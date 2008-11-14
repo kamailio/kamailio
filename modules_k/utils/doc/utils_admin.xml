@@ -1,0 +1,100 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module implement various functions related to SIP message handling.
+	</para>
+	<para>
+	It offers some functions related to handle ringing. In a parallel forking
+	scenario you get several 183s with SDP. You don't want that your customers
+	hear more than one ringtone or answer machine in parallel on the phone.
+	So its necessary to drop the 183 in this cases and send a 180 instead.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	
+	<section>
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>ring_timeout</varname> (int)</title>
+			<para>
+			Timeout value in seconds, define how long the call-id is stored in the internal list.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>30</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>ring_timeout</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "ring_timeout", "30")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">ring_insert_callid()</function>
+			</title>
+			<para>
+			Inserting the call-id in the internal list, which is checked when
+			further replies arrive. Any 183 reply that is received during the
+			timeout value will be converted to a 180 message.
+			</para>
+			<para>
+			The function returns TRUE on success, and FALSE during processing failures.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>ring_insert_callid()</function> usage</title>
+				<programlisting format="linespecific">
+...
+ring_insert_callid();
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>

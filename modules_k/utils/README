@@ -1,0 +1,96 @@
+utils
+
+Hardy Kahl
+
+   1&1 Internet AG
+
+Henning Westerholt
+
+   1&1 Internet AG
+
+   Copyright © 2008 1&1 Internet AG
+   Revision History
+   Revision $Revision: 4872 $ $Date: 2008-09-09 17:39:38 +0200
+                              (Di, 09 Sep 2008) $
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. ring_timeout (int)
+
+        1.4. Exported Functions
+
+              1.4.1. ring_insert_callid()
+
+   List of Examples
+
+   1.1. Set ring_timeout parameter
+   1.2. ring_insert_callid() usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module implement various functions related to SIP message
+   handling.
+
+   It offers some functions related to handle ringing. In a
+   parallel forking scenario you get several 183s with SDP. You
+   don't want that your customers hear more than one ringtone or
+   answer machine in parallel on the phone. So its necessary to
+   drop the 183 in this cases and send a 180 instead.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.3. Exported Parameters
+
+1.3.1. ring_timeout (int)
+
+   Timeout value in seconds, define how long the call-id is stored
+   in the internal list.
+
+   Default value is "30".
+
+   Example 1.1. Set ring_timeout parameter
+...
+modparam("utils", "ring_timeout", "30")
+...
+
+1.4. Exported Functions
+
+1.4.1.  ring_insert_callid()
+
+   Inserting the call-id in the internal list, which is checked
+   when further replies arrive. Any 183 reply that is received
+   during the timeout value will be converted to a 180 message.
+
+   The function returns TRUE on success, and FALSE during
+   processing failures.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.2. ring_insert_callid() usage
+...
+ring_insert_callid();
+...
