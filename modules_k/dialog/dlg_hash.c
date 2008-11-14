@@ -453,8 +453,9 @@ void unref_dlg(struct dlg_cell *dlg, unsigned int cnt)
  * \see next_state_dlg
  */
 static inline void log_next_state_dlg(const int event, const struct dlg_cell *dlg) {
-	LM_CRIT("bogus event %d in state %d for dlg with clid '%.*s' and tags "
-		"'%.*s' '%.*s'\n", event, dlg->state, dlg->callid.len, dlg->callid.s,
+	LM_CRIT("bogus event %d in state %d for dlg [%u:%u] with clid '%.*s' and tags "
+		"'%.*s' '%.*s'\n", event, dlg->state, dlg->h_entry, dlg->h_id,
+		dlg->callid.len, dlg->callid.s,
 		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 		dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 }
@@ -516,8 +517,8 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_DELETED:
 					if (dlg->flags&DLG_FLAG_HASBYE) {
 						LM_CRIT("bogus event %d in state %d (with BYE) "
-							"for dlg with clid '%.*s' and tags '%.*s' '%.*s'\n",
-							event,dlg->state,
+							"for dlg [%u:%u] with clid '%.*s' and tags '%.*s' '%.*s'\n",
+							event,dlg->state, dlg->h_entry, dlg->h_id,
 							dlg->callid.len, dlg->callid.s,
 							dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 							dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
