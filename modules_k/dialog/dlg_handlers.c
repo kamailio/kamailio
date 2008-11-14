@@ -453,6 +453,8 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
+	dlg->lifetime = get_dlg_timeout(req);
+
 	/* move pending profile linkers into dialog */
 	set_current_dialog( req, dlg);
 
@@ -473,8 +475,6 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		LM_ERR("failed to register TMCB\n");
 		goto error;
 	}
-
-	dlg->lifetime = get_dlg_timeout(req);
 
 	t->dialog_ctx = (void*) dlg;
 
