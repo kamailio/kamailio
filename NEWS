@@ -577,8 +577,8 @@ new config variables:
    tcp_connection_lifetime = value (s) - how long the lifetime of a
       tcp connection will be exteneded after an IO event (accept, connect, 
       read, write). Default: 120 s.
-   tcp_poll_method = poll|select|epoll_et|epoll-lt|kqueue|devpoll - poll
-      method used (by default the best one for the current OS is selected)
+   tcp_poll_method = poll|select|sigio_rt|epoll_et|epoll-lt|kqueue|devpoll - 
+      poll method used (by default the best one for the current OS is selected)
    tcp_max_connections = no. - maximum number of tcp connections (if the number
       is exceeded no new tcp connections will be accepted). Default: 2048.
 
