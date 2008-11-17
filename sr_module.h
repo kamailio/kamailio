@@ -41,6 +41,13 @@
  *  2007-06-07  added PROC_INIT, called in the main process context
  *               (same as PROC_MAIN), buf guaranteed to be called before
  *               any other process is forked (andrei)
+ *  2008-11-17  sip-router version: includes some of the openser/kamailio
+ *               changes: f(void) instead of f(), free_fixup_function()
+ */
+
+/*!
+ * \file
+ * \brief modules/plug-in structures declarations
  */
 
 
@@ -53,12 +60,14 @@
 #include "route_struct.h"
 #include "str.h"
 
-typedef  struct module_exports* (*module_register)();
+typedef  struct module_exports* (*module_register)(void);
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
 typedef  int (*fixup_function)(void** param, int param_no);
+typedef  int (*free_fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
 typedef  void (*onbreak_function)(struct sip_msg*);
-typedef void (*destroy_function)();
+typedef void (*destroy_function)(void);
+
 typedef int (*init_function)(void);
 typedef int (*child_init_function)(int rank);
 
@@ -193,19 +202,19 @@ extern struct sr_module* modules; /* global module list*/
 extern response_function* mod_response_cbks;/* response callback array */
 extern int mod_response_cbk_no;    /* size of reponse callbacks array */
 
-int register_builtin_modules();
+int register_builtin_modules(void);
 int register_module(struct module_exports*, char*,  void*);
 int load_module(char* path);
 cmd_export_t* find_export_record(char* name, int param_no, int flags);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
 rpc_export_t* find_rpc_export(char* name, int flags);
-void destroy_modules();
+void destroy_modules(void);
 int init_child(int rank);
 int init_modules(void);
 struct sr_module* find_module_by_name(char* mod);
 
-/*
+/*! \brief
  * Find a parameter with given type and return it's
  * address in memory
  * If there is no such parameter, NULL is returned
