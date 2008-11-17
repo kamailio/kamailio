@@ -44,18 +44,21 @@ MODULE_VERSION
 
 gen_lock_t *ring_lock = NULL;
 unsigned int ring_timeout = 30;
+unsigned int ring_activate = 0;
 
 static int mod_init(void);
+static int child_init(int rank);
 static void mod_destroy(void);
 
 
 static cmd_export_t cmds[]={
-	{ "ring_insert_callid", (cmd_function)ring_insert_callid, 0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE },
+	{ "ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE },
 	{0,0,0,0,0,0}
 };
 
 static param_export_t params[] = {
-	{"ring_timeout", INT_PARAM, &ring_timeout },
+	{"ring_activate", INT_PARAM, &ring_activate },
+	{"ring_timeout",  INT_PARAM, &ring_timeout  },
 	{0, 0, 0}
 };
 
@@ -72,29 +75,40 @@ struct module_exports exports= {
 	mod_init,        /* initialization function */
 	0,               /* Response function */
 	mod_destroy,     /* Destroy function */
-	0,               /* Child init function */
+	child_init,      /* Child init function */
 };
 
 
 static int mod_init(void)
 {
-	ring_init_hashtable();
+	return 0;
+}
 
-	ring_lock = lock_alloc();
-	assert(ring_lock);
-	if (lock_init(ring_lock) == 0) {
-		LM_CRIT("cannot initialize lock.\n");
-		return -1;
-	}
 
-	if (register_script_cb(ring_filter, PRE_SCRIPT_CB|RPL_TYPE_CB, 0) != 0) {
-		LM_ERR("could not insert callback");
-		return -1;
+static int child_init(int rank)
+{
+	/*
+	 * delay initialization, to avoid the overhead from the callback
+	 * when the ringing functionality is not used
+	 */
+	if(rank == PROC_MAIN && ring_activate == 1) {
+		ring_init_hashtable();
+
+		ring_lock = lock_alloc();
+		assert(ring_lock);
+		if (lock_init(ring_lock) == 0) {
+			LM_CRIT("cannot initialize lock.\n");
+			return -1;
+		}
+		LM_ERR("init CB..");
+		if (register_script_cb(ring_filter, PRE_SCRIPT_CB|RPL_TYPE_CB, 0) != 0) {
+			LM_ERR("could not insert callback");
+			return -1;
+		}
 	}
 
 	return 0;
 }
-
 
 static void mod_destroy(void)
 {

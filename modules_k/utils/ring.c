@@ -345,3 +345,16 @@ int ring_filter(struct sip_msg *msg, void *bar)
 
 	return 1;
 }
+
+
+/*!
+ * \brief Fixup function for the ring_insert_callid function
+ * \param param unused
+ * \param param_no unused
+ * \return 0
+ */
+int ring_fixup(void ** param, int param_no) {
+	ring_activate = 1;
+	return 0;
+}
+

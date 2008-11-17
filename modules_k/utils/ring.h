@@ -39,6 +39,7 @@
 
 extern gen_lock_t *ring_lock;
 extern unsigned int ring_timeout;
+extern unsigned int ring_activate;
 
 
 /*!
@@ -74,6 +75,15 @@ void ring_destroy_hashtable(void);
  * \return 1 on success, -1 on failure
  */
 int ring_filter(struct sip_msg *msg, void *bar);
+
+
+/*!
+ * \brief Fixup function for the ring_insert_callid function
+ * \param param unused
+ * \param param_no unused
+ * \return 0
+ */
+int ring_fixup(void ** param, int param_no);
 
 
 #endif
