@@ -433,7 +433,8 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 
 /* first param: DPID: type: INT, AVP, SVAR
- * second param: SRC/DST type: RURI, RURI_USERNAME, AVP, SVAR
+ * second param: SRC type: any psedo variable type
+ * second param: DST type: RURI, RURI_USERNAME, AVP, SVAR
  * default value for the second param: $ru.user/$ru.user
  */
 static int dp_trans_fixup(void ** param, int param_no){
@@ -489,8 +490,6 @@ static int dp_trans_fixup(void ** param, int param_no){
 		lstr.s = p; lstr.len = strlen(p);
 		if(pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
 			goto error;
-
-		verify_par_type(param_no, dp_par->v.sp[0]);
 
 		lstr.s = s; lstr.len = strlen(s);
 		if (pv_parse_spec( &lstr, &dp_par->v.sp[1] )==NULL)

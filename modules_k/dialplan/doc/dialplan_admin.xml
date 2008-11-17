@@ -385,7 +385,8 @@ modparam("dialplan", "fetch_rows", 4000)
 		<quote>ruri.user/ruri.user</quote> will be used, thus translating 
 		the request uri. 
  		</para>
-		<para>Both src and dest can have the following types:
+		<para>Input parameter src can be any pseudo variable.
+		Output parameter dest can be:
 		</para>
 		<itemizedlist>
 			<listitem>
