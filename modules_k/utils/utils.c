@@ -100,7 +100,6 @@ static int child_init(int rank)
 			LM_CRIT("cannot initialize lock.\n");
 			return -1;
 		}
-		LM_ERR("init CB..");
 		if (register_script_cb(ring_filter, PRE_SCRIPT_CB|RPL_TYPE_CB, 0) != 0) {
 			LM_ERR("could not insert callback");
 			return -1;
