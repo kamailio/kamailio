@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Digest Authentication Module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,6 +24,13 @@
  * 2003-04-28 rpid contributed by Juha Heinanen added (janakj)
  */
 
+/*!
+ * \file
+ * \brief Digest Authentication Module
+ * \ingroup auth
+ * - Module: \ref auth
+ */
+
 #ifndef AUTH_MOD_H
 #define AUTH_MOD_H
 
@@ -35,18 +40,18 @@
 #include "../../lock_ops.h"
 
 #define MAX_NONCE_INDEX     100000
-#define NBUF_LEN            (MAX_NONCE_INDEX>>3)
+#define NBUF_LEN            (MAX_NONCE_INDEX>>3) /*!< nonce buffer length */
 
 /*
  * Module parameters variables
  */
-extern str secret;            /* secret phrase used to generate nonce */
-extern unsigned int nonce_expire;      /* nonce expire interval */
-extern str rpid_prefix;       /* Remote-Party-ID prefix */
-extern str rpid_suffix;       /* Remote-Party-ID suffix */
-extern str realm_prefix;      /* strip off auto-generated realm */
+extern str secret;            /*!< secret phrase used to generate nonce */
+extern unsigned int nonce_expire; /*!< nonce expire interval */
+extern str rpid_prefix;       /*!< Remote-Party-ID prefix */
+extern str rpid_suffix;       /*!< Remote-Party-ID suffix */
+extern str realm_prefix;      /*!< strip off auto-generated realm */
 
-/** SL binds */
+/*! SL binds */
 extern struct sl_binds slb;
 
 /* nonce index */
@@ -57,4 +62,4 @@ extern int* second;
 extern int* next_index;
 extern int nonce_reuse;
 
-#endif /* AUTH_MOD_H */
+#endif

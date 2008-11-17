@@ -1,8 +1,6 @@
 /*
  * $Id: rfc2617.c 2 2005-06-13 16:47:24Z bogdan_iancu $
  *
- * Digest response calculation as per RFC2617
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,6 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief Digest response calculation as per RFC2617
+ * \ingroup auth
+ * - Module: \ref auth
+ */
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -31,6 +35,11 @@
 #include "../../md5.h"
 
 
+/*!
+ * \brief Convert to hex form
+ * \param Bin hash value
+ * \param Hex hex value
+ */
 inline void cvt_hex(HASH _b, HASHHEX _h)
 {
 	unsigned short i;
@@ -57,8 +66,15 @@ inline void cvt_hex(HASH _b, HASHHEX _h)
 }
 
 
-/* 
- * calculate H(A1) as per spec 
+/*!
+ * \brief Calculate H(A1) as per HTTP Digest spec
+ * \param _alg type of hash algorithm
+ * \param _username username
+ * \param _real authentification realm
+ * \param _password password
+ * \param _nonce nonce value
+ * \param _cnonce cnonce value
+ * \param _sess_key session key, result will be stored there
  */
 void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 	      str* _nonce, str* _cnonce, HASHHEX _sess_key)
@@ -88,8 +104,17 @@ void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 }
 
 
-/* 
- * calculate request-digest/response-digest as per HTTP Digest spec 
+/*!
+ * \brief Calculate request-digest/response-digest as per HTTP Digest spec
+ * \param _ha1 H(A1)
+ * \param _nonce nonce from server
+ * \param _nc 8 hex digits
+ * \param _qop qop-value: "", "auth", "auth-int
+ * \param _auth_int  1 if auth-int is used
+ * \param _method method from the request
+ * \param _uri requested URL/ URI
+ * \param _hentity  H(entity body) if qop="auth-int"
+ * \param _response request-digest or response-digest
  */
 void calc_response(HASHHEX _ha1,      /* H(A1) */
 		   str* _nonce,       /* nonce from server */
@@ -107,7 +132,7 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 	HASH RespHash;
 	HASHHEX HA2Hex;
 	
-	     /* calculate H(A2) */
+	/* calculate H(A2) */
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _method->s, _method->len);
 	MD5Update(&Md5Ctx, ":", 1);
@@ -121,7 +146,7 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 	MD5Final(HA2, &Md5Ctx);
 	cvt_hex(HA2, HA2Hex);
 	
-	     /* calculate response */
+	/* calculate response */
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _ha1, HASHHEXLEN);
 	MD5Update(&Md5Ctx, ":", 1);

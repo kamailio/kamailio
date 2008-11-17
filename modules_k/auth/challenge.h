@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Challenge related functions
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,6 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief Challenge related functions
+ * \ingroup auth
+ * - Module: \ref auth
+ */
 
 #ifndef CHALLENGE_H
 #define CHALLENGE_H
@@ -29,22 +33,34 @@
 #include "../../parser/msg_parser.h"
 
 
-/* 
- * Challenge a user agent using WWW-Authenticate header field
+/*!
+ * \brief Challenge a user to send credentials using WWW-Authorize header field
+ * \param _msg SIP message
+ * \param _realm authentification realm
+ * \param _qop qop value
+ * \return 0 if challenge could be sended, -1 on failure
  */
 int www_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
 
 
-/*
- * Challenge a user agent using Proxy-Authenticate header field
+/*!
+ * \brief Challenge a user to send credentials using Proxy-Authorize header field
+ * \param _msg SIP message
+ * \param _realm authentification realm
+ * \param _qop qop value
+ * \return 0 if challenge could be sended, -1 on failure
  */
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
 
 
-/*
- * Remove used credentials from a SIP message header
+/*!
+ * \brief Remove used credentials from a SIP message header
+ * \param _m SIP message
+ * \param _s1 unused
+ * \param _s2 unused
+ * \return 1 when credentials could be removed, -1 if not found or on failure
  */
 int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-#endif /* AUTH_H */
+#endif

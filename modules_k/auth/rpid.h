@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Remote-Party-ID related functions
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -27,6 +25,13 @@
  * 2005-05-31 general avp specification added for rpid (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Remote-Party-ID related functions
+ * \ingroup auth
+ * - Module: \ref auth
+ */
+
 #ifndef RPID_H
 #define RPID_H
 
@@ -35,34 +40,50 @@
 #include "../../usr_avp.h"
 
 
-/*
- * Parse and init the rpid avp specification
+/*!
+ * \brief Parse and set the RPID AVP specs
+ * \param rpid_avp_param RPID AVP parameter
+ * \return 0 on success, -1 on failure
  */
 int init_rpid_avp(char *rpid_avp_param);
 
 
-/*
- * Get the RPID avp specs
+/*!
+ * \brief Gets the RPID avp specs
+ * \param rpid_avp_p AVP name
+ * \param rpid_avp_type_p AVP type
  */
 void get_rpid_avp( int_str *rpid_avp_p, int *rpid_avp_type_p );
 
 
-/*
- * Append RPID header field to the message
+/*!
+ * \brief Append RPID header field to the message
+ * \param _m SIP message
+ * \param _s1 unused
+ * \param _s2 unused
+ * \return 1 on success, -1 on failure
  */
 int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-/*
- * Append RPID header field to the message with parameters
+/*!
+ * \brief Append RPID header field to the message with parameters
+ * \param _m SIP message
+ * \param _prefix prefix
+ * \param _suffix suffix
+ * \return 1 on success, -1 on failure
  */
 int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix);
 
 
-/*
- * Check if SIP URI in rpid contains an e164 user part
+/*!
+ * \brief Check if URI in RPID AVP contains an E164 user part
+ * \param _m SIP message
+ * \param _s1 unused
+ * \param _s2 unused
+ * \return 1 if the URI contains an E164 user part, -1 if not
  */
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-#endif /* RPID_H */
+#endif

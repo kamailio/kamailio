@@ -1,8 +1,6 @@
 /*
  * $Id:$
  *
- * Nonce index  related functions
- *
  * Copyright (C)2008  Voice System S.R.L
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,6 +24,13 @@
  *  2008-05-29  initial version (anca)
  */
 
+/*!
+ * \file
+ * \brief Nonce index related functions
+ * \ingroup auth
+ * - Module: \ref auth
+ */
+
 #include <stdio.h>
 #include "../../dprint.h"
 #include "../../timer.h"
@@ -44,10 +49,11 @@
 
 #define check_buf_bit(index)  ( nonce_buf[index>>3] & (1<<(index%8)) )
 
-/*
- *  Get a valid index for the new nonce
- */
 
+/*!
+ * \brief Get valid index for nonce
+ * \return index on success, -1 on failure
+ */
 int reserve_nonce_index(void)
 {
     unsigned int curr_sec;
@@ -125,15 +131,16 @@ done:
     return index;
 }
 
-/*
- *  Check if the nonce has been used before
+
+/*!
+ * \brief Check if the nonce has been used before
+ * \param index index
+ * \return 1 if nonce is valid, 0 if not valid or on errors
  */
-
-
 int is_nonce_index_valid(int index)
 {
     /* if greater than NBUF_LEN ->error */
-    
+
     if(index>= NBUF_LEN )
     {
         LM_ERR("index greater than buffer length\n");
@@ -183,7 +190,7 @@ int is_nonce_index_valid(int index)
         LM_DBG("nonce already used\n");
         goto error;
     }
-    
+
     set_buf_bit(index);
     lock_release(nonce_lock);
     return 1;
@@ -193,4 +200,3 @@ error:
     return 0;
 
 }
-

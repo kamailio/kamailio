@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Digest Authentication Module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,6 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief Digest Authentication Module, API exports
+ * \ingroup auth
+ * - Module: \ref auth
+ */
+
 #include <string.h>
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
@@ -39,9 +44,12 @@ static str auth_400_err = str_init(MESSAGE_400);
 static str auth_500_err = str_init(MESSAGE_500);
 
 
-/*
- * if realm determined from request, look if there are some
- * modification rules
+/*!
+ * \brief Strip the beginning of a realm string
+ *
+ * Strip the beginning of a realm string, depending on the length of
+ * the realm_prefix.
+ * \param _realm realm string
  */
 void strip_realm(str* _realm)
 {
@@ -60,8 +68,12 @@ void strip_realm(str* _realm)
 }
 
 
-/*
- * Find credentials with given realm in a SIP message header
+/*!
+ * \brief Find credentials with given realm in a SIP message header
+ * \param _m SIP message
+ * \param _real authentification realm
+ * \param _hftype header field type
+ * \param _h header field
  */
 static inline int find_credentials(struct sip_msg* _m, str* _realm,
 								hdr_types_t _hftype, struct hdr_field** _h)
@@ -143,11 +155,18 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 }
 
 
-/*
- * Purpose of this function is to find credentials with given realm,
+/*!
+ * \brief Find credentials with given realm, check if we need to authenticate
+ *
+ * The purpose of this function is to find credentials with given realm,
  * do sanity check, validate credential correctness and determine if
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
+ * \param _m SIP message
+ * \param _realm authentification realm
+ * \param _hftype header field type
+ * \param _h header field
+ * \return authentification result
  */
 auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 													struct hdr_field** _h)
@@ -225,9 +244,14 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 }
 
 
-/*
- * Purpose of this function is to do post authentication steps like
+/*!
+ * \brief Do post authentification steps
+ *
+ * The purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
+ * \param _m SIP message
+ * \param _h header field
+ * \return authentification result
  */
 auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 {
@@ -267,6 +291,17 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 
 }
 
+
+/*!
+ * \brief Calculate the response and compare with given response
+ *
+ * Calculate the response and compare with the given response string.
+ * Authorization is successful if this two strings are same.
+ * \param _cred digest credentials
+ * \param _method method from the request
+ * \param _ha1 HA1 value
+ * \return 0 if comparison was ok, 1 when length not match, 2 when comparison not ok
+ */
 int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 {
 	HASHHEX resp, hent;
@@ -305,7 +340,11 @@ int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 }
 
 
-
+/*!
+ * \brief Bind function for the auth API
+ * \param api binded API
+ * \return 0 on success, -1 on failure
+ */
 int bind_auth(auth_api_t* api)
 {
 	if (!api) {

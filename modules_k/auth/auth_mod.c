@@ -1,7 +1,5 @@
-/* 
+/*
  * $Id$ 
- *
- * Digest Authentication Module
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -32,6 +30,18 @@
  * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Digest Authentication Module
+ * \ingroup auth
+ * - Module: \ref auth
+ */
+
+/*!
+ * \defgroup auth AUTH :: The Kamailio auth Module
+ * The module provides functions to authentificate users.
+ * It also exports a API that can be used from other modules.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +62,7 @@
 
 MODULE_VERSION
 
+/*! length of the random secret */
 #define RAND_SECRET_LEN 32
 
 #define DEF_RPID_PREFIX ""
@@ -59,15 +70,15 @@ MODULE_VERSION
 #define DEF_STRIP_REALM ""
 #define DEF_RPID_AVP "$avp(s:rpid)"
 
-
+/*! error string for code 500 */
 static str auth_500_err = str_init("Server Internal Error");
 
-/*
+/*!
  * Module destroy function prototype
  */
 static void destroy(void);
 
-/*
+/*!
  * Module initialization function prototype
  */
 static int mod_init(void);
@@ -75,52 +86,52 @@ static int mod_init(void);
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2);
 int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2);
 
-/** SL binds */
+/*! SL binds */
 struct sl_binds slb;
 
 
 /*
  * Module parameter variables
  */
-char* sec_param    = 0;   /* If the parameter was not used, the secret phrase will be auto-generated */
-unsigned int   nonce_expire = 300; /* Nonce lifetime */
+char* sec_param    = 0;   /*!< If the parameter is not used, the secret phrase will be auto-generated */
+unsigned int   nonce_expire = 300; /*!< Nonce lifetime */
 
 str secret;
 char* sec_rand = 0;
 
 int auth_calc_ha1 = 0;
 
-/* Default Remote-Party-ID prefix */
+/*! Default Remote-Party-ID prefix */
 str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1};
-/* Default Remote-Party-IDD suffix */
+/*! Default Remote-Party-IDD suffix */
 str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
-/* Prefix to strip from realm */
+/*! Prefix to strip from realm */
 str realm_prefix = {DEF_STRIP_REALM, sizeof(DEF_STRIP_REALM) - 1};
 
-/* definition of AVP containing rpid value */
+/*! definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
 
-/* definition of AVP containing username value */
+/*! definition of AVP containing username value */
 char* user_spec_param = 0;
 static pv_spec_t user_spec;
 
 
-/* definition of AVP containing password value */
+/*! definition of AVP containing password value */
 char* passwd_spec_param = 0;
 static pv_spec_t passwd_spec;
 
-/* nonce index */
+/*! nonce index */
 gen_lock_t* nonce_lock= NULL;
 char* nonce_buf= NULL;
 int* sec_monit= NULL;
 int* second= NULL;
 int* next_index= NULL;
 
-/* control nonce usage checking */
+/*! control nonce usage checking */
 int nonce_reuse = 0;
 
 /*
- * Exported functions 
+ * Exported functions
  */
 static cmd_export_t cmds[] = {
 	{"www_challenge",       (cmd_function)www_challenge,           2,
@@ -183,9 +194,12 @@ struct module_exports exports = {
 };
 
 
-/*
- * Secret parameter was not used so we generate
- * a random value here
+/*!
+ * \brief Generate a random secret
+ *
+ * Generate a random secret. A secret parameter was not used so we
+ * generate a random value here.
+ * \return 0 on success, -1 on failure
  */
 static inline int generate_random_secret(void)
 {
@@ -282,7 +296,7 @@ static int mod_init(void)
 			default: ;
 		}
 	}
-    
+
 	if(nonce_reuse==0)
 	{
 	    nonce_lock = (gen_lock_t*)lock_alloc();
@@ -306,7 +320,7 @@ static int mod_init(void)
 			return -10;
 	    }
 		memset(nonce_buf, 255, NBUF_LEN);
-   
+
 	    sec_monit= (int*)shm_malloc((nonce_expire +1)* sizeof(int));
 	    if(sec_monit== NULL)
 		{
@@ -328,11 +342,10 @@ static int mod_init(void)
 }
 
 
-
 static void destroy(void)
 {
 	if (sec_rand) pkg_free(sec_rand);
-    
+
 	if(nonce_reuse==0)
 	{
 	    if(nonce_lock)
@@ -352,6 +365,15 @@ static void destroy(void)
 	}
 }
 
+
+/*! 
+ * \brief Generate a HA1 response from username and domain
+ * \param msg SIP message
+ * \param _username user name
+ * \param domain domain
+ * \param _ha1 generated HA1
+ * \return 0 on success, 1 on error and when the user could not found
+ */
 static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		str* _domain, char* _ha1)
 {
@@ -400,10 +422,19 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		memcpy(_ha1, sval.rs.s, sval.rs.len);
 		_ha1[sval.rs.len] = '\0';
 	}
-    
+
 	return 0;
 }
 
+
+/*!
+ * \brief Check authorization from a pseudo-variable
+ * \param msg SIP message
+ * \param realm authentification realm
+ * \param hftype type of the header field
+ * \return 1 when authorized, null on errors, negative on authentification failure
+ * \todo rework logic to not check for auth_get_ha1 < 0, this can not happen
+ */
 static inline int pv_authorize(struct sip_msg* msg, gparam_p realm,
 										hdr_types_t hftype)
 {
@@ -452,14 +483,27 @@ static inline int pv_authorize(struct sip_msg* msg, gparam_p realm,
 }
 
 
+/*!
+ * \brief Small wrapper around pv_authorize, use proxy challenge
+ * \param msg SIP message
+ * \param ream authenfication realm
+ * \param str2 unused
+ * \return 1 on sucess, 0 on errors, negative on authentification failures
+ */
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2)
 {
 	return pv_authorize(msg, (gparam_p)realm, HDR_PROXYAUTH_T);
 }
 
 
+/*!
+ * \brief Small wrapper around pv_authorize, use www challenge
+ * \param msg SIP message
+ * \param ream authenfication realm
+ * \param str2 unused
+ * \return 1 on sucess, 0 on errors, negative on authentification failures
+ */
 int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2)
 {
 	return pv_authorize(msg, (gparam_p)realm, HDR_AUTHORIZATION_T);
 }
-

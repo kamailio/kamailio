@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Digest Authentication Module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -29,6 +27,12 @@
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Digest Authentication Module
+ * \ingroup auth
+ * - Module: \ref auth
+ */
 
 #include <string.h>
 #include "../../dprint.h"
@@ -40,8 +44,12 @@
 #include "common.h"
 
 
-/* 
- * Return parsed To or From, host part of the parsed uri is realm
+/*!
+ * \brief Return parsed To or From, host part of the parsed uri is realm
+ * \param _m SIP message
+ * \param _hftype header field type
+ * \param _u SIP URI
+ * \return 0 on success, negative on failure
  */
 int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri** _u)
 {
@@ -73,9 +81,17 @@ int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri** _u)
 }
 
 
-/*
+/*!
+ * \brief Create a response with given code and reason phrase
+ *
  * Create a response with given code and reason phrase
  * Optionally add new headers specified in _hdr
+ * \param _m SIP message
+ * \param _code response code
+ * \param _reason reason string
+ * \param _hdr header to add
+ * \param _hdr_len header length
+ * \return 1 if reply could be sended, -1 on failure
  */
 int send_resp(struct sip_msg* _m, int _code, str* _reason,
 					char* _hdr, int _hdr_len)

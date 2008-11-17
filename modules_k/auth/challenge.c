@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Challenge related functions
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -27,6 +25,13 @@
  *            possible issues with too small buffer
  * 2003-01-26 consume_credentials no longer complains about ACK/CANCEL(jiri)
  * 2006-03-01 pseudo variables support for domain name (bogdan)
+ */
+
+/*!
+ * \file
+ * \brief Challenge related functions
+ * \ingroup auth
+ * - Module: \ref auth
  */
 
 #include "../../data_lump.h"
@@ -73,8 +78,15 @@ static str auth_500_err = str_init(MESSAGE_500);
 #define DIGEST_MD5_LEN	  (sizeof(DIGEST_MD5)-1)
 
 
-/*
- * Create {WWW,Proxy}-Authenticate header field
+/*!
+ * \brief Create {WWW,Proxy}-Authenticate header field
+ * \param _retries unused
+ * \param _stale
+ * \param _real authentification realm
+ * \param _len length, will be set
+ * \param _qop qop value
+ * \param _hf_name header field name
+ * \return created header field, or 0 on failure
  */
 static inline char *build_auth_hf(int _retries, int _stale, str* _realm, 
 				  int* _len, int _qop, char* _hf_name)
@@ -141,8 +153,15 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	return hf;
 }
 
-/*
- * Create and send a challenge
+/*!
+ * \brief Create and send a authentification challenge
+ * \param _msg SIP message
+ * \param _realm authentification realm
+ * \param _qop qop value
+ * \param _code response code
+ * \param _message response message
+ * \param _challenge_msg challenge message
+ * \return 0 if challenge could be created and sended, -1 on failure
  */
 static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 						int _code, char* _message, char* _challenge_msg)
@@ -152,7 +171,7 @@ static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 	auth_body_t* cred = 0;
 	char *auth_hf;
 	int ret;
-	hdr_types_t hftype = 0; /* Makes gcc happy */
+	hdr_types_t hftype = 0;
 	struct sip_uri *uri;
 	str realm;
 	str reason;
@@ -212,18 +231,27 @@ static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 }
 
 
-/*
- * Challenge a user to send credentials using WWW-Authorize header field
- */
+
 int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
-{
+{/*!
+ * \brief Challenge a user to send credentials using WWW-Authorize header field
+ * \param _msg SIP message
+ * \param _realm authentification realm
+ * \param _qop qop value
+ * \return 0 if challenge could be sended, -1 on failure
+ */
 	return challenge(_msg, (gparam_p)_realm, (int)(long)_qop, 401,
 			MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
 
-/*
- * Challenge a user to send credentials using Proxy-Authorize header field
+
+/*!
+ * \brief Challenge a user to send credentials using Proxy-Authorize header field
+ * \param _msg SIP message
+ * \param _realm authentification realm
+ * \param _qop qop value
+ * \return 0 if challenge could be sended, -1 on failure
  */
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
@@ -232,8 +260,12 @@ int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 }
 
 
-/*
- * Remove used credentials from a SIP message header
+/*!
+ * \brief Remove used credentials from a SIP message header
+ * \param _m SIP message
+ * \param _s1 unused
+ * \param _s2 unused
+ * \return 1 when credentials could be removed, -1 if not found or on failure
  */
 int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 {

@@ -1,8 +1,6 @@
 /*
  * $Id: rfc2617.h 2 2005-06-13 16:47:24Z bogdan_iancu $
  *
- * Digest response calculation as per RFC2617
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,6 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief Digest response calculation as per RFC2617
+ * \ingroup auth
+ * - Module: \ref auth
+ */
 
 #ifndef RFC2617_H
 #define RFC2617_H
@@ -37,44 +41,51 @@ typedef char HASH[HASHLEN];
 typedef char HASHHEX[HASHHEXLEN+1];
 
 
-/*
- * Type of algorithm used
- */
+/*! Type of algorithm used */
 typedef enum {
-	HA_MD5,      /* Plain MD5 */
-	HA_MD5_SESS, /* MD5-Session */
+	HA_MD5,      /*!< Plain MD5 */
+	HA_MD5_SESS, /*!< MD5-Session */
 } ha_alg_t;
 
 
-/*
- * Convert to hex form
+/*!
+ * \brief Convert to hex form
+ * \param Bin hash value
+ * \param Hex hex value
  */
 void cvt_hex(HASH Bin, HASHHEX Hex);
 
 
-/* 
- * calculate H(A1) as per HTTP Digest spec 
+/*!
+ * \brief Calculate H(A1) as per HTTP Digest spec
+ * \param _alg type of hash algorithm
+ * \param _username username
+ * \param _real authentification realm
+ * \param _password password
+ * \param _nonce nonce value
+ * \param _cnonce cnonce value
+ * \param _sess_key session key, result will be stored there
  */
-void calc_HA1(ha_alg_t _alg,      /* Type of algorithm */
-	      str* _username,     /* username */
-	      str* _realm,        /* realm */
-	      str* _password,     /* password */
-	      str* _nonce,        /* nonce string */
-	      str* _cnonce,       /* cnonce */
-	      HASHHEX _sess_key); /* Result will be stored here */
+void calc_HA1(ha_alg_t _alg, str* _username, str* _realm,
+		str* _password, str* _nonce, str* _cnonce,
+		HASHHEX _sess_key);
 
 
-/* calculate request-digest/response-digest as per HTTP Digest spec */
-void calc_response(HASHHEX _ha1,       /* H(A1) */
-		   str* _nonce,        /* nonce from server */
-		   str* _nc,           /* 8 hex digits */
-		   str* _cnonce,       /* client nonce */
-		   str* _qop,          /* qop-value: "", "auth", "auth-int" */
-		   int _auth_int,      /* 1 if auth-int is used */
-		   str* _method,       /* method from the request */
-		   str* _uri,          /* requested URL */
-		   HASHHEX _hentity,   /* H(entity body) if qop="auth-int" */
-		   HASHHEX _response); /* request-digest or response-digest */
+/*!
+ * \brief Calculate request-digest/response-digest as per HTTP Digest spec
+ * \param _ha1 H(A1)
+ * \param _nonce nonce from server
+ * \param _nc 8 hex digits
+ * \param _qop qop-value: "", "auth", "auth-int
+ * \param _auth_int  1 if auth-int is used
+ * \param _method method from the request
+ * \param _uri requested URL/ URI
+ * \param _hentity  H(entity body) if qop="auth-int"
+ * \param _response request-digest or response-digest
+ */
+void calc_response(HASHHEX _ha1, str* _nonce, str* _nc, str* _cnonce,
+		str* _qop, int _auth_int, str* _method, str* _uri,
+		HASHHEX _hentity, HASHHEX _response);
 
 
-#endif /* RFC2617_H */
+#endif

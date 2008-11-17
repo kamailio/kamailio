@@ -1,8 +1,6 @@
 /*
  * $Id:$
  *
- * Nonce index  related functions
- *
  * Copyright (C)2008  Voice System S.R.L
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,16 +24,27 @@
  *  2008-05-29  initial version (anca)
 */
 
+/*!
+ * \file
+ * \brief Nonce index related functions
+ * \ingroup auth
+ * - Module: \ref auth
+ */
+
 #ifndef _NONCE_INDEX_H_
 #define _NONCE_INDEX_H_
 
-/*
- * Get valid index for nonce
+/*!
+ * \brief Get valid index for nonce
+ * \return index on success, -1 on failure
  */
 int reserve_nonce_index(void);
 
-/*
- * Check index validity
+
+/*!
+ * \brief Check if the nonce has been used before
+ * \param index index
+ * \return 1 if nonce is valid, 0 if not valid or on errors
  */
 int is_nonce_index_valid(int index);
 

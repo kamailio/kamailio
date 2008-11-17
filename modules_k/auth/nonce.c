@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Nonce related functions
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,6 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief Nonce related functions
+ * \ingroup auth
+ * - Module: \ref auth
+ */
 
 #include <time.h>
 #include <string.h>
@@ -36,7 +40,7 @@
 #include "auth_mod.h"
 
 
-/*
+/*!
  * Convert an integer to its hex representation,
  * destination array must be at least 8 bytes long,
  * this string is NOT zero terminated
@@ -49,7 +53,7 @@ static inline void integer2hex(char* _d, int _s)
 
 	_s = htonl(_s);
 	s = (char*)&_s;
-    
+
 	for (i = 0; i < 4; i++) {
 		
 		j = (s[i] >> 4) & 0xf;
@@ -69,8 +73,10 @@ static inline void integer2hex(char* _d, int _s)
 }
 
 
-/*
- * Convert hex string to integer
+/*!
+ * \brief Convert hex string to integer
+ * \param _s hex string
+ * \return integer value, can be 0
  */
 static inline int hex2integer(char* _s)
 {
@@ -91,10 +97,15 @@ static inline int hex2integer(char* _s)
 }
 
 
-/*
- * Calculate nonce value
- * Nonce value consists of the expires time (in seconds since 1.1 1970) 
- * and a secret phrase
+/*!
+ * \brief Calculate nonce value
+ *
+ * Calculate nonce value value. The nonce value consists of the
+ * expires time (in seconds since 1.1 1970) and a secret phrase.
+ * \param _nonce nonce value
+ * \param _expires expires value
+ * \param _index nonce index
+ * \param _secret secret
  */
 void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 {
@@ -120,8 +131,11 @@ void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 	_nonce[offset + 32] = '\0';
 }
 
-/*
- * Get nonce index
+
+/*!
+ * \brief Get index from nonce string
+ * \param _nonce nonce string
+ * \return nonce index
  */
 int get_nonce_index(str* _n)
 {
@@ -129,8 +143,10 @@ int get_nonce_index(str* _n)
 }
 
 
-/*
- * Get expiry time from nonce string
+/*!
+ * \brief Get expiry time from nonce string
+ * \param _nonce nonce string
+ * \return expiry time
  */
 time_t get_nonce_expires(str* _n)
 {
@@ -138,9 +154,11 @@ time_t get_nonce_expires(str* _n)
 }
 
 
-/*
- * Check, if the nonce received from client is
- * correct
+/*!
+ * \brief Check nonce value received from user agent
+ * \param _nonce nonce value
+ * \param _secret secret phrase
+ * \return 0 when nonce is valid, -1 on errors, positive if nonce not valid
  */
 int check_nonce(str* _nonce, str* _secret)
 {
@@ -173,8 +191,10 @@ int check_nonce(str* _nonce, str* _secret)
 }
 
 
-/*
- * Check if a nonce is stale
+/*!
+ * \brief Check if a nonce is stale
+ * \param _n nonce string
+ * \return 1 if the nonce is stale, 0 otherwise
  */
 int is_nonce_stale(str* _n) 
 {
