@@ -1,8 +1,6 @@
 /*
  * $Id$ 
  *
- * Group membership - module interface
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -32,6 +30,19 @@
  *  2005-10-06 - added support for regexp-based groups (bogdan)
  */
 
+/**
+ * \file
+ * \brief Group membership module
+ * \ingroup group
+ * - Module: \ref group
+ */
+
+/*!
+ * \defgroup group GROUP :: The Kamailio group Module
+ * This module provides functions to check if a certain user belongs to a
+ * group. This group definitions are read from a DB table.
+ */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,28 +62,27 @@ MODULE_VERSION
 #define TABLE_VERSION    2
 #define RE_TABLE_VERSION 1
 
-/*
- * Module destroy function prototype
+/*!
+ * \brief Module destroy function prototype
  */
 static void destroy(void);
 
 
-/*
- * Module child-init function prototype
+/*!
+ * \brief Module child-init function prototype
  */
 static int child_init(int rank);
 
 
-/*
- * Module initialization function prototype
+/*!
+ * \brief Module initialization function prototype
  */
 static int mod_init(void);
 
-
-/* Header field fixup */
+/*! Header field fixup */
 static int hf_fixup(void** param, int param_no);
 
-
+/*! get user group ID fixup */
 static int get_gid_fixup(void** param, int param_no);
 
 
@@ -101,14 +111,14 @@ static int get_gid_fixup(void** param, int param_no);
  * Module parameter variables
  */
 static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-/* Table name where group definitions are stored */
+/*! Table name where group definitions are stored */
 str table         = {TABLE, TABLE_LEN}; 
 str user_column   = {USER_COL, USER_COL_LEN};
 str domain_column = {DOMAIN_COL, DOMAIN_COL_LEN};
 str group_column  = {GROUP_COL, GROUP_COL_LEN};
 int use_domain    = 0;
 
-/* tabel and columns used for re-based groups */
+/* table and columns used for regular expression-based groups */
 str re_table      = {0, 0};
 str re_exp_column = {RE_EXP_COL, RE_EXP_COL_LEN};
 str re_gid_column = {RE_GID_COL, RE_GID_COL_LEN};
@@ -119,7 +129,7 @@ db_func_t group_dbf;
 db_con_t* group_dbh = 0;
 
 
-/*
+/*!
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -131,7 +141,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
+/*!
  * Exported parameters
  */
 static param_export_t params[] = {
@@ -149,7 +159,7 @@ static param_export_t params[] = {
 };
 
 
-/*
+/*!
  * Module interface
  */
 struct module_exports exports = {
@@ -226,11 +236,13 @@ static void destroy(void)
 }
 
 
-/*
- * Convert HF description string to hdr_field pointer
+/*!
+ * \brief Convert HF description string to hdr_field pointer
  *
- * Supported strings: 
- * "Request-URI", "To", "From", "Credentials"
+ * Convert a header field description string to hdr_field structure
+ * Supported strings: "Request-URI", "To", "From", "Credentials"
+ * \param header field description string
+ * \return hdr_field structure on success, NULL on failure
  */
 static group_check_p get_hf( char *str1)
 {
@@ -272,6 +284,12 @@ static group_check_p get_hf( char *str1)
 }
 
 
+/*!
+ * \brief Header fixup function
+ * \param param fixed parameter
+ * \param param_no number of parameters
+ * \return 0 on success, negative on failure
+ */
 static int hf_fixup(void** param, int param_no)
 {
 	void* ptr;
@@ -296,6 +314,12 @@ static int hf_fixup(void** param, int param_no)
 }
 
 
+/*!
+ * \brief Group ID fixup
+ * \param param fixed parameter
+ * \param param_no number of parameters
+ * \return 0 on success, negative on failure
+ */
 static int get_gid_fixup(void** param, int param_no)
 {
 	pv_spec_t *sp;
@@ -326,4 +350,3 @@ static int get_gid_fixup(void** param, int param_no)
 
 	return 0;
 }
-

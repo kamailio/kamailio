@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Group membership
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,7 +24,13 @@
  * 2003-02-25 - created by janakj
  * 2004-06-07   updated to the new DB api, added group_db_{bind,init,close,ver}
  *               (andrei)
- *
+ */
+
+/**
+ * \file
+ * \brief Group membership module
+ * \ingroup group
+ * - Module: \ref group
  */
 
 
@@ -41,15 +45,24 @@
 #include "group.h"
 #include "group_mod.h"                   /* Module parameters */
 
-
-
+/*!
+ * \brief Extract the username and domain from the SIP message
+ *
+ * Set the username and domain depending on the value of the SIP
+ * message and the group check structure.
+ * \param msg SIP message
+ * \param gcp group check structure
+ * \param username stored username
+ * \param domain stored domain
+ * \return 0 on success, -1 on failure
+ */
 int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 											str *username, str *domain)
 {
 	struct sip_uri puri;
 	struct sip_uri *turi;
 	struct hdr_field* h;
-	struct auth_body* c = 0; /* Makes gcc happy */
+	struct auth_body* c = 0;
 	pv_value_t value;
 
 	turi = NULL;
@@ -117,8 +130,12 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 
 
 
-/*
- * Check if username in specified header field is in a table
+/*!
+ * \brief Check if username in specified header field is in a table
+ * \param _msg SIP message
+ * \param _hf Header field
+ * \param _grp checked table
+ * \param 1 on success, negative on failure 
  */
 int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 {
@@ -173,6 +190,11 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 }
 
 
+/*!
+ * \brief Initialize the DB connection
+ * \param db_url database URL
+ * \return 0 on success, -1 on failure
+ */
 int group_db_init(const str* db_url)
 {
 	if (group_dbf.init==0){
@@ -190,6 +212,11 @@ error:
 }
 
 
+/*!
+ * \brief Bind the DB connection
+ * \param db_url database URL
+ * \return 0 on success, -1 on failure
+ */
 int group_db_bind(const str* db_url)
 {
 	if (db_bind_mod(db_url, &group_dbf)<0){
@@ -206,6 +233,10 @@ int group_db_bind(const str* db_url)
 }
 
 
+/*!
+ * \brief Close the DB connection
+ * \param db_url database URL
+ */
 void group_db_close(void)
 {
 	if (group_dbh && group_dbf.close){
@@ -213,4 +244,3 @@ void group_db_close(void)
 		group_dbh=0;
 	}
 }
-

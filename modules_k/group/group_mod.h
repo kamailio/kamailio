@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Group membership 
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,6 +24,13 @@
  * 2003-02-25 - created by janakj
  */
 
+/**
+ * \file
+ * \brief Group membership module
+ * \ingroup group
+ * - Module: \ref group
+ */
+
 
 #ifndef GROUP_MOD_H
 #define GROUP_MOD_H
@@ -39,11 +44,11 @@
 /*
  * Module parameters variables
  */
-extern str table;           /* 'group' table name */
-extern str user_column;     /* 'user' column name in group table */
-extern str domain_column;   /* 'domain' column name in group table */
-extern str group_column;    /* "group' column name in group table */
-extern int use_domain;      /* Use domain in is_user_in */
+extern str table;           /*!< 'group' table name */
+extern str user_column;     /*!< 'user' column name in group table */
+extern str domain_column;   /*!< 'domain' column name in group table */
+extern str group_column;    /*!< "group' column name in group table */
+extern int use_domain;      /*!< Use domain in is_user_in */
 
 extern str re_table;
 extern str re_exp_column;
@@ -55,4 +60,4 @@ extern db_func_t group_dbf;
 extern db_con_t* group_dbh;
 
 
-#endif /* GROUP_MOD_H */
+#endif

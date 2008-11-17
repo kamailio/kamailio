@@ -24,6 +24,13 @@
  *  2005-10-06 - created by bogdan
  */
 
+/**
+ * \file
+ * \brief Group membership module
+ * \ingroup group
+ * - Module: \ref group
+ */
+
 #include <sys/types.h>
 #include <regex.h>
 
@@ -34,17 +41,23 @@
 #include "re_group.h"
 #include "group.h"
 
-
+/*! regular expression for groups */
 struct re_grp {
 	regex_t       re;
 	int_str       gid;
 	struct re_grp *next;
 };
 
-
+/*! global regexp list */
 static struct re_grp *re_list = 0;
 
 
+/*!
+ * \brief Create a group regexp and add it to the list
+ * \param re regular expression string
+ * \param gid group ID
+ * \return 0 on success, -1 on failure
+ */
 static int add_re(const char *re, int gid)
 {
 	struct re_grp *rg;
@@ -75,7 +88,11 @@ error:
 }
 
 
-
+/*!
+ * \brief Load regular expression rules from a database
+ * \param table DB table
+ * \return 0 on success, -1 on failure
+ */
 int load_re( str *table )
 {
 	db_key_t cols[2];
@@ -127,7 +144,13 @@ error:
 }
 
 
-
+/*!
+ * \brief Get the user group and compare to the regexp list
+ * \param req SIP message
+ * \param user user string
+ * \param avp AVP value
+ * \return number of all matches (positive), -1 on errors or when not found
+ */
 int get_user_group(struct sip_msg *req, char *user, char *avp)
 {
 	static char uri_buf[MAX_URI_SIZE];
