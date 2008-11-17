@@ -420,9 +420,9 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 #define verify_par_type(_par_no, _spec)\
 	do{\
-		if( ((_par_no == 0) \
+		if( ((_par_no == 1) \
 			&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) )\
-		  ||((_par_no ==1) \
+		  ||((_par_no == 2) \
 			&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) \
 		  	&& ((_spec).type!=PVT_RURI) && (_spec.type!=PVT_RURI_USERNAME))){\
 				\
