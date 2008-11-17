@@ -386,7 +386,7 @@ static int fix_actions(struct action* a)
 	struct proxy_l* p;
 	char *tmp;
 	int ret;
-	cmd_export_t* cmd;
+	union cmd_export_u* cmd;
 	str s;
 	struct hostent* he;
 	struct ip_addr ip;
@@ -504,9 +504,9 @@ static int fix_actions(struct action* a)
 
 			case MODULE_T:
 				cmd = t->val[0].u.data;
-				if (cmd && cmd->fixup) {
+				if (cmd && cmd->c.fixup) {
 					int i;
-					DBG("fixing %s()\n", cmd->name);
+					DBG("fixing %s()\n", cmd->c.name);
 					/* type cast NUMBER to STRING, old modules may expect
 					 * all STRING params during fixup */
 					for (i=0; i<t->val[1].u.number; i++) {
@@ -527,7 +527,7 @@ static int fix_actions(struct action* a)
 					for (i=0; i<t->val[1].u.number; i++) {
 						void *p;
 						p = t->val[i+2].u.data;
-						ret = cmd->fixup(&t->val[i+2].u.data, i+1);
+						ret = cmd->c.fixup(&t->val[i+2].u.data, i+1);
 						if (t->val[i+2].u.data != p)
 							t->val[i+2].type = MODFIXUP_ST;
 						if (ret < 0)
