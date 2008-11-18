@@ -46,6 +46,7 @@
  *              (andrei)
  *  2007-06-14  run_actions & do_action need a ctx or handle now, no more 
  *               static vars (andrei)
+ *  2008-11-18  support for variable parameter module functions (andrei)
  */
 
 
@@ -101,6 +102,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct dest_info dst;
 	char* tmp;
 	char *new_uri, *end, *crt;
+	void* f;
 	int len;
 	int user;
 	struct sip_uri uri, next_hop;
@@ -717,11 +719,89 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			break;
 		case MODULE_T:
 			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					((union cmd_export_u*)a->val[0].u.data)->c.function){
-				ret=((union cmd_export_u*)a->val[0].u.data)->c.function(msg,
-					(char*)a->val[2].u.data,
-					(char*)a->val[3].u.data
-				);
+					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
+				ret=((cmd_function)f)(msg,
+										(char*)a->val[2].u.data,
+										(char*)a->val[3].u.data
+									);
+				if (ret==0) h->run_flags|=EXIT_R_F;
+				h->last_retcode=ret;
+			} else {
+				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+			}
+			break;
+		/* instead of using the parameter number, we use different names
+		 * for calls to functions with 3, 4, 5, 6 or variable number of
+		 * parameters due to performance reasons */
+		case MODULE3_T:
+			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
+					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
+				ret=((cmd_function3)f)(msg,
+										(char*)a->val[2].u.data,
+										(char*)a->val[3].u.data,
+										(char*)a->val[4].u.data
+									);
+				if (ret==0) h->run_flags|=EXIT_R_F;
+				h->last_retcode=ret;
+			} else {
+				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+			}
+			break;
+		case MODULE4_T:
+			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
+					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
+				ret=((cmd_function4)f)(msg,
+										(char*)a->val[2].u.data,
+										(char*)a->val[3].u.data,
+										(char*)a->val[4].u.data,
+										(char*)a->val[5].u.data
+									);
+				if (ret==0) h->run_flags|=EXIT_R_F;
+				h->last_retcode=ret;
+			} else {
+				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+			}
+			break;
+		case MODULE5_T:
+			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
+					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
+				ret=((cmd_function5)f)(msg,
+										(char*)a->val[2].u.data,
+										(char*)a->val[3].u.data,
+										(char*)a->val[4].u.data,
+										(char*)a->val[5].u.data,
+										(char*)a->val[6].u.data
+									);
+				if (ret==0) h->run_flags|=EXIT_R_F;
+				h->last_retcode=ret;
+			} else {
+				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+			}
+			break;
+		case MODULE6_T:
+			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
+					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
+				ret=((cmd_function6)f)(msg,
+										(char*)a->val[2].u.data,
+										(char*)a->val[3].u.data,
+										(char*)a->val[4].u.data,
+										(char*)a->val[5].u.data,
+										(char*)a->val[6].u.data,
+										(char*)a->val[7].u.data
+									);
+				if (ret==0) h->run_flags|=EXIT_R_F;
+				h->last_retcode=ret;
+			} else {
+				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+			}
+			break;
+		case MODULEX_T:
+			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
+					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
+				ret=((cmd_function_var)f)(msg,
+											a->val[1].u.number,
+											&a->val[2]
+										);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
 			} else {

@@ -503,6 +503,11 @@ static int fix_actions(struct action* a)
 				break;
 
 			case MODULE_T:
+			case MODULE3_T:
+			case MODULE4_T:
+			case MODULE5_T:
+			case MODULE6_T:
+			case MODULEX_T:
 				cmd = t->val[0].u.data;
 				if (cmd && cmd->c.fixup) {
 					int i;

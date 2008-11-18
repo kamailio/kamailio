@@ -350,6 +350,11 @@ void print_action(struct action* t)
 			DBG("if (");
 			break;
 		case MODULE_T:
+		case MODULE3_T:
+		case MODULE4_T:
+		case MODULE5_T:
+		case MODULE6_T:
+		case MODULEX_T:
 			DBG(" external_module_call(");
 			break;
 		case FORCE_RPORT_T:
