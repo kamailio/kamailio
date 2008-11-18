@@ -198,7 +198,8 @@ static void system_listMethods(rpc_t* rpc, void* c)
 	}
 
 	for(t = modules; t; t = t->next) {
-		for(ptr = t->exports->rpc_methods; ptr && ptr->name; ptr++) {
+		if (t->mod_interface_ver!=0) continue;
+		for(ptr = t->exports->v0.rpc_methods; ptr && ptr->name; ptr++) {
 			if (rpc->add(c, "s", ptr->name) < 0) return;
 		}
 	}
@@ -232,7 +233,8 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 	}
 
 	for(t = modules; t; t = t->next) {
-		for(ptr = t->exports->rpc_methods; ptr && ptr->name; ptr++) {
+		if (t->mod_interface_ver!=0) continue;
+		for(ptr = t->exports->v0.rpc_methods; ptr && ptr->name; ptr++) {
 			if (strcmp(name, ptr->name) == 0) {
 				if (ptr->doc_str && ptr->doc_str[0]) {
 					rpc->add(c, "s", ptr->doc_str[0]);

@@ -41,6 +41,14 @@
  *  2007-06-07  added PROC_INIT, called in the main process context
  *               (same as PROC_MAIN), buf guaranteed to be called before
  *               any other process is forked (andrei)
+ *  2008-11-17  sip-router version: includes some of the openser/kamailio
+ *               changes: f(void) instead of f(), free_fixup_function()
+ *              dual module interface support: ser & kamailio (andrei)
+ */
+
+/*!
+ * \file
+ * \brief modules/plug-in structures declarations
  */
 
 
@@ -53,12 +61,40 @@
 #include "route_struct.h"
 #include "str.h"
 
-typedef  struct module_exports* (*module_register)();
+/* kamailio compat */
+#include "statistics.h"
+#include "mi/mi.h"
+#include "pvar.h"
+
+
+
+#if defined KAMAILIO_MOD_INTERFACE || defined OPENSER_MOD_INTERFACE || \
+	defined MOD_INTERFACE_V1
+
+#define MODULE_INTERFACE_VER 1
+#define cmd_export_t kam_cmd_export_t
+#define module_exports kam_module_exports
+
+#elif defined SER_MOD_INTERFACE || defined MOD_INTERFACE_V0
+
+#define MODULE_INTERFACE_VER 0
+#define cmd_export_t ser_cmd_export_t
+#define module_exports ser_module_exports
+
+#else
+
+/* do nothing for core */
+
+#endif
+
+typedef  struct module_exports* (*module_register)(void);
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
 typedef  int (*fixup_function)(void** param, int param_no);
+typedef  int (*free_fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
 typedef  void (*onbreak_function)(struct sip_msg*);
-typedef void (*destroy_function)();
+typedef void (*destroy_function)(void);
+
 typedef int (*init_function)(void);
 typedef int (*child_init_function)(int rank);
 
@@ -82,7 +118,8 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define FAILURE_ROUTE 2  /* Function can be used in reply route blocks */
 #define ONREPLY_ROUTE 4  /* Function can be used in on_reply */
 #define BRANCH_ROUTE  8  /* Function can be used in branch_route blocks */
-#define ONSEND_ROUTE   16  /* Function can be used in onsend_route blocks */
+#define ONSEND_ROUTE 16  /* Function can be used in onsend_route blocks */
+#define ERROR_ROUTE  32  /* Function can be used in an error route */ 
 
 /* Macros - used as rank in child_init function */
 #define PROC_MAIN      0  /* Main ser process */
@@ -107,17 +144,53 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 
 #define PROC_MIN PROC_NOCHLDINIT /* Minimum process rank */
 
+
+#define DEFAULT_DLFLAGS	0 /* value that signals to module loader to
+							use default dlopen flags in Kamailio */
+#ifndef RTLD_NOW
+/* for openbsd */
+#define RTLD_NOW DL_LAZY
+#endif
+
+#define KAMAILIO_DLFLAGS	RTLD_NOW
+
+
 #define MODULE_VERSION \
 	char *module_version=SER_FULL_VERSION; \
-	char *module_flags=SER_COMPILE_FLAGS;
+	char *module_flags=SER_COMPILE_FLAGS; \
+	unsigned int module_interface_ver=MODULE_INTERFACE_VER; 
 
-struct cmd_export_ {
+/* ser version */
+struct ser_cmd_export_ {
 	char* name;             /* null terminated command name */
 	cmd_function function;  /* pointer to the corresponding function */
 	int param_no;           /* number of parameters used by the function */
 	fixup_function fixup;   /* pointer to the function called to "fix" the
 							   parameters */
 	int flags;              /* Function flags */
+};
+
+
+/* kamailo/openser version */
+struct kam_cmd_export_ {
+	char* name;             /* null terminated command name */
+	cmd_function function;  /* pointer to the corresponding function */
+	int param_no;           /* number of parameters used by the function */
+	fixup_function fixup;   /* pointer to the function called to "fix" the
+							   parameters */
+	free_fixup_function free_fixup; /* function called to free the "fixed"
+									   parameters */
+	int flags;              /* Function flags */
+};
+
+
+/* members situated at the same place in memory in both ser & kamailio
+   cmd_export */
+struct cmd_export_common_ {
+	char* name;
+	cmd_function function; 
+	int param_no;
+	fixup_function fixup;
 };
 
 
@@ -157,18 +230,26 @@ typedef struct fparam {
 } fparam_t;
 
 
-typedef struct cmd_export_ cmd_export_t;
-typedef struct param_export_ param_export_t;
+typedef struct param_export_ param_export_t;  
+typedef struct ser_cmd_export_ ser_cmd_export_t;
+typedef struct kam_cmd_export_ kam_cmd_export_t;
+typedef struct cmd_export_common_ cmd_export_common_t;
 
-struct module_exports {
+union cmd_export_u{
+	cmd_export_common_t c; /* common members for everybody */
+	ser_cmd_export_t v0;
+	kam_cmd_export_t v1;
+};
+
+
+/* ser module exports version */
+struct ser_module_exports {
 	char* name;                     /* null terminated module name */
-
-	cmd_export_t* cmds;             /* null terminated array of the exported
+	ser_cmd_export_t* cmds;         /* null terminated array of the exported
 									   commands */
 	rpc_export_t* rpc_methods;      /* null terminated array of exported rpc methods */
 	param_export_t* params;         /* null terminated array of the exported
 									   module parameters */
-
 	init_function init_f;           /* Initialization function */
 	response_function response_f;   /* function used for responses,
 									   returns yes or no; can be null */
@@ -181,10 +262,69 @@ struct module_exports {
 };
 
 
+/* kamailio/openser proc_export (missing from ser) */
+typedef void (*mod_proc)(int no);
+
+typedef int (*mod_proc_wrapper)(void);
+
+struct proc_export_ {
+	char *name;
+	mod_proc_wrapper pre_fork_function;
+	mod_proc_wrapper post_fork_function;
+	mod_proc function;
+	unsigned int no;
+};
+
+typedef struct proc_export_ proc_export_t;
+
+
+/* kamailio/openser module exports version */
+struct kam_module_exports {
+	char* name;                     /* null terminated module name */
+	unsigned int dlflags;			/*!< flags for dlopen  */
+	kam_cmd_export_t* cmds;			/* null terminated array of the exported
+									   commands */
+	param_export_t* params;			/* null terminated array of the exported
+									   module parameters */
+	stat_export_t* stats;			/*!< null terminated array of the exported
+									  module statistics */
+	mi_export_t* mi_cmds;			/*!< null terminated array of the exported
+									  MI functions */
+	pv_export_t* items;				/*!< null terminated array of the exported
+									   module items (pseudo-variables) */
+	proc_export_t* procs;			/*!< null terminated array of the
+									  additional processes required by the
+									  module */
+	init_function init_f;           /* Initialization function */
+	response_function response_f;   /* function used for responses,
+									   returns yes or no; can be null */
+	destroy_function destroy_f;     /* function called when the module should
+									   be "destroyed", e.g: on ser exit;
+									   can be null */
+	child_init_function init_child_f;  /* function called by all processes
+										  after the fork */
+};
+
+
+
+/* module exports in the same place in memory in both ser & kamailio */
+struct module_exports_common{
+	char* name;
+};
+
+
+union module_exports_u {
+		struct module_exports_common c; /*common members for all the versions*/
+		struct ser_module_exports v0;
+		struct kam_module_exports v1;
+};
+
+
 struct sr_module{
 	char* path;
 	void* handle;
-	struct module_exports* exports;
+	unsigned int mod_interface_ver;
+	union module_exports_u* exports;
 	struct sr_module* next;
 };
 
@@ -193,19 +333,20 @@ extern struct sr_module* modules; /* global module list*/
 extern response_function* mod_response_cbks;/* response callback array */
 extern int mod_response_cbk_no;    /* size of reponse callbacks array */
 
-int register_builtin_modules();
-int register_module(struct module_exports*, char*,  void*);
+int register_builtin_modules(void);
+/*int register_module(unsigned , struct module_exports*, char*,  void*);*/
 int load_module(char* path);
-cmd_export_t* find_export_record(char* name, int param_no, int flags);
+union cmd_export_u* find_export_record(char* name, int param_no, int flags,
+										unsigned *ver);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
 rpc_export_t* find_rpc_export(char* name, int flags);
-void destroy_modules();
+void destroy_modules(void);
 int init_child(int rank);
 int init_modules(void);
 struct sr_module* find_module_by_name(char* mod);
 
-/*
+/*! \brief
  * Find a parameter with given type and return it's
  * address in memory
  * If there is no such parameter, NULL is returned
@@ -329,4 +470,20 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
  * @return: 0 for success, negative on error.
  */
 int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param);
+
+
+/* functions needed for kamailio/openser compatibility */
+
+/*! \brief Check if module is loaded
+ * \return Returns 1 if the module with name 'name' is loaded, and zero otherwise. */
+int module_loaded(char *name);
+
+/*! \brief Counts the additional the number of processes
+ requested by modules */
+int count_module_procs(void);
+
+
+/*! \brief Forks and starts the additional processes required by modules */
+int start_module_procs(void);
+
 #endif /* sr_module_h */

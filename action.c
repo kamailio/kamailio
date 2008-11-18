@@ -716,8 +716,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				}
 			break;
 		case MODULE_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && ((cmd_export_t*)a->val[0].u.data)->function ){
-				ret=((cmd_export_t*)a->val[0].u.data)->function(msg,
+			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
+					((union cmd_export_u*)a->val[0].u.data)->c.function){
+				ret=((union cmd_export_u*)a->val[0].u.data)->c.function(msg,
 					(char*)a->val[2].u.data,
 					(char*)a->val[3].u.data
 				);
@@ -976,9 +977,11 @@ end:
 	/* process module onbreak handlers if present */
 	if (h->rec_lev==0 && ret==0)
 		for (mod=modules;mod;mod=mod->next)
-			if (mod->exports && mod->exports->onbreak_f) {
-				mod->exports->onbreak_f( msg );
-				DBG("DEBUG: %s onbreak handler called\n", mod->exports->name);
+			if ((mod->mod_interface_ver==0) && mod->exports && 
+					mod->exports->v0.onbreak_f) {
+				mod->exports->v0.onbreak_f( msg );
+				DBG("DEBUG: %s onbreak handler called\n",
+						mod->exports->c.name);
 			}
 	return ret;
 

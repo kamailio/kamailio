@@ -174,6 +174,7 @@ extern int yylex();
 static void yyerror(char* s);
 static char* tmp;
 static int i_tmp;
+static unsigned u_tmp;
 static struct socket_id* lst_tmp;
 static struct name_lst*  nl_tmp;
 static int rt;  /* Type of route block for find_export */
@@ -2359,9 +2360,12 @@ cmd:
 	}
 	| FORCE_SEND_SOCKET error {$$=0; yyerror("missing '(' or ')' ?"); }
 	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0); } LPAREN func_params RPAREN	{
-		mod_func_action->val[0].u.data = find_export_record($1, mod_func_action->val[1].u.number, rt);
+		mod_func_action->val[0].u.data = 
+			find_export_record($1, mod_func_action->val[1].u.number, rt,
+								&u_tmp);
 		if (mod_func_action->val[0].u.data == 0) {
-			if (find_export_record($1, mod_func_action->val[1].u.number, 0) ) {
+			if (find_export_record($1, mod_func_action->val[1].u.number, 0,
+									&u_tmp) ) {
 					yyerror("Command cannot be used in the block\n");
 			} else {
 				yyerror("unknown command, missing loadmodule?\n");

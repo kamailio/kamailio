@@ -244,13 +244,34 @@ int log_facility_fixup(void *handle, str *name, void **val);
 		#define WARN(...) LOG(L_WARN, "WARNING: " LOC_INFO __VA_ARGS__)
 		#define INFO(...) LOG(L_INFO, "INFO: "    LOC_INFO __VA_ARGS__)
 		#define BUG(...) LOG(L_CRIT, "BUG: "      LOC_INFO __VA_ARGS__)
+		#define NOTICE(...) LOG(L_NOTICE, "NOTICE: " LOC_INFO __VA_ARGS__)
+		#define ALERT(...) LOG(L_ALERT, "ALERT: " LOC_INFO __VA_ARGS__)
+		#define CRIT(...) LOG(L_CRIT, "CRITICAL: " LOC_INFO __VA_ARGS__)
 #else
 		#define DEBUG(fmt, args...) DBG("DEBUG: "       LOC_INFO fmt, ## args)
 		#define ERR(fmt, args...) LOG(L_ERR, "ERROR: "  LOC_INFO fmt, ## args)
 		#define WARN(fmt, args...) LOG(L_WARN, "WARN: " LOC_INFO fmt, ## args)
 		#define INFO(fmt, args...) LOG(L_INFO, "INFO: " LOC_INFO fmt, ## args)
 		#define BUG(fmt, args...) LOG(L_CRIT, "BUG: "   LOC_INFO fmt, ## args)
+		#define NOTICE(fmt, args...) \
+			LOG(L_NOTICE, "NOTICE: " LOC_INFO fmt, ## args)
+		#define ALERT(fmt, args...) \
+			LOG(L_ALERT, "ALERT: " LOC_INFO fmt, ## args)
+		#define CRIT(fmt, args...) \
+			LOG(L_CRIT, "CRITICAL: " LOC_INFO fmt, ## args)
 #endif
+
+/* kamailio/openser compatibility */
+
+#define LM_GEN1 LOG
+
+#define LM_ALERT ALERT
+#define LM_CRIT  CRIT
+#define LM_ERR ERR
+#define LM_WARN WARN
+#define LM_NOTICE
+#define LM_INFO INFO
+#define LM_DBG DEBUG
 
 
 #endif /* ifndef dprint_h */
