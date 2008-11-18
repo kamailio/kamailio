@@ -39,7 +39,6 @@
 
 extern gen_lock_t *ring_lock;
 extern unsigned int ring_timeout;
-extern unsigned int ring_activate;
 
 
 /*!

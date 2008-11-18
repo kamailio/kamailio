@@ -43,11 +43,9 @@
 MODULE_VERSION
 
 gen_lock_t *ring_lock = NULL;
-unsigned int ring_timeout = 30;
-unsigned int ring_activate = 0;
+unsigned int ring_timeout = 0;
 
 static int mod_init(void);
-static int child_init(int rank);
 static void mod_destroy(void);
 
 
@@ -57,14 +55,13 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[] = {
-	{"ring_activate", INT_PARAM, &ring_activate },
 	{"ring_timeout",  INT_PARAM, &ring_timeout  },
 	{0, 0, 0}
 };
 
 
 struct module_exports exports= {
-	"utils",
+	"siputils",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* Exported functions */
 	params,          /* param exports */
@@ -75,23 +72,13 @@ struct module_exports exports= {
 	mod_init,        /* initialization function */
 	0,               /* Response function */
 	mod_destroy,     /* Destroy function */
-	child_init,      /* Child init function */
+	0,               /* Child init function */
 };
 
 
 static int mod_init(void)
 {
-	return 0;
-}
-
-
-static int child_init(int rank)
-{
-	/*
-	 * delay initialization, to avoid the overhead from the callback
-	 * when the ringing functionality is not used
-	 */
-	if(rank == PROC_MAIN && ring_activate == 1) {
+	if(ring_timeout > 0) {
 		ring_init_hashtable();
 
 		ring_lock = lock_alloc();
@@ -108,6 +95,7 @@ static int child_init(int rank)
 
 	return 0;
 }
+
 
 static void mod_destroy(void)
 {

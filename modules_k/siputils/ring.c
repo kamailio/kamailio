@@ -354,7 +354,9 @@ int ring_filter(struct sip_msg *msg, void *bar)
  * \return 0
  */
 int ring_fixup(void ** param, int param_no) {
-	ring_activate = 1;
+	if (ring_timeout == 0) {
+		LM_ERR("ring_insert_callid functionality deactivated, you need to set a positive ring_timeout\n");
+		return -1;
+	}
 	return 0;
 }
-

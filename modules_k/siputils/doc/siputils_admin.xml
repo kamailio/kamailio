@@ -53,10 +53,11 @@
 			<title><varname>ring_timeout</varname> (int)</title>
 			<para>
 			Timeout value in seconds, define how long the call-id is stored in the internal list.
+			A reasonable value is <quote>30</quote>.
 			</para>
 			<para>
 			<emphasis>
-				Default value is <quote>30</quote>.
+				Default value is <quote>0</quote>.
 			</emphasis>
 			</para>
 			<example>
@@ -79,7 +80,8 @@ modparam("utils", "ring_timeout", "30")
 			<para>
 			Inserting the call-id in the internal list, which is checked when
 			further replies arrive. Any 183 reply that is received during the
-			timeout value will be converted to a 180 message.
+			timeout value will be converted to a 180 message. Please not that you
+			need to set a positive timeout value in order to use this function.
 			</para>
 			<para>
 			The function returns TRUE on success, and FALSE during processing failures.
