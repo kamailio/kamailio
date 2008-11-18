@@ -184,12 +184,18 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 
 	end = &d_timer->first;
 	tl = d_timer->first.next;
-	LM_DBG("start with %p (%d) at %d\n", tl,tl->timeout,time);
+	LM_WARN("start with tl=%p tl->prev=%p tl->next=%p (%d) at %d "
+		"and end with end=%p end->prev=%p end->next=%p\n",
+		tl,tl->prev,tl->next,tl->timeout,time,
+		end,end->prev,end->next);
 	while( tl!=end && tl->timeout <= time) {
-		LM_DBG("getting %p with %d\n", tl,tl->timeout);
+		LM_WARN("getting tl=%p tl->prev=%p tl->next=%p with %d\n",
+			tl,tl->prev,tl->next,tl->timeout);
 		tl->prev = 0;
 		tl=tl->next;
 	}
+	LM_WARN("end with tl=%p tl->prev=%p tl->next=%p and d_timer->first.next->prev=%p\n",
+		tl,tl->prev,tl->next,d_timer->first.next->prev);
 
 	if (tl==end && d_timer->first.next->prev) {
 		ret = 0;
