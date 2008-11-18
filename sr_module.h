@@ -44,6 +44,8 @@
  *  2008-11-17  sip-router version: includes some of the openser/kamailio
  *               changes: f(void) instead of f(), free_fixup_function()
  *              dual module interface support: ser & kamailio (andrei)
+ *  2008-11-18  prototypes for various fixed parameters numbers module
+ *               functions (3, 4, 5 & 6) and variable parameters (andrei)
  */
 
 /*!
@@ -89,6 +91,15 @@
 
 typedef  struct module_exports* (*module_register)(void);
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
+typedef  int (*cmd_function3)(struct sip_msg*, char*, char*, char*);
+typedef  int (*cmd_function4)(struct sip_msg*, char*, char*, char*, char*);
+typedef  int (*cmd_function5)(struct sip_msg*,  char*, char*, char*,
+												char*, char*);
+typedef  int (*cmd_function6)(struct sip_msg*,  char*, char*, char*,
+												char*, char*, char*);
+/* variable number of param module function, takes as param the sip_msg,
+   extra paremeters number and a pointer to an array of parameters */
+typedef  int (*cmd_function_var)(struct sip_msg*, int no, action_u_t* vals );
 typedef  int (*fixup_function)(void** param, int param_no);
 typedef  int (*free_fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
@@ -114,6 +125,13 @@ typedef unsigned int modparam_t;
 
 typedef int (*param_func_t)( modparam_t type, void* val);
 
+/* magic parameter number values */
+
+#define NO_SCRIPT     -1    /* export not usable from scripts */
+#define VAR_PARAM_NO  -128  /* function has variable number of parameters
+							   (see cmd_function_var for the prototype) */
+
+/* functions flags */
 #define REQUEST_ROUTE 1  /* Function can be used in request route blocks */
 #define FAILURE_ROUTE 2  /* Function can be used in reply route blocks */
 #define ONREPLY_ROUTE 4  /* Function can be used in on_reply */
