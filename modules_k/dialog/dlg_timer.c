@@ -107,6 +107,8 @@ int insert_dlg_timer(struct dlg_tl *tl, int interval)
 
 	if (tl->next!=0 || tl->prev!=0) {
 		lock_release( d_timer->lock);
+		LM_CRIT("Trying to insert a bogus dlg tl=%p tl->next=%p tl->prev=%p\n",
+			tl, tl->next, tl->prev);
 		return -1;
 	}
 	tl->timeout = get_ticks()+interval;

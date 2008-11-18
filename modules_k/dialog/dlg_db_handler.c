@@ -342,7 +342,14 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				dlg->tl.timeout -= (unsigned int)time(0);
 
 			/*restore the timer values */
-			insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
+			if (0 != insert_dlg_timer( &(dlg->tl), (int)dlg->tl.timeout )) {
+				LM_CRIT("Unable to insert dlg %p [%u:%u] "
+					"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+					dlg, dlg->h_entry, dlg->h_id,
+					dlg->callid.len, dlg->callid.s,
+					dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+			}
 			LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
 
 			GET_STR_VALUE(cseq1, values, 10 , 1, 1);

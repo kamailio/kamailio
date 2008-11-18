@@ -315,7 +315,14 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		if ( dlg_db_mode==DB_MODE_REALTIME )
 			update_dialog_dbinfo(dlg);
 
-		insert_dlg_timer( &dlg->tl, dlg->lifetime );
+		if (0 != insert_dlg_timer( &dlg->tl, dlg->lifetime )) {
+			LM_CRIT("Unable to insert dlg %p [%u:%u] on event %d [%d->%d] "
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id, event, old_state, new_state,
+				dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+		}
 
 		/* dialog confirmed */
 		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl, DLG_DIR_UPSTREAM, 0);
@@ -608,7 +615,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			dlg = lookup_dlg( h_entry, h_id);
 			if (dlg==0) {
 				LM_WARN("unable to find dialog for %.*s "
-					"with route param '%.*s' (%d:%d)\n",
+					"with route param '%.*s' [%u:%u]\n",
 					req->first_line.u.request.method.len,
 					req->first_line.u.request.method.s,
 					val.len,val.s, h_entry, h_id);
