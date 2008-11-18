@@ -140,6 +140,17 @@ inline void destroy_dlg(struct dlg_cell *dlg);
 		(_dlg)->ref -= (_cnt); \
 		LM_DBG("unref dlg %p with %d -> %d\n",\
 			(_dlg),(_cnt),(_dlg)->ref);\
+		if ((_dlg)->ref<0) {\
+			LM_CRIT("bogus ref %d with cnt %d for dlg %p [%u:%u] "\
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",\
+				(_dlg)->ref, _cnt, _dlg,\
+				(_dlg)->h_entry, (_dlg)->h_id,\
+				(_dlg)->callid.len, (_dlg)->callid.s,\
+				(_dlg)->tag[DLG_CALLER_LEG].len,\
+				(_dlg)->tag[DLG_CALLER_LEG].s,\
+				(_dlg)->tag[DLG_CALLEE_LEG].len,\
+				(_dlg)->tag[DLG_CALLEE_LEG].s); \
+		}\
 		if ((_dlg)->ref<=0) { \
 			unlink_unsafe_dlg( _d_entry, _dlg);\
 			LM_DBG("ref <=0 for dialog %p\n",_dlg);\
