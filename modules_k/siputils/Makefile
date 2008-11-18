@@ -2,7 +2,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=utils.so
+NAME=siputils.so
 LIBS= 
 
 include ../../Makefile.modules
