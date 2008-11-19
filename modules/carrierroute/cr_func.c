@@ -391,7 +391,8 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			}
 			break;
 		case alg_crc32:
-			if(rf->dice_max == 0){
+			if(rf->dice_max == 0) {
+				LM_ERR("invalid dice_max value\n");
 				return -1;
 			}
 			if ((prob = hash_func(msg, hash_source, rf->dice_max)) < 0) {
@@ -420,7 +421,9 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 				}
 			}
 			break;
-		default: return -1;
+		default: 
+			LM_ERR("invalid hash algorithm\n");
+			return -1;
 	}
 	return actually_rewrite(rr, dest, msg, user, dstavp);
 }
