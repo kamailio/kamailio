@@ -358,7 +358,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 	<section>
 		<title><varname>early_media</varname> (integer)</title>
 		<para>
-		Should be early media (183) accounted too ?
+		Should be early media (any provisional reply with body) accounted too ?
 		</para>
 		<para>
 		Default value is 0 (no).

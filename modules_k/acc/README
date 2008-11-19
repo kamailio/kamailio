@@ -379,7 +379,8 @@ Note
 
 1.5.1. early_media (integer)
 
-   Should be early media (183) accounted too ?
+   Should be early media (any provisional reply with body)
+   accounted too ?
 
    Default value is 0 (no).
 

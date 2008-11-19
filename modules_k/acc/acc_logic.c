@@ -40,6 +40,7 @@
 
 #include "../../dprint.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_content.h"
 #include "../tm/tm_load.h"
 #include "../rr/api.h"
 #include "acc.h"
@@ -253,15 +254,18 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 
 
 /* is this reply of interest for accounting ? */
-static inline int should_acc_reply(struct sip_msg *req, int code)
+static inline int should_acc_reply(struct sip_msg *req,struct sip_msg *rpl,
+																	int code)
 {
 	/* negative transactions reported otherwise only if explicitly 
 	 * demanded */
-	if (!is_failed_acc_on(req) && code >=300)
+	if ( !is_failed_acc_on(req) && code >=300 )
 		return 0;
-	if (!is_acc_on(req))
+	if ( !is_acc_on(req) )
 		return 0;
-	if (code < 200 && ! (early_media && code==183))
+	if ( code<200 && !(early_media &&
+	parse_headers(rpl,HDR_CONTENTLENGTH_F, 0)==0 && rpl->content_length &&
+	get_content_length(rpl)>0 ) )
 		return 0;
 
 	return 1; /* seed is through, we will account this reply */
@@ -275,7 +279,7 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *req,
 {
 	/* don't parse replies in which we are not interested */
 	/* missed calls enabled ? */
-	if ( (reply && reply!=FAKED_REPLY) && (should_acc_reply(req,code)
+	if ( (reply && reply!=FAKED_REPLY) && (should_acc_reply(req,reply,code)
 	|| (is_invite(t) && code>=300 && is_mc_on(req))) ) {
 		parse_headers(reply, HDR_TO_F, 0 );
 	}
@@ -353,7 +357,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	if (is_invite(t) && code>=300 && is_mc_on(req) )
 		on_missed(t, req, reply, code);
 
-	if (!should_acc_reply(req, code))
+	if (!should_acc_reply(req, reply, code))
 		return;
 
 	/* for reply processing, set as new_uri the winning branch */
