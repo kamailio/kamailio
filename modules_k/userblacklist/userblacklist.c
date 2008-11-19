@@ -278,7 +278,7 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 		ptr = ptr + 1;
 	}
 
-	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL);
+	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL, 10);
 	if (nodeflags) {
 		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_ERR("whitelisted"); */
@@ -344,7 +344,8 @@ static int add_source(const char *table)
 	strcpy(src->table, table);
 	LM_DBG("add table %s", table);
 
-	src->dtrie_root = dtrie_init();
+	src->dtrie_root = dtrie_init(10);
+
 	if (src->dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
@@ -427,7 +428,7 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 
 	/* avoids dirty reads when updating d-tree */
 	lock_get(lock);
-	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL);
+	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, 10);
 	if (nodeflags) {
 		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_DBG("whitelisted"); */
@@ -498,7 +499,7 @@ static void destroy_source_list(void)
 			sources->head = src->next;
 
 			if (src->table) shm_free(src->table);
-			dtrie_destroy(&(src->dtrie_root), NULL);
+			dtrie_destroy(&(src->dtrie_root), NULL, 10);
 			shm_free(src);
 		}
 
@@ -561,7 +562,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (userblacklist_db_open() != 0) return -1;
-	dtrie_root=dtrie_init();
+	dtrie_root=dtrie_init(10);
 	if (dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
@@ -576,7 +577,7 @@ static int child_init(int rank)
 static int mi_child_init(void)
 {
 	if (userblacklist_db_open() != 0) return -1;
-	dtrie_root=dtrie_init();
+	dtrie_root=dtrie_init(10);
 	if (dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
@@ -593,5 +594,5 @@ static void mod_destroy(void)
 	destroy_source_list();
 	destroy_shmlock();
 	userblacklist_db_close();
-	dtrie_destroy(&dtrie_root, NULL);
+	dtrie_destroy(&dtrie_root, NULL, 10);
 }

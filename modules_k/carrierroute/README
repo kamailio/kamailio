@@ -40,6 +40,7 @@ Henning Westerholt
               1.3.8. use_domain (int)
               1.3.9. fallback_default (int)
               1.3.10. fetch_rows (integer)
+              1.3.11. match_mode (integer)
 
         1.4. Exported Functions
 
@@ -115,23 +116,24 @@ Henning Westerholt
    1.8. Set use_domain parameter
    1.9. Set fallback_default parameter
    1.10. Set fetch_rows parameter
-   1.11. cr_replace_host usage
-   1.12. cr_deactivate_host usage
-   1.13. cr_activate_host usage
-   1.14. cr_add_host usage
-   1.15. cr_delete_host usage
-   1.16. Configuration example - Routing to default tree
-   1.17. Configuration example - Routing to user tree
-   1.18. Configuration example - module configuration
-   1.19. Example database content - carrierroute table
-   1.20. Example database content - simple carrierfailureroute
+   1.11. Set match_mode parameter
+   1.12. cr_replace_host usage
+   1.13. cr_deactivate_host usage
+   1.14. cr_activate_host usage
+   1.15. cr_add_host usage
+   1.16. cr_delete_host usage
+   1.17. Configuration example - Routing to default tree
+   1.18. Configuration example - Routing to user tree
+   1.19. Configuration example - module configuration
+   1.20. Example database content - carrierroute table
+   1.21. Example database content - simple carrierfailureroute
           table
 
-   1.21. Example database content - more complex
+   1.22. Example database content - more complex
           carrierfailureroute table
 
-   1.22. Example database content - carrier_name table
-   1.23. Necessary extensions for the user table
+   1.23. Example database content - carrier_name table
+   1.24. Necessary extensions for the user table
    2.1. Set db_url parameter
    2.2. Set carrierroute_table parameter
    2.3. Set carrierroute_id_col parameter
@@ -380,6 +382,23 @@ modparam("carrierroute", "fallback_default", 1)
 modparam("carrierroute", "fetch_rows", 3000)
 ...
 
+1.3.11. match_mode (integer)
+
+   The number of individual characters that are used for matching.
+   Valid values are 10 or 128. When you specifiy 10, only digits
+   will be used for matching, this operation mode is equivalent to
+   the old behaviour. When configured with 128, all standard ascii
+   chars are available for matching. Please be aware that memory
+   requirements for storing the routing tree in shared memory will
+   also increase by a factor of 12.8.
+
+   Default value is "10".
+
+   Example 1.11. Set match_mode parameter
+...
+modparam("carrierroute", "match_mode", 10)
+...
+
 1.4. Exported Functions
 
    Previous versions of carrierroute had some more function. All
@@ -564,7 +583,7 @@ reply_code, dstavp)
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.11. cr_replace_host usage
+   Example 1.12. cr_replace_host usage
 ...
 kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
@@ -586,7 +605,7 @@ kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.12. cr_deactivate_host usage
+   Example 1.13. cr_deactivate_host usage
 ...
 kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -602,7 +621,7 @@ kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.13. cr_activate_host usage
+   Example 1.14. cr_activate_host usage
 ...
 kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -622,7 +641,7 @@ kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.14. cr_add_host usage
+   Example 1.15. cr_add_host usage
 ...
 kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -643,14 +662,14 @@ kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.15. cr_delete_host usage
+   Example 1.16. cr_delete_host usage
 ...
 kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
 1.6. Examples
 
-   Example 1.16. Configuration example - Routing to default tree
+   Example 1.17. Configuration example - Routing to default tree
 ...
 route {
         # route calls based on hash over callid
@@ -684,7 +703,7 @@ failure_route[2] {
 }
 
 
-   Example 1.17. Configuration example - Routing to user tree
+   Example 1.18. Configuration example - Routing to user tree
 ...
 route[1] {
         cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
@@ -724,7 +743,7 @@ failure_route[1] {
 }
 ...
 
-   Example 1.18. Configuration example - module configuration
+   Example 1.19. Configuration example - module configuration
 
    The following config file specifies within the default carrier
    two domains, each with an prefix that contains two hosts. It is
@@ -804,7 +823,7 @@ domain register {
    For a minimal configuration either use the config file given
    above, or insert some data into the tables of the module.
 
-   Example 1.19. Example database content - carrierroute table
+   Example 1.20. Example database content - carrierroute table
 ...
 +----+---------+--------+-------------+-------+------+---------------+
 | id | carrier | domain | scan_prefix | flags | prob | rewrite_host  |
@@ -843,7 +862,7 @@ domain register {
    this flags are not set, the other two rules are used. The
    "strip", "mask" and "comment" colums are omitted for brevity.
 
-   Example 1.20. Example database content - simple
+   Example 1.21. Example database content - simple
    carrierfailureroute table
 ...
 +----+---------+--------+---------------+------------+-------------+
@@ -865,7 +884,7 @@ domain register {
    corresponding entry in the carrierroute table, otherwise the
    module will not load the routing data.
 
-   Example 1.21. Example database content - more complex
+   Example 1.22. Example database content - more complex
    carrierfailureroute table
 ...
 +----+---------+-----------+------------+--------+-----+-------------+
@@ -892,7 +911,7 @@ domain register {
    holds domain entries for this routing rules. Not all table
    colums are show here for brevity.
 
-   Example 1.22. Example database content - carrier_name table
+   Example 1.23. Example database content - carrier_name table
 ...
 +----+----------+
 | id | carrier  |
@@ -911,7 +930,7 @@ domain register {
    that you specified as modul parameter) to choose the actual
    carrier for the users.
 
-   Example 1.23. Necessary extensions for the user table
+   Example 1.24. Necessary extensions for the user table
 
    Suggested changes:
 ...

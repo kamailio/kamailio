@@ -32,6 +32,7 @@
 #include "../../ut.h"
 #include "cr_domain.h"
 #include "cr_rule.h"
+#include "carrierroute.h"
 
 
 /**
@@ -86,12 +87,12 @@ struct domain_data_t * create_domain_data(int domain_id, str * domain_name) {
 	memset(tmp, 0, sizeof(struct domain_data_t));
 	tmp->id = domain_id;
 	tmp->name = domain_name;
-	if ((tmp->tree = dtrie_init()) == NULL) {
+	if ((tmp->tree = dtrie_init(cr_match_mode)) == NULL) {
 		shm_free(tmp);
 		return NULL;
 	}
-	if ((tmp->failure_tree = dtrie_init()) == NULL) {
-		dtrie_destroy(&tmp->tree, NULL);
+	if ((tmp->failure_tree = dtrie_init(cr_match_mode)) == NULL) {
+		dtrie_destroy(&tmp->tree, NULL, cr_match_mode);
 		shm_free(tmp);
 		return NULL;
 	}
@@ -106,8 +107,9 @@ struct domain_data_t * create_domain_data(int domain_id, str * domain_name) {
  */
 void destroy_domain_data(struct domain_data_t *domain_data) {
 	if (domain_data) {
-		dtrie_destroy(&domain_data->tree, destroy_route_flags_list);
-		dtrie_destroy(&domain_data->failure_tree, destroy_failure_route_rule_list);
+		dtrie_destroy(&domain_data->tree, destroy_route_flags_list, cr_match_mode);
+		dtrie_destroy(&domain_data->failure_tree, destroy_failure_route_rule_list,
+				cr_match_mode);
 		shm_free(domain_data);
 	}
 }
@@ -152,7 +154,7 @@ int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
 	void **ret;
 	struct route_flags *rf;
 
-	ret = dtrie_contains(node, scan_prefix->s, scan_prefix->len);
+	ret = dtrie_contains(node, scan_prefix->s, scan_prefix->len, cr_match_mode);
 
 	rf = add_route_flags((struct route_flags **)ret, flags, mask);
 	if (rf == NULL) {
@@ -162,7 +164,7 @@ int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
 
 	if (ret == NULL) {
 		/* node does not exist */
-		if (dtrie_insert(node, scan_prefix->s, scan_prefix->len, rf) != 0) {
+		if (dtrie_insert(node, scan_prefix->s, scan_prefix->len, rf, cr_match_mode) != 0) {
 			LM_ERR("cannot insert route flags into d-trie\n");
 			return -1;
 		}
@@ -201,7 +203,7 @@ int add_failure_route_to_tree(struct dtrie_node_t * failure_node, const str * sc
 	void **ret;
 	struct failure_route_rule *frr;
 
-	ret = dtrie_contains(failure_node, scan_prefix->s, scan_prefix->len);
+	ret = dtrie_contains(failure_node, scan_prefix->s, scan_prefix->len, cr_match_mode);
 
 	frr = add_failure_route_rule((struct failure_route_rule **)ret, full_prefix, host, reply_code, flags, mask, next_domain, comment);
 	if (frr == NULL) {
@@ -211,7 +213,7 @@ int add_failure_route_to_tree(struct dtrie_node_t * failure_node, const str * sc
 
 	if (ret == NULL) {
 		/* node does not exist */
-		if (dtrie_insert(failure_node, scan_prefix->s, scan_prefix->len, frr) != 0) {
+		if (dtrie_insert(failure_node, scan_prefix->s, scan_prefix->len, frr, cr_match_mode) != 0) {
 			LM_ERR("cannot insert failure route rule into d-trie\n");
 			return -1;
 		}

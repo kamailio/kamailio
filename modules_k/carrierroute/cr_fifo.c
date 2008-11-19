@@ -408,7 +408,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, c
 	strcpy (s, prefix);
 	p = s + strlen (s);
 	p[1] = '\0';
-	for (i = 0; i < 10; ++i) {
+	for (i = 0; i < cr_match_mode; ++i) {
 		if (node->child[i] != NULL) {
 			*p = i + '0';
 			dump_tree_recursor (msg->next, node->child[i], s);
@@ -866,7 +866,7 @@ static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domai
 			}
 		}
 	}
-	for (i=0; i<10; i++) {
+	for (i=0; i<cr_match_mode; i++) {
 		if (node->child[i]) {
 			if (update_route_data_recursor(node->child[i], act_domain, opts) < 0) {
 				return -1;
