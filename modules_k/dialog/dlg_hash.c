@@ -111,9 +111,26 @@ error0:
 
 inline void destroy_dlg(struct dlg_cell *dlg)
 {
+	int ret = 0;
+
 	LM_DBG("destroing dialog %p\n",dlg);
 
-	remove_dlg_timer(&dlg->tl);
+	ret = remove_dlg_timer(&dlg->tl);
+	if (ret < 0) {
+		LM_CRIT("unable to unlink the timer on dlg %p [%u:%u] "
+			"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+			dlg, dlg->h_entry, dlg->h_id,
+			dlg->callid.len, dlg->callid.s,
+			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+	} else if (ret > 0) {
+		LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+			"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+			dlg, dlg->h_entry, dlg->h_id,
+			dlg->callid.len, dlg->callid.s,
+			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+	}
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE, 0);
 

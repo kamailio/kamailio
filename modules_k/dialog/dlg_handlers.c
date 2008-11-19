@@ -588,6 +588,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	int event;
 	int timeout;
 	unsigned int dir;
+	int ret = 0;
 
 	/* skip initial requests - they may end up here because of the
 	 * preloaded route */
@@ -694,7 +695,22 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	old_state!=DLG_STATE_DELETED) {
 		LM_DBG("BYE successfully processed\n");
 		/* remove from timer */
-		remove_dlg_timer(&dlg->tl);
+		ret = remove_dlg_timer(&dlg->tl);
+		if (ret < 0) {
+			LM_CRIT("unable to unlink the timer on dlg %p [%u:%u] "
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id,
+				dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+		} else if (ret > 0) {
+			LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id,
+				dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+		}
 		/* dialog terminated (BYE) */
 		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req, dir, 0);
 

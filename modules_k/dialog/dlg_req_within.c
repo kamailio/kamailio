@@ -128,7 +128,7 @@ error:
 void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 	struct dlg_cell* dlg;
-	int event, old_state, new_state, unref;
+	int event, old_state, new_state, unref, ret;
 
 	if(ps->param == NULL || *ps->param == NULL){
 		LM_ERR("invalid parameter\n");
@@ -153,8 +153,22 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 			dlg->h_entry, dlg->h_id);
 
 		/* remove from timer */
-		remove_dlg_timer(&dlg->tl);
-
+		ret = remove_dlg_timer(&dlg->tl);
+		if (ret < 0) {
+			LM_CRIT("unable to unlink the timer on dlg %p [%u:%u] "
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id,
+				dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+		} else if (ret > 0) {
+			LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id,
+				dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+		}
 		/* dialog terminated (BYE) */
 		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req, DLG_DIR_NONE, 0);
 
