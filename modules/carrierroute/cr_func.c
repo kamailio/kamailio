@@ -219,7 +219,7 @@ static int set_next_domain_recursor(struct dtrie_node_t *failure_node,
 		++re_uri.s;
 		--re_uri.len;
 	}
-	ret = dtrie_longest_match(failure_node, re_uri.s, re_uri.len, NULL);
+	ret = dtrie_longest_match(failure_node, re_uri.s, re_uri.len, NULL, cr_match_mode);
 
 	if (ret == NULL) {
 		LM_INFO("URI or prefix tree nodes empty, empty rule list\n");
@@ -458,7 +458,7 @@ static int rewrite_uri_recursor(struct dtrie_node_t * node,
 		++re_pm.s;
 		--re_pm.len;
 	}
-	ret = dtrie_longest_match(node, re_pm.s, re_pm.len, NULL);
+	ret = dtrie_longest_match(node, re_pm.s, re_pm.len, NULL, cr_match_mode);
 
 	if (ret == NULL) {
 		LM_INFO("URI or prefix tree nodes empty, empty rule list\n");

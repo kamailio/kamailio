@@ -74,6 +74,7 @@ int mode = 0;
 int use_domain = 0;
 int fallback_default = 1;
 int cr_fetch_rows = 2000;
+int cr_match_mode = 10;
 
 
 /************* Declaration of Interface Functions **************************/
@@ -114,6 +115,7 @@ static param_export_t params[]= {
 	{"use_domain",             INT_PARAM, &use_domain },
 	{"fallback_default",       INT_PARAM, &fallback_default },
 	{"fetch_rows",             INT_PARAM, &cr_fetch_rows },
+	{"match_mode",             INT_PARAM, &cr_match_mode },
 	{0,0,0}
 };
 
@@ -162,6 +164,11 @@ static int mod_init(void) {
 	default_tree.len = strlen(default_tree.s);
 
 	carrierroute_db_vars();
+
+	if (cr_match_mode != 10 && cr_match_mode != 128) {
+		LM_ERR("invalid matching mode specific, please use 10 or 128");
+		return -1;
+	}
 
 	if (strcmp(config_source, "db") == 0) {
 		mode = CARRIERROUTE_MODE_DB;

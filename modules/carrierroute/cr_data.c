@@ -629,7 +629,7 @@ static int rule_fixup_recursor(struct dtrie_node_t *node) {
 		}
 	}
 
-	for (i=0; i<10; i++) {
+	for (i=0; i<cr_match_mode; i++) {
 		if (node->child[i]) {
 			ret += rule_fixup_recursor(node->child[i]);
 		}

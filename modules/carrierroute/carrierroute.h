@@ -54,5 +54,6 @@ extern int mode;
 extern int use_domain;
 extern int fallback_default;
 extern int cr_fetch_rows;
+extern int cr_match_mode;
 
 #endif

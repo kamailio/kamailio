@@ -411,7 +411,7 @@ static int save_route_data_recursor(struct dtrie_node_t * node, FILE * outfile) 
 		}
 		fprintf(outfile, "\t}\n");
 	}
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < cr_match_mode; i++) {
 		if (node->child[i]) {
 			if (save_route_data_recursor(node->child[i], outfile) < 0) {
 				return -1;
