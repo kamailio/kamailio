@@ -28,6 +28,7 @@
 #include "../../pvar.h"
 #include "pv_branch.h"
 #include "pv_core.h"
+#include "pv_stats.h"
 
 
 MODULE_VERSION
@@ -39,6 +40,10 @@ static pv_export_t mod_pvs[] = {
 	{ {"mi", (sizeof("mi")-1)}, /* message id */
 		PVT_MSGID, pv_get_msgid, 0,
 		0, 0, 0, 0},
+	{ {"stat", sizeof("stat")-1}, /* statistics */
+		101, pv_get_stat, 0,
+		pv_parse_stat_name, 0, 0, 0 },
+
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
