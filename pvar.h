@@ -72,8 +72,8 @@
 
 enum _pv_type { 
 	PVT_NONE=0,           PVT_EMPTY,             PVT_NULL, 
-	PVT_MARKER,           PVT_AVP,               PVT_OTHER,
-	PVT_EXTRA /* keep it last */
+	PVT_MARKER,           PVT_AVP,               PVT_COLOR,
+	PVT_OTHER,            PVT_EXTRA /* keep it last */
 };
 
 typedef enum _pv_type pv_type_t;
@@ -248,6 +248,7 @@ typedef struct _tr_export {
 
 char* tr_lookup(str *in, trans_t **tr);
 tr_export_t* tr_lookup_class(str *tclass);
+int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v);
 
 #endif
 
