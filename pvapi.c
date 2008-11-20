@@ -1,16 +1,16 @@
 /*
- * $Id: items.h 2111 2007-05-01 11:18:08Z juhe $
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SIP-Router, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify
+ * SIP-Router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * Kamailio is distributed in the hope that it will be useful,
+ * SIP-Router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -296,7 +296,20 @@ static str pv_str_marker = { PV_MARKER_STR, 1 };
 static int pv_get_marker(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	return pv_get_strintval(msg, param, res, &pv_str_marker, (int)pv_str_marker.s[0]);
+	return pv_get_strintval(msg, param, res, &pv_str_marker,
+			(int)pv_str_marker.s[0]);
+}
+
+static str pv_str_empty  = { "", 0 };
+int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(res==NULL)
+		return -1;
+	
+	res->rs = pv_str_empty;
+	res->ri = 0;
+	res->flags = PV_VAL_NULL;
+	return 0;
 }
 
 pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
