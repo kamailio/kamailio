@@ -89,6 +89,20 @@
 
 #endif
 
+/** type used for the mod_register function export.
+ *  mod_register is a function called when loading a module
+ *  (if present), prior to registering the module exports.
+ *  @param path - path to the module, including file name
+ *  @param dlflags - pointer to the dlflags used when loading the module.
+ *                   If the value is changed to a different and non-zero
+ *                   value, the module will be reloaded with the new flags.
+ *  @param reserved1 - reserved for future use.
+ *  @param reserved2 - reserver for future use
+ *  @return 0 on success, -1 on error, all the other values are reserved
+ *                      for future use (<0 meaning error and >0 success)
+ */
+typedef  int (*mod_register_function)(char*, int*, void*, void*);
+
 typedef  struct module_exports* (*module_register)(void);
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
 typedef  int (*cmd_function3)(struct sip_msg*, char*, char*, char*);
