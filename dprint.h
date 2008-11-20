@@ -87,6 +87,7 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #define LOC_INFO	__FILE__ ":" CT2STR(__LINE__) ": "
 
 
+#define is_printable(level) (cfg_get(core, core_cfg, debug)>=(level))
 
 #ifdef NO_DEBUG
 	#ifdef __SUNPRO_C
