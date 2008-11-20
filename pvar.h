@@ -1,38 +1,74 @@
 /*
- * $Id$
+ * $Id: items.h 2111 2007-05-01 11:18:08Z juhe $
  *
- * Copyright (C) 2008 
+ * Copyright (C) 2001-2003 FhG Fokus
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This file is part of Kamailio, a free SIP server.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-/*
- * pvar compatibility wrapper for kamailio
- * for now it doesn't do anything (feel free to rm & replace the file)
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
  *
- * History:
- * --------
- *  2008-11-17  initial version compatible with kamailio pvar.h (andrei)
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _pvar_h_
-#define _pvar_h_
+/*!
+ * \file
+ * \brief Definitions for Pseudo-variable support
+ */
+
+
+#ifndef _PVAR_H_
+#define _PVAR_H_
 
 #include "str.h"
 #include "usr_avp.h"
 #include "parser/msg_parser.h"
 
+#define PV_MARKER_STR	"$"
+#define PV_MARKER		'$'
 
+#define PV_LNBRACKET_STR	"("
+#define PV_LNBRACKET		'('
+#define PV_RNBRACKET_STR	")"
+#define PV_RNBRACKET		')'
 
+#define PV_LIBRACKET_STR	"["
+#define PV_LIBRACKET		'['
+#define PV_RIBRACKET_STR	"]"
+#define PV_RIBRACKET		']'
+
+#define PV_VAL_NONE			0
+#define PV_VAL_NULL			1
+#define PV_VAL_EMPTY		2
+#define PV_VAL_STR			4
+#define PV_VAL_INT			8
+#define PV_TYPE_INT			16
+#define PV_VAL_PKG			32
+#define PV_VAL_SHM			64
+
+#define PV_NAME_INTSTR	0
+#define PV_NAME_PVAR	1
+
+#define PV_IDX_INT	0
+#define PV_IDX_PVAR	1
+#define PV_IDX_ALL	2
+
+/*! if PV name is dynamic, integer, or str */
+#define pv_has_dname(pv) ((pv)->pvp.pvn.type==PV_NAME_PVAR)
+#define pv_has_iname(pv) ((pv)->pvp.pvn.type==PV_NAME_INTSTR \
+							&& !((pv)->pvp.pvn.u.isname.type&AVP_NAME_STR))
+#define pv_has_sname(pv) ((pv)->pvp.pvn.type==PV_NAME_INTSTR \
+							&& (pv)->pvp.pvn.u.isname.type&AVP_NAME_STR)
+#define pv_is_w(pv)	((pv)->setf!=NULL)
 
 enum _pv_type { 
 	PVT_NONE=0,           PVT_EMPTY,             PVT_NULL, 
@@ -63,11 +99,13 @@ enum _pv_type {
 	PVT_ERR_INFO,         PVT_ERR_RCODE,         PVT_ERR_RREASON,
 	PVT_SCRIPTVAR,        PVT_PROTO,             PVT_AUTH_USERNAME_WHOLE,
 	PVT_AUTH_DURI,        PVT_DIV_REASON,        PVT_DIV_PRIVACY,
-	PVT_AUTH_DOMAIN,      PVT_EXTRA /* keep it last */
+	PVT_AUTH_DOMAIN,      PVT_OTHER,
+	PVT_EXTRA /* keep it last */
 };
 
 typedef enum _pv_type pv_type_t;
 typedef int pv_flags_t;
+
 
 typedef struct _pv_value
 {
@@ -114,8 +152,6 @@ typedef struct _pv_spec {
 	void         *trans; /*!< transformations */
 } pv_spec_t, *pv_spec_p;
 
-
-
 typedef int (*pv_parse_name_f)(pv_spec_p sp, str *in);
 typedef int (*pv_parse_index_f)(pv_spec_p sp, str *in);
 typedef int (*pv_init_param_f)(pv_spec_p sp, int param);
@@ -142,4 +178,103 @@ typedef struct _pv_export {
 	int iparam;                    /*!< parameter for the init function */
 } pv_export_t;
 
-#endif /* _pvar_h_ */
+typedef struct _pv_elem
+{
+	str text;
+	pv_spec_t spec;
+	struct _pv_elem *next;
+} pv_elem_t, *pv_elem_p;
+
+char* pv_parse_spec(str *in, pv_spec_p sp);
+int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value);
+int pv_print_spec(struct sip_msg* msg, pv_spec_p sp, char *buf, int *len);
+int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);
+int pv_elem_free_all(pv_elem_p log);
+void pv_value_destroy(pv_value_t *val);
+void pv_spec_free(pv_spec_t *spec);
+int pv_spec_dbg(pv_spec_p sp);
+int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags);
+int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
+		unsigned short *name_type);
+int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name);
+int pv_parse_format(str *in, pv_elem_p *el);
+int pv_init_iname(pv_spec_p sp, int param);
+int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s);
+
+typedef struct _pvname_list {
+	pv_spec_t sname;
+	struct _pvname_list *next;
+} pvname_list_t, *pvname_list_p;
+
+typedef struct pv_spec_list {
+	pv_spec_p spec;
+	struct pv_spec_list *next;
+} pv_spec_list_t, *pv_spec_list_p;
+
+pvname_list_t* parse_pvname_list(str *in, unsigned int type);
+
+int register_pvars_mod(char *mod_name, pv_export_t *items);
+int pv_free_extra_list(void);
+
+/*! \brief PV helper functions */
+int pv_parse_index(pv_spec_p sp, str *in);
+
+int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_update_time(struct sip_msg *msg, time_t *t);
+
+int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, unsigned int uival);
+int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, int sival);
+int pv_get_strval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, str *sval);
+int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, str *sval, int ival);
+int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, int ival, str *sval);
+
+/**
+ * Transformations
+ */
+#define TR_LBRACKET_STR		"{"
+#define TR_LBRACKET		'{'
+#define TR_RBRACKET_STR		"}"
+#define TR_RBRACKET		'}'
+#define TR_CLASS_MARKER		'.'
+#define TR_PARAM_MARKER		','
+
+enum _tr_param_type { TR_PARAM_NONE=0, TR_PARAM_STRING, TR_PARAM_NUMBER,
+	TR_PARAM_SPEC };
+
+typedef struct _tr_param {
+	int type;
+	union {
+		int n;
+		str s;
+		void *data;
+	} v;
+	struct _tr_param *next;
+} tr_param_t, *tr_param_p;
+
+typedef int (*tr_func_t) (struct sip_msg *, tr_param_t*, int, pv_value_t*);
+
+typedef struct _trans {
+	str name;
+	int type;
+	int subtype;
+	tr_func_t trf;
+	tr_param_t *params;
+	struct _trans *next;
+} trans_t, *trans_p;
+
+typedef char* (*tr_parsef_t)(str *, trans_t *);
+typedef struct _tr_export {
+	str tclass;
+	tr_parsef_t tparse; 
+} tr_export_t, *tr_export_p;
+
+char* tr_lookup(str *in, trans_t **tr);
+tr_export_t* tr_lookup_class(str *tclass);
+
+#endif
+
