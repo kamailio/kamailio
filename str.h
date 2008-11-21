@@ -84,6 +84,9 @@ typedef struct _str str;
  */
 #define STR_STATIC_INIT(v) {(v), sizeof(v) - 1}
 
+/* kamailio compatibility macro (same thing as above) */
+#define str_init(v) STR_STATIC_INIT(v)
+
 /** Initializes ::str string with NULL pointer and zero length.
  * This is a convenience macro that can be used to initialize
  * ::str string variable to NULL string with zero length:
