@@ -143,7 +143,7 @@ error0:
 
 /*!
  * \brief Free all memory allocated for the domain
- * \param _f freed domain
+ * \param _d freed domain
  */
 void free_udomain(udomain_t* _d)
 {
@@ -606,7 +606,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 
 /*!
  * \brief Timer function to cleanup expired contacts, DB_ONLY db_mode
- * \param _ cleaned domain
+ * \param _d cleaned domain
  * \param 0 on success, -1 on failure
  */
 int db_timer_udomain(udomain_t* _d)

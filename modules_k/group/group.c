@@ -135,7 +135,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
  * \param _msg SIP message
  * \param _hf Header field
  * \param _grp checked table
- * \param 1 on success, negative on failure 
+ * \return 1 on success, negative on failure 
  */
 int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 {
@@ -235,7 +235,6 @@ int group_db_bind(const str* db_url)
 
 /*!
  * \brief Close the DB connection
- * \param db_url database URL
  */
 void group_db_close(void)
 {

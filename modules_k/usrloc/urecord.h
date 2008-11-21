@@ -151,6 +151,7 @@ void release_urecord(urecord_t* _r);
 /*!
  * \brief Create and insert new contact into urecord
  * \param _r record into the new contact should be inserted
+ * \param _contact contact string
  * \param _ci contact information
  * \param _c new created contact
  * \return 0 on success, -1 on failure

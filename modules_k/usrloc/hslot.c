@@ -39,7 +39,7 @@ gen_lock_set_t* ul_locks=0;
 
 /*!
  * \brief Initialize locks for the hash table
- * \param 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 int ul_init_locks(void)
 {
@@ -89,7 +89,7 @@ void ul_unlock_locks(void)
 
 
 /*!
- * \param Destroy all locks on the list
+ * \brief Destroy all locks on the list
  */
 void ul_destroy_locks(void)
 {

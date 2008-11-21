@@ -75,7 +75,17 @@ void slot_add(hslot_t* _s, struct urecord* _r);
  */
 void slot_rem(hslot_t* _s, struct urecord* _r);
 
+
+/*!
+ * \brief Initialize locks for the hash table
+ * \return 0 on success, -1 on failure
+ */
 int ul_init_locks(void);
+
+
+/*!
+ * \brief Destroy all locks on the list
+ */
 void ul_unlock_locks(void);
 void ul_destroy_locks(void);
 

@@ -75,7 +75,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d);
 
 /*!
  * \brief Free all memory allocated for the domain
- * \param _f freed domain
+ * \param _d freed domain
  */
 void free_udomain(udomain_t* _d);
 
@@ -108,7 +108,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d);
 
 /*!
  * \brief Timer function to cleanup expired contacts, DB_ONLY db_mode
- * \param _ cleaned domain
+ * \param _d cleaned domain
  * \param 0 on success, -1 on failure
  */
 int db_timer_udomain(udomain_t* _d);
@@ -190,7 +190,7 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _r new created record
  * \return 0 if a record was found, 1 if nothing could be found
  */
-typedef int  (*get_urecord_t)(udomain_t* _d, str* _a, struct urecord** _r);
+typedef int  (*get_urecord_t)(udomain_t* _d, str* _aor, struct urecord** _r);
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
@@ -201,7 +201,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _r deleted record
  * \param 0 on success, -1 if the record could not be deleted
  */
-typedef int  (*delete_urecord_t)(udomain_t* _d, str* _a, struct urecord* _r);
+typedef int  (*delete_urecord_t)(udomain_t* _d, str* _aor, struct urecord* _r);
 int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
 
 
