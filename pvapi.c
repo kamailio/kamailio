@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "mem/mem.h"
+#include "mem/shm_mem.h"
 #include "ut.h"
 #include "dprint.h"
 #include "hashes.h"
@@ -301,6 +302,7 @@ static int pv_get_marker(struct sip_msg *msg, pv_param_t *param,
 }
 
 static str pv_str_empty  = { "", 0 };
+static str pv_str_null   = { "<null>", 6 };
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(res==NULL)
@@ -628,6 +630,175 @@ error:
 
 } /* end: pv_parse_spec */
 
+/**
+ *
+ */
+int pv_parse_format(str *in, pv_elem_p *el)
+{
+	char *p, *p0;
+	int n = 0;
+	pv_elem_p e, e0;
+	str s;
+
+	if(in==NULL || in->s==NULL || el==NULL)
+		return -1;
+
+	/*LM_DBG("parsing [%.*s]\n", in->len, in->s);*/
+	
+	if(in->len == 0)
+	{
+		*el = pkg_malloc(sizeof(pv_elem_t));
+		if(*el == NULL)
+			goto error;
+		memset(*el, 0, sizeof(pv_elem_t));
+		(*el)->text = *in;
+		return 0;
+	}
+
+	p = in->s;
+	*el = NULL;
+	e = e0 = NULL;
+
+	while(is_in_str(p,in))
+	{
+		e0 = e;
+		e = pkg_malloc(sizeof(pv_elem_t));
+		if(!e)
+			goto error;
+		memset(e, 0, sizeof(pv_elem_t));
+		n++;
+		if(*el == NULL)
+			*el = e;
+		if(e0)
+			e0->next = e;
+	
+		e->text.s = p;
+		while(is_in_str(p,in) && *p!=PV_MARKER)
+			p++;
+		e->text.len = p - e->text.s;
+		
+		if(*p == '\0' || !is_in_str(p,in))
+			break;
+		s.s = p;
+		s.len = in->s+in->len-p;
+		p0 = pv_parse_spec(&s, &e->spec);
+		
+		if(p0==NULL)
+			goto error;
+		if(*p0 == '\0')
+			break;
+		p = p0;
+	}
+	/*LM_DBG("format parsed OK: [%d] items\n", n);*/
+
+	if(*el == NULL)
+		return -1;
+
+	return 0;
+
+error:
+	pv_elem_free_all(*el);
+	*el = NULL;
+	return -1;
+}
+
+int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
+{
+	int ret = 0;
+
+	if(msg==NULL || sp==NULL || sp->getf==NULL || value==NULL
+			|| sp->type==PVT_NONE)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	
+	memset(value, 0, sizeof(pv_value_t));
+
+	ret = (*sp->getf)(msg, &(sp->pvp), value);
+	if(ret!=0)
+		return ret;
+	if(sp->trans)
+		return tr_exec(msg, (trans_t*)sp->trans, value);
+	return ret;
+}
+
+/**
+ *
+ */
+int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
+{
+	int n, h;
+	pv_value_t tok;
+	pv_elem_p it;
+	char *cur;
+	
+	if(msg==NULL || list==NULL || buf==NULL || len==NULL)
+		return -1;
+
+	if(*len <= 0)
+		return -1;
+
+	*buf = '\0';
+	cur = buf;
+	
+	h = 0;
+	n = 0;
+	for (it=list; it; it=it->next)
+	{
+		/* put the text */
+		if(it->text.s && it->text.len>0)
+		{
+			if(n+it->text.len < *len)
+			{
+				memcpy(cur, it->text.s, it->text.len);
+				n += it->text.len;
+				cur += it->text.len;
+			} else {
+				LM_ERR("no more space for text [%d]\n", it->text.len);
+				goto overflow;
+			}
+		}
+		/* put the value of the specifier */
+		if(it->spec.type!=PVT_NONE
+				&& pv_get_spec_value(msg, &(it->spec), &tok)==0)
+		{
+			if(tok.flags&PV_VAL_NULL)
+				tok.rs = pv_str_null;
+			if(n+tok.rs.len < *len)
+			{
+				if(tok.rs.len>0)
+				{
+					memcpy(cur, tok.rs.s, tok.rs.len);
+					n += tok.rs.len;
+					cur += tok.rs.len;
+				}
+			} else {
+				LM_ERR("no more space for spec value\n");
+				goto overflow;
+			}
+		}
+	}
+
+	goto done;
+	
+overflow:
+	LM_ERR("buffer overflow -- increase the buffer size...\n");
+	return -1;
+
+done:
+#ifdef EXTRA_DEBUG
+	LM_DBG("final buffer length %d\n", n);
+#endif
+	*cur = '\0';
+	*len = n;
+	return 0;
+}
+
+
+/**
+ *
+ */
 void pv_spec_free(pv_spec_t *spec)
 {
 	if(spec==0) return;
@@ -637,6 +808,40 @@ void pv_spec_free(pv_spec_t *spec)
 	pkg_free(spec);
 }
 
+/**
+ *
+ */
+int pv_elem_free_all(pv_elem_p log)
+{
+	pv_elem_p t;
+	while(log)
+	{
+		t = log;
+		log = log->next;
+		pkg_free(t);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+void pv_value_destroy(pv_value_t *val)
+{
+	if(val==0) return;
+	if(val->flags&PV_VAL_PKG) pkg_free(val->rs.s);
+	if(val->flags&PV_VAL_SHM) shm_free(val->rs.s);
+	memset(val, 0, sizeof(pv_value_t));
+}
+
+
+/********************************************************
+ * Transformations API
+ ********************************************************/
+
+/**
+ *
+ */
 static inline char* tr_get_class(str *in, char *p, str *tclass)
 {
 	tclass->s = p;
@@ -652,6 +857,9 @@ static inline char* tr_get_class(str *in, char *p, str *tclass)
 	return p;
 }
 
+/**
+ *
+ */
 static inline trans_t* tr_new()
 {
 	trans_t *t = NULL;
@@ -757,6 +965,25 @@ void tr_destroy(trans_t *t)
 	memset(t, 0, sizeof(trans_t));
 }
 
+int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v)
+{
+	int r;
+	trans_t *i;
+
+	if(t==NULL || v==NULL)
+	{
+		LM_DBG("invalid parameters\n");
+		return -1;
+	}
+	
+	for(i = t; i!=NULL; i=i->next)
+	{
+		r = (*i->trf)(msg, i->params, i->subtype, v);
+		if(r!=0)
+			return r;
+	}
+	return 0;
+}
 
 /*!
  * \brief Free allocated memory of transformation list
