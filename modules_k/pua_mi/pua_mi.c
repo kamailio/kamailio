@@ -50,7 +50,6 @@ pua_api_t pua;
 /** module functions */
 
 static int mod_init(void);
-static void destroy(void);
 
 send_publish_t pua_send_publish;
 send_subscribe_t pua_send_subscribe;
