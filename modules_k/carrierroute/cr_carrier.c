@@ -98,7 +98,7 @@ void destroy_carrier_data(struct carrier_data_t *carrier_data) {
  */
 int add_domain_data(struct carrier_data_t * carrier_data, struct domain_data_t * domain_data, int index) {
 	LM_INFO("adding domain %d '%.*s' to carrier %d '%.*s'", domain_data->id, domain_data->name->len, domain_data->name->s, carrier_data->id, carrier_data->name->len, carrier_data->name->s);
- 	LM_DBG("domain position %d (domain_num=%d, first_empty_domain=%d)", index, carrier_data->domain_num, carrier_data->first_empty_domain);
+ 	LM_DBG("domain position %d (domain_num=%d, first_empty_domain=%d)", index, (int) carrier_data->domain_num, (int) carrier_data->first_empty_domain);
 
 	if ((index < 0) || (index > carrier_data->first_empty_domain)) {
 		LM_ERR("got invalid index during binary search\n");
