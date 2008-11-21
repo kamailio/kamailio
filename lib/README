@@ -26,6 +26,9 @@ xcap - Common XCAP operations and structures (XCAP authorization documents
 
 Used by modules: pa, rls, dialog, rpa
 
+trie - Common digit trie implementation for prefix matching, used by
+       carrierroute and userblacklist
+
 Usage:
 -----
 
