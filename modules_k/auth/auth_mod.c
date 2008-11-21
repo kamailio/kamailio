@@ -366,11 +366,11 @@ static void destroy(void)
 }
 
 
-/*! 
+/*!
  * \brief Generate a HA1 response from username and domain
  * \param msg SIP message
  * \param _username user name
- * \param domain domain
+ * \param _domain domain
  * \param _ha1 generated HA1
  * \return 0 on success, 1 on error and when the user could not found
  */

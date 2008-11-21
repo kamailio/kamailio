@@ -71,7 +71,7 @@ void strip_realm(str* _realm)
 /*!
  * \brief Find credentials with given realm in a SIP message header
  * \param _m SIP message
- * \param _real authentification realm
+ * \param _realm authentification realm
  * \param _hftype header field type
  * \param _h header field
  */
@@ -161,7 +161,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
  * The purpose of this function is to find credentials with given realm,
  * do sanity check, validate credential correctness and determine if
  * we should really authenticate (there must be no authentication for
- * ACK and CANCEL
+ * ACK and CANCEL.
  * \param _m SIP message
  * \param _realm authentification realm
  * \param _hftype header field type

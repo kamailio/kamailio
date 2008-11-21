@@ -143,7 +143,7 @@ int check_response(dig_cred_t* _cred, str* _method, char* _ha1);
  * \brief Calculate H(A1) as per HTTP Digest spec
  * \param _alg type of hash algorithm
  * \param _username username
- * \param _real authentification realm
+ * \param _realm authentification realm
  * \param _password password
  * \param _nonce nonce value
  * \param _cnonce cnonce value

@@ -40,7 +40,7 @@
  * \param _qop qop value
  * \return 0 if challenge could be sended, -1 on failure
  */
-int www_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
+int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop);
 
 
 /*!
@@ -50,7 +50,7 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
  * \param _qop qop value
  * \return 0 if challenge could be sended, -1 on failure
  */
-int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
+int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop);
 
 
 /*!
