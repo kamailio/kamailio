@@ -152,4 +152,13 @@
 int init_pkg_mallocs();
 int init_shm_mallocs(int force_alloc);
 
+/*! generic logging helper for allocation errors in private memory pool/ system */
+#ifdef SYSTEM_MALLOC
+#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from system")
+#else
+#define PKG_MEM_ERROR LM_ERR("could not allocate private memory from available pool")
+#endif
+/*! generic logging helper for allocation errors in shared memory pool */
+#define SHM_MEM_ERROR LM_ERR("could not allocate shared memory from available pool")
+
 #endif
