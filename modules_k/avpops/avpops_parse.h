@@ -34,8 +34,6 @@
 #include "avpops_db.h"
 
 
-char *parse_avp_attr(char *start, struct fis_param *attr, char end);
-
 struct fis_param *avpops_parse_pvar(char *s);
 
 int   parse_avp_db(char *s, struct db_param *dbp, int allow_scheme);
