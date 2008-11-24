@@ -43,7 +43,7 @@ str carrierroute_rewrite_suffix_col = str_init("rewrite_suffix");
 str carrierroute_description_col = str_init("description");
 
 /* table version */
-const unsigned int carrierroute_version = 2;
+const unsigned int carrierroute_version = 3;
 
 str carrierfailureroute_table = str_init("carrierfailureroute");
 
@@ -60,7 +60,7 @@ str carrierfailureroute_next_domain_col = str_init("next_domain");
 str carrierfailureroute_description_col = str_init("description");
 
 /* table version */
-const unsigned int carrierfailureroute_version = 1;
+const unsigned int carrierfailureroute_version = 2;
 
 str carrier_name_table = str_init("carrier_name");
 
