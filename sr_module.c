@@ -216,17 +216,29 @@ static inline int version_control(void *handle, char *path)
 	return 0;
 }
 
-/* returns 0 on success , <0 on error */
+/** load a sr module.
+ * tries to load the module specified by path.
+ * If modname does contain a '/' or a '.' it would be assumed to contain a 
+ * path to the module and it will be used as give.
+ * else <MODS_DIR>/<modname>.so will be tried and if this fails
+ *  <MODS_DIR>/<modname>/<modname>.so
+ * @param modname - path or module name
+ * @return 0 on success , <0 on error
+ */
 int load_module(char* path)
 {
 	void* handle;
 	char* error;
+	mod_register_function mr;
 	union module_exports_u* exp;
 	unsigned* mod_if_ver;
 	struct sr_module* t;
 	struct stat stat_buf;
 	char* modname;
 	int len;
+	int dlflags;
+	int new_dlflags;
+	int retries;
 
 #ifndef RTLD_NOW
 /* for openbsd */
@@ -287,7 +299,9 @@ int load_module(char* path)
 		}
 #endif /* !EXTRA_DEBUG */
 	}
-
+	retries=2;
+	dlflags=RTLD_NOW;
+reload:
 	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
 	if (handle==0){
 		LOG(L_ERR, "ERROR: load_module: could not open module <%s>: %s\n",
@@ -314,10 +328,46 @@ int load_module(char* path)
 		goto error1;
 	}
 	/* launch register */
+	mr = (mod_register_function)dlsym(handle, DLSYM_PREFIX "mod_register");
+	if (((error =(char*)dlerror())==0) && mr) {
+		/* no error call it */
+		new_dlflags=dlflags;
+		if (mr(path, &dlflags, 0, 0)!=0) {
+			LOG(L_ERR, "ERROR: load_module: %s: mod_register failed\n", path);
+			goto error1;
+		}
+		if (new_dlflags!=dlflags && new_dlflags!=0) {
+			/* we have to reload the module */
+			dlclose(handle);
+			dlflags=new_dlflags;
+			retries--;
+			if (retries>0) goto reload;
+			LOG(L_ERR, "ERROR: load_module: %s: cannot agree"
+					" on the dlflags\n", path);
+			goto error;
+		}
+	}
 	exp = (union module_exports_u*)dlsym(handle, DLSYM_PREFIX "exports");
 	if ( (error =(char*)dlerror())!=0 ){
 		LOG(L_ERR, "ERROR: load_module: %s\n", error);
 		goto error1;
+	}
+	/* hack to allow for kamailio style dlflags inside exports */
+	if (*mod_if_ver == 1) {
+		new_dlflags = exp->v1.dlflags;
+		if (new_dlflags!=dlflags && new_dlflags!=DEFAULT_DLFLAGS) {
+			/* we have to reload the module */
+			dlclose(handle);
+			WARN("%s: exports dlflags interface is deprecated and it will not"
+					"be supported in newer versions; consider using"
+					" mod_register() instead", path);
+			dlflags=new_dlflags;
+			retries--;
+			if (retries>0) goto reload;
+			LOG(L_ERR, "ERROR: load_module: %s: cannot agree"
+					" on the dlflags\n", path);
+			goto error;
+		}
 	}
 	if (register_module(*mod_if_ver, exp, path, handle)<0) goto error1;
 	return 0;
