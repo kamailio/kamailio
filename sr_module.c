@@ -164,6 +164,18 @@ static int register_module(unsigned ver, union module_exports_u* e,
 	mod->exports=e;
 	mod->next=modules;
 	modules=mod;
+
+	/* register module pseudo-variables */
+	if (ver==1 && e->v1.items) {
+		LM_DBG("register PV from: %s\n", e->c.name);
+		if (register_pvars_mod(e->c.name, e->v1.items)!=0) {
+			LM_ERR("failed to register pseudo-variables for module %s\n",
+				e->c.name);
+			pkg_free(mod);
+			return -1;
+		}
+	}
+
 	return 0;
 error:
 	return ret;
