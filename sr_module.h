@@ -242,7 +242,9 @@ enum {
 	FPARAM_REGEX  = (1 << 3),
 	FPARAM_AVP    = (1 << 5),
 	FPARAM_SELECT = (1 << 6),
-	FPARAM_SUBST  = (1 << 7)
+	FPARAM_SUBST  = (1 << 7),
+	FPARAM_PVS    = (1 << 8),
+	FPARAM_PVE    = (1 << 9)
 };
 
 /*
@@ -257,8 +259,10 @@ typedef struct fparam {
 		int i;                    /* Integer value */
 		regex_t* regex;           /* Compiled regular expression */
 		avp_ident_t avp;          /* AVP identifier */
-	        select_t* select;         /* select structure */ 
-	        struct subst_expr* subst; /* Regex substitution */
+		select_t* select;         /* select structure */ 
+		struct subst_expr* subst; /* Regex substitution */
+		struct pv_spec_t* pvs;    /* kamailo pseudo-vars */
+		struct pv_elem_t* pve;    /* kamailo pseudo-vars */
 	} v;
 } fparam_t;
 

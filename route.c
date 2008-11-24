@@ -512,6 +512,11 @@ static int fix_actions(struct action* a)
 				if (cmd && cmd->c.fixup) {
 					int i;
 					DBG("fixing %s()\n", cmd->c.name);
+					if (t->val[1].u.number==0) {
+						ret = cmd->c.fixup(0, 0);
+						if (ret < 0)
+							return ret;
+					}
 					/* type cast NUMBER to STRING, old modules may expect
 					 * all STRING params during fixup */
 					for (i=0; i<t->val[1].u.number; i++) {
