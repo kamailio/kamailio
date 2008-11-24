@@ -61,6 +61,7 @@
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
 	static str dummy_string = {"", 0};
+	char *tmp_s;
 
 	if (!_v) {
 		LM_ERR("invalid parameter value\n");
@@ -159,19 +160,32 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 
 	case DB_BLOB:
 		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
-		/* PQunescapeBytea:  Converts a string representation of binary data
-		 * into binary data - the reverse of PQescapeBytea.
-		 * This is needed when retrieving bytea data in text format,
-		 * but not when retrieving it in binary format.
+		/*
+		 * The string is stored in new allocated memory, which we could
+		 * not free later thus we need to copy it to some new memory here.
 		 */
-		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s, 
-			(size_t*)(void*)&(VAL_BLOB(_v).len) );
+ 		tmp_s = (char*)PQunescapeBytea((unsigned char*)_s, (size_t*)(void*)&(VAL_BLOB(_v).len));
+		if(tmp_s==NULL) {
+			LM_ERR("PQunescapeBytea failed\n");
+			return -7;
+		}
+		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len);
+		if (VAL_BLOB(_v).s == NULL) {
+			LM_ERR("no private memory left\n");
+			PQfreemem(tmp_s);
+			return -8;
+		}
+		LM_DBG("allocate %d bytes memory for BLOB at %p", VAL_BLOB(_v).len, VAL_BLOB(_v).s);
+		memcpy(VAL_BLOB(_v).s, tmp_s, VAL_BLOB(_v).len);
+		PQfreemem(tmp_s);
+
 		VAL_TYPE(_v) = DB_BLOB;
 		VAL_FREE(_v) = 1;
+
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
 	}
-	return -7;
+	return -9;
 }
 
 
@@ -314,7 +328,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 					(size_t)l, (size_t*)&tmp_len);
 			if(tmp_s==NULL)
 			{
-				LM_ERR("PQescapeBytea failed\n");
+				LM_ERR("PQescapeByteaConn failed\n");
 				return -9;
 			}
 			if (tmp_len > *_len) {
