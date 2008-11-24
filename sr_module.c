@@ -37,6 +37,7 @@
  *               find_export_record
  *  2006-02-07  added fix_flag (andrei)
  *  2008-02-29  store all the reponse callbacks in their own array (andrei)
+ *  2008-11-17  support dual module interface: ser & kamailio (andrei)
  */
 
 
@@ -63,30 +64,30 @@
 struct sr_module* modules=0;
 
 #ifdef STATIC_EXEC
-	extern struct module_exports* exec_exports();
+	extern struct module_exports exec_exports;
 #endif
 #ifdef STATIC_TM
-	extern struct module_exports* tm_exports();
+	extern struct module_exports tm_exports;
 #endif
 
 #ifdef STATIC_MAXFWD
-	extern struct module_exports* maxfwd_exports();
+	extern struct module_exports maxfwd_exports;
 #endif
 
 #ifdef STATIC_AUTH
-	extern struct module_exports* auth_exports();
+	extern struct module_exports auth_exports;
 #endif
 
 #ifdef STATIC_RR
-	extern struct module_exports* rr_exports();
+	extern struct module_exports rr_exports;
 #endif
 
 #ifdef STATIC_USRLOC
-	extern struct module_exports* usrloc_exports();
+	extern struct module_exports usrloc_exports;
 #endif
 
 #ifdef STATIC_SL
-	extern struct module_exports* sl_exports();
+	extern struct module_exports sl_exports;
 #endif
 
 
@@ -101,37 +102,37 @@ int register_builtin_modules()
 
 	ret=0;
 #ifdef STATIC_TM
-	ret=register_module(tm_exports,"built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &tm_exports,"built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_EXEC
-	ret=register_module(exec_exports,"built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &exec_exports,"built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_MAXFWD
-	ret=register_module(maxfwd_exports, "built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &maxfwd_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_AUTH
-	ret=register_module(auth_exports, "built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &auth_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_RR
-	ret=register_module(rr_exports, "built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &rr_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_USRLOC
-	ret=register_module(usrloc_exports, "built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &usrloc_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_SL
-	ret=register_module(sl_exports, "built-in", 0);
+	ret=register_module(MODULE_INTERFACE_VER, &sl_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
 
@@ -142,7 +143,8 @@ int register_builtin_modules()
 
 /* registers a module,  register_f= module register  functions
  * returns <0 on error, 0 on success */
-int register_module(struct module_exports* e, char* path, void* handle)
+static int register_module(unsigned ver, union module_exports_u* e,
+					char* path, void* handle)
 {
 	int ret;
 	struct sr_module* mod;
@@ -158,6 +160,7 @@ int register_module(struct module_exports* e, char* path, void* handle)
 	memset(mod,0, sizeof(struct sr_module));
 	mod->path=path;
 	mod->handle=handle;
+	mod->mod_interface_ver=ver;
 	mod->exports=e;
 	mod->next=modules;
 	modules=mod;
@@ -218,7 +221,8 @@ int load_module(char* path)
 {
 	void* handle;
 	char* error;
-	struct module_exports* exp;
+	union module_exports_u* exp;
+	unsigned* mod_if_ver;
 	struct sr_module* t;
 	struct stat stat_buf;
 	char* modname;
@@ -302,13 +306,20 @@ int load_module(char* path)
 	if (!version_control(handle, path)) {
 		exit(0);
 	}
+	mod_if_ver = (unsigned *)dlsym(handle,
+									DLSYM_PREFIX "module_interface_ver");
+	if ( (error =(char*)dlerror())!=0 ){
+		LOG(L_ERR, "ERROR: no module interface version in module <%s>\n",
+					path );
+		goto error1;
+	}
 	/* launch register */
-	exp = (struct module_exports*)dlsym(handle, DLSYM_PREFIX "exports");
+	exp = (union module_exports_u*)dlsym(handle, DLSYM_PREFIX "exports");
 	if ( (error =(char*)dlerror())!=0 ){
 		LOG(L_ERR, "ERROR: load_module: %s\n", error);
 		goto error1;
 	}
-	if (register_module(exp, path, handle)<0) goto error1;
+	if (register_module(*mod_if_ver, exp, path, handle)<0) goto error1;
 	return 0;
 
 error1:
@@ -321,25 +332,51 @@ skip:
 
 
 
-/* searches the module list and returns pointer to the "name" function record or
- * 0 if not found
+/* searches the module list for function name in module mod and returns 
+ *  a pointer to the "name" function record union or 0 if not found
+ * sets also *mod_if_ver to the module interface version (needed to know
+ * which member of the union should be accessed v0 or v1)
+ * mod==0 is a wildcard matching all modules
  * flags parameter is OR value of all flags that must match
  */
-cmd_export_t* find_export_record(char* name, int param_no, int flags)
+union cmd_export_u* find_mod_export_record(char* mod, char* name,
+											int param_no, int flags,
+											unsigned* mod_if_ver)
 {
 	struct sr_module* t;
-	cmd_export_t* cmd;
+	union cmd_export_u* cmd;
+	int i;
+	unsigned mver;
+
+#define FIND_EXPORT_IN_MOD(VER) \
+		if (t->exports->VER.cmds) \
+			for(i=0, cmd=(void*)&t->exports->VER.cmds[0]; cmd->VER.name; \
+					i++, cmd=(void*)&t->exports->VER.cmds[i]){\
+				if((strcmp(name, cmd->VER.name)==0)&& \
+					(cmd->VER.param_no==param_no) &&  \
+					((cmd->VER.flags & flags) == flags) \
+				){ \
+					DBG("find_export_record: found <%s> in module %s [%s]\n", \
+						name, t->exports->VER.name, t->path); \
+					*mod_if_ver=mver; \
+					return cmd; \
+				} \
+			}
 
 	for(t=modules;t;t=t->next){
-		for(cmd=t->exports->cmds; cmd && cmd->name; cmd++){
-			if((strcmp(name, cmd->name)==0)&&
-			   (cmd->param_no==param_no) &&
-			   ((cmd->flags & flags) == flags)
-			  ){
-				DBG("find_export_record: found <%s> in module %s [%s]\n",
-				    name, t->exports->name, t->path);
-				return cmd;
-			}
+		if (mod!=0 && (strcmp(t->exports->c.name, mod) !=0))
+			continue;
+		mver=t->mod_interface_ver;
+		switch (mver){
+			case 0:
+				FIND_EXPORT_IN_MOD(v0);
+				break;
+			case 1:
+				FIND_EXPORT_IN_MOD(v1);
+				break;
+			default:
+				BUG("invalid module interface version %d for modules %s\n",
+						t->mod_interface_ver, t->path);
 		}
 	}
 	DBG("find_export_record: <%s> not found \n", name);
@@ -347,11 +384,30 @@ cmd_export_t* find_export_record(char* name, int param_no, int flags)
 }
 
 
+
+/* searches the module list for function name and returns 
+ *  a pointer to the "name" function record union or 0 if not found
+ * sets also *mod_if_ver to the module interface version (needed to know
+ * which member of the union should be accessed v0 or v1)
+ * mod==0 is a wildcard matching all modules
+ * flags parameter is OR value of all flags that must match
+ */
+union cmd_export_u* find_export_record(char* name,
+											int param_no, int flags,
+											unsigned* mod_if_ver)
+{
+	return find_mod_export_record(0, name, param_no, flags, mod_if_ver);
+}
+
+
+
 cmd_function find_export(char* name, int param_no, int flags)
 {
-	cmd_export_t* cmd;
-	cmd = find_export_record(name, param_no, flags);
-	return cmd?cmd->function:0;
+	union cmd_export_u* cmd;
+	unsigned mver;
+	
+	cmd = find_export_record(name, param_no, flags, &mver);
+	return cmd?cmd->c.function:0;
 }
 
 
@@ -372,7 +428,8 @@ rpc_export_t* find_rpc_export(char* name, int flags)
 	}
 	     /* Continue with modules if not found */
 	for(t = modules; t; t = t->next) {
-		for(rpc = t->exports->rpc_methods; rpc && rpc->name; rpc++) {
+		if (t->mod_interface_ver!=0) continue;
+		for(rpc = t->exports->v0.rpc_methods; rpc && rpc->name; rpc++) {
 			if ((strcmp(name, rpc->name) == 0) &&
 			    ((rpc->flags & flags) == flags)
 			   ) {
@@ -385,30 +442,20 @@ rpc_export_t* find_rpc_export(char* name, int flags)
 
 
 /*
- * searches the module list and returns pointer to "name" function in module "mod"
+ * searches the module list and returns pointer to "name" function in module
+ * "mod"
  * 0 if not found
  * flags parameter is OR value of all flags that must match
  */
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
 {
-	struct sr_module* t;
-	cmd_export_t* cmd;
+	union cmd_export_u* cmd;
+	unsigned mver;
 
-	for (t = modules; t; t = t->next) {
-		if (strcmp(t->exports->name, mod) == 0) {
-			for (cmd = t->exports->cmds;  cmd && cmd->name; cmd++) {
-				if ((strcmp(name, cmd->name) == 0) &&
-				    (cmd->param_no == param_no) &&
-				    ((cmd->flags & flags) == flags)
-				   ){
-					DBG("find_mod_export: found <%s> in module %s [%s]\n",
-					    name, t->exports->name, t->path);
-					return cmd->function;
-				}
-			}
-		}
-	}
-
+	cmd=find_mod_export_record(mod, name, param_no, flags, &mver);
+	if (cmd)
+		return cmd->c.function;
+	
 	DBG("find_mod_export: <%s> in module <%s> not found\n", name, mod);
 	return 0;
 }
@@ -418,7 +465,7 @@ struct sr_module* find_module_by_name(char* mod) {
 	struct sr_module* t;
 
 	for(t = modules; t; t = t->next) {
-		if (strcmp(mod, t->exports->name) == 0) {
+		if (strcmp(mod, t->exports->c.name) == 0) {
 			return t;
 		}
 	}
@@ -427,23 +474,37 @@ struct sr_module* find_module_by_name(char* mod) {
 }
 
 
-void* find_param_export(struct sr_module* mod, char* name, modparam_t type_mask, modparam_t *param_type)
+void* find_param_export(struct sr_module* mod, char* name,
+						modparam_t type_mask, modparam_t *param_type)
 {
 	param_export_t* param;
 
 	if (!mod)
 		return 0;
-	for(param=mod->exports->params;param && param->name ; param++) {
+	param=0;
+	switch(mod->mod_interface_ver){
+		case 0:
+			param=mod->exports->v0.params;
+			break;
+		case 1:
+			param=mod->exports->v1.params;
+			break;
+		default:
+			BUG("bad module interface version %d in module %s [%s]\n",
+					mod->mod_interface_ver, mod->exports->c.name, mod->path);
+			return 0;
+	}
+	for(;param && param->name ; param++) {
 		if ((strcmp(name, param->name) == 0) &&
 			((param->type & PARAM_TYPE_MASK(type_mask)) != 0)) {
 			DBG("find_param_export: found <%s> in module %s [%s]\n",
-				name, mod->exports->name, mod->path);
+				name, mod->exports->c.name, mod->path);
 			*param_type = param->type;
 			return param->param_pointer;
 		}
 	}
 	DBG("find_param_export: parameter <%s> not found in module <%s>\n",
-			name, mod->exports->name);
+			name, mod->exports->c.name);
 	return 0;
 }
 
@@ -455,7 +516,20 @@ void destroy_modules()
 	t=modules;
 	while(t) {
 		foo=t->next;
-		if ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
+		if (t->exports){
+			switch(t->mod_interface_ver){
+				case 0:
+					if ((t->exports->v0.destroy_f)) t->exports->v0.destroy_f();
+					break;
+				case 1:
+					if ((t->exports->v1.destroy_f)) t->exports->v1.destroy_f();
+					break;
+				default:
+					BUG("bad module interface version %d in module %s [%s]\n",
+						t->mod_interface_ver, t->exports->c.name,
+						t->path);
+			}
+		}
 		pkg_free(t);
 		t=foo;
 	}
@@ -477,14 +551,36 @@ int init_modules(void)
 	struct sr_module* t;
 
 	for(t = modules; t; t = t->next) {
-		if ((t->exports) && (t->exports->init_f))
-			if (t->exports->init_f() != 0) {
-				LOG(L_ERR, "init_modules(): Error while initializing"
-							" module %s\n", t->exports->name);
-				return -1;
+		if (t->exports){
+			switch(t->mod_interface_ver){
+				case 0:
+					if (t->exports->v0.init_f)
+						if (t->exports->v0.init_f() != 0) {
+							LOG(L_ERR, "init_modules(): Error while"
+										" initializing module %s\n",
+										t->exports->v0.name);
+							return -1;
+						}
+					if (t->exports->v0.response_f)
+						mod_response_cbk_no++;
+					break;
+				case 1:
+					if (t->exports->v1.init_f)
+						if (t->exports->v1.init_f() != 0) {
+							LOG(L_ERR, "init_modules(): Error while"
+										" initializing module %s\n",
+										t->exports->v1.name);
+							return -1;
+						}
+					if (t->exports->v1.response_f)
+						mod_response_cbk_no++;
+					break;
+				default:
+					BUG("bad module interface version %d in module %s [%s]\n",
+						t->exports->c.name, t->path);
+					return -1;
 			}
-		if ( t->exports && t->exports->response_f)
-			mod_response_cbk_no++;
+		}
 	}
 	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
 									sizeof(response_function));
@@ -494,9 +590,21 @@ int init_modules(void)
 		return -1;
 	}
 	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next){
-		if (t->exports && t->exports->response_f){
-			mod_response_cbks[i]=t->exports->response_f;
-			i++;
+		if (t->exports){
+			switch(t->mod_interface_ver){
+				case 0:
+					if (t->exports->v0.response_f){
+						mod_response_cbks[i]=t->exports->v0.response_f;
+						i++;
+					}
+					break;
+				case 1:
+					if (t->exports->v1.response_f){
+						mod_response_cbks[i]=t->exports->v1.response_f;
+						i++;
+					}
+					break;
+			}
 		}
 	}
 	return 0;
@@ -521,12 +629,30 @@ int init_child(int rank)
 
 
 	for(t = modules; t; t = t->next) {
-		if (t->exports->init_child_f) {
-			if ((t->exports->init_child_f(rank)) < 0) {
-				LOG(L_ERR, "init_child(): Initialization of child %d failed\n",
-						rank);
+		switch(t->mod_interface_ver){
+			case 0:
+				if (t->exports->v0.init_child_f) {
+					if ((t->exports->v0.init_child_f(rank)) < 0) {
+						LOG(L_ERR, "init_child(): Initialization of child"
+									" %d failed\n", rank);
+						return -1;
+					}
+				}
+				break;
+			case 1:
+				if (t->exports->v1.init_child_f) {
+					if ((t->exports->v1.init_child_f(rank)) < 0) {
+						LOG(L_ERR, "init_child(): Initialization of child"
+									" %d failed\n", rank);
+						return -1;
+					}
+				}
+				break;
+			default:
+				BUG("bad module interface version %d in module %s [%s]\n",
+						t->mod_interface_ver, t->exports->c.name,
+						t->path);
 				return -1;
-			}
 		}
 	}
 	return 0;
@@ -547,19 +673,43 @@ static int init_mod_child( struct sr_module* m, int rank )
 		   propagate it up the stack
 		 */
 		if (init_mod_child(m->next, rank)!=0) return -1;
-		if (m->exports && m->exports->init_child_f) {
-			DBG("DEBUG: init_mod_child (%d): %s\n",
-					rank, m->exports->name);
-			if (m->exports->init_child_f(rank)<0) {
-				LOG(L_ERR, "init_mod_child(): Error while initializing"
-							" module %s\n", m->exports->name);
-				return -1;
-			} else {
-				/* module correctly initialized */
-				return 0;
+		if (m->exports){
+			switch(m->mod_interface_ver){
+				case 0:
+					if (m->exports->v0.init_child_f) {
+						DBG("DEBUG: init_mod_child (%d): %s\n",
+								rank, m->exports->v0.name);
+						if (m->exports->v0.init_child_f(rank)<0) {
+							LOG(L_ERR, "init_mod_child(): Error while"
+										" initializing module %s\n",
+										m->exports->v0.name);
+							return -1;
+						} else {
+							/* module correctly initialized */
+							return 0;
+						}
+					}
+					/* no init function -- proceed with success */
+					return 0;
+				case 1:
+					if (m->exports->v1.init_child_f) {
+						DBG("DEBUG: init_mod_child (%d): %s\n",
+								rank, m->exports->v1.name);
+						if (m->exports->v1.init_child_f(rank)<0) {
+							LOG(L_ERR, "init_mod_child(): Error while"
+										" initializing module %s\n",
+										m->exports->v1.name);
+							return -1;
+						} else {
+							/* module correctly initialized */
+							return 0;
+						}
+					}
+					/* no init function -- proceed with success */
+					return 0;
 			}
 		}
-		/* no init function -- proceed with success */
+		/* no exports -- proceed with success */
 		return 0;
 	} else {
 		/* end of list */
@@ -590,18 +740,39 @@ static int init_mod( struct sr_module* m )
 		   propagate it up the stack
 		 */
 		if (init_mod(m->next)!=0) return -1;
-		if (m->exports && m->exports->init_f) {
-			DBG("DEBUG: init_mod: %s\n", m->exports->name);
-			if (m->exports->init_f()!=0) {
-				LOG(L_ERR, "init_mod(): Error while initializing"
-							" module %s\n", m->exports->name);
-				return -1;
-			} else {
-				/* module correctly initialized */
-				return 0;
+		if (m->exports){
+			switch(m->mod_interface_ver){
+				case 0:
+					if ( m->exports->v0.init_f) {
+						DBG("DEBUG: init_mod: %s\n", m->exports->v0.name);
+						if (m->exports->v0.init_f()!=0) {
+							LOG(L_ERR, "init_mod(): Error while initializing"
+										" module %s\n", m->exports->v0.name);
+							return -1;
+						} else {
+							/* module correctly initialized */
+							return 0;
+						}
+					}
+					/* no init function -- proceed with success */
+					return 0;
+				case 1:
+					if ( m->exports->v1.init_f) {
+						DBG("DEBUG: init_mod: %s\n", m->exports->v1.name);
+						if (m->exports->v1.init_f()!=0) {
+							LOG(L_ERR, "init_mod(): Error while initializing"
+										" module %s\n", m->exports->v1.name);
+							return -1;
+						} else {
+							/* module correctly initialized */
+							return 0;
+						}
+					}
+					/* no init function -- proceed with success */
+					return 0;
 			}
 		}
-		/* no init function -- proceed with success */
+		/* no exports -- proceed with success */
 		return 0;
 	} else {
 		/* end of list */
@@ -619,8 +790,18 @@ int init_modules(void)
 	int i;
 	
 	for(t = modules; t; t = t->next)
-		if ( t->exports && t->exports->response_f)
-			mod_response_cbk_no++;
+		if (t->exports){
+			switch(t->mod_interface_ver){
+				case 0:
+					if (t->exports->v0.response_f)
+						mod_response_cbk_no++;
+					break;
+				case 1:
+					if (t->exports->v1.response_f)
+						mod_response_cbk_no++;
+					break;
+			}
+		}
 	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
 									sizeof(response_function));
 	if (mod_response_cbks==0){
@@ -629,9 +810,21 @@ int init_modules(void)
 		return -1;
 	}
 	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next){
-		if (t->exports && t->exports->response_f){
-			mod_response_cbks[i]=t->exports->response_f;
-			i++;
+		if (t->exports){
+			switch(t->mod_interface_ver){
+				case 0:
+					if (t->exports->v0.response_f){
+						mod_response_cbks[i]=t->exports->v0.response_f;
+						i++;
+					}
+					break;
+				case 1:
+					if (t->exports->v1.response_f){
+						mod_response_cbks[i]=t->exports->v1.response_f;
+						i++;
+					}
+					break;
+			}
 		}
 	}
 	
