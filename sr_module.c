@@ -353,7 +353,8 @@ union cmd_export_u* find_mod_export_record(char* mod, char* name,
 			for(i=0, cmd=(void*)&t->exports->VER.cmds[0]; cmd->VER.name; \
 					i++, cmd=(void*)&t->exports->VER.cmds[i]){\
 				if((strcmp(name, cmd->VER.name)==0)&& \
-					(cmd->VER.param_no==param_no) &&  \
+					((cmd->VER.param_no==param_no) || \
+					 (cmd->VER.param_no==VAR_PARAM_NO)) && \
 					((cmd->VER.flags & flags) == flags) \
 				){ \
 					DBG("find_export_record: found <%s> in module %s [%s]\n", \

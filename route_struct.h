@@ -70,7 +70,7 @@ enum { METHOD_O=1, URI_O, FROM_URI_O, TO_URI_O, SRCIP_O, SRCPORT_O,
 enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T,
 		SET_PORT_T, SET_URI_T, SET_HOSTPORTTRANS_T,
-		IF_T, MODULE_T,
+		IF_T, MODULE_T, MODULE3_T, MODULE4_T, MODULE5_T, MODULE6_T, MODULEX_T,
 		SETFLAG_T, RESETFLAG_T, ISFLAGSET_T ,
 		AVPFLAG_OPER_T,
 		LEN_GT_T, PREFIX_T, STRIP_T,STRIP_TAIL_T,
@@ -133,13 +133,17 @@ typedef struct {
 	} u;
 } action_u_t;
 
-#define MAX_ACTIONS 4
+/* maximum internal array/params
+ * for module function calls val[0] and val[1] store a pointer to the
+ * function and the number of params, the rest are the function params 
+ */
+#define MAX_ACTIONS (2+6)
 
 struct action{
 	int type;  /* forward, drop, log, send ...*/
 	int count;
-	action_u_t val[MAX_ACTIONS];
 	struct action* next;
+	action_u_t val[MAX_ACTIONS];
 };
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);

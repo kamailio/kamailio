@@ -88,6 +88,7 @@
  * 2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  * 2008-01-24  added cfg_var definition (Miklos)
+ * 2008-11-18  support for variable parameter module functions (andrei)
 */
 
 %{
@@ -2359,7 +2360,8 @@ cmd:
 		$$=0; yyerror("bad argument, [proto:]host[:port] expected");
 	}
 	| FORCE_SEND_SOCKET error {$$=0; yyerror("missing '(' or ')' ?"); }
-	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0); } LPAREN func_params RPAREN	{
+	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST,
+			0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data = 
 			find_export_record($1, mod_func_action->val[1].u.number, rt,
 								&u_tmp);
@@ -2372,6 +2374,33 @@ cmd:
 			}
 			pkg_free(mod_func_action);
 			mod_func_action=0;
+		}else{
+			switch( ((union cmd_export_u*)
+						mod_func_action->val[0].u.data)->c.param_no){
+				case 0:
+				case 1:
+				case 2:
+					/* MODULE_T used for 0-2 params */
+					break;
+				case 3:
+					mod_func_action->type=MODULE3_T;
+					break;
+				case 4:
+					mod_func_action->type=MODULE4_T;
+					break;
+				case 5:
+					mod_func_action->type=MODULE5_T;
+					break;
+				case 6:
+					mod_func_action->type=MODULE6_T;
+					break;
+				case VAR_PARAM_NO:
+					mod_func_action->type=MODULEX_T;
+					break;
+				default:
+					yyerror("too many parameters for function\n");
+					break;
+			}
 		}
 		$$ = mod_func_action;
 	}
@@ -2385,8 +2414,10 @@ func_params:
 func_param:
         NUMBER {
 		if (mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
-			mod_func_action->val[mod_func_action->val[1].u.number+2].type = NUMBER_ST;
-			mod_func_action->val[mod_func_action->val[1].u.number+2].u.number = $1;
+			mod_func_action->val[mod_func_action->val[1].u.number+2].type =
+				NUMBER_ST;
+			mod_func_action->val[mod_func_action->val[1].u.number+2].u.number =
+				$1;
 			mod_func_action->val[1].u.number++;
 		} else {
 			yyerror("Too many arguments\n");
