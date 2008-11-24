@@ -1,0 +1,137 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module implements various utility functions that are not SIP
+	related.
+	</para>
+	<para>
+	Function http_query allows &kamailio; to issue an HTTP GET
+	request and receive parts of the reply.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be
+		installed before  
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libcurl</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	
+	<section>
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>http_server</varname> (string)</title>
+			<para>
+			Contains URL of HTTP server to which &kamailio;
+		sends HTTP requests.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>http://localhost</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>http_server</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "http_server", "http://tutpro.com")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>http_query_timeout</varname> (int)</title>
+			<para>
+			Defines in seconds how long &kamailio; waits response
+			from HTTP server.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>4</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>http_query_timeout</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "http_query_timeout", "2")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+		<section>
+			<title>
+				<function
+	moreinfo="none">http_query(page, params, result)</function>
+			</title>
+			<para>
+			Sends HTTP GET request to HTTP server specified
+	by http_server module variable.  Request is send to page given
+	in page parameter, which is a string that may contain pseudo
+	variables.  If params parameter (also a string that may contain
+	pseudo variables) is not empty, its contents is
+	appended as parameters to the request.
+	    	       </para>
+    			       <para>
+        If HTTP server returns a
+	class 2xx or 3xx reply, first line of reply's body (if any) is
+	stored in result parameter, which must be a writable pseudo
+	variable.
+			</para>
+			<para>
+			Function returns reply code of HTTP reply or -1
+	if something went wrong.
+	   	     	</para>
+			<para>
+			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>http_query()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_query("/index.php",
+	   "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>

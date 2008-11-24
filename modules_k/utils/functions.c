@@ -1,0 +1,138 @@
+/*
+ * script functions of utils module
+ *
+ * Copyright (C) 2008 Juha Heinanen
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+
+#include <curl/curl.h>
+
+#include "../../mod_fix.h"
+#include "../../pvar.h"
+#include "../../route_struct.h"
+#include "../../ut.h"
+#include "../../mem/mem.h"
+#include "../../parser/msg_parser.h"
+
+#include "utils.h"
+
+
+/* 
+ * curl write function that saves received data as zero terminated
+ * to stream. Returns the amount of data taken care of.
+ */
+size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    /* Allocate memory and copy */
+    char* data;
+
+    data = (char*)malloc((size* nmemb) + 1);
+    if (data == NULL) {
+	LM_ERR("cannot allocate memory for stream\n");
+	return CURLE_WRITE_ERROR;
+    }
+
+    memcpy(data, (char*)ptr, size* nmemb);
+    data[nmemb] = '\0';
+        
+    *((char**) stream) = data;
+    
+    return size* nmemb;
+ }
+
+
+/* 
+ * Performs http_query and saves possible result (first body line of reply)
+ * to pvar.
+ */
+int http_query(struct sip_msg* _m, char* _page, char* _params, char* _dst)
+{
+    CURL *curl;
+    CURLcode res;  
+    str page, params;
+    char *url, *at;
+    char* stream;
+    long stat;
+    pv_spec_t *dst;
+    pv_value_t val;
+
+    if (fixup_get_svalue(_m, (gparam_p)_page, &page) != 0) {
+	LM_ERR("cannot get page value\n");
+	return -1;
+    }
+
+    if (fixup_get_svalue(_m, (gparam_p)_params, &params) != 0) {
+	LM_ERR("cannot get params value\n");
+	return -1;
+    }
+
+    curl = curl_easy_init();
+    if (curl == NULL) {
+	LM_ERR("failed to initialize curl\n");
+	return -1;
+    }
+
+    url = pkg_malloc(http_server.len + page.len + 1 /* ? */ +
+		     params.len + 1 /* 0 */);
+    if (url == NULL) {
+	LM_ERR("cannot allocate pkg memory for url\n");
+	return -1;
+    }
+    at = url;
+    append_str(at, http_server.s, http_server.len);
+    append_str(at, page.s, page.len);
+    if (params.len > 0) {
+	append_chr(at, '?');
+	append_str(at, params.s, params.len);
+    }
+    *at = (char)0;
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)http_query_timeout);
+
+    stream = NULL;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+
+    res = curl_easy_perform(curl);  
+    pkg_free(url);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK) {
+	LM_ERR("failed to perform curl\n");
+	return -1;
+    }
+
+    curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+    if ((stat >= 200) && (stat < 400)) {
+	at = index(stream, (char)10);  /* search for line feed */
+	if (at == NULL) {
+	    at = stream;  /* set empty string */
+	}
+	val.rs.s = stream;
+	val.rs.len = at - stream;
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_dst;
+	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+    }
+	
+    return stat;
+}

@@ -1,0 +1,112 @@
+utils
+
+Juha Heinanen
+
+   TutPro Inc.
+
+   Copyright © 2008 Juha Heinanen
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. http_server (string)
+              1.3.2. http_query_timeout (int)
+
+        1.4. Exported Functions
+
+              1.4.1. http_query(page, params, result)
+
+   List of Examples
+
+   1.1. Set http_server parameter
+   1.2. Set http_query_timeout parameter
+   1.3. http_query() usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module implements various utility functions that are not
+   SIP related.
+
+   Function http_query allows Kamailio to issue an HTTP GET
+   request and receive parts of the reply.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * libcurl.
+
+1.3. Exported Parameters
+
+1.3.1. http_server (string)
+
+   Contains URL of HTTP server to which Kamailio sends HTTP
+   requests.
+
+   Default value is "http://localhost".
+
+   Example 1.1. Set http_server parameter
+...
+modparam("utils", "http_server", "http://tutpro.com")
+...
+
+1.3.2. http_query_timeout (int)
+
+   Defines in seconds how long Kamailio waits response from HTTP
+   server.
+
+   Default value is "4".
+
+   Example 1.2. Set http_query_timeout parameter
+...
+modparam("utils", "http_query_timeout", "2")
+...
+
+1.4. Exported Functions
+
+1.4.1.  http_query(page, params, result)
+
+   Sends HTTP GET request to HTTP server specified by http_server
+   module variable. Request is send to page given in page
+   parameter, which is a string that may contain pseudo variables.
+   If params parameter (also a string that may contain pseudo
+   variables) is not empty, its contents is appended as parameters
+   to the request.
+
+   If HTTP server returns a class 2xx or 3xx reply, first line of
+   reply's body (if any) is stored in result parameter, which must
+   be a writable pseudo variable.
+
+   Function returns reply code of HTTP reply or -1 if something
+   went wrong.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.3. http_query() usage
+...
+http_query("/index.php",
+           "r_uri=$(ru{s.escape.param})&f_uri=$(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
