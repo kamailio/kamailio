@@ -23,7 +23,6 @@ source include/common
 source include/require
 source include/database
 
-# TODO add check_unixodbc test
 if ! (check_sipp && check_kamailio && check_module "db_unixodbc" && check_unixodbc); then
 	exit 0
 fi ;

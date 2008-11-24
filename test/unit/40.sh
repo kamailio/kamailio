@@ -22,12 +22,17 @@
 # Needs a default kamailio database setup for mysql
 
 source include/common
+source include/require
 source include/database
 
 CFG=40.cfg
 SRV=5060
 UAS=5070
 UAC=5080
+
+if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); then
+	exit 0
+fi ;
 
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
