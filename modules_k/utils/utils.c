@@ -60,7 +60,8 @@ static int fixup_free_http_query(void** param, int param_no);
 /* Exported functions */
 static cmd_export_t cmds[] = {
     {"http_query", (cmd_function)http_query, 3, fixup_http_query,
-     fixup_free_http_query, REQUEST_ROUTE|FAILURE_ROUTE},
+     fixup_free_http_query,
+     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 

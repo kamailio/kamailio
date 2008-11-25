@@ -84,7 +84,7 @@ modparam("utils", "http_server", "http://tutpro.com")
 			<title>Set <varname>http_query_timeout</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("utils", "http_query_timeout", "2")
+modparam("utils", "http_query_timeout", 2)
 ...
 				</programlisting>
 			</example>
@@ -117,7 +117,8 @@ modparam("utils", "http_query_timeout", "2")
 	if something went wrong.
 	   	     	</para>
 			<para>
-			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+			This function can be used from REQUEST_ROUTE,
+	ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
 			</para>
 			<example>
 				<title><function>http_query()</function> usage</title>

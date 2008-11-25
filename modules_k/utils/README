@@ -78,7 +78,7 @@ modparam("utils", "http_server", "http://tutpro.com")
 
    Example 1.2. Set http_query_timeout parameter
 ...
-modparam("utils", "http_query_timeout", "2")
+modparam("utils", "http_query_timeout", 2)
 ...
 
 1.4. Exported Functions
@@ -99,7 +99,8 @@ modparam("utils", "http_query_timeout", "2")
    Function returns reply code of HTTP reply or -1 if something
    went wrong.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, and BRANCH_ROUTE.
 
    Example 1.3. http_query() usage
 ...
