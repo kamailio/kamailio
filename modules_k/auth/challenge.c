@@ -94,18 +94,18 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	
 	int hf_name_len;
 	char *hf, *p;
-    int index = 0;
+	int index = 0;
 
 	if(nonce_reuse==0)
 	{
-	    /* get the nonce index and mark it as used */
+		/* get the nonce index and mark it as used */
 		index= reserve_nonce_index();
-	    if(index == -1)
+		if(index == -1)
 		{
 			LM_ERR("no more nonces can be generated\n");
-	        return 0;
+			return 0;
 		}
-	    LM_DBG("nonce index= %d\n", index);
+		LM_DBG("nonce index= %d\n", index);
 	}
 	     /* length calculation */
 	*_len=hf_name_len=strlen(_hf_name);

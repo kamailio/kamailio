@@ -313,7 +313,7 @@ static int mod_init(void)
 		    return -9;
 	    }
 
-	    nonce_buf= (char*)shm_malloc(NBUF_LEN);
+		nonce_buf= (char*)shm_malloc(NBUF_LEN);
 		if(nonce_buf== NULL)
 	    {
 		    LM_ERR("no more share memory\n");
@@ -321,21 +321,21 @@ static int mod_init(void)
 	    }
 		memset(nonce_buf, 255, NBUF_LEN);
 
-	    sec_monit= (int*)shm_malloc((nonce_expire +1)* sizeof(int));
-	    if(sec_monit== NULL)
+		sec_monit= (int*)shm_malloc((nonce_expire +1)* sizeof(int));
+		if(sec_monit== NULL)
 		{
 			LM_ERR("no more share memory\n");
 	        return -10;
 		}
-	    memset(sec_monit, -1, (nonce_expire +1)* sizeof(int));
+		memset(sec_monit, -1, (nonce_expire +1)* sizeof(int));
 		second= (int*)shm_malloc(sizeof(int));
-	    next_index= (int*)shm_malloc(sizeof(int));
+		next_index= (int*)shm_malloc(sizeof(int));
 		if(second==  NULL || next_index== NULL)
 	    {
 		    LM_ERR("no more share memory\n");
 	        return -10;
 		}
-	    *next_index= -1;
+		*next_index= -1;
 	}
 
 	return 0;

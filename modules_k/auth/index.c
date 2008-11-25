@@ -1,5 +1,5 @@
 /*
- * $Id:$
+ * $Id$
  *
  * Copyright (C)2008  Voice System S.R.L
  *
@@ -56,79 +56,75 @@
  */
 int reserve_nonce_index(void)
 {
-    unsigned int curr_sec;
-    int index;
-    int i;
+	unsigned int curr_sec;
+	int index, i;
 
+	curr_sec =  get_ticks()%(nonce_expire+1);
+	lock_get(nonce_lock);
 
-    curr_sec =  get_ticks()%(nonce_expire+1);
+	/* update last index for the previous seconds */
+	if(*next_index== -1) /* for the first request */
+		*next_index= 0;
+	else
+	{
+		if(*second!= curr_sec)
+		{
+			index= (*next_index==NBUF_LEN)?NBUF_LEN-1:*next_index -1;
 
-    lock_get(nonce_lock);
+			if(curr_sec> *second)
+			{
+				for (i= *second; i< curr_sec; i++)
+					sec_monit[i]= index;
+			}
+			else
+			{
+				for (i= *second; i<= nonce_expire; i++)
+					sec_monit[i]= index;
 
-    /* update last index for the previous seconds */
-    if(*next_index== -1) /* for the first request */
-        *next_index= 0;
-    else
-    {
-        if(*second!= curr_sec)
-        {
-            index= (*next_index==NBUF_LEN)?NBUF_LEN-1:*next_index -1;
+				for (i= 0; i< curr_sec; i++)
+					sec_monit[i]= index;
+			}
+		}
+	}
+	*second= curr_sec;
 
-            if(curr_sec> *second)
-            {
-                for (i= *second; i< curr_sec; i++)
-                    sec_monit[i]= index;
-            }
-            else
-            {
-                for (i= *second; i<= nonce_expire; i++)
-                    sec_monit[i]= index;
+	if(sec_monit[curr_sec]== -1) /* if in the first second*/
+	{
+		if(*next_index == NBUF_LEN)
+		{
+			lock_release(nonce_lock);
+			return -1;
+		}
 
-                for (i= 0; i< curr_sec; i++)
-                    sec_monit[i]= index;
-            }
-        }
-    }
-    *second= curr_sec;
+		goto done;
+	}
 
-    if(sec_monit[curr_sec]== -1) /* if in the first second*/
-    {
-        if(*next_index == NBUF_LEN)
-        {
-            lock_release(nonce_lock);
-            return -1;
-        }
-
-
-        goto done;
-    }
-
-    if(*next_index> sec_monit[curr_sec]) /* if at the end of the buffer */
-    {
-        /* if at the end of the buffer */
-        if(*next_index == NBUF_LEN)
-        {
-            *next_index = 0;
-            goto index_smaller;
-        }
-        goto done;
-    }
+	if(*next_index> sec_monit[curr_sec]) /* if at the end of the buffer */
+	{
+		/* if at the end of the buffer */
+		if(*next_index == NBUF_LEN)
+		{
+			*next_index = 0;
+			goto index_smaller;
+		}
+		goto done;
+	}
 
 index_smaller:
-    if(*next_index== sec_monit[curr_sec])  /* no more space -> return error */
-    {
-        lock_release(nonce_lock);
-        LM_INFO("no more indexes available\n");
-        return -1;
-    }
+	if(*next_index== sec_monit[curr_sec])  /* no more space -> return error */
+	{
+		lock_release(nonce_lock);
+		LM_INFO("no more indexes available\n");
+		return -1;
+	}
 
 done:
-    unset_buf_bit(*next_index);
-    index= *next_index;
-    *next_index = *next_index + 1;
-    LM_DBG("second= %d, sec_monit= %d,  index= %d\n", *second, sec_monit[curr_sec], index);
-    lock_release(nonce_lock);
-    return index;
+	unset_buf_bit(*next_index);
+	index= *next_index;
+	*next_index = *next_index + 1;
+	LM_DBG("second= %d, sec_monit= %d,  index= %d\n", *second, sec_monit[curr_sec], index);
+	lock_release(nonce_lock);
+	return index;
 }
 
 
