@@ -37,6 +37,7 @@
 #include "../../sr_module.h"
 #include "../../script_cb.h"
 #include "../../locking.h"
+#include "../../ut.h"
 
 #include "ring.h"
 #include "options.h"
@@ -47,10 +48,10 @@ MODULE_VERSION
 gen_lock_t *ring_lock = NULL;
 unsigned int ring_timeout = 0;
 /* for options functionality */
-str opt_accept;
-str opt_accept_enc;
-str opt_accept_lang;
-str opt_supported;
+str opt_accept = str_init(ACPT_DEF);
+str opt_accept_enc = str_init(ACPT_ENC_DEF);
+str opt_accept_lang = str_init(ACPT_LAN_DEF);
+str opt_supported = str_init(SUPT_DEF);
 /** SL binds */
 struct sl_binds opt_slb;
 
@@ -113,34 +114,10 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (opt_accept.s) {
-		opt_accept.len = strlen(opt_accept.s);
-	}
-	else {
-		opt_accept.len = ACPT_DEF_LEN;
-		opt_accept.s = ACPT_DEF;
-	}
-	if (opt_accept_enc.s) {
-		opt_accept_enc.len = strlen(opt_accept_enc.s);
-	}
-	else {
-		opt_accept_enc.len = ACPT_ENC_DEF_LEN;
-		opt_accept_enc.s = ACPT_ENC_DEF;
-	}
-	if (opt_accept_lang.s) {
-		opt_accept_lang.len = strlen(opt_accept_lang.s);
-	}
-	else {
-		opt_accept_lang.len = ACPT_LAN_DEF_LEN;
-		opt_accept_lang.s = ACPT_LAN_DEF;
-	}
-	if (opt_supported.s) {
-		opt_supported.len = strlen(opt_supported.s);
-	}
-	else {
-		opt_supported.len = SUPT_DEF_LEN;
-		opt_supported.s = SUPT_DEF;
-	}
+	opt_accept.len = strlen(opt_accept.s);
+	opt_accept_enc.len = strlen(opt_accept_enc.s);
+	opt_accept_lang.len = strlen(opt_accept_lang.s);
+	opt_supported.len = strlen(opt_supported.s);
 
 	return 0;
 }

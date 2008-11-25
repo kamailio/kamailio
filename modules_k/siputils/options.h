@@ -52,13 +52,9 @@
  * or no body (because it is not the endpoint of the media)
  */
 #define ACPT_DEF "*/*"
-#define ACPT_DEF_LEN 3
 #define ACPT_ENC_DEF ""
-#define ACPT_ENC_DEF_LEN 0
 #define ACPT_LAN_DEF "en"
-#define ACPT_LAN_DEF_LEN 2
 #define SUPT_DEF ""
-#define SUPT_DEF_LEN 0
 
 extern struct sl_binds opt_slb;
 
