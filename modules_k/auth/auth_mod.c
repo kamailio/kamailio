@@ -70,8 +70,6 @@ MODULE_VERSION
 #define DEF_STRIP_REALM ""
 #define DEF_RPID_AVP "$avp(s:rpid)"
 
-/*! error string for code 500 */
-static str auth_500_err = str_init("Server Internal Error");
 
 /*!
  * Module destroy function prototype
@@ -433,13 +431,11 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
  * \param realm authentification realm
  * \param hftype type of the header field
  * \return 1 when authorized, null on errors, negative on authentification failure
- * \todo rework logic to not check for auth_get_ha1 < 0, this can not happen
  */
 static inline int pv_authorize(struct sip_msg* msg, gparam_p realm,
 										hdr_types_t hftype)
 {
 	static char ha1[256];
-	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
@@ -461,15 +457,7 @@ static inline int pv_authorize(struct sip_msg* msg, gparam_p realm,
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = auth_get_ha1(msg, &cred->digest.username, &domain, ha1);
-	if (res < 0) {
-		/* Error */
-		if (slb.reply(msg, 500, &auth_500_err) == -1) {
-			LM_ERR("failed to send 500 reply\n");
-		}
-		return ERROR;
-	}
-	if (res > 0) {
+	if ((auth_get_ha1(msg, &cred->digest.username, &domain, ha1)) > 0) {
 		/* Username not found */
 		return USER_UNKNOWN;
 	}

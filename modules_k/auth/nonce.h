@@ -61,14 +61,6 @@ int check_nonce(str* _nonce, str* _secret);
 
 
 /*!
- * \brief Get expiry time from nonce string
- * \param _nonce nonce string
- * \return expiry time
- */
-time_t get_nonce_expires(str* _nonce);
-
-
-/*!
  * \brief Get index from nonce string
  * \param _nonce nonce string
  * \return nonce index

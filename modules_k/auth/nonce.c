@@ -148,7 +148,7 @@ int get_nonce_index(str* _n)
  * \param _nonce nonce string
  * \return expiry time
  */
-time_t get_nonce_expires(str* _n)
+static inline time_t get_nonce_expires(str* _n)
 {
 	return (time_t)hex2integer(_n->s);
 }

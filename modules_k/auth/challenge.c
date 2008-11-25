@@ -80,7 +80,6 @@ static str auth_500_err = str_init(MESSAGE_500);
 
 /*!
  * \brief Create {WWW,Proxy}-Authenticate header field
- * \param _retries unused
  * \param _stale
  * \param _real authentification realm
  * \param _len length, will be set
@@ -88,8 +87,8 @@ static str auth_500_err = str_init(MESSAGE_500);
  * \param _hf_name header field name
  * \return created header field, or 0 on failure
  */
-static inline char *build_auth_hf(int _retries, int _stale, str* _realm, 
-				  int* _len, int _qop, char* _hf_name)
+static inline char *build_auth_hf(int _stale, str* _realm, int* _len,
+		int _qop, char* _hf_name)
 {
 	
 	int hf_name_len;
@@ -211,7 +210,7 @@ static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 		strip_realm(&realm);
 	}
 
-	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), &realm, 
+	auth_hf = build_auth_hf((cred ? cred->stale : 0), &realm, 
 			&auth_hf_len, _qop, _challenge_msg);
 	if (!auth_hf) {
 		LM_ERR("failed to generate nonce\n");
