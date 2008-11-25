@@ -62,24 +62,19 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream)
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _page, char* _params, char* _dst)
+int http_query(struct sip_msg* _m, char* _url, char* _dst)
 {
     CURL *curl;
     CURLcode res;  
-    str page, params;
+    str value;
     char *url, *at;
     char* stream;
     long stat;
     pv_spec_t *dst;
     pv_value_t val;
 
-    if (fixup_get_svalue(_m, (gparam_p)_page, &page) != 0) {
+    if (fixup_get_svalue(_m, (gparam_p)_url, &value) != 0) {
 	LM_ERR("cannot get page value\n");
-	return -1;
-    }
-
-    if (fixup_get_svalue(_m, (gparam_p)_params, &params) != 0) {
-	LM_ERR("cannot get params value\n");
 	return -1;
     }
 
@@ -89,20 +84,14 @@ int http_query(struct sip_msg* _m, char* _page, char* _params, char* _dst)
 	return -1;
     }
 
-    url = pkg_malloc(http_server.len + page.len + 1 /* ? */ +
-		     params.len + 1 /* 0 */);
+    url = pkg_malloc(value.len + 1);
     if (url == NULL) {
+	curl_easy_cleanup(curl);
 	LM_ERR("cannot allocate pkg memory for url\n");
 	return -1;
     }
-    at = url;
-    append_str(at, http_server.s, http_server.len);
-    append_str(at, page.s, page.len);
-    if (params.len > 0) {
-	append_chr(at, '?');
-	append_str(at, params.s, params.len);
-    }
-    *at = (char)0;
+    memcpy(url, value.s, value.len);
+    *(url + value.len) = (char)0;
     curl_easy_setopt(curl, CURLOPT_URL, url);
 
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);

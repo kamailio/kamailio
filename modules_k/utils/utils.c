@@ -44,12 +44,7 @@ static void destroy(void);
 
 
 /* Module parameter variables */
-
 int http_query_timeout = 4;
-str http_server = str_init("http://localhost");
-
-
-/* Internal variables */
 
 
 /* Fixup functions to be defined later */
@@ -59,7 +54,7 @@ static int fixup_free_http_query(void** param, int param_no);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-    {"http_query", (cmd_function)http_query, 3, fixup_http_query,
+    {"http_query", (cmd_function)http_query, 2, fixup_http_query,
      fixup_free_http_query,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {0, 0, 0, 0, 0, 0}
@@ -69,7 +64,6 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {
     {"http_query_timeout", INT_PARAM, &http_query_timeout},
-    {"http_server", STR_PARAM, &http_server.s},
     {0, 0, 0}
 };
 
@@ -94,9 +88,6 @@ struct module_exports exports = {
 /* Module initialization function */
 static int mod_init(void)
 {
-    /* Update length of module variables */
-    http_server.len = strlen(http_server.s);
-
     /* Initialize curl */
     if (curl_global_init(CURL_GLOBAL_ALL)) {
 	LM_ERR("curl_global_init failed\n");
@@ -117,19 +108,16 @@ static void destroy(void)
 /* Fixup functions */
 
 /*
- * Fix http_query params: server page (string that may contain pvars),
- * params (string that may contain pvars), and result (writable pvar).
+ * Fix http_query params: url (string that may contain pvars) and
+ * result (writable pvar).
  */
 static int fixup_http_query(void** param, int param_no)
 {
-    LM_INFO("entering fixup_http_query\n");
-
-    if ((param_no == 1) || (param_no == 2)) {
-	LM_INFO("leaving fixup_http_query\n");
+    if (param_no == 1) {
 	return fixup_spve_null(param, 1);
     }
 
-    if (param_no == 3) {
+    if (param_no == 2) {
 	if (fixup_pvar(param) != 0) {
 	    LM_ERR("failed to fixup result pvar\n");
 	    return -1;
@@ -151,12 +139,12 @@ static int fixup_http_query(void** param, int param_no)
  */
 static int fixup_free_http_query(void** param, int param_no)
 {
-    if ((param_no == 1) || (param_no == 2)) {
+    if (param_no == 1) {
 	LM_WARN("free function has not been defined for spve\n");
 	return 0;
     }
 
-    if (param_no == 3) {
+    if (param_no == 2) {
 	return fixup_free_pvar_null(param, 1);
     }
     

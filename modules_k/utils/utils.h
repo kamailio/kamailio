@@ -28,6 +28,5 @@
 #include "../../str.h"
 
 extern int http_query_timeout;
-extern str http_server;
 
 #endif /* UTILS_H */
