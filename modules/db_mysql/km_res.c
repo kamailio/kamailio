@@ -41,8 +41,14 @@
 #include "res.h"
 
 
-/*! \brief
- * Get and convert columns from a result
+/*!
+ * \brief Get and convert columns from a result
+ *
+ * Get and convert columns from a result, fills the result structure
+ * with data from the database.
+ * \param _h database connection
+ * \param _r database result set
+ * \return 0 on success, negative on failure
  */
 int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 {
@@ -143,8 +149,11 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 }
 
 
-/*! \brief
- * Convert rows from mysql to db API representation
+/*!
+ * \brief Convert rows from mysql to db API representation
+ * \param _h database connection
+ * \param _r database result set
+ * \return 0 on success, negative on failure
  */
 static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
@@ -190,8 +199,11 @@ static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 }
 
 
-/*! \brief
- * Fill the structure with data from database
+/*!
+ * \brief Fill the result structure with data from database
+ * \param _h database connection
+ * \param _r database result
+ * \return 0 on success, negative on failure
  */
 int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r)
 {

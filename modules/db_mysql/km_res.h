@@ -38,11 +38,21 @@
 #include "../../db/db_con.h"
 
 
-/*
- * Fill the structure with data from database
+/*!
+ * \brief Fill the result structure with data from database
+ * \param _h database connection
+ * \param _r database result
+ * \return 0 on success, negative on failure
  */
 int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r);
 
+
+/*!
+ * \brief Get and convert columns from a result
+ * \param _h database connection
+ * \param _r database result set
+ * \return 0 on success, negative on failure
+ */
 int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r);
 
-#endif /* RES_H */
+#endif

@@ -39,9 +39,13 @@
 #include "../../db/db_row.h"
 
 
-/**
- * Convert a row from result into db API representation
+/*!
+ * \brief Convert a row from result into DB API representation
+ * \param _h database connection
+ * \param _res database result in the DB API representation
+ * \param _r database result row
+ * \return 0 on success, -1 on failure
  */
 int db_mysql_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r);
 
-#endif /* ROW_H */
+#endif
