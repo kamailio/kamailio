@@ -37,8 +37,8 @@
 
 /*!
  * \brief Convert to hex form
- * \param Bin hash value
- * \param Hex hex value
+ * \param _b hash value
+ * \param _h hex value
  */
 inline void cvt_hex(HASH _b, HASHHEX _h)
 {

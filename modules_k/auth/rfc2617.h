@@ -50,10 +50,10 @@ typedef enum {
 
 /*!
  * \brief Convert to hex form
- * \param Bin hash value
- * \param Hex hex value
+ * \param _b hash value
+ * \param _h hex value
  */
-void cvt_hex(HASH Bin, HASHHEX Hex);
+void cvt_hex(HASH _b, HASHHEX _h);
 
 
 /*!
