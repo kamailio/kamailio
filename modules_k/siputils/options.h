@@ -22,14 +22,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*! \file options/mod_options.h
- *  \brief Options reply modules
- *  \ingroup options
- *  Module: \ref options
+/*!
+ * \file siputils/options.c
+ * \brief Options reply modules
+ * \ingroup options
+ * Module: \ref options
  */
 
 #ifndef OPT_RPL_H
 #define OPT_RPL_H
+
+#include "../../str.h"
+#include "../../parser/msg_parser.h"
+#include "../sl/sl_api.h"
 
 #define ACPT_STR "Accept: "
 #define ACPT_STR_LEN 8
@@ -42,7 +47,7 @@
 #define HF_SEP_STR "\r\n"
 #define HF_SEP_STR_LEN 2
 
-/* 
+/*
  * I think RFC3261 is not precise if a proxy should accept any
  * or no body (because it is not the endpoint of the media)
  */
@@ -55,4 +60,13 @@
 #define SUPT_DEF ""
 #define SUPT_DEF_LEN 0
 
-#endif /* OPT_RPL_H */
+extern struct sl_binds opt_slb;
+
+extern str opt_accept;
+extern str opt_accept_enc;
+extern str opt_accept_lang;
+extern str opt_supported;
+
+int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
+
+#endif

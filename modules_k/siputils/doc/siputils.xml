@@ -30,11 +30,22 @@
 			<email>henning.westerholt@1und1.de</email>
 		</address>
 		</author>
+		<author>
+		<firstname>Nils</firstname>
+		<surname>Ohlmeier</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<address>
+		    <email>nils@iptel.org</email>
+		</address>
+	    </author>
 	</authorgroup>
 	<copyright>
 		<year>2008</year>
+		<year>2003</year>
 		<holder>1&amp;1 Internet AG</holder>
+		<holder>FhG Fokus</holder>
 	</copyright>
+
 	<revhistory>
 		<revision>
 		<revnumber>$Revision: 4872 $</revnumber>

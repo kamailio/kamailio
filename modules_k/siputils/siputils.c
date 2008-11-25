@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2008-2009 1&1 Internet AG
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -38,24 +39,37 @@
 #include "../../locking.h"
 
 #include "ring.h"
+#include "options.h"
 
 
 MODULE_VERSION
 
 gen_lock_t *ring_lock = NULL;
 unsigned int ring_timeout = 0;
+/* for options functionality */
+str opt_accept;
+str opt_accept_enc;
+str opt_accept_lang;
+str opt_supported;
+/** SL binds */
+struct sl_binds opt_slb;
 
 static int mod_init(void);
 static void mod_destroy(void);
 
 
 static cmd_export_t cmds[]={
-	{ "ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE },
+	{"ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"options_reply", (cmd_function)opt_reply, 0, 0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 
 static param_export_t params[] = {
-	{"ring_timeout",  INT_PARAM, &ring_timeout  },
+	{"ring_timeout",    INT_PARAM, &ring_timeout},
+	{"accept",          STR_PARAM, &opt_accept.s},
+	{"accept_encoding", STR_PARAM, &opt_accept_enc.s},
+	{"accept_language", STR_PARAM, &opt_accept_lang.s},
+	{"support",         STR_PARAM, &opt_supported.s},
 	{0, 0, 0}
 };
 
@@ -91,6 +105,41 @@ static int mod_init(void)
 			LM_ERR("could not insert callback");
 			return -1;
 		}
+	}
+
+		/* load the SL API */
+	if (load_sl_api(&opt_slb)!=0) {
+		LM_ERR("can't load SL API\n");
+		return -1;
+	}
+
+	if (opt_accept.s) {
+		opt_accept.len = strlen(opt_accept.s);
+	}
+	else {
+		opt_accept.len = ACPT_DEF_LEN;
+		opt_accept.s = ACPT_DEF;
+	}
+	if (opt_accept_enc.s) {
+		opt_accept_enc.len = strlen(opt_accept_enc.s);
+	}
+	else {
+		opt_accept_enc.len = ACPT_ENC_DEF_LEN;
+		opt_accept_enc.s = ACPT_ENC_DEF;
+	}
+	if (opt_accept_lang.s) {
+		opt_accept_lang.len = strlen(opt_accept_lang.s);
+	}
+	else {
+		opt_accept_lang.len = ACPT_LAN_DEF_LEN;
+		opt_accept_lang.s = ACPT_LAN_DEF;
+	}
+	if (opt_supported.s) {
+		opt_supported.len = strlen(opt_supported.s);
+	}
+	else {
+		opt_supported.len = SUPT_DEF_LEN;
+		opt_supported.s = SUPT_DEF;
 	}
 
 	return 0;
