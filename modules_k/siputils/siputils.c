@@ -66,11 +66,11 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[] = {
-	{"ring_timeout",    INT_PARAM, &ring_timeout},
-	{"accept",          STR_PARAM, &opt_accept.s},
-	{"accept_encoding", STR_PARAM, &opt_accept_enc.s},
-	{"accept_language", STR_PARAM, &opt_accept_lang.s},
-	{"support",         STR_PARAM, &opt_supported.s},
+	{"ring_timeout",            INT_PARAM, &ring_timeout},
+	{"options_accept",          STR_PARAM, &opt_accept.s},
+	{"options_accept_encoding", STR_PARAM, &opt_accept_enc.s},
+	{"options_accept_language", STR_PARAM, &opt_accept_lang.s},
+	{"options_support",         STR_PARAM, &opt_supported.s},
 	{0, 0, 0}
 };
 

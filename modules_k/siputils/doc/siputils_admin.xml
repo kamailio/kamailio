@@ -83,7 +83,7 @@ modparam("utils", "ring_timeout", "30")
 			</example>
 		</section>
 			<section>
-		<title><varname>accept</varname> (string)</title>
+		<title><varname>options_accept</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept header field.
 			Note: it is not clearly written in RFC3261 if a proxy should
@@ -97,16 +97,16 @@ modparam("utils", "ring_timeout", "30")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>accept</varname> parameter</title>
+		<title>Set <varname>options_accept</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "accept", "application/*")
+modparam("options", "options_accept", "application/*")
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>accept_encoding</varname> (string)</title>
+		<title><varname>options_accept_encoding</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept-Encoding header field.
 			Please do not change the default value because &kamailio; 
@@ -118,16 +118,16 @@ modparam("options", "accept", "application/*")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>accept_encoding</varname> parameter</title>
+		<title>Set <varname>options_accept_encoding</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "accept_encoding", "gzip")
+modparam("options", "options_accept_encoding", "gzip")
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>accept_language</varname> (string)</title>
+		<title><varname>options_accept_language</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept-Language header field.
 			You can set any language code which you prefer for error 
@@ -141,16 +141,16 @@ modparam("options", "accept_encoding", "gzip")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>accept_language</varname> parameter</title>
+		<title>Set <varname>options_accept_language</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "accept_language", "de")
+modparam("options", "options_accept_language", "de")
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>support</varname> (string)</title>
+		<title><varname>options_support</varname> (string)</title>
 		<para>
 			This parameter is the content of the Support header field.
 			Please do not change the default value, because &kamailio; currently 
@@ -162,10 +162,10 @@ modparam("options", "accept_language", "de")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>support</varname> parameter</title>
+		<title>Set <varname>options_support</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "support", "100rel")
+modparam("options", "options_support", "100rel")
 ...
 </programlisting>
 		</example>
