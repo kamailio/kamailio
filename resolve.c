@@ -1019,6 +1019,11 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 					memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
 					break;
+				case PROTO_SCTP:
+					memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
+					memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
+					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
 							srv_proto);
