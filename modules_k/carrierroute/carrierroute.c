@@ -110,7 +110,7 @@ static param_export_t params[]= {
 	{"subscriber_domain_col",  STR_PARAM, &subscriber_domain_col.s },
 	{"subscriber_carrier_col", STR_PARAM, &cr_preferred_carrier_col.s },
 	{"config_source",          STR_PARAM, &config_source },
-	{"default_tree",           STR_PARAM, &default_tree },
+	{"default_tree",           STR_PARAM, &default_tree.s },
 	{"config_file",            STR_PARAM, &config_file },
 	{"use_domain",             INT_PARAM, &use_domain },
 	{"fallback_default",       INT_PARAM, &fallback_default },
