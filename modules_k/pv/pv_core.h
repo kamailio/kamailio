@@ -29,5 +29,210 @@
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_udp(struct sip_msg *msg, pv_param_t *param, 
+		pv_value_t *res);
+
+int pv_get_5060(struct sip_msg *msg, pv_param_t *param, 
+		pv_value_t *res);
+
+int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_times(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_method(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_status(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_reason(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_ruri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_ouri(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
+		pv_param_t *param, pv_value_t *res);
+
+int pv_get_ruri_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_ouri_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_errinfo_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_contact(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_xto_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, struct to_body *xto, int type);
+
+int pv_get_to_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_from_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_cseq(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_msg_buf(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_msg_len(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_flags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_hexflags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_bflags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_hexbflags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_sflags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_hexsflags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_callid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_srcip(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_srcport(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvip(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_useragent(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_refer_to(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_diversion(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_rpid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_ppi_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_pai(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_dset(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_dsturi(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_dsturi_attr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_content_type(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_content_length(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_msg_body(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_authattr(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_acc_username(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_branch(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+
+int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+
+int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
+/********* end PV get functions *********/
+
+/********* start PV set functions *********/
+int pv_set_avp(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_scriptvar(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_dsturi(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_ruri(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_ruri_user(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_ruri_host(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_branch(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_mflags(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_sflags(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+/********* end PV set functions *********/
+
+int pv_parse_scriptvar_name(pv_spec_p sp, str *in);
+
+int pv_parse_hdr_name(pv_spec_p sp, str *in);
+
+int pv_parse_avp_name(pv_spec_p sp, str *in);
+
 #endif
 
