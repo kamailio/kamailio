@@ -261,8 +261,8 @@ typedef struct fparam {
 		avp_ident_t avp;          /* AVP identifier */
 		select_t* select;         /* select structure */ 
 		struct subst_expr* subst; /* Regex substitution */
-		struct pv_spec_t* pvs;    /* kamailo pseudo-vars */
-		struct pv_elem_t* pve;    /* kamailo pseudo-vars */
+		pv_spec_t* pvs;    /* kamailo pseudo-vars */
+		pv_elem_t* pve;    /* kamailo pseudo-vars in a string */
 	} v;
 } fparam_t;
 
@@ -417,6 +417,7 @@ int fix_flag( modparam_t type, void* val,
  * parameter types
  */
 int fix_param(int type, void** param);
+void fparam_free_contents(fparam_t* fp);
 
 /*
  * Fixup variable string, the parameter can be

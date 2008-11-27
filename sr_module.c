@@ -1031,6 +1031,7 @@ int fix_param(int type, void** param)
 			if (regcomp(p->v.regex, *param,
 						REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
 				pkg_free(p->v.regex);
+				p->v.regex=0;
 				ERR("Bad regular expression '%s'\n", (char*)*param);
 				goto error;
 			}
@@ -1058,7 +1059,7 @@ int fix_param(int type, void** param)
 			if (!name.len || name.s[0] != '@') {
 				/* Not a select identifier */
 				pkg_free(p);
-			return 1;
+				return 1;
 			}
 			if (parse_select(&name.s, &p->v.select) < 0) {
 				ERR("Error while parsing select identifier\n");
@@ -1071,7 +1072,37 @@ int fix_param(int type, void** param)
 			p->v.subst = subst_parser(&s);
 			if (!p->v.subst) {
 				ERR("Error while parsing regex substitution\n");
-			goto error;
+				goto error;
+			}
+			break;
+		case FPARAM_PVS:
+			name.s = (char*)*param;
+			name.len = strlen(name.s);
+			trim(&name);
+			if (!name.len || name.s[0] != '$'){
+				/* not a pvs identifier */
+				pkg_free(p);
+				return 1;
+			}
+			p->v.pvs=pkg_malloc(sizeof(pv_spec_t));
+			if (p->v.pvs==0){
+				ERR("out of memory while parsing pv_spec_t\n");
+				goto error;
+			}
+			if (pv_parse_spec(&name, p->v.pvs)==0){
+				ERR("unsupported user field indentifier \"%.*s\"\n",
+						name.len, name.s);
+				pkg_free(p->v.pvs);
+				p->v.pvs=0;
+				goto error;
+			}
+			break;
+		case FPARAM_PVE:
+			name.s = (char*)*param;
+			name.len = strlen(name.s);
+			if (pv_parse_format(&name, &p->v.pve)<0){
+				ERR("bad PVE format: \"%.*s\"\n", name.len, name.s);
+				goto error;
 			}
 			break;
 	}
@@ -1083,6 +1114,63 @@ int fix_param(int type, void** param)
 error:
 	pkg_free(p);
 	return E_UNSPEC;
+}
+
+
+
+/** fparam_t free function.
+ *  Frees the "content" of a fparam, but not the fparam itself.
+ *  Assumes pkg_malloc'ed content.
+ *  @param fp -  fparam to be freed
+ *
+ */
+void fparam_free_contents(fparam_t* fp)
+{
+
+	if (fp==0)
+		return;
+	switch(fp->type) {
+		case FPARAM_UNSPEC:
+		case FPARAM_STRING: /* asciiz string, not str */
+		case FPARAM_INT:
+		case FPARAM_STR:
+			/* nothing to do */
+			return;
+		case FPARAM_REGEX:
+			if (fp->v.regex){
+				regfree(fp->v.regex);
+				pkg_free(fp->v.regex);
+				fp->v.regex=0;
+			}
+			break;
+		case FPARAM_AVP:
+			free_avp_name(&fp->v.avp.flags, &fp->v.avp.name);
+			break;
+		case FPARAM_SELECT:
+			if (fp->v.select){
+				free_select(fp->v.select);
+				fp->v.select=0;
+			}
+			break;
+		case FPARAM_SUBST:
+			if (fp->v.subst){
+				subst_expr_free(fp->v.subst);
+				fp->v.subst=0;
+			}
+			break;
+		case FPARAM_PVS:
+			if (fp->v.pvs){
+				pv_spec_free(fp->v.pvs);
+				fp->v.pvs=0;
+			}
+			break;
+		case FPARAM_PVE:
+			if (fp->v.pve){
+				pv_elem_free_all(fp->v.pve);
+				fp->v.pve=0;
+			}
+			break;
+	}
 }
 
 
