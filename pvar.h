@@ -72,7 +72,11 @@
 
 enum _pv_type { 
 	PVT_NONE=0,           PVT_EMPTY,             PVT_NULL, 
-	PVT_MARKER,           PVT_AVP,               PVT_COLOR,
+	PVT_MARKER,           PVT_AVP,               PVT_HDR,
+	PVT_RURI,             PVT_RURI_USERNAME,     PVT_RURI_DOMAIN,
+	PVT_DSTURI,           PVT_COLOR,             PVT_BRANCH,
+	PVT_FROM,             PVT_TO,                PVT_OURI,
+	PVT_SCRIPTVAR,        PVT_MSG_BODY,
 	PVT_OTHER,            PVT_EXTRA /* keep it last */
 };
 
