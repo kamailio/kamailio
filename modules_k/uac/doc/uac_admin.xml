@@ -98,7 +98,7 @@ modparam("uac","rr_store_param","my_param")
 			<listitem>
 				<para>
 				<quote>none</quote> - no information about original URI is 
-				stored; restoretion is not possible.
+				stored; restoration is not possible.
 				</para>
 			</listitem>
 			<listitem>

@@ -104,7 +104,7 @@ modparam("uac","rr_store_param","my_param")
 
    There are 3 mode of restoring the original FROM URI:
      * "none" - no information about original URI is stored;
-       restoretion is not possible.
+       restoration is not possible.
      * "manual" - all following replies will be restored, but not
        also the sequential requests - this must be manually
        updated based on original URI.
