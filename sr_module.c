@@ -38,6 +38,7 @@
  *  2006-02-07  added fix_flag (andrei)
  *  2008-02-29  store all the reponse callbacks in their own array (andrei)
  *  2008-11-17  support dual module interface: ser & kamailio (andrei)
+ *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
  */
 
 
@@ -1172,6 +1173,27 @@ void fparam_free_contents(fparam_t* fp)
 			break;
 	}
 }
+
+
+
+/** fix a param to one of the given types (mask).
+  *
+  * @param types - bitmap of the allowed types (e.g. FPARAM_INT|FPARAM_STR)
+  * @param param - value/result
+  * @return - 0 on success, -1 on error, 1 if param doesn't
+  *           match any of the types
+  */
+int fix_param_types(int types, void** param)
+{
+	int ret;
+	int t;
+	
+	for (t=types & ~(types-1); types; types&=(types-1), t=types & ~(types-1)){
+		if ((ret=fix_param(t, param))<=0) return ret;
+	}
+	return E_UNSPEC;
+}
+
 
 
 /*
