@@ -854,10 +854,10 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
  *          <id>   = ascii string w/o '[', ']', '.' and '/'
  *          <name> = <id> | '/' regex '/'
  *                   (Note: regex use is deprecated)
- *          <track> = 'f' | 't' | 'g'
- *                   (from, to  or global)
- *          <class> = 'r' | 'u' | 'd' 
- *                    (uri, user or domain)
+ *          <track> = 'f' | 't'
+ *                   (from or to)
+ *          <class> = 'r' | 'u' | 'd' | 'g'
+ *                    (uri, user, domain or global)
  *          <index> = <number> | '-' <number> | ''
  *                    (the avp index, if missing it means AVP_INDEX_ALL, but
  *                     it's use is deprecated)
