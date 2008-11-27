@@ -1348,16 +1348,17 @@ int fixup_str_2(void** param, int param_no)
 }
 
 
-/*
- * Get the function parameter value as string
- * Return values:  0 - Success
- *                -1 - Cannot get value
+/** Get the function parameter value as string.
+ *  @return  0 - Success
+ *          -1 - Cannot get value
  */
 int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 {
 	int_str val;
 	int ret;
 	avp_t* avp;
+	pv_value_t pv_val;
+	static char pve_buf[256]; /* ugly hack needed for PVE */
 	
 	switch(param->type) {
 		case FPARAM_REGEX:
@@ -1374,12 +1375,12 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 		case FPARAM_AVP:
 			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
 									&val, 0);
-			if (!avp) {
+			if (unlikely(!avp)) {
 				DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
-			if (avp->flags & AVP_VAL_STR) {
+			if (likely(avp->flags & AVP_VAL_STR)) {
 				*dst = val.s;
 			} else {
 		 		/* The caller does not know of what type the AVP will be so
@@ -1390,17 +1391,34 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_SELECT:
 			ret = run_select(dst, param->v.select, msg);
-			if (ret < 0 || ret > 0) return -1;
+			if (unlikely(ret < 0 || ret > 0)) return -1;
+			break;
+		case FPARAM_PVS:
+			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
+					   ((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
+					*dst=pv_val.rs;
+			}else{
+				ERR("Could not convert PV to str\n");
+				return -1;
+			}
+			break;
+		case FPARAM_PVE:
+			dst->len=sizeof(pve_buf);
+			if (unlikely(pv_printf(msg, param->v.pve, pve_buf, &dst->len)!=0)){
+				ERR("Could not convert the PV-formated string to str\n");
+				dst->len=0;
+				return -1;
+			};
+			dst->s=pve_buf;
 			break;
 	}
 	return 0;
 }
 
 
-/*
- * Get the function parameter value as integer
- * Return values:  0 - Success
- *                -1 - Cannot get value
+/** Get the function parameter value as integer.
+ *  @return  0 - Success
+ *          -1 - Cannot get value
  */
 int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 {
@@ -1408,6 +1426,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 	int ret;
 	avp_t* avp;
 	str tmp;
+	pv_value_t pv_val;
 
 	switch(param->type) {
 		case FPARAM_INT:
@@ -1421,7 +1440,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 		case FPARAM_AVP:
 			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
 									&val, 0);
-			if (!avp) {
+			if (unlikely(!avp)) {
 				DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
@@ -1437,12 +1456,23 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_SELECT:
 			ret = run_select(&tmp, param->v.select, msg);
-			if (ret < 0 || ret > 0) return -1;
-			if (str2int(&tmp, (unsigned int*)dst) < 0) {
+			if (unlikely(ret < 0 || ret > 0)) return -1;
+			if (unlikely(str2int(&tmp, (unsigned int*)dst) < 0)) {
 				ERR("Could not convert select result to int\n");
 				return -1;
 			}
 			break;
+		case FPARAM_PVS:
+			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
+					   ((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT))){
+					*dst=pv_val.ri;
+			}else{
+				ERR("Could not convert PV to int\n");
+				return -1;
+			}
+			break;
+		case FPARAM_PVE:
+			return -1;
 	}
 	return 0;
 }
