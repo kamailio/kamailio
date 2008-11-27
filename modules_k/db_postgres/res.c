@@ -333,7 +333,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
  * \param _r result set
  * \param _row row
  * \param row_buf row buffer
- * \param 0 on success, negative on error
+ * \return 0 on success, negative on error
  */
 int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 		char **row_buf)

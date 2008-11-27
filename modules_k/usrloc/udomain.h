@@ -109,7 +109,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d);
 /*!
  * \brief Timer function to cleanup expired contacts, DB_ONLY db_mode
  * \param _d cleaned domain
- * \param 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 int db_timer_udomain(udomain_t* _d);
 
@@ -177,7 +177,7 @@ void unlock_ulslot(udomain_t* _d, int i);
  * \param _d domain to insert the new record
  * \param _aor address of the record
  * \param _r new created record
- * \param return 0 on success, -1 on failure
+ * \return return 0 on success, -1 on failure
  */
 typedef int (*insert_urecord_t)(udomain_t* _d, str* _aor, struct urecord** _r);
 int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
@@ -199,7 +199,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _d domain where the record should be deleted
  * \param _aor address of record
  * \param _r deleted record
- * \param 0 on success, -1 if the record could not be deleted
+ * \return 0 on success, -1 if the record could not be deleted
  */
 typedef int  (*delete_urecord_t)(udomain_t* _d, str* _aor, struct urecord* _r);
 int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);

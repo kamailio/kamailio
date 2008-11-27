@@ -110,6 +110,7 @@ typedef struct ucontact_info {
  * \brief Create a new contact structure
  * \param _dom domain
  * \param _aor address of record
+ * \param _contact contact string
  * \param _ci contact informations
  * \return new created contact on success, 0 on failure
  */
