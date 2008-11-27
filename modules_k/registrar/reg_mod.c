@@ -149,7 +149,7 @@ struct sl_binds slb;
  * Exported PV
  */
 static pv_export_t mod_pvs[] = {
-	{ {"ulc", sizeof("ulc")-1}, 1001, pv_get_ulc, pv_set_ulc,
+	{ {"ulc", sizeof("ulc")-1}, PVT_OTHER, pv_get_ulc, pv_set_ulc,
 		pv_parse_ulc_name, pv_parse_index, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

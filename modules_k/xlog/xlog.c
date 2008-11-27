@@ -74,7 +74,7 @@ typedef struct _xl_level
 } xl_level_t, *xl_level_p;
 
 static pv_export_t mod_items[] = {
-	{ {"C", sizeof("C")-1}, 101, pv_get_color, 0,
+	{ {"C", sizeof("C")-1}, PVT_OTHER, pv_get_color, 0,
 		pv_parse_color_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

@@ -266,9 +266,9 @@ static stat_export_t mod_stats[] = {
  * pseudo-variables exported by TM module
  */
 static pv_export_t mod_items[] = {
-	{ {"T_branch_idx", sizeof("T_branch_idx")-1}, 900, pv_get_tm_branch_idx, 0,
+	{ {"T_branch_idx", sizeof("T_branch_idx")-1}, PVT_OTHER, pv_get_tm_branch_idx, 0,
 		 0, 0, 0, 0 },
-	{ {"T_reply_code", sizeof("T_reply_code")-1}, 901, pv_get_tm_reply_code, 0,
+	{ {"T_reply_code", sizeof("T_reply_code")-1}, PVT_OTHER, pv_get_tm_reply_code, 0,
 		 0, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

@@ -35,13 +35,13 @@ MODULE_VERSION
 
 static pv_export_t mod_pvs[] = {
 	{ {"branch", sizeof("branch")-1}, /* branch attributes */
-		101, pv_get_branchx, pv_set_branchx,
+		PVT_OTHER, pv_get_branchx, pv_set_branchx,
 		pv_parse_branchx_name, pv_parse_index, 0, 0 },
 	{ {"mi", (sizeof("mi")-1)}, /* message id */
 		PVT_MSGID, pv_get_msgid, 0,
 		0, 0, 0, 0},
 	{ {"stat", sizeof("stat")-1}, /* statistics */
-		101, pv_get_stat, 0,
+		PVT_OTHER, pv_get_stat, 0,
 		pv_parse_stat_name, 0, 0, 0 },
 
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,

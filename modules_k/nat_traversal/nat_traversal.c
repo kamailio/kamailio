@@ -248,8 +248,8 @@ static param_export_t parameters[] = {
 };
 
 static pv_export_t pvars[] = {
-    {str_init("keepalive.socket"), 1000, pv_get_keepalive_socket, NULL, pv_parse_nat_contact_name, NULL, NULL, 0},
-    {str_init("source_uri"), 1000, pv_get_source_uri, NULL, NULL, NULL, NULL, 0},
+    {str_init("keepalive.socket"), PVT_OTHER, pv_get_keepalive_socket, NULL, pv_parse_nat_contact_name, NULL, NULL, 0},
+    {str_init("source_uri"), PVT_OTHER, pv_get_source_uri, NULL, NULL, NULL, NULL, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 

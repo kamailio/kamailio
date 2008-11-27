@@ -195,11 +195,11 @@ static mi_export_t mi_cmds[] = {
 
 
 static pv_export_t mod_items[] = {
-	{ {"DLG_count",  sizeof("DLG_count")-1}, 1000,  pv_get_dlg_count,    0,
+	{ {"DLG_count",  sizeof("DLG_count")-1}, PVT_OTHER,  pv_get_dlg_count,    0,
 		0, 0, 0, 0 },
-	{ {"DLG_lifetime",sizeof("DLG_lifetime")-1}, 1000, pv_get_dlg_lifetime, 0,
+	{ {"DLG_lifetime",sizeof("DLG_lifetime")-1}, PVT_OTHER, pv_get_dlg_lifetime, 0,
 		0, 0, 0, 0 },
-	{ {"DLG_status",  sizeof("DLG_status")-1}, 1000, pv_get_dlg_status, 0,
+	{ {"DLG_status",  sizeof("DLG_status")-1}, PVT_OTHER, pv_get_dlg_status, 0,
 		0, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

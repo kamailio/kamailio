@@ -181,11 +181,11 @@ static mi_export_t mi_cmds[] = {
 
 
 static pv_export_t mod_items[] = {
-	{ {"RANDOM", sizeof("RANDOM")-1}, 1000, pv_get_random_val, 0,
+	{ {"RANDOM", sizeof("RANDOM")-1}, PVT_OTHER, pv_get_random_val, 0,
 		0, 0, 0, 0 },
-	{ {"shv", (sizeof("shv")-1)}, 1001, pv_get_shvar,
+	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
 		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
-	{ {"time", (sizeof("time")-1)}, 1002, pv_get_time,
+	{ {"time", (sizeof("time")-1)}, PVT_OTHER, pv_get_time,
 		0, pv_parse_time_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }

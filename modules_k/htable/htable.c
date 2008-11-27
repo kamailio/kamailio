@@ -48,7 +48,7 @@ static int mod_init(void);
 void destroy(void);
 
 static pv_export_t mod_pvs[] = {
-	{ {"sht", sizeof("sht")-1}, 1001, pv_get_ht_cell, pv_set_ht_cell,
+	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
 		pv_parse_ht_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
