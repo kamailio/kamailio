@@ -197,7 +197,7 @@ int add_avp_galias(str *alias, int type, int_str avp_name);
 int parse_avp_ident( str *name, avp_ident_t* attr);
 int parse_avp_name( str *name, int *type, int_str *avp_name, int *index);
 int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index);
-void free_avp_name( int *type, int_str *avp_name);
+void free_avp_name( avp_flags_t *type, int_str *avp_name);
 
 /* AVP flags functions */
 #define MAX_AVPFLAG  ((unsigned int)( sizeof(avp_flags_t) * CHAR_BIT - 1 - AVP_CUSTOM_FLAGS))
