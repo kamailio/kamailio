@@ -39,6 +39,7 @@
 			<itemizedlist>
 			<listitem>
 				<para><emphasis>sl</emphasis> -- Stateless replies</para>
+				<para><emphasis>pv</emphasis> -- Pseudo-variables</para>
 			</listitem>
 			</itemizedlist>
 			</para>

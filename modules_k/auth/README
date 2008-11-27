@@ -120,6 +120,7 @@ Chapter 1. Admin Guide
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
      * sl -- Stateless replies
+       pv -- Pseudo-variables
 
 1.3.2. External Libraries or Applications
 
