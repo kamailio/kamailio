@@ -60,11 +60,30 @@ static select_table_t *select_list = &select_core_table;
  */
 int select_level = 0;
 
-/*
+/** parse a select identifier (internal version)
  * Parse select string into select structure s
- * moves pointer p to the first unused char
+ * moves pointer p to the first unused char.
  *
- * Returns -1 error
+ * The select identifier must be of the form:
+ *   [@] <sel_id> [ '.' <sel_id> ...]
+ *   
+ * Where 
+ *       <sel_id> = <id> |
+ *                  <id> '[' <idx> ']'
+ *       <id> = [a-zA-Z0-9_]+
+ *       <idx> = <number> | <string>
+ *       <string> = '"' <ascii> '"' | 
+ *                  '\"' <ascii> '\"'
+ *
+ * Examples:
+ *     @to.tag
+ *     @hf_value["contact"]
+ *     @msg.header["SER-Server-ID"]
+ *     @eval.pop[-1]
+ *     contact.uri.params.maddr
+ *     cfg_get.rtp_proxy.enabled 
+ *
+ * @return -1 error
  *			  p points to the first unconsumed char
  *          0 success
  *			  p points to the first unconsumed char
@@ -148,6 +167,35 @@ error:
 	return -1;
 }
 
+
+/** parse a select identifier.
+ * Parse select string into select structure s and
+ * moves pointer p to the first unused char.
+ * 
+ * The select identifier must be of the form:
+ *   [@] <sel_id> [ '.' <sel_id> ...]
+ *   
+ * Where 
+ *       <sel_id> = <id> |
+ *                  <id> '[' <idx> ']'
+ *       <id> = [a-zA-Z0-9_]+
+ *       <idx> = <number>  | '-' <number> | <string>
+ *       <string> = '"' <ascii> '"' | 
+ *                  '\"' <ascii> '\"'
+ *
+ * Examples:
+ *     @to.tag
+ *     @hf_value["contact"]
+ *     @msg.header["SER-Server-ID"]
+ *     @eval.pop[-1]
+ *     contact.uri.params.maddr
+ *     cfg_get.rtp_proxy.enabled 
+  *
+  * @param p - double string (asciiz) pointer, *p is moved to the first char
+  *            after the select identifier
+  * @param s - the result will be stored here
+  * @return  < 0 on error, 0 on success
+  */
 int parse_select (char** p, select_t** s)
 {
 	select_t* sel;
