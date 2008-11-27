@@ -156,7 +156,7 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"append_to_reply",  (cmd_function)append_to_reply_f, 1,
 		fixup_spve_null, 0,
-		REQUEST_ROUTE|BRANCH_ROUTE|ERROR_ROUTE},
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ERROR_ROUTE},
 	{"append_hf",        (cmd_function)append_hf_1,       1,
 		add_header_fixup, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
