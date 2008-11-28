@@ -1142,6 +1142,9 @@ inline static int io_wait_loop_sigio_rt(io_wait_h* h, int t)
 	int sigio_fd;
 	struct fd_map* fm;
 	int revents;
+#ifdef SIGINFO64_WORKARROUND
+	int* pi;
+#endif
 	
 	
 	ret=1; /* 1 event per call normally */
@@ -1177,8 +1180,9 @@ again:
 		 *  On newer kernels this is fixed (si_band is long in the kernel too).
 		 * -- andrei */
 		if  ((_os_ver<0x020605) && (sizeof(siginfo.si_band)>sizeof(int))){
-			sigio_band=*((int*)(void*)&siginfo.si_band);
-			sigio_fd=*(((int*)(void*)&siginfo.si_band)+1);
+			pi=(int*)(void*)&siginfo.si_band; /* avoid type punning warnings */
+			sigio_band=*pi;
+			sigio_fd=*(pi+1);
 		}else
 #endif
 		{
