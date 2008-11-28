@@ -75,6 +75,7 @@
  *  2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
+ *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
 */
 
 
@@ -94,8 +95,10 @@
 	#define COMMENT_S		1
 	#define COMMENT_LN_S	        2
 	#define STRING_S		3
-	#define ATTR_S                  4
-        #define SELECT_S                5
+	#define ATTR_S                  4  /* avp/attr */
+	#define SELECT_S                5
+	#define AVP_PVAR_S              6  /* avp or pvar */
+	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -106,6 +109,7 @@
 
 
 	static int comment_nest=0;
+	static int p_nest=0;
 	static int state=0, old_state=0, old_initial=0;
 	static struct str_buf s_buf;
 	int line=1;
@@ -120,7 +124,7 @@
 %}
 
 /* start conditions */
-%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT
+%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
 
 /* action keywords */
 FORWARD	forward
@@ -219,7 +223,8 @@ PLUS	"+"
 MINUS	"-"
 
 /* Attribute specification */
-ATTR_MARK   "$"|"%"
+ATTR_MARK   "%"
+VAR_MARK    "$"
 SELECT_MARK  "@"
 ATTR_FROM         "f"
 ATTR_TO           "t"
@@ -230,6 +235,9 @@ ATTR_TOUSER       "tu"
 ATTR_FROMDOMAIN   "fd"
 ATTR_TODOMAIN     "td"
 ATTR_GLOBAL       "g"
+
+/* avp prefix */
+AVP_PREF	(([ft][rud]?)|g)\.
 
 /* config vars. */
 DEBUG	debug
@@ -729,7 +737,8 @@ EAT_ABLE	[\ \t\b\r]
 <SELECT>{BINNUMBER}     { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
 
 
-<INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
+<INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR);
+							return ATTR_MARK; }
 <ATTR>{ATTR_FROM}       { count(); return ATTR_FROM; }
 <ATTR>{ATTR_TO}         { count(); return ATTR_TO; }
 <ATTR>{ATTR_FROMURI}    { count(); return ATTR_FROMURI; }
@@ -742,15 +751,48 @@ EAT_ABLE	[\ \t\b\r]
 <ATTR>{DOT}             { count(); return DOT; }
 <ATTR>{LBRACK}          { count(); return LBRACK; }
 <ATTR>{RBRACK}          { count(); return RBRACK; }
-<ATTR>{STAR}		{ count(); return STAR; }
-<ATTR>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
-<ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
-                           yylval.strval=s_buf.s;
-			   memset(&s_buf, 0, sizeof(s_buf));
-                           state = INITIAL_S;
-                           BEGIN(INITIAL);
-			   return ID;
-                        }
+<ATTR>{STAR}			{ count(); return STAR; }
+<ATTR>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<ATTR>{ID}				{ count(); addstr(&s_buf, yytext, yyleng);
+							yylval.strval=s_buf.s;
+							memset(&s_buf, 0, sizeof(s_buf));
+							state = INITIAL_S;
+							BEGIN(INITIAL);
+							return ID;
+						}
+
+<INITIAL>{VAR_MARK}{LPAREN}	{ state = PVAR_P_S; BEGIN(PVAR_P); p_nest=1; 
+								yymore();}
+	/* eat everything between 2 () and return PVAR token and a string
+	   containing everything (including $ and ()) */
+<PVAR_P>{RPAREN}			{	p_nest--;
+								if (p_nest==0){
+									count();
+									addstr(&s_buf, yytext, yyleng);
+									yylval.strval=s_buf.s;
+									memset(&s_buf, 0, sizeof(s_buf));
+									state=INITIAL_S;
+									BEGIN(INITIAL);
+									return PVAR;
+								}
+								yymore();
+							}
+<PVAR_P>.					{ yymore(); }
+
+
+<INITIAL>{VAR_MARK}			{  state=AVP_PVAR_S; BEGIN(AVP_PVAR); yymore(); }
+	/* avp prefix detected -> go to avp mode */
+<AVP_PVAR>{AVP_PREF}		|
+<AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); 
+							  return ATTR_MARK; }
+<AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; BEGIN(PVAR_P); yymore(); }
+<AVP_PVAR>{ID}				{ count(); addstr(&s_buf, yytext, yyleng);
+								yylval.strval=s_buf.s;
+								memset(&s_buf, 0, sizeof(s_buf));
+								state = INITIAL_S;
+								BEGIN(INITIAL);
+								return AVP_OR_PVAR;
+							}
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
 <INITIAL>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }

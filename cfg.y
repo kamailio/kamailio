@@ -185,7 +185,16 @@ static struct ip_addr* ip_tmp;
 static struct avp_spec* s_attr;
 static select_t sel;
 static select_t* sel_ptr;
+static pv_spec_t* pv_spec;
 static struct action *mod_func_action;
+
+static struct avp_pvar_spec{
+	int type;
+	union{
+		struct avp_spec avp;
+		pv_spec_t pv;
+	}u;
+} *apv_spec;
 
 static void warn(char* s);
 static struct socket_id* mk_listen_id(char*, int, int);
@@ -207,6 +216,8 @@ static void free_socket_id_lst(struct socket_id* i);
 	struct socket_id* sockid;
 	struct name_lst* name_l;
 	struct avp_spec* attr;
+	struct pv_spec_t* pvar;
+	struct avp_pvar_spec* avp_pvar_s;
 	select_t* select;
 }
 
@@ -426,6 +437,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token ATTR_GLOBAL
 %token ADDEQ
 
+
 %token STUN_REFRESH_INTERVAL
 %token STUN_ALLOW_STUN
 %token STUN_ALLOW_FP
@@ -452,6 +464,9 @@ static void free_socket_id_lst(struct socket_id* i);
 %token <strval> ID
 %token <strval> STRING
 %token <strval> IPV6ADDR
+%token <strval> PVAR
+/* not clear yet if this is an avp or pvar */
+%token <strval> AVP_OR_PVAR
 
 /* other */
 %token COMMA
@@ -492,6 +507,8 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <attr> attr_id_val
 %type <attr> attr_id_any
 %type <attr> attr_id_any_str
+%type <pvar> pvar
+%type <avp_pvar_s> avp_pvar
 /* %type <intval> class_id */
 %type <intval> assign_op
 %type <select> select_id
@@ -1954,7 +1971,7 @@ attr_id_any_str:
 		s.len = strlen(s.s);
 		if (parse_avp_name(&s, &type, &avp_spec->name, &idx)) {
 			yyerror("error when parsing AVP");
-		        pkg_free(avp_spec);
+			pkg_free(avp_spec);
 			YYABORT;
 		}
 		avp_spec->type = type;
@@ -1962,6 +1979,52 @@ attr_id_any_str:
 		$$ = avp_spec;
 	}
 	;
+
+pvar:	PVAR {
+			pv_spec=pkg_malloc(sizeof(*pv_spec));
+			if (!pv_spec) {
+				yyerror("Not enough memory");
+				YYABORT;
+			}
+			s.s=$1; s.len=strlen(s.s);
+			if (pv_parse_spec(&s, pv_spec)==0){
+				yyerror("unknown script pseudo variable");
+				pkg_free(pv_spec);
+				YYABORT;
+			}
+			$$=pv_spec;
+			BUG("parsed pvar \"%.*s\"\n", s.len, s.s);
+		}
+	;
+
+avp_pvar:	AVP_OR_PVAR {
+			apv=pkg_malloc(sizeof(*apv));
+			if (!apv) {
+				yyerror("Not enough memory");
+				YYABORT;
+			}
+			s.s=$1; s.len=strlen(s.s);
+			if (pv_parse_spec(&s, &apv_spec->u.pv)==0){
+				/* not a pvar, try avps */
+				/* TODO: test if in ser or k mode */
+				if (parse_avp_name(&s, &type, &apv_spec->u.avp.name, &idx)) {
+					yyerror("error when parsing AVP");
+					pkg_free(apv_spec);
+					YYABORT;
+				}
+				apv_spec->u.avp.type = type;
+				apv_spec->u.avp.index = idx;
+				apv_spec.type=APV_AVP_T;
+			}else{
+				apv_spec.type=APV_PVAR_T;
+			}
+			$$ = apv_spec;
+			BUG("parsed ambigous avp/pvar \"%.*s\" to %d\n", s.len, s.s,
+					apv_spec.type);
+		}
+	;
+
+
 /*
 assign_op:
 	ADDEQ { $$ = ADD_T; }
@@ -1979,6 +2042,8 @@ assign_action:
 	| attr_id_ass assign_op select_id { $$=mk_action($2, 2, AVP_ST, (void*)$1, SELECT_ST, (void*)$3); }
 	| attr_id_ass assign_op LPAREN exp RPAREN { $$ = mk_action($2, 2, AVP_ST, $1, EXPR_ST, $4); }
 	;
+
+
 avpflag_oper:
 	SETAVPFLAG { $$ = 1; }
 	| RESETAVPFLAG { $$ = 0; }
