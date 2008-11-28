@@ -56,7 +56,6 @@ str *rr_get_avp_cookies(void) {
 	str *avp_name;
 	str *result = 0;
 	rr_avp_flags_t avp_flags;
-	void** p_data;
 
 	len = sizeof(crc);
 	for (avp_list_no=0; avp_list_no<MAX_AVP_DIALOG_LISTS; avp_list_no++) {
@@ -67,13 +66,11 @@ str *rr_get_avp_cookies(void) {
 
 			if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
 				/* avp type str, int value */
-				p_data=&avp->data;
-				avp_name = & ((struct str_int_data*)p_data)->name;
+				avp_name = &  ((struct str_int_data*)&avp->d.data[0])->name;
 			}
 			else if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == (AVP_NAME_STR|AVP_VAL_STR)) {
 				/* avp type str, str value */
-				p_data=&avp->data;
-				avp_name = & ((struct str_str_data*)p_data)->name;
+				avp_name = & ((struct str_str_data*)&avp->d.data[0])->name;
 			}
 			else
 				avp_name = 0;  /* dummy */
