@@ -89,6 +89,7 @@
 	#include "usr_avp.h"
 	#include "select.h"
 	#include "cfg.tab.h"
+	#include "sr_compat.h"
 
 	/* states */
 	#define INITIAL_S		0
@@ -99,6 +100,7 @@
 	#define SELECT_S                5
 	#define AVP_PVAR_S              6  /* avp or pvar */
 	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
+	#define PVARID_S                8  /* $foo.bar...*/
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -124,7 +126,12 @@
 %}
 
 /* start conditions */
-%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
+%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P PVARID
+
+/* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
+SER_CFG			SER
+KAMAILIO_CFG	KAMAILIO|OPENSER
+MAXCOMPAT_CFG	MAXCOMPAT|ALL
 
 /* action keywords */
 FORWARD	forward
@@ -761,8 +768,22 @@ EAT_ABLE	[\ \t\b\r]
 							return ID;
 						}
 
-<INITIAL>{VAR_MARK}{LPAREN}	{ state = PVAR_P_S; BEGIN(PVAR_P); p_nest=1; 
-								yymore();}
+<INITIAL>{VAR_MARK}{LPAREN}	{
+								switch(sr_cfg_compat){
+									case SR_COMPAT_SER:
+										state=ATTR_S; BEGIN(ATTR);
+										yyless(1);
+										count();
+										return ATTR_MARK;
+										break;
+									case SR_COMPAT_KAMAILIO:
+									case SR_COMPAT_MAX:
+									default:
+										state = PVAR_P_S; BEGIN(PVAR_P);
+										p_nest=1; yymore();
+										break;
+								}
+							}
 	/* eat everything between 2 () and return PVAR token and a string
 	   containing everything (including $ and ()) */
 <PVAR_P>{RPAREN}			{	p_nest--;
@@ -779,14 +800,38 @@ EAT_ABLE	[\ \t\b\r]
 							}
 <PVAR_P>.					{ yymore(); }
 
+<PVARID>{ID}|'.'			{yymore(); }
+<PVARID>{LPAREN}			{	state = PVAR_P_S; BEGIN(PVAR_P);
+								p_nest=1; yymore(); }
+<PVARID>.					{ count(); state=INITIAL_S; BEGIN(INITIAL);
+								return PVAR;
+							}
 
-<INITIAL>{VAR_MARK}			{  state=AVP_PVAR_S; BEGIN(AVP_PVAR); yymore(); }
+
+<INITIAL>{VAR_MARK}			{
+								switch(sr_cfg_compat){
+									case SR_COMPAT_SER:
+										count();
+										state=ATTR_S; BEGIN(ATTR);
+										return ATTR_MARK;
+										break;
+									case SR_COMPAT_KAMAILIO:
+										state=PVARID_S; BEGIN(PVARID);
+										yymore();
+										break;
+									case SR_COMPAT_MAX:
+									default: 
+										state=AVP_PVAR_S; BEGIN(AVP_PVAR);
+										yymore();
+										break;
+								}
+							}
 	/* avp prefix detected -> go to avp mode */
 <AVP_PVAR>{AVP_PREF}		|
 <AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); 
 							  return ATTR_MARK; }
 <AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; BEGIN(PVAR_P); yymore(); }
-<AVP_PVAR>{ID}				{ count(); addstr(&s_buf, yytext, yyleng);
+<AVP_PVAR>{ID}				{	count(); addstr(&s_buf, yytext, yyleng);
 								yylval.strval=s_buf.s;
 								memset(&s_buf, 0, sizeof(s_buf));
 								state = INITIAL_S;
@@ -882,6 +927,12 @@ EAT_ABLE	[\ \t\b\r]
 								}
 <COMMENT>.|{EAT_ABLE}|{CR}				{ count(); };
 
+<INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
+											sr_cfg_compat=SR_COMPAT_SER;}
+<INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count(); 
+											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
+<INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
+												sr_cfg_compat=SR_COMPAT_MAX;}
 <INITIAL>{COM_LINE}.*{CR}	{ count(); }
 
 <INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng);
@@ -916,6 +967,8 @@ EAT_ABLE	[\ \t\b\r]
 													" while parsing"
 													" avp name\n");
 											break;
+										case PVARID_S:
+											p_nest=0;
 										case PVAR_P_S: 
 											LOG(L_CRIT, "ERROR: unexpected EOF"
 													" while parsing pvar name"
