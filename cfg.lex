@@ -911,6 +911,21 @@ EAT_ABLE	[\ \t\b\r]
 											LOG(L_CRIT, "ERROR: unexpected EOF:"
 														"comment line open\n");
 											break;
+										case  ATTR_S:
+											LOG(L_CRIT, "ERROR: unexpected EOF"
+													" while parsing"
+													" avp name\n");
+											break;
+										case PVAR_P_S: 
+											LOG(L_CRIT, "ERROR: unexpected EOF"
+													" while parsing pvar name"
+													" (%d paranthesis open)\n",
+													p_nest);
+											break;
+										case AVP_PVAR_S:
+											LOG(L_CRIT, "ERROR: unexpected EOF"
+													" while parsing"
+													" avp or pvar name\n");
 									}
 									return 0;
 								}
