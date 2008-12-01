@@ -735,6 +735,7 @@ int ops_dbquery_avps(struct sip_msg* msg, pv_elem_t* query,
 		pvname_list_t* dest)
 {
 	int printbuf_len;
+	int r;
 
 	if(msg==NULL || query==NULL)
 	{
@@ -751,9 +752,10 @@ int ops_dbquery_avps(struct sip_msg* msg, pv_elem_t* query,
 
 	LM_DBG("query [%s]\n", printbuf);
 	
-	if(db_query_avp(msg, printbuf, dest)!=0)
-		return -1;
-	return 1;
+	r = db_query_avp(msg, printbuf, dest);
+	if(r>=0)
+		return r+1;
+	return r;
 }
 
 
