@@ -613,7 +613,7 @@ if (has_body("multipart/mixed")) {
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
-		ERROR_ROUTE.
+		FAILURE_ROUTE, ERROR_ROUTE.
 		</para>
 		<example>
 		<title><function>append_to_reply</function> usage</title>

@@ -392,7 +392,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
    Example 1.13. subst_body usage
 ...
-if ( subst_body('/^o=(.*) /o=$fU ') ) {};
+if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 
 ...
 
@@ -444,7 +444,7 @@ if (has_body("multipart/mixed")) {
      * txt - String which may contains pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
-   ERROR_ROUTE.
+   FAILURE_ROUTE, ERROR_ROUTE.
 
    Example 1.16. append_to_reply usage
 ...
