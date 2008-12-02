@@ -61,6 +61,8 @@
 #include "config.h"
 #include "dprint.h"
 #include "str.h"
+#include "mem/mem.h"
+#include "mem/shm_mem.h"
 
 
 
@@ -589,6 +591,45 @@ static inline int str2sint(str* _s, int* _r)
 	}
 	*_r *= sign;
 
+	return 0;
+}
+
+/**
+ * \brief Make a copy of a str structure using shm_malloc
+ * \param dst destination
+ * \param src source
+ * \return 0 on success, -1 on failure
+ */
+static inline int shm_str_dup(str* dst, const str* src)
+{
+	dst->s = shm_malloc(src->len);
+	if (!dst->s) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	memcpy(dst->s, src->s, src->len);
+	dst->len = src->len;
+	return 0;
+}
+
+/**
+ * \brief Make a copy of a str structure using pkg_malloc
+ * \param dst destination
+ * \param src source
+ * \return 0 on success, -1 on failure
+ */
+static inline int pkg_str_dup(str* dst, const str* src)
+{
+	dst->s = pkg_malloc(src->len);
+	if (dst->s==NULL)
+	{
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	memcpy(dst->s, src->s, src->len);
+	dst->len = src->len;
 	return 0;
 }
 
