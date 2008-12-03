@@ -7,7 +7,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	This module implement various functions related to SIP message handling.
+	This module implement various functions and checks related to SIP message
+	handling and URI handling.
 	</para>
 	<para>
 	It offers some functions related to handle ringing. In a parallel forking
@@ -239,5 +240,190 @@ if (uri==myself) {
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_user(username)</function>
+		</title>
+		<para>
+		Check if the username in credentials matches the given username.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>username</emphasis> - Username string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>is_user</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_user("john")) {
+	...
+};
+...
+</programlisting>
+		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">has_totag()</function>
+		</title>
+		<para>
+		Check if To header field uri contains tag parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>has_totag</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (has_totag()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">uri_param(param)</function>
+		</title>
+		<para>
+		Find if Request URI has a given parameter with no value
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter name to look for.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri_param("param1")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">uri_param(param,value)</function>
+		</title>
+		<para>
+		Find if Request URI has a given parameter with matching value
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter name to look for.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> - parameter value to match.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri_param("param1","value1")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">add_uri_param(param)</function>
+		</title>
+		<para>
+		Add to RURI a parameter (name=value);
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter to be appended in
+			<quote>name=value</quote> format.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+add_uri_param("nat=yes");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">tel2sip()</function>
+		</title>
+		<para>
+		Converts RURI, if it is tel URI, to SIP URI.  Returns true, only if
+		conversion succeeded or if no conversion was needed (like RURI
+		was not tel URI.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>tel2sip</function> usage</title>
+		<programlisting format="linespecific">
+...
+tel2sip();
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">is_uri_user_e164(pseudo-variable)</function>
+		</title>
+		<para>
+		Checks if userpart of URI stored in pseudo variable is
+		E164 number.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>is_uri_user_e164</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_uri_user_e164("$fu")) {  # Check From header URI user part
+   ...
+}
+if (is_uri_user_e164("$avp(i:705)") {
+   # Check user part of URI stored in avp i:705
+   ...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
 </chapter>

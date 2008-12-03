@@ -38,10 +38,12 @@
 #include "../../script_cb.h"
 #include "../../locking.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 
 #include "ring.h"
 #include "options.h"
 
+#include "checks.h"
 
 MODULE_VERSION
 
@@ -61,7 +63,14 @@ static void mod_destroy(void);
 
 static cmd_export_t cmds[]={
 	{"ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"options_reply", (cmd_function)opt_reply, 0, 0, 0, REQUEST_ROUTE},
+	{"options_reply",      (cmd_function)opt_reply, 0, 0, 0, REQUEST_ROUTE},
+	{"is_user",            (cmd_function)is_user,        1, fixup_str_null, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"has_totag", 	       (cmd_function)has_totag,      0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"uri_param",          (cmd_function)uri_param_1,    1, fixup_str_null, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"uri_param",          (cmd_function)uri_param_2,    2, fixup_str_str, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"add_uri_param",      (cmd_function)add_uri_param,  1, fixup_str_null, 0, REQUEST_ROUTE},
+	{"tel2sip",            (cmd_function)tel2sip,        0, 0,         0, REQUEST_ROUTE},
+	{"is_uri_user_e164",   (cmd_function)is_uri_user_e164, 1, fixup_pvar_null, fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{0,0,0,0,0,0}
 };
 

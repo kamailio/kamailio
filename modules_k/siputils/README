@@ -12,7 +12,20 @@ Nils Ohlmeier
 
    FhG Fokus
 
-   Copyright © 2008, 2003 1&1 Internet AG, FhG Fokus
+Jan Janak
+
+   FhG FOKUS
+
+Edited by
+
+Jan Janak
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+   Copyright © 2008, 2005, 2003 1&1 Internet AG, FhG Fokus,
+   voice-system.ro
    Revision History
    Revision $Revision: 4872 $ $Date: 2008-09-09 17:39:38 +0200
                               (Di, 09 Sep 2008) $
@@ -40,6 +53,13 @@ Nils Ohlmeier
 
               1.4.1. ring_insert_callid()
               1.4.2. options_reply()
+              1.4.3. is_user(username)
+              1.4.4. has_totag()
+              1.4.5. uri_param(param)
+              1.4.6. uri_param(param,value)
+              1.4.7. add_uri_param(param)
+              1.4.8. tel2sip()
+              1.4.9. is_uri_user_e164(pseudo-variable)
 
    List of Examples
 
@@ -50,13 +70,20 @@ Nils Ohlmeier
    1.5. Set options_support parameter
    1.6. ring_insert_callid() usage
    1.7. options_reply usage
+   1.8. is_user usage
+   1.9. has_totag usage
+   1.10. uri_param usage
+   1.11. uri_param usage
+   1.12. add_uri_param usage
+   1.13. tel2sip usage
+   1.14. is_uri_user_e164 usage
 
 Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This module implement various functions related to SIP message
-   handling.
+   This module implement various functions and checks related to
+   SIP message handling and URI handling.
 
    It offers some functions related to handle ringing. In a
    parallel forking scenario you get several 183s with SDP. You
@@ -205,4 +232,112 @@ if (uri==myself) {
                 options_reply();
         }
 }
+...
+
+1.4.3.  is_user(username)
+
+   Check if the username in credentials matches the given
+   username.
+
+   Meaning of the parameters is as follows:
+     * username - Username string.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.8. is_user usage
+...
+if (is_user("john")) {
+        ...
+};
+...
+
+1.4.4.  has_totag()
+
+   Check if To header field uri contains tag parameter.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.9. has_totag usage
+...
+if (has_totag()) {
+        ...
+};
+...
+
+1.4.5.  uri_param(param)
+
+   Find if Request URI has a given parameter with no value
+
+   Meaning of the parameters is as follows:
+     * param - parameter name to look for.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. uri_param usage
+...
+if (uri_param("param1")) {
+        ...
+};
+...
+
+1.4.6.  uri_param(param,value)
+
+   Find if Request URI has a given parameter with matching value
+
+   Meaning of the parameters is as follows:
+     * param - parameter name to look for.
+     * value - parameter value to match.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.11. uri_param usage
+...
+if (uri_param("param1","value1")) {
+        ...
+};
+...
+
+1.4.7.  add_uri_param(param)
+
+   Add to RURI a parameter (name=value);
+
+   Meaning of the parameters is as follows:
+     * param - parameter to be appended in "name=value" format.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.12. add_uri_param usage
+...
+add_uri_param("nat=yes");
+...
+
+1.4.8.  tel2sip()
+
+   Converts RURI, if it is tel URI, to SIP URI. Returns true, only
+   if conversion succeeded or if no conversion was needed (like
+   RURI was not tel URI.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.13. tel2sip usage
+...
+tel2sip();
+...
+
+1.4.9.  is_uri_user_e164(pseudo-variable)
+
+   Checks if userpart of URI stored in pseudo variable is E164
+   number.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.14. is_uri_user_e164 usage
+...
+if (is_uri_user_e164("$fu")) {  # Check From header URI user part
+   ...
+}
+if (is_uri_user_e164("$avp(i:705)") {
+   # Check user part of URI stored in avp i:705
+   ...
+};
 ...
