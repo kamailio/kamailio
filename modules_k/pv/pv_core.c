@@ -23,10 +23,10 @@
 
 
 #include "pv_core.h"
+#include "pv_svar.h"
 #include "../../qvalue.h"
 #include "../../errinfo.h"
 #include "../../ut.h" 
-#include "../../script_var.h"
 #include "../../route_struct.h"
 #include "../../dset.h"
 #include "../../action.h"
