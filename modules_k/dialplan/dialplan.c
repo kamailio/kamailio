@@ -39,7 +39,6 @@
 #include "../../ut.h"
 #include "../../action.h"
 #include "../../pvar.h"
-#include "../../script_var.h"
 #include "../../dset.h"
 #include "../../mem/mem.h"
 #include "../../mi/mi.h"
