@@ -1,5 +1,5 @@
 #!/bin/bash
-# test cfgutils module
+# test cfgutils and pv module
 
 # Copyright (C) 2008 1&1 Internet AG
 #
