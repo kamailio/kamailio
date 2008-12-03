@@ -57,6 +57,9 @@
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
 #include "../../pvar.h"
+
+#include "../tm/tm_load.h"
+
 #include "sl_funcs.h"
 #include "sl_api.h"
 #include "sl_cb.h"
@@ -65,12 +68,14 @@ MODULE_VERSION
 
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
+static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy(void);
 /* module parameter */
 int sl_enable_stats = 1;
+int sl_bind_tm = 1;
 
 /* statistic variables */
 stat_var *tx_1xx_rpls;
@@ -83,22 +88,30 @@ stat_var *sent_rpls;
 stat_var *sent_err_rpls;
 stat_var *rcv_acks;
 
+static struct tm_binds tmb;
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",   (cmd_function)w_sl_send_reply,            2,  fixup_sl_send_reply, 0,
-			REQUEST_ROUTE | ERROR_ROUTE },
-	{"sl_reply_error",  (cmd_function)w_sl_reply_error,           0,  0, 0,
-			REQUEST_ROUTE},
-	{"register_slcb",  (cmd_function)register_slcb, 0,  0, 0,
-			0},
-	{"load_sl",        (cmd_function)load_sl,       0,  0, 0,
-			0},
+	{"sl_send_reply",   (cmd_function)w_sl_send_reply,
+		2,  fixup_sl_send_reply, 0,
+		REQUEST_ROUTE | ERROR_ROUTE },
+	{"send_reply",   (cmd_function)w_send_reply,
+		2,  fixup_sl_send_reply, 0,
+		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ERROR_ROUTE },
+	{"sl_reply_error",  (cmd_function)w_sl_reply_error,
+		0,  0, 0, REQUEST_ROUTE},
+	{"register_slcb",  (cmd_function)register_slcb,
+		0,  0, 0,
+		0},
+	{"load_sl",        (cmd_function)load_sl,
+		0,  0, 0,
+		0},
 	{0,0,0,0,0,0}
 };
 
 
 static param_export_t mod_params[]={
 	{ "enable_stats",  INT_PARAM, &sl_enable_stats },
+	{ "bind_tm",       INT_PARAM, &sl_bind_tm },
 	{ 0,0,0 }
 };
 
@@ -135,6 +148,8 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
+	load_tm_f load_tm;
+
 	/* if statistics are disabled, prevent their registration to core */
 	if (sl_enable_stats==0)
 		exports.stats = 0;
@@ -149,6 +164,17 @@ static int mod_init(void)
 	if (sl_startup()!=0) {
 		LM_ERR("sl_startup failed\n");
 		return -1;
+	}
+
+	if(sl_bind_tm!=0)
+	{
+		if ( (load_tm=(load_tm_f)find_export("load_tm", 0, 0)))
+		{
+			load_tm( &tmb );
+		} else {
+			LM_WARN("failed to bind tm module - stateless mode only now\n");
+			sl_bind_tm=0;
+		}
 	}
 
 	return 0;
@@ -250,6 +276,50 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 
 	return sl_send_reply(msg, code_i, &code_s);
 }
+
+static int w_send_reply(struct sip_msg* msg, char* str1, char* str2)
+{
+	str code_s;
+	unsigned int code_i;
+	struct cell * t;
+
+	if(((pv_elem_p)str1)->spec.getf!=NULL)
+	{
+		if(pv_printf_s(msg, (pv_elem_p)str1, &code_s)!=0)
+			return -1;
+		if(str2int(&code_s, &code_i)!=0 || code_i<100 || code_i>699)
+			return -1;
+	} else {
+		code_i = ((pv_elem_p)str1)->spec.pvp.pvn.u.isname.name.n;
+	}
+	
+	if(((pv_elem_p)str2)->spec.getf!=NULL)
+	{
+		if(pv_printf_s(msg, (pv_elem_p)str2, &code_s)!=0 || code_s.len <=0)
+			return -1;
+	} else {
+		code_s = ((pv_elem_p)str2)->text;
+	}
+
+	if(sl_bind_tm!=0)
+	{
+		t = tmb.t_gett();
+		if(t!= NULL && t!=T_UNDEFINED)
+		{
+			if(tmb.t_reply(msg, code_i, &code_s)< 0)
+			{
+				LM_ERR("failed to reply stateful (tm)\n");
+				return -1;
+			}
+			LM_DBG("reply stateful mode (tm)\n");
+			return 1;
+		}
+	}
+
+	LM_DBG("reply stateless mode (sl)\n");
+	return sl_send_reply(msg, code_i, &code_s);
+}
+
 
 
 /*!
