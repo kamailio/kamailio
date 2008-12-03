@@ -22,8 +22,6 @@
  */
 
 
-#include "pv_core.h"
-#include "pv_svar.h"
 #include "../../qvalue.h"
 #include "../../errinfo.h"
 #include "../../ut.h" 
@@ -42,6 +40,10 @@
 #include "../../parser/parse_ppi.h"
 #include "../../parser/parse_pai.h"
 #include "../../parser/digest/digest.h"
+
+#include "pv_core.h"
+#include "pv_svar.h"
+
 
 static str str_udp    = { "UDP", 3 };
 static str str_5060   = { "5060", 4 };
@@ -86,35 +88,6 @@ int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
 	if(_pv_pid == 0)
 		_pv_pid = (int)getpid();
 	return pv_get_sintval(msg, param, res, _pv_pid);
-}
-
-int pv_get_times(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
-{
-	time_t t;
-	if(msg==NULL)
-		return -1;
-
-	pv_update_time(msg, &t);
-
-	return pv_get_uintval(msg, param, res, (unsigned int)t);
-}
-
-
-int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
-{
-	str s;
-	time_t t;
-	
-	if(msg==NULL)
-		return -1;
-
-	pv_update_time(msg, &t);
-	
-	s.s = ctime(&t);
-	s.len = strlen(s.s)-1;
-	return pv_get_strintval(msg, param, res, &s, (int)t);
 }
 
 

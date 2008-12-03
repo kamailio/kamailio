@@ -32,6 +32,7 @@
 #include "pv_core.h"
 #include "pv_stats.h"
 #include "pv_shv.h"
+#include "pv_time.h"
 
 
 MODULE_VERSION
@@ -314,11 +315,17 @@ static pv_export_t mod_pvs[] = {
 	{{"to.user", (sizeof("to.user")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, 0,
 		0, 0, pv_init_iname, 2},
-	{{"Tf", (sizeof("tf")-1)}, /* */
+	{{"Tf", (sizeof("Tf")-1)}, /* */
 		PVT_OTHER, pv_get_timef, 0,
 		0, 0, 0, 0},
-	{{"Ts", (sizeof("ts")-1)}, /* */
+	{{"TF", (sizeof("TF")-1)}, /* */
+		PVT_OTHER, pv_get_timenowf, 0,
+		0, 0, 0, 0},
+	{{"Ts", (sizeof("Ts")-1)}, /* */
 		PVT_OTHER, pv_get_times, 0,
+		0, 0, 0, 0},
+	{{"TS", (sizeof("TS")-1)}, /* */
+		PVT_OTHER, pv_get_timenows, 0,
 		0, 0, 0, 0},
 	{{"ua", (sizeof("ua")-1)}, /* */
 		PVT_OTHER, pv_get_useragent, 0,

@@ -41,12 +41,6 @@ int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
 int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
-int pv_get_times(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-
-int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-
 int pv_get_method(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

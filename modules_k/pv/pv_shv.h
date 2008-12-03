@@ -70,10 +70,5 @@ struct mi_root* mi_shvar_set(struct mi_root* cmd_tree, void* param);
 int param_set_var( modparam_t type, void* val);
 int param_set_shvar( modparam_t type, void* val);
 
-/*** $time(name) PV class */
-int pv_parse_time_name(pv_spec_p sp, str *in);
-int pv_get_time(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-
 #endif
 
