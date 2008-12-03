@@ -50,7 +50,6 @@
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
-#include "../../script_var.h"
 #include "../../mem/mem.h"
 #include "../../mi/mi.h"
 #include "../tm/tm_load.h"
@@ -622,10 +621,7 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 	str val_s;
 	pv_spec_t *sp_dest;
 	unsigned int size;
-	int_str res;
-	int_str avp_name;
-	unsigned short avp_type;
-	script_var_t * sc_var;
+	pv_value_t val;
 
 	pve = (pv_elem_t *)value;
 	sp_dest = (pv_spec_t *)result;
@@ -641,36 +637,14 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 		size = get_profile_size( (struct dlg_profile_table*)profile, NULL );
 	}
 
-	switch (sp_dest->type) {
-		case PVT_AVP:
-			if (pv_get_avp_name( msg, &(sp_dest->pvp), &avp_name,
-			&avp_type)!=0){
-				LM_CRIT("BUG in getting AVP name\n");
-				return -1;
-			}
-			res.n = size;
-			if (add_avp(avp_type, avp_name, res)<0){
-				LM_ERR("cannot add AVP\n");
-				return -1;
-			}
-			break;
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_INT|PV_TYPE_INT;
+	val.ri = (int)size;
 
-		case PVT_SCRIPTVAR:
-			if(sp_dest->pvp.pvn.u.dname == 0){
-				LM_ERR("cannot find svar name\n");
-				return -1;
-			}
-			res.n = size;
-			sc_var = (script_var_t *)sp_dest->pvp.pvn.u.dname;
-			if(!set_var_value(sc_var, &res, 0)){
-				LM_ERR("cannot set svar\n");
-				return -1;
-			}
-			break;
-
-		default:
-			LM_CRIT("BUG: invalid pvar type\n");
-			return -1;
+	if(sp_dest->setf(msg, &sp_dest->pvp, (int)EQ_T, &val)<0)
+	{
+		LM_ERR("setting profile PV failed\n");
+		return -1;
 	}
 
 	return 1;
