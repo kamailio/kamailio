@@ -896,8 +896,9 @@ int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
 	if ((*crt==0) || ((*crt_proto!=n_proto) && 
 						( naptr_proto_preferred(n_proto, *crt_proto))) )
 			goto change;
-	if ((n->order<(*crt)->order) || ((n->order== (*crt)->order) &&
-									(n->pref < (*crt)->pref))){
+	if (!naptr_proto_preferred(*crt_proto, n_proto) && 
+			((n->order<(*crt)->order) || ((n->order== (*crt)->order) &&
+								(n->pref < (*crt)->pref)))){
 			goto change;
 	}
 #ifdef NAPTR_DBG
