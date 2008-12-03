@@ -69,7 +69,6 @@
 #include "../../globals.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "shvar.h"
 
 MODULE_VERSION
 
@@ -158,8 +157,6 @@ static param_export_t params[]={
 	{"initial_probability", INT_PARAM, &initial_prob},
 	{"initial_gflags", INT_PARAM, &initial_gflags},
 	{"hash_file",           STR_PARAM, &hash_file        },
-	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
-	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
 	{0,0,0}
 };
 
@@ -170,8 +167,6 @@ static mi_export_t mi_cmds[] = {
 	{ FIFO_GET_PROB,   mi_get_prob,   MI_NO_INPUT_FLAG,  0,  0 },
 	{ FIFO_GET_HASH,   mi_get_hash,   MI_NO_INPUT_FLAG,  0,  0 },
 	{ FIFO_CHECK_HASH, mi_check_hash, MI_NO_INPUT_FLAG,  0,  0 },
-	{ "shv_get",       mi_shvar_get,  0,                 0,  0 },
-	{ "shv_set" ,      mi_shvar_set,  0,                 0,  0 },
 	{ FIFO_SET_GFLAG,   mi_set_gflag,   0,                 0,  0 },
 	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,                 0,  0 },
 	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,                 0,  0 },
@@ -183,11 +178,6 @@ static mi_export_t mi_cmds[] = {
 static pv_export_t mod_items[] = {
 	{ {"RANDOM", sizeof("RANDOM")-1}, PVT_OTHER, pv_get_random_val, 0,
 		0, 0, 0, 0 },
-	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
-		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
-	{ {"time", (sizeof("time")-1)}, PVT_OTHER, pv_get_time,
-		0, pv_parse_time_name, 0, 0, 0},
-
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -625,13 +615,6 @@ static int mod_init(void)
 	}
 	*probability = initial_prob;
 
-	if(init_shvars()<0)
-	{
-		LM_ERR("init shvars failed\n");
-		shm_free(probability);
-		return -1;
-	}
-
 	gflags=(unsigned int *) shm_malloc(sizeof(unsigned int));
 	if (!gflags) {
 		LM_ERR(" no shmem available\n");
@@ -646,8 +629,6 @@ static void mod_destroy(void)
 {
 	if (probability)
 		shm_free(probability);
-	shvar_destroy_locks();
-	destroy_shvars();
 	if (gflags)
 		shm_free(gflags);
 }

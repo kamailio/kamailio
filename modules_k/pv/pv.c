@@ -26,9 +26,12 @@
 
 #include "../../sr_module.h"
 #include "../../pvar.h"
+#include "../../mi/mi.h"
+
 #include "pv_branch.h"
 #include "pv_core.h"
 #include "pv_stats.h"
+#include "pv_shv.h"
 
 
 MODULE_VERSION
@@ -321,23 +324,57 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_useragent, 0,
 		0, 0, 0, 0},
 
+	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
+		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
+	{ {"time", (sizeof("time")-1)}, PVT_OTHER, pv_get_time,
+		0, pv_parse_time_name, 0, 0, 0},
+
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
+static param_export_t params[]={ 
+	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
+	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
+	{0,0,0}
+};
+
+static mi_export_t mi_cmds[] = {
+	{ "shv_get",       mi_shvar_get,  0,                 0,  0 },
+	{ "shv_set" ,      mi_shvar_set,  0,                 0,  0 },
+	{ 0, 0, 0, 0, 0}
+};
+
+static int mod_init(void);
+static void mod_destroy(void);
 
 /** module exports */
 struct module_exports exports= {
 	"pv",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	0,
-	0,
+	params,
 	0,          /* exported statistics */
-	0,          /* exported MI functions */
+	mi_cmds,    /* exported MI functions */
 	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
-	0,          /* module initialization function */
+	mod_init,   /* module initialization function */
 	0,
-	0,
+	mod_destroy,
 	0           /* per-child init function */
 };
 
+static int mod_init(void)
+{
+	if(init_shvars()<0)
+	{
+		LM_ERR("init shvars failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+static void mod_destroy(void)
+{
+	shvar_destroy_locks();
+	destroy_shvars();
+}

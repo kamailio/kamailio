@@ -31,7 +31,7 @@
 #include "../../ut.h"
 #include "../../pvar.h"
 
-#include "shvar.h"
+#include "pv_shv.h"
 
 int shvar_locks_no=16;
 gen_lock_set_t* shvar_locks=0;

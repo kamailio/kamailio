@@ -27,7 +27,7 @@
 #include "../../sr_module.h"
 #include "../../locking.h"
 #include "../../mi/mi.h"
-#include "../../script_var.h"
+#include "pv_svar.h"
 
 typedef struct sh_var {
 	int n;                  /* Index of the variable */
