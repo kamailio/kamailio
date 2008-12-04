@@ -48,13 +48,13 @@
  * - \ref auth
  *
  * Implemented modules
- * - \ref db_berkeley
- * - \ref db_flatstore
- * - \ref db_text
- * - \ref db_mysql
- * - \ref db_oracle
- * - \ref db_postgres
- * - \ref db_unixodbc
+ * - \ref ../modules/db_berkeley
+ * - \ref ../modules/db_flatstore
+ * - \ref ../modules/db_text
+ * - \ref ../modules/db_mysql
+ * - \ref ../modules/db_oracle
+ * - \ref ../modules/db_postgres
+ * - \ref ../modules/db_unixodbc
  */
 
 #include "../dprint.h"
@@ -141,6 +141,8 @@ error:
 }
 
 /*! \brief fills mydbf with the corresponding db module callbacks
+ * \param mod
+ * \param mydbf
  * \return returns 0 on success, -1 on error
  * \note on error mydbf will contain only 0s */
 int db_bind_mod(const str* mod, db_func_t* mydbf)
@@ -323,6 +325,9 @@ void db_do_close(db_con_t* _h, void (*free_connection)())
 
 /*! \brief
  * Get version of a table
+ * \param dbf
+ * \param connection
+ * \param table
  * \return If there is no row for the given table, return version 0
  */
 int db_table_version(const db_func_t* dbf, db_con_t* connection, const str* table)
