@@ -487,7 +487,7 @@ int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2)
 /*!
  * \brief Small wrapper around pv_authorize, use www challenge
  * \param msg SIP message
- * \param ream authenfication realm
+ * \param realm authenfication realm
  * \param str2 unused
  * \return 1 on sucess, 0 on errors, negative on authentification failures
  */

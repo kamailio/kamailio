@@ -455,9 +455,9 @@ static int fixup_presence(void** param, int param_no)
 
 /*! \brief
  *  mi cmd: refreshWatchers
- *			<presentity_uri> 
- *			<event>
- *          <refresh_type> // can be:  = 0 -> watchers autentification type or
+ *			\<presentity_uri> 
+ *			\<event>
+ *          \<refresh_type> // can be:  = 0 -> watchers autentification type or
  *									  != 0 -> publish type //		   
  *		* */
 

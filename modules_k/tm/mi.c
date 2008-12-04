@@ -154,6 +154,7 @@ static inline struct str_list *new_str(char *s, int len, struct str_list **last,
  * pkg_mem.
  * \param uri SIP URI
  * \param hf header field
+ * \param l
  * \param send_sock socket information
  * \return new allocated char array on success, zero otherwise
  */

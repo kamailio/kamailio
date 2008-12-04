@@ -107,7 +107,7 @@ void db_postgres_close(db_con_t* _h)
 
 /*!
  * \brief Submit_query, run a query
- * \param _h database connection
+ * \param _con database connection
  * \param _s query string
  * \return 0 on success, negative on failure
  */
@@ -296,7 +296,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 
 /*!
  * \brief Free database and any old query results
- * \param _h database connection
+ * \param _con database connection
  */
 static void free_query(const db_con_t* _con)
 {
@@ -332,7 +332,7 @@ int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
 
 /*!
  * \brief Query table for specified rows
- * \param _con structure representing database connection
+ * \param _h structure representing database connection
  * \param _k key names
  * \param _op operators
  * \param _v values of the keys that must match
@@ -340,6 +340,7 @@ int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
  * \param _n nmber of key=values pairs to compare
  * \param _nc number of columns to return
  * \param _o order by the specified column
+ * \param _r result set
  * \return 0 on success, negative on failure
  */
 int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,

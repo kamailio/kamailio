@@ -62,7 +62,7 @@ int check_nonce(str* _nonce, str* _secret);
 
 /*!
  * \brief Get index from nonce string
- * \param _nonce nonce string
+ * \param _n nonce string
  * \return nonce index
  */
 int get_nonce_index(str* _nonce);

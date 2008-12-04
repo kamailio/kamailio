@@ -97,7 +97,7 @@ struct cell;
  *  or proxied) -- there is nothing more you can change from
  *  the callback, it is good for accounting-like uses.
  *
- *    Note: the message passed to callback may also have
+ *    \note: the message passed to callback may also have
  *    value FAKED_REPLY (like other reply callbacks) which
  *    indicates a pseudo_reply caused by a timer. Check for
  *    this value before deferring -- you will cause a segfault
@@ -128,13 +128,13 @@ struct cell;
  *  has not been executed and may fail, there is no guarantee
  *  a reply will be successfully sent out at this point of time.
  *
- *     \Note: TMCB_REPLY_ON_FAILURE and TMCB_REPLY_FWDED are
+ *     \note: TMCB_REPLY_ON_FAILURE and TMCB_REPLY_FWDED are
  *     called from reply mutex which is used to deterministically
  *     process multiple replies received in parallel. A failure
  *     to set the mutex again or stay too long in the callback
  *     may result in deadlock.
  *
- *     \Note: the reply callbacks will not be evoked if "silent
+ *     \note: the reply callbacks will not be evoked if "silent
  *     C-timer hits". That's a feature to clean transactional
  *     state from a proxy quickly -- transactions will then
  *     complete statelessly. If you wish to disable this
@@ -222,6 +222,7 @@ void destroy_tmcb_lists(void);
  * (global or per transaction, depending of event type).
  * \param p_msg SIP message
  * \param t transaction
+ * \param types
  * \param f callback
  * \param param callback parameter
  * \return negative result on error, the return code from insert_tmcb on success

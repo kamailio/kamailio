@@ -123,8 +123,8 @@ void t_on_reply( unsigned int go_to );
 unsigned int get_on_reply(void);
 
 /* Retransmits the last sent inbound reply.
- * Returns  -1 - error
- *           1 - OK
+ * \param t
+ * \return  -1 - error,  1 - OK
  */
 int t_retransmit_reply( struct cell *t );
 

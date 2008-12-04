@@ -826,6 +826,7 @@ static int pipe_push(struct sip_msg * msg, int id)
 
 /**     
  * runs the current request through the queues
+ * \param       msg
  * \param       forced_pipe     is >= 0 if a specific pipe should be used, < 0 otherwise
  * \return	-1 if drop needed, 1 if allowed
  */

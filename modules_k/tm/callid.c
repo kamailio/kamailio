@@ -44,9 +44,9 @@
 #define CALLID_NR_LEN 20
 
 /*! \brief
- *  Call-ID has the following form: <callid_nr>-<pid>@<ip>
+ *  Call-ID has the following form: \<callid_nr>-\<pid>\@\<ip>
  * callid_nr is initialized as a random number and continually
- * increases; -<pid>@<ip> is kept in callid_suffix
+ * increases; -\<pid>\@\<ip> is kept in callid_suffix
  */
 #define CALLID_SUFFIX_LEN ( 1 /*!< - */                                            + \
 			    5 /*!< pid */                                          + \

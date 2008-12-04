@@ -109,6 +109,7 @@ void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
  * \param _ha1 H(A1)
  * \param _nonce nonce from server
  * \param _nc 8 hex digits
+ * \param _cnonce cnonce value
  * \param _qop qop-value: "", "auth", "auth-int
  * \param _auth_int  1 if auth-int is used
  * \param _method method from the request

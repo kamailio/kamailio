@@ -241,7 +241,7 @@ static void destroy(void)
  *
  * Convert a header field description string to hdr_field structure
  * Supported strings: "Request-URI", "To", "From", "Credentials"
- * \param header field description string
+ * \param str1 header field description string
  * \return hdr_field structure on success, NULL on failure
  */
 static group_check_p get_hf( char *str1)

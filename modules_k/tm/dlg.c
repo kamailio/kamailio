@@ -331,9 +331,9 @@ static inline int get_callid(struct sip_msg* _m, str* _cid)
 /*!
  * \brief Create a copy of route set either in normal or reverse order
  * \param _m SIP message
- * \param rr_t Route set
+ * \param _rs Route set
  * \param _order how to order the copy, set to NORMAL_ORDER for normal copy
- * \param 0 on success, -1 on error
+ * \return 0 on success, -1 on error
  */
 static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _order)
 {
@@ -635,7 +635,7 @@ int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
  * \note Does not parse headers!
  * \param _m SIP message
  * \param _cs CSeq number
- * \param 0 on success, negative on error
+ * \return 0 on success, negative on error
  */
 static inline int get_cseq_value(struct sip_msg* _m, unsigned int* _cs)
 {

@@ -145,7 +145,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int forced_proto )
  *
  * Convert a URI into a socket address. Create a temporary proxy.
  * \param uri input URI
- * \param su target structure
+ * \param to_su target structure
  * \param proto protocol
  * \return choosen protocol
  */
@@ -177,7 +177,7 @@ static inline int uri2su(str *uri, union sockaddr_union *to_su, int proto)
  * Convert a URI into a socket_info for sending.
  * \param msg SIP message
  * \param uri input URI
- * \param to_so socket address
+ * \param to_su socket address
  * \param proto protocol
  * \return send socket
  */

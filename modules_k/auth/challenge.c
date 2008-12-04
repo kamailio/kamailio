@@ -81,7 +81,7 @@ static str auth_500_err = str_init(MESSAGE_500);
 /*!
  * \brief Create {WWW,Proxy}-Authenticate header field
  * \param _stale
- * \param _real authentification realm
+ * \param _realm authentification realm
  * \param _len length, will be set
  * \param _qop qop value
  * \param _hf_name header field name

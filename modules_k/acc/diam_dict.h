@@ -27,7 +27,6 @@
  * \ingroup acc
  * \brief Acc:: Diameter support
  *
- * - \ref diam_dict.c
  * - Module: \ref acc
  */
 

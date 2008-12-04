@@ -134,7 +134,7 @@ void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 
 /*!
  * \brief Get index from nonce string
- * \param _nonce nonce string
+ * \param _n nonce string
  * \return nonce index
  */
 int get_nonce_index(str* _n)
@@ -145,7 +145,7 @@ int get_nonce_index(str* _n)
 
 /*!
  * \brief Get expiry time from nonce string
- * \param _nonce nonce string
+ * \param _n nonce string
  * \return expiry time
  */
 static inline time_t get_nonce_expires(str* _n)

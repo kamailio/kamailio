@@ -111,7 +111,7 @@ int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
  * the information is and the next_domain parameters defines where to continue
  * routing in case of a match.
  *
- * @param failure_tree the root of the failure routing tree
+ * @param failure_node the root of the failure routing tree
  * @param scan_prefix the prefix for which to add the rule (must not contain non-digits)
  * @param full_prefix the whole scan prefix
  * @param host the hostname last tried

@@ -934,7 +934,7 @@ discard:
 
 /*!
  * \brief Retransmits the last sent inbound reply
- * \param p_msg request for which I want to retransmit an associated reply
+ * \param t request for which I want to retransmit an associated reply
  * \return 1 on succes, -1 on errors
  */
 int t_retransmit_reply( struct cell *t )

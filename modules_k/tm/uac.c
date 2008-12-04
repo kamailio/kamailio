@@ -140,7 +140,7 @@ void generate_fromtag(str* tag, str* callid)
  * \param to To URI
  * \param from From URI
  * \param dialog dialog state
- * \param return 0 if parameter are ok, negative on error
+ * \return 0 if parameter are ok, negative on error
  */
 static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 {
@@ -220,6 +220,7 @@ static inline struct sip_msg* buf_to_sip_msg(char *buf, unsigned int len,
  * \brief Send a request using data from the dialog structure
  * \param method SIP method
  * \param headers SIP header
+ * \param body 
  * \param dialog dialog state
  * \param cb transaction callback
  * \param cbp transaction callback parameter
@@ -400,7 +401,7 @@ error2:
  * \param dialog dialog state
  * \param completion_cb transaction callback
  * \param cbp transaction callback parameter
- * \param 1 on success, negative on error
+ * \return 1 on success, negative on error
  */
 int req_within(str* method, str* headers, str* body, dlg_t* dialog,
 									transaction_cb completion_cb, void* cbp)

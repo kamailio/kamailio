@@ -35,7 +35,7 @@
 #include "xmpp.h"
 #include "../../parser/parse_uri.h"
 
-/*! \brief decode sip:user*domain1@domain2 -> user@domain1 
+/*! \brief decode sip:user*domain1\@domain2 -> user\@domain1 
 	\note In many kinds of gateway scenarios, the % sign is a common character used
 		See the MSN XMPP transports for an example.
  */
@@ -61,7 +61,7 @@ char *decode_uri_sip_xmpp(char *uri)
 	return buf;
 }
 
-/*! \brief  encode sip:user@domain -> user*domain@xmpp_domain */
+/*! \brief  encode sip:user\@domain -> user*domain\@xmpp_domain */
 char *encode_uri_sip_xmpp(char *uri)
 {
 	struct sip_uri puri;
@@ -81,7 +81,7 @@ char *encode_uri_sip_xmpp(char *uri)
 	return buf;
 }
 
-/*! \brief  decode user*domain1@domain2 -> sip:user@domain1 */
+/*! \brief  decode user*domain1\@domain2 -> sip:user\@domain1 */
 char *decode_uri_xmpp_sip(char *jid)
 {
 	static char buf[512];
@@ -104,7 +104,7 @@ char *decode_uri_xmpp_sip(char *jid)
 	return buf;
 }
 
-/*! \brief  encode user@domain -> sip:user*domain@gateway_domain */
+/*! \brief  encode user\@domain -> sip:user*domain\@gateway_domain */
 char *encode_uri_xmpp_sip(char *jid)
 {
 	static char buf[512];

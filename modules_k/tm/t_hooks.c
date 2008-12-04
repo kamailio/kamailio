@@ -134,6 +134,7 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
  * (global or per transaction, depending of event type).
  * \param p_msg SIP message
  * \param t transaction
+ * \param types
  * \param f callback
  * \param param callback parameter
  * \return negative result on error, the return code from insert_tmcb on success
