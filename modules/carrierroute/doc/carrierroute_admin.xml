@@ -427,8 +427,9 @@ cr_tree_rewrite_uri(tree, domain)
 				the rewritten host is stored in the given AVP (if obmitted, the
 				host is not stored in an AVP).
         This function is only usable with rewrite_user and prefix_matching
-        containing a valid numerical only string. It uses the standard crc32 algorithm
-		to calculate the hash values.
+        containing a valid string. This string needs to be numerical if the match_mode
+		parameter is set to 10. It uses the standard crc32 algorithm to calculate
+		the hash values.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -485,8 +486,8 @@ cr_tree_rewrite_uri(tree, domain)
 				the rewritten host is stored in the given AVP (if obmitted, the
 				host is not stored in an AVP).
         This function is only usable with rewrite_user and prefix_matching
-        containing a valid numerical only string. It uses the prime hash algorithm
-		to calculate the hash values.
+        containing a valid string. This string needs to be numerical if the match_mode
+		parameter is set to 10. It uses the prime hash algorithm to calculate the hash values.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -545,8 +546,9 @@ cr_tree_rewrite_uri(tree, domain)
         Returns -1 if there is no data found or an empty next_domain on
         the longest match is found. Otherwise the next domain is stored
         in the given AVP.
-        This function is only usable with prefix_matching containing a
-        valid numerical only string.
+        This function is only usable with rewrite_user and prefix_matching
+        containing a valid string. This string needs to be numerical if the match_mode
+		parameter is set to 10.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -893,7 +895,7 @@ failure_route[1] {
 		<para>
 			Use the <quote>NULL</quote> prefix to specify an empty prefix in the config file.
 			Please note that the prefix is matched against the request URI (or to URI),
-			if they did not contain a valid numerical URI, no match is possible. So
+			if they did not contain a valid (numerical) URI, no match is possible. So
 			for loadbalancing purposes e.g. for your registrars, you should use an empty
 			prefix.
 		</para>
