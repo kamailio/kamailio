@@ -89,6 +89,8 @@
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  * 2008-01-24  added cfg_var definition (Miklos)
  * 2008-11-18  support for variable parameter module functions (andrei)
+ * 2007-12-03  support for generalised lvalues and rvalues:
+ *               lval=rval_expr, where lval=avp|pvar  (andrei)
 */
 
 %{
@@ -118,6 +120,10 @@
 #include "tcp_init.h"
 #include "tcp_options.h"
 #include "sctp_options.h"
+#include "pvar.h"
+#include "lvalue.h"
+#include "rvalue.h"
+#include "sr_compat.h"
 
 #include "config.h"
 #include "cfg_core.h"
@@ -187,14 +193,7 @@ static select_t sel;
 static select_t* sel_ptr;
 static pv_spec_t* pv_spec;
 static struct action *mod_func_action;
-
-static struct avp_pvar_spec{
-	int type;
-	union{
-		struct avp_spec avp;
-		pv_spec_t pv;
-	}u;
-} *apv_spec;
+static struct lvalue* lval_tmp;
 
 static void warn(char* s);
 static struct socket_id* mk_listen_id(char*, int, int);
@@ -216,8 +215,10 @@ static void free_socket_id_lst(struct socket_id* i);
 	struct socket_id* sockid;
 	struct name_lst* name_l;
 	struct avp_spec* attr;
-	struct pv_spec_t* pvar;
-	struct avp_pvar_spec* avp_pvar_s;
+	struct _pv_spec* pvar;
+	struct lvalue* lval;
+	struct rvalue* rval;
+	struct rval_expr* rv_expr;
 	select_t* select;
 }
 
@@ -508,13 +509,17 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <attr> attr_id_any
 %type <attr> attr_id_any_str
 %type <pvar> pvar
-%type <avp_pvar_s> avp_pvar
+%type <lval> lval
+%type <rv_expr> rval rval_expr
+%type <lval> avp_pvar
 /* %type <intval> class_id */
 %type <intval> assign_op
 %type <select> select_id
 %type <strval>	flag_name;
 %type <strval>	route_name;
 %type <intval> avpflag_oper
+%type <intval> rve_un_op
+%type <intval> rve_op
 
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -1986,42 +1991,38 @@ pvar:	PVAR {
 				yyerror("Not enough memory");
 				YYABORT;
 			}
-			s.s=$1; s.len=strlen(s.s);
-			if (pv_parse_spec(&s, pv_spec)==0){
+			memset(pv_spec, 0, sizeof(*pv_spec));
+			s_tmp.s=$1; s_tmp.len=strlen($1);
+			if (pv_parse_spec(&s_tmp, pv_spec)==0){
 				yyerror("unknown script pseudo variable");
 				pkg_free(pv_spec);
 				YYABORT;
 			}
 			$$=pv_spec;
-			BUG("parsed pvar \"%.*s\"\n", s.len, s.s);
 		}
 	;
 
 avp_pvar:	AVP_OR_PVAR {
-			apv=pkg_malloc(sizeof(*apv));
-			if (!apv) {
-				yyerror("Not enough memory");
-				YYABORT;
-			}
-			s.s=$1; s.len=strlen(s.s);
-			if (pv_parse_spec(&s, &apv_spec->u.pv)==0){
-				/* not a pvar, try avps */
-				/* TODO: test if in ser or k mode */
-				if (parse_avp_name(&s, &type, &apv_spec->u.avp.name, &idx)) {
-					yyerror("error when parsing AVP");
-					pkg_free(apv_spec);
+				lval_tmp=pkg_malloc(sizeof(*lval_tmp));
+				if (!lval_tmp) {
+					yyerror("Not enough memory");
 					YYABORT;
 				}
-				apv_spec->u.avp.type = type;
-				apv_spec->u.avp.index = idx;
-				apv_spec.type=APV_AVP_T;
-			}else{
-				apv_spec.type=APV_PVAR_T;
+				memset(lval_tmp, 0, sizeof(*lval_tmp));
+				s_tmp.s=$1; s_tmp.len=strlen(s_tmp.s);
+				if (pv_parse_spec(&s_tmp, &lval_tmp->lv.pvs)==0){
+					/* not a pvar, try avps */
+					lval_tmp->lv.avps.type|= AVP_NAME_STR;
+					lval_tmp->lv.avps.name.s.s = s_tmp.s+1;
+					lval_tmp->lv.avps.name.s.len = s_tmp.len-1;
+					lval_tmp->type=LV_AVP;
+				}else{
+					lval_tmp->type=LV_PVAR;
+				}
+				$$ = lval_tmp;
+				DBG("parsed ambigous avp/pvar \"%.*s\" to %d\n",
+							s_tmp.len, s_tmp.s, lval_tmp->type);
 			}
-			$$ = apv_spec;
-			BUG("parsed ambigous avp/pvar \"%.*s\" to %d\n", s.len, s.s,
-					apv_spec.type);
-		}
 	;
 
 
@@ -2034,6 +2035,98 @@ assign_op:
 assign_op:
 	EQUAL { $$ = ASSIGN_T; }
 	;
+
+
+lval: attr_id_ass {
+					lval_tmp=pkg_malloc(sizeof(*lval_tmp));
+					if (!lval_tmp) {
+						yyerror("Not enough memory");
+						YYABORT;
+					}
+					lval_tmp->type=LV_AVP; lval_tmp->lv.avps=*$1;
+					pkg_free($1); /* free the avp spec we just copied */
+					$$=lval_tmp;
+				}
+	| pvar        {
+					if (!pv_is_w($1))
+						yyerror("read only pvar in assignment left side");
+					if ($1->trans!=0)
+						yyerror("pvar with transformations in assignment"
+								" left side");
+					lval_tmp=pkg_malloc(sizeof(*lval_tmp));
+					if (!lval_tmp) {
+						yyerror("Not enough memory");
+						YYABORT;
+					}
+					lval_tmp->type=LV_PVAR; lval_tmp->lv.pvs=*($1);
+					pkg_free($1); /* free the pvar spec we just copied */
+					$$=lval_tmp;
+				}
+	| avp_pvar    {
+					if (($1)->type==LV_PVAR){
+						if (!pv_is_w(&($1)->lv.pvs))
+							yyerror("read only pvar in assignment left side");
+						if ($1->lv.pvs.trans!=0)
+							yyerror("pvar with transformations in assignment"
+									" left side");
+					}
+					$$=$1;
+				}
+	;
+
+rval: NUMBER			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
+	| STRING			{	s_tmp.s=$1; s_tmp.len=strlen($1);
+							$$=mk_rval_expr_v(RV_STR, &s_tmp); }
+	| attr_id_any		{$$=mk_rval_expr_v(RV_AVP, $1); pkg_free($1); }
+	| pvar				{$$=mk_rval_expr_v(RV_PVAR, $1); pkg_free($1); }
+	| avp_pvar			{
+							switch($1->type){
+								case LV_AVP:
+									$$=mk_rval_expr_v(RV_AVP, &$1->lv.avps);
+									break;
+								case LV_PVAR:
+									$$=mk_rval_expr_v(RV_PVAR, &$1->lv.pvs);
+									break;
+								default:
+									yyerror("BUG: invalid lvalue type ");
+									YYABORT;
+							}
+							pkg_free($1); /* not needed anymore */
+						}
+	| select_id			{$$=mk_rval_expr_v(RV_SEL, $1); pkg_free($1); }
+	| fcmd				{$$=mk_rval_expr_v(RV_ACTION_ST, $1); }
+	//| exp 				{$$=mk_rval_expr_v(RV_BEXPR, $1);}
+	/* missing/TODO: RV_ACTION_ST */
+	;
+
+
+rve_un_op: MINUS	{ $$=RVE_UMINUS_OP; }
+		/* TODO: RVE_BOOL_OP, RVE_NOT_OP? */
+	;
+
+rve_op:		PLUS		{ $$=RVE_PLUS_OP; }
+		|	MINUS		{ $$=RVE_MINUS_OP; }
+		|	STAR		{ $$=RVE_MUL_OP; }
+		/* TODO: RVE_DIV_OP */
+	;
+	
+rval_expr: rval							{ $$=$1;
+											if ($$==0){
+												yyerror("out of memory\n");
+												YYABORT;
+											}
+										}
+		| LPAREN rval_expr RPAREN		{ $$=$2; }
+		| rve_un_op rval_expr			{$$=mk_rval_expr1($1, $2); }
+		| rval_expr rve_op rval_expr	{$$=mk_rval_expr2($2, $1, $3); }
+	;
+
+assign_action: lval assign_op rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
+														 	  RVE_ST, $3);
+										}
+	;
+
+/*
 assign_action:
 	attr_id_ass assign_op STRING  { $$=mk_action($2, 2, AVP_ST, $1, STRING_ST, $3); }
 	| attr_id_ass assign_op NUMBER  { $$=mk_action($2, 2, AVP_ST, $1, NUMBER_ST, (void*)$3); }
@@ -2042,7 +2135,7 @@ assign_action:
 	| attr_id_ass assign_op select_id { $$=mk_action($2, 2, AVP_ST, (void*)$1, SELECT_ST, (void*)$3); }
 	| attr_id_ass assign_op LPAREN exp RPAREN { $$ = mk_action($2, 2, AVP_ST, $1, EXPR_ST, $4); }
 	;
-
+*/
 
 avpflag_oper:
 	SETAVPFLAG { $$ = 1; }
