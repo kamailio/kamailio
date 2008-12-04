@@ -47,6 +47,7 @@
  *  2007-06-14  run_actions & do_action need a ctx or handle now, no more 
  *               static vars (andrei)
  *  2008-11-18  support for variable parameter module functions (andrei)
+ *  2008-12-03  use lvalues/rvalues for assignments (andrei)
  */
 
 
@@ -63,6 +64,7 @@
 #include "parser/msg_parser.h"
 #include "parser/parse_uri.h"
 #include "ut.h"
+#include "lvalue.h"
 #include "sr_module.h"
 #include "mem/mem.h"
 #include "globals.h"
@@ -108,8 +110,6 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct sip_uri uri, next_hop;
 	struct sip_uri *u;
 	unsigned short port;
-	unsigned short flags;
-	int_str name, value;
 	str* dst_host;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
@@ -870,121 +870,16 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			ret=1; /* continue processing */
 			break;
 
-	        case ADD_T:
-	        case ASSIGN_T:
-
-			/* If the left attr was specified without indexing brackets delete
-			 * existing AVPs before adding new ones
-			 */
-			if ((a->val[0].u.attr->type & AVP_INDEX_ALL) != AVP_INDEX_ALL) delete_avp(a->val[0].u.attr->type, a->val[0].u.attr->name);
-
-			if (a->val[1].type == STRING_ST) {
-				value.s = a->val[1].u.str;
-				flags = a->val[0].u.attr->type | AVP_VAL_STR;
-				name = a->val[0].u.attr->name;
+	 case ADD_T:
+	case ASSIGN_T:
+			v=lval_assign(h, msg, (struct lvalue*)a->val[0].u.data,
+								  (struct rval_expr*)a->val[1].u.data);
+			if (likely(v>=0)) 
 				ret = 1;
-			} else if (a->val[1].type == NUMBER_ST) {
-				value.n = a->val[1].u.number;
-				flags = a->val[0].u.attr->type;
-				name = a->val[0].u.attr->name;
-				ret = 1;
-			} else if (a->val[1].type == ACTION_ST) {
-				flags = a->val[0].u.attr->type;
-				name = a->val[0].u.attr->name;
-				if (a->val[1].u.data) {
-					value.n = run_actions(h, (struct action*)a->val[1].u.data,
-											msg);
-				} else {
-					value.n = -1;
-				}
-				ret = value.n;
-			} else if(a->val[1].type == EXPR_ST && a->val[1].u.data) {
-				v = eval_expr(h, (struct expr*)a->val[1].u.data, msg);
-				if (v < 0) {
-					if (v == EXPR_DROP){ /* hack to quit on DROP*/
-						ret = 0;
-						break;
-					} else {
-						LOG(L_WARN,"WARNING: do_action: error in expression\n");
-						v = 0; /* error is treated as false (Miklos) */
-					}
-				}
-
-				flags = a->val[0].u.attr->type;
-				name = a->val[0].u.attr->name;
-				value.n = v;
-			} else if (a->val[1].type == AVP_ST) {
-				struct search_state st;
-				avp_t* avp;
-				avp_t* avp_mark;
-
-				avp_mark = NULL;
-				if ((a->val[1].u.attr->type & AVP_INDEX_ALL) == AVP_INDEX_ALL) {
-					avp = search_first_avp(a->val[1].u.attr->type, a->val[1].u.attr->name, &value, &st);
-					while(avp) {
-						     /* We take only the type of value and name from the source avp
-						      * and reset class and track flags
-						      */
-						flags = (a->val[0].u.attr->type & ~AVP_INDEX_ALL) | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
-
-						if (add_avp_before(avp_mark, flags, a->val[0].u.attr->name, value) < 0) {
-							LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
-							ret=E_UNSPEC;
-							break;
-						}
-
-						/* move the mark, so the next found AVP will come before the one currently added
-						 * so they will have the same order as in the source list
-						 */
-						if (avp_mark) {
-							avp_mark=avp_mark->next;
-						} else {
-							avp_mark=search_first_avp(flags, a->val[0].u.attr->name, NULL, NULL);
-						}
-
-						avp = search_next_avp(&st, &value);
-					}
-					ret = 1;
-					break;
-				} else {
-					avp = search_avp_by_index(a->val[1].u.attr->type, a->val[1].u.attr->name, &value, a->val[1].u.attr->index);
-					if (avp) {
-						flags = a->val[0].u.attr->type | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
-						name = a->val[0].u.attr->name;
-						ret = 1;
-					} else {
-						ret = E_UNSPEC;
-						break;
-					}
-				}
-			} else if (a->val[1].type == SELECT_ST) {
-				int r;
-				r = run_select(&value.s, a->val[1].u.select, msg);
-				if (r < 0) {
-					ret=E_UNSPEC;
-					break;
-				} else if (r > 0) {
-					value.s.s = "";
-					value.s.len = 0;
-				}
-
-				flags = a->val[0].u.attr->type | AVP_VAL_STR;
-				name = a->val[0].u.attr->name;
-				ret = 1;
-			} else {
-				LOG(L_CRIT, "BUG: do_action: Bad right side of avp assignment\n");
-				ret=E_BUG;
-				break;
-			}
-
-			/* If the action is assign then remove the old avp value
-			 * before adding new ones */
-/*			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name); */
-			if (add_avp(flags & ~AVP_INDEX_ALL, name, value) < 0) {
-				LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
-				ret=E_UNSPEC;
-				break;
-			}
+			else if (unlikely (v == EXPR_DROP)) /* hack to quit on DROP*/
+				ret=0;
+			else
+				ret=v;
 			break;
 
 		default:

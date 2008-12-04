@@ -48,6 +48,7 @@
  *		the expressions does not exist (Miklos)
  *  2008-04-23  errors are treated as false during expression evaluation
  *  		unless the operator is DIFF_OP (Miklos)
+ *  2008-12-03  fixups for rvalues in assignments (andrei)
  */
 
 
@@ -66,6 +67,8 @@
 #include "dprint.h"
 #include "proxy.h"
 #include "action.h"
+#include "lvalue.h"
+#include "rvalue.h"
 #include "sr_module.h"
 #include "ip_addr.h"
 #include "resolve.h"
@@ -276,12 +279,12 @@ int route_lookup(struct route_list* rt, char* name)
 
 
 
-static int fix_actions(struct action* a); /*fwd declaration*/
+int fix_actions(struct action* a); /*fwd declaration*/
 
 
 /* traverses an expr tree and compiles the REs where necessary)
  * returns: 0 for ok, <0 if errors */
-static int fix_expr(struct expr* exp)
+int fix_expr(struct expr* exp)
 {
 	regex_t* re;
 	int ret;
@@ -380,7 +383,7 @@ static int fix_expr(struct expr* exp)
 
 /* adds the proxies in the proxy list & resolves the hostnames */
 /* returns 0 if ok, <0 on error */
-static int fix_actions(struct action* a)
+int fix_actions(struct action* a)
 {
 	struct action *t;
 	struct proxy_l* p;
@@ -391,6 +394,8 @@ static int fix_actions(struct action* a)
 	struct hostent* he;
 	struct ip_addr ip;
 	struct socket_info* si;
+	struct lvalue* lval;
+	
 	char buf[30]; /* tmp buffer needed for module param fixups */
 
 	if (a==0){
@@ -466,40 +471,34 @@ static int fix_actions(struct action* a)
 				}
 				break;
 
-		        case ASSIGN_T:
-		        case ADD_T:
-				if (t->val[0].type != AVP_ST) {
-					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of assignment\n");
+			case ASSIGN_T:
+			case ADD_T:
+				if (t->val[0].type !=LVAL_ST) {
+					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of"
+								" assignment\n");
 					return E_BUG;
 				}
-				if (t->val[0].u.attr->type & AVP_CLASS_DOMAIN) {
-					LOG(L_ERR, "ERROR: You cannot change domain attributes from the script, they are read-only\n");
-					return E_BUG;
-				} else if (t->val[0].u.attr->type & AVP_CLASS_GLOBAL) {
-					LOG(L_ERR, "ERROR: You cannot change global attributes from the script, they are read-only\n");
+				if (t->val[1].type !=RVE_ST) {
+					LOG(L_CRIT, "BUG: fix_actions: Invalid right side of"
+								" assignment (%d)\n", t->val[1].type);
 					return E_BUG;
 				}
-
-				if (t->val[1].type == ACTION_ST && t->val[1].u.data) {
-					if ((ret = fix_actions((struct action*)t->val[1].u.data)) < 0) {
-						return ret;
-					}
-				} else if (t->val[1].type == EXPR_ST && t->val[1].u.data) {
-					if ((ret = fix_expr((struct expr*)t->val[1].u.data)) < 0) {
-						return ret;
-					}
-				} else if (t->val[1].type == STRING_ST) {
-					int len;
-					len = strlen(t->val[1].u.data);
-					t->val[1].u.str.s = t->val[1].u.data;
-					t->val[1].u.str.len = len;
-				} else if (t->val[1].type == SELECT_ST) {
-					if ((ret=resolve_select(t->val[1].u.select)) < 0) {
-						BUG("Unable to resolve select\n");
-						print_select(t->val[1].u.select);
-						return ret;
+				lval=t->val[0].u.data;
+				if (lval->type==LV_AVP){
+					if (lval->lv.avps.type & AVP_CLASS_DOMAIN) {
+						LOG(L_ERR, "ERROR: You cannot change domain"
+									" attributes from the script, they are"
+									" read-only\n");
+						return E_BUG;
+					} else if (lval->lv.avps.type & AVP_CLASS_GLOBAL) {
+						LOG(L_ERR, "ERROR: You cannot change global"
+								   " attributes from the script, they are"
+								   "read-only\n");
+						return E_BUG;
 					}
 				}
+				if ((ret=fix_rval_expr(&t->val[1].u.data))<0)
+					return ret;
 				break;
 
 			case MODULE_T:

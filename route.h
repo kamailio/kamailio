@@ -73,7 +73,9 @@ int fix_rls();
 int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg);
 
 
-
+/* fixup functions*/
+int fix_actions(struct action* a);
+int fix_expr(struct expr* exp);
 
 
 
