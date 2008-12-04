@@ -830,7 +830,8 @@ EAT_ABLE	[\ \t\b\r]
 <AVP_PVAR>{AVP_PREF}		|
 <AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); 
 							  return ATTR_MARK; }
-<AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; BEGIN(PVAR_P); yymore(); }
+<AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; p_nest=1; BEGIN(PVAR_P);
+								yymore(); }
 <AVP_PVAR>{ID}				{	count(); addstr(&s_buf, yytext, yyleng);
 								yylval.strval=s_buf.s;
 								memset(&s_buf, 0, sizeof(s_buf));
