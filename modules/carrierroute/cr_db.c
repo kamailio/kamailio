@@ -21,7 +21,7 @@
  */
 
 /**
- * \file route_db.c
+ * \file cr_db.c
  * \brief Functions for loading routing data from a database.
  * \ingroup carrierroute
  * - Module; \ref carrierroute

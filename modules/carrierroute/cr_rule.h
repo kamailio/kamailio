@@ -182,7 +182,7 @@ struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **fr
 /**
  * Destroys failure route rule frr by freeing all its memory.
  *
- * @param rr route rule to be destroyed
+ * @param frr route rule to be destroyed
  */
 void destroy_failure_route_rule(struct failure_route_rule * frr);
 

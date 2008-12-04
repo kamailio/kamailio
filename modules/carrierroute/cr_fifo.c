@@ -391,7 +391,7 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
  * and prints route rules if present.
  *
  * @param msg MI node that is used to append the informations
- * @param tree pointer to the routing tree node
+ * @param node pointer to the routing tree node
  * @param prefix carries the current scan prefix
  *
  * @return mi node containing the route rules
@@ -719,7 +719,7 @@ errout:
  * Does the work for update_route_data by recursively
  * traversing the routing tree
  *
- * @param rt points to the current routing tree node
+ * @param node points to the current routing tree node
  * @param act_domain routing domain which is currently
  * searched
  * @param opts points to the fifo command option structure

@@ -395,7 +395,7 @@ mem_error:
 /**
  * Destroys failure route rule frr by freeing all its memory.
  *
- * @param rr route rule to be destroyed
+ * @param frr route rule to be destroyed
  */
 void destroy_failure_route_rule(struct failure_route_rule * frr) {
 	if (frr->host.s) {

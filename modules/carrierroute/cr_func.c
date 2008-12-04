@@ -68,7 +68,8 @@ static const str AT_SIGN  = { .s="@",     .len=1 };
  * search_id function for the lookup.
  * @param _msg SIP message
  * @param gp id as integer, pseudo-variable or AVP name of carrier
- * @param search_if lookup function
+ * @param map lookup function
+ * @param size size of the list
  * @return id on success, -1 otherwise
  */
 static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t *map, int size) {
@@ -149,7 +150,7 @@ static inline int reply_code_matcher(const str *rcw, const str *rc) {
 /**
  * writes the next_domain avp using the rule list of failure_tree
  *
- * @param failure_tree the head of the failure route rule list
+ * @param frr_head the head of the failure route rule list
  * @param host last tried host
  * @param reply_code the last reply code
  * @param flags flags for the failure route rule
@@ -199,7 +200,7 @@ static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
  * The longest match is taken, so it is possible to define
  * failure route rules for a single number
  *
- * @param failure_tree the current routing tree node
+ * @param failure_node the current routing tree node
  * @param uri the uri to be rewritten at the current position
  * @param host last tried host
  * @param reply_code the last reply code
