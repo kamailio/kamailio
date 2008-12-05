@@ -133,7 +133,7 @@ int pv_parse_ht_name(pv_spec_p sp, str *in)
 	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
 		p++;
 	if(p>in->s+in->len || *p=='\0')
-		return -1;
+		goto error;
 	hpv->htname.s = p;
 	while(p < in->s + in->len)
 	{
@@ -142,18 +142,18 @@ int pv_parse_ht_name(pv_spec_p sp, str *in)
 		p++;
 	}
 	if(p>in->s+in->len || *p=='\0')
-		return -1;
+		goto error;
 	hpv->htname.len = p - hpv->htname.s;
 	if(*p!='=')
 	{
 		while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
 			p++;
 		if(p>in->s+in->len || *p=='\0' || *p!='=')
-			return -1;
+			goto error;
 	}
 	p++;
 	if(*p!='>')
-		return -1;
+		goto error;
 	p++;
 
 	pvs.len = in->len - (int)(p - in->s);
