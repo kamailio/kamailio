@@ -46,17 +46,27 @@ typedef struct _ht_entry
 
 typedef struct _ht
 {
+	str name;
+	unsigned int htid;
+	unsigned int htexpire;
+	str dbtable;
 	unsigned int htsize;
 	ht_entry_t *entries;
+	struct _ht *next;
 } ht_t;
 
-int ht_init(int size);
+int ht_pkg_init(str *name, int autoexp, str *dbtable, int size);
+int ht_shm_init(void);
 int ht_destroy(void);
-int ht_set_cell(str *name, int type, int_str *val);
-int ht_del_cell(str *name);
+int ht_set_cell(ht_t *ht, str *name, int type, int_str *val);
+int ht_del_cell(ht_t *ht, str *name);
 
 int ht_dbg(void);
-ht_cell_t* ht_cell_pkg_copy(str *name, ht_cell_t *old);
+ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old);
 int ht_cell_pkg_free(ht_cell_t *cell);
+
+int ht_table_spec(char *spec);
+ht_t* ht_get_table(str *name);
+int ht_db_load_tables(void);
 
 #endif

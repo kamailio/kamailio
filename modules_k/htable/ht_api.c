@@ -24,8 +24,10 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../hash_func.h"
+#include "../../ut.h"
 
 #include "ht_api.h"
+#include "ht_db.h"
 
 
 #define ht_compute_hash(_s)        core_case_hash(_s,0,0)
@@ -33,6 +35,7 @@
 
 
 ht_t *_ht_root = NULL;
+ht_t *_ht_pkg_root = NULL;
 
 
 ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
@@ -89,49 +92,124 @@ int ht_cell_pkg_free(ht_cell_t *cell)
 	return 0;
 }
 
-
-int ht_init(int size)
+ht_t* ht_get_table(str *name)
 {
-	int i;
-	if(size > 1<<14)
-		size = 1<<14;
+	unsigned int htid;
+	ht_t *ht;
 
-	_ht_root = (ht_t*)shm_malloc(sizeof(ht_t));
-	if(_ht_root==NULL)
-	{
-		LM_ERR("no more shm\n");
-		return -1;
-	}
-	memset(_ht_root, 0, sizeof(ht_t));
+	htid = ht_compute_hash(name);
 
-	_ht_root->entries = (ht_entry_t*)shm_malloc(size*sizeof(ht_entry_t));
-	if(_ht_root->entries==NULL)
+	/* does it exist */
+	ht = _ht_root;
+	while(ht!=NULL)
 	{
-		LM_ERR("no more shm.\n");
-		shm_free(_ht_root);
-		_ht_root = NULL;
-		return -1;
-	}
-
-	for(i=0; i<size; i++)
-	{
-		if(lock_init(&_ht_root->entries[i].lock)==0)
+		if(htid == ht->htid && name->len==ht->name.len 
+				&& strncmp(name->s, ht->name.s, name->len)==0)
 		{
-			LM_ERR("cannot initalize lock[%d]\n", i);
-			i--;
-			while(i>=0)
-			{
-				lock_destroy(&_ht_root->entries[i].lock);
-				i--;
-			}
-			shm_free(_ht_root->entries);
-			shm_free(_ht_root);
-			_ht_root = NULL;
-			return -1;
-
+			LM_DBG("htable found [%.*s]\n", name->len, name->s);
+			return ht;
 		}
+		ht = ht->next;
 	}
-	_ht_root->htsize = size;
+	return NULL;
+}
+
+int ht_pkg_init(str *name, int autoexp, str *dbtable, int size)
+{
+	unsigned int htid;
+	ht_t *ht;
+
+	htid = ht_compute_hash(name);
+
+	/* does it exist */
+	ht = _ht_pkg_root;
+	while(ht!=NULL)
+	{
+		if(htid == ht->htid && name->len==ht->name.len 
+				&& strncmp(name->s, ht->name.s, name->len)==0)
+		{
+			LM_ERR("htable already configured [%.*s]\n", name->len, name->s);
+			return -1;
+		}
+		ht = ht->next;
+	}
+
+	ht = (ht_t*)pkg_malloc(sizeof(ht_t));
+	if(ht==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	memset(ht, 0, sizeof(ht_t));
+
+	if(size<=1)
+		ht->htsize = 8;
+	else if(size>14)
+		ht->htsize = 1<<14;
+	else ht->htsize = 1<<size;
+	ht->htid = htid;
+	ht->htexpire = autoexp;
+	ht->name = *name;
+	if(dbtable!=NULL && dbtable->len>0)
+		ht->dbtable = *dbtable;
+
+	ht->next = _ht_pkg_root;
+	_ht_pkg_root = ht;
+	return 0;
+}
+
+int ht_shm_init(void)
+{
+	ht_t *htp;
+	ht_t *htp0;
+	ht_t *ht;
+	int i;
+
+	htp = _ht_pkg_root;
+
+	while(htp)
+	{
+		htp0 = htp->next;
+		ht = (ht_t*)shm_malloc(sizeof(ht_t));
+		if(ht==NULL)
+		{
+			LM_ERR("no more shm\n");
+			return -1;
+		}
+		memcpy(ht, htp, sizeof(ht_t));
+
+		ht->entries = (ht_entry_t*)shm_malloc(ht->htsize*sizeof(ht_entry_t));
+		if(ht->entries==NULL)
+		{
+			LM_ERR("no more shm.\n");
+			shm_free(ht);
+			return -1;
+		}
+
+		for(i=0; i<ht->htsize; i++)
+		{
+			if(lock_init(&ht->entries[i].lock)==0)
+			{
+				LM_ERR("cannot initalize lock[%d]\n", i);
+				i--;
+				while(i>=0)
+				{
+					lock_destroy(&ht->entries[i].lock);
+					i--;
+				}
+				shm_free(ht->entries);
+				shm_free(ht);
+				return -1;
+
+			}
+		}
+		ht->next = _ht_root;
+		_ht_root = ht;
+		pkg_free(htp);
+		htp = htp0;
+	}
+	_ht_pkg_root = NULL;
+
 	return 0;
 }
 
@@ -139,46 +217,54 @@ int ht_destroy(void)
 {
 	int i;
 	ht_cell_t *it, *it0;
+	ht_t *ht;
+	ht_t *ht0;
 
-	if(_ht_root==NULL || _ht_root->entries==NULL)
+	if(_ht_root==NULL)
 		return -1;
 
-	for(i=0; i<_ht_root->htsize; i++)
+	ht = _ht_root;
+	while(ht)
 	{
-		/* free entries */
-		it = _ht_root->entries[i].first;
-		while(it)
+		ht0 = ht->next;
+		for(i=0; i<ht->htsize; i++)
 		{
-			it0 = it;
-			it = it->next;
-			ht_cell_free(it0);
+			/* free entries */
+			it = ht->entries[i].first;
+			while(it)
+			{
+				it0 = it;
+				it = it->next;
+				ht_cell_free(it0);
+			}
+			/* free locks */
+			lock_destroy(&ht->entries[i].lock);
 		}
-		/* free locks */
-		lock_destroy(&_ht_root->entries[i].lock);
+		shm_free(ht->entries);
+		shm_free(ht);
+		ht = ht0;
 	}
-	shm_free(_ht_root->entries);
-	shm_free(_ht_root);
 	_ht_root = NULL;
 	return 0;
 }
 
 
-int ht_set_cell(str *name, int type, int_str *val)
+int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ht_cell_t *it, *prev, *cell;
 
-	if(_ht_root==NULL || _ht_root->entries==NULL)
+	if(ht==NULL || ht->entries==NULL)
 		return -1;
 
 	hid = ht_compute_hash(name);
 	
-	idx = ht_get_entry(hid, _ht_root->htsize);
+	idx = ht_get_entry(hid, ht->htsize);
 
 	prev = NULL;
-	lock_get(&_ht_root->entries[idx].lock);
-	it = _ht_root->entries[idx].first;
+	lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 	{
 		prev = it;
@@ -205,7 +291,7 @@ int ht_set_cell(str *name, int type, int_str *val)
 						if(cell == NULL)
 						{
 							LM_ERR("cannot create new cell\n");
-							lock_release(&_ht_root->entries[idx].lock);
+							lock_release(&ht->entries[idx].lock);
 							return -1;
 						}
 						cell->next = it->next;
@@ -220,7 +306,7 @@ int ht_set_cell(str *name, int type, int_str *val)
 					it->flags &= ~AVP_VAL_STR;
 					it->value.n = val->n;
 				}
-				lock_release(&_ht_root->entries[idx].lock);
+				lock_release(&ht->entries[idx].lock);
 				return 0;
 			} else {
 				if(type&AVP_VAL_STR)
@@ -230,7 +316,7 @@ int ht_set_cell(str *name, int type, int_str *val)
 					if(cell == NULL)
 					{
 						LM_ERR("cannot create new cell.\n");
-						lock_release(&_ht_root->entries[idx].lock);
+						lock_release(&ht->entries[idx].lock);
 						return -1;
 					}
 					cell->next = it->next;
@@ -243,7 +329,7 @@ int ht_set_cell(str *name, int type, int_str *val)
 				} else {
 					it->value.n = val->n;
 				}
-				lock_release(&_ht_root->entries[idx].lock);
+				lock_release(&ht->entries[idx].lock);
 				return 0;
 			}
 		}
@@ -255,17 +341,17 @@ int ht_set_cell(str *name, int type, int_str *val)
 	if(cell == NULL)
 	{
 		LM_ERR("cannot create new cell.\n");
-		lock_release(&_ht_root->entries[idx].lock);
+		lock_release(&ht->entries[idx].lock);
 		return -1;
 	}
 	if(prev==NULL)
 	{
-		if(_ht_root->entries[idx].first!=NULL)
+		if(ht->entries[idx].first!=NULL)
 		{
-			cell->next = _ht_root->entries[idx].first;
-			_ht_root->entries[idx].first->prev = cell;
+			cell->next = ht->entries[idx].first;
+			ht->entries[idx].first->prev = cell;
 		}
-		_ht_root->entries[idx].first = cell;
+		ht->entries[idx].first = cell;
 	} else {
 		cell->next = prev->next;
 		cell->prev = prev;
@@ -273,30 +359,30 @@ int ht_set_cell(str *name, int type, int_str *val)
 			prev->next->prev = cell;
 		prev->next = cell;
 	}
-	_ht_root->entries[idx].esize++;
-	lock_release(&_ht_root->entries[idx].lock);
+	ht->entries[idx].esize++;
+	lock_release(&ht->entries[idx].lock);
 	return 0;
 }
 
-int ht_del_cell(str *name)
+int ht_del_cell(ht_t *ht, str *name)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ht_cell_t *it;
 
-	if(_ht_root==NULL || _ht_root->entries==NULL)
+	if(ht==NULL || ht->entries==NULL)
 		return -1;
 
 	hid = ht_compute_hash(name);
 	
-	idx = ht_get_entry(hid, _ht_root->htsize);
+	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
-	if(_ht_root->entries[idx].first==NULL)
+	if(ht->entries[idx].first==NULL)
 		return 0;
 	
-	lock_get(&_ht_root->entries[idx].lock);
-	it = _ht_root->entries[idx].first;
+	lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
 	while(it!=NULL && it->cellid == hid)
@@ -306,41 +392,41 @@ int ht_del_cell(str *name)
 		{
 			/* found */
 			if(it->prev==NULL)
-				_ht_root->entries[idx].first = it->next;
+				ht->entries[idx].first = it->next;
 			else
 				it->prev->next = it->next;
 			if(it->next)
 				it->next->prev = it->prev;
-			_ht_root->entries[idx].esize--;
-			lock_release(&_ht_root->entries[idx].lock);
+			ht->entries[idx].esize--;
+			lock_release(&ht->entries[idx].lock);
 			ht_cell_free(it);
 			return 0;
 		}
 		it = it->next;
 	}
-	lock_release(&_ht_root->entries[idx].lock);
+	lock_release(&ht->entries[idx].lock);
 	return 0;
 }
 
-ht_cell_t* ht_cell_pkg_copy(str *name, ht_cell_t *old)
+ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ht_cell_t *it, *cell;
 
-	if(_ht_root==NULL || _ht_root->entries==NULL)
+	if(ht==NULL || ht->entries==NULL)
 		return NULL;
 
 	hid = ht_compute_hash(name);
 	
-	idx = ht_get_entry(hid, _ht_root->htsize);
+	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
-	if(_ht_root->entries[idx].first==NULL)
+	if(ht->entries[idx].first==NULL)
 		return NULL;
 	
-	lock_get(&_ht_root->entries[idx].lock);
-	it = _ht_root->entries[idx].first;
+	lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
 	while(it!=NULL && it->cellid == hid)
@@ -354,19 +440,19 @@ ht_cell_t* ht_cell_pkg_copy(str *name, ht_cell_t *old)
 				if(old->msize>=it->msize)
 				{
 					memcpy(old, it, it->msize);
-					lock_release(&_ht_root->entries[idx].lock);
+					lock_release(&ht->entries[idx].lock);
 					return old;
 				}
 			}
 			cell = (ht_cell_t*)pkg_malloc(it->msize);
 			if(cell!=NULL)
 				memcpy(cell, it, it->msize);
-			lock_release(&_ht_root->entries[idx].lock);
+			lock_release(&ht->entries[idx].lock);
 			return cell;
 		}
 		it = it->next;
 	}
-	lock_release(&_ht_root->entries[idx].lock);
+	lock_release(&ht->entries[idx].lock);
 	return NULL;
 }
 
@@ -395,6 +481,145 @@ int ht_dbg(void)
 			it = it->next;
 		}
 		lock_release(&_ht_root->entries[i].lock);
+	}
+	return 0;
+}
+
+int ht_table_spec(char *spec)
+{
+	str name;
+	str dbtable = {0, 0};
+	unsigned int autoexpire = 0;
+	unsigned int size = 4;
+	int type = 0;
+	str in;
+	str tok;
+	char *p;
+
+	/* parse: name=>dbtable=abc;autoexpire=123;size=123*/
+	in.s = spec;
+	in.len = strlen(in.s);
+
+	p = in.s;
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	name.s = p;
+	while(p < in.s + in.len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	name.len = p - name.s;
+	if(*p!='=')
+	{
+		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+			p++;
+		if(p>in.s+in.len || *p=='\0' || *p!='=')
+			goto error;
+	}
+	p++;
+	if(*p!='>')
+		goto error;
+	p++;
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+
+next_token:
+	tok.s = p;
+	while(p < in.s + in.len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	tok.len = p - tok.s;
+	if(tok.len==7 && strncmp(tok.s, "dbtable", 7)==0)
+		type = 1;
+	else if(tok.len==10 && strncmp(tok.s, "autoexpire", 10)==0)
+		type = 2;
+	else if(tok.len==4 && strncmp(tok.s, "size", 4)==0)
+		type = 3;
+	else goto error;
+
+	if(*p!='=')
+	{
+		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+			p++;
+		if(p>in.s+in.len || *p=='\0' || *p!='=')
+			goto error;
+	}
+	p++;
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	tok.s = p;
+	while(p < in.s + in.len)
+	{
+		if(*p==';' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	tok.len = p - tok.s;
+	switch(type)
+	{
+		case 1:
+			dbtable = tok;
+			LM_DBG("htable [%.*s] - dbtable [%.*s]\n", name.len, name.s,
+					dbtable.len, dbtable.s);
+			break;
+		case 2:
+			if(str2int(&tok, &autoexpire)!=0)
+				goto error;
+			LM_DBG("htable [%.*s] - expire [%u]\n", name.len, name.s,
+					autoexpire);
+			break;
+		case 3:
+			if(str2int(&tok, &size)!=0)
+				goto error;
+			LM_DBG("htable [%.*s] - size [%u]\n", name.len, name.s,
+					size);
+			break;
+	}
+	while(p<in.s+in.len && (*p==';' || *p==' ' || *p=='\t'
+				|| *p=='\n' || *p=='\r'))
+		p++;
+	if(p<in.s+in.len)
+		goto next_token;
+
+	return ht_pkg_init(&name, autoexpire, &dbtable, size);
+
+error:
+	LM_ERR("invalid htable parameter [%.*s] at [%d]\n", in.len, in.s,
+			(int)(p-in.s));
+	return -1;
+}
+
+int ht_db_load_tables(void)
+{
+	ht_t *ht;
+
+	ht = _ht_root;
+	while(ht)
+	{
+		if(ht->dbtable.len>0)
+		{
+			LM_DBG("loading db table [%.*s] in ht [%.*s]\n",
+					ht->dbtable.len, ht->dbtable.s,
+					ht->name.len, ht->name.s);
+			if(ht_db_load_table(ht, &ht->dbtable)!=0)
+				return -1;
+		}
+		ht = ht->next;
 	}
 	return 0;
 }

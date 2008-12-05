@@ -9,18 +9,20 @@
 	<para>
 		The module adds a hash table container to configuration language. The
 		hash table is stored in shared memory and the access to it can be
-		done via pseudo-variables: $sht(name).
+		done via pseudo-variables: $sht(htname=&gt;name).
 	</para>
 	<para>
 		The <quote>name</quote> can be a static string or can include pseudo-
 		variables that will be replaced at runtime.
 	</para>
 	<example>
-	<title>Accessing $sht(name)</title>
+		<title>Accessing $sht(htname=&gt;key)</title>
 	<programlisting format="linespecific">
 ...
-$sht(test) = 1;
-$sht($ci::srcip) = $si;
+modparam("htable", "htable", "a=&gt;size=4;")
+...
+$sht(a=&gt;test) = 1;
+$sht(a=&gt;$ci::srcip) = $si;
 ...
 </programlisting>
 	</example>
@@ -44,30 +46,32 @@ $sht($ci::srcip) = $si;
 	<title>Dictionary attack limitation</title>
 	<programlisting format="linespecific">
 ...
+modparam("htable", "htable", "a=&gt;size=4;")
+...
 if(is_present_hf("Authorization"))
 {
-	if($sht($au::auth_count)==3)
+	if($sht(a=&gt;$au::auth_count)==3)
 	{
-		if($sht($au::last_auth) &gt; $Ts-900)
+		if($sht(a=&gt;$au::last_auth) &gt; $Ts-900)
 		{
 			sl_send_reply("403", "Try later");
 			exit;
 		} else {
-			$sht($au::auth_count) = 0;
+			$sht(a=&gt;$au::auth_count) = 0;
 		}
 	}
 	if(!www_authorize(""))
 	{
-		if($sht($au::auth_count) == null)
-			$sht($au::auth_count) = 0;
-		$sht($au::auth_count) = $sht($au::auth_count) + 1;
-		if($sht($au::auth_count) == 3)
+		if($sht(a=&gt;$au::auth_count) == null)
+			$sht(a=&gt;$au::auth_count) = 0;
+		$sht(a=&gt;$au::auth_count) = $sht(a=&gt;$au::auth_count) + 1;
+		if($sht(a=&gt;$au::auth_count) == 3)
 			xlog("auth failed 3rd time - src ip: $si\n");
-		$sht($au::last_auth) = $Ts;
+		$sht(a=&gt;$au::last_auth) = $Ts;
 		www_challenge(""/*realm*/,"0"/*qop*/);
 		exit;
 	}
-	$sht($au::auth_count) = 0;
+	$sht(a=&gt;$au::auth_count) = 0;
 } else {
 	www_challenge("","0");
 	exit;
@@ -172,20 +176,61 @@ if(is_present_hf("Authorization"))
 	<section>
 	<title>Exported Parameters</title>
 	<section>
-		<title><varname>hash_size</varname> (integer)</title>
+		<title><varname>htable</varname> (str)</title>
 		<para>
-		The hash table will be build with 2^hash_size entries.
+		The definition of a hash table. The value of the parameter must have the
+		following format:
 		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"htname=&gt;size=_number_;autoexpire=_number_;dbtable=_string_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more hash tables in
+			same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>htname</emphasis> - string specifying the name of
+			the hash table. This string is used by $sht(...) to refer to the
+			hash table.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>size</emphasis> - number specifying the size of hash
+			table. The number of entries in the table is 2^size
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>autoexpire</emphasis> -time in seconds to delete an item
+			from hash table if no update was done to it. If is missing or set
+			to 0, the items won't expire.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>dbtable</emphasis> - name of database to be loaded at
+			startup in hash table. If empty or missing, no data will be loaded.
+		</para>
+		</listitem>
+		</itemizedlist>
 		<para>
 		<emphasis>
-			Default value is 6. Max value is 14.
+			Default value is NULL.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>hash_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("htable", "hash_size", 10)
+modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
+modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
 ...
 </programlisting>
 		</example>
@@ -206,26 +251,6 @@ modparam("htable", "hash_size", 10)
 		<programlisting format="linespecific">
 ...
 modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>db_table</varname> (str)</title>
-		<para>
-			The DB table name to load values from it in hash
-			table at start up.
-		</para>
-		<para>
-		<emphasis>
-			Default value is NULL (do not load).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>db_table</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("htable", "db_url", "htable")
 ...
 </programlisting>
 		</example>
@@ -374,12 +399,17 @@ sht_print();
 	<title>Exported pseudo-variables</title>
 		
 		<section>
-			<title><varname>$sht(name)</varname></title>
+			<title><varname>$sht(htable=>key)</varname></title>
 			<para>
 				Access hash table entries.
 			</para>
 			<para>
-			The <quote>name</quote> can be:
+			The <quote>htname</quote> must be a hash table name defined via
+			<quote>htable</quote> parameter.
+			</para>
+
+			<para>
+			The <quote>key</quote> can be:
 			</para>
 			<itemizedlist>
 				<listitem>
@@ -397,8 +427,10 @@ sht_print();
 				<title><function moreinfo="none">$sht(name)</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$sht($au) = 1;
-$sht($ru) = $fu;
+modparam("htable", "htable", "a=&gt;size=4;")
+...
+$sht(a=&gt;$au) = 1;
+$sht(a=&gt;$ru) = $fu;
 ...
 				 </programlisting>
 			</example>

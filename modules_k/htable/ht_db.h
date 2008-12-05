@@ -26,7 +26,6 @@
 #include "ht_api.h"
 
 extern str ht_db_url;
-extern str ht_db_table;
 extern str ht_db_name_column;
 extern str ht_db_ktype_column;
 extern str ht_db_vtype_column;
@@ -38,6 +37,6 @@ int ht_db_init_params(void);
 int ht_db_init_con(void);
 int ht_db_open_con(void);
 int ht_db_close_con(void);
-int ht_db_load_table(void);
+int ht_db_load_table(ht_t *ht, str *dbtable);
 
 #endif

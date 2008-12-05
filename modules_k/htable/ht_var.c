@@ -26,18 +26,31 @@
 /* pkg copy */
 ht_cell_t *_htc_local=NULL;
 
+typedef struct _ht_pv {
+	str htname;
+	ht_t *ht;
+	pv_elem_t *pve;
+} ht_pv_t, *ht_pv_p;
+
 int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	str htname;
 	ht_cell_t *htc=NULL;
+	ht_pv_t *hpv;
 
-	if(pv_printf_s(msg, (pv_elem_t*)param->pvn.u.dname, &htname)!=0)
+	hpv = (ht_pv_t*)param->pvn.u.dname;
+
+	if(hpv->ht==NULL)
+		hpv->ht = ht_get_table(&hpv->htname);
+	if(hpv->ht==NULL)
+		return pv_get_null(msg, param, res);
+	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
 		LM_ERR("cannot get $ht name\n");
 		return -1;
 	}
-	htc = ht_cell_pkg_copy(&htname, _htc_local);
+	htc = ht_cell_pkg_copy(hpv->ht, &htname, _htc_local);
 	if(htc==NULL)
 		return pv_get_null(msg, param, res);
 	if(_htc_local!=htc)
@@ -58,31 +71,40 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 {
 	str htname;
 	int_str isval;
+	ht_pv_t *hpv;
 
-	if(pv_printf_s(msg, (pv_elem_t*)param->pvn.u.dname, &htname)!=0)
+	hpv = (ht_pv_t*)param->pvn.u.dname;
+
+	if(hpv->ht==NULL)
+		hpv->ht = ht_get_table(&hpv->htname);
+	if(hpv->ht==NULL)
+		return -1;
+
+	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
 		LM_ERR("cannot get $ht name\n");
 		return -1;
 	}
-	LM_DBG("set value for $ht(%.*s)\n", htname.len, htname.s);
+	LM_DBG("set value for $ht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
+			htname.len, htname.s);
 	if(val==NULL)
 	{
 		/* delete it */
-		ht_del_cell(&htname);
+		ht_del_cell(hpv->ht, &htname);
 		return 0;
 	}
 
 	if(val->flags&PV_TYPE_INT)
 	{
 		isval.n = val->ri;
-		if(ht_set_cell(&htname, 0, &isval)!=0)
+		if(ht_set_cell(hpv->ht, &htname, 0, &isval)!=0)
 		{
 			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
 	} else {
 		isval.s = val->rs;
-		if(ht_set_cell(&htname, AVP_VAL_STR, &isval)!=0)
+		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval)!=0)
 		{
 			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
 			return -1;
@@ -93,16 +115,64 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 
 int pv_parse_ht_name(pv_spec_p sp, str *in)
 {
-	pv_elem_t *pvename=NULL;
+	ht_pv_t *hpv=NULL;
+	char *p;
+	str pvs;
+
 	if(in->s==NULL || in->len<=0)
 		return -1;
-	if(pv_parse_format(in, &pvename)<0 || pvename==NULL)
+
+	hpv = (ht_pv_t*)pkg_malloc(sizeof(ht_pv_t));
+	if(hpv==NULL)
+		return -1;
+
+	memset(hpv, 0, sizeof(ht_pv_t));
+
+	p = in->s;
+
+	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in->s+in->len || *p=='\0')
+		return -1;
+	hpv->htname.s = p;
+	while(p < in->s + in->len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+	if(p>in->s+in->len || *p=='\0')
+		return -1;
+	hpv->htname.len = p - hpv->htname.s;
+	if(*p!='=')
+	{
+		while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+			p++;
+		if(p>in->s+in->len || *p=='\0' || *p!='=')
+			return -1;
+	}
+	p++;
+	if(*p!='>')
+		return -1;
+	p++;
+
+	pvs.len = in->len - (int)(p - in->s);
+	pvs.s = p;
+	LM_DBG("htable [%.*s] - key [%.*s]\n", hpv->htname.len, hpv->htname.s,
+			pvs.len, pvs.s);
+	if(pv_parse_format(&pvs, &hpv->pve)<0 || hpv->pve==NULL)
 	{
 		LM_ERR("wrong format[%.*s]\n", in->len, in->s);
-		return -1;
+		goto error;
 	}
-	sp->pvp.pvn.u.dname = (void*)pvename;
+	hpv->ht = ht_get_table(&hpv->htname);
+	sp->pvp.pvn.u.dname = (void*)hpv;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
 	return 0;
+
+error:
+	if(hpv!=NULL)
+		pkg_free(hpv);
+	return -1;
 }
 

@@ -39,13 +39,12 @@
 
 MODULE_VERSION
 
-/** parameters */
-int ht_size=6;
-
 /** module functions */
 static int ht_print(struct sip_msg*, char*, char*);
 static int mod_init(void);
 void destroy(void);
+
+int ht_param(modparam_t type, void* val);
 
 static pv_export_t mod_pvs[] = {
 	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
@@ -61,9 +60,8 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"hash_size",          INT_PARAM, &ht_size},
+	{"htable",             STR_PARAM|USE_FUNC_PARAM, (void*)ht_param},
 	{"db_url",             STR_PARAM, &ht_db_url.s},
-	{"db_table",           STR_PARAM, &ht_db_table.s},
 	{"key_name_column",    STR_PARAM, &ht_db_name_column.s},
 	{"key_type_column",    STR_PARAM, &ht_db_ktype_column.s},
 	{"value_type_column",  STR_PARAM, &ht_db_vtype_column.s},
@@ -95,21 +93,17 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	if(ht_size<=0)
-		ht_size = 6;
-	if(ht_size>14)
-		ht_size = 14;
-	if(ht_init(1<<ht_size)!=0)
+	if(ht_shm_init()!=0)
 		return -1;
 	ht_db_init_params();
 
-	if(ht_db_url.len>0 && ht_db_table.len>0)
+	if(ht_db_url.len>0)
 	{
 		if(ht_db_init_con()!=0)
 			return -1;
 		if(ht_db_open_con()!=0)
 			return -1;
-		if(ht_db_load_table()!=0)
+		if(ht_db_load_tables()!=0)
 		{
 			ht_db_close_con();
 			return -1;
@@ -134,5 +128,16 @@ static int ht_print(struct sip_msg *msg, char *s1, char *s2)
 void destroy(void)
 {
 	ht_destroy();
+}
+
+int ht_param(modparam_t type, void *val)
+{
+	if(val==NULL)
+		goto error;
+
+	return ht_table_spec((char*)val);
+error:
+	return -1;
+
 }
 

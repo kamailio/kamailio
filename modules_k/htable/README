@@ -27,15 +27,14 @@ Elena-Ramona Modroiu
 
         1.3. Exported Parameters
 
-              1.3.1. hash_size (integer)
+              1.3.1. htable (str)
               1.3.2. db_url (str)
-              1.3.3. db_table (str)
-              1.3.4. key_name_column (str)
-              1.3.5. key_type_column (str)
-              1.3.6. value_type_column (str)
-              1.3.7. key_value_column (str)
-              1.3.8. array_size_suffix (str)
-              1.3.9. fetch_rows (integer)
+              1.3.3. key_name_column (str)
+              1.3.4. key_type_column (str)
+              1.3.5. value_type_column (str)
+              1.3.6. key_value_column (str)
+              1.3.7. array_size_suffix (str)
+              1.3.8. fetch_rows (integer)
 
         1.4. Exported Functions
 
@@ -43,23 +42,22 @@ Elena-Ramona Modroiu
 
         1.5. Exported pseudo-variables
 
-              1.5.1. $sht(name)
+              1.5.1. $sht(htable=>key)
 
    List of Examples
 
-   1.1. Accessing $sht(name)
+   1.1. Accessing $sht(htname=>key)
    1.2. Dictionary attack limitation
    1.3. Set hash_size parameter
    1.4. Set db_url parameter
-   1.5. Set db_table parameter
+   1.5. Set key_name parameter
    1.6. Set key_name parameter
-   1.7. Set key_name parameter
-   1.8. Set value_type parameter
-   1.9. Set key_value parameter
-   1.10. Set array_size_suffix parameter
-   1.11. Set fetch_rows parameter
-   1.12. sht_print usage
-   1.13. $sht(name) usage
+   1.7. Set value_type parameter
+   1.8. Set key_value parameter
+   1.9. Set array_size_suffix parameter
+   1.10. Set fetch_rows parameter
+   1.11. sht_print usage
+   1.12. $sht(name) usage
 
 Chapter 1. Admin Guide
 
@@ -67,15 +65,18 @@ Chapter 1. Admin Guide
 
    The module adds a hash table container to configuration
    language. The hash table is stored in shared memory and the
-   access to it can be done via pseudo-variables: $sht(name).
+   access to it can be done via pseudo-variables:
+   $sht(htname=>name).
 
    The "name" can be a static string or can include pseudo-
    variables that will be replaced at runtime.
 
-   Example 1.1. Accessing $sht(name)
+   Example 1.1. Accessing $sht(htname=>key)
 ...
-$sht(test) = 1;
-$sht($ci::srcip) = $si;
+modparam("htable", "htable", "a=>size=4;")
+...
+$sht(a=>test) = 1;
+$sht(a=>$ci::srcip) = $si;
 ...
 
    Next example shows a way to protect against dictionary attacks.
@@ -95,30 +96,32 @@ $sht($ci::srcip) = $si;
 
    Example 1.2. Dictionary attack limitation
 ...
+modparam("htable", "htable", "a=>size=4;")
+...
 if(is_present_hf("Authorization"))
 {
-        if($sht($au::auth_count)==3)
+        if($sht(a=>$au::auth_count)==3)
         {
-                if($sht($au::last_auth) > $Ts-900)
+                if($sht(a=>$au::last_auth) > $Ts-900)
                 {
                         sl_send_reply("403", "Try later");
                         exit;
                 } else {
-                        $sht($au::auth_count) = 0;
+                        $sht(a=>$au::auth_count) = 0;
                 }
         }
         if(!www_authorize(""))
         {
-                if($sht($au::auth_count) == null)
-                        $sht($au::auth_count) = 0;
-                $sht($au::auth_count) = $sht($au::auth_count) + 1;
-                if($sht($au::auth_count) == 3)
+                if($sht(a=>$au::auth_count) == null)
+                        $sht(a=>$au::auth_count) = 0;
+                $sht(a=>$au::auth_count) = $sht(a=>$au::auth_count) + 1;
+                if($sht(a=>$au::auth_count) == 3)
                         xlog("auth failed 3rd time - src ip: $si\n");
-                $sht($au::last_auth) = $Ts;
+                $sht(a=>$au::last_auth) = $Ts;
                 www_challenge(""/*realm*/,"0"/*qop*/);
                 exit;
         }
-        $sht($au::auth_count) = 0;
+        $sht(a=>$au::auth_count) = 0;
 } else {
         www_challenge("","0");
         exit;
@@ -157,15 +160,33 @@ if(is_present_hf("Authorization"))
 
 1.3. Exported Parameters
 
-1.3.1. hash_size (integer)
+1.3.1. htable (str)
 
-   The hash table will be build with 2^hash_size entries.
+   The definition of a hash table. The value of the parameter must
+   have the following format:
+     * "htname=>size=_number_;autoexpire=_number_;dbtable=_string_
+       "
 
-   Default value is 6. Max value is 14.
+   The parameter can be set multiple times to get more hash tables
+   in same configuration file.
+     * htname - string specifying the name of the hash table. This
+       string is used by $sht(...) to refer to the hash table.
+     * size - number specifying the size of hash table. The number
+       of entries in the table is 2^size
+     * autoexpire -time in seconds to delete an item from hash
+       table if no update was done to it. If is missing or set to
+       0, the items won't expire.
+     * dbtable - name of database to be loaded at startup in hash
+       table. If empty or missing, no data will be loaded.
+
+   Default value is NULL.
 
    Example 1.3. Set hash_size parameter
 ...
-modparam("htable", "hash_size", 10)
+modparam("htable", "htable", "a=>size=4;autoexpire=7200;dbtable=htable_a
+;")
+modparam("htable", "htable", "a=>size=4;autoexpire=7200;dbtable=htable_a
+;")
 ...
 
 1.3.2. db_url (str)
@@ -181,81 +202,69 @@ modparam("htable", "db_url", "mysql://openser:openserrw@localhost/opense
 r")
 ...
 
-1.3.3. db_table (str)
-
-   The DB table name to load values from it in hash table at start
-   up.
-
-   Default value is NULL (do not load).
-
-   Example 1.5. Set db_table parameter
-...
-modparam("htable", "db_url", "htable")
-...
-
-1.3.4. key_name_column (str)
+1.3.3. key_name_column (str)
 
    The name of the column containing hash table key name.
 
    Default value is 'key_name'.
 
-   Example 1.6. Set key_name parameter
+   Example 1.5. Set key_name parameter
 ...
 modparam("htable", "key_name_column", "kname")
 ...
 
-1.3.5. key_type_column (str)
+1.3.4. key_type_column (str)
 
    The name of the column containing hash table key type.
 
    Default value is 'key_type'.
 
-   Example 1.7. Set key_name parameter
+   Example 1.6. Set key_name parameter
 ...
 modparam("htable", "key_type_column", "ktype")
 ...
 
-1.3.6. value_type_column (str)
+1.3.5. value_type_column (str)
 
    The name of the column containing hash table value type.
 
    Default value is 'value_type'.
 
-   Example 1.8. Set value_type parameter
+   Example 1.7. Set value_type parameter
 ...
 modparam("htable", "value_type", "vtype")
 ...
 
-1.3.7. key_value_column (str)
+1.3.6. key_value_column (str)
 
    The name of the column containing hash table key value.
 
    Default value is 'key_value'.
 
-   Example 1.9. Set key_value parameter
+   Example 1.8. Set key_value parameter
 ...
 modparam("htable", "key_value", "kvalue")
 ...
 
-1.3.8. array_size_suffix (str)
+1.3.7. array_size_suffix (str)
 
    The suffix to be added to store the number of items in an
    array.
 
    Default value is '::size'.
 
-   Example 1.10. Set array_size_suffix parameter
+   Example 1.9. Set array_size_suffix parameter
 ...
 modparam("htable", "array_size_suffix", "-count")
 ...
 
-1.3.9. fetch_rows (integer)
+1.3.8. fetch_rows (integer)
 
    How many rows to fetch at once from database.
 
    Default value is 100.
 
-   Example 1.11. Set fetch_rows parameter
+   Example 1.10. Set fetch_rows parameter
 ...
 modparam("htable", "fetch_rows", 1000)
 ...
@@ -270,25 +279,30 @@ modparam("htable", "fetch_rows", 1000)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.12. sht_print usage
+   Example 1.11. sht_print usage
 ...
 sht_print();
 ...
 
 1.5. Exported pseudo-variables
 
-1.5.1. $sht(name)
+1.5.1. $sht(htable=>key)
 
    Access hash table entries.
 
-   The "name" can be:
+   The "htname" must be a hash table name defined via "htable"
+   parameter.
+
+   The "key" can be:
      * static string - set of characters without pseudo-variables
      * dynamic string - set of characters that include
        pseudo-variables. The pseudo-variables will be evaluated at
        runtime.
 
-   Example 1.13. $sht(name) usage
+   Example 1.12. $sht(name) usage
 ...
-$sht($au) = 1;
-$sht($ru) = $fu;
+modparam("htable", "htable", "a=>size=4;")
+...
+$sht(a=>$au) = 1;
+$sht(a=>$ru) = $fu;
 ...
