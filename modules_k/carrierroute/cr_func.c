@@ -216,7 +216,7 @@ static int set_next_domain_recursor(struct dtrie_node_t *failure_node,
 	void **ret;
 	
 	/* Skip over non-digits.  */
-	while (re_uri.len > 0 && !isdigit(*re_uri.s)) {
+	while (re_uri.len > 0 && (!isdigit(*re_uri.s) && cr_match_mode == 10)) {
 		++re_uri.s;
 		--re_uri.len;
 	}
@@ -455,7 +455,7 @@ static int rewrite_uri_recursor(struct dtrie_node_t * node,
 	void **ret;
 	
 	/* Skip over non-digits.  */
-	while (re_pm.len > 0 && !isdigit(*re_pm.s)) {
+	while (re_pm.len > 0 && (!isdigit(*re_pm.s) && cr_match_mode == 10)) {
 		++re_pm.s;
 		--re_pm.len;
 	}
