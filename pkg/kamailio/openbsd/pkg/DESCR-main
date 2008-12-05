@@ -1,0 +1,7 @@
+KAMAILIO (OpenSER) is a mature and flexible open source SIP server (RFC3261).
+It can be used on systems with limitted resources as well as on carrier grade
+servers, scaling to up to thousands call setups per second. It is written in
+pure C for Unix/Linux-like systems with architecture specific optimizations to
+offer high performances. It is customizable, being able to feature as fast load
+balancer; SIP server flavours: registrar, location server, proxy server,
+redirect server; gateway to SMS/XMPP; or advanced VoIP application server.

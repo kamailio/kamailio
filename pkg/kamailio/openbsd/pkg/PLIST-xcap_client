@@ -1,0 +1,3 @@
+@comment $OpenBSD$
+%%SHARED%%
+share/doc/kamailio/README.xcap_client

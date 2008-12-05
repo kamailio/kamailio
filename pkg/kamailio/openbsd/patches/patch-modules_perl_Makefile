@@ -1,0 +1,15 @@
+$OpenBSD$
+--- modules/perl/Makefile.orig	Thu Oct 23 12:04:58 2008
++++ modules/perl/Makefile	Mon Nov  3 21:33:22 2008
+@@ -5,6 +5,11 @@
+ # 
+ # WARNING: do not run this directly, it should be run by the master Makefile
+ 
++# Force inclusion due to bug in gmake 3.81 on OpenBSD which causes the 
++# "export" command to fail when the variable name contains hyphens. (!)
++ifeq ($(OS),openbsd)
++	makefile_defs=0
++endif
+ include ../../Makefile.defs
+ auto_gen=
+ NAME=perl.so
