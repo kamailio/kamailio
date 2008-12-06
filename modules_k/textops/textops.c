@@ -75,6 +75,7 @@
 #include <sys/time.h>
 
 #include "textops.h"
+#include "txt_var.h"
 #include "api.h"
 
 MODULE_VERSION
@@ -125,6 +126,12 @@ static int fixup_privacy(void** param, int param_no);
 
 static int mod_init(void);
 
+static tr_export_t mod_trans[] = {
+	{ {"re", sizeof("re")-1}, /* regexp class */
+		tr_txt_parse_re },
+
+	{ { 0, 0 }, 0 }
+};
 
 static cmd_export_t cmds[]={
 	{"search",           (cmd_function)search_f,          1,
@@ -234,6 +241,11 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	return 0;
+}
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	return register_trans_mod(path, mod_trans);
 }
 
 static char *get_header(struct sip_msg *msg)
