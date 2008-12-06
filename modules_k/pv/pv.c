@@ -33,9 +33,23 @@
 #include "pv_stats.h"
 #include "pv_shv.h"
 #include "pv_time.h"
+#include "pv_trans.h"
 
 
 MODULE_VERSION
+
+static tr_export_t mod_trans[] = {
+	{ {"s", sizeof("s")-1}, /* string class */
+		tr_parse_string },
+	{ {"nameaddr", sizeof("nameaddr")-1}, /* nameaddr class */
+		tr_parse_nameaddr },
+	{ {"uri", sizeof("uri")-1}, /* uri class */
+		tr_parse_uri },
+	{ {"param", sizeof("param")-1}, /* param class */
+		tr_parse_paramlist },
+
+	{ { 0, 0 }, 0 }
+};
 
 static pv_export_t mod_pvs[] = {
 	{ {"branch", sizeof("branch")-1}, /* branch attributes */
@@ -385,3 +399,9 @@ static void mod_destroy(void)
 	shvar_destroy_locks();
 	destroy_shvars();
 }
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	return register_trans_mod(path, mod_trans);
+}
+
