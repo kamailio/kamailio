@@ -57,6 +57,7 @@
 
 #define PV_NAME_INTSTR	0
 #define PV_NAME_PVAR	1
+#define PV_NAME_OTHER	2
 
 #define PV_IDX_INT	0
 #define PV_IDX_PVAR	1
@@ -76,7 +77,7 @@ enum _pv_type {
 	PVT_RURI,             PVT_RURI_USERNAME,     PVT_RURI_DOMAIN,
 	PVT_DSTURI,           PVT_COLOR,             PVT_BRANCH,
 	PVT_FROM,             PVT_TO,                PVT_OURI,
-	PVT_SCRIPTVAR,        PVT_MSG_BODY,
+	PVT_SCRIPTVAR,        PVT_MSG_BODY,          PVT_CONTEXT,
 	PVT_OTHER,            PVT_EXTRA /* keep it last */
 };
 
@@ -164,7 +165,6 @@ typedef struct _pv_elem
 
 char* pv_parse_spec(str *in, pv_spec_p sp);
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value);
-int pv_print_spec(struct sip_msg* msg, pv_spec_p sp, char *buf, int *len);
 int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);
 int pv_elem_free_all(pv_elem_p log);
 void pv_value_destroy(pv_value_t *val);
@@ -175,8 +175,10 @@ int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 		unsigned short *name_type);
 int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name);
 int pv_parse_format(str *in, pv_elem_p *el);
+int pv_parse_index(pv_spec_p sp, str *in);
 int pv_init_iname(pv_spec_p sp, int param);
 int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s);
+void pv_api_destroy(void);
 
 typedef struct _pvname_list {
 	pv_spec_t sname;
@@ -194,10 +196,7 @@ int register_pvars_mod(char *mod_name, pv_export_t *items);
 int pv_free_extra_list(void);
 
 /*! \brief PV helper functions */
-int pv_parse_index(pv_spec_p sp, str *in);
-
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
-int pv_update_time(struct sip_msg *msg, time_t *t);
 
 int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, unsigned int uival);
@@ -221,7 +220,7 @@ int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
 #define TR_PARAM_MARKER		','
 
 enum _tr_param_type { TR_PARAM_NONE=0, TR_PARAM_STRING, TR_PARAM_NUMBER,
-	TR_PARAM_SPEC };
+	TR_PARAM_SPEC, TR_PARAM_SUBST, TR_PARAM_OTHER };
 
 typedef struct _tr_param {
 	int type;
@@ -253,6 +252,9 @@ typedef struct _tr_export {
 char* tr_lookup(str *in, trans_t **tr);
 tr_export_t* tr_lookup_class(str *tclass);
 int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v);
+void tr_param_free(tr_param_t *tp);
+
+int register_trans_mod(char *mod_name, tr_export_t *items);
 
 #endif
 
