@@ -53,7 +53,7 @@ static tr_export_t mod_trans[] = {
 
 static pv_export_t mod_pvs[] = {
 	{ {"branch", sizeof("branch")-1}, /* branch attributes */
-		PVT_OTHER, pv_get_branchx, pv_set_branchx,
+		PVT_CONTEXT, pv_get_branchx, pv_set_branchx,
 		pv_parse_branchx_name, pv_parse_index, 0, 0 },
 	{ {"mi", (sizeof("mi")-1)}, /* message id */
 		PVT_OTHER, pv_get_msgid, 0,
@@ -90,16 +90,16 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_acc_username, 0,
 		0, 0, pv_init_iname, 1},
 	{{"bf", (sizeof("bf")-1)}, /* */
-		PVT_OTHER, pv_get_bflags, pv_set_bflags,
+		PVT_CONTEXT, pv_get_bflags, pv_set_bflags,
 		0, 0, 0, 0},
 	{{"bF", (sizeof("bF")-1)}, /* */
-		PVT_OTHER, pv_get_hexbflags, pv_set_bflags,
+		PVT_CONTEXT, pv_get_hexbflags, pv_set_bflags,
 		0, 0, 0, 0},
 	{{"br", (sizeof("br")-1)}, /* */
 		PVT_BRANCH, pv_get_branch, pv_set_branch,
 		0, 0, 0, 0},
 	{{"bR", (sizeof("bR")-1)}, /* */
-		PVT_OTHER, pv_get_branches, 0,
+		PVT_CONTEXT, pv_get_branches, 0,
 		0, 0, 0, 0},
 	{{"ci", (sizeof("ci")-1)}, /* */
 		PVT_OTHER, pv_get_callid, 0,
@@ -135,7 +135,7 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_dsturi_attr, 0,
 		0, 0, pv_init_iname, 3},
 	{{"ds", (sizeof("ds")-1)}, /* */
-		PVT_OTHER, pv_get_dset, 0,
+		PVT_CONTEXT, pv_get_dset, 0,
 		0, 0, 0, 0},
 	{{"du", (sizeof("du")-1)}, /* */
 		PVT_DSTURI, pv_get_dsturi, pv_set_dsturi,
@@ -330,13 +330,13 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_to_attr, 0,
 		0, 0, pv_init_iname, 2},
 	{{"Tf", (sizeof("Tf")-1)}, /* */
-		PVT_OTHER, pv_get_timef, 0,
+		PVT_CONTEXT, pv_get_timef, 0,
 		0, 0, 0, 0},
 	{{"TF", (sizeof("TF")-1)}, /* */
 		PVT_OTHER, pv_get_timenowf, 0,
 		0, 0, 0, 0},
 	{{"Ts", (sizeof("Ts")-1)}, /* */
-		PVT_OTHER, pv_get_times, 0,
+		PVT_CONTEXT, pv_get_times, 0,
 		0, 0, 0, 0},
 	{{"TS", (sizeof("TS")-1)}, /* */
 		PVT_OTHER, pv_get_timenows, 0,
@@ -347,7 +347,7 @@ static pv_export_t mod_pvs[] = {
 
 	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
 		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
-	{ {"time", (sizeof("time")-1)}, PVT_OTHER, pv_get_time,
+	{ {"time", (sizeof("time")-1)}, PVT_CONTEXT, pv_get_time,
 		0, pv_parse_time_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
