@@ -342,7 +342,7 @@ void rls_mod_destroy(void)
 static int rls_subscribe_fixup(void** param, int param_no)
 {
 	/* char *xcap_server = NULL; */
-	int send_errors = 0;
+	long send_errors = 0;
 
 /*	if (param_no == 1) {
 		if (!param) {
@@ -365,7 +365,7 @@ static int rls_subscribe_fixup(void** param, int param_no)
 		if (param) {
 			if (*param) send_errors = atoi(*param);
 		}
-		DEBUG_LOG("rls_subscribe_fixup(): send errors: %d\n", send_errors);
+		DEBUG_LOG("rls_subscribe_fixup(): send errors: %ld\n", send_errors);
 		*param = (void*)send_errors;
 	}
 	return 0;

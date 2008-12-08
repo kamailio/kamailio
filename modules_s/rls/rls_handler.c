@@ -367,10 +367,10 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 int handle_rls_subscription(struct sip_msg* _m, char *send_bad_resp)
 {
 	int res;
-	int send_err = 1;
+	long send_err = 1;
 	
 	PROF_START(rls_handle_subscription)
-	send_err = (int)send_bad_resp;
+	send_err = (long)send_bad_resp;
 	
 	res = parse_rls_headers(_m);
 	if (res == -1) {
