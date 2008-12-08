@@ -93,6 +93,7 @@
 #include "mi.h"
 #include "tm_load.h"
 #include "t_serial.h"
+#include "t_var.h"
 
 MODULE_VERSION
 
@@ -270,6 +271,10 @@ static pv_export_t mod_items[] = {
 		 0, 0, 0, 0 },
 	{ {"T_reply_code", sizeof("T_reply_code")-1}, PVT_OTHER, pv_get_tm_reply_code, 0,
 		 0, 0, 0, 0 },
+	{ {"T_req", sizeof("T_req")-1}, PVT_OTHER, pv_get_t_var_req, 0,
+		pv_parse_t_var_name, 0, 0, 0 },
+	{ {"T_rpl", sizeof("T_rpl")-1}, PVT_OTHER, pv_get_t_var_rpl, 0,
+		pv_parse_t_var_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
