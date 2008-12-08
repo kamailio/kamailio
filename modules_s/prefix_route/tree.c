@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include "../../atomic_ops.h"
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
 #include "tree.h"
