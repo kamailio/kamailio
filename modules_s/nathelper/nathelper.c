@@ -1131,6 +1131,31 @@ extract_mediainfo(str *body, str *mediaport, str *payload_types)
 }
 
 static int
+extract_rtcp(str *body, str *rtcpport)
+{
+	char *cp, *cp1;
+	int len;
+
+	cp1 = NULL;
+	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
+		cp1 = ser_memmem(cp, "a=rtcp:", len, 7);
+		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
+			break;
+		cp = cp1 + 7;
+	}
+
+	if (cp1 == NULL)
+		return -1;
+
+	rtcpport->s = cp1 + 7; /* skip `a=rtcp:' */
+	rtcpport->len = eat_line(rtcpport->s, body->s + body->len -
+				 rtcpport->s) - rtcpport->s;
+	trim_len(rtcpport->len, rtcpport->s, *rtcpport);
+
+	return 0;
+}
+
+static int
 alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
   str *newip, int newpf, int preserve)
 {
@@ -1317,6 +1342,40 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 #if 0
 	msg->msg_flags |= FL_SDP_PORT_AFS;
 #endif
+	return 0;
+}
+
+static int
+alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport)
+{
+	char *buf;
+	int offset;
+	struct lump* anchor;
+
+	/* check that updating rtcpport is really necessary */
+	if (newport->len == oldport->len &&
+	    memcmp(newport->s, oldport->s, newport->len) == 0)
+		return 0;
+
+	buf = pkg_malloc(newport->len);
+	if (buf == NULL) {
+		LOG(L_ERR, "ERROR: alter_rtcp: out of memory\n");
+		return -1;
+	}
+	offset = oldport->s - msg->buf;
+	anchor = del_lump(msg, offset, oldport->len, 0);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: alter_rtcp: del_lump failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	memcpy(buf, newport->s, newport->len);
+	if (insert_new_lump_after(anchor, buf, newport->len, 0) == 0) {
+		LOG(L_ERR, "ERROR: alter_rtcp: insert_new_lump_after failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -1862,6 +1921,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 {
 	str body, body1, oldport, oldip, newport, newip, str1, str2, s;
 	str callid, from_tag, to_tag, tmp, c1_oldip, payload_types;
+	str oldrtcp, newrtcp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
 	int oidx, pf, pf1, force, c1_pf, rep_oidx;
 	unsigned int node_idx, oldport_i;
@@ -2126,6 +2186,13 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				    " extract media port from the message\n");
 				return -1;
 			}
+			/* Extract rtcp attribute */
+			tmpstr1.s = m1p;
+			tmpstr1.len = m2p - m1p;
+			oldrtcp.s = NULL;
+			oldrtcp.len = 0;
+			extract_rtcp(&tmpstr1, &oldrtcp);
+
 			++medianum;
 			if (asymmetric != 0 || real != 0) {
 				newip = oldip;
@@ -2274,6 +2341,20 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				body1.s = m1p;
 				body1.len = bodylimit - body1.s;
 				if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
+					return -1;
+			}
+			/*
+			 * Alter RTCP attribute if present. Inserting RTP port + 1 (as allocated
+			 * by RTP proxy). No IP-address is needed in the new RTCP attribute as the
+			 * 'c' attribute (altered below) will contain the RTP proxy IP address.
+			 * See RFC 3605 for definition of RTCP attribute.
+			 */
+			if (oldrtcp.s && oldrtcp.len) {
+				newrtcp.s = int2str(port+1, &newrtcp.len); /* beware static buffer */
+				/* Alter port. */
+				body1.s = m1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_rtcp(msg, &body1, &oldrtcp, &newrtcp) == -1)
 					return -1;
 			}
 			/*
