@@ -85,8 +85,8 @@ int fill_xcap_params_impl(struct sip_msg *m, xcap_query_params_t *params)
 	check_params(m);
 	
 	use_default = 1;
-	if (xcap_root) 
-		if (*xcap_root) use_default = 0;
+	if (*xcap_root)
+		use_default = 0;
 	if (use_default) params->xcap_root = default_xcap_root;
 	else {
 		params->xcap_root.s = xcap_root;
