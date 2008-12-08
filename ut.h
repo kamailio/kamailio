@@ -56,6 +56,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <string.h>
+#include <strings.h>
 
 #include "compiler_opt.h"
 #include "config.h"
@@ -631,6 +633,49 @@ static inline int pkg_str_dup(str* dst, const str* src)
 	memcpy(dst->s, src->s, src->len);
 	dst->len = src->len;
 	return 0;
+}
+
+/**
+ * \brief Compare two str's case sensitive
+ * \param str1 first str
+ * \param str2 second str
+ * \return 0 if both are equal, positive if str1 is greater, negative if str2 is greater, -2 on errors
+ */
+static inline int str_strcmp(const str *str1, const str *str2)
+{
+	if(str1==NULL || str2==NULL || str1->s ==NULL || str2->s==NULL || str1->len<0 || str2->len<0)
+	{
+		LM_ERR("bad parameters\n");
+		return -2;
+	}
+
+	if (str1->len < str2->len)
+		return -1;
+	else if (str1->len > str2->len)
+		return 1;
+	else
+		return strncmp(str1->s, str2->s, str1->len);
+}
+
+/**
+ * \brief Compare two str's case insensitive
+ * \param str1 first str
+ * \param str2 second str
+ * \return 0 if both are equal, positive if str1 is greater, negative if str2 is greater, -2 on errors
+ */
+static inline int str_strcasecmp(const str *str1, const str *str2)
+{
+	if(str1==NULL || str2==NULL || str1->s ==NULL || str2->s==NULL || str1->len<0 || str2->len<0)
+	{
+		LM_ERR("bad parameters\n");
+		return -2;
+	}
+	if (str1->len < str2->len)
+		return -1;
+	else if (str1->len > str2->len)
+		return 1;
+	else
+		return strncasecmp(str1->s, str2->s, str1->len);
 }
 
 /* converts a username into uid:gid,
