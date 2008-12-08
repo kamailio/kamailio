@@ -127,6 +127,40 @@ modparam("options", "options_accept_encoding", "gzip")
 </programlisting>
 		</example>
 	</section>
+
+		<section>
+		<title><varname>contact_flds_separator</varname> (string)</title>
+		<para>
+		First char of this parameter is used as separator for encoding/decoding 
+		Contact header.
+		</para>
+		<warning>
+		<para>
+			First char of this field must be set to a value which is not used 
+			inside username,password or other fields of contact. Otherwise it 
+			is possible for the decoding step to fail/produce wrong results.
+		</para>
+		</warning>
+		<para>
+		<emphasis>
+			Default value is <quote>*</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mangler", "contact_flds_separator", "-")
+...
+</programlisting>
+		</example>
+		<para>
+		then an encoded uri might look 
+		sip:user-password-ip-port-protocol@PublicIP
+		</para>
+	</section>
+
+
 	<section>
 		<title><varname>options_accept_language</varname> (string)</title>
 		<para>
@@ -420,6 +454,98 @@ if (is_uri_user_e164("$avp(i:705)") {
    # Check user part of URI stored in avp i:705
    ...
 };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">encode_contact(encoding_prefix)</function>
+		</title>
+		<para>
+		This function will encode uri-s inside Contact header in the following 
+		manner
+		sip:username:password@ip:port;transport=protocol goes
+		sip:enc_pref*username*ip*port*protocol@public_ip * is the default 
+		separator.
+		</para>
+		<para>
+		The function returns negative on error, 1 on success.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>encoding_prefix</emphasis> - Something to allow us 
+			to determine that a contact is encoded publicip--a routable &ip;, 
+			most probably you should
+			put your external &ip; of your &nat; box.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>encode_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38"); 
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">decode_contact()</function>
+		</title>
+		<para>
+		This function will decode the &uri; in first line in packets which 
+		come with encoded &uri; in the following manner 
+		sip:enc_pref*username*ip*port*protocol@public_ip goes to
+		sip:username:password@ip:port;transport=protocol It uses the default 
+		set parameter for contact encoding separator.
+		</para>
+		<para>
+		The function returns negative on error, 1 on success.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>decode_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri =~ "^enc*") { decode_contact(); }
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">decode_contact_header()</function>
+		</title>
+		<para>
+		This function will decode &uri;s inside Contact header in the 
+		following manner sip:enc_pref*username*ip*port*protocol@public_ip goes 
+		to sip:username:password@ip:port;transport=protocol. It uses the 
+		default set parameter for contact encoding separator.
+		</para>
+		<para>
+		The function returns negative on error, 1 on success.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>decode_contact_header</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri =~ "^enc*") { decode_contact_header(); }
 ...
 </programlisting>
 		</example>

@@ -35,15 +35,21 @@
 #include <assert.h>
 
 #include "../../sr_module.h"
+#include "../../mem/mem.h"
+#include "../../dprint.h"
 #include "../../script_cb.h"
 #include "../../locking.h"
 #include "../../ut.h"
 #include "../../mod_fix.h"
+#include "../../error.h"
 
 #include "ring.h"
 #include "options.h"
 
 #include "checks.h"
+
+#include "utils.h"
+#include "contact_ops.h"
 
 MODULE_VERSION
 
@@ -60,6 +66,7 @@ struct sl_binds opt_slb;
 static int mod_init(void);
 static void mod_destroy(void);
 
+char *contact_flds_separator = DEFAULT_SEPARATOR;
 
 static cmd_export_t cmds[]={
 	{"ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -71,6 +78,9 @@ static cmd_export_t cmds[]={
 	{"add_uri_param",      (cmd_function)add_uri_param,  1, fixup_str_null, 0, REQUEST_ROUTE},
 	{"tel2sip",            (cmd_function)tel2sip,        0, 0,         0, REQUEST_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)is_uri_user_e164, 1, fixup_pvar_null, fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+	{"encode_contact",     (cmd_function)encode_contact,2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"decode_contact",     (cmd_function)decode_contact,0,0, 0, REQUEST_ROUTE},
+	{"decode_contact_header", (cmd_function)decode_contact_header,0,0,0,REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -80,6 +90,7 @@ static param_export_t params[] = {
 	{"options_accept_encoding", STR_PARAM, &opt_accept_enc.s},
 	{"options_accept_language", STR_PARAM, &opt_accept_lang.s},
 	{"options_support",         STR_PARAM, &opt_supported.s},
+	{"contact_flds_separator",  STR_PARAM,&contact_flds_separator},
 	{0, 0, 0}
 };
 

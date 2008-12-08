@@ -26,10 +26,10 @@
  *  2003-04-07 first version.  
  */
 
+#define STRICT_CHECK 1
 
 #include "contact_ops.h"
 #include "utils.h"
-#include "common.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../parser/hf.h"

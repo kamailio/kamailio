@@ -48,6 +48,15 @@
 		</address>
 		</author>
 		
+		<author>
+		<firstname>Gabriel</firstname>
+		<surname>Vasile</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+		    <email>vasile@fokus.fraunhofer.de</email>
+		</address>
+	    	</author>
+
 		<editor>
 		<firstname>Jan</firstname>
 		<surname>Janak</surname>
@@ -64,6 +73,14 @@
 		</address>
 		</editor>
 
+		<editor>
+		<firstname>Gabriel</firstname>
+		<surname>Vasile</surname>
+		<address>
+		    <email>vasile@fokus.fraunhofer.de</email>
+		</address>
+	    	</editor>
+		
 	</authorgroup>
 	<copyright>
 		<year>2008</year>
