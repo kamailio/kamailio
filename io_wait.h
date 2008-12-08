@@ -1104,7 +1104,7 @@ again:
 				   adding something to the changes array, close() and
 				   applying the changes */
 				LOG(L_INFO, "INFO: io_wait_loop_kqueue: kevent error on "
-							"fd %d: %s [%ld]\n", h->kq_array[r].ident,
+							"fd %ld: %s [%ld]\n", h->kq_array[r].ident,
 							strerror(h->kq_array[r].data),
 							(long)h->kq_array[r].data);
 			}else{ 
