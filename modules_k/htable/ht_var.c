@@ -42,9 +42,11 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 	hpv = (ht_pv_t*)param->pvn.u.dname;
 
 	if(hpv->ht==NULL)
+	{
 		hpv->ht = ht_get_table(&hpv->htname);
-	if(hpv->ht==NULL)
-		return pv_get_null(msg, param, res);
+		if(hpv->ht==NULL)
+			return pv_get_null(msg, param, res);
+	}
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
 		LM_ERR("cannot get $ht name\n");
