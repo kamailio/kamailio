@@ -235,13 +235,13 @@ $c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 
     <section id="rtpproxy_stream2xxx">
         <title>
-            <function>rtpproxy_stream2uac(prompt_name, count)</function>
+            <function>rtpproxy_stream2uac(prompt_name, count)</function>,
             <function>rtpproxy_stream2uas(prompt_name, count)</function>
         </title>
         <para>
             Instruct the RTPproxy to stream prompt/announcement pre-encoded with
             the makeann command from the RTPproxy distribution. The uac/uas
-            suffix selects who will hear the announcement relatively to tha current
+            suffix selects who will hear the announcement relatively to the current
             transaction - UAC or UAS. For example invoking the
             <function>rtpproxy_stream2uac</function> in the request processing
             block on ACK transaction will play the prompt to the UA that has
@@ -300,7 +300,7 @@ $c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 
     <section id="rtpproxy_stop_stream2xxx">
         <title>
-            <function>rtpproxy_stop_stream2uac()</function>
+            <function>rtpproxy_stop_stream2uac()</function>,
             <function>rtpproxy_stop_stream2uas()</function>
         </title>
         <para>
