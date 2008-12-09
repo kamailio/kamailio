@@ -38,11 +38,11 @@
 #include "pvar.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
+#define core_hash(in, a, b) get_hash1_raw((in)->s, (in)->len)
 
 #define PV_TABLE_SIZE	16
 #define TR_TABLE_SIZE	4
 
-#define core_hash(in, a, b) get_hash1_raw((in)->s, (in)->len);
 
 void tr_destroy(trans_t *t);
 void tr_free(trans_t *t);
@@ -56,6 +56,7 @@ typedef struct _pv_item
 
 static pv_item_t* _pv_table[PV_TABLE_SIZE];
 static int _pv_table_set = 0;
+
 
 /**
  *
@@ -88,7 +89,7 @@ int pv_table_add(pv_export_t *e)
 	pv_item_t *pvj = NULL;
 	pv_item_t *pvn = NULL;
 	int found;
-	int pvid;
+	unsigned int pvid;
 
 	if(e==NULL || e->name.s==NULL || e->getf==NULL || e->type==PVT_NONE)
 	{
@@ -239,8 +240,7 @@ int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
 	if(res==NULL)
 		return -1;
 
-	// ch = sint2str(sival, &l);
-	ch = int2str(sival, &l);
+	ch = sint2str(sival, &l);
 	res->rs.s = ch;
 	res->rs.len = l;
 
@@ -822,7 +822,8 @@ int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 			*name_type |= AVP_NAME_STR;
 		} else {
 			avp_name->n = ip->pvn.u.isname.name.n;
-			*name_type = 0; // &= AVP_SCRIPT_MASK;
+			/* *name_type &= AVP_SCRIPT_MASK; */
+			*name_type = 0;
 		}
 		return 0;
 	}
@@ -978,6 +979,73 @@ done:
 	return 0;
 }
 
+/**
+ *
+ */
+pvname_list_t* parse_pvname_list(str *in, unsigned int type)
+{
+	pvname_list_t* head = NULL;
+	pvname_list_t* al = NULL;
+	pvname_list_t* last = NULL;
+	char *p;
+	pv_spec_t spec;
+	str s;
+
+	if(in==NULL || in->s==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return NULL;
+	}
+
+	p = in->s;
+	while(is_in_str(p, in))
+	{
+		while(is_in_str(p, in) && (*p==' '||*p=='\t'||*p==','||*p==';'))
+			p++;
+		if(!is_in_str(p, in))
+		{
+			if(head==NULL)
+				LM_ERR("wrong item name list [%.*s]\n", in->len, in->s);
+			return head;
+		}
+		s.s=p;
+		s.len = in->s+in->len-p;
+		p = pv_parse_spec(&s, &spec);
+		if(p==NULL || (type && spec.type!=type))
+		{
+			LM_ERR("wrong item name list [%.*s]!\n", in->len, in->s);
+			goto error;
+		}
+		al = (pvname_list_t*)pkg_malloc(sizeof(pvname_list_t));
+		if(al==NULL)
+		{
+			LM_ERR("no more memory!\n");
+			goto error;
+		}
+		memset(al, 0, sizeof(pvname_list_t));
+		memcpy(&al->sname, &spec, sizeof(pv_spec_t));
+
+		if(last==NULL)
+		{
+			head = al;
+			last = al;
+		} else {
+			last->next = al;
+			last = al;
+		}
+	}
+
+	return head;
+
+error:
+	while(head)
+	{
+		al = head;
+		head=head->next;
+		pkg_free(al);
+	}
+	return NULL;
+}
 
 /**
  *
@@ -1259,7 +1327,7 @@ int tr_table_add(tr_export_t *e)
 	tr_item_t *trj = NULL;
 	tr_item_t *trn = NULL;
 	int found;
-	int trid;
+	unsigned int trid;
 
 	if(e==NULL || e->tclass.s==NULL)
 	{
