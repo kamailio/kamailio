@@ -78,7 +78,6 @@ int pv_t_update_req(struct sip_msg *msg)
 			return 1;
 
 	}
-	LM_DBG("++++++++++++++++ 0\n");
 
 	if(t->uas.request==NULL)
 		return 1;
@@ -87,7 +86,6 @@ int pv_t_update_req(struct sip_msg *msg)
 			&& t->uas.request->id==_pv_treq_id)
 		return 0;
 
-	LM_DBG("++++++++++++++++ 1\n");
 	/* make a copy */
 	if(_pv_treq_buf==NULL || _pv_treq_size<t->uas.request->len+1)
 	{
@@ -107,7 +105,6 @@ int pv_t_update_req(struct sip_msg *msg)
 			_pv_treq_size = 0;
 			return -1;
 		}
-		LM_DBG("++++++++++++++++ 2\n");
 	}
 	memcpy(_pv_treq_buf, t->uas.request->buf, t->uas.request->len);
 	_pv_treq_buf[t->uas.request->len] = '\0';
@@ -118,7 +115,6 @@ int pv_t_update_req(struct sip_msg *msg)
 	_pv_T_req = t;
 
 
-	LM_DBG("++++++++++++++++ 3\n");
 	pv_t_copy_msg(t->uas.request, &_pv_treq);
 
 	return 0;
@@ -197,7 +193,7 @@ int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
 		return pv_get_null(msg, param, res);
 
 	pv = (pv_spec_t*)param->pvn.u.dname;
-	if(pv==NULL || pv->type==PVT_CONTEXT)
+	if(pv==NULL || pv_alter_context(pv))
 		return pv_get_null(msg, param, res);
 
 	return pv_get_spec_value(&_pv_treq, pv, res);
@@ -212,7 +208,7 @@ int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
 		return pv_get_null(msg, param, res);
 
 	pv = (pv_spec_t*)param->pvn.u.dname;
-	if(pv==NULL || pv->type==PVT_CONTEXT)
+	if(pv==NULL || pv_alter_context(pv))
 		return pv_get_null(msg, param, res);
 
 	return pv_get_spec_value(&_pv_trpl, pv, res);
