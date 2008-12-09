@@ -91,6 +91,8 @@
  * 2008-11-18  support for variable parameter module functions (andrei)
  * 2007-12-03  support for generalised lvalues and rvalues:
  *               lval=rval_expr, where lval=avp|pvar  (andrei)
+ * 2007-12-06  expression are now evaluated in terms of rvalues;
+ *             NUMBER is now always positive; cleanup (andrei)
 */
 
 %{
@@ -194,6 +196,7 @@ static select_t* sel_ptr;
 static pv_spec_t* pv_spec;
 static struct action *mod_func_action;
 static struct lvalue* lval_tmp;
+static struct rvalue* rval_tmp;
 
 static void warn(char* s);
 static struct socket_id* mk_listen_id(char*, int, int);
@@ -444,21 +447,18 @@ static void free_socket_id_lst(struct socket_id* i);
 %token STUN_ALLOW_FP
 
 
-/* operators */
-%nonassoc EQUAL
-%nonassoc EQUAL_T
-%nonassoc GT
-%nonassoc LT
-%nonassoc GTE
-%nonassoc LTE
-%nonassoc DIFF
-%nonassoc MATCH
+/* operators, C like precedence */
+%right EQUAL
 %left LOG_OR
 %left LOG_AND
 %left BIN_OR
 %left BIN_AND
+%left EQUAL_T DIFF MATCH
+%left GT LT GTE LTE
 %left PLUS MINUS
+%left STAR SLASH
 %right NOT
+%left DOT
 
 /* values */
 %token <intval> NUMBER
@@ -478,16 +478,15 @@ static void free_socket_id_lst(struct socket_id* i);
 %token RBRACE
 %token LBRACK
 %token RBRACK
-%token SLASH
-%token DOT
 %token CR
 %token COLON
-%token STAR
 
 
 /*non-terminals */
-%type <expr> exp exp_elem /*, condition*/
-%type <action> action actions cmd fcmd if_cmd stm exp_stm assign_action
+%type <expr> exp exp_elem
+%type <intval> intno eint_op eint_op_onsend
+%type <intval> eip_op eip_op_onsend
+%type <action> action actions cmd fcmd if_cmd stm /*exp_stm*/ assign_action
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
@@ -498,19 +497,18 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <sockid>  phostport
 %type <sockid>  listen_phostport
 %type <intval> proto port
-%type <intval> equalop strop intop binop
-%type <strval> host_sep
+%type <intval> equalop strop cmpop
 %type <intval> uri_type
 %type <attr> attr_id
 %type <attr> attr_id_num_idx
 %type <attr> attr_id_no_idx
 %type <attr> attr_id_ass
-%type <attr> attr_id_val
+/*%type <attr> attr_id_val*/
 %type <attr> attr_id_any
 %type <attr> attr_id_any_str
 %type <pvar> pvar
 %type <lval> lval
-%type <rv_expr> rval rval_expr
+%type <rv_expr> rval rval_expr 
 %type <lval> avp_pvar
 /* %type <intval> class_id */
 %type <intval> assign_op
@@ -519,7 +517,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <strval>	route_name;
 %type <intval> avpflag_oper
 %type <intval> rve_un_op
-%type <intval> rve_op
+/* %type <intval> rve_op */
 
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -631,6 +629,10 @@ id_lst:
 	| listen_phostport id_lst	{ $$=$1; $$->next=$2; }
 	;
 
+intno: NUMBER
+	|  MINUS %prec NOT NUMBER { $$=-$2; }
+	;
+
 flags_decl:		FLAGS_DECL	flag_list
 			|	FLAGS_DECL error { yyerror("flag list expected\n"); }
 ;
@@ -666,7 +668,7 @@ avpflag_spec:
 	}
 	;
 assign_stm:
-	DEBUG_V EQUAL NUMBER { default_core_cfg.debug=$3; }
+	DEBUG_V EQUAL intno { default_core_cfg.debug=$3; }
 	| DEBUG_V EQUAL error  { yyerror("number  expected"); }
 	| FORK  EQUAL NUMBER { dont_fork= ! $3; }
 	| FORK  EQUAL error  { yyerror("boolean value expected"); }
@@ -689,13 +691,13 @@ assign_stm:
 	| DNS_TRY_NAPTR error { yyerror("boolean value expected"); }
 	| DNS_SRV_LB EQUAL NUMBER   { IF_DNS_FAILOVER(default_core_cfg.dns_srv_lb=$3); }
 	| DNS_SRV_LB error { yyerror("boolean value expected"); }
-	| DNS_UDP_PREF EQUAL NUMBER { IF_NAPTR(default_core_cfg.dns_udp_pref=$3);}
+	| DNS_UDP_PREF EQUAL intno { IF_NAPTR(default_core_cfg.dns_udp_pref=$3);}
 	| DNS_UDP_PREF error { yyerror("number expected"); }
-	| DNS_TCP_PREF EQUAL NUMBER { IF_NAPTR(default_core_cfg.dns_tcp_pref=$3);}
+	| DNS_TCP_PREF EQUAL intno { IF_NAPTR(default_core_cfg.dns_tcp_pref=$3);}
 	| DNS_TCP_PREF error { yyerror("number expected"); }
-	| DNS_TLS_PREF EQUAL NUMBER { IF_NAPTR(default_core_cfg.dns_tls_pref=$3);}
+	| DNS_TLS_PREF EQUAL intno { IF_NAPTR(default_core_cfg.dns_tls_pref=$3);}
 	| DNS_TLS_PREF error { yyerror("number expected"); }
-	| DNS_SCTP_PREF EQUAL NUMBER { 
+	| DNS_SCTP_PREF EQUAL intno { 
 								IF_NAPTR(default_core_cfg.dns_sctp_pref=$3); }
 	| DNS_SCTP_PREF error { yyerror("number expected"); }
 	| DNS_RETR_TIME EQUAL NUMBER   { default_core_cfg.dns_retr_time=$3; }
@@ -755,9 +757,9 @@ assign_stm:
 	| PHONE2TEL EQUAL error { yyerror("boolean value expected"); }
 	| SYN_BRANCH EQUAL NUMBER { syn_branch=$3; }
 	| SYN_BRANCH EQUAL error { yyerror("boolean value expected"); }
-	| MEMLOG EQUAL NUMBER { memlog=$3; }
+	| MEMLOG EQUAL intno { memlog=$3; }
 	| MEMLOG EQUAL error { yyerror("int value expected"); }
-	| MEMDBG EQUAL NUMBER { memdbg=$3; }
+	| MEMDBG EQUAL intno { memdbg=$3; }
 	| MEMDBG EQUAL error { yyerror("int value expected"); }
 	| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
 	| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
@@ -799,7 +801,7 @@ assign_stm:
 		#endif
 	}
 	| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
-	| TCP_CONNECT_TIMEOUT EQUAL NUMBER {
+	| TCP_CONNECT_TIMEOUT EQUAL intno {
 		#ifdef USE_TCP
 			tcp_connect_timeout=$3;
 		#else
@@ -807,7 +809,7 @@ assign_stm:
 		#endif
 	}
 	| TCP_CONNECT_TIMEOUT EQUAL error { yyerror("number expected"); }
-	| TCP_SEND_TIMEOUT EQUAL NUMBER {
+	| TCP_SEND_TIMEOUT EQUAL intno {
 		#ifdef USE_TCP
 			tcp_send_timeout=$3;
 		#else
@@ -815,7 +817,7 @@ assign_stm:
 		#endif
 	}
 	| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
-	| TCP_CON_LIFETIME EQUAL NUMBER {
+	| TCP_CON_LIFETIME EQUAL intno {
 		#ifdef USE_TCP
 			tcp_con_lifetime=$3;
 		#else
@@ -1484,281 +1486,168 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 	}
 	| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
 	;
-/*
-rules:
-	rules rule { push($2, &$1); $$=$1; }
-	| rule {$$=$1; }
-	| rules error { $$=0; yyerror("invalid rule"); }
-	;
-rule:
-	condition actions CR {
-		$$=0;
-		if (add_rule($1, $2, &$$)<0) {
-			yyerror("error calling add_rule");
-			YYABORT;
+
+exp:	rval_expr
+		{
+			if (!rve_check_type((enum rval_type*)&i_tmp, $1)){
+				yyerror("invalid expression");
+				$$=0;
+			}else if (i_tmp!=RV_INT && i_tmp!=RV_NONE){
+				yyerror("invalid expression type, int expected\n");
+				$$=0;
+			}else
+				$$=mk_elem(NO_OP, RVEXP_O, $1, 0, 0);
 		}
-	}
-	| CR	{ $$=0;}
-	| condition error { $$=0; yyerror("bad actions in rule"); }
 	;
-condition:
-	exp {$$=$1;}
-*/
-exp:	exp LOG_AND exp		{ $$=mk_exp(LOGAND_OP, $1, $3); }
-	| exp LOG_OR exp	{ $$=mk_exp(LOGOR_OP, $1, $3);  }
-	| NOT exp 		{ $$=mk_exp(NOT_OP, $2, 0);  }
-	| LPAREN exp RPAREN	{ $$=$2; }
-	| exp_elem		{ $$=$1; }
-	;
+
 equalop:
-	EQUAL_T {$$=EQUAL_OP; }
-	| DIFF	{$$=DIFF_OP; }
+	EQUAL_T {$$=RVE_EQ_OP; }
+	| DIFF	{$$=RVE_DIFF_OP; }
 	;
-intop:	equalop	{$$=$1; }
-	| GT	{$$=GT_OP; }
-	| LT	{$$=LT_OP; }
-	| GTE	{$$=GTE_OP; }
-	| LTE	{$$=LTE_OP; }
-	;
-binop :
-	BIN_OR { $$= BINOR_OP; }
-	| BIN_AND { $$ = BINAND_OP; }
+cmpop:
+	  GT	{$$=RVE_GT_OP; }
+	| LT	{$$=RVE_LT_OP; }
+	| GTE	{$$=RVE_GTE_OP; }
+	| LTE	{$$=RVE_LTE_OP; }
 	;
 strop:
 	equalop	{$$=$1; }
 	| MATCH	{$$=MATCH_OP; }
 	;
+
+
+/* boolean expression uri operands */
 uri_type:
 	URI		{$$=URI_O;}
 	| FROM_URI	{$$=FROM_URI_O;}
 	| TO_URI	{$$=TO_URI_O;}
 	;
 
+
+/* boolean expression integer operands, available only in the
+  onsend route */
+eint_op_onsend:
+			SNDPORT		{ $$=SNDPORT_O; }
+		|	TOPORT		{ $$=TOPORT_O; }
+		|	SNDPROTO	{ $$=SNDPROTO_O; }
+		|	SNDAF		{ $$=SNDAF_O; }
+		;
+
+/* boolean expression integer operands */
+eint_op:	SRCPORT		{ $$=SRCPORT_O; }
+		|	DSTPORT		{ $$=DSTPORT_O; }
+		|	PROTO		{ $$=PROTO_O; }
+		|	AF			{ $$=AF_O; }
+		|	MSGLEN		{ $$=MSGLEN_O; }
+		|	RETCODE		{ $$=RETCODE_O; }
+		| eint_op_onsend
+	;
+
+/* boolean expression ip/ipnet operands */
+eip_op_onsend:
+			SNDIP		{ onsend_check("snd_ip"); $$=SNDIP_O; }
+		|	TOIP		{ onsend_check("to_ip");  $$=TOIP_O; }
+		;
+
+eip_op:		SRCIP		{ $$=SRCIP_O; }
+		|	DSTIP		{ $$=DSTIP_O; }
+		| eip_op_onsend
+		;
+
+
+
 exp_elem:
-	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
-	| METHOD strop attr_id_val  {$$ = mk_elem($2, METHOD_O, 0, AVP_ST, $3); }
-	| METHOD strop select_id {$$ = mk_elem($2, METHOD_O, 0, SELECT_ST, $3); }
-	| METHOD strop  ID	{$$ = mk_elem($2, METHOD_O, 0, STRING_ST,$3); }
+	METHOD strop %prec EQUAL_T rval_expr
+		{$$= mk_elem($2, METHOD_O, 0, RVE_ST, $3);}
+	| METHOD strop %prec EQUAL_T ID
+		{$$ = mk_elem($2, METHOD_O, 0, STRING_ST,$3); }
 	| METHOD strop error { $$=0; yyerror("string expected"); }
-	| METHOD error	{ $$=0; yyerror("invalid operator,== , !=, or =~ expected"); }
-	| uri_type strop STRING	{$$ = mk_elem($2, $1, 0, STRING_ST, $3); }
-	| uri_type strop host 	{$$ = mk_elem($2, $1, 0, STRING_ST, $3); }
-	| uri_type strop attr_id_val {$$ = mk_elem($2, $1, 0, AVP_ST, $3); }
-	| uri_type strop select_id {$$ = mk_elem($2, $1, 0, SELECT_ST, $3); }
-	| uri_type equalop MYSELF {$$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
-	| uri_type strop error { $$=0; yyerror("string or MYSELF expected"); }
-	| uri_type error	{ $$=0; yyerror("invalid operator, == , != or =~ expected"); }
-
-	| SRCPORT intop NUMBER { $$=mk_elem($2, SRCPORT_O, 0, NUMBER_ST, (void*)$3 ); }
-	| SRCPORT intop attr_id_val { $$=mk_elem($2, SRCPORT_O, 0, AVP_ST, (void*)$3 ); }
-	| SRCPORT intop error { $$=0; yyerror("number expected"); }
-	| SRCPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-
-	| DSTPORT intop NUMBER	{ $$=mk_elem($2, DSTPORT_O, 0, NUMBER_ST, (void*)$3 ); }
-	| DSTPORT intop attr_id_val	{ $$=mk_elem($2, DSTPORT_O, 0, AVP_ST, (void*)$3 ); }
-	| DSTPORT intop error { $$=0; yyerror("number expected"); }
-	| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-
-	| SNDPORT intop NUMBER {
-		onsend_check("snd_port");
-		$$=mk_elem($2, SNDPORT_O, 0, NUMBER_ST, (void*)$3 );
-	}
-	| SNDPORT intop attr_id_val {
-		onsend_check("snd_port");
-		$$=mk_elem($2, SNDPORT_O, 0, AVP_ST, (void*)$3 );
-	}
-	| SNDPORT intop error { $$=0; yyerror("number expected"); }
-	| SNDPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-
-	| TOPORT intop NUMBER {
-		onsend_check("to_port");
-		$$=mk_elem($2, TOPORT_O, 0, NUMBER_ST, (void*)$3 );
-	}
-	| TOPORT intop attr_id_val {
-		onsend_check("to_port");
-		$$=mk_elem($2, TOPORT_O, 0, AVP_ST, (void*)$3 );
-	}
-	| TOPORT intop error { $$=0; yyerror("number expected"); }
-	| TOPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-
-	| PROTO intop proto	{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
-	| PROTO intop attr_id_val	{ $$=mk_elem($2, PROTO_O, 0, AVP_ST, (void*)$3 ); }
-	| PROTO intop error { $$=0; yyerror("protocol expected (udp, tcp or tls)"); }
-
-	| PROTO error { $$=0; yyerror("equal/!= operator expected"); }
-
-	| SNDPROTO intop proto	{
-		onsend_check("snd_proto");
-		$$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST, (void*)$3 );
-	}
-	| SNDPROTO intop attr_id_val {
-		onsend_check("snd_proto");
-		$$=mk_elem($2, SNDPROTO_O, 0, AVP_ST, (void*)$3 );
-	}
-	| SNDPROTO intop error { $$=0; yyerror("protocol expected (udp, tcp or tls)"); }
-	| SNDPROTO error { $$=0; yyerror("equal/!= operator expected"); }
-
-	| AF intop NUMBER	{ $$=mk_elem($2, AF_O, 0, NUMBER_ST,(void *) $3 ); }
-	| AF intop attr_id_val	{ $$=mk_elem($2, AF_O, 0, AVP_ST,(void *) $3 ); }
-	| AF intop error { $$=0; yyerror("number expected"); }
-	| AF error { $$=0; yyerror("equal/!= operator expected"); }
-
-	| SNDAF intop NUMBER {
-		onsend_check("snd_af");
-		$$=mk_elem($2, SNDAF_O, 0, NUMBER_ST, (void *) $3 ); }
-	| SNDAF intop attr_id_val {
-		onsend_check("snd_af");
-		$$=mk_elem($2, SNDAF_O, 0, AVP_ST, (void *) $3 );
-	}
-	| SNDAF intop error { $$=0; yyerror("number expected"); }
-	| SNDAF error { $$=0; yyerror("equal/!= operator expected"); }
-
-	| MSGLEN intop NUMBER		{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) $3 ); }
-	| MSGLEN intop attr_id_val	{ $$=mk_elem($2, MSGLEN_O, 0, AVP_ST, (void *) $3 ); }
-	| MSGLEN intop MAX_LEN		{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) BUF_SIZE); }
-	| MSGLEN intop error { $$=0; yyerror("number expected"); }
-	| MSGLEN error { $$=0; yyerror("equal/!= operator expected"); }
-
-	| RETCODE intop NUMBER	{ $$=mk_elem($2, RETCODE_O, 0, NUMBER_ST, (void *) $3 ); }
-	| RETCODE intop attr_id_val	{ $$=mk_elem($2, RETCODE_O, 0, AVP_ST, (void *) $3 ); }
-	| RETCODE intop error { $$=0; yyerror("number expected"); }
-	| RETCODE error { $$=0; yyerror("equal/!= operator expected"); }
-
-	| SRCIP equalop ipnet	{ $$=mk_elem($2, SRCIP_O, 0, NET_ST, $3); }
-	| SRCIP strop STRING {
-		s_tmp.s=$3;
-		s_tmp.len=strlen($3);
-		ip_tmp=str2ip(&s_tmp);
-	#ifdef USE_IPV6
-		if (ip_tmp==0)
-			ip_tmp=str2ip6(&s_tmp);
-	#endif
-		if (ip_tmp) {
-			$$=mk_elem($2, SRCIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
-		} else {
-			$$=mk_elem($2, SRCIP_O, 0, STRING_ST, $3);
+	| METHOD error	
+		{ $$=0; yyerror("invalid operator,== , !=, or =~ expected"); }
+	| uri_type strop %prec EQUAL_T rval_expr
+		{$$ = mk_elem($2, $1, 0, RVE_ST, $3); }
+	| uri_type strop %prec EQUAL_T MYSELF
+		{$$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
+	| uri_type strop %prec EQUAL_T error
+		{ $$=0; yyerror("string or MYSELF expected"); }
+	| uri_type error
+		{ $$=0; yyerror("invalid operator, == , != or =~ expected"); }
+	| eint_op cmpop %prec GT rval_expr { $$=mk_elem($2, $1, 0, RVE_ST, $3 ); }
+	| eint_op equalop %prec EQUAL_T rval_expr 
+		{ $$=mk_elem($2, $1, 0, RVE_ST, $3 ); }
+	| eint_op cmpop error   { $$=0; yyerror("number expected"); }
+	| eint_op equalop error { $$=0; yyerror("number expected"); }
+	| eint_op error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
+	| eip_op strop %prec EQUAL_T ipnet { $$=mk_elem($2, $1, 0, NET_ST, $3); }
+	| eip_op strop %prec EQUAL_T rval_expr {
+			s_tmp.s=0;
+			$$=0;
+			if (rve_is_constant($3)){
+				i_tmp=rve_guess_type($3);
+				if (i_tmp==RV_INT)
+					yyerror("string expected");
+				else if (i_tmp==RV_STR){
+					if (((rval_tmp=rval_expr_eval(0, 0, $3))==0) ||
+								(rval_get_str(0, 0, &s_tmp, rval_tmp, 0)<0)){
+						rval_destroy(rval_tmp);
+						yyerror("bad rvalue expression");
+					}else{
+						rval_destroy(rval_tmp);
+					}
+				}else{
+					yyerror("BUG: unexpected dynamic type");
+				}
+			}else{
+					warn("non constant rvalue in ip comparison");
+			}
+			if (s_tmp.s){
+				ip_tmp=str2ip(&s_tmp);
+			#ifdef USE_IPV6
+				if (ip_tmp==0)
+					ip_tmp=str2ip6(&s_tmp);
+			#endif
+				pkg_free(s_tmp.s);
+				if (ip_tmp) {
+					$$=mk_elem($2, $1, 0, NET_ST, 
+								mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
+				} else {
+					$$=mk_elem($2, $1, 0, RVE_ST, $3);
+				}
+			}else{
+				$$=mk_elem($2, $1, 0, RVE_ST, $3);
+			}
 		}
-	}
-	| SRCIP strop host	{ $$=mk_elem($2, SRCIP_O, 0, STRING_ST, $3); }
-	| SRCIP equalop MYSELF  { $$=mk_elem($2, SRCIP_O, 0, MYSELF_ST, 0);
-							}
-	| SRCIP strop error { $$=0; yyerror( "ip address or hostname expected" ); }
-	| SRCIP error  { $$=0; yyerror("invalid operator, ==, != or =~ expected");}
-	| DSTIP equalop ipnet	{ $$=mk_elem(	$2, DSTIP_O, 0, NET_ST, (void*)$3); }
-	| DSTIP strop STRING	{
-		s_tmp.s=$3;
-		s_tmp.len=strlen($3);
-		ip_tmp=str2ip(&s_tmp);
-	#ifdef USE_IPV6
-		if (ip_tmp==0)
-			ip_tmp=str2ip6(&s_tmp);
-	#endif /* USE_IPV6 */
-		if (ip_tmp) {
-			$$=mk_elem($2, DSTIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
-		} else {
-			$$=mk_elem($2, DSTIP_O, 0, STRING_ST, $3);
-		}
-	}
-	| DSTIP strop host	{ $$=mk_elem(	$2, DSTIP_O, 0, STRING_ST, $3); }
-	| DSTIP equalop MYSELF  { $$=mk_elem(	$2, DSTIP_O, 0, MYSELF_ST, 0); }
-	| DSTIP strop error { $$=0; yyerror( "ip address or hostname expected" ); }
-	| DSTIP error { $$=0; yyerror("invalid operator, ==, != or =~ expected"); }
-	| SNDIP equalop ipnet {
-		onsend_check("snd_ip");
-		$$=mk_elem($2, SNDIP_O, 0, NET_ST, $3);
-	}
-	| SNDIP strop STRING	{
-		onsend_check("snd_ip");
-		s_tmp.s=$3;
-		s_tmp.len=strlen($3);
-		ip_tmp=str2ip(&s_tmp);
-	#ifdef USE_IPV6
-		if (ip_tmp==0)
-			ip_tmp=str2ip6(&s_tmp);
-	#endif /* USE_IPV6 */
-		if (ip_tmp) {
-			$$=mk_elem($2, SNDIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
-		} else {
-			$$=mk_elem($2, SNDIP_O, 0, STRING_ST, $3);
-		}
-	}
-	| SNDIP strop host	{
-		onsend_check("snd_ip");
-		$$=mk_elem($2, SNDIP_O, 0, STRING_ST, $3);
-	}
-	| SNDIP equalop attr_id_val	{
-		onsend_check("snd_ip");
-	    $$=mk_elem($2, SNDIP_O, 0, AVP_ST, (void*)$3 ); 
-	}
-	| SNDIP equalop MYSELF  {
-		onsend_check("snd_ip");
-		$$=mk_elem($2, SNDIP_O, 0, MYSELF_ST, 0);
-	}
-	| SNDIP strop error { $$=0; yyerror( "ip address or hostname expected" ); }
-	| SNDIP error  { $$=0; yyerror("invalid operator, ==, != or =~ expected"); }
-	| TOIP equalop ipnet	{
-		onsend_check("to_ip");
-		$$=mk_elem($2, TOIP_O, 0, NET_ST, $3);
-	}
-	| TOIP strop STRING	{
-		onsend_check("to_ip");
-		s_tmp.s=$3;
-		s_tmp.len=strlen($3);
-		ip_tmp=str2ip(&s_tmp);
-	#ifdef USE_IPV6
-		if (ip_tmp==0)
-			ip_tmp=str2ip6(&s_tmp);
-	#endif /* USE_IPV6 */
-		if (ip_tmp) {
-			$$=mk_elem($2, TOIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
-		} else {
-			$$=mk_elem($2, TOIP_O, 0, STRING_ST, $3);
-		}
-	}
-	| TOIP strop host	{
-		onsend_check("to_ip");
-		$$=mk_elem($2, TOIP_O, 0, STRING_ST, $3);
-	}
-	| TOIP equalop attr_id_val	{
-		onsend_check("to_ip");
-	    $$=mk_elem($2, TOIP_O, 0, AVP_ST, (void*)$3 ); 
-	}
-	| TOIP equalop MYSELF  {
-		onsend_check("to_ip");
-		$$=mk_elem($2, TOIP_O, 0, MYSELF_ST, 0);
-	}
-	| TOIP strop error { $$=0; yyerror( "ip address or hostname expected" ); }
-	| TOIP error  { $$=0; yyerror("invalid operator, ==, != or =~ expected"); }
-
-	| MYSELF equalop uri_type	{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
-	| MYSELF equalop SRCIP  { $$=mk_elem($2, SRCIP_O, 0, MYSELF_ST, 0); }
-	| MYSELF equalop DSTIP  { $$=mk_elem($2, DSTIP_O, 0, MYSELF_ST, 0); }
-	| MYSELF equalop SNDIP  {
-		onsend_check("snd_ip");
-		$$=mk_elem($2, SNDIP_O, 0, MYSELF_ST, 0);
-	}
-	| MYSELF equalop TOIP  {
-		onsend_check("to_ip");
-		$$=mk_elem($2, TOIP_O, 0, MYSELF_ST, 0);
-	}
-	| MYSELF equalop error { $$=0; yyerror(" URI, SRCIP or DSTIP expected"); }
+	| eip_op strop %prec EQUAL_T host
+		{ $$=mk_elem($2, $1, 0, STRING_ST, $3); }
+	| eip_op strop %prec EQUAL_T MYSELF
+		{ $$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
+	| eip_op strop %prec EQUAL_T error
+		{ $$=0; yyerror( "ip address or hostname expected" ); }
+	| eip_op error
+		{ $$=0; yyerror("invalid operator, ==, != or =~ expected");}
+	
+	| MYSELF equalop %prec EQUAL_T uri_type
+		{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
+	| MYSELF equalop %prec EQUAL_T eip_op
+		{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
+	| MYSELF equalop %prec EQUAL_T error
+		{ $$=0; yyerror(" URI, SRCIP or DSTIP expected"); }
 	| MYSELF error	{ $$=0; yyerror ("invalid operator, == or != expected"); }
-	| exp_stm	{ $$=mk_elem( NO_OP, ACTION_O, 0, ACTIONS_ST, $1);  }
-	| NUMBER	{ $$=mk_elem( NO_OP, NUMBER_O, 0, NUMBER_ST, (void*)$1 ); }
-
-	| attr_id_any				{$$=mk_elem( NO_OP, AVP_O, (void*)$1, 0, 0); }
-	| attr_id_val strop STRING	{$$=mk_elem( $2, AVP_O, (void*)$1, STRING_ST, $3); }
-	| attr_id_val strop select_id	{$$=mk_elem( $2, AVP_O, (void*)$1, SELECT_ST, $3); }
-	| attr_id_val intop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
-	| attr_id_val binop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
-	| attr_id_val strop attr_id_val {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
-	| attr_id_val intop attr_id_val {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
-
-	| select_id                 { $$=mk_elem( NO_OP, SELECT_O, $1, 0, 0); }
-	| select_id strop STRING    { $$=mk_elem( $2, SELECT_O, $1, STRING_ST, $3); }
-	| select_id strop attr_id_val   { $$=mk_elem( $2, SELECT_O, $1, AVP_ST, (void*)$3); }
-	| select_id strop select_id { $$=mk_elem( $2, SELECT_O, $1, SELECT_ST, $3); }
+	;
+/*
+exp_elem2:
+	rval_expr cmpop %prec GT rval_expr
+		{ $$=mk_elem( $2, RVE_ST, $1, RVE_ST, $3);}
+	|
+	rval_expr equalop %prec EQUAL_T rval_expr
+		{ $$=mk_elem( $2, RVE_ST, $1, RVE_ST, $3);}
+	| rval_expr LOG_AND rval_expr
+		{ $$=mk_exp_rve(LOGAND_OP, $1, $3);}
+	| rval_expr LOG_OR rval_expr
+		{ $$=mk_exp_rve(LOGOR_OP, $1, $3);}
 ;
+*/
+
 ipnet:
 	ip SLASH ip	{ $$=mk_net($1, $3); }
 	| ip SLASH NUMBER {
@@ -1775,20 +1664,29 @@ ipnet:
 	| ip	{ $$=mk_net_bitlen($1, $1->len*8); }
 	| ip SLASH error { $$=0; yyerror("netmask (eg:255.0.0.0 or 8) expected"); }
 	;
-host_sep:
-	DOT {$$=".";}
-	| MINUS {$$="-"; }
-	;
 
 host:
 	ID { $$=$1; }
-	| host host_sep ID {
+	| host DOT ID {
 		$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 		if ($$==0) {
 			LOG(L_CRIT, "ERROR: cfg. parser: memory allocation failure while parsing host\n");
 		} else {
 			memcpy($$, $1, strlen($1));
-			$$[strlen($1)]=*$2;
+			$$[strlen($1)]='.';
+			memcpy($$+strlen($1)+1, $3, strlen($3));
+			$$[strlen($1)+1+strlen($3)]=0;
+		}
+		pkg_free($1);
+		pkg_free($3);
+	}
+	| host MINUS ID {
+		$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+		if ($$==0) {
+			LOG(L_CRIT, "ERROR: cfg. parser: memory allocation failure while parsing host\n");
+		} else {
+			memcpy($$, $1, strlen($1));
+			$$[strlen($1)]='-';
 			memcpy($$+strlen($1)+1, $3, strlen($3));
 			$$[strlen($1)+1+strlen($3)]=0;
 		}
@@ -1823,12 +1721,14 @@ fcmd:
 		}
 	}
 	;
+/*
 exp_stm:
 	fcmd	{ $$=$1; }
 	| if_cmd	{ $$=$1; }
 	| assign_action { $$ = $1; }
 	| LBRACE actions RBRACE	{ $$=$2; }
 	;
+*/
 stm:
 	action	{ $$=$1; }
 	| LBRACE actions RBRACE	{ $$=$2; }
@@ -1934,7 +1834,7 @@ attr_id:
 	attr_mark attr_spec { $$ = s_attr; }
 	;
 attr_id_num_idx:
-	attr_mark attr_spec LBRACK NUMBER RBRACK {
+	attr_mark attr_spec LBRACK intno RBRACK {
 		s_attr->type|= (AVP_NAME_STR | ($4<0?AVP_INDEX_BACKWARD:AVP_INDEX_FORWARD));
 		s_attr->index = ($4<0?-$4:$4);
 		$$ = s_attr;
@@ -1950,10 +1850,12 @@ attr_id_ass:
 	attr_id
 	| attr_id_no_idx
 	;
+/*
 attr_id_val:
 	attr_id
 	| attr_id_num_idx
 	;
+*/
 attr_id_any:
 	attr_id
 	| attr_id_no_idx
@@ -2074,7 +1976,7 @@ lval: attr_id_ass {
 				}
 	;
 
-rval: NUMBER			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
+rval: intno			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
 	| STRING			{	s_tmp.s=$1; s_tmp.len=strlen($1);
 							$$=mk_rval_expr_v(RV_STR, &s_tmp); }
 	| attr_id_any		{$$=mk_rval_expr_v(RV_AVP, $1); pkg_free($1); }
@@ -2095,33 +1997,51 @@ rval: NUMBER			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
 						}
 	| select_id			{$$=mk_rval_expr_v(RV_SEL, $1); pkg_free($1); }
 	| fcmd				{$$=mk_rval_expr_v(RV_ACTION_ST, $1); }
+	| LBRACE actions RBRACE	{$$=mk_rval_expr_v(RV_ACTION_ST, $2); }
+	| LPAREN assign_action RPAREN	{$$=mk_rval_expr_v(RV_ACTION_ST, $2); }
 	//| exp 				{$$=mk_rval_expr_v(RV_BEXPR, $1);}
 	/* missing/TODO: RV_ACTION_ST */
 	;
 
 
-rve_un_op: MINUS	{ $$=RVE_UMINUS_OP; }
+rve_un_op: NOT	{ $$=RVE_LNOT_OP; }
+		|  MINUS %prec NOT	{ $$=RVE_UMINUS_OP; } 
 		/* TODO: RVE_BOOL_OP, RVE_NOT_OP? */
 	;
 
+/*
 rve_op:		PLUS		{ $$=RVE_PLUS_OP; }
 		|	MINUS		{ $$=RVE_MINUS_OP; }
 		|	STAR		{ $$=RVE_MUL_OP; }
-		/* TODO: RVE_DIV_OP */
+		|	SLASH		{ $$=RVE_DIV_OP; }
 	;
-	
-rval_expr: rval							{ $$=$1;
+*/
+
+rval_expr: rval						{ $$=$1;
 											if ($$==0){
 												yyerror("out of memory\n");
 												YYABORT;
 											}
-										}
-		| LPAREN rval_expr RPAREN		{ $$=$2; }
-		| rve_un_op rval_expr			{$$=mk_rval_expr1($1, $2); }
-		| rval_expr rve_op rval_expr	{$$=mk_rval_expr2($2, $1, $3); }
-	;
+									}
+		| rve_un_op %prec NOT rval_expr 	{$$=mk_rval_expr1($1, $2); }
+		| rval_expr PLUS rval_expr	{$$=mk_rval_expr2(RVE_PLUS_OP, $1, $3); }
+		| rval_expr MINUS rval_expr	{$$=mk_rval_expr2(RVE_MINUS_OP, $1, $3); }
+		| rval_expr STAR rval_expr	{$$=mk_rval_expr2(RVE_MUL_OP, $1, $3); }
+		| rval_expr SLASH rval_expr	{$$=mk_rval_expr2(RVE_DIV_OP, $1, $3); }
+		| rval_expr BIN_OR rval_expr {$$=mk_rval_expr2(RVE_BOR_OP, $1,  $3); }
+		| rval_expr BIN_AND rval_expr {$$=mk_rval_expr2(RVE_BAND_OP, $1,  $3);}
+		| rval_expr cmpop %prec GT rval_expr { $$=mk_rval_expr2( $2, $1, $3);}
+		| rval_expr equalop %prec EQUAL_T rval_expr
+			{ $$=mk_rval_expr2( $2, $1, $3);}
+		| rval_expr LOG_AND rval_expr
+			{ $$=mk_rval_expr2(RVE_LAND_OP, $1, $3);}
+		| rval_expr LOG_OR rval_expr
+			{ $$=mk_rval_expr2(RVE_LOR_OP, $1, $3);}
+		| LPAREN rval_expr RPAREN	{ $$=$2; }
+		| exp_elem { $$=mk_rval_expr_v(RV_BEXPR, $1); }
+		;
 
-assign_action: lval assign_op rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
+assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
 														 	  RVE_ST, $3);
 										}
 	;

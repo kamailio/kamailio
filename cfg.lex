@@ -399,7 +399,7 @@ ID			{LETTER}{ALPHANUM}*
 HEX			[0-9a-fA-F]
 HEXNUMBER	0x{HEX}+
 OCTNUMBER	0[0-7]+
-DECNUMBER       0|-?([1-9]{DIGIT}*)
+DECNUMBER       0|([1-9]{DIGIT}*)
 BINNUMBER       [0-1]+b
 HEX4		{HEX}{1,4}
 IPV6ADDR	({HEX4}":"){7}{HEX4}|({HEX4}":"){1,7}(":"{HEX4}){1,7}|":"(":"{HEX4}){1,7}|({HEX4}":"){1,7}":"|"::"
