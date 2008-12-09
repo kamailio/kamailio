@@ -1464,28 +1464,23 @@ if (!t_next_contacts()) {
 
 	<section>
 		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$T_branch_idx</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_reply_code</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_req(pv)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_rpl(pv)</emphasis>
+			</para></listitem>
+		</itemizedlist>
 		<para>
-		Exported pseudo-variables are listed in the next sections.
+		Exported pseudo-variables are documented at &kamwikilink;.
 		</para>
-		<section>
-		<title>$T_branch_idx</title>
-			<para>
-			<emphasis>$T_branch_idx</emphasis> - the index (starting with 1
-			for the first branch) of the branch for which is executed the
-			branch_route[]. If used outside of branch_route[] block, the value
-			is '0'.
-			</para>
-		</section>
-		<section>
-		<title>$T_reply_code</title>
-			<para>
-			<emphasis>$T_reply_code</emphasis> - the code of the reply, as 
-			follows: in request_route will be the last stateful sent reply;
-			in reply_route will be the current processed reply; in 
-			failure_route will be the negative winning reply. In case of 
-			no-reply or error, '0' value is returned.
-			</para>
-		</section>
 	</section>
 
 

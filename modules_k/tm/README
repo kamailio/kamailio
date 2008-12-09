@@ -95,10 +95,6 @@ Juha Heinanen
               1.4.17. t_next_contacts()
 
         1.5. Exported pseudo-variables
-
-              1.5.1. $T_branch_idx
-              1.5.2. $T_reply_code
-
         1.6. Exported MI Functions
 
               1.6.1. t_uac_dlg
@@ -1094,21 +1090,13 @@ if (!t_next_contacts()) {
 
 1.5. Exported pseudo-variables
 
-   Exported pseudo-variables are listed in the next sections.
+     * $T_branch_idx
+     * $T_reply_code
+     * $T_req(pv)
+     * $T_rpl(pv)
 
-1.5.1. $T_branch_idx
-
-   $T_branch_idx - the index (starting with 1 for the first
-   branch) of the branch for which is executed the branch_route[].
-   If used outside of branch_route[] block, the value is '0'.
-
-1.5.2. $T_reply_code
-
-   $T_reply_code - the code of the reply, as follows: in
-   request_route will be the last stateful sent reply; in
-   reply_route will be the current processed reply; in
-   failure_route will be the negative winning reply. In case of
-   no-reply or error, '0' value is returned.
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.
 
 1.6. Exported MI Functions
 
