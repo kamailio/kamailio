@@ -49,10 +49,20 @@ enum rval_expr_op{
 	RVE_BOOL_OP,  /* one member evaluate as bool. : (val!=0)*/
 	RVE_LNOT_OP,  /* one member evaluate as bool. : (!val)*/
 	RVE_MUL_OP,   /* 2 members, returns left * right */
-	RVE_DIV_OP,   /* 2 memebers, returns left / right */
-	RVE_MINUS_OP, /* 2 memebers, returns left - right */
+	RVE_DIV_OP,   /* 2 members, returns left / right */
+	RVE_MINUS_OP, /* 2 members, returns left - right */
+	RVE_BAND_OP,  /* 2 members, returns left | right */
+	RVE_BOR_OP,   /* 2 members, returns left & right */
+	RVE_LAND_OP,  /* 2 members, returns left && right */
+	RVE_LOR_OP,   /* 2 members, returns left || right */
+	RVE_GT_OP,    /*  2 members, returns left > right */
+	RVE_GTE_OP,   /*  2 members, returns left >= right */
+	RVE_LT_OP,    /*  2 members, returns left  < right */
+	RVE_LTE_OP,   /*  2 members, returns left <= right */
 	/* common int & str */
-	RVE_PLUS_OP  /* 2 members, returns left + right */
+	RVE_PLUS_OP,  /* 2 members, returns left + right  (int or str)*/
+	RVE_EQ_OP,    /*  2 members, returns left == right  (int)*/
+	RVE_DIFF_OP,  /*  2 members, returns left != right  (int)*/
 	/* str only */
 };
 
@@ -152,6 +162,11 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg, int* i,
 int rval_get_str(struct run_act_ctx* h, struct sip_msg* msg,
 								str* s, struct rvalue* rv,
 								struct rval_cache* cache);
+/** get the string value of an rv in a tmp variable */
+int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
+								str* tmpv, struct rvalue* rv,
+								struct rval_cache* cache,
+								struct rval_cache* tmp_cache);
 
 /** evals an integer expr  to an int. */
 int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
@@ -160,8 +175,14 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 								struct rval_expr* rve);
 
+/** guess the type of an expression.  */
+enum rval_type rve_guess_type(struct rval_expr* rve);
+/** returns true if expression is constant. */
+int rve_is_constant(struct rval_expr* rve);
+/** returns 1 if expression is valid (type-wise).*/
+int rve_check_type(enum rval_type* type, struct rval_expr* rve);
 
-/** create a RVE_RVAL_OP rval_expr, containing a single rval of the given type.
+/** create a RVE_RVAL_OP rval_expr, containing a single rval of the given type
   */
 struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val);
 /** create a unary op. rval_expr.. */
