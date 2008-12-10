@@ -174,6 +174,11 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 /** evals a rval expr.. */
 struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 								struct rval_expr* rve);
+/** evals an integer expr  to an int or rvalue. */
+int rval_expr_eval_rvint( struct run_act_ctx* h, struct sip_msg* msg,
+						 struct rvalue** rv_res, int* i_res,
+						 struct rval_expr* rve, struct rval_cache* cache);
+
 
 /** guess the type of an expression.  */
 enum rval_type rve_guess_type(struct rval_expr* rve);

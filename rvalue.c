@@ -1099,12 +1099,11 @@ inline static struct rvalue* rval_str_add2(struct run_act_ctx* h,
 		s2=&rv2->v.s;
 	}
 	/* do the actual copy */
-	ret->v.s.len=rv1->v.s.len;
-	memmove(ret->buf+ret->v.s.len, s2->s, s2->len);
+	memmove(ret->buf+rv1->v.s.len, s2->s, s2->len);
 	if (s1){
 		memcpy(ret->buf, s1->s, s1->len);
 	}
-	ret->v.s.len+=s2->len;
+	ret->v.s.len=rv1->v.s.len+s2->len;
 	ret->v.s.s[ret->v.s.len]=0;
 	/* cleanup if needed */
 	if (flags & RV_CNT_ALLOCED_F)
@@ -1152,17 +1151,6 @@ error:
 	rval_destroy(rv2); 
 	return 0;
 }
-
-
-
-/* forward decl. */
-inline static int rval_expr_eval_rvint(struct run_act_ctx* h,
-									   struct sip_msg* msg,
-									   struct rvalue** res_rv,
-									   int* res_i,
-									   struct rval_expr* rve,
-									   struct rval_cache* cache
-									   );
 
 
 
@@ -1276,7 +1264,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
  * modified only if rv_chg_in_place() returns true.
  * @result  0 on success, -1 on error,  sets *res_rv or *res_i.
  */
-inline static int rval_expr_eval_rvint(struct run_act_ctx* h,
+int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 									   struct sip_msg* msg,
 									   struct rvalue** res_rv,
 									   int* res_i,
@@ -1645,6 +1633,8 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
  */
 static int rve_can_optimize_int(struct rval_expr* rve)
 {
+	if (scr_opt_lev<1)
+		return 0;
 	if (rve->op == RVE_RVAL_OP)
 		return 0;
 	if (rve->left.rve->op != RVE_RVAL_OP)
@@ -1671,6 +1661,8 @@ static int rve_can_optimize_int(struct rval_expr* rve)
  */
 static int rve_can_optimize_str(struct rval_expr* rve)
 {
+	if (scr_opt_lev<1)
+		return 0;
 	if (rve->op == RVE_RVAL_OP)
 		return 0;
 	DBG("rve_can_optimize_str: left %d, right %d\n", 
