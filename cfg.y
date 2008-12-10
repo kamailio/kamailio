@@ -497,7 +497,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <sockid>  phostport
 %type <sockid>  listen_phostport
 %type <intval> proto port
-%type <intval> equalop strop cmpop
+%type <intval> equalop strop cmpop rve_cmpop rve_equalop
 %type <intval> uri_type
 %type <attr> attr_id
 %type <attr> attr_id_num_idx
@@ -1500,20 +1500,35 @@ exp:	rval_expr
 		}
 	;
 
+/* exp elem operators */
 equalop:
-	EQUAL_T {$$=RVE_EQ_OP; }
-	| DIFF	{$$=RVE_DIFF_OP; }
+	EQUAL_T {$$=EQUAL_OP; }
+	| DIFF	{$$=DIFF_OP; }
 	;
 cmpop:
-	  GT	{$$=RVE_GT_OP; }
-	| LT	{$$=RVE_LT_OP; }
-	| GTE	{$$=RVE_GTE_OP; }
-	| LTE	{$$=RVE_LTE_OP; }
+	  GT	{$$=GT_OP; }
+	| LT	{$$=LT_OP; }
+	| GTE	{$$=GTE_OP; }
+	| LTE	{$$=LTE_OP; }
 	;
 strop:
 	equalop	{$$=$1; }
 	| MATCH	{$$=MATCH_OP; }
 	;
+
+
+/* rve expr. operators */
+rve_equalop:
+	EQUAL_T {$$=RVE_EQ_OP; }
+	| DIFF	{$$=RVE_DIFF_OP; }
+	;
+rve_cmpop:
+	  GT	{$$=RVE_GT_OP; }
+	| LT	{$$=RVE_LT_OP; }
+	| GTE	{$$=RVE_GTE_OP; }
+	| LTE	{$$=RVE_LTE_OP; }
+	;
+
 
 
 /* boolean expression uri operands */
@@ -2030,8 +2045,9 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr SLASH rval_expr	{$$=mk_rval_expr2(RVE_DIV_OP, $1, $3); }
 		| rval_expr BIN_OR rval_expr {$$=mk_rval_expr2(RVE_BOR_OP, $1,  $3); }
 		| rval_expr BIN_AND rval_expr {$$=mk_rval_expr2(RVE_BAND_OP, $1,  $3);}
-		| rval_expr cmpop %prec GT rval_expr { $$=mk_rval_expr2( $2, $1, $3);}
-		| rval_expr equalop %prec EQUAL_T rval_expr
+		| rval_expr rve_cmpop %prec GT rval_expr 
+			{ $$=mk_rval_expr2( $2, $1, $3);}
+		| rval_expr rve_equalop %prec EQUAL_T rval_expr
 			{ $$=mk_rval_expr2( $2, $1, $3);}
 		| rval_expr LOG_AND rval_expr
 			{ $$=mk_rval_expr2(RVE_LAND_OP, $1, $3);}
