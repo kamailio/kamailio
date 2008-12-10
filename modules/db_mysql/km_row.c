@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../db/db_row.h"
-#include "../../db/db_ut.h"
+#include "../../db/db_val.h"
 #include "my_con.h"
 #include "val.h"
 #include "row.h"
@@ -70,7 +70,7 @@ int db_mysql_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	lengths = mysql_fetch_lengths(CON_RESULT(_h));
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
-		if (db_mysql_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
+		if (db_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
 			LM_ERR("failed to convert value\n");
 			LM_DBG("free row at %p\n", _r);
