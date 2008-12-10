@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../db/db_row.h"
-#include "../../db/db_ut.h"
+#include "../../db/db_val.h"
 #include "val.h"
 #include "row.h"
 #include "con.h"
@@ -64,7 +64,7 @@ int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* 
 	/* Save the number of columns in the ROW structure */
 	ROW_N(_r) = RES_COL_N(_res);
 	for(i = 0; i < RES_COL_N(_res); i++) {
-		if (db_unixodbc_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
+		if (db_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			((CON_ROW(_h))[i]), lengths[i]) < 0) {
 			LM_ERR("failed to convert value\n");
 			LM_DBG("free row at %p\n", _r);

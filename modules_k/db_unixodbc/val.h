@@ -41,12 +41,6 @@
 
 
 /*
- * Does not copy strings
- */
-int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
-
-
-/*
  * Used when converting result from a query
  */
 int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len);

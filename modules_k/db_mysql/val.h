@@ -38,19 +38,6 @@
 
 
 /*!
- * \brief Convert a str to a db value, does not copy strings
- *
- * Convert a str to a db value, does not copy strings.
- * \param _t destination value type
- * \param _v destination value
- * \param _s source string
- * \param _l string length
- * \return 0 on success, negative on error
- */
-int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
-
-
-/*!
  * \brief Converting a value to a string
  *
  * Converting a value to a string, used when converting result from a query
