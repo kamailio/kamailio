@@ -59,6 +59,8 @@ extern struct route_list failure_rt;
 extern struct route_list branch_rt;
 extern struct route_list onsend_rt;
 
+/* script optimization level */
+extern int scr_opt_lev;
 
 int init_routes();
 void destroy_routes();

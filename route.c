@@ -93,6 +93,12 @@ struct route_list branch_rt;
 struct route_list onsend_rt;
 
 
+/** script optimization level, useful for debugging.
+ *  0 - no optimization
+ *  1 - optimize rval expressions
+ *  2 - optimize expr elems
+ */
+int scr_opt_lev=9;
 
 inline static void destroy_rlist(struct route_list* rt)
 {
@@ -283,6 +289,205 @@ int route_lookup(struct route_list* rt, char* name)
 int fix_actions(struct action* a); /*fwd declaration*/
 
 
+/** optimize the left side of a struct expr.
+ *  @return 1 if optimized, 0 if not and -1 on error
+ */
+static int exp_optimize_left(struct expr* exp)
+{
+	struct rval_expr* rve;
+	struct rvalue* rval;
+	int old_type, old_op;
+	int ret;
+	
+	ret=0;
+	if (exp->type!=ELEM_T)
+		return 0;
+	old_type=exp->l_type;
+	old_op=exp->op;
+	if (exp->l_type==RVEXP_O){
+		rve=exp->l.param;
+		/* rve should be previously fixed/optimized */
+		/* optimize exp (rval(val)) -> exp(val) */
+		if (rve->op==RVE_RVAL_OP){
+			rval=&rve->left.rval;
+			switch(rval->type){
+				case RV_INT:
+					if (exp->op==NO_OP){
+						exp->l_type=NUMBER_O;
+						exp->l.param=0;
+						exp->r_type=NUMBER_ST;
+						exp->r.numval=rval->v.l;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}
+					break;
+				case RV_STR:
+					/* string evaluated in expression context - not
+					   supported */
+					break;
+				case RV_BEXPR:
+					if (exp->op==NO_OP){
+						/* replace the current expr. */
+						*exp=*(rval->v.bexpr);
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					};
+					break;
+				case RV_ACTION_ST:
+					if (exp->op==NO_OP){
+						exp->l_type=ACTION_O;
+						exp->l.param=0;
+						exp->r_type=ACTION_ST;
+						exp->r.param=rval->v.action;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}
+					break;
+				case RV_SEL:
+					exp->l.select=pkg_malloc(sizeof(*exp->l.select));
+					if (exp->l.select){
+						exp->l_type=SELECT_O;
+						*exp->l.select=rval->v.sel;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_AVP:
+					exp->l.attr=pkg_malloc(sizeof(*exp->l.attr));
+					if (exp->l.attr){
+						exp->l_type=AVP_O;
+						*exp->l.attr=rval->v.avps;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_PVAR:
+					exp->l.param=pkg_malloc(sizeof(pv_spec_t));
+					if (exp->l.param){
+						exp->l_type=PVAR_O;
+						*((pv_spec_t*)exp->l.param)=rval->v.pvs;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_NONE:
+					break;
+			}
+		}
+	}
+	if (ret>0)
+		DBG("left EXP optimized succesfully: %d op %d to %d op %d\n",
+			old_type, old_op, exp->l_type, exp->op);
+	return ret;
+}
+
+
+
+/** optimize the left side of a struct expr.
+ *  @return 1 if optimized, 0 if not and -1 on error
+ */
+static int exp_optimize_right(struct expr* exp)
+{
+	struct rval_expr* rve;
+	struct rvalue* rval;
+	int old_type, old_op;
+	int ret;
+	
+	ret=0;
+	if ((exp->type!=ELEM_T) ||(exp->op==NO_OP))
+		return 0;
+	old_type=exp->r_type;
+	old_op=exp->op;
+	if (exp->r_type==RVE_ST){
+		rve=exp->r.param;
+		/* rve should be previously fixed/optimized */
+		/* optimize exp (rval(val)) -> exp(val) */
+		if (rve->op==RVE_RVAL_OP){
+			rval=&rve->left.rval;
+			switch(rval->type){
+				case RV_INT:
+					exp->r_type=NUMBER_ST;
+					exp->r.numval=rval->v.l;
+					rval_destroy(rval);
+					pkg_free(rve);
+					ret=1;
+					break;
+				case RV_STR:
+					exp->r.str.s=pkg_malloc(rval->v.s.len+1);
+					if (exp->r.str.s){
+						exp->r.str.len=rval->v.s.len;
+						memcpy(exp->r.str.s, rval->v.s.s, rval->v.s.len);
+						exp->r_type=STRING_ST;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_BEXPR:
+					/* cannot be optimized further, is an exp_elem
+					   which is not constant */
+					break;
+				case RV_ACTION_ST:
+					/* cannot be optimized further, is not constant and
+					  eval_elem() does not support ACTION_ST for op!=NO_OP*/
+					break;
+				case RV_SEL:
+					exp->r.select=pkg_malloc(sizeof(*exp->l.select));
+					if (exp->r.select){
+						exp->r_type=SELECT_ST;
+						*exp->r.select=rval->v.sel;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_AVP:
+					exp->r.attr=pkg_malloc(sizeof(*exp->l.attr));
+					if (exp->r.attr){
+						exp->r_type=AVP_ST;
+						*exp->r.attr=rval->v.avps;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_PVAR:
+					exp->r.param=pkg_malloc(sizeof(pv_spec_t));
+					if (exp->r.param){
+						exp->r_type=PVAR_ST;
+						*((pv_spec_t*)exp->r.param)=rval->v.pvs;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_NONE:
+					ret=-1;
+					break;
+			}
+		}
+	}
+	if (ret>0)
+		DBG("right EXP optimized succesfully: %d op %d to %d op %d\n",
+			old_type, old_op, exp->r_type, exp->op);
+	return ret;
+}
+
+
+
 /* traverses an expr tree and compiles the REs where necessary)
  * returns: 0 for ok, <0 if errors */
 int fix_expr(struct expr* exp)
@@ -382,12 +587,16 @@ int fix_expr(struct expr* exp)
 					ERR("Unable to fix left rval expression\n");
 					return ret;
 				}
+				if (scr_opt_lev>=2)
+					exp_optimize_left(exp);
 			}
 			if (exp->r_type==RVE_ST){
 				if ((ret=fix_rval_expr(&exp->r.param))<0){
 					ERR("Unable to fix right rval expression\n");
 					return ret;
 				}
+				if (scr_opt_lev>=2)
+					exp_optimize_right(exp);
 			}
 			/* PVAR don't need fixing */
 			ret=0;
@@ -934,11 +1143,28 @@ inline static int comp_rve(int op, struct rval_expr* rve, int rtype,
 							struct run_act_ctx* h)
 {
 	int i;
+	struct rvalue* rv;
+	struct rvalue* rv1;
+	struct rval_cache c1;
 	
-	if (unlikely(rval_expr_eval_int(h,  msg, &i, rve)<0)){
+	rval_cache_init(&c1);
+	if (unlikely(rval_expr_eval_rvint(h,  msg, &rv, &i, rve, &c1)<0)){
 		ERR("failure evaluating expression: bad type\n");
 		i=0; /* false */
+		goto int_expr;
 	}
+	if (unlikely(rv)){
+		/* no int => str */
+		rv1=rval_convert(h, msg, RV_STR, rv, &c1);
+		i=comp_str(op, &rv1->v.s, rtype, r, msg, h);
+		rval_destroy(rv1);
+		rval_destroy(rv);
+		rval_cache_clean(&c1);
+		return i;
+	}
+	/* expr evaluated to int */
+int_expr:
+	rval_cache_clean(&c1);
 	if (op==NO_OP)
 		return !(!i); /* transform it into { 0, 1 } */
 	return comp_num(op, i, rtype, r, msg, h);
