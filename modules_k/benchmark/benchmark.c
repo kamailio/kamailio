@@ -216,7 +216,7 @@ static void destroy(void)
 	}
 }
 
-void reset_timer(int i)
+void bm_reset_timer(int i)
 {
 	if(bm_mycfg==NULL || bm_mycfg->tindex[i]==NULL)
 		return;
@@ -236,7 +236,7 @@ void reset_timers(void)
 		return;
 
 	for (i = 0; i < bm_mycfg->nrtimers; i++)
-		reset_timer(i);
+		bm_reset_timer(i);
 }
 
 /*! \brief
@@ -432,7 +432,7 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	}
 	bm_mycfg->tindex[bmt->id] = bmt;
 	bm_mycfg->nrtimers = bmt->id + 1;
-	reset_timer(bmt->id);
+	bm_reset_timer(bmt->id);
 	*id = bmt->id;
 	LM_DBG("timer [%s] added with index <%u>\n", bmt->name, bmt->id);
 
