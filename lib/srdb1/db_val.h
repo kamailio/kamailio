@@ -28,7 +28,8 @@
  * This file defines data structures that represents values in the database.
  * Several datatypes are recognized and converted by the database API.
  * Available types: DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME, DB_BLOB and DB_BITMAP
- * It also provides some macros for convenient access to this values.
+ * It also provides some macros for convenient access to this values,
+ * and a function to convert a str to a value.
  * \ingroup db
  */
 
@@ -163,6 +164,19 @@ typedef struct {
  * Use this macro if you need to access the bitmap value in the db_val_t structure.
  */
 #define VAL_BITMAP(dv) ((dv)->val.bitmap_val)
+
+
+/**
+ * \brief Convert a str to a db value, copy strings
+ *
+ * Convert a str to a db value, does not copy strings.
+ * \param _t destination value type
+ * \param _v destination value
+ * \param _s source string
+ * \param _l string length
+ * \return 0 on success, negative on error
+ */
+int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
 
 
 #endif /* DB_VAL_H */
