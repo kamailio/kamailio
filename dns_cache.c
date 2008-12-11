@@ -3014,6 +3014,12 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 							tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
 							len=SRV_TLS_PREFIX_LEN + name->len;
 							break;
+						case PROTO_SCTP:
+							memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
+							memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
+							tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
+							len=SRV_SCTP_PREFIX_LEN + name->len;
+							break;
 						default:
 							LOG(L_CRIT, "BUG: sip_resolvehost: "
 									"unknown proto %d\n", (int)srv_proto);
