@@ -76,6 +76,7 @@
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
  *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
+ *  2008-12-11  added support for "string1" "string2" (andrei)
 */
 
 
@@ -101,6 +102,7 @@
 	#define AVP_PVAR_S              6  /* avp or pvar */
 	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
 	#define PVARID_S                8  /* $foo.bar...*/
+	#define STR_BETWEEN_S		9
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -126,7 +128,8 @@
 %}
 
 /* start conditions */
-%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P PVARID
+%x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
+%x PVARID
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -828,7 +831,7 @@ EAT_ABLE	[\ \t\b\r]
 							}
 	/* avp prefix detected -> go to avp mode */
 <AVP_PVAR>{AVP_PREF}		|
-<AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); 
+<AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); count();
 							  return ATTR_MARK; }
 <AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; p_nest=1; BEGIN(PVAR_P);
 								yymore(); }
@@ -886,12 +889,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING2); }
 
 
-<STRING1>{QUOTES} { count(); state=old_state; BEGIN(old_initial);
+<STRING1>{QUOTES} { count(); 
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
-						yylval.strval=s_buf.s;
-						memset(&s_buf, 0, sizeof(s_buf));
-						return STRING;
+						BEGIN(STR_BETWEEN);
 					}
 <STRING2>{TICK}  { count(); state=old_state; BEGIN(old_initial);
 						yytext[yyleng-1]=0; yyleng--;
@@ -917,6 +918,14 @@ EAT_ABLE	[\ \t\b\r]
 <STRING1>\\{CR}		{ count(); } /* eat escaped CRs */
 <STRING1>.|{EAT_ABLE}|{CR}	{ addchar(&s_buf, *yytext); }
 
+<STR_BETWEEN>{EAT_ABLE}|{CR}	{ count(); /* eat whitespace */ }
+<STR_BETWEEN>{QUOTES}			{ count(); state=STRING_S; BEGIN(STRING1);}
+<STR_BETWEEN>.					{	yyless(0);
+									state=old_state; BEGIN(old_initial);
+									yylval.strval=s_buf.s;
+									memset(&s_buf, 0, sizeof(s_buf));
+									return STRING;
+								}
 
 <INITIAL,COMMENT>{COM_START}	{ count(); comment_nest++; state=COMMENT_S;
 										BEGIN(COMMENT); }
@@ -946,6 +955,12 @@ EAT_ABLE	[\ \t\b\r]
 
 <<EOF>>							{
 									switch(state){
+										case STR_BETWEEN_S:
+											state=old_state;
+											BEGIN(old_initial);
+											yylval.strval=s_buf.s;
+											memset(&s_buf, 0, sizeof(s_buf));
+											return STRING;
 										case STRING_S:
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
 														" unclosed string\n");
