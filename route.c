@@ -296,13 +296,14 @@ static int exp_optimize_left(struct expr* exp)
 {
 	struct rval_expr* rve;
 	struct rvalue* rval;
-	int old_type, old_op;
+	int old_ltype, old_rtype, old_op;
 	int ret;
 	
 	ret=0;
 	if (exp->type!=ELEM_T)
 		return 0;
-	old_type=exp->l_type;
+	old_ltype=exp->l_type;
+	old_rtype=exp->r_type;
 	old_op=exp->op;
 	if (exp->l_type==RVEXP_O){
 		rve=exp->l.param;
@@ -385,8 +386,8 @@ static int exp_optimize_left(struct expr* exp)
 		}
 	}
 	if (ret>0)
-		DBG("left EXP optimized succesfully: %d op %d to %d op %d\n",
-			old_type, old_op, exp->l_type, exp->op);
+		DBG("left EXP optimized: op%d(_O%d_, ST%d) => op%d(_O%d_, ST%d)\n",
+			old_op, old_ltype, old_rtype, exp->op, exp->l_type, exp->r_type);
 	return ret;
 }
 
@@ -399,13 +400,14 @@ static int exp_optimize_right(struct expr* exp)
 {
 	struct rval_expr* rve;
 	struct rvalue* rval;
-	int old_type, old_op;
+	int old_ltype, old_rtype, old_op;
 	int ret;
 	
 	ret=0;
 	if ((exp->type!=ELEM_T) ||(exp->op==NO_OP))
 		return 0;
-	old_type=exp->r_type;
+	old_ltype=exp->l_type;
+	old_rtype=exp->r_type;
 	old_op=exp->op;
 	if (exp->r_type==RVE_ST){
 		rve=exp->r.param;
@@ -481,8 +483,8 @@ static int exp_optimize_right(struct expr* exp)
 		}
 	}
 	if (ret>0)
-		DBG("right EXP optimized succesfully: %d op %d to %d op %d\n",
-			old_type, old_op, exp->r_type, exp->op);
+		DBG("right EXP optimized: op%d(O%d, _ST%d_) => op%d(O%d, _ST%d_)\n",
+			old_op, old_ltype, old_rtype, exp->op, exp->l_type, exp->r_type);
 	return ret;
 }
 
