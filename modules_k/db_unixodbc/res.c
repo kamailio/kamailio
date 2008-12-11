@@ -235,6 +235,7 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 		if (!CON_ROW(_h))
 		{
 			LM_ERR("string null\n");
+			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
 			return -3;
 		}
