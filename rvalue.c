@@ -62,8 +62,9 @@ void rval_destroy(struct rvalue* rv)
 {
 	if (rv && rv_unref(rv)){
 		rval_force_clean(rv);
-		if (rv->flags & RV_RV_ALLOCED_F)
+		if (rv->flags & RV_RV_ALLOCED_F){
 			pkg_free(rv);
+		}
 	}
 }
 
@@ -409,6 +410,42 @@ int rve_is_constant(struct rval_expr* rve)
 			return rve_is_constant(rve->left.rve) &&
 					rve_is_constant(rve->right.rve);
 		case RVE_NONE_OP:
+			break;
+	}
+	return 0;
+}
+
+
+
+/** returns true if operator is unary (takes only 1 arg).
+  * @return 0 or 1 on
+  */
+static int rve_op_unary(enum rval_expr_op op)
+{
+	switch(op){
+		case RVE_RVAL_OP: /* not realy an operator */
+			return -1;
+		case RVE_UMINUS_OP:
+		case RVE_BOOL_OP:
+		case RVE_LNOT_OP:
+			return 1;
+		case RVE_MINUS_OP:
+		case RVE_MUL_OP:
+		case RVE_DIV_OP:
+		case RVE_BOR_OP:
+		case RVE_BAND_OP:
+		case RVE_LAND_OP:
+		case RVE_LOR_OP:
+		case RVE_GT_OP:
+		case RVE_GTE_OP:
+		case RVE_LT_OP:
+		case RVE_LTE_OP:
+		case RVE_EQ_OP:
+		case RVE_DIFF_OP:
+		case RVE_PLUS_OP:
+			return 0;
+		case RVE_NONE_OP:
+			return -1;
 			break;
 	}
 	return 0;
@@ -1626,6 +1663,77 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 
 
 
+/** returns true if the operator is associative. */
+static int rve_op_is_assoc(enum rval_expr_op op)
+{
+	switch(op){
+		case RVE_NONE_OP:
+		case RVE_RVAL_OP:
+		case RVE_UMINUS_OP:
+		case RVE_BOOL_OP:
+		case RVE_LNOT_OP:
+			/* one operand expression => cannot be assoc. */
+			return 0;
+		case RVE_DIV_OP:
+		case RVE_MINUS_OP:
+			return 0;
+		case RVE_PLUS_OP:
+		case RVE_MUL_OP:
+		case RVE_BAND_OP:
+		case RVE_BOR_OP:
+			return 1;
+		case RVE_LAND_OP:
+		case RVE_LOR_OP:
+			return 1;
+		case RVE_GT_OP:
+		case RVE_GTE_OP:
+		case RVE_LT_OP:
+		case RVE_LTE_OP:
+		case RVE_EQ_OP:
+		case RVE_DIFF_OP:
+			return 0;
+	}
+	return 0;
+}
+
+
+
+/** returns true if the operator is commutative. */
+static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
+{
+	switch(op){
+		case RVE_NONE_OP:
+		case RVE_RVAL_OP:
+		case RVE_UMINUS_OP:
+		case RVE_BOOL_OP:
+		case RVE_LNOT_OP:
+			/* one operand expression => cannot be commut. */
+			return 0;
+		case RVE_DIV_OP:
+		case RVE_MINUS_OP:
+			return 0;
+		case RVE_PLUS_OP:
+			return type==RV_INT; /* commutative only for INT*/
+		case RVE_MUL_OP:
+		case RVE_BAND_OP:
+		case RVE_BOR_OP:
+			return 1;
+		case RVE_LAND_OP:
+		case RVE_LOR_OP:
+			return 1;
+		case RVE_GT_OP:
+		case RVE_GTE_OP:
+		case RVE_LT_OP:
+		case RVE_LTE_OP:
+		case RVE_EQ_OP:
+		case RVE_DIFF_OP:
+			return 0;
+	}
+	return 0;
+}
+
+
+#if 0
 /** returns true if the rval expr can be optimized to an int.
  *  (if left & right are leafs (RVE_RVAL_OP) and both of them are
  *   ints return true, else false)
@@ -1680,6 +1788,7 @@ static int rve_can_optimize_str(struct rval_expr* rve)
 	}
 	return 1;
 }
+#endif
 
 
 
@@ -1721,6 +1830,261 @@ static int fix_rval(struct rvalue* rv)
 
 
 
+static int rve_replace_with_ct_rv(struct rval_expr* rve, struct rvalue* rv)
+{
+	enum rval_type type;
+	int flags;
+	int i;
+	union rval_val v;
+	
+	type=rv->type;
+	flags=0;
+	if (rv->type==RV_INT){
+		if (rval_get_int(0, 0, &i, rv, 0)!=0){
+			BUG("unexpected int evaluation failure\n");
+			return -1;
+		}
+		v.l=i;
+	}else if(rv->type==RV_STR){
+		if (rval_get_str(0, 0, &v.s, rv, 0)<0){
+			BUG("unexpected str evaluation failure\n");
+			return -1;
+		}
+		flags=RV_CNT_ALLOCED_F;
+	}else{
+		BUG("unknown constant expression type %d\n", rv->type);
+		return -1;
+	}
+	if (rve->op!=RVE_RVAL_OP){
+		rve_destroy(rve->left.rve);
+		if (rve_op_unary(rve->op)==0)
+			rve_destroy(rve->right.rve);
+	}else
+		rval_destroy(&rve->left.rval);
+	rval_init(&rve->left.rval, type, &v, flags);
+	rval_init(&rve->right.rval, RV_NONE, 0, 0);
+	rve->op=RVE_RVAL_OP;
+	return 0;
+}
+
+
+
+/** tries to optimize a rval_expr. */
+static int rve_optimize(struct rval_expr* rve)
+{
+	int ret;
+	struct rvalue* rv;
+	struct rvalue* trv; /* used only for DBG() */
+	enum rval_expr_op op;
+	int flags;
+	struct rval_expr tmp_rve;
+	enum rval_type type;
+	
+	ret=0;
+	flags=0;
+	rv=0;
+	if (scr_opt_lev<1)
+		return 0;
+	if (rve->op == RVE_RVAL_OP) /* if rval, nothing to do */
+		return 0;
+	if (rve_is_constant(rve)){
+		if ((rv=rval_expr_eval(0, 0, rve))==0){
+			ERR("optimization failure, bad expression\n");
+			goto error;
+		}
+		op=rve->op;
+		if (rve_replace_with_ct_rv(rve, rv)<0)
+			goto error;
+		rval_destroy(rv);
+		rv=0;
+		trv=&rve->left.rval;
+		if (trv->type==RV_INT)
+			DBG("FIXUP RVE: optimized constant int rve (old op %d) to %d\n",
+					op, (int)trv->v.l);
+		else if (trv->type==RV_STR)
+			DBG("FIXUP RVE: optimized constant str rve (old op %d) to"
+					" \"%.*s\"\n", op, trv->v.s.len, trv->v.s.s);
+		ret=1;
+	}else{
+		/* expression is not constant */
+		/* if unary => nothing to do */
+		if (rve_op_unary(rve->op))
+			return rve_optimize(rve->left.rve);
+		rve_optimize(rve->left.rve);
+		rve_optimize(rve->right.rve);
+		if (!rve_check_type(&type, rve)){
+			ERR("optimization failure, type mismatch in expression\n");
+			return 0;
+		}
+		/* TODO: $v - a => $v + (-a) */
+		/* TODO: $v * 0 => 0; $v * 1 => $v (for *, /, &, |, &&, ||, +, -) */
+		
+		/* op(op($v, a), b) => op($v, op(a,b)) */
+		if (rve_is_constant(rve->right.rve)){
+			/* op1(op2(...), b) */
+			if ((rve->op==rve->left.rve->op) && rve_op_is_assoc(rve->op)){
+				/* op(op(...), b) */
+				if (rve_is_constant(rve->left.rve->right.rve)){
+					/* op(op($v, a), b) => op($v, op(a, b)) */
+					/* rv= op(a, b) */
+					tmp_rve.op=rve->op;
+					tmp_rve.left.rve=rve->left.rve->right.rve;
+					tmp_rve.right.rve=rve->right.rve;
+					/* hack for RVE_PLUS_OP which can work on string, ints
+					   or a combination of them */
+					if ((rve->op==RVE_PLUS_OP) &&
+						(rve_guess_type(tmp_rve.left.rve)!=RV_STR)){
+						DBG("RVE optimization failed: cannot optimize"
+								" +(+($v, a), b) when typeof(a)==INT\n");
+						return 0;
+					}
+					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+						ERR("optimization failure, bad expression\n");
+						goto error;
+					}
+					/* op($v, rv) */
+					if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
+						goto error;
+					rval_destroy(rv);
+					rv=0;
+					rve_destroy(tmp_rve.left.rve);
+					rve->left.rve=rve->left.rve->left.rve;
+					trv=&rve->right.rve->left.rval;
+					if (trv->type==RV_INT)
+						DBG("FIXUP RVE: optimized int rve: op(op($v, a), b)"
+								" with op($v, %d); op=%d\n",
+								(int)trv->v.l, rve->op);
+					else if (trv->type==RV_STR)
+						DBG("FIXUP RVE: optimized str rve op(op($v, a), b)"
+								" with op($v, \"%.*s\"); op=%d\n",
+								trv->v.s.len, trv->v.s.s, rve->op);
+					ret=1;
+				}else if (rve_is_constant(rve->left.rve->left.rve) &&
+							rve_op_is_commutative(rve->op, type)){
+					/* op(op(a, $v), b) => op(op(a, b), $v) */
+					/* rv= op(a, b) */
+					tmp_rve.op=rve->op;
+					tmp_rve.left.rve=rve->left.rve->left.rve;
+					tmp_rve.right.rve=rve->right.rve;
+					/* no need for the RVE_PLUS_OP hack, all the bad
+					   cases are caught by rve_op_is_commutative()
+					   (in this case type will be typeof(a)) => ok only if
+					   typeof(a) is int) */
+					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+						ERR("optimization failure, bad expression\n");
+						goto error;
+					}
+					/* op(rv, $v) */
+					rve_destroy(rve->right.rve);
+					rve->right.rve=rve->left.rve->right.rve;
+					rve->left.rve->right.rve=0;
+					if (rve_replace_with_ct_rv(rve->left.rve, rv)<0)
+						goto error;
+					rval_destroy(rv);
+					rv=0;
+					trv=&rve->left.rve->left.rval;
+					if (trv->type==RV_INT)
+						DBG("FIXUP RVE: optimized int rve: op(op(a, $v), b)"
+								" with op(%d, $v); op=%d\n",
+								(int)trv->v.l, rve->op);
+					else if (trv->type==RV_STR)
+						DBG("FIXUP RVE: optimized str rve op(op(a, $v), b)"
+								" with op(\"%.*s\", $v); op=%d\n",
+								trv->v.s.len, trv->v.s.s, rve->op);
+					ret=1;
+				}
+				/* op(op($v, $w),b) => can't optimize */
+			}
+			/* op1(op2(...), b) and op1!=op2 or op is non assoc.
+			   => can't optimize */
+		}else if (rve_is_constant(rve->left.rve)){
+			/* op1(a, op2(...)) */
+			if ((rve->op==rve->right.rve->op) && rve_op_is_assoc(rve->op)){
+				/* op(a, op(...)) */
+				if (rve_is_constant(rve->right.rve->right.rve) &&
+						rve_op_is_commutative(rve->op, type)){
+					/* op(a, op($v, b)) => op(op(a, b), $v) */
+					/* rv= op(a, b) */
+					tmp_rve.op=rve->op;
+					tmp_rve.left.rve=rve->left.rve;
+					tmp_rve.right.rve=rve->right.rve->right.rve;
+					/* no need for the RVE_PLUS_OP hack, all the bad
+					   cases are caught by rve_op_is_commutative()
+					   (in this case type will be typeof(a)) => ok only if
+					   typeof(a) is int) */
+					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+						ERR("optimization failure, bad expression\n");
+						goto error;
+					}
+					/* op(rv, $v) */
+					if (rve_replace_with_ct_rv(rve->left.rve, rv)<0)
+						goto error;
+					rval_destroy(rv);
+					rv=0;
+					rve_destroy(tmp_rve.right.rve);
+					rve->right.rve=rve->right.rve->left.rve;
+					trv=&rve->left.rve->left.rval;
+					if (trv->type==RV_INT)
+						DBG("FIXUP RVE: optimized int rve: op(a, op($v, b))"
+								" with op(%d, $v); op=%d\n",
+								(int)trv->v.l, rve->op);
+					else if (trv->type==RV_STR)
+						DBG("FIXUP RVE: optimized str rve op(a, op($v, b))"
+								" with op(\"%.*s\", $v); op=%d\n",
+								trv->v.s.len, trv->v.s.s, rve->op);
+					ret=1;
+				}else if (rve_is_constant(rve->right.rve->left.rve)){
+					/* op(a, op(b, $v)) => op(op(a, b), $v) */
+					/* rv= op(a, b) */
+					tmp_rve.op=rve->op;
+					tmp_rve.left.rve=rve->left.rve;
+					tmp_rve.right.rve=rve->right.rve->left.rve;
+					/* hack for RVE_PLUS_OP which can work on string, ints
+					   or a combination of them */
+					if ((rve->op==RVE_PLUS_OP) &&
+						(rve_guess_type(tmp_rve.left.rve) != 
+						 	rve_guess_type(tmp_rve.right.rve))){
+						DBG("RVE optimization failed: cannot optimize"
+								" +(a, +(b, $v)) when typeof(a)!=typeof(b)\n");
+						return 0;
+					}
+					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+						ERR("optimization failure, bad expression\n");
+						goto error;
+					}
+					/* op(rv, $v) */
+					if (rve_replace_with_ct_rv(rve->left.rve, rv)<0)
+						goto error;
+					rval_destroy(rv);
+					rv=0;
+					rve_destroy(tmp_rve.right.rve);
+					rve->right.rve=rve->right.rve->right.rve;
+					trv=&rve->left.rve->left.rval;
+					if (trv->type==RV_INT)
+						DBG("FIXUP RVE: optimized int rve: op(a, op(b, $v))"
+								" with op(%d, $v); op=%d\n",
+								(int)trv->v.l, rve->op);
+					else if (trv->type==RV_STR)
+						DBG("FIXUP RVE: optimized str rve op(a, op(b, $v))"
+								" with op(\"%.*s\", $v); op=%d\n",
+								trv->v.s.len, trv->v.s.s, rve->op);
+					ret=1;
+				}
+				/* op(a, op($v, $w)) => can't optimize */
+			}
+			/* op1(a, op2(...)) and op1!=op2 or op is non assoc.
+			   => can't optimize */
+		}
+		/* op(op($v,a), op($w,b)) => no optimizations for now (TODO) */
+	}
+	return ret;
+error:
+	if (rv) rval_destroy(rv);
+	return -1;
+}
+
+
+
 /** fix a rval_expr.
  * fixes action, bexprs, resolves selects, pvars and
  * optimizes simple sub expressions (e.g. 1+2).
@@ -1733,10 +2097,7 @@ int fix_rval_expr(void** p)
 {
 	struct rval_expr** prve;
 	struct rval_expr* rve;
-	union rval_val v;
-	struct rvalue* rv;
 	int ret;
-	int i;
 	
 	prve=(struct rval_expr**)p;
 	rve=*prve;
@@ -1776,35 +2137,6 @@ int fix_rval_expr(void** p)
 			BUG("unsupported op type %d\n", rve->op);
 	}
 	/* try to optimize */
-	if (rve_can_optimize_int(rve)){
-		if (rval_expr_eval_int(0, 0, &i, rve)<0){
-			BUG("unexpected failure\n");
-			return -1;
-		}
-		rve_destroy(rve->left.rve);
-		rve_destroy(rve->right.rve);
-		v.l=i;
-		rval_init(&rve->left.rval, RV_INT, &v, 0);
-		rval_init(&rve->right.rval, RV_NONE, 0, 0);
-		DBG("FIXUP RVE: optimized int rve/rves (op %d) to %d\n", rve->op, i);
-		rve->op=RVE_RVAL_OP;
-	}else if (rve_can_optimize_str(rve)){
-		if ((rv=rval_expr_eval(0, 0, rve))==0){
-			BUG("unexpected failure\n");
-			return -1;
-		}
-		if (rval_get_str(0, 0, &v.s, rv, 0)<0){
-			BUG("unexpected failure\n");
-			return -1;
-		}
-		rval_destroy(rv);
-		rve_destroy(rve->left.rve);
-		rve_destroy(rve->right.rve);
-		rval_init(&rve->left.rval, RV_STR, &v, RV_CNT_ALLOCED_F);
-		rval_init(&rve->right.rval, RV_NONE, 0, 0);
-		DBG("FIXUP RVE: optimized str rves (op %d) to %.*s\n",
-				rve->op, v.s.len, v.s.s);
-		rve->op=RVE_RVAL_OP;
-	}
+	rve_optimize(rve);
 	return 0;
 }
