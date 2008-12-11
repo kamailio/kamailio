@@ -79,7 +79,7 @@
 #include "val.h"
 #include "res.h"
 
-static void free_query(const db_con_t* _con);
+static void db_postgres_free_query(const db_con_t* _con);
 
 
 /*!
@@ -142,10 +142,7 @@ static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
 	}
 
 	/* free any previous query that is laying about */
-	if(CON_RESULT(_con))
-	{
-		free_query(_con);
-	}
+	db_postgres_free_query(_con);
 
 	/* exec the query */
 	if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
@@ -298,7 +295,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
  * \brief Free database and any old query results
  * \param _con database connection
  */
-static void free_query(const db_con_t* _con)
+static void db_postgres_free_query(const db_con_t* _con)
 {
 	if(CON_RESULT(_con))
 	{
@@ -325,7 +322,7 @@ int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
 	     LM_ERR("unable to free result structure\n");
 	     return -1;
      }
-	free_query(_con);
+	db_postgres_free_query(_con);
 	return 0;
 }
 
@@ -453,7 +450,7 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 	}
 
 done:
-	free_query(_con);
+	db_postgres_free_query(_con);
 	return (rc);
 }
 
