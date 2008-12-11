@@ -46,30 +46,29 @@
 int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 {
 	int col;
-	SQLSMALLINT cols; //columns number
+	SQLSMALLINT cols; /* because gcc don't like RES_COL_N */
 
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
+	/* Save number of columns in the result structure */
 	SQLNumResultCols(CON_RESULT(_h), &cols);
-	if (!cols) {
+	RES_COL_N(_r) = cols;
+	if (!RES_COL_N(_r)) {
 		LM_ERR("no columns returned from the query\n");
 		return -2;
 	} else {
-		LM_DBG("%d columns returned from the query\n", cols);
+		LM_DBG("%d columns returned from the query\n", RES_COL_N(_r));
 	}
 
-	/* Save number of columns in the result structure */
-	RES_COL_N(_r) = cols;
-
-	if (db_allocate_columns(_r, cols) != 0) {
+	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
 		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
 
-	for(col = 0; col < cols; col++)
+	for(col = 0; col < RES_COL_N(_r); col++)
 	{
 		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
 		if (! RES_NAMES(_r)[col]) {
@@ -167,7 +166,7 @@ int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
  */
 static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
-	int row_n = 0, i = 0, ret = 0, len;
+	int i = 0, ret = 0, len;
 	SQLSMALLINT columns;
 	list* rows = NULL;
 	list* rowstart = NULL;
@@ -207,19 +206,18 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 			temp_row= NULL;
 			return -5;
 		}
-		row_n++;
+		RES_ROW_N(_r)++;
 	}
 	/* free temporary row data */
 	pkg_free(temp_row);
 	CON_ROW(_h) = NULL;
 
-	RES_ROW_N(_r) = row_n;
-	if (!row_n) {
+	if (!RES_ROW_N(_r)) {
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
 
-	len = sizeof(db_row_t) * row_n;
+	len = sizeof(db_row_t) * RES_ROW_N(_r);
 	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
 	if (!RES_ROWS(_r)) {
 		LM_ERR("no private memory left\n");
@@ -237,7 +235,6 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 		if (!CON_ROW(_h))
 		{
 			LM_ERR("string null\n");
-			RES_ROW_N(_r) = row_n;
 			db_free_rows(_r);
 			return -3;
 		}
