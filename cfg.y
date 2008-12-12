@@ -2013,9 +2013,9 @@ rval: intno			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
 	| select_id			{$$=mk_rval_expr_v(RV_SEL, $1); pkg_free($1); }
 	| fcmd				{$$=mk_rval_expr_v(RV_ACTION_ST, $1); }
 	| LBRACE actions RBRACE	{$$=mk_rval_expr_v(RV_ACTION_ST, $2); }
+	| LBRACE error RBRACE	{ yyerror("bad command block"); }
 	| LPAREN assign_action RPAREN	{$$=mk_rval_expr_v(RV_ACTION_ST, $2); }
-	//| exp 				{$$=mk_rval_expr_v(RV_BEXPR, $1);}
-	/* missing/TODO: RV_ACTION_ST */
+	| LPAREN error RPAREN	{ yyerror("bad expression"); }
 	;
 
 
@@ -2055,6 +2055,19 @@ rval_expr: rval						{ $$=$1;
 			{ $$=mk_rval_expr2(RVE_LOR_OP, $1, $3);}
 		| LPAREN rval_expr RPAREN	{ $$=$2; }
 		| exp_elem { $$=mk_rval_expr_v(RV_BEXPR, $1); }
+		| rve_un_op %prec NOT error { yyerror("bad expression"); }
+		| rval_expr PLUS error		{ yyerror("bad expression"); }
+		| rval_expr MINUS error		{ yyerror("bad expression"); }
+		| rval_expr STAR error		{ yyerror("bad expression"); }
+		| rval_expr SLASH error		{ yyerror("bad expression"); }
+		| rval_expr BIN_OR error	{ yyerror("bad expression"); }
+		| rval_expr BIN_AND error	{ yyerror("bad expression"); }
+		| rval_expr rve_cmpop %prec GT error
+			{ yyerror("bad expression"); }
+		| rval_expr rve_equalop %prec EQUAL_T error
+			{ yyerror("bad expression"); }
+		| rval_expr LOG_AND error	{ yyerror("bad expression"); }
+		| rval_expr LOG_OR error	{ yyerror("bad expression"); }
 		;
 
 assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
@@ -2498,12 +2511,13 @@ cmd:
 		}
 		$$ = mod_func_action;
 	}
+	| ID error					{ yyerror("'('')' expected (function call)");}
 	;
 func_params:
 	/* empty */
 	| func_params COMMA func_param { }
 	| func_param {}
-	| func_params error { yyerror("call params error\n"); YYABORT; }
+	| func_params error { yyerror("call params error\n"); }
 	;
 func_param:
         NUMBER {
@@ -2532,17 +2546,32 @@ func_param:
 extern int line;
 extern int column;
 extern int startcolumn;
+extern int startline;
+
 static void warn(char* s)
 {
-	LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", line, startcolumn,
-			column, s);
+	if (line!=startline)
+		LOG(L_WARN, "cfg. warning: (%d,%d-%d,%d): %s\n",
+					startline, startcolumn, line, column-1, s);
+	else if (startcolumn!=(column-1))
+		LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", startline, startcolumn,
+					column-1, s);
+	else
+		LOG(L_WARN, "cfg. warning: (%d,%d): %s\n", startline, startcolumn, s);
 	cfg_warnings++;
 }
 
 static void yyerror(char* s)
 {
-	LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d): %s\n", line, startcolumn,
-			column, s);
+	if (line!=startline)
+		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d,%d): %s\n", 
+					startline, startcolumn, line, column-1, s);
+	else if (startcolumn!=(column-1))
+		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d): %s\n", 
+					startline, startcolumn, column-1, s);
+	else
+		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d): %s\n", 
+					startline, startcolumn, s);
 	cfg_errors++;
 }
 
