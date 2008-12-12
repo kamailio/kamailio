@@ -648,7 +648,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 			last_free=wb->b_size;
 		}
 		crt_size=MIN_unsigned(last_free, size);
-		memcpy(wb->buf, data, crt_size);
+		memcpy(wb->buf+q->last_used, data, crt_size);
 		q->last_used+=crt_size;
 		size-=crt_size;
 		data+=crt_size;
