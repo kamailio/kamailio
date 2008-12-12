@@ -119,10 +119,15 @@
 	int line=1;
 	int column=1;
 	int startcolumn=1;
+	int startline=1;
+	static int ign_lines=0;
+	static int ign_columns=0;
 
 	static char* addchar(struct str_buf *, char);
 	static char* addstr(struct str_buf *, char*, int);
 	static void count();
+	static void count_more();
+	static void count_ignore();
 
 
 %}
@@ -806,7 +811,7 @@ EAT_ABLE	[\ \t\b\r]
 <PVARID>{ID}|'.'			{yymore(); }
 <PVARID>{LPAREN}			{	state = PVAR_P_S; BEGIN(PVAR_P);
 								p_nest=1; yymore(); }
-<PVARID>.					{ count(); state=INITIAL_S; BEGIN(INITIAL);
+<PVARID>.					{ yyless(0); state=INITIAL_S; BEGIN(INITIAL);
 								return PVAR;
 							}
 
@@ -872,7 +877,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{COMMA}		{ count(); return COMMA; }
 <INITIAL>{SEMICOLON}	{ count(); return SEMICOLON; }
 <INITIAL>{COLON}	{ count(); return COLON; }
-<INITIAL>{STAR}	{ count(); return STAR; }
+<INITIAL>{STAR}		{ count(); return STAR; }
 <INITIAL>{RPAREN}	{ count(); return RPAREN; }
 <INITIAL>{LPAREN}	{ count(); return LPAREN; }
 <INITIAL>{LBRACE}	{ count(); return LBRACE; }
@@ -885,16 +890,19 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CR}		{ count();/* return CR;*/ }
 
 
-<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING1); }
-<INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING2); }
+<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; 
+							old_state = state; state=STRING_S;
+							BEGIN(STRING1); }
+<INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state;
+					state=STRING_S; BEGIN(STRING2); }
 
 
-<STRING1>{QUOTES} { count(); 
+<STRING1>{QUOTES} { count_more(); 
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						BEGIN(STR_BETWEEN);
 					}
-<STRING2>{TICK}  { count(); state=old_state; BEGIN(old_initial);
+<STRING2>{TICK}  { count_more(); state=old_state; BEGIN(old_initial);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						yylval.strval=s_buf.s;
@@ -903,24 +911,28 @@ EAT_ABLE	[\ \t\b\r]
 					}
 <STRING2>.|{EAT_ABLE}|{CR}	{ yymore(); }
 
-<STRING1>\\n		{ count(); addchar(&s_buf, '\n'); }
-<STRING1>\\r		{ count(); addchar(&s_buf, '\r'); }
-<STRING1>\\a		{ count(); addchar(&s_buf, '\a'); }
-<STRING1>\\t		{ count(); addchar(&s_buf, '\t'); }
-<STRING1>\\{QUOTES}	{ count(); addchar(&s_buf, '"');  }
-<STRING1>\\\\		{ count(); addchar(&s_buf, '\\'); }
-<STRING1>\\x{HEX}{1,2}	{ count(); addchar(&s_buf,
+<STRING1>\\n		{ count_more(); addchar(&s_buf, '\n'); }
+<STRING1>\\r		{ count_more(); addchar(&s_buf, '\r'); }
+<STRING1>\\a		{ count_more(); addchar(&s_buf, '\a'); }
+<STRING1>\\t		{ count_more(); addchar(&s_buf, '\t'); }
+<STRING1>\\{QUOTES}	{ count_more(); addchar(&s_buf, '"');  }
+<STRING1>\\\\		{ count_more(); addchar(&s_buf, '\\'); }
+<STRING1>\\x{HEX}{1,2}	{ count_more(); addchar(&s_buf,
 											(char)strtol(yytext+2, 0, 16)); }
  /* don't allow \[0-7]{1}, it will eat the backreferences from
     subst_uri if allowed (although everybody should use '' in subt_uri) */
-<STRING1>\\[0-7]{2,3}	{ count(); addchar(&s_buf,
+<STRING1>\\[0-7]{2,3}	{ count_more(); addchar(&s_buf,
 											(char)strtol(yytext+1, 0, 8));  }
-<STRING1>\\{CR}		{ count(); } /* eat escaped CRs */
-<STRING1>.|{EAT_ABLE}|{CR}	{ addchar(&s_buf, *yytext); }
+<STRING1>\\{CR}		{ count_more(); } /* eat escaped CRs */
+<STRING1>.|{EAT_ABLE}|{CR}	{ count_more(); addchar(&s_buf, *yytext); }
 
-<STR_BETWEEN>{EAT_ABLE}|{CR}	{ count(); /* eat whitespace */ }
-<STR_BETWEEN>{QUOTES}			{ count(); state=STRING_S; BEGIN(STRING1);}
-<STR_BETWEEN>.					{	yyless(0);
+<STR_BETWEEN>{EAT_ABLE}|{CR}	{ count_ignore(); }
+<STR_BETWEEN>{QUOTES}			{ count_more(); state=STRING_S;
+								  BEGIN(STRING1);}
+<STR_BETWEEN>.					{	
+									yyless(0); /* reparse it */
+									/* ignore the whitespace now that is
+									  counted, return saved string value */
 									state=old_state; BEGIN(old_initial);
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
@@ -1043,24 +1055,64 @@ error:
 
 
 
-static void count()
+/** helper function for count_*(). */
+static void count_lc(int* l, int* c)
 {
 	int i;
-
-	startcolumn=column;
 	for (i=0; i<yyleng;i++){
 		if (yytext[i]=='\n'){
-			line++;
-			column=startcolumn=1;
+			(*l)++;
+			(*c)=1;
 		}else if (yytext[i]=='\t'){
-			column++;
-			/*column+=8 -(column%8);*/
+			(*c)++;
+			/*(*c)+=8 -((*c)%8);*/
 		}else{
-			column++;
+			(*c)++;
 		}
 	}
 }
 
+
+
+/* helper function */
+static void count_restore_ignored()
+{
+	if (ign_lines) /* ignored line(s) => column has changed */
+		column=ign_columns;
+	else
+		column+=ign_columns;
+	line+=ign_lines;
+	ign_lines=ign_columns=0;
+}
+
+
+
+/** count/record position for stuff added to the current token. */
+static void count_more()
+{
+	count_restore_ignored();
+	count_lc(&line, &column);
+}
+
+
+
+/** count/record position for a new token. */
+static void count()
+{
+	count_restore_ignored();
+	startline=line;
+	startcolumn=column;
+	count_more();
+}
+
+
+
+/** record discarded stuff (not contained in the token) so that
+    the next token position can be adjusted properly*/
+static void count_ignore()
+{
+	count_lc(&ign_lines, &ign_columns);
+}
 
 
 /* replacement yywrap, removes libfl dependency */
