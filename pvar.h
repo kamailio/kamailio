@@ -158,7 +158,8 @@ typedef struct _pv_elem
 	struct _pv_elem *next;
 } pv_elem_t, *pv_elem_p;
 
-char* pv_parse_spec(str *in, pv_spec_p sp);
+char* pv_parse_spec2(str *in, pv_spec_p sp, int silent);
+#define pv_parse_spec(in, sp) pv_parse_spec2((in), (sp), 0)
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value);
 int pv_print_spec(struct sip_msg* msg, pv_spec_p sp, char *buf, int *len);
 int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);

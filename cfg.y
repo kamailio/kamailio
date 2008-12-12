@@ -1913,6 +1913,7 @@ pvar:	PVAR {
 			if (pv_parse_spec(&s_tmp, pv_spec)==0){
 				yyerror("unknown script pseudo variable");
 				pkg_free(pv_spec);
+				pv_spec=0;
 				YYABORT;
 			}
 			$$=pv_spec;
@@ -1927,7 +1928,7 @@ avp_pvar:	AVP_OR_PVAR {
 				}
 				memset(lval_tmp, 0, sizeof(*lval_tmp));
 				s_tmp.s=$1; s_tmp.len=strlen(s_tmp.s);
-				if (pv_parse_spec(&s_tmp, &lval_tmp->lv.pvs)==0){
+				if (pv_parse_spec2(&s_tmp, &lval_tmp->lv.pvs, 1)==0){
 					/* not a pvar, try avps */
 					lval_tmp->lv.avps.type|= AVP_NAME_STR;
 					lval_tmp->lv.avps.name.s.s = s_tmp.s+1;

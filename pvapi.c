@@ -352,7 +352,7 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 	return NULL;
 }
 
-char* pv_parse_spec(str *in, pv_spec_p e)
+char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 {
 	char *p;
 	str s;
@@ -364,7 +364,7 @@ char* pv_parse_spec(str *in, pv_spec_p e)
 
 	if(in==NULL || in->s==NULL || e==NULL || *in->s!=PV_MARKER)
 	{
-		LM_ERR("bad parameters\n");
+		if (!silent) LM_ERR("bad parameters\n");
 		return NULL;
 	}
 	
@@ -411,8 +411,9 @@ char* pv_parse_spec(str *in, pv_spec_p e)
 			p++;
 			pvstate = 4;
 		} else {
-			LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len, in->s,
-					pvstate);
+			if (!silent)
+				LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
+							*p, in->len, in->s, pvstate);
 			goto error;
 		}
 	} else { 
@@ -433,21 +434,24 @@ char* pv_parse_spec(str *in, pv_spec_p e)
 done_inm:
 	if((pte = pv_lookup_spec_name(&pvname, e))==NULL)
 	{
-		LM_ERR("error searching pvar \"%.*s\"\n", pvname.len, pvname.s);
+		if (!silent) 
+			LM_ERR("error searching pvar \"%.*s\"\n", pvname.len, pvname.s);
 		goto error;
 	}
 	if(pte->parse_name!=NULL && pvstate!=2 && pvstate!=5)
 	{
-		LM_ERR("pvar \"%.*s\" expects an inner name\n",
-				pvname.len, pvname.s);
+		if (!silent) 
+			LM_ERR("pvar \"%.*s\" expects an inner name\n",
+						pvname.len, pvname.s);
 		goto error;
 	}
 	if(pvstate==2 || pvstate==5)
 	{
 		if(pte->parse_name==NULL)
 		{
-			LM_ERR("pvar \"%.*s\" does not get name param\n",
-					pvname.len, pvname.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" does not get name param\n",
+						pvname.len, pvname.s);
 			goto error;
 		}
 		s.s = p;
@@ -470,15 +474,17 @@ done_inm:
 
 		if(p==s.s)
 		{
-			LM_ERR("pvar \"%.*s\" does not get empty name param\n",
-					pvname.len, pvname.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" does not get empty name param\n",
+						pvname.len, pvname.s);
 			goto error;
 		}
 		s.len = p - s.s;
 		if(pte->parse_name(e, &s)!=0)
 		{
-			LM_ERR("pvar \"%.*s\" has an invalid name param [%.*s]\n",
-					pvname.len, pvname.s, s.len, s.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" has an invalid name param [%.*s]\n",
+						pvname.len, pvname.s, s.len, s.s);
 			goto error;
 		}
 		if(pvstate==2)
@@ -494,8 +500,9 @@ done_inm:
 				p++;
 				pvstate = 4;
 			} else {
-				LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len, in->s,
-					pvstate);
+				if (!silent)
+					LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
+								*p, in->len, in->s, pvstate);
 				goto error;
 			}
 		} else {
@@ -504,8 +511,9 @@ done_inm:
 				p++;
 				goto done_all;
 			} else {
-				LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len, in->s,
-					pvstate);
+				if (!silent)
+					LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
+								*p, in->len, in->s, pvstate);
 				goto error;
 			}
 		}
@@ -515,8 +523,9 @@ done_vnm:
 	{
 		if(pte->parse_index==NULL)
 		{
-			LM_ERR("pvar \"%.*s\" does not get index param\n",
-					pvname.len, pvname.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" does not get index param\n",
+						pvname.len, pvname.s);
 			goto error;
 		}
 		s.s = p;
@@ -538,15 +547,17 @@ done_vnm:
 
 		if(p==s.s)
 		{
-			LM_ERR("pvar \"%.*s\" does not get empty index param\n",
-					pvname.len, pvname.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" does not get empty index param\n",
+						pvname.len, pvname.s);
 			goto error;
 		}
 		s.len = p - s.s;
 		if(pte->parse_index(e, &s)!=0)
 		{
-			LM_ERR("pvar \"%.*s\" has an invalid index param [%.*s]\n",
-					pvname.len, pvname.s, s.len, s.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" has an invalid index param [%.*s]\n",
+						pvname.len, pvname.s, s.len, s.s);
 			goto error;
 		}
 		p++;
@@ -557,8 +568,9 @@ done_vnm:
 			p++;
 			pvstate = 4;
 		} else {
-			LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len, in->s,
-					pvstate);
+			if (!silent)
+				LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
+							*p, in->len, in->s, pvstate);
 			goto error;
 		}
 	}
@@ -594,8 +606,9 @@ done_idx:
 
 		if(p==s.s)
 		{
-			LM_ERR("pvar \"%.*s\" does not get empty index param\n",
-					pvname.len, pvname.s);
+			if (!silent)
+				LM_ERR("pvar \"%.*s\" does not get empty index param\n",
+						pvname.len, pvname.s);
 			goto error;
 		}
 		s.len = p - s.s + 1;
@@ -603,12 +616,14 @@ done_idx:
 		p = tr_lookup(&s, &tr);
 		if(p==NULL)
 		{
-			LM_ERR("bad tr in pvar name \"%.*s\"\n", pvname.len, pvname.s);
+			if (!silent)
+				LM_ERR("bad tr in pvar name \"%.*s\"\n", pvname.len, pvname.s);
 			goto error;
 		}
 		if(*p!=PV_RNBRACKET)
 		{
-			LM_ERR("bad pvar name \"%.*s\" (%c)!\n", in->len, in->s, *p);
+			if (!silent)
+				LM_ERR("bad pvar name \"%.*s\" (%c)!\n", in->len, in->s, *p);
 			goto error;
 		}
 		e->trans = (void*)tr;
@@ -621,11 +636,15 @@ done_all:
 	return p;
 
 error:
-	if(p!=NULL)
-		LM_ERR("wrong char [%c/%d] in [%.*s] at [%d (%d)]\n", *p, (int)*p,
-			in->len, in->s, (int)(p-in->s), pvstate);
-	else
-		LM_ERR("invalid parsing in [%.*s] at (%d)\n", in->len, in->s, pvstate);
+	if(p!=NULL){
+		if (!silent)
+			LM_ERR("wrong char [%c/%d] in [%.*s] at [%d (%d)]\n", *p, (int)*p,
+					in->len, in->s, (int)(p-in->s), pvstate);
+	}else{
+		if (!silent)
+			LM_ERR("invalid parsing in [%.*s] at (%d)\n",
+						in->len, in->s, pvstate);
+	}
 	return NULL;
 
 } /* end: pv_parse_spec */
