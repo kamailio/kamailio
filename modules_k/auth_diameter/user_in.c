@@ -59,23 +59,6 @@
 #include "tcp_comm.h"
 
 
-/* Get actual Request-URI */
-static inline int get_request_uri(struct sip_msg* m, str* u)
-{
-     /* Use new_uri if present */
-	if (m->new_uri.s)
-	{
-		u->s   = m->new_uri.s;
-		u->len = m->new_uri.len;
-		return 0;
-	} 
-	u->s = m->first_line.u.request.uri.s;
-	u->len = m->first_line.u.request.uri.len;
-
-	return 0;
-}
-
-
 /* Get To header field URI */
 static inline int get_to_uri(struct sip_msg* m, str* u)
 {
@@ -132,11 +115,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	switch(hf_type) 
 	{
 		case 1: /* Request-URI */
-			if (get_request_uri(_m, &uri) < 0) 
-			{
-				LM_ERR("failed to extract Request-URI\n");
-				return -1;
-			}
+			uri = *(GET_RURI(_m));
 		break;
 
 		case 2: /* To */
@@ -279,7 +258,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	
 
 	/* Destination-Realm AVP */
-	get_request_uri(_m, &uri);
+	uri = *(GET_RURI(_m));
 	parse_uri(uri.s, uri.len, &puri);
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
 						puri.host.len, AVP_DUPLICATE_DATA)) == 0)
