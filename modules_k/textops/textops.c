@@ -1502,15 +1502,10 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 {
 	int mime;
 
-	/* get body pointer */
-	if ( get_body(msg)==0 )
+	/* parse content len hdr */
+	if ( msg->content_length==NULL &&
+	(parse_headers(msg,HDR_CONTENTLENGTH_F, 0)==-1||msg->content_length==NULL))
 		return -1;
-
-	/* all headears are already parsed by "get_body" */
-	if (msg->content_length==0) {
-		LM_ERR("very bogus message with body, but no content length hdr\n");
-		return -1;
-	}
 
 	if (get_content_length (msg)==0) {
 		LM_DBG("content length is zero\n");
@@ -1522,6 +1517,7 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 	if (type==0)
 		return 1;
 
+	/* the function search for and parses the Content-Type hdr */
 	mime = parse_content_type_hdr (msg);
 	if (mime<0) {
 		LM_ERR("failed to extract content type hdr\n");
