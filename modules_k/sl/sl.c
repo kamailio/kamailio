@@ -304,8 +304,6 @@ static int w_send_reply(struct sip_msg* msg, char* str1, char* str2)
 	str code_s;
 	unsigned int code_i;
 
-	sl_get_reply_totag(msg, &code_s);
-	LM_DBG("sl to tag [%.*s]\n", code_s.len, code_s.s);
 	if(((pv_elem_p)str1)->spec.getf!=NULL)
 	{
 		if(pv_printf_s(msg, (pv_elem_p)str1, &code_s)!=0)
