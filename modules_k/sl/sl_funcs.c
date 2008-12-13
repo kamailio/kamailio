@@ -140,6 +140,14 @@ static inline void update_sl_reply_stat(int code)
 		update_stat(numerical_stat, 1);
 }
 
+int sl_get_reply_totag(struct sip_msg *msg, str *totag)
+{
+	if(msg==NULL || totag==NULL)
+		return -1;
+	calc_crc_suffix(msg, tag_suffix);
+	*totag = sl_tag;
+	return 1;
+}
 
 /*! sl_send_reply helper function */
 int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)

@@ -33,6 +33,9 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 
+typedef int (*get_reply_totag_f)(struct sip_msg *msg, str *tag);
+typedef int (*send_reply_f)(struct sip_msg *msg, int code, str *reason);
+typedef int (*sl_get_reply_totag_f)(struct sip_msg *msg, str *tag);
 typedef int (*sl_send_reply_f)(struct sip_msg *msg, int code, str *reason);
 typedef int (*sl_send_reply_dlg_f)(struct sip_msg *msg, int code, str *reason,
 		str *tag);
@@ -41,6 +44,9 @@ typedef int (*sl_send_reply_dlg_f)(struct sip_msg *msg, int code, str *reason,
 struct sl_binds {
 	sl_send_reply_f reply;
 	sl_send_reply_dlg_f reply_dlg;
+	sl_get_reply_totag_f sl_get_reply_totag;
+	send_reply_f send_reply;
+	get_reply_totag_f get_reply_totag;
 };
 
 typedef int(*load_sl_f)(struct sl_binds *slb);

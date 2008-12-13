@@ -277,12 +277,35 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 	return sl_send_reply(msg, code_i, &code_s);
 }
 
+int send_reply(struct sip_msg *msg, int code, str *text)
+{
+	struct cell * t;
+	if(sl_bind_tm!=0)
+	{
+		t = tmb.t_gett();
+		if(t!= NULL && t!=T_UNDEFINED)
+		{
+			if(tmb.t_reply(msg, code, text)< 0)
+			{
+				LM_ERR("failed to reply stateful (tm)\n");
+				return -1;
+			}
+			LM_DBG("reply stateful mode (tm)\n");
+			return 1;
+		}
+	}
+
+	LM_DBG("reply stateless mode (sl)\n");
+	return sl_send_reply(msg, code, text);
+}
+
 static int w_send_reply(struct sip_msg* msg, char* str1, char* str2)
 {
 	str code_s;
 	unsigned int code_i;
-	struct cell * t;
 
+	sl_get_reply_totag(msg, &code_s);
+	LM_DBG("sl to tag [%.*s]\n", code_s.len, code_s.s);
 	if(((pv_elem_p)str1)->spec.getf!=NULL)
 	{
 		if(pv_printf_s(msg, (pv_elem_p)str1, &code_s)!=0)
@@ -300,27 +323,37 @@ static int w_send_reply(struct sip_msg* msg, char* str1, char* str2)
 	} else {
 		code_s = ((pv_elem_p)str2)->text;
 	}
+	return send_reply(msg, code_i, &code_s);
+}
 
+
+int get_reply_totag(struct sip_msg *msg, str *totag)
+{
+	struct cell * t;
+	if(msg==NULL || totag==NULL)
+		return -1;
 	if(sl_bind_tm!=0)
 	{
 		t = tmb.t_gett();
 		if(t!= NULL && t!=T_UNDEFINED)
 		{
-			if(tmb.t_reply(msg, code_i, &code_s)< 0)
+#if 0
+			if(tmb.t_get_reply_totag(msg, totag)< 0)
 			{
-				LM_ERR("failed to reply stateful (tm)\n");
+				LM_ERR("failed to get totag (tm)\n");
 				return -1;
 			}
-			LM_DBG("reply stateful mode (tm)\n");
+			LM_DBG("totag stateful mode (tm)\n");
 			return 1;
+#else
+			return -1;
+#endif
 		}
 	}
 
-	LM_DBG("reply stateless mode (sl)\n");
-	return sl_send_reply(msg, code_i, &code_s);
+	LM_DBG("totag stateless mode (sl)\n");
+	return sl_get_reply_totag(msg, totag);
 }
-
-
 
 /*!
  * \brief Helper function for loading the SL API
@@ -334,6 +367,10 @@ int load_sl( struct sl_binds *slb)
 
 	slb->reply      = sl_send_reply;
 	slb->reply_dlg  = sl_send_reply_dlg;
+	slb->sl_get_reply_totag = sl_get_reply_totag;
+	slb->send_reply = send_reply;
+	slb->get_reply_totag = get_reply_totag;
+
 
 	return 1;
 }
