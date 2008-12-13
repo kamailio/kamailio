@@ -82,6 +82,7 @@ MODULE_VERSION
 
 char *log_buf = NULL;
 static int clean_period=100;
+static int db_update_period=100;
 
 /* database connection */
 db_con_t *pa_db = NULL;
@@ -111,6 +112,7 @@ int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
 static int fixup_subscribe(void** param, int param_no);
 static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 static int mi_child_init(void);
@@ -145,6 +147,7 @@ static param_export_t params[]={
 	{ "active_watchers_table",  STR_PARAM, &active_watchers_table.s},
 	{ "watchers_table",         STR_PARAM, &watchers_table.s},
 	{ "clean_period",           INT_PARAM, &clean_period },
+	{ "db_update_period",       INT_PARAM, &db_update_period },
 	{ "to_tag_pref",            STR_PARAM, &to_tag_pref },
 	{ "expires_offset",         INT_PARAM, &expires_offset },
 	{ "max_expires",            INT_PARAM, &max_expires },
@@ -158,6 +161,7 @@ static param_export_t params[]={
 
 static mi_export_t mi_cmds[] = {
 	{ "refreshWatchers", mi_refreshWatchers,    0,  0,  mi_child_init},
+	{ "cleanup",         mi_cleanup,            0,  0,  mi_child_init},
 	{  0,                0,                     0,  0,  0}
 };
 
@@ -277,12 +281,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(clean_period<=0)
-	{
-		LM_DBG("wrong clean_period \n");
-		return -1;
-	}
-
 	if(shtable_size< 1)
 		shtable_size= 512;
 	else
@@ -321,11 +319,14 @@ static int mod_init(void)
 
 	startup_time = (int) time(NULL);
 	
-	register_timer(msg_presentity_clean, 0, clean_period);
+	if(clean_period>0)
+	{
+		register_timer(msg_presentity_clean, 0, clean_period);
+		register_timer(msg_watchers_clean, 0, clean_period);
+	}
 	
-	register_timer(msg_watchers_clean, 0, clean_period);
-	
-	register_timer(timer_db_update, 0, clean_period);
+	if(db_update_period>0)
+		register_timer(timer_db_update, 0, db_update_period);
 
 	if(pa_db)
 		pa_dbf.close(pa_db);
@@ -607,6 +608,19 @@ error:
 	return 0;
 }
 
+/* 
+ *  mi cmd: cleanup
+ *		* */
+
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param)
+{
+	LM_DBG("mi_cleanup:start\n");
+	
+	(void)msg_watchers_clean(0,0);
+	(void)msg_presentity_clean(0,0);
+		
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
 
 int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
         db_val_t* query_vals, int n_query_cols, subs_t** subs_array)

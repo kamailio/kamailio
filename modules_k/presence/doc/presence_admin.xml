@@ -159,7 +159,7 @@ modparam("presence", "watchers_table", "watchers")
 		The period in seconds between checks if there are expired messages stored in database.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>100</quote>.
+		<emphasis>Default value is <quote>100</quote>. A zero or negative value disables this activity.
 		</emphasis>
 		</para>
 		<example>
@@ -167,6 +167,25 @@ modparam("presence", "watchers_table", "watchers")
 		<programlisting format="linespecific">
 ...
 modparam("presence", "clean_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_update_period</varname> (int)</title>
+		<para>
+		The period at which to synchronize cached subscriber info with the
+		database.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>100</quote>. A zero or negative value disables synchronization.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_update_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "db_update_period", 100)
 ...
 </programlisting>
 		</example>
@@ -486,6 +505,28 @@ if(method=="SUBSCRIBE")
 		1
 		_empty_line_
 		</programlisting>
+	</section>
+
+	<section>
+	  <title>
+		<function moreinfo="none">cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions for watchers and presentity tables. Useful if you
+		have set <varname>clean_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>cleanup</emphasis>
+	  </para>
+	  <para>Parameters:<emphasis>none.</emphasis>emphasis></para>
+
+	  <para>
+		MI FIFO Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+		:cleanup:fifo_reply
+		_empty_line_
+	  </programlisting>
 	</section>
 
    	</section>

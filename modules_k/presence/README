@@ -32,14 +32,15 @@ Anca-Maria Vamanu
               1.3.3. active_watchers_table(str)
               1.3.4. watchers_table(str)
               1.3.5. clean_period (int)
-              1.3.6. to_tag_pref (str)
-              1.3.7. expires_offset (int)
-              1.3.8. max_expires (int)
-              1.3.9. server_address (str)
-              1.3.10. fallback2db (int)
-              1.3.11. subs_htable_size (int)
-              1.3.12. pres_htable_size (int)
-              1.3.13. enable_sphere_check (int)
+              1.3.6. db_update_period (int)
+              1.3.7. to_tag_pref (str)
+              1.3.8. expires_offset (int)
+              1.3.9. max_expires (int)
+              1.3.10. server_address (str)
+              1.3.11. fallback2db (int)
+              1.3.12. subs_htable_size (int)
+              1.3.13. pres_htable_size (int)
+              1.3.14. enable_sphere_check (int)
 
         1.4. Exported Functions
 
@@ -49,6 +50,7 @@ Anca-Maria Vamanu
         1.5. Exported MI Functions
 
               1.5.1. refreshWatchers 
+              1.5.2. cleanup 
 
         1.6. Installation
 
@@ -77,16 +79,17 @@ Anca-Maria Vamanu
    1.3. Set active_watchers_table parameter
    1.4. Set watchers_table parameter
    1.5. Set clean_period parameter
-   1.6. Set to_tag_pref parameter
-   1.7. Set expires_offset parameter
-   1.8. Set max_expires parameter
-   1.9. Set server_address parameter
-   1.10. Set fallback2db parameter
-   1.11. Set subs_htable_size parameter
-   1.12. Set pres_htable_size parameter
-   1.13. Set enable_sphere_check parameter
-   1.14. handle_publish usage
-   1.15. handle_subscribe usage
+   1.6. Set db_update_period parameter
+   1.7. Set to_tag_pref parameter
+   1.8. Set expires_offset parameter
+   1.9. Set max_expires parameter
+   1.10. Set server_address parameter
+   1.11. Set fallback2db parameter
+   1.12. Set subs_htable_size parameter
+   1.13. Set pres_htable_size parameter
+   1.14. Set enable_sphere_check parameter
+   1.15. handle_publish usage
+   1.16. handle_subscribe usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -194,26 +197,40 @@ modparam("presence", "watchers_table", "watchers")
    The period in seconds between checks if there are expired
    messages stored in database.
 
-   Default value is "100". 
+   Default value is "100". A zero or negative value disables this
+   activity. 
 
    Example 1.5. Set clean_period parameter
 ...
 modparam("presence", "clean_period", 100)
 ...
 
-1.3.6. to_tag_pref (str)
+1.3.6. db_update_period (int)
+
+   The period at which to synchronize cached subscriber info with
+   the database.
+
+   Default value is "100". A zero or negative value disables
+   synchronization. 
+
+   Example 1.6. Set db_update_period parameter
+...
+modparam("presence", "db_update_period", 100)
+...
+
+1.3.7. to_tag_pref (str)
 
    The prefix used when generating to_tag when sending replies
    for SUBSCRIBE requests.
 
    Default value is "10". 
 
-   Example 1.6. Set to_tag_pref parameter
+   Example 1.7. Set to_tag_pref parameter
 ...
 modparam("presence", "to_tag_pref", 'pres')
 ...
 
-1.3.7. expires_offset (int)
+1.3.8. expires_offset (int)
 
    The value in seconds that should be subtracted from the
    expires value when sending a 200OK for a publish. It is used
@@ -222,35 +239,35 @@ modparam("presence", "to_tag_pref", 'pres')
 
    Default value is "0". 
 
-   Example 1.7. Set expires_offset parameter
+   Example 1.8. Set expires_offset parameter
 ...
 modparam("presence", "expires_offset", 10)
 ...
 
-1.3.8. max_expires (int)
+1.3.9. max_expires (int)
 
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE
    message (in seconds).
 
    Default value is "3600". 
 
-   Example 1.8. Set max_expires parameter
+   Example 1.9. Set max_expires parameter
 ...
 modparam("presence", "max_expires", 3600)
 ...
 
-1.3.9. server_address (str)
+1.3.10. server_address (str)
 
    The presence server address which will become the value of
    Contact header filed for 200OK replies to Subscribe and
    Publish and in Notify messages.
 
-   Example 1.9. Set server_address parameter
+   Example 1.10. Set server_address parameter
 ...
 modparam("presence", "server_address", "sip:10.10.10.10:5060")
 ...
 
-1.3.10. fallback2db (int)
+1.3.11. fallback2db (int)
 
    Setting this parameter enables a fallback to db mode of
    operation. In this mode, in case a searched record is not
@@ -258,12 +275,12 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
    for an architecture in which processing and memory load might
    be divided on more servers using the same database.
 
-   Example 1.10. Set fallback2db parameter
+   Example 1.11. Set fallback2db parameter
 ...
 modparam("presence", "fallback2db", 1)
 ...
 
-1.3.11. subs_htable_size (int)
+1.3.12. subs_htable_size (int)
 
    The size of the in-memory hash table to store subscription
    dialogs. This parameter will be used as the power of 2 when
@@ -271,12 +288,12 @@ modparam("presence", "fallback2db", 1)
 
    Default value is "9 (512)". 
 
-   Example 1.11. Set subs_htable_size parameter
+   Example 1.12. Set subs_htable_size parameter
 ...
 modparam("presence", "subs_htable_size", 11)
 ...
 
-1.3.12. pres_htable_size (int)
+1.3.13. pres_htable_size (int)
 
    The size of the in-memory hash table to store publish records.
    This parameter will be used as the power of 2 when computing
@@ -284,12 +301,12 @@ modparam("presence", "subs_htable_size", 11)
 
    Default value is "9 (512)". 
 
-   Example 1.12. Set pres_htable_size parameter
+   Example 1.13. Set pres_htable_size parameter
 ...
 modparam("presence", "pres_htable_size", 11)
 ...
 
-1.3.13. enable_sphere_check (int)
+1.3.14. enable_sphere_check (int)
 
    This parameter is a flag that should be set if permission
    rules include sphere checking. The sphere information is
@@ -300,7 +317,7 @@ modparam("presence", "pres_htable_size", 11)
 
    Default value is "0 ". 
 
-   Example 1.13. Set enable_sphere_check parameter
+   Example 1.14. Set enable_sphere_check parameter
 ...
 modparam("presence", "enable_sphere_check", 1)
 ...
@@ -329,7 +346,7 @@ modparam("presence", "enable_sphere_check", 1)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.14. handle_publish usage
+   Example 1.15. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -356,7 +373,7 @@ modparam("presence", "enable_sphere_check", 1)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.15. handle_subscribe usage
+   Example 1.16. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -390,6 +407,21 @@ if(method=="SUBSCRIBE")
                 presence
                 1
                 _empty_line_
+
+1.5.2.  cleanup
+
+   Manually triggers the cleanup functions for watchers and
+   presentity tables. Useful if you have set clean_period to zero
+   or less.
+
+   Name: cleanup
+
+   Parameters:none.emphasis>
+
+   MI FIFO Command Format:
+                :cleanup:fifo_reply
+                _empty_line_
+
 
 1.6. Installation
 
