@@ -79,6 +79,7 @@ struct tm_binds {
 	tlookuporiginalt_f t_lookup_original_t;
 	tuaccancel_f       t_cancel_uac;
 	setkr_f t_setkr;
+	tget_reply_totag_f t_get_reply_totag;
 };
 
 

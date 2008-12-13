@@ -117,6 +117,14 @@ static int goto_on_negative=0;
 /*! where to go on receipt of reply */
 static int goto_on_reply=0;
 
+int t_get_reply_totag(struct sip_msg *msg, str *totag)
+{
+	if(msg==NULL || totag==NULL)
+		return -1;
+	calc_crc_suffix(msg, tm_tag_suffix);
+	*totag = tm_tag;
+	return 1;
+}
 
 /*! \brief returns the picked branch */
 int t_get_picked_branch(void)

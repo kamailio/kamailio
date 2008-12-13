@@ -70,6 +70,9 @@ typedef unsigned int branch_bm_t;
 typedef int (*treply_f)(struct sip_msg * , unsigned int , str * );
 typedef int (*treply_wb_f)( struct cell* trans, unsigned int code, str *text,
 	str *body, str *new_header, str *to_tag);
+typedef int (*tget_reply_totag_f)(struct sip_msg *, str *);
+
+int t_get_reply_totag(struct sip_msg *msg, str *totag);
 
 #define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
 #define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
