@@ -660,7 +660,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	if(reason.s)
 		pkg_free(reason.s);
 	
-//	if(parsed_event->parsed!= EVENT_DIALOG_SLA && subs.pres_uri.s)
+	if(subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
 	
 	if((!server_address.s) || (server_address.len== 0))
@@ -692,7 +692,6 @@ error:
 		}
 	}
 
-//  if(parsed_event->parsed!= EVENT_DIALOG_SLA &&subs.pres_uri.s)
 	if(subs.pres_uri.s)	
 		pkg_free(subs.pres_uri.s);
 	

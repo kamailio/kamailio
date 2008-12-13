@@ -90,7 +90,7 @@ str presentity_table= str_init("presentity");
 str active_watchers_table = str_init("active_watchers");
 str watchers_table= str_init("watchers");
 
-int use_db=1;
+int library_mode= 0;
 str server_address= {0, 0};
 evlist_t* EvList= NULL;
 
@@ -109,6 +109,7 @@ static int child_init(int);
 static void destroy(void);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
+static int fixup_subscribe(void** param, int param_no);
 static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
@@ -131,11 +132,11 @@ phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",  (cmd_function)handle_publish,  0,    0,         0, REQUEST_ROUTE},
-	{"handle_publish",  (cmd_function)handle_publish,  1,fixup_presence,0, REQUEST_ROUTE},
-	{"handle_subscribe",(cmd_function)handle_subscribe,0,     0,        0, REQUEST_ROUTE},
-	{"bind_presence", (cmd_function)bind_presence,     1,     0,        0,  0},
-	{0,                     0,                         0,     0,        0,  0}
+	{"handle_publish",  (cmd_function)handle_publish,  0,fixup_presence,0, REQUEST_ROUTE},
+	{"handle_publish",  (cmd_function)handle_publish,  1,fixup_presence, 0, REQUEST_ROUTE},
+	{"handle_subscribe",(cmd_function)handle_subscribe,0,fixup_subscribe,0, REQUEST_ROUTE},
+	{"bind_presence",   (cmd_function)bind_presence,   1,     0,         0,  0},
+	{ 0,                    0,                         0,     0,         0,  0}
 };
 
 static param_export_t params[]={
@@ -188,8 +189,10 @@ static int mod_init(void)
 	watchers_table.len = strlen(watchers_table.s);
 
 	if(db_url.s== NULL)
+		library_mode= 1;
+
+	if(library_mode== 1)
 	{
-		use_db= 0;
 		LM_DBG("Presence module used for API library purpose only\n");
 		EvList= init_evlist();
 		if(!EvList)
@@ -198,7 +201,6 @@ static int mod_init(void)
 			return -1;
 		}
 		return 0;
-
 	}
 
 	if(expires_offset<0)
@@ -232,6 +234,12 @@ static int mod_init(void)
 		return -1;
 	}
 	
+	if(db_url.s== NULL)
+	{
+		LM_ERR("database url not set!\n");
+		return -1;
+	}
+
 	/* binding to database module  */
 	if (db_bind_mod(&db_url, &pa_dbf))
 	{
@@ -258,7 +266,7 @@ static int mod_init(void)
 	if((db_check_table_version(&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION) < 0) ||
 		(db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) ||
 		(db_check_table_version(&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION) < 0)) {
-			LM_ERR("error during table version check.\n");
+			LM_ERR("error during table version check\n");
 			return -1;
 	}
 
@@ -286,6 +294,7 @@ static int mod_init(void)
 		LM_ERR(" initializing subscribe hash table\n");
 		return -1;
 	}
+
 	if(restore_db_subs()< 0)
 	{
 		LM_ERR("restoring subscribe info from database\n");
@@ -303,6 +312,7 @@ static int mod_init(void)
 		LM_ERR("initializing presentity hash table\n");
 		return -1;
 	}
+
 	if(pres_htable_restore()< 0)
 	{
 		LM_ERR("filling in presentity hash table from database\n");
@@ -331,7 +341,7 @@ static int child_init(int rank)
 {
 	pid = my_pid();
 	
-	if(use_db== 0)
+	if(library_mode)
 		return 0;
 
 	if (pa_dbf.init==0)
@@ -372,11 +382,8 @@ static int child_init(int rank)
 
 static int mi_child_init(void)
 {
-	if(use_db== 0)
+	if(library_mode)
 		return 0;
-
-
-
 
 	if (pa_dbf.init==0)
 	{
@@ -437,7 +444,17 @@ static int fixup_presence(void** param, int param_no)
 {
  	pv_elem_t *model;
 	str s;
- 	if(*param)
+
+	if(library_mode)
+	{
+		LM_ERR("Bad config - you can not call 'handle_publish' function"
+				" (db_url not set)\n");
+		return -1;
+	}
+	if(param_no== 0)
+		return 0;
+
+	if(*param)
  	{
 		s.s = (char*)(*param); s.len = strlen(s.s);
  		if(pv_parse_format(&s, &model)<0)
@@ -451,6 +468,18 @@ static int fixup_presence(void** param, int param_no)
  	}
  	LM_ERR( "null format\n");
  	return E_UNSPEC;
+}
+
+static int fixup_subscribe(void** param, int param_no)
+{
+
+	if(library_mode)
+	{
+		LM_ERR("Bad config - you can not call 'handle_subscribe' function"
+				" (db_url not set)\n");
+		return -1;
+	}
+	return 0;
 }
 
 /*! \brief
