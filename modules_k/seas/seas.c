@@ -460,7 +460,7 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
 	 goto error;
       }else{
 	 flags|=CANCEL_FOUND;
-	 seas_f.tmb.unref_cell(originalT);
+	 //seas_f.tmb.unref_cell(originalT);
       }
       LM_DBG("Cancelling transaction !!\n");
    }

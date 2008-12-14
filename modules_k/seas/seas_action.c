@@ -396,7 +396,8 @@ int ac_cancel(as_p the_as,char *action,int len)
    char processor_id;
    struct sip_msg *my_msg;
    struct as_uac_param *the_param;
-   int k,retval,uac_id;
+   struct cell* t_invite;
+	int k,retval,uac_id;
    str headers,body;
 
    body.s=headers.s=NULL;
@@ -478,10 +479,19 @@ int ac_cancel(as_p the_as,char *action,int len)
       LM_ERR("no more share memory\n");
       goto error;
    }
+
+	if(seas_f.tmb.t_lookup_ident(&t_invite,cancelled_hashIdx,cancelled_label)<0){
+		LM_ERR("failed to t_lookup_ident hash_idx=%d,"
+			"label=%d\n", cancelled_hashIdx,cancelled_label);
+		goto error;
+	}
+	seas_f.tmb.unref_cell(t_invite);
+
    the_param->who=my_as;
    the_param->uac_id=uac_id;
    the_param->processor_id=processor_id;
-
+   the_param->destroy_cb_set=0;
+   
    ret=seas_f.tmb.t_cancel_uac(&headers,&body,cancelled_hashIdx,cancelled_label,uac_cb,(void*)the_param);
    if (ret == 0) {
       LM_ERR( "t_cancel_uac failed\n");
@@ -490,6 +500,8 @@ int ac_cancel(as_p the_as,char *action,int len)
    }else{
       the_param->label=ret;
    }
+
+	seas_f.tmb.unref_cell(t_invite);
    retval=0;
    goto exit;
 error:
@@ -718,6 +730,7 @@ int ac_reply(as_p the_as,char *action,int len)
    goto exit;
 error:
    retval = -1;
+   seas_f.tmb.unref_cell(c);
 exit:
    if(ttag)
       pkg_free(ttag);
@@ -1027,6 +1040,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
    the_param->who=my_as;
    the_param->uac_id=uac_id;
    the_param->processor_id=processor_id;
+   the_param->destroy_cb_set=0;
 
    shm_str_dup(&my_dlg->rem_target,&my_msg->first_line.u.request.uri);
 
@@ -1368,6 +1382,22 @@ int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int i)
    return 0;
 }
 
+/*
+ * This callback function should be used in order to free the parameters passed to uac_cb.
+ * This callback is called when the transaction is detroyed.
+ */
+void uac_cleanup_cb(struct cell* t, int type, struct tmcb_params *rcvd_params)
+{
+	struct as_uac_param *ev_info;
+
+	ev_info=(struct as_uac_param*)*rcvd_params->param;
+
+	if(ev_info) {	
+		shm_free(ev_info);
+		*rcvd_params->param=NULL;
+	}
+}
+
 /**
  * This function will be called from a SER process when a reply is received for
  * the transaction. The SER processes only have acces to the EventDispatcher 
@@ -1394,6 +1424,15 @@ void uac_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
    if(!ev_info || !ev_info->who){
       return;
    }
+
+   if(type == TMCB_LOCAL_COMPLETED && !ev_info->destroy_cb_set) {
+		if(seas_f.tmb.register_tmcb(NULL, t, TMCB_TRANS_DELETED, uac_cleanup_cb, (void*)ev_info) <= 0) {
+			LM_ERR( "register_tmcb for destroy callback failed\n");
+			goto error;
+		}
+		ev_info->destroy_cb_set = 1;
+	}
+
    LM_DBG("reply to UAC Transaction for AS:%.*s code: %d\n",
 		   ev_info->who->name.len,ev_info->who->name.s,code);
    LM_DBG("transaction %p Nr_of_outgoings:%d is_Local:%c\n",

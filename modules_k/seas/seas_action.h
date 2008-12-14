@@ -41,6 +41,7 @@ struct as_uac_param{
    int uac_id;
    unsigned int label;
    char processor_id;
+   char destroy_cb_set;
 };
 
 
@@ -69,6 +70,7 @@ int process_action(as_p my_as);
  * Callback Functions
  */
 void uac_cb(struct cell* t, int type, struct tmcb_params*);
+void uac_cleanup_cb(struct cell* t, int type, struct tmcb_params*);
 
 /**
  * Event creating functions
