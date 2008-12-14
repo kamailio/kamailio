@@ -184,7 +184,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		presentity= search_htable( hentity, hash_code);
 		if(presentity)
 		{
-			if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH)
+			if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH &&
+					hentity->flag!= MI_ASYN_PUBLISH)
 			{
 				/* sent a PUBLISH within a dialog that no longer exists
 				 * send again an intial PUBLISH */
