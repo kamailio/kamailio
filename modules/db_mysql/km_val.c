@@ -32,9 +32,6 @@
 #include "val.h"
 #include "my_con.h"
 
-#include <string.h>
-#include <stdio.h>
-
 
 /*!
  * \brief Converting a value to a string
@@ -48,60 +45,14 @@
  */
 int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 {
-	int l;
+	int l, tmp;
 	char* old_s;
 
-	if (!_c || !_v || !_s || !_len || !*_len) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
+	tmp = db_val2str(_c, _v, _s, _len);
+	if (tmp < 1)
+		return tmp;
 
-	if (VAL_NULL(_v)) {
-		if (*_len < sizeof("NULL")) {
-			LM_ERR("buffer too small\n");
-			return -1;
-		}
-		*_len = snprintf(_s, *_len, "NULL");
-		return 0;
-	}
-	
 	switch(VAL_TYPE(_v)) {
-	case DB_INT:
-		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to int\n");
-			return -2;
-		} else {
-			return 0;
-		}
-		break;
-
-	case DB_BIGINT:
-		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to big int\n");
-			return -3;
-		} else {
-			return 0;
-		}
-		break;
-
-	case DB_BITMAP:
-		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to int\n");
-			return -4;
-		} else {
-			return 0;
-		}
-		break;
-
-	case DB_DOUBLE:
-		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to double\n");
-			return -5;
-		} else {
-			return 0;
-		}
-		break;
-
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
@@ -129,15 +80,6 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 			*_s++ = '\'';
 			*_s = '\0';
 			*_len = _s - old_s;
-			return 0;
-		}
-		break;
-
-	case DB_DATETIME:
-		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LM_ERR("error while converting string to time_t\n");
-			return -8;
-		} else {
 			return 0;
 		}
 		break;
