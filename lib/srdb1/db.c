@@ -183,10 +183,12 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		tmp = (char*)pkg_malloc(len + 4);
 		if (!tmp) {
 			LM_ERR("no private memory left\n");
+			pkg_free(name);
 			return -1;
 		}
 		memcpy(tmp, name, len);
 		tmp[len] = '\0';
+		pkg_free(name);
 	} else {
 		tmp = name;
 	}
