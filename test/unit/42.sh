@@ -1,5 +1,5 @@
 #!/bin/bash
-# do some routing with carrierroute route sets from mysql database
+# do some (non numerical) routing with carrierroute route sets from mysql database
 
 # Copyright (C) 2007 1&1 Internet AG
 #
