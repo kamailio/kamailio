@@ -222,16 +222,10 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_r), len, row_buf);
 	memset(row_buf, 0, len);
 
-	/* Allocate a row structure for each row in the current fetch. */
-	len = sizeof(db_row_t) * RES_ROW_N(_r);
-	RES_ROWS(_r) = (db_row_t*)pkg_malloc(len);
-	LM_DBG("allocate %d bytes for %d rows at %p\n", len, RES_ROW_N(_r), RES_ROWS(_r));
-
-	if (!RES_ROWS(_r)) {
-		LM_ERR("no private memory left\n");
-		return -1;
+	if (db_allocate_rows(_r) < 0) {
+		LM_ERR("could not allocate rows");
+		return -2;
 	}
-	memset(RES_ROWS(_r), 0, len);
 
 	for(row = RES_LAST_ROW(_r); row < (RES_LAST_ROW(_r) + RES_ROW_N(_r)); row++) {
 		for(col = 0; col < RES_COL_N(_r); col++) {
@@ -293,30 +287,17 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 		char **row_buf)
 {
-	int col, len, col_len;
+	int col, col_len;
 
 	if (!_h || !_r || !_row)  {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	/*
-	 * Allocate storage to hold the data type value converted from a string
-	 * because PostgreSQL returns (most) data as strings
-	 */
-	len = sizeof(db_val_t) * RES_COL_N(_r);
-	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);
-
-	if (!ROW_VALUES(_row)) {
-		LM_ERR("no private memory left\n");
-		return -1;
+	if (db_allocate_row(_r, _row) != 0) {
+		LM_ERR("could not allocate row");
+		return -2;
 	}
-	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(_row));
-	ROW_N(_row) = RES_COL_N(_r);
-	memset(ROW_VALUES(_row), 0, len);
-
-	/* Save the number of columns in the ROW structure */
-	ROW_N(_row) = RES_COL_N(_r);
 
 	/* For each column in the row */
 	for(col = 0; col < ROW_N(_row); col++) {
