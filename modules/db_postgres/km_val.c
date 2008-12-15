@@ -42,14 +42,11 @@
 #include "../../mem/mem.h"
 #include "val.h"
 
-#include <string.h>
-#include <time.h>
-
 
 /*!
- * \brief Convert a str to a db value, does not copy strings
+ * \brief Convert a str to a db value, copy strings
  *
- * Convert a str to a db value, does not copy strings.
+ * Convert a str to a db value, copy strings.
  * The postgresql module uses a custom escape function for BLOBs.
  * If the _s is linked in the db_val result, it will be returned zero
  * \param _t destination value type
@@ -60,105 +57,10 @@
  */
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
-	static str dummy_string = {"", 0};
-	char *tmp_s;
-
-	if (!_v) {
-		LM_ERR("invalid parameter value\n");
-	}
-
-	/*
-	 * We implemented the mysql behaviour in the db_postgres_convert_rows function,
-	 * so a NULL string is a NULL value, otherwise its an empty value
-	 */
-	if (!_s) {
-		memset(_v, 0, sizeof(db_val_t));
-		/* Initialize the string pointers to a dummy empty
-		 * string so that we do not crash when the NULL flag
-		 * is set but the module does not check it properly
-		 */
-		VAL_STRING(_v) = dummy_string.s;
-		VAL_STR(_v) = dummy_string;
-		VAL_BLOB(_v) = dummy_string;
-		VAL_TYPE(_v) = _t;
-		VAL_NULL(_v) = 1;
-		return 0;
-	}
-	VAL_NULL(_v) = 0;
-
-	switch(_t) {
-	case DB_INT:
-		LM_DBG("converting INT [%s]\n", _s);
-		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LM_ERR("failed to convert INT value from string\n");
-			return -2;
-		} else {
-			VAL_TYPE(_v) = DB_INT;
-			return 0;
-		}
-		break;
-
-	case DB_BIGINT:
-		LM_DBG("converting BIGINT [%s]\n", _s);
-		if (db_str2longlong(_s, &VAL_BIGINT(_v)) < 0) {
-			LM_ERR("failed to convert BIGINT value from string\n");
-			return -3;
-		} else {
-			VAL_TYPE(_v) = DB_BIGINT;
-			return 0;
-		}
-		break;
-
-	case DB_BITMAP:
-		LM_DBG("converting BITMAP [%s]\n", _s);
-		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LM_ERR("failed to convert BITMAP value from string\n");
-			return -4;
-		} else {
-			VAL_TYPE(_v) = DB_BITMAP;
-			return 0;
-		}
-		break;
-	
-	case DB_DOUBLE:
-		LM_DBG("converting DOUBLE [%s]\n", _s);
-		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
-			LM_ERR("failed to convert DOUBLE value from string\n");
-			return -5;
-		} else {
-			VAL_TYPE(_v) = DB_DOUBLE;
-			return 0;
-		}
-		break;
-
-	case DB_STRING:
-		LM_DBG("converting STRING [%s]\n", _s);
-		VAL_STRING(_v) = _s;
-		VAL_TYPE(_v) = DB_STRING;
-		VAL_FREE(_v) = 1;
-		return 0;
-
-	case DB_STR:
-		LM_DBG("converting STR [%.*s]\n", _l, _s);
-		VAL_STR(_v).s = (char*)_s;
-		VAL_STR(_v).len = _l;
-		VAL_TYPE(_v) = DB_STR;
-		VAL_FREE(_v) = 1;
-		_s = 0;
-		return 0;
-
-	case DB_DATETIME:
-		LM_DBG("converting DATETIME [%s]\n", _s);
-		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
-			LM_ERR("failed to convert datetime\n");
-			return -6;
-		} else {
-			VAL_TYPE(_v) = DB_DATETIME;
-			return 0;
-		}
-		break;
-
-	case DB_BLOB:
+	if ( (_t != DB_BLOB && _v != NULL) || _v == NULL) {
+		return db_str2val(_t, _v, _s, _l);
+	} else {
+		char * tmp_s = NULL;
 		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
 		/*
 		 * The string is stored in new allocated memory, which we could
@@ -184,8 +86,8 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
+
 	}
-	return -9;
 }
 
 
@@ -201,63 +103,17 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
  */
 int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len)
 {
-	int l, ret;
+	int l, ret, tmp;
 	int pgret;
 	char *tmp_s;
 	size_t tmp_len;
 	char* old_s;
 
-	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
+	tmp = db_val2str(_con, _v, _s, _len);
+	if (tmp < 1)
+		return tmp;
 
-	if (VAL_NULL(_v)) {
-		if (*_len < sizeof("NULL")) {
-			LM_ERR("buffer too small\n");
-			return -1;
-		}
-		*_len = snprintf(_s, *_len, "NULL");
-		return 0;
-	}
-	
 	switch(VAL_TYPE(_v)) {
-	case DB_INT:
-		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert string to int\n");
-			return -2;
-		} else {
-			return 0;
-		}
-		break;
-
-	case DB_BIGINT:
-		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert string to big int\n");
-			return -3;
-		} else {
-			return 0;
-		}
-		break;
-
-	case DB_BITMAP:
-		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert string to int\n");
-			return -4;
-		} else {
-			return 0;
-		}
-		break;
-
-	case DB_DOUBLE:
-		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert string to double\n");
-			return -5;
-		} else {
-			return 0;
-		}
-		break;
-
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
@@ -303,15 +159,6 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 			*_s++ = '\'';
 			*_s = '\0'; /* FIXME */
 			*_len = _s - old_s;
-			return 0;
-		}
-		break;
-
-	case DB_DATETIME:
-		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert string to time_t\n");
-			return -8;
-		} else {
 			return 0;
 		}
 		break;
