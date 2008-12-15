@@ -251,7 +251,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 			 */
 			if (PQgetisnull(CON_RESULT(_h), row, col) == 0) {
 				row_buf[col] = s;
-				LM_ERR("[%d][%d] Column[%.*s]=[%s]\n",
+				LM_DBG("[%d][%d] Column[%.*s]=[%s]\n",
 					row, col, RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s, row_buf[col]);
 			}
 		}
