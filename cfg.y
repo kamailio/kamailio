@@ -99,6 +99,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -180,7 +181,7 @@
 
 
 extern int yylex();
-static void yyerror(char* s);
+static void yyerror(char* s, ...);
 static char* tmp;
 static int i_tmp;
 static unsigned u_tmp;
@@ -199,6 +200,10 @@ static struct lvalue* lval_tmp;
 static struct rvalue* rval_tmp;
 
 static void warn(char* s);
+static struct rval_expr* mk_rve_rval(enum rval_type, void* v);
+static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1);
+static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
+									struct rval_expr* rve2);
 static struct socket_id* mk_listen_id(char*, int, int);
 static struct name_lst* mk_name_lst(char* name, int flags);
 static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
@@ -1489,7 +1494,7 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 
 exp:	rval_expr
 		{
-			if (!rve_check_type((enum rval_type*)&i_tmp, $1)){
+			if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression");
 				$$=0;
 			}else if (i_tmp!=RV_INT && i_tmp!=RV_NONE){
@@ -1992,18 +1997,18 @@ lval: attr_id_ass {
 				}
 	;
 
-rval: intno			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
+rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 	| STRING			{	s_tmp.s=$1; s_tmp.len=strlen($1);
-							$$=mk_rval_expr_v(RV_STR, &s_tmp); }
-	| attr_id_any		{$$=mk_rval_expr_v(RV_AVP, $1); pkg_free($1); }
-	| pvar				{$$=mk_rval_expr_v(RV_PVAR, $1); pkg_free($1); }
+							$$=mk_rve_rval(RV_STR, &s_tmp); }
+	| attr_id_any		{$$=mk_rve_rval(RV_AVP, $1); pkg_free($1); }
+	| pvar				{$$=mk_rve_rval(RV_PVAR, $1); pkg_free($1); }
 	| avp_pvar			{
 							switch($1->type){
 								case LV_AVP:
-									$$=mk_rval_expr_v(RV_AVP, &$1->lv.avps);
+									$$=mk_rve_rval(RV_AVP, &$1->lv.avps);
 									break;
 								case LV_PVAR:
-									$$=mk_rval_expr_v(RV_PVAR, &$1->lv.pvs);
+									$$=mk_rve_rval(RV_PVAR, &$1->lv.pvs);
 									break;
 								default:
 									yyerror("BUG: invalid lvalue type ");
@@ -2011,11 +2016,12 @@ rval: intno			{$$=mk_rval_expr_v(RV_INT, (void*)$1); }
 							}
 							pkg_free($1); /* not needed anymore */
 						}
-	| select_id			{$$=mk_rval_expr_v(RV_SEL, $1); pkg_free($1); }
-	| fcmd				{$$=mk_rval_expr_v(RV_ACTION_ST, $1); }
-	| LBRACE actions RBRACE	{$$=mk_rval_expr_v(RV_ACTION_ST, $2); }
+	| select_id			{$$=mk_rve_rval(RV_SEL, $1); pkg_free($1); }
+	| fcmd				{$$=mk_rve_rval(RV_ACTION_ST, $1); }
+	| exp_elem { $$=mk_rve_rval(RV_BEXPR, $1); }
+	| LBRACE actions RBRACE	{$$=mk_rve_rval(RV_ACTION_ST, $2); }
 	| LBRACE error RBRACE	{ yyerror("bad command block"); }
-	| LPAREN assign_action RPAREN	{$$=mk_rval_expr_v(RV_ACTION_ST, $2); }
+	| LPAREN assign_action RPAREN	{$$=mk_rve_rval(RV_ACTION_ST, $2); }
 	| LPAREN error RPAREN	{ yyerror("bad expression"); }
 	;
 
@@ -2039,36 +2045,32 @@ rval_expr: rval						{ $$=$1;
 												YYABORT;
 											}
 									}
-		| rve_un_op %prec NOT rval_expr 	{$$=mk_rval_expr1($1, $2); }
-		| rval_expr PLUS rval_expr	{$$=mk_rval_expr2(RVE_PLUS_OP, $1, $3); }
-		| rval_expr MINUS rval_expr	{$$=mk_rval_expr2(RVE_MINUS_OP, $1, $3); }
-		| rval_expr STAR rval_expr	{$$=mk_rval_expr2(RVE_MUL_OP, $1, $3); }
-		| rval_expr SLASH rval_expr	{$$=mk_rval_expr2(RVE_DIV_OP, $1, $3); }
-		| rval_expr BIN_OR rval_expr {$$=mk_rval_expr2(RVE_BOR_OP, $1,  $3); }
-		| rval_expr BIN_AND rval_expr {$$=mk_rval_expr2(RVE_BAND_OP, $1,  $3);}
-		| rval_expr rve_cmpop %prec GT rval_expr 
-			{ $$=mk_rval_expr2( $2, $1, $3);}
+		| rve_un_op %prec NOT rval_expr	{$$=mk_rve1($1, $2); }
+		| rval_expr PLUS rval_expr		{$$=mk_rve2(RVE_PLUS_OP, $1, $3); }
+		| rval_expr MINUS rval_expr		{$$=mk_rve2(RVE_MINUS_OP, $1, $3); }
+		| rval_expr STAR rval_expr		{$$=mk_rve2(RVE_MUL_OP, $1, $3); }
+		| rval_expr SLASH rval_expr		{$$=mk_rve2(RVE_DIV_OP, $1, $3); }
+		| rval_expr BIN_OR rval_expr	{$$=mk_rve2(RVE_BOR_OP, $1,  $3); }
+		| rval_expr BIN_AND rval_expr	{$$=mk_rve2(RVE_BAND_OP, $1,  $3);}
+		| rval_expr rve_cmpop %prec GT rval_expr { $$=mk_rve2( $2, $1, $3);}
 		| rval_expr rve_equalop %prec EQUAL_T rval_expr
-			{ $$=mk_rval_expr2( $2, $1, $3);}
-		| rval_expr LOG_AND rval_expr
-			{ $$=mk_rval_expr2(RVE_LAND_OP, $1, $3);}
-		| rval_expr LOG_OR rval_expr
-			{ $$=mk_rval_expr2(RVE_LOR_OP, $1, $3);}
-		| LPAREN rval_expr RPAREN	{ $$=$2; }
-		| exp_elem { $$=mk_rval_expr_v(RV_BEXPR, $1); }
-		| rve_un_op %prec NOT error { yyerror("bad expression"); }
-		| rval_expr PLUS error		{ yyerror("bad expression"); }
-		| rval_expr MINUS error		{ yyerror("bad expression"); }
-		| rval_expr STAR error		{ yyerror("bad expression"); }
-		| rval_expr SLASH error		{ yyerror("bad expression"); }
-		| rval_expr BIN_OR error	{ yyerror("bad expression"); }
-		| rval_expr BIN_AND error	{ yyerror("bad expression"); }
+			{ $$=mk_rve2( $2, $1, $3);}
+		| rval_expr LOG_AND rval_expr	{ $$=mk_rve2(RVE_LAND_OP, $1, $3);}
+		| rval_expr LOG_OR rval_expr	{ $$=mk_rve2(RVE_LOR_OP, $1, $3);}
+		| LPAREN rval_expr RPAREN		{ $$=$2; }
+		| rve_un_op %prec NOT error		{ yyerror("bad expression"); }
+		| rval_expr PLUS error			{ yyerror("bad expression"); }
+		| rval_expr MINUS error			{ yyerror("bad expression"); }
+		| rval_expr STAR error			{ yyerror("bad expression"); }
+		| rval_expr SLASH error			{ yyerror("bad expression"); }
+		| rval_expr BIN_OR error		{ yyerror("bad expression"); }
+		| rval_expr BIN_AND error		{ yyerror("bad expression"); }
 		| rval_expr rve_cmpop %prec GT error
 			{ yyerror("bad expression"); }
 		| rval_expr rve_equalop %prec EQUAL_T error
 			{ yyerror("bad expression"); }
-		| rval_expr LOG_AND error	{ yyerror("bad expression"); }
-		| rval_expr LOG_OR error	{ yyerror("bad expression"); }
+		| rval_expr LOG_AND error		{ yyerror("bad expression"); }
+		| rval_expr LOG_OR error		{ yyerror("bad expression"); }
 		;
 
 assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
@@ -2562,8 +2564,14 @@ static void warn(char* s)
 	cfg_warnings++;
 }
 
-static void yyerror(char* s)
+static void yyerror(char* format, ...)
 {
+	va_list ap;
+	char s[256];
+	
+	va_start(ap, format);
+	vsnprintf(s, sizeof(s), format, ap);
+	va_end(ap);
 	if (line!=startline)
 		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d,%d): %s\n", 
 					startline, startcolumn, line, column-1, s);
@@ -2574,6 +2582,72 @@ static void yyerror(char* s)
 		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d): %s\n", 
 					startline, startcolumn, s);
 	cfg_errors++;
+}
+
+
+/** mk_rval_expr_v wrapper.
+ *  checks mk_rval_expr_v return value and sets the cfg. pos
+ *  (line and column numbers)
+ *  @return rval_expr* on success, 0 on error (@see mk_rval_expr_v)
+ */
+static struct rval_expr* mk_rve_rval(enum rval_type type, void* v)
+{
+	struct rval_expr* ret;
+
+	ret=mk_rval_expr_v(type, v);
+	if (ret==0){
+		yyerror("internal error: failed to create rval expr");
+		/* YYABORT; */
+	}
+	return ret;
+}
+
+
+/** mk_rval_expr1 wrapper.
+ *  checks mk_rval_expr1 return value (!=0 and type checking)
+ *  @return rval_expr* on success, 0 on error (@see mk_rval_expr1)
+ */
+static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1)
+{
+	struct rval_expr* ret;
+	struct rval_expr* bad_rve;
+	enum rval_type type, bad_t, exp_t;
+	
+	ret=mk_rval_expr1(op, rve1);
+	if (ret && (rve_check_type(&type, ret, &bad_rve, &bad_t, &exp_t)!=1)){
+		yyerror("bad expression: type mismatch (%s instead of %s)",
+					rval_type_name(bad_t), rval_type_name(exp_t));
+	}
+	return ret;
+}
+
+
+/** mk_rval_expr2 wrapper.
+ *  checks mk_rval_expr2 return value (!=0 and type checking)
+ *  @return rval_expr* on success, 0 on error (@see mk_rval_expr2)
+ */
+static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
+									struct rval_expr* rve2)
+{
+	struct rval_expr* ret;
+	struct rval_expr* bad_rve;
+	enum rval_type type, type1, type2, bad_t, exp_t;
+	
+	ret=mk_rval_expr2(op, rve1, rve2);
+	if (ret && (rve_check_type(&type, ret, &bad_rve, &bad_t, &exp_t)!=1)){
+		if (rve_check_type(&type1, rve1, &bad_rve, &bad_t, &exp_t)!=1)
+			yyerror("bad expression: left side type mismatch"
+					" (%s instead of %s)",
+					rval_type_name(bad_t), rval_type_name(exp_t));
+		else if (rve_check_type(&type2, rve2, &bad_rve, &bad_t, &exp_t)!=1)
+			yyerror("bad expression: right side type mismatch"
+					" (%s instead of %s)",
+					rval_type_name(bad_t), rval_type_name(exp_t));
+		else
+			yyerror("bad expression: type mismatch (%s instead of %s)",
+					rval_type_name(bad_t), rval_type_name(exp_t));
+	}
+	return ret;
 }
 
 
