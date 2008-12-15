@@ -250,19 +250,9 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 			 * steps expect. So we need to simulate this here unfortunally.
 			 */
 			if (PQgetisnull(CON_RESULT(_h), row, col) == 0) {
-				len = strlen(s);
-				row_buf[col] = pkg_malloc(len+1);
-				if (!row_buf[col]) {
-					LM_ERR("no private memory left\n");
-					return -1;
-				}
-				memset(row_buf[col], 0, len+1);
-				LM_DBG("allocated %d bytes for row_buf[%d] at %p\n", len, col, row_buf[col]);
-				strncpy(row_buf[col], s, len);
-				LM_DBG("[%d][%d] Column[%.*s]=[%s]\n",
+				row_buf[col] = s;
+				LM_ERR("[%d][%d] Column[%.*s]=[%s]\n",
 					row, col, RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s, row_buf[col]);
-			} else {
-				s = NULL;
 			}
 		}
 
@@ -277,44 +267,9 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 			LM_DBG("freeing row buffer at %p\n", row_buf);
 			pkg_free(row_buf);
 			return -4;
-		}
-		/*
-		 * pkg_free() must be done for the above allocations now that the row
-		 * has been converted. During pg_convert_row (and subsequent pg_str2val)
-		 * processing, data types that don't need to be converted (namely STRINGS
-		 * and STR) have their addresses saved. These data types should not have
-		 * their pkg_malloc() allocations freed here because they are still
-		 * needed.  However, some data types (ex: INT, DOUBLE) should have their
-		 * pkg_malloc() allocations freed because during the conversion process,
-		 * their converted values are saved in the union portion of the db_val_t
-		 * structure. BLOB will be copied during PQunescape in str2val, thus it
-		 * has to be freed here AND in pg_free_row().
-		 *
-		 * Warning: when the converted row is no longer needed, the data types
-		 * whose addresses were saved in the db_val_t structure must be freed
-		 * or a memory leak will happen. This processing should happen in the
-		 * pg_free_row() subroutine. The caller of this routine should ensure
-		 * that pg_free_rows(), pg_free_row() or pg_free_result() is eventually
-		 * called.
-		 */
-		for (col = 0; col < RES_COL_N(_r); col++) {
-			switch (RES_TYPES(_r)[col]) {
-				case DB_STRING:
-				case DB_STR:
-					break;
-				default:
-					LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
-					/* because it can contain NULL */
-					if(row_buf[col]) pkg_free(row_buf[col]); 
-			}
 			/*
 			 * The following housekeeping may not be technically required, but it
 			 * is a good practice to NULL pointer fields that are no longer valid.
-			 * Note that DB_STRING fields have not been pkg_free(). NULLing DB_STRING
-			 * fields would normally not be good to do because a memory leak would
-			 * occur.  However, the pg_convert_row() routine  has saved the DB_STRING
-			 * pointer in the db_val_t structure.  The db_val_t structure will 
-			 * eventually be used to pkg_free() the DB_STRING storage.
 			 */
 			row_buf[col] = (char *)NULL;
 		}
