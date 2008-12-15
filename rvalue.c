@@ -191,6 +191,36 @@ struct rvalue* rval_new_str(str* s, int extra_size)
 
 
 
+/** get string name for a type.
+  *
+  * @return - null terminated name of the type
+  */
+char* rval_type_name(enum rval_type type)
+{
+	switch(type){
+		case RV_NONE:
+			return "none";
+		case RV_INT:
+			return "int";
+		case RV_STR:
+			return "str";
+		case RV_BEXPR:
+			return "bexpr_t";
+		case RV_ACTION_ST:
+			return "action_t";
+		case RV_PVAR:
+			return "pvar";
+		case RV_AVP:
+			return "avp";
+			break;
+		case RV_SEL:
+			return "select";
+	}
+	return "error_unkown_type";
+}
+
+
+
 /** create a new pk_malloc'ed rvalue from a rval_val union.
   *
   * @param s - pointer to str, must be non-null
@@ -242,7 +272,7 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 	pv_value_t* pv;
 	enum rval_type tmp;
 	enum rval_type* ptype;
-
+	
 	switch(rv->type){
 		case RV_INT:
 		case RV_STR:
@@ -454,10 +484,21 @@ static int rve_op_unary(enum rval_expr_op op)
 
 
 /** returns 1 if expression is valid (type-wise).
+  * @param type - filled with the type of the expression (RV_INT, RV_STR or
+  *                RV_NONE if it's dynamic)
+  * @param rve  - checked expression
+  * @param bad_rve - set on failure to the subexpression for which the 
+  *                    type check failed
+  * @param bad_type - set on failure to the type of the bad subexpression
+  * @param exp_type - set on failure to the expected type for the bad
+  *                   subexpression
   * @return 0 or 1  and sets *type to the resulting type
   * (RV_INT, RV_STR or RV_NONE if it can be found only at runtime)
   */
-int rve_check_type(enum rval_type* type, struct rval_expr* rve)
+int rve_check_type(enum rval_type* type, struct rval_expr* rve,
+					struct rval_expr** bad_rve, 
+					enum rval_type* bad_t,
+					enum rval_type* exp_t)
 {
 	enum rval_type type1, type2;
 	
@@ -469,9 +510,13 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve)
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
 			*type=RV_INT;
-			if (rve_check_type(&type1, rve->left.rve)){
-				if (type1==RV_STR)
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (type1==RV_STR){
+					if (bad_rve) *bad_rve=rve->left.rve;
+					if (bad_t) *bad_t=type1;
+					if (exp_t) *exp_t=RV_INT;
 					return 0;
+				}
 				return 1;
 			}
 			return 0;
@@ -488,12 +533,21 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve)
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
 			*type=RV_INT;
-			if (rve_check_type(&type1, rve->left.rve)){
-				if (type1==RV_STR)
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (type1==RV_STR){
+					if (bad_rve) *bad_rve=rve->left.rve;
+					if (bad_t) *bad_t=type1;
+					if (exp_t) *exp_t=RV_INT;
 					return 0;
-				if (rve_check_type(&type2, rve->right.rve)){
-					if (type2==RV_STR)
+				}
+				if (rve_check_type(&type2, rve->right.rve, bad_rve,
+									bad_t, exp_t)){
+					if (type2==RV_STR){
+						if (bad_rve) *bad_rve=rve->left.rve;
+						if (bad_t) *bad_t=type2;
+						if (exp_t) *exp_t=RV_INT;
 						return 0;
+					}
 					return 1;
 				}
 			}
@@ -501,23 +555,34 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve)
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 			*type=RV_INT;
-			if (rve_check_type(&type1, rve->left.rve)){
-				if (rve_check_type(&type2, rve->right.rve)){
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
+										exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) && 
-							!(type1==RV_STR && type2==RV_INT))
+							!(type1==RV_STR && type2==RV_INT)){
+						if (bad_rve) *bad_rve=rve->right.rve;
+						if (bad_t) *bad_t=type2;
+						if (exp_t) *exp_t=type1;
 						return 0;
+					}
 					return 1;
 				}
 			}
 			return 0;
 		case RVE_PLUS_OP:
-			if (rve_check_type(&type1, rve->left.rve)){
-				if (rve_check_type(&type2, rve->right.rve)){
+			*type=RV_NONE;
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
+									exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) && 
-							!(type1==RV_STR && type2==RV_INT))
+							!(type1==RV_STR && type2==RV_INT)){
+						if (bad_rve) *bad_rve=rve->right.rve;
+						if (bad_t) *bad_t=type2;
+						if (exp_t) *exp_t=type1;
 						return 0;
+					}
 					*type=type1;
 					return 1;
 				}
@@ -1879,6 +1944,8 @@ static int rve_optimize(struct rval_expr* rve)
 	int flags;
 	struct rval_expr tmp_rve;
 	enum rval_type type;
+	struct rval_expr* bad_rve;
+	enum rval_type bad_type, exp_type;
 	
 	ret=0;
 	flags=0;
@@ -1912,8 +1979,10 @@ static int rve_optimize(struct rval_expr* rve)
 			return rve_optimize(rve->left.rve);
 		rve_optimize(rve->left.rve);
 		rve_optimize(rve->right.rve);
-		if (!rve_check_type(&type, rve)){
-			ERR("optimization failure, type mismatch in expression\n");
+		if (!rve_check_type(&type, rve, &bad_rve, &bad_type, &exp_type)){
+			ERR("optimization failure, type mismatch in expression, "
+					"type %s, but expected %s\n",
+					rval_type_name(bad_type), rval_type_name(exp_type));
 			return 0;
 		}
 		/* TODO: $v - a => $v + (-a) */

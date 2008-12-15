@@ -185,7 +185,11 @@ enum rval_type rve_guess_type(struct rval_expr* rve);
 /** returns true if expression is constant. */
 int rve_is_constant(struct rval_expr* rve);
 /** returns 1 if expression is valid (type-wise).*/
-int rve_check_type(enum rval_type* type, struct rval_expr* rve);
+int rve_check_type(enum rval_type* type, struct rval_expr* rve,
+					struct rval_expr** bad_rve, enum rval_type* bad_type,
+					enum rval_type* exp_type);
+/** returns a string name for type (debugging).*/
+char* rval_type_name(enum rval_type type);
 
 /** create a RVE_RVAL_OP rval_expr, containing a single rval of the given type
   */
