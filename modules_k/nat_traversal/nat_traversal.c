@@ -1637,7 +1637,7 @@ restore_keepalive_state(void)
 
     now = time(NULL);
 
-    fscanf(f, STATE_FILE_HEADER); // skip header
+    res = fscanf(f, STATE_FILE_HEADER); // skip header
 
     while (True) {
         res = fscanf(f, "%63s %63s %ld %ld", uri, socket, &rtime, &stime);
