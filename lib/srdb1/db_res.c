@@ -162,3 +162,23 @@ inline int db_allocate_columns(db_res_t* _r, const unsigned int cols)
 
 	return 0;
 }
+
+
+/**
+ * Allocate memory for rows.
+ * \param _res result set
+ * \return zero on success, negative on errors
+ */
+inline int db_allocate_rows(db_res_t* _res)
+{
+	int len = sizeof(db_row_t) * RES_ROW_N(_res);
+	RES_ROWS(_res) = (struct db_row*)pkg_malloc(len);
+	if (!RES_ROWS(_res)) {
+		LM_ERR("no private memory left\n");
+		return -1;
+	}
+	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));
+	memset(RES_ROWS(_res), 0, len);
+	
+	return 0;
+}

@@ -120,4 +120,12 @@ inline int db_free_result(db_res_t* _r);
  */
 inline int db_allocate_columns(db_res_t* _r, const unsigned int cols);
 
+
+/**
+ * Allocate memory for rows.
+ * \param _res result set
+ * \return zero on success, negative on errors
+ */
+inline int db_allocate_rows(db_res_t* _res);
+
 #endif /* DB_RES_H */

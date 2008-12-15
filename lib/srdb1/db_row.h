@@ -35,6 +35,7 @@
 #define DB_ROW_H
 
 #include "db_val.h"
+#include "db_res.h"
 
 
 /**
@@ -62,5 +63,14 @@ typedef struct db_row {
  * \return zero on success, negative on error
  */
 inline int db_free_row(db_row_t* _r);
+
+
+/**
+ * Allocate memory for row value.
+ * \param _res result set
+ * \param _row filled row
+ * \return zero on success, negative on errors
+ */
+inline int db_allocate_row(const db_res_t* _res, db_row_t* _row);
 
 #endif /* DB_ROW_H */

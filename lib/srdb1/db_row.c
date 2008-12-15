@@ -98,3 +98,27 @@ inline int db_free_row(db_row_t* _r)
 	}
 	return 0;
 }
+
+
+/**
+ * Allocate memory for row value.
+ * \param _res result set
+ * \param _row filled row
+ * \return zero on success, negative on errors
+ */
+inline int db_allocate_row(const db_res_t* _res, db_row_t* _row)
+{
+	int len = sizeof(db_val_t) * RES_COL_N(_res);
+	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);
+	if (!ROW_VALUES(_row)) {
+		LM_ERR("no private memory left\n");
+		return -1;
+	}
+	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(_row));
+
+	memset(ROW_VALUES(_row), 0, len);
+	/* Save the number of columns in the ROW structure */
+	ROW_N(_row) = RES_COL_N(_res);
+
+	return 0;
+}
