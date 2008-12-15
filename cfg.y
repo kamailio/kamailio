@@ -200,6 +200,9 @@ static struct lvalue* lval_tmp;
 static struct rvalue* rval_tmp;
 
 static void warn(char* s);
+static void get_cpos(struct cfg_pos* pos);
+static void get_rve2_pos(struct cfg_pos* res,
+							struct cfg_pos* pos1, struct cfg_pos* pos2);
 static struct rval_expr* mk_rve_rval(enum rval_type, void* v);
 static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1);
 static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
@@ -2057,7 +2060,7 @@ rval_expr: rval						{ $$=$1;
 			{ $$=mk_rve2( $2, $1, $3);}
 		| rval_expr LOG_AND rval_expr	{ $$=mk_rve2(RVE_LAND_OP, $1, $3);}
 		| rval_expr LOG_OR rval_expr	{ $$=mk_rve2(RVE_LOR_OP, $1, $3);}
-		| LPAREN rval_expr RPAREN		{ $$=$2; }
+		| LPAREN rval_expr RPAREN		{ $$=$2;}
 		| rve_un_op %prec NOT error		{ yyerror("bad expression"); }
 		| rval_expr PLUS error			{ yyerror("bad expression"); }
 		| rval_expr MINUS error			{ yyerror("bad expression"); }
@@ -2551,6 +2554,16 @@ extern int column;
 extern int startcolumn;
 extern int startline;
 
+
+static void get_cpos(struct cfg_pos* pos)
+{
+	pos->s_line=startline;
+	pos->e_line=line;
+	pos->s_col=startcolumn;
+	pos->e_col=column-1;
+}
+
+
 static void warn(char* s)
 {
 	if (line!=startline)
@@ -2564,7 +2577,7 @@ static void warn(char* s)
 	cfg_warnings++;
 }
 
-static void yyerror(char* format, ...)
+static void yyerror_at(struct cfg_pos* p, char* format, ...)
 {
 	va_list ap;
 	char s[256];
@@ -2572,16 +2585,50 @@ static void yyerror(char* format, ...)
 	va_start(ap, format);
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
-	if (line!=startline)
+	if (p->e_line!=p->s_line)
 		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d,%d): %s\n", 
-					startline, startcolumn, line, column-1, s);
-	else if (startcolumn!=(column-1))
+					p->s_line, p->s_col, p->e_line, p->e_col, s);
+	else if (p->s_col!=p->e_col)
 		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d): %s\n", 
-					startline, startcolumn, column-1, s);
+					p->s_line, p->s_col, p->e_col, s);
 	else
 		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d): %s\n", 
-					startline, startcolumn, s);
+					p->s_line, p->s_col, s);
 	cfg_errors++;
+}
+
+
+static void yyerror(char* format, ...)
+{
+	va_list ap;
+	char s[256];
+	struct cfg_pos pos;
+	
+	get_cpos(&pos);
+	va_start(ap, format);
+	vsnprintf(s, sizeof(s), format, ap);
+	va_end(ap);
+	yyerror_at(&pos, s);
+}
+
+
+
+static void get_rve2_pos(struct cfg_pos* res,
+							struct cfg_pos* pos1, struct cfg_pos* pos2)
+{
+	*res=*pos1;
+	if ((res->s_line == 0) || (res->s_line > pos2->s_line)){
+		res->s_line=pos2->s_line;
+		res->s_col=pos2->s_col;
+	}else if ((res->s_line == pos2->s_line) && (res->s_col > pos2->s_col)){
+		res->s_col=pos2->s_col;
+	}
+	if ((res->e_line == 0) || (res->e_line < pos2->e_line)){
+		res->e_line=pos2->e_line;
+		res->e_col=pos2->e_col;
+	}else if ((res->e_line == pos2->e_line) && (res->e_col < pos2->e_col)){
+		res->e_col=pos2->e_col;
+	}
 }
 
 
@@ -2593,8 +2640,10 @@ static void yyerror(char* format, ...)
 static struct rval_expr* mk_rve_rval(enum rval_type type, void* v)
 {
 	struct rval_expr* ret;
+	struct cfg_pos pos;
 
-	ret=mk_rval_expr_v(type, v);
+	get_cpos(&pos);
+	ret=mk_rval_expr_v(type, v, &pos);
 	if (ret==0){
 		yyerror("internal error: failed to create rval expr");
 		/* YYABORT; */
@@ -2613,10 +2662,13 @@ static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1)
 	struct rval_expr* bad_rve;
 	enum rval_type type, bad_t, exp_t;
 	
-	ret=mk_rval_expr1(op, rve1);
+	if (rve1==0)
+		return 0;
+	ret=mk_rval_expr1(op, rve1, &rve1->fpos);
 	if (ret && (rve_check_type(&type, ret, &bad_rve, &bad_t, &exp_t)!=1)){
-		yyerror("bad expression: type mismatch (%s instead of %s)",
-					rval_type_name(bad_t), rval_type_name(exp_t));
+		yyerror_at(&rve1->fpos, "bad expression: type mismatch"
+					" (%s instead of %s)", rval_type_name(bad_t),
+					rval_type_name(exp_t));
 	}
 	return ret;
 }
@@ -2631,21 +2683,18 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 {
 	struct rval_expr* ret;
 	struct rval_expr* bad_rve;
-	enum rval_type type, type1, type2, bad_t, exp_t;
+	enum rval_type type, bad_t, exp_t;
+	struct cfg_pos pos;
 	
-	ret=mk_rval_expr2(op, rve1, rve2);
+	if ((rve1==0) || (rve2==0))
+		return 0;
+	get_rve2_pos(&pos, &rve1->fpos, &rve2->fpos);
+	ret=mk_rval_expr2(op, rve1, rve2, &pos);
 	if (ret && (rve_check_type(&type, ret, &bad_rve, &bad_t, &exp_t)!=1)){
-		if (rve_check_type(&type1, rve1, &bad_rve, &bad_t, &exp_t)!=1)
-			yyerror("bad expression: left side type mismatch"
-					" (%s instead of %s)",
-					rval_type_name(bad_t), rval_type_name(exp_t));
-		else if (rve_check_type(&type2, rve2, &bad_rve, &bad_t, &exp_t)!=1)
-			yyerror("bad expression: right side type mismatch"
-					" (%s instead of %s)",
-					rval_type_name(bad_t), rval_type_name(exp_t));
-		else
-			yyerror("bad expression: type mismatch (%s instead of %s)",
-					rval_type_name(bad_t), rval_type_name(exp_t));
+		yyerror_at(&pos, "bad expression: type mismatch:"
+						" %s instead of %s at (%d,%d)",
+						rval_type_name(bad_t), rval_type_name(exp_t),
+						bad_rve->fpos.s_line, bad_rve->fpos.s_col);
 	}
 	return ret;
 }

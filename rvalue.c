@@ -543,7 +543,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 				if (rve_check_type(&type2, rve->right.rve, bad_rve,
 									bad_t, exp_t)){
 					if (type2==RV_STR){
-						if (bad_rve) *bad_rve=rve->left.rve;
+						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
 						if (exp_t) *exp_t=RV_INT;
 						return 0;
@@ -1597,9 +1597,11 @@ error:
  *
  * @param rv_type - rval type
  * @param val     - rval value
+ * @param pos     - config position
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
-struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val)
+struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val, 
+									struct cfg_pos* pos)
 {
 	struct rval_expr* rve;
 	union rval_val v;
@@ -1649,6 +1651,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val)
 	}
 	rval_init(&rve->left.rval, rv_type, &v, flags);
 	rve->op=RVE_RVAL_OP;
+	if (pos) rve->fpos=*pos;
 	return rve;
 }
 
@@ -1660,7 +1663,8 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val)
  * @param rve1 - rval expr. on which the operator will act.
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
-struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1)
+struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
+								struct cfg_pos* pos)
 {
 	struct rval_expr* ret;
 	
@@ -1679,6 +1683,7 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1)
 	memset(ret, sizeof(*ret), 0);
 	ret->op=op;
 	ret->left.rve=rve1;
+	if (pos) ret->fpos=*pos;
 	return ret;
 }
 
@@ -1692,7 +1697,8 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1)
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
 struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
-													  struct rval_expr* rve2)
+													  struct rval_expr* rve2,
+													  struct cfg_pos* pos)
 {
 	struct rval_expr* ret;
 	
@@ -1723,6 +1729,7 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 	ret->op=op;
 	ret->left.rve=rve1;
 	ret->right.rve=rve2;
+	if (pos) ret->fpos=*pos;
 	return ret;
 }
 

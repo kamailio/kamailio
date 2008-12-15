@@ -102,6 +102,15 @@ enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 #define EXIT_R_F   1
 #define RETURN_R_F 2
 
+
+struct cfg_pos{
+	int s_line;
+	int e_line;
+	unsigned short s_col;
+	unsigned short e_col;
+};
+
+
 /* Expression operand */
 union exp_op {
 	void* param;

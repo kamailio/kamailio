@@ -94,6 +94,7 @@ struct rvalue{
 #define RV_RV_ALLOCED_F   2  /* free rv itself (pkg_free(rv)) */
 #define RV_ALL_ALLOCED_F  (RV_CNT_ALLOCED|RV_RV_ALLOCED)
 
+
 struct rval_expr{
 	enum rval_expr_op op;
 	union{
@@ -104,6 +105,7 @@ struct rval_expr{
 		struct rval_expr* rve;
 		struct rvalue rval;
 	}right;
+	struct cfg_pos fpos;
 };
 
 
@@ -193,12 +195,15 @@ char* rval_type_name(enum rval_type type);
 
 /** create a RVE_RVAL_OP rval_expr, containing a single rval of the given type
   */
-struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val);
+struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
+									struct cfg_pos* pos);
 /** create a unary op. rval_expr.. */
-struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1);
+struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
+									struct cfg_pos* pos);
 /** create a rval_expr. from 2 other rval exprs, using op. */
 struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
-													  struct rval_expr* rve2);
+													  struct rval_expr* rve2,
+													  struct cfg_pos* pos);
 
 /** fix a rval_expr. */
 int fix_rval_expr(void** p);
