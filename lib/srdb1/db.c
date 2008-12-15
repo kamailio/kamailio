@@ -227,13 +227,11 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		goto error;
 
 	*mydbf=dbf; /* copy */
-	if (tmp != mod->s)
-		pkg_free(tmp);
+	pkg_free(tmp);
 	return 0;
 
 error:
-	if (tmp != mod->s)
-		pkg_free(tmp);
+	pkg_free(tmp);
 	return -1;
 }
 
