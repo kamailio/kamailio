@@ -335,7 +335,6 @@ int get_reply_totag(struct sip_msg *msg, str *totag)
 		t = tmb.t_gett();
 		if(t!= NULL && t!=T_UNDEFINED)
 		{
-#if 0
 			if(tmb.t_get_reply_totag(msg, totag)< 0)
 			{
 				LM_ERR("failed to get totag (tm)\n");
@@ -343,9 +342,6 @@ int get_reply_totag(struct sip_msg *msg, str *totag)
 			}
 			LM_DBG("totag stateful mode (tm)\n");
 			return 1;
-#else
-			return -1;
-#endif
 		}
 	}
 
