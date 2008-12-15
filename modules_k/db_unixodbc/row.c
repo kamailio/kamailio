@@ -43,26 +43,18 @@
 int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* _r,
 		const unsigned long* lengths)
 {
-	int i, len;
+	int i;
 
 	if ((!_h) || (!_res) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	len = sizeof(db_val_t) * RES_COL_N(_res);
-	
-	ROW_VALUES(_r) = (db_val_t*)pkg_malloc(len);
-	ROW_N(_r) = RES_COL_N(_res);
-	if (!ROW_VALUES(_r)) {
-		LM_ERR("no memory left\n");
-		return -1;
-	}
-	LM_DBG("allocate %d bytes for row values at %p\n", len,
-			ROW_VALUES(_r));
 
-	memset(ROW_VALUES(_r), 0, len);
-	/* Save the number of columns in the ROW structure */
-	ROW_N(_r) = RES_COL_N(_res);
+	if (db_allocate_row(_res, _r) != 0) {
+		LM_ERR("could not allocate row");
+		return -2;
+	}
+
 	for(i = 0; i < RES_COL_N(_res); i++) {
 		if (db_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			((CON_ROW(_h))[i]), lengths[i]) < 0) {

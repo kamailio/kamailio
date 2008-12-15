@@ -166,7 +166,7 @@ int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
  */
 static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
-	int i = 0, ret = 0, len;
+	int i = 0, ret = 0;
 	SQLSMALLINT columns;
 	list* rows = NULL;
 	list* rowstart = NULL;
@@ -217,15 +217,10 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 		return 0;
 	}
 
-	len = sizeof(db_row_t) * RES_ROW_N(_r);
-	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
-	if (!RES_ROWS(_r)) {
-		LM_ERR("no private memory left\n");
+	if (db_allocate_rows(_r) != 0) {
+		LM_ERR("could not allocate rows");
 		return -2;
 	}
-	LM_DBG("allocate %d bytes for rows at %p\n", len,
-			RES_ROWS(_r));
-	memset(RES_ROWS(_r), 0, len);
 
 	i = 0;
 	rows = rowstart;

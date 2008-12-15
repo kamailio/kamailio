@@ -107,21 +107,16 @@ static int dbt_get_columns(db_con_t* _h, db_res_t* _r)
  */
 static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
-	int i, len;
+	int i;
 	if (!_h || !_r || !_res) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	len = sizeof(db_val_t) * RES_COL_N(_res);
-	ROW_VALUES(_r) = (db_val_t*)pkg_malloc(len);
-	if (!ROW_VALUES(_r)) {
-		LM_ERR("no private memory left\n");
-		return -1;
+	if (db_allocate_row(_res, _r) != 0) {
+		LM_ERR("could not allocate row");
+		return -2;
 	}
-	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(_r));
-	ROW_N(_r) = RES_COL_N(_res);
-	memset(ROW_VALUES(_r), 0, len);
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
 		(ROW_VALUES(_r)[i]).nul = DBT_CON_ROW(_h)->fields[i].nul;
@@ -192,7 +187,7 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
  */
 static int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 {
-	int col, len;
+	int col;
 	dbt_row_p _rp = NULL;
 	if (!_h || !_r) {
 		LM_ERR("invalid parameter\n");
@@ -202,13 +197,10 @@ static int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 	if (!RES_ROW_N(_r)) {
 		return 0;
 	}
-	len = sizeof(db_row_t) * RES_ROW_N(_r);
-	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
-	if (!RES_ROWS(_r)) {
-		LM_ERR("no private memory left\n");
+	if (db_allocate_rows(_r) < 0) {
+		LM_ERR("could not allocate rows");
 		return -2;
 	}
-	LM_DBG("allocate %d bytes for %d rows at %p", len, RES_ROW_N(_r), RES_ROWS(_r));
 	col = 0;
 	_rp = DBT_CON_RESULT(_h)->rows;
 	while(_rp) {
