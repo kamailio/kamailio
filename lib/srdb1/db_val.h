@@ -37,6 +37,7 @@
 #ifndef DB_VAL_H
 #define DB_VAL_H
 
+#include "db_con.h"
 #include <time.h>
 #include "../str.h"
 
@@ -178,5 +179,18 @@ typedef struct {
  */
 int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
 
+
+/*!
+ * \brief Convert a numerical value to a string
+ *
+ * Convert a numerical value to a string, used when converting result from a query.
+ * Implement common functionality needed from the databases, does parameter checking.
+ * \param _c database connection
+ * \param _v source value
+ * \param _s target string
+ * \param _len target string length
+ * \return 0 on success, negative on error, 1 if value must be converted by other means
+ */
+int db_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len);
 
 #endif /* DB_VAL_H */

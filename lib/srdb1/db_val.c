@@ -23,6 +23,9 @@
 
 #include "db_ut.h"
 
+#include <stdio.h>
+#include <time.h>
+
 /*!
  * \brief Convert a str to a db value, copy strings
  *
@@ -102,37 +105,145 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 		}
 		break;
 
-		case DB_STRING:
-			LM_DBG("converting STRING [%s]\n", _s);
-			VAL_STRING(_v) = _s;
-			VAL_TYPE(_v) = DB_STRING;
-			return 0;
+	case DB_STRING:
+		LM_DBG("converting STRING [%s]\n", _s);
+		/*
+		 * Normally we could just use the string returned from the DB library,
+		 * as its usually not immediately freed after the free_result. But as
+		 * there exists some corner cases where this string gets invalid, we
+		 * need to copy it here.
+		 */
+		VAL_STRING(_v) = pkg_malloc(_l + 1);
+		if (VAL_STRING(_v) == NULL) {
+			LM_ERR("no private memory left\n");
+			return -6;
+		}
+		LM_DBG("allocate %d bytes memory for STRING at %p", _l + 1, VAL_STRING(_v));
+		strncpy((char*)VAL_STRING(_v), _s, _l);
+		((char*)VAL_STRING(_v))[_l] = '\0';
+		VAL_TYPE(_v) = DB_STRING;
+		VAL_FREE(_v) = 1;
+		return 0;
 
-		case DB_STR:
-			LM_DBG("converting STR [%.*s]\n", _l, _s);
-			VAL_STR(_v).s = (char*)_s;
-			VAL_STR(_v).len = _l;
-			VAL_TYPE(_v) = DB_STR;
-			return 0;
+	case DB_STR:
+		LM_DBG("converting STR [%.*s]\n", _l, _s);
+		/* same problem as DB_STRING.. */
+		VAL_STR(_v).s = pkg_malloc(_l);
+		if (VAL_STR(_v).s == NULL) {
+			LM_ERR("no private memory left\n");
+			return -7;
+		}
+		LM_DBG("allocate %d bytes memory for STR at %p", _l, VAL_STR(_v).s);
+		strncpy(VAL_STR(_v).s, _s, _l);
+		VAL_STR(_v).len = _l;
+		VAL_TYPE(_v) = DB_STR;
+		VAL_FREE(_v) = 1;
+		return 0;
 
-		case DB_DATETIME:
-			LM_DBG("converting DATETIME [%s]\n", _s);
-			if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
-				LM_ERR("error while converting datetime value from string\n");
-				return -6;
-			} else {
-				VAL_TYPE(_v) = DB_DATETIME;
-				return 0;
-			}
-			break;
-
-		case DB_BLOB:
-			LM_DBG("converting BLOB [%.*s]\n", _l, _s);
-			VAL_BLOB(_v).s = (char*)_s;
-			VAL_BLOB(_v).len = _l;
-			VAL_TYPE(_v) = DB_BLOB;
+	case DB_DATETIME:
+		LM_DBG("converting DATETIME [%s]\n", _s);
+		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
+			LM_ERR("error while converting datetime value from string\n");
+			return -8;
+		} else {
+			VAL_TYPE(_v) = DB_DATETIME;
 			return 0;
+		}
+		break;
+
+	case DB_BLOB:
+		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
+		/* same problem as DB_STRING.. */
+		VAL_BLOB(_v).s = pkg_malloc(_l);
+		if (VAL_BLOB(_v).s == NULL) {
+			LM_ERR("no private memory left\n");
+			return -9;
+		}
+		LM_DBG("allocate %d bytes memory for BLOB at %p", _l, VAL_BLOB(_v).s);
+		strncpy(VAL_BLOB(_v).s, _s, _l);
+		VAL_BLOB(_v).len = _l;
+		VAL_TYPE(_v) = DB_BLOB;
+		VAL_FREE(_v) = 1;
+		return 0;
 	}
-	return -7;
+	return -10;
 }
 
+
+/*!
+ * \brief Convert a numerical value to a string
+ *
+ * Convert a numerical value to a string, used when converting result from a query.
+ * Implement common functionality needed from the databases, does parameter checking.
+ * \param _c database connection
+ * \param _v source value
+ * \param _s target string
+ * \param _len target string length
+ * \return 0 on success, negative on error, 1 if value must be converted by other means
+ */
+int db_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+{
+	if (!_c || !_v || !_s || !_len || !*_len) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (VAL_NULL(_v)) {
+		if (*_len < sizeof("NULL")) {
+			LM_ERR("buffer too small\n");
+			return -1;
+		}
+		*_len = snprintf(_s, *_len, "NULL");
+		return 0;
+	}
+	
+	switch(VAL_TYPE(_v)) {
+	case DB_INT:
+		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
+			LM_ERR("error while converting string to int\n");
+			return -2;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_BIGINT:
+		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
+			LM_ERR("error while converting string to big int\n");
+			return -3;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_BITMAP:
+		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
+			LM_ERR("error while converting string to int\n");
+			return -4;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_DOUBLE:
+		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
+			LM_ERR("error while converting string to double\n");
+			return -5;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_DATETIME:
+		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
+			LM_ERR("failed to convert string to time_t\n");
+			return -8;
+		} else {
+			return 0;
+		}
+		break;
+
+	default:
+		return 1;
+	}
+}
