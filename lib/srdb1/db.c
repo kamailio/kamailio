@@ -147,7 +147,7 @@ error:
  * \note on error mydbf will contain only 0s */
 int db_bind_mod(const str* mod, db_func_t* mydbf)
 {
-	char* tmp, *p;
+	char *name, *tmp, *p;
 	int len;
 	db_func_t dbf;
 	db_bind_api_f dbind;
@@ -166,9 +166,12 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		return 0;
 	}
 	// add the prefix
-	char * name = pkg_malloc(mod->len + 4);
-	char * prefix = "db_";
-	memcpy(name, prefix, 3);
+	name = pkg_malloc(mod->len + 4);
+	if (!name) {
+		LM_ERR("no private memory left\n");
+		return -1;
+	}
+	memcpy(name, "db_", 3);
 	memcpy(name+3, mod->s, mod->len);
 	name[mod->len+3] = 0;
 
