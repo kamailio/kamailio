@@ -67,10 +67,13 @@ int reserve_nonce_index(void)
 		*next_index= 0;
 	else
 	{
+		/* if the portion with still alive nonces is not yet reached */
 		if(*second!= curr_sec)
 		{
-			index= (*next_index==NBUF_LEN)?NBUF_LEN-1:*next_index -1;
+			/* get the index for the next nonce */
+			index= (*next_index==MAX_NONCE_INDEX)?MAX_NONCE_INDEX-1:*next_index -1;
 
+			/* set the interval in sec_monit vector */
 			if(curr_sec> *second)
 			{
 				for (i= *second; i< curr_sec; i++)
@@ -90,7 +93,7 @@ int reserve_nonce_index(void)
 
 	if(sec_monit[curr_sec]== -1) /* if in the first second*/
 	{
-		if(*next_index == NBUF_LEN)
+		if(*next_index == MAX_NONCE_INDEX)
 		{
 			lock_release(nonce_lock);
 			return -1;
@@ -102,7 +105,7 @@ int reserve_nonce_index(void)
 	if(*next_index> sec_monit[curr_sec]) /* if at the end of the buffer */
 	{
 		/* if at the end of the buffer */
-		if(*next_index == NBUF_LEN)
+		if(*next_index == MAX_NONCE_INDEX)
 		{
 			*next_index = 0;
 			goto index_smaller;
@@ -135,10 +138,8 @@ done:
  */
 int is_nonce_index_valid(int index)
 {
-    /* if greater than NBUF_LEN ->error */
-
-    if(index>= NBUF_LEN )
-    {
+	/* if greater than MAX_NONCE_INDEX ->error */
+	if(index>= MAX_NONCE_INDEX )    {
         LM_ERR("index greater than buffer length\n");
         return 0;
     }

@@ -26,6 +26,13 @@
         with which to register a different contact or make calls using the others's
         account. The index ensures that this will never be possible since it
         is generated as unique through the lifetime of the nonce.
+	</para>
+	<para>
+		The default limit for the requests that can be authenticated is 100000 
+		in 30 seconds.
+		If you wish to adjust this you can decrease the lifetime of a nonce(
+		how much time to wait for a reply to a challenge). However, be aware not to
+		set it to a too small value.
     </para>
 	</section>
 
@@ -96,12 +103,12 @@ modparam("auth", "secret", "johndoessecretphrase")
 		and password.
 		</para>
 		<para>
-		The value is in seconds and default value is 300 seconds.
+		The value is in seconds and default value is 30 seconds.
 		</para>
 		<example>
 		<title>nonce_expire parameter example</title>
 		<programlisting format="linespecific">
-modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
+modparam("auth", "nonce_expire", 15)   # Set nonce_expire to 15s
 </programlisting>
 		</example>
 	</section>

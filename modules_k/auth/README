@@ -113,6 +113,12 @@ Chapter 1. Admin Guide
    since it is generated as unique through the lifetime of the
    nonce.
 
+   The default limit for the requests that can be authenticated is
+   100000 in 30 seconds. If you wish to adjust this you can
+   decrease the lifetime of a nonce( how much time to wait for a
+   reply to a challenge). However, be aware not to set it to a too
+   small value.
+
 1.3. Dependencies
 
 1.3.1. Kamailio Modules
@@ -159,10 +165,10 @@ modparam("auth", "secret", "johndoessecretphrase")
    asking for username and password, it can recalculate
    credentials using existing username and password.
 
-   The value is in seconds and default value is 300 seconds.
+   The value is in seconds and default value is 30 seconds.
 
    Example 1.2. nonce_expire parameter example
-modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
+modparam("auth", "nonce_expire", 15)   # Set nonce_expire to 15s
 
 1.4.3. rpid_prefix (string)
 

@@ -92,7 +92,7 @@ struct sl_binds slb;
  * Module parameter variables
  */
 char* sec_param    = 0;   /*!< If the parameter is not used, the secret phrase will be auto-generated */
-unsigned int   nonce_expire = 300; /*!< Nonce lifetime */
+unsigned int   nonce_expire = 30; /*!< Nonce lifetime - default 30 seconds */
 
 str secret;
 char* sec_rand = 0;
