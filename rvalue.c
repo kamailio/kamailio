@@ -661,8 +661,8 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 				memset(&pval, 0, sizeof(pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
 					if (likely(pval.flags & PV_VAL_INT)){
-						pv_value_destroy(&pval);
 						*i=pval.ri;
+						pv_value_destroy(&pval);
 					}else if (likely(pval.flags & PV_VAL_STR)){
 						pv_value_destroy(&pval);
 						goto rv_str;

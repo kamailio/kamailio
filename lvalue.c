@@ -69,7 +69,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			goto error;
 		case RV_INT:
 			value.n=rv->v.l;
-			flags=avp->type;
+			flags=avp->type & ~AVP_VAL_STR;
 			ret=!(!value.n);
 			break;
 		case RV_STR:
@@ -78,7 +78,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			ret=(value.s.len>0);
 			break;
 		case RV_ACTION_ST:
-			flags=avp->type;
+			flags=avp->type & ~AVP_VAL_STR;
 			if (rv->v.action)
 				value.n=run_actions(h, rv->v.action, msg);
 			else
@@ -93,7 +93,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				WARN("error in expression\n");
 				value.n=0; /* expr. is treated as false */
 			}
-			flags=avp->type;
+			flags=avp->type & ~AVP_VAL_STR;
 			ret=value.n;
 			break;
 		case RV_SEL:
@@ -107,7 +107,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 					value.s.len=0;
 				}
 			}
-			flags=avp->type;
+			flags=avp->type|AVP_VAL_STR;
 			ret=(value.s.len>0);
 			break;
 		case RV_AVP:
@@ -116,10 +116,11 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				r_avp = search_first_avp(rv->v.avps.type, rv->v.avps.name,
 											&value, &st);
 				while(r_avp){
-					/* We take only the type and name from the source avp
-					 * and reset the class and track flags */
-					flags=(avp->type & ~AVP_INDEX_ALL) | 
-							(r_avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
+					/* We take only the val type  from the source avp
+					 * and reset the class, track flags and name type  */
+					flags=(avp->type & ~(AVP_INDEX_ALL|AVP_VAL_STR)) | 
+							(r_avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL|
+												AVP_NAME_STR|AVP_NAME_RE));
 					if (add_avp_before(avp_mark, flags, avp->name, value)<0){
 						ERR("failed to assign avp\n");
 						ret=-1;
@@ -139,8 +140,11 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
 											&value, rv->v.avps.index);
 				if (likely(r_avp)){
-					flags=avp->type | (r_avp->flags & 
-								~(AVP_CLASS_ALL|AVP_TRACK_ALL));
+					/* take only the val type from the source avp
+					 * and reset the class, track flags and name type  */
+					flags=(avp->type & ~AVP_VAL_STR) | (r_avp->flags & 
+								~(AVP_CLASS_ALL|AVP_TRACK_ALL|AVP_NAME_STR|
+									AVP_NAME_RE));
 					ret=1;
 				}else{
 					ret=-1;
@@ -149,27 +153,30 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			}
 			break;
 		case RV_PVAR:
-			flags=avp->type;
 			memset(&pval, 0, sizeof(pval));
 			if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
 				destroy_pval=1;
-				if (pval.flags & PV_VAL_STR){
-					value.s=pval.rs;
-					ret=(value.s.len>0);
-				}else if (pval.flags & PV_TYPE_INT){
+				if (pval.flags & PV_TYPE_INT){
 					value.n=pval.ri;
 					ret=value.n;
+					flags=avp->type & ~AVP_VAL_STR;
+				}else if (pval.flags & PV_VAL_STR){
+					value.s=pval.rs;
+					ret=(value.s.len>0);
+					flags=avp->type | AVP_VAL_STR;
 				}else if (pval.flags==PV_VAL_NONE ||
 							(pval.flags & (PV_VAL_NULL|PV_VAL_EMPTY))){
 					value.s.s="";
 					value.s.len=0;
 					ret=0;
+					flags=avp->type | AVP_VAL_STR;
 				}
 			}else{
 				/* non existing pvar */
 				value.s.s="";
 				value.s.len=0;
 				ret=0;
+				flags=avp->type | AVP_VAL_STR;
 			}
 			break;
 	}
@@ -286,13 +293,12 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				}
 			break;
 		case RV_PVAR:
-			memset(&pval, 0, sizeof(pval));
 			if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
 				destroy_pval=1;
-				if (pval.flags & PV_VAL_STR){
-					ret=(pval.rs.len>0);
-				}else if (pval.flags & PV_TYPE_INT){
+				if (pval.flags & PV_TYPE_INT){
 					ret=!(!pval.ri);
+				}else if (pval.flags & PV_VAL_STR){
+					ret=(pval.rs.len>0);
 				}else{
 					ERR("no value in pvar assignment rval\n");
 					ret=-1;

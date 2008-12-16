@@ -841,8 +841,8 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r,
 				return (op == DIFF_OP); /* error, not found => false */
 			}
 			if (likely(pval.flags & (PV_TYPE_INT|PV_VAL_INT))){
-				pv_value_destroy(&pval);
 				right=pval.ri;
+				pv_value_destroy(&pval);
 			}else{
 				pv_value_destroy(&pval);
 				return (op == DIFF_OP); /* not found or invalid type */
