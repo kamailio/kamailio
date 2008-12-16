@@ -120,13 +120,10 @@ int pv_table_add(pv_export_t *e)
 	{
 		if(pvi->pvid > pvid)
 			break;
-		if(pvi->pve.name.len > in->len)
-			break;
 		if(pvi->pve.name.len==in->len)
 		{
 			found = strncmp(pvi->pve.name.s, in->s, in->len);
-			if(found>0)
-				break;
+
 			if(found==0)
 			{
 				LM_ERR("pvar [%.*s] already exists\n", in->len, in->s);
@@ -333,8 +330,6 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 	while(pvi)
 	{
 		if(pvi->pvid > pvid)
-			break;
-		if(pvi->pve.name.len > pvname->len)
 			break;
 
 		if(pvi->pvid==pvid && pvi->pve.name.len==pvname->len
