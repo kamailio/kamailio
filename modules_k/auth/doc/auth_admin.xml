@@ -12,20 +12,20 @@
 		authentication taking username and password from pseudo-variables.
     </para>
 	</section>
-    
+
     <section>
 		<title>Nonce Security</title>
     <para>
-        The authentication mechanism offers protection against sniffing intrusion.
-        The module generates and verifies the nonces so that they can be used only
-        once (in an auth response). This is done
-        by having a lifetime value and an index associated with every nonce.
-        Using only an expiration value is not good enough because,as this value
-        has to be of few tens of seconds, it is possible for someone to sniff
-        on the network, get the credentials and then reuse them in another packet
-        with which to register a different contact or make calls using the others's
-        account. The index ensures that this will never be possible since it
-        is generated as unique through the lifetime of the nonce.
+		The authentication mechanism offers protection against sniffing intrusion.
+		The module generates and verifies the nonces so that they can be used only
+		once (in an auth response). This is done
+		by having a lifetime value and an index associated with every nonce.
+		Using only an expiration value is not good enough because,as this value
+		has to be of few tens of seconds, it is possible for someone to sniff
+		on the network, get the credentials and then reuse them in another packet
+		with which to register a different contact or make calls using the others's
+		account. The index ensures that this will never be possible since it
+		is generated as unique through the lifetime of the nonce.
 	</para>
 	<para>
 		The default limit for the requests that can be authenticated is 100000 
