@@ -337,8 +337,10 @@ static inline struct hostent* _resolvehost(char* name)
 {
 	static struct hostent* he=0;
 #ifdef HAVE_GETIPNODEBYNAME 
+#ifdef USE_IPV6
 	int err;
 	static struct hostent* he2=0;
+#endif
 #endif
 #ifndef DNS_IP_HACK
 #ifdef USE_IPV6
