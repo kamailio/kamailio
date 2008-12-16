@@ -806,6 +806,7 @@ EAT_ABLE	[\ \t\b\r]
 								}
 								yymore();
 							}
+<PVAR_P>{LPAREN}			{ p_nest++; yymore(); }
 <PVAR_P>.					{ yymore(); }
 
 <PVARID>{ID}|'.'			{yymore(); }
