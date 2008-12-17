@@ -385,7 +385,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	msg->msg_flags |= FL_USE_UAC_FROM;
 
 	/* add TM callback to restore the FROM hdr in reply */
-	if (uac_tmb.register_tmcb(msg,0,TMCB_RESPONSE_IN,restore_from_reply,0)!=1)
+	if (uac_tmb.register_tmcb(msg,0,TMCB_RESPONSE_IN,restore_from_reply,0,0)!=1)
 	{
 		LM_ERR("failed to install TM callback\n");
 		goto error1;
@@ -523,7 +523,7 @@ void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 		/* in callback we need TO/FROM to be parsed- it's already done 
 		 * by restore_from() function */
 		if ( uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
-		is_from?restore_from_reply:restore_to_reply, 0)!=1 ) {
+		is_from?restore_from_reply:restore_to_reply, 0, 0)!=1 ) {
 			LM_ERR("failed to install TM callback\n");
 				return;
 		}

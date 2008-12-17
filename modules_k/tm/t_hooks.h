@@ -179,9 +179,11 @@ struct tmcb_params {
 
 /*! \brief callback function prototype */
 typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
+/*! \brief function to release the callback param */
+typedef void (release_tmcb_param) (void *param);
 /*! \brief register callback function prototype */
 typedef int (*register_tmcb_f)(struct sip_msg* p_msg, struct cell *t,
-		int cb_types, transaction_cb f, void *param);
+		int cb_types, transaction_cb f, void *param, release_tmcb_param func);
 
 
 struct tm_callback {
@@ -189,6 +191,7 @@ struct tm_callback {
 	int types;                   /*!< types of events that trigger the callback*/
 	transaction_cb* callback;    /*!< callback function */
 	void *param;                 /*!< param to be passed to callback function */
+	release_tmcb_param *release; /*!< function to release the callback param when the callback is deleted */
 	struct tm_callback* next;
 };
 
@@ -208,6 +211,7 @@ extern unsigned int tmcb_pending_id;
 #define has_reqin_tmcbs() \
 	( req_in_tmcb_hl->first!=0 )
 
+void empty_tmcb_list(struct tmcb_head_list *head);
 
 int init_tmcb_lists(void);
 
@@ -225,9 +229,10 @@ void destroy_tmcb_lists(void);
  * \param types
  * \param f callback
  * \param param callback parameter
+ * \param release_func release function for callback parameter
  * \return negative result on error, the return code from insert_tmcb on success
  */
-int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param );
+int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param, release_tmcb_param release_func );
 
 /*!
  * \brief Inserts a callback into the a callback list
@@ -235,8 +240,9 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction
  * \param types callback type
  * \param f transaction callback
  * \param param callback parameter
+ * \param release_func release function for callback parameter
  */
-int insert_tmcb(struct tmcb_head_list *cb_list, int types, transaction_cb f, void *param );
+int insert_tmcb(struct tmcb_head_list *cb_list, int types, transaction_cb f, void *param, release_tmcb_param release_func );
 
 /*!
  * \brief Set extra parameter for tm callback

@@ -239,7 +239,7 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			TMCB_RESPONSE_IN |
 			/* report on missed calls */
 			((is_invite && is_mc_on(ps->req))?TMCB_ON_FAILURE:0) ;
-		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
+		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0, 0 )<=0) {
 			LM_ERR("cannot register additional callbacks\n");
 			return;
 		}

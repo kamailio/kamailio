@@ -54,7 +54,7 @@ int ospInitTm(void)
     }
 
     /* Register callbacks, listen for all incoming requests  */
-    if (osp_tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, ospOnReq, 0) <= 0) {
+    if (osp_tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, ospOnReq, 0, 0) <= 0) {
        LM_ERR("failed to register TMCB_REQUEST_IN callback\n");
        LM_ERR("TM callbacks are required for reporting call set up usage\n");
         return -1;
@@ -92,7 +92,7 @@ static void ospOnReq(
 //        TMCB_RESPONSE_IN |
         0;
 
-    if (osp_tmb.register_tmcb(0, t, tmcb_types, ospTmcbFunc, 0) <= 0) {
+    if (osp_tmb.register_tmcb(0, t, tmcb_types, ospTmcbFunc, 0, 0) <= 0) {
        LM_ERR("failed to register TM callbacks\n");
        LM_ERR("TM callbacks are required for reporting call setup usage\n");
         return;

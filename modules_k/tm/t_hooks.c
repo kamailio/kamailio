@@ -52,6 +52,22 @@ struct tmcb_head_list tmcb_pending_hl = {0,0};
 unsigned int tmcb_pending_id = -1;
 
 
+void empty_tmcb_list(struct tmcb_head_list *head)
+{
+	struct tm_callback *cbp, *cbp_tmp;
+
+	for( cbp=head->first; cbp ; ) {
+		cbp_tmp = cbp;
+		cbp = cbp->next;
+		if (cbp_tmp->release)
+			cbp_tmp->release(cbp_tmp->param);
+		shm_free( cbp_tmp );
+	}
+	head->first = 0 ;
+	head->reg_types = 0;
+}
+
+
 int init_tmcb_lists(void)
 {
 	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
@@ -65,20 +81,6 @@ int init_tmcb_lists(void)
 	return 1;
 }
 
-
-inline static void empty_tmcb_list(struct tmcb_head_list *head)
-{
-	struct tm_callback *cbp, *cbp_tmp;
-
-	for( cbp=head->first; cbp ; ) {
-		cbp_tmp = cbp;
-		cbp = cbp->next;
-		if (cbp_tmp->param) shm_free( cbp_tmp->param );
-		shm_free( cbp_tmp );
-	}
-	head->first = 0 ;
-	head->reg_types = 0;
-}
 
 void destroy_tmcb_lists(void)
 {
@@ -98,7 +100,7 @@ void destroy_tmcb_lists(void)
  * \param param callback parameter
  */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
-									transaction_cb f, void *param )
+				transaction_cb f, void *param, release_tmcb_param release_func )
 {
 	struct tm_callback *cbp;
 
@@ -115,6 +117,7 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 	/* ... and fill it up */
 	cbp->callback = f;
 	cbp->param = param;
+	cbp->release = release_func;
 	cbp->types = types;
 	if (cbp->next)
 		cbp->id = cbp->next->id+1;
@@ -137,9 +140,10 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
  * \param types
  * \param f callback
  * \param param callback parameter
+ * \param release_func release function for the callback parameter
  * \return negative result on error, the return code from insert_tmcb on success
  */
-int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param )
+int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param, release_tmcb_param release_func )
 {
 	struct tmcb_head_list *cb_list;
 
@@ -190,7 +194,7 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction
 		}
 	}
 
-	return insert_tmcb( cb_list, types, f, param );
+	return insert_tmcb( cb_list, types, f, param, release_func );
 }
 
 

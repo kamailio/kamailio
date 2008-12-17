@@ -178,7 +178,7 @@ unsigned int t_uac_cancel( str *headers, str *body,
 	}
 	reset_avps();
 	if(cb && insert_tmcb(&(cancel_cell->tmcb_hl),
-	TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED,cb,cbp)!=1){
+	TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED,cb,cbp,0)!=1){
 		ret=0;
 		LM_ERR("short of tmcb shmem !\n");
 		goto error2;

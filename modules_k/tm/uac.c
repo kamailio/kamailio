@@ -286,7 +286,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	/* Add also TMCB_LOCAL_RESPONSE_OUT if provisional replies are desired */
 	if (pass_provisional_replies || pass_provisional(new_cell))
 		flags |= TMCB_LOCAL_RESPONSE_OUT;
-	if(cb && insert_tmcb(&(new_cell->tmcb_hl),flags,cb,cbp)!=1){
+	if(cb && insert_tmcb(&(new_cell->tmcb_hl),flags,cb,cbp,0)!=1){
 		ret=E_OUT_OF_MEM;
 		LM_ERR("short of tmcb shmem\n");
 		goto error2;
@@ -341,9 +341,9 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 			 * we ignore any change on RURI and DSTURI and they should not
 			 * be changed  -bogdan */
 			if (req->new_uri.s)
-				{ pkg_free(req->new_uri.s); req->new_uri.len=0; }
+				{ pkg_free(req->new_uri.s); req->new_uri.s=0; req->new_uri.len=0; }
 			if (req->dst_uri.s)
-				{ pkg_free(req->dst_uri.s); req->dst_uri.len=0; }
+				{ pkg_free(req->dst_uri.s); req->dst_uri.s=0; req->dst_uri.len=0; }
 
 			if (req->add_rm || req->body_lumps) {
 				LM_DBG("re-building the buffer (sip_msg changed) - lumps are"

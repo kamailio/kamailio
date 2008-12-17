@@ -1141,6 +1141,15 @@ __dialog_destroy(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
     if (!param)
         return;
 
+    // If nat_table is NULL, it's because it was already removed during
+    // shutdown by mod_destroy. However we can still receive dialog destroy
+    // notifications when the dialog module removes dialogs on shutdown.
+    if (!nat_table) {
+        Dialog_Param_del(param);
+        *_params->param = NULL;
+        return;
+    }
+
     if (param->caller_uri) {
         h = HASH(nat_table, param->caller_uri);
         lock_get(&nat_table->slots[h].lock);
@@ -1371,7 +1380,7 @@ NAT_Keepalive(struct sip_msg *msg)
         // fallthrough
     case METHOD_SUBSCRIBE:
         msg->msg_flags |= FL_DO_KEEPALIVE;
-        if (tm_api.register_tmcb(msg, 0, TMCB_RESPONSE_IN, __tm_reply_in, 0) <= 0) {
+        if (tm_api.register_tmcb(msg, 0, TMCB_RESPONSE_IN, __tm_reply_in, 0, 0) <= 0) {
             LM_ERR("cannot register TM callback for incoming replies\n");
             return -1;
         }
@@ -1519,8 +1528,7 @@ send_keepalive(NAT_Contact *contact)
                    keepalive_params.extra_headers);
 
     if (len >= sizeof(buffer)) {
-        LM_ERR("keepalive message is longer than %lu bytes\n",
-			(unsigned long)sizeof(buffer));
+        LM_ERR("keepalive message is longer than %lu bytes\n", (unsigned long)sizeof(buffer));
         return;
     }
 
@@ -1797,6 +1805,7 @@ mod_destroy(void)
     if (nat_table) {
         save_keepalive_state();
         HashTable_del(nat_table);
+        nat_table = NULL;
     }
 }
 

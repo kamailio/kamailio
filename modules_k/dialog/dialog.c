@@ -415,7 +415,7 @@ static int mod_init(void)
 
 	/* register callbacks*/
 	/* listen for all incoming requests  */
-	if ( d_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, dlg_onreq, 0 ) <=0 ) {
+	if ( d_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, dlg_onreq, 0, 0 ) <=0 ) {
 		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
 		return -1;
 	}

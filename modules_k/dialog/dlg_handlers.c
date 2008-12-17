@@ -365,10 +365,6 @@ static void dlg_seq_up_onreply(struct cell* t, int type,
 		return;
 	}
 
-	/* unref the dialog as used from this callback */
-	if (type==TMCB_TRANS_DELETED)
-		unref_dlg(dlg,1);
-
 	return;
 }
 
@@ -388,10 +384,6 @@ static void dlg_seq_down_onreply(struct cell* t, int type,
 			DLG_DIR_DOWNSTREAM, 0);
 		return;
 	}
-
-	/* unref the dialog as used from this callback */
-	if (type==TMCB_TRANS_DELETED)
-		unref_dlg(dlg,1);
 
 	return;
 }
@@ -465,10 +457,10 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	/* move pending profile linkers into dialog */
 	set_current_dialog( req, dlg);
 
+	link_dlg( dlg , 2/* extra ref for the callback and current dlg hook */);
+
 	/* first INVITE seen (dialog created, unconfirmed) */
 	run_create_callbacks( dlg, req);
-
-	link_dlg( dlg , 2/* extra ref for the callback and current dlg hook */);
 
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID &&
 	add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
@@ -478,7 +470,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	if ( d_tmb.register_tmcb( 0, t,
 				  TMCB_RESPONSE_OUT|TMCB_TRANS_DELETED|TMCB_RESPONSE_FWDED,
-				  dlg_onreply, (void*)dlg)<0 ) {
+				  dlg_onreply, (void*)dlg, 0)<0 ) {
 		LM_ERR("failed to register TMCB\n");
 		goto error;
 	}
@@ -571,6 +563,15 @@ static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
 	}
 }
 
+
+static void
+unreference_dialog(void *dialog)
+{
+	// if the dialog table is gone, it means the system is shutting down.
+	if (!d_table)
+		return;
+	unref_dlg((struct dlg_cell*)dialog, 1);
+}
 
 
 void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
@@ -748,15 +749,13 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 		if ( (event!=DLG_EVENT_REQACK) &&
 		(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
-			/* ref the dialog as registered into the transaction
-			 * callback; unref will be done when the transaction
-			 * will be destroied */
+			/* ref the dialog as registered into the transaction callback.
+			 * unref will be done when the callback will be destroyed */
 			ref_dlg( dlg , 1);
 			/* register callback for the replies of this request */
-			if ( d_tmb.register_tmcb( req, 0, 
-			TMCB_RESPONSE_FWDED|TMCB_TRANS_DELETED,
+			if ( d_tmb.register_tmcb( req, 0, TMCB_RESPONSE_FWDED,
 			(dir==DLG_DIR_UPSTREAM)?dlg_seq_down_onreply:dlg_seq_up_onreply,
-			(void*)dlg)<0 ) {
+			(void*)dlg, unreference_dialog)<0 ) {
 				LM_ERR("failed to register TMCB (2)\n");
 					unref_dlg( dlg , 1);
 			}

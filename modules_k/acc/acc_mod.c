@@ -381,7 +381,7 @@ static int mod_init( void )
 	}
 
 	/* listen for all incoming requests  */
-	if ( tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, acc_onreq, 0 ) <=0 ) {
+	if ( tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, acc_onreq, 0, 0 ) <=0 ) {
 		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
 		return -1;
 	}

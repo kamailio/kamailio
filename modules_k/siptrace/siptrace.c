@@ -237,7 +237,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0) <=0)
+	if(tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0, 0) <=0)
 	{
 		LM_ERR("can't register trace_onreq_in\n");
 		return -1;
@@ -591,19 +591,19 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	if(tmb.register_tmcb( 0, t, TMCB_REQUEST_BUILT, trace_onreq_out, 0) <=0)
+	if(tmb.register_tmcb( 0, t, TMCB_REQUEST_BUILT, trace_onreq_out, 0, 0) <=0)
 	{
 		LM_ERR("can't register trace_onreq_out\n");
 		return;
 	}
 
-	if(tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN, trace_onreply_in, 0) <=0)
+	if(tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN, trace_onreply_in, 0, 0) <=0)
 	{
 		LM_ERR("can't register trace_onreply_in\n");
 		return;
 	}
 
-	if(tmb.register_tmcb( 0, t, TMCB_RESPONSE_OUT, trace_onreply_out, 0) <=0)
+	if(tmb.register_tmcb( 0, t, TMCB_RESPONSE_OUT, trace_onreply_out, 0, 0) <=0)
 	{
 		LM_ERR("can't register trace_onreply_out\n");
 		return;

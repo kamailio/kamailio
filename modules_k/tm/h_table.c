@@ -126,11 +126,12 @@ void free_cell( struct cell* dead_cell )
 	int i;
 	struct sip_msg *rpl;
 	struct totag_elem *tt, *foo;
-	struct tm_callback *cbs, *cbs_tmp;
 	struct proxy_l *p;
 
 	if ( has_tran_tmcbs( dead_cell, TMCB_TRANS_DELETED) )
 		run_trans_callbacks( TMCB_TRANS_DELETED, dead_cell, 0, 0, 0);
+
+	empty_tmcb_list(&dead_cell->tmcb_hl);
 
 	shm_lock();
 
@@ -139,13 +140,6 @@ void free_cell( struct cell* dead_cell )
 		sip_msg_free_unsafe( dead_cell->uas.request );
 	if ( dead_cell->uas.response.buffer.s )
 		shm_free_unsafe( dead_cell->uas.response.buffer.s );
-
-	/* callbacks */
-	for( cbs=dead_cell->tmcb_hl.first ; cbs ; ) {
-		cbs_tmp = cbs;
-		cbs = cbs->next;
-		shm_free_unsafe( cbs_tmp );
-	}
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )

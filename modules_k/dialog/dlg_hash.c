@@ -560,6 +560,8 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					break;
 				case DLG_STATE_CONFIRMED:
 					break;
+				case DLG_STATE_DELETED:
+					break;
 				default:
 					log_next_state_dlg(event, dlg);
 			}
