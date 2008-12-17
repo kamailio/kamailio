@@ -40,7 +40,8 @@
 
 
 typedef enum auth_result {
-	AUTH_ERROR = -5,    /*!< Error occurred, a reply has not been sent out */
+	NONCE_REUSED = -6,  /*!< Returned if nonce is used more than once */
+	AUTH_ERROR,         /*!< Error occurred, a reply has not been sent out */
 	NO_CREDENTIALS,     /*!< Credentials missing */
 	STALE_NONCE,        /*!< Stale nonce */
 	INVALID_PASSWORD,   /*!< Invalid password */
@@ -50,7 +51,6 @@ typedef enum auth_result {
 	AUTHORIZED,         /*!< Authorized. If returned by pre_auth,
 	                         no digest authorization necessary */
 	DO_AUTHORIZATION,   /*!< Can only be returned by pre_auth. */
-	NONCE_REUSED        /*!< Returned if nonce is used more than once */
 	                    /*!< Means to continue doing authorization */
 } auth_result_t;
 
