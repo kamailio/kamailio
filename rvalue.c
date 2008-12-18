@@ -2007,6 +2007,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 	int i;
 	int ret;
 	enum rval_expr_op op;
+	struct cfg_pos pos;
 	int right; /* debugging msg */
 	
 	rv=0;
@@ -2046,7 +2047,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v *  1 -> $v
 					 *  1 * $v -> $v */
 					rve_destroy(ct_rve);
+					pos=rve->fpos;
 					*rve=*v_rve; /* replace current expr. with $v */
+					rve->fpos=pos;
 					pkg_free(v_rve);/* rve_destroy(v_rve) would free
 									   everything*/
 					ret=1;
@@ -2068,7 +2071,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					if (ct_rve==rve->right.rve){
 						/* $v / 1 -> $v */
 						rve_destroy(ct_rve);
+						pos=rve->fpos;
 						*rve=*v_rve; /* replace current expr. with $v */
+						rve->fpos=pos;
 						pkg_free(v_rve);/* rve_destroy(v_rve) would free
 										   everything*/
 						ret=1;
@@ -2080,7 +2085,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					if (ct_rve==rve->right.rve){
 						/* $v - 0 -> $v */
 						rve_destroy(ct_rve);
+						pos=rve->fpos;
 						*rve=*v_rve; /* replace current expr. with $v */
+						rve->fpos=pos;
 						pkg_free(v_rve);/* rve_destroy(v_rve) would free
 										   everything*/
 						ret=1;
@@ -2104,7 +2111,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v |  0 -> $v
 					 *  0 | $v -> $v */
 					rve_destroy(ct_rve);
+					pos=rve->fpos;
 					*rve=*v_rve; /* replace current expr. with $v */
+					rve->fpos=pos;
 					pkg_free(v_rve);/* rve_destroy(v_rve) would free
 									   everything*/
 					ret=1;
@@ -2121,7 +2130,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v &&  1 -> $v
 					 *  1 && $v -> $v */
 					rve_destroy(ct_rve);
+					pos=rve->fpos;
 					*rve=*v_rve; /* replace current expr. with $v */
+					rve->fpos=pos;
 					pkg_free(v_rve);/* rve_destroy(v_rve) would free
 									   everything*/
 					ret=1;
@@ -2138,7 +2149,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v ||  0 -> $v
 					 *  0 && $v -> $v */
 					rve_destroy(ct_rve);
+					pos=rve->fpos;
 					*rve=*v_rve; /* replace current expr. with $v */
+					rve->fpos=pos;
 					pkg_free(v_rve);/* rve_destroy(v_rve) would free
 									   everything*/
 					ret=1;
@@ -2151,7 +2164,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v +  0 -> $v
 					 *  0 + $v -> $v */
 					rve_destroy(ct_rve);
+					pos=rve->fpos;
 					*rve=*v_rve; /* replace current expr. with $v */
+					rve->fpos=pos;
 					pkg_free(v_rve);/* rve_destroy(v_rve) would free
 									   everything*/
 					ret=1;
@@ -2168,26 +2183,26 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d($v, %d) -> %d\n", 
 							rve->fpos.s_line, rve->fpos.s_col,
-							rve->fpos.e_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.e_col,
 							op, i, (int)rve->left.rval.v.l);
 				else
 					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d($v, %d) -> $v\n",
 							rve->fpos.s_line, rve->fpos.s_col,
-							rve->fpos.e_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.e_col,
 							op, i);
 			}else{
 				if ((rve->op==RVE_RVAL_OP) && (rve->left.rval.type==RV_INT))
 					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d(%d, $v) -> %d\n", 
 							rve->fpos.s_line, rve->fpos.s_col,
-							rve->fpos.e_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.e_col,
 							op, i, (int)rve->left.rval.v.l);
 				else
 					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 							" op%d(%d, $v) -> $v\n",
 							rve->fpos.s_line, rve->fpos.s_col,
-							rve->fpos.e_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.e_col,
 							op, i);
 			}
 		}
