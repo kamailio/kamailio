@@ -61,6 +61,10 @@
  *              (rfc3486) (andrei)
  * 2007-08-31  id_builder() and via_builder() are grouped into one function:
  *             create_via_hf() -- tm module needs them as well (Miklos)
+ * 2008-12-17  build_req_from_sip_req() will now fallback to tcp, tls or sctp
+ *              if packet size > udp_mtu and fallback is enabled 
+ *             build_req_from_sip_req() uses now global_req_flags along
+ *               msg->msg_flags  (andrei)
  *
  */
 /* Via special params:
@@ -134,6 +138,8 @@
 #include "resolve.h"
 #include "ut.h"
 #include "pt.h"
+#include "cfg/cfg.h"
+#include "forward.h"
 
 
 #define append_str(_dest,_src,_len) \
@@ -148,9 +154,35 @@
 extern char version[];
 extern int version_len;
 
+/* global flags for build_req_from_sip_req */
+static unsigned int global_req_flags=0;
 
 
 
+/** per process fixup function for global_req_flags.
+  * It should be called from the configuration framework.
+  */
+void fix_global_req_flags( str* name)
+{
+	global_req_flags=0;
+	switch(cfg_get(core, core_cfg, udp_mtu_try_proto)){
+		case PROTO_NONE:
+		case PROTO_UDP:
+			/* do nothing */
+			break;
+		case PROTO_TCP:
+			global_req_flags|=FL_MTU_TCP_FB;
+			break;
+		case PROTO_TLS:
+			global_req_flags|=FL_MTU_TLS_FB;
+			break;
+		case PROTO_SCTP:
+			global_req_flags|=FL_MTU_SCTP_FB;
+			break;
+	}
+	if (cfg_get(core, core_cfg, force_rport))
+		global_req_flags|=FL_FORCE_RPORT;
+}
 
 
 
@@ -1419,20 +1451,54 @@ error:
 
 
 
+/** builds a request in memory from another sip request.
+  *
+  * Side-effects: - it adds lumps to the msg which are _not_ cleaned.
+  * All the added lumps are HDR_VIA_T.
+  *               - it might change send_info->proto and send_info->send_socket
+  *                 if proto fallback is enabled (see below).
+  *
+  * Uses also global_req_flags ( OR'ed with msg->msg_flags, see send_info
+  * below).
+  *
+  * @param msg  - sip message structure, complete with lumps
+  * @param returned_len - result length (filled in)
+  * @param send_info  - dest_info structure (value/result), contains where the
+  *                     packet will be sent to (it's needed for building a 
+  *                     correct via, fill RR lumps a.s.o.). If MTU based
+  *                     protocol fall-back is enabled (see flags below),
+  *                     send_info->proto might be updated with the new
+  *                     protocol.
+  *                     msg->msg_flags used:
+  *                     - FL_TCP_MTU_FB, FL_TLS_MTU_FB and FL_SCTP_MTU_FB -
+  *                       fallback to the corresp. proto if the built 
+  *                       message > mtu and send_info->proto==PROTO_UDP. 
+  *                       It will also update send_info->proto.
+  *                     - FL_FORCE_RPORT: add rport to via
+  *
+  * @return pointer to the new request (pkg_malloc'ed, needs freeing when
+  *   done) and sets returned_len or 0 on error.
+  */
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
-								struct dest_info* send_info)
+								struct dest_info* send_info
+								)
 {
-	unsigned int len, new_len, received_len, rport_len, uri_len, via_len, body_delta;
+	unsigned int len, new_len, received_len, rport_len, uri_len, via_len,
+				 body_delta;
 	char* line_buf;
 	char* received_buf;
 	char* rport_buf;
 	char* new_buf;
 	char* buf;
 	unsigned int offset, s_offset, size;
-	struct lump* anchor;
+	struct lump* via_anchor;
+	struct lump* via_lump;
 	struct lump* via_insert_param;
 	str branch;
+	unsigned int flags;
+	unsigned int udp_mtu;
+	struct socket_info* ss;
 
 	via_insert_param=0;
 	uri_len=0;
@@ -1445,9 +1511,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	rport_buf=0;
 	line_buf=0;
 
-	     /* Calculate message body difference and adjust
-	      * Content-Length
-	      */
+	flags=msg->msg_flags|global_req_flags;
+	/* Calculate message body difference and adjust Content-Length */
 	body_delta = lumps_len(msg, msg->body_lumps, send_info);
 	if (adjust_clen(msg, body_delta, send_info->proto) < 0) {
 		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: Error while adjusting"
@@ -1455,13 +1520,14 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		goto error00;
 	}
 
-	/* create a the via header */
+	/* create the via header */
 	branch.s=msg->add_to_branch_s;
 	branch.len=msg->add_to_branch_len;
 
 	line_buf = create_via_hf( &via_len, msg, send_info, &branch);
 	if (!line_buf){
-		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
+		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: "
+					"memory allocation failure\n");
 		goto error00;
 	}
 	/* check if received needs to be added */
@@ -1478,7 +1544,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	 *  - if via already contains an rport add it and overwrite the previous
 	 *  rport value if present (if you don't want to overwrite the previous
 	 *  version remove the comments) */
-	if ((msg->msg_flags&FL_FORCE_RPORT)||
+	if ((flags&FL_FORCE_RPORT)||
 			(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
 		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
@@ -1487,13 +1553,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		}
 	}
 
-	/* add via header to the list */
-	/* try to add it before msg. 1st via */
-	/* add first via, as an anchor for second via*/
-	anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
-	if (anchor==0) goto error01;
-	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA_T)==0)
-		goto error01;
 	/* find out where the offset of the first parameter that should be added
 	 * (after host:port), needed by add receive & maybe rport */
 	if (msg->via1->params.s){
@@ -1546,10 +1605,57 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 
 	/* compute new msg len and fix overlapping zones*/
-	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_info);
+	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_info)+via_len;
 #ifdef XL_DEBUG
 	LOG(L_ERR, "DEBUG: new_len(%d)=len(%d)+lumps_len\n", new_len, len);
 #endif
+	udp_mtu=cfg_get(core, core_cfg, udp_mtu);
+	if (unlikely((send_info->proto==PROTO_UDP) && udp_mtu && 
+					(flags & FL_MTU_FB_MASK) && (new_len>udp_mtu))){
+		ss=0;
+#ifdef USE_TCP
+		if (!tcp_disable && (flags & FL_MTU_TCP_FB) &&
+				(ss=get_send_socket(msg, &send_info->to, PROTO_TCP))){
+			send_info->proto=PROTO_TCP;
+		}
+	#ifdef USE_TLS
+		else if (!tls_disable && (flags & FL_MTU_TLS_FB) &&
+				(ss=get_send_socket(msg, &send_info->to, PROTO_TLS))){
+			send_info->proto=PROTO_TLS;
+		}
+	#endif /* USE_TLS */
+#endif /* USE_TCP */
+#ifdef USE_SCTP
+	#ifdef USE_TCP
+		else
+	#endif /* USE_TCP */
+		 if (!sctp_disable && (flags & FL_MTU_SCTP_FB) &&
+				(ss=get_send_socket(msg, &send_info->to, PROTO_SCTP))){
+			send_info->proto=PROTO_SCTP;
+		 }
+#endif /* USE_SCTP */
+		
+		if (ss){
+			send_info->send_sock=ss;
+			new_len-=via_len;
+			pkg_free(line_buf);
+			line_buf = create_via_hf( &via_len, msg, send_info, &branch);
+			if (!line_buf){
+				LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: "
+							"memory allocation failure!\n");
+				goto error00;
+			}
+			new_len+=via_len;
+		}
+	}
+	/* add via header to the list */
+	/* try to add it before msg. 1st via */
+	/* add first via, as an anchor for second via*/
+	via_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
+	if (via_anchor==0) goto error04;
+	if ((via_lump=insert_new_lump_before(via_anchor, line_buf, via_len,
+											HDR_VIA_T))==0)
+		goto error04;
 
 	if (msg->new_uri.s){
 		uri_len=msg->new_uri.len;
@@ -1593,11 +1699,12 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	return new_buf;
 
 error01:
-	if (line_buf) pkg_free(line_buf);
 error02:
 	if (received_buf) pkg_free(received_buf);
 error03:
 	if (rport_buf) pkg_free(rport_buf);
+error04:
+	if (line_buf) pkg_free(line_buf);
 error00:
 	*returned_len=0;
 	return 0;
@@ -1729,7 +1836,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		}
 	}
 	/* check if rport needs to be updated */
-	if ( (msg->msg_flags&FL_FORCE_RPORT)||
+	if ( ((msg->msg_flags|global_req_flags)&FL_FORCE_RPORT)||
 		(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
 		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req:"

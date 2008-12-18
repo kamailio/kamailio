@@ -41,6 +41,7 @@
 #if defined PKG_MALLOC || defined SHM_MEM
 #include "pt.h"
 #endif
+#include "msg_translator.h" /* fix_global_req_flags() */
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
@@ -88,6 +89,9 @@ struct cfg_group_core default_core_cfg = {
 #ifdef SHM_MEM
 	0, /* mem_dump_shm */
 #endif
+	0, /* udp_mtu (disabled by default) */
+	0, /* udp_mtu_try_proto -> default disabled */
+	0  /* force_rport */ 
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -177,5 +181,12 @@ cfg_def_t core_cfg_def[] = {
 	{"mem_dump_shm",	CFG_VAR_INT,	0, 0, mem_dump_shm_fixup, 0,
 		"dump shared memory status"},
 #endif
+	{"udp_mtu",	CFG_VAR_INT|CFG_ATOMIC,	0, 65535, 0, 0,
+		"fallback to a congestion controlled protocol if send size"
+			" exceeds udp_mtu"},
+	{"udp_mtu_try_proto", CFG_VAR_INT, 1, 4, 0, fix_global_req_flags,
+		"if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp)"},
+	{"force_rport",     CFG_VAR_INT, 0, 1,  0, fix_global_req_flags,
+		"force rport for all the received messages" },
 	{0, 0, 0, 0, 0, 0}
 };
