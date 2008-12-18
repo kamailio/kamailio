@@ -564,6 +564,32 @@ static int fix_actions(struct action* a)
 				t->val[0].u.data=si;
 				t->val[0].type=SOCKETINFO_ST;
 				break;
+			case UDP_MTU_TRY_PROTO_T:
+				if (t->val[0].type!=NUMBER_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for udp_mtu_try_proto\n",
+								t->val[0].type);
+					return E_BUG;
+				}
+				switch(t->val[0].u.number){
+					case PROTO_UDP:
+						t->val[0].u.number=0;
+						break;
+					case PROTO_TCP:
+						t->val[0].u.number=FL_MTU_TCP_FB;
+						break;
+					case PROTO_TLS:
+						t->val[0].u.number=FL_MTU_TLS_FB;
+						break;
+					case PROTO_SCTP:
+						t->val[0].u.number=FL_MTU_SCTP_FB;
+						break;
+					default:
+						LOG(L_CRIT, "BUG: fix actions: invalid argument for"
+									" udp_mtu_try_proto (%d)\n", 
+									(unsigned int)t->val[0].u.number);
+				}
+				break;
 		}
 	}
 	return 0;

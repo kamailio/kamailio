@@ -117,6 +117,7 @@
 #include "tcp_init.h"
 #include "tcp_options.h"
 #include "sctp_options.h"
+#include "msg_translator.h"
 
 #include "config.h"
 #include "cfg_core.h"
@@ -244,6 +245,8 @@ static void free_socket_id_lst(struct socket_id* i);
 %token REVERT_URI
 %token FORCE_RPORT
 %token FORCE_TCP_ALIAS
+%token UDP_MTU
+%token UDP_MTU_TRY_PROTO
 %token IF
 %token ELSE
 %token SET_ADV_ADDRESS
@@ -1248,6 +1251,15 @@ assign_stm:
 	| STUN_ALLOW_FP EQUAL NUMBER { IF_STUN(stun_allow_fp=$3) ; }
 	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
+	| UDP_MTU EQUAL error { yyerror("number expected"); }
+	| FORCE_RPORT EQUAL NUMBER 
+		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0); }
+	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
+	| UDP_MTU_TRY_PROTO EQUAL proto
+		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0); }
+	| UDP_MTU_TRY_PROTO EQUAL error
+		{ yyerror("TCP, TLS, SCTP or UDP expected"); }
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
@@ -2322,6 +2334,10 @@ cmd:
 		#endif
 	}
 	| FORCE_TCP_ALIAS LPAREN error RPAREN	{$$=0; yyerror("bad argument, number expected"); }
+	| UDP_MTU_TRY_PROTO LPAREN proto RPAREN
+		{ $$=mk_action(UDP_MTU_TRY_PROTO_T, 1, NUMBER_ST, $3); }
+	| UDP_MTU_TRY_PROTO LPAREN error RPAREN
+		{ $$=0; yyerror("bad argument, UDP, TCP, TLS or SCTP expected"); }
 	| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 		$$=0;
 		if ((str_tmp=pkg_malloc(sizeof(str)))==0) {
