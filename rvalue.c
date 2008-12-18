@@ -1992,7 +1992,24 @@ static int rve_optimize(struct rval_expr* rve)
 					rval_type_name(bad_type), rval_type_name(exp_type));
 			return 0;
 		}
-		/* TODO: $v - a => $v + (-a) */
+		/* $v - a => $v + (-a)  (easier to optimize)*/
+		if ((rve->op==RVE_MINUS_OP) && (rve_is_constant(rve->right.rve))){
+			if ((rv=rval_expr_eval(0, 0, rve->right.rve))==0){
+				ERR("optimization failure, bad expression\n");
+				goto error;
+			}
+			if (rv->type==RV_INT){
+				rv->v.l=-rv->v.l;
+				if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
+					goto error;
+				rve->op=RVE_PLUS_OP;
+				DBG("FIXUP RVE: optimized $v - a into $v + (%d)\n",
+								(int)rve->right.rve->left.rval.v.l);
+			}
+			rval_destroy(rv);
+			rv=0;
+		}
+		
 		/* TODO: $v * 0 => 0; $v * 1 => $v (for *, /, &, |, &&, ||, +, -) */
 		
 		/* op(op($v, a), b) => op($v, op(a,b)) */
