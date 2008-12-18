@@ -1288,8 +1288,6 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_PLUS_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
-		case RVE_LAND_OP:
-		case RVE_LOR_OP:
 		case RVE_GT_OP:
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
@@ -1301,6 +1299,34 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 					(ret=rval_expr_eval_int(h, msg, &i2, rve->right.rve)) <0) )
 				break;
 			ret=int_intop2(res, rve->op, i1, i2);
+			break;
+		case RVE_LAND_OP:
+			if (unlikely(
+					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
+				break;
+			if (i1==0){
+				*res=0;
+			}else{
+				if (unlikely( (ret=rval_expr_eval_int(h, msg, &i2,
+										rve->right.rve)) <0) )
+					break;
+				*res=i1 && i2;
+			}
+			ret=0;
+			break;
+		case RVE_LOR_OP:
+			if (unlikely(
+					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
+				break;
+			if (i1){
+				*res=1;
+			}else{
+				if (unlikely( (ret=rval_expr_eval_int(h, msg, &i2,
+										rve->right.rve)) <0) )
+					break;
+				*res=i1 || i2;
+			}
+			ret=0;
 			break;
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
@@ -1589,6 +1615,32 @@ error:
 	rval_destroy(rv1);
 	rval_destroy(rv2);
 	return 0;
+}
+
+
+
+/** evals a rval expr and always returns a new rval.
+ * like rval_expr_eval, but always returns a new rvalue (never a reference
+ * to an exisiting one).
+ * WARNING: result must be rval_destroy()'ed if non-null (it might be
+ * a reference to another rval). The result can be modified only
+ * if rv_chg_in_place() returns true.
+ * @result rvalue on success, 0 on error
+ */
+struct rvalue* rval_expr_eval_new(struct run_act_ctx* h, struct sip_msg* msg,
+								struct rval_expr* rve)
+{
+	struct rvalue* ret;
+	struct rvalue* rv;
+	
+	ret=rval_expr_eval(h, msg, rve);
+	if (ret && !rv_chg_in_place(ret)){
+		rv=ret;
+		/* create a new rv */
+		ret=rval_new(rv->type, &rv->v, 0);
+		rval_destroy(rv);
+	}
+	return ret;
 }
 
 
@@ -1941,6 +1993,221 @@ static int rve_replace_with_ct_rv(struct rval_expr* rve, struct rvalue* rv)
 
 
 
+/** optimize op($v, 0) or op($v, 1).
+ * Note: internal use only from rve_optimize
+ * It should be called after ct optimization, for non-contant
+ *  expressions (the left or right side is not constant).
+ * @return 1 on success (rve was changed), 0 on failure and -1 on error
+ */
+static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
+{
+	struct rvalue* rv;
+	struct rval_expr* ct_rve;
+	struct rval_expr* v_rve;
+	int i;
+	int ret;
+	enum rval_expr_op op;
+	int right; /* debugging msg */
+	
+	rv=0;
+	ret=0;
+	right=0;
+	
+	if (rve_is_constant(rve->right.rve)){
+		ct_rve=rve->right.rve;
+		v_rve=rve->left.rve;
+		right=1;
+	}else if (rve_is_constant(rve->left.rve)){
+		ct_rve=rve->left.rve;
+		v_rve=rve->right.rve;
+		right=0;
+	}else
+		return 0; /* op($v, $w) */
+	
+	/* rval_expr_eval_new() instead of rval_expr_eval() to avoid
+	   referencing a ct_rve->left.rval if ct_rve is a rval, which
+	   would prevent rve_destroy(ct_rve) from working */
+	if ((rv=rval_expr_eval_new(0, 0, ct_rve))==0){
+		ERR("optimization failure, bad expression\n");
+		goto error;
+	}
+	op=rve->op;
+	if (rv->type==RV_INT){
+		i=rv->v.l;
+		switch(op){
+			case RVE_MUL_OP:
+				if (i==0){
+					/* $v *  0 -> 0
+					 *  0 * $v -> 0 */
+					if (rve_replace_with_ct_rv(rve, rv)<0)
+						goto error;
+					ret=1;
+				}else if (i==1){
+					/* $v *  1 -> $v
+					 *  1 * $v -> $v */
+					rve_destroy(ct_rve);
+					*rve=*v_rve; /* replace current expr. with $v */
+					pkg_free(v_rve);/* rve_destroy(v_rve) would free
+									   everything*/
+					ret=1;
+				}
+				break;
+			case RVE_DIV_OP:
+				if (i==0){
+					if (ct_rve==rve->left.rve){
+						/* 0 / $v -> 0 */
+						if (rve_replace_with_ct_rv(rve, rv)<0)
+							goto error;
+						ret=1;
+					}else{
+						/* $v / 0 */
+						ERR("RVE divide by 0 at %d,%d\n",
+								ct_rve->fpos.s_line, ct_rve->fpos.s_col);
+					}
+				}else if (i==1){
+					if (ct_rve==rve->right.rve){
+						/* $v / 1 -> $v */
+						rve_destroy(ct_rve);
+						*rve=*v_rve; /* replace current expr. with $v */
+						pkg_free(v_rve);/* rve_destroy(v_rve) would free
+										   everything*/
+						ret=1;
+					}
+				}
+				break;
+			case RVE_MINUS_OP:
+				if (i==0){
+					if (ct_rve==rve->right.rve){
+						/* $v - 0 -> $v */
+						rve_destroy(ct_rve);
+						*rve=*v_rve; /* replace current expr. with $v */
+						pkg_free(v_rve);/* rve_destroy(v_rve) would free
+										   everything*/
+						ret=1;
+					}
+					/* ? 0 - $v -> -($v)  ? */
+				}
+				break;
+			case RVE_BAND_OP:
+				if (i==0){
+					/* $v &  0 -> 0
+					 *  0 & $v -> 0 */
+					if (rve_replace_with_ct_rv(rve, rv)<0)
+						goto error;
+					ret=1;
+				}
+				/* no 0xffffff optimization for now (haven't decide on
+				   the number of bits ) */
+				break;
+			case RVE_BOR_OP:
+				if (i==0){
+					/* $v |  0 -> $v
+					 *  0 | $v -> $v */
+					rve_destroy(ct_rve);
+					*rve=*v_rve; /* replace current expr. with $v */
+					pkg_free(v_rve);/* rve_destroy(v_rve) would free
+									   everything*/
+					ret=1;
+				}
+				break;
+			case RVE_LAND_OP:
+				if (i==0){
+					/* $v &&  0 -> 0
+					 *  0 && $v -> 0 */
+					if (rve_replace_with_ct_rv(rve, rv)<0)
+						goto error;
+					ret=1;
+				}else if (i==1){
+					/* $v &&  1 -> $v
+					 *  1 && $v -> $v */
+					rve_destroy(ct_rve);
+					*rve=*v_rve; /* replace current expr. with $v */
+					pkg_free(v_rve);/* rve_destroy(v_rve) would free
+									   everything*/
+					ret=1;
+				}
+				break;
+			case RVE_LOR_OP:
+				if (i==1){
+					/* $v ||  1 -> 1
+					 *  1 || $v -> 1 */
+					if (rve_replace_with_ct_rv(rve, rv)<0)
+						goto error;
+					ret=1;
+				}else if (i==0){
+					/* $v ||  0 -> $v
+					 *  0 && $v -> $v */
+					rve_destroy(ct_rve);
+					*rve=*v_rve; /* replace current expr. with $v */
+					pkg_free(v_rve);/* rve_destroy(v_rve) would free
+									   everything*/
+					ret=1;
+				}
+				break;
+			case RVE_PLUS_OP:
+				/* we must make sure that this is an int PLUS
+				   (because "foo"+0 is valid => "foo0") */
+				if ((i==0) && (rve_type==RV_INT)){
+					/* $v +  0 -> $v
+					 *  0 + $v -> $v */
+					rve_destroy(ct_rve);
+					*rve=*v_rve; /* replace current expr. with $v */
+					pkg_free(v_rve);/* rve_destroy(v_rve) would free
+									   everything*/
+					ret=1;
+				}
+				break;
+			default:
+				/* do nothing */
+				break;
+		}
+		/* debugging messages */
+		if (ret==1){
+			if (right){
+				if ((rve->op==RVE_RVAL_OP) && (rve->left.rval.type==RV_INT))
+					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+							" op%d($v, %d) -> %d\n", 
+							rve->fpos.s_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.s_col,
+							op, i, (int)rve->left.rval.v.l);
+				else
+					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+							" op%d($v, %d) -> $v\n",
+							rve->fpos.s_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.s_col,
+							op, i);
+			}else{
+				if ((rve->op==RVE_RVAL_OP) && (rve->left.rval.type==RV_INT))
+					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+							" op%d(%d, $v) -> %d\n", 
+							rve->fpos.s_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.s_col,
+							op, i, (int)rve->left.rval.v.l);
+				else
+					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+							" op%d(%d, $v) -> $v\n",
+							rve->fpos.s_line, rve->fpos.s_col,
+							rve->fpos.e_line, rve->fpos.s_col,
+							op, i);
+			}
+		}
+	}
+	/* no optimization for strings for now
+	   (We could optimize $v + "" or ""+$v, but this ""+$v is a way
+	    to force convert $v to str , it might mess up type checking
+	    (e.g. errors w/o optimization and no errors with) and it brings
+	    a very small benefit anyway (it's unlikely we'll see a lot of
+	    "")
+	*/
+	if (rv) rval_destroy(rv);
+	return ret;
+error:
+	if (rv) rval_destroy(rv);
+	return -1;
+}
+
+
+
 /** tries to optimize a rval_expr. */
 static int rve_optimize(struct rval_expr* rve)
 {
@@ -1987,8 +2254,9 @@ static int rve_optimize(struct rval_expr* rve)
 		rve_optimize(rve->left.rve);
 		rve_optimize(rve->right.rve);
 		if (!rve_check_type(&type, rve, &bad_rve, &bad_type, &exp_type)){
-			ERR("optimization failure, type mismatch in expression, "
+			ERR("optimization failure, type mismatch in expression (%d,%d), "
 					"type %s, but expected %s\n",
+					bad_rve->fpos.s_line, bad_rve->fpos.s_col,
 					rval_type_name(bad_type), rval_type_name(exp_type));
 			return 0;
 		}
@@ -2010,7 +2278,14 @@ static int rve_optimize(struct rval_expr* rve)
 			rv=0;
 		}
 		
-		/* TODO: $v * 0 => 0; $v * 1 => $v (for *, /, &, |, &&, ||, +, -) */
+		/* $v * 0 => 0; $v * 1 => $v (for *, /, &, |, &&, ||, +, -) */
+		if (rve_opt_01(rve, type)==1){
+			/* success, rve was changed => return now
+			  (since this is recursively invoked the "new" rve
+			   is already optimized) */
+			ret=1;
+			goto end;
+		}
 		
 		/* op(op($v, a), b) => op($v, op(a,b)) */
 		if (rve_is_constant(rve->right.rve)){
@@ -2170,6 +2445,7 @@ static int rve_optimize(struct rval_expr* rve)
 		}
 		/* op(op($v,a), op($w,b)) => no optimizations for now (TODO) */
 	}
+end:
 	return ret;
 error:
 	if (rv) rval_destroy(rv);
