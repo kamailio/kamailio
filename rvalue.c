@@ -385,10 +385,13 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IPLUS_OP:
 			return RV_INT;
 		case RVE_PLUS_OP:
 			/* '+' evaluates to the type of the left operand */
 			return rve_guess_type(rve->left.rve);
+		case RVE_CONCAT_OP:
+			return RV_STR;
 		case RVE_NONE_OP:
 			break;
 	}
@@ -437,6 +440,8 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
+		case RVE_CONCAT_OP:
 			return rve_is_constant(rve->left.rve) &&
 					rve_is_constant(rve->right.rve);
 		case RVE_NONE_OP:
@@ -473,6 +478,8 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
+		case RVE_CONCAT_OP:
 			return 0;
 		case RVE_NONE_OP:
 			return -1;
@@ -532,6 +539,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
+		case RVE_IPLUS_OP:
 			*type=RV_INT;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (type1==RV_STR){
@@ -584,6 +592,28 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 						return 0;
 					}
 					*type=type1;
+					return 1;
+				}
+			}
+		case RVE_CONCAT_OP:
+			*type=RV_STR;
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
+									exp_t)){
+					if ((type2!=type1) && (type1!=RV_NONE) &&
+							(type2!=RV_NONE) && 
+							!(type1==RV_STR && type2==RV_INT)){
+						if (bad_rve) *bad_rve=rve->right.rve;
+						if (bad_t) *bad_t=type2;
+						if (exp_t) *exp_t=type1;
+						return 0;
+					}
+					if (type1==RV_INT){
+						if (bad_rve) *bad_rve=rve->left.rve;
+						if (bad_t) *bad_t=type1;
+						if (exp_t) *exp_t=RV_STR;
+						return 0;
+					}
 					return 1;
 				}
 			}
@@ -936,6 +966,7 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
 {
 	switch(op){
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
 			*res=v1+v2;
 			break;
 		case RVE_MINUS_OP:
@@ -981,6 +1012,10 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
 		case RVE_DIFF_OP:
 			*res=v1 != v2;
 			break;
+		case RVE_CONCAT_OP:
+			*res=0;
+			/* invalid operand for int */
+			return -1;
 		default:
 			BUG("rv unsupported intop %d\n", op);
 			return -1;
@@ -1286,6 +1321,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_DIV_OP:
 		case RVE_MINUS_OP:
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
 		case RVE_GT_OP:
@@ -1376,6 +1412,10 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 				rval_destroy(rv2);
 			break;
 #endif
+		case RVE_CONCAT_OP:
+			*res=0;
+			ret=-1;
+			break;
 		case RVE_NONE_OP:
 		/*default:*/
 			BUG("invalid rval int expression operation %d\n", rve->op);
@@ -1446,6 +1486,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IPLUS_OP:
 			/* operator forces integer type */
 			ret=rval_expr_eval_int(h, msg, res_i, rve);
 			*res_rv=0;
@@ -1478,6 +1519,10 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 				ret=-(*res_rv==0);
 			}
 			rval_cache_clean(&c1);
+			break;
+		case RVE_CONCAT_OP:
+			*res_rv=rval_expr_eval(h, msg, rve);
+			ret=-(*res_rv==0);
 			break;
 		case RVE_NONE_OP:
 		/*default:*/
@@ -1535,6 +1580,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IPLUS_OP:
 			/* operator forces integer type */
 			r=rval_expr_eval_int(h, msg, &i, rve);
 			if (likely(r==0)){
@@ -1602,6 +1648,19 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 					goto error;
 			}
 			rval_cache_clean(&c1);
+			break;
+		case RVE_CONCAT_OP:
+			rv1=rval_expr_eval(h, msg, rve->left.rve);
+			if (unlikely(rv1==0)){
+				ERR("rval expression evaluation failed\n");
+				goto error;
+			}
+			rv2=rval_expr_eval(h, msg, rve->right.rve);
+			if (unlikely(rv2==0)){
+				ERR("rval expression evaluation failed\n");
+				goto error;
+			}
+			ret=rval_str_add2(h, msg, rv1, 0, rv2, 0);
 			break;
 		case RVE_NONE_OP:
 		/*default:*/
@@ -1767,8 +1826,10 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_CONCAT_OP:
 			break;
 		default:
 			BUG("unsupported operator %d\n", op);
@@ -1802,6 +1863,8 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_MINUS_OP:
 			return 0;
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
+		case RVE_CONCAT_OP:
 		case RVE_MUL_OP:
 		case RVE_BAND_OP:
 		case RVE_BOR_OP:
@@ -1838,6 +1901,7 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 			return 0;
 		case RVE_PLUS_OP:
 			return type==RV_INT; /* commutative only for INT*/
+		case RVE_IPLUS_OP:
 		case RVE_MUL_OP:
 		case RVE_BAND_OP:
 		case RVE_BOR_OP:
@@ -1851,6 +1915,7 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_CONCAT_OP:
 			return 0;
 	}
 	return 0;
@@ -2158,9 +2223,10 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				}
 				break;
 			case RVE_PLUS_OP:
+			case RVE_IPLUS_OP:
 				/* we must make sure that this is an int PLUS
 				   (because "foo"+0 is valid => "foo0") */
-				if ((i==0) && (rve_type==RV_INT)){
+				if ((i==0) && ((op==RVE_IPLUS_OP)||(rve_type==RV_INT))){
 					/* $v +  0 -> $v
 					 *  0 + $v -> $v */
 					rve_destroy(ct_rve);
@@ -2206,14 +2272,32 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 							op, i);
 			}
 		}
-	}
-	/* no optimization for strings for now
+	}else if (rv->type==RV_STR){
+		switch(op){
+			case RVE_CONCAT_OP:
+				if (rv->v.s.len==0){
+					/* $v . "" -> $v 
+					   "" . $v -> $v */
+					rve_destroy(ct_rve);
+					pos=rve->fpos;
+					*rve=*v_rve; /* replace current expr. with $v */
+					rve->fpos=pos;
+					pkg_free(v_rve);/* rve_destroy(v_rve) would free
+									   everything*/
+					ret=1;
+				}
+				break;
+			default:
+				break;
+		}
+	/* no optimization for generic RVE_PLUS_OP for now, only for RVE_CONCAT_OP
 	   (We could optimize $v + "" or ""+$v, but this ""+$v is a way
 	    to force convert $v to str , it might mess up type checking
 	    (e.g. errors w/o optimization and no errors with) and it brings
 	    a very small benefit anyway (it's unlikely we'll see a lot of
 	    "")
 	*/
+	}
 	if (rv) rval_destroy(rv);
 	return ret;
 error:
@@ -2232,7 +2316,7 @@ static int rve_optimize(struct rval_expr* rve)
 	enum rval_expr_op op;
 	int flags;
 	struct rval_expr tmp_rve;
-	enum rval_type type;
+	enum rval_type type, l_type;
 	struct rval_expr* bad_rve;
 	enum rval_type bad_type, exp_type;
 	
@@ -2285,12 +2369,28 @@ static int rve_optimize(struct rval_expr* rve)
 				rv->v.l=-rv->v.l;
 				if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
 					goto error;
-				rve->op=RVE_PLUS_OP;
+				rve->op=RVE_IPLUS_OP;
 				DBG("FIXUP RVE: optimized $v - a into $v + (%d)\n",
 								(int)rve->right.rve->left.rval.v.l);
 			}
 			rval_destroy(rv);
 			rv=0;
+		}
+		
+		/* e1 PLUS_OP e2 -> change op if we know e1 basic type */
+		if (rve->op==RVE_PLUS_OP){
+			l_type=rve_guess_type(rve->left.rve);
+			if (l_type==RV_INT){
+				rve->op=RVE_IPLUS_OP;
+				DBG("FIXUP RVE (%d,%d-%d,%d): changed + into interger plus\n",
+						rve->fpos.s_line, rve->fpos.s_col,
+						rve->fpos.e_line, rve->fpos.e_col);
+			}else if (l_type==RV_STR){
+				rve->op=RVE_CONCAT_OP;
+				DBG("FIXUP RVE (%d,%d-%d,%d): changed + into string concat\n",
+						rve->fpos.s_line, rve->fpos.s_col,
+						rve->fpos.e_line, rve->fpos.e_col);
+			}
 		}
 		
 		/* $v * 0 => 0; $v * 1 => $v (for *, /, &, |, &&, ||, +, -) */
@@ -2510,8 +2610,10 @@ int fix_rval_expr(void** p)
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
 		case RVE_PLUS_OP:
+		case RVE_IPLUS_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_CONCAT_OP:
 			ret=fix_rval_expr((void**)&rve->left.rve);
 			if (ret<0) return ret;
 			ret=fix_rval_expr((void**)&rve->right.rve);

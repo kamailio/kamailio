@@ -59,10 +59,12 @@ enum rval_expr_op{
 	RVE_GTE_OP,   /*  2 members, returns left >= right */
 	RVE_LT_OP,    /*  2 members, returns left  < right */
 	RVE_LTE_OP,   /*  2 members, returns left <= right */
+	RVE_IPLUS_OP, /* 2 members, integer +, returns int(a)+int(b) */
 	/* common int & str */
-	RVE_PLUS_OP,  /* 2 members, returns left + right  (int or str)*/
+	RVE_PLUS_OP,  /* generic plus (int or str) returns left + right */
 	RVE_EQ_OP,    /*  2 members, returns left == right  (int)*/
 	RVE_DIFF_OP,  /*  2 members, returns left != right  (int)*/
+	RVE_CONCAT_OP,/* string concatenation, returns left . right */
 	/* str only */
 };
 
