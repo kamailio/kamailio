@@ -194,6 +194,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 	struct retr_buf *crb, *irb;
 	int ret;
 	branch_bm_t tmp_bm;
+	void* pcbuf;
 
 	crb=&t->uac[branch].local_cancel;
 	irb=&t->uac[branch].request;
@@ -216,7 +217,8 @@ int cancel_branch( struct cell *t, int branch, int flags )
 			DBG("DEBUG: cancel_branch: no response ever received: "
 			    "giving up on cancel\n");
 			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-			atomic_set_long((void*)&crb->buffer, 0);
+			pcbuf=&crb->buffer; /* workaround for type punning warnings */
+			atomic_set_long(pcbuf, 0);
 			if (flags & F_CANCEL_B_FAKE_REPLY){
 				LOCK_REPLIES(t);
 				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm, 1) == 
@@ -235,7 +237,8 @@ int cancel_branch( struct cell *t, int branch, int flags )
 				if (!(flags & F_CANCEL_B_FORCE_RETR))
 					stop_rb_retr(irb); /* stop retransmissions */
 				/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-				atomic_set_long((void*)&crb->buffer, 0);
+				pcbuf=&crb->buffer; /* workaround for type punning warnings */
+				atomic_set_long(pcbuf, 0);
 				if (flags & F_CANCEL_B_FAKE_REPLY){
 					stop_rb_timers( irb ); /* stop even the fr timer */
 					LOCK_REPLIES(t);
@@ -262,7 +265,8 @@ int cancel_branch( struct cell *t, int branch, int flags )
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
 		/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-		atomic_set_long((void*)&crb->buffer, 0);
+		pcbuf=&crb->buffer; /* workaround for type punning warnings */
+		atomic_set_long(pcbuf, 0);
 		return -1;
 	}
 	/* install cancel now */

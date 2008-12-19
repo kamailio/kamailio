@@ -500,7 +500,7 @@ static int get_reply(struct binrpc_handle *handle,
 		/* we must read all datagram in one read call, otherwise unread part is truncated and lost. Read will block execution */
 		if (crt - hdr_end < tl) {
 			snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
-				"get_reply: datagram truncated. Received: %d, Expected: %d.",
+				"get_reply: datagram truncated. Received: %ld, Expected: %d.",
 				crt-hdr_end, tl);
 			return FATAL_ERROR;		
 		}

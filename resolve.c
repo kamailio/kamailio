@@ -896,8 +896,9 @@ int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
 	if ((*crt==0) || ((*crt_proto!=n_proto) && 
 						( naptr_proto_preferred(n_proto, *crt_proto))) )
 			goto change;
-	if ((n->order<(*crt)->order) || ((n->order== (*crt)->order) &&
-									(n->pref < (*crt)->pref))){
+	if (!naptr_proto_preferred(*crt_proto, n_proto) && 
+			((n->order<(*crt)->order) || ((n->order== (*crt)->order) &&
+								(n->pref < (*crt)->pref)))){
 			goto change;
 	}
 #ifdef NAPTR_DBG
@@ -1018,6 +1019,11 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 					memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
 					memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
+					break;
+				case PROTO_SCTP:
+					memcpy(tmp, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
+					memcpy(tmp+SRV_SCTP_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
 					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",

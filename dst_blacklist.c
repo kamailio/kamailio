@@ -879,6 +879,8 @@ static char* get_proto_name(unsigned char proto)
 			return "tcp";
 		case PROTO_TLS:
 			return "tls";
+		case PROTO_SCTP:
+			return "sctp";
 		default:
 			return "unknown";
 	}

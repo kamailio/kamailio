@@ -77,7 +77,7 @@ char *zt_strdup(const char*src);
 
 /** frees string content if allocated */
 /* void str_free_content(str_t *s); */
-#define str_free_content(str)	do { if (str) { \
+#define str_free_content(str)	do { if (str != NULL) { \
 		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
 		(str)->len = 0; \
 		(str)->s = 0; \
@@ -85,13 +85,13 @@ char *zt_strdup(const char*src);
 
 /** frees string content if allocated and then the string itself */
 /* void str_free(str_t *s); */
-#define str_free(str)	do { if (str) { \
+#define str_free(str)	do { if (str != NULL) { \
 		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
 		cds_free(str); \
 	} } while (0)
 
 /* clears string content */
-#define str_clear(str)	do { if (str) { \
+#define str_clear(str)	do { if (str != NULL) { \
 		(str)->len = 0; \
 		(str)->s = 0; \
 	} } while (0)

@@ -577,7 +577,7 @@ $(man_prefix)/$(man_dir)/man7:
 
 $(man_prefix)/$(man_dir)/man5:
 		mkdir -p $(man_prefix)/$(man_dir)/man5
-		
+
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
 		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
@@ -600,7 +600,7 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 		# radius dictionary
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser
 		$(INSTALL_CFG) etc/dictionary.ser $(cfg_prefix)/$(cfg_dir)
-		
+
 		# TLS configuration
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
 		$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)

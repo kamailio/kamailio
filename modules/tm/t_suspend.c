@@ -38,6 +38,14 @@
 #include "timer.h"
 #include "t_suspend.h"
 
+/* Suspends the transaction for later use.
+ * Save the returned hash_index and label to get
+ * back to the SIP request processing, see the readme.
+ *
+ * Return value:
+ * 	0  - success
+ * 	<0 - failure
+ */
 int t_suspend(struct sip_msg *msg,
 		unsigned int *hash_index, unsigned int *label)
 {
@@ -85,6 +93,14 @@ int t_suspend(struct sip_msg *msg,
 	return 0;
 }
 
+/* Continues the SIP request processing previously saved by
+ * t_suspend(). The script does not continue from the same
+ * point, but a separate route block is executed instead.
+ *
+ * Return value:
+ * 	0  - success
+ * 	<0 - failure
+ */
 int t_continue(unsigned int hash_index, unsigned int label,
 		struct action *route)
 {

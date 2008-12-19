@@ -155,6 +155,93 @@ end of body
 		</listitem>
 	    </itemizedlist>
 	</section>
+
+	<section id="t_suspend">
+	    <title>
+	    	<function>int t_suspend(struct sip_msg *msg,
+			unsigned int *hash_index, unsigned int *label)</function>
+	    </title>
+	    <para>
+	    	For programmatic use only.
+		This function together with t_continue() can be used to
+		implement asynchronous actions: t_suspend() saves the transaction,
+		returns its identifiers, and t_continue() continues the
+		SIP request processing. (The request processing does not continue
+		from the same point in the script, a separate route block defined
+		by the parameter of t_continue() is executed instead. The reply lock
+		is held during the route block execution.)
+		FR timer is ticking while the transaction is suspended, and the
+		transaction's failure route is executed if t_continue() is not
+		called in time.
+	    </para>
+	    <para>
+		Missing: message lumps are saved by t_suspend() and are not updated by
+		the subsequent t_relay(). This means that the modifications made
+		between them are lost.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>msg</emphasis> - SIP message pointer.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_index</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>label</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	    <para>
+		Usage: Allocate a memory block for storing the transaction identifiers
+		(hash_index and label), and for storing also any variable related to
+		the async query. Before calling t_suspend(), register for the following
+		callbacks, and pass the pointer to the allocated shared memory as
+		a parameter: TMCB_ON_FAILURE, TMCB_DESTROY, and TMCB_E2ECANCEL_IN
+		(in case of INVITE transaction). The async operation can be
+		cancelled, if it is still pending, when TMCB_ON_FAILURE or
+		TMCB_E2ECANCEL_IN is called. TMCB_DESTROY is suitable to free
+		the shared memory allocated for the async and SIP transaction identifiers.
+		Once the async query result is available call t_continue(), see below.
+		The SIP transaction must exist before calling t_suspend(), and the module
+		function calling t_suspend() should return 0 to make sure that the script
+		processing does not continue.
+	    </para>
+	</section>
+
+	<section id="t_continue">
+	    <title>
+		<function>int t_continue(unsigned int hash_index, unsigned int label,
+		                struct action *route)</function>
+	    </title>
+	    <para>
+		For programmatic use only.
+		This function is the pair of t_suspend(), and is supposed
+		to be called when the asynchronous query result is available.
+		The function executes a route block with the saved SIP message.
+		It is possible to add more branches to the transaction, or send
+		a reply from the route block.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>hash_index</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>label</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>route</emphasis> - route block to execute.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
     </section>
     
 </section>

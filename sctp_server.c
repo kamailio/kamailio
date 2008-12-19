@@ -216,6 +216,15 @@ static int sctp_init_sock_opt_common(int s)
 		}
 	}
 	
+	/* set reuseaddr */
+	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+						(void*)&optval, sizeof(optval))==-1){
+			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
+						" SO_REUSEADDR (%d): %s\n", optval, strerror(errno));
+			/* continue, non-critical */
+	}
+
+	
 	/* disable fragments interleave (SCTP_FRAGMENT_INTERLEAVE) --
 	 * we don't want partial delivery, so fragment interleave must be off too
 	 */

@@ -55,6 +55,10 @@ fs.file-max                 - maximum number of fds that will be allocated
 1.5 other sysctl that might affect tcp connection rate or the maximum number
     of open connections
 
+fs.epoll.max_user_instances - maximum number of devices - per user (2.6.27.8+)
+fs.epoll.max_user_watches   - maximum number of "watched" fds - per user
+                              (2.6.27.8+)
+
 iptables  - remove the ip_conntrack module (it limits the maximum tcp
  connections, adds extra overhead (slow)). It's probably better to remove
   all the iptables modules.
