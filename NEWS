@@ -1,7 +1,23 @@
-Release notes for SIP Express Router (ser)
+Release notes for SIP Router (sr)
 ***********************************************
 
 $Id$
+
+sip-router changes
+
+core:
+  - support for dual module interfaces: ser and kamailio
+config script changes:
+  - script mode can be switched between ser compatible, kamailio compatible
+    and max compatibility (compatible with both as much as possible), using
+      #!SER
+      #!KAMAILIO
+      #!OPENSER
+      #!ALL
+      #!MAXCOMPAT
+    where #!KAMAILIO is equivalent with #!OPENSER and #!ALL with #!MAXCOMPAT
+  - support for kamailio style pvars
+
 
 
 

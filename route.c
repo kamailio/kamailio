@@ -48,6 +48,7 @@
  *		the expressions does not exist (Miklos)
  *  2008-04-23  errors are treated as false during expression evaluation
  *  		unless the operator is DIFF_OP (Miklos)
+ *  2008-12-03  fixups for rvalues in assignments (andrei)
  */
 
 
@@ -66,6 +67,8 @@
 #include "dprint.h"
 #include "proxy.h"
 #include "action.h"
+#include "lvalue.h"
+#include "rvalue.h"
 #include "sr_module.h"
 #include "ip_addr.h"
 #include "resolve.h"
@@ -78,6 +81,7 @@
 #include "onsend.h"
 #include "str_hash.h"
 #include "ut.h"
+#include "rvalue.h"
 
 #define RT_HASH_SIZE	8 /* route names hash */
 
@@ -89,6 +93,12 @@ struct route_list branch_rt;
 struct route_list onsend_rt;
 
 
+/** script optimization level, useful for debugging.
+ *  0 - no optimization
+ *  1 - optimize rval expressions
+ *  2 - optimize expr elems
+ */
+int scr_opt_lev=9;
 
 inline static void destroy_rlist(struct route_list* rt)
 {
@@ -276,12 +286,213 @@ int route_lookup(struct route_list* rt, char* name)
 
 
 
-static int fix_actions(struct action* a); /*fwd declaration*/
+int fix_actions(struct action* a); /*fwd declaration*/
+
+
+/** optimize the left side of a struct expr.
+ *  @return 1 if optimized, 0 if not and -1 on error
+ */
+static int exp_optimize_left(struct expr* exp)
+{
+	struct rval_expr* rve;
+	struct rvalue* rval;
+	int old_ltype, old_rtype, old_op;
+	int ret;
+	
+	ret=0;
+	if (exp->type!=ELEM_T)
+		return 0;
+	old_ltype=exp->l_type;
+	old_rtype=exp->r_type;
+	old_op=exp->op;
+	if (exp->l_type==RVEXP_O){
+		rve=exp->l.param;
+		/* rve should be previously fixed/optimized */
+		/* optimize exp (rval(val)) -> exp(val) */
+		if (rve->op==RVE_RVAL_OP){
+			rval=&rve->left.rval;
+			switch(rval->type){
+				case RV_INT:
+					if (exp->op==NO_OP){
+						exp->l_type=NUMBER_O;
+						exp->l.param=0;
+						exp->r_type=NUMBER_ST;
+						exp->r.numval=rval->v.l;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}
+					break;
+				case RV_STR:
+					/* string evaluated in expression context - not
+					   supported */
+					break;
+				case RV_BEXPR:
+					if (exp->op==NO_OP){
+						/* replace the current expr. */
+						*exp=*(rval->v.bexpr);
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					};
+					break;
+				case RV_ACTION_ST:
+					if (exp->op==NO_OP){
+						exp->l_type=ACTION_O;
+						exp->l.param=0;
+						exp->r_type=ACTION_ST;
+						exp->r.param=rval->v.action;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}
+					break;
+				case RV_SEL:
+					exp->l.select=pkg_malloc(sizeof(*exp->l.select));
+					if (exp->l.select){
+						exp->l_type=SELECT_O;
+						*exp->l.select=rval->v.sel;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_AVP:
+					exp->l.attr=pkg_malloc(sizeof(*exp->l.attr));
+					if (exp->l.attr){
+						exp->l_type=AVP_O;
+						*exp->l.attr=rval->v.avps;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_PVAR:
+					exp->l.param=pkg_malloc(sizeof(pv_spec_t));
+					if (exp->l.param){
+						exp->l_type=PVAR_O;
+						*((pv_spec_t*)exp->l.param)=rval->v.pvs;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_NONE:
+					break;
+			}
+		}
+	}
+	if (ret>0)
+		DBG("left EXP optimized: op%d(_O%d_, ST%d) => op%d(_O%d_, ST%d)\n",
+			old_op, old_ltype, old_rtype, exp->op, exp->l_type, exp->r_type);
+	return ret;
+}
+
+
+
+/** optimize the left side of a struct expr.
+ *  @return 1 if optimized, 0 if not and -1 on error
+ */
+static int exp_optimize_right(struct expr* exp)
+{
+	struct rval_expr* rve;
+	struct rvalue* rval;
+	int old_ltype, old_rtype, old_op;
+	int ret;
+	
+	ret=0;
+	if ((exp->type!=ELEM_T) ||(exp->op==NO_OP))
+		return 0;
+	old_ltype=exp->l_type;
+	old_rtype=exp->r_type;
+	old_op=exp->op;
+	if (exp->r_type==RVE_ST){
+		rve=exp->r.param;
+		/* rve should be previously fixed/optimized */
+		/* optimize exp (rval(val)) -> exp(val) */
+		if (rve->op==RVE_RVAL_OP){
+			rval=&rve->left.rval;
+			switch(rval->type){
+				case RV_INT:
+					exp->r_type=NUMBER_ST;
+					exp->r.numval=rval->v.l;
+					rval_destroy(rval);
+					pkg_free(rve);
+					ret=1;
+					break;
+				case RV_STR:
+					exp->r.str.s=pkg_malloc(rval->v.s.len+1);
+					if (exp->r.str.s){
+						exp->r.str.len=rval->v.s.len;
+						memcpy(exp->r.str.s, rval->v.s.s, rval->v.s.len);
+						exp->r_type=STRING_ST;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_BEXPR:
+					/* cannot be optimized further, is an exp_elem
+					   which is not constant */
+					break;
+				case RV_ACTION_ST:
+					/* cannot be optimized further, is not constant and
+					  eval_elem() does not support ACTION_ST for op!=NO_OP*/
+					break;
+				case RV_SEL:
+					exp->r.select=pkg_malloc(sizeof(*exp->l.select));
+					if (exp->r.select){
+						exp->r_type=SELECT_ST;
+						*exp->r.select=rval->v.sel;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_AVP:
+					exp->r.attr=pkg_malloc(sizeof(*exp->l.attr));
+					if (exp->r.attr){
+						exp->r_type=AVP_ST;
+						*exp->r.attr=rval->v.avps;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_PVAR:
+					exp->r.param=pkg_malloc(sizeof(pv_spec_t));
+					if (exp->r.param){
+						exp->r_type=PVAR_ST;
+						*((pv_spec_t*)exp->r.param)=rval->v.pvs;
+						rval_destroy(rval);
+						pkg_free(rve);
+						ret=1;
+					}else
+						ret=-1;
+					break;
+				case RV_NONE:
+					ret=-1;
+					break;
+			}
+		}
+	}
+	if (ret>0)
+		DBG("right EXP optimized: op%d(O%d, _ST%d_) => op%d(O%d, _ST%d_)\n",
+			old_op, old_ltype, old_rtype, exp->op, exp->l_type, exp->r_type);
+	return ret;
+}
+
 
 
 /* traverses an expr tree and compiles the REs where necessary)
  * returns: 0 for ok, <0 if errors */
-static int fix_expr(struct expr* exp)
+int fix_expr(struct expr* exp)
 {
 	regex_t* re;
 	int ret;
@@ -330,7 +541,9 @@ static int fix_expr(struct expr* exp)
 					pkg_free(exp->r.param);
 					exp->r.re=re;
 					exp->r_type=RE_ST;
-				}else if (exp->r_type!=RE_ST && exp->r_type != AVP_ST && exp->r_type != SELECT_ST){
+				}else if (exp->r_type!=RE_ST && exp->r_type != AVP_ST
+						&& exp->r_type != SELECT_ST && exp->r_type!= RVE_ST
+						&& exp->r_type != PVAR_ST){
 					LOG(L_CRIT, "BUG: fix_expr : invalid type for match\n");
 					return E_BUG;
 				}
@@ -371,6 +584,23 @@ static int fix_expr(struct expr* exp)
 					return ret;
 				}
 			}
+			if (exp->l_type==RVEXP_O){
+				if ((ret=fix_rval_expr(&exp->l.param))<0){
+					ERR("Unable to fix left rval expression\n");
+					return ret;
+				}
+				if (scr_opt_lev>=2)
+					exp_optimize_left(exp);
+			}
+			if (exp->r_type==RVE_ST){
+				if ((ret=fix_rval_expr(&exp->r.param))<0){
+					ERR("Unable to fix right rval expression\n");
+					return ret;
+				}
+				if (scr_opt_lev>=2)
+					exp_optimize_right(exp);
+			}
+			/* PVAR don't need fixing */
 			ret=0;
 	}
 	return ret;
@@ -380,7 +610,7 @@ static int fix_expr(struct expr* exp)
 
 /* adds the proxies in the proxy list & resolves the hostnames */
 /* returns 0 if ok, <0 on error */
-static int fix_actions(struct action* a)
+int fix_actions(struct action* a)
 {
 	struct action *t;
 	struct proxy_l* p;
@@ -391,6 +621,8 @@ static int fix_actions(struct action* a)
 	struct hostent* he;
 	struct ip_addr ip;
 	struct socket_info* si;
+	struct lvalue* lval;
+	
 	char buf[30]; /* tmp buffer needed for module param fixups */
 
 	if (a==0){
@@ -466,40 +698,34 @@ static int fix_actions(struct action* a)
 				}
 				break;
 
-		        case ASSIGN_T:
-		        case ADD_T:
-				if (t->val[0].type != AVP_ST) {
-					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of assignment\n");
+			case ASSIGN_T:
+			case ADD_T:
+				if (t->val[0].type !=LVAL_ST) {
+					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of"
+								" assignment\n");
 					return E_BUG;
 				}
-				if (t->val[0].u.attr->type & AVP_CLASS_DOMAIN) {
-					LOG(L_ERR, "ERROR: You cannot change domain attributes from the script, they are read-only\n");
-					return E_BUG;
-				} else if (t->val[0].u.attr->type & AVP_CLASS_GLOBAL) {
-					LOG(L_ERR, "ERROR: You cannot change global attributes from the script, they are read-only\n");
+				if (t->val[1].type !=RVE_ST) {
+					LOG(L_CRIT, "BUG: fix_actions: Invalid right side of"
+								" assignment (%d)\n", t->val[1].type);
 					return E_BUG;
 				}
-
-				if (t->val[1].type == ACTION_ST && t->val[1].u.data) {
-					if ((ret = fix_actions((struct action*)t->val[1].u.data)) < 0) {
-						return ret;
-					}
-				} else if (t->val[1].type == EXPR_ST && t->val[1].u.data) {
-					if ((ret = fix_expr((struct expr*)t->val[1].u.data)) < 0) {
-						return ret;
-					}
-				} else if (t->val[1].type == STRING_ST) {
-					int len;
-					len = strlen(t->val[1].u.data);
-					t->val[1].u.str.s = t->val[1].u.data;
-					t->val[1].u.str.len = len;
-				} else if (t->val[1].type == SELECT_ST) {
-					if ((ret=resolve_select(t->val[1].u.select)) < 0) {
-						BUG("Unable to resolve select\n");
-						print_select(t->val[1].u.select);
-						return ret;
+				lval=t->val[0].u.data;
+				if (lval->type==LV_AVP){
+					if (lval->lv.avps.type & AVP_CLASS_DOMAIN) {
+						LOG(L_ERR, "ERROR: You cannot change domain"
+									" attributes from the script, they are"
+									" read-only\n");
+						return E_BUG;
+					} else if (lval->lv.avps.type & AVP_CLASS_GLOBAL) {
+						LOG(L_ERR, "ERROR: You cannot change global"
+								   " attributes from the script, they are"
+								   "read-only\n");
+						return E_BUG;
 					}
 				}
+				if ((ret=fix_rval_expr(&t->val[1].u.data))<0)
+					return ret;
 				break;
 
 			case MODULE_T:
@@ -586,40 +812,67 @@ static int fix_actions(struct action* a)
  * attributes. If either of the attributes if of string type then the length of
  * its value will be used.
  */
-inline static int comp_num(int op, long left, int rtype, union exp_op* r)
+inline static int comp_num(int op, long left, int rtype, union exp_op* r,
+							struct sip_msg* msg, struct run_act_ctx* h)
 {
 	int_str val;
+	pv_value_t pval;
 	avp_t* avp;
-	long right;
+	int right;
 
-	if (rtype == AVP_ST) {
-		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
-		if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
-		else return (op == DIFF_OP);
-	} else if (rtype == NUMBER_ST) {
-		right = r->numval;
-	} else {
-		LOG(L_CRIT, "BUG: comp_num: Invalid right operand (%d)\n", rtype);
-		return E_BUG;
+	if (unlikely(op==NO_OP)) return !(!left);
+	switch(rtype){
+		case AVP_ST:
+			avp = search_avp_by_index(r->attr->type, r->attr->name,
+										&val, r->attr->index);
+			if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
+			else return (op == DIFF_OP);
+			break;
+		case NUMBER_ST:
+			right = r->numval;
+			break;
+		case RVE_ST:
+			if (unlikely(rval_expr_eval_int(h, msg, &right, r->param)<0))
+				return (op == DIFF_OP); /* not found/invalid */
+			break;
+		case PVAR_ST:
+			memset(&pval, 0, sizeof(pv_value_t));
+			if (unlikely(pv_get_spec_value(msg, r->param, &pval)!=0)){
+				return (op == DIFF_OP); /* error, not found => false */
+			}
+			if (likely(pval.flags & (PV_TYPE_INT|PV_VAL_INT))){
+				right=pval.ri;
+				pv_value_destroy(&pval);
+			}else{
+				pv_value_destroy(&pval);
+				return (op == DIFF_OP); /* not found or invalid type */
+			}
+			break;
+		default:
+			LOG(L_CRIT, "BUG: comp_num: Invalid right operand (%d)\n", rtype);
+			return E_BUG;
 	}
 
 	switch (op){
-	case EQUAL_OP: return (long)left == (long)right;
-	case DIFF_OP:  return (long)left != (long)right;
-	case GT_OP:    return (long)left >  (long)right;
-	case LT_OP:    return (long)left <  (long)right;
-	case GTE_OP:   return (long)left >= (long)right;
-	case LTE_OP:   return (long)left <= (long)right;
-	default:
-		LOG(L_CRIT, "BUG: comp_num: unknown operator: %d\n", op);
-		return E_BUG;
+		case EQUAL_OP: return (long)left == (long)right;
+		case DIFF_OP:  return (long)left != (long)right;
+		case GT_OP:    return (long)left >  (long)right;
+		case LT_OP:    return (long)left <  (long)right;
+		case GTE_OP:   return (long)left >= (long)right;
+		case LTE_OP:   return (long)left <= (long)right;
+		default:
+			LOG(L_CRIT, "BUG: comp_num: unknown operator: %d\n", op);
+			return E_BUG;
 	}
+	return E_BUG;
 }
 
 /*
  * Compare given string "left" with right side of expression
  */
-inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct sip_msg* msg)
+inline static int comp_str(int op, str* left, int rtype, 
+							union exp_op* r, struct sip_msg* msg,
+							struct run_act_ctx* h)
 {
 	str* right;
 	int_str val;
@@ -629,33 +882,74 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 	char backup;
 	regex_t* re;
 	unsigned int l;
+	struct rvalue* rv;
+	struct rval_cache rv_cache;
+	pv_value_t pval;
+	int destroy_pval;
 	
 	right=0; /* warning fix */
-
-	if (rtype == AVP_ST) {
-		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
-		if (avp && (avp->flags & AVP_VAL_STR)) right = &val.s;
-		else return (op == DIFF_OP);
-	} else if (rtype == SELECT_ST) {
-		ret = run_select(&v, r->select, msg);
-		if (ret != 0) return (op == DIFF_OP); /* Not found or error */
-		right = &v;
-	} else if ((op == MATCH_OP && rtype == RE_ST)) {
-	} else if (op != MATCH_OP && rtype == STRING_ST) {
-		right = &r->str;
-	} else if (rtype == NUMBER_ST) {
+	rv=0;
+	destroy_pval=0;
+	if (unlikely(op==NO_OP)) return (left->s!=0);
+	switch(rtype){
+		case AVP_ST:
+			avp = search_avp_by_index(r->attr->type, r->attr->name,
+										&val, r->attr->index);
+			if (likely(avp && (avp->flags & AVP_VAL_STR))) right = &val.s;
+			else return (op == DIFF_OP);
+			break;
+		case SELECT_ST:
+			ret = run_select(&v, r->select, msg);
+			if (unlikely(ret != 0)) 
+				return (op == DIFF_OP); /* Not found or error */
+			right = &v;
+			break;
+		case RVE_ST:
+			rval_cache_init(&rv_cache);
+			rv=rval_expr_eval(h, msg, r->param);
+			if (unlikely (rv==0)) 
+				return (op==DIFF_OP); /* not found or error*/
+			if (unlikely(rval_get_tmp_str(h, msg, &v, rv, 0, &rv_cache)<0)){
+				goto error;
+			}
+			right = &v;
+			break;
+		case PVAR_ST:
+			memset(&pval, 0, sizeof(pv_value_t));
+			if (unlikely(pv_get_spec_value(msg, r->param, &pval)!=0)){
+				return (op == DIFF_OP); /* error, not found => false */
+			}
+			destroy_pval=1;
+			if (likely(pval.flags & PV_VAL_STR)){
+				right=&pval.rs;
+			}else{
+				pv_value_destroy(&pval);
+				return (op == DIFF_OP); /* not found or invalid type */
+			}
+			break;
+		case RE_ST:
+			if (unlikely(op != MATCH_OP)){
+				LOG(L_CRIT, "BUG: comp_str: Bad operator %d,"
+							" ~= expected\n", op);
+				goto error;
+			}
+			break;
+		case STRING_ST:
+			right=&r->str;
+			break;
+		case NUMBER_ST:
 			/* "123" > 100 is not allowed by cfg.y rules
 			 * but can happen as @select or $avp evaluation
 			 * $test > 10
 			 * the right operator MUST be number to do the conversion
 			 */
-		if (str2int(left,&l) < 0)
+			if (str2int(left,&l) < 0)
+				goto error;
+			return comp_num(op, l, rtype, r, msg, h);
+		default:
+			LOG(L_CRIT, "BUG: comp_str: Bad type %d, "
+						"string or RE expected\n", rtype);
 			goto error;
-		return comp_num(op, l, rtype, r);
-	} else {
-		LOG(L_CRIT, "BUG: comp_str: Bad type %d, "
-		    "string or RE expected\n", rtype);
-		goto error;
 	}
 
 	ret=-1;
@@ -669,111 +963,97 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 			ret = (strncasecmp(left->s, right->s, left->len)!=0);
 			break;
 		case MATCH_OP:
-			     /* this is really ugly -- we put a temporary zero-terminating
-			      * character in the original string; that's because regexps
-			      * take 0-terminated strings and our messages are not
-			      * zero-terminated; it should not hurt as long as this function
-			      * is applied to content of pkg mem, which is always the case
-			      * with calls from route{}; the same goes for fline in reply_route{};
-			      *
-			      * also, the received function should always give us an extra
-			      * character, into which we can put the 0-terminator now;
-			      * an alternative would be allocating a new piece of memory,
-			      * which might be too slow
-			      * -jiri
-			      *
-			      * janakj: AVPs are zero terminated too so this is not problem either
-			      */
+			/* this is really ugly -- we put a temporary zero-terminating
+			 * character in the original string; that's because regexps
+			 * take 0-terminated strings and our messages are not
+			 * zero-terminated; it should not hurt as long as this function
+			 * is applied to content of pkg mem, which is always the case
+			 * with calls from route{}; the same goes for fline in 
+			 * reply_route{};
+			 *
+			 * also, the received function should always give us an extra
+			 * character, into which we can put the 0-terminator now;
+			 * an alternative would be allocating a new piece of memory,
+			 * which might be too slow
+			 * -jiri
+			 *
+			 * janakj: AVPs are zero terminated too so this is not problem 
+			 * either
+			 */
 			backup=left->s[left->len];
-			if (backup) left->s[left->len]='\0';
-			if (rtype == AVP_ST || rtype == SELECT_ST) {
-				     /* For AVPs we need to compile the RE on the fly */
-				re=(regex_t*)pkg_malloc(sizeof(regex_t));
-				if (re==0){
-					LOG(L_CRIT, "ERROR: comp_strstr: memory allocation"
-					    " failure\n");
-					left->s[left->len] = backup;
-					goto error;
-				}
-				if (regcomp(re, right->s, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+			left->s[left->len]='\0';
+			switch(rtype){
+				case AVP_ST:
+				case SELECT_ST:
+				case RVE_ST:
+				case PVAR_ST:
+					/* we need to compile the RE on the fly */
+					re=(regex_t*)pkg_malloc(sizeof(regex_t));
+					if (re==0){
+						LOG(L_CRIT, "ERROR: comp_strstr: memory allocation"
+									 " failure\n");
+						left->s[left->len] = backup;
+						goto error;
+					}
+					if (regcomp(re, right->s,
+								REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+						pkg_free(re);
+						left->s[left->len] = backup;
+						goto error;
+					}
+					ret=(regexec(re, left->s, 0, 0, 0)==0);
+					regfree(re);
 					pkg_free(re);
-					left->s[left->len] = backup;
+					break;
+				case RE_ST:
+					ret=(regexec(r->re, left->s, 0, 0, 0)==0);
+					break;
+				case STRING_ST:
+				default:
+					LOG(L_CRIT, "BUG: comp_str: Bad operator type %d, "
+								"for ~= \n", rtype);
 					goto error;
-				}
-				ret=(regexec(re, left->s, 0, 0, 0)==0);
-				regfree(re);
-				pkg_free(re);
-			} else {
-				ret=(regexec(r->re, left->s, 0, 0, 0)==0);
 			}
-			if (backup) left->s[left->len] = backup;
+			left->s[left->len] = backup;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
 			goto error;
 	}
+	if (rv){
+		rval_cache_clean(&rv_cache);
+		rval_destroy(rv);
+	}
+	if (destroy_pval)
+		pv_value_destroy(&pval);
 	return ret;
 
 error:
+	if (rv){
+		rval_cache_clean(&rv_cache);
+		rval_destroy(rv);
+	}
+	if (destroy_pval)
+		pv_value_destroy(&pval);
 	return (op == DIFF_OP) ? 1 : -1;
 }
 
 
 /* eval_elem helping function, returns str op param */
-inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
+inline static int comp_string(int op, char* left, int rtype, union exp_op* r,
+								struct sip_msg* msg, struct run_act_ctx* h)
 {
-	int ret;
-	int_str val;
-	avp_t* avp;
-	char* right;
-
-	ret=-1;
-	right=0;
-	if (rtype == AVP_ST) {
-		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
-		if (avp && (avp->flags & AVP_VAL_STR)) right = val.s.s;
-		else return (op == DIFF_OP);
-	} else if (rtype == STRING_ST) {
-		right = r->str.s;
-	}
-
-	switch(op){
-		case EQUAL_OP:
-			if (rtype!=STRING_ST && rtype!=AVP_ST){
-				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
-						"string or attr expected\n", rtype);
-				goto error;
-			}
-			ret=(strcasecmp(left, right)==0);
-			break;
-		case DIFF_OP:
-			if (rtype!=STRING_ST && rtype!=AVP_ST){
-				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
-						"string or attr expected\n", rtype);
-				goto error;
-			}
-			ret=(strcasecmp(left, right)!=0);
-			break;
-		case MATCH_OP:
-			if (rtype!=RE_ST){
-				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
-						" RE expected\n", rtype);
-				goto error;
-			}
-			ret=(regexec(r->re, left, 0, 0, 0)==0);
-			break;
-		default:
-			LOG(L_CRIT, "BUG: comp_string: unknown op %d\n", op);
-			goto error;
-	}
-	return ret;
-
-error:
-	return -1;
+	str s;
+	
+	s.s=left;
+	s.len=strlen(left);
+	return comp_str(op, &s, rtype, r, msg, h);
 }
 
 
-inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r, struct sip_msg* msg)
+inline static int comp_avp(int op, avp_spec_t* spec, int rtype,
+							union exp_op* r, struct sip_msg* msg,
+							struct run_act_ctx* h)
 {
 	avp_t* avp;
 	int_str val;
@@ -782,46 +1062,41 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 	unsigned int uval;
 
 	if (spec->type & AVP_INDEX_ALL) {
-		avp = search_first_avp(spec->type & ~AVP_INDEX_ALL, spec->name, NULL, NULL);
+		avp = search_first_avp(spec->type & ~AVP_INDEX_ALL, spec->name,
+								NULL, NULL);
 		return (avp!=0);
 	}
 	avp = search_avp_by_index(spec->type, spec->name, &val, spec->index);
 	if (!avp) return (op == DIFF_OP);
 
-	switch(op) {
-	case NO_OP:
+	if (op==NO_OP){
 		if (avp->flags & AVP_VAL_STR) {
 			return val.s.len!=0;
 		} else {
 			return val.n != 0;
 		}
-		break;
-
-	case BINOR_OP:
-		return (val.n | r->numval)!=0;
-		break;
-
-	case BINAND_OP:
-		return (val.n & r->numval)!=0;
-		break;
 	}
-
 	if (avp->flags & AVP_VAL_STR) {
-		return comp_str(op, &val.s, rtype, r, msg);
+		return comp_str(op, &val.s, rtype, r, msg, h);
 	} else {
 		switch(rtype){
 			case NUMBER_ST:
-				return comp_num(op, val.n, rtype, r);
+			case AVP_ST:
+			case RVE_ST:
+			case PVAR_ST:
+				return comp_num(op, val.n, rtype, r, msg, h);
+				break;
 			case STRING_ST:
 				tmp.s=r->string;
 				tmp.len=strlen(r->string);
 				if (str2int(&tmp, &uval)<0){
-					LOG(L_WARN, "WARNING: comp_avp: cannot convert string value"
-								" to int (%s)\n", ZSW(r->string));
+					LOG(L_WARN, "WARNING: comp_avp: cannot convert"
+								" string value to int (%s)\n",
+								ZSW(r->string));
 					goto error;
 				}
 				num_val.numval=uval;
-				return comp_num(op, val.n, NUMBER_ST, &num_val);
+				return comp_num(op, val.n, NUMBER_ST, &num_val, msg, h);
 			case STR_ST:
 				if (str2int(&r->str, &uval)<0){
 					LOG(L_WARN, "WARNING: comp_avp: cannot convert str value"
@@ -829,9 +1104,7 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 					goto error;
 				}
 				num_val.numval=uval;
-				return comp_num(op, val.n, NUMBER_ST, &num_val);
-			case AVP_ST:
-				return comp_num(op, val.n, rtype, r);
+				return comp_num(op, val.n, NUMBER_ST, &num_val, msg, h);
 			default:
 				LOG(L_CRIT, "BUG: comp_avp: invalid type for numeric avp "
 							"comparison (%d)\n", rtype);
@@ -845,7 +1118,9 @@ error:
 /*
  * Left side of expression was select
  */
-inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r, struct sip_msg* msg)
+inline static int comp_select(int op, select_t* sel, int rtype,
+								union exp_op* r, struct sip_msg* msg,
+								struct run_act_ctx* h)
 {
 	int ret;
 	str val;
@@ -854,21 +1129,84 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 	ret = run_select(&val, sel, msg);
 	if (ret != 0) return (op == DIFF_OP);
 
-	switch(op) {
-	case NO_OP: return (val.len>0);
-	case BINOR_OP:
-	case BINAND_OP:
-		ERR("Binary operators cannot be used with string selects\n");
-		return -1;
-	}
-	if (val.len==0) {
+	if (op==NO_OP) return (val.len>0);
+	if (unlikely(val.len==0)) {
 		/* make sure the string pointer uses accessible memory range
 		 * the comp_str function might dereference it
 		 */
 		val.s=&empty_str;
 	}
-	return comp_str(op, &val, rtype, r, msg);
+	return comp_str(op, &val, rtype, r, msg, h);
 }
+
+
+inline static int comp_rve(int op, struct rval_expr* rve, int rtype,
+							union exp_op* r, struct sip_msg* msg,
+							struct run_act_ctx* h)
+{
+	int i;
+	struct rvalue* rv;
+	struct rvalue* rv1;
+	struct rval_cache c1;
+	
+	rval_cache_init(&c1);
+	if (unlikely(rval_expr_eval_rvint(h,  msg, &rv, &i, rve, &c1)<0)){
+		ERR("failure evaluating expression: bad type\n");
+		i=0; /* false */
+		goto int_expr;
+	}
+	if (unlikely(rv)){
+		/* no int => str */
+		rv1=rval_convert(h, msg, RV_STR, rv, &c1);
+		i=comp_str(op, &rv1->v.s, rtype, r, msg, h);
+		rval_destroy(rv1);
+		rval_destroy(rv);
+		rval_cache_clean(&c1);
+		return i;
+	}
+	/* expr evaluated to int */
+int_expr:
+	rval_cache_clean(&c1);
+	if (op==NO_OP)
+		return !(!i); /* transform it into { 0, 1 } */
+	return comp_num(op, i, rtype, r, msg, h);
+}
+
+
+
+inline static int comp_pvar(int op, pv_spec_t* pvs, int rtype,
+							union exp_op* r, struct sip_msg* msg,
+							struct run_act_ctx* h)
+{
+	pv_value_t pval;
+	int ret;
+	
+	ret=0;
+	memset(&pval, 0, sizeof(pv_value_t));
+	if (unlikely(pv_get_spec_value(msg, r->param, &pval)!=0)){
+		return 0; /* error, not found => false */
+	}
+	if (likely(pval.flags & PV_TYPE_INT)){
+		if (op==NO_OP)
+			ret=!(!pval.ri);
+		else
+			ret=comp_num(op, pval.ri, rtype, r, msg, h);
+	}else if ((pval.flags==PV_VAL_NONE) ||
+			(pval.flags & (PV_VAL_NULL|PV_VAL_EMPTY))){
+		if (op==NO_OP)
+			ret=0;
+		else
+			ret=comp_num(op, 0, rtype, r, msg, h);
+	}else{
+		ret=pval.rs.len!=0;
+		if (op!=NO_OP)
+			ret=comp_num(op, ret, rtype, r, msg, h);
+	}
+	pv_value_destroy(&pval);
+	return ret;
+}
+
+
 
 /* check_self wrapper -- it checks also for the op */
 inline static int check_self_op(int op, str* s, unsigned short p)
@@ -878,6 +1216,7 @@ inline static int check_self_op(int op, str* s, unsigned short p)
 	ret=check_self(s, p, 0);
 	switch(op){
 		case EQUAL_OP:
+		case MATCH_OP:
 			break;
 		case DIFF_OP:
 			ret=(ret > 0) ? 0 : 1;
@@ -891,7 +1230,9 @@ inline static int check_self_op(int op, str* s, unsigned short p)
 
 
 /* eval_elem helping function, returns an op param */
-inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r)
+inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
+							union exp_op* r, struct sip_msg* msg,
+							struct run_act_ctx *ctx )
 {
 	struct hostent* he;
 	char ** h;
@@ -915,12 +1256,14 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 		case AVP_ST:
 		case STRING_ST:
 		case RE_ST:
+		case RVE_ST:
+		case SELECT_ST:
 			switch(op){
 				case EQUAL_OP:
 				case MATCH_OP:
 					/* 1: compare with ip2str*/
-					ret=comp_string(op, ip_addr2a(ip), rtype, r);
-					if (ret==1) break;
+					ret=comp_string(op, ip_addr2a(ip), rtype, r, msg, ctx);
+					if (likely(ret==1)) break;
 					/* 2: resolve (name) & compare w/ all the ips */
 					if (rtype==STRING_ST){
 						he=resolvehost(r->str.s);
@@ -940,17 +1283,17 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 					if (unlikely((received_dns & DO_REV_DNS) && 
 							((he=rev_resolvehost(ip))!=0) )){
 						/*  compare with primary host name */
-						ret=comp_string(op, he->h_name, rtype, r);
+						ret=comp_string(op, he->h_name, rtype, r, msg, ctx);
 						/* compare with all the aliases */
 						for(h=he->h_aliases; (ret!=1) && (*h); h++){
-							ret=comp_string(op, *h, rtype, r);
+							ret=comp_string(op, *h, rtype, r, msg, ctx);
 						}
 					}else{
 						ret=0;
 					}
 					break;
 				case DIFF_OP:
-					ret=(comp_ip(EQUAL_OP, ip, rtype, r) > 0) ? 0 : 1;
+					ret=(comp_ip(EQUAL_OP, ip, rtype, r, msg, ctx) > 0) ?0:1;
 					break;
 				default:
 					goto error_op;
@@ -970,8 +1313,8 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 error_op:
 	LOG(L_CRIT, "BUG: comp_ip: invalid operator %d\n", op);
 	return -1;
-
 }
+
 
 
 /* returns: 0/1 (false/true) or -1 on error */
@@ -991,7 +1334,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 	switch(e->l_type){
 	case METHOD_O:
 		ret=comp_str(e->op, &msg->first_line.u.request.method,
-			     e->r_type, &e->r, msg);
+			 			e->r_type, &e->r, msg, h);
 		break;
 	case URI_O:
 		if(msg->new_uri.s) {
@@ -1002,7 +1345,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 						       msg->parsed_uri.port_no:SIP_PORT);
 			}else{
 				ret=comp_str(e->op, &msg->new_uri,
-					     e->r_type, &e->r, msg);
+								e->r_type, &e->r, msg, h);
 			}
 		}else{
 			if (e->r_type==MYSELF_ST){
@@ -1012,7 +1355,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 						       msg->parsed_uri.port_no:SIP_PORT);
 			}else{
 				ret=comp_str(e->op, &msg->first_line.u.request.uri,
-					     e->r_type, &e->r, msg);
+								e->r_type, &e->r, msg, h);
 			}
 		}
 		break;
@@ -1033,7 +1376,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 					  uri.port_no?uri.port_no:SIP_PORT);
 		}else{
 			ret=comp_str(e->op, &get_from(msg)->uri,
-				     e->r_type, &e->r, msg);
+							e->r_type, &e->r, msg, h);
 		}
 		break;
 
@@ -1055,22 +1398,23 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 					  uri.port_no?uri.port_no:SIP_PORT);
 		}else{
 			ret=comp_str(e->op, &get_to(msg)->uri,
-				     e->r_type, &e->r, msg);
+							e->r_type, &e->r, msg, h);
 		}
 		break;
 
 	case SRCIP_O:
-		ret=comp_ip(e->op, &msg->rcv.src_ip, e->r_type, &e->r);
+		ret=comp_ip(e->op, &msg->rcv.src_ip, e->r_type, &e->r, msg, h);
 		break;
 
 	case DSTIP_O:
-		ret=comp_ip(e->op, &msg->rcv.dst_ip, e->r_type, &e->r);
+		ret=comp_ip(e->op, &msg->rcv.dst_ip, e->r_type, &e->r, msg, h);
 		break;
 
 	case SNDIP_O:
 		snd_inf=get_onsend_info();
-		if (snd_inf && snd_inf->send_sock){
-			ret=comp_ip(e->op, &snd_inf->send_sock->address, e->r_type, &e->r);
+		if (likely(snd_inf && snd_inf->send_sock)){
+			ret=comp_ip(e->op, &snd_inf->send_sock->address,
+						e->r_type, &e->r, msg, h);
 		}else{
 			BUG("eval_elem: snd_ip unknown (not in a onsend_route?)\n");
 		}
@@ -1078,9 +1422,9 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 
 	case TOIP_O:
 		snd_inf=get_onsend_info();
-		if (snd_inf && snd_inf->to){
+		if (likely(snd_inf && snd_inf->to)){
 			su2ip_addr(&ip, snd_inf->to);
-			ret=comp_ip(e->op, &ip, e->r_type, &e->r);
+			ret=comp_ip(e->op, &ip, e->r_type, &e->r, msg, h);
 		}else{
 			BUG("eval_elem: to_ip unknown (not in a onsend_route?)\n");
 		}
@@ -1097,20 +1441,18 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 		break;
 
 	case SRCPORT_O:
-		ret=comp_num(e->op, (int)msg->rcv.src_port,
-			     e->r_type, &e->r);
+		ret=comp_num(e->op, (int)msg->rcv.src_port, e->r_type, &e->r, msg, h);
 		break;
 
 	case DSTPORT_O:
-		ret=comp_num(e->op, (int)msg->rcv.dst_port,
-			     e->r_type, &e->r);
+		ret=comp_num(e->op, (int)msg->rcv.dst_port, e->r_type, &e->r, msg, h);
 		break;
 
 	case SNDPORT_O:
 		snd_inf=get_onsend_info();
-		if (snd_inf && snd_inf->send_sock){
+		if (likely(snd_inf && snd_inf->send_sock)){
 			ret=comp_num(e->op, (int)snd_inf->send_sock->port_no,
-				     e->r_type, &e->r);
+							e->r_type, &e->r, msg, h);
 		}else{
 			BUG("eval_elem: snd_port unknown (not in a onsend_route?)\n");
 		}
@@ -1118,39 +1460,37 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 
 	case TOPORT_O:
 		snd_inf=get_onsend_info();
-		if (snd_inf && snd_inf->to){
+		if (likely(snd_inf && snd_inf->to)){
 			ret=comp_num(e->op, (int)su_getport(snd_inf->to),
-				     e->r_type, &e->r);
+								e->r_type, &e->r, msg, h);
 		}else{
 			BUG("eval_elem: to_port unknown (not in a onsend_route?)\n");
 		}
 		break;
 
 	case PROTO_O:
-		ret=comp_num(e->op, msg->rcv.proto,
-			     e->r_type, &e->r);
+		ret=comp_num(e->op, msg->rcv.proto, e->r_type, &e->r, msg, h);
 		break;
 
 	case SNDPROTO_O:
 		snd_inf=get_onsend_info();
-		if (snd_inf && snd_inf->send_sock){
+		if (likely(snd_inf && snd_inf->send_sock)){
 			ret=comp_num(e->op, snd_inf->send_sock->proto,
-				     e->r_type, &e->r);
+							e->r_type, &e->r, msg, h);
 		}else{
 			BUG("eval_elem: snd_proto unknown (not in a onsend_route?)\n");
 		}
 		break;
 
 	case AF_O:
-		ret=comp_num(e->op, (int)msg->rcv.src_ip.af,
-			     e->r_type, &e->r);
+		ret=comp_num(e->op, (int)msg->rcv.src_ip.af, e->r_type, &e->r, msg, h);
 		break;
 
 	case SNDAF_O:
 		snd_inf=get_onsend_info();
-		if (snd_inf && snd_inf->send_sock){
+		if (likely(snd_inf && snd_inf->send_sock)){
 			ret=comp_num(e->op, snd_inf->send_sock->address.af,
-							e->r_type, &e->r);
+							e->r_type, &e->r, msg, h);
 		}else{
 			BUG("eval_elem: snd_af unknown (not in a onsend_route?)\n");
 		}
@@ -1158,24 +1498,30 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 
 	case MSGLEN_O:
 		if ((snd_inf=get_onsend_info())!=0){
-			ret=comp_num(e->op, (int)snd_inf->len,
-					e->r_type, &e->r);
+			ret=comp_num(e->op, (int)snd_inf->len, e->r_type, &e->r, msg, h);
 		}else{
-			ret=comp_num(e->op, (int)msg->len,
-					e->r_type, &e->r);
+			ret=comp_num(e->op, (int)msg->len, e->r_type, &e->r, msg, h);
 		}
 		break;
 
 	case RETCODE_O:
-		ret=comp_num(e->op, h->last_retcode, e->r_type, &e->r);
+		ret=comp_num(e->op, h->last_retcode, e->r_type, &e->r, msg, h);
 		break;
 
 	case AVP_O:
-		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r, msg);
+		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r, msg, h);
 		break;
 
 	case SELECT_O:
-		ret = comp_select(e->op, e->l.select, e->r_type, &e->r, msg);
+		ret = comp_select(e->op, e->l.select, e->r_type, &e->r, msg, h);
+		break;
+
+	case RVEXP_O:
+		ret = comp_rve(e->op, e->l.param, e->r_type, &e->r, msg, h);
+		break;
+
+	case PVAR_O:
+		ret=comp_pvar(e->op, e->l.param, e->r_type, &e->r, msg, h);
 		break;
 
 	default:

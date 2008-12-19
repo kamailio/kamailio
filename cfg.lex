@@ -75,6 +75,8 @@
  *  2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
+ *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
+ *  2008-12-11  added support for "string1" "string2" (andrei)
 */
 
 
@@ -88,14 +90,19 @@
 	#include "usr_avp.h"
 	#include "select.h"
 	#include "cfg.tab.h"
+	#include "sr_compat.h"
 
 	/* states */
 	#define INITIAL_S		0
 	#define COMMENT_S		1
 	#define COMMENT_LN_S	        2
 	#define STRING_S		3
-	#define ATTR_S                  4
-        #define SELECT_S                5
+	#define ATTR_S                  4  /* avp/attr */
+	#define SELECT_S                5
+	#define AVP_PVAR_S              6  /* avp or pvar */
+	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
+	#define PVARID_S                8  /* $foo.bar...*/
+	#define STR_BETWEEN_S		9
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -106,21 +113,33 @@
 
 
 	static int comment_nest=0;
+	static int p_nest=0;
 	static int state=0, old_state=0, old_initial=0;
 	static struct str_buf s_buf;
 	int line=1;
 	int column=1;
 	int startcolumn=1;
+	int startline=1;
+	static int ign_lines=0;
+	static int ign_columns=0;
 
 	static char* addchar(struct str_buf *, char);
 	static char* addstr(struct str_buf *, char*, int);
 	static void count();
+	static void count_more();
+	static void count_ignore();
 
 
 %}
 
 /* start conditions */
-%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT
+%x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
+%x PVARID
+
+/* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
+SER_CFG			SER
+KAMAILIO_CFG	KAMAILIO|OPENSER
+MAXCOMPAT_CFG	MAXCOMPAT|ALL
 
 /* action keywords */
 FORWARD	forward
@@ -219,7 +238,8 @@ PLUS	"+"
 MINUS	"-"
 
 /* Attribute specification */
-ATTR_MARK   "$"|"%"
+ATTR_MARK   "%"
+VAR_MARK    "$"
 SELECT_MARK  "@"
 ATTR_FROM         "f"
 ATTR_TO           "t"
@@ -230,6 +250,9 @@ ATTR_TOUSER       "tu"
 ATTR_FROMDOMAIN   "fd"
 ATTR_TODOMAIN     "td"
 ATTR_GLOBAL       "g"
+
+/* avp prefix */
+AVP_PREF	(([ft][rud]?)|g)\.
 
 /* config vars. */
 DEBUG	debug
@@ -384,7 +407,7 @@ ID			{LETTER}{ALPHANUM}*
 HEX			[0-9a-fA-F]
 HEXNUMBER	0x{HEX}+
 OCTNUMBER	0[0-7]+
-DECNUMBER       0|-?([1-9]{DIGIT}*)
+DECNUMBER       0|([1-9]{DIGIT}*)
 BINNUMBER       [0-1]+b
 HEX4		{HEX}{1,4}
 IPV6ADDR	({HEX4}":"){7}{HEX4}|({HEX4}":"){1,7}(":"{HEX4}){1,7}|":"(":"{HEX4}){1,7}|({HEX4}":"){1,7}":"|"::"
@@ -729,7 +752,8 @@ EAT_ABLE	[\ \t\b\r]
 <SELECT>{BINNUMBER}     { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
 
 
-<INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
+<INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR);
+							return ATTR_MARK; }
 <ATTR>{ATTR_FROM}       { count(); return ATTR_FROM; }
 <ATTR>{ATTR_TO}         { count(); return ATTR_TO; }
 <ATTR>{ATTR_FROMURI}    { count(); return ATTR_FROMURI; }
@@ -742,15 +766,88 @@ EAT_ABLE	[\ \t\b\r]
 <ATTR>{DOT}             { count(); return DOT; }
 <ATTR>{LBRACK}          { count(); return LBRACK; }
 <ATTR>{RBRACK}          { count(); return RBRACK; }
-<ATTR>{STAR}		{ count(); return STAR; }
-<ATTR>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
-<ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
-                           yylval.strval=s_buf.s;
-			   memset(&s_buf, 0, sizeof(s_buf));
-                           state = INITIAL_S;
-                           BEGIN(INITIAL);
-			   return ID;
-                        }
+<ATTR>{STAR}			{ count(); return STAR; }
+<ATTR>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<ATTR>{ID}				{ count(); addstr(&s_buf, yytext, yyleng);
+							yylval.strval=s_buf.s;
+							memset(&s_buf, 0, sizeof(s_buf));
+							state = INITIAL_S;
+							BEGIN(INITIAL);
+							return ID;
+						}
+
+<INITIAL>{VAR_MARK}{LPAREN}	{
+								switch(sr_cfg_compat){
+									case SR_COMPAT_SER:
+										state=ATTR_S; BEGIN(ATTR);
+										yyless(1);
+										count();
+										return ATTR_MARK;
+										break;
+									case SR_COMPAT_KAMAILIO:
+									case SR_COMPAT_MAX:
+									default:
+										state = PVAR_P_S; BEGIN(PVAR_P);
+										p_nest=1; yymore();
+										break;
+								}
+							}
+	/* eat everything between 2 () and return PVAR token and a string
+	   containing everything (including $ and ()) */
+<PVAR_P>{RPAREN}			{	p_nest--;
+								if (p_nest==0){
+									count();
+									addstr(&s_buf, yytext, yyleng);
+									yylval.strval=s_buf.s;
+									memset(&s_buf, 0, sizeof(s_buf));
+									state=INITIAL_S;
+									BEGIN(INITIAL);
+									return PVAR;
+								}
+								yymore();
+							}
+<PVAR_P>{LPAREN}			{ p_nest++; yymore(); }
+<PVAR_P>.					{ yymore(); }
+
+<PVARID>{ID}|'.'			{yymore(); }
+<PVARID>{LPAREN}			{	state = PVAR_P_S; BEGIN(PVAR_P);
+								p_nest=1; yymore(); }
+<PVARID>.					{ yyless(0); state=INITIAL_S; BEGIN(INITIAL);
+								return PVAR;
+							}
+
+
+<INITIAL>{VAR_MARK}			{
+								switch(sr_cfg_compat){
+									case SR_COMPAT_SER:
+										count();
+										state=ATTR_S; BEGIN(ATTR);
+										return ATTR_MARK;
+										break;
+									case SR_COMPAT_KAMAILIO:
+										state=PVARID_S; BEGIN(PVARID);
+										yymore();
+										break;
+									case SR_COMPAT_MAX:
+									default: 
+										state=AVP_PVAR_S; BEGIN(AVP_PVAR);
+										yymore();
+										break;
+								}
+							}
+	/* avp prefix detected -> go to avp mode */
+<AVP_PVAR>{AVP_PREF}		|
+<AVP_PVAR>{ID}{LBRACK}		{ state = ATTR_S; BEGIN(ATTR); yyless(1); count();
+							  return ATTR_MARK; }
+<AVP_PVAR>{ID}{LPAREN}		{ state = PVAR_P_S; p_nest=1; BEGIN(PVAR_P);
+								yymore(); }
+<AVP_PVAR>{ID}				{	count(); addstr(&s_buf, yytext, yyleng);
+								yylval.strval=s_buf.s;
+								memset(&s_buf, 0, sizeof(s_buf));
+								state = INITIAL_S;
+								BEGIN(INITIAL);
+								return AVP_OR_PVAR;
+							}
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
 <INITIAL>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
@@ -781,7 +878,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{COMMA}		{ count(); return COMMA; }
 <INITIAL>{SEMICOLON}	{ count(); return SEMICOLON; }
 <INITIAL>{COLON}	{ count(); return COLON; }
-<INITIAL>{STAR}	{ count(); return STAR; }
+<INITIAL>{STAR}		{ count(); return STAR; }
 <INITIAL>{RPAREN}	{ count(); return RPAREN; }
 <INITIAL>{LPAREN}	{ count(); return LPAREN; }
 <INITIAL>{LBRACE}	{ count(); return LBRACE; }
@@ -794,18 +891,19 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CR}		{ count();/* return CR;*/ }
 
 
-<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING1); }
-<INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state; state=STRING_S; BEGIN(STRING2); }
+<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; 
+							old_state = state; state=STRING_S;
+							BEGIN(STRING1); }
+<INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state;
+					state=STRING_S; BEGIN(STRING2); }
 
 
-<STRING1>{QUOTES} { count(); state=old_state; BEGIN(old_initial);
+<STRING1>{QUOTES} { count_more(); 
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
-						yylval.strval=s_buf.s;
-						memset(&s_buf, 0, sizeof(s_buf));
-						return STRING;
+						BEGIN(STR_BETWEEN);
 					}
-<STRING2>{TICK}  { count(); state=old_state; BEGIN(old_initial);
+<STRING2>{TICK}  { count_more(); state=old_state; BEGIN(old_initial);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						yylval.strval=s_buf.s;
@@ -814,21 +912,33 @@ EAT_ABLE	[\ \t\b\r]
 					}
 <STRING2>.|{EAT_ABLE}|{CR}	{ yymore(); }
 
-<STRING1>\\n		{ count(); addchar(&s_buf, '\n'); }
-<STRING1>\\r		{ count(); addchar(&s_buf, '\r'); }
-<STRING1>\\a		{ count(); addchar(&s_buf, '\a'); }
-<STRING1>\\t		{ count(); addchar(&s_buf, '\t'); }
-<STRING1>\\{QUOTES}	{ count(); addchar(&s_buf, '"');  }
-<STRING1>\\\\		{ count(); addchar(&s_buf, '\\'); }
-<STRING1>\\x{HEX}{1,2}	{ count(); addchar(&s_buf,
+<STRING1>\\n		{ count_more(); addchar(&s_buf, '\n'); }
+<STRING1>\\r		{ count_more(); addchar(&s_buf, '\r'); }
+<STRING1>\\a		{ count_more(); addchar(&s_buf, '\a'); }
+<STRING1>\\t		{ count_more(); addchar(&s_buf, '\t'); }
+<STRING1>\\{QUOTES}	{ count_more(); addchar(&s_buf, '"');  }
+<STRING1>\\\\		{ count_more(); addchar(&s_buf, '\\'); }
+<STRING1>\\x{HEX}{1,2}	{ count_more(); addchar(&s_buf,
 											(char)strtol(yytext+2, 0, 16)); }
  /* don't allow \[0-7]{1}, it will eat the backreferences from
     subst_uri if allowed (although everybody should use '' in subt_uri) */
-<STRING1>\\[0-7]{2,3}	{ count(); addchar(&s_buf,
+<STRING1>\\[0-7]{2,3}	{ count_more(); addchar(&s_buf,
 											(char)strtol(yytext+1, 0, 8));  }
-<STRING1>\\{CR}		{ count(); } /* eat escaped CRs */
-<STRING1>.|{EAT_ABLE}|{CR}	{ addchar(&s_buf, *yytext); }
+<STRING1>\\{CR}		{ count_more(); } /* eat escaped CRs */
+<STRING1>.|{EAT_ABLE}|{CR}	{ count_more(); addchar(&s_buf, *yytext); }
 
+<STR_BETWEEN>{EAT_ABLE}|{CR}	{ count_ignore(); }
+<STR_BETWEEN>{QUOTES}			{ count_more(); state=STRING_S;
+								  BEGIN(STRING1);}
+<STR_BETWEEN>.					{	
+									yyless(0); /* reparse it */
+									/* ignore the whitespace now that is
+									  counted, return saved string value */
+									state=old_state; BEGIN(old_initial);
+									yylval.strval=s_buf.s;
+									memset(&s_buf, 0, sizeof(s_buf));
+									return STRING;
+								}
 
 <INITIAL,COMMENT>{COM_START}	{ count(); comment_nest++; state=COMMENT_S;
 										BEGIN(COMMENT); }
@@ -840,6 +950,12 @@ EAT_ABLE	[\ \t\b\r]
 								}
 <COMMENT>.|{EAT_ABLE}|{CR}				{ count(); };
 
+<INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
+											sr_cfg_compat=SR_COMPAT_SER;}
+<INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count(); 
+											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
+<INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
+												sr_cfg_compat=SR_COMPAT_MAX;}
 <INITIAL>{COM_LINE}.*{CR}	{ count(); }
 
 <INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng);
@@ -852,6 +968,12 @@ EAT_ABLE	[\ \t\b\r]
 
 <<EOF>>							{
 									switch(state){
+										case STR_BETWEEN_S:
+											state=old_state;
+											BEGIN(old_initial);
+											yylval.strval=s_buf.s;
+											memset(&s_buf, 0, sizeof(s_buf));
+											return STRING;
 										case STRING_S:
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
 														" unclosed string\n");
@@ -869,6 +991,23 @@ EAT_ABLE	[\ \t\b\r]
 											LOG(L_CRIT, "ERROR: unexpected EOF:"
 														"comment line open\n");
 											break;
+										case  ATTR_S:
+											LOG(L_CRIT, "ERROR: unexpected EOF"
+													" while parsing"
+													" avp name\n");
+											break;
+										case PVARID_S:
+											p_nest=0;
+										case PVAR_P_S: 
+											LOG(L_CRIT, "ERROR: unexpected EOF"
+													" while parsing pvar name"
+													" (%d paranthesis open)\n",
+													p_nest);
+											break;
+										case AVP_PVAR_S:
+											LOG(L_CRIT, "ERROR: unexpected EOF"
+													" while parsing"
+													" avp or pvar name\n");
 									}
 									return 0;
 								}
@@ -917,24 +1056,64 @@ error:
 
 
 
-static void count()
+/** helper function for count_*(). */
+static void count_lc(int* l, int* c)
 {
 	int i;
-
-	startcolumn=column;
 	for (i=0; i<yyleng;i++){
 		if (yytext[i]=='\n'){
-			line++;
-			column=startcolumn=1;
+			(*l)++;
+			(*c)=1;
 		}else if (yytext[i]=='\t'){
-			column++;
-			/*column+=8 -(column%8);*/
+			(*c)++;
+			/*(*c)+=8 -((*c)%8);*/
 		}else{
-			column++;
+			(*c)++;
 		}
 	}
 }
 
+
+
+/* helper function */
+static void count_restore_ignored()
+{
+	if (ign_lines) /* ignored line(s) => column has changed */
+		column=ign_columns;
+	else
+		column+=ign_columns;
+	line+=ign_lines;
+	ign_lines=ign_columns=0;
+}
+
+
+
+/** count/record position for stuff added to the current token. */
+static void count_more()
+{
+	count_restore_ignored();
+	count_lc(&line, &column);
+}
+
+
+
+/** count/record position for a new token. */
+static void count()
+{
+	count_restore_ignored();
+	startline=line;
+	startcolumn=column;
+	count_more();
+}
+
+
+
+/** record discarded stuff (not contained in the token) so that
+    the next token position can be adjusted properly*/
+static void count_ignore()
+{
+	count_lc(&ign_lines, &ign_columns);
+}
 
 
 /* replacement yywrap, removes libfl dependency */

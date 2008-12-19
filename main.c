@@ -222,7 +222,7 @@ Options:\n\
 #endif
 #ifdef USE_SCTP
 "    -S           disable sctp\n\
-    -O            Number of sctp child processes (default: equal to `-n')\n"
+    -Q            Number of sctp child processes (default: equal to `-n')\n"
 #endif /* USE_SCTP */
 "    -V           Version number\n\
     -h           This help message\n\
@@ -234,7 +234,8 @@ Options:\n\
     -u uid       Change uid \n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
-    -G file      Create a pgid file\n"
+    -G file      Create a pgid file\n\
+    -O nr        Script optimization level (debugging option)\n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -1502,7 +1503,7 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SO:"
+	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1572,6 +1573,14 @@ int main(int argc, char** argv)
 			case 'E':
 					log_stderr=1;
 					break;
+			case 'O':
+					scr_opt_lev=strtol(optarg, &tmp, 10);
+					if (tmp &&(*tmp)){
+						fprintf(stderr, "bad optimization level: -O %s\n",
+										optarg);
+						goto error;
+					};
+					break;
 			case 'b':
 			case 'l':
 			case 'n':
@@ -1589,7 +1598,7 @@ int main(int argc, char** argv)
 			case 'P':
 			case 'G':
 			case 'S':
-			case 'O':
+			case 'Q':
 			case 's':
 					break;
 			case '?':
@@ -1676,6 +1685,7 @@ try_again:
 			case 'd':
 			case 'V':
 			case 'h':
+			case 'O':
 					break;
 			case 'E':
 					log_stderr=1;	// use in both getopt switches
@@ -1762,7 +1772,7 @@ try_again:
 					fprintf(stderr,"WARNING: sctp support not compiled in\n");
 				#endif
 					break;
-			case 'O':
+			case 'Q':
 				#ifdef USE_SCTP
 					sctp_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
