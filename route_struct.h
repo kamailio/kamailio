@@ -167,5 +167,8 @@ void print_action(struct action* a);
 void print_actions(struct action* a);
 void print_expr(struct expr* exp);
 
+/** joins to cfg file positions into a new one. */
+void cfg_pos_join(struct cfg_pos* res,
+							struct cfg_pos* pos1, struct cfg_pos* pos2);
 #endif
 

@@ -201,8 +201,6 @@ static struct rvalue* rval_tmp;
 
 static void warn(char* s);
 static void get_cpos(struct cfg_pos* pos);
-static void get_rve2_pos(struct cfg_pos* res,
-							struct cfg_pos* pos1, struct cfg_pos* pos2);
 static struct rval_expr* mk_rve_rval(enum rval_type, void* v);
 static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1);
 static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
@@ -2613,25 +2611,6 @@ static void yyerror(char* format, ...)
 
 
 
-static void get_rve2_pos(struct cfg_pos* res,
-							struct cfg_pos* pos1, struct cfg_pos* pos2)
-{
-	*res=*pos1;
-	if ((res->s_line == 0) || (res->s_line > pos2->s_line)){
-		res->s_line=pos2->s_line;
-		res->s_col=pos2->s_col;
-	}else if ((res->s_line == pos2->s_line) && (res->s_col > pos2->s_col)){
-		res->s_col=pos2->s_col;
-	}
-	if ((res->e_line == 0) || (res->e_line < pos2->e_line)){
-		res->e_line=pos2->e_line;
-		res->e_col=pos2->e_col;
-	}else if ((res->e_line == pos2->e_line) && (res->e_col < pos2->e_col)){
-		res->e_col=pos2->e_col;
-	}
-}
-
-
 /** mk_rval_expr_v wrapper.
  *  checks mk_rval_expr_v return value and sets the cfg. pos
  *  (line and column numbers)
@@ -2688,7 +2667,7 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 	
 	if ((rve1==0) || (rve2==0))
 		return 0;
-	get_rve2_pos(&pos, &rve1->fpos, &rve2->fpos);
+	cfg_pos_join(&pos, &rve1->fpos, &rve2->fpos);
 	ret=mk_rval_expr2(op, rve1, rve2, &pos);
 	if (ret && (rve_check_type(&type, ret, &bad_rve, &bad_t, &exp_t)!=1)){
 		yyerror_at(&pos, "bad expression: type mismatch:"

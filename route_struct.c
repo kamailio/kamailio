@@ -52,6 +52,30 @@
 #include "ut.h" /* ZSW() */
 
 
+
+/** joins to cfg file positions into a new one. */
+void cfg_pos_join(struct cfg_pos* res,
+							struct cfg_pos* pos1, struct cfg_pos* pos2)
+{
+	struct cfg_pos ret;
+	ret=*pos1;
+	if ((ret.s_line == 0) || (ret.s_line > pos2->s_line)){
+		ret.s_line=pos2->s_line;
+		ret.s_col=pos2->s_col;
+	}else if ((ret.s_line == pos2->s_line) && (ret.s_col > pos2->s_col)){
+		ret.s_col=pos2->s_col;
+	}
+	if ((ret.e_line == 0) || (ret.e_line < pos2->e_line)){
+		ret.e_line=pos2->e_line;
+		ret.e_col=pos2->e_col;
+	}else if ((ret.e_line == pos2->e_line) && (ret.e_col < pos2->e_col)){
+		ret.e_col=pos2->e_col;
+	}
+	*res=ret;
+}
+
+
+
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 {
 	struct expr * e;
