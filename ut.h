@@ -299,6 +299,27 @@ static inline char* int2str(unsigned int l, int* len)
 	return &r[i+1];
 }
 
+/* Signed INTeger-TO-STRing: convers a long to a string
+ * returns a pointer to a static buffer containing l in asciiz & sets len */
+static inline char* sint2str(long l, int* len)
+{
+	int sign;
+	char *p;
+
+	sign = 0;
+	if(l<0) {
+		sign = 1;
+		l = -l;
+	}
+	p = int2str((unsigned long)l, len);
+	if(sign) {
+		*(--p) = '-';
+		if (len) (*len)++;
+	}
+	return p;
+}
+
+
 
 
 #define USHORT2SBUF_MAX_LEN  5 /* 65535*/

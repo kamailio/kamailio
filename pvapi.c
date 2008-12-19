@@ -34,18 +34,18 @@
 #include "mem/shm_mem.h"
 #include "ut.h"
 #include "dprint.h"
-#include "hashes.h"
+#include "hash_func.h"
 #include "pvar.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
+#define core_hash(in, a, b) get_hash1_raw((in)->s, (in)->len)
 
 #define PV_TABLE_SIZE	16
-#define TR_TABLE_SIZE	2
+#define TR_TABLE_SIZE	4
 
 
 void tr_destroy(trans_t *t);
 void tr_free(trans_t *t);
-void tr_param_free(tr_param_t *tp);
 
 typedef struct _pv_item
 {
@@ -61,7 +61,7 @@ static int _pv_table_set = 0;
 /**
  *
  */
-void pv_init_table()
+void pv_init_table(void)
 {
 	memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
 	_pv_table_set = 1;
@@ -89,7 +89,7 @@ int pv_table_add(pv_export_t *e)
 	pv_item_t *pvj = NULL;
 	pv_item_t *pvn = NULL;
 	int found;
-	int pvid;
+	unsigned int pvid;
 
 	if(e==NULL || e->name.s==NULL || e->getf==NULL || e->type==PVT_NONE)
 	{
@@ -112,20 +112,18 @@ int pv_table_add(pv_export_t *e)
 		return -1;
 	}
 	found = 0;
-	pvid = get_hash1_raw(in->s, in->len);
+	//pvid = get_hash1_raw(in->s, in->len);
+	pvid = core_hash(in, 0, 0);
 
 	pvi = _pv_table[pvid%PV_TABLE_SIZE];
 	while(pvi)
 	{
 		if(pvi->pvid > pvid)
 			break;
-		if(pvi->pve.name.len > in->len)
-			break;
 		if(pvi->pve.name.len==in->len)
 		{
 			found = strncmp(pvi->pve.name.s, in->s, in->len);
-			if(found>0)
-				break;
+
 			if(found==0)
 			{
 				LM_ERR("pvar [%.*s] already exists\n", in->len, in->s);
@@ -239,7 +237,7 @@ int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
 	if(res==NULL)
 		return -1;
 
-	ch = int2str(sival, &l);
+	ch = sint2str(sival, &l);
 	res->rs.s = ch;
 	res->rs.len = l;
 
@@ -326,13 +324,12 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 	}
 
 	/* search in PV table */
-	pvid = get_hash1_raw(pvname->s, pvname->len);
+	// pvid = get_hash1_raw(pvname->s, pvname->len);
+	pvid = core_hash(pvname, 0, 0);
 	pvi = _pv_table[pvid%PV_TABLE_SIZE];
 	while(pvi)
 	{
 		if(pvi->pvid > pvid)
-			break;
-		if(pvi->pve.name.len > pvname->len)
 			break;
 
 		if(pvi->pvid==pvid && pvi->pve.name.len==pvname->len
@@ -350,6 +347,71 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 	}
 
 	return NULL;
+}
+
+int pv_parse_index(pv_spec_p sp, str *in)
+{
+	char *p;
+	char *s;
+	int sign;
+	pv_spec_p nsp = 0;
+
+	if(in==NULL || in->s==NULL || sp==NULL)
+		return -1;
+	p = in->s;
+	if(*p==PV_MARKER)
+	{
+		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
+		if(nsp==NULL)
+		{
+			LM_ERR("no more memory\n");
+			return -1;
+		}
+		s = pv_parse_spec(in, nsp);
+		if(s==NULL)
+		{
+			LM_ERR("invalid index [%.*s]\n", in->len, in->s);
+			pv_spec_free(nsp);
+			return -1;
+		}
+		sp->pvp.pvi.type = PV_IDX_PVAR;
+		sp->pvp.pvi.u.dval = (void*)nsp;
+		return 0;
+	}
+	if(*p=='*' && in->len==1)
+	{
+		sp->pvp.pvi.type = PV_IDX_ALL;
+		return 0;
+	}
+	sign = 1;
+	if(*p=='-')
+	{
+		sign = -1;
+		p++;
+	}
+	sp->pvp.pvi.u.ival = 0;
+	while(p<in->s+in->len && *p>='0' && *p<='9')
+	{
+		sp->pvp.pvi.u.ival = sp->pvp.pvi.u.ival * 10 + *p - '0';
+		p++;
+	}
+	if(p!=in->s+in->len)
+	{
+		LM_ERR("invalid index [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	sp->pvp.pvi.u.ival *= sign;
+	sp->pvp.pvi.type = PV_IDX_INT;
+	return 0;
+}
+
+int pv_init_iname(pv_spec_p sp, int param)
+{
+	if(sp==NULL)
+		return -1;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.name.n = param;
+	return 0;
 }
 
 char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
@@ -721,6 +783,122 @@ error:
 	return -1;
 }
 
+int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name)
+{
+	if(msg==NULL || ip==NULL || name==NULL)
+		return -1;
+	memset(name, 0, sizeof(pv_value_t));
+
+	if(ip->pvn.type==PV_NAME_INTSTR)
+	{
+		if(ip->pvn.u.isname.type&AVP_NAME_STR)
+		{
+			name->rs = ip->pvn.u.isname.name.s;
+			name->flags = PV_VAL_STR;
+		} else {
+			name->ri = ip->pvn.u.isname.name.n;
+			name->flags = PV_VAL_INT|PV_TYPE_INT;
+		}
+		return 0;
+	} else if(ip->pvn.type==PV_NAME_INTSTR) {
+		/* pvar */
+		if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), name)!=0)
+		{
+			LM_ERR("cannot get name value\n");
+			return -1;
+		}
+		if(name->flags&PV_VAL_NULL || name->flags&PV_VAL_EMPTY)
+		{
+			LM_ERR("null or empty name\n");
+			return -1;
+		}
+		return 0;
+	}
+	LM_ERR("name type is PV_NAME_OTHER - cannot resolve\n");
+	return -1;
+}
+
+int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
+		unsigned short *name_type)
+{
+	pv_value_t tv;
+	if(ip==NULL || avp_name==NULL || name_type==NULL)
+		return -1;
+	memset(avp_name, 0, sizeof(int_str));
+	*name_type = 0;
+
+	if(ip->pvn.type==PV_NAME_INTSTR)
+	{
+		*name_type = ip->pvn.u.isname.type;
+		if(ip->pvn.u.isname.type&AVP_NAME_STR)
+		{
+			avp_name->s = ip->pvn.u.isname.name.s;
+			*name_type |= AVP_NAME_STR;
+		} else {
+			avp_name->n = ip->pvn.u.isname.name.n;
+			/* *name_type &= AVP_SCRIPT_MASK; */
+			*name_type = 0;
+		}
+		return 0;
+	}
+	/* pvar */
+	if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), &tv)!=0)
+	{
+		LM_ERR("cannot get avp value\n");
+		return -1;
+	}
+	if(tv.flags&PV_VAL_NULL || tv.flags&PV_VAL_EMPTY)
+	{
+		LM_ERR("null or empty name\n");
+		return -1;
+	}
+		
+	if((tv.flags&PV_TYPE_INT) && (tv.flags&PV_VAL_INT))
+	{
+		avp_name->n = tv.ri;
+	} else {
+		avp_name->s = tv.rs;
+		*name_type = AVP_NAME_STR;
+	}
+	return 0;
+}
+
+
+int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
+{
+	pv_value_t tv;
+	if(ip==NULL || idx==NULL || flags==NULL)
+		return -1;
+
+	*idx = 0;
+	*flags = 0;
+
+	if(ip->pvi.type == PV_IDX_ALL) {
+		*flags = PV_IDX_ALL;
+		return 0;
+	}
+	
+	if(ip->pvi.type == PV_IDX_INT)
+	{
+		*idx = ip->pvi.u.ival;
+		return 0;
+	}
+
+	/* pvar */
+	if(pv_get_spec_value(msg, (pv_spec_p)ip->pvi.u.dval, &tv)!=0)
+	{
+		LM_ERR("cannot get index value\n");
+		return -1;
+	}
+	if(!(tv.flags&PV_VAL_INT))
+	{
+		LM_ERR("invalid index value\n");
+		return -1;
+	}
+	*idx = tv.ri;
+	return 0;
+}
+
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 {
 	int ret = 0;
@@ -737,6 +915,7 @@ int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 	ret = (*sp->getf)(msg, &(sp->pvp), value);
 	if(ret!=0)
 		return ret;
+		
 	if(sp->trans)
 		return tr_exec(msg, (trans_t*)sp->trans, value);
 	return ret;
@@ -814,6 +993,73 @@ done:
 	return 0;
 }
 
+/**
+ *
+ */
+pvname_list_t* parse_pvname_list(str *in, unsigned int type)
+{
+	pvname_list_t* head = NULL;
+	pvname_list_t* al = NULL;
+	pvname_list_t* last = NULL;
+	char *p;
+	pv_spec_t spec;
+	str s;
+
+	if(in==NULL || in->s==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return NULL;
+	}
+
+	p = in->s;
+	while(is_in_str(p, in))
+	{
+		while(is_in_str(p, in) && (*p==' '||*p=='\t'||*p==','||*p==';'))
+			p++;
+		if(!is_in_str(p, in))
+		{
+			if(head==NULL)
+				LM_ERR("wrong item name list [%.*s]\n", in->len, in->s);
+			return head;
+		}
+		s.s=p;
+		s.len = in->s+in->len-p;
+		p = pv_parse_spec(&s, &spec);
+		if(p==NULL || (type && spec.type!=type))
+		{
+			LM_ERR("wrong item name list [%.*s]!\n", in->len, in->s);
+			goto error;
+		}
+		al = (pvname_list_t*)pkg_malloc(sizeof(pvname_list_t));
+		if(al==NULL)
+		{
+			LM_ERR("no more memory!\n");
+			goto error;
+		}
+		memset(al, 0, sizeof(pvname_list_t));
+		memcpy(&al->sname, &spec, sizeof(pv_spec_t));
+
+		if(last==NULL)
+		{
+			head = al;
+			last = al;
+		} else {
+			last->next = al;
+			last = al;
+		}
+	}
+
+	return head;
+
+error:
+	while(head)
+	{
+		al = head;
+		head=head->next;
+		pkg_free(al);
+	}
+	return NULL;
+}
 
 /**
  *
@@ -853,6 +1099,23 @@ void pv_value_destroy(pv_value_t *val)
 	memset(val, 0, sizeof(pv_value_t));
 }
 
+#define PV_PRINT_BUF_SIZE  1024
+#define PV_PRINT_BUF_NO    3
+int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s)
+{
+	static int buf_itr = 0;
+	static char buf[PV_PRINT_BUF_NO][PV_PRINT_BUF_SIZE];
+
+	if (list->next==0 && list->spec.getf==0) {
+		*s = list->text;
+		return 0;
+	} else {
+		s->s = buf[buf_itr];
+		s->len = PV_PRINT_BUF_SIZE;
+		buf_itr = (buf_itr+1)%PV_PRINT_BUF_NO;
+		return pv_printf( msg, list, s->s, &s->len);
+	}
+}
 
 /********************************************************
  * Transformations API
@@ -879,7 +1142,7 @@ static inline char* tr_get_class(str *in, char *p, str *tclass)
 /**
  *
  */
-static inline trans_t* tr_new()
+static inline trans_t* tr_new(void)
 {
 	trans_t *t = NULL;
 
@@ -984,6 +1247,14 @@ void tr_destroy(trans_t *t)
 	memset(t, 0, sizeof(trans_t));
 }
 
+/*!
+ * \brief Exec transformation on a pseudo-variable value
+ * \param msg SIP message
+ * \param tr one or more transformations
+ * \param val pseudo-variable value
+ * \return 0 on success, -1 on error
+ */
+
 int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v)
 {
 	int r;
@@ -1048,14 +1319,14 @@ typedef struct _tr_item
 	struct _tr_item *next;
 } tr_item_t, *tr_item_p;
 
-static tr_item_t* _tr_table[PV_TABLE_SIZE];
+static tr_item_t* _tr_table[TR_TABLE_SIZE];
 static int _tr_table_set = 0;
 
 
 /**
  *
  */
-void tr_init_table()
+void tr_init_table(void)
 {
 	memset(_tr_table, 0, sizeof(tr_item_t*)*TR_TABLE_SIZE);
 	_tr_table_set = 1;
@@ -1070,7 +1341,7 @@ int tr_table_add(tr_export_t *e)
 	tr_item_t *trj = NULL;
 	tr_item_t *trn = NULL;
 	int found;
-	int trid;
+	unsigned int trid;
 
 	if(e==NULL || e->tclass.s==NULL)
 	{
@@ -1085,9 +1356,10 @@ int tr_table_add(tr_export_t *e)
 	}
 
 	found = 0;
-	trid = get_hash1_raw(e->tclass.s, e->tclass.len);
+	// trid = get_hash1_raw(e->tclass.s, e->tclass.len);
+	trid = core_hash(&e->tclass, 0, 0);
 
-	tri = _tr_table[trid%PV_TABLE_SIZE];
+	tri = _tr_table[trid%TR_TABLE_SIZE];
 	while(tri)
 	{
 		if(tri->trid > trid)
@@ -1120,10 +1392,12 @@ int tr_table_add(tr_export_t *e)
 	memcpy(&(trn->tre), e, sizeof(tr_export_t));
 	trn->trid = trid;
 
+	//LM_DBG("TR class [%.*s] added to entry [%d]\n", e->tclass.len,
+	//					e->tclass.s, trid%TR_TABLE_SIZE);
 	if(trj==0)
 	{
-		trn->next = _tr_table[trid%PV_TABLE_SIZE];
-		_tr_table[trid%PV_TABLE_SIZE] = trn;
+		trn->next = _tr_table[trid%TR_TABLE_SIZE];
+		_tr_table[trid%TR_TABLE_SIZE] = trn;
 		goto done;
 	}
 	trn->next = trj->next;
@@ -1191,7 +1465,8 @@ tr_export_t* tr_lookup_class(str *tclass)
 	}
 
 	/* search in TR table */
-	trid = get_hash1_raw(tclass->s, tclass->len);
+	// trid = get_hash1_raw(tclass->s, tclass->len);
+	trid = core_hash(tclass, 0, 0);
 	tri = _tr_table[trid%TR_TABLE_SIZE];
 	while(tri)
 	{
@@ -1209,3 +1484,8 @@ tr_export_t* tr_lookup_class(str *tclass)
 	return NULL;
 }
 
+void pv_api_destroy(void)
+{
+	/* free PV and TR hash tables */
+	return;
+}
