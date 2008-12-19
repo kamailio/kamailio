@@ -1449,6 +1449,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 	
 	rv1=0;
 	rv2=0;
+	ret=-1;
 	switch(rve->op){
 		case RVE_RVAL_OP:
 			rv1=&rve->left.rval;
@@ -1506,7 +1507,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 						rval_cache_clean(&c1);
 						goto error;
 				}
-				int_intop2(res_i, rve->op, i, j);
+				ret=int_intop2(res_i, rve->op, i, j);
 				*res_rv=0;
 			}else{
 				rv2=rval_expr_eval(h, msg, rve->right.rve);
@@ -1559,6 +1560,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 	
 	rv1=0;
 	rv2=0;
+	ret=0;
 	switch(rve->op){
 		case RVE_RVAL_OP:
 			rv_ref(&rve->left.rval);
