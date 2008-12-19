@@ -46,6 +46,7 @@
  *              dual module interface support: ser & kamailio (andrei)
  *  2008-11-18  prototypes for various fixed parameters numbers module
  *               functions (3, 4, 5 & 6) and variable parameters (andrei)
+ *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
  */
 
 /*!
@@ -234,17 +235,23 @@ struct param_export_ {
 };
 
 
+
+/** allowed parameter types.
+  * the types that cannot be deduced from the string, should
+  * be at the end (e.g. FPARAM_STR), to allow fallback 
+  * (e.g. fix_param_types(FPARAM_AVP|FPARAM_SELECT|FPARAM_STR, param))
+  */
 enum {
 	FPARAM_UNSPEC = 0,
-	FPARAM_STRING = (1 << 0),
-	FPARAM_STR    = (1 << 1),
-	FPARAM_INT    = (1 << 2),
-	FPARAM_REGEX  = (1 << 3),
-	FPARAM_AVP    = (1 << 5),
-	FPARAM_SELECT = (1 << 6),
-	FPARAM_SUBST  = (1 << 7),
-	FPARAM_PVS    = (1 << 8),
-	FPARAM_PVE    = (1 << 9)
+	FPARAM_INT    = (1 << 0),
+	FPARAM_REGEX  = (1 << 1),
+	FPARAM_AVP    = (1 << 2),
+	FPARAM_SELECT = (1 << 3),
+	FPARAM_SUBST  = (1 << 4),
+	FPARAM_PVS    = (1 << 5),
+	FPARAM_PVE    = (1 << 6),
+	FPARAM_STRING = (1 << 7),
+	FPARAM_STR    = (1 << 8)
 };
 
 /*
@@ -261,8 +268,8 @@ typedef struct fparam {
 		avp_ident_t avp;          /* AVP identifier */
 		select_t* select;         /* select structure */ 
 		struct subst_expr* subst; /* Regex substitution */
-		struct pv_spec_t* pvs;    /* kamailo pseudo-vars */
-		struct pv_elem_t* pve;    /* kamailo pseudo-vars */
+		pv_spec_t* pvs;    /* kamailo pseudo-vars */
+		pv_elem_t* pve;    /* kamailo pseudo-vars in a string */
 	} v;
 } fparam_t;
 
@@ -417,6 +424,11 @@ int fix_flag( modparam_t type, void* val,
  * parameter types
  */
 int fix_param(int type, void** param);
+void fparam_free_contents(fparam_t* fp);
+
+/** fix a param to one of the given types (mask).
+  */
+int fix_param_types(int types, void** param);
 
 /*
  * Fixup variable string, the parameter can be

@@ -831,6 +831,39 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 	return ret;
 }
 
+
+/** parse an avp indentifier.
+ *
+ * Parses the following avp indentifier forms:
+ *       - "i:<number>"  - old form, deprecated  (e.g. i:42)
+ *       - "s:<string>"  - old form, deprecated  (e.g. s:foo)
+ *       - "<track>.<name>"                      (e.g.: f.bar)
+ *       - "<track>.<name>[<index>]"             (e.g.: f.bar[1])
+ *       - "<track><class>.<name>"               (e.g:  tu.bar)
+ *       - "<track><class>.<name>[<index>]"      (e.g:  fd.bar[2])
+ *       - "<string>"                            (e.g.: foo)
+ * Where:
+ *          <string> = ascii string
+ *          <id>   = ascii string w/o '[', ']', '.' and '/'
+ *          <name> = <id> | '/' regex '/'
+ *                   (Note: regex use is deprecated)
+ *          <track> = 'f' | 't'
+ *                   (from or to)
+ *          <class> = 'r' | 'u' | 'd' | 'g'
+ *                    (uri, user, domain or global)
+ *          <index> = <number> | '-' <number> | ''
+ *                    (the avp index, if missing it means AVP_INDEX_ALL, but
+ *                     it's use is deprecated)
+ * More examples:
+ *       "fr.bar[1]"  - from track, uri class, avp "bar", the value 1.
+ *       "tu./^foo/"  - to track,  user class, all avps for which the name
+ *                      starts with foo (note RE in avp names are deprecated).
+ *        "t.did"     - to track, "did" avp
+ *
+ * @param name  - avp identifier
+ * @param *attr - the result will be stored here
+ * @return 0 on success, -1 on error
+ */
 int parse_avp_ident( str *name, avp_ident_t* attr)
 {
 	unsigned int id;
@@ -960,6 +993,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 			name->s[name->len-1]=0;
 			if (regcomp(attr->name.re, name->s+1, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
 				pkg_free(attr->name.re);
+				attr->name.re=0;
 				name->s[name->len-1] = '/';
 				goto error;
 			}
@@ -1003,10 +1037,13 @@ int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index)
 	}
 }
 
-void free_avp_name( int *type, int_str *avp_name)
+void free_avp_name(avp_flags_t *type, int_str *avp_name)
 {
-	if ((*type & AVP_NAME_RE) && (avp_name->re))
+	if ((*type & AVP_NAME_RE) && (avp_name->re)){
+		regfree(avp_name->re);
 		pkg_free(avp_name->re);
+		avp_name->re=0;
+	}
 }
 
 int add_avp_galias_str(char *alias_definition)
