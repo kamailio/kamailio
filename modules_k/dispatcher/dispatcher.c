@@ -132,8 +132,8 @@ static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
 static int mi_child_init(void);
 
 static cmd_export_t cmds[]={
-	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2, fixup_igp_igp, 0, REQUEST_ROUTE},
-	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2, fixup_igp_igp, 0, REQUEST_ROUTE},
+	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2, fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2, fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0, ds_warn_fixup, 0, FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0, ds_warn_fixup, 0, FAILURE_ROUTE},
 	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst0,     0, ds_warn_fixup, 0, FAILURE_ROUTE},
