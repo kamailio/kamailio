@@ -783,7 +783,7 @@ if (!next_gw()) {
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE.
+		and ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>from_gw</function> usage</title>
@@ -814,9 +814,9 @@ if (from_gw("$si")) {
 		<para>
 			Checks if request came from IP address of a
 			gateway that belongs to the given group
-			(integer string).  Sets
-			or resets a message flag depending on whether
-			the gateway supports directed media. 
+			(integer string).  
+			As a side effect, stores gateway's flags to
+			flags_avp.
 		</para>
 		<para>
 		Execution time of from_gw_grp() function is O(log N),
@@ -824,7 +824,7 @@ if (from_gw("$si")) {
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE.
+		and ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>from_gw_grp</function> usage</title>
@@ -836,24 +836,24 @@ if (from_gw_grp("1")) {
 ...
 </programlisting>
 		</example>
-		</section>
-		<section>
+	</section>
+	<section>
 		<title>
-		<function moreinfo="none">to_gw([group-id])</function>
+		<function moreinfo="none">to_gw([pvar])</function>
 		</title>
 		<para>
 		Checks if in-dialog request goes to a
-			gateway. If an optional 
-			group-id (integer string) is given,
-			only gateways belonging to
-			this group are checked.
+		gateway. IP address to be checked is either
+		taken from request URI hostpart or
+		(if present) from pseudo variable argument.
 		</para>
 		<para>
 		Execution time of to_gw() function is O(log N),
 		where N is number of gateways.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		and ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>to_gw</function> usage</title>
@@ -867,12 +867,41 @@ if (to_gw()) {
 </programlisting>
 		</example>
 		<example>
-		<title><function>to_gw</function> usage with group-id</title>
-		<programlisting format = "linespecific">
+		<title><function>to_gw</function> usage with pseudo
+		variable argument</title>
+		<programlisting format="linespecific">
 ...
-if (to_gw("1")) {
+if (to_gw("$var(next_hop)")) {
 	...
-	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">to_gw_grp(group-id)</function>
+		</title>
+		<para>
+			Checks if in-dialog request goes to a gateway
+			that belongs to the given group (integer
+			string). IP address to be checked is
+ 			taken from request URI hostpart.
+		</para>
+		<para>
+		Execution time of to_gw_grp() function is O(log N),
+		where N is number of gateways.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>to_gw_grp</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (to_gw_grp("1")) {
+	...
 };
 ...
 </programlisting>

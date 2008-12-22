@@ -248,7 +248,8 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
-static int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
+static int to_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
+static int to_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 
 
@@ -270,10 +271,12 @@ static cmd_export_t cmds[] = {
      fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"from_gw_grp", (cmd_function)from_gw_grp, 1, fixup_uint_null, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-    {"to_gw", (cmd_function)to_gw, 0, 0, 0,
-     REQUEST_ROUTE | FAILURE_ROUTE},
-    {"to_gw", (cmd_function)to_gw_grp, 1, fixup_uint_null, 0,
-     REQUEST_ROUTE | FAILURE_ROUTE},
+    {"to_gw", (cmd_function)to_gw_0, 0, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"to_gw", (cmd_function)to_gw_1, 1, fixup_pvar_null,
+     fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"to_gw_grp", (cmd_function)to_gw_grp, 1, fixup_uint_null, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
@@ -2164,7 +2167,7 @@ static int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * Checks if request comes from a gateway, taking source address from pw
+ * Checks if request comes from a gateway, taking source address from pv
  * and ignoring group id.
  */
 static int from_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
@@ -2176,33 +2179,49 @@ static int from_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
 /*
  * Checks if in-dialog request goes to gateway
  */
-static int do_to_gw(struct sip_msg* _m, int grp_id)
+static int do_to_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 {
-    char host[16];
-    struct in_addr addr;
+    unsigned int dst_addr;
+    pv_value_t pv_val;
+    struct ip_addr *ip;
     struct gw_info gw, *res;
 
-    if((_m->parsed_uri_ok == 0) && (parse_sip_msg_uri(_m) < 0)) {
-	LM_ERR("Error while parsing the R-URI\n");
-	return -1;
-    }
-
-    if (_m->parsed_uri.host.len > 15) {
-	return -1;
-    }
-    memcpy(host, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
-    host[_m->parsed_uri.host.len] = 0;
-
-    if (!inet_aton(host, &addr)) {
-	return -1;
+    if (addr_sp && (pv_get_spec_value(_m, addr_sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_INT) {
+	    dst_addr = pv_val.ri;
+	} else if (pv_val.flags & PV_VAL_STR) {
+	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
+		LM_ERR("failed to convert IP address string to in_addr\n");
+		return -1;
+	    } else {
+		dst_addr = ip->u.addr32[0];
+	    }
+	} else {
+	    LM_ERR("IP address pvar has empty value\n");
+	    return -1;
+	}
+    } else {
+	if ((_m->parsed_uri_ok == 0) && (parse_sip_msg_uri(_m) < 0)) {
+	    LM_ERR("Error while parsing the R-URI\n");
+	    return -1;
+	}
+	if (_m->parsed_uri.host.len > 15) {
+	    return -1;
+	}
+	if ((ip = str2ip(&(_m->parsed_uri.host))) == NULL) {
+	    LM_ERR("failed to convert IP address string to in_addr\n");
+	    return -1;
+	} else {
+	    dst_addr = ip->u.addr32[0];
+	}
     }
 
     if (grp_id < 0) {
-	res = (struct gw_info *)bsearch(&(addr.s_addr), &((*gws)[1]),
+	res = (struct gw_info *)bsearch(&dst_addr, &((*gws)[1]),
 					(*gws)[0].ip_addr,
 					sizeof(struct gw_info), comp_gws);
     } else {
-	gw.ip_addr = addr.s_addr;
+	gw.ip_addr = dst_addr;
 	gw.grp_id = grp_id;
 	res = (struct gw_info *)bsearch(&gw, &((*gws)[1]),
 					(*gws)[0].ip_addr,
@@ -2220,23 +2239,30 @@ static int do_to_gw(struct sip_msg* _m, int grp_id)
 
 
 /*
- * Checks if in-dialog request goes to gateway, taking
- * into account the group id.
+ * Checks if in-dialog request goes to gateway, taking destination address
+ * from request and taking into account group id.
  */
-static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
+static int to_gw_grp(struct sip_msg* _m, char* _grp_id, char* _s2)
 {
-    int grp_id;
-
-    grp_id = (int)(long)_s1;
-    return do_to_gw(_m, grp_id);
+    return do_to_gw(_m, (pv_spec_t *)0, (int)(long)_grp_id);
 }
 
 
 /*
- * Checks if in-dialog request goes to gateway, ignoring
- * the group id.
+ * Checks if request goes to a gateway, taking destination address from request
+ * and ignoring group id.
  */
-static int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
+static int to_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    return do_to_gw(_m, -1);
+    return do_to_gw(_m, (pv_spec_t *)0, -1);
+}
+
+
+/*
+ * Checks if request goes to a gateway, taking destination address from pv
+ * and ignoring group id.
+ */
+static int to_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
+{
+    return do_to_gw(_m, (pv_spec_t *)_addr_sp, -1);
 }
