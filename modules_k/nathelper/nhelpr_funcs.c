@@ -23,6 +23,8 @@
  * --------
  *  2003-11-06  body len is computed using the message len (it's
  *               not taken any more from the msg. content-length) (andrei)
+ *  2008-08-30  body len is taken from Conent-length header as it is more 
+ *               reliable (UDP packages may contain garbage at the end)(bogdan)
  */
 
 #include <stdio.h>
@@ -39,9 +41,11 @@
 #include "../../udp_server.h"
 #include "../../pt.h"
 #include "../../parser/msg_parser.h"
-
-
-
+#include "../../trim.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_uri.h"
+#include "../../parser/parse_content.h"
 
 #define READ(val) \
 	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
@@ -159,7 +163,13 @@ int extract_body(struct sip_msg *msg, str *body )
 		LM_ERR("failed to get the message body\n");
 		goto error;
 	}
-	body->len = msg->len -(int)(body->s-msg->buf);
+	
+	/*
+	 * Better use the content-len value - no need of any explicit
+	 * parcing as get_body() parsed all headers and Conten-Length
+	 * body header is automaticaly parsed when found.
+	 */
+	body->len = get_content_length(msg);
 	if (body->len==0) {
 		LM_ERR("message body has length zero\n");
 		goto error;
@@ -192,3 +202,137 @@ error:
 	return -1;
 }
 
+/*
+ * ser_memmem() returns the location of the first occurrence of data
+ * pattern b2 of size len2 in memory block b1 of size len1 or
+ * NULL if none is found. Obtained from NetBSD.
+ */
+void *
+ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
+{
+        /* Initialize search pointer */
+        char *sp = (char *) b1;
+
+        /* Initialize pattern pointer */
+        char *pp = (char *) b2;
+
+        /* Initialize end of search address space pointer */
+        char *eos = sp + len1 - len2;
+
+        /* Sanity check */
+        if(!(b1 && b2 && len1 && len2))
+                return NULL;
+
+        while (sp <= eos) {
+                if (*sp == *pp)
+                        if (memcmp(sp, pp, len2) == 0)
+                                return sp;
+
+                        sp++;
+        }
+
+        return NULL;
+}
+
+/*
+ * Some helper functions taken verbatim from tm module.
+ */
+
+/*
+ * Extract Call-ID value
+ * assumes the callid header is already parsed
+ * (so make sure it is, before calling this function or
+ *  it might fail even if the message _has_ a callid)
+ */
+int
+get_callid(struct sip_msg* _m, str* _cid)
+{
+
+        if ((parse_headers(_m, HDR_CALLID_F, 0) == -1)) {
+                LM_ERR("failed to parse call-id header\n");
+                return -1;
+        }
+
+        if (_m->callid == NULL) {
+                LM_ERR("call-id not found\n");
+                return -1;
+        }
+
+        _cid->s = _m->callid->body.s;
+        _cid->len = _m->callid->body.len;
+        trim(_cid);
+        return 0;
+}
+
+/*
+ * Extract tag from To header field of a response
+ * assumes the to header is already parsed, so
+ * make sure it really is before calling this function
+ */
+int
+get_to_tag(struct sip_msg* _m, str* _tag)
+{
+
+        if (!_m->to) {
+                LM_ERR("To header field missing\n");
+                return -1;
+        }
+
+        if (get_to(_m)->tag_value.len) {
+                _tag->s = get_to(_m)->tag_value.s;
+                _tag->len = get_to(_m)->tag_value.len;
+        } else {
+                _tag->s = NULL; /* fixes gcc 4.0 warnings */
+                _tag->len = 0;
+        }
+
+        return 0;
+}
+
+/*
+ * Extract tag from From header field of a request
+ */
+int
+get_from_tag(struct sip_msg* _m, str* _tag)
+{
+
+        if (parse_from_header(_m)<0) {
+                LM_ERR("failed to parse From header\n");
+                return -1;
+        }
+
+        if (get_from(_m)->tag_value.len) {
+                _tag->s = get_from(_m)->tag_value.s;
+                _tag->len = get_from(_m)->tag_value.len;
+        } else {
+                _tag->s = NULL; /* fixes gcc 4.0 warnings */
+                _tag->len = 0;
+        }
+
+        return 0;
+}
+
+/*
+ * Extract URI from the Contact header field
+ */
+int
+get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
+{
+
+        if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
+                return -1;
+        if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
+                LM_ERR("failed to parse Contact body\n");
+                return -1;
+        }
+        *_c = ((contact_body_t*)_m->contact->parsed)->contacts;
+        if (*_c == NULL)
+                /* no contacts found */
+                return -1;
+
+        if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
+                LM_ERR("failed to parse Contact URI\n");
+                return -1;
+        }
+        return 0;
+}

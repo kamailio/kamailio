@@ -20,16 +20,16 @@
 		<author>
 		<firstname>Maxim</firstname>
 		<surname>Sobolev</surname>
-		<affiliation><orgname>PortaOne</orgname></affiliation>
+		<affiliation><orgname>Sippy Software, Inc.</orgname></affiliation>
 		<address>
-			<email>sobomax@portaone.com</email>
+			<email>sobomax@sippysoft.com</email>
 		</address>
 		</author>
 		<editor>
 		<firstname>Maxim</firstname>
 		<surname>Sobolev</surname>
 		<address>
-			<email>sobomax@portaone.com</email>
+			<email>sobomax@sippysoft.com</email>
 		</address>
 		</editor>
 		<editor>
@@ -41,8 +41,8 @@
 		</editor>
 	</authorgroup>
 	<copyright>
-		<year>2003</year>
-		<holder>Porta Software Ltd.</holder>
+		<year>2003-2008</year>
+		<holder>Sippy Software, Inc.</holder>
 	</copyright>
 	<copyright>
 		<year>2005</year>
