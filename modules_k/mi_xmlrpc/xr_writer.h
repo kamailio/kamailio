@@ -31,7 +31,7 @@
 #include <stdio.h>
 #define XMLRPC_WANT_INTERNAL_DECLARATIONS
 #include <xmlrpc.h>
-#include "../../mi/tree.h"
+#include "../../mi/mi.h"
 
 int xr_writer_init( unsigned int size );
 char * xr_build_response( xmlrpc_env * env, struct mi_root * tree );
