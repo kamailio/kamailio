@@ -32,7 +32,7 @@
 #include "../../str.h"
 #include "../../ut.h"
 #include "../../dprint.h"
-#include "../../mi/tree.h"
+#include "../../mi/mi.h"
 #include "../../mem/mem.h"
 #include "mi_fifo.h"
 #include "fifo_fnc.h"
