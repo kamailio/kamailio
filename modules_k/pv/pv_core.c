@@ -29,6 +29,7 @@
 #include "../../dset.h"
 #include "../../action.h"
 #include "../../socket_info.h"
+#include "../../cmpapi.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -1340,8 +1341,7 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			if (tv.ri==hf->type)
 				break;
 		} else {
-			if (hf->name.len==tv.rs.len 
-					&& strncasecmp(hf->name.s, tv.rs.s, hf->name.len)==0)
+			if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
 				break;
 		}
 	}
@@ -1392,8 +1392,7 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 					if (tv.ri==hf->type)
 						break;
 				} else {
-					if (hf->name.len==tv.rs.len 
-						&& strncasecmp(hf->name.s, tv.rs.s, hf->name.len)==0)
+					if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
 					break;
 				}
 			}
@@ -1417,9 +1416,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				if (tv.ri==hf0->type)
 					n++;
 			} else {
-				if (hf0->name.len==tv.rs.len 
-					&& strncasecmp(hf0->name.s, tv.rs.s, hf0->name.len)==0)
-				n++;
+				if (cmp_hdrname_str(&hf0->name, &tv.rs)==0)
+					n++;
 			}
 		}
 		idx = -idx;
@@ -1445,9 +1443,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 				if (tv.ri==hf0->type)
 					n++;
 			} else {
-				if (hf0->name.len==tv.rs.len 
-					&& strncasecmp(hf0->name.s, tv.rs.s, hf0->name.len)==0)
-				n++;
+				if (cmp_hdrname_str(&hf0->name, &tv.rs)==0)
+					n++;
 			}
 			if(n==idx)
 				break;
