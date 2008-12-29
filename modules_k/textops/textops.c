@@ -66,6 +66,7 @@
 #include "../../parser/parse_privacy.h"
 #include "../../mod_fix.h"
 #include "../../ut.h"
+#include "../../cmpapi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -115,6 +116,8 @@ static int insert_body_f(struct sip_msg* msg, char*, char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
+static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
+static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
@@ -218,6 +221,13 @@ static cmd_export_t cmds[]={
 	{"is_privacy",       (cmd_function)is_privacy_f,      1,
 		fixup_privacy, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"cmp_str",  (cmd_function)cmp_str_f, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"cmp_istr",  (cmd_function)cmp_istr_f, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+
 	{0,0,0,0,0,0}
 };
 
@@ -1545,3 +1555,52 @@ static int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
     return get_privacy_values(msg) & ((unsigned int)(long)_privacy) ? 1 : -1;
 
 }
+
+static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )
+{
+	str s1;
+	str s2;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &s1)!=0)
+	{
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)str2, &s2)!=0)
+	{
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+	ret = cmp_str(&s1, &s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	str s1;
+	str s2;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &s1)!=0)
+	{
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)str2, &s2)!=0)
+	{
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+	ret = cmpi_str(&s1, &s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+

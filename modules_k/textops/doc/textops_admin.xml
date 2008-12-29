@@ -1050,6 +1050,56 @@ if(is_privacy("id"))
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">cmp_str(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the two parameters matches as string case sensitive comparison.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_str("$rU", "kamailio"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">cmp_istr(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the two parameters matches as string case insensitive comparison.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_istr("$rU@you", "kamailio@YOU"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 		<title>Known Limitations</title>
