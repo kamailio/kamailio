@@ -57,6 +57,7 @@
 #include "../../qvalue.h"
 #include "../../dset.h"
 #include "../../mod_fix.h"
+#include "../../cmpapi.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
 #endif
@@ -135,8 +136,7 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	}
 
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len==sock_hdr_name.len &&
-		strncasecmp(hf->name.s, sock_hdr_name.s, sock_hdr_name.len)==0 )
+		if (cmp_hdrname_str(&hf->name, &sock_hdr_name)==0)
 			break;
 	}
 
