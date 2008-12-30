@@ -37,6 +37,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../radius.h"
+#include "../../cmpapi.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "peering.h"
@@ -330,9 +331,7 @@ int verify_source(struct sip_msg* _msg, char* s1, char* s2)
     /* Add P-Request-Hash header body */
     parse_headers(_msg, HDR_EOH_F, 0);
     for (hf = _msg->headers; hf; hf = hf->next) {
-	if (hf->name.len != sizeof("P-Request-Hash") - 1)
-	    continue;
-	if (strncasecmp(hf->name.s, "P-Request-Hash",
+		if(cmp_hdrname_strzn(&hf->name, "P-Request-Hash",
 			sizeof("P-Request-Hash") - 1) == 0)
 	    break;
     }
