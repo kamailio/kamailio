@@ -983,6 +983,42 @@ if(remove_hf("User-Agent"))
 
 	<section>
 		<title>
+		<function moreinfo="none">remove_hf_re(re)</function>
+		</title>
+		<para>
+			Remove from message all headers with name matching regular
+			expression <quote>re</quote>
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - regular expression to match
+				the header name to be removed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_re</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_re("^P-"))
+{
+    # All headers starting with "P-" removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">has_body()</function>,
 		<function moreinfo="none">has_body(mime)</function>
 		</title>

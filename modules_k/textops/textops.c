@@ -118,6 +118,7 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
+static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
@@ -184,6 +185,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"remove_hf",        (cmd_function)remove_hf_f,       1,
 		hname_fixup, free_hname_fixup,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"remove_hf_re",     (cmd_function)remove_hf_re_f,    1,
+		fixup_regexp_null, fixup_free_regexp_null,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"is_present_hf",    (cmd_function)is_present_hf_f,   1,
 		hname_fixup, free_hname_fixup,
@@ -917,6 +921,42 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		}
 		cnt++;
 	}
+	return cnt==0 ? -1 : 1;
+}
+
+static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
+{
+	struct hdr_field *hf;
+	struct lump* l;
+	int cnt;
+	regex_t *re;
+	char c;
+	regmatch_t pmatch;
+
+	re = (regex_t*)key;
+	cnt=0;
+
+	/* we need to be sure we have seen all HFs */
+	parse_headers(msg, HDR_EOH_F, 0);
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		c = hf->name.s[hf->name.len];
+		hf->name.s[hf->name.len] = '\0';
+		if (regexec(re, hf->name.s, 1, &pmatch, 0)!=0)
+		{
+			hf->name.s[hf->name.len] = c;
+			continue;
+		}
+		hf->name.s[hf->name.len] = c;
+		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+		if (l==0)
+		{
+			LM_ERR("cannot remove header\n");
+			return -1;
+		}
+		cnt++;
+	}
+
 	return cnt==0 ? -1 : 1;
 }
 
