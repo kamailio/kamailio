@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "../../str.h"
+#include "../../cmpapi.h"
 #include "../../dprint.h"
 #include "../../pvar.h"
 #include "../../data_lump.h"
@@ -233,8 +233,7 @@ static inline struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl,
 	{
 		if ( hdr->type!=HDR_OTHER_T )
 			continue;
-		if (hdr->name.len==hdr_name.len &&
-		strncasecmp(hdr->name.s,hdr_name.s, hdr_name.len)==0 )
+		if (cmp_hdrname_str(&hdr->name, &hdr_name)==0)
 			return hdr;
 	}
 
