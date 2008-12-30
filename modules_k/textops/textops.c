@@ -907,7 +907,7 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		} else {
 			if (hf->name.len!=gp->v.sval.len)
 				continue;
-			if (strncasecmp(hf->name.s, gp->v.sval.s, hf->name.len)!=0)
+			if (cmp_hdrname_str(&hf->name, &gp->v.sval)!=0)
 				continue;
 		}
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
@@ -937,7 +937,7 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		} else {
 			if (hf->name.len!=gp->v.sval.len)
 				continue;
-			if (strncasecmp(hf->name.s,gp->v.sval.s,hf->name.len)!=0)
+			if (cmp_hdrname_str(&hf->name,&gp->v.sval)!=0)
 				continue;
 		}
 		return 1;
@@ -1179,7 +1179,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 			} else {
 				if (hf->name.len!=hfanc->v.sval.len)
 					continue;
-				if (strncasecmp(hf->name.s,hfanc->v.sval.s,hf->name.len)!=0)
+				if (cmp_hdrname_str(&hf->name,&hfanc->v.sval)!=0)
 					continue;
 			}
 			break;
