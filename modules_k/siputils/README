@@ -16,6 +16,10 @@ Jan Janak
 
    FhG FOKUS
 
+Daniel-Constantin Mierla
+
+   Asipto SRL
+
 Gabriel Vasile
 
    FhG FOKUS
@@ -72,6 +76,8 @@ Gabriel Vasile
               1.4.10. encode_contact(encoding_prefix)
               1.4.11. decode_contact()
               1.4.12. decode_contact_header()
+              1.4.13. cmp_uri(str1, str2)
+              1.4.14. cmp_aor(str1, str2)
 
    List of Examples
 
@@ -93,6 +99,8 @@ Gabriel Vasile
    1.16. encode_contact usage
    1.17. decode_contact usage
    1.18. decode_contact_header usage
+   1.19. cmp_uri usage
+   1.20. cmp_aor usage
 
 Chapter 1. Admin Guide
 
@@ -439,4 +447,36 @@ if (uri =~ "^enc*") { decode_contact(); }
    Example 1.18. decode_contact_header usage
 ...
 if (uri =~ "^enc*") { decode_contact_header(); }
+...
+
+1.4.13.  cmp_uri(str1, str2)
+
+   The function returns true if the two parameters matches as SIP
+   URI.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE and BRANCH_ROUTE.
+
+   Example 1.19. cmp_uri usage
+...
+if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
+{
+    # do interesting stuff here
+}
+...
+
+1.4.14.  cmp_aor(str1, str2)
+
+   The function returns true if the two parameters matches as AoR.
+   The parameters have to be SIP URIs.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE and BRANCH_ROUTE.
+
+   Example 1.20. cmp_aor usage
+...
+if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
+{
+    # do interesting stuff here
+}
 ...

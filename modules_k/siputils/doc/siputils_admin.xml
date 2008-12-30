@@ -550,6 +550,56 @@ if (uri =~ "^enc*") { decode_contact_header(); }
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">cmp_uri(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the two parameters matches as SIP URI.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_uri</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">cmp_aor(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the two parameters matches as AoR. The parameters have to be SIP
+		URIs.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_aor</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>

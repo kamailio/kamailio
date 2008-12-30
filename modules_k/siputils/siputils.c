@@ -50,6 +50,7 @@
 
 #include "utils.h"
 #include "contact_ops.h"
+#include "sipops.h"
 
 MODULE_VERSION
 
@@ -81,6 +82,12 @@ static cmd_export_t cmds[]={
 	{"encode_contact",     (cmd_function)encode_contact,2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"decode_contact",     (cmd_function)decode_contact,0,0, 0, REQUEST_ROUTE},
 	{"decode_contact_header", (cmd_function)decode_contact_header,0,0,0,REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"cmp_uri",  (cmd_function)w_cmp_uri, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"cmp_aor",  (cmd_function)w_cmp_aor, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{0,0,0,0,0,0}
 };
 
