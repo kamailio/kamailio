@@ -39,7 +39,7 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
-#include "../../str.h"
+#include "../../cmpapi.h"
 #include "../tm/tm_load.h"
 #include "pua.h"
 #include "hash.h"
@@ -252,7 +252,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
-		if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
+		if(cmp_hdrname_strzn(&hdr->name, "SIP-ETag",8)==0 )
 		{
 			found = 1;
 			break;

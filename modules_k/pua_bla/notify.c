@@ -32,6 +32,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
+#include "../../cmpapi.h"
 #include "../pua/hash.h"
 #include"pua_bla.h"
 
@@ -139,7 +140,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
- 		if(strncmp(hdr->name.s, "Subscription-State",18)==0 )
+ 		if(cmp_hdrname_strzn(&hdr->name, "Subscription-State",18)==0)
  		{
  			found = 1;
  			break;

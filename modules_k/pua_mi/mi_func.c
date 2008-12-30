@@ -30,6 +30,7 @@
 #include  "../../mem/mem.h"
 #include "../../mi/mi.h"
 #include "../../ut.h"
+#include "../../cmpapi.h"
 
 #include "../pua/pua_bind.h"
 #include "../pua/pua.h"
@@ -301,7 +302,7 @@ int mi_publ_rpl_cback( ua_pres_t* hentity, struct sip_msg* reply)
 		found = 0;
 		while (hdr!= NULL)
 		{
-			if(strncmp(hdr->name.s, "SIP-ETag",8)==0 )
+			if(cmp_hdrname_strzn(&hdr->name, "SIP-ETag",8)==0)
 			{
 				found = 1;
 				break;
