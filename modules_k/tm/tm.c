@@ -754,7 +754,8 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 				set_t(0);
 				return 0;
 			case -2:
-				/* e2e ACK found */
+			case -3:
+				/* e2e/dlg-local ACK found */
 				return 1;
 			default:
 				/* notfound */

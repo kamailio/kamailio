@@ -292,6 +292,7 @@ int add_blind_uac(void)  /*struct cell *t*/
 		return -1;
 	}
 
+	t->flags |= T_BLIND_UAC;
 	t->nr_of_outgoings++;
 	/* start FR timer -- protocol set by default to PROTO_NONE,
 	   which means retransmission timer will not be started */

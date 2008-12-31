@@ -184,6 +184,7 @@ struct totag_elem {
 #define T_PASS_PROVISIONAL_FLAG (1<<6)	/*!< provisional replies must trigger callbacks for local transaction */
 #define T_NO_DNS_FAILOVER_FLAG  (1<<7)	/*!< do auto DNS failover  */
 #define T_NO_NEW_BRANCHES_FLAG  (1<<8)	/*!< transaction must not create new branches  */
+#define T_BLIND_UAC             (1<<9) /*!< transaction has a blind uac  */
 
 /* transaction UAC's flags */
 #define T_UAC_TO_CANCEL_FLAG  (1<<0)	/*!< UAC :: is the UAC pending for CANCEL ?  */

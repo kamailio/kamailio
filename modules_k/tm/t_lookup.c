@@ -333,6 +333,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	int dlg_parsed;
 	int ret = 0;
 	struct cell *e2e_ack_trans;
+	int e2e_ack_ret = 0;
 
 	e2e_ack_trans=0;
 	via1=p_msg->via1;
@@ -377,6 +378,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
 			if (ret>0) {
 				e2e_ack_trans=p_cell;
+				e2e_ack_ret = ret;
 				continue;
 			}
 			/* this ACK is neither local "negative" one, nor a proxied
@@ -400,7 +402,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	/* just check if it we found an e2e ACK previously */
 	if (e2e_ack_trans) {
 		*trans=e2e_ack_trans;
-		return ret;
+		return e2e_ack_ret;
 	}
 	LM_DBG("RFC3261 transaction matching failed\n");
 	return 0;
@@ -471,7 +473,9 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		switch(match_status) {
 				case 0:	goto notfound;	/* no match */
 				case 1:	goto found; 	/* match */
-				case 2:	goto e2e_ack;	/* e2e proxy ACK */
+				case 2:
+					LM_DBG("RFC3261 ACK matched\n");
+					goto e2e_ack;	/* e2e proxy ACK */
 		}
 	}
 
@@ -542,7 +546,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 					}
 					/* it's a local UAS transaction */
 					if (dlg_matching(p_cell, p_msg))
+					{
+						LM_DBG("preRFC3261 ACK matched\n");
 						goto e2e_ack;
+					}
 					continue;
 				}
 				continue;
@@ -580,6 +587,18 @@ notfound:
 	return -1;
 
 e2e_ack:
+	/* todo: extend second condition for * branches */
+	if((p_cell->nr_of_outgoings==0) ||
+			(p_cell->nr_of_outgoings==1 && (p_cell->flags&T_BLIND_UAC)))
+	{
+		UNLOCK_HASH(p_msg->hash_index);
+		/* release local transaction - nothing else to do */
+		t_release_transaction(p_cell);
+		set_t(0);
+		LM_DBG("local ACK found - nothing to forward\n");
+		return -3;
+	}
+
 	REF_UNSAFE( p_cell );
 	UNLOCK_HASH(p_msg->hash_index);
 	e2eack_T = p_cell;
