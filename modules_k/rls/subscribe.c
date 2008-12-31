@@ -33,6 +33,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
+#include "../../cmpapi.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"
 #include "../../parser/parse_expires.h"
@@ -488,7 +489,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	hdr= msg->headers;
 	while(hdr)
 	{
-		if(strncmp(hdr->name.s, "Support", 7)== 0)
+		if(cmp_hdrname_strzn(&hdr->name, "Support", 7)== 0)
 			break;
 		hdr= hdr->next;
 	}

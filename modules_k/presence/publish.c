@@ -43,6 +43,7 @@
 #include "../../parser/parse_content.h" 
 #include "../../lock_ops.h"
 #include "../../hash_func.h"
+#include "../../cmpapi.h"
 #include "../../db/db.h"
 #include "presence.h"
 #include "notify.h"
@@ -343,8 +344,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	hdr = msg->headers;
 	while (hdr!= NULL)
 	{
-		if(strncmp(hdr->name.s, "SIP-If-Match",12)==0|| 
-				strncmp(hdr->name.s,"Sip-If-Match",12)==0 )
+		if(cmp_hdrname_strzn(&hdr->name, "SIP-If-Match", 12)==0)
 		{
 			found = 1;
 			break;
