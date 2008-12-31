@@ -35,7 +35,7 @@
 #include <libxml/parser.h>
 
 #include "../../ut.h"
-#include "../../str.h"
+#include "../../cmpapi.h"
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
@@ -222,7 +222,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 		hdr = msg->headers;
 		while (hdr!= NULL)
 		{
-			if(strncmp(hdr->name.s, "Subscription-State",18)==0 )
+			if(cmp_hdrname_strzn(&hdr->name, "Subscription-State", 18)==0)
 				break;
 			hdr = hdr->next;
 		}
@@ -254,7 +254,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 			hdr = msg->headers;
 			while (hdr!= NULL)
 			{
-				if(strncmp(hdr->name.s, "Subscription-State",18)==0 )
+				if(cmp_hdrname_strzn(&hdr->name, "Subscription-State", 18)==0)
 					break;
 				hdr = hdr->next;
 			}
