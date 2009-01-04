@@ -1092,30 +1092,29 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_re
 int calculate_routeset_length(dlg_t* _d)
 {
 	int len;
-	rr_t* ptr;
+	rr_t *ptr;
 
-	len = 0;
-	ptr = _d->hooks.first_route;
+	if (! _d->route_set)
+		return 0;
 
-	if (ptr) {
-		len = ROUTE_PREFIX_LEN;
-		len += CRLF_LEN;
-	}
+	len = ROUTE_PREFIX_LEN;
 
-	while(ptr) {
+	for (ptr = _d->hooks.first_route; ptr; ptr = ptr->next) {
 		len += ptr->len;
-		ptr = ptr->next;
-		if (ptr) len += ROUTE_SEPARATOR_LEN;
-	} 
-
-	if (_d->hooks.last_route) {
-		len += ROUTE_SEPARATOR_LEN + 2; /* < > */
-		len += _d->hooks.last_route->len;
+		len += ROUTE_SEPARATOR_LEN;
 	}
+	if (_d->hooks.last_route) {
+		if (_d->hooks.first_route)
+			len += ROUTE_SEPARATOR_LEN;
+		len += _d->hooks.last_route->len + 2; /* < > */
+	} else {
+		len -= ROUTE_SEPARATOR_LEN;
+	}
+
+	len += CRLF_LEN;
 
 	return len;
 }
-
 
 /*
  *
