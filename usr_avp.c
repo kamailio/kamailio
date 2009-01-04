@@ -981,6 +981,20 @@ error:
 	return -1;
 }
 
+void free_avp_ident(avp_ident_t* attr)
+{
+	if (attr->flags & AVP_NAME_RE) {
+		if (! attr->name.re) {
+			BUG("attr ident @%p has the regexp flag set, but no regexp.\n",
+					attr);
+#ifdef EXTRA_DEBUG
+			abort();
+#endif
+		} else {
+			pkg_free(attr->name.re);
+		}
+	}
+}
 
 int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index)
 {

@@ -203,7 +203,10 @@ int add_avp_galias(str *alias, int type, int_str avp_name);
 int parse_avp_ident( str *name, avp_ident_t* attr);
 int parse_avp_name( str *name, int *type, int_str *avp_name, int *index);
 int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index);
+/* TODO: is there any client for this function? */
 void free_avp_name( int *type, int_str *avp_name);
+/* Free an ident obtained with parse_avp_ident() */
+void free_avp_ident(avp_ident_t* attr);
 
 /* AVP flags functions */
 #define MAX_AVPFLAG  ((unsigned int)( sizeof(avp_flags_t) * CHAR_BIT - 1 - AVP_CUSTOM_FLAGS))
