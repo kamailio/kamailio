@@ -112,3 +112,20 @@ void rpc_reload(rpc_t *rpc, void *c) {
     }
 	return ;
 }
+
+/* rpc function titles */
+static const char *rpc_dump_doc[2] = {
+	"Dump dispatcher set configuration",
+	0
+};
+static const char *rpc_reload_doc[2] = {
+	"Reload dispatcher list from file",
+	0
+};
+
+rpc_export_t rpc_methods[] = {
+    {"dispatcher.dump",     rpc_dump,       rpc_dump_doc,       0},
+    {"dispatcher.reload",   rpc_reload,     rpc_reload_doc,     0},
+    {0, 0, 0, 0}
+};
+

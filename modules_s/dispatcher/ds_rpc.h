@@ -31,21 +31,8 @@
 #ifndef _DS_RPC_H_
 #define _DS_RPC_H_
 
-#include "../../sr_module.h"
-#include "dispatcher.h"
+#include "../../rpc.h"
 
-/* rpc function titles */
-static const char *rpc_dump_doc[2] = {
-	"Dump dispatcher set configuration",
-	0
-};
-static const char *rpc_reload_doc[2] = {
-	"Reload dispatcher list from file",
-	0
-};
-
-/* prototypes */
-void rpc_dump(rpc_t *rpc, void *c);
-void rpc_reload(rpc_t *rpc, void *c);
+extern rpc_export_t rpc_methods[];
 
 #endif /* _DS_RPC_H_ */

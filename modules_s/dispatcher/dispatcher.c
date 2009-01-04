@@ -68,12 +68,6 @@ static cmd_export_t cmds[]={
 	{0,0,0,0,0}
 };
 
-static rpc_export_t rpc_methods[] = {
-    {"dispatcher.dump",     rpc_dump,       rpc_dump_doc,       0},
-    {"dispatcher.reload",   rpc_reload,     rpc_reload_doc,     0},
-    {0, 0, 0, 0}
-};
-
 static param_export_t params[]={
 	{"list_file",      PARAM_STRING, &dslistfile},
 	{"force_dst",      PARAM_INT,    &force_dst},
