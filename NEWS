@@ -77,7 +77,10 @@ modules:
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
- - tm        - added t_reset_fr(), t_reset_retr(), t_reset_max_lifetime()
+ - tm        - matching of E2E ACKs no longer requires full From HF identity,
+               but rather only tag equality (this behaviour can be changed by
+               defining TM_E2E_ACK_CHECK_FROM_URI)
+             - added t_reset_fr(), t_reset_retr(), t_reset_max_lifetime()
              - t_relay_to renamed to t_relay_to_avp (undocumented function)
              - t_relay() can now also take host and port parameters (e.g.
                t_relay(host, port)), behaving like a statefull 

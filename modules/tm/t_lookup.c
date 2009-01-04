@@ -605,19 +605,34 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 			/* CSeq only the number without method ! */
 			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
 				continue;
-			if (! EQ_LEN(from)) continue;
 			/* To only the uri -- to many UACs screw up tags  */
 			if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
 				continue;
 			if (!EQ_STR(callid)) continue;
 			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
 				get_cseq(p_msg)->number.len)!=0) continue;
-			if (!EQ_STR(from)) continue;
 			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
 				get_to(t_msg)->uri.len)!=0) continue;
 			
 			/* it is e2e ACK/200 */
 			if (p_cell->uas.status<300) {
+				/* For e2e ACKs, From's tag 'MUST' equal INVITE's, while use
+				 * of the URI in this case is to be deprecated (Sec. 12.2.1.1).
+				 * Comparing entire From body is dangerous, since some UAs
+				 * screw the display name up. */
+				if (parse_from_header(p_msg) < 0) {
+					ERR("failed to parse From HF; ACK might not match.\n");
+					continue;
+				}
+				if (! STR_EQ(get_from(t_msg)->tag_value, 
+						get_from(p_msg)->tag_value))
+					continue;
+#ifdef TM_E2E_ACK_CHECK_FROM_URI
+				if (! STR_EQ(get_from(t_msg)->uri, 
+						get_from(p_msg)->uri))
+					continue;
+#endif
+
 				/* all criteria for proxied ACK are ok */
 				if (likely(p_cell->relayed_reply_branch!=-2)) {
 					if (unlikely(has_tran_tmcbs(p_cell, 
@@ -633,6 +648,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				if (dlg_matching(p_cell, p_msg))
 					goto found;
 				continue;
+			} else {
+				/* for hbh ACKs, From HF 'MUST' equal INVITE's one */
+				if (! EQ_LEN(from)) continue;
+				if (! EQ_STR(from)) continue;
 			}
 			
 			/* it is not an e2e ACK/200 -- perhaps it is 
