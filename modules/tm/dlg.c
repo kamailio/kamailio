@@ -54,12 +54,6 @@
 #define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
 
-#define ROUTE_PREFIX "Route: "
-#define ROUTE_PREFIX_LEN (sizeof(ROUTE_PREFIX) - 1)
-
-#define ROUTE_SEPARATOR "," CRLF "       "
-#define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
-
 
 #ifdef DIALOG_CALLBACKS
 
