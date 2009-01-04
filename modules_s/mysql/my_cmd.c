@@ -45,6 +45,7 @@
 #include "../../db/db_cmd.h"
 #include "../../ut.h"
 
+#include <stdlib.h>
 #include <strings.h>
 #include <stdio.h>
 #include <time.h>  /*strptime, XOPEN issue must be >=4 */
@@ -836,7 +837,7 @@ static int bind_mysql_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params
 	my_params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * (count1 + count2));
 	if (my_params == NULL) {
 		ERR("mysql: No memory left\n");
-		return -1;
+		return 1;
 	}
 	memset(my_params, '\0', sizeof(MYSQL_BIND) * (count1 + count2));
 
@@ -854,6 +855,7 @@ static int bind_mysql_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params
 	if (err) {
 		ERR("mysql: libmysqlclient: %d, %s\n", 
 			mysql_stmt_errno(st), mysql_stmt_error(st));
+		err = -abs(err);
 		goto error;
 	}
 
@@ -1066,6 +1068,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 	err = mysql_stmt_bind_result(st, result);
 	if (err) {
 		ERR("mysql: Error while binding result: %s\n", mysql_stmt_error(st));
+		err = -abs(err);
 		goto error;
 	}
 
@@ -1105,7 +1108,7 @@ static int upload_cmd(db_cmd_t* cmd)
 	res->st = mysql_stmt_init(mcon->con);
 	if (res->st == NULL) {
 		ERR("mysql: Error while creating new MySQL_STMT data structure (no memory left)\n");
-		err = 1;
+		err = -1;
 		goto error;
 	}
 
@@ -1115,6 +1118,7 @@ static int upload_cmd(db_cmd_t* cmd)
 		ERR("mysql: libmysql: %d, %s\n", mysql_stmt_errno(res->st), 
 			mysql_stmt_error(res->st));
 		ERR("mysql: An error occurred while uploading a command to MySQL server\n");
+		err = -abs(err); /* mysql_stmt_prepare() can return + for err */
 		goto error;
 	}
 
