@@ -223,7 +223,7 @@ static int sd_lookup_fixup(void** param, int param_no)
 		}
 		ptr[tables_no].table = (char*)*param;
 		ptr[tables_no].lookup_num = NULL;
-		*param = (void*)tables_no;
+		*param = (void*)(long)tables_no;
 		tables_no++;
 		tables = ptr;
 	}

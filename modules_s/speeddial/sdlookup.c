@@ -60,7 +60,7 @@ int sd_lookup(struct sip_msg* _msg, char* _index, char* _str2)
 	db_rec_t* rec;
 
 	/* init */
-	i = (int)_index;
+	i = (int)(long)_index;
 
 	     /* Retrieve the owner of the record */
 	if (get_from_uid(&uid, _msg) < 0) {

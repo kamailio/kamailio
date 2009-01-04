@@ -167,6 +167,12 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	received = NULL;
 
 	switch(auth_api.pre_auth(msg, realm, hftype, &h, NULL)) {
+	default:
+		BUG("unexpected reply '%d'.\n", auth_api.pre_auth(msg, realm, hftype,
+				&h, NULL));
+#ifdef EXTRA_DEBUG
+		abort();
+#endif
 	case ERROR:
 	case BAD_CREDENTIALS:
 	    ret = -3;
