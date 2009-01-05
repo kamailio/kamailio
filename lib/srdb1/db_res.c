@@ -85,8 +85,6 @@ inline int db_free_columns(db_res_t* _r)
 			RES_NAMES(_r)[col] = NULL;
 		}
 	}
-	RES_COL_N(_r) = 0;
-
 	/* free names and types */
 	if (RES_NAMES(_r)) {
 		LM_DBG("freeing result names at %p\n", RES_NAMES(_r));
@@ -129,9 +127,9 @@ inline int db_free_result(db_res_t* _r)
 		return -1;
 	}
 
-	LM_DBG("freeing result set at %p\n", _r);
 	db_free_columns(_r);
 	db_free_rows(_r);
+	LM_DBG("freeing result set at %p\n", _r);
 	pkg_free(_r);
 	_r = NULL;
 	return 0;
@@ -179,8 +177,7 @@ inline int db_allocate_rows(db_res_t* _res)
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
-	LM_DBG("allocate %d bytes for %d rows at %p\n", len, RES_ROW_N(_res),
-			RES_ROWS(_res));
+	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));
 	memset(RES_ROWS(_res), 0, len);
 	
 	return 0;
