@@ -167,17 +167,19 @@ typedef struct {
 #define VAL_BITMAP(dv) ((dv)->val.bitmap_val)
 
 
-/**
- * \brief Convert a str to a db value, copy strings
+/*!
+ * \brief Convert a str to a db value
  *
- * Convert a str to a db value, does not copy strings.
+ * Convert a str to a db value, does not copy strings if _cpy is zero
  * \param _t destination value type
  * \param _v destination value
  * \param _s source string
  * \param _l string length
+ * \param _cpy when set to zero does not copy strings, otherwise copy strings
  * \return 0 on success, negative on error
  */
-int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
+int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
+		const unsigned int _cpy);
 
 
 /*!

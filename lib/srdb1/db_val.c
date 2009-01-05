@@ -27,16 +27,23 @@
 #include <time.h>
 
 /*!
- * \brief Convert a str to a db value, copy strings
+ * \brief Convert a str to a db value
  *
- * Convert a str to a db value, does not copy strings.
+ * Convert a str to a db value, copy strings if _cpy is not zero.
+ * Copying is not necessary if the result from the database client library
+ * is freed after the result inside the server is processed. If the result
+ * is freed earlier, e.g. because its saved inside some temporary storage,
+ * then it must be copied in order to be use it reliable.
+ *
  * \param _t destination value type
  * \param _v destination value
  * \param _s source string
  * \param _l string length
+ * \param _cpy when set to zero does not copy strings, otherwise copy strings
  * \return 0 on success, negative on error
  */
-int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
+int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
+		const unsigned int _cpy)
 {
 	static str dummy_string = {"", 0};
 	
@@ -44,7 +51,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	/* A NULL string is a NULL value, otherwise its an empty value */
+	/* A NULL string is a SQL NULL value, otherwise its an empty value */
 	if (!_s) {
 		memset(_v, 0, sizeof(db_val_t));
 			/* Initialize the string pointers to a dummy empty
@@ -107,37 +114,42 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 
 	case DB_STRING:
 		LM_DBG("converting STRING [%s]\n", _s);
-		/*
-		 * Normally we could just use the string returned from the DB library,
-		 * as its usually not immediately freed after the free_result. But as
-		 * there exists some corner cases where this string gets invalid, we
-		 * need to copy it here.
-		 */
-		VAL_STRING(_v) = pkg_malloc(_l + 1);
-		if (VAL_STRING(_v) == NULL) {
-			LM_ERR("no private memory left\n");
-			return -6;
+
+		if (_cpy == 0) {
+			VAL_STRING(_v) = _s;
+		} else {
+			VAL_STRING(_v) = pkg_malloc(_l + 1);
+			if (VAL_STRING(_v) == NULL) {
+				LM_ERR("no private memory left\n");
+				return -6;
+			}
+			LM_DBG("allocate %d bytes memory for STRING at %p", _l + 1, VAL_STRING(_v));
+			strncpy((char*)VAL_STRING(_v), _s, _l);
+			((char*)VAL_STRING(_v))[_l] = '\0';
+			VAL_FREE(_v) = 1;
 		}
-		LM_DBG("allocate %d bytes memory for STRING at %p", _l + 1, VAL_STRING(_v));
-		strncpy((char*)VAL_STRING(_v), _s, _l);
-		((char*)VAL_STRING(_v))[_l] = '\0';
+
 		VAL_TYPE(_v) = DB_STRING;
-		VAL_FREE(_v) = 1;
 		return 0;
 
 	case DB_STR:
 		LM_DBG("converting STR [%.*s]\n", _l, _s);
-		/* same problem as DB_STRING.. */
-		VAL_STR(_v).s = pkg_malloc(_l);
-		if (VAL_STR(_v).s == NULL) {
-			LM_ERR("no private memory left\n");
-			return -7;
+
+		if (_cpy == 0) {
+			VAL_STR(_v).s = (char*) _s;
+		} else {
+			VAL_STR(_v).s = pkg_malloc(_l);
+			if (VAL_STR(_v).s == NULL) {
+				LM_ERR("no private memory left\n");
+				return -7;
+			}
+			LM_DBG("allocate %d bytes memory for STR at %p", _l, VAL_STR(_v).s);
+			strncpy(VAL_STR(_v).s, _s, _l);
+			VAL_FREE(_v) = 1;
 		}
-		LM_DBG("allocate %d bytes memory for STR at %p", _l, VAL_STR(_v).s);
-		strncpy(VAL_STR(_v).s, _s, _l);
+
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
-		VAL_FREE(_v) = 1;
 		return 0;
 
 	case DB_DATETIME:
@@ -153,17 +165,22 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 
 	case DB_BLOB:
 		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
-		/* same problem as DB_STRING.. */
-		VAL_BLOB(_v).s = pkg_malloc(_l);
-		if (VAL_BLOB(_v).s == NULL) {
-			LM_ERR("no private memory left\n");
-			return -9;
+
+		if (_cpy == 0) {
+			VAL_BLOB(_v).s = (char*) _s;
+		} else {
+			VAL_BLOB(_v).s = pkg_malloc(_l);
+			if (VAL_BLOB(_v).s == NULL) {
+				LM_ERR("no private memory left\n");
+				return -9;
+			}
+			LM_DBG("allocate %d bytes memory for BLOB at %p", _l, VAL_BLOB(_v).s);
+			strncpy(VAL_BLOB(_v).s, _s, _l);
+			VAL_FREE(_v) = 1;
 		}
-		LM_DBG("allocate %d bytes memory for BLOB at %p", _l, VAL_BLOB(_v).s);
-		strncpy(VAL_BLOB(_v).s, _s, _l);
+
 		VAL_BLOB(_v).len = _l;
 		VAL_TYPE(_v) = DB_BLOB;
-		VAL_FREE(_v) = 1;
 		return 0;
 	}
 	return -10;
