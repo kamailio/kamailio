@@ -34,6 +34,15 @@
 #include "../../mem/mem.h"
 #include "list.h"
 
+
+/*!
+ * \brief Create a list
+ * \param start start of the list
+ * \param link inserted element
+ * \param n number of values
+ * \param value inserted value
+ * \return 0 on success, -1 on failure
+ */
 int db_unixodbc_list_insert(list** start, list** link, int n, strn* value)
 {
 	int i = 0;
@@ -133,6 +142,10 @@ int db_unixodbc_list_insert(list** start, list** link, int n, strn* value)
 }
 
 
+/*!
+ * \brief Destroy a list
+ * \param link list element(s)
+ */
 void db_unixodbc_list_destroy(list *start)
 {
 	int i = 0;
