@@ -76,12 +76,15 @@ struct cell;
 #define TMCB_DESTROY_N          15  /* called on transaction destroy */
 #define TMCB_E2ECANCEL_IN_N     16
 #define TMCB_E2EACK_RETR_IN_N   17
+#ifdef WITH_AS_SUPPORT
+#define TMCB_DONT_ACK_N         18 /* TM shoudn't ACK a local UAC  */
+#endif
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     18
-#define TMCB_RESPONSE_SENT_N    19
-#define TMCB_MAX_N              19
+#define TMCB_REQUEST_SENT_N     19
+#define TMCB_RESPONSE_SENT_N    20
+#define TMCB_MAX_N              20
 #else
-#define TMCB_MAX_N              17
+#define TMCB_MAX_N              18
 #endif
 
 
@@ -103,6 +106,9 @@ struct cell;
 #define TMCB_DESTROY          (1<<TMCB_DESTROY_N)
 #define TMCB_E2ECANCEL_IN     (1<<TMCB_E2ECANCEL_IN_N)
 #define TMCB_E2EACK_RETR_IN   (1<<TMCB_E2EACK_RETR_IN_N)
+#ifdef WITH_AS_SUPPORT
+#define TMCB_DONT_ACK         (1<<TMCB_DONT_ACK_N)
+#endif
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -313,6 +319,14 @@ struct cell;
  *  the cell* parameter (t) and the tmcb are set to 0. Only the param is
  *  is filled inside TMCB. For dialogs callbacks t is also 0.
  *
+ *
+ * TMCB_DONT_ACK (requires AS support) -- for localy generated INVITEs, TM 
+ * automatically generates an ACK for the received 2xx replies. But, if this 
+ * flag is passed to TM when creating the initial UAC request, this won't
+ * happen anymore: the ACK generation must be triggered from outside, using
+ * TM's interface.
+ * While this isn't exactly a callback type, it is used as part of the flags
+ * mask when registering callbacks.
 
 	the callback's param MUST be in shared memory and will
 	NOT be freed by TM; you must do it yourself from the

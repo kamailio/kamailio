@@ -65,6 +65,7 @@
 #include "h_table.h"
 #include "fix_lumps.h" /* free_via_clen_lump */
 #include "timer.h"
+#include "uac.h" /* free_local_ack */
 
 
 static enum kill_reason kr;
@@ -173,6 +174,9 @@ void free_cell( struct cell* dead_cell )
 		dns_srv_handle_put_shm_unsafe(&dead_cell->uac[i].dns_h);
 #endif
 	}
+
+	if (dead_cell->uac[0].local_ack)
+		free_local_ack_unsafe(dead_cell->uac[0].local_ack);
 
 	/* collected to tags */
 	tt=dead_cell->fwded_totags;

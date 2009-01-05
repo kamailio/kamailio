@@ -93,7 +93,9 @@
  */
 
 
-
+#ifdef EXTRA_DEBUG
+#include <assert.h>
+#endif
 #include "../../comp_defs.h"
 #include "../../hash_func.h"
 #include "../../dprint.h"
@@ -368,15 +370,43 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
 								int branch, unsigned int *ret_len,
 								struct dest_info*  dst)
 {
-	str to;
-	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
-		LOG(L_ERR, "ERROR: build_local_ack: Error while parsing headers\n");
-		return 0;
+#ifdef WITH_AS_SUPPORT
+	struct retr_buf *local_ack, *old_lack;
+
+	/* do we have the ACK cache, previously build? */
+	if ((local_ack = trans->uac[0].local_ack) && local_ack->buffer_len) {
+		DEBUG("reusing ACK retr. buffer.\n");
+		*ret_len = local_ack->buffer_len;
+		*dst = local_ack->dst;
+		return local_ack->buffer;
 	}
 
-	to.s = rpl->to->name.s;
-	to.len = rpl->to->len;
-	return build_dlg_ack(rpl, trans, branch, &to, ret_len, dst);
+	/* the ACK will be built (and cached) by the AS (ack_local_uac()) */
+	if (trans->flags & T_NO_AUTO_ACK) 
+		return NULL;
+
+	if (! (local_ack = local_ack_rb(rpl, trans, branch, /*hdrs*/NULL, 
+			/*body*/NULL))) {
+		ERR("failed to build local ACK retransmission buffer (T@%p).\n",trans);
+		return NULL;
+	}
+
+	/* set the new buffer, but only if not already set (concurrent 2xx) */
+	if ((old_lack = (struct retr_buf *)atomic_cmpxchg_long(
+			(void *)&trans->uac[0].local_ack, 0, (long)local_ack))) {
+		/* buffer already set: trash current and use the winning one */
+		INFO("concurrent 2xx to local INVITE detected (T@%p).\n", trans);
+		free_local_ack(local_ack);
+		local_ack = old_lack;
+	}
+	
+	*ret_len = local_ack->buffer_len;
+	*dst = local_ack->dst;
+	return local_ack->buffer;
+#else /* ! WITH_AS_SUPPORT */
+	return build_dlg_ack(rpl, trans, branch, /*hdrs*/NULL, /*body*/NULL, 
+			ret_len, dst);
+#endif /* WITH_AS_SUPPORT */
 }
 
 
@@ -1125,9 +1155,16 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 	/* not >=300 ... it must be 2xx or provisional 1xx */
 	if (new_code>=100) {
+#ifdef WITH_AS_SUPPORT
+			/* need a copy of the message for ACK generation */
+			*should_store = (inv_through && is_local(Trans) && 
+					(Trans->uac[branch].last_received < 200) &&
+					(Trans->flags & T_NO_AUTO_ACK)) ? 1 : 0;
+#else
+		*should_store=0;
+#endif
 		/* 1xx and 2xx except 100 will be relayed */
 		Trans->uac[branch].last_received=new_code;
-		*should_store=0;
 		*should_relay= new_code==100? -1 : branch;
 		if (new_code>=200 ) {
 			which_cancel( Trans, cancel_bitmap );
@@ -1818,7 +1855,9 @@ int reply_received( struct sip_msg  *p_msg )
 													&onsend_params);
 					}
 #endif
+#ifndef WITH_AS_SUPPORT
 					shm_free(ack);
+#endif
 				}
 			}
 		}

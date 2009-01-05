@@ -77,7 +77,13 @@ modules:
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
- - tm        - matching of E2E ACKs no longer requires full From HF identity,
+ - tm        - added API function t_get_canceled_ident(): returns the hash 
+               coordinates (bucket/index) of the transaction the currently 
+               processed CANCEL is targeting. Requires AS support enabled.
+             - added API function ack_local_uac(): allow generating the ACKs 
+               for 2xx'ed locally originated INVITEs - new headers and body can
+               now also be appended to it. Requires AS support enabled.
+             - matching of E2E ACKs no longer requires full From HF identity,
                but rather only tag equality (this behaviour can be changed by
                defining TM_E2E_ACK_CHECK_FROM_URI)
              - added t_reset_fr(), t_reset_retr(), t_reset_max_lifetime()

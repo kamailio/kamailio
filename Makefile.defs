@@ -456,6 +456,8 @@ endif
 #		core that the DNS servers are down. No DNS query is performed
 #		when the servers are unreachable, and even expired resource
 #		records are used from the cache. (requires external watchdog)
+# -DWITH_AS_SUPPORT
+#		adds support for Application Server interface
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
 DEFS= $(extra_defs) \
@@ -476,6 +478,7 @@ DEFS= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DUSE_NAPTR \
+	 -DWITH_AS_SUPPORT \
 	 -DDBG_QM_MALLOC \
 	 #-DUSE_DNS_CACHE_STATS \
 	 #-DUSE_DST_BLACKLIST_STATS \
