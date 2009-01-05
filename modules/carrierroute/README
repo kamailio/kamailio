@@ -65,10 +65,12 @@ Henning Westerholt
               1.5.6. cr_add_host
               1.5.7. cr_delete_host
 
-        1.6. Examples
+        1.6. Configuration examples
         1.7. Installation and Running
 
               1.7.1. Database setup
+              1.7.2. Database examples
+              1.7.3. User specific routing
 
    2. Module parameter for database access.
 
@@ -133,7 +135,8 @@ Henning Westerholt
           carrierfailureroute table
 
    1.23. Example database content - carrier_name table
-   1.24. Necessary extensions for the user table
+   1.24. Example database content - domain_name table
+   1.25. Necessary extensions for the user table
    2.1. Set db_url parameter
    2.2. Set carrierroute_table parameter
    2.3. Set carrierroute_id_col parameter
@@ -671,7 +674,7 @@ kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
-1.6. Examples
+1.6. Configuration examples
 
    Example 1.17. Configuration example - Routing to default tree
 ...
@@ -827,6 +830,8 @@ domain register {
    For a minimal configuration either use the config file given
    above, or insert some data into the tables of the module.
 
+1.7.2. Database examples
+
    Example 1.20. Example database content - carrierroute table
 ...
 +----+---------+--------+-------------+-------+------+---------------+
@@ -858,13 +863,13 @@ domain register {
    are not reachable. Two more fallback rules (domain 2 and 3) for
    carrier 1 are also supplied to support the functionality of the
    carrierfailureroute table example that is provided in the next
-   section. The usage of strings for the domains is also possible,
-   for example at carrier 3.
+   section.
 
-   This table provides also a "carrier1" routing rule for the "49"
-   prefix, that is only choosen if some message flags are set. If
-   this flags are not set, the other two rules are used. The
-   "strip", "mask" and "comment" colums are omitted for brevity.
+   This table provides also a "carrier 1" routing rule for the
+   "49" prefix, that is only choosen if some message flags are
+   set. If this flags are not set, the other two rules are used.
+   The "strip", "mask" and "comment" colums are omitted for
+   brevity.
 
    Example 1.21. Example database content - simple
    carrierfailureroute table
@@ -929,12 +934,28 @@ domain register {
    This table contains the mapping of the carrier id to actual
    names.
 
+   Example 1.24. Example database content - domain_name table
+...
++----+----------+
+| id | carrier  |
++----+----------+
+|  1 | domain1  |
+|  2 | domain2  |
+|  3 | domain3  |
++----+----------+
+...
+
+   This table contains the mapping of the domain id to actual
+   names.
+
+1.7.3. User specific routing
+
    For a functional routing the "cr_preferred_carrier" column must
    be added to the subscriber table (or to the table and column
    that you specified as modul parameter) to choose the actual
    carrier for the users.
 
-   Example 1.24. Necessary extensions for the user table
+   Example 1.25. Necessary extensions for the user table
 
    Suggested changes:
 ...
