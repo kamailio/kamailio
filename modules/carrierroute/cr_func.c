@@ -563,7 +563,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 		goto unlock_and_out;
 	}
 
-	LM_INFO("uri %.*s was rewritten to %.*s\n", rewrite_user.len, rewrite_user.s, dest.len, dest.s);
+	LM_INFO("uri %.*s was rewritten to %.*s, domain %d, carrier %d\n", rewrite_user.len, rewrite_user.s, dest.len, dest.s, domain_id, carrier_id);
 
 	act.type = SET_URI_T;
 	act.elem[0].type= STRING_ST;
