@@ -90,6 +90,8 @@ inline int db_free_row(db_row_t* _r)
 				break;
 		}
 	}
+	/* now as we freed all, set number of colums to zero again */
+	ROW_N(_r) = 0;
 
 	if (ROW_VALUES(_r)) {
 		LM_DBG("freeing row values at %p\n", ROW_VALUES(_r));

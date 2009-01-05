@@ -85,6 +85,8 @@ inline int db_free_columns(db_res_t* _r)
 			RES_NAMES(_r)[col] = NULL;
 		}
 	}
+	RES_COL_N(_r) = 0;
+
 	/* free names and types */
 	if (RES_NAMES(_r)) {
 		LM_DBG("freeing result names at %p\n", RES_NAMES(_r));
