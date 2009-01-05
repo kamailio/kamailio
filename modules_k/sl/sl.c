@@ -172,7 +172,7 @@ static int mod_init(void)
 		{
 			load_tm( &tmb );
 		} else {
-			LM_WARN("failed to bind tm module - stateless mode only now\n");
+			LM_WARN("could not bind tm module - only stateless mode available\n");
 			sl_bind_tm=0;
 		}
 	}
@@ -290,12 +290,12 @@ int send_reply(struct sip_msg *msg, int code, str *text)
 				LM_ERR("failed to reply stateful (tm)\n");
 				return -1;
 			}
-			LM_DBG("reply stateful mode (tm)\n");
+			LM_DBG("reply in stateful mode (tm)\n");
 			return 1;
 		}
 	}
 
-	LM_DBG("reply stateless mode (sl)\n");
+	LM_DBG("reply in stateless mode (sl)\n");
 	return sl_send_reply(msg, code, text);
 }
 
