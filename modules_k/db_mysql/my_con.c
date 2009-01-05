@@ -43,6 +43,7 @@
 struct my_con* db_mysql_new_connection(const struct db_id* id)
 {
 	struct my_con* ptr;
+	char *host, *grp;
 
 	if (!id) {
 		LM_ERR("invalid parameter value\n");
@@ -66,11 +67,30 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 
 	mysql_init(ptr->con);
 
+	if (id->host[0] == '[' && (host = strchr(id->host, ']')) != NULL) {
+		grp = id->host + 1;
+		*host = '\0';
+		if (host != id->host + strlen(id->host)-1) {
+			host += 1; // host found after closing bracket
+		}
+		else {
+			// let mysql read host info from my.cnf
+			// (defaults to "localhost")
+			host = NULL;
+		}
+		// read [client] and [<grp>] sections in the order
+		// given in my.cnf
+		mysql_options(ptr->con, MYSQL_READ_DEFAULT_GROUP, grp);
+	}
+	else {
+		host = id->host;
+	}
+
 	if (id->port) {
-		LM_DBG("opening connection: mysql://xxxx:xxxx@%s:%d/%s\n", ZSW(id->host),
+		LM_DBG("opening connection: mysql://xxxx:xxxx@%s:%d/%s\n", ZSW(host),
 			id->port, ZSW(id->database));
 	} else {
-		LM_DBG("opening connection: mysql://xxxx:xxxx@%s/%s\n", ZSW(id->host),
+		LM_DBG("opening connection: mysql://xxxx:xxxx@%s/%s\n", ZSW(host),
 			ZSW(id->database));
 	}
 
@@ -80,10 +100,10 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const char *)&db_mysql_timeout_interval);
 
 #if (MYSQL_VERSION_ID >= 40100)
-	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password,
+	if (!mysql_real_connect(ptr->con, host, id->username, id->password,
 				id->database, id->port, 0, CLIENT_MULTI_STATEMENTS)) {
 #else
-	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password,
+	if (!mysql_real_connect(ptr->con, host, id->username, id->password,
 				id->database, id->port, 0, 0)) {
 #endif
 		LM_ERR("driver error: %s\n", mysql_error(ptr->con));

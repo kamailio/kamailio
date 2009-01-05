@@ -140,5 +140,59 @@ modparam("auto_reconnect", "auto_reconnect", 0)
 			</listitem>
 		</itemizedlist>
 	</section>
+	<section>
+		<title>Reading configuration from my.cnf</title>
+		<para>
+		In order to take into account specific mysql client options, a my.cnf config group can be passed using the <emphasis>db_url</emphasis> module parameter. This is done by setting <emphasis>[group]</emphasis> in front of or instead of the host part. The following examples are valid <emphasis>db_url</emphasis> definitions, which include a my.cnf group:
+		</para>
+
+		<itemizedlist>
+			<listitem>mysql://user:pass@[group]host:port/db</listitem>
+			<listitem>mysql://user:pass@[group]:port/db</listitem>
+			<listitem>mysql://user:pass@[group]/db</listitem>
+			<listitem>mysql://[group]/db</listitem>
+		</itemizedlist>
+		<example>
+		<title>Set a my.cnf group in <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_url", "mysql://[kamailio]/kamailio)
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Adding a kamailio group to my.cnf</title>
+		<programlisting format="linespecific">
+...
+[kamailio]
+socket = /path/to/mysql.sock
+user = kamailiouser
+password = kamailiopass
+default-character-set = utf8
+...
+</programlisting>
+		</example>
+		<para>
+		In addition to the given group, also the <emphasis>[client]</emphasis> section is read, in the order given in my.cnf. So if you for example specify a <emphasis>socket</emphasis> in both your specific group and the client group, then the value is taken from the last one.
+		</para>
+		<example>
+		<title>Using [client] and specific group</title>
+		<programlisting format="linespecific">
+...
+[client]
+socket = /var/run/mysql/mysqld.sock
+
+[kamailio]
+socket = /path/to/mysqld.sock
+user = kamailiouser
+password = kamailiopass
+default-character-set = utf8
+...
+</programlisting>
+		</example>
+		<para>
+		In the example given above, the socket <emphasis>/path/to/mysqld.sock</emphasis> is used by &kamailio; because both <emphasis>[kamailio]</emphasis> and <emphasis>[client]</emphasis> define this option, and the latter overwrites the first.
+		</para>
+	</section>
 </chapter>
 
