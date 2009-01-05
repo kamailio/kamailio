@@ -175,8 +175,10 @@ void free_cell( struct cell* dead_cell )
 #endif
 	}
 
+#ifdef WITH_AS_SUPPORT
 	if (dead_cell->uac[0].local_ack)
 		free_local_ack_unsafe(dead_cell->uac[0].local_ack);
+#endif
 
 	/* collected to tags */
 	tt=dead_cell->fwded_totags;
