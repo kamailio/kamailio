@@ -795,7 +795,7 @@ kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 	</section>
     </section>
     <section>
-	<title>Examples</title>
+	<title>Configuration examples</title>
 	<example>
 		<title>Configuration example - Routing to default tree</title>
 		<programlisting format="linespecific">
@@ -965,6 +965,10 @@ domain register {
 			For a minimal configuration either use the config file given above, or
 			insert some data into the tables of the module.
 		</para>
+	</section>
+	
+	<section>
+		<title>Database examples</title>
 	<example>
 		<title>Example database content - carrierroute table</title>
 		<programlisting format="linespecific">
@@ -998,11 +1002,10 @@ domain register {
 			with the domain 1, that can be used for example as fallback if the gateways
 			in domain 0 are not reachable. Two more fallback rules (domain 2 and 3) for 
 			carrier 1 are also supplied to support the functionality of the carrierfailureroute
-			table example that is provided in the next section. The usage of strings
-			for the domains is also possible, for example at carrier 3.
+			table example that is provided in the next section.
 		</para>
 		<para>
-			This table provides also a <quote>carrier1</quote> routing rule for the
+			This table provides also a <quote>carrier 1</quote> routing rule for the
 			<quote>49</quote> prefix, that is only choosen if some message flags are set.
 			If this flags are not set, the other two rules are used. The <quote>strip</quote>,
 			<quote>mask</quote> and <quote>comment</quote> colums are omitted for brevity.
@@ -1079,6 +1082,27 @@ domain register {
 		<para>
 			This table contains the mapping of the carrier id to actual names.
 		</para>
+		<example>
+		<title>Example database content - domain_name table</title>
+		<programlisting format="linespecific">
+...
++----+----------+
+| id | carrier  |
++----+----------+
+|  1 | domain1  |
+|  2 | domain2  |
+|  3 | domain3  |
++----+----------+
+...
+		</programlisting>
+		</example>
+		<para>
+			This table contains the mapping of the domain id to actual names.
+		</para>
+
+	</section>
+	<section>
+		<title>User specific routing</title>
 		<para>
 			For a functional routing the <quote>cr_preferred_carrier</quote> column must
 			be added to the subscriber table (or to the table and column that you specified
