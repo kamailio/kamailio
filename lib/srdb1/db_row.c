@@ -41,7 +41,7 @@
  */
 inline int db_free_row(db_row_t* _r)
 {
-	int	col;
+	int col;
 	db_val_t* _val;
 
 	if (!_r) {
@@ -96,6 +96,7 @@ inline int db_free_row(db_row_t* _r)
 		pkg_free(ROW_VALUES(_r));
 		ROW_VALUES(_r) = NULL;
 	}
+
 	return 0;
 }
 
