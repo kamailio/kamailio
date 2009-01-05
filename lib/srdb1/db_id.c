@@ -262,7 +262,11 @@ unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2)
 	if (id1->port != id2->port) return 0;
 
 	if (strcmp(id1->scheme, id2->scheme)) return 0;
-	if (strcmp(id1->username, id2->username)) return 0;
+	if (id1->username!=0 && id2->username!=0) {
+		if (strcmp(id1->username, id2->username)) return 0;
+	} else {
+		if (id1->username!=0 || id2->username!=0) return 0;
+	}
 	if (id1->password!=0 && id2->password!=0) {
 		if(strcmp(id1->password, id2->password)) return 0;
 	} else {
