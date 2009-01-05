@@ -58,7 +58,7 @@
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
 	if ( (_t != DB_BLOB && _v != NULL) || _v == NULL) {
-		return db_str2val(_t, _v, _s, _l);
+		return db_str2val(_t, _v, _s, _l, 1);
 	} else {
 		char * tmp_s = NULL;
 		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
