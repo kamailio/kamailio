@@ -223,7 +223,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 	memset(row_buf, 0, len);
 
 	if (db_allocate_rows(_r) < 0) {
-		LM_ERR("could not allocate rows");
+		LM_ERR("could not allocate rows\n");
 		return -2;
 	}
 
@@ -295,7 +295,7 @@ int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 	}
 
 	if (db_allocate_row(_r, _row) != 0) {
-		LM_ERR("could not allocate row");
+		LM_ERR("could not allocate row\n");
 		return -2;
 	}
 
@@ -311,7 +311,7 @@ int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 		if (db_postgres_str2val(RES_TYPES(_r)[col], &(ROW_VALUES(_row)[col]),
 		row_buf[col], col_len) < 0) {
 			LM_ERR("failed to convert value\n");
-			LM_DBG("free row at %pn", _row);
+			LM_DBG("free row at %p\n", _row);
 			db_free_row(_row);
 			return -3;
 		}
