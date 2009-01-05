@@ -34,12 +34,16 @@ Daniel-Constantin Mierla
 
         1.4. Exported Functions
         1.5. Installation
+        1.6. Reading configuration from my.cnf
 
    List of Examples
 
    1.1. Set ping_interval parameter
    1.2. Set timeout_interval parameter
    1.3. Set auto_reconnect parameter
+   1.4. Set a my.cnf group in db_url parameter
+   1.5. Adding a kamailio group to my.cnf
+   1.6. Using [client] and specific group
 
 Chapter 1. Admin Guide
 
@@ -121,3 +125,50 @@ modparam("auto_reconnect", "auto_reconnect", 0)
      * - from command line use: 'make all
        include_modules="db_mysql"; make install
        include_modules="db_mysql"'.
+
+1.6. Reading configuration from my.cnf
+
+   In order to take into account specific mysql client options, a
+   my.cnf config group can be passed using the db_url module
+   parameter. This is done by setting [group] in front of or
+   instead of the host part. The following examples are valid
+   db_url definitions, which include a my.cnf group:
+     * mysql://user:pass@[group]host:port/db
+     * mysql://user:pass@[group]:port/db
+     * mysql://user:pass@[group]/db
+     * mysql://[group]/db
+
+   Example 1.4. Set a my.cnf group in db_url parameter
+...
+modparam("usrloc", "db_url", "mysql://[kamailio]/kamailio)
+...
+
+   Example 1.5. Adding a kamailio group to my.cnf
+...
+[kamailio]
+socket = /path/to/mysql.sock
+user = kamailiouser
+password = kamailiopass
+default-character-set = utf8
+...
+
+   In addition to the given group, also the [client] section is
+   read, in the order given in my.cnf. So if you for example
+   specify a socket in both your specific group and the client
+   group, then the value is taken from the last one.
+
+   Example 1.6. Using [client] and specific group
+...
+[client]
+socket = /var/run/mysql/mysqld.sock
+
+[kamailio]
+socket = /path/to/mysqld.sock
+user = kamailiouser
+password = kamailiopass
+default-character-set = utf8
+...
+
+   In the example given above, the socket /path/to/mysqld.sock is
+   used by Kamailio because both [kamailio] and [client] define
+   this option, and the latter overwrites the first.
