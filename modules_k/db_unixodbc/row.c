@@ -57,7 +57,7 @@ int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* 
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
 		if (db_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
-			((CON_ROW(_h))[i]), lengths[i]) < 0) {
+			((CON_ROW(_h))[i]), lengths[i], 1) < 0) {
 			LM_ERR("failed to convert value\n");
 			LM_DBG("free row at %p\n", _r);
 			db_free_row(_r);
