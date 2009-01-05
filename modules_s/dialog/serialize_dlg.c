@@ -309,7 +309,7 @@ int serialize_dlg(sstream_t *ss, dlg_t *dlg)
 	if ((res == 0) && (is_input_sstream(ss))) {
 		/* tmb.w_calculate_hooks(dlg); */
 		res = tmb.calculate_hooks(dlg);
-		if (res != 0) {
+		if (res < 0) {
 			ERROR_LOG("error during calculate_hooks (%d)!\n", res);
 		}
 	}
