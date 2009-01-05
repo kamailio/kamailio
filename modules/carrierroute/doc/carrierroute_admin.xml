@@ -424,12 +424,22 @@ cr_tree_rewrite_uri(tree, domain)
         The Request URI is rewritten using rewrite_user and the given
         hash source and algorithm. Returns -1 if there is no data found
         or an empty rewrite host on the longest match is found. Otherwise
-				the rewritten host is stored in the given AVP (if obmitted, the
-				host is not stored in an AVP).
+        the rewritten host is stored in the given AVP (if obmitted, the
+        host is not stored in an AVP).
+        </para>
+        <para>
         This function is only usable with rewrite_user and prefix_matching
         containing a valid string. This string needs to be numerical if the match_mode
-		parameter is set to 10. It uses the standard crc32 algorithm to calculate
-		the hash values.
+        parameter is set to 10. It uses the standard CRC32 algorithm to calculate
+        the hash values.
+        </para>
+        <para>
+        If flags and masks values are specified in the routing rule, they will be
+        compared by this function to the message flags. Specify a flag and mask value of
+        <quote>0</quote> to match to all possible message flags (this is the default value).
+        If flags and mask are not zero, and no match to the message flags is possible, no
+        routing will be done. The calculation of the hash and the load-balancing is done
+        after the flags matching.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
