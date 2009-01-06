@@ -35,6 +35,7 @@
  *              and first next_gw() calls.
  *  2008-10-10: Database values are now checked and from/to_gw functions
  *              execute in O(logN) time.
+ *  2008-11-26: Added timer based check of gateways (shurik)
  */
 
 #include <stdio.h>
@@ -62,6 +63,7 @@
 #include "../../mi/mi.h"
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
+#include "../tm/tm_load.h"
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "hash.h"
@@ -74,7 +76,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 8
+#define GW_TABLE_VERSION 9
 #define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
@@ -110,6 +112,8 @@ static int fixstringloadgws(void **param, int param_count);
 
 #define FLAGS_COL "flags"
 
+#define PING_COL "ping"
+
 #define LCR_TABLE "lcr"
 
 #define PREFIX_COL "prefix"
@@ -128,10 +132,15 @@ static int fixstringloadgws(void **param, int param_count);
 #define DEF_FR_INV_TIMER_NEXT 30
 #define DEF_LCR_HASH_SIZE 128
 #define DEF_FETCH_ROWS 2000
+#define DEF_PING_TIMER 180
+#define MAX_CODES 10
 
 /*
  * Type definitions
  */
+
+/* TMB Structure */
+struct tm_binds tmb;
 
 typedef enum sip_protos uri_transport;
 
@@ -148,6 +157,7 @@ struct gw_info {
     unsigned short tag_len;
     unsigned short weight;
     unsigned int flags;
+    unsigned short ping;
     unsigned int next;  /* index of next gw in the same group */
 };
 
@@ -192,6 +202,7 @@ static str strip_col        = str_init(STRIP_COL);
 static str tag_col          = str_init(TAG_COL);
 static str weight_col       = str_init(WEIGHT_COL);
 static str flags_col        = str_init(FLAGS_COL);
+static str ping_col         = str_init(PING_COL);
 static str lcr_table        = str_init(LCR_TABLE);
 static str prefix_col       = str_init(PREFIX_COL);
 static str from_uri_col     = str_init(FROM_URI_COL);
@@ -203,6 +214,21 @@ static int fetch_rows_param = DEF_FETCH_ROWS;
 /* timer */
 int fr_inv_timer      = DEF_FR_INV_TIMER;
 int fr_inv_timer_next = DEF_FR_INV_TIMER_NEXT;
+
+/* OPTIONS timer */
+static void timer(unsigned int ticks, void* param);  /* Timer handler */
+int ping_interval = 0;  /* Timer interval in seconds */
+
+/* OPTIONS From URI */
+static str ping_from   = {"sip:127.0.0.1", 20};
+static str ping_method = {"OPTIONS", 7};
+
+/* codes */
+int positive_codes[MAX_CODES];
+int negative_codes[MAX_CODES];
+
+static str positive_codes_str   = {"200;501;403;404", 15};
+static str negative_codes_str   = {"408", 3};
 
 /* avps */
 static char *fr_inv_timer_avp_param = NULL;
@@ -218,8 +244,10 @@ unsigned int lcr_hash_size_param = DEF_LCR_HASH_SIZE;
  * Other module types and variables
  */
 
-static int     fr_inv_timer_avp_type;
-static int_str fr_inv_timer_avp;
+/* these two are defined in ../tm/t_funcs.h */
+int     fr_inv_timer_avp_type;
+int_str fr_inv_timer_avp;
+
 static int     gw_uri_avp_type;
 static int_str gw_uri_avp;
 static int     ruri_user_avp_type;
@@ -239,7 +267,7 @@ struct lcr_info **lcrs_2; /* Pointer to lcr hash table 2 */
 
 
 /*
- * Module functions that are defined later
+ * Functions that are defined later
  */
 static int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2);
 static int load_gws_1(struct sip_msg* _m, char* _s1, char* _s2);
@@ -251,7 +279,7 @@ static int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
-
+static int add_code_to_array(str *codes, int local_codes[]);
 
 /*
  * Exported functions
@@ -302,15 +330,21 @@ static param_export_t params[] = {
     {"prefix_column",            STR_PARAM, &prefix_col.s   },
     {"from_uri_column",          STR_PARAM, &from_uri_col.s },
     {"priority_column",          STR_PARAM, &priority_col.s },
+    {"ping_column",              STR_PARAM, &ping_col.s     },
     {"fr_inv_timer_avp",         STR_PARAM, &fr_inv_timer_avp_param },
     {"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param },
     {"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
     {"rpid_avp",                 STR_PARAM, &rpid_avp_param },
     {"flags_avp",                STR_PARAM, &flags_avp_param },
-    {"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
+    {"fr_inv_timer",             INT_PARAM, &fr_inv_timer   },
     {"fr_inv_timer_next",        INT_PARAM, &fr_inv_timer_next },
     {"lcr_hash_size",            INT_PARAM, &lcr_hash_size_param },
     {"fetch_rows",               INT_PARAM, &fetch_rows_param },
+    {"ping_interval",		 INT_PARAM, &ping_interval },
+    {"ping_from",                STR_PARAM, &ping_from.s    },
+    {"ping_method",              STR_PARAM, &ping_method.s  },
+    {"positve_codes",            STR_PARAM, &positive_codes_str.s },
+    {"negative_codes",           STR_PARAM, &negative_codes_str.s },
     {0, 0, 0}
 };
 
@@ -421,6 +455,11 @@ static int mod_init(void)
     prefix_col.len = strlen(prefix_col.s);
     from_uri_col.len = strlen(from_uri_col.s);
     priority_col.len = strlen(priority_col.s);
+    ping_col.len = strlen(ping_col.s);
+    ping_from.len = strlen(ping_from.s);
+    ping_method.len = strlen(ping_method.s);
+    positive_codes_str.len = strlen(positive_codes_str.s);
+    negative_codes_str.len = strlen(negative_codes_str.s);
 
     /* Bind database */
     if (lcr_db_bind(&db_url)) {
@@ -434,6 +473,33 @@ static int mod_init(void)
 	return -1;
     }
 
+    /* Load the TM API */
+    if (load_tm_api(&tmb) != 0) {
+        LM_ERR("failed to load TM API\n");
+        return -1;
+    }
+
+    /* Register OPTIONS timer. Timer should be minimum 180 seconds. */
+    if (ping_interval) {
+	if (ping_interval < DEF_PING_TIMER) { 
+	    ping_interval = DEF_PING_TIMER;              
+	    LM_DBG("set OPTIONS timer to default value <%d>\n", DEF_PING_TIMER);
+	}
+	register_timer(timer, 0, ping_interval);
+	LM_DBG("started OPTIONS timer. Interval value <%d>\n", ping_interval);
+    }
+    
+    /* Parse Codes */ 
+    if (add_code_to_array(&positive_codes_str, positive_codes) != 0) {
+	LM_ERR("couldn't parse positive codes\n");
+	return -1;
+    }
+
+    if (add_code_to_array(&negative_codes_str, negative_codes) != 0) {
+	LM_ERR("couldn't parse negative codes\n");
+	return -1;
+    }
+
     /* Process AVP params */
     if (fr_inv_timer_avp_param && *fr_inv_timer_avp_param) {
 	s.s = fr_inv_timer_avp_param; s.len = strlen(s.s);
@@ -444,7 +510,8 @@ static int mod_init(void)
 	    return -1;
 	}
 	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &fr_inv_timer_avp, &avp_flags)!=0) {
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &fr_inv_timer_avp, &avp_flags)
+	   != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", fr_inv_timer_avp_param);
 	    return -1;
 	}
@@ -462,7 +529,7 @@ static int mod_init(void)
 	    return -1;
 	}
 	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &gw_uri_avp, &avp_flags)!=0) {
+	if (pv_get_avp_name(0, &(avp_spec.pvp), &gw_uri_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
@@ -481,7 +548,8 @@ static int mod_init(void)
 	    return -1;
 	}
 	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &ruri_user_avp, &avp_flags)!=0) {
+	if (pv_get_avp_name(0, &(avp_spec.pvp), &ruri_user_avp, &avp_flags)
+	    != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", ruri_user_avp_param);
 	    return -1;
 	}
@@ -499,7 +567,7 @@ static int mod_init(void)
  	    return -1;
 	}
 	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &rpid_avp, &avp_flags)!=0) {
+	if (pv_get_avp_name(0, &(avp_spec.pvp), &rpid_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", rpid_avp_param);
 	    return -1;
 	}
@@ -517,7 +585,7 @@ static int mod_init(void)
 	    return -1;
 	}
 	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &flags_avp, &avp_flags)!=0) {
+	if (pv_get_avp_name(0, &(avp_spec.pvp), &flags_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
@@ -544,10 +612,10 @@ static int mod_init(void)
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
-    if((db_check_table_version(&lcr_dbf, dbh, &gw_table, GW_TABLE_VERSION)
-	< 0) ||
-       (db_check_table_version(&lcr_dbf, dbh, &lcr_table, LCR_TABLE_VERSION)
-	< 0)) { 
+    if ((db_check_table_version(&lcr_dbf, dbh, &gw_table, GW_TABLE_VERSION)
+	 < 0) ||
+	(db_check_table_version(&lcr_dbf, dbh, &lcr_table, LCR_TABLE_VERSION)
+	 < 0)) { 
 	LM_ERR("error during table version check\n");
 	lcr_dbf.close(dbh);
 	goto err;
@@ -822,7 +890,8 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
 		     unsigned int grp_id, char *ip_string, unsigned int port,
 		     unsigned int scheme, unsigned int transport,
 		     unsigned int flags, unsigned int strip, char *tag,
-		     unsigned int tag_len, unsigned short weight)
+		     unsigned int tag_len, unsigned short weight,
+		     unsigned short ping)
 {
     if (gw_unique(gws, i - 1, ip_addr, grp_id) == 0) {
 	LM_ERR("ip_addr/grp_id <%s/%u> of gw is not unique\n",
@@ -842,6 +911,7 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
     gws[i].tag_len = tag_len;
     if (tag_len) memcpy(&(gws[i].tag[0]), tag, tag_len);
     gws[i].weight = weight;
+    gws[i].ping = ping;
     gws[i].next = 0;
 
     return 1;
@@ -945,7 +1015,7 @@ int reload_gws_and_lcrs(void)
 {
     unsigned int i, n, port, strip, tag_len, prefix_len, from_uri_len,
 	grp_id,	grp_cnt, priority, flags, first_gw, weight, gw_cnt,
-	hostname_len;
+	hostname_len, ping;
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
@@ -953,7 +1023,7 @@ int reload_gws_and_lcrs(void)
     char *ip_string, *hostname, *tag, *prefix, *from_uri;
     db_res_t* res = NULL;
     db_row_t* row;
-    db_key_t gw_cols[10];
+    db_key_t gw_cols[11];
     db_key_t lcr_cols[4];
     pcre *from_uri_re;
     struct gw_grp gw_grps[MAX_NO_OF_GWS];
@@ -968,6 +1038,7 @@ int reload_gws_and_lcrs(void)
     gw_cols[7] = &flags_col;
     gw_cols[8] = &weight_col;
     gw_cols[9] = &hostname_col;
+    gw_cols[10] = &ping_col;
 
     lcr_cols[0] = &prefix_col;
     lcr_cols[1] = &from_uri_col;
@@ -991,7 +1062,7 @@ int reload_gws_and_lcrs(void)
 	return -1;
     }
 
-    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 10, 0, &res) < 0) {
+    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 11, 0, &res) < 0) {
 	LM_ERR("failed to query gw data\n");
 	lcr_dbf.close(dbh);
 	return -1;
@@ -1149,19 +1220,31 @@ int reload_gws_and_lcrs(void)
 		   hostname_len, ip_string, i);
 	    goto gw_err;
 	}
-	
+	if (!VAL_NULL(ROW_VALUES(row) + 10) &&
+	    (VAL_TYPE(ROW_VALUES(row) + 10) == DB_INT)) {
+	    ping = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
+	} else {
+	    LM_ERR("ping of gw <%s> at row <%u> is NULL or not int\n",
+		   ip_string, i);
+	    goto gw_err;
+	}	
+	if (ping > 2) {
+	    LM_ERR("ping <%d> of gw <%s> at row <%u> is not 0, 1, or 2\n",
+		   ping, ip_string, i);
+	    goto gw_err;
+	}
 	if (*gws == gws_1) {
 	    if (!insert_gw(gws_2, i + 1, (unsigned int)ip_addr.s_addr, 
 			   hostname, hostname_len, grp_id,
 			   ip_string, port, scheme, transport, flags, strip,
-			   tag, tag_len, weight)) {
+			   tag, tag_len, weight, ping)) {
 		goto gw_err;
 	    }
 	} else {
 	    if (!insert_gw(gws_1, i + 1, (unsigned int)ip_addr.s_addr,
 			   hostname, hostname_len, grp_id,
 			   ip_string, port, scheme, transport, flags, strip,
-			   tag, tag_len, weight)) {
+			   tag, tag_len, weight, ping)) {
 		goto gw_err;
 	    }
 	}
@@ -1422,6 +1505,10 @@ int mi_print_gws(struct mi_node* rpl)
 	p = int2str((unsigned long)(*gws)[i].flags, &len);
 	attr = add_mi_attr(node, MI_DUP_VALUE, "FLAGS", 5, p, len);
 	if (attr == NULL) goto err;
+	
+	p = int2str((unsigned long)(*gws)[i].ping, &len);
+	attr = add_mi_attr(node, MI_DUP_VALUE, "PING", 4, p, len);
+	if (attr == NULL) goto err;	
     }
 
     return 0;
@@ -1765,6 +1852,10 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri)
 		    /* Load unique gws of the group of this lcr entry */
 		    j = lcr_rec->first_gw;
 		    while (j) {
+                        /* If this destination is failure, skip it */
+		        if ((*gws)[j].ping == 2) {
+			    goto gw_found;
+                        }
 			for (k = 0; k < gw_index; k++) {
 			    if ((*gws)[j].ip_addr ==
 				(*gws)[matched_gws[k].gw_index].ip_addr)
@@ -2107,14 +2198,15 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 	if (pv_val.flags & PV_VAL_INT) {
 	    src_addr = pv_val.ri;
 	} else if (pv_val.flags & PV_VAL_STR) {
-	    if ( (ip=str2ip( &pv_val.rs)) == NULL) {
-		LM_ERR("failed to convert IP address string to in_addr\n");
+	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
+		LM_DBG("request did not come from gw "
+		       "(pvar value is not an IP address)\n");
 		return -1;
 	    } else {
 		src_addr = ip->u.addr32[0];
 	    }
 	} else {
-	    LM_ERR("IP address pvar has empty value\n");
+	    LM_ERR("pvar has no value\n");
 	    return -1;
 	}
     } else {
@@ -2191,13 +2283,14 @@ static int do_to_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 	    dst_addr = pv_val.ri;
 	} else if (pv_val.flags & PV_VAL_STR) {
 	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
-		LM_ERR("failed to convert IP address string to in_addr\n");
+		LM_DBG("request is not going to gw "
+		       "(pvar value is not an IP address)\n");
 		return -1;
 	    } else {
 		dst_addr = ip->u.addr32[0];
 	    }
 	} else {
-	    LM_ERR("IP address pvar has empty value\n");
+	    LM_ERR("pvar has no value\n");
 	    return -1;
 	}
     } else {
@@ -2206,10 +2299,13 @@ static int do_to_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 	    return -1;
 	}
 	if (_m->parsed_uri.host.len > 15) {
+	    LM_DBG("request is not going to gw "
+		   "(Request-URI host is not an IP address)\n");
 	    return -1;
 	}
 	if ((ip = str2ip(&(_m->parsed_uri.host))) == NULL) {
-	    LM_ERR("failed to convert IP address string to in_addr\n");
+	    LM_DBG("request is not going to gw "
+		   "(Request-URI host is not an IP address)\n");
 	    return -1;
 	} else {
 	    dst_addr = ip->u.addr32[0];
@@ -2229,7 +2325,7 @@ static int do_to_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
     }
 
     if (res == NULL) {
-	LM_DBG("request does not go to gw\n");
+	LM_DBG("request is not going to gw\n");
 	return -1;
     } else {
 	LM_DBG("request goes to gw\n");
@@ -2265,4 +2361,361 @@ static int to_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 static int to_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
 {
     return do_to_gw(_m, (pv_spec_t *)_addr_sp, -1);
+}
+
+
+/* Set PING Flag in our Structure */
+int gw_set_state(int index, struct sip_uri *uri, int ping) 
+{
+    int addr, port;
+    struct ip_addr address;
+    uri_type scheme;
+    uri_transport transport;
+    str addr_str;
+                     
+    if ((*gws)[index].ip_addr == 0) { 
+	return -1;
+    }
+
+    addr = (*gws)[index].ip_addr;
+    port = (*gws)[index].port;
+    scheme = (*gws)[index].scheme;
+    transport = (*gws)[index].transport;
+                
+    /* Check Scheme */
+    if (scheme != uri->type) {
+	LM_ERR("URI scheme is not equals <%u>\n", (unsigned int)scheme);
+	return -1;
+    }
+    
+    address.af = AF_INET;
+    address.len = 4;
+    address.u.addr32[0] = addr;
+    addr_str.s = ip_addr2a(&address);
+    addr_str.len = strlen(addr_str.s);
+        
+    /* Check IP */
+    if (strncmp(addr_str.s, uri->host.s, addr_str.len)) {
+	LM_ERR("IP of the response <%.*s> is not equal to gw IP <%.*s>\n",
+	       uri->host.len, uri->host.s, addr_str.len, addr_str.s);
+	return -1;
+    }
+
+    /* Check Port */
+    if (port != uri->port_no) {
+	LM_ERR("Port of the response <%u> is not equal to gw port <%u>\n",
+	       uri->port_no, port);
+	return -1;
+    }        
+
+    if ((*gws)[index].ping != ping) {
+
+	/* Send notice to syslog */
+	switch(ping) {						
+
+	case 2: /* offline */
+	    LM_NOTICE("trunk \"%.*s:%d\" from group: <%d> is OFFLINE!",
+		      addr_str.len, addr_str.s, port, (*gws)[index].grp_id);
+	    break;
+
+	default: /* online */ 
+	    LM_NOTICE("trunk \"%.*s:%d\" from group: <%d> is ONLINE!",
+		      addr_str.len, addr_str.s, port, (*gws)[index].grp_id);
+	    break;
+	}
+    }
+
+    /* Set our destination */
+    (*gws)[index].ping = ping;
+        
+    LM_DBG("set ping flag <%d> for index: <%u> destination: <%.*s>\n",
+	   ping, index, uri->host.len, uri->host.s);
+
+    return 0;
+}
+
+
+/*! \brief
+ * Callback-Function for the OPTIONS-Request
+ * This Function is called, as soon as the Transaction is finished
+ * (e. g. a Response came in, the timeout was hit, ...)
+ * Some part of this code was imported from dispatcher module
+ *
+ */
+static void check_options_callback(struct cell *t, int type,
+				   struct tmcb_params *ps)
+{
+    int index = 0;
+    str uri = {0, 0};
+    struct sip_uri to_uri;
+    int i = 0;
+                
+    /* Param should contain the index, in which the failed host
+     * can be found */
+    if (*ps->param == NULL) {
+	LM_DBG("no parameter provided; OPTIONS-Request was finished"
+	       " with code %d\n", ps->code);
+	return;
+    }
+    /* Param is a (void*) pointer, so we need to dereference it and
+     *  cast it to an int */
+    index = (int)(long)(*ps->param);
+        
+    /* SIP URI is taken from the transaction;
+     * Remove the "To: " (s+4) and the trailing new-line (s - 4 (To: )
+     * - 2 (\r\n)). */
+    uri.s = t->to.s + 4;
+    uri.len = t->to.len - 6;
+        
+    LM_DBG("trying to get domain from uri\n");
+
+    if (parse_uri(uri.s, uri.len, &to_uri) || !to_uri.host.len) {
+	LM_ERR("unable to extract domain name from To URI\n");
+	return;
+    }
+
+    LM_DBG("OPTIONS request was finished with code %d (to %.*s, index %d) "
+	   "(domain: %.*s)\n",
+	   ps->code, uri.len, uri.s, index, to_uri.host.len, to_uri.host.s);
+
+    /* Check for positive response */ 
+    for (i = 0; i < MAX_CODES; i++) {
+
+	if (!positive_codes[i]) break;
+
+	if (ps->code == positive_codes[i]) {
+	    /* Set the gw state back to "active" */
+	    if (gw_set_state(index, &to_uri, 1) != 0) {
+		LM_ERR("setting the active state failed (%.*s, index %d)\n",
+		       uri.len, uri.s, index);
+	    }
+	    return;
+	}
+    }
+
+    /* Check for negative response */
+    for (i = 0; i < MAX_CODES; i++) {
+	
+	if (!negative_codes[i]) break;
+
+	if (ps->code == negative_codes[i]) {
+	    /* Set the gw state to "inactive" */
+	    if (gw_set_state(index, &to_uri, 2) != 0) {
+		LM_ERR("Setting the inactive state failed (%.*s, index %d)\n",
+		       uri.len, uri.s, index);
+	    }
+	    break;
+	}
+    }
+    
+    return;
+}
+
+
+/*
+ * Here we send OPTIONS packet to the GW 
+ */
+int send_sip_options_request(str *to, int index)
+{
+    str hdrs = {0, 0};
+    int res;
+    char *p;
+    int max_forward = 10;
+    char* max_forward_s = NULL;
+    int len = 0;
+
+    /* Length */
+    hdrs.len =  CRLF_LEN;
+    hdrs.len += 14; /* "Max-Forwards: "*/	
+	
+    /* Convert to char */
+    max_forward_s = int2str(max_forward, &len);
+    hdrs.len += len;
+
+    hdrs.s = (char*)pkg_malloc(hdrs.len);
+    if (!hdrs.s) {
+	LM_ERR("no more pkg memory!\n");
+	return -1;
+    }
+    p = hdrs.s;
+    append_str(p, "Max-Forwards: ", 14);
+    append_str(p, max_forward_s, len);
+    append_str(p, CRLF, CRLF_LEN);
+
+    /* Send the request */
+    res = tmb.t_request(&ping_method,   /* request type */
+                        0,              /* Request-URI */
+                        to,             /* To */
+                        &ping_from,     /* From */
+                        &hdrs,          /* Additional headers including CRLF */
+                        0,              /* Message body */
+                        0,		/* outbound uri */
+                        check_options_callback,   /* Callback function */
+                        (void*)(long)index	  /* Callback parameter */
+			);
+    pkg_free(hdrs.s);
+    return res;
+}
+
+
+/*
+ *  Gateway Loop Checker
+ */ 
+int check_our_gws(void) 
+{
+    unsigned int i, addr, port;	
+    struct ip_addr address;
+    char ruri[MAX_URI_SIZE];
+    uri_type scheme;
+    uri_transport transport;
+    str addr_str, port_str, to_uri;
+    char *at;
+        
+    /* Find gws and check them */
+    LM_DBG("check our gateways!\n");
+                     
+    for (i = 1; i <= (*gws)[0].ip_addr; i++) {
+
+	if ((*gws)[i].ip_addr == 0) break;
+
+	if ((*gws)[i].ping == 0) goto skip;
+	
+	addr = (*gws)[i].ip_addr;
+	port = (*gws)[i].port;
+	scheme = (*gws)[i].scheme;
+	transport = (*gws)[i].transport;
+
+	at = (char *)&(ruri[0]);        
+	
+	if (scheme == SIP_URI_T) {
+	    append_str(at, "sip:", 4);
+	} else if (scheme == SIPS_URI_T) {
+	    append_str(at, "sips:", 5);
+	} else {
+	    LM_ERR("unknown or unsupported URI scheme <%u>\n",
+		   (unsigned int)scheme);
+	    goto skip;
+	}
+	address.af = AF_INET;
+	address.len = 4;
+	address.u.addr32[0] = addr;
+	addr_str.s = ip_addr2a(&address);
+	addr_str.len = strlen(addr_str.s);
+	append_str(at, addr_str.s, addr_str.len);
+	if (port != 0) {
+	    if (port > 65536) {
+		LM_ERR("port of gw is too large <%u>\n", port);
+		goto skip;
+	    }
+	    append_chr(at, ':');
+	    port_str.s = int2str(port, &port_str.len);
+	    append_str(at, port_str.s, port_str.len);
+	}
+
+	if (transport != PROTO_NONE) {
+	    append_str(at, ";transport=", 11);
+	    switch(transport) {
+	    case PROTO_UDP:
+		append_str(at, "udp", 3);
+		break;
+	    case PROTO_TCP:
+		append_str(at, "tcp", 3);
+		break;
+	    case PROTO_TLS:
+		append_str(at, "tls", 3);
+		break;
+	    case PROTO_SCTP:
+		append_str(at, "sctp", 4);
+		break;
+	    default:
+		LM_ERR("Unknown or unsupported transport <%u>\n",
+		       (unsigned int)transport);
+		goto skip;
+		break;                                        
+	    }                    
+	}
+
+	to_uri.s = (char *)&(ruri[0]);
+	to_uri.len = at - to_uri.s;
+                
+	LM_DBG("check URI (%.*s)\n", to_uri.len, to_uri.s);
+
+	if (!send_sip_options_request(&to_uri, i)) return -1;
+	
+    skip:
+	continue;		         
+    }   
+            
+    return 0;         
+}
+
+
+/*
+ * Timer handler
+ */
+static void timer(unsigned int ticks, void* param)
+{
+    if (check_our_gws() != 0) {
+	LM_ERR("gw checkd failed\n");
+    }
+}
+
+
+/*
+ * Function used by mod_init.
+ */
+int add_code_to_array( str *codes, int local_codes[])
+{
+    char *p;
+    char *d;
+    str code_str;
+    unsigned int int_code;
+    int i = 0;
+
+    if (codes->s==NULL || codes->len==0 )
+	return 0;                
+
+    p = codes->s;
+    do {        
+	if (i > MAX_CODES) {
+	    LM_ERR("too many MAX_CODES = %d\n", i);
+	    return -1;
+	}
+
+	/* Locate code_str of profile */
+	code_str.s = p;
+	d = strchr( p, ';');
+	if (d) {
+	    code_str.len = d-p;
+	    d++;
+	} else {
+	    code_str.len = strlen(p);
+	}
+
+	/* We have the code_str -> trim it for spaces */
+	trim_spaces_lr(code_str);
+	
+	/* check len code_str */
+	if (code_str.len==0)
+	    /* ignore */
+	    continue;
+
+	if (str2int(&code_str, &int_code) <  0) {
+	    LM_ERR("converting string to int [code]= %.*s\n",
+		   code_str.len, code_str.s);
+	    return -1;
+	}
+
+	if ((int_code < 100) || (int_code > 700)) {
+	    LM_ERR("wrong code %u\n", int_code);
+	    return -1;
+	}
+
+	local_codes[i]=int_code;
+	
+	i++;
+
+    } while ((p=d) != NULL);
+
+    return 0;
 }

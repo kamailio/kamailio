@@ -17,7 +17,7 @@
 	each gateway belongs to a gateway group and each gateway group
 	is associated with one or more &lt;prefix, from pattern, priority&gt;
 	tuples.  A gateway matches a request if	user part of Request URI
-	matches a prefix and caller's URI matches a from pattern in a
+	matches a prefix and caller's UtRI matches a from pattern in a
 	tuple that belongs to the group of the gateway.
 	</para>
 	<para>
@@ -30,6 +30,14 @@
 	pcresyntax' for syntax) or empty.  Empty from pattern matches anything.
 	Smaller priority value means higher priority (highest priority
 	value being 0).  Weight is an integer value from 1 to 254.
+	</para>
+	<para>
+	LCR module may be configured via ping_interval module parameter
+	to check if certain gateways are alive.  A gateway is subject for
+	checking if its ping_column has value 1 (default is 0).  When
+	load_gws() is called, only matching gateways that are
+	currently not found to be dead or that are not subject for
+	checking, will be loaded.
 	</para>
 	<para>
         Function next_gw() can then be used to select one gateway at a
@@ -367,6 +375,27 @@ modparam("lcr","flags_column","gw_flags")
 </programlisting>
 		</example>
 	</section>
+	
+	<section>
+		<title><varname>ping_column</varname> (string)</title>
+		<para>
+		Name of the column telling if gateway is subject for
+		aliveness check.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>ping</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>ping_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "ping_column", "gw_ping")
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section>
 		<title><varname>lcr_table</varname> (string)</title>
@@ -633,6 +662,111 @@ modparam("lcr", "fetch_rows", 3000)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>ping_interval</varname> (integer)</title>
+		<para>
+		How often (in seconds) gateways are checked for
+		aliveness.  If set to 0, checking of
+		gateways is disabled. 
+		The interval cannot be less than 180 seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "ping_interval", 300)
+...
+</programlisting>
+		</example>
+	</section>	
+	
+	<section>
+		<title><varname>ping_from</varname> (string)</title>
+		<para>
+		From URI used in gateway aliveness check.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>sip:127.0.0.1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_from</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "ping_from", "sip:gateway.kamalio.org")
+...
+</programlisting>
+		</example>
+	</section>		
+
+	<section>
+		<title><varname>ping_method</varname> (string)</title>
+		<para>
+		SIP method used for aliveness check.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>OPTIONS</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_method</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "ping_method", "INFO")
+...
+</programlisting>
+		</example>
+	</section>		
+	
+	<section>
+		<title><varname>positive_codes</varname> (string)</title>
+		<para>
+		Semicolon separated reply codes that are
+		interpreted as positive replies to aliveness check.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>200;501;403;404</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>positive_codes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "positive_codes", "200;501;403;404")
+...
+</programlisting>
+		</example>
+	</section>			
+	
+	<section>
+		<title><varname>negative_codes</varname> (string)</title>
+		<para>
+		Semicolon separated reply codes that are
+		interpreted as negative replies to aliveness check.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>408</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>negative_codes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "negative_codes", "408")
+...
+</programlisting>
+		</example>
+	</section>			
+
 	</section>
 
 	<section>
@@ -771,9 +905,14 @@ if (!next_gw()) {
 		</title>
 		<para>
 			Checks if request came from IP address of a
-			gateway.  IP address to be checked is either
+			gateway.  Host to be checked is either
 			taken from source IP address of the request or
-			(if present) from pseudo variable argument.
+			(if present) from pseudo variable argument.  For
+			positive check result, pvar argument must
+			contain an IP address, i.e., DNS lookups are
+			<emphasis>not</emphasis> performed.
+		</para>
+		<para>
 			As a side effect, stores gateway's flags to
 			flags_avp.
 		</para>
@@ -843,9 +982,12 @@ if (from_gw_grp("1")) {
 		</title>
 		<para>
 		Checks if in-dialog request goes to a
-		gateway. IP address to be checked is either
+		gateway. Host address to be checked is either
 		taken from request URI hostpart or
 		(if present) from pseudo variable argument.
+		For positive check result, pvar argument must
+		contain an IP address, i.e., DNS lookups are
+		<emphasis>not</emphasis> performed.
 		</para>
 		<para>
 		Execution time of to_gw() function is O(log N),
