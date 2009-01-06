@@ -10,7 +10,7 @@
 
 <table id="gw" xmlns:db="http://docbook.org/ns/docbook">
     <name>gw</name>
-    <version>8</version>
+    <version>9</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
@@ -97,6 +97,13 @@
         <type>unsigned int</type>
         <null/>
         <description>Weight of gateway within gw_grp.  Valid values are 1-254.</description>
+    </column>
+
+    <column>
+        <name>ping</name>
+        <type>unsigned char</type>
+        <default>0</default>
+        <description>Is gateway eligible for aliveness check (0 = no, 1 = yes)</description>
     </column>
 
     <column>
