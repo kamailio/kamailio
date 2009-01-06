@@ -209,6 +209,7 @@ LCR_GW_STRIP_COLUMN=strip
 LCR_GW_TAG_COLUMN=tag
 LCR_GW_FLAGS_COLUMN=flags
 LCR_GW_WEIGHT_COLUMN=weight
+LCR_GW_PING_COLUMN=ping
 
 # route_tree table
 if [ -z "$ROUTE_TREE_TABLE" ] ; then
@@ -362,9 +363,9 @@ cat <<EOF
    *            lcr addroute +1 '' 1 1                                 *
  lcr show .......... show gateways and routes
  lcr reload ........ reload lcr gateways and routes
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname>
-           ......... add a gateway with flags, tag, strip, weight, and hostname
-           ......... (flags, tag, strip, weight, and hostname are optional)
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <ping> <hostname>
+           ......... add a gateway with flags, tag, strip, weight, ping, and hostname
+           ......... (flags, tag, strip, weight, ping, and hostname are optional)
  lcr rmgw <gw_name> delete a gateway
  lcr addroute <prefix> <from> <grp_id> <prio>
            ......... add a route ( use '' to match anything in <from> )
