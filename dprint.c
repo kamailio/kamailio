@@ -29,48 +29,47 @@
  */
 
  
-#include "dprint.h"
 #include "globals.h"
-#include "pt.h"
+#include "dprint.h"
  
 #include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
 
-volatile int dprint_crit=0; /* signal protection: !=0 when dprint/LOG/DBG are
-								printing */
+#ifndef NO_SIG_DEBUG
+/* signal protection: !=0 when LOG/DBG/... are printing */
+volatile int dprint_crit = 0; 
+#endif
 
 static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
-					"LOG_KERN","LOG_LOCAL0","LOG_LOCAL1",
-					"LOG_LOCAL2","LOG_LOCAL3","LOG_LOCAL4","LOG_LOCAL5",
-					"LOG_LOCAL6","LOG_LOCAL7","LOG_LPR","LOG_MAIL",
-					"LOG_NEWS","LOG_USER","LOG_UUCP",
+			"LOG_KERN","LOG_LOCAL0","LOG_LOCAL1",
+			"LOG_LOCAL2","LOG_LOCAL3","LOG_LOCAL4","LOG_LOCAL5",
+			"LOG_LOCAL6","LOG_LOCAL7","LOG_LPR","LOG_MAIL",
+			"LOG_NEWS","LOG_USER","LOG_UUCP",
 #ifndef __OS_solaris
-					"LOG_AUTHPRIV","LOG_FTP","LOG_SYSLOG",
+			"LOG_AUTHPRIV","LOG_FTP","LOG_SYSLOG",
 #endif
-					0};
+			0};
+			
 static int int_fac[]={LOG_AUTH ,  LOG_CRON , LOG_DAEMON ,
-					LOG_KERN , LOG_LOCAL0 , LOG_LOCAL1 ,
-					LOG_LOCAL2 , LOG_LOCAL3 , LOG_LOCAL4 , LOG_LOCAL5 ,
-					LOG_LOCAL6 , LOG_LOCAL7 , LOG_LPR , LOG_MAIL ,
-					LOG_NEWS , LOG_USER , LOG_UUCP
+		      LOG_KERN , LOG_LOCAL0 , LOG_LOCAL1 ,
+		      LOG_LOCAL2 , LOG_LOCAL3 , LOG_LOCAL4 , LOG_LOCAL5 ,
+		      LOG_LOCAL6 , LOG_LOCAL7 , LOG_LPR , LOG_MAIL ,
+		      LOG_NEWS , LOG_USER , LOG_UUCP,
 #ifndef __OS_solaris
-					,LOG_AUTHPRIV,LOG_FTP,LOG_SYSLOG
+		      LOG_AUTHPRIV,LOG_FTP,LOG_SYSLOG,
 #endif
-					};
+		      0};
 
-
-void dprint(char * format, ...)
-{
-	va_list ap;
-
-	fprintf(stderr, "%2d(%d) ", process_no, my_pid());
-	va_start(ap, format);
-	vfprintf(stderr,format,ap);
-	fflush(stderr);
-	va_end(ap);
-}
-
+struct log_level_info log_level_info[] = {
+	{"ALERT", LOG_ALERT},	  /* L_ALERT */
+	{"BUG", LOG_CRIT},        /* L_CRIT */
+	{"ERROR", LOG_ERR},       /* L_ERR */
+	{"WARNING", LOG_WARNING}, /* L_WARN */
+	{"NOTICE", LOG_NOTICE},   /* L_NOTICE */
+	{"INFO", LOG_INFO},       /* L_INFO */
+	{"DEBUG", LOG_DEBUG}	  /* L_DBG */
+};
 
 int str2facility(char *s)
 {

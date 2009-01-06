@@ -46,7 +46,7 @@
 #include "cfg_core.h"
 
 struct cfg_group_core default_core_cfg = {
-	L_DEFAULT, /*  print only msg. < L_WARN */
+	L_WARN, 	/*  print only msg. < L_WARN */
 	LOG_DAEMON,	/* log_facility -- see syslog(3) */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */

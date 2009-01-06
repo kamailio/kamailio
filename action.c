@@ -44,7 +44,7 @@
  *  2006-07-27  dns cache and dns based send address failover support (andrei)
  *  2006-12-06  on popular request last_retcode set also by module functions
  *              (andrei)
- *  2007-06-14  run_actions & do_action need a ctx or handle now, no more 
+ *  2007-06-14  run_actions & do_action need a ctx or handle now, no more
  *               static vars (andrei)
  *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
  */
@@ -221,7 +221,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 #endif
 				}
 
-#ifdef HONOR_MADDR				
+#ifdef HONOR_MADDR
 				if (u->maddr_val.s && u->maddr_val.len)
 					dst_host=&u->maddr_val;
 				else
@@ -303,7 +303,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			LOG(a->val[0].u.number, "%s", a->val[1].u.string);
+			LOG_(a->val[0].u.number, "<script>: ", "%s", a->val[1].u.string);
 			ret=1;
 			break;
 
@@ -707,11 +707,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->val[1].type==ACTIONS_ST)&&a->val[1].u.data){
-							ret=run_actions(h, 
+							ret=run_actions(h,
 										(struct action*)a->val[1].u.data, msg);
 						}
 					}else if ((a->val[2].type==ACTIONS_ST)&&a->val[2].u.data){
-							ret=run_actions(h, 
+							ret=run_actions(h,
 										(struct action*)a->val[2].u.data, msg);
 					}
 				}
@@ -794,8 +794,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			ret=1; /* continue processing */
 			break;
 
-	        case ADD_T:
-	        case ASSIGN_T:
+		case ADD_T:
+		case ASSIGN_T:
 
 			/* If the left attr was specified without indexing brackets delete
 			 * existing AVPs before adding new ones
@@ -992,6 +992,3 @@ error:
 	h->rec_lev--;
 	return ret;
 }
-
-
-

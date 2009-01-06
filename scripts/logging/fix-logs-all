@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Usage: fix-logs-all [DIR]
+#
+# Fixes logging macros and messages in SER source files in DIR
+# directory (recursively).
+#
+# See doc/logging-api.txt and fix-logs script for details.
+#
+# $Id$
+
+# <filename>.ORIG backup files is created for each processed file.
+# If TEST is set, it only prints a "patch" file.
+#
+
+find ${1:-.} -type f \( -name "*.[chy]" -o -name "*.lex" -o -name "*.cc" \) | \
+    grep -v "/dprint\.[hc]$" | \
+	while read file; do
+	    echo "=== $file"
+
+	    if ! test "$TEST"; then
+		mv "$file" "$file.ORIG"
+	    fi
+
+	    if expr match "$file" ".*/modules/" >/dev/null; then
+		module=$(basename $(dirname $file))
+	    fi
+
+	    if ! test "$TEST"; then
+		fix-logs "$module" < "$file.ORIG" > "$file"
+	    else
+		fix-logs "$module" < "$file" > "$file.NEW"
+
+		diff "$file.NEW" "$file"
+		rm "$file.NEW"
+	    fi
+	done

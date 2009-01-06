@@ -641,7 +641,7 @@ void handle_sigs()
 				DBG("SIGTERM received, program terminates\n");
 			/* shutdown/kill all the children */
 			shutdown_children(SIGTERM, 1);
-			dprint("Thank you for flying " NAME "\n");
+			LOG(L_NOTICE, "Thank you for flying " NAME "\n");
 			exit(0);
 			break;
 
@@ -767,32 +767,32 @@ int install_sigs()
 {
 	/* added by jku: add exit handler */
 	if (set_sig_h(SIGINT, sig_usr) == SIG_ERR ) {
-		DPrint("ERROR: no SIGINT signal handler can be installed\n");
+		ERR("no SIGINT signal handler can be installed\n");
 		goto error;
 	}
 	/* if we debug and write to a pipe, we want to exit nicely too */
 	if (set_sig_h(SIGPIPE, sig_usr) == SIG_ERR ) {
-		DPrint("ERROR: no SIGINT signal handler can be installed\n");
+		ERR("no SIGINT signal handler can be installed\n");
 		goto error;
 	}
 	if (set_sig_h(SIGUSR1, sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
+		ERR("no SIGUSR1 signal handler can be installed\n");
 		goto error;
 	}
 	if (set_sig_h(SIGCHLD , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGCHLD signal handler can be installed\n");
+		ERR("no SIGCHLD signal handler can be installed\n");
 		goto error;
 	}
 	if (set_sig_h(SIGTERM , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGTERM signal handler can be installed\n");
+		ERR("no SIGTERM signal handler can be installed\n");
 		goto error;
 	}
 	if (set_sig_h(SIGHUP , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGHUP signal handler can be installed\n");
+		ERR("no SIGHUP signal handler can be installed\n");
 		goto error;
 	}
 	if (set_sig_h(SIGUSR2 , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGUSR2 signal handler can be installed\n");
+		ERR("no SIGUSR2 signal handler can be installed\n");
 		goto error;
 	}
 	return 0;
