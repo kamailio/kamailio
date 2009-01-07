@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('gw','8');
+INSERT INTO version (table_name, table_version) values ('gw','9');
 CREATE TABLE gw (
     id SERIAL PRIMARY KEY NOT NULL,
     gw_name VARCHAR(128) NOT NULL,
@@ -11,6 +11,7 @@ CREATE TABLE gw (
     strip SMALLINT,
     tag VARCHAR(16) DEFAULT NULL,
     weight INTEGER,
+    ping SMALLINT DEFAULT 0 NOT NULL,
     flags INTEGER DEFAULT 0 NOT NULL,
     CONSTRAINT gw_gw_name_idx UNIQUE (gw_name)
 );
