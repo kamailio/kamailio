@@ -224,6 +224,8 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 
 	if (db_allocate_rows(_r) < 0) {
 		LM_ERR("could not allocate rows\n");
+		LM_DBG("freeing row buffer at %p\n", row_buf);
+		pkg_free(row_buf);
 		return -2;
 	}
 
@@ -260,6 +262,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 			}
 			LM_DBG("freeing row buffer at %p\n", row_buf);
 			pkg_free(row_buf);
+			db_free_rows(_r);
 			return -4;
 			/*
 			 * The following housekeeping may not be technically required, but it
