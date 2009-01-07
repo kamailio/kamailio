@@ -96,7 +96,7 @@ struct module_exports exports = {
 
 static int mysql_mod_init(void)
 {
-	LM_DBG("mysql: MySQL client version is %s\n", mysql_get_client_info());
+	LM_DBG("MySQL client version is %s\n", mysql_get_client_info());
 	return 0;
 }
 
@@ -115,7 +115,7 @@ int db_mysql_bind_api(db_func_t *dbb)
 	dbb->raw_query        = db_mysql_raw_query;
 	dbb->free_result      = db_mysql_free_result;
 	dbb->insert           = db_mysql_insert;
-	dbb->delete           = db_mysql_delete; 
+	dbb->delete           = db_mysql_delete;
 	dbb->update           = db_mysql_update;
 	dbb->replace          = db_mysql_replace;
 	dbb->last_inserted_id = db_last_inserted_id;
