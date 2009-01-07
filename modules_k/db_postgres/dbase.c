@@ -413,8 +413,8 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			/* Successful completion of a command returning data
 			 * (such as a SELECT or SHOW). */
 			if (db_postgres_convert_result(_con, *_r) < 0) {
-				LM_ERR("%p Error returned from convert_result()\n", _con);
-				db_free_result(*_r);
+				LM_ERR("error while converting result\n");
+				pkg_free(*_r);
 				*_r = 0;
 				rc = -4;
 				break;
