@@ -423,9 +423,8 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			break;
 		/* query failed */
 		case PGRES_FATAL_ERROR:
-			LM_ERR("%p - invalid query, execution aborted\n", _con);
-			LM_ERR("%p: %s\n", _con, PQresStatus(pqresult));
-			LM_ERR("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
+			LM_ERR("invalid query, execution aborted\n");
+			LM_ERR("driver error: %s, %s\n", PQresStatus(pqresult), PQresultErrorMessage(CON_RESULT(_con)));
 			db_free_result(*_r);
 			*_r = 0;
 			rc = -3;
@@ -440,9 +439,8 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 		/* unexpected response */
 		case PGRES_BAD_RESPONSE:
 		default:
-			LM_ERR("%p Probable invalid query\n", _con);
-			LM_ERR("%p: %s\n", _con, PQresStatus(pqresult));
-			LM_ERR("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
+			LM_ERR("probable invalid query, execution aborted\n");
+			LM_ERR("driver message: %s, %s\n", PQresStatus(pqresult), PQresultErrorMessage(CON_RESULT(_con)));
 			db_free_result(*_r);
 			*_r = 0;
 			rc = -4;
