@@ -757,7 +757,7 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 	}
 
 	if (set_next_domain_recursor(domain_data->failure_tree, &prefix_matching, &host, &reply_code, flags, _dstavp) != 0) {
-		LM_ERR("during set_next_domain_recursor, prefix '%.*s', carrier %d, domain %d\n", prefix_matching.len,
+		LM_INFO("set_next_domain_recursor doesn't complete, prefix '%.*s', carrier %d, domain %d\n", prefix_matching.len,
 			prefix_matching.s, carrier_id, domain_id);
 		goto unlock_and_out;
 	}
