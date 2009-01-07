@@ -104,7 +104,7 @@ int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 /*! \brief
  * Just like insert, but replace the row if it exists
  */
-int db_mysql_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* 	vals, const int n);
+int db_mysql_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* vals, const int n);
 
 /*! \brief
  * Returns the last inserted ID
