@@ -414,6 +414,7 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			 * (such as a SELECT or SHOW). */
 			if (db_postgres_convert_result(_con, *_r) < 0) {
 				LM_ERR("error while converting result\n");
+				LM_DBG("freeing result set at %p\n", _r);
 				pkg_free(*_r);
 				*_r = 0;
 				rc = -4;

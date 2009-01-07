@@ -206,6 +206,7 @@ static int db_unixodbc_store_result(const db_con_t* _h, db_res_t** _r)
 	if (db_unixodbc_convert_result(_h, *_r) < 0)
 	{
 		LM_ERR("failed to convert result\n");
+		LM_DBG("freeing result set at %p\n", _r);
 		pkg_free(*_r);
 		*_r = 0;
 		return -4;
