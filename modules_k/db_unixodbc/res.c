@@ -219,6 +219,7 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 
 	if (db_allocate_rows(_r) != 0) {
 		LM_ERR("could not allocate rows");
+		db_unixodbc_list_destroy(rowstart);
 		return -2;
 	}
 
@@ -232,12 +233,14 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 			LM_ERR("string null\n");
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
+			db_unixodbc_list_destroy(rowstart);
 			return -3;
 		}
 		if (db_unixodbc_convert_row(_h, _r, &(RES_ROWS(_r)[i]), rows->lengths) < 0) {
 			LM_ERR("converting row failed #%d\n", i);
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
+			db_unixodbc_list_destroy(rowstart);
 			return -4;
 		}
 		i++;
