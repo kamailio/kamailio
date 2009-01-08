@@ -44,22 +44,22 @@ $MYSQL "insert into domain_name (id, domain) values ('10', 'domain0');"
 $MYSQL "insert into domain_name (id, domain) values ('1', 'fallback');"
 $MYSQL "insert into domain_name (id, domain) values ('2', 'domain2');"
 
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('1','1','10','49','0','0.5','0','127.0.0.1:7000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('2','1','10','49','0','0.5','0','127.0.0.1:8000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('3','2','10','49','0','1','0','127.0.0.1:9000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask,prob, strip, rewrite_host)
-values ('4','3','10','49','0', '3', '1','0','127.0.0.1:10001');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask,prob, strip, rewrite_host)
-values ('5','3','10','49','1', '3', '1','0','127.0.0.1:10000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
-values ('6','3','10','49','2', '3', '1','0','127.0.0.1:10002');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('7','3','1','49','0','1','0','127.0.0.1:10000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('8','3','2','49','0','1','0','127.0.0.1:10000');"
+values ('1','1','10','49','0','0','0.5','0','127.0.0.1:7000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('2','1','10','49','0','0','0.5','0','127.0.0.1:8000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('3','2','10','49','0','0','1','0','127.0.0.1:9000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('4','3','10','49','0','3','1','0','127.0.0.1:10001');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('5','3','10','49','1','3','1','0','127.0.0.1:10000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('6','3','10','49','2','3','1','0','127.0.0.1:10002');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('7','3','1','49','0','0','1','0','127.0.0.1:10000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
+values ('8','3','2','49','0','0','1','0','127.0.0.1:10000');"
 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
 flags, mask, next_domain) values ('1', '3', '10', '49', '127.0.0.1:10000', '5..', '0', '0', '1');"
