@@ -60,14 +60,15 @@ Daniel-Constantin Mierla
               1.3.20. insert_hf(txt, hdr)
               1.3.21. append_urihf(prefix, suffix)
               1.3.22. is_present_hf(hf_name)
-              1.3.23. append_time()
-              1.3.24. is_method(name)
-              1.3.25. remove_hf(hname)
-              1.3.26. remove_hf_re(re)
-              1.3.27. has_body(), has_body(mime)
-              1.3.28. is_privacy(privacy_type)
-              1.3.29. cmp_str(str1, str2)
-              1.3.30. cmp_istr(str1, str2)
+              1.3.23. is_present_hf_re(hf_name_re)
+              1.3.24. append_time()
+              1.3.25. is_method(name)
+              1.3.26. remove_hf(hname)
+              1.3.27. remove_hf_re(re)
+              1.3.28. has_body(), has_body(mime)
+              1.3.29. is_privacy(privacy_type)
+              1.3.30. cmp_str(str1, str2)
+              1.3.31. cmp_istr(str1, str2)
 
         1.4. Known Limitations
 
@@ -101,14 +102,15 @@ Daniel-Constantin Mierla
    1.20. insert_hf usage
    1.21. append_urihf usage
    1.22. is_present_hf usage
-   1.23. append_time usage
-   1.24. is_method usage
-   1.25. remove_hf usage
-   1.26. remove_hf_re usage
-   1.27. has_body usage
-   1.28. is_privacy usage
-   1.29. cmp_str usage
+   1.23. is_present_hf_re usage
+   1.24. append_time usage
+   1.25. is_method usage
+   1.26. remove_hf usage
+   1.27. remove_hf_re usage
+   1.28. has_body usage
+   1.29. is_privacy usage
    1.30. cmp_str usage
+   1.31. cmp_str usage
 
 Chapter 1. Admin Guide
 
@@ -570,7 +572,24 @@ Note
 if (is_present_hf("From")) log(1, "From HF Present");
 ...
 
-1.3.23.  append_time()
+1.3.23.  is_present_hf_re(hf_name_re)
+
+   Return true if a header field whose name matches regular
+   expression 'hf_name_re' is present in message.
+
+   Meaning of the parameters is as follows:
+     * hf_name_re - Regular expression to match header field name.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.23. is_present_hf_re usage
+...
+if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\
+n");
+...
+
+1.3.24.  append_time()
 
    Adds a time header to the reply of the request. You must use it
    before functions that are likely to send a reply, e.g., save()
@@ -589,12 +608,12 @@ if (is_present_hf("From")) log(1, "From HF Present");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.23. append_time usage
+   Example 1.24. append_time usage
 ...
 append_time();
 ...
 
-1.3.24.  is_method(name)
+1.3.25.  is_method(name)
 
    Check if the method of the message matches the name. If name is
    a known method (invite, cancel, ack, bye, options, info,
@@ -619,7 +638,7 @@ append_time();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.24. is_method usage
+   Example 1.25. is_method usage
 ...
 if(is_method("INVITE"))
 {
@@ -631,7 +650,7 @@ if(is_method("OPTION|UPDATE"))
 }
 ...
 
-1.3.25.  remove_hf(hname)
+1.3.26.  remove_hf(hname)
 
    Remove from message all headers with name "hname"
 
@@ -643,7 +662,7 @@ if(is_method("OPTION|UPDATE"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.25. remove_hf usage
+   Example 1.26. remove_hf usage
 ...
 if(remove_hf("User-Agent"))
 {
@@ -651,7 +670,7 @@ if(remove_hf("User-Agent"))
 }
 ...
 
-1.3.26.  remove_hf_re(re)
+1.3.27.  remove_hf_re(re)
 
    Remove from message all headers with name matching regular
    expression "re"
@@ -665,7 +684,7 @@ if(remove_hf("User-Agent"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.26. remove_hf_re usage
+   Example 1.27. remove_hf_re usage
 ...
 if(remove_hf_re("^P-"))
 {
@@ -673,7 +692,7 @@ if(remove_hf_re("^P-"))
 }
 ...
 
-1.3.27.  has_body(), has_body(mime)
+1.3.28.  has_body(), has_body(mime)
 
    The function returns true if the SIP message has a body
    attached. The checked includes also the "Content-Lenght" header
@@ -689,7 +708,7 @@ if(remove_hf_re("^P-"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.27. has_body usage
+   Example 1.28. has_body usage
 ...
 if(has_body("application/sdp"))
 {
@@ -697,7 +716,7 @@ if(has_body("application/sdp"))
 }
 ...
 
-1.3.28.  is_privacy(privacy_type)
+1.3.29.  is_privacy(privacy_type)
 
    The function returns true if the SIP message has a Privacy
    header field that includes the given privacy_type among its
@@ -708,7 +727,7 @@ if(has_body("application/sdp"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.28. is_privacy usage
+   Example 1.29. is_privacy usage
 ...
 if(is_privacy("id"))
 {
@@ -716,7 +735,7 @@ if(is_privacy("id"))
 }
 ...
 
-1.3.29.  cmp_str(str1, str2)
+1.3.30.  cmp_str(str1, str2)
 
    The function returns true if the two parameters matches as
    string case sensitive comparison.
@@ -724,7 +743,7 @@ if(is_privacy("id"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.29. cmp_str usage
+   Example 1.30. cmp_str usage
 ...
 if(cmp_str("$rU", "kamailio"))
 {
@@ -732,7 +751,7 @@ if(cmp_str("$rU", "kamailio"))
 }
 ...
 
-1.3.30.  cmp_istr(str1, str2)
+1.3.31.  cmp_istr(str1, str2)
 
    The function returns true if the two parameters matches as
    string case insensitive comparison.
@@ -740,7 +759,7 @@ if(cmp_str("$rU", "kamailio"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.30. cmp_str usage
+   Example 1.31. cmp_str usage
 ...
 if(cmp_istr("$rU@you", "kamailio@YOU"))
 {

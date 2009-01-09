@@ -839,6 +839,36 @@ if (is_present_hf("From")) log(1, "From HF Present");
 
 	<section>
 		<title>
+		<function moreinfo="none">is_present_hf_re(hf_name_re)</function>
+		</title>
+		<para>
+		Return true if a header field whose name matches regular expression
+		'hf_name_re' is present in message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hf_name_re</emphasis> - Regular expression to
+				match header field name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>is_present_hf_re</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">append_time()</function>
 		</title>
 		<para>
