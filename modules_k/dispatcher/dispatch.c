@@ -960,7 +960,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 	switch(mode)
 	{
 		case 1:
-			act.type = SET_HOSTPORT_T;
+			act.type = SET_HOSTALL_T;
 			act.elem[0].type = STRING_ST;
 			if(uri->len>4 
 					&& strncasecmp(uri->s,"sip:",4)==0)
@@ -973,30 +973,21 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 				LM_ERR("error while setting host\n");
 				return -1;
 			}
-			if(route_type==FAILURE_ROUTE)
-			{
-				if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
-				{
-					LM_ERR("append_branch action failed\n");
-					return -1;
-				}
-			}
 		break;
 		default:
-			if(route_type==FAILURE_ROUTE)
-			{
-				if (append_branch(msg, 0, uri, 0, Q_UNSPECIFIED, 0, 0)!=1 )
-				{
-					LM_ERR("append_branch action failed\n");
-					return -1;
-				}
-			} else {
-				if (set_dst_uri(msg, uri) < 0) {
-					LM_ERR("error while setting dst uri\n");
-					return -1;
-				}	
-			}
+			if (set_dst_uri(msg, uri) < 0) {
+				LM_ERR("error while setting dst uri\n");
+				return -1;
+			}	
 		break;
+	}
+	if(ds_append_branch!=0 && route_type==FAILURE_ROUTE)
+	{
+		if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
+		{
+			LM_ERR("append_branch action failed\n");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -1556,15 +1547,8 @@ static void ds_options_callback( struct cell *t, int type,
  */
 void ds_check_timer(unsigned int ticks, void* param)
 {
-	
-	struct socket_info* send_sock = 0;
-	struct sip_uri curi;
-	union sockaddr_union to;
-	struct hostent* he;
-	unsigned short proto;
-	dlg_t * dialog;	
-	ds_set_p list;
 	int j;
+	ds_set_p list;
 	
 	/* Check for the list. */
 	if(_ds_list==NULL || _ds_list_nr<=0)
@@ -1585,57 +1569,21 @@ void ds_check_timer(unsigned int ticks, void* param)
 				LM_DBG("probing set #%d, URI %.*s\n", list->id,
 						list->dlist[j].uri.len, list->dlist[j].uri.s);
 				
-				/* Parse the URI of the destination, we want to probe (we need
-				 * more information about the destination) */
-				if (parse_uri(list->dlist[j].uri.s,
-							list->dlist[j].uri.len, &curi) < 0)
-				{
-					LM_ERR("unable to parse URI (%.*s)\n",
-							list->dlist[j].uri.len, list->dlist[j].uri.s);
-					continue;
-				}
-				
-				/* If the port is not set, we use the default-SIP-Port.*/
-				if (curi.port_no == 0)
-					curi.port_no = SIP_PORT;
-
-				/* Resolve the Hostnamme */
-				proto = curi.proto;
-				he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 
-						(curi.type==SIPS_URI_T)?1:0 , 0);
-				if (he == NULL)
-				{
-					LM_ERR("can't resolve_host\n");
-					continue;
-				}
-				
-				/* Determine the sending-socket for sending the OPTIONS-Request
-				 * Maybe, later, provide the possibility to use a specific
-				 * socket */
-				hostent2su(&to, he, 0, curi.port_no);
-				if (send_sock==0) {
-					/* send_sock=force_socket ? force_socket : 
-						get_send_socket(0, &to, PROTO_UDP); */
-					send_sock=get_send_socket(0, &to, PROTO_UDP);
-				}
-				if (send_sock == NULL) {
-					LM_ERR("can't get sending socket\n");
-					continue;
-				}
-				
-				/* Execute the Dialog using the "req_outside"-Method of the
-				 * TM-Module.
-				 * req_outside(str* m, str* t, str* f, str* h, str* b,
-				 *		dlg_t** d, transaction_cb c, void* cp); */
-				if (tmb.t_request_outside(&ds_ping_method,
+				/* Send ping using TM-Module.
+				 * int request(str* m, str* ruri, str* to, str* from, str* h,
+				 *		str* b, str *oburi,
+				 *		transaction_cb cb, void* cbp); */
+				if (tmb.t_request(&ds_ping_method,
+							&list->dlist[j].uri,
 							&list->dlist[j].uri,
 							&ds_ping_from,
 							NULL,
 							NULL,
-							&dialog,
+							NULL,
 							ds_options_callback,
 							(void*)(long)list->id) < 0) {
-					LM_ERR("unable to execute dialog\n");
+					LM_ERR("unable to ping [%.*s]\n",
+							list->dlist[j].uri.len, list->dlist[j].uri.s);
 				}
 			}
 		}

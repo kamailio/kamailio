@@ -489,6 +489,28 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
 	</section>
 
+ 	<section>
+ 		<title><varname>ds_append_branch</varname> (int)</title>
+ 		<para>
+		If set to 1, functions will automaticall append a new branch if
+		called in FAILURE_ROUTE. If set to 0, script writer has to call
+		append_branch() in config after calling dispatcher functions.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>1</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_append_branch</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_append_branch", 0)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+
 	</section>
 
 	<section>

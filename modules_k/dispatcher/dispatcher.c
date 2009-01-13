@@ -96,7 +96,8 @@ int probing_threshhold = 3; /* number of failed requests, before a destination
 str ds_ping_method = {"OPTIONS",7};
 str ds_ping_from   = {"sip:dispatcher@localhost", 24};
 static int ds_ping_interval = 0;
-int ds_probing_mode = 0;
+int ds_probing_mode  = 0;
+int ds_append_branch = 1;
 
 /*db */
 str ds_db_url         = {NULL, 0};
@@ -164,6 +165,7 @@ static param_export_t params[]={
 	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
+	{"ds_append_branch",   INT_PARAM, &ds_append_branch},
 	{0,0,0}
 };
 
