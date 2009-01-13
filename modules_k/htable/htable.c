@@ -29,6 +29,7 @@
 #include <fcntl.h>
 
 #include "../../sr_module.h"
+#include "../../timer.h"
 #include "../../dprint.h"
 
 #include "../../pvar.h"
@@ -39,6 +40,9 @@
 
 MODULE_VERSION
 
+int  ht_timer_interval = 20;
+int  ht_timer_mode = 0;
+
 /** module functions */
 static int ht_print(struct sip_msg*, char*, char*);
 static int mod_init(void);
@@ -48,6 +52,9 @@ int ht_param(modparam_t type, void* val);
 
 static pv_export_t mod_pvs[] = {
 	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
+		pv_parse_ht_name, 0, 0, 0 },
+	{ {"shtex", sizeof("shtex")-1}, PVT_OTHER, pv_get_ht_cell_expire,
+		pv_set_ht_cell_expire,
 		pv_parse_ht_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -68,6 +75,8 @@ static param_export_t params[]={
 	{"key_value_column",   STR_PARAM, &ht_db_value_column.s},
 	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
+	{"timer_interval",     INT_PARAM, &ht_timer_interval},
+	{"timer_mode",         INT_PARAM, &ht_timer_mode},
 	{0,0,0}
 };
 
@@ -110,6 +119,28 @@ static int mod_init(void)
 		}
 		ht_db_close_con();
 	}
+	if(ht_has_autoexpire())
+	{
+		LM_DBG("starting auto-expire timer\n");
+		if(ht_timer_interval<=0)
+			ht_timer_interval = 20;
+		if(ht_timer_mode!=0)
+		{
+			if(register_timer(ht_timer, 0, ht_timer_interval)<0)
+			{
+				LM_ERR("failed to register timer function\n");
+				return -1;
+			}
+		} else {
+			if (register_timer_process(ht_timer, NULL, ht_timer_interval,
+					TIMER_PROC_INIT_FLAG)<0)
+			{
+				LM_ERR("failed to register new timer process\n");
+				return -1;
+			}
+		}
+	}
+
 	return 0;
 }
 

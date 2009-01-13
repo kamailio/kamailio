@@ -370,6 +370,46 @@ modparam("htable", "fetch_rows", 1000)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>timer_interval</varname> (integer)</title>
+		<para>
+		Interval in seconds to check for expired htable values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 20.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "timer_interval", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>timer_mode</varname> (integer)</title>
+		<para>
+		If set to 1, will start a new timer process. If set to 0
+		will use default timer process to check for expired htable
+		values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "timer_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Exported Functions</title>
@@ -395,46 +435,19 @@ sht_print();
 		</example>
 	</section>
 	</section>
-	<section>
-	<title>Exported pseudo-variables</title>
-		
 		<section>
-			<title><varname>$sht(htable=>key)</varname></title>
-			<para>
-				Access hash table entries.
-			</para>
-			<para>
-			The <quote>htname</quote> must be a hash table name defined via
-			<quote>htable</quote> parameter.
-			</para>
-
-			<para>
-			The <quote>key</quote> can be:
-			</para>
-			<itemizedlist>
-				<listitem>
-				<para><emphasis>static string</emphasis> - set of characters
-				without pseudo-variables</para>
-				</listitem>	  
-				<listitem>
-				<para><emphasis>dynamic string</emphasis> - set of characters
-				that include pseudo-variables. The pseudo-variables will be
-				evaluated at runtime.</para>
-				</listitem>	  
-			</itemizedlist>
-
-			<example>
-				<title><function moreinfo="none">$sht(name)</function> usage</title>
-				<programlisting format="linespecific">
-...
-modparam("htable", "htable", "a=&gt;size=4;")
-...
-$sht(a=&gt;$au) = 1;
-$sht(a=&gt;$ru) = $fu;
-...
-				 </programlisting>
-			</example>
-	</section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$sht(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtex(htable=>key)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
 	</section>
 </chapter>
 

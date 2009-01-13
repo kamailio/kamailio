@@ -58,7 +58,7 @@ ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
 	memset(cell, 0, msize);
 	cell->msize = msize;
 	cell->cellid = cellid;
-	cell->flags = type&AVP_VAL_STR;
+	cell->flags = type;
 	cell->name.len = name->len;
 	cell->name.s = (char*)cell + sizeof(ht_cell_t);
 	memcpy(cell->name.s, name->s, name->len);
@@ -254,6 +254,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 	unsigned int idx;
 	unsigned int hid;
 	ht_cell_t *it, *prev, *cell;
+	time_t now;
 
 	if(ht==NULL || ht->entries==NULL)
 		return -1;
@@ -262,6 +263,9 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 	
 	idx = ht_get_entry(hid, ht->htsize);
 
+	now = 0;
+	if(ht->htexpire>0)
+		now = time(NULL);
 	prev = NULL;
 	lock_get(&ht->entries[idx].lock);
 	it = ht->entries[idx].first;
@@ -285,6 +289,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 						/* copy */
 						it->value.s.len = val->s.len;
 						memcpy(it->value.s.s, val->s.s, val->s.len);
+						it->expire = now + ht->htexpire;
 					} else {
 						/* new */
 						cell = ht_cell_new(name, type, val, hid);
@@ -296,8 +301,11 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 						}
 						cell->next = it->next;
 						cell->prev = it->prev;
+						cell->expire = now + ht->htexpire;
 						if(it->prev)
 							it->prev->next = cell;
+						else
+							ht->entries[idx].first = cell;
 						if(it->next)
 							it->next->prev = cell;
 						ht_cell_free(it);
@@ -305,6 +313,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 				} else {
 					it->flags &= ~AVP_VAL_STR;
 					it->value.n = val->n;
+					it->expire = now + ht->htexpire;
 				}
 				lock_release(&ht->entries[idx].lock);
 				return 0;
@@ -319,15 +328,19 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 						lock_release(&ht->entries[idx].lock);
 						return -1;
 					}
+					cell->expire = now + ht->htexpire;
 					cell->next = it->next;
 					cell->prev = it->prev;
 					if(it->prev)
 						it->prev->next = cell;
+					else
+						ht->entries[idx].first = cell;
 					if(it->next)
 						it->next->prev = cell;
 					ht_cell_free(it);
 				} else {
 					it->value.n = val->n;
+					it->expire = now + ht->htexpire;
 				}
 				lock_release(&ht->entries[idx].lock);
 				return 0;
@@ -344,6 +357,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 		lock_release(&ht->entries[idx].lock);
 		return -1;
 	}
+	cell->expire = now + ht->htexpire;
 	if(prev==NULL)
 	{
 		if(ht->entries[idx].first!=NULL)
@@ -460,27 +474,32 @@ int ht_dbg(void)
 {
 	int i;
 	ht_cell_t *it;
+	ht_t *ht;
 
-	if(_ht_root==NULL || _ht_root->entries==NULL)
-		return -1;
-
-	for(i=0; i<_ht_root->htsize; i++)
+	ht = _ht_root;
+	while(ht)
 	{
-		lock_get(&_ht_root->entries[i].lock);
-		LM_ERR("htable[%d] -- <%d>\n", i, _ht_root->entries[i].esize);
-		it = _ht_root->entries[i].first;
-		while(it)
+		LM_ERR("===== htable[%.*s] hid: %u exp: %u>\n", ht->name.len,
+				ht->name.s, ht->htid, ht->htexpire);
+		for(i=0; i<ht->htsize; i++)
 		{
-			LM_ERR("\tcell: %.*s\n", it->name.len, it->name.s);
-			LM_ERR("\thid: %u msize: %u flags: %d\n", it->cellid, it->msize,
-					it->flags);
-			if(it->flags&AVP_VAL_STR)
-				LM_ERR("\tv-s:%.*s\n", it->value.s.len, it->value.s.s);
-			else
-				LM_ERR("\tv-i:%d\n", it->value.n);
-			it = it->next;
+			lock_get(&ht->entries[i].lock);
+			LM_ERR("htable[%d] -- <%d>\n", i, ht->entries[i].esize);
+			it = ht->entries[i].first;
+			while(it)
+			{
+				LM_ERR("\tcell: %.*s\n", it->name.len, it->name.s);
+				LM_ERR("\thid: %u msize: %u flags: %d expire: %u\n", it->cellid,
+						it->msize, it->flags, (unsigned int)it->expire);
+				if(it->flags&AVP_VAL_STR)
+					LM_ERR("\tv-s:%.*s\n", it->value.s.len, it->value.s.s);
+				else
+					LM_ERR("\tv-i:%d\n", it->value.n);
+				it = it->next;
+			}
+			lock_release(&ht->entries[i].lock);
 		}
-		lock_release(&_ht_root->entries[i].lock);
+		ht = ht->next;
 	}
 	return 0;
 }
@@ -621,6 +640,158 @@ int ht_db_load_tables(void)
 		}
 		ht = ht->next;
 	}
+	return 0;
+}
+
+int ht_has_autoexpire(void)
+{
+	ht_t *ht;
+
+	if(_ht_root==NULL)
+		return 0;
+
+	ht = _ht_root;
+	while(ht)
+	{
+		if(ht->htexpire>0)
+			return 1;
+		ht = ht->next;
+	}
+	return 0;
+}
+
+void ht_timer(unsigned int ticks, void *param)
+{
+	ht_t *ht;
+	ht_cell_t *it;
+	ht_cell_t *it0;
+	time_t now;
+	int i;
+
+	if(_ht_root==NULL)
+		return;
+
+	now = time(NULL);
+	
+	ht = _ht_root;
+	while(ht)
+	{
+		if(ht->htexpire>0)
+		{
+			for(i=0; i<ht->htsize; i++)
+			{
+				/* free entries */
+				lock_get(&ht->entries[i].lock);
+				it = ht->entries[i].first;
+				while(it)
+				{
+					it0 = it->next;
+					if(it->expire!=0 && it->expire<now)
+					{
+						/* expired */
+						if(it->prev==NULL)
+							ht->entries[i].first = it->next;
+						else
+							it->prev->next = it->next;
+						if(it->next)
+							it->next->prev = it->prev;
+						ht->entries[i].esize--;
+						ht_cell_free(it);
+					}
+					it = it0;
+				}
+				lock_release(&ht->entries[i].lock);
+			}
+		}
+		ht = ht->next;
+	}
+	return;
+}
+
+int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
+{
+	unsigned int idx;
+	unsigned int hid;
+	ht_cell_t *it;
+	time_t now;
+
+	if(ht==NULL || ht->entries==NULL)
+		return -1;
+
+	/* str value - ignore */
+	if(type&AVP_VAL_STR)
+		return 0;
+	/* not auto-expire htable */
+	if(ht->htexpire==0)
+		return 0;
+
+	hid = ht_compute_hash(name);
+	
+	idx = ht_get_entry(hid, ht->htsize);
+
+	now = 0;
+	if(val->n>0)
+		now = time(NULL) + val->n;
+	LM_DBG("set auto-expire to %u (%d)\n", (unsigned int)now,
+			val->n);
+
+	lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
+	while(it!=NULL && it->cellid < hid)
+		it = it->next;
+	while(it!=NULL && it->cellid == hid)
+	{
+		if(name->len==it->name.len 
+				&& strncmp(name->s, it->name.s, name->len)==0)
+		{
+			/* update value */
+			it->expire = now;
+			lock_release(&ht->entries[idx].lock);
+			return 0;
+		}
+		it = it->next;
+	}
+	lock_release(&ht->entries[idx].lock);
+	return 0;
+}
+
+int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
+{
+	unsigned int idx;
+	unsigned int hid;
+	ht_cell_t *it;
+	time_t now;
+
+	if(ht==NULL || ht->entries==NULL)
+		return -1;
+
+	*val = 0;
+	/* not auto-expire htable */
+	if(ht->htexpire==0)
+		return 0;
+
+	hid = ht_compute_hash(name);
+	
+	idx = ht_get_entry(hid, ht->htsize);
+
+	now = time(NULL);
+	lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
+	while(it!=NULL && it->cellid < hid)
+		it = it->next;
+	while(it!=NULL && it->cellid == hid)
+	{
+		if(name->len==it->name.len 
+				&& strncmp(name->s, it->name.s, name->len)==0)
+		{
+			/* update value */
+			*val = (unsigned int)(it->expire - now);
+			lock_release(&ht->entries[idx].lock);
+			return 0;
+		}
+		it = it->next;
+	}
+	lock_release(&ht->entries[idx].lock);
 	return 0;
 }
 

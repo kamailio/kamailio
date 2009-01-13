@@ -178,3 +178,66 @@ error:
 	return -1;
 }
 
+int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	str htname;
+	ht_cell_t *htc=NULL;
+	ht_pv_t *hpv;
+	unsigned int now;
+
+	hpv = (ht_pv_t*)param->pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL)
+			return pv_get_null(msg, param, res);
+	}
+	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
+	{
+		LM_ERR("cannot get $ht name\n");
+		return -1;
+	}
+	if(ht_get_cell_expire(hpv->ht, &htname, &now)!=0)
+		return pv_get_null(msg, param, res);
+	/* integer */
+	return pv_get_uintval(msg, param, res, htc->value.n);
+}
+
+int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	str htname;
+	int_str isval;
+	ht_pv_t *hpv;
+
+	hpv = (ht_pv_t*)param->pvn.u.dname;
+
+	if(hpv->ht==NULL)
+		hpv->ht = ht_get_table(&hpv->htname);
+	if(hpv->ht==NULL)
+		return -1;
+
+	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
+	{
+		LM_ERR("cannot get $ht name\n");
+		return -1;
+	}
+	LM_DBG("set expire value for $ht(%.*s=>%.*s)\n", hpv->htname.len,
+			hpv->htname.s, htname.len, htname.s);
+	isval.n = 0;
+	if(val!=NULL)
+	{
+		if(val->flags&PV_TYPE_INT)
+			isval.n = val->ri;
+	}
+	if(ht_set_cell_expire(hpv->ht, &htname, 0, &isval)!=0)
+	{
+		LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
+		return -1;
+	}
+
+	return 0;
+}
+

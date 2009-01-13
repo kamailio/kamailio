@@ -23,6 +23,8 @@
 #ifndef _HT_API_H_
 #define _HT_API_H_
 
+#include <time.h>
+
 #include "../../usr_avp.h"
 #include "../../locking.h"
 
@@ -33,6 +35,7 @@ typedef struct _ht_cell
 	int flags;
 	str name;
 	int_str value;
+	time_t  expire;
     struct _ht_cell *prev;
     struct _ht_cell *next;
 } ht_cell_t;
@@ -68,5 +71,10 @@ int ht_cell_pkg_free(ht_cell_t *cell);
 int ht_table_spec(char *spec);
 ht_t* ht_get_table(str *name);
 int ht_db_load_tables(void);
+
+int ht_has_autoexpire(void);
+void ht_timer(unsigned int ticks, void *param);
+int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
+int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
 
 #endif

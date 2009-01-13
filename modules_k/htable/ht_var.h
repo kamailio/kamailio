@@ -25,10 +25,14 @@
 
 #include "../../pvar.h"
 
-int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
+int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 int pv_parse_ht_name(pv_spec_p sp, str *in);
+int pv_get_ht_cell_expire(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
 
 #endif
