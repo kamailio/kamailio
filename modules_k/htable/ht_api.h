@@ -27,6 +27,7 @@
 
 #include "../../usr_avp.h"
 #include "../../locking.h"
+#include "../../pvar.h"
 
 typedef struct _ht_cell
 {
@@ -58,6 +59,12 @@ typedef struct _ht
 	struct _ht *next;
 } ht_t;
 
+typedef struct _ht_pv {
+	str htname;
+	ht_t *ht;
+	pv_elem_t *pve;
+} ht_pv_t, *ht_pv_p;
+
 int ht_pkg_init(str *name, int autoexp, str *dbtable, int size);
 int ht_shm_init(void);
 int ht_destroy(void);
@@ -76,5 +83,7 @@ int ht_has_autoexpire(void);
 void ht_timer(unsigned int ticks, void *param);
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
+
+int ht_rm_cell_re(str *sre, ht_t *ht, int mode);
 
 #endif

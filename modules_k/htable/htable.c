@@ -48,6 +48,10 @@ static int ht_print(struct sip_msg*, char*, char*);
 static int mod_init(void);
 void destroy(void);
 
+static int fixup_ht_rm(void** param, int param_no);
+static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
+static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
+
 int ht_param(modparam_t type, void* val);
 
 static pv_export_t mod_pvs[] = {
@@ -61,6 +65,12 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[]={
 	{"sht_print",  (cmd_function)ht_print,  0, 0, 0, 
+		REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,  1, fixup_ht_rm, 0, 
+		REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+	{"sht_rm_value_re",  (cmd_function)ht_rm_value_re,  1, fixup_ht_rm, 0, 
 		REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
 	{0,0,0,0,0,0}
@@ -145,6 +155,14 @@ static int mod_init(void)
 }
 
 /**
+ * destroy function
+ */
+void destroy(void)
+{
+	ht_destroy();
+}
+
+/**
  * print hash table content
  */
 static int ht_print(struct sip_msg *msg, char *s1, char *s2)
@@ -153,13 +171,85 @@ static int ht_print(struct sip_msg *msg, char *s1, char *s2)
 	return 1;
 }
 
-/**
- * destroy function
- */
-void destroy(void)
+static int fixup_ht_rm(void** param, int param_no)
 {
-	ht_destroy();
+	pv_spec_t *sp;
+	str s;
+
+	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+	if(param_no != 1)
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return -1;
+	}
+	if (sp == 0)
+	{
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memset(sp, 0, sizeof(pv_spec_t));
+	s.s = (char*)*param; s.len = strlen(s.s);
+	if(pv_parse_ht_name(sp, &s)<0)
+	{
+		pkg_free(sp);
+		LM_ERR("invalid parameter %d\n", param_no);
+		return -1;
+	}
+	*param = (void*)sp;
+	return 0;
 }
+
+static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
+{
+	ht_pv_t *hpv;
+	str sre;
+	pv_spec_t *sp;
+	sp = (pv_spec_t*)key;
+
+	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL)
+			return 1;
+	}
+	if(pv_printf_s(msg, hpv->pve, &sre)!=0)
+	{
+		LM_ERR("cannot get $ht expression\n");
+		return -1;
+	}
+	if(ht_rm_cell_re(&sre, hpv->ht, 0)<0)
+		return -1;
+	return 1;
+}
+
+static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
+{
+	ht_pv_t *hpv;
+	str sre;
+	pv_spec_t *sp;
+	sp = (pv_spec_t*)key;
+
+	hpv = (ht_pv_t*)sp->pvp.pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL)
+			return 1;
+	}
+	if(pv_printf_s(msg, hpv->pve, &sre)!=0)
+	{
+		LM_ERR("cannot get $ht expression\n");
+		return -1;
+	}
+
+	if(ht_rm_cell_re(&sre, hpv->ht, 1)<0)
+		return -1;
+	return 1;
+}
+
 
 int ht_param(modparam_t type, void *val)
 {

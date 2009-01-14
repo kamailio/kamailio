@@ -26,12 +26,6 @@
 /* pkg copy */
 ht_cell_t *_htc_local=NULL;
 
-typedef struct _ht_pv {
-	str htname;
-	ht_t *ht;
-	pv_elem_t *pve;
-} ht_pv_t, *ht_pv_p;
-
 int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {

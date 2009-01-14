@@ -20,11 +20,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <regex.h>
+
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../hash_func.h"
 #include "../../ut.h"
+#include "../../re.h"
 
 #include "ht_api.h"
 #include "ht_db.h"
@@ -289,6 +292,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 						/* copy */
 						it->value.s.len = val->s.len;
 						memcpy(it->value.s.s, val->s.s, val->s.len);
+						it->value.s.s[it->value.s.len] = '\0';
 						it->expire = now + ht->htexpire;
 					} else {
 						/* new */
@@ -792,6 +796,61 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 		it = it->next;
 	}
 	lock_release(&ht->entries[idx].lock);
+	return 0;
+}
+
+int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
+{
+	ht_cell_t *it;
+	ht_cell_t *it0;
+	int i;
+	regex_t re;
+	int match;
+	regmatch_t pmatch;
+
+	if(sre==NULL || sre->len<=0 || ht==NULL)
+		return -1;
+
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+	{
+		LM_ERR("bad re %s\n", sre->s);
+		return -1;
+	}
+
+	for(i=0; i<ht->htsize; i++)
+	{
+		/* free entries */
+		lock_get(&ht->entries[i].lock);
+		it = ht->entries[i].first;
+		while(it)
+		{
+			it0 = it->next;
+			match = 0;
+			if(mode==0)
+			{
+				if (regexec(&re, it->name.s, 1, &pmatch, 0)==0)
+					match = 1;
+			} else {
+				if(it->flags&AVP_VAL_STR)
+					if (regexec(&re, it->value.s.s, 1, &pmatch, 0)==0)
+						match = 1;
+			}
+			if(match==1)
+			{
+				if(it->prev==NULL)
+					ht->entries[i].first = it->next;
+				else
+					it->prev->next = it->next;
+				if(it->next)
+					it->next->prev = it->prev;
+				ht->entries[i].esize--;
+				ht_cell_free(it);
+			}
+			it = it0;
+		}
+		lock_release(&ht->entries[i].lock);
+	}
+	regfree(&re);
 	return 0;
 }
 
