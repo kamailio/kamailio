@@ -13,7 +13,8 @@ Iñaki Baz Castillo
 
    Copyright © 2009 Iñaki Baz Castillo
    Revision History
-   Revision $Revision$ $Date$
+   Revision $Revision: 5462 $ $Date: 2009-01-14 17:05:51 +0100
+   (mié, 14 ene 2009) $
      _________________________________________________________
 
    Table of Contents
@@ -95,7 +96,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running Kamailio with this module loaded:
-     * libpcre-dev - the development libraries of pcre.
+     * libpcre-dev - the development libraries of PCRE.
 
 1.3. Exported Parameters
 
@@ -331,7 +332,7 @@ group 0: ((^Twinkle/1)|(^X-Lite)|(^eyeBeam)|(^Bria)|(^SIP Communicator)
 group 1: ((^190\.232\.250\.226$)|(^122\.5\.27\.125$)|(^86\.92\.112\.))
 group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
 
-   The fist group can be used to avoid auto-generated PUBLISH
+   The first group can be used to avoid auto-generated PUBLISH
    (pua_usrloc module) for UA's already supporting presence:
 
    Example 1.12. Using with pua_usrloc

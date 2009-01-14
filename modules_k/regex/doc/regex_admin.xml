@@ -10,7 +10,7 @@
 		
 		<para>
 			This module offers matching operations against regular expressions using the
-			powerful <ulink url="http://www.pcre.org/">PCRE library</ulink>.
+			powerful <ulink url="http://www.pcre.org/">PCRE</ulink> library.
 		</para>
 		
 		<para>
@@ -55,7 +55,7 @@
 				<itemizedlist>
 					<listitem>
 						<para>
-							<emphasis>libpcre-dev - the development libraries of pcre</emphasis>.
+							<emphasis>libpcre-dev - the development libraries of <ulink url="http://www.pcre.org/">PCRE</ulink></emphasis>.
 						</para>
 					</listitem>
 				</itemizedlist>
@@ -438,7 +438,7 @@ group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
 </programlisting>
 
 			<para>
-				The fist group can be used to avoid auto-generated PUBLISH (pua_usrloc
+				The first group can be used to avoid auto-generated PUBLISH (pua_usrloc
 				module) for UA's already supporting presence:
 			</para>
 			
