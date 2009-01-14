@@ -15,8 +15,6 @@ else
 	INSTALLMIBDIR = $(cfg-prefix)$(shell net-snmp-config --prefix)/share/snmp/mibs
 endif 
 
-BUILDAGENTLIBS:=$(filter-out %netsnmpmibs, $(BUILDAGENTLIBS))
-
 CFLAGS+=
 auto_gen=
 NAME=snmpstats.so
