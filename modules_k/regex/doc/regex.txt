@@ -1,5 +1,5 @@
 
-Regex module
+Regex Module
 
 Iñaki Baz Castillo
 
@@ -11,10 +11,9 @@ Iñaki Baz Castillo
 
    <ibc@aliax.net>
 
-   Copyright © 2008 Iñaki Baz Castillo
+   Copyright © 2009 Iñaki Baz Castillo
    Revision History
-   Revision $revision: 5450$ $Date: 2009-01-13 23:11:30 +0100
-   (mar, 13 ene 2009)$
+   Revision $Revision$ $Date$
      _________________________________________________________
 
    Table of Contents
@@ -62,7 +61,7 @@ Iñaki Baz Castillo
    1.8. pcre_match usage (forcing case insensitive) 
    1.9. pcre_match usage (using "end of line" symbol) 
    1.10. pcre_match_group usage 
-   1.11. groups file
+   1.11. regex file
    1.12. Using with pua_usrloc
    1.13. Incorrect groups file
 
@@ -74,7 +73,7 @@ Chapter 1. Admin Guide
    expressions using the powerful PCRE library.
 
    A text file containing regular expressions categorized in
-   groups is compiled when themodule is loaded, storing the
+   groups is compiled when the module is loaded, storing the
    compiled PCRE objects in an array. A function to match a
    string or pseudo-variable against any of these groups is
    provided. The text file can be modified and reloaded at any
@@ -290,9 +289,9 @@ _empty_line_
 
    An example of the file format would be the following:
 
-   Example 1.11. groups file
+   Example 1.11. regex file
+### List of User-Agents publishing presence status
 [0]
-### List of User-Agent publishing presence status
 
 # Softphones
 ^Twinkle/1
@@ -309,33 +308,40 @@ _empty_line_
 ^SIPp
 ^PJSUA
 
-[1]
-### List of SIP User-Agent not publishing presence status
 
-# Deskphones
-^Linksys
-^Thomson
-^Siemens
+### Blacklisted source IP's
+[1]
+
+^190\.232\.250\.226$
+^122\.5\.27\.125$
+^86\.92\.112\.
+
+
+### Free PSTN destinations in Spain
+[2]
+
+^1\d{3}$
+^(\+34)?900\d{6}$
 
    The module compiles the text above to the following regular
    expressions:
 group 0: ((^Twinkle/1)|(^X-Lite)|(^eyeBeam)|(^Bria)|(^SIP Communicator)
 |
-                (^Linphone)|(^Snom)|(^SIPp)|(^PJSUA))
-group 1: ((^Linksys)|(^Thomson)|(^Siemens))
+          (^Linphone)|(^Snom)|(^SIPp)|(^PJSUA))
+group 1: ((^190\.232\.250\.226$)|(^122\.5\.27\.125$)|(^86\.92\.112\.))
+group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
 
-   The groups above can be used to avoid auto-generated PUBLISH
+   The fist group can be used to avoid auto-generated PUBLISH
    (pua_usrloc module) for UA's already supporting presence:
 
    Example 1.12. Using with pua_usrloc
 route[REGISTER] {
-        if ! pcre_match_group("$ua", 0) {
-                xlog("L_INFO", "Auto-generated PUBLISH for $fu ($ua)\n"
-);
-                pua_set_publish();
-        }
-        save("location");
-        exit;
+    if (! pcre_match_group("$ua", 0)) {
+        xlog("L_INFO", "Auto-generated PUBLISH for $fu ($ua)\n");
+        pua_set_publish();
+    }
+    save("location");
+    exit;
 }
 
    NOTE: It's important to understand that the numbers in each
@@ -357,13 +363,16 @@ group 0: ((^aaa)|(^bbb))
 group 1: ((^ccc)|(^ddd))
 
    Note that the real index doesn't match the group number in the
-   file. This is, group 0 points to the first group in the file,
-   regardless of its number in the file. In fact, the group
-   number appearing in the file is used for nothing but for
-   delimiting different groups.
+   file. This is, compiled group 0 always points to the first
+   group in the file, regardless of its number in the file. In
+   fact, the group number appearing in the file is used for
+   nothing but for delimiting different groups.
 
    NOTE: A line containing a regular expression cannot start by
-   '[' since it would be treated as a new group. As a workaround,
-   using brackets would work:
+   '[' since it would be treated as a new group. The same for
+   lines starting by space, tab, or '#' (they would be ignored by
+   the parser). As a workaround, using brackets would work:
 [0]
 ([0-9]{9})
+( #abcde)
+( qwerty)

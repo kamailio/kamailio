@@ -15,7 +15,7 @@
 		
 		<para>
 			A text file containing regular expressions categorized in groups is compiled
-			when themodule is loaded, storing the compiled PCRE objects in an array. A
+			when the module is loaded, storing the compiled PCRE objects in an array. A
 			function to match a string or pseudo-variable against any of these groups is
 			provided. The text file can be modified and reloaded at any time via a MI command.
 			The module also offers a function to perform a PCRE matching operation against a
@@ -387,10 +387,10 @@ _empty_line_
 			</para>
 			
 			<example>
-				<title>groups file</title>
+				<title>regex file</title>
 <programlisting  format="linespecific">
+### List of User-Agents publishing presence status
 [0]
-### List of User-Agent publishing presence status
 
 # Softphones
 ^Twinkle/1
@@ -407,13 +407,20 @@ _empty_line_
 ^SIPp
 ^PJSUA
 
-[1]
-### List of SIP User-Agent not publishing presence status
 
-# Deskphones
-^Linksys
-^Thomson
-^Siemens
+### Blacklisted source IP's
+[1]
+
+^190\.232\.250\.226$
+^122\.5\.27\.125$
+^86\.92\.112\.
+
+
+### Free PSTN destinations in Spain
+[2]
+
+^1\d{3}$
+^(\+34)?900\d{6}$
 </programlisting>
 			
 			</example>
@@ -425,12 +432,13 @@ _empty_line_
 			
 <programlisting  format="linespecific">
 group 0: ((^Twinkle/1)|(^X-Lite)|(^eyeBeam)|(^Bria)|(^SIP Communicator)|
-		(^Linphone)|(^Snom)|(^SIPp)|(^PJSUA))
-group 1: ((^Linksys)|(^Thomson)|(^Siemens))
+          (^Linphone)|(^Snom)|(^SIPp)|(^PJSUA))
+group 1: ((^190\.232\.250\.226$)|(^122\.5\.27\.125$)|(^86\.92\.112\.))
+group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
 </programlisting>
 
 			<para>
-				The groups above can be used to avoid auto-generated PUBLISH (pua_usrloc
+				The fist group can be used to avoid auto-generated PUBLISH (pua_usrloc
 				module) for UA's already supporting presence:
 			</para>
 			
@@ -438,12 +446,12 @@ group 1: ((^Linksys)|(^Thomson)|(^Siemens))
 				<title>Using with pua_usrloc</title>
 <programlisting  format="linespecific">
 route[REGISTER] {
-	if ! pcre_match_group("$ua", 0) {
-		xlog("L_INFO", "Auto-generated PUBLISH for $fu ($ua)\n");
-		pua_set_publish();
-	}
-	save("location");
-	exit;
+    if (! pcre_match_group("$ua", 0)) {
+        xlog("L_INFO", "Auto-generated PUBLISH for $fu ($ua)\n");
+        pua_set_publish();
+    }
+    save("location");
+    exit;
 }
 </programlisting>
 			</example>
@@ -479,19 +487,23 @@ group 1: ((^ccc)|(^ddd))
 			
 			<para>
 				Note that the real index doesn't match the group number in the file. This
-				is, group 0 points to the first group in the file, regardless of its number
-				in the file. In fact, the group number appearing in the file is used for
-				nothing but for delimiting different groups.
+				is, compiled group 0 always points to the first group in the file, regardless
+				of its number in the file. In fact, the group number appearing in the file is
+				used for nothing but for delimiting different groups.
 			</para>
 			
 			<para>
 				NOTE: A line containing a regular expression cannot start by '[' since it
-				would be treated as a new group. As a workaround, using brackets would work:
+				would be treated as a new group. The same for lines starting by space, tab,
+				or '#' (they would be ignored by the parser). As a workaround, using brackets
+				would work:
 			</para>
 			
 <programlisting  format="linespecific">
 [0]
 ([0-9]{9})
+( #abcde)
+( qwerty)
 </programlisting>
 			
 		</section>
