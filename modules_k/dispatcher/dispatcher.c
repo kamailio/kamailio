@@ -67,10 +67,11 @@
 
 MODULE_VERSION
 
-#define DS_SET_ID_COL		"setid"
-#define DS_DEST_URI_COL		"destination"
-#define DS_DEST_FLAGS_COL	"flags"
-#define DS_TABLE_NAME 		"dispatcher"
+#define DS_SET_ID_COL			"setid"
+#define DS_DEST_URI_COL			"destination"
+#define DS_DEST_FLAGS_COL		"flags"
+#define DS_DEST_PRIORITY_COL	"priority"
+#define DS_TABLE_NAME			"dispatcher"
 
 /** parameters */
 char *dslistfile = CFG_DIR"dispatcher.list";
@@ -100,11 +101,12 @@ int ds_probing_mode  = 0;
 int ds_append_branch = 1;
 
 /*db */
-str ds_db_url         = {NULL, 0};
-str ds_set_id_col     = str_init(DS_SET_ID_COL);
-str ds_dest_uri_col   = str_init(DS_DEST_URI_COL);
-str ds_dest_flags_col = str_init(DS_DEST_FLAGS_COL);
-str ds_table_name     = str_init(DS_TABLE_NAME);
+str ds_db_url            = {NULL, 0};
+str ds_set_id_col        = str_init(DS_SET_ID_COL);
+str ds_dest_uri_col      = str_init(DS_DEST_URI_COL);
+str ds_dest_flags_col    = str_init(DS_DEST_FLAGS_COL);
+str ds_dest_priority_col = str_init(DS_DEST_PRIORITY_COL);
+str ds_table_name        = str_init(DS_TABLE_NAME);
 
 str ds_setid_pvname   = {NULL, 0};
 pv_spec_t ds_setid_pv;
@@ -152,6 +154,7 @@ static param_export_t params[]={
 	{"setid_col",       STR_PARAM, &ds_set_id_col.s},
 	{"destination_col", STR_PARAM, &ds_dest_uri_col.s},
 	{"flags_col",       STR_PARAM, &ds_dest_flags_col.s},
+	{"priority_col",    STR_PARAM, &ds_dest_priority_col.s},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},

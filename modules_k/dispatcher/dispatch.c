@@ -71,6 +71,7 @@
 
 #define DS_TABLE_VERSION	1
 #define DS_TABLE_VERSION2	2
+#define DS_TABLE_VERSION3	3
 
 static int _ds_table_version = DS_TABLE_VERSION;
 
@@ -78,6 +79,7 @@ typedef struct _ds_dest
 {
 	str uri;
 	int flags;
+	int priority;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the request URI */
 	int failure_count;
@@ -107,6 +109,30 @@ int *next_idx   = NULL;
 
 void destroy_list(int);
 
+static int ds_print_sets(void)
+{
+	ds_set_p si = NULL;
+	int i;
+
+	if(_ds_list==NULL)
+		return -1;
+	
+	/* get the index of the set */
+	si = _ds_list;
+	while(si)
+	{
+		for(i=0; i<si->nr; i++)
+		{
+			LM_DBG("dst>> %d %.*s %d %d\n", si->id,
+					si->dlist[i].uri.len, si->dlist[i].uri.s,
+					si->dlist[i].flags, si->dlist[i].priority);
+		}
+		si = si->next;
+	}
+
+	return 0;
+}
+
 int init_data(void)
 {
 	int * p;
@@ -135,10 +161,13 @@ int init_data(void)
 	return 0;
 }
 
-int add_dest2list(int id, str uri, int flags, int list_idx, int * setn)
+int add_dest2list(int id, str uri, int flags, int priority, int list_idx,
+		int * setn)
 {
 	ds_dest_p dp = NULL;
 	ds_set_p  sp = NULL;
+	ds_dest_p dp0 = NULL;
+	ds_dest_p dp1 = NULL;
 	
 	/* For DNS-Lookups */
 	static char hn[256];
@@ -197,6 +226,7 @@ int add_dest2list(int id, str uri, int flags, int list_idx, int * setn)
 	dp->uri.s[uri.len]='\0';
 	dp->uri.len = uri.len;
 	dp->flags = flags;
+	dp->priority = priority;
 
 	/* The Hostname needs to be \0 terminated for resolvehost, so we
 	 * make a copy here. */
@@ -217,8 +247,28 @@ int add_dest2list(int id, str uri, int flags, int list_idx, int * setn)
 	/* Copy the Port out of the URI: */
 	dp->port = puri.port_no;		
 
-	dp->next = sp->dlist;
-	sp->dlist = dp;
+	if(sp->dlist==NULL)
+	{
+		sp->dlist = dp;
+	} else {
+		dp1 = NULL;
+		dp0 = sp->dlist;
+		/* highest priority last -> reindex will copy backwards */
+		while(dp0) {
+			if(dp0->priority > dp->priority)
+				break;
+			dp1 = dp0;
+			dp0=dp0->next;
+		}
+		if(dp1==NULL)
+		{
+			dp->next = sp->dlist;
+			sp->dlist = dp;
+		} else {
+			dp->next  = dp1->next;
+			dp1->next = dp;
+		}
+	}
 
 	LM_DBG("dest [%d/%d] <%.*s>\n", sp->id, sp->nr, dp->uri.len, dp->uri.s);
 	
@@ -280,7 +330,7 @@ int ds_load_list(char *lfile)
 {
 	char line[256], *p;
 	FILE *f = NULL;
-	int id, setn, flags;
+	int id, setn, flags, priority;
 	str uri;
 	
 	if( (*crt_idx) != (*next_idx)) {
@@ -302,7 +352,7 @@ int ds_load_list(char *lfile)
 		
 	}
 
-	id = setn = flags = 0;
+	id = setn = flags = priority = 0;
 
 	*next_idx = (*crt_idx + 1)%2;
 	destroy_list(*next_idx);
@@ -345,11 +395,9 @@ int ds_load_list(char *lfile)
 		
 		/* get flags */
 		flags = 0;
+		priority = 0;
 		if(*p=='\0' || *p=='#')
-		{
-			/* no flags given */
-			goto add_destination;
-		}
+			goto add_destination; /* no flags given */
 
 		while(*p>='0' && *p<='9')
 		{
@@ -357,8 +405,23 @@ int ds_load_list(char *lfile)
 			p++;
 		}
 		
+		/* eat all white spaces */
+		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
+			p++;
+		
+		/* get priority */
+		priority = 0;
+		if(*p=='\0' || *p=='#')
+			goto add_destination; /* no priority given */
+
+		while(*p>='0' && *p<='9')
+		{
+			priority = priority*10+ (*p-'0');
+			p++;
+		}
+		
 add_destination:
-		if(add_dest2list(id, uri, flags, *next_idx, &setn) != 0)
+		if(add_dest2list(id, uri, flags, priority, *next_idx, &setn) != 0)
 			goto error;
 					
 		
@@ -376,6 +439,7 @@ next_line:
 	/* Update list */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
+	ds_print_sets();
 	return 0;
 
 error:
@@ -443,10 +507,12 @@ int init_ds_db(void)
 		LM_ERR("failed to query table version\n");
 		return -1;
 	} else if (_ds_table_version != DS_TABLE_VERSION
-			&& _ds_table_version != DS_TABLE_VERSION2) {
-		LM_ERR("invalid table version (found %d , required %d or %d)\n"
+			&& _ds_table_version != DS_TABLE_VERSION2
+			&& _ds_table_version != DS_TABLE_VERSION3) {
+		LM_ERR("invalid table version (found %d , required %d, %d or %d)\n"
 			"(use kamdbctl reinit)\n",
-			_ds_table_version, DS_TABLE_VERSION, DS_TABLE_VERSION2 );
+			_ds_table_version, DS_TABLE_VERSION, DS_TABLE_VERSION2,
+			DS_TABLE_VERSION3);
 		return -1;
 	}
 
@@ -462,18 +528,21 @@ int ds_load_db(void)
 {
 	int i, id, nr_rows, setn;
 	int flags;
+	int priority;
 	int nrcols;
 	str uri;
 	db_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
 	
-	db_key_t query_cols[3] = {&ds_set_id_col, &ds_dest_uri_col,
-								&ds_dest_flags_col};
+	db_key_t query_cols[4] = {&ds_set_id_col, &ds_dest_uri_col,
+								&ds_dest_flags_col, &ds_dest_priority_col};
 	
 	nrcols = 2;
 	if(_ds_table_version == DS_TABLE_VERSION2)
 		nrcols = 3;
+	else if(_ds_table_version == DS_TABLE_VERSION3)
+		nrcols = 4;
 
 	if( (*crt_idx) != (*next_idx))
 	{
@@ -520,13 +589,17 @@ int ds_load_db(void)
 		uri.s = VAL_STR(values+1).s;
 		uri.len = strlen(uri.s);
 		flags = 0;
-		if(nrcols==3)
+		if(nrcols>=3)
 			flags = VAL_INT(values+2);
+		priority=0;
+		if(nrcols>=4)
+			priority = VAL_INT(values+3);
 
-		if(add_dest2list(id, uri, flags, *next_idx, &setn) != 0)
+		if(add_dest2list(id, uri, flags, priority, *next_idx, &setn) != 0)
 			goto err2;
 
 	}
+	ds_dbf.free_result(ds_db_handle, res);
 
 	if(reindex_dests(*next_idx, setn)!=0)
 	{
@@ -537,7 +610,8 @@ int ds_load_db(void)
 	/*update data*/
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
-	ds_dbf.free_result(ds_db_handle, res);
+
+	ds_print_sets();
 
 	return 0;
 

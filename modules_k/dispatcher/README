@@ -42,20 +42,21 @@ Carsten Bock
               1.3.4. setid_col (string)
               1.3.5. destination_col (string)
               1.3.6. flags_col (string)
-              1.3.7. force_dst (int)
-              1.3.8. flags (int)
-              1.3.9. use_default (int)
-              1.3.10. dst_avp (str)
-              1.3.11. grp_avp (str)
-              1.3.12. cnt_avp (str)
-              1.3.13. hash_pvar (str)
-              1.3.14. setid_pvar (str)
-              1.3.15. ds_ping_method (string)
-              1.3.16. ds_ping_from (string)
-              1.3.17. ds_ping_interval (int)
-              1.3.18. ds_probing_threshhold (int)
-              1.3.19. ds_probing_mode (int)
-              1.3.20. ds_append_branch (int)
+              1.3.7. priority_col (string)
+              1.3.8. force_dst (int)
+              1.3.9. flags (int)
+              1.3.10. use_default (int)
+              1.3.11. dst_avp (str)
+              1.3.12. grp_avp (str)
+              1.3.13. cnt_avp (str)
+              1.3.14. hash_pvar (str)
+              1.3.15. setid_pvar (str)
+              1.3.16. ds_ping_method (string)
+              1.3.17. ds_ping_from (string)
+              1.3.18. ds_ping_interval (int)
+              1.3.19. ds_probing_threshhold (int)
+              1.3.20. ds_probing_mode (int)
+              1.3.21. ds_append_branch (int)
 
         1.4. Exported Functions
 
@@ -89,24 +90,25 @@ Carsten Bock
    1.4. Set "setid_col" parameter
    1.5. Set "destination_col" parameter
    1.6. Set "flags_col" parameter
-   1.7. Set the "force_dst" parameter
-   1.8. Set the "flags" parameter
-   1.9. Set the "use_default" parameter
-   1.10. Set the "dst_avp" parameter
-   1.11. Set the "grp_avp" parameter
-   1.12. Set the "cnt_avp" parameter
-   1.13. Use $avp(i:273) for hashing:
-   1.14. Use combination of PVs for hashing:
-   1.15. Set the "setid_pvar" parameter
-   1.16. Set the "ds_ping_method" parameter
-   1.17. Set the "ds_ping_from" parameter
-   1.18. Set the "ds_ping_interval" parameter
-   1.19. Set the "ds_probing_threshhold" parameter
-   1.20. Set the "ds_probing_mode" parameter
-   1.21. Set the "ds_append_branch" parameter
-   1.22. ds_select_dst usage
-   1.23. dispatcher list file
-   1.24. Kamailio config script - sample dispatcher usage
+   1.7. Set "priority_col" parameter
+   1.8. Set the "force_dst" parameter
+   1.9. Set the "flags" parameter
+   1.10. Set the "use_default" parameter
+   1.11. Set the "dst_avp" parameter
+   1.12. Set the "grp_avp" parameter
+   1.13. Set the "cnt_avp" parameter
+   1.14. Use $avp(i:273) for hashing:
+   1.15. Use combination of PVs for hashing:
+   1.16. Set the "setid_pvar" parameter
+   1.17. Set the "ds_ping_method" parameter
+   1.18. Set the "ds_ping_from" parameter
+   1.19. Set the "ds_ping_interval" parameter
+   1.20. Set the "ds_probing_threshhold" parameter
+   1.21. Set the "ds_probing_mode" parameter
+   1.22. Set the "ds_append_branch" parameter
+   1.23. ds_select_dst usage
+   1.24. dispatcher list file
+   1.25. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -208,19 +210,31 @@ modparam("dispatcher", "destination_col", "uri")
 modparam("dispatcher", "flags_col", "dstflags")
 ...
 
-1.3.7. force_dst (int)
+1.3.7. priority_col (string)
+
+   The column's name in the database storing the priority for
+   destination uri.
+
+   Default value is "priority".
+
+   Example 1.7. Set "priority_col" parameter
+...
+modparam("dispatcher", "priority_col", "dstpriority")
+...
+
+1.3.8. force_dst (int)
 
    If set to 1, force overwriting of destination address when that
    is already set.
 
    Default value is "0".
 
-   Example 1.7. Set the "force_dst" parameter
+   Example 1.8. Set the "force_dst" parameter
 ...
 modparam("dispatcher", "force_dst", 1)
 ...
 
-1.3.8. flags (int)
+1.3.9. flags (int)
 
    Various flags that affect dispatcher's behaviour. The flags are
    defined as a bitmask on an integer value. If flag 1 is set only
@@ -236,12 +250,12 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "0".
 
-   Example 1.8. Set the "flags" parameter
+   Example 1.9. Set the "flags" parameter
  ...
  modparam("dispatcher", "flags", 3)
  ...
 
-1.3.9. use_default (int)
+1.3.10. use_default (int)
 
    If the parameter is set to 1, the last address in destination
    set is used as last option to send the message. For example, it
@@ -250,12 +264,12 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "0".
 
-   Example 1.9. Set the "use_default" parameter
+   Example 1.10. Set the "use_default" parameter
  ...
  modparam("dispatcher", "use_default", 1)
  ...
 
-1.3.10. dst_avp (str)
+1.3.11. dst_avp (str)
 
    The name of the avp which will hold the list with addresses, in
    the order they have been selected by the chosen algorithm. If
@@ -272,12 +286,12 @@ Note
 
    Default value is "null" - don't add AVPs.
 
-   Example 1.10. Set the "dst_avp" parameter
+   Example 1.11. Set the "dst_avp" parameter
  ...
  modparam("dispatcher", "dst_avp", "$avp(i:271)")
  ...
 
-1.3.11. grp_avp (str)
+1.3.12. grp_avp (str)
 
    The name of the avp storing the group id of the destination
    set. Good to have it for later usage or checks.
@@ -289,12 +303,12 @@ Note
 
    Default value is "null" - don't add AVP.
 
-   Example 1.11. Set the "grp_avp" parameter
+   Example 1.12. Set the "grp_avp" parameter
  ...
  modparam("dispatcher", "grp_avp", "$avp(i:272)")
  ...
 
-1.3.12. cnt_avp (str)
+1.3.13. cnt_avp (str)
 
    The name of the avp storing the number of destination addresses
    kept in dst_avp avps.
@@ -306,12 +320,12 @@ Note
 
    Default value is "null" - don't add AVP.
 
-   Example 1.12. Set the "cnt_avp" parameter
+   Example 1.13. Set the "cnt_avp" parameter
  ...
  modparam("dispatcher", "cnt_avp", "$avp(i:273)")
  ...
 
-1.3.13. hash_pvar (str)
+1.3.14. hash_pvar (str)
 
    String with PVs used for the hashing algorithm 7.
 
@@ -322,29 +336,29 @@ Note
 
    Default value is "null" - disabled.
 
-   Example 1.13. Use $avp(i:273) for hashing:
+   Example 1.14. Use $avp(i:273) for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "$avp(i:273)")
  ...
 
-   Example 1.14. Use combination of PVs for hashing:
+   Example 1.15. Use combination of PVs for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
 
-1.3.14. setid_pvar (str)
+1.3.15. setid_pvar (str)
 
    The name of the PV where to store the set ID (group ID) when
    calling ds_is_from_list() with no parameter.
 
    Default value is "null" - don't set PV.
 
-   Example 1.15. Set the "setid_pvar" parameter
+   Example 1.16. Set the "setid_pvar" parameter
  ...
  modparam("dispatcher", "setid_pvar", "$var(setid)")
  ...
 
-1.3.15. ds_ping_method (string)
+1.3.16. ds_ping_method (string)
 
    With this Method you can define, with which method you want to
    probe the failed gateways. This method is only available, if
@@ -352,12 +366,12 @@ Note
 
    Default value is "OPTIONS".
 
-   Example 1.16. Set the "ds_ping_method" parameter
+   Example 1.17. Set the "ds_ping_method" parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
 
-1.3.16. ds_ping_from (string)
+1.3.17. ds_ping_from (string)
 
    With this Method you can define the "From:"-Line for the
    request, sent to the failed gateways. This method is only
@@ -366,12 +380,12 @@ Note
 
    Default value is "sip:dispatcher@localhost".
 
-   Example 1.17. Set the "ds_ping_from" parameter
+   Example 1.18. Set the "ds_ping_from" parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
 
-1.3.17. ds_ping_interval (int)
+1.3.18. ds_ping_interval (int)
 
    With this Method you can define the interval for sending a
    request to a failed gateway. This parameter is only used, when
@@ -380,12 +394,12 @@ Note
 
    Default value is "10".
 
-   Example 1.18. Set the "ds_ping_interval" parameter
+   Example 1.19. Set the "ds_ping_interval" parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-1.3.18. ds_probing_threshhold (int)
+1.3.19. ds_probing_threshhold (int)
 
    If you want to set a gateway into probing mode, you will need a
    specific number of requests until it will change from "active"
@@ -394,12 +408,12 @@ Note
 
    Default value is "3".
 
-   Example 1.19. Set the "ds_probing_threshhold" parameter
+   Example 1.20. Set the "ds_probing_threshhold" parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
 
-1.3.19. ds_probing_mode (int)
+1.3.20. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable.
    If set to 0, only the gateways with state PROBING are tested,
@@ -409,12 +423,12 @@ Note
 
    Default value is "0".
 
-   Example 1.20. Set the "ds_probing_mode" parameter
+   Example 1.21. Set the "ds_probing_mode" parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-1.3.20. ds_append_branch (int)
+1.3.21. ds_append_branch (int)
 
    If set to 1, functions will automaticall append a new branch if
    called in FAILURE_ROUTE. If set to 0, script writer has to call
@@ -422,7 +436,7 @@ Note
 
    Default value is "1".
 
-   Example 1.21. Set the "ds_append_branch" parameter
+   Example 1.22. Set the "ds_append_branch" parameter
  ...
  modparam("dispatcher", "ds_append_branch", 0)
  ...
@@ -459,7 +473,7 @@ Note
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.22. ds_select_dst usage
+   Example 1.23. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -598,7 +612,7 @@ ds_select_dst("1", "0");
    address must be a valid SIP URI. Empty lines or lines starting
    with "#" are ignored.
 
-   Example 1.23. dispatcher list file
+   Example 1.24. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -622,7 +636,7 @@ ds_select_dst("1", "0");
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1.24. Kamailio config script - sample dispatcher usage
+   Example 1.25. Kamailio config script - sample dispatcher usage
 ...
 # $Id$
 # sample config file for dispatcher module

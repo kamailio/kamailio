@@ -58,6 +58,7 @@ extern str ds_table_name;
 extern str ds_set_id_col;
 extern str ds_dest_uri_col;
 extern str ds_dest_flags_col;
+extern str ds_dest_priority_col;
 
 extern int ds_flags; 
 extern int ds_use_default;

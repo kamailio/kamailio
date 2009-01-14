@@ -176,6 +176,27 @@ modparam("dispatcher", "flags_col", "dstflags")
 	</section>
 
 	<section>
+		<title><varname>priority_col</varname> (string)</title>
+		<para>
+			The column's name in the database storing the priority for
+			destination uri.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>priority</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <quote>priority_col</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "priority_col", "dstpriority")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>force_dst</varname> (int)</title>
 		<para>
 		If set to 1, force overwriting of destination address when that is
