@@ -10,7 +10,7 @@ cpl:1
 dbaliases:1
 dialog:2
 dialplan:1
-dispatcher:2
+dispatcher:3
 domain:1
 domain_name:1
 domainpolicy:2
