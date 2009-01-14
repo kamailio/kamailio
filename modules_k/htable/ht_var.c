@@ -93,14 +93,14 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	if(val->flags&PV_TYPE_INT)
 	{
 		isval.n = val->ri;
-		if(ht_set_cell(hpv->ht, &htname, 0, &isval)!=0)
+		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1)!=0)
 		{
 			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
 	} else {
 		isval.s = val->rs;
-		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval)!=0)
+		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1)!=0)
 		{
 			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
 			return -1;

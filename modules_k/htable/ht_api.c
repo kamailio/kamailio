@@ -188,6 +188,7 @@ int ht_shm_init(void)
 			shm_free(ht);
 			return -1;
 		}
+		memset(ht->entries, 0, ht->htsize*sizeof(ht_entry_t));
 
 		for(i=0; i<ht->htsize; i++)
 		{
@@ -252,7 +253,7 @@ int ht_destroy(void)
 }
 
 
-int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
+int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -270,7 +271,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 	if(ht->htexpire>0)
 		now = time(NULL);
 	prev = NULL;
-	lock_get(&ht->entries[idx].lock);
+	if(mode) lock_get(&ht->entries[idx].lock);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 	{
@@ -300,7 +301,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 						if(cell == NULL)
 						{
 							LM_ERR("cannot create new cell\n");
-							lock_release(&ht->entries[idx].lock);
+							if(mode) lock_release(&ht->entries[idx].lock);
 							return -1;
 						}
 						cell->next = it->next;
@@ -319,7 +320,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 					it->value.n = val->n;
 					it->expire = now + ht->htexpire;
 				}
-				lock_release(&ht->entries[idx].lock);
+				if(mode) lock_release(&ht->entries[idx].lock);
 				return 0;
 			} else {
 				if(type&AVP_VAL_STR)
@@ -329,7 +330,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 					if(cell == NULL)
 					{
 						LM_ERR("cannot create new cell.\n");
-						lock_release(&ht->entries[idx].lock);
+						if(mode) lock_release(&ht->entries[idx].lock);
 						return -1;
 					}
 					cell->expire = now + ht->htexpire;
@@ -346,7 +347,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 					it->value.n = val->n;
 					it->expire = now + ht->htexpire;
 				}
-				lock_release(&ht->entries[idx].lock);
+				if(mode) lock_release(&ht->entries[idx].lock);
 				return 0;
 			}
 		}
@@ -358,7 +359,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 	if(cell == NULL)
 	{
 		LM_ERR("cannot create new cell.\n");
-		lock_release(&ht->entries[idx].lock);
+		if(mode) lock_release(&ht->entries[idx].lock);
 		return -1;
 	}
 	cell->expire = now + ht->htexpire;
@@ -378,7 +379,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val)
 		prev->next = cell;
 	}
 	ht->entries[idx].esize++;
-	lock_release(&ht->entries[idx].lock);
+	if(mode) lock_release(&ht->entries[idx].lock);
 	return 0;
 }
 
@@ -639,7 +640,7 @@ int ht_db_load_tables(void)
 			LM_DBG("loading db table [%.*s] in ht [%.*s]\n",
 					ht->dbtable.len, ht->dbtable.s,
 					ht->name.len, ht->name.s);
-			if(ht_db_load_table(ht, &ht->dbtable)!=0)
+			if(ht_db_load_table(ht, &ht->dbtable, 0)!=0)
 				return -1;
 		}
 		ht = ht->next;

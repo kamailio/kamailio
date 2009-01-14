@@ -104,7 +104,7 @@ int ht_db_close_con(void)
 #define HT_NAME_BUF_SIZE	256
 static char ht_name_buf[HT_NAME_BUF_SIZE];
 
-int ht_db_load_table(ht_t *ht, str *dbtable)
+int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 {
 	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
 		&ht_db_vtype_column, &ht_db_value_column};
@@ -194,7 +194,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable)
 				hname.len = strlen(ht_name_buf);
 				val.n = n+1;
 
-				if(ht_set_cell(ht, &hname, 0, &val))
+				if(ht_set_cell(ht, &hname, 0, &val, mode))
 				{
 					LM_ERR("error adding array size to hash table.\n");
 					goto error;
@@ -219,7 +219,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable)
 						hname.len = strlen(ht_name_buf);
 						val.n = n+1;
 
-						if(ht_set_cell(ht, &hname, 0, &val))
+						if(ht_set_cell(ht, &hname, 0, &val, mode))
 						{
 							LM_ERR("error adding array size to hash table\n");
 							goto error;
@@ -249,7 +249,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable)
 			else
 				val.s = kvalue;
 				
-			if(ht_set_cell(ht, &hname, (vtype)?0:AVP_VAL_STR, &val))
+			if(ht_set_cell(ht, &hname, (vtype)?0:AVP_VAL_STR, &val, mode))
 			{
 				LM_ERR("error adding to hash table\n");
 				goto error;
@@ -273,7 +273,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable)
 		hname.s = ht_name_buf;
 		hname.len = strlen(ht_name_buf);
 		val.n = n+1;
-		if(ht_set_cell(ht, &hname, 0, &val))
+		if(ht_set_cell(ht, &hname, 0, &val, mode))
 		{
 			LM_ERR("error adding array size to hash table.\n");
 			goto error;
@@ -281,7 +281,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable)
 	}
 
 	ht_dbf.free_result(ht_db_con, db_res);
-	LM_DBG("============= loaded %d values in hash table\n", cnt);
+	LM_DBG("loaded %d values in hash table\n", cnt);
 
 	return 0;
 error:

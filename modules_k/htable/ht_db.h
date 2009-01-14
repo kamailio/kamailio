@@ -37,6 +37,6 @@ int ht_db_init_params(void);
 int ht_db_init_con(void);
 int ht_db_open_con(void);
 int ht_db_close_con(void);
-int ht_db_load_table(ht_t *ht, str *dbtable);
+int ht_db_load_table(ht_t *ht, str *dbtable, int mode);
 
 #endif

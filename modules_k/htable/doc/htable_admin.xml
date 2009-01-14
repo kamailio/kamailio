@@ -491,5 +491,30 @@ sht_rm_value_re(ha=>.*);
 		Exported pseudo-variables are documented at &kamwikilink;.
 		</para>
 	</section>
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sht_reload</function>
+		</title>
+		<para>
+		Reload a hash table from database.
+		</para>
+		<para>
+		Name: <emphasis>sht_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>_hash_table_name_</emphasis> - the name
+		of hash table to reload.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:ds_list:_reply_fifo_file_
+		_hah_table_name_
+		_empty_line_
+		</programlisting>
+    </section>
+    </section>
+
 </chapter>
 

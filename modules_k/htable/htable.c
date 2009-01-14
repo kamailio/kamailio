@@ -31,6 +31,7 @@
 #include "../../sr_module.h"
 #include "../../timer.h"
 #include "../../dprint.h"
+#include "../../mi/mi.h"
 
 #include "../../pvar.h"
 #include "ht_api.h"
@@ -54,6 +55,8 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
+static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param);
+
 static pv_export_t mod_pvs[] = {
 	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
 		pv_parse_ht_name, 0, 0, 0 },
@@ -62,6 +65,12 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_ht_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
+
+static mi_export_t mi_cmds[] = {
+	{ "sht_reload",     ht_mi_reload,  0,  0,  0},
+	{ 0, 0, 0, 0, 0}
+};
+
 
 static cmd_export_t cmds[]={
 	{"sht_print",  (cmd_function)ht_print,  0, 0, 0, 
@@ -98,7 +107,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
+	mi_cmds,    /* exported MI functions */
 	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -260,5 +269,74 @@ int ht_param(modparam_t type, void *val)
 error:
 	return -1;
 
+}
+
+#define MI_ERR_RELOAD 			"ERROR Reloading data"
+#define MI_ERR_RELOAD_LEN 		(sizeof(MI_ERR_RELOAD)-1)
+static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
+{
+	struct mi_node* node;
+	str htname;
+	ht_t *ht;
+	ht_t nht;
+	ht_cell_t *first;
+	ht_cell_t *it;
+	int i;
+
+	if(ht_db_url.len<=0)
+		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	
+	if(ht_db_init_con()!=0)
+		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	if(ht_db_open_con()!=0)
+		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+
+	node = cmd_tree->node.kids;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	htname = node->value;
+	if(htname.len<=0 || htname.s==NULL)
+	{
+		LM_ERR("bad hash table name\n");
+		return init_mi_tree( 500, "bad hash table name", 19);
+	}
+	ht = ht_get_table(&htname);
+	if(ht==NULL || ht->dbtable.len<=0)
+	{
+		LM_ERR("bad hash table name\n");
+		return init_mi_tree( 500, "no such hash table", 18);
+	}
+	memcpy(&nht, ht, sizeof(ht_t));
+	nht.entries = (ht_entry_t*)shm_malloc(nht.htsize*sizeof(ht_entry_t));
+	if(nht.entries == NULL)
+		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	memset(nht.entries, 0, nht.htsize*sizeof(ht_entry_t));
+
+	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
+		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+
+	/* replace old entries */
+	for(i=0; i<nht.htsize; i++)
+	{
+		lock_get(&ht->entries[i].lock);
+		first = ht->entries[i].first;
+		ht->entries[i].first = nht.entries[i].first;
+		ht->entries[i].esize = nht.entries[i].esize;
+		lock_release(&ht->entries[i].lock);
+		nht.entries[i].first = first;
+	}
+	/* free old entries */
+	for(i=0; i<nht.htsize; i++)
+	{
+		first = nht.entries[i].first;
+		while(first)
+		{
+			it = first;
+			first = first->next;
+			ht_cell_free(it);
+		}
+	}
+	ht_db_close_con();
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 

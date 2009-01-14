@@ -68,12 +68,13 @@ typedef struct _ht_pv {
 int ht_pkg_init(str *name, int autoexp, str *dbtable, int size);
 int ht_shm_init(void);
 int ht_destroy(void);
-int ht_set_cell(ht_t *ht, str *name, int type, int_str *val);
+int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
 int ht_del_cell(ht_t *ht, str *name);
 
 int ht_dbg(void);
 ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old);
 int ht_cell_pkg_free(ht_cell_t *cell);
+int ht_cell_free(ht_cell_t *cell);
 
 int ht_table_spec(char *spec);
 ht_t* ht_get_table(str *name);

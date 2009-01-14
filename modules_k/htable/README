@@ -45,6 +45,9 @@ Elena-Ramona Modroiu
               1.4.3. sht_rm_value_re(htable=>regexp)
 
         1.5. Exported pseudo-variables
+        1.6. Exported MI Functions
+
+              1.6.1. sht_reload
 
    List of Examples
 
@@ -345,3 +348,19 @@ sht_rm_value_re(ha=>.*);
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/dokuwiki/.
+
+1.6. Exported MI Functions
+
+1.6.1.  sht_reload
+
+   Reload a hash table from database.
+
+   Name: sht_reload
+
+   Parameters: _hash_table_name_ - the name of hash table to
+   reload.
+
+   MI FIFO Command Format:
+                :ds_list:_reply_fifo_file_
+                _hah_table_name_
+                _empty_line_
