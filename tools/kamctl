@@ -1150,17 +1150,17 @@ $LCR_GW_FLAGS_COLUMN, $LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN FROM $GW_TABLE 
 					STRIP=0
 				fi
 				if [ $# -gt 9 ] ; then
-					GW_WEIGHT=$10
+					GW_WEIGHT=${10}
 				else
 					GW_WEIGHT=1
 				fi
 				if [ $# -gt 10 ] ; then
-					GW_HOSTNAME=$10
+					GW_HOSTNAME=${10}
 				else
 					GW_WEIGHT=""
 				fi
 				if [ $# -gt 11 ] ; then
-					GW_PING=$11
+					GW_PING=${11}
 				else
 					GW_PING=0
 				fi
