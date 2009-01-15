@@ -16,7 +16,7 @@
 	<title>How it works</title>
 	<para>
 	At startup, the module will load a set of transformation rules from a 
-	database. Every database raw will be stored in memory as a translation 
+	database. Every database row will be stored in memory as a translation 
 	rule. Each rule will describe how the matching should be made, how the 
 	input value should be modified and which attributes should be set for 
 	the matching transformation.
@@ -158,7 +158,8 @@ modparam("dialplan", "dpid_col", "column_name")
 	<section>
 		<title><varname>pr_col</varname> (string)</title>
 		<para>
-		The column name to store the priority of the corresponding rule from the 		database raw.
+		The column name to store the priority of the corresponding rule from the database
+		row.
 		</para>
 		<para>
 		<emphasis>
