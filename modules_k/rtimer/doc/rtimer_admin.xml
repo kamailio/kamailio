@@ -1,0 +1,152 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module executes route blocks on a timer base. It can create new
+		timer processes and execute many route blocks on same timer.
+	</para>
+	<para>
+		A static faked SIP message is given as parameter to called functions,
+		so all functions available for REQUEST_ROUTE can be used.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>timer</varname> (str)</title>
+		<para>
+		The definition of a timer. The value of the parameter must have the
+		following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"name=_string_;mode=_number_;interval=_number_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more timers in
+			same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>name</emphasis> - name of the timer.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>mode</emphasis> - if set to 1, will create a new timer
+			process.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>interval</emphasis> - timer interval in seconds.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>exec</varname> (str)</title>
+		<para>
+		Specify route to be executed on timer. The value of the parameter
+		must have the following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"timer=_string_;route=_number_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more routes
+			executed on same timer.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>timer</emphasis> - name of the timer.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		<emphasis>route</emphasis> - the index of the route to be executed.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>exec</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+modparam("rtimer", "exec", "timer=ta;route=8")
+
+route[8] {
+    xlog("timer routine: time is %TF\n");
+    # delete from my sql cache table entries older than 2H
+    sql_query("delete from kamailio_cache where last_updated&lt;$TS-3600");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+</chapter>
+
