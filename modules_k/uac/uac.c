@@ -47,6 +47,7 @@
 
 #include "from.h"
 #include "auth.h"
+#include "uac_send.h"
 
 
 MODULE_VERSION
@@ -78,6 +79,13 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 
+static pv_export_t mod_pvs[] = {
+	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
+		pv_parse_uac_req_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+
 /* Exported functions */
 static cmd_export_t cmds[]={
 	{"uac_replace_from",  (cmd_function)w_replace_from2,  2, fixup_replace_from2, 0,
@@ -88,6 +96,10 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE },
 	{"uac_auth",          (cmd_function)w_uac_auth,       0,                  0, 0,
 			FAILURE_ROUTE },
+	{"uac_req_send",  (cmd_function)uac_req_send,         0,                  0, 0, 
+		REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+
 	{0,0,0,0,0,0}
 };
 
@@ -114,7 +126,7 @@ struct module_exports exports= {
 	params,     /* param exports */
 	0,          /* exported statistics */
 	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
+	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
 	0,
@@ -207,6 +219,8 @@ static int mod_init(void)
 	}
 
 	init_from_replacer();
+
+	uac_req_init();
 
 	return 0;
 error:

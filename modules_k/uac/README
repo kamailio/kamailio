@@ -4,6 +4,10 @@ Ramona-Elena Modroiu
 
    <ramona@rosdev.ro>
 
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
 Edited by
 
 Ramona-Elena Modroiu
@@ -11,9 +15,8 @@ Ramona-Elena Modroiu
    <ramona@rosdev.ro>
 
    Copyright © 2005 Voice Sistem
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+
+   Copyright © 2009 Asipto.com
      __________________________________________________________
 
    Table of Contents
@@ -42,6 +45,9 @@ Ramona-Elena Modroiu
               1.4.2. uac_replace_from(uri)
               1.4.3. uac_restore_from()
               1.4.4. uac_auth()
+              1.4.5. uac_send_req()
+
+        1.5. Exported pseudo-variables
 
    List of Examples
 
@@ -56,6 +62,7 @@ Ramona-Elena Modroiu
    1.9. uac_replace_from usage
    1.10. uac_restore_from usage
    1.11. uac_auth usage
+   1.12. uac_send_request usage
 
 Chapter 1. Admin Guide
 
@@ -63,7 +70,8 @@ Chapter 1. Admin Guide
 
    UAC (User Agent Client) module provides some basic UAC
    functionalities like FROM header manipulation (anonymization)
-   or client authentication.
+   or client authentication. From version 1.5.0 it has function to
+   send SIP message from configuration file.
 
    Known limitations in this version:
      * authentication does not support qop auth-int, just qop
@@ -248,3 +256,27 @@ uac_restore_from();
 ...
 uac_auth();
 ...
+
+1.4.5.  uac_send_req()
+
+   This function sends a SIP message from the configuration file.
+   The message is built out of $uac_req(...) pseudo-variable.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
+
+   Example 1.12. uac_send_request usage
+...
+$uac_req(method)="OPTIONS";
+$uac_req(ruri)="sip:kamailio.org";
+$uac_req(furi)="sip:kamailio.org";
+$uac_req(turi)="sip:kamailio.org";
+uac_send_req();
+...
+
+1.5. Exported pseudo-variables
+
+     * $uac_req(key)
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.

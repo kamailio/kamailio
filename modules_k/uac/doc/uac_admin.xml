@@ -10,7 +10,8 @@
 		<para>
 		UAC (User Agent Client) module provides some basic UAC
 		functionalities like FROM header manipulation (anonymization)
-		or client authentication.
+		or client authentication. From version 1.5.0 it has function to
+		send SIP message from configuration file.
 		</para>
 		<para>
 		Known limitations in this version:
@@ -339,7 +340,42 @@ uac_auth();
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_send_req()</function>
+			</title>
+			<para>
+			This function sends a SIP message from the configuration file.
+			The message is built out of $uac_req(...) pseudo-variable.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_send_request</function> usage</title>
+				<programlisting format="linespecific">
+...
+$uac_req(method)="OPTIONS";
+$uac_req(ruri)="sip:kamailio.org";
+$uac_req(furi)="sip:kamailio.org";
+$uac_req(turi)="sip:kamailio.org";
+uac_send_req();
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
-
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$uac_req(key)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
 </chapter>
 

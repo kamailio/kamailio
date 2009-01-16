@@ -22,6 +22,11 @@
 			<surname>Modroiu</surname>
 				<email>ramona@rosdev.ro</email>
 		</author>
+		<author>
+			<firstname>Daniel-Constantin</firstname>
+			<surname>Mierla</surname>
+				<email>miconda@gmail.com</email>
+		</author>
 		<editor>
 			<firstname>Ramona-Elena</firstname>
 			<surname>Modroiu</surname>
@@ -32,12 +37,10 @@
 		<year>2005</year>
 		<holder>Voice Sistem</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-			<revnumber>$Revision$</revnumber>
-			<date>$Date$</date>
-		</revision>
-	</revhistory>
+	<copyright>
+		<year>2009</year>
+		<holder>Asipto.com</holder>
+	</copyright>
 	</bookinfo>
 	<toc></toc>
 
