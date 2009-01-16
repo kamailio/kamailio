@@ -112,6 +112,7 @@
 #include "../../route.h"
 #include "../../cfg/cfg.h"
 #include "../../globals.h"
+#include "../../timer_ticks.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -229,6 +230,7 @@ static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
 static int t_any_replied(struct sip_msg* msg, char*, char*);
 static int t_is_canceled(struct sip_msg* msg, char*, char*);
+static int t_is_expired(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
@@ -359,6 +361,8 @@ static cmd_export_t cmds[]={
 	{"t_any_replied",     t_any_replied,            0, 0, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_canceled",     t_is_canceled,            0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_is_expired",      t_is_expired,             0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -1551,6 +1555,25 @@ int t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
 		ret=-1;
 	}else{
 		ret=(t->flags & T_CANCELED)?1:-1;
+	}
+	return ret;
+}
+
+/* script function, returns: 1 if the transaction lifetime interval has already elapsed, -1 if not */
+int t_is_expired(struct sip_msg* msg, char* foo, char* bar)
+{
+	struct cell *t;
+	int ret;
+	
+	
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_is_expired: cannot check a message "
+			"for which no T-state has been established\n");
+		ret=-1;
+	}else{
+		ret=(TICKS_GT(t->end_of_life, get_ticks_raw()))?-1:1;
 	}
 	return ret;
 }
