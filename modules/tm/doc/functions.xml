@@ -841,6 +841,29 @@ failure_route[0]{
 	</example>
 	</section>
 
+	<section id="t_is_expired">
+	<title>
+	    <function>t_is_expired()</function>
+	</title>
+	<para>
+		Returns true if the current transaction has already been expired,
+		i.e. the max_inv_lifetime/max_noninv_lifetime interval has already
+		elapsed.
+	</para>
+	<example>
+	    <title><function>t_is_expired</function> usage</title>
+	    <programlisting>
+...
+failure_route[0]{ 
+	if (t_is_expired()){
+		log("transaction expired\n");
+		# There is no point in adding a new branch.
+	}
+} 
+	    </programlisting>
+	</example>
+	</section>
+
     <section id="t_relay_cancel">
 	<title>
 	    <function>t_relay_cancel()</function>
