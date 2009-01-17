@@ -1094,6 +1094,10 @@ $LCR_GW_FLAGS_COLUMN, $LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN FROM $GW_TABLE 
 		reload)
 			$CTLCMD lcr_reload
 			;;
+		dump
+			$CTLCMD lcr_gw_dump
+			$CTLCMD lcr_lcr_dump
+			;;
 		addroute)
 			shift
 			if [ $# -ne 4 ] ; then

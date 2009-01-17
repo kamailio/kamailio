@@ -361,7 +361,8 @@ cat <<EOF
    *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls, 4=sctp *
    * Examples:  lcr addgw level3 1.2.3.4 5080 sip tcp 1                *
    *            lcr addroute +1 '' 1 1                                 *
- lcr show .......... show gateways and routes
+ lcr show .......... show gateways and routes tables
+ lcr dump .......... show in memory gateways and routes tables
  lcr reload ........ reload lcr gateways and routes
  lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname> <ping>
            ......... add a gateway with flags, tag, strip, weight, hostname, and ping
