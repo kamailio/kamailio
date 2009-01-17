@@ -363,9 +363,9 @@ cat <<EOF
    *            lcr addroute +1 '' 1 1                                 *
  lcr show .......... show gateways and routes
  lcr reload ........ reload lcr gateways and routes
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <ping> <hostname>
-           ......... add a gateway with flags, tag, strip, weight, ping, and hostname
-           ......... (flags, tag, strip, weight, ping, and hostname are optional)
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname> <ping>
+           ......... add a gateway with flags, tag, strip, weight, hostname, and ping
+           ......... (flags, tag, strip, weight, hostname, and ping are optional)
  lcr rmgw <gw_name> delete a gateway
  lcr addroute <prefix> <from> <grp_id> <prio>
            ......... add a route ( use '' to match anything in <from> )

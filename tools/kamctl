@@ -1157,7 +1157,7 @@ $LCR_GW_FLAGS_COLUMN, $LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN FROM $GW_TABLE 
 				if [ $# -gt 10 ] ; then
 					GW_HOSTNAME=${10}
 				else
-					GW_WEIGHT=""
+					GW_HOSTNAME=""
 				fi
 				if [ $# -gt 11 ] ; then
 					GW_PING=${11}
@@ -1174,8 +1174,8 @@ $LCR_GW_FLAGS_COLUMN, $LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN FROM $GW_TABLE 
 				GW_TAG=""
 				STRIP=0
 				GW_WEIGHT=1
-				GW_PING=0
 				GW_HOSTNAME=""
+				GW_PING=0
 			fi
 			GW_NAME=$1
 			GW_IP=$2
