@@ -1094,7 +1094,7 @@ $LCR_GW_FLAGS_COLUMN, $LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN FROM $GW_TABLE 
 		reload)
 			$CTLCMD lcr_reload
 			;;
-		dump
+		dump)
 			$CTLCMD lcr_gw_dump
 			$CTLCMD lcr_lcr_dump
 			;;
