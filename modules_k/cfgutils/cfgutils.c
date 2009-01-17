@@ -67,6 +67,8 @@
 #include "../../mod_fix.h"
 #include "../../md5utils.h"
 #include "../../globals.h"
+#include "../../hash_func.h"
+#include "../../locking.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -86,6 +88,8 @@ static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
 
+static int cfg_lock(struct sip_msg*, char *, char *);
+static int cfg_unlock(struct sip_msg*, char *, char *);
 
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
@@ -119,6 +123,8 @@ static char* hash_file = NULL;
 static int initial_gflags=0;
 static unsigned int *gflags=0;
 
+static gen_lock_set_t *_cfg_lock_set = NULL;
+static unsigned int _cfg_lock_size = 0;
 
 static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
@@ -149,14 +155,19 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"is_gflag",     (cmd_function)is_gflag,    1,   fixup_gflags, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"lock",         (cmd_function)cfg_lock,    1,   fixup_spve_null, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"unlock",       (cmd_function)cfg_unlock,  1,   fixup_spve_null, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
 
 static param_export_t params[]={ 
-	{"initial_probability", INT_PARAM, &initial_prob},
-	{"initial_gflags", INT_PARAM, &initial_gflags},
-	{"hash_file",           STR_PARAM, &hash_file        },
+	{"initial_probability", INT_PARAM, &initial_prob   },
+	{"initial_gflags",      INT_PARAM, &initial_gflags },
+	{"hash_file",           STR_PARAM, &hash_file      },
+	{"lock_set_size",       INT_PARAM, &_cfg_lock_size },
 	{0,0,0}
 };
 
@@ -589,6 +600,39 @@ static int dbg_shm_status(struct sip_msg* msg, char* foo, char* bar)
 	return 1;
 }
 
+int cfg_lock_helper(struct sip_msg *msg, gparam_p key, int mode)
+{
+	str s;
+	unsigned int pos;
+	if(fixup_get_svalue(msg, key, &s)!=0)
+	{
+		LM_ERR("cannot get first parameter\n");
+		return -1;
+	}
+	pos = core_case_hash(&s, 0, _cfg_lock_size);
+	LM_DBG("cfg_lock mode %d on %u\n", mode, pos);
+	if(mode==0)
+		lock_set_get(_cfg_lock_set, pos);
+	else
+		lock_set_release(_cfg_lock_set, pos);
+	return 1;
+}
+
+static int cfg_lock(struct sip_msg *msg, char *key, char *s2)
+{
+	if(_cfg_lock_set==NULL || key==NULL)
+		return -1;
+	return cfg_lock_helper(msg, (gparam_p)key, 0);
+}
+
+static int cfg_unlock(struct sip_msg *msg, char *key, char *s2)
+{
+	if(_cfg_lock_set==NULL || key==NULL)
+		return -1;
+	return cfg_lock_helper(msg, (gparam_p)key, 1);
+}
+
+
 static int mod_init(void)
 {
 	if (!hash_file) {
@@ -621,6 +665,16 @@ static int mod_init(void)
 		return -1;
 	}
 	*gflags=initial_gflags;
+	if(_cfg_lock_size>0 && _cfg_lock_size<=10)
+	{
+		_cfg_lock_size = 1<<_cfg_lock_size;
+		_cfg_lock_set = lock_set_alloc(_cfg_lock_size);
+		if(_cfg_lock_set==NULL || lock_set_init(_cfg_lock_set)==NULL)
+		{
+			LM_ERR("cannot initiate lock set\n");
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -631,4 +685,9 @@ static void mod_destroy(void)
 		shm_free(probability);
 	if (gflags)
 		shm_free(gflags);
+	if(_cfg_lock_set!=NULL)
+	{
+		lock_set_destroy(_cfg_lock_set);
+		lock_set_dealloc(_cfg_lock_set);
+	}
 }
