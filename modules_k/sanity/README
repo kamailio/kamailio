@@ -1,0 +1,196 @@
+Sanity Module
+
+Nils Ohlmeier
+
+   iptelorg GmbH
+   <nils@iptel.org>
+
+Edited by
+
+Nils Ohlmeier
+
+   <nils@iptel.org>
+
+   Copyright © 2006 iptelorg GmbH
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. default_checks (integer)
+              1.3.2. uri_checks (integer)
+              1.3.3. proxy_require (string)
+
+        1.4. Exported Functions
+
+              1.4.1. sanity_check([checks, [uri_checks]])
+
+   List of Examples
+
+   1.1. Set default_checks parameter
+   1.2. Set proxy_require parameter
+   1.3. sanity_check usage
+   1.4. sanity_check usage with parameter
+   1.5. sanity_check usage with two parameters
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module aims to implement several sanity checks on incoming
+   requests which are suggested or even required by a RFC.
+
+   This checks are not required by Kamailio itself for its
+   functionality. But on the other side it makes not much sence if
+   a broken request traverses through a SIP network if it is
+   rejected sooner or later by a SIP device any way. As every
+   sanity cost extra performance because of additional parsing and
+   evaluation it is now with this module up to the Kamailio
+   adminstrator which checks should be done on which request.
+
+   The following checks are available:
+     * ruri sip version - (1) - checks if the SIP version in the
+       request URI is supported, currently only 2.0.
+     * ruri scheme - (2) - checks if the URI scheme of the request
+       URI is supported (sip[s]|tel[s]) by Kamailio.
+     * required headers - (4) -checks if the minimum set of
+       required headers to, from, cseq, callid and via is present
+       in the request.
+     * via sip version - (8) - not working because parser fails
+       already when another version then 2.0 is present.
+     * via protocol - (16) - not working because parser fails
+       already if an unsupported transport is present.
+     * cseq method - (32) - checks if the method from the cseq
+       header is equal to the request method.
+     * cseq value - (64) - checks if the number in the cseq header
+       is a valid unsigend integer.
+     * content length - (128) - checks if the size of the body
+       matches with the value from the content length header.
+     * expires value - (256) - checks if the value of the expires
+       header is a valid unsigned integer.
+     * proxy require - (512) - checks if all items of the proxy
+       require header are present in the list of the extensions
+       from the module parameter proxy_require.
+     * parse uri's - (1024) - checks if the specified URIs are
+       present and parseable by the Kamailio parsers
+     * digest credentials (2048) Check all instances of digest
+       credentials in a message. The test checks whether there are
+       all required digest parameters and have meaningful values.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * sl - send reply.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.3. Exported Parameters
+
+1.3.1. default_checks (integer)
+
+   This parameter determines which of the checks from the sanity
+   module are executed if no parameter was given to the
+   sanity_check function call. By default all implemented checks
+   are included in the execution of the sanity_check function. The
+   integer value is the sum of the check numbers which should be
+   executed by default.
+
+   Default value is 999. This resolves to the following list of
+   checks: ruri_sip_version (1), ruri_scheme (2), required_headers
+   (4), cseq_method (32), cseq_value (64), cotent_length (128),
+   expires_value (256), proxy_require (512).
+
+   Example 1.1. Set default_checks parameter
+...
+modparam("sanity", "default_checks", "1")
+...
+
+1.3.2. uri_checks (integer)
+
+   This parameter determines which URIs are going to be checked if
+   the 'parse uri' will be executed.
+
+   Default value is 7. This resolves to the following list of
+   parsed URIs: Request RUI (1), From URI (2) and To URI (4).
+
+1.3.3. proxy_require (string)
+
+   This parameter set the list of supported extensions for this
+   Kamailio. The value is expected as comma seperated list of the
+   extensions. This list is seperated into single tokens. Each
+   token from a proxy require header will be compare to the tokens
+   from this list.
+
+   Example 1.2. Set proxy_require parameter
+...
+modparam("sanity", "proxy_require", "foo, bar")
+...
+
+1.4. Exported Functions
+
+1.4.1.  sanity_check([checks, [uri_checks]])
+
+   This function makes a row of sanity checks on the given
+   request. The function returns true if one of the checks failed.
+   If one of the checks fails the module sends a precise error
+   reply via sl_send_reply. Thus their is no need to reply with a
+   generic error message.
+
+   Example 1.3. sanity_check usage
+
+...
+if (sanity_check()) {
+        xlog("malformed message from $si:$sp\n");
+        exit;
+}
+...
+
+
+   Optionally the function takes an integer argument which
+   overwrites the global module parameter default_checks. This
+   allows to make certain test from script regions. The integer
+   value is again the sum of the checks (like for the module
+   parameter) which should be executed at this function call.
+
+   Example 1.4. sanity_check usage with parameter
+
+...
+if (method=="REGISTER" && sanity_check("256")) {
+        /* the register contains an invalid expires value and is replied
+ with a 400 */
+        xlog("malformed message from $si:$sp\n");
+        exit;
+}
+...
+
+
+   Optionally the function takes a second integer argument which
+   overwrites the global module parameter uri_checks and thus
+   determines which URIs will be checked if the parse uri test
+   will be executed.
+
+   Example 1.5. sanity_check usage with two parameters
+
+...
+if (method=="INVITE" && sanity_check("1024", "6")) {
+        /* the INVITE contains an invalid From or To header and is repli
+ed with a 400 */
+        xlog("malformed message from $si:$sp\n");
+        exit;
+}
+...
