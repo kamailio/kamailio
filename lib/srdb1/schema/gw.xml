@@ -31,14 +31,14 @@
         <name>gw_name</name>
         <type>string</type>
         <size>128</size>
-        <description>Gateway Name</description>
+        <description>Name of the gateway</description>
         <natural/>
     </column>
 
     <column id="grp_id">
         <name>grp_id</name>
         <type>unsigned int</type>
-        <description>Gateway ID</description>
+        <description>ID of gateway's group</description>
     </column>
 
     <column>
@@ -52,7 +52,8 @@
         <name>hostname</name>
         <type>string</type>
         <size>64</size>
-        <description>IP Address of the gateway</description>
+        <null/>
+        <description>Hostname of the gateway</description>
     </column>
 
     <column>
@@ -66,7 +67,7 @@
         <name>uri_scheme</name>
         <type>unsigned char</type>
         <null/>
-        <description>URI scheme of the gateway</description>
+        <description>URI scheme of gateway</description>
     </column>
 
     <column>
