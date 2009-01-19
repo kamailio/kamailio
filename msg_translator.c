@@ -1498,7 +1498,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	str branch;
 	unsigned int flags;
 	unsigned int udp_mtu;
-	struct socket_info* ss;
+	struct dest_info di;
 
 	via_insert_param=0;
 	uri_len=0;
@@ -1610,18 +1610,21 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	LOG(L_ERR, "DEBUG: new_len(%d)=len(%d)+lumps_len\n", new_len, len);
 #endif
 	udp_mtu=cfg_get(core, core_cfg, udp_mtu);
+	di.proto=PROTO_NONE;
 	if (unlikely((send_info->proto==PROTO_UDP) && udp_mtu && 
 					(flags & FL_MTU_FB_MASK) && (new_len>udp_mtu))){
-		ss=0;
+
+		di=*send_info; /* copy whole struct - will be used in the Via builder */
+		di.proto=PROTO_NONE; /* except the proto */
 #ifdef USE_TCP
 		if (!tcp_disable && (flags & FL_MTU_TCP_FB) &&
-				(ss=get_send_socket(msg, &send_info->to, PROTO_TCP))){
-			send_info->proto=PROTO_TCP;
+				(di.send_sock=get_send_socket(msg, &send_info->to, PROTO_TCP))){
+			di.proto=PROTO_TCP;
 		}
 	#ifdef USE_TLS
 		else if (!tls_disable && (flags & FL_MTU_TLS_FB) &&
-				(ss=get_send_socket(msg, &send_info->to, PROTO_TLS))){
-			send_info->proto=PROTO_TLS;
+				(di.send_sock=get_send_socket(msg, &send_info->to, PROTO_TLS))){
+			di.proto=PROTO_TLS;
 		}
 	#endif /* USE_TLS */
 #endif /* USE_TCP */
@@ -1630,16 +1633,15 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		else
 	#endif /* USE_TCP */
 		 if (!sctp_disable && (flags & FL_MTU_SCTP_FB) &&
-				(ss=get_send_socket(msg, &send_info->to, PROTO_SCTP))){
-			send_info->proto=PROTO_SCTP;
+				(di.send_sock=get_send_socket(msg, &send_info->to, PROTO_SCTP))){
+			di.proto=PROTO_SCTP;
 		 }
 #endif /* USE_SCTP */
 		
-		if (ss){
-			send_info->send_sock=ss;
+		if (di.proto!=PROTO_NONE){
 			new_len-=via_len;
 			pkg_free(line_buf);
-			line_buf = create_via_hf( &via_len, msg, send_info, &branch);
+			line_buf = create_via_hf( &via_len, msg, &di, &branch);
 			if (!line_buf){
 				LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: "
 							"memory allocation failure!\n");
@@ -1687,6 +1689,12 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
 	new_buf[new_len]=0;
+
+	/* update the send_info if udp_mtu affected */
+	if (di.proto!=PROTO_NONE) { 
+		send_info->proto=di.proto;
+		send_info->send_sock=di.send_sock;
+	}
 
 #ifdef DBG_MSG_QA
 	if (new_buf[new_len-1]==0) {
