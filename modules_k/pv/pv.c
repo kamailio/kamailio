@@ -47,6 +47,8 @@ static tr_export_t mod_trans[] = {
 		tr_parse_uri },
 	{ {"param", sizeof("param")-1}, /* param class */
 		tr_parse_paramlist },
+	{ {"tobody", sizeof("tobody")-1}, /* param class */
+		tr_parse_tobody },
 
 	{ { 0, 0 }, 0 }
 };

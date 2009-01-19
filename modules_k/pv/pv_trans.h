@@ -32,7 +32,8 @@
 
 
 
-enum _tr_type { TR_NONE=0, TR_STRING, TR_URI, TR_PARAMLIST, TR_NAMEADDR };
+enum _tr_type { TR_NONE=0, TR_STRING, TR_URI, TR_PARAMLIST, TR_NAMEADDR,
+				TR_TOBODY };
 enum _tr_s_subtype { 
 	TR_S_NONE=0, TR_S_LEN, TR_S_INT, TR_S_MD5, TR_S_SUBSTR,
 	TR_S_SELECT, TR_S_ENCODEHEXA, TR_S_DECODEHEXA,
@@ -51,10 +52,16 @@ enum _tr_param_subtype {
 enum _tr_nameaddr_subtype {
 	TR_NA_NONE=0, TR_NA_NAME, TR_NA_URI, TR_NA_LEN
 };
+enum _tr_tobody_subtype {
+	TR_TOBODY_NONE=0, TR_TOBODY_DISPLAY, TR_TOBODY_URI, TR_TOBODY_TAG,
+	TR_TOBODY_URI_USER, TR_TOBODY_URI_HOST
+};
+
 
 char* tr_parse_string(str *in, trans_t *tr);
 char* tr_parse_uri(str *in, trans_t *tr);
 char* tr_parse_paramlist(str *in, trans_t *tr);
 char* tr_parse_nameaddr(str *in, trans_t *tr);
+char* tr_parse_tobody(str* in, trans_t *t);
 
 #endif

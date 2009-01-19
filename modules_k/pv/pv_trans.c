@@ -40,6 +40,7 @@
 
 #include "../../parser/parse_param.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_to.h"
 #include "../../parser/parse_nameaddr.h"
 
 #include "../../strcommon.h"
@@ -899,6 +900,87 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	return 0;
 }
 
+static str _tr_tobody_str = {0, 0};
+static struct to_body _tr_tobody;
+
+/*!
+ * \brief Evaluate To-Body transformations
+ * \param msg SIP message
+ * \param tp transformation
+ * \param subtype transformation type
+ * \param val pseudo-variable
+ * \return 0 on success, -1 on error
+ */
+int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
+		pv_value_t *val)
+{
+	str sv;
+
+	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
+		return -1;
+
+	if(_tr_tobody_str.len==0 || _tr_tobody_str.len!=val->rs.len ||
+			strncmp(_tr_tobody_str.s, val->rs.s, val->rs.len)!=0)
+	{
+		if(_tr_tobody_str.len==0)
+			memset(&_tr_tobody, 0, sizeof(struct to_body));
+		if(val->rs.len>_tr_tobody_str.len)
+		{
+			if(_tr_tobody_str.s) pkg_free(_tr_tobody_str.s);
+				_tr_tobody_str.s =
+						(char*)pkg_malloc((val->rs.len+1)*sizeof(char));
+			if(_tr_tobody_str.s==NULL)
+			{
+				LM_ERR("no more private memory\n");
+				memset(&_tr_tobody_str, 0, sizeof(str));
+				memset(&_tr_tobody, 0, sizeof(struct to_body));
+				return -1;
+			}
+		}
+		_tr_tobody_str.len = val->rs.len;
+		memcpy(_tr_tobody_str.s, val->rs.s, val->rs.len);
+		_tr_tobody_str.s[_tr_tobody_str.len] = '\0';
+		
+		/* reset old values */
+		destroy_to(&_tr_tobody);
+		memset(&_tr_tobody, 0, sizeof(struct to_body));
+		
+		/* parse params */
+		sv = _tr_tobody_str;
+		if (parse_to(sv.s, sv.s + sv.len, &_tr_tobody)<0)
+			return -1;
+	}
+	
+	memset(val, 0, sizeof(pv_value_t));
+	val->flags = PV_VAL_STR;
+
+	switch(subtype)
+	{
+		case TR_TOBODY_URI:
+			val->rs = (_tr_tobody.uri.s)?_tr_tobody.uri:_tr_empty;
+			break;
+		case TR_TOBODY_TAG:
+			val->rs = (_tr_tobody.tag_value.s)?_tr_tobody.tag_value:_tr_empty;
+			break;
+		case TR_TOBODY_DISPLAY:
+			val->rs = (_tr_tobody.display.s)?_tr_tobody.display:_tr_empty;
+			break;
+		case TR_TOBODY_URI_USER:
+			val->rs = (_tr_tobody.parsed_uri.user.s)
+							?_tr_tobody.parsed_uri.user:_tr_empty;
+			break;
+		case TR_TOBODY_URI_HOST:
+			val->rs = (_tr_tobody.parsed_uri.host.s)
+							?_tr_tobody.parsed_uri.host:_tr_empty;
+			break;
+
+		default:
+			LM_ERR("unknown subtype %d\n", subtype);
+			return -1;
+	}
+	return 0;
+}
+
 
 #define _tr_parse_nparam(_p, _p0, _tp, _spec, _n, _sign, _in, _s) \
 	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
@@ -1446,6 +1528,64 @@ char* tr_parse_nameaddr(str* in, trans_t *t)
 		t->subtype = TR_NA_LEN;
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "name", 4)==0) {
+		t->subtype = TR_NA_NAME;
+		goto done;
+	}
+
+
+	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s,
+			name.len, name.s, name.len);
+error:
+	return NULL;
+done:
+	t->name = name;
+	return p;
+}
+
+/*!
+ * \brief Helper fuction to parse a name-address transformation
+ * \param in parsed string
+ * \param t transformation
+ * \return pointer to the end of the transformation in the string - '}', null on error
+ */
+char* tr_parse_tobody(str* in, trans_t *t)
+{
+	char *p;
+	str name;
+
+	if(in==NULL || t==NULL)
+		return NULL;
+
+	p = in->s;
+	name.s = in->s;
+	t->type = TR_TOBODY;
+	t->trf = tr_eval_tobody;
+
+	/* find next token */
+	while(is_in_str(p, in) && *p!=TR_PARAM_MARKER && *p!=TR_RBRACKET) p++;
+	if(*p=='\0')
+	{
+		LM_ERR("invalid transformation: %.*s\n",
+				in->len, in->s);
+		goto error;
+	}
+	name.len = p - name.s;
+	trim(&name);
+
+	if(name.len==3 && strncasecmp(name.s, "uri", 3)==0)
+	{
+		t->subtype = TR_TOBODY_URI;
+		goto done;
+	} else if(name.len==3 && strncasecmp(name.s, "tag", 3)==0) {
+		t->subtype = TR_TOBODY_TAG;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "user", 4)==0) {
+		t->subtype = TR_TOBODY_URI_USER;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "host", 4)==0) {
+		t->subtype = TR_TOBODY_URI_HOST;
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "display", 7)==0) {
 		t->subtype = TR_NA_NAME;
 		goto done;
 	}
