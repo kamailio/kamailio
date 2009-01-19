@@ -73,7 +73,7 @@ int pv_t_update_req(struct sip_msg *msg)
 		branch=-1;
 		if (t_check(msg, &branch ) == -1)
 			return 1;
-		   t = get_t();
+		t = get_t();
 		if ((t == 0) || (t == T_UNDEFINED))
 			return 1;
 
@@ -122,7 +122,7 @@ int pv_t_update_req(struct sip_msg *msg)
 
 int pv_t_update_rpl(struct sip_msg *msg)
 {
-		struct cell * t;
+	struct cell * t;
 	int branch;
 
 	if(msg==NULL)
