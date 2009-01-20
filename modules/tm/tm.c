@@ -250,7 +250,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_lookup_request",   w_t_check,               0, 0,
 			REQUEST_ROUTE},
-	{"t_lookup_cancel",    w_t_lookup_cancel,     0, 0,
+	{"t_lookup_cancel",    w_t_lookup_cancel,       0, 0,
+			REQUEST_ROUTE},
+	{"t_lookup_cancel",    w_t_lookup_cancel,       1, fixup_int_1,
 			REQUEST_ROUTE},
 	{T_REPLY,              w_t_reply,               2, fixup_t_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -893,17 +895,21 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *ret;
+	int i=0;
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		ret = t_lookupOriginalT( msg );
 		DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
 		if (ret != T_NULL_CELL) {
+			/* If the parameter is set to 1, overwrite the message flags of
+			 * the CANCEL with the flags of the INVITE */
+			if (str && (get_int_fparam(&i, msg, (fparam_t*)str)==0) && i)
+				msg->flags = ret->uas.request->flags;
+
 			/* The cell is reffed by t_lookupOriginalT, but T is not set.
 			So we must unref it before returning. */
 			UNREF(ret);
-			set_t(T_UNDEFINED);
 			return 1;
 		}
-		set_t(T_UNDEFINED);
 	} else {
 		LOG(L_WARN, "WARNING: script error t_lookup_cancel() called for non-CANCEL request\n");
 	}
