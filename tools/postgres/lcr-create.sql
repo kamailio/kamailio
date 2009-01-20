@@ -4,7 +4,7 @@ CREATE TABLE gw (
     gw_name VARCHAR(128) NOT NULL,
     grp_id INTEGER NOT NULL,
     ip_addr VARCHAR(15) NOT NULL,
-    hostname VARCHAR(64) NOT NULL,
+    hostname VARCHAR(64),
     port SMALLINT,
     uri_scheme SMALLINT,
     transport SMALLINT,
