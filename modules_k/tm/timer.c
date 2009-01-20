@@ -614,14 +614,14 @@ static void check_timer_list(enum lists list_id, char *txt )
 
 	if (list_id<0 || list_id>=NR_OF_TIMER_LISTS) {
 			LM_CRIT("------- list [%d] bug [%s]\n",list_id, txt);
-			abort(0);
+			abort();
 	}
 
 	tl = timer_list->last_tl.prev_tl;
 	while (tl!=&timer_list->first_tl) {
 		if (tl->prev_tl==0) {
 			LM_CRIT("------- list [%d] prev_tl==0 [%s]\n",list_id, txt);
-			abort(0);
+			abort();
 		}
 		tl = tl->prev_tl;
 	}
@@ -630,7 +630,7 @@ static void check_timer_list(enum lists list_id, char *txt )
 	while (tl!=&timer_list->last_tl) {
 		if (tl->next_tl==0) {
 			LM_CRIT("------- list [%d] next_tl==0 [%s]\n",list_id, txt);
-			abort(0);
+			abort();
 		}
 		tl = tl->next_tl;
 	}
@@ -639,12 +639,12 @@ static void check_timer_list(enum lists list_id, char *txt )
 	while (tl!=&timer_list->last_tl) {
 		if (tl->ld_tl==0) {
 			LM_CRIT("------- list [%d] currupted - ld=0 [%s]\n",list_id, txt);
-			abort(0);
+			abort();
 		}
 		if (tl->ld_tl->ld_tl!=tl) {
 			LM_CRIT("------- list [%d] currupted - ld cycle broken [%s]\n",
 				list_id, txt);
-			abort(0);
+			abort();
 		}
 
 		if (tl->ld_tl!=tl) {
@@ -653,7 +653,7 @@ static void check_timer_list(enum lists list_id, char *txt )
 				if (tl1->ld_tl) {
 					LM_CRIT("------- list [%d] currupted - ld!=0 inside "
 						"cycle [%s]\n", list_id, txt);
-					abort(0);
+					abort();
 				}
 				tl1 = tl1->next_tl;
 			}
