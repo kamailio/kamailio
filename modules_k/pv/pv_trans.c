@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2007 voice-system.ro
+ * Copyright (C) 2009 asipto.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -928,7 +929,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		{
 			if(_tr_tobody_str.s) pkg_free(_tr_tobody_str.s);
 				_tr_tobody_str.s =
-						(char*)pkg_malloc((val->rs.len+1)*sizeof(char));
+						(char*)pkg_malloc((val->rs.len+3)*sizeof(char));
 			if(_tr_tobody_str.s==NULL)
 			{
 				LM_ERR("no more private memory\n");
@@ -939,7 +940,9 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		}
 		_tr_tobody_str.len = val->rs.len;
 		memcpy(_tr_tobody_str.s, val->rs.s, val->rs.len);
-		_tr_tobody_str.s[_tr_tobody_str.len] = '\0';
+		_tr_tobody_str.s[_tr_tobody_str.len] = '\r';
+		_tr_tobody_str.s[_tr_tobody_str.len+1] = '\n';
+		_tr_tobody_str.s[_tr_tobody_str.len+2] = '\0';
 		
 		/* reset old values */
 		destroy_to(&_tr_tobody);
@@ -947,7 +950,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		
 		/* parse params */
 		sv = _tr_tobody_str;
-		if (parse_to(sv.s, sv.s + sv.len, &_tr_tobody)<0)
+		if (parse_to(sv.s, sv.s + sv.len + 2, &_tr_tobody)<0)
 			return -1;
 	}
 	
