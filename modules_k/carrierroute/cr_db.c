@@ -95,6 +95,11 @@ static int load_carrier_map(struct route_data_t *rd) {
 	}
 
 	count = RES_ROW_N(res);
+	if (count == 0) {
+		LM_ERR("empty %.*s table", carrier_name_table.len, carrier_name_table.s);
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
+		return 0;
+	}
 
 	rd->carrier_map = shm_malloc(sizeof(struct name_map_t) * count);
 	if (rd->carrier_map == NULL) {
@@ -146,6 +151,11 @@ static int load_domain_map(struct route_data_t *rd) {
 	}
 
 	count = RES_ROW_N(res);
+	if (count == 0) {
+		LM_ERR("empty %.*s table", domain_name_table.len, domain_name_table.s);
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
+		return 0;
+	}
 
 	rd->domain_map = shm_malloc(sizeof(struct name_map_t) * count);
 	if (rd->domain_map == NULL) {
