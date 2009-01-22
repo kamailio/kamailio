@@ -46,8 +46,8 @@ $MYSQL "insert into domain_name (id, domain) values ('2', 'domain2');"
 
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
 values ('1','1','10','49','0','0','0.5','0','127.0.0.1:7000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
-values ('2','1','10','49','0','0','0.5','0','127.0.0.1:8000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host, description)
+values ('2','1','10','49','0','0','0.5','0','127.0.0.1:8000', 'foobar');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
 values ('3','2','10','49','0','0','1','0','127.0.0.1:9000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
