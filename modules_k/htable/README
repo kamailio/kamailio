@@ -108,31 +108,38 @@ modparam("htable", "htable", "a=>size=4;")
 ...
 if(is_present_hf("Authorization"))
 {
-        if($sht(a=>$au::auth_count)==3)
+    if($sht(a=>$au::auth_count)==3)
+    {
+        if($sht(a=>$au::last_auth) > $Ts-900)
         {
-                if($sht(a=>$au::last_auth) > $Ts-900)
-                {
-                        sl_send_reply("403", "Try later");
-                        exit;
-                } else {
-                        $sht(a=>$au::auth_count) = 0;
-                }
+            sl_send_reply("403", "Try later");
+            exit;
+        } else {
+            $sht(a=>$au::auth_count) = 0;
         }
-        if(!www_authorize(""))
-        {
+    }
+    if(!www_authorize(""))
+    {
+        switch ($retcode) {
+            case -1:
+                sl_send_reply("403", "Forbidden");
+            exit;
+            case -2:
                 if($sht(a=>$au::auth_count) == null)
-                        $sht(a=>$au::auth_count) = 0;
+                    $sht(a=>$au::auth_count) = 0;
                 $sht(a=>$au::auth_count) = $sht(a=>$au::auth_count) + 1;
                 if($sht(a=>$au::auth_count) == 3)
-                        xlog("auth failed 3rd time - src ip: $si\n");
+                    xlog("auth failed 3rd time - src ip: $si\n");
                 $sht(a=>$au::last_auth) = $Ts;
-                www_challenge(""/*realm*/,"0"/*qop*/);
-                exit;
+            break;
         }
-        $sht(a=>$au::auth_count) = 0;
-} else {
-        www_challenge("","0");
+        www_challenge(""/*realm*/,"0"/*qop*/);
         exit;
+    }
+    $sht(a=>$au::auth_count) = 0;
+} else {
+    www_challenge("","0");
+    exit;
 }
 ...
 
