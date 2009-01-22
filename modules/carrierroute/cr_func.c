@@ -269,14 +269,14 @@ static struct route_rule * get_rule_by_hash(const struct route_flags * rf,
  * @param dest the returned new destination URI
  * @param msg the sip message
  * @param user the localpart of the uri to be rewritten
- * @param dstavp the name of the destination AVP where the used host name is stored
+ * @param descavp the name of the AVP where the description is stored
  *
  * @return 0 on success, -1 on failure
  *
  * @see rewrite_on_rule()
  */
 static int actually_rewrite(const struct route_rule *rs, str *dest,
-		const struct sip_msg *msg, const str * user, gparam_t *dstavp) {
+		const struct sip_msg *msg, const str * user, gparam_t *descavp) {
 	size_t len;
 	char *p;
 	int_str avp_val;
@@ -327,10 +327,10 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	p += rs->host.len;
 	*p = '\0';
 
-	if (dstavp) {
-		avp_val.s = rs->host;
-		if (add_avp(AVP_VAL_STR | dstavp->v.pve->spec.pvp.pvn.u.isname.type,
-					dstavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
+	if (descavp) {
+		avp_val.s = rs->comment;
+		if (add_avp(AVP_VAL_STR | descavp->v.pve->spec.pvp.pvn.u.isname.type,
+					descavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
 			LM_ERR("set AVP failed\n");
 			pkg_free(dest->s);
 			return -1;

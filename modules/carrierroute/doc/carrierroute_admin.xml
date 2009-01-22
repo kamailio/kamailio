@@ -416,16 +416,18 @@ cr_tree_rewrite_uri(tree, domain)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source, dstavp)</function>
+		<function moreinfo="none">cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source, descavp)</function>
 	    </title>
 	    <para>
         This function searches for the longest match for the user given
         in prefix_matching at the given domain in the given carrier tree.
         The Request URI is rewritten using rewrite_user and the given
         hash source and algorithm. Returns -1 if there is no data found
-        or an empty rewrite host on the longest match is found. Otherwise
-        the rewritten host is stored in the given AVP (if obmitted, the
-        host is not stored in an AVP).
+        or an empty rewrite host on the longest match is found. On sucess
+        also the description is stored in the given AVP (if obmitted, nothing
+        is stored in an AVP). This is useful if you need some additional
+        informations that belongs to each gw, like the destination or the
+        number of channels.
         </para>
         <para>
         This function is only usable with rewrite_user and prefix_matching
@@ -477,7 +479,7 @@ cr_tree_rewrite_uri(tree, domain)
   		    </para>
         </listitem>
         <listitem>
-		      <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the rewritten host.
+		      <para><emphasis>decsavp</emphasis> - Name of the AVP where to store the description.
 			This parameter is optional.
   		    </para>
         </listitem>
@@ -485,16 +487,18 @@ cr_tree_rewrite_uri(tree, domain)
 	</section>
 		<section>
 	    <title>
-		<function moreinfo="none">cr_prime_route(carrier, domain, prefix_matching, rewrite_user, hash_source, dstavp)</function>
+		<function moreinfo="none">cr_prime_route(carrier, domain, prefix_matching, rewrite_user, hash_source, descavp)</function>
 	    </title>
 	    <para>
         This function searches for the longest match for the user given
         in prefix_matching at the given domain in the given carrier tree.
         The Request URI is rewritten using rewrite_user and the given
         hash source and algorithm. Returns -1 if there is no data found
-        or an empty rewrite host on the longest match is found. Otherwise
-				the rewritten host is stored in the given AVP (if obmitted, the
-				host is not stored in an AVP).
+        or an empty rewrite host on the longest match is found. On success
+        also the description is stored in the given AVP (if obmitted, nothing
+        is stored in an AVP). This is useful if you need some additional
+        informations that belongs to each gw, like the destination or the
+        number of channels.
         This function is only usable with rewrite_user and prefix_matching
         containing a valid string. This string needs to be numerical if the match_mode
 		parameter is set to 10. It uses the prime hash algorithm to calculate the hash values.
@@ -535,7 +539,7 @@ cr_tree_rewrite_uri(tree, domain)
   		    </para>
         </listitem>
         <listitem>
-		      <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the rewritten host.
+		      <para><emphasis>descavp</emphasis> - Name of the AVP where to store the description.
 			This parameter is optional.
   		    </para>
         </listitem>
@@ -854,10 +858,13 @@ route[1] {
 	# just an example domain
 	$avp(s:domain)="start";
 	if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
-			"call_id", "$avp(s:host)")) {
+			"call_id")) {
 		xlog("L_ERR", "cr_route failed\n");
 		exit;
 	}
+	# if you store also the port as part of the rewrite host,
+	# otherwise you can just use $rd later
+	$avp(s:host)= $rd+":"+$rp;
 	t_on_failure("1");
 		if (!t_relay()) {
 			sl_reply_error();
@@ -872,10 +879,11 @@ failure_route[1] {
 		exit;
 	}
 	if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
-			"call_id", "$avp(s:host)")) {
+			"call_id")) {
 		xlog("L_ERR", "cr_route failed\n");
 		exit;
 	}
+	$avp(s:host)= $rd+":"+$rp;
 	t_on_failure("1");
 	append_branch();
 	if (!t_relay()) {
