@@ -128,7 +128,7 @@ $avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
 	<section>
 		<title>Exported Parameters</title>
 		<section>
-			<title><varname>avp_url</varname> (string)</title>
+			<title><varname>db_url</varname> (string)</title>
 			<para>
 			DB URL for database connection.
 			</para>
@@ -138,20 +138,13 @@ $avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>avp_url</varname> parameter</title>
+				<title>Set <varname>db_url</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("avpops","avp_url","mysql://user:passwd@host/database")
+modparam("avpops","db_url","mysql://user:passwd@host/database")
 ...
 				</programlisting>
 			</example>
-		</section>
-		<section>
-			<title><varname>db_url</varname> (string)</title>
-			<para>
-			This parameter has the same meaning as <quote>avp_url</quote>
-			parameter.
-			</para>
 		</section>
 		<section>
 			<title><varname>avp_table</varname> (string)</title>
@@ -160,7 +153,8 @@ modparam("avpops","avp_url","mysql://user:passwd@host/database")
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default value being NULL.
+					This parameter is optional, it's default value being NULL. But if
+					you specify a db_url, you need also setup this parameter.
 				</emphasis>
 			</para>
 			<example>

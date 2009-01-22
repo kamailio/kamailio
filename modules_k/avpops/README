@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
-                              (Wed, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -29,17 +29,16 @@ Ramona-Elena Modroiu
         1.3. AVP naming format
         1.4. Exported Parameters
 
-              1.4.1. avp_url (string)
-              1.4.2. db_url (string)
-              1.4.3. avp_table (string)
-              1.4.4. use_domain (integer)
-              1.4.5. uuid_column (string)
-              1.4.6. username_column (string)
-              1.4.7. domain_column (string)
-              1.4.8. attribute_column (string)
-              1.4.9. value_column (string)
-              1.4.10. type_column (string)
-              1.4.11. db_scheme (string)
+              1.4.1. db_url (string)
+              1.4.2. avp_table (string)
+              1.4.3. use_domain (integer)
+              1.4.4. uuid_column (string)
+              1.4.5. username_column (string)
+              1.4.6. domain_column (string)
+              1.4.7. attribute_column (string)
+              1.4.8. value_column (string)
+              1.4.9. type_column (string)
+              1.4.10. db_scheme (string)
 
         1.5. Exported Functions
 
@@ -60,7 +59,7 @@ Ramona-Elena Modroiu
    List of Examples
 
    1.1. AVP naming examples
-   1.2. Set avp_url parameter
+   1.2. Set db_url parameter
    1.3. Set avp_table parameter
    1.4. Set use_domain parameter
    1.5. Set uuid_column parameter
@@ -158,33 +157,30 @@ ags 1
 
 1.4. Exported Parameters
 
-1.4.1. avp_url (string)
+1.4.1. db_url (string)
 
    DB URL for database connection.
 
    This parameter is optional, it's default value being NULL.
 
-   Example 1.2. Set avp_url parameter
+   Example 1.2. Set db_url parameter
 ...
-modparam("avpops","avp_url","mysql://user:passwd@host/database")
+modparam("avpops","db_url","mysql://user:passwd@host/database")
 ...
 
-1.4.2. db_url (string)
-
-   This parameter has the same meaning as "avp_url" parameter.
-
-1.4.3. avp_table (string)
+1.4.2. avp_table (string)
 
    DB table to be used.
 
-   This parameter is optional, it's default value being NULL.
+   This parameter is optional, it's default value being NULL. But
+   if you specify a db_url, you need also setup this parameter.
 
    Example 1.3. Set avp_table parameter
 ...
 modparam("avpops","avp_table","avptable")
 ...
 
-1.4.4. use_domain (integer)
+1.4.3. use_domain (integer)
 
    If the domain part of the an URI should be used for identifying
    an AVP in DB operations.
@@ -196,7 +192,7 @@ modparam("avpops","avp_table","avptable")
 modparam("avpops","use_domain",1)
 ...
 
-1.4.5. uuid_column (string)
+1.4.4. uuid_column (string)
 
    Name of column containing the uuid (unique user id).
 
@@ -207,7 +203,7 @@ modparam("avpops","use_domain",1)
 modparam("avpops","uuid_column","uuid")
 ...
 
-1.4.6. username_column (string)
+1.4.5. username_column (string)
 
    Name of column containing the username.
 
@@ -218,7 +214,7 @@ modparam("avpops","uuid_column","uuid")
 modparam("avpops","username_column","username")
 ...
 
-1.4.7. domain_column (string)
+1.4.6. domain_column (string)
 
    Name of column containing the domain name.
 
@@ -229,7 +225,7 @@ modparam("avpops","username_column","username")
 modparam("avpops","domain_column","domain")
 ...
 
-1.4.8. attribute_column (string)
+1.4.7. attribute_column (string)
 
    Name of column containing the attribute name (AVP name).
 
@@ -240,7 +236,7 @@ modparam("avpops","domain_column","domain")
 modparam("avpops","attribute_column","attribute")
 ...
 
-1.4.9. value_column (string)
+1.4.8. value_column (string)
 
    Name of column containing the AVP value.
 
@@ -251,7 +247,7 @@ modparam("avpops","attribute_column","attribute")
 modparam("avpops","value_column","value")
 ...
 
-1.4.10. type_column (string)
+1.4.9. type_column (string)
 
    Name of integer column containing the AVP type.
 
@@ -268,7 +264,7 @@ modparam("avpops","value_column","value")
 modparam("avpops","type_column","type")
 ...
 
-1.4.11. db_scheme (string)
+1.4.10. db_scheme (string)
 
    Definition of a DB scheme to be used for non-standard access to
    Database information.
