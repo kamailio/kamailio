@@ -159,6 +159,8 @@
  *             session in the RTP proxy (Carsten Bock - ported from SER)
  * 2007-09-11 Separate timer process and support for multiple timer processes
  *             (bogdan)
+ * 2008-12-12 Support for RTCP attribute in the SDP
+ *              (Min Wang/BASIS AudioNet - ported from SER)
  */
 
 #include <sys/types.h>
@@ -274,8 +276,10 @@ static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int extract_mediaip(str *, str *, int *, char *);
 static int extract_mediainfo(str *, str *, str *);
+static int extract_rtcp(str *body, str *rtcpport);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
+static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
@@ -1749,6 +1753,34 @@ extract_mediainfo(str *body, str *mediaport, str *payload_types)
 	return -1;
 }
 
+/*
+ * this function is ported from SER 
+ */
+static int
+extract_rtcp(str *body, str *rtcpport)
+{
+	char *cp, *cp1;
+	int len;
+
+	cp1 = NULL;
+	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
+		cp1 = ser_memmem(cp, "a=rtcp:", len, 7);
+		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
+			break;
+		cp = cp1 + 7;
+	}
+
+	if (cp1 == NULL)
+		return -1;
+
+	rtcpport->s = cp1 + 7; /* skip `a=rtcp:' */
+	rtcpport->len = eat_line(rtcpport->s, body->s + body->len -
+				 rtcpport->s) - rtcpport->s;
+	trim_len(rtcpport->len, rtcpport->s, *rtcpport);
+
+	return 0;
+}
+
 static int
 alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
   str *newip, int newpf, int preserve)
@@ -1909,6 +1941,43 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 #if 0
 	msg->msg_flags |= FL_SDP_PORT_AFS;
 #endif
+	return 0;
+}
+
+/*
+ * this function is ported from SER 
+ */
+static int
+alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport)
+{
+	char *buf;
+	int offset;
+	struct lump* anchor;
+
+	/* check that updating rtcpport is really necessary */
+	if (newport->len == oldport->len &&
+	    memcmp(newport->s, oldport->s, newport->len) == 0)
+		return 0;
+
+	buf = pkg_malloc(newport->len);
+	if (buf == NULL) {
+		LM_ERR("alter_rtcp: out of memory\n");
+		return -1;
+	}
+	offset = oldport->s - msg->buf;
+	anchor = del_lump(msg, offset, oldport->len, 0);
+	if (anchor == NULL) {
+		LM_ERR("alter_rtcp: del_lump failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	memcpy(buf, newport->s, newport->len);
+	if (insert_new_lump_after(anchor, buf, newport->len, 0) == 0) {
+		LM_ERR("alter_rtcp: insert_new_lump_after failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -2366,6 +2435,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 {
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp, payload_types;
+	str oldrtcp, newrtcp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real;
 	int orgip, commip;
 	int oidx, pf, pf1, force, swap, rep_oidx;
@@ -2631,6 +2701,13 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 				LM_ERR("can't extract media port from the message\n");
 				return -1;
 			}
+			/* Extract rtcp attribute,ported from SER */
+			tmpstr1.s = m1p;
+			tmpstr1.len = m2p - m1p;
+			oldrtcp.s = NULL;
+			oldrtcp.len = 0;
+			extract_rtcp(&tmpstr1, &oldrtcp);
+			
 			++medianum;
 			if (asymmetric != 0 || real != 0) {
 				newip = oldip;
@@ -2762,6 +2839,24 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 				if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
 					return -1;
 			}
+			
+			/*
+			 * Alter RTCP attribute if present. Inserting RTP port + 1 (as allocated
+			 * by RTP proxy). No IP-address is needed in the new RTCP attribute as the
+			 * 'c' attribute (altered below) will contain the RTP proxy IP address.
+			 * See RFC 3605 for definition of RTCP attribute.
+             * ported from ser
+			 */
+			if (oldrtcp.s && oldrtcp.len) {
+				newrtcp.s = int2str(port+1, &newrtcp.len); /* beware static buffer */
+				/* Alter port. */
+				body1.s = m1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_rtcp(msg, &body1, &oldrtcp, &newrtcp) == -1)
+					return -1;
+			}			
+			
+			
 			/*
 			 * Alter IP. Don't alter IP common for the session
 			 * more than once.
