@@ -203,7 +203,8 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 
    display and URI parameters can include pseudo-variables.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and from
+   BRANCH_ROUTE.
 
    Example 1.8. uac_replace_from usage
 ...
@@ -224,7 +225,8 @@ uac_replace_from("","");
 
    URI parameter can include pseudo-variables.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and from
+   BRANCH_ROUTE.
 
    Example 1.9. uac_replace_from usage
 ...

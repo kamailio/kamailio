@@ -18,8 +18,8 @@ Bogdan-Andre Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
-                              (Wed, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -484,17 +484,17 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 
    The function processes a REGISTER message. It can add, remove
    or modify usrloc records depending on Contact and Expires HFs
-   in the REGISTER message. On success, 200 OK will be returned
-   listing all contacts that are currently in usrloc. On an error,
-   error message will be send with a short description in reason
-   phrase.
+   in the REGISTER message. On success and when called from the
+   REQUEST_ROUTE, 200 OK will be returned listing all contacts
+   that are currently in usrloc. On an error, error message will
+   be send with a short description in reason phrase.
 
    Meaning of the parameters is as follows:
      * domain - Logical domain within registrar. If database is
        used then this must be name of the table which stores the
        contacts.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 
    Example 1.21. save usage
 ...
@@ -515,14 +515,15 @@ save("location");
           + 0x01 - save the contacts only in memory cache without
             no DB operation;
           + 0x02 - do not generate a SIP reply to the current
-            REGISTER request.
+            REGISTER request. When used in ONREPLY_ROUTE, this
+            parameter is obsolete.
           + 0x04 - store and maintain one contact per AoR. If
             there are other contact addresses for AoR not matching
             current registration, remove them. This mode ensures
             one contact per AoR (user).
        The flags may be given in decimal or hexa format.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
    Example 1.22. save usage
 ...
