@@ -61,6 +61,8 @@ static void restore_to_reply(struct cell* t, int type, struct tmcb_params *p);
 
 #define text3B64_len(_l)   ( ( ((_l)+2)/3 ) << 2 )
 
+/* The reply, were the From-Line was replaced. */
+static int msg_id = 0;
 
 void init_from_replacer(void)
 {
@@ -553,6 +555,13 @@ void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 		return;
 	}
 
+	LM_DBG("rpl->id = %d, code %d (current id %d)\n", rpl->id, p->code, msg_id);
+	if (msg_id == rpl->id) {
+		LM_DBG("No change, already done!\n");
+		return;
+	}
+	msg_id = rpl->id; 	
+	
 	/* duplicate the new from value */
 	new_val.s = pkg_malloc( req->from->len );
 	if (p==0) {
