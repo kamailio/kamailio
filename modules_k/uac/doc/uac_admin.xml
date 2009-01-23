@@ -257,7 +257,7 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 			can include pseudo-variables.
 			</para>
 			<para>
-			This function can be used from REQUEST_ROUTE.
+			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
 			<example>
 				<title><function>uac_replace_from</function> usage</title>
@@ -287,7 +287,7 @@ uac_replace_from("","");
 			<emphasis>URI</emphasis> parameter can include pseudo-variables.
 			</para>
 			<para>
-			This function can be used from REQUEST_ROUTE.
+			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
 			<example>
 				<title><function>uac_replace_from</function> usage</title>
