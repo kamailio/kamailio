@@ -525,6 +525,19 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>The function delivers the following return-codes:</para>
+			<itemizedlist>
+			<listitem><para>
+			<emphasis>-1</emphasis> - An error occured while querying the database
+			(e.g. wrong SQL or database error)
+			</para></listitem>
+			<listitem><para>
+			<emphasis>1</emphasis> - Query was successful
+			</para></listitem>
+			<listitem><para>
+			<emphasis>2</emphasis> - Query was successful, but no rows where returned.
+			</para></listitem>
+			</itemizedlist>
 			<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
