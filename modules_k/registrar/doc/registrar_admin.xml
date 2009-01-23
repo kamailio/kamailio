@@ -616,9 +616,10 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<para>
 		The function processes a REGISTER message. It can add, remove or 
 		modify usrloc records depending on Contact and Expires HFs in the 
-		REGISTER message. On success, 200 OK will be returned listing all 
-		contacts that are currently in usrloc. On an error, error message 
-		will be send with a short description in reason phrase.
+		REGISTER message. On success and when called from the REQUEST_ROUTE, 
+		200 OK will be returned listing all	contacts that are currently in 
+		usrloc. On an error, error message will be send with a short
+		description in reason phrase.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -631,7 +632,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>save</function> usage</title>
@@ -673,7 +674,8 @@ save("location");
 				</listitem>
 				<listitem>
 					<para><emphasis>0x02</emphasis> - do not generate a SIP 
-						reply to the current REGISTER request.</para>
+						reply to the current REGISTER request. When used in
+						ONREPLY_ROUTE, this parameter is obsolete.</para>
 				</listitem>
 				<listitem>
 					<para><emphasis>0x04</emphasis> - store and maintain one
@@ -686,7 +688,7 @@ save("location");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>save</function> usage</title>

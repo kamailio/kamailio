@@ -160,9 +160,9 @@ static pv_export_t mod_pvs[] = {
  */
 static cmd_export_t cmds[] = {
 	{"save",         (cmd_function)save,         1,    save_fixup, 0,
-			REQUEST_ROUTE },
+			REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"save",         (cmd_function)save,         2,    save_fixup, 0,
-			REQUEST_ROUTE },
+			REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"lookup",       (cmd_function)lookup,       1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)registered,   1,  domain_fixup, 0,
