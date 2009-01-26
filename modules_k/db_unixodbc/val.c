@@ -36,15 +36,41 @@
 #include "val.h"
 #include "con.h"
 
+/*
+ * Used when converting the query to a result
+ */
+int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
+		const unsigned int _cpy)
+{
+	/* db_unixodbc uses the NULL string for NULL SQL values */
+	if (_v && _s && !strcmp(_s, "NULL")) {
+		LM_DBG("converting NULL value");
+		static str dummy_string = {"", 0};
+		memset(_v, 0, sizeof(db_val_t));
+			/* Initialize the string pointers to a dummy empty
+			 * string so that we do not crash when the NULL flag
+			 * is set but the module does not check it properly
+			 */
+		VAL_STRING(_v) = dummy_string.s;
+		VAL_STR(_v) = dummy_string;
+		VAL_BLOB(_v) = dummy_string;
+		VAL_TYPE(_v) = _t;
+		VAL_NULL(_v) = 1;
+		return 0;
+	} else {
+		return db_str2val(_t, _v, _s, _l, _cpy);
+	}
+}
 
 /*
- * Used when converting result from a query
+ * Used when converting a result from the query
  */
 int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 {
 	int l, tmp;
 	char* old_s;
 
+	/* db_unixodbc uses a custom escape function */
 	tmp = db_val2str(_c, _v, _s, _len);
 	if (tmp < 1)
 		return tmp;
