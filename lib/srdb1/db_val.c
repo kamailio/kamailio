@@ -53,6 +53,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 	}
 	/* A NULL string is a SQL NULL value, otherwise its an empty value */
 	if (!_s) {
+		LM_DBG("converting NULL value");
 		memset(_v, 0, sizeof(db_val_t));
 			/* Initialize the string pointers to a dummy empty
 			 * string so that we do not crash when the NULL flag
