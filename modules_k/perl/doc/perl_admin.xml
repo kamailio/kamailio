@@ -171,7 +171,8 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl")
 			crucial to set this path,
 			as you <emphasis>may</emphasis> install the Modules in Perl's standard path, or update
 			the <quote>%INC</quote> variable from within your script. Using this module parameter
-			is the standard behavior, though.
+			is the standard behavior, though. Multiple paths may be specified by separating them with
+			a <quote>:</quote> character. The maximum is 10 paths.
 			</para>
 			<example>
 			<title>Set <varname>modpath</varname> parameter</title>

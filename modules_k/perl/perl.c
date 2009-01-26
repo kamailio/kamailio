@@ -25,6 +25,7 @@
  */
 
 #define DEFAULTMODULE "OpenSER"
+#define MAX_LIB_PATHS 10
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -187,9 +188,12 @@ EXTERN_C void xs_init(pTHX) {
  */
 PerlInterpreter *parser_init(void) {
 	int argc = 0;
-	char *argv[9];
+	char *argv[MAX_LIB_PATHS + 3];
 	PerlInterpreter *new_perl = NULL;
-	int modpathset = 0;
+	char *entry, *stop, *end;
+	int modpathset_start = 0;
+	int modpathset_end = 0;
+	int i;
 
 	new_perl = perl_alloc();
 
@@ -204,11 +208,25 @@ PerlInterpreter *parser_init(void) {
 	
 	 /* Possible Include path extension by modparam */
 	if (modpath && (strlen(modpath) > 0)) {
-		modpathset = argc;
-		LM_INFO("setting lib path: '%s'\n", modpath);
-		argv[argc] = pkg_malloc(strlen(modpath)+20);
-		sprintf(argv[argc], "-I%s", modpath);
-		argc++;
+		modpathset_start = argc;
+
+		entry = modpath;
+		stop = modpath + strlen(modpath);
+		for (end = modpath; end <= stop; end++) {
+			if ( (end[0] == ':') || (end[0] == '\0') ) {
+				end[0] = '\0';
+				if (argc > MAX_LIB_PATHS) {
+					LM_ERR("too many lib paths, skipping lib path: '%s'\n", entry);
+				} else {
+					LM_INFO("setting lib path: '%s'\n", entry);
+					argv[argc] = pkg_malloc(strlen(entry)+20);
+					sprintf(argv[argc], "-I%s", entry);
+					modpathset_end = argc;
+					argc++;
+				}
+				entry = end + 1;
+			}
+		}
 	}
 
 	argv[argc] = "-M"DEFAULTMODULE; argc++; /* Always "use" Openser.pm */
@@ -218,13 +236,21 @@ PerlInterpreter *parser_init(void) {
 
 	if (perl_parse(new_perl, xs_init, argc, argv, NULL)) {
 		LM_ERR("failed to load perl file \"%s\".\n", argv[argc-1]);
-		if (modpathset) pkg_free(argv[modpathset]);
+		if (modpathset_start) {
+			for (i = modpathset_start; i <= modpathset_end; i++) {
+				pkg_free(argv[i]);
+			}
+		}
 		return NULL;
 	} else {
 		LM_INFO("successfully loaded perl file \"%s\"\n", argv[argc-1]);
 	}
 
-	if (modpathset) pkg_free(argv[modpathset]);
+	if (modpathset_start) {
+		for (i = modpathset_start; i <= modpathset_end; i++) {
+			pkg_free(argv[i]);
+		}
+	}
 	perl_run(new_perl);
 
 	return new_perl;

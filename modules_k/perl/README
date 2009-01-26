@@ -310,7 +310,9 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl")
    is not absolutely crucial to set this path, as you may install
    the Modules in Perl's standard path, or update the "%INC"
    variable from within your script. Using this module parameter
-   is the standard behavior, though.
+   is the standard behavior, though. Multiple paths may be
+   specified by separating them with a ":" character. The maximum
+   is 10 paths.
 
    Example 1.2. Set modpath parameter
 ...
