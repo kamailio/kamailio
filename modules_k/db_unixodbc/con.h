@@ -53,14 +53,14 @@ typedef struct strn
 
 struct my_con
 {
-	struct db_id* id;				  /* Connection identifier */
-	unsigned int ref;				  /* Reference count */
-	struct pool_con* next;			  /* Next connection in the pool */
-	SQLHENV env;
-	SQLHSTMT stmt_handle;			  /* Actual result */
-	SQLHDBC dbc;					  /* Connection representation */
-	char** row;						  /* Actual row in the result */
-	time_t timestamp;				  /* Timestamp of last query */
+	struct db_id* id;		/*!< Connection identifier */
+	unsigned int ref;		/*!< Reference count */
+	struct pool_con* next;		/*!< Next connection in the pool */
+	SQLHENV env;			/*!< Environment handle */
+	SQLHSTMT stmt_handle;		/*!< Actual result */
+	SQLHDBC dbc;			/*!< Connection representation */
+	char** row;			/*!< Actual row in the result */
+	time_t timestamp;		/*!< Timestamp of last query */
 };
 
 /*
