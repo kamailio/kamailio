@@ -14,6 +14,13 @@
 	Function http_query allows &kamailio; to issue an HTTP GET
 	request and get access to parts of the reply.
 	</para>
+	<para>
+	The forward functionality allows &kamailio; to configure forwarding
+	at runtime with FIFO commands. The forwarding is executed in the pre
+	script call back and therefore handled before the routing script is
+	executed on the current message. The callback is not installed on
+	default, thus this functionality has no runtime overhead when its
+	deactivated.
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -69,6 +76,26 @@ modparam("utils", "http_query_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>forward_active</varname> (int)</title>
+			<para>
+				Defines if the forwarding callback should be installed.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>0</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>forward_active</varname> parameter</title>
+				<programlisting format="linespecific">
+					...
+					modparam("utils", "forward_active", 1)
+					...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>
