@@ -25,6 +25,11 @@
  *  2006-09-25  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief MI_FIFO :: Fifo API for the Kamailio manager interface
+ * \ingroup mi
+ */
 
 
 #include <stdlib.h>
@@ -52,21 +57,20 @@ static void fifo_process(int rank);
 static int mi_destroy(void);
 
 /* FIFO server vars */
-/* FIFO name */
-static char *mi_fifo = 0;
-/* dir where reply fifos are allowed */
-static char *mi_fifo_reply_dir = DEFAULT_MI_REPLY_DIR;
+static char *mi_fifo = 0;		 		/*!< FIFO name */
+static char *mi_fifo_reply_dir = DEFAULT_MI_REPLY_DIR; 	/*!< dir where reply fifos are allowed */
 static char *mi_reply_indent = DEFAULT_MI_REPLY_IDENT;
-static int  mi_fifo_uid = -1;
-static char *mi_fifo_uid_s = 0;
-static int  mi_fifo_gid = -1;
-static char *mi_fifo_gid_s = 0;
-static int  mi_fifo_mode = S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
+static int  mi_fifo_uid = -1;				/*!< Fifo default UID */
+static char *mi_fifo_uid_s = 0;				/*!< Fifo default User ID name */
+static int  mi_fifo_gid = -1;				/*!< Fifo default Group ID */
+static char *mi_fifo_gid_s = 0;				/*!< Fifo default Group ID name */
+static int  mi_fifo_mode = S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* Default file mode rw-rw---- */
 static int  read_buf_size = MAX_MI_FIFO_READ;
 
 MODULE_VERSION
 
-static param_export_t mi_params[] = {
+/*! \brief Configuration parameters in .cfg file */
+static param_export_t mi_params[] = {			
 	{"fifo_name",        STR_PARAM, &mi_fifo},
 	{"fifo_mode",        INT_PARAM, &mi_fifo_mode},
 	{"fifo_group",       STR_PARAM, &mi_fifo_gid_s},
@@ -86,22 +90,23 @@ static proc_export_t mi_procs[] = {
 
 
 struct module_exports exports = {
-	"mi_fifo",                     /* module name */
-	DEFAULT_DLFLAGS,               /* dlopen flags */
-	0,                             /* exported functions */
-	mi_params,                     /* exported parameters */
-	0,                             /* exported statistics */
-	0,                             /* exported MI functions */
-	0,                             /* exported pseudo-variables */
-	mi_procs,                      /* extra processes */
-	mi_mod_init,                   /* module initialization function */
-	0,                             /* response handling function */
-	(destroy_function) mi_destroy, /* destroy function */
-	mi_child_init                  /* per-child init function */
+	"mi_fifo",                     /*!< module name */
+	DEFAULT_DLFLAGS,               /*!< dlopen flags */
+	0,                             /*!< exported functions */
+	mi_params,                     /*!< exported parameters */
+	0,                             /*!< exported statistics */
+	0,                             /*!< exported MI functions */
+	0,                             /*!< exported pseudo-variables */
+	mi_procs,                      /*!< extra processes */
+	mi_mod_init,                   /*!< module initialization function */
+	0,                             /*!< response handling function */
+	(destroy_function) mi_destroy, /*!< destroy function */
+	mi_child_init                  /*!< per-child init function */
 };
 
 
 
+/*! \brief Initialize mi_fifo module */
 static int mi_mod_init(void)
 {
 	int n;
@@ -109,33 +114,34 @@ static int mi_mod_init(void)
 
 	/* checking the mi_fifo module param */
 	if (mi_fifo==NULL || *mi_fifo == 0) {
-		LM_ERR("no fifo configured\n");
+		LM_ERR("No MI fifo configured\n");
 		return -1;
 	}
 
-	LM_DBG("testing fifo existance ...\n");
+	LM_DBG("testing mi_fifo existance ...\n");
 	n=stat(mi_fifo, &filestat);
-	if (n==0){
+	if (n==0) {
 		/* FIFO exist, delete it (safer) */
 		if (unlink(mi_fifo)<0){
-			LM_ERR("cannot delete old fifo (%s): %s\n",
+			LM_ERR("Cannot delete old MI fifo (%s): %s\n",
 				mi_fifo, strerror(errno));
 			return -1;
 		}
-	}else if (n<0 && errno!=ENOENT){
-		LM_ERR("FIFO stat failed: %s\n", strerror(errno));
+	} else if (n<0 && errno!=ENOENT){
+		LM_ERR("MI FIFO stat failed: %s\n", strerror(errno));
 		return -1;
 	}
 
 	/* checking the mi_fifo_reply_dir param */
-	if(!mi_fifo_reply_dir || *mi_fifo_reply_dir == 0){
+	if(!mi_fifo_reply_dir || *mi_fifo_reply_dir == 0) {
 		LM_ERR("mi_fifo_reply_dir parameter is empty\n");
 		return -1;
 	}
 
+	/* Check if the directory for the reply fifo exists */
 	n = stat(mi_fifo_reply_dir, &filestat);
 	if(n < 0){
-		LM_ERR("directory stat failed: %s\n", strerror(errno));
+		LM_ERR("Directory stat for MI Fifo reply failed: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -152,14 +158,14 @@ static int mi_mod_init(void)
 
 	if (mi_fifo_uid_s){
 		if (user2uid(&mi_fifo_uid, &mi_fifo_gid, mi_fifo_uid_s)<0){
-			LM_ERR("bad user name %s\n", mi_fifo_uid_s);
+			LM_ERR("Bad user name %s\n", mi_fifo_uid_s);
 			return -1;
 		}
 	}
 
 	if (mi_fifo_gid_s){
 		if (group2gid(&mi_fifo_gid, mi_fifo_gid_s)<0){
-			LM_ERR("bad group name %s\n", mi_fifo_gid_s);
+			LM_ERR("Bad group name %s\n", mi_fifo_gid_s);
 			return -1;
 		}
 	}
@@ -168,6 +174,7 @@ static int mi_mod_init(void)
 }
 
 
+/*! \brief Initialize module for child processes */
 static int mi_child_init(int rank)
 {
 	if (rank==PROC_TIMER || rank>0 ) {
@@ -195,17 +202,17 @@ static void fifo_process(int rank)
 	}
 
 	if( init_mi_child()!=0) {
-		LM_CRIT("faild to init the mi process\n");
+		LM_CRIT("Failed to init the mi process\n");
 		exit(-1);
 	}
 
 	if ( mi_parser_init(read_buf_size)!=0 ) {
-		LM_CRIT("failed to init the command parser\n");
+		LM_CRIT("Failed to init the command parser\n");
 		exit(-1);
 	}
 
 	if ( mi_writer_init(read_buf_size, mi_reply_indent)!=0 ) {
-		LM_CRIT("failed to init the reply writer\n");
+		LM_CRIT("Failed to init the reply writer\n");
 		exit(-1);
 	}
 

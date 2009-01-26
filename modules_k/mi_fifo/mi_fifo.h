@@ -25,6 +25,11 @@
  *  2006-09-25  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief MI Fifo :: Core
+ * \ingroup mi
+ */
 
 #ifndef _MI_FIFO_H_
 #define _MI_FIFO_H_

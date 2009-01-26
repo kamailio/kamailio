@@ -25,6 +25,12 @@
  *  2006-09-25  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief MI Fifo :: Parser
+ * \ingroup mi
+ */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -75,7 +81,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 			return -1;
 		}
 		if (line_len == 1){
-			LM_DBG("end of input tree\n");
+			LM_DBG("end of fifo input tree\n");
 			return 1;
 		}
 
@@ -190,7 +196,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 			return -1;
 		}
 		if (line_len == 1) {
-			LM_DBG("end of input tree\n");
+			LM_DBG("end of fifo input tree\n");
 			return -2;
 		}
 
@@ -239,7 +245,7 @@ struct mi_root * mi_parse_tree(FILE *stream) {
 			name.len,name.s, value.len,value.s);
 
 		if(!add_mi_node_child(node,0,name.s,name.len,value.s,value.len)){
-			LM_ERR("cannot add the child node to the tree\n");
+			LM_ERR("cannot add the child node to the MI tree\n");
 			goto error;
 		}
 	}

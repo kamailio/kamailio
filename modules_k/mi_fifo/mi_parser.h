@@ -25,6 +25,12 @@
  *  2006-09-25  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief MI Fifo :: parser
+ * \ingroup mi
+ */
+
 
 #ifndef _MI_PARSER_H_
 #define _MI_PARSER_H_

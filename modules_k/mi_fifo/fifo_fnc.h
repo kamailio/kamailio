@@ -24,7 +24,11 @@
  * 2006-09-25: first version (bogdan)
  */
 
-
+/*!
+ * \file
+ * \brief MI Fifo :: Functions
+ * \ingroup mi
+ */
 
 #ifndef _FIFO_FNC_H_
 #define _FIFO_FNC_H_
@@ -34,13 +38,11 @@
 #include <errno.h>
 
 
-/* how patient is openser with FIFO clients not awaiting a reply? 
+/*! \brief how patient is openser with FIFO clients not awaiting a reply? 
    default = 4 x 80ms = 0.32 sec
 */
 #define FIFO_REPLY_RETRIES  4
 #define FIFO_REPLY_WAIT     80000
-
-
 
 FILE* mi_init_fifo_server(char *fifo_name, int mode, int uid, int gid,
 		char* fifo_reply_dir);

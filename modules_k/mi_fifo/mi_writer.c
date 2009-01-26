@@ -25,6 +25,12 @@
  *  2006-09-25  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief MI Fifo :: Fifo writer
+ * \ingroup mi
+ */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -138,19 +144,17 @@ static inline int mi_write_node(str *buf, struct mi_node *node, int level)
 
 
 
-static int recur_write_tree(FILE *stream, struct mi_node *tree, str *buf,
-																	int level)
+static int recur_write_tree(FILE *stream, struct mi_node *tree, str *buf, int level)
 {
 	for( ; tree ; tree=tree->next ) {
 		if (mi_write_node( buf, tree, level)!=0) {
 			/* buffer is full -> write it and reset buffer */
-			if (mi_fifo_reply( stream,"%.*s", buf->s-mi_write_buffer,
-			mi_write_buffer)!=0)
+			if (mi_fifo_reply( stream,"%.*s", buf->s-mi_write_buffer, mi_write_buffer)!=0)
 				return -1;
 			buf->s = mi_write_buffer;
 			buf->len = mi_write_buffer_len;
 			if (mi_write_node( buf, tree, level)!=0) {
-				LM_ERR("failed to write - line too long!\n");
+				LM_ERR("failed to write MI tree - line too long!\n");
 				return -1;
 			}
 		}

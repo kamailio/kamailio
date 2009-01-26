@@ -25,6 +25,12 @@
  *  2006-09-25  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief MI Fifo :: Writer
+ * \ingroup mi
+ */
+
 
 #ifndef _MI_WRITER_H_
 #define _MI_WRITER_H_
