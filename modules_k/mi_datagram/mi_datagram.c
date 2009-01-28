@@ -25,7 +25,11 @@
  *  2007-06-25  first version (ancuta)
  */
 
-
+/*!
+ * \file
+ * \brief MI_DATAGRAM :: Unix socket and network socket (UDP) API for the Kamailio manager interface
+ * \ingroup mi
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -67,7 +71,7 @@
 #endif
 
 
-#define MAX_CTIME_LEN 128
+#define MAX_CTIME_LEN 	  128
 #define MAX_NB_PORT	  65535
 
 static int mi_mod_init(void);
@@ -165,26 +169,25 @@ static int mi_mod_init(void)
 		LM_DBG("we have an udp socket\n");
 		/*separate proto and host */
 		p = mi_socket+4;
-		if( (*(p)) == '\0')
-		{
+		if( (*(p)) == '\0') {
 			LM_ERR("malformed ip address\n");
 			return -1;
 		}
 		host_s=p;
 		LM_DBG("the remaining address after separating the protocol is %s\n",p);
 
-		if( (p = strrchr(p+1, ':')) == 0 )
-		{
+		if( (p = strrchr(p+1, ':')) == 0 ) {
 			LM_ERR("no port specified\n");
 			return -1;
 		}
 
 		/*the address contains a port number*/
-		*p = '\0'; p++;
+		*p = '\0';
+		p++;
 		port_str.s = p;
 		port_str.len = strlen(p);
 		LM_DBG("the port string is %s\n", p);
-		if(str2int(&port_str, &port_no) != 0 ){
+		if(str2int(&port_str, &port_no) != 0 ) {
 			LM_ERR("there is not a valid number port\n");
 			return -1;
 		}
@@ -195,7 +198,7 @@ static int mi_mod_init(void)
 			return -1;
 		}
 		
-		if(! (host = resolvehost(host_s, 0)) ){
+		if(! (host = resolvehost(host_s, 0)) ) {
 			LM_ERR("failed to resolve %s\n", host_s);
 			return -1;
 		}
@@ -205,52 +208,46 @@ static int mi_mod_init(void)
 			return -1;
 		}
 		mi_socket_domain = host->h_addrtype;
-	}
-	else
-	{
-		/*in case of a Unix socket*/
-		LM_DBG("we have an UNIX socket\n");
+		return 0;
+	} 
+	/* in case of a Unix socket*/
+	LM_DBG("we have an UNIX socket\n");
 		
-		n=stat(mi_socket, &filestat);
-		if( n==0){
-			LM_INFO("the socket %s already exists, trying to delete it...\n",
-					mi_socket);
-			if (unlink(mi_socket)<0){
-				LM_ERR("cannot delete old socket: %s\n", strerror(errno));
-				return -1;
-			}
-		}else if (n<0 && errno!=ENOENT){
-			LM_ERR("socket stat failed:%s\n", strerror(errno));
+	n=stat(mi_socket, &filestat);
+	if( n==0) {
+		LM_INFO("the socket %s already exists, trying to delete it...\n", mi_socket);
+		if (unlink(mi_socket)<0) {
+			LM_ERR("cannot delete old socket: %s\n", strerror(errno));
 			return -1;
 		}
-
-		/* check mi_unix_socket_mode */
-		if(!mi_unix_socket_mode){
-			LM_WARN("cannot specify mi_unix_socket_mode = 0, "
-					"forcing it to rw-------\n");
-			mi_unix_socket_mode = S_IRUSR| S_IWUSR;
-		}
-	
-		if (mi_unix_socket_uid_s){
-			if (user2uid(&mi_unix_socket_uid, &mi_unix_socket_gid, 
-					mi_unix_socket_uid_s)<0){
-				LM_ERR("bad user name %s\n", mi_unix_socket_uid_s);
-				return -1;
-			}
-		}
-	
-		if (mi_unix_socket_gid_s){
-			if (group2gid(&mi_unix_socket_gid, mi_unix_socket_gid_s)<0){
-				LM_ERR("bad group name %s\n", mi_unix_socket_gid_s);
-				return -1;
-			}
-		}
-
-		/*create the unix socket address*/
-		mi_dtgram_addr.unix_addr.sun_family = AF_LOCAL;
-		memcpy( mi_dtgram_addr.unix_addr.sun_path,
-			mi_socket, strlen(mi_socket));
+	} else if (n<0 && errno!=ENOENT) {
+		LM_ERR("socket stat failed:%s\n", strerror(errno));
+		return -1;
 	}
+
+	/* check mi_unix_socket_mode */
+	if(!mi_unix_socket_mode) {
+		LM_WARN("cannot specify mi_unix_socket_mode = 0, forcing it to rw-------\n");
+		mi_unix_socket_mode = S_IRUSR| S_IWUSR;
+	}
+	
+	if (mi_unix_socket_uid_s) {
+		if (user2uid(&mi_unix_socket_uid, &mi_unix_socket_gid, mi_unix_socket_uid_s)<0) {
+			LM_ERR("bad user name %s\n", mi_unix_socket_uid_s);
+			return -1;
+		}
+	}
+	
+	if (mi_unix_socket_gid_s) {
+		if (group2gid(&mi_unix_socket_gid, mi_unix_socket_gid_s)<0) {
+			LM_ERR("bad group name %s\n", mi_unix_socket_gid_s);
+			return -1;
+		}
+	}
+
+	/*create the unix socket address*/
+	mi_dtgram_addr.unix_addr.sun_family = AF_LOCAL;
+	memcpy( mi_dtgram_addr.unix_addr.sun_path, mi_socket, strlen(mi_socket));
 
 	return 0;
 }
@@ -259,8 +256,7 @@ static int mi_mod_init(void)
 static int mi_child_init(int rank)
 {
 	if (rank==PROC_TIMER || rank>0 ) {
-		if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
-		mi_reply_indent )!= 0){
+		if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE , mi_reply_indent )!= 0) {
 			LM_CRIT("failed to initiate mi_datagram_writer\n");
 			return -1;
 		}
@@ -275,8 +271,7 @@ static int pre_datagram_process(void)
 
 	/*create the sockets*/
 	res = mi_init_datagram_server(&mi_dtgram_addr, mi_socket_domain, &sockets,
-								mi_unix_socket_mode, mi_unix_socket_uid, 
-								mi_unix_socket_gid);
+					mi_unix_socket_mode, mi_unix_socket_uid, mi_unix_socket_gid);
 
 	if ( res ) {
 		LM_CRIT("function mi_init_datagram_server returned with error!!!\n");
@@ -296,13 +291,12 @@ static void datagram_process(int rank)
 		LM_CRIT("failed to init the mi process\n");
 		exit(-1);
 	}
-	if (mi_init_datagram_buffer()!=0){
+	if (mi_init_datagram_buffer()!=0) {
 		LM_ERR("failed to allocate datagram buffer\n");
 		exit(-1);
 	}
 
-	if (mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
-	mi_reply_indent )!= 0){
+	if (mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE , mi_reply_indent )!= 0) {
 		LM_CRIT("failed to initiate mi_datagram_writer\n");
 		exit(-1);
 	}
@@ -328,16 +322,16 @@ static int mi_destroy(void)
 	struct stat filestat;
 
 	/* destroying the socket descriptors */
-	if(mi_socket_domain == AF_UNIX){
+	if(mi_socket_domain == AF_UNIX) {
 		n=stat(mi_socket, &filestat);
-		if (n==0){
+		if (n==0) {
 			if (unlink(mi_socket)<0){
 				LM_ERR("cannot delete the socket (%s): %s\n", 
 						mi_socket, strerror(errno));
 				goto error;
 			}
 		} else if (n<0 && errno!=ENOENT) {
-			LM_ERR("socket stat failed: %s\n",	strerror(errno));
+			LM_ERR("socket stat failed: %s\n", strerror(errno));
 			goto error;
 		}
 	}

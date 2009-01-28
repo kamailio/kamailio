@@ -25,6 +25,12 @@
  *  2007-06-25  first version (ancuta)
  */
 
+/*!
+ * \file
+ * \brief MI_DATAGRAM :: Writer
+ * \ingroup mi
+ */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -72,8 +78,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 			node->name.len, node->name.s, node->value.len, node->value.s);
 	/* write indents */
 	if (mi_datagram_indent.s) {
-		if (p + level*mi_datagram_indent.len>end)
-		{
+		if (p + level*mi_datagram_indent.len>end) {
 			LM_DBG("a too long line\n");
 			return -1;
 		}
@@ -84,8 +89,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 	}
 	/* name and value */
 	if (node->name.s!=NULL) {
-		if (p+node->name.len+3>end)
-		{
+		if (p+node->name.len+3>end) {
 			LM_DBG("too long name\n");
 			return -1;
 		}
@@ -99,8 +103,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 	/*LM_DBG("after adding the "
 			"name, the datagram is %s\n ", dtgram->datagram.s);*/
 	if (node->value.s!=NULL) {
-		if (p+node->value.len>end)
-		{
+		if (p+node->value.len>end) {
 			LM_DBG("too long value\n");
 			return -1;
 		}
@@ -112,8 +115,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 	/* attributes */
 	for( attr=node->attributes ; attr!=NULL ; attr=attr->next ) {
 		if (attr->name.s!=NULL) {
-			if (p+attr->name.len+2>end)
-			{
+			if (p+attr->name.len+2>end) {
 				LM_DBG("too long attr name\n");
 				return -1;
 			}
@@ -123,8 +125,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 			*(p++) = '=';
 		}
 		if (attr->value.s!=NULL) {
-			if (p+attr->value.len>end)
-			{
+			if (p+attr->value.len>end) {
 				LM_DBG("too long attr value\n");
 				return -1;
 			}
@@ -134,8 +135,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 	}
 /*	LM_DBG("after adding the "
 			"attributes, the datagram is %s\n ", dtgram->datagram.s);*/
-	if (p+1>end)
-	{
+	if (p+1>end) {
 		LM_DBG("overflow before returning\n");
 		return -1;
 	}

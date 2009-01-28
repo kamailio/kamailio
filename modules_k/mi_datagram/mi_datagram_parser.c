@@ -25,6 +25,12 @@
  *  2007-06-25  first version (ancuta)
  */
 
+/*!
+ * \file
+ * \brief MI_DATAGRAM :: Command parser
+ * \ingroup mi
+ */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -50,13 +56,13 @@ int mi_datagram_parser_init( unsigned int size )
 
 
 
-/* returns -1 = error
+/*! \brief Parse MI command
+		example: mi_parse_node(datagram, &buf, &name, &value)
+ * returns -1 = error
  *          0 = ok
  *          1 = end of input
  */
-/*example: mi_parse_node(datagram, &buf, &name, &value)*/
-static inline int mi_datagram_parse_node(datagram_stream * data, str *name, 
-											str *value)
+static inline int mi_datagram_parse_node(datagram_stream * data, str *name, str *value)
 {
 	char *p, *pmax;
 	char *start, *start1;
@@ -92,23 +98,23 @@ static inline int mi_datagram_parse_node(datagram_stream * data, str *name,
 		/* look for the atribute name */
 
 		p = mark_nsp = start;
-		while ( p!=pmax && (( *p!=MI_ATTR_VAL_SEP1) || p+1==pmax 
-		||*(p+1)!=MI_ATTR_VAL_SEP2) ) {
+		while ( p!=pmax && (( *p!=MI_ATTR_VAL_SEP1) || p+1==pmax ||*(p+1)!=MI_ATTR_VAL_SEP2) ) {
 			if (!isspace((int)*p)) {
-				if (*p=='"')
-				{
+				if (*p=='"') {
 					LM_DBG("found \" before attr_separator\n");
 					goto parse_err;
 				}
 				mark_nsp = p;
 			}
-			if(*p=='\n' && p!=(pmax -1)){
+			if(*p=='\n' && p!=(pmax -1)) {
 				LM_DBG("found newline before attr_separator--we have just the "
 					"attribute's value\n");
-				mark_nsp++; pmax = ++p;
+				mark_nsp++;
+				pmax = ++p;
 				break;
 			}else if (p == (pmax-1)){
-				mark_nsp++; pmax = ++p;
+				mark_nsp++;
+				pmax = ++p;
 				LM_DBG("just a value, no new line");
 				break;
 			}
@@ -130,10 +136,8 @@ static inline int mi_datagram_parse_node(datagram_stream * data, str *name,
 			p += 2; /* for separator */
 				
 			/* consume the trailing spaces */
-			for( ; p!=pmax && isspace((int)*p) ; p++)
-			{
-				if(*p=='\n')
-				{
+			for( ; p!=pmax && isspace((int)*p) ; p++) {
+				if(*p=='\n') {
 					LM_DBG("empty value\n");
 					/* empty value.....we are done */
 					goto done;
@@ -141,8 +145,7 @@ static inline int mi_datagram_parse_node(datagram_stream * data, str *name,
 			}
 			/*LM_DBG("p is %s case2\n",p);*/
 
-			if(p==pmax && *p=='\n')
-			{
+			if(p==pmax && *p=='\n') {
 				LM_DBG("empty value\n");
 					/* empty value.....we are done */
 				goto done;
@@ -153,14 +156,14 @@ static inline int mi_datagram_parse_node(datagram_stream * data, str *name,
 				LM_DBG("not quoted value, p is %c \n", *p);
 				for( start=p ; p!=pmax ; p++ ) {
 					if (!isspace((int)*p)) {
-						if (*p=='"'){
+						if (*p=='"') {
 							goto parse_err;
 						}
 						mark_nsp = p;
 						LM_DBG("nsp is %p ,p is %p, pmax is %p and *p is %c\n",
 							mark_nsp, p, pmax,*p);
 					}
-					if(*p=='\n'){/*end of the node*/
+					if(*p=='\n') {	/*end of the node*/
 						pmax = p;
 						break;
 					}
@@ -192,7 +195,7 @@ static inline int mi_datagram_parse_node(datagram_stream * data, str *name,
 	p = start;
 	/* parse the buffer and look for " */
 	while (p<pmax) {
-		if (*p=='"' && start!=p){ /*search the closing "*/
+		if (*p=='"' && start!=p) { /*search the closing "*/
 
 			LM_DBG("\" found p is %s\n",p);
 
@@ -227,13 +230,12 @@ static inline int mi_datagram_parse_node(datagram_stream * data, str *name,
 				/* found! */
 				goto done;
 			}
-		}else {
+		} else {
 			p++;
 		}
 	}
 
-	if(p== pmax && !newline_found)
-	{
+	if(p== pmax && !newline_found) {
 		LM_ERR("didn't find newline case2\n");
 		goto parse_err;
 	}
@@ -252,7 +254,7 @@ parse_err:
 
 
 
-/*parsing the datagram buffer*/
+/*! \brief parsing the datagram buffer*/
 struct mi_root * mi_datagram_parse_tree(datagram_stream * datagram) {
 	struct mi_root *root;
 	struct mi_node *node;
