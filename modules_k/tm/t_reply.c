@@ -1485,15 +1485,22 @@ int reply_received( struct sip_msg  *p_msg )
 			/* invite: change FR to longer FR_INV, do not
 			 * attempt to restart retransmission any more
 			 */
-			backup_list = set_avp_list(&t->user_avps);
-			if (!fr_inv_avp2timer(&timer)) {
-				LM_DBG("FR_INV_TIMER = %lld\n", timer);
-				set_timer(&uac->request.fr_timer,
-					FR_INV_TIMER_LIST, &timer);
+			if(uac->local_cancel.buffer.s==NULL)
+			{
+				backup_list = set_avp_list(&t->user_avps);
+				if (!fr_inv_avp2timer(&timer)) {
+					LM_DBG("FR_INV_TIMER = %lld\n", timer);
+					set_timer(&uac->request.fr_timer,
+							FR_INV_TIMER_LIST, &timer);
+				} else {
+					set_timer(& uac->request.fr_timer, FR_INV_TIMER_LIST, 0);
+				}
+				set_avp_list(backup_list);
 			} else {
-				set_timer(& uac->request.fr_timer, FR_INV_TIMER_LIST, 0);
+				/* fast failure */
+				timer = 1;
+				set_timer(&uac->request.fr_timer, FR_INV_TIMER_LIST, &timer);
 			}
-			set_avp_list(backup_list);
 		} else {
 			/* non-invite: restart retransmissions (slow now) */
 			uac->request.retr_list = RT_T2;

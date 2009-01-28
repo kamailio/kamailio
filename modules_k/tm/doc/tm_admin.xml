@@ -1459,6 +1459,44 @@ if (!t_next_contacts()) {
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">t_cancel_branches(which)</function>
+		</title>
+		<para>
+		Cancel branches of an active SIP transaction. The function can be
+		called for a SIP reply that will identify the current branch.
+		</para>
+		<para>
+		Parameter can be:.
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>all</emphasis> - cancel all branches.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>others</emphasis> - cancel all branches but
+				the current one.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>this</emphasis> - cancel current branch.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used in ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>t_cancel_branches</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_cancel_branches("all")) {
+	xlog("cancelled all branches\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 

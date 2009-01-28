@@ -93,6 +93,7 @@ Juha Heinanen
               1.4.15. t_on_branch(branch_route)
               1.4.16. t_load_contacts()
               1.4.17. t_next_contacts()
+              1.4.18. t_cancel_branches(which)
 
         1.5. Exported pseudo-variables
         1.6. Exported MI Functions
@@ -161,6 +162,7 @@ Juha Heinanen
    1.35. t_on_branch usage
    1.36. t_load_contacts usage
    1.37. t_next_contacts usage
+   1.38. t_cancel_branches usage
 
 Chapter 1. Admin Guide
 
@@ -1086,6 +1088,26 @@ if (!t_next_contacts()) {
 } else {
         t_relay();
 };
+...
+
+1.4.18.  t_cancel_branches(which)
+
+   Cancel branches of an active SIP transaction. The function can
+   be called for a SIP reply that will identify the current
+   branch.
+
+   Parameter can be:.
+     * all - cancel all branches.
+     * others - cancel all branches but the current one.
+     * this - cancel current branch.
+
+   This function can be used in ONREPLY_ROUTE.
+
+   Example 1.38. t_cancel_branches usage
+...
+if (t_cancel_branches("all")) {
+        xlog("cancelled all branches\n");
+}
 ...
 
 1.5. Exported pseudo-variables

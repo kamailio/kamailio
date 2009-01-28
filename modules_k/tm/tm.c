@@ -109,6 +109,7 @@ static int fixup_local_replied(void** param, int param_no);
 static int fixup_t_relay1(void** param, int param_no);
 static int fixup_t_relay2(void** param, int param_no);
 static int fixup_t_replicate(void** param, int param_no);
+static int fixup_cancel_branches(void** param, int param_no);
 
 
 /* init functions */
@@ -131,6 +132,7 @@ inline static int t_flush_flags(struct sip_msg* msg, char*, char* );
 inline static int t_local_replied(struct sip_msg* msg, char *type, char* );
 inline static int t_check_trans(struct sip_msg* msg, char* , char* );
 inline static int t_was_cancelled(struct sip_msg* msg, char* , char* );
+inline static int t_cancel_branches(struct sip_msg* msg, char* , char* );
 
 
 /* strings with avp definition */
@@ -198,6 +200,8 @@ static cmd_export_t cmds[]={
 	                0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contacts", (cmd_function)t_next_contacts, 0, 0,
 	                0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"t_cancel_branches", (cmd_function)t_cancel_branches,  1,
+		fixup_cancel_branches, 0, ONREPLY_ROUTE },
 	{0,0,0,0,0,0}
 };
 
@@ -1030,11 +1034,11 @@ route_err:
 
 
 
+extern int _tm_branch_index;
 /* item functions */
 static int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	extern int _tm_branch_index;
 	int l = 0;
 	char *ch = NULL;
 
@@ -1100,5 +1104,67 @@ static int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 	res->ri = code;
 	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 	return 0;
+}
+
+static int fixup_cancel_branches(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"others")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"this")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+inline static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
+{
+	branch_bm_t cb = 0;
+	struct cell *t = 0;
+	int n=0;
+	t=get_t();
+	if (t==NULL || t==T_UNDEFINED || !is_invite(t))
+		return -1;
+	n = (int)k;
+	switch(n) {
+		case 1:
+			LOCK_REPLIES(t);
+			which_cancel(t, &cb);
+			if(t->uac[_tm_branch_index].local_cancel.buffer.s==BUSY_BUFFER)
+				t->uac[_tm_branch_index].local_cancel.buffer.s=NULL;
+			UNLOCK_REPLIES(t);
+			cb &= ~(1<<_tm_branch_index);
+		case 2:
+			if(msg->first_line.u.reply.statuscode>=200)
+				break;
+			cb = 1<<_tm_branch_index;
+		break;
+		default:
+			LOCK_REPLIES(t);
+			which_cancel(t, &cb);
+			UNLOCK_REPLIES(t);
+			if (msg->first_line.u.reply.statuscode>=200)
+				cb &= ~(1<<_tm_branch_index);
+	}
+	LM_DBG("canceling %d/%d\n", n, (int)cb);
+	if(cb==0)
+		return -1;
+	cancel_uacs(t, cb);
+	return 1;
 }
 
