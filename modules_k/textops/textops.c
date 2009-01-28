@@ -112,7 +112,8 @@ static int insert_hf_1(struct sip_msg* msg, char* str1, char* str2);
 static int insert_hf_2(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
-static int insert_body_f(struct sip_msg* msg, char*, char *);
+static int set_body_f(struct sip_msg* msg, char*, char *);
+static int set_rpl_body_f(struct sip_msg* msg, char*, char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
@@ -214,8 +215,11 @@ static cmd_export_t cmds[]={
 	{"append_time",      (cmd_function)append_time_f,     0,
 		0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{"insert_body",      (cmd_function)insert_body_f,     2,
-		0, 0,
+	{"set_body",         (cmd_function)set_body_f,        2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
+	{"set_rpl_body",     (cmd_function)set_rpl_body_f,    2,
+		fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"is_method",        (cmd_function)is_method_f,       1,
 		fixup_method, 0,
@@ -1077,18 +1081,41 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 }
 
 
-static int insert_body_f(struct sip_msg* msg, char* p1, char* p2)
+static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 {
 	struct lump *anchor;
 	char* buf;
 	int len;
 	char* value_s;
 	int value_len;
-	str body;
+	str body = {0,0};
+	str nb = {0,0};
+	str nc = {0,0};
 
 	if(p1==0 || p2==0)
 	{
 		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &nb)!=0)
+	{
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+	if(nb.s==NULL || nb.len == 0)
+	{
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
+	{
+		LM_ERR("unable to get p2\n");
+		return -1;
+	}
+	if(nc.s==NULL || nc.len == 0)
+	{
+		LM_ERR("invalid content-type parameter\n");
 		return -1;
 	}
 
@@ -1100,14 +1127,24 @@ static int insert_body_f(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 
+	free_lump_list(msg->body_lumps);
+	msg->body_lumps = NULL;
+
 	if (msg->content_length) 
 	{
 		body.len = get_content_length( msg );
 		if(body.len > 0)
 		{
-			LM_INFO("the sip message has a body"
-				" - multipart not supported yet\n");
-			return -1;
+			if(body.s+body.len>msg->buf+msg->len)
+			{
+				LM_ERR("invalid content length: %d\n", body.len);
+				return -1;
+			}
+			if(del_lump(msg, body.s - msg->buf, body.len, 0) == 0)
+			{
+				LM_ERR("cannot delete existing body");
+				return -1;
+			}
 		}
 	}
 
@@ -1122,7 +1159,7 @@ static int insert_body_f(struct sip_msg* msg, char* p1, char* p2)
 	if (msg->content_length==0)
 	{
 		/* need to add Content-Length */
-		len = strlen(p1);
+		len = nb.len;
 		value_s=int2str(len, &value_len);
 		LM_DBG("content-length: %d (%s)\n", value_len, value_s);
 
@@ -1147,7 +1184,97 @@ static int insert_body_f(struct sip_msg* msg, char* p1, char* p2)
 	}
 
 	/* add content-type */
-	value_len = strlen(p2);
+	if(msg->content_type==NULL || msg->content_type->body.len!=nc.len
+			|| strncmp(msg->content_type->body.s, nc.s, nc.len)!=0)
+	{
+		if(msg->content_type!=NULL)
+			if(del_lump(msg, msg->content_type->name.s-msg->buf,
+						msg->content_type->len, 0) == 0)
+			{
+				LM_ERR("failed to delete content type\n");
+				return -1;
+			}
+		value_len = nc.len;
+		len=sizeof("Content-Type: ") - 1 + value_len + CRLF_LEN;
+		buf=pkg_malloc(sizeof(char)*(len));
+
+		if (buf==0)
+		{
+			LM_ERR("out of pkg memory\n");
+			return -1;
+		}
+		memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
+		memcpy(buf+sizeof("Content-Type: ") - 1, nc.s, value_len);
+		memcpy(buf+sizeof("Content-Type: ") - 1 + value_len, CRLF, CRLF_LEN);
+		if (insert_new_lump_after(anchor, buf, len, 0) == 0)
+		{
+			LM_ERR("failed to insert content-type lump\n");
+			pkg_free(buf);
+			return -1;
+		}
+	}	
+	anchor = anchor_lump(msg, body.s - msg->buf, 0, 0);
+
+	if (anchor == 0)
+	{
+		LM_ERR("failed to get body anchor\n");
+		return -1;
+	} 
+
+	buf=pkg_malloc(sizeof(char)*(nb.len));
+	if (buf==0)
+	{
+		LM_ERR("out of pkg memory\n");
+		return -1;
+	}
+	memcpy(buf, nb.s, nb.len);
+	if (insert_new_lump_after(anchor, buf, nb.len, 0) == 0)
+	{
+		LM_ERR("failed to insert body lump\n");
+		pkg_free(buf);
+		return -1;
+	}
+	LM_DBG("new body: [%.*s]", nb.len, nb.s);
+	return 1;
+}
+
+static int set_rpl_body_f(struct sip_msg* msg, char* p1, char* p2)
+{
+	char* buf;
+	int len;
+	int value_len;
+	str nb = {0,0};
+	str nc = {0,0};
+
+	if(p1==0 || p2==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &nb)!=0)
+	{
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+	if(nb.s==NULL || nb.len == 0)
+	{
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)p2, &nc)!=0)
+	{
+		LM_ERR("unable to get p2\n");
+		return -1;
+	}
+	if(nc.s==NULL || nc.len == 0)
+	{
+		LM_ERR("invalid content-type parameter\n");
+		return -1;
+	}
+
+	/* add content-type */
+	value_len = nc.len;
 	len=sizeof("Content-Type: ") - 1 + value_len + CRLF_LEN;
 	buf=pkg_malloc(sizeof(char)*(len));
 
@@ -1157,45 +1284,24 @@ static int insert_body_f(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 	memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
-	memcpy(buf+sizeof("Content-Type: ") - 1, p2, value_len);
+	memcpy(buf+sizeof("Content-Type: ") - 1, nc.s, value_len);
 	memcpy(buf+sizeof("Content-Type: ") - 1 + value_len, CRLF, CRLF_LEN);
-	if (insert_new_lump_after(anchor, buf, len, 0) == 0)
+	if (add_lump_rpl(msg, buf, len, LUMP_RPL_HDR) == 0)
 	{
 		LM_ERR("failed to insert content-type lump\n");
 		pkg_free(buf);
 		return -1;
 	}
+	pkg_free(buf);
 
+	if (add_lump_rpl( msg, nb.s, nb.len, LUMP_RPL_BODY)==0) {
+		LM_ERR("cannot add body lump\n");
+		return -1;
+	}
 		
-	anchor = anchor_lump(msg, body.s - msg->buf, 0, 0);
-
-	if (anchor == 0)
-	{
-		LM_ERR("failed to get body anchor\n");
-		return -1;
-	} 
-
-	len = strlen(p1);
-	buf=pkg_malloc(sizeof(char)*(len));
-	if (buf==0)
-	{
-		LM_ERR("out of pkg memory\n");
-		return -1;
-	}
-
-	memcpy(buf, p1, len);
-
-	if (insert_new_lump_after(anchor, buf, len, 0) == 0)
-	{
-		LM_ERR("failed to insert body lump\n");
-		pkg_free(buf);
-		return -1;
-	} else {
-		LM_DBG("inserted inserted body! [%s]", p1);
-	}
-
 	return 1;
 }
+
 
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
