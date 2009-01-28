@@ -212,6 +212,7 @@ static stat_export_t mod_stats[] = {
 	{0,0,0}
 };
 
+struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param);
 
 static mi_export_t mi_cmds[] = {
 	{ "dlg_list",           mi_print_dlgs,       0,  0,  0},
@@ -219,6 +220,7 @@ static mi_export_t mi_cmds[] = {
 	{ "dlg_end_dlg",        mi_terminate_dlg,    0,  0,  0},
 	{ "profile_get_size",   mi_get_profile,      0,  0,  0},
 	{ "profile_list_dlgs",  mi_profile_list,     0,  0,  0},
+	{ "dlg_bridge",         mi_dlg_bridge,       0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -1002,3 +1004,43 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	_dlg_ctx.dir = dir;
 	return 1;
 }
+
+struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
+{
+	str from = {0,0};
+	str to = {0,0};
+	str op = {0,0};
+	struct mi_node* node;
+
+	node = cmd_tree->node.kids;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	from = node->value;
+	if(from.len<=0 || from.s==NULL)
+	{
+		LM_ERR("bad From value\n");
+		return init_mi_tree( 500, "Bad From value", 14);
+	}
+
+	node = node->next;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	to = node->value;
+	if(to.len<=0 || to.s == NULL)
+	{
+		return init_mi_tree(500, "Bad To value", 12);
+	}
+
+	node= node->next;
+	if(node != NULL)
+	{
+		op = node->value;
+	}
+
+	if(dlg_bridge(&from, &to, &op)!=0)
+		return init_mi_tree(500, MI_INTERNAL_ERR_S,  MI_INTERNAL_ERR_LEN);
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
+
+

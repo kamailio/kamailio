@@ -39,7 +39,7 @@
 #define DLG_HOLD_SDP "v=0\r\no=kamailio-bridge 0 0 IN IP4 0.0.0.0\r\ns=kamailio\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"
 #define DLG_HOLD_SDP_LEN	(sizeof(DLG_HOLD_SDP)-1)
 
-#define DLG_HOLD_CT_HDR "Contact: <sip:192.168.1.23>\r\nContent-Type: application/sdp\r\n"
+#define DLG_HOLD_CT_HDR "Contact: <sip:kamailio.org:5060>\r\nContent-Type: application/sdp\r\n"
 #define DLG_HOLD_CT_HDR_LEN	(sizeof(DLG_HOLD_CT_HDR)-1)
 
 extern str dlg_bridge_controller;
