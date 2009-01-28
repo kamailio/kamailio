@@ -991,6 +991,13 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs = (_tr_tobody.parsed_uri.host.s)
 							?_tr_tobody.parsed_uri.host:_tr_empty;
 			break;
+		case TR_TOBODY_PARAMS:
+			if(_tr_tobody.param_lst!=NULL)
+			{
+				val->rs.s = _tr_tobody.param_lst->name.s;
+				val->rs.len = _tr_tobody.body.s+_tr_tobody.body.len-val->rs.s;
+			} else val->rs = _tr_empty;
+			break;
 
 		default:
 			LM_ERR("unknown subtype %d\n", subtype);
@@ -1603,8 +1610,11 @@ char* tr_parse_tobody(str* in, trans_t *t)
 	} else if(name.len==4 && strncasecmp(name.s, "host", 4)==0) {
 		t->subtype = TR_TOBODY_URI_HOST;
 		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "params", 6)==0) {
+		t->subtype = TR_TOBODY_PARAMS;
+		goto done;
 	} else if(name.len==7 && strncasecmp(name.s, "display", 7)==0) {
-		t->subtype = TR_NA_NAME;
+		t->subtype = TR_TOBODY_DISPLAY;
 		goto done;
 	}
 
