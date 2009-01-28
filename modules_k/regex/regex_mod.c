@@ -27,6 +27,13 @@
  */
 
 
+/*!
+ * \file
+ * \brief REGEX :: Perl-compatible regular expressions using PCRE library
+ * Copyright (C) 2008 Iñaki Baz Castillo
+ * \ingroup regex
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,9 +53,9 @@ MODULE_VERSION
 #define START 0
 #define RELOAD 1
 
-#define FILE_MAX_LINE 500        /* Max line size in the file */
-#define MAX_GROUPS 20            /* Max number of groups */
-#define GROUP_MAX_SIZE 8192      /* Max size of a group */
+#define FILE_MAX_LINE 500        /*!< Max line size in the file */
+#define MAX_GROUPS 20            /*!< Max number of groups */
+#define GROUP_MAX_SIZE 8192      /*!< Max size of a group */
 
 
 /*
@@ -148,23 +155,23 @@ static mi_export_t mi_cmds[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"regex",                   /* module name */
-	DEFAULT_DLFLAGS,           /* dlopen flags */
-	cmds,                      /* exported functions */
-	params,                    /* exported parameters */
-	0,                         /* exported statistics */
-	mi_cmds,                   /* exported MI functions */
-	0,                         /* exported pseudo-variables */
-	0,                         /* extra processes */
-	mod_init,                  /* module initialization function */
-	(response_function) 0,     /* response handling function */
-	destroy,                   /* destroy function */
-	0                          /* per-child init function */
+	"regex",                   /*!< module name */
+	DEFAULT_DLFLAGS,           /*!< dlopen flags */
+	cmds,                      /*!< exported functions */
+	params,                    /*!< exported parameters */
+	0,                         /*!< exported statistics */
+	mi_cmds,                   /*!< exported MI functions */
+	0,                         /*!< exported pseudo-variables */
+	0,                         /*!< extra processes */
+	mod_init,                  /*!< module initialization function */
+	(response_function) 0,     /*!< response handling function */
+	destroy,                   /*!< destroy function */
+	0                          /*!< per-child init function */
 };
 
 
 
-/*
+/*! \brief
  * Init module function
  */
 static int mod_init(void)
@@ -175,8 +182,7 @@ static int mod_init(void)
 	/* Group matching feature */
 	if (file == NULL) {
 		LM_NOTICE("'file' parameter is not set, group matching disabled\n");
-	}
-	else {
+	} else {
 		/* Create and init the lock */
 		reload_lock = lock_alloc();
 		if (reload_lock == NULL) {
@@ -242,7 +248,7 @@ static void destroy(void)
 }
 
 
-/* Convert the file content into regular expresions and store them in pcres */
+/*! \brief Convert the file content into regular expresions and store them in pcres */
 static int load_pcres(int action)
 {
 	int i, j;
@@ -327,13 +333,12 @@ static int load_pcres(int action)
 		if (line[strlen(line) - 1] == '\n') {
 			line[strlen(line)] = line[strlen(line) - 1];
 			line[strlen(line) - 2] = ')';
-		}
-		else {
+		} else {
 			/* This is the last char in the file and it's not \n */
 			line[strlen(line)] = ')';
 		}
 		
-		/* Append '(' at the beginning of the line ')' */
+		/* Append '(' at the beginning of the line */
 		memcpy(patterns[i]+strlen(patterns[i]), "(", 1);
 		
 		/* Append the line to the current pattern */
@@ -361,7 +366,7 @@ static int load_pcres(int action)
 			patterns[i][strlen(patterns[i])-1] = '\0';
 		}
 		
-		/* Replace '|n' with '|' (except at the end of the pattern) */
+		/* Replace '\n' with '|' (except at the end of the pattern) */
 		for (j=0; j < strlen(patterns[i]); j++) {
 			if (patterns[i][j] == '\n' && j != strlen(patterns[i])-1) {
 				patterns[i][j] = '|';
@@ -508,7 +513,7 @@ static void free_shared_memory(void)
  * Script functions
  */
 
-/* Return true if the argument matches the regular expression parameter */
+/*! \brief Return true if the argument matches the regular expression parameter */
 static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	str string;
@@ -567,15 +572,13 @@ static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
 		}
 		return -1;
 	}
-	else {
-		LM_DBG("'%s' matches '%s'\n", string.s, regex.s);
-		return 1;
-	}
-	
+
+	LM_DBG("'%s' matches '%s'\n", string.s, regex.s);
+	return 1;
 }
 
 
-/* Return true if the string argument matches the pattern group parameter */
+/*! \brief Return true if the string argument matches the pattern group parameter */
 static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	str string;
@@ -595,8 +598,7 @@ static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 	
 	if (_s2 == NULL) {
 		num_pcre = 0;
-	}
-	else {
+	} else {
 		num_pcre = (uint)(long)_s2;
 	}
 	
@@ -649,13 +651,13 @@ static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
  * MI functions
  */
 
-/* Reload pcres by reading the file again */
+/*! \brief Reload pcres by reading the file again */
 static struct mi_root* mi_pcres_reload(struct mi_root* cmd, void* param)
 {
 	/* Check if group matching feature is enabled */
 	if (file == NULL) {
 		LM_NOTICE("'file' parameter is not set, group matching disabled\n");
-		return init_mi_tree(403, "Feature not enabled", 19);
+		return init_mi_tree(403, MI_SSTR("Group matching not enabled"));
 	}
 	
 	LM_NOTICE("reloading pcres...\n");
