@@ -52,6 +52,7 @@
 #define MI_SUBSCRIBE        1<<8
 #define RLS_SUBSCRIBE       1<<9
 #define DIALOG_PUBLISH      1<<10
+#define PURPLE_PUBLISH      1<<11
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1
