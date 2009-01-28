@@ -70,7 +70,7 @@ typedef struct int_or_pvar {
 #define DISABLE_CACHE 0
 #define ENABLE_CACHE 1
 
-char *allow_suffix;
+extern char *allow_suffix;
 int allow_test(char *file, char *uri, char *contact);
 
 #endif
