@@ -58,6 +58,8 @@ str to_contact_column		=	str_init(TO_CONTACT_COL);
 str from_contact_column		=	str_init(FROM_CONTACT_COL);
 str to_sock_column			=	str_init(TO_SOCK_COL);
 str from_sock_column		=	str_init(FROM_SOCK_COL);
+str sflags_column			=	str_init(SFLAGS_COL);
+str toroute_column			=	str_init(TOROUTE_COL);
 str dialog_table_name		=	str_init(DIALOG_TABLE_NAME);
 int dlg_db_mode				=	DB_MODE_NONE;
 

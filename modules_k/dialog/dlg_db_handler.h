@@ -49,6 +49,8 @@
 #define FROM_CONTACT_COL		"caller_contact"
 #define FROM_SOCK_COL			"caller_sock"
 #define TO_SOCK_COL				"callee_sock"
+#define SFLAGS_COL				"sflags"
+#define TOROUTE_COL				"toroute"
 #define DIALOG_TABLE_NAME		"dialog"
 
 #define DLG_TABLE_VERSION		2
@@ -81,6 +83,8 @@ extern str to_contact_column;
 extern str from_contact_column;
 extern str to_sock_column;
 extern str from_sock_column;
+extern str sflags_column;
+extern str toroute_column;
 extern str dialog_table_name;
 extern int dlg_db_mode;
 

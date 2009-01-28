@@ -195,10 +195,13 @@ static param_export_t mod_params[]={
 	{ "from_contact_column",   STR_PARAM, &from_contact_column.s    },
 	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
 	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
+	{ "sflags_column",         STR_PARAM, &sflags_column.s          },
+	{ "toroute_column",        STR_PARAM, &toroute_column.s         },
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
 	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
+	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
 	{ 0,0,0 }
 };
 
@@ -363,6 +366,7 @@ static int mod_init(void)
 	if (timeout_spec.s)
 		timeout_spec.len = strlen(timeout_spec.s);
 
+	dlg_bridge_controller.len = strlen(dlg_bridge_controller.s);
 	db_url.len = strlen(db_url.s);
 	call_id_column.len = strlen(call_id_column.s);
 	from_uri_column.len = strlen(from_uri_column.s);
@@ -382,6 +386,8 @@ static int mod_init(void)
 	from_contact_column.len = strlen(from_contact_column.s);
 	to_sock_column.len = strlen(to_sock_column.s);
 	from_sock_column.len = strlen(from_sock_column.s);
+	sflags_column.len = strlen(sflags_column.s);
+	toroute_column.len = strlen(toroute_column.s);
 	dialog_table_name.len = strlen(dialog_table_name.s);
 
 	/* param checkings */
