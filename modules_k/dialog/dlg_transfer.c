@@ -1,0 +1,420 @@
+/**
+ * $Id$
+ *
+ * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
+ *
+ * This file is part of kamailio, a free SIP server.
+ *
+ * kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "../../dprint.h"
+#include "../../ut.h"
+#include "../../trim.h"
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/msg_parser.h"
+
+#include "../tm/tm_load.h"
+
+#include "dlg_req_within.h"
+#include "dlg_transfer.h"
+
+#define DLG_HOLD_SDP "v=0\r\no=kamailio-bridge 0 0 IN IP4 0.0.0.0\r\ns=kamailio\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"
+#define DLG_HOLD_SDP_LEN	(sizeof(DLG_HOLD_SDP)-1)
+
+#define DLG_HOLD_CT_HDR "Contact: <sip:192.168.1.23>\r\nContent-Type: application/sdp\r\n"
+#define DLG_HOLD_CT_HDR_LEN	(sizeof(DLG_HOLD_CT_HDR)-1)
+
+extern str dlg_bridge_controller;
+
+void dlg_transfer_ctx_free(dlg_transfer_ctx_t *dtc)
+{
+	struct dlg_cell *dlg;
+
+	if(dtc==NULL)
+		return;
+	if(dtc->from.s!=NULL)
+		shm_free(dtc->from.s);
+	if(dtc->to.s!=NULL)
+		shm_free(dtc->to.s);
+
+	dlg = dtc->dlg;
+	if(dlg!=NULL)
+	{
+		if (dlg->tag[DLG_CALLER_LEG].s)
+			shm_free(dlg->tag[DLG_CALLER_LEG].s);
+
+		if (dlg->tag[DLG_CALLEE_LEG].s)
+			shm_free(dlg->tag[DLG_CALLEE_LEG].s);
+
+		if (dlg->cseq[DLG_CALLER_LEG].s)
+			shm_free(dlg->cseq[DLG_CALLER_LEG].s);
+
+		if (dlg->cseq[DLG_CALLEE_LEG].s)
+			shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
+
+		shm_free(dlg);
+	}
+
+	shm_free(dtc);
+}
+
+void dlg_refer_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
+{
+	dlg_transfer_ctx_t *dtc = NULL;
+	dlg_t* dialog_info = NULL;
+	str met = {"BYE", 3};
+	int result;
+	struct dlg_cell *dlg;
+
+	if(ps->param==NULL || *ps->param==0)
+	{
+		LM_DBG("message id not received\n");
+		return;
+	}
+	dtc = *((dlg_transfer_ctx_t**)ps->param);
+	if(dtc==NULL)
+		return;
+	LM_DBG("REFER completed with status %d\n", ps->code);
+
+	/* we send the BYE anyhow */
+	dlg = dtc->dlg;
+	if ((dialog_info = build_dlg_t(dlg, DLG_CALLEE_LEG)) == 0){
+		LM_ERR("failed to create dlg_t\n");
+		goto error;
+	}
+
+	result = d_tmb.t_request_within
+		(&met,         /* method */
+		0,             /* extra headers */
+		NULL,          /* body */
+		dialog_info,   /* dialog structure */
+		0,             /* callback function */
+		0);            /* callback parameter */
+
+	if(result < 0) {
+		LM_ERR("failed to send the REFER request\n");
+		/* todo: clean-up dtc */
+		goto error;
+	}
+
+	free_tm_dlg(dialog_info);
+	dlg_transfer_ctx_free(dtc);
+
+	LM_DBG("BYE sent\n");
+	return;
+
+error:
+	dlg_transfer_ctx_free(dtc);
+	if(dialog_info)
+		free_tm_dlg(dialog_info);
+	return;
+
+}
+
+static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
+{
+	/*verify direction*/
+	dlg_t* dialog_info = NULL;
+	str met = {"REFER", 5};
+	int result;
+	str hdrs;
+	struct dlg_cell *dlg;
+
+	dlg = dtc->dlg;
+
+	if ((dialog_info = build_dlg_t(dlg, DLG_CALLEE_LEG)) == 0){
+		LM_ERR("failed to create dlg_t\n");
+		goto error;
+	}
+
+	hdrs.len = 23 + 2*CRLF_LEN + dlg_bridge_controller.len
+		+ dtc->to.len;
+	LM_DBG("sending REFER [%d] <%.*s>\n", hdrs.len, dtc->to.len, dtc->to.s);
+	hdrs.s = (char*)pkg_malloc(hdrs.len*sizeof(char));
+	if(hdrs.s == NULL)
+		goto error;
+	memcpy(hdrs.s, "Referred-By: ", 13);
+	memcpy(hdrs.s+13, dlg_bridge_controller.s, dlg_bridge_controller.len);
+	memcpy(hdrs.s+13+dlg_bridge_controller.len, CRLF, CRLF_LEN);
+	memcpy(hdrs.s+13+dlg_bridge_controller.len+CRLF_LEN, "Refer-To: ", 10);
+	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN, dtc->to.s,
+			dtc->to.len);
+	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len,
+			CRLF, CRLF_LEN);
+
+	result = d_tmb.t_request_within
+		(&met,         /* method */
+		&hdrs,         /* extra headers */
+		NULL,          /* body */
+		dialog_info,   /* dialog structure */
+		dlg_refer_tm_callback,  /* callback function */
+		(void*)dtc);            /* callback parameter */
+
+	pkg_free(hdrs.s);
+	if(result < 0) {
+		LM_ERR("failed to send the REFER request\n");
+		/* todo: clean-up dtc */
+		goto error;
+	}
+
+	free_tm_dlg(dialog_info);
+
+	LM_DBG("REFER sent\n");
+	return 0;
+
+error:
+	if(dialog_info)
+		free_tm_dlg(dialog_info);
+	dlg_transfer_ctx_free(dtc);
+	return -1;
+}
+
+
+void dlg_bridge_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
+{
+	struct sip_msg *msg = NULL;
+	dlg_transfer_ctx_t *dtc = NULL;
+	struct dlg_cell *dlg = NULL;
+	str s;
+	str cseq;
+	str empty = {"", 0};
+
+	if(ps->param==NULL || *ps->param==0)
+	{
+		LM_DBG("message id not received\n");
+		return;
+	}
+	dtc = *((dlg_transfer_ctx_t**)ps->param);
+	if(dtc==NULL)
+		return;
+	LM_DBG("completed with status %d\n", ps->code);
+	if(ps->code>=300)
+		goto error;
+
+	/* 2xx - build dialog/send refer */
+	msg = ps->rpl;
+	if((msg->cseq==NULL || parse_headers(msg,HDR_CSEQ_F,0)<0)
+			|| msg->cseq==NULL || msg->cseq->parsed==NULL)
+	{
+			LM_ERR("bad sip message or missing CSeq hdr :-/\n");
+			goto error;
+	}
+	cseq = (get_cseq(msg))->number;
+
+	if((msg->to==NULL && parse_headers(msg, HDR_TO_F,0)<0) || msg->to==NULL)
+	{
+		LM_ERR("bad request or missing TO hdr\n");
+		goto error;
+	}
+	if(parse_from_header(msg))
+	{
+		LM_ERR("bad request or missing FROM hdr\n");
+		goto error;
+	}
+	if((msg->callid==NULL && parse_headers(msg,HDR_CALLID_F,0)<0)
+			|| msg->callid==NULL){
+		LM_ERR("bad request or missing CALLID hdr\n");
+		goto error;
+	}
+	s = msg->callid->body;
+	trim(&s);
+
+	/* some sanity checks */
+	if (s.len==0 || get_from(msg)->tag_value.len==0) {
+		LM_ERR("invalid request -> callid (%d) or from TAG (%d) empty\n",
+			s.len, get_from(msg)->tag_value.len);
+		goto error;
+	}
+
+	dlg = build_new_dlg(&s /*callid*/, &(get_from(msg)->uri) /*from uri*/,
+		&(get_to(msg)->uri) /*to uri*/,
+		&(get_from(msg)->tag_value)/*from_tag*/ );
+	if (dlg==0) {
+		LM_ERR("failed to create new dialog\n");
+		goto error;
+	}
+	dtc->dlg = dlg;
+	if (dlg_set_leg_info(dlg, &(get_from(msg)->tag_value),
+				&empty, &dlg_bridge_controller, &cseq, DLG_CALLER_LEG)!=0) {
+		LM_ERR("dlg_set_leg_info failed\n");
+		goto error;
+	}
+
+	if (populate_leg_info(dlg, msg, t, DLG_CALLEE_LEG,
+			&(get_to(msg)->tag_value)) !=0)
+	{
+		LM_ERR("could not add further info to the dialog\n");
+		shm_free(dlg);
+		goto error;
+	}
+
+	if(dlg_refer_callee(dtc)!=0)
+		goto error;
+	return;
+
+error:
+	dlg_transfer_ctx_free(dtc);
+	return;
+}
+
+
+int dlg_bridge(str *from, str *to, str *op)
+{
+	dlg_transfer_ctx_t *dtc;
+	int ret;
+	str s_method = {"INVITE", 6};
+	str s_body;
+	str s_hdrs;
+
+	dtc = (dlg_transfer_ctx_t*)shm_malloc(sizeof(dlg_transfer_ctx_t));
+	if(dtc==NULL)
+	{
+		LM_ERR("no shm\n");
+		return -1;
+	}
+	memset(dtc, 0, sizeof(dlg_transfer_ctx_t));
+	dtc->from.s = (char*)shm_malloc((from->len+1)*sizeof(char));
+	if(dtc->from.s==NULL)
+	{
+		LM_ERR("no shm\n");
+		shm_free(dtc);
+		return -1;
+	}
+	dtc->to.s = (char*)shm_malloc((to->len+1)*sizeof(char));
+	if(dtc->to.s==NULL)
+	{
+		LM_ERR("no shm\n");
+		shm_free(dtc->from.s);
+		shm_free(dtc);
+		return -1;
+	}
+	memcpy(dtc->from.s, from->s, from->len);
+	dtc->from.len = from->len;
+	dtc->from.s[dtc->from.len] = '\0';
+	memcpy(dtc->to.s, to->s, to->len);
+	dtc->to.len = to->len;
+	dtc->to.s[dtc->to.len] = '\0';
+
+	s_body.s   = DLG_HOLD_SDP;
+	s_body.len = DLG_HOLD_SDP_LEN;
+	s_hdrs.s   = DLG_HOLD_CT_HDR;
+	s_hdrs.len = DLG_HOLD_CT_HDR_LEN;
+
+	ret = d_tmb.t_request(&s_method,  /* Type of the message */
+		&dtc->from,                   /* Request-URI (To) */
+		&dtc->from,                   /* To */
+		&dlg_bridge_controller,       /* From */
+		&s_hdrs, /* Optional headers including CRLF */
+		&s_body, /* Message body */
+		(op!=NULL && op->len>0)?op:NULL, /* outbound uri */
+		dlg_bridge_tm_callback, /* Callback function */
+		(void*)(long)dtc        /* Callback parameter */
+		);
+
+	if(ret!=0)
+	{
+		dlg_transfer_ctx_free(dtc);
+		return -1;
+	}
+	return 0;
+}
+
+int dlg_transfer(struct dlg_cell *dlg, str *to, int side)
+{
+	dlg_transfer_ctx_t *dtc = NULL;
+	struct dlg_cell *ndlg = NULL;
+	str from;
+	str empty = {"", 0};
+
+	dtc = (dlg_transfer_ctx_t*)shm_malloc(sizeof(dlg_transfer_ctx_t));
+	if(dtc==NULL)
+	{
+		LM_ERR("no shm\n");
+		return -1;
+	}
+	if(side==DLG_CALLEE_LEG)
+	{
+		from = dlg->from_uri;
+	} else {
+		from = dlg->to_uri;
+	}
+	memset(dtc, 0, sizeof(dlg_transfer_ctx_t));
+	dtc->from.s = (char*)shm_malloc((from.len+1)*sizeof(char));
+	if(dtc->from.s==NULL)
+	{
+		LM_ERR("no shm\n");
+		shm_free(dtc);
+		return -1;
+	}
+	dtc->to.s = (char*)shm_malloc((to->len+1)*sizeof(char));
+	if(dtc->to.s==NULL)
+	{
+		LM_ERR("no shm\n");
+		shm_free(dtc->from.s);
+		shm_free(dtc);
+		return -1;
+	}
+	memcpy(dtc->from.s, from.s, from.len);
+	dtc->from.len = from.len;
+	dtc->from.s[dtc->from.len] = '\0';
+	memcpy(dtc->to.s, to->s, to->len);
+	dtc->to.len = to->len;
+	dtc->to.s[dtc->to.len] = '\0';
+	
+	if(side==DLG_CALLER_LEG)
+		ndlg = build_new_dlg(&dlg->callid /*callid*/,
+				&dlg->to_uri /*from uri*/, &dlg->from_uri /*to uri*/,
+				&dlg->tag[side]/*from_tag*/ );
+	else
+		ndlg = build_new_dlg(&dlg->callid /*callid*/,
+				&dlg->from_uri /*from uri*/, &dlg->to_uri /*to uri*/,
+				&dlg->tag[side]/*from_tag*/ );
+	if (ndlg==0) {
+		LM_ERR("failed to create new dialog\n");
+		goto error;
+	}
+	dtc->dlg = ndlg;
+	if (dlg_set_leg_info(ndlg, &dlg->tag[side], &empty,
+			&dlg->contact[side], &dlg->cseq[side], DLG_CALLER_LEG)!=0)
+	{
+		LM_ERR("dlg_set_leg_info failed for caller\n");
+		goto error;
+	}
+	if(side==DLG_CALLEE_LEG)
+		side = DLG_CALLER_LEG;
+	else
+		side = DLG_CALLEE_LEG;
+	if (dlg_set_leg_info(ndlg, &dlg->tag[side], &dlg->route_set[side],
+			&dlg->contact[side], &dlg->cseq[side], DLG_CALLEE_LEG)!=0)
+	{
+		LM_ERR("dlg_set_leg_info failed for caller\n");
+		goto error;
+	}
+
+	if(dlg_refer_callee(dtc)!=0)
+		goto error;
+	return 0;
+
+error:
+	dlg_transfer_ctx_free(dtc);
+	return -1;
+}
+
