@@ -54,7 +54,7 @@ void destroy_dlg_timer(void);
 
 int insert_dlg_timer(struct dlg_tl *tl, int interval);
 
-int remove_dlg_timer(struct dlg_tl *tl);
+int remove_dialog_timer(struct dlg_tl *tl);
 
 int update_dlg_timer( struct dlg_tl *tl, int timeout );
 

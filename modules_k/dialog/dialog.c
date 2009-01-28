@@ -50,6 +50,7 @@
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
+#include "../../faked_msg.h"
 #include "../../mem/mem.h"
 #include "../../mi/mi.h"
 #include "../tm/tm_load.h"
@@ -62,6 +63,8 @@
 #include "dlg_db_handler.h"
 #include "dlg_req_within.h"
 #include "dlg_profile.h"
+#include "dlg_var.h"
+#include "dlg_transfer.h"
 
 MODULE_VERSION
 
@@ -82,6 +85,7 @@ static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 
+str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
 /* statistic variables */
 int dlg_enable_stats = 1;
@@ -112,9 +116,21 @@ static int w_set_dlg_profile(struct sip_msg*, char*, char*);
 static int w_unset_dlg_profile(struct sip_msg*, char*, char*);
 static int w_is_in_profile(struct sip_msg*, char*, char*);
 static int w_get_profile_size(struct sip_msg*, char*, char*, char*);
-
+static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2);
+static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2);
+static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
+static int w_dlg_manage(struct sip_msg*, char*, char*);
+static int w_dlg_bye(struct sip_msg*, char*, char*);
+static int w_dlg_refer(struct sip_msg*, char*, char*);
+static int w_dlg_bridge(struct sip_msg*, char*, char*, char*);
+static int fixup_dlg_bye(void** param, int param_no);
+static int fixup_dlg_refer(void** param, int param_no);
+static int fixup_dlg_bridge(void** param, int param_no);
+static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 
 static cmd_export_t cmds[]={
+	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
+			0, REQUEST_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  1,fixup_profile,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  2,fixup_profile,
@@ -131,6 +147,20 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"get_profile_size",(cmd_function)w_get_profile_size, 3,fixup_get_profile3,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_setflag", (cmd_function)w_dlg_setflag,          1,fixup_igp_null,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_resetflag", (cmd_function)w_dlg_resetflag,      1,fixup_igp_null,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_isflagset", (cmd_function)w_dlg_isflagset,      1,fixup_igp_null,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_bye",(cmd_function)w_dlg_bye,                   1,fixup_dlg_bye,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_refer",(cmd_function)w_dlg_refer,               2,fixup_dlg_refer,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_bridge",(cmd_function)w_dlg_bridge,             3,fixup_dlg_bridge,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"dlg_get",(cmd_function)w_dlg_get,                   3,fixup_dlg_bridge,
+			0, REQUEST_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -200,6 +230,10 @@ static pv_export_t mod_items[] = {
 		0, 0, 0, 0 },
 	{ {"DLG_status",  sizeof("DLG_status")-1}, PVT_OTHER, pv_get_dlg_status, 0,
 		0, 0, 0, 0 },
+	{ {"dlg_ctx",  sizeof("dlg_ctx")-1}, PVT_OTHER, pv_get_dlg_ctx,
+		pv_set_dlg_ctx, pv_parse_dlg_ctx_name, 0, 0, 0 },
+	{ {"dlg",  sizeof("dlg")-1}, PVT_OTHER, pv_get_dlg,
+		0, pv_parse_dlg_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -321,6 +355,9 @@ static int mod_init(void)
 {
 	unsigned int n;
 
+	if(faked_msg_init()<0)
+		return -1;
+
 	if (timeout_spec.s)
 		timeout_spec.len = strlen(timeout_spec.s);
 
@@ -428,6 +465,18 @@ static int mod_init(void)
 
 	if (register_script_cb( profile_cleanup, POST_SCRIPT_CB|REQ_TYPE_CB,0)<0) {
 		LM_ERR("cannot regsiter script callback");
+		return -1;
+	}
+	if (register_script_cb(dlg_cfg_cb,
+				PRE_SCRIPT_CB|REQ_TYPE_CB,0)<0)
+	{
+		LM_ERR("cannot regsiter pre-script ctx callback\n");
+		return -1;
+	}
+	if (register_script_cb(dlg_cfg_cb,
+				POST_SCRIPT_CB|REQ_TYPE_CB,0)<0)
+	{
+		LM_ERR("cannot regsiter post-script ctx callback\n");
 		return -1;
 	}
 
@@ -650,4 +699,306 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 	return 1;
 }
 
+static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
+{
+	struct dlg_cell *dlg;
+	int val;
 
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
+	{
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	if(val<0 || val>31)
+		return -1;
+	if ( (dlg=dlg_get_ctx_dialog())==NULL )
+		return -1;
+
+	dlg->sflags |= 1<<val;
+	return 1;
+}
+
+
+static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
+{
+	struct dlg_cell *dlg;
+	int val;
+
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
+	{
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	if(val<0 || val>31)
+		return -1;
+
+	if ( (dlg=dlg_get_ctx_dialog())==NULL )
+		return -1;
+
+	dlg->sflags &= ~(1<<val);
+	return 1;
+}
+
+
+static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
+{
+	struct dlg_cell *dlg;
+	int val;
+
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
+	{
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	if(val<0 || val>31)
+		return -1;
+
+	if ( (dlg=dlg_get_ctx_dialog())==NULL )
+		return -1;
+
+	return (dlg->sflags&(1<<val))?1:-1;
+}
+
+static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
+{
+	str tag;
+	int backup_mode;
+
+	if( (msg->to==NULL && parse_headers(msg, HDR_TO_F,0)<0) || msg->to==NULL )
+	{
+		LM_ERR("bad TO header\n");
+		return -1;
+	}
+	tag = get_to(msg)->tag_value;
+	if(tag.s!=0 && tag.len!=0)
+	{
+		backup_mode = seq_match_mode;
+		seq_match_mode = SEQ_MATCH_NO_ID;
+		dlg_onroute(msg, NULL, NULL);
+		seq_match_mode = backup_mode;
+	} else {
+		if(dlg_new_dialog(msg, 0)!=0)
+			return -1;
+	}
+	return 1;
+}
+
+static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
+{
+	struct dlg_cell *dlg;
+	int n;
+
+	dlg = dlg_get_ctx_dialog();
+	if(dlg==NULL)
+		return -1;
+	
+	n = (int)(long)side;
+	if(n==1)
+	{
+		if(dlg_bye(dlg, NULL, DLG_CALLER_LEG)!=0)
+			return -1;
+		return 1;
+	} else if(n==2) {
+		if(dlg_bye(dlg, NULL, DLG_CALLEE_LEG)!=0)
+			return -1;
+		return 1;
+	} else {
+		if(dlg_bye_all(dlg, NULL)!=0)
+			return -1;
+		return 1;
+	}
+}
+
+static int w_dlg_refer(struct sip_msg *msg, char *side, char *to)
+{
+	struct dlg_cell *dlg;
+	int n;
+	str st = {0,0};
+
+	dlg = dlg_get_ctx_dialog();
+	if(dlg==NULL)
+		return -1;
+	
+	n = (int)(long)side;
+
+	if(fixup_get_svalue(msg, (gparam_p)to, &st)!=0)
+	{
+		LM_ERR("unable to get To\n");
+		return -1;
+	}
+	if(st.s==NULL || st.len == 0)
+	{
+		LM_ERR("invalid To parameter\n");
+		return -1;
+	}
+	if(n==1)
+	{
+		if(dlg_transfer(dlg, &st, DLG_CALLER_LEG)!=0)
+			return -1;
+	} else {
+		if(dlg_transfer(dlg, &st, DLG_CALLEE_LEG)!=0)
+			return -1;
+	}
+	return 1;
+}
+
+static int w_dlg_bridge(struct sip_msg *msg, char *from, char *to, char *op)
+{
+	str sf = {0,0};
+	str st = {0,0};
+	str so = {0,0};
+
+	if(from==0 || to==0 || op==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)from, &sf)!=0)
+	{
+		LM_ERR("unable to get From\n");
+		return -1;
+	}
+	if(sf.s==NULL || sf.len == 0)
+	{
+		LM_ERR("invalid From parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)to, &st)!=0)
+	{
+		LM_ERR("unable to get To\n");
+		return -1;
+	}
+	if(st.s==NULL || st.len == 0)
+	{
+		LM_ERR("invalid To parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)op, &so)!=0)
+	{
+		LM_ERR("unable to get OP\n");
+		return -1;
+	}
+
+	if(dlg_bridge(&sf, &st, &so)!=0)
+		return -1;
+	return 1;
+}
+
+
+static int fixup_dlg_bye(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"caller")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"callee")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int fixup_dlg_refer(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"caller")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"callee")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else if (param_no==2) {
+		return fixup_spve_null(param, 1);
+	} else {
+		LM_ERR("called with parameter idx %d\n", param_no);
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int fixup_dlg_bridge(void** param, int param_no)
+{
+	if (param_no>=1 && param_no<=3) {
+		return fixup_spve_null(param, 1);
+	} else {
+		LM_ERR("called with parameter idx %d\n", param_no);
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
+{
+	struct dlg_cell *dlg = NULL;
+	str sc = {0,0};
+	str sf = {0,0};
+	str st = {0,0};
+	unsigned int dir = 0;
+
+	if(ci==0 || ft==0 || tt==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ci, &sc)!=0)
+	{
+		LM_ERR("unable to get Call-ID\n");
+		return -1;
+	}
+	if(sc.s==NULL || sc.len == 0)
+	{
+		LM_ERR("invalid Call-ID parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
+	{
+		LM_ERR("unable to get From tag\n");
+		return -1;
+	}
+	if(sf.s==NULL || sf.len == 0)
+	{
+		LM_ERR("invalid From tag parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
+	{
+		LM_ERR("unable to get To Tag\n");
+		return -1;
+	}
+	if(st.s==NULL || st.len == 0)
+	{
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+
+	dlg = get_dlg(&sc, &sf, &st, &dir);
+	if(dlg==NULL)
+		return -1;
+	current_dlg_pointer = dlg;
+	_dlg_ctx.dlg = dlg;
+	_dlg_ctx.dir = dir;
+	return 1;
+}

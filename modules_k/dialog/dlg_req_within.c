@@ -37,6 +37,7 @@
 #include "../tm/dlg.h"
 #include "../tm/tm_load.h"
 #include "../../mi/tree.h"
+#include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
@@ -77,8 +78,8 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	memset(td, 0, sizeof(dlg_t));
 
 	/*local sequence number*/
-	cseq = (dir == DLG_CALLER_LEG) ?	cell->cseq[DLG_CALLER_LEG]:
-										cell->cseq[DLG_CALLEE_LEG];
+	cseq = (dir == DLG_CALLER_LEG) ?	cell->cseq[DLG_CALLEE_LEG]:
+										cell->cseq[DLG_CALLER_LEG];
 	if(str2int(&cseq, &loc_seq) != 0){
 		LM_ERR("invalid cseq\n");
 		goto error;
@@ -153,7 +154,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 			dlg->h_entry, dlg->h_id);
 
 		/* remove from timer */
-		ret = remove_dlg_timer(&dlg->tl);
+		ret = remove_dialog_timer(&dlg->tl);
 		if (ret < 0) {
 			LM_CRIT("unable to unlink the timer on dlg %p [%u:%u] "
 				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
@@ -168,6 +169,8 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 				dlg->callid.len, dlg->callid.s,
 				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+		} else {
+			unref++;
 		}
 		/* dialog terminated (BYE) */
 		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req, DLG_DIR_NONE, 0);
@@ -193,12 +196,14 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 
 
-static inline int build_extra_hdr(struct dlg_cell * cell, int dir,
-											str *extra_hdrs, str *str_hdr)
+static inline int build_extra_hdr(struct dlg_cell * cell, str *extra_hdrs,
+		str *str_hdr)
 {
 	char *p;
 
-	str_hdr->len = MAX_FWD_HDR_LEN + dlg_extra_hdrs.len + extra_hdrs->len;
+	str_hdr->len = MAX_FWD_HDR_LEN + dlg_extra_hdrs.len;
+	if(extra_hdrs && extra_hdrs->len>0)
+		str_hdr->len += extra_hdrs->len;
 
 	str_hdr->s = (char*)pkg_malloc( str_hdr->len * sizeof(char) );
 	if(!str_hdr->s){
@@ -212,10 +217,8 @@ static inline int build_extra_hdr(struct dlg_cell * cell, int dir,
 		memcpy( p, dlg_extra_hdrs.s, dlg_extra_hdrs.len);
 		p += dlg_extra_hdrs.len;
 	}
-	if (extra_hdrs->len) {
+	if (extra_hdrs && extra_hdrs->len>0)
 		memcpy( p, extra_hdrs->s, extra_hdrs->len);
-		p += extra_hdrs->len;
-	}
 
 	return 0;
 
@@ -230,12 +233,11 @@ error:
  * 		DLG_CALLER_LEG (0): caller
  * 		DLG_CALLEE_LEG (1): callee
  */
-static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
+static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 {
 	/*verify direction*/
 	dlg_t* dialog_info;
 	str met = {"BYE", 3};
-	str str_hdr = {NULL,0};
 	int result;
 
 	if ((dialog_info = build_dlg_t(cell, dir)) == 0){
@@ -243,18 +245,13 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 		goto err;
 	}
 
-	if ((build_extra_hdr(cell, dir, extra_hdrs, &str_hdr)) != 0){
-		LM_ERR("failed to create extra headers\n");
-		goto err;
-	}
-
-	LM_DBG("sending BYE to %s\n", (dir==0)?"caller":"callee");
+	LM_DBG("sending BYE to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
 
 	ref_dlg(cell, 1);
 
 	result = d_tmb.t_request_within
 		(&met,         /* method*/
-		&str_hdr,      /* extra headers*/
+		hdrs,         /* extra headers*/
 		NULL,          /* body*/
 		dialog_info,   /* dialog structure*/
 		bye_reply_cb,  /* callback function*/
@@ -266,7 +263,6 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 	}
 
 	free_tm_dlg(dialog_info);
-	pkg_free(str_hdr.s);
 
 	LM_DBG("BYE sent to %s\n", (dir==0)?"caller":"callee");
 	return 0;
@@ -276,8 +272,6 @@ err1:
 err:
 	if(dialog_info)
 		free_tm_dlg(dialog_info);
-	if(str_hdr.s)
-		pkg_free(str_hdr.s);
 	return -1;
 }
 
@@ -323,8 +317,7 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 	// lookup_dlg has incremented the reference count
 
 	if(dlg){
-		if ( (send_bye(dlg,DLG_CALLER_LEG,&mi_extra_hdrs)!=0) ||
-		(send_bye(dlg,DLG_CALLEE_LEG,&mi_extra_hdrs)!=0)) {
+		if(dlg_bye_all(dlg,(mi_extra_hdrs.len>0)?&mi_extra_hdrs:NULL)<0) {
 			status = 500;
 			msg = MI_DLG_OPERATION_ERR;
 			msg_len = MI_DLG_OPERATION_ERR_LEN;
@@ -346,3 +339,48 @@ error:
 	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 
 }
+
+int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side)
+{
+	str all_hdrs = { 0, 0 };
+	int ret;
+
+	if(side==DLG_CALLER_LEG)
+	{
+		if(dlg->dflags&DLG_FLAG_CALLERBYE)
+			return -1;
+		dlg->dflags |= DLG_FLAG_CALLERBYE;
+	} else {
+		if(dlg->dflags&DLG_FLAG_CALLEEBYE)
+			return -1;
+		dlg->dflags |= DLG_FLAG_CALLEEBYE;
+	}
+	if ((build_extra_hdr(dlg, hdrs, &all_hdrs)) != 0)
+	{
+		LM_ERR("failed to build dlg headers\n");
+		return -1;
+	}
+	ret = send_bye(dlg, side, &all_hdrs);
+	pkg_free(all_hdrs.s);
+	return ret;
+}
+
+int dlg_bye_all(struct dlg_cell *dlg, str *hdrs)
+{
+	str all_hdrs = { 0, 0 };
+	int ret;
+
+	if ((build_extra_hdr(dlg, hdrs, &all_hdrs)) != 0)
+	{
+		LM_ERR("failed to build dlg headers\n");
+		return -1;
+	}
+
+	ret = send_bye(dlg, DLG_CALLER_LEG, &all_hdrs);
+	ret |= send_bye(dlg, DLG_CALLEE_LEG, &all_hdrs);
+	
+	pkg_free(all_hdrs.s);
+	return ret;
+
+}
+

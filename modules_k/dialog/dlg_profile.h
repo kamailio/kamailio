@@ -66,7 +66,6 @@ struct dlg_profile_table {
 	struct dlg_profile_table *next;
 };
 
-
 int add_profile_definitions( char* profiles, unsigned int has_value);
 
 void destroy_dlg_profiles(void);

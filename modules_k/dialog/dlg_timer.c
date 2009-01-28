@@ -129,26 +129,20 @@ static inline void remove_dialog_timer_unsafe(struct dlg_tl *tl)
 
 
 
-int remove_dlg_timer_unsafe(struct dlg_tl *tl)
+int remove_dialog_timer(struct dlg_tl *tl)
 {
-	int ret = 0;
+	lock_get( d_timer->lock);
 
-	if (tl->prev==NULL && tl->next==NULL) {
-		if (tl->timeout != 0) {
-			LM_WARN("bogus non null timeout %u on unlinked dialog tl %p\n",
-				tl->timeout, tl);
-			return 1;
-		}
-		return 0;
+	if (tl->prev==NULL && tl->timeout==0) {
+		lock_release( d_timer->lock);
+		return 1;
 	}
+
 	if (tl->prev==NULL || tl->next==NULL) {
 		LM_CRIT("bogus tl=%p tl->prev=%p tl->next=%p\n",
 			tl, tl->prev, tl->next);
+		lock_release( d_timer->lock);
 		return -1;
-	}
-	if (tl->timeout == 0) {
-		LM_WARN("bogus null timeout on linked dialog tl=%p\n", tl);
-		ret = 2;
 	}
 
 	remove_dialog_timer_unsafe(tl);
@@ -156,17 +150,8 @@ int remove_dlg_timer_unsafe(struct dlg_tl *tl)
 	tl->prev = NULL;
 	tl->timeout = 0;
 
-	return ret;
-}
-
-int remove_dlg_timer(struct dlg_tl *tl)
-{
-	int ret = 0;
-
-	lock_get( d_timer->lock);
-	ret = remove_dlg_timer_unsafe(tl);
 	lock_release( d_timer->lock);
-	return ret;
+	return 0;
 }
 
 
@@ -213,6 +198,7 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 		LM_WARN("getting tl=%p tl->prev=%p tl->next=%p with %d\n",
 			tl,tl->prev,tl->next,tl->timeout);
 		tl->prev = 0;
+		tl->timeout = 0;
 		tl=tl->next;
 	}
 	LM_WARN("end with tl=%p tl->prev=%p tl->next=%p and d_timer->first.next->prev=%p\n",
@@ -243,8 +229,7 @@ void dlg_timer_routine(unsigned int ticks , void * attr)
 	while (tl) {
 		ctl = tl;
 		tl = tl->next;
-		ctl->next = (struct dlg_tl *)NULL;
-		ctl->timeout = 0;
+		ctl->next = NULL;
 		LM_DBG("tl=%p next=%p\n", ctl, tl);
 		timer_hdl( ctl );
 	}

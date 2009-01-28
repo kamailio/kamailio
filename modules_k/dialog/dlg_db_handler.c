@@ -341,17 +341,6 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			else
 				dlg->tl.timeout -= (unsigned int)time(0);
 
-			/*restore the timer values */
-			if (0 != insert_dlg_timer( &(dlg->tl), (int)dlg->tl.timeout )) {
-				LM_CRIT("Unable to insert dlg %p [%u:%u] "
-					"with clid '%.*s' and tags '%.*s' '%.*s'\n",
-					dlg, dlg->h_entry, dlg->h_id,
-					dlg->callid.len, dlg->callid.s,
-					dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-			}
-			LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
-
 			GET_STR_VALUE(cseq1, values, 10 , 1, 1);
 			GET_STR_VALUE(cseq2, values, 11 , 1, 1);
 			GET_STR_VALUE(rroute1, values, 12, 0, 0);
@@ -370,9 +359,23 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 			dlg->bind_addr[DLG_CALLER_LEG] = create_socket_info(values, 16);
 			dlg->bind_addr[DLG_CALLEE_LEG] = create_socket_info(values, 17);
+			
+			/*restore the timer values */
+			if (0 != insert_dlg_timer( &(dlg->tl), (int)dlg->tl.timeout )) {
+				LM_CRIT("Unable to insert dlg %p [%u:%u] "
+					"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+					dlg, dlg->h_entry, dlg->h_id,
+					dlg->callid.len, dlg->callid.s,
+					dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+				unref_dlg(dlg,1);
+				continue;
+			}
+			ref_dlg(dlg,1);
+			LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
 
 			dlg->lifetime = 0;
-			dlg->flags = 0;
+			dlg->dflags = 0;
 			next_dialog:
 			;
 		}
@@ -384,6 +387,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				goto error;
 			}
 			nr_rows = RES_ROW_N(res);
+			rows = RES_ROWS(res);
 		} else {
 			nr_rows = 0;
 		}
@@ -408,8 +412,8 @@ int remove_dialog_from_db(struct dlg_cell * cell)
 	db_key_t match_keys[2] = { &h_entry_column, &h_id_column};
 
 	/*if the dialog hasn 't been yet inserted in the database*/
-	LM_DBG("trying to remove a dialog, update_flag is %i\n", cell->flags);
-	if (cell->flags & DLG_FLAG_NEW) 
+	LM_DBG("trying to remove a dialog, update_flag is %i\n", cell->dflags);
+	if (cell->dflags & DLG_FLAG_NEW) 
 		return 0;
 
 	if (use_dialog_table()!=0)
@@ -450,7 +454,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 	if(use_dialog_table()!=0)
 		return -1;
 	
-	if((cell->flags & DLG_FLAG_NEW) != 0){
+	if((cell->dflags & DLG_FLAG_NEW) != 0){
 		/* save all the current dialogs information*/
 		VAL_TYPE(values) = VAL_TYPE(values+1) = VAL_TYPE(values+9) = 
 		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB_INT;
@@ -506,9 +510,9 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 			LM_ERR("could not add another dialog to db\n");
 			goto error;
 		}
-		cell->flags &= ~(DLG_FLAG_NEW|DLG_FLAG_CHANGED);
+		cell->dflags &= ~(DLG_FLAG_NEW|DLG_FLAG_CHANGED);
 		
-	} else if((cell->flags & DLG_FLAG_CHANGED) != 0) {
+	} else if((cell->dflags & DLG_FLAG_CHANGED) != 0) {
 		/* save only dialog's state and timeout */
 		VAL_TYPE(values) = VAL_TYPE(values+1) = 
 		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB_INT;
@@ -538,7 +542,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 			LM_ERR("could not update database info\n");
 			goto error;
 		}
-		cell->flags &= ~(DLG_FLAG_CHANGED);
+		cell->dflags &= ~(DLG_FLAG_CHANGED);
 	} else {
 		return 0;
 	}
@@ -593,7 +597,7 @@ void dialog_update_db(unsigned int ticks, void * param)
 
 		for(cell = entry.first; cell != NULL; cell = cell->next){
 
-			if( (cell->flags & DLG_FLAG_NEW) != 0 ) {
+			if( (cell->dflags & DLG_FLAG_NEW) != 0 ) {
 
 				VAL_INT(values)			= cell->h_entry;
 				VAL_INT(values+1)		= cell->h_id;
@@ -638,9 +642,9 @@ void dialog_update_db(unsigned int ticks, void * param)
 					goto error;
 				}
 
-				cell->flags &= ~(DLG_FLAG_NEW |DLG_FLAG_CHANGED);
+				cell->dflags &= ~(DLG_FLAG_NEW |DLG_FLAG_CHANGED);
 
-			} else if( (cell->flags & DLG_FLAG_CHANGED)!=0 ){
+			} else if( (cell->dflags & DLG_FLAG_CHANGED)!=0 ){
 
 				VAL_INT(values)			= cell->h_entry;
 				VAL_INT(values+1)		= cell->h_id;
@@ -658,7 +662,7 @@ void dialog_update_db(unsigned int ticks, void * param)
 					goto error;
 				}
 
-				cell->flags &= ~DLG_FLAG_CHANGED;
+				cell->dflags &= ~DLG_FLAG_CHANGED;
 
 			}
 

@@ -208,7 +208,7 @@ void destroy_dlg_profiles(void)
 extern struct tm_binds d_tmb;
 
 static unsigned int            current_dlg_msg_id = 0 ;
-static struct dlg_cell         *current_dlg_pointer = NULL ;
+struct dlg_cell                *current_dlg_pointer = NULL ;
 static struct dlg_profile_link *current_pending_linkers = NULL;
 
 

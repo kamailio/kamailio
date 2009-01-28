@@ -49,6 +49,7 @@
 #include "../../ut.h"
 #include "../../hash_func.h"
 #include "../../mi/mi.h"
+#include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 
@@ -115,7 +116,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	LM_DBG("destroing dialog %p\n",dlg);
 
-	ret = remove_dlg_timer(&dlg->tl);
+	ret = remove_dialog_timer(&dlg->tl);
 	if (ret < 0) {
 		LM_CRIT("unable to unlink the timer on dlg %p [%u:%u] "
 			"with clid '%.*s' and tags '%.*s' '%.*s'\n",
@@ -124,7 +125,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 	} else if (ret > 0) {
-		LM_WARN("inconsitent dlg timer data on dlg %p [%u:%u] "
+		LM_DBG("removed timer for dlg %p [%u:%u] "
 			"with clid '%.*s' and tags '%.*s' '%.*s'\n",
 			dlg, dlg->h_entry, dlg->h_id,
 			dlg->callid.len, dlg->callid.s,
@@ -485,6 +486,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
+	*unref = 0;
 
 	dlg_lock( d_table, d_entry);
 
@@ -501,8 +503,10 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					break;
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
-				case DLG_STATE_DELETED:
 					unref_dlg_unsafe(dlg,1,d_entry);
+					break;
+				case DLG_STATE_DELETED:
+					*unref = 1;
 					break;
 				default:
 					log_next_state_dlg(event, dlg);
@@ -532,7 +536,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 		case DLG_EVENT_RPL2xx:
 			switch (dlg->state) {
 				case DLG_STATE_DELETED:
-					if (dlg->flags&DLG_FLAG_HASBYE) {
+					if (dlg->dflags&DLG_FLAG_HASBYE) {
 						LM_CRIT("bogus event %d in state %d (with BYE) "
 							"for dlg %p [%u:%u] with clid '%.*s' and tags '%.*s' '%.*s'\n",
 							event, dlg->state, dlg, dlg->h_entry, dlg->h_id,
@@ -570,7 +574,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 			switch (dlg->state) {
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
-					dlg->flags |= DLG_FLAG_HASBYE;
+					dlg->dflags |= DLG_FLAG_HASBYE;
 					dlg->state = DLG_STATE_DELETED;
 					*unref = 1;
 					break;

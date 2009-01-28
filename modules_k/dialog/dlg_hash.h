@@ -62,6 +62,10 @@
 #define DLG_FLAG_NEW           (1<<0)
 #define DLG_FLAG_CHANGED       (1<<1)
 #define DLG_FLAG_HASBYE        (1<<2)
+#define DLG_FLAG_TOBYE         (1<<3)
+#define DLG_FLAG_CALLERBYE     (1<<4)
+#define DLG_FLAG_CALLEEBYE     (1<<5)
+#define DLG_FLAG_LOCALDLG      (1<<6)
 
 #define DLG_CALLER_LEG         0
 #define DLG_CALLEE_LEG         1
@@ -82,7 +86,9 @@ struct dlg_cell
 	unsigned int         state;
 	unsigned int         lifetime;
 	unsigned int         start_ts;    /* start time  (absolute UNIX ts)*/
-	unsigned int         flags;
+	unsigned int         dflags;
+	unsigned int         sflags;
+	unsigned int         toroute;
 	unsigned int         from_rr_nb;
 	struct dlg_tl        tl;
 	str                  callid;
@@ -118,7 +124,7 @@ struct dlg_table
 
 
 extern struct dlg_table *d_table;
-
+extern struct dlg_cell  *current_dlg_pointer;
 
 #define dlg_lock(_table, _entry) \
 		lock_set_get( (_table)->locks, (_entry)->lock_idx);
