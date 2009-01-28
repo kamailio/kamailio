@@ -791,7 +791,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 	struct cell *t;
 	char *status, *s = NULL;
 	char backup;
-	int lowest_status, n;
+	int lowest_status, n, ret;
 	fparam_t* fp;
 	regex_t* re = NULL;
 	str tmp;
@@ -850,7 +850,16 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 
 	case MODE_ONFAILURE:
 		/* use the status of the winning reply */
-		if (t_pick_branch( -1, 0, t, &lowest_status)<0 ) {
+		ret = t_pick_branch( -1, 0, t, &lowest_status);
+		if (ret == -1) {
+			/* t_pick_branch() retuns error also when there are only
+			 * blind UACs. Let us give it another chance including the
+			 * blind branches. */
+			LOG(L_DBG, "DEBUG: t_check_status: t_pick_branch returned error, "
+				"trying t_pick_branch_blind\n");
+			ret = t_pick_branch_blind(t, &lowest_status);
+		}
+		if (ret < 0) {
 			LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
 				" a final response in MODE_ONFAILURE\n");
 			goto error;

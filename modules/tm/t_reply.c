@@ -937,6 +937,36 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 	return best_b;
 }
 
+/* The same as t_pick_branch(), but allows also
+ * blind branches to be picked up.
+ * This function should be used only in failure_route
+ * to check which response has been 
+ * picked up by t_pick_branch().
+ * returns:
+ * 0..X ... branch number
+ * -1   ... error
+ * -2   ... can't decide yet -- incomplete branches present
+ */
+int t_pick_branch_blind(struct cell *t, int *res_code)
+{
+	int best_b, best_s, b;
+
+	best_b=-1; best_s=0;
+	for ( b=0; b<t->nr_of_outgoings ; b++ ) {
+		/* there is still an unfinished UAC transaction; wait now! */
+		if ( t->uac[b].last_received<200 )
+			return -2;
+		/* if reply is null => t_send_branch "faked" reply, skip over it */
+		if ( t->uac[b].reply && 
+				get_prio(t->uac[b].last_received)<get_prio(best_s) ) {
+			best_b = b;
+			best_s = t->uac[b].last_received;
+		}
+	} /* find lowest branch */
+	
+	*res_code=best_s;
+	return best_b;
+}
 
 /* flag indicating whether it is requested
  * to drop the already saved replies or not */
