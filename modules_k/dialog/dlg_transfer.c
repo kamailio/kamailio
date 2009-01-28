@@ -183,7 +183,6 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 error:
 	if(dialog_info)
 		free_tm_dlg(dialog_info);
-	dlg_transfer_ctx_free(dtc);
 	return -1;
 }
 
@@ -313,6 +312,8 @@ int dlg_bridge(str *from, str *to, str *op)
 	dtc->to.len = to->len;
 	dtc->to.s[dtc->to.len] = '\0';
 
+	LM_DBG("bridge <%.*s> to <%.*s>\n", dtc->from.len, dtc->from.s,
+			dtc->to.len, dtc->to.s);
 	s_body.s   = DLG_HOLD_SDP;
 	s_body.len = DLG_HOLD_SDP_LEN;
 	s_hdrs.s   = DLG_HOLD_CT_HDR;
@@ -329,7 +330,7 @@ int dlg_bridge(str *from, str *to, str *op)
 		(void*)(long)dtc        /* Callback parameter */
 		);
 
-	if(ret!=0)
+	if(ret<0)
 	{
 		dlg_transfer_ctx_free(dtc);
 		return -1;

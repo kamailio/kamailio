@@ -1041,6 +1041,10 @@ struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
 	if(node != NULL)
 	{
 		op = node->value;
+		if(op.len<=0 || op.s==NULL)
+		{
+			return init_mi_tree(500, "Bad OP value", 12);
+		}
 	}
 
 	if(dlg_bridge(&from, &to, &op)!=0)
