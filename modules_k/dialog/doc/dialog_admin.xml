@@ -1094,6 +1094,235 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">dlg_isflagset(flag)</function>
+		</title>
+		<para>
+		Check if the dialog flag is set or not.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>flag</emphasis> - index of the flag - can be
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_isflagset</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_isflagset("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_setflag(flag)</function>
+		</title>
+		<para>
+		Set the dialog flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>flag</emphasis> - index of the flag - can be
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_setflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_setflag("1");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_resetflag(flag)</function>
+		</title>
+		<para>
+		Reset the dialog flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>flag</emphasis> - index of the flag - can be
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_resetflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+redlg_setflag("1");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_bye(side)</function>
+		</title>
+		<para>
+		Send BYE to parties in dialog.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>side</emphasis> - where to send the BYE. It can be:
+				caller, callee or all.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_bye</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_bye("all");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_refer(side, address)</function>
+		</title>
+		<para>
+		Refer the 'side' to a new SIP 'address'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>side</emphasis> - which part to REFER. It can be:
+				caller or callee.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>address</emphasis> - SIP address to refer to.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_refer</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_refer("caller", "sip:annoucement@kamailio.org");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_bridge(from, to, op)</function>
+		</title>
+		<para>
+		Bridge 'from' SIP address to 'to' SIP address via outbound proxy 'op'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>from</emphasis> - SIP address of first side to call.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>to</emphasis> - SIP address to refer 'from' to.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>op</emphasis> - outbound proxy SIP address.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_bridge</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_refer("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
+   "sip:kamailio.org:5080");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_get(callid, ftag, ttag)</function>
+		</title>
+		<para>
+			Search and set current dialog based on Call-ID, From-Tag and To-Tag
+			parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>callid</emphasis> - SIP call-id.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ftag</emphasis> - SIP From tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ttag</emphasis> - SIP To tag.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_get</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_get("abcdef", "123", "456"))
+{
+	dlg_bye("all");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -1303,7 +1532,38 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
 		</programlisting>
 		</section>
 
-
+		<section>
+		<title><varname>dlg_bridge</varname></title>
+		<para>
+			Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
+			mechanism.
+		</para>
+		<para>
+		Name: <emphasis>dlg_bridge</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>from</emphasis> - SIP address to initiate the call
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to</emphasis> - SIP address to refer 'from' to
+			</para></listitem>
+			<listitem><para>
+				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:dlg_bridge:_reply_fifo_file_
+		from
+		to
+		op
+		_empty_line_
+		</programlisting>
+		</section>
 
 	</section>
 
@@ -1358,6 +1618,14 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
 			<para>
 			NULL will be returned if there is no dialog for the request.
 			</para>
+		</section>
+		<section>
+			<title><varname>$dlg(...)</varname></title>
+			<para>Access to dialog attributes.</para>
+		</section>
+		<section>
+			<title><varname>$dlg_ctx(...)</varname></title>
+			<para>Access to dialog context attributes.</para>
 		</section>
 
 	</section>

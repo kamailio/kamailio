@@ -71,6 +71,13 @@ Bogdan-Andrei Iancu
               1.6.2. unset_dlg_profile(profile,[value])
               1.6.3. is_in_profile(profile,[value])
               1.6.4. get_profile_size(profile,[value],size)
+              1.6.5. dlg_isflagset(flag)
+              1.6.6. dlg_setflag(flag)
+              1.6.7. dlg_resetflag(flag)
+              1.6.8. dlg_bye(side)
+              1.6.9. dlg_refer(side, address)
+              1.6.10. dlg_bridge(from, to, op)
+              1.6.11. dlg_get(callid, ftag, ttag)
 
         1.7. Exported statistics
 
@@ -87,12 +94,15 @@ Bogdan-Andrei Iancu
               1.8.3. dlg_end_dlg
               1.8.4. profile_get_size
               1.8.5. profile_list_dlgs
+              1.8.6. dlg_bridge
 
         1.9. Exported pseudo-variables
 
               1.9.1. $DLG_count
               1.9.2. $DLG_status
               1.9.3. $DLG_lifetime
+              1.9.4. $dlg(...)
+              1.9.5. $dlg_ctx(...)
 
    2. Developer Guide
 
@@ -145,6 +155,13 @@ Bogdan-Andrei Iancu
    1.38. unset_dlg_profile usage
    1.39. is_in_profile usage
    1.40. get_profile_size usage
+   1.41. dlg_isflagset usage
+   1.42. dlg_setflag usage
+   1.43. dlg_resetflag usage
+   1.44. dlg_bye usage
+   1.45. dlg_refer usage
+   1.46. dlg_bridge usage
+   1.47. dlg_get usage
 
 Chapter 1. Admin Guide
 
@@ -781,6 +798,126 @@ get_profile_size("caller","$fu");
 xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
 ...
 
+1.6.5.  dlg_isflagset(flag)
+
+   Check if the dialog flag is set or not.
+
+   Meaning of the parameters is as follows:
+     * flag - index of the flag - can be pseudo-variable.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.41. dlg_isflagset usage
+...
+if(dlg_isflagset("1"))
+{
+    ...
+}
+...
+
+1.6.6.  dlg_setflag(flag)
+
+   Set the dialog flag.
+
+   Meaning of the parameters is as follows:
+     * flag - index of the flag - can be pseudo-variable.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.42. dlg_setflag usage
+...
+dlg_setflag("1");
+...
+
+1.6.7.  dlg_resetflag(flag)
+
+   Reset the dialog flag.
+
+   Meaning of the parameters is as follows:
+     * flag - index of the flag - can be pseudo-variable.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.43. dlg_resetflag usage
+...
+redlg_setflag("1");
+...
+
+1.6.8.  dlg_bye(side)
+
+   Send BYE to parties in dialog.
+
+   Meaning of the parameters is as follows:
+     * side - where to send the BYE. It can be: caller, callee or
+       all.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.44. dlg_bye usage
+...
+dlg_bye("all");
+...
+
+1.6.9.  dlg_refer(side, address)
+
+   Refer the 'side' to a new SIP 'address'.
+
+   Meaning of the parameters is as follows:
+     * side - which part to REFER. It can be: caller or callee.
+     * address - SIP address to refer to.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.45. dlg_refer usage
+...
+dlg_refer("caller", "sip:annoucement@kamailio.org");
+...
+
+1.6.10.  dlg_bridge(from, to, op)
+
+   Bridge 'from' SIP address to 'to' SIP address via outbound
+   proxy 'op'.
+
+   Meaning of the parameters is as follows:
+     * from - SIP address of first side to call.
+     * to - SIP address to refer 'from' to.
+     * op - outbound proxy SIP address.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.46. dlg_bridge usage
+...
+dlg_refer("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
+   "sip:kamailio.org:5080");
+...
+
+1.6.11.  dlg_get(callid, ftag, ttag)
+
+   Search and set current dialog based on Call-ID, From-Tag and
+   To-Tag parameters.
+
+   Meaning of the parameters is as follows:
+     * callid - SIP call-id.
+     * ftag - SIP From tag.
+     * ttag - SIP To tag.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.47. dlg_get usage
+...
+if(dlg_get("abcdef", "123", "456"))
+{
+        dlg_bye("all");
+}
+...
+
 1.7. Exported statistics
 
 1.7.1. active_dialogs
@@ -910,6 +1047,25 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
                 inbound_calls
                 _empty_line_
 
+1.8.6. dlg_bridge
+
+   Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
+   mechanism.
+
+   Name: dlg_bridge
+
+   Parameters:
+     * from - SIP address to initiate the call
+     * to - SIP address to refer 'from' to
+     * op (optional) - outbound proxy SIP address
+
+   MI FIFO Command Format:
+                :dlg_bridge:_reply_fifo_file_
+                from
+                to
+                op
+                _empty_line_
+
 1.9. Exported pseudo-variables
 
 1.9.1. $DLG_count
@@ -938,6 +1094,14 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
    loose_route().
 
    NULL will be returned if there is no dialog for the request.
+
+1.9.4. $dlg(...)
+
+   Access to dialog attributes.
+
+1.9.5. $dlg_ctx(...)
+
+   Access to dialog context attributes.
 
 Chapter 2. Developer Guide
 
