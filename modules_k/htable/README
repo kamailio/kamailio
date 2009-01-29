@@ -110,7 +110,8 @@ if(is_present_hf("Authorization"))
 {
     if($sht(a=>$au::auth_count)==3)
     {
-        if($sht(a=>$au::last_auth) > $Ts-900)
+                $var(exp) = $Ts - 900;
+        if($sht(a=>$au::last_auth) > $var(exp))
         {
             sl_send_reply("403", "Try later");
             exit;
