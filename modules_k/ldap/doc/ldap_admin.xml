@@ -248,7 +248,7 @@ ldap_client_bind_timeout   = 500
 
             <listitem>
 			  <para>
-			    LDAP URL including fully qualified domain name or IP address of LDAP server optionally followed by a colon and TCP port to connect: <varname>ldap://&lt;FQDN/IP&gt;[:&lt;port&gt;]</varname>. Failover LDAP servers can be added, each separated by a comma. In the event of connection errors, the module tries to connect to servers in order of appearance.
+				  LDAP URL including fully qualified domain name or IP address of LDAP server optionally followed by a colon and TCP port to connect: <varname>ldap://&lt;FQDN/IP&gt;[:&lt;port&gt;]</varname>. Failover LDAP servers can be added, each separated by a comma. In the event of connection errors, the module tries to connect to servers in order of appearance. To connect over TLS/SSL, use ldaps://.
 			  </para>
 
               <para>Default value: none, this is a mandatory setting</para>
@@ -258,7 +258,7 @@ ldap_client_bind_timeout   = 500
 
                 <programlisting format="linespecific">
 ldap_server_url = "ldap://localhost"
-ldap_server_url = "ldap://ldap.example.com:7777"
+ldap_server_url = "ldaps://ldap.example.com:7777"
 ldap_server_url = "ldap://ldap1.example.com, 
                    ldap://ldap2.example.com:80389"
 				</programlisting>

@@ -292,14 +292,15 @@ ldap://example_ldap/cn=admin,dc=example,dc=com
           and TCP port to connect: ldap://<FQDN/IP>[:<port>].
           Failover LDAP servers can be added, each separated by a
           comma. In the event of connection errors, the module
-          tries to connect to servers in order of appearance.
+          tries to connect to servers in order of appearance. To
+          connect over TLS/SSL, use ldaps://.
 
           Default value: none, this is a mandatory setting
 
           Example 1.1. ldap_server_url examples
 
 ldap_server_url = "ldap://localhost"
-ldap_server_url = "ldap://ldap.example.com:7777"
+ldap_server_url = "ldaps://ldap.example.com:7777"
 ldap_server_url = "ldap://ldap1.example.com,
                    ldap://ldap2.example.com:80389"
 
