@@ -819,6 +819,46 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 	</section>
 
 	<section>
+		<title><varname>sflags_column</varname> (string)</title>
+		<para>
+			The column's name in the database to store the script flags.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>sflags</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sflags_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "sflags_column", "s_flags")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>toroute_column</varname> (string)</title>
+		<para>
+			The column's name in the database to store the index of the
+			route to be executed at timeout.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>toroute</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>toroute_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "toroute_column", "timeout_route")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>profiles_with_value</varname> (string)</title>
 		<para>
 			List of names for profiles with values.
@@ -853,6 +893,26 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 		<programlisting format="linespecific">
 ...
 modparam("dialog", "profiles_no_value", "inbound ; outbound")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>bridge_controller</varname> (string)</title>
+		<para>
+			SIP address to be used in From header when initiating a call bridge.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>sip:controller@kamailio.org</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>bridge_controller</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
 </programlisting>
 		</example>
