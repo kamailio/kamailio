@@ -1,165 +1,246 @@
-OpenSER PURPLE MODULE
----------------------
+Purple Module
 
-Copyright (C) 2008 Atos Worldline
-Contact: Eric PTAK <eric.ptak@atosorigin.com>
+Eric Ptak
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+   Atos Worldline
+   <eric.ptak@atosorigin.com>
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+Edited by
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+Eric Ptak
 
+   <eric.ptak@atosorigin.com>
 
-Introduction
-------------
-Purple module is a multi-protocol instant-messaging gateway module which use libpurple, the library on bottom of Pidgin (ex-gaim).
-This plugin was wrote in order to proof the concept of gateway between SIP and MSN/Live networks. As libpurple is written to code multi-protocol 
-graphic IM clients , it provides a high level API in order to manipulate accounts, contacts, contacts lists, conversations and more. So this module 
-provides a multi-protocol IM/Presence client running inside OpenSER with an account for each protocols used by each SIP user whereas libpurple is 
-designed for a graphic client for only one user. So it's no really adapted to a production environment with a huge user count but can be used in order 
-to demonstrate the concept or to use it in SOHO environment.
+   Copyright © 2008 Atos Worldline
+     __________________________________________________________
 
-Requirements
-------------
-* OpenSER fork 1.5.x devel trunk (eg. Kamailio/OpenSIPS)
-* modules : presence*, pua, db_?
-* database
-* libpurple from pidgin 2.5.2
+   Table of Contents
 
-PUA mod
--------
-In order to compile the module, you'll need to add a PURPLE_PUBLISH preprocessor definition to modules/pua/hash.h after others *_PUBLISH.
-* Kamailio :
-[...]
-#define RLS_SUBSCRIBE       1<<9
-#define DIALOG_PUBLISH      1<<10
-#define PURPLE_PUBLISH      1<<11
+   1. Admin Guide
 
-* OpenSIPS :
-[...]
-#define MI_SUBSCRIBE        1<<8
-#define RLS_SUBSCRIBE       1<<9
-#define PURPLE_PUBLISH      1<<10
+        1.1. Overview
+        1.2. Dependencies
 
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
 
-openserctl mod
---------------
-By default - and I don't know exactly why - there's some undefined symbol errors with libpurple shared object when using inside OpenSER.
-To solve it, you have to force preload of the library by setting up LD_PRELOAD environment variable.
-So you should add to your [openser|kam|opensips]ctl (adapt the path to your environment) :
-export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
+        1.3. Database
+        1.4. Exported Parameters
 
+              1.4.1. db_url (str)
+              1.4.2. db_table (str)
+              1.4.3. httpProxy_host (str)
+              1.4.4. httpProxy_port (int)
 
-Database scheme
----------------
-The database is used to map SIP URIs with external accounts (eg. MSN)
+        1.5. Exported Functions
 
-	+----------+------------------+------+-----+---------+----------------+
-	| Field    | Type             | Null | Key | Default | Extra          |
-	+----------+------------------+------+-----+---------+----------------+
-	| id       | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
-	| sip_user | varchar(128)     | NO   |     | NULL    |                |
-	| ext_user | varchar(128)     | NO   |     | NULL    |                |
-	| ext_prot | varchar(16)      | NO   |     | NULL    |                |
-	| ext_pass | varchar(64)      | YES  |     | NULL    |                |
-	+----------+------------------+------+-----+---------+----------------+
+              1.5.1. purple_send_message()
+              1.5.2. purple_handle_publish()
+              1.5.3. purple_handle_subscribe()
 
-Details :
-	* sip_user : user's SIP URI
-	* ext_user : user's external account login
-	* ext_prot : purple plugin id to use, except for gtalk
-	* ext_pass : user's external account password
+   List of Examples
 
-Example :
-	+----+------------------+-----------------+----------------+----------+
-	| id | sip_user         | ext_user        | ext_prot       | ext_pass |
-	+----+------------------+-----------------+----------------+----------+
-	|  1 | sip:alice@domain | alice@live.com  | prpl-msn-pecan | password |
-	|  2 | sip:bob@domain   | bob@live.com    | prpl-msn-pecan | password |
-	|  3 | sip:alice@domain | alice@gmail.com | gtalk          | password |
-	|  4 | sip:bob@domain   | bob@gmail.com   | gtalk          | password |
-	+----+------------------+-----------------+----------------+----------+
+   1.1. Database table description
+   1.2. Database sample records
+   1.3. MySQL create script
+   1.4. Set db_url parameter
+   1.5. Set db_table parameter
+   1.6. Set httpProxy_host parameter
+   1.7. Set httpProxy_port parameter
+   1.8. purple_send_message usage
+   1.9. purple_handle_publish usage
+   1.10. purple_handle_subscribe usage
 
+Chapter 1. Admin Guide
 
-MySQL script :
-	CREATE TABLE purplemap (
-			id INT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
-			sip_user VARCHAR(128) NOT NULL,
-			ext_user VARCHAR(128) NOT NULL,
-			ext_prot VARCHAR(16) NOT NULL,
-			ext_pass VARCHAR(64)
-	);
+1.1. Overview
 
+   Purple module is a multi-protocol instant-messaging gateway
+   module which use libpurple, the library on bottom of Pidgin
+   (ex-gaim).
 
+   This plugin was wrote in order to proof the concept of gateway
+   between SIP and MSN/Live networks. As libpurple is written to
+   code multi-protocol graphic IM clients, it provides a high
+   level API in order to manipulate accounts, contacts, contacts
+   lists, conversations and more.
 
+   So this module provides a multi-protocol IM/Presence client
+   running inside Kamailio with an account for each protocols used
+   by each SIP user whereas libpurple is designed for a graphic
+   client for only one user.
 
-Exported Parameters
--------------------
-* db_url (string)
-modparam("purple", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
+   It's no really adapted to a production environment with a huge
+   user count but can be used in order to demonstrate the concept
+   or to use it in SOHO environment.
 
-* db_table (string)
+   By default, there's some undefined symbol errors with libpurple
+   shared object when using inside Kamailio. To solve it, you have
+   to force preload of the library by setting up LD_PRELOAD
+   environment variable.
+
+   Before starting Kamailio use (adapt the path to your
+   environment):
+
+   export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
+
+   Limitations: doesn't implement authorization requests from
+   external accounts to SIP.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * presence*.
+     * pua.
+     * database driver module (db_mysql, ...).
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * libpurple devel from pidgin 2.5.2.
+
+1.3. Database
+
+   The database is used to map SIP URIs with external accounts
+   (eg. MSN).
+
+   Example 1.1. Database table description
+...
++----------+------------------+------+-----+---------+----------------+
+| Field    | Type             | Null | Key | Default | Extra          |
++----------+------------------+------+-----+---------+----------------+
+| id       | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| sip_user | varchar(128)     | NO   |     | NULL    |                |
+| ext_user | varchar(128)     | NO   |     | NULL    |                |
+| ext_prot | varchar(16)      | NO   |     | NULL    |                |
+| ext_pass | varchar(64)      | YES  |     | NULL    |                |
++----------+------------------+------+-----+---------+----------------+
+...
+
+   The meaning of columns:
+     * sip_user user's SIP URI.
+     * ext_user user's external account login.
+     * ext_prot purple plugin id to use, except for gtalk.
+     * ext_pass user's external account password.
+
+   Example 1.2. Database sample records
+...
++----+------------------+-----------------+----------------+----------+
+| id | sip_user         | ext_user        | ext_prot       | ext_pass |
++----+------------------+-----------------+----------------+----------+
+|  1 | sip:alice@domain | alice@live.com  | prpl-msn-pecan | password |
+|  2 | sip:bob@domain   | bob@live.com    | prpl-msn-pecan | password |
+|  3 | sip:alice@domain | alice@gmail.com | gtalk          | password |
+|  4 | sip:bob@domain   | bob@gmail.com   | gtalk          | password |
++----+------------------+-----------------+----------------+----------+
+...
+
+   Example 1.3. MySQL create script
+...
+CREATE TABLE purplemap (
+  id INT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  sip_user VARCHAR(128) NOT NULL,
+  ext_user VARCHAR(128) NOT NULL,
+  ext_prot VARCHAR(16) NOT NULL,
+  ext_pass VARCHAR(64)
+);
+...
+
+1.4. Exported Parameters
+
+1.4.1. db_url (str)
+
+   The URL to connect to database.
+
+   Default value is NULL (do not connect).
+
+   Example 1.4. Set db_url parameter
+...
+modparam("purple", "db_url", "mysql://openser:openserrw@localhost/opense
+r")
+...
+
+1.4.2. db_table (str)
+
+   Database table name.
+
+   Default value is purplemap.
+
+   Example 1.5. Set db_table parameter
+...
 modparam("purple", "db_table", "purplemap")
+...
 
-* httpProxy_host (string)
+1.4.3. httpProxy_host (str)
+
+   Address of HTTP proxy.
+
+   Default value is NULL.
+
+   Example 1.6. Set httpProxy_host parameter
+...
 modparam("purple", "httpProxy_host", "10.26.52.12")
+...
 
-* httpProxy_port (int)
+1.4.4. httpProxy_port (int)
+
+   Port of HTTP proxy.
+
+   Default value is 0.
+
+   Example 1.7. Set httpProxy_port parameter
+...
 modparam("purple", "httpProxy_port", 3128)
+...
 
+1.5. Exported Functions
 
-Exported Functions
-------------------
-* purple_send_message
-In order to filter messages from purple and avoid loops, the tag proto=purple is appended to the R-URI.
+1.5.1.  purple_send_message()
 
-	if (is_method("MESSAGE")) {
-		xlog("MESSAGE $ru from <$fu> to <$tu>\n");
-		if (uri !~ "sip:.+@.+;proto=.+") {
-				xlog("FORWARDED to PURPLE\n");
-				purple_send_message();
-				if (!lookup("location")) {
-						sl_send_reply("200", "Accepted");
-						exit;
-				}
-		}
-	}
+   Send message to a purple destination.
 
+   This function can be used from REQUEST_ROUTE.
 
-* purple_handle_publish
-In order to filter publications from purple and avoid loops, the tag proto=purple is appended to the R-URI.
+   Example 1.8. purple_send_message usage
+...
+if (is_method("MESSAGE")) {
+    xlog("MESSAGE $ru from [$fu] to [$tu]\n");
+    if (uri !~ "sip:.+@.+;proto=.+") {
+        purple_send_message();
+        sl_send_reply("200", "Accepted");
+    }
+}
+...
 
-	if(is_method("PUBLISH")) {
-			xlog("PUBLISH $ru from <$fu> to <$tu>\n");
-			if($hdr(Sender)!= NULL)
-					handle_publish("$hdr(Sender)");
-			else
-					handle_publish();
-			if (uri !~ "sip:.+@.+;proto=.+")
-					purple_handle_publish();
-			t_release();
-	}
+1.5.2.  purple_handle_publish()
 
-* purple_handle_subscribe
+   Handle PUBLISH to a purple destination.
 
-	if(is_method("SUBSCRIBE")) {
-			xlog("SUBSCRIBE $ru from <$fu> to <$tu>\n");
-			handle_subscribe();
-			if ($hdr(Event) == "presence")
-					purple_handle_subscribe("$ruri", "$hdr(Expires)");
-			t_release();
-	}
+   This function can be used from REQUEST_ROUTE.
 
+   Example 1.9. purple_handle_publish usage
+...
+if(is_method("PUBLISH")) {
+    xlog("PUBLISH $ru from [$fu] to [$tu]\n");
+    if (uri !~ "sip:.+@.+;proto=.+")
+        purple_handle_publish();
+}
+...
 
-Limitations
------------
-* Doesn't implement authorization requests from external accounts to SIP.
+1.5.3.  purple_handle_subscribe()
 
+   Handle SUBSCRIBE to a purple destination.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. purple_handle_subscribe usage
+...
+if(is_method("SUBSCRIBE")) {
+    xlog("SUBSCRIBE $ru from [$fu] to [$tu]\n");
+    if ($hdr(Event) == "presence")
+        purple_handle_subscribe("$ruri", "$hdr(Expires)");
+}
+...
