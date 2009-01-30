@@ -76,8 +76,9 @@ Bogdan-Andrei Iancu
               1.6.7. dlg_resetflag(flag)
               1.6.8. dlg_bye(side)
               1.6.9. dlg_refer(side, address)
-              1.6.10. dlg_bridge(from, to, op)
-              1.6.11. dlg_get(callid, ftag, ttag)
+              1.6.10. dlg_manage()
+              1.6.11. dlg_bridge(from, to, op)
+              1.6.12. dlg_get(callid, ftag, ttag)
 
         1.7. Exported statistics
 
@@ -160,8 +161,9 @@ Bogdan-Andrei Iancu
    1.43. dlg_resetflag usage
    1.44. dlg_bye usage
    1.45. dlg_refer usage
-   1.46. dlg_bridge usage
-   1.47. dlg_get usage
+   1.46. dlg_manage usage
+   1.47. dlg_bridge usage
+   1.48. dlg_get usage
 
 Chapter 1. Admin Guide
 
@@ -878,7 +880,31 @@ dlg_bye("all");
 dlg_refer("caller", "sip:annoucement@kamailio.org");
 ...
 
-1.6.10.  dlg_bridge(from, to, op)
+1.6.10.  dlg_manage()
+
+   Process current SIP request with dialog module. It is
+   alternative to setting dialog flag for initial INVITE and
+   Route-parameter-callback execution for within-dialog requests.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.46. dlg_manage usage
+...
+modparam("dialog", "default_timeout", 100)
+...
+route {
+...
+    if(is_method("INVITE") && !has_totag())
+    {
+        $dlg_ctx(timeout_route) = 12;
+        $dlg_ctx(timeout_bye) = 1;
+    }
+    dlg_manage();
+...
+}
+...
+
+1.6.11.  dlg_bridge(from, to, op)
 
    Bridge 'from' SIP address to 'to' SIP address via outbound
    proxy 'op'.
@@ -891,13 +917,13 @@ dlg_refer("caller", "sip:annoucement@kamailio.org");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.46. dlg_bridge usage
+   Example 1.47. dlg_bridge usage
 ...
 dlg_refer("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
 ...
 
-1.6.11.  dlg_get(callid, ftag, ttag)
+1.6.12.  dlg_get(callid, ftag, ttag)
 
    Search and set current dialog based on Call-ID, From-Tag and
    To-Tag parameters.
@@ -910,7 +936,7 @@ dlg_refer("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.47. dlg_get usage
+   Example 1.48. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {

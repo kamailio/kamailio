@@ -1248,6 +1248,39 @@ dlg_refer("caller", "sip:annoucement@kamailio.org");
 
 	<section>
 		<title>
+		<function moreinfo="none">dlg_manage()</function>
+		</title>
+		<para>
+		Process current SIP request with dialog module. It is alternative to
+		setting dialog flag for initial INVITE and Route-parameter-callback
+		execution for within-dialog requests.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_manage</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "default_timeout", 100)
+...
+route {
+...
+    if(is_method("INVITE") &amp;&amp; !has_totag())
+    {
+        $dlg_ctx(timeout_route) = 12;
+        $dlg_ctx(timeout_bye) = 1;
+    }
+    dlg_manage();
+...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">dlg_bridge(from, to, op)</function>
 		</title>
 		<para>
