@@ -165,6 +165,9 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dlg->state);
 		case 3:
+			if(_dlg_ctx.dlg->route_set[DLG_CALLEE_LEG].s==NULL
+					|| _dlg_ctx.dlg->route_set[DLG_CALLEE_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->route_set[DLG_CALLEE_LEG]);
 		case 4:
@@ -174,27 +177,48 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dlg->sflags);
 		case 6:
+			if(_dlg_ctx.dlg->callid.s==NULL
+					|| _dlg_ctx.dlg->callid.len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->callid);
 		case 7:
+			if(_dlg_ctx.dlg->to_uri.s==NULL
+					|| _dlg_ctx.dlg->to_uri.len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->to_uri);
 		case 8:
+			if(_dlg_ctx.dlg->tag[DLG_CALLEE_LEG].s==NULL
+					|| _dlg_ctx.dlg->tag[DLG_CALLEE_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->tag[DLG_CALLEE_LEG]);
 		case 9:
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dlg->toroute);
 		case 10:
+			if(_dlg_ctx.dlg->cseq[DLG_CALLEE_LEG].s==NULL
+					|| _dlg_ctx.dlg->cseq[DLG_CALLEE_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->cseq[DLG_CALLEE_LEG]);
 		case 11:
+			if(_dlg_ctx.dlg->route_set[DLG_CALLER_LEG].s==NULL
+					|| _dlg_ctx.dlg->route_set[DLG_CALLER_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->route_set[DLG_CALLER_LEG]);
 		case 12:
+			if(_dlg_ctx.dlg->from_uri.s==NULL
+					|| _dlg_ctx.dlg->from_uri.len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->from_uri);
 		case 13:
+			if(_dlg_ctx.dlg->tag[DLG_CALLER_LEG].s==NULL
+					|| _dlg_ctx.dlg->tag[DLG_CALLER_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->tag[DLG_CALLER_LEG]);
 		case 14:
@@ -204,18 +228,31 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dlg->start_ts);
 		case 16:
+			if(_dlg_ctx.dlg->cseq[DLG_CALLER_LEG].s==NULL
+					|| _dlg_ctx.dlg->cseq[DLG_CALLER_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->cseq[DLG_CALLER_LEG]);
 		case 17:
+			if(_dlg_ctx.dlg->contact[DLG_CALLEE_LEG].s==NULL
+					|| _dlg_ctx.dlg->contact[DLG_CALLEE_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->contact[DLG_CALLEE_LEG]);
 		case 18:
+			if(_dlg_ctx.dlg->bind_addr[DLG_CALLEE_LEG]==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->bind_addr[DLG_CALLEE_LEG]->sock_str);
 		case 19:
+			if(_dlg_ctx.dlg->contact[DLG_CALLER_LEG].s==NULL
+					|| _dlg_ctx.dlg->contact[DLG_CALLER_LEG].len<=0)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->contact[DLG_CALLER_LEG]);
 		case 20:
+			if(_dlg_ctx.dlg->bind_addr[DLG_CALLER_LEG]==NULL)
+				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->bind_addr[DLG_CALLER_LEG]->sock_str);
 		default:
