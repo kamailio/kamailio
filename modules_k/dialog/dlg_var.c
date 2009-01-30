@@ -255,6 +255,9 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res,
 					&_dlg_ctx.dlg->bind_addr[DLG_CALLER_LEG]->sock_str);
+		case 21:
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_dlg_ctx.dlg->h_entry);
 		default:
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dlg->ref);
@@ -306,6 +309,8 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 10;
 			else if(strncmp(in->s, "from_rs", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 11;
+			else if(strncmp(in->s, "h_entry", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 21;
 			else goto error;
 		break;
 		case 8: 
