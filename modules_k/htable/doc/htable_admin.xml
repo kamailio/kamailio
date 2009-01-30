@@ -458,7 +458,7 @@ sht_print();
 		<title><function>sht_rm_name_re</function> usage</title>
 		<programlisting format="linespecific">
 ...
-sht_rm_name_re(ha=>.*);
+sht_rm_name_re("ha=>.*");
 ...
 </programlisting>
 		</example>
@@ -479,7 +479,7 @@ sht_rm_name_re(ha=>.*);
 		<title><function>sht_rm_value_re</function> usage</title>
 		<programlisting format="linespecific">
 ...
-sht_rm_value_re(ha=>.*);
+sht_rm_value_re("ha=>.*");
 ...
 </programlisting>
 		</example>

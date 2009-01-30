@@ -333,7 +333,7 @@ sht_print();
 
    Example 1.14. sht_rm_name_re usage
 ...
-sht_rm_name_re(ha=>.*);
+sht_rm_name_re("ha=>.*");
 ...
 
 1.4.3.  sht_rm_value_re(htable=>regexp)
@@ -346,7 +346,7 @@ sht_rm_name_re(ha=>.*);
 
    Example 1.15. sht_rm_value_re usage
 ...
-sht_rm_value_re(ha=>.*);
+sht_rm_value_re("ha=>.*");
 ...
 
 1.5. Exported pseudo-variables
