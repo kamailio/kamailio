@@ -311,7 +311,10 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 		case 6: 
 			if(strncmp(in->s, "method", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
-			if(strncmp(in->s, "onreply", 6)==0)
+			else goto error;
+		break;
+		case 7: 
+			if(strncmp(in->s, "onreply", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else goto error;
 		break;
