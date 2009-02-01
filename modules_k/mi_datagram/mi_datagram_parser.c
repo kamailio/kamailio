@@ -262,17 +262,17 @@ struct mi_root * mi_datagram_parse_tree(datagram_stream * datagram) {
 	str value;
 	int ret;
 
-	if(!datagram || datagram->current[0] == '\0')
-	{
-		LM_ERR("no data in the datagram\n");
-		return 0;
-	}
-
 	root = init_mi_tree(0,0,0);
 	if (!root) {
 		LM_ERR("the MI tree cannot be initialized!\n");
 		goto error;
 	}
+	if(!datagram || datagram->current[0] == '\0')
+	{
+		LM_DBG("no data in the datagram\n");
+		return root;
+	}
+
 	node = &root->node;
 
 	name.s = value.s = 0;
