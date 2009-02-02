@@ -1031,6 +1031,7 @@ static inline int ds_get_index(int group, ds_set_p *index)
 static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 {
 	struct action act;
+	str *duri = NULL;
 	switch(mode)
 	{
 		case 1:
@@ -1049,6 +1050,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			}
 		break;
 		default:
+			duri = uri;
 			if (set_dst_uri(msg, uri) < 0) {
 				LM_ERR("error while setting dst uri\n");
 				return -1;
@@ -1057,7 +1059,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 	}
 	if(ds_append_branch!=0 && route_type==FAILURE_ROUTE)
 	{
-		if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
+		if (append_branch(msg, 0, duri, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 		{
 			LM_ERR("append_branch action failed\n");
 			return -1;
