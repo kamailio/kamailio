@@ -218,7 +218,7 @@ static cmd_export_t cmds[]={
 	{"set_body",         (cmd_function)set_body_f,        2,
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
-	{"set_rpl_body",     (cmd_function)set_rpl_body_f,    2,
+	{"set_reply_body",     (cmd_function)set_rpl_body_f,    2,
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"is_method",        (cmd_function)is_method_f,       1,
