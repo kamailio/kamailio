@@ -155,12 +155,13 @@ CREATE TABLE purplemap (
 
    The URL to connect to database.
 
-   Default value is NULL (do not connect).
+   Default value is
+   "mysql://openserro:openserro@localhost/openser".
 
    Example 1.4. Set db_url parameter
 ...
-modparam("purple", "db_url", "mysql://openser:openserrw@localhost/opense
-r")
+modparam("purple", "db_url", "dbdriver://username:password@dbhost/dbname
+")
 ...
 
 1.4.2. db_table (str)

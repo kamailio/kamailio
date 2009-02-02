@@ -53,7 +53,7 @@ int pipefds[2] = {-1, -1};
 db_con_t *pa_db = NULL;
 db_func_t pa_dbf;
 str db_table = {"purplemap", 0};
-str db_url = {0, 0};
+str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str httpProxy_host = {NULL, 0};
 int httpProxy_port = 3128;
 
