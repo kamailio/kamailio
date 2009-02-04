@@ -82,6 +82,7 @@
 #include "str_hash.h"
 #include "ut.h"
 #include "rvalue.h"
+#include "switch.h"
 
 #define RT_HASH_SIZE	8 /* route names hash */
 
@@ -697,7 +698,29 @@ int fix_actions(struct action* a)
 						return ret;
 				}
 				break;
-
+			case SWITCH_T:
+				if (t->val[0].type!=RVE_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for if (should be expr)\n",
+								t->val[0].type);
+					return E_BUG;
+				}else if (t->val[1].type!=CASE_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for switch(...){...}(should be action)\n",
+								t->val[1].type);
+					return E_BUG;
+				}
+				if (t->val[0].u.data){
+					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
+						return ret;
+				}else{
+					LOG(L_CRIT, "BUG: fix_actions: null switch()"
+							" expression\n");
+					return E_BUG;
+				}
+				if ((ret=fix_switch(t))<0)
+					return ret;
+				break;
 			case ASSIGN_T:
 			case ADD_T:
 				if (t->val[0].type !=LVAL_ST) {
