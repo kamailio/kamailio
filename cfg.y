@@ -93,6 +93,7 @@
  *               lval=rval_expr, where lval=avp|pvar  (andrei)
  * 2007-12-06  expression are now evaluated in terms of rvalues;
  *             NUMBER is now always positive; cleanup (andrei)
+ * 2009-01-26  case/switch() support (andrei)
 */
 
 %{
@@ -109,6 +110,7 @@
 #include "route_struct.h"
 #include "globals.h"
 #include "route.h"
+#include "switch.h"
 #include "dprint.h"
 #include "sr_module.h"
 #include "modparam.h"
@@ -211,6 +213,8 @@ static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
 static void free_name_lst(struct name_lst* lst);
 static void free_socket_id_lst(struct socket_id* i);
 
+static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a);
+
 %}
 
 %union {
@@ -219,6 +223,7 @@ static void free_socket_id_lst(struct socket_id* i);
 	char* strval;
 	struct expr* expr;
 	struct action* action;
+	struct case_stms* case_stms;
 	struct net* ipnet;
 	struct ip_addr* ipaddr;
 	struct socket_id* sockid;
@@ -272,6 +277,9 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SET_ADV_ADDRESS
 %token SET_ADV_PORT
 %token FORCE_SEND_SOCKET
+%token SWITCH
+%token CASE
+%token DEFAULT
 %token URIHOST
 %token URIPORT
 %token MAX_LEN
@@ -493,6 +501,8 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <intval> intno eint_op eint_op_onsend
 %type <intval> eip_op eip_op_onsend
 %type <action> action actions cmd fcmd if_cmd stm /*exp_stm*/ assign_action
+%type <action> switch_cmd
+%type <case_stms> single_case case_stms
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
@@ -514,7 +524,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <attr> attr_id_any_str
 %type <pvar> pvar
 %type <lval> lval
-%type <rv_expr> rval rval_expr 
+%type <rv_expr> rval rval_expr ct_rval
 %type <lval> avp_pvar
 /* %type <intval> class_id */
 %type <intval> assign_op
@@ -1762,6 +1772,7 @@ actions:
 action:
 	fcmd SEMICOLON {$$=$1;}
 	| if_cmd {$$=$1;}
+	| switch_cmd {$$=$1;}
 	| assign_action SEMICOLON {$$=$1;}
 	| SEMICOLON /* null action */ {$$=0;}
 	| fcmd error { $$=0; yyerror("bad command: missing ';'?"); }
@@ -1770,6 +1781,98 @@ if_cmd:
 	IF exp stm		{ $$=mk_action( IF_T, 3, EXPR_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0); }
 	| IF exp stm ELSE stm	{ $$=mk_action( IF_T, 3, EXPR_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5); }
 	;
+
+ct_rval: rval_expr {
+			$$=0;
+			if (!rve_is_constant($1)){
+				yyerror("constant expected");
+			}else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
+				yyerror("invalid expression (bad type)");
+			}else if (i_tmp!=RV_INT){
+				yyerror("invalid expression type, int expected\n");
+			}else
+				$$=$1;
+		}
+;
+single_case:
+	CASE ct_rval COLON actions {
+		$$=0;
+		if ($2==0) yyerror ("bad case label");
+		else if (($$=mk_case_stm($2, $4))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| CASE ct_rval COLON {
+		$$=0;
+		if ($2==0) yyerror ("bad case label");
+		else if (($$=mk_case_stm($2, 0))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| DEFAULT COLON actions {
+		if (($$=mk_case_stm(0, $3))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| DEFAULT COLON {
+		if (($$=mk_case_stm(0, 0))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| CASE error { $$=0; yyerror("bad case label"); }
+	| CASE ct_rval COLON error { $$=0; yyerror ("bad case body"); }
+;
+case_stms:
+	case_stms single_case {
+		$$=$1;
+		if ($2==0) yyerror ("bad case");
+		if ($$){
+			*($$->append)=$2;
+			if (*($$->append)!=0)
+				$$->append=&((*($$->append))->next);
+		}
+	}
+	| single_case {
+		$$=$1;
+		if ($1==0) yyerror ("bad case");
+		else $$->append=&($$->next);
+	}
+;
+switch_cmd:
+	  SWITCH rval_expr LBRACE case_stms RBRACE { 
+		$$=0;
+		if ($2==0) yyerror("bad expression in switch(...)");
+		else if ($4==0) yyerror ("bad switch body");
+		else{
+			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, $4);
+			if ($$==0) {
+				yyerror("internal error");
+				YYABORT;
+			}
+		}
+	}
+	| SWITCH rval_expr LBRACE RBRACE {
+		$$=0;
+		warn("empty switch()");
+		if ($2==0) yyerror("bad expression in switch(...)");
+		else{
+			/* it might have sideffects, so leave it for the optimizer */
+			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, 0);
+			if ($$==0) {
+				yyerror("internal error");
+				YYABORT;
+			}
+		}
+	}
+	| SWITCH error { $$=0; yyerror ("bad expression in switch(...)"); }
+	| SWITCH rval_expr LBRACE error RBRACE 
+		{$$=0; yyerror ("bad switch body"); }
+;
+
 /* class_id:
 	LBRACK ATTR_USER RBRACK { $$ = AVP_CLASS_USER; }
 	| LBRACK ATTR_DOMAIN RBRACK { $$ = AVP_CLASS_DOMAIN; }
@@ -2761,6 +2864,23 @@ static void free_socket_id_lst(struct socket_id* lst)
 		lst=lst->next;
 		free_socket_id(tmp);
 	}
+}
+
+
+static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a)
+{
+	struct case_stms* s;
+	s=pkg_malloc(sizeof(*s));
+	if (s==0) {
+		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+	} else {
+		memset(s, 0, sizeof(*s));
+		s->ct_rve=ct;
+		s->actions=a;
+		s->next=0;
+		s->append=0;
+	}
+	return s;
 }
 
 /*

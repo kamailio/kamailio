@@ -187,6 +187,9 @@ ELSE			"else"
 SET_ADV_ADDRESS	"set_advertised_address"
 SET_ADV_PORT	"set_advertised_port"
 FORCE_SEND_SOCKET	"force_send_socket"
+SWITCH			"switch"
+CASE			"case"
+DEFAULT			"default"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -495,6 +498,10 @@ EAT_ABLE	[\ \t\b\r]
 										return SET_ADV_PORT; }
 <INITIAL>{FORCE_SEND_SOCKET}	{	count(); yylval.strval=yytext;
 									return FORCE_SEND_SOCKET; }
+<INITIAL>{SWITCH}	{ count(); yylval.strval=yytext; return SWITCH; }
+<INITIAL>{CASE}	{ count(); yylval.strval=yytext; return CASE; }
+<INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
+
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
