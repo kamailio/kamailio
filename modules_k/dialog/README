@@ -919,7 +919,7 @@ route {
 
    Example 1.47. dlg_bridge usage
 ...
-dlg_refer("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
+dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
 ...
 

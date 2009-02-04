@@ -1309,7 +1309,7 @@ route {
 		<title><function>dlg_bridge</function> usage</title>
 		<programlisting format="linespecific">
 ...
-dlg_refer("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
+dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
 ...
 </programlisting>
