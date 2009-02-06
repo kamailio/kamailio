@@ -642,8 +642,8 @@ rtpproxy_stream2uas(prompt_name, count)
     if (is_method("INVITE")) {
         rtpproxy_offer();
         if (detect_hold()) {
-            rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", -
-1);
+            rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", "
+-1");
         } else {
             rtpproxy_stop_stream2uas();
         };
