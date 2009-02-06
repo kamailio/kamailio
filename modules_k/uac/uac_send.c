@@ -300,9 +300,9 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "furi", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
-			else if(strncmp(in->s, "body", 4)==0)
-				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "hdrs", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "body", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "ouri", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
