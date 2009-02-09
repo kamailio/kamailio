@@ -90,6 +90,10 @@ Chapter 1. Admin Guide
    Linux/Unix, the second over all, after msxml library. It is
    integrated in most of well known Linux distributions.
 
+   Please not that this module is deprecated and will be removed
+   in the next major release of Kamailio. The purple module should
+   be used instead.
+
 1.1.1. New Features
 
      * Presence support (see doc/xxjab.cfg for a sample cfg file)

@@ -16,6 +16,10 @@
 		available for Linux/Unix, the second over all, after msxml library. It 
 		is integrated in most of well known Linux distributions.
 	</para>
+	<para>Please not that this module is deprecated and will be removed in
+	the next major release of &kamailio;. The <emphasis>purple</emphasis>
+	module should be used instead.
+	</para>
 	<section>
 		<title>New Features</title>
 		<itemizedlist>

@@ -197,6 +197,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	LM_WARN("This module is deprecated and will be removed in the next release. Use the <purple> module.");
 #ifdef HAVE_IHTTP
 	load_ih_f load_ih;
 #endif
