@@ -54,6 +54,7 @@ struct switch_jmp_table{
 	struct switch_cond_table rest; /**< normal cond. table for the rest */
 };
 
+int fix_switch(struct action* t);
 
 #endif /*__switch_h*/
 

@@ -77,6 +77,7 @@
 #ifdef USE_SCTP
 #include "sctp_server.h"
 #endif
+#include "switch.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -111,6 +112,10 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct sip_uri *u;
 	unsigned short port;
 	str* dst_host;
+	int i;
+	struct switch_cond_table* sct;
+	struct switch_jmp_table*  sjt;
+
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -448,7 +453,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
 			ret=run_actions(h, main_rt.rlist[a->val[0].u.number], msg);
 			h->last_retcode=ret;
-			h->run_flags&=~RETURN_R_F; /* absorb returns */
+			h->run_flags&=~(RETURN_R_F|BREAK_R_F); /* absorb return & break */
 			break;
 		case EXEC_T:
 			if (a->val[0].type!=STRING_ST){
@@ -704,7 +709,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						ret=0;
 						break;
 					}
-					h->run_flags &= ~RETURN_R_F; /* catch returns in expr */
+					h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
+															    break in expr*/
 					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->val[1].type==ACTIONS_ST)&&a->val[1].u.data){
@@ -808,6 +814,98 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
 			break;
+		case EVAL_T:
+			/* only eval the expression to account for possible
+			   side-effect */
+			rval_expr_eval_int(h, msg, &v,
+					(struct rval_expr*)a->val[0].u.data);
+			if (h->run_flags & EXIT_R_F){
+				ret=0;
+				break;
+			}
+			h->run_flags &= ~RETURN_R_F|BREAK_R_F; /* catch return & break in
+													  expr */
+			ret=1; /* default is continue */
+			break;
+		case SWITCH_COND_T:
+			sct=(struct switch_cond_table*)a->val[1].u.data;
+			if (unlikely( rval_expr_eval_int(h, msg, &v,
+									(struct rval_expr*)a->val[0].u.data) <0)){
+				/* handle error in expression => use default */
+				ret=-1;
+				goto sw_cond_def;
+			}
+			if (h->run_flags & EXIT_R_F){
+				ret=0;
+				break;
+			}
+			h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return & break
+													    in expr */
+			ret=1; /* default is continue */
+			for(i=0; i<sct->n; i++)
+				if (sct->cond[i]==v){
+					if (likely(sct->jump[i])){
+						ret=run_actions(h, sct->jump[i], msg);
+						h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+													   returns passthrough */
+					}
+					goto skip;
+				}
+sw_cond_def:
+			if (sct->def){
+				ret=run_actions(h, sct->def, msg);
+				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+											   returns passthrough */
+			}
+			break;
+		case SWITCH_JT_T:
+			sjt=(struct switch_jmp_table*)a->val[1].u.data;
+			if (unlikely( rval_expr_eval_int(h, msg, &v,
+									(struct rval_expr*)a->val[0].u.data) <0)){
+				/* handle error in expression => use default */
+				ret=-1;
+				goto sw_jt_def;
+			}
+			if (h->run_flags & EXIT_R_F){
+				ret=0;
+				break;
+			}
+			h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return & break
+													    in expr */
+			ret=1; /* default is continue */
+			if (likely(v >= sjt->first && v <= sjt->last)){
+				if (likely(sjt->tbl[v - sjt->first])){
+					ret=run_actions(h, sjt->tbl[v - sjt->first], msg);
+					h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+												   returns passthrough */
+				}
+				break; 
+			}else{
+				for(i=0; i<sjt->rest.n; i++)
+					if (sjt->rest.cond[i]==v){
+						if (likely(sjt->rest.jump[i])){
+							ret=run_actions(h, sjt->rest.jump[i], msg);
+							h->run_flags &= ~BREAK_R_F; /* catch breaks, but 
+														   let returns pass */
+						}
+						goto skip;
+					}
+			}
+			/* not found => try default */
+sw_jt_def:
+			if (sjt->rest.def){
+				ret=run_actions(h, sjt->rest.def, msg);
+				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+											   returns passthrough */
+			}
+			break;
+		case BLOCK_T:
+			if (likely(a->val[0].u.data)){
+				ret=run_actions(h, (struct action*)a->val[0].u.data, msg);
+				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+											   returns passthrough */
+			}
+			break;
 		case FORCE_RPORT_T:
 			msg->msg_flags|=FL_FORCE_RPORT;
 			ret=1; /* continue processing */
@@ -885,7 +983,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
 	}
-/*skip:*/
+skip:
 	return ret;
 
 error_uri:
@@ -935,7 +1033,9 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 	for (t=a; t!=0; t=t->next){
 		ret=do_action(h, t, msg);
-		if (h->run_flags & (RETURN_R_F|EXIT_R_F)){
+		/* break, return or drop/exit stop execution of the current
+		   block */
+		if (h->run_flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F)){
 			if (h->run_flags & EXIT_R_F){
 #ifdef USE_LONGJMP
 				h->last_retcode=ret;
