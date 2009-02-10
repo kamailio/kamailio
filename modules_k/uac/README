@@ -128,7 +128,7 @@ modparam("uac","from_restore_mode","auto")
 
 1.3.3. from_passwd (string)
 
-   String password to be used to encrypt the RR storing paramter.
+   String password to be used to encrypt the RR storing parameter.
    If empty, no encryption will be used.
 
    Default value of this parameter is empty.

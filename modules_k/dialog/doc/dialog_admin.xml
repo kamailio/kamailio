@@ -1403,7 +1403,7 @@ if(dlg_get("abcdef", "123", "456"))
 		<para>
 		Lists the description of a dialog or of all dialogs (calls). If only
 		one dialogs is to be listed, the dialog identifiers are to be passed
-		as paramter (callid and fromtag).
+		as parameter (callid and fromtag).
 		</para>
 		<para>
 		Name: <emphasis>dlg_list</emphasis>
@@ -1416,7 +1416,7 @@ if(dlg_get("abcdef", "123", "456"))
 			</para></listitem>
 			<listitem><para>
 				<emphasis>from_tag</emphasis> (optional, but cannot be present
-				without the callid paramter) - fromtag (as per initial request)
+				without the callid parameter) - fromtag (as per initial request)
 				of the dialog to be listed.  Note that if the from_tag is not
 				specified, only dialogs created by a request without a from tag
 				are matched, which will only occur with broken clients and is

@@ -136,7 +136,7 @@ modparam("uac","from_restore_mode","auto")
 		<section>
 			<title><varname>from_passwd</varname> (string)</title>
 			<para>
-			String password to be used to encrypt the RR storing paramter. If
+			String password to be used to encrypt the RR storing parameter. If
 			empty, no encryption will be used.
 			</para>
 			<para>

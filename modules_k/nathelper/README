@@ -412,7 +412,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 
    Alters the SDP information in orer to facilitate NAT traversal.
    What changes to be performed may be controled via the "flags"
-   paramter.
+   parameter.
 
    Meaning of the parameters is as follows:
      * flags - the value may be a bitwise OR of the following
@@ -681,7 +681,7 @@ rtpproxy_stream2uas(prompt_name, count)
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
-add_rcv_param("1"); # add the paramter to the Contact URI
+add_rcv_param("1"); # add the parameter to the Contact URI
 ...
 
 1.6.11.  fix_nated_register()

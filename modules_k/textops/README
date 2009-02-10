@@ -717,7 +717,7 @@ if(remove_hf_re("^P-"))
    attached. The checked includes also the "Content-Lenght" header
    presence and value.
 
-   If a paramter is given, the mime described will be also checked
+   If a parameter is given, the mime described will be also checked
    against the "Content-Type" header.
 
    Meaning of the parameters is as follows:

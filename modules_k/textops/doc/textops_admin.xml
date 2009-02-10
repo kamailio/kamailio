@@ -1091,7 +1091,7 @@ if(remove_hf_re("^P-"))
 		<quote>Content-Lenght</quote> header presence and value.
 		</para>
 		<para>
-		If a paramter is given, the mime described will be also checked against
+		If a parameter is given, the mime described will be also checked against
 		the <quote>Content-Type</quote> header.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>

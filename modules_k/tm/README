@@ -713,7 +713,7 @@ if (!t_relay()) {
 
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   NOTE: the first paramter can take only static values. If you
+   NOTE: the first parameter can take only static values. If you
    need to set next hop (proxy) destination via some script
    variable, set the value of destination URI variable: $du. $du
    takes as value a SIP URI, so "proto:host:port" translates in:
