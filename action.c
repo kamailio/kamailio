@@ -112,9 +112,10 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct sip_uri *u;
 	unsigned short port;
 	str* dst_host;
-	int i;
+	int i, flags;
 	struct switch_cond_table* sct;
 	struct switch_jmp_table*  sjt;
+	struct rval_expr* rve;
 
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
@@ -904,6 +905,30 @@ sw_jt_def:
 				ret=run_actions(h, (struct action*)a->val[0].u.data, msg);
 				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
 											   returns passthrough */
+			}
+			break;
+		case WHILE_T:
+			i=0;
+			flags=0;
+			rve=(struct rval_expr*)a->val[0].u.data;
+			ret=1;
+			while(!(flags & BREAK_R_F) && 
+					(rval_expr_eval_int(h, msg, &v, rve) == 0) && v){
+				i++;
+				if (unlikely(i > cfg_get(core, core_cfg, max_while_loops))){
+					LOG(L_ERR, "ERROR: runaway while (%d, %d): more then"
+								" %d loops\n", 
+								rve->fpos.s_line, rve->fpos.s_col,
+								cfg_get(core, core_cfg, max_while_loops));
+					ret=-1;
+					break;
+				}
+				if (likely(a->val[1].u.data)){
+					ret=run_actions(h, (struct action*)a->val[1].u.data, msg);
+					flags|=h->run_flags;
+					h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+												   returns passthrough */
+				}
 			}
 			break;
 		case FORCE_RPORT_T:
