@@ -754,7 +754,7 @@ int ops_dbquery_avps(struct sip_msg* msg, pv_elem_t* query,
 	
 	r = db_query_avp(msg, printbuf, dest);
 	if(r>=0)
-		return r+1;
+		return 1;
 	return r;
 }
 

@@ -338,7 +338,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 	{
 		LM_DBG("no result after query\n");
 		db_close_query( db_res );
-		return 1;
+		return -2;
 	}
 
 	LM_DBG("rows [%d]\n", RES_ROW_N(db_res));
