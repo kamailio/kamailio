@@ -535,7 +535,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 			<emphasis>1</emphasis> - Query was successful
 			</para></listitem>
 			<listitem><para>
-			<emphasis>2</emphasis> - Query was successful, but no rows where returned.
+			<emphasis>-2</emphasis> - Query was successful, but no rows where returned.
 			</para></listitem>
 			</itemizedlist>
 			<para>

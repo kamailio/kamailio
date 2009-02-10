@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -390,7 +390,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
      * -1 - An error occured while querying the database (e.g.
        wrong SQL or database error)
      * 1 - Query was successful
-     * 2 - Query was successful, but no rows where returned.
+     * -2 - Query was successful, but no rows where returned.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
