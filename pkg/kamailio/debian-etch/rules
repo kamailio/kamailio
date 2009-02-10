@@ -124,6 +124,9 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(BERKELEY_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(LDAP_MOD_PATH)" cfg-target=/etc/kamailio/
 
+	# generate the man pages for modules
+	$(MAKE) modules-docbook-man include_modules="$(ALL_MODULES)"
+
 	# generate the utils db_berkeley
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) utils include_modules="db_berkeley"
 
