@@ -18,16 +18,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- *
- * History:
- * ---------
- *  2005-08-02  first version (bogdan)
  */
 
 /*!
  * \file
- * \brief RR module API
+ * \brief Kamailio RR module (record-routing) API
+ *
+ * Kamailio RR module (record-routing) API.
+ * The RR module provides an internal API to be used by other
+ * Kamailio modules. The API offers support for SIP dialog based
+ * functionalities.
+
+ * For internal(non-script) usage, the RR module offers to other
+ * module the possibility to register callback functions to be
+ * executed each time a local Route header is processed. The
+ * callback function will receive as parameter the register
+ * parameter and the Route header parameter string.
  * \ingroup rr
  */
 
@@ -45,26 +51,31 @@ typedef  int (*check_route_param_t)(struct sip_msg*, regex_t*);
 typedef  int (*is_direction_t)(struct sip_msg*, int);
 typedef  int (*get_route_param_t)(struct sip_msg*, str*, str*);
 
+
+/*! record-route API export binding */
 struct rr_binds {
-	add_rr_param_t      add_rr_param;
-	check_route_param_t check_route_param;
-	is_direction_t      is_direction;
-	get_route_param_t   get_route_param;
-	register_rrcb_t     register_rrcb;
-	int                 append_fromtag;
+	add_rr_param_t		add_rr_param;
+	check_route_param_t	check_route_param;
+	is_direction_t			is_direction;
+	get_route_param_t		get_route_param;
+	register_rrcb_t			register_rrcb;
+	int					append_fromtag;
 };
 
 typedef  int (*load_rr_f)( struct rr_binds* );
 
-/*! \brief
- * function exported by module - it will load the other functions
+/*!
+* \brief API bind function exported by the module - it will load the other functions
+ * \param rr_binds record-route API export binding
+ * \return 1
  */
 int load_rr( struct rr_binds * );
 
 
-/*! \brief
- * function to be called directly from other modules 
- * to load the RR API
+/*!
+ * \brief Function to be called directly from other modules to load the RR API
+ * \param rrb record-route API export binding
+ * \return 0 on success, -1 if the API loader could not imported
  */
 inline static int load_rr_api( struct rr_binds *rrb )
 {

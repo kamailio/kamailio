@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Route & Record-Route module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -20,15 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * -------
- * 2003-04-04 Extracted from common.[ch] (janakj)
- * 2005-04-10 add_rr_param() function and all corresponing hooks added (bogdan)
- * 2006-02-14 record_route may take as param a string to be used as RR param;
- *            record_route and record_route_preset accept pseudo-variables in
- *            parameters; add_rr_param may be called from BRANCH and FAILURE
- *            routes (bogdan)
  */
 
 /*!
@@ -39,6 +28,8 @@
 
 /*!
  * \defgroup rr RR :: Route & Record-Route Module
+ * This module contains record routing logic, as described in RFC 3261
+ * (see chapter 16.12 and 12.1.1 - UAS behavior).
  */
 
 #include <string.h>
@@ -70,23 +61,29 @@
 #define RR_TERM ">"CRLF
 #define RR_TERM_LEN (sizeof(RR_TERM)-1)
 
-#define INBOUND  1  /* Insert inbound Record-Route */
-#define OUTBOUND 0  /* Insert outbound Record-Route */
+#define INBOUND  1	/*!< Insert inbound Record-Route */
+#define OUTBOUND 0	/*!< Insert outbound Record-Route */
 
-#define RR_PARAM_BUF_SIZE 512
+#define RR_PARAM_BUF_SIZE 512 /*!< buffer for RR parameter */
 
 
-/*! \brief RR param buffer 
- *  \note used for storing RR param which are added before RR insertion -bogdan 
+/*!
+ * \brief RR param buffer 
+ * \note used for storing RR param which are added before RR insertion
  */
 static char rr_param_buf_ptr[RR_PARAM_BUF_SIZE];
 static str rr_param_buf = {rr_param_buf_ptr,0};
 static unsigned int rr_param_msg;
 
-/*! \brief
- * Extract username from the Request URI
- * First try to look at the original Request URI and if there
- * is no username use the new Request URI
+
+/*!
+ * \brief Extract username from the Request URI
+ *
+ * Extract username from the Request URI. First try to look at the original
+ * Request URI and if there is no username use the new Request URI.
+ * \param _m SIP message
+ * \param _user username
+ * \return 0 on success, negative on errors
  */
 static inline int get_username(struct sip_msg* _m, str* _user)
 {
@@ -116,6 +113,13 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 }
 
 
+/*!
+ * \brief Insert RR parameter lump in new allocated private memory
+ * \param before lump list
+ * \param s parameter string
+ * \param l parameter string length
+ * \return pointer to new lump on success, NULL on failure
+ */
 static inline struct lump *insert_rr_param_lump(struct lump *before,
 						char *s, int l)
 {
@@ -141,8 +145,16 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
 }
 
 
-/*! \brief
- * build a Record-Route header field
+/*!
+ * \brief Build a Record-Route header field
+ *
+* Build a Record-Route header field, allocates new private memory for this.
+ * \param _l first lump
+ * \param _l2 second lump
+ * \param tag tag parameter
+ * \param params parameter
+ * \param _inbound inbound request
+ * \return 0 on success, negative on failure
  */
 static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 						str *tag, str *params, int _inbound)
@@ -253,19 +265,22 @@ lump_err:
 }
 
 
-/*! \brief
- * Insert a new Record-Route header field
- * And also 2nd one if it is enabled and realm changed so
- * the 2nd record-route header will be necessary
+/*!
+ * \brief Insert a new Record-Route header field with lr parameter
+ *
+ * Insert a new Record-Route header field and also 2nd one if it is enabled
+ * and the realm changed so the 2nd record-route header will be necessary.
+ * \param _m SIP message
+ * \param params RR parameter
+ * \return 0 on success, negative on failure
  */
 int record_route(struct sip_msg* _m, str *params)
 {
 	struct lump* l, *l2;
 	str user;
-	struct to_body* from;
+	struct to_body* from = NULL;
 	str* tag;
 	
-	from = 0; /* Makes gcc happy */
 	user.len = 0;
 	
 	if (add_username) {
@@ -328,9 +343,15 @@ int record_route(struct sip_msg* _m, str *params)
 }
 
 
-/*! \brief
+/*!
+ * \brief Insert manually created Record-Route header
+ *
  * Insert manually created Record-Route header, no checks, no restrictions,
- * always adds lr parameter, only fromtag is added automatically when requested
+ * always adds lr parameter, only fromtag is added automatically when requested.
+ * Allocates new private memory for this.
+ * \param _m SIP message
+ * \param _data manually created RR header
+ * \return 1 on success, negative on failure
  */
 int record_route_preset(struct sip_msg* _m, str* _data)
 {
@@ -428,6 +449,11 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 }
 
 
+/*!
+ * \brief Get the RR parameter lump
+ * \param root root of the lump list
+ * \return pointer to the RR parameter lump, or NULL if not found
+ */
 static struct lump *get_rr_param_lump( struct lump** root)
 {
 	struct lump *r, *crt, *last;
@@ -447,8 +473,11 @@ static struct lump *get_rr_param_lump( struct lump** root)
 }
 
 
-/*! \brief
- * Appends a new Record-Route parameter
+/*!
+ * \brief Appends a new Record-Route parameter
+ * \param msg SIP message
+ * \param rr_param RR parameter
+ * \return 0 on success, -1 on failure
  */
 int add_rr_param(struct sip_msg* msg, str* rr_param)
 {
@@ -494,5 +523,3 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 error:
 	return -1;
 }
-
-

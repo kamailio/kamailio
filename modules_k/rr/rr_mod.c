@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Route & Record-Route module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -20,20 +18,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * --------
- *  2003-03-11  updated to the new module interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-01  Added record_route with ip address parameter (janakj)
- *  2003-04-14  enable_full_lr parameter introduced (janakj)
- *  2005-04-10  add_rr_param() and check_route_param() added (bogdan)
- *  2006-02-14  record_route may take as param a string to be used as RR param;
- *              record_route and record_route_preset accept pseudo-variables in
- *              parameters; add_rr_param may be called from BRANCH and FAILURE
- *              routes (bogdan)
  */
+
 /*!
  * \file
  * \brief Route & Record-Route module
@@ -64,10 +50,10 @@ str i_user;
 char *ignore_user = NULL;
 #endif
 
-int append_fromtag = 1;
-int enable_double_rr = 1; /* Enable using of 2 RR by default */
-int enable_full_lr = 0;   /* Disabled by default */
-int add_username = 0;     /* Do not add username by default */
+int append_fromtag = 1;		/*!< append from tag by default */
+int enable_double_rr = 1;	/*!< enable using of 2 RR by default */
+int enable_full_lr = 0;		/*!< compatibilty mode disabled by default */
+int add_username = 0;	 	/*!< do not add username by default */
 
 static unsigned int last_rr_msg;
 
@@ -84,57 +70,57 @@ static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
 
-/*! \brief
- * Exported functions
+/*!
+ * \brief Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"loose_route",          (cmd_function)loose_route,           0,     0, 0,
+	{"loose_route",          (cmd_function)loose_route,			0, 0, 0,
 			REQUEST_ROUTE},
-	{"record_route",         (cmd_function)w_record_route,        0,     0, 0,
+	{"record_route",         (cmd_function)w_record_route,		0, 0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"record_route",         (cmd_function)w_record_route,        1,     it_list_fixup, 0,
+	{"record_route",         (cmd_function)w_record_route, 		1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"record_route_preset",  (cmd_function)w_record_route_preset, 1,     it_list_fixup, 0,
+	{"record_route_preset",  (cmd_function)w_record_route_preset, 1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"add_rr_param",         (cmd_function)w_add_rr_param,        1,     it_list_fixup, 0,
+	{"add_rr_param",         (cmd_function)w_add_rr_param,	1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"check_route_param",    (cmd_function)w_check_route_param,   1,     fixup_regexp_null, fixup_free_regexp_null,
+	{"check_route_param",    (cmd_function)w_check_route_param, 1, fixup_regexp_null, fixup_free_regexp_null,
 			REQUEST_ROUTE},
-	{"is_direction",         (cmd_function)w_is_direction,        1,     direction_fixup, 0,
+	{"is_direction",         (cmd_function)w_is_direction, 		1, direction_fixup, 0,
 			REQUEST_ROUTE},
-	{"load_rr",              (cmd_function)load_rr, 0, 0, 0, 0},
+	{"load_rr",              (cmd_function)load_rr, 				0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
 
-/*! \brief
- * Exported parameters
+/*!
+ * \brief Exported parameters
  */
 static param_export_t params[] ={ 
-	{"append_fromtag",   INT_PARAM, &append_fromtag  },
-	{"enable_double_rr", INT_PARAM, &enable_double_rr},
-	{"enable_full_lr",   INT_PARAM, &enable_full_lr  },
+	{"append_fromtag",	INT_PARAM, &append_fromtag},
+	{"enable_double_rr",	INT_PARAM, &enable_double_rr},
+	{"enable_full_lr",		INT_PARAM, &enable_full_lr},
 #ifdef ENABLE_USER_CHECK
-	{"ignore_user",      STR_PARAM, &ignore_user     },
+	{"ignore_user",		STR_PARAM, &ignore_user},
 #endif
-	{"add_username",     INT_PARAM, &add_username    },
+	{"add_username",		INT_PARAM, &add_username},
 	{0, 0, 0 }
 };
 
 
 struct module_exports exports = {
 	"rr",
-	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,        /*!< Exported functions */
-	params,      /*!< Exported parameters */
-	0,           /*!< exported statistics */
-	0,           /*!< exported MI functions */
-	0,           /*!< exported pseudo-variables */
-	0,           /*!< extra processes */
-	mod_init,    /*!< initialize module */
-	0,           /*!< response function*/
-	mod_destroy, /*!< destroy function */
-	0            /*!< per-child init function */
+	DEFAULT_DLFLAGS,	/*!< dlopen flags */
+	cmds,			/*!< Exported functions */
+	params,			/*!< Exported parameters */
+	0,				/*!< exported statistics */
+	0,				/*!< exported MI functions */
+	0,				/*!< exported pseudo-variables */
+	0,				/*!< extra processes */
+	mod_init,			/*!< initialize module */
+	0,				/*!< response function*/
+	mod_destroy,		/*!< destroy function */
+	0				/*!< per-child init function */
 };
 
 
@@ -276,5 +262,3 @@ static int w_is_direction(struct sip_msg *msg,char *dir, char *foo)
 {
 	return ((is_direction(msg,(int)(long)dir)==0)?1:-1);
 }
-
-

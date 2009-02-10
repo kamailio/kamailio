@@ -18,11 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- *
- * History:
- * ---------
- *  2005-08-02  first version (bogdan)
  */
 
 /*!
@@ -35,10 +30,13 @@
 #include "rr_cb.h"
 
 
+/*! global callback list */
 struct rr_callback* rrcb_hl = 0;  /* head list */
 
 
-
+/*!
+ * \brief destroy global callback list, frees memory
+ */
 void destroy_rrcb_lists(void)
 {
 	struct rr_callback *cbp, *cbp_tmp;
@@ -51,6 +49,12 @@ void destroy_rrcb_lists(void)
 }
 
 
+/*!
+ * \brief register a RR callback, allocates new private memory for it
+ * \param f callback register function
+ * \param param callback parameter
+ * \return 0 on success, -1 on failure (out of memory)
+ */
 int register_rrcb( rr_cb_t f, void *param )
 {
 	struct rr_callback *cbp;
@@ -77,6 +81,11 @@ int register_rrcb( rr_cb_t f, void *param )
 }
 
 
+/*!
+ * \brief run RR transaction callbacks
+ * \param req SIP request
+ * \param rr_param callback list
+ */
 void run_rr_callbacks( struct sip_msg *req, str *rr_params )
 {
 	str l_param;
@@ -89,6 +98,3 @@ void run_rr_callbacks( struct sip_msg *req, str *rr_params )
 		cbp->callback( req, &l_param, cbp->param );
 	}
 }
-
-
-

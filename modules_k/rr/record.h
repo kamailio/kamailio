@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Route & Record-Route module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -20,11 +18,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * -------
- * 2003-04-04 Extracted from common.[ch] (janakj)
- * 2005-04-10 add_rr_param() function added (bogdan)
  */
 
 /*!
@@ -40,21 +33,36 @@
 #include "../../str.h"
 
 
-/*! \brief
- * Insert a new Record-Route header field with lr parameter
+/*!
+ * \brief Insert a new Record-Route header field with lr parameter
+ *
+ * Insert a new Record-Route header field with lr parameter, and also 2nd one if it is
+ * enabled and the realm changed so the 2nd record-route header will be necessary.
+ * \param _m SIP message
+ * \param params RR parameter
+ * \return 0 on success, negative on failure
  */
 int record_route(struct sip_msg* _m, str* _param);
 
 
-/*! \brief
+/*!
+ * \brief Insert manually created Record-Route header
+ *
  * Insert manually created Record-Route header, no checks, no restrictions,
- * always adds lr parameter, only fromtag is added automatically when requested
+ * always adds lr parameter, only fromtag is added automatically when requested.
+ * Allocates new private memory for this.
+ * \param _m SIP message
+ * \param _data manually created RR header
+ * \return 1 on success, negative on failure
  */
 int record_route_preset(struct sip_msg* _m, str* _data);
 
 
-/*! \brief
- * Appends a new Record-Route parameter
+/*!
+ * \brief Appends a new Record-Route parameter
+ * \param msg SIP message
+ * \param rr_param RR parameter
+ * \return 0 on success, -1 on failure
  */
 int add_rr_param(struct sip_msg* msg, str* rr_param);
 

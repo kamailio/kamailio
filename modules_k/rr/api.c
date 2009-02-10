@@ -18,16 +18,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- *
- * History:
- * ---------
- *  2005-08-02  first version (bogdan)
  */
 
 /*!
  * \file
- * \brief Kamailio RR module (record-routing)
+ * \brief Kamailio RR module (record-routing) API
+ *
+ * Kamailio RR module (record-routing) API.
+ * The RR module provides an internal API to be used by other
+ * Kamailio modules. The API offers support for SIP dialog based
+ * functionalities.
+
+ * For internal(non-script) usage, the RR module offers to other
+ * module the possibility to register callback functions to be
+ * executed each time a local Route header is processed. The
+ * callback function will receive as parameter the register
+ * parameter and the Route header parameter string.
  * \ingroup rr
  */
 
@@ -38,8 +44,16 @@
 #include "api.h"
 #include "rr_cb.h"
 
+
+/*! append from tag to record route */
 extern int append_fromtag;
 
+
+/*!
+* \brief Function exported by module - it will load the other functions
+ * \param rrb record-route API export binding
+ * \return 1
+ */
 int load_rr( struct rr_binds *rrb )
 {
 	rrb->add_rr_param      = add_rr_param;
@@ -51,4 +65,3 @@ int load_rr( struct rr_binds *rrb )
 
 	return 1;
 }
-

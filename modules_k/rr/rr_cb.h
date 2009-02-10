@@ -18,11 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- *
- * History:
- * ---------
- *  2005-08-02  first version (bogdan)
  */
 
 /*!
@@ -44,26 +39,36 @@ typedef void (rr_cb_t) (struct sip_msg* req, str *rr_param, void *param);
 typedef int (*register_rrcb_t)( rr_cb_t f, void *param);
 
 
-
-
+/*! rr callback */
 struct rr_callback {
-	int id;                   /*!< id of this callback - useless */
-	rr_cb_t* callback;        /*!< callback function */
-	void *param;              /*!< param to be passed to callback function */
+	int id;				/*!< id of this callback - useless */
+	rr_cb_t* callback;		/*!< callback function */
+	void *param;			/*!< param to be passed to callback function */
 	struct rr_callback* next; /*!< next callback element*/
 };
 
 
+/*!
+ * \brief destroy global callback list, frees memory
+ */
 void destroy_rrcb_lists(void);
 
 
-/*! \brief register a RR callback */
+/*!
+ * \brief register a RR callback, allocates new private memory for it
+ * \param f callback register function
+ * \param param callback parameter
+ * \return 0 on success, -1 on failure (out of memory)
+ */
 int register_rrcb(rr_cb_t f, void *param );
 
-/*! \brief run RR transaction callbacks */
+
+/*!
+ * \brief run RR transaction callbacks
+ * \param req SIP request
+ * \param rr_param callback list
+ */
 void run_rr_callbacks( struct sip_msg *req, str *rr_param);
 
 
 #endif
-
-
