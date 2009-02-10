@@ -184,6 +184,7 @@
 
 extern int yylex();
 static void yyerror(char* s, ...);
+static void yyerror_at(struct cfg_pos* pos, char* s, ...);
 static char* tmp;
 static int i_tmp;
 static unsigned u_tmp;
@@ -201,7 +202,8 @@ static struct action *mod_func_action;
 static struct lvalue* lval_tmp;
 static struct rvalue* rval_tmp;
 
-static void warn(char* s);
+static void warn(char* s, ...);
+static void warn_at(struct cfg_pos* pos, char* s, ...);
 static void get_cpos(struct cfg_pos* pos);
 static struct rval_expr* mk_rve_rval(enum rval_type, void* v);
 static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1);
@@ -280,6 +282,7 @@ static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a);
 %token SWITCH
 %token CASE
 %token DEFAULT
+%token WHILE
 %token URIHOST
 %token URIPORT
 %token MAX_LEN
@@ -436,6 +439,7 @@ static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a);
 %token TOS
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
+%token MAX_WLOOPS
 %token CFG_DESCRIPTION
 %token SERVER_ID
 
@@ -501,7 +505,7 @@ static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a);
 %type <intval> intno eint_op eint_op_onsend
 %type <intval> eip_op eip_op_onsend
 %type <action> action actions cmd fcmd if_cmd stm /*exp_stm*/ assign_action
-%type <action> switch_cmd
+%type <action> switch_cmd while_cmd
 %type <case_stms> single_case case_stms
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
@@ -1283,6 +1287,8 @@ assign_stm:
 	| PMTU_DISCOVERY error { yyerror("number expected"); }
 	| KILL_TIMEOUT EQUAL NUMBER { ser_kill_timeout=$3; }
 	| KILL_TIMEOUT EQUAL error { yyerror("number expected"); }
+	| MAX_WLOOPS EQUAL NUMBER { default_core_cfg.max_while_loops=$3; }
+	| MAX_WLOOPS EQUAL error { yyerror("number expected"); }
 	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }
 	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
 	| STUN_ALLOW_STUN EQUAL NUMBER { IF_STUN(stun_allow_stun=$3); }
@@ -1773,6 +1779,7 @@ action:
 	fcmd SEMICOLON {$$=$1;}
 	| if_cmd {$$=$1;}
 	| switch_cmd {$$=$1;}
+	| while_cmd { $$=$1; }
 	| assign_action SEMICOLON {$$=$1;}
 	| SEMICOLON /* null action */ {$$=0;}
 	| fcmd error { $$=0; yyerror("bad command: missing ';'?"); }
@@ -1871,6 +1878,17 @@ switch_cmd:
 	| SWITCH error { $$=0; yyerror ("bad expression in switch(...)"); }
 	| SWITCH rval_expr LBRACE error RBRACE 
 		{$$=0; yyerror ("bad switch body"); }
+;
+
+while_cmd:
+	WHILE rval_expr stm {
+		if ($2){
+			if (rve_is_constant($2))
+				warn_at(&$2->fpos, "constant value in while(...)");
+		}else
+			yyerror_at(&$2->fpos, "bad while(...) expression");
+		$$=mk_action( WHILE_T, 2, RVE_ST, $2, ACTIONS_ST, $3);
+	}
 ;
 
 /* class_id:
@@ -2665,18 +2683,27 @@ static void get_cpos(struct cfg_pos* pos)
 }
 
 
-static void warn(char* s)
+static void warn_at(struct cfg_pos* p, char* format, ...)
 {
-	if (line!=startline)
+	va_list ap;
+	char s[256];
+	
+	va_start(ap, format);
+	vsnprintf(s, sizeof(s), format, ap);
+	va_end(ap);
+	if (p->e_line!=p->s_line)
 		LOG(L_WARN, "cfg. warning: (%d,%d-%d,%d): %s\n",
-					startline, startcolumn, line, column-1, s);
-	else if (startcolumn!=(column-1))
-		LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", startline, startcolumn,
-					column-1, s);
+					p->s_line, p->s_col, p->e_line, p->e_col, s);
+	else if (p->s_col!=p->e_col)
+		LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n",
+					p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_WARN, "cfg. warning: (%d,%d): %s\n", startline, startcolumn, s);
+		LOG(L_WARN, "cfg. warning: (%d,%d): %s\n",
+				p->s_line, p->s_col, s);
 	cfg_warnings++;
 }
+
+
 
 static void yyerror_at(struct cfg_pos* p, char* format, ...)
 {
@@ -2697,6 +2724,22 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 					p->s_line, p->s_col, s);
 	cfg_errors++;
 }
+
+
+
+static void warn(char* format, ...)
+{
+	va_list ap;
+	char s[256];
+	struct cfg_pos pos;
+	
+	get_cpos(&pos);
+	va_start(ap, format);
+	vsnprintf(s, sizeof(s), format, ap);
+	va_end(ap);
+	warn_at(&pos, s);
+}
+
 
 
 static void yyerror(char* format, ...)

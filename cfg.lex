@@ -190,6 +190,7 @@ FORCE_SEND_SOCKET	"force_send_socket"
 SWITCH			"switch"
 CASE			"case"
 DEFAULT			"default"
+WHILE			"while"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -375,6 +376,7 @@ MCAST_TTL		"mcast_ttl"
 TOS			"tos"
 PMTU_DISCOVERY	"pmtu_discovery"
 KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
+MAX_WLOOPS		"max_while_loops"
 
 /* stun config variables */
 STUN_REFRESH_INTERVAL "stun_refresh_interval"
@@ -501,7 +503,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SWITCH}	{ count(); yylval.strval=yytext; return SWITCH; }
 <INITIAL>{CASE}	{ count(); yylval.strval=yytext; return CASE; }
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
-
+<INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
@@ -717,6 +719,8 @@ EAT_ABLE	[\ \t\b\r]
 									return PMTU_DISCOVERY; }
 <INITIAL>{KILL_TIMEOUT}			{	count(); yylval.strval=yytext;
 									return KILL_TIMEOUT; }
+<INITIAL>{MAX_WLOOPS}			{	count(); yylval.strval=yytext;
+									return MAX_WLOOPS; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
