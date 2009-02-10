@@ -16,8 +16,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-12-25 08:08:54 +0200
-                              (Thu, 25 Dec 2008) $
+   Revision $Revision$ $Date: 2008-12-25 07:08:54 +0100
+                              (Do, 25 Dez 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -170,7 +170,7 @@ Chapter 1. Admin Guide
    [un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
    the 0 id set will be used.
 
-   IMPORTANT: if you use nultiple sets, take care and use the same
+   IMPORTANT: if you use multiple sets, take care and use the same
    set for both force_ and unforce_rtpproxy()!!
 
 1.4. Dependencies

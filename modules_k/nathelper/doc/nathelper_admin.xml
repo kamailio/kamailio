@@ -101,7 +101,7 @@
 		the 0 id set will be used.
 	</para>
 	<para>
-		IMPORTANT: if you use nultiple sets, take care and use the same set for
+		IMPORTANT: if you use multiple sets, take care and use the same set for
 		both force_ and unforce_rtpproxy()!!
 	</para>
 	</section>
