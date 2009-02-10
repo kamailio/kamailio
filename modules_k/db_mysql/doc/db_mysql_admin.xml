@@ -106,7 +106,7 @@ modparam("db_mysql", "timeout_interval", 2)
 		<title>Set <varname>auto_reconnect</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("auto_reconnect", "auto_reconnect", 0)
+modparam("db_mysql", "auto_reconnect", 0)
 ...
 </programlisting>
 		</example>
