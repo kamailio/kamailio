@@ -29,7 +29,7 @@
 
 /**
  * \file lib/srdb1/db.c
- * \ingroup db
+ * \ingroup db1
  * \brief Generic Database Interface
  *
  */

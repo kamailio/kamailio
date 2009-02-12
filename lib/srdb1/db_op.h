@@ -24,7 +24,7 @@
 /**
  * \file lib/srdb1/db_op.h
  * \brief Type that represents a expression operator.
- * \ingroup db
+ * \ingroup db1
  */
 
 #ifndef DB_OP_H

@@ -24,7 +24,7 @@
 /**
  * \file lib/srdb1/db_pool.h
  * \brief Functions for managing a pool of database connections.
- * \ingroup db
+ * \ingroup db1
  */
 
 #ifndef _DB_POOL_H

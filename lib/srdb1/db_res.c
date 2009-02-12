@@ -24,7 +24,7 @@
 /**
  * \file lib/srdb1/db_res.c
  * \brief Functions to manage result structures
- * \ingroup db
+ * \ingroup db1
  *
  * Provides some convenience macros and some memory management
  * functions for result structures.

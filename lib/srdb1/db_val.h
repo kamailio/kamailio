@@ -30,7 +30,7 @@
  * Available types: DB1_INT, DB1_DOUBLE, DB1_STRING, DB1_STR, DB1_DATETIME, DB1_BLOB and DB1_BITMAP
  * It also provides some macros for convenient access to this values,
  * and a function to convert a str to a value.
- * \ingroup db
+ * \ingroup db1
  */
 
 

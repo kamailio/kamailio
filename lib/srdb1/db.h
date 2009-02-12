@@ -23,7 +23,7 @@
 
 /**
  * \file lib/srdb1/db.h
- * \ingroup db
+ * \ingroup db1
  * \ref db.c
  * \brief Generic Database Interface
  *

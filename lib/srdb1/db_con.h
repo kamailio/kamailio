@@ -23,7 +23,7 @@
 
 /*!
  * \file lib/srdb1/db_con.h
- * \ingroup db
+ * \ingroup db1
  * \brief Type that represents a database connection
  */
 

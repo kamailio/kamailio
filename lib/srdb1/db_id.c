@@ -23,7 +23,7 @@
 
 /**
  * \file lib/srdb1/db_id.c
- * \ingroup db
+ * \ingroup db1
  * \brief Functions for parsing a database URL and work with db identifier.
  */
 

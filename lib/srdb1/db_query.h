@@ -24,7 +24,7 @@
 /**
  * \file lib/srdb1/db_query.h
  * \brief Query helper for database drivers
- * \ingroup db
+ * \ingroup db1
  *
  * This helper methods for database queries are used from the database
  * SQL driver to do the actual work. Each function uses some functions from
