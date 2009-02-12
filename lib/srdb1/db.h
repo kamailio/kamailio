@@ -55,7 +55,7 @@
 /**
  * \brief Specify table name that will be used for subsequent operations.
  * 
- * The function db_use_table takes a table name and stores it db_con_t structure.
+ * The function db_use_table takes a table name and stores it db1_con_t structure.
  * All subsequent operations (insert, delete, update, query) are performed on
  * that table.
  * \param _h database connection handle
@@ -83,7 +83,7 @@ typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
  * name of the database (optional).
  * \see bind_dbmod
  * \param _sqlurl database connection URL
- * \return returns a pointer to the db_con_t representing the connection if it was
+ * \return returns a pointer to the db1_con_t representing the connection if it was
  * successful, otherwise 0 is returned
  */
 typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
@@ -93,7 +93,7 @@ typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
  *
  * The function closes previously open connection and frees all previously 
  * allocated memory. The function db_close must be the very last function called.
- * \param _h db_con_t structure representing the database connection
+ * \param _h db1_con_t structure representing the database connection
  */
 typedef void (*db_close_f) (db1_con_t* _h); 
 
@@ -335,7 +335,7 @@ int db_bind_mod(const str* mod, db_func_t* dbf);
  * functions.
  * \param url database connection URL
  * \param (*new_connection)() Pointer to the db specific connection creation method
- * \return returns a pointer to the db_con_t representing the connection if it was
+ * \return returns a pointer to the db1_con_t representing the connection if it was
    successful, otherwise 0 is returned.
  */
 db1_con_t* db_do_init(const str* url, void* (*new_connection)());
@@ -380,7 +380,7 @@ int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table, con
  * \brief Stores the name of a table.
  *
  * Stores the name of the table that will be used by subsequent database
- * functions calls in a db_con_t structure.
+ * functions calls in a db1_con_t structure.
  * \param _h database connection handle
  * \param _t stored name
  * \return 0 if everything is ok, otherwise returns value < 0
