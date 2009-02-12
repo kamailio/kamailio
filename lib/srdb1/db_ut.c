@@ -265,8 +265,8 @@ inline int db_print_columns(char* _b, const int _l, const db_key_t* _c, const in
 /*
  * Print values of SQL statement
  */
-int db_print_values(const db_con_t* _c, char* _b, const int _l, const db_val_t* _v,
-	const int _n, int (*val2str)(const db_con_t*, const db_val_t*, char*, int*))
+int db_print_values(const db1_con_t* _c, char* _b, const int _l, const db_val_t* _v,
+	const int _n, int (*val2str)(const db1_con_t*, const db_val_t*, char*, int*))
 {
 	int i, l, len = 0;
 
@@ -294,9 +294,9 @@ int db_print_values(const db_con_t* _c, char* _b, const int _l, const db_val_t* 
 /*
  * Print where clause of SQL statement
  */
-int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
+int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k,
 	const db_op_t* _o, const db_val_t* _v, const int _n, int (*val2str)
-	(const 	db_con_t*, const db_val_t*, char*, int*))
+	(const 	db1_con_t*, const db_val_t*, char*, int*))
 {
 	int i, l, ret, len = 0;
 
@@ -338,8 +338,8 @@ int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _
 /*
  * Print set clause of update SQL statement
  */
-int db_print_set(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
-	const db_val_t* _v, const int _n, int (*val2str)(const db_con_t*,
+int db_print_set(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k,
+	const db_val_t* _v, const int _n, int (*val2str)(const db1_con_t*,
 	const db_val_t*,char*, int*))
 {
 	int i, l, ret, len = 0;

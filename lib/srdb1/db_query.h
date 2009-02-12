@@ -66,11 +66,11 @@
  * \param (*store_result) function pointer to the db specific store result function
  * \return zero on success, negative on errors
  */
-int db_do_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-	const db_key_t _o, db_res_t** _r, int (*val2str) (const db_con_t*,
-	const db_val_t*, char*, int*), int (*submit_query)(const db_con_t* _h,
-	const str* _c), int (*store_result)(const db_con_t* _h, db_res_t** _r));
+	const db_key_t _o, db_res_t** _r, int (*val2str) (const db1_con_t*,
+	const db_val_t*, char*, int*), int (*submit_query)(const db1_con_t* _h,
+	const str* _c), int (*store_result)(const db1_con_t* _h, db_res_t** _r));
 
 
 /**
@@ -88,9 +88,9 @@ int db_do_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \param (*store_result) function pointer to the db specific store result function
  * \return zero on success, negative on errors
  */
-int db_do_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r,
-	int (*submit_query)(const db_con_t* _h, const str* _c),
-	int (*store_result)(const db_con_t* _h, db_res_t** _r));
+int db_do_raw_query(const db1_con_t* _h, const str* _s, db_res_t** _r,
+	int (*submit_query)(const db1_con_t* _h, const str* _c),
+	int (*store_result)(const db1_con_t* _h, db_res_t** _r));
 
 
 /**
@@ -109,9 +109,9 @@ int db_do_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r,
  * \param (*submit_query) function pointer to the db specific query submit function
  * \return zero on success, negative on errors
  */
-int db_do_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
-	const int _n, int (*val2str) (const db_con_t*, const db_val_t*, char*, int*),
-	int (*submit_query)(const db_con_t* _h, const str* _c));
+int db_do_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n, int (*val2str) (const db1_con_t*, const db_val_t*, char*, int*),
+	int (*submit_query)(const db1_con_t* _h, const str* _c));
 
 
 /**
@@ -131,9 +131,9 @@ int db_do_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  * \param (*submit_query) function pointer to the db specific query submit function
  * \return zero on success, negative on errors
  */
-int db_do_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-	const db_val_t* _v, const int _n, int (*val2str) (const db_con_t*,
-	const db_val_t*, char*, int*), int (*submit_query)(const db_con_t* _h,
+int db_do_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+	const db_val_t* _v, const int _n, int (*val2str) (const db1_con_t*,
+	const db_val_t*, char*, int*), int (*submit_query)(const db1_con_t* _h,
 	const str* _c));
 
 
@@ -157,10 +157,10 @@ int db_do_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param (*submit_query) function pointer to the db specific query submit function
  * \return zero on success, negative on errors
  */
-int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_do_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
-	const int _un, int (*val2str) (const db_con_t*, const db_val_t*, char*, int*),
-	int (*submit_query)(const db_con_t* _h, const str* _c));
+	const int _un, int (*val2str) (const db1_con_t*, const db_val_t*, char*, int*),
+	int (*submit_query)(const db1_con_t* _h, const str* _c));
 
 
 /**
@@ -179,9 +179,9 @@ int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param (*submit_query) function pointer to the db specific query submit function
  * \return zero on success, negative on errors
  */
-int db_do_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
-	const int _n, int (*val2str) (const db_con_t*, const db_val_t*, char*,
-	int*), int (*submit_query)(const db_con_t* _h, const str* _c));
+int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n, int (*val2str) (const db1_con_t*, const db_val_t*, char*,
+	int*), int (*submit_query)(const db1_con_t* _h, const str* _c));
 
 
 #endif

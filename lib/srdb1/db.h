@@ -62,7 +62,7 @@
  * \param _t table name
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_use_table_f)(db_con_t* _h, const str * _t);
+typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
 
 /**
  * \brief Initialize database connection and obtain the connection handle.
@@ -86,7 +86,7 @@ typedef int (*db_use_table_f)(db_con_t* _h, const str * _t);
  * \return returns a pointer to the db_con_t representing the connection if it was
  * successful, otherwise 0 is returned
  */
-typedef db_con_t* (*db_init_f) (const str* _sqlurl);
+typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
 
 /**
  * \brief Close a database connection and free all memory used.
@@ -95,7 +95,7 @@ typedef db_con_t* (*db_init_f) (const str* _sqlurl);
  * allocated memory. The function db_close must be the very last function called.
  * \param _h db_con_t structure representing the database connection
  */
-typedef void (*db_close_f) (db_con_t* _h); 
+typedef void (*db_close_f) (db1_con_t* _h); 
 
 
 /**
@@ -127,7 +127,7 @@ typedef void (*db_close_f) (db_con_t* _h);
  * \param _r address of variable where pointer to the result will be stored
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_query_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+typedef int (*db_query_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 				const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 				const db_key_t _o, db_res_t** _r);
 
@@ -146,7 +146,7 @@ typedef int (*db_query_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t
  * \param _n the number of rows that should be fetched
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_fetch_result_f) (const db_con_t* _h, db_res_t** _r, const int _n);
+typedef int (*db_fetch_result_f) (const db1_con_t* _h, db_res_t** _r, const int _n);
 
 
 /**
@@ -164,7 +164,7 @@ typedef int (*db_fetch_result_f) (const db_con_t* _h, db_res_t** _r, const int _
  * \param _r structure for the result
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_raw_query_f) (const db_con_t* _h, const str* _s, db_res_t** _r);
+typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db_res_t** _r);
 
 
 /**
@@ -177,7 +177,7 @@ typedef int (*db_raw_query_f) (const db_con_t* _h, const str* _s, db_res_t** _r)
  * \param _r pointer to db_res_t structure to destroy
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
+typedef int (*db_free_result_f) (db1_con_t* _h, db_res_t* _r);
 
 
 /**
@@ -191,7 +191,7 @@ typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
  * \param _n number of keys-value pairs int _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_f) (const db_con_t* _h, const db_key_t* _k,
+typedef int (*db_insert_f) (const db1_con_t* _h, const db_key_t* _k,
 				const db_val_t* _v, const int _n);
 
 
@@ -211,7 +211,7 @@ typedef int (*db_insert_f) (const db_con_t* _h, const db_key_t* _k,
  * \param _n number of keys-value parameters in _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_delete_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+typedef int (*db_delete_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				const db_val_t* _v, const int _n);
 
 
@@ -230,7 +230,7 @@ typedef int (*db_delete_f) (const db_con_t* _h, const db_key_t* _k, const db_op_
  * \param _un number of key-value pairs in _uk and _uv parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_update_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+typedef int (*db_update_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 				const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv,
 				const int _n, const int _un);
 
@@ -247,7 +247,7 @@ typedef int (*db_update_f) (const db_con_t* _h, const db_key_t* _k, const db_op_
  * \param _n number of key=value pairs
  * \return returns 0 if everything is OK, otherwise returns value < 0
 */
-typedef int (*db_replace_f) (const db_con_t* handle, const db_key_t* keys,
+typedef int (*db_replace_f) (const db1_con_t* handle, const db_key_t* keys,
 				const db_val_t* vals, const int n);
 
 
@@ -262,7 +262,7 @@ typedef int (*db_replace_f) (const db_con_t* handle, const db_key_t* keys,
  * \return returns the ID as integer or returns 0 if the previous statement
  * does not use an AUTO_INCREMENT value.
  */
-typedef int (*db_last_inserted_id_f) (const db_con_t* _h);
+typedef int (*db_last_inserted_id_f) (const db1_con_t* _h);
 
 
 /**
@@ -277,7 +277,7 @@ typedef int (*db_last_inserted_id_f) (const db_con_t* _h);
  * \param _n number of key=value pairs
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_update_f) (const db_con_t* _h, const db_key_t* _k,
+typedef int (*db_insert_update_f) (const db1_con_t* _h, const db_key_t* _k,
 				const db_val_t* _v, const int _n);
 
 
@@ -338,7 +338,7 @@ int db_bind_mod(const str* mod, db_func_t* dbf);
  * \return returns a pointer to the db_con_t representing the connection if it was
    successful, otherwise 0 is returned.
  */
-db_con_t* db_do_init(const str* url, void* (*new_connection)());
+db1_con_t* db_do_init(const str* url, void* (*new_connection)());
 
 
 /**
@@ -349,7 +349,7 @@ db_con_t* db_do_init(const str* url, void* (*new_connection)());
  * \param _h database connection handle
  * \param (*free_connection) Pointer to the db specifc free_connection method
  */
-void db_do_close(db_con_t* _h, void (*free_connection)());
+void db_do_close(db1_con_t* _h, void (*free_connection)());
 
 
 /**
@@ -362,7 +362,7 @@ void db_do_close(db_con_t* _h, void (*free_connection)());
  * \param table checked table
  * \return the version number if present, 0 if no version data available, < 0 on error
  */
-int db_table_version(const db_func_t* dbf, db_con_t* con, const str* table);
+int db_table_version(const db_func_t* dbf, db1_con_t* con, const str* table);
 
 /**
  * \brief Check the table version
@@ -374,7 +374,7 @@ int db_table_version(const db_func_t* dbf, db_con_t* con, const str* table);
  * \param version checked version
  * \return 0 means ok, -1 means an error occured
  */
-int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const unsigned int version);
+int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table, const unsigned int version);
 
 /**
  * \brief Stores the name of a table.
@@ -385,7 +385,7 @@ int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, cons
  * \param _t stored name
  * \return 0 if everything is ok, otherwise returns value < 0
  */
-int db_use_table(db_con_t* _h, const str* _t);
+int db_use_table(db1_con_t* _h, const str* _t);
 
 /**
  * \brief Bind the DB API exported by a module.

@@ -168,8 +168,8 @@ int db_print_columns(char* _b, const int _l, const db_key_t* _c, const int _n);
  * \param  (*val2str) function pointer to a db specific conversion function
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_values(const db_con_t* _c, char* _b, const int _l, const db_val_t* _v,
-	const int _n, int (*val2str)(const db_con_t*, const db_val_t*, char*, int*));
+int db_print_values(const db1_con_t* _c, char* _b, const int _l, const db_val_t* _v,
+	const int _n, int (*val2str)(const db1_con_t*, const db_val_t*, char*, int*));
 
 
 /**
@@ -185,9 +185,9 @@ int db_print_values(const db_con_t* _c, char* _b, const int _l, const db_val_t* 
  * \param  (*val2str) function pointer to a db specific conversion function
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
+int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k,
 	const db_op_t* _o, const db_val_t* _v, const int _n, int (*val2str)
-	(const 	db_con_t*, const db_val_t*, char*, int*));
+	(const 	db1_con_t*, const db_val_t*, char*, int*));
 
 
 /**
@@ -202,8 +202,8 @@ int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _
  * \param  (*val2str) function pointer to a db specific conversion function
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_set(const db_con_t* _c, char* _b, const int _l,
+int db_print_set(const db1_con_t* _c, char* _b, const int _l,
 	const db_key_t* _k, const db_val_t* _v, const int _n, int (*val2str)
-	(const db_con_t*, const db_val_t*, char*, int*));
+	(const db1_con_t*, const db_val_t*, char*, int*));
 
 #endif

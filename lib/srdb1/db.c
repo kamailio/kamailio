@@ -245,13 +245,13 @@ error:
  * Initialize database module
  * \note No function should be called before this
  */
-db_con_t* db_do_init(const str* url, void* (*new_connection)())
+db1_con_t* db_do_init(const str* url, void* (*new_connection)())
 {
 	struct db_id* id;
 	void* con;
-	db_con_t* res;
+	db1_con_t* res;
 
-	int con_size = sizeof(db_con_t) + sizeof(void *);
+	int con_size = sizeof(db1_con_t) + sizeof(void *);
 	id = 0;
 	res = 0;
 
@@ -266,7 +266,7 @@ db_con_t* db_do_init(const str* url, void* (*new_connection)())
 	}
 	
 	/* this is the root memory for this database connection. */
-	res = (db_con_t*)pkg_malloc(con_size);
+	res = (db1_con_t*)pkg_malloc(con_size);
 	if (!res) {
 		LM_ERR("no private memory left\n");
 		return 0;
@@ -308,7 +308,7 @@ db_con_t* db_do_init(const str* url, void* (*new_connection)())
  * Shut down database module
  * \note No function should be called after this
  */
-void db_do_close(db_con_t* _h, void (*free_connection)())
+void db_do_close(db1_con_t* _h, void (*free_connection)())
 {
 	struct pool_con* con;
 
@@ -334,7 +334,7 @@ void db_do_close(db_con_t* _h, void (*free_connection)())
  * \param table
  * \return If there is no row for the given table, return version 0
  */
-int db_table_version(const db_func_t* dbf, db_con_t* connection, const str* table)
+int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* table)
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
@@ -399,7 +399,7 @@ int db_table_version(const db_func_t* dbf, db_con_t* connection, const str* tabl
  * Check the table version
  * 0 means ok, -1 means an error occured
  */
-int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const unsigned int version)
+int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table, const unsigned int version)
 {
 	int ver = db_table_version(dbf, dbh, table);
 	if (ver < 0) {
@@ -416,7 +416,7 @@ int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, cons
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_use_table(db_con_t* _h, const str* _t)
+int db_use_table(db1_con_t* _h, const str* _t)
 {
 	if (!_h || !_t || !_t->s) {
 		LM_ERR("invalid parameter value\n");

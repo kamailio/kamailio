@@ -40,7 +40,7 @@
 typedef struct {
 	const str* table;      /*!< Default table that should be used              */
 	unsigned long tail;    /*!< Variable length tail, database module specific */
-} db_con_t;
+} db1_con_t;
 
 
 /** Return the table of the connection handle */

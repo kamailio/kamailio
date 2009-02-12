@@ -199,7 +199,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
  * \param _len target string length
  * \return 0 on success, negative on error, 1 if value must be converted by other means
  */
-int db_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 {
 	if (!_c || !_v || !_s || !_len || !*_len) {
 		LM_ERR("invalid parameter value\n");
