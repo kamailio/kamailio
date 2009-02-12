@@ -27,7 +27,7 @@
  *
  * This file defines data structures that represents values in the database.
  * Several datatypes are recognized and converted by the database API.
- * Available types: DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME, DB_BLOB and DB_BITMAP
+ * Available types: DB1_INT, DB1_DOUBLE, DB1_STRING, DB1_STR, DB1_DATETIME, DB1_BLOB and DB1_BITMAP
  * It also provides some macros for convenient access to this values,
  * and a function to convert a str to a value.
  * \ingroup db

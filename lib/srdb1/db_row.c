@@ -52,7 +52,7 @@ inline int db_free_row(db_row_t* _r)
 	/*
 	 * Loop thru each columm, then check to determine if the storage pointed to
 	 * by db_val_t structure must be freed. This is required for all data types
-	 * which use a pointer to a buffer like DB_STRING, DB_STR and DB_BLOB and
+	 * which use a pointer to a buffer like DB1_STRING, DB1_STR and DB1_BLOB and
 	 * the database module copied them during the assignment.
 	 * If this is not done, a memory leak will happen.
 	 * Don't try to free the static dummy string (as indicated from the NULL value),
