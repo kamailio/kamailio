@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="re_grp" xmlns:db="http://docbook.org/ns/docbook">
+    <name>re_grp</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para> This table is used by the group module to check membership based on regular expressions. More information about the group module can be found at: &KAMAILIO_MOD_DOC;group.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column>
+        <name>reg_exp</name>
+        <type>string</type>
+        <size>128</size>
+        <description>Regular expression</description>
+        <default/>
+    </column>
+
+    <column id="group_id">
+        <name>group_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>Group ID</description>
+        <natural/>
+    </column>
+
+    <index>
+        <name>group_idx</name>
+        <colref linkend="group_id"/>
+    </index>
+
+</table>

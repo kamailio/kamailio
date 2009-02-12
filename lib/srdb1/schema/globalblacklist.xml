@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="globalblacklist" xmlns:db="http://docbook.org/ns/docbook">
+    <name>globalblacklist</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the userblacklist module for the global blacklists. More information is available at: &KAMAILIO_MOD_DOC;userblacklist.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="prefix">
+        <name>prefix</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>The prefix that is matched for the blacklist.</description>
+    </column>
+
+    <column>
+        <name>whitelist</name>
+        <type>char</type>
+        <size>1</size>
+        <default>0</default>
+        <description>Specify if this a blacklist (0) or a whitelist (1) entry.</description>
+    </column>
+
+     <column>
+        <name>description</name>
+        <type>string</type>
+        <size>&description_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>A comment for the entry.</description>
+    </column>
+
+    <index>
+        <name>globalblacklist_idx</name>
+        <colref linkend="prefix"/>
+    </index>
+</table>

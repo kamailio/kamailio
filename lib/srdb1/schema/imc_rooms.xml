@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="imc_rooms" xmlns:db="http://docbook.org/ns/docbook">
+    <name>imc_rooms</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Room table for the IMC module. More information at &KAMAILIO_MOD_DOC;imc.html.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="name">
+        <name>name</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Name of the room</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain of the room</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>flag</name>
+        <type>int</type>
+        <size>&flag_len;</size>
+        <description>Flags</description>
+    </column>
+
+    <index>
+        <name>name_domain_idx</name>
+        <colref linkend="name"/>
+        <colref linkend="domain"/>
+        <unique/>
+    </index>
+</table>

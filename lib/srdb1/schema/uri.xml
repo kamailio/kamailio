@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="uri" xmlns:db="http://docbook.org/ns/docbook">
+    <name>uri</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by uri_db module to implement various SIP URI checks.
+                 More information about the uri_db module can be found at: &KAMAILIO_MOD_DOC;uri_db.html 
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+        <natural/>
+    </column>
+
+    <column id="uri_user">
+        <name>uri_user</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this record was last modified.</description>
+    </column>
+
+    <index>
+        <name>account_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="uri_user"/>
+        <unique/>
+    </index>
+
+</table>

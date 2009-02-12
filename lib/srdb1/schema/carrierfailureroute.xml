@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+	  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+	  
+	  <!ENTITY % entities SYSTEM "entities.xml">
+	  %entities;
+	  
+	  ]>
+	  
+	  <table id="carrierfailureroute" xmlns:db="http://docbook.org/ns/docbook">
+		  <name>carrierfailureroute</name>
+		  <version>2</version>
+		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <description>
+			  <db:para>This table is used by the carrierroute module to provide failure routing capabilities. It contains the 
+			  failureroute routing informations. More information is available at: http://www.kamailio.org/docs/modules/devel/carrierroute.html
+			  </db:para>
+		  </description>
+		  
+		  <column id="id">
+			  <name>id</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <autoincrement/>
+			  <primary/>
+			  <type db="dbtext">int,auto</type>
+			  <description>This column contains the unique identifier of a failure route.</description>
+		  </column>
+		  
+		  <column>
+			  <name>carrier</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the carrier id.</description>
+		  </column>
+		  
+		  <column>
+			  <name>domain</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the routing domain id. You can define several routing domains
+			  to have different routing rules. Maybe you use domain 0 for normal routing and domain 1 if
+			  domain 0 failed.</description>
+		  </column>
+		  
+		  <column>
+			  <name>scan_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>Name of column contains the the scan prefixes. Scan prexies define the matching
+			  portion of a phone number, e.g. we have the scan prefixes 49721 and 49, the called number is
+			  49721913740, it matches 49721, because the longest match is taken. If no prefix matches,
+			  the number is not failure routed. To prevent this, an empty prefix value of <quote></quote>
+			  could be added.</description>
+		  </column>
+		  
+		  <column>
+			  <name>host_name</name>
+			  <type>string</type>
+			  <size>&uri_len;</size>
+			  <default/>
+			  <description>Name of the column containing the host name of the last routing destination,
+			  using for rules matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>reply_code</name>
+			  <type>string</type>
+			  <size>3</size>
+			  <default/>
+			  <description>This column contains the reply code used for rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>flags</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>This column contains the flags used for rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>mask</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>This column contains the mask that is applied to the message flags before rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>next_domain</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the route domain id that should be used for the next routing attempt.</description>
+		  </column>
+		  
+		  <column>
+			  <name>description</name>
+			  <type>string</type>
+			  <size>&description_len;</size>
+			  <null/>
+			  <default><null/></default>
+			  <description>A comment for the route entry, useful for larger routing tables.</description>
+		  </column>
+	  </table>

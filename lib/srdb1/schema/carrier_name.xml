@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+	  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+	  
+	  <!ENTITY % entities SYSTEM "entities.xml">
+	  %entities;
+	  
+	  ]>
+	  
+	  <table id="carrier_name" xmlns:db="http://docbook.org/ns/docbook">
+		  <name>carrier_name</name>
+		  <version>1</version>
+		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <description>
+			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting capabilities. It contains the existing carriers, consisting of the ids and corresponding names. More
+			  information is available at: &KAMAILIO_MOD_DOC;carrierroute.html
+			  </db:para>
+		  </description>
+		  
+		  <column id="id">
+			  <name>id</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <natural/>
+			  <autoincrement/>
+			  <primary/>
+			  <type db="dbtext">int,auto</type>
+			  <description>Name of the column containing the unique identifier of a carrier.</description>
+		  </column>
+		  
+		  <column>
+			  <name>carrier</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <null/>
+			  <default><null/></default>
+			  <description>This column contains the carrier name.</description>
+		  </column>
+	  </table>

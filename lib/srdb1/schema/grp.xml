@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="grp" xmlns:db="http://docbook.org/ns/docbook">
+    <name>grp</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table us used by the group module as a means of group membership checking. Used primarily for Access Control Lists (ACL's). More information about the group module can be found at: &KAMAILIO_MOD_DOC;group.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+        <natural/>
+    </column>
+
+    <column id="group">
+        <name>grp</name>
+        <type>string</type>
+        <size>&id_len;</size>
+        <default/>
+        <description>Group name</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this record was last modified.</description>
+    </column>
+
+    <index>
+        <name>account_group_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="group"/>
+        <unique/>
+    </index>
+
+</table>

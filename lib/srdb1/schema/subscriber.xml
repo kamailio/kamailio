@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="subscriber" xmlns:db="http://docbook.org/ns/docbook">
+    <name>subscriber</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used to provide authentication information. More information about the auth_db module can be found at: &KAMAILIO_MOD_DOC;auth_db.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>password</name>
+        <type>string</type>
+        <size>25</size>
+        <default/>
+        <description>Password</description>
+    </column>
+
+    <column>
+        <name>email_address</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Email address</description>
+    </column>
+
+    <column>
+        <name>ha1</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>md5(username:realm:password)</description>
+    </column>
+
+    <column>
+        <name>ha1b</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>md5(username@domain:realm:password)</description>
+    </column>
+
+    <column>
+        <name>rpid</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>The SIP Remote-Party-ID header identifies the calling party and includes user, party, screen and privacy headers that specify how a call is presented and screened.</description>
+    </column>
+
+    <index>
+        <name>account_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>username_idx</name>
+        <colref linkend="username"/>
+    </index>
+
+</table>

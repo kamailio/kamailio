@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+]>
+
+<!-- Version table for Kamailio, and inclusion point for custom extensions -->
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>Version</name>
+    <xi:include href="version.xml"/>
+</database>

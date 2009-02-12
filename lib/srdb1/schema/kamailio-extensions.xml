@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+]>
+
+<!-- Inclusion point for custom extensions for Kamailio -->
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>Extensions</name>
+    <!-- Include extra definitions if found, it is not
+         an error if they are not present, although it
+         would produce a warning -->
+    <xi:include href="extra.xml">
+        <xi:fallback/>
+    </xi:include>
+    <!-- add more extensions here -->
+    <!-- <xi:include href="more-extras.xml"> -->
+</database>

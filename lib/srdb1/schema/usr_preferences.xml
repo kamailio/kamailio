@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="usr_preferences" xmlns:db="http://docbook.org/ns/docbook">
+    <name>usr_preferences</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table us used by the avpops module to implement Attribute Value Pairs (AVP's). More information about the avpops module can be found at: &KAMAILIO_MOD_DOC;avpops.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="uuid">
+        <name>uuid</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Unique user ID</description>
+    </column>
+
+    <column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default>0</default>
+        <description>Username / phone number</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <default/>
+        <description>Domain name</description>
+        <natural/>
+    </column>
+
+    <column id="attribute">
+        <name>attribute</name>
+        <type>string</type>
+        <size>&avp_name_len;</size>
+        <default/>
+        <description>AVP attribute</description>
+    </column>
+
+    <column>
+        <name>type</name>
+        <type>int</type>
+        <size>&flag_len;</size>
+        <default>0</default>
+        <description>AVP type</description>
+    </column>
+
+    <column>
+        <name>value</name>
+        <type>string</type>
+        <size>&avp_val_len;</size>
+        <default/>
+        <description>AVP value</description>
+    </column>
+
+    <column>
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this record was last modified.</description>
+    </column>
+
+    <index>
+        <name>ua_idx</name>
+        <colref linkend="uuid"/>
+        <colref linkend="attribute"/>
+    </index>
+
+    <index>
+        <name>uda_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="attribute"/>
+    </index>
+
+</table>

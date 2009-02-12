@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="cpl" xmlns:db="http://docbook.org/ns/docbook">
+    <name>cpl</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the call processing language "cpl" module. More information is available at: &KAMAILIO_MOD_DOC;cpl-c.html</db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="username">
+        <name>username</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <natural/>
+    </column>
+
+    <column>
+        <name>cpl_xml</name>
+        <type>text</type>
+        <null/>
+    </column>
+
+    <column>
+        <name>cpl_bin</name>
+        <type>text</type>
+        <null/>
+    </column>
+
+    <index>
+        <name>account_idx</name>
+        <unique/>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+    </index>
+
+</table>

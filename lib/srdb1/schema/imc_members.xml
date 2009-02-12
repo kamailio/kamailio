@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="imc_members" xmlns:db="http://docbook.org/ns/docbook">
+    <name>imc_members</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Member table for the IMC module. More information at &KAMAILIO_MOD_DOC;imc.html.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="username">
+        <name>username</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Username</description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain</description>
+        <natural/>
+    </column>
+
+    <column id="room">
+        <name>room</name>
+        <type>string</type>
+        <size>&realm_len;</size>
+        <natural/>
+    </column>
+
+    <column>
+        <name>flag</name>
+        <type>int</type>
+        <size>&flag_len;</size>
+        <description>Flags</description>
+    </column>
+
+    <index>
+        <name>account_room_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="room"/>
+        <unique/>
+    </index>
+</table>
+

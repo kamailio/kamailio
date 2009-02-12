@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+
+<table id="gw" xmlns:db="http://docbook.org/ns/docbook">
+    <name>gw</name>
+    <version>9</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
+                 More information can be found at: &KAMAILIO_MOD_DOC;lcr.html.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="gw_name">
+        <name>gw_name</name>
+        <type>string</type>
+        <size>128</size>
+        <description>Name of the gateway</description>
+        <natural/>
+    </column>
+
+    <column id="grp_id">
+        <name>grp_id</name>
+        <type>unsigned int</type>
+        <description>ID of gateway's group</description>
+    </column>
+
+    <column>
+        <name>ip_addr</name>
+        <type>string</type>
+        <size>15</size>
+        <description>IP Address of the gateway</description>
+    </column>
+
+    <column>
+        <name>hostname</name>
+        <type>string</type>
+        <size>64</size>
+        <null/>
+        <description>Hostname of the gateway</description>
+    </column>
+
+    <column>
+        <name>port</name>
+        <type>unsigned short</type>
+        <null/>
+        <description>Port of the gateway</description>
+    </column>
+
+    <column>
+        <name>uri_scheme</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>URI scheme of gateway</description>
+    </column>
+
+    <column>
+        <name>transport</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>Transport type to be used for the gateway</description>
+    </column>
+
+    <column>
+        <name>strip</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>The number of digits to strip from Request URI user part before inserting tag</description>
+    </column>
+
+    <column>
+        <name>tag</name>
+        <type>string</type>
+        <size>16</size>
+        <null/>
+        <default><null/></default>
+        <description>Request URI user part tag</description>
+    </column>
+
+    <column>
+        <name>weight</name>
+        <type>unsigned int</type>
+        <null/>
+        <description>Weight of gateway within gw_grp.  Valid values are 1-254.</description>
+    </column>
+
+    <column>
+        <name>ping</name>
+        <type>unsigned char</type>
+        <default>0</default>
+        <description>Is gateway eligible for aliveness check (0 = no, 1 = yes)</description>
+    </column>
+
+    <column>
+        <name>flags</name>
+        <type>unsigned int</type>
+        <default>&DEFAULT_FLAGS;</default>
+        <description>Gateway specific flags</description>
+    </column>
+
+    <index>
+        <name>gw_name_idx</name>
+        <colref linkend="gw_name"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>grp_id_idx</name>
+        <colref linkend="grp_id"/>
+    </index>
+
+</table>

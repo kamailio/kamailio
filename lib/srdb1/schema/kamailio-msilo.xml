@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+]>
+
+<database xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>Message Storage</name>
+    <xi:include href="silo.xml"/>
+</database>

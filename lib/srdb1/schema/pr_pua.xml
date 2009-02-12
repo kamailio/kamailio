@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="pua" xmlns:db="http://docbook.org/ns/docbook">
+    <name>pua</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the presence related pua module. More information can be found at: &KAMAILIO_MOD_DOC;pua.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column>
+        <name>pres_uri</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>URI</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>pres_id</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>ID</description>
+    </column>
+
+    <column>
+        <name>event</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Event</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Expires</description>
+    </column>
+
+    <column>
+        <name>desired_expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Desired Expires</description>
+    </column>
+
+    <column>
+        <name>flag</name>
+        <type>int</type>
+        <size>&flag_len;</size>
+        <description>Flags</description>
+    </column>
+
+    <column>
+        <name>etag</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Etag</description>
+    </column>
+
+    <column>
+        <name>tuple_id</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <description>Tuple ID</description>
+    </column>
+
+    <column>
+        <name>watcher_uri</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Watcher URI</description>
+    </column>
+
+    <column>
+        <name>call_id</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Call ID</description>
+    </column>
+
+    <column>
+        <name>to_tag</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>To tag</description>
+    </column>
+
+    <column>
+        <name>from_tag</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>To tag</description>
+    </column>
+
+    <column>
+        <name>cseq</name>
+        <type>int</type>
+        <size>&cseq_len;</size>
+    </column>
+
+    <column>
+        <name>record_route</name>
+        <type>text</type>
+        <null/>
+        <description>Record route</description>
+    </column>
+
+    <column>
+        <name>contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Contact</description>
+    </column>
+
+    <column>
+        <name>remote_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Remote contact</description>
+    </column>
+
+    <column>
+        <name>version</name>
+        <type>int</type>
+        <size>11</size>
+        </column>
+        <column>
+        <name>extra_headers</name>
+        <type>text</type>
+        <description>Extra Headers</description>
+    </column>
+
+</table>

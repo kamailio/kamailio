@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="domainpolicy" xmlns:db="http://docbook.org/ns/docbook">
+    <name>domainpolicy</name>
+    <version>2</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the domainpolicy module. More information at &KAMAILIO_MOD_DOC;domainpolicy.html.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="rule">
+        <name>rule</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <description>Domain policy rule name which is equal to the URI as published in the domain policy NAPTRs.</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>type</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <description> Domain policy rule type. In the case of federation names, this is "fed". For standard referrals according to draft-lendl-speermint-technical-policy-00, this is "std". For direct domain lookups, this is "dom". Default value is "type".</description>
+        <natural/>
+    </column>
+
+    <column id="att">
+        <name>att</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <null/>
+        <description>It contains the AVP's name. If the rule stored in this row triggers, than dp_can_connect() will add an AVP with that name.</description>
+    </column>
+
+    <column id="val">
+        <name>val</name>
+        <type>string</type>
+        <size>&avp_val_len;</size>
+        <null/>
+        <description>It contains the values for AVPs created by dp_can_connect(). Default value is "val"</description>
+    </column>
+
+    <column>
+        <name>description</name>
+        <type>string</type>
+        <size>&rule_len;</size>
+        <description>Comment about the rule</description>
+    </column>
+
+    <index>
+        <name>rav_idx</name>
+        <colref linkend="rule"/>
+        <colref linkend="att"/>
+        <colref linkend="val"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>rule_idx</name>
+        <colref linkend="rule"/>
+    </index>
+</table>

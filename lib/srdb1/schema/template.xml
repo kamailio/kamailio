@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+<!-- set DTD for XML format, use values from entities.xml -->
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="table_name" xmlns:db="http://docbook.org/ns/docbook"> <!-- set id for colref links and namespace for "db:para" nodes -->
+    <name>table_name</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type><!-- specify the table type for mysql -->
+    <description>
+        <db:para>table documentation</db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>int</type><!-- look into the xsl files in doc/dbschema/xsl for a list of all possible datatypes -->
+        <size>&table_id_len;</size> <!-- use a value from entities.xml -->
+        <primary/><!-- primary key -->
+        <autoincrement/><!-- auto increment the id -->
+        <type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
+        <description>unique ID</description>
+    </column>
+
+    <column id="bla">
+        <name>foo</name>
+        <type>string</type>
+        <size>100</size>
+        <!--<default>bla</default> Default value for the column is 'bla' -->
+        <!--<default/>  Default value is '' -->
+        <!--<default><null/></default> Default value is NULL -->
+
+        <!--</null> This column can be NULL, if not specified it is NOT NULL -->
+        <description>column documentation</description>
+    </column>
+
+    <column id="another_id">
+        <name>test123</name>
+        <type>string</type>
+        <size>25</size>
+        <natural/><!-- This column is a natural key for non SQL databases, e.g. db_berkeley -->
+    </column>
+
+    <index>
+        <name>bar</name>
+        <!--<unique/> -> UNIQUE KEY -->
+        <colref linkend="bla"/> <!-- link to the node with these id -->
+    </index>
+
+    <index>
+        <name>blub</name>
+        <!--<primary/> -> PRIMARY KEY over more than one colums -->
+        <colref linkend="bla"/> <!-- link to the node with these id -->
+        <colref linkend="id"/>
+    </index>
+</table>

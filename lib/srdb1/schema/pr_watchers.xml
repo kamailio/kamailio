@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="watchers" xmlns:db="http://docbook.org/ns/docbook">
+    <name>watchers</name>
+    <version>3</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the presence module. More information can be found at: &KAMAILIO_MOD_DOC;presence.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="presentity_uri">
+        <name>presentity_uri</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Presentity Uri</description>
+        <natural/>
+    </column>
+
+    <column id="watcher_username">
+        <name>watcher_username</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>Watcher User</description>
+    </column>
+
+    <column id="watcher_domain">
+        <name>watcher_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Watcher Domain</description>
+    </column>
+
+    <column id="event">
+        <name>event</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default>presence</default>
+        <description>Event description</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>status</name>
+        <type>int</type>
+        <size>11</size>
+        <description>Status</description>
+    </column>
+
+    <column>
+        <name>reason</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <null/>
+        <description>Reason</description>
+    </column>
+
+    <column>
+        <name>inserted_time</name>
+        <type>int</type>
+        <size>11</size>
+    </column>
+
+    <index>
+        <name>watcher_idx</name>
+        <colref linkend="presentity_uri"/>
+        <colref linkend="watcher_username"/>
+        <colref linkend="watcher_domain"/>
+        <colref linkend="event"/>
+        <unique/>
+    </index>
+
+</table>

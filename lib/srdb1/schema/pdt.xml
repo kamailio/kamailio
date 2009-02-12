@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="pdt" xmlns:db="http://docbook.org/ns/docbook">
+    <name>pdt</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Prefix-Domain Translation means to change the host and port in R-URI, based on the prefix found in R-URI and source           domain (that is domain in From-URI). More information can be found at: &KAMAILIO_MOD_DOC;pdt.html 
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="sdomain">
+        <name>sdomain</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Source domain</description>
+        <natural/>
+    </column>
+
+    <column id="prefix">
+        <name>prefix</name>
+        <type>string</type>
+        <size>32</size>
+        <description>Prefix found in the username part of R-URI.</description>
+    </column>
+
+    <column>
+        <name>domain</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Domain corresponding to (sdomain, prefix) pair where the message must be sent.</description>
+    </column>
+
+    <index>
+        <name>sdomain_prefix_idx</name>
+        <colref linkend="sdomain"/>
+        <colref linkend="prefix"/>
+        <unique/>
+    </index>
+</table>

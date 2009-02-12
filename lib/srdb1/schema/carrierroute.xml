@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+	  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+	  
+	  <!ENTITY % entities SYSTEM "entities.xml">
+	  %entities;
+	  
+	  ]>
+	  
+	  <table id="carrierroute" xmlns:db="http://docbook.org/ns/docbook">
+		  <name>carrierroute</name>
+		  <version>3</version>
+		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <description>
+			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting 
+			  capabilities. It contains the routing data. More information is available at: http://www.kamailio.org/docs/modules/devel/carrierroute.html
+			  </db:para>
+		  </description>
+		  
+		  <column id="id">
+			  <name>id</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <autoincrement/>
+			  <primary/>
+			  <type db="dbtext">int,auto</type>
+			  <description>Name of the column contains the unique identifier of a route.</description>
+		  </column>
+		  
+		  <column>
+			  <name>carrier</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the carrier id.</description>
+		  </column>
+		  
+		  <column>
+			  <name>domain</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the routing domain id. You can define several routing
+			  domains to have different routing rules. Maybe you use domain 0 for normal routing and
+			  domain 1 if domain 0 failed.</description>
+		  </column>
+		  
+		  <column>
+			  <name>scan_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>Name of column contains the scan prefixes. Scan prefixes define
+			  the matching portion of a phone number, e.g. when we have the scan prefixes 49721
+			  and 49, the called number is 49721913740, it matches 49721, because the longest
+			  match is taken. If no prefix matches, the number is not routed. To prevent this,
+			  an empty prefix value of <quote></quote> could be added.</description>
+		  </column>
+		  
+		  <column>
+			  <name>flags</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>This column contains the flags used for rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>mask</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>This column contains the mask that is applied to the message flags before rule 
+			  matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>prob</name>
+			  <type>float</type>
+			  <default>0</default>
+			  <description><para>
+			  Name of column contains the probability. The probability value is used to
+			  distribute the traffic between several gateways. Let's say 70 % of the
+			  traffic shall be routed to gateway A, the other 30 % shall be routed to
+			  gateway B, we define a rule for gateway A with a prob value of 0.7 and a
+			  rule for gateway B with a prob value of 0.3.
+			  </para>
+			  <para>
+			  If all probabilities for a given prefix, tree and domain don't add to 100%,
+			  the prefix values will be adjusted according the given prob values. E.g. if
+			  three hosts with prob values of 0.5, 0.5 and 0.4 are defined, the resulting
+			  probabilities are 35.714, 35.714 and 28.571%. But its better to choose meaningful
+			  values in the first place because of clarity.
+			  </para></description>
+		  </column>
+		  
+		  <column>
+			  <name>strip</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>Name of the column contains the number of digits to be stripped of the userpart of an URI before prepending rewrite_prefix.</description>
+		  </column>
+		  
+		  <column>
+			  <name>rewrite_host</name>
+			  <type>string</type>
+			  <size>&uri_len;</size>
+			  <default/>
+			  <description>Name of column contains the rewrite prefixes. Here you can define a rewrite prefix
+			  for the localpart of the SIP URI. An empty field represents a blacklist entry, anything else
+			  is put as domain part into the Request URI of the SIP message.</description>
+		  </column>
+		  
+		  <column>
+			  <name>rewrite_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>Name of column contains the rewrite prefixes. Here you can define a rewrite
+			  prefix for the localpart of the SIP URI.</description>
+		  </column>
+		  
+		  <column>
+			  <name>rewrite_suffix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>Name of column contains the rewrite suffixes. Here you can define a rewrite
+			  suffix for the localpart of the SIP URI.</description>
+		  </column>
+		  
+		  <column>
+			  <name>description</name>
+			  <type>string</type>
+			  <size>&description_len;</size>
+			  <null/>
+			  <default><null/></default>
+			  <description>A comment for the route entry, useful for larger routing tables.
+			  The comment is also displayed by the fifo cmd "cr_dump_routes".</description>
+		  </column>
+	  </table>
