@@ -171,10 +171,10 @@ typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db1_res_t** _
  * \brief Free a result allocated by db_query.
  *
  * This function frees all memory allocated previously in db_query. Its
- * neccessary to call this function on a db_res_t structure if you don't need the
+ * neccessary to call this function on a db1_res_t structure if you don't need the
  * structure anymore. You must call this function before you call db_query again!
  * \param _h database connection handle
- * \param _r pointer to db_res_t structure to destroy
+ * \param _r pointer to db1_res_t structure to destroy
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_free_result_f) (db1_con_t* _h, db1_res_t* _r);

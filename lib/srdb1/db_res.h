@@ -44,11 +44,11 @@ struct db_row;
  * This type represents a result returned by db_query function (see below). The 
  * result can consist of zero or more rows (see db_row_t description).
  *
- * Note: A variable of type db_res_t returned by db_query function uses dynamicaly
+ * Note: A variable of type db1_res_t returned by db_query function uses dynamicaly
  * allocated memory, don't forget to call db_free_result if you don't need the
  * variable anymore. You will encounter memory leaks if you fail to do this!
  *
- * In addition to zero or more rows, each db_res_t object contains also an array
+ * In addition to zero or more rows, each db1_res_t object contains also an array
  * of db_key_t objects. The objects represent keys (names of columns). *
  */
 typedef struct db1_res {
