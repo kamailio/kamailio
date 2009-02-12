@@ -108,7 +108,7 @@ inline int db_free_row(db_row_t* _r)
  * \param _row filled row
  * \return zero on success, negative on errors
  */
-inline int db_allocate_row(const db_res_t* _res, db_row_t* _row)
+inline int db_allocate_row(const db1_res_t* _res, db_row_t* _row)
 {
 	int len = sizeof(db_val_t) * RES_COL_N(_res);
 	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);

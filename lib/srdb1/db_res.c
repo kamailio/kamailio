@@ -41,7 +41,7 @@
 /*
  * Release memory used by rows
  */
-inline int db_free_rows(db_res_t* _r)
+inline int db_free_rows(db1_res_t* _r)
 {
 	int i;
 
@@ -68,7 +68,7 @@ inline int db_free_rows(db_res_t* _r)
 /*
  * Release memory used by columns
  */
-inline int db_free_columns(db_res_t* _r)
+inline int db_free_columns(db1_res_t* _r)
 {
 	int col;
 
@@ -104,24 +104,24 @@ inline int db_free_columns(db_res_t* _r)
 /*
  * Create a new result structure and initialize it
  */
-inline db_res_t* db_new_result(void)
+inline db1_res_t* db_new_result(void)
 {
-	db_res_t* r = NULL;
-	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
+	db1_res_t* r = NULL;
+	r = (db1_res_t*)pkg_malloc(sizeof(db1_res_t));
 	if (!r) {
 		LM_ERR("no private memory left\n");
 		return 0;
 	}
 	LM_DBG("allocate %d bytes for result set at %p\n",
-		(int)sizeof(db_res_t), r);
-	memset(r, 0, sizeof(db_res_t));
+		(int)sizeof(db1_res_t), r);
+	memset(r, 0, sizeof(db1_res_t));
 	return r;
 }
 
 /*
  * Release memory used by a result structure
  */
-inline int db_free_result(db_res_t* _r)
+inline int db_free_result(db1_res_t* _r)
 {
 	if (!_r)
 	{
@@ -141,7 +141,7 @@ inline int db_free_result(db_res_t* _r)
  * Allocate storage for column names and type in existing
  * result structure.
  */
-inline int db_allocate_columns(db_res_t* _r, const unsigned int cols)
+inline int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
 {
 	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
 	if (!RES_NAMES(_r)) {
@@ -171,7 +171,7 @@ inline int db_allocate_columns(db_res_t* _r, const unsigned int cols)
  * \param _res result set
  * \return zero on success, negative on errors
  */
-inline int db_allocate_rows(db_res_t* _res)
+inline int db_allocate_rows(db1_res_t* _res)
 {
 	int len = sizeof(db_row_t) * RES_ROW_N(_res);
 	RES_ROWS(_res) = (struct db_row*)pkg_malloc(len);

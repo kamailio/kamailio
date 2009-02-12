@@ -129,7 +129,7 @@ typedef void (*db_close_f) (db1_con_t* _h);
  */
 typedef int (*db_query_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 				const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-				const db_key_t _o, db_res_t** _r);
+				const db_key_t _o, db1_res_t** _r);
 
 /**
  * \brief Gets a partial result set, fetch rows from a result
@@ -146,7 +146,7 @@ typedef int (*db_query_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_
  * \param _n the number of rows that should be fetched
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_fetch_result_f) (const db1_con_t* _h, db_res_t** _r, const int _n);
+typedef int (*db_fetch_result_f) (const db1_con_t* _h, db1_res_t** _r, const int _n);
 
 
 /**
@@ -164,7 +164,7 @@ typedef int (*db_fetch_result_f) (const db1_con_t* _h, db_res_t** _r, const int 
  * \param _r structure for the result
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db_res_t** _r);
+typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db1_res_t** _r);
 
 
 /**
@@ -177,7 +177,7 @@ typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db_res_t** _r
  * \param _r pointer to db_res_t structure to destroy
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_free_result_f) (db1_con_t* _h, db_res_t* _r);
+typedef int (*db_free_result_f) (db1_con_t* _h, db1_res_t* _r);
 
 
 /**

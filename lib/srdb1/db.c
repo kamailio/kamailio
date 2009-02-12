@@ -338,7 +338,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	db_val_t* ver = 0;
 
 	if (!dbf||!connection || !table || !table->s) {

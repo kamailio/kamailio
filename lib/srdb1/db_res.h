@@ -51,7 +51,7 @@ struct db_row;
  * In addition to zero or more rows, each db_res_t object contains also an array
  * of db_key_t objects. The objects represent keys (names of columns). *
  */
-typedef struct db_res {
+typedef struct db1_res {
 	struct {
 		db_key_t* names;   /**< Column names                    */
 		db_type_t* types;  /**< Column types                    */
@@ -61,7 +61,7 @@ typedef struct db_res {
 	int n;                 /**< Number of rows in current fetch */
 	int res_rows;          /**< Number of total rows in query   */
 	int last_row;          /**< Last row                        */
-} db_res_t;
+} db1_res_t;
 
 
 /** Return the column names */
@@ -85,7 +85,7 @@ typedef struct db_res {
  * \param _r the result that should be released
  * \return zero on success, negative on errors
  */
-inline int db_free_rows(db_res_t* _r);
+inline int db_free_rows(db1_res_t* _r);
 
 
 /**
@@ -95,20 +95,20 @@ inline int db_free_rows(db_res_t* _r);
  * \param _r the result that should be released
  * \return zero on success, negative on errors
  */
-inline int db_free_columns(db_res_t* _r);
+inline int db_free_columns(db1_res_t* _r);
 
 
 /**
  * Create a new result structure and initialize it.
  * \return a pointer to the new result on success, NULL on errors
  */
-inline db_res_t* db_new_result(void);
+inline db1_res_t* db_new_result(void);
 
 /**
  * Release memory used by a result structure.
  * \return zero on success, negative on errors
  */
-inline int db_free_result(db_res_t* _r);
+inline int db_free_result(db1_res_t* _r);
 
 /**
  * Allocate storage for column names and type in existing result structure.
@@ -118,7 +118,7 @@ inline int db_free_result(db_res_t* _r);
  * \param cols number of columns
  * \return zero on success, negative on errors
  */
-inline int db_allocate_columns(db_res_t* _r, const unsigned int cols);
+inline int db_allocate_columns(db1_res_t* _r, const unsigned int cols);
 
 
 /**
@@ -126,6 +126,6 @@ inline int db_allocate_columns(db_res_t* _r, const unsigned int cols);
  * \param _res result set
  * \return zero on success, negative on errors
  */
-inline int db_allocate_rows(db_res_t* _res);
+inline int db_allocate_rows(db1_res_t* _res);
 
 #endif /* DB_RES_H */
