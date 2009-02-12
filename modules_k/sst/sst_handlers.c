@@ -706,7 +706,7 @@ static int send_response(struct sip_msg *request, int code, str *reason,
 		char *header, int header_len) 
 {
 
-	if (slb.reply != 0) {
+	if (slb.send_reply != 0) {
 		/* Add new headers if not null or zero length */
 		if ((header) && (header_len)) {
 			if (add_lump_rpl(request, header, header_len, LUMP_RPL_HDR) == 0) {
@@ -716,7 +716,7 @@ static int send_response(struct sip_msg *request, int code, str *reason,
 			}
 		}
 		/* Now using the sl function, send the reply/response */
-		if (slb.reply(request, code, reason) < 0) {
+		if (slb.send_reply(request, code, reason) < 0) {
 			LM_ERR("Unable to sent reply.\n");
 			return -1;
 		}
