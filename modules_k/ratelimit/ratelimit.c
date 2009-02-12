@@ -667,7 +667,7 @@ static int rl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 
 	LM_DBG("(%d, %d)\n", low, high);
 
-	if (slb.reply != 0) {
+	if (slb.send_reply != 0) {
 		if (low != 0 && high != 0) {
 			hdr.s = (char *)pkg_malloc(64);
 			if (hdr.s == 0) {
@@ -693,11 +693,11 @@ static int rl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 				return 0;
 			}
 
-			ret = slb.reply(msg, rl_drop_code, &rl_drop_reason);
+			ret = slb.send_reply(msg, rl_drop_code, &rl_drop_reason);
 
 			pkg_free(hdr.s);
 		} else {
-			ret = slb.reply(msg, rl_drop_code, &rl_drop_reason);
+			ret = slb.send_reply(msg, rl_drop_code, &rl_drop_reason);
 		}
 	} else {
 		LM_ERR("Can't send reply\n");
