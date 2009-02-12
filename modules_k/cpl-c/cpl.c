@@ -842,7 +842,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			goto resume_script;
 
 		/* send a 200 OK reply back */
-		cpl_fct.slb.reply( msg, 200, &cpl_ok_rpl);
+		cpl_fct.slb.send_reply( msg, 200, &cpl_ok_rpl);
 		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -878,7 +878,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto resume_script;
 
 	/* send a 200 OK reply back */
-	cpl_fct.slb.reply( msg, 200, &cpl_ok_rpl);
+	cpl_fct.slb.send_reply( msg, 200, &cpl_ok_rpl);
 
 stop_script:
 	return 0;
@@ -886,7 +886,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.slb.reply( msg, cpl_err->err_code, &cpl_err->err_msg);
+	cpl_fct.slb.send_reply( msg, cpl_err->err_code, &cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }
