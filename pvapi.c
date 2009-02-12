@@ -1362,15 +1362,9 @@ int tr_table_add(tr_export_t *e)
 	tri = _tr_table[trid%TR_TABLE_SIZE];
 	while(tri)
 	{
-		if(tri->trid > trid)
-			break;
-		if(tri->tre.tclass.len > e->tclass.len)
-			break;
 		if(tri->tre.tclass.len==e->tclass.len)
 		{
 			found = strncmp(tri->tre.tclass.s, e->tclass.s, e->tclass.len);
-			if(found>0)
-				break;
 			if(found==0)
 			{
 				LM_ERR("TR class [%.*s] already exists\n", e->tclass.len,
@@ -1470,11 +1464,6 @@ tr_export_t* tr_lookup_class(str *tclass)
 	tri = _tr_table[trid%TR_TABLE_SIZE];
 	while(tri)
 	{
-		if(tri->trid > trid)
-			break;
-		if(tri->tre.tclass.len > tclass->len)
-			break;
-
 		if(tri->trid==trid && tri->tre.tclass.len==tclass->len
 				&& memcmp(tri->tre.tclass.s, tclass->s, tclass->len)==0)
 			return &(tri->tre);
