@@ -33,7 +33,7 @@
 */
 
 #include <stdio.h>
-#include "../dprint.h"
+#include "../../dprint.h"
 #include "db_ut.h"
 #include "db_query.h"
 

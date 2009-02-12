@@ -30,7 +30,7 @@
 #ifndef DB_CON_H
 #define DB_CON_H
 
-#include "../str.h"
+#include "../../str.h"
 
 
 /*! \brief

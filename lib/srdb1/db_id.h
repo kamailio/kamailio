@@ -30,7 +30,7 @@
 #ifndef _DB_ID_H
 #define _DB_ID_H
 
-#include "../str.h"
+#include "../../str.h"
 
 /** Structure representing a database ID */
 struct db_id {

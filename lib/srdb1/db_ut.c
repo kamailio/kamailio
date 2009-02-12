@@ -32,8 +32,8 @@
 
 #include "db_ut.h"
 
-#include "../mem/mem.h"
-#include "../dprint.h"
+#include "../../mem/mem.h"
+#include "../../dprint.h"
 #include <limits.h>
 #include </usr/include/limits.h>
 #include <errno.h>

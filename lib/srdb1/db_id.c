@@ -28,9 +28,9 @@
  */
 
 #include "db_id.h"
-#include "../dprint.h"
-#include "../mem/mem.h"
-#include "../ut.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
+#include "../../ut.h"
 #include <stdlib.h>
 #include <string.h>
 

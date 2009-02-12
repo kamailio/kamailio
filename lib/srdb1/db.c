@@ -57,10 +57,10 @@
  * - \ref ../modules/db_unixodbc
  */
 
-#include "../dprint.h"
-#include "../sr_module.h"
-#include "../mem/mem.h"
-#include "../ut.h"
+#include "../../dprint.h"
+#include "../../sr_module.h"
+#include "../../mem/mem.h"
+#include "../../ut.h"
 #include "db_cap.h"
 #include "db_id.h"
 #include "db_pool.h"

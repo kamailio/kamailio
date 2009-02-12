@@ -33,8 +33,8 @@
 #include "db_row.h"
 
 #include <string.h>
-#include "../dprint.h"
-#include "../mem/mem.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
 
 /*
  * Release memory used by row
