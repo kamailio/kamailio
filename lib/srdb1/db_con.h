@@ -27,8 +27,8 @@
  * \brief Type that represents a database connection
  */
 
-#ifndef DB_CON_H
-#define DB_CON_H
+#ifndef DB1_CON_H
+#define DB1_CON_H
 
 #include "../../str.h"
 
@@ -49,4 +49,4 @@ typedef struct {
 #define CON_TAIL(cn)       ((cn)->tail)
 
 
-#endif /* DB_CON_H */
+#endif /* DB1_CON_H */

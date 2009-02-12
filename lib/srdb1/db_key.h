@@ -27,8 +27,8 @@
  * \brief Type that represents a database key.
  */
 
-#ifndef DB_KEY_H
-#define DB_KEY_H
+#ifndef DB1_KEY_H
+#define DB1_KEY_H
 
 #include "../../ut.h"
 
@@ -40,4 +40,4 @@
 typedef str* db_key_t;
 
 
-#endif /* DB_KEY_H */
+#endif /* DB1_KEY_H */

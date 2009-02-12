@@ -30,8 +30,8 @@
  * \ingroup db1
 */
 
-#ifndef DB_UT_H
-#define DB_UT_H
+#ifndef DB1_UT_H
+#define DB1_UT_H
 
 /**
  * maximal SQL buffer length for database drivers

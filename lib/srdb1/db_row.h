@@ -31,8 +31,8 @@
  */
 
 
-#ifndef DB_ROW_H
-#define DB_ROW_H
+#ifndef DB1_ROW_H
+#define DB1_ROW_H
 
 #include "db_val.h"
 #include "db_res.h"
@@ -73,4 +73,4 @@ inline int db_free_row(db_row_t* _r);
  */
 inline int db_allocate_row(const db1_res_t* _res, db_row_t* _row);
 
-#endif /* DB_ROW_H */
+#endif /* DB1_ROW_H */

@@ -39,8 +39,8 @@
  * take a look at the sources of the usrloc or auth modules.
  */
 
-#ifndef DB_H
-#define DB_H
+#ifndef DB1_H
+#define DB1_H
 
 #include "db_key.h"
 #include "db_op.h"
@@ -399,4 +399,4 @@ int db_use_table(db1_con_t* _h, const str* _t);
 typedef int (*db_bind_api_f)(db_func_t *dbb);
 
 
-#endif /* DB_H */
+#endif /* DB1_H */

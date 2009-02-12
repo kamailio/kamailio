@@ -34,8 +34,8 @@
  */
 
 
-#ifndef DB_VAL_H
-#define DB_VAL_H
+#ifndef DB1_VAL_H
+#define DB1_VAL_H
 
 #include "db_con.h"
 #include <time.h>
@@ -195,4 +195,4 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
  */
 int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len);
 
-#endif /* DB_VAL_H */
+#endif /* DB1_VAL_H */

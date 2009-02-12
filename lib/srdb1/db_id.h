@@ -27,8 +27,8 @@
  * \brief Functions for parsing a database URL and works with db identifier.
  */
 
-#ifndef _DB_ID_H
-#define _DB_ID_H
+#ifndef _DB1_ID_H
+#define _DB1_ID_H
 
 #include "../../str.h"
 
@@ -67,4 +67,4 @@ unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2);
 void free_db_id(struct db_id* id);
 
 
-#endif /* _DB_ID_H */
+#endif /* _DB1_ID_H */

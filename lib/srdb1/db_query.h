@@ -32,8 +32,8 @@
  * implementation.
 */
 
-#ifndef DB_QUERY_H
-#define DB_QUERY_H
+#ifndef DB1_QUERY_H
+#define DB1_QUERY_H
 
 #include "db_key.h"
 #include "db_op.h"

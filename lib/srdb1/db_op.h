@@ -27,8 +27,8 @@
  * \ingroup db1
  */
 
-#ifndef DB_OP_H
-#define DB_OP_H
+#ifndef DB1_OP_H
+#define DB1_OP_H
 
 /** operator less than */
 #define OP_LT  "<"
@@ -50,4 +50,4 @@
 typedef const char* db_op_t;
 
 
-#endif /* DB_OP_H */
+#endif /* DB1_OP_H */

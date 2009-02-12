@@ -27,8 +27,8 @@
  * \ingroup db1
  */
 
-#ifndef _DB_POOL_H
-#define _DB_POOL_H
+#ifndef _DB1_POOL_H
+#define _DB1_POOL_H
 
 #include "db_id.h"
 #include "db_con.h"
@@ -80,4 +80,4 @@ void pool_insert(struct pool_con* con);
 int pool_remove(struct pool_con* con);
 
 
-#endif /* _POOL_H */
+#endif /* _DB1_POOL_H */

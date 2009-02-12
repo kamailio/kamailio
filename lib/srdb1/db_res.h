@@ -31,8 +31,8 @@
  * \ingroup db1
  */
 
-#ifndef DB_RES_H
-#define DB_RES_H
+#ifndef DB1_RES_H
+#define DB1_RES_H
 
 
 #include "db_key.h"
@@ -128,4 +128,4 @@ inline int db_allocate_columns(db1_res_t* _r, const unsigned int cols);
  */
 inline int db_allocate_rows(db1_res_t* _res);
 
-#endif /* DB_RES_H */
+#endif /* DB1_RES_H */

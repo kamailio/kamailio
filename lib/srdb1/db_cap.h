@@ -31,8 +31,8 @@
  * values.
  */
 
-#ifndef DB_CAP_H
-#define DB_CAP_H
+#ifndef DB1_CAP_H
+#define DB1_CAP_H
 
 
 /*! \brief
@@ -66,4 +66,4 @@ typedef enum db_cap {
 #define DB_CAPABILITY(dbf, cpv) (((dbf).cap & (cpv)) == (cpv))
 
 
-#endif /* DB_CAP_H */
+#endif /* DB1_CAP_H */
