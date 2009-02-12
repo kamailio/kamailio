@@ -427,7 +427,7 @@ int send_reply(struct sip_msg* _m)
 		} 
 	}
 	
-	if (slb.reply(_m, code, &msg) == -1) {
+	if (slb.send_reply(_m, code, &msg) == -1) {
 		LM_ERR("failed to send %ld %.*s\n", code, msg.len,msg.s);
 		return -1;
 	} else return 0;
