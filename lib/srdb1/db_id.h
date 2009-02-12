@@ -22,7 +22,7 @@
  */
 
 /*!
- * \file db/db_id.h
+ * \file lib/srdb1/db_id.h
  * \ingroup db
  * \brief Functions for parsing a database URL and works with db identifier.
  */

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_res.h
+ * \file lib/srdb1/db_res.h
  * \brief Data structure that represents a result from a query.
  *
  * Data structure that represents a result from a database query,

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_res.c
+ * \file lib/srdb1/db_res.c
  * \brief Functions to manage result structures
  * \ingroup db
  *

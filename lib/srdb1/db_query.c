@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_query.c
+ * \file lib/srdb1/db_query.c
  * \brief Query helper for database drivers
  * \ingroup db
  *

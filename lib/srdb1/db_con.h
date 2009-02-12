@@ -22,7 +22,7 @@
  */
 
 /*!
- * \file db/db_con.h
+ * \file lib/srdb1/db_con.h
  * \ingroup db
  * \brief Type that represents a database connection
  */

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_pool.c
+ * \file lib/srdb1/db_pool.c
  * \brief Functions for managing a pool of database connections.
  * \ingroup db
  */

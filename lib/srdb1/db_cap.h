@@ -22,7 +22,7 @@
  */
 
 /*!
- * \file db_cap.h
+ * \file lib/srdb1/db_cap.h
  * \ingroup db
  * \brief Data structures that represents capabilities in the database.
  *

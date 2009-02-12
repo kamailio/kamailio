@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_val.h
+ * \file lib/srdb1/db_val.h
  * \brief Data structures that represents values in the database.
  *
  * This file defines data structures that represents values in the database.

@@ -28,7 +28,7 @@
   */
 
 /**
- * \file db/db.c
+ * \file lib/srdb1/db.c
  * \ingroup db
  * \brief Generic Database Interface
  *

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_ut.h
+ * \file lib/srdb1/db_ut.h
  * \brief Utility functions for database drivers.
  *
  * This utility methods are used from the database SQL driver to convert

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_row.h
+ * \file lib/srdb1/db_row.h
  * \brief Type that represents a row in a database.
  *
  * This file holds a type that represents a row in a database, some convenience
