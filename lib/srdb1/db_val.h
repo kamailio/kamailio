@@ -49,14 +49,14 @@
  * API.
  */
 typedef enum {
-	DB_INT,        /**< represents an 32 bit integer number      */
-	DB_BIGINT,     /**< represents an 64 bit integer number      */
-	DB_DOUBLE,     /**< represents a floating point number       */
-	DB_STRING,     /**< represents a zero terminated const char* */
-	DB_STR,        /**< represents a string of 'str' type        */
-	DB_DATETIME,   /**< represents date and time                 */
-	DB_BLOB,       /**< represents a large binary object         */
-	DB_BITMAP      /**< an one-dimensional array of 32 flags     */
+	DB1_INT,        /**< represents an 32 bit integer number      */
+	DB1_BIGINT,     /**< represents an 64 bit integer number      */
+	DB1_DOUBLE,     /**< represents a floating point number       */
+	DB1_STRING,     /**< represents a zero terminated const char* */
+	DB1_STR,        /**< represents a string of 'str' type        */
+	DB1_DATETIME,   /**< represents date and time                 */
+	DB1_BLOB,       /**< represents a large binary object         */
+	DB1_BITMAP      /**< an one-dimensional array of 32 flags     */
 } db_type_t;
 
 

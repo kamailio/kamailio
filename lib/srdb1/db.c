@@ -356,7 +356,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	str tmp1 = str_init(TABLENAME_COLUMN);
 	key[0] = &tmp1;
 
-	VAL_TYPE(val) = DB_STR;
+	VAL_TYPE(val) = DB1_STR;
 	VAL_NULL(val) = 0;
 	VAL_STR(val) = *table;
 	
@@ -382,7 +382,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	}
 
 	ver = ROW_VALUES(RES_ROWS(res));
-	if ( VAL_TYPE(ver)!=DB_INT || VAL_NULL(ver) ) {
+	if ( VAL_TYPE(ver)!=DB1_INT || VAL_NULL(ver) ) {
 		LM_ERR("invalid type (%d) or nul (%d) version "
 			"columns for %.*s\n", VAL_TYPE(ver), VAL_NULL(ver),
 			table->len, ZSW(table->s));

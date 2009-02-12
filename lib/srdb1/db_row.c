@@ -61,7 +61,7 @@ inline int db_free_row(db_row_t* _r)
 	for (col = 0; col < ROW_N(_r); col++) {
 		_val = &(ROW_VALUES(_r)[col]);
 		switch (VAL_TYPE(_val)) {
-			case DB_STRING:
+			case DB1_STRING:
 				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
 					LM_DBG("free VAL_STRING[%d] '%s' at %p\n", col,
 							(char *)VAL_STRING(_val),
@@ -70,7 +70,7 @@ inline int db_free_row(db_row_t* _r)
 					VAL_STRING(_val) = NULL;
 				}
 				break;
-			case DB_STR:
+			case DB1_STR:
 				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
 					LM_DBG("free VAL_STR[%d] '%.*s' at %p\n", col,
 							VAL_STR(_val).len,
@@ -79,7 +79,7 @@ inline int db_free_row(db_row_t* _r)
 					VAL_STR(_val).s = NULL;
 				}
 				break;
-			case DB_BLOB:
+			case DB1_BLOB:
 				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
 					LM_DBG("free VAL_BLOB[%d] at %p\n", col, VAL_BLOB(_val).s);
 					pkg_free(VAL_BLOB(_val).s);
