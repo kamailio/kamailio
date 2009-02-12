@@ -100,7 +100,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 		LM_ERR("unknown perl function called.\n");
 		reason.s = "Internal error";
 		reason.len = sizeof("Internal error")-1;
-		if (slb.reply(_msg, 500, &reason) == -1)
+		if (slb.send_reply(_msg, 500, &reason) == -1)
 		{
 			LM_ERR("failed to send reply\n");
 		}
@@ -114,7 +114,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 
 			reason.s = "Bad Request-URI";
 			reason.len = sizeof("Bad Request-URI")-1;
-			if (slb.reply(_msg, 400, &reason) == -1) {
+			if (slb.send_reply(_msg, 400, &reason) == -1) {
 				LM_ERR("failed to send reply\n");
 			}
 			return -1;
