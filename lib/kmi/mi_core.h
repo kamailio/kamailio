@@ -36,6 +36,6 @@
 #ifndef _MI_MI_CORE_H_
 #define _MI_MI_CORE_H_
 
-int init_mi_core(void);
+// int init_mi_core(void);
 
 #endif

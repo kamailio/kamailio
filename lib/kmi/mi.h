@@ -91,5 +91,7 @@ static inline struct mi_root* run_mi_cmd(struct mi_cmd *cmd, struct mi_root *t)
 
 void get_mi_cmds( struct mi_cmd** cmds, int *size);
 
+int init_mi_core(void);
+
 #endif
 
