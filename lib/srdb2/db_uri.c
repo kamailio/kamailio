@@ -31,9 +31,9 @@
  */
 
 #include "db_uri.h"
-#include "../dprint.h"
-#include "../mem/mem.h"
-#include "../ut.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
+#include "../../ut.h"
 #include <string.h>
 
 

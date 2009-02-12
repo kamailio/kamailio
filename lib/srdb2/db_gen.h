@@ -34,8 +34,8 @@
  */
 
 #include "db_drv.h"
-#include "../str.h"
-#include "../list.h"
+#include "../../str.h"
+#include "../../list.h"
 
 
 #ifdef __cplusplus

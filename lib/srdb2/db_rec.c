@@ -32,8 +32,8 @@
 
 #include "db_rec.h"
 
-#include "../dprint.h"
-#include "../mem/mem.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
 
 #include <stdlib.h>
 #include <string.h>

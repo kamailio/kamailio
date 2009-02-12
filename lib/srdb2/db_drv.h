@@ -35,8 +35,8 @@
 
 #include "db_gen.h"
 
-#include "../str.h"
-#include "../list.h"
+#include "../../str.h"
+#include "../../list.h"
 
 
 #ifdef __cplusplus

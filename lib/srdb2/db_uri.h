@@ -34,7 +34,7 @@
  */
 
 #include "db_gen.h"
-#include "../str.h"
+#include "../../str.h"
 
 
 #ifdef __cplusplus

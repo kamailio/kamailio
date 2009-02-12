@@ -34,9 +34,9 @@
 
 #include "db_gen.h"
 
-#include "../mem/mem.h"
-#include "../sr_module.h"
-#include "../ut.h"
+#include "../../mem/mem.h"
+#include "../../sr_module.h"
+#include "../../ut.h"
 
 #include <string.h>
 #include <stdlib.h>

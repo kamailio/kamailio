@@ -32,8 +32,8 @@
 
 #include "db_con.h"
 
-#include "../mem/mem.h"
-#include "../dprint.h"
+#include "../../mem/mem.h"
+#include "../../dprint.h"
 
 #include <string.h>
 #include <stdlib.h>

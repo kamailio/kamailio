@@ -32,9 +32,9 @@
 
 #include "db_cmd.h"
 
-#include "../dprint.h"
-#include "../mem/mem.h"
-#include "../ut.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
+#include "../../ut.h"
 
 #include <string.h>
 #include <stdarg.h>

@@ -33,8 +33,8 @@
 #include "db_ctx.h"
 #include "db.h"
 
-#include "../dprint.h"
-#include "../mem/mem.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
 
 #include <string.h>
 

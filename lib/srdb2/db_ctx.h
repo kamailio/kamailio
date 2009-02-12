@@ -37,8 +37,8 @@
 #include "db_gen.h"
 #include "db_con.h"
 
-#include "../str.h"
-#include "../list.h"
+#include "../../str.h"
+#include "../../list.h"
 
 #ifdef __cplusplus
 extern "C" {
