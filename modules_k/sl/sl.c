@@ -172,7 +172,7 @@ static int mod_init(void)
 		{
 			load_tm( &tmb );
 		} else {
-			LM_WARN("could not bind tm module - only stateless mode available\n");
+			LM_INFO("could not bind tm module - only stateless mode available\n");
 			sl_bind_tm=0;
 		}
 	}
