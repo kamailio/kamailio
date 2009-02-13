@@ -101,7 +101,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"mysql",
+	"db_mysql",
 	cmds,
 	0,               /* RPC method */
 	params,          /*  module parameters */
