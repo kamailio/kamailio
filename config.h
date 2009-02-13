@@ -208,4 +208,7 @@
 
 #define DEFAULT_DID "_default"
 
+/*  maximum allowed iterations for a while (to catch runaways) */
+#define DEFAULT_MAX_WHILE_LOOPS 100
+
 #endif
