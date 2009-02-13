@@ -46,7 +46,7 @@
 #include "my_res.h"
 
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 
 int my_ping_interval = 5 * 60; /* Default is 5 minutes */
 unsigned int my_connect_to = 2; /* 2 s by default */

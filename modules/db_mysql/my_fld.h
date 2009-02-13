@@ -33,8 +33,8 @@
  *  @{
  */
 
-#include "../../db/db_drv.h"
-#include "../../db/db_fld.h"
+#include "../../lib/srdb2/db_drv.h"
+#include "../../lib/srdb2/db_fld.h"
 #include <mysql/mysql.h>
 
 struct my_fld {

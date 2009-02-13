@@ -29,8 +29,8 @@
 #ifndef _MY_CMD_H
 #define _MY_CMD_H  1
 
-#include "../../db/db_drv.h"
-#include "../../db/db_cmd.h"
+#include "../../lib/srdb2/db_drv.h"
+#include "../../lib/srdb2/db_cmd.h"
 #include <mysql/mysql.h>
 #include <stdarg.h>
 

@@ -7,7 +7,7 @@ auto_gen=
 NAME=mysql.so
 
 # mysql.h locations (freebsd,openbsd  solaris)
-DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
+DEFS +=-DSER_MOD_INTERFACE -I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
 		-I$(LOCALBASE)/mysql/include \
 		-I/usr/include/mysql
 
@@ -18,5 +18,8 @@ LIBS=-L/usr/lib/mysql -L$(LOCALBASE)/lib -L$(LOCALBASE)/lib/mysql \
 		-L$(LOCALBASE)/mysql/lib \
 		-L/usr/lib64/mysql \
 		-lmysqlclient -lz
+
+SERLIBPATH=../../lib
+SER_LIBS=$(SERLIBPATH)/srdb2/srdb2
 
 include ../../Makefile.modules

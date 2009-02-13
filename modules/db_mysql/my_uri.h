@@ -31,8 +31,8 @@
 #ifndef _MY_URI_H
 #define _MY_URI_H
 
-#include "../../db/db_uri.h"
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_uri.h"
+#include "../../lib/srdb2/db_drv.h"
 
 struct my_uri {
 	db_drv_t drv;
