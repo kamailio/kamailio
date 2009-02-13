@@ -10,7 +10,8 @@ ALL_PACKAGES = kamailio kamailio-mysql-module kamailio-postgres-module \
 	kamailio-jabber-module kamailio-cpl-module kamailio-radius-modules \
 	kamailio-unixodbc-module kamailio-presence-modules kamailio-xmlrpc-module \
 	kamailio-perl-modules kamailio-snmpstats-module kamailio-xmpp-module \
-	kamailio-carrierroute-module kamailio-berkeley-module kamailio-ldap-modules
+	kamailio-carrierroute-module kamailio-berkeley-module kamailio-ldap-modules \
+	kamailio-utils-module
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
@@ -59,8 +60,10 @@ CROUTE_MODULES = carrierroute
 BERKELEY_MODULES = db_berkeley
 # LDAP modules
 LDAP_MODULES = ldap h350
+# utils module
+UTILS_MODULES = utils
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES)
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES) $(UTILS_MODULES)
 
 # modules not in the "main" package or unstable modules
 EXCLUDED_MODULES = $(ALL_MODULES) pa osp
@@ -80,6 +83,7 @@ XMPP_MOD_PATH=$(addprefix modules/, $(XMPP_MODULES))
 CROUTE_MOD_PATH=$(addprefix modules/, $(CROUTE_MODULES))
 BERKELEY_MOD_PATH=$(addprefix modules/, $(BERKELEY_MODULES))
 LDAP_MOD_PATH=$(addprefix modules/, $(LDAP_MODULES))
+UTILS_MOD_PATH=$(addprefix modules/, $(UTILS_MODULES))
 
 ifeq (cc, $(CC))
 	CC = gcc
@@ -125,6 +129,7 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CROUTE_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(BERKELEY_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(LDAP_MOD_PATH)" cfg-target=/etc/kamailio/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(UTILS_MOD_PATH)" cfg-target=/etc/kamailio/
 
 	# generate the utils db_berkeley
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) utils include_modules="db_berkeley"
@@ -277,6 +282,14 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/kamailio-ldap-modules \
 		cfg-target=/etc/kamailio/ \
 		doc-dir=share/doc/kamailio-ldap-modules
+
+	# install only the utils modules
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(UTILS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/kamailio-utils-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/kamailio-utils-modules \
+		cfg-target=/etc/kamailio/ \
+		doc-dir=share/doc/kamailio-utils-modules
 
 	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
 	for p in $(ALL_PACKAGES); \

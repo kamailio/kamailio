@@ -197,3 +197,14 @@ Description: LDAP modules for Kamailio
  This package provides the ldap and h350 modules for Kamailio, enabling LDAP
  queries from the Kamailio config and storage of SIP account data in an LDAP
  directory.
+
+Package: kamailio-utils-module
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
+Description: Provides a set utility functions for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ Provides a set of utility functions for Kamailio, which are not related
+ to the server configuration.
