@@ -29,8 +29,8 @@
 #ifndef _BDB_RES_H_
 #define _BDB_RES_H_
 
-#include "../../db/db_drv.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb2/db_drv.h"
+#include "../../lib/srdb2/db_res.h"
 
 typedef struct _bdb_res {
 	db_drv_t gen;

@@ -36,8 +36,8 @@
 
 #include <db.h>
 
-#include "../../db/db_gen.h"
-#include "../../db/db_fld.h"
+#include "../../lib/srdb2/db_gen.h"
+#include "../../lib/srdb2/db_fld.h"
 
 typedef struct _bdb_fld {
 	db_drv_t gen;

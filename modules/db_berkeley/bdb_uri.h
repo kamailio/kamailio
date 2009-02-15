@@ -33,8 +33,8 @@
  * The functions parsing and interpreting bdb: URIs.
  */
 
-#include "../../db/db_uri.h"
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_uri.h"
+#include "../../lib/srdb2/db_drv.h"
 
 #include <db.h>
 

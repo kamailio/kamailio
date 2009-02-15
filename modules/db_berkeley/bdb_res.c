@@ -33,7 +33,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_gen.h"
+#include "../../lib/srdb2/db_gen.h"
 
 
 void bdb_res_free(db_res_t* res, bdb_res_t *payload)

@@ -38,8 +38,8 @@
 #include <db.h>
 
 #include "../../str.h"
-#include "../../db/db.h"
-#include "../../db/db_fld.h"
+#include "../../lib/srdb2/db.h"
+#include "../../lib/srdb2/db_fld.h"
 
 /*max number of columns in a table*/
 #define MAX_NUM_COLS 32

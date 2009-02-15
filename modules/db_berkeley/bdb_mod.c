@@ -37,8 +37,8 @@
 #include "../../mem/mem.h"
 
 #include "../../sr_module.h"
-#include "../../db/db_res.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db_res.h"
+#include "../../lib/srdb2/db.h"
 
 #include "bdb_lib.h"
 #include "bdb_con.h"

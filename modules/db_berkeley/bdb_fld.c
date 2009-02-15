@@ -37,7 +37,7 @@
 #include <string.h>
 #include <time.h>   /* strptime, XOPEN issue must be >= 4 */
 
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_drv.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
