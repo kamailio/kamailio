@@ -39,8 +39,8 @@
  * The implementation of parser parsing postgres://.. URIs.
  */
 
-#include "../../db/db_uri.h"
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_uri.h"
+#include "../../lib/srdb2/db_drv.h"
 
 /** PostgreSQL driver specific payload to attach to db_uri structures.
  * This is the PostgreSQL specific structure that will be attached

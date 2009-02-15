@@ -41,7 +41,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
-#include "../../db/db_gen.h"
+#include "../../lib/srdb2/db_gen.h"
 
 #include <stdlib.h>
 #include <string.h>

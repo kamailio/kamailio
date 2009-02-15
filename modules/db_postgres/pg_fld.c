@@ -40,7 +40,7 @@
 #include "pg_con.h" /* flags */
 #include "pg_mod.h"
 
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_drv.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 

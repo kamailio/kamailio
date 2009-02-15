@@ -42,9 +42,9 @@
 
 #include "pg_oid.h"
 
-#include "../../db/db_drv.h"
-#include "../../db/db_cmd.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb2/db_drv.h"
+#include "../../lib/srdb2/db_cmd.h"
+#include "../../lib/srdb2/db_res.h"
 #include "../../str.h"
 
 #include <stdarg.h>
