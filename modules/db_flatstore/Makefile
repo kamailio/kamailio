@@ -4,7 +4,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=flatstore.so
+NAME=db_flatstore.so
 LIBS=
 
 DEFS += -DSER_MOD_INTERFACE
