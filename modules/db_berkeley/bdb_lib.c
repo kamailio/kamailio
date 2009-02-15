@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: bdb_lib.c 4585 2008-08-06 08:20:30Z klaus_darilion $
  *
  * db_berkeley module, portions of this code were templated using
  * the dbtext and postgres modules.
@@ -27,61 +27,52 @@
  * 2007-09-19  genesis (wiquan)
  */
 
+
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <errno.h>
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 
-#include "bdb_util.h"
+#include "bdb_fld.h"
 #include "bdb_lib.h"
-#include "bdb_val.h"
 
-static database_p *_cachedb = NULL;
-static db_parms_p _db_parms = NULL;
+static bdb_params_p _bdb_parms = NULL;
 
 /**
  *
  */
-int bdblib_init(db_parms_p _p) 
+int bdblib_init(bdb_params_p _p) 
 {
-	if (!_cachedb)
-	{
-		_cachedb = pkg_malloc( sizeof(database_p) );
-		if (!_cachedb) 
-		{	LM_CRIT("not enough private memory\n");
-			return -1;
-		}
-		
-		*_cachedb = NULL;
+	bdb_params_p dp = NULL;
+	if (_bdb_parms != NULL)
+		return 0;
 		
 		/*create default parms*/
-		db_parms_p dp = (db_parms_p) pkg_malloc( sizeof(db_parms_t) );
-		if (!dp) 
-		{	LM_CRIT("not enough private memory\n");
-			return -1;
-		}
-		
-		if(_p)
-		{
-			dp->cache_size  = _p->cache_size;
-			dp->auto_reload = _p->auto_reload;
-			dp->log_enable  = _p->log_enable;
-			dp->journal_roll_interval = _p->journal_roll_interval;
-		}
-		else
-		{
-			dp->cache_size = (4 * 1024 * 1024); //4Mb
-			dp->auto_reload = 0;
-			dp->log_enable = 0;
-			dp->journal_roll_interval = 3600;
-		}
-		
-		_db_parms = dp;
+	dp = (bdb_params_p) pkg_malloc( sizeof(bdb_params_t) );
+	if (dp==NULL) 
+	{
+		ERR("not enough private memory\n");
+		return -1;
 	}
+		
+	if(_p!=NULL)
+	{
+		dp->cache_size  = _p->cache_size;
+		dp->auto_reload = _p->auto_reload;
+		dp->log_enable  = _p->log_enable;
+		dp->journal_roll_interval = _p->journal_roll_interval;
+	} else {
+		dp->cache_size = (4 * 1024 * 1024); //4Mb
+		dp->auto_reload = 0;
+		dp->log_enable = 0;
+		dp->journal_roll_interval = 3600;
+	}
+		
+	_bdb_parms = dp;
 	return 0;
 }
 
@@ -91,8 +82,7 @@ int bdblib_init(db_parms_p _p)
  */
 int bdblib_destroy(void)
 {
-	if (_cachedb)	db_free(*_cachedb);
-	if(_db_parms)	pkg_free(_db_parms);
+	if(_bdb_parms)	pkg_free(_bdb_parms);
 	return 0;
 }
 
@@ -101,193 +91,186 @@ int bdblib_destroy(void)
   assumes the lib data-structures are already initialzed;
   used to sync and reload the db file.
 */
-int bdblib_close(char* _n)
+int bdblib_close(bdb_db_p _db_p, str *dirpath)
 {
-	str s;
 	int rc;
-	tbl_cache_p _tbc;
+	bdb_tcache_p _tbc;
 	DB* _db = NULL;
 	DB_ENV* _env = NULL;
-	database_p _db_p = *_cachedb;
 	
-	if (!_cachedb || !_n)
+	if (_db_p==NULL || dirpath==NULL)
 		return -1;
 	
 	rc = 0;
-	s.s = (char*)_n;
-	s.len = strlen(_n);
 	
-	if (_db_p)
+	if (_db_p==NULL)
 	{	
-		_env = _db_p->dbenv;
-		_tbc = _db_p->tables;
-LM_DBG("ENV %.*s \n"
-	, _db_p->name.len
-	, _db_p->name.s);
-		if(s.len == _db_p->name.len && 
-		!strncasecmp(s.s, _db_p->name.s, _db_p->name.len))
-		{
-			//close the whole dbenv
-			LM_DBG("ENV %.*s \n", s.len, s.s);
-			while(_tbc)
-			{
-				if(_tbc->dtp)
-				{
-					lock_get(&_tbc->dtp->sem);
-					_db = _tbc->dtp->db;
-					if(_db)
-						rc = _db->close(_db, 0);
-					if(rc != 0)
-						LM_CRIT("error closing %s\n", _tbc->dtp->name.s);
-					_tbc->dtp->db = NULL;
-					
-					lock_release(&_tbc->dtp->sem);
-				}
-				_tbc = _tbc->next;
-			}
-			_env->close(_env, 0);
-			_db_p->dbenv = NULL;
-			return 0;
-		}
-		
-		//close a particular db
+		DBG("DB not found %.*s \n", dirpath->len, dirpath->s);
+		return 1; /*table not found*/
+	}
+	
+	_env = _db_p->dbenv;
+	_tbc = _db_p->tables;
+	DBG("ENV %.*s \n", _db_p->name.len, _db_p->name.s);
+	if(dirpath->len == _db_p->name.len && 
+		!strncasecmp(dirpath->s, _db_p->name.s, _db_p->name.len))
+	{
+		//close the whole dbenv
+		DBG("ENV %.*s \n", dirpath->len, dirpath->s);
 		while(_tbc)
 		{
 			if(_tbc->dtp)
 			{
-	LM_DBG("checking DB %.*s \n"
-		, _tbc->dtp->name.len
-		, _tbc->dtp->name.s);
-				
-				if(_tbc->dtp->name.len == s.len && 
-				!strncasecmp(_tbc->dtp->name.s, s.s, s.len ))
-				{
-					LM_DBG("DB %.*s \n", s.len, s.s);
-					lock_get(&_tbc->dtp->sem);
-					_db = _tbc->dtp->db;
-					if(_db)
-						rc = _db->close(_db, 0);
-					if(rc != 0)
-						LM_CRIT("error closing %s\n", _tbc->dtp->name.s);
-					_tbc->dtp->db = NULL;
-					lock_release(&_tbc->dtp->sem);
-					return 0;
-				}
+				_db = _tbc->dtp->db;
+				if(_db)
+					rc = _db->close(_db, 0);
+				if(rc != 0)
+					ERR("error closing %s\n", _tbc->dtp->name.s);
+				_tbc->dtp->db = NULL;
 			}
 			_tbc = _tbc->next;
 		}
+		_env->close(_env, 0);
+		_db_p->dbenv = NULL;
+		return 0;
 	}
-	LM_DBG("DB not found %.*s \n", s.len, s.s);
-	return 1; /*table not found*/
+		
+	//close a particular db
+	while(_tbc)
+	{
+		if(_tbc->dtp)
+		{
+			DBG("checking DB %.*s \n", _tbc->dtp->name.len, _tbc->dtp->name.s);
+				
+			if(_tbc->dtp->name.len == dirpath->len && 
+				!strncasecmp(_tbc->dtp->name.s, dirpath->s, dirpath->len ))
+			{
+				DBG("DB %.*s \n", dirpath->len, dirpath->s);
+				_db = _tbc->dtp->db;
+				if(_db)
+					rc = _db->close(_db, 0);
+				if(rc != 0)
+					ERR("error closing %s\n", _tbc->dtp->name.s);
+				_tbc->dtp->db = NULL;
+				return 0;
+			}
+		}
+		_tbc = _tbc->next;
+	}
+	DBG("DB not found %.*s \n", dirpath->len, dirpath->s);
+	return 1; /*table not found*/	
 }
 
 /** opens the underlying Berkeley DB.
   assumes the lib data-structures are already initialzed;
   used to sync and reload the db file.
 */
-int bdblib_reopen(char* _n)
+int bdblib_reopen(bdb_db_p _db_p, str *dirpath)
 {
-	str s;
 	int rc, flags;
-	tbl_cache_p _tbc;
+	bdb_tcache_p _tbc;
 	DB* _db = NULL;
 	DB_ENV* _env = NULL;
-	database_p _db_p = *_cachedb;
 	rc = flags = 0;
 	_tbc = NULL;
 	
-	if (!_cachedb || !_n)
+	if (_db_p==NULL || dirpath==NULL)
 		return -1;
 
-	s.s = (char*)_n;
-	s.len = strlen(_n);
 	
 	if (_db_p)
 	{
+		DBG("bdb: DB not found %.*s \n", dirpath->len, dirpath->s);
+		return 1; /*table not found*/
+	}
+	
+	_env = _db_p->dbenv;
+	_tbc = _db_p->tables;
+		
+	if(dirpath->len ==_db_p->name.len && 
+		!strncasecmp(dirpath->s, _db_p->name.s, _db_p->name.len))
+	{
+		//open the whole dbenv
+		DBG("-- bdblib_reopen ENV %.*s \n", dirpath->len, dirpath->s);
+		if(!_db_p->dbenv)
+		{
+			rc = bdblib_create_dbenv(&_env, dirpath->s);
+			_db_p->dbenv = _env;
+		}
+			
+		if(rc!=0) return rc;
+
 		_env = _db_p->dbenv;
 		_tbc = _db_p->tables;
-		
-		if(s.len ==_db_p->name.len && 
-		!strncasecmp(s.s, _db_p->name.s,_db_p->name.len))
-		{
-			//open the whole dbenv
-			LM_DBG("-- bdblib_reopen ENV %.*s \n", s.len, s.s);
-			if(!_db_p->dbenv)
-			{	rc = bdblib_create_dbenv(&_env, _n);
-				_db_p->dbenv = _env;
-			}
-			
-			if(rc!=0) return rc;
-			_env = _db_p->dbenv;
-			_tbc = _db_p->tables;
 
-			while(_tbc)
-			{
-				if(_tbc->dtp)
-				{
-					lock_get(&_tbc->dtp->sem);
-					if(!_tbc->dtp->db)
-					{
-						if ((rc = db_create(&_db, _env, 0)) != 0)
-						{	_env->err(_env, rc, "db_create");
-							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
-							bdblib_recover(_tbc->dtp, rc);
-						}
-					}
-					
-					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
-					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
-						LM_CRIT("error in db_open: %s.\n",db_strerror(rc));
-						bdblib_recover(_tbc->dtp, rc);
-					}
-					
-					_tbc->dtp->db = _db;
-					lock_release(&_tbc->dtp->sem);
-				}
-				_tbc = _tbc->next;
-			}
-			_env->close(_env, 0);
-			return rc;
-		}
-		
-		//open a particular db
 		while(_tbc)
 		{
 			if(_tbc->dtp)
 			{
-	LM_DBG("checking DB %.*s \n"
-		, _tbc->dtp->name.len
-		, _tbc->dtp->name.s);
-				
-				if(_tbc->dtp->name.len == s.len && 
-				!strncasecmp(_tbc->dtp->name.s, s.s, s.len ))
+				if(!_tbc->dtp->db)
 				{
-					LM_DBG("DB %.*s \n", s.len, s.s);
-					lock_get(&_tbc->dtp->sem);
-					if(!_tbc->dtp->db) 
+					if ((rc = db_create(&_db, _env, 0)) != 0)
 					{
-						if ((rc = db_create(&_db, _env, 0)) != 0)
-						{	_env->err(_env, rc, "db_create");
-							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
-							bdblib_recover(_tbc->dtp, rc);
-						}
-					}
-					
-					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
-					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
-						LM_CRIT("bdb open: %s.\n",db_strerror(rc));
+						_env->err(_env, rc, "db_create");
+						ERR("error in db_create, db error: %s.\n",
+								db_strerror(rc));
 						bdblib_recover(_tbc->dtp, rc);
 					}
-					_tbc->dtp->db = _db;
-					lock_release(&_tbc->dtp->sem);
-					return rc;
 				}
+					
+				if ((rc = _db->open(_db, NULL, dirpath->s, NULL, DB_HASH,
+								DB_CREATE, 0664)) != 0)
+				{
+					_db->dbenv->err(_env, rc, "DB->open: %s", dirpath->s);
+					ERR("error in db_open: %s.\n",db_strerror(rc));
+					bdblib_recover(_tbc->dtp, rc);
+				}
+					
+				_tbc->dtp->db = _db;
 			}
 			_tbc = _tbc->next;
 		}
-		
+		_env->close(_env, 0);
+		return rc;
 	}
-	LM_DBG("DB not found %.*s \n", s.len, s.s);
+		
+	// open a particular db
+	while(_tbc)
+	{
+		if(_tbc->dtp)
+		{
+			ERR("checking DB %.*s \n", _tbc->dtp->name.len, _tbc->dtp->name.s);
+				
+			if(_tbc->dtp->name.len == dirpath->len && 
+				!strncasecmp(_tbc->dtp->name.s, dirpath->s, dirpath->len ))
+			{
+				ERR("DB %.*s \n", dirpath->len, dirpath->s);
+				if(!_tbc->dtp->db) 
+				{
+					if ((rc = db_create(&_db, _env, 0)) != 0)
+					{
+						_env->err(_env, rc, "db_create");
+						ERR("error in db_create, db error: %s.\n",
+								db_strerror(rc));
+						bdblib_recover(_tbc->dtp, rc);
+					}
+				}
+					
+				if ((rc = _db->open(_db, NULL, dirpath->s, NULL, DB_HASH,
+								DB_CREATE, 0664)) != 0)
+				{
+					_db->dbenv->err(_env, rc, "DB->open: %s", dirpath->s);
+					ERR("bdb open: %s.\n",db_strerror(rc));
+					bdblib_recover(_tbc->dtp, rc);
+				}
+				_tbc->dtp->db = _db;
+				return rc;
+			}
+		}
+		_tbc = _tbc->next;
+	}
+
+	DBG("DB not found %.*s \n", dirpath->len, dirpath->s);
 	return 1; /*table not found*/
 }
 
@@ -306,16 +289,16 @@ int bdblib_create_dbenv(DB_ENV **_dbenv, char* _home)
 	/* Create an environment and initialize it for additional error * reporting. */ 
 	if ((rc = db_env_create(&env, 0)) != 0) 
 	{
-		LM_ERR("db_env_create failed! bdb error: %s.\n", db_strerror(rc)); 
+		ERR("db_env_create failed! bdb error: %s.\n", db_strerror(rc)); 
 		return (rc);
 	}
  
 	env->set_errpfx(env, progname);
 
 	/*  Specify the shared memory buffer pool cachesize */ 
-	if ((rc = env->set_cachesize(env, 0, _db_parms->cache_size, 0)) != 0) 
+	if ((rc = env->set_cachesize(env, 0, _bdb_parms->cache_size, 0)) != 0) 
 	{
-		LM_ERR("dbenv set_cachsize failed! bdb error: %s.\n", db_strerror(rc));
+		ERR("dbenv set_cachsize failed! bdb error: %s.\n", db_strerror(rc));
 		env->err(env, rc, "set_cachesize"); 
 		goto err; 
 	}
@@ -340,7 +323,7 @@ int bdblib_create_dbenv(DB_ENV **_dbenv, char* _home)
 	/* Open the environment */ 
 	if ((rc = env->open(env, _home, flags, 0)) != 0) 
 	{ 
-		LM_ERR("dbenv is not initialized! bdb error: %s.\n",db_strerror(rc));
+		ERR("dbenv is not initialized! bdb error: %s.\n",db_strerror(rc));
 		env->err(env, rc, "environment open: %s", _home); 
 		goto err; 
 	}
@@ -355,60 +338,49 @@ err: (void)env->close(env, 0);
 
 /**
  */
-database_p bdblib_get_db(str *_s)
+bdb_db_p bdblib_get_db(str *dirpath)
 {
 	int rc;
-	database_p _db_p=NULL;
-	char name[512];
+	bdb_db_p _db_p=NULL;
 
-	if(!_s || !_s->s || _s->len<=0 || _s->len > 512)
+	if(dirpath==0 || dirpath->s==NULL || dirpath->s[0]=='\0')
 		return NULL;
 
-	if( !_cachedb)
+	if(_bdb_parms==NULL)
 	{
-		LM_ERR("db_berkeley cache is not initialized! Check if you loaded db_berkeley "
+		ERR("bdb: cache is not initialized! Check if you loaded bdb "
 			"before any other module that uses it.\n");
 		return NULL;
 	}
 
-	_db_p = *_cachedb;
-	if(_db_p)
-	{
-		LM_DBG("db already cached!\n");
-		return _db_p;
-	}
-
-	if(!bdb_is_database(_s))
+	if(!bdb_is_database(dirpath->s))
 	{	
-		LM_ERR("database [%.*s] does not exists!\n" ,_s->len , _s->s);
+		ERR("bdb: database [%.*s] does not exists!\n",
+				dirpath->len , dirpath->s);
 		return NULL;
 	}
 
-	_db_p = (database_p)pkg_malloc(sizeof(database_t));
+	_db_p = (bdb_db_p)pkg_malloc(sizeof(bdb_db_t));
 	if(!_db_p)
 	{
-		LM_ERR("no private memory for dbenv_t.\n");
+		ERR("no private memory for dbenv_t.\n");
 		pkg_free(_db_p);
 		return NULL;
 	}
 
-	_db_p->name.s = (char*)pkg_malloc(_s->len*sizeof(char));
-	memcpy(_db_p->name.s, _s->s, _s->len);
-	_db_p->name.len = _s->len;
+	_db_p->name.s = (char*)pkg_malloc(dirpath->len*sizeof(char));
+	memcpy(_db_p->name.s, dirpath->s, dirpath->len);
+	_db_p->name.len = dirpath->len;
 
-	strncpy(name, _s->s, _s->len);
-	name[_s->len] = 0;
-
-	if ((rc = bdblib_create_dbenv(&(_db_p->dbenv), name)) != 0)
+	if ((rc = bdblib_create_dbenv(&(_db_p->dbenv), dirpath->s)) != 0)
 	{
-		LM_ERR("bdblib_create_dbenv failed");
+		ERR("bdblib_create_dbenv failed");
 		pkg_free(_db_p->name.s);
 		pkg_free(_db_p);
 		return NULL;
 	}
 
 	_db_p->tables=NULL;
-	*_cachedb = _db_p;
 
 	return _db_p;
 }
@@ -418,10 +390,10 @@ database_p bdblib_get_db(str *_s)
  * look thru a linked list for the table. if dne, create a new one
  * and add to the list
 */
-tbl_cache_p bdblib_get_table(database_p _db, str *_s)
+bdb_tcache_p bdblib_get_table(bdb_db_t *_db, str *_s)
 {
-	tbl_cache_p _tbc = NULL;
-	table_p _tp = NULL;
+	bdb_tcache_p _tbc = NULL;
+	bdb_table_p _tp = NULL;
 
 	if(!_db || !_s || !_s->s || _s->len<=0)
 		return NULL;
@@ -446,30 +418,19 @@ tbl_cache_p bdblib_get_table(database_p _db, str *_s)
 		_tbc = _tbc->next;
 	}
 
-	_tbc = (tbl_cache_p)pkg_malloc(sizeof(tbl_cache_t));
+	_tbc = (bdb_tcache_p)pkg_malloc(sizeof(bdb_tcache_t));
 	if(!_tbc)
 		return NULL;
 
-	if(!lock_init(&_tbc->sem))
-	{
-		pkg_free(_tbc);
-		return NULL;
-	}
-
 	_tp = bdblib_create_table(_db, _s);
-
-#ifdef BDB_EXTRA_DEBUG
-	LM_DBG("table: %.*s\n", _s->len, _s->s);
-#endif
 
 	if(!_tp)
 	{
-		LM_ERR("failed to create table.\n");
+		ERR("failed to create table.\n");
 		pkg_free(_tbc);
 		return NULL;
 	}
 
-	lock_get(&_tbc->sem);
 	_tbc->dtp = _tp;
 
 	if(_db->tables)
@@ -477,16 +438,15 @@ tbl_cache_p bdblib_get_table(database_p _db, str *_s)
 	
 	_tbc->next = _db->tables;
 	_db->tables = _tbc;
-	lock_release(&_tbc->sem);
 
 	return _tbc;
 }
 
 
-void bdblib_log(int op, table_p _tp, char* _msg, int len)
+void bdblib_log(int op, bdb_db_p _db_p, bdb_table_p _tp, char* _msg, int len)
 {
 	if(!_tp || !len) 		return;
-	if(! _db_parms->log_enable) 	return;
+	if(! _bdb_parms->log_enable) 	return;
 	if (_tp->logflags == JLOG_NONE)	return;
 	
 	if ((_tp->logflags & op) == op)
@@ -495,13 +455,13 @@ void bdblib_log(int op, table_p _tp, char* _msg, int len)
 		char *c;
 		time_t now = time(NULL);
 		
-		if( _db_parms->journal_roll_interval)
+		if( _bdb_parms->journal_roll_interval)
 		{
-			if((_tp->t) && (now - _tp->t) > _db_parms->journal_roll_interval)
+			if((_tp->t) && (now - _tp->t) > _bdb_parms->journal_roll_interval)
 			{	/*try to roll logfile*/
-				if(bdblib_create_journal(_tp))
+				if(bdblib_create_journal(_db_p, _tp))
 				{
-					LM_ERR("Journaling has FAILED !\n");
+					ERR("Journaling has FAILED !\n");
 					return;
 				}
 			}
@@ -559,31 +519,31 @@ void bdblib_log(int op, table_p _tp, char* _msg, int len)
  * Function returns NULL on error, which will cause openser to exit.
  *
  */
-table_p bdblib_create_table(database_p _db, str *_s)
+bdb_table_p bdblib_create_table(bdb_db_p _db, str *_s)
 {
 
 	int rc,i,flags;
 	DB *bdb = NULL;
-	table_p tp = NULL;
+	bdb_table_p tp = NULL;
 	char tblname[MAX_TABLENAME_SIZE]; 
 
 	if(!_db || !_db->dbenv)
 	{
-		LM_ERR("no database_p or dbenv.\n");
+		ERR("no bdb_db_p or dbenv.\n");
 		return NULL;
 	}
 
-	tp = (table_p)pkg_malloc(sizeof(table_t));
+	tp = (bdb_table_p)pkg_malloc(sizeof(bdb_table_t));
 	if(!tp)
 	{
-		LM_ERR("no private memory for table_t.\n");
+		ERR("no private memory for bdb_table_t.\n");
 		return NULL;
 	}
 
 	if ((rc = db_create(&bdb, _db->dbenv, 0)) != 0)
 	{ 
 		_db->dbenv->err(_db->dbenv, rc, "database create");
-		LM_ERR("error in db_create, bdb error: %s.\n",db_strerror(rc));
+		ERR("error in db_create, bdb error: %s.\n",db_strerror(rc));
 		pkg_free(tp);
 		return NULL;
 	}
@@ -591,25 +551,16 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	memset(tblname, 0, MAX_TABLENAME_SIZE);
 	strncpy(tblname, _s->s, _s->len);
 
-#ifdef BDB_EXTRA_DEBUG
-	LM_DBG("CREATE TABLE = %s\n", tblname);
-#endif
-
 	flags = DB_THREAD;
 
 	if ((rc = bdb->open(bdb, NULL, tblname, NULL, DB_HASH, flags, 0664)) != 0)
 	{ 
 		_db->dbenv->err(_db->dbenv, rc, "DB->open: %s", tblname);
-		LM_ERR("bdb open failed: %s.\n",db_strerror(rc));
+		ERR("bdb open failed: %s.\n",db_strerror(rc));
 		pkg_free(tp);
 		return NULL;
 	}
 
-	if(!lock_init(&tp->sem))
-	{
-		goto error;
-	}
-	
 	tp->name.s = (char*)pkg_malloc(_s->len*sizeof(char));
 	memcpy(tp->name.s, _s->s, _s->len);
 	tp->name.len = _s->len;
@@ -631,7 +582,7 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	rc = load_metadata_columns(tp);
 	if(rc!=0)
 	{
-		LM_ERR("FAILED to load METADATA COLS in table: %s.\n", tblname);
+		ERR("FAILED to load METADATA COLS in table: %s.\n", tblname);
 		goto error;
 	}
 	
@@ -639,14 +590,14 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	rc = load_metadata_defaults(tp);
 	if(rc!=0)
 	{
-		LM_ERR("FAILED to load METADATA DEFAULTS in table: %s.\n", tblname);
+		ERR("FAILED to load METADATA DEFAULTS in table: %s.\n", tblname);
 		goto error;
 	}
 	
 	rc = load_metadata_keys(tp);
 	if(rc!=0)
 	{
-		LM_ERR("FAILED to load METADATA KEYS in table: %s.\n", tblname);
+		ERR("FAILED to load METADATA KEYS in table: %s.\n", tblname);
 		/*will have problems later figuring column types*/
 		goto error;
 	}
@@ -655,22 +606,18 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	rc = load_metadata_readonly(tp);
 	if(rc!=0)
 	{
-		LM_INFO("No METADATA_READONLY in table: %s.\n", tblname);
+		INFO("No METADATA_READONLY in table: %s.\n", tblname);
 		/*non-critical; table will default to READWRITE*/
 	}
 
 	if(tp->ro)
 	{	
 		/*schema defines this table RO readonly*/
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("TABLE %.*s is changing to READONLY mode\n"
-			, tp->name.len, tp->name.s);
-#endif
 		
 		if ((rc = bdb->close(bdb,0)) != 0)
 		{ 
 			_db->dbenv->err(_db->dbenv, rc, "DB->close: %s", tblname);
-			LM_ERR("bdb close: %s.\n",db_strerror(rc));
+			ERR("bdb close: %s.\n",db_strerror(rc));
 			goto error;
 		}
 		
@@ -678,7 +625,7 @@ table_p bdblib_create_table(database_p _db, str *_s)
 		if ((rc = db_create(&bdb, _db->dbenv, 0)) != 0)
 		{ 
 			_db->dbenv->err(_db->dbenv, rc, "database create");
-			LM_ERR("error in db_create.\n");
+			ERR("error in db_create.\n");
 			goto error;
 		}
 		
@@ -686,7 +633,7 @@ table_p bdblib_create_table(database_p _db, str *_s)
 		if ((rc = bdb->open(bdb, NULL, tblname, NULL, DB_HASH, flags, 0664)) != 0)
 		{ 
 			_db->dbenv->err(_db->dbenv, rc, "DB->open: %s", tblname);
-			LM_ERR("bdb open: %s.\n",db_strerror(rc));
+			ERR("bdb open: %s.\n",db_strerror(rc));
 			goto error;
 		}
 		tp->db=bdb;
@@ -697,10 +644,10 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	*/
 	rc = load_metadata_logflags(tp);
 	if(rc!=0)
-		LM_INFO("No METADATA_LOGFLAGS in table: %s.\n", tblname);
+		INFO("No METADATA_LOGFLAGS in table: %s.\n", tblname);
 	
 	if ((tp->logflags & JLOG_FILE) == JLOG_FILE)
-		bdblib_create_journal(tp);
+		bdblib_create_journal(_db, tp);
 	
 	return tp;
 	
@@ -713,7 +660,7 @@ error:
 	return NULL;
 }
 
-int bdblib_create_journal(table_p _tp)
+int bdblib_create_journal(bdb_db_p _db_p, bdb_table_p _tp)
 {
 	char *s;
 	char fn[1024];
@@ -721,11 +668,10 @@ int bdblib_create_journal(table_p _tp)
 	FILE *fp = NULL;
 	struct tm *t;
 	int bl;
-	database_p _db_p = *_cachedb;
 	time_t tim = time(NULL);
 	
 	if(! _db_p || ! _tp) return -1;
-	if(! _db_parms->log_enable) return 0;
+	if(! _bdb_parms->log_enable) return 0;
 	/* journal filename ; e.g. '/var/kamailio/db/location-YYYYMMDDhhmmss.jnl' */
 	s=fn;
 	strncpy(s, _db_p->name.s, _db_p->name.len);
@@ -746,7 +692,7 @@ int bdblib_create_journal(table_p _tp)
 	if(_tp->fp)
 	{	/* must be rolling. */
 		if( fclose(_tp->fp) )
-		{	LM_ERR("Failed to Close Log in table: %.*s .\n", _tp->name.len,
+		{	ERR("Failed to Close Log in table: %.*s .\n", _tp->name.len,
 			 _tp->name.s);
 			return -1;
 		}
@@ -758,7 +704,7 @@ int bdblib_create_journal(table_p _tp)
 	}
 	else
 	{
-		LM_ERR("Failed to Open Log in table: %.*s .\n",_tp->name.len, _tp->name.s);
+		ERR("Failed to Open Log in table: %.*s .\n",_tp->name.len, _tp->name.s);
 		return -1;
 	}
 	
@@ -767,7 +713,7 @@ int bdblib_create_journal(table_p _tp)
 
 }
 
-int load_metadata_columns(table_p _tp)
+int load_metadata_columns(bdb_table_p _tp)
 {
 	int ret,n,len;
 	char dbuf[MAX_ROW_SIZE];
@@ -775,7 +721,7 @@ int load_metadata_columns(table_p _tp)
 	char cn[64], ct[16];
 	DB *db = NULL;
 	DBT key, data;
-	column_p col;
+	bdb_col_p col;
 	ret = n = len = 0;
 	
 	if(!_tp || !_tp->db)
@@ -800,11 +746,11 @@ int load_metadata_columns(table_p _tp)
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
 		db->err(db, ret, "load_metadata_columns DB->get failed");
-		LM_ERR("FAILED to find METADATA_COLUMNS in DB \n");
+		ERR("FAILED to find METADATA_COLUMNS in DB \n");
 		return -1;
 	}
 
-	/* eg: dbuf = "table_name(str) table_version(int)" */
+	/* eg: dbuf = "bdb_table_name(str) bdb_table_version(int)" */
 	s = strtok(dbuf, " ");
 	while(s!=NULL && n<MAX_NUM_COLS) 
 	{
@@ -812,9 +758,9 @@ int load_metadata_columns(table_p _tp)
 		sscanf(s,"%20[^(](%10[^)])[^\n]", cn, ct);
 		
 		/* create column*/
-		col = (column_p) pkg_malloc(sizeof(column_t));
+		col = (bdb_col_p) pkg_malloc(sizeof(bdb_col_t));
 		if(!col)
-		{	LM_ERR("out of private memory \n");
+		{	ERR("out of private memory \n");
 			return -1;
 		}
 		
@@ -826,7 +772,7 @@ int load_metadata_columns(table_p _tp)
 		
 		/*set column type*/
 		if(strncmp(ct, "str", 3)==0)
-		{	col->type = DB_STRING;
+		{	col->type = DB_STR;
 		}
 		else if(strncmp(ct, "int", 3)==0)
 		{	col->type = DB_INT;
@@ -838,7 +784,7 @@ int load_metadata_columns(table_p _tp)
 		{	col->type = DB_DATETIME;
 		}
 		else
-		{	col->type = DB_STRING;
+		{	col->type = DB_STR;
 		}
 		
 		col->flag = 0;
@@ -851,7 +797,7 @@ int load_metadata_columns(table_p _tp)
 	return 0;
 }
 
-int load_metadata_keys(table_p _tp)
+int load_metadata_keys(bdb_table_p _tp)
 {
 	int ret,n,ci;
 	char dbuf[MAX_ROW_SIZE];
@@ -876,7 +822,7 @@ int load_metadata_keys(table_p _tp)
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
 		db->err(db, ret, "load_metadata_keys DB->get failed");
-		LM_ERR("FAILED to find METADATA in table \n");
+		ERR("FAILED to find METADATA in table \n");
 		return ret;
 	}
 	
@@ -896,7 +842,7 @@ int load_metadata_keys(table_p _tp)
 }
 
 
-int load_metadata_readonly(table_p _tp)
+int load_metadata_readonly(bdb_table_p _tp)
 {
 	int i, ret;
 	char dbuf[MAX_ROW_SIZE];
@@ -928,7 +874,7 @@ int load_metadata_readonly(table_p _tp)
 	return 0;
 }
 
-int load_metadata_logflags(table_p _tp)
+int load_metadata_logflags(bdb_table_p _tp)
 {
 	int i, ret;
 	char dbuf[MAX_ROW_SIZE];
@@ -960,7 +906,7 @@ int load_metadata_logflags(table_p _tp)
 	return 0;
 }
 
-int load_metadata_defaults(table_p _tp)
+int load_metadata_defaults(bdb_table_p _tp)
 {
 	int ret,n,len;
 	char dbuf[MAX_ROW_SIZE];
@@ -968,7 +914,7 @@ int load_metadata_defaults(table_p _tp)
 	char cv[64];
 	DB *db = NULL;
 	DBT key, data;
-	column_p col;
+	bdb_col_p col;
 	ret = n = len = 0;
 	
 	if(!_tp || !_tp->db)
@@ -989,10 +935,6 @@ int load_metadata_defaults(table_p _tp)
 	
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("NO DEFAULTS ; SETTING ALL columns to NULL! \n" );
-#endif
-
 		/*no defaults in DB; make some up.*/
 		for(n=0; n<_tp->ncols; n++)
 		{
@@ -1020,13 +962,6 @@ int load_metadata_defaults(table_p _tp)
 			col->dv.s = (char*)pkg_malloc(len * sizeof(char));
 			memcpy(col->dv.s, cv, len);
 			col->dv.len = len;
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("COLUMN DEFAULT is %.*s for column[%.*s] \n"
-			, col->dv.len , ZSW(col->dv.s)
-			, col->name.len , ZSW(col->name.s)
-			);
-#endif
-
 		}
 		n++;
 		s=strtok(NULL, DELIM);
@@ -1035,97 +970,233 @@ int load_metadata_defaults(table_p _tp)
 	return 0;
 }
 
+inline int bdb_int2str(int _v, char* _s, int* _l)
+{
+	int ret;
+
+	if ((!_s) || (!_l) || (!*_l)) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(_s, *_l, "%-d", _v);
+	if (ret < 0 || ret >= *_l) {
+		ERR("Error in snprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
+	return 0;
+}
+
+inline int bdb_double2str(double _v, char* _s, int* _l)
+{
+	int ret;
+
+	if ((!_s) || (!_l) || (!*_l)) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(_s, *_l, "%-10.2f", _v);
+	if (ret < 0 || ret >= *_l) {
+		ERR("Error in snprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
+	return 0;
+}
+
+inline int bdb_time2str(time_t _v, char* _s, int* _l)
+{
+	struct tm* t;
+	int l;
+
+	if ((!_s) || (!_l) || (*_l < 2)) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	*_s++ = '\'';
+
+	/* Convert time_t structure to format accepted by the database */
+	t = localtime(&_v);
+	l = strftime(_s, *_l -1, "%Y-%m-%d %H:%M:%S", t);
+
+	if (l == 0) {
+		ERR("Error during time conversion\n");
+		/* the value of _s is now unspecified */
+		_s = NULL;
+		_l = 0;
+		return -1;
+	}
+	*_l = l;
+
+	*(_s + l) = '\'';
+	*_l = l + 2;
+	return 0;
+}
+
+/*
+ * Used when converting result from a query
+ */
+int bdb_val2str(db_fld_t *fld, char *sout, int *slen)
+{
+	int l;
+	db_fld_val_t *val;
+
+	if (fld->flags&DB_NULL) 
+	{
+		*slen = snprintf(sout, *slen, "NULL");
+		return 0;
+	}
+	
+	val = &(fld->v);
+	switch(fld->type)
+	{
+		case DB_INT:
+			if (bdb_int2str(val->int4, sout, slen) < 0) {
+				ERR("Error while converting int to string\n");
+				return -2;
+			} else {
+				DBG("Converted int to string\n");
+				return 0;
+			}
+		break;
+
+		case DB_BITMAP:
+			if (bdb_int2str(val->bitmap, sout, slen) < 0) {
+				ERR("Error while converting bitmap to string\n");
+				return -3;
+			} else {
+				DBG("Converted bitmap to string\n");
+				return 0;
+			}
+		break;
+
+		case DB_DOUBLE:
+			if (bdb_double2str(val->dbl, sout, slen) < 0) {
+				ERR("Error while converting double  to string\n");
+				return -3;
+			} else {
+				DBG("Converted double to string\n");
+				return 0;
+			}
+		break;
+
+		case DB_CSTR:
+			l = strlen(val->cstr);
+			if (*slen < l ) 
+			{
+				ERR("Destination buffer too short for string\n");
+				return -4;
+			} else {
+				DBG("Converted string to string\n");
+				strncpy(sout, val->cstr , l);
+				sout[l] = 0;
+				*slen = l;
+				return 0;
+			}
+		break;
+
+		case DB_STR:
+			l = val->lstr.len;
+			if (*slen < l) 
+			{
+				ERR("Destination buffer too short for str\n");
+				return -5;
+			} else {
+				DBG("Converted str to string\n");
+				strncpy(sout, val->lstr.s , val->lstr.len);
+				*slen = val->lstr.len;
+				return 0;
+			}
+		break;
+
+		case DB_DATETIME:
+			if (bdb_time2str(val->time, sout, slen) < 0) {
+				ERR("Error while converting time_t to string\n");
+				return -6;
+			} else {
+				DBG("Converted time_t to string\n");
+				return 0;
+			}
+		break;
+
+		case DB_BLOB:
+			l = val->blob.len;
+			if (*slen < l) 
+			{
+				ERR("Destination buffer too short for blob\n");
+				return -7;
+			} else {
+				DBG("Converting BLOB [%s]\n", sout);
+				memcpy(sout, val->blob.s , val->blob.len);
+				*slen = l;
+				return 0;
+			}
+		break;
+
+		default:
+			DBG("Unknown data type\n");
+			return -8;
+	}
+}
 
 /*creates a composite key _k of length _klen from n values of _v;
   provide your own initialized memory for target _k and _klen;
   resulting value: _k = "KEY1 | KEY2"
   ko = key only
 */
-int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko)
+
+int bdblib_valtochar(bdb_table_p tp, db_fld_t *fld, int fld_count, char *kout,
+		int *klen, int ktype)
 {
 	char *p; 
-	char sk[MAX_ROW_SIZE]; // subkey(sk) val
+	static char sk[MAX_ROW_SIZE]; // subkey(sk) val
 	char* delim = DELIM;
 	char* cNULL = "NULL";
 	int  len, total, sum;
 	int i, j, k;
-	p =  _k;
+	bdb_fld_t *f;
+
+	p =  kout;
 	len = sum = total = 0;
 	i = j = k = 0;
 	
-	if(!_tp) return -1;
-	if(!_v || (_n<1) ) return -1;
-	if(!_k || !_klen ) return -1;
-	if( *_klen < 1)    return -1;
+	if(tp==NULL) return -1;
+	if(fld==NULL || fld_count<1) return -1;
+	if(kout==NULL || klen==NULL ) return -1;
+	if( *klen < 1)    return -1;
 	
 	memset(sk, 0, MAX_ROW_SIZE);
-	total = *_klen;
-	*_klen = 0; //sum
+	total = *klen;
+	*klen = 0; //sum
 	
-	if(! _lres)
-	{	
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("schema has NOT specified any keys! \n");
-#endif
-
-		/* schema has not specified keys
-		   just use the provided data in order provided
-		*/
-		for(i=0;i<_n;i++)
-		{	len = total - sum;
-			if ( bdb_val2str(&_v[i], sk, &len) != 0 ) 
-			{	LM_ERR("error building composite key \n");
-				return -2;
-			}
-
-			sum += len;
-			if(sum > total)
-			{	LM_ERR("Destination buffer too short for subval %s\n",sk);
-				return -2;
-			} 
-
-			/* write sk */
-			strncpy(p, sk, len);
-			p += len;
-			*_klen = sum;
-
-			sum += DELIM_LEN;
-			if(sum > total)
-			{	LM_ERR("Destination buffer too short for delim \n");
-				return -3;
-			}
-			
-			/* write delim */
-			strncpy(p, delim, DELIM_LEN);
-			p += DELIM_LEN;
-			*_klen = sum;;
-		}
-		return 0;
-	}
-
-
 	/*
 	  schema has specified keys
 	  verify all schema keys are provided
 	  use 'NULL' for those that are missing.
 	*/
-	for(i=0; i<_tp->ncols; i++)
+	for(i=0; i<tp->ncols; i++)
 	{	/* i indexes columns in schema order */
-		if( _ko)
+		if(ktype)
 		{	/* keymode; skip over non-key columns */
-			if( ! _tp->colp[i]->flag) 
+			if(tp->colp[i]->flag==0) 
 				continue; 
 		}
 		
-		for(j=0; j<_n; j++)
-		{	
+		for(j=0; j<fld_count; j++)
+		{
+			f = DB_GET_PAYLOAD(fld + j);
 			/*
 			  j indexes the columns provided in _k
 			  which may be less than the total required by
 			  the schema. the app does not know the order
 			  of the columns in our schema!
 			 */
-			k = (_lres) ? _lres[j] : j;
+			k = f->col_pos;
 			
 			/*
 			 * k index will remap back to our schema order; like i
@@ -1139,39 +1210,35 @@ int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v
 				 now we know its a match, and we dont need
 				 index k for anything else
 				*/
-#ifdef BDB_EXTRA_DEBUG
-				LM_DBG("KEY PROVIDED[%i]: %.*s.%.*s \n", i 
-					, _tp->name.len , ZSW(_tp->name.s) 
-					, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
-				   );
-#endif
-
 				len = total - sum;
-				if ( bdb_val2str(&_v[j], sk, &len) != 0)
-				{	LM_ERR("Destination buffer too short for subval %s\n",sk);
+				if ( bdb_val2str((fld+j), sk, &len) != 0)
+				{
+					ERR("Destination buffer too short for subval %s\n",sk);
 					return -4;
 				}
 				
 				sum += len;
 				if(sum > total)
-				{	LM_ERR("Destination buffer too short for subval %s\n",sk);
+				{
+					ERR("Destination buffer too short for subval %s\n",sk);
 					return -5;
 				}
 
 				strncpy(p, sk, len);
 				p += len;
-				*_klen = sum;
+				*klen = sum;
 
 				sum += DELIM_LEN;
 				if(sum > total)
-				{	LM_ERR("Destination buffer too short for delim \n");
+				{
+					ERR("Destination buffer too short for delim \n");
 					return -5;
 				} 
 				
 				/* append delim */
 				strncpy(p, delim, DELIM_LEN);
 				p += DELIM_LEN;
-				*_klen = sum;
+				*klen = sum;
 				
 				
 				/* take us out of inner for loop
@@ -1180,45 +1247,37 @@ int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v
 				*/
 				goto next;
 			}
-			
 		}
 
 		/*
 		 NO KEY provided; use the column default value (dv)
 		     i.e _tp->colp[i]->dv
 		*/
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("Missing KEY[%i]: %.*s.%.*s using default [%.*s] \n", i
-			, _tp->name.len , ZSW(_tp->name.s) 
-			, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
-			, _tp->colp[i]->dv.len , ZSW(_tp->colp[i]->dv.s)
-		   );
-#endif
-		len = _tp->colp[i]->dv.len;
+		len = tp->colp[i]->dv.len;
 		sum += len;
 		if(sum > total)
-		{	LM_ERR("Destination buffer too short for subval %s\n",cNULL);
+		{
+			ERR("Destination buffer too short for subval %s\n",cNULL);
 			return -5;
 		}
 		
-		strncpy(p, _tp->colp[i]->dv.s, len);
+		strncpy(p, tp->colp[i]->dv.s, len);
 		p += len;
-		*_klen = sum;
+		*klen = sum;
 		
 		sum += DELIM_LEN;
 		if(sum > total)
-		{	LM_ERR("Destination buffer too short for delim \n");
+		{
+			ERR("Destination buffer too short for delim \n");
 			return -5;
 		} 
 		
 		strncpy(p, delim, DELIM_LEN);
 		p += DELIM_LEN;
-		*_klen = sum;
+		*klen = sum;
 next:
 		continue;
 	}
-
-
 
 	return 0;
 }
@@ -1227,9 +1286,9 @@ next:
 /**
  *
  */
-int db_free(database_p _dbp)
+int bdb_db_free(bdb_db_p _dbp)
 {
-	tbl_cache_p _tbc = NULL, _tbc0=NULL;
+	bdb_tcache_p _tbc = NULL, _tbc0=NULL;
 	if(!_dbp)
 		return -1;
 
@@ -1238,7 +1297,7 @@ int db_free(database_p _dbp)
 	while(_tbc)
 	{
 		_tbc0 = _tbc->next;
-		tbl_cache_free(_tbc);
+		bdb_tcache_free(_tbc);
 		_tbc = _tbc0;
 	}
 	
@@ -1257,17 +1316,15 @@ int db_free(database_p _dbp)
 /**
  *
  */
-int tbl_cache_free(tbl_cache_p _tbc)
+int bdb_tcache_free(bdb_tcache_p _tbc)
 {
 	if(!_tbc)
 		return -1;
 	
-	lock_get(&_tbc->sem);
-	
+	/*while ??!? */	
 	if(_tbc->dtp)
-		tbl_free(_tbc->dtp);
+		bdb_table_free(_tbc->dtp);
 	
-	lock_destroy(&_tbc->sem);
 	pkg_free(_tbc);
 
 	return 0;
@@ -1277,7 +1334,7 @@ int tbl_cache_free(tbl_cache_p _tbc)
 /**
  * close DB (sync data to disk) and free mem
  */
-int tbl_free(table_p _tp)
+int bdb_table_free(bdb_table_p _tp)
 {	int i;
 	if(!_tp)
 		return -1;
@@ -1303,19 +1360,109 @@ int tbl_free(table_p _tp)
 	return 0;
 }
 
-int bdblib_recover(table_p _tp, int _rc)
+int bdblib_recover(bdb_table_p _tp, int _rc)
 {
 	switch(_rc)
 	{
 		case DB_LOCK_DEADLOCK:
-		LM_ERR("DB_LOCK_DEADLOCK detected !!\n");
+		ERR("DB_LOCK_DEADLOCK detected !!\n");
 		
 		case DB_RUNRECOVERY:
-		LM_ERR("DB_RUNRECOVERY detected !! \n");
+		ERR("DB_RUNRECOVERY detected !! \n");
 		bdblib_destroy();
 		exit(1);
 		break;
 	}
 	
+	return 0;
+}
+
+/**
+ *
+ */
+int bdb_is_database(char *dirpath)
+{
+	DIR *dirp = NULL;
+	
+	if(dirpath==NULL || dirpath[0]=='\0')
+		return 0;
+	dirp = opendir(dirpath);
+	if(dirp==NULL)
+		return 0;
+	closedir(dirp);
+
+	return 1;
+}
+
+int bdb_get_colpos(bdb_table_t *tp, char *name)
+{
+	str s;
+	int i;
+
+	if(tp==NULL || name==NULL)
+	{
+		ERR("bdb: bad parameters\n");
+		return -1;
+	}
+
+	s.s = name;
+	s.len = strlen(name);
+	for(i=0; i<tp->ncols; i++) {
+		if(tp->colp[i]->name.len == s.len
+				&& !strncasecmp(s.s, tp->colp[i]->name.s, s.len))
+			return i;
+	}
+	return -1;
+}
+
+int bdb_str2time(char *s, time_t *v)
+{
+	struct tm time;
+
+	if ((!s) || (!v)) {
+		ERR("bdb:invalid parameter value\n");
+		return -1;
+	}
+
+	memset(&time, '\0', sizeof(struct tm));
+	//if (strptime(s, "%Y-%m-%d %H:%M:%S", &time) == NULL) {
+	//	ERR("Error during time conversion\n");
+	//	return -1;
+	//}
+
+	time.tm_isdst = -1;
+	*v = mktime(&time);
+
+	return 0;
+}
+
+int bdb_str2double(char *s, double *v)
+{
+	if ((!s) || (!v)) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	*v = atof(s);
+	return 0;
+}
+
+int bdb_str2int(char *s, int *v)
+{
+	long tmp;
+
+	if (!s || !v) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	tmp = strtoul(s, 0, 10);
+	if ((tmp == ULONG_MAX && errno == ERANGE) || 
+	    (tmp < INT_MIN) || (tmp > UINT_MAX)) {
+		ERR("Value out of range\n");
+		return -1;
+	}
+
+	*v = (int)tmp;
 	return 0;
 }
