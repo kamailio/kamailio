@@ -79,7 +79,7 @@ static int get_index(char* name)
 pg_type_t* pg_new_oid_table(PGresult* res)
  {
 	pg_type_t* table = NULL;
-	int row, n, end, idx, fields;
+	int row, n = 0, end, idx, fields;
 	str s;
 	
 	if (res == NULL || PQresultStatus(res) != PGRES_TUPLES_OK) goto error;
