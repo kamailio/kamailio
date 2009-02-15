@@ -52,20 +52,20 @@ extern "C" {
 /*
  * Various database flags shared by modules 
  */
-#define DB_LOAD_SER   (1 << 0)  /* The row should be loaded by SER */
-#define DB_DISABLED   (1 << 1)  /* The row is disabled */
-#define DB_CANON      (1 << 2)  /* Canonical entry (domain or uri) */
-#define DB_IS_TO      (1 << 3)  /* The URI can be used in To */
-#define DB_IS_FROM    (1 << 4)  /* The URI can be used in From */
-#define DB_FOR_SERWEB (1 << 5)  /* Credentials instance can be used by serweb */
-#define DB_PENDING    (1 << 6)
-#define DB_DELETED    (1 << 7)
-#define DB_CALLER_DELETED (1 << 8) /* Accounting table */
-#define DB_CALLEE_DELETED (1 << 9) /* Accounting table */
-#define DB_MULTIVALUE     (1 << 10) /* Attr_types table */
-#define DB_FILL_ON_REG    (1 << 11) /* Attr_types table */
-#define DB_REQUIRED       (1 << 12) /* Attr_types table */
-#define DB_DIR            (1 << 13) /* Domain_settings table */
+#define SRDB_LOAD_SER   (1 << 0)  /* The row should be loaded by SER */
+#define SRDB_DISABLED   (1 << 1)  /* The row is disabled */
+#define SRDB_CANON      (1 << 2)  /* Canonical entry (domain or uri) */
+#define SRDB_IS_TO      (1 << 3)  /* The URI can be used in To */
+#define SRDB_IS_FROM    (1 << 4)  /* The URI can be used in From */
+#define SRDB_FOR_SERWEB (1 << 5)  /* Credentials instance can be used by serweb */
+#define SRDB_PENDING    (1 << 6)
+#define SRDB_DELETED    (1 << 7)
+#define SRDB_CALLER_DELETED (1 << 8) /* Accounting table */
+#define SRDB_CALLEE_DELETED (1 << 9) /* Accounting table */
+#define SRDB_MULTIVALUE     (1 << 10) /* Attr_types table */
+#define SRDB_FILL_ON_REG    (1 << 11) /* Attr_types table */
+#define SRDB_REQUIRED       (1 << 12) /* Attr_types table */
+#define SRDB_DIR            (1 << 13) /* Domain_settings table */
 
 
 struct db_gen;
