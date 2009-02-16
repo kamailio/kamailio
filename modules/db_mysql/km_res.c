@@ -33,12 +33,12 @@
 
 #include <string.h>
 #include <mysql/mysql.h>
-#include "../../db/db_res.h"
+#include "../../lib/srdb1/db_res.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "row.h"
-#include "my_con.h"
-#include "res.h"
+#include "km_row.h"
+#include "km_my_con.h"
+#include "km_res.h"
 
 
 /*!

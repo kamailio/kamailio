@@ -31,11 +31,11 @@
  */
 
 
-#ifndef RES_H
-#define RES_H
+#ifndef KM_RES_H
+#define KM_RES_H
 
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_con.h"
 
 
 /*!

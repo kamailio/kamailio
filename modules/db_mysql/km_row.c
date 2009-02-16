@@ -31,11 +31,11 @@
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "../../db/db_row.h"
-#include "../../db/db_val.h"
-#include "my_con.h"
-#include "val.h"
-#include "row.h"
+#include "../../lib/srdb1/db_row.h"
+#include "../../lib/srdb1/db_val.h"
+#include "km_my_con.h"
+#include "km_val.h"
+#include "km_row.h"
 
 /*!
  * \brief Convert a row from result into DB API representation

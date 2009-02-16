@@ -29,11 +29,11 @@
  */
 
 
-#ifndef MY_CON_H
-#define MY_CON_H
+#ifndef KM_MY_CON_H
+#define KM_MY_CON_H
 
-#include "../../db/db_pool.h"
-#include "../../db/db_id.h"
+#include "../../lib/srdb1/db_pool.h"
+#include "../../lib/srdb1/db_id.h"
 
 #include <time.h>
 #include <mysql/mysql.h>
@@ -72,4 +72,4 @@ struct my_con* db_mysql_new_connection(const struct db_id* id);
  */
 void db_mysql_free_connection(struct pool_con* con);
 
-#endif /* MY_CON_H */
+#endif /* KM_MY_CON_H */

@@ -31,15 +31,15 @@
 
 
 
-#ifndef DBASE_H
-#define DBASE_H
+#ifndef KM_DBASE_H
+#define KM_DBASE_H
 
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_key.h"
-#include "../../db/db_op.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_key.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_val.h"
 #include "../../str.h"
 
 /*! \brief
@@ -125,4 +125,4 @@ int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 int db_mysql_use_table(db_con_t* _h, const str* _t);
 
 
-#endif /* DBASE_H */
+#endif /* KM_DBASE_H */

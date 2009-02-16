@@ -31,12 +31,12 @@
  */
 
 
-#ifndef ROW_H
-#define ROW_H
+#ifndef KM_ROW_H
+#define KM_ROW_H
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_row.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_row.h"
 
 
 /*!

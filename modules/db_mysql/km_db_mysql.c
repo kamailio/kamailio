@@ -42,9 +42,9 @@
  */
 
 #include "../../sr_module.h"
-#include "../../db/db.h"
-#include "dbase.h"
-#include "db_mysql.h"
+#include "../../lib/srdb1/db.h"
+#include "km_dbase.h"
+#include "km_db_mysql.h"
 
 #include <mysql/mysql.h>
 

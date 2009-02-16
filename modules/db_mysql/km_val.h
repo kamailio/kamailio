@@ -29,12 +29,12 @@
  */
 
 
-#ifndef VAL_H
-#define VAL_H
+#ifndef KM_VAL_H
+#define KM_VAL_H
 
 #include <mysql/mysql.h>
-#include "../../db/db_val.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db.h"
 
 
 /*!

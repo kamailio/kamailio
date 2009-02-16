@@ -28,9 +28,9 @@
  */
 
 #include "../../dprint.h"
-#include "../../db/db_ut.h"
-#include "val.h"
-#include "my_con.h"
+#include "../../lib/srdb1/db_ut.h"
+#include "km_val.h"
+#include "km_my_con.h"
 
 
 /*!

@@ -40,14 +40,14 @@
 #include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_query.h"
-#include "../../db/db_ut.h"
-#include "val.h"
-#include "my_con.h"
-#include "res.h"
-#include "row.h"
-#include "db_mysql.h"
-#include "dbase.h"
+#include "../../lib/srdb1/db_query.h"
+#include "../../lib/srdb1/db_ut.h"
+#include "km_val.h"
+#include "km_my_con.h"
+#include "km_res.h"
+#include "km_row.h"
+#include "km_db_mysql.h"
+#include "km_dbase.h"
 
 
 /**
