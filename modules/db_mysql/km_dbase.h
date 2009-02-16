@@ -45,25 +45,25 @@
 /*! \brief
  * Initialize database connection
  */
-db_con_t* db_mysql_init(const str* _sqlurl);
+db1_con_t* db_mysql_init(const str* _sqlurl);
 
 
 /*! \brief
  * Close a database connection
  */
-void db_mysql_close(db_con_t* _h);
+void db_mysql_close(db1_con_t* _h);
 
 
 /*! \brief
  * Free all memory allocated by get_result
  */
-int db_mysql_free_result(db_con_t* _h, db_res_t* _r);
+int db_mysql_free_result(db1_con_t* _h, db_res_t* _r);
 
 
 /*! \brief
  * Do a query
  */
-int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 	     const db_key_t _o, db_res_t** _r);
 
@@ -71,32 +71,32 @@ int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 /*! \brief
  * fetch rows from a result
  */
-int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
+int db_mysql_fetch_result(const db1_con_t* _h, db_res_t** _r, const int nrows);
 
 
 /*! \brief
  * Raw SQL query
  */
-int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
+int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db_res_t** _r);
 
 
 /*! \brief
  * Insert a row into table
  */
-int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
+int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
 
 
 /*! \brief
  * Delete a row from table
  */
-int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const 
+int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const 
 	db_op_t* _o, const db_val_t* _v, const int _n);
 
 
 /*! \brief
  * Update a row in table
  */
-int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
 	const int _un);
 
@@ -104,17 +104,17 @@ int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 /*! \brief
  * Just like insert, but replace the row if it exists
  */
-int db_mysql_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* vals, const int n);
+int db_mysql_replace(const db1_con_t* handle, const db_key_t* keys, const db_val_t* vals, const int n);
 
 /*! \brief
  * Returns the last inserted ID
  */
-int db_last_inserted_id(const db_con_t* _h);
+int db_last_inserted_id(const db1_con_t* _h);
 
 /*! \brief
  * Insert a row into table, update on duplicate key
  */
-int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n);
 
 
@@ -122,7 +122,7 @@ int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_mysql_use_table(db_con_t* _h, const str* _t);
+int db_mysql_use_table(db1_con_t* _h, const str* _t);
 
 
 #endif /* KM_DBASE_H */

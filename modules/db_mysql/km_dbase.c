@@ -65,7 +65,7 @@
  * \param _s executed query
  * \return zero on success, negative value on failure
  */
-static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
+static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 {	
 	time_t t;
 	int i, code;
@@ -125,7 +125,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
  * \param _url URL used for initialization
  * \return zero on success, negative value on failure
  */
-db_con_t* db_mysql_init(const str* _url)
+db1_con_t* db_mysql_init(const str* _url)
 {
 	return db_do_init(_url, (void *)db_mysql_new_connection);
 }
@@ -137,7 +137,7 @@ db_con_t* db_mysql_init(const str* _url)
  * \param _h handle to the closed connection
  * \return zero on success, negative value on failure
  */
-void db_mysql_close(db_con_t* _h)
+void db_mysql_close(db1_con_t* _h)
 {
 	db_do_close(_h, db_mysql_free_connection);
 }
@@ -149,7 +149,7 @@ void db_mysql_close(db_con_t* _h)
  * \param _r result set that should be retrieved
  * \return zero on success, negative value on failure
  */
-static int db_mysql_store_result(const db_con_t* _h, db_res_t** _r)
+static int db_mysql_store_result(const db1_con_t* _h, db_res_t** _r)
 {
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
@@ -213,7 +213,7 @@ done:
  * \param _r result set that should be freed
  * \return zero on success, negative value on failure
  */
-int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
+int db_mysql_free_result(db1_con_t* _h, db_res_t* _r)
 {
      if ((!_h) || (!_r)) {
 	     LM_ERR("invalid parameter value\n");
@@ -243,7 +243,7 @@ int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
  * \param _r pointer to a structure representing the result
  * \return zero on success, negative value on failure
  */
-int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 	     const db_key_t _o, db_res_t** _r)
 {
@@ -266,7 +266,7 @@ int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \param nrows number of fetched rows
  * \return zero on success, negative value on failure
  */
-int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
+int db_mysql_fetch_result(const db1_con_t* _h, db_res_t** _r, const int nrows)
 {
 	int rows, i;
 
@@ -374,7 +374,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
  * \param _r result set for storage
  * \return zero on success, negative value on failure
  */
-int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
+int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_mysql_submit_query,
 	db_mysql_store_result);
@@ -389,7 +389,7 @@ int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query);
@@ -405,7 +405,7 @@ int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, 
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const int _n)
 {
 	return db_do_delete(_h, _k, _o, _v, _n, db_mysql_val2str,
@@ -425,7 +425,7 @@ int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _un number of columns to update
  * \return zero on success, negative value on failure
  */
-int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, 
+int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o, 
 	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, 
 	const int _un)
 {
@@ -442,7 +442,7 @@ int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_mysql_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_replace(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query);
@@ -455,7 +455,7 @@ int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  * \return returns the ID as integer or returns 0 if the previous statement
  * does not use an AUTO_INCREMENT value.
  */
-int db_last_inserted_id(const db_con_t* _h)
+int db_last_inserted_id(const db1_con_t* _h)
 {
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -472,7 +472,7 @@ int db_last_inserted_id(const db_con_t* _h)
   * \param _v values of the keys
   * \param _n number of key=value pairs
  */
- int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+ int db_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n)
  {
 	int off, ret;
@@ -530,7 +530,7 @@ error:
  * \param _t table name
  * \return zero on success, negative value on failure
  */
-int db_mysql_use_table(db_con_t* _h, const str* _t)
+int db_mysql_use_table(db1_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }
