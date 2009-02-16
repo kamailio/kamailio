@@ -59,7 +59,7 @@ static str pu_489_rpl  = str_init("Bad Event");
 
 
 int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
-		str *rtag, str* local_contact)
+		str* local_contact)
 {
 	static str hdr_append;
 	
@@ -87,7 +87,7 @@ int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 		goto error;
 	}
 
-	if( slb.reply_dlg( msg, reply_code, &su_200_rpl, rtag)== -1)
+	if( slb.send_reply(msg, reply_code, &su_200_rpl)== -1)
 	{
 		LM_ERR("sending reply\n");
 		goto error;
@@ -286,7 +286,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
-				if( send_2XX_reply(msg, 202, subs->expires, &subs->to_tag,
+				if( send_2XX_reply(msg, 202, subs->expires,
 							&subs->local_contact) <0)
 				{
 					LM_ERR("sending 202 OK\n");
@@ -306,7 +306,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			}	
 			else /* if unsubscribe for winfo */
 			{
-				if( send_2XX_reply(msg, 200, subs->expires, &subs->to_tag,
+				if( send_2XX_reply(msg, 200, subs->expires,
 							&subs->local_contact) <0)
 				{
 					LM_ERR("sending 200 OK reply\n");
@@ -359,7 +359,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 
 	if(subs->event->type & PUBL_TYPE)
 	{	
-		if(send_2XX_reply(msg, 202, subs->expires,&subs->to_tag,
+		if(send_2XX_reply(msg, 202, subs->expires,
 					&subs->local_contact)<0)
 		{
 			LM_ERR("sending 202 OK reply\n");
@@ -396,7 +396,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 	}
 	else 
 	{
-		if( send_2XX_reply(msg, 200, subs->expires, &subs->to_tag,
+		if( send_2XX_reply(msg, 200, subs->expires,
 					&subs->local_contact)<0)
 		{
 			LM_ERR("sending 200 OK reply\n");
@@ -718,7 +718,6 @@ error:
 
 int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag_gen)
 {
-	static char buf[50];
 	str rec_route= {0, 0};
 	int rt  = 0;
 	str* contact= NULL;
@@ -824,17 +823,13 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 		subs->from_domain = uri.host;
 	}
 
-	/*generate to_tag if the message does not have a to_tag*/
+	/* get to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
 		LM_DBG("generating to_tag\n");
 		*to_tag_gen = 1;
-		/*generate to_tag then insert it in avp*/
-		
-		rtag_value.s = buf;
-		rtag_value.len = sprintf(rtag_value.s,"%s.%d.%d.%d", to_tag_pref,
-				pid, (int)time(NULL), counter);
-		if(rtag_value.len<= 0)
+		rtag_value.len = 0;
+		if(slb.get_reply_totag(msg, &rtag_value)<0 || rtag_value.len <= 0)
 		{
 			LM_ERR("while creating to_tag\n");
 			goto error;
