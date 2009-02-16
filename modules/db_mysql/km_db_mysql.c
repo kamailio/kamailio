@@ -54,18 +54,17 @@ unsigned int db_mysql_auto_reconnect = 1;     /* Default is enabled   */
 
 static int mysql_mod_init(void);
 
-MODULE_VERSION
+/* MODULE_VERSION */
 
 int db_mysql_bind_api(db_func_t *dbb);
 
 /*! \brief
  * MySQL database module interface
  */
-static cmd_export_t cmds[] = {
+static kam_cmd_export_t cmds[] = {
 	{"db_bind_api",         (cmd_function)db_mysql_bind_api,      0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*! \brief
  * Exported parameters
@@ -77,8 +76,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-
-struct module_exports exports = {	
+struct kam_module_exports kam_exports = {	
 	"db_mysql",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
