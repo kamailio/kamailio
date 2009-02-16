@@ -17,6 +17,10 @@ config script changes:
       #!MAXCOMPAT
     where #!KAMAILIO is equivalent with #!OPENSER and #!ALL with #!MAXCOMPAT
   - support for kamailio style pvars
+  - C-like switch()/case (integer only)
+  - while()
+  - max_while_loops - maximum iterations allowed for a while, can be changed
+    at runtime. Default 100.
 
 
 

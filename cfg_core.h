@@ -85,6 +85,7 @@ struct cfg_group_core {
 #ifdef SHM_MEM
 	int mem_dump_shm;
 #endif
+	int max_while_loops;
 };
 
 extern struct cfg_group_core default_core_cfg;

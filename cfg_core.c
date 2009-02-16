@@ -88,6 +88,7 @@ struct cfg_group_core default_core_cfg = {
 #ifdef SHM_MEM
 	0, /* mem_dump_shm */
 #endif
+	DEFAULT_MAX_WHILE_LOOPS, /* max_while_loops */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -177,5 +178,7 @@ cfg_def_t core_cfg_def[] = {
 	{"mem_dump_shm",	CFG_VAR_INT,	0, 0, mem_dump_shm_fixup, 0,
 		"dump shared memory status"},
 #endif
+	{"max_while_loops",	CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"maximum iterations allowed for a while loop" },
 	{0, 0, 0, 0, 0, 0}
 };

@@ -452,6 +452,17 @@ int rve_is_constant(struct rval_expr* rve)
 
 
 
+/** returns true if the expression has side-effects.
+  * @return  1 for possible side-effects, 0 for no side-effects
+  * TODO: add better checks
+  */
+int rve_has_side_effects(struct rval_expr* rve)
+{
+	return !rve_is_constant(rve);
+}
+
+
+
 /** returns true if operator is unary (takes only 1 arg).
   * @return 0 or 1 on
   */

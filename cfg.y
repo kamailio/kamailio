@@ -93,6 +93,7 @@
  *               lval=rval_expr, where lval=avp|pvar  (andrei)
  * 2007-12-06  expression are now evaluated in terms of rvalues;
  *             NUMBER is now always positive; cleanup (andrei)
+ * 2009-01-26  case/switch() support (andrei)
 */
 
 %{
@@ -109,6 +110,7 @@
 #include "route_struct.h"
 #include "globals.h"
 #include "route.h"
+#include "switch.h"
 #include "dprint.h"
 #include "sr_module.h"
 #include "modparam.h"
@@ -182,6 +184,7 @@
 
 extern int yylex();
 static void yyerror(char* s, ...);
+static void yyerror_at(struct cfg_pos* pos, char* s, ...);
 static char* tmp;
 static int i_tmp;
 static unsigned u_tmp;
@@ -199,7 +202,8 @@ static struct action *mod_func_action;
 static struct lvalue* lval_tmp;
 static struct rvalue* rval_tmp;
 
-static void warn(char* s);
+static void warn(char* s, ...);
+static void warn_at(struct cfg_pos* pos, char* s, ...);
 static void get_cpos(struct cfg_pos* pos);
 static struct rval_expr* mk_rve_rval(enum rval_type, void* v);
 static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1);
@@ -211,6 +215,8 @@ static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
 static void free_name_lst(struct name_lst* lst);
 static void free_socket_id_lst(struct socket_id* i);
 
+static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a);
+
 %}
 
 %union {
@@ -219,6 +225,7 @@ static void free_socket_id_lst(struct socket_id* i);
 	char* strval;
 	struct expr* expr;
 	struct action* action;
+	struct case_stms* case_stms;
 	struct net* ipnet;
 	struct ip_addr* ipaddr;
 	struct socket_id* sockid;
@@ -272,6 +279,10 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SET_ADV_ADDRESS
 %token SET_ADV_PORT
 %token FORCE_SEND_SOCKET
+%token SWITCH
+%token CASE
+%token DEFAULT
+%token WHILE
 %token URIHOST
 %token URIPORT
 %token MAX_LEN
@@ -428,6 +439,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token TOS
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
+%token MAX_WLOOPS
 %token CFG_DESCRIPTION
 %token SERVER_ID
 
@@ -493,6 +505,8 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <intval> intno eint_op eint_op_onsend
 %type <intval> eip_op eip_op_onsend
 %type <action> action actions cmd fcmd if_cmd stm /*exp_stm*/ assign_action
+%type <action> switch_cmd while_cmd
+%type <case_stms> single_case case_stms
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
@@ -514,7 +528,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <attr> attr_id_any_str
 %type <pvar> pvar
 %type <lval> lval
-%type <rv_expr> rval rval_expr 
+%type <rv_expr> rval rval_expr ct_rval
 %type <lval> avp_pvar
 /* %type <intval> class_id */
 %type <intval> assign_op
@@ -1273,6 +1287,8 @@ assign_stm:
 	| PMTU_DISCOVERY error { yyerror("number expected"); }
 	| KILL_TIMEOUT EQUAL NUMBER { ser_kill_timeout=$3; }
 	| KILL_TIMEOUT EQUAL error { yyerror("number expected"); }
+	| MAX_WLOOPS EQUAL NUMBER { default_core_cfg.max_while_loops=$3; }
+	| MAX_WLOOPS EQUAL error { yyerror("number expected"); }
 	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }
 	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
 	| STUN_ALLOW_STUN EQUAL NUMBER { IF_STUN(stun_allow_stun=$3); }
@@ -1762,6 +1778,8 @@ actions:
 action:
 	fcmd SEMICOLON {$$=$1;}
 	| if_cmd {$$=$1;}
+	| switch_cmd {$$=$1;}
+	| while_cmd { $$=$1; }
 	| assign_action SEMICOLON {$$=$1;}
 	| SEMICOLON /* null action */ {$$=0;}
 	| fcmd error { $$=0; yyerror("bad command: missing ';'?"); }
@@ -1770,6 +1788,109 @@ if_cmd:
 	IF exp stm		{ $$=mk_action( IF_T, 3, EXPR_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0); }
 	| IF exp stm ELSE stm	{ $$=mk_action( IF_T, 3, EXPR_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5); }
 	;
+
+ct_rval: rval_expr {
+			$$=0;
+			if (!rve_is_constant($1)){
+				yyerror("constant expected");
+			}else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
+				yyerror("invalid expression (bad type)");
+			}else if (i_tmp!=RV_INT){
+				yyerror("invalid expression type, int expected\n");
+			}else
+				$$=$1;
+		}
+;
+single_case:
+	CASE ct_rval COLON actions {
+		$$=0;
+		if ($2==0) yyerror ("bad case label");
+		else if (($$=mk_case_stm($2, $4))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| CASE ct_rval COLON {
+		$$=0;
+		if ($2==0) yyerror ("bad case label");
+		else if (($$=mk_case_stm($2, 0))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| DEFAULT COLON actions {
+		if (($$=mk_case_stm(0, $3))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| DEFAULT COLON {
+		if (($$=mk_case_stm(0, 0))==0){
+				yyerror("internal error: memory allocation failure");
+				YYABORT;
+		}
+	}
+	| CASE error { $$=0; yyerror("bad case label"); }
+	| CASE ct_rval COLON error { $$=0; yyerror ("bad case body"); }
+;
+case_stms:
+	case_stms single_case {
+		$$=$1;
+		if ($2==0) yyerror ("bad case");
+		if ($$){
+			*($$->append)=$2;
+			if (*($$->append)!=0)
+				$$->append=&((*($$->append))->next);
+		}
+	}
+	| single_case {
+		$$=$1;
+		if ($1==0) yyerror ("bad case");
+		else $$->append=&($$->next);
+	}
+;
+switch_cmd:
+	  SWITCH rval_expr LBRACE case_stms RBRACE { 
+		$$=0;
+		if ($2==0) yyerror("bad expression in switch(...)");
+		else if ($4==0) yyerror ("bad switch body");
+		else{
+			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, $4);
+			if ($$==0) {
+				yyerror("internal error");
+				YYABORT;
+			}
+		}
+	}
+	| SWITCH rval_expr LBRACE RBRACE {
+		$$=0;
+		warn("empty switch()");
+		if ($2==0) yyerror("bad expression in switch(...)");
+		else{
+			/* it might have sideffects, so leave it for the optimizer */
+			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, 0);
+			if ($$==0) {
+				yyerror("internal error");
+				YYABORT;
+			}
+		}
+	}
+	| SWITCH error { $$=0; yyerror ("bad expression in switch(...)"); }
+	| SWITCH rval_expr LBRACE error RBRACE 
+		{$$=0; yyerror ("bad switch body"); }
+;
+
+while_cmd:
+	WHILE rval_expr stm {
+		if ($2){
+			if (rve_is_constant($2))
+				warn_at(&$2->fpos, "constant value in while(...)");
+		}else
+			yyerror_at(&$2->fpos, "bad while(...) expression");
+		$$=mk_action( WHILE_T, 2, RVE_ST, $2, ACTIONS_ST, $3);
+	}
+;
+
 /* class_id:
 	LBRACK ATTR_USER RBRACK { $$ = AVP_CLASS_USER; }
 	| LBRACK ATTR_DOMAIN RBRACK { $$ = AVP_CLASS_DOMAIN; }
@@ -2307,7 +2428,7 @@ cmd:
 	| RETURN			{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST, (void*)RETURN_R_F); }
 	| RETURN NUMBER			{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)$2, NUMBER_ST, (void*)RETURN_R_F);}
 	| RETURN RETCODE		{$$=mk_action(DROP_T, 2, RETCODE_ST, 0, NUMBER_ST, (void*)RETURN_R_F);}
-	| BREAK				{$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)RETURN_R_F); }
+	| BREAK				{$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)BREAK_R_F); }
 	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)4, STRING_ST, $3); }
 	| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)$3, STRING_ST, $5); }
 	| LOG_TOK error 		{ $$=0; yyerror("missing '(' or ')' ?"); }
@@ -2562,18 +2683,27 @@ static void get_cpos(struct cfg_pos* pos)
 }
 
 
-static void warn(char* s)
+static void warn_at(struct cfg_pos* p, char* format, ...)
 {
-	if (line!=startline)
+	va_list ap;
+	char s[256];
+	
+	va_start(ap, format);
+	vsnprintf(s, sizeof(s), format, ap);
+	va_end(ap);
+	if (p->e_line!=p->s_line)
 		LOG(L_WARN, "cfg. warning: (%d,%d-%d,%d): %s\n",
-					startline, startcolumn, line, column-1, s);
-	else if (startcolumn!=(column-1))
-		LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", startline, startcolumn,
-					column-1, s);
+					p->s_line, p->s_col, p->e_line, p->e_col, s);
+	else if (p->s_col!=p->e_col)
+		LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n",
+					p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_WARN, "cfg. warning: (%d,%d): %s\n", startline, startcolumn, s);
+		LOG(L_WARN, "cfg. warning: (%d,%d): %s\n",
+				p->s_line, p->s_col, s);
 	cfg_warnings++;
 }
+
+
 
 static void yyerror_at(struct cfg_pos* p, char* format, ...)
 {
@@ -2594,6 +2724,22 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 					p->s_line, p->s_col, s);
 	cfg_errors++;
 }
+
+
+
+static void warn(char* format, ...)
+{
+	va_list ap;
+	char s[256];
+	struct cfg_pos pos;
+	
+	get_cpos(&pos);
+	va_start(ap, format);
+	vsnprintf(s, sizeof(s), format, ap);
+	va_end(ap);
+	warn_at(&pos, s);
+}
+
 
 
 static void yyerror(char* format, ...)
@@ -2761,6 +2907,23 @@ static void free_socket_id_lst(struct socket_id* lst)
 		lst=lst->next;
 		free_socket_id(tmp);
 	}
+}
+
+
+static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a)
+{
+	struct case_stms* s;
+	s=pkg_malloc(sizeof(*s));
+	if (s==0) {
+		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+	} else {
+		memset(s, 0, sizeof(*s));
+		s->ct_rve=ct;
+		s->actions=a;
+		s->next=0;
+		s->append=0;
+	}
+	return s;
 }
 
 /*

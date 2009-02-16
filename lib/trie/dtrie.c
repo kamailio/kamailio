@@ -55,7 +55,7 @@ struct dtrie_node_t *dtrie_init(const unsigned int branches)
 		SHM_MEM_ERROR;
 		return NULL;
 	}
-	LM_DBG("allocate %lu bytes for root at %p",
+	LM_DBG("allocate %lu bytes for root at %p\n",
 			(long unsigned)sizeof(struct dtrie_node_t), root);
 	memset(root, 0, sizeof(struct dtrie_node_t));
 
@@ -65,7 +65,7 @@ struct dtrie_node_t *dtrie_init(const unsigned int branches)
 		SHM_MEM_ERROR;
 		return NULL;
 	}
-	LM_DBG("allocate %lu bytes for %d root children pointer at %p",
+	LM_DBG("allocate %lu bytes for %d root children pointer at %p\n",
 			(long unsigned)sizeof(struct dtrie_node_t *) * branches,
 			branches, root->child);
 	memset(root->child, 0, sizeof(struct dtrie_node_t *) * branches);
@@ -91,7 +91,7 @@ void dtrie_delete(struct dtrie_node_t *root, struct dtrie_node_t *node,
 	}
 
 	if (node != root) {
-		LM_DBG("free node at %p", node);
+		LM_DBG("free node at %p\n", node);
 		shm_free(node);
 	}
 }
@@ -101,7 +101,7 @@ void dtrie_destroy(struct dtrie_node_t **root, dt_delete_func_t delete_payload, 
 {
 	if ((root!=NULL) && (*root!=NULL)) {
 		dtrie_delete(*root, *root, delete_payload, branches);
-		LM_DBG("free root at %p", root);
+		LM_DBG("free root at %p\n", root);
 		shm_free(*root);
 		*root = NULL;
 	}
@@ -139,12 +139,12 @@ int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned i
 		if (node->child[digit] == NULL) {
 			node->child[digit] = shm_malloc(sizeof(struct dtrie_node_t));
 			assert(node->child[digit] != NULL);
-			LM_DBG("allocate %lu bytes for node at %p", (long unsigned)sizeof(struct dtrie_node_t), node->child[digit]);
+			LM_DBG("allocate %lu bytes for node at %p\n", (long unsigned)sizeof(struct dtrie_node_t), node->child[digit]);
 			memset(node->child[digit], 0, sizeof(struct dtrie_node_t));
 
 			node->child[digit]->child = shm_malloc(sizeof(struct dtrie_node_t *) * branches);
 			assert(node->child[digit]->child != NULL);
-			LM_DBG("allocate %lu bytes for %d root children pointer at %p",
+			LM_DBG("allocate %lu bytes for %d root children pointer at %p\n",
 					(long unsigned)sizeof(struct dtrie_node_t *) * branches,
 					branches, node->child[digit]->child);
 			memset(node->child[digit]->child, 0, sizeof(struct dtrie_node_t *) * branches);

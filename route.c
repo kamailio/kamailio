@@ -82,6 +82,7 @@
 #include "str_hash.h"
 #include "ut.h"
 #include "rvalue.h"
+#include "switch.h"
 
 #define RT_HASH_SIZE	8 /* route names hash */
 
@@ -622,6 +623,10 @@ int fix_actions(struct action* a)
 	struct ip_addr ip;
 	struct socket_info* si;
 	struct lvalue* lval;
+	struct rval_expr* rve;
+	struct rval_expr* err_rve;
+	enum rval_type rve_type, err_type, expected_type;
+
 	
 	char buf[30]; /* tmp buffer needed for module param fixups */
 
@@ -697,7 +702,78 @@ int fix_actions(struct action* a)
 						return ret;
 				}
 				break;
-
+			case SWITCH_T:
+				if (t->val[0].type!=RVE_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for switch() (should be expr)\n",
+								t->val[0].type);
+					return E_BUG;
+				}else if (t->val[1].type!=CASE_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for switch(...){...}(should be case)\n",
+								t->val[1].type);
+					return E_BUG;
+				}
+				if (t->val[0].u.data){
+					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
+						return ret;
+				}else{
+					LOG(L_CRIT, "BUG: fix_actions: null switch()"
+							" expression\n");
+					return E_BUG;
+				}
+				if ((ret=fix_switch(t))<0)
+					return ret;
+				break;
+			case WHILE_T:
+				if (t->val[0].type!=RVE_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for while() (should be expr)\n",
+								t->val[0].type);
+					return E_BUG;
+				}else if (t->val[1].type!=ACTIONS_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for while(...){...}(should be action)\n",
+								t->val[1].type);
+					return E_BUG;
+				}
+				rve=(struct rval_expr*)t->val[0].u.data;
+				if (rve){
+					err_rve=0;
+					if (!rve_check_type(&rve_type, rve, &err_rve,
+											&err_type, &expected_type)){
+						if (err_rve)
+							LOG(L_ERR, "fix_actions: invalid expression "
+									"(%d,%d): subexpression (%d,%d) has type"
+									" %s,  but %s is expected\n",
+									rve->fpos.s_line, rve->fpos.s_col,
+									err_rve->fpos.s_line, err_rve->fpos.s_col,
+									rval_type_name(err_type),
+									rval_type_name(expected_type) );
+						else
+							LOG(L_ERR, "fix_actions: invalid expression "
+									"(%d,%d): type mismatch?",
+									rve->fpos.s_line, rve->fpos.s_col);
+						return E_UNSPEC;
+					}
+					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
+								" bad type, integer expected\n",
+								rve->fpos.s_line, rve->fpos.s_col);
+						return E_UNSPEC;
+					}
+					if ((ret=fix_rval_expr((void**)&rve))<0)
+						return ret;
+				}else{
+					LOG(L_CRIT, "BUG: fix_actions: null while()"
+							" expression\n");
+					return E_BUG;
+				}
+				if ( t->val[1].u.data && 
+					((ret= fix_actions((struct action*)t->val[1].u.data))<0)){
+					return ret;
+				}
+				break;
 			case ASSIGN_T:
 			case ADD_T:
 				if (t->val[0].type !=LVAL_ST) {

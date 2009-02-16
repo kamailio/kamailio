@@ -188,6 +188,8 @@ int rval_expr_eval_rvint( struct run_act_ctx* h, struct sip_msg* msg,
 enum rval_type rve_guess_type(struct rval_expr* rve);
 /** returns true if expression is constant. */
 int rve_is_constant(struct rval_expr* rve);
+/** returns true if the expression can have side-effect */
+int rve_has_side_effects(struct rval_expr* rve);
 /** returns 1 if expression is valid (type-wise).*/
 int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					struct rval_expr** bad_rve, enum rval_type* bad_type,
@@ -206,6 +208,8 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 													  struct rval_expr* rve2,
 													  struct cfg_pos* pos);
+/** destroys a pkg_malloc'ed rve. */
+void rve_destroy(struct rval_expr* rve);
 
 /** fix a rval_expr. */
 int fix_rval_expr(void** p);
