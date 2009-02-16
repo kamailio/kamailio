@@ -498,7 +498,7 @@ size_t get_xcap_etag( void *ptr, size_t size, size_t nmemb, void *stream)
 	int len= 0;
 	char* etag= NULL;
 
-	if(strncmp(ptr, ETAG_HDR, ETAG_HDR_LEN)== 0)
+	if(strncasecmp(ptr, ETAG_HDR, ETAG_HDR_LEN)== 0)
 	{
 		len= size* nmemb- ETAG_HDR_LEN;
 		etag= (char*)pkg_malloc((len+ 1)* sizeof(char));
