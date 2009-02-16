@@ -231,7 +231,7 @@ int reply_421(struct sip_msg* msg)
 
 }
 
-int reply_200(struct sip_msg* msg, str* contact, int expires, str* rtag)
+int reply_200(struct sip_msg* msg, str* contact, int expires)
 {
 	str hdr_append;
 	int len;
@@ -272,7 +272,7 @@ int reply_200(struct sip_msg* msg, str* contact, int expires, str* rtag)
 		goto error;
 	}
 
-	if( slb.reply_dlg( msg, 200, &su_200_rpl, rtag)== -1)
+	if(slb.send_reply(msg, 200, &su_200_rpl)== -1)
 	{
 		LM_ERR("while sending reply\n");
 		goto error;
@@ -595,7 +595,7 @@ found_support:
 	}
 
 /*** if correct reply with 200 OK*/
-	if(reply_200(msg, &subs.contact, subs.expires, &subs.to_tag)< 0)
+	if(reply_200(msg, &subs.contact, subs.expires)< 0)
 		goto error;
 
 	/* call sending Notify with full state */
