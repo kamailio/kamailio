@@ -149,7 +149,7 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 		goto error;
 	}
 
-	if( slb.reply( msg, 200, &pu_200_rpl)== -1)
+	if( slb.send_reply( msg, 200, &pu_200_rpl)== -1)
 	{
 		LM_ERR("sending reply\n");
 		goto error;
@@ -629,7 +629,7 @@ after_dialog_check:
 			pa_dbf.free_result(pa_db, result);
 			result= NULL;
 			LM_ERR("No E_Tag match\n");
-			if (slb.reply(msg, 412, &pu_412_rpl) == -1)
+			if (slb.send_reply(msg, 412, &pu_412_rpl) == -1)
 			{
 				LM_ERR("sending '412 Conditional request failed' reply\n");
 				goto error;
