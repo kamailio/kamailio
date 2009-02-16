@@ -585,11 +585,9 @@ int http_get_rules_doc(str user, str domain, str* rules_doc)
 		req.xcap_root= xs->addr;
 		req.port= xs->port;
 		doc= xcap_GetNewDoc(req, user, domain);
-		if(doc== NULL)
-		{
-			LM_ERR("while fetching data from xcap server\n");
-			goto error;	
-		}
+		if(doc!=NULL)
+			break;
+		xs = xs->next;
 	}
 
 	rules_doc->s= doc;
@@ -598,8 +596,5 @@ int http_get_rules_doc(str user, str domain, str* rules_doc)
 	return 0;
 
 error:
-	
 	return -1;
-
-
 }
