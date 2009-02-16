@@ -97,34 +97,34 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			case MYSQL_TYPE_LONG:
 			case MYSQL_TYPE_INT24:
 			case MYSQL_TYPE_TIMESTAMP:
-				LM_DBG("use DB_INT result type\n");
-				RES_TYPES(_r)[col] = DB_INT;
+				LM_DBG("use DB1_INT result type\n");
+				RES_TYPES(_r)[col] = DB1_INT;
 				break;
 
 			case MYSQL_TYPE_LONGLONG:
-				LM_DBG("use DB_BIGINT result type\n");
-				RES_TYPES(_r)[col] = DB_BIGINT;
+				LM_DBG("use DB1_BIGINT result type\n");
+				RES_TYPES(_r)[col] = DB1_BIGINT;
 				break;
 
 			case MYSQL_TYPE_FLOAT:
 			case MYSQL_TYPE_DOUBLE:
-				LM_DBG("use DB_DOUBLE result type\n");
-				RES_TYPES(_r)[col] = DB_DOUBLE;
+				LM_DBG("use DB1_DOUBLE result type\n");
+				RES_TYPES(_r)[col] = DB1_DOUBLE;
 				break;
 
 			case MYSQL_TYPE_DATETIME:
-				LM_DBG("use DB_DATETIME result type\n");
-				RES_TYPES(_r)[col] = DB_DATETIME;
+				LM_DBG("use DB1_DATETIME result type\n");
+				RES_TYPES(_r)[col] = DB1_DATETIME;
 				break;
 
 			case MYSQL_TYPE_BLOB:
-				LM_DBG("use DB_BLOB result type\n");
-				RES_TYPES(_r)[col] = DB_BLOB;
+				LM_DBG("use DB1_BLOB result type\n");
+				RES_TYPES(_r)[col] = DB1_BLOB;
 				break;
 
 			case FIELD_TYPE_SET:
-				LM_DBG("use DB_BITMAP result type\n");
-				RES_TYPES(_r)[col] = DB_BITMAP;
+				LM_DBG("use DB1_BITMAP result type\n");
+				RES_TYPES(_r)[col] = DB1_BITMAP;
 				break;
 
 			case MYSQL_TYPE_DECIMAL:
@@ -133,15 +133,15 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			#endif
 			case MYSQL_TYPE_STRING:
 			case MYSQL_TYPE_VAR_STRING:
-				LM_DBG("use DB_STRING result type\n");
-				RES_TYPES(_r)[col] = DB_STRING;
+				LM_DBG("use DB1_STRING result type\n");
+				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
+						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, fields[col].type);
-				RES_TYPES(_r)[col] = DB_STRING;
+				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 		}
 	}

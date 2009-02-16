@@ -53,7 +53,7 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 		return tmp;
 
 	switch(VAL_TYPE(_v)) {
-	case DB_STRING:
+	case DB1_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
@@ -69,7 +69,7 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 		}
 		break;
 
-	case DB_STR:
+	case DB1_STR:
 		if (*_len < (VAL_STR(_v).len * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
 			return -7;
@@ -84,7 +84,7 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 		}
 		break;
 
-	case DB_BLOB:
+	case DB1_BLOB:
 		l = VAL_BLOB(_v).len;
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
