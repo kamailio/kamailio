@@ -149,7 +149,7 @@ void db_mysql_close(db1_con_t* _h)
  * \param _r result set that should be retrieved
  * \return zero on success, negative value on failure
  */
-static int db_mysql_store_result(const db1_con_t* _h, db_res_t** _r)
+static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 {
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
@@ -213,7 +213,7 @@ done:
  * \param _r result set that should be freed
  * \return zero on success, negative value on failure
  */
-int db_mysql_free_result(db1_con_t* _h, db_res_t* _r)
+int db_mysql_free_result(db1_con_t* _h, db1_res_t* _r)
 {
      if ((!_h) || (!_r)) {
 	     LM_ERR("invalid parameter value\n");
@@ -245,7 +245,7 @@ int db_mysql_free_result(db1_con_t* _h, db_res_t* _r)
  */
 int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-	     const db_key_t _o, db_res_t** _r)
+	     const db_key_t _o, db1_res_t** _r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
 	db_mysql_val2str, db_mysql_submit_query, db_mysql_store_result);
@@ -266,7 +266,7 @@ int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \param nrows number of fetched rows
  * \return zero on success, negative value on failure
  */
-int db_mysql_fetch_result(const db1_con_t* _h, db_res_t** _r, const int nrows)
+int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 {
 	int rows, i;
 
@@ -374,7 +374,7 @@ int db_mysql_fetch_result(const db1_con_t* _h, db_res_t** _r, const int nrows)
  * \param _r result set for storage
  * \return zero on success, negative value on failure
  */
-int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db_res_t** _r)
+int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_mysql_submit_query,
 	db_mysql_store_result);

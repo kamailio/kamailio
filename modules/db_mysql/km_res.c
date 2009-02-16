@@ -50,7 +50,7 @@
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-int db_mysql_get_columns(const db1_con_t* _h, db_res_t* _r)
+int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 {
 	int col;
 	MYSQL_FIELD* fields;
@@ -155,7 +155,7 @@ int db_mysql_get_columns(const db1_con_t* _h, db_res_t* _r)
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-static inline int db_mysql_convert_rows(const db1_con_t* _h, db_res_t* _r)
+static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 {
 	int row;
 
@@ -201,7 +201,7 @@ static inline int db_mysql_convert_rows(const db1_con_t* _h, db_res_t* _r)
  * \param _r database result
  * \return 0 on success, negative on failure
  */
-int db_mysql_convert_result(const db1_con_t* _h, db_res_t* _r)
+int db_mysql_convert_result(const db1_con_t* _h, db1_res_t* _r)
 {
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
