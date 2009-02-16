@@ -1440,6 +1440,16 @@ ifeq  ($(OS), solaris)
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT
 	endif
+	# check for filio.h
+	filio_h_locations= /usr/include/sys/filio.h \
+						$(LOCALBASE)/include/sys/filio.h
+	has_filio_h=$(shell for r in $(filio_h_locations); do \
+						if  [ -r "$$r" ] ; then echo yes; exit; fi \
+						done;\
+				)
+	ifeq ($(has_filio_h), yes)
+		DEFS+=-DHAVE_FILIO_H
+	endif
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
 		#LDFLAGS=-O2 $(PROFILE)
