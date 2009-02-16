@@ -80,7 +80,8 @@
 #define L_DBG    	3
 
 #define LOG_LEVEL2NAME(level)	(log_level_info[(level) - (L_ALERT)].name)
-#define LOG2SYSLOG_LEVEL(level)	(log_level_info[(level) - (L_ALERT)].syslog_level)
+#define LOG2SYSLOG_LEVEL(level) \
+	(log_level_info[(level) - (L_ALERT)].syslog_level)
 
 
 /* my_pid(), process_no are from pt.h but we cannot #include it here
@@ -112,9 +113,9 @@ int log_facility_fixup(void *handle, str *name, void **val);
 /*
  * General logging macros
  *
- * LOG_(level, prefix, fmt, ...) prints "printf"-formatted log message to stderr (if
- *	`log_stderr' is non-zero) to syslog.  Note that `fmt' must be constant.
- *      `prefix' is added to the beginning of the message.
+ * LOG_(level, prefix, fmt, ...) prints "printf"-formatted log message to
+ * stderr (if `log_stderr' is non-zero) or to syslog.  Note that `fmt' must
+ * be constant. `prefix' is added to the beginning of the message.
  *
  * LOG(level, fmt, ...) is same as LOG_() with LOC_INFO prefix.
  */
@@ -143,15 +144,19 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #	ifdef __SUNPRO_C
 #		define LOG_(level, prefix, fmt, ...) \
 			do { \
-				if (cfg_get(core, core_cfg, debug) >= (level) && DPRINT_NON_CRIT) { \
+				if (cfg_get(core, core_cfg, debug) >= (level) && \
+						DPRINT_NON_CRIT) { \
 					DPRINT_CRIT_ENTER; \
 					assert(((level) >= L_ALERT) && ((level) <= L_DBG)); \
 					if (log_stderr) { \
 						fprintf(stderr, "%2d(%d) %s: %s" fmt, \
-					            process_no, my_pid(), LOG_LEVEL2NAME(level), (prefix), __VA_ARGS__); \
+								process_no, my_pid(), LOG_LEVEL2NAME(level),\
+								(prefix), __VA_ARGS__); \
 					} else { \
-						syslog(LOG2SYSLOG_LEVEL(level) | cfg_get(core, core_cfg, log_facility), \
-						       "%s: %s" fmt, log_level_info[(level)].name, (prefix), __VA_ARGS__); \
+						syslog(LOG2SYSLOG_LEVEL(level) | \
+									cfg_get(core, core_cfg, log_facility), \
+								"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+								(prefix), __VA_ARGS__); \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
@@ -162,15 +167,19 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #	else
 #		define LOG_(level, prefix, fmt, args...) \
 			do { \
-				if (cfg_get(core, core_cfg, debug) >= (level) && DPRINT_NON_CRIT) { \
+				if (cfg_get(core, core_cfg, debug) >= (level) && \
+						DPRINT_NON_CRIT) { \
 					DPRINT_CRIT_ENTER; \
 					assert(((level) >= L_ALERT) && ((level) <= L_DBG)); \
 					if (log_stderr) { \
 						fprintf(stderr, "%2d(%d) %s: %s" fmt, \
-					            process_no, my_pid(), LOG_LEVEL2NAME(level), (prefix), ## args); \
+								process_no, my_pid(), LOG_LEVEL2NAME(level),\
+								(prefix), ## args); \
 					} else { \
-						syslog(LOG2SYSLOG_LEVEL(level) | cfg_get(core, core_cfg, log_facility), \
-						       "%s: %s" fmt, log_level_info[(level)].name, (prefix), ## args); \
+						syslog(LOG2SYSLOG_LEVEL(level) |\
+									cfg_get(core, core_cfg, log_facility), \
+						 		"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+								(prefix), ## args); \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
