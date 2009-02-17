@@ -62,26 +62,40 @@ void db_drv_free(db_drv_t* ptr)
  */
 int db_drv_func(db_drv_func_t* func, str* module, char* func_name)
 {
-	char* buf;
-
-	buf = pkg_malloc(module->len + 1);
-	if (buf == NULL) {
+	static str prefix = STR_STATIC_INIT("db_");
+	char* buf = NULL, *name;
+	
+	if ((buf = pkg_malloc(prefix.len + module->len + 1)) == NULL) {
 		LOG(L_ERR, "db_drv_func: No memory left\n");
-		return -1;
+		goto error;
 	}
-	memcpy(buf, module->s, module->len);
-	buf[module->len] = '\0';
-
-	if (find_module_by_name(buf) == 0) {
-		ERR("db_drv_func: database driver for '%s' not found\n", buf);
-		pkg_free(buf);
-		return -1;
+	
+	memcpy(buf, prefix.s, prefix.len);
+	memcpy(buf + prefix.len, module->s, module->len);
+	buf[prefix.len + module->len] = '\0';
+	
+	/* First try to find the module with prefix "db_" */
+	name = buf;
+	if (find_module_by_name(name) == 0) {
+		/* Not found, so try without the prefix */
+		name = buf + prefix.len;
+		if (find_module_by_name(name) == 0) {
+			ERR("db_drv_func: database driver for '%.*s' not found\n", STR_FMT(module));
+			goto error;
+		}
 	}
-	*func = (db_drv_func_t)find_mod_export(buf, func_name, 0, 0);
-	pkg_free(buf);
+	
+	*func = (db_drv_func_t)find_mod_export(name, func_name, 0, 0);
+	
+	if (buf) pkg_free(buf);
 	if (*func) return 0;
 	else return 1;
+	
+error:
+	if (buf) pkg_free(buf);
+	return -1;
 }
+
 
 
 /*
