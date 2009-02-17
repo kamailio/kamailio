@@ -4,7 +4,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=postgres.so
+NAME=db_postgres.so
 
 # set CROSS_COMPILE to true if you want to skip
 # the autodetection
