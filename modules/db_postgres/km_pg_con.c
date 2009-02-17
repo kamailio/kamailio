@@ -27,7 +27,7 @@
  *  Module: \ref db_postgres
  */
 
-#include "pg_con.h"
+#include "km_pg_con.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"

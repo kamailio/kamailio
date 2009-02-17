@@ -47,10 +47,10 @@
 #include "../../db/db_con.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "res.h"
-#include "val.h"
-#include "pg_con.h"
-#include "pg_type.h"
+#include "km_res.h"
+#include "km_val.h"
+#include "km_pg_con.h"
+#include "km_pg_type.h"
 
 
 /*!

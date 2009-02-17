@@ -37,7 +37,7 @@
 #include "../../sr_module.h"
 #include "../../db/db_con.h"
 #include "../../db/db.h"
-#include "dbase.h"
+#include "km_dbase.h"
 
 
 MODULE_VERSION

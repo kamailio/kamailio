@@ -74,10 +74,10 @@
 #include "../../db/db.h"
 #include "../../db/db_ut.h"
 #include "../../db/db_query.h"
-#include "dbase.h"
-#include "pg_con.h"
-#include "val.h"
-#include "res.h"
+#include "km_dbase.h"
+#include "km_pg_con.h"
+#include "km_val.h"
+#include "km_res.h"
 
 static void db_postgres_free_query(const db_con_t* _con);
 

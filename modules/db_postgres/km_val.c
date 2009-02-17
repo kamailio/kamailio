@@ -37,10 +37,10 @@
 #include "../../db/db_val.h"
 #include "../../db/db_ut.h"
 #include "../../dprint.h"
-#include "pg_con.h"
+#include "km_pg_con.h"
 
 #include "../../mem/mem.h"
-#include "val.h"
+#include "km_val.h"
 
 
 /*!
