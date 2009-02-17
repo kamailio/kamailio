@@ -42,6 +42,7 @@
 #include "../../dprint.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
+#include "mysql_mod.h"
 #include "km_val.h"
 #include "km_my_con.h"
 #include "km_res.h"
@@ -75,9 +76,9 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 		return -1;
 	}
 
-	if (db_mysql_ping_interval) {
+	if (my_ping_interval) {
 		t = time(0);
-		if ((t - CON_TIMESTAMP(_h)) > db_mysql_ping_interval) {
+		if ((t - CON_TIMESTAMP(_h)) > my_ping_interval) {
 			if (mysql_ping(CON_CONNECTION(_h))) {
 				LM_WARN("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
 			}

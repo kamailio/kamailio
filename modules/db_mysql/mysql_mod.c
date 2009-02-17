@@ -97,6 +97,9 @@ static param_export_t params[] = {
 	{"send_timeout",    PARAM_INT, &my_send_to},
 	{"receive_timeout", PARAM_INT, &my_recv_to},
 	{"retries",         PARAM_INT, &my_retries},
+
+	{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
+	{"auto_reconnect",   INT_PARAM, &db_mysql_auto_reconnect},
 	{0, 0, 0}
 };
 
