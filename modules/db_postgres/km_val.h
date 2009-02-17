@@ -26,8 +26,8 @@
  *  Module: \ref db_postgres
  */
 
-#ifndef DB_PG_VAL_H
-#define DB_PG_VAL_H
+#ifndef KM_VAL_H
+#define KM_VAL_H
 
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
 

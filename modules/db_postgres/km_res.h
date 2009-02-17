@@ -27,8 +27,8 @@
  *  Module: \ref db_postgres
  */
 
-#ifndef DB_PG_RES_H
-#define DB_PG_RES_H
+#ifndef KM_RES_H
+#define KM_RES_H
 
 #include "../../db/db_row.h"
 

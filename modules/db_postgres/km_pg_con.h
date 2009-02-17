@@ -31,8 +31,8 @@
  *  Module: \ref db_mysql
  */
 
-#ifndef PG_CON_H
-#define PG_CON_H
+#ifndef KM_PG_CON_H
+#define KM_PG_CON_H
 
 #include "../../db/db_pool.h"
 #include "../../db/db_id.h"
@@ -75,4 +75,4 @@ struct pg_con* db_postgres_new_connection(struct db_id* id);
  */
 void db_postgres_free_connection(struct pool_con* con);
 
-#endif /* PG_CON_H */
+#endif /* KM_PG_CON_H */

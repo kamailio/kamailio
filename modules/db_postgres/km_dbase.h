@@ -31,8 +31,8 @@
  *  Module: \ref db_postgres
  */
 
-#ifndef DBASE_H
-#define DBASE_H
+#ifndef KM_DBASE_H
+#define KM_DBASE_H
 
 #include "../../db/db_con.h"
 #include "../../db/db_res.h"
@@ -110,4 +110,4 @@ int db_postgres_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 int db_postgres_use_table(db_con_t* _h, const str* _t);
 
 
-#endif /* DBASE_H */
+#endif /* KM_DBASE_H */
