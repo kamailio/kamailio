@@ -50,8 +50,6 @@
 unsigned int db_mysql_timeout_interval = 2;   /* Default is 6 seconds */
 unsigned int db_mysql_auto_reconnect = 1;     /* Default is enabled   */
 
-static int mysql_mod_init(void);
-
 /* MODULE_VERSION */
 
 /*! \brief
@@ -81,14 +79,14 @@ struct kam_module_exports kam_exports = {
 	0,               /* exported MI functions */
 	0,               /* exported pseudo-variables */
 	0,               /* extra processes */
-	mysql_mod_init,  /* module initialization function */
+	kam_mysql_mod_init,  /* module initialization function */
 	0,               /* response function*/
 	0,               /* destroy function */
 	0                /* per-child init function */
 };
 
 
-static int mysql_mod_init(void)
+int kam_mysql_mod_init(void)
 {
 	LM_DBG("MySQL client version is %s\n", mysql_get_client_info());
 	return 0;

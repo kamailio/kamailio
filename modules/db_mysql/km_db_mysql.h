@@ -45,4 +45,6 @@ extern unsigned int db_mysql_auto_reconnect;
 
 int db_mysql_bind_api(db_func_t *dbb);
 
+int kam_mysql_mod_init(void);
+
 #endif /* KM_DB_MOD_H */

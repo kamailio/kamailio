@@ -144,7 +144,8 @@ static int mysql_mod_init(void)
 			" compiled against %ld)\n", MYSQL_VERSION_ID);
 	}
 #endif
-	return 0;
+
+	return kam_mysql_mod_init();
 }
 
 /** @} */
