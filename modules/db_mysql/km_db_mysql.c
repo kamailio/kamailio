@@ -42,7 +42,6 @@
  */
 
 #include "../../sr_module.h"
-#include "../../lib/srdb1/db.h"
 #include "km_dbase.h"
 #include "km_db_mysql.h"
 
@@ -55,8 +54,6 @@ unsigned int db_mysql_auto_reconnect = 1;     /* Default is enabled   */
 static int mysql_mod_init(void);
 
 /* MODULE_VERSION */
-
-int db_mysql_bind_api(db_func_t *dbb);
 
 /*! \brief
  * MySQL database module interface

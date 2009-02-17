@@ -32,12 +32,12 @@
  *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  */
-
 /** @addtogroup mysql
  *  @{
  */
  
 #include "mysql_mod.h"
+#include "km_db_mysql.h"
 
 #include "my_uri.h"
 #include "my_con.h"
@@ -83,6 +83,7 @@ static cmd_export_t cmds[] = {
 	{"db_next",   (cmd_function)my_cmd_next,  0, 0, 0},
 	{"db_setopt", (cmd_function)my_setopt,    0, 0, 0},
 	{"db_getopt", (cmd_function)my_getopt,    0, 0, 0},
+	{"db_bind_api",         (cmd_function)db_mysql_bind_api,      0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 

@@ -38,8 +38,12 @@
 #ifndef KM_DB_MOD_H
 #define KM_DB_MOD_H
 
+#include "../../lib/srdb1/db.h"
+
 extern unsigned int db_mysql_ping_interval;
 extern unsigned int db_mysql_timeout_interval;
 extern unsigned int db_mysql_auto_reconnect;
+
+int db_mysql_bind_api(db_func_t *dbb);
 
 #endif /* KM_DB_MOD_H */
