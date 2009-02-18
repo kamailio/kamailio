@@ -34,8 +34,8 @@
 #ifndef KM_PG_CON_H
 #define KM_PG_CON_H
 
-#include "../../db/db_pool.h"
-#include "../../db/db_id.h"
+#include "../../lib/srdb1/db_pool.h"
+#include "../../lib/srdb1/db_id.h"
 
 #include <time.h>
 #include <libpq-fe.h>

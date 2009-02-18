@@ -25,7 +25,7 @@
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
  *
- * 2006-07-26 added BPCHAROID as a valid type for DB_STRING conversions
+ * 2006-07-26 added BPCHAROID as a valid type for DB1_STRING conversions
  *            this removes the "unknown type 1042" log messages (norm)
  *
  * 2006-10-27 Added fetch support (norm)
@@ -42,9 +42,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../../db/db_id.h"
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb1/db_id.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_con.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "km_res.h"
@@ -59,7 +59,7 @@
  * \param _r result set
  * \return 0 on success, negative on error
  */
-int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r)
+int db_postgres_convert_result(const db1_con_t* _h, db1_res_t* _r)
 {
 	if (!_h || !_r)  {
 		LM_ERR("invalid parameter value\n");
@@ -86,7 +86,7 @@ int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r)
  * \param _r result set
  * \return 0 on success, negative on error
  */
-int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
+int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 {
 	int col, datatype;
 
@@ -137,53 +137,53 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 		{
 			case INT2OID:
 			case INT4OID:
-				LM_DBG("use DB_INT result type\n");
-				RES_TYPES(_r)[col] = DB_INT;
+				LM_DBG("use DB1_INT result type\n");
+				RES_TYPES(_r)[col] = DB1_INT;
 			break;
 
 			case INT8OID:
-				LM_DBG("use DB_BIGINT result type\n");
-				RES_TYPES(_r)[col] = DB_BIGINT;
+				LM_DBG("use DB1_BIGINT result type\n");
+				RES_TYPES(_r)[col] = DB1_BIGINT;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
 			case NUMERICOID:
-				LM_DBG("use DB_DOUBLE result type\n");
-				RES_TYPES(_r)[col] = DB_DOUBLE;
+				LM_DBG("use DB1_DOUBLE result type\n");
+				RES_TYPES(_r)[col] = DB1_DOUBLE;
 			break;
 
 			case DATEOID:
 			case TIMESTAMPOID:
 			case TIMESTAMPTZOID:
-				LM_DBG("use DB_DATETIME result type\n");
-				RES_TYPES(_r)[col] = DB_DATETIME;
+				LM_DBG("use DB1_DATETIME result type\n");
+				RES_TYPES(_r)[col] = DB1_DATETIME;
 			break;
 
 			case BOOLOID:
 			case CHAROID:
 			case VARCHAROID:
 			case BPCHAROID:
-				LM_DBG("use DB_STRING result type\n");
-				RES_TYPES(_r)[col] = DB_STRING;
+				LM_DBG("use DB1_STRING result type\n");
+				RES_TYPES(_r)[col] = DB1_STRING;
 			break;
 
 			case TEXTOID:
 			case BYTEAOID:
-				LM_DBG("use DB_BLOB result type\n");
-				RES_TYPES(_r)[col] = DB_BLOB;
+				LM_DBG("use DB1_BLOB result type\n");
+				RES_TYPES(_r)[col] = DB1_BLOB;
 			break;
 
 			case BITOID:
 			case VARBITOID:
-				LM_DBG("use DB_BITMAP result type\n");
-				RES_TYPES(_r)[col] = DB_BITMAP;
+				LM_DBG("use DB1_BITMAP result type\n");
+				RES_TYPES(_r)[col] = DB1_BITMAP;
 			break;
 				
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
+						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, datatype);
-				RES_TYPES(_r)[col] = DB_STRING;
+				RES_TYPES(_r)[col] = DB1_STRING;
 			break;
 		}
 	}
@@ -197,7 +197,7 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
  * \param _r result set
  * \return 0 on success, negative on error
  */
-int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
+int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 {
 	char **row_buf, *s;
 	int row, col, len;
@@ -278,7 +278,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
  * \param row_buf row buffer
  * \return 0 on success, negative on error
  */
-int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
+int db_postgres_convert_row(const db1_con_t* _h, db1_res_t* _r, db_row_t* _row,
 		char **row_buf)
 {
 	int col, col_len;

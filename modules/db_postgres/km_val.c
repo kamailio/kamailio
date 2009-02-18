@@ -34,8 +34,8 @@
  *  Module: \ref db_postgres
  */
 
-#include "../../db/db_val.h"
-#include "../../db/db_ut.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db_ut.h"
 #include "../../dprint.h"
 #include "km_pg_con.h"
 
@@ -58,7 +58,7 @@
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
 	/* use common function for non BLOB, NULL setting and input parameter checking */
-	if ( _t != DB_BLOB || _s == NULL || _v == NULL) {
+	if ( _t != DB1_BLOB || _s == NULL || _v == NULL) {
 		return db_str2val(_t, _v, _s, _l, 1);
 	} else {
 		char * tmp_s = NULL;
@@ -82,7 +82,7 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		memcpy(VAL_BLOB(_v).s, tmp_s, VAL_BLOB(_v).len);
 		PQfreemem(tmp_s);
 
-		VAL_TYPE(_v) = DB_BLOB;
+		VAL_TYPE(_v) = DB1_BLOB;
 		VAL_FREE(_v) = 1;
 
 		LM_DBG("got blob len %d\n", _l);
@@ -102,7 +102,7 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
  * \param _len target string length
  * \return 0 on success, negative on error
  */
-int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len)
+int db_postgres_val2str(const db1_con_t* _con, const db_val_t* _v, char* _s, int* _len)
 {
 	int l, ret, tmp;
 	int pgret;
@@ -115,7 +115,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		return tmp;
 
 	switch(VAL_TYPE(_v)) {
-	case DB_STRING:
+	case DB1_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short for string\n");
@@ -140,7 +140,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		}
 		break;
 
-	case DB_STR:
+	case DB1_STR:
 		l = VAL_STR(_v).len;
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short for str\n");
@@ -164,7 +164,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		}
 		break;
 
-	case DB_BLOB:
+	case DB1_BLOB:
 		l = VAL_BLOB(_v).len;
 		/* this estimation is not always correct, thus we need to check later again */
 		if (*_len < (l * 2 + 3)) {

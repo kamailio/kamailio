@@ -71,15 +71,15 @@
 #include <stdio.h>
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "../../db/db.h"
-#include "../../db/db_ut.h"
-#include "../../db/db_query.h"
+#include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_ut.h"
+#include "../../lib/srdb1/db_query.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
 #include "km_val.h"
 #include "km_res.h"
 
-static void db_postgres_free_query(const db_con_t* _con);
+static void db_postgres_free_query(const db1_con_t* _con);
 
 
 /*!
@@ -88,7 +88,7 @@ static void db_postgres_free_query(const db_con_t* _con);
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
  */
-db_con_t *db_postgres_init(const str* _url)
+db1_con_t *db_postgres_init(const str* _url)
 {
 	return db_do_init(_url, (void*) db_postgres_new_connection);
 }
@@ -99,7 +99,7 @@ db_con_t *db_postgres_init(const str* _url)
  * \param _h closed connection, as returned from db_postgres_init
  * \note free all memory and resources
  */
-void db_postgres_close(db_con_t* _h)
+void db_postgres_close(db1_con_t* _h)
 {
 	db_do_close(_h, db_postgres_free_connection);
 }
@@ -111,7 +111,7 @@ void db_postgres_close(db_con_t* _h)
  * \param _s query string
  * \return 0 on success, negative on failure
  */
-static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
+static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 {
 	if(! _con || !_s || !_s->s)
 	{
@@ -172,7 +172,7 @@ static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
  * \param nrows number of fetches rows
  * \return 0 on success, negative on failure
  */
-int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nrows)
+int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int nrows)
 {
 	int rows;
 	PGresult *res = NULL;
@@ -295,7 +295,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
  * \brief Free database and any old query results
  * \param _con database connection
  */
-static void db_postgres_free_query(const db_con_t* _con)
+static void db_postgres_free_query(const db1_con_t* _con)
 {
 	if(CON_RESULT(_con))
 	{
@@ -312,7 +312,7 @@ static void db_postgres_free_query(const db_con_t* _con)
  * \param _r result set
  * \return 0 on success, -1 on failure
  */
-int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
+int db_postgres_free_result(db1_con_t* _con, db1_res_t* _r)
 {
      if ((!_con) || (!_r)) {
 	     LM_ERR("invalid parameter value\n");
@@ -340,9 +340,9 @@ int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
  * \param _r result set
  * \return 0 on success, negative on failure
  */
-int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_postgres_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-	     const db_key_t _o, db_res_t** _r)
+	     const db_key_t _o, db1_res_t** _r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r, db_postgres_val2str,
 		db_postgres_submit_query, db_postgres_store_result);
@@ -356,7 +356,7 @@ int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
  * \param _r result set
  * \return 0 on success, negative on failure
  */
-int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
+int db_postgres_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_postgres_submit_query,
 		db_postgres_store_result);
@@ -376,7 +376,7 @@ int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
  * result structure. If this routine returns < 0, then the result structure
  * is freed before returning to the caller.
  */
-int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
+int db_postgres_store_result(const db1_con_t* _con, db1_res_t** _r)
 {
 	PGresult *res = NULL;
 	ExecStatusType pqresult;
@@ -462,10 +462,10 @@ done:
  * \param _n number of key=value pairs
  * \return 0 on success, negative on failure
  */
-int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_postgres_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		const int _n)
 {
-	db_res_t* _r = NULL;
+	db1_res_t* _r = NULL;
 
 	int tmp = db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
 	// finish the async query, otherwise the next query will not complete
@@ -488,10 +488,10 @@ int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _
  * \param _n number of key=value pairs
  * \return 0 on success, negative on failure
  */
-int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_postgres_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const int _n)
 {
-	db_res_t* _r = NULL;
+	db1_res_t* _r = NULL;
 	int tmp = db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
 		db_postgres_submit_query);
 
@@ -517,11 +517,11 @@ int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
  * \param _un number of columns to update
  * \return 0 on success, negative on failure
  */
-int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_postgres_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
 		const int _un)
 {
-	db_res_t* _r = NULL;
+	db1_res_t* _r = NULL;
 	int tmp = db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
 		db_postgres_submit_query);
 
@@ -541,7 +541,7 @@ int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
  * \param _t table name
  * \return 0 on success, negative on error
  */
-int db_postgres_use_table(db_con_t* _con, const str* _t)
+int db_postgres_use_table(db1_con_t* _con, const str* _t)
 {
 	return db_use_table(_con, _t);
 }

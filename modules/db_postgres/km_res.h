@@ -30,15 +30,15 @@
 #ifndef KM_RES_H
 #define KM_RES_H
 
-#include "../../db/db_row.h"
+#include "../../lib/srdb1/db_row.h"
 
-int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r);
+int db_postgres_convert_result(const db1_con_t* _h, db1_res_t* _r);
 
-int db_postgres_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r,
+int db_postgres_convert_row(const db1_con_t* _h, db1_res_t* _res, db_row_t* _r,
 	char **row_buf);
 
-int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r);
+int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r);
 
-int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r);
+int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r);
 
 #endif

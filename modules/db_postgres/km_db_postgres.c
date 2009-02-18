@@ -35,12 +35,12 @@
 
 #include <stdio.h>
 #include "../../sr_module.h"
-#include "../../db/db_con.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db.h"
 #include "km_dbase.h"
 
 
-MODULE_VERSION
+/*MODULE_VERSION*/
 
 int db_postgres_bind_api(db_func_t *dbb);
 
@@ -50,14 +50,14 @@ static int mod_init(void);
  * PostgreSQL database module interface
  */
 
-static cmd_export_t cmds[]={
+static kam_cmd_export_t cmds[]={
 	{"db_bind_api",     (cmd_function)db_postgres_bind_api,     0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
 
 
 
-struct module_exports exports = {
+struct kam_module_exports kam_exports = {
 	"db_postgres",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
