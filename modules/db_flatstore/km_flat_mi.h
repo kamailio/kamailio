@@ -25,7 +25,7 @@
 #ifndef _KM_FLAT_MI_H_
 #define _KM_FLAT_MI_H_
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #define MI_FLAT_ROTATE "flat_rotate"
 
