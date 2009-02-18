@@ -420,7 +420,7 @@ _empty_line_
 [2]
 
 ^1\d{3}$
-^(\+34)?900\d{6}$
+^((\+|00)34)?900\d{6}$
 </programlisting>
 			
 			</example>
