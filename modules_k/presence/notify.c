@@ -1558,7 +1558,6 @@ jump_over_body:
 		goto error;	
 	}	
 
-	LM_ERR("before tmb.t_request_within\n");
 	result = tmb.t_request_within
 		(&met,              /* method*/
 		&str_hdr,           /* extra headers*/
@@ -1566,7 +1565,6 @@ jump_over_body:
 		td,                 /* dialog structure*/
 		p_tm_callback,      /* callback function*/
 		(void*)cb_param);   /* callback parameter*/
-	LM_ERR("after tmb.t_request_within\n");
 
 	if(result< 0)
 	{
