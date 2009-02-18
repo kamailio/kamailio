@@ -29,8 +29,8 @@
 /** \file 
  * Flatstore module interface.
  */
-
 #include "flatstore_mod.h"
+#include "km_flatstore_mod.h"
 #include "flat_con.h"
 #include "flat_cmd.h"
 #include "flat_rpc.h"
@@ -166,21 +166,32 @@ static int mod_init(void)
 
 	*flat_rotate = time(0);
 	flat_local_timestamp = *flat_rotate;
-	return 0;
+
+	return km_mod_init();
 }
 
 
 static void mod_destroy(void)
 {
+	km_mod_destroy();
 	if (flat_pid.s) free(flat_pid.s);
 	if (flat_rotate) shm_free(flat_rotate);
 }
 
 
+/*
+ * FIXME: We should check whether just calling km_child_init would really work
+ * here. This function comes from kamailio and since the core of sip-router is
+ * based on SER 2.0, the way how child_init is called and values of the rank
+ * variable could be incompatible with km_child_init function. A solution here
+ * would be to rewrite km_child_init with ser 2.0 init stuff in mind.
+ */
 static int child_init(int rank)
 {
 	char* tmp;
 	unsigned int v;
+
+	km_child_init(rank);
 
 	if (rank <= 0) {
 		v = -rank;

@@ -158,9 +158,9 @@ int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 	int l;
 	char *s, *p;
 
-	if (local_timestamp < *flat_rotate) {
+	if (km_local_timestamp < *km_flat_rotate) {
 		flat_rotate_logs();
-		local_timestamp = *flat_rotate;
+		km_local_timestamp = *km_flat_rotate;
 	}
 
 	f = CON_FILE(h);

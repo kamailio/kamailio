@@ -23,6 +23,7 @@
  */
 
 #include "flatstore_mod.h"
+#include "km_flatstore_mod.h"
 #include "km_flat_mi.h"
 
 
@@ -34,7 +35,7 @@ struct mi_root*  mi_flat_rotate_cmd(struct mi_root* cmd_tree, void* param)
 	if(rpl_tree == NULL)
 		return rpl_tree;
 
-	*flat_rotate = time(0);
+	*km_flat_rotate = time(0);
 
 	return rpl_tree;
 }

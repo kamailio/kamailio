@@ -48,14 +48,20 @@ extern char* km_flat_delimiter;
  * The timestamp of log rotation request from
  * the FIFO interface
  */
-extern time_t* flat_rotate;
+extern time_t* km_flat_rotate;
 
 
 /*
  * Local timestamp marking the time of the
  * last log rotation in the process
  */
-extern time_t local_timestamp;
+extern time_t km_local_timestamp;
+
+int km_mod_init(void);
+
+void km_mod_destroy(void);
+
+int km_child_init(int rank);
 
 
 #endif /* KM_FLATSTORE_MOD_H */

@@ -37,12 +37,6 @@
 
 /*MODULE_VERSION*/
 
-static int child_init(int rank);
-
-static int mod_init(void);
-
-static void mod_destroy(void);
-
 int db_flat_bind_api(db_func_t *dbb);
 
 /*
@@ -61,9 +55,9 @@ char* km_flat_delimiter = "|";
  * Timestamp of the last log rotation request from
  * the FIFO interface
  */
-time_t* flat_rotate;
+time_t* km_flat_rotate;
 
-time_t local_timestamp;
+time_t km_local_timestamp;
 
 /*
  * Flatstore database module interface
@@ -98,40 +92,40 @@ struct kam_module_exports km_exports = {
 	mi_cmds,     /* exported MI functions */
 	0,           /* exported pseudo-variables */
 	0,           /* extra processes */
-	mod_init,    /* module initialization function */
+	km_mod_init,    /* module initialization function */
 	0,           /* response function*/
-	mod_destroy, /* destroy function */
-	child_init   /* per-child init function */
+	km_mod_destroy, /* destroy function */
+	km_child_init   /* per-child init function */
 };
 
 
-static int mod_init(void)
+int km_mod_init(void)
 {
 	if (strlen(km_flat_delimiter) != 1) {
 		LM_ERR("delimiter has to be exactly one character\n");
 		return -1;
 	}
 
-	flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
-	if (!flat_rotate) {
+	km_flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
+	if (!km_flat_rotate) {
 		LM_ERR("no shared memory left\n");
 		return -1;
 	}
 
-	*flat_rotate = time(0);
-	local_timestamp = *flat_rotate;
+	*km_flat_rotate = time(0);
+	km_local_timestamp = *km_flat_rotate;
 
 	return 0;
 }
 
 
-static void mod_destroy(void)
+void km_mod_destroy(void)
 {
-	if (flat_rotate) shm_free(flat_rotate);
+	if (km_flat_rotate) shm_free(km_flat_rotate);
 }
 
 
-static int child_init(int rank)
+int km_child_init(int rank)
 {
 	if (rank <= 0) {
 		km_flat_pid = - rank;
