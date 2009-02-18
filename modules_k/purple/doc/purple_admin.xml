@@ -265,7 +265,7 @@ if (is_method("MESSAGE")) {
     xlog("MESSAGE $ru from [$fu] to [$tu]\n");
     if (uri !~ "sip:.+@.+;proto=.+") {
         purple_send_message();
-        sl_send_reply("200", "Accepted");
+        sl_send_reply("202", "Accepted");
     }
 }
 ...
