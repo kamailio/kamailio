@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _FLAT_CON_H
-#define _FLAT_CON_H
+#ifndef _KM_FLAT_CON_H
+#define _KM_FLAT_CON_H
 
 #include <stdio.h>
 #include <time.h>
@@ -62,4 +62,4 @@ void flat_free_connection(struct flat_con* con);
 int flat_reopen_connection(struct flat_con* con);
 
 
-#endif /* _FLAT_CON_H */
+#endif /* _KM_FLAT_CON_H */

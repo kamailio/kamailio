@@ -27,8 +27,8 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
-#ifndef FLATSTORE_MOD_H
-#define FLATSTORE_MOD_H
+#ifndef KM_FLATSTORE_MOD_H
+#define KM_FLATSTORE_MOD_H
 
 #include <time.h>
 
@@ -64,4 +64,4 @@ extern time_t* flat_rotate;
 extern time_t local_timestamp;
 
 
-#endif /* FLATSTORE_MOD_H */
+#endif /* KM_FLATSTORE_MOD_H */

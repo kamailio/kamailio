@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _FLAT_ID_H
-#define _FLAT_ID_H
+#ifndef _KM_FLAT_ID_H
+#define _KM_FLAT_ID_H
 
 #include "../../str.h"
 
@@ -52,4 +52,4 @@ unsigned char cmp_flat_id(struct flat_id* id1, struct flat_id* id2);
 void free_flat_id(struct flat_id* id);
 
 
-#endif /* _FLAT_ID_H */
+#endif /* _KM_FLAT_ID_H */

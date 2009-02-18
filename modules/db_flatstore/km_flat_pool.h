@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _FLAT_POOL_H
-#define _FLAT_POOL_H
+#ifndef _KM_FLAT_POOL_H
+#define _KM_FLAT_POOL_H
 
 #include "flat_con.h"
 
@@ -47,4 +47,4 @@ void flat_release_connection(struct flat_con* con);
  */
 int flat_rotate_logs(void);
 
-#endif /* _FLAT_POOL_H */
+#endif /* _KM_FLAT_POOL_H */

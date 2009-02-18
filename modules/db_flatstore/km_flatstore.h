@@ -28,8 +28,8 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
-#ifndef _FLATSTORE_H
-#define _FLATSTORE_H
+#ifndef _KM_FLATSTORE_H
+#define _KM_FLATSTORE_H
 
 #include "../../db/db_val.h"
 #include "../../db/db_key.h"
@@ -64,4 +64,4 @@ int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
 		const int n);
 
 
-#endif /* _FLATSTORE_H */
+#endif /* _KM_FLATSTORE_H */

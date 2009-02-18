@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _FLATSTORE_MI_H_
-#define _FLATSTORE_MI_H_
+#ifndef _KM_FLAT_MI_H_
+#define _KM_FLAT_MI_H_
 
 #include "../../mi/mi.h"
 
@@ -31,5 +31,5 @@
 
 struct mi_root*  mi_flat_rotate_cmd(struct mi_root* cmd, void* param);
 
-#endif /* _FLATSTORE_MI_H_ */
+#endif /* _KM_FLAT_MI_H_ */
 
