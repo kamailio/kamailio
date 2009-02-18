@@ -518,7 +518,8 @@ found_support:
 /*** examine the event header */
 
 	/* extract dialog information from message headers */
-	if(pres_extract_sdialog_info(&subs, msg, rls_max_expires, &to_tag_gen)< 0)
+	if(pres_extract_sdialog_info(&subs, msg, rls_max_expires,
+				&to_tag_gen, server_address)< 0)
 	{
 		LM_ERR("bad Subscribe request\n");
 		goto error;

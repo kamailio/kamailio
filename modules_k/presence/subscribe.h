@@ -48,6 +48,7 @@ struct pres_ev;
 #define ACTIVE_STATUS        1
 #define PENDING_STATUS       2
 #define TERMINATED_STATUS    3
+#define WAITING_STATUS       4
 
 struct subscription
 {
@@ -107,8 +108,8 @@ typedef void (*update_db_subs_t)(db_con_t * ,db_func_t ,shtable_t ,int ,int ,
 		handle_expired_func_t);
 
 int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
-		int* to_tag_gen);
+		int* to_tag_gen, str scontact);
 typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
-		int max_expire, int* to_tag_gen);
+		int max_expire, int* to_tag_gen, str scontact);
 
 #endif

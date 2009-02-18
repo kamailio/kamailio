@@ -61,23 +61,48 @@ static str pu_489_rpl  = str_init("Bad Event");
 int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 		str* local_contact)
 {
-	static str hdr_append;
+	str hdr_append = {0, 0};
+	str tmp;
 	
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 128));
+	tmp.s = int2str((unsigned long)lexpire, &tmp.len);
+	hdr_append.len = 9 + tmp.len + CRLF_LEN
+		+ 10 + local_contact->len + 16 + CRLF_LEN;
+	hdr_append.s = (char *)pkg_malloc(sizeof(char)*(hdr_append.len+1));
 	if(hdr_append.s == NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);
 	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);	
-	
-	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
-	hdr_append.len += 10;
-	strncpy(hdr_append.s+hdr_append.len, local_contact->s, local_contact->len);
-	hdr_append.len+= local_contact->len;
-	strncpy(hdr_append.s+hdr_append.len, ">", 1);
-	hdr_append.len += 1;
-	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
-	hdr_append.len += CRLF_LEN;
+	strncpy(hdr_append.s, "Expires: ", 9);
+	strncpy(hdr_append.s+9, tmp.s, tmp.len);
+	tmp.s = hdr_append.s+9+tmp.len;
+	strncpy(tmp.s, CRLF, CRLF_LEN);
+	tmp.s += CRLF_LEN;
+	strncpy(tmp.s, "Contact: <", 10);
+	tmp.s += 10;
+	strncpy(tmp.s, local_contact->s, local_contact->len);
+	tmp.s += local_contact->len;
+	switch (msg->rcv.proto)
+	{
+		case PROTO_TCP:
+			strncpy(tmp.s, ";transport=tcp", 14);
+			tmp.s += 14;
+			hdr_append.len -= 1;
+		break;
+		case PROTO_TLS:
+			strncpy(tmp.s, ";transport=tls", 14);
+			tmp.s += 14;
+			hdr_append.len -= 1;
+		break;
+		case PROTO_SCTP:
+			strncpy(tmp.s, ";transport=sctp", 15);
+			tmp.s += 15;
+			hdr_append.len -= 1;
+		break;
+		default:
+			hdr_append.len -= 15;
+	}
+	*tmp.s = '>';
+	strncpy(tmp.s+1, CRLF, CRLF_LEN);
 
 	hdr_append.s[hdr_append.len]= '\0';
 	
@@ -98,7 +123,8 @@ int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 
 error:
 
-	pkg_free(hdr_append.s);
+	if(hdr_append.s!=NULL)
+		pkg_free(hdr_append.s);
 	return -1;
 }
 
@@ -536,7 +562,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		ev_param= ev_param->next;
 	}		
 	
-	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen)< 0)
+	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen,
+				server_address)< 0)
 	{
 		LM_ERR("failed to extract dialog information\n");
 		goto error;
@@ -716,7 +743,8 @@ error:
 }
 
 
-int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag_gen)
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
+		int* to_tag_gen, str scontact)
 {
 	str rec_route= {0, 0};
 	int rt  = 0;
@@ -924,7 +952,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 
 	subs->version = 0;
 	
-	if((!server_address.s) || (server_address.len== 0))
+	if((!scontact.s) || (scontact.len== 0))
 	{
 		contact= get_local_contact(msg);
 		if(contact== NULL)
@@ -935,7 +963,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 		subs->local_contact= *contact;
 	}
 	else
-		subs->local_contact= server_address;
+		subs->local_contact= scontact;
 	
 	return 0;
 	

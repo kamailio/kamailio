@@ -54,10 +54,15 @@
 #define ALLOC_SIZE 3000
 #define MAX_FORWARD 70
 
-c_back_param* shm_dup_cbparam(subs_t* , subs_t*);
+c_back_param* shm_dup_cbparam(subs_t*);
 void free_cbparam(c_back_param* cb_param);
 
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
+int add_waiting_watchers(watcher_t *watchers, str pres_uri, str event);
+int add_watcher_list(subs_t *s, watcher_t *watchers);
+str* create_winfo_xml(watcher_t* watchers, char* version,
+		str resource, str event, int STATE_FLAG);
+void free_watcher_list(watcher_t* watchers);
 
 str str_to_user_col = str_init("to_user");
 str str_username_col = str_init("username");
@@ -95,6 +100,7 @@ char* get_status_str(int status_flag)
 		case ACTIVE_STATUS: return "active";
 		case PENDING_STATUS: return "pending";
 		case TERMINATED_STATUS: return "terminated";
+		case WAITING_STATUS: return "waiting";
 	}
 	return NULL;
 }
@@ -114,147 +120,142 @@ void printf_subs(subs_t* subs)
 		subs->to_tag.s,subs->from_tag.len, subs->from_tag.s,subs->contact.len,
 		subs->contact.s,subs->record_route.len,subs->record_route.s);
 }
-str* create_winfo_xml(watcher_t* watchers, char* version,str resource, int STATE_FLAG );
 
-int build_str_hdr(subs_t* subs, int is_body, str** hdr)
+int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 {
-	str* str_hdr = NULL;	
-	char* subs_expires = NULL;
-	int len = 0;
 	pres_ev_t* event= subs->event;
-	int expires_t;
-	char* status= NULL;
+	str expires = {0, 0};
+	str status = {0, 0};
+	str tmp = {0, 0};
 
-	str_hdr =(str*)pkg_malloc(sizeof(str));
-	if(str_hdr== NULL)
+	if(hdr == NULL)
 	{
-		LM_ERR("while allocating memory\n");
+		LM_ERR("bad parameter\n");
 		return -1;
 	}
-	memset(str_hdr, 0, sizeof(str));
-
-	str_hdr->s = (char*)pkg_malloc(ALLOC_SIZE* sizeof(char));
-	if(str_hdr->s== NULL)
+	expires.s = int2str(subs->expires, &expires.len);
+	status.s= get_status_str(subs->status);
+	if(status.s == NULL)
 	{
-		LM_ERR("while allocating memory\n");
-		pkg_free(str_hdr);
+		LM_ERR("bad status %d\n", subs->status);
 		return -1;
-	}	
+	}
+	status.len = strlen(status.s);
 
-	strncpy(str_hdr->s ,"Max-Forwards: ", 14);
-	str_hdr->len = 14;
-	len= sprintf(str_hdr->s+str_hdr->len, "%d", MAX_FORWARD);
-	if(len<= 0)
+	hdr->len = 18 /*Max-Forwards:  + val*/ + CRLF_LEN + 
+		7 /*Event: */ + subs->event->name.len +4 /*;id=*/+ subs->event_id.len+
+		CRLF_LEN + 10 /*Contact: <*/ + subs->local_contact.len + 1/*>*/ +
+		15/*";transport=xxxx"*/ + CRLF_LEN + 20 /*Subscription-State: */ +
+		status.len + 10 /*reason/expires params*/
+		+ (subs->reason.len>expires.len?subs->reason.len:expires.len)
+		+ CRLF_LEN + (is_body?
+		(14 /*Content-Type: */+subs->event->content_type.len + CRLF_LEN):0) + 1;
+
+	hdr->s = (char*)pkg_malloc(hdr->len);
+	if(hdr->s == NULL)
 	{
-		LM_ERR("while printing in string\n");
-		pkg_free(str_hdr->s);
-		pkg_free(str_hdr);
+		LM_ERR("no more pkg\n");
 		return -1;
-	}	
-	str_hdr->len+= len; 
-	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-	str_hdr->len += CRLF_LEN;
+	}
 
-	strncpy(str_hdr->s+str_hdr->len  ,"Event: ", 7);
-	str_hdr->len+= 7;
-	strncpy(str_hdr->s+str_hdr->len, event->name.s, event->name.len);
-	str_hdr->len+= event->name.len;
+	strncpy(hdr->s, "Max-Forwards: ", 14);
+	tmp.s = int2str((unsigned long)MAX_FORWARD, &tmp.len);
+	strncpy(hdr->s+14, tmp.s, tmp.len);
+	tmp.s = hdr->s + tmp.len + 14;
+	strncpy(tmp.s, CRLF, CRLF_LEN);
+	tmp.s += CRLF_LEN;
+
+	strncpy(tmp.s  ,"Event: ", 7);
+	tmp.s += 7;
+	strncpy(tmp.s, event->name.s, event->name.len);
+	tmp.s += event->name.len;
 	if(subs->event_id.len && subs->event_id.s) 
 	{
- 		strncpy(str_hdr->s+str_hdr->len, ";id=", 4);
- 		str_hdr->len += 4;
- 		strncpy(str_hdr->s+str_hdr->len, subs->event_id.s, subs->event_id.len);
- 		str_hdr->len += subs->event_id.len;
+ 		strncpy(tmp.s, ";id=", 4);
+ 		tmp.s += 4;
+ 		strncpy(tmp.s, subs->event_id.s, subs->event_id.len);
+ 		tmp.s += subs->event_id.len;
  	}
-	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-	str_hdr->len += CRLF_LEN;
+	strncpy(tmp.s, CRLF, CRLF_LEN);
+	tmp.s += CRLF_LEN;
 
-	strncpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
-	str_hdr->len += 10;
-	strncpy(str_hdr->s+str_hdr->len, subs->local_contact.s, subs->local_contact.len);
-	str_hdr->len +=  subs->local_contact.len;
-	strncpy(str_hdr->s+str_hdr->len, ">", 1);
-	str_hdr->len += 1;
-	strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-	str_hdr->len += CRLF_LEN;
-	
-	strncpy(str_hdr->s+str_hdr->len,"Subscription-State: ", 20);
-	str_hdr->len+= 20;
-	status= get_status_str(subs->status);
-	if(status== NULL)
+	strncpy(tmp.s, "Contact: <", 10);
+	tmp.s += 10;
+	strncpy(tmp.s, subs->local_contact.s, subs->local_contact.len);
+	tmp.s +=  subs->local_contact.len;
+	if(subs->sockinfo_str.s!=NULL)
 	{
-		LM_ERR("bad status flag= %d\n", subs->status);
-		pkg_free(str_hdr->s);
-		pkg_free(str_hdr);
-		return -1;
+		/* fix me */
+		switch(subs->sockinfo_str.s[0]) {
+			case 's':
+			case 'S':
+				strncpy(tmp.s, ";transport=sctp", 15);
+				tmp.s += 15;
+			break;
+			case 't':
+			case 'T':
+				switch(subs->sockinfo_str.s[1]) {
+					case 'c':
+					case 'C':
+						strncpy(tmp.s, ";transport=tcp", 14);
+						tmp.s += 14;
+					break;
+					case 'l':
+					case 'L':
+						strncpy(tmp.s, ";transport=tls", 14);
+						tmp.s += 14;
+					break;
+				}
+			break;
+		}
 	}
-	strcpy(str_hdr->s+str_hdr->len, status);
-	str_hdr->len+= strlen(status);
+	*tmp.s =  '>';
+	tmp.s++;
+	strncpy(tmp.s, CRLF, CRLF_LEN);
+	tmp.s += CRLF_LEN;
 	
-	expires_t= subs->expires;
+	strncpy(tmp.s, "Subscription-State: ", 20);
+	tmp.s += 20;
+	strncpy(tmp.s, status.s, status.len);
+	tmp.s += status.len;
 	
-	if(subs->status== TERMINATED_STATUS)
+	if(subs->status == TERMINATED_STATUS)
 	{
 		LM_DBG("state = terminated\n");
 		
-		strncpy(str_hdr->s+str_hdr->len,";reason=", 8);
-		str_hdr->len+= 8;
-		strncpy(str_hdr->s+str_hdr->len, subs->reason.s ,subs->reason.len );
-		str_hdr->len+= subs->reason.len;
-		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len+= CRLF_LEN;
+		strncpy(tmp.s, ";reason=", 8);
+		tmp.s += 8;
+		strncpy(tmp.s, subs->reason.s, subs->reason.len);
+		tmp.s += subs->reason.len;
+	} else {	
+		strncpy(tmp.s, ";expires=", 9);
+		tmp.s += 9;
+		LM_DBG("expires = %d\n", subs->expires);
+		strncpy(tmp.s, expires.s, expires.len);
+		tmp.s += expires.len;
 	}
-	else
-	{	
-		strncpy(str_hdr->s+str_hdr->len,";expires=", 9);
-		str_hdr->len+= 9;
-	
-		subs_expires= int2str(expires_t, &len); 
-
-		if(subs_expires == NULL || len == 0)
-		{
-			LM_ERR("converting int to str\n");
-			pkg_free(str_hdr->s);
-			pkg_free(str_hdr);
-			return -1;
-		}
-
-		LM_DBG("expires = %d\n", expires_t);
-
-		strncpy(str_hdr->s+str_hdr->len,subs_expires ,len );
-		str_hdr->len += len;
-		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len += CRLF_LEN;
-	}
+	strncpy(tmp.s, CRLF, CRLF_LEN);
+	tmp.s += CRLF_LEN;
 	
 	if(is_body)
 	{	
-		strncpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
-		str_hdr->len += 14;
-		strncpy(str_hdr->s+str_hdr->len, event->content_type.s , event->content_type.len);
-		str_hdr->len += event->content_type.len;
-		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-		str_hdr->len += CRLF_LEN;
+		strncpy(tmp.s,"Content-Type: ", 14);
+		tmp.s += 14;
+		strncpy(tmp.s, event->content_type.s, event->content_type.len);
+		tmp.s += event->content_type.len;
+		strncpy(tmp.s, CRLF, CRLF_LEN);
+		tmp.s += CRLF_LEN;
 	}
 	
-	if(str_hdr->len> ALLOC_SIZE)
-	{
-		LM_ERR("buffer size overflown\n");
-		pkg_free(str_hdr->s);
-		pkg_free(str_hdr);
-		return -1;
-
-	}
-	str_hdr->s[str_hdr->len] = '\0';
-	*hdr= str_hdr;
+	*tmp.s = '\0';
+	hdr->len = tmp.s - hdr->s;
 
 	return 0;
-
 }
 
-int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
+int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 {	
-	watcher_t *w;
+	subs_t sb;
 	db_key_t query_cols[6];
 	db_op_t  query_ops[6];
 	db_val_t query_vals[6];
@@ -265,8 +266,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i;
-	int status_col, expires_col, from_user_col, from_domain_col;
-	str from_user, from_domain;
+	int status_col, expires_col, from_user_col, from_domain_col, callid_col;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -286,6 +286,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
 	result_cols[expires_col=n_result_cols++] = &str_expires_col;
 	result_cols[from_user_col=n_result_cols++] = &str_watcher_username_col;
 	result_cols[from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[callid_col=n_result_cols++] = &str_callid_col;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
@@ -318,40 +319,21 @@ int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);
 		
-		from_user.s= (char*)row_vals[from_user_col].val.string_val;
-		from_user.len= strlen(from_user.s);
+		sb.from_user.s= (char*)row_vals[from_user_col].val.string_val;
+		sb.from_user.len= strlen(sb.from_user.s);
 
-		from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
-		from_domain.len= strlen(from_domain.s);
+		sb.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
+		sb.from_domain.len= strlen(sb.from_domain.s);
 
-		w= (watcher_t*)pkg_malloc(sizeof(watcher_t));
-		if(w== NULL)
-		{
-			ERR_MEM(PKG_MEM_STR);
-		}
-		w->status= row_vals[status_col].val.int_val;
-		if(uandd_to_uri(from_user, from_domain, &w->uri)<0)
-	 	{
-			pkg_free(w);
-   			LM_ERR("creating uri\n");
-   			goto error;
-   		}
-		w->id.s = (char*)pkg_malloc(w->uri.len*2 +1);
-		if(w->id.s== NULL)
-		{
-			pkg_free(w->uri.s);
-			pkg_free(w);
-			ERR_MEM(PKG_MEM_STR);
-		}
+		sb.callid.s= (char*)row_vals[callid_col].val.string_val;
+		sb.callid.len= strlen(sb.callid.s);
 
-		to64frombits((unsigned char *)w->id.s,
-   			(const unsigned char*)w->uri.s, w->uri.len);
-   
-   		w->id.len = strlen(w->id.s);
-  		w->event= subs->event->wipeer->name;
+		sb.event =subs->event->wipeer;
+		sb.status= row_vals[status_col].val.int_val;
 		
-		w->next= (*watchers)->next;
-		(*watchers)->next= w;
+		if(add_watcher_list(&sb, watchers)<0)
+			goto error;
+
 	}
 	
 	pa_dbf.free_result(pa_db, result);
@@ -367,17 +349,11 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 {
 	str* notify_body = NULL;
 	char* version_str;
-	watcher_t *watchers = NULL, *w= NULL;
+	watcher_t *watchers = NULL;
 	int len = 0;
 	unsigned int hash_code;
 	subs_t* s= NULL;
 	int state = FULL_STATE_FLAG;
-
-	if(!subs->event->wipeer) {
-		LM_ERR("can not create NOTIFY body as wipeer not defined for event [%.*s]\n ",
-			subs->event->name.len, subs->event->name.s);
-		return NULL;
-	}
 
 	hash_code = 0;
 	version_str = int2str(subs->version, &len);
@@ -396,39 +372,8 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 
 	if(watcher_subs != NULL) 
 	{		
-		w= (watcher_t *)pkg_malloc(sizeof(watcher_t));
-		if(w== NULL)
-		{
-			ERR_MEM(PKG_MEM_STR);
-		}
-		memset(w, 0, sizeof(watcher_t));
-
-		w->status= watcher_subs->status;
-		uandd_to_uri( watcher_subs->from_user,watcher_subs->from_domain,
-						&w->uri);
-		if(w->uri.s== NULL)
-		{
-			pkg_free(w);
+		if(add_watcher_list(watcher_subs, watchers)< 0)
 			goto error;
-		}
-
-		w->id.s = (char *)pkg_malloc(w->uri.len *2 +1);
-		if(w->id.s== NULL)
-		{
-			pkg_free(w->uri.s);
-			pkg_free(w);
-			ERR_MEM(PKG_MEM_STR);
-		}
-		to64frombits((unsigned char *)w->id.s,
-				(const unsigned char*)w->uri.s, w->uri.len );
-			
-		w->id.len = strlen(w->id.s);
-		
-		w->event= watcher_subs->event->name;
-		
-		w->next= watchers->next;
-		watchers->next= w;
-
 		state = PARTIAL_STATE_FLAG;
 
 		goto done;
@@ -436,7 +381,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 
 	if(fallback2db)
 	{
-		if(get_wi_subs_db(subs, &watchers)< 0)
+		if(get_wi_subs_db(subs, watchers)< 0)
 		{
 			LM_ERR("getting watchers from database\n");
 			goto error;
@@ -469,43 +414,24 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			s->pres_uri.len== subs->pres_uri.len &&
 			strncmp(s->pres_uri.s, subs->pres_uri.s,subs->pres_uri.len)== 0)
 		{
-			w= (watcher_t*)pkg_malloc(sizeof(watcher_t));
-			if(w== NULL)
+			if(add_watcher_list(s, watchers)< 0)
 			{
 				lock_release(&subs_htable[hash_code].lock);
-				ERR_MEM(PKG_MEM_STR);
+				goto error;
 			}
-			w->status= s->status;
-			if(uandd_to_uri(s->from_user, s->from_domain, &w->uri)<0)
-	 		{
-				lock_release(&subs_htable[hash_code].lock);
-				pkg_free(w);
-   				LM_ERR("creating uri\n");
-   				goto error;
-   			}
-			w->id.s = (char*)pkg_malloc(w->uri.len*2 +1);
-			if(w->id.s== NULL)
-			{
-				lock_release(&subs_htable[hash_code].lock);
-				pkg_free(w->uri.s);
-				pkg_free(w);
-				ERR_MEM(PKG_MEM_STR);
-			}
-
-			to64frombits((unsigned char *)w->id.s,
-   				(const unsigned char*)w->uri.s, w->uri.len);
-   
-   			w->id.len = strlen(w->id.s);
-  			w->event= subs->event->wipeer->name;
-		
-			w->next= watchers->next;
-			watchers->next= w;
 		}
 	}
 	
+	if(add_waiting_watchers(watchers, subs->pres_uri,
+				subs->event->wipeer->name)< 0 )
+	{
+		LM_ERR("failed to add waiting watchers\n");
+		goto error;
+	}
+
 done:
 	notify_body = create_winfo_xml(watchers,version_str,subs->pres_uri,
-			state );
+			subs->event->wipeer->name, state);
 	
 	if(watcher_subs == NULL) 
 		lock_release(&subs_htable[hash_code].lock);
@@ -515,16 +441,7 @@ done:
 		LM_ERR("in function create_winfo_xml\n");
 		goto error;
 	}
-	while(watchers)
-	{	
-		w= watchers;
-		if(w->uri.s !=NULL)
-			pkg_free(w->uri.s);
-		if(w->id.s !=NULL)
-			pkg_free(w->id.s);
-		watchers= watchers->next;
-		pkg_free(w);
-	}
+	free_watcher_list(watchers);
 	return notify_body;
 
 error:
@@ -534,6 +451,13 @@ error:
 			xmlFree(notify_body->s);
 		pkg_free(notify_body);
 	}
+	free_watcher_list(watchers);
+	return NULL;
+}
+
+void free_watcher_list(watcher_t* watchers)
+{
+	watcher_t* w;
 	while(watchers)
 	{	
 		w= watchers;
@@ -544,8 +468,47 @@ error:
 		watchers= watchers->next;
 		pkg_free(w);
 	}
+}
 
-	return NULL;
+int add_watcher_list(subs_t *s, watcher_t *watchers)
+{
+	watcher_t* w;
+
+	w= (watcher_t*)pkg_malloc(sizeof(watcher_t));
+	if(w== NULL)
+	{
+		LM_ERR("No more private memory\n");
+		return -1;
+	}
+	w->status= s->status;
+	if(uandd_to_uri(s->from_user, s->from_domain, &w->uri)<0)
+	{
+		LM_ERR("failed to create uri\n");
+		goto error;
+	}
+	w->id.s = (char*)pkg_malloc(s->callid.len+ 1);
+	if(w->id.s == NULL)
+	{
+		LM_ERR("no more memory\n");
+		goto error;
+	}
+	memcpy(w->id.s, s->callid.s, s->callid.len);
+	w->id.len = s->callid.len;
+	w->id.s[w->id.len] = '\0';
+
+	w->next= watchers->next;
+	watchers->next= w;
+
+	return 0;
+
+error:
+	if(w)
+	{
+		if(w->uri.s)
+			pkg_free(w->uri.s);
+		pkg_free(w);
+	}
+	return -1;
 }
 
 str* build_empty_bla_body(str pres_uri)
@@ -1067,16 +1030,19 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	query_vals[n_query_cols].val.int_val = ACTIVE_STATUS;
 	n_query_cols++;
 
+	query_cols[n_query_cols] = &str_contact_col;
+	query_ops[n_query_cols] = OP_NEQ;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
 	if(sender)
 	{	
 		LM_DBG("Do not send Notify to:[uri]= %.*s\n",sender->len,sender->s);
-		query_cols[n_query_cols] = &str_contact_col;
-		query_ops[n_query_cols] = OP_NEQ;
-		query_vals[n_query_cols].type = DB_STR;
-		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val = *sender;
-		n_query_cols++;
+	} else {
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
 	}
+	n_query_cols++;
 
 	result_cols[to_user_col=n_result_cols++]      =   &str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++]    =   &str_to_domain_col;
@@ -1361,11 +1327,11 @@ int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str
 	s= subs_array;
 	while(s)
 	{
+		s->auth_rules_doc= rules_doc;
 		if (p->event->aux_body_processing) {
 			aux_body = p->event->aux_body_processing(s, notify_body?notify_body:body);
 		}
 
-		s->auth_rules_doc= rules_doc;
 		if(notify(s, NULL, aux_body?aux_body:(notify_body?notify_body:body), 0)< 0 )
 		{
 			LM_ERR("Could not send notify for %.*s\n",
@@ -1475,7 +1441,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 {
 	dlg_t* td = NULL;
 	str met = {"NOTIFY", 6};
-	str* str_hdr = NULL;
+	str str_hdr = {0, 0};
 	str* notify_body = NULL;
 	int result= 0;
     c_back_param *cb_param= NULL;
@@ -1496,11 +1462,13 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		if( subs->event->req_auth)
 		{
 			
-			if(subs->auth_rules_doc && subs->event->apply_auth_nbody &&
-				subs->event->apply_auth_nbody(n_body, subs, &notify_body)< 0)
+			if(subs->auth_rules_doc && subs->event->apply_auth_nbody)
 			{
-				LM_ERR("in function apply_auth_nbody\n");
-				goto error;
+				if(subs->event->apply_auth_nbody(n_body, subs, &notify_body)< 0)
+				{
+					LM_ERR("in function apply_auth_nbody\n");
+					goto error;
+				}
 			}
 			if(notify_body== NULL)
 				notify_body= n_body;
@@ -1530,7 +1498,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 			else
 			{
 				notify_body = get_p_notify_body(subs->pres_uri,
-						subs->event, NULL, (subs->contact.s)?&subs->contact:NULL);
+					subs->event, NULL, (subs->contact.s)?&subs->contact:NULL);
 				if(notify_body == NULL || notify_body->s== NULL)
 				{
 					LM_DBG("Could not get the notify_body\n");
@@ -1539,8 +1507,9 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 				if(subs->event->req_auth)
 				{
 					 
-					if(subs->auth_rules_doc && subs->event->apply_auth_nbody &&
-					subs->event->apply_auth_nbody(notify_body,subs,&final_body)<0)
+					if(subs->auth_rules_doc && subs->event->apply_auth_nbody
+							&& subs->event->apply_auth_nbody(notify_body,
+								subs,&final_body)<0)
 					{
 						LM_ERR("in function apply_auth\n");
 						goto error;
@@ -1572,7 +1541,7 @@ jump_over_body:
 		LM_ERR("while building headers\n");
 		goto error;
 	}	
-	LM_DBG("headers:\n%.*s\n", str_hdr->len, str_hdr->s);
+	LM_DBG("headers:\n%.*s\n", str_hdr.len, str_hdr.s);
 
 	/* construct the dlg_t structure */
 	td = build_dlg_t(subs);
@@ -1582,25 +1551,22 @@ jump_over_body:
 		goto error;	
 	}
 
-	if(subs->event->type == WINFO_TYPE && watcher_subs )
-	{
-		LM_DBG("Send notify for presence on callback\n");
-		watcher_subs->send_on_cback = 1;			
-	}
-	cb_param = shm_dup_cbparam(watcher_subs, subs);
+	cb_param = shm_dup_cbparam(subs);
 	if(cb_param == NULL)
 	{
 		LM_ERR("while duplicating cb_param in share memory\n");
 		goto error;	
 	}	
 
+	LM_ERR("before tmb.t_request_within\n");
 	result = tmb.t_request_within
 		(&met,              /* method*/
-		str_hdr,            /* extra headers*/
+		&str_hdr,           /* extra headers*/
 		notify_body,        /* body*/
 		td,                 /* dialog structure*/
 		p_tm_callback,      /* callback function*/
 		(void*)cb_param);   /* callback parameter*/
+	LM_ERR("after tmb.t_request_within\n");
 
 	if(result< 0)
 	{
@@ -1610,13 +1576,14 @@ jump_over_body:
 	}
 
 	LM_INFO("NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
-		td->rem_uri.len, td->rem_uri.s, td->hooks.next_hop->len, td->hooks.next_hop->s,
-		td->loc_uri.len, td->loc_uri.s, subs->event->name.len, subs->event->name.s);
+		td->rem_uri.len, td->rem_uri.s, td->hooks.next_hop->len,
+		td->hooks.next_hop->s,
+		td->loc_uri.len, td->loc_uri.s, subs->event->name.len,
+		subs->event->name.s);
 
 	free_tm_dlg(td);
 	
-	pkg_free(str_hdr->s);
-	pkg_free(str_hdr);
+	if(str_hdr.s) pkg_free(str_hdr.s);
 	
 	if((int)(long)n_body!= (int)(long)notify_body)
 	{
@@ -1627,7 +1594,8 @@ jump_over_body:
 				if(subs->event->type& WINFO_TYPE )
 					xmlFree(notify_body->s);
 				else
-				if(subs->event->apply_auth_nbody== NULL && subs->event->agg_nbody== NULL)
+				if(subs->event->apply_auth_nbody== NULL
+						&& subs->event->agg_nbody== NULL)
 					pkg_free(notify_body->s);
 				else
 				subs->event->free_body(notify_body->s);
@@ -1639,12 +1607,8 @@ jump_over_body:
 
 error:
 	free_tm_dlg(td);
-	if(str_hdr!=NULL)
-	{
-		if(str_hdr->s)
-			pkg_free(str_hdr->s);
-		pkg_free(str_hdr);
-	}
+	if(str_hdr.s!=NULL)
+		pkg_free(str_hdr.s);
 	if((int)(long)n_body!= (int)(long)notify_body)
 	{
 		if(notify_body!=NULL)
@@ -1654,7 +1618,8 @@ error:
 				if(subs->event->type& WINFO_TYPE)
 					xmlFree(notify_body->s);
 				else
-				if(subs->event->apply_auth_nbody== NULL && subs->event->agg_nbody== NULL)
+				if(subs->event->apply_auth_nbody== NULL
+						&& subs->event->agg_nbody== NULL)
 					pkg_free(notify_body->s);
 				else
 				subs->event->free_body(notify_body->s);
@@ -1735,111 +1700,52 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 		delete_db_subs(cb->pres_uri, cb->ev_name, cb->to_tag);
 	}	
-	/* send a more accurate Notify for presence depending on the reply for winfo*/
-	if(((c_back_param*)(*ps->param))->wi_subs!= NULL)
-	{
-		/* if an error message is received as a reply for the winfo Notify 
-	  * send a Notify for presence with no body (the stored presence information is 
-	  * not valid ) */
-
-		if(ps->code >= 408)
-		{
-			if(notify( ((c_back_param*)(*ps->param))->wi_subs, NULL,NULL,1)< 0)
-			{
-				LM_ERR("Could not send notify for presence\n");
-			}
-		}
-		else
-		{
-			if(notify( ((c_back_param*)(*ps->param))->wi_subs, NULL,NULL,0)< 0)
-			{
-				LM_ERR("Could not send notify for presence\n");
-			}
-		}	
-	}
-	else
-		LM_DBG("Empty wi_subs parameter\n");
 
 	if(*ps->param !=NULL  )
 		free_cbparam((c_back_param*)(*ps->param));
 	return ;
-
 }
 
 void free_cbparam(c_back_param* cb_param)
 {
 	if(cb_param!= NULL)
-	{
-		if(cb_param->pres_uri.s)
-			shm_free(cb_param->pres_uri.s);
-		if(cb_param->ev_name.s)
-			shm_free(cb_param->ev_name.s);
-		if(cb_param->wi_subs)
-			shm_free(cb_param->wi_subs);
-		if(cb_param->to_tag.s)
-			shm_free(cb_param->to_tag.s);
 		shm_free(cb_param);
-	}
-
 }
 
-c_back_param* shm_dup_cbparam(subs_t* w_subs, subs_t* subs)
+c_back_param* shm_dup_cbparam(subs_t* subs)
 {
+	int size;
 	c_back_param* cb_param = NULL;
-
-	cb_param= (c_back_param*)shm_malloc(sizeof(c_back_param));
-	if(cb_param== NULL)
-	{
-		ERR_MEM(SHM_MEM_STR);
-	}
-	memset(cb_param, 0, sizeof(c_back_param));
-
-	cb_param->pres_uri.s= (char*)shm_malloc(subs->pres_uri.len* sizeof(char));
-	if(cb_param->pres_uri.s== NULL)
-	{
-		ERR_MEM(SHM_MEM_STR);
-	}
-	memcpy(cb_param->pres_uri.s, subs->pres_uri.s, subs->pres_uri.len);
-	cb_param->pres_uri.len= subs->pres_uri.len;
-
-	cb_param->ev_name.s= (char*)shm_malloc
-			(subs->event->name.len* sizeof(char));
-	if(cb_param->ev_name.s== NULL)
-	{
-		ERR_MEM(SHM_MEM_STR);
-	}
-	memcpy(cb_param->ev_name.s, subs->event->name.s,
-			subs->event->name.len);
-	cb_param->ev_name.len= subs->event->name.len;
-
-	cb_param->to_tag.s= (char*)shm_malloc(subs->to_tag.len*sizeof(char));
-	if(cb_param->to_tag.s== NULL)
-	{
-		ERR_MEM(SHM_MEM_STR);
-	}
-	memcpy(cb_param->to_tag.s, subs->to_tag.s ,subs->to_tag.len) ;
-	cb_param->to_tag.len= subs->to_tag.len;
-
-	if(w_subs && w_subs->send_on_cback)
-	{
-		cb_param->wi_subs= mem_copy_subs(w_subs, SHM_MEM_TYPE);
-		if(cb_param->wi_subs== NULL)
-		{
-			LM_ERR("copying subs_t structure in share memory\n");
-			goto error;
-		}
-	}
 	
-	return cb_param;
+	size = sizeof(c_back_param) + subs->pres_uri.len+
+			subs->event->name.len + subs->to_tag.len;
 
-error:
-	free_cbparam(cb_param);
-	return NULL;
+	cb_param= (c_back_param*)shm_malloc(size);
+	LM_DBG("=== %d/%d/%d\n", subs->pres_uri.len,
+			subs->event->name.len, subs->to_tag.len);
+	if(cb_param==NULL)
+	{
+		LM_ERR("no more shared memory\n");
+		return NULL;
+	}
+	memset(cb_param, 0, size);
+
+	cb_param->pres_uri.s = (char*)cb_param + sizeof(c_back_param);
+	memcpy(cb_param->pres_uri.s, subs->pres_uri.s, subs->pres_uri.len);
+	cb_param->pres_uri.len = subs->pres_uri.len;
+	cb_param->ev_name.s = (char*)(cb_param->pres_uri.s) + cb_param->pres_uri.len;
+	memcpy(cb_param->ev_name.s, subs->event->name.s, subs->event->name.len);
+	cb_param->ev_name.len = subs->event->name.len;
+	cb_param->to_tag.s = (char*)(cb_param->ev_name.s) + cb_param->ev_name.len;
+	memcpy(cb_param->to_tag.s, subs->to_tag.s, subs->to_tag.len);
+	cb_param->to_tag.len = subs->to_tag.len;
+
+	return cb_param;
 }
 
 
 str* create_winfo_xml(watcher_t* watchers, char* version,
-		str resource, int STATE_FLAG )
+		str resource, str event, int STATE_FLAG)
 {
 	xmlDocPtr doc = NULL;       
     xmlNodePtr root_node = NULL, node = NULL;
@@ -1883,18 +1789,20 @@ str* create_winfo_xml(watcher_t* watchers, char* version,
 		LM_ERR("while adding child\n");
 		goto error;
 	}
-	res= (char*)pkg_malloc(sizeof(char)*(resource.len+ 1));
+	res= (char*)pkg_malloc((resource.len>event.len)?resource.len:event.len
+			+ 1);
 	if(res== NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);
 	}
 	memcpy(res, resource.s, resource.len);
 	res[resource.len]= '\0';
-
 	xmlNewProp(w_list_node, BAD_CAST "resource", BAD_CAST res);
-	xmlNewProp(w_list_node, BAD_CAST "package", BAD_CAST "presence");
-
+	memcpy(res, event.s, event.len);
+	res[event.len]= '\0';
+	xmlNewProp(w_list_node, BAD_CAST "package", BAD_CAST res);
 	pkg_free(res);
+
 
 	w= watchers->next;
 	while(w)
@@ -1949,5 +1857,149 @@ error:
     if(doc)
 		xmlFreeDoc(doc);
 	return NULL;
+}
+
+int watcher_found_in_list(watcher_t * watchers, str wuri)
+{
+	watcher_t * w;
+
+	w = watchers->next;
+
+	while(w)
+	{
+		if(w->uri.len == wuri.len && strncmp(w->uri.s, wuri.s, wuri.len)== 0)
+			return 1;
+		w= w->next;
+	}
+
+	return 0;
+}
+
+int add_waiting_watchers(watcher_t *watchers, str pres_uri, str event)
+{
+	watcher_t * w;
+	db_key_t query_cols[3];
+	db_val_t query_vals[3];
+	db_key_t result_cols[2];
+	db_res_t *result = NULL;
+	db_row_t *row= NULL ;	
+	db_val_t *row_vals;
+	int n_result_cols = 0;
+	int n_query_cols = 0;
+	int wuser_col, wdomain_col;
+	str wuser, wdomain, wuri;
+	int i;
+
+	/* select from watchers table the users that have subscribed
+	 * to the presentity and have status pending */
+
+	query_cols[n_query_cols] = &str_presentity_uri_col;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres_uri;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_event_col;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = event;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_status_col;
+	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = PENDING_STATUS;
+	n_query_cols++;
+
+	result_cols[wuser_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[wdomain_col=n_result_cols++] = &str_watcher_domain_col;
+	
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
+	{
+		LM_ERR("sql use table 'watchers_table' failed\n");
+		return -1;
+	}
+
+	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
+		 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
+	{
+		LM_ERR("failed to query %.*s table\n",
+				watchers_table.len, watchers_table.s);
+		if(result)
+			pa_dbf.free_result(pa_db, result);
+		return -1;
+	}
+	
+	if(result== NULL)
+	{
+		LM_ERR("mysql query failed - null result\n");
+		return -1;
+	}
+
+	if (result->n<=0 )
+	{
+		LM_DBG("The query returned no result\n");
+		pa_dbf.free_result(pa_db, result);
+		return 0;
+	}
+
+	for(i=0; i< result->n; i++)
+	{
+		row = &result->rows[i];
+		row_vals = ROW_VALUES(row);
+
+		wuser.s = (char*)row_vals[wuser_col].val.string_val;
+		wuser.len = strlen(wuser.s);
+
+		wdomain.s = (char*)row_vals[wdomain_col].val.string_val;
+		wdomain.len = strlen(wdomain.s);
+
+		if(uandd_to_uri(wuser, wdomain, &wuri)<0)
+		{
+			LM_ERR("creating uri from username and domain\n");
+			goto error;
+		}
+
+		if(watcher_found_in_list(watchers, wuri))
+		{
+			pkg_free(wuri.s);
+			continue;
+		}
+		
+		w= (watcher_t*)pkg_malloc(sizeof(watcher_t));
+		if(w== NULL)
+		{
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memset(w, 0, sizeof(watcher_t));
+
+		w->status= WAITING_STATUS;
+		w->uri = wuri;
+		w->id.s = (char*)pkg_malloc(w->uri.len*2 +1);
+		if(w->id.s== NULL)
+		{
+			pkg_free(w->uri.s);
+			pkg_free(w);
+			ERR_MEM(PKG_MEM_STR);
+		}
+
+		to64frombits((unsigned char *)w->id.s,
+			(const unsigned char*)w->uri.s, w->uri.len);
+		w->id.len = strlen(w->id.s);
+		w->event= event;
+	
+		w->next= watchers->next;
+		watchers->next= w;
+
+	}
+
+	pa_dbf.free_result(pa_db, result);
+	return 0;
+
+error:
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+	return -1;
+
 }
 

@@ -103,8 +103,8 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	
 	hdr_append.s = buf;
 	hdr_append.s[0]='\0';
-	hdr_append.len = snprintf(hdr_append.s, buf_len, "Expires: %d\r\n",lexpire -
-			expires_offset);
+	hdr_append.len = snprintf(hdr_append.s, buf_len, "Expires: %d\r\n",
+			((lexpire==0)?0:(lexpire-expires_offset)));
 	if(hdr_append.len < 0)
 	{
 		LM_ERR("unsuccessful snprintf\n");
@@ -635,6 +635,7 @@ after_dialog_check:
 				goto error;
 			}
 			*sent_reply= 1;
+			goto done;
 		}
 	}
 
@@ -981,3 +982,4 @@ error:
 	return NULL;
 
 }
+
