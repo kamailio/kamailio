@@ -38,13 +38,10 @@
 #include "../../lib/srdb1/db_con.h"
 #include "../../lib/srdb1/db.h"
 #include "km_dbase.h"
+#include "km_db_postgres.h"
 
 
 /*MODULE_VERSION*/
-
-int db_postgres_bind_api(db_func_t *dbb);
-
-static int mod_init(void);
 
 /*
  * PostgreSQL database module interface
@@ -66,14 +63,14 @@ struct kam_module_exports kam_exports = {
 	0,        /* exported MI functions */
 	0,        /* exported pseudo-variables */
 	0,        /* extra processes */
-	mod_init, /* module initialization function */
+	km_postgres_mod_init, /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */
 	0         /* per-child init function */
 };
 
 
-static int mod_init(void)
+int km_postgres_mod_init(void)
 {
 	return 0;
 }

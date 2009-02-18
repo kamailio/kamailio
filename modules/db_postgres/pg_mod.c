@@ -42,6 +42,7 @@
 #include "pg_cmd.h"
 #include "pg_res.h"
 #include "pg_fld.h"
+#include "km_db_postgres.h"
 
 #include "../../sr_module.h"
 
@@ -77,6 +78,7 @@ static cmd_export_t cmds[] = {
 	{"db_next",   (cmd_function)pg_cmd_next, 0, 0, 0},
 	{"db_setopt", (cmd_function)pg_setopt, 0, 0, 0},
 	{"db_getopt", (cmd_function)pg_getopt, 0, 0, 0},
+	{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -538,7 +540,7 @@ static int pg_mod_init(void)
 	}
 	return -1;
 #endif /* PG_TEST */
-	return 0;
+	return km_postgres_mod_init();
 }
 
 /** @} */
