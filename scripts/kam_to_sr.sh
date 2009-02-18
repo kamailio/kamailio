@@ -34,7 +34,7 @@ if ! egrep "Makefile\.modules" Makefile >/dev/null ; then
 	exit 1
 fi
 
-if ! egrep '^#[ \t]*include[ \t]*".*\/db\/db(_(cap|id|key|op|pool|query|res|row|ut|val))?\.h[ \t]*"' *.[ch] >/dev/null ; then
+if ! egrep '^#[ \t]*include[ \t]*".*\/db\/db(_(cap|con|id|key|op|pool|query|res|row|ut|val))?\.h[ \t]*"' *.[ch] >/dev/null ; then
 	echo "The module does not seem to include old database headers..."
 	exit 0
 fi
@@ -80,18 +80,18 @@ for file in *.[ch] ; do
 	cp $file $file.backup
 	cat $file.backup | gawk '
 
-/^#[ \t]*include[ \t]*".*\/db\/db(_(cap|id|key|op|pool|query|res|row|ut|val))?\.h[ \t]*"/ {
+/^#[ \t]*include[ \t]*".*\/db\/db(_(cap|con|id|key|op|pool|query|res|row|ut|val))?\.h[ \t]*"/ {
     sub("/db/", "/lib/srdb1/", $0);
 }
 
-/[^a-zA-Z0-9_](db_(con|res)_t|struct[ \t]+db_(con|res))[^a-zA-Z0-9_]/ {
+/(^|[^a-zA-Z0-9_])(db_(con|res)_t|struct[ \t]+db_(con|res))([^a-zA-Z0-9_]|$)/ {
     gsub("struct[ \t]+db_con", "struct db1_con", $0);
     gsub("struct[ \t]+db_res", "struct db1_res", $0);
     gsub("db_con_t", "db1_con_t", $0);
     gsub("db_res_t", "db1_res_t", $0);
 }
 
-/[^a-zA-Z0-9_]DB_((BIG)?INT|DOUBLE|STR(ING)?|DATETIME|BLOB|BITMAP)[^a-zA-Z0-9_]/ {
+/(^|[^a-zA-Z0-9_])DB_((BIG)?INT|DOUBLE|STR(ING)?|DATETIME|BLOB|BITMAP)([^a-zA-Z0-9_]|$)/ {
     gsub("DB_INT", "DB1_INT", $0);
     gsub("DB_BIGINT", "DB1_BIGINT", $0);
     gsub("DB_DOUBLE", "DB1_DOUBLE", $0);
