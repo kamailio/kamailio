@@ -25,7 +25,7 @@
 #ifndef _KM_FLAT_POOL_H
 #define _KM_FLAT_POOL_H
 
-#include "flat_con.h"
+#include "km_flat_con.h"
 
 /*
  * Get a connection from the pool, reuse existing

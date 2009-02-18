@@ -27,8 +27,8 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "flatstore_mod.h"
-#include "flat_con.h"
+#include "km_flatstore_mod.h"
+#include "km_flat_con.h"
 
 #define FILE_SUFFIX ".log"
 #define FILE_SUFFIX_LEN (sizeof(FILE_SUFFIX) - 1)

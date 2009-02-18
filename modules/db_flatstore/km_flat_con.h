@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "flat_id.h"
+#include "km_flat_id.h"
 
 struct flat_con {
 	struct flat_id* id;    /* Connection identifier */

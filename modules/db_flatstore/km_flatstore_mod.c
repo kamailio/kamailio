@@ -30,9 +30,9 @@
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "../../db/db.h"
-#include "flatstore.h"
-#include "flat_mi.h"
-#include "flatstore_mod.h"
+#include "km_flatstore.h"
+#include "km_flat_mi.h"
+#include "km_flatstore_mod.h"
 
 MODULE_VERSION
 

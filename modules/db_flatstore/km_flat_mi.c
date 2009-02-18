@@ -23,7 +23,7 @@
  */
 
 #include "flatstore_mod.h"
-#include "flat_mi.h"
+#include "km_flat_mi.h"
 
 
 struct mi_root*  mi_flat_rotate_cmd(struct mi_root* cmd_tree, void* param)

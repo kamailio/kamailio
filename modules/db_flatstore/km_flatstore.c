@@ -31,10 +31,10 @@
 #include <ctype.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "flat_pool.h"
-#include "flat_con.h"
-#include "flatstore_mod.h"
-#include "flatstore.h"
+#include "km_flat_pool.h"
+#include "km_flat_con.h"
+#include "km_flatstore_mod.h"
+#include "km_flatstore.h"
 
 
 static int parse_flat_url(const str* url, str* path)

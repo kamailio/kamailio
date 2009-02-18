@@ -24,8 +24,8 @@
 
 #include <unistd.h>
 #include "../../dprint.h"
-#include "flat_pool.h"
-#include "flat_id.h"
+#include "km_flat_pool.h"
+#include "km_flat_id.h"
 
 
 /* The head of the pool */
