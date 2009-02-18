@@ -35,19 +35,13 @@
 /*
  * Process number used in filenames
  */
-extern int flat_pid;
-
-
-/*
- * Should we flush after each write to the database ?
- */
-extern int flat_flush;
+extern int km_flat_pid;
 
 
 /*
  * Delmiter delimiting columns
  */
-extern char* flat_delimiter;
+extern char* km_flat_delimiter;
 
 
 /*

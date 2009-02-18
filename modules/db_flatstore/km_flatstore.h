@@ -31,26 +31,26 @@
 #ifndef _KM_FLATSTORE_H
 #define _KM_FLATSTORE_H
 
-#include "../../db/db_val.h"
-#include "../../db/db_key.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db_key.h"
+#include "../../lib/srdb1/db_con.h"
 
 
 /*
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* flat_db_init(const str* _url);
+db1_con_t* flat_db_init(const str* _url);
 
 
 /*
  * Store name of table that will be used by
  * subsequent database functions
  */
-int flat_use_table(db_con_t* h, const str* t);
+int flat_use_table(db1_con_t* h, const str* t);
 
 
-void flat_db_close(db_con_t* h);
+void flat_db_close(db1_con_t* h);
 
 
 /*
@@ -60,7 +60,7 @@ void flat_db_close(db_con_t* h);
  * v: values of the keys
  * n: number of key=value pairs
  */
-int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
+int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 		const int n);
 
 

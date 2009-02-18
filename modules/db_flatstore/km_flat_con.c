@@ -72,7 +72,7 @@ static char* get_name(struct flat_id* id)
 
 	*ptr++ = '_';
 	
-	num = int2str(flat_pid, &num_len);
+	num = int2str(km_flat_pid, &num_len);
 	if (buf_len<(total_len+num_len)){
 		LM_ERR("the path is too long (%d and PATHMAX is"
 				" %d)\n", total_len+num_len, buf_len);

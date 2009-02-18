@@ -35,6 +35,7 @@
 #include "km_flat_con.h"
 #include "km_flatstore_mod.h"
 #include "km_flatstore.h"
+#include "flatstore_mod.h"
 
 
 static int parse_flat_url(const str* url, str* path)
@@ -54,9 +55,9 @@ static int parse_flat_url(const str* url, str* path)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* flat_db_init(const str* url)
+db1_con_t* flat_db_init(const str* url)
 {
-	db_con_t* res;
+	db1_con_t* res;
 	str* path;
 
 	if (!url || !url->s) {
@@ -72,13 +73,13 @@ db_con_t* flat_db_init(const str* url)
 	/* as the table (path) is a substring of the received str, we need to 
 	 * allocate a separate str struct for it -bogdan
 	 */
-	res = pkg_malloc(sizeof(db_con_t)+sizeof(struct flat_con*)+sizeof(str));
+	res = pkg_malloc(sizeof(db1_con_t)+sizeof(struct flat_con*)+sizeof(str));
 	if (!res) {
 		LM_ERR("no pkg memory left\n");
 		return 0;
 	}
-	memset(res, 0, sizeof(db_con_t) + sizeof(struct flat_con*) + sizeof(str));
-	path = (str*)(((char*)res) + sizeof(db_con_t) + sizeof(struct flat_con*));
+	memset(res, 0, sizeof(db1_con_t) + sizeof(struct flat_con*) + sizeof(str));
+	path = (str*)(((char*)res) + sizeof(db1_con_t) + sizeof(struct flat_con*));
 
 	if (parse_flat_url(url, path) < 0) {
 		pkg_free(res);
@@ -94,7 +95,7 @@ db_con_t* flat_db_init(const str* url)
  * Store name of table that will be used by
  * subsequent database functions
  */
-int flat_use_table(db_con_t* h, const str* t)
+int flat_use_table(db1_con_t* h, const str* t)
 {
 	struct flat_con* con;
 
@@ -124,7 +125,7 @@ int flat_use_table(db_con_t* h, const str* t)
 }
 
 
-void flat_db_close(db_con_t* h)
+void flat_db_close(db1_con_t* h)
 {
 	struct flat_con* con;
 
@@ -149,7 +150,7 @@ void flat_db_close(db_con_t* h)
  * v: values of the keys
  * n: number of key=value pairs
  */
-int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
+int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 		const int n)
 {
 	FILE* f;
@@ -170,31 +171,31 @@ int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
 
 	for(i = 0; i < n; i++) {
 		switch(VAL_TYPE(v + i)) {
-		case DB_INT:
+		case DB1_INT:
 			fprintf(f, "%d", VAL_INT(v + i));
 			break;
 
-		case DB_BIGINT:
+		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return -1;
 
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			fprintf(f, "%f", VAL_DOUBLE(v + i));
 			break;
 
-		case DB_STRING:
+		case DB1_STRING:
 			fprintf(f, "%s", VAL_STRING(v + i));
 			break;
 
-		case DB_STR:
+		case DB1_STR:
 			fprintf(f, "%.*s", VAL_STR(v + i).len, VAL_STR(v + i).s);
 			break;
 
-		case DB_DATETIME:
+		case DB1_DATETIME:
 			fprintf(f, "%u", (unsigned int)VAL_TIME(v + i));
 			break;
 
-		case DB_BLOB:
+		case DB1_BLOB:
 			l = VAL_BLOB(v+i).len;
 			s = p = VAL_BLOB(v+i).s;
 			while (l--) {
@@ -208,13 +209,13 @@ int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
 				fprintf(f,"%.*s",(int)(s-p),p);
 			break;
 
-		case DB_BITMAP:
+		case DB1_BITMAP:
 			fprintf(f, "%u", VAL_BITMAP(v + i));
 			break;
 		}
 
 		if (i < (n - 1)) {
-			fprintf(f, "%c", *flat_delimiter);
+			fprintf(f, "%c", *km_flat_delimiter);
 		}
 	}
 

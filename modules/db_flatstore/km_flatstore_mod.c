@@ -29,12 +29,13 @@
 
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "km_flatstore.h"
 #include "km_flat_mi.h"
 #include "km_flatstore_mod.h"
+#include "flatstore_mod.h"
 
-MODULE_VERSION
+/*MODULE_VERSION*/
 
 static int child_init(int rank);
 
@@ -47,18 +48,13 @@ int db_flat_bind_api(db_func_t *dbb);
 /*
  * Process number used in filenames
  */
-int flat_pid;
-
-/*
- * Should we flush after each write to the database ?
- */
-int flat_flush = 1;
+int km_flat_pid;
 
 
 /*
  * Delimiter delimiting columns
  */
-char* flat_delimiter = "|";
+char* km_flat_delimiter = "|";
 
 
 /*
@@ -72,7 +68,7 @@ time_t local_timestamp;
 /*
  * Flatstore database module interface
  */
-static cmd_export_t cmds[] = {
+static kam_cmd_export_t cmds[] = {
 	{"db_bind_api",    (cmd_function)db_flat_bind_api,      0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -81,7 +77,6 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"flush", INT_PARAM, &flat_flush},
 	{0, 0, 0}
 };
 
@@ -94,7 +89,7 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
-struct module_exports exports = {
+struct kam_module_exports km_exports = {
 	"db_flatstore",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
@@ -112,7 +107,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	if (strlen(flat_delimiter) != 1) {
+	if (strlen(km_flat_delimiter) != 1) {
 		LM_ERR("delimiter has to be exactly one character\n");
 		return -1;
 	}
@@ -139,9 +134,9 @@ static void mod_destroy(void)
 static int child_init(int rank)
 {
 	if (rank <= 0) {
-		flat_pid = - rank;
+		km_flat_pid = - rank;
 	} else {
-		flat_pid = rank - PROC_TCP_MAIN;
+		km_flat_pid = rank - PROC_TCP_MAIN;
 	}
 	return 0;
 }
