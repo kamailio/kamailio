@@ -26,4 +26,7 @@ TAGS
 test/udp_flood
 utils/gen_ha1/gen_ha1
 utils/sercmd/sercmd
+# Emacs backup files
 *~
+# Emacs file locks
+.#*
