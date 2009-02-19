@@ -116,6 +116,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct switch_cond_table* sct;
 	struct switch_jmp_table*  sjt;
 	struct rval_expr* rve;
+	struct match_cond_table* mct;
+	struct rvalue* rv;
+	struct rvalue* rv1;
+	struct rval_cache c1;
+	str s;
 
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
@@ -905,6 +910,68 @@ sw_jt_def:
 				ret=run_actions(h, (struct action*)a->val[0].u.data, msg);
 				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
 											   returns passthrough */
+			}
+			break;
+		case MATCH_COND_T:
+			mct=(struct match_cond_table*)a->val[1].u.data;
+			rval_cache_init(&c1);
+			rv=0;
+			rv1=0;
+			ret=rval_expr_eval_rvint(h, msg, &rv, &v, 
+									(struct rval_expr*)a->val[0].u.data, &c1);
+									
+			if (unlikely( ret<0)){
+				/* handle error in expression => use default */
+				ret=-1;
+				goto match_cond_def;
+			}
+			if (h->run_flags & EXIT_R_F){
+				ret=0;
+				break;
+			}
+			h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return & break
+													    in expr */
+			if (likely(rv)){
+				rv1=rval_convert(h, msg, RV_STR, rv, &c1);
+				if (unlikely(rv1==0)){
+					ret=-1;
+					goto match_cond_def;
+				}
+				s=rv1->v.s;
+			}else{
+				/* int result in v */
+				rval_cache_clean(&c1);
+				s.s=sint2str(v, &s.len);
+			}
+			ret=1; /* default is continue */
+			for(i=0; i<mct->n; i++)
+				if (( mct->match[i].type==MATCH_STR &&
+						mct->match[i].l.s.len==s.len &&
+						memcmp(mct->match[i].l.s.s, s.s, s.len) == 0 ) ||
+					 ( mct->match[i].type==MATCH_RE &&
+					  regexec(mct->match[i].l.regex, s.s, 0, 0, 0) == 0)
+					){
+					if (likely(mct->jump[i])){
+						ret=run_actions(h, mct->jump[i], msg);
+						h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+													   returns passthrough */
+					}
+					goto match_cleanup;
+				}
+match_cond_def:
+			if (mct->def){
+				ret=run_actions(h, mct->def, msg);
+				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
+											   returns passthrough */
+			}
+match_cleanup:
+			if (rv1){
+				rval_destroy(rv1);
+				rval_destroy(rv);
+				rval_cache_clean(&c1);
+			}else if (rv){
+				rval_destroy(rv);
+				rval_cache_clean(&c1);
 			}
 			break;
 		case WHILE_T:
