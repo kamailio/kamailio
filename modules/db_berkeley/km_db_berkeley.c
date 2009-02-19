@@ -55,7 +55,7 @@
 #define BDB_KEY   1
 #define BDB_VALUE 0
 
-MODULE_VERSION
+/*MODULE_VERSION*/
 
 int auto_reload = 0;
 int log_enable  = 0;
