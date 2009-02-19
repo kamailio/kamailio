@@ -312,7 +312,7 @@ static inline char* sint2str(long l, int* len)
 		l = -l;
 	}
 	p = int2str((unsigned long)l, len);
-	if(sign) {
+	if(sign && *len<(INT2STR_MAX_LEN-1)) {
 		*(--p) = '-';
 		if (len) (*len)++;
 	}
