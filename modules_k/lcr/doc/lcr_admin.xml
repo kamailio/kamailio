@@ -17,7 +17,7 @@
 	each gateway belongs to a gateway group and each gateway group
 	is associated with one or more &lt;prefix, from pattern, priority&gt;
 	tuples.  A gateway matches a request if	user part of Request URI
-	matches a prefix and caller's UtRI matches a from pattern in a
+	matches a prefix and caller's URI matches a from pattern in a
 	tuple that belongs to the group of the gateway.
 	</para>
 	<para>

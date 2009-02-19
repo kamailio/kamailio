@@ -1,7 +1,7 @@
 /*
  * Header file for hash table functions
  *
- * Copyright (C) 2008 Juha Heinanen
+ * Copyright (C) 2008-2009 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -58,8 +58,8 @@ int lcr_hash_table_insert(struct lcr_info **hash_table,
     lcr->first_gw = first_gw;
     lcr->priority = priority;
     
-    prefix_str.len = prefix_len;
-    prefix_str.s = prefix;
+    prefix_str.len = lcr->prefix_len;
+    prefix_str.s = lcr->prefix;
 
     hash_val = lcr_hash(&prefix_str);
     lcr->next = hash_table[hash_val];
