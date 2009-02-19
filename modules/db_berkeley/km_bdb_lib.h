@@ -28,8 +28,8 @@
  */
 
 
-#ifndef _BDB_LIB_H_
-#define _BDB_LIB_H_
+#ifndef _KM_BDB_LIB_H_
+#define _KM_BDB_LIB_H_
 
 #include <stdlib.h>
 #include <syslog.h>

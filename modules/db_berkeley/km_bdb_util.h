@@ -28,8 +28,8 @@
  */
 
 
-#ifndef _BDB_UTIL_H_
-#define _BDB_UTIL_H_
+#ifndef _KM_BDB_UTIL_H_
+#define _KM_BDB_UTIL_H_
 
 #include "../../str.h"
 

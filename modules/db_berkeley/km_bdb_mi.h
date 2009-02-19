@@ -23,8 +23,8 @@
  */
 
 
-#ifndef _BDB_MI_H_
-#define _BDB_MI_H_
+#ifndef _KM_BDB_MI_H_
+#define _KM_BDB_MI_H_
 
 #include "../../mi/mi.h"
 

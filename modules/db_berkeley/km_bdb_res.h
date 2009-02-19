@@ -28,8 +28,8 @@
  */
 
 
-#ifndef _BDB_RES_H_
-#define _BDB_RES_H_
+#ifndef _KM_BDB_RES_H_
+#define _KM_BDB_RES_H_
 
 #include "../../db/db_op.h"
 #include "../../db/db_res.h"
