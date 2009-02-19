@@ -22,6 +22,7 @@
  * History:
  * --------
  *  2009-02-02  initial version (andrei)
+ *  2009-02-19  string and RE switch support added (andrei)
 */
 
 #include "switch.h"
@@ -84,6 +85,32 @@ static struct switch_jmp_table* mk_switch_jmp_table(int jmp_size, int rest)
 
 
 
+/** create a match cond table structure (pkg_malloc'ed).
+ * @return 0 on error, pointer on success
+ */
+static struct match_cond_table* mk_match_cond_table(int n)
+{
+	struct match_cond_table* mct;
+	
+	/* allocate everything in a single block, better for cache locality */
+	mct=pkg_malloc(ROUND_POINTER(sizeof(*mct))+
+					ROUND_POINTER(n*sizeof(mct->match[0]))+
+					n*sizeof(mct->jump[0]));
+	if (mct==0) return 0;
+	mct->n=n;
+	mct->match=(struct match_str*)((char*)mct+ROUND_POINTER(sizeof(*mct)));
+	mct->jump=(struct action**)
+				((char*)mct->match+ROUND_POINTER(n*sizeof(mct->match[0])));
+	mct->def=0;
+	return mct;
+}
+
+
+
+static int fix_match(struct action* t);
+
+
+
 void destroy_case_stms(struct case_stms *lst)
 {
 	struct case_stms* l;
@@ -138,6 +165,11 @@ int fix_switch(struct action* t)
 	def_jmp_bm=0;
 	labels_no=0;
 	default_found=0;
+	/* check if string switch (first case is string or RE) */
+	for (c=(struct case_stms*)t->val[1].u.data; c && c->is_default; c=c->next);
+	if (c && (c->type==MATCH_STR || c->type==MATCH_RE))
+		return fix_match(t);
+	
 	sw_rve=(struct rval_expr*)t->val[0].u.data;
 	/*  handle null actions: optimize away if no
 	   sideffects */
@@ -159,12 +191,17 @@ int fix_switch(struct action* t)
 	n=0;
 	for (c=(struct case_stms*)t->val[1].u.data; c; c=c->next){
 		if (c->ct_rve){
+			if (c->type!=MATCH_INT){
+				LOG(L_ERR, "ERROR: fix_switch: wrong case type %d (int"
+							"expected)\n", c->type);
+				return E_UNSPEC;
+			}
 			if (!rve_is_constant(c->ct_rve)){
 				LOG(L_ERR, "ERROR: fix_switch: non constant "
 						"expression in case\n");
 				return E_BUG;
 			}
-			if (rval_expr_eval_int(0, 0,  &c->int_label, c->ct_rve)
+			if (rval_expr_eval_int(0, 0,  &c->label.match_int, c->ct_rve)
 					<0){
 				LOG(L_ERR, "ERROR: fix_switch: case expression"
 						" (%d,%d) has non-interger type\n",
@@ -183,7 +220,7 @@ int fix_switch(struct action* t)
 				return E_UNSPEC;
 			}
 			default_found=1;
-			c->int_label=-1;
+			c->label.match_int=-1;
 			c->is_default=1;
 			def_a=c->actions;
 		}
@@ -241,14 +278,14 @@ int fix_switch(struct action* t)
 			def_jmp_bm=tail;
 		} else {
 			for (j=0; j<n; j++){
-				if (cond[j]==c->int_label){
+				if (cond[j]==c->label.match_int){
 					LOG(L_ERR, "ERROR: fix_switch: duplicate case (%d,%d)\n",
 							c->ct_rve->fpos.s_line, c->ct_rve->fpos.s_col);
 					ret=E_UNSPEC;
 					goto error;
 				}
 			}
-			cond[n]=c->int_label;
+			cond[n]=c->label.match_int;
 			jmp_bm[n]=tail;
 			n++;
 		}
@@ -371,4 +408,300 @@ error:
 	return ret;
 }
 
+
+
+/** fixup function for MATCH_T actions.
+ * can produce 3 different action types:
+ *  - BLOCK_T (actions) - actions grouped in a block, break ends the block
+ *    execution.
+ *  - EVAL_T (cond)  - null switch block, but the condition has to be
+ *                       evaluated due to possible side-effects.
+ *  - MATCH_COND_T(cond, jumps) - condition table
+ */
+static int fix_match(struct action* t)
+{
+	struct case_stms* c;
+	int n, i, j, ret;
+	struct action* a;
+	struct action* block;
+	struct action* def_a;
+	struct action* action_lst;
+	struct action** tail;
+	struct match_cond_table* mct;
+	int labels_no;
+	struct action** def_jmp_bm;
+	struct match_str* match;
+	struct action*** jmp_bm;
+	int default_found;
+	struct rval_expr* m_rve;
+	struct rvalue* rv;
+	regex_t* regex;
+	str s;
+	
+	ret=E_BUG;
+	match=0;
+	jmp_bm=0;
+	def_jmp_bm=0;
+	labels_no=0;
+	default_found=0;
+	rv=0;
+	s.s=0;
+	s.len=0;
+	m_rve=(struct rval_expr*)t->val[0].u.data;
+	/*  handle null actions: optimize away if no
+	   sideffects */
+	if (t->val[1].u.data==0){
+		if (!rve_has_side_effects(m_rve)){
+			t->type=BLOCK_T;
+			rve_destroy(m_rve);
+			t->val[0].type=BLOCK_ST;
+			t->val[0].u.data=0;
+			DBG("MATCH: null switch optimized away\n");
+		}else{
+			t->type=EVAL_T;
+			t->val[0].type=RVE_ST;
+			DBG("MATCH: null switch turned to EVAL_T\n");
+		}
+		return 0;
+	}
+	def_a=0;
+	n=0;
+	for (c=(struct case_stms*)t->val[1].u.data; c; c=c->next){
+		if (c->ct_rve){
+			if (c->type!=MATCH_STR && c->type!=MATCH_RE){
+				LOG(L_ERR, "ERROR: fix_match: wrong case type %d (string"
+							"or RE expected)\n", c->type);
+				return E_UNSPEC;
+			}
+			if (!rve_is_constant(c->ct_rve)){
+				LOG(L_ERR, "ERROR: fix_match: non constant "
+						"expression in case\n");
+				ret=E_BUG;
+				goto error;
+			}
+			if ((rv=rval_expr_eval(0, 0, c->ct_rve)) == 0 ){
+				LOG(L_ERR, "ERROR: fix_match: bad case expression"
+						" (%d,%d)\n",
+						c->ct_rve->fpos.s_line,
+						c->ct_rve->fpos.s_col);
+				ret=E_BUG;
+				goto error;
+			}
+			if (rval_get_str(0, 0, &s, rv, 0)<0){
+				LOG(L_ERR, "ERROR: fix_match (%d,%d): out of memory?\n",
+						c->ct_rve->fpos.s_line,
+						c->ct_rve->fpos.s_col);
+				ret=E_BUG;
+				goto error;
+			}
+			if (c->type==MATCH_RE){
+				if ((regex=pkg_malloc(sizeof(regex_t))) == 0){
+					LOG(L_ERR, "ERROR: fix_match: out of memory\n");
+					ret=E_OUT_OF_MEM;
+					goto error;
+				}
+				if (regcomp(regex, s.s, 
+							REG_EXTENDED | REG_NOSUB | c->re_flags) !=0){
+					pkg_free(regex);
+					regex=0;
+					LOG(L_ERR, "ERROR: fix_match (%d, %d): bad regular"
+								" expression %.*s\n",
+							c->ct_rve->fpos.s_line,
+							c->ct_rve->fpos.s_col,
+							s.len, ZSW(s.s));
+					ret=E_UNSPEC;
+					goto error;
+				}
+				c->label.match_re=regex;
+				regex=0;
+			}else if (c->type==MATCH_STR){
+				c->label.match_str=s;
+				s.s=0;
+				s.len=0;
+			}else{
+				LOG(L_CRIT, "BUG: fix_match (%d,%d): wrong case type %d\n",
+						c->ct_rve->fpos.s_line, c->ct_rve->fpos.s_col,
+						c->type);
+				ret=E_BUG;
+				goto error;
+			}
+			c->is_default=0;
+			n++; /* count only non-default cases */
+			/* cleanup */
+			rval_destroy(rv);
+			rv=0;
+			if (s.s){
+				pkg_free(s.s);
+				s.s=0;
+				s.len=0;
+			}
+		}else{
+			if (default_found){
+				LOG(L_ERR, "ERROR: fix_match: more then one \"default\""
+						" label found (%d, %d)\n",
+						c->ct_rve->fpos.s_line,
+						c->ct_rve->fpos.s_col);
+				ret=E_UNSPEC;
+				goto error;
+			}
+			default_found=1;
+			c->is_default=1;
+			def_a=c->actions;
+		}
+		if ( c->actions && ((ret=fix_actions(c->actions))<0))
+			goto error;
+	}
+	DBG("MATCH: %d cases, %d default\n", n, default_found);
+	/*: handle n==0 (no case only a default:) */
+	if (n==0){
+		if (default_found){
+			if (!rve_has_side_effects(m_rve)){
+				t->type=BLOCK_T;
+				rve_destroy(m_rve);
+				destroy_case_stms(t->val[1].u.data);
+				t->val[0].type=BLOCK_ST;
+				t->val[0].u.data=def_a;
+				t->val[1].type=0;
+				t->val[1].u.data=0;
+				DBG("MATCH: default only switch optimized away (BLOCK_T)\n");
+				return 0;
+			}
+			DBG("MATCH: default only switch with side-effect...\n");
+		}else{
+			LOG(L_CRIT, "BUG: fix_match: empty switch not expected at this"
+					" point\n");
+			ret=E_BUG;
+			goto error;
+		}
+	}
+	labels_no=n;
+	match=pkg_malloc(sizeof(match[0])*n);
+	jmp_bm=pkg_malloc(sizeof(jmp_bm[0])*n);
+	if (match==0 || jmp_bm==0){
+		LOG(L_ERR, "ERROR: fix_match: memory allocation failure\n");
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	
+	/* fill condition table and jump point bookmarks and "flatten" the action 
+	   lists (transform them into a single list for the entire switch, rather
+	    then one block per case ) */
+	n=0;
+	action_lst=0;
+	tail=&action_lst;
+	for (c=(struct case_stms*)t->val[1].u.data; c; c=c->next){
+		a=c->actions;
+		if (a){
+			for (; a->next; a=a->next);
+			if (action_lst==0)
+				action_lst=c->actions;
+			else
+				*tail=c->actions;
+		}
+		if (c->is_default){
+			def_jmp_bm=tail;
+		} else{
+			match[n].type=c->type;
+			if (match[n].type == MATCH_STR){
+				for (j=0; j<n; j++){
+					if ( match[j].type == c->type &&
+						 match[j].l.s.len ==  c->label.match_str.len &&
+						 memcmp(match[j].l.s.s, c->label.match_str.s,
+							 		match[j].l.s.len) == 0 ){
+						LOG(L_ERR, "ERROR: fix_match: duplicate case"
+								" (%d,%d)\n", c->ct_rve->fpos.s_line,
+								c->ct_rve->fpos.s_col);
+						ret=E_UNSPEC;
+						goto error;
+					}
+				}
+				match[n].flags=0;
+				match[n].l.s=c->label.match_str;
+				c->label.match_str.s=0; /* prevent s being freed */
+				c->label.match_str.len=0;
+			} else {
+				match[n].flags=c->re_flags | REG_EXTENDED | REG_NOSUB;
+				match[n].l.regex=c->label.match_re;
+				c->label.match_re=0;
+			}
+			jmp_bm[n]=tail;
+			n++;
+		}
+		if (c->actions)
+			tail=&a->next;
+	}
+	/* handle constant rve w/ no side-effects: replace the whole case 
+	   with the case rve block */
+	if ( (scr_opt_lev>=2) &&
+			!rve_has_side_effects(m_rve) && rve_is_constant(m_rve)){
+		if ((rv=rval_expr_eval(0, 0, m_rve)) == 0){
+			LOG(L_ERR, "ERROR: fix_match: bad expression (%d,%d)\n", 
+					m_rve->fpos.s_line, m_rve->fpos.s_col);
+			ret=E_UNSPEC;
+			goto error;
+		}
+		if (rval_get_str(0, 0, &s, rv, 0) < 0 ){
+				LOG(L_ERR, "ERROR: fix_match (%d,%d): bad string expression\n",
+						m_rve->fpos.s_line,
+						m_rve->fpos.s_col);
+			ret=E_UNSPEC;
+			goto error;
+		}
+		/* start with the "default:" value in case nothing is found */
+		block=def_jmp_bm?*def_jmp_bm:0;
+		for (i=0; i<n; i++){
+			if (((match[i].type == MATCH_STR) && (match[i].l.s.len == s.len) &&
+					(memcmp(match[i].l.s.s, s.s, s.len) == 0)) ||
+				((match[i].type == MATCH_RE) && 
+					regexec(match[i].l.regex, s.s, 0, 0, 0) == 0) ) {
+				block=*jmp_bm[i];
+				break;
+			}
+		}
+		DBG("MATCH: constant switch(\"%.*s\") with %d cases optimized away"
+				" to case no. %d\n", s.len, ZSW(s.s), n, i);
+		/* cleanup */
+		rval_destroy(rv);
+		rv=0;
+		pkg_free(s.s);
+		s.s=0;
+		s.len=0;
+		ret=0;
+		/* replace with BLOCK_ST */
+		rve_destroy(m_rve);
+		destroy_case_stms(t->val[1].u.data);
+		t->type=BLOCK_T;
+		t->val[0].type=BLOCK_ST;
+		t->val[0].u.data=block;
+		t->val[1].type=0;
+		t->val[1].u.data=0;
+		goto end;
+	}
+	mct=mk_match_cond_table(n);
+	if (mct==0){
+		LOG(L_ERR, "ERROR: fix_match: memory allocation error\n");
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	mct->n=n;
+	for (i=0; i<n; i++){
+		mct->match[i]=match[i];
+		mct->jump[i]=*jmp_bm[i];
+	}
+	mct->def=def_jmp_bm?*def_jmp_bm:0;
+	t->type=MATCH_COND_T;
+	t->val[1].type=MATCH_CONDTABLE_ST;
+	t->val[1].u.data=mct;
+	DBG("MATCH: optimized to match condtable (%d) default: %s\n ",
+				mct->n, mct->def?"yes":"no");
+		ret=0;
+end:
+error:
+	if (match) pkg_free(match);
+	if (jmp_bm) pkg_free(jmp_bm);
+	/* cleanup rv & s*/
+	if (rv) rval_destroy(rv);
+	if (s.s) pkg_free(s.s);
+	return ret;
+}
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
