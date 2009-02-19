@@ -58,9 +58,6 @@
 
 /*MODULE_VERSION*/
 
-static int mod_init(void);
-static void destroy(void);
-
 int bdb_bind_api(db_func_t *dbb);
 
 /*
@@ -99,14 +96,13 @@ struct kam_module_exports kam_exports = {
 	mi_cmds,  /* exported MI functions */
 	0,        /* exported pseudo-variables */
 	0,        /* extra processes */
-	mod_init, /* module initialization function */
+	km_mod_init, /* module initialization function */
 	0,        /* response function*/
-	destroy,  /* destroy function */
+	km_destroy,  /* destroy function */
 	0         /* per-child init function */
 };
 
-
-static int mod_init(void)
+int km_mod_init(void)
 {
 	db_parms_t p;
 	
@@ -121,7 +117,7 @@ static int mod_init(void)
 	return 0;
 }
 
-static void destroy(void)
+void km_destroy(void)
 {
 	km_bdblib_destroy();
 }

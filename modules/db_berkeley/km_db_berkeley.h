@@ -36,6 +36,7 @@
 #include "../../lib/srdb1/db_key.h"
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db.h"
 
 /* reloads the berkeley db */
 int bdb_reload(char* _n);
@@ -91,6 +92,11 @@ int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
  */
 int bdb_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+
+int bdb_bind_api(db_func_t *dbb);
+
+int km_mod_init(void);
+void km_destroy(void);
 
 #endif
 

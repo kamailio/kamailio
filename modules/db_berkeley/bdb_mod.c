@@ -46,6 +46,7 @@
 #include "bdb_fld.h"
 #include "bdb_res.h"
 #include "bdb_cmd.h"
+#include "km_db_berkeley.h"
 
 MODULE_VERSION
 
@@ -73,6 +74,7 @@ static cmd_export_t cmds[] = {
 	{"db_next",   (cmd_function)bdb_cmd_next,  0, 0, 0},
 	{"db_res",    (cmd_function)bdb_res,       0, 0, 0},
 	{"db_fld",    (cmd_function)bdb_fld,       0, 0, 0},
+	{"db_bind_api", (cmd_function)bdb_bind_api, 0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -111,11 +113,12 @@ static int bdb_mod_init(void)
 	if(bdblib_init(&p))
 		return -1;
 
-	return 0;
+	return km_mod_init();
 }
 
 static void bdb_mod_destroy(void)
 {
+	km_destroy();
 	bdblib_destroy();
 }
 
