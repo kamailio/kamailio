@@ -31,65 +31,65 @@
 #ifndef _KM_BDB_H_
 #define _KM_BDB_H_
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_key.h"
-#include "../../db/db_op.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_key.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_val.h"
 
 /* reloads the berkeley db */
 int bdb_reload(char* _n);
 
-void bdb_check_reload(db_con_t* _con);
-int  bdb_use_table(db_con_t* _h, const str* _t);
+void bdb_check_reload(db1_con_t* _con);
+int  bdb_use_table(db1_con_t* _h, const str* _t);
 
 /*
  * Initialize database connection
  */
-db_con_t* bdb_init(const str* _sqlurl);
+db1_con_t* bdb_init(const str* _sqlurl);
 
 
 /*
  * Close a database connection
  */
-void bdb_close(db_con_t* _h);
+void bdb_close(db1_con_t* _h);
 
 
 /*
  * Free all memory allocated by get_result
  */
-int bdb_free_query(db_con_t* _h, db_res_t* _r);
+int bdb_free_query(db1_con_t* _h, db1_res_t* _r);
 
 
 /*
  * Do a query
  */
-int bdb_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
-			db_key_t* _c, int _n, int _nc, db_key_t _o, db_res_t** _r);
+int bdb_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
+			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r);
 
 
 /*
  * Raw SQL query
  */
-int bdb_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
+int bdb_raw_query(db1_con_t* _h, char* _s, db1_res_t** _r);
 
 
 /*
  * Insert a row into table
  */
-int bdb_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 
 /*
  * Delete a row from table
  */
-int bdb_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
-int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n);
+int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n);
 
 /*
  * Update a row in table
  */
-int bdb_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
+int bdb_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 #endif

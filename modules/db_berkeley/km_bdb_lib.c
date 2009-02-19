@@ -826,19 +826,19 @@ int load_metadata_columns(table_p _tp)
 		
 		/*set column type*/
 		if(strncmp(ct, "str", 3)==0)
-		{	col->type = DB_STRING;
+		{	col->type = DB1_STRING;
 		}
 		else if(strncmp(ct, "int", 3)==0)
-		{	col->type = DB_INT;
+		{	col->type = DB1_INT;
 		}
 		else if(strncmp(ct, "double", 6)==0)
-		{	col->type = DB_DOUBLE;
+		{	col->type = DB1_DOUBLE;
 		}
 		else if(strncmp(ct, "datetime", 8)==0)
-		{	col->type = DB_DATETIME;
+		{	col->type = DB1_DATETIME;
 		}
 		else
-		{	col->type = DB_STRING;
+		{	col->type = DB1_STRING;
 		}
 		
 		col->flag = 0;

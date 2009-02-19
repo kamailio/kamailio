@@ -28,8 +28,8 @@
  */
  
 
-#include "../../db/db_val.h"
-#include "../../db/db_ut.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db_ut.h"
 #include "km_db_berkeley.h"
 #include "km_bdb_res.h"
 #include "km_bdb_val.h"
@@ -102,43 +102,43 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 	VAL_NULL(_v) = 0;
 
 	switch(_t) {
-	case DB_INT:
+	case DB1_INT:
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LM_ERR("Error while converting INT value from string\n");
 			return -2;
 		} else {
-			VAL_TYPE(_v) = DB_INT;
+			VAL_TYPE(_v) = DB1_INT;
 			return 0;
 		}
 		break;
 
-	case DB_BIGINT:
+	case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return -1;
 
-	case DB_BITMAP:
+	case DB1_BITMAP:
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LM_ERR("Error while converting BITMAP value from string\n");
 			return -3;
 		} else {
-			VAL_TYPE(_v) = DB_BITMAP;
+			VAL_TYPE(_v) = DB1_BITMAP;
 			return 0;
 		}
 		break;
 
-	case DB_DOUBLE:
+	case DB1_DOUBLE:
 		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
 			LM_ERR("Error while converting DOUBLE value from string\n");
 			return -4;
 		} else {
-			VAL_TYPE(_v) = DB_DOUBLE;
+			VAL_TYPE(_v) = DB1_DOUBLE;
 			return 0;
 		}
 		break;
 
-	case DB_STRING:
+	case DB1_STRING:
 		VAL_STRING(_v) = _s;
-		VAL_TYPE(_v) = DB_STRING;
+		VAL_TYPE(_v) = DB1_STRING;
 		VAL_FREE(_v) = 1;
 		
 		if( strlen(_s)==4 && !strncasecmp(_s, "NULL", 4) )
@@ -146,10 +146,10 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 		
 		return 0;
 
-	case DB_STR:
+	case DB1_STR:
 		VAL_STR(_v).s = (char*)_s;
 		VAL_STR(_v).len = _l;
-		VAL_TYPE(_v) = DB_STR;
+		VAL_TYPE(_v) = DB1_STR;
 		VAL_FREE(_v) = 1;
 
 		if( strlen(_s)==4 && !strncasecmp(_s, "NULL", 4) )
@@ -157,19 +157,19 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 
 		return 0;
 
-	case DB_DATETIME:
+	case DB1_DATETIME:
 		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
 			LM_ERR("Error converting datetime\n");
 			return -5;
 		} else {
-			VAL_TYPE(_v) = DB_DATETIME;
+			VAL_TYPE(_v) = DB1_DATETIME;
 			return 0;
 		}
 		break;
 
-	case DB_BLOB:
+	case DB1_BLOB:
 		VAL_BLOB(_v).s = _s;
-		VAL_TYPE(_v) = DB_BLOB;
+		VAL_TYPE(_v) = DB1_BLOB;
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
 	}
@@ -192,7 +192,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 	}
 	
 	switch(VAL_TYPE(_v)) {
-	case DB_INT:
+	case DB1_INT:
 		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
 			LM_ERR("Error while converting int to string\n");
 			return -2;
@@ -202,7 +202,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
-	case DB_BITMAP:
+	case DB1_BITMAP:
 		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
 			LM_ERR("Error while converting bitmap to string\n");
 			return -3;
@@ -212,7 +212,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
-	case DB_DOUBLE:
+	case DB1_DOUBLE:
 		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
 			LM_ERR("Error while converting double  to string\n");
 			return -3;
@@ -222,7 +222,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
-	case DB_STRING:
+	case DB1_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < l ) 
 		{	LM_ERR("Destination buffer too short for string\n");
@@ -237,7 +237,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
-	case DB_STR:
+	case DB1_STR:
 		l = VAL_STR(_v).len;
 		if (*_len < l) 
 		{
@@ -253,7 +253,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
-	case DB_DATETIME:
+	case DB1_DATETIME:
 		if (bdb_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LM_ERR("Error while converting time_t to string\n");
 			return -6;
@@ -263,7 +263,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
-	case DB_BLOB:
+	case DB1_BLOB:
 		l = VAL_BLOB(_v).len;
 		if (*_len < l) 
 		{

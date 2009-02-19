@@ -37,8 +37,8 @@
 #include <db.h>
 
 #include "../../str.h"
-#include "../../db/db.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_val.h"
 #include "../../locking.h"
 
 /*max number of columns in a table*/

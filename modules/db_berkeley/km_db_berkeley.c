@@ -37,8 +37,8 @@
 #include "../../mem/mem.h"
 
 #include "../../sr_module.h"
-#include "../../db/db_res.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db.h"
 #include "km_db_berkeley.h"
 #include "km_bdb_lib.h"
 #include "km_bdb_res.h"
@@ -69,7 +69,7 @@ int bdb_bind_api(db_func_t *dbb);
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {
+static kam_cmd_export_t cmds[] = {
 	{"db_bind_api",    (cmd_function)bdb_bind_api,   0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -93,7 +93,7 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
-struct module_exports exports = {	
+struct kam_module_exports kam_exports = {	
 	"db_berkeley",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,     /* Exported functions */
@@ -148,7 +148,7 @@ int bdb_bind_api(db_func_t *dbb)
 	return 0;
 }
 
-int bdb_use_table(db_con_t* _h, const str* _t)
+int bdb_use_table(db1_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }
@@ -156,9 +156,9 @@ int bdb_use_table(db_con_t* _h, const str* _t)
 /*
  * Initialize database connection
  */
-db_con_t* bdb_init(const str* _sqlurl)
+db1_con_t* bdb_init(const str* _sqlurl)
 {
-	db_con_t* _res;
+	db1_con_t* _res;
 	str _s;
 	char bdb_path[BDB_PATH_LEN];
 	
@@ -192,14 +192,14 @@ db_con_t* bdb_init(const str* _sqlurl)
 		_s.s = bdb_path;
 	}
 	
-	_res = pkg_malloc(sizeof(db_con_t)+sizeof(bdb_con_t));
+	_res = pkg_malloc(sizeof(db1_con_t)+sizeof(bdb_con_t));
 	if (!_res)
 	{
 		LM_ERR("No private memory left\n");
 		return NULL;
 	}
-	memset(_res, 0, sizeof(db_con_t) + sizeof(bdb_con_t));
-	_res->tail = (unsigned long)((char*)_res+sizeof(db_con_t));
+	memset(_res, 0, sizeof(db1_con_t) + sizeof(bdb_con_t));
+	_res->tail = (unsigned long)((char*)_res+sizeof(db1_con_t));
 
 	LM_INFO("using database at: %.*s", _s.len, _s.s);
 	BDB_CON_CONNECTION(_res) = bdblib_get_db(&_s);
@@ -216,7 +216,7 @@ db_con_t* bdb_init(const str* _sqlurl)
 /*
  * Close a database connection
  */
-void bdb_close(db_con_t* _h)
+void bdb_close(db1_con_t* _h)
 {
 	if(BDB_CON_RESULT(_h))
 		db_free_result(BDB_CON_RESULT(_h));
@@ -253,7 +253,7 @@ int bdb_reload(char* _n)
 /*
  * Attempts to reload a Berkeley database; reloads when the inode changes
  */
-void bdb_check_reload(db_con_t* _con)
+void bdb_check_reload(db1_con_t* _con)
 {
 	str s;
 	char* p;
@@ -331,7 +331,7 @@ void bdb_check_reload(db_con_t* _con)
 /*
  * Free all memory allocated by get_result
  */
-int bdb_free_query(db_con_t* _h, db_res_t* _r)
+int bdb_free_query(db1_con_t* _h, db1_res_t* _r)
 {
 	if(_r)
 		db_free_result(_r);
@@ -352,8 +352,8 @@ int bdb_free_query(db_con_t* _h, db_res_t* _r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
-			db_key_t* _c, int _n, int _nc, db_key_t _o, db_res_t** _r)
+int bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
+			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r)
 {
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
@@ -479,7 +479,7 @@ int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		RES_ROWS(*_r) = (db_row_t*)pkg_malloc( len );
 		memset(RES_ROWS(*_r), 0, len);
 		
-		/*fill in the column part of db_res_t (metadata) */
+		/*fill in the column part of db1_res_t (metadata) */
 		if ((ret = bdb_get_columns(_tbc->dtp, *_r, lres, _nc)) < 0) 
 		{	LM_ERR("Error while getting column names\n");
 			goto error;
@@ -506,7 +506,7 @@ int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			, (char *)data.data);
 #endif
 
-			/*fill in the row part of db_res_t */
+			/*fill in the row part of db1_res_t */
 			if ((ret=bdb_append_row( *_r, dbuf, lres, i)) < 0) 
 			{	LM_ERR("Error while converting row\n");
 				goto error;
@@ -533,7 +533,7 @@ int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	data.ulen = MAX_ROW_SIZE;
 	data.flags = DB_DBT_USERMEM;
 
-	/*create an empty db_res_t which gets returned even if no result*/
+	/*create an empty db1_res_t which gets returned even if no result*/
 	*_r = db_new_result();
 	if (!*_r) 
 	{	LM_ERR("no memory left for result \n");
@@ -560,12 +560,12 @@ int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			, (char *)data.data);
 #endif
 
-		/*fill in the col part of db_res_t */
+		/*fill in the col part of db1_res_t */
 		if ((ret = bdb_get_columns(_tbc->dtp, *_r, lres, _nc)) < 0) 
 		{	LM_ERR("Error while getting column names\n");
 			goto error;
 		}
-		/*fill in the row part of db_res_t */
+		/*fill in the row part of db1_res_t */
 		if ((ret=bdb_convert_row( *_r, dbuf, lres)) < 0) 
 		{	LM_ERR("Error while converting row\n");
 			goto error;
@@ -623,7 +623,7 @@ error:
 /*
  * Raw SQL query
  */
-int bdb_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
+int bdb_raw_query(db1_con_t* _h, char* _s, db1_res_t** _r)
 {
 	LM_CRIT("DB RAW QUERY not implemented!\n");
 	return -1;
@@ -632,7 +632,7 @@ int bdb_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 /*
  * Insert a row into table
  */
-int bdb_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
@@ -768,7 +768,7 @@ error:
  *   do Not specify any keys, or values, and _n <=0
  *
  */
-int bdb_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
+int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 {
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
@@ -894,11 +894,11 @@ _bdb_delete_cursor -- called from bdb_delete when the query involves operators
   In this case, the keys _k are not the actually schema keys, so we need to 
   iterate via cursor to perform this operation.
 */
-int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
+int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 {
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
-	db_res_t* _r   = NULL;
+	db1_res_t* _r   = NULL;
 	char kbuf[MAX_ROW_SIZE];
 	char dbuf[MAX_ROW_SIZE];
 	int i, ret, klen=MAX_ROW_SIZE;
@@ -936,7 +936,7 @@ int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, i
 		}
 	}
 	
-	/* create an empty db_res_t which gets returned even if no result */
+	/* create an empty db1_res_t which gets returned even if no result */
 	_r = db_new_result();
 	if (!_r) 
 	{	LM_ERR("no memory for result \n");
@@ -944,7 +944,7 @@ int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, i
 	
 	RES_ROW_N(_r) = 0;
 	
-	/* fill in the col part of db_res_t */
+	/* fill in the col part of db1_res_t */
 	if ((ret = bdb_get_columns(_tp, _r, 0, 0)) != 0) 
 	{	LM_ERR("Error while getting column names\n");
 		goto error;
@@ -970,7 +970,7 @@ int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, i
 		if(!strncasecmp((char*)key.data,"METADATA",8))
 			continue;
 		
-		/*fill in the row part of db_res_t */
+		/*fill in the row part of db1_res_t */
 		if ((ret=bdb_convert_row( _r, dbuf, 0)) < 0) 
 		{	LM_ERR("Error while converting row\n");
 			goto error;
@@ -1021,7 +1021,7 @@ error:
  * _uv: update values; col values that need to be commited
  * _un: number of rows to update
  */
-int bdb_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
+int bdb_update(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
 	char *c, *t;

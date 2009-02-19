@@ -31,9 +31,9 @@
 #ifndef _KM_BDB_VAL_H_
 #define _KM_BDB_VAL_H_
 
-#include "../../db/db_op.h"
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_con.h"
 
 int bdb_val2str(db_val_t* _v, char* _s, int* _len);
 int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l);

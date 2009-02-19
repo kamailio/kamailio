@@ -34,7 +34,7 @@
 #include "km_bdb_res.h"
 
 
-int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
+int bdb_get_columns(table_p _tp, db1_res_t* _res, int* _lres, int _nc)
 {
 	int col;
 
@@ -94,7 +94,7 @@ int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 /**
  * Convert rows from Berkeley DB to db API representation
  */
-int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
+int bdb_convert_row(db1_res_t* _res, char *bdb_result, int* _lres)
 {
 	int col, len, i, j;
 	char **row_buf, *s;
@@ -205,8 +205,8 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	for (col = 0; col < RES_COL_N(_res); col++) {
 		switch (RES_TYPES(_res)[col]) 
 		{
-			case DB_STRING:
-			case DB_STR:
+			case DB1_STRING:
+			case DB1_STR:
 				break;
 			default:
 			LM_DBG("col[%d] Col[%.*s] Type[%d] Freeing row_buf[%p]\n", col
@@ -216,11 +216,11 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 			pkg_free(row_buf[col]);
 		}
 		/* The following housekeeping may not be technically required, but it is a good practice
-		 * to NULL pointer fields that are no longer valid.  Note that DB_STRING fields have not
-		 * been pkg_free(). NULLing DB_STRING fields would normally not be good to do because a memory
-		 * leak would occur.  However, the pg_convert_row() routine has saved the DB_STRING pointer
+		 * to NULL pointer fields that are no longer valid.  Note that DB1_STRING fields have not
+		 * been pkg_free(). NULLing DB1_STRING fields would normally not be good to do because a memory
+		 * leak would occur.  However, the pg_convert_row() routine has saved the DB1_STRING pointer
 		 * in the db_val_t structure.  The db_val_t structure will eventually be used to pkg_free()
-		 * the DB_STRING storage.
+		 * the DB1_STRING storage.
 		 */
 		row_buf[col] = (char *)NULL;
 	}
@@ -233,7 +233,7 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 }
 
 /*rx is row index*/
-int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
+int bdb_append_row(db1_res_t* _res, char *bdb_result, int* _lres, int _rx)
 {
 	int col, len, i, j;
 	char **row_buf, *s;
@@ -341,7 +341,7 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	 * is eventually called.
 	 */
 	for (col = 0; col < RES_COL_N(_res); col++) {
-		if (RES_TYPES(_res)[col] != DB_STRING) {
+		if (RES_TYPES(_res)[col] != DB1_STRING) {
 			LM_DBG("col[%d] Col[%.*s] Type[%d] Freeing row_buf[%p]\n", col
 				, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s,
 				  RES_TYPES(_res)[col], row_buf[col]);
@@ -349,11 +349,11 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 			pkg_free(row_buf[col]);
 		}
 		/* The following housekeeping may not be technically required, but it is a good practice
-		 * to NULL pointer fields that are no longer valid.  Note that DB_STRING fields have not
-		 * been pkg_free(). NULLing DB_STRING fields would normally not be good to do because a memory
-		 * leak would occur.  However, the pg_convert_row() routine has saved the DB_STRING pointer
+		 * to NULL pointer fields that are no longer valid.  Note that DB1_STRING fields have not
+		 * been pkg_free(). NULLing DB1_STRING fields would normally not be good to do because a memory
+		 * leak would occur.  However, the pg_convert_row() routine has saved the DB1_STRING pointer
 		 * in the db_val_t structure.  The db_val_t structure will eventually be used to pkg_free()
-		 * the DB_STRING storage.
+		 * the DB1_STRING storage.
 		 */
 		row_buf[col] = (char *)NULL;
 	}
@@ -402,30 +402,30 @@ int bdb_is_neq_type(db_type_t _t0, db_type_t _t1)
 	
 	switch(_t1)
 	{
-		case DB_INT:
-			if(_t0==DB_DATETIME || _t0==DB_BITMAP)
+		case DB1_INT:
+			if(_t0==DB1_DATETIME || _t0==DB1_BITMAP)
 				return 0;
-		case DB_BIGINT:
+		case DB1_BIGINT:
 				LM_ERR("BIGINT not supported");
 				return 0;
-		case DB_DATETIME:
-			if(_t0==DB_INT)
+		case DB1_DATETIME:
+			if(_t0==DB1_INT)
 				return 0;
-			if(_t0==DB_BITMAP)
+			if(_t0==DB1_BITMAP)
 				return 0;
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			break;
-		case DB_STRING:
-			if(_t0==DB_STR)
+		case DB1_STRING:
+			if(_t0==DB1_STR)
 				return 0;
-		case DB_STR:
-			if(_t0==DB_STRING || _t0==DB_BLOB)
+		case DB1_STR:
+			if(_t0==DB1_STRING || _t0==DB1_BLOB)
 				return 0;
-		case DB_BLOB:
-			if(_t0==DB_STR)
+		case DB1_BLOB:
+			if(_t0==DB1_STR)
 				return 0;
-		case DB_BITMAP:
-			if (_t0==DB_INT)
+		case DB1_BITMAP:
+			if (_t0==DB1_INT)
 				return 0;
 	}
 	return 1;
@@ -434,7 +434,7 @@ int bdb_is_neq_type(db_type_t _t0, db_type_t _t1)
 
 /*
 */
-int bdb_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r, int* _lkey )
+int bdb_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db1_res_t* _r, int* _lkey )
 {
 	int i, res;
 	db_row_t* row = NULL;
@@ -495,19 +495,19 @@ int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 	
 	switch(VAL_TYPE(_v))
 	{
-		case DB_INT:
+		case DB1_INT:
 			return (_vp->val.int_val<_v->val.int_val)?-1:
 					(_vp->val.int_val>_v->val.int_val)?1:0;
-		case DB_BIGINT:
+		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return -1;
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			return (_vp->val.double_val<_v->val.double_val)?-1:
 					(_vp->val.double_val>_v->val.double_val)?1:0;
-		case DB_DATETIME:
+		case DB1_DATETIME:
 			return (_vp->val.int_val<_v->val.time_val)?-1:
 					(_vp->val.int_val>_v->val.time_val)?1:0;
-		case DB_STRING:
+		case DB1_STRING:
 			_l = strlen(_v->val.string_val);
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.string_val, _l);
@@ -518,7 +518,7 @@ int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-		case DB_STR:
+		case DB1_STR:
 			_l = _v->val.str_val.len;
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.str_val.s, _l);
@@ -529,7 +529,7 @@ int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-		case DB_BLOB:
+		case DB1_BLOB:
 			_l = _v->val.blob_val.len;
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.blob_val.s, _l);
@@ -540,7 +540,7 @@ int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-		case DB_BITMAP:
+		case DB1_BITMAP:
 			return (_vp->val.int_val<_v->val.bitmap_val)?-1:
 				(_vp->val.int_val>_v->val.bitmap_val)?1:0;
 	}
