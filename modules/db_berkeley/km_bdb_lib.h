@@ -124,28 +124,28 @@ typedef struct _db_parms
 } db_parms_t, *db_parms_p;
 
 
-int bdblib_init(db_parms_p _parms);
-int bdblib_destroy(void);
-int bdblib_close(char* _n);
-int bdblib_reopen(char* _n);
-int bdblib_recover(table_p _tp, int error_code);
-void bdblib_log(int op, table_p _tp, char* _msg, int len);
-int bdblib_create_dbenv(DB_ENV **dbenv, char* home);
-int bdblib_create_journal(table_p _tp);
-database_p  	bdblib_get_db(str *_s);
-tbl_cache_p 	bdblib_get_table(database_p _db, str *_s);
-table_p 	bdblib_create_table(database_p _db, str *_s);
+int km_bdblib_init(db_parms_p _parms);
+int km_bdblib_destroy(void);
+int km_bdblib_close(char* _n);
+int km_bdblib_reopen(char* _n);
+int km_bdblib_recover(table_p _tp, int error_code);
+void km_bdblib_log(int op, table_p _tp, char* _msg, int len);
+int km_bdblib_create_dbenv(DB_ENV **dbenv, char* home);
+int km_bdblib_create_journal(table_p _tp);
+database_p  	km_bdblib_get_db(str *_s);
+tbl_cache_p 	km_bdblib_get_table(database_p _db, str *_s);
+table_p 	km_bdblib_create_table(database_p _db, str *_s);
 
 int db_free(database_p _dbp);
 int tbl_cache_free(tbl_cache_p _tbc);
 int tbl_free(table_p _tp);
 
-int load_metadata_columns(table_p _tp);
-int load_metadata_keys(table_p _tp);
-int load_metadata_readonly(table_p _tp);
-int load_metadata_logflags(table_p _tp);
-int load_metadata_defaults(table_p _tp);
+int km_load_metadata_columns(table_p _tp);
+int km_load_metadata_keys(table_p _tp);
+int km_load_metadata_readonly(table_p _tp);
+int km_load_metadata_logflags(table_p _tp);
+int km_load_metadata_defaults(table_p _tp);
 
-int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko);
+int km_bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko);
 
 #endif

@@ -46,7 +46,7 @@ static db_parms_p _db_parms = NULL;
 /**
  *
  */
-int bdblib_init(db_parms_p _p) 
+int km_bdblib_init(db_parms_p _p) 
 {
 	if (!_cachedb)
 	{
@@ -89,7 +89,7 @@ int bdblib_init(db_parms_p _p)
 /**
  * close all DBs and then the DBENV; free all memory
  */
-int bdblib_destroy(void)
+int km_bdblib_destroy(void)
 {
 	if (_cachedb)	db_free(*_cachedb);
 	if(_db_parms)	pkg_free(_db_parms);
@@ -101,7 +101,7 @@ int bdblib_destroy(void)
   assumes the lib data-structures are already initialzed;
   used to sync and reload the db file.
 */
-int bdblib_close(char* _n)
+int km_bdblib_close(char* _n)
 {
 	str s;
 	int rc;
@@ -185,7 +185,7 @@ LM_DBG("ENV %.*s \n"
   assumes the lib data-structures are already initialzed;
   used to sync and reload the db file.
 */
-int bdblib_reopen(char* _n)
+int km_bdblib_reopen(char* _n)
 {
 	str s;
 	int rc, flags;
@@ -211,9 +211,9 @@ int bdblib_reopen(char* _n)
 		!strncasecmp(s.s, _db_p->name.s,_db_p->name.len))
 		{
 			//open the whole dbenv
-			LM_DBG("-- bdblib_reopen ENV %.*s \n", s.len, s.s);
+			LM_DBG("-- km_bdblib_reopen ENV %.*s \n", s.len, s.s);
 			if(!_db_p->dbenv)
-			{	rc = bdblib_create_dbenv(&_env, _n);
+			{	rc = km_bdblib_create_dbenv(&_env, _n);
 				_db_p->dbenv = _env;
 			}
 			
@@ -231,14 +231,14 @@ int bdblib_reopen(char* _n)
 						if ((rc = db_create(&_db, _env, 0)) != 0)
 						{	_env->err(_env, rc, "db_create");
 							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
-							bdblib_recover(_tbc->dtp, rc);
+							km_bdblib_recover(_tbc->dtp, rc);
 						}
 					}
 					
 					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
 					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
 						LM_CRIT("error in db_open: %s.\n",db_strerror(rc));
-						bdblib_recover(_tbc->dtp, rc);
+						km_bdblib_recover(_tbc->dtp, rc);
 					}
 					
 					_tbc->dtp->db = _db;
@@ -269,14 +269,14 @@ int bdblib_reopen(char* _n)
 						if ((rc = db_create(&_db, _env, 0)) != 0)
 						{	_env->err(_env, rc, "db_create");
 							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
-							bdblib_recover(_tbc->dtp, rc);
+							km_bdblib_recover(_tbc->dtp, rc);
 						}
 					}
 					
 					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
 					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
 						LM_CRIT("bdb open: %s.\n",db_strerror(rc));
-						bdblib_recover(_tbc->dtp, rc);
+						km_bdblib_recover(_tbc->dtp, rc);
 					}
 					_tbc->dtp->db = _db;
 					lock_release(&_tbc->dtp->sem);
@@ -295,7 +295,7 @@ int bdblib_reopen(char* _n)
 /**
  *
  */
-int bdblib_create_dbenv(DB_ENV **_dbenv, char* _home)
+int km_bdblib_create_dbenv(DB_ENV **_dbenv, char* _home)
 {
 	DB_ENV *env;
 	char *progname;
@@ -355,7 +355,7 @@ err: (void)env->close(env, 0);
 
 /**
  */
-database_p bdblib_get_db(str *_s)
+database_p km_bdblib_get_db(str *_s)
 {
 	int rc;
 	database_p _db_p=NULL;
@@ -378,7 +378,7 @@ database_p bdblib_get_db(str *_s)
 		return _db_p;
 	}
 
-	if(!bdb_is_database(_s))
+	if(!km_bdb_is_database(_s))
 	{	
 		LM_ERR("database [%.*s] does not exists!\n" ,_s->len , _s->s);
 		return NULL;
@@ -399,9 +399,9 @@ database_p bdblib_get_db(str *_s)
 	strncpy(name, _s->s, _s->len);
 	name[_s->len] = 0;
 
-	if ((rc = bdblib_create_dbenv(&(_db_p->dbenv), name)) != 0)
+	if ((rc = km_bdblib_create_dbenv(&(_db_p->dbenv), name)) != 0)
 	{
-		LM_ERR("bdblib_create_dbenv failed");
+		LM_ERR("km_bdblib_create_dbenv failed");
 		pkg_free(_db_p->name.s);
 		pkg_free(_db_p);
 		return NULL;
@@ -418,7 +418,7 @@ database_p bdblib_get_db(str *_s)
  * look thru a linked list for the table. if dne, create a new one
  * and add to the list
 */
-tbl_cache_p bdblib_get_table(database_p _db, str *_s)
+tbl_cache_p km_bdblib_get_table(database_p _db, str *_s)
 {
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
@@ -456,7 +456,7 @@ tbl_cache_p bdblib_get_table(database_p _db, str *_s)
 		return NULL;
 	}
 
-	_tp = bdblib_create_table(_db, _s);
+	_tp = km_bdblib_create_table(_db, _s);
 
 #ifdef BDB_EXTRA_DEBUG
 	LM_DBG("table: %.*s\n", _s->len, _s->s);
@@ -483,7 +483,7 @@ tbl_cache_p bdblib_get_table(database_p _db, str *_s)
 }
 
 
-void bdblib_log(int op, table_p _tp, char* _msg, int len)
+void km_bdblib_log(int op, table_p _tp, char* _msg, int len)
 {
 	if(!_tp || !len) 		return;
 	if(! _db_parms->log_enable) 	return;
@@ -499,7 +499,7 @@ void bdblib_log(int op, table_p _tp, char* _msg, int len)
 		{
 			if((_tp->t) && (now - _tp->t) > _db_parms->journal_roll_interval)
 			{	/*try to roll logfile*/
-				if(bdblib_create_journal(_tp))
+				if(km_bdblib_create_journal(_tp))
 				{
 					LM_ERR("Journaling has FAILED !\n");
 					return;
@@ -559,7 +559,7 @@ void bdblib_log(int op, table_p _tp, char* _msg, int len)
  * Function returns NULL on error, which will cause openser to exit.
  *
  */
-table_p bdblib_create_table(database_p _db, str *_s)
+table_p km_bdblib_create_table(database_p _db, str *_s)
 {
 
 	int rc,i,flags;
@@ -628,7 +628,7 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	/*load metadata; seeded\db_loaded when database are created*/
 	
 	/*initialize columns with metadata*/
-	rc = load_metadata_columns(tp);
+	rc = km_load_metadata_columns(tp);
 	if(rc!=0)
 	{
 		LM_ERR("FAILED to load METADATA COLS in table: %s.\n", tblname);
@@ -636,14 +636,14 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	}
 	
 	/*initialize columns default values from metadata*/
-	rc = load_metadata_defaults(tp);
+	rc = km_load_metadata_defaults(tp);
 	if(rc!=0)
 	{
 		LM_ERR("FAILED to load METADATA DEFAULTS in table: %s.\n", tblname);
 		goto error;
 	}
 	
-	rc = load_metadata_keys(tp);
+	rc = km_load_metadata_keys(tp);
 	if(rc!=0)
 	{
 		LM_ERR("FAILED to load METADATA KEYS in table: %s.\n", tblname);
@@ -652,7 +652,7 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	}
 
 	/*opened RW by default; Query to set the RO flag */
-	rc = load_metadata_readonly(tp);
+	rc = km_load_metadata_readonly(tp);
 	if(rc!=0)
 	{
 		LM_INFO("No METADATA_READONLY in table: %s.\n", tblname);
@@ -695,12 +695,12 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	/* set the journaling flags; flags indicate which operations
 	   need to be journalled. (e.g possible to only journal INSERT.)
 	*/
-	rc = load_metadata_logflags(tp);
+	rc = km_load_metadata_logflags(tp);
 	if(rc!=0)
 		LM_INFO("No METADATA_LOGFLAGS in table: %s.\n", tblname);
 	
 	if ((tp->logflags & JLOG_FILE) == JLOG_FILE)
-		bdblib_create_journal(tp);
+		km_bdblib_create_journal(tp);
 	
 	return tp;
 	
@@ -713,7 +713,7 @@ error:
 	return NULL;
 }
 
-int bdblib_create_journal(table_p _tp)
+int km_bdblib_create_journal(table_p _tp)
 {
 	char *s;
 	char fn[1024];
@@ -767,7 +767,7 @@ int bdblib_create_journal(table_p _tp)
 
 }
 
-int load_metadata_columns(table_p _tp)
+int km_load_metadata_columns(table_p _tp)
 {
 	int ret,n,len;
 	char dbuf[MAX_ROW_SIZE];
@@ -799,7 +799,7 @@ int load_metadata_columns(table_p _tp)
 	
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
-		db->err(db, ret, "load_metadata_columns DB->get failed");
+		db->err(db, ret, "km_load_metadata_columns DB->get failed");
 		LM_ERR("FAILED to find METADATA_COLUMNS in DB \n");
 		return -1;
 	}
@@ -851,7 +851,7 @@ int load_metadata_columns(table_p _tp)
 	return 0;
 }
 
-int load_metadata_keys(table_p _tp)
+int km_load_metadata_keys(table_p _tp)
 {
 	int ret,n,ci;
 	char dbuf[MAX_ROW_SIZE];
@@ -875,7 +875,7 @@ int load_metadata_keys(table_p _tp)
 	
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
-		db->err(db, ret, "load_metadata_keys DB->get failed");
+		db->err(db, ret, "km_load_metadata_keys DB->get failed");
 		LM_ERR("FAILED to find METADATA in table \n");
 		return ret;
 	}
@@ -896,7 +896,7 @@ int load_metadata_keys(table_p _tp)
 }
 
 
-int load_metadata_readonly(table_p _tp)
+int km_load_metadata_readonly(table_p _tp)
 {
 	int i, ret;
 	char dbuf[MAX_ROW_SIZE];
@@ -928,7 +928,7 @@ int load_metadata_readonly(table_p _tp)
 	return 0;
 }
 
-int load_metadata_logflags(table_p _tp)
+int km_load_metadata_logflags(table_p _tp)
 {
 	int i, ret;
 	char dbuf[MAX_ROW_SIZE];
@@ -960,7 +960,7 @@ int load_metadata_logflags(table_p _tp)
 	return 0;
 }
 
-int load_metadata_defaults(table_p _tp)
+int km_load_metadata_defaults(table_p _tp)
 {
 	int ret,n,len;
 	char dbuf[MAX_ROW_SIZE];
@@ -1041,7 +1041,7 @@ int load_metadata_defaults(table_p _tp)
   resulting value: _k = "KEY1 | KEY2"
   ko = key only
 */
-int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko)
+int km_bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko)
 {
 	char *p; 
 	char sk[MAX_ROW_SIZE]; // subkey(sk) val
@@ -1073,7 +1073,7 @@ int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v
 		*/
 		for(i=0;i<_n;i++)
 		{	len = total - sum;
-			if ( bdb_val2str(&_v[i], sk, &len) != 0 ) 
+			if ( km_bdb_val2str(&_v[i], sk, &len) != 0 ) 
 			{	LM_ERR("error building composite key \n");
 				return -2;
 			}
@@ -1147,7 +1147,7 @@ int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v
 #endif
 
 				len = total - sum;
-				if ( bdb_val2str(&_v[j], sk, &len) != 0)
+				if ( km_bdb_val2str(&_v[j], sk, &len) != 0)
 				{	LM_ERR("Destination buffer too short for subval %s\n",sk);
 					return -4;
 				}
@@ -1303,7 +1303,7 @@ int tbl_free(table_p _tp)
 	return 0;
 }
 
-int bdblib_recover(table_p _tp, int _rc)
+int km_bdblib_recover(table_p _tp, int _rc)
 {
 	switch(_rc)
 	{
@@ -1312,7 +1312,7 @@ int bdblib_recover(table_p _tp, int _rc)
 		
 		case DB_RUNRECOVERY:
 		LM_ERR("DB_RUNRECOVERY detected !! \n");
-		bdblib_destroy();
+		km_bdblib_destroy();
 		exit(1);
 		break;
 	}

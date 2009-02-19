@@ -118,7 +118,7 @@ static int mod_init(void)
 	p.cache_size  = (4 * 1024 * 1024); //4Mb
 	p.journal_roll_interval = journal_roll_interval;
 	
-	if(bdblib_init(&p))
+	if(km_bdblib_init(&p))
 		return -1;
 
 	return 0;
@@ -126,7 +126,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	bdblib_destroy();
+	km_bdblib_destroy();
 }
 
 int bdb_bind_api(db_func_t *dbb)
@@ -139,7 +139,7 @@ int bdb_bind_api(db_func_t *dbb)
 	dbb->use_table   = bdb_use_table;
 	dbb->init        = bdb_init;
 	dbb->close       = bdb_close;
-	dbb->query       = (db_query_f)bdb_query;
+	dbb->query       = (db_query_f)km_bdb_query;
 	dbb->free_result = bdb_free_query;
 	dbb->insert      = (db_insert_f)bdb_insert;
 	dbb->delete      = (db_delete_f)bdb_delete; 
@@ -202,7 +202,7 @@ db1_con_t* bdb_init(const str* _sqlurl)
 	_res->tail = (unsigned long)((char*)_res+sizeof(db1_con_t));
 
 	LM_INFO("using database at: %.*s", _s.len, _s.s);
-	BDB_CON_CONNECTION(_res) = bdblib_get_db(&_s);
+	BDB_CON_CONNECTION(_res) = km_bdblib_get_db(&_s);
 	if (!BDB_CON_CONNECTION(_res))
 	{
 		LM_ERR("cannot get the link to database\n");
@@ -233,12 +233,12 @@ int bdb_reload(char* _n)
 	LM_DBG("[bdb_reload] Initiate RELOAD in %s\n", _n);
 #endif
 
-	if ((rc = bdblib_close(_n)) != 0) 
+	if ((rc = km_bdblib_close(_n)) != 0) 
 	{	LM_ERR("[bdb_reload] Error while closing db_berkeley DB.\n");
 		return rc;
 	}
 
-	if ((rc = bdblib_reopen(_n)) != 0) 
+	if ((rc = km_bdblib_reopen(_n)) != 0) 
 	{	LM_ERR("[bdb_reload] Error while reopening db_berkeley DB.\n");
 		return rc;
 	}
@@ -310,7 +310,7 @@ void bdb_check_reload(db1_con_t* _con)
 	p+=s.len;
 	*p=0;
 	
-	if( (tbc = bdblib_get_table(db, &s)) == NULL)
+	if( (tbc = km_bdblib_get_table(db, &s)) == NULL)
 		return;
 	
 	if( (tp = tbc->dtp) == NULL)
@@ -352,7 +352,7 @@ int bdb_free_query(db1_con_t* _h, db1_res_t* _r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
+int km_bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r)
 {
 	tbl_cache_p _tbc = NULL;
@@ -379,7 +379,7 @@ int bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if(auto_reload)
 		bdb_check_reload(_con);
 
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_con), (str*)CON_TABLE(_con));
+	_tbc = km_bdblib_get_table(BDB_CON_CONNECTION(_con), (str*)CON_TABLE(_con));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -1;
@@ -519,7 +519,7 @@ int bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		return 0; 
 	}
 
-	if ( (ret = bdblib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, BDB_KEY)) != 0 ) 
+	if ( (ret = km_bdblib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, BDB_KEY)) != 0 ) 
 	{	LM_ERR("error in query key \n");
 		goto error;
 	}
@@ -594,7 +594,7 @@ int bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		case DB_RUNRECOVERY:
 		default:
 			LM_CRIT("DB->get error: %s.\n", db_strerror(ret));
-			bdblib_recover(_tp,ret);
+			km_bdblib_recover(_tp,ret);
 			goto error;
 		}
 	}
@@ -659,7 +659,7 @@ int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		return -2;
 	}
 
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
+	_tbc = km_bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -3;
@@ -699,8 +699,8 @@ int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	}
 	
 	/* make the key */
-	if ( (ret = bdblib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, BDB_KEY)) != 0 ) 
-	{	LM_ERR("Error in bdblib_valtochar  \n");
+	if ( (ret = km_bdblib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, BDB_KEY)) != 0 ) 
+	{	LM_ERR("Error in km_bdblib_valtochar  \n");
 		ret = -9;
 		goto error;
 	}
@@ -714,8 +714,8 @@ int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	memset(&data, 0, sizeof(DBT));
 	memset(dbuf, 0, MAX_ROW_SIZE);
 
-	if ( (ret = bdblib_valtochar(_tp, lkey, dbuf, &dlen, _v, _n, BDB_VALUE)) != 0 ) 
-	{	LM_ERR("Error in bdblib_valtochar \n");
+	if ( (ret = km_bdblib_valtochar(_tp, lkey, dbuf, &dlen, _v, _n, BDB_VALUE)) != 0 ) 
+	{	LM_ERR("Error in km_bdblib_valtochar \n");
 		ret = -9;
 		goto error;
 	}
@@ -727,7 +727,7 @@ int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	if ((ret = db->put(db, NULL, &key, &data, 0)) == 0) 
 	{
-		bdblib_log(JLOG_INSERT, _tp, dbuf, dlen);
+		km_bdblib_log(JLOG_INSERT, _tp, dbuf, dlen);
 
 #ifdef BDB_EXTRA_DEBUG
 	LM_DBG("INSERT\nKEY:  [%.*s]\nDATA: [%.*s]\n"
@@ -748,7 +748,7 @@ int bdb_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		case DB_RUNRECOVERY:
 		default:
 			LM_CRIT("DB->put error: %s.\n", db_strerror(ret));
-			bdblib_recover(_tp, ret);
+			km_bdblib_recover(_tp, ret);
 			goto error;
 		}
 	}
@@ -788,7 +788,7 @@ int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 	if ((!_h) || !CON_TABLE(_h))
 		return -1;
 
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
+	_tbc = km_bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -3;
@@ -836,7 +836,7 @@ int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 	if(!lkey)  return -5;
 
 	/* make the key */
-	if ( (ret = bdblib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, BDB_KEY)) != 0 ) 
+	if ( (ret = km_bdblib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, BDB_KEY)) != 0 ) 
 	{	LM_ERR("Error in bdblib_makekey\n");
 		ret = -6;
 		goto error;
@@ -849,7 +849,7 @@ int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 
 	if ((ret = db->del(db, NULL, &key, 0)) == 0)
 	{
-		bdblib_log(JLOG_DELETE, _tp, kbuf, klen);
+		km_bdblib_log(JLOG_DELETE, _tp, kbuf, klen);
 
 #ifdef BDB_EXTRA_DEBUG
 		LM_DBG("DELETED ROW \n KEY: %s \n", (char *)key.data);
@@ -872,7 +872,7 @@ int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 		default:
 			LM_CRIT("DB->del error: %s.\n"
 				, db_strerror(ret));
-			bdblib_recover(_tp, ret);
+			km_bdblib_recover(_tp, ret);
 			goto error;
 		}
 	}
@@ -912,7 +912,7 @@ int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 	if ((!_h) || !CON_TABLE(_h))
 		return -1;
 
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
+	_tbc = km_bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -3;
@@ -988,7 +988,7 @@ int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 			{	
 				/* Berkeley DB error handler */
 				LM_CRIT("DB->get error: %s.\n", db_strerror(ret));
-				bdblib_recover(_tp,ret);
+				km_bdblib_recover(_tp,ret);
 			}
 			
 		}
@@ -1040,7 +1040,7 @@ int bdb_update(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if (!_con || !CON_TABLE(_con) || !_uk || !_uv || _un <= 0)
 		return -1;
 
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_con), (str*)CON_TABLE(_con));
+	_tbc = km_bdblib_get_table(BDB_CON_CONNECTION(_con), (str*)CON_TABLE(_con));
 	if(!_tbc)
 	{	LM_ERR("table does not exist\n");
 		return -1;
@@ -1084,7 +1084,7 @@ int bdb_update(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	
 	len = MAX_ROW_SIZE;
 	
-	if ( (ret = bdblib_valtochar(_tp, lkey, kbuf, &len, _v, _n, BDB_KEY)) != 0 ) 
+	if ( (ret = km_bdblib_valtochar(_tp, lkey, kbuf, &len, _v, _n, BDB_KEY)) != 0 ) 
 	{	LM_ERR("Error in query key \n");
 		goto cleanup;
 	}
@@ -1147,7 +1147,7 @@ int bdb_update(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			if (qcol == k)
 			{	/* update this col */
 				int j = MAX_ROW_SIZE - sum;
-				if( bdb_val2str( &_uv[i], t, &j) )
+				if( km_bdb_val2str( &_uv[i], t, &j) )
 				{	LM_ERR("value too long for string \n");
 					ret = -3;
 					goto cleanup;
@@ -1206,7 +1206,7 @@ next:
 	/* stage 4: INSERT new row with key*/
 	if ((ret = db->put(db, NULL, &key, &udata, 0)) == 0) 
 	{
-		bdblib_log(JLOG_UPDATE, _tp, ubuf, sum);
+		km_bdblib_log(JLOG_UPDATE, _tp, ubuf, sum);
 #ifdef BDB_EXTRA_DEBUG
 	LM_DBG("INSERT \nKEY:  [%.*s]\nDATA: [%.*s]\n"
 		, (int)   key.size
@@ -1252,7 +1252,7 @@ db_error:
 	case DB_RUNRECOVERY:
 	default:
 		LM_CRIT("DB->get error: %s.\n", db_strerror(ret));
-		bdblib_recover(_tp,ret);
+		km_bdblib_recover(_tp,ret);
 	}
 	
 	if(lkey)

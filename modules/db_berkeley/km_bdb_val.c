@@ -47,7 +47,7 @@
  * should be done in the val2str function, as some databases
  * like db_berkeley don't need or like this at all.
  */
-inline int bdb_time2str(time_t _v, char* _s, int* _l)
+inline int km_bdb_time2str(time_t _v, char* _s, int* _l)
 {
 	struct tm* t;
 	int l;
@@ -181,7 +181,7 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int bdb_val2str(db_val_t* _v, char* _s, int* _len)
+int km_bdb_val2str(db_val_t* _v, char* _s, int* _len)
 {
 	int l;
 
@@ -254,7 +254,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB1_DATETIME:
-		if (bdb_time2str(VAL_TIME(_v), _s, _len) < 0) {
+		if (km_bdb_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LM_ERR("Error while converting time_t to string\n");
 			return -6;
 		} else {
