@@ -43,6 +43,7 @@
 #include "km_bdb_lib.h"
 #include "km_bdb_res.h"
 #include "km_bdb_mi.h"
+#include "bdb_mod.h"
 
 #ifndef CFG_DIR
 #define CFG_DIR "/tmp"
@@ -56,10 +57,6 @@
 #define BDB_VALUE 0
 
 /*MODULE_VERSION*/
-
-int auto_reload = 0;
-int log_enable  = 0;
-int journal_roll_interval = 0;
 
 static int mod_init(void);
 static void destroy(void);
