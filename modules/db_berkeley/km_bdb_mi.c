@@ -29,8 +29,8 @@
 
 #include "../../dprint.h"
 #include "../../db/db.h"
-#include "db_berkeley.h"
-#include "bdb_mi.h"
+#include "km_db_berkeley.h"
+#include "km_bdb_mi.h"
 
 
 /*

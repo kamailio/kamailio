@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include "bdb_util.h"
+#include "km_bdb_util.h"
 
 /**
  *

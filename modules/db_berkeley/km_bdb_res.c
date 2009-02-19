@@ -31,7 +31,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include "../../mem/mem.h"
-#include "bdb_res.h"
+#include "km_bdb_res.h"
 
 
 int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)

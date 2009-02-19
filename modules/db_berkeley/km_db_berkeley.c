@@ -39,10 +39,10 @@
 #include "../../sr_module.h"
 #include "../../db/db_res.h"
 #include "../../db/db.h"
-#include "db_berkeley.h"
-#include "bdb_lib.h"
-#include "bdb_res.h"
-#include "bdb_mi.h"
+#include "km_db_berkeley.h"
+#include "km_bdb_lib.h"
+#include "km_bdb_res.h"
+#include "km_bdb_mi.h"
 
 #ifndef CFG_DIR
 #define CFG_DIR "/tmp"

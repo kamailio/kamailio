@@ -30,9 +30,9 @@
 
 #include "../../db/db_val.h"
 #include "../../db/db_ut.h"
-#include "db_berkeley.h"
-#include "bdb_res.h"
-#include "bdb_val.h"
+#include "km_db_berkeley.h"
+#include "km_bdb_res.h"
+#include "km_bdb_val.h"
 #include <string.h>
 
 /**

@@ -34,8 +34,8 @@
 #include "../../db/db_op.h"
 #include "../../db/db_res.h"
 #include "../../db/db_con.h"
-#include "bdb_lib.h"
-#include "bdb_val.h"
+#include "km_bdb_lib.h"
+#include "km_bdb_val.h"
 
 typedef struct _con
 {

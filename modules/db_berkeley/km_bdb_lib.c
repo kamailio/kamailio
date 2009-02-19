@@ -36,9 +36,9 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 
-#include "bdb_util.h"
-#include "bdb_lib.h"
-#include "bdb_val.h"
+#include "km_bdb_util.h"
+#include "km_bdb_lib.h"
+#include "km_bdb_val.h"
 
 static database_p *_cachedb = NULL;
 static db_parms_p _db_parms = NULL;
