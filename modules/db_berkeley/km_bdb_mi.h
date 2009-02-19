@@ -26,7 +26,7 @@
 #ifndef _KM_BDB_MI_H_
 #define _KM_BDB_MI_H_
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #define MI_BDB_RELOAD "bdb_reload"
 
