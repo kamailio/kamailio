@@ -233,13 +233,17 @@ struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size)
 {
 	struct rvalue* rv;
 	
-	if (t==RV_STR && v && v->s.len)
+	if (t==RV_STR && v && v->s.s)
 		return rval_new_str(&v->s, extra_size);
 	rv=rval_new_empty(extra_size);
 	if (likely(rv)){
 		rv->type=t;
-		if (likely(v)){
+		if (likely(v && t!=RV_STR)){
 			rv->v=*v;
+		}else if (t==RV_STR){
+			rv->v.s.s=&rv->buf[0];
+			rv->v.s.len=0;
+			if (likely(extra_size)) rv->v.s.s[0]=0;
 		}else
 			memset (&rv->v, 0, sizeof(rv->v));
 	}
