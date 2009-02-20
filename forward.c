@@ -342,6 +342,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	struct socket_info* orig_send_sock; /* initial send_sock */
 	int ret;
 	struct ip_addr ip; /* debugging only */
+	char proto;
 #ifdef USE_DNS_FAILOVER
 	struct socket_info* prev_send_sock;
 	int err;
@@ -354,6 +355,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	
 	buf=0;
 	orig_send_sock=send_info->send_sock;
+	proto=send_info->proto;
 	ret=0;
 
 	if(dst){
@@ -361,7 +363,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (cfg_get(core, core_cfg, use_dns_failover)){
 			dns_srv_handle_init(&dns_srv_h);
 			err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
-									&send_info->proto, dns_flags);
+									&proto, dns_flags);
 			if (err!=0){
 				LOG(L_ERR, "ERROR: forward_request: resolving \"%.*s\""
 						" failed: %s [%d]\n", dst->len, ZSW(dst->s),
@@ -371,7 +373,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			}
 		}else
 #endif
-		if (sip_hostport2su(&send_info->to, dst, port, &send_info->proto)<0){
+		if (sip_hostport2su(&send_info->to, dst, port, &proto)<0){
 			LOG(L_ERR, "ERROR: forward_request: bad host name %.*s,"
 						" dropping packet\n", dst->len, ZSW(dst->s));
 			ret=E_BAD_ADDRESS;
@@ -410,12 +412,11 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	do{
 #endif
 		if (orig_send_sock==0) /* no forced send_sock => find it **/
-			send_info->send_sock=get_send_socket(msg, &send_info->to,
-												send_info->proto);
+			send_info->send_sock=get_send_socket(msg, &send_info->to, proto);
 		if (send_info->send_sock==0){
 			LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
 						"no corresponding listening socket\n",
-						send_info->to.s.sa_family, send_info->proto);
+						send_info->to.s.sa_family, proto);
 			ret=ser_error=E_NO_SOCKET;
 #ifdef USE_DNS_FAILOVER
 			/* continue, maybe we find a socket for some other ip */
@@ -431,6 +432,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			prev_send_sock=send_info->send_sock;
 #endif
 			if (buf) pkg_free(buf);
+			send_info->proto=proto;
 			buf = build_req_buf_from_sip_req(msg, &len, send_info);
 			if (!buf){
 				LOG(L_ERR, "ERROR: forward_request: building failed\n");
@@ -496,7 +498,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	}while(dst && cfg_get(core, core_cfg, use_dns_failover) &&
 			dns_srv_handle_next(&dns_srv_h, err) && 
 			((err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
-								  &send_info->proto, dns_flags))==0));
+										&proto, dns_flags))==0));
 	if ((err!=0) && (err!=-E_DNS_EOR)){
 		LOG(L_ERR, "ERROR:  resolving %.*s host name in uri"
 							" failed: %s [%d] (dropping packet)\n",

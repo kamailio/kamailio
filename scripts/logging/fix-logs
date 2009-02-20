@@ -1,0 +1,155 @@
+#!/usr/bin/perl -w
+#
+# Usage: fix-log [MODULE-NAME] < INFILE > OUTFILE
+#
+# Fixes logging macros and messages in the SER source file INFILE
+# to match the recent updates in the logging API.
+#
+# Specify MODULE_NAME if INFILE source file is a part of a SER module.
+#
+# See doc/logging-api.txt for details.
+#
+# $Id$
+
+#
+# What *exactly* does this script do?
+#
+#   - replaces LOG(L_*, ...) with the short macro corresponding to L_* level
+#
+#   - replaces DEBUG() with DBG() macro
+#
+#   - removes MODULE and the level string prefixes from FMT arguments of macros
+#     where FMT looks like "X:...", "X:Y:..." or "X:Y:Z:...", white spaces are
+#     ignored and preserved, string matching is case-insensitive
+#
+#     In addition, if the level string found in FMT argument doesn't match the actual
+#     level of the macro, the macro level is fixed.
+#
+#     Examples:
+#        ERR("ERROR:tm: blah\n")           becomes ERR("blah\n")
+#        DBG("Debug: blah\n")              becomes DBG("blah\n")
+#        LOG(L_ERR, "tm: INFO: blah\n")    becomes INFO("blah\n")
+#
+#   - removes 'MODULE_NAME ":' string from the beggining of FMT arguments of macros
+#     in module source files (a common special case)
+#
+#     Example:
+#        LOG(L_ERR, MODULE_NAME ": tm:Info:blah\n")   becomes INFO("blah\n")
+#
+
+# Map a text string to L_* log level macro
+my %text2level = (
+    "BUG"         => "L_CRIT",
+    "CRIT"        => "L_CRIT",
+    "CRITICAL"    => "L_CRIT",
+
+    "ALERT"       => "L_ALERT",
+
+    "ERR"         => "L_ERR",
+    "ERROR"       => "L_ERR",
+
+    "WARN"        => "L_WARN",
+    "WARNING"     => "L_WARN",
+
+    "NOTICE"      => "L_NOTICE",
+
+    "INFO"        => "L_INFO",
+
+    "DBG"         => "L_DBG",
+    "DEBUG"       => "L_DBG",
+);
+
+#
+short2level
+
+
+# Strip the leading and trailing whitespaces and upper-case a text
+sub norm {
+    my $text = ($_[0] || "");
+    $text =~ s/^\s*//;
+    $text =~ s/\s*$//;
+    uc($text);
+}
+
+my $module_name = norm($ARGV[0]);
+
+sub fix_log_prefix {
+    my ($prefix, $level) = ($_[0], $_[1]);
+
+    # delete prefix if it contains module name
+    if ($module_name) {
+        if (!$text || (norm($text) eq $module_name)) {
+            return ("", $level);
+        }
+    }
+
+    # delete prefix if it contains text level
+    my $prefix_level = $text2level{norm($prefix)};
+    if ($prefix_level) {
+	$prefix = "";
+	
+	# change level if does not match prefix level
+	if ($level =~ /^L_(DBG|INFO|NOTICE|WARN|ERR|CRIT|ALERT)$/ && 
+	    $level ne $prefix_level) {
+    	    return ("", $prefix_level);
+	}
+    }
+
+    return ($prefix . ":", $level);
+}
+
+sub fix_log {
+    my $level = $_[0];
+    my $prefix1 = $_[1];
+    my $prefix2 = $_[2];
+    my $prefix3 = $_[3];
+    my $space = $_[4];
+
+    ($prefix1, $level) = fix_log_prefix($prefix1, $level) if $prefix1;
+    ($prefix2, $level) = fix_log_prefix($prefix2, $level) if $prefix2;
+    ($prefix3, $level) = fix_log_prefix($prefix3, $level) if $prefix3;
+
+    my $prefix = $prefix1 . $prefix2 . $prefix3 . $space;
+    $prefix =~ s/^\s*//;
+    
+    "LOG($level, \"$prefix";
+}
+
+while (<STDIN>) {
+AGAIN:
+    # replace DEBUG() by DBG()
+    s/DEBUG\(/DBG\(/g;
+
+    # ...in case the statement spans more lines
+    if (/(DBG|INFO|NOTICE|WARN|ERR|BUG|ALERT)\(\s*$/ || /LOG\(([^,]*,)?\s*$/) {
+        $_ .= <STDIN>;
+        goto AGAIN;
+    }
+
+    # one common special case used in several modules
+    if ($module_name) {
+	s/LOG\(\s*([^,]+)\s*,\s*MODULE_NAME\s*"\s*:\s*/LOG($1, "/g;
+	s/(DBG|INFO|NOTICE|WARN|ERR|BUG|ALERT)\(\s*MODULE_NAME\s*"\s*:\s*/$1("/g;
+    }
+
+    # module name and level prefix removing magic, may change macro level
+    # if different one found in the message
+    $id='\s*[a-zA-Z0-9_]+\s*';
+    
+    s/LOG\(\s*(([A-Z_]+)|[^,]+)\s*,\s*"($id):(($id):(($id):)?)?(\s*)/
+        fix_log($1, $3, $5, $7, $8);
+    /eg;
+
+    s/(DBG|INFO|NOTICE|WARN|ERR|BUG|ALERT)\(\s*"($id):(($id):(($id):)?)?(\s*)/
+        $1 = "CRIT" if $1 eq "BUG";
+        fix_log("L_$1", $2, $4, $6, $7);
+    /eg;
+
+    # prefer shorter static-level macros
+    s/LOG\(\s*L_(DBG|INFO|NOTICE|WARN|ERR|CRIT|ALERT)\s*,\s*/
+	$1 = "BUG" if $1 eq "CRIT";
+	"$1\(";
+    /eg;
+
+    print;
+}

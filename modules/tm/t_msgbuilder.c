@@ -50,7 +50,9 @@
 
 #include "defs.h"
 
-
+#ifdef EXTRA_DEBUG
+#include <assert.h>
+#endif
 #include "../../comp_defs.h"
 #include "../../hash_func.h"
 #include "../../globals.h"
@@ -69,24 +71,24 @@
 #include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
-
-#define ROUTE_PREFIX "Route: "
-#define ROUTE_PREFIX_LEN (sizeof(ROUTE_PREFIX) - 1)
-
-#define ROUTE_SEPARATOR ", "
-#define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
+/* convenience macros */
+#define memapp(_d,_s,_len) \
+	do{\
+		memcpy((_d),(_s),(_len));\
+		(_d) += (_len);\
+	}while(0)
 
 #define  append_mem_block(_d,_s,_len) \
 		do{\
 			memcpy((_d),(_s),(_len));\
 			(_d) += (_len);\
-		}while(0);
+		}while(0)
 
 #define append_str(_p,_str) \
 	do{  \
 		memcpy((_p), (_str).s, (_str).len); \
 		(_p)+=(_str).len;  \
- 	} while(0);
+ 	} while(0)
 
 
 /* Build a local request based on a previous request; main
@@ -375,10 +377,13 @@ error:
 }
 
 
-struct rte {
+typedef struct rte {
 	rr_t* ptr;
+	/* 'ptr' above doesn't point to a mem chunk linked to a sip_msg, so it
+	 * won't be free'd along with it => it must be free'd "manually" */
+	int free_rr;
 	struct rte* next;
-};
+} rte_t;
 
   	 
 static inline void free_rte_list(struct rte* list)
@@ -388,71 +393,10 @@ static inline void free_rte_list(struct rte* list)
 	while(list) {
 		ptr = list;
 		list = list->next;
+		if (ptr->free_rr)
+			free_rr(&ptr->ptr);
 		pkg_free(ptr);
 	}
-}
-
-
-static inline int process_routeset(struct sip_msg* msg, str* contact, struct rte** list, str* ruri, str* next_hop)
-{
-	struct hdr_field* ptr;
-	rr_t* p;
-	struct rte* t, *head;
-	struct sip_uri puri;
-	
-	ptr = msg->record_route;
-	head = 0;
-	while(ptr) {
-		if (ptr->type == HDR_RECORDROUTE_T) {
-			if (parse_rr(ptr) < 0) {
-				LOG(L_ERR, "process_routeset: Error while parsing Record-Route header\n");
-				return -1;
-			}
-			
-			p = (rr_t*)ptr->parsed;
-			while(p) {
-				t = (struct rte*)pkg_malloc(sizeof(struct rte));
-				if (!t) {
-					LOG(L_ERR, "process_routeset: No memory left\n");
-					free_rte_list(head);
-					return -1;
-				}
-				t->ptr = p;
-				t->next = head;
-				head = t;
-				p = p->next;
-			}
-		}
-		ptr = ptr->next;
-	}
-	
-	if (head) {
-		if (parse_uri(head->ptr->nameaddr.uri.s, head->ptr->nameaddr.uri.len, &puri) == -1) {
-			LOG(L_ERR, "process_routeset: Error while parsing URI\n");
-			free_rte_list(head);
-			return -1;
-		}
-		
-		if (puri.lr.s) {
-			     /* Next hop is loose router */
-			*ruri = *contact;
-			*next_hop = head->ptr->nameaddr.uri;
-		} else {
-			     /* Next hop is strict router */
-			*ruri = head->ptr->nameaddr.uri;
-			*next_hop = *ruri;
-			t = head;
-			head = head->next;
-			pkg_free(t);
-		}
-	} else {
-		     /* No routes */
-		*ruri = *contact;
-		*next_hop = *contact;
-	}
-	
-	*list = head;
-	return 0;
 }
 
 
@@ -547,7 +491,429 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 	return 0;
 }
 
+/**
+ * Extract route set from the message (out of Record-Route, if reply, OR
+ * Route, if request).
+ * The route set is returned into the "UAC-format" (keep order for Rs, reverse
+ * RRs).
+ */
+static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
+{
+	struct hdr_field* ptr;
+	rr_t *p, *new_p;
+	struct rte *t, *head, *old_head;
 
+	head = 0;
+	for (ptr = is_req ? msg->route : msg->record_route; ptr; ptr = ptr->next) {
+		switch (ptr->type) {
+			case HDR_RECORDROUTE_T:
+				if (is_req)
+					continue;
+				break;
+			case HDR_ROUTE_T:
+				if (! is_req)
+					continue;
+				break;
+			default:
+				continue;
+		}
+		if (parse_rr(ptr) < 0) {
+			ERR("failed to parse Record-/Route HF (%d).\n", ptr->type);
+			goto err;
+		}
+			
+		p = (rr_t*)ptr->parsed;
+		while(p) {
+			if (! (t = (struct rte*)pkg_malloc(sizeof(struct rte)))) {
+				ERR("out of pkg mem (asked for: %zd).\n", sizeof(struct rte));
+				goto err;
+			}
+			if (is_req) {
+				/* in case of requests, the sip_msg structure is free'd before
+				 * rte list is evaluated => must do a copy of it */
+				if (duplicate_rr(&new_p, p) < 0) {
+					pkg_free(t);
+					ERR("failed to duplicate RR");
+					goto err;
+				}
+				t->ptr = new_p;
+			} else {
+				t->ptr = p;
+			}
+			t->free_rr = is_req;
+			t->next = head;
+			head = t;
+			p = p->next;
+		}
+	}
+
+	if (is_req) {
+		/* harvesting the R/RR HF above inserts at head, which suites RRs (as
+		 * they must be reversed, anyway), but not Rs => reverse once more */
+		old_head = head;
+		head = 0;
+		while (old_head) {
+			t = old_head;
+			old_head = old_head->next;
+			t->next = head;
+			head = t;
+		}
+	}
+
+	*rtset = head;
+	return 0;
+err:
+	free_rte_list(head);
+	return -1;
+}
+
+
+static inline unsigned short uri2port(const struct sip_uri *puri)
+{
+	if (puri->port.s) {
+		return puri->port_no;
+	} else switch (puri->type) {
+		case SIP_URI_T:
+		case TEL_URI_T:
+			if (puri->transport_val.len == sizeof("TLS") - 1) {
+				unsigned trans;
+				trans = puri->transport_val.s[0] | 0x20; trans <<= 8;
+				trans |= puri->transport_val.s[1] | 0x20; trans <<= 8;
+				trans |= puri->transport_val.s[2] | 0x20;
+				if (trans == 0x746C73) /* t l s */
+					return SIPS_PORT;
+			}
+			return SIP_PORT;
+		case SIPS_URI_T:
+		case TELS_URI_T:
+			return SIPS_PORT;
+		default:
+			BUG("unexpected URI type %d.\n", puri->type);
+	}
+	return 0;
+}
+
+/**
+ * Evaluate if next hop is a strict or loose router, by looking at the
+ * retr. buffer of the original INVITE.
+ * Assumes:
+ * 	orig_inv is a parsed SIP message;
+ * 	rtset is not NULL.
+ * @return:
+ * 	F_RB_NH_LOOSE : next hop was loose router;
+ * 	F_RB_NH_STRICT: nh is strict;
+ * 	0 on error.
+ */
+static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
+		const struct dest_info *dst_inv, str *contact)
+{
+	struct sip_uri puri, topr_uri, lastr_uri, inv_ruri, cont_uri;
+	struct ip_addr *uri_ia;
+	union sockaddr_union uri_sau;
+	unsigned int uri_port, dst_port, inv_port, cont_port, lastr_port;
+	rte_t *last_r;
+#ifdef TM_LOC_ACK_DO_REV_DNS
+	struct ip_addr ia;
+	struct hostent *he;
+	char **alias;
+#endif
+
+#define PARSE_URI(_str_, _uri_) \
+	do { \
+		/* parse_uri() 0z the puri */ \
+		if (parse_uri((_str_)->s, \
+				(_str_)->len, _uri_) < 0) { \
+			ERR("failed to parse route body '%.*s'.\n", STR_FMT(_str_)); \
+			return 0; \
+		} \
+	} while (0)
+
+#define HAS_LR(_rte_) \
+	({ \
+		PARSE_URI(&(_rte_)->ptr->nameaddr.uri, &puri); \
+		puri.lr.s; \
+	})
+
+#define URI_PORT(_puri_, _port) \
+	do { \
+		if (! (_port = uri2port(_puri_))) \
+			return 0; \
+	} while (0)
+
+	/* examine the easy/fast & positive cases foremost */
+
+	/* [1] check if 1st route lacks ;lr */
+	DEBUG("checking lack of ';lr' in 1st route.\n");
+	if (! HAS_LR(rtset))
+		return F_RB_NH_STRICT;
+	topr_uri = puri; /* save 1st route's URI */
+
+	/* [2] check if last route shows ;lr */
+	DEBUG("checking presence of ';lr' in last route.\n");
+	for (last_r = rtset; last_r->next; last_r = last_r->next)
+		/* scroll down to last route */
+		;
+	if (HAS_LR(last_r))
+		return F_RB_NH_LOOSE;
+
+	/* [3] 1st route has ;lr -> check if the destination of original INV
+	 * equals the address provided by this route; if does -> loose */
+	DEBUG("checking INVITE's destination against its first route.\n");
+	URI_PORT(&topr_uri, uri_port);
+	if (! (dst_port = su_getport((void *)&dst_inv->to)))
+		return 0; /* not really expected */
+	if (dst_port != uri_port)
+		return F_RB_NH_STRICT;
+	/* if 1st route contains an IP address, comparing it against .dst */
+	if ((uri_ia = str2ip(&topr_uri.host))
+#ifdef USE_IPV6
+			|| (uri_ia = str2ip6(&topr_uri.host))
+#endif
+			) {
+		/* we have an IP address in route -> comparison can go swiftly */
+		if (init_su(&uri_sau, uri_ia, uri_port) < 0)
+			return 0; /* not really expected */
+		if (su_cmp(&uri_sau, (void *)&dst_inv->to))
+			/* ;lr and sent there */
+			return F_RB_NH_LOOSE;
+		else
+			/* ;lr and NOT sent there (probably sent to RURI address) */
+			return F_RB_NH_STRICT;
+	} else {
+		/*if 1st route contains a name, rev resolve the .dst and compare*/
+		INFO("Failed to decode string '%.*s' in route set element as IP "
+				"address. Trying name resolution.\n",STR_FMT(&topr_uri.host));
+
+	/* TODO: alternatively, rev name and compare against dest. IP.  */
+#ifdef TM_LOC_ACK_DO_REV_DNS
+		ia.af = 0;
+		su2ip_addr(&ia, (void *)&dst_inv->to);
+		if (! ia.af)
+			return 0; /* not really expected */
+		if ((he = rev_resolvehost(&ia))) {
+			if ((strlen(he->h_name) == topr_uri.host.len) &&
+					(memcmp(he->h_name, topr_uri.host.s, 
+							topr_uri.host.len) == 0))
+				return F_RB_NH_LOOSE;
+			for (alias = he->h_aliases; *alias; alias ++)
+				if ((strlen(*alias) == topr_uri.host.len) &&
+						(memcmp(*alias, topr_uri.host.s, 
+								topr_uri.host.len) == 0))
+					return F_RB_NH_LOOSE;
+			return F_RB_NH_STRICT;
+		} else {
+			INFO("failed to resolve address '%s' to a name.\n", 
+					ip_addr2a(&ia));
+		}
+#endif
+	}
+
+	WARN("failed to establish with certainty the type of next hop; trying an"
+			" educated guess.\n");
+
+	/* [4] compare (possibly updated) remote target to original RURI; if
+	 * equal, a strict router's address wasn't filled in as RURI -> loose */
+	DEBUG("checking remote target against INVITE's RURI.\n");
+	PARSE_URI(contact, &cont_uri);
+	PARSE_URI(GET_RURI(orig_inv), &inv_ruri);
+	URI_PORT(&cont_uri, cont_port);
+	URI_PORT(&inv_ruri, inv_port);
+	if ((cont_port == inv_port) && (cont_uri.host.len == inv_ruri.host.len) &&
+			(memcmp(cont_uri.host.s, inv_ruri.host.s, cont_uri.host.len) == 0))
+		return F_RB_NH_LOOSE;
+
+	/* [5] compare (possibly updated) remote target to last route; if equal, 
+	 * strict router's address might have been filled as RURI and remote
+	 * target appended to route set -> strict */
+	DEBUG("checking remote target against INVITE's last route.\n");
+	PARSE_URI(&last_r->ptr->nameaddr.uri, &lastr_uri);
+	URI_PORT(&lastr_uri, lastr_port);
+	if ((cont_port == lastr_port) && 
+			(cont_uri.host.len == lastr_uri.host.len) &&
+			(memcmp(cont_uri.host.s, lastr_uri.host.s, 
+					lastr_uri.host.len) == 0))
+		return F_RB_NH_STRICT;
+
+	WARN("failed to establish the type of next hop; assuming loose router.\n");
+	return F_RB_NH_LOOSE;
+
+#undef PARSE_URI
+#undef HAS_LR
+#undef URI_PORT
+}
+
+/**
+ * Evaluates the routing elements in locally originated request or reply to
+ * locally originated request.
+ * If original INVITE was in-dialog (had to-tag), it uses the
+ * routes present there (b/c the 2xx for it does not have a RR set, normally).
+ * Otherwise, use the reply (b/c the INVITE does not have yet the complete 
+ * route set).
+ *
+ * @return: negative for failure; out params:
+ *  - list: route set;
+ *  - ruri: RURI to be used in ACK;
+ *  - nexthop: where to first send the ACK.
+ *
+ *  NOTE: assumes rpl's parsed to EOF!
+ *
+ */
+static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb, 
+		str* contact, struct rte **list, str *ruri, str *next_hop)
+{
+	sip_msg_t orig_inv, *sipmsg; /* reparse original INVITE */
+	rte_t *t, *prev_t, *rtset = NULL;
+	int is_req;
+	struct sip_uri puri;
+	static size_t chklen;
+	int ret = -1;
+	
+	/* parse the retr. buffer */
+	memset(&orig_inv, 0, sizeof(struct sip_msg));
+	orig_inv.buf = inv_rb->buffer;
+	orig_inv.len = inv_rb->buffer_len;
+	DEBUG("reparsing retransmission buffer of original INVITE:\n%.*s\n",
+			orig_inv.len, orig_inv.buf);
+	if (parse_msg(orig_inv.buf, orig_inv.len, &orig_inv) != 0) {
+		ERR("failed to parse retr buffer (weird!): \n%.*s\n", orig_inv.len,
+				orig_inv.buf);
+		return -1;
+	}
+
+	/* check if we need to look at request or reply */
+	if ((parse_headers(&orig_inv, HDR_TO_F, 0) < 0) || (! orig_inv.to)) {
+		/* the bug is at message assembly */
+		BUG("failed to parse INVITE retr. buffer and/or extract 'To' HF:"
+				"\n%.*s\n", orig_inv.len, orig_inv.buf);
+		goto end;
+	}
+	if (((struct to_body *)orig_inv.to->parsed)->tag_value.len) {
+		DEBUG("building ACK for in-dialog INVITE (using RS in orig. INV.)\n");
+		if (parse_headers(&orig_inv, HDR_EOH_F, 0) < 0) {
+			BUG("failed to parse INVITE retr. buffer to EOH:"
+					"\n%.*s\n", orig_inv.len, orig_inv.buf);
+			goto end;
+		}
+		sipmsg = &orig_inv;
+		is_req = 1;
+	} else {
+		DEBUG("building ACK for out-of-dialog INVITE (using RS in RR set).\n");
+		sipmsg = rpl;
+		is_req = 0;
+	}
+
+	/* extract the route set */
+	if (get_uac_rs(sipmsg, is_req, &rtset) < 0) {
+		ERR("failed to extract route set.\n");
+		goto end;
+	}
+
+	if (! rtset) { /* No routes */
+		*ruri = *contact;
+		*next_hop = *contact;
+	} else if (! is_req) { /* out of dialog req. */
+		if (parse_uri(rtset->ptr->nameaddr.uri.s, rtset->ptr->nameaddr.uri.len,
+				&puri) < 0) {
+			ERR("failed to parse first route in set.\n");
+			goto end;
+		}
+		
+		if (puri.lr.s) { /* Next hop is loose router */
+			*ruri = *contact;
+			*next_hop = rtset->ptr->nameaddr.uri;
+		} else { /* Next hop is strict router */
+			*ruri = rtset->ptr->nameaddr.uri;
+			*next_hop = *ruri;
+			/* consume first route, b/c it will be put in RURI */
+			t = rtset;
+			rtset = rtset->next;
+			pkg_free(t);
+		}
+	} else {
+		unsigned long route_flags = inv_rb->flags;
+		DEBUG("UAC rb flags: 0x%x.\n", (unsigned int)route_flags);
+eval_flags:
+		switch (route_flags & (F_RB_NH_LOOSE|F_RB_NH_STRICT)) {
+		case 0:
+			WARN("calculate_hooks() not called when built the local UAC of "
+					"in-dialog request, or called with empty route set.\n");
+			/* try to figure out what kind of hop is the next one
+			 * (strict/loose) by reading the original invite */
+			if ((route_flags = nhop_type(&orig_inv, rtset, &inv_rb->dst, 
+					contact))) {
+				DEBUG("original request's next hop type evaluated to: 0x%x.\n",
+						(unsigned int)route_flags);
+				goto eval_flags;
+			} else {
+				ERR("failed to establish what kind of router the next "
+						"hop is.\n");
+				goto end;
+			}
+			break;
+		case F_RB_NH_LOOSE:
+			*ruri = *contact;
+			*next_hop = rtset->ptr->nameaddr.uri;
+			break;
+		case F_RB_NH_STRICT:
+			/* find ptr to last route body that contains the (possibly) old 
+			 * remote target 
+			 */
+			for (t = rtset, prev_t = t; t->next; prev_t = t, t = t->next)
+				;
+			if ((t->ptr->len == contact->len) && 
+					(memcmp(t->ptr->nameaddr.name.s, contact->s, 
+							contact->len) == 0)){
+				/* the remote target didn't update -> keep the whole route set,
+				 * including the last entry */
+				/* do nothing */
+			} else {
+				/* trash last entry and replace with new remote target */
+				free_rte_list(t);
+				/* compact the rr_t struct along with rte. this way, free'ing
+				 * it can be done along with rte chunk, independent of Route
+				 * header parser's allocator (using pkg/shm) */
+				chklen = sizeof(struct rte) + sizeof(rr_t);
+				if (! (t = (struct rte *)pkg_malloc(chklen))) {
+					ERR("out of pkg memory (%zd required)\n", chklen);
+					goto end;
+				}
+				/* this way, .free_rr is also set to 0 (!!!) */
+				memset(t, 0, chklen); 
+				((rr_t *)&t[1])->nameaddr.name = *contact;
+				((rr_t *)&t[1])->len = contact->len;
+				/* chain the new route elem in set */
+				if (prev_t == rtset)
+				 	/*there is only one elem in route set: the remote target*/
+					rtset = t;
+				else
+					prev_t->next = t;
+			}
+
+			*ruri = *GET_RURI(&orig_inv); /* reuse original RURI */
+			*next_hop = *ruri;
+			break;
+		default:
+			/* probably a mem corruption */
+			BUG("next hop of original request marked as both loose and strict"
+					" router (buffer: %.*s).\n", inv_rb->buffer_len, 
+					inv_rb->buffer);
+#ifdef EXTRA_DEBUG
+			abort();
+#else
+			goto end;
+#endif
+		}
+	}
+
+	*list = rtset;
+	/* all went well */
+	ret = 0;
+end:
+	free_sip_msg(&orig_inv);
+	if (ret < 0)
+		free_rte_list(rtset);
+	return ret;
+}
 
      /*
       * The function creates an ACK to 200 OK. Route set will be created
@@ -556,8 +922,8 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 	  * generates local ACK to 200 OK (on behalf of applications using uac)
       */
 char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, 
-					unsigned int branch, str* to, unsigned int *len,
-					struct dest_info* dst)
+					unsigned int branch, str *hdrs, str *body,
+					unsigned int *len, struct dest_info* dst)
 {
 	char *req_buf, *p, *via;
 	unsigned int via_len;
@@ -568,18 +934,47 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	struct rte* list;
 	str contact, ruri, *cont;
 	str next_hop;
+	str body_len;
+	str _to, *to = &_to;
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
+#ifdef WITH_AS_SUPPORT
+	/* With AS support, TM allows for external modules to generate building of
+	 * the ACK; in this case, the ACK's retransmission buffer is built once
+	 * and kept in memory (to help when retransmitted 2xx are received and ACK
+	 * must be resent).
+	 * Allocation of the string raw buffer that holds the ACK is piggy-backed
+	 * with allocation of the retransmission buffer (since both have the same
+	 * life-cycle): both the string buffer and retransm. buffer are placed 
+	 * into the same allocated chunk of memory (retr. buffer first, string 
+	 * buffer follows).In this case, the 'len' param is used as in-out 
+	 * parameter: 'in' to give the extra space needed by the retr. buffer,
+	 * 'out' to return the lenght of the allocated string buffer.
+	 */
+	unsigned offset = *len;
+#endif
+	
+	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
+		ERR("Error while parsing headers.\n");
+		return 0;
+	} else {
+		_to.s = rpl->to->name.s;
+		_to.len = rpl->to->len;
+	}
 	
 	if (get_contact_uri(rpl, &contact) < 0) {
 		return 0;
 	}
 	
-	if (process_routeset(rpl, &contact, &list, &ruri, &next_hop) < 0) {
+	if (eval_uac_routing(rpl, &Trans->uac[branch].request, &contact, 
+			&list, &ruri, &next_hop) < 0) {
+		ERR("failed to evaluate routing elements.\n");
 		return 0;
 	}
-	
+	DEBUG("ACK RURI: `%.*s', NH: `%.*s'.\n", STR_FMT(&ruri), 
+			STR_FMT(&next_hop));
+
 	if ((contact.s != ruri.s) || (contact.len != ruri.len)) {
 		     /* contact != ruri means that the next
 		      * hop is a strict router, cont will be non-zero
@@ -643,12 +1038,29 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	
 	     /* User Agent */
 	if (server_signature) *len += USER_AGENT_LEN + CRLF_LEN;
+		/* extra headers */
+	if (hdrs)
+		*len += hdrs->len;
+		/* body */
+	if (body) {
+		body_len.s = int2str(body->len, &body_len.len);
+		*len += body->len;
+	} else {
+		body_len.len = 0;
+		body_len.s = NULL; /*4gcc*/
+		*len += 1; /* for the (Cont-Len:) `0' */
+	}
 	     /* Content Length, EoM */
-	*len += CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN;
-	
+	*len += CONTENT_LENGTH_LEN + body_len.len + CRLF_LEN + CRLF_LEN;
+
+#if WITH_AS_SUPPORT
+	req_buf = shm_malloc(offset + *len + 1);
+	req_buf += offset;
+#else
 	req_buf = shm_malloc(*len + 1);
+#endif
 	if (!req_buf) {
-		LOG(L_ERR, "build_dlg_ack: Cannot allocate memory\n");
+		ERR("Cannot allocate memory (%u+1)\n", *len);
 		goto error01;
 	}
 	p = req_buf;
@@ -679,8 +1091,23 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 		append_mem_block(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
 	}
 	
-	     /* Content Length, EoM */
-	append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF, CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
+	/* extra headers */
+	if (hdrs)
+		append_mem_block(p, hdrs->s, hdrs->len);
+	
+	     /* Content Length, EoH, (body) */
+	if (body) {
+		append_mem_block(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		append_mem_block(p, body_len.s, body_len.len);
+		append_mem_block(p, /*end crr. header*/CRLF /*EoH*/CRLF, CRLF_LEN + 
+				CRLF_LEN);
+		append_mem_block(p, body->s, body->len);
+	} else {
+		append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF, 
+				CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
+	}
+
+	/* EoM */
 	*p = 0;
 	
 	pkg_free(via);
@@ -692,7 +1119,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
  error:
 	free_rte_list(list);
 	return 0;
-  	 }
+}
 
 
 /*
@@ -959,7 +1386,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
      	if (body) memapp(w, body->s, body->len);
 
 #ifdef EXTRA_DEBUG
-	if (w-buf != *len ) abort();
+	assert(w-buf == *len);
 #endif
 
 	pkg_free(via.s);

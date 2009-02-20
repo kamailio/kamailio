@@ -25,242 +25,215 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-
 #ifndef dprint_h
 #define dprint_h
 
+#include <assert.h>
 #include <syslog.h>
+#include <stdio.h> /* stderr, fprintf() */
+
 #include "cfg_core.h"
 
 
-#define L_ALERT -3
-#define L_CRIT  -2
-#define L_ERR   -1
-#define L_DEFAULT 0
-#define L_WARN   1
-#define L_NOTICE 2
-#define L_INFO   3
-#define L_DBG    4
-
-/* vars:*/
-
-extern int log_stderr;
-extern volatile int dprint_crit; /* protection against "simultaneous"
-									printing from signal handlers */
-
-#ifdef NO_SIG_DEBUG
-#define DPRINT_NON_CRIT		(1)
-#define DPRINT_CRIT_ENTER
-#define DPRINT_CRIT_EXIT
+/* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
+#if __STDC_VERSION__ < 199901L
+#	if __GNUC__ >= 2
+#		define _FUNC_NAME_ __FUNCTION__
+#	else
+#		define _FUNC_NAME_ ""
+#	endif
 #else
-#define DPRINT_NON_CRIT		(dprint_crit==0)
-#define DPRINT_CRIT_ENTER	(dprint_crit++)
-#define DPRINT_CRIT_EXIT	(dprint_crit--)
+#	define _FUNC_NAME_ __func__
 #endif
 
-#define DPRINT_LEV	1
-/* priority at which we log */
-#define DPRINT_PRIO LOG_DEBUG
+#ifdef NO_DEBUG
+#	ifdef MOD_NAME
+#		define LOC_INFO		MOD_NAME ": "
+#	else
+#		define LOC_INFO		"<core>: "
+#	endif
+#else
+#	define XCT2STR(i) #i
+#	define CT2STR(l)  XCT2STR(l)
+#
+#	ifdef MOD_NAME
+#		define LOC_INFO		MOD_NAME " [" __FILE__ ":" CT2STR(__LINE__) "]: "
+#	else
+#		define LOC_INFO		"<core> [" __FILE__ ":" CT2STR(__LINE__) "]: "
+#	endif
+#
+#	ifdef NO_LOG
+#		undef NO_LOG
+#	endif
+#endif /* NO_DEBUG */
 
 
-void dprint (char* format, ...);
+/*
+ * Log levels
+ */
+#define L_ALERT		-4
+#define L_CRIT2		-3  /* like L_CRIT, but not used for BUGs */
+#define L_CRIT  	-2  /* used only for BUG */
+#define L_ERR   	-1
+#define L_WARN   	0
+#define L_NOTICE 	1
+#define L_INFO   	2
+#define L_DBG    	3
+
+#define LOG_LEVEL2NAME(level)	(log_level_info[(level) - (L_ALERT)].name)
+#define LOG2SYSLOG_LEVEL(level) \
+	(log_level_info[(level) - (L_ALERT)].syslog_level)
+
+
+/* my_pid(), process_no are from pt.h but we cannot #include it here
+   because of circular dependencies */
+extern int process_no;
+extern int my_pid();
+
+/* non-zero if logging to stderr instead to the syslog */
+extern int log_stderr;
+
+/* maps log levels to their string name and corresponding syslog level */
+
+struct log_level_info {
+ 	char *name;
+	int syslog_level;
+};
+
+#define is_printable(level) (cfg_get(core, core_cfg, debug)>=(level))
+extern struct log_level_info log_level_info[];
+
+#ifndef NO_SIG_DEBUG
+/* protection against "simultaneous" printing from signal handlers */
+extern volatile int dprint_crit; 
+#endif
 
 int str2facility(char *s);
 int log_facility_fixup(void *handle, str *name, void **val);
 
-/* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
-#if __STDC_VERSION__ < 199901L
-# if __GNUC__ >= 2
-#  define _FUNC_NAME_ __FUNCTION__
-# else
-#  define _FUNC_NAME_ ""
-# endif
-#else
-# define _FUNC_NAME_ __func__
-#endif
 
-
-#define XCT2STR(i) #i
-#define CT2STR(l) XCT2STR(l)
-
-#define LOC_INFO	__FILE__ ":" CT2STR(__LINE__) ": "
-
-
-#define is_printable(level) (cfg_get(core, core_cfg, debug)>=(level))
-
-#ifdef NO_DEBUG
-	#ifdef __SUNPRO_C
-		#define DPrint(...)
-	#else
-		#define DPrint(fmt, args...)
-	#endif
-#else
-	#ifdef __SUNPRO_C
-		#define DPrint( ...) \
-			do{ \
-				if ((cfg_get(core, core_cfg, debug)>=DPRINT_LEV) && DPRINT_NON_CRIT){ \
-					DPRINT_CRIT_ENTER; \
-					if (log_stderr){ \
-						dprint (__VA_ARGS__); \
-					}else{ \
-						syslog(DPRINT_LEV|cfg_get(core, core_cfg, log_facility), \
-							__VA_ARGS__); \
-					}\
-					DPRINT_CRIT_EXIT; \
-				} \
-			}while(0)
-	#else
-			#define DPrint(fmt,args...) \
-			do{ \
-				if ((cfg_get(core, core_cfg, debug)>=DPRINT_LEV) && DPRINT_NON_CRIT){ \
-					DPRINT_CRIT_ENTER; \
-					if (log_stderr){ \
-						dprint (fmt, ## args); \
-					}else{ \
-						syslog(DPRINT_LEV|cfg_get(core, core_cfg, log_facility), \
-							fmt, ## args); \
-					}\
-					DPRINT_CRIT_EXIT; \
-				} \
-			}while(0)
-	#endif
-
-#endif
-
-#ifndef NO_DEBUG
-	#undef NO_LOG
-#endif
-
+/*
+ * General logging macros
+ *
+ * LOG_(level, prefix, fmt, ...) prints "printf"-formatted log message to
+ * stderr (if `log_stderr' is non-zero) or to syslog.  Note that `fmt' must
+ * be constant. `prefix' is added to the beginning of the message.
+ *
+ * LOG(level, fmt, ...) is same as LOG_() with LOC_INFO prefix.
+ */
 #ifdef NO_LOG
-	#ifdef __SUNPRO_C
-		#define LOG(lev, ...)
-	#else
-		#define LOG(lev, fmt, args...)
-	#endif
+
+#	ifdef __SUNPRO_C
+#		define LOG_(level, prefix, fmt, ...)
+#		define LOG(level, fmt, ...)
+#	else
+#		define LOG_(level, prefix, fmt, args...)
+#		define LOG(level, fmt, args...)
+#	endif
+
 #else
-	#ifdef __SUNPRO_C
-		#define LOG(lev, ...) \
+
+#	ifdef NO_SIG_DEBUG
+#		define DPRINT_NON_CRIT		(1)
+#		define DPRINT_CRIT_ENTER
+#		define DPRINT_CRIT_EXIT
+#	else
+#		define DPRINT_NON_CRIT		(dprint_crit==0)
+#		define DPRINT_CRIT_ENTER	(dprint_crit++)
+#		define DPRINT_CRIT_EXIT		(dprint_crit--)
+#	endif
+
+#	ifdef __SUNPRO_C
+#		define LOG_(level, prefix, fmt, ...) \
 			do { \
-				if ((cfg_get(core, core_cfg, debug)>=(lev)) && DPRINT_NON_CRIT){ \
+				if (cfg_get(core, core_cfg, debug) >= (level) && \
+						DPRINT_NON_CRIT) { \
 					DPRINT_CRIT_ENTER; \
-					if (log_stderr) dprint (__VA_ARGS__); \
-					else { \
-						switch(lev){ \
-							case L_CRIT: \
-								syslog(LOG_CRIT|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__); \
-								break; \
-							case L_ALERT: \
-								syslog(LOG_ALERT|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__); \
-								break; \
-							case L_ERR: \
-								syslog(LOG_ERR|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__); \
-								break; \
-							case L_WARN: \
-								syslog(LOG_WARNING|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__);\
-								break; \
-							case L_NOTICE: \
-								syslog(LOG_NOTICE|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__); \
-								break; \
-							case L_INFO: \
-								syslog(LOG_INFO|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__); \
-								break; \
-							case L_DBG: \
-								syslog(LOG_DEBUG|cfg_get(core, core_cfg, log_facility), \
-									__VA_ARGS__); \
-								break; \
-						} \
+					assert(((level) >= L_ALERT) && ((level) <= L_DBG)); \
+					if (log_stderr) { \
+						fprintf(stderr, "%2d(%d) %s: %s" fmt, \
+								process_no, my_pid(), LOG_LEVEL2NAME(level),\
+								(prefix), __VA_ARGS__); \
+					} else { \
+						syslog(LOG2SYSLOG_LEVEL(level) | \
+									cfg_get(core, core_cfg, log_facility), \
+								"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+								(prefix), __VA_ARGS__); \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
-			}while(0)
-	#else
-		#define LOG(lev, fmt, args...) \
+			} while(0)
+			
+#		define LOG(level, fmt, ...)  LOG_((level), LOC_INFO, fmt, __VA_ARGS__)
+
+#	else
+#		define LOG_(level, prefix, fmt, args...) \
 			do { \
-				if ((cfg_get(core, core_cfg, debug)>=(lev)) && DPRINT_NON_CRIT){ \
+				if (cfg_get(core, core_cfg, debug) >= (level) && \
+						DPRINT_NON_CRIT) { \
 					DPRINT_CRIT_ENTER; \
-					if (log_stderr) dprint (fmt, ## args); \
-					else { \
-						switch(lev){ \
-							case L_CRIT: \
-								syslog(LOG_CRIT|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args); \
-								break; \
-							case L_ALERT: \
-								syslog(LOG_ALERT|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args); \
-								break; \
-							case L_ERR: \
-								syslog(LOG_ERR|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args); \
-								break; \
-							case L_WARN: \
-								syslog(LOG_WARNING|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args);\
-								break; \
-							case L_NOTICE: \
-								syslog(LOG_NOTICE|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args); \
-								break; \
-							case L_INFO: \
-								syslog(LOG_INFO|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args); \
-								break; \
-							case L_DBG: \
-								syslog(LOG_DEBUG|cfg_get(core, core_cfg, log_facility), \
-									fmt, ##args); \
-								break; \
-						} \
+					assert(((level) >= L_ALERT) && ((level) <= L_DBG)); \
+					if (log_stderr) { \
+						fprintf(stderr, "%2d(%d) %s: %s" fmt, \
+								process_no, my_pid(), LOG_LEVEL2NAME(level),\
+								(prefix), ## args); \
+					} else { \
+						syslog(LOG2SYSLOG_LEVEL(level) |\
+									cfg_get(core, core_cfg, log_facility), \
+						 		"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+								(prefix), ## args); \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
-			}while(0)
-	#endif /*SUN_PRO_C*/
-#endif
+			} while(0)
+			
+#		define LOG(level, fmt, args...)  LOG_((level), LOC_INFO, fmt, ## args)
+		
+#	endif /* __SUNPRO_C */
+#endif /* NO_LOG */
 
 
-#ifdef NO_DEBUG
-	#ifdef __SUNPRO_C
-		#define DBG(...)
-	#else
-		#define DBG(fmt, args...)
-	#endif
-#else
-	#ifdef __SUNPRO_C
-		#define DBG(...) LOG(L_DBG, __VA_ARGS__)
-	#else
-		#define DBG(fmt, args...) LOG(L_DBG, fmt, ## args)
-	#endif
-#endif
-
+/*
+ * Simplier, prefered logging macros for constant log level
+ */
 #ifdef __SUNPRO_C
-		#define DEBUG(...) DBG("DEBUG: "          LOC_INFO __VA_ARGS__)
-		#define ERR(...)  LOG(L_ERR, "ERROR: "    LOC_INFO __VA_ARGS__)
-		#define WARN(...) LOG(L_WARN, "WARNING: " LOC_INFO __VA_ARGS__)
-		#define INFO(...) LOG(L_INFO, "INFO: "    LOC_INFO __VA_ARGS__)
-		#define BUG(...) LOG(L_CRIT, "BUG: "      LOC_INFO __VA_ARGS__)
-		#define NOTICE(...) LOG(L_NOTICE, "NOTICE: " LOC_INFO __VA_ARGS__)
-		#define ALERT(...) LOG(L_ALERT, "ALERT: " LOC_INFO __VA_ARGS__)
-		#define CRIT(...) LOG(L_CRIT, "CRITICAL: " LOC_INFO __VA_ARGS__)
-#else
-		#define DEBUG(fmt, args...) DBG("DEBUG: "       LOC_INFO fmt, ## args)
-		#define ERR(fmt, args...) LOG(L_ERR, "ERROR: "  LOC_INFO fmt, ## args)
-		#define WARN(fmt, args...) LOG(L_WARN, "WARN: " LOC_INFO fmt, ## args)
-		#define INFO(fmt, args...) LOG(L_INFO, "INFO: " LOC_INFO fmt, ## args)
-		#define BUG(fmt, args...) LOG(L_CRIT, "BUG: "   LOC_INFO fmt, ## args)
-		#define NOTICE(fmt, args...) \
-			LOG(L_NOTICE, "NOTICE: " LOC_INFO fmt, ## args)
-		#define ALERT(fmt, args...) \
-			LOG(L_ALERT, "ALERT: " LOC_INFO fmt, ## args)
-		#define CRIT(fmt, args...) \
-			LOG(L_CRIT, "CRITICAL: " LOC_INFO fmt, ## args)
-#endif
+#	define ALERT(...)  LOG(L_ALERT,  __VA_ARGS__)
+#	define BUG(...)    LOG(L_CRIT,   __VA_ARGS__)
+#	define ERR(...)    LOG(L_ERR,    __VA_ARGS__)
+#	define WARN(...)   LOG(L_WARN,   __VA_ARGS__)
+#	define NOTICE(...) LOG(L_NOTICE, __VA_ARGS__)
+#	define INFO(...)   LOG(L_INFO,   __VA_ARGS__)
+#	define CRIT(...)    LOG(L_CRIT2,   __VA_ARGS__)
+
+#	ifdef NO_DEBUG
+#		define DBG(...)
+#	else
+#		define DBG(...)    LOG(L_DBG, __VA_ARGS__)
+#	endif		
+
+/* obsolete, do not use */
+#	define DEBUG(...) DBG(__VA_ARGS__)
+
+#else /* ! __SUNPRO_C */
+#	define ALERT(fmt, args...)  LOG(L_ALERT,  fmt, ## args)
+#	define BUG(fmt, args...)    LOG(L_CRIT,   fmt, ## args)
+#	define ERR(fmt, args...)    LOG(L_ERR,    fmt, ## args)
+#	define WARN(fmt, args...)   LOG(L_WARN,   fmt, ## args)
+#	define NOTICE(fmt, args...) LOG(L_NOTICE, fmt, ## args)
+#	define INFO(fmt, args...)   LOG(L_INFO,   fmt, ## args)
+#	define CRIT(fmt, args...)   LOG(L_CRIT2,   fmt, ## args)
+
+#	ifdef NO_DEBUG
+#		define DBG(fmt, args...)
+#	else
+#		define DBG(fmt, args...)    LOG(L_DBG, fmt, ## args)
+#	endif		
+
+/* obsolete, do not use */
+#	define DEBUG(fmt, args...) DBG(fmt, ## args)
+		
+#endif /* __SUNPRO_C */
+
 
 /* kamailio/openser compatibility */
 
@@ -274,5 +247,4 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #define LM_INFO INFO
 #define LM_DBG DEBUG
 
-
-#endif /* ifndef dprint_h */
+#endif /* !dprint_h */

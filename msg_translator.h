@@ -149,5 +149,7 @@ char * build_all( struct sip_msg* msg, int adjust_clen,
 			int *error,
 			struct dest_info* send_info);
 
+/** cfg framework fixup */
+void fix_global_req_flags( str* name);
 
 #endif

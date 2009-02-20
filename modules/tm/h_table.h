@@ -143,6 +143,10 @@ enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8,
 #define F_RB_REPLIED	0x20 /* reply received */
 #define F_RB_CANCELED	0x40 /* rb/branch canceled */
 #define F_RB_DEL_TIMER	0x80 /* timer should be deleted if active */
+#define F_RB_NH_LOOSE	0x100 /* next hop is a loose router */
+#define F_RB_NH_STRICT	0x200 /* next hop is a strict router */
+/* must detect when neither loose nor strict flag is set -> two flags.
+ * alternatively, 1x flag for strict/loose and 1x for loose|strict set/not */
 
 
 /* if canceled or intended to be canceled, return true */
@@ -154,10 +158,10 @@ typedef struct retr_buf
 	short activ_type;
 	/* set to status code if the buffer is a reply,
 	0 if request or -1 if local CANCEL */
-	volatile unsigned char flags; /* DISABLED, T2 */
+	volatile unsigned short flags; /* DISABLED, T2 */
 	volatile unsigned char t_active; /* timer active */
 	unsigned short branch; /* no more then 65k branches :-) */
-	short   buffer_len;
+	short buffer_len;
 	char *buffer;
 	/*the cell that contains this retrans_buff*/
 	struct cell* my_T;
@@ -207,6 +211,16 @@ typedef struct ua_client
 	str              uri;
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
+#ifdef WITH_AS_SUPPORT
+	/**
+	 * Resent for every rcvd 2xx reply.
+	 * This member's as an alternative to passing the reply to the AS, 
+	 * every time a reply for local request is rcvd.
+	 * Member can not be union'ed with local_cancel, since CANCEL can happen
+	 * concurrently with a 2xx reply (to generate an ACK).
+	 */
+	struct retr_buf *local_ack;
+#endif
 }ua_client_type;
 
 
@@ -237,6 +251,10 @@ struct totag_elem {
 #define T_IN_AGONY (1<<5) /* set if waiting to die (delete timer)
                              TODO: replace it with del on unref */
 #define T_AUTO_INV_100 (1<<6) /* send an 100 reply automatically  to inv. */
+#ifdef WITH_AS_SUPPORT
+	/* don't generate automatically an ACK for local transaction */
+#	define T_NO_AUTO_ACK	(1<<7)
+#endif
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
@@ -441,6 +459,9 @@ inline static void insert_into_hash_table_unsafe( struct cell * p_cell,
 													unsigned int hash )
 {
 	p_cell->label = _tm_table->entries[hash].next_label++;
+#ifdef EXTRA_DEBUG
+	DEBUG("cell label: %u\n", p_cell->label);
+#endif
 	p_cell->hash_index=hash;
 	/* insert at the beginning */
 	clist_insert(&_tm_table->entries[hash], p_cell, next_c, prev_c);

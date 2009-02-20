@@ -41,11 +41,12 @@
 #if defined PKG_MALLOC || defined SHM_MEM
 #include "pt.h"
 #endif
+#include "msg_translator.h" /* fix_global_req_flags() */
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
 struct cfg_group_core default_core_cfg = {
-	L_DEFAULT, /*  print only msg. < L_WARN */
+	L_WARN, 	/*  print only msg. < L_WARN */
 	LOG_DAEMON,	/* log_facility -- see syslog(3) */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
@@ -89,6 +90,9 @@ struct cfg_group_core default_core_cfg = {
 	0, /* mem_dump_shm */
 #endif
 	DEFAULT_MAX_WHILE_LOOPS, /* max_while_loops */
+	0, /* udp_mtu (disabled by default) */
+	0, /* udp_mtu_try_proto -> default disabled */
+	0  /* force_rport */ 
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -180,5 +184,12 @@ cfg_def_t core_cfg_def[] = {
 #endif
 	{"max_while_loops",	CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"maximum iterations allowed for a while loop" },
+	{"udp_mtu",	CFG_VAR_INT|CFG_ATOMIC,	0, 65535, 0, 0,
+		"fallback to a congestion controlled protocol if send size"
+			" exceeds udp_mtu"},
+	{"udp_mtu_try_proto", CFG_VAR_INT, 1, 4, 0, fix_global_req_flags,
+		"if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp)"},
+	{"force_rport",     CFG_VAR_INT, 0, 1,  0, fix_global_req_flags,
+		"force rport for all the received messages" },
 	{0, 0, 0, 0, 0, 0}
 };

@@ -1,0 +1,134 @@
+  _                      _                  _    ____ ___ 
+ | |    ___   __ _  __ _(_)_ __   __ _     / \  |  _ \_ _|
+ | |   / _ \ / _` |/ _` | | '_ \ / _` |   / _ \ | |_) | | 
+ | |__| (_) | (_| | (_| | | | | | (_| |  / ___ \|  __/| | 
+ |_____\___/ \__, |\__, |_|_| |_|\__, | /_/   \_\_|  |___|
+            |___/ |___/         |___/                    
+                         Ondrej Martinek <ondra@iptel.org>
+                                              January 2009
+
+This document contains the short description of the logging API in SER
+for developers.
+
+Source files:
+    dprint.h
+    dprint.c
+
+ Compile-time control macros
+=============================
+
+    NO_LOG
+	If defined, logging is completely disabled in SER and no messages
+        are produced at all
+	       
+    NO_DEBUG
+	If defined, logging messages do not include the source filename and
+	line location info
+
+ Logging levels
+================
+
+    L_DBG   ... Debugging message (the lowest level)
+    L_INFO  ... Info message
+    L_WARN  ... Warning message
+    L_ERR   ... Error message
+    L_CRIT  ... Critical message
+    L_ALERT ... Alert message (the highest level)
+
+    The levels are implemented as integer macros.
+
+ Related variables
+===================
+
+    debug
+	The config.framework setting that contains the current logging level.
+	The initial value can be specified by "debug" parameter in ser.cfg or
+	by -d options on the command-line.  The default value is L_WARN.
+
+    log_stderror
+	The global variable which specifies whether the log messages should be
+	send to the standard error output or syslog (equals to zero).
+	Its value can be specified by "log_stderr" parameter in ser.cfg or
+	-E option on the command-line.
+	
+    log_facility
+	The config.framework setting that contains the current facility for
+	logging to syslog.
+	The initial value can be specified by "log_facility" parameter in
+	ser.cfg.  The default value is LOG_DAEMON.
+
+ Macro functions
+=================
+
+    * short macro aliases:
+	DBG(FMT, ARGS...)   alias for LOG(L_DBG, FMT, ARGS...)
+        INFO(FMT, ARGS...)  alias for LOG(L_INFO, FMT, ARGS...)
+        WARN(FMT, ARGS...)  alias for LOG(L_WARN, FMT, ARGS...)
+        ERR(FMT, ARGS...)   alias for LOG(L_ERR, FMT, ARGS...)
+        BUG(FMT, ARGS...)   alias for LOG(L_CRIT, FMT, ARGS...)
+        ALERT(FMT, ARGS...) alias for LOG(L_ALERT, FMT, ARGS...)
+
+    * LOG(LEVEL, FMT, ARGS...) macro
+	Prints the log message on stderr or syslog if the current debug level
+	is greater or equal to LEVEL.  The message has the following format:
+
+          - for messages by core:
+              PROC(PID) LEVEL: <core> [FILE:LINE]: MESSAGE
+
+          - for messages by modules:
+              PROC(PID) LEVEL: MODULE [FILE:LINE]: MESSAGE
+	      
+          - for messages by log(), xlog(), xdbg() script funcitons:
+              PROC(PID) LEVEL: <script>: MESSAGE
+
+	PROC is the SER process number and PID is the linux process ID.
+        LEVEL is one of "DEBUG", "INFO", "NOTICE", "WARNING", "ERROR",
+	"ALERT" and "BUG" strings.  MESSAGE is constructed from printf-like
+	arguments FMT and ARGS.
+
+        [FILE:LINE] location info is not present if NO_DEBUG macro is defined.
+  
+	Use of shorter aliases is preferred if LEVEL is a preprocess-time
+	constant.
+	
+    * LOG_(LEVEL, PREFIX, FMT, ARGS...) macro
+	Prints the log message on stderr or syslog if the current debug level
+	is greater or equal to LEVEL.  The message has the following format:
+	
+              PROC(PID) LEVEL: PREFIXMESSAGE
+
+	This is an internal macro try to avoid using it.
+
+
+--------------------------------------------------------------------------------
+
+ APPENDIX: Summary of the changes to the original API
+======================================================
+
+  - LOG(LEVEL, FMT, ARGS...) and the short macro corresponding to LEVEL level
+    made eqvivalent (eg. LOG(L_DBG, FMT, ARGS...) and DBG(FMT, ARGS...) prints
+    always the same message)
+
+  - changed the format of log messages produced by the macros to include
+    the log level, module name, filename, line (if applicable)
+     
+  - added new, internal LOG_(LEVEL, PREFIX, FORMAT, ARGS...) macro
+
+  - removed DPrint() and DEBUG() macros, L_DEFAULT log level and dprint()
+    function
+
+!!!
+!!! IMPORTANT! READ ME!
+!!!
+!!!  These changes (mainly the first two) require reformating of the most log
+!!!  messages in SER core and module source files.  This step can be done
+!!!  automatically by running "scripts/logging/fix-logs-all" script BUT it
+!!!  was NOT originally performed because it would have generated too many
+!!!  changes in CVS which was discouraged by Andrei.  Instead, the developers
+!!!  are expected to run it when ready.
+!!!
+!!! IMPORTANT! READ ME!
+!!!  
+
+--
+$Id$

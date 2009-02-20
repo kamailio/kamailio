@@ -115,6 +115,11 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#ifdef HAVE_FILIO_H
+#include <sys/filio.h> /* needed on solaris 2.x for FIONREAD */
+#elif defined __OS_solaris
+#define BSD_COMP  /* needed on older solaris for FIONREAD */
+#endif /* HAVE_FILIO_H / __OS_solaris */
 #include <sys/ioctl.h>  /* ioctl() used on write error */
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
