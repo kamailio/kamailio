@@ -605,19 +605,34 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 			/* CSeq only the number without method ! */
 			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
 				continue;
-			if (! EQ_LEN(from)) continue;
 			/* To only the uri -- to many UACs screw up tags  */
 			if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
 				continue;
 			if (!EQ_STR(callid)) continue;
 			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
 				get_cseq(p_msg)->number.len)!=0) continue;
-			if (!EQ_STR(from)) continue;
 			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
 				get_to(t_msg)->uri.len)!=0) continue;
 			
 			/* it is e2e ACK/200 */
 			if (p_cell->uas.status<300) {
+				/* For e2e ACKs, From's tag 'MUST' equal INVITE's, while use
+				 * of the URI in this case is to be deprecated (Sec. 12.2.1.1).
+				 * Comparing entire From body is dangerous, since some UAs
+				 * screw the display name up. */
+				if (parse_from_header(p_msg) < 0) {
+					ERR("failed to parse From HF; ACK might not match.\n");
+					continue;
+				}
+				if (! STR_EQ(get_from(t_msg)->tag_value, 
+						get_from(p_msg)->tag_value))
+					continue;
+#ifdef TM_E2E_ACK_CHECK_FROM_URI
+				if (! STR_EQ(get_from(t_msg)->uri, 
+						get_from(p_msg)->uri))
+					continue;
+#endif
+
 				/* all criteria for proxied ACK are ok */
 				if (likely(p_cell->relayed_reply_branch!=-2)) {
 					if (unlikely(has_tran_tmcbs(p_cell, 
@@ -633,6 +648,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				if (dlg_matching(p_cell, p_msg))
 					goto found;
 				continue;
+			} else {
+				/* for hbh ACKs, From HF 'MUST' equal INVITE's one */
+				if (! EQ_LEN(from)) continue;
+				if (! EQ_STR(from)) continue;
 			}
 			
 			/* it is not an e2e ACK/200 -- perhaps it is 
@@ -1481,6 +1500,31 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned 
     return 1;
 }
 
+#ifdef WITH_AS_SUPPORT
+/**
+ * Returns the hash coordinates of the transaction current CANCEL is targeting.
+ */
+int t_get_canceled_ident(struct sip_msg* msg, unsigned int* hash_index, 
+		unsigned int* label)
+{
+	struct cell *orig;
+	if (msg->REQ_METHOD != METHOD_CANCEL) {
+		WARN("looking up original transaction for non-CANCEL method (%d).\n",
+				msg->REQ_METHOD);
+		return -1;
+	}
+	orig = t_lookupOriginalT(msg);
+	if ((orig == T_NULL_CELL) || (orig == T_UNDEFINED))
+		return -1;
+	*hash_index = orig->hash_index;
+	*label = orig->label;
+	DEBUG("original T found @%p, %d:%d.\n", orig, *hash_index, *label);
+	/* TODO: why's w_t_lookup_cancel setting T to 'undefined'?? */
+	UNREF(orig);
+	return 1;
+}
+#endif /* WITH_AS_SUPPORT */
+
 int t_lookup_ident(struct cell ** trans, unsigned int hash_index, 
 					unsigned int label)
 {
@@ -1493,7 +1537,11 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 	}
 	
 	LOCK_HASH(hash_index);
-	
+
+#ifndef E2E_CANCEL_HOP_BY_HOP
+#warning "t_lookup_ident() can only reliably match INVITE transactions in " \
+		"E2E_CANCEL_HOP_BY_HOP mode"
+#endif
 	hash_bucket=&(get_tm_table()->entries[hash_index]);
 	/* all the transactions from the entry are compared */
 	clist_foreach(hash_bucket, p_cell, next_c){

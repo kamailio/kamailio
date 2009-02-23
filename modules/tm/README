@@ -74,9 +74,11 @@ Jiri Kuthan
         1.4.23. t_any_replied() 
         1.4.24. t_grep_status("code") 
         1.4.25. t_is_canceled() 
-        1.4.26. t_relay_cancel() 
-        1.4.27. t_drop_replies() 
-        1.4.28. t_save_lumps() 
+        1.4.26. t_is_expired() 
+        1.4.27. t_relay_cancel() 
+        1.4.28. t_lookup_cancel(), t_lookup_cancel(1) 
+        1.4.29. t_drop_replies() 
+        1.4.30. t_save_lumps() 
 
    1.5. TM Module API
 
@@ -1154,7 +1156,21 @@ failure_route[0]{
         }
 }
 
-1.4.26.  t_relay_cancel()
+1.4.26.  t_is_expired()
+
+   Returns true if the current transaction has already been expired, i.e.
+   the max_inv_lifetime/max_noninv_lifetime interval has already elapsed.
+
+   Example 50. t_is_expired usage
+...
+failure_route[0]{
+        if (t_is_expired()){
+                log("transaction expired\n");
+                # There is no point in adding a new branch.
+        }
+}
+
+1.4.27.  t_relay_cancel()
 
    Forwards the CANCEL if the corresponding INVITE transaction exists.
    The function is supposed to be used at the very beginning of the
@@ -1166,7 +1182,7 @@ failure_route[0]{
    CANCELs were successfully sent to the pending branches, true if the
    INVITE was not found, and false in case of any error.
 
-   Example 50. t_relay_cancel usage
+   Example 51. t_relay_cancel usage
 if (method == CANCEL) {
         if (!t_relay_cancel()) {  # implicit drop if relaying was successful,
                                   # nothing to do
@@ -1179,14 +1195,46 @@ if (method == CANCEL) {
         # do the same as for INVITEs
 }
 
-1.4.27.  t_drop_replies()
+1.4.28.  t_lookup_cancel(), t_lookup_cancel(1)
+
+   Returns true if the corresponding INVITE transaction exists for a
+   CANCEL request. The function can be called at the beginning of the
+   script to check whether or not the CANCEL can be immediately forwarded
+   bypassing the rest of the script. Note however that t_relay_cancel
+   includes t_lookup_cancel as well, therefore it is not needed to
+   explicitly call this function unless something has to be logged for
+   example.
+
+   If the function parameter (optional) is set to 1, the message flags
+   are overwritten with the flags of the INVITE. isflagset() can be used
+   to check the flags of the previously forwarded INVITE in this case.
+
+   Example 52. t_lookup_cancel usage
+if (method == CANCEL) {
+        if (t_lookup_cancel()) {
+                log("INVITE transaction exists");
+                if (!t_relay_cancel()) {  # implicit drop if
+                                          # relaying was successful,
+                                          # nothing to do
+
+                        # corresponding INVITE transaction found
+                        # but error occurred
+                        sl_reply("500", "Internal Server Error");
+                        drop;
+                }
+        }
+        # bad luck, corresponding INVITE transaction is missing,
+        # do the same as for INVITEs
+}
+
+1.4.29.  t_drop_replies()
 
    Drops all the previously received replies in failure_route block to
    make sure that none of them is picked up again. Works only if a new
    branch is added to the transaction, or it is explicitly replied in the
    script!
 
-   Example 51. t_drop_replies() usage
+   Example 53. t_drop_replies() usage
 ...
 failure_route[0]{
         if (t_check_status("5[0-9][0-9]")){
@@ -1202,7 +1250,7 @@ failure_route[0]{
         }
 }
 
-1.4.28.  t_save_lumps()
+1.4.30.  t_save_lumps()
 
    Forces the modifications of the processed SIP message to be saved in
    shared memory before t_relay() is called. The new branches which are
@@ -1217,7 +1265,7 @@ failure_route[0]{
    The transaction must be created by t_newtran() before calling
    t_save_lumps().
 
-   Example 52. t_save_lumps() usage
+   Example 54. t_save_lumps() usage
 route {
         ...
         t_newtran();

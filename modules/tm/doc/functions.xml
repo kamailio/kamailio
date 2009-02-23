@@ -841,6 +841,29 @@ failure_route[0]{
 	</example>
 	</section>
 
+	<section id="t_is_expired">
+	<title>
+	    <function>t_is_expired()</function>
+	</title>
+	<para>
+		Returns true if the current transaction has already been expired,
+		i.e. the max_inv_lifetime/max_noninv_lifetime interval has already
+		elapsed.
+	</para>
+	<example>
+	    <title><function>t_is_expired</function> usage</title>
+	    <programlisting>
+...
+failure_route[0]{ 
+	if (t_is_expired()){
+		log("transaction expired\n");
+		# There is no point in adding a new branch.
+	}
+} 
+	    </programlisting>
+	</example>
+	</section>
+
     <section id="t_relay_cancel">
 	<title>
 	    <function>t_relay_cancel()</function>
@@ -869,6 +892,50 @@ if (method == CANCEL) {
 		# corresponding INVITE transaction found but error occurred
 		sl_reply("500", "Internal Server Error");
 		drop;
+	}
+	# bad luck, corresponding INVITE transaction is missing,
+	# do the same as for INVITEs
+}
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="t_lookup_cancel">
+	<title>
+	    <function>t_lookup_cancel()</function>,
+	    <function>t_lookup_cancel(1)</function>
+	</title>
+	<para>
+		Returns true if the corresponding INVITE transaction exists
+		for a CANCEL request. The function can be called at the beginning
+		of the script to check whether or not the CANCEL can be immediately
+		forwarded bypassing the rest of the script. Note however that
+		<function>t_relay_cancel</function> includes
+		<function>t_lookup_cancel</function> as well, therefore it is not
+		needed to explicitly call this function unless something has to be
+		logged for example.
+	</para>
+	<para>
+		If the function parameter (optional) is set to 1, the message flags
+		are overwritten with the flags of the INVITE. isflagset() can be used
+		to check the flags of the previously forwarded INVITE in this case.
+	</para>
+	<example>
+	    <title><function>t_lookup_cancel</function> usage</title>
+	    <programlisting>
+
+if (method == CANCEL) {
+	if (t_lookup_cancel()) {
+		log("INVITE transaction exists");
+		if (!t_relay_cancel()) {  # implicit drop if
+                                          # relaying was successful,
+                                          # nothing to do
+
+			# corresponding INVITE transaction found
+			# but error occurred
+			sl_reply("500", "Internal Server Error");
+			drop;
+		}
 	}
 	# bad luck, corresponding INVITE transaction is missing,
 	# do the same as for INVITEs

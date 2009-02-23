@@ -44,10 +44,11 @@
  *  2006-07-27  dns cache and dns based send address failover support (andrei)
  *  2006-12-06  on popular request last_retcode set also by module functions
  *              (andrei)
- *  2007-06-14  run_actions & do_action need a ctx or handle now, no more 
+ *  2007-06-14  run_actions & do_action need a ctx or handle now, no more
  *               static vars (andrei)
  *  2008-11-18  support for variable parameter module functions (andrei)
  *  2008-12-03  use lvalues/rvalues for assignments (andrei)
+ *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
  */
 
 
@@ -228,7 +229,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 #endif
 				}
 
-#ifdef HONOR_MADDR				
+#ifdef HONOR_MADDR
 				if (u->maddr_val.s && u->maddr_val.len)
 					dst_host=&u->maddr_val;
 				else
@@ -310,7 +311,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			LOG(a->val[0].u.number, "%s", a->val[1].u.string);
+			LOG_(a->val[0].u.number, "<script>: ", "%s", a->val[1].u.string);
 			ret=1;
 			break;
 
@@ -715,11 +716,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->val[1].type==ACTIONS_ST)&&a->val[1].u.data){
-							ret=run_actions(h, 
+							ret=run_actions(h,
 										(struct action*)a->val[1].u.data, msg);
 						}
 					}else if ((a->val[2].type==ACTIONS_ST)&&a->val[2].u.data){
-							ret=run_actions(h, 
+							ret=run_actions(h,
 										(struct action*)a->val[2].u.data, msg);
 					}
 				}
@@ -935,6 +936,10 @@ sw_jt_def:
 			msg->msg_flags|=FL_FORCE_RPORT;
 			ret=1; /* continue processing */
 			break;
+		case UDP_MTU_TRY_PROTO_T:
+			msg->msg_flags|= (unsigned int)a->val[0].u.number & FL_MTU_FB_MASK;
+			ret=1; /* continue processing */
+			break;
 		case SET_ADV_ADDR_T:
 			if (a->val[0].type!=STR_ST){
 				LOG(L_CRIT, "BUG: do_action: bad set_advertised_address() "
@@ -993,11 +998,11 @@ sw_jt_def:
 			ret=1; /* continue processing */
 			break;
 
-	 case ADD_T:
-	case ASSIGN_T:
+		case ADD_T:
+		case ASSIGN_T:
 			v=lval_assign(h, msg, (struct lvalue*)a->val[0].u.data,
 								  (struct rval_expr*)a->val[1].u.data);
-			if (likely(v>=0)) 
+			if (likely(v>=0))
 				ret = 1;
 			else if (unlikely (v == EXPR_DROP)) /* hack to quit on DROP*/
 				ret=0;
@@ -1090,6 +1095,3 @@ error:
 	h->rec_lev--;
 	return ret;
 }
-
-
-

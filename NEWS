@@ -97,7 +97,16 @@ modules:
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
- - tm        - added t_reset_fr(), t_reset_retr(), t_reset_max_lifetime()
+ - tm        - added API function t_get_canceled_ident(): returns the hash 
+               coordinates (bucket/index) of the transaction the currently 
+               processed CANCEL is targeting. Requires AS support enabled.
+             - added API function ack_local_uac(): allow generating the ACKs 
+               for 2xx'ed locally originated INVITEs - new headers and body can
+               now also be appended to it. Requires AS support enabled.
+             - matching of E2E ACKs no longer requires full From HF identity,
+               but rather only tag equality (this behaviour can be changed by
+               defining TM_E2E_ACK_CHECK_FROM_URI)
+             - added t_reset_fr(), t_reset_retr(), t_reset_max_lifetime()
              - t_relay_to renamed to t_relay_to_avp (undocumented function)
              - t_relay() can now also take host and port parameters (e.g.
                t_relay(host, port)), behaving like a statefull 
@@ -220,6 +229,10 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - fallback to tcp or other congestion controlled transport 
+               protocol if a forwarded udp sip request is greater then 
+               udp_mtu (config). Default off. See udp_mtu and 
+               udp_mtu_try_proto.
              - sctp support (one-to-many, work in progress, for now linux
                only with no fallback to one-to-one on full send buffers)
              - partial cygwin (windows) support revived: core+static modules, 
@@ -240,6 +253,17 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  udp_mtu = number - fallback to another protocol (udp_mtu_try_proto must be
+                     set also either globally or per packet) if the constructed
+                     request size is greater then udp_mtu.
+                     Recommended size: 1300. Default: 0 (off).
+  udp_mtu_try_proto = TCP|TLS|SCTP|UDP - if udp_mtu !=0 and udp forwarded
+                     request size (after adding all the "local" headers) >
+                     udp_mtu, use this protocol instead of udp. Only the
+                     Via header will be updated (e.g. The Record-Route
+                     will be the one built for udp).
+                     Default: UDP (off). Recommended: TCP.
+  force_rport =yes/no - like force_rport(), but works globally.
   disable_sctp = yes/no - disable sctp support (default auto, see enable_sctp)
   enable_sctp = 0/1/2  - disable (0)/enable (1)/auto (2) sctp support, 
                          default auto (2)
@@ -260,8 +284,8 @@ new config variables:
                       hosts (default: 0).
   server_id = number - A configurable unique server id that can be used to
                        discriminate server instances within a cluster of
-                       servers when all other information, such as IP adddresses
-                       are same.
+                       servers when all other information, such as IP addresses
+                       are the same.
   loadpath = <modules path> - directory where to load the modules from (-L
      equivalent); modules can be loaded simply by specifying their name
      (loadmodule "maxfwd")
@@ -355,6 +379,11 @@ new config variables:
   dst_blacklist_init = on | off (default on) - if off, the blacklist
     is not initialized at startup and cannot be enabled runtime,
     that saves some memory.
+
+new script commands:
+  udp_mtu_try_proto(TCP|TLS|SCTP|UDP) - same as udp_mtu_try_proto=... (see
+    above), but works per packet and not globally.
+
 
 build system:
  - check defines and includes used at compile time and if different 

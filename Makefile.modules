@@ -29,6 +29,8 @@ override static_modules_path=
 # should be set in Makefile of apart module
 # INCLUDES += -I$(COREPATH)
 
+DEFS += -DMOD_NAME='"$(MOD_NAME)"'
+
 ifneq ($(makefile_defs_included),1)
 $(error "the local makefile does not include Makefile.defs!")
 endif

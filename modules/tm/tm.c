@@ -112,6 +112,7 @@
 #include "../../route.h"
 #include "../../cfg/cfg.h"
 #include "../../globals.h"
+#include "../../timer_ticks.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -229,6 +230,7 @@ static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
 static int t_any_replied(struct sip_msg* msg, char*, char*);
 static int t_is_canceled(struct sip_msg* msg, char*, char*);
+static int t_is_expired(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
@@ -248,7 +250,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_lookup_request",   w_t_check,               0, 0,
 			REQUEST_ROUTE},
-	{"t_lookup_cancel",    w_t_lookup_cancel,     0, 0,
+	{"t_lookup_cancel",    w_t_lookup_cancel,       0, 0,
+			REQUEST_ROUTE},
+	{"t_lookup_cancel",    w_t_lookup_cancel,       1, fixup_int_1,
 			REQUEST_ROUTE},
 	{T_REPLY,              w_t_reply,               2, fixup_t_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -359,6 +363,8 @@ static cmd_export_t cmds[]={
 	{"t_any_replied",     t_any_replied,            0, 0, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_canceled",     t_is_canceled,            0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_is_expired",      t_is_expired,             0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -785,7 +791,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 	struct cell *t;
 	char *status, *s = NULL;
 	char backup;
-	int lowest_status, n;
+	int lowest_status, n, ret;
 	fparam_t* fp;
 	regex_t* re = NULL;
 	str tmp;
@@ -844,7 +850,16 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 
 	case MODE_ONFAILURE:
 		/* use the status of the winning reply */
-		if (t_pick_branch( -1, 0, t, &lowest_status)<0 ) {
+		ret = t_pick_branch( -1, 0, t, &lowest_status);
+		if (ret == -1) {
+			/* t_pick_branch() retuns error also when there are only
+			 * blind UACs. Let us give it another chance including the
+			 * blind branches. */
+			LOG(L_DBG, "DEBUG: t_check_status: t_pick_branch returned error, "
+				"trying t_pick_branch_blind\n");
+			ret = t_pick_branch_blind(t, &lowest_status);
+		}
+		if (ret < 0) {
 			LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
 				" a final response in MODE_ONFAILURE\n");
 			goto error;
@@ -889,17 +904,21 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *ret;
+	int i=0;
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		ret = t_lookupOriginalT( msg );
 		DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
 		if (ret != T_NULL_CELL) {
+			/* If the parameter is set to 1, overwrite the message flags of
+			 * the CANCEL with the flags of the INVITE */
+			if (str && (get_int_fparam(&i, msg, (fparam_t*)str)==0) && i)
+				msg->flags = ret->uas.request->flags;
+
 			/* The cell is reffed by t_lookupOriginalT, but T is not set.
 			So we must unref it before returning. */
 			UNREF(ret);
-			set_t(T_UNDEFINED);
 			return 1;
 		}
-		set_t(T_UNDEFINED);
 	} else {
 		LOG(L_WARN, "WARNING: script error t_lookup_cancel() called for non-CANCEL request\n");
 	}
@@ -1551,6 +1570,25 @@ int t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
 		ret=-1;
 	}else{
 		ret=(t->flags & T_CANCELED)?1:-1;
+	}
+	return ret;
+}
+
+/* script function, returns: 1 if the transaction lifetime interval has already elapsed, -1 if not */
+int t_is_expired(struct sip_msg* msg, char* foo, char* bar)
+{
+	struct cell *t;
+	int ret;
+	
+	
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_is_expired: cannot check a message "
+			"for which no T-state has been established\n");
+		ret=-1;
+	}else{
+		ret=(TICKS_GT(t->end_of_life, get_ticks_raw()))?-1:1;
 	}
 	return ret;
 }

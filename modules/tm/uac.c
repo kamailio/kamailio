@@ -194,6 +194,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
+	long nhtype;
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -203,7 +204,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	/*** added by dcm 
 	 * - needed by external ua to send a request within a dlg
 	 */
-	if (w_calculate_hooks(uac_r->dialog)<0 && !uac_r->dialog->hooks.next_hop)
+	if ((nhtype = w_calculate_hooks(uac_r->dialog)) < 0)
+		/* if err's returned, the message is incorrect */
 		goto error2;
 
 	if (!uac_r->dialog->loc_seq.is_set) {
@@ -257,6 +259,10 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		new_cell->flags |= T_IS_INVITE_FLAG;
 		new_cell->flags|=T_AUTO_INV_100 &
 				(!cfg_get(tm, tm_cfg, tm_auto_inv_100) -1);
+#ifdef WITH_AS_SUPPORT
+		if (uac_r->cb_flags & TMCB_DONT_ACK)
+			new_cell->flags |= T_NO_AUTO_ACK;
+#endif
 		lifetime=cfg_get(tm, tm_cfg, tm_max_inv_lifetime);
 	}else
 		lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
@@ -282,8 +288,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;
-	
 	request->dst = dst;
+	request->flags |= nhtype;
 
 	if (!is_ack) {
 #ifdef TM_DEL_UNREF
@@ -402,18 +408,7 @@ void send_prepared_request(struct retr_buf *request)
  */
 int t_uac(uac_req_t *uac_r)
 {
-	struct retr_buf *request;
-	struct cell *cell;
-	int ret;
-	int is_ack;
-
-	ret = t_uac_prepare(uac_r, &request, &cell);
-	if (ret < 0) return ret;
-	is_ack = (uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0) ? 1 : 0;
-	send_prepared_request_impl(request, !is_ack /* retransmit */);
-	if (cell && is_ack)
-		free_cell(cell);
-	return ret;
+	return t_uac_with_ids(uac_r, NULL, NULL);
 }
 
 /*
@@ -444,6 +439,140 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	}
 	return ret;
 }
+
+#ifdef WITH_AS_SUPPORT
+struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
+					unsigned int branch, str *hdrs, str *body)
+{
+	struct retr_buf *lack;
+	unsigned int buf_len;
+	char *buffer;
+	struct dest_info dst;
+
+	buf_len = (unsigned)sizeof(struct retr_buf);
+	if (! (buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body, 
+			&buf_len, &dst))) {
+		return 0;
+	} else {
+		/* 'buffer' now points into a contiguous chunk of memory with enough
+		 * room to hold both the retr. buffer and the string raw buffer: it
+		 * points to the begining of the string buffer; we iterate back to get
+		 * the begining of the space for the retr. buffer. */
+		lack = &((struct retr_buf *)buffer)[-1];
+		lack->buffer = buffer;
+		lack->buffer_len = buf_len;
+		lack->dst = dst;
+	}
+
+	/* TODO: need next 2? */
+	lack->activ_type = TYPE_LOCAL_ACK;
+	lack->my_T = trans;
+
+	return lack;
+}
+
+void free_local_ack(struct retr_buf *lack)
+{
+	shm_free(lack);
+}
+
+void free_local_ack_unsafe(struct retr_buf *lack)
+{
+	shm_free_unsafe(lack);
+}
+
+/**
+ * @return: 
+ * 	0: success
+ * 	-1: internal error
+ * 	-2: insane call :)
+ */
+int ack_local_uac(struct cell *trans, str *hdrs, str *body)
+{
+	struct retr_buf *local_ack, *old_lack;
+	int ret;
+
+	/* sanity checks */
+
+#ifdef EXTRA_DEBUG
+	if (! trans) {
+		BUG("no transaction to ACK.\n");
+		abort();
+	}
+#endif
+
+#define RET_INVALID \
+		ret = -2; \
+		goto fin
+
+	if (! is_local(trans)) {
+		ERR("trying to ACK non local transaction (T@%p).\n", trans);
+		RET_INVALID;
+	}
+	if (! is_invite(trans)) {
+		ERR("trying to ACK non INVITE local transaction (T@%p).\n", trans);
+		RET_INVALID;
+	}
+	if (! trans->uac[0].reply) {
+		ERR("trying to ACK un-completed INVITE transaction (T@%p).\n", trans);
+		RET_INVALID;
+	}
+
+	if (! (trans->flags & T_NO_AUTO_ACK)) {
+		ERR("trying to ACK an auto-ACK transaction (T@%p).\n", trans);
+		RET_INVALID;
+	}
+	if (trans->uac[0].local_ack) {
+		ERR("trying to rebuild ACK retransmission buffer (T@%p).\n", trans);
+		RET_INVALID;
+	}
+
+	/* looks sane: build the retransmission buffer */
+
+	if (! (local_ack = local_ack_rb(trans->uac[0].reply, trans, /*branch*/0, 
+			hdrs, body))) {
+		ERR("failed to build ACK retransmission buffer");
+		RET_INVALID;
+	} else {
+		/* set the new buffer, but only if not already set (conc. invok.) */
+		if ((old_lack = (struct retr_buf *)atomic_cmpxchg_long(
+				(void *)&trans->uac[0].local_ack, 0, (long)local_ack))) {
+			/* buffer already set: deny current attempt */
+			ERR("concurrent ACKing for local INVITE detected (T@%p).\n",trans);
+			free_local_ack(local_ack);
+			RET_INVALID;
+		}
+	}
+
+	if (msg_send(&local_ack->dst, local_ack->buffer, local_ack->buffer_len)<0){
+		/* hopefully will succeed on next 2xx retransmission */
+		ERR("failed to send local ACK (T@%p).\n", trans);
+		ret = -1;
+		goto fin;
+	}
+#ifdef	TMCB_ONSEND
+	else {
+		run_onsend_callbacks2(TMCB_REQUEST_SENT, &trans->uac[0]->request, 
+				local_ack->buffer, local_ack->buffer_len, &local_ack->dst,
+				TYPE_LOCAL_ACK);
+	}
+#endif
+
+	ret = 0;
+fin:
+	/* TODO: ugly! */
+	/* FIXME: the T had been obtain by t_lookup_ident()'ing for it, so, it is
+	 * ref-counted. The t_unref() can not be used, as it requests a valid SIP
+	 * message (all available might be the reply, but if AS goes wrong and
+	 * tries to ACK before the final reply is received, we still have to
+	 * lookup the T to find this out). */
+	UNREF( trans );
+	return ret;
+
+#undef RET_INVALID
+}
+#endif /* WITH_AS_SUPPORT */
+
 
 /*
  * Send a message within a dialog

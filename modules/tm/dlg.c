@@ -54,12 +54,6 @@
 #define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
 
-#define ROUTE_PREFIX "Route: "
-#define ROUTE_PREFIX_LEN (sizeof(ROUTE_PREFIX) - 1)
-
-#define ROUTE_SEPARATOR "," CRLF "       "
-#define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
-
 
 #ifdef DIALOG_CALLBACKS
 
@@ -221,11 +215,17 @@ static inline int str_duplicate(str* _d, str* _s)
 
 /*
  * Calculate dialog hooks
+ * @return:
+ *  negative : error
+ *  0 : no routes present
+ *  F_RB_NH_LOOSE : routes present, next hop is loose router
+ *  F_RB_NH_STRICT: next hop is strict.
  */
 static inline int calculate_hooks(dlg_t* _d)
 {
 	str* uri;
 	struct sip_uri puri;
+	int nhop;
 
 	/* we might re-calc. some existing hooks =>
 	 * reset all the hooks to 0 */
@@ -242,6 +242,7 @@ static inline int calculate_hooks(dlg_t* _d)
 			else _d->hooks.request_uri = &_d->rem_uri;
 			_d->hooks.next_hop = &_d->route_set->nameaddr.uri;
 			_d->hooks.first_route = _d->route_set;
+			nhop = F_RB_NH_LOOSE;
 		} else {
 			_d->hooks.request_uri = &_d->route_set->nameaddr.uri;
 			_d->hooks.next_hop = _d->hooks.request_uri;
@@ -250,6 +251,7 @@ static inline int calculate_hooks(dlg_t* _d)
 				_d->hooks.last_route = &_d->rem_target;
 			else 
 				_d->hooks.last_route = NULL; /* ? */
+			nhop = F_RB_NH_STRICT;
 		}
 	} else {
 		if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
@@ -258,12 +260,14 @@ static inline int calculate_hooks(dlg_t* _d)
 		if (_d->dst_uri.s) _d->hooks.next_hop = &_d->dst_uri;
 		else _d->hooks.next_hop = _d->hooks.request_uri;
 
+		nhop = 0;
 		/*
-		 * the routes in the hooks need to be reset because if the route_set was dropped somewhere else
-		 * then these will remain set without the actual routes existing any more
+		 * the routes in the hooks need to be reset because if the route_set 
+		 * was dropped somewhere else then these will remain set without the
+		 * actual routes existing any more
 		 */
 		_d->hooks.first_route = 0;
-		_d->hooks.last_route = 0; 
+		_d->hooks.last_route = 0;
 	}
 
 	if ((_d->hooks.request_uri) && (_d->hooks.request_uri->s) && (_d->hooks.request_uri->len)) {
@@ -279,7 +283,7 @@ static inline int calculate_hooks(dlg_t* _d)
 		get_raw_uri(_d->hooks.next_hop);
 	}
 
-	return 0;
+	return nhop;
 }
 
 /*
@@ -744,7 +748,8 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m,
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -4;
 		}
 
-		calculate_hooks(_d);
+		if (calculate_hooks(_d) < 0)
+			return -1;
 	}
 
 	return 0;
@@ -1084,7 +1089,8 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_re
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -6;
 		}
 
-		calculate_hooks(_d);
+		if (calculate_hooks(_d) < 0)
+			return -1;
 		
 	}
 
@@ -1098,30 +1104,29 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_re
 int calculate_routeset_length(dlg_t* _d)
 {
 	int len;
-	rr_t* ptr;
+	rr_t *ptr;
 
-	len = 0;
-	ptr = _d->hooks.first_route;
+	if (! _d->route_set)
+		return 0;
 
-	if (ptr) {
-		len = ROUTE_PREFIX_LEN;
-		len += CRLF_LEN;
-	}
+	len = ROUTE_PREFIX_LEN;
 
-	while(ptr) {
+	for (ptr = _d->hooks.first_route; ptr; ptr = ptr->next) {
 		len += ptr->len;
-		ptr = ptr->next;
-		if (ptr) len += ROUTE_SEPARATOR_LEN;
-	} 
-
-	if (_d->hooks.last_route) {
-		len += ROUTE_SEPARATOR_LEN + 2; /* < > */
-		len += _d->hooks.last_route->len;
+		len += ROUTE_SEPARATOR_LEN;
 	}
+	if (_d->hooks.last_route) {
+		if (_d->hooks.first_route)
+			len += ROUTE_SEPARATOR_LEN;
+		len += _d->hooks.last_route->len + 2; /* < > */
+	} else {
+		len -= ROUTE_SEPARATOR_LEN;
+	}
+
+	len += CRLF_LEN;
 
 	return len;
 }
-
 
 /*
  *
@@ -1255,7 +1260,7 @@ int set_dlg_target(dlg_t* _d, str* _ruri, str* _duri) {
 		if (str_duplicate(&_d->dst_uri, _duri)) return -1;
 	}
 
-	if (calculate_hooks(_d)) {
+	if (calculate_hooks(_d) < 0) {
 		LOG(L_ERR, "set_dlg_target(): Error while calculating hooks\n");
 		return -1;
 	}

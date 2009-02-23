@@ -456,6 +456,8 @@ endif
 #		core that the DNS servers are down. No DNS query is performed
 #		when the servers are unreachable, and even expired resource
 #		records are used from the cache. (requires external watchdog)
+# -DWITH_AS_SUPPORT
+#		adds support for Application Server interface
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
 DEFS= $(extra_defs) \
@@ -1437,6 +1439,16 @@ ifeq  ($(OS), solaris)
 	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT
+	endif
+	# check for filio.h
+	filio_h_locations= /usr/include/sys/filio.h \
+						$(LOCALBASE)/include/sys/filio.h
+	has_filio_h=$(shell for r in $(filio_h_locations); do \
+						if  [ -r "$$r" ] ; then echo yes; exit; fi \
+						done;\
+				)
+	ifeq ($(has_filio_h), yes)
+		DEFS+=-DHAVE_FILIO_H
 	endif
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld

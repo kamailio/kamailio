@@ -92,6 +92,11 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
                                 (for failure route use) */
 #define FL_HASH_INDEX  128 /* msg->hash_index contains a valid value (tm use)*/
 
+#define FL_MTU_TCP_FB   256
+#define FL_MTU_TLS_FB   512
+#define FL_MTU_SCTP_FB 1024
+#define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
+
 
 #define IFISMETHOD(methodname,firstchar)                                  \
 if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
