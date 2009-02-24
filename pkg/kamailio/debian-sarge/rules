@@ -285,11 +285,11 @@ install: build
 
 	# install only the utils modules
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(UTILS_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-utils-modules \
+		basedir=$(CURDIR)/debian/kamailio-utils-module \
 		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-utils-modules \
+		cfg-prefix=$(CURDIR)/debian/kamailio-utils-module \
 		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-utils-modules
+		doc-dir=share/doc/kamailio-utils-module
 
 	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
 	for p in $(ALL_PACKAGES); \
