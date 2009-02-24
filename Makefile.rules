@@ -27,12 +27,20 @@
 # (if not rebuild everything)
 ifeq (,$(filter $(nodep_targets),$(MAKECMDGOALS)))
 -include makecfg.lst
-ifneq ($(strip $(DEFS)), $(strip $(CFG_DEFS)))
+# if trying  to build a lib automatically and the lib is already compiled,
+# don't rebuild it if the only differences in DEFS or INCLUDES are covered
+# by LIB_NOREBUILD_DEFS/LIB_NOREBUILD_INCLUDES
+LIB_NOREBUILD_DEFS+= -DMOD_NAME% -D%_MOD_INTERFACE -DMOD_INTERFACE_% -DSR_%
+
+# don't rebuild if the differences are covered by NOREBUILD_DEFS or 
+# NOREBUILD_INCLUDES
+ifneq ($(filter-out $(NOREBUILD_DEFS),$(strip $(DEFS))), $(strip $(CFG_DEFS)))
 #$(warning different defs: <$(strip $(DEFS))> != )
 #$(warning               : <$(strip $(CFG_DEFS))>)
 $(shell rm -f makecfg.lst)
 endif
-ifneq ($(strip $(INCLUDES)), $(strip $(CFG_INCLUDES)))
+ifneq ($(filter-out $(NOREBUILD_INCLUDES), $(strip $(INCLUDES))),\
+		$(strip $(CFG_INCLUDES)))
 $(shell rm -f makecfg.lst)
 endif
 endif
@@ -95,7 +103,9 @@ ALL_LIBS+=$(foreach l, $(SER_LIBS), -L$(dir $l) -l$(notdir $l))
 $(NAME): librpath.lst $(SER_LIBS_DEPS)
 
 $(SER_LIBS_DEPS): FORCE
-	$(MAKE) -wC $(dir $@)  compile_for_install=$(lib_compile_for_install)
+	@$(MAKE) -wC $(dir $@)  compile_for_install=$(lib_compile_for_install) \
+		NOREBUILD_DEFS="$(NOREBUILD_DEFS) $(LIB_NOREBUILD_DEFS)" \
+		NOREBUILD_INCLUDES="$(NOREBUILD_INCLUDES) $(LIB_NOREBUILD_INCLUDES)"
 
 .PHONY: FORCE
 FORCE:
@@ -134,8 +144,10 @@ librpath.lst: $(ALLDEP)
 	@echo LIB_RPATH_LST:=$(SER_RPATH_LST) >librpath.lst
 
 makecfg.lst:
-	@echo CFG_DEFS:=$(subst ',\', $(subst ",\", $(strip $(DEFS)))) >>$@
-	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\", $(strip $(INCLUDES)))) >>$@
+	@echo CFG_DEFS:=$(subst ',\', $(subst ",\", \
+		$(filter-out $(NOREBUILD_DEFS), $(strip $(DEFS))))) >>$@
+	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\", \
+		$(filter-out $(NOREBUILD_INCLUDES), $(strip $(INCLUDES))))) >>$@
 .PHONY: all
 all: $(NAME) modules
 
