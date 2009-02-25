@@ -63,7 +63,7 @@
 #include <string.h>
 
 #include "../../sr_module.h"
-#include "../../local_route.h"
+#include "../../lib/kcore/local_route.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
