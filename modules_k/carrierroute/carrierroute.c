@@ -166,7 +166,7 @@ static int mod_init(void) {
 	carrierroute_db_vars();
 
 	if (cr_match_mode != 10 && cr_match_mode != 128) {
-		LM_ERR("invalid matching mode specific, please use 10 or 128");
+		LM_ERR("invalid matching mode %d specific, please use 10 or 128", cr_match_mode);
 		return -1;
 	}
 
@@ -196,12 +196,12 @@ static int mod_init(void) {
 		if( !( fs.st_mode & S_IWOTH) &&
 			!((fs.st_mode & S_IWGRP) && (fs.st_gid == getegid())) &&
 			!((fs.st_mode & S_IWUSR) && (fs.st_uid == geteuid())) ) {
-				LM_ERR("config file <%s> not writable\n", config_file);
+				LM_ERR("config file %s not writable\n", config_file);
 				return -1;
 		}
 	}
 	else {
-		LM_ERR("invalid config_source parameter: <%s>\n", config_source);
+		LM_ERR("invalid config_source parameter: %s\n", config_source);
 		return -1;
 	}
 
