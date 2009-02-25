@@ -193,7 +193,7 @@ static void
 __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
 	str tag = {0,0};
-	struct dlginfo_cell *dlginfo = (struct dlginfo_cell*)_params->param;
+	struct dlginfo_cell *dlginfo = (struct dlginfo_cell*)*_params->param;
 
 	switch (type) {
 	case DLGCB_FAILED:
