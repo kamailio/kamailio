@@ -100,7 +100,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running Kamailio with this module loaded:
-     * libpurple devel from pidgin 2.5.2.
+     * libpurple, e.g. from pidgin 2.5.2.
 
 1.3. Database
 
