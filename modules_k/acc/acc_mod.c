@@ -377,8 +377,11 @@ static int mod_init( void )
 
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
-	if (flag_idx2mask(&failed_transaction_flag)<0)
+	if ((failed_transaction_flag != -1) && 
+		!flag_in_range(failed_transaction_flag)) {
+		LM_ERR("failed_transaction_flag set to invalid value\n");
 		return -1;
+	}
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
@@ -423,11 +426,15 @@ static int mod_init( void )
 		return -1;
 	}
 
-	if (flag_idx2mask(&log_flag)<0)
+	if ((log_flag != -1) && !flag_in_range(log_flag)) {
+		LM_ERR("log_flag set to invalid value\n");
 		return -1;
+	}
 
-	if (flag_idx2mask(&log_missed_flag)<0)
+	if ((log_missed_flag != -1) && !flag_in_range(log_missed_flag)) {
+		LM_ERR("log_missed_flag set to invalid value\n");
 		return -1;
+	}
 
 	acc_log_init();
 
@@ -445,10 +452,16 @@ static int mod_init( void )
 			return -1;
 		}
 		/* fix the flags */
-		if (flag_idx2mask(&db_flag)<0)
+
+		if ((db_flag != -1) && !flag_in_range(db_flag)) {
+			LM_ERR("db_flag set to invalid value\n");
 			return -1;
-		if (flag_idx2mask(&db_missed_flag)<0)
+		}
+
+		if ((db_missed_flag != -1) && !flag_in_range(db_missed_flag)) {
+			LM_ERR("db_missed_flag set to invalid value\n");
 			return -1;
+		}
 	} else {
 		db_flag = 0;
 		db_missed_flag = 0;
@@ -466,10 +479,16 @@ static int mod_init( void )
 		}
 
 		/* fix the flags */
-		if (flag_idx2mask(&radius_flag)<0)
+		if ((radius_flag != -1) && !flag_in_range(radius_flag)) {
+			LM_ERR("radius_flag set to invalid value\n");
 			return -1;
-		if (flag_idx2mask(&radius_missed_flag)<0)
+		}
+
+		if ((radius_missed_flag != -1) && !flag_in_range(radius_missed_flag)) {
+			LM_ERR("radius_missed_flag set to invalid value\n");
 			return -1;
+		}
+
 		if (init_acc_rad( radius_config, service_type)!=0 ) {
 			LM_ERR("failed to init radius\n");
 			return -1;

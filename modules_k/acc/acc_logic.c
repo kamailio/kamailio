@@ -55,8 +55,8 @@ extern struct rr_binds rrb;
 struct acc_enviroment acc_env;
 
 
-#define is_acc_flag_set(_rq,_flag)  (((_rq)->flags)&(_flag))
-#define reset_acc_flag(_rq,_flag)   (_rq)->flags &= ~(_flag)
+#define is_acc_flag_set(_rq,_flag)  (((_flag) != -1) && (isflagset((_rq), (_flag)) == 1))
+#define reset_acc_flag(_rq,_flag)   (resetflag((_rq), (_flag)))
 
 #define is_failed_acc_on(_rq)  is_acc_flag_set(_rq,failed_transaction_flag)
 
