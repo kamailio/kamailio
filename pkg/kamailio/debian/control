@@ -93,8 +93,8 @@ Description: radius modules for Kamailio
  per second even on low-budget hardware.
  .
  This package provides a set of Radius modules for Kamailio, for
- authentication, group membership and messages URIs checking against a
- Radius Server.
+ authentication, peering, group membership and messages URIs checking
+ against a Radius Server.
 
 Package: kamailio-unixodbc-module 
 Architecture: any 
