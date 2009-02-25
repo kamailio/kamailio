@@ -73,6 +73,14 @@
 
 #define MAX_SYSLOG_SIZE  65536
 
+/* WARNING: This is a flag stored in the sip_msg structure, the flag is
+ * temporarily defined here to make the module work with the sip-router core,
+ * I assume it won't be needed once we merge acc implementations from both
+ * projects. The value of the flag must be kept synchronized with other flags
+ * defined in parser/msg_parser.h!
+ */
+#define FL_REQ_UPSTREAM (1<<11)
+
 void acc_log_init(void);
 int  acc_log_request( struct sip_msg *req);
 
