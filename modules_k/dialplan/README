@@ -133,7 +133,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running Kamailio with this module loaded:
-     * None.
+     * libpcre - the libraries of PCRE.
 
 1.5. Exported Parameters
 
@@ -293,7 +293,8 @@ modparam("dialplan", "fetch_rows", 4000)
        parameter is missing the default parameter
        "ruri.user/ruri.user" will be used, thus translating the
        request uri.
-       Both src and dest can have the following types:
+       Input parameter src can be any pseudo variable. Output
+       parameter dest can be:
           + R-URI
             - the string is the r-uri or r-uri username
           + avp var

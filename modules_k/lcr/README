@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2005-2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-10-16 19:58:34 +0300
-                              (Thu, 16 Oct 2008) $
+   Revision $Revision$ $Date: 2008-10-16 18:58:34 +0200
+                              (Do, 16 Okt 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
    each gateway belongs to a gateway group and each gateway group
    is associated with one or more <prefix, from pattern, priority>
    tuples. A gateway matches a request if user part of Request URI
-   matches a prefix and caller's UtRI matches a from pattern in a
+   matches a prefix and caller's URI matches a from pattern in a
    tuple that belongs to the group of the gateway.
 
    When function load_gws() is called, matching gateways are
@@ -188,7 +188,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running Kamailio with this module:
-     * none.
+     * libpcre - the libraries of PCRE.
 
 1.3. Exported Parameters
 
