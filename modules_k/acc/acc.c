@@ -88,7 +88,7 @@ extern struct acc_extra *dia_extra;
 
 #ifdef SQL_ACC
 static db_func_t acc_dbf;
-static db_con_t* db_handle=0;
+static db1_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
 #endif
 
@@ -318,10 +318,10 @@ static void acc_db_init_keys(void)
 
 	/* init the values */
 	for(i=0; i<n; i++) {
-		VAL_TYPE(db_vals+i)=DB_STR;
+		VAL_TYPE(db_vals+i)=DB1_STR;
 		VAL_NULL(db_vals+i)=0;
 	}
-	VAL_TYPE(db_vals+time_idx)=DB_DATETIME;
+	VAL_TYPE(db_vals+time_idx)=DB1_DATETIME;
 }
 
 
