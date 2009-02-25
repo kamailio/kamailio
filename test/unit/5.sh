@@ -22,8 +22,14 @@
 # Needs a default kamailio database setup for mysql
 
 source include/common
+source include/require
 
 CFG=5.cfg
+
+if ! (check_kamailio); then
+	exit 0
+fi ;
+        
 
 # start
 ../$BIN -w . -f $CFG &> /dev/null

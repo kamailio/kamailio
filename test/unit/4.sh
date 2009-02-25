@@ -20,13 +20,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/common
+source include/require
 
 CFG=4.cfg
+
+if ! (check_kamailio); then
+	exit 0
+fi ;
 
 # setup config
 echo -e "loadmodule \"../modules/mi_fifo/mi_fifo.so\"" > $CFG
 echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
 
+
+        
 ../$BIN -w . -f $CFG > /dev/null
 ret=$?
 

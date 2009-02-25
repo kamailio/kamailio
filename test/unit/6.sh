@@ -20,8 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/common
+source include/require
 
 CFG=2.cfg
+
+if ! (check_kamailio); then
+	exit 0
+fi ;
 
 # start
 ../$BIN -w . -c -f $CFG > /dev/null 2>&1
