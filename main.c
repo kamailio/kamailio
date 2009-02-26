@@ -1998,7 +1998,7 @@ try_again:
 		goto error;
 	}
 	/* declare the core cfg before the module configs */
-	if (cfg_declare("core", core_cfg_def, &default_core_cfg, cfg_size(core),
+	if (cfg_declare("core", core_cfg_def, &default_core_cfg, cfg_sizeof(core),
 			&core_cfg)
 	) {
 		LOG(L_CRIT, "could not declare the core configuration\n");

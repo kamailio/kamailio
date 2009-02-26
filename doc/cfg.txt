@@ -147,7 +147,7 @@ Each row consists of the following items:
 
 static int mod_init(void)
 {
-	if (cfg_declare("foo", cfg_def, &default_cfg, cfg_size(foo),
+	if (cfg_declare("foo", cfg_def, &default_cfg, cfg_sizeof(foo),
 			 &cfg_handle)
 	) {
 		/* error */
