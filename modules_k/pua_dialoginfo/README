@@ -33,20 +33,22 @@ Klaus Darilion
    1. Admin Guide
 
         1.1. Overview
-        1.2. Dependencies
+        1.2. Activate Functionality
+        1.3. Known issues
+        1.4. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              1.4.1. Kamailio Modules
+              1.4.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        1.5. Exported Parameters
 
-              1.3.1. include_callid (int)
-              1.3.2. include_tags (int)
-              1.3.3. include_localremote (int)
-              1.3.4. override_lifetime (int)
-              1.3.5. caller_confirmed (int)
+              1.5.1. include_callid (int)
+              1.5.2. include_tags (int)
+              1.5.3. include_localremote (int)
+              1.5.4. override_lifetime (int)
+              1.5.5. caller_confirmed (int)
 
-        1.4. Exported Functions
+        1.6. Exported Functions
 
    List of Examples
 
@@ -187,7 +189,18 @@ Chapter 1. Admin Guide
    and you want to debug them you define PUA_DIALOGINFO_DEBUG in
    pua_dialoginfo.c and recompile.
 
-   Known issues:
+1.2. Activate Functionality
+
+   This module is directly coupled with the dialog module. Thus,
+   if the module is loaded, it is automatically active for all
+   calls tracked by the dialog module. Thus, make sure that you
+   activate the dialog module for a certain call if you want
+   dialog-state to be PUBLISHED. This means, the dlg_flag of the
+   dialog module must be configured and the respective flag must
+   be set during call processing.
+
+1.3. Known issues
+
      * The module tries to find out if the entity is a local
        user. Only PUBLISH to local user are sent. Therefore, the
        module needs to find out if the domain is a local one or
@@ -207,23 +220,23 @@ Chapter 1. Admin Guide
        canonical AoR the PUBLISH might have the wrong SIP URI in
        the RURI and the entity parameter.
 
-1.2. Dependencies
+1.4. Dependencies
 
-1.2.1. Kamailio Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * dialog.
      * pua.
 
-1.2.2. External Libraries or Applications
+1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running Kamailio with this module loaded:
      * libxml.
 
-1.3. Exported Parameters
+1.5. Exported Parameters
 
-1.3.1. include_callid (int)
+1.5.1. include_callid (int)
 
    If this parameter is set, the optional call-id will be put
    into the dialog element. This is needed for call-pickup
@@ -236,7 +249,7 @@ Chapter 1. Admin Guide
 modparam("pua_dialoginfo", "include_callid", 0)
 ...
 
-1.3.2. include_tags (int)
+1.5.2. include_tags (int)
 
    If this parameter is set, the local and remote tag will be put
    into the dialog element. This is needed for call-pickup
@@ -249,7 +262,7 @@ modparam("pua_dialoginfo", "include_callid", 0)
 modparam("pua_dialoginfo", "include_tags", 0)
 ...
 
-1.3.3. include_localremote (int)
+1.5.3. include_localremote (int)
 
    If this parameter is set, the optional local and remote
    elements will be put into the dialog element. This is needed
@@ -262,7 +275,7 @@ modparam("pua_dialoginfo", "include_tags", 0)
 modparam("pua_dialoginfo", "include_localremote", 0)
 ...
 
-1.3.4. override_lifetime (int)
+1.5.4. override_lifetime (int)
 
    The PUBLISH requests used to send the dialog-info contain an
    Expires header. The value of the expires is usually taken from
@@ -279,7 +292,7 @@ modparam("pua_dialoginfo", "include_localremote", 0)
 modparam("pua_dialoginfo", "override_lifetime", 300)
 ...
 
-1.3.5. caller_confirmed (int)
+1.5.5. caller_confirmed (int)
 
    Usually the dialog-info of the caller will be "trying -> early
    -> confirmed" and the dialog-info of the callee will be "early
@@ -299,4 +312,4 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
 modparam("pua_dialoginfo", "caller_confirmed", 1)
 ...
 
-1.4. Exported Functions
+1.6. Exported Functions

@@ -149,10 +149,20 @@
 		
 		If there are problems with the callbacks from dialog module and you want to 
 		debug them you define PUA_DIALOGINFO_DEBUG in pua_dialoginfo.c and recompile.
-
 	</para>
+	</section>
+	<section>
+	<title>Activate Functionality</title>
+	<para>This module is directly coupled with the dialog module. Thus, if the module is
+		loaded, it is automatically active for all calls tracked by the dialog module. Thus,
+		make sure that you activate the dialog module for a certain call if you want dialog-state
+		to be PUBLISHED. This means, the dlg_flag of the dialog module must be configured
+		and the respective flag must be set during call processing.
+	</para>
+	</section>
+	<section>
+	<title>Known issues</title>
 	<para>
-		Known issues:
 		<itemizedlist>
 			<listitem><para>
 				The module tries to find out if the entity is a local user. Only PUBLISH to
@@ -173,7 +183,6 @@
 				SIP URI in the RURI and the entity parameter.
 			</para></listitem>
 		</itemizedlist>
-
 	</para>
 	</section>
 		<section>
