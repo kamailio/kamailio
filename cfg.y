@@ -216,7 +216,11 @@ static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
 static void free_name_lst(struct name_lst* lst);
 static void free_socket_id_lst(struct socket_id* i);
 
-static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a);
+static struct case_stms* mk_case_stm(struct rval_expr* ct, int is_re, 
+									struct action* a, int* err);
+static int case_check_type(struct case_stms* stms);
+static int case_check_default(struct case_stms* stms);
+
 
 %}
 
@@ -1805,10 +1809,12 @@ ct_rval: rval_expr {
 			$$=0;
 			if (!rve_is_constant($1)){
 				yyerror("constant expected");
-			}else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
+			/*
+			} else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression (bad type)");
 			}else if (i_tmp!=RV_INT){
 				yyerror("invalid expression type, int expected\n");
+			*/
 			}else
 				$$=$1;
 		}
@@ -1817,28 +1823,38 @@ single_case:
 	CASE ct_rval COLON actions {
 		$$=0;
 		if ($2==0) yyerror ("bad case label");
-		else if (($$=mk_case_stm($2, $4))==0){
-				yyerror("internal error: memory allocation failure");
+		else if ((($$=mk_case_stm($2, 0, $4, &i_tmp))==0) && (i_tmp==-10)){
+				YYABORT;
+		}
+	}
+| CASE SLASH ct_rval COLON actions {
+		$$=0;
+		if ($3==0) yyerror ("bad case label");
+		else if ((($$=mk_case_stm($3, 1, $5, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
 	| CASE ct_rval COLON {
 		$$=0;
 		if ($2==0) yyerror ("bad case label");
-		else if (($$=mk_case_stm($2, 0))==0){
-				yyerror("internal error: memory allocation failure");
+		else if ((($$=mk_case_stm($2, 0, 0, &i_tmp))==0) && (i_tmp==-10)){
+				YYABORT;
+		}
+	}
+	| CASE SLASH ct_rval COLON {
+		$$=0;
+		if ($3==0) yyerror ("bad case label");
+		else if ((($$=mk_case_stm($3, 1, 0, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
 	| DEFAULT COLON actions {
-		if (($$=mk_case_stm(0, $3))==0){
-				yyerror("internal error: memory allocation failure");
+		if ((($$=mk_case_stm(0, 0, $3, &i_tmp))==0) && (i_tmp=-10)){
 				YYABORT;
 		}
 	}
 	| DEFAULT COLON {
-		if (($$=mk_case_stm(0, 0))==0){
-				yyerror("internal error: memory allocation failure");
+		if ((($$=mk_case_stm(0, 0, 0, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
@@ -1866,6 +1882,12 @@ switch_cmd:
 		$$=0;
 		if ($2==0) yyerror("bad expression in switch(...)");
 		else if ($4==0) yyerror ("bad switch body");
+		else if (case_check_default($4)!=0)
+			yyerror_at(&$2->fpos, "bad switch(): too many "
+							"\"default:\" labels\n");
+		else if (case_check_type($4)!=0)
+			yyerror_at(&$2->fpos, "bad switch(): mixed integer and"
+							" string/RE cases not allowed\n");
 		else{
 			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, $4);
 			if ($$==0) {
@@ -2926,21 +2948,99 @@ static void free_socket_id_lst(struct socket_id* lst)
 }
 
 
-static struct case_stms* mk_case_stm(struct rval_expr* ct, struct action* a)
+/** create a temporary case statmenet structure.
+ *  *err will be filled in case of error (return == 0):
+ *   -1 - non constant expression
+ *   -2 - expression error (bad type)
+ *   -10 - memory allocation error
+ */
+static struct case_stms* mk_case_stm(struct rval_expr* ct, int is_re,
+											struct action* a, int* err)
 {
 	struct case_stms* s;
+	struct rval_expr* bad_rve;
+	enum rval_type type, bad_t, exp_t;
+	enum match_str_type t;
+	
+	t=MATCH_UNKNOWN;
+	if (ct){
+		/* if ct!=0 => case, else if ct==0 is a default */
+		if (!rve_is_constant(ct)){
+			yyerror_at(&ct->fpos, "non constant expression in case");
+			*err=-1;
+			return 0;
+		}
+		if (rve_check_type(&type, ct, &bad_rve, &bad_t, &exp_t)!=1){
+			yyerror_at(&ct->fpos, "bad expression: type mismatch:"
+							" %s instead of %s at (%d,%d)",
+							rval_type_name(bad_t), rval_type_name(exp_t),
+							bad_rve->fpos.s_line, bad_rve->fpos.s_col);
+			*err=-2;
+			return 0;
+		}
+		if (is_re)
+			t=MATCH_RE;
+		else if (type==RV_STR)
+			t=MATCH_STR;
+		else
+			t=MATCH_INT;
+	}
+
 	s=pkg_malloc(sizeof(*s));
 	if (s==0) {
-		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+		yyerror("internal error: memory allocation failure");
+		*err=-10;
 	} else {
 		memset(s, 0, sizeof(*s));
 		s->ct_rve=ct;
+		s->type=t;
 		s->actions=a;
 		s->next=0;
 		s->append=0;
 	}
 	return s;
 }
+
+
+/*
+ * @return 0 on success, -1 on error.
+ */
+static int case_check_type(struct case_stms* stms)
+{
+	struct case_stms* c;
+	struct case_stms* s;
+	
+	for(c=stms; c ; c=c->next){
+		if (!c->ct_rve) continue;
+		for (s=c->next; s; s=s->next){
+			if (!s->ct_rve) continue;
+			if ((s->type!=c->type) &&
+				!(	(c->type==MATCH_STR || c->type==MATCH_RE) &&
+					(s->type==MATCH_STR || s->type==MATCH_RE) ) ){
+					yyerror_at(&s->ct_rve->fpos, "type mismatch in case");
+					return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+
+/*
+ * @return 0 on success, -1 on error.
+ */
+static int case_check_default(struct case_stms* stms)
+{
+	struct case_stms* c;
+	int default_no;
+	
+	default_no=0;
+	for(c=stms; c ; c=c->next)
+		if (c->ct_rve==0) default_no++;
+	return (default_no<=1)?0:-1;
+}
+
+
 
 /*
 int main(int argc, char ** argv)
