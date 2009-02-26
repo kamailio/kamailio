@@ -32,6 +32,7 @@
 #include <syslog.h>
 #include <stdio.h> /* stderr, fprintf() */
 
+#include "compiler_opt.h"
 #include "cfg_core.h"
 
 
@@ -144,19 +145,36 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #	ifdef __SUNPRO_C
 #		define LOG_(level, prefix, fmt, ...) \
 			do { \
-				if (cfg_get(core, core_cfg, debug) >= (level) && \
-						DPRINT_NON_CRIT) { \
+				if (unlikely(cfg_get(core, core_cfg, debug) >= (level) && \
+						DPRINT_NON_CRIT)) { \
 					DPRINT_CRIT_ENTER; \
-					assert(((level) >= L_ALERT) && ((level) <= L_DBG)); \
-					if (log_stderr) { \
-						fprintf(stderr, "%2d(%d) %s: %s" fmt, \
-								process_no, my_pid(), LOG_LEVEL2NAME(level),\
-								(prefix), __VA_ARGS__); \
+					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
+						if (unlikely(log_stderr)) { \
+							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
+									process_no, my_pid(), \
+									LOG_LEVEL2NAME(level), (prefix), \
+									__VA_ARGS__); \
+						} else { \
+							syslog(LOG2SYSLOG_LEVEL(level) | \
+									cfg_get(core, core_cfg, log_facility),\
+									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+									(prefix), __VA_ARGS__); \
+						} \
 					} else { \
-						syslog(LOG2SYSLOG_LEVEL(level) | \
-									cfg_get(core, core_cfg, log_facility), \
-								"%s: %s" fmt, LOG_LEVEL2NAME(level),\
-								(prefix), __VA_ARGS__); \
+						if (log_stderr) { \
+							fprintf(stderr, "%2d(%d) %s" fmt, \
+									process_no, my_pid(), \
+									(prefix),  __VA_ARGS__); \
+						} else { \
+							if ((level)<L_ALERT) \
+								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
+										cfg_get(core, core_cfg, log_facility),\
+										"%s" fmt, (prefix), __VA_ARGS__); \
+							else \
+								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
+										cfg_get(core, core_cfg, log_facility),\
+										"%s" fmt, (prefix), __VA_ARGS__); \
+						} \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
@@ -164,22 +182,38 @@ int log_facility_fixup(void *handle, str *name, void **val);
 			
 #		define LOG(level, fmt, ...)  LOG_((level), LOC_INFO, fmt, __VA_ARGS__)
 
-#	else
+#	else /* ! __SUNPRO_C */
 #		define LOG_(level, prefix, fmt, args...) \
 			do { \
 				if (cfg_get(core, core_cfg, debug) >= (level) && \
 						DPRINT_NON_CRIT) { \
 					DPRINT_CRIT_ENTER; \
-					assert(((level) >= L_ALERT) && ((level) <= L_DBG)); \
-					if (log_stderr) { \
-						fprintf(stderr, "%2d(%d) %s: %s" fmt, \
-								process_no, my_pid(), LOG_LEVEL2NAME(level),\
-								(prefix), ## args); \
-					} else { \
-						syslog(LOG2SYSLOG_LEVEL(level) |\
+					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
+						if (unlikely(log_stderr)) { \
+							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
+									process_no, my_pid(), \
+									LOG_LEVEL2NAME(level),(prefix), ## args);\
+						} else { \
+							syslog(LOG2SYSLOG_LEVEL(level) |\
 									cfg_get(core, core_cfg, log_facility), \
-						 		"%s: %s" fmt, LOG_LEVEL2NAME(level),\
-								(prefix), ## args); \
+									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
+									(prefix), ## args); \
+						} \
+					} else { \
+						if (log_stderr) { \
+							fprintf(stderr, "%2d(%d) %s" fmt, \
+										process_no, my_pid(), \
+										(prefix), ## args); \
+						} else { \
+							if ((level)<L_ALERT) \
+								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
+										cfg_get(core, core_cfg, log_facility),\
+										"%s" fmt, (prefix), ## args); \
+							else \
+								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
+										cfg_get(core, core_cfg, log_facility),\
+										"%s" fmt, (prefix), ## args); \
+						} \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \

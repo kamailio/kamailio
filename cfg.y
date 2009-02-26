@@ -2207,7 +2207,8 @@ cmd:
 	| RETURN NUMBER			{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)$2, NUMBER_ST, (void*)RETURN_R_F);}
 	| RETURN RETCODE		{$$=mk_action(DROP_T, 2, RETCODE_ST, 0, NUMBER_ST, (void*)RETURN_R_F);}
 	| BREAK				{$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)RETURN_R_F); }
-	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)4, STRING_ST, $3); }
+	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST,
+										(void*)(L_DBG+1), STRING_ST, $3); }
 	| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)$3, STRING_ST, $5); }
 	| LOG_TOK error 		{ $$=0; yyerror("missing '(' or ')' ?"); }
 	| LOG_TOK LPAREN error RPAREN	{ $$=0; yyerror("bad log argument"); }
