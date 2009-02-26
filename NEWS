@@ -273,9 +273,10 @@ new config variables:
      will be cached inside the process calling tcp_send (performance increase
      for sending over tcp at the cost of slightly slower connection closing and
      extra FDs kept open)
-  tcp_buf_write = yes | no (default no) - if enabled all the tcp  writes that 
+  tcp_async = yes | no (default no) - if enabled all the tcp  writes that 
      would block / wait for connect to finish, will be queued and attempted
      latter (see also tcp_conn_wq_max and tcp_wq_max).
+  tcp_buf_write = synonim for tcp_async
   tcp_conn_wq_max = bytes (default 32 K) - maximum bytes queued for write 
      allowed per connection. Attempting to queue more bytes would result
      in an error and in the connection being closed (too slow). If 
