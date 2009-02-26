@@ -77,7 +77,7 @@ typedef struct _cfg_def {
 int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 			void **handler);
 
-#define cfg_size(gname) \
+#define cfg_sizeof(gname) \
 	sizeof(struct cfg_group_##gname)
 
 #define cfg_get(gname, handle, var) \

@@ -707,7 +707,7 @@ static int mod_init(void)
 #endif
 
 	/* declare the configuration */
-	if (cfg_declare("tm", tm_cfg_def, &default_tm_cfg, cfg_size(tm),
+	if (cfg_declare("tm", tm_cfg_def, &default_tm_cfg, cfg_sizeof(tm),
 			 &tm_cfg)) {
 		LOG(L_ERR, "ERROR: mod_init: failed to declare the configuration\n");
 		return -1;
