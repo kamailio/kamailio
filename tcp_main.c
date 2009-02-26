@@ -2661,7 +2661,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 #ifdef TCP_BUF_WRITE
 			if (unlikely(tcp_options.tcp_buf_write && 
 							_wbufq_non_empty(tcpconn) )){
-				if (unlikely(TICKS_LE(t, tcpconn->wbuf_q.wr_timeout))){
+				if (unlikely(TICKS_GE(t, tcpconn->wbuf_q.wr_timeout))){
 					DBG("handle_tcp_child: wr. timeout on CONN_RELEASE for %p "
 							"refcnt= %d\n", tcpconn,
 							atomic_get(&tcpconn->refcnt));
@@ -2772,6 +2772,9 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	int fd;
 	int flags;
 	ticks_t t;
+#ifdef TCP_BUF_WRITE
+	ticks_t nxt_timeout;
+#endif /* TCP_BUF_WRITE */
 	
 	ret=-1;
 	if (unlikely(p->unix_sock<=0)){
@@ -2993,11 +2996,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* update the timeout*/
 			t=get_ticks_raw();
 			tcpconn->timeout=t+tcp_con_lifetime;
-			/* activate the timer (already properly init. in tcpconn_new())
-			 * no need for reinit */
-			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
-								tcp_con_lifetime, t);
-			tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD;
+			nxt_timeout=tcp_con_lifetime;
 			if (unlikely(cmd==CONN_NEW_COMPLETE)){
 				tcpconn->state=S_CONN_OK;
 				/* check if needs to be watched for write */
@@ -3005,8 +3004,18 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 					/* if queue non empty watch it for write */
 					flags=(_wbufq_empty(tcpconn)-1)&POLLOUT;
 				lock_release(&tcpconn->write_lock);
-				tcpconn->flags|=(!(flags&POLLOUT)-1)&
-									(F_CONN_WRITE_W|F_CONN_WANTS_WR);
+				if (flags){
+					if (TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)
+							&& TICKS_LT(t, tcpconn->wbuf_q.wr_timeout))
+						nxt_timeout=tcpconn->wbuf_q.wr_timeout-t;
+					tcpconn->flags|=F_CONN_WRITE_W|F_CONN_WANTS_WR;
+				}
+				/* activate the timer (already properly init. in 
+				   tcpconn_new())  no need for reinit */
+				local_timer_add(&tcp_main_ltimer, &tcpconn->timer, nxt_timeout,
+									t);
+				tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W| 
+								F_CONN_WANTS_RD;
 			}else{
 				/* CONN_NEW_PENDING_WRITE */
 				/* we don't know if we successfully sent anything, but
@@ -3015,7 +3024,16 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 				tcpconn->state=S_CONN_CONNECT;
 				/* no need to check, we have something queued for write */
 				flags=POLLOUT;
-				tcpconn->flags|=(F_CONN_WRITE_W|F_CONN_WANTS_WR);
+				if (TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)
+						&& TICKS_LT(t, tcpconn->wbuf_q.wr_timeout))
+					nxt_timeout=tcpconn->wbuf_q.wr_timeout-t;
+				/* activate the timer (already properly init. in 
+				   tcpconn_new())  no need for reinit */
+				local_timer_add(&tcp_main_ltimer, &tcpconn->timer, nxt_timeout,
+									t);
+				tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W| 
+								F_CONN_WANTS_RD |
+								F_CONN_WRITE_W|F_CONN_WANTS_WR;
 			}
 			flags|=POLLIN;
 			if (unlikely(
