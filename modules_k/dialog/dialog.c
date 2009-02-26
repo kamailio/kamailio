@@ -160,7 +160,7 @@ static cmd_export_t cmds[]={
 	{"dlg_bridge",(cmd_function)w_dlg_bridge,             3,fixup_dlg_bridge,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"dlg_get",(cmd_function)w_dlg_get,                   3,fixup_dlg_bridge,
-			0, REQUEST_ROUTE },
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
