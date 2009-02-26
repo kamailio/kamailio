@@ -40,6 +40,7 @@
  * 2007-11-26  improved tcp timers: switched to local_timer (andrei)
  * 2008-02-04  optimizations: handle POLLRDHUP (if supported), detect short
  *              reads (sock. buffer empty) (andrei)
+ * 2009-02-26  direct blacklist support (andrei)
  */
 
 #ifdef USE_TCP
@@ -72,7 +73,10 @@
 #include "tls/tls_server.h"
 #else
 #include "tls_hooks.h"
-#endif
+#endif /* CORE_TLS */
+#ifdef USE_DST_BLACKLIST
+#include "dst_blacklist.h"
+#endif /* USE_DST_BLACKLIST */
 
 #define HANDLE_IO_INLINE
 #include "io_wait.h"
@@ -142,6 +146,19 @@ again:
 				bytes_read=0; /* nothing has been read */
 			}else if (errno == EINTR) goto again;
 			else{
+#ifdef USE_DST_BLACKLIST
+				if (cfg_get(core, core_cfg, use_dst_blacklist))
+					switch(errno){
+						case ECONNRESET:
+						case ETIMEDOUT:
+							dst_blacklist_su((c->state==S_CONN_CONNECT)?
+													BLST_ERR_CONNECT:
+													BLST_ERR_SEND,
+													c->rcv.proto,
+													&c->rcv.src_su, 0);
+							break;
+					}
+#endif /* USE_DST_BLACKLIST */
 				LOG(L_ERR, "ERROR: tcp_read: error reading: %s (%d)\n",
 							strerror(errno), errno);
 				r->error=TCP_READ_ERROR;
@@ -152,10 +169,16 @@ again:
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
 			DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
+		}else{
+			if (unlikely(c->state==S_CONN_CONNECT))
+				c->state=S_CONN_OK;
 		}
 		/* short read */
 		*flags|=RD_CONN_SHORT_READ;
-	} /* else normal full read */
+	}else{ /* else normal full read */
+		if (unlikely(c->state==S_CONN_CONNECT))
+			c->state=S_CONN_OK;
+	}
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
 #endif

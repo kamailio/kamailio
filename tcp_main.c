@@ -97,6 +97,7 @@
  *               POLLHUP (andrei)
  *              on write error check if there's still data in the socket 
  *               read buffer and process it first (andrei)
+ *  2009-02-26  direct blacklist support (andrei)
  */
 
 
@@ -161,7 +162,10 @@
 #else
 #include "tls_hooks_init.h"
 #include "tls_hooks.h"
-#endif
+#endif /* CORE_TLS*/
+#ifdef USE_DST_BLACKLIST
+#include "dst_blacklist.h"
+#endif /* USE_DST_BLACKLIST */
 
 #include "tcp_info.h"
 #include "tcp_options.h"
@@ -481,7 +485,8 @@ error:
  * if BLOCKING_USE_SELECT and HAVE_SELECT are defined it will internally
  * use select() instead of poll (bad if fd > FD_SET_SIZE, poll is preferred)
  */
-static int tcp_blocking_connect(int fd, const struct sockaddr *servaddr,
+static int tcp_blocking_connect(int fd, int type,
+								const struct sockaddr *servaddr,
 								socklen_t addrlen)
 {
 	int n;
@@ -511,6 +516,19 @@ again:
 			else goto error_timeout;
 		}
 		if (errno!=EINPROGRESS && errno!=EALREADY){
+#ifdef USE_DST_BLACKLIST
+			if (cfg_get(core, core_cfg, use_dst_blacklist))
+				switch(errno){
+					case ECONNREFUSED:
+					case ENETUNREACH:
+					case ETIMEDOUT:
+					case ECONNRESET:
+					case EHOSTUNREACH:
+						dst_blacklist_su(BLST_ERR_CONNECT, type,
+										 (union sockaddr_union*)servaddr, 0);
+						break;
+				}
+#endif /* USE_DST_BLACKLIST */
 			LOG(L_ERR, "ERROR: tcp_blocking_connect %s: (%d) %s\n",
 					su2a((union sockaddr_union*)servaddr, addrlen),
 					errno, strerror(errno));
@@ -574,6 +592,11 @@ again:
 	}
 error_timeout:
 	/* timeout */
+#ifdef USE_DST_BLACKLIST
+	if (cfg_get(core, core_cfg, use_dst_blacklist))
+		dst_blacklist_su(BLST_ERR_CONNECT, type,
+							(union sockaddr_union*)servaddr, 0);
+#endif /* USE_DST_BLACKLIST */
 	LOG(L_ERR, "ERROR: tcp_blocking_connect %s: timeout %d s elapsed "
 				"from %d s\n", su2a((union sockaddr_union*)servaddr, addrlen),
 				elapsed, tcp_connect_timeout);
@@ -619,6 +642,15 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
 					TICKS_TO_S(t-q->wr_timeout-tcp_options.tcp_wq_timeout));
+#ifdef USE_DST_BLACKLIST
+		if (q->first && TICKS_LT(q->wr_timeout, t) &&
+				cfg_get(core, core_cfg, use_dst_blacklist)){
+			ERR("blacklisting, state=%d\n", c->state);
+			dst_blacklist_su((c->state==S_CONN_CONNECT)?  BLST_ERR_CONNECT:
+									BLST_ERR_SEND,
+								c->rcv.proto, &c->rcv.src_su, 0);
+		}
+#endif /* USE_DST_BLACKLIST */
 		goto error;
 	}
 	
@@ -682,7 +714,7 @@ inline static int _wbufq_insert(struct  tcp_connection* c, char* data,
 		return _wbufq_add(c, data, size);
 	
 	if (unlikely((*tcp_total_wq+size)>tcp_options.tcp_wq_max)){
-		LOG(L_ERR, "ERROR: wbufq_insert(%d bytes): write queue full or timeout"
+		LOG(L_ERR, "ERROR: wbufq_insert(%d bytes): write queue full"
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
 					TICKS_TO_S(get_ticks_raw()-q->wr_timeout-
@@ -784,11 +816,24 @@ inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
 				break;
 			}
 			q->wr_timeout=t+tcp_options.tcp_wq_timeout;
-			c->state=S_CONN_OK;
 		}else{
 			if (n<0){
 				/* EINTR is handled inside _tcpconn_write_nb */
 				if (!(errno==EAGAIN || errno==EWOULDBLOCK)){
+#ifdef USE_DST_BLACKLIST
+					if (cfg_get(core, core_cfg, use_dst_blacklist))
+						switch(errno){
+							case ENETUNREACH:
+							case ECONNRESET:
+							/*case EHOSTUNREACH: -- not posix */
+								dst_blacklist_su((c->state==S_CONN_CONNECT)?
+														BLST_ERR_CONNECT:
+														BLST_ERR_SEND,
+														c->rcv.proto,
+														&c->rcv.src_su, 0);
+								break;
+						}
+#endif /* USE_DST_BLACKLIST */
 					ret=-1;
 					LOG(L_ERR, "ERROR: wbuf_runq: %s [%d]\n",
 						strerror(errno), errno);
@@ -994,6 +1039,19 @@ again:
 			if (likely(errno==EINPROGRESS))
 				*state=S_CONN_CONNECT;
 			else if (errno!=EALREADY){
+#ifdef USE_DST_BLACKLIST
+				if (cfg_get(core, core_cfg, use_dst_blacklist))
+					switch(errno){
+						case ECONNREFUSED:
+						case ENETUNREACH:
+						case ETIMEDOUT:
+						case ECONNRESET:
+						case EHOSTUNREACH:
+							dst_blacklist_su(BLST_ERR_CONNECT, type, server,
+												0);
+							break;
+				}
+#endif /* USE_DST_BLACKLIST */
 				LOG(L_ERR, "ERROR: tcp_do_connect: connect %s: (%d) %s\n",
 							su2a(server, sizeof(*server)),
 							errno, strerror(errno));
@@ -1002,7 +1060,8 @@ again:
 		}
 	}else{
 #endif /* TCP_BUF_WRITE */
-		if (tcp_blocking_connect(s, &server->s, sockaddru_len(*server))<0){
+		if (tcp_blocking_connect(s, type, &server->s,
+									sockaddru_len(*server))<0){
 			LOG(L_ERR, "ERROR: tcp_do_connect: tcp_blocking_connect %s"
 						" failed\n", su2a(server, sizeof(*server)));
 			goto error;
@@ -1656,6 +1715,8 @@ no_id:
 				/* do connect and if src ip or port changed, update the 
 				 * aliases */
 				if (unlikely((fd=tcpconn_finish_connect(c, from))<0)){
+					/* tcpconn_finish_connect will automatically blacklist
+					   on error => no need to do it here */
 					LOG(L_ERR, "ERROR: tcp_send %s: tcpconn_finish_connect(%p)"
 							" failed\n", su2a(&dst->to, sizeof(dst->to)),
 								c);
@@ -1703,6 +1764,18 @@ no_id:
 						n=len;
 						goto end;
 					}
+#ifdef USE_DST_BLACKLIST
+					if (cfg_get(core, core_cfg, use_dst_blacklist))
+						switch(errno){
+							case ENETUNREACH:
+							case ECONNRESET:
+							/*case EHOSTUNREACH: -- not posix */
+								/* if first write failed it's most likely a
+								   connect error */
+								dst_blacklist_add( BLST_ERR_CONNECT, dst, 0);
+								break;
+						}
+#endif /* USE_DST_BLACKLIST */
 					/* error: destroy it directly */
 					LOG(L_ERR, "ERROR: tcp_send %s: connect & send "
 										" for %p failed:" " %s (%d)\n",
@@ -1899,6 +1972,20 @@ send_it:
 			lock_release(&c->write_lock);
 		}
 #endif /* TCP_BUF_WRITE */
+#ifdef USE_DST_BLACKLIST
+		if (cfg_get(core, core_cfg, use_dst_blacklist))
+			switch(errno){
+				case ENETUNREACH:
+				case ECONNRESET:
+				/*case EHOSTUNREACH: -- not posix */
+					dst_blacklist_su((c->state==S_CONN_CONNECT)?
+											BLST_ERR_CONNECT:
+											BLST_ERR_SEND,
+										c->rcv.proto,
+										&c->rcv.src_su, 0);
+					break;
+			}
+#endif /* USE_DST_BLACKLIST */
 		LOG(L_ERR, "ERROR: tcp_send: failed to send on %p (%s:%d->%s): %s (%d)"
 					"\n", c, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
 					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
@@ -2579,6 +2666,14 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 							"refcnt= %d\n", tcpconn,
 							atomic_get(&tcpconn->refcnt));
 					/* timeout */
+#ifdef USE_DST_BLACKLIST
+					if (cfg_get(core, core_cfg, use_dst_blacklist))
+						dst_blacklist_su((tcpconn->state==S_CONN_CONNECT)?
+													BLST_ERR_CONNECT:
+													BLST_ERR_SEND,
+													tcpconn->rcv.proto,
+													&tcpconn->rcv.src_su, 0);
+#endif /* USE_DST_BLACKLIST */
 					if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 						io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 						tcpconn->flags&=~F_CONN_WRITE_W;
@@ -2893,7 +2988,6 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 				tcpconn_put_destroy(tcpconn);
 				break;
 			}
-			tcpconn->state=S_CONN_OK;
 			(*tcp_connections_no)++;
 			tcpconn->s=fd;
 			/* update the timeout*/
@@ -2905,6 +2999,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 								tcp_con_lifetime, t);
 			tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD;
 			if (unlikely(cmd==CONN_NEW_COMPLETE)){
+				tcpconn->state=S_CONN_OK;
 				/* check if needs to be watched for write */
 				lock_get(&tcpconn->write_lock);
 					/* if queue non empty watch it for write */
@@ -2914,6 +3009,10 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 									(F_CONN_WRITE_W|F_CONN_WANTS_WR);
 			}else{
 				/* CONN_NEW_PENDING_WRITE */
+				/* we don't know if we successfully sent anything, but
+				   for sure we haven't sent all what we wanted, so consider
+				   the connection in "connecting" state */
+				tcpconn->state=S_CONN_CONNECT;
 				/* no need to check, we have something queued for write */
 				flags=POLLOUT;
 				tcpconn->flags|=(F_CONN_WRITE_W|F_CONN_WANTS_WR);
@@ -3351,6 +3450,15 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 		else
 			return (ticks_t)(c->timeout - t);
 	}
+#ifdef USE_DST_BLACKLIST
+	/* if time out due to write, add it to the blacklist */
+	if (tcp_options.tcp_buf_write && _wbufq_non_empty(c) &&
+			TICKS_GE(t, c->wbuf_q.wr_timeout) &&
+			cfg_get(core, core_cfg, use_dst_blacklist))
+		dst_blacklist_su((c->state==S_CONN_CONNECT)?  BLST_ERR_CONNECT:
+										BLST_ERR_SEND,
+								c->rcv.proto, &c->rcv.src_su, 0);
+#endif /* USE_DST_BLACKLIST */
 #else /* ! TCP_BUF_WRITE */
 	if (TICKS_LT(t, c->timeout)){
 		/* timeout extended, exit */
