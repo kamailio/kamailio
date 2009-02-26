@@ -34,6 +34,7 @@
  *  2007-07-30  added dst_blacklist_del() and dst_blacklist_add_to()  (andrei)
  *  2007-07-30  dst blacklist measurements added (Gergo)
  *  2008-02-11  dns_blacklist_init cfg parameter is introduced (Miklos)
+ *  2009-02-26  added dst_blacklist_su* variant (andrei)
  */
 
 
@@ -785,6 +786,14 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
 
 
 
+/** add dst to the blacklist, specifying the timeout.
+ * @param err_flags - reason (bitmap)
+ * @param si - destination (protocol, ip and port)
+ * @param msg - sip message that triggered the blacklisting (can be 0 if 
+ *               not known)
+ * @param timeout - timeout in ticks
+ * @return 0 on success, -1 on error
+ */
 int dst_blacklist_add_to(unsigned char err_flags,  struct dest_info* si,
 						struct sip_msg* msg, ticks_t timeout)
 {
@@ -798,6 +807,32 @@ int dst_blacklist_add_to(unsigned char err_flags,  struct dest_info* si,
 	su2ip_addr(&ip, &si->to);
 	return dst_blacklist_add_ip(err_flags, si->proto, &ip,
 								su_getport(&si->to), timeout);
+}
+
+
+
+/** add dst to the blacklist, specifying the timeout.
+ * (like @function dst_blacklist_add_to)= above, but uses 
+ * (proto, sockaddr_union) instead of struct dest_info)
+ */
+int dst_blacklist_su_to(unsigned char err_flags, unsigned char proto,
+							union sockaddr_union* dst,
+							struct sip_msg* msg, ticks_t timeout)
+{
+	struct ip_addr ip;
+#ifdef DST_BLACKLIST_HOOKS
+	struct dest_info si;
+	
+	init_dest_info(&si);
+	si.to=*dst;
+	si.proto=proto;
+	if (unlikely (blacklist_run_hooks(&blst_add_cb, &si, &err_flags, msg) ==
+					DST_BLACKLIST_DENY))
+		return 0;
+#endif
+	su2ip_addr(&ip, dst);
+	return dst_blacklist_add_ip(err_flags, proto, &ip,
+								su_getport(dst), timeout);
 }
 
 
