@@ -22,6 +22,7 @@
  * History:
  * --------
  *  2008-08-07  initial version (andrei)
+ *  2009-02-27  blacklist support (andrei)
  */
 
 #ifdef USE_SCTP
@@ -49,6 +50,9 @@
 #include "mem/mem.h"
 #include "ip_addr.h"
 #include "cfg/cfg_struct.h"
+#ifdef USE_DST_BLACKLIST
+#include "dst_blacklist.h"
+#endif /* USE_DST_BLACKLIST */
 
 
 
@@ -643,6 +647,16 @@ static int sctp_handle_send_failed(struct socket_info* si,
 		
 		ret=sctp_msg_send_raw(&dst, data, data_len, &sinfo);
 	}
+#ifdef USE_DST_BLACKLIST
+	 else if (cfg_get(core, core_cfg, use_dst_blacklist) &&
+					sctp_options.sctp_send_retries) {
+		/* blacklist only if send_retries is on, if off we blacklist
+		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
+		   which is better (because we can tell connect errors from send
+		   errors and we blacklist a failed dst only once) */
+		dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
+	}
+#endif /* USE_DST_BLACKLIST */
 	
 	return (ret>0)?0:ret;
 }
@@ -665,7 +679,7 @@ static int sctp_handle_notification(struct socket_info* si,
 						text " too short (%d bytes instead of %d bytes)\n", \
 						su2a((from_su), sizeof(*(from_su))), \
 						(bind_addr)->name.len, (bind_addr)->name.s, \
-						(bind_addr)->port_no, (length), (val)); \
+						(bind_addr)->port_no, (int)(length), (int)(val)); \
 			goto error; \
 		}
 
@@ -735,6 +749,21 @@ static int sctp_handle_notification(struct socket_info* si,
 					snp->sn_assoc_change.sac_outbound_streams,
 					snp->sn_assoc_change.sac_inbound_streams
 					);
+#ifdef USE_DST_BLACKLIST
+			/* blacklist only if send_retries is turned off (if on we don't 
+			   know here if we did retry or we are at the first error) */
+			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
+					(sctp_options.sctp_send_retries==0)){
+				switch(snp->sn_assoc_change.sac_state) {
+					case SCTP_CANT_STR_ASSOC:
+						dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0);
+						break;
+					case SCTP_COMM_LOST:
+						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
+						break;
+				}
+			}
+#endif /* USE_DST_BLACKLIST */
 			break;
 #ifdef SCTP_ADAPTION_INDICATION
 		case SCTP_ADAPTION_INDICATION:
