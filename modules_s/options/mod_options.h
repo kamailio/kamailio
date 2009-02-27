@@ -30,9 +30,6 @@
 #ifndef _MOD_OPTIONS_H
 #define _MOD_OPTIONS_H
 
-#define OPTIONS "OPTIONS"
-#define OPTIONS_LEN (sizeof(OPTIONS) - 1)
-
 #define ACPT_STR "Accept: "
 #define ACPT_STR_LEN (sizeof(ACPT_STR) - 1)
 
