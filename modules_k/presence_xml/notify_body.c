@@ -179,15 +179,15 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	doc_root = xmlDocGetNodeByName(doc,"presence", NULL);
 	if(doc_root == NULL)
 	{
-		LM_ERR("while extracting the transformation node\n");
+		LM_ERR("while extracting the presence node\n");
 		goto error;
 	}
 
 	transf_node = xmlNodeGetChildByName(rule_node, "transformations");
 	if(transf_node == NULL)
 	{
-		LM_ERR("while extracting the transformation node\n");
-		goto error;
+		LM_DBG("transformations node not found\n");
+		goto done;
 	}
 	
 	for(node = transf_node->children; node; node = node->next )
@@ -411,6 +411,8 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 	
 		}
 	}
+
+done:
 	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&new_body->s,
 			&new_body->len, 1);
 	LM_DBG("body = \n%.*s\n", new_body->len,
@@ -532,7 +534,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		goto error;
 	}
 
-	for(i= j; i>=0; i--)
+	for(i= j-1; i>=0; i--)
 	{
 		new_p_root= xmlDocGetNodeByName( xml_array[i], "presence", NULL);
 		if(new_p_root ==NULL)
@@ -541,45 +543,43 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 			goto error;
 		}
 
-		node= xmlNodeGetChildByName(new_p_root, "tuple");
-		if(node== NULL)
-		{
-			LM_ERR("couldn't extract tuple node\n");
-			goto error;
-		}
-		tuple_id= xmlNodeGetAttrContentByName(node, "id");
-		if(tuple_id== NULL)
-		{
-			LM_ERR("while extracting tuple id\n");
-			goto error;
-		}
 		append= 1;
-		for (node = p_root->children; node!=NULL; node = node->next)
-		{		
-			if( xmlStrcasecmp(node->name,(unsigned char*)"text")==0)
-				continue;
-			
-			if( xmlStrcasecmp(node->name,(unsigned char*)"tuple")==0)
+		node= xmlNodeGetChildByName(new_p_root, "tuple");
+		if(node != NULL)
+		{
+			tuple_id= xmlNodeGetAttrContentByName(node, "id");
+			if(tuple_id== NULL)
 			{
-				id = xmlNodeGetAttrContentByName(node, "id");
-				if(id== NULL)
-				{
-					LM_ERR("while extracting tuple id\n");
-					goto error;
-				}
-				
-				if(xmlStrcasecmp((unsigned char*)tuple_id,
-							(unsigned char*)id )== 0)
-				{
-					append = 0;
-					xmlFree(id);
-					break;
-				}
-				xmlFree(id);
+				LM_ERR("while extracting tuple id\n");
+				goto error;
 			}
+			for (node = p_root->children; node!=NULL; node = node->next)
+			{		
+				if( xmlStrcasecmp(node->name,(unsigned char*)"text")==0)
+					continue;
+			
+				if( xmlStrcasecmp(node->name,(unsigned char*)"tuple")==0)
+				{
+					id = xmlNodeGetAttrContentByName(node, "id");
+					if(id== NULL)
+					{
+						LM_ERR("while extracting tuple id\n");
+						goto error;
+					}
+				
+					if(xmlStrcasecmp((unsigned char*)tuple_id,
+								(unsigned char*)id )== 0)
+					{
+						append = 0;
+						xmlFree(id);
+						break;
+					}
+					xmlFree(id);
+				}
+			}
+			xmlFree(tuple_id);
+			tuple_id= NULL;
 		}
-		xmlFree(tuple_id);
-		tuple_id= NULL;
 
 		if(append) 
 		{	

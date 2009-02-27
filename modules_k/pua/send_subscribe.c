@@ -221,6 +221,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	str record_route= {0, 0};
 	int rt;
 	str contact;
+	int initial_request = 0;
 
 	if( ps->param== NULL || *ps->param== NULL )
 	{
@@ -278,6 +279,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if(hentity->call_id.s== NULL)
 	{
+		initial_request = 1;
 		if(ps->code>= 300)
 		{
 			LM_DBG("initial Subscribe request failed\n");
@@ -334,7 +336,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		}			
 		if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 		{
-			LM_ERR("no from tag value present\n");
+			LM_ERR("no to tag value present\n");
 			goto done;
 		}
 		hentity->call_id=  msg->callid->body;
@@ -446,6 +448,13 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
 	}
+	if(initial_request == 0)
+	{
+		LM_ERR("Not initial request and no record found\n");
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto error;
+	}
+
 
 	lock_release(&HashT->p_records[hash_code].lock);
 
