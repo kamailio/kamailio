@@ -88,10 +88,23 @@ void destroy_dst_blacklist();
 /* like dst_blacklist_add, but the timeout can be also set */
 int dst_blacklist_add_to(unsigned char err_flags, struct dest_info* si,
 						struct sip_msg* msg, ticks_t timeout);
+/* like above, but using a differnt way of passing the target */
+int dst_blacklist_su_to(unsigned char err_flags, unsigned char proto,
+							union sockaddr_union* dst,
+							struct sip_msg* msg, ticks_t timeout);
 
-/* adds a dst to the blacklist with default timeout */
+/** adds a dst to the blacklist with default timeout.
+ * @see dst_blacklist_add_to for more details.
+ */
 #define dst_blacklist_add(err_flags, si, msg) \
 	dst_blacklist_add_to((err_flags), (si), (msg), \
+		S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
+
+/** adds a dst to the blacklist with default timeout.
+ * @see dst_blacklist_su_to for more details.
+ */
+#define dst_blacklist_su(err_flags, proto, dst, msg) \
+	dst_blacklist_su_to((err_flags), (proto), (dst), (msg), \
 		S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
 
 int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg);
