@@ -58,6 +58,8 @@
 #define REGISTER_LEN 8
 #define SUBSCRIBE_LEN 9
 #define NOTIFY_LEN 6
+#define MESSAGE_LEN 7
+#define OPTIONS_LEN 7
 
 struct msg_start {
 	int type;					/* Type of the Message - Request/Response */

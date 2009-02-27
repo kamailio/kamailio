@@ -79,7 +79,8 @@
 /* number methods as power of two to allow bitmap matching */
 enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4,
 	METHOD_BYE=8, METHOD_INFO=16, METHOD_REGISTER=32, METHOD_SUBSCRIBE=64,
-        METHOD_NOTIFY=128, METHOD_OTHER=256 };
+	METHOD_NOTIFY=128, METHOD_MESSAGE=256, METHOD_OPTIONS=512,
+	METHOD_OTHER=1024 };
 
 #define FL_FORCE_RPORT 1   /* force rport */
 #define FL_FORCE_ACTIVE 2  /* force active SDP */
