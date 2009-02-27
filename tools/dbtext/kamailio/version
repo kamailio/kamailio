@@ -8,7 +8,7 @@ carrier_name:1
 carrierroute:3
 cpl:1
 dbaliases:1
-dialog:2
+dialog:3
 dialplan:1
 dispatcher:3
 domain:1
@@ -26,6 +26,7 @@ missed_calls:3
 pdt:1
 presentity:3
 pua:6
+purplemap:1
 re_grp:1
 rls_presentity:0
 rls_watchers:1

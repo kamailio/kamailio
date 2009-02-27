@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('dialog','2');
+INSERT INTO version (table_name, table_version) values ('dialog','3');
 CREATE TABLE dialog (
     id SERIAL PRIMARY KEY NOT NULL,
     hash_entry INTEGER NOT NULL,
@@ -18,7 +18,9 @@ CREATE TABLE dialog (
     callee_sock VARCHAR(64) NOT NULL,
     state INTEGER NOT NULL,
     start_time INTEGER NOT NULL,
-    timeout INTEGER NOT NULL
+    timeout INTEGER NOT NULL,
+    sflags INTEGER NOT NULL,
+    toroute INTEGER NOT NULL
 );
 
 CREATE INDEX dialog_hash_idx ON dialog (hash_entry, hash_id);

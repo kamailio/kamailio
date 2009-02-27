@@ -27,7 +27,7 @@ cpl|1
 dbaliases|
 dbaliases|1
 dialog|
-dialog|2
+dialog|3
 dialplan|
 dialplan|1
 dispatcher|
@@ -62,6 +62,8 @@ presentity|
 presentity|3
 pua|
 pua|6
+purplemap|
+purplemap|1
 re_grp|
 re_grp|1
 rls_presentity|
