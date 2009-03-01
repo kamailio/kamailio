@@ -62,7 +62,7 @@
 #define DB_MODE_DELAYED				2
 #define DB_MODE_SHUTDOWN			3
 
-#define DIALOG_TABLE_COL_NO 		18
+#define DIALOG_TABLE_COL_NO 		20
 
 
 extern str call_id_column; 

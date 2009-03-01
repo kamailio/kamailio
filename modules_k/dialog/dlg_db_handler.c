@@ -195,7 +195,8 @@ static int select_entire_dialog_table(db_res_t ** res, int fetch_num_rows)
 			&start_time_column,	&state_column,		&timeout_column,
 			&from_cseq_column,	&to_cseq_column,	&from_route_column,
 			&to_route_column, 	&from_contact_column, &to_contact_column,
-			&from_sock_column,	&to_sock_column};
+			&from_sock_column,	&to_sock_column,    &sflags_column,
+			&toroute_column };
 
 	if(use_dialog_table() != 0){
 		return -1;
@@ -451,7 +452,8 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 			&from_sock_column,   &to_sock_column,
 			&start_time_column,  &state_column,       &timeout_column,
 			&from_cseq_column,   &to_cseq_column,     &from_route_column,
-			&to_route_column,    &from_contact_column,&to_contact_column};
+			&to_route_column,    &from_contact_column,&to_contact_column,
+			&sflags_column,      &toroute_column };
 
 	if(use_dialog_table()!=0)
 		return -1;
@@ -467,7 +469,8 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		VAL_TYPE(values+14) = VAL_TYPE(values+15) = VAL_TYPE(values+16)=
 		VAL_TYPE(values+17) = DB_STR;
 
-		SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-4, 0);
+		SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
+		VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB_INT;
 
 		/* lock the entry */
 		entry = (d_table->entries)[cell->h_entry];
@@ -506,6 +509,8 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLER_LEG], 	values, 16);
 		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG], 	values, 17);
 
+		VAL_INT(values+18)		= cell->sflags;
+		VAL_INT(values+19)		= cell->toroute;
 
 		if((dialog_dbf.insert(dialog_db_handle, insert_keys, values, 
 								DIALOG_TABLE_COL_NO)) !=0){
@@ -572,7 +577,8 @@ void dialog_update_db(unsigned int ticks, void * param)
 			&from_sock_column,	&to_sock_column,
 			&start_time_column,	&state_column,			&timeout_column,
 			&from_cseq_column,	&to_cseq_column,		&from_route_column,
-			&to_route_column, 	&from_contact_column, 	&to_contact_column};
+			&to_route_column, 	&from_contact_column, 	&to_contact_column,
+			&sflags_column,     &toroute_column };
 
 	if(use_dialog_table()!=0)
 		return;
@@ -587,7 +593,9 @@ void dialog_update_db(unsigned int ticks, void * param)
 	VAL_TYPE(values+14) = VAL_TYPE(values+15) = VAL_TYPE(values+16) = 
 	VAL_TYPE(values+17) = DB_STR;
 
-	SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-4, 0);
+	SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
+
+	VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB_INT;
 
 	LM_DBG("saving current_info \n");
 	
@@ -637,6 +645,9 @@ void dialog_update_db(unsigned int ticks, void * param)
 					values, 16);
 				SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG],
 					values, 17);
+				
+				VAL_INT(values+18)		= cell->sflags;
+				VAL_INT(values+19)		= cell->toroute;
 
 				if((dialog_dbf.insert(dialog_db_handle, insert_keys, 
 				values, DIALOG_TABLE_COL_NO)) !=0){
