@@ -38,6 +38,8 @@
 
 #include "dbt_res.h"
 
+#define SIGN(_i) ((_i) > 0 ? 1 : ((_i) < 0 ? -1 : 0))
+
 dbt_result_p dbt_result_new(dbt_table_p _dtp, int *_lres, int _sz)
 {
 	dbt_result_p _dres = NULL;
@@ -463,7 +465,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.string_val, _l);
 			if(_n)
-				return _n;
+				return SIGN(_n);
 			if(_vp->val.str_val.len == strlen(_v->val.string_val))
 				return 0;
 			if(_l==_vp->val.str_val.len)
@@ -474,7 +476,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.str_val.s, _l);
 			if(_n)
-				return _n;
+				return SIGN(_n);
 			if(_vp->val.str_val.len == _v->val.str_val.len)
 				return 0;
 			if(_l==_vp->val.str_val.len)
@@ -485,7 +487,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.blob_val.s, _l);
 			if(_n)
-				return _n;
+				return SIGN(_n);
 			if(_vp->val.str_val.len == _v->val.blob_val.len)
 				return 0;
 			if(_l==_vp->val.str_val.len)
