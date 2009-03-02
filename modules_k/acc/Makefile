@@ -28,4 +28,6 @@ ifeq ($(ENABLE_DIAMETER_ACC),true)
 DEFS+=-DDIAM_ACC
 endif
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
