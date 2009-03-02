@@ -96,6 +96,10 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 #define FL_MTU_TCP_FB   (1 << 8)
 #define FL_MTU_TLS_FB   (1 << 9)
 #define FL_MTU_SCTP_FB  (1 << 10)
+
+/* WARNING: Value (1 << 11) is temporarily reserved for use in kamailio acc
+ * module (flag FL_REQ_UPSTREAM)! */
+
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 
 
