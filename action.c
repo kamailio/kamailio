@@ -316,7 +316,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			LOG_(a->val[0].u.number, "<script>: ", "%s", a->val[1].u.string);
+			LOG_(DEFAULT_FACILITY, a->val[0].u.number, "<script>: ", "%s", 
+				 a->val[1].u.string);
 			ret=1;
 			break;
 
