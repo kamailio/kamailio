@@ -82,20 +82,20 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 	METHOD_NOTIFY=128, METHOD_MESSAGE=256, METHOD_OPTIONS=512,
 	METHOD_OTHER=1024 };
 
-#define FL_FORCE_RPORT 1   /* force rport */
-#define FL_FORCE_ACTIVE 2  /* force active SDP */
-#define FL_SDP_IP_AFS 4    /* SDP IP rewritten */
-#define FL_SDP_PORT_AFS 8  /* SDP port rewritten */
-#define FL_SHM_CLONE   16  /* msg cloned in SHM as a single chunk */
-#define FL_TIMEOUT     32  /* message belongs to an "expired" branch
-                               (for failure route use) */
-#define FL_REPLIED     64  /* message branch received at least one reply
-                                (for failure route use) */
-#define FL_HASH_INDEX  128 /* msg->hash_index contains a valid value (tm use)*/
+#define FL_FORCE_RPORT  (1 << 0)  /* force rport */
+#define FL_FORCE_ACTIVE (1 << 1)  /* force active SDP */
+#define FL_SDP_IP_AFS   (1 << 2)  /* SDP IP rewritten */
+#define FL_SDP_PORT_AFS (1 << 3)  /* SDP port rewritten */
+#define FL_SHM_CLONE    (1 << 4)  /* msg cloned in SHM as a single chunk */
+#define FL_TIMEOUT      (1 << 5)  /* message belongs to an "expired" branch
+									 (for failure route use) */
+#define FL_REPLIED      (1 << 6)  /* message branch received at least one reply
+									 (for failure route use) */
+#define FL_HASH_INDEX   (1 << 7)  /* msg->hash_index contains a valid value (tm use)*/
 
-#define FL_MTU_TCP_FB   256
-#define FL_MTU_TLS_FB   512
-#define FL_MTU_SCTP_FB 1024
+#define FL_MTU_TCP_FB   (1 << 8)
+#define FL_MTU_TLS_FB   (1 << 9)
+#define FL_MTU_SCTP_FB  (1 << 10)
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 
 
