@@ -81,6 +81,11 @@
 #define L_INFO   	2
 #define L_DBG    	3
 
+/* This is the facility value used to indicate that the caller of the macro
+ * did not override the facility. Value 0 (the defaul) is LOG_KERN on Linux
+ */
+#define DEFAULT_FACILITY 0
+
 #define LOG_LEVEL2NAME(level)	(log_level_info[(level) - (L_ALERT)].name)
 #define LOG2SYSLOG_LEVEL(level) \
 	(log_level_info[(level) - (L_ALERT)].syslog_level)
@@ -125,11 +130,13 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #ifdef NO_LOG
 
 #	ifdef __SUNPRO_C
-#		define LOG_(level, prefix, fmt, ...)
+#		define LOG_(facility, level, prefix, fmt, ...)
 #		define LOG(level, fmt, ...)
+#		define LOG_FC(facility, level, fmt, ...)
 #	else
-#		define LOG_(level, prefix, fmt, args...)
+#		define LOG_(facility, level, prefix, fmt, args...)
 #		define LOG(level, fmt, args...)
+#		define LOG_FC(facility, level, fmt, args...)
 #	endif
 
 #else
@@ -145,7 +152,7 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #	endif
 
 #	ifdef __SUNPRO_C
-#		define LOG_(level, prefix, fmt, ...) \
+#		define LOG_(facility, level, prefix, fmt, ...) \
 			do { \
 				if (unlikely(cfg_get(core, core_cfg, debug) >= (level) && \
 						DPRINT_NON_CRIT)) { \
@@ -158,7 +165,9 @@ int log_facility_fixup(void *handle, str *name, void **val);
 									__VA_ARGS__); \
 						} else { \
 							syslog(LOG2SYSLOG_LEVEL(level) | \
-									cfg_get(core, core_cfg, log_facility),\
+								   (((facility) != DEFAULT_FACILITY) ? \
+									(facility) : \
+									cfg_get(core, core_cfg, log_facility)), \
 									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
 									(prefix), __VA_ARGS__); \
 						} \
@@ -170,22 +179,29 @@ int log_facility_fixup(void *handle, str *name, void **val);
 						} else { \
 							if ((level)<L_ALERT) \
 								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
-										cfg_get(core, core_cfg, log_facility),\
-										"%s" fmt, (prefix), __VA_ARGS__); \
+									   (((facility) != DEFAULT_FACILITY) ? \
+										(facility) : \
+										cfg_get(core, core_cfg, log_facility)),\
+									   "%s" fmt, (prefix), __VA_ARGS__); \
 							else \
 								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
-										cfg_get(core, core_cfg, log_facility),\
-										"%s" fmt, (prefix), __VA_ARGS__); \
+									   (((facility) != DEFAULT_FACILITY) ? \
+										(facility) : \
+										cfg_get(core, core_cfg, log_facility)),\
+									   "%s" fmt, (prefix), __VA_ARGS__); \
 						} \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
 			} while(0)
 			
-#		define LOG(level, fmt, ...)  LOG_((level), LOC_INFO, fmt, __VA_ARGS__)
+#		define LOG(level, fmt, ...) \
+	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt, __VA_ARGS__)
+#		define LOG_FC(facility, level, fmt, ...) \
+	LOG_((facility), (level), LOC_INFO, fmt, __VA_ARGS__)
 
 #	else /* ! __SUNPRO_C */
-#		define LOG_(level, prefix, fmt, args...) \
+#		define LOG_(facility, level, prefix, fmt, args...) \
 			do { \
 				if (cfg_get(core, core_cfg, debug) >= (level) && \
 						DPRINT_NON_CRIT) { \
@@ -197,7 +213,9 @@ int log_facility_fixup(void *handle, str *name, void **val);
 									LOG_LEVEL2NAME(level),(prefix), ## args);\
 						} else { \
 							syslog(LOG2SYSLOG_LEVEL(level) |\
-									cfg_get(core, core_cfg, log_facility), \
+								   (((facility) != DEFAULT_FACILITY) ? \
+									(facility) : \
+									cfg_get(core, core_cfg, log_facility)), \
 									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
 									(prefix), ## args); \
 						} \
@@ -209,11 +227,15 @@ int log_facility_fixup(void *handle, str *name, void **val);
 						} else { \
 							if ((level)<L_ALERT) \
 								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
-										cfg_get(core, core_cfg, log_facility),\
+									   (((facility) != DEFAULT_FACILITY) ? \
+										(facility) : \
+										cfg_get(core, core_cfg, log_facility)),\
 										"%s" fmt, (prefix), ## args); \
 							else \
 								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
-										cfg_get(core, core_cfg, log_facility),\
+									   (((facility) != DEFAULT_FACILITY) ? \
+										(facility) : \
+										cfg_get(core, core_cfg, log_facility)),\
 										"%s" fmt, (prefix), ## args); \
 						} \
 					} \
@@ -221,7 +243,10 @@ int log_facility_fixup(void *handle, str *name, void **val);
 				} \
 			} while(0)
 			
-#		define LOG(level, fmt, args...)  LOG_((level), LOC_INFO, fmt, ## args)
+#		define LOG(level, fmt, args...) \
+	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt, ## args)
+#		define LOG_FC(facility, level, fmt, args...) \
+	LOG_((facility), (level), LOC_INFO, fmt, ## args)
 		
 #	endif /* __SUNPRO_C */
 #endif /* NO_LOG */
@@ -272,7 +297,7 @@ int log_facility_fixup(void *handle, str *name, void **val);
 /* kamailio/openser compatibility */
 
 #define LM_GEN1 LOG
-
+#define LM_GEN2 LOG_FC
 #define LM_ALERT ALERT
 #define LM_CRIT  CRIT
 #define LM_ERR ERR
