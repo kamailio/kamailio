@@ -2,8 +2,6 @@
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
 
-DH_COMPAT=$(shell cat $(CURDIR)/debian/compat)
-
 DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 ALL_PACKAGES = kamailio kamailio-mysql-module kamailio-postgres-module \
@@ -11,7 +9,7 @@ ALL_PACKAGES = kamailio kamailio-mysql-module kamailio-postgres-module \
 	kamailio-unixodbc-module kamailio-presence-modules kamailio-xmlrpc-module \
 	kamailio-perl-modules kamailio-snmpstats-module kamailio-xmpp-module \
 	kamailio-carrierroute-module kamailio-berkeley-module kamailio-ldap-modules \
-	kamailio-utils-module kamailio-regex-modules
+	kamailio-utils-module kamailio-regex-modules kamailio-purple-module
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
@@ -45,7 +43,7 @@ CPL_MODULES = cpl-c
 # module depending on radiusclient
 RADIUS_MODULES = auth_radius misc_radius peering
 # presence related modules
-PRESENCE_MODULES = presence presence_xml presence_mwi presence_dialoginfo pua pua_bla pua_mi pua_usrloc pua_xmpp pua_dialoginfo xcap_client
+PRESENCE_MODULES = presence presence_xml presence_mwi presence_dialoginfo pua pua_bla pua_mi pua_usrloc pua_xmpp pua_dialoginfo xcap_client rls
 # XMLRPC module
 XMLRPC_MODULES = mi_xmlrpc
 # Perl module
@@ -64,8 +62,10 @@ LDAP_MODULES = ldap h350
 UTILS_MODULES = utils
 # modules depending on libpcre
 REGEX_MODULES = dialplan regex lcr
+# purple module
+PURPLE_MODULES = purple
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES) $(UTILS_MODULES) $(REGEX_MODULES)
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES) $(UTILS_MODULES) $(REGEX_MODULES) $(PURPLE_MODULES)
 
 # modules not in the "main" package or unstable modules
 EXCLUDED_MODULES = $(ALL_MODULES) pa osp
@@ -87,6 +87,7 @@ BERKELEY_MOD_PATH=$(addprefix modules/, $(BERKELEY_MODULES))
 LDAP_MOD_PATH=$(addprefix modules/, $(LDAP_MODULES))
 UTILS_MOD_PATH=$(addprefix modules/, $(UTILS_MODULES))
 REGEX_MOD_PATH=$(addprefix modules/, $(REGEX_MODULES))
+PURPLE_MOD_PATH=$(addprefix modules/, $(PURPLE_MODULES))
 
 ifeq (cc, $(CC))
 	CC = gcc
@@ -134,6 +135,7 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(LDAP_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(UTILS_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(REGEX_MOD_PATH)" cfg-target=/etc/kamailio/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PURPLE_MOD_PATH)" cfg-target=/etc/kamailio/
 
 	# generate the utils db_berkeley
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) utils include_modules="db_berkeley"
@@ -303,6 +305,14 @@ install: build
 		cfg-target=/etc/kamailio/ \
 		doc-dir=share/doc/kamailio-regex-modules
 
+	# install only the purple modules
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PURPLE_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/kamailio-purple-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/kamailio-purple-module \
+		cfg-target=/etc/kamailio/ \
+		doc-dir=share/doc/kamailio-purple-module
+
 	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
 	for p in $(ALL_PACKAGES); \
 		do rmdir --ignore-fail-on-non-empty $(CURDIR)/debian/$$p/usr/sbin; done
@@ -323,17 +333,7 @@ binary-arch: build install
 	dh_installinfo
 	dh_installchangelogs
 	dh_link
-# Emulate debhelper v5 behaviour for Sarge backports with debhelper v4
-ifeq ($(DH_COMPAT),4)
-	dh_strip --keep-debug
-	mkdir -p $(CURDIR)/debian/kamailio-dbg/usr/lib/debug
-	for p in $(ALL_PACKAGES); do \
-		tar cf - -C $(CURDIR)/debian/$$p/usr/lib/debug . | tar xf - -C $(CURDIR)/debian/kamailio-dbg/usr/lib/debug \
-			&& rm -rf $(CURDIR)/debian/$$p/usr/lib/debug; \
-	done
-else
 	dh_strip --dbg-package=kamailio-dbg
-endif
 	dh_compress 
 	dh_fixperms
 	dh_installdeb

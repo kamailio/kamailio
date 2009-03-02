@@ -19,6 +19,6 @@ MEMORY=64
 # or 'no' to disable this feature. This option is case sensitive and only
 # accepts 'yes' and 'no' and only in lowercase letters.
 # On some systems (e.g. Ubuntu 6.10, Debian 4.0) it is necessary to specify
-# a directory for the core files to get the dump. Look into the kamailio
+# a directory for the core files to get a dump. Look into the kamailio
 # init file for an example configuration.
 DUMP_CORE=no
