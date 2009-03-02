@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Kilian Krause <kilian@debian.org>
-Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp5-dev, libdb4.3-dev, libsensors-dev, xsltproc, libconfuse-dev, libldap2-dev, libcurl3-dev, python, docbook-xml, libpurple-dev
+Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp5-dev, libdb4.3-dev, libsensors-dev, xsltproc, libconfuse-dev, libldap2-dev, libcurl3-dev, python, docbook-xml
 Standards-Version: 3.7.2
 
 Package: kamailio
@@ -215,14 +215,3 @@ Description: Provides the lcr, diaplan and regex modules
  per second even on low-budget hardware.
  .
  Contains the lcr, diaplan and regex modules that depends on the pcre library.
-
-Package: kamailio-purple-module
-Architecture: any
-Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
-Description: Provides the purple module, a multi-protocol IM gateway
- Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the purple module, a multi-protocol instant
- messaging gateway module.

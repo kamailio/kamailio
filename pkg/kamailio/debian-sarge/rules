@@ -11,7 +11,7 @@ ALL_PACKAGES = kamailio kamailio-mysql-module kamailio-postgres-module \
 	kamailio-unixodbc-module kamailio-presence-modules kamailio-xmlrpc-module \
 	kamailio-perl-modules kamailio-snmpstats-module kamailio-xmpp-module \
 	kamailio-carrierroute-module kamailio-berkeley-module kamailio-ldap-modules \
-	kamailio-utils-module kamailio-regex-modules kamailio-purple-module
+	kamailio-utils-module kamailio-regex-modules
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
@@ -64,10 +64,8 @@ LDAP_MODULES = ldap h350
 UTILS_MODULES = utils
 # modules depending on libpcre
 REGEX_MODULES = dialplan regex lcr
-# purple module
-PURPLE_MODULES = purple
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES) $(UTILS_MODULES) $(REGEX_MODULES) $(PURPLE_MODULES)
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES) $(UTILS_MODULES) $(REGEX_MODULES)
 
 # modules not in the "main" package or unstable modules
 EXCLUDED_MODULES = $(ALL_MODULES) pa osp
@@ -89,7 +87,6 @@ BERKELEY_MOD_PATH=$(addprefix modules/, $(BERKELEY_MODULES))
 LDAP_MOD_PATH=$(addprefix modules/, $(LDAP_MODULES))
 UTILS_MOD_PATH=$(addprefix modules/, $(UTILS_MODULES))
 REGEX_MOD_PATH=$(addprefix modules/, $(REGEX_MODULES))
-PURPLE_MOD_PATH=$(addprefix modules/, $(PURPLE_MODULES))
 
 ifeq (cc, $(CC))
 	CC = gcc
@@ -137,7 +134,6 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(LDAP_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(UTILS_MOD_PATH)" cfg-target=/etc/kamailio/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(REGEX_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PURPLE_MOD_PATH)" cfg-target=/etc/kamailio/
 
 	# generate the utils db_berkeley
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) utils include_modules="db_berkeley"
@@ -306,14 +302,6 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/kamailio-regex-modules \
 		cfg-target=/etc/kamailio/ \
 		doc-dir=share/doc/kamailio-regex-modules
-
-	# install only the purple modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PURPLE_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-purple-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-purple-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-purple-module
 
 	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
 	for p in $(ALL_PACKAGES); \
