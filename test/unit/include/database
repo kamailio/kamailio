@@ -21,7 +21,7 @@ MYSQL="mysql openser --show-warnings --batch --user=openser --password=openserrw
 export PGPASSWORD="openserrw"
 PSQL="psql -A -t -n -q -h localhost -U openser openser -c"
 
-ISQL="isql -b -v openser openser openserrw"
+ISQL="isql -b -v -d0x0 openser openser openserrw"
 
 function check_mysql() {
 	$MYSQL "select * from location;" > /dev/null
