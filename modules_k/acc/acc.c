@@ -63,7 +63,7 @@
 #include "acc_logic.h"
 
 #ifdef RAD_ACC
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 #endif
 
 #ifdef DIAM_ACC
