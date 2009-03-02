@@ -1,3 +1,9 @@
+kamailio (1.5.0-svn1) unstable; urgency=low
+
+  * increment debian packaging for trunk
+
+ -- Henning Westerholt <henning.westerholt@1und1.de>  Mon, 02 Mar 2009 17:40:02 +0100
+
 kamailio (1.4.0-svn1) unstable; urgency=low
 
   [ Klaus Darilion ]
