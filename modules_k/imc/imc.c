@@ -48,7 +48,7 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../resolve.h"
 #include "../../hash_func.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #include "../tm/tm_load.h"
 
