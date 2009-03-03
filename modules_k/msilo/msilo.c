@@ -54,7 +54,7 @@
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
@@ -88,15 +88,15 @@ static str sc_snd_time = str_init("snd_time");  /* 9 */
 	{ \
 		switch(RES_ROWS(_res)[_r].values[_c].type) \
 		{ \
-		case DB_STRING: \
+		case DB1_STRING: \
 			(_str).s=(char*)RES_ROWS(_res)[_r].values[_c].val.string_val; \
 			(_str).len=strlen((_str).s); \
 			break; \
-		case DB_STR: \
+		case DB1_STR: \
 			(_str).len=RES_ROWS(_res)[_r].values[_c].val.str_val.len; \
 			(_str).s=(char*)RES_ROWS(_res)[_r].values[_c].val.str_val.s; \
 			break; \
-		case DB_BLOB: \
+		case DB1_BLOB: \
 			(_str).len=RES_ROWS(_res)[_r].values[_c].val.blob_val.len; \
 			(_str).s=(char*)RES_ROWS(_res)[_r].values[_c].val.blob_val.s; \
 			break; \
@@ -111,7 +111,7 @@ MODULE_VERSION
 #define S_TABLE_VERSION 5
 
 /** database connection */
-static db_con_t *db_con = NULL;
+static db1_con_t *db_con = NULL;
 static db_func_t msilo_dbf;
 
 /** precessed msg list - used for dumping the messages */
@@ -456,7 +456,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	db_key_t db_keys[NR_KEYS-1];
 	db_val_t db_vals[NR_KEYS-1];
 	db_key_t db_cols[1]; 
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	
 	int nr_keys = 0, val, lexpire;
 	content_type_t ctype;
@@ -569,7 +569,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	
 	db_keys[nr_keys] = &sc_uri_user;
 	
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = puri.user.s;
 	db_vals[nr_keys].val.str_val.len = puri.user.len;
@@ -578,7 +578,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	db_keys[nr_keys] = &sc_uri_host;
 	
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = puri.host.s;
 	db_vals[nr_keys].val.str_val.len = puri.host.len;
@@ -610,7 +610,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	/* Set To key */
 	db_keys[nr_keys] = &sc_to;
 	
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = pto->uri.s;
 	db_vals[nr_keys].val.str_val.len = pto->uri.len;
@@ -639,7 +639,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	
 	db_keys[nr_keys] = &sc_from;
 	
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
 	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
@@ -650,7 +650,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	
 	db_keys[nr_keys] = &sc_body;
 	
-	db_vals[nr_keys].type = DB_BLOB;
+	db_vals[nr_keys].type = DB1_BLOB;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.blob_val.s = body.s;
 	db_vals[nr_keys].val.blob_val.len = body.len;
@@ -666,7 +666,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	}
 
 	db_keys[nr_keys]      = &sc_ctype;
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul  = 0;
 	db_vals[nr_keys].val.str_val.s   = "text/plain";
 	db_vals[nr_keys].val.str_val.len = 10;
@@ -699,21 +699,21 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	
 	/* add expiration time */
 	db_keys[nr_keys] = &sc_exp_time;
-	db_vals[nr_keys].type = DB_INT;
+	db_vals[nr_keys].type = DB1_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = val+lexpire;
 	nr_keys++;
 
 	/* add incoming time */
 	db_keys[nr_keys] = &sc_inc_time;
-	db_vals[nr_keys].type = DB_INT;
+	db_vals[nr_keys].type = DB1_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = val;
 	nr_keys++;
 
 	/* add sending time */
 	db_keys[nr_keys] = &sc_snd_time;
-	db_vals[nr_keys].type = DB_INT;
+	db_vals[nr_keys].type = DB1_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = 0;
 	if(ms_snd_time_avp_name.n!=0)
@@ -834,7 +834,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	db_op_t  db_ops[3];
 	db_val_t db_vals[3];
 	db_key_t db_cols[6];
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	int i, db_no_cols = 6, db_no_keys = 3, mid, n;
 	static char hdr_buf[1024];
 	static char body_buf[1024];
@@ -957,17 +957,17 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		goto error;
 	}
 
-	db_vals[0].type = DB_STR;
+	db_vals[0].type = DB1_STR;
 	db_vals[0].nul = 0;
 	db_vals[0].val.str_val.s = puri.user.s;
 	db_vals[0].val.str_val.len = puri.user.len;
 
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = puri.host.s;
 	db_vals[1].val.str_val.len = puri.host.len;
 
-	db_vals[2].type = DB_INT;
+	db_vals[2].type = DB1_INT;
 	db_vals[2].nul = 0;
 	db_vals[2].val.int_val = 0;
 	
@@ -1080,7 +1080,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 #endif
 
 			db_keys[n] = &sc_mid;
-			db_vals[n].type = DB_INT;
+			db_vals[n].type = DB1_INT;
 			db_vals[n].nul = 0;
 			db_vals[n].val.int_val = p->msgid;
 			LM_DBG("cleaning sent message [%d]\n", p->msgid);
@@ -1120,7 +1120,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 	{
 		LM_DBG("cleaning expired messages\n");
 		db_keys[0] = &sc_exp_time;
-		db_vals[0].type = DB_INT;
+		db_vals[0].type = DB1_INT;
 		db_vals[0].nul = 0;
 		db_vals[0].val.int_val = (int)time(NULL);
 		if (msilo_dbf.delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
@@ -1178,7 +1178,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	db_op_t  db_ops[2];
 	db_val_t db_vals[2];
 	db_key_t db_cols[6];
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	int i, db_no_cols = 6, db_no_keys = 2, mid, n;
 	static char hdr_buf[1024];
 	static char uri_buf[1024];
@@ -1215,11 +1215,11 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	body_str.s=body_buf;
 	body_str.len=1024;
 	
-	db_vals[0].type = DB_INT;
+	db_vals[0].type = DB1_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = 0;
 	
-	db_vals[1].type = DB_INT;
+	db_vals[1].type = DB1_INT;
 	db_vals[1].nul = 0;
 	ttime = time(NULL);
 	db_vals[1].val.int_val = (int)ttime;
@@ -1321,13 +1321,13 @@ int ms_reset_stime(int mid)
 	db_keys[0]=&sc_mid;
 	db_ops[0]=OP_EQ;
 
-	db_vals[0].type = DB_INT;
+	db_vals[0].type = DB1_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = mid;
 	
 
 	db_cols[0]=&sc_snd_time;
-	db_cvals[0].type = DB_INT;
+	db_cvals[0].type = DB1_INT;
 	db_cvals[0].nul = 0;
 	db_cvals[0].val.int_val = 0;
 	
