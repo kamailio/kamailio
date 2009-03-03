@@ -30,7 +30,7 @@
 
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../re.h"
 #include "dp_db.h"
 #include "dialplan.h"
@@ -48,7 +48,7 @@ str attrs_column    =   str_init(ATTRS_COL);
 
 extern int dp_fetch_rows;
 
-static db_con_t* dp_db_handle    = 0; /* database connection handle */
+static db1_con_t* dp_db_handle    = 0; /* database connection handle */
 static db_func_t dp_dbf;
 
 #define GET_STR_VALUE(_res, _values, _index)\
@@ -180,7 +180,7 @@ void destroy_data(void)
 int dp_load_db(void)
 {
 	int i, nr_rows;
-	db_res_t * res = 0;
+	db1_res_t * res = 0;
 	db_val_t * values;
 	db_row_t * rows;
 	db_key_t query_cols[DP_TABLE_COL_NO] = {

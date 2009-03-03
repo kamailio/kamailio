@@ -28,7 +28,7 @@
 #define _DP_DB_H
 
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 
 #define DP_TABLE_NAME			"dialplan"
 #define DPID_COL				"dpid"
