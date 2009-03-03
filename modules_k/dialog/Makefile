@@ -7,4 +7,6 @@ auto_gen=
 NAME=dialog.so
 LIBS= 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
