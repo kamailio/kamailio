@@ -24,7 +24,7 @@
  */
 
 #include "../../mod_fix.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 
 #include "sipops.h"
 
