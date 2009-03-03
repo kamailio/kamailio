@@ -27,7 +27,7 @@
 #include "../../ut.h"
 #include "../../hash_func.h"
 #include "../../mem/shm_mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "domain_mod.h"
 #include <stdlib.h>
 #include <string.h>

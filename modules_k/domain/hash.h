@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 #include "domain_mod.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 int hash_table_install (struct domain_list **hash_table, char *domain);
 int hash_table_lookup (str *domain);
