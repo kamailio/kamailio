@@ -53,7 +53,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../ip_addr.h"
 #include "mi_datagram.h"
 #include "datagram_fnc.h"
