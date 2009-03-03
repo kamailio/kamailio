@@ -15,4 +15,6 @@ LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -lcurl
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 include ../../Makefile.modules

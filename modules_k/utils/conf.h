@@ -24,7 +24,7 @@
 #ifndef CONF_H
 #define CONF_H
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../parser/msg_parser.h"
 #include "../../proxy.h"
 
