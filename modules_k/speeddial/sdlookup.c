@@ -34,7 +34,7 @@
 #include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 
 #include "speeddial.h"
 #include "sdlookup.h"
@@ -74,7 +74,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	db_key_t db_keys[4];
 	db_val_t db_vals[4];
 	db_key_t db_cols[1];
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 
 	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
 	{
@@ -111,7 +111,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	}
 		
 	db_keys[nr_keys]=&user_column;
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = puri->user.s;
 	db_vals[nr_keys].val.str_val.len = puri->user.len;
@@ -120,7 +120,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	if(use_domain>=1)
 	{
 		db_keys[nr_keys]=&domain_column;
-		db_vals[nr_keys].type = DB_STR;
+		db_vals[nr_keys].type = DB1_STR;
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val.s = puri->host.s;
 		db_vals[nr_keys].val.str_val.len = puri->host.len;
@@ -142,7 +142,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	}
 	
 	db_keys[nr_keys]=&sd_user_column;
-	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.user.s;
 	db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.user.len;
@@ -151,7 +151,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	if(use_domain>=2)
 	{
 		db_keys[nr_keys]=&sd_domain_column;
-		db_vals[nr_keys].type = DB_STR;
+		db_vals[nr_keys].type = DB1_STR;
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.host.s;
 		db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.host.len;
@@ -185,19 +185,19 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	user_s.s = useruri_buf+4;
 	switch(RES_ROWS(db_res)[0].values[0].type)
 	{ 
-		case DB_STRING:
+		case DB1_STRING:
 			strcpy(user_s.s, 
 				(char*)RES_ROWS(db_res)[0].values[0].val.string_val);
 			user_s.len = strlen(user_s.s);
 		break;
-		case DB_STR:
+		case DB1_STR:
 			strncpy(user_s.s, 
 				(char*)RES_ROWS(db_res)[0].values[0].val.str_val.s,
 				RES_ROWS(db_res)[0].values[0].val.str_val.len);
 			user_s.len = RES_ROWS(db_res)[0].values[0].val.str_val.len;
 			user_s.s[user_s.len] = '\0';
 		break;
-		case DB_BLOB:
+		case DB1_BLOB:
 			strncpy(user_s.s, 
 				(char*)RES_ROWS(db_res)[0].values[0].val.blob_val.s,
 				RES_ROWS(db_res)[0].values[0].val.blob_val.len);

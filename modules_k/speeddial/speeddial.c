@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
@@ -64,7 +64,7 @@ str dstrip_s = {NULL, 0};
 
 
 db_func_t db_funcs;      /* Database functions */
-db_con_t* db_handle=0;   /* Database connection handle */
+db1_con_t* db_handle=0;   /* Database connection handle */
 
 
 /* Exported functions */

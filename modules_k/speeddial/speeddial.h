@@ -28,7 +28,7 @@
 #ifndef _SPEEDDIAL_H_
 #define _SPEEDDIAL_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -43,6 +43,6 @@ extern int   use_domain;      /* use or not the domain for sd lookup */
 extern str   dstrip_s;
 
 extern db_func_t db_funcs;    /* Database functions */
-extern db_con_t* db_handle;   /* Database connection handle */
+extern db1_con_t* db_handle;   /* Database connection handle */
 
 #endif /* _SPEEDDIAL_H_ */
