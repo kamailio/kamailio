@@ -35,7 +35,7 @@
 #include <libxml/parser.h>
 
 #include "../../ut.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
