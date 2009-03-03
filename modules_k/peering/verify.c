@@ -37,7 +37,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../lib/kcore/radius.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "peering.h"
