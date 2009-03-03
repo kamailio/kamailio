@@ -29,7 +29,7 @@
 #include "../../dset.h"
 #include "../../action.h"
 #include "../../socket_info.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
