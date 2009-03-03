@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 
 #include "mapping.h"
@@ -99,13 +99,13 @@ char *find_sip_user(char *extern_user) {
 	int n_query_cols = 0, n_result_cols = 0;
 	db_row_t *row;
 	db_val_t *row_vals;
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	int sip_user_col;
 
 	str q_ext_user = {"ext_user", 8};
 	query_cols[n_query_cols] = &q_ext_user;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = ext_user;
 	n_query_cols++;
@@ -113,7 +113,7 @@ char *find_sip_user(char *extern_user) {
 	str r_sip_user = {"sip_user", 8};
 	result_cols[sip_user_col=n_result_cols++] = &r_sip_user;
 
-	db_con_t *pa_db;
+	db1_con_t *pa_db;
 	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db) {
 		LM_ERR("error connecting database\n");
@@ -165,13 +165,13 @@ extern_account_t *find_accounts(char* sip_user, int* count) {
 	int n_query_cols = 0, n_result_cols = 0;
 	db_row_t *row;
 	db_val_t *row_vals;
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	int ext_prot_col, ext_user_col, ext_pass_col;
 
 	str q_sip_user = {"sip_user", 8};
 	query_cols[n_query_cols] = &q_sip_user;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].type = DB1_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val = sip_user;
 	n_query_cols++;
@@ -183,7 +183,7 @@ extern_account_t *find_accounts(char* sip_user, int* count) {
 	result_cols[ext_user_col=n_result_cols++] = &r_ext_user;
 	result_cols[ext_pass_col=n_result_cols++] = &r_ext_pass;
 
-	db_con_t *pa_db;
+	db1_con_t *pa_db;
 	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db) {
 		LM_ERR("error connecting database\n");
@@ -254,13 +254,13 @@ extern_user_t *find_users(char *sip_user, int* count) {
 	int n_query_cols = 0, n_result_cols = 0;
 	db_row_t *row;
 	db_val_t *row_vals;
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	int ext_prot_col, ext_user_col;
 	
 	str q_sip_user = {"sip_user", 8};
 	query_cols[n_query_cols] = &q_sip_user;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].type = DB1_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val = sip_user;
 	n_query_cols++;
@@ -270,7 +270,7 @@ extern_user_t *find_users(char *sip_user, int* count) {
 	result_cols[ext_prot_col=n_result_cols++] = &r_ext_prot;
 	result_cols[ext_user_col=n_result_cols++] = &r_ext_user;
 
-	db_con_t *pa_db;
+	db1_con_t *pa_db;
 	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db) {
 		LM_ERR("error connecting database\n");

@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <libxml/parser.h>
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../sr_module.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
@@ -50,7 +50,7 @@ static int fixup_subscribe(void** param, int param_no);
 
 int pipefds[2] = {-1, -1};
 
-db_con_t *pa_db = NULL;
+db1_con_t *pa_db = NULL;
 db_func_t pa_dbf;
 str db_table = {"purplemap", 0};
 str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
