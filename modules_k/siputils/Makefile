@@ -5,4 +5,6 @@ auto_gen=
 NAME=siputils.so
 LIBS= 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
