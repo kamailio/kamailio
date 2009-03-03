@@ -83,5 +83,7 @@ DEFS+=$(MY_DEFS)
 LIBS+=$(MY_LIBS)
 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 
