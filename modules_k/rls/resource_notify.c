@@ -146,7 +146,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	str* res_id= NULL;
 	db_key_t query_cols[9], result_cols[1];
 	db_val_t query_vals[9];
-	db_res_t* result= NULL;
+	db1_res_t* result= NULL;
 	int n_query_cols= 0;
 	str auth_state= {0, 0};
 	int found= 0;
@@ -306,25 +306,25 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	LM_DBG("body= %.*s\n", body.len, body.s);
 
 	query_cols[n_query_cols]= &str_rlsubs_did_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= *res_id; 
 	n_query_cols++;
 	
 	query_cols[n_query_cols]= &str_resource_uri_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= *dialog.pres_uri; 
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_updated_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= UPDATED_TYPE; 
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_auth_state_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= auth_flag; 
 	n_query_cols++;
@@ -332,25 +332,25 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	if(reason)
 	{
 		query_cols[n_query_cols]= &str_reason_col;
-		query_vals[n_query_cols].type = DB_STR;
+		query_vals[n_query_cols].type = DB1_STR;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val= *reason;
 		n_query_cols++;
 	}
 	query_cols[n_query_cols]= &str_content_type_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= content_type;
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_presence_state_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= body;
 	n_query_cols++;
 	
 	query_cols[n_query_cols]= &str_expires_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= expires+ (int)time(NULL);
 	n_query_cols++;
@@ -449,7 +449,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 	int did_col, resource_uri_col, auth_state_col, reason_col,
 		pres_state_col, content_type_col;
 	int n_result_cols= 0, i;
-	db_res_t *result= NULL;
+	db1_res_t *result= NULL;
 	char* prev_did= NULL, * curr_did= NULL;
 	db_row_t *row;	
 	db_val_t *row_vals;
@@ -468,7 +468,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 	char* rl_uri= NULL;
 
 	query_cols[0]= &str_updated_col;
-	query_vals[0].type = DB_INT;
+	query_vals[0].type = DB1_INT;
 	query_vals[0].nul = 0;
 	query_vals[0].val.int_val= UPDATED_TYPE; 
 
@@ -499,7 +499,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 
 	/* update the rlpres table */
 	update_cols[0]= &str_updated_col;
-	update_vals[0].type = DB_INT;
+	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 
@@ -791,7 +791,7 @@ void rls_presentity_clean(unsigned int ticks,void *param)
 	query_cols[0]= &str_expires_col;
 	query_ops[0]= OP_LT;
 	query_vals[0].nul= 0;
-	query_vals[0].type= DB_INT;
+	query_vals[0].type= DB1_INT;
 	query_vals[0].val.int_val= (int)time(NULL) - 10;
 
 	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 

@@ -37,8 +37,8 @@
 #include "../presence/hash.h"
 #include "../presence/event_list.h"
 #include "../sl/sl_api.h"
-#include "../../db/db_con.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db.h"
 
 #define NO_UPDATE_TYPE     -1 
 #define UPDATED_TYPE        1 
@@ -97,7 +97,7 @@ extern int rls_events;
 extern int to_presence_code;
 
 /* database connection */
-extern db_con_t *rls_db;
+extern db1_con_t *rls_db;
 extern db_func_t rls_dbf;
 
 extern struct tm_binds tmb;

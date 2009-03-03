@@ -70,7 +70,7 @@ int get_resource_list(str* pres_uri, char** list)
 	db_val_t query_vals[5];
 	db_key_t result_cols[3];
 	int n_query_cols = 0;
-	db_res_t *result = 0;
+	db1_res_t *result = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	str body ;
@@ -90,19 +90,19 @@ int get_resource_list(str* pres_uri, char** list)
 	}
 	/* first search in database */
 	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.host;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_doc_type_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= RESOURCE_LIST;
 	n_query_cols++;

@@ -36,7 +36,7 @@
 #include <time.h>
 
 #include "../../pt.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
@@ -60,7 +60,7 @@ MODULE_VERSION
 #define W_TABLE_VERSION 1
 
 /** database connection */
-db_con_t *rls_db = NULL;
+db1_con_t *rls_db = NULL;
 db_func_t rls_dbf;
 
 /** modules variables */
@@ -535,7 +535,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 int rls_restore_db_subs(void)
 {
 	db_key_t result_cols[22]; 
-	db_res_t *res= NULL;
+	db1_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
 	int i;

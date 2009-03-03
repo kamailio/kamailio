@@ -50,16 +50,16 @@
 typedef struct res_param
 {
 	xmlNodePtr list_node;
-	db_res_t* db_result;
+	db1_res_t* db_result;
 	char** cid_array;
 }res_param_t;
 
 int resource_uri_col=0, content_type_col, pres_state_col= 0,
 	auth_state_col= 0, reason_col= 0;
 
-str* constr_rlmi_doc(db_res_t* result, str* rl_uri, int version,
+str* constr_rlmi_doc(db1_res_t* result, str* rl_uri, int version,
 		xmlNodePtr rl_node, char*** cid_array);
-str* constr_multipart_body(db_res_t* result,char** cid_array,
+str* constr_multipart_body(db1_res_t* result,char** cid_array,
 		char* boundary_string);
 
 dlg_t* rls_notify_dlg(subs_t* subs);
@@ -74,7 +74,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	str* multipart_body= NULL;
 	db_key_t query_cols[2], update_cols[2], result_cols[7];
 	db_val_t query_vals[2], update_vals[2];
-	db_res_t *result= NULL;
+	db1_res_t *result= NULL;
 	int n_result_cols= 0, i;
 	char* boundary_string;
 	char** cid_array= NULL;
@@ -86,7 +86,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	CONSTR_RLSUBS_DID(subs, &rlsubs_did);
 
 	query_cols[0]= &str_rlsubs_did_col;
-	query_vals[0].type = DB_STR;
+	query_vals[0].type = DB1_STR;
 	query_vals[0].nul = 0;
 	query_vals[0].val.str_val= rlsubs_did; 
 
@@ -149,7 +149,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 
 	/* update updated col in rlpres_table*/
 	update_cols[0]= &str_updated_col;
-	update_vals[0].type = DB_INT;
+	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 	
@@ -277,7 +277,7 @@ error:
 
 
 int add_resource_instance(char* uri, xmlNodePtr resource_node,
-		db_res_t* result, char** cid_array)
+		db1_res_t* result, char** cid_array)
 {
 	xmlNodePtr instance_node= NULL;
 	db_row_t *row;	
@@ -355,7 +355,7 @@ int add_resource(char* uri, void* param)
 	char** cid_array= ((res_param_t*)param)->cid_array;
 	xmlNodePtr list_node= ((res_param_t*)param)->list_node;
 	xmlNodePtr resource_node= NULL;
-	db_res_t *result= ((res_param_t*)param)->db_result;
+	db1_res_t *result= ((res_param_t*)param)->db_result;
 
 	LM_DBG("uri= %s\n", uri);
 	resource_node= xmlNewChild(list_node, NULL, BAD_CAST "resource", NULL);
@@ -377,7 +377,7 @@ error:
 	return -1;
 }
 
-str* constr_rlmi_doc(db_res_t *result, str* rl_uri, int version,
+str* constr_rlmi_doc(db1_res_t *result, str* rl_uri, int version,
 		xmlNodePtr rl_node, char*** rlmi_cid_array)
 {
 	xmlDocPtr doc= NULL;
@@ -458,7 +458,7 @@ error:
 }
 
 
-str* constr_multipart_body(db_res_t* result, char** cid_array, 
+str* constr_multipart_body(db1_res_t* result, char** cid_array, 
 		char* boundary_string)
 {
 	char* buf= NULL;
@@ -826,12 +826,12 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 		}
 		
 		db_keys[0] =&str_to_tag_col;
-		db_vals[0].type = DB_STR;
+		db_vals[0].type = DB1_STR;
 		db_vals[0].nul = 0;
 		db_vals[0].val.str_val = subs.to_tag;
 
 		db_keys[1] =&str_callid_col;
-		db_vals[1].type = DB_STR;
+		db_vals[1].type = DB1_STR;
 		db_vals[1].nul = 0;
 		db_vals[1].val.str_val = subs.callid;
 
