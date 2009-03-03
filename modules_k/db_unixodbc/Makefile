@@ -13,4 +13,6 @@ DEFS += -I$(LOCALBASE)/include
 # (Debian does the right thing and puts it in /usr/lib)
 LIBS= -L$(LOCALBASE)/lib -lodbc
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
