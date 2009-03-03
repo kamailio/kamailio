@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mod_fix.h"
@@ -101,7 +101,7 @@ str pass_column_2           = {PASS_COL_2, PASS_COL_2_LEN};
 int calc_ha1                = 0;
 int use_domain              = 0; /* Use also domain when looking up in table */
 
-db_con_t* auth_db_handle    = 0; /* database connection handle */
+db1_con_t* auth_db_handle    = 0; /* database connection handle */
 db_func_t auth_dbf;
 auth_api_t auth_api;
 
@@ -229,7 +229,7 @@ static void destroy(void)
  */
 static int auth_fixup(void** param, int param_no)
 {
-	db_con_t* dbh = NULL;
+	db1_con_t* dbh = NULL;
 	str name;
 
 	if (param_no == 1) {

@@ -36,7 +36,7 @@
 #include <string.h>
 #include "../../ut.h"
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
 #include "../../parser/hf.h"
@@ -52,7 +52,7 @@ static str auth_500_err = str_init("Server Internal Error");
 
 
 static inline int get_ha1(struct username* _username, str* _domain,
-			  const str* _table, char* _ha1, db_res_t** res)
+			  const str* _table, char* _ha1, db1_res_t** res)
 {
 	struct aaa_avp *cred;
 	db_key_t keys[2];
@@ -78,7 +78,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 		col[1 + n] = &cred->attr_name;
 	}
 
-	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
+	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB1_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 
 	VAL_STR(vals).s = _username->user.s;
@@ -133,7 +133,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 /*
  * Generate AVPs from the database result
  */
-static int generate_avps(db_res_t* result)
+static int generate_avps(db1_res_t* result)
 {
 	struct aaa_avp *cred;
 	int_str ivalue;
@@ -141,7 +141,7 @@ static int generate_avps(db_res_t* result)
 
 	for (cred=credentials, i=1; cred; cred=cred->next, i++) {
 		switch (result->col.types[i]) {
-		case DB_STR:
+		case DB1_STR:
 			ivalue.s = VAL_STR(&(result->rows[0].values[i]));
 
 			if (VAL_NULL(&(result->rows[0].values[i])) ||
@@ -158,7 +158,7 @@ static int generate_avps(db_res_t* result)
 				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
 				ivalue.s.len, ZSW(ivalue.s.s));
 			break;
-		case DB_STRING:
+		case DB1_STRING:
 			ivalue.s.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
 
 			if (VAL_NULL(&(result->rows[0].values[i])) ||
@@ -175,7 +175,7 @@ static int generate_avps(db_res_t* result)
 				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
 				ivalue.s.len, ZSW(ivalue.s.s));
 			break;
-		case DB_INT:
+		case DB1_INT:
 			if (VAL_NULL(&(result->rows[0].values[i])))
 				continue;
 
@@ -215,7 +215,7 @@ static inline int authorize(struct sip_msg* _m, gparam_p _realm,
 	auth_body_t* cred;
 	auth_result_t ret;
 	str domain, table;
-	db_res_t* result = NULL;
+	db1_res_t* result = NULL;
 
 	if(!_table) {
 		LM_ERR("invalid table parameter\n");

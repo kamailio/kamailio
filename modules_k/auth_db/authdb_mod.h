@@ -27,7 +27,7 @@
 #define AUTHDB_MOD_H
 
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../auth/api.h"
 #include "../sl/sl_api.h"
 #include "../../parser/msg_parser.h"
@@ -47,7 +47,7 @@ extern str pass_column_2;   /* Column containing HA1 string constructed
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int use_domain;        /* If set to 1 then the domain will be used when selecting a row */
 
-extern db_con_t* auth_db_handle; /* database connection handle */
+extern db1_con_t* auth_db_handle; /* database connection handle */
 extern db_func_t auth_dbf;
 
 extern auth_api_t auth_api;
