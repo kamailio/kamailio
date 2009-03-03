@@ -33,7 +33,7 @@
 #include "permissions.h"
 #include "hash.h"
 #include "../../config.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../ip_addr.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
@@ -53,7 +53,7 @@ struct subnet **subnet_table;        /* Ptr to current subnet table */
 struct subnet *subnet_table_1;       /* Ptr to subnet table 1 */
 struct subnet *subnet_table_2;       /* Ptr to subnet table 2 */
 
-static db_con_t* db_handle = 0;
+static db1_con_t* db_handle = 0;
 static db_func_t perm_dbf;
 
 
@@ -64,7 +64,7 @@ static db_func_t perm_dbf;
 int reload_address_table(void)
 {
     db_key_t cols[4];
-    db_res_t* res = NULL;
+    db1_res_t* res = NULL;
     db_row_t* row;
     db_val_t* val;
 
@@ -113,13 +113,13 @@ int reload_address_table(void)
     for (i = 0; i < RES_ROW_N(res); i++) {
 	val = ROW_VALUES(row + i);
 	if ((ROW_N(row + i) == 4) &&
-	    (VAL_TYPE(val) == DB_INT) && !VAL_NULL(val) &&
-	    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
+	    (VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
+	    (VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
 	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
-	    (VAL_TYPE(val + 2) == DB_INT) && !VAL_NULL(val + 2) && 
+	    (VAL_TYPE(val + 2) == DB1_INT) && !VAL_NULL(val + 2) && 
 	    ((unsigned int)VAL_INT(val + 2) > 0) && 
 	    ((unsigned int)VAL_INT(val + 2) <= 32) &&
-	    (VAL_TYPE(val + 3) == DB_INT) && !VAL_NULL(val + 3)) {
+	    (VAL_TYPE(val + 3) == DB1_INT) && !VAL_NULL(val + 3)) {
 	    if ((unsigned int)VAL_INT(val + 2) == 32) {
 		if (addr_hash_table_insert(new_hash_table,
 					   (unsigned int)VAL_INT(val),

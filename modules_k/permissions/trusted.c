@@ -33,7 +33,7 @@
 #include "permissions.h"
 #include "hash.h"
 #include "../../config.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../ip_addr.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
@@ -47,7 +47,7 @@ struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
 struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
 
 
-static db_con_t* db_handle = 0;
+static db1_con_t* db_handle = 0;
 static db_func_t perm_dbf;
 
 
@@ -58,7 +58,7 @@ static db_func_t perm_dbf;
 int reload_trusted_table(void)
 {
 	db_key_t cols[4];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	db_row_t* row;
 	db_val_t* val;
 
@@ -98,12 +98,12 @@ int reload_trusted_table(void)
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    val = ROW_VALUES(row + i);
 	    if ((ROW_N(row + i) == 4) &&
-		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
-		(VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
+		(VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
+		(VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
 		(VAL_NULL(val + 2) ||
-		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2))) &&
+		 ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))) &&
 		(VAL_NULL(val + 3) ||
-		 ((VAL_TYPE(val + 3) == DB_STRING) && !VAL_NULL(val + 3)))) {
+		 ((VAL_TYPE(val + 3) == DB1_STRING) && !VAL_NULL(val + 3)))) {
 		if (VAL_NULL(val + 2)) {
 		    pattern = 0;
 		} else {
@@ -325,7 +325,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
  * Matches from uri against patterns returned from database.  Returns 1 when
  * first pattern matches and 0 if none of the patterns match.
  */
-static int match_res(struct sip_msg* msg, int proto, db_res_t* _r)
+static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 {
         int i, tag_avp_type;
 	str uri;
@@ -349,12 +349,12 @@ static int match_res(struct sip_msg* msg, int proto, db_res_t* _r)
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 	    val = ROW_VALUES(row + i);
 	    if ((ROW_N(row + i) == 3) &&
-		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
+		(VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
 		match_proto(VAL_STRING(val), proto) &&
 		(VAL_NULL(val + 1) ||
-		 ((VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1))) &&
+		 ((VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1))) &&
 		(VAL_NULL(val + 2) ||
-		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2))))
+		 ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))))
 	    {
 		if (VAL_NULL(val + 1)) goto found;
 		if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
@@ -393,7 +393,7 @@ found:
 int allow_trusted(struct sip_msg* msg, char *src_ip, int proto) 
 {
 	int result;
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	
 	db_key_t keys[1];
 	db_val_t vals[1];
@@ -415,7 +415,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 			return -1;
 		}
 		
-		VAL_TYPE(vals) = DB_STRING;
+		VAL_TYPE(vals) = DB1_STRING;
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = src_ip;
 

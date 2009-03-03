@@ -31,7 +31,7 @@
 #define PERMISSIONS_H 1
 
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../pvar.h"
 #include "rule.h"
 
