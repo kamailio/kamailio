@@ -10,4 +10,6 @@ auto_gen=
 NAME=mi_fifo.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
