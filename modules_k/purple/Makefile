@@ -8,4 +8,6 @@ DEFS+=-I/usr/lib/glib-2.0/include -I/usr/include/glib-2.0 \
 LIBS+=-lglib-2.0 -lpurple -lxml2
 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
