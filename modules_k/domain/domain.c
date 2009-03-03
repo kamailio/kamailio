@@ -31,7 +31,7 @@
 
 #include "domain_mod.h"
 #include "hash.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
@@ -40,7 +40,7 @@
 #include "../../pvar.h"
 #include "../../str.h"
 
-static db_con_t* db_handle=0;
+static db1_con_t* db_handle=0;
 static db_func_t domain_dbf;
 
 /* helper db functions*/
@@ -103,7 +103,7 @@ int is_domain_local(str* _host)
 		db_key_t keys[1];
 		db_val_t vals[1];
 		db_key_t cols[1]; 
-		db_res_t* res = NULL;
+		db1_res_t* res = NULL;
 
 		keys[0] = &domain_col;
 		cols[0] = &domain_col;
@@ -113,7 +113,7 @@ int is_domain_local(str* _host)
 			return -1;
 		}
 
-		VAL_TYPE(vals) = DB_STR;
+		VAL_TYPE(vals) = DB1_STR;
 		VAL_NULL(vals) = 0;
 		
 		VAL_STR(vals).s = _host->s;
@@ -228,7 +228,7 @@ int reload_domain_table ( void )
 {
 	db_val_t vals[1];
 	db_key_t cols[1];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	db_row_t* row;
 	db_val_t* val;
 
@@ -242,7 +242,7 @@ int reload_domain_table ( void )
 		return -1;
 	}
 
-	VAL_TYPE(vals) = DB_STR;
+	VAL_TYPE(vals) = DB1_STR;
 	VAL_NULL(vals) = 0;
 
 	if (domain_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 1, 0, &res) < 0) {
@@ -265,7 +265,7 @@ int reload_domain_table ( void )
 		
 	for (i = 0; i < RES_ROW_N(res); i++) {
 		val = ROW_VALUES(row + i);
-		if ((ROW_N(row) == 1) && (VAL_TYPE(val) == DB_STRING)) {
+		if ((ROW_N(row) == 1) && (VAL_TYPE(val) == DB1_STRING)) {
 			
 			LM_DBG("Value: %s inserted into domain hash table\n",VAL_STRING(val));
 

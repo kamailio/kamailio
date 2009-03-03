@@ -27,7 +27,7 @@
 #define DOMAIN_MOD_H
 
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../str.h"
 #include "../../usr_avp.h"
 
