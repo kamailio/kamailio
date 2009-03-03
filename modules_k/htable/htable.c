@@ -31,7 +31,7 @@
 #include "../../sr_module.h"
 #include "../../timer.h"
 #include "../../dprint.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #include "../../pvar.h"
 #include "ht_api.h"
