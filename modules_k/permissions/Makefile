@@ -9,4 +9,6 @@ auto_gen=
 NAME=permissions.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
