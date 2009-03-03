@@ -30,7 +30,7 @@
 #include "db.h"
 #include "db_userblacklist.h"
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
 #include "../../lib/trie/dtrie.h"
@@ -46,14 +46,14 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	db_key_t key[2] = { &userblacklist_username_col, &userblacklist_domain_col };
 
 	db_val_t val[2];
-	VAL_TYPE(val) = VAL_TYPE(val + 1) = DB_STR;
+	VAL_TYPE(val) = VAL_TYPE(val + 1) = DB1_STR;
 	VAL_NULL(val) = VAL_NULL(val + 1) = 0;
 	VAL_STR(val).s = username->s;
 	VAL_STR(val).len = username->len;
 	VAL_STR(val + 1).s = domain->s;
 	VAL_STR(val + 1).len = domain->len;
 
-	db_res_t *res;
+	db1_res_t *res;
 	int i;
 	int n = 0;
 	void *nodeflags;
@@ -72,8 +72,8 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	if (RES_COL_N(res) > 1) {
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			if ((!RES_ROWS(res)[i].values[0].nul) && (!RES_ROWS(res)[i].values[1].nul)) {
-				if ((RES_ROWS(res)[i].values[0].type == DB_STRING) &&
-					(RES_ROWS(res)[i].values[1].type == DB_INT)) {
+				if ((RES_ROWS(res)[i].values[0].type == DB1_STRING) &&
+					(RES_ROWS(res)[i].values[1].type == DB1_INT)) {
 
 					/* LM_DBG("insert into tree prefix %s, whitelist %d",
 						RES_ROWS(res)[i].values[0].val.string_val,
@@ -102,7 +102,7 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 int db_reload_source(const str *table, struct dtrie_node_t *root)
 {
 	db_key_t columns[2] = { &globalblacklist_prefix_col, &globalblacklist_whitelist_col };
-	db_res_t *res;
+	db1_res_t *res;
 	int i;
 	int n = 0;
 	void *nodeflags;
@@ -121,8 +121,8 @@ int db_reload_source(const str *table, struct dtrie_node_t *root)
 	if (RES_COL_N(res) > 1) {
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			if ((!RES_ROWS(res)[i].values[0].nul) && (!RES_ROWS(res)[i].values[1].nul)) {
-				if ((RES_ROWS(res)[i].values[0].type == DB_STRING) &&
-					(RES_ROWS(res)[i].values[1].type == DB_INT)) {
+				if ((RES_ROWS(res)[i].values[0].type == DB1_STRING) &&
+					(RES_ROWS(res)[i].values[1].type == DB1_INT)) {
 
 					/* LM_DBG("insert into tree prefix %s, whitelist %d",
 						RES_ROWS(res)[i].values[0].val.string_val,
