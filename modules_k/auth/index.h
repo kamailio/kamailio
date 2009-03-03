@@ -1,5 +1,5 @@
 /*
- * $Id:$
+ * $Id$
  *
  * Copyright (C)2008  Voice System S.R.L
  *
