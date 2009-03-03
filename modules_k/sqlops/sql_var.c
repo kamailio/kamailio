@@ -109,7 +109,7 @@ int sql_parse_index(str *in, gparam_t *gp)
 		}
 	} else {
 		gp->type = GPARAM_TYPE_INT;
-		if(str2sint(in, &gp->v.ival) != 0)
+		if(str2sint(in, &gp->v.i) != 0)
 		{
 			LM_ERR("bad number <%.*s>\n", in->len, in->s);
 			return -1;
