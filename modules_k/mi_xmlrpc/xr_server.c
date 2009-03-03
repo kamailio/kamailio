@@ -30,7 +30,7 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../sr_module.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../locking.h"

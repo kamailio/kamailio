@@ -31,7 +31,7 @@
 #include <stdio.h>
 #define XMLRPC_WANT_INTERNAL_DECLARATIONS
 #include <xmlrpc.h>
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 struct mi_root * xr_parse_tree ( xmlrpc_env * env, xmlrpc_value * paramArray );
 
