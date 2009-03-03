@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
@@ -64,7 +64,7 @@ str domain_prefix       = {NULL, 0};
 int use_domain          = 0;
 int ald_append_branches = 0;
 
-db_con_t* db_handle;   /* Database connection handle */
+db1_con_t* db_handle;   /* Database connection handle */
 db_func_t adbf;  /* DB functions */
 
 /* Exported functions */

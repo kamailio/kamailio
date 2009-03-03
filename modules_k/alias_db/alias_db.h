@@ -30,7 +30,7 @@
 #ifndef _ALIAS_DB_H_
 #define _ALIAS_DB_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -44,6 +44,6 @@ extern str domain_prefix;
 extern int use_domain;      /* use or not the domain for alias lookup */
 extern int ald_append_branches;  /* append branches after an alias lookup */
 
-extern db_con_t* db_handle;   /* Database connection handle */
+extern db1_con_t* db_handle;   /* Database connection handle */
 
 #endif /* _ALIAS_DB_H_ */

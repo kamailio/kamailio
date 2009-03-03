@@ -33,7 +33,7 @@
 #include "../../config.h"
 #include "../../ut.h"
 #include "../../parser/parse_uri.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
 
@@ -75,7 +75,7 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	db_key_t db_keys[2] = {&alias_user_column, &alias_domain_column};
 	db_val_t db_vals[2];
 	db_key_t db_cols[] = {&user_column, &domain_column};
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	int i;
 	
 	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
@@ -87,14 +87,14 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	if (parse_sip_msg_uri(_msg) < 0)
 		return -1;
 	
-	db_vals[0].type = DB_STR;
+	db_vals[0].type = DB1_STR;
 	db_vals[0].nul = 0;
 	db_vals[0].val.str_val.s = _msg->parsed_uri.user.s;
 	db_vals[0].val.str_val.len = _msg->parsed_uri.user.len;
 
 	if (use_domain)
 	{
-		db_vals[1].type = DB_STR;
+		db_vals[1].type = DB1_STR;
 		db_vals[1].nul = 0;
 		db_vals[1].val.str_val.s = _msg->parsed_uri.host.s;
 		db_vals[1].val.str_val.len = _msg->parsed_uri.host.len;
@@ -132,18 +132,18 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		user_s.s = useruri_buf+4;
 		switch(RES_ROWS(db_res)[i].values[0].type)
 		{ 
-			case DB_STRING:
+			case DB1_STRING:
 				strcpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[0].val.string_val);
 				user_s.len += strlen(user_s.s);
 			break;
-			case DB_STR:
+			case DB1_STR:
 				strncpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[0].val.str_val.s,
 					RES_ROWS(db_res)[i].values[0].val.str_val.len);
 				user_s.len += RES_ROWS(db_res)[i].values[0].val.str_val.len;
 			break;
-			case DB_BLOB:
+			case DB1_BLOB:
 				strncpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[0].val.blob_val.s,
 					RES_ROWS(db_res)[i].values[0].val.blob_val.len);
@@ -166,19 +166,19 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		user_s.s = useruri_buf+user_s.len;
 		switch(RES_ROWS(db_res)[i].values[1].type)
 		{ 
-			case DB_STRING:
+			case DB1_STRING:
 				strcpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[1].val.string_val);
 				user_s.len += strlen(user_s.s);
 			break;
-			case DB_STR:
+			case DB1_STR:
 				strncpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[1].val.str_val.s,
 					RES_ROWS(db_res)[i].values[1].val.str_val.len);
 				user_s.len += RES_ROWS(db_res)[i].values[1].val.str_val.len;
 				useruri_buf[user_s.len] = '\0';
 			break;
-			case DB_BLOB:
+			case DB1_BLOB:
 				strncpy(user_s.s, 
 					(char*)RES_ROWS(db_res)[i].values[1].val.blob_val.s,
 					RES_ROWS(db_res)[i].values[1].val.blob_val.len);
