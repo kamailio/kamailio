@@ -66,7 +66,7 @@
 #include "../../parser/parse_privacy.h"
 #include "../../mod_fix.h"
 #include "../../ut.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
