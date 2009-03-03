@@ -39,7 +39,7 @@
 #include "../../ip_addr.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../db/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
