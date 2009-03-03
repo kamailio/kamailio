@@ -40,7 +40,7 @@
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../config.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 #include "verify.h"
 
 MODULE_VERSION
