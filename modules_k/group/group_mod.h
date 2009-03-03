@@ -35,7 +35,7 @@
 #ifndef GROUP_MOD_H
 #define GROUP_MOD_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../str.h"
 #include "../../parser/digest/digest.h" /* auth_body_t */
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
@@ -57,7 +57,7 @@ extern int multiple_gid;
 
 /* DB functions and handlers */
 extern db_func_t group_dbf;
-extern db_con_t* group_dbh;
+extern db1_con_t* group_dbh;
 
 
 #endif

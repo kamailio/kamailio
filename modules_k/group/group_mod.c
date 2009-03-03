@@ -126,7 +126,7 @@ int multiple_gid  = 1;
 
 /* DB functions and handlers */
 db_func_t group_dbf;
-db_con_t* group_dbh = 0;
+db1_con_t* group_dbh = 0;
 
 
 /*!

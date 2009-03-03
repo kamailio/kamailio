@@ -96,7 +96,7 @@ error:
 int load_re( str *table )
 {
 	db_key_t cols[2];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	db_row_t* row;
 	int n;
 
@@ -116,12 +116,12 @@ int load_re( str *table )
 	for( n=0 ; n<RES_ROW_N(res) ; n++) {
 		row = &res->rows[n];
 		/* validate row */
-		if (row->values[0].nul || row->values[0].type!=DB_STRING) {
+		if (row->values[0].nul || row->values[0].type!=DB1_STRING) {
 			LM_ERR("empty or non-string "
 				"value for <%s>(re) column\n",re_exp_column.s);
 			goto error1;
 		}
-		if (row->values[1].nul || row->values[1].type!=DB_INT) {
+		if (row->values[1].nul || row->values[1].type!=DB1_INT) {
 			LM_ERR("empty or non-integer "
 				"value for <%s>(gid) column\n",re_gid_column.s);
 			goto error1;

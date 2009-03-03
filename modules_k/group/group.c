@@ -36,7 +36,7 @@
 
 #include <string.h>
 #include "../../dprint.h"               /* Logging */
-#include "../../db/db.h"                /* Generic database API */
+#include "../../lib/srdb1/db.h"                /* Generic database API */
 #include "../../ut.h"
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
 #include "../../parser/hf.h"            /* Header Field types */
@@ -142,7 +142,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t col[1];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 
 	keys[0] = &user_column;
 	keys[1] = &group_column;
@@ -160,7 +160,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 		return -1;
 	}
 
-	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
+	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB1_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 
 	VAL_STR(vals + 1) = *((str*)_grp);
