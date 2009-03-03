@@ -28,7 +28,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_uri.h"
 #include  "../../mem/mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../ut.h"
 #include "../../cmpapi.h"
 
