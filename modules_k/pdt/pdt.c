@@ -40,9 +40,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../../db/db_op.h"
+#include "../../lib/srdb1/db_op.h"
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -67,7 +67,7 @@ int pdt_fetch_rows = 1000;
 pdt_tree_t **_ptree = NULL; 
 
 /** database connection */
-static db_con_t *db_con = NULL;
+static db1_con_t *db_con = NULL;
 static db_func_t pdt_dbf;
 
 
@@ -549,7 +549,7 @@ static int pdt_load_db(void)
 {
 	db_key_t db_cols[3] = {&sdomain_column, &prefix_column, &domain_column};
 	str p, d, sdomain;
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	int i, ret;
 	pdt_tree_t *_ptree_new = NULL; 
 	pdt_tree_t *old_tree = NULL; 
@@ -776,17 +776,17 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree(400,
 				"(sdomain,prefix,domain) exists already", 38);
 	}
-	db_vals[0].type = DB_STR;
+	db_vals[0].type = DB1_STR;
 	db_vals[0].nul = 0;
 	db_vals[0].val.str_val.s = sdomain.s;
 	db_vals[0].val.str_val.len = sdomain.len;
 
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = sp.s;
 	db_vals[1].val.str_val.len = sp.len;
 
-	db_vals[2].type = DB_STR;
+	db_vals[2].type = DB1_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = sd.s;
 	db_vals[2].val.str_val.len = sd.len;
@@ -861,12 +861,12 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 		 return init_mi_tree( 400, "empty param", 11);
 
 
-	db_vals[0].type = DB_STR;
+	db_vals[0].type = DB1_STR;
 	db_vals[0].nul = 0;
 	db_vals[0].val.str_val.s = sdomain.s;
 	db_vals[0].val.str_val.len = sdomain.len;
 	
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = sd.s;
 	db_vals[1].val.str_val.len = sd.len;
