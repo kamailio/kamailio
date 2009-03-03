@@ -27,7 +27,7 @@
 #include "../../str.h"
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 
 struct extra_attr {
     str name;

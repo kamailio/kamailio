@@ -33,7 +33,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../usr_avp.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 #include "../../ut.h"
 #include "../auth/api.h"
 #include "sterman.h"

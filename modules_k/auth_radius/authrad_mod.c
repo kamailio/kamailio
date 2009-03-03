@@ -40,7 +40,7 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../pvar.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 #include "../../mem/mem.h"
 #include "authrad_mod.h"
 #include "authorize.h"

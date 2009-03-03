@@ -31,7 +31,7 @@
 #define AUTHRAD_MOD_H
 
 #include "../auth/api.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 
 extern struct attr attrs[];
 extern struct val vals[];
