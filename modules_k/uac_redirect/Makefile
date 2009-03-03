@@ -8,4 +8,6 @@ auto_gen=
 NAME=uac_redirect.so
 LIBS= 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
