@@ -63,7 +63,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mod_fix.h"
 #include "../../md5utils.h"
 #include "../../globals.h"
