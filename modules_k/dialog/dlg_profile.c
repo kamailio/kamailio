@@ -35,7 +35,7 @@
 
 
 #include "../../mem/shm_mem.h"
-#include "../../hash_func.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../route.h"
