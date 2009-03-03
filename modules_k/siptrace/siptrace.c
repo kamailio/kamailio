@@ -40,7 +40,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../pvar.h"
@@ -102,7 +102,7 @@ static str trace_table_avp_str = {NULL, 0};
 
 static str trace_local_ip = {NULL, 0};
 
-db_con_t *db_con = NULL; 		/*!< database connection */
+db1_con_t *db_con = NULL; 		/*!< database connection */
 db_func_t db_funcs;      		/*!< Database functions */
 
 register_slcb_t register_slcb_f=NULL;	/*!< stateless callback registration */
@@ -393,19 +393,19 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	}
 
 	db_keys[0] = &msg_column;
-	db_vals[0].type = DB_BLOB;
+	db_vals[0].type = DB1_BLOB;
 	db_vals[0].nul = 0;
 	db_vals[0].val.blob_val.s = msg->buf;
 	db_vals[0].val.blob_val.len = msg->len;
 	
 	db_keys[1] = &callid_column;
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
 	db_keys[2] = &method_column;
-	db_vals[2].type = DB_STR;
+	db_vals[2].type = DB1_STR;
 	db_vals[2].nul = 0;
 	if(msg->first_line.type==SIP_REQUEST) {
 		db_vals[2].val.str_val.s = msg->first_line.u.request.method.s;
@@ -416,7 +416,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	}
 		
 	db_keys[3] = &status_column;
-	db_vals[3].type = DB_STR;
+	db_vals[3].type = DB1_STR;
 	db_vals[3].nul = 0;
 	if(msg->first_line.type==SIP_REPLY) {
 		db_vals[3].val.str_val.s = msg->first_line.u.reply.status.s;
@@ -427,7 +427,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	}
 		
 	db_keys[4] = &fromip_column;
-	db_vals[4].type = DB_STRING;
+	db_vals[4].type = DB1_STRING;
 	db_vals[4].nul = 0;
 	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
 	strcat(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
@@ -436,7 +436,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_vals[4].val.string_val = fromip_buff;
 	
 	db_keys[5] = &toip_column;
-	db_vals[5].type = DB_STRING;
+	db_vals[5].type = DB1_STRING;
 	db_vals[5].nul = 0;
 	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
 	siptrace_copy_proto(msg->rcv.proto, toip_buff);
@@ -446,17 +446,17 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_vals[5].val.string_val = toip_buff;
 	
 	db_keys[6] = &date_column;
-	db_vals[6].type = DB_DATETIME;
+	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = &direction_column;
-	db_vals[7].type = DB_STRING;
+	db_vals[7].type = DB1_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "in";
 	
 	db_keys[8] = &fromtag_column;
-	db_vals[8].type = DB_STR;
+	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
@@ -464,7 +464,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_funcs.use_table(db_con, siptrace_get_table());
 	
 	db_keys[9] = &traced_user_column;
-	db_vals[9].type = DB_STR;
+	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
 
 	if(trace_on_flag!=NULL && *trace_on_flag!=0) {
@@ -618,7 +618,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	db_keys[0] = &msg_column;
-	db_vals[0].type = DB_BLOB;
+	db_vals[0].type = DB1_BLOB;
 	db_vals[0].nul = 0;
 	sbuf = (str*)ps->extra1;
 	if(sbuf!=NULL && sbuf->len>0) {
@@ -636,13 +636,13 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	db_keys[1] = &callid_column;
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
 	db_keys[2] = &method_column;
-	db_vals[2].type = DB_STR;
+	db_vals[2].type = DB1_STR;
 	db_vals[2].nul = 0;
 	sbuf = (str*)ps->extra1;
 	if(sbuf!=NULL && sbuf->len > 7 && !strncasecmp(sbuf->s, "CANCEL ", 7)) {
@@ -654,7 +654,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 		
 	db_keys[3] = &status_column;
-	db_vals[3].type = DB_STR;
+	db_vals[3].type = DB1_STR;
 	db_vals[3].nul = 0;
 	db_vals[3].val.str_val.s = "";
 	db_vals[3].val.str_val.len = 0;
@@ -663,7 +663,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	dst = (struct dest_info*)ps->extra2;
 
 	db_keys[4] = &fromip_column;
-	db_vals[4].type = DB_STRING;
+	db_vals[4].type = DB1_STRING;
 	db_vals[4].nul = 0;
 	if (trace_local_ip.s && trace_local_ip.len > 0) {
 		db_vals[4].val.string_val = trace_local_ip.s;
@@ -675,13 +675,13 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 			strcat(fromip_buff, int2str(msg->rcv.dst_port, NULL));
 			db_vals[4].val.string_val = fromip_buff;
 		} else {
-			db_vals[4].type = DB_STR;
+			db_vals[4].type = DB1_STR;
 			db_vals[4].val.str_val = dst->send_sock->sock_str;
 		}
 	}
 	
 	db_keys[5] = &toip_column;
-	db_vals[5].type = DB_STRING;
+	db_vals[5].type = DB1_STRING;
 	db_vals[5].nul = 0;
 	if(dst==0) {
 		db_vals[5].val.string_val = "any:255.255.255.255";
@@ -697,17 +697,17 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	db_keys[6] = &date_column;
-	db_vals[6].type = DB_DATETIME;
+	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = &direction_column;
-	db_vals[7].type = DB_STRING;
+	db_vals[7].type = DB1_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "out";
 	
 	db_keys[8] = &fromtag_column;
-	db_vals[8].type = DB_STR;
+	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
@@ -715,7 +715,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = &traced_user_column;
-	db_vals[9].type = DB_STR;
+	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
 
 	if( !trace_is_off(msg) ) {
@@ -810,7 +810,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	db_keys[0] = &msg_column;
-	db_vals[0].type = DB_BLOB;
+	db_vals[0].type = DB1_BLOB;
 	db_vals[0].nul = 0;
 	if(msg->len>0) {
 		db_vals[0].val.blob_val.s   = msg->buf;
@@ -827,25 +827,25 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	db_keys[1] = &callid_column;
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
 	db_keys[2] = &method_column;
-	db_vals[2].type = DB_STR;
+	db_vals[2].type = DB1_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = t->method.s;
 	db_vals[2].val.str_val.len = t->method.len;
 		
 	db_keys[3] = &status_column;
-	db_vals[3].type = DB_STRING;
+	db_vals[3].type = DB1_STRING;
 	db_vals[3].nul = 0;
 	strcpy(statusbuf, int2str(ps->code, NULL));
 	db_vals[3].val.string_val = statusbuf;
 		
 	db_keys[4] = &fromip_column;
-	db_vals[4].type = DB_STRING;
+	db_vals[4].type = DB1_STRING;
 	db_vals[4].nul = 0;
 	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
 	strcat(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
@@ -854,7 +854,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[4].val.string_val = fromip_buff;
 	
 	db_keys[5] = &toip_column;
-	db_vals[5].type = DB_STRING;
+	db_vals[5].type = DB1_STRING;
 	db_vals[5].nul = 0;
 	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
 	if(trace_local_ip.s && trace_local_ip.len > 0) {
@@ -868,17 +868,17 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	db_keys[6] = &date_column;
-	db_vals[6].type = DB_DATETIME;
+	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = &direction_column;
-	db_vals[7].type = DB_STRING;
+	db_vals[7].type = DB1_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "in";
 	
 	db_keys[8] = &fromtag_column;
-	db_vals[8].type = DB_STR;
+	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
@@ -886,7 +886,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = &traced_user_column;
-	db_vals[9].type = DB_STR;
+	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
 
 	if( !trace_is_off(req) ) {
@@ -985,7 +985,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	db_keys[0] = &msg_column;
-	db_vals[0].type = DB_BLOB;
+	db_vals[0].type = DB1_BLOB;
 	db_vals[0].nul = 0;
 	sbuf = (str*)ps->extra1;
 	if(faked==0) {
@@ -1022,19 +1022,19 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 
 	db_keys[1] = &callid_column;
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
 	db_keys[2] = &method_column;
-	db_vals[2].type = DB_STR;
+	db_vals[2].type = DB1_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = t->method.s;
 	db_vals[2].val.str_val.len = t->method.len;
 		
 	db_keys[4] = &fromip_column;
-	db_vals[4].type = DB_STRING;
+	db_vals[4].type = DB1_STRING;
 	db_vals[4].nul = 0;
 	
 	if(trace_local_ip.s && trace_local_ip.len > 0) {
@@ -1049,13 +1049,13 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	db_keys[3] = &status_column;
-	db_vals[3].type = DB_STRING;
+	db_vals[3].type = DB1_STRING;
 	db_vals[3].nul = 0;
 	strcpy(statusbuf, int2str(ps->code, NULL));
 	db_vals[3].val.string_val = statusbuf;
 		
 	db_keys[5] = &toip_column;
-	db_vals[5].type = DB_STRING;
+	db_vals[5].type = DB1_STRING;
 	db_vals[5].nul = 0;
 	memset(&to_ip, 0, sizeof(struct ip_addr));
 	dst = (struct dest_info*)ps->extra2;
@@ -1072,17 +1072,17 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	
 	db_keys[6] = &date_column;
-	db_vals[6].type = DB_DATETIME;
+	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = &direction_column;
-	db_vals[7].type = DB_STRING;
+	db_vals[7].type = DB1_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "out";
 	
 	db_keys[8] = &fromtag_column;
-	db_vals[8].type = DB_STR;
+	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
@@ -1090,7 +1090,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = &traced_user_column;
-	db_vals[9].type = DB_STR;
+	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
 
 	if( !trace_is_off(req) ) {
@@ -1190,7 +1190,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req, struc
 	}
 
 	db_keys[0] = &msg_column;
-	db_vals[0].type = DB_BLOB;
+	db_vals[0].type = DB1_BLOB;
 	db_vals[0].nul = 0;
 	db_vals[0].val.blob_val.s   = (sl_param->buffer)?sl_param->buffer->s:"";
 	db_vals[0].val.blob_val.len = (sl_param->buffer)?sl_param->buffer->len:0;
@@ -1202,19 +1202,19 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req, struc
 	}
 
 	db_keys[1] = &callid_column;
-	db_vals[1].type = DB_STR;
+	db_vals[1].type = DB1_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
 	db_keys[2] = &method_column;
-	db_vals[2].type = DB_STR;
+	db_vals[2].type = DB1_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = msg->first_line.u.request.method.s;
 	db_vals[2].val.str_val.len = msg->first_line.u.request.method.len;
 		
 	db_keys[4] = &fromip_column;
-	db_vals[4].type = DB_STRING;
+	db_vals[4].type = DB1_STRING;
 	db_vals[4].nul = 0;
 	if(trace_local_ip.s && trace_local_ip.len > 0) {
 		db_vals[4].val.string_val = trace_local_ip.s;
@@ -1228,13 +1228,13 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req, struc
 	}
 
 	db_keys[3] = &status_column;
-	db_vals[3].type = DB_STRING;
+	db_vals[3].type = DB1_STRING;
 	db_vals[3].nul = 0;
 	strcpy(statusbuf, int2str(sl_param->code, NULL));
 	db_vals[3].val.string_val = statusbuf;
 		
 	db_keys[5] = &toip_column;
-	db_vals[5].type = DB_STRING;
+	db_vals[5].type = DB1_STRING;
 	db_vals[5].nul = 0;
 	memset(&to_ip, 0, sizeof(struct ip_addr));
 	if(sl_param->dst==0)
@@ -1253,17 +1253,17 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req, struc
 	}
 	
 	db_keys[6] = &date_column;
-	db_vals[6].type = DB_DATETIME;
+	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
 	db_keys[7] = &direction_column;
-	db_vals[7].type = DB_STRING;
+	db_vals[7].type = DB1_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "out";
 	
 	db_keys[8] = &fromtag_column;
-	db_vals[8].type = DB_STR;
+	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
 	db_vals[8].val.str_val.len = get_from(msg)->tag_value.len;
@@ -1271,7 +1271,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req, struc
 	db_funcs.use_table(db_con, siptrace_get_table());
 
 	db_keys[9] = &traced_user_column;
-	db_vals[9].type = DB_STR;
+	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
 
 	if( !trace_is_off(msg) ) {
