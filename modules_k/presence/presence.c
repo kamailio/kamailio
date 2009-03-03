@@ -66,7 +66,7 @@
 #include "../tm/tm_load.h"
 #include "../sl/sl_api.h"
 #include "../../pt.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../pua/hash.h"
 #include "publish.h"
 #include "subscribe.h"
