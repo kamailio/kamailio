@@ -7,4 +7,6 @@ auto_gen=
 NAME=statistics.so
 LIBS= 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
