@@ -40,7 +40,7 @@
 #include "../../usr_avp.h"
 #include "../../ut.h"
 #include "../../config.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 #include "../../mod_fix.h"
 #include "misc_radius.h"
 #include "functions.h"

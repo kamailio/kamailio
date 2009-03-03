@@ -26,7 +26,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../usr_avp.h"
-#include "../../radius.h"
+#include "../../lib/kcore/radius.h"
 #include "../../parser/parse_uri.h"
 #include "misc_radius.h"
 #include "extra.h"
