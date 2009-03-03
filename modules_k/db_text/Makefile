@@ -13,4 +13,6 @@ auto_gen=
 NAME=db_text.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
