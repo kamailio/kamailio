@@ -30,7 +30,7 @@
 #include  "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../ut.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 
 #include "../pua/pua_bind.h"
 #include "../pua/pua.h"
