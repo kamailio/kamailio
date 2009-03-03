@@ -35,7 +35,7 @@
 
 
 #include "../../ut.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../dialog/dlg_load.h"
 #include "sst_handlers.h"
 
