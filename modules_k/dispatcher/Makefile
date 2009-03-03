@@ -12,4 +12,6 @@ NAME=dispatcher.so
 
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
