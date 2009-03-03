@@ -30,7 +30,7 @@
 #ifndef _AVP_OPS_DB_H_
 #define _AVP_OPS_DB_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include "../../sr_module.h"
@@ -55,10 +55,10 @@ int avpops_db_bind(const str* db_url);
 
 int avpops_db_init(const str* db_url, const str* db_table, str **db_columns);
 
-db_res_t *db_load_avp( str *uuid, str *username, str *domain,
+db1_res_t *db_load_avp( str *uuid, str *username, str *domain,
 		char *attr, const str *table, struct db_scheme *scheme);
 
-void db_close_query( db_res_t *res );
+void db_close_query( db1_res_t *res );
 
 int db_store_avp( db_key_t *keys, db_val_t *vals, int n, const str *table);
 

@@ -70,27 +70,27 @@ void init_store_avps(str **db_columns)
 {
 	/* unique user id */
 	store_keys[0] = db_columns[0]; /*uuid*/
-	store_vals[0].type = DB_STR;
+	store_vals[0].type = DB1_STR;
 	store_vals[0].nul  = 0;
 	/* attribute */
 	store_keys[1] = db_columns[1]; /*attribute*/
-	store_vals[1].type = DB_STR;
+	store_vals[1].type = DB1_STR;
 	store_vals[1].nul  = 0;
 	/* value */
 	store_keys[2] = db_columns[2]; /*value*/
-	store_vals[2].type = DB_STR;
+	store_vals[2].type = DB1_STR;
 	store_vals[2].nul  = 0;
 	/* type */
 	store_keys[3] = db_columns[3]; /*type*/
-	store_vals[3].type = DB_INT;
+	store_vals[3].type = DB1_INT;
 	store_vals[3].nul  = 0;
 	/* user name */
 	store_keys[4] = db_columns[4]; /*username*/
-	store_vals[4].type = DB_STR;
+	store_vals[4].type = DB1_STR;
 	store_vals[4].nul  = 0;
 	/* domain */
 	store_keys[5] = db_columns[5]; /*domain*/
-	store_vals[5].type = DB_STR;
+	store_vals[5].type = DB1_STR;
 	store_vals[5].nul  = 0;
 }
 
@@ -122,9 +122,9 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 		}
 
 		/* check the value types */
-		if ( (row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR)
-			||  (row->values[1].type!=DB_STRING && row->values[1].type!=DB_STR)
-			|| row->values[2].type!=DB_INT )
+		if ( (row->values[0].type!=DB1_STRING && row->values[0].type!=DB1_STR)
+			||  (row->values[1].type!=DB1_STRING && row->values[1].type!=DB1_STR)
+			|| row->values[2].type!=DB1_INT )
 		{
 			LM_ERR("wrong field types in dbrow\n");
 			return -1;
@@ -143,8 +143,8 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 			return -2;
 	} else {
 		/* check the validity of value column */
-		if (row->values[0].nul || (row->values[0].type!=DB_STRING &&
-		row->values[0].type!=DB_STR && row->values[0].type!=DB_INT) )
+		if (row->values[0].nul || (row->values[0].type!=DB1_STRING &&
+		row->values[0].type!=DB1_STR && row->values[0].type!=DB1_INT) )
 		{
 			LM_ERR("empty or wrong type for 'value' using scheme\n");
 			return -1;
@@ -160,7 +160,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 		db_flags |= attr_type;
 	} else {
 		/* take the name from db response */
-		if (row->values[1].type==DB_STRING)
+		if (row->values[1].type==DB1_STRING)
 		{
 			atmp.s = (char*)row->values[1].val.string_val;
 			atmp.len = strlen(atmp.s);
@@ -183,11 +183,11 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 	}
 
 	/* now get the value as correct type */
-	if (row->values[0].type==DB_STRING)
+	if (row->values[0].type==DB1_STRING)
 	{
 		vtmp.s = (char*)row->values[0].val.string_val;
 		vtmp.len = strlen(vtmp.s);
-	} else if (row->values[0].type==DB_STR){
+	} else if (row->values[0].type==DB1_STR){
 		vtmp = row->values[0].val.str_val;
 	} else {
 		vtmp.s = 0;
@@ -195,14 +195,14 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 	}
 	if (db_flags&AVP_VAL_STR) {
 		/* value must be saved as string */
-		if (row->values[0].type==DB_INT) {
+		if (row->values[0].type==DB1_INT) {
 			vtmp.s = int2str( (unsigned long)row->values[0].val.int_val,
 				&vtmp.len);
 		}
 		avp_val.s = vtmp;
 	} else {
 		/* value must be saved as integer */
-		if (row->values[0].type!=DB_INT) {
+		if (row->values[0].type!=DB1_INT) {
 			if (vtmp.len==0 || vtmp.s==0 || str2int(&vtmp, &uint)==-1) {
 				LM_ERR("value is not int as flags say <%s>\n", vtmp.s);
 				return -1;
@@ -284,7 +284,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
 {
 	struct sip_uri   uri;
-	db_res_t         *res = NULL;
+	db1_res_t         *res = NULL;
 	str              uuid;
 	int  i, n, sh_flg;
 	str *s0, *s1, *s2;

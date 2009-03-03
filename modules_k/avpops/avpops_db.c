@@ -31,13 +31,13 @@
 
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "avpops_parse.h"
 #include "avpops_db.h"
 
 
-static db_con_t  *db_hdl=0;     /* DB handler */
+static db1_con_t  *db_hdl=0;     /* DB handler */
 static db_func_t avpops_dbf;    /* DB functions */
 static str       def_table;    /* default DB table */
 static str      **db_columns;  /* array with names of DB columns */
@@ -190,7 +190,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 		/* uuid column */
 		keys_cmp[ nr_keys_cmp ] =
 			(scheme&&scheme->uuid_col.s)?&scheme->uuid_col:db_columns[0];
-		vals_cmp[ nr_keys_cmp ].type = DB_STR;
+		vals_cmp[ nr_keys_cmp ].type = DB1_STR;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
 		vals_cmp[ nr_keys_cmp ].val.str_val = *uuid;
 		nr_keys_cmp++;
@@ -200,7 +200,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 			/* username column */
 			keys_cmp[ nr_keys_cmp ] =
 			(scheme&&scheme->username_col.s)?&scheme->username_col:db_columns[4];
-			vals_cmp[ nr_keys_cmp ].type = DB_STR;
+			vals_cmp[ nr_keys_cmp ].type = DB1_STR;
 			vals_cmp[ nr_keys_cmp ].nul  = 0;
 			vals_cmp[ nr_keys_cmp ].val.str_val = *username;
 			nr_keys_cmp++;
@@ -210,7 +210,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 			/* domain column */
 			keys_cmp[ nr_keys_cmp ] =
 			(scheme&&scheme->domain_col.s)?&scheme->domain_col:db_columns[5];
-			vals_cmp[ nr_keys_cmp ].type = DB_STR;
+			vals_cmp[ nr_keys_cmp ].type = DB1_STR;
 			vals_cmp[ nr_keys_cmp ].nul  = 0;
 			vals_cmp[ nr_keys_cmp ].val.str_val = *domain;
 			nr_keys_cmp++;
@@ -220,7 +220,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 	{
 		/* attribute name column */
 		keys_cmp[ nr_keys_cmp ] = db_columns[1];
-		vals_cmp[ nr_keys_cmp ].type = DB_STRING;
+		vals_cmp[ nr_keys_cmp ].type = DB1_STRING;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
 		vals_cmp[ nr_keys_cmp ].val.string_val = attr;
 		nr_keys_cmp++;
@@ -229,13 +229,13 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 }
 
 
-db_res_t *db_load_avp( str *uuid, str *username, str *domain,
+db1_res_t *db_load_avp( str *uuid, str *username, str *domain,
 							char *attr, const str *table, struct db_scheme *scheme)
 {
 	static db_key_t   keys_ret[3];
 	unsigned int      nr_keys_cmp;
 	unsigned int      nr_keys_ret;
-	db_res_t          *res = NULL;
+	db1_res_t          *res = NULL;
 
 	/* prepare DB query */
 	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, scheme);
@@ -266,7 +266,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 }
 
 
-void db_close_query( db_res_t *res )
+void db_close_query( db1_res_t *res )
 {
 	LM_DBG("close avp query\n");
 	avpops_dbf.free_result( db_hdl, res);
@@ -314,7 +314,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 	int_str avp_val;
 	int_str avp_name;
 	unsigned short avp_type;
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	int i, j;
 	pvname_list_t* crt;
 	static str query_str;
@@ -365,7 +365,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 			}
 			switch(RES_ROWS(db_res)[i].values[j].type)
 			{
-				case DB_STRING:
+				case DB1_STRING:
 					avp_type |= AVP_VAL_STR;
 					avp_val.s.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
@@ -373,7 +373,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 					if(avp_val.s.len<=0)
 						goto next_avp;
 				break;
-				case DB_STR:
+				case DB1_STR:
 					avp_type |= AVP_VAL_STR;
 					avp_val.s.len=
 						RES_ROWS(db_res)[i].values[j].val.str_val.len;
@@ -382,7 +382,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 					if(avp_val.s.len<=0)
 						goto next_avp;
 				break;
-				case DB_BLOB:
+				case DB1_BLOB:
 					avp_type |= AVP_VAL_STR;
 					avp_val.s.len=
 						RES_ROWS(db_res)[i].values[j].val.blob_val.len;
@@ -391,15 +391,15 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 					if(avp_val.s.len<=0)
 						goto next_avp;
 				break;
-				case DB_INT:
+				case DB1_INT:
 					avp_val.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
 				break;
-				case DB_DATETIME:
+				case DB1_DATETIME:
 					avp_val.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
 				break;
-				case DB_BITMAP:
+				case DB1_BITMAP:
 					avp_val.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 				break;
