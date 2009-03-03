@@ -10,4 +10,6 @@ auto_gen=
 NAME=pike.so
 LIBS= 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
