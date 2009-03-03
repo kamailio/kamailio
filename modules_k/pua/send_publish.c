@@ -39,7 +39,7 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../tm/tm_load.h"
 #include "pua.h"
 #include "hash.h"
