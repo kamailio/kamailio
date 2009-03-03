@@ -41,7 +41,7 @@
 #include "../../pvar.h"
 #include "../../dset.h"
 #include "../../mem/mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../parser/parse_to.h"
 #include "dialplan.h"
 #include "dp_db.h"
