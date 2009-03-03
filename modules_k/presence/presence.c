@@ -51,7 +51,7 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
@@ -85,7 +85,7 @@ static int clean_period=100;
 static int db_update_period=100;
 
 /* database connection */
-db_con_t *pa_db = NULL;
+db1_con_t *pa_db = NULL;
 db_func_t pa_dbf;
 str presentity_table= str_init("presentity");
 str active_watchers_table = str_init("active_watchers");
@@ -632,22 +632,22 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 	int status;
 	query_cols[q_wuser_col=n_query_cols]= &str_watcher_username_col;
 	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].type= DB1_STR;
 	n_query_cols++;
 
 	query_cols[q_wdomain_col=n_query_cols]= &str_watcher_domain_col;
 	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].type= DB1_STR;
 	n_query_cols++;
 
 	update_cols[u_status_col= n_update_cols]= &str_status_col;
 	update_vals[u_status_col].nul= 0;
-	update_vals[u_status_col].type= DB_INT;
+	update_vals[u_status_col].type= DB1_INT;
 	n_update_cols++;
 
 	update_cols[u_reason_col= n_update_cols]= &str_reason_col;
 	update_vals[u_reason_col].nul= 0;
-	update_vals[u_reason_col].type= DB_STR;
+	update_vals[u_reason_col].type= DB1_STR;
 	n_update_cols++;
 
 	status= subs.status;
@@ -714,25 +714,25 @@ int pres_db_delete_status(subs_t* s)
 
     query_cols[n_query_cols]= &str_event_col;
     query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].type= DB1_STR;
     query_vals[n_query_cols].val.str_val= s->event->name ;
     n_query_cols++;
 
     query_cols[n_query_cols]= &str_presentity_uri_col;
     query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].type= DB1_STR;
     query_vals[n_query_cols].val.str_val= s->pres_uri;
     n_query_cols++;
 
     query_cols[n_query_cols]= &str_watcher_username_col;
     query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].type= DB1_STR;
     query_vals[n_query_cols].val.str_val= s->from_user;
     n_query_cols++;
 
     query_cols[n_query_cols]= &str_watcher_domain_col;
     query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].type= DB1_STR;
     query_vals[n_query_cols].val.str_val= s->from_domain;
     n_query_cols++;
 
@@ -751,7 +751,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	db_key_t query_cols[6], result_cols[5];
 	db_val_t query_vals[6];
 	int n_result_cols= 0, n_query_cols = 0;
-	db_res_t* result= NULL;
+	db1_res_t* result= NULL;
 	db_row_t *row;
 	db_val_t *row_vals ;
 	int i;
@@ -791,13 +791,13 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	/* update in watchers_table */
 	query_cols[n_query_cols]= &str_presentity_uri_col;
 	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].type= DB1_STR;
 	query_vals[n_query_cols].val.str_val= pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols]= &str_event_col;
 	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
+	query_vals[n_query_cols].type= DB1_STR;
 	query_vals[n_query_cols].val.str_val= ev->name;
 	n_query_cols++;
 

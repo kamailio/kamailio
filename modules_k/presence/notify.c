@@ -41,8 +41,8 @@
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../str.h"
-#include "../../db/db.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_val.h"
 #include "../../socket_info.h"
 #include "../tm/tm_load.h"
 #include "../pua/hash.h"
@@ -260,7 +260,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	db_op_t  query_ops[6];
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	db_row_t *row = NULL ;	
 	db_val_t *row_vals = NULL;
 	int n_result_cols = 0;
@@ -270,14 +270,14 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= subs->pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->event->wipeer->name;
 	n_query_cols++;
@@ -612,7 +612,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	db_key_t query_cols[6];
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	int body_col, expires_col, etag_col= 0, sender_col;
 	str** body_array= NULL;
 	str* notify_body= NULL;	
@@ -656,19 +656,19 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 db_query:
 
 	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.host;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= event->name;
 	n_query_cols++;
@@ -993,7 +993,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	int from_user_col, from_domain_col, from_tag_col;
 	int to_user_col, to_domain_col, to_tag_col;
 	int expires_col= 0,callid_col, cseq_col, i, reason_col;
@@ -1011,28 +1011,28 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	LM_DBG("querying database table = active_watchers\n");
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *pres_uri;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_event_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = event->name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_status_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val = ACTIVE_STATUS;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_contact_col;
 	query_ops[n_query_cols] = OP_NEQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	if(sender)
 	{	
@@ -1879,7 +1879,7 @@ int add_waiting_watchers(watcher_t *watchers, str pres_uri, str event)
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
 	db_key_t result_cols[2];
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	db_row_t *row= NULL ;	
 	db_val_t *row_vals;
 	int n_result_cols = 0;
@@ -1892,19 +1892,19 @@ int add_waiting_watchers(watcher_t *watchers, str pres_uri, str event)
 	 * to the presentity and have status pending */
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = event;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_status_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val = PENDING_STATUS;
 	n_query_cols++;

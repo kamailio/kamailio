@@ -44,7 +44,7 @@
 #include "../../lock_ops.h"
 #include "../../hash_func.h"
 #include "../../cmpapi.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
@@ -70,7 +70,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db_val_t db_vals[2];
 	db_op_t  db_ops[2] ;
 	db_key_t result_cols[6];
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int i =0, size= 0;
@@ -94,7 +94,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 	db_keys[0] = &str_expires_col;
 	db_ops[0] = OP_LT;
-	db_vals[0].type = DB_INT;
+	db_vals[0].type = DB1_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL);
 		

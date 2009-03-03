@@ -39,7 +39,7 @@
 #include "../../parser/msg_parser.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_api.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/parse_from.h"
 #include "event_list.h"
 #include "hash.h"
@@ -48,7 +48,7 @@
 extern struct tm_binds tmb;
 /* DB module bind */
 extern db_func_t pa_dbf;
-extern db_con_t* pa_db;
+extern db1_con_t* pa_db;
 
 /* PRESENCE database */
 extern str db_url;

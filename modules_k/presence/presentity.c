@@ -37,7 +37,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
@@ -271,7 +271,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	db_key_t query_cols[12], update_keys[8], result_cols[5];
 	db_op_t  query_ops[12];
 	db_val_t query_vals[12], update_vals[8];
-	db_res_t *result= NULL;
+	db1_res_t *result= NULL;
 	int n_query_cols = 0;
 	int n_update_cols = 0;
 	char* dot= NULL;
@@ -306,28 +306,28 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 	query_cols[n_query_cols] = &str_domain_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->domain;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_username_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->event->name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_etag_col;
 	query_ops[n_query_cols] = OP_EQ;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->etag;
 	n_query_cols++;
@@ -347,7 +347,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		
 		/* insert new record into database */	
 		query_cols[n_query_cols] = &str_expires_col;
-		query_vals[n_query_cols].type = DB_INT;
+		query_vals[n_query_cols].type = DB1_INT;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.int_val = presentity->expires+
 				(int)time(NULL);
@@ -356,7 +356,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		if( presentity->sender)
 		{
 			query_cols[n_query_cols] = &str_sender_col;
-			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].type = DB1_STR;
 			query_vals[n_query_cols].nul = 0;
 			query_vals[n_query_cols].val.str_val.s = presentity->sender->s;
 			query_vals[n_query_cols].val.str_val.len = presentity->sender->len;
@@ -364,13 +364,13 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		}
 
 		query_cols[n_query_cols] = &str_body_col;
-		query_vals[n_query_cols].type = DB_BLOB;
+		query_vals[n_query_cols].type = DB1_BLOB;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val = *body;
 		n_query_cols++;
 		
 		query_cols[n_query_cols] = &str_received_time_col;
-		query_vals[n_query_cols].type = DB_INT;
+		query_vals[n_query_cols].type = DB1_INT;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.int_val = presentity->received_time;
 		n_query_cols++;
@@ -549,7 +549,7 @@ after_dialog_check:
 				cur_etag= etag;
 
 				update_keys[n_update_cols] = &str_etag_col;
-				update_vals[n_update_cols].type = DB_STR;
+				update_vals[n_update_cols].type = DB1_STR;
 				update_vals[n_update_cols].nul = 0;
 				update_vals[n_update_cols].val.str_val = etag;
 				n_update_cols++;
@@ -559,14 +559,14 @@ after_dialog_check:
 				cur_etag= presentity->etag;
 			
 			update_keys[n_update_cols] = &str_expires_col;
-			update_vals[n_update_cols].type = DB_INT;
+			update_vals[n_update_cols].type = DB1_INT;
 			update_vals[n_update_cols].nul = 0;
 			update_vals[n_update_cols].val.int_val= presentity->expires +
 				(int)time(NULL);
 			n_update_cols++;
 
 			update_keys[n_update_cols] = &str_received_time_col;
-			update_vals[n_update_cols].type = DB_INT;
+			update_vals[n_update_cols].type = DB1_INT;
 			update_vals[n_update_cols].nul = 0;
 			update_vals[n_update_cols].val.int_val= presentity->received_time;
 			n_update_cols++;
@@ -574,7 +574,7 @@ after_dialog_check:
 			if(body && body->s)
 			{
 				update_keys[n_update_cols] = &str_body_col;
-				update_vals[n_update_cols].type = DB_BLOB;
+				update_vals[n_update_cols].type = DB1_BLOB;
 				update_vals[n_update_cols].nul = 0;
 				update_vals[n_update_cols].val.str_val = *body;
 				n_update_cols++;
@@ -594,7 +594,7 @@ after_dialog_check:
 			if( presentity->sender)
 			{
 				update_keys[n_update_cols] = &str_sender_col;
-				update_vals[n_update_cols].type = DB_STR;
+				update_vals[n_update_cols].type = DB1_STR;
 				update_vals[n_update_cols].nul = 0;
 				update_vals[n_update_cols].val.str_val = *presentity->sender;
 				n_update_cols++;
@@ -683,7 +683,7 @@ int pres_htable_restore(void)
 	/* query all records from presentity table and insert records 
 	 * in presentity table */
 	db_key_t result_cols[6];
-	db_res_t *result= NULL;
+	db1_res_t *result= NULL;
 	db_row_t *row= NULL ;	
 	db_val_t *row_vals;
 	int  i;
@@ -858,7 +858,7 @@ char* get_sphere(str* pres_uri)
 	db_key_t query_cols[6];
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	db_row_t *row= NULL ;	
 	db_val_t *row_vals;
 	int n_result_cols = 0;
@@ -908,19 +908,19 @@ char* get_sphere(str* pres_uri)
 	}
 
 	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.host;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val.s= "presence";
 	query_vals[n_query_cols].val.str_val.len= 8;

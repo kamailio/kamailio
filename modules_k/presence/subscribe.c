@@ -143,19 +143,19 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 	int n_query_cols= 0;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = ev_stored_name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_to_tag_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = to_tag;
 	n_query_cols++;
@@ -184,25 +184,25 @@ int update_subs_db(subs_t* subs, int type)
 	int n_query_cols = 0;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->pres_uri;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_watcher_username_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_watcher_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
@@ -210,25 +210,25 @@ int update_subs_db(subs_t* subs, int type)
 	if(subs->event_id.s)
 	{
 		query_cols[n_query_cols] = &str_event_id_col;
-		query_vals[n_query_cols].type = DB_STR;
+		query_vals[n_query_cols].type = DB1_STR;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val = subs->event_id;
 		n_query_cols++;
 	}
 	query_cols[n_query_cols] = &str_callid_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->callid;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_to_tag_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_tag;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_from_tag_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_tag;
 	n_query_cols++;
@@ -236,13 +236,13 @@ int update_subs_db(subs_t* subs, int type)
 	if(type & REMOTE_TYPE)
 	{
 		update_keys[n_update_cols] = &str_expires_col;
-		update_vals[n_update_cols].type = DB_INT;
+		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->expires + (int)time(NULL);
 		n_update_cols++;
 	
 		update_keys[n_update_cols] = &str_remote_cseq_col;
-		update_vals[n_update_cols].type = DB_INT;
+		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->remote_cseq; 
 		n_update_cols++;
@@ -250,26 +250,26 @@ int update_subs_db(subs_t* subs, int type)
 	else
 	{	
 		update_keys[n_update_cols] = &str_local_cseq_col;
-		update_vals[n_update_cols].type = DB_INT;
+		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->local_cseq+ 1;
 		n_update_cols++;
 	
 		update_keys[n_update_cols] = &str_version_col;
-		update_vals[n_update_cols].type = DB_INT;
+		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->version+ 1;
 		n_update_cols++;
 	}
 
 	update_keys[n_update_cols] = &str_status_col;
-	update_vals[n_update_cols].type = DB_INT;
+	update_vals[n_update_cols].type = DB1_INT;
 	update_vals[n_update_cols].nul = 0;
 	update_vals[n_update_cols].val.int_val = subs->status;
 	n_update_cols++;
 
 	update_keys[n_update_cols] = &str_reason_col;
-	update_vals[n_update_cols].type = DB_STR;
+	update_vals[n_update_cols].type = DB1_STR;
 	update_vals[n_update_cols].nul = 0;
 	update_vals[n_update_cols].val.str_val = subs->reason;
 	n_update_cols++;
@@ -457,19 +457,19 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_key_t db_keys[3], result_cols[1];
 	db_val_t db_vals[3];
 	db_op_t  db_ops[3] ;
-	db_res_t *result= NULL;
+	db1_res_t *result= NULL;
 
 	LM_DBG("cleaning pending subscriptions\n");
 	
 	db_keys[0] = &str_inserted_time_col;
 	db_ops[0] = OP_LT;
-	db_vals[0].type = DB_INT;
+	db_vals[0].type = DB1_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL)- 24*3600 ;
 
 	db_keys[1] = &str_status_col;
 	db_ops [1] = OP_EQ;
-	db_vals[1].type = DB_INT;
+	db_vals[1].type = DB1_INT;
 	db_vals[1].nul = 0;
 	db_vals[1].val.int_val = PENDING_STATUS;
 	
@@ -1119,7 +1119,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
 	db_key_t result_cols[9];
-	db_res_t *result= NULL;
+	db1_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int n_query_cols = 0;
@@ -1132,37 +1132,37 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	str reason;
 
 	query_cols[n_query_cols] = &str_to_user_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_to_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_domain;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_watcher_username_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_watcher_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_id_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	if( subs->event_id.s != NULL)
 	{
@@ -1175,19 +1175,19 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_callid_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->callid;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_to_tag_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_tag;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_from_tag_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_tag;
 	n_query_cols++;
@@ -1337,7 +1337,7 @@ void timer_db_update(unsigned int ticks,void *param)
 
 }
 
-void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
+void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {	
 	db_key_t query_cols[22], update_cols[7];
@@ -1356,135 +1356,135 @@ void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int n_query_update;
 
 	query_cols[pres_uri_col= n_query_cols] =&str_presentity_uri_col;
-	query_vals[pres_uri_col].type = DB_STR;
+	query_vals[pres_uri_col].type = DB1_STR;
 	query_vals[pres_uri_col].nul = 0;
 	n_query_cols++;
 	
 	query_cols[callid_col= n_query_cols] =&str_callid_col;
-	query_vals[callid_col].type = DB_STR;
+	query_vals[callid_col].type = DB1_STR;
 	query_vals[callid_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[totag_col= n_query_cols] =&str_to_tag_col;
-	query_vals[totag_col].type = DB_STR;
+	query_vals[totag_col].type = DB1_STR;
 	query_vals[totag_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[fromtag_col= n_query_cols] =&str_from_tag_col;
-	query_vals[fromtag_col].type = DB_STR;
+	query_vals[fromtag_col].type = DB1_STR;
 	query_vals[fromtag_col].nul = 0;
 	n_query_cols++;
 
 	n_query_update= n_query_cols;
 
 	query_cols[to_user_col= n_query_cols] =&str_to_user_col;
-	query_vals[to_user_col].type = DB_STR;
+	query_vals[to_user_col].type = DB1_STR;
 	query_vals[to_user_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[to_domain_col= n_query_cols] =&str_to_domain_col;
-	query_vals[to_domain_col].type = DB_STR;
+	query_vals[to_domain_col].type = DB1_STR;
 	query_vals[to_domain_col].nul = 0;
 	n_query_cols++;
 	
 	query_cols[from_user_col= n_query_cols] =&str_watcher_username_col;
-	query_vals[from_user_col].type = DB_STR;
+	query_vals[from_user_col].type = DB1_STR;
 	query_vals[from_user_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[from_domain_col= n_query_cols] =&str_watcher_domain_col;
-	query_vals[from_domain_col].type = DB_STR;
+	query_vals[from_domain_col].type = DB1_STR;
 	query_vals[from_domain_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[event_col= n_query_cols] =&str_event_col;
-	query_vals[event_col].type = DB_STR;
+	query_vals[event_col].type = DB1_STR;
 	query_vals[event_col].nul = 0;
 	n_query_cols++;	
 
 	query_cols[event_id_col= n_query_cols] =&str_event_id_col;
-	query_vals[event_id_col].type = DB_STR;
+	query_vals[event_id_col].type = DB1_STR;
 	query_vals[event_id_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[local_cseq_col= n_query_cols]=&str_local_cseq_col;
-	query_vals[local_cseq_col].type = DB_INT;
+	query_vals[local_cseq_col].type = DB1_INT;
 	query_vals[local_cseq_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[remote_cseq_col= n_query_cols]=&str_remote_cseq_col;
-	query_vals[remote_cseq_col].type = DB_INT;
+	query_vals[remote_cseq_col].type = DB1_INT;
 	query_vals[remote_cseq_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[expires_col= n_query_cols] =&str_expires_col;
-	query_vals[expires_col].type = DB_INT;
+	query_vals[expires_col].type = DB1_INT;
 	query_vals[expires_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[status_col= n_query_cols] =&str_status_col;
-	query_vals[status_col].type = DB_INT;
+	query_vals[status_col].type = DB1_INT;
 	query_vals[status_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[reason_col= n_query_cols] =&str_reason_col;
-	query_vals[reason_col].type = DB_STR;
+	query_vals[reason_col].type = DB1_STR;
 	query_vals[reason_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[record_route_col= n_query_cols] =&str_record_route_col;
-	query_vals[record_route_col].type = DB_STR;
+	query_vals[record_route_col].type = DB1_STR;
 	query_vals[record_route_col].nul = 0;
 	n_query_cols++;
 	
 	query_cols[contact_col= n_query_cols] =&str_contact_col;
-	query_vals[contact_col].type = DB_STR;
+	query_vals[contact_col].type = DB1_STR;
 	query_vals[contact_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[local_contact_col= n_query_cols] =&str_local_contact_col;
-	query_vals[local_contact_col].type = DB_STR;
+	query_vals[local_contact_col].type = DB1_STR;
 	query_vals[local_contact_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[socket_info_col= n_query_cols] =&str_socket_info_col;
-	query_vals[socket_info_col].type = DB_STR;
+	query_vals[socket_info_col].type = DB1_STR;
 	query_vals[socket_info_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[version_col= n_query_cols]=&str_version_col;
-	query_vals[version_col].type = DB_INT;
+	query_vals[version_col].type = DB1_INT;
 	query_vals[version_col].nul = 0;
 	n_query_cols++;
 
 	/* cols and values used for update */
 	update_cols[u_expires_col= n_update_cols]= &str_expires_col;
-	update_vals[u_expires_col].type = DB_INT;
+	update_vals[u_expires_col].type = DB1_INT;
 	update_vals[u_expires_col].nul = 0;
 	n_update_cols++;
 
 	update_cols[u_status_col= n_update_cols]= &str_status_col;
-	update_vals[u_status_col].type = DB_INT;
+	update_vals[u_status_col].type = DB1_INT;
 	update_vals[u_status_col].nul = 0;
 	n_update_cols++;
 
 	update_cols[u_reason_col= n_update_cols]= &str_reason_col;
-	update_vals[u_reason_col].type = DB_STR;
+	update_vals[u_reason_col].type = DB1_STR;
 	update_vals[u_reason_col].nul = 0;
 	n_update_cols++;
 
 	update_cols[u_remote_cseq_col= n_update_cols]= &str_remote_cseq_col;
-	update_vals[u_remote_cseq_col].type = DB_INT;
+	update_vals[u_remote_cseq_col].type = DB1_INT;
 	update_vals[u_remote_cseq_col].nul = 0;
 	n_update_cols++;
 
 	update_cols[u_local_cseq_col= n_update_cols]= &str_local_cseq_col;
-	update_vals[u_local_cseq_col].type = DB_INT;
+	update_vals[u_local_cseq_col].type = DB1_INT;
 	update_vals[u_local_cseq_col].nul = 0;
 	n_update_cols++;
 	
 	update_cols[u_version_col= n_update_cols]= &str_version_col;
-	update_vals[u_version_col].type = DB_INT;
+	update_vals[u_version_col].type = DB1_INT;
 	update_vals[u_version_col].nul = 0;
 	n_update_cols++;
 
@@ -1618,7 +1618,7 @@ void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 int restore_db_subs(void)
 {
 	db_key_t result_cols[22]; 
-	db_res_t *res= NULL;
+	db1_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
 	int i;
@@ -1891,30 +1891,30 @@ int get_db_subs_auth(subs_t* subs, int* found)
 	db_val_t db_vals[5];
 	int n_query_cols= 0; 
 	db_key_t result_cols[3];
-	db_res_t *result = NULL;
+	db1_res_t *result = NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 
 	db_keys[n_query_cols] =&str_presentity_uri_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val= subs->pres_uri;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_watcher_username_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_watcher_domain_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 	
 	db_keys[n_query_cols] =&str_event_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
@@ -1982,37 +1982,37 @@ int insert_db_subs_auth(subs_t* subs)
 	int n_query_cols= 0; 
 
 	db_keys[n_query_cols] =&str_presentity_uri_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val= subs->pres_uri;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_watcher_username_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_watcher_domain_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 	
 	db_keys[n_query_cols] =&str_event_col;
-	db_vals[n_query_cols].type = DB_STR;
+	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_status_col;
-	db_vals[n_query_cols].type = DB_INT;
+	db_vals[n_query_cols].type = DB1_INT;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.int_val = subs->status;
 	n_query_cols++;
 								
 	db_keys[n_query_cols] = &str_inserted_time_col;
-	db_vals[n_query_cols].type = DB_INT;
+	db_vals[n_query_cols].type = DB1_INT;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.int_val= (int)time(NULL);
 	n_query_cols++;
@@ -2020,7 +2020,7 @@ int insert_db_subs_auth(subs_t* subs)
 	if(subs->reason.s && subs->reason.len)
 	{
 		db_keys[n_query_cols] =&str_reason_col;
-		db_vals[n_query_cols].type = DB_STR;
+		db_vals[n_query_cols].type = DB1_STR;
 		db_vals[n_query_cols].nul = 0;
 		db_vals[n_query_cols].val.str_val = subs->reason;
 		n_query_cols++;	
