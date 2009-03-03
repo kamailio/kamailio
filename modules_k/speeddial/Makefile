@@ -12,4 +12,6 @@ NAME=speeddial.so
 LIBS=
 DEFS+=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
