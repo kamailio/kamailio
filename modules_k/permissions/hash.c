@@ -25,7 +25,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
-#include "../../hash_func.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../usr_avp.h"
 #include "../../ip_addr.h"
 #include "../../pvar.h"
