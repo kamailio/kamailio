@@ -36,7 +36,7 @@
 
 #include "domainpolicy_mod.h"
 #include "domainpolicy.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
@@ -50,7 +50,7 @@
 
 #define IS_D2PNAPTR(naptr) ((naptr->services_len >= 7) && (!strncasecmp("D2P+SIP", naptr->services, 7)))
 
-static db_con_t* db_handle=0;
+static db1_con_t* db_handle=0;
 static db_func_t domainpolicy_dbf;
 
 /*
@@ -260,7 +260,7 @@ void domainpolicy_db_close(void)
 int domainpolicy_db_ver(const str* db_url, const str* name)
 {
 	int ver;
-	db_con_t* dbh;
+	db1_con_t* dbh;
 
 	if (domainpolicy_dbf.init==0){
 		LM_CRIT("unbound database\n");
@@ -419,7 +419,7 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
     db_key_t keys[2];
     db_val_t vals[2];
     db_key_t cols[4]; 
-    db_res_t* res;
+    db1_res_t* res;
     db_row_t* row;
     db_val_t* val;
     int	i;
@@ -450,12 +450,12 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
     cols[2]=&domainpolicy_col_att;
     cols[3]=&domainpolicy_col_val;
 
-    VAL_TYPE(&vals[0]) = DB_STR;
+    VAL_TYPE(&vals[0]) = DB1_STR;
     VAL_NULL(&vals[0]) = 0;
     VAL_STR(&vals[0]).s = rule->s;
     VAL_STR(&vals[0]).len = rule->len;
 
-    VAL_TYPE(&vals[1]) = DB_STR;
+    VAL_TYPE(&vals[1]) = DB1_STR;
     VAL_NULL(&vals[1]) = 0;
     VAL_STR(&vals[1]).s = type;
     VAL_STR(&vals[1]).len = type_len;
@@ -490,10 +490,10 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
 
 			val = ROW_VALUES(row + i);
 
-			if ((VAL_TYPE(val) != DB_STRING) || 
-				(VAL_TYPE(val+1) != DB_STRING) ||
-				(VAL_TYPE(val+2) != DB_STRING) ||
-				(VAL_TYPE(val+3) != DB_STRING)) {
+			if ((VAL_TYPE(val) != DB1_STRING) || 
+				(VAL_TYPE(val+1) != DB1_STRING) ||
+				(VAL_TYPE(val+2) != DB1_STRING) ||
+				(VAL_TYPE(val+3) != DB1_STRING)) {
 					LM_ERR("unexpected cell types\n");
 			    return(-1);
 			}
