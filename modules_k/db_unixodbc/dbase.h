@@ -32,70 +32,70 @@
 #ifndef DBASE_H
 #define DBASE_H
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_key.h"
-#include "../../db/db_op.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_key.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_val.h"
 
 /*
  * Initialize database connection
  */
-db_con_t* db_unixodbc_init(const str* _sqlurl);
+db1_con_t* db_unixodbc_init(const str* _sqlurl);
 
 /*
  * Close a database connection
  */
-void db_unixodbc_close(db_con_t* _h);
+void db_unixodbc_close(db1_con_t* _h);
 
 /*
  * Free all memory allocated by get_result
  */
-int db_unixodbc_free_result(db_con_t* _h, db_res_t* _r);
+int db_unixodbc_free_result(db1_con_t* _h, db1_res_t* _r);
 
 /*
  * Do a query
  */
-int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op, const db_val_t* _v,
-const db_key_t* _c, const int _n, const int _nc, const db_key_t _o, db_res_t** _r);
+int db_unixodbc_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op, const db_val_t* _v,
+const db_key_t* _c, const int _n, const int _nc, const db_key_t _o, db1_res_t** _r);
 
 /*
  * Fetch rows from a result
  */
-int db_unixodbc_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
+int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows);
 
 /*
  * Raw SQL query
  */
-int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
+int db_unixodbc_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r);
 
 /*
  * Insert a row into table
  */
-int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
+int db_unixodbc_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
 
 /*
  * Delete a row from table
  */
-int db_unixodbc_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, const db_val_t* _v,
+int db_unixodbc_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o, const db_val_t* _v,
 const int _n);
 
 /*
  * Update a row in table
  */
-int db_unixodbc_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, const db_val_t* _v,
+int db_unixodbc_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o, const db_val_t* _v,
 const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un);
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_unixodbc_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* vals,
+int db_unixodbc_replace(const db1_con_t* handle, const db_key_t* keys, const db_val_t* vals,
 const int n);
 
 /*
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_unixodbc_use_table(db_con_t* _h, const str* _t);
+int db_unixodbc_use_table(db1_con_t* _h, const str* _t);
 
 #endif                                                      /* DBASE_H */

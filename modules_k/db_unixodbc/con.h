@@ -32,8 +32,8 @@
 #ifndef MY_CON_H
 #define MY_CON_H
 
-#include "../../db/db_pool.h"
-#include "../../db/db_id.h"
+#include "../../lib/srdb1/db_pool.h"
+#include "../../lib/srdb1/db_id.h"
 
 #include <time.h>
 #include <stdio.h>

@@ -31,7 +31,7 @@
 
 #include "../../dprint.h"
 #include "../../strcommon.h"
-#include "../../db/db_ut.h"
+#include "../../lib/srdb1/db_ut.h"
 #include "db_unixodbc.h"
 #include "val.h"
 #include "con.h"
@@ -65,7 +65,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 /*
  * Used when converting a result from the query
  */
-int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_unixodbc_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 {
 	int l, tmp;
 	char* old_s;
@@ -77,7 +77,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 
 	switch(VAL_TYPE(_v))
 	{
-		case DB_STRING:
+		case DB1_STRING:
 			l = strlen(VAL_STRING(_v));
 			if (*_len < (l * 2 + 3))
 			{
@@ -102,7 +102,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			}
 			break;
 
-		case DB_STR:
+		case DB1_STR:
 			l = VAL_STR(_v).len;
 			if (*_len < (l * 2 + 3))
 			{
@@ -127,7 +127,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			}
 			break;
 
-		case DB_BLOB:
+		case DB1_BLOB:
 			l = VAL_BLOB(_v).len;
 			if (*_len < (l * 2 + 3))
 			{

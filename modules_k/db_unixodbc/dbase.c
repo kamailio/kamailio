@@ -36,7 +36,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_query.h"
+#include "../../lib/srdb1/db_query.h"
 #include "val.h"
 #include "con.h"
 #include "row.h"
@@ -49,7 +49,7 @@
 /*
  * Reconnect if connection is broken
  */
-static int reconnect(const db_con_t* _h)
+static int reconnect(const db1_con_t* _h)
 {
 	int ret = 0;
 	SQLCHAR outstr[1024];
@@ -91,7 +91,7 @@ static int reconnect(const db_con_t* _h)
 /*
  * Send an SQL query to the server
  */
-static int db_unixodbc_submit_query(const db_con_t* _h, const str* _s)
+static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 {
 	int ret = 0;
 	SQLCHAR sqlstate[7];
@@ -170,7 +170,7 @@ static int db_unixodbc_submit_query(const db_con_t* _h, const str* _s)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_unixodbc_init(const str* _url)
+db1_con_t* db_unixodbc_init(const str* _url)
 {
 	return db_do_init(_url, (void*)db_unixodbc_new_connection);
 }
@@ -179,7 +179,7 @@ db_con_t* db_unixodbc_init(const str* _url)
  * Shut down database module
  * No function should be called after this
  */
-void db_unixodbc_close(db_con_t* _h)
+void db_unixodbc_close(db1_con_t* _h)
 {
 	return db_do_close(_h, db_unixodbc_free_connection);
 }
@@ -187,7 +187,7 @@ void db_unixodbc_close(db_con_t* _h)
 /*
  * Retrieve result set
  */
-static int db_unixodbc_store_result(const db_con_t* _h, db_res_t** _r)
+static int db_unixodbc_store_result(const db1_con_t* _h, db1_res_t** _r)
 {
 	if ((!_h) || (!_r))
 	{
@@ -217,7 +217,7 @@ static int db_unixodbc_store_result(const db_con_t* _h, db_res_t** _r)
 /*
  * Release a result set from memory
  */
-int db_unixodbc_free_result(db_con_t* _h, db_res_t* _r)
+int db_unixodbc_free_result(db1_con_t* _h, db1_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
@@ -246,9 +246,9 @@ int db_unixodbc_free_result(db_con_t* _h, db_res_t* _r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_unixodbc_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-		const db_key_t _o, db_res_t** _r)
+		const db_key_t _o, db1_res_t** _r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
 			db_unixodbc_val2str,  db_unixodbc_submit_query, db_unixodbc_store_result);
@@ -269,7 +269,7 @@ int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
  * \param nrows number of fetched rows
  * \return return zero on success, negative value on failure
  */
-int db_unixodbc_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
+int db_unixodbc_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 {
 	int row_n = 0, i = 0, ret = 0, len;
 	SQLSMALLINT columns;
@@ -421,7 +421,7 @@ int db_unixodbc_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 /*
  * Execute a raw SQL query
  */
-int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
+int db_unixodbc_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_unixodbc_submit_query,
 			db_unixodbc_store_result);
@@ -434,7 +434,7 @@ int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
  * _v: values of the keys
  * _n: number of key=value pairs
  */
-int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_unixodbc_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_insert(_h, _k, _v, _n, db_unixodbc_val2str,
 			db_unixodbc_submit_query);
@@ -448,7 +448,7 @@ int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-int db_unixodbc_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_unixodbc_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const int _n)
 {
 	return db_do_delete(_h, _k, _o, _v, _n, db_unixodbc_val2str,
@@ -466,7 +466,7 @@ int db_unixodbc_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int db_unixodbc_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_unixodbc_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un)
 {
 	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_unixodbc_val2str,
@@ -476,7 +476,7 @@ int db_unixodbc_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_unixodbc_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_unixodbc_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_replace(_h, _k, _v, _n, db_unixodbc_val2str,
 			db_unixodbc_submit_query);
@@ -486,7 +486,7 @@ int db_unixodbc_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* 
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_unixodbc_use_table(db_con_t* _h, const str* _t)
+int db_unixodbc_use_table(db1_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }

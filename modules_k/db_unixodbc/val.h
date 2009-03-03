@@ -36,8 +36,8 @@
 #include <string.h>
 #include <sql.h>
 #include <sqlext.h>
-#include "../../db/db_val.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db.h"
 
 
 /*
@@ -49,7 +49,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 /*
  * Used when converting result from a query
  */
-int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len);
+int db_unixodbc_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len);
 
 
 #endif /* VAL_H */

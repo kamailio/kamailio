@@ -31,15 +31,15 @@
 #ifndef ROW_H
 #define ROW_H
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_row.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_row.h"
 
 
 /*
  * Convert a row from result into db API representation
  */
-int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* _r,
+int db_unixodbc_convert_row(const db1_con_t* _h, const db1_res_t* _res, db_row_t* _r,
 		const unsigned long* lengths);
 
 #endif /* ROW_H */

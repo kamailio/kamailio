@@ -33,7 +33,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "row.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb1/db_res.h"
 #include "con.h"
 #include "res.h"
 #include "list.h"
@@ -43,7 +43,7 @@
 /*
  * Get and convert columns from a result
  */
-int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
+int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 {
 	int col;
 	SQLSMALLINT cols; /* because gcc don't like RES_COL_N */
@@ -106,20 +106,20 @@ int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_TINYINT:
 			case SQL_DECIMAL:
 			case SQL_NUMERIC:
-				LM_DBG("use DB_INT result type\n");
-				RES_TYPES(_r)[col] = DB_INT;
+				LM_DBG("use DB1_INT result type\n");
+				RES_TYPES(_r)[col] = DB1_INT;
 				break;
 
 			case SQL_BIGINT:
-				LM_DBG("use DB_BIGINT result type\n");
-				RES_TYPES(_r)[col] = DB_BIGINT;
+				LM_DBG("use DB1_BIGINT result type\n");
+				RES_TYPES(_r)[col] = DB1_BIGINT;
 				break;
 
 			case SQL_REAL:
 			case SQL_FLOAT:
 			case SQL_DOUBLE:
-				LM_DBG("use DB_DOUBLE result type\n");
-				RES_TYPES(_r)[col] = DB_DOUBLE;
+				LM_DBG("use DB1_DOUBLE result type\n");
+				RES_TYPES(_r)[col] = DB1_DOUBLE;
 				break;
 
 			case SQL_TYPE_TIMESTAMP:
@@ -128,16 +128,16 @@ int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_TIMESTAMP:
 			case SQL_TYPE_DATE:
 			case SQL_TYPE_TIME:
-				LM_DBG("use DB_DATETIME result type\n");
-				RES_TYPES(_r)[col] = DB_DATETIME;
+				LM_DBG("use DB1_DATETIME result type\n");
+				RES_TYPES(_r)[col] = DB1_DATETIME;
 				break;
 
 			case SQL_CHAR:
 			case SQL_VARCHAR:
 			case SQL_WCHAR:
 			case SQL_WVARCHAR:
-				LM_DBG("use DB_STRING result type\n");
-				RES_TYPES(_r)[col] = DB_STRING;
+				LM_DBG("use DB1_STRING result type\n");
+				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 
 			case SQL_BINARY:
@@ -146,15 +146,15 @@ int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_BIT:
 			case SQL_LONGVARCHAR:
 			case SQL_WLONGVARCHAR:
-				LM_DBG("use DB_BLOB result type\n");
-				RES_TYPES(_r)[col] = DB_BLOB;
+				LM_DBG("use DB1_BLOB result type\n");
+				RES_TYPES(_r)[col] = DB1_BLOB;
 				break;
 
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
+						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, datatype);
-				RES_TYPES(_r)[col] = DB_STRING;
+				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 		}
 	}
@@ -164,7 +164,7 @@ int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 /*
  * Convert rows from UNIXODBC to db API representation
  */
-static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
+static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 {
 	int i = 0, ret = 0;
 	SQLSMALLINT columns;
@@ -254,7 +254,7 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 /*
  * Fill the structure with data from database
  */
-int db_unixodbc_convert_result(const db_con_t* _h, db_res_t* _r)
+int db_unixodbc_convert_result(const db1_con_t* _h, db1_res_t* _r)
 {
 	if (!_h || !_r) {
 		LM_ERR("invalid parameter\n");

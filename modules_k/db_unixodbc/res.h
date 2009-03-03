@@ -31,8 +31,8 @@
 #ifndef RES_H
 #define RES_H
 
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_con.h"
 
 
 /**
@@ -41,7 +41,7 @@
  * \param _r result structure
  * \return zero on success, negative on errors
  */
-int db_unixodbc_convert_result(const db_con_t* _h, db_res_t* _r);
-int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r);
+int db_unixodbc_convert_result(const db1_con_t* _h, db1_res_t* _r);
+int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r);
 
 #endif /* RES_H */
