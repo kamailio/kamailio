@@ -5,6 +5,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=dialplan.so
-LIBS=-lpcre
+DEFS+=-I$(LOCALBASE)/include
+LIBS=-L$(LOCALBASE)/lib -lpcre
 
 include ../../Makefile.modules
