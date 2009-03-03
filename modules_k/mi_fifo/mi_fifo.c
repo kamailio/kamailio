@@ -45,7 +45,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "mi_fifo.h"
 #include "mi_parser.h"
 #include "mi_writer.h"

@@ -44,7 +44,7 @@
 
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "mi_fifo.h"
