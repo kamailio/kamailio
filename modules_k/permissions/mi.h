@@ -26,7 +26,7 @@
 #define _PERMISSIONS_MI_H_
 
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 
 #define MI_TRUSTED_RELOAD "trusted_reload"

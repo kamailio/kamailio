@@ -29,7 +29,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include "../../usr_avp.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #define PERM_HASH_SIZE 128
 
