@@ -50,7 +50,7 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../usr_avp.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
@@ -174,7 +174,7 @@ struct matched_gw_info {
 /*
  * Database variables
  */
-static db_con_t* db_handle = 0;   /* Database connection handle */
+static db1_con_t* db_handle = 0;   /* Database connection handle */
 static db_func_t lcr_dbf;
 
 /*
@@ -569,7 +569,7 @@ static int mod_init(void)
     }
 
     /* Check table version */
-    db_con_t* dbh;
+    db1_con_t* dbh;
     if (lcr_dbf.init==0){
 	LM_CRIT("unbound database\n");
 	return -1;
@@ -986,9 +986,9 @@ int reload_gws_and_lcrs(void)
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
-    db_con_t* dbh;
+    db1_con_t* dbh;
     char *ip_string, *hostname, *tag, *prefix, *from_uri;
-    db_res_t* res = NULL;
+    db1_res_t* res = NULL;
     db_row_t* row;
     db_key_t gw_cols[11];
     db_key_t lcr_cols[4];
@@ -1043,7 +1043,7 @@ int reload_gws_and_lcrs(void)
     for (i = 0; i < RES_ROW_N(res); i++) {
 	row = RES_ROWS(res) + i;
 	if (VAL_NULL(ROW_VALUES(row)) ||
-	    (VAL_TYPE(ROW_VALUES(row)) != DB_STRING)) {
+	    (VAL_TYPE(ROW_VALUES(row)) != DB1_STRING)) {
 	    LM_ERR("gw ip address at row <%u> is null or not string\n", i);
 	    goto gw_err;
 	}
@@ -1056,7 +1056,7 @@ int reload_gws_and_lcrs(void)
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 	    port = 0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 1) != DB_INT) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_INT) {
 		LM_ERR("port of gw <%s> at row <%u> is not int\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1071,7 +1071,7 @@ int reload_gws_and_lcrs(void)
 	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
 	    scheme = SIP_URI_T;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 2) != DB_INT) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT) {
 		LM_ERR("uri scheme of gw <%s> at row <%u> is not int\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1086,7 +1086,7 @@ int reload_gws_and_lcrs(void)
 	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
 	    transport = PROTO_NONE;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 3) != DB_INT) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT) {
 		LM_ERR("transport of gw <%s> at row <%u> is not int\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1108,7 +1108,7 @@ int reload_gws_and_lcrs(void)
 	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
 	    strip = 0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 4) != DB_INT) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT) {
 		LM_ERR("strip count of gw <%s> at row <%u> is not int\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1124,7 +1124,7 @@ int reload_gws_and_lcrs(void)
 	    tag_len = 0;
 	    tag = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 5) != DB_STRING) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 5) != DB1_STRING) {
 		LM_ERR("tag of gw <%s> at row <%u> is not string\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1140,7 +1140,7 @@ int reload_gws_and_lcrs(void)
 	if (VAL_NULL(ROW_VALUES(row) + 6) == 1) {
 	    grp_id = 0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 6) != DB_INT) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 6) != DB1_INT) {
 		LM_ERR("grp_id of gw <%s> at row <%u> is not int\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1148,7 +1148,7 @@ int reload_gws_and_lcrs(void)
 	    grp_id = VAL_INT(ROW_VALUES(row) + 6);
 	}
 	if (!VAL_NULL(ROW_VALUES(row) + 7) &&
-	    (VAL_TYPE(ROW_VALUES(row) + 7) == DB_INT)) {
+	    (VAL_TYPE(ROW_VALUES(row) + 7) == DB1_INT)) {
 	    flags = (unsigned int)VAL_INT(ROW_VALUES(row) + 7);
 	} else {
 	    LM_ERR("flags of gw <%s> at row <%u> is NULL or not int\n",
@@ -1158,7 +1158,7 @@ int reload_gws_and_lcrs(void)
 	if (VAL_NULL(ROW_VALUES(row) + 8) == 1) {
 	    weight = 1;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 8) != DB_INT) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 8) != DB1_INT) {
 		LM_ERR("weight of gw <%s> at row <%u> is not int\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1174,7 +1174,7 @@ int reload_gws_and_lcrs(void)
 	    hostname_len = 0;
 	    hostname = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 9) != DB_STRING) {
+	    if (VAL_TYPE(ROW_VALUES(row) + 9) != DB1_STRING) {
 		LM_ERR("hostname of gw <%s> at row <%u> is not string\n",
 		       ip_string, i);
 		goto gw_err;
@@ -1188,7 +1188,7 @@ int reload_gws_and_lcrs(void)
 	    goto gw_err;
 	}
 	if (!VAL_NULL(ROW_VALUES(row) + 10) &&
-	    (VAL_TYPE(ROW_VALUES(row) + 10) == DB_INT)) {
+	    (VAL_TYPE(ROW_VALUES(row) + 10) == DB1_INT)) {
 	    ping = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
 	} else {
 	    LM_ERR("ping of gw <%s> at row <%u> is NULL or not int\n",
@@ -1281,7 +1281,7 @@ int reload_gws_and_lcrs(void)
 		prefix_len = 0;
 		prefix = 0;
 	    } else {
-		if (VAL_TYPE(ROW_VALUES(row)) != DB_STRING) {
+		if (VAL_TYPE(ROW_VALUES(row)) != DB1_STRING) {
 		    LM_ERR("lcr prefix at row <%u> is not string\n", i);
 		    goto lcr_err;
 		}
@@ -1297,7 +1297,7 @@ int reload_gws_and_lcrs(void)
 		from_uri_len = 0;
 		from_uri = 0;
 	    } else {
-		if (VAL_TYPE(ROW_VALUES(row) + 1) != DB_STRING) {
+		if (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_STRING) {
 		    LM_ERR("lcr from_uri at row <%u> is not string\n", i);
 		    goto lcr_err;
 		}
@@ -1320,7 +1320,7 @@ int reload_gws_and_lcrs(void)
 		from_uri_re = 0;
 	    }
 	    if ((VAL_NULL(ROW_VALUES(row) + 2) == 1) ||
-		(VAL_TYPE(ROW_VALUES(row) + 2) != DB_INT)) {
+		(VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)) {
 		LM_ERR("lcr grp_id at row <%u> is null or not int\n", i);
 		goto lcr_err;
 	    }
@@ -1332,7 +1332,7 @@ int reload_gws_and_lcrs(void)
 		goto lcr_err;
 	    }
 	    if ((VAL_NULL(ROW_VALUES(row) + 3) == 1) ||
-		(VAL_TYPE(ROW_VALUES(row) + 3) != DB_INT)) {
+		(VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT)) {
 		LM_ERR("lcr priority at row <%u> is null or not int\n", i);
 		goto lcr_err;
 	    }
