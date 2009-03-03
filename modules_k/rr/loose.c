@@ -49,9 +49,6 @@
 #define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
 #define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
 
-#define ROUTE_PREFIX "Route: <" /*!< SIP header prefix */
-#define ROUTE_PREFIX_LEN (sizeof(ROUTE_PREFIX)-1)
-
 #define ROUTE_SUFFIX ">\r\n"  /*!< SIP header suffix */
 #define ROUTE_SUFFIX_LEN (sizeof(ROUTE_SUFFIX)-1)
 
