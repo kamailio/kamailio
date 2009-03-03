@@ -250,7 +250,7 @@ done:
  * return : 0 on success or <0 on error
  */
 int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, char* priority,
-		int rank, db_con_t* db_con, db_func_t* dbf)
+		int rank, db1_con_t* db_con, db_func_t* dbf)
 {
 	int pipe, ret, i, pos, maxfd, flag;
 	xj_jcon_pool jcp;
@@ -271,12 +271,12 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, char* priority,
 	db_key_t keys[] = {&tmp1, &tmp2};
 	db_val_t vals[2];
 	db_key_t col[] = {&tmp3, &tmp4};
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 
-	vals[0].type=DB_STRING;
+	vals[0].type=DB1_STRING;
 	vals[0].nul=0;
 	vals[0].val.string_val=buff;
-	vals[1].type=DB_INT;
+	vals[1].type=DB1_INT;
 	vals[1].nul=0;
 	vals[1].val.int_val=0;
 		

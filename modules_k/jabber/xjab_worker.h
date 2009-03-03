@@ -33,7 +33,7 @@
 #define _XJAB_WORKER_H_
 
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../locking.h"
 #include "../tm/tm_load.h"
 
@@ -85,7 +85,7 @@ int  xj_wlist_set_aliases(xj_wlist, char *, char *, char *);
 int  xj_wlist_check_aliases(xj_wlist, str*);
 int  xj_wlist_clean_jobs(xj_wlist, int, int); 
 
-int xj_worker_process(xj_wlist, char*, int, char*, int, db_con_t*, db_func_t*);
+int xj_worker_process(xj_wlist, char*, int, char*, int, db1_con_t*, db_func_t*);
 
 int xj_address_translation(str *src, str *dst, xj_jalias als, int flag);
 int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc);

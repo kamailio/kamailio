@@ -57,7 +57,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 
 #include "../tm/tm_load.h"
 
@@ -89,7 +89,7 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 xj_wlist jwl = NULL;
 
 /** Structure that represents database connection */
-static db_con_t** db_con;
+static db1_con_t** db_con;
 static db_func_t jabber_dbf;
 
 /** parameters */
@@ -222,7 +222,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	db_con = (db_con_t**)shm_malloc(nrw*sizeof(db_con_t*));
+	db_con = (db1_con_t**)shm_malloc(nrw*sizeof(db1_con_t*));
 	if (db_con == NULL)
 	{
 		LM_ERR("no more shm memory\n");
