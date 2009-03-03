@@ -9,4 +9,6 @@ auto_gen=
 NAME=ratelimit.so
 LIBS= 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
