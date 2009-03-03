@@ -11,4 +11,6 @@ DEFS +=-I$(SYSBASE)/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
 
 LIBS= -L$(LOCALBASE)/lib -lxml2
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
