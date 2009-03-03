@@ -233,4 +233,4 @@ FIXUP_F2FP_T(igp_pvar_pvar, 1, 3, 1, FPARAM_INT|FPARAM_PVS, FPARAM_PVS)
 FIXUP_F_SPVE_T(spve_spve, 1, 2, 2, 0)
 FIXUP_F_SPVE_T(spve_uint, 1, 2, 2, FPARAM_INT)
 FIXUP_F_SPVE_T(spve_str, 1, 2, 2, FPARAM_STR)
-
+FIXUP_F_SPVE_T(spve_null, 1, 1, 1, 0)
