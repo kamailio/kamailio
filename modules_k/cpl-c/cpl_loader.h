@@ -27,7 +27,7 @@
 
 #ifndef _CPL_LOADER_H
 #define _CPL_LOADER_H
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 struct mi_root *mi_cpl_load(struct mi_root *cmd, void *param);
 struct mi_root *mi_cpl_remove(struct mi_root *cmd, void *param);

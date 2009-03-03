@@ -44,7 +44,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "cpl_db.h"
 #include "cpl_env.h"
 #include "cpl_parser.h"

@@ -55,7 +55,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_disposition.h"
 #include "../../db/db.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../sl/sl_api.h"
 #include "cpl_run.h"
 #include "cpl_env.h"
