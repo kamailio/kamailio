@@ -78,7 +78,7 @@ str * failure_columns[FAILURE_COLUMN_NUM] = {
 
 
 static int load_carrier_map(struct route_data_t *rd) {
-	db_res_t * res = NULL;
+	db1_res_t * res = NULL;
 	int i, count;
 	if(!rd){
 		LM_ERR("invalid parameter\n");
@@ -134,7 +134,7 @@ static int load_carrier_map(struct route_data_t *rd) {
 
 
 static int load_domain_map(struct route_data_t *rd) {
-	db_res_t * res = NULL;
+	db1_res_t * res = NULL;
 	int i, count;
 	if(!rd){
 		LM_ERR("invalid parameter\n");
@@ -190,7 +190,7 @@ static int load_domain_map(struct route_data_t *rd) {
 
 
 int load_user_carrier(str * user, str * domain) {
-	db_res_t * res;
+	db1_res_t * res;
 	db_key_t cols[1];
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -205,13 +205,13 @@ int load_user_carrier(str * user, str * domain) {
 
 	keys[0] = subscriber_columns[SUBSCRIBER_USERNAME_COL];
 	op[0] = OP_EQ;
-	VAL_TYPE(vals) = DB_STR;
+	VAL_TYPE(vals) = DB1_STR;
 	VAL_NULL(vals) = 0;
 	VAL_STR(vals) = *user;
 
 	keys[1] = subscriber_columns[SUBSCRIBER_DOMAIN_COL];
 	op[1] = OP_EQ;
-	VAL_TYPE(vals+1) = DB_STR;
+	VAL_TYPE(vals+1) = DB1_STR;
 	VAL_NULL(vals+1) = 0;
 	VAL_STR(vals+1) = *domain;
 
@@ -254,7 +254,7 @@ int load_user_carrier(str * user, str * domain) {
  *
  */
 int load_route_data_db(struct route_data_t * rd) {
-	db_res_t * res = NULL;
+	db1_res_t * res = NULL;
 	db_row_t * row = NULL;
 	int i, ret;
 	struct carrier_data_t * tmp_carrier_data;

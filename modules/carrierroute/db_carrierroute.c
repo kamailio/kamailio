@@ -23,7 +23,7 @@
 /* TODO assign read-write or read-only URI, introduce a parameter in XML */
 
 //extern str carrierroute_db_url;
-db_con_t * carrierroute_dbh = NULL;
+db1_con_t * carrierroute_dbh = NULL;
 db_func_t carrierroute_dbf;
 
 str carrierroute_table = str_init("carrierroute");
