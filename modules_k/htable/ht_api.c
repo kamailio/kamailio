@@ -25,7 +25,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../hash_func.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../ut.h"
 #include "../../re.h"
 
