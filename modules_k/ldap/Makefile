@@ -21,4 +21,6 @@ ifeq ($(OS),solaris)
 endif
 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
