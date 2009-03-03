@@ -13,4 +13,6 @@ LIBS=
 DEFS+=-I$(LOCALBASE)/include
 LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
