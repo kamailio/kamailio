@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 #include <pcre.h>
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../locking.h"
 
 #define MAX_PREFIX_LEN 32

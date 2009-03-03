@@ -30,7 +30,7 @@
 #ifndef _LCR_MI_H_
 #define _LCR_MI_H_
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #define MI_LCR_RELOAD "lcr_reload"
 #define MI_LCR_GW_DUMP "lcr_gw_dump"

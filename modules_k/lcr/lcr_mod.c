@@ -60,7 +60,7 @@
 #include "../../dset.h"
 #include "../../ip_addr.h"
 #include "../../resolve.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
 #include "../tm/tm_load.h"
