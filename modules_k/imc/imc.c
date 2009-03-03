@@ -34,15 +34,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-#include "../../db/db.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_res.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../str.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
@@ -60,7 +60,7 @@ MODULE_VERSION
 
 /** parameters */
 
-db_con_t *imc_db = NULL;
+db1_con_t *imc_db = NULL;
 db_func_t imc_dbf;
 static str db_url  = str_init(DEFAULT_DB_URL);
 str outbound_proxy = {NULL, 0};
@@ -162,8 +162,8 @@ int add_from_db(void)
 	db_key_t mq_result_cols[4], mquery_cols[2];
 	db_key_t rq_result_cols[4];
 	db_val_t mquery_vals[2];
-	db_res_t *r_res= NULL;
-	db_res_t *m_res= NULL;
+	db1_res_t *r_res= NULL;
+	db1_res_t *m_res= NULL;
 	db_row_t *m_row = NULL, *r_row = NULL;	
 	db_val_t *m_row_vals, *r_row_vals = NULL;
 	str name, domain;
@@ -179,7 +179,7 @@ int add_from_db(void)
 	mq_result_cols[2] = &imc_col_flag;
 
 	mquery_cols[0] = &imc_col_room;
-	mquery_vals[0].type = DB_STR;
+	mquery_vals[0].type = DB1_STR;
 	mquery_vals[0].nul = 0;
 	
 	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
@@ -605,32 +605,32 @@ void destroy(void)
 		goto done;
 
 	mq_cols[0] = &imc_col_username;
-	mq_vals[0].type = DB_STR;
+	mq_vals[0].type = DB1_STR;
 	mq_vals[0].nul = 0;
 			
 	mq_cols[1] = &imc_col_domain;
-	mq_vals[1].type = DB_STR;
+	mq_vals[1].type = DB1_STR;
 	mq_vals[1].nul = 0;
 	
 	mq_cols[2] = &imc_col_flag;
-	mq_vals[2].type = DB_INT;
+	mq_vals[2].type = DB1_INT;
 	mq_vals[2].nul = 0;
 
 	mq_cols[3] = &imc_col_room;
-	mq_vals[3].type = DB_STR;
+	mq_vals[3].type = DB1_STR;
 	mq_vals[3].nul = 0;
 
 
 	rq_cols[0] = &imc_col_name;
-	rq_vals[0].type = DB_STR;
+	rq_vals[0].type = DB1_STR;
 	rq_vals[0].nul = 0;
 		
 	rq_cols[1] = &imc_col_domain;
-	rq_vals[1].type = DB_STR;
+	rq_vals[1].type = DB1_STR;
 	rq_vals[1].nul = 0;
 
 	rq_cols[2] = &imc_col_flag;
-	rq_vals[2].type = DB_INT;
+	rq_vals[2].type = DB1_INT;
 	rq_vals[2].nul = 0;
 
 	for(i=0; i<imc_hash_size; i++) 
