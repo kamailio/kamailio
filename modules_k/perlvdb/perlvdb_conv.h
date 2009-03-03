@@ -27,9 +27,9 @@
 #ifndef _PERLVDB_CONV_H
 #define _PERLVDB_CONV_H 
 
-#include "../../db/db_op.h"
-#include "../../db/db_val.h"
-#include "../../db/db_key.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db_key.h"
 
 #include "perlvdb.h"
 
@@ -60,6 +60,6 @@ SV *val2perlval(db_val_t* val);
 SV *pair2perlpair(db_key_t key, db_val_t* val);
 SV *cond2perlcond(db_key_t key, db_op_t op, db_val_t* val);
 
-int perlresult2dbres(SV *perlres, db_res_t **r);
+int perlresult2dbres(SV *perlres, db1_res_t **r);
 
 #endif /* _PERLVDB_CONV_H */

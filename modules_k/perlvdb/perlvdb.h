@@ -28,7 +28,7 @@
 #define _PERLVDB_H 
 
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"

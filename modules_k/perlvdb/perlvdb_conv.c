@@ -97,20 +97,20 @@ inline SV *valdata(db_val_t* val) {
 	const char* stringval;
 
 	switch(VAL_TYPE(val)) {
-		case DB_INT:
+		case DB1_INT:
 			data = newSViv(VAL_INT(val));
 			break;
 
-		case DB_BIGINT:
+		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			data = &PL_sv_undef;
 			break;
 
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			data = newSVnv(VAL_DOUBLE(val));
 			break;
 
-		case DB_STRING:
+		case DB1_STRING:
 			stringval = VAL_STRING(val);
 			if (strlen(stringval) > 0)
 				data = newSVpv(stringval, strlen(stringval));
@@ -118,18 +118,18 @@ inline SV *valdata(db_val_t* val) {
 				data = &PL_sv_undef;
 			break;
 
-		case DB_STR:
+		case DB1_STR:
 			if (VAL_STR(val).len > 0)
 				data = newSVpv(VAL_STR(val).s, VAL_STR(val).len);
 			else
 				data = &PL_sv_undef;
 			break;
 
-		case DB_DATETIME:
+		case DB1_DATETIME:
 			data = newSViv((unsigned int)VAL_TIME(val));
 			break;
 
-		case DB_BLOB:
+		case DB1_BLOB:
 			if (VAL_BLOB(val).len > 0)
 				data = newSVpv(VAL_BLOB(val).s,
 						VAL_BLOB(val).len);
@@ -137,7 +137,7 @@ inline SV *valdata(db_val_t* val) {
 				data = &PL_sv_undef;
 			break;
 
-		case DB_BITMAP:
+		case DB1_BITMAP:
 			data = newSViv(VAL_BITMAP(val));
 			break;
 	}
@@ -211,7 +211,7 @@ SV *cond2perlcond(db_key_t key, db_op_t op, db_val_t* val) {
 
 
 
-int perlresult2dbres(SV *perlres, db_res_t **r) {
+int perlresult2dbres(SV *perlres, db1_res_t **r) {
 
 	SV *colarrayref = NULL;
 	AV *colarray = NULL;
@@ -250,12 +250,12 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 		goto error;
 	}
 	/* Memory allocation for C side result structure */
-	*r = (db_res_t *)pkg_malloc(sizeof(db_res_t));
+	*r = (db1_res_t *)pkg_malloc(sizeof(db1_res_t));
 	if (!(*r)) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
-	memset(*r, 0, sizeof(db_res_t));
+	memset(*r, 0, sizeof(db1_res_t));
 	
 	/* Fetch column definitions */
 	colarrayref = perlvdb_perlmethod(perlres, PERL_VDB_COLDEFSMETHOD,
@@ -347,21 +347,21 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 				cur_val.nul = 1;
 			} else {
 				switch (atype) {
-					case DB_INT:
+					case DB1_INT:
 						cur_val.val.int_val = 
 							SvIV(aval);
 						cur_val.nul = 0;
 						break;
-					case DB_DOUBLE:
+					case DB1_DOUBLE:
 						cur_val.val.double_val = 
 							SvNV(aval);
 						cur_val.nul = 0;
 						break;
-					case DB_STRING:
-					case DB_STR:
-				/* We dont support DB_STR for now.
-				 * Set DB_STRING instead */
-						cur_val.type = DB_STRING;
+					case DB1_STRING:
+					case DB1_STR:
+				/* We dont support DB1_STR for now.
+				 * Set DB1_STRING instead */
+						cur_val.type = DB1_STRING;
 						currentstring = SvPV(aval, len);
 						charbuf = pkg_malloc(len+1);
 						strncpy(charbuf, currentstring,
@@ -370,12 +370,12 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 							charbuf;
 						cur_val.nul = 0;
 						break;
-					case DB_DATETIME:
+					case DB1_DATETIME:
 						cur_val.val.time_val =
 							(time_t)SvIV(aval);
 						cur_val.nul = 0;
 						break;
-					case DB_BLOB:
+					case DB1_BLOB:
 						currentstring = SvPV(aval, len);
 						charbuf = pkg_malloc(len+1);
 						strncpy(charbuf, currentstring,
@@ -385,7 +385,7 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 						cur_val.val.blob_val.len = len;
 						cur_val.nul = 0;
 						break;
-					case DB_BITMAP:
+					case DB1_BITMAP:
 						cur_val.val.bitmap_val =
 							SvIV(aval);
 						cur_val.nul = 0;
