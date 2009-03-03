@@ -189,7 +189,7 @@ void sql_reset_result(sql_result_t *res)
 int sql_do_query(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 		sql_result_t *res)
 {
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	int i, j;
 	str sq;
 
@@ -270,37 +270,37 @@ int sql_do_query(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 			}
 			switch(RES_ROWS(db_res)[i].values[j].type)
 			{
-				case DB_STRING:
+				case DB1_STRING:
 					res->vals[i][j].flags = PV_VAL_STR;
 					sq.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
 					sq.len=strlen(sq.s);
 				break;
-				case DB_STR:
+				case DB1_STR:
 					res->vals[i][j].flags = PV_VAL_STR;
 					sq.len=
 						RES_ROWS(db_res)[i].values[j].val.str_val.len;
 					sq.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
 				break;
-				case DB_BLOB:
+				case DB1_BLOB:
 					res->vals[i][j].flags = PV_VAL_STR;
 					sq.len=
 						RES_ROWS(db_res)[i].values[j].val.blob_val.len;
 					sq.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
 				break;
-				case DB_INT:
+				case DB1_INT:
 					res->vals[i][j].flags = PV_VAL_INT;
 					res->vals[i][j].value.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
 				break;
-				case DB_DATETIME:
+				case DB1_DATETIME:
 					res->vals[i][j].flags = PV_VAL_INT;
 					res->vals[i][j].value.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
 				break;
-				case DB_BITMAP:
+				case DB1_BITMAP:
 					res->vals[i][j].flags = PV_VAL_INT;
 					res->vals[i][j].value.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;

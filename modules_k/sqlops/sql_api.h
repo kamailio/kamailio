@@ -23,7 +23,7 @@
 #ifndef _SQL_API_H_
 #define _SQL_API_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../pvar.h"
 
 typedef struct _sql_col
@@ -54,7 +54,7 @@ typedef struct _sql_con
 	str name;
 	unsigned int conid;
 	str db_url;
-	db_con_t  *dbh;
+	db1_con_t  *dbh;
 	db_func_t dbf;
 	struct _sql_con *next;
 } sql_con_t;
