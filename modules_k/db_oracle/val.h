@@ -24,8 +24,8 @@
 #define VAL_H
 
 #include <oci.h>
-#include "../../db/db_val.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db_val.h"
+#include "../../lib/srdb1/db.h"
 
 struct bmap_t {
     dvoid *addr;
@@ -37,7 +37,7 @@ typedef struct bmap_t bmap_t;
 /*
  * Convert value to sql-string as db bind index
  */
-int db_oracle_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len);
+int db_oracle_val2str(const db1_con_t* _con, const db_val_t* _v, char* _s, int* _len);
 
 /*
  * Called after val2str to realy binding

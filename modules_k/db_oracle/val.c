@@ -34,7 +34,7 @@
 /*
  * Convert value to sql-string as db bind index
  */
-int db_oracle_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_oracle_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 {
 	int ret;
 
@@ -63,35 +63,35 @@ int db_oracle_val2bind(bmap_t* _m, const db_val_t* _v, OCIDate* _o)
 	}
 
 	switch (VAL_TYPE(_v)) {
-	case DB_INT:
+	case DB1_INT:
 		_m->addr = (int*)&VAL_INT(_v);
 		_m->size = sizeof(VAL_INT(_v));
 		_m->type = SQLT_INT;
 		break;
 
-	case DB_BIGINT:
+	case DB1_BIGINT:
 		LM_ERR("BIGINT not supported");
 		return -1;
 
-	case DB_BITMAP:
+	case DB1_BITMAP:
 		_m->addr = (unsigned*)&VAL_BITMAP(_v);
 		_m->size = sizeof(VAL_BITMAP(_v));
 		_m->type = SQLT_UIN;
 		break;
 
-	case DB_DOUBLE:
+	case DB1_DOUBLE:
 		_m->addr = (double*)&VAL_DOUBLE(_v);
 		_m->size = sizeof(VAL_DOUBLE(_v));
 		_m->type = SQLT_FLT;
 		break;
 
-	case DB_STRING:
+	case DB1_STRING:
 		_m->addr = (char*)VAL_STRING(_v);
 		_m->size = strlen(VAL_STRING(_v))+1;
 		_m->type = SQLT_STR;
 		break;
 
-	case DB_STR:
+	case DB1_STR:
 		{
 			unsigned len = VAL_STR(_v).len;
 			char *estr, *pstr = VAL_STR(_v).s;
@@ -108,7 +108,7 @@ int db_oracle_val2bind(bmap_t* _m, const db_val_t* _v, OCIDate* _o)
 		}
 		break;
 
-	case DB_DATETIME:
+	case DB1_DATETIME:
 		{
 			struct tm* tm = localtime(&VAL_TIME(_v));
 			if (tm->tm_sec == 60)
@@ -123,7 +123,7 @@ int db_oracle_val2bind(bmap_t* _m, const db_val_t* _v, OCIDate* _o)
 		}
 		break;
 
-	case DB_BLOB:
+	case DB1_BLOB:
 		_m->addr = VAL_BLOB(_v).s;
 		_m->size = VAL_BLOB(_v).len;
 		_m->type = SQLT_CLOB;

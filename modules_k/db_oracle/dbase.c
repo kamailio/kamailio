@@ -29,10 +29,10 @@
 #include <oci.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_pool.h"
-#include "../../db/db_ut.h"
-#include "../../db/db_res.h"
-#include "../../db/db_query.h"
+#include "../../lib/srdb1/db_pool.h"
+#include "../../lib/srdb1/db_ut.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_query.h"
 #include "val.h"
 #include "ora_con.h"
 #include "res.h"
@@ -161,7 +161,7 @@ const char* db_oracle_error(ora_con_t* con, sword status)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_oracle_init(const str* _url)
+db1_con_t* db_oracle_init(const str* _url)
 {
 	return db_do_init(_url, (void *)db_oracle_new_connection);
 }
@@ -171,7 +171,7 @@ db_con_t* db_oracle_init(const str* _url)
  * Shut down database module
  * No function should be called after this
  */
-void db_oracle_close(db_con_t* _h)
+void db_oracle_close(db1_con_t* _h)
 {
 	db_do_close(_h, db_oracle_free_connection);
 }
@@ -180,7 +180,7 @@ void db_oracle_close(db_con_t* _h)
 /*
  * Release a result set from memory
  */
-int db_oracle_free_result(db_con_t* _h, db_res_t* _r)
+int db_oracle_free_result(db1_con_t* _h, db1_res_t* _r)
 {
 	if (!_h || !_r) {
 		LM_ERR("invalid parameter value\n");
@@ -199,7 +199,7 @@ int db_oracle_free_result(db_con_t* _h, db_res_t* _r)
 /*
  * Send an SQL query to the server
  */
-static int db_oracle_submit_query(const db_con_t* _h, const str* _s)
+static int db_oracle_submit_query(const db1_con_t* _h, const str* _s)
 {
 	OCIBind* bind[MAX_BIND_HANDLES];
 	OCIDate odt[sizeof(bind)/sizeof(bind[0])];
@@ -336,9 +336,9 @@ stop_exec:
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int db_oracle_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_oracle_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		const db_val_t* _v, const db_key_t* _c, int _n, int _nc,
-		const db_key_t _o, db_res_t** _r)
+		const db_key_t _o, db1_res_t** _r)
 {
 	query_data_t cb;
 	OCIStmt* reshp;
@@ -366,7 +366,7 @@ int db_oracle_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 /*
  * Execute a raw SQL query
  */
-int db_oracle_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
+int db_oracle_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
 	query_data_t cb;
 	OCIStmt* reshp;
@@ -415,7 +415,7 @@ badparam:
  * _v: values of the keys
  * _n: number of key=value pairs
  */
-int db_oracle_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_oracle_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		int _n)
 {
 	query_data_t cb;
@@ -447,7 +447,7 @@ int db_oracle_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-int db_oracle_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_oracle_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, int _n)
 {
 	query_data_t cb;
@@ -482,7 +482,7 @@ int db_oracle_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int db_oracle_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_oracle_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv,
 		int _n, int _un)
 {
@@ -512,7 +512,7 @@ int db_oracle_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_oracle_use_table(db_con_t* _h, const str* _t)
+int db_oracle_use_table(db1_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }

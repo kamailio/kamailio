@@ -26,8 +26,8 @@
 #include <string.h>
 #include <time.h>
 #include <oci.h>
-#include "../../db/db_res.h"
-#include "../../db/db_row.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_row.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "ora_con.h"
@@ -58,7 +58,7 @@ typedef struct dmap dmap_t;
 /*
  * Get and convert columns from a result. Define handlers and buffers
  */
-static int get_columns(ora_con_t* con, db_res_t* _r, OCIStmt* _c, dmap_t* _d)
+static int get_columns(ora_con_t* con, db1_res_t* _r, OCIStmt* _c, dmap_t* _d)
 {
 	OCIParam *param;
 	size_t tsz;
@@ -129,15 +129,15 @@ static int get_columns(ora_con_t* con, db_res_t* _r, OCIStmt* _c, dmap_t* _d)
 		switch (dtype) {
 		case SQLT_UIN:		/* unsigned integer */
 set_bitmap:
-			LM_DBG("use DB_BITMAP type");
-			RES_TYPES(_r)[i] = DB_BITMAP;
+			LM_DBG("use DB1_BITMAP type");
+			RES_TYPES(_r)[i] = DB1_BITMAP;
 			len = sizeof(VAL_BITMAP((db_val_t*)NULL));
 			break;
 
 		case SQLT_INT:		/* (ORANET TYPE) integer */
 set_int:
-			LM_DBG("use DB_INT result type");
-			RES_TYPES(_r)[i] = DB_INT;
+			LM_DBG("use DB1_INT result type");
+			RES_TYPES(_r)[i] = DB1_INT;
 			len = sizeof(VAL_INT((db_val_t*)NULL));
 			break;
 
@@ -168,8 +168,8 @@ set_int:
 		case SQLT_IBFLOAT:	/* binary float canonical */
 		case SQLT_IBDOUBLE:	/* binary double canonical */
 		case SQLT_PDN:		/* (ORANET TYPE) Packed Decimal Numeric */
-			LM_DBG("use DB_DOUBLE result type");
-			RES_TYPES(_r)[i] = DB_DOUBLE;
+			LM_DBG("use DB1_DOUBLE result type");
+			RES_TYPES(_r)[i] = DB1_DOUBLE;
 			len = sizeof(VAL_DOUBLE((db_val_t*)NULL));
 			dtype = SQLT_FLT;
 			break;
@@ -184,8 +184,8 @@ set_int:
 		case SQLT_TIMESTAMP_LTZ:/* TIMESTAMP WITH LOCAL TZ */
 //		case SQLT_INTERVAL_YM:	/* INTERVAL YEAR TO MONTH */
 //		case SQLT_INTERVAL_DS:	/* INTERVAL DAY TO SECOND */
-			LM_DBG("use DB_DATETIME result type");
-			RES_TYPES(_r)[i] = DB_DATETIME;
+			LM_DBG("use DB1_DATETIME result type");
+			RES_TYPES(_r)[i] = DB1_DATETIME;
 			len = sizeof(OCIDate);
 			dtype = SQLT_ODT;
 			break;
@@ -196,8 +196,8 @@ set_int:
 //		case SQLT_CFILEE:	/* character file lob */
 //		case SQLT_BIN:		/* binary data(DTYBIN) */
 //		case SQLT_LBI:		/* long binary */
-			LM_DBG("use DB_BLOB result type");
-			RES_TYPES(_r)[i] = DB_BLOB;
+			LM_DBG("use DB1_BLOB result type");
+			RES_TYPES(_r)[i] = DB1_BLOB;
 			goto dyn_str;
 
 		case SQLT_CHR:		/* (ORANET TYPE) character string */
@@ -207,8 +207,8 @@ set_int:
 		case SQLT_AFC:		/* Ansi fixed char */
 		case SQLT_AVC:		/* Ansi Var char */
 //		case SQLT_RID:		/* rowid */
-			LM_DBG("use DB_STR result type");
-			RES_TYPES(_r)[i] = DB_STR;
+			LM_DBG("use DB1_STR result type");
+			RES_TYPES(_r)[i] = DB1_STR;
 dyn_str:
 			dtype = SQLT_CHR;
 			len = 0; /* DATA_SIZE is ub2 */
@@ -217,8 +217,8 @@ dyn_str:
 				con->errhp);
 			if (status != OCI_SUCCESS) goto ora_err;
 			if (len >= 4000) {
-				LM_DBG("use DB_BLOB result type");
-				RES_TYPES(_r)[i] = DB_BLOB;
+				LM_DBG("use DB1_BLOB result type");
+				RES_TYPES(_r)[i] = DB1_BLOB;
 			}
 			++len;
 			break;
@@ -256,7 +256,7 @@ stop_load:
 /*
  * Convert data fron db format to internal format
  */
-static int convert_row(db_res_t* _res, db_row_t* _r, dmap_t* _d)
+static int convert_row(db1_res_t* _res, db_row_t* _r, dmap_t* _d)
 {
 	unsigned i, n = RES_COL_N(_res);
 
@@ -293,23 +293,23 @@ nomem:
 
 		VAL_TYPE(v) = t;
 		switch (t) {
-		case DB_INT:
+		case DB1_INT:
 			VAL_INT(v) = *_d->pv[i].i;
 			break;
 
-		case DB_BIGINT:
+		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return -1;
 
-		case DB_BITMAP:
+		case DB1_BITMAP:
 			VAL_BITMAP(v) = *_d->pv[i].i;
 			break;
 
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			VAL_DOUBLE(v) = *_d->pv[i].f;
 			break;
 
-		case DB_DATETIME:
+		case DB1_DATETIME:
 			{
 				struct tm tm;
 				memset(&tm, 0, sizeof(tm));
@@ -325,9 +325,9 @@ nomem:
 			}
 			break;
 
-		case DB_STR:
-		case DB_BLOB:
-		case DB_STRING:
+		case DB1_STR:
+		case DB1_BLOB:
+		case DB1_STRING:
 			{
 				size_t len = _d->len[i];
 				char *pstr = pkg_malloc(len+1);
@@ -335,10 +335,10 @@ nomem:
 				memcpy(pstr, _d->pv[i].c, len);
 				pstr[len] = '\0';
 				VAL_FREE(v) = 1;
-				if (t == DB_STR) {
+				if (t == DB1_STR) {
 					VAL_STR(v).s = pstr;
 					VAL_STR(v).len = len;
-				} else if (t == DB_BLOB) {
+				} else if (t == DB1_BLOB) {
 					VAL_BLOB(v).s = pstr;
 					VAL_BLOB(v).len = len;
 				} else {
@@ -360,7 +360,7 @@ nomem:
 /*
  * Get rows and convert it from oracle to db API representation
  */
-static int get_rows(ora_con_t* con, db_res_t* _r, OCIStmt* _c, dmap_t* _d)
+static int get_rows(ora_con_t* con, db1_res_t* _r, OCIStmt* _c, dmap_t* _d)
 {
 	ub4 rcnt;
 	sword status;
@@ -431,11 +431,11 @@ stop_load:
 /*
  * Read database answer and fill the structure
  */
-int db_oracle_store_result(const db_con_t* _h, db_res_t** _r)
+int db_oracle_store_result(const db1_con_t* _h, db1_res_t** _r)
 {
 	dmap_t dmap;
 	int rc;
-	db_res_t* r;
+	db1_res_t* r;
 	ora_con_t* con;
 	OCIStmt* hs;
 

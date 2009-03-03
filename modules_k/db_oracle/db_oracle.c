@@ -29,7 +29,7 @@
 #include <sys/time.h>
 #include <oci.h>
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "dbase.h"
 #include "asynch.h"
 

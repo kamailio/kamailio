@@ -24,9 +24,9 @@
 #define ORA_CON_H
 
 #include <oci.h>
-#include "../../db/db_pool.h"
-#include "../../db/db_id.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db_pool.h"
+#include "../../lib/srdb1/db_id.h"
+#include "../../lib/srdb1/db_val.h"
 
 /* Temporary -- callback data for submit_query/store_result */
 struct query_data {

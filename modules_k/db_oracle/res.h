@@ -25,8 +25,8 @@
 #ifndef RES_H
 #define RES_H
 
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_con.h"
 
 
 #define STATIC_BUF_LEN	65536
@@ -36,6 +36,6 @@ extern char st_buf[STATIC_BUF_LEN];
 /*
  * Read database answer and fill the structure
  */
-int db_oracle_store_result(const db_con_t* _h, db_res_t** _r);
+int db_oracle_store_result(const db1_con_t* _h, db1_res_t** _r);
 
 #endif /* RES_H */
