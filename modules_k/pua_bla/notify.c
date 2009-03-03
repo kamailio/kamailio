@@ -32,7 +32,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../pua/hash.h"
 #include"pua_bla.h"
 
