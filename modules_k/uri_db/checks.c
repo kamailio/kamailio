@@ -36,11 +36,11 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../ut.h"                   /* Handy utilities */
-#include "../../db/db.h"                /* Database API */
+#include "../../lib/srdb1/db.h"                /* Database API */
 #include "uridb_mod.h"
 #include "checks.h"
 
-static db_con_t* db_handle = 0;   /* Database connection handle */
+static db1_con_t* db_handle = 0;   /* Database connection handle */
 static db_func_t uridb_dbf;
 
 
@@ -55,7 +55,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t cols[1];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 
 	if (!_uri) {
 		LM_ERR("Bad parameter\n");
@@ -98,7 +98,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		keys[2] = &uridb_uriuser_col;
 		cols[0] = &uridb_user_col;
 
-		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
+		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB1_STR;
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 
 		VAL_STR(vals) = c->digest.username.user;
@@ -188,7 +188,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t cols[1];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("Error while parsing URI\n");
@@ -213,7 +213,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		cols[0] = &uridb_user_col;
 	}
 
-	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
+	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB1_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	VAL_STR(vals) = _msg->parsed_uri.user;
 	VAL_STR(vals + 1) = _msg->parsed_uri.host;
@@ -281,7 +281,7 @@ void uridb_db_close(void)
 
 int uridb_db_ver(const str* db_url, str* name)
 {
-	db_con_t* dbh;
+	db1_con_t* dbh;
 	int ver;
 	
 	if (uridb_dbf.init==0){

@@ -30,7 +30,7 @@
 #ifndef URIDB_MOD_H
 #define URIDB_MOD_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../str.h"
 
 /*
