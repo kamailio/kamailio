@@ -117,6 +117,7 @@ static inline int find_first_route(struct sip_msg* _m)
  * \param _params URI
  * \return 1 if URI contains a r2 parameter, 0 otherwise
  */
+/*
 static inline int is_2rr(str* _params)
 {
 	str s;
@@ -193,7 +194,7 @@ static inline int is_2rr(str* _params)
 	if ((state == 2) || (state == 3)) return 1;
 	else return 0;
 }
-
+*/
 
 /*!
  * \brief Check if URI is myself
