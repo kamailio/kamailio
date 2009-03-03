@@ -33,7 +33,7 @@
 #include "../../db/db.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
-#include "../../trie/dtrie.h"
+#include "../../lib/trie/dtrie.h"
 
 
 /**

@@ -31,7 +31,7 @@
 #define _DB_H_
 
 #include "../../sr_module.h"
-#include "../../trie/dtrie.h"
+#include "../../lib/trie/dtrie.h"
 
 #define MARK_WHITELIST 1
 #define MARK_BLACKLIST 2

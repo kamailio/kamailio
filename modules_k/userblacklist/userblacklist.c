@@ -51,7 +51,7 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 
-#include "../../trie/dtrie.h"
+#include "../../lib/trie/dtrie.h"
 #include "db.h"
 #include "db_userblacklist.h"
 
