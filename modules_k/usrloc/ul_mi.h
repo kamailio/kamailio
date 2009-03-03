@@ -29,7 +29,7 @@
 #ifndef _USRLOC_MI_H_
 #define _USRLOC_MI_H_
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #define MI_USRLOC_RM           "ul_rm"
 #define MI_USRLOC_RM_CONTACT   "ul_rm_contact"

@@ -34,7 +34,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../qvalue.h"
