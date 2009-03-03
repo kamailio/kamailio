@@ -10,5 +10,7 @@ auto_gen=
 NAME=textops.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 
