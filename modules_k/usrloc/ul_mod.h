@@ -34,7 +34,7 @@
 #define UL_MOD_H
 
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../str.h"
 
 
@@ -75,7 +75,7 @@ extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
 
-extern db_con_t* ul_dbh;   /* Database connection handle */
+extern db1_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;
 
 

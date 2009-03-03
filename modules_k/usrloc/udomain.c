@@ -40,7 +40,7 @@
 #include "../../parser/parse_methods.h"
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../socket_info.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
@@ -343,13 +343,13 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
  * \param _d loaded domain
  * \return 0 on success, -1 on failure
  */
-int preload_udomain(db_con_t* _c, udomain_t* _d)
+int preload_udomain(db1_con_t* _c, udomain_t* _d)
 {
 	char uri[MAX_URI_SIZE];
 	ucontact_info_t *ci;
 	db_row_t *row;
 	db_key_t columns[15];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	str user, contact;
 	char* domain;
 	int i;
@@ -502,14 +502,14 @@ error:
  * \param _aor address of record
  * \return pointer to the record on success, 0 on errors or if nothing is found
  */
-urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
+urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 {
 	ucontact_info_t *ci;
 	db_key_t columns[13];
 	db_key_t keys[2];
 	db_key_t order;
 	db_val_t vals[2];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	str contact;
 	char *domain;
 	int i;
@@ -518,11 +518,11 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	ucontact_t* c;
 
 	keys[0] = &user_col;
-	vals[0].type = DB_STR;
+	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	if (use_domain) {
 		keys[1] = &domain_col;
-		vals[1].type = DB_STR;
+		vals[1].type = DB1_STR;
 		vals[1].nul = 0;
 		domain = memchr(_aor->s, '@', _aor->len);
 		vals[0].val.str_val.s   = _aor->s;
@@ -617,13 +617,13 @@ int db_timer_udomain(udomain_t* _d)
 
 	keys[0] = &expires_col;
 	ops[0] = "<";
-	vals[0].type = DB_DATETIME;
+	vals[0].type = DB1_DATETIME;
 	vals[0].nul = 0;
 	vals[0].val.time_val = act_time + 1;
 
 	keys[1] = &expires_col;
 	ops[1] = "!=";
-	vals[1].type = DB_DATETIME;
+	vals[1].type = DB1_DATETIME;
 	vals[1].nul = 0;
 	vals[1].val.time_val = 0;
 
@@ -646,11 +646,11 @@ int db_timer_udomain(udomain_t* _d)
  * \param con database connection
  * \param d domain
  */
-int testdb_udomain(db_con_t* con, udomain_t* d)
+int testdb_udomain(db1_con_t* con, udomain_t* d)
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 
 	if (ul_dbf.use_table(con, d->name) < 0) {
 		LM_ERR("failed to change table\n");
@@ -660,7 +660,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d)
 	key[0] = &user_col;
 
 	col[0] = &user_col;
-	VAL_TYPE(val) = DB_STRING;
+	VAL_TYPE(val) = DB1_STRING;
 	VAL_NULL(val) = 0;
 	VAL_STRING(val) = "dummy_user";
 	

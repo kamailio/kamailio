@@ -124,7 +124,7 @@ int ul_hash_size = 9;
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
 
-db_con_t* ul_dbh = 0; /* Database connection handle */
+db1_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
 

@@ -39,7 +39,7 @@
 #include "../../statistics.h"
 #include "../../locking.h"
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "urecord.h"
 #include "hslot.h"
 
@@ -95,7 +95,7 @@ void print_udomain(FILE* _f, udomain_t* _d);
  * \param _d loaded domain
  * \return 0 on success, -1 on failure
  */
-int preload_udomain(db_con_t* _c, udomain_t* _d);
+int preload_udomain(db1_con_t* _c, udomain_t* _d);
 
 
 /*!
@@ -103,7 +103,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d);
  * \param con database connection
  * \param d domain
  */
-int testdb_udomain(db_con_t* con, udomain_t* d);
+int testdb_udomain(db1_con_t* con, udomain_t* d);
 
 
 /*!

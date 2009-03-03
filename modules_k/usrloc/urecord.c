@@ -401,7 +401,7 @@ int db_delete_urecord(urecord_t* _r)
 
 	keys[0] = &user_col;
 	keys[1] = &domain_col;
-	vals[0].type = DB_STR;
+	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _r->aor.s;
 	vals[0].val.str_val.len = _r->aor.len;
@@ -410,7 +410,7 @@ int db_delete_urecord(urecord_t* _r)
 		dom = memchr(_r->aor.s, '@', _r->aor.len);
 		vals[0].val.str_val.len = dom - _r->aor.s;
 
-		vals[1].type = DB_STR;
+		vals[1].type = DB1_STR;
 		vals[1].nul = 0;
 		vals[1].val.str_val.s = dom + 1;
 		vals[1].val.str_val.len = _r->aor.s + _r->aor.len - dom - 1;

@@ -40,7 +40,7 @@
 #include "../../ip_addr.h"
 #include "../../socket_info.h"
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "ul_mod.h"
 #include "ul_callback.h"
 #include "urecord.h"
@@ -410,47 +410,47 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[13] = &last_mod_col;
 	keys[14] = &domain_col;
 
-	vals[0].type = DB_STR;
+	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _c->aor->s;
 	vals[0].val.str_val.len = _c->aor->len;
 
-	vals[1].type = DB_STR;
+	vals[1].type = DB1_STR;
 	vals[1].nul = 0;
 	vals[1].val.str_val.s = _c->c.s; 
 	vals[1].val.str_val.len = _c->c.len;
 
-	vals[2].type = DB_DATETIME;
+	vals[2].type = DB1_DATETIME;
 	vals[2].nul = 0;
 	vals[2].val.time_val = _c->expires;
 
-	vals[3].type = DB_DOUBLE;
+	vals[3].type = DB1_DOUBLE;
 	vals[3].nul = 0;
 	vals[3].val.double_val = q2double(_c->q);
 
-	vals[4].type = DB_STR;
+	vals[4].type = DB1_STR;
 	vals[4].nul = 0;
 	vals[4].val.str_val.s = _c->callid.s;
 	vals[4].val.str_val.len = _c->callid.len;
 
-	vals[5].type = DB_INT;
+	vals[5].type = DB1_INT;
 	vals[5].nul = 0;
 	vals[5].val.int_val = _c->cseq;
 
-	vals[6].type = DB_INT;
+	vals[6].type = DB1_INT;
 	vals[6].nul = 0;
 	vals[6].val.bitmap_val = _c->flags;
 
-	vals[7].type = DB_INT;
+	vals[7].type = DB1_INT;
 	vals[7].nul = 0;
 	vals[7].val.bitmap_val = _c->cflags;
 
-	vals[8].type = DB_STR;
+	vals[8].type = DB1_STR;
 	vals[8].nul = 0;
 	vals[8].val.str_val.s = _c->user_agent.s;
 	vals[8].val.str_val.len = _c->user_agent.len;
 
-	vals[9].type = DB_STR;
+	vals[9].type = DB1_STR;
 	if (_c->received.s == 0) {
 		vals[9].nul = 1;
 	} else {
@@ -459,7 +459,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[9].val.str_val.len = _c->received.len;
 	}
 	
-	vals[10].type = DB_STR;
+	vals[10].type = DB1_STR;
 	if (_c->path.s == 0) {
 		vals[10].nul = 1;
 	} else {
@@ -468,7 +468,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[10].val.str_val.len = _c->path.len;
 	}
 
-	vals[11].type = DB_STR;
+	vals[11].type = DB1_STR;
 	if (_c->sock) {
 		vals[11].val.str_val = _c->sock->sock_str;
 		vals[11].nul = 0;
@@ -476,7 +476,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[11].nul = 1;
 	}
 
-	vals[12].type = DB_BITMAP;
+	vals[12].type = DB1_BITMAP;
 	if (_c->methods == 0xFFFFFFFF) {
 		vals[12].nul = 1;
 	} else {
@@ -484,12 +484,12 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[12].nul = 0;
 	}
 
-	vals[13].type = DB_DATETIME;
+	vals[13].type = DB1_DATETIME;
 	vals[13].nul = 0;
 	vals[13].val.time_val = _c->last_modified;
 
 	if (use_domain) {
-		vals[14].type = DB_STR;
+		vals[14].type = DB1_STR;
 		vals[14].nul = 0;
 
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
@@ -551,43 +551,43 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[9] = &methods_col;
 	keys2[10] = &last_mod_col;
 
-	vals1[0].type = DB_STR;
+	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
 	vals1[0].val.str_val = *_c->aor;
 
-	vals1[1].type = DB_STR;
+	vals1[1].type = DB1_STR;
 	vals1[1].nul = 0;
 	vals1[1].val.str_val = _c->c;
 
-	vals1[2].type = DB_STR;
+	vals1[2].type = DB1_STR;
 	vals1[2].nul = 0;
 	vals1[2].val.str_val = _c->callid;
 
-	vals2[0].type = DB_DATETIME;
+	vals2[0].type = DB1_DATETIME;
 	vals2[0].nul = 0;
 	vals2[0].val.time_val = _c->expires;
 
-	vals2[1].type = DB_DOUBLE;
+	vals2[1].type = DB1_DOUBLE;
 	vals2[1].nul = 0;
 	vals2[1].val.double_val = q2double(_c->q);
 
-	vals2[2].type = DB_INT;
+	vals2[2].type = DB1_INT;
 	vals2[2].nul = 0;
 	vals2[2].val.int_val = _c->cseq;
 
-	vals2[3].type = DB_INT;
+	vals2[3].type = DB1_INT;
 	vals2[3].nul = 0;
 	vals2[3].val.bitmap_val = _c->flags;
 
-	vals2[4].type = DB_INT;
+	vals2[4].type = DB1_INT;
 	vals2[4].nul = 0;
 	vals2[4].val.bitmap_val = _c->cflags;
 
-	vals2[5].type = DB_STR;
+	vals2[5].type = DB1_STR;
 	vals2[5].nul = 0;
 	vals2[5].val.str_val = _c->user_agent;
 
-	vals2[6].type = DB_STR;
+	vals2[6].type = DB1_STR;
 	if (_c->received.s == 0) {
 		vals2[6].nul = 1;
 	} else {
@@ -595,7 +595,7 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[6].val.str_val = _c->received;
 	}
 	
-	vals2[7].type = DB_STR;
+	vals2[7].type = DB1_STR;
 	if (_c->path.s == 0) {
 		vals2[7].nul = 1;
 	} else {
@@ -603,7 +603,7 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[7].val.str_val = _c->path;
 	}
 
-	vals2[8].type = DB_STR;
+	vals2[8].type = DB1_STR;
 	if (_c->sock) {
 		vals2[8].val.str_val = _c->sock->sock_str;
 		vals2[8].nul = 0;
@@ -611,7 +611,7 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[8].nul = 1;
 	}
 
-	vals2[9].type = DB_BITMAP;
+	vals2[9].type = DB1_BITMAP;
 	if (_c->methods == 0xFFFFFFFF) {
 		vals2[9].nul = 1;
 	} else {
@@ -619,12 +619,12 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[9].nul = 0;
 	}
 
-	vals2[10].type = DB_DATETIME;
+	vals2[10].type = DB1_DATETIME;
 	vals2[10].nul = 0;
 	vals2[10].val.time_val = _c->last_modified;
 
 	if (use_domain) {
-		vals1[3].type = DB_STR;
+		vals1[3].type = DB1_STR;
 		vals1[3].nul = 0;
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
@@ -672,20 +672,20 @@ int db_delete_ucontact(ucontact_t* _c)
 	keys[2] = &callid_col;
 	keys[3] = &domain_col;
 
-	vals[0].type = DB_STR;
+	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val = *_c->aor;
 
-	vals[1].type = DB_STR;
+	vals[1].type = DB1_STR;
 	vals[1].nul = 0;
 	vals[1].val.str_val = _c->c;
 
-	vals[2].type = DB_STR;
+	vals[2].type = DB1_STR;
 	vals[2].nul = 0;
 	vals[2].val.str_val = _c->callid;
 
 	if (use_domain) {
-		vals[3].type = DB_STR;
+		vals[3].type = DB1_STR;
 		vals[3].nul = 0;
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {

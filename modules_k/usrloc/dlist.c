@@ -40,7 +40,7 @@
 #include <string.h>            /* strlen, memcmp */
 #include <stdio.h>             /* printf */
 #include "../../ut.h"
-#include "../../db/db_ut.h"
+#include "../../lib/srdb1/db_ut.h"
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../ip_addr.h"
@@ -97,7 +97,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	struct socket_info *sock;
 	unsigned int dbflags;
-	db_res_t* res = NULL;
+	db1_res_t* res = NULL;
 	db_row_t *row;
 	dlist_t *dom;
 	char *p, *p1;
@@ -462,7 +462,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 {
 	dlist_t* d;
 	str s;
-	db_con_t* con;
+	db1_con_t* con;
 
 	s.s = (char*)_n;
 	s.len = strlen(_n);
