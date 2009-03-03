@@ -29,7 +29,7 @@
 
 #include "../../ut.h"
 #include "../../dprint.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "qos_handlers.h"
 #include "qos_ctx_helpers.h"
 
