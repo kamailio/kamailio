@@ -29,13 +29,13 @@
 
 #include <string.h>
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../mem/mem.h"
 
 #include "dbt_res.h"
 #include "dbt_api.h"
 
-int dbt_use_table(db_con_t* _h, const str* _t)
+int dbt_use_table(db1_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }
@@ -44,7 +44,7 @@ int dbt_use_table(db_con_t* _h, const str* _t)
 /*
  * Get and convert columns from a result
  */
-static int dbt_get_columns(db_con_t* _h, db_res_t* _r)
+static int dbt_get_columns(db1_con_t* _h, db1_res_t* _r)
 {
 	int col;
 	
@@ -83,19 +83,19 @@ static int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 
 		switch(DBT_CON_RESULT(_h)->colv[col].type)
 		{
-			case DB_STR:
-			case DB_STRING:
-			case DB_BLOB:
-			case DB_INT:
-			case DB_DATETIME:
-			case DB_DOUBLE:
+			case DB1_STR:
+			case DB1_STRING:
+			case DB1_BLOB:
+			case DB1_INT:
+			case DB1_DATETIME:
+			case DB1_DOUBLE:
 				RES_TYPES(_r)[col] = DBT_CON_RESULT(_h)->colv[col].type;
 			break;
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
 						"use STR as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, DBT_CON_RESULT(_h)->colv[col].type);
-				RES_TYPES(_r)[col] = DB_STR;
+				RES_TYPES(_r)[col] = DB1_STR;
 			break;
 		}
 	}
@@ -105,7 +105,7 @@ static int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 /*
  * Convert a row from result into db API representation
  */
-static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
+static int dbt_convert_row(db1_con_t* _h, db1_res_t* _res, db_row_t* _r)
 {
 	int i;
 	if (!_h || !_r || !_res) {
@@ -122,59 +122,59 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 		(ROW_VALUES(_r)[i]).nul = DBT_CON_ROW(_h)->fields[i].nul;
 		switch(RES_TYPES(_res)[i])
 		{
-			case DB_INT:
+			case DB1_INT:
 				VAL_INT(&(ROW_VALUES(_r)[i])) = 
 						DBT_CON_ROW(_h)->fields[i].val.int_val;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_INT;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_INT;
 			break;
 
-			case DB_BIGINT:
+			case DB1_BIGINT:
 				LM_ERR("BIGINT not supported");
 				return -1;
 
-			case DB_DOUBLE:
+			case DB1_DOUBLE:
 				VAL_DOUBLE(&(ROW_VALUES(_r)[i])) = 
 						DBT_CON_ROW(_h)->fields[i].val.double_val;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_DOUBLE;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_DOUBLE;
 			break;
 
-			case DB_STRING:
+			case DB1_STRING:
 				VAL_STR(&(ROW_VALUES(_r)[i])).s = 
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STRING;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_STRING;
 				VAL_FREE(&(ROW_VALUES(_r)[i])) = 0;
 			break;
 
-			case DB_STR:
+			case DB1_STR:
 				VAL_STR(&(ROW_VALUES(_r)[i])).s = 
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_STR;
 				VAL_FREE(&(ROW_VALUES(_r)[i])) = 0;
 			break;
 
-			case DB_DATETIME:
+			case DB1_DATETIME:
 				VAL_INT(&(ROW_VALUES(_r)[i])) = 
 						DBT_CON_ROW(_h)->fields[i].val.int_val;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_DATETIME;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_DATETIME;
 			break;
 
-			case DB_BLOB:
+			case DB1_BLOB:
 				VAL_STR(&(ROW_VALUES(_r)[i])).s =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_BLOB;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_BLOB;
 				VAL_FREE(&(ROW_VALUES(_r)[i])) = 0;
 			break;
 
-			case DB_BITMAP:
+			case DB1_BITMAP:
 				VAL_INT(&(ROW_VALUES(_r)[i])) =
 					DBT_CON_ROW(_h)->fields[i].val.bitmap_val;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_INT;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_INT;
 			break;
 		}
 	}
@@ -185,7 +185,7 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 /*
  * Convert rows from internal to db API representation
  */
-static int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
+static int dbt_convert_rows(db1_con_t* _h, db1_res_t* _r)
 {
 	int col;
 	dbt_row_p _rp = NULL;
@@ -227,7 +227,7 @@ static int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 /*
  * Fill the structure with data from database
  */
-static int dbt_convert_result(db_con_t* _h, db_res_t* _r)
+static int dbt_convert_result(db1_con_t* _h, db1_res_t* _r)
 {
 	if (!_h || !_r) {
 		LM_ERR("invalid parameter\n");
@@ -249,7 +249,7 @@ static int dbt_convert_result(db_con_t* _h, db_res_t* _r)
 /*
  * Retrieve result set
  */
-int dbt_get_result(db_con_t* _h, db_res_t** _r)
+int dbt_get_result(db1_con_t* _h, db1_res_t** _r)
 {
 	if (!_h || !_r) {
 		LM_ERR("invalid parameter value\n");

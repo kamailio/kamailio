@@ -187,27 +187,27 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 				{
 					case 's':
 					case 'S':
-						colp->type = DB_STR;
+						colp->type = DB1_STR;
 						LM_DBG("column[%d] is STR!\n", ccol+1);
 					break;
 					case 'i':
 					case 'I':
-						colp->type = DB_INT;
+						colp->type = DB1_INT;
 						LM_DBG("column[%d] is INT!\n", ccol+1);
 					break;
 					case 'd':
 					case 'D':
-						colp->type = DB_DOUBLE;
+						colp->type = DB1_DOUBLE;
 						LM_DBG("column[%d] is DOUBLE!\n", ccol+1);
 					break;
 					case 'b':
 					case 'B':
-						colp->type = DB_BLOB;
+						colp->type = DB1_BLOB;
 						LM_DBG("column[%d] is BLOB!\n", ccol+1);
 					break;
 					case 't':
 					case 'T':
-						colp->type = DB_DATETIME;
+						colp->type = DB1_DATETIME;
 						LM_DBG("column[%d] is TIME!\n", ccol+1);
 					break;
 					default:
@@ -217,9 +217,9 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 
 				while(c!='\n' && c!=EOF && c!=')' && c!= ',')
 				{
-					if(colp->type == DB_STR && (c=='i'|| c=='I'))
+					if(colp->type == DB1_STR && (c=='i'|| c=='I'))
 					{
-						colp->type = DB_STRING;
+						colp->type = DB1_STRING;
 						LM_DBG("column[%d] is actually STRING!\n", ccol+1);
 					}
 					c = fgetc(fin);
@@ -235,7 +235,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						//LM_DBG("NULL flag set!\n");
 						colp->flag |= DBT_FLAG_NULL;
 					}
-					else if(colp->type==DB_INT && dtp->auto_col<0
+					else if(colp->type==DB1_INT && dtp->auto_col<0
 							&& (c=='A' || c=='a'))
 					{
 						//LM_DBG("AUTO flag set!\n");
@@ -310,8 +310,8 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 				
 				switch(dtp->colv[ccol]->type)
 				{
-					case DB_INT:
-					case DB_DATETIME:
+					case DB1_INT:
+					case DB1_DATETIME:
 						//LM_DBG("INT value!\n");
 						dtval.val.int_val = 0;
 						dtval.type = dtp->colv[ccol]->type;
@@ -350,10 +350,10 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 									dtval.val.int_val:max_auto;
 					break;
 					
-					case DB_DOUBLE:
+					case DB1_DOUBLE:
 						//LM_DBG("DOUBLE value!\n");
 						dtval.val.double_val = 0.0;
-						dtval.type = DB_DOUBLE;
+						dtval.type = DB1_DOUBLE;
 
 						if(c==DBT_DELIM || 
 								(ccol==dtp->nrcols-1
@@ -393,13 +393,13 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						}
 						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
 							goto clean;
-						if(dbt_row_set_val(rowp,&dtval,DB_DOUBLE,ccol))
+						if(dbt_row_set_val(rowp,&dtval,DB1_DOUBLE,ccol))
 							goto clean;
 					break;
 					
-					case DB_STR:
-					case DB_STRING:
-					case DB_BLOB:
+					case DB1_STR:
+					case DB1_STRING:
+					case DB1_BLOB:
 						//LM_DBG("STR value!\n");
 						
 						dtval.val.str_val.s = NULL;
@@ -523,22 +523,22 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 	{
 		switch(colp->type)
 		{
-			case DB_INT:
+			case DB1_INT:
 				fprintf(fout, "%.*s(int", colp->name.len, colp->name.s);
 			break;
-			case DB_DOUBLE:
+			case DB1_DOUBLE:
 				fprintf(fout, "%.*s(double", colp->name.len, colp->name.s);
 			break;
-			case DB_STR:
+			case DB1_STR:
 				fprintf(fout, "%.*s(str", colp->name.len, colp->name.s);
 			break;
-			case DB_STRING:
+			case DB1_STRING:
 				fprintf(fout, "%.*s(string", colp->name.len, colp->name.s);
 			break;
-			case DB_BLOB:
+			case DB1_BLOB:
 				fprintf(fout, "%.*s(blob", colp->name.len, colp->name.s);
 			break;
-			case DB_DATETIME:
+			case DB1_DATETIME:
 				fprintf(fout, "%.*s(time", colp->name.len, colp->name.s);
 			break;
 			default:
@@ -549,7 +549,7 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 		
 		if(colp->flag & DBT_FLAG_NULL)
 				fprintf(fout,",null");
-		else if(colp->type==DB_INT && colp->flag & DBT_FLAG_AUTO)
+		else if(colp->type==DB1_INT && colp->flag & DBT_FLAG_AUTO)
 					fprintf(fout,",auto");
 		fprintf(fout,")");
 		
@@ -565,20 +565,20 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 		{
 			switch(_dtp->colv[ccol]->type)
 			{
-				case DB_DATETIME:
-				case DB_INT:
+				case DB1_DATETIME:
+				case DB1_INT:
 					if(!rowp->fields[ccol].nul)
 						fprintf(fout,"%d",
 								rowp->fields[ccol].val.int_val);
 				break;
-				case DB_DOUBLE:
+				case DB1_DOUBLE:
 					if(!rowp->fields[ccol].nul)
 						fprintf(fout, "%.2f",
 								rowp->fields[ccol].val.double_val);
 				break;
-				case DB_STR:
-				case DB_STRING:
-				case DB_BLOB:
+				case DB1_STR:
+				case DB1_STRING:
+				case DB1_BLOB:
 					if(!rowp->fields[ccol].nul)
 					{
 						p = rowp->fields[ccol].val.str_val.s;

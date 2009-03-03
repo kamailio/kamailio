@@ -32,7 +32,7 @@
 #define _DBT_LIB_H_
 
 #include "../../str.h"
-#include "../../db/db_val.h"
+#include "../../lib/srdb1/db_val.h"
 #include "../../locking.h"
 
 #define DBT_FLAG_UNSET  0

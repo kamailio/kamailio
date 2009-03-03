@@ -31,8 +31,8 @@
 #ifndef _DBT_RES_H_
 #define _DBT_RES_H_
 
-#include "../../db/db_op.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_res.h"
 
 #include "dbt_lib.h"
 
@@ -44,7 +44,7 @@ typedef struct _dbt_result
 	dbt_row_p rows;
 } dbt_result_t, *dbt_result_p;
 
-//typedef db_res_t dbt_result_t, *dbt_result_p;
+//typedef db1_res_t dbt_result_t, *dbt_result_p;
 
 typedef struct _dbt_con
 {

@@ -117,8 +117,8 @@ int dbt_result_free(dbt_result_p _dres)
 		{
 			for(i=0; i<_dres->nrcols; i++)
 			{
-				if((_dres->colv[i].type==DB_STR 
-							|| _dres->colv[i].type==DB_STRING)
+				if((_dres->colv[i].type==DB1_STR 
+							|| _dres->colv[i].type==DB1_STRING)
 						&& _rp0->fields[i].val.str_val.s)
 					pkg_free(_rp0->fields[i].val.str_val.s);
 			}
@@ -262,19 +262,19 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 		
 		switch(_dres->colv[i].type)
 		{
-			case DB_INT:
-			case DB_DATETIME:
-			case DB_BITMAP:
+			case DB1_INT:
+			case DB1_DATETIME:
+			case DB1_BITMAP:
 				_rp->fields[i].type = _dres->colv[i].type;
 				_rp->fields[i].val.int_val = _drp->fields[n].val.int_val;
 			break;
-			case DB_DOUBLE:
-				_rp->fields[i].type = DB_DOUBLE;
+			case DB1_DOUBLE:
+				_rp->fields[i].type = DB1_DOUBLE;
 				_rp->fields[i].val.double_val=_drp->fields[n].val.double_val;
 			break;
-			case DB_STRING:
-			case DB_STR:
-			case DB_BLOB:
+			case DB1_STRING:
+			case DB1_STR:
+			case DB1_BLOB:
 				_rp->fields[i].type = _dres->colv[i].type;
 				_rp->fields[i].val.str_val.len =
 						_drp->fields[n].val.str_val.len;
@@ -304,9 +304,9 @@ clean:
 	LM_DBG("make clean!\n");
 	while(i>=0)
 	{
-		if((_rp->fields[i].type == DB_STRING
-					|| _rp->fields[i].type == DB_STR
-					|| _rp->fields[i].type == DB_BLOB)
+		if((_rp->fields[i].type == DB1_STRING
+					|| _rp->fields[i].type == DB1_STR
+					|| _rp->fields[i].type == DB1_BLOB)
 				&& !_rp->fields[i].nul
 				&& _rp->fields[i].val.str_val.s)
 			pkg_free(_rp->fields[i].val.str_val.s);
@@ -336,21 +336,21 @@ int dbt_result_print(dbt_result_p _dres)
 	{
 		switch(_dres->colv[i].type)
 		{
-			case DB_INT:
+			case DB1_INT:
 				fprintf(fout, "%.*s(int", _dres->colv[i].name.len,
 								_dres->colv[i].name.s);
 				if(_dres->colv[i].flag & DBT_FLAG_NULL)
 					fprintf(fout, ",null");
 				fprintf(fout, ") ");
 			break;
-			case DB_DOUBLE:
+			case DB1_DOUBLE:
 				fprintf(fout, "%.*s(double", _dres->colv[i].name.len,
 							_dres->colv[i].name.s);
 				if(_dres->colv[i].flag & DBT_FLAG_NULL)
 					fprintf(fout, ",null");
 				fprintf(fout, ") ");
 			break;
-			case DB_STR:
+			case DB1_STR:
 				fprintf(fout, "%.*s(str", _dres->colv[i].name.len,
 						_dres->colv[i].name.s);
 				if(_dres->colv[i].flag & DBT_FLAG_NULL)
@@ -369,21 +369,21 @@ int dbt_result_print(dbt_result_p _dres)
 		{
 			switch(_dres->colv[i].type)
 			{
-				case DB_INT:
+				case DB1_INT:
 					if(rowp->fields[i].nul)
 						fprintf(fout, "N ");
 					else
 						fprintf(fout, "%d ",
 								rowp->fields[i].val.int_val);
 				break;
-				case DB_DOUBLE:
+				case DB1_DOUBLE:
 					if(rowp->fields[i].nul)
 						fprintf(fout, "N ");
 					else
 						fprintf(fout, "%.2f ",
 								rowp->fields[i].val.double_val);
 				break;
-				case DB_STR:
+				case DB1_STR:
 					fprintf(fout, "\"");
 					if(!rowp->fields[i].nul)
 					{
@@ -449,21 +449,21 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 	
 	switch(VAL_TYPE(_v))
 	{
-		case DB_INT:
+		case DB1_INT:
 			return (_vp->val.int_val<_v->val.int_val)?-1:
 					(_vp->val.int_val>_v->val.int_val)?1:0;
 
-		case DB_BIGINT:
+		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return -1;
 
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			return (_vp->val.double_val<_v->val.double_val)?-1:
 					(_vp->val.double_val>_v->val.double_val)?1:0;
-		case DB_DATETIME:
+		case DB1_DATETIME:
 			return (_vp->val.int_val<_v->val.time_val)?-1:
 					(_vp->val.int_val>_v->val.time_val)?1:0;
-		case DB_STRING:
+		case DB1_STRING:
 			_l = strlen(_v->val.string_val);
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.string_val, _l);
@@ -474,7 +474,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-		case DB_STR:
+		case DB1_STR:
 			_l = _v->val.str_val.len;
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.str_val.s, _l);
@@ -485,7 +485,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-		case DB_BLOB:
+		case DB1_BLOB:
 			_l = _v->val.blob_val.len;
 			_l = (_l>_vp->val.str_val.len)?_vp->val.str_val.len:_l;
 			_n = strncasecmp(_vp->val.str_val.s, _v->val.blob_val.s, _l);
@@ -496,7 +496,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-		case DB_BITMAP:
+		case DB1_BITMAP:
 			return (_vp->val.int_val<_v->val.bitmap_val)?-1:
 				(_vp->val.int_val>_v->val.bitmap_val)?1:0;
 	}
@@ -797,16 +797,16 @@ void dbt_project_result(dbt_result_p _dres, int _o_nc)
 	/* check whether there are string columns, free them */
 	for (_i = _dres->nrcols - _o_nc; _i < _dres->nrcols; _i++)
 	{
-		if (_dres->colv[_i].type == DB_STRING ||
-				_dres->colv[_i].type == DB_STR ||
-				_dres->colv[_i].type == DB_BLOB)
+		if (_dres->colv[_i].type == DB1_STRING ||
+				_dres->colv[_i].type == DB1_STR ||
+				_dres->colv[_i].type == DB1_BLOB)
 		{
 			for (_drp=_dres->rows; _drp != NULL; _drp = _drp->next)
 			{
 				if (! _drp->fields[_i].nul &&
-					(_drp->fields[_i].type == DB_STRING ||
-					_drp->fields[_i].type == DB_STR ||
-					_drp->fields[_i].type == DB_BLOB ))
+					(_drp->fields[_i].type == DB1_STRING ||
+					_drp->fields[_i].type == DB1_STR ||
+					_drp->fields[_i].type == DB1_BLOB ))
 				{
 					pkg_free(_drp->fields[_i].val.str_val.s);
 					_drp->fields[_i].val.str_val.s = NULL;

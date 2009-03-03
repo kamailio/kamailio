@@ -31,16 +31,16 @@
 #ifndef _DBT_API_H_
 #define _DBT_API_H_
 
-#include "../../db/db_op.h"
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
-#include "../../db/db_row.h"
+#include "../../lib/srdb1/db_op.h"
+#include "../../lib/srdb1/db_res.h"
+#include "../../lib/srdb1/db_con.h"
+#include "../../lib/srdb1/db_row.h"
 
 /*
  * Retrieve result set
  */
-int dbt_get_result(db_con_t* _h, db_res_t** _r);
+int dbt_get_result(db1_con_t* _h, db1_res_t** _r);
 
-int dbt_use_table(db_con_t* _h, const str* _t);
+int dbt_use_table(db1_con_t* _h, const str* _t);
 
 #endif

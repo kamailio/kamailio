@@ -33,7 +33,7 @@
 #include <unistd.h>
 
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "dbtext.h"
 #include "dbt_lib.h"
 #include "dbt_api.h"

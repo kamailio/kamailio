@@ -125,8 +125,8 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 	if(_drp->fields)
 	{
 		for(i=0; i<_dtp->nrcols; i++)
-			if((_dtp->colv[i]->type==DB_STR || _dtp->colv[i]->type==DB_STRING
-						|| _dtp->colv[i]->type==DB_BLOB)
+			if((_dtp->colv[i]->type==DB1_STR || _dtp->colv[i]->type==DB1_STRING
+						|| _dtp->colv[i]->type==DB1_BLOB)
 					&& _drp->fields[i].val.str_val.s)
 				shm_free(_drp->fields[i].val.str_val.s);
 		shm_free(_drp->fields);
@@ -285,8 +285,8 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 	{
 		switch(_t)
 		{
-			case DB_STR:
-			case DB_BLOB:
+			case DB1_STR:
+			case DB1_BLOB:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.str_val.s = 
 					(char*)shm_malloc((_vp->val.str_val.len+1)*sizeof(char));
@@ -301,7 +301,7 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
 			break;
 			
-			case DB_STRING:
+			case DB1_STRING:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.str_val.len=_vp->val.str_val.len;
 				
@@ -318,23 +318,23 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				_drp->fields[_idx].val.str_val.s[_drp->fields[_idx].val.str_val.len] = '\0';
 			break;
 			
-			case DB_DOUBLE:
-				_drp->fields[_idx].type = DB_DOUBLE;
+			case DB1_DOUBLE:
+				_drp->fields[_idx].type = DB1_DOUBLE;
 				_drp->fields[_idx].val.double_val = _vp->val.double_val;
 			break;
 			
-			case DB_INT:
-				_drp->fields[_idx].type = DB_INT;
+			case DB1_INT:
+				_drp->fields[_idx].type = DB1_INT;
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
 			break;
 			
-			case DB_DATETIME:
+			case DB1_DATETIME:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
 			break;
 			
-			case DB_BITMAP:
-				_drp->fields[_idx].type = DB_INT;
+			case DB1_BITMAP:
+				_drp->fields[_idx].type = DB1_INT;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.bitmap_val;
 			break;
 			
@@ -362,8 +362,8 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 	{
 		switch(_t)
 		{
-			case DB_BLOB:
-			case DB_STR:
+			case DB1_BLOB:
+			case DB1_STR:
 				_drp->fields[_idx].type = _t;
 				// free if already exists
 				if(_drp->fields[_idx].val.str_val.s)
@@ -382,13 +382,13 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
 			break;
 			
-			case DB_STRING:
+			case DB1_STRING:
 				/* free if already exists */
 				if(_drp->fields[_idx].val.str_val.s)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 
 				_drp->fields[_idx].type = _t;
-				if(_vp->type==DB_STR)
+				if(_vp->type==DB1_STR)
 					_drp->fields[_idx].val.str_val.len=_vp->val.str_val.len;
 				else
 					_drp->fields[_idx].val.str_val.len
@@ -407,22 +407,22 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
 			break;
 			
-			case DB_DOUBLE:
+			case DB1_DOUBLE:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.double_val = _vp->val.double_val;
 			break;
 			
-			case DB_INT:
+			case DB1_INT:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
 			break;
 			
-			case DB_DATETIME:
+			case DB1_DATETIME:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
 			break;
 			
-			case DB_BITMAP:
+			case DB1_BITMAP:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.bitmap_val;
 			break;
@@ -461,7 +461,7 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 		if(!_drp->fields[i].nul)
 			continue;
 
-		if(_dtp->colv[i]->type==DB_INT
+		if(_dtp->colv[i]->type==DB1_INT
 			&& (_dtp->colv[i]->flag & DBT_FLAG_AUTO)
 			&& i==_dtp->auto_col)
 		{

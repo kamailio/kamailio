@@ -48,9 +48,9 @@
 /*
  * Initialize database connection
  */
-db_con_t* dbt_init(const str* _sqlurl)
+db1_con_t* dbt_init(const str* _sqlurl)
 {
-	db_con_t* _res;
+	db1_con_t* _res;
 	str _s;
 	char dbt_path[DBT_PATH_LEN];
 	
@@ -87,14 +87,14 @@ db_con_t* dbt_init(const str* _sqlurl)
 		_s.s = dbt_path;
 	}
 	
-	_res = pkg_malloc(sizeof(db_con_t)+sizeof(dbt_con_t));
+	_res = pkg_malloc(sizeof(db1_con_t)+sizeof(dbt_con_t));
 	if (!_res)
 	{
 		LM_ERR("no pkg memory left\n");
 		return NULL;
 	}
-	memset(_res, 0, sizeof(db_con_t) + sizeof(dbt_con_t));
-	_res->tail = (unsigned long)((char*)_res+sizeof(db_con_t));
+	memset(_res, 0, sizeof(db1_con_t) + sizeof(dbt_con_t));
+	_res->tail = (unsigned long)((char*)_res+sizeof(db1_con_t));
 
 	LM_INFO("using database at: %.*s", _s.len, _s.s);
 	DBT_CON_CONNECTION(_res) = dbt_cache_get_db(&_s);
@@ -111,7 +111,7 @@ db_con_t* dbt_init(const str* _sqlurl)
 /*
  * Close a database connection
  */
-void dbt_close(db_con_t* _h)
+void dbt_close(db1_con_t* _h)
 {
 	if (!_h) 
 	{
@@ -130,7 +130,7 @@ void dbt_close(db_con_t* _h)
 /*
  * Free all memory allocated by get_result
  */
-int dbt_free_result(db_con_t* _h, db_res_t* _r)
+int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
@@ -167,8 +167,8 @@ int dbt_free_result(db_con_t* _h, db_res_t* _r)
  * _o: order by the specified column
  */
 
-int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
-			db_key_t* _c, int _n, int _nc, db_key_t _o, db_res_t** _r)
+int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
+			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
@@ -328,7 +328,7 @@ clean:
 /*
  * Raw SQL query -- is not the case to have this method
  */
-int dbt_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
+int dbt_raw_query(db1_con_t* _h, char* _s, db1_res_t** _r)
 {
 	*_r = NULL;
     return -1;
@@ -337,7 +337,7 @@ int dbt_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 /*
  * Insert a row into table
  */
-int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
@@ -390,7 +390,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 			LM_ERR("incompatible types v[%d] - c[%d]!\n", i, j);
 			goto clean;
 		}
-		if(_v[i].type == DB_STRING && !_v[i].nul)
+		if(_v[i].type == DB1_STRING && !_v[i].nul)
 			_v[i].val.str_val.len = strlen(_v[i].val.string_val);
 		if(dbt_row_set_val(_drp, &(_v[i]), _tbc->colv[j]->type, j))
 		{
@@ -439,7 +439,7 @@ clean:
 /*
  * Delete a row from table
  */
-int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL, _drp0 = NULL;
@@ -516,7 +516,7 @@ error:
 /*
  * Update a row in table
  */
-int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
+int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
 	dbt_table_p _tbc = NULL;

@@ -432,32 +432,32 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 		return 0;
 	switch(_t1)
 	{
-		case DB_INT:
-			if(_t0==DB_DATETIME || _t0==DB_BITMAP)
+		case DB1_INT:
+			if(_t0==DB1_DATETIME || _t0==DB1_BITMAP)
 				return 0;
 
-		case DB_BIGINT:
+		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return 0;
 
-		case DB_DATETIME:
-			if(_t0==DB_INT)
+		case DB1_DATETIME:
+			if(_t0==DB1_INT)
 				return 0;
-			if(_t0==DB_BITMAP)
+			if(_t0==DB1_BITMAP)
 				return 0;
-		case DB_DOUBLE:
+		case DB1_DOUBLE:
 			break;
-		case DB_STRING:
-			if(_t0==DB_STR)
+		case DB1_STRING:
+			if(_t0==DB1_STR)
 				return 0;
-		case DB_STR:
-			if(_t0==DB_STRING || _t0==DB_BLOB)
+		case DB1_STR:
+			if(_t0==DB1_STRING || _t0==DB1_BLOB)
 				return 0;
-		case DB_BLOB:
-			if(_t0==DB_STR)
+		case DB1_BLOB:
+			if(_t0==DB1_STR)
 				return 0;
-		case DB_BITMAP:
-			if (_t0==DB_INT)
+		case DB1_BITMAP:
+			if (_t0==DB1_INT)
 				return 0;
 	}
 	return 1;
