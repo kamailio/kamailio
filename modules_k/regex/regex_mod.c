@@ -46,7 +46,7 @@
 #include "../../str.h"
 #include "../../locking.h"
 #include "../../mod_fix.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 MODULE_VERSION
 
