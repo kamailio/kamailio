@@ -834,7 +834,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 					return 1;
 				return -1;
 			}
-			return (t->relaied_reply_branch==-2)?1:-1;
+			return (t->relayed_reply_branch==-2)?1:-1;
 		default:
 			return -1;
 	}

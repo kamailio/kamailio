@@ -239,7 +239,7 @@ typedef struct cell
 	int first_branch;		/*!< first branch - when serial forking is performed, keeps the first
 	 			    	      branch for each step ; it allows proper branch selection */
 	int nr_of_outgoings;			/*!< number of forks */
-	int relaied_reply_branch;	/*!< nr of replied branch; 0..MAX_BRANCHES=branch value,
+	int relayed_reply_branch;	/*!< nr of replied branch; 0..MAX_BRANCHES=branch value,
 	 					  -1 no reply, -2 local reply */
 	struct ua_server  uas;			/*!< UA Server */
 	struct ua_client  uac[ MAX_BRANCHES ];	/*!< UA Clients */

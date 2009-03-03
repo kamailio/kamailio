@@ -361,9 +361,9 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 		return;
 
 	/* for reply processing, set as new_uri the winning branch */
-	if (t->relaied_reply_branch>=0) {
+	if (t->relayed_reply_branch>=0) {
 		new_uri_bk = req->new_uri;
-		req->new_uri = t->uac[t->relaied_reply_branch].uri;
+		req->new_uri = t->uac[t->relayed_reply_branch].uri;
 		req->parsed_uri_ok = 0;
 	} else {
 		new_uri_bk.len = -1;
