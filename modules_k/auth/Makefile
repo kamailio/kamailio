@@ -10,4 +10,6 @@ auto_gen=
 NAME=auth.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
