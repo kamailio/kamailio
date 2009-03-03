@@ -34,7 +34,7 @@
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../rr/api.h"
 #include "../sl/sl_api.h"
 

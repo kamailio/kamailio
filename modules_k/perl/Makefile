@@ -25,6 +25,8 @@ endif
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 include ../../Makefile.modules
 
 PODFILES=openserxs.xs `find lib/perl -name *.pm`
