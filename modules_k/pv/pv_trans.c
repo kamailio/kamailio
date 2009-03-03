@@ -44,7 +44,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_nameaddr.h"
 
-#include "../../strcommon.h"
+#include "../../lib/kcore/strcommon.h"
 #include "pv_trans.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
