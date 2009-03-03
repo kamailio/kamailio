@@ -93,7 +93,7 @@ int disable_bla      = 0;
 struct sl_binds slb;
 
 /* database connection */
-db_con_t *pxml_db = NULL;
+db1_con_t *pxml_db = NULL;
 db_func_t pxml_dbf;
 
 /* functions imported from xcap_client module */

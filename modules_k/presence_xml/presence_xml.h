@@ -36,7 +36,7 @@
 #ifndef _PRES_XML_H_
 #define _PRES_XML_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../sl/sl_api.h"
 #include "../presence/event_list.h"
 #include "../presence/presence.h"
@@ -52,7 +52,7 @@ typedef struct xcap_serv
 
 extern str xcap_table;
 extern add_event_t pres_add_event;
-extern db_con_t *pxml_db;
+extern db1_con_t *pxml_db;
 extern db_func_t pxml_dbf;
 extern int force_active;
 extern int pidf_manipulation;

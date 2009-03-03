@@ -427,7 +427,7 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	db_val_t query_vals[5];
 	db_key_t result_cols[3];
 	int n_query_cols = 0;
-	db_res_t *result = 0;
+	db1_res_t *result = 0;
 	db_row_t *row;
 	db_val_t *row_vals;
 	str body;
@@ -447,19 +447,19 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 			user->len, user->s,	domain->len, domain->s);
 	/* first search in database */
 	query_cols[n_query_cols] = &tmp1;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &tmp2;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *domain;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &tmp3;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= type;
 	n_query_cols++;
