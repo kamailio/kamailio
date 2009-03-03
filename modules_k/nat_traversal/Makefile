@@ -10,5 +10,7 @@ auto_gen=
 NAME=nat_traversal.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 
