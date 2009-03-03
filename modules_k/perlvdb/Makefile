@@ -9,4 +9,6 @@ LIBS=`perl -MExtUtils::Embed -e ldopts`
 DEFS+=`perl -MExtUtils::Embed -e ccopts`
 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
