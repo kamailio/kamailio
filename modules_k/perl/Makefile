@@ -23,6 +23,8 @@ else
 endif
 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 
 PODFILES=openserxs.xs `find lib/perl -name *.pm`
