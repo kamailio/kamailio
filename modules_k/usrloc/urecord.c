@@ -39,7 +39,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../hash_func.h"
+#include "../../lib/kcore/hash_func.h"
 #include "ul_mod.h"
 #include "utime.h"
 #include "ul_callback.h"
