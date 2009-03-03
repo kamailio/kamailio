@@ -7,7 +7,10 @@ auto_gen=
 NAME=db_oracle.so
 
 # can be defined for non standard placement of oracle so's
-ORAPATH=
+ORAPATH=/usr/lib/oracle/xe/app/oracle/product/10.2.0/client
+DEFS += -I$(ORAPATH)/rdbms/public
+LIBS += -L$(ORAPATH)/lib
+
 
 # use for multiple client sdk version install
 ifneq ($(ORAVERSION),)
