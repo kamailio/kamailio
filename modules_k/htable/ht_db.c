@@ -25,12 +25,12 @@
 #include "../../dprint.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 
 #include "ht_db.h"
 
 /** database connection */
-db_con_t *ht_db_con = NULL;
+db1_con_t *ht_db_con = NULL;
 db_func_t ht_dbf;
 
 str ht_array_size_suffix = str_init("::size");
@@ -109,7 +109,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
 		&ht_db_vtype_column, &ht_db_value_column};
 	db_key_t db_ord = &ht_db_ktype_column;
-	db_res_t* db_res = NULL;
+	db1_res_t* db_res = NULL;
 	str kname;
 	str pname;
 	str hname;
