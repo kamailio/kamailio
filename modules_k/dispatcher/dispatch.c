@@ -63,8 +63,8 @@
 #include "../../parser/digest/digest.h"
 #include "../../resolve.h"
 #include "../tm/tm_load.h"
-#include "../../db/db.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_res.h"
 #include "../../str.h"
 
 #include "dispatch.h"
@@ -98,7 +98,7 @@ typedef struct _ds_set
 extern int ds_force_dst;
 
 static db_func_t ds_dbf;
-static db_con_t* ds_db_handle=0;
+static db1_con_t* ds_db_handle=0;
 ds_set_p *ds_lists=NULL;
 int *ds_list_nr = NULL;
 int *crt_idx    = NULL;
@@ -531,7 +531,7 @@ int ds_load_db(void)
 	int priority;
 	int nrcols;
 	str uri;
-	db_res_t * res;
+	db1_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
 	
