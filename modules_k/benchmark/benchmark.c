@@ -46,7 +46,7 @@
 #include <stdlib.h>
 
 #include "../../sr_module.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
 
