@@ -17,4 +17,6 @@ DEFS+=-DXJ_EXTRA_DEBUG
 DEFS+=-I$(LOCALBASE)/include
 LIBS=-L$(LOCALBASE)/lib -lexpat
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
