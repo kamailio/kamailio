@@ -31,7 +31,7 @@
 #include <libxml/parser.h>
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../pua/hash.h"
 #include "rls.h"
 #include "notify.h"

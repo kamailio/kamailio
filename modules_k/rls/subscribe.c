@@ -33,7 +33,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
-#include "../../cmpapi.h"
+#include "../../lib/kcore/cmpapi.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"
 #include "../../parser/parse_expires.h"
