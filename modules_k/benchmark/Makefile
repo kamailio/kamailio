@@ -16,4 +16,6 @@ DEFS+=
 #DEFS+= -DBM_CLOCK_REALTIME
 #LIBS+= -lrt
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
