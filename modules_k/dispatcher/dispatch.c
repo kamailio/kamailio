@@ -59,7 +59,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../parser/digest/digest.h"
 #include "../../resolve.h"
 #include "../tm/tm_load.h"

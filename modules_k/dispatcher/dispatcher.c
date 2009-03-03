@@ -54,7 +54,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
