@@ -12,4 +12,6 @@ LIBS=
 
 #DEFS+=-DENABLE_USER_CHECK
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
