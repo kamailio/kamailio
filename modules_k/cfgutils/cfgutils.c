@@ -67,7 +67,7 @@
 #include "../../mod_fix.h"
 #include "../../md5utils.h"
 #include "../../globals.h"
-#include "../../hash_func.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../locking.h"
 #include <stdio.h>
 #include <stdlib.h>
