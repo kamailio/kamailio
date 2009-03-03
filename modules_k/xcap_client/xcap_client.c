@@ -37,7 +37,7 @@
 #include <curl/curl.h>
 
 #include "../../pt.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
@@ -74,7 +74,7 @@ str str_port_col = str_init("port");
 
 
 /* database connection */
-db_con_t *xcap_db = NULL;
+db1_con_t *xcap_db = NULL;
 db_func_t xcap_dbf;
 
 void query_xcap_update(unsigned int ticks, void* param);
@@ -168,7 +168,7 @@ void query_xcap_update(unsigned int ticks, void* param)
 	db_val_t query_vals[3], update_vals[3];
 	db_key_t result_cols[7];
 	int n_result_cols = 0, n_query_cols= 0, n_update_cols= 0;
-	db_res_t* result= NULL;
+	db1_res_t* result= NULL;
 	int user_col, domain_col, doc_type_col, etag_col, doc_uri_col, port_col; 
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -180,22 +180,22 @@ void query_xcap_update(unsigned int ticks, void* param)
 
 	/* query the ones I have to handle */
 	query_cols[n_query_cols] = &str_source_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= XCAP_CL_MOD;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_path_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 
 	update_cols[u_doc_col=n_update_cols] = &str_doc_col;
-	update_vals[n_update_cols].type = DB_STRING;
+	update_vals[n_update_cols].type = DB1_STRING;
 	update_vals[n_update_cols].nul = 0;
 	n_update_cols++;
 
 	update_cols[u_etag_col=n_update_cols] = &str_etag_col;
-	update_vals[n_update_cols].type = DB_STRING;
+	update_vals[n_update_cols].type = DB1_STRING;
 	update_vals[n_update_cols].nul = 0;
 	n_update_cols++;
 

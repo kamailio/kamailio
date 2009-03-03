@@ -36,7 +36,7 @@
 #include <time.h>
 #include <curl/curl.h>
 #include "../../mem/mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
 #include "../presence/hash.h"
@@ -335,49 +335,49 @@ char* xcapGetNewDoc(xcap_get_req_t req, str user, str domain)
 	}
 	/* insert in xcap table*/
 	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = user;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = domain;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_doc_type_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= req.doc_sel.doc_type;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_doc_col;
-	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].type = DB1_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val= doc;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_etag_col;
-	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].type = DB1_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val= etag;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_source_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= XCAP_CL_MOD;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_doc_uri_col;
-	query_vals[n_query_cols].type = DB_STRING;
+	query_vals[n_query_cols].type = DB1_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val= path;
 	n_query_cols++;
 	
 	query_cols[n_query_cols] = &str_port_col;
-	query_vals[n_query_cols].type = DB_INT;
+	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= req.port;
 	n_query_cols++;

@@ -29,7 +29,7 @@
 #ifndef XCAP_CL_H
 #define XCAP_CL_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "xcap_callbacks.h"
 
 extern xcap_callback_t* xcapcb_list;
@@ -47,7 +47,7 @@ extern str str_doc_uri_col;
 extern str str_port_col;
 
 /* database connection */
-extern db_con_t *xcap_db;
+extern db1_con_t *xcap_db;
 extern db_func_t xcap_dbf;
 
 extern int periodical_query;
