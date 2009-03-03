@@ -10,4 +10,6 @@ auto_gen=
 NAME=seas.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
