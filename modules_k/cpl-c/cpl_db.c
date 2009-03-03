@@ -26,14 +26,14 @@
   */
 
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../str.h"
 #include "cpl_db.h"
 
 #define TABLE_VERSION 1
 
-static db_con_t* db_hdl=0;
+static db1_con_t* db_hdl=0;
 static db_func_t cpl_dbf;
 
 str cpl_username_col = str_init("username");
@@ -115,7 +115,7 @@ int get_user_script(str *username, str *domain, str *script, str* key)
 	db_key_t   keys_cmp[2];
 	db_key_t   keys_ret[1];
 	db_val_t   vals[2];
-	db_res_t   *res = NULL;
+	db1_res_t   *res = NULL;
 	int n;
 
 	keys_cmp[0] = &cpl_username_col;
@@ -124,12 +124,12 @@ int get_user_script(str *username, str *domain, str *script, str* key)
 
 	LM_DBG("fetching script for user <%.*s>\n",
 		username->len,username->s);
-	vals[0].type = DB_STR;
+	vals[0].type = DB1_STR;
 	vals[0].nul  = 0;
 	vals[0].val.str_val = *username;
 	n = 1;
 	if (domain) {
-		vals[1].type = DB_STR;
+		vals[1].type = DB1_STR;
 		vals[1].nul  = 0;
 		vals[1].val.str_val = *domain;
 		n++;
@@ -187,18 +187,18 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 {
 	db_key_t   keys[4];
 	db_val_t   vals[4];
-	db_res_t   *res = NULL;
+	db1_res_t   *res = NULL;
 	int n;
 
 	/* lets see if the user is already in database */
 	keys[2] = &cpl_username_col;
-	vals[2].type = DB_STR;
+	vals[2].type = DB1_STR;
 	vals[2].nul  = 0;
 	vals[2].val.str_val = *username;
 	n = 1;
 	if (domain) {
 		keys[3] = &cpl_domain_col;
-		vals[3].type = DB_STR;
+		vals[3].type = DB1_STR;
 		vals[3].nul  = 0;
 		vals[3].val.str_val = *domain;
 		n++;
@@ -215,14 +215,14 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 
 	/* cpl text */
 	keys[0] = &cpl_xml_col;
-	vals[0].type = DB_BLOB;
+	vals[0].type = DB1_BLOB;
 	vals[0].nul  = 0;
 	vals[0].val.blob_val.s = xml->s;
 	vals[0].val.blob_val.len = xml->len;
 	n++;
 	/* cpl bin */
 	keys[1] = &cpl_bin_col;
-	vals[1].type = DB_BLOB;
+	vals[1].type = DB1_BLOB;
 	vals[1].nul  = 0;
 	vals[1].val.blob_val.s = bin->s;
 	vals[1].val.blob_val.len = bin->len;
@@ -265,13 +265,13 @@ int rmv_from_db(str *username, str *domain)
 
 	/* username */
 	keys[0] = &cpl_username_col;
-	vals[0].type = DB_STR;
+	vals[0].type = DB1_STR;
 	vals[0].nul  = 0;
 	vals[0].val.str_val = *username;
 	n = 1;
 	if (domain) {
 		keys[1] = &cpl_domain_col;
-		vals[1].type = DB_STR;
+		vals[1].type = DB1_STR;
 		vals[1].nul  = 0;
 		vals[1].val.str_val = *domain;
 		n++;

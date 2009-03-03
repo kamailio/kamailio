@@ -23,7 +23,7 @@
 #ifndef _CPL_DB_H
 #define _CPL_DB_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 
 
 int cpl_db_bind(const str* db_url, const str* db_table);

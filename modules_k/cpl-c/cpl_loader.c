@@ -51,7 +51,7 @@
 #include "cpl_loader.h"
 
 
-extern db_con_t* db_hdl;
+extern db1_con_t* db_hdl;
 
 #if 0
 /* debug function -> write into a file the content of a str struct. */
