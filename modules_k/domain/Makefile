@@ -10,4 +10,6 @@ auto_gen=
 NAME=domain.so
 LIBS=
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
