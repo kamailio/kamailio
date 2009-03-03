@@ -26,7 +26,7 @@
 
 #include "../../sr_module.h"
 #include "../../pvar.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #include "pv_branch.h"
 #include "pv_core.h"

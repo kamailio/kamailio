@@ -26,7 +26,7 @@
 
 #include "../../sr_module.h"
 #include "../../locking.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "pv_svar.h"
 
 typedef struct sh_var {
