@@ -30,7 +30,7 @@
 
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../socket_info.h"

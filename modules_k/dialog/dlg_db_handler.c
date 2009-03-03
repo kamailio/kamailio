@@ -33,7 +33,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../timer.h"
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../str.h"
 #include "../../socket_info.h"
 #include "dlg_hash.h"
@@ -63,7 +63,7 @@ str toroute_column			=	str_init(TOROUTE_COL);
 str dialog_table_name		=	str_init(DIALOG_TABLE_NAME);
 int dlg_db_mode				=	DB_MODE_NONE;
 
-static db_con_t* dialog_db_handle    = 0; /* database connection handle */
+static db1_con_t* dialog_db_handle    = 0; /* database connection handle */
 static db_func_t dialog_dbf;
 
 extern int dlg_enable_stats;
@@ -187,7 +187,7 @@ static int use_dialog_table(void)
 
 
 
-static int select_entire_dialog_table(db_res_t ** res, int fetch_num_rows)
+static int select_entire_dialog_table(db1_res_t ** res, int fetch_num_rows)
 {
 	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	&h_entry_column,
 			&h_id_column,		&call_id_column,	&from_uri_column,
@@ -257,7 +257,7 @@ struct socket_info * create_socket_info(db_val_t * vals, int n){
 
 static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 {
-	db_res_t * res;
+	db1_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
 	int i, nr_rows;
@@ -422,7 +422,7 @@ int remove_dialog_from_db(struct dlg_cell * cell)
 	if (use_dialog_table()!=0)
 		return -1;
 
-	VAL_TYPE(values) = VAL_TYPE(values+1) = DB_INT;
+	VAL_TYPE(values) = VAL_TYPE(values+1) = DB1_INT;
 	VAL_NULL(values) = VAL_NULL(values+1) = 0;
 
 	VAL_INT(values) 	= cell->h_entry;
@@ -461,16 +461,16 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 	if((cell->dflags & DLG_FLAG_NEW) != 0){
 		/* save all the current dialogs information*/
 		VAL_TYPE(values) = VAL_TYPE(values+1) = VAL_TYPE(values+9) = 
-		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB_INT;
+		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB1_INT;
 
 		VAL_TYPE(values+2) = VAL_TYPE(values+3) = VAL_TYPE(values+4) = 
 		VAL_TYPE(values+5) = VAL_TYPE(values+6) = VAL_TYPE(values+7) = 
 		VAL_TYPE(values+8) = VAL_TYPE(values+12) = VAL_TYPE(values+13) = 
 		VAL_TYPE(values+14) = VAL_TYPE(values+15) = VAL_TYPE(values+16)=
-		VAL_TYPE(values+17) = DB_STR;
+		VAL_TYPE(values+17) = DB1_STR;
 
 		SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
-		VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB_INT;
+		VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB1_INT;
 
 		/* lock the entry */
 		entry = (d_table->entries)[cell->h_entry];
@@ -522,9 +522,9 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 	} else if((cell->dflags & DLG_FLAG_CHANGED) != 0) {
 		/* save only dialog's state and timeout */
 		VAL_TYPE(values) = VAL_TYPE(values+1) = 
-		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB_INT;
+		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB1_INT;
 
-		VAL_TYPE(values+12) = VAL_TYPE(values+13) =DB_STR;
+		VAL_TYPE(values+12) = VAL_TYPE(values+13) =DB1_STR;
 
 		/* lock the entry */
 		entry = (d_table->entries)[cell->h_entry];
@@ -585,17 +585,17 @@ void dialog_update_db(unsigned int ticks, void * param)
 
 	/*save the current dialogs information*/
 	VAL_TYPE(values) = VAL_TYPE(values+1) = VAL_TYPE(values+9) = 
-	VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB_INT;
+	VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB1_INT;
 
 	VAL_TYPE(values+2) = VAL_TYPE(values+3) = VAL_TYPE(values+4) = 
 	VAL_TYPE(values+5) = VAL_TYPE(values+6) = VAL_TYPE(values+7) = 
 	VAL_TYPE(values+8) = VAL_TYPE(values+12) = VAL_TYPE(values+13) = 
 	VAL_TYPE(values+14) = VAL_TYPE(values+15) = VAL_TYPE(values+16) = 
-	VAL_TYPE(values+17) = DB_STR;
+	VAL_TYPE(values+17) = DB1_STR;
 
 	SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
 
-	VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB_INT;
+	VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB1_INT;
 
 	LM_DBG("saving current_info \n");
 	
