@@ -30,7 +30,7 @@
 
 
 #include "../../dprint.h"
-#include "../../strcommon.h"
+#include "../../lib/kcore/strcommon.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "db_unixodbc.h"
 #include "val.h"
