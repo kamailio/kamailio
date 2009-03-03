@@ -30,7 +30,7 @@
 #ifndef _PIKE_MI_H_
 #define _PIKE_MI_H_
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #define MI_PIKE_LIST      "pike_list"
 
