@@ -641,11 +641,20 @@ int forward_reply(struct sip_msg* msg)
 	dst.comp=msg->via2->comp_no;
 #endif
 
+#if defined USE_TCP || defined USE_SCTP
+	if (
 #ifdef USE_TCP
-	if (dst.proto==PROTO_TCP
+			dst.proto==PROTO_TCP
 #ifdef USE_TLS
 			|| dst.proto==PROTO_TLS
 #endif
+#ifdef USE_SCTP
+			||
+#endif /* USE_SCTP */
+#endif /* USE_TCP */
+#ifdef USE_SCTP
+			dst.proto==PROTO_SCTP
+#endif /* USE_SCTP */
 			){
 		/* find id in i param if it exists */
 		if (msg->via1->i && msg->via1->i->value.s){

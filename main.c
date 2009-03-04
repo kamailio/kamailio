@@ -1959,6 +1959,14 @@ try_again:
 		}
 	}
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+	if (!sctp_disable){
+		if (init_sctp()<0){
+			LOG(L_CRIT, "Could not initialize sctp, exiting...\n");
+			goto error;
+		}
+	}
+#endif /* USE_SCTP */
 	/* init_daemon? */
 	if (!dont_fork){
 		if ( daemonize(argv[0]) <0 ) goto error;
