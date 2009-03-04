@@ -663,6 +663,24 @@ static int sctp_handle_send_failed(struct socket_info* si,
 
 
 
+/* handle SCTP_ASOC_CHANGE notifications: map ser global sctp ids
+ * to kernel asoc_ids. The global ids are needed because the kernel ones
+ * might get reused after a close and so they are not unique for ser's
+ * lifetime. We need a unique id to match replies to the association on
+ * which we received the corresponding request (so that we can send them
+ * back on the same asoc & socket if still opened).
+ * returns 0 on success, -1 on failure
+ */
+static int sctp_handle_assoc_change(struct socket_info* si,
+									union sockaddr_union* su,
+									int state,
+									int assoc_id)
+{
+	return -1; /* failure, not implemented */
+}
+
+
+
 static int sctp_handle_notification(struct socket_info* si,
 									union sockaddr_union* su,
 									char* buf, unsigned len)
@@ -764,6 +782,8 @@ static int sctp_handle_notification(struct socket_info* si,
 				}
 			}
 #endif /* USE_DST_BLACKLIST */
+			sctp_handle_assoc_change(si, su, snp->sn_assoc_change.sac_state,
+										snp->sn_assoc_change.sac_assoc_id);
 			break;
 #ifdef SCTP_ADAPTION_INDICATION
 		case SCTP_ADAPTION_INDICATION:
