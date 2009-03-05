@@ -80,7 +80,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 
 	switch (gp->type) {
 	case GPARAM_TYPE_INT:
-		return gp->v.ival;
+		return gp->v.i;
 		break;
 	case GPARAM_TYPE_PVE:
 		/* does this PV hold an AVP? */
@@ -496,6 +496,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	struct carrier_data_t * carrier_data;
 	struct domain_data_t * domain_data;
 	struct action act;
+	struct run_act_ctx ra_ctx;
 
 	if (fixup_get_svalue(_msg, _rewrite_user, &rewrite_user)<0) {
 		LM_ERR("cannot print the rewrite_user\n");
@@ -565,12 +566,12 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 
 	LM_INFO("uri %.*s was rewritten to %.*s, carrier %d, domain %d\n", rewrite_user.len, rewrite_user.s, dest.len, dest.s, carrier_id, domain_id);
 
+	memset(&act, 0, sizeof(act));
 	act.type = SET_URI_T;
-	act.elem[0].type= STRING_ST;
-	act.elem[0].u.string = dest.s;
-	act.next = NULL;
-
-	ret = do_action(&act, _msg);
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = dest.s;
+	init_run_actions_ctx(&ra_ctx);
+	ret = do_action(&ra_ctx, &act, _msg);
 	if (ret < 0) {
 		LM_ERR("Error in do_action()\n");
 	}

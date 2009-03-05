@@ -30,7 +30,7 @@
 #ifndef CR_DB_H
 #define CR_DB_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "db_carrierroute.h"
 #include "cr_data.h"
 

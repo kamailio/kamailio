@@ -30,7 +30,7 @@
 #ifndef CR_FIFO_H
 #define CR_FIFO_H
 
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 extern int fifo_err;
 

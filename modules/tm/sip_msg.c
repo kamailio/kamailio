@@ -65,6 +65,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
 #include "../../parser/digest/digest.h"
+#include "../../parser/parse_to.h"
 
 #ifdef POSTPONE_MSG_CLONING
 #include "../../atomic_ops.h"

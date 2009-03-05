@@ -24,4 +24,9 @@ endif
 DEFS+=$(CONFUSEDEFS)
 LIBS=$(CONFUSELIBS)
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/trie/trie $(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/kmi/kmi $(SERLIBPATH)/kcore/kcore
+
 include ../../Makefile.modules

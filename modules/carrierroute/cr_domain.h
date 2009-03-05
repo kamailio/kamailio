@@ -32,7 +32,7 @@
 
 #include "../../str.h"
 #include "../../flags.h"
-#include "../../trie/dtrie.h"
+#include "../../lib/trie/dtrie.h"
 
 
 /**

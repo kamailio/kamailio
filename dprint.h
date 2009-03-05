@@ -302,7 +302,7 @@ int log_facility_fixup(void *handle, str *name, void **val);
 #define LM_CRIT  CRIT
 #define LM_ERR ERR
 #define LM_WARN WARN
-#define LM_NOTICE
+#define LM_NOTICE NOTICE
 #define LM_INFO INFO
 #define LM_DBG DEBUG
 

@@ -22,7 +22,7 @@
 
 
 /* necessary includes */
-#include "../../db/db.h"
+#include "../../lib/srdb1/db.h"
 #include "../../str.h"
 #include "../../ut.h"
 
@@ -32,7 +32,7 @@
 /* database variables */
 
 extern str carrierroute_db_url;
-extern db_con_t * carrierroute_dbh;
+extern db1_con_t * carrierroute_dbh;
 extern db_func_t carrierroute_dbf;
 
 #define carrierroute_DB_URL { "db_url", STR_PARAM, &carrierroute_db_url.s },

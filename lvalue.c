@@ -52,11 +52,10 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	int_str value;
 	unsigned short flags;
 	struct search_state st;
-	int ret;
-	int v;
-	int destroy_pval;
+	int ret, v, destroy_pval;
 	
 	destroy_pval=0;
+	flags = 0;
 	avp=&lv->lv.avps;
 	ret=0;
 	/* If the left attr was specified without indexing brackets delete

@@ -129,12 +129,12 @@ static int carrier_fixup(void ** param) {
 		/* This is a name string, convert to a int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get carrier id */
-		if ((id = carrier_name_2_id(&((gparam_p)(*param))->v.sval)) < 0) {
-			LM_ERR("could not find carrier name '%.*s' in map\n", ((gparam_p)(*param))->v.sval.len, ((gparam_p)(*param))->v.sval.s);
+		if ((id = carrier_name_2_id(&((gparam_p)(*param))->v.str)) < 0) {
+			LM_ERR("could not find carrier name '%.*s' in map\n", ((gparam_p)(*param))->v.str.len, ((gparam_p)(*param))->v.str.s);
 			pkg_free(*param);
 			return -1;
 		}
-		((gparam_p)(*param))->v.ival = id;
+		((gparam_p)(*param))->v.i = id;
 	}
 	return 0;
 }
@@ -160,12 +160,12 @@ static int domain_fixup(void ** param) {
 		/* This is a name string, convert to a int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get domain id */
-		if ((id = domain_name_2_id(&(((gparam_p)(*param))->v.sval))) < 0) {
-			LM_ERR("could not find domain name '%.*s' in map\n", ((gparam_p)(*param))->v.sval.len, ((gparam_p)(*param))->v.sval.s);
+		if ((id = domain_name_2_id(&(((gparam_p)(*param))->v.str))) < 0) {
+			LM_ERR("could not find domain name '%.*s' in map\n", ((gparam_p)(*param))->v.str.len, ((gparam_p)(*param))->v.str.s);
 			pkg_free(*param);
 			return -1;
 		}
-		((gparam_p)(*param))->v.ival = id;
+		((gparam_p)(*param))->v.i = id;
 	}
 	return 0;
 }

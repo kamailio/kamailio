@@ -140,4 +140,23 @@ typedef int(*load_tm_f)( struct tm_binds *tmb );
 int load_tm( struct tm_binds *tmb);
 
 
+static inline int load_tm_api(struct tm_binds* tmb)
+{
+	load_tm_f load_tm;
+
+	/* import the TM auto-loading function */
+	load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0);
+	
+	if (load_tm == NULL) {
+		LOG(L_ERR, "Cannot import load_tm function from tm module\n");
+		return -1;
+	}
+	
+	/* let the auto-loading function load all TM stuff */
+	if (load_tm(tmb) == -1) {
+		return -1;
+	}
+	return 0;
+}
+
 #endif
