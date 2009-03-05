@@ -106,7 +106,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 	}
 
 	/* do t_forward */
-	if (cpl_fct.tmb.t_relay(msg, 0, 0, 0, 0, 0, 0)==-1) {
+	if (cpl_fct.tmb.t_relay(msg, 0, 0)==-1) {
 		LM_ERR("t_relay failed !\n");
 		goto error;
 	}
