@@ -435,6 +435,8 @@ struct s_table*  _tm_table; /* private internal stuff, don't touch directly */
 #define is_invite(_t_)           ((_t_)->flags&T_IS_INVITE_FLAG)
 #define is_local(_t_)            ((_t_)->flags&T_IS_LOCAL_FLAG)
 #define has_noisy_ctimer(_t_)    ((_t_)->flags&T_NOISY_CTIMER_FLAG)
+#define was_cancelled(_t_)       ((_t_)->flags&T_CANCELED)
+#define no_new_branches(_t_)     ((_t_)->flags&T_6xx)
 
 
 void reset_kr();
