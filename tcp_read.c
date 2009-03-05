@@ -351,7 +351,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					case '\n':
 						break;
 					case '\r':
-						if (tcp_options.crlf_ping) {
+						if (cfg_get(tcp, tcp_cfg, crlf_ping)) {
 							r->state=H_SKIP_EMPTY_CR_FOUND;
 							r->start=p;
 						}

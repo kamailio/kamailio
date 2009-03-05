@@ -315,7 +315,7 @@ static inline int init_sock_keepalive(int s)
 	int optval;
 	
 #ifdef HAVE_SO_KEEPALIVE
-	if (tcp_options.keepalive){
+	if (cfg_get(tcp, tcp_cfg, keepalive)){
 		optval=1;
 		if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &optval,
 						sizeof(optval))<0){
@@ -326,8 +326,7 @@ static inline int init_sock_keepalive(int s)
 	}
 #endif
 #ifdef HAVE_TCP_KEEPINTVL
-	if (tcp_options.keepintvl){
-		optval=tcp_options.keepintvl;
+	if ((optval=cfg_get(tcp, tcp_cfg, keepintvl))){
 		if (setsockopt(s, IPPROTO_TCP, TCP_KEEPINTVL, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to set"
@@ -336,8 +335,7 @@ static inline int init_sock_keepalive(int s)
 	}
 #endif
 #ifdef HAVE_TCP_KEEPIDLE
-	if (tcp_options.keepidle){
-		optval=tcp_options.keepidle;
+	if ((optval=cfg_get(tcp, tcp_cfg, keepidle))){
 		if (setsockopt(s, IPPROTO_TCP, TCP_KEEPIDLE, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to set"
@@ -346,8 +344,7 @@ static inline int init_sock_keepalive(int s)
 	}
 #endif
 #ifdef HAVE_TCP_KEEPCNT
-	if (tcp_options.keepcnt){
-		optval=tcp_options.keepcnt;
+	if ((optval=cfg_get(tcp, tcp_cfg, keepcnt))){
 		if (setsockopt(s, IPPROTO_TCP, TCP_KEEPCNT, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to set"
@@ -394,8 +391,7 @@ static int init_sock_opt(int s)
 	}
 #endif /* !TCP_DONT_REUSEADDR */
 #ifdef HAVE_TCP_SYNCNT
-	if (tcp_options.syncnt){
-		optval=tcp_options.syncnt;
+	if ((optval=cfg_get(tcp, tcp_cfg, syncnt))){
 		if (setsockopt(s, IPPROTO_TCP, TCP_SYNCNT, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: init_sock_opt: failed to set"
@@ -404,8 +400,7 @@ static int init_sock_opt(int s)
 	}
 #endif
 #ifdef HAVE_TCP_LINGER2
-	if (tcp_options.linger2){
-		optval=tcp_options.linger2;
+	if ((optval=cfg_get(tcp, tcp_cfg, linger2))){
 		if (setsockopt(s, IPPROTO_TCP, TCP_LINGER2, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: init_sock_opt: failed to set"
@@ -414,7 +409,7 @@ static int init_sock_opt(int s)
 	}
 #endif
 #ifdef HAVE_TCP_QUICKACK
-	if (tcp_options.delayed_ack){
+	if (cfg_get(tcp, tcp_cfg, delayed_ack)){
 		optval=0; /* reset quick ack => delayed ack */
 		if (setsockopt(s, IPPROTO_TCP, TCP_QUICKACK, &optval,
 						sizeof(optval))<0){
@@ -634,14 +629,15 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 	
 	q=&c->wbuf_q;
 	t=get_ticks_raw();
-	if (unlikely(	((q->queued+size)>tcp_options.tcpconn_wq_max) ||
-					((*tcp_total_wq+size)>tcp_options.tcp_wq_max) ||
+	if (unlikely(	((q->queued+size)>cfg_get(tcp, tcp_cfg, tcpconn_wq_max)) ||
+					((*tcp_total_wq+size)>cfg_get(tcp, tcp_cfg, tcp_wq_max)) ||
 					(q->first &&
 					TICKS_LT(q->wr_timeout, t)) )){
 		LOG(L_ERR, "ERROR: wbufq_add(%d bytes): write queue full or timeout "
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
-					TICKS_TO_S(t-q->wr_timeout-tcp_options.tcp_wq_timeout));
+					TICKS_TO_S(t-q->wr_timeout-
+						cfg_get(tcp, tcp_cfg, tcp_wq_timeout)));
 #ifdef USE_DST_BLACKLIST
 		if (q->first && TICKS_LT(q->wr_timeout, t) &&
 				cfg_get(core, core_cfg, use_dst_blacklist)){
@@ -665,7 +661,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 		q->first=wb;
 		q->last_used=0;
 		q->offset=0;
-		q->wr_timeout=get_ticks_raw()+tcp_options.tcp_wq_timeout;
+		q->wr_timeout=get_ticks_raw()+cfg_get(tcp, tcp_cfg, tcp_wq_timeout);
 	}else{
 		wb=q->last;
 	}
@@ -713,12 +709,12 @@ inline static int _wbufq_insert(struct  tcp_connection* c, char* data,
 	if (likely(q->first==0)) /* if empty, use wbufq_add */
 		return _wbufq_add(c, data, size);
 	
-	if (unlikely((*tcp_total_wq+size)>tcp_options.tcp_wq_max)){
+	if (unlikely((*tcp_total_wq+size)>cfg_get(tcp, tcp_cfg, tcp_wq_max))){
 		LOG(L_ERR, "ERROR: wbufq_insert(%d bytes): write queue full"
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
 					TICKS_TO_S(get_ticks_raw()-q->wr_timeout-
-										tcp_options.tcp_wq_timeout));
+									cfg_get(tcp, tcp_cfg, tcp_wq_timeout)));
 		goto error;
 	}
 	if (unlikely(q->offset)){
@@ -815,7 +811,7 @@ inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
 				atomic_add_int((int*)tcp_total_wq, -n);
 				break;
 			}
-			q->wr_timeout=t+tcp_options.tcp_wq_timeout;
+			q->wr_timeout=t+cfg_get(tcp, tcp_cfg, tcp_wq_timeout);
 		}else{
 			if (n<0){
 				/* EINTR is handled inside _tcpconn_write_nb */
@@ -1031,7 +1027,7 @@ inline static int tcp_do_connect(	union sockaddr_union* server,
 	}
 	*state=S_CONN_OK;
 #ifdef TCP_BUF_WRITE
-	if (likely(tcp_options.tcp_buf_write)){
+	if (likely(cfg_get(tcp, tcp_cfg, tcp_buf_write))){
 again:
 		n=connect(s, &server->s, sockaddru_len(*server));
 		if (unlikely(n==-1)){
@@ -1633,7 +1629,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	struct fd_cache_entry* fd_cache_e;
 	int use_fd_cache;
 	
-	use_fd_cache=tcp_options.fd_cache;
+	use_fd_cache=cfg_get(tcp, tcp_cfg, fd_cache);
 	fd_cache_e=0;
 #endif /* TCP_FD_CACHE */
 	do_close_fd=1; /* close the fd on exit */
@@ -1682,8 +1678,8 @@ no_id:
 				}
 			}
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
-			if (likely(tcp_options.tcp_connect_wait && 
-						tcp_options.tcp_buf_write )){
+			if (likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait) && 
+						cfg_get(tcp, tcp_cfg, tcp_buf_write) )){
 				if (unlikely(*tcp_connections_no >= tcp_max_connections)){
 					LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
 								" connections exceeded (%d/%d)\n",
@@ -1828,7 +1824,8 @@ no_id:
 get_fd:
 #ifdef TCP_BUF_WRITE
 		/* if data is already queued, we don't need the fd any more */
-		if (unlikely(tcp_options.tcp_buf_write && (_wbufq_non_empty(c)
+		if (unlikely(cfg_get(tcp, tcp_cfg, tcp_buf_write) &&
+						(_wbufq_non_empty(c)
 #ifdef TCP_CONNECT_WAIT
 												|| (c->state==S_CONN_PENDING)
 #endif /* TCP_CONNECT_WAIT */
@@ -1911,7 +1908,7 @@ send_it:
 	DBG("tcp_send: sending...\n");
 	lock_get(&c->write_lock);
 #ifdef TCP_BUF_WRITE
-	if (likely(tcp_options.tcp_buf_write)){
+	if (likely(cfg_get(tcp, tcp_cfg, tcp_buf_write))){
 		if (_wbufq_non_empty(c)
 #ifdef TCP_CONNECT_WAIT
 			|| (c->state==S_CONN_PENDING) 
@@ -1946,7 +1943,7 @@ send_it:
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
 	if (unlikely(n<(int)len)){
 #ifdef TCP_BUF_WRITE
-		if (tcp_options.tcp_buf_write && 
+		if (cfg_get(tcp, tcp_cfg, tcp_buf_write) && 
 				((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK)){
 			enable_write_watch=_wbufq_empty(c);
 			if (n<0) n=0;
@@ -2023,7 +2020,7 @@ error:
 	
 #ifdef TCP_BUF_WRITE
 	lock_release(&c->write_lock);
-	if (likely(tcp_options.tcp_buf_write)){
+	if (likely(cfg_get(tcp, tcp_cfg, tcp_buf_write))){
 		if (unlikely(c->state==S_CONN_CONNECT))
 			c->state=S_CONN_OK;
 	}
@@ -2137,8 +2134,7 @@ int tcp_init(struct socket_info* sock_info)
 	}
 #ifdef HAVE_TCP_DEFER_ACCEPT
 	/* linux only */
-	if (tcp_options.defer_accept){
-		optval=tcp_options.defer_accept;
+	if ((optval=cfg_get(tcp, tcp_cfg, defer_accept))){
 		if (setsockopt(sock_info->socket, IPPROTO_TCP, TCP_DEFER_ACCEPT,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_WARN, "WARNING: tcp_init: setsockopt TCP_DEFER_ACCEPT %s\n",
@@ -2148,8 +2144,7 @@ int tcp_init(struct socket_info* sock_info)
 	}
 #endif /* HAVE_TCP_DEFFER_ACCEPT */
 #ifdef HAVE_TCP_SYNCNT
-	if (tcp_options.syncnt){
-		optval=tcp_options.syncnt;
+	if ((optval=cfg_get(tcp, tcp_cfg, syncnt))){
 		if (setsockopt(sock_info->socket, IPPROTO_TCP, TCP_SYNCNT, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: tcp_init: failed to set"
@@ -2158,8 +2153,7 @@ int tcp_init(struct socket_info* sock_info)
 	}
 #endif
 #ifdef HAVE_TCP_LINGER2
-	if (tcp_options.linger2){
-		optval=tcp_options.linger2;
+	if ((optval=cfg_get(tcp, tcp_cfg, linger2))){
 		if (setsockopt(sock_info->socket, IPPROTO_TCP, TCP_LINGER2, &optval,
 						sizeof(optval))<0){
 			LOG(L_WARN, "WARNING: tcp_init: failed to set"
@@ -2187,7 +2181,7 @@ int tcp_init(struct socket_info* sock_info)
 	}
 #ifdef HAVE_TCP_ACCEPT_FILTER
 	/* freebsd */
-	if (tcp_options.defer_accept){
+	if (cfg_get(tcp, tcp_cfg, defer_accept)){
 		memset(&afa, 0, sizeof(afa));
 		strcpy(afa.af_name, "dataready");
 		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_ACCEPTFILTER,
@@ -2224,7 +2218,7 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 		tls_close(tcpconn, fd);
 #endif
 #ifdef TCP_FD_CACHE
-	if (likely(tcp_options.fd_cache)) shutdown(fd, SHUT_RDWR);
+	if (likely(cfg_get(tcp, tcp_cfg, fd_cache))) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
 close_again:
 	if (unlikely(close(fd)<0)){
@@ -2659,7 +2653,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			tcpconn->timeout=t+tcp_con_lifetime;
 			crt_timeout=tcp_con_lifetime;
 #ifdef TCP_BUF_WRITE
-			if (unlikely(tcp_options.tcp_buf_write && 
+			if (unlikely(cfg_get(tcp, tcp_cfg, tcp_buf_write) && 
 							_wbufq_non_empty(tcpconn) )){
 				if (unlikely(TICKS_GE(t, tcpconn->wbuf_q.wr_timeout))){
 					DBG("handle_tcp_child: wr. timeout on CONN_RELEASE for %p "
@@ -3449,6 +3443,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 {
 	struct tcp_connection *c;
 	int fd;
+	int tcp_async;
 	
 	c=(struct tcp_connection*)data; 
 	/* or (struct tcp...*)(tl-offset(c->timer)) */
@@ -3460,17 +3455,17 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			c->wbuf_q.wr_timeout, TICKS_TO_S(c->wbuf_q.wr_timeout-t),
 			c->wbuf_q.queued);
 	
-	if (TICKS_LT(t, c->timeout) && 
-			(!tcp_options.tcp_buf_write | _wbufq_empty(c) |
-				TICKS_LT(t, c->wbuf_q.wr_timeout)) ){
-		if (unlikely(tcp_options.tcp_buf_write && _wbufq_non_empty(c)))
+	tcp_async=cfg_get(tcp, tcp_cfg, tcp_buf_write);
+	if (likely(TICKS_LT(t, c->timeout) && ( !tcp_async | _wbufq_empty(c) |
+					TICKS_LT(t, c->wbuf_q.wr_timeout)) )){
+		if (unlikely(tcp_async && _wbufq_non_empty(c)))
 			return (ticks_t)MIN_unsigned(c->timeout-t, c->wbuf_q.wr_timeout-t);
 		else
 			return (ticks_t)(c->timeout - t);
 	}
 #ifdef USE_DST_BLACKLIST
 	/* if time out due to write, add it to the blacklist */
-	if (tcp_options.tcp_buf_write && _wbufq_non_empty(c) &&
+	if (tcp_async && _wbufq_non_empty(c) &&
 			TICKS_GE(t, c->wbuf_q.wr_timeout) &&
 			cfg_get(core, core_cfg, use_dst_blacklist))
 		dst_blacklist_su((c->state==S_CONN_CONNECT)?  BLST_ERR_CONNECT:
@@ -3561,7 +3556,8 @@ static inline void tcpconn_destroy_all()
 				_tcpconn_rm(c);
 				if (fd>0) {
 #ifdef TCP_FD_CACHE
-					if (likely(tcp_options.fd_cache)) shutdown(fd, SHUT_RDWR);
+					if (likely(cfg_get(tcp, tcp_cfg, fd_cache)))
+						shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
 					close(fd);
 				}
@@ -3605,7 +3601,7 @@ void tcp_main_loop()
 		goto error;
 	}
 #ifdef TCP_FD_CACHE
-	if (tcp_options.fd_cache) tcp_fd_cache_init();
+	if (cfg_get(tcp, tcp_cfg, fd_cache)) tcp_fd_cache_init();
 #endif /* TCP_FD_CACHE */
 	
 	/* add all the sockets we listen on for connections */
@@ -3791,6 +3787,10 @@ int init_tcp()
 	char* poll_err;
 	
 	tcp_options_check();
+	if (tcp_cfg==0){
+		BUG("tcp_cfg not initialized\n");
+		goto error;
+	}
 	/* init lock */
 	tcpconn_lock=lock_alloc();
 	if (tcpconn_lock==0){

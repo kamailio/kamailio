@@ -109,15 +109,15 @@
 
 #endif /* USE_TCP */
 
-struct tcp_cfg_options{
+struct cfg_group_tcp{
 	/* ser tcp options */
 	int fd_cache; /* on /off */
-	/* tcp buf. write options */
+	/* tcp async options */
 	int tcp_buf_write; /* on / off */
 	int tcp_connect_wait; /* on / off, depends on tcp_buf_write */
 	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
 	unsigned int tcp_wq_max; /* maximum overall queued bytes */
-	unsigned int tcp_wq_timeout;      /* timeout for queue writes */
+	unsigned int tcp_wq_timeout;      /* timeout for queued writes */
 
 	/* tcp socket options */
 	int defer_accept; /* on / off */
@@ -128,14 +128,20 @@ struct tcp_cfg_options{
 	int keepidle;   /* idle time (s) before tcp starts sending keepalives */
 	int keepintvl;  /* interval between keep alives */
 	int keepcnt;    /* maximum no. of keepalives before giving up */
+	
+	/* other options */
 	int crlf_ping;  /* on/off - reply to double CRLF keepalives */
 };
 
+extern struct cfg_group_tcp tcp_default_cfg;
 
-extern struct tcp_cfg_options tcp_options;
+/* tcp config handle*/
+extern void* tcp_cfg;
+
 
 void init_tcp_options();
 void tcp_options_check();
-void tcp_options_get(struct tcp_cfg_options* t);
+int tcp_register_cfg();
+void tcp_options_get(struct cfg_group_tcp* t);
 
 #endif /* tcp_options_h */

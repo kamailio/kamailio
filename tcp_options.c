@@ -21,62 +21,137 @@
  * History:
  * --------
  *  2007-11-28  created by andrei
+ *  2009-03-05  use cfg framework (andrei)
  */
 
 #include "tcp_options.h"
 #include "dprint.h"
 #include "globals.h"
 #include "timer_ticks.h"
+#include "cfg/cfg.h"
 
 
-struct tcp_cfg_options tcp_options;
 
+/* default/initial values for tcp config options
+   NOTE: all the options are initialized in init_tcp_options()
+   depending on compile time defines */
+struct cfg_group_tcp tcp_default_cfg;
+#if 0
+{
+	1, /* fd_cache, default on */
+	/* tcp async options */
+	0, /* tcp_buf_write / tcp_async, default off */
+	1, /* tcp_connect_wait - depends on tcp_async */
+	32*1024, /* tcpconn_wq_max - max. write queue len per connection (32k) */
+	10*1024*1024, /* tcp_wq_max - max.  overall queued bytes  (10MB)*/
+	S_TO_TICKS(tcp_send_timeout), /* tcp_wq_timeout - timeout for queued 
+									 writes, depends on tcp_send_timeout */
+	/* tcp socket options */
+	0, /* defer_accept - on/off*/
+	1, /* delayed_ack - delay ack on connect (on/off)*/
+	0, /* syncnt - numbers of SYNs retrs. before giving up (0 = OS default) */
+	0, /* linger2 - lifetime of orphaned FIN_WAIT2 sockets (0 = OS default)*/
+	1, /* keepalive - on/off */
+	0, /* keepidle - idle time (s) before tcp starts sending keepalives */
+	0, /* keepintvl - interval between keep alives (0 = OS default) */
+	0, /* keepcnt - maximum no. of keepalives (0 = OS default)*/
+	
+	/* other options */
+	1 /* crlf_ping - respond to double CRLF ping/keepalive (on/off) */
+	
+};
+#endif
+
+
+
+/* cfg_group_tcp description (for the config framework)*/
+static cfg_def_t tcp_cfg_def[] = {
+	/*   name        , type |input type| chg type, min, max, fixup, proc. cbk 
+	      description */
+	{ "fd_cache",     CFG_VAR_INT | CFG_READONLY,    0,   1,     0,         0,
+		"file descriptor cache for tcp_send"},
+	/* tcp async options */
+	{ "async",        CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
+		"async mode for writes and connects"},
+	{ "connect_wait", CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
+		"parallel simultaneous connects to the same dst. (0) or one connect"},
+	{ "conn_wq_max",  CFG_VAR_INT | CFG_READONLY,    0, 1024*1024, 0,        0,
+		"maximum bytes queued for write per connection (depends on async)"},
+	{ "wq_max",       CFG_VAR_INT | CFG_READONLY,    0,  1<<30,    0,        0,
+		"maximum bytes queued for write allowed globally (depends on async)"},
+	{ "wq_timeout",   CFG_VAR_INT | CFG_READONLY,    1,  1<<30,    0,        0,
+		"timeout for queued writes (in ticks, use send_timeout for seconds)"},
+	/* tcp socket options */
+	{ "defer_accept", CFG_VAR_INT | CFG_READONLY,    0,   3600,   0,         0,
+		"0/1 on linux, seconds on freebsd (see docs)"},
+	{ "delayed_ack",  CFG_VAR_INT | CFG_READONLY,    0,      1,   0,         0,
+		"initial ack will be delayed and sent with the first data segment"},
+	{ "syncnt",       CFG_VAR_INT | CFG_READONLY,    0,      1,   0,         0,
+		"number of syn retransmissions before aborting a connect (0=not set)"},
+	{ "linger2",      CFG_VAR_INT | CFG_READONLY,    0,   3600,   0,         0,
+		"lifetime of orphaned sockets in FIN_WAIT2 state in s (0=not set)"},
+	{ "keepalive",    CFG_VAR_INT | CFG_READONLY,    0,      1,   0,         0,
+		"enables/disables keepalives for tcp"},
+	{ "keepidle",     CFG_VAR_INT | CFG_READONLY,    0, 24*3600,  0,         0,
+		"time before sending a keepalive if the connection is idle (linux)"},
+	{ "keepintvl",    CFG_VAR_INT | CFG_READONLY,    0, 24*3600,  0,         0,
+		"time interval between keepalive probes on failure (linux)"},
+	{ "keepcnt",     CFG_VAR_INT | CFG_READONLY,    0,    1<<10,  0,         0,
+		"number of failed keepalives before dropping the connection (linux)"},
+	/* other options */
+	{ "crlf_ping",   CFG_VAR_INT | CFG_READONLY,    0,        1,  0,         0,
+		"enable responding to CRLF SIP-level keepalives "},
+	{0, 0, 0, 0, 0, 0, 0}
+};
+
+
+void* tcp_cfg; /* tcp config handle */
 
 /* set defaults */
 void init_tcp_options()
 {
 #ifdef TCP_BUF_WRITE
-	tcp_options.tcp_buf_write=0;
-	tcp_options.tcpconn_wq_max=32*1024; /* 32 k */
-	tcp_options.tcp_wq_max=10*1024*1024; /* 10 MB */
-	tcp_options.tcp_wq_timeout=S_TO_TICKS(tcp_send_timeout);
+	tcp_default_cfg.tcp_buf_write=0;
+	tcp_default_cfg.tcpconn_wq_max=32*1024; /* 32 k */
+	tcp_default_cfg.tcp_wq_max=10*1024*1024; /* 10 MB */
+	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_send_timeout);
 #ifdef TCP_CONNECT_WAIT
-	tcp_options.tcp_connect_wait=1;
+	tcp_default_cfg.tcp_connect_wait=1;
 #endif /* TCP_CONNECT_WAIT */
 #endif /* TCP_BUF_WRITE */
 #ifdef TCP_FD_CACHE
-	tcp_options.fd_cache=1;
+	tcp_default_cfg.fd_cache=1;
 #endif
 #ifdef HAVE_SO_KEEPALIVE
-	tcp_options.keepalive=1;
+	tcp_default_cfg.keepalive=1;
 #endif
 /*
 #if defined HAVE_TCP_DEFER_ACCEPT || defined HAVE_TCP_ACCEPT_FILTER
-	tcp_options.defer_accept=1;
+	tcp_default_cfg.defer_accept=1;
 #endif
 */
 #ifdef HAVE_TCP_QUICKACK
-	tcp_options.delayed_ack=1;
+	tcp_default_cfg.delayed_ack=1;
 #endif
-	tcp_options.crlf_ping=1;
+	tcp_default_cfg.crlf_ping=1;
 }
 
 
 
 #define W_OPT_NC(option) \
-	if (tcp_options.option){\
+	if (tcp_default_cfg.option){\
 		WARN("tcp_options: tcp_" #option \
 				" cannot be enabled (recompile needed)\n"); \
-		tcp_options.option=0; \
+		tcp_default_cfg.option=0; \
 	}
 
 
 
 #define W_OPT_NS(option) \
-	if (tcp_options.option){\
+	if (tcp_default_cfg.option){\
 		WARN("tcp_options: tcp_" #option \
 				" cannot be enabled (no OS support)\n"); \
-		tcp_options.option=0; \
+		tcp_default_cfg.option=0; \
 	}
 
 
@@ -97,10 +172,10 @@ void tcp_options_check()
 	W_OPT_NC(tcp_connect_wait);
 #endif /* TCP_CONNECT_WAIT */
 	
-	if (tcp_options.tcp_connect_wait && !tcp_options.tcp_buf_write){
+	if (tcp_default_cfg.tcp_connect_wait && !tcp_default_cfg.tcp_buf_write){
 		WARN("tcp_options: tcp_connect_wait depends on tcp_buf_write, "
 				" disabling...\n");
-		tcp_options.tcp_connect_wait=0;
+		tcp_default_cfg.tcp_connect_wait=0;
 	}
 	
 #if ! defined HAVE_TCP_DEFER_ACCEPT && ! defined HAVE_TCP_ACCEPT_FILTER
@@ -121,8 +196,9 @@ void tcp_options_check()
 #ifndef HAVE_TCP_KEEPCNT
 	W_OPT_NS(keepcnt);
 #endif
-	if (tcp_options.keepintvl || tcp_options.keepidle || tcp_options.keepcnt){
-		tcp_options.keepalive=1; /* force on */
+	if (tcp_default_cfg.keepintvl || tcp_default_cfg.keepidle || 
+			tcp_default_cfg.keepcnt){
+		tcp_default_cfg.keepalive=1; /* force on */
 	}
 #ifndef HAVE_SO_KEEPALIVE
 	W_OPT_NS(keepalive);
@@ -134,7 +210,23 @@ void tcp_options_check()
 
 
 
-void tcp_options_get(struct tcp_cfg_options* t)
+void tcp_options_get(struct cfg_group_tcp* t)
 {
-	*t=tcp_options;
+	*t=tcp_default_cfg;
+}
+
+
+
+/** register tcp config into the configuration framework.
+ *  @return 0 on succes, -1 on error*/
+int tcp_register_cfg()
+{
+	if (cfg_declare("tcp", tcp_cfg_def, &tcp_default_cfg, cfg_sizeof(tcp),
+					&tcp_cfg))
+		return -1;
+	if (tcp_cfg==0){
+		BUG("null tcp cfg");
+		return -1;
+	}
+	return 0;
 }

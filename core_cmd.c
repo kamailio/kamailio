@@ -560,7 +560,7 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 {
 #ifdef USE_TCP
 	void *handle;
-	struct tcp_cfg_options t;
+	struct cfg_group_tcp t;
 
 	if (!tcp_disable){
 		tcp_options_get(&t);
