@@ -43,6 +43,7 @@
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../parser/parse_to.h"
+#include "../../lvalue.h"
 #include "dialplan.h"
 #include "dp_db.h"
 
