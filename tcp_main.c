@@ -203,8 +203,6 @@
 #define SEND_FD_QUEUE_TIMEOUT	MS_TO_TICKS(2000)  /* 2 s */
 #endif
 
-/* maximum accepted lifetime (maximum possible is  ~ MAXINT/2) */
-#define MAX_TCP_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
 /* minimum interval local_timer_run() is allowed to run, in ticks */
 #define TCPCONN_TIMEOUT_MIN_RUN 1  /* once per tick */
 #define TCPCONN_WAIT_TIMEOUT 1 /* 1 tick */
@@ -235,17 +233,10 @@ static struct fd_cache_entry fd_cache[TCP_FD_CACHE_SIZE];
 
 static int is_tcp_main=0;
 
-int tcp_accept_aliases=0; /* by default don't accept aliases */
-/* flags used for adding new aliases */
-int tcp_alias_flags=TCP_ALIAS_FORCE_ADD;
-/* flags used for adding the default aliases of a new tcp connection */
-int tcp_new_conn_alias_flags=TCP_ALIAS_REPLACE;
-int tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
-int tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
-int tcp_con_lifetime=DEFAULT_TCP_CONNECTION_LIFETIME;
+
 enum poll_types tcp_poll_method=0; /* by default choose the best method */
-int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
 int tcp_main_max_fd_no=0;
+int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
 
 static union sockaddr_union tcp_source_ipv4_addr; /* saved bind/srv v4 addr. */
 static union sockaddr_union* tcp_source_ipv4=0;
@@ -500,7 +491,7 @@ static int tcp_blocking_connect(int fd, int type,
 	int poll_err;
 	
 	poll_err=0;
-	to=tcp_connect_timeout;
+	to=cfg_get(tcp, tcp_cfg, connect_timeout_s);
 	ticks=get_ticks();
 again:
 	n=connect(fd, servaddr, addrlen);
@@ -594,7 +585,7 @@ error_timeout:
 #endif /* USE_DST_BLACKLIST */
 	LOG(L_ERR, "ERROR: tcp_blocking_connect %s: timeout %d s elapsed "
 				"from %d s\n", su2a((union sockaddr_union*)servaddr, addrlen),
-				elapsed, tcp_connect_timeout);
+				elapsed, cfg_get(tcp, tcp_cfg, connect_timeout_s));
 error:
 	return -1;
 end:
@@ -976,7 +967,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	{
 		c->type=PROTO_TCP;
 		c->rcv.proto=PROTO_TCP;
-		c->timeout=get_ticks_raw()+tcp_con_lifetime;
+		c->timeout=get_ticks_raw()+cfg_get(tcp, tcp_cfg, con_lifetime);
 	}
 	
 	return c;
@@ -1118,10 +1109,11 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 
 	s=-1;
 	
-	if (*tcp_connections_no >= tcp_max_connections){
+	if (*tcp_connections_no >= cfg_get(tcp, tcp_cfg, max_connections)){
 		LOG(L_ERR, "ERROR: tcpconn_connect: maximum number of connections"
 					" exceeded (%d/%d)\n",
-					*tcp_connections_no, tcp_max_connections);
+					*tcp_connections_no,
+					cfg_get(tcp, tcp_cfg, max_connections));
 		goto error;
 	}
 	s=tcp_do_connect(server, from, type, &my_name, &si, &state);
@@ -1155,6 +1147,7 @@ int tcpconn_finish_connect( struct tcp_connection* c,
 	struct socket_info* si;
 	enum tcp_conn_states state;
 	struct tcp_conn_alias* a;
+	int new_conn_alias_flags;
 	
 	s=tcp_do_connect(&c->rcv.src_su, from, c->type, &local_addr, &si, &state);
 	if (unlikely(s==-1)){
@@ -1168,14 +1161,16 @@ int tcpconn_finish_connect( struct tcp_connection* c,
 	c->rcv.dst_port=su_getport(&local_addr);
 	/* update aliases if needed */
 	if (likely(from==0)){
+		new_conn_alias_flags=cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
 		/* add aliases */
 		TCPCONN_LOCK;
 		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip, 0,
-													tcp_new_conn_alias_flags);
+													new_conn_alias_flags);
 		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
-									c->rcv.dst_port, tcp_new_conn_alias_flags);
+									c->rcv.dst_port, new_conn_alias_flags);
 		TCPCONN_UNLOCK;
 	}else if (su_cmp(from, &local_addr)!=1){
+		new_conn_alias_flags=cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
 		TCPCONN_LOCK;
 			/* remove all the aliases except the first one and re-add them
 			 * (there shouldn't be more then the 3 default aliases at this 
@@ -1187,9 +1182,9 @@ int tcpconn_finish_connect( struct tcp_connection* c,
 			c->aliases=1;
 			/* add the local_ip:0 and local_ip:local_port aliases */
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
-												0, tcp_new_conn_alias_flags);
+												0, new_conn_alias_flags);
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
-									c->rcv.dst_port, tcp_new_conn_alias_flags);
+									c->rcv.dst_port, new_conn_alias_flags);
 		TCPCONN_UNLOCK;
 	}
 	
@@ -1204,11 +1199,13 @@ int tcpconn_finish_connect( struct tcp_connection* c,
 inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 {
 	struct ip_addr zero_ip;
+	int new_conn_alias_flags;
 
 	if (likely(c)){
 		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		c->id_hash=tcp_id_hash(c->id);
 		c->aliases=0;
+		new_conn_alias_flags=cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
 		TCPCONN_LOCK;
 		c->flags|=F_CONN_HASHED;
 		/* add it at the begining of the list*/
@@ -1221,12 +1218,12 @@ inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 		 * the third alias is for (peer_ip, peer_port, local_addr, local_port) 
 		 *   -- for finding if a fully specified connection exists */
 		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &zero_ip, 0,
-													tcp_new_conn_alias_flags);
+													new_conn_alias_flags);
 		if (likely(c->rcv.dst_ip.af && ! ip_addr_any(&c->rcv.dst_ip))){
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip, 0,
-													tcp_new_conn_alias_flags);
+													new_conn_alias_flags);
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
-									c->rcv.dst_port, tcp_new_conn_alias_flags);
+									c->rcv.dst_port, new_conn_alias_flags);
 		}
 		/* ignore add_alias errors, there are some valid cases when one
 		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
@@ -1501,6 +1498,7 @@ int tcpconn_add_alias(int id, int port, int proto)
 	int ret;
 	struct ip_addr zero_ip;
 	int r;
+	int alias_flags;
 	
 	/* fix the port */
 	port=port?port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT);
@@ -1509,18 +1507,18 @@ int tcpconn_add_alias(int id, int port, int proto)
 	c=_tcpconn_find(id, 0, 0, 0, 0);
 	if (likely(c)){
 		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
-		
+		alias_flags=cfg_get(tcp, tcp_cfg, alias_flags);
 		/* alias src_ip:port, 0, 0 */
 		ret=_tcpconn_add_alias_unsafe(c, port,  &zero_ip, 0, 
-										tcp_alias_flags);
+										alias_flags);
 		if (ret<0 && ret!=-3) goto error;
 		/* alias src_ip:port, local_ip, 0 */
 		ret=_tcpconn_add_alias_unsafe(c, port,  &c->rcv.dst_ip, 0, 
-										tcp_alias_flags);
+										alias_flags);
 		if (ret<0 && ret!=-3) goto error;
 		/* alias src_ip:port, local_ip, local_port */
 		ret=_tcpconn_add_alias_unsafe(c, port, &c->rcv.dst_ip, c->rcv.dst_port,
-										tcp_alias_flags);
+										alias_flags);
 		if (unlikely(ret<0)) goto error;
 	}else goto error_not_found;
 	TCPCONN_UNLOCK;
@@ -1622,6 +1620,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	long response[2];
 	int n;
 	int do_close_fd;
+	ticks_t con_lifetime;
 #ifdef TCP_BUF_WRITE
 	int enable_write_watch;
 #endif /* TCP_BUF_WRITE */
@@ -1634,11 +1633,12 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 #endif /* TCP_FD_CACHE */
 	do_close_fd=1; /* close the fd on exit */
 	port=su_getport(&dst->to);
+	con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
 	if (likely(port)){
 		su2ip_addr(&ip, &dst->to);
-		c=tcpconn_get(dst->id, &ip, port, from, tcp_con_lifetime); 
+		c=tcpconn_get(dst->id, &ip, port, from, con_lifetime); 
 	}else if (likely(dst->id)){
-		c=tcpconn_get(dst->id, 0, 0, 0, tcp_con_lifetime);
+		c=tcpconn_get(dst->id, 0, 0, 0, con_lifetime);
 	}else{
 		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
 		return -1;
@@ -1648,7 +1648,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		if (unlikely(c==0)) {
 			if (likely(port)){
 				/* try again w/o id */
-				c=tcpconn_get(0, &ip, port, from, tcp_con_lifetime);
+				c=tcpconn_get(0, &ip, port, from, con_lifetime);
 				goto no_id;
 			}else{
 				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
@@ -1680,11 +1680,13 @@ no_id:
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
 			if (likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait) && 
 						cfg_get(tcp, tcp_cfg, tcp_buf_write) )){
-				if (unlikely(*tcp_connections_no >= tcp_max_connections)){
+				if (unlikely(*tcp_connections_no >=
+								cfg_get(tcp, tcp_cfg, max_connections))){
 					LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
 								" connections exceeded (%d/%d)\n",
 								su2a(&dst->to, sizeof(dst->to)),
-								*tcp_connections_no, tcp_max_connections);
+								*tcp_connections_no,
+								cfg_get(tcp, tcp_cfg, max_connections));
 					return -1;
 				}
 				c=tcpconn_new(-1, &dst->to, from, 0, dst->proto,
@@ -1932,7 +1934,8 @@ send_it:
 	else
 #endif
 		/* n=tcp_blocking_write(c, fd, buf, len); */
-		n=tsend_stream(fd, buf, len, tcp_send_timeout*1000); 
+		n=tsend_stream(fd, buf, len,
+							cfg_get(tcp, tcp_cfg, send_timeout_s)*1000);
 #ifdef TCP_BUF_WRITE
 	}
 #else /* ! TCP_BUF_WRITE */
@@ -2574,6 +2577,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	int n;
 	ticks_t t;
 	ticks_t crt_timeout;
+	ticks_t con_lifetime;
 	
 	if (unlikely(tcp_c->unix_sock<=0)){
 		/* (we can't have a fd==0, 0 is never closed )*/
@@ -2650,8 +2654,9 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			}
 			/* update the timeout*/
 			t=get_ticks_raw();
-			tcpconn->timeout=t+tcp_con_lifetime;
-			crt_timeout=tcp_con_lifetime;
+			con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
+			tcpconn->timeout=t+con_lifetime;
+			crt_timeout=con_lifetime;
 #ifdef TCP_BUF_WRITE
 			if (unlikely(cfg_get(tcp, tcp_cfg, tcp_buf_write) && 
 							_wbufq_non_empty(tcpconn) )){
@@ -2676,7 +2681,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn_put_destroy(tcpconn);
 					break;
 				}else{
-					crt_timeout=MIN_unsigned(tcp_con_lifetime,
+					crt_timeout=MIN_unsigned(con_lifetime,
 											tcpconn->wbuf_q.wr_timeout-t);
 				}
 			}
@@ -2766,6 +2771,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	int fd;
 	int flags;
 	ticks_t t;
+	ticks_t con_lifetime;
 #ifdef TCP_BUF_WRITE
 	ticks_t nxt_timeout;
 #endif /* TCP_BUF_WRITE */
@@ -2874,11 +2880,12 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			tcpconn_add(tcpconn);
 			/* update the timeout*/
 			t=get_ticks_raw();
-			tcpconn->timeout=t+tcp_con_lifetime;
+			con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
+			tcpconn->timeout=t+con_lifetime;
 			/* activate the timer (already properly init. in tcpconn_new())
 			 * no need for reinit */
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
-								tcp_con_lifetime, t);
+								con_lifetime, t);
 			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD)
 #ifdef TCP_BUF_WRITE
 					/* not used for now, the connection is sent to tcp_main
@@ -2989,8 +2996,9 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			tcpconn->s=fd;
 			/* update the timeout*/
 			t=get_ticks_raw();
-			tcpconn->timeout=t+tcp_con_lifetime;
-			nxt_timeout=tcp_con_lifetime;
+			con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
+			tcpconn->timeout=t+con_lifetime;
+			nxt_timeout=con_lifetime;
 			if (unlikely(cmd==CONN_NEW_COMPLETE)){
 				tcpconn->state=S_CONN_OK;
 				/* check if needs to be watched for write */
@@ -3157,9 +3165,10 @@ static inline int handle_new_connect(struct socket_info* si)
 				" connection(%d): %s\n", errno, strerror(errno));
 		return -1;
 	}
-	if (unlikely(*tcp_connections_no>=tcp_max_connections)){
+	if (unlikely(*tcp_connections_no>=cfg_get(tcp, tcp_cfg, max_connections))){
 		LOG(L_ERR, "ERROR: maximum number of connections exceeded: %d/%d\n",
-					*tcp_connections_no, tcp_max_connections);
+					*tcp_connections_no,
+					cfg_get(tcp, tcp_cfg, max_connections));
 		close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
@@ -3192,7 +3201,8 @@ static inline int handle_new_connect(struct socket_info* si)
 		tcpconn_add(tcpconn);
 		/* activate the timer */
 		local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
-								tcp_con_lifetime, get_ticks_raw());
+								cfg_get(tcp, tcp_cfg, con_lifetime),
+								get_ticks_raw());
 		tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD);
 		if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLIN, 
 													F_TCPCONN, tcpconn)<0)){
@@ -3843,26 +3853,7 @@ int init_tcp()
 			TCP_ID_HASH_SIZE * sizeof(struct tcp_connection*));
 	
 	/* fix config variables */
-	if (tcp_connect_timeout<0)
-		tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
-	if (tcp_send_timeout<0)
-		tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
-	if (tcp_con_lifetime<0){
-		/* set to max value (~ 1/2 MAX_INT) */
-		tcp_con_lifetime=MAX_TCP_CON_LIFETIME;
-	}else{
-		if ((unsigned)tcp_con_lifetime > 
-				(unsigned)TICKS_TO_S(MAX_TCP_CON_LIFETIME)){
-			LOG(L_WARN, "init_tcp: tcp_con_lifetime too big (%u s), "
-					" the maximum value is %u\n", tcp_con_lifetime,
-					TICKS_TO_S(MAX_TCP_CON_LIFETIME));
-			tcp_con_lifetime=MAX_TCP_CON_LIFETIME;
-		}else{
-			tcp_con_lifetime=S_TO_TICKS(tcp_con_lifetime);
-		}
-	}
-	
-		poll_err=check_poll_method(tcp_poll_method);
+	poll_err=check_poll_method(tcp_poll_method);
 	
 	/* set an appropriate poll method */
 	if (poll_err || (tcp_poll_method==0)){

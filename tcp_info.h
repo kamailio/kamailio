@@ -33,7 +33,7 @@
 
 struct tcp_gen_info{
 	int tcp_readers;
-	int tcp_max_connections;
+	int tcp_max_connections; /* startup connection limit, cannot be exceeded*/
 	int tcp_connections_no; /* crt. number */
 	int tcp_write_queued; /* total bytes queued for write, 0 if no
 							 write queued support is enabled */

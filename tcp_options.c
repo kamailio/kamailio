@@ -29,6 +29,7 @@
 #include "globals.h"
 #include "timer_ticks.h"
 #include "cfg/cfg.h"
+#include "tcp_init.h" /* DEFAULT* */
 
 
 
@@ -68,7 +69,18 @@ struct cfg_group_tcp tcp_default_cfg;
 static cfg_def_t tcp_cfg_def[] = {
 	/*   name        , type |input type| chg type, min, max, fixup, proc. cbk 
 	      description */
-	{ "fd_cache",     CFG_VAR_INT | CFG_READONLY,    0,   1,     0,         0,
+	{ "connect_timeout", CFG_VAR_INT | CFG_READONLY, -1,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),         0,         0,
+		"used only in non-async mode, in seconds"},
+	{ "send_timeout", CFG_VAR_INT | CFG_READONLY,   -1,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),         0,         0,
+		"in seconds"},
+	{ "connection_lifetime", CFG_VAR_INT | CFG_READONLY,   -1,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),         0,         0,
+		"connection lifetime (in seconds)"},
+	{ "max_connections", CFG_VAR_INT | CFG_READONLY, 0,  (1U<<31)-1, 0,      0,
+		"maximum connection number, soft limit"},
+	{ "fd_cache",     CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
 		"file descriptor cache for tcp_send"},
 	/* tcp async options */
 	{ "async",        CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
@@ -79,8 +91,7 @@ static cfg_def_t tcp_cfg_def[] = {
 		"maximum bytes queued for write per connection (depends on async)"},
 	{ "wq_max",       CFG_VAR_INT | CFG_READONLY,    0,  1<<30,    0,        0,
 		"maximum bytes queued for write allowed globally (depends on async)"},
-	{ "wq_timeout",   CFG_VAR_INT | CFG_READONLY,    1,  1<<30,    0,        0,
-		"timeout for queued writes (in ticks, use send_timeout for seconds)"},
+	/* see also wq_timeout below */
 	/* tcp socket options */
 	{ "defer_accept", CFG_VAR_INT | CFG_READONLY,    0,   3600,   0,         0,
 		"0/1 on linux, seconds on freebsd (see docs)"},
@@ -101,6 +112,20 @@ static cfg_def_t tcp_cfg_def[] = {
 	/* other options */
 	{ "crlf_ping",   CFG_VAR_INT | CFG_READONLY,    0,        1,  0,         0,
 		"enable responding to CRLF SIP-level keepalives "},
+	{ "accept_aliases", CFG_VAR_INT | CFG_READONLY, 0,        1,  0,         0,
+		"turn on/off tcp aliases (see tcp_accept_aliases) "},
+	{ "alias_flags", CFG_VAR_INT | CFG_READONLY,    0,        0,  0,         0,
+		"flags used for adding new aliases (FORCE_ADD:1 , REPLACE:2) "},
+	{ "new_conn_alias_flags", CFG_VAR_INT | CFG_READONLY, 0,  0,  0,         0,
+		"flags for the def. aliases for a new conn. (FORCE_ADD:1, REPLACE:2 "},
+	/* internal and/or "fixed" versions of some vars
+	   (not supposed to be writeable, read will provide only debugging value*/
+	{ "wq_timeout_ticks",   CFG_VAR_INT | CFG_READONLY, 0,
+									MAX_TCP_CON_LIFETIME,         0,         0,
+		"internal send_timeout value in ticks, used in async. mode"},
+	{ "con_lifetime_ticks", CFG_VAR_INT | CFG_READONLY, 0,
+									MAX_TCP_CON_LIFETIME,         0,         0,
+		"internal connection_lifetime value, converted to ticks"},
 	{0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -110,11 +135,15 @@ void* tcp_cfg; /* tcp config handle */
 /* set defaults */
 void init_tcp_options()
 {
+	tcp_default_cfg.connect_timeout_s=DEFAULT_TCP_CONNECT_TIMEOUT;
+	tcp_default_cfg.send_timeout_s=DEFAULT_TCP_SEND_TIMEOUT;
+	tcp_default_cfg.con_lifetime_s=DEFAULT_TCP_CONNECTION_LIFETIME_S;
+	tcp_default_cfg.max_connections=tcp_max_connections;
 #ifdef TCP_BUF_WRITE
 	tcp_default_cfg.tcp_buf_write=0;
 	tcp_default_cfg.tcpconn_wq_max=32*1024; /* 32 k */
 	tcp_default_cfg.tcp_wq_max=10*1024*1024; /* 10 MB */
-	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_send_timeout);
+	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_default_cfg.send_timeout_s);
 #ifdef TCP_CONNECT_WAIT
 	tcp_default_cfg.tcp_connect_wait=1;
 #endif /* TCP_CONNECT_WAIT */
@@ -134,6 +163,11 @@ void init_tcp_options()
 	tcp_default_cfg.delayed_ack=1;
 #endif
 	tcp_default_cfg.crlf_ping=1;
+	tcp_default_cfg.accept_aliases=0; /* don't accept aliases by default */
+	/* flags used for adding new aliases */
+	tcp_default_cfg.alias_flags=TCP_ALIAS_FORCE_ADD;
+	/* flags used for adding the default aliases of a new tcp connection */
+	tcp_default_cfg.new_conn_alias_flags=TCP_ALIAS_REPLACE;
 }
 
 
@@ -153,6 +187,20 @@ void init_tcp_options()
 				" cannot be enabled (no OS support)\n"); \
 		tcp_default_cfg.option=0; \
 	}
+
+
+
+/* if *to<0 to=default_val, else if to>max_val to=max_val */
+static void fix_timeout(char* name, int* to, int default_val, unsigned max_val)
+{
+	if (*to < 0) *to=default_val;
+	else if ((unsigned)*to > max_val){
+		WARN("%s: timeout too big (%u), the maximum value is %u\n",
+				name, *to, max_val);
+		*to=max_val;
+	}
+}
+
 
 
 /* checks & warns if some tcp_option cannot be enabled */
@@ -196,7 +244,7 @@ void tcp_options_check()
 #ifndef HAVE_TCP_KEEPCNT
 	W_OPT_NS(keepcnt);
 #endif
-	if (tcp_default_cfg.keepintvl || tcp_default_cfg.keepidle || 
+	if (tcp_default_cfg.keepintvl || tcp_default_cfg.keepidle ||
 			tcp_default_cfg.keepcnt){
 		tcp_default_cfg.keepalive=1; /* force on */
 	}
@@ -206,6 +254,22 @@ void tcp_options_check()
 #ifndef HAVE_TCP_QUICKACK
 	W_OPT_NS(delayed_ack);
 #endif
+	/* fix various timeouts */
+	fix_timeout("tcp_connect_timeout", &tcp_default_cfg.connect_timeout_s,
+						DEFAULT_TCP_CONNECT_TIMEOUT,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+	fix_timeout("tcp_send_timeout", &tcp_default_cfg.send_timeout_s,
+						DEFAULT_TCP_SEND_TIMEOUT,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+	fix_timeout("tcp_connection_lifetime", &tcp_default_cfg.con_lifetime_s,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+	/* compute timeout in ticks */
+#ifdef TCP_BUF_WRITE
+	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_default_cfg.send_timeout_s);
+#endif /* TCP_BUF_WRITE */
+	tcp_default_cfg.con_lifetime=S_TO_TICKS(tcp_default_cfg.con_lifetime_s);
+	tcp_default_cfg.max_connections=tcp_max_connections;
 }
 
 

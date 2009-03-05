@@ -764,7 +764,7 @@ assign_stm:
 	| DISABLE_TCP EQUAL error { yyerror("boolean value expected"); }
 	| TCP_ACCEPT_ALIASES EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_accept_aliases=$3;
+			tcp_default_cfg.accept_aliases=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -780,7 +780,7 @@ assign_stm:
 	| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
 	| TCP_CONNECT_TIMEOUT EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_connect_timeout=$3;
+			tcp_default_cfg.connect_timeout_s=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -788,7 +788,7 @@ assign_stm:
 	| TCP_CONNECT_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_SEND_TIMEOUT EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_send_timeout=$3;
+			tcp_default_cfg.send_timeout_s=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -796,7 +796,7 @@ assign_stm:
 	| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_CON_LIFETIME EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_con_lifetime=$3;
+			tcp_default_cfg.con_lifetime_s=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif

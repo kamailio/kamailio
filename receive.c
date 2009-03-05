@@ -62,7 +62,8 @@
 #include "select_buf.h"
 
 #include "tcp_server.h" /* for tcpconn_add_alias */
-
+#include "tcp_options.h" /* for access to tcp_accept_aliases*/
+#include "cfg/cfg.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -138,7 +139,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* check if necessary to add receive?->moved to forward_req */
 		/* check for the alias stuff */
 #ifdef USE_TCP
-		if (msg->via1->alias && tcp_accept_aliases && 
+		if (msg->via1->alias && cfg_get(tcp, tcp_cfg, accept_aliases) && 
 				(((rcv_info->proto==PROTO_TCP) && !tcp_disable)
 #ifdef USE_TLS
 					|| ((rcv_info->proto==PROTO_TLS) && !tls_disable)

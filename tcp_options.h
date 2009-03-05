@@ -110,14 +110,17 @@
 #endif /* USE_TCP */
 
 struct cfg_group_tcp{
-	/* ser tcp options */
+	/* ser tcp options, low level */
+	int connect_timeout_s; /* in s, used only in non-async mode */
+	int send_timeout_s; /* in s */
+	int con_lifetime_s; /* in s */
+	int max_connections;
 	int fd_cache; /* on /off */
 	/* tcp async options */
 	int tcp_buf_write; /* on / off */
 	int tcp_connect_wait; /* on / off, depends on tcp_buf_write */
 	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
 	unsigned int tcp_wq_max; /* maximum overall queued bytes */
-	unsigned int tcp_wq_timeout;      /* timeout for queued writes */
 
 	/* tcp socket options */
 	int defer_accept; /* on / off */
@@ -131,6 +134,12 @@ struct cfg_group_tcp{
 	
 	/* other options */
 	int crlf_ping;  /* on/off - reply to double CRLF keepalives */
+	int accept_aliases;
+	int alias_flags;
+	int new_conn_alias_flags;
+	/* internal, "fixed" vars */
+	unsigned int tcp_wq_timeout; /* in ticks, timeout for queued writes */
+	unsigned int con_lifetime; /* in ticks, see con_lifetime_s */
 };
 
 extern struct cfg_group_tcp tcp_default_cfg;
