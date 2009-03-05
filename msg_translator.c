@@ -2287,7 +2287,7 @@ char* create_via_hf( unsigned int *len,
 	char* via;
 	str extra_params;
 	struct hostport hp;
-#ifdef USE_TCP
+#if defined USE_TCP || defined USE_SCTP
 	char* id_buf;
 	unsigned int id_len;
 
@@ -2299,13 +2299,21 @@ char* create_via_hf( unsigned int *len,
 	extra_params.s=0;
 
 
-#ifdef USE_TCP
+#if defined USE_TCP || defined USE_SCTP
 	/* add id if tcp */
-	if (msg
-	&& ((msg->rcv.proto==PROTO_TCP)
+	if (msg && (
+#ifdef USE_TCP
+		(msg->rcv.proto==PROTO_TCP)
 #ifdef USE_TLS
 			|| (msg->rcv.proto==PROTO_TLS)
 #endif
+#ifdef USE_SCTP
+			||
+#endif /* USE_SCTP */
+#endif /* USE_TCP */
+#ifdef USE_SCTP
+			(msg->rcv.proto==PROTO_SCTP)
+#endif /* USE_SCTP */
 			)){
 		if  ((id_buf=id_builder(msg, &id_len))==0){
 			LOG(L_ERR, "ERROR: create_via_hf:"
@@ -2318,13 +2326,13 @@ char* create_via_hf( unsigned int *len,
 		extra_params.s=id_buf;
 		extra_params.len=id_len;
 	}
-#endif
+#endif /* USE_TCP || USE_SCTP */
 
 	set_hostport(&hp, msg);
 	via = via_builder( len, send_info, branch,
 							extra_params.len?&extra_params:0, &hp);
 
-#ifdef USE_TCP
+#if defined USE_TCP || defined USE_SCTP
 	/* we do not need id_buf any more, the id is already in the new via header */
 	if (id_buf) pkg_free(id_buf);
 #endif

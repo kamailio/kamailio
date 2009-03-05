@@ -41,6 +41,7 @@
 #include "core_cmd.h"
 #ifdef USE_SCTP
 #include "sctp_options.h"
+#include "sctp_server.h"
 #endif
 
 #ifdef USE_DNS_CACHE
@@ -561,19 +562,23 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 {
 #ifdef USE_TCP
 	void *handle;
-	struct tcp_cfg_options t;
+	struct cfg_group_tcp t;
 
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "ddddddddddddddd",
+		rpc->struct_add(handle, "ddddddddddddddddddddddd",
+			"connect_timeout", t.connect_timeout_s,
+			"send_timeout",  t.send_timeout_s,
+			"connection_lifetime",  t.con_lifetime_s,
+			"max_connections(soft)", t.max_connections,
+			"no_connect",	t.no_connect,
 			"fd_cache",		t.fd_cache,
-			"tcp_buf_write",	t.tcp_buf_write,
-			"tcp_connect_wait",	t.tcp_connect_wait,
-			"tcpconn_wq_max",	t.tcpconn_wq_max,
-			"tcp_wq_max",	t.tcp_wq_max,
-			"tcp_wq_timeout",	TICKS_TO_S(t.tcp_wq_timeout),
-			
+			"async",		t.async,
+			"connect_wait",	t.tcp_connect_wait,
+			"conn_wq_max",	t.tcpconn_wq_max,
+			"wq_max",		t.tcp_wq_max,
+			"wq_timeout",	TICKS_TO_S(t.tcp_wq_timeout),
 			"defer_accept",	t.defer_accept,
 			"delayed_ack",	t.delayed_ack,
 			"syncnt",		t.syncnt,
@@ -582,7 +587,10 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 			"keepidle",		t.keepidle,
 			"keepintvl",	t.keepintvl,
 			"keepcnt",		t.keepcnt,
-			"crlf_ping",	t.crlf_ping
+			"crlf_ping",	t.crlf_ping,
+			"accept_aliases", t.accept_aliases,
+			"alias_flags",	t.alias_flags,
+			"new_conn_alias_flags",	t.new_conn_alias_flags
 		);
 	}else{
 		rpc->fault(c, 500, "tcp support disabled");
@@ -624,6 +632,35 @@ static void core_sctp_options(rpc_t* rpc, void* c)
 
 
 
+static const char* core_sctpinfo_doc[] = {
+	"Returns sctp related info.",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+static void core_sctpinfo(rpc_t* rpc, void* c)
+{
+#ifdef USE_SCTP
+	void *handle;
+	struct sctp_gen_info i;
+
+	if (!sctp_disable){
+		sctp_get_info(&i);
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "ddd",
+			"opened_connections", i.sctp_connections_no,
+			"tracked_connections", i.sctp_tracked_no,
+			"total_connections", i.sctp_total_connections
+		);
+	}else{
+		rpc->fault(c, 500, "sctp support disabled");
+	}
+#else
+	rpc->fault(c, 500, "sctp support not compiled");
+#endif
+}
+
+
+
 /*
  * RPC Methods exported by this module
  */
@@ -646,6 +683,7 @@ rpc_export_t core_rpc_methods[] = {
 	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
 	{"core.sctp_options",      core_sctp_options,      core_sctp_options_doc,
 		0},
+	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
 	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},

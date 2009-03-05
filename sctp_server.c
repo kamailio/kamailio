@@ -53,8 +53,14 @@
 #ifdef USE_DST_BLACKLIST
 #include "dst_blacklist.h"
 #endif /* USE_DST_BLACKLIST */
+#include "timer_ticks.h"
+#include "clist.h"
+#include "error.h"
+#include "timer.h"
 
 
+
+static atomic_t* sctp_conn_no;
 
 /* check if the underlying OS supports sctp
    returns 0 if yes, -1 on error */
@@ -521,6 +527,1004 @@ error:
 #endif /* USE_SCTP_OO */
 
 
+#define SCTP_CONN_REUSE /* FIXME */
+#ifdef SCTP_CONN_REUSE
+
+/* we  need SCTP_ADDR_HASH for being able to make inquires related to existing
+   sctp association to a particular address  (optional) */
+/*#define SCTP_ADDR_HASH*/
+
+#define SCTP_ID_HASH_SIZE 1024 /* must be 2^k */
+#define SCTP_ASSOC_HASH_SIZE 1024 /* must be 2^k */
+#define SCTP_ADDR_HASH_SIZE 1024 /* must be 2^k */
+
+/* lock method */
+#ifdef GEN_LOCK_T_UNLIMITED
+#define SCTP_HASH_LOCK_PER_BUCKET
+#elif defined GEN_LOCK_SET_T_UNLIMITED
+#define SCTP_HASH_LOCK_SET
+#else
+#define SCTP_HASH_ONE_LOCK
+#endif
+
+
+#ifdef SCTP_HASH_LOCK_PER_BUCKET
+/* lock included in the hash bucket */
+#define LOCK_SCTP_ID_H(h)		lock_get(&sctp_con_id_hash[(h)].lock)
+#define UNLOCK_SCTP_ID_H(h)		lock_release(&sctp_con_id_hash[(h)].lock)
+#define LOCK_SCTP_ASSOC_H(h)	lock_get(&sctp_con_assoc_hash[(h)].lock)
+#define UNLOCK_SCTP_ASSOC_H(h)	lock_release(&sctp_con_assoc_hash[(h)].lock)
+#define LOCK_SCTP_ADDR_H(h)		lock_get(&sctp_con_addr_hash[(h)].lock)
+#define UNLOCK_SCTP_ADDR_H(h)	lock_release(&sctp_con_addr_hash[(h)].lock)
+#elif defined SCTP_HASH_LOCK_SET
+static gen_lock_set_t* sctp_con_id_h_lock_set=0;
+static gen_lock_set_t* sctp_con_assoc_h_lock_set=0;
+static gen_lock_set_t* sctp_con_addr_h_lock_set=0;
+#define LOCK_SCTP_ID_H(h)		lock_set_get(sctp_con_id_h_lock_set, (h))
+#define UNLOCK_SCTP_ID_H(h)		lock_set_release(sctp_con_id_h_lock_set, (h))
+#define LOCK_SCTP_ASSOC_H(h)	lock_set_get(sctp_con_assoc_h_lock_set, (h))
+#define UNLOCK_SCTP_ASSOC_H(h)	\
+	lock_set_release(sctp_con_assoc_h_lock_set, (h))
+#define LOCK_SCTP_ADDR_H(h)	lock_set_get(sctp_con_addr_h_lock_set, (h))
+#define UNLOCK_SCTP_ADDR_H(h)	lock_set_release(sctp_con_addr_h_lock_set, (h))
+#else /* use only one lock */
+static gen_lock_t* sctp_con_id_h_lock=0;
+static gen_lock_t* sctp_con_assoc_h_lock=0;
+static gen_lock_t* sctp_con_addr_h_lock=0;
+#define LOCK_SCTP_ID_H(h)		lock_get(sctp_con_id_h_lock)
+#define UNLOCK_SCTP_ID_H(h)		lock_release(sctp_con_id_hlock)
+#define LOCK_SCTP_ASSOC_H(h)	lock_get(sctp_con_assoc_h_lock)
+#define UNLOCK_SCTP_ASSOC_H(h)	lock_release(sctp_con_assoc_h_lock)
+#define LOCK_SCTP_ADDR_H(h)	lock_get(sctp_con_addr_h_lock)
+#define UNLOCK_SCTP_ADDR_H(h)	lock_release(sctp_con_addr_h_lock)
+#endif /* SCTP_HASH_LOCK_PER_BUCKET */
+
+
+/* sctp connection flags */
+#define SCTP_CON_UP_SEEN   1
+#define SCTP_CON_RCV_SEEN  2
+#define SCTP_CON_DOWN_SEEN 4
+
+struct sctp_connection{
+	unsigned int id;       /**< ser unique global id */
+	unsigned int assoc_id; /**< sctp assoc id (can be reused for new assocs)*/
+	struct socket_info* si; /**< local socket used */
+	unsigned flags; /**< internal flags UP_SEEN, RCV_SEEN, DOWN_SEEN */
+	ticks_t start;
+	ticks_t expire; 
+	union sockaddr_union remote; /**< remote ip & port */
+};
+
+struct sctp_lst_connector{
+	/* id hash */
+	struct sctp_con_elem* next_id;
+	struct sctp_con_elem* prev_id;
+	/* assoc hash */
+	struct sctp_con_elem* next_assoc;
+	struct sctp_con_elem* prev_assoc;
+#ifdef SCTP_ADDR_HASH
+	/* addr hash */
+	struct sctp_con_elem* next_addr;
+	struct sctp_con_elem* prev_addr;
+#endif /* SCTP_ADDR_HASH */
+};
+
+struct sctp_con_elem{
+	struct sctp_lst_connector l; /* must be first */
+	atomic_t refcnt;
+	/* data */
+	struct sctp_connection con;
+};
+
+struct sctp_con_id_hash_head{
+	struct sctp_lst_connector l; /* must be first */
+#ifdef SCTP_HASH_LOCK_PER_BUCKET
+	gen_lock_t lock;
+#endif /* SCTP_HASH_LOCK_PER_BUCKET */
+};
+
+struct sctp_con_assoc_hash_head{
+	struct sctp_lst_connector l; /* must be first */
+#ifdef SCTP_HASH_LOCK_PER_BUCKET
+	gen_lock_t lock;
+#endif /* SCTP_HASH_LOCK_PER_BUCKET */
+};
+
+#ifdef SCTP_ADDR_HASH
+struct sctp_con_addr_hash_head{
+	struct sctp_lst_connector l; /* must be first */
+#ifdef SCTP_HASH_LOCK_PER_BUCKET
+	gen_lock_t lock;
+#endif /* SCTP_HASH_LOCK_PER_BUCKET */
+};
+#endif /* SCTP_ADDR_HASH */
+
+static struct sctp_con_id_hash_head*     sctp_con_id_hash;
+static struct sctp_con_assoc_hash_head*  sctp_con_assoc_hash;
+#ifdef SCTP_ADDR_HASH
+static struct sctp_con_addr_hash_head*  sctp_con_addr_hash;
+#endif /* SCTP_ADDR_HASH */
+
+static atomic_t* sctp_id;
+static atomic_t* sctp_conn_tracked;
+
+
+#define get_sctp_con_id_hash(id) ((id) % SCTP_ID_HASH_SIZE)
+#define get_sctp_con_assoc_hash(assoc_id)  ((assoc_id) % SCTP_ASSOC_HASH_SIZE)
+#ifdef SCTP_ADDR_HASH
+static inline unsigned get_sctp_con_addr_hash(union sockaddr_union* remote,
+											struct socket_info* si)
+{
+	struct ip_addr ip;
+	unsigned short port;
+	unsigned h;
+	
+	su2ip_addr(&ip, remote);
+	port=su_getport(remote);
+	if (likely(ip.len==4))
+		h=ip.u.addr32[0]^port;
+	else if (ip.len==16)
+		h=ip.u.addr32[0]^ip.u.addr32[1]^ip.u.addr32[2]^ ip.u.addr32[3]^port;
+	else
+		h=0; /* error */
+	/* make sure the first bits are influenced by all 32
+	 * (the first log2(SCTP_ADDR_HASH_SIZE) bits should be a mix of all
+	 *  32)*/
+	h ^= h>>17;
+	h ^= h>>7;
+	return h & (SCTP_ADDR_HASH_SIZE-1);
+}
+#endif /* SCTP_ADDR_HASH */
+
+
+
+/** destroy sctp conn hashes. */
+void destroy_sctp_con_tracking()
+{
+	int r;
+	
+#ifdef SCTP_HASH_LOCK_PER_BUCKET
+	if (sctp_con_id_hash)
+		for(r=0; r<SCTP_ID_HASH_SIZE; r++)
+			lock_destroy(&sctp_con_id_hash[r].lock);
+	if (sctp_con_assoc_hash)
+		for(r=0; r<SCTP_ASSOC_HASH_SIZE; r++)
+			lock_destroy(&sctp_con_assoc_hash[r].lock);
+#	ifdef SCTP_ADDR_HASH
+	if (sctp_con_addr_hash)
+		for(r=0; r<SCTP_ADDR_HASH_SIZE; r++)
+			lock_destroy(&sctp_con_addr_hash[r].lock);
+#	endif /* SCTP_ADDR_HASH */
+#elif defined SCTP_HASH_LOCK_SET
+	if (sctp_con_id_h_lock_set){
+		lock_set_destroy(sctp_con_id_h_lock_set);
+		lock_set_dealloc(sctp_con_id_h_lock_set);
+		sctp_con_id_h_lock_set=0;
+	}
+	if (sctp_con_assoc_h_lock_set){
+		lock_set_destroy(sctp_con_assoc_h_lock_set);
+		lock_set_dealloc(sctp_con_assoc_h_lock_set);
+		sctp_con_assoc_h_lock_set=0;
+	}
+#	ifdef SCTP_ADDR_HASH
+	if (sctp_con_addr_h_lock_set){
+		lock_set_destroy(sctp_con_addr_h_lock_set);
+		lock_set_dealloc(sctp_con_addr_h_lock_set);
+		sctp_con_addr_h_lock_set=0;
+	}
+#	endif /* SCTP_ADDR_HASH */
+#else /* SCTP_HASH_ONE_LOCK */
+	if (sctp_con_id_h_lock){
+		lock_destroy(sctp_con_id_h_lock);
+		lock_dealloc(sctp_con_id_h_lock);
+		sctp_con_id_h_lock=0;
+	}
+	if (sctp_con_assoc_h_lock){
+		lock_destroy(sctp_con_assoc_h_lock);
+		lock_dealloc(sctp_con_assoc_h_lock);
+		sctp_con_assoc_h_lock=0;
+	}
+#	ifdef SCTP_ADDR_HASH
+	if (sctp_con_addr_h_lock){
+		lock_destroy(sctp_con_addr_h_lock);
+		lock_dealloc(sctp_con_addr_h_lock);
+		sctp_con_addr_h_lock=0;
+	}
+#	endif /* SCTP_ADDR_HASH */
+#endif /* SCTP_HASH_LOCK_PER_BUCKET/SCTP_HASH_LOCK_SET/one lock */
+	if (sctp_con_id_hash){
+		shm_free(sctp_con_id_hash);
+		sctp_con_id_hash=0;
+	}
+	if (sctp_con_assoc_hash){
+		shm_free(sctp_con_assoc_hash);
+		sctp_con_assoc_hash=0;
+	}
+#ifdef SCTP_ADDR_HASH
+	if (sctp_con_addr_hash){
+		shm_free(sctp_con_addr_hash);
+		sctp_con_addr_hash=0;
+	}
+#endif /* SCTP_ADDR_HASH */
+	if (sctp_id){
+		shm_free(sctp_id);
+		sctp_id=0;
+	}
+	if (sctp_conn_tracked){
+		shm_free(sctp_conn_tracked);
+		sctp_conn_tracked=0;
+	}
+}
+
+
+
+/** intializaze sctp_conn hashes.
+  * @return 0 on success, <0 on error
+  */
+int init_sctp_con_tracking()
+{
+	int r, ret;
+	
+	sctp_con_id_hash=shm_malloc(SCTP_ID_HASH_SIZE*sizeof(*sctp_con_id_hash));
+	sctp_con_assoc_hash=shm_malloc(SCTP_ASSOC_HASH_SIZE*
+									sizeof(*sctp_con_assoc_hash));
+#ifdef SCTP_ADDR_HASH
+	sctp_con_addr_hash=shm_malloc(SCTP_ADDR_HASH_SIZE*
+									sizeof(*sctp_con_addr_hash));
+#endif /* SCTP_ADDR_HASH */
+	sctp_id=shm_malloc(sizeof(*sctp_id));
+	sctp_conn_tracked=shm_malloc(sizeof(*sctp_conn_tracked));
+	if (sctp_con_id_hash==0 || sctp_con_assoc_hash==0 ||
+#ifdef SCTP_ADDR_HASH
+			sctp_con_addr_hash==0 ||
+#endif /* SCTP_ADDR_HASH */
+			sctp_id==0 || sctp_conn_tracked==0){
+		ERR("sctp init: memory allocation error\n");
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	atomic_set(sctp_id, 0);
+	atomic_set(sctp_conn_tracked, 0);
+	for (r=0; r<SCTP_ID_HASH_SIZE; r++)
+		clist_init(&sctp_con_id_hash[r], l.next_id, l.prev_id);
+	for (r=0; r<SCTP_ASSOC_HASH_SIZE; r++)
+		clist_init(&sctp_con_assoc_hash[r], l.next_assoc, l.prev_assoc);
+#ifdef SCTP_ADDR_HASH
+	for (r=0; r<SCTP_ADDR_HASH_SIZE; r++)
+		clist_init(&sctp_con_addr_hash[r], l.next_addr, l.prev_addr);
+#endif /* SCTP_ADDR_HASH */
+#ifdef SCTP_HASH_LOCK_PER_BUCKET
+	for (r=0; r<SCTP_ID_HASH_SIZE; r++){
+		if (lock_init(&sctp_con_id_hash[r].lock)==0){
+			ret=-1;
+			ERR("sctp init: failed to initialize locks\n");
+			goto error;
+		}
+	}
+	for (r=0; r<SCTP_ASSOC_HASH_SIZE; r++){
+		if (lock_init(&sctp_con_assoc_hash[r].lock)==0){
+			ret=-1;
+			ERR("sctp init: failed to initialize locks\n");
+			goto error;
+		}
+	}
+#	ifdef SCTP_ADDR_HASH
+	for (r=0; r<SCTP_ADDR_HASH_SIZE; r++){
+		if (lock_init(&sctp_con_addr_hash[r].lock)==0){
+			ret=-1;
+			ERR("sctp init: failed to initialize locks\n");
+			goto error;
+		}
+	}
+#	endif /* SCTP_ADDR_HASH */
+#elif defined SCTP_HASH_LOCK_SET
+	sctp_con_id_h_lock_set=lock_set_alloc(SCTP_ID_HASH_SIZE);
+	sctp_con_assoc_h_lock_set=lock_set_alloc(SCTP_ASSOC_HASH_SIZE);
+#	ifdef SCTP_ADDR_HASH
+	sctp_con_addr_h_lock_set=lock_set_alloc(SCTP_ADDR_HASH_SIZE);
+#	endif /* SCTP_ADDR_HASH */
+	if (sctp_con_id_h_lock_set==0 || sctp_con_assoc_h_lock_set==0
+#	ifdef SCTP_ADDR_HASH
+			|| sctp_con_addr_h_lock_set==0
+#	endif /* SCTP_ADDR_HASH */
+			){
+		ret=E_OUT_OF_MEM;
+		ERR("sctp_init: failed to alloc lock sets\n");
+		goto error;
+	}
+	if (lock_set_init(sctp_con_id_h_lock_set)==0){
+		lock_set_dealloc(sctp_con_id_h_lock_set);
+		sctp_con_id_h_lock_set=0;
+		ret=-1;
+		ERR("sctp init: failed to initialize lock set\n");
+		goto error;
+	}
+	if (lock_set_init(sctp_con_assoc_h_lock_set)==0){
+		lock_set_dealloc(sctp_con_assoc_h_lock_set);
+		sctp_con_assoc_h_lock_set=0;
+		ret=-1;
+		ERR("sctp init: failed to initialize lock set\n");
+		goto error;
+	}
+#	ifdef SCTP_ADDR_HASH
+	if (lock_set_init(sctp_con_addr_h_lock_set)==0){
+		lock_set_dealloc(sctp_con_addr_h_lock_set);
+		sctp_con_addr_h_lock_set=0;
+		ret=-1;
+		ERR("sctp init: failed to initialize lock set\n");
+		goto error;
+	}
+#	endif /* SCTP_ADDR_HASH */
+#else /* SCTP_HASH_ONE_LOCK */
+	sctp_con_id_h_lock=lock_alloc();
+	sctp_con_assoc_h_lock=lock_alloc();
+#	ifdef SCTP_ADDR_HASH
+	sctp_con_addr_h_lock=lock_alloc();
+#	endif /* SCTP_ADDR_HASH */
+	if (sctp_con_id_h_lock==0 || sctp_con_assoc_h_lock==0
+#	ifdef SCTP_ADDR_HASH
+			|| sctp_con_addr_h_lock==0
+#	endif /* SCTP_ADDR_HASH */
+			){
+		ret=E_OUT_OF_MEM;
+		ERR("sctp init: failed to alloc locks\n");
+		goto error;
+	}
+	if (lock_init(sctp_con_id_h_lock)==0){
+		lock_dealloc(sctp_con_id_h_lock);
+		sctp_con_id_h_lock=0;
+		ret=-1;
+		ERR("sctp init: failed to initialize lock\n");
+		goto error;
+	}
+	if (lock_init(sctp_con_assoc_h_lock)==0){
+		lock_dealloc(sctp_con_assoc_h_lock);
+		sctp_con_assoc_h_lock=0;
+		ret=-1;
+		ERR("sctp init: failed to initialize lock\n");
+		goto error;
+	}
+#	ifdef SCTP_ADDR_HASH
+	if (lock_init(sctp_con_addr_h_lock)==0){
+		lock_dealloc(sctp_con_addr_h_lock);
+		sctp_con_addr_h_lock=0;
+		ret=-1;
+		ERR("sctp init: failed to initialize lock\n");
+		goto error;
+	}
+#	endif /* SCTP_ADDR_HASH */
+#endif /* SCTP_HASH_LOCK_PER_BUCKET/SCTP_HASH_LOCK_SET/one lock */
+	return 0;
+error:
+	destroy_sctp_con_tracking();
+	return ret;
+}
+
+
+
+#if 0
+/** adds "e" to the hashes, safe locking version.*/
+static void sctp_con_add(struct sctp_con_elem* e)
+{
+	unsigned hash;
+	DBG("sctp_con_add(%p) ( ser id %d, assoc_id %d)\n",
+			e, e->con.id, e->con.assoc_id);
+	
+	e->l.next_id=e->l.prev_id=0;
+	e->l.next_assoc=e->l.prev_assoc=0;
+#ifdef SCTP_ADDR_HASH
+	e->l.next_addr=e->l.prev_addr=0;
+	e->refcnt.val+=3; /* account for the 3 lists */
+#else /* SCTP_ADDR_HASH */
+	e->refcnt.val+=2; /* account for the 2 lists */
+#endif /* SCTP_ADDR_HASH */
+	hash=get_sctp_con_id_hash(e->con.id);
+	DBG("adding to con id hash %d\n", hash);
+	LOCK_SCTP_ID_H(hash);
+		clist_insert(&sctp_con_id_hash[hash], e, l.next_id, l.prev_id);
+	UNLOCK_SCTP_ID_H(hash);
+	hash=get_sctp_con_assoc_hash(e->con.assoc_id);
+	DBG("adding to assoc_id hash %d\n", hash);
+	LOCK_SCTP_ASSOC_H(hash);
+		clist_insert(&sctp_con_assoc_hash[hash], e,
+						l.next_assoc, l.prev_assoc);
+	UNLOCK_SCTP_ASSOC_H(hash);
+#ifdef SCTP_ADDR_HASH
+	hash=get_sctp_con_addr_hash(&e->con.remote, e->con.si);
+	DBG("adding to addr hash %d\n", hash);
+	LOCK_SCTP_ADDR_H(hash);
+		clist_insert(&sctp_con_addr_hash[hash], e,
+						l.next_addr, l.prev_addr);
+	UNLOCK_SCTP_ADDR_H(hash);
+#endif /* SCTP_ADDR_HASH */
+	atomic_inc(sctp_conn_tracked);
+}
+#endif
+
+
+
+/** helper internal del elem function, the id hash must be locked.
+  * WARNING: the id hash(h) _must_ be locked (LOCK_SCTP_ID_H(h)).
+  * @param h - id hash
+  * @param e - sctp_con_elem to delete (from all the hashes)
+  * @return 0 if the id hash was unlocked, 1 if it's still locked */
+inline static int _sctp_con_del_id_locked(unsigned h, struct sctp_con_elem* e)
+{
+	unsigned assoc_id_h;
+	int deref; /* delayed de-reference counter */
+	int locked;
+#ifdef SCTP_ADDR_HASH
+	unsigned addr_h;
+#endif /* SCTP_ADDR_HASH */
+	
+	locked=1;
+	clist_rm(e, l.next_id, l.prev_id);
+	e->l.next_id=e->l.prev_id=0; /* mark it as id unhashed */
+	/* delay atomic dereference, so that we'll perform only one
+	   atomic op. even for multiple derefs. It also has the
+	   nice side-effect that the entry will be guaranteed to be
+	   referenced until we perform the delayed deref. at the end,
+	   so we don't need to keep some lock to prevent somebody from
+	   deleting the entry from under us */
+	deref=1; /* removed from one list =>  deref once */
+	/* remove it from the assoc hash if needed */
+	if (likely(e->l.next_assoc)){
+		UNLOCK_SCTP_ID_H(h);
+		locked=0; /* no longer id-locked */
+		/* we haven't dec. refcnt, so it's still safe to use e */
+		assoc_id_h=get_sctp_con_assoc_hash(e->con.assoc_id);
+		LOCK_SCTP_ASSOC_H(assoc_id_h);
+			/* make sure nobody removed it in the meantime */
+			if (likely(e->l.next_assoc)){
+				clist_rm(e, l.next_assoc, l.prev_assoc);
+				e->l.next_assoc=e->l.prev_assoc=0; /* mark it as removed */
+				deref++; /* rm'ed from the assoc list => inc. delayed deref. */
+			}
+		UNLOCK_SCTP_ASSOC_H(assoc_id_h);
+	}
+#ifdef SCTP_ADDR_HASH
+	/* remove it from the addr. hash if needed */
+	if (likely(e->l.next_addr)){
+		if (unlikely(locked)){
+			UNLOCK_SCTP_ID_H(h);
+			locked=0; /* no longer id-locked */
+		}
+		addr_h=get_sctp_con_addr_hash(&e->con.remote, e->con.si);
+		LOCK_SCTP_ADDR_H(addr_h);
+			/* make sure nobody removed it in the meantime */
+			if (likely(e->l.next_addr)){
+				clist_rm(e, l.next_addr, l.prev_addr);
+				e->l.next_addr=e->l.prev_addr=0; /* mark it as removed */
+				deref++; /* rm'ed from the addr list => inc. delayed deref. */
+			}
+		UNLOCK_SCTP_ADDR_H(addr_h);
+	}
+#endif /* SCTP_ADDR_HASH */
+	
+	/* performed delayed de-reference */
+	if (atomic_add(&e->refcnt, -deref)==0){
+		atomic_dec(sctp_conn_tracked);
+		shm_free(e);
+	}
+	else
+		DBG("del assoc post-deref (kept): ser id %d, assoc_id %d,"
+			" post-refcnt %d, deref %d, post-tracked %d\n",
+			e->con.id, e->con.assoc_id, atomic_get(&e->refcnt), deref,
+			atomic_get(sctp_conn_tracked));
+	return locked;
+}
+
+
+
+/** helper internal del elem function, the assoc hash must be locked.
+  * WARNING: the assoc hash(h) _must_ be locked (LOCK_SCTP_ASSOC_H(h)).
+  * @param h - assoc hash
+  * @param e - sctp_con_elem to delete (from all the hashes)
+  * @return 0 if the assoc hash was unlocked, 1 if it's still locked */
+inline static int _sctp_con_del_assoc_locked(unsigned h,
+												struct sctp_con_elem* e)
+{
+	unsigned id_hash;
+	int deref; /* delayed de-reference counter */
+	int locked;
+#ifdef SCTP_ADDR_HASH
+	unsigned addr_h;
+#endif /* SCTP_ADDR_HASH */
+	
+	locked=1;
+	clist_rm(e, l.next_assoc, l.prev_assoc);
+	e->l.next_assoc=e->l.prev_assoc=0; /* mark it as assoc unhashed */
+	/* delay atomic dereference, so that we'll perform only one
+	   atomic op. even for multiple derefs. It also has the
+	   nice side-effect that the entry will be guaranteed to be
+	   referenced until we perform the delayed deref. at the end,
+	   so we don't need to keep some lock to prevent somebody from
+	   deleting the entry from under us */
+	deref=1; /* removed from one list =>  deref once */
+	/* remove it from the id hash if needed */
+	if (likely(e->l.next_id)){
+		UNLOCK_SCTP_ASSOC_H(h);
+		locked=0; /* no longer assoc-hash-locked */
+		/* we have a ref. to it so it's still safe to use e */
+		id_hash=get_sctp_con_id_hash(e->con.id);
+		LOCK_SCTP_ID_H(id_hash);
+			/* make sure nobody removed it in the meantime */
+			if (likely(e->l.next_id)){
+				clist_rm(e, l.next_id, l.prev_id);
+				e->l.next_id=e->l.prev_id=0; /* mark it as removed */
+				deref++; /* rm'ed from the id list => inc. delayed deref. */
+			}
+		UNLOCK_SCTP_ID_H(id_hash);
+	}
+#ifdef SCTP_ADDR_HASH
+	/* remove it from the addr. hash if needed */
+	if (likely(e->l.next_addr)){
+		if (unlikely(locked)){
+			UNLOCK_SCTP_ASSOC_H(h);
+			locked=0; /* no longer id-locked */
+		}
+		addr_h=get_sctp_con_addr_hash(&e->con.remote, e->con.si);
+		LOCK_SCTP_ADDR_H(addr_h);
+			/* make sure nobody removed it in the meantime */
+			if (likely(e->l.next_addr)){
+				clist_rm(e, l.next_addr, l.prev_addr);
+				e->l.next_addr=e->l.prev_addr=0; /* mark it as removed */
+				deref++; /* rm'ed from the addr list => inc. delayed deref. */
+			}
+		UNLOCK_SCTP_ADDR_H(addr_h);
+	}
+#endif /* SCTP_ADDR_HASH */
+	if (atomic_add(&e->refcnt, -deref)==0){
+		atomic_dec(sctp_conn_tracked);
+		shm_free(e);
+	}
+	else
+		DBG("del assoc post-deref (kept): ser id %d, assoc_id %d,"
+				" post-refcnt %d, deref %d, post-tracked %d\n",
+				e->con.id, e->con.assoc_id, atomic_get(&e->refcnt), deref,
+				atomic_get(sctp_conn_tracked));
+	return locked;
+}
+
+
+
+#ifdef SCTP_ADDR_HASH
+/** helper internal del elem function, the addr hash must be locked.
+  * WARNING: the addr hash(h) _must_ be locked (LOCK_SCTP_ADDR_H(h)).
+  * @param h - addr hash
+  * @param e - sctp_con_elem to delete (from all the hashes)
+  * @return 0 if the addr hash was unlocked, 1 if it's still locked */
+inline static int _sctp_con_del_addr_locked(unsigned h,
+												struct sctp_con_elem* e)
+{
+	unsigned id_hash;
+	unsigned assoc_id_h;
+	int deref; /* delayed de-reference counter */
+	int locked;
+	
+	locked=1;
+	clist_rm(e, l.next_addr, l.prev_addr);
+	e->l.next_addr=e->l.prev_addr=0; /* mark it as addr unhashed */
+	/* delay atomic dereference, so that we'll perform only one
+	   atomic op. even for multiple derefs. It also has the
+	   nice side-effect that the entry will be guaranteed to be
+	   referenced until we perform the delayed deref. at the end,
+	   so we don't need to keep some lock to prevent somebody from
+	   deleting the entry from under us */
+	deref=1; /* removed from one list =>  deref once */
+	/* remove it from the id hash if needed */
+	if (likely(e->l.next_id)){
+		UNLOCK_SCTP_ADDR_H(h);
+		locked=0; /* no longer addr-hash-locked */
+		/* we have a ref. to it so it's still safe to use e */
+		id_hash=get_sctp_con_id_hash(e->con.id);
+		LOCK_SCTP_ID_H(id_hash);
+			/* make sure nobody removed it in the meantime */
+			if (likely(e->l.next_id)){
+				clist_rm(e, l.next_id, l.prev_id);
+				e->l.next_id=e->l.prev_id=0; /* mark it as removed */
+				deref++; /* rm'ed from the id list => inc. delayed deref. */
+			}
+		UNLOCK_SCTP_ID_H(id_hash);
+	}
+	/* remove it from the assoc hash if needed */
+	if (likely(e->l.next_assoc)){
+		if (locked){
+			UNLOCK_SCTP_ADDR_H(h);
+			locked=0; /* no longer addr-hash-locked */
+		}
+		/* we haven't dec. refcnt, so it's still safe to use e */
+		assoc_id_h=get_sctp_con_assoc_hash(e->con.assoc_id);
+		LOCK_SCTP_ASSOC_H(assoc_id_h);
+			/* make sure nobody removed it in the meantime */
+			if (likely(e->l.next_assoc)){
+				clist_rm(e, l.next_assoc, l.prev_assoc);
+				e->l.next_assoc=e->l.prev_assoc=0; /* mark it as removed */
+				deref++; /* rm'ed from the assoc list => inc. delayed deref. */
+			}
+		UNLOCK_SCTP_ASSOC_H(assoc_id_h);
+	}
+	if (atomic_add(&e->refcnt, -deref)==0){
+		atomic_dec(sctp_conn_tracked);
+		shm_free(e);
+	}
+	else
+		DBG("del assoc post-deref (kept): ser id %d, assoc_id %d,"
+				" post-refcnt %d, deref %d, post-tracked %d\n",
+				e->con.id, e->con.assoc_id, atomic_get(&e->refcnt), deref,
+				atomic_get(sctp_conn_tracked));
+	return locked;
+}
+#endif /* SCTP_ADDR_HASH */
+
+
+
+/** using id, get the corresponding sctp assoc & socket. 
+ *  @param id - ser unique assoc id
+ *  @param si  - result parameter, filled with the socket info on success
+ *  @param remote - result parameter, filled with the address and port
+ *  @param del - if 1 delete the entry,
+ *  @return assoc_id (!=0) on success & sets si, 0 on not found
+ * si and remote will not be touched on failure.
+ *
+ */
+int sctp_con_get_assoc(unsigned int id, struct socket_info** si, 
+								union sockaddr_union *remote, int del)
+{
+	unsigned h;
+	ticks_t now; 
+	struct sctp_con_elem* e;
+	struct sctp_con_elem* tmp;
+	int ret;
+	
+	ret=0;
+	now=get_ticks_raw();
+	h=get_sctp_con_id_hash(id);
+#if 0
+again:
+#endif
+	LOCK_SCTP_ID_H(h);
+		clist_foreach_safe(&sctp_con_id_hash[h], e, tmp, l.next_id){
+			if(e->con.id==id){
+				ret=e->con.assoc_id;
+				*si=e->con.si;
+				*remote=e->con.remote;
+				if (del){
+					if (_sctp_con_del_id_locked(h, e)==0)
+						goto skip_unlock;
+				}else
+					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+				break;
+			}
+#if 0
+			else if (TICKS_LT(e->con.expire, now)){
+				WARN("sctp con: found expired assoc %d, id %d (%d s ago)\n",
+						e->con.assoc_id, e->con.id,
+						TICKS_TO_S(now-e->con.expire));
+				if (_sctp_con_del_id_locked(h, e)==0)
+					goto again; /* if unlocked need to restart the list */
+			}
+#endif
+		}
+	UNLOCK_SCTP_ID_H(h);
+skip_unlock:
+	return ret;
+}
+
+
+
+/** using the assoc_id, remote addr. & socket, get the corresp. internal id.
+ *  @param assoc_id - sctp assoc id
+ *  @param si  - socket on which the packet was received
+ *  @param del - if 1 delete the entry,
+ *  @return assoc_id (!=0) on success, 0 on not found
+ */
+int sctp_con_get_id(unsigned int assoc_id, union sockaddr_union* remote,
+					struct socket_info* si, int del)
+{
+	unsigned h;
+	ticks_t now; 
+	struct sctp_con_elem* e;
+	struct sctp_con_elem* tmp;
+	int ret;
+	
+	ret=0;
+	now=get_ticks_raw();
+	h=get_sctp_con_assoc_hash(assoc_id);
+#if 0
+again:
+#endif
+	LOCK_SCTP_ASSOC_H(h);
+		clist_foreach_safe(&sctp_con_assoc_hash[h], e, tmp, l.next_assoc){
+			if(e->con.assoc_id==assoc_id && e->con.si==si &&
+					su_cmp(remote, &e->con.remote)){
+				ret=e->con.id;
+				if (del){
+					if (_sctp_con_del_assoc_locked(h, e)==0)
+						goto skip_unlock;
+				}else
+					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+				break;
+			}
+#if 0
+			else if (TICKS_LT(e->con.expire, now)){
+				WARN("sctp con: found expired assoc %d, id %d (%d s ago)\n",
+						e->con.assoc_id, e->con.id,
+						TICKS_TO_S(now-e->con.expire));
+				if (_sctp_con_del_assoc_locked(h, e)==0)
+					goto again; /* if unlocked need to restart the list */
+			}
+#endif
+		}
+	UNLOCK_SCTP_ASSOC_H(h);
+skip_unlock:
+	return ret;
+}
+
+
+
+#ifdef SCTP_ADDR_HASH
+/** using the dest. & source socket, get the corresponding id and assoc_id 
+ *  @param remote   - peer address & port
+ *  @param si       - local source socket
+ *  @param assoc_id - result, filled with the sctp assoc_id
+ *  @param del - if 1 delete the entry,
+ *  @return ser id (!=0) on success, 0 on not found
+ */
+int sctp_con_addr_get_id_assoc(union sockaddr_union* remote,
+								struct socket_info* si,
+								int* assoc_id, int del)
+{
+	unsigned h;
+	ticks_t now; 
+	struct sctp_con_elem* e;
+	struct sctp_con_elem* tmp;
+	int ret;
+	
+	ret=0;
+	*assoc_id=0;
+	now=get_ticks_raw();
+	h=get_sctp_con_addr_hash(remote, si);
+again:
+	LOCK_SCTP_ADDR_H(h);
+		clist_foreach_safe(&sctp_con_addr_hash[h], e, tmp, l.next_addr){
+			if(su_cmp(remote, &e->con.remote) && e->con.si==si){
+				ret=e->con.id;
+				*assoc_id=e->con.assoc_id;
+				if (del){
+					if (_sctp_con_del_addr_locked(h, e)==0)
+						goto skip_unlock;
+				}else
+					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+				break;
+			}
+#if 0
+			else if (TICKS_LT(e->con.expire, now)){
+				WARN("sctp con: found expired assoc %d, id %d (%d s ago)\n",
+						e->con.assoc_id, e->con.id,
+						TICKS_TO_S(now-e->con.expire));
+				if (_sctp_con_del_addr_locked(h, e)==0)
+					goto again; /* if unlocked need to restart the list */
+			}
+#endif
+		}
+	UNLOCK_SCTP_ADDR_H(h);
+skip_unlock:
+	return ret;
+}
+#endif /* SCTP_ADDR_HASH */
+
+
+
+/** del con tracking for (assod_id, si).
+ * @return 0 on success, -1 on error (not found)
+ */
+#define sctp_con_del_assoc(assoc_id, si) \
+	(-(sctp_con_get_id((assoc_id), (si), 1)==0))
+
+
+
+/** create a new sctp con elem.
+  * @param id - ser connection id
+  * @param assoc_id - sctp assoc id
+  * @param si - corresp. socket
+  * @param remote - remote side
+  * @return pointer to shm allocated sctp_con_elem on success, 0 on error
+  */
+struct sctp_con_elem* sctp_con_new(unsigned id, unsigned assoc_id, 
+									struct socket_info* si,
+									union sockaddr_union* remote)
+{
+	struct sctp_con_elem* e;
+	
+	e=shm_malloc(sizeof(*e));
+	if (unlikely(e==0))
+		goto error;
+	e->l.next_id=e->l.prev_id=0;
+	e->l.next_assoc=e->l.prev_assoc=0;
+	atomic_set(&e->refcnt, 0);
+	e->con.id=id;
+	e->con.assoc_id=assoc_id;
+	e->con.si=si;
+	e->con.flags=0;
+	if (likely(remote))
+		e->con.remote=*remote;
+	else
+		memset(&e->con.remote, 0, sizeof(e->con.remote));
+	e->con.start=get_ticks_raw();
+	e->con.expire=e->con.start+S_TO_TICKS(sctp_options.sctp_autoclose);
+	return e;
+error:
+	return 0;
+}
+
+
+
+/** handles every ev on sctp assoc_id.
+  * @return ser id on success (!=0) or 0 on not found/error
+  */
+static int sctp_con_track(int assoc_id, struct socket_info* si,
+							union sockaddr_union* remote, int ev)
+{
+	int id;
+	unsigned hash;
+	unsigned assoc_hash;
+	struct sctp_con_elem* e;
+	struct sctp_con_elem* tmp;
+	
+	id=0;
+	DBG("sctp_con_track(%d, %p, %d) \n", assoc_id, si, ev);
+	
+	/* search for (assoc_id, si) */
+	assoc_hash=get_sctp_con_assoc_hash(assoc_id);
+	LOCK_SCTP_ASSOC_H(assoc_hash);
+		clist_foreach_safe(&sctp_con_assoc_hash[assoc_hash], e, tmp,
+								l.next_assoc){
+			/* we need to use the remote side address, because at least
+			   on linux assoc_id are immediately reused (even if sctp
+			   autoclose is off) and so it's possible that the association
+			   id we saved is already closed and assigned to another
+			   association by the time we search for it) */
+			if(e->con.assoc_id==assoc_id && e->con.si==si &&
+					su_cmp(remote, &e->con.remote)){
+				if (ev==SCTP_CON_DOWN_SEEN){
+					if (e->con.flags & SCTP_CON_UP_SEEN){
+						/* DOWN after UP => delete */
+						id=e->con.id;
+						/* do delete */
+						if (_sctp_con_del_assoc_locked(assoc_hash, e)==0)
+							goto found; /* skip unlock */
+					}else{
+						/* DOWN after DOWN => error
+						   DOWN after RCV w/ no UP -> not possible
+						    since we never create a tracking entry on RCV
+							only */
+						BUG("unexpected flags: %x for assoc_id %d, id %d"
+								", sctp con %p\n", e->con.flags, assoc_id,
+								e->con.id, e);
+						/* do delete */
+						if (_sctp_con_del_assoc_locked(assoc_hash, e)==0)
+							goto found; /* skip unlock */
+					}
+				}else if (ev==SCTP_CON_RCV_SEEN){
+					/* RCV after UP or DOWN => just mark RCV as seen */
+					id=e->con.id;
+					e->con.flags |= SCTP_CON_RCV_SEEN;
+				}else{
+					/* SCTP_CON_UP */
+					if (e->con.flags & SCTP_CON_DOWN_SEEN){
+						/* UP after DOWN => delete */
+						id=e->con.id;
+						/* do delete */
+						if (_sctp_con_del_assoc_locked(assoc_hash, e)==0)
+							goto found; /* skip unlock */
+					}else{
+						/* UP after UP or after RCVD => BUG */
+						BUG("connection with same assoc_id (%d) already"
+								" present, flags %x\n",
+								assoc_id, e->con.flags);
+					}
+				}
+				UNLOCK_SCTP_ASSOC_H(assoc_hash);
+				goto found;
+			}
+		}
+		/* not found */
+		if (unlikely(ev!=SCTP_CON_RCV_SEEN)){
+			/* UP or DOWN and no tracking entry => create new tracking entry
+			   for both of them (because we can have a re-ordered DOWN before
+			   the UP) */
+again:
+				id=atomic_add(sctp_id, 1);
+				if (unlikely(id==0)){
+					/* overflow  and 0 is not a valid id */
+					goto again;
+				}
+				e=sctp_con_new(id, assoc_id, si, remote);
+				if (likely(e)){
+					e->con.flags=ev;
+					e->l.next_id=e->l.prev_id=0;
+					e->l.next_assoc=e->l.prev_assoc=0;
+#ifdef SCTP_ADDR_HASH
+					e->l.next_addr=e->l.prev_addr=0;
+					e->refcnt.val+=3; /* account for the 3 lists */
+#else /* SCTP_ADDR_HASH */
+					e->refcnt.val+=2; /* account for the 2 lists */
+#endif /* SCTP_ADDR_HASH */
+					/* already locked */
+					clist_insert(&sctp_con_assoc_hash[assoc_hash], e,
+									l.next_assoc, l.prev_assoc);
+					hash=get_sctp_con_id_hash(e->con.id);
+					LOCK_SCTP_ID_H(hash);
+						clist_insert(&sctp_con_id_hash[hash], e,
+									l.next_id, l.prev_id);
+					UNLOCK_SCTP_ID_H(hash);
+#ifdef SCTP_ADDR_HASH
+					hash=get_sctp_con_addr_hash(&e->con.remote, e->con.si);
+					LOCK_SCTP_ADDR_H(hash);
+						clist_insert(&sctp_con_addr_hash[hash], e,
+									l.next_addr, l.prev_addr);
+					UNLOCK_SCTP_ADDR_H(hash);
+#endif /* SCTP_ADDR_HASH */
+					atomic_inc(sctp_conn_tracked);
+				}
+		} /* else not found and RCV -> ignore
+			 We cannot create a new entry because we don't know when to
+			 delete it (we can have UP DOWN RCV which would result in a
+			 tracking entry living forever). This means that if we receive
+			 a msg. on an assoc. before it's UP notification we won't know
+			 the id for connection reuse, but since happens very rarely it's
+			 an acceptable tradeoff */
+	UNLOCK_SCTP_ASSOC_H(assoc_hash);
+	if (unlikely(e==0)){
+		ERR("memory allocation failure\n");
+		goto error;
+	}
+found:
+	return id;
+error:
+	return 0;
+}
+
+
+
+#endif /* SCTP_CONN_REUSE */
+
+
+int init_sctp()
+{
+	int ret;
+	
+	ret=0;
+	/* sctp options must be initialized before  calling this function */
+	sctp_conn_no=shm_malloc(sizeof(*sctp_conn_tracked));
+	if ( sctp_conn_no==0){
+		ERR("sctp init: memory allocation error\n");
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	atomic_set(sctp_conn_no, 0);
+#ifdef SCTP_CONN_REUSE
+	return init_sctp_con_tracking();
+#endif
+error:
+	return ret;
+}
+
+
+
+void destroy_sctp()
+{
+	if (sctp_conn_no){
+		shm_free(sctp_conn_no);
+		sctp_conn_no=0;
+	}
+#ifdef SCTP_CONN_REUSE
+	destroy_sctp_con_tracking();
+#endif
+}
+
+
 
 static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 						struct sctp_sndrcvinfo* sndrcv_info);
@@ -593,7 +1597,7 @@ static char* sctp_paddr_change_state2s(unsigned int state)
 
 
 /* handle SCTP_SEND_FAILED notifications: if packet marked for retries
- * retry the send (with 0 associd)
+ * retry the send (with 0 assoc_id)
  * returns 0 on success, -1 on failure
  */
 static int sctp_handle_send_failed(struct socket_info* si,
@@ -663,14 +1667,96 @@ static int sctp_handle_send_failed(struct socket_info* si,
 
 
 
+/* handle SCTP_ASOC_CHANGE notifications: map ser global sctp ids
+ * to kernel asoc_ids. The global ids are needed because the kernel ones
+ * might get reused after a close and so they are not unique for ser's
+ * lifetime. We need a unique id to match replies to the association on
+ * which we received the corresponding request (so that we can send them
+ * back on the same asoc & socket if still opened).
+ * returns 0 on success, -1 on failure
+ */
+static int sctp_handle_assoc_change(struct socket_info* si,
+									union sockaddr_union* su,
+									int state,
+									int assoc_id)
+{
+	int ret;
+	
+	ret=-1;
+	switch(state){
+		case SCTP_COMM_UP:
+			atomic_inc(sctp_conn_no);
+#ifdef SCTP_CONN_REUSE
+			/* new connection, track it */
+			sctp_con_track(assoc_id, si, su, SCTP_CON_UP_SEEN);
+#if 0
+again:
+			id=atomic_add(sctp_id, 1);
+			if (unlikely(id==0)){
+				/* overflow  and 0 is not a valid id */
+				goto again;
+			}
+			e=sctp_con_new(id, assoc_id, si, su);
+			if (unlikely(e==0)){
+				ERR("memory allocation failure\n");
+			}else{
+				sctp_con_add(e);
+				ret=0;
+			}
+#endif
+#endif /* SCTP_CONN_REUSE */
+			break;
+		case SCTP_COMM_LOST:
+#ifdef USE_DST_BLACKLIST
+			/* blacklist only if send_retries is turned off (if on we don't
+			   know here if we did retry or we are at the first error) */
+			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
+					(sctp_options.sctp_send_retries==0))
+						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
+#endif /* USE_DST_BLACKLIST */
+			/* no break */
+		case SCTP_SHUTDOWN_COMP:
+			atomic_dec(sctp_conn_no);
+#ifdef SCTP_CONN_REUSE
+			/* connection down*/
+			sctp_con_track(assoc_id, si, su, SCTP_CON_DOWN_SEEN);
+#if 0
+			if (unlikely(sctp_con_del_assoc(assoc_id, si)!=0))
+				WARN("sctp con: tried to remove inexistent connection\n");
+			else
+				ret=0;
+#endif
+#endif /* SCTP_CONN_REUSE */
+			break;
+		case SCTP_RESTART:
+			/* do nothing on restart */
+			break;
+		case SCTP_CANT_STR_ASSOC:
+			/* do nothing when failing to start an assoc
+			  (in this case we never see SCTP_COMM_UP so we never 
+			  track the assoc) */
+#ifdef USE_DST_BLACKLIST
+			/* blacklist only if send_retries is turned off (if on we don't 
+			   know here if we did retry or we are at the first error) */
+			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
+					(sctp_options.sctp_send_retries==0))
+						dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0);
+#endif /* USE_DST_BLACKLIST */
+			break;
+		default:
+			break;
+	}
+	return ret;
+}
+
+
+
 static int sctp_handle_notification(struct socket_info* si,
 									union sockaddr_union* su,
 									char* buf, unsigned len)
 {
 	union sctp_notification* snp;
 	char su_buf[SU2A_MAX_STR_SIZE];
-	
-	DBG("sctp_rcv_loop: MSG_NOTIFICATION\n");
 	
 	#define SNOT DBG
 	#define ERR_LEN_TOO_SMALL(length, val, bind_addr, from_su, text) \
@@ -696,7 +1782,7 @@ static int sctp_handle_notification(struct socket_info* si,
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_remote_error), si, su,
 								"SCTP_REMOTE_ERROR");
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_REMOTE_ERROR:"
-					" %d, len %d\n, assoc. %d",
+					" %d, len %d\n, assoc_id %d",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no,
 					ntohs(snp->sn_remote_error.sre_error),
@@ -708,7 +1794,7 @@ static int sctp_handle_notification(struct socket_info* si,
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_send_failed), si, su,
 								"SCTP_SEND_FAILED");
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_SEND_FAILED:"
-					" error %d, assoc. %d, flags %x\n",
+					" error %d, assoc_id %d, flags %x\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no, snp->sn_send_failed.ssf_error,
 					snp->sn_send_failed.ssf_assoc_id,
@@ -722,7 +1808,7 @@ static int sctp_handle_notification(struct socket_info* si,
 									&snp->sn_paddr_change.spc_aaddr, 
 									sizeof(snp->sn_paddr_change.spc_aaddr)));
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_PEER_ADDR_CHANGE"
-					": %s: %s: assoc. %d \n",
+					": %s: %s: assoc_id %d \n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no, su_buf,
 					sctp_paddr_change_state2s(snp->sn_paddr_change.spc_state),
@@ -733,7 +1819,7 @@ static int sctp_handle_notification(struct socket_info* si,
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_shutdown_event), si, su,
 								"SCTP_SHUTDOWN_EVENT");
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_SHUTDOWN_EVENT:"
-					" assoc. %d\n",
+					" assoc_id %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no, snp->sn_shutdown_event.sse_assoc_id);
 			break;
@@ -741,7 +1827,7 @@ static int sctp_handle_notification(struct socket_info* si,
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_assoc_change), si, su,
 								"SCTP_ASSOC_CHANGE");
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_ASSOC_CHANGE"
-					": %s: assoc. %d, ostreams %d, istreams %d\n",
+					": %s: assoc_id %d, ostreams %d, istreams %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no,
 					sctp_assoc_change_state2s(snp->sn_assoc_change.sac_state),
@@ -749,21 +1835,8 @@ static int sctp_handle_notification(struct socket_info* si,
 					snp->sn_assoc_change.sac_outbound_streams,
 					snp->sn_assoc_change.sac_inbound_streams
 					);
-#ifdef USE_DST_BLACKLIST
-			/* blacklist only if send_retries is turned off (if on we don't 
-			   know here if we did retry or we are at the first error) */
-			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(sctp_options.sctp_send_retries==0)){
-				switch(snp->sn_assoc_change.sac_state) {
-					case SCTP_CANT_STR_ASSOC:
-						dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0);
-						break;
-					case SCTP_COMM_LOST:
-						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
-						break;
-				}
-			}
-#endif /* USE_DST_BLACKLIST */
+			sctp_handle_assoc_change(si, su, snp->sn_assoc_change.sac_state,
+										snp->sn_assoc_change.sac_assoc_id);
 			break;
 #ifdef SCTP_ADAPTION_INDICATION
 		case SCTP_ADAPTION_INDICATION:
@@ -778,8 +1851,9 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_PARTIAL_DELIVERY_EVENT:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_pdapi_event), si, su,
 								"SCTP_PARTIAL_DELIVERY_EVENT");
-			SNOT("sctp notification from %s on %.*s:%d: "
-					"SCTP_PARTIAL_DELIVERY_EVENT: %d%s, assoc. %d\n",
+			ERR("sctp notification from %s on %.*s:%d: "
+					"SCTP_PARTIAL_DELIVERY_EVENT not supported: %d %s,"
+					"assoc_id %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no, snp->sn_pdapi_event.pdapi_indication,
 					(snp->sn_pdapi_event.pdapi_indication==
@@ -828,7 +1902,7 @@ int sctp_rcv_loop()
 	ri.dst_port=bind_address->port_no;
 	ri.dst_ip=bind_address->address;
 	ri.proto=PROTO_SCTP;
-	ri.proto_reserved1=ri.proto_reserved2=0;
+	ri.proto_reserved2=0;
 	
 	iov[0].iov_base=buf;
 	iov[0].iov_len=BUF_SIZE;
@@ -845,10 +1919,9 @@ int sctp_rcv_loop()
 		msg.msg_namelen=sockaddru_len(bind_address->su);
 		msg.msg_control=cbuf;
 		msg.msg_controllen=sizeof(cbuf);
+		sinfo=0;
 
 		len=recvmsg(bind_address->socket, &msg, 0);
-		/* len=sctp_recvmsg(bind_address->socket, buf, BUF_SIZE, &ri.src_su.s,
-							&msg.msg_namelen, &sinfo, &msg.msg_flags); */
 		if (len==-1){
 			if (errno==EAGAIN){
 				DBG("sctp_rcv_loop: EAGAIN on sctp socket\n");
@@ -862,7 +1935,7 @@ int sctp_rcv_loop()
 			else goto error;
 		}
 		if (unlikely(msg.msg_flags & MSG_NOTIFICATION)){
-			/* intercept usefull notifications */
+			/* intercept useful notifications */
 			sctp_handle_notification(bind_address, &ri.src_su, buf, len);
 			continue;
 		}else if (unlikely(!(msg.msg_flags & MSG_EOR))){
@@ -884,8 +1957,8 @@ int sctp_rcv_loop()
 						) && (cmsg->cmsg_len>=CMSG_LEN(sizeof(*sinfo)))) ){
 				sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
 				DBG("sctp recv: message from %s:%d stream %d  ppid %x"
-						" flags %x%s tsn %u" " cumtsn %u associd %d\n",
-						ip_addr2a(&ri.src_ip), htons(ri.src_port),
+						" flags %x%s tsn %u" " cumtsn %u assoc_id %d\n",
+						ip_addr2a(&ri.src_ip), ri.src_port,
 						sinfo->sinfo_stream, sinfo->sinfo_ppid,
 						sinfo->sinfo_flags,
 						(sinfo->sinfo_flags&SCTP_UNORDERED)?
@@ -901,13 +1974,13 @@ int sctp_rcv_loop()
 		/* sanity checks */
 		if (len<MIN_SCTP_PACKET) {
 			tmp=ip_addr2a(&ri.src_ip);
-			DBG("sctp_rcv_loop: probing packet received from %s %d\n",
-					tmp, htons(ri.src_port));
+			DBG("sctp_rcv_loop: probing packet received from %s:%d\n",
+					tmp, ri.src_port);
 			continue;
 		}
 		if (ri.src_port==0){
 			tmp=ip_addr2a(&ri.src_ip);
-			LOG(L_INFO, "sctp_rcv_loop: dropping 0 port packet from %s\n",
+			LOG(L_INFO, "sctp_rcv_loop: dropping 0 port packet from %s:0\n",
 						tmp);
 			continue;
 		}
@@ -916,6 +1989,26 @@ int sctp_rcv_loop()
 #endif
 		/* update the local config */
 		cfg_update();
+#ifdef SCTP_CONN_REUSE
+		if (likely(sinfo)){
+			ri.proto_reserved1 = sctp_con_track(sinfo->sinfo_assoc_id,
+												ri.bind_address, 
+												&ri.src_su,
+												SCTP_CON_RCV_SEEN);
+			/* debugging */
+			if (unlikely(ri.proto_reserved1==0))
+				DBG("no tracked assoc. found for assoc_id %d, from %s\n",
+						sinfo->sinfo_assoc_id, 
+						su2a(&ri.src_su, sizeof(ri.src_su)));
+#if 0
+			ri.proto_reserved1=
+				sctp_con_get_id(sinfo->sinfo_assoc_id, ri.bind_address, 0);
+#endif
+		}else
+			ri.proto_reserved1=0;
+#else /* SCTP_CONN_REUSE */
+		ri.proto_received1=0;
+#endif /* SCTP_CONN_REUSE */
 		receive_msg(buf, len, &ri);
 	}
 error:
@@ -923,8 +2016,9 @@ error:
 }
 
 
-/* send buf:len over udp to dst using sndrcv_info (uses only the to and 
- * send_sock members from dst)
+
+/* send buf:len over sctp to dst using sndrcv_info (uses send_sock,
+ * to and id from dest_info)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
  */
 static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
@@ -935,6 +2029,7 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 	struct ip_addr ip; /* used only on error, for debugging */
 	struct msghdr msg;
 	struct iovec iov[1];
+	struct socket_info* si;
 	struct sctp_sndrcvinfo* sinfo;
 	struct cmsghdr* cmsg;
 	/* make sure msg_control will point to properly aligned data */
@@ -942,14 +2037,18 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 		struct cmsghdr cm;
 		char cbuf[CMSG_SPACE(sizeof(*sinfo))];
 	}ctrl_un;
+#ifdef SCTP_CONN_REUSE
+	int assoc_id;
+	union sockaddr_union to;
+#ifdef SCTP_ADDR_HASH
+	int tmp_id, tmp_assoc_id;
+#endif /* SCTP_ADDR_HASH */
+#endif /* SCTP_CONN_REUSE */
 	
-	tolen=sockaddru_len(dst->to);
 	iov[0].iov_base=buf;
 	iov[0].iov_len=len;
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
-	msg.msg_name=&dst->to.s;
-	msg.msg_namelen=tolen;
 	msg.msg_flags=0; /* not used on send (use instead sinfo_flags) */
 	msg.msg_control=ctrl_un.cbuf;
 	msg.msg_controllen=sizeof(ctrl_un.cbuf);
@@ -962,19 +2061,101 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 	/* some systems need msg_controllen set to the actual size and not
 	 * something bigger (e.g. openbsd) */
 	msg.msg_controllen=cmsg->cmsg_len;
+	si=dst->send_sock;
+#ifdef SCTP_CONN_REUSE
+	/* if dst->id is set it means we want to send on association with
+	   ser id dst->id if still opened and only if closed use dst->to */
+	assoc_id=0;
+	if ((dst->id) && (assoc_id=sctp_con_get_assoc(dst->id, &si, &to, 0))){
+		DBG("sctp: sending on sctp assoc_id %d (ser id %d)\n",
+				assoc_id, dst->id);
+		sinfo->sinfo_assoc_id=assoc_id;
+		/* on linux msg->name has priority over assoc_id. To try first assoc_id
+		 * and then dst, one has to call first sendmsg() with msg->name==0 and
+		 * sinfo->assoc_id set. If it returns EPIPE => association is no longer
+		 * open => call again sendmsg() this time with msg->name!=0.
+		 * on freebsd assoc_id has priority over msg->name and moreover the
+		 * send falls back automatically to the address if the assoc_id is
+		 * closed, so a single call to sendmsg(msg->name, sinfo->assoc_id ) is
+		 * enough.  If one tries calling with msg->name==0 and the association
+		 * is no longer open send will return ENOENT.
+		 * on solaris it seems one must always use a dst address (assoc_id
+		 * will be ignored).
+		 */
+#ifdef __OS_linux
+		DBG("sctp: linux: trying with 0 msg_name\n");
+		msg.msg_name=0;
+		msg.msg_namelen=0;
+#elif defined __OS_freebsd
+		tolen=sockaddru_len(dst->to);
+		msg.msg_name=&dst->to.s;
+		msg.msg_namelen=tolen;
+#else /* __OS_* */
+		/* fallback for solaris and others, sent back to
+		  the address recorded (not exactly what we want, but there's 
+		  no way to fallback to dst->to) */
+		tolen=sockaddru_len(&to);
+		msg.msg_name=&to.s;
+		msg.msg_namelen=tolen;
+#endif /* __OS_* */
+	}else{
+#ifdef SCTP_ADDR_HASH
+		/* update timeout for the assoc identified  by (dst->to, dst->si) */
+		tmp_id=sctp_con_addr_get_id_assoc(&dst->to, dst->send_sock,
+											&tmp_assoc_id, 0);
+		DBG("sctp send: timeout updated ser id %d, sctp assoc_id %d\n",
+				tmp_id, tmp_assoc_id);
+#endif /* SCTP_ADDR_HASH */
+		tolen=sockaddru_len(dst->to);
+		msg.msg_name=&dst->to.s;
+		msg.msg_namelen=tolen;
+	}
+#else /* SCTP_CONN_REUSE */
+	tolen=sockaddru_len(dst->to);
+	msg.msg_name=&dst->to.s;
+	msg.msg_namelen=tolen;
+#endif /* SCTP_CONN_REUSE */
+
 again:
-	n=sendmsg(dst->send_sock->socket, &msg, MSG_DONTWAIT);
-#if 0
-	n=sctp_sendmsg(dst->send_sock->socket, buf, len, &dst->to.s, tolen,
-					0 /* ppid */, SCTP_UNORDERED /* | SCTP_EOR */ /* flags */,
-					0 /* stream */, sctp_options.sctp_send_ttl /* ttl */,
-					0 /* context */);
-#endif
+	n=sendmsg(si->socket, &msg, MSG_DONTWAIT);
 	if (n==-1){
+#ifdef SCTP_CONN_REUSE
+#ifdef __OS_linux
+		if ((errno==EPIPE) && assoc_id){
+			/* try again, this time with null assoc_id and non-null msg.name */
+			DBG("sctp sendmsg: assoc already closed (EPIPE), retrying with"
+					" assoc_id=0\n");
+			tolen=sockaddru_len(dst->to);
+			msg.msg_name=&dst->to.s;
+			msg.msg_namelen=tolen;
+			sinfo->sinfo_assoc_id=0;
+			goto again;
+		}
+#elif defined __OS_freebsd
+		if ((errno==ENOENT)){
+			/* it didn't work, no retrying */
+			WARN("sctp sendmsg: unexpected sendmsg() failure (ENOENT),"
+					" assoc_id %d\n", assoc_id);
+		}
+#else /* __OS_* */
+		if ((errno==ENOENT || errno==EPIPE) && assoc_id){
+			/* in case the sctp stack prioritises assoc_id over msg->name,
+			   try again with 0 assoc_id and msg->name set to dst->to */
+			WARN("sctp sendmsg: unexpected ENOENT or EPIPE (assoc_id %d),"
+					"trying automatic recovery... (please report along with"
+					"your OS version)\n", assoc_id);
+			tolen=sockaddru_len(dst->to);
+			msg.msg_name=&dst->to.s;
+			msg.msg_namelen=tolen;
+			sinfo->sinfo_assoc_id=0;
+			goto again;
+		}
+#endif /* __OS_* */
+#endif /* SCTP_CONN_REUSE */
 		su2ip_addr(&ip, &dst->to);
-		LOG(L_ERR, "ERROR: sctp_msg_send: sendmsg(sock,%p,%d,0,%s:%d,%d):"
+		LOG(L_ERR, "ERROR: sctp_msg_send: sendmsg(sock,%p,%d,0,%s:%d,...):"
 				" %s(%d)\n", buf, len, ip_addr2a(&ip), su_getport(&dst->to),
-				tolen, strerror(errno),errno);
+				strerror(errno), errno);
 		if (errno==EINTR) goto again;
 		if (errno==EINVAL) {
 			LOG(L_CRIT,"CRITICAL: invalid sendmsg parameters\n"
@@ -991,7 +2172,7 @@ again:
 
 
 /* wrapper around sctp_msg_send_raw():
- * send buf:len over udp to dst (uses only the to and send_sock members
+ * send buf:len over udp to dst (uses only the to, send_sock and id members
  * from dst)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
  */
@@ -1016,8 +2197,19 @@ int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
 
 
 
-void destroy_sctp()
+/** generic sctp info (basic stats).*/
+void sctp_get_info(struct sctp_gen_info* i)
 {
+	if (i){
+		i->sctp_connections_no=atomic_get(sctp_conn_no);
+#ifdef SCTP_CONN_REUSE
+		i->sctp_tracked_no=atomic_get(sctp_conn_tracked);
+#else /* SCTP_CONN_REUSE */
+		i->sctp_tracked_no=-1;
+#endif /* SCTP_CONN_REUSE */
+		i->sctp_total_connections=atomic_get(sctp_id);
+	}
 }
+
 
 #endif /* USE_SCTP */

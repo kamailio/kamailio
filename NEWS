@@ -229,12 +229,15 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - most tcp config vars migrated to the dynamic config framework
+               (can be changed at runtime, e.g. 
+                 sercmd cfg.set_now_int tcp connection_lifetime 180 )
              - fallback to tcp or other congestion controlled transport 
                protocol if a forwarded udp sip request is greater then 
                udp_mtu (config). Default off. See udp_mtu and 
                udp_mtu_try_proto.
              - sctp support (one-to-many, work in progress, for now linux
-               only with no fallback to one-to-one on full send buffers)
+               and freebsd only)
              - partial cygwin (windows) support revived: core+static modules, 
                no ipv6, no tcp, no dynamic modules
              - most of the config variables can now be changed on the fly,
@@ -253,6 +256,9 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  tcp_no_connect = yes/no - disable connects, ser will only accept new 
+                     connections, it will never try to open new ones.
+                     Default: no, can be changed at runtime.
   udp_mtu = number - fallback to another protocol (udp_mtu_try_proto must be
                      set also either globally or per packet) if the constructed
                      request size is greater then udp_mtu.
@@ -293,10 +299,10 @@ new config variables:
      will be cached inside the process calling tcp_send (performance increase
      for sending over tcp at the cost of slightly slower connection closing and
      extra FDs kept open)
-  tcp_async = yes | no (default no) - if enabled all the tcp  writes that 
+  tcp_async = yes | no (default yes) - if enabled all the tcp  writes that 
      would block / wait for connect to finish, will be queued and attempted
      latter (see also tcp_conn_wq_max and tcp_wq_max).
-  tcp_buf_write = synonim for tcp_async
+  tcp_buf_write = obsoleted synonim for tcp_async
   tcp_conn_wq_max = bytes (default 32 K) - maximum bytes queued for write 
      allowed per connection. Attempting to queue more bytes would result
      in an error and in the connection being closed (too slow). If 

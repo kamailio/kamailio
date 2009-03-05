@@ -29,11 +29,22 @@
 
 #include "ip_addr.h"
 
+struct sctp_gen_info{
+	int sctp_connections_no;
+	int sctp_tracked_no;
+	int sctp_total_connections;
+};
+
+int init_sctp();
+void destroy_sctp();
 int sctp_check_compiled_sockopts(char* buf, int size);
 int sctp_check_support();
 int sctp_init_sock(struct socket_info* sock_info);
 int sctp_rcv_loop();
 int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len);
+
+/* generic sctp information (stats a.s.o) */
+void sctp_get_info(struct sctp_gen_info* sinf);
 
 void destroy_sctp();
 
