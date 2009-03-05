@@ -30,6 +30,7 @@
 #define PARSE_TO
 
 #include "../str.h"
+#include "msg_parser.h"
 
 enum {
 	TAG_PARAM = 400, GENERAL_PARAM
@@ -49,6 +50,7 @@ struct to_body{
 	str uri;                      /* URI */
 	str display;				  /* Display Name */
 	str tag_value;                /* Value of tag */
+	struct sip_uri parsed_uri;
 	struct to_param *param_lst;   /* Linked list of parameters */
 	struct to_param *last_param;  /* Last parameter in the list */
 };
