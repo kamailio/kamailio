@@ -1025,6 +1025,7 @@ void free_avp_ident(avp_ident_t* attr)
 			abort();
 #endif
 		} else {
+			regfree(attr->name.re);
 			pkg_free(attr->name.re);
 		}
 	}

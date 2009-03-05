@@ -29,6 +29,16 @@
 #define tcp_init_h
 #include "ip_addr.h"
 
+#define DEFAULT_TCP_CONNECTION_LIFETIME_S 120 /* in  seconds */
+/* maximum accepted lifetime in ticks (maximum possible is  ~ MAXINT/2) */
+#define MAX_TCP_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
+
+#define DEFAULT_TCP_SEND_TIMEOUT 10 /* if a send can't write for more then 10s,
+									   timeout */
+#define DEFAULT_TCP_CONNECT_TIMEOUT 10 /* if a connect doesn't complete in this
+										  time, timeout */
+#define DEFAULT_TCP_MAX_CONNECTIONS 2048 /* maximum connections */
+
 struct tcp_child{
 	pid_t pid;
 	int proc_no; /* ser proc_no, for debugging */

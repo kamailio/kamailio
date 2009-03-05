@@ -28,17 +28,17 @@
 
 #ifdef USE_TCP
 
-#ifndef NO_TCP_BUF_WRITE
-#define TCP_BUF_WRITE /* enabled buffered writing */
-#endif 
+#ifndef NO_TCP_ASYNC
+#define TCP_ASYNC /* enabled async mode */
+#endif
 
-#if !defined(NO_TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
+#if !defined(NO_TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 #define TCP_CONNECT_WAIT /* enable pending connects support */
 #endif
 
-#if defined(TCP_CONNECT_WAIT) && !defined(TCP_BUF_WRITE)
-/* check for impossible configuration: TCP_CONNECT_WAIT w/o TCP_BUF_WRITE */
-#warning "disabling TCP_CONNECT_WAIT because TCP_BUF_WRITE is not defined"
+#if defined(TCP_CONNECT_WAIT) && !defined(TCP_ASYNC)
+/* check for impossible configuration: TCP_CONNECT_WAIT w/o TCP_ASYNC */
+#warning "disabling TCP_CONNECT_WAIT because TCP_ASYNC is not defined"
 #undef TCP_CONNECT_WAIT
 #endif
 
@@ -109,15 +109,19 @@
 
 #endif /* USE_TCP */
 
-struct tcp_cfg_options{
-	/* ser tcp options */
+struct cfg_group_tcp{
+	/* ser tcp options, low level */
+	int connect_timeout_s; /* in s, used only in non-async mode */
+	int send_timeout_s; /* in s */
+	int con_lifetime_s; /* in s */
+	int max_connections;
+	int no_connect; /* do not open any new tcp connection (but accept them) */
 	int fd_cache; /* on /off */
-	/* tcp buf. write options */
-	int tcp_buf_write; /* on / off */
-	int tcp_connect_wait; /* on / off, depends on tcp_buf_write */
+	/* tcp async options */
+	int async; /* on / off */
+	int tcp_connect_wait; /* on / off, depends on async */
 	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
 	unsigned int tcp_wq_max; /* maximum overall queued bytes */
-	unsigned int tcp_wq_timeout;      /* timeout for queue writes */
 
 	/* tcp socket options */
 	int defer_accept; /* on / off */
@@ -128,14 +132,26 @@ struct tcp_cfg_options{
 	int keepidle;   /* idle time (s) before tcp starts sending keepalives */
 	int keepintvl;  /* interval between keep alives */
 	int keepcnt;    /* maximum no. of keepalives before giving up */
+	
+	/* other options */
 	int crlf_ping;  /* on/off - reply to double CRLF keepalives */
+	int accept_aliases;
+	int alias_flags;
+	int new_conn_alias_flags;
+	/* internal, "fixed" vars */
+	unsigned int tcp_wq_timeout; /* in ticks, timeout for queued writes */
+	unsigned int con_lifetime; /* in ticks, see con_lifetime_s */
 };
 
+extern struct cfg_group_tcp tcp_default_cfg;
 
-extern struct tcp_cfg_options tcp_options;
+/* tcp config handle*/
+extern void* tcp_cfg;
+
 
 void init_tcp_options();
 void tcp_options_check();
-void tcp_options_get(struct tcp_cfg_options* t);
+int tcp_register_cfg();
+void tcp_options_get(struct cfg_group_tcp* t);
 
 #endif /* tcp_options_h */

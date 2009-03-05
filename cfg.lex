@@ -325,6 +325,7 @@ TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 TCP_CON_LIFETIME	"tcp_connection_lifetime"
 TCP_POLL_METHOD		"tcp_poll_method"
 TCP_MAX_CONNECTIONS	"tcp_max_connections"
+TCP_NO_CONNECT		"tcp_no_connect"
 TCP_SOURCE_IPV4		"tcp_source_ipv4"
 TCP_SOURCE_IPV6		"tcp_source_ipv6"
 TCP_OPT_FD_CACHE	"tcp_fd_cache"
@@ -624,6 +625,8 @@ EAT_ABLE	[\ \t\b\r]
 									return TCP_POLL_METHOD; }
 <INITIAL>{TCP_MAX_CONNECTIONS}	{ count(); yylval.strval=yytext;
 									return TCP_MAX_CONNECTIONS; }
+<INITIAL>{TCP_NO_CONNECT}		{ count(); yylval.strval=yytext;
+									return TCP_NO_CONNECT; }
 <INITIAL>{TCP_SOURCE_IPV4}		{ count(); yylval.strval=yytext;
 									return TCP_SOURCE_IPV4; }
 <INITIAL>{TCP_SOURCE_IPV6}		{ count(); yylval.strval=yytext;

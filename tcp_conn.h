@@ -42,6 +42,7 @@
 #ifndef _tcp_conn_h
 #define _tcp_conn_h
 
+#include "tcp_init.h"
 #include "tcp_options.h"
 
 #include "ip_addr.h"
@@ -54,12 +55,6 @@
 #define TCP_CON_MAX_ALIASES (4*3) 
 
 #define TCP_BUF_SIZE	4096 
-#define DEFAULT_TCP_CONNECTION_LIFETIME 120 /* in  seconds */
-#define DEFAULT_TCP_SEND_TIMEOUT 10 /* if a send can't write for more then 10s,
-									   timeout */
-#define DEFAULT_TCP_CONNECT_TIMEOUT 10 /* if a connect doesn't complete in this
-										  time, timeout */
-#define DEFAULT_TCP_MAX_CONNECTIONS 2048 /* maximum connections */
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
@@ -137,7 +132,7 @@ struct tcp_conn_alias{
 };
 
 
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	struct tcp_wbuffer{
 		struct tcp_wbuffer* next;
 		unsigned int b_size;
@@ -179,7 +174,7 @@ struct tcp_connection{
 	struct tcp_connection* c_prev;
 	struct tcp_conn_alias con_aliases[TCP_CON_MAX_ALIASES];
 	int aliases; /* aliases number, at least 1 */
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	struct tcp_wbuffer_queue wbuf_q;
 #endif
 };
