@@ -209,12 +209,15 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - most tcp config vars migrated to the dynamic config framework
+               (can be changed at runtime, e.g. 
+                 sercmd cfg.set_now_int tcp connection_lifetime 180 )
              - fallback to tcp or other congestion controlled transport 
                protocol if a forwarded udp sip request is greater then 
                udp_mtu (config). Default off. See udp_mtu and 
                udp_mtu_try_proto.
              - sctp support (one-to-many, work in progress, for now linux
-               only with no fallback to one-to-one on full send buffers)
+               and freebsd only)
              - partial cygwin (windows) support revived: core+static modules, 
                no ipv6, no tcp, no dynamic modules
              - most of the config variables can now be changed on the fly,
@@ -233,6 +236,9 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  tcp_no_connect = yes/no - disable connects, ser will only accept new 
+                     connections, it will never try to open new ones.
+                     Default: no, can be changed at runtime.
   udp_mtu = number - fallback to another protocol (udp_mtu_try_proto must be
                      set also either globally or per packet) if the constructed
                      request size is greater then udp_mtu.

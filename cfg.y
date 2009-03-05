@@ -351,6 +351,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token TCP_CON_LIFETIME
 %token TCP_POLL_METHOD
 %token TCP_MAX_CONNECTIONS
+%token TCP_NO_CONNECT
 %token TCP_SOURCE_IPV4
 %token TCP_SOURCE_IPV6
 %token TCP_OPT_FD_CACHE
@@ -839,6 +840,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
+	| TCP_NO_CONNECT EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_default_cfg.no_connect=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_NO_CONNECT EQUAL error { yyerror("boolean value expected"); }
 	| TCP_SOURCE_IPV4 EQUAL ipv4 {
 		#ifdef USE_TCP
 			if (tcp_set_src_addr($3)<0)

@@ -115,6 +115,7 @@ struct cfg_group_tcp{
 	int send_timeout_s; /* in s */
 	int con_lifetime_s; /* in s */
 	int max_connections;
+	int no_connect; /* do not open any new tcp connection (but accept them) */
 	int fd_cache; /* on /off */
 	/* tcp async options */
 	int async; /* on / off */
