@@ -565,14 +565,17 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "ddddddddddddddd",
+		rpc->struct_add(handle, "dddddddddddddddddddddd",
+			"connect_timeout", t.connect_timeout_s,
+			"send_timeout",  t.send_timeout_s,
+			"connection_lifetime",  t.con_lifetime_s,
+			"max_connections(soft)", t.max_connections,
 			"fd_cache",		t.fd_cache,
-			"tcp_buf_write",	t.tcp_buf_write,
-			"tcp_connect_wait",	t.tcp_connect_wait,
-			"tcpconn_wq_max",	t.tcpconn_wq_max,
-			"tcp_wq_max",	t.tcp_wq_max,
-			"tcp_wq_timeout",	TICKS_TO_S(t.tcp_wq_timeout),
-			
+			"async",		t.tcp_buf_write,
+			"connect_wait",	t.tcp_connect_wait,
+			"conn_wq_max",	t.tcpconn_wq_max,
+			"wq_max",		t.tcp_wq_max,
+			"wq_timeout",	TICKS_TO_S(t.tcp_wq_timeout),
 			"defer_accept",	t.defer_accept,
 			"delayed_ack",	t.delayed_ack,
 			"syncnt",		t.syncnt,
@@ -581,7 +584,10 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 			"keepidle",		t.keepidle,
 			"keepintvl",	t.keepintvl,
 			"keepcnt",		t.keepcnt,
-			"crlf_ping",	t.crlf_ping
+			"crlf_ping",	t.crlf_ping,
+			"accept_aliases", t.accept_aliases,
+			"alias_flags",	t.alias_flags,
+			"new_conn_alias_flags",	t.new_conn_alias_flags
 		);
 	}else{
 		rpc->fault(c, 500, "tcp support disabled");

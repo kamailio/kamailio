@@ -65,20 +65,28 @@ struct cfg_group_tcp tcp_default_cfg;
 
 
 
+static int fix_connect_to(void* cfg_h, str* name, void** val);
+static int fix_send_to(void* cfg_h, str* name, void** val);
+static int fix_con_lt(void* cfg_h, str* name, void** val);
+static int fix_max_conns(void* cfg_h, str* name, void** val);
+
+
+
 /* cfg_group_tcp description (for the config framework)*/
 static cfg_def_t tcp_cfg_def[] = {
 	/*   name        , type |input type| chg type, min, max, fixup, proc. cbk 
 	      description */
-	{ "connect_timeout", CFG_VAR_INT | CFG_READONLY, -1,
-						TICKS_TO_S(MAX_TCP_CON_LIFETIME),         0,         0,
+	{ "connect_timeout", CFG_VAR_INT | CFG_ATOMIC,  -1,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),  fix_connect_to,   0,
 		"used only in non-async mode, in seconds"},
-	{ "send_timeout", CFG_VAR_INT | CFG_READONLY,   -1,
-						TICKS_TO_S(MAX_TCP_CON_LIFETIME),         0,         0,
+	{ "send_timeout", CFG_VAR_INT | CFG_ATOMIC,   -1,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),   fix_send_to,     0,
 		"in seconds"},
-	{ "connection_lifetime", CFG_VAR_INT | CFG_READONLY,   -1,
-						TICKS_TO_S(MAX_TCP_CON_LIFETIME),         0,         0,
+	{ "connection_lifetime", CFG_VAR_INT | CFG_ATOMIC,   -1,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),   fix_con_lt,      0,
 		"connection lifetime (in seconds)"},
-	{ "max_connections", CFG_VAR_INT | CFG_READONLY, 0,  (1U<<31)-1, 0,      0,
+	{ "max_connections", CFG_VAR_INT | CFG_ATOMIC, 0, (1U<<31)-1,
+													       fix_max_conns,    0,
 		"maximum connection number, soft limit"},
 	{ "fd_cache",     CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
 		"file descriptor cache for tcp_send"},
@@ -87,36 +95,36 @@ static cfg_def_t tcp_cfg_def[] = {
 		"async mode for writes and connects"},
 	{ "connect_wait", CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
 		"parallel simultaneous connects to the same dst. (0) or one connect"},
-	{ "conn_wq_max",  CFG_VAR_INT | CFG_READONLY,    0, 1024*1024, 0,        0,
+	{ "conn_wq_max",  CFG_VAR_INT | CFG_ATOMIC,      0, 1024*1024, 0,        0,
 		"maximum bytes queued for write per connection (depends on async)"},
-	{ "wq_max",       CFG_VAR_INT | CFG_READONLY,    0,  1<<30,    0,        0,
+	{ "wq_max",       CFG_VAR_INT | CFG_ATOMIC,      0,  1<<30,    0,        0,
 		"maximum bytes queued for write allowed globally (depends on async)"},
 	/* see also wq_timeout below */
 	/* tcp socket options */
 	{ "defer_accept", CFG_VAR_INT | CFG_READONLY,    0,   3600,   0,         0,
 		"0/1 on linux, seconds on freebsd (see docs)"},
-	{ "delayed_ack",  CFG_VAR_INT | CFG_READONLY,    0,      1,   0,         0,
+	{ "delayed_ack",  CFG_VAR_INT | CFG_ATOMIC,      0,      1,   0,         0,
 		"initial ack will be delayed and sent with the first data segment"},
-	{ "syncnt",       CFG_VAR_INT | CFG_READONLY,    0,      1,   0,         0,
+	{ "syncnt",       CFG_VAR_INT | CFG_ATOMIC,      0,   1024,   0,         0,
 		"number of syn retransmissions before aborting a connect (0=not set)"},
-	{ "linger2",      CFG_VAR_INT | CFG_READONLY,    0,   3600,   0,         0,
+	{ "linger2",      CFG_VAR_INT | CFG_ATOMIC,      0,   3600,   0,         0,
 		"lifetime of orphaned sockets in FIN_WAIT2 state in s (0=not set)"},
-	{ "keepalive",    CFG_VAR_INT | CFG_READONLY,    0,      1,   0,         0,
+	{ "keepalive",    CFG_VAR_INT | CFG_ATOMIC,      0,      1,   0,         0,
 		"enables/disables keepalives for tcp"},
-	{ "keepidle",     CFG_VAR_INT | CFG_READONLY,    0, 24*3600,  0,         0,
+	{ "keepidle",     CFG_VAR_INT | CFG_ATOMIC,      0, 24*3600,  0,         0,
 		"time before sending a keepalive if the connection is idle (linux)"},
-	{ "keepintvl",    CFG_VAR_INT | CFG_READONLY,    0, 24*3600,  0,         0,
+	{ "keepintvl",    CFG_VAR_INT | CFG_ATOMIC,      0, 24*3600,  0,         0,
 		"time interval between keepalive probes on failure (linux)"},
-	{ "keepcnt",     CFG_VAR_INT | CFG_READONLY,    0,    1<<10,  0,         0,
+	{ "keepcnt",     CFG_VAR_INT | CFG_ATOMIC,       0,    1<<10,  0,        0,
 		"number of failed keepalives before dropping the connection (linux)"},
 	/* other options */
-	{ "crlf_ping",   CFG_VAR_INT | CFG_READONLY,    0,        1,  0,         0,
+	{ "crlf_ping",   CFG_VAR_INT | CFG_ATOMIC,      0,        1,  0,         0,
 		"enable responding to CRLF SIP-level keepalives "},
-	{ "accept_aliases", CFG_VAR_INT | CFG_READONLY, 0,        1,  0,         0,
+	{ "accept_aliases", CFG_VAR_INT | CFG_ATOMIC,   0,        1,  0,         0,
 		"turn on/off tcp aliases (see tcp_accept_aliases) "},
-	{ "alias_flags", CFG_VAR_INT | CFG_READONLY,    0,        0,  0,         0,
+	{ "alias_flags", CFG_VAR_INT | CFG_ATOMIC,      0,        2,  0,         0,
 		"flags used for adding new aliases (FORCE_ADD:1 , REPLACE:2) "},
-	{ "new_conn_alias_flags", CFG_VAR_INT | CFG_READONLY, 0,  0,  0,         0,
+	{ "new_conn_alias_flags", CFG_VAR_INT | CFG_ATOMIC, 0,    2,  0,         0,
 		"flags for the def. aliases for a new conn. (FORCE_ADD:1, REPLACE:2 "},
 	/* internal and/or "fixed" versions of some vars
 	   (not supposed to be writeable, read will provide only debugging value*/
@@ -203,6 +211,61 @@ static void fix_timeout(char* name, int* to, int default_val, unsigned max_val)
 
 
 
+static int fix_connect_to(void* cfg_h, str* name, void** val)
+{
+	int v;
+	v=(int)(long)*val;
+	fix_timeout("tcp_connect_timeout", &v, DEFAULT_TCP_CONNECT_TIMEOUT,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+	*val=(void*)(long)v;
+	return 0;
+}
+
+
+static int fix_send_to(void* cfg_h, str* name, void** val)
+{
+	int v;
+	v=(int)(long)*val;
+	fix_timeout("tcp_send_timeout", &v, DEFAULT_TCP_SEND_TIMEOUT,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+	*val=(void*)(long)v;
+#ifdef TCP_BUF_WRITE
+	((struct cfg_group_tcp*)cfg_h)->tcp_wq_timeout=S_TO_TICKS(v);
+#endif /* TCP_BUF_WRITE */
+	return 0;
+}
+
+
+static int fix_con_lt(void* cfg_h, str* name, void** val)
+{
+	int v;
+	v=(int)(long)*val;
+	fix_timeout("tcp_connection_lifetime", &v,
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME),
+						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
+	*val=(void*)(long)v;
+#ifdef TCP_BUF_WRITE
+	((struct cfg_group_tcp*)cfg_h)->con_lifetime=S_TO_TICKS(v);
+#endif /* TCP_BUF_WRITE */
+	return 0;
+}
+
+
+static int fix_max_conns(void* cfg_h, str* name, void** val)
+{
+	int v;
+	v=(int)(long)*val;
+	if (v>tcp_max_connections){
+		INFO("cannot override hard tcp_max_connections limit, please"
+				" restart and increase tcp_max_connections in the cfg.\n");
+		v=tcp_max_connections;
+	}
+	*val=(void*)(long)v;
+	return 0;
+}
+
+
+
 /* checks & warns if some tcp_option cannot be enabled */
 void tcp_options_check()
 {
@@ -276,7 +339,7 @@ void tcp_options_check()
 
 void tcp_options_get(struct cfg_group_tcp* t)
 {
-	*t=tcp_default_cfg;
+	*t=*(struct cfg_group_tcp*)tcp_cfg;
 }
 
 
