@@ -1151,6 +1151,7 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 	str  tfrom;
 	str  str_hdr;
 	char buf1[1024];
+	uac_req_t uac_r;
 
 	if( !to || !to->s || to->len <= 0 
 			|| !from || !from->s || from->len <= 0 
@@ -1183,11 +1184,11 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 #ifdef XJ_EXTRA_DEBUG
 		LM_DBG("uac callback parameter [%p==%d]\n", cbp, *cbp);
 #endif
-		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 
-						0, xj_tuac_callback, (void*)cbp);
+		set_uac_req(&uac_r, &msg_type, &str_hdr, msg, 0, 0, xj_tuac_callback, (void*)cbp);
+	} else {
+		set_uac_req(&uac_r, &msg_type, &str_hdr, msg, 0, 0, 0, 0);		
 	}
-	else
-		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 0, 0, 0);
+	return tmb.t_request(&uac_r, 0, to, &tfrom, 0);
 }
 
 /**
