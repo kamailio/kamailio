@@ -61,6 +61,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
+#include "../../lvalue.h"
 #include "../../dprint.h"
 #include "../../sr_module.h" /* Needed for find_export() */
 #include "../sl/sl_api.h"
