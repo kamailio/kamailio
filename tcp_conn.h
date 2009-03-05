@@ -132,7 +132,7 @@ struct tcp_conn_alias{
 };
 
 
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	struct tcp_wbuffer{
 		struct tcp_wbuffer* next;
 		unsigned int b_size;
@@ -174,7 +174,7 @@ struct tcp_connection{
 	struct tcp_connection* c_prev;
 	struct tcp_conn_alias con_aliases[TCP_CON_MAX_ALIASES];
 	int aliases; /* aliases number, at least 1 */
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	struct tcp_wbuffer_queue wbuf_q;
 #endif
 };

@@ -873,7 +873,7 @@ assign_stm:
 	| TCP_OPT_FD_CACHE EQUAL error { yyerror("boolean value expected"); }
 	| TCP_OPT_BUF_WRITE EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_default_cfg.tcp_buf_write=$3;
+			tcp_default_cfg.async=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif

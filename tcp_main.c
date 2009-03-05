@@ -207,7 +207,7 @@
 #define TCPCONN_TIMEOUT_MIN_RUN 1  /* once per tick */
 #define TCPCONN_WAIT_TIMEOUT 1 /* 1 tick */
 
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 #define TCP_WBUF_SIZE	1024 /* FIXME: after debugging switch to 16-32k */
 static unsigned int* tcp_total_wq=0;
 #endif
@@ -598,7 +598,7 @@ inline static int _tcpconn_write_nb(int fd, struct tcp_connection* c,
 									char* buf, int len);
 
 
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 
 
 /* unsafe version */
@@ -841,7 +841,7 @@ inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
 	return ret;
 }
 
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 
 
 
@@ -995,9 +995,9 @@ inline static int tcp_do_connect(	union sockaddr_union* server,
 	union sockaddr_union my_name;
 	socklen_t my_name_len;
 	struct ip_addr ip;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	int n;
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if (unlikely(s==-1)){
@@ -1017,8 +1017,8 @@ inline static int tcp_do_connect(	union sockaddr_union* server,
 					strerror(errno), errno);
 	}
 	*state=S_CONN_OK;
-#ifdef TCP_BUF_WRITE
-	if (likely(cfg_get(tcp, tcp_cfg, tcp_buf_write))){
+#ifdef TCP_ASYNC
+	if (likely(cfg_get(tcp, tcp_cfg, async))){
 again:
 		n=connect(s, &server->s, sockaddru_len(*server));
 		if (unlikely(n==-1)){
@@ -1046,16 +1046,16 @@ again:
 			}
 		}
 	}else{
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 		if (tcp_blocking_connect(s, type, &server->s,
 									sockaddru_len(*server))<0){
 			LOG(L_ERR, "ERROR: tcp_do_connect: tcp_blocking_connect %s"
 						" failed\n", su2a(server, sizeof(*server)));
 			goto error;
 		}
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	if (from){
 		su2ip_addr(&ip, from);
 		if (!ip_addr_any(&ip))
@@ -1256,7 +1256,7 @@ static inline void _tcpconn_detach(struct tcp_connection *c)
 
 static inline void _tcpconn_free(struct tcp_connection* c)
 {
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	if (unlikely(_wbufq_non_empty(c)))
 		_wbufq_destroy(&c->wbuf_q);
 #endif
@@ -1621,9 +1621,9 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	int n;
 	int do_close_fd;
 	ticks_t con_lifetime;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	int enable_write_watch;
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 #ifdef TCP_FD_CACHE
 	struct fd_cache_entry* fd_cache_e;
 	int use_fd_cache;
@@ -1677,9 +1677,9 @@ no_id:
 						break;
 				}
 			}
-#if defined(TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
+#if defined(TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 			if (likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait) && 
-						cfg_get(tcp, tcp_cfg, tcp_buf_write) )){
+						cfg_get(tcp, tcp_cfg, async) )){
 				if (unlikely(*tcp_connections_no >=
 								cfg_get(tcp, tcp_cfg, max_connections))){
 					LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
@@ -1795,7 +1795,7 @@ no_id:
 				}
 				goto end;
 			}
-#endif /* TCP_CONNECT_WAIT  && TCP_BUF_WRITE */
+#endif /* TCP_CONNECT_WAIT  && TCP_ASYNC */
 			if (unlikely((c=tcpconn_connect(&dst->to, from, dst->proto))==0)){
 				LOG(L_ERR, "ERROR: tcp_send %s: connect failed\n",
 								su2a(&dst->to, sizeof(dst->to)));
@@ -1824,9 +1824,9 @@ no_id:
 			goto send_it;
 		}
 get_fd:
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 		/* if data is already queued, we don't need the fd any more */
-		if (unlikely(cfg_get(tcp, tcp_cfg, tcp_buf_write) &&
+		if (unlikely(cfg_get(tcp, tcp_cfg, async) &&
 						(_wbufq_non_empty(c)
 #ifdef TCP_CONNECT_WAIT
 												|| (c->state==S_CONN_PENDING)
@@ -1851,7 +1851,7 @@ get_fd:
 				}
 			lock_release(&c->write_lock);
 		}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 		/* check if this is not the same reader process holding
 		 *  c  and if so send directly on c->fd */
 		if (c->reader_pid==my_pid()){
@@ -1909,8 +1909,8 @@ get_fd:
 send_it:
 	DBG("tcp_send: sending...\n");
 	lock_get(&c->write_lock);
-#ifdef TCP_BUF_WRITE
-	if (likely(cfg_get(tcp, tcp_cfg, tcp_buf_write))){
+#ifdef TCP_ASYNC
+	if (likely(cfg_get(tcp, tcp_cfg, async))){
 		if (_wbufq_non_empty(c)
 #ifdef TCP_CONNECT_WAIT
 			|| (c->state==S_CONN_PENDING) 
@@ -1927,7 +1927,7 @@ send_it:
 		}
 		n=_tcpconn_write_nb(fd, c, buf, len);
 	}else{
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 #ifdef USE_TLS
 	if (c->type==PROTO_TLS)
 		n=tls_blocking_write(c, fd, buf, len);
@@ -1936,17 +1936,17 @@ send_it:
 		/* n=tcp_blocking_write(c, fd, buf, len); */
 		n=tsend_stream(fd, buf, len,
 							cfg_get(tcp, tcp_cfg, send_timeout_s)*1000);
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	}
-#else /* ! TCP_BUF_WRITE */
+#else /* ! TCP_ASYNC */
 	lock_release(&c->write_lock);
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	
 	DBG("tcp_send: after real write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
 	if (unlikely(n<(int)len)){
-#ifdef TCP_BUF_WRITE
-		if (cfg_get(tcp, tcp_cfg, tcp_buf_write) && 
+#ifdef TCP_ASYNC
+		if (cfg_get(tcp, tcp_cfg, async) && 
 				((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK)){
 			enable_write_watch=_wbufq_empty(c);
 			if (n<0) n=0;
@@ -1971,7 +1971,7 @@ send_it:
 		}else{
 			lock_release(&c->write_lock);
 		}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 #ifdef USE_DST_BLACKLIST
 		if (cfg_get(core, core_cfg, use_dst_blacklist))
 			switch(errno){
@@ -1990,9 +1990,9 @@ send_it:
 					"\n", c, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
 					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
 					strerror(errno), errno);
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 error:
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 		/* error on the connection , mark it as bad and set 0 timeout */
 		c->state=S_CONN_BAD;
 		c->timeout=get_ticks_raw();
@@ -2021,13 +2021,13 @@ error:
 		return n; /* error return, no tcpconn_put */
 	}
 	
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	lock_release(&c->write_lock);
-	if (likely(cfg_get(tcp, tcp_cfg, tcp_buf_write))){
+	if (likely(cfg_get(tcp, tcp_cfg, async))){
 		if (unlikely(c->state==S_CONN_CONNECT))
 			c->state=S_CONN_OK;
 	}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 end:
 #ifdef TCP_FD_CACHE
 	if (unlikely((fd_cache_e==0) && use_fd_cache)){
@@ -2368,7 +2368,7 @@ inline static int tcpconn_try_unhash(struct tcp_connection* tcpconn)
 				TCPCONN_UNLOCK;
 				return 0;
 			}
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 		/* empty possible write buffers (optional) */
 		if (unlikely(_wbufq_non_empty(tcpconn))){
 			lock_get(&tcpconn->write_lock);
@@ -2377,7 +2377,7 @@ inline static int tcpconn_try_unhash(struct tcp_connection* tcpconn)
 					_wbufq_destroy(&tcpconn->wbuf_q);
 			lock_release(&tcpconn->write_lock);
 		}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 		return 1;
 	}
 	return 0;
@@ -2508,7 +2508,7 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 						   p->unix_sock, (long)(p-&q->data[0]), p->retries,
 						   p->tcp_conn, p->tcp_conn->s, errno,
 						   strerror(errno));
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 				if (p->tcp_conn->flags & F_CONN_WRITE_W){
 					io_watch_del(&io_h, p->tcp_conn->s, -1, IO_FD_CLOSING);
 					p->tcp_conn->flags &=~F_CONN_WRITE_W;
@@ -2642,12 +2642,12 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				break;
 			}
 			if (unlikely(tcpconn->state==S_CONN_BAD)){ 
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 				if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 					tcpconn->flags &= ~F_CONN_WRITE_W;
 				}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 				if (tcpconn_try_unhash(tcpconn))
 					tcpconn_put_destroy(tcpconn);
 				break;
@@ -2657,8 +2657,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
 			tcpconn->timeout=t+con_lifetime;
 			crt_timeout=con_lifetime;
-#ifdef TCP_BUF_WRITE
-			if (unlikely(cfg_get(tcp, tcp_cfg, tcp_buf_write) && 
+#ifdef TCP_ASYNC
+			if (unlikely(cfg_get(tcp, tcp_cfg, async) && 
 							_wbufq_non_empty(tcpconn) )){
 				if (unlikely(TICKS_GE(t, tcpconn->wbuf_q.wr_timeout))){
 					DBG("handle_tcp_child: wr. timeout on CONN_RELEASE for %p "
@@ -2685,7 +2685,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 											tcpconn->wbuf_q.wr_timeout-t);
 				}
 			}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 			/* re-activate the timer */
 			tcpconn->timer.f=tcpconn_main_timeout;
 			local_timer_reinit(&tcpconn->timer);
@@ -2693,22 +2693,22 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			/* must be after the de-ref*/
 			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD);
 			tcpconn->flags&=~(F_CONN_READER|F_CONN_OOB_DATA);
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 			if (unlikely(tcpconn->flags & F_CONN_WRITE_W))
 				n=io_watch_chg(&io_h, tcpconn->s, POLLIN| POLLOUT, -1);
 			else
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 				n=io_watch_add(&io_h, tcpconn->s, POLLIN, F_TCPCONN, tcpconn);
 			if (unlikely(n<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_tcp_child: failed to add"
 						" new socket to the fd list\n");
 				tcpconn->flags&=~F_CONN_READ_W;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 				if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 					tcpconn->flags&=~F_CONN_WRITE_W;
 				}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 				if (tcpconn_try_unhash(tcpconn));
 					tcpconn_put_destroy(tcpconn);
 				break;
@@ -2725,12 +2725,12 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				 if (tcpconn->s!=-1)
 					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 				*/
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 				if ((tcpconn->flags & F_CONN_WRITE_W) && (tcpconn->s!=-1)){
 					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 					tcpconn->flags&=~F_CONN_WRITE_W;
 				}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 				if (tcpconn_try_unhash(tcpconn))
 					tcpconn_put(tcpconn);
 				tcpconn_put_destroy(tcpconn); /* deref & delete if refcnt==0 */
@@ -2772,9 +2772,9 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	int flags;
 	ticks_t t;
 	ticks_t con_lifetime;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	ticks_t nxt_timeout;
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	
 	ret=-1;
 	if (unlikely(p->unix_sock<=0)){
@@ -2887,22 +2887,22 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								con_lifetime, t);
 			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD)
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 					/* not used for now, the connection is sent to tcp_main
 					 * before knowing whether we can write on it or we should 
 					 * wait */
 							| (((int)!(tcpconn->flags & F_CONN_WANTS_WR)-1)& 
 								F_CONN_WRITE_W)
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 				;
 			tcpconn->flags&=~F_CONN_FD_CLOSED;
 			flags=POLLIN 
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 					/* not used for now, the connection is sent to tcp_main
 					 * before knowing if we can write on it or we should 
 					 * wait */
 					| (((int)!(tcpconn->flags & F_CONN_WANTS_WR)-1) & POLLOUT)
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 					;
 			if (unlikely(
 					io_watch_add(&io_h, tcpconn->s, flags,
@@ -2914,7 +2914,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 				tcpconn_put_destroy(tcpconn);
 			}
 			break;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 		case CONN_QUEUED_WRITE:
 			/* received only if the wr. queue is empty and a write finishes
 			 * with EAGAIN (common after connect())
@@ -3049,7 +3049,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			}
 			break;
 #endif /* TCP_CONNECT_WAIT */
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 		default:
 			LOG(L_CRIT, "BUG: handle_ser_child: unknown cmd %d\n", cmd);
 	}
@@ -3253,10 +3253,10 @@ static inline int handle_new_connect(struct socket_info* si)
 inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev, 
 										int fd_i)
 {
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	int empty_q;
 	int bytes;
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	/*  is refcnt!=0 really necessary? 
 	 *  No, in fact it's a bug: I can have the following situation: a send only
 	 *   tcp connection used by n processes simultaneously => refcnt = n. In 
@@ -3276,7 +3276,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 #endif
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	empty_q=0; /* warning fix */
 	if (unlikely((ev & (POLLOUT|POLLERR|POLLHUP)) &&
 					(tcpconn->flags & F_CONN_WRITE_W))){
@@ -3351,14 +3351,14 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 		}else
 #else
 	{
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 			if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1)){
 				LOG(L_ERR, "ERROR: handle_tcpconn_ev: io_watch_del(3)"
 							" failed:" " for %p, fd %d\n",
 							tcpconn, tcpconn->s);
 				goto error;
 			}
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 send_to_child:
 #endif
 		DBG("tcp: DBG: sendig to child, events %x\n", ev);
@@ -3376,7 +3376,7 @@ send_to_child:
 		if (unlikely(send2child(tcpconn)<0)){
 			LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
 			tcpconn->flags&=~F_CONN_READER;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 			if (tcpconn->flags & F_CONN_WRITE_W){
 				if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)<0)){
 					LOG(L_ERR, "ERROR: handle_tcpconn_ev: io_watch_del(4)"
@@ -3385,7 +3385,7 @@ send_to_child:
 				}
 				tcpconn->flags&=~F_CONN_WRITE_W;
 			}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 			tcpconn_put(tcpconn);
 			tcpconn_try_unhash(tcpconn); 
 			tcpconn_put_destroy(tcpconn); /* because of the tcpconn_ref() */
@@ -3458,14 +3458,14 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	c=(struct tcp_connection*)data; 
 	/* or (struct tcp...*)(tl-offset(c->timer)) */
 	
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	DBG( "tcp_main: entering timer for %p (ticks=%d, timeout=%d (%d s), "
 			"wr_timeout=%d (%d s)), write queue: %d bytes\n",
 			c, t, c->timeout, TICKS_TO_S(c->timeout-t),
 			c->wbuf_q.wr_timeout, TICKS_TO_S(c->wbuf_q.wr_timeout-t),
 			c->wbuf_q.queued);
 	
-	tcp_async=cfg_get(tcp, tcp_cfg, tcp_buf_write);
+	tcp_async=cfg_get(tcp, tcp_cfg, async);
 	if (likely(TICKS_LT(t, c->timeout) && ( !tcp_async | _wbufq_empty(c) |
 					TICKS_LT(t, c->wbuf_q.wr_timeout)) )){
 		if (unlikely(tcp_async && _wbufq_non_empty(c)))
@@ -3482,12 +3482,12 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 										BLST_ERR_SEND,
 								c->rcv.proto, &c->rcv.src_su, 0);
 #endif /* USE_DST_BLACKLIST */
-#else /* ! TCP_BUF_WRITE */
+#else /* ! TCP_ASYNC */
 	if (TICKS_LT(t, c->timeout)){
 		/* timeout extended, exit */
 		return (ticks_t)(c->timeout - t);
 	}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	DBG("tcp_main: timeout for %p\n", c);
 	if (likely(c->flags & F_CONN_HASHED)){
 		c->flags&=~(F_CONN_HASHED|F_CONN_MAIN_TIMER);
@@ -3764,12 +3764,12 @@ void destroy_tcp()
 			shm_free(tcp_connections_no);
 			tcp_connections_no=0;
 		}
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 		if (tcp_total_wq){
 			shm_free(tcp_total_wq);
 			tcp_total_wq=0;
 		}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 		if (connection_id){
 			shm_free(connection_id);
 			connection_id=0;
@@ -3826,13 +3826,13 @@ int init_tcp()
 		goto error;
 	}
 	*connection_id=1;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	tcp_total_wq=shm_malloc(sizeof(*tcp_total_wq));
 	if (tcp_total_wq==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
 		goto error;
 	}
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	/* alloc hashtables*/
 	tcpconn_aliases_hash=(struct tcp_conn_alias**)
 			shm_malloc(TCP_ALIAS_HASH_SIZE* sizeof(struct tcp_conn_alias*));
@@ -3981,11 +3981,11 @@ void tcp_get_info(struct tcp_gen_info *ti)
 	ti->tcp_readers=tcp_children_no;
 	ti->tcp_max_connections=tcp_max_connections;
 	ti->tcp_connections_no=*tcp_connections_no;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	ti->tcp_write_queued=*tcp_total_wq;
 #else
 	ti->tcp_write_queued=0;
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 }
 
 #endif

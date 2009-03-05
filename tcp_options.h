@@ -28,17 +28,17 @@
 
 #ifdef USE_TCP
 
-#ifndef NO_TCP_BUF_WRITE
-#define TCP_BUF_WRITE /* enabled buffered writing */
-#endif 
+#ifndef NO_TCP_ASYNC
+#define TCP_ASYNC /* enabled async mode */
+#endif
 
-#if !defined(NO_TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
+#if !defined(NO_TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 #define TCP_CONNECT_WAIT /* enable pending connects support */
 #endif
 
-#if defined(TCP_CONNECT_WAIT) && !defined(TCP_BUF_WRITE)
-/* check for impossible configuration: TCP_CONNECT_WAIT w/o TCP_BUF_WRITE */
-#warning "disabling TCP_CONNECT_WAIT because TCP_BUF_WRITE is not defined"
+#if defined(TCP_CONNECT_WAIT) && !defined(TCP_ASYNC)
+/* check for impossible configuration: TCP_CONNECT_WAIT w/o TCP_ASYNC */
+#warning "disabling TCP_CONNECT_WAIT because TCP_ASYNC is not defined"
 #undef TCP_CONNECT_WAIT
 #endif
 
@@ -117,8 +117,8 @@ struct cfg_group_tcp{
 	int max_connections;
 	int fd_cache; /* on /off */
 	/* tcp async options */
-	int tcp_buf_write; /* on / off */
-	int tcp_connect_wait; /* on / off, depends on tcp_buf_write */
+	int async; /* on / off */
+	int tcp_connect_wait; /* on / off, depends on async */
 	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
 	unsigned int tcp_wq_max; /* maximum overall queued bytes */
 

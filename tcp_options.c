@@ -41,7 +41,7 @@ struct cfg_group_tcp tcp_default_cfg;
 {
 	1, /* fd_cache, default on */
 	/* tcp async options */
-	0, /* tcp_buf_write / tcp_async, default off */
+	0, /* async / tcp_async, default off */
 	1, /* tcp_connect_wait - depends on tcp_async */
 	32*1024, /* tcpconn_wq_max - max. write queue len per connection (32k) */
 	10*1024*1024, /* tcp_wq_max - max.  overall queued bytes  (10MB)*/
@@ -147,15 +147,15 @@ void init_tcp_options()
 	tcp_default_cfg.send_timeout_s=DEFAULT_TCP_SEND_TIMEOUT;
 	tcp_default_cfg.con_lifetime_s=DEFAULT_TCP_CONNECTION_LIFETIME_S;
 	tcp_default_cfg.max_connections=tcp_max_connections;
-#ifdef TCP_BUF_WRITE
-	tcp_default_cfg.tcp_buf_write=0;
+#ifdef TCP_ASYNC
+	tcp_default_cfg.async=1;
 	tcp_default_cfg.tcpconn_wq_max=32*1024; /* 32 k */
 	tcp_default_cfg.tcp_wq_max=10*1024*1024; /* 10 MB */
 	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_default_cfg.send_timeout_s);
 #ifdef TCP_CONNECT_WAIT
 	tcp_default_cfg.tcp_connect_wait=1;
 #endif /* TCP_CONNECT_WAIT */
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 #ifdef TCP_FD_CACHE
 	tcp_default_cfg.fd_cache=1;
 #endif
@@ -229,9 +229,9 @@ static int fix_send_to(void* cfg_h, str* name, void** val)
 	fix_timeout("tcp_send_timeout", &v, DEFAULT_TCP_SEND_TIMEOUT,
 						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
 	*val=(void*)(long)v;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	((struct cfg_group_tcp*)cfg_h)->tcp_wq_timeout=S_TO_TICKS(v);
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	return 0;
 }
 
@@ -244,9 +244,9 @@ static int fix_con_lt(void* cfg_h, str* name, void** val)
 						TICKS_TO_S(MAX_TCP_CON_LIFETIME),
 						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
 	*val=(void*)(long)v;
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	((struct cfg_group_tcp*)cfg_h)->con_lifetime=S_TO_TICKS(v);
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	return 0;
 }
 
@@ -273,19 +273,17 @@ void tcp_options_check()
 	W_OPT_NC(defer_accept);
 #endif
 
-#ifndef TCP_BUF_WRITE
-	W_OPT_NC(tcp_buf_write);
+#ifndef TCP_ASYNC
+	W_OPT_NC(async);
 	W_OPT_NC(tcpconn_wq_max);
 	W_OPT_NC(tcp_wq_max);
 	W_OPT_NC(tcp_wq_timeout);
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 #ifndef TCP_CONNECT_WAIT
 	W_OPT_NC(tcp_connect_wait);
 #endif /* TCP_CONNECT_WAIT */
 	
-	if (tcp_default_cfg.tcp_connect_wait && !tcp_default_cfg.tcp_buf_write){
-		WARN("tcp_options: tcp_connect_wait depends on tcp_buf_write, "
-				" disabling...\n");
+	if (tcp_default_cfg.tcp_connect_wait && !tcp_default_cfg.async){
 		tcp_default_cfg.tcp_connect_wait=0;
 	}
 	
@@ -328,9 +326,9 @@ void tcp_options_check()
 						TICKS_TO_S(MAX_TCP_CON_LIFETIME),
 						TICKS_TO_S(MAX_TCP_CON_LIFETIME));
 	/* compute timeout in ticks */
-#ifdef TCP_BUF_WRITE
+#ifdef TCP_ASYNC
 	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_default_cfg.send_timeout_s);
-#endif /* TCP_BUF_WRITE */
+#endif /* TCP_ASYNC */
 	tcp_default_cfg.con_lifetime=S_TO_TICKS(tcp_default_cfg.con_lifetime_s);
 	tcp_default_cfg.max_connections=tcp_max_connections;
 }
