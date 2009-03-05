@@ -30,6 +30,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
+#include "../../lvalue.h"
 
 #include "utils.h"
 
