@@ -41,6 +41,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 {
 	struct location *foo;
 	struct action act;
+	struct run_act_ctx ra_ctx;
 	int bflags;
 
 	if (!*locs) {
@@ -53,12 +54,13 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 	if (!(flag&CPL_PROXY_DONE)) {
 		LM_DBG("rewriting Request-URI with <%s>\n",(*locs)->addr.uri.s);
 		/* build a new action for setting the URI */
+		memset(&act, '\0', sizeof(act));
 		act.type = SET_URI_T;
-		act.elem[0].type = STRING_ST;
-		act.elem[0].u.string = (*locs)->addr.uri.s;
-		act.next = 0;
+		act.val[0].type = STRING_ST;
+		act.val[0].u.string = (*locs)->addr.uri.s;
+		init_run_actions_ctx(&ra_ctx);
 		/* push the action */
-		if (do_action(&act, msg) < 0) {
+		if (do_action(&ra_ctx, &act, msg) < 0) {
 			LM_ERR("do_action failed\n");
 			goto error;
 		}
