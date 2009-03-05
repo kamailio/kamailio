@@ -36,12 +36,12 @@
 
 #define MAX_LOG_NR    64
 
-#define ERR     "Error: "
-#define ERR_LEN (sizeof(ERR)-1)
-#define WARN    "Warning: "
-#define WARN_LEN (sizeof(WARN)-1)
-#define NOTE     "Notice: "
-#define NOTE_LEN (sizeof(NOTE)-1)
+#define MSG_ERR     "Error: "
+#define MSG_ERR_LEN (sizeof(MSG_ERR)-1)
+#define MSG_WARN    "Warning: "
+#define MSG_WARN_LEN (sizeof(MSG_WARN)-1)
+#define MSG_NOTE     "Notice: "
+#define MSG_NOTE_LEN (sizeof(MSG_NOTE)-1)
 
 #define LF       "\n"
 #define LF_LEN   (1)
