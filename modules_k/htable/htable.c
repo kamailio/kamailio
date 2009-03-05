@@ -42,7 +42,6 @@
 MODULE_VERSION
 
 int  ht_timer_interval = 20;
-int  ht_timer_mode = 0;
 
 /** module functions */
 static int ht_print(struct sip_msg*, char*, char*);
@@ -95,7 +94,6 @@ static param_export_t params[]={
 	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
-	{"timer_mode",         INT_PARAM, &ht_timer_mode},
 	{0,0,0}
 };
 
@@ -143,20 +141,10 @@ static int mod_init(void)
 		LM_DBG("starting auto-expire timer\n");
 		if(ht_timer_interval<=0)
 			ht_timer_interval = 20;
-		if(ht_timer_mode!=0)
+		if(register_timer(ht_timer, 0, ht_timer_interval)<0)
 		{
-			if(register_timer(ht_timer, 0, ht_timer_interval)<0)
-			{
-				LM_ERR("failed to register timer function\n");
-				return -1;
-			}
-		} else {
-			if (register_timer_process(ht_timer, NULL, ht_timer_interval,
-					TIMER_PROC_INIT_FLAG)<0)
-			{
-				LM_ERR("failed to register new timer process\n");
-				return -1;
-			}
+			LM_ERR("failed to register timer function\n");
+			return -1;
 		}
 	}
 
