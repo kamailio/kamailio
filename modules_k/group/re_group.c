@@ -37,6 +37,7 @@
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../route_struct.h"
+#include "../../lvalue.h"
 #include "group_mod.h"
 #include "re_group.h"
 #include "group.h"
