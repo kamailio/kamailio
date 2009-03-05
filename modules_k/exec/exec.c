@@ -92,6 +92,7 @@ error01:
 int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 
 	struct action act;
+	struct run_act_ctx ra_ctx;
 	int cmd_len;
 	FILE *pipe;	
 	char *cmd_line;
@@ -157,9 +158,10 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 		if (uri_cnt==0) {
 			memset(&act, 0, sizeof(act));
 			act.type = SET_URI_T;
-			act.elem[0].type = STRING_ST;
-			act.elem[0].u.string = uri.s;
-			if (do_action(&act, msg)<0) {
+			act.val[0].type = STRING_ST;
+			act.val[0].u.string = uri.s;
+			init_run_actions_ctx(&ra_ctx);
+			if (do_action(&ra_ctx, &act, msg)<0) {
 				LM_ERR("the action for has failed\n");
 				ser_error=E_OUT_OF_MEM;
 				goto error02;
