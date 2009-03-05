@@ -48,6 +48,18 @@ check_kamailio_config ()
 	fi
 }
 
+check_homedir ()
+{
+    # Create HOMEDIR directory in case it doesn't exist
+    if [ ! -d $HOMEDIR ]; then
+        mkdir $HOMEDIR
+    fi
+
+    # Set the appropiate owner and group
+    chown ${USER}:${GROUP} $HOMEDIR
+}
+
+
 create_radius_seqfile ()
 {
     # Create a radius sequence file to be used by the radius client if
@@ -58,17 +70,14 @@ create_radius_seqfile ()
     # write to the file. If the file exists before kamailio starts, it
     # won't change it's ownership and will be writable for both root
     # and kamailio, no matter what options are chosen at install time
-    RADIUS_SEQ_FILE=/var/run/kamailio/kamailio_radius.seq
-    if [ -d /var/run/kamailio ]; then
-	chown ${USER}:${GROUP} /var/run/kamailio
+    RADIUS_SEQ_FILE=$HOMEDIR/kamailio_radius.seq
 
-	if [ ! -f $RADIUS_SEQ_FILE ]; then
-	    touch $RADIUS_SEQ_FILE
-	fi
-
-	chown ${USER}:${GROUP} $RADIUS_SEQ_FILE
-	chmod 660 $RADIUS_SEQ_FILE
+    if [ ! -f $RADIUS_SEQ_FILE ]; then
+        touch $RADIUS_SEQ_FILE
     fi
+
+    chown ${USER}:${GROUP} $RADIUS_SEQ_FILE
+    chmod 660 $RADIUS_SEQ_FILE
 }
 
 test -f $DAEMON || exit 0
@@ -106,6 +115,7 @@ OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
 case "$1" in
   start|debug)
 	check_kamailio_config
+	check_homedir
 	create_radius_seqfile
 
 	if [ "$1" != "debug" ]; then
@@ -125,6 +135,7 @@ case "$1" in
 	;;
   restart|force-reload)
 	check_kamailio_config
+	check_homedir
 	create_radius_seqfile
 
 	echo -n "Restarting $DESC: $NAME"
