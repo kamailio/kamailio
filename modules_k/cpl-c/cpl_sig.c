@@ -68,13 +68,8 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		if((*locs)->addr.received.s && (*locs)->addr.received.len) {
 			LM_DBG("rewriting Destination URI "
 				"with <%s>\n",(*locs)->addr.received.s);
-			act.type = SET_DSTURI_T;
-			act.elem[0].type = STRING_ST;
-			act.elem[0].u.s = (*locs)->addr.received;
-			act.next = 0;
-			/* push the action */
-			if (do_action(&act, msg) < 0) {
-				LM_ERR("do_action failed\n");
+			if (set_dst_uri(msg, &(*locs)->addr.received) < 0) {
+				LM_ERR("Error while setting the dst uri\n");
 				goto error;
 			}
 		}
