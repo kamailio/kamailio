@@ -59,6 +59,9 @@ MODULE_VERSION
 # define INLINE
 #endif
 
+/* WARNING: Keep this aligned with parser/msg_parser.h! */
+#define FL_USE_MEDIA_PROXY (1<<12)
+
 #define SIGNALING_IP_AVP_SPEC  "$avp(s:signaling_ip)"
 #define MEDIA_RELAY_AVP_SPEC   "$avp(s:media_relay)"
 
