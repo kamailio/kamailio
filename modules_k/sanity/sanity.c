@@ -46,16 +46,6 @@ int sanity_reply(struct sip_msg* _msg, int _code, char *_reason)
 	return sl.send_reply(_msg, _code, &s);
 }
 
-static inline char* q_memchr(char* p, int c, unsigned int size)
-{
-	char* end;
-
-	end=p+size;
-	for(;p<end;p++){
-		if (*p==(unsigned char)c) return p;
-	}
-	return 0;
-}
 
 /* check if the given string is a valid unsigned int value */
 int str2valid_uint(str* _number, unsigned int* _result) {
