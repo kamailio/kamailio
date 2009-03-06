@@ -99,6 +99,9 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 /* WARNING: Value (1 << 11) is temporarily reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
 
+/* WARNING: Value (1 << 12) is temporarily reserved for use in kamailio
+ * media proxy module (flag FL_USE_MEDIA_PROXY)! */
+
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 
 
