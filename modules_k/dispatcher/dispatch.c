@@ -1032,20 +1032,21 @@ static inline int ds_get_index(int group, ds_set_p *index)
 static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 {
 	struct action act;
+	struct run_act_ctx ra_ctx;
 	str *duri = NULL;
 	switch(mode)
 	{
 		case 1:
+			memset(&act, '\0', sizeof(act));
 			act.type = SET_HOSTALL_T;
-			act.elem[0].type = STRING_ST;
+			act.val[0].type = STRING_ST;
 			if(uri->len>4 
 					&& strncasecmp(uri->s,"sip:",4)==0)
-				act.elem[0].u.string = uri->s+4;
+				act.val[0].u.string = uri->s+4;
 			else
-				act.elem[0].u.string = uri->s;
-			act.next = 0;
-	
-			if (do_action(&act, msg) < 0) {
+				act.val[0].u.string = uri->s;
+			init_run_actions_ctx(&ra_ctx);
+			if (do_action(&ra_ctx, &act, msg) < 0) {
 				LM_ERR("error while setting host\n");
 				return -1;
 			}
