@@ -1675,6 +1675,7 @@ mod_init(void)
 {
     pv_spec_t avp_spec;
     int *param;
+	modparam_t type;
 
     // initialize the signaling_ip_avp structure
     if (signaling_ip_avp.spec.s==NULL || *(signaling_ip_avp.spec.s)==0) {
@@ -1711,11 +1712,17 @@ mod_init(void)
         have_dlg_api = True;
 
         // load dlg_flag and default_timeout parameters from the dialog module
-        param = find_param_export("dialog", "dlg_flag", INT_PARAM);
+        param = find_param_export(find_module_by_name("dialog"), "dlg_flag", INT_PARAM, &type);
         if (!param) {
             LM_CRIT("cannot find dlg_flag parameter in the dialog module\n");
             return -1;
         }
+
+		if (type != INT_PARAM) {
+			LM_CRIT("dlg_flag parameter found but with wrong type: %d\n", type);
+			return -1;
+		}
+
         dialog_flag = *param;
 
         // register dialog creation callback
