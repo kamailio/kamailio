@@ -69,6 +69,7 @@
 #include "../../md5utils.h"
 #include "../../globals.h"
 #include "../../lib/kcore/hash_func.h"
+#include "../../lib/kcore/km_ut.h"
 #include "../../locking.h"
 #include <stdio.h>
 #include <stdlib.h>
