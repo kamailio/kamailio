@@ -111,7 +111,11 @@ int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 			}
 			p = p->next;
 		}
-		iroute = iroute->sibling;
+
+		for(iroute = iroute->next; iroute; iroute = iroute->next) {
+			if (iroute->type == HDR_ROUTE_T) break;
+		}		
+/*		iroute = iroute->sibling; */
 	}
 
 	for(i=0;i<n;i++){
