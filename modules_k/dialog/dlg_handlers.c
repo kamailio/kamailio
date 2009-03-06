@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -28,17 +28,17 @@
  * 2007-03-06  syncronized state machine added for dialog state. New tranzition
  *             design based on events; removed num_1xx and num_2xx (bogdan)
  * 2007-04-30  added dialog matching without DID (dialog ID), but based only
- *             on RFC3261 elements - based on an original patch submitted 
+ *             on RFC3261 elements - based on an original patch submitted
  *             by Michel Bensoussan <michel@extricom.com> (bogdan)
- * 2007-05-17  new feature: saving dialog info into a database if 
+ * 2007-05-17  new feature: saving dialog info into a database if
  *             realtime update is set(ancuta)
- * 2007-07-06  support for saving additional dialog info : cseq, contact, 
+ * 2007-07-06  support for saving additional dialog info : cseq, contact,
  *             route_set and socket_info for both caller and callee (ancuta)
  * 2007-07-10  Optimized dlg_match_mode 2 (DID_NONE), it now employs a proper
- *             hash table lookup and isn't dependant on the is_direction 
- *             function (which requires an RR param like dlg_match_mode 0 
- *             anyways.. ;) ; based on a patch from 
- *             Tavis Paquette <tavis@galaxytelecom.net> 
+ *             hash table lookup and isn't dependant on the is_direction
+ *             function (which requires an RR param like dlg_match_mode 0
+ *             anyways.. ;) ; based on a patch from
+ *             Tavis Paquette <tavis@galaxytelecom.net>
  *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
  * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
  */
@@ -95,7 +95,7 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;
 
 
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
-		pv_spec_t *timeout_avp_p ,int default_timeout_p, 
+		pv_spec_t *timeout_avp_p ,int default_timeout_p,
 		int seq_match_mode_p)
 {
 	rr_param.s = rr_param_p;
@@ -153,12 +153,12 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
 
 /*usage: dlg: the dialog to add cseq, contact & record_route
  * 		 msg: sip message
- * 		 flag: 0-for a request(INVITE), 
+ * 		 flag: 0-for a request(INVITE),
  * 		 		1- for a reply(200 ok)
  *
  *	for a request: get record route in normal order
  *	for a reply  : get in reverse order, skipping the ones from the request and
- *				   the proxies' own 
+ *				   the proxies' own
  */
 int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	struct cell* t, unsigned int leg, str *tag)
@@ -210,7 +210,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	}
 
 	if(msg->record_route){
-		if( print_rr_body(msg->record_route, &rr_set, leg, 
+		if( print_rr_body(msg->record_route, &rr_set, leg,
 							&skip_recs) != 0 ){
 			LM_ERR("failed to print route records \n");
 			goto error0;
@@ -225,7 +225,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 
 	LM_DBG("route_set %.*s, contact %.*s, cseq %.*s and bind_addr %.*s\n",
 		rr_set.len, rr_set.s, contact.len, contact.s,
-		cseq.len, cseq.s, 
+		cseq.len, cseq.s,
 		msg->rcv.bind_address->sock_str.len,
 		msg->rcv.bind_address->sock_str.s);
 
@@ -310,7 +310,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		/* set start time */
 		dlg->start_ts = (unsigned int)(time(0));
 
-		/* save the settings to the database, 
+		/* save the settings to the database,
 		 * if realtime saving mode configured- save dialog now
 		 * else: the next time the timer will fire the update*/
 		dlg->dflags |= DLG_FLAG_NEW;
@@ -490,8 +490,6 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	link_dlg(dlg, 2/* extra ref for the callback and current dlg hook */);
 
 	/* first INVITE seen (dialog created, unconfirmed) */
-	run_create_callbacks( dlg, msg);
-
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID &&
 			add_dlg_rr_param( msg, dlg->h_entry, dlg->h_id)<0 ) {
 		LM_ERR("failed to add RR param\n");
@@ -514,6 +512,8 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 
 	if (t)
 		t->dialog_ctx = (void*) dlg;
+
+	run_create_callbacks( dlg, msg);
 
 	if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
@@ -685,11 +685,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 							dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s,
 							dlg->tag[DLG_CALLEE_LEG].len);
 					unref_dlg(dlg, 1);
-					
+
 					// Reset variables in order to do a lookup based on SIP-Elements.
 					dlg = 0;
 					dir = DLG_DIR_NONE;
-					
+
 					if (seq_match_mode==SEQ_MATCH_STRICT_ID )
 						return;
 				}
@@ -843,7 +843,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	}
 
 	if ((dlg->dflags&DLG_FLAG_TOBYE)
-			&& (dlg->state==DLG_STATE_CONFIRMED_NA 
+			&& (dlg->state==DLG_STATE_CONFIRMED_NA
 				|| dlg->state==DLG_STATE_CONFIRMED))
 	{
 		dlg_bye_all(dlg, NULL);
