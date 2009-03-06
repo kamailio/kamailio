@@ -40,6 +40,7 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_to.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../pt.h"
