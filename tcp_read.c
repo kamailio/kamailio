@@ -170,13 +170,13 @@ again:
 			*flags|=RD_CONN_EOF;
 			DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
 		}else{
-			if (unlikely(c->state==S_CONN_CONNECT))
+			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
 				c->state=S_CONN_OK;
 		}
 		/* short read */
 		*flags|=RD_CONN_SHORT_READ;
 	}else{ /* else normal full read */
-		if (unlikely(c->state==S_CONN_CONNECT))
+		if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
 			c->state=S_CONN_OK;
 	}
 #ifdef EXTRA_DEBUG
@@ -615,7 +615,8 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			if (unlikely(con->state!=S_CONN_OK && con->state!=S_CONN_ACCEPT))
+				goto end_req; /* not enough data */
 		}
 #endif
 
