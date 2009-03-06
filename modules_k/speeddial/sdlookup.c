@@ -48,13 +48,14 @@ static char useruri_buf[MAX_USERURI_SIZE];
 static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 {
 	struct action act;
+	struct run_act_ctx ra_ctx;
 
+	memset(&act, '\0', sizeof(act));
 	act.type = SET_URI_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = _s;
-	act.next = 0;
-	
-	if (do_action(&act, _m) < 0)
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = _s;
+	init_run_actions_ctx(&ra_ctx);
+	if (do_action(&ra_ctx, &act, _m) < 0)
 	{
 		LM_ERR("do_action failed\n");
 		return -1;
