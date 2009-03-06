@@ -65,12 +65,16 @@
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../mod_fix.h"
+#include "../../md5.h"
 #include "../../md5utils.h"
 #include "../../globals.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../locking.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 MODULE_VERSION
 
@@ -472,6 +476,59 @@ error:
 	free_mi_tree(rpl_tree);
 	return 0;
 }
+
+
+/*! \brief
+  * Calculate a MD5 digest over a file.
+  * This function assumes 32 bytes in the destination buffer.
+  * \param dest destination
+  * \param file_name file for that the digest should be calculated
+  * \return zero on success, negative on errors
+  */
+static int MD5File(char *dest, const char *file_name)
+{
+	if (!dest || !file_name) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	MD5_CTX context;
+	FILE *input;
+	unsigned char buffer[32768];
+	unsigned char hash[16];
+	unsigned int counter, size;
+	
+	struct stat stats;
+    if (stat(file_name, &stats) != 0) {
+		LM_ERR("could not stat file %s\n", file_name);
+		return -1;
+	}
+	size = stats.st_size;
+
+	MD5Init(&context);
+	if((input = fopen(file_name, "rb")) == NULL) {
+		LM_ERR("could not open file %s\n", file_name);
+		return -1;
+	}
+
+	while(size) {
+		counter = (size > sizeof(buffer)) ? sizeof(buffer) : size;
+		if ((counter = fread(buffer, 1, counter, input)) <= 0) {
+			fclose(input);
+			return -1;
+		}
+		MD5Update(&context, buffer, counter);
+		size -= counter;
+	}
+	fclose(input);
+	MD5Final(hash, &context);
+
+	string2hex(hash, 16, dest);
+	LM_DBG("MD5 calculated: %.*s for file %s\n", MD5_LEN, dest, file_name);
+
+	return 0;
+}
+
 
 static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param )
 {
