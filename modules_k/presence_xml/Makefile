@@ -10,7 +10,7 @@ auto_gen=
 NAME=presence_xml.so
 LIBS=
 
-DEFS+=-I$(SYSBASE)/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
       -I$(LOCALBASE)/include
 LIBS+=-L$(SYSBASE)/include/lib  -L$(LOCALBASE)/lib -lxml2
 
