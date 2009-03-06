@@ -133,12 +133,6 @@ static int mod_init(void)
 		return -2;
 	}
 
-	vend = rc_dict_findvend(rh, "Cisco");
-	if (vend == NULL) {
-		LM_DBG("no `Cisco' vendor in Radius dictionary\n");
-		attrs[A_CISCO_AVPAIR].n = NULL;
-	}
-
 	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
 	if (!bind_auth) {
 		LM_ERR("unable to find bind_auth function. Check if you load the auth module.\n");
@@ -175,8 +169,13 @@ static int mod_init(void)
 	attrs[A_DIGEST_REALM].n			= "Digest-Realm";
 	attrs[A_DIGEST_USER_NAME].n		= "Digest-User-Name";
 	attrs[A_USER_NAME].n			= "User-Name";
-	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
 	attrs[A_SIP_AVP].n			= "SIP-AVP";
+	vend = rc_dict_findvend(rh, "Cisco");
+	if (vend == NULL) {
+	    LM_DBG("no `Cisco' vendor in Radius dictionary\n");
+	} else {
+	    attrs[A_CISCO_AVPAIR].n		= "Cisco-AVPair";
+	}
 	n = A_MAX;
 	n += extra2attrs(auth_extra, attrs, n);
 	memset(vals, 0, sizeof(vals));
