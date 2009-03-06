@@ -39,6 +39,7 @@ int purple_send_sip_msg(char *to, char *from, char *msg) {
 	str msg_type = { "MESSAGE", 7 };
 	str ruri, hdr, fromstr, tostr, msgstr;
 	char hdr_buf[512], ruri_buf[512];
+	uac_req_t uac_r;
 	
 	ruri.s = ruri_buf;
 	ruri.len = snprintf(ruri_buf, sizeof(ruri_buf), "%s;proto=purple", to);
@@ -53,7 +54,8 @@ int purple_send_sip_msg(char *to, char *from, char *msg) {
 	msgstr.s = msg;
 	msgstr.len = strlen(msg);
 
-	if (tmb.t_request(&msg_type, &ruri, &tostr, &fromstr, &hdr, &msgstr, 0, 0, 0) < 0) {
+	set_uac_req(&uac_r, &msg_type, &hdr, &msgstr, 0, 0, 0, 0);
+	if (tmb.t_request(&uac_r, &ruri, &tostr, &fromstr, 0) < 0) {
 		LM_ERR("error sending request\n");
 		return -1;
 	}
