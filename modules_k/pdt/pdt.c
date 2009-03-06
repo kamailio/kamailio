@@ -505,6 +505,7 @@ error:
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 {
 	struct action act;
+	struct run_act_ctx ra_ctx;
 	if(msg==NULL || d==NULL)
 	{
 		LM_ERR("bad parameters\n");
@@ -513,27 +514,28 @@ static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	
 	if(mode==0 || (mode==1 && prefix.len>0))
 	{
+		memset(&act, '\0', sizeof(act));
 		act.type = STRIP_T;
-		act.elem[0].type = NUMBER_ST;
+		act.val[0].type = NUMBER_ST;
 		if(mode==0)
-			act.elem[0].u.number = plen + prefix.len;
+			act.val[0].u.number = plen + prefix.len;
 		else
-			act.elem[0].u.number = prefix.len;
-		act.next = 0;
+			act.val[0].u.number = prefix.len;
 
-		if (do_action(&act, msg) < 0)
+		init_run_actions_ctx(&ra_ctx);
+		if (do_action(&ra_ctx, &act, msg) < 0)
 		{
 			LM_ERR("failed to remove prefix\n");
 			return -1;
 		}
 	}
 	
+	memset(&act, '\0', sizeof(act));
 	act.type = SET_HOSTPORT_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = d->s;
-	act.next = 0;
-
-	if (do_action(&act, msg) < 0)
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = d->s;
+	init_run_actions_ctx(&ra_ctx);
+	if (do_action(&ra_ctx, &act, msg) < 0)
 	{
 		LM_ERR("failed to change domain\n");
 		return -1;
