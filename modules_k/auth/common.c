@@ -1,3 +1,4 @@
+
 /*
  * $Id$
  *
@@ -40,6 +41,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
+#include "../../lib/kcore/parser_helpers.h"
 #include "auth_mod.h"
 #include "common.h"
 
