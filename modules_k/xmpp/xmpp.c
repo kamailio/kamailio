@@ -261,6 +261,7 @@ int xmpp_send_sip_msg(char *from, char *to, char *msg)
 	str msg_type = { "MESSAGE", 7 };
 	str hdr, fromstr, tostr, msgstr;
 	char buf[512];
+	uac_req_t uac_r;
 	
 	hdr.s = buf;
 	hdr.len = snprintf(buf, sizeof(buf),
@@ -273,16 +274,13 @@ int xmpp_send_sip_msg(char *from, char *to, char *msg)
 	msgstr.s = msg;
 	msgstr.len = strlen(msg);
 
+	set_uac_req(&uac_r, &msg_type, &hdr, &msgstr, 0, 0, 0, 0);
 	return tmb.t_request(
-			&msg_type,						/*!< Type of the message */
+			&uac_r,
 			0,							/*!< Request-URI */
 			&tostr,							/*!< To */
 			&fromstr,						/*!< From */
-			&hdr,							/*!< Optional headers */
-			&msgstr,						/*!< Message body */
-	(outbound_proxy.s)?&outbound_proxy:NULL,/* Outbound proxy*/
-			0,								/*!< Callback function */
-			0								/*!< Callback parameter */
+			(outbound_proxy.s)?&outbound_proxy:NULL/* Outbound proxy*/
 			);
 }
 
