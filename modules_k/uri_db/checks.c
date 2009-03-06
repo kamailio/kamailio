@@ -35,6 +35,7 @@
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
+#include "../../lib/kcore/parser_helpers.h"
 #include "../../ut.h"                   /* Handy utilities */
 #include "../../lib/srdb1/db.h"                /* Database API */
 #include "uridb_mod.h"
