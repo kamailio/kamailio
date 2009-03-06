@@ -198,7 +198,7 @@ static int mi_mod_init(void)
 			return -1;
 		}
 		
-		if(! (host = resolvehost(host_s, 0)) ) {
+		if(! (host = resolvehost(host_s)) ) {
 			LM_ERR("failed to resolve %s\n", host_s);
 			return -1;
 		}
