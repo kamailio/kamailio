@@ -1627,6 +1627,7 @@ void ds_check_timer(unsigned int ticks, void* param)
 {
 	int j;
 	ds_set_p list;
+	uac_req_t uac_r;
 	
 	/* Check for the list. */
 	if(_ds_list==NULL || _ds_list_nr<=0)
@@ -1651,15 +1652,13 @@ void ds_check_timer(unsigned int ticks, void* param)
 				 * int request(str* m, str* ruri, str* to, str* from, str* h,
 				 *		str* b, str *oburi,
 				 *		transaction_cb cb, void* cbp); */
-				if (tmb.t_request(&ds_ping_method,
+				set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0, 0, ds_options_callback,
+							(void*)(long)list->id);
+				if (tmb.t_request(&uac_r,
 							&list->dlist[j].uri,
 							&list->dlist[j].uri,
 							&ds_ping_from,
-							NULL,
-							NULL,
-							NULL,
-							ds_options_callback,
-							(void*)(long)list->id) < 0) {
+							0) < 0) {
 					LM_ERR("unable to ping [%.*s]\n",
 							list->dlist[j].uri.len, list->dlist[j].uri.s);
 				}
