@@ -811,6 +811,7 @@ int send_subscribe(subs_info_t* subs)
 	int expires;
 	int flag;
 	int result;
+	uac_req_t uac_r;
 
 	print_subs(subs);
 
@@ -882,16 +883,14 @@ insert:
 		}
 		hentity->flag= flag;
 
+		set_uac_req(&uac_r, &met, str_hdr, 0, 0, 0,subs_cback_func, 
+					(void*)hentity);
 		result= tmb.t_request
-			(&met,						  /* Type of the message */
+			(&uac_r,						  /* Type of the message */
 		subs->remote_target?subs->remote_target:subs->pres_uri,/* Request-URI*/
 			subs->pres_uri,				  /* To */
 			subs->watcher_uri,			  /* From */
-			str_hdr,					  /* Optional headers including CRLF */
-			0,							  /* Message body */
-			subs->outbound_proxy,		  /* Outbound_proxy */	
-			subs_cback_func,		      /* Callback function */
-			(void*)hentity			      /* Callback parameter */
+			subs->outbound_proxy		  /* Outbound_proxy */	
 			);
 		if(result< 0)
 		{
@@ -969,14 +968,10 @@ insert:
 
 	//	hentity->flag= flag;
 		LM_DBG("event parameter: %d\n", hentity->event);	
-		result= tmb.t_request_within
-			(&met,
-			str_hdr,
-			0,
-			td,
-			subs_cback_func,
-			(void*)hentity
-			);
+
+		set_uac_req(&uac_r, &met, str_hdr, 0, td, 0,subs_cback_func, 
+					(void*)hentity);
+		result= tmb.t_request_within(&uac_r);
 		if(result< 0)
 		{
 			shm_free(hentity);

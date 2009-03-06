@@ -397,6 +397,7 @@ int send_publish( publ_info_t* publ )
 	int result;
 	int ret_code= 0;
 	pua_event_t* ev= NULL;
+	uac_req_t uac_r;
 
 	LM_DBG("pres_uri=%.*s\n", publ->pres_uri->len, publ->pres_uri->s );
 	
@@ -543,15 +544,13 @@ send_publish:
 	if(body && body->len && body->s )
 		LM_DBG("body:\n%.*s\n ", body->len, body->s);
 
-	result= tmb.t_request(&met,			/*! Type of the message */
+	set_uac_req(&uac_r, &met, str_hdr, body, 0, 0, publ_cback_func,
+				(void*)cb_param);
+	result= tmb.t_request(&uac_r,
 			publ->pres_uri,			/*! Request-URI */
 			publ->pres_uri,			/*! To */
 			publ->pres_uri,			/*! From */
-			str_hdr,			/*! Optional headers */
-			body,				/*! Message body */
-			&outbound_proxy,		/*! Outbound proxy*/
-			publ_cback_func,		/*! Callback function */
-			(void*)cb_param			/*! Callback parameter */
+			&outbound_proxy		/*! Outbound proxy*/
 			);
 
 	if(result< 0)

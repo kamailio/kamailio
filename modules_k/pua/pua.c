@@ -638,6 +638,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 	str* str_hdr= NULL;
 	int expires;
 	int result;
+	uac_req_t uac_r;
 	
 	if(p->desired_expires== 0)
 		expires= 3600;
@@ -664,15 +665,15 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			LM_ERR("while constructing publ callback param\n");
 			goto error;
 		}	
-		result= tmb.t_request(&met,				/* Type of the message */
+		
+		set_uac_req(&uac_r, &met, str_hdr, 0, 0, 0, publ_cback_func, 
+					(void*)cb_param);
+
+		result= tmb.t_request(&uac_r,
 				p->pres_uri,					/* Request-URI */
 				p->pres_uri,					/* To */
 				p->pres_uri,					/* From */
-				str_hdr,						/* Optional headers */
-				0,								/* Message body */
-				0,								/* Outbound proxy*/
-				publ_cback_func,				/* Callback function */
-				(void*)cb_param					/* Callback parameter */
+				0								/* Outbound proxy*/
 				);
 		if(result< 0)
 		{
@@ -709,14 +710,11 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			goto error;
 
 		}	
-		result= tmb.t_request_within
-				(&met,
-				str_hdr,
-				0,
-				td,
-				subs_cback_func,
-				(void*)cb_param	
-				);
+
+		set_uac_req(&uac_r, &met, str_hdr, 0, td, 0, subs_cback_func, 
+					(void*)cb_param);
+		
+		result= tmb.t_request_within(&uac_r);
 		if(result< 0)
 		{
 			LM_ERR("in t_request function\n"); 
