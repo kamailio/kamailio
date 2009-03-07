@@ -42,6 +42,29 @@
 
 /*#include "cfg_parser.h" */
 
+/* Various types of route sections, make sure that the values defined in the
+ * macros below occupy disjunct bits so that they can also be used as flags
+ */
+#define REQUEST_ROUTE (1 << 0)
+#define FAILURE_ROUTE (1 << 1)
+#define ONREPLY_ROUTE (1 << 2)
+#define BRANCH_ROUTE  (1 << 3)
+#define ONSEND_ROUTE  (1 << 4)
+#define ERROR_ROUTE   (1 << 5)
+#define LOCAL_ROUTE   (1 << 6)
+
+/* The value of this variable is one of the route types defined above and it
+ * determines the type of the route being executed, module functions can use
+ * this value to determine the type of the route they are being executed in
+ */
+extern int route_type;
+
+#define set_route_type(type) \
+	do {					 \
+		route_type = (type); \
+	} while(0)
+
+#define is_route_type(type) (route_type == (type))
 
 struct route_list{
 	struct action** rlist;
