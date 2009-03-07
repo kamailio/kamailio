@@ -1454,7 +1454,7 @@ int t_unref( struct sip_msg* p_msg  )
 		kr=get_kr();
 		if (unlikely(kr == REQ_ERR_DELAYED)){
 			DBG("t_unref: delayed error reply generation(%d)\n", tm_error);
-			if (unlikely(rmode==MODE_ONFAILURE)){
+			if (unlikely(is_route_type(FAILURE_ROUTE))){
 				BUG("tm: t_unref: called w/ kr=REQ_ERR_DELAYED in failure"
 						" route for %p\n", T);
 			}else if (unlikely( kill_transaction(T, tm_error)<=0 )){
@@ -1675,8 +1675,8 @@ int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to)
 	}
 	
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		set_msgid_val(user_fr_inv_timeout, msg->id, int, (int)fr_inv);
@@ -1693,8 +1693,8 @@ int t_reset_fr()
 	struct cell *t;
 
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
@@ -1739,8 +1739,8 @@ int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to)
 	} 
 	
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		set_msgid_val(user_rt_t1_timeout, msg->id, int, (int)retr_t1);
@@ -1757,8 +1757,8 @@ int t_reset_retr()
 	struct cell *t;
 
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		memset(&user_rt_t1_timeout, 0, sizeof(user_rt_t1_timeout));
@@ -1799,8 +1799,8 @@ int t_set_max_lifetime(struct sip_msg* msg,
 	}
 	
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		set_msgid_val(user_noninv_max_lifetime, msg->id, int,
@@ -1820,8 +1820,8 @@ int t_reset_max_lifetime()
 	struct cell *t;
 
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));

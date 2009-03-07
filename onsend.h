@@ -68,6 +68,7 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 		onsnd_info.buf=buf;
 		onsnd_info.len=len;
 		p_onsend=&onsnd_info;
+		set_route_type(ONSEND_ROUTE);
 		init_run_actions_ctx(&ra_ctx);
 		ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
 		p_onsend=0; /* reset it */

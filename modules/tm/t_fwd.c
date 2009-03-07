@@ -97,6 +97,7 @@
 #include "../../data_lump.h"
 #include "../../onsend.h"
 #include "../../compiler_opt.h"
+#include "../../route.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -126,8 +127,8 @@ void t_on_branch( unsigned int go_to )
 {
 	struct cell *t = get_t();
 
-       /* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-        * in MODE_REQUEST T will be set only if the transaction was already
+       /* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+        * in REQUEST_ROUTE T will be set only if the transaction was already
         * created; if not -> use the static variable */
 	if (!t || t==T_UNDEFINED ) {
 		goto_on_branch=go_to;
@@ -191,6 +192,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(branch_route)) {
 		reset_static_buffer();
 		     /* run branch_route actions if provided */
+		set_route_type(BRANCH_ROUTE);
 		init_run_actions_ctx(&ra_ctx);
 		if (run_actions(&ra_ctx, branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
@@ -812,7 +814,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		 * is called (we are already holding the reply mutex for the cancel
 		 * transaction).
 		 */
-		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
+		if ((is_route_type(FAILURE_ROUTE)) && (t_cancel==get_t()))
 			t_reply_unsafe( t_cancel, cancel_msg, 500, "cancel error");
 		else
 			t_reply( t_cancel, cancel_msg, 500, "cancel error");
@@ -825,7 +827,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		 * is called (we are already hold the reply mutex for the cancel
 		 * transaction).
 		 */
-		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
+		if ((is_route_type(FAILURE_ROUTE)) && (t_cancel==get_t()))
 			t_reply_unsafe( t_cancel, cancel_msg, 200, CANCELING );
 		else
 			t_reply( t_cancel, cancel_msg, 200, CANCELING );
@@ -838,7 +840,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		 * is called (we are already hold the reply mutex for the cancel
 		 * transaction).
 		 */
-		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
+		if ((is_route_type(FAILURE_ROUTE)) && (t_cancel==get_t()))
 			t_reply_unsafe( t_cancel, cancel_msg, 200, CANCEL_DONE );
 		else
 			t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
@@ -1046,7 +1048,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (first_branch==0) {
 #ifdef POSTPONE_MSG_CLONING
 		/* update the shmem-ized msg with the lumps */
-		if ((rmode == MODE_REQUEST) &&
+		if ((is_route_type(REQUEST_ROUTE)) &&
 			save_msg_lumps(t->uas.request, p_msg)) {
 				LOG(L_ERR, "ERROR: t_forward_nonack: "
 					"failed to save the message lumps\n");
@@ -1102,7 +1104,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	ser_error=0; /* clear branch adding errors */
 	/* send them out now */
 	success_branch=0;
-	lock_replies= ! ((rmode==MODE_ONFAILURE) && (t==get_t()));
+	lock_replies= ! ((is_route_type(FAILURE_ROUTE)) && (t==get_t()));
 	for (i=first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
 			

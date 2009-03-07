@@ -642,7 +642,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 	reset_kr(0);
 	/* set request mode so that multiple-mode actions know
 	 * how to behave */
-	rmode=MODE_REQUEST;
+	set_route_type(REQUEST_ROUTE);
 
 #ifdef POSTPONE_MSG_CLONING
 	lumps_are_cloned = 0;
@@ -835,20 +835,20 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		break;
 	}
 	
-	switch(rmode) {
-	case MODE_REQUEST:
+	switch(route_type) {
+	case REQUEST_ROUTE:
 		/* use the status of the last sent reply */
 		status = int2str( t->uas.status, 0);
 		break;
 		
-	case MODE_ONREPLY:
+	case ONREPLY_ROUTE:
 		/* use the status of the current reply */
 		status = msg->first_line.u.reply.status.s;
 		backup = status[msg->first_line.u.reply.status.len];
 		status[msg->first_line.u.reply.status.len] = 0;
 		break;
 
-	case MODE_ONFAILURE:
+	case FAILURE_ROUTE:
 		/* use the status of the winning reply */
 		ret = t_pick_branch( -1, 0, t, &lowest_status);
 		if (ret == -1) {
@@ -861,14 +861,14 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		}
 		if (ret < 0) {
 			LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
-				" a final response in MODE_ONFAILURE\n");
+				" a final response in FAILURE_ROUTE\n");
 			goto error;
 		}
 		status = int2str( lowest_status , 0);
 		break;
 
 	default:
-		LOG(L_ERR,"ERROR:t_check_status: unsupported mode %d\n",rmode);
+		LOG(L_ERR,"ERROR:t_check_status: unsupported route type %d\n",route_type);
 		goto error;
 	}
 
@@ -1143,10 +1143,10 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	 * the safe version would lead to a deadlock
 	 */
 	 
-	if (rmode==MODE_ONFAILURE) {
+	if (is_route_type(FAILURE_ROUTE)) {
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
 		ret = t_reply_unsafe(t, msg, code, r);
-	} else if (rmode==MODE_REQUEST) {
+	} else if (is_route_type(REQUEST_ROUTE)) {
 		ret = t_reply( t, msg, code, r);
 	} else {
 		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
@@ -1233,7 +1233,7 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 {
 	struct cell *t;
 
-	if (rmode==MODE_ONFAILURE) {
+	if (is_route_type(FAILURE_ROUTE)) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
@@ -1248,10 +1248,10 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 		}
 		return 1;
 	}
-	if (rmode==MODE_REQUEST)
+	if (is_route_type(REQUEST_ROUTE))
 		return t_relay_to( p_msg, proxy, force_proto,
 			0 /* no replication */ );
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
+	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n", route_type);
 	return 0;
 }
 
@@ -1517,8 +1517,8 @@ static int t_set_auto_inv_100(struct sip_msg* msg, char* p1, char* p2)
 	
 	if (get_int_fparam(&state, msg, (fparam_t*)p1) < 0) return -1;
 	t=get_t();
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
 		if (state)
