@@ -1289,6 +1289,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 int ds_next_dst(struct sip_msg *msg, int mode)
 {
+	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
 	int_str avp_value;
@@ -1300,11 +1301,11 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	}
 
 
-	prev_avp = search_first_avp(dst_avp_type, dst_avp_name, &avp_value, 0);
+	prev_avp = search_first_avp(dst_avp_type, dst_avp_name, &avp_value, &st);
 	if(prev_avp==NULL)
 		return -1; /* used avp deleted -- strange */
 
-	avp = search_next_avp(prev_avp, &avp_value);
+	avp = search_next_avp(&st, &avp_value);
 	destroy_avp(prev_avp);
 	if(avp==NULL || !(avp->flags&AVP_VAL_STR))
 		return -1; /* no more avps or value is int */
