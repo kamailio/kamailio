@@ -248,6 +248,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	str hdrs;
 	int foo;
 	char *p;
+	uac_req_t uac_r;
 
 	from.s = hdrs.s = 0;
 	from.len = hdrs.len = 0;
@@ -286,15 +287,12 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	}
 
 	/* sending the request */
-	foo = tmb.t_request( &msg_type,   /* request type */
+	set_uac_req(&uac_r, &msg_type, &hdrs, body, 0, 0, 0, 0);
+	foo = tmb.t_request( &uac_r,
 			0,                        /* Request-URI */
 			to,                       /* To */
 			&from,                    /* From */
-			&hdrs,                    /* Additional headers including CRLF */
-			body,                     /* Message body */
-			0,                        /* outbound uri */
-			0,                        /* Callback function */
-			0                         /* Callback parameter */
+			0                        /* outbound uri */
 		);
 	if (from.s) pkg_free(from.s);
 	if (hdrs.s) pkg_free(hdrs.s);
