@@ -63,6 +63,7 @@ int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 {
 	str hdr_append = {0, 0};
 	str tmp;
+	char *t = NULL;
 	
 	tmp.s = int2str((unsigned long)lexpire, &tmp.len);
 	hdr_append.len = 9 + tmp.len + CRLF_LEN
@@ -80,26 +81,32 @@ int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 	strncpy(tmp.s, "Contact: <", 10);
 	tmp.s += 10;
 	strncpy(tmp.s, local_contact->s, local_contact->len);
+	tmp.s[local_contact->len] = '\0';
+	t = strstr(tmp.s, ";transport=");
 	tmp.s += local_contact->len;
-	switch (msg->rcv.proto)
+	if(t==NULL)
 	{
-		case PROTO_TCP:
-			strncpy(tmp.s, ";transport=tcp", 14);
-			tmp.s += 14;
-			hdr_append.len -= 1;
-		break;
-		case PROTO_TLS:
-			strncpy(tmp.s, ";transport=tls", 14);
-			tmp.s += 14;
-			hdr_append.len -= 1;
-		break;
-		case PROTO_SCTP:
-			strncpy(tmp.s, ";transport=sctp", 15);
-			tmp.s += 15;
-			hdr_append.len -= 1;
-		break;
-		default:
-			hdr_append.len -= 15;
+		switch (msg->rcv.proto)
+		{
+			case PROTO_TCP:
+				strncpy(tmp.s, ";transport=tcp", 14);
+				tmp.s += 14;
+				hdr_append.len -= 1;
+			break;
+			case PROTO_TLS:
+				strncpy(tmp.s, ";transport=tls", 14);
+				tmp.s += 14;
+				hdr_append.len -= 1;
+			break;
+			case PROTO_SCTP:
+				strncpy(tmp.s, ";transport=sctp", 15);
+				tmp.s += 15;
+			break;
+			default:
+				hdr_append.len -= 15;
+		}
+	} else {
+		hdr_append.len -= 15;
 	}
 	*tmp.s = '>';
 	strncpy(tmp.s+1, CRLF, CRLF_LEN);

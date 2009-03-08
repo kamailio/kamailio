@@ -84,6 +84,7 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	int port;
 	int len;
 	str* contact;
+	int plen;
 
 	contact= (str*)pkg_malloc(sizeof(str));
 	if(contact== NULL)
@@ -102,6 +103,7 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	memset(contact->s, 0, LCONTACT_BUF_SIZE);
 	contact->len= 0;
 	
+	plen = 3;
 	if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
 		proto= "udp";
 	else
@@ -110,6 +112,11 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	else	
 	if(msg->rcv.proto== PROTO_TCP)
 		proto= "tcp";
+	else	
+	if(msg->rcv.proto== PROTO_SCTP) {
+		proto= "sctp";
+		plen = 4;
+	}
 	else
 	{
 		LM_ERR("unsupported proto\n");
@@ -153,8 +160,8 @@ static inline str* get_local_contact(struct sip_msg* msg)
 		return NULL;
 	}	
 	contact->len+= len;
-	strncpy(contact->s+ contact->len, proto, 3);
-	contact->len += 3;
+	strncpy(contact->s+ contact->len, proto, plen);
+	contact->len += plen;
 	
 	return contact;
 	
