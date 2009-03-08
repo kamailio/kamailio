@@ -365,7 +365,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	struct sip_uri inv_uri;
 	del_member_t *cback_param = NULL;
 	int result;
-
+	uac_req_t uac_r;
 
 	size = cmd->param[0].len+2 ;	
 	add_domain = 1;
@@ -491,15 +491,14 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	cback_param->member_domain = member->domain;
 	cback_param->inv_uri = member->uri;
 	/*?!?! possible race with 'remove user' */
-	result= tmb.t_request(&imc_msg_type,				/* Request Method */
+
+	set_uac_req(&uac_r, &imc_msg_type, &imc_hdr_ctype, &body, 0, 0,
+				imc_inv_callback, (void*)(cback_param));
+	result= tmb.t_request(&uac_r,
 				&member->uri,							/* Request-URI */
 				&member->uri,							/* To */
 				&room->uri,								/* From */
-				&imc_hdr_ctype,							/* Extra headers */
-				&body,						            /* Message body */
-				(outbound_proxy.s)?&outbound_proxy:NULL,/* outbound proxy*/
-				imc_inv_callback,						/* callback function*/
-				(void*)(cback_param)					/* callback param*/
+				(outbound_proxy.s)?&outbound_proxy:NULL/* outbound proxy*/
 			);				
 	if(result< 0)
 	{
@@ -979,20 +978,18 @@ error:
 int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 {
 	str body;
+	uac_req_t uac_r;
 
 	body.s   = IMC_HELP_MSG;
 	body.len = IMC_HELP_MSG_LEN;
 
 	LM_DBG("to: [%.*s] from: [%.*s]\n", src->len, src->s, dst->len, dst->s);
-	tmb.t_request(&imc_msg_type,						/* Request method */
+	set_uac_req(&uac_r, &imc_msg_type, &imc_hdr_ctype, &body, 0, 0, 0, 0);
+	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
 				src,									/* To */
 				dst,									/* From */
-				&imc_hdr_ctype,							/* Headers */
-				&body,									/* Body */
-				(outbound_proxy.s)?&outbound_proxy:NULL,/* outbound proxy */
-				NULL,									/* callback function */
-				NULL									/* callback parameter*/
+				(outbound_proxy.s)?&outbound_proxy:NULL/* outbound proxy */
 				);
 	return 0;
 }
@@ -1003,6 +1000,7 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 {
 	str body;
+	uac_req_t uac_r;
 
 	body.s   = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE,
@@ -1016,15 +1014,12 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 	}
 
 	LM_DBG("to: [%.*s] from: [%.*s]\n", src->len, src->s, dst->len, dst->s);
-	tmb.t_request(&imc_msg_type,						/* Request method */
+	set_uac_req(&uac_r, &imc_msg_type, &imc_hdr_ctype, &body, 0, 0, 0, 0);
+	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
 				src,									/* To */
 				dst,									/* From */
-				&imc_hdr_ctype,							/* Headers */
-				&body,									/* Body */
-				(outbound_proxy.s)?&outbound_proxy:NULL,/* outbound proxy */
-				NULL,									/* callback function */
-				NULL									/* callback parameter*/
+				(outbound_proxy.s)?&outbound_proxy:NULL /* outbound proxy */
 			);
 	return 0;
 }
@@ -1119,18 +1114,16 @@ int imc_room_broadcast(imc_room_p room, str *ctype, str *body)
  */
 int imc_send_message(str *src, str *dst, str *headers, str *body)
 {
+	uac_req_t uac_r;
 	if(src==NULL || dst==NULL || body==NULL)
 		return -1;
 	/* to-do: callbac to remove user fi delivery fails */
-	tmb.t_request(&imc_msg_type,						/* Request method */
+	set_uac_req(&uac_r, &imc_msg_type, headers, body, 0, 0, 0, 0);
+	tmb.t_request(&uac_r,
 			NULL,										/* Request-URI */
 			dst,										/* To */
 			src,										/* From */
-			headers,									/* Headers */
-			body,										/* Body */
-			(outbound_proxy.s)?&outbound_proxy:NULL,	/* outbound proxy */
-			NULL,										/* callback function */
-			NULL										/* callback parameter */
+			(outbound_proxy.s)?&outbound_proxy:NULL  	/* outbound proxy */
 		);
 	return 0;
 }
@@ -1147,6 +1140,7 @@ void imc_inv_callback( struct cell *t, int type, struct tmcb_params *ps)
 	str from_uri_s, to_uri_s;
 	imc_member_p member= NULL;
 	imc_room_p room = NULL;
+	uac_req_t uac_r;
 
 	if(ps->param==NULL || *ps->param==NULL || 
 			(del_member_t*)(*ps->param) == NULL)
@@ -1215,15 +1209,12 @@ send_message:
 
 	LM_DBG("to: %.*s\nfrom: %.*s\nbody: %.*s\n", to_uri_s.len, to_uri_s.s,
 			from_uri_s.len, from_uri_s.s, body_final.len, body_final.s);
-	tmb.t_request(&imc_msg_type,							/* Request method*/
+	set_uac_req(&uac_r, &imc_msg_type, 0, &body_final, 0, 0, 0, 0);
+	tmb.t_request(&uac_r,
 					NULL,									/* Request-URI */
 					&to_uri_s,								/* To */
 					&from_uri_s,							/* From */
-					NULL,									/* Headers */
-					&body_final,							/* Body */
-					(outbound_proxy.s)?&outbound_proxy:NULL,/* outbound proxy*/
-					NULL,								/* callback function */
-					NULL								/* callback parameter*/
+					(outbound_proxy.s)?&outbound_proxy:NULL /* outbound proxy*/
 				);
 	if(room!=NULL)
 	{
