@@ -47,6 +47,9 @@
 		(_dest) += (_len) ;						\
 	}while(0);									\
 	
+/*! append _c char to _dest string */
+#define append_chr(_dest,_c) \
+	*((_dest)++) = _c;
 
 
 /* INTeger-TO-Buffer-STRing : convers an unsigned long to a string 
