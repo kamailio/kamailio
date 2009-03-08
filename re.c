@@ -211,7 +211,6 @@ struct subst_expr* subst_parser(str* subst)
 	char* repl_end;
 	struct replace_with rw[MAX_REPLACE_WITH];
 	int rw_no;
-	int escape;
 	int cflags; /* regcomp flags */
 	int replace_all;
 	struct subst_expr* se;
@@ -250,91 +249,16 @@ struct subst_expr* subst_parser(str* subst)
 	goto error;
 found_re:
 	re_end=p;
-	p++;
-	/* parse replacement */
-	repl=p;
-	rw_no=0;
-	max_pmatch=0;
-	escape=0;
-	for(;p<end; p++){
-		if (escape){
-			escape=0;
-			switch (*p){
-				/* special char escapes */
-				case '\\':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\\';
-					break;
-				case 'n':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\n';
-					break;
-				case 'r':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\r';
-					break;
-				case 't':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\t';
-					break;
-				/* special sip msg parts escapes */
-				case 'u':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_URI;
-					break;
-				/* re matches */
-				case '0': /* allow 0, too, reference to the whole match */
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_NMATCH;
-					rw[rw_no].u.nmatch=(*p)-'0';/* 0 is the whole matched str*/
-					if (max_pmatch<rw[rw_no].u.nmatch) 
-						max_pmatch=rw[rw_no].u.nmatch;
-					break;
-				default: /* just print current char */
-					if (*p!=c){
-						LOG(L_WARN, "subst_parser: WARNING: \\%c unknown"
-								" escape in %.*s\n", *p, subst->len, subst->s);
-					}
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c=*p;
-					break;
-			}
-			rw_no++;
-			if (rw_no>=MAX_REPLACE_WITH){
-				LOG(L_ERR, "ERROR: subst_parser: too many escapes in the"
-							" replace part %.*s\n", subst->len, subst->s);
-				goto error;
-			}
-		}else if (*p=='\\') escape=1;
-		else  if (*p==c) goto found_repl;
+	if (end < (p + 2)) {
+		ERR("subst_parser: String too short\n");
+		goto error;
 	}
-	LOG(L_ERR, "ERROR: subst_parser: missing separator: %.*s\n", subst->len, 
-			subst->s);
-	goto error;
-found_repl:
-	repl_end=p;
+	repl=p+1;
+	if ((rw_no = parse_repl(rw, &p, end, &max_pmatch, WITH_SEP)) < 0)
+		goto error;
+	repl_end = p;
 	p++;
+	
 	/* parse flags */
 	for(;p<end; p++){
 		switch(*p){
