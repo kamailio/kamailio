@@ -50,7 +50,7 @@
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
-#include "../../faked_msg.h"
+#include "../../lib/kcore/faked_msg.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lvalue.h"
