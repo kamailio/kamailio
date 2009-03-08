@@ -381,30 +381,30 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 {
 	int r;
 	str* uri;
+	pv_value_t sv;
 	char* p;
 	char* dest;
 	char* end;
 	int size;
-	
-	rpl->len=replace_len(match, nmatch, pmatch, se, msg);
-	if (rpl->len==0){
-		rpl->s=0; /* empty string */
-		return 0;
-	}
-	rpl->s=pkg_malloc(rpl->len);
-	if (rpl->s==0){
-		LOG(L_ERR, "ERROR: replace_build: out of mem (rpl)\n");
-		goto error;
-	}
+	static char rbuf[REPLACE_BUFFER_SIZE];
+
+#define RBUF_APPEND(dst, src, size) \
+	if ((dst) - rbuf + (size) >= REPLACE_BUFFER_SIZE - 1) {	\
+		ERR("replace_build: Buffer too small\n");			\
+		goto error;											\
+	}														\
+	memcpy((dst), (src), (size));							\
+	(dst) += (size);
+
 	p=se->replacement.s;
 	end=p+se->replacement.len;
-	dest=rpl->s;
+	dest=rbuf;
+	
 	for (r=0; r<se->n_escapes; r++){
 		/* copy the unescaped parts */
 		size=se->replacement.s+se->replace[r].offset-p;
-		memcpy(dest, p, size);
+		RBUF_APPEND(dest, p, size);
 		p+=size+se->replace[r].size;
-		dest+=size;
 		switch(se->replace[r].type){
 			case REPLACE_NMATCH:
 				if ((se->replace[r].u.nmatch<nmatch)&&(
@@ -412,15 +412,13 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 						/* do the replace */
 						size=pmatch[se->replace[r].u.nmatch].rm_eo-
 								pmatch[se->replace[r].u.nmatch].rm_so;
-						memcpy(dest, 
-								match+pmatch[se->replace[r].u.nmatch].rm_so,
-								size);
-						dest+=size;
+						RBUF_APPEND(dest, 
+									match+pmatch[se->replace[r].u.nmatch].rm_so,
+									size);
 				};
 				break;
 			case REPLACE_CHAR:
-				*dest=se->replace[r].u.c;
-				dest++;
+				RBUF_APPEND(dest, &se->replace[r].u.c, 1);
 				break;
 			case REPLACE_URI:
 				if (msg->first_line.type!=SIP_REQUEST){
@@ -430,8 +428,14 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 				}
 				uri= (msg->new_uri.s)?(&msg->new_uri):
 					(&msg->first_line.u.request.uri);
-				memcpy(dest, uri->s, uri->len);
-				dest+=uri->len;
+				RBUF_APPEND(dest, uri->s, uri->len);
+				break;
+			case REPLACE_SPEC:
+				if(pv_get_spec_value(msg, &se->replace[r].u.spec, &sv)!=0) {
+					ERR("replace_build: item substitution returned error\n");
+					break; /* ignore, we can continue */
+				}
+				RBUF_APPEND(dest, sv.rs.s, sv.rs.len);
 				break;
 			default:
 				LOG(L_CRIT, "BUG: replace_build: unknown type %d\n", 
@@ -439,7 +443,13 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 				/* ignore it */
 		}
 	}
-	memcpy(dest, p, end-p);
+	RBUF_APPEND(dest, p, end-p);
+	rpl->len = dest - rbuf;
+	if ((rpl->s = pkg_malloc(rpl->len)) == NULL) {
+		ERR("replace_build: Out of pkg memory\n");
+		goto error;
+	}
+	memcpy(rpl->s, rbuf, rpl->len);
 	return 0;
 error:
 	return -1;
