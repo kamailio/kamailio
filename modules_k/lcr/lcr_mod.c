@@ -2133,15 +2133,12 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     if (dst_uri_len > 0) {
 	uri_str.s = dst_uri;
 	uri_str.len = dst_uri_len;
-	act.type = SET_DSTURI_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.s = uri_str;
-	act.next = 0;
-	rval = do_action(&act, _m);
-	if (rval != 1) {
+	rval = set_dst_uri(_m, &uri_str);
+	if (rval != 0) {
 	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
+	
     }
 
     /* Set flags_avp */
