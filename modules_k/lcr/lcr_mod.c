@@ -2495,6 +2495,7 @@ int send_sip_options_request(str *to, int index)
     int max_forward = 10;
     char* max_forward_s = NULL;
     int len = 0;
+	uac_req_t uac_r;
 
     /* Length */
     hdrs.len =  CRLF_LEN;
@@ -2514,16 +2515,15 @@ int send_sip_options_request(str *to, int index)
     append_str(p, max_forward_s, len);
     append_str(p, CRLF, CRLF_LEN);
 
+	set_uac_req(&uac_r, &ping_method, &hdrs, 0, 0, 0, check_options_callback,
+				(void*)(long)index);
+
     /* Send the request */
-    res = tmb.t_request(&ping_method,   /* request type */
+    res = tmb.t_request(&uac_r,
                         0,              /* Request-URI */
                         to,             /* To */
                         &ping_from,     /* From */
-                        &hdrs,          /* Additional headers including CRLF */
-                        0,              /* Message body */
-                        0,		/* outbound uri */
-                        check_options_callback,   /* Callback function */
-                        (void*)(long)index	  /* Callback parameter */
+                        0		/* outbound uri */
 			);
     pkg_free(hdrs.s);
     return res;
