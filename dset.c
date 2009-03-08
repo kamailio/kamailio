@@ -57,9 +57,16 @@ struct branch
 	char dst_uri[MAX_URI_SIZE];
 	unsigned int dst_uri_len;
 
+	/* Path set */
+	char path[MAX_PATH_SIZE];
+	unsigned int path_len;
+
 	int q; /* Preference of the contact among
 		* contact within the array */
 	struct socket_info* force_send_socket;
+
+	/* Branch flags */
+	unsigned int flags;
 };
 
 
