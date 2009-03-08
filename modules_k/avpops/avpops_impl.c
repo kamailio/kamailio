@@ -918,6 +918,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 	int            n;
 	int            flags;
 	pv_value_t     xvalue;
+	struct run_act_ctx ra_ctx;
 
 	avp = NULL;
 	flags = 0;
@@ -1001,10 +1002,11 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				}
 			}
 			memset(&act, 0, sizeof(act));
-			act.elem[0].type = STRING_ST;
-			act.elem[0].u.string = val.s;
+			act.val[0].type = STRING_ST;
+			act.val[0].u.string = val.s;
 			act.type = act_type;
-			if (do_action(&act, msg)<0)
+			init_run_actions_ctx(&ra_ctx);
+			if (do_action(&ra_ctx, &act, msg)<0)
 			{
 				LM_ERR("SET_XXXX_T action failed\n");
 				goto error;
