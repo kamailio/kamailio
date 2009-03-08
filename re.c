@@ -483,18 +483,20 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 		DBG("subst_run: running. r=%d\n", r);
 		/* subst */
 		if (r==0){ /* != REG_NOMATCH */
-			/* change eflags, not to match any more at string start */
-			eflags|=REG_NOTBOL;
+			if (pmatch[0].rm_so==-1) {
+				ERR("subst_run: Unknown offset?\n");
+				goto error;
+			}
+			if (pmatch[0].rm_so==pmatch[0].rm_eo) {
+				ERR("subst_run: Matched string is empty, invalid regexp?\n");
+				goto error;
+			}
 			*crt=pkg_malloc(sizeof(struct replace_lst));
 			if (*crt==0){
 				LOG(L_ERR, "ERROR: subst_run: out of mem (crt)\n");
 				goto error;
 			}
 			memset(*crt, 0, sizeof(struct replace_lst));
-			if (pmatch[0].rm_so==-1){
-				LOG(L_ERR, "ERROR: subst_run: unknown offset?\n");
-				goto error;
-			}
 			(*crt)->offset=pmatch[0].rm_so+(int)(p-input);
 			(*crt)->size=pmatch[0].rm_eo-pmatch[0].rm_so;
 			DBG("subst_run: matched (%d, %d): [%.*s]\n",
@@ -507,6 +509,8 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 			}
 			crt=&((*crt)->next);
 			p+=pmatch[0].rm_eo;
+			if (*(p-1) == '\n' || *(p-1) == '\r') eflags&=~REG_NOTBOL;
+			else eflags|=REG_NOTBOL;
 			cnt++;
 		}
 	}while((r==0) && se->replace_all);
