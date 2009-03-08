@@ -536,8 +536,9 @@ error:
 int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
 {
+	struct search_state st;
 	struct sip_uri   uri;
-	struct usr_avp   **avp_list;
+	avp_list_t avp_list;
 	struct usr_avp   *avp;
 	unsigned short   name_type;
 	int_str          avp_name;
@@ -664,7 +665,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* avp name is known ->set it and its type */
 		store_vals[1].val.str_val = dbp->sa; /*attr name*/
 		avp = search_first_avp( name_type, avp_name, &i_s, 0);
-		for( ; avp; avp=search_first_avp( name_type, avp_name, &i_s, avp))
+		for( ; avp; avp=search_first_avp( name_type, avp_name, &i_s, &st))
 		{
 			/* don't insert avps which were loaded */
 			if (avp->flags&AVP_IS_IN_DB)
@@ -761,8 +762,8 @@ int ops_dbquery_avps(struct sip_msg* msg, pv_elem_t* query,
 
 int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 {
-	struct usr_avp **avp_list;
-	struct usr_avp *avp;
+	avp_list_t avp_list;
+	avp_t *avp;
 	struct usr_avp *avp_next;
 	unsigned short name_type;
 	int_str avp_name;
@@ -814,6 +815,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 													struct fis_param* dst)
 {
+	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
 	int_str         avp_val;
@@ -877,7 +879,7 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 			break;
 		} else {
 			prev_avp = avp;
-			avp = search_first_avp( name_type1, avp_name1, &avp_val, prev_avp);
+			avp = search_next_avp(&st, &avp_val);
 			/* delete the old one? */
 			if (dst->ops&AVPOPS_FLAG_DELETE)
 				destroy_avp( prev_avp );
@@ -908,6 +910,7 @@ inline static int append_0(str *in, str *out)
 int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 													struct fis_param* src)
 {
+	struct search_state st;
 	struct action  act;
 	struct usr_avp *avp;
 	unsigned short name_type;
@@ -930,7 +933,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			LM_ERR("failed to get src AVP name\n");
 			goto error;
 		}
-		avp = search_first_avp( name_type, avp_name, &avp_val, 0);
+		avp = search_first_avp( name_type, avp_name, &avp_val, &st);
 		if (avp==0)
 		{
 			LM_DBG(" no src avp found\n");
@@ -1034,7 +1037,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			break;
 		if(avp==NULL)
 			break;
-		if((avp = search_first_avp( name_type, avp_name, &avp_val, avp))!=NULL)
+		if((avp = search_next_avp(&st, &avp_val))!=NULL)
 			flags = avp->flags;
 	} while (avp);/* end while */
 
@@ -1047,6 +1050,7 @@ error:
 int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 													struct fis_param* val)
 {
+	struct search_state st1, st2;
 	unsigned short    name_type1;
 	unsigned short    name_type2;
 	struct usr_avp    *avp1;
@@ -1071,7 +1075,7 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 			LM_ERR("failed to get src AVP name\n");
 			goto error;
 		}
-		avp1 = search_first_avp( name_type1, avp_name1, &avp_val, 0);
+		avp1 = search_first_avp( name_type1, avp_name1, &avp_val, &st1);
 		if (avp1==0)
 		{
 			LM_DBG("no src avp found\n");
@@ -1121,7 +1125,7 @@ cycle1:
 				LM_ERR("failed to get dst AVP name\n");
 				goto error;
 			}
-			avp2 = search_first_avp( name_type2, avp_name2, &check_val, 0);
+			avp2 = search_first_avp( name_type2, avp_name2, &check_val, &st2);
 			if (avp2==0)
 			{
 				LM_DBG("no dst avp found\n");
@@ -1284,7 +1288,7 @@ cycle2:
 next:
 	/* cycle for the second value (only if avp can have multiple vals) */
 	if ((avp2!=NULL)
-		&& (avp2=search_first_avp( name_type2, avp_name2, &check_val, avp2))!=NULL)
+		&& (avp2=search_next_avp(&st2, &check_val))!=NULL)
 	{
 		check_flags = avp2->flags;
 		goto cycle2;
@@ -1292,7 +1296,7 @@ next:
 	} else {
 		if(avp1 && val->ops&AVPOPS_FLAG_ALL)
 		{
-			avp1=search_first_avp(name_type1, avp_name1, &avp_val, avp1);
+			avp1=search_next_avp(&st1, &avp_val);
 			if (avp1)
 				goto cycle1;
 		}
@@ -1343,6 +1347,7 @@ int ops_print_avp(void)
 int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		struct subst_expr* se)
 {
+	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
 	int_str         avp_val;
@@ -1365,7 +1370,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		return -1;
 	}
 
-	avp = search_first_avp(name_type1, avp_name1, &avp_val, 0);
+	avp = search_first_avp(name_type1, avp_name1, &avp_val, &st);
 
 	if(avp==NULL)
 		return -1;
@@ -1400,7 +1405,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		if(!is_avp_str_val(avp))
 		{
 			prev_avp = avp;
-			avp = search_first_avp(name_type1, avp_name1, &avp_val, prev_avp);
+			avp = search_next_avp(&st, &avp_val);
 			continue;
 		}
 		
@@ -1428,14 +1433,14 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 				break;
 			} else {
 				prev_avp = avp;
-				avp = search_first_avp(name_type1,avp_name1,&avp_val,prev_avp);
+				avp = search_next_avp(&st, &avp_val);
 				/* delete the old one? */
 				if (src[0]->ops&AVPOPS_FLAG_DELETE || src[1]==0)
 					destroy_avp( prev_avp );
 			}
 		} else {
 			prev_avp = avp;
-			avp = search_first_avp(name_type1, avp_name1, &avp_val, prev_avp);
+			avp = search_next_avp(&st, &avp_val);
 		}
 
 	}
@@ -1448,6 +1453,7 @@ error:
 int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 													struct fis_param* val)
 {
+	struct search_state st1, st2;
 	unsigned short    name_type1;
 	unsigned short    name_type2;
 	unsigned short    name_type3;
@@ -1472,7 +1478,7 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 		LM_ERR("failed to get src AVP name\n");
 		goto error;
 	}
-	avp1 = search_first_avp(name_type1, avp_name1, &avp_val, 0);
+	avp1 = search_first_avp(name_type1, avp_name1, &avp_val, &st1);
 	if (avp1==0)
 	{
 		LM_DBG(" no src avp found\n");
@@ -1483,7 +1489,7 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 	{
 		if(!(avp1->flags&AVP_VAL_STR))
 			break;
-		avp1 = search_first_avp(name_type1, avp_name1, &avp_val, avp1);
+		avp1 = search_next_avp(&st1, &avp_val);
 	}
 	if (avp1==0 && !(val->ops&AVPOPS_OP_BNOT)) {
 		LM_DBG("no proper avp found\n");
@@ -1526,12 +1532,12 @@ cycle1:
 				LM_ERR("failed to get dst AVP name\n");
 				goto error;
 			}
-			avp2 = search_first_avp( name_type2, avp_name2, &op_val, 0);
+			avp2 = search_first_avp( name_type2, avp_name2, &op_val, &st2);
 			while(avp2!=0)
 			{
 				if(!(avp2->flags&AVP_VAL_STR))
 					break;
-				avp2 = search_first_avp( name_type2, avp_name2, &op_val, avp2);
+				avp2 = search_next_avp( &st2, &op_val);
 			}
 			if (avp2==0)
 			{
@@ -1610,7 +1616,7 @@ cycle2:
 
 	/* cycle for the second value (only if avp can have multiple vals) */
 	while((avp2!=NULL)
-		&&(avp2=search_first_avp( name_type2, avp_name2, &op_val, avp2))!=0)
+		  &&(avp2=search_next_avp( &st2, &op_val))!=0)
 	{
 		if(!(avp2->flags&AVP_VAL_STR))
 			goto cycle2;
@@ -1618,7 +1624,7 @@ cycle2:
 	prev_avp = avp1;
 	/* cycle for the first value -> next avp */
 	while((avp1!=NULL)
-		&&(avp1=search_first_avp(name_type1, avp_name1, &avp_val, avp1))!=0)
+		  &&(avp1=search_next_avp(&st1, &avp_val))!=0)
 	{
 		if (!(avp1->flags&AVP_VAL_STR))
 		{
@@ -1644,6 +1650,7 @@ error:
 
 int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 {
+	struct search_state st;
 	struct usr_avp *avp;
 	unsigned short    name_type;
 	int_str avp_name;
@@ -1665,7 +1672,7 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 		return -1;
 	}
 	
-	avp=search_first_avp(name_type, avp_name, &avp_value, 0);
+	avp=search_first_avp(name_type, avp_name, &avp_value, &st);
 	if(avp==0)
 		return -1;
 	
@@ -1696,7 +1703,7 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 			return 1;
 		}
 		index--;
-	} while ((avp=search_first_avp(name_type, avp_name, &avp_value, avp))!=0);
+	} while ((avp=search_next_avp(&st, &avp_value))!=0);
 	
 	return -1;
 }
