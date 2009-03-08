@@ -169,6 +169,8 @@ int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value
 /* Delete avps with given type and name */
 void delete_avp(avp_flags_t flags, avp_name_t name);
 
+int destroy_avps(avp_flags_t flags, avp_name_t name, int all);
+
 /* search functions */
 avp_t *search_first_avp( avp_flags_t flags, avp_name_t name,
 			 avp_value_t *val, struct search_state* state);

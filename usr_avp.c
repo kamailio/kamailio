@@ -1129,6 +1129,24 @@ error:
 }
 
 
+int destroy_avps(avp_flags_t flags, avp_name_t name, int all)
+{
+	struct search_state st;
+	avp_t* avp;
+	int n;
+	
+	n = 0;
+	avp = search_first_avp(flags, name, 0, &st);
+	while (avp) {
+		destroy_avp(avp);
+		n++;
+		if (!all) break;
+		avp = search_next_avp(&st, 0);
+	}
+	return n;
+}
+
+
 void delete_avp(avp_flags_t flags, avp_name_t name)
 {
 	struct search_state st;
