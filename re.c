@@ -64,12 +64,143 @@ void replace_lst_free(struct replace_lst* l)
 	}
 }
 
+int parse_repl(struct replace_with * rw, char ** begin, 
+				char * end, int *max_token_nb, int with_sep)
+{
+
+	char* p0;
+	char * repl;
+	str s;
+	int token_nb;
+	int escape;
+	int max_pmatch;
+	char *p, c;
+
+	/* parse replacement */
+	p = *begin;
+	c = *p;
+	if(with_sep)
+		p++;
+	repl= p;
+	token_nb=0;
+	max_pmatch=0;
+	escape=0;
+	for(;p<end; p++){
+		if (escape){
+			escape=0;
+			switch (*p){
+				/* special char escapes */
+				case '\\':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\\';
+					break;
+				case 'n':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\n';
+					break;
+				case 'r':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\r';
+					break;
+				case 't':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\t';
+					break;
+				case PV_MARKER:
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c=PV_MARKER;
+					break;
+				/* special sip msg parts escapes */
+				case 'u':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_URI;
+					break;
+				/* re matches */
+				case '0': /* allow 0, too, reference to the whole match */
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_NMATCH;
+					rw[token_nb].u.nmatch=(*p)-'0';
+								/* 0 is the whole matched str*/
+					if (max_pmatch<rw[token_nb].u.nmatch) 
+						max_pmatch=rw[token_nb].u.nmatch;
+					break;
+				default: /* just print current char */
+					if (*p!=c){
+						WARN("subst_parser:\\%c unknown escape in %s\n", *p, *begin);
+					}
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c=*p;
+					break;
+			}
+
+			token_nb++;
+
+			if (token_nb>=MAX_REPLACE_WITH){
+				ERR("subst_parser: too many escapes in the replace part %s\n", *begin);
+				goto error;
+			}
+		}else if (*p=='\\') {
+			escape=1;
+		}else if (*p==PV_MARKER) {
+			s.s = p;
+			s.len = end - s.s;
+			p0 = pv_parse_spec(&s, &rw[token_nb].u.spec);
+			if(p0==NULL)
+			{
+				ERR("subst_parser: bad specifier in replace part %s\n", *begin);
+				goto error;
+			}
+			rw[token_nb].size=p0-p;
+			rw[token_nb].offset=p-repl;
+			rw[token_nb].type=REPLACE_SPEC;
+			token_nb++;
+			p=p0-1;
+		}else  if (*p==c && with_sep){
+				goto found_repl;
+		}
+	}
+	if(with_sep){
+		ERR("subst_parser: missing separator: %s\n", *begin);
+		goto error;
+	}
+
+found_repl:
+
+	*max_token_nb = max_pmatch;
+	*begin = p;
+	return token_nb;
+
+error:
+	return -1;
+}
 
 
 /* parse a /regular expression/replacement/flags into a subst_expr structure */
 struct subst_expr* subst_parser(str* subst)
 {
-#define MAX_REPLACE_WITH 100
 	char c;
 	char* end;
 	char* p;
