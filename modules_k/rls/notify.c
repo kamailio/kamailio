@@ -44,6 +44,7 @@
 #include "../tm/dlg.h"
 #include "../presence/utils_func.h"
 #include "../presence/hash.h"
+#include "../../lib/kcore/hash_func.h"
 #include "rls.h"
 #include "notify.h"
 
