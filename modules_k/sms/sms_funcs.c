@@ -42,6 +42,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../data_lump_rpl.h"
+#include "../../lib/kcore/km_ut.h"
 #include "../tm/t_hooks.h"
 #include "../tm/uac.h"
 #include "sms_funcs.h"
