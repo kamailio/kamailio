@@ -22,6 +22,7 @@
 
 
 #include "../../mem/shm_mem.h"
+#include "../../lib/kcore/hash_func.h"
 #include "lcr_mod.h"
 
 #define lcr_hash(_s) core_hash( _s, 0, lcr_hash_size_param)
