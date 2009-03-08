@@ -37,11 +37,16 @@
 #define _re_h
 
 #include "str.h"
+#include "pvar.h"
 #include "parser/msg_parser.h"
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
-enum replace_special { REPLACE_NMATCH, REPLACE_CHAR, REPLACE_URI };
+#define WITH_SEP	1
+#define WITHOUT_SEP	0
+
+enum replace_special { REPLACE_NMATCH, REPLACE_CHAR, REPLACE_URI, 
+					   REPLACE_SPEC };
 
 struct replace_with{
 	int offset; /* offset in string */
@@ -50,6 +55,7 @@ struct replace_with{
 	union{
 		int nmatch;
 		char c;
+		pv_spec_t spec;
 	}u;
 };
 
