@@ -328,52 +328,6 @@ error:
 	return 0;
 }
 
-
-
-static int replace_len(const char* match, int nmatch, regmatch_t* pmatch,
-					struct subst_expr* se, struct sip_msg* msg)
-{
-	int r;
-	int len;
-	str* uri;
-	
-	len=se->replacement.len;
-	for (r=0; r<se->n_escapes; r++){
-		switch(se->replace[r].type){
-			case REPLACE_NMATCH:
-				len-=se->replace[r].size;
-				if ((se->replace[r].u.nmatch<nmatch)&&(
-						pmatch[se->replace[r].u.nmatch].rm_so!=-1)){
-						/* do the replace */
-						len+=pmatch[se->replace[r].u.nmatch].rm_eo-
-								pmatch[se->replace[r].u.nmatch].rm_so;
-				};
-				break;
-			case REPLACE_CHAR:
-				len-=(se->replace[r].size-1);
-				break;
-			case REPLACE_URI:
-				len-=se->replace[r].size;
-				if (msg->first_line.type!=SIP_REQUEST){
-					LOG(L_CRIT, "BUG: replace_len: uri substitution on"
-								" a reply\n");
-					break; /* ignore, we can continue */
-				}
-				uri= (msg->new_uri.s)?(&msg->new_uri):
-					(&msg->first_line.u.request.uri);
-				len+=uri->len;
-				break;
-			default:
-				LOG(L_CRIT, "BUG: replace_len: unknown type %d\n", 
-						se->replace[r].type);
-				/* ignore it */
-		}
-	}
-	return len;
-}
-
-
-
 /* rpl.s will be alloc'ed with the proper size & rpl.len set
  * returns 0 on success, <0 on error*/
 static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
