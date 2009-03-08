@@ -39,7 +39,7 @@
 #define _DIALOG_DLG_HASH_H_
 
 #include "../../locking.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 

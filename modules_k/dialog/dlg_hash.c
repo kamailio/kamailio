@@ -48,7 +48,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"

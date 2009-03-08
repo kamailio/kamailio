@@ -36,7 +36,7 @@
 #include "../../socket_info.h"
 #include "../tm/dlg.h"
 #include "../tm/tm_load.h"
-#include "../../mi/tree.h"
+#include "../../lib/kmi/tree.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_req_within.h"

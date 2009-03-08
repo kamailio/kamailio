@@ -52,7 +52,7 @@
 #include "../../script_cb.h"
 #include "../../faked_msg.h"
 #include "../../mem/mem.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../tm/tm_load.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
