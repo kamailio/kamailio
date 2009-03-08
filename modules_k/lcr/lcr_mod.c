@@ -2059,6 +2059,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
     int_str ruri_user_val, val;
     struct action act;
+	struct run_act_ctx ra_ctx;
     struct usr_avp *ru_avp;
     int rval;
     str uri_str;
@@ -2102,10 +2103,12 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     if ((route_type == REQUEST_ROUTE) && (ru_avp == NULL)) {
 
 	/* First invocation in route block => Rewrite Request URI. */
+    memset(&act, '\0', sizeof(act));
 	act.type = SET_URI_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = r_uri;
-	rval = do_action(&act, _m);
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = r_uri;
+	init_run_actions_ctx(&ra_ctx);
+	rval = do_action(&ra_ctx, &act, _m);
 	if (rval != 1) {
 	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
@@ -2117,12 +2120,14 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
          * failure route block => append new branch. */
 	uri_str.s = r_uri;
 	uri_str.len = r_uri_len;
+    memset(&act, '\0', sizeof(act));
 	act.type = APPEND_BRANCH_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.s = uri_str;
-	act.elem[1].type = NUMBER_ST;
-	act.elem[1].u.number = 0;
-	rval = do_action(&act, _m);
+	act.val[0].type = STRING_ST;
+	act.val[0].u.str = uri_str;
+	act.val[1].type = NUMBER_ST;
+	act.val[1].u.number = 0;
+	init_run_actions_ctx(&ra_ctx);
+	rval = do_action(&ra_ctx, &act, _m);
 	if (rval != 1) {
 	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
