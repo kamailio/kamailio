@@ -125,6 +125,7 @@
 #ifdef CORE_TLS
 #include "tls/tls_config.h"
 #endif
+#include "timer_ticks.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -797,7 +798,10 @@ assign_stm:
 	| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_CON_LIFETIME EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_default_cfg.con_lifetime_s=$3;
+			if ($3<0)
+				tcp_default_cfg.con_lifetime=-1;
+			else
+				tcp_default_cfg.con_lifetime=S_TO_TICKS($3);
 		#else
 			warn("tcp support not compiled in");
 		#endif

@@ -568,7 +568,7 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 		rpc->struct_add(handle, "ddddddddddddddddddddddd",
 			"connect_timeout", t.connect_timeout_s,
 			"send_timeout",  t.send_timeout_s,
-			"connection_lifetime",  t.con_lifetime_s,
+			"connection_lifetime",  TICKS_TO_S(t.con_lifetime),
 			"max_connections(soft)", t.max_connections,
 			"no_connect",	t.no_connect,
 			"fd_cache",		t.fd_cache,
