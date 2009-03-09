@@ -130,7 +130,7 @@ int tcp_read(struct tcp_connection *c, int* flags)
 
 	r=&c->req;
 	fd=c->fd;
-	bytes_free=TCP_BUF_SIZE- (int)(r->pos - r->buf);
+	bytes_free=r->b_size- (int)(r->pos - r->buf);
 	
 	if (bytes_free==0){
 		LOG(L_ERR, "ERROR: tcp_read: buffer overrun, dropping\n");

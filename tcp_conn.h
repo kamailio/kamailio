@@ -54,7 +54,6 @@
 /* maximum number of port aliases x search wildcard possibilities */
 #define TCP_CON_MAX_ALIASES (4*3) 
 
-#define TCP_BUF_SIZE	4096 
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
@@ -107,12 +106,13 @@ enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE,
 struct tcp_req{
 	struct tcp_req* next;
 	/* sockaddr ? */
-	char buf[TCP_BUF_SIZE+1]; /* bytes read so far (+0-terminator)*/
+	char* buf; /* bytes read so far (+0-terminator)*/
 	char* start; /* where the message starts, after all the empty lines are
 					skipped*/
 	char* pos; /* current position in buf */
 	char* parsed; /* last parsed position */
 	char* body; /* body position */
+	unsigned int b_size; /* buffer size-1 (extra space for 0-term)*/
 	int content_len;
 	int has_content_len; /* 1 if content_length was parsed ok*/
 	int complete; /* 1 if one req has been fully read, 0 otherwise*/
@@ -190,9 +190,11 @@ struct tcp_connection{
 #define tcpconn_put(c) atomic_dec_and_test(&((c)->refcnt))
 
 
-#define init_tcp_req( r) \
+#define init_tcp_req( r, rd_buf, rd_buf_size) \
 	do{ \
 		memset( (r), 0, sizeof(struct tcp_req)); \
+		(r)->buf=(rd_buf) ;\
+		(r)->b_size=(rd_buf_size)-1; /* space for 0 term. */ \
 		(r)->parsed=(r)->pos=(r)->start=(r)->buf; \
 		(r)->error=TCP_REQ_OK;\
 		(r)->state=H_SKIP_EMPTY; \
