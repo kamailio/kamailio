@@ -208,7 +208,6 @@
 #define TCPCONN_WAIT_TIMEOUT 1 /* 1 tick */
 
 #ifdef TCP_ASYNC
-#define TCP_WBUF_SIZE	1024 /* FIXME: after debugging switch to 16-32k */
 static unsigned int* tcp_total_wq=0;
 #endif
 
@@ -642,7 +641,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 	}
 	
 	if (unlikely(q->last==0)){
-		wb_size=MAX_unsigned(TCP_WBUF_SIZE, size);
+		wb_size=MAX_unsigned(cfg_get(tcp, tcp_cfg, wq_blk_size), size);
 		wb=shm_malloc(sizeof(*wb)+wb_size-1);
 		if (unlikely(wb==0))
 			goto error;
@@ -663,7 +662,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 	while(size){
 		last_free=wb->b_size-q->last_used;
 		if (last_free==0){
-			wb_size=MAX_unsigned(TCP_WBUF_SIZE, size);
+			wb_size=MAX_unsigned(cfg_get(tcp, tcp_cfg, wq_blk_size), size);
 			wb=shm_malloc(sizeof(*wb)+wb_size-1);
 			if (unlikely(wb==0))
 				goto error;
@@ -926,13 +925,15 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 									int state)
 {
 	struct tcp_connection *c;
+	int rd_b_size;
 	
-	c=(struct tcp_connection*)shm_malloc(sizeof(struct tcp_connection));
+	rd_b_size=cfg_get(tcp, tcp_cfg, rd_buf_size);
+	c=shm_malloc(sizeof(struct tcp_connection) + rd_b_size);
 	if (c==0){
 		LOG(L_ERR, "ERROR: tcpconn_new: mem. allocation failure\n");
 		goto error;
 	}
-	memset(c, 0, sizeof(struct tcp_connection)); /* zero init */
+	memset(c, 0, sizeof(struct tcp_connection)); /* zero init (skip rd buf)*/
 	c->s=sock;
 	c->fd=-1; /* not initialized */
 	if (lock_init(&c->write_lock)==0){
@@ -956,7 +957,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
 	DBG(     "tcpconn_new: on port %d, type %d\n", c->rcv.src_port, type);
-	init_tcp_req(&c->req);
+	init_tcp_req(&c->req, (char*)c+sizeof(struct tcp_connection), rd_b_size);
 	c->id=(*connection_id)++;
 	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
 	c->rcv.proto_reserved2=0;

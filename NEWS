@@ -236,6 +236,20 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  tcp_rd_buf_size = buffer size used for tcp reads.
+                    A high buffer size increases performance on server with few
+                    connections and lot of traffic on them, but also increases
+                     memory consumption (so for lots of connection is better 
+                    to use a low value). Note also that this value limits the
+                    maximum datagram size that can be received over tcp.
+                    Default: 4096, can be changed at runtime.
+  tcp_wq_blk_size = block size used for tcp async writes. It should be big
+                    enough to hold a few datagrams. If it's smaller then a
+                    datagram (in fact a tcp write()) size, it will be rounded
+                    up. It has no influenced on the number of datagrams 
+                    queued (for that see tcp_conn_wq_max or tcp_wq_max).
+                    It has mostly debugging and testing value (can be ignored).
+                    Default: 2100 (~ 2 INVITEs), can be changed at runtime.
   tcp_no_connect = yes/no - disable connects, ser will only accept new 
                      connections, it will never try to open new ones.
                      Default: no, can be changed at runtime.

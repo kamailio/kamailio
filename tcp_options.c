@@ -133,6 +133,10 @@ static cfg_def_t tcp_cfg_def[] = {
 	{ "wq_timeout_ticks",   CFG_VAR_INT | CFG_READONLY, 0,
 									MAX_TCP_CON_LIFETIME,         0,         0,
 		"internal send_timeout value in ticks, used in async. mode"},
+	{ "rd_buf_size", CFG_VAR_INT | CFG_ATOMIC,    512,    65536,  0,         0,
+		"internal read buffer size (should be > max. expected datagram)"},
+	{ "wq_blk_size", CFG_VAR_INT | CFG_ATOMIC,    1,    65535,  0,         0,
+		"internal async write block size (debugging use only for now)"},
 	{0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -175,6 +179,8 @@ void init_tcp_options()
 	tcp_default_cfg.alias_flags=TCP_ALIAS_FORCE_ADD;
 	/* flags used for adding the default aliases of a new tcp connection */
 	tcp_default_cfg.new_conn_alias_flags=TCP_ALIAS_REPLACE;
+	tcp_default_cfg.rd_buf_size=DEFAULT_TCP_BUF_SIZE;
+	tcp_default_cfg.wq_blk_size=DEFAULT_TCP_WBUF_SIZE;
 }
 
 
@@ -261,6 +267,39 @@ static int fix_max_conns(void* cfg_h, str* name, void** val)
 
 
 
+/** fix *val according to the cfg entry "name".
+ * (*val must be integer)
+ * 1. check if *val is between name min..max and if not change it to
+ *    the corresp. value
+ * 2. call fixup callback if defined in the cfg
+ * @return 0 on success
+ */
+static int tcp_cfg_def_fix(char* name, int* val)
+{
+	cfg_def_t* c;
+	str s;
+	
+	for (c=&tcp_cfg_def[0]; c->name; c++){
+		if (strcmp(name, c->name)==0){
+			/* found */
+			if ((c->type & CFG_VAR_INT)  && (c->min || c->max)){
+				if (*val < c->min) *val=c->min;
+				else if (*val > c->max) *val=c->max;
+				if (c->on_change_cb){
+					s.s=c->name;
+					s.len=strlen(s.s);
+					return c->on_change_cb(&tcp_default_cfg, &s, (void*)val);
+				}
+			}
+			return 0;
+		}
+	}
+	WARN("tcp config option \"%s\" not found\n", name);
+	return -1; /* not found */
+}
+
+
+
 /* checks & warns if some tcp_option cannot be enabled */
 void tcp_options_check()
 {
@@ -324,6 +363,9 @@ void tcp_options_check()
 	tcp_default_cfg.tcp_wq_timeout=S_TO_TICKS(tcp_default_cfg.send_timeout_s);
 #endif /* TCP_ASYNC */
 	tcp_default_cfg.max_connections=tcp_max_connections;
+	tcp_cfg_def_fix("rd_buf_size", (int*)&tcp_default_cfg.rd_buf_size);
+	tcp_cfg_def_fix("wq_blk_size", (int*)&tcp_default_cfg.wq_blk_size);
+	
 }
 
 
