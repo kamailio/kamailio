@@ -1358,6 +1358,10 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 	struct lump* anchor;
 	char* clen_buf;
 	int clen_len, body_only;
+#ifdef USE_TCP
+	char* body;
+	int comp_clen;
+#endif /* USE_TCP */
 
 	/* Calculate message length difference caused by lumps modifying message
 	 * body, from this point on the message body must not be modified. Zero
@@ -1379,7 +1383,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 			LOG(L_ERR, "adjust_clen: error parsing content-length\n");
 			goto error;
 		}
-		if (msg->content_length==0){
+		if (unlikely(msg->content_length==0)){
 			/* not present, we need to add it */
 			/* msg->unparsed should point just before the final crlf
 			 * - whole message was parsed by the above parse_headers
@@ -1391,12 +1395,37 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 				goto error;
 			}
 			body_only=0;
+		}else{
+			/* compute current content length and compare it with the
+			   one in the message */
+			body=get_body(msg);
+			if (unlikely(body==0)){
+				ser_error=E_BAD_REQ;
+				LOG(L_ERR, "adjust_clen: no message body found"
+						" (missing crlf?)");
+				goto error;
+			}
+			comp_clen=msg->len-(int)(body-msg->buf)+body_delta;
+			if (comp_clen!=(int)(long)msg->content_length->parsed){
+				/* note: we don't distinguish here between received with
+				   wrong content-length and content-length changed, we just
+				   fix it automatically in both cases (the reason being
+				   that an error message telling we have received a msg-
+				   with wrong content-length is of very little use) */
+				anchor = del_lump(msg, msg->content_length->body.s-msg->buf,
+									msg->content_length->body.len,
+									HDR_CONTENTLENGTH_T);
+				if (anchor==0) {
+					LOG(L_ERR, "adjust_clen: Can't remove original"
+								" Content-Length\n");
+					goto error;
+				}
+				body_only=1;
+			}
 		}
-	}
-#endif
-
-
-	if ((anchor==0) && body_delta){
+	}else
+#endif /* USE_TCP */
+	if (body_delta){
 		if (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1) {
 			LOG(L_ERR, "adjust_clen: Error parsing Content-Length\n");
 			goto error;
@@ -1420,13 +1449,14 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 					goto error;
 				}
 				body_only=0;
-			}else{
-				DBG("adjust_clen: UDP packet with no clen => not adding one \n");
-			}
+			} /* else
+				DBG("adjust_clen: UDP packet with no clen => "
+						"not adding one \n"); */
 		}else{
 			/* Content-Length has been found, remove it */
 			anchor = del_lump(	msg, msg->content_length->body.s - msg->buf,
-								msg->content_length->body.len, HDR_CONTENTLENGTH_T);
+								msg->content_length->body.len,
+								HDR_CONTENTLENGTH_T);
 			if (anchor==0) {
 				LOG(L_ERR, "adjust_clen: Can't remove original"
 							" Content-Length\n");
@@ -1442,7 +1472,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 					HDR_CONTENTLENGTH_T) == 0)
 			goto error;
 	}
-
+	
 	return 0;
 error:
 	if (clen_buf) pkg_free(clen_buf);
