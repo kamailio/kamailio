@@ -35,11 +35,11 @@
 
 #include <string.h>
 
-#include "mem/shm_mem.h"
-#include "mi/mi.h"
-#include "ut.h"
-#include "dprint.h"
-#include "locking.h"
+#include "../../mem/shm_mem.h"
+#include "../kmi/mi.h"
+#include "../../ut.h"
+#include "../../dprint.h"
+#include "../../locking.h"
 #include "core_stats.h"
 #include "statistics.h"
 

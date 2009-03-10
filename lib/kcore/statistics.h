@@ -36,7 +36,7 @@
 #define _STATISTICS_H_
 
 #include "hash_func.h"
-#include "atomic.h"
+#include "../../atomic_ops.h"
 
 #define STATS_HASH_POWER   8
 #define STATS_HASH_SIZE    (1<<(STATS_HASH_POWER))
