@@ -35,7 +35,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../mod_fix.h"
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../mem/mem.h"
 #include "stats_funcs.h"
 
