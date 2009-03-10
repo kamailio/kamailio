@@ -113,7 +113,7 @@ static param_export_t params[]={
 };
 
 #ifdef STATISTICS
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 
 stat_var* imc_active_rooms;
 
