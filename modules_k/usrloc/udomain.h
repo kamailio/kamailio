@@ -36,7 +36,7 @@
 
 
 #include <stdio.h>
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
