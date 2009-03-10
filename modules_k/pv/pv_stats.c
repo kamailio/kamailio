@@ -25,7 +25,7 @@
  * \brief Implementation for Stats Pseudo-variables
  */
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "pv_stats.h"
 
 int pv_parse_stat_name(pv_spec_p sp, str *in)
