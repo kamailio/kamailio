@@ -75,6 +75,7 @@
  *  2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
+ *  2009-03-10  added SET_USERPHONE action (Miklos)
 */
 
 
@@ -164,6 +165,7 @@ REVERT_URI		"revert_uri"
 PREFIX			"prefix"
 STRIP			"strip"
 STRIP_TAIL		"strip_tail"
+SET_USERPHONE		"userphone"
 APPEND_BRANCH	"append_branch"
 IF				"if"
 ELSE			"else"
@@ -465,6 +467,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
 <INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext;
 								return APPEND_BRANCH; }
+<INITIAL>{SET_USERPHONE}	{ count(); yylval.strval=yytext;
+								return SET_USERPHONE; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }

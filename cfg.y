@@ -88,6 +88,7 @@
  * 2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
  * 2008-01-24  added cfg_var definition (Miklos)
+ * 2009-03-10  added SET_USERPHONE action (Miklos)
 */
 
 %{
@@ -238,6 +239,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token PREFIX
 %token STRIP
 %token STRIP_TAIL
+%token SET_USERPHONE
 %token APPEND_BRANCH
 %token SET_USER
 %token SET_USERPASS
@@ -2312,6 +2314,8 @@ cmd:
 	| STRIP LPAREN NUMBER RPAREN { $$=mk_action(STRIP_T, 1, NUMBER_ST, (void*) $3); }
 	| STRIP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
+	| SET_USERPHONE LPAREN RPAREN { $$=mk_action(SET_USERPHONE_T, 0); }
+	| SET_USERPHONE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN {
 		qvalue_t q;
 		if (str2q(&q, $5, strlen($5)) < 0) {
