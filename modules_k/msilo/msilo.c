@@ -211,7 +211,7 @@ static param_export_t params[]={
 };
 
 #ifdef STATISTICS
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 
 stat_var* ms_stored_msgs;
 stat_var* ms_dumped_msgs;
