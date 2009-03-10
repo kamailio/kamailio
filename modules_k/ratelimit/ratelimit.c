@@ -47,6 +47,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../statistics.h"
 #include "../sl/sl_api.h"
+#include "../../lib/kcore/km_ut.h"
 
 MODULE_VERSION
 
