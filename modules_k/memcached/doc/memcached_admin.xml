@@ -1,0 +1,241 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module provides access to the distributed hash table <emphasis>memcached</emphasis>.
+		This hash table is stored in memory and can can be accessed via a pseudo-variable:
+		$mcd(key). Entries are stored and retrieved from an external server application.
+	</para>
+	<para>
+		The <quote>key</quote> can be a static string and also any existing pseudo-variable. Further
+		interfaces to the functionality provided from memcached are also provided, like access to the
+		atomic increment and decrement operations.
+		<example>
+		<title>Storing and retrieving entries</title>
+			<programlisting format="linespecific">
+...
+$mct(test) = 1;
+xlog("stored value is $mct(test)");
+$mct(test) = null; # delete it
+xlog("stored value is $mct(test)"); # will return &lt;null&gt;
+...
+			</programlisting>
+		</example>
+		<example>
+			<title>Using atomic operations</title>
+			<programlisting format="linespecific">
+...
+$mct(cnt) = 1;
+$mcinc(cnt) = 1; # increment by 2
+xlog("counter is now $mct(cnt)");
+$mcdec(cnt) = 1; # decrement by 1
+xlog("counter is now $mct(cnt)");
+...
+			</programlisting>
+		</example>
+	</para>
+	<para>
+		This module is an addition to the existing <emphasis>htable</emphasis> functionality,
+		not a replacement. In smaller architectures or installations where only one instance
+		needs access to the hash table this module is easier to setup, as no dedicated server
+		needs to be setup. But when a distributed storage facilility is necessary, or one want to
+		separate the storage from the SIP server, this module could be used.
+	</para>
+	</section>
+	<section>
+	<title>Implementation notes</title>
+		<para>
+			Important notes about made assumptions and adaptions that were necessary for the proper
+			integration of this library into &kamailio;.
+		</para>
+	<section>
+		<title>Error behaviour</title>
+		<para>
+			The used memcache library has a rather conservative approach to error handling. In the
+			default configuration each error with severity above <quote>WARN</quote> will lead to a
+			immediately exit (or even an abort) of the execution, causing also a shutdown of &kamailio;.
+			This is of course not optimal from a availability point of view. Therefore in the internal error
+			handler this is overriden. This means that we err a bit on the side of data integrity in order to
+			get a sufficient availability. But even with this changes some problems in the memcache server
+			can lead to problems in the library and subsequently also in the server.
+		</para>
+	</section>
+	<section>
+		<title>Data safety</title>
+		<para>
+			Don't store data in memcached that you also have somewhere else. This system was
+			designed as fast cache, and not for persistent storage. The memcached server can crash,
+			machines can reboot or are restarted. If the memcache storage pool gets fulls, it starts
+			to drop the least used items, even if they are not yet expired. So don't store any data in
+			it where it would be a problem when it disappear from one moment to the other.
+		</para>
+	</section>
+	<section>
+		<title>Size restrictions</title>
+		<para>
+			The maximum key length that is supported from memcached is 250 characters. In order
+			to support longer keys in the &kamailio; configuration script they are hashed with MD5.
+			This should normally be safe against collisions, as the value space is sufficient large enough.
+		</para>
+		<para>
+			The maximum value size that is supported is 1MB. The reason for this is the internal memory
+			manager used from memcached. But normally this restriction should be not a problem in the
+			SIP environment where this module is used.
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libmemcache library</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>a compatible memcached server implementation</emphasis>.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>servers</varname> (str)</title>
+		<para>
+		The servers to connect to. At the moment only one server is supported.
+<!-- If more then one server is used they must be specified in the exact same order, otherwise
+     the hashing algorithm and the data access will not work. -->
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>localhost:11211</quote>.
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>servers</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "servers", "localhost:11211")
+...
+			</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>expire</varname> (str)</title>
+		<para>
+			The default expire value of all entries in memcached in seconds. The maximal
+			value is 2592000 (about 30 days). You can also specify an arbitrary unix time
+			stamp in the future. A value of zero means that no automatic expiration is done,
+			memcached will then delete the least used items when the cache gets full.
+		</para>
+		<para>
+			Please note that memcached implements lazy caching, that means items are only
+			deleted when they requested (they are of course not delivered to the client),
+			or on insertion of new entries when the cache is full. Items can also be deleted
+			before there expire time when the available space in memory is exhausted.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>10800</quote>s (3h).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expire</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("memcached", "expire", 10800)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>mode</varname> (integer)</title>
+		<para>
+			The used storage mode for the memcached module for write access
+			to the hash table. A value of <quote>0</quote> means to set
+			(overwrite) the old value, with a value of <quote>1</quote> the
+			module will not overwrite it. Here every entry to the hash table could
+			be written only once, subsequent inserts will fail.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote> (overwrite).
+			</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("memcached", "mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>timeout</varname> (integer)</title>
+		<para>
+			The timeout the memcache servers access in milliseconds.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>5000</quote> (5s).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>timeout</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("memcached", "timeout", 10000)
+...
+			</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+		<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$mct(key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$mcinc(key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$mcdec(key)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+	</section>
+</chapter>
+
