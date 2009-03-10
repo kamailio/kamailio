@@ -37,6 +37,13 @@
 MODULE_VERSION
 
 
+#define DP_ALERT_TEXT    "ALERT:"
+#define DP_ERR_TEXT      "ERROR:"
+#define DP_WARN_TEXT     "WARNING:"
+#define DP_NOTICE_TEXT   "NOTICE:"
+#define DP_INFO_TEXT     "INFO:"
+
+
 /*! server string */
 char* memcached_srv_str = "localhost:11211";
 /*! cache expire time in seconds */
