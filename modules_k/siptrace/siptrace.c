@@ -152,7 +152,7 @@ static mi_export_t mi_cmds[] = {
 
 
 #ifdef STATISTICS
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 
 stat_var* siptrace_req;
 stat_var* siptrace_rpl;
