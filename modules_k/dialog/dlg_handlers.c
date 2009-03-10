@@ -50,7 +50,7 @@
 #include "../../trim.h"
 #include "../../pvar.h"
 #include "../../timer.h"
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../action.h"
 #include "../../script_cb.h"
 #include "../../lib/kcore/faked_msg.h"
