@@ -34,7 +34,7 @@
 #ifndef _SL_H_
 #define _SL_H_
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 
 /* module parameter */
 extern int sl_enable_stats;
