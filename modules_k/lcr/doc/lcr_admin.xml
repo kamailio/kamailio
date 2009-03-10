@@ -812,7 +812,7 @@ if (!load_gws("$var(caller_uri)")) {
 		</title>
 		<para>
 		Loads URI schemes, IP addresses, hostnames, ports, and
-		transports of 
+		transports of alive
 		gateways that belong to a given group to gw_uri_avp.
 		group-id argument is a string that may contain 
 		pseudo-variables.  Its value must be a a string of

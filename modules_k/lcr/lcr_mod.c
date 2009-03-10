@@ -1971,14 +1971,16 @@ static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
 	if ((*gws)[i].grp_id == grp_id) {
 	    next_index = i;
 	    while (next_index) {
-		matched_gws[gw_index].gw_index = next_index;
-		matched_gws[gw_index].prefix_len = 0;
-		matched_gws[gw_index].priority = 1;
-		matched_gws[gw_index].weight = rand();
-		LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
-			gw_index, next_index, 0, 1, 
-			matched_gws[gw_index].weight);
-		gw_index++;
+		if ((*gws)[next_index].ping != 2) {
+		    matched_gws[gw_index].gw_index = next_index;
+		    matched_gws[gw_index].prefix_len = 0;
+		    matched_gws[gw_index].priority = 1;
+		    matched_gws[gw_index].weight = rand();
+		    LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
+			   gw_index, next_index, 0, 1, 
+			   matched_gws[gw_index].weight);
+		    gw_index++;
+		}
 		next_index = (*gws)[next_index].next;
 	    }
 	    break;

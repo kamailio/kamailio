@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2005-2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-10-16 18:58:34 +0200
-                              (Do, 16 Okt 2008) $
+   Revision $Revision$ $Date: 2008-10-16 19:58:34 +0300
+                              (Thu, 16 Oct 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -594,7 +594,7 @@ ys");
 1.4.2.  load_gws_from_grp(group-id)
 
    Loads URI schemes, IP addresses, hostnames, ports, and
-   transports of gateways that belong to a given group to
+   transports of alive gateways that belong to a given group to
    gw_uri_avp. group-id argument is a string that may contain
    pseudo-variables. Its value must be a a string of digits that
    are converted to an integer group id. Returns 1 or -1 depending
