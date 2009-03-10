@@ -367,9 +367,9 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	src[6]= msg->via1->port_str;
 	if (msg->via1->branch) {
 		src[7]= msg->via1->branch->value;
-		MDStringArray ( cv, src, 8 );
+		MD5StringArray ( cv, src, 8 );
 	} else {
-		MDStringArray( cv, src, 7 );
+		MD5StringArray( cv, src, 7 );
 	}
 	return 1;
 }

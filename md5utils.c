@@ -45,7 +45,7 @@ jku: added support to deal with vectors
 /* Digests a string array and store the result in dst; assumes
   32 bytes in dst
  */
-void MDStringArray (char *dst, str src[], int size)
+void MD5StringArray (char *dst, str src[], int size)
 {
 	MD_CTX context;
 	unsigned char digest[16];

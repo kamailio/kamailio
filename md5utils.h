@@ -34,6 +34,6 @@
 
 #define MD5_LEN	32
 
-void MDStringArray (char *dst, str src[], int size);
+void MD5StringArray (char *dst, str src[], int size);
 
 #endif /* _MD5UTILS_H */
