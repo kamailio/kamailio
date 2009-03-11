@@ -7,6 +7,6 @@ auto_gen=
 NAME=memcached.so
 
 DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
-LIBS+=-lmemcache
+LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcache
 
 include ../../Makefile.modules
