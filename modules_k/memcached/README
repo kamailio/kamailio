@@ -66,7 +66,7 @@ xlog("stored value is $mct(test)"); # will return <null>
    Example 1.2. Using atomic operations
 ...
 $mct(cnt) = 1;
-$mcinc(cnt) = 1; # increment by 2
+$mcinc(cnt) = 1; # increment by 1
 xlog("counter is now $mct(cnt)");
 $mcdec(cnt) = 1; # decrement by 1
 xlog("counter is now $mct(cnt)");
