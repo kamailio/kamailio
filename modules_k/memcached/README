@@ -47,7 +47,7 @@ Chapter 1. Admin Guide
 
    The module provides access to the distributed hash table
    memcached. This hash table is stored in memory and can can be
-   accessed via a pseudo-variable: $mcd(key). Entries are stored
+   accessed via a pseudo-variable: $mct(key). Entries are stored
    and retrieved from an external server application.
 
    The "key" can be a static string and also any existing
@@ -189,7 +189,7 @@ modparam("memcached", "mode", 0)
 
 1.4.4. timeout (integer)
 
-   The timeout the memcache servers access in milliseconds.
+   The timeout for the memcache servers access in milliseconds.
 
    Default value is "5000" (5s).
 
