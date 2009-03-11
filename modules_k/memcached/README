@@ -76,8 +76,8 @@ xlog("counter is now $mct(cnt)");
    functionality, not a replacement. In smaller architectures or
    installations where only one instance needs access to the hash
    table this module is easier to setup, as no dedicated server
-   needs to be setup. But when a distributed storage facilility is
-   necessary, or one want to separate the storage from the SIP
+   needs to be provided. But when a distributed storage facilility
+   is necessary, or one want to separate the storage from the SIP
    server, this module could be used.
 
 1.2. Implementation notes
@@ -133,8 +133,8 @@ xlog("counter is now $mct(cnt)");
 
    The following libraries or applications must be installed
    before running Kamailio with this module loaded:
-     * libmemcache library.
-     * a compatible memcached server implementation.
+     * the libmemcache library.
+     * the memcached server implementation.
 
 1.4. Exported Parameters
 
