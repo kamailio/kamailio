@@ -10,8 +10,8 @@ Bogdan Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -31,7 +31,8 @@ Bogdan Iancu
         1.4. Exported Functions
 
               1.4.1. sl_send_reply(code, reason)
-              1.4.2. sl_reply_error()
+              1.4.2. send_reply(code, reason)
+              1.4.3. sl_reply_error()
 
         1.5. Exported Statistics
 
@@ -49,7 +50,8 @@ Bogdan Iancu
 
    1.1. enable_stats example
    1.2. sl_send_reply usage
-   1.3. sl_reply_error usage
+   1.3. send_reply usage
+   1.4. sl_reply_error usage
 
 Chapter 1. Admin Guide
 
@@ -134,7 +136,29 @@ sl_send_reply("404", "Not found");
 sl_send_reply("$err.rcode", "$err.rreason");
 ...
 
-1.4.2.  sl_reply_error()
+1.4.2.  send_reply(code, reason)
+
+   For the current request, a reply is sent back having the given
+   code and text reason. The reply is sent stateful or stateless,
+   depending of the Transaction module: if the transaction for
+   current request has created, then the reply is sent stateful,
+   otherwise stateless.
+
+   Meaning of the parameters is as follows:
+     * code - Return code.
+     * reason - Reason phrase.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, ERROR_ROUTE.
+
+   Example 1.3. send_reply usage
+...
+send_reply("404", "Not found");
+...
+send_reply("403", "Invalid user - $fU");
+...
+
+1.4.3.  sl_reply_error()
 
    Sends back an error reply describing the nature of the last
    internal error. Usually this function should be used after a
@@ -142,7 +166,7 @@ sl_send_reply("$err.rcode", "$err.rreason");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.3. sl_reply_error usage
+   Example 1.4. sl_reply_error usage
 ...
 sl_reply_error();
 ...
