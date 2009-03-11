@@ -197,7 +197,8 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 
 /* 
  * Check if an entry exists in hash table that has given src_ip and protocol
- * value and pattern that matches to From URI.  If, assign 
+ * value and pattern that matches to From URI.  If an entry exists and tag_avp
+ * has been defined, tag of the entry is added as a value to tag_avp.
  */
 int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 		     char *src_ip_c_str, int proto)

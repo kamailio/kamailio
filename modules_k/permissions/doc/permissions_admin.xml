@@ -216,6 +216,11 @@
 		Otherwise the request is rejected.
 		</para>
 		<para>
+		As a side effect of accepting the request, peer's
+	non-NULL tag (see tag_col module parameter) is added as value to
+	peer_tag AVP if peer_tag_avp module parameter has been defined.
+		</para>
+		<para>
 		Rules are stored in a database table specified by module
 		parameters.  There also exists a module parameter
 	        <varname>dm_mode</varname> that
