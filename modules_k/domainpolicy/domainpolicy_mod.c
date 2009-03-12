@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Domain module
- *
  * Copyright (C) 2002-2003 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
@@ -32,6 +30,11 @@
  */
 
 
+/*!
+ * \file
+ * \brief Domain module
+ */
+
 #include "domainpolicy_mod.h"
 #include <stdio.h>
 #include "../../mem/shm_mem.h"
@@ -47,10 +50,9 @@ static int child_init(int rank);
 
 MODULE_VERSION
 
-/*
- * Version of gw and lcr tables required by the module,
- * increment this value if you change the table in
- * an backwards incompatible way
+/*!
+ * Version of gw and lcr tables required by the module, increment this value
+ * if you change the table in an backwards incompatible way
  */
 #define DOMAINPOLICY_TABLE_VERSION 2
 
@@ -73,7 +75,7 @@ MODULE_VERSION
  * Module parameter variables
  */
 static str db_url         = str_init(DEFAULT_RODB_URL);
-str domainpolicy_table    = str_init(DOMAINPOLICY_TABLE);     /* Name of domainpolicy table */
+str domainpolicy_table    = str_init(DOMAINPOLICY_TABLE);     /*!< Name of domainpolicy table */
 str domainpolicy_col_rule = str_init(DOMAINPOLICY_COL_RULE);
 str domainpolicy_col_type = str_init(DOMAINPOLICY_COL_TYPE);
 str domainpolicy_col_att  = str_init(DOMAINPOLICY_COL_ATT);
@@ -134,17 +136,17 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"domainpolicy", 
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* exported functions */
-	params,    /* exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	0,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function*/
-	0,         /* destroy function */
-	child_init /* per-child init function */
+	DEFAULT_DLFLAGS, /*!< dlopen flags */
+	cmds,      /*!< exported functions */
+	params,    /*!< exported parameters */
+	0,         /*!< exported statistics */
+	0,         /*!< exported MI functions */
+	0,         /*!< exported pseudo-variables */
+	0,         /*!< extra processes */
+	mod_init,  /*!< module initialization function */
+	0,         /*!< response function*/
+	0,         /*!< destroy function */
+	child_init /*!< per-child init function */
 };
 
 
@@ -272,4 +274,3 @@ static int child_init(int rank)
 	}
 	return 0;
 }
-

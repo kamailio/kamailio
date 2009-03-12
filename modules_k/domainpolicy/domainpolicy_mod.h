@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Domain module headers
- *
  * Copyright (C) 2002-2003 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
@@ -23,6 +21,12 @@
  */
 
 
+/*!
+ * \file
+ * \brief Domain module headers
+ */
+
+
 #ifndef DOMAINPOLICY_MOD_H
 #define DOMAINPOLICY_MOD_H
 
@@ -32,21 +36,19 @@
 #include "../../usr_avp.h"
 
 
-
 /*
  * Module parameters variables
  */
-extern str domainpolicy_table;		/* Domainpolicy table name */
-extern str domainpolicy_col_rule;   	/* Rule column name */
-extern str domainpolicy_col_type;   	/* Type column name */
-extern str domainpolicy_col_att;   	/* Attribute column name */
-extern str domainpolicy_col_val;   	/* Value column name */
+extern str domainpolicy_table;		/*!< Domainpolicy table name */
+extern str domainpolicy_col_rule;   	/*!< Rule column name */
+extern str domainpolicy_col_type;   	/*!< Type column name */
+extern str domainpolicy_col_att;   	/*!< Attribute column name */
+extern str domainpolicy_col_val;   	/*!< Value column name */
 
 
 /*
  * Other module variables
  */
-
 extern int_str port_override_name, transport_override_name, 
 		domain_prefix_name, domain_suffix_name, domain_replacement_name,
 		send_socket_name, target_name;
@@ -59,4 +61,4 @@ extern unsigned short domain_replacement_avp_name_str;
 extern unsigned short send_socket_avp_name_str;
 
 
-#endif /* DOMAINPOLICY_MOD_H */
+#endif

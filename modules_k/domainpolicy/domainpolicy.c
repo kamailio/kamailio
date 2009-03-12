@@ -1,8 +1,6 @@
 /* 
  * $Id$
  *
- * Domain Policy related functions
- *
  * Copyright (C) 2006 Otmar Lendl & Klaus Darilion
  *
  * Based on the ENUM and domain module.
@@ -28,6 +26,13 @@
  *  2006-04-20  Initial Version
  *  2006-09-08  Updated to -02 version, added support for D2P+SIP:std
  */
+
+
+/*!
+ * \file
+ * \brief Domain Policy related functions
+ */
+
 
 #include "domainpolicy_mod.h"
 #include "domainpolicy.h"
@@ -196,6 +201,11 @@ static void stack_to_avp(struct avp_stack *stack) {
 
 /* helper db functions*/
 
+/*!
+ * \brief Bind the database interface
+ * \param db_url database url
+ * \return -1 on failure, 0 on success
+ */
 int domainpolicy_db_bind(const str* db_url)
 {
 	if (db_bind_mod(db_url, &domainpolicy_dbf )) {
@@ -207,7 +217,11 @@ int domainpolicy_db_bind(const str* db_url)
 }
 
 
-
+/*!
+ * \brief Initialize the database connection
+ * \param db_url database url
+ * \return -1 on failure, 0 on success
+ */
 int domainpolicy_db_init(const str* db_url)
 {
 	if (domainpolicy_dbf.init==0){
@@ -225,6 +239,9 @@ error:
 }
 
 
+/*!
+ * \brief Close the database connection
+ */
 void domainpolicy_db_close(void)
 {
 	if (db_handle && domainpolicy_dbf.close){
@@ -234,7 +251,12 @@ void domainpolicy_db_close(void)
 }
 
 
-
+/*!
+ * \brief Check the database table version
+ * \param db_url database URL
+ * \param name table name
+ * \return -1 on failure, positive database version on success
+ */
 int domainpolicy_db_ver(const str* db_url, const str* name)
 {
 	int ver;
@@ -729,6 +751,14 @@ int dp_can_connect_str(str *domain, int rec_level) {
     return(  found_anything ? DP_DDDS_RET_NEGATIVE : DP_DDDS_RET_NOTFOUND );
 }
 
+
+/*!
+ * \brief Check if host in Request URI has DP-DDDS NAPTRs and if we can connect to them
+ * \param _msg SIP message
+ * \param _s1 unused
+ * \param _s2 unused
+ * \return negative on failure, positive on success
+ */
 int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2) {
 
 	static char domainname[MAX_DOMAIN_SIZE];
@@ -765,6 +795,19 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2) {
 	return(ret);
 }
 
+
+/*!
+ * \brief Apply DP-DDDS policy to current SIP message
+ *
+ * Apply DP-DDDS policy to current SIP message. This means
+ * build a new destination URI from the policy AVP and export it
+ * as AVP. Then in kamailio.cfg this new target AVP can be pushed
+ * into the destination URI $duri
+ * \param _msg SIP message
+ * \param _s1 unused
+ * \param _s2 unused
+ * \return negative on failure, positive on succes
+ */
 int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 
 	str *domain;
