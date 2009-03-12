@@ -229,7 +229,9 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 			if(body.len>0)
 				imc_room_broadcast(room, &imc_hdr_ctype, &body);
 
-		}				
+			if(body.len>=IMC_BUF_SIZE)
+				LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
+		}
 	}
 
 done:
@@ -329,6 +331,9 @@ build_inform:
 					member->uri.len, member->uri.s);
 	if(body.len>0)
 		imc_room_broadcast(room, &imc_hdr_ctype, &body);
+
+	if(body.len>=IMC_BUF_SIZE)
+		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
 
 done:
 	if(room!=NULL)
@@ -554,6 +559,9 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(body.len>0)
 		imc_room_broadcast(room, &imc_hdr_ctype, &body);
 
+	if(body.len>=IMC_BUF_SIZE)
+		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
+
 	imc_release_room(room);
 	return 0;
 
@@ -694,6 +702,8 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	if(body.len>0)
 		imc_room_broadcast(room, &imc_hdr_ctype, &body);
 
+	if(body.len>=IMC_BUF_SIZE)
+		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
 
 	if(uri.s!=0)
 		pkg_free(uri.s);
@@ -888,6 +898,9 @@ int imc_handle_exit(struct sip_msg* msg, imc_cmd_t *cmd,
 				src->user.len, src->user.s);
 		if(body.len>0)
 			imc_room_broadcast(room, &imc_hdr_ctype, &body);
+
+		if(body.len>=IMC_BUF_SIZE)
+			LM_ERR("user name %.*s truncated\n", src->user.len, src->user.s);
 	}
 
 done:
