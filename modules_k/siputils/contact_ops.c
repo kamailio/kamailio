@@ -146,6 +146,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	int res;
 
 	uri.s = 0;
+	uri.len = 0;
 
 #ifdef DEBUG
 	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
