@@ -129,7 +129,7 @@ Each row consists of the following items:
   handle within the fixup function. String and str values are cloned to
   shm memory by the framework. The callback type is:
 
-  typedef int (*cfg_on_change)(void *temp_handle, str *var_name, void **value);
+  typedef int (*cfg_on_change)(void *temp_handle, str *group_name, str *var_name, void **value);
 
 - per-child process callback function (optional) that is called by each child
   process separately, after the new values have been committed, and the
@@ -137,7 +137,7 @@ Each row consists of the following items:
   longer be used by the process. (Useful for fix-ups that cannot be done
   in shm memory, for example regexp compilation.)
 
-  typedef void (*cfg_on_set_child)(str *var_name);
+  typedef void (*cfg_on_set_child)(str *group_name, str *var_name);
 
 - description of the variable
 

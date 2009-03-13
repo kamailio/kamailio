@@ -392,7 +392,7 @@ int cancel_b_flags_get(unsigned int* f, int m)
 
 /* fixup function for the default cancel branch method/flags
  * (called by the configuration framework) */
-int cancel_b_flags_fixup(void* handle, str* name, void** val)
+int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val)
 {
 	unsigned int m,f;
 	int ret;

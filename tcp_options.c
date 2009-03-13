@@ -65,10 +65,10 @@ struct cfg_group_tcp tcp_default_cfg;
 
 
 
-static int fix_connect_to(void* cfg_h, str* name, void** val);
-static int fix_send_to(void* cfg_h, str* name, void** val);
-static int fix_con_lt(void* cfg_h, str* name, void** val);
-static int fix_max_conns(void* cfg_h, str* name, void** val);
+static int fix_connect_to(void* cfg_h, str* gname, str* name, void** val);
+static int fix_send_to(void* cfg_h, str* gname, str* name, void** val);
+static int fix_con_lt(void* cfg_h, str* gname, str* name, void** val);
+static int fix_max_conns(void* cfg_h, str* gname, str* name, void** val);
 
 
 
@@ -216,7 +216,7 @@ static void fix_timeout(char* name, int* to, int default_val, unsigned max_val)
 
 
 
-static int fix_connect_to(void* cfg_h, str* name, void** val)
+static int fix_connect_to(void* cfg_h, str* gname, str* name, void** val)
 {
 	int v;
 	v=(int)(long)*val;
@@ -227,7 +227,7 @@ static int fix_connect_to(void* cfg_h, str* name, void** val)
 }
 
 
-static int fix_send_to(void* cfg_h, str* name, void** val)
+static int fix_send_to(void* cfg_h, str* gname, str* name, void** val)
 {
 	int v;
 	v=(int)(long)*val;
@@ -241,7 +241,7 @@ static int fix_send_to(void* cfg_h, str* name, void** val)
 }
 
 
-static int fix_con_lt(void* cfg_h, str* name, void** val)
+static int fix_con_lt(void* cfg_h, str* gname, str* name, void** val)
 {
 	int v;
 	v=S_TO_TICKS((int)(long)*val);
@@ -252,7 +252,7 @@ static int fix_con_lt(void* cfg_h, str* name, void** val)
 }
 
 
-static int fix_max_conns(void* cfg_h, str* name, void** val)
+static int fix_max_conns(void* cfg_h, str* gname, str* name, void** val)
 {
 	int v;
 	v=(int)(long)*val;
@@ -288,7 +288,7 @@ static int tcp_cfg_def_fix(char* name, int* val)
 				if (c->on_change_cb){
 					s.s=c->name;
 					s.len=strlen(s.s);
-					return c->on_change_cb(&tcp_default_cfg, &s, (void*)val);
+					return c->on_change_cb(&tcp_default_cfg, NULL, &s, (void*)val);
 				}
 			}
 			return 0;

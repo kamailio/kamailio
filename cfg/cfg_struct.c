@@ -317,7 +317,7 @@ int cfg_init(void)
 	This stucture will be the entry point for the child processes, and
 	will be freed later, when none of the processes refers to it */
 	*cfg_child_cb_first = *cfg_child_cb_last =
-		cfg_child_cb_new(NULL, NULL);
+		cfg_child_cb_new(NULL, NULL, NULL);
 
 	if (!*cfg_child_cb_first) goto error;
 
@@ -552,7 +552,7 @@ void cfg_install_global(cfg_block_t *block, char **replaced,
 }
 
 /* creates a structure for a per-child process callback */
-cfg_child_cb_t *cfg_child_cb_new(str *name, cfg_on_set_child cb)
+cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name, cfg_on_set_child cb)
 {
 	cfg_child_cb_t	*cb_struct;
 
@@ -562,6 +562,10 @@ cfg_child_cb_t *cfg_child_cb_new(str *name, cfg_on_set_child cb)
 		return NULL;
 	}
 	memset(cb_struct, 0, sizeof(cfg_child_cb_t));
+	if (gname) {
+		cb_struct->gname.s = gname->s;
+		cb_struct->gname.len = gname->len;
+	}
 	if (name) {
 		cb_struct->name.s = name->s;
 		cb_struct->name.len = name->len;

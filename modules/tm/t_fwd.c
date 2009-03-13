@@ -1297,7 +1297,7 @@ int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
 }
 
 /* fixup function for reparse_on_dns_failover modparam */
-int reparse_on_dns_failover_fixup(void *handle, str *name, void **val)
+int reparse_on_dns_failover_fixup(void *handle, str *gname, str *name, void **val)
 {
 #ifdef USE_DNS_FAILOVER
 	if ((int)(long)(*val) && mhomed) {

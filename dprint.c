@@ -83,7 +83,7 @@ int str2facility(char *s)
 }
 
 /* fixup function for log_facility cfg parameter */
-int log_facility_fixup(void *handle, str *name, void **val)
+int log_facility_fixup(void *handle, str *gname, str *name, void **val)
 {
 	int	i;
 

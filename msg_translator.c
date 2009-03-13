@@ -162,7 +162,7 @@ static unsigned int global_req_flags=0;
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
   */
-void fix_global_req_flags( str* name)
+void fix_global_req_flags(str* gname, str* name)
 {
 	global_req_flags=0;
 	switch(cfg_get(core, core_cfg, udp_mtu_try_proto)){

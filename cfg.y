@@ -1287,10 +1287,10 @@ assign_stm:
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER 
-		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0); }
+		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0, 0); }
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
 	| UDP_MTU_TRY_PROTO EQUAL proto
-		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0); }
+		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0, 0); }
 	| UDP_MTU_TRY_PROTO EQUAL error
 		{ yyerror("TCP, TLS, SCTP or UDP expected"); }
 	| cfg_var

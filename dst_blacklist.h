@@ -116,8 +116,8 @@ int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg);
  */
 void dst_blst_flush(void);
 
-int use_dst_blacklist_fixup(void *handle, str *name, void **val);
+int use_dst_blacklist_fixup(void *handle, str *gname, str *name, void **val);
 /* KByte to Byte conversion */
-int blst_max_mem_fixup(void *handle, str *name, void **val);
+int blst_max_mem_fixup(void *handle, str *gname, str *name, void **val);
 
 #endif
