@@ -48,6 +48,7 @@
 #include "../../statistics.h"
 #include "../sl/sl_api.h"
 #include "../../lib/kcore/km_ut.h"
+#include "../../lib/kmi/mi.h"
 
 MODULE_VERSION
 

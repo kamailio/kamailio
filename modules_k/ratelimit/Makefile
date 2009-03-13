@@ -13,4 +13,5 @@ DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
+SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 include ../../Makefile.modules
