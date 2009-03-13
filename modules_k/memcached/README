@@ -75,10 +75,10 @@ xlog("counter is now $mct(cnt)");
    This module is an addition to the existing htable
    functionality, not a replacement. In smaller architectures or
    installations where only one instance needs access to the hash
-   table this module is easier to setup, as no dedicated server
-   needs to be provided. But when a distributed storage facilility
-   is necessary, or one want to separate the storage from the SIP
-   server, this module could be used.
+   table the htable module is easier to setup, as no dedicated
+   server needs to be provided. But when a distributed storage
+   facilility is necessary, or one want to separate the storage
+   from the SIP server, this module could be used.
 
 1.2. Implementation notes
 
