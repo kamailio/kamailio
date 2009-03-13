@@ -30,8 +30,8 @@ Juha Heinanen
 
    Copyright © 2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-10-22 11:03:56 +0300
-                              (Wed, 22 Oct 2008) $
+   Revision $Revision$ $Date: 2008-10-22 10:03:56 +0200
+                              (Mi, 22 Okt 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -464,8 +464,10 @@ modparam("tm", "restart_fr_on_each_reply", 0)
    final response timeout value. If present, ths value will
    override the static fr_timer parameter.
 
-   If set to empty string, the whole mechanism for variable
-   timeout will be disabled, falling back to the static value.
+   If you set the AVP to an empty string, the whole mechanism for
+   variable timeout will be disabled, falling back to the static
+   value. Note that if you set this parameter to an empty string,
+   a value of zero will be used.
 
    Default value is "NULL" (feature disabled).
 
@@ -480,8 +482,10 @@ modparam("tm", "fr_timer_avp", "$avp(i:24)")
    final INVITE response timeout value. If present, ths value will
    overeide the static fr_inv_timer parameter.
 
-   If set to empty string, the whole mechanism for variable
-   timeout will be disabled, falling back to the static value.
+   If set the AVP to an to empty string, the whole mechanism for
+   variable timeout will be disabled, falling back to the static
+   value. Note that if you set this parameter to an empty string,
+   a value of zero will be used.
 
    Default value is "NULL" (feature disabled).
 

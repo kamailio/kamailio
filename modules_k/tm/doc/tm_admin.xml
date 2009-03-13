@@ -454,8 +454,9 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 		static fr_timer parameter.
 		</para>
 		<para>
-		If set to empty string, the whole mechanism for variable timeout will
-		be disabled, falling back to the static value.
+		If you set the AVP to an empty string, the whole mechanism for variable
+		timeout will be disabled, falling back to the static value. Note that if
+		you set this parameter to an empty string, a value of zero will be used.
 		</para>
 		<para>
 		<emphasis>
@@ -480,8 +481,9 @@ modparam("tm", "fr_timer_avp", "$avp(i:24)")
 		static fr_inv_timer parameter.
 		</para>
 		<para>
-		If set to empty string, the whole mechanism for variable timeout will
-		be disabled, falling back to the static value.
+		If set the AVP to an to empty string, the whole mechanism for variable
+		timeout will be disabled, falling back to the static value. Note that if
+		you set this parameter to an empty string, a value of zero will be used.
 		</para>
 		<para>
 		<emphasis>
