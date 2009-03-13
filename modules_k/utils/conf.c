@@ -93,7 +93,7 @@ static void remove_spaces(char *s)
  *    >=0 on success
  *     -1 otherwise
  */
-static int str2int(char *s)
+static int conf_str2int(char *s)
 {
 	if (s == NULL) return -1;
 
@@ -120,7 +120,7 @@ static int str2int(char *s)
  */
 int conf_str2id(char *id_str)
 {
-	int id = str2int(id_str);
+	int id = conf_str2int(id_str);
 
 	if ((id<0) || (id > fwd_max_id)) {
 	LM_ERR("id %d is out of range.\n", id);
@@ -248,7 +248,7 @@ static int update_proxy(int id, char *host_str, char *port_str)
 		return -1;
 	}
 
-	int port = str2int(port_str);
+	int port = conf_str2int(port_str);
 	if (port < 0) {
 		LM_ERR("invalid port '%s'.\n", port_str);
 		return -1;
