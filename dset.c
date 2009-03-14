@@ -66,7 +66,7 @@ struct branch
 	struct socket_info* force_send_socket;
 
 	/* Branch flags */
-	unsigned int flags;
+	flag_t flags;
 };
 
 
@@ -83,7 +83,47 @@ unsigned int nr_branches = 0;
 static int branch_iterator = 0;
 
 /* The q parameter of the Request-URI */
-static qvalue_t ruri_q = Q_UNSPECIFIED; 
+static qvalue_t ruri_q = Q_UNSPECIFIED;
+
+/* Branch flags of the Request-URI */
+static flag_t ruri_bflags;
+
+
+static inline flag_t* get_bflags_ptr(unsigned int branch)
+{
+	if (branch == 0) return &ruri_bflags;
+	if (branch - 1 < nr_branches) return &branches[branch - 1].flags;
+	return NULL;
+}
+
+
+int setbflag(unsigned int branch, flag_t flag)
+{
+	flag_t* flags;
+
+	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	(*flags) |= 1 << flag;
+	return 1;
+}
+
+
+int isbflagset(unsigned int branch, flag_t flag)
+{
+	flag_t* flags;
+
+	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	return ((*flags) & (1 << flag)) ? 1 : -1;
+}
+
+
+int resetbflag(unsigned int branch, flag_t flag)
+{
+	flag_t* flags;
+
+	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	(*flags) &= ~ (1 << flag);
+	return 1;
+}
 
 
 /*
