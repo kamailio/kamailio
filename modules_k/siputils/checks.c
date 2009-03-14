@@ -311,6 +311,10 @@ int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 	if (strncasecmp(ruri->s, "tel:", 4) != 0) return 1;
 	
 	tel_uri.s = pkg_malloc(ruri->len);
+	if (tel_uri.s == 0) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
 	
 	/* Remove visual separators before converting to SIP URI. Don't remove 
 	visual separators in TEL URI parameters (after the first ";") */
