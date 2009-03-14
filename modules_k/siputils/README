@@ -1,3 +1,4 @@
+
 siputils
 
 Hardy Kahl
@@ -40,8 +41,8 @@ Gabriel Vasile
    voice-system.ro
    Revision History
    Revision $Revision: 4872 $ $Date: 2008-09-09 17:39:38 +0200
-                              (Di, 09 Sep 2008) $
-     __________________________________________________________
+   (Di, 09 Sep 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -64,20 +65,20 @@ Gabriel Vasile
 
         1.4. Exported Functions
 
-              1.4.1. ring_insert_callid()
-              1.4.2. options_reply()
-              1.4.3. is_user(username)
-              1.4.4. has_totag()
-              1.4.5. uri_param(param)
-              1.4.6. uri_param(param,value)
-              1.4.7. add_uri_param(param)
-              1.4.8. tel2sip()
-              1.4.9. is_uri_user_e164(pseudo-variable)
-              1.4.10. encode_contact(encoding_prefix)
-              1.4.11. decode_contact()
-              1.4.12. decode_contact_header()
-              1.4.13. cmp_uri(str1, str2)
-              1.4.14. cmp_aor(str1, str2)
+              1.4.1. ring_insert_callid() 
+              1.4.2. options_reply() 
+              1.4.3. is_user(username) 
+              1.4.4. has_totag() 
+              1.4.5. uri_param(param) 
+              1.4.6. uri_param(param,value) 
+              1.4.7. add_uri_param(param) 
+              1.4.8. tel2sip() 
+              1.4.9. is_uri_user_e164(pseudo-variable) 
+              1.4.10. encode_contact(encoding_prefix) 
+              1.4.11. decode_contact() 
+              1.4.12. decode_contact_header() 
+              1.4.13. cmp_uri(str1, str2) 
+              1.4.14. cmp_aor(str1, str2) 
 
    List of Examples
 
@@ -117,9 +118,9 @@ Chapter 1. Admin Guide
 
    This module provides a function to answer OPTIONS requests
    which are directed to the server itself. This means an OPTIONS
-   request which has the address of the server in the request URI,
-   and no username in the URI. The request will be answered with a
-   200 OK which the capabilities of the server.
+   request which has the address of the server in the request
+   URI, and no username in the URI. The request will be answered
+   with a 200 OK which the capabilities of the server.
 
    To answer OPTIONS request directed to your server is the
    easiest way for is-alive-tests on the SIP (application) layer
@@ -143,10 +144,10 @@ Chapter 1. Admin Guide
 
 1.3.1. ring_timeout (int)
 
-   Timeout value in seconds, define how long the call-id is stored
-   in the internal list. A reasonable value is "30".
+   Timeout value in seconds, define how long the call-id is
+   stored in the internal list. A reasonable value is "30".
 
-   Default value is "0".
+   Default value is "0". 
 
    Example 1.1. Set ring_timeout parameter
 ...
@@ -155,12 +156,13 @@ modparam("utils", "ring_timeout", "30")
 
 1.3.2. options_accept (string)
 
-   This parameter is the content of the Accept header field. Note:
-   it is not clearly written in RFC3261 if a proxy should accept
-   any content (the default "*/*") because it does not care about
-   content. Or if it does not accept any content, which is "".
+   This parameter is the content of the Accept header field.
+   Note: it is not clearly written in RFC3261 if a proxy should
+   accept any content (the default "*/*") because it does not
+   care about content. Or if it does not accept any content,
+   which is "".
 
-   Default value is "*/*".
+   Default value is "*/*". 
 
    Example 1.2. Set options_accept parameter
 ...
@@ -173,7 +175,7 @@ modparam("options", "options_accept", "application/*")
    field. Please do not change the default value because Kamailio
    does not support any encodings yet.
 
-   Default value is "".
+   Default value is "". 
 
    Example 1.3. Set options_accept_encoding parameter
 ...
@@ -192,7 +194,7 @@ Warning
    Otherwise it is possible for the decoding step to fail/produce
    wrong results.
 
-   Default value is "*".
+   Default value is "*". 
 
    Example 1.4. Set db_url parameter
 ...
@@ -205,12 +207,12 @@ modparam("mangler", "contact_flds_separator", "-")
 1.3.5. options_accept_language (string)
 
    This parameter is the content of the Accept-Language header
-   field. You can set any language code which you prefer for error
-   descriptions from other devices, but presumably there are not
-   much devices around which support other languages then the
-   default English.
+   field. You can set any language code which you prefer for
+   error descriptions from other devices, but presumably there
+   are not much devices around which support other languages then
+   the default English.
 
-   Default value is "en".
+   Default value is "en". 
 
    Example 1.5. Set options_accept_language parameter
 ...
@@ -221,10 +223,10 @@ modparam("options", "options_accept_language", "de")
 
    This parameter is the content of the Support header field.
    Please do not change the default value, because Kamailio
-   currently does not support any of the SIP extensions registered
-   at the IANA.
+   currently does not support any of the SIP extensions
+   registered at the IANA.
 
-   Default value is "".
+   Default value is "". 
 
    Example 1.6. Set options_support parameter
 ...
@@ -244,7 +246,8 @@ modparam("options", "options_support", "100rel")
    The function returns TRUE on success, and FALSE during
    processing failures.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
 
    Example 1.7. ring_insert_callid() usage
 ...
@@ -264,10 +267,10 @@ ring_insert_callid();
    The check for the request method and the missing username is
    optional because it is also done by the function itself. But
    you should not call this function outside the myself check
-   because in this case the function could answer OPTIONS requests
-   which are sent to you as outbound proxy but with an other
-   destination then your proxy (this check is currently missing in
-   the function).
+   because in this case the function could answer OPTIONS
+   requests which are sent to you as outbound proxy but with an
+   other destination then your proxy (this check is currently
+   missing in the function).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -359,15 +362,29 @@ add_uri_param("nat=yes");
 
 1.4.8.  tel2sip()
 
-   Converts RURI, if it is tel URI, to SIP URI. Returns true, only
+   Converts RURI, if it is tel URI, to SIP URI. Returns true only
    if conversion succeeded or if no conversion was needed (like
-   RURI was not tel URI.
+   RURI was not tel URI).
+
+   The conversion follows the rules in RFC 3261 section 19.1.6:
+     * Visual separators ( "-", ".", "(", ")" ) are removed from
+       tel URI number before converting it to SIP URI userinfo.
+     * tel URI parameters are downcased before appending them to
+       SIP URI userinfo
+
+   The SIP URI host is formed using the From URI host.
 
    This function can be used from REQUEST_ROUTE.
 
    Example 1.14. tel2sip usage
 ...
+# RURI:  tel:+(34)-999-888-777
 tel2sip();
+# RURI:  sip:+34999888777@foo.com;user=phone
+
+# RURI:  tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
+tel2sip();
+# RURI:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
 ...
 
 1.4.9.  is_uri_user_e164(pseudo-variable)
@@ -375,7 +392,8 @@ tel2sip();
    Checks if userpart of URI stored in pseudo variable is E164
    number.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and
+   FAILURE_ROUTE.
 
    Example 1.15. is_uri_user_e164 usage
 ...
@@ -399,16 +417,16 @@ if (is_uri_user_e164("$avp(i:705)") {
    The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
-     * encoding_prefix - Something to allow us to determine that a
-       contact is encoded publicip--a routable IP, most probably
-       you should put your external IP of your NAT box.
+     * encoding_prefix - Something to allow us to determine that
+       a contact is encoded publicip--a routable IP, most
+       probably you should put your external IP of your NAT box.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
    Example 1.16. encode_contact usage
 ...
-if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
-
+if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
+;
 ...
 
 1.4.11.  decode_contact()
@@ -467,8 +485,8 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 
 1.4.14.  cmp_aor(str1, str2)
 
-   The function returns true if the two parameters matches as AoR.
-   The parameters have to be SIP URIs.
+   The function returns true if the two parameters matches as
+   AoR. The parameters have to be SIP URIs.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
