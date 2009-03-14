@@ -297,22 +297,44 @@ ok:
 int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	str *ruri;
+	str tel_uri;
 	struct sip_uri *pfuri;
 	str suri;
 	char* at;
+	int i, j;
+	int in_tel_parameters = 0;
 
 	ruri = GET_RURI(_msg);
-
+	
 	if (ruri->len < 4) return 1;
 
-	if (strncmp(ruri->s, "tel:", 4) != 0) return 1;
+	if (strncasecmp(ruri->s, "tel:", 4) != 0) return 1;
+	
+	tel_uri.s = pkg_malloc(ruri->len);
+	
+	/* Remove visual separators before converting to SIP URI. Don't remove 
+	visual separators in TEL URI parameters (after the first ";") */
+	for(i=0,j=0; i < ruri->len; i++) {
+		if (in_tel_parameters == 0) {
+			if (ruri->s[i] == ';')
+				in_tel_parameters = 1;
+		}
+		if (in_tel_parameters == 0) {
+			if (ruri->s[i] != '-' && ruri->s[i] != '.' && ruri->s[i] != '(' && ruri->s[i] != ')')
+				tel_uri.s[j++] = tolower(ruri->s[i]);
+		} else {
+			tel_uri.s[j++] = tolower(ruri->s[i]);
+		}
+	}
+	tel_uri.s[j] = '\0';
+	tel_uri.len = strlen(tel_uri.s);
 
 	if ((pfuri=parse_from_uri(_msg))==NULL) {
 		LM_ERR("parsing From header failed\n");
 		return -1;
 	}
 
-	suri.len = 4 + ruri->len - 4 + 1 + pfuri->host.len + 1 + 10;
+	suri.len = 4 + tel_uri.len - 4 + 1 + pfuri->host.len + 1 + 10;
 	suri.s = pkg_malloc(suri.len);
 	if (suri.s == 0) {
 		LM_ERR("no more pkg memory\n");
@@ -321,8 +343,8 @@ int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 	at = suri.s;
 	memcpy(at, "sip:", 4);
 	at = at + 4;
-	memcpy(at, ruri->s + 4, ruri->len - 4);
-	at = at + ruri->len - 4;
+	memcpy(at, tel_uri.s + 4, tel_uri.len - 4);
+	at = at + tel_uri.len - 4;
 	*at = '@';
 	at = at + 1;
 	memcpy(at, pfuri->host.s, pfuri->host.len);
