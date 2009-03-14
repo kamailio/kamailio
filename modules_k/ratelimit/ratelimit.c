@@ -40,6 +40,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../timer.h"
+#include "../../timer_ticks.h"
 #include "../../ut.h"
 #include "../../locking.h"
 #include "../../mod_fix.h"
@@ -140,6 +141,8 @@ typedef struct rl_queue {
 	str             method_mp;
 } rl_queue_t;
 
+static struct timer_ln* rl_timer;
+
 /* === these change after startup */
 gen_lock_t * rl_lock;
 
@@ -200,7 +203,7 @@ static regex_t queue_params_regex;
 
 /** module functions */
 static int mod_init(void);
-static void rl_timer(unsigned int, void *);
+static ticks_t rl_timer_handle(ticks_t, struct timer_ln*, void*);
 static int w_rl_check_default(struct sip_msg*, char *, char *);
 static int w_rl_check_forced(struct sip_msg*, char *, char *);
 static int w_rl_check_forced_pipe(struct sip_msg*, char *, char *);
@@ -442,10 +445,12 @@ static int mod_init(void)
 	}
 
 	/* register timer to reset counters */
-	if (register_timer_process(rl_timer, NULL, timer_interval, TIMER_PROC_INIT_FLAG) < 0) {
-		LM_ERR("could not register timer function\n");
+	if ((rl_timer = timer_alloc()) == NULL) {
+		LM_ERR("could not allocate timer\n");
 		return -1;
 	}
+	timer_init(rl_timer, rl_timer_handle, 0, F_TIMER_FAST);
+	timer_add(rl_timer, MS_TO_TICKS(1500)); /* Start it after 1500ms */
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
@@ -674,6 +679,11 @@ void destroy(void)
 		}
 		shm_free(rl_dbg_str);
 		rl_dbg_str = NULL;
+	}
+
+	if (rl_timer) {
+		timer_free(rl_timer);
+		rl_timer = NULL;
 	}
 
 	if (rl_lock) {
@@ -1115,7 +1125,7 @@ static int add_queue_params(modparam_t type, void * val)
 
 
 /* timer housekeeping, invoked each timer interval to reset counters */
-static void rl_timer(unsigned int ticks, void *param)
+static ticks_t rl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
 {
 	int i, len;
 	char *c, *p;
@@ -1156,6 +1166,7 @@ static void rl_timer(unsigned int ticks, void *param)
 		*pipes[i].counter = 0;
 	}
 	LOCK_RELEASE(rl_lock);
+	return (ticks_t)(-1); /* periodical */
 }
 
 
