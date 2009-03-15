@@ -36,6 +36,7 @@ struct cseq_body{
 	int error;  /* Error code */
 	str number; /* CSeq number */
 	str method; /* Associated method */
+	unsigned int method_id; /* Associated method ID */
 };
 
 

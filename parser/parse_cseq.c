@@ -36,6 +36,7 @@
 #include "parser_f.h"  /* eat_space_end and so on */
 #include "../dprint.h"
 #include "parse_def.h"
+#include "parse_methods.h"
 #include "../mem/mem.h"
 
 /*
@@ -71,6 +72,12 @@ char* parse_cseq(char *buf, char* end, struct cseq_body* cb)
 	cb->method.s=m;
 	t=m_end;
 	cb->method.len=t-cb->method.s;
+
+	/* Cache method id */
+	if (parse_method(&cb->method, &cb->method_id) == 0) {
+		LOG(L_ERR, "ERROR: parse_cseq: Cannot parse method string\n");
+		goto error;
+	}
 
 	/* there may be trailing LWS 
 	 * (it was not my idea to put it in SIP; -jiri )
