@@ -407,5 +407,7 @@ inline static char* get_body(struct sip_msg *msg)
  */
 int set_dst_uri(struct sip_msg* msg, str* uri);
 
+/* If the dst_uri is set to an URI then reset it */
+void reset_dst_uri(struct sip_msg* msg);
 
 #endif
