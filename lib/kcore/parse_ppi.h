@@ -30,7 +30,8 @@
 #ifndef PARSE_PPI_H
 #define PARSE_PPI_H
 
-#include "msg_parser.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_to.h"
 
 
 /*! casting macro for accessing P-Preferred-Identity body */

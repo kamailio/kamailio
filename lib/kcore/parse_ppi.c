@@ -27,15 +27,15 @@
  */
 
 #include "parse_ppi.h"
-#include "parse_to.h"
-#include "parse_uri.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
 #include <stdlib.h>
 #include <string.h>
-#include "../dprint.h"
-#include "msg_parser.h"
-#include "../ut.h"
-#include "../errinfo.h"
-#include "../mem/mem.h"
+#include "../../dprint.h"
+#include "../../parser/msg_parser.h"
+#include "../../ut.h"
+#include "errinfo.h"
+#include "../../mem/mem.h"
 
 
 /*!
