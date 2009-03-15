@@ -57,5 +57,7 @@ enum method {
  */
 int parse_methods(str* _body, unsigned int* _methods);
 
+int parse_method(str* _next, unsigned int* _method);
+
 
 #endif /* PARSE_METHODS_H */

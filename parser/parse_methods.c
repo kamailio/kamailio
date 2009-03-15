@@ -49,7 +49,7 @@ static int token_char(char _c)
   * Parse a method pointed by _next, assign its enum bit to _method, and update
   * _next past the method. Returns 1 if parse succeeded and 0 otherwise.
   */
-static int parse_method(str* _next, unsigned int* _method) 
+int parse_method(str* _next, unsigned int* _method) 
  {
 	 if (!_next || !_method) {
 		 LOG(L_ERR, "parse_method: Invalid parameter value\n");
