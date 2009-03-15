@@ -65,6 +65,7 @@ struct to_body{
  */
 char* parse_to(char* buffer, char *end, struct to_body *to_b);
 
+void free_to_params(struct to_body* tb);
 
 void free_to(struct to_body* tb);
 

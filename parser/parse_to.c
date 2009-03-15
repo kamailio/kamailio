@@ -773,7 +773,7 @@ error:
 }
 
 
-void free_to(struct to_body* tb)
+void free_to_params(struct to_body* tb)
 {
 	struct to_param *tp=tb->param_lst;
 	struct to_param *foo;
@@ -782,5 +782,11 @@ void free_to(struct to_body* tb)
 		pkg_free(tp);
 		tp=foo;
 	}
+}
+
+
+void free_to(struct to_body* tb)
+{
+	free_to_params(tb);
 	pkg_free(tb);
 }
