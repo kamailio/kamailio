@@ -29,7 +29,8 @@
 #ifndef PARSE_PAI_H
 #define PARSE_PAI_H
 
-#include "msg_parser.h"
+#include "../../msg_parser.h"
+#include "../../parser/parse_to.h"
 
 
 /*! casting macro for accessing P-Asserted-Identity body */

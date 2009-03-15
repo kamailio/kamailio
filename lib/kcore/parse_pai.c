@@ -24,14 +24,14 @@
  * \ingroup parser
  */
 
-#include "parse_from.h"
-#include "parse_to.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include <stdlib.h>
 #include <string.h>
-#include "../dprint.h"
-#include "msg_parser.h"
-#include "../ut.h"
-#include "../mem/mem.h"
+#include "../../dprint.h"
+#include "../../parser/msg_parser.h"
+#include "../../ut.h"
+#include "../../mem/mem.h"
 
 /*!
  * This method is used to parse P-Asserted-Identity header (RFC 3325).
