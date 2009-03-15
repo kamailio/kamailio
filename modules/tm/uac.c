@@ -116,7 +116,7 @@ int uac_init(void)
 	src[2].s = si->port_no_str.s;
 	src[2].len = strlen(src[2].s);
 
-	MDStringArray(from_tag, src, 3);
+	MD5StringArray(from_tag, src, 3);
 	from_tag[MD5_LEN] = '-';
 	return 1;
 }

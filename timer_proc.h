@@ -1,7 +1,7 @@
 /* 
  * $Id$
  * 
- * Copyright (C) 2008 iptelorg GmbH
+ * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,37 +15,29 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* 
- * sctp one to many 
+/*
+ * timer_proc.h - separate process timers
+ * (unrelated to the main fast and slow timers)
  */
 /*
  * History:
  * --------
- *  2008-08-07  initial version (andrei)
- */
+ *  2009-03-10  initial version (andrei)
+*/
 
-#ifndef _sctp_server_h
-#define _sctp_server_h
+#ifndef __timer_proc_h
+#define __timer_proc_h
 
-#include "ip_addr.h"
+#include "local_timer.h"
 
-struct sctp_gen_info{
-	int sctp_connections_no;
-	int sctp_tracked_no;
-	int sctp_total_connections;
-};
+/* forks a separate simple sleep() periodic timer */
+int fork_dummy_timer(int child_id, char* desc, int make_sock,
+						timer_function* f, void* param, int interval);
 
-int init_sctp();
-void destroy_sctp();
-int sctp_check_compiled_sockopts(char* buf, int size);
-int sctp_check_support();
-int sctp_init_sock(struct socket_info* sock_info);
-int sctp_rcv_loop();
-int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len);
+/* forks a timer process based on the local timer */
+int fork_local_timer_process(int child_id, char* desc, int make_sock,
+						struct local_timer** lt_h);
 
-/* generic sctp information (stats a.s.o) */
-void sctp_get_info(struct sctp_gen_info* sinf);
+#endif /*__timer_proc_h*/
 
-void destroy_sctp();
-
-#endif /* _sctp_server_h */
+/* vi: set ts=4 sw=4 tw=79:ai:cindent: */

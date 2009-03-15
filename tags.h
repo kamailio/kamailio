@@ -83,7 +83,7 @@ static void inline init_tags( char *tag, char **suffix,
 	src[2].s=si?si->port_no_str.s:"";
 	src[2].len=si?si->port_no_str.len:0;
 
-	MDStringArray( tag, src, 3 );
+	MD5StringArray( tag, src, 3 );
 
 	tag[MD5_LEN]=separator;
 	*suffix=tag+MD5_LEN+1;

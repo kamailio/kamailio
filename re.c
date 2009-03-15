@@ -40,7 +40,8 @@
 
 #include <string.h>
 
-
+#define MAX_REPLACE_WITH 100
+#define REPLACE_BUFFER_SIZE 1024
 
 void subst_expr_free(struct subst_expr* se)
 {
@@ -64,12 +65,143 @@ void replace_lst_free(struct replace_lst* l)
 	}
 }
 
+int parse_repl(struct replace_with * rw, char ** begin, 
+				char * end, int *max_token_nb, int with_sep)
+{
+
+	char* p0;
+	char * repl;
+	str s;
+	int token_nb;
+	int escape;
+	int max_pmatch;
+	char *p, c;
+
+	/* parse replacement */
+	p = *begin;
+	c = *p;
+	if(with_sep)
+		p++;
+	repl= p;
+	token_nb=0;
+	max_pmatch=0;
+	escape=0;
+	for(;p<end; p++){
+		if (escape){
+			escape=0;
+			switch (*p){
+				/* special char escapes */
+				case '\\':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\\';
+					break;
+				case 'n':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\n';
+					break;
+				case 'r':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\r';
+					break;
+				case 't':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c='\t';
+					break;
+				case PV_MARKER:
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c=PV_MARKER;
+					break;
+				/* special sip msg parts escapes */
+				case 'u':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_URI;
+					break;
+				/* re matches */
+				case '0': /* allow 0, too, reference to the whole match */
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_NMATCH;
+					rw[token_nb].u.nmatch=(*p)-'0';
+								/* 0 is the whole matched str*/
+					if (max_pmatch<rw[token_nb].u.nmatch) 
+						max_pmatch=rw[token_nb].u.nmatch;
+					break;
+				default: /* just print current char */
+					if (*p!=c){
+						WARN("subst_parser:\\%c unknown escape in %s\n", *p, *begin);
+					}
+					rw[token_nb].size=2;
+					rw[token_nb].offset=(p-1)-repl;
+					rw[token_nb].type=REPLACE_CHAR;
+					rw[token_nb].u.c=*p;
+					break;
+			}
+
+			token_nb++;
+
+			if (token_nb>=MAX_REPLACE_WITH){
+				ERR("subst_parser: too many escapes in the replace part %s\n", *begin);
+				goto error;
+			}
+		}else if (*p=='\\') {
+			escape=1;
+		}else if (*p==PV_MARKER) {
+			s.s = p;
+			s.len = end - s.s;
+			p0 = pv_parse_spec(&s, &rw[token_nb].u.spec);
+			if(p0==NULL)
+			{
+				ERR("subst_parser: bad specifier in replace part %s\n", *begin);
+				goto error;
+			}
+			rw[token_nb].size=p0-p;
+			rw[token_nb].offset=p-repl;
+			rw[token_nb].type=REPLACE_SPEC;
+			token_nb++;
+			p=p0-1;
+		}else  if (*p==c && with_sep){
+				goto found_repl;
+		}
+	}
+	if(with_sep){
+		ERR("subst_parser: missing separator: %s\n", *begin);
+		goto error;
+	}
+
+found_repl:
+
+	*max_token_nb = max_pmatch;
+	*begin = p;
+	return token_nb;
+
+error:
+	return -1;
+}
 
 
 /* parse a /regular expression/replacement/flags into a subst_expr structure */
 struct subst_expr* subst_parser(str* subst)
 {
-#define MAX_REPLACE_WITH 100
 	char c;
 	char* end;
 	char* p;
@@ -79,7 +211,6 @@ struct subst_expr* subst_parser(str* subst)
 	char* repl_end;
 	struct replace_with rw[MAX_REPLACE_WITH];
 	int rw_no;
-	int escape;
 	int cflags; /* regcomp flags */
 	int replace_all;
 	struct subst_expr* se;
@@ -118,91 +249,16 @@ struct subst_expr* subst_parser(str* subst)
 	goto error;
 found_re:
 	re_end=p;
-	p++;
-	/* parse replacement */
-	repl=p;
-	rw_no=0;
-	max_pmatch=0;
-	escape=0;
-	for(;p<end; p++){
-		if (escape){
-			escape=0;
-			switch (*p){
-				/* special char escapes */
-				case '\\':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\\';
-					break;
-				case 'n':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\n';
-					break;
-				case 'r':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\r';
-					break;
-				case 't':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c='\t';
-					break;
-				/* special sip msg parts escapes */
-				case 'u':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_URI;
-					break;
-				/* re matches */
-				case '0': /* allow 0, too, reference to the whole match */
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_NMATCH;
-					rw[rw_no].u.nmatch=(*p)-'0';/* 0 is the whole matched str*/
-					if (max_pmatch<rw[rw_no].u.nmatch) 
-						max_pmatch=rw[rw_no].u.nmatch;
-					break;
-				default: /* just print current char */
-					if (*p!=c){
-						LOG(L_WARN, "subst_parser: WARNING: \\%c unknown"
-								" escape in %.*s\n", *p, subst->len, subst->s);
-					}
-					rw[rw_no].size=2;
-					rw[rw_no].offset=(p-1)-repl;
-					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].u.c=*p;
-					break;
-			}
-			rw_no++;
-			if (rw_no>=MAX_REPLACE_WITH){
-				LOG(L_ERR, "ERROR: subst_parser: too many escapes in the"
-							" replace part %.*s\n", subst->len, subst->s);
-				goto error;
-			}
-		}else if (*p=='\\') escape=1;
-		else  if (*p==c) goto found_repl;
+	if (end < (p + 2)) {
+		ERR("subst_parser: String too short\n");
+		goto error;
 	}
-	LOG(L_ERR, "ERROR: subst_parser: missing separator: %.*s\n", subst->len, 
-			subst->s);
-	goto error;
-found_repl:
-	repl_end=p;
+	repl=p+1;
+	if ((rw_no = parse_repl(rw, &p, end, &max_pmatch, WITH_SEP)) < 0)
+		goto error;
+	repl_end = p;
 	p++;
+	
 	/* parse flags */
 	for(;p<end; p++){
 		switch(*p){
@@ -272,52 +328,6 @@ error:
 	return 0;
 }
 
-
-
-static int replace_len(const char* match, int nmatch, regmatch_t* pmatch,
-					struct subst_expr* se, struct sip_msg* msg)
-{
-	int r;
-	int len;
-	str* uri;
-	
-	len=se->replacement.len;
-	for (r=0; r<se->n_escapes; r++){
-		switch(se->replace[r].type){
-			case REPLACE_NMATCH:
-				len-=se->replace[r].size;
-				if ((se->replace[r].u.nmatch<nmatch)&&(
-						pmatch[se->replace[r].u.nmatch].rm_so!=-1)){
-						/* do the replace */
-						len+=pmatch[se->replace[r].u.nmatch].rm_eo-
-								pmatch[se->replace[r].u.nmatch].rm_so;
-				};
-				break;
-			case REPLACE_CHAR:
-				len-=(se->replace[r].size-1);
-				break;
-			case REPLACE_URI:
-				len-=se->replace[r].size;
-				if (msg->first_line.type!=SIP_REQUEST){
-					LOG(L_CRIT, "BUG: replace_len: uri substitution on"
-								" a reply\n");
-					break; /* ignore, we can continue */
-				}
-				uri= (msg->new_uri.s)?(&msg->new_uri):
-					(&msg->first_line.u.request.uri);
-				len+=uri->len;
-				break;
-			default:
-				LOG(L_CRIT, "BUG: replace_len: unknown type %d\n", 
-						se->replace[r].type);
-				/* ignore it */
-		}
-	}
-	return len;
-}
-
-
-
 /* rpl.s will be alloc'ed with the proper size & rpl.len set
  * returns 0 on success, <0 on error*/
 static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
@@ -325,30 +335,30 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 {
 	int r;
 	str* uri;
+	pv_value_t sv;
 	char* p;
 	char* dest;
 	char* end;
 	int size;
-	
-	rpl->len=replace_len(match, nmatch, pmatch, se, msg);
-	if (rpl->len==0){
-		rpl->s=0; /* empty string */
-		return 0;
-	}
-	rpl->s=pkg_malloc(rpl->len);
-	if (rpl->s==0){
-		LOG(L_ERR, "ERROR: replace_build: out of mem (rpl)\n");
-		goto error;
-	}
+	static char rbuf[REPLACE_BUFFER_SIZE];
+
+#define RBUF_APPEND(dst, src, size) \
+	if ((dst) - rbuf + (size) >= REPLACE_BUFFER_SIZE - 1) {	\
+		ERR("replace_build: Buffer too small\n");			\
+		goto error;											\
+	}														\
+	memcpy((dst), (src), (size));							\
+	(dst) += (size);
+
 	p=se->replacement.s;
 	end=p+se->replacement.len;
-	dest=rpl->s;
+	dest=rbuf;
+	
 	for (r=0; r<se->n_escapes; r++){
 		/* copy the unescaped parts */
 		size=se->replacement.s+se->replace[r].offset-p;
-		memcpy(dest, p, size);
+		RBUF_APPEND(dest, p, size);
 		p+=size+se->replace[r].size;
-		dest+=size;
 		switch(se->replace[r].type){
 			case REPLACE_NMATCH:
 				if ((se->replace[r].u.nmatch<nmatch)&&(
@@ -356,15 +366,13 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 						/* do the replace */
 						size=pmatch[se->replace[r].u.nmatch].rm_eo-
 								pmatch[se->replace[r].u.nmatch].rm_so;
-						memcpy(dest, 
-								match+pmatch[se->replace[r].u.nmatch].rm_so,
-								size);
-						dest+=size;
+						RBUF_APPEND(dest, 
+									match+pmatch[se->replace[r].u.nmatch].rm_so,
+									size);
 				};
 				break;
 			case REPLACE_CHAR:
-				*dest=se->replace[r].u.c;
-				dest++;
+				RBUF_APPEND(dest, &se->replace[r].u.c, 1);
 				break;
 			case REPLACE_URI:
 				if (msg->first_line.type!=SIP_REQUEST){
@@ -374,8 +382,14 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 				}
 				uri= (msg->new_uri.s)?(&msg->new_uri):
 					(&msg->first_line.u.request.uri);
-				memcpy(dest, uri->s, uri->len);
-				dest+=uri->len;
+				RBUF_APPEND(dest, uri->s, uri->len);
+				break;
+			case REPLACE_SPEC:
+				if(pv_get_spec_value(msg, &se->replace[r].u.spec, &sv)!=0) {
+					ERR("replace_build: item substitution returned error\n");
+					break; /* ignore, we can continue */
+				}
+				RBUF_APPEND(dest, sv.rs.s, sv.rs.len);
 				break;
 			default:
 				LOG(L_CRIT, "BUG: replace_build: unknown type %d\n", 
@@ -383,7 +397,13 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 				/* ignore it */
 		}
 	}
-	memcpy(dest, p, end-p);
+	RBUF_APPEND(dest, p, end-p);
+	rpl->len = dest - rbuf;
+	if ((rpl->s = pkg_malloc(rpl->len)) == NULL) {
+		ERR("replace_build: Out of pkg memory\n");
+		goto error;
+	}
+	memcpy(rpl->s, rbuf, rpl->len);
 	return 0;
 error:
 	return -1;
@@ -427,18 +447,20 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 		DBG("subst_run: running. r=%d\n", r);
 		/* subst */
 		if (r==0){ /* != REG_NOMATCH */
-			/* change eflags, not to match any more at string start */
-			eflags|=REG_NOTBOL;
+			if (pmatch[0].rm_so==-1) {
+				ERR("subst_run: Unknown offset?\n");
+				goto error;
+			}
+			if (pmatch[0].rm_so==pmatch[0].rm_eo) {
+				ERR("subst_run: Matched string is empty, invalid regexp?\n");
+				goto error;
+			}
 			*crt=pkg_malloc(sizeof(struct replace_lst));
 			if (*crt==0){
 				LOG(L_ERR, "ERROR: subst_run: out of mem (crt)\n");
 				goto error;
 			}
 			memset(*crt, 0, sizeof(struct replace_lst));
-			if (pmatch[0].rm_so==-1){
-				LOG(L_ERR, "ERROR: subst_run: unknown offset?\n");
-				goto error;
-			}
 			(*crt)->offset=pmatch[0].rm_so+(int)(p-input);
 			(*crt)->size=pmatch[0].rm_eo-pmatch[0].rm_so;
 			DBG("subst_run: matched (%d, %d): [%.*s]\n",
@@ -451,6 +473,8 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 			}
 			crt=&((*crt)->next);
 			p+=pmatch[0].rm_eo;
+			if (*(p-1) == '\n' || *(p-1) == '\r') eflags&=~REG_NOTBOL;
+			else eflags|=REG_NOTBOL;
 			cnt++;
 		}
 	}while((r==0) && se->replace_all);

@@ -88,7 +88,10 @@ struct socket_info* grep_sock_info_by_port(unsigned short port,
 struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 												unsigned short proto);
 
+struct socket_info** get_sock_info_list(unsigned short proto);
 
+struct name_lst* parse_phostport(char* s, char** host, int* hlen,
+								 int* port, int* proto);
 
 /* helper function:
  * returns next protocol, if the last one is reached return 0

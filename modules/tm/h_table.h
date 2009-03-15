@@ -71,6 +71,7 @@
 #include "../../usr_avp.h"
 #include "../../timer.h"
 #include "../../atomic_ops.h"
+#include "../../hash_func.h"
 #include "config.h"
 
 /* if TM_DIFF_RT_TIMEOUT is defined, different retransmissions timeouts

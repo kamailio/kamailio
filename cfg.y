@@ -389,6 +389,7 @@ static int case_check_default(struct case_stms* stms);
 %token TCP_CON_LIFETIME
 %token TCP_POLL_METHOD
 %token TCP_MAX_CONNECTIONS
+%token TCP_NO_CONNECT
 %token TCP_SOURCE_IPV4
 %token TCP_SOURCE_IPV6
 %token TCP_OPT_FD_CACHE
@@ -814,7 +815,7 @@ assign_stm:
 	| DISABLE_TCP EQUAL error { yyerror("boolean value expected"); }
 	| TCP_ACCEPT_ALIASES EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_accept_aliases=$3;
+			tcp_default_cfg.accept_aliases=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -830,7 +831,7 @@ assign_stm:
 	| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
 	| TCP_CONNECT_TIMEOUT EQUAL intno {
 		#ifdef USE_TCP
-			tcp_connect_timeout=$3;
+			tcp_default_cfg.connect_timeout_s=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -838,7 +839,7 @@ assign_stm:
 	| TCP_CONNECT_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_SEND_TIMEOUT EQUAL intno {
 		#ifdef USE_TCP
-			tcp_send_timeout=$3;
+			tcp_default_cfg.send_timeout_s=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -846,7 +847,7 @@ assign_stm:
 	| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_CON_LIFETIME EQUAL intno {
 		#ifdef USE_TCP
-			tcp_con_lifetime=$3;
+			tcp_default_cfg.con_lifetime_s=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -889,6 +890,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
+	| TCP_NO_CONNECT EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_default_cfg.no_connect=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_NO_CONNECT EQUAL error { yyerror("boolean value expected"); }
 	| TCP_SOURCE_IPV4 EQUAL ipv4 {
 		#ifdef USE_TCP
 			if (tcp_set_src_addr($3)<0)
@@ -915,7 +924,7 @@ assign_stm:
 	| TCP_SOURCE_IPV6 EQUAL error { yyerror("IPv6 address expected"); }
 	| TCP_OPT_FD_CACHE EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.fd_cache=$3;
+			tcp_default_cfg.fd_cache=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -923,7 +932,7 @@ assign_stm:
 	| TCP_OPT_FD_CACHE EQUAL error { yyerror("boolean value expected"); }
 	| TCP_OPT_BUF_WRITE EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.tcp_buf_write=$3;
+			tcp_default_cfg.async=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -931,7 +940,7 @@ assign_stm:
 	| TCP_OPT_BUF_WRITE EQUAL error { yyerror("boolean value expected"); }
 	| TCP_OPT_CONN_WQ_MAX EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.tcpconn_wq_max=$3;
+			tcp_default_cfg.tcpconn_wq_max=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -939,7 +948,7 @@ assign_stm:
 	| TCP_OPT_CONN_WQ_MAX error { yyerror("boolean value expected"); }
 	| TCP_OPT_WQ_MAX EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.tcp_wq_max=$3;
+			tcp_default_cfg.tcp_wq_max=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -947,7 +956,7 @@ assign_stm:
 	| TCP_OPT_WQ_MAX error { yyerror("boolean value expected"); }
 	| TCP_OPT_DEFER_ACCEPT EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.defer_accept=$3;
+			tcp_default_cfg.defer_accept=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -955,7 +964,7 @@ assign_stm:
 	| TCP_OPT_DEFER_ACCEPT EQUAL error { yyerror("boolean value expected"); }
 	| TCP_OPT_DELAYED_ACK EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.delayed_ack=$3;
+			tcp_default_cfg.delayed_ack=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -963,7 +972,7 @@ assign_stm:
 	| TCP_OPT_DELAYED_ACK EQUAL error { yyerror("boolean value expected"); }
 	| TCP_OPT_SYNCNT EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.syncnt=$3;
+			tcp_default_cfg.syncnt=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -971,7 +980,7 @@ assign_stm:
 	| TCP_OPT_SYNCNT EQUAL error { yyerror("number expected"); }
 	| TCP_OPT_LINGER2 EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.linger2=$3;
+			tcp_default_cfg.linger2=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -979,7 +988,7 @@ assign_stm:
 	| TCP_OPT_LINGER2 EQUAL error { yyerror("number expected"); }
 	| TCP_OPT_KEEPALIVE EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.keepalive=$3;
+			tcp_default_cfg.keepalive=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -987,7 +996,7 @@ assign_stm:
 	| TCP_OPT_KEEPALIVE EQUAL error { yyerror("boolean value expected");}
 	| TCP_OPT_KEEPIDLE EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.keepidle=$3;
+			tcp_default_cfg.keepidle=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -995,7 +1004,7 @@ assign_stm:
 	| TCP_OPT_KEEPIDLE EQUAL error { yyerror("number expected"); }
 	| TCP_OPT_KEEPINTVL EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.keepintvl=$3;
+			tcp_default_cfg.keepintvl=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -1003,7 +1012,7 @@ assign_stm:
 	| TCP_OPT_KEEPINTVL EQUAL error { yyerror("number expected"); }
 	| TCP_OPT_KEEPCNT EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.keepcnt=$3;
+			tcp_default_cfg.keepcnt=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -1011,7 +1020,7 @@ assign_stm:
 	| TCP_OPT_KEEPCNT EQUAL error { yyerror("number expected"); }
 	| TCP_OPT_CRLF_PING EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_options.crlf_ping=$3;
+			tcp_default_cfg.crlf_ping=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif

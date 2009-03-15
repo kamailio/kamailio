@@ -30,6 +30,7 @@
 
 #include "ip_addr.h"
 #include "qvalue.h"
+#include "flags.h"
 
 struct sip_msg;
 
@@ -82,5 +83,34 @@ qvalue_t get_ruri_q(void);
 int get_request_uri(struct sip_msg* _m, str* _u);
 int rewrite_uri(struct sip_msg* _m, str* _s);
 
+/**
+ * Set a per-branch flag to 1.
+ *
+ * This function sets the value of one particular branch flag to 1.
+ * @param branch Number of the branch (0 for the main Request-URI branch)
+ * @param flag Number of the flag to be set (starting with 0)
+ * @return 1 on success, -1 on failure.
+ */
+int setbflag(unsigned int branch, flag_t flag);
+
+/**
+ * Reset a per-branch flag value to 0.
+ *
+ * This function resets the value of one particular branch flag to 0.
+ * @param branch Number of the branch (0 for the main Request-URI branch)
+ * @param flag Number of the flag to be reset (starting with 0)
+ * @return 1 on success, -1 on failure.
+ */
+int resetbflag(unsigned int branch, flag_t flag);
+
+/**
+ * Determine if a branch flag is set.
+ *
+ * This function tests the value of one particular per-branch flag.
+ * @param branch Number of the branch (0 for the main Request-URI branch)
+ * @param flag Number of the flag to be tested (starting with 0)
+ * @return 1 if the branch flag is set, -1 if not or on failure.
+ */
+int isbflagset(unsigned int branch, flag_t flag);
 
 #endif /* _DSET_H */

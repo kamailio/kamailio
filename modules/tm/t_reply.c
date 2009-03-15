@@ -108,6 +108,7 @@
 #include "../../action.h"
 #include "../../dset.h"
 #include "../../tags.h"
+#include "../../route.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
@@ -136,9 +137,6 @@
 #include "t_stats.h"
 #include "uac.h"
 
-
-/* are we processing original or shmemed request ? */
-enum route_mode rmode=MODE_REQUEST;
 
 /* private place where we create to-tags for replies */
 /* janakj: made public, I need to access this value to store it in dialogs */
@@ -187,8 +185,8 @@ void t_on_negative( unsigned int go_to )
 {
 	struct cell *t = get_t();
 
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variable */
 	if (!t || t==T_UNDEFINED )
 		goto_on_negative=go_to;
@@ -201,8 +199,8 @@ void t_on_reply( unsigned int go_to )
 {
 	struct cell *t = get_t();
 
-	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
-	 * in MODE_REQUEST T will be set only if the transaction was already
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variable */
 	if (!t || t==T_UNDEFINED )
 		goto_on_reply=go_to;
@@ -659,7 +657,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
  * the env. will be restore to original */
 void faked_env( struct cell *t,struct sip_msg *msg)
 {
-	static enum route_mode backup_mode;
+	static int backup_route_type;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
 	static avp_list_t* backup_user_from, *backup_user_to;
@@ -669,11 +667,11 @@ void faked_env( struct cell *t,struct sip_msg *msg)
 
 	if (msg) {
 		/* remember we are back in request processing, but process
-		 * a shmem-ed replica of the request; advertise it in rmode;
+		 * a shmem-ed replica of the request; advertise it in route type;
 		 * for example t_reply needs to know that
 		 */
-		backup_mode=rmode;
-		rmode=MODE_ONFAILURE;
+		backup_route_type=route_type;
+		set_route_type(FAILURE_ROUTE);
 		/* also, tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing
 		 * or a timer process, we need to set current transaction;
@@ -701,7 +699,7 @@ void faked_env( struct cell *t,struct sip_msg *msg)
 		/* restore original environment */
 		set_t(backup_t);
 		global_msg_id=backup_msgid;
-		rmode=backup_mode;
+		set_route_type(backup_route_type);
 		/* restore original avp list */
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
@@ -1932,7 +1930,7 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 	/* processing of on_reply block */
 	if (t->on_reply) {
-		rmode=MODE_ONREPLY;
+		set_route_type(ONREPLY_ROUTE);
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */

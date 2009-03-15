@@ -70,6 +70,8 @@
 
 #define MAX_URI_SIZE 1024	/* used when rewriting URIs */
 
+#define MAX_PATH_SIZE 256 /* Maximum length of path header buffer */
+
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN (sizeof(MY_VIA) - 1)
 

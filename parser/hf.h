@@ -107,7 +107,8 @@ enum _hdr_types_t {
 	HDR_IDENTITY_T			       /* Identity header field */,
 	HDR_IDENTITY_INFO_T		       /* Identity-info header field */,
 	HDR_RETRY_AFTER_T		           /* Retry-After header field */,
-
+	HDR_PPI_T                          /**< P-Preferred-Identity header field */,
+	HDR_PAI_T                          /**< P-Asserted-Identity header field */,
 	HDR_EOH_T					       /* End of message header */
 };
 
@@ -175,6 +176,8 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_IDENTITY_F			HDR_F_DEF(IDENTITY)
 #define HDR_IDENTITY_INFO_F		HDR_F_DEF(IDENTITY_INFO)
 #define HDR_RETRY_AFTER_F			HDR_F_DEF(RETRY_AFTER)
+#define HDR_PPI_F                   HDR_F_DEF(PPI)
+#define HDR_PAI_F                   HDR_F_DEF(PAI)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 

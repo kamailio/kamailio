@@ -728,3 +728,13 @@ int set_dst_uri(struct sip_msg* msg, str* uri)
 	}
 	return 0;
 }
+
+
+void reset_dst_uri(struct sip_msg* msg)
+{
+	if(msg->dst_uri.s != 0) {
+		pkg_free(msg->dst_uri.s);
+	}
+	msg->dst_uri.s = 0;
+	msg->dst_uri.len = 0;
+}

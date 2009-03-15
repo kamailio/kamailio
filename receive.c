@@ -62,7 +62,8 @@
 #include "select_buf.h"
 
 #include "tcp_server.h" /* for tcpconn_add_alias */
-
+#include "tcp_options.h" /* for access to tcp_accept_aliases*/
+#include "cfg/cfg.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -138,7 +139,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* check if necessary to add receive?->moved to forward_req */
 		/* check for the alias stuff */
 #ifdef USE_TCP
-		if (msg->via1->alias && tcp_accept_aliases && 
+		if (msg->via1->alias && cfg_get(tcp, tcp_cfg, accept_aliases) && 
 				(((rcv_info->proto==PROTO_TCP) && !tcp_disable)
 #ifdef USE_TLS
 					|| ((rcv_info->proto==PROTO_TLS) && !tls_disable)
@@ -168,6 +169,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		if (exec_pre_req_cb(msg)==0 )
 			goto end; /* drop the request */
 
+		set_route_type(REQUEST_ROUTE);
 		/* exec the routing script */
 		init_run_actions_ctx(&ra_ctx);
 		if (run_actions(&ra_ctx, main_rt.rlist[DEFAULT_RT], msg)<0){
@@ -209,8 +211,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		*/
 		if (exec_pre_rpl_cb(msg)==0 )
 			goto end; /* drop the request */
+
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
+			set_route_type(ONREPLY_ROUTE);
 			init_run_actions_ctx(&ra_ctx);
 			ret=run_actions(&ra_ctx, onreply_rt.rlist[DEFAULT_RT], msg);
 			if (ret<0){

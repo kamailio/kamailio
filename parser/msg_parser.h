@@ -99,6 +99,9 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 /* WARNING: Value (1 << 11) is temporarily reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
 
+/* WARNING: Value (1 << 12) is temporarily reserved for use in kamailio
+ * media proxy module (flag FL_USE_MEDIA_PROXY)! */
+
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 
 
@@ -252,6 +255,8 @@ typedef struct sip_msg {
 	struct hdr_field* date;
 	struct hdr_field* identity;
 	struct hdr_field* identity_info;
+	struct hdr_field* pai;
+	struct hdr_field* ppi;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/
@@ -364,9 +369,9 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	src[6]= msg->via1->port_str;
 	if (msg->via1->branch) {
 		src[7]= msg->via1->branch->value;
-		MDStringArray ( cv, src, 8 );
+		MD5StringArray ( cv, src, 8 );
 	} else {
-		MDStringArray( cv, src, 7 );
+		MD5StringArray( cv, src, 7 );
 	}
 	return 1;
 }
@@ -402,5 +407,7 @@ inline static char* get_body(struct sip_msg *msg)
  */
 int set_dst_uri(struct sip_msg* msg, str* uri);
 
+/* If the dst_uri is set to an URI then reset it */
+void reset_dst_uri(struct sip_msg* msg);
 
 #endif

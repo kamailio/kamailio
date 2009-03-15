@@ -157,6 +157,17 @@ typedef struct avp_spec {
 
 #define GALIAS_CHAR_MARKER  '$'
 
+#define AVP_NAME_VALUE_MASK     0x0007
+#define AVP_CORE_MASK           0x00ff
+#define AVP_SCRIPT_MASK         0xff00
+#define avp_core_flags(f)       ((f)&0x00ff)
+#define avp_script_flags(f)     (((f)<<8)&0xff00)
+#define avp_get_script_flags(f) (((f)&0xff00)>>8)
+
+#define is_avp_str_name(a)      ((a)->flags&AVP_NAME_STR)
+#define is_avp_str_val(a)       ((a)->flags&AVP_VAL_STR)
+
+
 #define AVP_IS_ASSIGNABLE(ident) ( ((ident).flags & AVP_NAME_RE) == 0 && (((ident).flags & AVP_NAME) == 0 || (((ident)->flags & AVP_NAME) && (ident).name.s.len)) )
 /* Initialize memory structures */
 int init_avps(void);
@@ -168,6 +179,8 @@ int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value
 
 /* Delete avps with given type and name */
 void delete_avp(avp_flags_t flags, avp_name_t name);
+
+int destroy_avps(avp_flags_t flags, avp_name_t name, int all);
 
 /* search functions */
 avp_t *search_first_avp( avp_flags_t flags, avp_name_t name,

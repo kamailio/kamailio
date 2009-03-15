@@ -1025,6 +1025,7 @@ void free_avp_ident(avp_ident_t* attr)
 			abort();
 #endif
 		} else {
+			regfree(attr->name.re);
 			pkg_free(attr->name.re);
 		}
 	}
@@ -1125,6 +1126,24 @@ parse_error:
 		"pos %ld\n", alias_definition, (long)(s-alias_definition));
 error:
 	return -1;
+}
+
+
+int destroy_avps(avp_flags_t flags, avp_name_t name, int all)
+{
+	struct search_state st;
+	avp_t* avp;
+	int n;
+	
+	n = 0;
+	avp = search_first_avp(flags, name, 0, &st);
+	while (avp) {
+		destroy_avp(avp);
+		n++;
+		if (!all) break;
+		avp = search_next_avp(&st, 0);
+	}
+	return n;
 }
 
 

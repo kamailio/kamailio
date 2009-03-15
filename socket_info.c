@@ -301,7 +301,7 @@ static char* get_proto_name(unsigned short proto)
 
 /* returns 0 if support for the protocol is not compiled or if proto is 
    invalid */
-static struct socket_info** get_sock_info_list(unsigned short proto)
+struct socket_info** get_sock_info_list(unsigned short proto)
 {
 	
 	switch(proto){

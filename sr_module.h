@@ -62,6 +62,7 @@
 #include "version.h"
 #include "rpc.h"
 #include "route_struct.h"
+#include "route.h"
 #include "str.h"
 
 /* kamailio compat */
@@ -145,15 +146,6 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define NO_SCRIPT     -1    /* export not usable from scripts */
 #define VAR_PARAM_NO  -128  /* function has variable number of parameters
 							   (see cmd_function_var for the prototype) */
-
-/* functions flags */
-#define REQUEST_ROUTE 1  /* Function can be used in request route blocks */
-#define FAILURE_ROUTE 2  /* Function can be used in reply route blocks */
-#define ONREPLY_ROUTE 4  /* Function can be used in on_reply */
-#define BRANCH_ROUTE  8  /* Function can be used in branch_route blocks */
-#define ONSEND_ROUTE 16  /* Function can be used in onsend_route blocks */
-#define ERROR_ROUTE  32  /* Function can be used in an error route */ 
-#define LOCAL_ROUTE  64  /* Function can be used in a local route */
 
 /* Macros - used as rank in child_init function */
 #define PROC_MAIN      0  /* Main ser process */

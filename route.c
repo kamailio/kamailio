@@ -93,6 +93,7 @@ struct route_list failure_rt;
 struct route_list branch_rt;
 struct route_list onsend_rt;
 
+int route_type = REQUEST_ROUTE;
 
 /** script optimization level, useful for debugging.
  *  0 - no optimization
