@@ -113,6 +113,7 @@ struct socket_info{
 	struct socket_info* prev;
 	unsigned short port_no;  /* port number */
 	char proto; /* tcp or udp*/
+	str sock_str; /* Socket proto, ip, and port as string */
 	struct addr_info* addr_info_lst; /* extra addresses (e.g. SCTP mh) */
 };
 

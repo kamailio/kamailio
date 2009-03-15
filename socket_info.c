@@ -268,6 +268,7 @@ static void free_sock_info(struct socket_info* si)
 		if(si->address_str.s) pkg_free(si->address_str.s);
 		if(si->port_no_str.s) pkg_free(si->port_no_str.s);
 		if (si->addr_info_lst) free_addr_info_lst(&si->addr_info_lst);
+		if(si->sock_str.s) pkg_free(si->sock_str.s);
 	}
 }
 
@@ -297,6 +298,42 @@ static char* get_proto_name(unsigned short proto)
 	}
 }
 
+
+/* Fill si->sock_str with string representing the socket_info structure,
+ * format of the string is 'proto:address:port'. Returns 0 on success and
+ * negative number on failure.
+ */
+static int fix_sock_str(struct socket_info* si)
+{
+	char* p;
+	str proto;
+
+	if (si->sock_str.s) pkg_free(si->sock_str.s);
+	
+	proto.s = get_proto_name(si->proto);
+	proto.len = strlen(proto.s);
+	
+	si->sock_str.len = proto.len + si->address_str.len + 
+		si->port_no_str.len + 2;
+	
+	si->sock_str.s = pkg_malloc(si->sock_str.len + 1);
+	if (si->sock_str.s == NULL) {
+		LOG(L_ERR, "fix_sock_str: No pkg memory left\n");
+		return -1;
+	}
+	p = si->sock_str.s;
+	memcpy(p, proto.s, proto.len);
+	p += proto.len;
+	*p = ':'; p++;
+	memcpy(p, si->address_str.s, si->address_str.len);
+	p += si->address_str.len;
+	*p = ':'; p++;
+	memcpy(p, si->port_no_str.s, si->port_no_str.len);
+	p += si->port_no_str.len;
+	*p = '\0';
+
+	return 0;
+}
 
 
 /* returns 0 if support for the protocol is not compiled or if proto is 
@@ -1028,6 +1065,8 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 						&ail->flags, type_flags, si) !=0 )
 				goto error;
 		}
+
+		if (fix_sock_str(si) < 0) goto error;
 		
 #ifdef EXTRA_DEBUG
 		printf("              %.*s [%s]:%s%s\n", si->name.len, 
