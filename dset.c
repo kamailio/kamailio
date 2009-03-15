@@ -174,6 +174,46 @@ char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct so
 }
 
 
+/** \brief Get a branch from the destination set
+ * \return Return the 'i' branch from the dset
+ * array, 0 is returned if there are no
+ * more branches
+ */
+char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
+				 str* path, unsigned int *flags, struct socket_info** force_socket)
+{
+	if (i < nr_branches) {
+		*len = branches[i].len;
+		*q = branches[i].q;
+		if (dst_uri) {
+			dst_uri->len = branches[i].dst_uri_len;
+			dst_uri->s = (dst_uri->len)?branches[i].dst_uri:0;
+		}
+		if (path) {
+			path->len = branches[i].path_len;
+			path->s = (path->len)?branches[i].path:0;
+		}
+		if (force_socket)
+			*force_socket = branches[i].force_send_socket;
+		if (flags)
+			*flags = branches[i].flags;
+		return branches[i].uri;
+	} else {
+		*len = 0;
+		*q = Q_UNSPECIFIED;
+		if (dst_uri) {
+			dst_uri->s = 0;
+			dst_uri->len = 0;
+		}
+		if (force_socket)
+			*force_socket = 0;
+		if (flags)
+			*flags = 0;
+		return 0;
+	}
+}
+
+
 /*
  * Empty the dset array
  */
@@ -239,6 +279,87 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, in
 
 	branches[nr_branches].force_send_socket = force_socket;
 	
+	nr_branches++;
+	return 1;
+}
+
+
+/* ! \brief
+ * Add a new branch to current transaction using str parameters
+ * Kamailio compatibility version
+ */
+int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+		qvalue_t q, unsigned int flags, struct socket_info* force_socket)
+{
+	str luri;
+
+#ifdef USE_LOCAL_ROUTE
+	if (dset_state==0)
+		return -1;
+#endif
+
+	/* if we have already set up the maximum number
+	 * of branches, don't try new ones 
+	 */
+	if (nr_branches == MAX_BRANCHES - 1) {
+		LOG(L_ERR, "max nr of branches exceeded\n");
+		ser_error = E_TOO_MANY_BRANCHES;
+		return -1;
+	}
+
+	/* if not parameterized, take current uri */
+	if (uri==0 || uri->len==0 || uri->s==0) {
+		if (msg->new_uri.s)
+			luri = msg->new_uri;
+		else
+			luri = msg->first_line.u.request.uri;
+	} else {
+		luri = *uri;
+	}
+
+	if (luri.len > MAX_URI_SIZE - 1) {
+		LOG(L_ERR, "too long uri: %.*s\n", luri.len, luri.s);
+		return -1;
+	}
+
+	/* copy the dst_uri */
+	if (dst_uri && dst_uri->len && dst_uri->s) {
+		if (dst_uri->len > MAX_URI_SIZE - 1) {
+			LOG(L_ERR, "too long dst_uri: %.*s\n",
+				dst_uri->len, dst_uri->s);
+			return -1;
+		}
+		memcpy(branches[nr_branches].dst_uri, dst_uri->s, dst_uri->len);
+		branches[nr_branches].dst_uri[dst_uri->len] = 0;
+		branches[nr_branches].dst_uri_len = dst_uri->len;
+	} else {
+		branches[nr_branches].dst_uri[0] = '\0';
+		branches[nr_branches].dst_uri_len = 0;
+	}
+
+	/* copy the path string */
+	if (path && path->len && path->s) {
+		if (path->len > MAX_PATH_SIZE - 1) {
+			LOG(L_ERR, "too long path: %.*s\n", path->len, path->s);
+			return -1;
+		}
+		memcpy(branches[nr_branches].path, path->s, path->len);
+		branches[nr_branches].path[path->len] = 0;
+		branches[nr_branches].path_len = path->len;
+	} else {
+		branches[nr_branches].path[0] = '\0';
+		branches[nr_branches].path_len = 0;
+	}
+
+	/* copy the ruri */
+	memcpy(branches[nr_branches].uri, luri.s, luri.len);
+	branches[nr_branches].uri[luri.len] = 0;
+	branches[nr_branches].len = luri.len;
+	branches[nr_branches].q = q;
+
+	branches[nr_branches].force_send_socket = force_socket;
+	branches[nr_branches].flags = flags;
+
 	nr_branches++;
 	return 1;
 }

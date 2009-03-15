@@ -44,6 +44,10 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, in
 		  qvalue_t q, struct socket_info* force_socket);
 
 
+int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+					 qvalue_t q, unsigned int flags, struct socket_info* force_socket);
+
+
 /* 
  * Iterate through the list of transaction branches 
  */
@@ -54,6 +58,10 @@ void init_branch_iterator(void);
  * Get the next branch in the current transaction
  */
 char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct socket_info** force_socket);
+
+
+char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
+				  str* path, unsigned int *flags, struct socket_info** force_socket);
 
 
 /*
