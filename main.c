@@ -958,8 +958,8 @@ error:
  * returns  fills proto, port, host and returns list of addresses on success
  * (pkg malloc'ed) and 0 on failure
  */
-static struct name_lst* parse_phostport(char* s, char** host, int* hlen,
-										int* port, int* proto)
+struct name_lst* parse_phostport(char* s, char** host, int* hlen,
+								 int* port, int* proto)
 {
 	char* first; /* first ':' occurrence */
 	char* second; /* second ':' occurrence */
