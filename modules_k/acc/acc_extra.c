@@ -304,6 +304,7 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 		int *int_arr, char *type_arr, int start)
 {
 	static struct usr_avp *avp[MAX_ACC_LEG];
+	static struct search_state st[MAX_ACC_LEG];
 	unsigned short name_type;
 	int_str name;
 	int_str value;
@@ -319,9 +320,9 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 		if (start) {
 			if ( pv_get_avp_name( rq, &(legs->spec.pvp), &name, &name_type)<0 )
 				goto exit;
-			avp[n] = search_first_avp( name_type, name, &value, 0);
+			avp[n] = search_first_avp( name_type, name, &value, st + n);
 		} else {
-			avp[n] = search_next_avp( avp[n], &value);
+			avp[n] = search_next_avp(st + n, &value);
 		}
 
 		/* set new leg record */
