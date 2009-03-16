@@ -652,7 +652,7 @@ int pv_get_diversion(struct sip_msg *msg, pv_param_t *param,
 	if(param->pvn.u.isname.name.n == 2)  { /* reason param */
 	    name.s = "reason";
 	    name.len = 6;
-	    val = diversion_param(msg, name);
+	    val = get_diversion_param(msg, &name);
 	    if (val) {
 			return pv_get_strval(msg, param, res, val);
 	    } else {
@@ -663,7 +663,7 @@ int pv_get_diversion(struct sip_msg *msg, pv_param_t *param,
 	if(param->pvn.u.isname.name.n == 3)  { /* privacy param */
 	    name.s = "privacy";
 	    name.len = 7;
-	    val = diversion_param(msg, name);
+	    val = get_diversion_param(msg, &name);
 	    if (val) {
 			return pv_get_strval(msg, param, res, val);
 	    } else {
