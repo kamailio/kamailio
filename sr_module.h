@@ -58,6 +58,8 @@
 #ifndef sr_module_h
 #define sr_module_h
 
+#include <dlfcn.h>
+
 #include "parser/msg_parser.h" /* for sip_msg */
 #include "version.h"
 #include "rpc.h"
