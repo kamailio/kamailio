@@ -1591,8 +1591,6 @@ error:
 int pv_set_dsturi(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
-	struct action  act;
-
 	if(msg==NULL || param==NULL)
 	{
 		LM_ERR("bad parameters\n");
@@ -1601,13 +1599,7 @@ int pv_set_dsturi(struct sip_msg* msg, pv_param_t *param,
 					
 	if(val == NULL)
 	{
-		memset(&act, 0, sizeof(act));
-		act.type = RESET_DSTURI_T;
-		if (do_action(&act, msg)<0)
-		{
-			LM_ERR("error - do action failed)\n");
-			goto error;
-		}
+		reset_dst_uri(msg);
 		return 1;
 	}
 	if(!(val->flags&PV_VAL_STR))
