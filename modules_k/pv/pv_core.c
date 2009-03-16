@@ -1179,6 +1179,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	int idxf;
 	char *p;
 	int n=0;
+	struct search_state state;
 
 	if(msg==NULL || res==NULL || param==NULL)
 		return -1;
@@ -1196,7 +1197,8 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 		return -1;
 	}
 	
-	if ((avp=search_first_avp(name_type, avp_name, &avp_value, 0))==0)
+	memset(&state, 0, sizeof(struct search_state));
+	if ((avp=search_first_avp(name_type, avp_name, &avp_value, &state))==0)
 		return pv_get_null(msg, param, res);
 	res->flags = PV_VAL_STR;
 	if(idxf==0 && idx==0)
@@ -1239,13 +1241,11 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			}
 			memcpy(p, res->rs.s, res->rs.len);
 			p += res->rs.len;
-		} while ((avp=search_first_avp(name_type, avp_name,
-						&avp_value, avp))!=0);
+		} while ((avp=search_next_avp(&state, &avp_value))!=0);
 		*p = 0;
 		res->rs.s = pv_local_buf;
 		res->rs.len = p - pv_local_buf;
 		return 0;
-
 	}
 
 	/* we have a numeric index */
@@ -1253,8 +1253,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	{
 		n = 1;
 		avp0 = avp;
-		while ((avp0=search_first_avp(name_type, avp_name,
-						&avp_value0, avp0))!=0) n++;
+		while ((avp0=search_next_avp(&state, &avp_value0))!=0) n++;
 		idx = -idx;
 		if(idx>n)
 		{
@@ -1277,7 +1276,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	}
 	n=0;
 	while(n<idx 
-			&& (avp=search_first_avp(name_type, avp_name, &avp_value, avp))!=0)
+		  && (avp=search_next_avp(&state, &avp_value))!=0)
 		n++;
 
 	if(avp!=0)
