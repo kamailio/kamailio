@@ -1816,7 +1816,7 @@ int pv_set_branch(struct sip_msg* msg, pv_param_t *param,
 		goto error;
 	}
 	
-	if (append_branch( msg, &val->rs, 0, 0, Q_UNSPECIFIED, 0,
+	if (km_append_branch( msg, &val->rs, 0, 0, Q_UNSPECIFIED, 0,
 			msg->force_send_socket)!=1 )
 	{
 		LM_ERR("append_branch action failed\n");
