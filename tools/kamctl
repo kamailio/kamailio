@@ -1654,7 +1654,7 @@ openser_stop() {
 options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
-	CMD="t_uac_dlg OPTIONS \"$1\" \".\" \".\" \"From:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:daemon@$myhost"$'\r\n'"\""
+	CMD="t_uac_dlg OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
 	RET=`$CTLCMD $CMD | head -1`
 	print_status $RET
 }
