@@ -148,7 +148,7 @@ modparam("memcached", "servers", "localhost:11211")
 		</example>
 	</section>
 	<section>
-		<title><varname>expire</varname> (str)</title>
+		<title><varname>expire</varname> (integer)</title>
 		<para>
 			The default expire value of all entries in memcached in seconds. The maximal
 			value is 2592000 (about 30 days). You can also specify an arbitrary unix time

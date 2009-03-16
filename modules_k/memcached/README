@@ -24,7 +24,7 @@ Henning Westerholt
         1.4. Exported Parameters
 
               1.4.1. servers (str)
-              1.4.2. expire (str)
+              1.4.2. expire (integer)
               1.4.3. mode (integer)
               1.4.4. timeout (integer)
 
@@ -150,7 +150,7 @@ xlog("counter is now $mct(cnt)");
 modparam("memcached", "servers", "localhost:11211")
 ...
 
-1.4.2. expire (str)
+1.4.2. expire (integer)
 
    The default expire value of all entries in memcached in
    seconds. The maximal value is 2592000 (about 30 days). You can
