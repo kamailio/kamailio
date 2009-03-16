@@ -1518,13 +1518,13 @@ int pv_set_avp(struct sip_msg* msg, pv_param_t *param,
 	}
 	if(val == NULL)
 	{
-		if(op == COLONEQ_T)
+		if(op == ASSIGN_T)
 			destroy_avps(name_type, avp_name, 1);
 		else
 			destroy_avps(name_type, avp_name, 0);
 		return 0;
 	}
-	if(op == COLONEQ_T)
+	if(op == ASSIGN_T)
 		destroy_avps(name_type, avp_name, 1);
 	flags = name_type;
 	if(val->flags&PV_TYPE_INT)
