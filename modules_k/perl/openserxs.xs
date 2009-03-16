@@ -218,7 +218,8 @@ int moduleFunc(struct sip_msg *m, char *func,
 	struct action *act;
 	char *argv[2];
 	int argc = 0;
-	action_elem_t elems[MAX_ACTION_ELEMS];
+	action_u_t elems[MAX_ACTIONS];
+	struct run_act_ctx ra_ctx;
 
 	if (!func) {
 		LM_ERR("moduleFunc called with null function name. Error.");
@@ -287,20 +288,20 @@ int moduleFunc(struct sip_msg *m, char *func,
 		}
 
 		if (argc>=2) {
-			*retval = exp_func_struct->fixup(&(act->elem[2].u.data), 2);
+			*retval = exp_func_struct->fixup(&(act->val[2].u.data), 2);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (2)\n");
 				return -1;
 			}
-			act->elem[2].type = MODFIXUP_ST;
+			act->val[2].type = MODFIXUP_ST;
 		}
 		if (argc>=1) {
-			*retval = exp_func_struct->fixup(&(act->elem[1].u.data), 1);
+			*retval = exp_func_struct->fixup(&(act->val[1].u.data), 1);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (1)\n");
 				return -1;
 			}
-			act->elem[1].type = MODFIXUP_ST;
+			act->val[1].type = MODFIXUP_ST;
 		}
 		if (argc==0) {
 			*retval = exp_func_struct->fixup(0, 0);
@@ -311,15 +312,16 @@ int moduleFunc(struct sip_msg *m, char *func,
 		}
 	}
 
-	*retval = do_action(act, m);
+	init_run_actions_ctx(&ra_ctx);
+	*retval = do_action(&ra_ctx, act, m);
 
-	if ((act->elem[2].type == MODFIXUP_ST) && (act->elem[2].u.data)) {
+	if ((act->val[2].type == MODFIXUP_ST) && (act->val[2].u.data)) {
 		/* pkg_free(act->elem[2].u.data); */
 		LM_WARN("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
 	}
 
-	if ((act->elem[1].type == MODFIXUP_ST) && (act->elem[1].u.data)) {
+	if ((act->val[1].type == MODFIXUP_ST) && (act->val[1].u.data)) {
 		/* pkg_free(act->elem[1].u.data); */
 		LM_WARN("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
@@ -340,13 +342,15 @@ int moduleFunc(struct sip_msg *m, char *func,
 static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 {
 	struct action act;
+	struct run_act_ctx ra_ctx;
 
 	act.type = SET_URI_T;
-	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = _s;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = _s;
 	act.next = 0;
-	
-	if (do_action(&act, _m) < 0)
+
+	init_run_actions_ctx(&ra_ctx);	
+	if (do_action(&ra_ctx, &act, _m) < 0)
 	{
 		LM_ERR("rewrite_ruri: Error in do_action\n");
 		return -1;
@@ -1180,10 +1184,11 @@ append_branch(self, branch = NULL, qval = NULL)
 	char *qval;
   PREINIT:
 	struct sip_msg *msg = sv2msg(self);
-	action_elem_t elems[MAX_ACTION_ELEMS];
+	action_u_t elems[MAX_ACTIONS];
 	qvalue_t q;
 	int err = 0;
 	struct action *act = NULL;
+	struct run_act_ctx ra_ctx;
   INIT:
   CODE:
   	if (!msg) {
@@ -1226,7 +1231,8 @@ append_branch(self, branch = NULL, qval = NULL)
 		}
 
 		if (act) {
-			RETVAL = do_action(act, msg);
+		    init_run_actions_ctx(&ra_ctx);
+			RETVAL = do_action(&ra_ctx, act, msg);
 		} else {
 			RETVAL = -1;
 		}
