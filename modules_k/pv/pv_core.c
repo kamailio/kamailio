@@ -2042,6 +2042,7 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
 	char *p;
 	char *s;
 	pv_spec_p nsp = 0;
+	int avp_index;
 
 	if(in==NULL || in->s==NULL || sp==NULL)
 		return -1;
@@ -2068,8 +2069,9 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
 		return 0;
 	}
 	/*LM_DBG("static name [%.*s]\n", in->len, in->s);*/
+	avp_index = 0;
 	if(parse_avp_spec(in, &sp->pvp.pvn.u.isname.type,
-				&sp->pvp.pvn.u.isname.name)!=0)
+					  &sp->pvp.pvn.u.isname.name, &avp_index)!=0)
 	{
 		LM_ERR("bad avp name [%.*s]\n", in->len, in->s);
 		return -1;
