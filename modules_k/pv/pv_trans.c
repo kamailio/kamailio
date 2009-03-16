@@ -37,7 +37,7 @@
 #include "../../ut.h" 
 #include "../../trim.h" 
 #include "../../dset.h"
-#include "../../errinfo.h"
+#include "../../lib/kcore/errinfo.h"
 
 #include "../../parser/parse_param.h"
 #include "../../parser/parse_uri.h"

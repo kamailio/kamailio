@@ -23,7 +23,7 @@
 
 
 #include "../../qvalue.h"
-#include "../../errinfo.h"
+#include "../../lib/kcore/errinfo.h"
 #include "../../ut.h" 
 #include "../../route_struct.h"
 #include "../../dset.h"
@@ -38,8 +38,8 @@
 #include "../../parser/parse_refer_to.h"
 #include "../../parser/parse_rpid.h"
 #include "../../parser/parse_diversion.h"
-#include "../../parser/parse_ppi.h"
-#include "../../parser/parse_pai.h"
+#include "../../lib/kcore/parse_ppi.h"
+#include "../../lib/kcore/parse_pai.h"
 #include "../../parser/digest/digest.h"
 
 #include "pv_core.h"
