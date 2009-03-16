@@ -214,8 +214,9 @@ int moduleFunc(struct sip_msg *m, char *func,
 	       char *param1, char *param2,
 	       int *retval) {
 
-	cmd_export_t *exp_func_struct;
+    union cmd_export_u* exp_func_struct;
 	struct action *act;
+	unsigned mod_ver;
 	char *argv[2];
 	int argc = 0;
 	action_u_t elems[MAX_ACTIONS];
@@ -249,8 +250,8 @@ int moduleFunc(struct sip_msg *m, char *func,
 		argv[1] = NULL;
 	}
 
-	exp_func_struct = find_cmd_export_t(func, argc, 0);
-	if (!exp_func_struct) {
+	exp_func_struct = find_export_record(func, argc, 0, &mod_ver);
+	if (!exp_func_struct || mod_ver < 1) {
 		LM_ERR("function '%s' called, but not available.", func);
 		*retval = -1;
 		if (argv[0]) pkg_free(argv[0]);
@@ -258,7 +259,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 		return -1;
 	}
 
-	elems[0].type = CMD_ST;
+	elems[0].type = MODULE_T;
 	elems[0].u.data = exp_func_struct;
 	elems[1].type = STRING_ST;
 	elems[1].u.data = argv[0];
@@ -278,7 +279,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 	}
 
 
-	if (exp_func_struct->fixup) {
+	if (exp_func_struct->v1.fixup) {
 		if (!unsafemodfnc) {
 			LM_ERR("Module function '%s' is unsafe. Call is refused.\n", func);
 			if (argv[0]) pkg_free(argv[0]);
@@ -288,7 +289,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 		}
 
 		if (argc>=2) {
-			*retval = exp_func_struct->fixup(&(act->val[2].u.data), 2);
+			*retval = exp_func_struct->v1.fixup(&(act->val[2].u.data), 2);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (2)\n");
 				return -1;
@@ -296,7 +297,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 			act->val[2].type = MODFIXUP_ST;
 		}
 		if (argc>=1) {
-			*retval = exp_func_struct->fixup(&(act->val[1].u.data), 1);
+			*retval = exp_func_struct->v1.fixup(&(act->val[1].u.data), 1);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (1)\n");
 				return -1;
@@ -304,7 +305,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 			act->val[1].type = MODFIXUP_ST;
 		}
 		if (argc==0) {
-			*retval = exp_func_struct->fixup(0, 0);
+			*retval = exp_func_struct->v1.fixup(0, 0);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (0)\n");
 				return -1;
