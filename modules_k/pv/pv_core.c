@@ -1834,6 +1834,7 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 	struct socket_info *si;
 	int port, proto;
 	str host;
+	char backup;
 	
 	if(msg==NULL || param==NULL)
 	{
@@ -1853,11 +1854,15 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		goto error;
 	}
 	
-	if (parse_phostport(val->rs.s, val->rs.len, &host.s, &host.len, &port, &proto) < 0)
+	backup = val->rs.s[val->rs.len];
+	val->rs.s[val->rs.len] = '\0';
+	if (parse_phostport(val->rs.s, &host.s, &host.len, &port, &proto) < 0)
 	{
 		LM_ERR("invalid socket specification\n");
+		val->rs.s[val->rs.len] = backup;
 		goto error;
 	}
+	val->rs.s[val->rs.len] = backup;
 	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL)
 	{
