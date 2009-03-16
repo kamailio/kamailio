@@ -69,5 +69,10 @@ int* dbt_get_refs(dbt_table_p, db_key_t*, int);
 int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v);
 dbt_row_p dbt_result_new_row(dbt_result_p _dres);
 
+int dbt_parse_orderbyclause(db_key_t **_o_k, char **_o_op, int *_o_n, db_key_t _o);
+int dbt_mangle_columnselection(int **_lres, int *_nc, int *_o_nc, int *_o_l, int _o_n);
+int dbt_sort_result(dbt_result_p _dres, int *_o_l, char *_o_op, int _o_n, int *_lres, int _nc);
+void dbt_project_result(dbt_result_p _dres, int _o_nc);
+
 #endif
 

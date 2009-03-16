@@ -23,6 +23,7 @@
  * 
  * History:
  * --------
+ * 2009-03-01 added support for ORDER-BY clause by Edgar Holleis
  * 2003-01-30 created by Daniel
  * 
  */
@@ -175,6 +176,12 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	
 	int *lkey=NULL, *lres=NULL;
 	
+	db_key_t *_o_k=NULL;    /* columns in order-by */
+	char *_o_op=NULL;       /* operators for oder-by */
+	int _o_n;               /* no of elements in order-by */
+	int *_o_l=NULL;         /* column selection for order-by */
+	int _o_nc;              /* no of elements in _o_l but not lres */
+
 	if ((!_h) || (!_r) || !CON_TABLE(_h))
 	{
 		LM_ERR("invalid parameters\n");
@@ -182,6 +189,12 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	}
 	*_r = NULL;
 	
+
+	if (_o)
+	{
+		if (dbt_parse_orderbyclause(&_o_k, &_o_op, &_o_n, _o) < 0)
+			return -1;
+	}
 
 	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
@@ -207,6 +220,15 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	{
 		lres = dbt_get_refs(_tbc, _c, _nc);
 		if(!lres)
+			goto error;
+	}
+	if(_o_k)
+	{
+		_o_l = dbt_get_refs(_tbc, _o_k, _o_n);
+		if (!_o_l)
+			goto error;
+		/* enlarge select-columns lres by all order-by columns, _o_nc is how many */
+		if (dbt_mangle_columnselection(&lres, &_nc, &_o_nc, _o_l, _o_n) < 0)
 			goto error;
 	}
 
@@ -235,6 +257,19 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
+	if (_o_l)
+	{
+		if (_dres->nrrows > 1)
+		{
+			if (dbt_sort_result(_dres, _o_l, _o_op, _o_n, lres, _nc) < 0)
+				goto error_nounlock;
+		}
+
+		/* last but not least, remove surplus columns */
+		if (_o_nc)
+			dbt_project_result(_dres, _o_nc);
+	}
+
 
 	/* dbt_result_print(_dres); */
 	
@@ -244,16 +279,29 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
+	if(_o_k)
+ 		pkg_free(_o_k);
+ 	if(_o_op)
+ 		pkg_free(_o_op);
+ 	if(_o_l)
+ 		pkg_free(_o_l);
 
 	return dbt_get_result(_h, _r);
 
 error:
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+error_nounlock:
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
+	if(_o_k)
+		pkg_free(_o_k);
+	if(_o_op)
+		pkg_free(_o_op);
+	if(_o_l)
+		pkg_free(_o_l);
 	LM_ERR("failed to query the table!\n");
 
 	return -1;
@@ -265,6 +313,12 @@ clean:
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
+	if(_o_k)
+		pkg_free(_o_k);
+	if(_o_op)
+		pkg_free(_o_op);
+	if(_o_l)
+		pkg_free(_o_l);
 	if(_dres)
 		dbt_result_free(_dres);
 
@@ -336,7 +390,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 			LM_ERR("incompatible types v[%d] - c[%d]!\n", i, j);
 			goto clean;
 		}
-		if(_v[i].type == DB_STRING)
+		if(_v[i].type == DB_STRING && !_v[i].nul)
 			_v[i].val.str_val.len = strlen(_v[i].val.string_val);
 		if(dbt_row_set_val(_drp, &(_v[i]), _tbc->colv[j]->type, j))
 		{
@@ -411,6 +465,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		LM_DBG("deleting all records\n");
 		dbt_table_free_rows(_tbc);
 		/* unlock databse */
+		dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 		return 0;
 	}
 

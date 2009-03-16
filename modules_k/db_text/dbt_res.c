@@ -23,6 +23,7 @@
  *
  * History:
  * --------
+ * 2009-03-01 added support for ORDER-BY clause by Edgar Holleis
  * 2003-06-05 fixed bug: when comparing two values and the first was less than
  *           the second one, the result of 'dbt_row_match' was always true,
  *           thanks to Gabriel, (Daniel)
@@ -33,6 +34,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdlib.h>
+#include <setjmp.h>
 
 #include "../../mem/mem.h"
 
@@ -497,6 +500,7 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			return (_vp->val.int_val<_v->val.bitmap_val)?-1:
 				(_vp->val.int_val>_v->val.bitmap_val)?1:0;
 	}
+	LM_ERR("invalid datatype %d\n", VAL_TYPE(_v));
 	return -2;
 }
 
@@ -523,4 +527,301 @@ dbt_row_p dbt_result_new_row(dbt_result_p _dres)
 	return _drp;
 }
 
+
+/* The _o clause to query is not really a db_key_t, it is SQL (str).
+ * db_mysql and db_postgres simply paste it into SQL, we need to parse it. */
+/* Format of _o:  column1 [ASC|DESC], column2 [ASC|DESC], ... */
+int dbt_parse_orderbyclause(db_key_t **_o_k, char **_o_op, int *_o_n, db_key_t _o)
+{
+	char *_po, *_ps, *_pe;
+	char _c = '\0';
+	char _d[8];
+	int _n;
+	int _i;
+	str *_s;
+
+	/* scan _o, count ',' -> upper bound for no of columns */
+	_n = 1;
+	for (_i=0; _i < _o->len; _i++)
+		if (_o->s[_i] == ',')
+			_n++;
+
+    /* *_o_k will include the db_key_ts, the strs, a copy of _o and \0 */
+	*_o_k = pkg_malloc((sizeof(db_key_t)+sizeof(str)) * _n + _o->len + 1);
+	if (!*_o_k)
+		return -1;
+	_s = (str *)((char *)(*_o_k) + sizeof(db_key_t) * _n);
+	for (_i=0; _i < _n; _i++)
+	    (*_o_k)[_i] = &_s[_i];
+	_po = (char *)(*_o_k) + (sizeof(db_key_t) + sizeof(str)) * _n;
+	memcpy(_po, _o->s, _o->len);
+	*(_po+_o->len) = '\0';
+
+	*_o_op = pkg_malloc(sizeof(db_op_t) * _n);
+	if (!*_o_op)
+	{
+		pkg_free(*_o_k);
+		return -1;
+	}
+
+	*_o_n = 0;
+	_ps = _po;
+	while (*_o_n < _n)
+	{
+		while (*_ps == ' ') _ps++;
+		if (*_ps == '\0')
+			break;
+		strcpy(_d, " \f\n\r\t\v,"); /* isspace() and comma */
+		if (*_ps == '"' || *_ps == '\'') /* detect quote */
+		{
+			_d[0] = *_ps;
+			_d[1] = '\0';
+			_ps++;
+		}
+		_pe = strpbrk(_ps, _d); /* search quote, space, comma or eos */
+		if (!_pe && _d[0] == ' ') /* if token is last token in string */
+			_pe = _po + _o->len; /* point to end of string */
+		if (! _pe) /* we were looking for quote but found none */
+			goto parse_error;
+
+		/* _ps points to start of column-name,
+		 * _pe points after the column-name, on quote, space, comma, or '\0' */
+		_c = *_pe;
+		*_pe = '\0';
+		(*_o_k)[*_o_n]->s = _ps;
+		(*_o_k)[*_o_n]->len = _pe - _ps;
+		(*_o_op)[*_o_n] = '<'; /* default */
+		(*_o_n)++;
+
+		if (_c == '\0')
+			break;
+
+		/* go beyond current token */
+		_ps = _pe + 1;
+		if (_c == ',')
+			continue;
+		while (*_ps == ' ') _ps++;
+		if (*_ps == ',')
+		{
+			_ps++;
+			continue;
+		}
+		if (*_ps == '\0')
+			break;
+
+		/* there is ASC OR DESC qualifier */
+		if (strncasecmp(_ps, "DESC", 4) == 0)
+		{
+			(*_o_op)[*_o_n-1] = '>';
+			_ps += 4;
+		} else if (strncasecmp(_ps, "ASC", 3) == 0)
+		{
+			_ps += 3;
+		} else goto parse_error;
+
+		/* point behind qualifier */
+		while (*_ps == ' ') _ps++;
+		if (*_ps == ',')
+		{
+			_ps++;
+			continue;
+		}
+		if (*_ps == '\0')
+			break;
+		goto parse_error;
+	}
+
+	if (*_ps != '\0' && _c != '\0')   /* that means more elements than _tbc->nrcols */
+		goto parse_error;
+
+	if (*_o_n == 0) /* there weren't actually any columns */
+	{
+		pkg_free(*_o_k);
+		pkg_free(*_o_op);
+		*_o_op = NULL;
+		*_o_k = NULL;
+		return 0; /* return success anyway */
+	}
+
+	return 0;
+
+parse_error:
+	pkg_free(*_o_k);
+	pkg_free(*_o_op);
+	*_o_op = NULL;
+	*_o_k = NULL;
+	*_o_n = 0;
+	return -1;
+}
+
+
+/* lres/_nc is the selected columns, _o_l/_o_n is the order-by columns:
+ *   All order-by columns need to be extracted along with the selected columns,
+ *   so any column in _o_l and not lres needs to be added to lres. _o_nc keeps
+ *   track of the number of columns added to lres. */
+int dbt_mangle_columnselection(int **_lres, int *_nc, int *_o_nc, int *_o_l, int _o_n)
+{
+	int _i, _j;
+
+	*_o_nc = 0;
+
+	if (! *_lres)
+		return 0; /* all columns selected, no need to worry */
+
+	/* count how many columns are affected */
+	for (_i=0; _i < _o_n; _i++) /* loop over order-by columns */
+	{
+		for (_j=0; _j < *_nc && (*_lres)[_j] != _o_l[_i]; _j++);
+		if (_j == *_nc) /* order-by column not found in select columns */
+			(*_o_nc)++;
+	}
+
+	if (*_o_nc == 0)
+		return 0; /* all order-by columns also selected, we're fine */
+
+	/* make _lres bigger */
+	*_lres = pkg_realloc(*_lres, sizeof(int) * (*_nc + *_o_nc));
+	if (! *_lres)
+		return -1;
+
+	/* add oder-by columns to select columns */
+	for (_i=0; _i < _o_n; _i++) /* loop over order-by columns */
+	{
+		for (_j=0; _j < *_nc && (*_lres)[_j] != _o_l[_i]; _j++);
+		if (_j == *_nc) /* order-by column not found in select columns */
+		{
+			(*_lres)[*_nc] = _o_l[_i];
+			(*_nc)++;
+		}
+	}
+
+	/* _lres, _nc modified, _o_nc returned */
+	return 0;
+}
+
+/* globals for qsort */
+dbt_result_p dbt_sort_dres;
+int *dbt_sort_o_l;
+char *dbt_sort_o_op;
+int dbt_sort_o_n;
+jmp_buf dbt_sort_jmpenv;
+
+
+/* comparison function for qsort */
+int dbt_qsort_compar(const void *_a, const void *_b)
+{
+	int _i, _j, _r;
+
+	for (_i=0; _i<dbt_sort_o_n; _i++)
+	{
+		_j = dbt_sort_o_l[_i];
+		_r = dbt_cmp_val(&(*(dbt_row_p *)_a)->fields[_j], &(*(dbt_row_p *)_b)->fields[_j]);
+		if (_r == 0)
+			continue; /* no result yet, compare next column */
+		if (_r == +1 || _r == -1)
+			return (dbt_sort_o_op[_i] == '<') ? _r : -_r; /* ASC OR DESC */
+		/* error */
+		longjmp(dbt_sort_jmpenv, _r);
+	}
+
+	/* no result after comparing all columns, same */
+	return 0;
+}
+
+
+int dbt_sort_result(dbt_result_p _dres, int *_o_l, char *_o_op, int _o_n, int *_lres, int _nc)
+{
+	int _i, _j;
+	dbt_row_p *_a;
+	dbt_row_p _el;
+
+	/* first we need to rewrite _o_l in terms of _lres */
+	if (_lres)
+	{
+		for (_i=0; _i < _o_n; _i++) /* loop over order-by columns */
+		{
+			/* depends on correctness of dbt_mangle_columnselection */
+			for (_j=0; _lres[_j] != _o_l[_i]; _j++ /*, assert(_j < _nc)*/);
+			_o_l[_i] = _j;
+		}
+	}
+
+	/* rewrite linked list to array */
+	_a = pkg_malloc(sizeof(dbt_row_t) * _dres->nrrows);
+	if (!_a)
+		return -1;
+	for (_el=_dres->rows, _i=0; _el != NULL; _el=_el->next, _i++)
+		_a[_i] = _el;
+
+	/* set globals */
+	dbt_sort_dres = _dres;
+	dbt_sort_o_l = _o_l;
+	dbt_sort_o_op = _o_op;
+	dbt_sort_o_n = _o_n;
+	_i = setjmp(dbt_sort_jmpenv);  /* exception handling */
+	if (_i)
+	{
+		/* error occured during qsort */
+		LM_ERR("qsort aborted\n");
+		pkg_free(_a);
+		return _i;
+	}
+
+	qsort(_a, _dres->nrrows, sizeof(dbt_row_p), &dbt_qsort_compar);
+
+	/* restore linked list */
+	for (_i=0; _i < _dres->nrrows; _i++)
+	{
+		_a[_i]->prev = (_i > 0) ? _a[_i-1] : NULL;
+		_a[_i]->next = (_i+1 < _dres->nrrows) ? _a[_i+1] : NULL;
+	}
+	_dres->rows = _a[0];
+
+	pkg_free(_a);
+	return 0;
+}
+
+
+/* Remove the columns that were added to the result to facilitate sorting.
+ *   The additional columns constitute the end of the queue. Instead of
+ *   actually removing them with realloc, they are simply kept around, but
+ *   hidden. For string-columns, the allocated string is however freed. */
+void dbt_project_result(dbt_result_p _dres, int _o_nc)
+{
+	int _i;
+	dbt_row_p _drp;
+
+	if (! _o_nc)
+		return;
+
+	/* check whether there are string columns, free them */
+	for (_i = _dres->nrcols - _o_nc; _i < _dres->nrcols; _i++)
+	{
+		if (_dres->colv[_i].type == DB_STRING ||
+				_dres->colv[_i].type == DB_STR ||
+				_dres->colv[_i].type == DB_BLOB)
+		{
+			for (_drp=_dres->rows; _drp != NULL; _drp = _drp->next)
+			{
+				if (! _drp->fields[_i].nul &&
+					(_drp->fields[_i].type == DB_STRING ||
+					_drp->fields[_i].type == DB_STR ||
+					_drp->fields[_i].type == DB_BLOB ))
+				{
+					pkg_free(_drp->fields[_i].val.str_val.s);
+					_drp->fields[_i].val.str_val.s = NULL;
+					_drp->fields[_i].val.str_val.len = 0;
+				}
+			}
+		}
+
+		/* free the string containing the column name */
+		pkg_free(_dres->colv[_i].name.s);
+		_dres->colv[_i].name.s = NULL;
+		_dres->colv[_i].name.len = 0;
+	}
+
+	/* pretend the columns are gone, in dbt_free_query free will do the right thing */
+	_dres->nrcols -= _o_nc;
+}
 
