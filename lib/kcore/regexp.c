@@ -33,7 +33,7 @@
 #include <regex.h>
 #include <ctype.h>
 #include "regexp.h"
-#include "dprint.h"
+#include "../../dprint.h"
 
 /*! \brief Replace in replacement tokens \\d with substrings of string pointed by
  * pmatch.

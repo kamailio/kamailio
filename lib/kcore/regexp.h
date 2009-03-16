@@ -32,7 +32,7 @@
 #ifndef REGEXP_H
 #define REGEXP_H
 
-#include "str.h"
+#include "../../str.h"
 
 #define MAX_MATCH 6
 
