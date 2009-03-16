@@ -257,6 +257,7 @@ typedef struct sip_msg {
 	struct hdr_field* identity_info;
 	struct hdr_field* pai;
 	struct hdr_field* ppi;
+	struct hdr_field* path;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/
