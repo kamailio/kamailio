@@ -482,19 +482,29 @@ int pv_get_hexflags(struct sip_msg *msg, pv_param_t *param,
 int pv_get_bflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	return pv_get_uintval(msg, param, res, getb0flags());
+	flag_t flags;
+	if (getbflags(&flags, 0) < 0) {
+		ERR("pv_get_bflags: Error while obtainig values of branch flags\n");
+		return -1;
+	}
+	return pv_get_uintval(msg, param, res, flags);
 }
 
 int pv_get_hexbflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
+	flag_t flags;
 	str s;
 	if(res==NULL)
 		return -1;
 
-	s.s = int_to_8hex((int)getb0flags());
+	if (getbflags(&flags, 0) < 0) {
+		ERR("pv_get_hexbflags: Error while obtaining values of branch flags\n");
+		return -1;
+	}
+	s.s = int_to_8hex((int)flags);
 	s.len = 8;
-	return pv_get_strintval(msg, param, res, &s, (int)getb0flags());
+	return pv_get_strintval(msg, param, res, &s, (int)flags);
 }
 
 int pv_get_sflags(struct sip_msg *msg, pv_param_t *param,
@@ -1941,7 +1951,7 @@ int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
 					
 	if(val == NULL)
 	{
-		setb0flags(0);
+		setbflagsval(0, 0);
 		return 0;
 	}
 
@@ -1951,7 +1961,7 @@ int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 	
-	setb0flags((unsigned int)val->ri);
+	setbflagsval(0, (flag_t)val->ri);
 
 	return 0;
 }
