@@ -945,7 +945,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		_tr_tobody_str.s[_tr_tobody_str.len+2] = '\0';
 		
 		/* reset old values */
-		destroy_to(&_tr_tobody);
+		free_to_params(&_tr_tobody);
 		memset(&_tr_tobody, 0, sizeof(struct to_body));
 		
 		/* parse params */
@@ -960,7 +960,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		if (parse_uri(_tr_tobody.uri.s, _tr_tobody.uri.len,
 				&_tr_tobody.parsed_uri)<0)
 		{
-			destroy_to(&_tr_tobody);
+			free_to_params(&_tr_tobody);
 			memset(&_tr_tobody, 0, sizeof(struct to_body));
 			pkg_free(_tr_tobody_str.s);
 			_tr_tobody_str.len = 0;
