@@ -126,6 +126,25 @@ int resetbflag(unsigned int branch, flag_t flag)
 }
 
 
+int getbflags(flag_t* res, unsigned int branch)
+{
+	flag_t* flags;
+	if (res == NULL) return -1;
+	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	*res = *flags;
+	return 1;
+}
+
+
+int setbflagsval(unsigned int branch, flag_t val)
+{
+	flag_t* flags;
+	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	*flags = val;
+	return 1;
+}
+
+
 /*
  * Initialize the branch iterator, the next
  * call to next_branch will return the first
