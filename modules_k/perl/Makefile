@@ -17,10 +17,9 @@ else
 endif
 
 ifeq ($(PERLCCOPTS),)
-	DEFS+=`perl -MExtUtils::Embed -e ccopts`
-else
-	DEFS+=$(PERLCCOPTS)
+	PERLCCOPTS=$(shell perl -MExtUtils::Embed -e ccopts)
 endif
+DEFS+=$(PERLCCOPTS)
 
 
 DEFS+=-DOPENSER_MOD_INTERFACE
