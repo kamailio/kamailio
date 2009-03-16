@@ -226,3 +226,14 @@ Description: Provides the purple module, a multi-protocol IM gateway
  .
  This package provides the purple module, a multi-protocol instant
  messaging gateway module.
+
+Package: kamailio-memcached-module
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
+Description: Provides the memcached module, an interface to the memcached server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the memcached module, an interface to the memcached
+ server, a high-performance, distributed memory object caching system.
