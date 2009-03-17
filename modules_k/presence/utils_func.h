@@ -43,9 +43,15 @@
 #include "../../dprint.h"
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_event.h"
 
 #define LCONTACT_BUF_SIZE 1024
 #define BAD_EVENT_CODE 489
+
+
+#define EVENT_DIALOG_SLA(ev) \
+	((ev)->type == EVENT_DIALOG && (ev)->params.dialog.sla)
+
 
 static inline int uandd_to_uri(str user,  str domain, str *out)
 {

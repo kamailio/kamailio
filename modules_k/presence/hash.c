@@ -598,7 +598,7 @@ int update_phtable(presentity_t* presentity, str pres_uri, str body)
 	
 	lock_get(&pres_htable[hash_code].lock);
 
-	p= search_phtable(&pres_uri, presentity->event->evp->parsed, hash_code);
+	p= search_phtable(&pres_uri, presentity->event->evp->type, hash_code);
 	if(p== NULL)
 	{
 		lock_release(&pres_htable[hash_code].lock);

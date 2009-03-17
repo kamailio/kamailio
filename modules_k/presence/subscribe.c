@@ -541,7 +541,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			reply_str= pu_400_rpl;
 			goto error;
 		}
-		if(((event_t*)msg->event->parsed)->parsed == EVENT_OTHER)
+		if(((event_t*)msg->event->parsed)->type == EVENT_OTHER)
 		{	
 			goto bad_event;
 		}
@@ -559,7 +559,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	subs.event= event;
 	
 	/* extract the id if any*/
-	ev_param= parsed_event->params;
+	ev_param= parsed_event->params.list;
 	while(ev_param)
 	{
 		if(ev_param->name.len== 2 && strncmp(ev_param->name.s, "id", 2)== 0)
@@ -580,7 +580,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	/* getting presentity uri from Request-URI if initial subscribe - or else from database*/
 	if(to_tag_gen)
 	{
-		if(parsed_event->parsed!= EVENT_DIALOG_SLA)
+		if (!EVENT_DIALOG_SLA(parsed_event))
 		{
 			if( parse_sip_msg_uri(msg)< 0)
 			{
@@ -711,8 +711,8 @@ bad_event:
 
 	LM_ERR("Missing or unsupported event header field value\n");
 		
-	if(parsed_event && parsed_event->text.s)
-		LM_ERR("\tevent= %.*s\n",parsed_event->text.len,parsed_event->text.s);
+	if(parsed_event && parsed_event->name.s)
+		LM_ERR("\tevent= %.*s\n",parsed_event->name.len,parsed_event->name.s);
 	
 	reply_code= BAD_EVENT_CODE;
 	reply_str= pu_489_rpl;
@@ -918,7 +918,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
 			subs->contact.s, subs->contact.len);	
 
-    if(subs->event->evp->parsed== EVENT_DIALOG_SLA)
+	if (EVENT_DIALOG_SLA(subs->event->evp))
     {
         /* user_contact@from_domain */
         if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0)
@@ -1027,7 +1027,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	{
 		lock_get(&subs_htable[i].lock);
 		s= search_shtable(subs_htable, subs->callid,subs->to_tag,subs->from_tag, i);
-		if(s && s->event->evp->parsed!= EVENT_DIALOG_SLA)
+		if (s && !EVENT_DIALOG_SLA(s->event->evp))
 		{
 			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
 			if(pres_uri.s== NULL)
@@ -1059,7 +1059,7 @@ found_rec:
 	
 	LM_DBG("Record found in hash_table\n");
 	
-	if(s->event->evp->parsed!= EVENT_DIALOG_SLA)
+	if(!EVENT_DIALOG_SLA(s->event->evp))
 		subs->pres_uri= pres_uri;
 	
 	subs->version = s->version;
@@ -1260,7 +1260,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	subs->version= row_vals[version_col].val.int_val;
 
-	if(subs->event->evp->parsed!= EVENT_DIALOG_SLA)
+	if(!EVENT_DIALOG_SLA(subs->event->evp))
 	{
 		pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 		pres_uri.len= strlen(pres_uri.s);
@@ -1739,14 +1739,14 @@ int restore_db_subs(void)
 			event= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 			if(event== NULL)
 			{
-				free_event_params(parsed_event.params, PKG_MEM_TYPE);
+				free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 				ERR_MEM(SHM_MEM_STR);
 			}
 			memset(event, 0, sizeof(pres_ev_t));
 			event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
 			if(event->name.s== NULL)
 			{
-				free_event_params(parsed_event.params, PKG_MEM_TYPE);
+				free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 				ERR_MEM(SHM_MEM_STR);
 			}
 			memcpy(event->name.s,ev_sname.s, ev_sname.len);
@@ -1756,14 +1756,14 @@ int restore_db_subs(void)
 			if(event->evp== NULL)
 			{
 				LM_ERR("ERROR copying event_t structure\n");
-				free_event_params(parsed_event.params, PKG_MEM_TYPE);
+				free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 				goto error;
 			}
 			event->next= EvList->events;
 			EvList->events= event;
 		}
 			
-		free_event_params(parsed_event.params, PKG_MEM_TYPE);
+		free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 
 		s.event= event;
 

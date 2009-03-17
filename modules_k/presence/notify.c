@@ -638,7 +638,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 
 	/* search in hash table if any record exists */
 	hash_code= core_hash(&pres_uri, NULL, phtable_size);
-	if(search_phtable(&pres_uri, event->evp->parsed, hash_code)== NULL)
+	if(search_phtable(&pres_uri, event->evp->type, hash_code)== NULL)
 	{
 		LM_DBG("No record exists in hash_table\n");
 		if(fallback2db)
@@ -726,8 +726,7 @@ db_query:
 			
 			/* if event BLA - check if sender is the same as contact */
 			/* if so, send an empty dialog info document */
-			if( event->evp->parsed == EVENT_DIALOG_SLA && contact )
-			{
+			if( EVENT_DIALOG_SLA(event->evp) && contact ) {
 				sender.s = (char*)row_vals[sender_col].val.string_val;
 				if(sender.s== NULL || strlen(sender.s)==0)
 					goto after_sender_check;

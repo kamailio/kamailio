@@ -177,7 +177,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		if(pres->event== NULL)
 		{
 			LM_ERR("event not found\n");
-			free_event_params(ev.params, PKG_MEM_TYPE);
+			free_event_params(ev.params.list, PKG_MEM_TYPE);
 			goto error;
 		}	
 	
@@ -185,18 +185,18 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		if(uandd_to_uri(user, domain, &p[i].uri)< 0)
 		{
 			LM_ERR("constructing uri\n");
-			free_event_params(ev.params, PKG_MEM_TYPE);
+			free_event_params(ev.params.list, PKG_MEM_TYPE);
 			goto error;
 		}
 		
 		/* delete from hash table */
-		if(delete_phtable(&p[i].uri, ev.parsed)< 0)
+		if(delete_phtable(&p[i].uri, ev.type)< 0)
 		{
 			LM_ERR("deleting from pres hash table\n");
-			free_event_params(ev.params, PKG_MEM_TYPE);
+			free_event_params(ev.params.list, PKG_MEM_TYPE);
 			goto error;
 		}
-		free_event_params(ev.params, PKG_MEM_TYPE);
+		free_event_params(ev.params.list, PKG_MEM_TYPE);
 
 	}
 	pa_dbf.free_result(pa_db, result);
@@ -325,7 +325,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 			reply_str= pu_400a_rpl;
 			goto error;
 		}
-		if(((event_t*)msg->event->parsed)->parsed == EVENT_OTHER)
+		if(((event_t*)msg->event->parsed)->type == EVENT_OTHER)
 		{	
 			goto unsupported_event;
 		}
@@ -334,7 +334,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		goto unsupported_event;
 
 	/* search event in the list */
-	event= search_event((event_t*)msg->event->parsed);
+	event= search_event((event_t*)msg->event->type);
 	if(event== NULL)
 	{
 		goto unsupported_event;
@@ -441,7 +441,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		}
 		body.len= get_content_length( msg );
 
-		if(sphere_enable && event->evp->parsed == EVENT_PRESENCE &&
+		if(sphere_enable && event->evp->type == EVENT_PRESENCE &&
 				get_content_type(msg)== SUBTYPE_PIDFXML)
 		{
 			sphere= extract_sphere(body);			

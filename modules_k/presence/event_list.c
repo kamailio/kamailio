@@ -61,15 +61,15 @@ event_t* shm_copy_event(event_t* e)
 	}
 	memset(ev, 0, sizeof(event_t));
 
-	ev->text.s= (char*)shm_malloc(e->text.len* sizeof(char));
-	if(ev->text.s== NULL)
+	ev->name.s= (char*)shm_malloc(e->name.len* sizeof(char));
+	if(ev->name.s== NULL)
 	{
 		ERR_MEM(SHARE_MEM);
 	}
-	memcpy(ev->text.s, e->text.s, e->text.len);
-	ev->text.len= e->text.len;
+	memcpy(ev->name.s, e->name.s, e->name.len);
+	ev->name.len= e->name.len;
 
-	p1= e->params;
+	p1= e->params.list;
 	while(p1)
 	{
 		size= sizeof(param_t)+ (p1->name.len+ p1->body.len)* sizeof(char);
@@ -84,11 +84,11 @@ event_t* shm_copy_event(event_t* e)
 		CONT_COPY(p2, p2->name, p1->name);
 		if(p1->body.s && p1->body.len)
 			CONT_COPY(p2, p2->body, p1->body);
-		p2->next= ev->params;
-		ev->params= p2;
+		p2->next= ev->params.list;
+		ev->params.list= p2;
 		p1= p1->next;
 	}
-	ev->parsed= e->parsed;
+	ev->type= e->type;
 
 	return ev;
 
@@ -102,10 +102,10 @@ void shm_free_event(event_t* ev)
 	if(ev== NULL)
 		return;
 	
-	if(ev->text.s)
-		shm_free(ev->text.s);
+	if(ev->name.s)
+		shm_free(ev->name.s);
 
-	free_event_params(ev->params, SHM_MEM_TYPE);
+	free_event_params(ev->params.list, SHM_MEM_TYPE);
 
 	shm_free(ev);
 }
@@ -141,14 +141,14 @@ int add_event(pres_ev_t* event)
 		ev= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 		if(ev== NULL)
 		{
-			free_event_params(parsed_event.params, PKG_MEM_TYPE);
+			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 			ERR_MEM(SHARE_MEM);
 		}
 		memset(ev, 0, sizeof(pres_ev_t));
 		ev->name.s= (char*)shm_malloc(event->name.len* sizeof(char));
 		if(ev->name.s== NULL)
 		{
-			free_event_params(parsed_event.params, PKG_MEM_TYPE);
+			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 			ERR_MEM(SHARE_MEM);
 		}
 		memcpy(ev->name.s, event->name.s, event->name.len);
@@ -158,14 +158,14 @@ int add_event(pres_ev_t* event)
 		if(ev->evp== NULL)
 		{
 			LM_ERR("copying event_t structure\n");
-			free_event_params(parsed_event.params, PKG_MEM_TYPE);
+			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 			goto error;
 		}
-		free_event_params(parsed_event.params, PKG_MEM_TYPE);
+		free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 	}
 	else
 	{
-		free_event_params(parsed_event.params, PKG_MEM_TYPE);
+		free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 		if(ev->content_type.s)
 		{
 			LM_DBG("Event already registered\n");
@@ -296,7 +296,7 @@ pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 		*parsed_event= event;
 	else
 	{
-		free_event_params(event.params, PKG_MEM_TYPE);
+		free_event_params(event.params.list, PKG_MEM_TYPE);
 	}
 	e= search_event(&event);
 
@@ -325,13 +325,13 @@ pres_ev_t* search_event(event_t* event)
 	pres_ev_t* pres_ev;
 	pres_ev= EvList->events;
 
-	LM_DBG("start event= [%.*s]\n", event->text.len, event->text.s);
+	LM_DBG("start event= [%.*s]\n", event->name.len, event->name.s);
 
 	while(pres_ev)
 	{
-		if(pres_ev->evp->parsed== event->parsed)
+		if(pres_ev->evp->type== event->type)
 		{
-			if(event->params== NULL && pres_ev->evp->params== NULL)
+			if(event->params.list== NULL && pres_ev->evp->params.list== NULL)
 			{
 				return pres_ev;
 			}
@@ -357,11 +357,11 @@ int search_event_params(event_t* ev, event_t* searched_ev)
 	param_t* ps, *p;
 	int found;
 
-	ps= ev->params;
+	ps= ev->params.list;
 
 	while(ps)
 	{
-		p= searched_ev->params;
+		p= searched_ev->params.list;
 		found= 0;
 	
 		while(p)

@@ -340,7 +340,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	{
 		/* insert new record in hash_table */
 	
-		if(insert_phtable(&pres_uri, presentity->event->evp->parsed, sphere)< 0)
+		if(insert_phtable(&pres_uri, presentity->event->evp->type, sphere)< 0)
 		{
 			LM_ERR("inserting record in hash table\n");
 			goto error;
@@ -417,7 +417,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		if (result->n > 0)
 		{
 
-			if(presentity->event->evp->parsed == EVENT_DIALOG_SLA)
+			if(EVENT_DIALOG_SLA(presentity->event->evp))
 			{
 				/* analize if previous body has a dialog */
 				row = &result->rows[0];
@@ -489,7 +489,7 @@ after_dialog_check:
 
 				/* delete from hash table */
 	
-				if(delete_phtable(&pres_uri, presentity->event->evp->parsed)< 0)
+				if(delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
 				{
 					LM_ERR("deleting record from hash table\n");
 					goto error;
@@ -500,7 +500,7 @@ after_dialog_check:
 			n_update_cols= 0;
 			/* if event dialog and is_dialog -> if sender not the same as
 			 * old sender do not overwrite */
-			if( (presentity->event->evp->parsed == EVENT_DIALOG_SLA) &&  bla_update_publish==0)
+			if( EVENT_DIALOG_SLA(presentity->event->evp) &&  bla_update_publish==0)
 			{
 				LM_DBG("drop Publish for BLA from a different sender that"
 						" wants to overwrite an existing dialog\n");
@@ -582,7 +582,7 @@ after_dialog_check:
 
 				/* updated stored sphere */
 				if(sphere_enable && 
-						presentity->event->evp->parsed== EVENT_PRESENCE)
+						presentity->event->evp->type== EVENT_PRESENCE)
 				{
 					if(update_phtable(presentity, pres_uri, *body)< 0)
 					{
@@ -742,11 +742,11 @@ int pres_htable_restore(void)
 		if(event_parser(ev_str.s, ev_str.len, &ev)< 0)
 		{
 			LM_ERR("parsing event\n");
-			free_event_params(ev.params, PKG_MEM_TYPE);
+			free_event_params(ev.params.list, PKG_MEM_TYPE);
 			goto error;
 		}
-		event= ev.parsed;
-		free_event_params(ev.params, PKG_MEM_TYPE);
+		event= ev.type;
+		free_event_params(ev.params.list, PKG_MEM_TYPE);
 
 		if(uandd_to_uri(user, domain, &uri)< 0)
 		{
