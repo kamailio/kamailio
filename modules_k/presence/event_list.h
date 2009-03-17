@@ -37,6 +37,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"
+#include "../../parser/parse_param.h"
 #include "../../str.h"
 #include "subscribe.h"
 
