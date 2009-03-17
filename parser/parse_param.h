@@ -56,7 +56,12 @@ typedef enum ptype {
 	P_DSTIP,     /* URI: dstip parameter */
 	P_DSTPORT,   /* URi: dstport parameter */
 	P_INSTANCE,  /* Contact: sip.instance parameter */
-	P_FTAG       /* URI: ftag parameter */
+	P_FTAG,      /* URI: ftag parameter */
+	P_CALL_ID,   /* Dialog event package: call-id */
+	P_FROM_TAG,  /* Dialog event package: from-tag */
+	P_TO_TAG,    /* Dialog event package: to-tag */
+	P_ISD,       /* Dialog event package: include-session-description */
+	P_SLA        /* Dialog event package: sla */
 } ptype_t;
 
 
@@ -64,9 +69,10 @@ typedef enum ptype {
  * Class of parameters
  */
 typedef enum pclass {
-	CLASS_ANY = 0,  /* Any parameters, well-known hooks will be not used */
-	CLASS_CONTACT,  /* Contact parameters */
-	CLASS_URI       /* URI parameters */
+	CLASS_ANY = 0,      /* Any parameters, well-known hooks will be not used */
+	CLASS_CONTACT,      /* Contact parameters */
+	CLASS_URI,          /* URI parameters */
+	CLASS_EVENT_DIALOG  /* Event dialog parameters */
 } pclass_t;
 
 
@@ -109,12 +115,21 @@ struct uri_hooks {
 };
 
 
+struct event_dialog_hooks {
+	struct param* call_id;
+	struct param* from_tag;
+	struct param* to_tag;
+	struct param* include_session_description;
+	struct param* sla;
+};
+
 /*
  * Union of hooks structures for all classes
  */
 typedef union param_hooks {
 	struct contact_hooks contact; /* Contact hooks */
 	struct uri_hooks uri;         /* URI hooks */
+	struct event_dialog_hooks event_dialog;
 } param_hooks_t;
 
 /**

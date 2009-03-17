@@ -43,6 +43,66 @@
 #include "parse_param.h"
 
 
+static inline void parse_event_dialog_class(param_hooks_t* h, param_t* p)
+{
+
+	if (!p->name.s) {
+		LOG(L_ERR, "ERROR: parse_event_dialog_class: empty value\n");
+		return;
+	}
+	if (!h) {
+		LOG(L_CRIT, "BUG: parse_event_dialog_class: NULL param hook pointer\n");
+		return;
+	}
+	switch(p->name.s[0]) {
+	case 'c':
+	case 'C':
+		if ((p->name.len == 7) &&
+		    (!strncasecmp(p->name.s + 1, "all-id", 6))) {
+			p->type = P_CALL_ID;
+			h->event_dialog.call_id = p;
+		}
+		break;
+
+	case 'f':
+	case 'F':
+		if ((p->name.len == 8) &&
+		    (!strncasecmp(p->name.s + 1, "rom-tag", 7))) {
+			p->type = P_FROM_TAG;
+			h->event_dialog.from_tag = p;
+		}
+		break;
+
+	case 't':
+	case 'T':
+		if ((p->name.len == 6) &&
+		    (!strncasecmp(p->name.s + 1, "o-tag", 5))) {
+			p->type = P_TO_TAG;
+			h->event_dialog.to_tag = p;
+		}
+		break;
+
+	case 'i':
+	case 'I':
+		if ((p->name.len == 27) &&
+		    (!strncasecmp(p->name.s + 1, "nclude-session-description", 26))) {
+			p->type = P_ISD;
+			h->event_dialog.include_session_description = p;
+		}
+		break;
+
+	case 's':
+	case 'S':
+		if ((p->name.len == 3) &&
+		    (!strncasecmp(p->name.s + 1, "la", 2))) {
+			p->type = P_SLA;
+			h->event_dialog.sla = p;
+		}
+		break;
+	}
+}
+
+
 /*
  * Try to find out parameter name, recognized parameters
  * are q, expires and method
@@ -328,6 +388,7 @@ static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, par
 	switch(_c) {
 	case CLASS_CONTACT: parse_contact_class(_h, _p); break;
 	case CLASS_URI:     parse_uri_class(_h, _p);     break;
+	case CLASS_EVENT_DIALOG: parse_event_dialog_class(_h, _p); break;
 	default: break;
 	}
 }
@@ -545,6 +606,11 @@ static inline void print_param(FILE* _o, param_t* _p)
 	case P_DSTPORT:   type = "P_DSTPORT";   break;
 	case P_INSTANCE:  type = "P_INSTANCE";  break;
 	case P_FTAG:      type = "P_FTAG";      break;
+	case P_CALL_ID:   type = "P_CALL_ID";   break;
+	case P_FROM_TAG:  type = "P_FROM_TAG";  break;
+	case P_TO_TAG:    type = "P_TO_TAG";    break;
+	case P_ISD:       type = "P_ISD";       break;
+	case P_SLA:       type = "P_SLA";       break;
 	default:          type = "UNKNOWN";     break;
 	}
 	
