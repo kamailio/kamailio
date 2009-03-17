@@ -966,12 +966,18 @@ dlg_t* build_dlg_t(subs_t* subs)
 	if (subs->sockinfo_str.len) {
 		int port, proto;
         str host;
-		if (parse_phostport (
-				subs->sockinfo_str.s,subs->sockinfo_str.len,&host.s,
-				&host.len,&port, &proto )) {
-			LM_ERR("bad sockinfo string\n");
+		char* tmp;
+		if ((tmp = as_asciiz(&subs->sockinfo_str)) == NULL) {
+			LM_ERR("no pkg memory left\n");
 			goto error;
 		}
+		if (parse_phostport (tmp,&host.s,
+				&host.len,&port, &proto )) {
+			LM_ERR("bad sockinfo string\n");
+			pkg_free(tmp);
+			goto error;
+		}
+		pkg_free(tmp);
 		td->send_sock = grep_sock_info (
 			&host, (unsigned short) port, (unsigned short) proto);
 	}
