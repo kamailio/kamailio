@@ -638,6 +638,7 @@ int rls_send_notify(subs_t* subs, str* body, char* start_cid,
 	dialog_id_t* cb_param= NULL;
 	int size;
 	int rt;
+	uac_req_t uac_r;
 
 	LM_DBG("start\n");
 	td= rls_notify_dlg(subs);
@@ -681,14 +682,11 @@ int rls_send_notify(subs_t* subs, str* body, char* start_cid,
 		goto error;
 	}
 	LM_DBG("str_hdr= %.*s\n", str_hdr->len, str_hdr->s);
-	rt = tmb.t_request_within
-		(&met,						             
-		str_hdr,                               
-		body,                           
-		td,					                  
-		rls_notify_callback,				        
-		(void*)cb_param);				
 
+	set_uac_req(&uac_r, &met, str_hdr, body, td, 0, rls_notify_callback,
+				(void*)cb_param);
+
+	rt = tmb.t_request_within(&uac_r);
 	if(rt < 0)
 	{
 		LM_ERR("in function tmb.t_request_within\n");
