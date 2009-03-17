@@ -38,21 +38,12 @@
 
 #if 0
 #ifdef PKG_MALLOC
-#       ifdef VQ_MALLOC
-#               include "vq_malloc.h"
-#		define MY_MALLOC vqm_malloc
-#		define MY_FREE vqm_free
-#		define MY_INIT vqm_malloc_init
-#		define MY_BLOCK vqm_block
-#		define MY_STATUS vqm_status
-#       else
-#               include "q_malloc.h"
-#		define MY_MALLOC qm_malloc
-#		define MY_FREE qm_free
-#		define MY_INIT qm_malloc_init
-#		define MY_BLOCK qm_block
-#		define MY_STATUS qm_status
-#       endif
+#	include "q_malloc.h"
+#	define MY_MALLOC qm_malloc
+#	define MY_FREE qm_free
+#	define MY_INIT qm_malloc_init
+#	define MY_BLOCK qm_block
+#	define MY_STATUS qm_status
 #endif
 
 void memtest()

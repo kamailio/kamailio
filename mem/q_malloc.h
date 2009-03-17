@@ -36,7 +36,7 @@
  */
 
 
-#if !defined(q_malloc_h) && !defined(VQ_MALLOC) && !defined(F_MALLOC)
+#if !defined(q_malloc_h) && !defined(F_MALLOC)
 #define q_malloc_h
 
 #include "meminfo.h"

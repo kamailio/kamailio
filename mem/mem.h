@@ -55,10 +55,7 @@
 #endif
 
 #ifdef PKG_MALLOC
-#	ifdef VQ_MALLOC
-#		include "vq_malloc.h"
-		extern struct vqm_block* mem_block;
-#	elif defined F_MALLOC
+#	ifdef F_MALLOC
 #		include "f_malloc.h"
 		extern struct fm_block* mem_block;
 #	elif defined DL_MALLOC
@@ -75,13 +72,7 @@
 #ifdef __SUNPRO_C
 		#define __FUNCTION__ ""  /* gcc specific */
 #endif
-#		ifdef VQ_MALLOC
-#			define pkg_malloc(s) vqm_malloc(mem_block, (s),__FILE__, \
-				__FUNCTION__, __LINE__)
-#			define pkg_free(p)   vqm_free(mem_block, (p), __FILE__,  \
-				__FUNCTION__, __LINE__)
-#			warn "no proper realloc implementation, use another mem. alloc"
-#		elif defined F_MALLOC
+#		ifdef F_MALLOC
 #			define pkg_malloc(s) fm_malloc(mem_block, (s),__FILE__, \
 				__FUNCTION__, __LINE__)
 #			define pkg_free(p)   fm_free(mem_block, (p), __FILE__,  \
@@ -97,10 +88,7 @@
 				__FUNCTION__, __LINE__)
 #		endif
 #	else
-#		ifdef VQ_MALLOC
-#			define pkg_malloc(s) vqm_malloc(mem_block, (s))
-#			define pkg_free(p)   vqm_free(mem_block, (p))
-#		elif defined F_MALLOC
+#		ifdef F_MALLOC
 #			define pkg_malloc(s) fm_malloc(mem_block, (s))
 #			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s))
 #			define pkg_free(p)   fm_free(mem_block, (p))
@@ -114,9 +102,7 @@
 #			define pkg_free(p)   qm_free(mem_block, (p))
 #		endif
 #	endif
-#	ifdef VQ_MALLOC
-#		define pkg_status()  vqm_status(mem_block)
-#	elif defined F_MALLOC
+#	ifdef F_MALLOC
 #		define pkg_status()    fm_status(mem_block)
 #		define pkg_info(mi)    fm_info(mem_block, mi)
 #		define pkg_available() fm_available(mem_block)

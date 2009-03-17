@@ -129,17 +129,6 @@
 #	define shm_malloc_init sfm_malloc_init
 #	define shm_malloc_destroy(b) sfm_malloc_destroy(b)
 #	define shm_malloc_on_fork()	sfm_pool_reset()
-#elif VQ_MALLOC
-#	include "vq_malloc.h"
-	extern struct vqm_block* shm_block;
-#	define MY_MALLOC vqm_malloc
-#	define MY_FREE vqm_free
-#	define MY_STATUS vqm_status
-#	define MY_SUMS do{}while(0)
-#	define  shm_malloc_init vqm_malloc_init
-#	define shm_malloc_destroy(b) do{}while(0)
-#	define shm_malloc_on_fork() do{}while(0)
-#	warn "no proper vq_realloc implementation, try another memory allocator"
 #elif defined F_MALLOC
 #	include "f_malloc.h"
 	extern struct fm_block* shm_block;

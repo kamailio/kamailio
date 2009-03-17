@@ -73,8 +73,6 @@ static void* shm_mempool=(void*)-1;
 	struct sfm_block* shm_block;
 #elif SF_MALLOC
 	struct sfm_block* shm_block;
-#elif VQ_MALLOC
-	struct vqm_block* shm_block;
 #elif F_MALLOC
 	struct fm_block* shm_block;
 #elif DL_MALLOC
@@ -110,26 +108,10 @@ void* _shm_resize( void* p, unsigned int s, const char* file, const char* func,
 void* _shm_resize( void* p , unsigned int s)
 #endif
 {
-#ifdef VQ_MALLOC
-	struct vqm_frag *f;
-#endif
 	if (p==0) {
 		DBG("WARNING:vqm_resize: resize(0) called\n");
 		return shm_malloc( s );
 	}
-#	ifdef DBG_QM_MALLOC
-#	ifdef VQ_MALLOC
-	f=(struct  vqm_frag*) ((char*)p-sizeof(struct vqm_frag));
-	MDBG("_shm_resize(%p, %d), called from %s: %s(%d)\n",  
-		p, s, file, func, line);
-	VQM_DEBUG_FRAG(shm_block, f);
-	if (p>(void *)shm_block->core_end || p<(void*)shm_block->init_core){
-		LOG(L_CRIT, "BUG: vqm_free: bad pointer %p (out of memory block!) - "
-				"aborting\n", p);
-		abort();
-	}
-#endif
-#	endif
 	return sh_realloc( p, s ); 
 }
 

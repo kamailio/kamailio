@@ -37,7 +37,7 @@
  */
 
 
-#if !defined(f_malloc_h) && !defined(VQ_MALLOC) 
+#if !defined(f_malloc_h)
 #define f_malloc_h
 
 #ifdef DBG_QM_MALLOC

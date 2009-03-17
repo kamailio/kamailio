@@ -39,11 +39,7 @@
 #include "mem.h"
 
 #ifdef PKG_MALLOC
-	#ifdef VQ_MALLOC
-		#include "vq_malloc.h"
-	#else
-		#include "q_malloc.h"
-	#endif
+#include "q_malloc.h"
 #endif
 
 #ifdef SHM_MEM
@@ -55,9 +51,7 @@
 	char mem_pool[PKG_MEM_POOL_SIZE];
 	#endif
 
-	#ifdef VQ_MALLOC
-		struct vqm_block* mem_block;
-	#elif defined F_MALLOC
+	#ifdef F_MALLOC
 		struct fm_block* mem_block;
 	#elif defined DL_MALLOC
 		/* don't need this */
@@ -71,9 +65,7 @@ int init_pkg_mallocs()
 {
 #ifdef PKG_MALLOC
 	/*init mem*/
-	#ifdef VQ_MALLOC
-		mem_block=vqm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
-	#elif F_MALLOC
+	#ifdef F_MALLOC
 		mem_block=fm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	#elif DL_MALLOC
 		/* don't need this */
