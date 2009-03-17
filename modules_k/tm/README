@@ -248,10 +248,10 @@ Chapter 1. Admin Guide
    Section 1.4.15, " t_on_branch(branch_route) " and the
    setbflag(), resetbflag() and isbflagset() script functions.
 
-   Also, modules may set branch flags before transaction creation
-   (for the moment this feature is not available in script). The
-   REGISTRAR module was the first to use this type of flags. The
-   NAT flag is pushed in branch flags instead in message flags
+   Also, modules may set branch flags before transaction creation.
+   The REGISTRAR module was the first to use this type of flags.
+   The NAT flag is pushed in branch flags instead in message
+   flags.
 
 1.1.2. Timer-Based Failover
 
@@ -448,8 +448,8 @@ modparam("tm", "unix_tx_timeout", 5)
 
    If true (non null value), the final response timer will be
    re-triggered for each received provisional reply. In this case,
-   final response timeout may occure after a time longe than
-   fr_inv_timer (if UAS keeps sending provisional replies)
+   final response timeout may occure after a time longer than
+   fr_inv_timer (if UAS keeps sending provisional replies).
 
    Default value is 1 (true).
 
@@ -461,7 +461,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 1.3.11. fr_timer_avp (string)
 
    Full specification (NAME, ID, Alias) of an AVP which contains a
-   final response timeout value. If present, ths value will
+   final response timeout value. If present, this value will
    override the static fr_timer parameter.
 
    If you set the AVP to an empty string, the whole mechanism for

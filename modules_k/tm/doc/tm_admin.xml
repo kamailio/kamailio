@@ -108,10 +108,9 @@
 		isbflagset() script functions.
 		</para>
 		<para>
-		Also, modules may set branch flags before transaction creation 
-		(for the moment this feature is not available in script). The 
+		Also, modules may set branch flags before transaction creation. The 
 		REGISTRAR module was the first to use this type of flags. The NAT flag 
-		is pushed in branch flags instead in message flags
+		is pushed in branch flags instead in message flags.
 		</para>
 	</section>
 	<section id="timer-based-failover">
@@ -428,8 +427,8 @@ modparam("tm", "unix_tx_timeout", 5)
 		<para>
 		If true (non null value), the final response timer will be re-triggered
 		for each received provisional reply. In this case, final response
-		timeout may occure after a time longe than fr_inv_timer (if UAS keeps
-		sending provisional replies)
+		timeout may occure after a time longer than fr_inv_timer (if UAS keeps
+		sending provisional replies).
 		</para>
 		<para>
 		<emphasis>
@@ -450,7 +449,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 		<title><varname>fr_timer_avp</varname> (string)</title>
 		<para>
 		Full specification (NAME, ID, Alias) of an AVP which contains a final
-		response timeout value. If present, ths value will override the 
+		response timeout value. If present, this value will override the 
 		static fr_timer parameter.
 		</para>
 		<para>
