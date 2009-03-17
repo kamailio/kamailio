@@ -874,7 +874,7 @@ int select_event(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}
 
-	*res = ((event_t*)msg->event->parsed)->text;
+	*res = ((event_t*)msg->event->parsed)->name;
 	return 0;
 }
 
