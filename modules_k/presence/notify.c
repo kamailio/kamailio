@@ -1452,6 +1452,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	int result= 0;
     c_back_param *cb_param= NULL;
 	str* final_body= NULL;
+	uac_req_t uac_r;
 	
 	LM_DBG("dialog info:\n");
 	printf_subs(subs);
@@ -1564,14 +1565,9 @@ jump_over_body:
 		goto error;	
 	}	
 
-	result = tmb.t_request_within
-		(&met,              /* method*/
-		&str_hdr,           /* extra headers*/
-		notify_body,        /* body*/
-		td,                 /* dialog structure*/
-		p_tm_callback,      /* callback function*/
-		(void*)cb_param);   /* callback parameter*/
-
+	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, 0, p_tm_callback,
+				(void*)cb_param);
+	result = tmb.t_request_within(&uac_r);
 	if(result< 0)
 	{
 		LM_ERR("in function tmb.t_request_within\n");
