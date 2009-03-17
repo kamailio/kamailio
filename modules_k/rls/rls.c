@@ -716,13 +716,13 @@ int add_rls_event(modparam_t type, void* val)
 		LM_ERR("while parsing event = %s\n", event);
 		return -1;
 	}
-	if(e.parsed & EVENT_OTHER)
+	if(e.type & EVENT_OTHER)
 	{
 		LM_ERR("wrong event= %s\n", event);
 		return -1;
 	}
 
-	rls_events|= e.parsed;
+	rls_events|= e.type;
 
 	return 0;
 

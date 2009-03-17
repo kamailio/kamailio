@@ -369,7 +369,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			LM_ERR("cannot parse Event header\n");
 			goto error;
 		}
-		if(! ( ((event_t*)msg->event->parsed)->parsed & rls_events) )
+		if(! ( ((event_t*)msg->event->parsed)->type & rls_events) )
 		{	
 			return to_presence_code;
 		}
@@ -387,7 +387,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	subs.event= event;
 	
 	/* extract the id if any*/
-	ev_param= parsed_event->params;
+	ev_param= parsed_event->params.list;
 	while(ev_param)
 	{
 		if(ev_param->name.len== 2 && strncmp(ev_param->name.s, "id", 2)== 0)
