@@ -44,18 +44,19 @@
 #include <stdio.h>         /* printf */
 #include "../ut.h"
 
-
-#define PRES_STR "presence"
-#define PRES_STR_LEN 8
-
-#define PRES_WINFO_STR "presence.winfo"
-#define PRES_WINFO_STR_LEN 14
-
-#define PRES_XCAP_CHANGE_STR "xcap-change"
-#define PRES_XCAP_CHANGE_STR_LEN 11
-
-#define PRES_SIP_PROFILE_STR "sip-profile"
-#define PRES_SIP_PROFILE_STR_LEN 11
+static struct {
+	str name;
+	int type;	
+} events[] = {
+	{STR_STATIC_INIT("presence"),        EVENT_PRESENCE},
+	{STR_STATIC_INIT("presence.winfo"),  EVENT_PRESENCE_WINFO},
+	{STR_STATIC_INIT("xcap-change"),     EVENT_XCAP_CHANGE},
+	{STR_STATIC_INIT("sip-profile"),     EVENT_SIP_PROFILE},
+	{STR_STATIC_INIT("message-summary"), EVENT_MESSAGE_SUMMARY},
+	{STR_STATIC_INIT("dialog"),          EVENT_DIALOG},
+	/* The following must be the last element in the array */
+	{STR_NULL,                           EVENT_OTHER}
+};
 
 
 static inline char* skip_token(char* _b, int _l)
@@ -77,41 +78,58 @@ static inline char* skip_token(char* _b, int _l)
 }
 
 
-static inline int event_parser(char* _s, int _l, event_t* _e)
+int event_parser(char* s, int len, event_t* e)
 {
+	int i;
 	str tmp;
 	char* end;
+	param_hooks_t* phooks = NULL;
+	enum pclass pclass = CLASS_ANY;
 
-	tmp.s = _s;
-	tmp.len = _l;
-
-	trim_leading(&tmp);
-
-	if (tmp.len == 0) {
-		LOG(L_ERR, "event_parser(): Empty body\n");
+	if (e == NULL) {
+		ERR("event_parser: Invalid parameter value\n");
 		return -1;
 	}
 
-	_e->text.s = tmp.s;
+	tmp.s = s;
+	tmp.len = len;
+	trim_leading(&tmp);
 
+	if (tmp.len == 0) {
+		LOG(L_ERR, "event_parser: Empty body\n");
+		return -1;
+	}
+
+	e->name.s = tmp.s;
 	end = skip_token(tmp.s, tmp.len);
+	e->name.len = end - tmp.s;
 
-	_e->text.len = end - tmp.s;
+	e->type = EVENT_OTHER;
+	for(i = 0; events[i].name.len; i++) {
+		if (e->name.len == events[i].name.len &&
+			!strncasecmp(e->name.s, events[i].name.s, e->name.len)) {
+			e->type = events[i].type;
+			break;
+		}
+	}
 
-	if ((_e->text.len == PRES_STR_LEN) && 
-	    !strncasecmp(PRES_STR, tmp.s, _e->text.len)) {
-		_e->parsed = EVENT_PRESENCE;
-	} else if ((_e->text.len == PRES_XCAP_CHANGE_STR_LEN) && 
-		   !strncasecmp(PRES_XCAP_CHANGE_STR, tmp.s, _e->text.len)) {
-		_e->parsed = EVENT_XCAP_CHANGE;
-	} else if ((_e->text.len == PRES_WINFO_STR_LEN) && 
-		   !strncasecmp(PRES_WINFO_STR, tmp.s, _e->text.len)) {
-		_e->parsed = EVENT_PRESENCE_WINFO;
-	} else if ((_e->text.len == PRES_SIP_PROFILE_STR_LEN) && 
-		   !strncasecmp(PRES_SIP_PROFILE_STR, tmp.s, _e->text.len)) {
-		_e->parsed = EVENT_SIP_PROFILE;
+	tmp.len -= end - tmp.s;
+	tmp.s = end;
+	trim_leading(&tmp);
+
+	if (tmp.s[0] == ';') {
+		/* We have parameters to parse */
+		if (e->type == EVENT_DIALOG) {
+			pclass = CLASS_EVENT_DIALOG;
+			phooks = (param_hooks_t*)&e->params.dialog;
+		}
+
+		if (parse_params(&tmp, pclass, phooks, &e->params.list) < 0) {
+			ERR("event_parser: Error while parsing parameters parameters\n");
+			return -1;
+		}
 	} else {
-		_e->parsed = EVENT_OTHER;
+		e->params.list = NULL;
 	}
 
 	return 0;
@@ -153,19 +171,24 @@ int parse_event(struct hdr_field* _h)
  */
 void free_event(event_t** _e)
 {
-	if (*_e) pkg_free(*_e);
-	*_e = 0;
+	if (*_e) {
+		if ((*_e)->params.list) free_params((*_e)->params.list);
+		pkg_free(*_e);
+		*_e = NULL;
+	}
 }
 
 
 /*
  * Print structure, for debugging only
  */
-void print_event(event_t* _e)
+void print_event(event_t* e)
 {
 	printf("===Event===\n");
-	printf("text  : \'%.*s\'\n", _e->text.len, ZSW(_e->text.s));
-	printf("parsed: %s\n", 
-	       (_e->parsed == EVENT_PRESENCE) ? ("EVENT_PRESENCE") : ("EVENT_OTHER"));
+	printf("name  : \'%.*s\'\n", STR_FMT(&e->name));
+	printf("type: %d\n", e->type);
+	if (e->params.list) {
+		print_params(stdout, e->params.list);
+	}
 	printf("===/Event===\n");
 }

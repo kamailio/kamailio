@@ -1,12 +1,6 @@
 /*
  * $Id$
  *
- * Event header field body parser
- * This parser was written for Presence Agent module only.
- * it recognizes presence package only, no subpackages, no parameters
- * It should be replaced by a more generic parser if subpackages or
- * parameters should be parsed too.
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -37,35 +31,51 @@
 
 #include "../str.h"
 #include "hf.h"
+#include "parse_param.h"
 
-#define EVENT_OTHER          0
-#define EVENT_PRESENCE       1
-#define EVENT_PRESENCE_WINFO 2
-#define EVENT_SIP_PROFILE    3
-#define EVENT_XCAP_CHANGE    4
+/* Recognized event types */
+enum event_type {
+	EVENT_OTHER = 0,
+	EVENT_PRESENCE,
+	EVENT_PRESENCE_WINFO,
+	EVENT_SIP_PROFILE,
+	EVENT_XCAP_CHANGE,
+	EVENT_DIALOG,
+	EVENT_MESSAGE_SUMMARY
+};
+
+
+struct event_params {
+	struct event_dialog_hooks dialog; /* Well known dialog package params */
+	param_t* list; /* Linked list of all parsed parameters */
+};
+
 
 typedef struct event {
-	str text;       /* Original string representation */
-	int parsed;     /* Parsed variant */
+	enum event_type type; /* Parsed variant */
+	str name;             /* Original string representation */
+	struct event_params params;
 } event_t;
 
 
 /*
  * Parse Event HF body
  */
-int parse_event(struct hdr_field* _h);
+int parse_event(struct hdr_field* hf);
 
 
 /*
  * Release memory
  */
-void free_event(event_t** _e);
+void free_event(event_t** e);
 
 
 /*
  * Print structure, for debugging only
  */
-void print_event(event_t* _e);
+void print_event(event_t* e);
+
+int event_parser(char* s, int l, event_t* e);
 
 
 #endif /* PARSE_EVENT_H */
