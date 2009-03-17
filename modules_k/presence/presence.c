@@ -67,6 +67,7 @@
 #include "../sl/sl_api.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../pua/hash.h"
 #include "publish.h"
 #include "subscribe.h"

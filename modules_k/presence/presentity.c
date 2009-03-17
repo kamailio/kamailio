@@ -38,6 +38,7 @@
 #include <time.h>
 
 #include "../../lib/srdb1/db.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
