@@ -86,6 +86,17 @@ event_t* shm_copy_event(event_t* e)
 			CONT_COPY(p2, p2->body, p1->body);
 		p2->next= ev->params.list;
 		ev->params.list= p2;
+
+		/* Update parameter hooks in the shmmem copy, this is needed so that
+		 * we can test for the presence of the sla parameter even in the
+		 * shared copy of the event */
+		if (e->params.dialog.call_id == p1) ev->params.dialog.call_id = p2;
+		if (e->params.dialog.from_tag == p1) ev->params.dialog.from_tag = p2;
+		if (e->params.dialog.to_tag == p1) ev->params.dialog.to_tag = p2;
+		if (e->params.dialog.include_session_description == p1) 
+			ev->params.dialog.include_session_description = p2;
+		if (e->params.dialog.sla == p1) ev->params.dialog.sla = p2;
+
 		p1= p1->next;
 	}
 	ev->type= e->type;
