@@ -490,6 +490,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		case SET_HOST_T:
 		case SET_HOSTPORT_T:
 		case SET_HOSTPORTTRANS_T:
+		case SET_HOSTALL_T:
 		case SET_USER_T:
 		case SET_USERPASS_T:
 		case SET_PORT_T:
@@ -627,6 +628,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				}
 				if ((a->type==SET_HOST_T)
 						|| (a->type==SET_HOSTPORT_T)
+						|| (a->type==SET_HOSTALL_T)
 						|| (a->type==SET_HOSTPORTTRANS_T)) {
 					tmp=a->val[0].u.string;
 					if (tmp) len = strlen(tmp);
@@ -639,6 +641,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 				}
+				if(a->type==SET_HOSTALL_T)
+					goto done_seturi;
 				/* port */
 				if ((a->type==SET_HOSTPORT_T)
 						|| (a->type==SET_HOSTPORTTRANS_T))
@@ -690,6 +694,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					*crt='?'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
+	done_seturi:
 				*crt=0; /* null terminate the thing */
 				/* copy it to the msg */
 				if (msg->new_uri.s) pkg_free(msg->new_uri.s);
