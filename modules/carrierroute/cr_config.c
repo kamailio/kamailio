@@ -32,6 +32,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
@@ -50,8 +52,17 @@
  * @param ap format arguments
  */
 static void conf_error(cfg_t *cfg, const char * fmt, va_list ap) {
-	// FIXME this don't seems to work reliable, produces strange error messages
-	LM_GEN1(L_ERR, (char *) fmt, ap);
+	int ret;
+	static char buf[1024];
+
+	ret = vsnprintf(buf, sizeof(buf), fmt, ap);
+	if (ret < 0 || ret >= sizeof(buf)) {
+		LM_ERR("could not print error message\n");
+	} else {
+		// FIXME this don't seems to work reliable in all cases, charset 
+		// problems
+		LM_GEN1(L_ERR, "%s", buf);
+	}
 }
 
 
