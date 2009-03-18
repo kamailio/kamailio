@@ -38,6 +38,7 @@
 
 extern int restart_fr_on_each_reply;
 extern int onreply_avp_mode;
+extern int drop_stateless_replies;
 
 /*! reply processing status */
 enum rps {

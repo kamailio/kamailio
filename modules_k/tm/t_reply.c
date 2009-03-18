@@ -101,6 +101,8 @@
 /*! restart fr timer on each provisional reply, default yes */
 int restart_fr_on_each_reply=1;
 int onreply_avp_mode = 0;
+/*! drop responses matching no client transaction (draft-sparks-sip-invfix-03) */
+int drop_stateless_replies = 0;
 
 /*! disable the 6xx fork-blocking - default no (as per RFC3261) */
 int disable_6xx_block = 0;
@@ -1520,6 +1522,14 @@ done:
 	return 0;
 not_found:
 	set_t(T_UNDEFINED);
+	/* if drop_stateless_replies is enabled then replies no
+	 * matching a client transaction are dropped instead of
+	 * forwarded stateless based on Via header.
+	 */
+	if (drop_stateless_replies) {
+		LM_DBG("reply with no transaction -> drop\n");
+		return 0;
+	}
 	return 1;
 }
 

@@ -247,6 +247,8 @@ static param_export_t params[]={
 	        &fr_inv_timer_next },
 	{"contacts_avp",              STR_PARAM,
 		&contacts_avp_param},
+	{ "drop_stateless_replies",   INT_PARAM,
+		&drop_stateless_replies },
 	{0,0,0}
 };
 
