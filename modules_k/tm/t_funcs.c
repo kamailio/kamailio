@@ -71,8 +71,7 @@ int_str fr_inv_timer_avp;
 int     contacts_avp_type;
 int_str contacts_avp;
 
-static str relay_reason_100 = str_init("Giving a try");
-
+extern str auto_inv_100_reason;
 
 
 /* ----------------------------------------------------- */
@@ -258,7 +257,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 	   look-ups -- let upstream know we're working on it */
 	if ( p_msg->REQ_METHOD==METHOD_INVITE &&
 	!(flags&(TM_T_REPLY_no100_FLAG|TM_T_REPLY_repl_FLAG)) )
-		t_reply( t, p_msg , 100 , &relay_reason_100);
+		t_reply( t, p_msg , 100 , &auto_inv_100_reason);
 
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack( t, p_msg, proxy);

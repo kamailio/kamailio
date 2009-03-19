@@ -48,6 +48,7 @@
  *              (bogdan)
  *  2008-04-04  added support for local and remote dispaly name in TM dialogs
  *              (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
+ *  2009-03-14  new modparam "auto_inv_100_reason" added (aheise)
  */
 
 /*! \file
@@ -142,6 +143,7 @@ static char *contacts_avp_param = NULL;
 
 /* module parameteres */
 int tm_enable_stats = 1;
+str auto_inv_100_reason = str_init("Giving a Try");
 
 /* statistic variables */
 stat_var *tm_rcv_rpls;
@@ -249,6 +251,8 @@ static param_export_t params[]={
 		&contacts_avp_param},
 	{ "drop_stateless_replies",   INT_PARAM,
 		&drop_stateless_replies },
+	{"auto_inv_100_reason",          STR_PARAM,
+		&auto_inv_100_reason.s},
 	{0,0,0}
 };
 
@@ -643,6 +647,13 @@ static int mod_init(void)
 	}
 
 	LM_INFO("fr_inv_timer_next value is <%u>\n", fr_inv_timer_next);
+
+	/* update len for modparam "auto_inv_100_reason" */
+	auto_inv_100_reason.len = strlen(auto_inv_100_reason.s);
+	
+	/* log "auto_inv_100_reason" if value is not default */
+	if (strcmp(auto_inv_100_reason.s, "Giving a Try"))
+		LM_INFO("auto_inv_100_reason value is <%s>\n", auto_inv_100_reason.s);
 
 	return 0;
 }
