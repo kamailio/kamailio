@@ -111,6 +111,7 @@ struct cfg_group_tm {
 	unsigned int	tm_max_noninv_lifetime;
 	int	noisy_ctimer;
 	int	tm_auto_inv_100;
+	char	*tm_auto_inv_100_r;	
 	int	tm_unix_tx_timeout;
 	int	restart_fr_on_each_reply;
 	int	pass_provisional_replies;

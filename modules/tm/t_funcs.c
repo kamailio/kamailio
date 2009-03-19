@@ -324,7 +324,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	{
 		DBG( "SER: new INVITE\n");
 		if (!t_reply( t, p_msg , 100 ,
-			"trying -- your call is important to us"))
+			cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
 				DBG("SER: ERROR: t_reply (100)\n");
 	} 
 
