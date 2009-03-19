@@ -56,6 +56,8 @@ $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values 
 
 $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456785\",\"sip:223456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456784\",\"sip:2.23456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+
 
 # setup userblacklist, first some dummy data
 $MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675454','','49900','0');"
@@ -138,6 +140,13 @@ fi;
 sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
 
+if [ "$ret" -ne 0 ] ; then
+	cleanup 1
+fi;
+
+sipp -sn uac -s 49721123456784 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
 sleep 1
 # cleanup:
-cleanup 0
+cleanup $ret
