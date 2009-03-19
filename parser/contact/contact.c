@@ -246,7 +246,7 @@ int parse_contacts(str* _s, contact_t** _c)
 			c->q = hooks.contact.q;
 			c->expires = hooks.contact.expires;
 			c->received = hooks.contact.received;
-			c->method = hooks.contact.method;
+			c->methods = hooks.contact.methods;
 			c->instance = hooks.contact.instance;
 
 			if (_s->len == 0) goto ok;
@@ -315,7 +315,7 @@ void print_contacts(FILE* _o, contact_t* _c)
 		fprintf(_o, "q       : %p\n", ptr->q);
 		fprintf(_o, "expires : %p\n", ptr->expires);
 		fprintf(_o, "received: %p\n", ptr->received);
-		fprintf(_o, "method  : %p\n", ptr->method);
+		fprintf(_o, "methods  : %p\n", ptr->methods);
 		fprintf(_o, "instance: %p\n", ptr->instance);
 		fprintf(_o, "len     : %d\n", ptr->len);
 		if (ptr->params) {
