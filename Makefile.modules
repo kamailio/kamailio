@@ -11,6 +11,9 @@
 #               installed if needed (andrei)
 #  2008-06-23  added the README & man targets (andrei)
 #  2008-06-27  make cfg / config.mak support (andrei)
+#  2009-03-10  replaced DEFS with C_DEFS and INCLUDES with C_INCLUDES (DEFS
+#              and INCLUDES are now used only for "temporary" defines/includes
+#              inside modules or libs) (andrei)
 #
 
 MOD_NAME=$(NAME:.so=)
@@ -26,9 +29,10 @@ override modules=
 override static_modules=
 override static_modules_path=
 
-# should be set in Makefile of apart module
+# should be set in the Makefile of each module
 # INCLUDES += -I$(COREPATH)
 
+# temporary def (visible only in the module, not exported)
 DEFS += -DMOD_NAME='"$(MOD_NAME)"'
 
 ifneq ($(makefile_defs_included),1)

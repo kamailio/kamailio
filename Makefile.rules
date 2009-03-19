@@ -6,7 +6,8 @@
 #
 
 #
-# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, INCLUDES, LIBS, MKDEP, auto_gen, 
+# Uses: NAME, ALLDEP, CC, CFLAGS, C_DEFS, DEFS, C_INCLUDES, INCLUDES, LIBS, 
+#       MKDEP, auto_gen, 
 # auto_gen_others, depends, objs, extra_objs, static_modules, 
 # static_modules_path, LD_RPATH
 # (all this must  be defined previously!,  see Makefile.defs & Makefile)
@@ -20,19 +21,22 @@
 #              automatically build listed SER_LIBS if needed (andrei)
 #  2008-06-23  automatically rebuild if make time defines or includes
 #              changed (via makecfg.lst)
-#
+#  2009-03-10  support for C_DEFS and C_INCLUDES (DEFS and INCLUDES are now
+#              used only for "temporary" defines/includes inside modules or
+#              libs, C_DEFS and C_INCLUDES are used for the common stuff)
+#              (andrei)
 
 
 # check if the saved cfg corresponds with the current one
 # (if not rebuild everything)
 ifeq (,$(filter $(nodep_targets),$(MAKECMDGOALS)))
 -include makecfg.lst
-ifneq ($(strip $(DEFS)), $(strip $(CFG_DEFS)))
-#$(warning different defs: <$(strip $(DEFS))> != )
+ifneq ($(strip $(C_DEFS) $(DEFS)), $(strip $(CFG_DEFS)))
+#$(warning different defs: <$(strip $(C_DEFS) $(DEFS))> != )
 #$(warning               : <$(strip $(CFG_DEFS))>)
 $(shell rm -f makecfg.lst)
 endif
-ifneq ($(strip $(INCLUDES)), $(strip $(CFG_INCLUDES)))
+ifneq ($(strip $(C_INCLUDES) $(INCLUDES)), $(strip $(CFG_INCLUDES)))
 $(shell rm -f makecfg.lst)
 endif
 endif
@@ -41,10 +45,10 @@ ALLDEP+=makecfg.lst
 
 #implicit rules
 %.o:%.c  $(ALLDEP)
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -c $< -o $@
+	$(CC) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $(CFLAGS) $(INCLUDES) $(DEFS) $< \
+	@set -e; $(MKDEP) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) $<\
 	    |  sed 's#\(\($(*D)/\)\{0,1\}$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
 	    test -s $@ || ( rm -f $@; false )
 
@@ -134,8 +138,10 @@ librpath.lst: $(ALLDEP)
 	@echo LIB_RPATH_LST:=$(SER_RPATH_LST) >librpath.lst
 
 makecfg.lst:
-	@echo CFG_DEFS:=$(subst ',\', $(subst ",\", $(strip $(DEFS)))) >>$@
-	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\", $(strip $(INCLUDES)))) >>$@
+	@echo CFG_DEFS:=\
+		$(subst ',\', $(subst ",\", $(strip $(C_DEFS) $(DEFS)))) >>$@
+	@echo CFG_INCLUDES:=\
+		$(subst ',\', $(subst ",\", $(strip $(C_INCLUDES) $(INCLUDES)))) >>$@
 .PHONY: all
 all: $(NAME) modules
 
