@@ -13,8 +13,8 @@ Henning Westerholt
 
    Copyright © 2008 1&1 Internet AG
    Revision History
-   Revision $Revision: 2 $ $Date: 2005-06-13 18:47:24 +0200 (Mo,
-                           13 Jun 2005) $
+   Revision $Revision: 4863 $ $Date: 2008-09-05 13:11:33 +0200
+                              (Fr, 05 Sep 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -106,6 +106,12 @@ Chapter 1. Admin Guide
    check_user_blacklist for usage in the config file. Furthermore
    its provide a FIFO function to reload the global blacklist
    cache.
+
+   Please note that only numerical strings for matching are
+   supported at the moment (the used library supports this
+   already, but its not yet implemented in the module). Non-digits
+   on the beginning of the matched string are skipped, any later
+   non-digits will stop the matching on this position.
 
 1.2. Dependencies
 

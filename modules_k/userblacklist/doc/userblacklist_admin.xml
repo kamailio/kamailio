@@ -26,6 +26,12 @@
 	file. Furthermore its provide a FIFO function to reload the global
 	blacklist cache.
 	</para>
+	<para>
+	Please note that only numerical strings for matching are supported at the
+	moment (the used library supports this already, but its not yet implemented
+	in the module). Non-digits on the beginning of the matched string are skipped,
+	any later non-digits will stop the matching on this position.
+	</para>
 	</section>
 
 	<section>
