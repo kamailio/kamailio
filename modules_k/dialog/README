@@ -10,8 +10,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
-                              (Wed, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -747,15 +747,15 @@ unset_dlg_profile("caller","$fu");
    Checks if the current dialog belongs to a profile. If the
    profile supports values, the check can be reinforced to take
    into account a specific value - if the dialog was inserted into
-   the profile for a specific value. If not value is passed, only
+   the profile for a specific value. If no value is passed, only
    simply belonging of the dialog to the profile is checked. Note
-   that the profile does not supports values, this will be
+   that if the profile does not supports values, this will be
    silently discarded.
 
    Meaning of the parameters is as follows:
      * profile - name of the profile to be checked against;
-     * value (optional) - string value to toughen the check.
-       Pseudo-variables are supported.
+     * value (optional) - string value to further restrict the
+       check. Pseudo-variables are supported.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    REPLY_ROUTE and FAILURE_ROUTE.
@@ -776,15 +776,15 @@ if (is_in_profile("caller","XX")) {
    Returns the number of dialogs belonging to a profile. If the
    profile supports values, the check can be reinforced to take
    into account a specific value - how many dialogs were inserted
-   into the profile with a specific value. If not value is passed,
+   into the profile with a specific value. If no value is passed,
    only simply belonging of the dialog to the profile is checked.
-   Note that the profile does not supports values, this will be
+   Note that if the profile does not supports values, this will be
    silently discarded.
 
    Meaning of the parameters is as follows:
      * profile - name of the profile to get the size for;
-     * value (optional) - string value to toughen the check.
-       Pseudo-variables are supported;
+     * value (optional) - string value to further restrict the
+       check. Pseudo-variables are supported;
      * size - an AVP or script variable to return the profile size
        in.
 
@@ -1036,16 +1036,17 @@ if(dlg_get("abcdef", "123", "456"))
    Returns the number of dialogs belonging to a profile. If the
    profile supports values, the check can be reinforced to take
    into account a specific value - how many dialogs were inserted
-   into the profile with a specific value. If not value is passed,
+   into the profile with a specific value. If no value is passed,
    only simply belonging of the dialog to the profile is checked.
-   Note that the profile does not supports values, this will be
+   Note that if the profile does not supports values, this will be
    silently discarded.
 
    Name: profile_get_size
 
    Parameters:
      * profile - name of the profile to get the value for.
-     * value (optional)- string value to toughen the check;
+     * value (optional)- string value to further restrict the
+       check;
 
    MI FIFO Command Format:
                 :profile_get_size:_reply_fifo_file_
@@ -1057,16 +1058,17 @@ if(dlg_get("abcdef", "123", "456"))
    Lists all the dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into
    account a specific value - list only the dialogs that were
-   inserted into the profile with that specific value. If not
-   value is passed, all dialogs belonging to the profile will be
-   listed. Note that the profile does not supports values, this
-   will be silently discarded.
+   inserted into the profile with that specific value. If no value
+   is passed, all dialogs belonging to the profile will be listed.
+   Note that the profile does not supports values, this will be
+   silently discarded.
 
    Name: profile_list_dlgs
 
    Parameters:
      * profile - name of the profile to list the dialog for.
-     * value (optional)- string value to toughen the check;
+     * value (optional)- string value to further restrict the
+       check;
 
    MI FIFO Command Format:
                 :profile_list_dlgs:_reply_fifo_file_

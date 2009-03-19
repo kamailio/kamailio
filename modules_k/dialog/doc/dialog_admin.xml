@@ -1009,8 +1009,8 @@ unset_dlg_profile("caller","$fu");
 		Checks if the current dialog belongs to a profile. If the profile 
 		supports values, the check can be reinforced to take into account a 
 		specific value - if the dialog was inserted into the profile for a 
-		specific value. If not value is passed, only simply belonging of the 
-		dialog to the profile is checked. Note that the profile does not 
+		specific value. If no value is passed, only simply belonging of the 
+		dialog to the profile is checked. Note that if the profile does not 
 		supports values, this will be silently discarded.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -1022,7 +1022,7 @@ unset_dlg_profile("caller","$fu");
 		</listitem>
 		<listitem>
 			<para><emphasis>value</emphasis> (optional) - string value to 
-			toughen  the check. Pseudo-variables are supported.
+			further restrict the check. Pseudo-variables are supported.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1054,8 +1054,8 @@ if (is_in_profile("caller","XX")) {
 		Returns the number of dialogs belonging to a profile. If the profile 
 		supports values, the check can be reinforced to take into account a 
 		specific value - how many dialogs were inserted into the profile with 
-		a specific value. If not value is passed, only simply belonging of the 
-		dialog to the profile is checked. Note that the profile does not 
+		a specific value. If no value is passed, only simply belonging of the 
+		dialog to the profile is checked. Note that if the profile does not 
 		supports values, this will be silently discarded.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -1067,7 +1067,7 @@ if (is_in_profile("caller","XX")) {
 		</listitem>
 		<listitem>
 			<para><emphasis>value</emphasis> (optional) - string value to 
-			toughen  the check. Pseudo-variables are supported;
+			further restrict the check. Pseudo-variables are supported;
 			</para>
 		</listitem>
 		<listitem>
@@ -1503,8 +1503,8 @@ if(dlg_get("abcdef", "123", "456"))
 		Returns the number of dialogs belonging to a profile. If the profile 
 		supports values, the check can be reinforced to take into account a 
 		specific value - how many dialogs were inserted into the profile with 
-		a specific value. If not value is passed, only simply belonging of the 
-		dialog to the profile is checked. Note that the profile does not 
+		a specific value. If no value is passed, only simply belonging of the 
+		dialog to the profile is checked. Note that if the profile does not 
 		supports values, this will be silently discarded.
 		</para>
 		<para>
@@ -1518,7 +1518,7 @@ if(dlg_get("abcdef", "123", "456"))
 			</para></listitem>
 			<listitem><para>
 				<emphasis>value</emphasis> (optional)- string value to 
-				toughen the check;
+				further restrict the check;
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -1537,7 +1537,7 @@ if(dlg_get("abcdef", "123", "456"))
 		Lists all the dialogs belonging to a profile. If the profile 
 		supports values, the check can be reinforced to take into account a 
 		specific value - list only the dialogs that were inserted into the 
-		profile with that specific value. If not value is passed, all dialogs 
+		profile with that specific value. If no value is passed, all dialogs 
 		belonging to the profile will be listed. Note that the profile does 
 		not supports values, this will be silently discarded.
 		</para>
@@ -1552,7 +1552,7 @@ if(dlg_get("abcdef", "123", "456"))
 			</para></listitem>
 			<listitem><para>
 				<emphasis>value</emphasis> (optional)- string value to 
-				toughen the check;
+				further restrict the check;
 			</para></listitem>
 		</itemizedlist>
 		<para>
