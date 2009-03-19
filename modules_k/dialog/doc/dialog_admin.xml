@@ -9,7 +9,7 @@
 	<para>
 	The dialog module provides dialog awareness to the &kamailio; proxy. Its 
 	functionality is to keep trace of the current dialogs, to offer information
-	about them (like how many dialogs are active). The module exports no 
+	about them (like how many dialogs are active). The module exports several
 	functions that could be used directly from scripts.
 	</para>
 	<para>

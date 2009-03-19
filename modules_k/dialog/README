@@ -172,8 +172,8 @@ Chapter 1. Admin Guide
    The dialog module provides dialog awareness to the Kamailio
    proxy. Its functionality is to keep trace of the current
    dialogs, to offer information about them (like how many dialogs
-   are active). The module exports no functions that could be used
-   directly from scripts.
+   are active). The module exports several functions that could be
+   used directly from scripts.
 
    The module, via an internal API, also provide the foundation to
    build on top of it more complex dialog-based functionalities
