@@ -1025,10 +1025,10 @@ inline static int tcp_do_connect(	union sockaddr_union* server,
 	if (likely(cfg_get(tcp, tcp_cfg, async))){
 again:
 		n=connect(s, &server->s, sockaddru_len(*server));
-		if (unlikely(n==-1)){
-			if (errno==EINTR) goto again;
+		if (likely(n==-1)){ /*non-blocking => most probable EINPROGRESS*/
 			if (likely(errno==EINPROGRESS))
 				*state=S_CONN_CONNECT;
+			else if (errno==EINTR) goto again;
 			else if (errno!=EALREADY){
 #ifdef USE_DST_BLACKLIST
 				if (cfg_get(core, core_cfg, use_dst_blacklist))
@@ -2723,7 +2723,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 					tcpconn->flags&=~F_CONN_WRITE_W;
 				}
 #endif /* TCP_ASYNC */
-				if (tcpconn_try_unhash(tcpconn));
+				if (tcpconn_try_unhash(tcpconn))
 					tcpconn_put_destroy(tcpconn);
 				break;
 			}
