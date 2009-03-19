@@ -540,7 +540,8 @@ man: modules.lst
 	done; true
 
 .PHONY: install
-install:all install-bin install-modules install-cfg \
+install: export compile_for_install=yes
+install: install-bin install-modules install-cfg \
 	install-doc install-man install-utils install-share
 
 .PHONY: dbinstall

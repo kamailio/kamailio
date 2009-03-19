@@ -62,7 +62,7 @@ ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
 lib_compile_for_install=yes
 expected_lib_ipath=$(lib_target)
 else
-lib_compile_for_install=no
+lib_compile_for_install=$(compile_for_install)
 # function: expected_lib_ipath ser_lib_dir
 expected_lib_ipath=$(1)
 endif
