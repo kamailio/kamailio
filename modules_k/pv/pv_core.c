@@ -78,11 +78,11 @@ int pv_get_5060(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_strintval(msg, param, res, &str_5060, 5060);
 }
 
-extern int return_code;
+extern int _last_returned_code;
 int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	return pv_get_sintval(msg, param, res, return_code);
+	return pv_get_sintval(msg, param, res, _last_returned_code);
 }
 
 int pv_get_pid(struct sip_msg *msg, pv_param_t *param,
