@@ -1,6 +1,7 @@
 /* $Id$
  *
  * Copyright (C) 2004-2008 Dan Pascu
+ * Copyright (C) 2009 Juha Heinanen (multipart hack)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -651,30 +652,69 @@ get_media_relay(struct sip_msg* msg)
 // Functions to manipulate the SDP message body
 //
 
-static Bool
-check_content_type(struct sip_msg *msg)
+static int
+find_content_type_application_sdp(struct sip_msg *msg, str *sdp)
 {
     str type;
+    char *start, *s;
+    unsigned int len;
+    Bool done;
 
     if (!msg->content_type) {
         LM_WARN("the Content-Type header is missing! Assume the content type is text/plain\n");
-        return True;
+        return 1;
     }
 
     type = msg->content_type->body;
     trim(&type);
 
-    if (strncasecmp(type.s, "application/sdp", 15) != 0) {
-        LM_ERR("invalid Content-Type for SDP: %.*s\n", type.len, type.s);
-        return False;
+    if (strncasecmp(type.s, "application/sdp", 15) == 0) {
+	done = True;
+    } else if (strncasecmp(type.s, "multipart/mixed", 15) == 0) {
+	done = False;
+    } else {
+	LM_ERR("invalid Content-Type for SDP: %.*s\n", type.len, type.s);
+	return -1;
     }
 
     if (!(isspace((int)type.s[15]) || type.s[15] == ';' || type.s[15] == 0)) {
         LM_ERR("invalid character after Content-Type: `%c'\n", type.s[15]);
-        return False;
+        return -1;
     }
 
-    return True;
+    if (done) return 1;
+
+    // Hack to find application/sdp bodypart
+    while ((s = find_line_starting_with(sdp, "Content-Type: ", True))) {
+	start = s + 14;
+	len = sdp->len - (s - sdp->s) - 14;
+	if (len > 15 + 2) {
+	    if (strncasecmp(start, "application/sdp", 15) == 0) {
+		start = start + 15;
+		if ((*start != 13) || (*(start + 1) != 10)) {
+		    LM_ERR("no CRLF found after content type\n");
+		    return -1;
+		}
+		start = start + 2;
+		len = len - 15 - 2;
+		while ((len > 0) && ((*start == 13) || (*start == 10))) {
+		    len = len - 1;
+		    start = start + 1;
+		}
+		sdp->s = start;
+		sdp->len = len;
+		s = find_line_starting_with(sdp, "--Boundary", False);
+		if (s == NULL) {
+		    LM_ERR("boundary not found after bodypart\n");
+		    return -1;
+		}
+		sdp->len = s - start - 2;
+		return 1;
+	    }
+	}
+    }
+    LM_ERR("no application/sdp bodypart found\n");
+    return -1;
 }
 
 
@@ -696,12 +736,7 @@ get_sdp_message(struct sip_msg *msg, str *sdp)
     if (sdp->len == 0)
         return -2;
 
-    if (!check_content_type(msg)) {
-        LM_ERR("content type is not `application/sdp'\n");
-        return -1;
-    }
-
-    return 1;
+    return find_content_type_application_sdp(msg, sdp);
 }
 
 
