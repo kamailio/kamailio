@@ -411,4 +411,7 @@ int set_dst_uri(struct sip_msg* msg, str* uri);
 /* If the dst_uri is set to an URI then reset it */
 void reset_dst_uri(struct sip_msg* msg);
 
+struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht);
+struct hdr_field* next_sibling_hdr(struct hdr_field *hf);
+
 #endif
