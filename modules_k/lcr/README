@@ -45,14 +45,12 @@ Juha Heinanen
               1.3.15. prefix_column (string)
               1.3.16. from_uri_column (string)
               1.3.17. priority_column (string)
-              1.3.18. fr_inv_timer_avp (AVP string)
-              1.3.19. gw_uri_avp (AVP string)
-              1.3.20. rpid_avp (AVP string)
-              1.3.21. ruri_user_avp (AVP string)
-              1.3.22. fr_inv_timer (integer)
-              1.3.23. flags_avp (AVP string)
-              1.3.24. lcr_hash_size (integer)
-              1.3.25. fetch_rows (integer)
+              1.3.18. gw_uri_avp (AVP string)
+              1.3.19. rpid_avp (AVP string)
+              1.3.20. ruri_user_avp (AVP string)
+              1.3.21. flags_avp (AVP string)
+              1.3.22. lcr_hash_size (integer)
+              1.3.23. fetch_rows (integer)
 
         1.4. Exported Functions
 
@@ -90,23 +88,21 @@ Juha Heinanen
    1.15. Setting prefix_column module parameter
    1.16. Setting from_uri_column module parameter
    1.17. Setting priority_column module parameter
-   1.18. Setting fr_inv_timer_avp module parameter
-   1.19. Setting gw_uri_avp module parameter
-   1.20. Setting rpid_avp module parameter
-   1.21. Setting ruri_user_avp module parameter
-   1.22. Setting fr_inv_timer module parameter
-   1.23. Setting flags_avp module parameter
-   1.24. Setting lcr_hash_size module parameter
-   1.25. Set fetch_rows parameter
-   1.26. load_gws usage
-   1.27. load_gws_from_grp usage
-   1.28. next_gw usage from a route block
-   1.29. next_gw usage from a failure route block
-   1.30. from_gw usage
-   1.31. from_gw usage with pseudo variable argument
-   1.32. from_gw_grp usage
-   1.33. to_gw usage
-   1.34. to_gw usage with group-id
+   1.18. Setting gw_uri_avp module parameter
+   1.19. Setting rpid_avp module parameter
+   1.20. Setting ruri_user_avp module parameter
+   1.21. Setting flags_avp module parameter
+   1.22. Setting lcr_hash_size module parameter
+   1.23. Set fetch_rows parameter
+   1.24. load_gws usage
+   1.25. load_gws_from_grp usage
+   1.26. next_gw usage from a route block
+   1.27. next_gw usage from a failure route block
+   1.28. from_gw usage
+   1.29. from_gw usage with pseudo variable argument
+   1.30. from_gw_grp usage
+   1.31. to_gw usage
+   1.32. to_gw usage with group-id
 
 Chapter 1. Admin Guide
 
@@ -366,21 +362,7 @@ modparam("lcr","from_uri_column","from_uri")
 modparam("lcr","priority_column","priority")
 ...
 
-1.3.18. fr_inv_timer_avp (AVP string)
-
-   An AVP that contains a final response timeout for INVITEs. Its
-   value must be the same as that of the corresponding tm module
-   parameter.
-
-   There is NO default value, thus this variable must be defined
-   in kamailio.cfg.
-
-   Example 1.18. Setting fr_inv_timer_avp module parameter
-...
-modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
-...
-
-1.3.19. gw_uri_avp (AVP string)
+1.3.18. gw_uri_avp (AVP string)
 
    Internal AVP that load_gws function uses to store information
    of matching gateways.
@@ -388,24 +370,24 @@ modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.19. Setting gw_uri_avp module parameter
+   Example 1.18. Setting gw_uri_avp module parameter
 ...
 modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 ...
 
-1.3.20. rpid_avp (AVP string)
+1.3.19. rpid_avp (AVP string)
 
    An AVP that contains caller's RPID (if any).
 
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.20. Setting rpid_avp module parameter
+   Example 1.19. Setting rpid_avp module parameter
 ...
 modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 ...
 
-1.3.21. ruri_user_avp (AVP string)
+1.3.20. ruri_user_avp (AVP string)
 
    Internal AVP that next_gw function uses to store Request-URI
    user for subsequent next_gw calls.
@@ -413,24 +395,12 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.21. Setting ruri_user_avp module parameter
+   Example 1.20. Setting ruri_user_avp module parameter
 ...
 modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 ...
 
-1.3.22. fr_inv_timer (integer)
-
-   Sets the value of the fist INVITE's Final Response timeout to
-   be used during sequential forwarding:
-
-   Default value is 90.
-
-   Example 1.22. Setting fr_inv_timer module parameter
-...
-modparam("lcr","fr_inv_timer",90)
-...
-
-1.3.23. flags_avp (AVP string)
+1.3.21. flags_avp (AVP string)
 
    An AVP where successful next_gw and from_gw functions store
    gateway's flags.
@@ -438,12 +408,12 @@ modparam("lcr","fr_inv_timer",90)
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.23. Setting flags_avp module parameter
+   Example 1.21. Setting flags_avp module parameter
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
 
-1.3.24. lcr_hash_size (integer)
+1.3.22. lcr_hash_size (integer)
 
    Defines the size of hash table used to store <prefix,
    from_pattern, priority> tuples. Hashing is done based on
@@ -452,12 +422,12 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    Default value is 128.
 
-   Example 1.24.  Setting lcr_hash_size module parameter
+   Example 1.22.  Setting lcr_hash_size module parameter
 ...
 modparam("lcr", "lcr_hash_size", 1024)
 ...
 
-1.3.25. fetch_rows (integer)
+1.3.23. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when
    loading data from lcr table. This value can be used to tune the
@@ -467,7 +437,7 @@ modparam("lcr", "lcr_hash_size", 1024)
 
    Default value is "2000".
 
-   Example 1.25. Set fetch_rows parameter
+   Example 1.23. Set fetch_rows parameter
 ...
 modparam("lcr", "fetch_rows", 3000)
 ...
@@ -490,7 +460,7 @@ modparam("lcr", "fetch_rows", 3000)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.26. load_gws usage
+   Example 1.24. load_gws usage
 ...
 if (!load_gws("$var(caller_uri)")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatewa
@@ -513,7 +483,7 @@ ys");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.27. load_gws_from_grp usage
+   Example 1.25. load_gws_from_grp usage
 ...
 if (!load_gws_from_grp("1")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatewa
@@ -551,7 +521,7 @@ ys");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. next_gw usage from a route block
+   Example 1.26. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -559,7 +529,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1.29. next_gw usage from a failure route block
+   Example 1.27. next_gw usage from a failure route block
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -580,14 +550,14 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.30. from_gw usage
+   Example 1.28. from_gw usage
 ...
 if (from_gw()) {
         ...
 };
 ...
 
-   Example 1.31. from_gw usage with pseudo variable argument
+   Example 1.29. from_gw usage with pseudo variable argument
 ...
 if (from_gw("$si")) {
         ...
@@ -607,7 +577,7 @@ if (from_gw("$si")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.32. from_gw_grp usage
+   Example 1.30. from_gw_grp usage
 ...
 if (from_gw_grp("1")) {
         ...
@@ -625,7 +595,7 @@ if (from_gw_grp("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.33. to_gw usage
+   Example 1.31. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -633,7 +603,7 @@ if (to_gw()) {
 };
 ...
 
-   Example 1.34. to_gw usage with group-id
+   Example 1.32. to_gw usage with group-id
 ...
 if (to_gw("1")) {
         ...

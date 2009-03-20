@@ -452,29 +452,6 @@ modparam("lcr","priority_column","priority")
 	</section>
 
 	<section>
-		<title><varname>fr_inv_timer_avp</varname> (AVP string)</title>
-		<para>
-		An AVP that contains a final response timeout
-		for INVITEs.  Its value must be the same as that of the
-		corresponding tm module parameter.
-		</para>
-		<para>
-		<emphasis>
-			There is NO default value, thus this variable must
-			be defined in kamailio.cfg.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>fr_inv_timer_avp</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>gw_uri_avp</varname> (AVP string)</title>
 		<para>
    Internal AVP that load_gws function uses to store information of
@@ -534,27 +511,6 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "ruri_user_avp", "$avp(i:500)")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>fr_inv_timer</varname> (integer)</title>
-		<para>
-		Sets the value of the fist INVITE's Final Response timeout to be used 
-		during sequential forwarding:
-		</para>
-		<para>
-		<emphasis>
-			Default value is 90.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>fr_inv_timer</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","fr_inv_timer",90)
 ...
 </programlisting>
 		</example>

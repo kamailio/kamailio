@@ -211,10 +211,6 @@ static str priority_col     = str_init(PRIORITY_COL);
 /* number of rows to fetch at a shot */
 static int fetch_rows_param = DEF_FETCH_ROWS;
 
-/* timer */
-int fr_inv_timer      = DEF_FR_INV_TIMER;
-int fr_inv_timer_next = DEF_FR_INV_TIMER_NEXT;
-
 /* OPTIONS timer */
 static void timer(unsigned int ticks, void* param);  /* Timer handler */
 int ping_interval = 0;  /* Timer interval in seconds */
@@ -231,7 +227,6 @@ static str positive_codes_str   = {"200;501;403;404", 15};
 static str negative_codes_str   = {"408", 3};
 
 /* avps */
-static char *fr_inv_timer_avp_param = NULL;
 static char *gw_uri_avp_param = NULL;
 static char *ruri_user_avp_param = NULL;
 static char *rpid_avp_param = NULL;
@@ -243,10 +238,6 @@ unsigned int lcr_hash_size_param = DEF_LCR_HASH_SIZE;
 /*
  * Other module types and variables
  */
-
-/* these two are defined in ../tm/t_funcs.h */
-int     fr_inv_timer_avp_type;
-int_str fr_inv_timer_avp;
 
 static int     gw_uri_avp_type;
 static int_str gw_uri_avp;
@@ -331,13 +322,10 @@ static param_export_t params[] = {
     {"from_uri_column",          STR_PARAM, &from_uri_col.s },
     {"priority_column",          STR_PARAM, &priority_col.s },
     {"ping_column",              STR_PARAM, &ping_col.s     },
-    {"fr_inv_timer_avp",         STR_PARAM, &fr_inv_timer_avp_param },
     {"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param },
     {"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
     {"rpid_avp",                 STR_PARAM, &rpid_avp_param },
     {"flags_avp",                STR_PARAM, &flags_avp_param },
-    {"fr_inv_timer",             INT_PARAM, &fr_inv_timer   },
-    {"fr_inv_timer_next",        INT_PARAM, &fr_inv_timer_next },
     {"lcr_hash_size",            INT_PARAM, &lcr_hash_size_param },
     {"fetch_rows",               INT_PARAM, &fetch_rows_param },
     {"ping_interval",		 INT_PARAM, &ping_interval },
@@ -501,25 +489,6 @@ static int mod_init(void)
     }
 
     /* Process AVP params */
-    if (fr_inv_timer_avp_param && *fr_inv_timer_avp_param) {
-	s.s = fr_inv_timer_avp_param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
-	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("malformed or non AVP definition <%s>\n",
-		   fr_inv_timer_avp_param);
-	    return -1;
-	}
-	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &fr_inv_timer_avp, &avp_flags)
-	   != 0) {
-	    LM_ERR("invalid AVP definition <%s>\n", fr_inv_timer_avp_param);
-	    return -1;
-	}
-	fr_inv_timer_avp_type = avp_flags;
-    } else {
-	LM_ERR("AVP fr_inv_timer_avp has not been defined\n");
-	return -1;
-    }
 
     if (gw_uri_avp_param && *gw_uri_avp_param) {
 	s.s = gw_uri_avp_param; s.len = strlen(s.s);
