@@ -114,13 +114,18 @@ struct tcp_req{
 	char* body; /* body position */
 	unsigned int b_size; /* buffer size-1 (extra space for 0-term)*/
 	int content_len;
-	int has_content_len; /* 1 if content_length was parsed ok*/
-	int complete; /* 1 if one req has been fully read, 0 otherwise*/
+	unsigned short flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
 };
 
+/* tcp_req flags */
+#define F_TCP_REQ_HAS_CLEN 1
+#define F_TCP_REQ_COMPLETE 2
+
+#define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
+#define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
 
 
 struct tcp_connection;
