@@ -66,6 +66,9 @@
 #  2008-06-26  support for make cfg / config.mak and hack to load 
 #               automatically config.mak when included from a module, lib 
 #               a.s.o (not from the main Makefile)  (andrei)
+#  2009-03-10  replaced DEFS with C_DEFS and INCLUDES with C_INCLUDES (DEFS
+#              and INCLUDES are now used only for "temporary" defines/includes
+#              inside modules or libs) (andrei)
 
 
 # check if already included/exported
@@ -460,7 +463,7 @@ endif
 #		adds support for Application Server interface
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
-DEFS= $(extra_defs) \
+C_DEFS= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DSER_VER=$(SER_VER) \
@@ -507,14 +510,14 @@ DEFS= $(extra_defs) \
 # debugging symbols in all cases (-g). --andrei
 
 ifeq ($(CORE_TLS), 1)
-	DEFS+= -DUSE_TLS -DCORE_TLS
+	C_DEFS+= -DUSE_TLS -DCORE_TLS
 endif
 ifeq ($(TLS_HOOKS), 1)
-	DEFS+= -DUSE_TLS -DTLS_HOOKS
+	C_DEFS+= -DUSE_TLS -DTLS_HOOKS
 endif
 
 ifneq ($(STUN),)
-	DEFS+= -DUSE_STUN
+	C_DEFS+= -DUSE_STUN
 endif
 
 ifeq ($(mode),)
@@ -522,7 +525,7 @@ ifeq ($(mode),)
 endif
 
 ifeq ($(mode),debug)
-	DEFS+= -DEXTRA_DEBUG
+	C_DEFS+= -DEXTRA_DEBUG
 endif
 
 # platform dependent settings
@@ -598,7 +601,7 @@ endif
 
 ifeq ($(ARCH), arm)
 	use_fast_lock=yes
-	DEFS+=-DNOSMP # very unlikely to have an smp arm
+	C_DEFS+=-DNOSMP # very unlikely to have an smp arm
 endif
 
 ifeq ($(ARCH), arm6)
@@ -616,8 +619,8 @@ endif
 ifeq ($(ARCH), mips)
 # mips1 arch. (e.g. R3000) - no hardware locking support
 	use_fast_lock=no
-	DEFS+=-DMIPS_HAS_LLSC # likely
-	DEFS+=-DNOSMP # very likely
+	C_DEFS+=-DMIPS_HAS_LLSC # likely
+	C_DEFS+=-DNOSMP # very likely
 endif
 
 ifeq ($(ARCH), mips2)
@@ -632,24 +635,24 @@ endif
 
 ifeq ($(ARCH), alpha)
 	use_fast_lock=yes
-	DEFS+=-DNOSMP # very likely
+	C_DEFS+=-DNOSMP # very likely
 endif
 
 ifeq ($(use_fast_lock), yes)
-	DEFS+= -DFAST_LOCK -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 
+	C_DEFS+= -DFAST_LOCK -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 
 	found_lock_method=yes
 endif
 
 CFLAGS=
 LDFLAGS=
-INCLUDES=
+C_INCLUDES=
 # setting CFLAGS
 ifeq ($(mode), release)
 	#if i386
 ifeq	($(ARCH), i386)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.0+
@@ -692,7 +695,7 @@ endif			# CC_SHORTVER, 4.x
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
-			DEFS+=-DCC_GCC_LIKE_ASM
+			C_DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII 
 				# -prefetch doesn't seem to work
@@ -710,7 +713,7 @@ endif	#ARCH, i386
 ifeq	($(ARCH), x86_64)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-m64 -g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 				LDFLAGS+=-m64
@@ -754,7 +757,7 @@ endif			# CC_SHORTVER, 4.x
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
-			DEFS+=-DCC_GCC_LIKE_ASM
+			C_DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII 
 				# -prefetch doesn't seem to work
@@ -772,7 +775,7 @@ endif	#ARCH, x86_64
 ifeq	($(ARCH), sparc64)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
+				C_DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
 				#common stuff
 				CFLAGS=-m64 -g -O9 -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
@@ -834,7 +837,7 @@ endif			#CC_SHORTVER, 4.x
 	
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
-			DEFS+=-DSPARC64_MODE
+			C_DEFS+=-DSPARC64_MODE
 			CFLAGS+= -m64 -g -xO5 -fast -native -xarch=v9 -xCC \
 					-xc99 # C99 support
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
@@ -849,7 +852,7 @@ endif	#ARCH, sparc64
 ifeq	($(ARCH), sparc)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
@@ -906,7 +909,7 @@ endif	#ARCH, sparc
 ifeq	($(ARCH), arm)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-O9 -funroll-loops $(PROFILE)
 			#if gcc 4.x+
@@ -948,7 +951,7 @@ endif	#ARCH, arm
 ifeq	($(ARCH), arm6)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-march=armv6 -O9 -funroll-loops \
 						$(PROFILE)
@@ -990,7 +993,7 @@ endif	#ARCH, arm6
 ifeq	($(ARCH), mips)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  $(PROFILE)
 			#if gcc 4.0+
@@ -1031,7 +1034,7 @@ endif	#ARCH, mips
 ifeq	($(ARCH), mips2)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
@@ -1070,7 +1073,7 @@ endif	#ARCH, mips2
 ifeq	($(ARCH), mips64)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips64 -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
@@ -1109,7 +1112,7 @@ endif	#ARCH, mips64
 ifeq	($(ARCH), alpha)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
@@ -1149,7 +1152,7 @@ endif	#ARCH, alpha
 ifeq	($(ARCH), ppc)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)
 			#if gcc 4.0+
@@ -1190,7 +1193,7 @@ endif	#ARCH, ppc
 ifeq	($(ARCH), ppc64)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
-				DEFS+=-DCC_GCC_LIKE_ASM
+				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)
 ifeq			($(CC_SHORTVER), 4.x)
@@ -1269,9 +1272,9 @@ endif
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align $(PROFILE)
-		DEFS+=-DCC_GCC_LIKE_ASM
+		C_DEFS+=-DCC_GCC_LIKE_ASM
 ifeq		($(ARCH), sparc64)
-			DEFS+=SPARC64_MODE
+			C_DEFS+=SPARC64_MODE
 			CFLAGS+= -mcpu=ultrasparc -m64
 			LDFLAGS+=-m64
 endif
@@ -1292,7 +1295,7 @@ else
 endif
 endif
 ifeq	($(CC_NAME), icc)
-		DEFS+=-DCC_GCC_LIKE_ASM
+		C_DEFS+=-DCC_GCC_LIKE_ASM
 		CFLAGS=-g  $(PROFILE)
 		LDFLAGS+=-g -Wl,-E $(PROFILE)
 		MOD_LDFLAGS:=-shared $(LDFLAGS)
@@ -1357,27 +1360,27 @@ LIB_SUFFIX:=.so
 ifeq ($(OS), linux)
 # by default use futexes if available
 	use_futex= yes
-	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
+	C_DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
 			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
 	ifneq ($(found_lock_method), yes)
-		#DEFS+= -DUSE_POSIX_SEM
-		DEFS+=-DUSE_PTHREAD_MUTEX
+		#C_DEFS+= -DUSE_POSIX_SEM
+		C_DEFS+=-DUSE_PTHREAD_MUTEX
 		LIBS+= -lpthread
-		#DEFS+= -DUSE_SYSV_SEM  # try posix sems
+		#C_DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
 	else
-		ifneq (,$(findstring -DUSE_POSIX_SEM, $(DEFS)))
+		ifneq (,$(findstring -DUSE_POSIX_SEM, $(C_DEFS)))
 			LIBS+=-lpthread
 		endif
-		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(DEFS)))
+		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(C_DEFS)))
 			LIBS+=-lpthread
 		endif
 	endif
 	# check for >= 2.5.44
 	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
 		ifeq ($(NO_EPOLL),)
-			DEFS+=-DHAVE_EPOLL
+			C_DEFS+=-DHAVE_EPOLL
 			# linux + gcc >= 3.0 + -malign-double + epoll => problems
 			CFLAGS_RM+=-malign-double
 			#CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
@@ -1386,17 +1389,17 @@ ifeq ($(OS), linux)
 	# check for >= 2.2.0
 	ifeq ($(shell [ $(OSREL_N) -ge 2002000 ] && echo has_sigio), has_sigio)
 		ifeq ($(NO_SIGIO),)
-			DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND
+			C_DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND
 		endif
 	endif
 	# check for >= 2.5.70
 	ifeq ($(shell [ $(OSREL_N) -ge 2005070 ] && echo has_futex), has_futex)
 		ifeq ($(use_futex), yes)
-			DEFS+=-DUSE_FUTEX
+			C_DEFS+=-DUSE_FUTEX
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 	# sctp support
 	ifeq ($(SCTP),1)
@@ -1418,27 +1421,27 @@ $(info "sctp libraries not installed -- sctp disabled")
 		
 		ifeq ($(SCTP),1)
 			# use lksctp
-			DEFS+=-DUSE_SCTP
+			C_DEFS+=-DUSE_SCTP
 			LIBS+=-lsctp
 		endif
 	endif # SCTP
 endif
 
 ifeq  ($(OS), solaris)
-	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD \
+	C_DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD \
 			-DHAVE_ALLOCA_H -DUSE_SIGACTION
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
 	endif
 	# check for ver >= 5.7
 	ifeq ($(shell [ $(OSREL_N) -gt 5007 ] && echo has_devpoll), has_devpoll)
 		ifeq ($(NO_DEVPOLL),)
-			DEFS+=-DHAVE_DEVPOLL
+			C_DEFS+=-DHAVE_DEVPOLL
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 	# check for filio.h
 	filio_h_locations= /usr/include/sys/filio.h \
@@ -1448,7 +1451,7 @@ ifeq  ($(OS), solaris)
 						done;\
 				)
 	ifeq ($(has_filio_h), yes)
-		DEFS+=-DHAVE_FILIO_H
+		C_DEFS+=-DHAVE_FILIO_H
 	endif
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
@@ -1475,12 +1478,12 @@ endif
 endif
 
 ifeq ($(OS), freebsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
+	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
 		-DHAVE_SCHED_YIELD -DHAVE_MSGHDR_MSG_CONTROL \
 		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
 		-DHAVE_NETINET_IN_SYSTM
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
 		LIBS+= -pthread   #dlopen is in libc
 	else
@@ -1489,11 +1492,11 @@ ifeq ($(OS), freebsd)
 	# check for ver >= 4.1
 	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
 		ifeq ($(NO_KQUEUE),)
-			DEFS+=-DHAVE_KQUEUE
+			C_DEFS+=-DHAVE_KQUEUE
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
 	# sctp support
@@ -1512,29 +1515,29 @@ $(info "old freebsd version (>= 7.0 needed) -- sctp disabled")
 		endif
 		
 		ifeq ($(SCTP),1)
-			DEFS+=-DUSE_SCTP
+			C_DEFS+=-DUSE_SCTP
 			LIBS+=  # no extra libs needed on freebsd
 		endif
 	endif # SCTP
 endif
 
 ifeq ($(OS), openbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN  -DHAVE_GETHOSTBYNAME2 \
+	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN  -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_UNION_SEMUN -DHAVE_MSGHDR_MSG_CONTROL \
 		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
 		-DHAVE_NETINET_IN_SYSTM -DUSE_SIGWAIT
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
 	endif
 	# check for ver >=2 9
 	ifeq ($(shell [ $(OSREL_N) -ge 2009 ] && echo has_kqueue), has_kqueue)
 		ifeq ($(NO_KQUEUE),)
-			DEFS+=-DHAVE_KQUEUE
+			C_DEFS+=-DHAVE_KQUEUE
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
@@ -1554,29 +1557,29 @@ endif
 endif
 	
 ifeq ($(OPENBSD_IS_AOUT), yes)
-		DEFS+=-DDLSYM_PREFIX='"_"'
+		C_DEFS+=-DDLSYM_PREFIX='"_"'
 		LDFLAGS=        # openbsd ld doesn't like -O2 or -E
 endif
 endif   # if opensd
 	
 ifeq ($(OS), netbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 \
+	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_MSGHDR_MSG_CONTROL -DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_SYSV_SEM  # try pthread sems
+		C_DEFS+= -DUSE_SYSV_SEM  # try pthread sems
 		found_lock_method=yes
 	endif
 	# check for ver >= 2.0.0
 	ifeq ($(shell [ $(OSREL_N) -ge 2000000 ] && echo has_kqueue), has_kqueue)
 		ifeq ($(NO_KQUEUE),)
-			DEFS+=-DHAVE_KQUEUE
+			C_DEFS+=-DHAVE_KQUEUE
 			# netbsd + kqueue and -malign-double don't work
 			CFLAGS_RM+=-malign-double
 			#CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
 	LIBS=  
@@ -1584,7 +1587,7 @@ endif
 
 # OS X support, same as freebsd
 ifeq ($(OS), darwin)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
+	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
 		-DHAVE_SCHED_YIELD -DHAVE_MSGHDR_MSG_CONTROL \
 		-DUSE_ANON_MMAP \
 		-DNDEBUG -DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
@@ -1592,18 +1595,18 @@ ifeq ($(OS), darwin)
 	# -DNDEBUG used to turn off assert (assert wants to call
 	# eprintf which doesn't seem to be defined in any shared lib
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		DEFS+= -DUSE_SYSV_SEM  # try sys v sems (pthread don't work for
+		C_DEFS+= -DUSE_SYSV_SEM  # try sys v sems (pthread don't work for
 		                       # processes and unnamed posix sems are not
 		                       # supported)
 	endif
 	LIBS= -lresolv  #dlopen is in libc
 	ifeq ($(NO_KQUEUE),)
-		DEFS+=-DHAVE_KQUEUE
+		C_DEFS+=-DHAVE_KQUEUE
 	endif
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 	LDFLAGS=        # darwin doesn't like -O2 or -E
 	# the modules uses symbols from ser => either 
@@ -1621,34 +1624,34 @@ endif
 
 ifneq (,$(findstring cygwin, $(OS)))
 	# cygwin doesn't support IPV6 and doesn't support fd passing so no TCP
-	#DEFS:=$(filter-out -DUSE_IPV6 -DUSE_TCP, $(DEFS))
+	#C_DEFS:=$(filter-out -DUSE_IPV6 -DUSE_TCP, $(C_DEFS))
 	DEFS_RM+=-DUSE_IPV6 -DUSE_TCP
-	DEFS+=-DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
+	C_DEFS+=-DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
 			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_POSIX_SEM
-		#DEFS+= -DUSE_SYSV_SEM  # try posix sems
+		C_DEFS+= -DUSE_POSIX_SEM
+		#C_DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		# PTHREAD_MUTEX do not work for processes (try test/pthread_test.c)
 		#LIBS+= -lpthread
 		found_lock_method=yes
 	else
-		ifneq (,$(findstring -DUSE_POSIX_SEM, $(DEFS)))
+		ifneq (,$(findstring -DUSE_POSIX_SEM, $(C_DEFS)))
 			#LIBS+=-lpthread
 		endif
-		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(DEFS)))
+		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(C_DEFS)))
 $(error PTHREAD_MUTEX do not work for processes on Windows/CYGWIN)
 		endif
 	endif
 	# check for >= 2.5.70
 	ifeq ($(NO_SELECT),)
-		DEFS+=-DHAVE_SELECT
+		C_DEFS+=-DHAVE_SELECT
 	endif
 endif
 
 #add libssl if needed
 ifeq ($(CORE_TLS), 1)
-DEFS+= -I$(LOCALBASE)/ssl/include
+C_DEFS+= -I$(LOCALBASE)/ssl/include
 LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto \
 		$(TLS_EXTRA_LIBS)
 # NOTE: depending on the way in which libssl was compiled you might
@@ -1657,13 +1660,13 @@ LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto \
 endif
 
 ifneq ($(STUN),)
-DEFS+= -I$(LOCALBASE)/ssl/include
+C_DEFS+= -I$(LOCALBASE)/ssl/include
 LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lcrypto
 endif
 
 ifneq ($(found_lock_method), yes)
 $(warning	No locking method found so far, trying SYS V sems)
-		DEFS+= -DUSE_SYSV_SEM  # try sys v sems
+		C_DEFS+= -DUSE_SYSV_SEM  # try sys v sems
 		found_lock_method=yes
 endif
 
@@ -1685,7 +1688,7 @@ export exported_vars
 #  is run)
 saved_fixed_vars:=	MAIN_NAME \
 		RELEASE OS ARCH \
-		DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS INCLUDES \
+		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
 		MOD_LDFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH \
 		LIB_SUFFIX LIB_PREFIX \
 		LIBS \

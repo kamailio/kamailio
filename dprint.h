@@ -115,7 +115,7 @@ extern volatile int dprint_crit;
 #endif
 
 int str2facility(char *s);
-int log_facility_fixup(void *handle, str *name, void **val);
+int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 
 
 /*

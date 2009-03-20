@@ -20,7 +20,7 @@ endif
 
 ifneq	(,$(filter install% %install install, $(MAKECMDGOALS)))
 compile_for_install:=yes
-$(info install mode => compile_for_install=$(compile_for_install))
+$(info install mode)
 endif
 
 ifeq ($(NAME),)
@@ -157,8 +157,7 @@ endif
 .PHONY:install-if-newer
 install-if-newer: $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) 
 
-$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME) $(LIBINAME_F)
-	@$(MAKE) install
+$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME) $(LIBINAME_F) install
 
 
 ifneq ($(strip $(LIBINAME_F)),)

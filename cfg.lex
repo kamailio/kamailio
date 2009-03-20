@@ -77,6 +77,7 @@
  *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
  *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
  *  2008-12-11  added support for "string1" "string2" (andrei)
+ *  2009-03-10  added SET_USERPHONE action (Miklos)
 */
 
 
@@ -183,6 +184,7 @@ REVERT_URI		"revert_uri"
 PREFIX			"prefix"
 STRIP			"strip"
 STRIP_TAIL		"strip_tail"
+SET_USERPHONE		"userphone"
 APPEND_BRANCH	"append_branch"
 IF				"if"
 ELSE			"else"
@@ -332,6 +334,8 @@ TCP_OPT_FD_CACHE	"tcp_fd_cache"
 TCP_OPT_BUF_WRITE	"tcp_buf_write"|"tcp_async"
 TCP_OPT_CONN_WQ_MAX	"tcp_conn_wq_max"
 TCP_OPT_WQ_MAX		"tcp_wq_max"
+TCP_OPT_RD_BUF		"tcp_rd_buf_size"
+TCP_OPT_WQ_BLK		"tcp_wq_blk_size"
 TCP_OPT_DEFER_ACCEPT "tcp_defer_accept"
 TCP_OPT_DELAYED_ACK	"tcp_delayed_ack"
 TCP_OPT_SYNCNT		"tcp_syncnt"
@@ -491,6 +495,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
 <INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext;
 								return APPEND_BRANCH; }
+<INITIAL>{SET_USERPHONE}	{ count(); yylval.strval=yytext;
+								return SET_USERPHONE; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
@@ -637,6 +643,10 @@ EAT_ABLE	[\ \t\b\r]
 									return TCP_OPT_CONN_WQ_MAX; }
 <INITIAL>{TCP_OPT_WQ_MAX}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_WQ_MAX; }
+<INITIAL>{TCP_OPT_RD_BUF}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_RD_BUF; }
+<INITIAL>{TCP_OPT_WQ_BLK}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_WQ_BLK; }
 <INITIAL>{TCP_OPT_BUF_WRITE}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_BUF_WRITE; }
 <INITIAL>{TCP_OPT_DEFER_ACCEPT}	{ count(); yylval.strval=yytext;

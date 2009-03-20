@@ -76,7 +76,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 					struct proxy_l * proxy, int lock_replies);
 int t_relay_cancel(struct sip_msg* p_msg);
 
-int reparse_on_dns_failover_fixup(void *handle, str *name, void **val);
+int reparse_on_dns_failover_fixup(void *handle, str *gname, str *name, void **val);
 
 #endif
 

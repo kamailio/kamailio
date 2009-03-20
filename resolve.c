@@ -159,7 +159,7 @@ int resolv_init()
  * This function must be called by each child process whenever
  * a resolver option changes
  */
-void resolv_reinit(str *name)
+void resolv_reinit(str *gname, str *name)
 {
 	_resolv_init();
 
@@ -173,14 +173,14 @@ void resolv_reinit(str *name)
 /* fixup function for dns_reinit variable
  * (resets the variable to 0)
  */
-int dns_reinit_fixup(void *handle, str *name, void **val)
+int dns_reinit_fixup(void *handle, str *gname, str *name, void **val)
 {
 	*val = (void *)(long)0;
 	return 0;
 }
 
 /* wrapper function to recalculate the naptr protocol preferences */
-void reinit_naptr_proto_prefs(str *name)
+void reinit_naptr_proto_prefs(str *gname, str *name)
 {
 #ifdef USE_NAPTR
 	init_naptr_proto_prefs();
@@ -190,7 +190,7 @@ void reinit_naptr_proto_prefs(str *name)
 /* fixup function for dns_try_ipv6
  * verifies that SER really listens on an ipv6 interface
  */
-int dns_try_ipv6_fixup(void *handle, str *name, void **val)
+int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val)
 {
 	if ((int)(long)(*val) && !(socket_types & SOCKET_T_IPV6)) {
 		LOG(L_ERR, "ERROR: dns_try_ipv6_fixup(): "

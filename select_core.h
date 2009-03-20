@@ -41,7 +41,7 @@
 
 enum {
 	SEL_PARAM_TAG, 
-	SEL_PARAM_Q, SEL_PARAM_EXPIRES, SEL_PARAM_METHOD, SEL_PARAM_RECEIVED, SEL_PARAM_INSTANCE, 
+	SEL_PARAM_Q, SEL_PARAM_EXPIRES, SEL_PARAM_METHODS, SEL_PARAM_RECEIVED, SEL_PARAM_INSTANCE, 
 	SEL_PARAM_BRANCH, SEL_PARAM_RPORT, SEL_PARAM_I, SEL_PARAM_ALIAS
        };
 
@@ -251,7 +251,7 @@ static select_row_t select_core[] = {
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_contact_name, 0}, 
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("q"), select_contact_params_spec, DIVERSION | SEL_PARAM_Q}, 
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("expires"), select_contact_params_spec, DIVERSION | SEL_PARAM_EXPIRES}, 
-	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_contact_params_spec, DIVERSION | SEL_PARAM_METHOD}, 
+	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("methods"), select_contact_params_spec, DIVERSION | SEL_PARAM_METHODS}, 
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("received"), select_contact_params_spec, DIVERSION | SEL_PARAM_RECEIVED}, 
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("instance"), select_contact_params_spec, DIVERSION | SEL_PARAM_INSTANCE}, 	
 	{ select_contact, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_contact_params, CONSUME_NEXT_STR},

@@ -19,7 +19,7 @@
 # Radiusclient-ng is often installed from tarballs so we
 # need to look int /usr/local/lib as well
 #
-DEFS+=-I$(LOCALBASE)/include
+INCLUDES+=-I$(LOCALBASE)/include
 
 ifneq ($(radiusclient_ng), 4)
 

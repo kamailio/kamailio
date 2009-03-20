@@ -54,7 +54,6 @@
 /* maximum number of port aliases x search wildcard possibilities */
 #define TCP_CON_MAX_ALIASES (4*3) 
 
-#define TCP_BUF_SIZE	4096 
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
@@ -89,9 +88,12 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP_EMPTY_CR_FOUND, H_SKIP_EMPTY_CRLF_FOU
 		H_STUN_MSG, H_STUN_READ_BODY, H_STUN_FP, H_STUN_END, H_PING_CRLF
 	};
 
-enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0, 
-						S_CONN_INIT, S_CONN_EOF, 
-						S_CONN_ACCEPT, S_CONN_CONNECT, S_CONN_PENDING };
+enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1,
+						S_CONN_OK=0, /* established (write or read) */
+						S_CONN_INIT, /* initial state (invalid) */
+						S_CONN_EOF,
+						S_CONN_ACCEPT, S_CONN_CONNECT
+					};
 
 
 /* fd communication commands */
@@ -104,20 +106,26 @@ enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE,
 struct tcp_req{
 	struct tcp_req* next;
 	/* sockaddr ? */
-	char buf[TCP_BUF_SIZE+1]; /* bytes read so far (+0-terminator)*/
+	char* buf; /* bytes read so far (+0-terminator)*/
 	char* start; /* where the message starts, after all the empty lines are
 					skipped*/
 	char* pos; /* current position in buf */
 	char* parsed; /* last parsed position */
 	char* body; /* body position */
+	unsigned int b_size; /* buffer size-1 (extra space for 0-term)*/
 	int content_len;
-	int has_content_len; /* 1 if content_length was parsed ok*/
-	int complete; /* 1 if one req has been fully read, 0 otherwise*/
+	unsigned short flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
 };
 
+/* tcp_req flags */
+#define F_TCP_REQ_HAS_CLEN 1
+#define F_TCP_REQ_COMPLETE 2
+
+#define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
+#define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
 
 
 struct tcp_connection;
@@ -187,9 +195,11 @@ struct tcp_connection{
 #define tcpconn_put(c) atomic_dec_and_test(&((c)->refcnt))
 
 
-#define init_tcp_req( r) \
+#define init_tcp_req( r, rd_buf, rd_buf_size) \
 	do{ \
 		memset( (r), 0, sizeof(struct tcp_req)); \
+		(r)->buf=(rd_buf) ;\
+		(r)->b_size=(rd_buf_size)-1; /* space for 0 term. */ \
 		(r)->parsed=(r)->pos=(r)->start=(r)->buf; \
 		(r)->error=TCP_REQ_OK;\
 		(r)->state=H_SKIP_EMPTY; \
