@@ -112,8 +112,8 @@
 struct cfg_group_tcp{
 	/* ser tcp options, low level */
 	int connect_timeout_s; /* in s */
-	int send_timeout_s; /* in s */
-	int con_lifetime; /* s fixed to ticks */
+	int send_timeout; /* in ticks (s fixed to ticks) */
+	int con_lifetime; /* in ticks (s fixed to ticks) */
 	int max_connections;
 	int no_connect; /* do not open any new tcp connection (but accept them) */
 	int fd_cache; /* on /off */
@@ -139,7 +139,6 @@ struct cfg_group_tcp{
 	int alias_flags;
 	int new_conn_alias_flags;
 	/* internal, "fixed" vars */
-	unsigned int tcp_wq_timeout; /* in ticks, timeout for queued writes */
 	unsigned int rd_buf_size; /* read buffer size (should be > max. datagram)*/
 	unsigned int wq_blk_size; /* async write block size (debugging use) */
 };

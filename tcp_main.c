@@ -98,6 +98,8 @@
  *              on write error check if there's still data in the socket 
  *               read buffer and process it first (andrei)
  *  2009-02-26  direct blacklist support (andrei)
+ *  2009-03-20  s/wq_timeout/send_timeout ; send_timeout is now in ticks
+ *              (andrei)
  */
 
 
@@ -627,7 +629,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
 					TICKS_TO_S(t-q->wr_timeout-
-						cfg_get(tcp, tcp_cfg, tcp_wq_timeout)));
+						cfg_get(tcp, tcp_cfg, send_timeout)));
 #ifdef USE_DST_BLACKLIST
 		if (q->first && TICKS_LT(q->wr_timeout, t) &&
 				cfg_get(core, core_cfg, use_dst_blacklist)){
@@ -654,7 +656,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 		q->wr_timeout=get_ticks_raw()+
 			((c->state==S_CONN_CONNECT)?
 					S_TO_TICKS(cfg_get(tcp, tcp_cfg, connect_timeout_s)):
-					cfg_get(tcp, tcp_cfg, tcp_wq_timeout));
+					cfg_get(tcp, tcp_cfg, send_timeout));
 	}else{
 		wb=q->last;
 	}
@@ -707,7 +709,7 @@ inline static int _wbufq_insert(struct  tcp_connection* c, char* data,
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
 					TICKS_TO_S(get_ticks_raw()-q->wr_timeout-
-									cfg_get(tcp, tcp_cfg, tcp_wq_timeout)));
+									cfg_get(tcp, tcp_cfg, send_timeout)));
 		goto error;
 	}
 	if (unlikely(q->offset)){
@@ -836,7 +838,7 @@ inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
 	}
 	lock_release(&c->write_lock);
 	if (likely(ret>0)){
-		q->wr_timeout=get_ticks_raw()+cfg_get(tcp, tcp_cfg, tcp_wq_timeout);
+		q->wr_timeout=get_ticks_raw()+cfg_get(tcp, tcp_cfg, send_timeout);
 		if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
 			c->state=S_CONN_OK;
 	}
@@ -1946,7 +1948,8 @@ send_it:
 #endif
 		/* n=tcp_blocking_write(c, fd, buf, len); */
 		n=tsend_stream(fd, buf, len,
-							cfg_get(tcp, tcp_cfg, send_timeout_s)*1000);
+						TICKS_TO_S(cfg_get(tcp, tcp_cfg, send_timeout)) *
+						1000);
 #ifdef TCP_ASYNC
 	}
 #else /* ! TCP_ASYNC */

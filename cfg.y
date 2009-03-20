@@ -794,7 +794,7 @@ assign_stm:
 	| TCP_CONNECT_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_SEND_TIMEOUT EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_default_cfg.send_timeout_s=$3;
+			tcp_default_cfg.send_timeout=S_TO_TICKS($3);
 		#else
 			warn("tcp support not compiled in");
 		#endif
