@@ -132,6 +132,7 @@ struct tm_binds {
 #endif
 	t_suspend_f	t_suspend;
 	t_continue_f	t_continue;
+	tget_reply_totag_f t_get_reply_totag;
 };
 
 extern int tm_init;

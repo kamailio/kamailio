@@ -170,6 +170,19 @@ static unsigned short resp_class_prio[]={
 };
 
 
+int t_get_reply_totag(struct sip_msg *msg, str *totag)
+{
+	if(msg==NULL || totag==NULL) {
+		return -1;
+	}
+
+    calc_crc_suffix(msg, tm_tag_suffix);
+	*totag = tm_tag;
+	
+	return 1;
+}
+
+
 
 /* we store the reply_route # in private memory which is
    then processed during t_relay; we cannot set this value
