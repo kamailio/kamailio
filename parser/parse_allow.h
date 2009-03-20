@@ -29,23 +29,43 @@
 #define PARSE_ALLOW_H
  
 #include "hf.h"
+#include "msg_parser.h"
 
  
 /* 
- * casting macro for accessing RPID body 
+ * casting macro for accessing Allow body 
  */
-#define get_allow_methods(p_msg) (unsigned int)(p_msg)->allow->parsed)
+#define get_allow_methods(p_msg)							\
+	(((struct allow_body*)(p_msg)->allow->parsed)->allow_all)
+
+
+struct allow_body {
+	unsigned int allow;     /* allow mask for the current hdr */
+	unsigned int allow_all; /* allow mask for the all allow hdr - it's
+							 * set only for the first hdr in sibling
+							 * list*/
+};
+
+
+/*
+ * Parse all Allow HFs
+ */
+int parse_allow(struct sip_msg *msg);
 
 
 /*
  * Parse Allow HF body
  */
-int parse_allow(struct hdr_field* _h);
+int parse_allow_header(struct hdr_field* _h);
 
 
 /*
  * Release memory
  */
-void free_allow(unsigned int** _methods);
+void free_allow_body(struct allow_body **ab);
+
+void free_allow_header(struct hdr_field* hf);
+
+
 
 #endif /* PARSE_ALLOW_H */
