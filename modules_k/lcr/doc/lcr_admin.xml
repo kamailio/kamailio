@@ -24,29 +24,22 @@
 	When function load_gws() is called, matching gateways are ordered
 	for forwarding purpose (1) according to longest user part match,
 	(2) according to  
-	tuple's priority, (3) gateway's randomized weight within its
-	gateway group.  Prefix is a string of
-	characters.  From pattern is a regular expression (see 'man
-	pcresyntax' for syntax) or empty.  Empty from pattern matches anything.
+	tuple's priority, and (3) gateway's randomized weight within its
+	group.  Prefix is a string of characters or NULL.  From
+	pattern is a regular expression (see 'man 
+	pcresyntax' for syntax), an empty string, or NULL.  Empty or
+	NULL from pattern or prefix matches anything. 
 	Smaller priority value means higher priority (highest priority
 	value being 0).  Weight is an integer value from 1 to 254.
-	</para>
-	<para>
-	LCR module may be configured via ping_interval module parameter
-	to check if certain gateways are alive.  A gateway is subject for
-	checking if its ping_column has value 1 (default is 0).  When
-	load_gws() is called, only matching gateways that are
-	currently not found to be dead or that are not subject for
-	checking, will be loaded.
 	</para>
 	<para>
         Function next_gw() can then be used to select one gateway at a
 	time for forwarding.  Upon each call, user part of original
 	Request URI is first stripped by the number of characters as
 	specified by the gateway's strip count and then prefixed by
-	gateway's tag.  Upon first call, if gateway's hostname is null,
+	gateway's tag.  Upon first call, if gateway's hostname is NULL,
 	Request URI is rewritten based on gateway's URI scheme, IP
-	address, port, and transport protocol.  If hostname is not null,
+	address, port, and transport protocol.  If hostname is not NULL,
 	Request-URI is rewritten based on gateway's URI scheme and
 	hostname, and destination URI is set based on gateway's URI
 	scheme, IP address, port, and transport protocol.  Upon
@@ -94,7 +87,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				 <emphasis>libpcre - the libraries of <ulink url="http://www.pcre.org/">PCRE</ulink></emphasis>.
+				<emphasis>none</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -375,27 +368,6 @@ modparam("lcr","flags_column","gw_flags")
 </programlisting>
 		</example>
 	</section>
-	
-	<section>
-		<title><varname>ping_column</varname> (string)</title>
-		<para>
-		Name of the column telling if gateway is subject for
-		aliveness check.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>ping</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>ping_column</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "ping_column", "gw_ping")
-...
-</programlisting>
-		</example>
-	</section>
 
 	<section>
 		<title><varname>lcr_table</varname> (string)</title>
@@ -662,111 +634,6 @@ modparam("lcr", "fetch_rows", 3000)
 		</example>
 	</section>
 
-	<section>
-		<title><varname>ping_interval</varname> (integer)</title>
-		<para>
-		How often (in seconds) gateways are checked for
-		aliveness.  If set to 0, checking of
-		gateways is disabled. 
-		The interval cannot be less than 180 seconds.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>ping_interval</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "ping_interval", 300)
-...
-</programlisting>
-		</example>
-	</section>	
-	
-	<section>
-		<title><varname>ping_from</varname> (string)</title>
-		<para>
-		From URI used in gateway aliveness check.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>sip:127.0.0.1</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>ping_from</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "ping_from", "sip:gateway.kamalio.org")
-...
-</programlisting>
-		</example>
-	</section>		
-
-	<section>
-		<title><varname>ping_method</varname> (string)</title>
-		<para>
-		SIP method used for aliveness check.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>OPTIONS</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>ping_method</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "ping_method", "INFO")
-...
-</programlisting>
-		</example>
-	</section>		
-	
-	<section>
-		<title><varname>positive_codes</varname> (string)</title>
-		<para>
-		Semicolon separated reply codes that are
-		interpreted as positive replies to aliveness check.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>200;501;403;404</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>positive_codes</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "positive_codes", "200;501;403;404")
-...
-</programlisting>
-		</example>
-	</section>			
-	
-	<section>
-		<title><varname>negative_codes</varname> (string)</title>
-		<para>
-		Semicolon separated reply codes that are
-		interpreted as negative replies to aliveness check.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>408</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>negative_codes</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "negative_codes", "408")
-...
-</programlisting>
-		</example>
-	</section>			
-
 	</section>
 
 	<section>
@@ -812,7 +679,7 @@ if (!load_gws("$var(caller_uri)")) {
 		</title>
 		<para>
 		Loads URI schemes, IP addresses, hostnames, ports, and
-		transports of alive
+		transports of 
 		gateways that belong to a given group to gw_uri_avp.
 		group-id argument is a string that may contain 
 		pseudo-variables.  Its value must be a a string of
@@ -905,14 +772,9 @@ if (!next_gw()) {
 		</title>
 		<para>
 			Checks if request came from IP address of a
-			gateway.  Host to be checked is either
+			gateway.  IP address to be checked is either
 			taken from source IP address of the request or
-			(if present) from pseudo variable argument.  For
-			positive check result, pvar argument must
-			contain an IP address, i.e., DNS lookups are
-			<emphasis>not</emphasis> performed.
-		</para>
-		<para>
+			(if present) from pseudo variable argument.
 			As a side effect, stores gateway's flags to
 			flags_avp.
 		</para>
@@ -922,7 +784,7 @@ if (!next_gw()) {
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		and ONREPLY_ROUTE.
+		ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>from_gw</function> usage</title>
@@ -953,9 +815,9 @@ if (from_gw("$si")) {
 		<para>
 			Checks if request came from IP address of a
 			gateway that belongs to the given group
-			(integer string).  
-			As a side effect, stores gateway's flags to
-			flags_avp.
+			(integer string).  Sets
+			or resets a message flag depending on whether
+			the gateway supports directed media. 
 		</para>
 		<para>
 		Execution time of from_gw_grp() function is O(log N),
@@ -963,7 +825,7 @@ if (from_gw("$si")) {
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		and ONREPLY_ROUTE.
+		ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>from_gw_grp</function> usage</title>
@@ -975,27 +837,24 @@ if (from_gw_grp("1")) {
 ...
 </programlisting>
 		</example>
-	</section>
-	<section>
+		</section>
+		<section>
 		<title>
-		<function moreinfo="none">to_gw([pvar])</function>
+		<function moreinfo="none">to_gw([group-id])</function>
 		</title>
 		<para>
 		Checks if in-dialog request goes to a
-		gateway. Host address to be checked is either
-		taken from request URI hostpart or
-		(if present) from pseudo variable argument.
-		For positive check result, pvar argument must
-		contain an IP address, i.e., DNS lookups are
-		<emphasis>not</emphasis> performed.
+			gateway. If an optional 
+			group-id (integer string) is given,
+			only gateways belonging to
+			this group are checked.
 		</para>
 		<para>
 		Execution time of to_gw() function is O(log N),
 		where N is number of gateways.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		and ONREPLY_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>to_gw</function> usage</title>
@@ -1009,41 +868,12 @@ if (to_gw()) {
 </programlisting>
 		</example>
 		<example>
-		<title><function>to_gw</function> usage with pseudo
-		variable argument</title>
-		<programlisting format="linespecific">
+		<title><function>to_gw</function> usage with group-id</title>
+		<programlisting format = "linespecific">
 ...
-if (to_gw("$var(next_hop)")) {
+if (to_gw("1")) {
 	...
-};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">to_gw_grp(group-id)</function>
-		</title>
-		<para>
-			Checks if in-dialog request goes to a gateway
-			that belongs to the given group (integer
-			string). IP address to be checked is
- 			taken from request URI hostpart.
-		</para>
-		<para>
-		Execution time of to_gw_grp() function is O(log N),
-		where N is number of gateways.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		and ONREPLY_ROUTE.
-		</para>
-		<example>
-		<title><function>to_gw_grp</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (to_gw_grp("1")) {
-	...
+	exit;
 };
 ...
 </programlisting>
