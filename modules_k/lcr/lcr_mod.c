@@ -329,7 +329,7 @@ static param_export_t params[] = {
     {"ping_interval",		 INT_PARAM, &ping_interval },
     {"ping_from",                STR_PARAM, &ping_from.s    },
     {"ping_method",              STR_PARAM, &ping_method.s  },
-    {"positve_codes",            STR_PARAM, &positive_codes_str.s },
+    {"positive_codes",           STR_PARAM, &positive_codes_str.s },
     {"negative_codes",           STR_PARAM, &negative_codes_str.s },
     {0, 0, 0}
 };
