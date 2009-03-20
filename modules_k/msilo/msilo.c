@@ -457,6 +457,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	db_val_t db_vals[NR_KEYS-1];
 	db_key_t db_cols[1]; 
 	db1_res_t* res = NULL;
+	uac_req_t uac_r;
 	
 	int nr_keys = 0, val, lexpire;
 	content_type_t ctype;
@@ -806,15 +807,15 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		}
 	}
 		
-	tmb.t_request(&msg_type,  /* Type of the message */
-			(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
-			&pfrom->uri,      /* To */
-			&notify_from,     /* From */
-			&str_hdr,         /* Optional headers including CRLF */
-			&notify_body,     /* Message body */
-			(ms_outbound_proxy.s)?&ms_outbound_proxy:0, /* outbound uri */
-			NULL,             /* Callback function */
-			NULL              /* Callback parameter */
+	memset(&uac_r,'\0', sizeof(uac_r));
+	uac_r.method = &msg_type;
+	uac_r.headers = &str_hdr;
+	uac_r.body = &notify_body;
+	tmb.t_request(&uac_r,  /* UAC Req */
+				  (ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
+				  &pfrom->uri,      /* To */
+				  &notify_from,     /* From */
+				  (ms_outbound_proxy.s)?&ms_outbound_proxy:0 /* outbound uri */
 		);
 
 done:
@@ -840,7 +841,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	static char body_buf[1024];
 	struct sip_uri puri;
 	str owner_s;
-
+	uac_req_t uac_r;
 	str str_vals[4], hdr_str , body_str;
 	time_t rtime;
 	
@@ -1025,17 +1026,19 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		else
 			LM_DBG("sending composed body\n");
 		
-			tmb.t_request(&msg_type,  /* Type of the message */
-					&str_vals[1],     /* Request-URI (To) */
-					&str_vals[1],     /* To */
-					&str_vals[0],     /* From */
-					&hdr_str,         /* Optional headers including CRLF */
-					(n<0)?&str_vals[2]:&body_str, /* Message body */
-					(ms_outbound_proxy.s)?&ms_outbound_proxy:0,
-									/* outbound uri */
-					m_tm_callback,    /* Callback function */
-					(void*)(long)mid  /* Callback parameter */
-				);
+		memset(&uac_r,'\0', sizeof(uac_r));
+		uac_r.method = &msg_type;
+		uac_r.headers = &hdr_str;
+		uac_r.body = (n<0)?&str_vals[2]:&body_str;
+		uac_r.cb  = m_tm_callback;
+		uac_r.cbp = (void*)(long)mid;
+
+		tmb.t_request(&uac_r,  /* UAC Req */
+					  &str_vals[1],  /* Request-URI */
+					  &str_vals[1],  /* To */
+					  &str_vals[0],  /* From */
+					  (ms_outbound_proxy.s)?&ms_outbound_proxy:0 /* ob uri */
+			);
 	}
 
 done:
@@ -1185,7 +1188,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	static char body_buf[1024];
 	str puri;
 	time_t ttime;
-	
+	uac_req_t uac_r;
 	str str_vals[4], hdr_str , body_str;
 	time_t stime;
 
@@ -1286,18 +1289,20 @@ void m_send_ontimer(unsigned int ticks, void *param)
 			LM_DBG("sending composed body\n");
 		
 		msg_list_set_flag(ml, mid, MS_MSG_TSND);
-		
-		tmb.t_request(&msg_type,  /* Type of the message */
-					&puri,            /* Request-URI */
-					&puri,            /* To */
-					&ms_reminder,     /* From */
-					&hdr_str,         /* Optional headers including CRLF */
-					(n<0)?&str_vals[2]:&body_str, /* Message body */
-					(ms_outbound_proxy.s)?&ms_outbound_proxy:0,
-							/* outbound uri */
-					m_tm_callback,    /* Callback function */
-					(void*)(long)mid  /* Callback parameter */
-				);
+
+
+		memset(&uac_r, '\0', sizeof(uac_r));
+		uac_r.method  = &msg_type;
+		uac_r.headers = &hdr_str;
+		uac_r.body = (n<0)?&str_vals[2]:&body_str;
+		uac_r.cb  = m_tm_callback;
+		uac_r.cbp = (void*)(long)mid;
+		tmb.t_request(&uac_r,  /* UAC Req */
+					  &puri,         /* Request-URI */
+					  &puri,         /* To */
+					  &ms_reminder,  /* From */
+					  (ms_outbound_proxy.s)?&ms_outbound_proxy:0 /* ob uri */
+			);
 	}
 
 done:
