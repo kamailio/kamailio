@@ -128,8 +128,6 @@ static int fixstringloadgws(void **param, int param_count);
 #define MAX_USER_LEN 64
 
 /* Default module parameter values */
-#define DEF_FR_INV_TIMER 90
-#define DEF_FR_INV_TIMER_NEXT 30
 #define DEF_LCR_HASH_SIZE 128
 #define DEF_FETCH_ROWS 2000
 #define DEF_PING_TIMER 180
