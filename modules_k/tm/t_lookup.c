@@ -876,7 +876,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		if (is_invite(p_cell) && p_msg->REPLY_STATUS>=200 
 		&& p_msg->REPLY_STATUS<300 
 		&& ( (!is_local(p_cell) &&
-				has_tran_tmcbs(p_cell,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
+				has_tran_tmcbs(p_cell,
+				TMCB_RESPONSE_PRE_OUT|TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
 			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell,TMCB_LOCAL_COMPLETED))
 		)) {
 			if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {

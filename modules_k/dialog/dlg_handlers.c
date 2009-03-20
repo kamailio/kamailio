@@ -497,7 +497,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	}
 
 	if ( d_tmb.register_tmcb( msg, t,
-				TMCB_RESPONSE_OUT|TMCB_RESPONSE_FWDED,
+				TMCB_RESPONSE_PRE_OUT|TMCB_RESPONSE_FWDED,
 				dlg_onreply, (void*)dlg, unref_new_dialog)<0 ) {
 		LM_ERR("failed to register TMCB\n");
 		goto error;

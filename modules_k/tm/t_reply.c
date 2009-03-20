@@ -391,11 +391,12 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					0, FAKED_REPLY, code);
 			}
 		} else {
-			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) ) {
+			/* run the PRE send callbacks */
+			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_PRE_OUT) ) {
 				cb_s.s = buf;
 				cb_s.len = len;
 				set_extra_tmcb_params( &cb_s, &rb->dst);
-				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
+				run_trans_callbacks( TMCB_RESPONSE_PRE_OUT, trans,
 					trans->uas.request, FAKED_REPLY, code);
 			}
 		}
@@ -415,6 +416,16 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	SEND_PR_BUFFER( rb, buf, len );
 	LM_DBG("reply sent out. buf=%p: %.9s..., "
 		"shmem=%p: %.9s\n", buf, buf, rb->buffer.s, rb->buffer.s );
+
+	/* run the POST send callbacks */
+	if (code>=200&&!is_local(trans)&&has_tran_tmcbs(trans,TMCB_RESPONSE_OUT)) {
+		cb_s.s = buf;
+		cb_s.len = len;
+		set_extra_tmcb_params( &cb_s, &rb->dst);
+		run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
+			trans->uas.request, FAKED_REPLY, code);
+	}
+
 	pkg_free( buf ) ;
 	stats_trans_rpl( code, 1 /*local*/ );
 	LM_DBG("finished\n");
@@ -1195,7 +1206,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 		if (is_invite(t) && relayed_msg!=FAKED_REPLY
 		&& relayed_code>=200 && relayed_code < 300
-		&& has_tran_tmcbs( t, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ) {
+		&& has_tran_tmcbs( t,
+			TMCB_RESPONSE_PRE_OUT|TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ) {
 			totag_retr=update_totag_set(t, relayed_msg);
 		}
 	}; /* if relay ... */
@@ -1211,9 +1223,18 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
+		/* run the PRE sending out callback */
+		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_PRE_OUT) ) {
+			cb_s.s = buf;
+			cb_s.len = res_len;
+			set_extra_tmcb_params( &cb_s, &uas_rb->dst);
+			run_trans_callbacks( TMCB_RESPONSE_PRE_OUT, t, t->uas.request,
+				relayed_msg, relayed_code);
+		}
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
 		LM_DBG("sent buf=%p: %.9s..., shmem=%p: %.9s\n", 
 			buf, buf, uas_rb->buffer.s, uas_rb->buffer.s );
+		/* run the POST sending out callback */
 		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
 			cb_s.s = buf;
 			cb_s.len = res_len;
@@ -1291,7 +1312,8 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		stats_trans_rpl( winning_code, (winning_msg==FAKED_REPLY)?1:0 );
 		if (is_invite(t) && winning_msg!=FAKED_REPLY
 		&& winning_code>=200 && winning_code <300
-		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )  {
+		&& has_tran_tmcbs(t,
+			TMCB_RESPONSE_PRE_OUT|TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )  {
 			totag_retr=update_totag_set(t, winning_msg);
 		}
 	}
