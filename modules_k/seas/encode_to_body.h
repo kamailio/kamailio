@@ -22,6 +22,7 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_to.h"
 #define MAX_XHDR_LEN 255
 #define HAS_DISPLAY_F	0x01
 #define HAS_TAG_F	0x02
