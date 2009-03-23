@@ -505,7 +505,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 				goto found_support;
 			}
 		}
-		hdr= hdr->sibling;
+		hdr = next_sibling_hdr(hdr);
 	}
 
 found_support:	
