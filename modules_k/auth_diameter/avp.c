@@ -51,7 +51,7 @@ inline void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 		case 296: /*AVP Origin_Realm*/
 		case 400: /* AVP_Resource */	
 		case 401: /* AVP_Response */	
-		case 402: /* AVP_Chalenge */	
+		case 402: /* AVP_Challenge */	
 		case 403: /* AVP_Method */
 		case 404: /* Service_Type AVP */
 		case 405: /* User_Group AVP*/
@@ -400,7 +400,7 @@ char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 		case AAA_AVP_TIME_TYPE:
 		default:
 			LM_WARN("don't know how to print"
-				" this data type [%d] -> tryng hexa\n",avp->type);
+				" this data type [%d] -> trying hexa\n",avp->type);
 		case AAA_AVP_DATA_TYPE:
 			for (i=0;i<avp->data.len&&l<destLen-1;i++)
 			l+=snprintf(dest+l,destLen-l-1,"%x",
