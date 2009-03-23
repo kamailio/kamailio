@@ -182,7 +182,6 @@ static Bool test_private_via(struct sip_msg *msg);
 static INLINE char* shm_strdup(char *source);
 
 static int  mod_init(void);
-static int  child_init(int rank);
 static void mod_destroy(void);
 static int  preprocess_request(struct sip_msg *msg, void *param);
 static int  reply_filter(struct sip_msg *reply);
@@ -273,7 +272,7 @@ struct module_exports exports = {
     mod_init,        // module init function (before fork. kids will inherit)
     reply_filter,    // reply processing function
     mod_destroy,     // destroy function
-    child_init       // child init function
+    0                // child init function
 };
 
 
@@ -1788,13 +1787,6 @@ mod_init(void)
         return -1;
     }
 
-    return 0;
-}
-
-
-static int
-child_init(int rank)
-{
     return 0;
 }
 
