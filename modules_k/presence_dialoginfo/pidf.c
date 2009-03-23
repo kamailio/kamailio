@@ -182,7 +182,10 @@ time_t xml_parse_dateTime(char* xml_time_str)
 
 	p++;
 
-	sscanf(p, "%c%c:%c%c", &h1, &h2, &m1, &m2);
+	if(sscanf(p, "%c%c:%c%c", &h1, &h2, &m1, &m2) < 0) {
+		printf("error: failed to parse time\n");
+		return 0;
+	}
 	
 	h= (h1- '0')*10+ h2- '0';
 	m= (m1- '0')*10+ m2- '0';
