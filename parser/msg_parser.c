@@ -241,6 +241,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_REQUESTDISPOSITION_T:
 		case HDR_WWW_AUTHENTICATE_T:
 		case HDR_PROXY_AUTHENTICATE_T:
+	    case HDR_PATH_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -516,6 +517,10 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 				if (msg->identity_info==0) msg->identity_info=hf;
 				msg->parsed_flag|=HDR_IDENTITY_INFO_F;
 				break;
+		    case HDR_PATH_T:
+				if (msg->path==0) msg->path=hf;
+				msg->parsed_flag|=HDR_PATH_F;
+				break;
 			default:
 				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",
 							hf->type);
@@ -737,4 +742,26 @@ void reset_dst_uri(struct sip_msg* msg)
 	}
 	msg->dst_uri.s = 0;
 	msg->dst_uri.len = 0;
+}
+
+
+struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
+{
+	struct hdr_field *hdr;
+
+	for(hdr = msg->headers; hdr; hdr = hdr->next) {
+		if(hdr->type == ht) return hdr;
+	}
+	return NULL;
+}
+
+
+struct hdr_field* next_sibling_hdr(struct hdr_field *hf)
+{	
+	struct hdr_field *hdr;
+	
+	for(hdr = hf->next; hdr; hdr = hdr->next) {
+		if(hdr->type == hf->type) return hdr;
+	}
+	return NULL;
 }

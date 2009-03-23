@@ -265,7 +265,7 @@ void destroy_dns_cache()
 }
 
 /* set the value of dns_flags */
-void fix_dns_flags(str *name)
+void fix_dns_flags(str *gname, str *name)
 {
 	/* restore the original value of dns_cache_flags first
 	 * (DNS_IPV4_ONLY may have been set only because dns_try_ipv6
@@ -300,7 +300,7 @@ void fix_dns_flags(str *name)
 /* fixup function for use_dns_failover
  * verifies that use_dns_cache is set to 1
  */
-int use_dns_failover_fixup(void *handle, str *name, void **val)
+int use_dns_failover_fixup(void *handle, str *gname, str *name, void **val)
 {
 	if ((int)(long)(*val) && !cfg_get(core, handle, use_dns_cache)) {
 		LOG(L_ERR, "ERROR: use_dns_failover_fixup(): "
@@ -314,7 +314,7 @@ int use_dns_failover_fixup(void *handle, str *name, void **val)
 /* fixup function for use_dns_cache
  * verifies that dns_cache_init is set to 1
  */
-int use_dns_cache_fixup(void *handle, str *name, void **val)
+int use_dns_cache_fixup(void *handle, str *gname, str *name, void **val)
 {
 	if ((int)(long)(*val) && !dns_cache_init) {
 		LOG(L_ERR, "ERROR: use_dns_cache_fixup(): "
@@ -332,7 +332,7 @@ int use_dns_cache_fixup(void *handle, str *name, void **val)
 }
 
 /* KByte to Byte conversion */
-int dns_cache_max_mem_fixup(void *handle, str *name, void **val)
+int dns_cache_max_mem_fixup(void *handle, str *gname, str *name, void **val)
 {
 	unsigned int    u;
 
@@ -407,7 +407,7 @@ int init_dns_cache()
 	if (default_core_cfg.use_dns_cache==0)
 		default_core_cfg.use_dns_failover=0; /* cannot work w/o dns_cache support */
 	/* fix flags */
-	fix_dns_flags(NULL);
+	fix_dns_flags(NULL, NULL);
 
 	dns_timer_h=timer_alloc();
 	if (dns_timer_h==0){

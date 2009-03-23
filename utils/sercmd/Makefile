@@ -20,7 +20,8 @@ endif
 endif #ifneq (,$(MAKECMDGOALS))
 
 
-
+# erase common DEFS (not needed)
+C_DEFS:=
 DEFS:= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' \
 		$(filter -D%HAVE -DARCH% -DOS% -D__CPU% -D__OS%, $(DEFS))
 LIBS:=$(filter-out -lfl  -ldl -lpthread -lssl -lcrypto, $(LIBS))

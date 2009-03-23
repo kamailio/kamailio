@@ -98,6 +98,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_date.h"     /* Date */
 #include "case_iden.h"     /* Identity, Identity-info */
 #include "case_retr.h"     /* Retry-After */
+#include "case_path.h"     /* Path */
 
 
 #define READ(val) \
@@ -143,6 +144,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _date_: date_CASE; \
 	case _iden_: iden_CASE; \
 	case _retr_: retr_CASE; \
+    case _path_: path_CASE;
 
 
 

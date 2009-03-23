@@ -54,6 +54,8 @@
 #               the modules list can be changed without rebuilding the whole
 #               ser (andrei)
 #              added cfg-defs, new target that only rebuilds config.mak
+#  2009-03-10  replaced DEFS with C_DEFS (DEFS are now used only for
+#              "temporary" defines inside modules or libs) (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
@@ -203,7 +205,7 @@ ALLDEP=config.mak Makefile Makefile.sources Makefile.rules
 # hack to force makefile.defs re-inclusion (needed when make calls itself with
 # other options -- e.g. make bin)
 #makefile_defs=0
-#DEFS:=
+#C_DEFS:=
 
 
 # try saved cfg, unless we are in the process of building it
@@ -331,7 +333,7 @@ config.mak: Makefile.defs
 	@$(call mapf2,cfg_save_var,saved_fixed_vars,$(@))
 	@$(call mapf2,cfg_save_var2,saved_chg_vars,$(@))
 	@echo "override makefile_defs:=1" >>$@
-	@echo "DEFS:=\$$(filter-out \$$(DEFS_RM) \$$(extra_defs),\$$(DEFS))" \
+	@echo "C_DEFS:=\$$(filter-out \$$(DEFS_RM) \$$(extra_defs),\$$(C_DEFS))" \
 					"\$$(extra_defs)"  >>$@
 	@echo "CFLAGS:=\$$(filter-out \$$(CFLAGS_RM) \$$(CC_EXTRA_OPTS)," \
 						"\$$(CFLAGS)) \$$(CC_EXTRA_OPTS)" >>$@
@@ -538,7 +540,8 @@ man: modules.lst
 	done; true
 
 .PHONY: install
-install:all install-bin install-modules install-cfg \
+install: export compile_for_install=yes
+install: install-bin install-modules install-cfg \
 	install-doc install-man install-utils install-share
 
 .PHONY: dbinstall

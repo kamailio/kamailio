@@ -43,6 +43,26 @@ int setflag( struct sip_msg* msg, flag_t flag );
 int resetflag( struct sip_msg* msg, flag_t flag );
 int isflagset( struct sip_msg* msg, flag_t flag );
 
+
+/* Script flag functions. Script flags are global flags that keep their
+ * value regardless of the SIP message being processed.
+ */
+
+/* Set the value of all the global flags */
+int setsflagsval(flag_t val);
+
+/* Set the given flag to 1. Parameter flag contains the index of the flag */
+int setsflag(flag_t flag);
+
+/* Reset the given flag to 0. Parameter flag contains the index of the flag */
+int resetsflag(flag_t flag);
+
+/* Returns 1 if the given flag is set and -1 otherwise */
+int issflagset(flag_t flag);
+
+/* Get the value of all the script flags combined */
+flag_t getsflags(void);
+
 int flag_in_range( flag_t flag );
 
 int register_flag(char* name, int pos);

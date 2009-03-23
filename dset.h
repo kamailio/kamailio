@@ -44,6 +44,10 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, in
 		  qvalue_t q, struct socket_info* force_socket);
 
 
+int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+					 qvalue_t q, unsigned int flags, struct socket_info* force_socket);
+
+
 /* 
  * Iterate through the list of transaction branches 
  */
@@ -54,6 +58,10 @@ void init_branch_iterator(void);
  * Get the next branch in the current transaction
  */
 char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct socket_info** force_socket);
+
+
+char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
+				  str* path, unsigned int *flags, struct socket_info** force_socket);
 
 
 /*
@@ -112,5 +120,27 @@ int resetbflag(unsigned int branch, flag_t flag);
  * @return 1 if the branch flag is set, -1 if not or on failure.
  */
 int isbflagset(unsigned int branch, flag_t flag);
+
+/**
+ * Get the value of all branch flags for a branch
+ *
+ * This function returns the value of all branch flags
+ * combined in a single variable.
+ * @param res A pointer to a variable to store the result
+ * @param branch Number of the branch (0 for the main Request-URI branch)
+ * @return 1 on success, -1 on failure
+ */
+int getbflags(flag_t* res, unsigned int branch);
+
+/**
+ * Set the value of all branch flags at once for a given branch.
+ *
+ * This function sets the value of all branch flags for a given
+ * branch at once.
+ * @param branch Number of the branch (0 for the main Request-URI branch)
+ * @param val All branch flags combined into a single variable
+ * @return 1 on success, -1 on failure
+ */
+int setbflagsval(unsigned int branch, flag_t val);
 
 #endif /* _DSET_H */

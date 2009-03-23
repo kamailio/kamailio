@@ -487,6 +487,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_DATE_T:
 		case HDR_IDENTITY_T:
 		case HDR_IDENTITY_INFO_T:
+		case HDR_PPI_T:
+		case HDR_PAI_T:
+		case HDR_PATH_T:
 			/* we ignore them for now even if they have something parsed*/
 			break;
 		}/*switch*/
@@ -872,6 +875,21 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_SIPIFMATCH_T:
 			if (!HOOK_SET(sipifmatch)) {
 				new_msg->sipifmatch = new_hdr;
+			}
+			break;
+		case HDR_PPI_T:
+			if (!HOOK_SET(ppi)) {
+				new_msg->ppi = new_hdr;
+			}
+			break;
+		case HDR_PAI_T:
+			if (!HOOK_SET(pai)) {
+				new_msg->pai = new_hdr;
+			}
+			break;
+		case HDR_PATH_T:
+			if (!HOOK_SET(path)) {
+				new_msg->path = new_hdr;
 			}
 			break;
 		}/*switch*/

@@ -1,7 +1,9 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Path Header Field Name Parsing Macros
+ *
+ * Copyright (C) 2009 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,34 +28,14 @@
  */
 
 
-#ifndef PARSE_CSEQ
-#define PARSE_CSEQ
-
-#include "../str.h"
+#ifndef CASE_PATH_H
+#define CASE_PATH_H
 
 
-struct cseq_body{
-	int error;  /* Error code */
-	str number; /* CSeq number */
-	str method; /* Associated method */
-	unsigned int method_id; /* Associated method ID */
-};
+#define path_CASE				\
+	hdr->type = HDR_PATH_T;		\
+	p += 4;						\
+	goto dc_end
 
 
-/* casting macro for accessing CSEQ body */
-#define get_cseq(p_msg) ((struct cseq_body*)(p_msg)->cseq->parsed)
-
-
-/*
- * Parse CSeq header field
- */
-char* parse_cseq(char *buf, char* end, struct cseq_body* cb);
-
-
-/*
- * Free all associated memory
- */
-void free_cseq(struct cseq_body* cb);
-
-
-#endif
+#endif /* CASE_PATH_H */

@@ -52,6 +52,7 @@
 #include "parse_subscription_state.h"
 #include "contact/parse_contact.h"
 #include "parse_disposition.h"
+#include "parse_allow.h"
 #include "../ut.h"
 
 
@@ -138,6 +139,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_ALLOW_T:
+			free_allow_header(hf);
 			break;
 
 		case HDR_EVENT_T:
@@ -211,6 +213,7 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_REQUESTDISPOSITION_T:
 		case HDR_WWW_AUTHENTICATE_T:
 		case HDR_PROXY_AUTHENTICATE_T:
+		case HDR_PATH_T:
 			break;
 		default:
 			LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",

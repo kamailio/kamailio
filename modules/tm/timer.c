@@ -233,7 +233,7 @@ error:
 /* fixup function for the timer values
  * (called by the configuration framework)
  */
-int timer_fixup(void *handle, str *name, void **val)
+int timer_fixup(void *handle, str *gname, str *name, void **val)
 {
 	ticks_t	t;
 

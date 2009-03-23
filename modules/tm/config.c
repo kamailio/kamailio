@@ -66,6 +66,7 @@ struct cfg_group_tm	default_tm_cfg = {
 	MAX_NONINV_LIFETIME,	/* tm_max_noninv_lifetime */
 	1,	/* noisy_ctimer */
 	1,	/* tm_auto_inv_100 */
+	"trying -- your call is important to us",	/* tm_auto_inv_100_r */
 	500,	/* tm_unix_tx_timeout -- 500 ms by default */
 	1,	/* restart_fr_on_each_reply */
 	0,	/* pass_provisional_replies */
@@ -126,6 +127,8 @@ cfg_def_t	tm_cfg_def[] = {
 		"will be always replied"},
 	{"auto_inv_100",	CFG_VAR_INT,	0, 1, 0, 0,
 		"automatically send 100 to an INVITE"},
+	{"auto_inv_100_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
+		"reason text of the automatically send 100 to an INVITE"},   
 	{"unix_tx_timeout",	CFG_VAR_INT,	0, 0, 0, 0,
 		"Unix socket transmission timeout, in milliseconds"},
 	{"restart_fr_on_each_reply",	CFG_VAR_INT,	0, 1, 0, 0,

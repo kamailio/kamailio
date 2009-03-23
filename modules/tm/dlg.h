@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include "../../str.h"
+#include "../../ip_addr.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/msg_parser.h"
 
@@ -118,6 +119,7 @@ typedef struct dlg {
 				 * can be reused when building a message (to
 				 * prevent repeated analyzing of the dialog data
 				 */
+	struct socket_info* send_sock;
 #ifdef DIALOG_CALLBACKS
 	struct tmcb_head_list dlg_callbacks;
 #endif

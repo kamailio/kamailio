@@ -56,8 +56,8 @@
 /* variable is read-only */
 #define CFG_READONLY		(1U<<(2*CFG_INPUT_SHIFT+1))
 
-typedef int (*cfg_on_change)(void *, str *, void **);
-typedef void (*cfg_on_set_child)(str *);
+typedef int (*cfg_on_change)(void *, str *, str *, void **);
+typedef void (*cfg_on_set_child)(str *, str *);
 
 /* strutrure to be used by the module interface */
 typedef struct _cfg_def {

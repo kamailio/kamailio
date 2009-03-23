@@ -332,14 +332,35 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 		Default value is 1 (on).
 	</para>
 	<para>
-		See also:
-				<function>t_set_auto_inv_100()</function>.
+		See also: <function>t_set_auto_inv_100()</function>
+				  <varname>auto_inv_100_reason</varname>. 
 	</para>
 	<example>
 		<title>Set <varname>auto_inv_100</varname> parameter</title>
 		<programlisting>
 ...
 modparam("tm", "auto_inv_100", 0)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="auto_inv_100_reason">
+	<title><varname>auto_inv_100_reason</varname> (string)</title>
+	<para>
+		Set reason text of the automatically send 100 to an INVITE.
+	</para>
+	<para>
+		Default value is "trying -- your call is important to us".
+	</para>
+	<para>
+		See also: <varname>auto_inv_100</varname>.
+	</para>
+	<example>
+		<title>Set <varname>auto_inv_100_reason</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "auto_inv_100_reason", "Trying")
 ...
 	    </programlisting>
 	</example>

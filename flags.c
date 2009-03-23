@@ -43,6 +43,10 @@
 #include "clist.h"
 #include "mem/mem.h"
 
+/* Script flags */
+static flag_t sflags = 0;
+
+
 int setflag( struct sip_msg* msg, flag_t flag ) {
 	msg->flags |= 1 << flag;
 	return 1;
@@ -69,6 +73,39 @@ int flag_in_range( flag_t flag ) {
 		return 0;
 	}
 	return 1;
+}
+
+
+int setsflagsval(flag_t val)
+{
+	sflags = val;
+	return 1;
+}
+
+
+int setsflag(flag_t flag)
+{
+	sflags |= 1 << flag;
+	return 1;
+}
+
+
+int resetsflag(flag_t flag)
+{
+	sflags &= ~ (1 << flag);
+	return 1;
+}
+
+
+int issflagset(flag_t flag)
+{
+	return (sflags & (1<<flag)) ? 1 : -1;
+}
+
+
+flag_t getsflags(void)
+{
+	return sflags;
 }
 
 

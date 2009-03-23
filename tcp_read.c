@@ -130,7 +130,7 @@ int tcp_read(struct tcp_connection *c, int* flags)
 
 	r=&c->req;
 	fd=c->fd;
-	bytes_free=TCP_BUF_SIZE- (int)(r->pos - r->buf);
+	bytes_free=r->b_size- (int)(r->pos - r->buf);
 	
 	if (bytes_free==0){
 		LOG(L_ERR, "ERROR: tcp_read: buffer overrun, dropping\n");
@@ -170,13 +170,13 @@ again:
 			*flags|=RD_CONN_EOF;
 			DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
 		}else{
-			if (unlikely(c->state==S_CONN_CONNECT))
+			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
 				c->state=S_CONN_OK;
 		}
 		/* short read */
 		*flags|=RD_CONN_SHORT_READ;
 	}else{ /* else normal full read */
-		if (unlikely(c->state==S_CONN_CONNECT))
+		if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
 			c->state=S_CONN_OK;
 	}
 #ifdef EXTRA_DEBUG
@@ -218,19 +218,19 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 	#define content_len_beg_case \
 					case ' ': \
 					case '\t': \
-						if (!r->has_content_len) r->state=H_STARTWS; \
+						if (!TCP_REQ_HAS_CLEN(r)) r->state=H_STARTWS; \
 						else r->state=H_SKIP; \
 							/* not interested if we already found one */ \
 						break; \
 					case 'C': \
 					case 'c': \
-						if(!r->has_content_len) r->state=H_CONT_LEN1; \
+						if(!TCP_REQ_HAS_CLEN(r)) r->state=H_CONT_LEN1; \
 						else r->state=H_SKIP; \
 						break; \
 					case 'l': \
 					case 'L': \
 						/* short form for Content-Length */ \
-						if (!r->has_content_len) r->state=H_L_COLON; \
+						if (!TCP_REQ_HAS_CLEN(r)) r->state=H_L_COLON; \
 						else r->state=H_SKIP; \
 						break
 						
@@ -272,7 +272,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				r->bytes_to_go-=remaining;
 				p+=remaining;
 				if (r->bytes_to_go==0){
-					r->complete=1;
+					r->flags|=F_TCP_REQ_COMPLETE;
 					goto skip;
 				}
 				break;
@@ -298,11 +298,11 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					case '\n':
 						/* found LF LF */
 						r->state=H_BODY;
-						if (r->has_content_len){
+						if (TCP_REQ_HAS_CLEN(r)){
 							r->body=p+1;
 							r->bytes_to_go=r->content_len;
 							if (r->bytes_to_go==0){
-								r->complete=1;
+								r->flags|=F_TCP_REQ_COMPLETE;
 								p++;
 								goto skip;
 							}
@@ -322,11 +322,11 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				if (*p=='\n'){
 					/* found LF CR LF */
 					r->state=H_BODY;
-					if (r->has_content_len){
+					if (TCP_REQ_HAS_CLEN(r)){
 						r->body=p+1;
 						r->bytes_to_go=r->content_len;
 						if (r->bytes_to_go==0){
-							r->complete=1;
+							r->flags|=F_TCP_REQ_COMPLETE;
 							p++;
 							goto skip;
 						}
@@ -410,8 +410,8 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 			case H_SKIP_EMPTY_CRLFCR_FOUND:
 				if (*p=='\n'){
 					r->state = H_PING_CRLF;
-					r->complete = 1;
-					r->has_content_len = 1; /* hack to avoid error check */
+					r->flags |= F_TCP_REQ_HAS_CLEN |
+							F_TCP_REQ_COMPLETE; /* hack to avoid error check */
 					p++;
 					goto skip;
 				}else{
@@ -437,7 +437,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					/* using has_content_len as a flag if there should be
 					 * fingerprint or no
 					 */
-					r->has_content_len = (mc == MAGIC_COOKIE) ? 1 : 0;
+					r->flags |= (mc == MAGIC_COOKIE) ? F_TCP_REQ_HAS_CLEN : 0;
 					
 					r->body += sizeof(struct stun_hdr);
 					p = r->body; 
@@ -485,8 +485,8 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					r->body += body_len;
 					p = r->body;
 					r->state = H_STUN_END;
-					r->complete = 1;
-					r->has_content_len = 1; /* hack to avoid error check */
+					r->flags |= F_TCP_REQ_COMPLETE |
+						F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
 					goto skip;
 				}
 				else {
@@ -563,12 +563,12 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					case ' ':
 					case '\t': /* FIXME: check if line contains only WS */
 						r->state=H_SKIP;
-						r->has_content_len=1;
+						r->flags|=F_TCP_REQ_HAS_CLEN;
 						break;
 					case '\n':
 						/* end of line, parse successful */
 						r->state=H_LF;
-						r->has_content_len=1;
+						r->flags|=F_TCP_REQ_HAS_CLEN;
 						break;
 					default:
 						LOG(L_ERR, "ERROR: tcp_read_headers: bad "
@@ -615,7 +615,8 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			if (unlikely(con->state!=S_CONN_OK && con->state!=S_CONN_ACCEPT))
+				goto end_req; /* not enough data */
 		}
 #endif
 
@@ -642,7 +643,8 @@ again:
 			 * if req. is complete we might have a second unparsed
 			 * request after it, so postpone release_with_eof
 			 */
-			if (unlikely((con->state==S_CONN_EOF) && (req->complete==0))) {
+			if (unlikely((con->state==S_CONN_EOF) && 
+						(! TCP_REQ_COMPLETE(req)))) {
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
@@ -659,7 +661,7 @@ again:
 			resp=CONN_ERROR;
 			goto end_req;
 		}
-		if (likely(req->complete)){
+		if (likely(TCP_REQ_COMPLETE(req))){
 #ifdef EXTRA_DEBUG
 			DBG("tcp_read_req: end of header part\n");
 			DBG("- received from: port %d\n", con->rcv.src_port);
@@ -667,7 +669,7 @@ again:
 			DBG("tcp_read_req: headers:\n%.*s.\n",
 					(int)(req->body-req->start), req->start);
 #endif
-			if (likely(req->has_content_len)){
+			if (likely(TCP_REQ_HAS_CLEN(req))){
 				DBG("tcp_read_req: content-length= %d\n", req->content_len);
 #ifdef EXTRA_DEBUG
 				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);
@@ -732,7 +734,8 @@ again:
 			req->body=0;
 			req->error=TCP_REQ_OK;
 			req->state=H_SKIP_EMPTY;
-			req->complete=req->content_len=req->has_content_len=0;
+			req->flags=0;
+			req->content_len=0;
 			req->bytes_to_go=0;
 			req->pos=req->buf+size;
 			
@@ -1084,15 +1087,15 @@ error:
 #ifdef USE_STUN
 int is_msg_complete(struct tcp_req* r)
 {
-	if (r->has_content_len == 1) {
+	if (TCP_REQ_HAS_CLEN(r)) {
 		r->state = H_STUN_FP;
 		return 0;
 	}
 	else {
 		/* STUN message is complete */
 		r->state = H_STUN_END;
-		r->complete = 1;
-		r->has_content_len = 1; /* hack to avoid error check */
+		r->flags |= F_TCP_REQ_COMPLETE |
+					F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
 		return 1;
 	}
 }

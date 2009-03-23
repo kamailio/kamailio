@@ -93,7 +93,7 @@
 #include <dmalloc.h>
 #endif
 
-
+int _last_returned_code  = 0;
 struct onsend_info* p_onsend=0; /* onsend route send info */
 
 /* ret= 0! if action -> end of list(e.g DROP),
@@ -122,7 +122,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct rvalue* rv1;
 	struct rval_cache c1;
 	str s;
-
+	int orig_p2t;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -461,6 +461,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
 			ret=run_actions(h, main_rt.rlist[a->val[0].u.number], msg);
 			h->last_retcode=ret;
+			_last_returned_code = h->last_retcode;
 			h->run_flags&=~(RETURN_R_F|BREAK_R_F); /* absorb return & break */
 			break;
 		case EXEC_T:
@@ -490,6 +491,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		case SET_HOST_T:
 		case SET_HOSTPORT_T:
 		case SET_HOSTPORTTRANS_T:
+		case SET_HOSTALL_T:
 		case SET_USER_T:
 		case SET_USERPASS_T:
 		case SET_PORT_T:
@@ -497,18 +499,22 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		case PREFIX_T:
 		case STRIP_T:
 		case STRIP_TAIL_T:
+		case SET_USERPHONE_T:
 				user=0;
 				if (a->type==STRIP_T || a->type==STRIP_TAIL_T) {
 					if (a->val[0].type!=NUMBER_ST) {
 						LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->val[0].type);
+						ret=E_BUG;
 						break;
 					}
-				} else if (a->val[0].type!=STRING_ST){
-					LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
+				} else if (a->type!=SET_USERPHONE_T) {
+					if (a->val[0].type!=STRING_ST) {
+						LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->val[0].type);
-					ret=E_BUG;
-					break;
+						ret=E_BUG;
+						break;
+					}
 				}
 				if (a->type==SET_URI_T){
 					if (msg->new_uri.s) {
@@ -531,7 +537,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					ret=1;
 					break;
 				}
-				if (msg->parsed_uri_ok==0) {
+				if ((msg->parsed_uri_ok==0) || ((uri.flags & URI_SIP_USER_PHONE)!=0)) {
 					if (msg->new_uri.s) {
 						tmp=msg->new_uri.s;
 						len=msg->new_uri.len;
@@ -539,14 +545,39 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						tmp=msg->first_line.u.request.uri.s;
 						len=msg->first_line.u.request.uri.len;
 					}
+					/* don't convert sip:user=phone to tel, otherwise we loose parameters */
+					orig_p2t=phone2tel;
+					phone2tel=0;
+					msg->parsed_uri_ok=0;
 					if (parse_uri(tmp, len, &uri)<0){
+						phone2tel=orig_p2t;
 						LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
 									" packet\n", tmp);
 						ret=E_UNSPEC;
 						break;
 					}
+					phone2tel=orig_p2t;
 				} else {
 					uri=msg->parsed_uri;
+				}
+
+				/* skip SET_USERPHONE_T action if the URI is already
+				 * a tel: or tels: URI, or contains the user=phone param */
+				if ((a->type==SET_USERPHONE_T) 
+					&& ((uri.type==TEL_URI_T) || (uri.type==TELS_URI_T)
+						|| ((uri.user_param_val.len==5) && (memcmp(uri.user_param_val.s, "phone", 5)==0)))
+				) {
+					ret=1;
+					break;
+				}
+				/* SET_PORT_T does not work with tel: URIs */
+				if ((a->type==SET_PORT_T)
+					&& ((uri.type==TEL_URI_T) || (uri.type==TELS_URI_T))
+					&& ((uri.flags & URI_SIP_USER_PHONE)==0)
+				) {
+					LOG(L_ERR, "ERROR: do_action: port number of a tel: URI cannot be set\n");
+					ret=E_UNSPEC;
+					break;
 				}
 
 				new_uri=pkg_malloc(MAX_URI_SIZE);
@@ -559,8 +590,57 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				end=new_uri+MAX_URI_SIZE;
 				crt=new_uri;
 				/* begin copying */
-				len=strlen("sip:"); if(crt+len>end) goto error_uri;
-				memcpy(crt,"sip:",len);crt+=len;
+				/* Preserve the URI scheme unless the host part needs
+				 * to be rewritten, and the shceme is tel: or tels: */
+				switch (uri.type) {
+				case SIP_URI_T:
+					len=s_sip.len;
+					tmp=s_sip.s;
+					break;
+
+				case SIPS_URI_T:
+					len=s_sips.len;
+					tmp=s_sips.s;
+					break;
+
+				case TEL_URI_T:
+					if ((uri.flags & URI_SIP_USER_PHONE)
+						|| (a->type==SET_HOST_T)
+						|| (a->type==SET_HOSTPORT_T)
+						|| (a->type==SET_HOSTPORTTRANS_T)
+					) {
+						len=s_sip.len;
+						tmp=s_sip.s;
+						break;
+					}
+					len=s_tel.len;
+					tmp=s_tel.s;
+					break;
+
+				case TELS_URI_T:
+					if ((uri.flags & URI_SIP_USER_PHONE)
+						|| (a->type==SET_HOST_T)
+						|| (a->type==SET_HOSTPORT_T)
+						|| (a->type==SET_HOSTPORTTRANS_T)
+					) {
+						len=s_sips.len;
+						tmp=s_sips.s;
+						break;
+					}
+					len=s_tels.len;
+					tmp=s_tels.s;
+					break;
+
+				default:
+					LOG(L_ERR, "ERROR: Unsupported URI scheme (%d), "
+						"reverted to sip:\n",
+						uri.type);
+					len=s_sip.len;
+					tmp=s_sip.s;
+				}
+				if(crt+len+1 /* colon */ >end) goto error_uri;
+				memcpy(crt,tmp,len);crt+=len;
+				*crt=':'; crt++;
 
 				/* user */
 
@@ -621,24 +701,33 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* host */
-				if (user || tmp){ /* add @ */
-					if(crt+1>end) goto error_uri;
-					*crt='@'; crt++;
-				}
 				if ((a->type==SET_HOST_T)
 						|| (a->type==SET_HOSTPORT_T)
-						|| (a->type==SET_HOSTPORTTRANS_T)) {
+						|| (a->type==SET_HOSTALL_T)
+						|| (a->type==SET_HOSTPORTTRANS_T)
+				) {
 					tmp=a->val[0].u.string;
 					if (tmp) len = strlen(tmp);
 					else len=0;
-				} else {
+				} else if ((uri.type==SIP_URI_T)
+					|| (uri.type==SIPS_URI_T)
+					|| (uri.flags & URI_SIP_USER_PHONE)
+				) {
 					tmp=uri.host.s;
-					len = uri.host.len;
+					len=uri.host.len;
+				} else {
+					tmp=0;
 				}
 				if (tmp){
+					if (user) { /* add @ */
+						if(crt+1>end) goto error_uri;
+						*crt='@'; crt++;
+					}
 					if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 				}
+				if(a->type==SET_HOSTALL_T)
+					goto done_seturi;
 				/* port */
 				if ((a->type==SET_HOSTPORT_T)
 						|| (a->type==SET_HOSTPORTTRANS_T))
@@ -683,6 +772,22 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						memcpy(crt,tmp,len);crt+=len;
 					}
 				}
+				/* Add the user=phone param if a tel: or tels:
+				 * URI was converted to sip: or sips:.
+				 * (host part of a tel/tels URI was set.)
+				 * Or in case of sip: URI and SET_USERPHONE_T action */
+				if (((((uri.type==TEL_URI_T) || (uri.type==TELS_URI_T))
+					&& ((uri.flags & URI_SIP_USER_PHONE)==0))
+					&& ((a->type==SET_HOST_T)
+						|| (a->type==SET_HOSTPORT_T)
+						|| (a->type==SET_HOSTPORTTRANS_T)))
+					|| (a->type==SET_USERPHONE_T)
+				) {
+					tmp=";user=phone";
+					len=strlen(tmp);
+					if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
 				/* headers */
 				tmp=uri.headers.s;
 				if (tmp){
@@ -690,6 +795,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					*crt='?'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
+	done_seturi:
 				*crt=0; /* null terminate the thing */
 				/* copy it to the msg */
 				if (msg->new_uri.s) pkg_free(msg->new_uri.s);
@@ -740,6 +846,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -757,6 +864,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -772,6 +880,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -788,6 +897,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -805,6 +915,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -818,6 +929,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 										);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -1114,6 +1226,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	if (h->rec_lev==1){
 		h->run_flags=0;
 		h->last_retcode=0;
+		_last_returned_code = h->last_retcode;
 #ifdef USE_LONGJMP
 		if (setjmp(h->jmp_env)){
 			h->rec_lev=0;
@@ -1137,6 +1250,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			if (h->run_flags & EXIT_R_F){
 #ifdef USE_LONGJMP
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 				longjmp(h->jmp_env, ret);
 #endif
 			}

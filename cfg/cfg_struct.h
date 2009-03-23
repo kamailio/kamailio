@@ -98,7 +98,7 @@ typedef struct _cfg_block {
 typedef struct _cfg_child_cb {
 	atomic_t		refcnt; /* number of child processes
 					referring to the element */
-	str			name;	/* name of the variable that has changed */
+	str			gname, name;	/* name of the variable that has changed */
 	cfg_on_set_child	cb;	/* callback function that has to be called */
 
 	struct _cfg_child_cb	*next;
@@ -232,7 +232,7 @@ static inline void cfg_update_local(void)
 			}
 		}
 		/* execute the callback */
-		cfg_child_cb->cb(&cfg_child_cb->name);
+		cfg_child_cb->cb(&cfg_child_cb->gname, &cfg_child_cb->name);
 	}
 }
 
@@ -280,7 +280,7 @@ void cfg_install_global(cfg_block_t *block, char **replaced,
 			cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
 
 /* creates a structure for a per-child process callback */
-cfg_child_cb_t *cfg_child_cb_new(str *name, cfg_on_set_child cb);
+cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name, cfg_on_set_child cb);
 
 /* free the memory allocated for a child cb list */
 void cfg_child_cb_free(cfg_child_cb_t *child_cb_first);

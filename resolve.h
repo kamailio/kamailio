@@ -408,10 +408,10 @@ skip_ipv4:
 int resolv_init();
 
 /* callback/fixup functions executed by the configuration framework */
-void resolv_reinit(str *name);
-int dns_reinit_fixup(void *handle, str *name, void **val);
-int dns_try_ipv6_fixup(void *handle, str *name, void **val);
-void reinit_naptr_proto_prefs(str *name);
+void resolv_reinit(str *gname, str *name);
+int dns_reinit_fixup(void *handle, str *gname, str *name, void **val);
+int dns_try_ipv6_fixup(void *handle, str *gname, str *name, void **val);
+void reinit_naptr_proto_prefs(str *gname, str *name);
 
 #ifdef DNS_WATCHDOG_SUPPORT
 /* callback function that is called by the child processes
