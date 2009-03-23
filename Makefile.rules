@@ -6,7 +6,8 @@
 #
 
 #
-# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, INCLUDES, LIBS, MKDEP, auto_gen, 
+# Uses: NAME, ALLDEP, CC, CFLAGS, C_DEFS, DEFS, C_INCLUDES, INCLUDES, LIBS, 
+#       MKDEP, auto_gen, 
 # auto_gen_others, depends, objs, extra_objs, static_modules, 
 # static_modules_path, LD_RPATH
 # (all this must  be defined previously!,  see Makefile.defs & Makefile)
@@ -20,7 +21,10 @@
 #              automatically build listed SER_LIBS if needed (andrei)
 #  2008-06-23  automatically rebuild if make time defines or includes
 #              changed (via makecfg.lst)
-#
+#  2009-03-10  support for C_DEFS and C_INCLUDES (DEFS and INCLUDES are now
+#              used only for "temporary" defines/includes inside modules or
+#              libs, C_DEFS and C_INCLUDES are used for the common stuff)
+#              (andrei)
 
 
 # check if the saved cfg corresponds with the current one
@@ -30,17 +34,18 @@ ifeq (,$(filter $(nodep_targets),$(MAKECMDGOALS)))
 # if trying  to build a lib automatically and the lib is already compiled,
 # don't rebuild it if the only differences in DEFS or INCLUDES are covered
 # by LIB_NOREBUILD_DEFS/LIB_NOREBUILD_INCLUDES
-LIB_NOREBUILD_DEFS+= -DMOD_NAME% -D%_MOD_INTERFACE -DMOD_INTERFACE_% -DSR_%
+LIB_NOREBUILD_DEFS=
 
 # don't rebuild if the differences are covered by NOREBUILD_DEFS or 
 # NOREBUILD_INCLUDES
-ifneq ($(filter-out $(NOREBUILD_DEFS),$(strip $(DEFS))), $(strip $(CFG_DEFS)))
+ifneq ($(strip $(filter-out $(NOREBUILD_DEFS),\
+		$(C_DEFS) $(DEFS))),$(strip $(CFG_DEFS)))
 #$(warning different defs: <$(strip $(DEFS))> != )
 #$(warning               : <$(strip $(CFG_DEFS))>)
 $(shell rm -f makecfg.lst)
 endif
-ifneq ($(filter-out $(NOREBUILD_INCLUDES), $(strip $(INCLUDES))),\
-		$(strip $(CFG_INCLUDES)))
+ifneq ($(strip $(filter-out $(NOREBUILD_INCLUDES),\
+			$(C_INCLUDES) $(INCLUDES))),$(strip $(CFG_INCLUDES)))
 $(shell rm -f makecfg.lst)
 endif
 endif
@@ -49,10 +54,10 @@ ALLDEP+=makecfg.lst
 
 #implicit rules
 %.o:%.c  $(ALLDEP)
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -c $< -o $@
+	$(CC) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $(CFLAGS) $(INCLUDES) $(DEFS) $< \
+	@set -e; $(MKDEP) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) $<\
 	    |  sed 's#\(\($(*D)/\)\{0,1\}$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
 	    test -s $@ || ( rm -f $@; false )
 
@@ -66,7 +71,7 @@ ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
 lib_compile_for_install=yes
 expected_lib_ipath=$(lib_target)
 else
-lib_compile_for_install=no
+lib_compile_for_install=$(compile_for_install)
 # function: expected_lib_ipath ser_lib_dir
 expected_lib_ipath=$(1)
 endif
@@ -144,10 +149,11 @@ librpath.lst: $(ALLDEP)
 	@echo LIB_RPATH_LST:=$(SER_RPATH_LST) >librpath.lst
 
 makecfg.lst:
-	@echo CFG_DEFS:=$(subst ',\', $(subst ",\", \
-		$(filter-out $(NOREBUILD_DEFS), $(strip $(DEFS))))) >>$@
-	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\", \
-		$(filter-out $(NOREBUILD_INCLUDES), $(strip $(INCLUDES))))) >>$@
+	@echo CFG_DEFS:=$(subst ',\', $(subst ",\",$(strip \
+			$(filter-out $(NOREBUILD_DEFS), $(C_DEFS) $(DEFS))))) >>$@
+	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\",$(strip \
+			$(filter-out $(NOREBUILD_INCLUDES),\
+				$(C_INCLUDES) $(INCLUDES))))) >>$@
 .PHONY: all
 all: $(NAME) modules
 

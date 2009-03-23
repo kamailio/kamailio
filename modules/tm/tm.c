@@ -90,7 +90,8 @@
  *               t_relay_to_{udp,tcp,tls}(<no param>) (force protocol, but 
  *               forward to uri)  (andrei)
  *  2008-08-11  sctp support: t_relay_to_sctp, t_replicate_sctp,
- *               t_forward_nonack_sctp (andrei
+ *               t_forward_nonack_sctp (andrei)
+ *  2009-03-18  added a new param: auto_inv_100_reason (aheise) 
  */
 
 
@@ -425,6 +426,7 @@ static param_export_t params[]={
 	{"max_noninv_lifetime", PARAM_INT, &default_tm_cfg.tm_max_noninv_lifetime},
 	{"noisy_ctimer",        PARAM_INT, &default_tm_cfg.noisy_ctimer          },
 	{"auto_inv_100",        PARAM_INT, &default_tm_cfg.tm_auto_inv_100       },
+	{"auto_inv_100_reason", PARAM_STRING, &default_tm_cfg.tm_auto_inv_100_r  },    
 	{"unix_tx_timeout",     PARAM_INT, &default_tm_cfg.tm_unix_tx_timeout    },
 	{"restart_fr_on_each_reply", PARAM_INT,
 									&default_tm_cfg.restart_fr_on_each_reply},

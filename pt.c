@@ -522,7 +522,7 @@ end:
  * Per-child process callback that is called
  * when mem_dump_pkg cfg var is changed.
  */
-void mem_dump_pkg_cb(str *name)
+void mem_dump_pkg_cb(str *gname, str *name)
 {
 	int	old_memlog;
 
@@ -545,7 +545,7 @@ void mem_dump_pkg_cb(str *name)
  * fixup function that is called
  * when mem_dump_shm cfg var is set.
  */
-int mem_dump_shm_fixup(void *handle, str *name, void **val)
+int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val)
 {
 	int	old_memlog;
 

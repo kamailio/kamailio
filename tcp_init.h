@@ -39,6 +39,10 @@
 										  time, timeout */
 #define DEFAULT_TCP_MAX_CONNECTIONS 2048 /* maximum connections */
 
+#define DEFAULT_TCP_BUF_SIZE	4096  /* buffer size used for reads */
+
+#define DEFAULT_TCP_WBUF_SIZE	2100 /*  after debugging switch to 4-16k */
+
 struct tcp_child{
 	pid_t pid;
 	int proc_no; /* ser proc_no, for debugging */

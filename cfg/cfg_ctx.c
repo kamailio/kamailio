@@ -258,7 +258,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	cfg_mapping_t	*var;
 	void		*p, *v;
 	cfg_block_t	*block = NULL;
-	str		s;
+	str		s, s2;
 	char		*old_string = NULL;
 	char		**replaced = NULL;
 	cfg_child_cb_t	*child_cb = NULL;
@@ -300,6 +300,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		There is no need to set a temporary cfg handle,
 		becaue a single variable is changed */
 		if (var->def->on_change_cb(*(group->handle),
+						group_name,
 						var_name,
 						&v) < 0) {
 			LOG(L_ERR, "ERROR: cfg_set_now(): fixup failed\n");
@@ -311,9 +312,11 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	if (var->def->on_set_child_cb) {
 		/* get the name of the variable from the internal struct,
 		because var_name may be freed before the callback needs it */
-		s.s = var->def->name;
-		s.len = var->name_len;
-		child_cb = cfg_child_cb_new(&s,
+		s.s = group->name;
+		s.len = group->name_len;
+		s2.s = var->def->name;
+		s2.len = var->name_len;
+		child_cb = cfg_child_cb_new(&s, &s2,
 					var->def->on_set_child_cb);
 		if (!child_cb) {
 			LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
@@ -579,6 +582,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		}
 			
 		if (var->def->on_change_cb(temp_handle,
+						group_name,
 						var_name,
 						&v) < 0) {
 			LOG(L_ERR, "ERROR: cfg_set_delayed(): fixup failed\n");
@@ -711,7 +715,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 	cfg_child_cb_t	*child_cb_last = NULL;
 	int	size;
 	void	*p;
-	str	s;
+	str	s, s2;
 
 	if (!ctx) {
 		LOG(L_ERR, "ERROR: cfg_commit(): context is undefined\n");
@@ -740,9 +744,11 @@ int cfg_commit(cfg_ctx_t *ctx)
 
 
 		if (changed->var->def->on_set_child_cb) {
-			s.s = changed->var->def->name;
-			s.len = changed->var->name_len;
-			child_cb = cfg_child_cb_new(&s,
+			s.s = changed->group->name;
+			s.len = changed->group->name_len;
+			s2.s = changed->var->def->name;
+			s2.len = changed->var->name_len;
+			child_cb = cfg_child_cb_new(&s, &s2,
 					changed->var->def->on_set_child_cb);
 			if (!child_cb) goto error0;
 

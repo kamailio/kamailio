@@ -207,9 +207,7 @@ install: build
 	# install the *.sql files for ser_mysql.sh script
 	cp -f scripts/mysql/*.sql $(CURDIR)/debian/ser/usr/lib/ser/
 	# and fix path to the *.sql files in ser_mysql.sh script
-	sed -i 's#CREATE_SCRIPT=`dirname $$0`"/"$$DEFAULT_CREATE_SCRIPT#CREATE_SCRIPT="/usr/lib/ser/"\$$DEFAULT_CREATE_SCRIPT#' $(CURDIR)/debian/ser/usr/sbin/ser_mysql.sh
-	sed -i 's#DATA_SCRIPT=`dirname $$0`"/"$$DEFAULT_DATA_SCRIPT#DATA_SCRIPT="/usr/lib/ser/"$$DEFAULT_DATA_SCRIPT#' $(CURDIR)/debian/ser/usr/sbin/ser_mysql.sh
-	sed -i 's#DROP_SCRIPT=`dirname $$0`"/"$$DEFAULT_DROP_SCRIPT#DROP_SCRIPT="/usr/lib/ser/"$$DEFAULT_DROP_SCRIPT#' $(CURDIR)/debian/ser/usr/sbin/ser_mysql.sh
+	sed -i 's#DEFAULT_SCRIPT_DIR=.*#DEFAULT_SCRIPT_DIR="/usr/lib/ser/"#' $(CURDIR)/debian/ser/usr/sbin/ser_mysql.sh
 	# install advanced ser config file for ser-oob package
 	mkdir -p $(CURDIR)/debian/ser-oob/etc/ser
 	cp -f etc/ser-oob.cfg $(CURDIR)/debian/ser-oob/etc/ser/

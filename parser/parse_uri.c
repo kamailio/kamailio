@@ -1431,10 +1431,10 @@ inline int normalize_tel_user(char* res, str* src) {
 }
 
 
-static str	s_sip  = STR_STATIC_INIT("sip");
-static str	s_sips = STR_STATIC_INIT("sips");
-static str	s_tel  = STR_STATIC_INIT("tel");
-static str	s_tels = STR_STATIC_INIT("tels");
+str	s_sip  = STR_STATIC_INIT("sip");
+str	s_sips = STR_STATIC_INIT("sips");
+str	s_tel  = STR_STATIC_INIT("tel");
+str	s_tels = STR_STATIC_INIT("tels");
 static str	s_null = STR_STATIC_INIT("");
 
 inline void uri_type_to_str(uri_type type, str *s) {

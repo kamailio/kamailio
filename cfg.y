@@ -94,6 +94,7 @@
  * 2007-12-06  expression are now evaluated in terms of rvalues;
  *             NUMBER is now always positive; cleanup (andrei)
  * 2009-01-26  case/switch() support (andrei)
+ * 2009-03-10  added SET_USERPHONE action (Miklos)
 */
 
 %{
@@ -137,6 +138,7 @@
 #ifdef CORE_TLS
 #include "tls/tls_config.h"
 #endif
+#include "timer_ticks.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -271,6 +273,7 @@ static int case_check_default(struct case_stms* stms);
 %token PREFIX
 %token STRIP
 %token STRIP_TAIL
+%token SET_USERPHONE
 %token APPEND_BRANCH
 %token SET_USER
 %token SET_USERPASS
@@ -396,6 +399,8 @@ static int case_check_default(struct case_stms* stms);
 %token TCP_OPT_BUF_WRITE
 %token TCP_OPT_CONN_WQ_MAX
 %token TCP_OPT_WQ_MAX
+%token TCP_OPT_RD_BUF
+%token TCP_OPT_WQ_BLK
 %token TCP_OPT_DEFER_ACCEPT
 %token TCP_OPT_DELAYED_ACK
 %token TCP_OPT_SYNCNT
@@ -839,7 +844,7 @@ assign_stm:
 	| TCP_CONNECT_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_SEND_TIMEOUT EQUAL intno {
 		#ifdef USE_TCP
-			tcp_default_cfg.send_timeout_s=$3;
+			tcp_default_cfg.send_timeout=S_TO_TICKS($3);
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -847,7 +852,10 @@ assign_stm:
 	| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_CON_LIFETIME EQUAL intno {
 		#ifdef USE_TCP
-			tcp_default_cfg.con_lifetime_s=$3;
+			if ($3<0)
+				tcp_default_cfg.con_lifetime=-1;
+			else
+				tcp_default_cfg.con_lifetime=S_TO_TICKS($3);
 		#else
 			warn("tcp support not compiled in");
 		#endif
@@ -953,7 +961,23 @@ assign_stm:
 			warn("tcp support not compiled in");
 		#endif
 	}
-	| TCP_OPT_WQ_MAX error { yyerror("boolean value expected"); }
+	| TCP_OPT_WQ_MAX error { yyerror("number expected"); }
+	| TCP_OPT_RD_BUF EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_default_cfg.rd_buf_size=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_RD_BUF error { yyerror("number expected"); }
+	| TCP_OPT_WQ_BLK EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_default_cfg.wq_blk_size=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_WQ_BLK error { yyerror("number expected"); }
 	| TCP_OPT_DEFER_ACCEPT EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_default_cfg.defer_accept=$3;
@@ -1315,10 +1339,10 @@ assign_stm:
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER 
-		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0); }
+		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0, 0); }
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
 	| UDP_MTU_TRY_PROTO EQUAL proto
-		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0); }
+		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0, 0); }
 	| UDP_MTU_TRY_PROTO EQUAL error
 		{ yyerror("TCP, TLS, SCTP or UDP expected"); }
 	| cfg_var
@@ -2546,6 +2570,8 @@ cmd:
 	| STRIP LPAREN NUMBER RPAREN { $$=mk_action(STRIP_T, 1, NUMBER_ST, (void*) $3); }
 	| STRIP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
+	| SET_USERPHONE LPAREN RPAREN { $$=mk_action(SET_USERPHONE_T, 0); }
+	| SET_USERPHONE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN {
 		qvalue_t q;
 		if (str2q(&q, $5, strlen($5)) < 0) {
