@@ -324,10 +324,15 @@ static int get_cpuload(double * load)
 	static int first_time = 1;
 	FILE * f = fopen("/proc/stat", "r");
 
-	if (! f)
+	if (! f) {
+		LM_ERR("could not open /proc/stat\n");
 		return -1;
-	fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld",
-			&n_user, &n_nice, &n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl);
+	}
+	if (fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld",
+			&n_user, &n_nice, &n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl) < 0) {
+		  LM_ERR("could not parse load informations\n");
+		  return -1;
+	}
 	fclose(f);
 
 	if (first_time) {
