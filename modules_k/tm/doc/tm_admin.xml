@@ -476,7 +476,7 @@ modparam("tm", "fr_timer_avp", "$avp(i:24)")
 		<title><varname>fr_inv_timer_avp</varname> (string)</title>
 		<para>
 		Full specification (NAME, ID, Alias) of an AVP which contains a final
-		INVITE response timeout value. If present, ths value will overeide the 
+		INVITE response timeout value. If present, this value will override the 
 		static fr_inv_timer parameter.
 		</para>
 		<para>

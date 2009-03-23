@@ -483,8 +483,8 @@ modparam("tm", "fr_timer_avp", "$avp(i:24)")
 1.3.12. fr_inv_timer_avp (string)
 
    Full specification (NAME, ID, Alias) of an AVP which contains a
-   final INVITE response timeout value. If present, ths value will
-   overeide the static fr_inv_timer parameter.
+   final INVITE response timeout value. If present, this value will
+   override the static fr_inv_timer parameter.
 
    If set the AVP to an to empty string, the whole mechanism for
    variable timeout will be disabled, falling back to the static
