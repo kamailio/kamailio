@@ -809,8 +809,11 @@ int load_metadata_columns(table_p _tp)
 	while(s!=NULL && n<MAX_NUM_COLS) 
 	{
 		/* eg: meta[0]=table_name  meta[1]=str */
-		sscanf(s,"%20[^(](%10[^)])[^\n]", cn, ct);
-		
+		if (sscanf(s,"%20[^(](%10[^)])[^\n]", cn, ct) < 0) {
+			LM_ERR("could not parse meta data\n");
+			return -1;
+		}
+
 		/* create column*/
 		col = (column_p) pkg_malloc(sizeof(column_t));
 		if(!col)
