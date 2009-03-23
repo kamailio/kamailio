@@ -529,7 +529,7 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
    i=j=k=0;
    /* count how many record-route bodies come in the response*/
    /* this does not work, I think because of siblings
-   for(hf=resp->record_route;hf;hf=hf->sibling,j=0){
+   for(hf=resp->record_route;hf;hf=next_sibling_hdr(hf),j=0){
    */
    for(hf=resp->headers;hf;hf=hf->next,j=0){
       if(hf->type != HDR_RECORDROUTE_T)
@@ -548,7 +548,7 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
       }
    }
    /*
-   for(hf=req->record_route;hf;hf=hf->sibling,j=0){
+   for(hf=req->record_route;hf;hf=next_sibling_hdr(hf),j=0){
       */
    for(hf=req->headers;hf;hf=hf->next,j=0){
       if(hf->type != HDR_RECORDROUTE_T)
@@ -579,7 +579,7 @@ int via_diff(struct sip_msg *req,struct sip_msg *resp)
 
    i=j=k=0;
    /* count how many via bodies come in the response*/
-   for(hf=resp->h_via1;hf;hf=hf->sibling){
+   for(hf=resp->h_via1;hf;hf=next_sibling_hdr(hf)){
       if(!hf->parsed){
 	 if((vb=pkg_malloc(sizeof(struct via_body)))==0){
 	    LM_ERR("Out of mem in via_diff!!\n");
@@ -605,7 +605,7 @@ int via_diff(struct sip_msg *req,struct sip_msg *resp)
    }
    j=0;
    /* count how many via bodies were in the orig. request*/
-   for(hf=req->h_via1;hf;hf=hf->sibling){
+   for(hf=req->h_via1;hf;hf=next_sibling_hdr(hf)){
       if(!hf->parsed){
 	 if((vb=pkg_malloc(sizeof(struct via_body)))==0){
 	    goto error;
