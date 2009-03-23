@@ -141,6 +141,9 @@ void free_cell( struct cell* dead_cell )
 	for( cbs=(struct tm_callback*)dead_cell->tmcb_hl.first ; cbs ; ) {
 		cbs_tmp = cbs;
 		cbs = cbs->next;
+		if (cbs_tmp->release) {
+			cbs_tmp->release(cbs_tmp->param);
+		}
 		shm_free_unsafe( cbs_tmp );
 	}
 

@@ -126,7 +126,7 @@ int register_dlg_tmcb(int types, dlg_t* dlg, transaction_cb f, void* param)
 		LOG(L_CRIT, "BUG: tm: register_dlg_tmcb: null callback function");
 		return E_BUG;
 	}
-	return insert_tmcb(&dlg->dlg_callbacks, types, f, param);
+	return insert_tmcb(&dlg->dlg_callbacks, types, f, param, NULL);
 }
 
 

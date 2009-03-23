@@ -319,7 +319,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	/* Register the callbacks after everything is successful and nothing can fail.
 	Otherwise the callback parameter would be freed twise, once from TMCB_DESTROY,
 	and again because of the negative return code. */
-	if(uac_r->cb && insert_tmcb(&(new_cell->tmcb_hl), uac_r->cb_flags, *(uac_r->cb), uac_r->cbp)!=1){
+	if(uac_r->cb && insert_tmcb(&(new_cell->tmcb_hl), uac_r->cb_flags, 
+								*(uac_r->cb), uac_r->cbp, NULL)!=1){
 		ret=E_OUT_OF_MEM; 
 		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
 		goto error1;

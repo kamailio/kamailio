@@ -117,7 +117,8 @@ void destroy_tmcb_lists()
 
 /* lockless insert: should be always safe */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
-									transaction_cb f, void *param )
+				transaction_cb f, void *param,
+				release_tmcb_param rel_func)
 {
 	struct tm_callback *cbp;
 	struct tm_callback *old;
@@ -133,6 +134,7 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 	/* ... and fill it up */
 	cbp->callback = f;
 	cbp->param = param;
+	cbp->release = rel_func;
 	cbp->types = types;
 	cbp->id=0;
 	old=(struct tm_callback*)cb_list->first;
@@ -164,7 +166,8 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
  *                 from mod_init (before forking!).
 */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
-											transaction_cb f, void *param )
+				   transaction_cb f, void *param,
+				   release_tmcb_param rel_func)
 {
 	//struct cell* t;
 	struct tmcb_head_list *cb_list;
@@ -217,7 +220,7 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 		cb_list = &(t->tmcb_hl);
 	}
 
-	return insert_tmcb( cb_list, types, f, param );
+	return insert_tmcb( cb_list, types, f, param, rel_func );
 }
 
 
