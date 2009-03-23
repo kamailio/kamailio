@@ -41,7 +41,6 @@ MODULE_VERSION
  * Module management function prototypes
  */
 static int mod_init(void);
-static void destroy(void);
 static int child_init(int rank);
 
 /*
@@ -118,7 +117,7 @@ struct module_exports exports = {
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
-	destroy,    /* destroy function */
+	0,          /* destroy function */
 	child_init  /* child initialization function */
 };
 
@@ -168,11 +167,6 @@ static int mod_init(void)
 		return -1;
 	}
 	
-}
-
-
-static void destroy(void)
-{
 }
 
 
