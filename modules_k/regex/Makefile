@@ -6,4 +6,6 @@ NAME=regex.so
 DEFS+=-I$(LOCALBASE)/include
 LIBS=-L$(LOCALBASE)/lib -lpcre
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
