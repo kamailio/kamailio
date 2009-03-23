@@ -124,7 +124,6 @@ struct tm_binds tmb;
 static int  mod_init(void);
 static void xmpp_process(int rank);
 static int  cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar);
-void destroy(void);
 
 static int pipe_fds[2] = {-1,-1};
 
@@ -188,7 +187,7 @@ struct module_exports exports = {
 	procs,           /* extra processes */
 	mod_init,        /* Initialization function */
 	0,               /* Response function */
-	destroy,         /* Destroy function */
+	0,               /* Destroy function */
 	0,               /* Child init function */
 };
 
@@ -249,12 +248,6 @@ static void xmpp_process(int rank)
 		xmpp_server_child_process(pipe_fds[0]);
 }
 
-
-/* TODO */
-void destroy(void)
-{
-	LM_DBG("cleaning up...\n");
-}
 
 /*********************************************************************************/
 
