@@ -52,6 +52,7 @@
 #include "parse_subscription_state.h"
 #include "contact/parse_contact.h"
 #include "parse_disposition.h"
+#include "parse_allow.h"
 #include "../ut.h"
 
 
@@ -138,6 +139,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_ALLOW_T:
+			free_allow_header(hf);
 			break;
 
 		case HDR_EVENT_T:

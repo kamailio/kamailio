@@ -73,6 +73,9 @@ typedef int (*treply_wb_f)( struct cell* trans,
 /* wrapper function needed after changes in w_t_reply */
 int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt);
 
+typedef int (*tget_reply_totag_f)(struct sip_msg *, str *);
+int t_get_reply_totag(struct sip_msg *msg, str *totag);
+
 #define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
 #define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
 

@@ -225,5 +225,7 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_continue' not found\n");
 		return -1;
 	}
+
+	tmb->t_get_reply_totag = t_get_reply_totag;
 	return 1;
 }
