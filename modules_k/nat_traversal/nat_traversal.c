@@ -891,7 +891,7 @@ get_register_expire(struct sip_msg *request, struct sip_msg *reply)
     // request may be R/O (if we are called from the TM callback),
     // thus we copy the hdr_field structures before parsing them
 
-    for (hdr=request->contact; hdr; hdr=hdr->sibling) {
+    for (hdr=request->contact; hdr; hdr = next_sibling_hdr(hdr)) {
         if (!hdr->parsed) {
             memcpy(&contact_hdr, hdr, sizeof(struct hdr_field));
             if (parse_contact(&contact_hdr) < 0) {
@@ -910,7 +910,7 @@ get_register_expire(struct sip_msg *request, struct sip_msg *reply)
         }
 
         for (contact=contact_body->contacts; contact; contact=contact->next) {
-            for (r_hdr=reply->contact, matched=False; r_hdr && !matched; r_hdr=r_hdr->sibling) {
+            for (r_hdr=reply->contact, matched=False; r_hdr && !matched; r_hdr=next_sibling_hdr(r_hdr)) {
                 if (!r_hdr->parsed && parse_contact(r_hdr) < 0) {
                     LM_ERR("failed to parse the Contact header body in reply\n");
                     continue;
