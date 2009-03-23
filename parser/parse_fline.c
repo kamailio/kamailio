@@ -125,6 +125,8 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	else IFISMETHOD( NOTIFY, 'N')
 	else IFISMETHOD( MESSAGE, 'M')
 	else IFISMETHOD( OPTIONS, 'O')
+	else IFISMETHOD( PRACK, 'P')
+	else IFISMETHOD( UPDATE, 'U')
 	/* if you want to add another method XXX, include METHOD_XXX in
            H-file (this is the value which you will take later in
            processing and define XXX_LEN as length of method name;
