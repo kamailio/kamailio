@@ -51,8 +51,9 @@ static inline int new_sdp(struct sip_msg* _m)
 		return -1;
 	}
 	memset( sdp, 0, sizeof(sdp_info_t));
-		
-	_m->sdp = sdp;
+	sdp->type = MSG_BODY_SDP;
+	sdp->free = (free_msg_body_f)free_sdp;
+	_m->body = (msg_body_t*)sdp;
 
 	return 0;
 }
@@ -279,8 +280,9 @@ sdp_session_cell_t* get_sdp_session_sdp(struct sdp_info* sdp, int session_num)
 
 sdp_session_cell_t* get_sdp_session(struct sip_msg* _m, int session_num)
 {
-	if (_m->sdp == NULL) return NULL;
-	return get_sdp_session_sdp(_m->sdp, session_num);
+	if (_m->body == NULL) return NULL;
+	if (_m->body->type != MSG_BODY_SDP) return NULL;
+	return get_sdp_session_sdp((sdp_info_t*)_m->body, session_num);
 }
 
 
@@ -311,15 +313,18 @@ sdp_stream_cell_t* get_sdp_stream_sdp(struct sdp_info* sdp, int session_num, int
 
 sdp_stream_cell_t* get_sdp_stream(struct sip_msg* _m, int session_num, int stream_num)
 {
+	sdp_info_t* sdp;
         sdp_session_cell_t *session;
 	sdp_stream_cell_t *stream;
 
-	return get_sdp_stream_sdp(_m->sdp, session_num, stream_num);
+	return get_sdp_stream_sdp((sdp_info_t*)_m->body, session_num, stream_num);
 
-        if (_m->sdp == NULL) return NULL;
-        if (session_num > _m->sdp->sessions_num) return NULL;
+	sdp = (sdp_info_t*)_m->body;
+        if (sdp == NULL) return NULL;
+		if (sdp->type != MSG_BODY_SDP) return NULL;
+        if (session_num > sdp->sessions_num) return NULL;
 
-	session = _m->sdp->sessions;
+		session = sdp->sessions;
 	while (session) {
 		if (session->session_num == session_num) {
 			stream = session->streams;
@@ -666,7 +671,7 @@ int parse_sdp(struct sip_msg* _m)
 	str body, mp_delimiter;
 	int mime;
 
-	if (_m->sdp) {
+	if (_m->body) {
 		return 0;  /* Already parsed */
 	}
 
@@ -696,10 +701,10 @@ int parse_sdp(struct sip_msg* _m)
 				LM_ERR("Can't create sdp\n");
 				return -1;
 			}
-			res = parse_sdp_session(&body, 0, NULL, _m->sdp);
+			res = parse_sdp_session(&body, 0, NULL, (sdp_info_t*)_m->body);
 			if (res != 0) {
 				LM_DBG("free_sdp\n");
-				free_sdp((sdp_info_t**)(void*)&(_m->sdp));
+				free_sdp((sdp_info_t**)&_m->body);
 			}
 			return res;
 			break;
@@ -719,9 +724,9 @@ int parse_sdp(struct sip_msg* _m)
 					LM_ERR("Can't create sdp\n");
 					return -1;
 				}
-				res = parse_mixed_content(&body, mp_delimiter, _m->sdp);
+				res = parse_mixed_content(&body, mp_delimiter, (sdp_info_t*)_m->body);
 				if (res != 0) {
-					free_sdp((sdp_info_t**)(void*)&(_m->sdp));
+					free_sdp((sdp_info_t**)&_m->body);
 				}
 				return res;
 			} else {
@@ -1151,12 +1156,17 @@ error:
 
 sdp_info_t * clone_sdp_info(struct sip_msg* _m)
 {
-	sdp_info_t *clone_sdp_info, *sdp_info=_m->sdp;
+	sdp_info_t *clone_sdp_info, *sdp_info=(sdp_info_t*)_m->body
+;
 	sdp_session_cell_t *clone_session, *prev_clone_session, *session;
 	int i, len;
 
 	if (sdp_info==NULL) {
 		LM_ERR("no sdp to clone\n");
+		return NULL;
+	}
+	if (sdp_info->type != MSG_BODY_SDP) {
+		LM_ERR("Unsupported body type\n");
 		return NULL;
 	}
 	if (sdp_info->sessions_num == 0) {

@@ -86,6 +86,8 @@ typedef struct sdp_session_cell {
  * Here we hold the head of the parsed sdp structure
  */
 typedef struct sdp_info {
+	msg_body_type_t type;
+	free_msg_body_f free;
 	int sessions_num;	/**< number of SDP sessions */
 	struct sdp_session_cell *sessions;
 } sdp_info_t;
