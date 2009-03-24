@@ -200,6 +200,26 @@ struct sip_uri {
 #endif
 };
 
+struct msg_body;
+
+typedef void (*free_msg_body_f)(struct msg_body** ptr);
+
+typedef enum msg_body_type {
+	MSG_BODY_UNKNOWN = 0,
+	MSG_BODY_SDP
+} msg_body_type_t;
+
+/* This structure represents a generic SIP message body, regardless of the
+ * body type. Body parsers are supposed to cast this structure to some other
+ * body-type specific structure, but the body type specific structure must
+ * retain msg_body_type variable and a pointer to the free function as the 
+ * first two variables within the structure.
+ */
+typedef struct msg_body {
+	msg_body_type_t type;
+	free_msg_body_f free;
+} msg_body_t;
+
 
 typedef struct sip_msg {
 	unsigned int id;               /* message id, unique/process*/
@@ -258,6 +278,8 @@ typedef struct sip_msg {
 	struct hdr_field* pai;
 	struct hdr_field* ppi;
 	struct hdr_field* path;
+
+	struct msg_body* body;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/
