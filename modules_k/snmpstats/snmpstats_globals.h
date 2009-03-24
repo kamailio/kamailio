@@ -126,8 +126,6 @@
 
 #define MAX_USER_LOOKUP_COUNTER 255
 
-#define NUM_IP_OCTETS 4
-
 #define HASH_SIZE 32
 
 extern unsigned int global_UserLookupCounter;

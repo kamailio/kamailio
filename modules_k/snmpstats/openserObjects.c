@@ -43,10 +43,10 @@
 #include "../../dprint.h"
 #include "../../statistics.h"
 #include "../../config.h"
+#include "../../socket_info.h"
 
 #include "snmpstats_globals.h"
 #include "utilities.h"
-#include "network_stats.h"
 #include "alarm_checks.h"
 
 /* 

@@ -33,19 +33,18 @@
  *
  */
 
-#include "snmpstats_globals.h"
-#include "network_stats.h"
-#include "../../socket_info.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-
 #include <net-snmp/library/snmp_assert.h>
 
-#include "openserSIPPortTable.h"
+#include "../../socket_info.h"
 #include "../../statistics.h"
 #include "../../mem/mem.h"
+
+#include "snmpstats_globals.h"
+#include "openserSIPPortTable.h"
 
 static     netsnmp_handler_registration *my_handler = NULL;
 static     netsnmp_table_array_callbacks cb;

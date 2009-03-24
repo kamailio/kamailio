@@ -38,9 +38,10 @@
 
 #include <signal.h>
 
+#include "../../socket_info.h"
+
 #include "alarm_checks.h"
 #include "sub_agent.h"
-#include "network_stats.h"
 #include "utilities.h"
 #include "openserObjects.h"
 #include "openserMIBNotifications.h"
