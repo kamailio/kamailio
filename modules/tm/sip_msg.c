@@ -524,6 +524,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 
 	new_msg->msg_flags |= FL_SHM_CLONE;
 	p += ROUND4(sizeof(struct sip_msg));
+	new_msg->body = 0;
 	new_msg->add_rm = 0;
 	new_msg->body_lumps = 0;
 	new_msg->reply_lump = 0;
