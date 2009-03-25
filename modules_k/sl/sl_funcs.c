@@ -59,6 +59,7 @@
 #include "../../dset.h"
 #include "../../data_lump_rpl.h"
 #include "../../action.h"
+#include "../../parser/parse_to.h"
 #include "../../config.h"
 #include "../../tags.h"
 #include "sl.h"
