@@ -160,16 +160,21 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 	struct bookmark dummy_bm;
 	int backup_mhomed;
 	int ret;
+	struct dest_info dst;
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
 		goto error;
 
+	init_dest_info(&dst);
 	if (reply_to_via) {
-		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1) {
-			LM_ERR("cannot lookup reply dst: %s\n", msg->via1->host.s );
+		if (update_sock_struct_from_via(  &dst.to, msg, msg->via1 )==-1)
+		{		
+			LOG(L_ERR, "ERROR: sl_send_reply: "
+				"cannot lookup reply dst: %s\n",
+				msg->via1->host.s );
 			goto error;
 		}
-	} else update_sock_struct_from_ip( &to, msg );
+	} else update_sock_struct_from_ip( &dst.to, msg );
 
 	/* if that is a redirection message, dump current message set to it */
 	if (code>=300 && code<400) {
