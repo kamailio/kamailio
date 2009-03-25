@@ -88,6 +88,16 @@
 		encounter this.
 		</para>
 	</section>
+	<section>
+		<title>Network Algorithm (NETWORK)</title>
+		<para>
+		This algorithm relies on information provided by network interfaces.
+		The total amount of bytes waiting to be consumed on all the network
+		interfaces is retrieved once every timer_interval seconds.
+		If the returned amount exceeds the limit specified in the modparam,
+		rl_check returns an error. 
+		</para>
+	</section>
 	</section>
 	<section>
 	<title>Dynamic Rate Limiting Algorithms</title>
@@ -234,10 +244,13 @@ modparam("ratelimit", "queue", "2:*")
 # define pipe 1 with a limit of 100 pkts/sec using RED algorithm
 # define pipe 2 with a limit of 50 pkts/sec using TAILDROP algorithm
 # define pipe 3 with a limit of load factor 80 using FEEDBACK algorithm
+# define pipe 4 with a limit of 10000 pending bytes in the rx_queue
+#                                     using NETWORK algorithm
 modparam("ratelimit", "pipe", "0:TAILDROP:200")
 modparam("ratelimit", "pipe", "1:RED:100")
 modparam("ratelimit", "pipe", "2:TAILDROP:50")
 modparam("ratelimit", "pipe", "3:FEEDBACK:80")
+modparam("ratelimit", "pipe", "4:NETWORK:10000")
 ...
 </programlisting>
 		</example>

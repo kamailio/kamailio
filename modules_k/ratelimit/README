@@ -20,10 +20,10 @@ Hendrik Scholz
 
    Copyright © 2006 Freenet Cityline GmbH
 
-   Copyright © 2008 VoIP Embedded Inc.
+   Copyright © 2008-2009 VoIP Embedded Inc.
    Revision History
-   Revision $Revision: 4594 $ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision: 4594 $ $Date: 2008-08-06 06:08:33 -0400
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -36,6 +36,7 @@ Hendrik Scholz
 
               1.3.1. Tail Drop Algorithm (TAILDROP)
               1.3.2. Random Early Detection Algorithm (RED)
+              1.3.3. Network Algorithm (NETWORK)
 
         1.4. Dynamic Rate Limiting Algorithms
 
@@ -158,6 +159,14 @@ Chapter 1. Admin Guide
    not be reached within the interval. Decrease the timer interval
    if you encounter this.
 
+1.3.3. Network Algorithm (NETWORK)
+
+   This algorithm relies on information provided by network
+   interfaces. The total amount of bytes waiting to be consumed on
+   all the network interfaces is retrieved once every
+   timer_interval seconds. If the returned amount exceeds the
+   limit specified in the modparam, rl_check returns an error.
+
 1.4. Dynamic Rate Limiting Algorithms
 
    When running openser on different machines, one has to adjust
@@ -263,10 +272,13 @@ modparam("ratelimit", "queue", "2:*")
 # define pipe 1 with a limit of 100 pkts/sec using RED algorithm
 # define pipe 2 with a limit of 50 pkts/sec using TAILDROP algorithm
 # define pipe 3 with a limit of load factor 80 using FEEDBACK algorithm
+# define pipe 4 with a limit of 10000 pending bytes in the rx_queue
+#                                     using NETWORK algorithm
 modparam("ratelimit", "pipe", "0:TAILDROP:200")
 modparam("ratelimit", "pipe", "1:RED:100")
 modparam("ratelimit", "pipe", "2:TAILDROP:50")
 modparam("ratelimit", "pipe", "3:FEEDBACK:80")
+modparam("ratelimit", "pipe", "4:NETWORK:10000")
 ...
 
 1.6.4. reply_code (integer)

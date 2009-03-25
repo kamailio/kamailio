@@ -45,6 +45,7 @@
 #include "../../mod_fix.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
+#include "../../socket_info.h"
 #include "../sl/sl_api.h"
 
 MODULE_VERSION
@@ -84,7 +85,8 @@ enum {
 	PIPE_ALGO_NOP = 0,
 	PIPE_ALGO_RED,
 	PIPE_ALGO_TAILDROP,
-	PIPE_ALGO_FEEDBACK,             
+	PIPE_ALGO_FEEDBACK,
+	PIPE_ALGO_NETWORK
 };
 
 str_map_t algo_names[] = {
@@ -92,6 +94,7 @@ str_map_t algo_names[] = {
 	{str_init("RED"),	PIPE_ALGO_RED},
 	{str_init("TAILDROP"),	PIPE_ALGO_TAILDROP},
 	{str_init("FEEDBACK"),	PIPE_ALGO_FEEDBACK},
+	{str_init("NETWORK"),	PIPE_ALGO_NETWORK},
 	{{0, 0},		0},
 };
 
@@ -103,7 +106,7 @@ str_map_t algo_names[] = {
  */
 enum {
 	LOAD_SOURCE_CPU,
-	LOAD_SOURCE_EXTERNAL,
+	LOAD_SOURCE_EXTERNAL
 };
 
 str_map_t source_names[] = {
@@ -141,6 +144,8 @@ gen_lock_t * rl_lock;
 static double * load_value;     /* actual load, used by PIPE_ALGO_FEEDBACK */
 static double * pid_kp, * pid_ki, * pid_kd, * pid_setpoint; /* PID tuning params */
 static int * drop_rate;         /* updated by PIPE_ALGO_FEEDBACK */
+
+static int * network_load_value;      /* network load */
 
 /* where to get the load for feedback. values: cpu, external */
 static int load_source_mp = LOAD_SOURCE_CPU;
@@ -446,6 +451,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	network_load_value = shm_malloc(sizeof(int));
+	if (network_load_value==NULL) {
+		LM_ERR("oom for network_load_value\n");
+		return -1;
+	}
+
 	load_value = shm_malloc(sizeof(double));
 	if (load_value==NULL) {
 		LM_ERR("oom for load_value\n");
@@ -492,6 +503,7 @@ static int mod_init(void)
 		return -1;
 	}
 
+	*network_load_value = 0;
 	*load_value = 0.0;
 	*load_source = load_source_mp;
 	*pid_kp = 0.0;
@@ -616,6 +628,10 @@ void destroy(void)
 		}
 	}
 
+	if (network_load_value) {
+		shm_free(network_load_value);
+		network_load_value = NULL;
+	}
 	if (load_value) {
 		shm_free(load_value);
 		load_value = NULL;
@@ -806,7 +822,7 @@ static int pipe_push(struct sip_msg * msg, int id)
 
 	switch (*pipes[id].algo) {
 		case PIPE_ALGO_NOP:
-			LM_WARN("queue connected to NOP pipe\n");
+			LM_ERR("no algorithm defined for pipe %d\n", id);
 			ret = 1;
 			break;
 		case PIPE_ALGO_TAILDROP:
@@ -820,6 +836,9 @@ static int pipe_push(struct sip_msg * msg, int id)
 			break;
 		case PIPE_ALGO_FEEDBACK:
 			ret = (hash[*pipes[id].counter % 100] < *drop_rate) ? -1 : 1;
+			break;
+		case PIPE_ALGO_NETWORK:
+			ret = -1 * *pipes[id].load;
 			break;
 		default:
 			LM_ERR("unknown ratelimit algorithm: %d\n", *pipes[id].algo);
@@ -859,17 +878,11 @@ out_release:
 
 	/* no locks here because it's only read and pipes[pipe_id] is always alloc'ed */
 	LM_DBG("meth=%.*s queue=%d pipe=%d algo=%d limit=%d pkg_load=%d counter=%d "
-		"load=%2.1lf => %s\n",
-		method.len,
-		method.s,
-		que_id,
-		pipe_id,
-		*pipes[pipe_id].algo,
-		*pipes[pipe_id].limit,
-		*pipes[pipe_id].load,
-		*pipes[pipe_id].counter,
-		*load_value,
-		(ret == 1) ? "ACCEPT" : "DROP");
+		"load=%2.1lf network_load=%d => %s\n",
+		method.len, method.s, que_id, pipe_id,
+		*pipes[pipe_id].algo, *pipes[pipe_id].limit,
+		*pipes[pipe_id].load, *pipes[pipe_id].counter,
+		*load_value, *network_load_value, (ret == 1) ? "ACCEPT" : "DROP");
 
 	return ret;
 }
@@ -1112,6 +1125,8 @@ static void rl_timer(unsigned int ticks, void *param)
 			break;
 	}
 
+	*network_load_value = get_total_bytes_waiting();
+
 	if (rl_dbg_str->s) {
 		c = p = rl_dbg_str->s;
 		memset(c, ' ', rl_dbg_str->len);
@@ -1130,8 +1145,11 @@ static void rl_timer(unsigned int ticks, void *param)
 	}
 
 	for (i=0; i<MAX_PIPES; i++) {
-		if (*pipes[i].limit && timer_interval)
+		if( *pipes[i].algo == PIPE_ALGO_NETWORK ) {
+			*pipes[i].load = ( *network_load_value > *pipes[i].limit ) ? 1 : -1;
+		} else if (*pipes[i].limit && timer_interval) {
 			*pipes[i].load = *pipes[i].counter / (*pipes[i].limit * timer_interval);
+		}
 		*pipes[i].last_counter = *pipes[i].counter;
 		*pipes[i].counter = 0;
 	}
