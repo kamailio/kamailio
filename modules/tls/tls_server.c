@@ -45,6 +45,7 @@
 #include "../../timer.h"
 #include "../../globals.h"
 #include "../../pt.h"
+#include "../../tcp_options.h"
 
 #include "tls_init.h"
 #include "tls_domain.h"
@@ -813,7 +814,7 @@ int tls_h_read(struct tcp_connection * c)
 	SSL* ssl;
 
 	r = &c->req;
-	bytes_free = TCP_BUF_SIZE - (int)(r->pos - r->buf);
+	bytes_free = cfg_get(tcp, tcp_cfg, rd_buf_size) - (int)(r->pos - r->buf);
 	
 	if (bytes_free == 0) {
 		ERR("Buffer overrun, dropping\n");
