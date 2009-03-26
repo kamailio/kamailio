@@ -40,32 +40,6 @@
 
 
 /*
- * Make a shared memory copy of str string
- * Return value: -1 on error
- *                0 on success
- */
-int shm_str_dup(char** dest, str* val)
-{
-	char* ret;
-
-	if (!val) {
-		*dest = NULL;
-		return 0;
-	}
-
-	ret = shm_malloc(val->len + 1);
-	if (!ret) {
-		ERR("No memory left\n");
-		return 1;
-	}
-	memcpy(ret, val->s, val->len);
-	ret[val->len] = '\0';
-	*dest = ret;
-	return 0;
-}
-
-
-/*
  * Make a shared memory copy of ASCII zero terminated string
  * Return value: -1 on error
  *                0 on success
