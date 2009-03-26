@@ -39,7 +39,6 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/library/snmp_assert.h>
 
-#include "../../socket_info.h"
 #include "../../statistics.h"
 #include "../../mem/mem.h"
 

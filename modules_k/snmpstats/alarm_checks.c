@@ -38,7 +38,7 @@
 
 #include <signal.h>
 
-#include "../../socket_info.h"
+#include "../../statistics.h"
 
 #include "alarm_checks.h"
 #include "sub_agent.h"

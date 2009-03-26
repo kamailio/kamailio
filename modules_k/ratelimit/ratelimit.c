@@ -45,7 +45,7 @@
 #include "../../mod_fix.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
-#include "../../socket_info.h"
+#include "../../statistics.h"
 #include "../sl/sl_api.h"
 
 MODULE_VERSION

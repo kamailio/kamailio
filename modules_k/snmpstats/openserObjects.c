@@ -43,7 +43,6 @@
 #include "../../dprint.h"
 #include "../../statistics.h"
 #include "../../config.h"
-#include "../../socket_info.h"
 
 #include "snmpstats_globals.h"
 #include "utilities.h"
