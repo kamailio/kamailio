@@ -452,7 +452,7 @@ insert:
 		if(publ->body== NULL)
 		{
 			LM_ERR("New PUBLISH and no body found- invalid request\n");
-			return -1;
+			return ERR_PUBLISH_NO_BODY;
 		}
 	}
 	else

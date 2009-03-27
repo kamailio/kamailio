@@ -193,6 +193,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	publ_info_t* publ= NULL;
 	int size= 0;
 	str content_type;
+	int error;
 
 	content_type.s= "application/pidf+xml";
 	content_type.len= 20;
@@ -204,16 +205,16 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	}	
 
 	if(type & UL_CONTACT_DELETE)
-		LM_DBG("\nul_publish: DELETE type\n");
+		LM_DBG("\nDELETE type\n");
 	else
 		if(type & UL_CONTACT_INSERT)
-			LM_DBG("\nul_publish: INSERT type\n");
+			LM_DBG("\nINSERT type\n");
 		else
 			if(type & UL_CONTACT_UPDATE)
-				LM_DBG("\nul_publish: UPDATE type\n");
+				LM_DBG("\nUPDATE type\n");
 			else
 				if(type & UL_CONTACT_EXPIRE)
-					LM_DBG("\nul_publish: EXPIRE type\n");
+					LM_DBG("\nEXPIRE type\n");
 
 	if(type & UL_CONTACT_INSERT)
 	{
@@ -239,7 +240,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 		memcpy(uri.s+ uri.len, default_domain.s, default_domain.len);
 		uri.len+= default_domain.len;		
 	}
-	LM_DBG("ul_publish: uri= %.*s\n", uri.len, uri.s);
+	LM_DBG("uri= %.*s\n", uri.len, uri.s);
 	
 	size= sizeof(publ_info_t)+ sizeof(str)+( uri.len 
 			+c->callid.len+ 12 + content_type.len)*sizeof(char); 
@@ -298,10 +299,21 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	publ->event|= PRESENCE_EVENT;
 	publ->extra_headers= NULL;
 	print_publ(publ);
-	if(pua_send_publish(publ)< 0)
+	if((error=pua_send_publish(publ))< 0)
 	{
 		LM_ERR("while sending publish\n");
-	}	
+		if(type & UL_CONTACT_UPDATE && error == ERR_PUBLISH_NO_BODY) {
+			/* This can occur if Kamailio was restarted before storing an entry in 'pua' DB table.
+			 * The next refresh registration from that user would create an UPDATE action in pua_usrloc
+			 * and since the appropiate entry doesn't exist in pua hast table it would fail ("empty body").
+			 * This code solves this problem by invoking an INSERT action if an UPDATE action failed with
+			 * code ERR_PUBLISH_NO_BODY. It will however generate a new presentity status in the presence
+			 * server until the previous one expires. */
+			LM_ERR("UPDATE action generated a PUBLISH without body -> invoking INSERT action\n");
+			ul_publish(c, UL_CONTACT_INSERT, param);
+			return;
+		}
+	}
 
 	pua_ul_publish= 0;
 
