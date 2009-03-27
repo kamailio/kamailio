@@ -917,12 +917,12 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		   the header type */
 		if(gp->type==GPARAM_TYPE_INT)
 		{
-			if (gp->v.ival!=hf->type)
+			if (gp->v.i!=hf->type)
 				continue;
 		} else {
-			if (hf->name.len!=gp->v.sval.len)
+			if (hf->name.len!=gp->v.str.len)
 				continue;
-			if (cmp_hdrname_str(&hf->name, &gp->v.sval)!=0)
+			if (cmp_hdrname_str(&hf->name, &gp->v.str)!=0)
 				continue;
 		}
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
@@ -983,12 +983,12 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if(gp->type==GPARAM_TYPE_INT)
 		{
-			if (gp->v.ival!=hf->type)
+			if (gp->v.i!=hf->type)
 				continue;
 		} else {
-			if (hf->name.len!=gp->v.sval.len)
+			if (hf->name.len!=gp->v.str.len)
 				continue;
-			if (cmp_hdrname_str(&hf->name,&gp->v.sval)!=0)
+			if (cmp_hdrname_str(&hf->name,&gp->v.str)!=0)
 				continue;
 		}
 		return 1;
@@ -1354,12 +1354,12 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		for (hf=msg->headers; hf; hf=hf->next) {
 			if(hfanc->type==GPARAM_TYPE_INT)
 			{
-				if (hfanc->v.ival!=hf->type)
+				if (hfanc->v.i!=hf->type)
 					continue;
 			} else {
-				if (hf->name.len!=hfanc->v.sval.len)
+				if (hf->name.len!=hfanc->v.str.len)
 					continue;
-				if (cmp_hdrname_str(&hf->name,&hfanc->v.sval)!=0)
+				if (cmp_hdrname_str(&hf->name,&hfanc->v.str)!=0)
 					continue;
 			}
 			break;
@@ -1497,41 +1497,41 @@ static int hname_fixup(void** param, int param_no)
 	}
 	memset(gp, 0, sizeof(gparam_t));
 
-	gp->v.sval.s = (char*)*param;
-	gp->v.sval.len = strlen(gp->v.sval.s);
-	if(gp->v.sval.len==0)
+	gp->v.str.s = (char*)*param;
+	gp->v.str.len = strlen(gp->v.str.s);
+	if(gp->v.str.len==0)
 	{
 		LM_ERR("empty header name parameter\n");
 		pkg_free(gp);
 		return E_UNSPEC;
 	}
 	
-	c = gp->v.sval.s[gp->v.sval.len];
-	gp->v.sval.s[gp->v.sval.len] = ':';
-	gp->v.sval.len++;
+	c = gp->v.str.s[gp->v.str.len];
+	gp->v.str.s[gp->v.str.len] = ':';
+	gp->v.str.len++;
 	
-	if (parse_hname2(gp->v.sval.s, gp->v.sval.s
-				+ ((gp->v.sval.len<4)?4:gp->v.sval.len), &hdr)==0)
+	if (parse_hname2(gp->v.str.s, gp->v.str.s
+				+ ((gp->v.str.len<4)?4:gp->v.str.len), &hdr)==0)
 	{
 		LM_ERR("error parsing header name\n");
 		pkg_free(gp);
 		return E_UNSPEC;
 	}
 	
-	gp->v.sval.len--;
-	gp->v.sval.s[gp->v.sval.len] = c;
+	gp->v.str.len--;
+	gp->v.str.s[gp->v.str.len] = c;
 
 	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 	{
 		LM_INFO("using hdr type (%d) instead of <%.*s>\n",
-				hdr.type, gp->v.sval.len, gp->v.sval.s);
-		pkg_free(gp->v.sval.s);
-		gp->v.sval.s = NULL;
-		gp->v.ival = hdr.type;
+				hdr.type, gp->v.str.len, gp->v.str.s);
+		pkg_free(gp->v.str.s);
+		gp->v.str.s = NULL;
+		gp->v.i = hdr.type;
 		gp->type = GPARAM_TYPE_INT;
 	} else {
 		gp->type = GPARAM_TYPE_STR;
-		LM_INFO("using hdr type name <%.*s>\n", gp->v.sval.len, gp->v.sval.s);
+		LM_INFO("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
 	}
 	
 	*param = (void*)gp;
@@ -1543,7 +1543,7 @@ static int free_hname_fixup(void** param, int param_no)
 	if(*param)
 	{
 		if(((gparam_p)(*param))->type==GPARAM_TYPE_STR)
-			pkg_free(((gparam_p)(*param))->v.sval.s);
+			pkg_free(((gparam_p)(*param))->v.str.s);
 		pkg_free(*param);
 		*param = 0;
 	}
