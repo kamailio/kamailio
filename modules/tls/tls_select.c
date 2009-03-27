@@ -59,7 +59,8 @@ enum {
 	COMP_HOST,        /* hostname from subject/alternative */
 	COMP_URI,         /* URI from subject/alternative */
 	COMP_E,           /* Email address */
-	COMP_IP           /* IP from subject/alternative */
+	COMP_IP,          /* IP from subject/alternative */
+	TLSEXT_SN         /* Server name of the peer */
 };
 
 
@@ -691,6 +692,75 @@ static int sel_cert(str* res, select_t* s, struct sip_msg* msg)
 }
 
 
+#ifdef OPENSSL_NO_TLSEXT
+static int get_tlsext_sn(str* res, int type, sip_msg_t* msg)
+{
+	ERR("TLS extension 'server name' is not available! "
+		"please install openssl with TLS extension support and recompile "
+		"the server\n");
+	return -1;
+}
+#else
+static int get_tlsext_sn(str* res, sip_msg_t* msg)
+{
+	static char buf[1024];
+	struct tcp_connection* c;
+	str server_name;	
+	SSL* ssl;
+
+	c = get_cur_connection(msg);
+	if (!c) {
+		INFO("TLS connection not found in select_desc\n");
+		goto error;
+	}
+	ssl = get_ssl(c);
+	if (!ssl) goto error;
+
+	buf[0] = '\0';
+
+	server_name.s = (char*)SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	if (server_name.s) {
+		DBG("received server_name (TLS extension): '%.*s'\n", 
+			STR_FMT(&server_name));
+		server_name.len = strlen(server_name.s);
+	} else {
+		DBG("SSL_get_servername returned NULL\n");
+		goto error;
+	}
+	
+	/* copy server_name into the buffer. If the buffer is too small copy only
+	 * the last bytes as these are the more important ones and prefix with
+	 * '+' */
+	if (server_name.len > sizeof(buf)) {
+		ERR("server_name to big for buffer\n");
+		buf[0] = '+';
+		memcpy(buf + 1, server_name.s + 1 + server_name.len - sizeof(buf), 
+			   sizeof(buf) - 1);
+		res->len = sizeof(buf);
+	} else {
+		memcpy(buf, server_name.s, server_name.len);
+		res->len = server_name.len;
+	}
+	res->s = buf;
+	
+	tcpconn_put(c);
+	return 0;
+	
+error:
+	if (c) tcpconn_put(c);
+	return -1;
+}
+#endif
+
+
+static int sel_tlsext_sn(str* res, select_t* s, sip_msg_t* msg)
+{
+	return get_tlsext_sn(res, msg);
+}
+
+
+
+
 select_row_t tls_sel[] = {
 	/* Current cipher parameters */
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("tls"), sel_tls, 0},
@@ -699,6 +769,10 @@ select_row_t tls_sel[] = {
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("desc"),        sel_desc,    0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("description"), sel_desc,    0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("cipher"),      sel_cipher,  0},
+
+	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("serverName"), sel_tlsext_sn,  0},
+	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("server_name"), sel_tlsext_sn,  0},
+
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("peer"),        sel_cert,    DIVERSION | CERT_PEER},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("my"),          sel_cert,    DIVERSION | CERT_LOCAL},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("me"),          sel_cert,    DIVERSION | CERT_LOCAL},
