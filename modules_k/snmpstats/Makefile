@@ -21,6 +21,8 @@ NAME=snmpstats.so
 LIBS=$(BUILDAGENTLIBS)
 
 
+DEFS+=-DOPENSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 
 install_module_custom:
