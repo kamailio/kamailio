@@ -181,4 +181,8 @@
 #define _ter1_ 0x3a726574   /* "ter:" */
 #define _ter2_ 0x20726574   /* "ter " */
 
+#define _priv_ 0x76697270   /* "priv" */
+#define _acy2_ 0x20796361   /* "acy " */
+#define _acy1_ 0x3a796361   /* "acy:" */
+
 #endif /* KEYS_H */

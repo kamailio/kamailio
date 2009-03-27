@@ -278,6 +278,7 @@ typedef struct sip_msg {
 	struct hdr_field* pai;
 	struct hdr_field* ppi;
 	struct hdr_field* path;
+	struct hdr_field* privacy;
 
 	struct msg_body* body;
 
