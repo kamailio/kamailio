@@ -5,7 +5,8 @@
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * COpyright (C) 2005,2006 iptelorg GmbH
+ * Copyright (C) 2005,2006 iptelorg GmbH
+ * Copyright (C) 2006 enum.at
  *
  * This file is part of ser, a free SIP server.
  *
@@ -33,7 +34,10 @@
 #define _TLS_SELECT_H
 
 #include "../../select.h"
+#include "../../pvar.h"
 
 extern select_row_t tls_sel[];
+
+extern pv_export_t tls_pv[];
 
 #endif /* _TLS_SELECT_H */

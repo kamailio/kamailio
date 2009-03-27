@@ -5,7 +5,8 @@
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * COpyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2006 enum.at
  *
  * This file is part of ser, a free SIP server.
  *
@@ -62,6 +63,38 @@ enum {
 	COMP_IP,          /* IP from subject/alternative */
 	TLSEXT_SN         /* Server name of the peer */
 };
+
+
+enum {
+	PV_CERT_LOCAL      = 1<<0,   /* Select local certificate */
+	PV_CERT_PEER       = 1<<1,   /* Select peer certificate */
+	PV_CERT_SUBJECT    = 1<<2,   /* Select subject part of certificate */
+	PV_CERT_ISSUER     = 1<<3,   /* Select issuer part of certificate */
+
+	PV_CERT_VERIFIED   = 1<<4,   /* Test for verified certificate */
+	PV_CERT_REVOKED    = 1<<5,   /* Test for revoked certificate */
+	PV_CERT_EXPIRED    = 1<<6,   /* Expiration certificate test */
+	PV_CERT_SELFSIGNED = 1<<7,   /* self-signed certificate test */
+	PV_CERT_NOTBEFORE  = 1<<8,   /* Select validity end from certificate */
+	PV_CERT_NOTAFTER   = 1<<9,   /* Select validity start from certificate */
+
+	PV_COMP_CN = 1<<10,          /* Common name */
+	PV_COMP_O  = 1<<11,          /* Organization name */
+	PV_COMP_OU = 1<<12,          /* Organization unit */
+	PV_COMP_C  = 1<<13,          /* Country name */
+	PV_COMP_ST = 1<<14,          /* State */
+	PV_COMP_L  = 1<<15,          /* Locality/town */
+
+	PV_COMP_HOST = 1<<16,        /* hostname from subject/alternative */
+	PV_COMP_URI  = 1<<17,        /* URI from subject/alternative */
+	PV_COMP_E    = 1<<18,        /* Email address */
+	PV_COMP_IP   = 1<<19,        /* IP from subject/alternative */
+
+	PV_TLSEXT_SNI = 1<<20,       /* Peer's server name (TLS extension) */
+};
+
+
+
 
 
 struct tcp_connection* get_cur_connection(struct sip_msg* msg)
@@ -160,7 +193,14 @@ static int sel_cipher(str* res, select_t* s, sip_msg_t* msg)
 }
 
 
-
+static int pv_cipher(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	if (get_cipher(&res->rs, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR;
+	return 0;
+}
 
 
 static int get_bits(str* res, int* i, sip_msg_t* msg) 
@@ -204,6 +244,14 @@ static int sel_bits(str* res, select_t* s, sip_msg_t* msg)
 	return get_bits(res, NULL, msg);
 }
 
+static int pv_bits(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	if (get_bits(&res->rs, &res->ri, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR | PV_VAL_INT;
+	return 0;
+}
 
 
 static int get_version(str* res, sip_msg_t* msg)
@@ -246,6 +294,17 @@ static int sel_version(str* res, select_t* s, sip_msg_t* msg)
 }
 
 
+static int pv_version(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	if (get_version(&res->rs, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
+
+
 static int get_desc(str* res, sip_msg_t* msg)
 {
 	static char buf[128];
@@ -279,6 +338,16 @@ static int sel_desc(str* res, select_t* s, sip_msg_t* msg)
 	return get_desc(res, msg);
 }
 
+static int pv_desc(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	if (get_desc(&res->rs, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
+
 
 static int get_cert_version(str* res, int local, sip_msg_t* msg)
 {
@@ -309,6 +378,26 @@ static int sel_cert_version(str* res, select_t* s, sip_msg_t* msg)
 	}
 
 	return get_cert_version(res, local, msg);
+}
+
+static int pv_cert_version(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int local;
+	
+	if (param->pvn.u.isname.name.n & PV_CERT_PEER) {
+		local = 0;
+	} else if (param->pvn.u.isname.name.n & PV_CERT_LOCAL) {
+		local = 1;
+	} else {
+		BUG("bug in call to pv_cert_version\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (get_cert_version(&res->rs, local, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	res->flags = PV_VAL_STR;
+	return 0;
 }
 
 
@@ -380,6 +469,30 @@ static int sel_check_cert(str* res, select_t* s, sip_msg_t* msg)
 
 	return check_cert(res, NULL, local, err, msg);
 }
+
+static int pv_check_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int err;
+	
+	switch (param->pvn.u.isname.name.n) {
+	case PV_CERT_VERIFIED:   err = X509_V_OK;                              break;
+	case PV_CERT_REVOKED:    err = X509_V_ERR_CERT_REVOKED;                break;
+	case PV_CERT_EXPIRED:    err = X509_V_ERR_CERT_HAS_EXPIRED;            break;
+	case PV_CERT_SELFSIGNED: err = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT; break;
+	default:
+		BUG("unexpected parameter value \"%d\"\n", param->pvn.u.isname.name.n);
+		return pv_get_null(msg, param, res);
+	}
+	
+
+	if (check_cert(&res->rs, &res->ri, 0, err, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	res->flags = PV_VAL_STR | PV_VAL_INT;
+	return 0;
+}
+
 
 
 
@@ -459,6 +572,26 @@ static int sel_validity(str* res, select_t* s, sip_msg_t* msg)
 }
 
 
+static int pv_validity(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int bound;
+	
+	switch (param->pvn.u.isname.name.n) {
+	case PV_CERT_NOTBEFORE: bound = NOT_BEFORE; break;
+	case PV_CERT_NOTAFTER:  bound = NOT_AFTER;  break;
+	default:
+		BUG("unexpected parameter value \"%d\"\n", param->pvn.u.isname.name.n);
+		return pv_get_null(msg, param, res);
+	}
+
+	if (get_validity(&res->rs, 0, bound, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 static int get_sn(str* res, int* ires, int local, sip_msg_t* msg)
 {
@@ -494,6 +627,29 @@ static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
 
 	return get_sn(res, NULL, local, msg);
 }
+
+
+static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int local;
+	
+	if (param->pvn.u.isname.name.n & PV_CERT_PEER) {
+		local = 0;
+	} else if (param->pvn.u.isname.name.n & PV_CERT_LOCAL) {
+		local = 1;
+	} else {
+		BUG("could not determine certificate\n");
+		return pv_get_null(msg, param, res);
+	}
+	
+	if (get_sn(&res->rs, &res->ri, local, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	
+	res->flags = PV_VAL_STR | PV_VAL_INT;
+	return 0;
+}
+
 
 
 static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
@@ -584,6 +740,54 @@ static int sel_comp(str* res, select_t* s, sip_msg_t* msg)
 }
 
 
+static int pv_comp(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int ind_local, local = 0, issuer = 0, nid = NID_commonName;
+
+	/* copy callback value as we modify it */
+	ind_local = param->pvn.u.isname.name.n;	
+	DBG("ind_local = %x", ind_local);
+
+	if (ind_local & PV_CERT_PEER) {
+		local = 0;
+		ind_local = ind_local ^ PV_CERT_PEER;
+	} else if (ind_local & PV_CERT_LOCAL) {
+		local = 1;
+		ind_local = ind_local ^ PV_CERT_LOCAL;
+	} else {
+		BUG("could not determine certificate\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if (ind_local & PV_CERT_SUBJECT) {
+		issuer = 0;
+		ind_local = ind_local ^ PV_CERT_SUBJECT;
+	} else if (ind_local & PV_CERT_ISSUER) {
+		issuer = 1;
+		ind_local = ind_local ^ PV_CERT_ISSUER;
+	} else {
+		BUG("could not determine subject or issuer\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(ind_local) {
+		case PV_COMP_CN: nid = NID_commonName;             break;
+		case PV_COMP_O:  nid = NID_organizationName;       break;
+		case PV_COMP_OU: nid = NID_organizationalUnitName; break;
+		case PV_COMP_C:  nid = NID_countryName;            break;
+		case PV_COMP_ST: nid = NID_stateOrProvinceName;    break;
+		case PV_COMP_L:  nid = NID_localityName;           break;
+		default:      nid = NID_undef;
+	}
+
+	if (get_comp(&res->rs, local, issuer, nid, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 static int get_alt(str* res, int local, int type, sip_msg_t* msg)
 {
@@ -673,6 +877,41 @@ static int sel_alt(str* res, select_t* s, sip_msg_t* msg)
 }
 
 
+static int pv_alt(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int ind_local, local = 0, type = GEN_URI;
+	
+	ind_local = param->pvn.u.isname.name.n;
+
+	if (ind_local & PV_CERT_PEER) {
+		local = 0;
+		ind_local = ind_local ^ PV_CERT_PEER;
+	} else if (ind_local & PV_CERT_LOCAL) {
+		local = 1;
+		ind_local = ind_local ^ PV_CERT_LOCAL;
+	} else {
+		BUG("could not determine certificate\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(ind_local) {
+		case PV_COMP_E:    type = GEN_EMAIL; break;
+		case PV_COMP_HOST: type = GEN_DNS;   break;
+		case PV_COMP_URI:  type = GEN_URI;   break;
+		case PV_COMP_IP:   type = GEN_IPADD; break;
+		default:
+			BUG("ind_local=%d\n", ind_local);
+			return pv_get_null(msg, param, res);
+	}
+
+	if (get_alt(&res->rs, local, type, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 static int sel_tls(str* res, select_t* s, struct sip_msg* msg)
 {
@@ -757,6 +996,24 @@ static int sel_tlsext_sn(str* res, select_t* s, sip_msg_t* msg)
 {
 	return get_tlsext_sn(res, msg);
 }
+
+
+static int pv_tlsext_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	if (param->pvn.u.isname.name.n != PV_TLSEXT_SNI) {
+		BUG("unexpected parameter value \"%d\"\n",
+			param->pvn.u.isname.name.n);
+		return pv_get_null(msg, param, res);
+	}
+	
+	if (get_tlsext_sn(&res->rs, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+	
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 
 
@@ -848,3 +1105,172 @@ select_row_t tls_sel[] = {
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
+
+
+/*
+ *  pseudo variables
+ */
+pv_export_t tls_pv[] = {
+	/* TLS session parameters */
+	{{"tls_version", sizeof("tls_version")-1},
+		PVT_OTHER, pv_version, 0,
+		0, 0, 0, 0 },
+	{{"tls_description", sizeof("tls_description")-1},
+		PVT_OTHER, pv_desc, 0,
+		0, 0, 0, 0 },
+	{{"tls_cipher_info", sizeof("tls_cipher_info")-1},
+		PVT_OTHER, pv_cipher, 0,
+		0, 0, 0, 0 },
+	{{"tls_cipher_bits", sizeof("tls_cipher_bits")-1},
+		PVT_OTHER,  pv_bits, 0,
+		0, 0, 0, 0 },
+	/* general certificate parameters for peer and local */
+	{{"tls_peer_version", sizeof("tls_peer_version")-1},
+		PVT_OTHER, pv_cert_version, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  },
+	{{"tls_my_version", sizeof("tls_my_version")-1},
+		PVT_OTHER, pv_cert_version, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL },
+	{{"tls_peer_serial", sizeof("tls_peer_serial")-1},
+		PVT_OTHER, pv_sn, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  },
+	{{"tls_my_serial", sizeof("tls_my_serial")-1},
+		PVT_OTHER, pv_sn,0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL },
+	/* certificate parameters for peer and local, for subject and issuer*/	
+	{{"tls_peer_subject", sizeof("tls_peer_subject")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT },
+	{{"tls_peer_issuer", sizeof("tls_peer_issuer")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  },
+	{{"tls_my_subject", sizeof("tls_my_subject")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT },
+	{{"tls_my_issuer", sizeof("tls_my_issuer")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  },
+	{{"tls_peer_subject_cn", sizeof("tls_peer_subject_cn")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT | PV_COMP_CN },
+	{{"tls_peer_issuer_cn", sizeof("tls_peer_issuer_cn")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  | PV_COMP_CN },
+	{{"tls_my_subject_cn", sizeof("tls_my_subject_cn")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_CN },
+	{{"tls_my_issuer_cn", sizeof("tls_my_issuer_cn")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  | PV_COMP_CN },
+	{{"tls_peer_subject_locality", sizeof("tls_peer_subject_locality")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT | PV_COMP_L },
+	{{"tls_peer_issuer_locality", sizeof("tls_peer_issuer_locality")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  | PV_COMP_L },
+	{{"tls_my_subject_locality", sizeof("tls_my_subject_locality")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_L },
+	{{"tls_my_issuer_locality", sizeof("tls_my_issuer_locality")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  | PV_COMP_L },
+	{{"tls_peer_subject_country", sizeof("tls_peer_subject_country")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT | PV_COMP_C },
+	{{"tls_peer_issuer_country", sizeof("tls_peer_issuer_country")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  | PV_COMP_C },
+	{{"tls_my_subject_country", sizeof("tls_my_subject_country")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_C },
+	{{"tls_my_issuer_country", sizeof("tls_my_issuer_country")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  | PV_COMP_C },
+	{{"tls_peer_subject_state", sizeof("tls_peer_subject_state")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT | PV_COMP_ST },
+	{{"tls_peer_issuer_state", sizeof("tls_peer_issuer_state")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  | PV_COMP_ST },
+	{{"tls_my_subject_state", sizeof("tls_my_subject_state")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_ST },
+	{{"tls_my_issuer_state", sizeof("tls_my_issuer_state")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  | PV_COMP_ST },
+	{{"tls_peer_subject_organization", sizeof("tls_peer_subject_organization")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT | PV_COMP_O },
+	{{"tls_peer_issuer_organization", sizeof("tls_peer_issuer_organization")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  | PV_COMP_O },
+	{{"tls_my_subject_organization", sizeof("tls_my_subject_organization")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_O },
+	{{"tls_my_issuer_organization", sizeof("tls_my_issuer_organization")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  | PV_COMP_O },
+	{{"tls_peer_subject_unit", sizeof("tls_peer_subject_unit")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_SUBJECT | PV_COMP_OU },
+	{{"tls_peer_issuer_unit", sizeof("tls_peer_issuer_unit")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_CERT_ISSUER  | PV_COMP_OU },
+	{{"tls_my_subject_unit", sizeof("tls_my_subject_unit")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_OU },
+	{{"tls_my_issuer_unit", sizeof("tls_my_issuer_unit")-1},
+		PVT_OTHER, pv_comp, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_ISSUER  | PV_COMP_OU },
+	/* subject alternative name parameters for peer and local */	
+	{{"tls_peer_san_email", sizeof("tls_peer_san_email")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_E },
+	{{"tls_my_san_email", sizeof("tls_my_san_email")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_E },
+	{{"tls_peer_san_hostname", sizeof("tls_peer_san_hostname")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_HOST },
+	{{"tls_my_san_hostname", sizeof("tls_my_san_hostname")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_HOST },
+	{{"tls_peer_san_uri", sizeof("tls_peer_san_uri")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_URI },
+	{{"tls_my_san_uri", sizeof("tls_my_san_uri")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_URI },
+	{{"tls_peer_san_ip", sizeof("tls_peer_san_ip")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_IP },
+	{{"tls_my_san_ip", sizeof("tls_my_san_ip")-1},
+		PVT_OTHER, pv_alt, 0,
+		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_IP },
+	/* peer certificate validation parameters */		
+	{{"tls_peer_verified", sizeof("tls_peer_verified")-1},
+		PVT_OTHER, pv_check_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_VERIFIED },
+	{{"tls_peer_revoked", sizeof("tls_peer_revoked")-1},
+		PVT_OTHER, pv_check_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_REVOKED },
+	{{"tls_peer_expired", sizeof("tls_peer_expired")-1},
+		PVT_OTHER, pv_check_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_EXPIRED },
+	{{"tls_peer_selfsigned", sizeof("tls_peer_selfsigned")-1},
+		PVT_OTHER, pv_check_cert, 0,
+		0, 0, pv_init_iname, PV_CERT_SELFSIGNED },
+	{{"tls_peer_notBefore", sizeof("tls_peer_notBefore")-1},
+		PVT_OTHER, pv_validity, 0,
+		0, 0, pv_init_iname, PV_CERT_NOTBEFORE },
+	{{"tls_peer_notAfter", sizeof("tls_peer_notAfter")-1},
+		PVT_OTHER, pv_validity, 0,
+		0, 0, pv_init_iname, PV_CERT_NOTAFTER },
+	/* peer certificate validation parameters */		
+	{{"tls_peer_server_name", sizeof("tls_peer_server_name")-1},
+		PVT_OTHER, pv_tlsext_sn, 0,
+		0, 0, pv_init_iname, PV_TLSEXT_SNI },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+
+}; 
