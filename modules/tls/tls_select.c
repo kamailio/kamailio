@@ -59,7 +59,7 @@ enum {
 	COMP_HOST,        /* hostname from subject/alternative */
 	COMP_URI,         /* URI from subject/alternative */
 	COMP_E,           /* Email address */
-        COMP_IP           /* IP from subject/alternative */
+	COMP_IP           /* IP from subject/alternative */
 };
 
 
@@ -107,8 +107,12 @@ static int get_cert(X509** cert, struct tcp_connection** c, struct sip_msg* msg,
 	ssl = get_ssl(*c);
 	if (!ssl) goto err;
 	*cert = my ? SSL_get_certificate(ssl) : SSL_get_peer_certificate(ssl);
-	if (!*cert) goto err;
-        return 0;
+	if (!*cert) {
+		ERR("Unable to retrieve TLS certificate from SSL structure\n");
+		goto err;
+	}
+	
+	return 0;
 	
  err:
 	tcpconn_put(*c);
@@ -116,7 +120,7 @@ static int get_cert(X509** cert, struct tcp_connection** c, struct sip_msg* msg,
 }
 
 
-static int sel_cipher(str* res, select_t* s, struct sip_msg* msg) 
+static int get_cipher(str* res, sip_msg_t* msg) 
 {
 	str cipher;
 	static char buf[1024];
@@ -142,15 +146,23 @@ static int sel_cipher(str* res, select_t* s, struct sip_msg* msg)
 	res->s = buf;
 	res->len = cipher.len;
 	tcpconn_put(c);
-        return 0;
+	return 0;
 
  err:
 	if (c) tcpconn_put(c);
 	return -1;
 }
 
+static int sel_cipher(str* res, select_t* s, sip_msg_t* msg)
+{
+	return get_cipher(res, msg);
+}
 
-static int sel_bits(str* res, select_t* s, struct sip_msg* msg) 
+
+
+
+
+static int get_bits(str* res, int* i, sip_msg_t* msg) 
 {
 	str bits;
 	int b;
@@ -176,8 +188,9 @@ static int sel_bits(str* res, select_t* s, struct sip_msg* msg)
 	memcpy(buf, bits.s, bits.len);
 	res->s = buf;
 	res->len = bits.len;
+	if (i) *i = b;
 	tcpconn_put(c);
-        return 0;
+	return 0;
 
  err:
 	if (c) tcpconn_put(c);
@@ -185,7 +198,14 @@ static int sel_bits(str* res, select_t* s, struct sip_msg* msg)
 }
 
 
-static int sel_version(str* res, select_t* s, struct sip_msg* msg)
+static int sel_bits(str* res, select_t* s, sip_msg_t* msg) 
+{
+	return get_bits(res, NULL, msg);
+}
+
+
+
+static int get_version(str* res, sip_msg_t* msg)
 {
 	str version;
 	static char buf[1024];
@@ -219,7 +239,13 @@ static int sel_version(str* res, select_t* s, struct sip_msg* msg)
 }
 
 
-static int sel_desc(str* res, select_t* s, struct sip_msg* msg)
+static int sel_version(str* res, select_t* s, sip_msg_t* msg)
+{
+	return get_version(res, msg);
+}
+
+
+static int get_desc(str* res, sip_msg_t* msg)
 {
 	static char buf[128];
 
@@ -239,7 +265,7 @@ static int sel_desc(str* res, select_t* s, struct sip_msg* msg)
 	res->s = buf;
 	res->len = strlen(buf);
 	tcpconn_put(c);
-        return 0;
+	return 0;
 
  err:
 	if (c) tcpconn_put(c);
@@ -247,49 +273,95 @@ static int sel_desc(str* res, select_t* s, struct sip_msg* msg)
 }
 
 
-static int sel_cert_version(str* res, select_t* s, struct sip_msg* msg)
+static int sel_desc(str* res, select_t* s, sip_msg_t* msg)
+{
+	return get_desc(res, msg);
+}
+
+
+static int get_cert_version(str* res, int local, sip_msg_t* msg)
 {
 	static char buf[INT2STR_MAX_LEN];
 	X509* cert;
 	struct tcp_connection* c;
 	char* version;
-	int my;
 
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+	version = int2str(X509_get_version(cert), &res->len);
+	memcpy(buf, version, res->len);
+	res->s = buf;
+	if (!local) X509_free(cert);
+	tcpconn_put(c);
+	return 0;
+}
+
+static int sel_cert_version(str* res, select_t* s, sip_msg_t* msg)
+{
+	int local;
+	
 	switch(s->params[s->n - 2].v.i) {
-	case CERT_PEER: my = 0; break;
-	case CERT_LOCAL: my = 1; break;
+	case CERT_PEER: local = 0; break;
+	case CERT_LOCAL: local = 1; break;
 	default:
 		BUG("Bug in call to sel_cert_version\n");
 		return -1;
 	}
 
-	if (get_cert(&cert, &c, msg, my) < 0) return -1;
-	version = int2str(X509_get_version(cert), &res->len);
-	memcpy(buf, version, res->len);
-	res->s = buf;
-	if (!my) X509_free(cert);
-	tcpconn_put(c);
-	return 0;
+	return get_cert_version(res, local, msg);
 }
+
 
 
 /*
  * Check whether peer certificate exists and verify the result
  * of certificate verification
  */
-static int check_cert(str* res, select_t* s, struct sip_msg* msg)
+static int check_cert(str* res, int* ires, int local, int err, sip_msg_t* msg)
 {
 	static str succ = STR_STATIC_INIT("1");
 	static str fail = STR_STATIC_INIT("0");
 
-	int ret, my, err;
 	struct tcp_connection* c;
 	SSL* ssl;
 	X509* cert = 0;
 
+	c = get_cur_connection(msg);
+	if (!c) return -1;
+
+	ssl = get_ssl(c);
+	if (!ssl) goto error;
+
+	if (local) {
+		DBG("Verification of local certificates not supported\n");
+		goto error;
+	} else {
+		if ((cert = SSL_get_peer_certificate(ssl)) && SSL_get_verify_result(ssl) == err) {
+			*res = succ;
+			if (ires) *ires = 1;
+		} else {
+			*res = fail;
+			if (ires) *ires = 0;
+		}
+	}
+
+	if (cert) X509_free(cert);
+	tcpconn_put(c);
+	return 0;
+
+ error:
+	if (cert) X509_free(cert);
+	if (c) tcpconn_put(c);
+	return -1;
+}
+
+
+static int sel_check_cert(str* res, select_t* s, sip_msg_t* msg)
+{
+	int local, err;
+	
 	switch(s->params[s->n - 2].v.i) {
-	case CERT_PEER: my = 0; break;
-	case CERT_LOCAL: my = 1; break;
+	case CERT_PEER: local = 0; break;
+	case CERT_LOCAL: local = 1; break;
 	default:
 		BUG("Bug in call to sel_cert_version\n");
 		return -1;
@@ -305,63 +377,29 @@ static int check_cert(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}   
 
-	c = get_cur_connection(msg);
-	if (!c) return -1;
-
-	ssl = get_ssl(c);
-	if (!ssl) goto err;
-
-	if (my) {
-		DBG("Verification of local certificates not supported\n");
-		goto err;
-	} else {
-		if ((cert = SSL_get_peer_certificate(ssl)) && SSL_get_verify_result(ssl) == err) {
-			*res = succ;
-			ret = 0; /* Verified certificate */
-		} else {
-			*res = fail;
-			/* I is better to return 0, because the select function
-			call is successful, only the result is false (Miklos) */
-			ret = 0; /* Certificate missing or not verified */
-		}
-	}
-
-	if (cert) X509_free(cert);
-	tcpconn_put(c);
-        return ret;
-
- err:
-	if (cert) X509_free(cert);
-	if (c) tcpconn_put(c);
-	return -1;
+	return check_cert(res, NULL, local, err, msg);
 }
 
 
-static int sel_validity(str* res, select_t* s, struct sip_msg* msg)
+
+static int get_validity(str* res, int local, int bound, sip_msg_t* msg)
 {
+#define NOT_BEFORE 0
+#define NOT_AFTER 1
 	static char buf[1024];
 	X509* cert;
 	struct tcp_connection* c;
 	BUF_MEM* p;
 	BIO* mem = 0;
 	ASN1_TIME* date;
-	int my;
 
-	switch(s->params[s->n - 2].v.i) {
-	case CERT_PEER:  my = 0; break;
-	case CERT_LOCAL: my = 1; break;
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+
+	switch (bound) {
+	case NOT_BEFORE: date = X509_get_notBefore(cert); break;
+	case NOT_AFTER:  date = X509_get_notAfter(cert);  break;
 	default:
-		BUG("Could not determine certificate\n");
-		return -1;
-	}
-
-	if (get_cert(&cert, &c, msg, my) < 0) return -1;
-
-	switch (s->params[s->n - 1].v.i) {
-	case CERT_NOTBEFORE: date = X509_get_notBefore(cert); break;
-	case CERT_NOTAFTER:  date = X509_get_notAfter(cert);  break;
-	default:
-		BUG("Unexpected parameter value \"%d\"\n", s->params[s->n - 1].v.i);
+		BUG("Unexpected parameter value \"%d\"\n", bound);
 		goto err;
 	}
 
@@ -386,44 +424,78 @@ static int sel_validity(str* res, select_t* s, struct sip_msg* msg)
 	res->len = p->length;
 
 	BIO_free(mem);
-	if (!my) X509_free(cert);
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
  err:
 	if (mem) BIO_free(mem);
-	if (!my) X509_free(cert);
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
 
-
-static int sel_sn(str* res, select_t* s, struct sip_msg* msg)
+static int sel_validity(str* res, select_t* s, sip_msg_t* msg)
 {
-	static char buf[INT2STR_MAX_LEN];
-	X509* cert;
-	struct tcp_connection* c;
-	int my;
-	char* sn;
-
+	int local, bound;
+	
 	switch(s->params[s->n - 2].v.i) {
-	case CERT_PEER:  my = 0; break;
-	case CERT_LOCAL: my = 1; break;
+	case CERT_PEER:  local = 0; break;
+	case CERT_LOCAL: local = 1; break;
 	default:
 		BUG("Could not determine certificate\n");
 		return -1;
 	}
 
-	if (get_cert(&cert, &c, msg, my) < 0) return -1;
+	switch (s->params[s->n - 1].v.i) {
+	case CERT_NOTBEFORE: bound = NOT_BEFORE; break;
+	case CERT_NOTAFTER:  bound = NOT_AFTER; break;
+	default:
+		BUG("Unexpected parameter value \"%d\"\n", s->params[s->n - 1].v.i);
+		return -1;
+	}
 
-	sn = int2str(ASN1_INTEGER_get(X509_get_serialNumber(cert)), &res->len);
+	return get_validity(res, local, bound, msg);
+}
+
+
+
+static int get_sn(str* res, int* ires, int local, sip_msg_t* msg)
+{
+	static char buf[INT2STR_MAX_LEN];
+	X509* cert;
+	struct tcp_connection* c;
+	char* sn;
+	int num;
+
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+
+	num = ASN1_INTEGER_get(X509_get_serialNumber(cert));
+	sn = int2str(num, &res->len);
 	memcpy(buf, sn, res->len);
 	res->s = buf;
-	if (!my) X509_free(cert);
+	if (ires) *ires = num;
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 }
 
-static int sel_comp(str* res, select_t* s, struct sip_msg* msg)
+static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
+{
+	int local;
+
+	switch(s->params[s->n - 2].v.i) {
+	case CERT_PEER:  local = 0; break;
+	case CERT_LOCAL: local = 1; break;
+	default:
+		BUG("Could not determine certificate\n");
+		return -1;
+	}
+
+	return get_sn(res, NULL, local, msg);
+}
+
+
+static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
 {
 	static char buf[1024];
 	X509* cert;
@@ -431,32 +503,13 @@ static int sel_comp(str* res, select_t* s, struct sip_msg* msg)
 	X509_NAME* name;
 	X509_NAME_ENTRY* e;
 	ASN1_STRING* asn1;
-	int nid = NID_commonName, index, my = 0, issuer = 0, i;
+	int index, text_len;
 	char* elem;
 	unsigned char* text_s;
-	int text_len;
 	       
 	text_s = 0;
 
-	for(i = 1; i <= s->n - 1; i++) {
-		switch(s->params[i].v.i) {
-		case CERT_LOCAL: my = 1; break;
-		case CERT_PEER: my = 0; break;
-		case CERT_SUBJECT: issuer = 0;  break;
-		case CERT_ISSUER: issuer = 1; break;
-		case COMP_CN: nid = NID_commonName; break;
-		case COMP_O: nid = NID_organizationName; break;
-		case COMP_OU: nid = NID_organizationalUnitName; break;
-		case COMP_C: nid = NID_countryName; break;
-		case COMP_ST: nid = NID_stateOrProvinceName; break;
-		case COMP_L: nid = NID_localityName; break;
-		default:
-			BUG("Bug in sel_comp: %d\n", s->params[s->n - 1].v.i);
-			return -1;
-		}
-	}
-
-	if (get_cert(&cert, &c, msg, my) < 0) return -1;
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
 
 	name = issuer ? X509_get_issuer_name(cert) : X509_get_subject_name(cert);
 	if (!name) {
@@ -491,21 +544,50 @@ static int sel_comp(str* res, select_t* s, struct sip_msg* msg)
 	res->len = text_len;
 
 	OPENSSL_free(text_s);
-	if (!my) X509_free(cert);
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
  err:
 	if (text_s) OPENSSL_free(text_s);
-	if (!my) X509_free(cert);
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
 
-static int sel_alt(str* res, select_t* s, struct sip_msg* msg)
+
+static int sel_comp(str* res, select_t* s, sip_msg_t* msg)
+{
+	int i, local = 0, issuer = 0;
+	int nid = NID_commonName;
+
+	for(i = 1; i <= s->n - 1; i++) {
+		switch(s->params[i].v.i) {
+		case CERT_LOCAL:   local = 1;                        break;
+		case CERT_PEER:    local = 0;                        break;
+		case CERT_SUBJECT: issuer = 0;                       break;
+		case CERT_ISSUER:  issuer = 1;                       break;
+		case COMP_CN:      nid = NID_commonName;             break;
+		case COMP_O:       nid = NID_organizationName;       break;
+		case COMP_OU:      nid = NID_organizationalUnitName; break;
+		case COMP_C:       nid = NID_countryName;            break;
+		case COMP_ST:      nid = NID_stateOrProvinceName;    break;
+		case COMP_L:       nid = NID_localityName;           break;
+		default:
+			BUG("Bug in sel_comp: %d\n", s->params[s->n - 1].v.i);
+			return -1;
+		}
+	}
+
+	return get_comp(res, local, issuer, nid, msg);
+}
+
+
+
+static int get_alt(str* res, int local, int type, sip_msg_t* msg)
 {
 	static char buf[1024];
-	int type = GEN_URI, my = 0, n, i, found = 0;
+	int n, found = 0;
 	STACK_OF(GENERAL_NAME)* names = 0;
 	GENERAL_NAME* nm;
 	X509* cert;
@@ -513,21 +595,7 @@ static int sel_alt(str* res, select_t* s, struct sip_msg* msg)
 	str text;
 	struct ip_addr ip;
 
-	for(i = 1; i <= s->n - 1; i++) {
-		switch(s->params[i].v.i) {
-		case CERT_LOCAL: my = 1; break;
-		case CERT_PEER: my = 0; break;
-		case COMP_E:    type = GEN_EMAIL; break;
-		case COMP_HOST: type = GEN_DNS;   break;
-		case COMP_URI:  type = GEN_URI;   break;
-		case COMP_IP:   type = GEN_IPADD; break;
-		default:
-			BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
-			return -1;
-		}
-	}
-
-	if (get_cert(&cert, &c, msg, my) < 0) return -1;
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
 
 	names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
 	if (!names) {
@@ -572,15 +640,37 @@ static int sel_alt(str* res, select_t* s, struct sip_msg* msg)
 	if (!found) goto err;
 
 	if (names) sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
-	if (!my) X509_free(cert);
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
  err:
 	if (names) sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
-	if (!my) X509_free(cert);
+	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
+
+static int sel_alt(str* res, select_t* s, sip_msg_t* msg)
+{
+	int type = GEN_URI, local = 0, i;
+
+	for(i = 1; i <= s->n - 1; i++) {
+		switch(s->params[i].v.i) {
+		case CERT_LOCAL: local = 1; break;
+		case CERT_PEER:  local = 0; break;
+		case COMP_E:     type = GEN_EMAIL; break;
+		case COMP_HOST:  type = GEN_DNS;   break;
+		case COMP_URI:   type = GEN_URI;   break;
+		case COMP_IP:    type = GEN_IPADD; break;
+		default:
+			BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
+			return -1;
+		}
+	}
+	
+	return get_alt(res, local, type, msg);
+}
+
 
 
 static int sel_tls(str* res, select_t* s, struct sip_msg* msg)
@@ -602,28 +692,28 @@ static int sel_cert(str* res, select_t* s, struct sip_msg* msg)
 
 
 select_row_t tls_sel[] = {
-	     /* Current cipher parameters */
-        { NULL, SEL_PARAM_STR, STR_STATIC_INIT("tls"), sel_tls, 0},
-
+	/* Current cipher parameters */
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("tls"), sel_tls, 0},
+	
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("version"),     sel_version, 0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("desc"),        sel_desc,    0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("description"), sel_desc,    0},
-        { sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("cipher"),      sel_cipher,  0},
+	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("cipher"),      sel_cipher,  0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("peer"),        sel_cert,    DIVERSION | CERT_PEER},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("my"),          sel_cert,    DIVERSION | CERT_LOCAL},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("me"),          sel_cert,    DIVERSION | CERT_LOCAL},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("myself"),      sel_cert,    DIVERSION | CERT_LOCAL},
-
-        { sel_cipher, SEL_PARAM_STR, STR_STATIC_INIT("bits"), sel_bits, 0},
-
+	
+	{ sel_cipher, SEL_PARAM_STR, STR_STATIC_INIT("bits"), sel_bits, 0},
+	
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("subject"), sel_name, DIVERSION | CERT_SUBJECT},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("subj"),    sel_name, DIVERSION | CERT_SUBJECT},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("issuer"),  sel_name, DIVERSION | CERT_ISSUER},
 
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("verified"),    check_cert, DIVERSION | CERT_VERIFIED},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("revoked"),     check_cert, DIVERSION | CERT_REVOKED},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("expired"),     check_cert, DIVERSION | CERT_EXPIRED},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("self_signed"), check_cert, DIVERSION | CERT_SELFSIGNED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("verified"),    sel_check_cert, DIVERSION | CERT_VERIFIED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("revoked"),     sel_check_cert, DIVERSION | CERT_REVOKED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("expired"),     sel_check_cert, DIVERSION | CERT_EXPIRED},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("self_signed"), sel_check_cert, DIVERSION | CERT_SELFSIGNED},
 
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("version"), sel_cert_version, 0},
 
@@ -682,5 +772,5 @@ select_row_t tls_sel[] = {
 	{ sel_name, SEL_PARAM_STR, STR_STATIC_INIT("organizational_unit_name"), sel_comp, DIVERSION | COMP_OU},
 	{ sel_name, SEL_PARAM_STR, STR_STATIC_INIT("unit"),                     sel_comp, DIVERSION | COMP_OU},
 
-        { NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
