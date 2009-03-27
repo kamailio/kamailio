@@ -41,6 +41,8 @@
 
 #include "../../sr_module.h"
 
+#define OPENSER_OID            1,3,6,1,4,1,27483
+
 /***************************************************************
  * Textual Conventions for BITS types - begins
  *
