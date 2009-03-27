@@ -280,12 +280,20 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 int send_reply(struct sip_msg *msg, int code, str *text)
 {
 	struct cell * t;
+	char rbuf[256];
 	if(sl_bind_tm!=0)
 	{
 		t = tmb.t_gett();
 		if(t!= NULL && t!=T_UNDEFINED)
 		{
-			if(tmb.t_reply(msg, code, text)< 0)
+			if(text->len>=256)
+			{
+				LM_ERR("reason phrase too long (tm)\n");
+				return -1;
+			}
+			strncpy(rbuf,  text->s,  text->len);			
+			rbuf[text->len] = '\0';
+			if(tmb.t_reply(msg, code, rbuf)< 0)
 			{
 				LM_ERR("failed to reply stateful (tm)\n");
 				return -1;

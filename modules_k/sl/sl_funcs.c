@@ -161,6 +161,7 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 	int backup_mhomed;
 	int ret;
 	struct dest_info dst;
+	char rbuf[256];
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
 		goto error;
@@ -184,21 +185,30 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 		}
 	}
 
+	/*sr core requres charz reason phrase */
+	if(text->len>=256)
+	{
+		LOG(L_ERR, "ERROR: reason phrase too long\n");
+		goto error;
+	}
+	strncpy(rbuf, text->s, text->len);
+	rbuf[text->len] = '\0';
+
 	/* add a to-tag if there is a To header field without it */
 	if ( code>=180 &&
 		(msg->to || (parse_headers(msg,HDR_TO_F, 0)!=-1 && msg->to))
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
 		if(tag!=NULL && tag->s!=NULL) {
-			buf.s = build_res_buf_from_sip_req( code, text, tag,
+			buf.s = build_res_buf_from_sip_req( code, rbuf, tag,
 						msg, (unsigned int*)&buf.len, &dummy_bm);
 		} else {
 			calc_crc_suffix( msg, tag_suffix );
-			buf.s = build_res_buf_from_sip_req( code, text, &sl_tag, msg,
+			buf.s = build_res_buf_from_sip_req( code, rbuf, &sl_tag, msg,
 				(unsigned int*)&buf.len, &dummy_bm);
 		}
 	} else {
-		buf.s = build_res_buf_from_sip_req( code, text, 0, msg,
+		buf.s = build_res_buf_from_sip_req( code, rbuf, 0, msg,
 			(unsigned int*)&buf.len, &dummy_bm);
 	}
 	if (!buf.s) {
