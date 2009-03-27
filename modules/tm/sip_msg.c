@@ -490,6 +490,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_PPI_T:
 		case HDR_PAI_T:
 		case HDR_PATH_T:
+		case HDR_PRIVACY_T:
 			/* we ignore them for now even if they have something parsed*/
 			break;
 		}/*switch*/
@@ -524,6 +525,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 
 	new_msg->msg_flags |= FL_SHM_CLONE;
 	p += ROUND4(sizeof(struct sip_msg));
+	new_msg->body = 0;
 	new_msg->add_rm = 0;
 	new_msg->body_lumps = 0;
 	new_msg->reply_lump = 0;
@@ -890,6 +892,11 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		case HDR_PATH_T:
 			if (!HOOK_SET(path)) {
 				new_msg->path = new_hdr;
+			}
+			break;
+		case HDR_PRIVACY_T:
+			if (!HOOK_SET(privacy)) {
+				new_msg->privacy = new_hdr;
 			}
 			break;
 		}/*switch*/

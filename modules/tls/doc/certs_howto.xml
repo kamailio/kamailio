@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tls.certs_howto" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+	<title>Quick Certificate Howto</title>
+		<para>
+			There are various ways to create, sign certificates and manage small CAs (Certificate Authorities). If you want a GUI, try <ulink url="http://tinyca.sm-zone.net/">tinyca (http://tinyca.sm-zone.net/)</ulink>, a very nice and small CA management application. If you are in a hurry and everything you have are the installed openssl libraries and utilities, read on.
+		</para>
+		<para>
+			Assumptions: we run our own CA.
+		</para>
+		<para>
+			Warning: in this example no key is encrypted. The client and server private keys must not be encrypted (ser doesn't support encrypted keys), so make sure the corresponding files are readable only by trusted people. You should use a password for your CA private key.
+		</para>
+		<para>
+		<programlisting>
+
+Creating CA certificate
+-----------------------
+1. create CA dir
+	mkdir ca
+	cd ca
+	
+2. create ca dir structure and files  (see ca(1))
+	mkdir demoCA #default CA name, edit /etc/ss/openssl.cnf
+	mkdir  demoCA/private
+	mkdir demoCA/newcerts
+	touch demoCA/index.txt
+	echo 01 >demoCA/serial
+	
+2. create CA private key
+	openssl genrsa -out demoCA/private/cakey.pem 2048
+	chmod 600 demoCA/private/cakey.pem
+	
+3. create CA self-signed certificate
+	openssl req -out demoCA/cacert.pem   -x509 -new -key demoCA/private/cakey.pem
+
+
+Creating a server/client certificate
+------------------------------------
+1. create a certificate request (and its private key in privkey.pem)
+	openssl req -out ser1_cert_req.pem -new -nodes
+   WARNING: the organization name should be the same as in the ca certificate.
+	
+2. sign it with the ca certificate
+	openssl ca -in ser1_cert_req.pem -out ser1_cert.pem
+	
+3. copy ser1_cert.pem to your ser config. dir
+
+
+Setting ser to use the certificate
+----------------------------------
+1. create the ca list file:
+	for each of your ca certificates that you intend to use do:
+		cat cacert.pem >>calist.pem
+	
+2. copy your ser certificate, private key and ca list file to your 
+	intended machine (preferably in your ser cfg. directory, this is the 
+	default place ser searches for)
+	
+3. set up ser.cfg to use the certificate
+	if your ser certificate name is different from cert.pem or it is not
+	placed in ser cfg. directory, add to your ser.cfg:
+		modparam("tls", "certificate", "/path/cert_file_name")
+	
+4. set up ser to use the private key
+	if your private key is not contained in the certificate (or the
+	 certificate name is not the default cert.pem), add to your ser.cfg:
+		modparam("tls", "private_key", "/path/private_key_file")
+	
+5. set up ser to use the ca list (optional)
+	add to your ser.cfg:
+		modparam("tls", "ca_list", "/path/ca_list_file")
+	
+6. set up tls authentication options:
+		modparam("tls", "verify_certificate", 1)
+		modparam("tls", "require_certificate", 1) 
+	(for more information see the module parameters documentation)
+
+		</programlisting>
+		</para>
+
+
+</section>

@@ -1,0 +1,4 @@
+* After the parser change relative pathnames are not handled
+  properly (they are not expanded to absolute pathnames with
+  respect to the configuration file).
+

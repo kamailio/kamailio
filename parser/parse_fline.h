@@ -60,6 +60,8 @@
 #define NOTIFY_LEN 6
 #define MESSAGE_LEN 7
 #define OPTIONS_LEN 7
+#define PRACK_LEN 5
+#define UPDATE_LEN 6
 
 struct msg_start {
 	int type;					/* Type of the Message - Request/Response */

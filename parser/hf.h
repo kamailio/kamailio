@@ -110,6 +110,7 @@ enum _hdr_types_t {
 	HDR_PPI_T                          /**< P-Preferred-Identity header field */,
 	HDR_PAI_T                          /**< P-Asserted-Identity header field */,
 	HDR_PATH_T                         /**< Path header field */,
+	HDR_PRIVACY_T				       /**< Privacy header field */,
 	HDR_EOH_T					       /* End of message header */
 };
 
@@ -180,6 +181,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_PPI_F                   HDR_F_DEF(PPI)
 #define HDR_PAI_F                   HDR_F_DEF(PAI)
 #define HDR_PATH_F                  HDR_F_DEF(PATH)
+#define HDR_PRIVACY_F               HDR_F_DEF(PRIVACY)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 

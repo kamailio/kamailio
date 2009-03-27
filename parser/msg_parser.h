@@ -79,7 +79,7 @@
 enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4,
 	METHOD_BYE=8, METHOD_INFO=16, METHOD_REGISTER=32, METHOD_SUBSCRIBE=64,
 	METHOD_NOTIFY=128, METHOD_MESSAGE=256, METHOD_OPTIONS=512,
-	METHOD_OTHER=1024 };
+	METHOD_PRACK=1024, METHOD_UPDATE=2048, METHOD_OTHER=4096 };
 
 #define FL_FORCE_RPORT  (1 << 0)  /* force rport */
 #define FL_FORCE_ACTIVE (1 << 1)  /* force active SDP */
@@ -200,6 +200,26 @@ struct sip_uri {
 #endif
 };
 
+struct msg_body;
+
+typedef void (*free_msg_body_f)(struct msg_body** ptr);
+
+typedef enum msg_body_type {
+	MSG_BODY_UNKNOWN = 0,
+	MSG_BODY_SDP
+} msg_body_type_t;
+
+/* This structure represents a generic SIP message body, regardless of the
+ * body type. Body parsers are supposed to cast this structure to some other
+ * body-type specific structure, but the body type specific structure must
+ * retain msg_body_type variable and a pointer to the free function as the 
+ * first two variables within the structure.
+ */
+typedef struct msg_body {
+	msg_body_type_t type;
+	free_msg_body_f free;
+} msg_body_t;
+
 
 typedef struct sip_msg {
 	unsigned int id;               /* message id, unique/process*/
@@ -258,6 +278,9 @@ typedef struct sip_msg {
 	struct hdr_field* pai;
 	struct hdr_field* ppi;
 	struct hdr_field* path;
+	struct hdr_field* privacy;
+
+	struct msg_body* body;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/

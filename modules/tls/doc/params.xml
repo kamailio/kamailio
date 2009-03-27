@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="tm.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+	<section id="tls_method">
+	<title><varname>tls_method</varname> (string)</title>
+	<para>
+		Sets the SSL protocol method. Possible values are:
+	</para>
+	<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>TLSv1</emphasis> - only TLSv1 connections are accepted. This is the default and recommended method (if you want to be rfc3261  conformant don't change it).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>SSLv3</emphasis> - only SSLv3 connections are accepted
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>SSLv2</emphasis> - only SSLv2 connections, for old clients. Note: you shouldn't use SSLv2 for anything which should be highly secure.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>SSLv23</emphasis> - any of the above methods will be accepted, with the following limitation: the initial SSL hello message must be V2 (in the initial hello all the supported protocols are advertised enabling switching to a higher and more secure version). This means connections from SSLv3 or TLSv1 clients will not be accepted.
+				</para>
+			</listitem>
+	</itemizedlist>
+	<para>
+		If rfc3261 conformance is desired,  TLSv1 must be used. For compatibility with older clients SSLv23 is a good option.
+	</para>
+	<example>
+	    <title>Set <varname>tls_method</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "tls_method", "TLSv1")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="certificate">
+	<title><varname>certificate</varname> (string)</title>
+	<para>
+		Sets the certificate file name. The certificate file can also contain the private key.
+	</para>
+	<para>
+		<emphasis>Warning:</emphasis> try not to use certificate with keys longer then 1024 bytes. Longer keys will severely impact performance, in particular the tls connection rate.
+	</para>
+	<para>
+		The default value is [SER_CFG_DIR]/cert.pem.
+	</para>
+	<example>
+	    <title>Set <varname>certificate</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="private_key">
+	<title><varname>private_key</varname> (string)</title>
+	<para>
+		Sets the private key file name.
+	</para>
+	<para>
+		Note: the private key can be contained in the same file as the certificate (just append it to the certificate file, e.g.: cat pkey.pem >> cert.pem)
+	</para>
+	<para>
+		The default value is [SER_CFG_DIR]/cert.pem.
+	</para>
+	<example>
+	    <title>Set <varname>private_key</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+<section id="ca_list">
+	<title><varname>ca_list</varname> (string)</title>
+	<para>
+		Sets the CA list file name. This file contains a list of all the trusted CAs certificates. If a signature in a certificate chain belongs to one of the listed CAs, the authentication will succeed. See also <emphasis>verify_certificate</emphasis>, <emphasis>verify_depth</emphasis> and <emphasis>require_certificate</emphasis>.
+	</para>
+	<para>
+		By default the CA file is not set.
+	</para>
+	<para>
+		An easy way to create the CA list is to append each trusted trusted CA certificate in the PEM format to one file, e.g.: for f in trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done .
+	</para>
+	<example>
+	    <title>Set <varname>ca_list</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+<section id="verify_certificate">
+	<title><varname>verify_certificate</varname> (boolean)</title>
+	<para>
+		If enabled it will force certificate verification. For more information see the <ulink url="http://www.openssl.org/docs/apps/verify.html">verify(1)</ulink> openssl man page.
+	</para>
+	<para>
+		Note: the certificate verification will always fail if the ca_list is empty.
+	</para>
+	<para>
+		See also: <varname>ca_list</varname>, <varname>require_certificate</varname>, <varname>verify_depth</varname>.
+	</para>
+	<para>
+		By default the certificate verification is off.
+	</para>
+	<example>
+	    <title>Set <varname>verify_certificate</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "verify_certificate", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+<section id="verify_depth">
+	<title><varname>verify_depth</varname> (integer)</title>
+	<para>
+		Sets how far up the certificate chain will the certificate verification go in the search for a trusted CA.
+	</para>
+	<para>
+		See also: <varname>ca_list</varname>, <varname>require_certificate</varname>, <varname>verify_certificate</varname>,
+	</para>
+	<para>
+		The default value is 9.
+	</para>
+	<example>
+	    <title>Set <varname>verify_depth</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "verify_depth", 9)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+<section id="require_certificate">
+	<title><varname>require_certificate</varname> (boolean)</title>
+	<para>
+		When enabled it will require a certificate from a client. If the client does not offer a certificate and <varname>verify_certificate</varname> is on, the certificate verification will fail.
+	</para>
+	<para>
+		The default value is off.
+	</para>
+	<example>
+	    <title>Set <varname>require_certificate</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "require_certificate", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+<section id="cipher_list">
+	<title><varname>cipher_list</varname> (string)</title>
+	<para>
+		Sets the list of accepted ciphers. The list consists of cipher strings separated by colons. For more information on the cipher list format see the <ulink url="http://www.openssl.org/docs/apps/ciphers.html">cipher(1)</ulink> openssl man page.
+	</para>
+	<para>
+		The default value is not set (all the openssl supported ciphers are enabled).
+	</para>
+	<example>
+	    <title>Set <varname>cipher_list</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "cipher_list", "HIGH")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="send_timeout">
+	<title><varname>send_timeout</varname> (int)</title>
+	<para>
+		Sets the maximum interval of time after which ser will give up trying to send a message over tls (time after a tls send will be aborted and the corresponding tls connection closed). The value is in seconds.
+	</para>
+	<para>
+		The default value is 120 s.
+	</para>
+	<example>
+	    <title>Set <varname>send_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "send_timeout", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="handshake_timeout">
+	<title><varname>handshake_timeout</varname> (int)</title>
+	<para>
+		Sets the maximum interval of time after which ser will give up trying to accept a tls connection or connect to a tls peer. The value is in seconds.
+	</para>
+	<para>
+		The default value is 120 s.
+	</para>
+	<example>
+	    <title>Set <varname>handshake_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "handshake_timeout", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="connection_timeout">
+	<title><varname>connection_timeout</varname> (int)</title>
+	<para>
+		Sets the amount of time after which an idle tls connection will be closed. This is similar to tcp_connection_lifetime. The value is expressed in seconds.
+	</para>
+	<para>
+		The default value is 10 min.
+	</para>
+	<para>
+		If the value set is -1, the connection will never be close on idle.
+	</para>
+	<example>
+	    <title>Set <varname>connection_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "connection_timeout", 60)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="tls_disable_compression">
+	<title><varname>tls_disable_compression</varname> (boolean)</title>
+	<para>
+		If set compression over SSL/TLS will be disabled.
+	</para>
+	<para>
+		By default compression is enabled.
+	</para>
+	<example>
+	    <title>Set <varname>tls_disable_compression</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "tls_disable_compression", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="tls_log">
+	<title><varname>tls_log</varname> (int)</title>
+	<para>
+		Sets the log level at which tls related messages will be logged.
+	</para>
+	<para>
+		The default value is 3.
+	</para>
+	<example>
+		<title>Set <varname>tls_log</varname> parameter</title>
+		<programlisting>
+...
+# ignore tls messages if ser is started with debug less than 10
+modparam("tls", "tls_log", 10)
+...
+		</programlisting>
+	</example>
+	</section>
+
+<section id="low_mem_threshold1">
+	<title><varname>low_mem_threshold1</varname> (integer)</title>
+	<para>
+		Sets the minimal free memory from which new tls connection will start to fail. The value is expressed in KB.
+	</para>
+	<para>
+		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
+	</para>
+	<para>
+		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created tls connections (and hence on the process number).
+	</para>
+	<para>
+		The following values have a special meaning:
+	</para>
+	<itemizedlist>
+			<listitem>
+				<para>
+					-1 - use the default value
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					0 - disable (tls connections will not fail preemptively)
+				</para>
+			</listitem>
+	</itemizedlist>
+	<para>
+		See also <varname>low_mem_threshold2</varname>.
+	</para>
+	<example>
+		<title>Set <varname>low_memory_threshold1</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "low_memory_threshold1", -1)
+...
+	</programlisting>
+	</example>
+	</section>
+
+<section id="low_mem_threshold2">
+	<title><varname>low_mem_threshold2</varname> (integer)</title>
+	<para>
+		Sets the minimal free memory from which tls operations on already established tls connections will start to fail preemptively.  The value is expressed in KB.
+	</para>
+	<para>
+		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
+	</para>
+	<para>
+		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created tls connections (and hence on the process number).
+	</para>
+	<para>
+		The following values have a special meaning:
+	</para>
+	<itemizedlist>
+			<listitem>
+				<para>
+					-1 - use the default value
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					0 - disable (tls operations will not fail preemptively)
+				</para>
+			</listitem>
+	</itemizedlist>
+	<para>
+		See also <varname>low_mem_threshold1</varname>.
+	</para>
+	<example>
+		<title>Set <varname>low_memory_threshold2</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "low_memory_threshold2", -1)
+...
+	</programlisting>
+	</example>
+	</section>
+
+	<section id="tls_force_run">
+	<title><varname>tls_force_run</varname> (boolean)</title>
+	<para>
+		If enabled ser will start even if some of the openssl sanity checks fail (turn it on at your own risk).
+	</para>
+	<para>
+		Currently failing any of the following sanity checks will not allow ser to start:
+	</para>
+	<itemizedlist>
+			<listitem>
+				<para>
+					the version of the library the tls module was compiled with is "too different" from the library used at runtime. The versions should have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					the openssl library used at compile time and the one used at runtime have different kerberos options 
+				</para>
+			</listitem>
+	</itemizedlist>
+	<para>
+		By default tls_force_run is disabled.
+	</para>
+	<example>
+		<title>Set <varname>tls_force_run</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "tls_force_run", 11)
+...
+	</programlisting>
+	</example>
+	</section>
+
+	<section id="config">
+	<title><varname>config</varname> (string)</title>
+	<para>
+		Sets the name of the TLS specific config file.
+	</para>
+	<para>
+		If set the tls module will load a special config file, in which different tls parameters can be specified on a per role (server or client) and domain basis (for now only IPs). The corresponding module parameters will be ignored.
+	</para>
+	<para>
+		By default no config file is specified.
+	</para>
+	<para>
+		The following parameters can be set in the config file, for each domain:
+	</para>
+	<itemizedlist>
+			<listitem><para>tls_method</para></listitem>
+			<listitem><para>verify_certificate</para></listitem>
+			<listitem><para>require_certificate</para></listitem>
+			<listitem><para>private_key</para></listitem>
+			<listitem><para>certificate</para></listitem>
+			<listitem><para>verify_depth</para></listitem>
+			<listitem><para>ca_list</para></listitem>
+			<listitem><para>cipher_list</para></listitem>
+	</itemizedlist>
+	<para>
+		ser acts as a server when it accepts a connection and as a client when it initiates a new connection by itself (it connects to something).
+	</para>
+	<example>
+		<title>Short config file</title>
+	<programlisting>
+[server:default]
+method = TLSv1
+verify_certificate = no
+require_certificate = no
+private_key = default_key.pem
+certificate = default_cert.pem
+ca_list = default_ca.pem
+
+[client:default]
+verify_certificate = yes
+require_certificate = yes
+
+#more relaxed for connection on the loopback interface
+[server:127.0.0.1:5061]
+method = SSLv23
+verify_certificate = yes
+require_certificate = no
+private_key = local_key.pem
+certificate = local_cert.pem
+verify_depth = 3
+ca_list = local_ca.pem
+
+	</programlisting>
+	</example>
+	<para>
+		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed with the ser source (sip_router/modules/tls/tls.cfg).
+	</para>
+	<example>
+		<title>Set <varname>config</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
+...
+	</programlisting>
+	</example>
+	</section>
+
+</section>
