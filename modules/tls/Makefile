@@ -17,6 +17,6 @@ LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto \
 #       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
 
 
-DEFS+=-DSER_MOD_INTERFACE
+DEFS+=-DOPENSER_MOD_INTERFACE
 
 include ../../Makefile.modules
