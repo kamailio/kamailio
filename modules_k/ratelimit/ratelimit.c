@@ -46,7 +46,7 @@
 #include "../../mod_fix.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../sl/sl_api.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../lib/kmi/mi.h"
