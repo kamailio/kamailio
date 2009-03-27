@@ -129,6 +129,7 @@ static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int fixup_body_type(void** param, int param_no);
 static int fixup_privacy(void** param, int param_no);
+int fixup_regexpNL_none(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -1783,3 +1784,30 @@ static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
 	return -2;
 }
 
+int fixup_regexpNL_none(void** param, int param_no)
+{
+	regex_t* re;
+
+	if (param_no != 1 && param_no != 2 )
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	if (param_no == 2)
+		return 0;
+	/* param 1 */
+	if ((re=pkg_malloc(sizeof(regex_t)))==0) {
+		LM_ERR("no more pkg memory\n");
+		return E_OUT_OF_MEM;
+	}
+	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE)) {
+		pkg_free(re);
+		LM_ERR("bad re %s\n", (char*)*param);
+		return E_BAD_RE;
+	}
+	/* free string */
+	pkg_free(*param);
+	/* replace it with the compiled re */
+	*param=re;
+	return 0;
+}
