@@ -96,6 +96,8 @@ static int mod_init(void);
 static int mod_child(int rank);
 static void destroy(void);
 
+static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2);
+
 MODULE_VERSION
 
 
@@ -185,7 +187,9 @@ gen_lock_t* tls_cfg_lock = NULL;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{0, 0, 0, 0, 0}
+	{"is_peer_verified", (cmd_function)is_peer_verified,   0, 0, 0,
+			REQUEST_ROUTE},
+	{0,0,0,0,0,0}
 };
 
 
@@ -394,4 +398,63 @@ static int mod_child(int rank)
 
 static void destroy(void)
 {
+}
+
+
+static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
+{
+	struct tcp_connection *c;
+	SSL *ssl;
+	long ssl_verify;
+	X509 *x509_cert;
+
+	DBG("started...\n");
+	if (msg->rcv.proto != PROTO_TLS) {
+		ERR("proto != TLS --> peer can't be verified, return -1\n");
+		return -1;
+	}
+
+	DBG("trying to find TCP connection of received message...\n");
+
+	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, tls_con_lifetime);
+	if (c && c->type != PROTO_TLS) {
+		ERR("Connection found but is not TLS\n");
+		tcpconn_put(c);
+		return -1;
+	}
+
+	if (!c->extra_data) {
+		LM_ERR("no extra_data specified in TLS/TCP connection found."
+				" This should not happen... return -1\n");
+		tcpconn_put(c);
+		return -1;
+	}
+
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
+
+	ssl_verify = SSL_get_verify_result(ssl);
+	if ( ssl_verify != X509_V_OK ) {
+		LM_WARN("verification of presented certificate failed... return -1\n");
+		tcpconn_put(c);
+		return -1;
+	}
+
+	/* now, we have only valid peer certificates or peers without certificates.
+	 * Thus we have to check for the existence of a peer certificate
+	 */
+	x509_cert = SSL_get_peer_certificate(ssl);
+	if ( x509_cert == NULL ) {
+		LM_WARN("tlsops:is_peer_verified: WARNING: peer did not presented "
+			"a certificate. Thus it could not be verified... return -1\n");
+		tcpconn_put(c);
+		return -1;
+	}
+
+	X509_free(x509_cert);
+
+	tcpconn_put(c);
+
+	LM_DBG("tlsops:is_peer_verified: peer is successfuly verified"
+		"...done\n");
+	return 1;
 }
