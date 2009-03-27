@@ -226,8 +226,13 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 	backup_mhomed=mhomed;
 	mhomed=0;
 	/* use for sending the received interface -bogdan*/
-	ret = msg_send( msg->rcv.bind_address, msg->rcv.proto, &to,
-			msg->rcv.proto_reserved1, buf.s, buf.len);
+	dst.proto=msg->rcv.proto;
+	dst.send_sock=msg->rcv.bind_address;
+	dst.id=msg->rcv.proto_reserved1;	
+#ifdef USE_COMP
+	dst.comp=msg->via1->comp_no;
+#endif
+	ret = msg_send(&dst, buf.s, buf.len);
 	mhomed=backup_mhomed;
 	pkg_free(buf.s);
 
