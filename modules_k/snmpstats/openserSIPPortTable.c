@@ -39,7 +39,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/library/snmp_assert.h>
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../mem/mem.h"
 
 #include "snmpstats_globals.h"

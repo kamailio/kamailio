@@ -41,7 +41,7 @@
 #include "openserObjects.h"
 
 #include "../../dprint.h"
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../config.h"
 
 #include "snmpstats_globals.h"

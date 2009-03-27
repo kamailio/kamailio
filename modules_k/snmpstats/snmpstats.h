@@ -65,7 +65,7 @@
 #ifndef _SNMP_STATS_
 #define _SNMP_STATS_
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"

@@ -38,7 +38,7 @@
 
 #include <signal.h>
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 
 #include "alarm_checks.h"
 #include "sub_agent.h"

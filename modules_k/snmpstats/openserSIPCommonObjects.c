@@ -40,7 +40,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../config.h"
 
 #include <net-snmp/net-snmp-config.h>

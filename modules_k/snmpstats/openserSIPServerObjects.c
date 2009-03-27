@@ -38,7 +38,7 @@
 
 #include <string.h>
 
-#include "../../statistics.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../sr_module.h"
 #include "../../config.h"
 #include "../usrloc/usrloc.h"
