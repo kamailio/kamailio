@@ -303,12 +303,15 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	{
 		LM_ERR("while sending publish\n");
 		if(type & UL_CONTACT_UPDATE && error == ERR_PUBLISH_NO_BODY) {
-			/* This can occur if Kamailio was restarted before storing an entry in 'pua' DB table.
-			 * The next refresh registration from that user would create an UPDATE action in pua_usrloc
-			 * and since the appropiate entry doesn't exist in pua hast table it would fail ("empty body").
-			 * This code solves this problem by invoking an INSERT action if an UPDATE action failed with
-			 * code ERR_PUBLISH_NO_BODY. It will however generate a new presentity status in the presence
-			 * server until the previous one expires. */
+			/* This error can occur if Kamailio was restarted/stopped and for any reason couldn't store a pua
+			 * entry in 'pua' DB table. It can also occur if 'pua' table is cleaned externally while Kamailio
+			 * is stopped so cannot retrieve these entries from DB when restarting.
+			 * In these cases, when a refresh registration for that user creates an UPDATE action in pua_usrloc,
+			 * pua 'ul_publish()' would fail since the appropiate entry doesn't exist in pua hast table ("New 
+			 * PUBLISH and no body found - invalid request").
+			 * This code solves this problem by invoking an INSERT action if an UPDATE action failed due to the 
+			 * above error. It will however generate a new presentity entry in the presence server (until the
+			 * previous one expires), but this is a minor issue. */
 			LM_ERR("UPDATE action generated a PUBLISH without body -> invoking INSERT action\n");
 			ul_publish(c, UL_CONTACT_INSERT, param);
 			return;
