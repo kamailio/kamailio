@@ -63,7 +63,7 @@
 #include "../../parser/parse_hname2.h"
 #include "../../parser/parse_methods.h"
 #include "../../parser/parse_content.h"
-#include "../../parser/parse_privacy.h"
+#include "../../lib/kcore/parse_privacy.h"
 #include "../../mod_fix.h"
 #include "../../ut.h"
 #include "../../lib/kcore/cmpapi.h"
