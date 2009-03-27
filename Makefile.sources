@@ -23,6 +23,6 @@ endif
 objs=$(sources:.c=.o)
 extra_objs=
 depends=$(sources:.c=.d)
-modules=
+cmodules=
 static_modules=
 static_modules_path=

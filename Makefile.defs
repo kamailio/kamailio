@@ -168,7 +168,8 @@ CC_EXTRA_OPTS ?=
 cfg_dir = etc/ser/
 bin_dir = sbin/
 share_dir = share/ser/
-modules_dir = lib/ser/modules/
+# lib/ser/modules , lib/ser/modules-s, lib/ser/modules-k
+modules_dir = lib/ser/
 lib_dir = lib/ser/
 ifeq ($(OS), linux)
 	doc_dir = share/doc/ser/
