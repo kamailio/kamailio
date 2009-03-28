@@ -841,8 +841,10 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 			return -1;
 		}
 		LM_DBG("send_socket_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
-		/* parse phostport */
-		if (parse_phostport(val.s.s, val.s.len, &(host.s), &(host.len), &port, &proto)) {
+		/* parse phostport - AVP str val is asciiz */
+		/* FIXME: This code relies on the fact that the string value of an AVP
+		 * is zero terminated, which may or may not be true in the future */
+		if (parse_phostport(val.s.s, &(host.s), &(host.len), &port, &proto)) {
 			LM_ERR("could not parse send_socket, return with error ...\n");
 			return -1;
 		}
