@@ -35,6 +35,7 @@
 #include "../../pvar.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
+#include "../../hashes.h"
 #include "../tm/tm_load.h"
 
 #include "auth.h"
@@ -297,7 +298,8 @@ static inline void do_uac_auth(struct sip_msg *req, str *uri,
 	if((auth->flags&QOP_AUTH) || (auth->flags&QOP_AUTH_INT))
 	{
 		/* if qop generate nonce-count and cnonce */
-		cnonce.s = int2str(core_hash(&auth->nonce, 0, 0),&cnonce.len);
+		cnonce.s = int2str(get_hash1_raw(auth->nonce.s, auth->nonce.len), 
+						   &cnonce.len);
 
 		/* do authentication */
 		uac_calc_HA1( crd, auth, &cnonce, ha1);
