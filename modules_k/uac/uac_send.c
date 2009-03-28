@@ -373,20 +373,25 @@ done:
 int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 {
 	int ret;
+	uac_req_t uac_r;
+
 	if(_uac_req.s_ruri.len<=0 || _uac_req.s_method.len == 0
 			|| tmb.t_request==NULL)
 		return -1;
-	ret = tmb.t_request(&_uac_req.s_method,  /* Type of the message */
-		&_uac_req.s_ruri,     /* Request-URI (To) */
-		(_uac_req.s_turi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_turi,  /* To */
-		(_uac_req.s_furi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_furi,  /* From */
-		(_uac_req.s_hdrs.len<=0)?NULL:&_uac_req.s_hdrs, /* Optional headers
-														   including CRLF */
-		(_uac_req.s_body.len<=0)?NULL:&_uac_req.s_body, /* Message body */
-		(_uac_req.s_ouri.len<=0)?NULL:&_uac_req.s_ouri, /* outbound uri */
-		(_uac_req.onreply>0)?uac_send_tm_callback:NULL, /* Callback function */
-		(_uac_req.onreply>0)?(void*)(long)_uac_req.onreply:0
-														/* Callback parameter */
+
+	memset(&uac_r, '\0', sizeof(uac_r));
+	uac_r.method = &_uac_req.s_method;
+	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
+	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
+	uac_r.cb  = (_uac_req.onreply > 0) ? uac_send_tm_callback : NULL;
+	/* Callback function */
+	uac_r.cbp = (_uac_req.onreply > 0) ? (void*)(long)_uac_req.onreply : 0;
+	/* Callback parameter */
+	ret = tmb.t_request(&uac_r,  /* UAC Req */
+						&_uac_req.s_ruri,        /* Request-URI */
+						(_uac_req.s_turi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_turi, /* To */
+						(_uac_req.s_furi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_furi, /* From */
+						(_uac_req.s_ouri.len<=0)?NULL:&_uac_req.s_ouri /* outbound uri */
 		);
 
 	if(ret!=0)
