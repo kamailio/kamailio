@@ -564,7 +564,7 @@ int dp_can_connect_str(str *domain, int rec_level) {
     }
 
     LM_INFO("doing DDDS with %.*s\n",domain->len, ZSW(domain->s));
-    head = get_record(domain->s, T_NAPTR);
+    head = get_record(domain->s, T_NAPTR, RES_ONLY_TYPE);
     if (head == 0) {
     	LM_NOTICE("no NAPTR record found for %.*s.\n", 
 				domain->len, ZSW(domain->s));
