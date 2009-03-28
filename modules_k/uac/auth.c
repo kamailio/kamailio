@@ -390,7 +390,7 @@ int uac_auth( struct sip_msg *msg)
 	}
 
 	/* get the selected branch */
-	branch = uac_tmb.t_get_picked();
+	branch = uac_tmb.t_get_picked_branch();
 	if (branch<0) {
 		LM_CRIT("no picked branch (%d)\n",branch);
 		goto error;
