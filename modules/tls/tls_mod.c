@@ -167,8 +167,8 @@ tls_domain_t cli_defaults = {
 static str tls_method = STR_STATIC_INIT("TLSv1");
 
 
-int tls_handshake_timeout = 120;
-int tls_send_timeout = 120;
+int tls_handshake_timeout = 30;
+int tls_send_timeout = 30;
 int tls_con_lifetime = 600; /* this value will be adjusted to ticks later */
 int tls_log = 3;
 int tls_session_cache = 0;
