@@ -164,4 +164,7 @@ int fake_req(struct sip_msg *faked_req,
 
 void free_faked_req(struct sip_msg *faked_req, struct cell *t);
 
+typedef int (*tget_picked_f)(void);
+int t_get_picked_branch(void);
+
 #endif

@@ -227,5 +227,6 @@ int load_tm( struct tm_binds *tmb)
 	}
 
 	tmb->t_get_reply_totag = t_get_reply_totag;
+	tmb->t_get_picked_branch = t_get_picked_branch;
 	return 1;
 }

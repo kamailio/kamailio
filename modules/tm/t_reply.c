@@ -182,6 +182,15 @@ int t_get_reply_totag(struct sip_msg *msg, str *totag)
 	return 1;
 }
 
+static int picked_branch = -1;
+
+/*! \brief returns the picked branch */
+int t_get_picked_branch(void)
+{
+	return picked_branch;
+}
+
+
 
 
 /* we store the reply_route # in private memory which is
@@ -1000,7 +1009,6 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
 {
 	int branch_cnt;
-	int picked_branch;
 	int picked_code;
 	int new_branch;
 	int inv_through;
