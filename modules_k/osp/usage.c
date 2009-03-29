@@ -556,12 +556,13 @@ void ospReportOrigSetupUsage(void)
     OSPTTRANHANDLE transaction = -1;
     int lastcode = 0;
     int errorcode;
+	struct search_state st;
 
     errorcode = OSPPTransactionNew(_osp_provider, &transaction);
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
         destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
+		 destavp = search_next_avp(&st, 0))
     {
         get_avp_val(destavp, &destval);
 

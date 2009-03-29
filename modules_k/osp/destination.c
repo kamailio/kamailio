@@ -132,10 +132,11 @@ int ospCheckOrigDestination(void)
     int_str destval;
     osp_dest* dest = NULL;
     int result = -1;
+	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
         destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
+		 destavp = search_next_avp(&st, NULL))
     {
         get_avp_val(destavp, &destval);
 
@@ -177,10 +178,11 @@ osp_dest* ospGetNextOrigDestination(void)
     int_str destval;
     osp_dest* dest = NULL;
     osp_dest* result = NULL;
+	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
         destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
+		 destavp = search_next_avp(&st, NULL))
     {
         get_avp_val(destavp, &destval);
 
@@ -229,10 +231,11 @@ osp_dest* ospGetLastOrigDestination(void)
     int_str destval;
     osp_dest* dest = NULL;
     osp_dest* lastdest = NULL;
+	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
         destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
+		 destavp = search_next_avp(&st, NULL))
     {
         get_avp_val(destavp, &destval);
 
@@ -389,10 +392,11 @@ void ospDumpAllDestination(void)
     int_str destval;
     osp_dest* dest = NULL;
     int count = 0;
+	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
+    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
         destavp != NULL;
-        destavp = search_next_avp(destavp, NULL))
+		 destavp = search_next_avp(&st, NULL))
     {
         get_avp_val(destavp, &destval);
 
