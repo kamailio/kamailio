@@ -32,9 +32,9 @@
 
 #include "parse_sst.h"
 
-#include "../error.h"
-#include "../dprint.h"
-#include "../mem/mem.h"
+#include "../../error.h"
+#include "../../dprint.h"
+#include "../../mem/mem.h"
 
 
 inline int/*bool*/  is_space( char c ) { return (c == ' ' || c == '\t'); }

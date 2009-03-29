@@ -34,8 +34,8 @@
 #define PARSE_SST_H 1
 
 
-#include "msg_parser.h"
-#include "hf.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/hf.h"
 
 
 /*!
