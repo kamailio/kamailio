@@ -106,7 +106,6 @@ int t_continue(unsigned int hash_index, unsigned int label,
 {
 	struct cell	*t;
 	struct sip_msg	faked_req;
-	struct run_act_ctx	ra_ctx;
 	int	branch;
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
@@ -148,9 +147,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 	faked_env( t, &faked_req);
 
-	init_run_actions_ctx(&ra_ctx);
-	if (run_actions(&ra_ctx, route, &faked_req)<0)
-		LOG(L_ERR, "ERROR: t_continue: Error in run_action\n");
+	if (run_top_route(route, &faked_req)<0)
+		LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
 
 	/* TODO: save_msg_lumps should clone the lumps to shm mem */
 

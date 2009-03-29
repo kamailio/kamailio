@@ -114,7 +114,6 @@
 #include "../../usr_avp.h"
 #include "../../atomic_ops.h" /* membar_write() */
 #include "../../compiler_opt.h"
-#include "../../select_buf.h" /* reset_static_buffer() */
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
 #endif
@@ -824,7 +823,6 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
-	struct run_act_ctx ra_ctx;
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
@@ -859,11 +857,9 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		 * on failure */
 		on_failure = t->on_negative;
 		t->on_negative=0;
-		reset_static_buffer();
 		/* run a reply_route action if some was marked */
-		init_run_actions_ctx(&ra_ctx);
-		if (run_actions(&ra_ctx, failure_rt.rlist[on_failure], &faked_req)<0)
-			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
+		if (run_top_route(failure_rt.rlist[on_failure], &faked_req)<0)
+			LOG(L_ERR, "ERROR: run_failure_handlers: Error in run_top_route\n");
 	}
 
 	/* restore original environment and free the fake msg */
@@ -1818,7 +1814,6 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
-	struct run_act_ctx ra_ctx;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
 	int prev_branch;
@@ -1962,9 +1957,7 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
-		reset_static_buffer();
-		init_run_actions_ctx(&ra_ctx);
-		if (run_actions(&ra_ctx, onreply_rt.rlist[t->on_reply], p_msg)<0)
+		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
@@ -2090,8 +2083,7 @@ trans_not_found:
 	if (goto_on_sl_reply) {
 		/* the script writer has a chance to decide whether to
 		forward the reply or not */
-		init_run_actions_ctx(&ra_ctx);
-		return run_actions(&ra_ctx, onreply_rt.rlist[goto_on_sl_reply], p_msg);
+		return run_top_route(onreply_rt.rlist[goto_on_sl_reply], p_msg);
 	} else {
 		/* let the core forward the reply */
 		return 1;

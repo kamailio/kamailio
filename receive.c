@@ -85,7 +85,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 {
 	struct sip_msg* msg;
 	int ret;
-	struct run_act_ctx ra_ctx;
 #ifdef STATS
 	int skipped = 1;
 	struct timeval tvb, tve;	
@@ -123,7 +122,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 	/* ... clear branches from previous message */
 	clear_branches();
-	reset_static_buffer();
 
 	if (msg->first_line.type==SIP_REQUEST){
 		if (!IS_SIP(msg)){
@@ -171,8 +169,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 		set_route_type(REQUEST_ROUTE);
 		/* exec the routing script */
-		init_run_actions_ctx(&ra_ctx);
-		if (run_actions(&ra_ctx, main_rt.rlist[DEFAULT_RT], msg)<0){
+		if (run_top_route(main_rt.rlist[DEFAULT_RT], msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error_req;
@@ -215,8 +212,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
 			set_route_type(ONREPLY_ROUTE);
-			init_run_actions_ctx(&ra_ctx);
-			ret=run_actions(&ra_ctx, onreply_rt.rlist[DEFAULT_RT], msg);
+			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg);
 			if (ret<0){
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");

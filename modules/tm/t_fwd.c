@@ -116,7 +116,6 @@
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
 #endif
-#include "../../select_buf.h" /* reset_static_buffer() */
 #ifdef POSTPONE_MSG_CLONING
 #include "../../atomic_ops.h" /* membar_depends() */
 #endif
@@ -152,7 +151,6 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	struct sip_uri parsed_uri_bak;
 	int parsed_uri_ok_bak, uri_backed_up;
 	str msg_uri_bak;
-	struct run_act_ctx ra_ctx;
 
 	shbuf=0;
 	msg_uri_bak.s=0; /* kill warnings */
@@ -190,13 +188,12 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	i_req->body_lumps = dup_lump_list(i_req->body_lumps);
 
 	if (unlikely(branch_route)) {
-		reset_static_buffer();
 		     /* run branch_route actions if provided */
 		set_route_type(BRANCH_ROUTE);
-		init_run_actions_ctx(&ra_ctx);
-		if (run_actions(&ra_ctx, branch_rt.rlist[branch_route], i_req) < 0) {
-			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
-               }
+		
+		if (run_top_route(branch_rt.rlist[branch_route], i_req) < 0) {
+			LOG(L_ERR, "ERROR: print_uac_request: Error in run_top_route\n");
+		}
 	}
 
 	/* run the specific callbacks for this transaction */
