@@ -67,6 +67,7 @@
 #include "ut.h"
 #include "lvalue.h"
 #include "sr_module.h"
+#include "select_buf.h"
 #include "mem/mem.h"
 #include "globals.h"
 #include "dset.h"
@@ -1267,4 +1268,14 @@ end:
 error:
 	h->rec_lev--;
 	return ret;
+}
+
+
+int run_top_route(struct action* a, sip_msg_t* msg)
+{
+	struct run_act_ctx ctx;
+	setsflagsval(0);
+	reset_static_buffer();
+	init_run_actions_ctx(&ctx);
+	return run_actions(&ctx, a, msg);
 }

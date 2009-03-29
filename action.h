@@ -59,8 +59,6 @@ struct run_act_ctx{
 int do_action(struct run_act_ctx* c, struct action* a, struct sip_msg* msg);
 int run_actions(struct run_act_ctx* c, struct action* a, struct sip_msg* msg);
 
-
-
-
+int run_top_route(struct action* a, sip_msg_t* msg);
 
 #endif
