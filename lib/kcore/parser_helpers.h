@@ -17,5 +17,6 @@ struct sip_uri* parse_from_uri(struct sip_msg* msg);
 int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 				  unsigned int * nb_recs);
 
+int get_path_dst_uri(str *_p, str *_dst);
 
 #endif /* _PARSER_HELPERS_H */
