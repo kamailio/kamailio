@@ -54,8 +54,9 @@
 #include <stdlib.h> /* For atoi() */
 
 #include "../../pvar.h"
-#include "../../parser/parse_sst.h"
-#include "../../parser/parse_supported.h"
+#include "../../lib/kcore/parse_sst.h"
+#include "../../lib/kcore/parse_supported.h"
+#include "../../lib/kcore/km_ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../data_lump.h"
