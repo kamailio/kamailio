@@ -191,7 +191,7 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		if (exec_pre_req_cb(&_stm_msg)==0 )
 			continue; /* drop the request */
 		set_route_type(REQUEST_ROUTE);
-		run_top_route(rlist[rt->route], &_stm_msg);
+		run_top_route(main_rt.rlist[rt->route], &_stm_msg);
 		exec_post_req_cb(&_stm_msg);
 	}
 }
