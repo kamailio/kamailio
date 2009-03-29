@@ -35,8 +35,8 @@
 #ifndef PARSE_SUPPORTED_H
 #define PARSE_SUPPORTED_H
 
-#include "msg_parser.h"
-#include "../mem/mem.h"
+#include "../../parser/msg_parser.h"
+#include "../../mem/mem.h"
 
 
 #define F_SUPPORTED_PATH	(1 << 0)

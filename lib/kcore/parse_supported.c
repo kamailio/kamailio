@@ -26,9 +26,12 @@
  * \ingroup parser
  */
 
-#include "../mem/mem.h"
-#include "keys.h"
+#include "../../mem/mem.h"
+#include "../../parser/keys.h"
 #include "parse_supported.h"
+
+#define _100r_ 0x72303031   /* "100r" for "100rel" */
+#define _time_ 0x656d6974   /*!< "time" */
 
 #define IS_DELIM(c) (*(c) == ' ' || *(c) == '\t' || *(c) == '\r' || *(c) == '\n' || *(c) == ',')
 
@@ -119,7 +122,7 @@ int parse_supported( struct sip_msg *msg)
 
 	/* bad luck! :-( - we have to parse them */
 	supported = 0;
-	for( hdr=msg->supported ; hdr ; hdr=hdr->sibling) {
+	for( hdr=msg->supported ; hdr ; hdr=next_sibling_hdr(hdr)) {
 		if (hdr->parsed) {
 			supported |= ((struct supported_body*)hdr->parsed)->supported;
 			continue;
