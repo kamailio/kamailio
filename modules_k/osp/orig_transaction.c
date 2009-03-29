@@ -514,7 +514,7 @@ static int ospPrepareDestination(
             if (isfirst == OSP_FIRST_ROUTE) {
                 rewrite_uri(msg, &newuri);
             } else {
-                append_branch(msg, &newuri, NULL, NULL, Q_UNSPECIFIED, 0, NULL);
+                km_append_branch(msg, &newuri, NULL, NULL, Q_UNSPECIFIED, 0, NULL);
             }
             /* Do not add route specific OSP information */
             result = MODULE_RETURNCODE_TRUE;
