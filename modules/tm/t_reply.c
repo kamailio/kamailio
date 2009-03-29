@@ -2070,6 +2070,7 @@ trans_not_found:
 	if (goto_on_sl_reply) {
 		/* the script writer has a chance to decide whether to
 		forward the reply or not */
+		reset_static_buffer();
 		init_run_actions_ctx(&ra_ctx);
 		return run_actions(&ra_ctx, onreply_rt.rlist[goto_on_sl_reply], p_msg);
 	} else {
