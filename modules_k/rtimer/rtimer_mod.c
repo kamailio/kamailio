@@ -36,6 +36,8 @@
 #include "../../action.h"
 #include "../../socket_info.h"
 #include "../../dset.h"
+#include "../../pt.h"
+#include "../../timer_proc.h"
 #include "../../script_cb.h"
 #include "../../parser/parse_param.h"
 
@@ -60,6 +62,7 @@ stm_timer_t *_stm_list = NULL;
 
 /** module functions */
 static int mod_init(void);
+static int child_init(int);
 
 int stm_t_param(modparam_t type, void* val);
 int stm_e_param(modparam_t type, void* val);
@@ -86,7 +89,7 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	0,
 	0,
-	0           /* per-child init function */
+	child_init  /* per-child init function */
 };
 
 
@@ -115,12 +118,7 @@ static int mod_init(void)
 				return -1;
 			}
 		} else {
-			if (register_timer_process(stm_timer_exec, (void*)it, it->interval,
-					TIMER_PROC_INIT_FLAG)<0)
-			{
-				LM_ERR("failed to register new timer process\n");
-				return -1;
-			}
+			register_procs(1);
 		}
 		it = it->next;
 	}
@@ -141,6 +139,33 @@ static int mod_init(void)
 	{
 		LM_ERR("parse_msg failed\n");
 		return -1;
+	}
+
+	return 0;
+}
+
+static int child_init(int rank)
+{
+	stm_timer_t *it;
+	if(_stm_list==NULL)
+		return 0;
+
+	if (rank!=PROC_MAIN)
+		return 0;
+
+	it = _stm_list;
+	while(it)
+	{
+		if(it->mode!=0)
+		{
+			if(fork_dummy_timer(PROC_TIMER, "TIMER RT", 1 /*socks flag*/,
+								stm_timer_exec, (void*)it, it->interval
+								/*sec*/)<0) {
+				LM_ERR("failed to register timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+		it = it->next;
 	}
 
 	return 0;
