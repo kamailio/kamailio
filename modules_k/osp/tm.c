@@ -131,7 +131,8 @@ static void ospTmcbFunc(
     }
 
     if (t) {
-        ospRecordEvent(t->uac[t->first_branch].last_received, t->uas.status);
+        ospRecordEvent(t->uac[t->nr_of_outgoings - 1].last_received,
+					   t->uas.status);
     } else {
         LM_DBG("cell is empty\n");
     }
