@@ -152,6 +152,24 @@ struct cname_rdata {
 /* real size of the structure */
 #define CNAME_RDATA_SIZE(s) (sizeof(struct cname_rdata)+(s).name_len)
 
+/* dns character-string */
+struct dns_cstr{
+	char* cstr; /* pointer to null term. string */
+	unsigned char cstr_len;
+};
+
+/* txt rec. struct */
+struct txt_rdata {
+	unsigned short cstr_no; /* number of strings */
+	unsigned short tslen; /* total strings table len */
+	struct dns_cstr txt[1]; /* at least 1 */
+	/* all txt[*].cstr point inside a string table at the end of the struct.*/
+};
+
+#define TXT_RDATA_SIZE(s) \
+	(sizeof(struct txt_rdata)+((s).cstr_no-1)*sizeof(struct dns_cstr)+\
+	 	(s).tslen)
+
 
 #ifdef HAVE_RESOLV_RES
 int match_search_list(const struct __res_state* res, char* name);

@@ -456,6 +456,73 @@ error:
 
 
 
+/** parses a TXT record into a txt_rdata structure.
+ *   @param msg   - pointer to the dns message
+ *   @param end   - pointer to the end of the record (rdata end)
+ *   @param rdata - pointer  to the rdata part of the txt answer
+ * returns 0 on error, or a dyn. alloc'ed txt_rdata structure */
+/*  TXT rdata format:
+ *
+ * one or several character strings:
+ *  01234567
+ * +--------------------+
+ * | len    | string   / ...
+ * |------------------+
+ */
+static struct txt_rdata* dns_txt_parser(unsigned char* msg, unsigned char* end,
+										unsigned char* rdata)
+{
+	struct txt_rdata* txt;
+	int len, n, i;
+	int str_size;
+	unsigned char* p;
+	unsigned char* st;
+	
+	txt=0;
+	if (unlikely((rdata+1)>end)) goto error;
+	n=0;
+	str_size=0;
+	/* count the number of strings */
+	p=rdata;
+	do{
+		len=*p;
+		p+=len+1;
+		str_size+=len+1; /* 1 for the term. 0 */
+		if (unlikely(p>end)) goto error;
+		n++;
+	}while(p<end);
+	/* alloc sizeof struct + space for the dns_cstr array + space for
+	   the strings */
+	txt=local_malloc(sizeof(struct txt_rdata) +(n-1)*sizeof(struct dns_cstr)+
+						str_size);
+	if(unlikely(txt==0)){
+		LOG(L_ERR, "ERROR: dns_txt_parser: out of memory\n");
+		goto error;
+	}
+	/* string table */
+	st=(unsigned char*)txt+sizeof(struct txt_rdata) +
+		(n-1)*sizeof(struct dns_cstr);
+	txt->cstr_no=n;
+	txt->tslen=str_size;
+	/* fill the structure */
+	p=rdata;
+	for (i=0; i<n; i++){
+		len=*p;
+		memcpy(st, p+1, len);
+		st[len]=0;
+		txt->txt[i].cstr_len=len;
+		txt->txt[i].cstr=(char*)st;
+		st+=len+1;
+		p+=len+1;
+	}
+	return txt;
+error:
+	if (txt) local_free(txt);
+	return 0;
+}
+
+
+
 /* frees completely a struct rdata list */
 void free_rdata_list(struct rdata* head)
 {
@@ -686,6 +753,12 @@ again:
 			case T_NAPTR:
 				rd->rdata=(void*) dns_naptr_parser(buff.buff, rd_end, p);
 				if(unlikely(rd->rdata==0)) goto error_parse;
+				*last=rd;
+				last=&(rd->next);
+				break;
+			case T_TXT:
+				rd->rdata= dns_txt_parser(buff.buff, p+rdlength, p);
+				if (rd->rdata==0) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
