@@ -323,7 +323,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 	memcpy(name + j, suffix->s, suffix->len + 1);
 
-	head = get_record(name, T_NAPTR);
+	head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
 
 	if (head == 0) {
 		LM_DBG("No NAPTR record found for %s.\n", name);
@@ -580,7 +580,7 @@ int do_query(struct sip_msg* _msg, char *user, char *name, str *service) {
     struct naptr_rdata* naptr;
     str pattern, replacement, result, new_result;
 
-    head = get_record(name, T_NAPTR);
+    head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
     
     if (head == 0) {
 	LM_DBG("No NAPTR record found for %s.\n", name);
@@ -827,7 +827,7 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		memcpy(name + j, suffix->s, suffix->len + 1);
 
 		LM_DBG("Looking for EBL record for %s.\n", name); 
-		head = get_record(name, T_EBL);
+		head = get_record(name, T_EBL, RES_ONLY_TYPE);
 		if (head == 0) {
 			LM_DBG("No EBL found for %s. Defaulting to user ENUM.\n",name);
 		} else {
@@ -875,7 +875,7 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		}
 		memcpy(name + j, suffix->s, suffix->len + 1);
 
-		head = get_record(name, T_TXT);
+		head = get_record(name, T_TXT, RES_ONLY_TYPE);
 		if (head == 0) {
 			LM_DBG("TXT found for %s. Defaulting to %d\n",
 			       name, cc_len);
@@ -1020,7 +1020,7 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 
 	memcpy(name + j, suffix->s, suffix->len + 1);
 
-	head = get_record(name, T_NAPTR);
+	head = get_record(name, T_NAPTR, RES_ONLY_TYPE);
 
 	if (head == 0) {
 		LM_DBG("No NAPTR record found for %s.\n", name);
