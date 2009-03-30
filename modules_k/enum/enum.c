@@ -34,7 +34,7 @@
 #include "../../dset.h"
 #include "../../qvalue.h"
 #include "enum_mod.h"
-#include "../../regexp.h"
+#include "../../lib/kcore/regexp.h"
 #include "../../pvar.h"
 
 /*
