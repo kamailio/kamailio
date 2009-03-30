@@ -73,6 +73,7 @@
  * file/function/line number information to all LOG messages.
  */
 
+#ifdef USE_CONFIRM_CALLBACK
 #define DLOGMSG(msg) {									   \
 		if (msg->first_line.type == SIP_REQUEST) {		   \
 			LM_INFO("REQUEST: %.*s\n",			    	   \
@@ -86,6 +87,7 @@
 					msg->first_line.u.reply.reason.s);	   \
 		}												   \
 }
+#endif
 
 
 /**
@@ -437,7 +439,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 					msg->first_line.u.request.method.len, 
 					msg->first_line.u.request.method.s);
 			if (parse_msg_for_sst_info(msg, &minfo)) {
-				// FIXME: need an error message here
+				LM_ERR("failed to parse sst information\n"); 
 				return;
 			}
 			/* Early resetting of the value here */
@@ -472,7 +474,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 					msg->first_line.u.reply.reason.len, 
 					msg->first_line.u.reply.reason.s);
 			if (parse_msg_for_sst_info(msg, &minfo)) {
-				// FIXME: need an error message here
+				LM_ERR("failed to parse sst information\n");
 				return;
 			}
 			set_timeout_avp(msg, minfo.se);
@@ -516,7 +518,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		 */
 		if (msg->first_line.u.reply.statuscode == 422) {
 			if (parse_msg_for_sst_info(msg, &minfo)) {
-				LM_ERR("failed to prase sst information for thr 422 reply\n");
+				LM_ERR("failed to parse sst information for the 422 reply\n");
 				return;
 			}
 			/* Make sure we do not try to use anything smaller */
@@ -545,7 +547,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 
 			if (minfo.se != 0) {
 				if (set_timeout_avp(msg, info->interval)) {
-					// FIXME: need an error message here
+					LM_ERR("failed to set the timeout AVP\n");
 					return;
 				}
 			}
