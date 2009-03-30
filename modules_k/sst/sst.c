@@ -65,16 +65,16 @@ struct sl_binds slb;
 int sst_enable_stats = 1;
 stat_var *expired_sst = 0;
 
-/*
+/*!
  * The name of the AVP the dialog module will use to hold the timeout
  * value so we can set the AVP in the dialog callbacks so the dialog
  * code will set the dialog lifetime when it returns from the INVITE
  * and IN_ROUTE callbacks.
  */
 pv_spec_t timeout_avp; 
-static char* timeout_spec = 0; /* Place holder for the passed in name */
+static char* timeout_spec = 0; /*!< Place holder for the passed in name */
 
-/*
+/*!
  * The default or script parameter for the requested MIN-SE: value for
  * this proxy. (in seconds) If the passed in value is 0, then this
  * proxy will except any value from the UAC as its min-SE value. If
@@ -82,13 +82,13 @@ static char* timeout_spec = 0; /* Place holder for the passed in name */
  */
 unsigned int sst_minSE = 90; 
 
-/*
+/*!
  * Should the PROXY (us) reject (with a 422 reply) and SE < sst_minSE
  * requests is it can. Default is YES.
  */
 unsigned int sst_reject = 1;
 
-/* The sst message flag value */
+/*! The sst message flag value */
 static int sst_flag = -1;
 
 
@@ -110,10 +110,10 @@ static cmd_export_t cmds[]={
  * Script parameters
  */
 static param_export_t mod_params[]={
-	{ "enable_stats", INT_PARAM, &sst_enable_stats		},
-	{ "min_se", INT_PARAM, &sst_minSE					},
+	{ "enable_stats", INT_PARAM, &sst_enable_stats			},
+	{ "min_se", INT_PARAM, &sst_minSE				},
 	{ "timeout_avp", STR_PARAM, &timeout_spec			},
-	{ "reject_to_small",		INT_PARAM, &sst_reject 	},
+	{ "reject_to_small",		INT_PARAM, &sst_reject 		},
 	{ "sst_flag",				INT_PARAM, &sst_flag	},
 	{ 0,0,0 }
 };
@@ -154,9 +154,7 @@ struct module_exports exports= {
 static int mod_init(void) 
 {
 	str s;
-	/*
-	 * if statistics are disabled, prevent their registration to core.
-	 */
+	/* if statistics are disabled, prevent their registration to core. */
 	if (sst_enable_stats==0) {
 		exports.stats = 0;
 	}
@@ -187,15 +185,11 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/*
-	 * Init the handlers
-	 */
+	/* Init the handlers */
 	sst_handler_init((timeout_spec?&timeout_avp:0), sst_minSE, 
 			sst_flag, sst_reject);
 
-	/*
-	 * Register the main (static) dialog call back.
-	 */
+	/* Register the main (static) dialog call back. */
 	if (load_dlg_api(&dialog_st) != 0) {
 		LM_ERR("failed to load dialog hooks");
 		return(-1);
@@ -204,8 +198,5 @@ static int mod_init(void)
 	/* Load dialog hooks */
 	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL, NULL);
 
-	/*
-	 * We are GOOD-TO-GO.
-	 */
 	return 0;
 }

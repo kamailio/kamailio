@@ -188,10 +188,8 @@ static inline int sst_build_se_hdr(int seval, str *sehdr)
  * is loaded from the mod_init() function in sst.c to initialize the
  * callback handlers and local variables.
  *
- * @param timeout_avp_p - The pointer to the dialog modules timeout
- *                        AVP.
- * @param min_se - The minimum session expire value allowed by this
- *                PROXY.
+ * @param timeout_avp_p - The pointer to the dialog modules timeout AVP.
+ * @param min_se - The minimum session expire value allowed by this PROXY.
  * @param flag - sst flag
  * @param reject - reject state
  */
@@ -927,7 +925,7 @@ static int send_reject(struct sip_msg *msg, unsigned int min_se)
 
 /**
  * A helper function to setup all the callbacks from the dialog module
- * after we find intrest in the dialog.
+ * after we find interest in the dialog.
  *
  * @param did The Dialog ID.
  * @param info The sst information.
