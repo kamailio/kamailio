@@ -26,15 +26,30 @@
  *             (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Timer related functions for the dialog module
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
 
 #include "../../mem/shm_mem.h"
 #include "../../timer.h"
 #include "dlg_timer.h"
 
+/*! global dialog timer */
 struct dlg_timer *d_timer = 0;
+/*! global dialog timer handler */
 dlg_timer_handler timer_hdl = 0;
 
 
+/*!
+ * \brief Initialize the dialog timer handler
+ * Initialize the dialog timer handler, allocate the lock and a global
+ * timer in shared memory. The global timer handler will be set on success.
+ * \param hdl dialog timer handler
+ * \return 0 on success, -1 on failure
+ */
 int init_dlg_timer( dlg_timer_handler hdl )
 {
 	d_timer = (struct dlg_timer*)shm_malloc(sizeof(struct dlg_timer));
@@ -68,7 +83,9 @@ error0:
 }
 
 
-
+/*!
+ * \brief Destroy global dialog timer
+ */
 void destroy_dlg_timer(void)
 {
 	if (d_timer==0)
@@ -82,11 +99,16 @@ void destroy_dlg_timer(void)
 }
 
 
-
+/*!
+ * \brief Helper function for insert_dialog_timer
+ * \see insert_dialog_timer
+ * \param tl dialog timer list
+ */
 static inline void insert_dialog_timer_unsafe(struct dlg_tl *tl)
 {
 	struct dlg_tl* ptr;
 
+	/* insert in sorted order */
 	for(ptr = d_timer->first.prev; ptr != &d_timer->first ; ptr = ptr->prev) {
 		if ( ptr->timeout <= tl->timeout )
 			break;
@@ -100,7 +122,12 @@ static inline void insert_dialog_timer_unsafe(struct dlg_tl *tl)
 }
 
 
-
+/*!
+ * \brief Insert a dialog timer to the list
+ * \param tl dialog timer list
+ * \param interval timeout value in seconds
+ * \return 0 on success, -1 when the input timer list is invalid
+ */
 int insert_dlg_timer(struct dlg_tl *tl, int interval)
 {
 	lock_get( d_timer->lock);
@@ -120,7 +147,11 @@ int insert_dlg_timer(struct dlg_tl *tl, int interval)
 }
 
 
-
+/*!
+ * \brief Helper function for remove_dialog_timer
+ * \param tl dialog timer list
+ * \see remove_dialog_timer
+ */
 static inline void remove_dialog_timer_unsafe(struct dlg_tl *tl)
 {
 	tl->prev->next = tl->next;
@@ -128,7 +159,12 @@ static inline void remove_dialog_timer_unsafe(struct dlg_tl *tl)
 }
 
 
-
+/*!
+ * \brief Remove a dialog timer from the list
+ * \param tl dialog timer that should be removed
+ * \return 1 when the input timer is empty, 0 when the timer was removed,
+ * -1 when the input timer list is invalid
+ */
 int remove_dialog_timer(struct dlg_tl *tl)
 {
 	lock_get( d_timer->lock);
@@ -155,6 +191,13 @@ int remove_dialog_timer(struct dlg_tl *tl)
 }
 
 
+/*!
+ * \brief Update a dialog timer on the list
+ * \param tl dialog timer
+ * \param timeout new timeout value in seconds
+ * \return 0 on success, -1 when the input list is invalid
+ * \note the update is implemented as a remove, insert
+ */
 int update_dlg_timer( struct dlg_tl *tl, int timeout )
 {
 	lock_get( d_timer->lock);
@@ -175,7 +218,11 @@ int update_dlg_timer( struct dlg_tl *tl, int timeout )
 }
 
 
-
+/*!
+ * \brief Helper function for dlg_timer_routine
+ * \param time time for expiration check
+ * \return list of expired dialogs on success, 0 on failure
+ */
 static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 {
 	struct dlg_tl *tl , *end, *ret;
@@ -219,7 +266,12 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 }
 
 
-
+/*!
+ * \brief Timer routine for expiration of dialogs
+ * Timer handler for expiration of dialogs, runs the global timer handler on them.
+ * \param time for expiration checks
+ * \param attr unused
+ */
 void dlg_timer_routine(unsigned int ticks , void * attr)
 {
 	struct dlg_tl *tl, *ctl;
@@ -234,4 +286,3 @@ void dlg_timer_routine(unsigned int ticks , void * attr)
 		timer_hdl( ctl );
 	}
 }
-
