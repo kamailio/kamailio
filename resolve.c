@@ -499,6 +499,7 @@ struct rdata* get_record(char* name, int type, int flags)
 	static union dns_query buff;
 	unsigned char* p;
 	unsigned char* end;
+	unsigned char* rd_end;
 	static char rec_name[MAX_DNS_NAME]; /* placeholder for the record name */
 	int rec_name_len;
 	unsigned short rtype, class, rdlength;
@@ -593,10 +594,11 @@ again:
 		memcpy((void*)&rdlength, (void*)p, 2);
 		rdlength=ntohs(rdlength);
 		p+=2;
-		if (unlikely((p+rdlength)>end)) goto error_boundary;
+		rd_end=p+rdlength;
+		if (unlikely((rd_end)>end)) goto error_boundary;
 		if ((flags & RES_ONLY_TYPE) && (rtype!=type)){
 			/* skip */
-			p+=rdlength;
+			p=rd_end;
 			continue;
 		}
 		/* expand the "type" record  (rdata)*/
@@ -639,7 +641,7 @@ again:
 		}
 		switch(rtype){
 			case T_SRV:
-				srv_rd= dns_srv_parser(buff.buff, end, p);
+				srv_rd= dns_srv_parser(buff.buff, rd_end, p);
 				rd->rdata=(void*)srv_rd;
 				if (unlikely(srv_rd==0)) goto error_parse;
 				
@@ -663,26 +665,26 @@ again:
 				*crt=rd;
 				break;
 			case T_A:
-				rd->rdata=(void*) dns_a_parser(p,end);
+				rd->rdata=(void*) dns_a_parser(p, rd_end);
 				if (unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd; /* last points to the last "next" or the list
 							 	head*/
 				last=&(rd->next);
 				break;
 			case T_AAAA:
-				rd->rdata=(void*) dns_aaaa_parser(p,end);
+				rd->rdata=(void*) dns_aaaa_parser(p, rd_end);
 				if (unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
 			case T_CNAME:
-				rd->rdata=(void*) dns_cname_parser(buff.buff, end, p);
+				rd->rdata=(void*) dns_cname_parser(buff.buff, rd_end, p);
 				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
 			case T_NAPTR:
-				rd->rdata=(void*) dns_naptr_parser(buff.buff, end, p);
+				rd->rdata=(void*) dns_naptr_parser(buff.buff, rd_end, p);
 				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
