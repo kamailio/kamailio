@@ -499,6 +499,7 @@ struct rdata* get_record(char* name, int type, int flags)
 	static union dns_query buff;
 	unsigned char* p;
 	unsigned char* end;
+	unsigned char* rd_end;
 	static char rec_name[MAX_DNS_NAME]; /* placeholder for the record name */
 	int rec_name_len;
 	unsigned short rtype, class, rdlength;
@@ -523,22 +524,22 @@ struct rdata* get_record(char* name, int type, int flags)
 	fullname_rd=0;
 
 	size=res_search(name, C_IN, type, buff.buff, sizeof(buff));
-	if (size<0) {
+	if (unlikely(size<0)) {
 		DBG("get_record: lookup(%s, %d) failed\n", name, type);
 		goto not_found;
 	}
-	else if (size > sizeof(buff)) size=sizeof(buff);
+	else if (unlikely(size > sizeof(buff))) size=sizeof(buff);
 	head=rd=0;
 	last=crt=&head;
 	
 	p=buff.buff+DNS_HDR_SIZE;
 	end=buff.buff+size;
-	if (p>=end) goto error_boundary;
+	if (unlikely(p>=end)) goto error_boundary;
 	qno=ntohs((unsigned short)buff.hdr.qdcount);
 
 	for (r=0; r<qno; r++){
 		/* skip the name of the question */
-		if ((p=dns_skipname(p, end))==0) {
+		if (unlikely((p=dns_skipname(p, end))==0)) {
 			LOG(L_ERR, "ERROR: get_record: skipname==0\n");
 			goto error;
 		}
@@ -547,7 +548,7 @@ struct rdata* get_record(char* name, int type, int flags)
 		for (;(p<end && (*p)); p++);
 		p+=1+2+2; /* skip the ending  '\0, QCODE and QCLASS */
 	#endif
-		if (p>end) {
+		if (unlikely(p>end)) {
 			LOG(L_ERR, "ERROR: get_record: p>=end\n");
 			goto error;
 		}
@@ -562,20 +563,21 @@ again:
 			goto error;
 		}
 #else
-		if ((skip=dn_expand(buff.buff, end, p, rec_name, MAX_DNS_NAME-1))==-1){
+		if (unlikely((skip=dn_expand(buff.buff, end, p, rec_name,
+							MAX_DNS_NAME-1))==-1)){
 			LOG(L_ERR, "ERROR: get_record: dn_expand(rec_name) failed\n");
 			goto error;
 		}
 #endif
 		p+=skip;
 		rec_name_len=strlen(rec_name);
-		if (rec_name_len>255){
+		if (unlikely(rec_name_len>255)){
 			LOG(L_ERR, "ERROR: get_record: dn_expand(rec_name): name too"
 					" long  (%d)\n", rec_name_len);
 			goto error;
 		}
 		/* check if enough space is left for type, class, ttl & size */
-		if ((p+2+2+4+2)>end) goto error_boundary;
+		if (unlikely((p+2+2+4+2)>end)) goto error_boundary;
 		/* get type */
 		memcpy((void*) &rtype, (void*)p, 2);
 		rtype=ntohs(rtype);
@@ -592,14 +594,17 @@ again:
 		memcpy((void*)&rdlength, (void*)p, 2);
 		rdlength=ntohs(rdlength);
 		p+=2;
+		rd_end=p+rdlength;
+		if (unlikely((rd_end)>end)) goto error_boundary;
 		if ((flags & RES_ONLY_TYPE) && (rtype!=type)){
 			/* skip */
-			p+=rdlength;
+			p=rd_end;
 			continue;
 		}
 		/* expand the "type" record  (rdata)*/
 		
-		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+rec_name_len+1-1);
+		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+rec_name_len+
+										1-1);
 		if (rd==0){
 			LOG(L_ERR, "ERROR: get_record: out of memory\n");
 			goto error;
@@ -615,13 +620,13 @@ again:
 		if ((search_list_used==1)&&(fullname_rd==0)&&
 				(rec_name_len>=name_len)&&
 				(strncasecmp(rec_name, name, name_len)==0)) {
-			/* now we have record which's name is the same (up-to the name_len
-			 * with the searched one
-			 * if the length is the same - we found full match, no fake cname
-			 *   needed, just clear the flag
-			 * if the length of the name differs - it has matched using search list
-			 *   remember the rd, so we can create fake CNAME record when all answers
-			 *   are used and no better match found
+			/* now we have record whose name is the same (up-to the
+			 * name_len with the searched one):
+			 * if the length is the same - we found full match, no fake
+			 *  cname needed, just clear the flag
+			 * if the length of the name differs - it has matched using
+			 *  search list remember the rd, so we can create fake CNAME
+			 *  record when all answers are used and no better match found
 			 */
 			if (rec_name_len==name_len)
 				search_list_used=0;
@@ -636,9 +641,9 @@ again:
 		}
 		switch(rtype){
 			case T_SRV:
-				srv_rd= dns_srv_parser(buff.buff, end, p);
+				srv_rd= dns_srv_parser(buff.buff, rd_end, p);
 				rd->rdata=(void*)srv_rd;
-				if (srv_rd==0) goto error_parse;
+				if (unlikely(srv_rd==0)) goto error_parse;
 				
 				/* insert sorted into the list */
 				for (crt=&head; *crt; crt= &((*crt)->next)){
@@ -652,34 +657,35 @@ again:
 						goto skip;
 					}
 				}
-				last=&(rd->next); /*end of for => this will be the last elem*/
+				last=&(rd->next); /*end of for => this will be the last
+									element*/
 			skip:
 				/* insert here */
 				rd->next=*crt;
 				*crt=rd;
-				
 				break;
 			case T_A:
-				rd->rdata=(void*) dns_a_parser(p,end);
-				if (rd->rdata==0) goto error_parse;
-				*last=rd; /* last points to the last "next" or the list head*/
+				rd->rdata=(void*) dns_a_parser(p, rd_end);
+				if (unlikely(rd->rdata==0)) goto error_parse;
+				*last=rd; /* last points to the last "next" or the list
+							 	head*/
 				last=&(rd->next);
 				break;
 			case T_AAAA:
-				rd->rdata=(void*) dns_aaaa_parser(p,end);
-				if (rd->rdata==0) goto error_parse;
+				rd->rdata=(void*) dns_aaaa_parser(p, rd_end);
+				if (unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
 			case T_CNAME:
-				rd->rdata=(void*) dns_cname_parser(buff.buff, end, p);
-				if(rd->rdata==0) goto error_parse;
+				rd->rdata=(void*) dns_cname_parser(buff.buff, rd_end, p);
+				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
 			case T_NAPTR:
-				rd->rdata=(void*) dns_naptr_parser(buff.buff, end, p);
-				if(rd->rdata==0) goto error_parse;
+				rd->rdata=(void*) dns_naptr_parser(buff.buff, rd_end, p);
+				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
@@ -697,7 +703,8 @@ again:
 		flags&=~RES_AR;
 		answers_no=ntohs((unsigned short)buff.hdr.nscount);
 #ifdef RESOLVE_DBG
-		DBG("get_record: skipping %d NS (p=%p, end=%p)\n", answers_no, p, end);
+		DBG("get_record: skipping %d NS (p=%p, end=%p)\n", answers_no, p,
+				end);
 #endif
 		for (r=0; (r<answers_no) && (p<end); r++){
 			/* skip over the ns records */
@@ -706,13 +713,14 @@ again:
 				goto error;
 			}
 			/* check if enough space is left for type, class, ttl & size */
-			if ((p+2+2+4+2)>end) goto error_boundary;
+			if (unlikely((p+2+2+4+2)>end)) goto error_boundary;
 			memcpy((void*)&rdlength, (void*)p+2+2+4, 2);
 			p+=2+2+4+2+ntohs(rdlength);
 		}
 		answers_no=ntohs((unsigned short)buff.hdr.arcount);
 #ifdef RESOLVE_DBG
-		DBG("get_record: parsing %d ARs (p=%p, end=%p)\n", answers_no, p, end);
+		DBG("get_record: parsing %d ARs (p=%p, end=%p)\n", answers_no, p,
+				end);
 #endif
 		goto again; /* add also the additional records */
 	}
@@ -723,7 +731,7 @@ again:
 	 */
 	if ((search_list_used==1)&&(fullname_rd!=0)) {
 		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+name_len+1-1);
-		if (rd==0){
+		if (unlikely(rd==0)){
 			LOG(L_ERR, "ERROR: get_record: out of memory\n");
 			goto error;
 		}
@@ -735,13 +743,15 @@ again:
 		rd->name[name_len]=0;
 		rd->name_len=name_len;
 		/* alloc sizeof struct + space for the null terminated name */
-		rd->rdata=(void*)local_malloc(sizeof(struct cname_rdata)-1+head->name_len+1);
-		if(rd->rdata==0){
+		rd->rdata=(void*)local_malloc(sizeof(struct cname_rdata)-1+
+										head->name_len+1);
+		if(unlikely(rd->rdata==0)){
 			LOG(L_ERR, "ERROR: get_record: out of memory\n");
 			goto error_rd;
 		}
 		((struct cname_rdata*)(rd->rdata))->name_len=fullname_rd->name_len;
-		memcpy(((struct cname_rdata*)(rd->rdata))->name, fullname_rd->name, fullname_rd->name_len);
+		memcpy(((struct cname_rdata*)(rd->rdata))->name, fullname_rd->name,
+				fullname_rd->name_len);
 		((struct cname_rdata*)(rd->rdata))->name[head->name_len]=0;
 		head=rd;
 	}
