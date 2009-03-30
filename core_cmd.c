@@ -49,6 +49,7 @@ void dns_cache_debug(rpc_t* rpc, void* ctx);
 void dns_cache_debug_all(rpc_t* rpc, void* ctx);
 void dns_cache_mem_info(rpc_t* rpc, void* ctx);
 void dns_cache_view(rpc_t* rpc, void* ctx);
+void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx);
 void dns_cache_delete_all(rpc_t* rpc, void* ctx);
 void dns_cache_add_a(rpc_t* rpc, void* ctx);
 void dns_cache_add_aaaa(rpc_t* rpc, void* ctx);
@@ -56,6 +57,9 @@ void dns_cache_add_srv(rpc_t* rpc, void* ctx);
 void dns_cache_delete_a(rpc_t* rpc, void* ctx);
 void dns_cache_delete_aaaa(rpc_t* rpc, void* ctx);
 void dns_cache_delete_srv(rpc_t* rpc, void* ctx);
+void dns_cache_delete_naptr(rpc_t* rpc, void* ctx);
+void dns_cache_delete_cname(rpc_t* rpc, void* ctx);
+void dns_cache_delete_txt(rpc_t* rpc, void* ctx);
 
 
 static const char* dns_cache_mem_info_doc[] = {
@@ -74,6 +78,11 @@ static const char* dns_cache_debug_all_doc[] = {
 
 static const char* dns_cache_view_doc[] = {
 	"dns cache dump in a human-readable format",
+	0
+};
+
+static const char* dns_cache_rpc_lookup_doc[] = {
+	"perform a dns lookup",
 	0
 };
 
@@ -110,6 +119,22 @@ static const char* dns_cache_delete_srv_doc[] = {
 	"deletes an SRV record from the DNS cache",
 	0
 };
+
+static const char* dns_cache_delete_naptr_doc[] = {
+	"deletes a NAPTR record from the DNS cache",
+	0
+};
+
+static const char* dns_cache_delete_cname_doc[] = {
+	"deletes a CNAME record from the DNS cache",
+	0
+};
+
+static const char* dns_cache_delete_txt_doc[] = {
+	"deletes a TXT record from the DNS cache",
+	0
+};
+
 
 #ifdef USE_DNS_CACHE_STATS
 void dns_cache_stats_get(rpc_t* rpc, void* ctx);
@@ -684,33 +709,60 @@ rpc_export_t core_rpc_methods[] = {
 		0},
 	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
 #ifdef USE_DNS_CACHE
-	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
-	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},
-	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,        0	},
-	{"dns.view",               dns_cache_view,        dns_cache_view_doc,        0	},
-	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,  0	},
-	{"dns.add_a",              dns_cache_add_a,       dns_cache_add_a_doc,       0	},
-	{"dns.add_aaaa",           dns_cache_add_aaaa,    dns_cache_add_aaaa_doc,    0	},
-	{"dns.add_srv",            dns_cache_add_srv,     dns_cache_add_srv_doc,     0	},
-	{"dns.delete_a",           dns_cache_delete_a,    dns_cache_delete_a_doc,    0	},
-	{"dns.delete_aaaa",        dns_cache_delete_aaaa, dns_cache_delete_aaaa_doc, 0	},
-	{"dns.delete_srv",         dns_cache_delete_srv,  dns_cache_delete_srv_doc,  0	},
+	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
+		0	},
+	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,
+		0	},
+	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,
+		0	},
+	{"dns.view",               dns_cache_view,        dns_cache_view_doc,
+		0	},
+	{"dns.lookup",             dns_cache_rpc_lookup,  dns_cache_rpc_lookup_doc,
+		0	},
+	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,
+		0	},
+	{"dns.add_a",              dns_cache_add_a,       dns_cache_add_a_doc,
+		0	},
+	{"dns.add_aaaa",           dns_cache_add_aaaa,    dns_cache_add_aaaa_doc,
+		0	},
+	{"dns.add_srv",            dns_cache_add_srv,     dns_cache_add_srv_doc,
+		0	},
+	{"dns.delete_a",           dns_cache_delete_a,    dns_cache_delete_a_doc,
+		0	},
+	{"dns.delete_aaaa",        dns_cache_delete_aaaa,
+		dns_cache_delete_aaaa_doc, 0	},
+	{"dns.delete_srv",         dns_cache_delete_srv,
+		dns_cache_delete_srv_doc,  0	},
+	{"dns.delete_naptr",         dns_cache_delete_naptr,
+		dns_cache_delete_naptr_doc,  0	},
+	{"dns.delete_cname",         dns_cache_delete_cname,
+		dns_cache_delete_cname_doc,  0	},
+	{"dns.delete_txt",         dns_cache_delete_txt,
+		dns_cache_delete_txt_doc,  0	},
 #ifdef USE_DNS_CACHE_STATS
-	{"dns.stats_get",    dns_cache_stats_get,   dns_cache_stats_get_doc,        0	},
+	{"dns.stats_get",    dns_cache_stats_get,   dns_cache_stats_get_doc,
+		0	},
 #endif /* USE_DNS_CACHE_STATS */
 #ifdef DNS_WATCHDOG_SUPPORT
-	{"dns.set_server_state",   dns_set_server_state_rpc, dns_set_server_state_doc, 0 },
-	{"dns.get_server_state",   dns_get_server_state_rpc, dns_get_server_state_doc, 0 },
+	{"dns.set_server_state",   dns_set_server_state_rpc,
+		dns_set_server_state_doc, 0 },
+	{"dns.get_server_state",   dns_get_server_state_rpc,
+		dns_get_server_state_doc, 0 },
 #endif
 #endif
 #ifdef USE_DST_BLACKLIST
-	{"dst_blacklist.mem_info",  dst_blst_mem_info,     dst_blst_mem_info_doc,     0	},
-	{"dst_blacklist.debug",    dst_blst_debug,         dst_blst_debug_doc,        0	},
-	{"dst_blacklist.view",     dst_blst_view,         dst_blst_view_doc,         0	},
-	{"dst_blacklist.delete_all", dst_blst_delete_all, dst_blst_delete_all_doc,   0	},
-	{"dst_blacklist.add",      dst_blst_add,          dst_blst_add_doc,          0	},
+	{"dst_blacklist.mem_info",  dst_blst_mem_info,     dst_blst_mem_info_doc,
+		0	},
+	{"dst_blacklist.debug",    dst_blst_debug,         dst_blst_debug_doc,
+		0	},
+	{"dst_blacklist.view",     dst_blst_view,         dst_blst_view_doc,
+		0	},
+	{"dst_blacklist.delete_all", dst_blst_delete_all, dst_blst_delete_all_doc,
+		0	},
+	{"dst_blacklist.add",      dst_blst_add,          dst_blst_add_doc,
+		0	},
 #ifdef USE_DST_BLACKLIST_STATS
-	{"dst_blacklist.stats_get", dst_blst_stats_get, dst_blst_stats_get_doc, 0 },
+	{"dst_blacklist.stats_get", dst_blst_stats_get, dst_blst_stats_get_doc, 0},
 #endif /* USE_DST_BLACKLIST_STATS */
 #endif
 	{0, 0, 0, 0}

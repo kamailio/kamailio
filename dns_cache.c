@@ -44,6 +44,7 @@
  *  2008-02-11  dns_cache_init cfg parameter is introduced (Miklos)
  *  2008-10-17  fixed srv continue with 0 hostname (when falling back to
                   aaaa) (andrei)
+ *  2009-03-30  TXT record support, more rpcs (andrei)
  */
 
 #ifdef USE_DNS_CACHE
@@ -51,6 +52,7 @@
 #ifdef DNS_SRV_LB
 #include <stdlib.h> /* FIXME: rand() */
 #endif
+#include <string.h>
 
 #include "globals.h"
 #include "cfg_core.h"
@@ -1006,6 +1008,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	ticks_t now;
 	unsigned int max_ttl;
 	unsigned int ttl;
+	int i;
 
 #define rec_matches(rec, t, n) /*(struct rdata* record, int type, str* name)*/\
 	(	((rec)->name_len==(n)->len) && ((rec)->type==(t)) && \
@@ -1143,6 +1146,25 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				 * just been elimintated */
 			}
 			break;
+		case T_TXT:
+			for(; *p;){
+				if (!rec_matches((*p), type, name)){
+					/* skip this record */
+					p=&(*p)->next; /* advance */
+					continue;
+				}
+				/* padding to char* (because of txt[]->cstr*/
+				size+=ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
+						TXT_RDATA_SIZE(*(struct txt_rdata*)(*p)->rdata));
+				/* add it to our tmp. lst */
+				*tail=*p;
+				tail=&(*p)->next;
+				/* detach it from the rd list */
+				*p=(*p)->next;
+				/* don't advance p, because the crt. elem. has
+				 * just been elimintated */
+			}
+			break;
 		default:
 			LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: type %d not "
 							"supported\n", type);
@@ -1269,6 +1291,28 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				rr=rr->next;
 			}
 			break;
+		case T_TXT:
+			for(l=tmp_lst; l; l=l->next){
+				ttl=FIX_TTL(l->ttl);
+				rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
+				max_ttl=MAX(max_ttl, ttl);
+				rr->rdata=(void*)((char*)rr+
+							ROUND_POINTER(sizeof(struct dns_rr)));
+				memcpy(rr->rdata, l->rdata,
+							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata));
+				/* adjust the string pointers */
+				for (i=0; i<((struct txt_rdata*)l->rdata)->cstr_no; i++){
+					((struct txt_rdata*)rr->rdata)->txt[i].cstr=
+						translate_pointer((char*)rr->rdata, (char*)l->rdata,
+								((struct txt_rdata*)l->rdata)->txt[i].cstr);
+				}
+				rr->next=(void*)((char*)rr+
+						ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
+							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata)));
+				tail_rr=&(rr->next);
+				rr=rr->next;
+			}
+			break;
 		default:
 			/* do nothing */
 			LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: create: type %d not "
@@ -1304,7 +1348,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry2(struct rdata* rd)
 	ticks_t now;
 	struct tmp_rec rec[MAX_DNS_RECORDS];
 	int rec_idx[MAX_DNS_RECORDS];
-	int r, i;
+	int r, i, j;
 	int no_records; /* number of different records */
 	unsigned int ttl;
 
@@ -1381,6 +1425,12 @@ found:
 					/* no padding */
 				rec[r].size+=ROUND_POINTER(sizeof(struct dns_rr)+
 							CNAME_RDATA_SIZE(*(struct cname_rdata*)l->rdata));
+				break;
+			case T_TXT:
+					/* padding to char* (because of txt[]->cstr*/
+				rec[r].size+=ROUND_POINTER(ROUND_POINTER(
+												sizeof(struct dns_rr))+
+							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata));
 				break;
 			default:
 				LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: type %d not "
@@ -1498,6 +1548,26 @@ found:
 				rec[r].rr->next=(void*)((char*)rec[r].rr+
 							ROUND_POINTER(sizeof(struct dns_rr)+
 							CNAME_RDATA_SIZE(*(struct cname_rdata*)l->rdata)));
+				rec[r].tail_rr=&(rec[r].rr->next);
+				rec[r].rr=rec[r].rr->next;
+				break;
+			case T_TXT:
+				rec[r].rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
+				rec[r].max_ttl=MAX(rec[r].max_ttl, ttl);
+				rec[r].rr->rdata=(void*)((char*)rec[r].rr+
+									ROUND_POINTER(sizeof(struct dns_rr)));
+				memcpy(rec[r].rr->rdata, l->rdata,
+							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata));
+				/* adjust the string pointers */
+				for (j=0; j<((struct txt_rdata*)l->rdata)->cstr_no; j++){
+					((struct txt_rdata*)rec[r].rr->rdata)->txt[j].cstr=
+						translate_pointer((char*)rec[r].rr->rdata,
+								(char*)l->rdata,
+								((struct txt_rdata*)l->rdata)->txt[j].cstr);
+				}
+				rec[r].rr->next=(void*)((char*)rec[r].rr+
+						ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
+							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata)));
 				rec[r].tail_rr=&(rec[r].rr->next);
 				rec[r].rr=rec[r].rr->next;
 				break;
@@ -3445,6 +3515,12 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 							rpc->add(ctx, "ss", "cname",
 									((struct cname_rdata*)(rr->rdata))->name);
 							break;
+						case T_TXT:
+							rpc->add(ctx, "ss", "txt",
+								((struct txt_rdata*)(rr->rdata))->cstr_no?
+								((struct txt_rdata*)(rr->rdata))->txt[0].cstr:
+								"");
+							break;
 						default:
 							rpc->add(ctx, "ss", "unknown", "?");
 					}
@@ -3472,103 +3548,167 @@ static char *print_type(unsigned short type)
 			return "NAPTR";
 		case T_CNAME:
 			return "CNAME";
+		case T_TXT:
+			return "TXT";
 		default:
 			return "unkown";
 	}
 }
 
-/* dumps the content of the cache in a human-readable format */
-void dns_cache_view(rpc_t* rpc, void* ctx)
+
+/** convert string type to dns integer T_*.
+ * used for rpc type translation.
+ * @return T_* on success, -1 on error.
+ */
+static int dns_get_type(str* s)
 {
-	int h;
+	char *t;
+	int len;
+	
+	t=s->s;
+	len=s->len;
+	/* skip over a T_ or t_ prefix */
+	if ((len>2) && (t[0]=='T' || t[0]=='t') && (t[1]=='_')){
+		t+=2;
+		len-=2;
+	}
+	switch(len){
+		case 1:
+			if (t[0]=='A' || t[0]=='a')
+				return T_A;
+			break;
+		case 4:
+			if (strncasecmp(t, "AAAA", len)==0)
+				return T_AAAA;
+			break;
+		case 3:
+			if (strncasecmp(t, "SRV", len)==0)
+				return T_SRV;
+			else if (strncasecmp(t, "TXT", len)==0)
+				return T_TXT;
+			break;
+		case 5:
+			if (strncasecmp(t, "NAPTR", len)==0)
+				return T_NAPTR;
+			else if (strncasecmp(t, "CNAME", len)==0)
+				return T_CNAME;
+			break;
+	}
+	return -1;
+}
+
+
+/** rpc-prints a dns cache entry.
+  */
+void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
+{
 	int expires;
-	struct dns_hash_entry* e;
 	struct dns_rr* rr;
 	struct ip_addr ip;
 	ticks_t now;
 	str s;
+	int i;
+
+	now=get_ticks_raw();
+	expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
+	if (expires < 0) {
+		return;
+	}
+	rpc->printf(ctx, "%sname: %s", SPACE_FORMAT, e->name);
+	rpc->printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
+	rpc->printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
+						e->total_size);
+	rpc->printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
+						e->refcnt.val);
+	rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
+	rpc->printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
+						TICKS_TO_S(now-e->last_used));
+	rpc->printf(ctx, "%serror flags: %d", SPACE_FORMAT, e->err_flags);
+	
+	for (rr=e->rr_lst; rr; rr=rr->next) {
+		switch(e->type) {
+			case T_A:
+			case T_AAAA:
+				if (dns_rr2ip(e->type, rr, &ip)==0){
+				  rpc->printf(ctx, "%srr ip: %s", SPACE_FORMAT,
+									ip_addr2a(&ip) );
+				}else{
+				  rpc->printf(ctx, "%srr ip: <error: bad rr>", 
+									SPACE_FORMAT);
+				}
+				break;
+			case T_SRV:
+				rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
+							((struct srv_rdata*)(rr->rdata))->name);
+				rpc->printf(ctx, "%srr port: %d", SPACE_FORMAT,
+							((struct srv_rdata*)(rr->rdata))->port);
+				rpc->printf(ctx, "%srr priority: %d", SPACE_FORMAT,
+						((struct srv_rdata*)(rr->rdata))->priority);
+				rpc->printf(ctx, "%srr weight: %d", SPACE_FORMAT,
+							((struct srv_rdata*)(rr->rdata))->weight);
+				break;
+			case T_NAPTR:
+				rpc->printf(ctx, "%srr order: %d", SPACE_FORMAT,
+							((struct naptr_rdata*)(rr->rdata))->order);
+				rpc->printf(ctx, "%srr preference: %d", SPACE_FORMAT,
+							((struct naptr_rdata*)(rr->rdata))->pref);
+				s.s = ((struct naptr_rdata*)(rr->rdata))->flags;
+				s.len = ((struct naptr_rdata*)(rr->rdata))->flags_len;
+				rpc->printf(ctx, "%srr flags: %.*s", SPACE_FORMAT,
+									s.len, s.s);
+				s.s=((struct naptr_rdata*)(rr->rdata))->services;
+				s.len=((struct naptr_rdata*)(rr->rdata))->services_len;
+				rpc->printf(ctx, "%srr service: %.*s", SPACE_FORMAT,
+									s.len, s.s);
+				s.s = ((struct naptr_rdata*)(rr->rdata))->regexp;
+				s.len = ((struct naptr_rdata*)(rr->rdata))->regexp_len;
+				rpc->printf(ctx, "%srr regexp: %.*s", SPACE_FORMAT,
+									s.len, s.s);
+				s.s = ((struct naptr_rdata*)(rr->rdata))->repl;
+				s.len = ((struct naptr_rdata*)(rr->rdata))->repl_len;
+				rpc->printf(ctx, "%srr replacement: %.*s", 
+									SPACE_FORMAT, s.len, s.s);
+				break;
+			case T_CNAME:
+				rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
+							((struct cname_rdata*)(rr->rdata))->name);
+				break;
+			case T_TXT:
+				for (i=0; i<((struct txt_rdata*)(rr->rdata))->cstr_no;
+						i++){
+					rpc->printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
+						((struct txt_rdata*)(rr->rdata))->txt[i].cstr);
+				}
+				break;
+			default:
+				rpc->printf(ctx, "%sresource record: unknown",
+									SPACE_FORMAT);
+		}
+		rpc->printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
+						(s_ticks_t)(rr->expire-now)<0?-1 : 
+						TICKS_TO_S(rr->expire-now));
+		rpc->printf(ctx, "%srr error flags: %d", SPACE_FORMAT, 
+						rr->err_flags);
+	}
+}
+
+
+
+/* dumps the content of the cache in a human-readable format */
+void dns_cache_view(rpc_t* rpc, void* ctx)
+{
+	int h;
+	struct dns_hash_entry* e;
 
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
-	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 	for (h=0; h<DNS_HASH_SIZE; h++){
 		clist_foreach(&dns_hash[h], e, next){
-			expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
-			if (expires < 0) {
-				continue;
-			}
-			rpc->printf(ctx, "{\n%sname: %s", SPACE_FORMAT, e->name);
-			rpc->printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
-			rpc->printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
-								e->total_size);
-			rpc->printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
-								e->refcnt.val);
-			rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
-			rpc->printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
-								TICKS_TO_S(now-e->last_used));
-			rpc->printf(ctx, "%serror flags: %d", SPACE_FORMAT, e->err_flags);
-			
-			for (rr=e->rr_lst; rr; rr=rr->next) {
-				switch(e->type) {
-					case T_A:
-					case T_AAAA:
-						if (dns_rr2ip(e->type, rr, &ip)==0){
-						  rpc->printf(ctx, "%srr ip: %s", SPACE_FORMAT,
-								  			ip_addr2a(&ip) );
-						}else{
-						  rpc->printf(ctx, "%srr ip: <error: bad rr>", 
-								  			SPACE_FORMAT);
-						}
-						break;
-					case T_SRV:
-						rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
-									((struct srv_rdata*)(rr->rdata))->name);
-						rpc->printf(ctx, "%srr port: %d", SPACE_FORMAT,
-									((struct srv_rdata*)(rr->rdata))->port);
-						rpc->printf(ctx, "%srr priority: %d", SPACE_FORMAT,
-								((struct srv_rdata*)(rr->rdata))->priority);
-						rpc->printf(ctx, "%srr weight: %d", SPACE_FORMAT,
-									((struct srv_rdata*)(rr->rdata))->weight);
-						break;
-					case T_NAPTR:
-						rpc->printf(ctx, "%srr order: %d", SPACE_FORMAT,
-									((struct naptr_rdata*)(rr->rdata))->order);
-						rpc->printf(ctx, "%srr preference: %d", SPACE_FORMAT,
-									((struct naptr_rdata*)(rr->rdata))->pref);
-						s.s = ((struct naptr_rdata*)(rr->rdata))->flags;
-						s.len = ((struct naptr_rdata*)(rr->rdata))->flags_len;
-						rpc->printf(ctx, "%srr flags: %.*s", SPACE_FORMAT,
-											s.len, s.s);
-						s.s=((struct naptr_rdata*)(rr->rdata))->services;
-						s.len=((struct naptr_rdata*)(rr->rdata))->services_len;
-						rpc->printf(ctx, "%srr service: %.*s", SPACE_FORMAT,
-											s.len, s.s);
-						s.s = ((struct naptr_rdata*)(rr->rdata))->regexp;
-						s.len = ((struct naptr_rdata*)(rr->rdata))->regexp_len;
-						rpc->printf(ctx, "%srr regexp: %.*s", SPACE_FORMAT,
-											s.len, s.s);
-						s.s = ((struct naptr_rdata*)(rr->rdata))->repl;
-						s.len = ((struct naptr_rdata*)(rr->rdata))->repl_len;
-						rpc->printf(ctx, "%srr replacement: %.*s", 
-											SPACE_FORMAT, s.len, s.s);
-						break;
-					case T_CNAME:
-						rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
-									((struct cname_rdata*)(rr->rdata))->name);
-						break;
-					default:
-						rpc->printf(ctx, "%sresource record: unknown",
-											SPACE_FORMAT);
-				}
-				rpc->printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
-								(s_ticks_t)(rr->expire-now)<0?-1 : 
-								TICKS_TO_S(rr->expire-now));
-				rpc->printf(ctx, "%srr error flags: %d", SPACE_FORMAT, 
-								rr->err_flags);
-			}
+			rpc->printf(ctx, "{\n");
+			dns_cache_print_entry(rpc, ctx, e);
 			rpc->printf(ctx, "}");
 		}
 	}
@@ -3616,6 +3756,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 	struct dns_rr *rr, *last_rr, *new_rr;
 	int size, rounded_size, rr_size;
 	ticks_t now;
+	int i;
 
 	now=get_ticks_raw();
 	size = e->total_size;
@@ -3633,6 +3774,9 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 				rr_size = ROUND_SHORT(sizeof(struct dns_rr));
 				break;
 			case T_NAPTR:
+				rr_size = ROUND_POINTER(sizeof(struct dns_rr));
+				break;
+			case T_TXT:
 				rr_size = ROUND_POINTER(sizeof(struct dns_rr));
 				break;
 			default:
@@ -3692,6 +3836,13 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 			((struct naptr_rdata*)rr->rdata)->repl =
 				translate_pointer((char*)new, (char*)e,
 					((struct naptr_rdata*)rr->rdata)->repl);
+		}else if (e->type == T_TXT){
+			/* there are pointers inside the TXT structure */
+			for (i=0; i<((struct txt_rdata*)rr->rdata)->cstr_no; i++){
+				((struct txt_rdata*)rr->rdata)->txt[i].cstr=
+					translate_pointer((char*) new, (char*) e,
+						((struct txt_rdata*)rr->rdata)->txt[i].cstr);
+			}
 		}
 	}
 
@@ -3763,6 +3914,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 		break;
 	case T_CNAME:
 	case T_NAPTR:
+	case T_TXT:
 		rpc->fault(ctx, 400, "not implemented");
 		return;
 	default:
@@ -3980,6 +4132,37 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 }
 
 
+/* performs  a dns lookup over rpc */
+void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx)
+{
+	struct dns_hash_entry *e;
+	str name;
+	str type;
+	int t;
+
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
+	
+	if (rpc->scan(ctx, "SS", &type, &name) < 1)
+		return;
+	t=dns_get_type(&type);
+	if (t<0){
+		rpc->fault(ctx, 400, "Invalid type");
+		return;
+	}
+	e=dns_get_entry(&name, t);
+	if (e==0){
+		rpc->fault(ctx, 400, "Not found");
+		return;
+	}
+	dns_cache_print_entry(rpc, ctx, e);
+	dns_hash_put(e);
+}
+
+
+
 /* wrapper functions for adding and deleting records */
 void dns_cache_add_a(rpc_t* rpc, void* ctx)
 {
@@ -4014,6 +4197,24 @@ void dns_cache_delete_aaaa(rpc_t* rpc, void* ctx)
 void dns_cache_delete_srv(rpc_t* rpc, void* ctx)
 {
 	dns_cache_delete_record(rpc, ctx, T_SRV);
+}
+
+
+void dns_cache_delete_naptr(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_NAPTR);
+}
+
+
+void dns_cache_delete_cname(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_CNAME);
+}
+
+
+void dns_cache_delete_txt(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_TXT);
 }
 
 
