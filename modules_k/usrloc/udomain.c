@@ -307,7 +307,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	if (VAL_NULL(vals+10) || p==0 || p[0]==0){
 		ci.sock = 0;
 	} else {
-		if (parse_phostport( p, strlen(p), &host.s, &host.len, 
+		if (parse_phostport( p, &host.s, &host.len, 
 		&port, &proto)!=0) {
 			LM_ERR("bad socket <%s>\n", p);
 			return 0;

@@ -198,7 +198,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			if (VAL_NULL(ROW_VALUES(row)+2) || p==0 || p[0]==0){
 				sock = 0;
 			} else {
-				if (parse_phostport( p, strlen(p), &host.s, &host.len,
+				if (parse_phostport( p, &host.s, &host.len,
 				&port, &proto)!=0) {
 					LM_ERR("bad socket <%s>...ignoring\n", p);
 					sock = 0;
