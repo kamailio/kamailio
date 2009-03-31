@@ -29,27 +29,9 @@
 #define PARSE_METHODS_H
 
 #include "../str.h"
+#include "msg_parser.h"
 
-/*
- * Methods found in methods Contact parameter or Allow header.
- */
-enum method {
-	METH_UNKNOWN = 1, 
-	METH_ACK = 2, 
-	METH_BYE = 4, 
-	METH_CANCEL = 8,
-	METH_INFO = 16, 
-	METH_INVITE = 32, 
-	METH_NOTIFY = 64,
-	METH_OPTIONS = 128, 
-	METH_PRACK = 256, 
-	METH_REGISTER  = 512,
-	METH_SUBSCRIBE = 1024, 
-	METH_UPDATE = 2048, 
-	METH_MESSAGE = 4096,
-	METH_REFER = 8192
-};
-
+#define ALL_METHODS 0xffffffff
 
 /* 
  * Parse comma separated list of methods pointed by _body and assign their
@@ -57,7 +39,7 @@ enum method {
  */
 int parse_methods(str* _body, unsigned int* _methods);
 
-int parse_method(str* _next, unsigned int* _method);
+int parse_method(str* _next, enum request_method* _method);
 
 
 #endif /* PARSE_METHODS_H */
