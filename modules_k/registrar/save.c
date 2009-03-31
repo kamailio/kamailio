@@ -451,7 +451,8 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 #ifdef USE_TCP
 	if ( tcp_check && e_max>0 ) {
 		e_max -= act_time;
-		force_tcp_conn_lifetime( &_m->rcv , e_max + 10 );
+		/*FIXME: Do we want this in the sr core?*/
+		/*force_tcp_conn_lifetime( &_m->rcv , e_max + 10 );*/
 	}
 #endif
 
@@ -666,7 +667,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 #ifdef USE_TCP
 	if ( tcp_check && e_max>-1 ) {
 		if (e_max) e_max -= act_time;
-		force_tcp_conn_lifetime( &_m->rcv , e_max + 10 );
+		/*FIXME: Do we want this in the sr core? */
+		/*force_tcp_conn_lifetime( &_m->rcv , e_max + 10 );*/
 	}
 #endif
 
