@@ -30,6 +30,8 @@
  *
  */
 
+#include "../../select_buf.h" /* reset_static_buffer() */
+
 #include "sip_msg.h"
 #include "t_reply.h"
 #include "h_table.h"

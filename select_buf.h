@@ -35,6 +35,8 @@
 #ifndef SELECT_BUFFER_H
 #define SELECT_BUFFER_H
 
+#include "str.h"
+
 /*
  * Request for space from buffer
  *
