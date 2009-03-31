@@ -130,7 +130,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 		set_ruri_q(ptr->q);
 
-		setbflag( 0, ptr->cflags);
+		setbflagsval( 0, ptr->cflags);
 
 		if (ptr->sock)
 			_m->force_send_socket = ptr->sock;
