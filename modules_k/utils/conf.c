@@ -266,7 +266,7 @@ static int update_proxy(int id, char *host_str, char *port_str)
 
 	/* make proxy in shared memory */
 	struct proxy_l* proxy;
-	proxy = mk_shm_proxy(&host, port, PROTO_UDP, 0);
+	proxy = mk_shm_proxy(&host, port, PROTO_UDP);
 	if (proxy == NULL) {
 		LM_ERR("cannot make proxy (host='%s', port=%d).\n", host_str, port);
 		shm_free(host.s);
