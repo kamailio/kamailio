@@ -45,6 +45,7 @@
  *  2008-10-17  fixed srv continue with 0 hostname (when falling back to
                   aaaa) (andrei)
  *  2009-03-30  TXT record support, more rpcs (andrei)
+ *  2009-03-30  EBL record support (andrei)
  */
 
 #ifdef USE_DNS_CACHE
@@ -1165,6 +1166,25 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				 * just been elimintated */
 			}
 			break;
+		case T_EBL:
+			for(; *p;){
+				if (!rec_matches((*p), type, name)){
+					/* skip this record */
+					p=&(*p)->next; /* advance */
+					continue;
+				}
+				/* padding to char* (because of the char* pointers */
+				size+=ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
+						EBL_RDATA_SIZE(*(struct ebl_rdata*)(*p)->rdata));
+				/* add it to our tmp. lst */
+				*tail=*p;
+				tail=&(*p)->next;
+				/* detach it from the rd list */
+				*p=(*p)->next;
+				/* don't advance p, because the crt. elem. has
+				 * just been elimintated */
+			}
+			break;
 		default:
 			LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: type %d not "
 							"supported\n", type);
@@ -1313,6 +1333,32 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				rr=rr->next;
 			}
 			break;
+		case T_EBL:
+			for(l=tmp_lst; l; l=l->next){
+				ttl=FIX_TTL(l->ttl);
+				rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
+				max_ttl=MAX(max_ttl, ttl);
+				rr->rdata=(void*)((char*)rr+
+							ROUND_POINTER(sizeof(struct dns_rr)));
+				memcpy(rr->rdata, l->rdata,
+							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata));
+				/* adjust the string pointers */
+				((struct ebl_rdata*)rr->rdata)->separator=
+					translate_pointer((char*)rr->rdata, (char*)l->rdata,
+								((struct ebl_rdata*)l->rdata)->separator);
+				((struct ebl_rdata*)rr->rdata)->separator=
+						translate_pointer((char*)rr->rdata, (char*)l->rdata,
+								((struct ebl_rdata*)l->rdata)->separator);
+				((struct ebl_rdata*)rr->rdata)->apex=
+						translate_pointer((char*)rr->rdata, (char*)l->rdata,
+								((struct ebl_rdata*)l->rdata)->apex);
+				rr->next=(void*)((char*)rr+
+						ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
+							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata)));
+				tail_rr=&(rr->next);
+				rr=rr->next;
+			}
+			break;
 		default:
 			/* do nothing */
 			LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: create: type %d not "
@@ -1427,10 +1473,16 @@ found:
 							CNAME_RDATA_SIZE(*(struct cname_rdata*)l->rdata));
 				break;
 			case T_TXT:
-					/* padding to char* (because of txt[]->cstr*/
+					/* padding to char* (because of txt[]->cstr)*/
 				rec[r].size+=ROUND_POINTER(ROUND_POINTER(
 												sizeof(struct dns_rr))+
 							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata));
+				break;
+			case T_EBL:
+					/* padding to char* (because of char* pointers)*/
+				rec[r].size+=ROUND_POINTER(ROUND_POINTER(
+												sizeof(struct dns_rr))+
+							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata));
 				break;
 			default:
 				LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: type %d not "
@@ -1568,6 +1620,28 @@ found:
 				rec[r].rr->next=(void*)((char*)rec[r].rr+
 						ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
 							TXT_RDATA_SIZE(*(struct txt_rdata*)l->rdata)));
+				rec[r].tail_rr=&(rec[r].rr->next);
+				rec[r].rr=rec[r].rr->next;
+				break;
+			case T_EBL:
+				rec[r].rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
+				rec[r].max_ttl=MAX(rec[r].max_ttl, ttl);
+				rec[r].rr->rdata=(void*)((char*)rec[r].rr+
+									ROUND_POINTER(sizeof(struct dns_rr)));
+				memcpy(rec[r].rr->rdata, l->rdata,
+							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata));
+				/* adjust the string pointers */
+				((struct ebl_rdata*)rec[r].rr->rdata)->separator=
+					translate_pointer((char*)rec[r].rr->rdata,
+							(char*)l->rdata,
+							((struct ebl_rdata*)l->rdata)->separator);
+				((struct ebl_rdata*)rec[r].rr->rdata)->apex=
+					translate_pointer((char*)rec[r].rr->rdata,
+							(char*)l->rdata,
+							((struct ebl_rdata*)l->rdata)->apex);
+				rec[r].rr->next=(void*)((char*)rec[r].rr+
+						ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
+							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata)));
 				rec[r].tail_rr=&(rec[r].rr->next);
 				rec[r].rr=rec[r].rr->next;
 				break;
@@ -3521,6 +3595,10 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 								((struct txt_rdata*)(rr->rdata))->txt[0].cstr:
 								"");
 							break;
+						case T_EBL:
+							rpc->add(ctx, "ss", "ebl",
+								((struct ebl_rdata*)(rr->rdata))->apex);
+							break;
 						default:
 							rpc->add(ctx, "ss", "unknown", "?");
 					}
@@ -3550,6 +3628,8 @@ static char *print_type(unsigned short type)
 			return "CNAME";
 		case T_TXT:
 			return "TXT";
+		case T_EBL:
+			return "EBL";
 		default:
 			return "unkown";
 	}
@@ -3586,6 +3666,8 @@ static int dns_get_type(str* s)
 				return T_SRV;
 			else if (strncasecmp(t, "TXT", len)==0)
 				return T_TXT;
+			else if (strncasecmp(t, "EBL", len)==0)
+				return T_EBL;
 			break;
 		case 5:
 			if (strncasecmp(t, "NAPTR", len)==0)
@@ -3679,6 +3761,14 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 					rpc->printf(ctx, "%stxt[%d]: %s", SPACE_FORMAT, i,
 						((struct txt_rdata*)(rr->rdata))->txt[i].cstr);
 				}
+				break;
+			case T_EBL:
+				rpc->printf(ctx, "%srr position: %d", SPACE_FORMAT,
+							((struct ebl_rdata*)(rr->rdata))->position);
+				rpc->printf(ctx, "%srr separator: %s", SPACE_FORMAT,
+							((struct ebl_rdata*)(rr->rdata))->separator);
+				rpc->printf(ctx, "%srr apex: %s", SPACE_FORMAT,
+							((struct ebl_rdata*)(rr->rdata))->apex);
 				break;
 			default:
 				rpc->printf(ctx, "%sresource record: unknown",
@@ -3779,6 +3869,9 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 			case T_TXT:
 				rr_size = ROUND_POINTER(sizeof(struct dns_rr));
 				break;
+			case T_EBL:
+				rr_size = ROUND_POINTER(sizeof(struct dns_rr));
+				break;
 			default:
 				LOG(L_ERR, "ERROR: dns_cache_clone_entry: type %d not "
 							"supported\n", e->type);
@@ -3819,30 +3912,42 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 		else
 			last_rr = rr;
 
-		if (e->type == T_NAPTR) {
-			/* there are pointers inside the NAPTR rdata stucture */
-			((struct naptr_rdata*)rr->rdata)->flags =
-				translate_pointer((char*)new, (char*)e,
-					((struct naptr_rdata*)rr->rdata)->flags);
+		switch(e->type){
+			case T_NAPTR:
+				/* there are pointers inside the NAPTR rdata stucture */
+				((struct naptr_rdata*)rr->rdata)->flags =
+					translate_pointer((char*)new, (char*)e,
+						((struct naptr_rdata*)rr->rdata)->flags);
 
-			((struct naptr_rdata*)rr->rdata)->services =
-				translate_pointer((char*)new, (char*)e,
-					((struct naptr_rdata*)rr->rdata)->services);
+				((struct naptr_rdata*)rr->rdata)->services =
+					translate_pointer((char*)new, (char*)e,
+						((struct naptr_rdata*)rr->rdata)->services);
 
-			((struct naptr_rdata*)rr->rdata)->regexp =
-				translate_pointer((char*)new, (char*)e,
-					((struct naptr_rdata*)rr->rdata)->regexp);
+				((struct naptr_rdata*)rr->rdata)->regexp =
+					translate_pointer((char*)new, (char*)e,
+						((struct naptr_rdata*)rr->rdata)->regexp);
 
-			((struct naptr_rdata*)rr->rdata)->repl =
-				translate_pointer((char*)new, (char*)e,
-					((struct naptr_rdata*)rr->rdata)->repl);
-		}else if (e->type == T_TXT){
-			/* there are pointers inside the TXT structure */
-			for (i=0; i<((struct txt_rdata*)rr->rdata)->cstr_no; i++){
-				((struct txt_rdata*)rr->rdata)->txt[i].cstr=
-					translate_pointer((char*) new, (char*) e,
-						((struct txt_rdata*)rr->rdata)->txt[i].cstr);
-			}
+				((struct naptr_rdata*)rr->rdata)->repl =
+					translate_pointer((char*)new, (char*)e,
+						((struct naptr_rdata*)rr->rdata)->repl);
+				break;
+			case T_TXT:
+				/* there are pointers inside the TXT structure */
+				for (i=0; i<((struct txt_rdata*)rr->rdata)->cstr_no; i++){
+					((struct txt_rdata*)rr->rdata)->txt[i].cstr=
+						translate_pointer((char*) new, (char*) e,
+							((struct txt_rdata*)rr->rdata)->txt[i].cstr);
+				}
+				break;
+			case T_EBL:
+				/* there are pointers inside the EBL structure */
+				((struct ebl_rdata*)rr->rdata)->separator =
+					translate_pointer((char*)new, (char*)e,
+							((struct ebl_rdata*)rr->rdata)->separator);
+				((struct ebl_rdata*)rr->rdata)->apex =
+					translate_pointer((char*)new, (char*)e,
+							((struct ebl_rdata*)rr->rdata)->apex);
+				break;
 		}
 	}
 
@@ -3915,6 +4020,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	case T_CNAME:
 	case T_NAPTR:
 	case T_TXT:
+	case T_EBL:
 		rpc->fault(ctx, 400, "not implemented");
 		return;
 	default:
@@ -4215,6 +4321,11 @@ void dns_cache_delete_cname(rpc_t* rpc, void* ctx)
 void dns_cache_delete_txt(rpc_t* rpc, void* ctx)
 {
 	dns_cache_delete_record(rpc, ctx, T_TXT);
+}
+
+void dns_cache_delete_ebl(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_EBL);
 }
 
 

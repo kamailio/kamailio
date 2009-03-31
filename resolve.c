@@ -527,6 +527,70 @@ error:
 
 
 
+/** parses an EBL record into a txt_rdata structure.
+ *   @param msg   - pointer to the dns message
+ *   @param end   - pointer to the end of the dns message
+ *   @param eor   - pointer to the end of the record (rdata end)
+ *   @param rdata - pointer  to the rdata part of the txt answer
+ * returns 0 on error, or a dyn. alloc'ed txt_rdata structure */
+/*  EBL rdata format:
+ *  (see http://tools.ietf.org/html/draft-ietf-enum-branch-location-record-03)
+ * one or several character strings:
+ *  01234567
+ * +--------+
+ * | postion|
+ * +-----------+
+ * / separator /
+ * +-----------+
+ * /   apex    /
+ * +----------+
+ *
+ * where separator is a character string ( 8 bit len, followed by len chars)
+ * and apex is a domain-name.
+ */
+static struct ebl_rdata* dns_ebl_parser(unsigned char* msg, unsigned char* end,
+										unsigned char* eor,
+										unsigned char* rdata)
+{
+	struct ebl_rdata* ebl;
+	int sep_len;
+	int apex_len;
+	char apex[MAX_DNS_NAME];
+	
+	ebl=0;
+	/* check if len is at least 4 chars (minimum possible):
+	     pos (1 byte) +  sep. (min 1 byte) + apex (min. 2 bytes) 
+	   and also check if rdata+1 (pos) + 1 (sep. len) + sep_len + 1 is ok*/
+	if (unlikely(((rdata+4)>eor)||((rdata+1+1+rdata[1]+2)>eor))) goto error;
+	sep_len=rdata[1];
+	if (unlikely(dn_expand(msg, end, rdata+1+1+sep_len,
+							apex, MAX_DNS_NAME-1)==-1))
+		goto error;
+	apex_len=strlen(apex);
+	/* alloc sizeof struct + space for the 2 null-terminated strings */
+	ebl=local_malloc(sizeof(struct ebl_rdata)-1+sep_len+1+apex_len+1);
+	if (ebl==0){
+		LOG(L_ERR, "ERROR: dns_ebl_parser: out of memory\n");
+		goto error;
+	}
+	ebl->position=rdata[0];
+	ebl->separator=&ebl->str_table[0];
+	ebl->apex=ebl->separator+sep_len+1;
+	ebl->separator_len=sep_len;
+	ebl->apex_len=apex_len;
+	memcpy(ebl->separator, rdata+2, sep_len);
+	ebl->separator[sep_len]=0;
+	memcpy(ebl->apex, apex, apex_len);
+	ebl->apex[apex_len]=0;
+	
+	return ebl;
+error:
+	if (ebl) local_free(ebl);
+	return 0;
+}
+
+
+
 /* frees completely a struct rdata list */
 void free_rdata_list(struct rdata* head)
 {
@@ -761,7 +825,13 @@ again:
 				last=&(rd->next);
 				break;
 			case T_TXT:
-				rd->rdata= dns_txt_parser(buff.buff, p+rdlength, p);
+				rd->rdata= dns_txt_parser(buff.buff, rd_end, p);
+				if (rd->rdata==0) goto error_parse;
+				*last=rd;
+				last=&(rd->next);
+				break;
+			case T_EBL:
+				rd->rdata= dns_ebl_parser(buff.buff, end, rd_end, p);
 				if (rd->rdata==0) goto error_parse;
 				*last=rd;
 				last=&(rd->next);

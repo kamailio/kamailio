@@ -69,6 +69,10 @@
 #define MAX_DNS_NAME 256
 #define MAX_DNS_STRING 255
 
+#ifndef T_EBL
+/** not official yet - iEnum. */
+#define T_EBL 65300
+#endif
 
 /* get_record flags */
 #define RES_ONLY_TYPE 1   /* return only the specified type records */
@@ -169,6 +173,19 @@ struct txt_rdata {
 #define TXT_RDATA_SIZE(s) \
 	(sizeof(struct txt_rdata)+((s).cstr_no-1)*sizeof(struct dns_cstr)+\
 	 	(s).tslen)
+
+/* ebl rec. struct, see
+   http://tools.ietf.org/html/draft-ietf-enum-branch-location-record-03 */
+struct ebl_rdata {
+	char* separator; /* points inside str_table */
+	char* apex;      /* point inside str_table */
+	unsigned char separator_len; /* separator len w/o the terminating 0 */
+	unsigned char apex_len;      /* apex len w/p the terminating 0 */
+	unsigned char position;
+	char str_table[1]; /* contains the 2 strings: separator and apex */
+};
+#define EBL_RDATA_SIZE(s) \
+	(sizeof(struct ebl_rdata)-1+(s).separator_len+1+(s).apex_len+1)
 
 
 #ifdef HAVE_RESOLV_RES
