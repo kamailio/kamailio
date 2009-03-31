@@ -130,6 +130,7 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	str hosts;
 	int port;
 	int proto;
+	char c;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse message\n");
@@ -149,12 +150,17 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	if (socks.len==0)
 		return 0;
 
-	if (parse_phostport( socks.s, socks.len, &hosts.s, &hosts.len, 
+	/*FIXME: This is a hack */
+	c = socks.s[socks.len];
+	socks.s[socks.len] = '\0';
+	if (parse_phostport( socks.s, &hosts.s, &hosts.len,
 	&port, &proto)!=0) {
+		socks.s[socks.len] = c;
 		LM_ERR("bad socket <%.*s> in \n",
 			socks.len, socks.s);
 		return 0;
 	}
+	socks.s[socks.len] = c;
 	sock = grep_sock_info(&hosts,(unsigned short)port,(unsigned short)proto);
 	if (sock==0) {
 		LM_ERR("non-local socket <%.*s>\n",	socks.len, socks.s);
