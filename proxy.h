@@ -62,9 +62,11 @@ extern struct proxy_l* proxies;
 
 struct proxy_l* add_proxy(str* name, unsigned short port, int proto);
 struct proxy_l* mk_proxy(str* name, unsigned short port, int proto);
+struct proxy_l* mk_shm_proxy(str* name, unsigned short port, int proto);
 struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 									int proto);
 void free_proxy(struct proxy_l* p);
+void free_shm_proxy(struct proxy_l* p);
 
 
 
