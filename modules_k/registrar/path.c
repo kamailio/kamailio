@@ -57,7 +57,7 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 		goto error;
 	}
 
-	for( hdr=_m->path,p=buf ; hdr ; hdr=hdr->sibling) {
+	for( hdr=_m->path,p=buf ; hdr ; hdr = next_sibling_hdr(hdr)) {
 		/* check for max. Path length */
 		if( p-buf+hdr->body.len+1 >= MAX_PATH_SIZE) {
 			LM_ERR("Overall Path body exceeds max. length of %d\n",
