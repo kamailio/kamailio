@@ -275,14 +275,10 @@ static int fixup_free_http_query(void** param, int param_no)
 int utils_forward(struct sip_msg *msg, int id, int proto)
 {
 	int ret = -1;
-	union sockaddr_union* to = NULL;
-	struct socket_info *send_sock = NULL;
+	struct dest_info dst;
 
-	to = (union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
-	if (to == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
+	init_dest_info(&dst);
+	dst.proto = proto;
 
 	// critical section start:
 	// avoids dirty reads when updating configuration.
@@ -291,29 +287,15 @@ int utils_forward(struct sip_msg *msg, int id, int proto)
 	struct proxy_l *proxy = conf_needs_forward(msg, id);
 
 	if (proxy != NULL) {
-		hostent2su(to, &proxy->host, proxy->addr_idx, (proxy->port)?proxy->port:SIP_PORT);
-		do {
-			send_sock=get_send_socket(msg, to, proto);
-
-			if (send_sock==0) {
-				LM_ERR("cannot forward to af %d, "
-					"proto %d no corresponding listening socket\n", to->s.sa_family, proto);
-				continue;
-			}
-			LM_DBG("Sending:\n%.*s.\n", (int)msg->len,msg->buf);
-
-			if (msg_send(send_sock, proto, to, 0, msg->buf,msg->len)<0){
-				LM_ERR("Error sending message!\n");
-				continue;
-			}
-			ret = 0;
-        		break;
-		} while( get_next_su( proxy, to, 0) == 0 );
+		proxy2su(&dst.to, proxy);
+		if (forward_request(msg, NULL, 0, &dst) < 0){
+			LM_ERR("could not forward message\n");
+		}
+		ret = 0;
 	}
 
 	// critical section end
 	lock_release(conf_lock);
-	pkg_free(to);
 
 	return ret;
 }
