@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"
-#include "../../parser/parse_supported.h"
+#include "../../lib/kcore/parse_supported.h"
 #include "../../data_lump_rpl.h"
 #include "../usrloc/usrloc.h"
 #include "rerrno.h"
