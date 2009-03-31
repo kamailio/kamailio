@@ -230,6 +230,7 @@ unsigned char* dns_skipname(unsigned char* p, unsigned char* end)
 /* parses the srv record into a srv_rdata structure
  *   msg   - pointer to the dns message
  *   end   - pointer to the end of the message
+ *   eor   - pointer to the end of the record/rdata
  *   rdata - pointer  to the rdata part of the srv answer
  * returns 0 on error, or a dyn. alloc'ed srv_rdata structure */
 /* SRV rdata format:
@@ -248,6 +249,7 @@ unsigned char* dns_skipname(unsigned char* p, unsigned char* end)
  * +----------------+
  */
 struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
+								  unsigned char* eor,
 								  unsigned char* rdata)
 {
 	struct srv_rdata* srv;
@@ -258,7 +260,7 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	char name[MAX_DNS_NAME];
 	
 	srv=0;
-	if ((rdata+6+1)>end) goto error;
+	if ((rdata+6+1)>eor) goto error;
 	
 	memcpy((void*)&priority, rdata, 2);
 	memcpy((void*)&weight,   rdata+2, 2);
@@ -292,6 +294,7 @@ error:
 /* parses the naptr record into a naptr_rdata structure
  *   msg   - pointer to the dns message
  *   end   - pointer to the end of the message
+ *   eor   - pointer to the end of the record/rdata
  *   rdata - pointer  to the rdata part of the naptr answer
  * returns 0 on error, or a dyn. alloc'ed naptr_rdata structure */
 /* NAPTR rdata format:
@@ -316,7 +319,8 @@ error:
  * +----------------+
  */
 struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
-								  unsigned char* rdata)
+										unsigned char* eor,
+										unsigned char* rdata)
 {
 	struct naptr_rdata* naptr;
 	unsigned char* flags;
@@ -331,20 +335,20 @@ struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
 	char repl[MAX_DNS_NAME];
 	
 	naptr = 0;
-	if ((rdata + 7 + 1)>end) goto error;
+	if ((rdata + 7 + 1)>eor) goto error;
 	
 	memcpy((void*)&order, rdata, 2);
 	memcpy((void*)&pref, rdata + 2, 2);
 	flags_len = rdata[4];
-	if ((rdata + 7 + 1 +  flags_len) > end)
+	if ((rdata + 7 + 1 +  flags_len) > eor)
 		goto error;
 	flags=rdata+5;
 	services_len = rdata[5 + flags_len];
-	if ((rdata + 7 + 1 + flags_len + services_len) > end)
+	if ((rdata + 7 + 1 + flags_len + services_len) > eor)
 		goto error;
 	services=rdata + 6 + flags_len;
 	regexp_len = rdata[6 + flags_len + services_len];
-	if ((rdata + 7 +1 + flags_len + services_len + regexp_len) > end)
+	if ((rdata + 7 +1 + flags_len + services_len + regexp_len) > eor)
 		goto error;
 	regexp=rdata + 7 + flags_len + services_len;
 	rdata = rdata + 7 + flags_len + services_len + regexp_len;
@@ -418,11 +422,11 @@ error:
 /* parses an A record rdata into an a_rdata structure
  * returns 0 on error or a dyn. alloc'ed a_rdata struct
  */
-struct a_rdata* dns_a_parser(unsigned char* rdata, unsigned char* end)
+struct a_rdata* dns_a_parser(unsigned char* rdata, unsigned char* eor)
 {
 	struct a_rdata* a;
 	
-	if (rdata+4>end) goto error;
+	if (rdata+4>eor) goto error;
 	a=(struct a_rdata*)local_malloc(sizeof(struct a_rdata));
 	if (a==0){
 		LOG(L_ERR, "ERROR: dns_a_parser: out of memory\n");
@@ -438,11 +442,11 @@ error:
 
 /* parses an AAAA (ipv6) record rdata into an aaaa_rdata structure
  * returns 0 on error or a dyn. alloc'ed aaaa_rdata struct */
-struct aaaa_rdata* dns_aaaa_parser(unsigned char* rdata, unsigned char* end)
+struct aaaa_rdata* dns_aaaa_parser(unsigned char* rdata, unsigned char* eor)
 {
 	struct aaaa_rdata* aaaa;
 	
-	if (rdata+16>end) goto error;
+	if (rdata+16>eor) goto error;
 	aaaa=(struct aaaa_rdata*)local_malloc(sizeof(struct aaaa_rdata));
 	if (aaaa==0){
 		LOG(L_ERR, "ERROR: dns_aaaa_parser: out of memory\n");
@@ -641,7 +645,7 @@ again:
 		}
 		switch(rtype){
 			case T_SRV:
-				srv_rd= dns_srv_parser(buff.buff, rd_end, p);
+				srv_rd= dns_srv_parser(buff.buff, end, rd_end, p);
 				rd->rdata=(void*)srv_rd;
 				if (unlikely(srv_rd==0)) goto error_parse;
 				
@@ -678,13 +682,13 @@ again:
 				last=&(rd->next);
 				break;
 			case T_CNAME:
-				rd->rdata=(void*) dns_cname_parser(buff.buff, rd_end, p);
+				rd->rdata=(void*) dns_cname_parser(buff.buff, end, p);
 				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;
 			case T_NAPTR:
-				rd->rdata=(void*) dns_naptr_parser(buff.buff, rd_end, p);
+				rd->rdata=(void*)dns_naptr_parser(buff.buff, end, rd_end, p);
 				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
