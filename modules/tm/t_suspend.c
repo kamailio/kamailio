@@ -30,6 +30,8 @@
  *
  */
 
+#include "../../select_buf.h" /* reset_static_buffer() */
+
 #include "sip_msg.h"
 #include "t_reply.h"
 #include "h_table.h"
@@ -148,6 +150,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 	faked_env( t, &faked_req);
 
+	reset_static_buffer();
 	init_run_actions_ctx(&ra_ctx);
 	if (run_actions(&ra_ctx, route, &faked_req)<0)
 		LOG(L_ERR, "ERROR: t_continue: Error in run_action\n");
