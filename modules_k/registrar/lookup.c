@@ -152,7 +152,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 			/* The same as for the first contact applies for branches 
 			 * regarding path vs. received. */
-			if (append_branch(_m,&ptr->c,path_dst.len?&path_dst:&ptr->received,
+			if (km_append_branch(_m,&ptr->c,path_dst.len?&path_dst:&ptr->received,
 			&ptr->path, ptr->q, ptr->cflags, ptr->sock) == -1) {
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
