@@ -44,6 +44,9 @@
  *  2008-01-31  resolver options use the configuration framework, and the
  *               resolver is reinitialized when the options change (Miklos)
  *  2008-08-12  sctp preference support for NAPTR queries (andrei)
+ *  2009-03-30  TXT record support (andrei)
+ *  2009-03-31  EBL record support (andrei)
+ *  2009-04-01  PTR record support (andrei)
  */ 
 
 
@@ -591,6 +594,37 @@ error:
 
 
 
+/* parses a PTR record into a ptr_rdata structure */
+struct ptr_rdata* dns_ptr_parser( unsigned char* msg, unsigned char* end,
+									  unsigned char* rdata)
+{
+	struct ptr_rdata* pname;
+	int len;
+	char name[MAX_DNS_NAME];
+	
+	pname=0;
+	if (dn_expand(msg, end, rdata, name, MAX_DNS_NAME-1)==-1)
+		goto error;
+	len=strlen(name);
+	if (len>255)
+		goto error;
+	/* alloc sizeof struct + space for the null terminated name */
+	pname=local_malloc(sizeof(struct ptr_rdata)-1+len+1);
+	if(pname==0){
+		LOG(L_ERR, "ERROR: dns_ptr_parser: out of memory\n");
+		goto error;
+	}
+	pname->ptrdname_len=len;
+	memcpy(pname->ptrdname, name, pname->ptrdname_len);
+	pname->ptrdname[pname->ptrdname_len]=0;
+	return pname;
+error:
+	if (pname) local_free(pname);
+	return 0;
+}
+
+
+
 /* frees completely a struct rdata list */
 void free_rdata_list(struct rdata* head)
 {
@@ -833,6 +867,12 @@ again:
 			case T_EBL:
 				rd->rdata= dns_ebl_parser(buff.buff, end, rd_end, p);
 				if (rd->rdata==0) goto error_parse;
+				*last=rd;
+				last=&(rd->next);
+				break;
+			case T_PTR:
+				rd->rdata=(void*) dns_ptr_parser(buff.buff, end, p);
+				if(unlikely(rd->rdata==0)) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
 				break;

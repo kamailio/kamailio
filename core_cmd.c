@@ -61,6 +61,7 @@ void dns_cache_delete_naptr(rpc_t* rpc, void* ctx);
 void dns_cache_delete_cname(rpc_t* rpc, void* ctx);
 void dns_cache_delete_txt(rpc_t* rpc, void* ctx);
 void dns_cache_delete_ebl(rpc_t* rpc, void* ctx);
+void dns_cache_delete_ptr(rpc_t* rpc, void* ctx);
 
 
 static const char* dns_cache_mem_info_doc[] = {
@@ -138,6 +139,12 @@ static const char* dns_cache_delete_txt_doc[] = {
 
 static const char* dns_cache_delete_ebl_doc[] = {
 	"deletes an EBL record from the DNS cache",
+	0
+};
+
+
+static const char* dns_cache_delete_ptr_doc[] = {
+	"deletes an PTR record from the DNS cache",
 	0
 };
 
@@ -747,6 +754,8 @@ rpc_export_t core_rpc_methods[] = {
 		dns_cache_delete_txt_doc,  0	},
 	{"dns.delete_ebl",         dns_cache_delete_ebl,
 		dns_cache_delete_ebl_doc,  0	},
+	{"dns.delete_ptr",         dns_cache_delete_ptr,
+		dns_cache_delete_ptr_doc,  0	},
 #ifdef USE_DNS_CACHE_STATS
 	{"dns.stats_get",    dns_cache_stats_get,   dns_cache_stats_get_doc,
 		0	},

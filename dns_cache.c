@@ -46,6 +46,7 @@
                   aaaa) (andrei)
  *  2009-03-30  TXT record support, more rpcs (andrei)
  *  2009-03-30  EBL record support (andrei)
+ *  2009-04-01  PTR record support (andrei)
  */
 
 #ifdef USE_DNS_CACHE
@@ -1185,6 +1186,25 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				 * just been elimintated */
 			}
 			break;
+		case T_PTR:
+			for(; *p;){
+				if (!rec_matches((*p), type, name)){
+					/* skip this record */
+					p=&(*p)->next; /* advance */
+					continue;
+				}
+				/* no padding */
+				size+=ROUND_POINTER(sizeof(struct dns_rr)+
+						PTR_RDATA_SIZE(*(struct ptr_rdata*)(*p)->rdata));
+				/* add it to our tmp. lst */
+				*tail=*p;
+				tail=&(*p)->next;
+				/* detach it from the rd list */
+				*p=(*p)->next;
+				/* don't advance p, because the crt. elem. has
+				 * just been elimintated */
+			}
+			break;
 		default:
 			LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: type %d not "
 							"supported\n", type);
@@ -1359,6 +1379,20 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 				rr=rr->next;
 			}
 			break;
+		case T_PTR:
+			for(l=tmp_lst; l; l=l->next){
+				ttl=FIX_TTL(l->ttl);
+				rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
+				max_ttl=MAX(max_ttl, ttl);
+				rr->rdata=(void*)((char*)rr+sizeof(struct dns_rr));
+				memcpy(rr->rdata, l->rdata,
+							PTR_RDATA_SIZE(*(struct ptr_rdata*)l->rdata));
+				rr->next=(void*)((char*)rr+ROUND_POINTER(sizeof(struct dns_rr)+
+							PTR_RDATA_SIZE(*(struct ptr_rdata*)l->rdata)));
+				tail_rr=&(rr->next);
+				rr=rr->next;
+			}
+			break;
 		default:
 			/* do nothing */
 			LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: create: type %d not "
@@ -1483,6 +1517,11 @@ found:
 				rec[r].size+=ROUND_POINTER(ROUND_POINTER(
 												sizeof(struct dns_rr))+
 							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata));
+				break;
+			case T_PTR:
+					/* no padding */
+				rec[r].size+=ROUND_POINTER(sizeof(struct dns_rr)+
+							PTR_RDATA_SIZE(*(struct ptr_rdata*)l->rdata));
 				break;
 			default:
 				LOG(L_CRIT, "BUG: dns_cache_mk_rd_entry: type %d not "
@@ -1642,6 +1681,19 @@ found:
 				rec[r].rr->next=(void*)((char*)rec[r].rr+
 						ROUND_POINTER(ROUND_POINTER(sizeof(struct dns_rr))+
 							EBL_RDATA_SIZE(*(struct ebl_rdata*)l->rdata)));
+				rec[r].tail_rr=&(rec[r].rr->next);
+				rec[r].rr=rec[r].rr->next;
+				break;
+			case T_PTR:
+				rec[r].rr->expire=now+S_TO_TICKS(ttl); /* maximum expire */
+				rec[r].max_ttl=MAX(rec[r].max_ttl, ttl);
+				rec[r].rr->rdata=(void*)((char*)rec[r].rr
+									+sizeof(struct dns_rr));
+				memcpy(rec[r].rr->rdata, l->rdata,
+							PTR_RDATA_SIZE(*(struct ptr_rdata*)l->rdata));
+				rec[r].rr->next=(void*)((char*)rec[r].rr+
+							ROUND_POINTER(sizeof(struct dns_rr)+
+							PTR_RDATA_SIZE(*(struct ptr_rdata*)l->rdata)));
 				rec[r].tail_rr=&(rec[r].rr->next);
 				rec[r].rr=rec[r].rr->next;
 				break;
@@ -3599,6 +3651,10 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 							rpc->add(ctx, "ss", "ebl",
 								((struct ebl_rdata*)(rr->rdata))->apex);
 							break;
+						case T_PTR:
+							rpc->add(ctx, "ss", "ptr",
+								((struct ptr_rdata*)(rr->rdata))->ptrdname);
+							break;
 						default:
 							rpc->add(ctx, "ss", "unknown", "?");
 					}
@@ -3630,8 +3686,10 @@ static char *print_type(unsigned short type)
 			return "TXT";
 		case T_EBL:
 			return "EBL";
+		case T_PTR:
+			return "PTR";
 		default:
-			return "unkown";
+			return "unknown";
 	}
 }
 
@@ -3668,6 +3726,8 @@ static int dns_get_type(str* s)
 				return T_TXT;
 			else if (strncasecmp(t, "EBL", len)==0)
 				return T_EBL;
+			else if (strncasecmp(t, "PTR", len)==0)
+				return T_PTR;
 			break;
 		case 5:
 			if (strncasecmp(t, "NAPTR", len)==0)
@@ -3693,9 +3753,7 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 
 	now=get_ticks_raw();
 	expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
-	if (expires < 0) {
-		return;
-	}
+	
 	rpc->printf(ctx, "%sname: %s", SPACE_FORMAT, e->name);
 	rpc->printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
 	rpc->printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
@@ -3770,6 +3828,10 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 				rpc->printf(ctx, "%srr apex: %s", SPACE_FORMAT,
 							((struct ebl_rdata*)(rr->rdata))->apex);
 				break;
+			case T_PTR:
+				rpc->printf(ctx, "%srr name: %s", SPACE_FORMAT,
+							((struct ptr_rdata*)(rr->rdata))->ptrdname);
+				break;
 			default:
 				rpc->printf(ctx, "%sresource record: unknown",
 									SPACE_FORMAT);
@@ -3789,14 +3851,19 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 {
 	int h;
 	struct dns_hash_entry* e;
+	ticks_t now;
 
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
+	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 	for (h=0; h<DNS_HASH_SIZE; h++){
 		clist_foreach(&dns_hash[h], e, next){
+			if (TICKS_LT(e->expire, now)) {
+				continue;
+			}
 			rpc->printf(ctx, "{\n");
 			dns_cache_print_entry(rpc, ctx, e);
 			rpc->printf(ctx, "}");
@@ -3871,6 +3938,9 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 				break;
 			case T_EBL:
 				rr_size = ROUND_POINTER(sizeof(struct dns_rr));
+				break;
+			case T_PTR:
+				rr_size = sizeof(struct dns_rr);
 				break;
 			default:
 				LOG(L_ERR, "ERROR: dns_cache_clone_entry: type %d not "
@@ -4021,6 +4091,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	case T_NAPTR:
 	case T_TXT:
 	case T_EBL:
+	case T_PTR:
 		rpc->fault(ctx, 400, "not implemented");
 		return;
 	default:
@@ -4326,6 +4397,11 @@ void dns_cache_delete_txt(rpc_t* rpc, void* ctx)
 void dns_cache_delete_ebl(rpc_t* rpc, void* ctx)
 {
 	dns_cache_delete_record(rpc, ctx, T_EBL);
+}
+
+void dns_cache_delete_ptr(rpc_t* rpc, void* ctx)
+{
+	dns_cache_delete_record(rpc, ctx, T_PTR);
 }
 
 

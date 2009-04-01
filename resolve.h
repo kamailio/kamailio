@@ -188,6 +188,14 @@ struct ebl_rdata {
 	(sizeof(struct ebl_rdata)-1+(s).separator_len+1+(s).apex_len+1)
 
 
+struct ptr_rdata {
+	unsigned char ptrdname_len; /* name length w/o the terminating 0 */
+	char ptrdname[1]; /* null terminated name (len=name_len+1) */
+};
+/* real size of the structure */
+#define PTR_RDATA_SIZE(s) (sizeof(struct ptr_rdata)-1+(s).ptrdname_len+1)
+
+
 #ifdef HAVE_RESOLV_RES
 int match_search_list(const struct __res_state* res, char* name);
 #endif
