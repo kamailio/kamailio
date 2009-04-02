@@ -66,7 +66,7 @@ typedef void (*dlg_timer_handler)(struct dlg_tl *);
  * \param hdl dialog timer handler
  * \return 0 on success, -1 on failure
  */
-int init_dlg_timer( dlg_timer_handler );
+int init_dlg_timer(dlg_timer_handler);
 
 
 /*!
@@ -100,7 +100,7 @@ int remove_dialog_timer(struct dlg_tl *tl);
  * \return 0 on success, -1 when the input list is invalid
  * \note the update is implemented as a remove, insert
  */
-int update_dlg_timer( struct dlg_tl *tl, int timeout );
+int update_dlg_timer(struct dlg_tl *tl, int timeout);
 
 
 /*!

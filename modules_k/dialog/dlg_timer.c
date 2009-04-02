@@ -50,7 +50,7 @@ dlg_timer_handler timer_hdl = 0;
  * \param hdl dialog timer handler
  * \return 0 on success, -1 on failure
  */
-int init_dlg_timer( dlg_timer_handler hdl )
+int init_dlg_timer(dlg_timer_handler hdl)
 {
 	d_timer = (struct dlg_timer*)shm_malloc(sizeof(struct dlg_timer));
 	if (d_timer==0) {
@@ -198,7 +198,7 @@ int remove_dialog_timer(struct dlg_tl *tl)
  * \return 0 on success, -1 when the input list is invalid
  * \note the update is implemented as a remove, insert
  */
-int update_dlg_timer( struct dlg_tl *tl, int timeout )
+int update_dlg_timer(struct dlg_tl *tl, int timeout)
 {
 	lock_get( d_timer->lock);
 
