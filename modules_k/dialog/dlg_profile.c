@@ -177,7 +177,7 @@ static struct dlg_profile_table* new_dlg_profile( str *name, unsigned int size,
 
 	profile = search_dlg_profile(name);
 	if (profile!=NULL) {
-		LM_ERR("duplicate dialgo profile registered <%.*s>\n",
+		LM_ERR("duplicate dialog profile registered <%.*s>\n",
 			name->len, name->s);
 		return NULL;
 	}
