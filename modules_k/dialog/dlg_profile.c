@@ -26,16 +26,40 @@
  */
 
 
+/*!
+ * \file
+ * \brief Profile related functions for the dialog module
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
+
+
 #include "../../mem/shm_mem.h"
 #include "../../hash_func.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../route.h"
+#include "../tm/tm_load.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 
+
+/*! size of dialog profile hash */
 #define PROFILE_HASH_SIZE 16
 
+/*! tm bindings */
+extern struct tm_binds d_tmb;
 
+/*! global dialog message id */
+static unsigned int            current_dlg_msg_id = 0 ;
+
+/*! global dialog */
+struct dlg_cell                *current_dlg_pointer = NULL ;
+
+/*! pending dialog links */
+static struct dlg_profile_link *current_pending_linkers = NULL;
+
+/*! global dialog profile list */
 static struct dlg_profile_table *profiles = NULL;
 
 
@@ -43,6 +67,13 @@ static struct dlg_profile_table* new_dlg_profile( str *name,
 		unsigned int size, unsigned int has_value);
 
 
+/*!
+ * \brief Add profile definitions to the global list
+ * \see new_dlg_profile
+ * \param profiles profile name
+ * \param has_value set to 0 for a profile without value, otherwise it has a value
+ * \return 0 on success, -1 on failure
+ */
 int add_profile_definitions( char* profiles, unsigned int has_value)
 {
 	char *p;
@@ -96,6 +127,12 @@ int add_profile_definitions( char* profiles, unsigned int has_value)
 }
 
 
+/*!
+ * \brief Search a dialog profile in the global list
+ * \note Linear search, this won't have the best performance for huge profile lists
+ * \param name searched dialog profile
+ * \return pointer to the profile on success, NULL otherwise
+ */
 struct dlg_profile_table* search_dlg_profile(str *name)
 {
 	struct dlg_profile_table *profile;
@@ -109,9 +146,16 @@ struct dlg_profile_table* search_dlg_profile(str *name)
 }
 
 
-
+/*!
+ * \brief Creates a new dialog profile
+ * \see add_profile_definitions
+ * \param name profile name
+ * \param size profile size
+ * \param has_value set to 0 for a profile without value, otherwise it has a value
+ * \return pointer to the created dialog on success, NULL otherwise
+ */
 static struct dlg_profile_table* new_dlg_profile( str *name, unsigned int size,
-													unsigned int has_value)
+		unsigned int has_value)
 {
 	struct dlg_profile_table *profile;
 	struct dlg_profile_table *ptmp;
@@ -179,6 +223,10 @@ static struct dlg_profile_table* new_dlg_profile( str *name, unsigned int size,
 }
 
 
+/*!
+ * \brief Destroy a dialog profile list
+ * \param profile dialog profile
+ */
 static void destroy_dlg_profile(struct dlg_profile_table *profile)
 {
 	if (profile==NULL)
@@ -190,6 +238,9 @@ static void destroy_dlg_profile(struct dlg_profile_table *profile)
 }
 
 
+/*!
+ * \brief Destroy the global dialog profile list
+ */
 void destroy_dlg_profiles(void)
 {
 	struct dlg_profile_table *profile;
@@ -203,15 +254,10 @@ void destroy_dlg_profiles(void)
 }
 
 
-#include "../../route.h"
-#include "../tm/tm_load.h"
-extern struct tm_binds d_tmb;
-
-static unsigned int            current_dlg_msg_id = 0 ;
-struct dlg_cell                *current_dlg_pointer = NULL ;
-static struct dlg_profile_link *current_pending_linkers = NULL;
-
-
+/*!
+ * \brief Destroy dialog linkers
+ * \param linker dialog linker
+ */ 
 void destroy_linkers(struct dlg_profile_link *linker)
 {
 	struct dlg_profile_entry *p_entry;
@@ -245,7 +291,12 @@ void destroy_linkers(struct dlg_profile_link *linker)
 }
 
 
-
+/*!
+ * \brief Cleanup a profile
+ * \param msg SIP message
+ * \param unused
+ * \return 1
+ */
 int profile_cleanup( struct sip_msg *msg, void *param )
 {
 	current_dlg_msg_id = 0;
@@ -263,7 +314,11 @@ int profile_cleanup( struct sip_msg *msg, void *param )
 }
 
 
-
+/*!
+ * \brief Get the current dialog for a message, if exists
+ * \param msg SIP message
+ * \return NULL if called in REQUEST_ROUTE, pointer to dialog ctx otherwise
+ */ 
 static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 {
 	struct cell *trans;
@@ -287,9 +342,16 @@ static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 }
 
 
-
-inline static unsigned int calc_hash_profile( str *value, struct dlg_cell *dlg,
-										struct dlg_profile_table *profile )
+/*!
+ * \brief Calculate the hash profile from a dialog
+ * \see core_hash
+ * \param value hash source
+ * \param dlg dialog cell
+ * \param profile dialog profile table (for hash size)
+ * \return value hash if the value has a value, hash over dialog otherwise
+ */
+inline static unsigned int calc_hash_profile(str *value, struct dlg_cell *dlg,
+		struct dlg_profile_table *profile)
 {
 	if (profile->has_value) {
 		/* do hash over the value */
@@ -301,9 +363,12 @@ inline static unsigned int calc_hash_profile( str *value, struct dlg_cell *dlg,
 }
 
 
-
-static void link_dlg_profile(struct dlg_profile_link *linker,
-													struct dlg_cell *dlg)
+/*!
+ * \brief Link a dialog profile
+ * \param linker dialog linker
+ * \param dlg dialog cell
+ */
+static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *dlg)
 {
 	unsigned int hash;
 	struct dlg_profile_entry *p_entry;
@@ -346,7 +411,11 @@ static void link_dlg_profile(struct dlg_profile_link *linker,
 }
 
 
-
+/*!
+ * \brief Set the global variables to the current dialog
+ * \param msg SIP message
+ * \param dlg dialog cell
+ */
 void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg)
 {
 	struct dlg_profile_link *linker;
@@ -372,9 +441,14 @@ void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg)
 }
 
 
-
-int set_dlg_profile(struct sip_msg *msg, str *value,
-									struct dlg_profile_table *profile)
+/*!
+ * \brief Set a dialog profile
+ * \param msg SIP message
+ * \param value value
+ * \param profile dialog profile table
+ * \return 0 on success, -1 on failure
+ */
+int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *profile)
 {
 	struct dlg_cell *dlg;
 	struct dlg_profile_link *linker;
@@ -420,8 +494,15 @@ int set_dlg_profile(struct sip_msg *msg, str *value,
 }
 
 
+/*!
+ * \brief Unset a dialog profile
+ * \param msg SIP message
+ * \param value value
+ * \param profile dialog profile table
+ * \return 1 on success, -1 on failure
+ */
 int unset_dlg_profile(struct sip_msg *msg, str *value,
-									struct dlg_profile_table *profile)
+		struct dlg_profile_table *profile)
 {
 	struct dlg_cell *dlg;
 	struct dlg_profile_link *linker;
@@ -473,9 +554,15 @@ found:
 }
 
 
-
+/*!
+ * \brief Check if a dialog belongs to a profile
+ * \param msg SIP message
+ * \param profile dialog profile table
+ * \param value value
+ * \return 1 on success, -1 on failure
+ */
 int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
-																str *value)
+		str *value)
 {
 	struct dlg_cell *dlg;
 	struct dlg_profile_link *linker;
@@ -510,6 +597,12 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 }
 
 
+/*!
+ * \brief Get the size of a profile
+ * \param profile evaluated profile
+ * \param value value
+ * \return the profile size
+ */
 unsigned int get_profile_size(struct dlg_profile_table *profile, str *value)
 {
 	unsigned int n,i;
@@ -548,7 +641,13 @@ unsigned int get_profile_size(struct dlg_profile_table *profile, str *value)
 
 /****************************** MI commands *********************************/
 
-struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param )
+/*!
+ * \brief Output a profile via MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return MI root output on success, NULL on failure
+ */
+struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param)
 {
 	struct mi_node* node;
 	struct mi_root* rpl_tree= NULL;
@@ -623,6 +722,12 @@ error:
 }
 
 
+/*!
+ * \brief List the profiles via MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return MI root output on success, NULL on failure
+ */
 struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 {
 	struct mi_node* node;
@@ -703,4 +808,3 @@ error:
 	free_mi_tree(rpl_tree);
 	return NULL;
 }
-
