@@ -83,6 +83,7 @@ void dlg_refer_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	str met = {"BYE", 3};
 	int result;
 	struct dlg_cell *dlg;
+	uac_req_t uac_r;
 
 	if(ps->param==NULL || *ps->param==0)
 	{
@@ -101,13 +102,9 @@ void dlg_refer_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
-	result = d_tmb.t_request_within
-		(&met,         /* method */
-		0,             /* extra headers */
-		NULL,          /* body */
-		dialog_info,   /* dialog structure */
-		0,             /* callback function */
-		0);            /* callback parameter */
+	memset(&uac_r, '\0', sizeof(uac_req_t));
+	set_uac_req(&uac_r, &met, NULL, NULL, dialog_info, 0, NULL, NULL);
+	result = d_tmb.t_request_within(&uac_r);
 
 	if(result < 0) {
 		LM_ERR("failed to send the REFER request\n");
@@ -137,6 +134,7 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 	int result;
 	str hdrs;
 	struct dlg_cell *dlg;
+	uac_req_t uac_r;
 
 	dlg = dtc->dlg;
 
@@ -160,13 +158,10 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len,
 			CRLF, CRLF_LEN);
 
-	result = d_tmb.t_request_within
-		(&met,         /* method */
-		&hdrs,         /* extra headers */
-		NULL,          /* body */
-		dialog_info,   /* dialog structure */
-		dlg_refer_tm_callback,  /* callback function */
-		(void*)dtc);            /* callback parameter */
+	memset(&uac_r, '\0', sizeof(uac_req_t));
+	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, 0,
+				dlg_refer_tm_callback, (void*)dtc);
+	result = d_tmb.t_request_within(&uac_r);
 
 	pkg_free(hdrs.s);
 	if(result < 0) {
@@ -282,6 +277,7 @@ int dlg_bridge(str *from, str *to, str *op)
 	str s_method = {"INVITE", 6};
 	str s_body;
 	str s_hdrs;
+	uac_req_t uac_r;
 
 	dtc = (dlg_transfer_ctx_t*)shm_malloc(sizeof(dlg_transfer_ctx_t));
 	if(dtc==NULL)
@@ -319,15 +315,17 @@ int dlg_bridge(str *from, str *to, str *op)
 	s_hdrs.s   = DLG_HOLD_CT_HDR;
 	s_hdrs.len = DLG_HOLD_CT_HDR_LEN;
 
-	ret = d_tmb.t_request(&s_method,  /* Type of the message */
-		&dtc->from,                   /* Request-URI (To) */
-		&dtc->from,                   /* To */
-		&dlg_bridge_controller,       /* From */
-		&s_hdrs, /* Optional headers including CRLF */
-		&s_body, /* Message body */
-		(op!=NULL && op->len>0)?op:NULL, /* outbound uri */
-		dlg_bridge_tm_callback, /* Callback function */
-		(void*)(long)dtc        /* Callback parameter */
+	memset(&uac_r, '\0', sizeof(uac_req_t));
+	uac_r.method = &s_method;
+	uac_r.headers = &s_hdrs;
+	uac_r.body = &s_body;
+	uac_r.cb = dlg_bridge_tm_callback;
+	uac_r.cbp = (void*)(long)dtc;
+	ret = d_tmb.t_request(&uac_r, /* UAC Req */
+						  &dtc->from, /* Request-URI (To) */
+						  &dtc->from, /* To */
+						  &dlg_bridge_controller, /* From */
+						  (op != NULL && op->len>0)?op:NULL /* Outbound-URI */
 		);
 
 	if(ret<0)

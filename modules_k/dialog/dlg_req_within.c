@@ -236,6 +236,7 @@ error:
 static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 {
 	/*verify direction*/
+	uac_req_t uac_r;
 	dlg_t* dialog_info;
 	str met = {"BYE", 3};
 	int result;
@@ -249,13 +250,10 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 
 	ref_dlg(cell, 1);
 
-	result = d_tmb.t_request_within
-		(&met,         /* method*/
-		hdrs,         /* extra headers*/
-		NULL,          /* body*/
-		dialog_info,   /* dialog structure*/
-		bye_reply_cb,  /* callback function*/
-		(void*)cell);  /* callback parameter*/
+	memset(&uac_r,'\0', sizeof(uac_req_t));
+	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, 0,
+				bye_reply_cb, (void*)cell);
+	result = d_tmb.t_request_within(&uac_r);
 
 	if(result < 0){
 		LM_ERR("failed to send the BYE request\n");
