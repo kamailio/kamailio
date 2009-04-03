@@ -229,24 +229,24 @@ static int select_entire_dialog_table(db1_res_t ** res, int fetch_num_rows)
 struct socket_info * create_socket_info(db_val_t * vals, int n){
 
 	struct socket_info * sock;
-	str host, p;
+	char* p;
+	str host;
 	int port, proto;
 
 	/* socket name */
-	p.s  = (VAL_STR(vals+n)).s;
-	p.len = strlen(p.s);
+	p = (VAL_STR(vals+n)).s;
 
-	if (VAL_NULL(vals+n) || p.s==0 || p.s[0]==0){
+	if (VAL_NULL(vals+n) || p==0 || p[0]==0){
 		sock = 0;
 	} else {
-		if (parse_phostport( p.s, p.len, &host.s, &host.len, 
+		if (parse_phostport( p, &host.s, &host.len, 
 		&port, &proto)!=0) {
-			LM_ERR("bad socket <%.*s>\n", p.len, p.s);
+			LM_ERR("bad socket <%s>\n", p);
 			return 0;
 		}
 		sock = grep_sock_info( &host, (unsigned short)port, proto);
 		if (sock==0) {
-			LM_WARN("non-local socket <%.*s>...ignoring\n", p.len, p.s);
+			LM_WARN("non-local socket <%s>...ignoring\n", p);
 			}
 	}
 
