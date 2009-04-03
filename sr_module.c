@@ -274,7 +274,6 @@ int load_module(char* path)
 		strcat(path, modname);
 		strcat(path, ".so");
 
-#ifdef EXTRA_DEBUG
 		if (stat(path, &stat_buf) == -1) {
 			DBG("load_module: module file not found <%s>\n", path);
 			pkg_free(path);
@@ -302,15 +301,6 @@ int load_module(char* path)
 				goto error;
 			}
 		}
-#else /* !EXTRA_DEBUG */
-		if (stat(path, &stat_buf) == -1) {
-			DBG("load_module: module file not found <%s>\n", path);
-			pkg_free(path);
-			LOG(L_ERR, "ERROR: load_module: could not find module <%s>\n",
-				modname);
-			goto error;
-		}
-#endif /* !EXTRA_DEBUG */
 	}
 	retries=2;
 	dlflags=RTLD_NOW;
