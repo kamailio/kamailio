@@ -270,7 +270,7 @@ void destroy_linkers(struct dlg_profile_link *linker)
 		/* unlink from profile table */
 		if (l->hash_linker.next) {
 			p_entry = &l->profile->entries[l->hash_linker.hash];
-			get_lock( &l->profile->lock );
+			lock_get( &l->profile->lock );
 			lh = &l->hash_linker;
 			/* last element on the list? */
 			if (lh==lh->next) {
@@ -283,7 +283,7 @@ void destroy_linkers(struct dlg_profile_link *linker)
 			}
 			lh->next = lh->prev = NULL;
 			p_entry->content --;
-			release_lock( &l->profile->lock );
+			lock_release( &l->profile->lock );
 		}
 		/* free memory */
 		shm_free(l);
@@ -396,7 +396,7 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
 
 	/* insert into profile hash table */
 	p_entry = &linker->profile->entries[hash];
-	get_lock( &linker->profile->lock );
+	lock_get( &linker->profile->lock );
 	if (p_entry->first) {
 		linker->hash_linker.prev = p_entry->first->prev;
 		linker->hash_linker.next = p_entry->first;
@@ -407,7 +407,7 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
 			= linker->hash_linker.prev = &linker->hash_linker;
 	}
 	p_entry->content ++;
-	release_lock( &linker->profile->lock );
+	lock_release( &linker->profile->lock );
 }
 
 
@@ -610,17 +610,17 @@ unsigned int get_profile_size(struct dlg_profile_table *profile, str *value)
 
 	if (profile->has_value==0 || value==NULL) {
 		/* iterate through the hash and count all records */
-		get_lock( &profile->lock );
+		lock_get( &profile->lock );
 		for( i=0,n=0 ; i<profile->size ; i++ )
 			n += profile->entries[i].content;
-		release_lock( &profile->lock );
+		lock_release( &profile->lock );
 		return n;
 	} else {
 		/* iterate through the hash entry and count only matching */
 		/* calculate the hash position */
 		i = calc_hash_profile( value, NULL, profile);
 		n = 0;
-		get_lock( &profile->lock );
+		lock_get( &profile->lock );
 		ph = profile->entries[i].first;
 		if(ph) {
 			do {
@@ -634,7 +634,7 @@ unsigned int get_profile_size(struct dlg_profile_table *profile, str *value)
 				ph=ph->next;
 			}while( ph!=profile->entries[i].first );
 		}
-		release_lock( &profile->lock );
+		lock_release( &profile->lock );
 		return n;
 	}
 }
@@ -768,7 +768,7 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 	/* go through the hash and print the dialogs */
 	if (profile->has_value==0 || value==NULL) {
 		/* no value */
-		get_lock( &profile->lock );
+		lock_get( &profile->lock );
 		for ( i=0 ; i< profile->size ; i++ ) {
 			ph = profile->entries[i].first;
 			if(ph) {
@@ -780,11 +780,11 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 					ph=ph->next;
 				}while( ph!=profile->entries[i].first );
 			}
-			release_lock( &profile->lock );
+			lock_release( &profile->lock );
 		}
 	} else {
 		/* check for value also */
-		get_lock( &profile->lock );
+		lock_get( &profile->lock );
 		for ( i=0 ; i< profile->size ; i++ ) {
 			ph = profile->entries[i].first;
 			if(ph) {
@@ -799,7 +799,7 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 					ph=ph->next;
 				}while( ph!=profile->entries[i].first );
 			}
-			release_lock( &profile->lock );
+			lock_release( &profile->lock );
 		}
 	}
 
