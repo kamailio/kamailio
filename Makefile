@@ -56,7 +56,20 @@
 #              added cfg-defs, new target that only rebuilds config.mak
 #  2009-03-10  replaced DEFS with C_DEFS (DEFS are now used only for
 #              "temporary" defines inside modules or libs) (andrei)
+#  2009-04-02  workaround for export not supported in gnu make 3.80
+#               target specific variables: use mk_params for each
+#               $(MAKE) invocation (andrei)
 #
+
+# check make version
+# required 3.80, recommended 3.81
+req_ver=3.80
+# the check below works for version number of the type x.yy or x.yy.z*
+# (from the GNU Make Cookbook)
+ifeq (,$(filter $(req_ver),$(firstword $(sort $(MAKE_VERSION) $(req_ver)))))
+$(error make version $(MAKE_VERSION) not supported, use at least $(req_ver))
+endif
+
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -197,7 +210,7 @@ endif
 # status of the modules
 # the rest is excluded because it depends on external libraries
 #
-static_modules=
+static_modules:=
 
 ALLDEP=config.mak Makefile Makefile.sources Makefile.rules
 
@@ -235,7 +248,7 @@ static_modules_path=$(addprefix modules/, $(static_modules))
 extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))
 extra_objs=$(extra_sources:.c=.o)
 
-static_defs= $(foreach  mod, $(static_modules), \
+static_defs:= $(foreach  mod, $(static_modules), \
 		-DSTATIC_$(shell echo $(mod) | tr [:lower:] [:upper:]) )
 
 override extra_defs+=$(static_defs) $(EXTRA_DEFS)
@@ -262,7 +275,7 @@ endif # ifneq($(group_include),)
 endif # ifneq($(modules_configured),1)
 modules_names=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1.so/g' )
-modules_basenames=$(shell echo $(modules)| \
+modules_basenames:=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1/g' )
 #modules_names=$(patsubst modules/%, %.so, $(modules))
 #modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
@@ -381,7 +394,8 @@ modules: modules.lst
 		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if  $(MAKE) -C $$r || [ ${err_fail} != 1 ] ; then \
+			if  $(MAKE) -C $$r $(mk_params) || [ ${err_fail} != 1 ] ; \
+			then\
 				:; \
 			else \
 				exit 1; \
@@ -395,7 +409,7 @@ $(extra_objs):
 		if [ -n "$$r" -a -r "$$r/Makefile"  ]; then \
 			echo  "" ; \
 			echo  "Making static module $r" ; \
-			if $(MAKE) -C $$r static ; then  \
+			if $(MAKE) -C $$r static $(mk_params) ; then  \
 				:; \
 			else \
 				exit 1; \
@@ -409,7 +423,8 @@ utils:
 		if [ -n "$$r" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if  $(MAKE) -C $$r || [ ${err_fail} != 1 ] ; then \
+			if  $(MAKE) -C $$r $(mk_params) || [ ${err_fail} != 1 ] ; \
+			then \
 				:; \
 			else \
 				exit 1; \
@@ -466,7 +481,7 @@ tar:
 .PHONY: bin
 bin:
 	mkdir -p tmp/ser/usr/local
-	$(MAKE) install basedir=tmp/ser 
+	$(MAKE) install basedir=tmp/ser $(mk_params)
 	$(TAR) -C tmp/ser/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
 	rm -rf tmp/ser
 
@@ -484,7 +499,7 @@ deb:
 sunpkg:
 	mkdir -p tmp/ser
 	mkdir -p tmp/ser_sun_pkg
-	$(MAKE) install basedir=tmp/ser prefix=/usr/local
+	$(MAKE) install basedir=tmp/ser prefix=/usr/local $(mk_params)
 	(cd pkg/solaris; \
 	pkgmk -r ../../tmp/ser/usr/local -o -d ../../tmp/ser_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ../..)
@@ -501,7 +516,7 @@ modules-doc: modules.lst
 		if [ -n "$$r" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			$(MAKE) -C $$r/doc $(doc_format) ; \
+			$(MAKE) -C $$r/doc $(doc_format)  $(mk_params); \
 		fi ; \
 	done 
 
@@ -514,7 +529,8 @@ README: modules.lst
 		if [ -n "$$r" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if  $(MAKE) -C $$r README || [ ${err_fail} != 1 ] ; then \
+			if  $(MAKE) -C $$r README $(mk_params) || \
+				[ ${err_fail} != 1 ] ; then \
 				:; \
 			else \
 				exit 1; \
@@ -531,7 +547,8 @@ man: modules.lst
 		if [ -n "$$r" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if  $(MAKE) -C $$r man || [ ${err_fail} != 1 ] ; then \
+			if  $(MAKE) -C $$r man $(mk_params) || [ ${err_fail} != 1 ] ; \
+			then \
 				:; \
 			else \
 				exit 1; \
@@ -540,7 +557,7 @@ man: modules.lst
 	done; true
 
 .PHONY: install
-install: export compile_for_install=yes
+install: mk_params="compile_for_install=yes"
 install: install-bin install-modules install-cfg \
 	install-doc install-man install-utils install-share
 
@@ -636,7 +653,8 @@ install-modules: modules.lst $(modules_prefix)/$(modules_dir)
 		if [ -n "$$r" -a -r "$$r/Makefile" ]; then \
 			echo  "" ; \
 			echo  "" ; \
-			if  $(MAKE) -C $$r install || [ ${err_fail} != 1 ] ; then \
+			if  $(MAKE) -C $$r install $(mk_params) || \
+				[ ${err_fail} != 1 ] ; then \
 				:; \
 			else \
 				exit 1; \

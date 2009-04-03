@@ -110,8 +110,8 @@ EXTRAVERSION = -dev23-make
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
-RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
-OS = $(shell uname -s | sed -e s/SunOS/solaris/ -e s/CYGWIN.*/cygwin/ \
+RELEASE:=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+OS := $(shell uname -s | sed -e s/SunOS/solaris/ -e s/CYGWIN.*/cygwin/ \
 		 | tr "[A-Z]" "[a-z]")
 
 ifeq ($(OS),solaris)
@@ -138,9 +138,9 @@ ifeq ($(ARCH),sparc)
 	endif
 endif
 
-OSREL = $(shell uname -r)
+OSREL := $(shell uname -r)
 # numerical version (good for comparisons: A.B.C => A*1000000+B*1000+C)
-OSREL_N= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
+OSREL_N:= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
 		-e 's/^\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$$/\1/g' | \
 		(IFS=. read A B C D; R=0; \
 		[ -n "$$A" ] && R=`expr $$R \* 1000 + $$A` && \
@@ -271,7 +271,7 @@ ifeq ($(CC),)
 	CC=gcc
 endif
 LD= $(CC)
-CC_LONGVER=$(shell if  $(CC) -v 2>/dev/null; then \
+CC_LONGVER:=$(shell if  $(CC) -v 2>/dev/null; then \
 						$(CC) -v 2>&1 ;\
 					else \
 						$(CC) -V 2>&1 ; \
@@ -282,14 +282,14 @@ MKTAGS=ctags -R .
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
-	CC_VER=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3|\
-				 sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
+	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3\
+				|sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
 				 	 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sed with POSIX.1 regex doesn't support |, + or ? 
         # (darwin, solaris ...) => this complicated expression
 	MKDEP=$(CC) -MM 
 	#transform gcc version into 2.9x or 3.0
-	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
+	CC_SHORTVER:=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
 				 sed -e 's/2\.9.*/2.9x/' -e 's/3\.[0-3]\..*/3.0/' -e \
 				 	's/3\.[0-3]/3.0/' -e 's/3\.[4-9]\..*/3.4/' -e \
@@ -299,7 +299,7 @@ endif
 
 ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	CC_NAME=suncc
-	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -n 1| \
+	CC_SHORTVER:=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
 	MKDEP=$(CC) -xM1 
@@ -308,9 +308,9 @@ endif
 ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
 	# very nice: gcc compatible
 	CC_NAME=icc
-	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -n 1| \
+	CC_FULLVER:=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
-	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
+	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
 	MKDEP=$(CC) -MM 
 endif
@@ -533,18 +533,18 @@ endif
 # find ld & as name (gnu or solaris)
 ifeq ($(OS), solaris)
 ifeq ($(CC_NAME), gcc)
-		LDGCC=$(shell $(CC) -v 2>&1 | grep with-ld| \
+		LDGCC:=$(shell $(CC) -v 2>&1 | grep with-ld| \
 				   sed -e 's/.*--with-ld=\([^ ][^ ]*\).*/\1/' )
-		ASGCC=$(shell $(CC) -v 2>&1 | grep with-as| \
+		ASGCC:=$(shell $(CC) -v 2>&1 | grep with-as| \
 				   sed -e 's/.*--with-as=\([^ ][^ ]*\).*/\1/' )
-		LDPATH=$(shell  if [ -z "$(LDGCC)" ] ; then echo "ld" ;\
+		LDPATH:=$(shell  if [ -z "$(LDGCC)" ] ; then echo "ld" ;\
 						else \
 						if $(LDGCC) -V 2>/dev/null 1>/dev/null; then \
 							echo $(LDGCC); \
 						else echo "ld" ; \
 						fi\
 						fi)
-		ASPATH=$(shell  if [ -z "$(ASGCC)" ] ; then echo "as" ;\
+		ASPATH:=$(shell  if [ -z "$(ASGCC)" ] ; then echo "as" ;\
 						else \
 						if $(ASGCC) -V 2>/dev/null 1>/dev/null; then \
 							echo $(ASGCC); \
@@ -552,7 +552,7 @@ ifeq ($(CC_NAME), gcc)
 						fi\
 						fi)
 							
-		LDTYPE=$(shell if $(LDPATH) -V 1>/dev/null  2>/dev/null; then \
+		LDTYPE:=$(shell if $(LDPATH) -V 1>/dev/null  2>/dev/null; then \
 							if $(LDPATH) -V 2>&1|grep GNU >/dev/null; \
 							then echo gnu; \
 							else \
@@ -563,13 +563,13 @@ ifeq ($(CC_NAME), gcc)
 							fi \
 							fi \
 						fi)
-		ASTYPE=$(shell if $(ASPATH) -V 1>/dev/null  2>/dev/null </dev/null; \
+		ASTYPE:=$(shell if $(ASPATH) -V 1>/dev/null  2>/dev/null </dev/null; \
 						then \
-							if $(ASPATH) -V 2>&1 </dev/null |grep GNU >/dev/null; \
-							then echo gnu; \
+							if $(ASPATH) -V 2>&1 </dev/null | \
+								grep GNU >/dev/null; then echo gnu; \
 							else \
-							if $(ASPATH) -V 2>&1 </dev/null |grep Sun >/dev/null;\
-							then echo solaris; \
+							if $(ASPATH) -V 2>&1 </dev/null | \
+								grep Sun >/dev/null; then echo solaris; \
 							else \
 								echo unknown ; \
 							fi \
@@ -1544,7 +1544,7 @@ ifeq ($(OS), openbsd)
 	# no sched_yield on openbsd unless linking with c_r (not recommended)
 	# unfortunately pthread is needed for sigwait
 	LIBS= -lpthread
-	OPENBSD_IS_AOUT= $(shell echo "$(OSREL)" | \
+	OPENBSD_IS_AOUT:= $(shell echo "$(OSREL)" | \
 				sed -e 's/^3\.[0-3][^0-9]*$$/yes/' |sed -e 's/^[0-2]\..*/yes/')
 # exception: on sparc openbsd 3.2 is elf and not aout
 ifeq ($(OSREL), 3.2)

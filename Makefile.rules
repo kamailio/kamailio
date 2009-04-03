@@ -65,7 +65,7 @@ ALLDEP+=makecfg.lst
 # on some ser libs)
 
 ifneq	($(SER_LIBS),)
-# abspath & realpath don't seem to work on darwin
+# abspath & realpath don't work on make <= 3.80
 SER_LIBS_DIRS:=$(dir $(SER_LIBS))
 ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
 lib_compile_for_install=yes
@@ -79,7 +79,14 @@ ifneq	($(LD_RPATH),)
 ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
 SER_RPATH_LST:=$(lib_target)
 else
-SER_RPATH_LST:=$(realpath $(dir $(SER_LIBS)))
+# realpath is not supported in make 3.80 or older
+ifeq (,$(filter-out 3.80 3.80.%,$(MAKE_VERSION)))
+fullpath=$(shell cd $(1); pwd)
+else
+fullpath=$(realpath $(1))
+endif
+
+SER_RPATH_LST:=$(call fullpath,$(dir $(SER_LIBS)))
 endif
 ifneq	($(strip $(SER_RPATH_LST)),)
 SER_RPATH:=$(addprefix $(LD_RPATH),$(SER_RPATH_LST))

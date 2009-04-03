@@ -584,8 +584,11 @@ again:
 #endif
 #endif
 			return e;
-		}else if ((e->type==T_CNAME) && (e->name_len==name->len) &&
-			(strncasecmp(e->name, name->s, e->name_len)==0)){
+		}else if ((e->type==T_CNAME) && !((e->rr_lst==0) || e->err_flags) &&
+					(e->name_len==name->len) &&
+					(strncasecmp(e->name, name->s, e->name_len)==0)){
+			/*if CNAME matches and CNAME is entry is not a neg. cache entry
+			  (could be produced by a specific CNAME lookup)*/
 			e->last_used=now;
 #ifdef DNS_LU_LST
 			/* add it at the end */

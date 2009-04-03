@@ -7,7 +7,7 @@
 #
 
 
-SUBDIRS=binrpc cds xcap presence
+SUBDIRS=binrpc cds xcap presence shm_regex
 
 .PHONY: subdirs $(SUBDIRS) 
 
