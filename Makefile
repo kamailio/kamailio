@@ -210,7 +210,7 @@ endif
 # status of the modules
 # the rest is excluded because it depends on external libraries
 #
-static_modules=
+static_modules:=
 
 ALLDEP=config.mak Makefile Makefile.sources Makefile.rules
 
@@ -248,7 +248,7 @@ static_modules_path=$(addprefix modules/, $(static_modules))
 extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))
 extra_objs=$(extra_sources:.c=.o)
 
-static_defs= $(foreach  mod, $(static_modules), \
+static_defs:= $(foreach  mod, $(static_modules), \
 		-DSTATIC_$(shell echo $(mod) | tr [:lower:] [:upper:]) )
 
 override extra_defs+=$(static_defs) $(EXTRA_DEFS)
@@ -275,7 +275,7 @@ endif # ifneq($(group_include),)
 endif # ifneq($(modules_configured),1)
 modules_names=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1.so/g' )
-modules_basenames=$(shell echo $(modules)| \
+modules_basenames:=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1/g' )
 #modules_names=$(patsubst modules/%, %.so, $(modules))
 #modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
