@@ -194,7 +194,7 @@ static char help_msg[]= "\
 Usage: " NAME " [options]\n\
 Options:\n\
     -f file      Configuration file (default: " CFG_FILE ")\n\
-    -L dir       Modules directory (default: " MODS_DIR ")\n\
+    -L path      Modules search path (default: " MODS_DIR ")\n\
     -c           Check configuration file for errors\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
                   mean listening on more addresses).  The address format is\n\
@@ -283,7 +283,7 @@ void receive_stdin_loop()
 int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
 					 to use kill(0, sig) */
 
-char* mods_dir = MODS_DIR;  /* directory with dyn. loadable modules */
+char* mods_dir = MODS_DIR;  /* search path for dyn. loadable modules */
 
 char* cfg_file = 0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do

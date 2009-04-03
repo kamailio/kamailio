@@ -239,6 +239,7 @@ lib_target = $(prefix)/$(lib_dir)
 doc_target = $(prefix)/$(doc_dir)
 
 
+
 ifeq ($(OS), solaris)
 #use GNU versions
 INSTALL ?= ginstall
@@ -466,10 +467,10 @@ endif
 
 C_DEFS= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
-	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
+	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
+	 -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg_target)"'\
-	 -DMODS_DIR='"$(modules_target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \

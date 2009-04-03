@@ -359,6 +359,14 @@ lex.yy.c: cfg.lex cfg.tab.h $(ALLDEP)
 cfg.tab.c cfg.tab.h: cfg.y  $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
+nullstring=
+space=$(nullstring) $(nullstring)
+
+modules_search_path=$(subst $(space),:,$(strip\
+						$(addprefix $(modules_target),$(modules_dirs))))
+
+main.o: DEFS+=-DMODS_DIR='"$(modules_search_path)"'
+
 include Makefile.shared
 
 ifeq ($(config_mak),1)
