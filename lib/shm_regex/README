@@ -1,0 +1,23 @@
+$Id$
+
+Wrapper functions for regcomp, regexec, regfree, and regerror using shared
+memory allocators instead of libc malloc/realloc/free. The original functions
+are prefixed with "shm_".
+
+The regular expression compiled with shm_regcomp() can be used with shm_regexec()
+simultaneously by multiple processes without locking, because regexec has its own
+internal locks. It can be later on freed with shm_regfree() when the expression
+is no longer used. Note however that
+
+1) shm_regexec allocates shared memory for the pattern buffer when it is successfully
+called for the first time.
+
+2) shm_regexec temporary allocates and deallocates memory for storing the registers
+for the pmatch array runtime if nmatch and pmatch parameters are not 0. This is
+done also in shared memory, therefore use the shared memory wrappers for
+regular expression based search-and-replace only if really necessary.
+
+See 'man regex' for the usage and parameters of the functions.
+
+Supported only with GNU C library.
+

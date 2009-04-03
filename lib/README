@@ -24,28 +24,32 @@ xcap - Common XCAP operations and structures (XCAP authorization documents
        requires external libraries: libxml2, libcurl3 (nonSER version)
        requires internal libraries: cds
 
+shm_regex - Wrapper functions for regcomp, regexec, regfree and regerror
+	    using shared memory. See 'man regex' for details.
+
 Used by modules: pa, rls, dialog, rpa
 
 Usage:
 -----
 
-All libraries can be compiled "with ser" or "without ser". Compilation
-without ser may be useful for debugging purposes or for example for 
+All libraries except shm_regex can be compiled "with ser" or "without ser".
+Compilation without ser may be useful for debugging purposes or for example for 
 searching for memory leaks with some tool like valgrind.
+shm_regex library can be compiled only with ser.
 
 Compilation with ser:
 --------------------
 
 Compilation and installation of these libraries is NOT DONE by running
-main ser makefile now - it MUST be done MANUALLY. For this purpose
-is there Makefile.ser. To compile and install libraries simply run
+main ser makefile now - it MUST be done MANUALLY. To compile and install
+libraries simply run
 
-   make -f Makefile.ser install
+   make install
 
 in lib directory. You can select destination directory like in the case
 of ser, for example:
 
-   make -f Makefile.ser install prefix="/my/ser/directory"
+   make install prefix="/my/ser/directory"
    
 AFTER COMPILATION of libraries you can COMPILE MODULES using this 
 libraries like PA, RLS or dialog.
@@ -60,6 +64,12 @@ example, if libraries were installed to default directory (/usr/local),
 you should set LD_LIBRARY_PATH=/usr/local/lib/ser. In the case of 
 nonstandard installation, you can use something like 
 LD_LIBRARY_PATH=/my/ser/directory/lib/ser.
+
+Compilation without ser:
+--------------------
+Use the alternate makefile, Makefile.noser:
+
+   make -f Makefile.noser install
 
 Documentation
 -------------
