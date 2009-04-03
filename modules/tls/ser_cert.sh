@@ -19,8 +19,33 @@ DEFAULT_KEY_FILENAME="ser-selfsigned.key"
 DEFAULT_OPENSSL='openssl'
 
 HOSTNAME=`hostname -s`
-FQDN=`hostname -f`
-MAILNAME=`cat /etc/mailname 2> /dev/null || hostname -f`
+if hostname -f >/dev/null 2>/dev/null ; then
+	FQDN=`hostname -f`
+else
+	FQDN=`hostname`
+fi
+MAILNAME=`cat /etc/mailname 2> /dev/null || echo $FQDN`
+
+# test if we have the normal or enhanced getopt
+getopt -T >/dev/null
+if [ $? == 4 ]; then
+	LONGOPTS_SUPPORTED=1
+fi
+
+longopts() {
+	if [ -z "${LONGOPTS_SUPPORTED}"]; then
+		exit;
+	fi
+	case "$1" in
+	-h)	echo ', --help';;
+	-d)	echo ', --dir' ;;
+	-c)	echo ', --certificate';;
+	-k)	echo ', --key';;
+	-e)	echo ', --expires';;
+	-i)	echo ', --info';;
+    	-o)	echo ', --overwrite' ;;
+	esac
+}
 
 usage() {
 cat <<EOF
@@ -41,30 +66,30 @@ DESCRIPTION
   the options below).
 
 OPTIONS
-  -h, --help
+  -h`longopts -h` 
       Display this help text.
 
-  -d, --dir=DIRECTORY
+  -d`longopts -d`
       The path to the directory where cert and key files will be stored.
 	  (Default value is '$DEFAULT_DIR')
 
-  -c, --certificate=FILENAME
+  -c`longopts -c`
       The name of the file where the certificate will be stored.
 	  (Default value is '$DEFAULT_CERT_FILENAME')
 
-  -k, --key=FILENAME
+  -k`longopts -k`
       The name of the file where the private key will be stored.
 	  (Default value is '$DEFAULT_KEY_FILENAME')
 
-  -e, --expires=DAYS
+  -e`longopts -e`
       Number of days for which the certificate will be valid.
 	  (Default value is '$DEFAULT_DAYS')
 
-  -i, --info=TEXT
+  -i`longopts -i`
       The description text to be embedded in the certificate.
 	  (Default value is '$DEFAULT_INFO')
 
-  -o, --overwrite
+  -o`longopts -o`
       Overwrite certificate and key files if they exist already.
       (By default they will be not overwritten.)
 
@@ -88,7 +113,13 @@ if [ -z "$CERT_FILENAME" ] ; then CERT_FILENAME=$DEFAULT_CERT_FILENAME; fi;
 if [ -z "$KEY_FILENAME" ] ; then KEY_FILENAME=$DEFAULT_KEY_FILENAME; fi;
 if [ -z "$OPENSSL" ] ; then OPENSSL=$DEFAULT_OPENSSL; fi;
 
-TEMP=`getopt -o hd:c:k:e:i:o --long help,dir:,certificate:,key:,expires:,info:,overwrite -n $COMMAND -- "$@"`
+if [ -n "${LONGOPTS_SUPPORTED}" ]; then
+	# enhanced version
+	TEMP=`getopt -o hd:c:k:e:i:o --long help,dir:,certificate:,key:,expires:,info:,overwrite -n $COMMAND -- "$@"`
+else
+	# basic version	
+	TEMP=`getopt hd:c:k:e:i:o "$@"`
+fi
 if [ $? != 0 ] ; then exit 1; fi
 eval set -- "$TEMP"
 
