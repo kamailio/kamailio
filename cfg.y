@@ -2766,13 +2766,13 @@ static void warn_at(struct cfg_pos* p, char* format, ...)
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_WARN, "cfg. warning: (%d,%d-%d,%d): %s\n",
+		LOG(L_WARN, "warning in config file, from line %d, column %d to line %d, column %d: %s\n",
 					p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
-		LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n",
+		LOG(L_WARN, "warning in config file, line %d, column %d-%d: %s\n",
 					p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_WARN, "cfg. warning: (%d,%d): %s\n",
+		LOG(L_WARN, "warning in config file, line %d, column %d: %s\n",
 				p->s_line, p->s_col, s);
 	cfg_warnings++;
 }
@@ -2788,13 +2788,13 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d,%d): %s\n", 
+		LOG(L_CRIT, "parse error in config file, from line %d, column %d to line %d, column %d): %s\n",
 					p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
-		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d): %s\n", 
+		LOG(L_CRIT, "parse error in config file, line %d, column %d-%d: %s\n",
 					p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d): %s\n", 
+		LOG(L_CRIT, "parse error in config file, line %d, column %d: %s\n",
 					p->s_line, p->s_col, s);
 	cfg_errors++;
 }
