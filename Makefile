@@ -61,6 +61,16 @@
 #               $(MAKE) invocation (andrei)
 #
 
+# check make version
+# required 3.80, recommended 3.81
+req_ver=3.80
+# the check below works for version number of the type x.yy or x.yy.z*
+# (from the GNU Make Cookbook)
+ifeq (,$(filter $(req_ver),$(firstword $(sort $(MAKE_VERSION) $(req_ver)))))
+$(error make version $(MAKE_VERSION) not supported, use at least $(req_ver))
+endif
+
+
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
 
