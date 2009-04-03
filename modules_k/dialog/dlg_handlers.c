@@ -838,7 +838,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 		{
 			LM_DBG("executing route %d on timeout\n", dlg->toroute);
 			set_route_type(REQUEST_ROUTE);
-			run_top_route(rlist[dlg->toroute], fmsg);
+			run_top_route(main_rt.rlist[dlg->toroute], fmsg);
 			exec_post_req_cb(fmsg);
 		}
 	}
