@@ -6,6 +6,10 @@ $Id$
 sip-router changes
 
 core:
+  - module search path support: loadpath takes now a list of directories
+    separated by ':'. The list is searched in-order. For each directory d
+    $d/${module_name}.so and $d/${module_name}/${module_name}.so are tried.
+  - dns TXT, EBL and PTR support (both cache and non-cached resolver)
   - support for dual module interfaces: ser and kamailio
 config script changes:
   - script mode can be switched between ser compatible, kamailio compatible
@@ -21,6 +25,8 @@ config script changes:
   - while()
   - max_while_loops - maximum iterations allowed for a while, can be changed
     at runtime. Default 100.
+build system:
+  - multiple modules directories are now supported (defined in Makefile.dirs)
 
 
 

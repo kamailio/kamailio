@@ -238,7 +238,7 @@ static inline int version_control(void *handle, char *path)
  * @param modname - path or module name
  * @return 0 on success , <0 on error
  */
-int load_module(char* path)
+int load_module(char* mod_path)
 {
 	void* handle;
 	char* error;
@@ -248,6 +248,10 @@ int load_module(char* path)
 	struct sr_module* t;
 	struct stat stat_buf;
 	char* modname;
+	char* mdir;
+	char* nxt_mdir;
+	char* path;
+	int mdir_len;
 	int len;
 	int dlflags;
 	int new_dlflags;
@@ -257,49 +261,64 @@ int load_module(char* path)
 /* for openbsd */
 #define RTLD_NOW DL_LAZY
 #endif
-
+	path=mod_path;
 	if (!strchr(path, '/') && !strchr(path, '.')) {
 		/* module name was given, we try to construct the path */
 		modname = path;
-
-		/* try path <MODS_DIR>/<modname>.so */
-		path = (char*)pkg_malloc(
-			strlen(mods_dir) + 1 /* "/" */ +
-			strlen(modname) + 3 /* ".so" */ + 1);
-		strcpy(path, mods_dir);
-		len = strlen(path);
-		if (len != 0 && path[len - 1] != '/') {
-			strcat(path, "/");
-		}
-		strcat(path, modname);
-		strcat(path, ".so");
-
-		if (stat(path, &stat_buf) == -1) {
-			DBG("load_module: module file not found <%s>\n", path);
-			pkg_free(path);
-
-			/* try path <MODS_DIR>/<modname>/<modname>.so */
-			path = (char*)pkg_malloc(
-				strlen(mods_dir) + 1 /* "/" */ +
-				strlen(modname) + 1 /* "/" */ +
-				strlen(modname) + 3 /* ".so" */ + 1);
-			strcpy(path, mods_dir);
-			len = strlen(path);
-			if (len != 0 && path[len - 1] != '/') {
-				strcat(path, "/");
+		mdir=mods_dir; /* search path */
+		do{
+			nxt_mdir=strchr(mdir, ':');
+			if (nxt_mdir) mdir_len=(int)(nxt_mdir-mdir);
+			else mdir_len=strlen(mdir);
+			
+			/* try path <MODS_DIR>/<modname>.so */
+			path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
+									strlen(modname) + 3 /* ".so" */ + 1);
+			if (path==0) goto error;
+			memcpy(path, mdir, mdir_len);
+			len = mdir_len;
+			if (len != 0 && path[len - 1] != '/'){
+				path[len]='/';
+				len++;
 			}
-			strcat(path, modname);
-			strcat(path, "/");
+			path[len]=0;
 			strcat(path, modname);
 			strcat(path, ".so");
 
 			if (stat(path, &stat_buf) == -1) {
 				DBG("load_module: module file not found <%s>\n", path);
 				pkg_free(path);
-				LOG(L_ERR, "ERROR: load_module: could not find module <%s>\n",
-					modname);
-				goto error;
+
+				/* try path <MODS_DIR>/<modname>/<modname>.so */
+				path = (char*)pkg_malloc(
+					mdir_len + 1 /* "/" */ +
+					strlen(modname) + 1 /* "/" */ +
+					strlen(modname) + 3 /* ".so" */ + 1);
+				if (path==0) goto error;
+				memcpy(path, mdir, mdir_len);
+				len = mdir_len;
+				if (len != 0 && path[len - 1] != '/') {
+					path[len]='/';
+					len++;
+				}
+				path[len]=0;
+				strcat(path, modname);
+				strcat(path, "/");
+				strcat(path, modname);
+				strcat(path, ".so");
+
+				if (stat(path, &stat_buf) == -1) {
+					DBG("load_module: module file not found <%s>\n", path);
+					pkg_free(path);
+					path=0;
+				}
 			}
+			mdir=nxt_mdir?nxt_mdir+1:0;
+		}while(path==0 && mdir);
+		if (path==0){
+			LOG(L_ERR, "ERROR: load_module: could not find module <%s> in"
+						" <%s>\n", modname, mods_dir);
+			goto error;
 		}
 	}
 	retries=2;
@@ -373,15 +392,18 @@ reload:
 		}
 	}
 	if (register_module(*mod_if_ver, exp, path, handle)<0) goto error1;
+	if (path && path!=mod_path)
+		pkg_free(path);
 	return 0;
 
 error1:
 	dlclose(handle);
 error:
 skip:
+	if (path && path!=mod_path)
+		pkg_free(path);
 	return -1;
 }
-
 
 
 
