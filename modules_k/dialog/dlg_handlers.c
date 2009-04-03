@@ -538,12 +538,12 @@ static inline int parse_dlg_rr_param(char *p, char *end,
 		return -1;
 	}
 
-	if ( (*h_entry=reverse_hex2int( s, p-s))<0 ) {
+	if ( reverse_hex2int( s, p-s, (unsigned int*)h_entry)<0 ) {
 		LM_ERR("invalid hash entry '%.*s'\n", (int)(long)(p-s), s);
 		return -1;
 	}
 
-	if ( (*h_id=reverse_hex2int( p+1, end-(p+1)))<0 ) {
+	if ( reverse_hex2int( p+1, end-(p+1), (unsigned int*)h_id)<0 ) {
 		LM_ERR("invalid hash id '%.*s'\n", (int)(long)(end-(p+1)), p+1 );
 		return -1;
 	}
