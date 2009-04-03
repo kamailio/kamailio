@@ -162,7 +162,7 @@ makecfg.lst:
 			$(filter-out $(NOREBUILD_INCLUDES),\
 				$(C_INCLUDES) $(INCLUDES))))) >>$@
 .PHONY: all
-all: $(NAME) modules
+all: $(NAME) every-module
 
 .PHONY: dep
 dep: $(depends)
@@ -173,14 +173,14 @@ static: $(objs)
 .PHONY: clean
 clean: 
 	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst 2>/dev/null
-	-@for r in $(modules) $(static_modules_path) "" ; do \
+	-@for r in $(cmodules) $(static_modules_path) "" ; do \
 		if [ -d "$$r" ]; then \
 			echo "module $$r" ; \
 			$(MAKE) -C $$r clean ; \
 			$(MAKE) -C $$r/doc clean ; \
 		fi ; \
 	done 
-	@if [ -n "$(modules)" ]; then \
+	@if [ -n "$(cmodules)" ]; then \
 		for r in $(utils_compile) "" ; do \
 			if [ -d "$$r" ]; then \
 				 $(MAKE) -C $$r clean ; \
@@ -196,13 +196,13 @@ proper realclean distclean: mrproper
 mrproper: clean 
 	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) \
 			makecfg.lst 2>/dev/null
-	-@for r in $(modules) "" ; do \
+	-@for r in $(cmodules) "" ; do \
 		if [ -d "$$r" ]; then \
 			$(MAKE) -C $$r proper ; \
 			$(MAKE) -C $$r/doc proper ; \
 		fi ; \
 	done 
-	@if [ -n "$(modules)" ]; then \
+	@if [ -n "$(cmodules)" ]; then \
 		for r in $(utils_compile) "" ; do \
 			if [ -d "$$r" ]; then \
 				 $(MAKE) -C $$r proper ; \
@@ -213,7 +213,7 @@ mrproper: clean
 .PHONY: mantainer-cleaan
 mantainer-clean: distclean
 	-rm -f TAGS tags *.dbg .*.swp
-	-@for r in $(modules) "" ; do \
+	-@for r in $(cmodules) "" ; do \
 		if [ -d "$$r" ]; then \
 			$(MAKE) -C $$r mantainer-clean; \
 		fi ; \

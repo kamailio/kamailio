@@ -13,19 +13,27 @@
 #  2008-06-26  initial version (andrei) 
 #
 
+ifeq (,$(strip $(modules_dirs)))
+include $(COREPATH)/Makefile.dirs
+endif
+
 clean_targets:=	clean proper distclean realclean mantainer-clean clean_libs \
 				clean-all proper-all distclean-all realclean-all \
 				clean_cfg clean_modules_cfg clean-modules-cfg
-doc_targets:=	modules-doc modules-readme README modules-man man \
-		install-doc install-modules-doc install-man install-ser-man \
-		install-modules-man
+doc_targets:=	README man install-doc install-man install-ser-man \
+		install-every-module-doc install-every-module-man \
+		$(foreach m,$(modules_dirs),$(m)-doc $(m)-readme $(m)-man) \
+		$(foreach m,$(modules_dirs),install-$(m)-doc install-$(m)-man)
+
 # auxiliary: maintance, debugging, etc. (don't affect code/objects)
 aux_targets:=	TAGS tar dist cfg-defs cfg config config.mak print-modules \
-		dbg dbinstall librpath.lst makecfg.lst modules.lst
+		dbg dbinstall librpath.lst makecfg.lst \
+		modules-cfg modules-list modules-lst modules.lst mk-install_dirs
 # other targets that don't produce code in the current directory ("external")
-ext_targets:=	modules libs utils \
-		install-cfg install-modules install-utils  install-modules-all \
-		install-share 
+ext_targets:=	every-module $(modules_dirs) libs utils \
+		install-cfg install-utils  install-modules-all install-every-module\
+		$(foreach m,$(modules_dirs),install-$(m)) \
+		install-share
 
 # all the targets that don't require code dependecies in the current dir.
 nodep_targets:=	$(clean_targets) $(doc_targets) $(aux_targets) $(ext_targets)

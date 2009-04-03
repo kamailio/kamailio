@@ -22,7 +22,7 @@ MOD_NAME=$(NAME:.so=)
 COREPATH ?=../..
 
 ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
- $(COREPATH)/Makefile.modules $(COREPATH)/config.mak
+ $(COREPATH)/Makefile.modules $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
 
 #override modules value, a module cannot have submodules
 override modules=
@@ -65,22 +65,24 @@ endif
 
 
 
+include $(COREPATH)/Makefile.dirs
 include $(COREPATH)/Makefile.targets
 include $(COREPATH)/Makefile.rules
 
+# default: if not overwritten by the main Makefile, install in modules
+mods_dst=$(modules_prefix)/$(modules_dir)/modules
 
-
-$(modules_prefix)/$(modules_dir):
-		mkdir -p $(modules_prefix)/$(modules_dir)
+$(mods_dst):
+		mkdir -p $(mods_dst)
 
 LIBS:=$(filter-out -ldl -lresolv, $(LIBS))
 
 
 .PHONY: install
 .PHONY: install-libs
-install: $(NAME) $(modules_prefix)/$(modules_dir) install-libs
-	$(INSTALL_TOUCH) $(modules_prefix)/$(modules_dir)/$(NAME)
-	$(INSTALL_MODULES)  $(NAME)  $(modules_prefix)/$(modules_dir)
+install: $(NAME) $(mods_dst) install-libs
+	$(INSTALL_TOUCH) $(mods_dst)/$(NAME)
+	$(INSTALL_MODULES)  $(NAME)  $(mods_dst)
 
 install-libs:
 	@for lib in $(dir $(SER_LIBS)); do \
