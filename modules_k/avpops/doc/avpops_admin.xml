@@ -521,7 +521,9 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 				<quote>$avp(i:1);$avp(i:2);...</quote>. If the result gives
 				many rows, then multiple AVPs with corresponding name will
 				be added. The value type of the AVP (string or integer) will
-				be derived from the type of the columns.
+				be derived from the type of the columns. Please note that only
+				this two datatypes are supported, so its not possible for
+				example to return floating point or big integer values this way.
 				</para>
 			</listitem>
 			</itemizedlist>

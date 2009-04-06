@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
-                              (Wed, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -384,7 +384,10 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        "$avp(i:1);$avp(i:2);...". If the result gives many rows,
        then multiple AVPs with corresponding name will be added.
        The value type of the AVP (string or integer) will be
-       derived from the type of the columns.
+       derived from the type of the columns. Please note that only
+       this two datatypes are supported, so its not possible for
+       example to return floating point or big integer values this
+       way.
 
    The function delivers the following return-codes:
      * -1 - An error occured while querying the database (e.g.

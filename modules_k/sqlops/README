@@ -60,7 +60,11 @@ Chapter 1. Admin Guide
        time. Thus is possible to work in parallel with several DB
        results.
      * access via pseudo-variables - the content of SQL query
-       result is accessible via pseudo-variables.
+       result is accessible via pseudo-variables. Please note that
+       only integer and string variables are supported at the
+       moment because of the internal usage of "AVPs" to hold the
+       values. So its not possible for example to return floating
+       point or big integer values this way.
      * array indexes - fast access to result values via array
        possition: [row,column].
      * persistence in process space - a result can be used many

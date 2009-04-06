@@ -25,13 +25,17 @@
 			<emphasis>many DB results</emphasis> - the module can store
 			many results of different SQL queries in separate structures at
 			the same time. Thus is possible to work in parallel with several
-			DB results.			
+			DB results.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
 			<emphasis>access via pseudo-variables</emphasis> - the content
-			of SQL query result is accessible via pseudo-variables.
+			of SQL query result is accessible via pseudo-variables. Please
+			note that only integer and string variables are supported at the
+			moment because of the internal usage of <quote>AVPs</quote> to hold
+			the values. So its not possible for example to return floating point
+			or big integer values this way.
 		</para>
 		</listitem>
 		<listitem>
