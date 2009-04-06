@@ -232,7 +232,7 @@ sql_result_free("ra");
 				</listitem>	  
 				<listitem>
 					<para><emphasis>[row,col]</emphasis> - return the value
-						at positon (row,col) in result. 'row' and 'col' must
+						at position (row,col) in result. 'row' and 'col' must
 					be integer or pseudo-variable holding an integer.</para>
 				</listitem>
 				<listitem>

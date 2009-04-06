@@ -154,7 +154,7 @@ sql_result_free("ra");
    The "key" can be:
      * rows - return number of rows in result
      * cols - return the number of columns in result.
-     * [row,col] - return the value at positon (row,col) in
+     * [row,col] - return the value at position (row,col) in
        result. 'row' and 'col' must be integer or pseudo-variable
        holding an integer.
      * colname[N] - return the name of the N-th column in result.
