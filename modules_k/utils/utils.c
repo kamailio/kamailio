@@ -360,33 +360,26 @@ error:
 static struct mi_root* forward_fifo_switch(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node = NULL;
-	struct mi_root * ret = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if(ret == NULL)
-		return 0;
+	int result;
 
 	node = cmd_tree->node.kids;
-	if (node==NULL || node->next!=NULL)
-		ret = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
-	ret = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if (node==NULL || node->next!=NULL || node->value.s==NULL)
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	// critical section start:
 	// avoids dirty reads when updating configuration.
 	lock_get(conf_lock);
 
-	int result = conf_parse_switch(buf);
+	result = conf_parse_switch(node->value.s);
 
 	// critical section end
 	lock_release(conf_lock);
 
 	if (result < 0) {
-		LM_ERR("cannot parse parameter.\n");
-		ret = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+		LM_ERR("cannot parse parameter\n");
+		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 	}
-	return ret;
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 
@@ -397,33 +390,26 @@ static struct mi_root* forward_fifo_switch(struct mi_root* cmd_tree, void* param
 static struct mi_root* forward_fifo_filter(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node = NULL;
-	struct mi_root * ret = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if(ret == NULL)
-		return 0;
+	int result;
 
 	node = cmd_tree->node.kids;
-	if (node==NULL || node->next!=NULL)
-		ret = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
-		ret = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if (node==NULL || node->next!=NULL || node->value.s==NULL)
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	// critical section start:
 	//   avoids dirty reads when updating configuration.
 	lock_get(conf_lock);
 
-	int result = conf_parse_filter(buf);
+	result = conf_parse_filter(node->value.s);
 
 	// critical section end
 	lock_release(conf_lock);
 
 	if (result < 0) {
-		LM_ERR("cannot parse parameter.\n");
-		ret = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+		LM_ERR("cannot parse parameter\n");
+		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 	}
-	return ret;
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 
@@ -434,31 +420,24 @@ static struct mi_root* forward_fifo_filter(struct mi_root* cmd_tree, void* param
 static struct mi_root* forward_fifo_proxy(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node = NULL;
-	struct mi_root * ret = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if(ret == NULL)
-		return 0;
+	int result;
 
 	node = cmd_tree->node.kids;
-	if (node==NULL || node->next!=NULL)
-		ret = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
-		ret = init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if (node==NULL || node->next!=NULL || node->value.s==NULL)
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	// critical section start:
 	//   avoids dirty reads when updating configuration.
 	lock_get(conf_lock);
 
-	int result = conf_parse_proxy(buf);
+	result = conf_parse_proxy(node->value.s);
 
 	// critical section end
 	lock_release(conf_lock);
 
 	if (result < 0) {
-		LM_ERR("cannot parse parameter.\n");
-		ret = init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+		LM_ERR("cannot parse parameter\n");
+		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 	}
-	return ret;
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
