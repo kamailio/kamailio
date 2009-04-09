@@ -18,9 +18,9 @@ CREATE TABLE dialog (
     callee_sock VARCHAR(64) NOT NULL,
     state INTEGER NOT NULL,
     start_time INTEGER NOT NULL,
-    timeout INTEGER NOT NULL,
-    sflags INTEGER NOT NULL,
-    toroute INTEGER NOT NULL
+    timeout INTEGER DEFAULT 0 NOT NULL,
+    sflags INTEGER DEFAULT 0 NOT NULL,
+    toroute INTEGER DEFAULT 0 NOT NULL
 );
 
 CREATE INDEX dialog_hash_idx ON dialog (hash_entry, hash_id);
