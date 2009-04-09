@@ -41,6 +41,7 @@
  * 2008-02-04  optimizations: handle POLLRDHUP (if supported), detect short
  *              reads (sock. buffer empty) (andrei)
  * 2009-02-26  direct blacklist support (andrei)
+ * 2009-04-09  tcp ev and tcp stats macros added (andrei)
  */
 
 #ifdef USE_TCP
@@ -61,6 +62,8 @@
 
 #include "dprint.h"
 #include "tcp_conn.h"
+#include "tcp_stats.h"
+#include "tcp_ev.h"
 #include "pass_fd.h"
 #include "globals.h"
 #include "receive.h"
@@ -146,19 +149,47 @@ again:
 				bytes_read=0; /* nothing has been read */
 			}else if (errno == EINTR) goto again;
 			else{
-#ifdef USE_DST_BLACKLIST
-				if (cfg_get(core, core_cfg, use_dst_blacklist))
+				if (unlikely(c->state=S_CONN_CONNECT)){
 					switch(errno){
 						case ECONNRESET:
-						case ETIMEDOUT:
-							dst_blacklist_su((c->state==S_CONN_CONNECT)?
-													BLST_ERR_CONNECT:
-													BLST_ERR_SEND,
-													c->rcv.proto,
-													&c->rcv.src_su, 0);
-							break;
-					}
+#ifdef USE_DST_BLACKLIST
+							if (cfg_get(core, core_cfg, use_dst_blacklist))
+								dst_blacklist_su(BLST_ERR_CONNECT,
+														c->rcv.proto,
+														&c->rcv.src_su, 0);
 #endif /* USE_DST_BLACKLIST */
+							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
+									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+							break;
+						case ETIMEDOUT:
+#ifdef USE_DST_BLACKLIST
+							if (cfg_get(core, core_cfg, use_dst_blacklist))
+								dst_blacklist_su(BLST_ERR_CONNECT,
+														c->rcv.proto,
+														&c->rcv.src_su, 0);
+#endif /* USE_DST_BLACKLIST */
+							TCP_EV_CONNECT_TIMEOUT(errno, TCP_LADDR(c),
+									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+							break;
+						default:
+							TCP_EV_CONNECT_ERR(errno, TCP_LADDR(c),
+									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+					}
+					TCP_STATS_CONNECT_FAILED();
+				}else{
+						switch(errno){
+							case ECONNRESET:
+								TCP_STATS_CON_RESET();
+							case ETIMEDOUT:
+#ifdef USE_DST_BLACKLIST
+								if (cfg_get(core, core_cfg, use_dst_blacklist))
+									dst_blacklist_su(BLST_ERR_SEND,
+														c->rcv.proto,
+														&c->rcv.src_su, 0);
+#endif /* USE_DST_BLACKLIST */
+								break;
+						}
+				}
 				LOG(L_ERR, "ERROR: tcp_read: error reading: %s (%d)\n",
 							strerror(errno), errno);
 				r->error=TCP_READ_ERROR;
@@ -170,14 +201,18 @@ again:
 			*flags|=RD_CONN_EOF;
 			DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
 		}else{
-			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
+			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
+				TCP_STATS_ESTABLISHED(c->state);
 				c->state=S_CONN_OK;
+			}
 		}
 		/* short read */
 		*flags|=RD_CONN_SHORT_READ;
 	}else{ /* else normal full read */
-		if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT))
+		if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
+			TCP_STATS_ESTABLISHED(c->state);
 			c->state=S_CONN_OK;
+		}
 	}
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
