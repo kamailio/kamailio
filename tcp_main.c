@@ -506,49 +506,7 @@ again:
 			else goto error_timeout;
 		}
 		if (errno!=EINPROGRESS && errno!=EALREADY){
-			switch(errno){
-				case ENETUNREACH:
-				case EHOSTUNREACH:
-#ifdef USE_DST_BLACKLIST
-					if (cfg_get(core, core_cfg, use_dst_blacklist))
-						dst_blacklist_su(BLST_ERR_CONNECT, type,
-									 (union sockaddr_union*)servaddr, 0);
-#endif /* USE_DST_BLACKLIST */
-					TCP_EV_CONNECT_UNREACHABLE(errno, 0, 0,
-									(union sockaddr_union*)servaddr, type);
-					break;
-				case ETIMEDOUT:
-#ifdef USE_DST_BLACKLIST
-					if (cfg_get(core, core_cfg, use_dst_blacklist))
-						dst_blacklist_su(BLST_ERR_CONNECT, type,
-										 (union sockaddr_union*)servaddr, 0);
-#endif /* USE_DST_BLACKLIST */
-					TCP_EV_CONNECT_TIMEOUT(errno, 0, 0,
-									(union sockaddr_union*)servaddr, type);
-					break;
-				case ECONNREFUSED:
-				case ECONNRESET:
-#ifdef USE_DST_BLACKLIST
-					if (cfg_get(core, core_cfg, use_dst_blacklist))
-						dst_blacklist_su(BLST_ERR_CONNECT, type,
-										 (union sockaddr_union*)servaddr, 0);
-#endif /* USE_DST_BLACKLIST */
-					TCP_EV_CONNECT_RST(errno, 0, 0,
-									(union sockaddr_union*)servaddr, type);
-					break;
-				case EAGAIN: /* not posix, but supported on linux and bsd */
-					TCP_EV_CONNECT_NO_MORE_PORTS(errno, 0, 0,
-									(union sockaddr_union*)servaddr, type);
-					break;
-				default:
-					TCP_EV_CONNECT_ERR(errno, 0, 0,
-										(union sockaddr_union*)servaddr, type);
-			}
-			TCP_STATS_CONNECT_FAILED();
-			LOG(L_ERR, "ERROR: tcp_blocking_connect %s: (%d) %s\n",
-					su2a((union sockaddr_union*)servaddr, addrlen),
-					errno, strerror(errno));
-			goto error;
+			goto error_errno;
 		}
 	}else goto end;
 	
@@ -602,10 +560,54 @@ again:
 						"%s\n",
 						su2a((union sockaddr_union*)servaddr, addrlen),
 						err, strerror(err));
-				goto error;
+				errno=err;
+				goto error_errno;
 			}
 		}
 	}
+error_errno:
+	switch(errno){
+		case ENETUNREACH:
+		case EHOSTUNREACH:
+#ifdef USE_DST_BLACKLIST
+			if (cfg_get(core, core_cfg, use_dst_blacklist))
+				dst_blacklist_su(BLST_ERR_CONNECT, type,
+							 (union sockaddr_union*)servaddr, 0);
+#endif /* USE_DST_BLACKLIST */
+			TCP_EV_CONNECT_UNREACHABLE(errno, 0, 0,
+							(union sockaddr_union*)servaddr, type);
+			break;
+		case ETIMEDOUT:
+#ifdef USE_DST_BLACKLIST
+			if (cfg_get(core, core_cfg, use_dst_blacklist))
+				dst_blacklist_su(BLST_ERR_CONNECT, type,
+								 (union sockaddr_union*)servaddr, 0);
+#endif /* USE_DST_BLACKLIST */
+			TCP_EV_CONNECT_TIMEOUT(errno, 0, 0,
+							(union sockaddr_union*)servaddr, type);
+			break;
+		case ECONNREFUSED:
+		case ECONNRESET:
+#ifdef USE_DST_BLACKLIST
+			if (cfg_get(core, core_cfg, use_dst_blacklist))
+				dst_blacklist_su(BLST_ERR_CONNECT, type,
+								 (union sockaddr_union*)servaddr, 0);
+#endif /* USE_DST_BLACKLIST */
+			TCP_EV_CONNECT_RST(errno, 0, 0,
+							(union sockaddr_union*)servaddr, type);
+			break;
+		case EAGAIN: /* not posix, but supported on linux and bsd */
+			TCP_EV_CONNECT_NO_MORE_PORTS(errno, 0, 0,
+							(union sockaddr_union*)servaddr, type);
+			break;
+		default:
+			TCP_EV_CONNECT_ERR(errno, 0, 0,
+								(union sockaddr_union*)servaddr, type);
+	}
+	LOG(L_ERR, "ERROR: tcp_blocking_connect %s: (%d) %s\n",
+			su2a((union sockaddr_union*)servaddr, addrlen),
+			errno, strerror(errno));
+	goto error;
 error_timeout:
 	/* timeout */
 #ifdef USE_DST_BLACKLIST
@@ -614,11 +616,11 @@ error_timeout:
 							(union sockaddr_union*)servaddr, 0);
 #endif /* USE_DST_BLACKLIST */
 	TCP_EV_CONNECT_TIMEOUT(0, 0, 0, (union sockaddr_union*)servaddr, type);
-	TCP_STATS_CONNECT_FAILED();
 	LOG(L_ERR, "ERROR: tcp_blocking_connect %s: timeout %d s elapsed "
 				"from %d s\n", su2a((union sockaddr_union*)servaddr, addrlen),
 				elapsed, cfg_get(tcp, tcp_cfg, connect_timeout_s));
 error:
+	TCP_STATS_CONNECT_FAILED();
 	return -1;
 end:
 	return 0;
@@ -963,6 +965,8 @@ again:
 		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
 			LOG(L_ERR, "tcp_blocking_write: failed to send: (%d) %s\n",
 					errno, strerror(errno));
+			TCP_EV_SEND_TIMEOUT(errno, &c->rcv);
+			TCP_STATS_SEND_TIMEOUT();
 			goto error;
 		}
 	}else if (n<len){
