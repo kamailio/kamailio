@@ -27,6 +27,26 @@
 #ifndef __tcp_stats_h
 #define __tcp_stats_h
 
+#ifndef USE_TCP_STATS
+
+#define INIT_TCP_STATS() 0 /* success */
+#define DESTROY_TCP_STATS()
+
+#define TCP_STATS_ESTABLISHED(state)
+#define TCP_STATS_CONNECT_FAILED()
+#define TCP_STATS_LOCAL_REJECT()
+#define TCP_STATS_CON_TIMEOUT()
+#define TCP_STATS_CON_RESET()
+#define TCP_STATS_SEND_TIMEOUT()
+#define TCP_STATS_SENDQ_FULL()
+
+#else /* USE_TCP_STATS */
+
+#define INIT_TCP_STATS() 0 /* success */
+
+#define DESTROY_TCP_STATS()
+
+
 /** called each time a new tcp connection is established.
  *  @param state - S_CONN_ACCEPT if it was the result of an accept()
  *               - S_CONN_CONNECT if it was the result of a connect()
@@ -65,7 +85,7 @@
   */
 #define TCP_STATS_SENDQ_FULL()
 
-
+#endif /* USE_TCP_STATS */
 
 #endif /*__tcp_stats_h*/
 
