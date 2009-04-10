@@ -1651,7 +1651,7 @@ endif
 
 #add libssl if needed
 ifeq ($(CORE_TLS), 1)
-C_DEFS+= -I$(LOCALBASE)/ssl/include
+C_INCLUDES+= -I$(LOCALBASE)/ssl/include
 LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto \
 		$(TLS_EXTRA_LIBS)
 # NOTE: depending on the way in which libssl was compiled you might
@@ -1660,7 +1660,7 @@ LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto \
 endif
 
 ifneq ($(STUN),)
-C_DEFS+= -I$(LOCALBASE)/ssl/include
+C_INCLUDES+= -I$(LOCALBASE)/ssl/include
 LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lcrypto
 endif
 
