@@ -414,7 +414,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							r->state=H_STUN_MSG;
 						/* body will used as pointer to the last used byte */
 							r->body=p;
-							body_len = 0;
+							r->content_len = 0;
 							DBG("stun msg detected\n");
 						}else
 #endif
@@ -456,14 +456,13 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 #ifdef USE_STUN
 			case H_STUN_MSG:
 				if ((r->pos - r->body) >= sizeof(struct stun_hdr)) {
-					r->content_len = 0;
 					/* copy second short from buffer where should be body 
 					 * length 
 					 */
 					memcpy(&body_len, &r->start[sizeof(unsigned short)], 
 						sizeof(unsigned short));
 					
-					body_len = ntohs(r->content_len);
+					body_len = ntohs(body_len);
 					
 					/* check if there is valid magic cookie */
 					memcpy(&mc, &r->start[sizeof(unsigned int)], 
@@ -490,6 +489,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 									   SHA_DIGEST_LENGTH;
 						}
 					}
+					r->content_len=body_len;
 				}
 				else {
 					p = r->pos; 
@@ -498,15 +498,18 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				
 			case H_STUN_READ_BODY:
 				/* check if the whole body was read */
+				body_len=r->content_len;
 				if ((r->pos - r->body) >= body_len) {
 					r->body += body_len;
 					p = r->body;
 					if (is_msg_complete(r) != 0) {
+						r->content_len=0;
 						goto skip;
 					}
 					else {
 						/* set content_len to length of fingerprint */
 						body_len = sizeof(struct stun_attr)+SHA_DIGEST_LENGTH;
+						r->content_len=body_len;
 					}
 				}
 				else {
@@ -516,12 +519,14 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				
 			case H_STUN_FP:
 				/* content_len contains length of fingerprint in this place! */
+				body_len=r->content_len;
 				if ((r->pos - r->body) >= body_len) {
 					r->body += body_len;
 					p = r->body;
 					r->state = H_STUN_END;
 					r->flags |= F_TCP_REQ_COMPLETE |
 						F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
+					r->content_len=0;
 					goto skip;
 				}
 				else {
