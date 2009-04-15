@@ -3027,11 +3027,11 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	str opt;
 	str path;
 	struct sip_uri curi;
-	union sockaddr_union to;
 	struct hostent* he;
 	struct socket_info* send_sock;
 	unsigned int flags;
 	char proto;
+	struct dest_info dst;
 
 	if((*natping_state) == 0)
 		goto done;
@@ -3118,26 +3118,31 @@ nh_timer(unsigned int ticks, void *timer_idx)
 			LM_ERR("can't resolve_host\n");
 			continue;
 		}
-		hostent2su(&to, he, 0, curi.port_no);
+		init_dest_info(&dst);
+		hostent2su(&dst.to, he, 0, curi.port_no);
 		if (send_sock==0) {
 			send_sock=force_socket ? force_socket : 
-					get_send_socket(0, &to, PROTO_UDP);
+					get_send_socket(0, &dst.to, PROTO_UDP);
 		}
 		if (send_sock == NULL) {
 			LM_ERR("can't get sending socket\n");
 			continue;
 		}
+		dst.proto=PROTO_UDP;
+		dst.send_sock=send_sock;
+
 		if ( (flags&sipping_flag)!=0 &&
 		(opt.s=build_sipping( &c, send_sock, &path, &opt.len))!=0 ) {
-			if (udp_send(send_sock, opt.s, opt.len, &to)<0){
+			if (udp_send(&dst, opt.s, opt.len)<0){
 				LM_ERR("sip udp_send failed\n");
 			}
 		} else if (raw_ip) {
-			if (send_raw((char*)sbuf, sizeof(sbuf), &to, raw_ip, raw_port)<0) {
+			if (send_raw((char*)sbuf, sizeof(sbuf), &dst.to, raw_ip, 
+						 raw_port)<0) {
 				LM_ERR("send_raw failed\n");
 			}
 		} else {
-			if (udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to)<0 ) {
+			if (udp_send(&dst, (char *)sbuf, sizeof(sbuf))<0 ) {
 				LM_ERR("udp_send failed\n");
 			}
 		}
