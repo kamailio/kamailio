@@ -172,7 +172,12 @@ else
 							auth_radius uri_radius avp_radius \
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
-							unixsock dbg print_lib auth_identity ldap
+							unixsock dbg print_lib auth_identity ldap \
+							db_berkeley db_mysql db_postgres db_oracle \
+							db_unixodbc memcached mi_xmlrpc \
+							nat_traversal perlvdb purple seas siptrace \
+							snmpstats uac_redirect xmpp \
+							carrierroute
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
 	exclude_modules+= avpops  bdb dbtext iptrtpproxy pa rls
