@@ -138,7 +138,7 @@ static int mod_init(void)
 	if (from_restore_mode==FROM_AUTO_RESTORE)
 	{
 		/* get all transactions */
-		if (uac_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, tr_checker, 0)!=1)
+		if (uac_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, tr_checker, 0, 0)!=1)
 		{
 			LOG(L_ERR,"ERROR:uac:mod_init: failed to install TM callback\n");
 			goto error;

@@ -876,24 +876,28 @@ void on_req(struct cell* t, int type, struct tmcb_params *ps)
 	req_time = time(0);
 
 	if (is_acc_on(ps->req) || is_mc_on(ps->req)) {
-		if (tmb.register_tmcb(0, t, TMCB_RESPONSE_OUT, replyout_handler, (void*)req_time) <= 0) {
+		if (tmb.register_tmcb(0, t, TMCB_RESPONSE_OUT, replyout_handler,
+								(void*)req_time, 0) <= 0) {
 			LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_RESPONSE_OUT callback\n");
 			return;
 		}
 
 		if (report_ack) {
-			if (tmb.register_tmcb(0, t, TMCB_E2EACK_IN, ack_handler, (void*)req_time) <= 0) {
+			if (tmb.register_tmcb(0, t, TMCB_E2EACK_IN, ack_handler,
+									(void*)req_time, 0) <= 0) {
 				LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_E2EACK_IN callback\n");
 				return;
 			}
 		}
 
-		if (tmb.register_tmcb(0, t, TMCB_ON_FAILURE_RO, failure_handler, (void*)req_time) <= 0) {
+		if (tmb.register_tmcb(0, t, TMCB_ON_FAILURE_RO, failure_handler,
+								(void*)req_time, 0) <= 0) {
 			LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_ON_FAILURE_RO callback\n");
 			return;
 		}
 
-		if (tmb.register_tmcb(0, t, TMCB_RESPONSE_IN, replyin_handler, (void*)req_time) <= 0) {
+		if (tmb.register_tmcb(0, t, TMCB_RESPONSE_IN, replyin_handler,
+								(void*)req_time, 0) <= 0) {
 			LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_RESPONSE_IN callback\n");
 			return;
 		}
@@ -924,7 +928,7 @@ static int mod_init(void)
 
 	     /* register callbacks*/
 	     /* listen for all incoming requests  */
-	if (tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, on_req, 0 ) <= 0) {
+	if (tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, on_req, 0, 0) <= 0) {
 		LOG(L_ERR,"ERROR:acc:mod_init: cannot register TMCB_REQUEST_IN "
 		    "callback\n");
 		return -1;

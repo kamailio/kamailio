@@ -185,7 +185,7 @@ prepare ()
 	}
 	if (load_tm(&tmb)==-1) return -1;
 
-	if (tmb.register_tmcb(TMCB_REQUEST_OUT,func_invite,0) <= 0) return -1;
+	if (tmb.register_tmcb(TMCB_REQUEST_OUT, func_invite, 0, 0) <= 0) return -1;
 #endif
 	return 0;
 }

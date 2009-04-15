@@ -420,7 +420,7 @@ void tr_checker(struct cell* t, int type, struct tmcb_params *param)
 			 * by replace_from() function */
 			DBG("*************** marker **************\n");
 			if ( uac_tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN,
-				correct_reply, (void*)&rst_from )!=1 )
+						correct_reply, (void*)&rst_from, 0)!=1 )
 			{
 				LOG(L_ERR,"ERROR:uac:tr_checker: failed to install "
 					"TM callback\n");
@@ -434,7 +434,7 @@ void tr_checker(struct cell* t, int type, struct tmcb_params *param)
 				 * by restore_from() function */
 				/* restore in req performed -> replace in reply */
 				if ( uac_tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN,
-					correct_reply, (void*)&rst_to)!=1 )
+							correct_reply, (void*)&rst_to, 0)!=1 )
 				{
 					LOG(L_ERR,"ERROR:uac:tr_checker: failed to install "
 						"TM callback\n");
