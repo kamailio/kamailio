@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="uri_db.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="check_to">
+	<title>
+	    <function>check_to()</function>
+	</title>
+	<para>
+	    Check To username against URI table or digest credentials.
+	</para>
+	<example>
+	    <title><function>check_to</function> usage</title>
+	    <programlisting>
+...
+if (check_to()) {
+    ...
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="check_from">
+	<title>
+	    <function>check_from()</function>
+	</title>
+	<para>
+	    Check From username against URI table or digest credentials.
+	</para>
+	<example>
+	    <title><function>check_from</function> usage</title>
+	    <programlisting>
+...
+if (check_from()) {
+    ...
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="does_uri_exist">
+	<title>
+	    <function>does_uri_exist()</function>
+	</title>
+	<para>
+	    Check if username in the request URI belongs to an existing user.
+	</para>
+	<example>
+	    <title><function>does_uri_exist</function> usage</title>
+	    <programlisting>
+...
+if (does_uri_exist()) {
+    ...
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

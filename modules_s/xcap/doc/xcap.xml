@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section id="xcap_module"><title>XCAP module</title>
+
+    <sectioninfo><authorgroup>
+	<author>
+		<firstname>Vaclav</firstname>
+		<surname>Kubart</surname>
+		<affiliation><orgname>Iptel/Tekelec</orgname></affiliation>
+		<email>vaclav.kubart@iptel.org</email>
+	</author>
+	</authorgroup></sectioninfo>
+
+<para>Module for doing XCAP queries.</para>
+
+<para>This module covers functions called internaly to access XCAP server. These
+functions were separated into standalone module to allow simple replacing XCAP
+queries with queries into database or local filesystem or whatever else.  Next
+reason was to protect other modules from linking with libcurl (implements
+HTTP) or other such stuff.
+</para>
+
+<section><title>Dependencies</title>
+<para>
+	<itemizedlist><title>Libraries</title>
+
+			<listitem><para><application>libxml2</application> (development
+			version) - external library for parsing XML
+			documents</para></listitem>
+
+			<listitem><para><application>libcurl</application> (development
+			version) - external library for HTTP queries</para></listitem>
+
+			<listitem><para><application>libcds (internal)</application></para></listitem>
+			
+			<listitem><para><application>libpresence (internal)</application></para></listitem>
+
+			<listitem><para><application>libxcap (internal)</application> -
+			parsing XCAP documents, ...</para></listitem>
+	</itemizedlist>
+</para>
+</section>
+
+<section><title>Incompatibility</title>
+<para>This module is not working with TLS module. Fro
+more information see section "Known problems" in presence handbook.
+</para>
+</section>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+
+</section>

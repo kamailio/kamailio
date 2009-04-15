@@ -1,0 +1,9 @@
+- Describe parser structure, how nonce is looked up
+- Describe that www,proxy_authorize must be called before
+  any other function
+- Create some examples how to use digest parser
+
+- Consider MD5-Sess support(will require to store passwords in clear text)
+- auth-int support
+- Database cache
+- Option to use memory only

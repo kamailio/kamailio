@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="pa.xcap"><title>XCAP authorization</title>
+
+<section><title>Presence authorization documents</title>
+<para>Presence authorization documents are described in <xref
+linkend="pres_draft_auth"/> and they are not fully supported now. We ignore
+sphere, transformations and date and time conditions. [Are there any clients
+supporting this?].
+</para>
+<example><title>presence authorization document</title>
+<para>This document has two rules: one named <quote>blacklist</quote> disabling
+subscriptions from user <quote>smith</quote> and one named
+<quote>whitelist</quote> enabling subscriptions from all other users from domain
+<quote>test-domain.com</quote>. (It doesn't depend on names of rules but on
+actions for them.)
+</para>
+<programlisting>
+<![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ruleset xmlns="urn:ietf:params:xml:ns:common-policy" 
+		xmlns:pr="urn:ietf:params:xml:ns:pres-rules">
+	<rule id="blacklist">
+		<conditions>
+			<identity>
+				<id>sip:smith@test-domain.com</id>
+			</identity>
+		</conditions>
+		<actions>
+			<pr:sub-handling>block</pr:sub-handling>
+		</actions>
+		<transformations/>
+	</rule>
+	
+	<rule id="whitelist">
+		<conditions>
+			<identity>
+				<domain domain="test-domain.com"/>
+				<except entity="smith"/>
+			</identity>
+		</conditions>
+		<actions>
+			<pr:sub-handling>allow</pr:sub-handling>
+		</actions>
+		<transformations/>
+	</rule>
+</ruleset>]]>
+</programlisting>
+</example>
+</section>
+
+<section><title>Presence authorization document URI</title>
+
+<para>Authorization documents are read for presentities according to their presentity
+URIs (presentity URI is URI in To header of SUBSCRIBE request). Resulting XCAP URI with
+authorization document is:</para>
+<para>
+<filename>&lt;xcap-root&gt;/pres-rules/users/&lt;username&gt;/presence-rules.xml</filename>,
+</para>
+<para>
+where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration of XCAP
+module and
+<parameter>&lt;username&gt;</parameter> is UUID (unique user identification used
+in SER everywhere) discovered from presentity URI.</para> 
+
+<para>If you need to use other
+filename than default <quote>presence-rules.xml</quote>, you can redefine it by
+parameter <parameter>pres_rules_file</parameter>. Problem can be, that
+<parameter>pres_rules_file</parameter> is specified as module parameter and thus
+common for all users.
+</para>
+
+<example><title>presence authorization document uri</title>
+<para>For example for presentity <literal>sip:joe@someorg.org</literal> with
+UUID <quote>joe</quote> and <parameter>xcap-root</parameter>
+<literal>http://localhost/xcap-root</literal> will be the URI for the
+authorization document
+<filename>http://localhost/xcap-root/pres-rules/users/joe/presence-rules.xml</filename>
+</para>
+</example>
+
+</section>
+
+<section><title>Message authorization documents</title>
+<para>Message authorization documents are described in <xref linkend="im_rules"/>. We ignore
+sphere, transformations and date and time conditions like in the case of presence
+authorization.
+</para>
+<example><title>message authorization document</title>
+<para>This document has one rule named <quote>blacklist</quote> disabling
+messages sent from users <quote>jan@test-domain.com</quote> and
+<quote>jana@test-domain.com</quote>.</para>
+<programlisting>
+<![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ruleset xmlns="urn:ietf:params:xml:ns:common-policy" xmlns:im="urn:iptel:xml:ns:im-rules">
+	<rule id="blacklist">
+		<conditions>
+			<identity>
+				<id>sip:jana@test-domain.com</id>
+				<id>sip:jan@test-domain.com</id>
+			</identity>
+		</conditions>
+		<actions>
+			<im:im-handling>block</im:im-handling>
+		</actions>
+		<transformations/>
+	</rule>
+</ruleset>]]>
+</programlisting>
+</example>
+</section>
+
+<section><title>Message authorization document URI</title>
+<para>Authorization documents are read for recipients according to To
+URIs. Resulting URI for XCAP query will be:</para>
+<para>
+<filename>&lt;xcap-root&gt;/im-rules/users/&lt;username&gt;/im-rules.xml</filename>
+where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration of XCAP
+module, im-rules.xml is default filename for message authorization rules (may be
+redefined in <function>authorize_message</function> call parameter) and
+<parameter>&lt;username&gt;</parameter> is UUID discovered from To URI.
+</para>
+<example><title>message authorization document uri</title>
+<para>For example for recipient <literal>sip:smith@someorg.org</literal> with
+UUID <quote>smith</quote> and <parameter>xcap-root</parameter>
+<literal>http://localhost/xcap-root</literal> will be the URI for the
+authorization document
+<filename>http://localhost/xcap-root/im-rules/users/smith/im-rules.xml</filename>
+</para>
+</example>
+</section>
+
+<section><title>Disadvantages</title>
+<para>One of the worst disadvantages of XCAP authorization is slowness of XCAP
+queries compared to - for example - data stored in local database. This is the
+reason for caching XCAP queries and responses, but there is a problem - how to
+detect changes in data stored on XCAP server. One of possible solutions is to 
+implement client for <quote>XCAP change notifications</quote> described in <xref
+linkend="pres_draft_xcap_change"/> and <xref linkend="pres_draft_xcap_profiles"/>
+(planned in future versions).</para>
+</section>
+
+<section><title>Standard incompliances</title>
+<para>XCAP authorization support is not finished yet, there are some standard
+incompliances now:
+<itemizedlist>
+	<listitem><para>ignored sphere</para></listitem>
+	<listitem><para>ignored date and time conditions</para></listitem>
+	<listitem><para>ignored transformations</para></listitem>
+	<listitem><para>Presentity URI is taken from To header field instead of AOR
+	because AOR in consequent SUBSCRIBE requests is set to "contact to server
+	URI" instead of user's URI (RFCs contradict themselves).</para></listitem>
+	<listitem><para>We use UUID instead of whole presentity URI as
+	<parameter>&lt;username&gt;</parameter> due to possibility of using 
+	the same authorization document for more user's aliases (TODO: control this by module
+	parameter?).</para></listitem>
+	<listitem><para>According to current presence authorization draft should
+	presence server look for ALL authorization documents within user's directory
+	on XCAP server, but listing documents on XCAP server is NOT
+	defined. This will be partialy solved in future by possibility of having
+	list of authorization documents as user's attributes.</para></listitem>
+</itemizedlist>
+</para>
+</section>
+
+</section>
+

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="rls.functions"><title>Functions</title>
+<variablelist>
+
+<varlistentry id="handle_rls_subscription">
+	<term><varname>handle_rls_subscription</varname></term>
+	<listitem>
+		<para>Handle subscription to resource list uri.</para>
+		<variablelist><title>Parameters:</title>
+<!--			<varlistentry>
+			<term>xcap_root (string)</term>
+			<listitem><para>String representing XCAP root for resource
+			lists. For example <quote>http://localhost/xcap-root</quote>.
+			</para></listitem>
+		</varlistentry>-->
+		<varlistentry>
+			<term>create_error_response (integer)</term>
+			<listitem><para>If set to 0 error responses are not sent
+			to the client. This may be useful, if used together with PA
+			module.
+			</para></listitem>
+		</varlistentry>
+		</variablelist>
+		<para>This function handles resource list subscription. XCAP document
+		containing the list must be loaded before using one of query function
+		(<xref linkend="query_rls_services"/>, <xref
+		linkend="query_resource_list"/>).
+		</para>
+		<example><title>handling subscription</title>
+		<programlisting>
+...
+if (method=="SUBSCRIBE") {
+	if (!t_newtran()) {
+		sl_reply_error();
+	};
+	
+	if (query_rls_services()) {
+		handle_rls_subscription("1");
+	}
+	else {
+		# no such list exists -> process it with PA module
+		handle_subscription("registrar");
+	}
+	break;
+};
+...
+		</programlisting>
+		<para>In this case for every incomming SUBSCRIBE request SER asks for
+		"global resource list". If such list exists, the subscription is
+		processed like resource list subscription.
+		</para>
+		</example>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>is_simple_rls_target</varname></term>
+	<listitem>
+		<para>Test uri according to given template.</para>
+			<variablelist><title>Parameters:</title>
+			<varlistentry>
+				<term>template (string)</term>
+				<listitem><para>Template to be compared with To URI.</para></listitem>
+			</varlistentry>
+			</variablelist>
+		<para>Function tries to compare username in To URI with given
+		template. If there are different domains in To and From URIs,
+		the function fails. There can be used "$uid" in template and it
+		is replaced by value returned by get_from_uid.
+		</para>
+		<para><emphasis>In the future should be this function replaced by AVP
+		operations but I was not able to do it with them now...</emphasis></para>
+		<example><title>handling subscription</title>
+		<programlisting>
+...	
+if (method=="SUBSCRIBE") {
+	if (!t_newtran()) {
+		sl_reply_error();
+		break;
+	};
+	
+	if (lookup_domain("From")) {
+		if (lookup_user("From")) {
+			if (is_simple_rls_target("$uid-list")) {
+				# takes From UID and makes XCAP query
+				# for user's list named "default"
+				if (!query_resource_list("default")) {
+					t_reply("500", "XCAP query error");
+					break;
+				}
+				handle_rls_subscription("1");
+				break;
+			}
+		}
+	}
+}
+...
+		</programlisting>
+		<para>In this case if SUBSCRIBE request arrives and From is
+		smith@test-domain.com and To is smith-list@test-domain.com, the function
+		returns true and the subscription is handled like subscription to
+		"user's resource list" (not "global") as written above.
+		</para>
+		</example>
+	</listitem>
+</varlistentry>
+
+<varlistentry id="query_rls_services">
+	<term><varname>query_rls_services</varname></term>
+	<listitem>
+		<para>Get list from global rls-services document.</para>
+		<para>Function loads "global resource list" from XCAP server. This list
+		is then processed by RLS module using <xref linkend="handle_rls_subscription"/>.
+		</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry id="query_resource_list">
+	<term><varname>query_resource_list</varname></term>
+	<listitem>
+		<para>Get user's resource list.</para>
+		<variablelist><title>Parameters:</title>
+		<varlistentry>
+			<term>list_name (string)</term>
+			<listitem><para>Name of the requested list. If empty, it loads whole
+			user's resource-lists document as one list.</para></listitem>
+		</varlistentry>
+		</variablelist>
+		<para>Function loads "user's resource list" from XCAP server. This list
+		is then processed by RLS module using <xref linkend="handle_rls_subscription"/>.
+		</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>have_flat_list</varname></term>
+	<listitem>
+		<para>Test if a resource list is loaded.</para>
+		<para>Function tests if a list was loaded using one of query
+		functions (<xref linkend="query_resource_list"/> or <xref
+		linkend="query_rls_services"/>) and returns 1 if yes and -1
+		otherwise.
+		</para>
+	</listitem>
+</varlistentry>
+
+</variablelist>
+</section>
+

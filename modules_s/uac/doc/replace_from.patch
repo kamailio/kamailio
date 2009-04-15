@@ -1,0 +1,150 @@
+Index: modules/uac/from.c
+===================================================================
+diff -u -r1.3 modules/uac/from.c
+--- modules/uac/from.c      26 Feb 2005 18:04:20 -0000      1.3
++++ modules/uac/from.c      24 Mar 2005 16:29:27 -0000
+@@ -39,7 +39,6 @@
+ #include "../tm/tm_load.h"
+ 
+ #include "from.h"
+-#define  FL_FROM_ALTERED  (1<<31)
+ 
+ extern str from_param;
+ extern int from_restore_mode;
+Index: parser/msg_parser.h
+===================================================================
+RCS file: /cvsroot/ser/sip_router/parser/msg_parser.h,v
+retrieving revision 1.56
+diff -u -r1.56 msg_parser.h
+--- parser/msg_parser.h	28 Feb 2005 15:28:24 -0000	1.56
++++ parser/msg_parser.h	24 Mar 2005 22:13:04 -0000
+@@ -73,8 +73,8 @@
+ #define FL_FORCE_ACTIVE 2  /* force active SDP */
+ #define FL_SDP_IP_AFS 4    /* SDP IP rewritten */
+ #define FL_SDP_PORT_AFS 8  /* SDP port rewritten */
+-#define FL_SHM_CLONE   16  /* msg cloned in SHM as a single chunk */
+-
++#define FL_SHM_CLONE    16 /* msg cloned in SHM as a single chunk */
++#define FL_FROM_ALTERED 32 /* from is altered */
+ 
+ #define IFISMETHOD(methodname,firstchar)                                  \
+ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
+Index: modules/tm/t_msgbuilder.c
+===================================================================
+RCS file: /cvsroot/ser/sip_router/modules/tm/t_msgbuilder.c,v
+retrieving revision 1.41
+diff -u -r1.41 t_msgbuilder.c
+--- modules/tm/t_msgbuilder.c	23 Feb 2005 17:16:06 -0000	1.41
++++ modules/tm/t_msgbuilder.c	24 Mar 2005 22:13:04 -0000
+@@ -75,6 +75,72 @@
+ 		(_p)+=(_str).len;  \
+  	} while(0);
+ 
++#define LC(_cp) ((*(_cp))|0x20)
++static int extract_from( char *buf, int len, str *from)
++{
++	char *end, *p;
++	char *b;
++	int state;
++
++	p = buf;
++	end = buf+len;
++	state = 1;
++	b = 0;
++
++	while(p<end) {
++		switch (*p) {
++			case '\n':
++			case '\r':
++				switch (state) {
++					case 4: state=5;break;
++					case 5: case 6: state=6;break;
++					default : state=2;break;
++				}
++				break;
++			case ' ':
++			case '\t':
++				switch (state) {
++					case 4: case 6: state=5; break;
++					case 2: state=1; break;/*folded line*/
++				}
++				break;
++			case ':':
++				switch (state) {
++					case 4: state=5;break;
++					case 6: goto found;
++					case 2: state=1;break;
++				}
++				break;
++			case 'f':
++			case 'F':
++				if (state==5) break;
++				if (state==6) goto found;
++				if (state!=2) {state = 1;break;}
++				/* hdr starting with 'f' */
++				b = p;
++				if (p+3<end && LC(p+1)=='r' && LC(p+2)=='o' && LC(p+3)=='m')
++					p+=3;
++				state = 4; /* "f" or "from" found */
++				break;
++			default:
++				switch (state) {
++					case 2:case 4: state=1; break;
++					case 6: ;goto found;
++				}
++		}
++		p++;
++	}
++
++	LOG(L_CRIT,"BUG:tm:extract_from: no from found in outgoing buffer\n");
++	return -1;
++found:
++	from->s = b;
++	from->len = p-b;
++	DBG("-----from= <%.*s>\n",from->len,from->s);
++	return 0;
++}
++
++
+ /* Build a local request based on a previous request; main
+    customers of this function are local ACK and local CANCEL
+  */
+@@ -88,6 +154,7 @@
+ 	int branch_len;
+ 	str branch_str;
+ 	struct hostport hp;
++	str from;
+ 
+ #ifdef _OBSO
+ 	if ( Trans->uac[branch].last_received<100)
+@@ -98,6 +165,12 @@
+ 	}
+ #endif
+ 
++	if (!Trans->uas.request || !(Trans->uas.request->msg_flags&FL_FROM_ALTERED)
++	|| extract_from( Trans->uac[branch].request.buffer,
++	Trans->uac[branch].request.buffer_len, &from)!=0) {
++		from = Trans->from;
++	}
++
+ 	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
+ 	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
+ 	*len+=Trans->uac[branch].uri.len;
+@@ -119,7 +192,7 @@
+ 	}
+ 	*len+= via_len;
+ 	/*headers*/
+-	*len+=Trans->from.len+Trans->callid.len+to->len+
++	*len+=from.len+Trans->callid.len+to->len+
+ 		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
+ 
+ 
+@@ -154,7 +227,7 @@
+ 	append_mem_block(p,via,via_len);
+ 
+ 	/*other headers*/
+-	append_str( p, Trans->from );
++	append_str( p, from );
+ 	append_str( p, Trans->callid );
+ 	append_str( p, *to );
+ 

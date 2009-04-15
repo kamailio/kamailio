@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="auth" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>Song Networks</orgname></affiliation>
+		<email>jh@song.fi</email>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Auth Module</title>
+    
+    <section id="auth.overview">
+	<title>Overview</title>
+	<para>
+	    This is a generic module that itself doesn't provide all functions
+	    necessary for authentication but provides functions that are needed
+	    by all other authentication related modules (so called
+	    authentication backends).
+	</para>
+	<para>
+	    We decided to break the authentication code into several modules
+	    because there are now more than one backends (currently database
+	    authentication and radius are supported). This allows us to create
+	    separate packages so uses can install and load only required
+	    functionality. This also allows us to avoid unnecessary
+	    dependencies in the binary packages.
+	</para>
+    </section>
+
+    <section id="auth.dep">
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the listed modules
+	    must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <formalpara>
+			<title>sl</title>
+			<para>The modules needs sl module to send stateless replies.</para>
+		    </formalpara>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>

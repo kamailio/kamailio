@@ -1,0 +1,522 @@
+1. RLS (Resource List Server)
+
+Vaclav Kubart
+
+   Iptel/Tekelec
+   <vaclav.kubart@iptel.org>
+     __________________________________________________________________
+
+   1.1. Dependencies
+   1.2. RLS and XCAP
+
+        1.2.1. Used terms
+        1.2.2. Processing subscriptions
+        1.2.3. Global resource lists
+
+              1.2.3.1. rls-services document URI
+              1.2.3.2. Disadvantages
+
+        1.2.4. User's resource lists
+        1.2.5. Standard incompliances
+
+   1.3. Parameters
+   1.4. Functions
+
+   Resource lists server is a server which allows subscriptions to lists
+   of users. Its behaviour is defined in [rls] and [sip rls]. As described
+   there, it uses XCAP server for storing data about lists of users. These
+   data can be manipulated in any way by user's client software.
+
+1.1. Dependencies
+
+   Modules
+     * tm
+     * pa
+     * dialog
+     * optionaly database module (mysql, ...)
+
+   Libraries
+     * libcds (internal)
+     * libxcap (internal) - XCAP queries
+     * libpresence (internal) - used for internal subscriptions ta
+       PA/presence_b2b
+
+1.2. RLS and XCAP
+
+1.2.1. Used terms
+
+   RLS
+          Resource List Server - server processing subscriptions to
+          special URIs (RL-URIs) which represent more resources than only
+          one like "normal URIs".
+
+   RL-URI
+          Resource list URI. URI which represents a list of resources
+          instead of a single user.
+
+1.2.2. Processing subscriptions
+
+   Specification says that each time a SUBSCRIBE request to a RL-URI
+   comes, RLS has to ask XCAP server for coresponding <service> in default
+   rls-services document. The XCAP query in this case is for document like
+   <xcap-root>/rls-services/global/index/~~/rls-services/service[@uri=%22<
+   AOR>%22]. Returned <service> is processed according to specification
+   then and the result of it is flat list of URIs to subscribe to.
+
+   This processing has its weaknesses.
+     * In case of such processing is one <service> element in rls-services
+       needed for every user who wants to have his "buddies" stored on
+       XCAP server. Such <service> will (for user's records) mostly point
+       into his resource-lists document and thus another XCAP query for
+       result list is needed.
+     * Another problem is, that each user has to modify global
+       rls-services document. This is security problem and there is no
+       client software doing this itself. [Exists something?]
+
+   These reasons lead to separation of resource lists into "global lists"
+   and "users lists".
+
+   Global lists are not stored/modified by regular users; they are managed
+   by administrators and they are handled according the draft. Example of
+   such lists may be "technical support", "human resources", ...
+
+   Resource lists for users are stored only in their resource-lists
+   documents and the <service> element in global rls-services document is
+   ommited (it is "implicit"). In this case RLS reads directly user's
+   resource-lists document instead of trying to find it in global
+   rls-services document.
+
+1.2.3. Global resource lists
+
+   As said above, resources described in rls-services documents are global
+   resources accessible by all users. No regular user should have acces
+   rights to modify global rls-services document on XCAP server.
+
+1.2.3.1. rls-services document URI
+
+   The construction of rls-services document URI is described in [rls].
+   Only in short: the AOR from SIP SUBSCRIBE request is combined with XCAP
+   root given in configuration like this:
+
+   <xcap-root>/rls-services/global/index/~~/rls-services/service[@uri=%22<
+   AOR>%22].
+
+   This URI doesn't not specify namespaces as mentioned in definition, but
+   this is due to problems with XCAP server used for tests (problems
+   querying parts of documents with namespaces).
+
+   Example 1. rls-services uri example
+
+   Let us assume
+     * xcap-root = http://localhost/xcap-root
+     * AOR of SUBSCRIBE request = sip:technical-support@someorg.org
+
+   Resulting document describing the list will be get from URI:
+   http://localhost/xcap-root/rls-services/global/index/~~/rls-services/se
+   rvice[@uri=%22<technical-support@someorg.org>%22], which means the
+   service element with uri parameter value technical-support@someorg.org
+   stored in rls-services document named index.
+
+   Example 2. rls-services document
+
+   There is example rls-services document describing resources
+   "technical-support@test-domain.com", "hr@test-domain.com" and
+   "work@test-domain.com" which puts previous two into itself. This
+   document should be stored on xcap server in file
+   <xcap-root>/rls-services/global/index.
+<?xml version="1.0" encoding="UTF-8"?>
+<rls-services>
+
+        <service uri="sip:technical-support@test-domain.com">
+                <list name="Our technical support">
+                        <entry uri="sip:smith@test-domain.com">
+                                <display-name>Smith</display-name>
+                        </entry>
+                        <entry uri="sip:joe@test-domain.com">
+                                <display-name>Joe</display-name>
+                        </entry>
+                        <entry uri="sip:agatha@test-domain.com">
+                                <display-name>Agatha</display-name>
+                        </entry>
+                </list>
+                <packages>
+                        <package>presence</package>
+                </packages>
+        </service>
+
+        <service uri="sip:hr@test-domain.com">
+                <list name="Human resources">
+                        <entry uri="sip:johny@test-domain.com">
+                                <display-name>Johny V</display-name>
+                        </entry>
+                        <entry uri="sip:joe@test-domain.com">
+                                <display-name>Joe</display-name>
+                        </entry>
+                </list>
+                <packages>
+                        <package>presence</package>
+                </packages>
+        </service>
+
+        <service uri="sip:work@test-domain.com">
+                <list name="Employee resources">
+                        <entry uri="sip:technical-support@test-domain.com">
+                                <display-name>Technical support</display-name>
+                        </entry>
+                        <entry uri="sip:hr@test-domain.com">
+                                <display-name>Human resources</display-name>
+                        </entry>
+                </list>
+                <packages>
+                        <package>presence</package>
+                </packages>
+        </service>
+
+</rls-services>
+
+1.2.3.2. Disadvantages
+
+   Working with URIs presented in this section have one big disadvantage -
+   it needs full XCAP server which is able to work with partial documents
+   and able to process XPointer expressions in XCAP queries.
+
+   Due to unavailability of free XCAP servers is there a possibility to
+   use SER's RLS server in mode of reduced XCAP server needs (see RLS
+   module parameters). If operating in this mode, RLS requests full
+   rls-service document from uri <xcap-root>/rls-services/global/index,
+   inspects it and finds requested resource list according to URI and AOR
+   by itself. (Only if possible! There can't be links to partial documents
+   in rls-services document.)
+
+1.2.4. User's resource lists
+
+   Opposite to global resource lists are resource lists of standalone
+   users. As was told above, these lists are stored as resource-lists
+   documents under user's directories. These resource-lists documents are
+   accessed directly without searching for them in rls-services document -
+   they behave like if they have implicit link there.
+
+   Example 3. User's resource lists
+
+   Let us assume
+     * xcap root = http://localhost/xcap-root
+     * user smith (sends SUBSCRIBE with smith@... in From URI)
+     * Smith's UUID = smith
+
+   The document below for user Smith can be stored on XCAP server in
+   http://localhost/xcap-root/resource-lists/users/smith/resource-lists.xm
+   l. It contains two resource lists: "default" and "contacts".
+<?xml version="1.0" encoding="UTF-8"?>
+<resource-lists
+   xmlns="urn:ietf:params:xml:ns:resource-lists"
+>
+  <list name="default">
+    <display-name>Buddy List</display-name>
+    <entry uri="sip:joe@test-domain.com">
+      <display-name>Joe</display-name>
+    </entry>
+    <entry uri="sip:jan@test-domain.com">
+      <display-name>Jan</display-name>
+    </entry>
+  </list>
+
+  <list name="contacts">
+    <display-name>Contact List</display-name>
+    <entry uri="sip:alois@test-domain.com">
+      <display-name>Alois</display-name>
+    </entry>
+  </list>
+
+</resource-lists>
+
+1.2.5. Standard incompliances
+
+   SER's resource lists support is not finished yet, there are some
+   standard incompliances now:
+     * uri canonicalization not done yet according to definition
+     * full status documents only
+
+1.3. Parameters
+
+   min_expiration (integer)
+          Minimal subscription expiration timeout in seconds.
+
+          If client supplies value, which is less than value of
+          min_expiration, the server returns response "423 Interval too
+          small" as described in [events].
+
+          Default value is 60.
+
+   max_expiration (integer)
+          Maximal subscription expiration timeout in seconds.
+
+          If client supplies value, which is more than value of
+          max_expiration, the server shortens this value to value of this
+          variable as described in [events].
+
+          Default value is 7200.
+
+   default_expiration (integer)
+          Default subscription expiration timeout in seconds.
+
+          If client doesn't supply subscription expiration timeout this
+          value is used.
+
+          Default value is 3761.
+
+   auth (string)
+          This variable specifies authorization type for list watchers.
+          Value can be one of:
+
+        none
+                All watchers are always authorized. This is not
+                recommended because it ignores user's wish.
+
+        implicit
+                In this case is implicit authorization done. This means,
+                that for list URIs in the form "<username>-list@domain" is
+                subscription allowed only for user with username
+                <username>, rejected for others.
+
+                If the URI is not in the form presented above, the
+                subscription is marked as pending.
+
+          Default value is empty. In this case "implict" authorization is
+          used with an error message.
+
+   reduce_xcap_needs (int)
+          If set to 1 the module tries to do simplify XCAP queries -
+          queries will be done for whole documents, not partial, thus the
+          XCAP server may be simulated using standard web server. It has
+          influence only on querying resource lists and it will work
+          correctly only if there are no links to resource lists containg
+          partial documents URIs (lists should be contained directly in
+          main rls-services document).
+
+          Default value is 0.
+
+   db_mode (integer)
+          If set to 1, RLS module stores all subscription data into
+          database and reloads them on startup. Requires db_url to be set.
+
+          Default value is 0.
+
+   db_url (integer)
+          Database connection URL. It has to be specified if db_mode is
+          set.
+
+          Default value is empty.
+
+          Example 4. db_url settings
+
+...
+modparam("rls", "db_mode", 1)
+modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+...
+
+   max_notifications_at_once
+          Max. number of notifications sent within one timer tick
+          (experimental). It might be used to reduce SER's machine load if
+          there are lots of changes in presence status.
+
+          Default value is 1000000. (Too high number which in praxis means
+          unlimited.)
+
+   timer_interval
+          Interval in seconds when are processed internal notifications
+          and sent NOTIFYs to subscribers.
+
+   max_nesting_level
+          Maximum number of nested lists. For example if set to 2, it it
+          possible to use "list nested in list nested in root list".
+
+          Default value is -1 what means "unlimited".
+
+          It is possible to use this for speedup - if you know, that you
+          will need only "flat" lists (no nested lists), you can set this
+          to 0. In this case RLS doesn't try to query XCAP server for
+          "possibly netsted list URIs" and directly creates subscription
+          to URIs in list like if they are URIs of standalone users.
+
+   expiration_timer_period
+          Interval in seconds of timer which removes expired
+          subscriptions.
+
+   ignore_408_on_notify
+          If set to 1 and 408 response to NOTIFY arrives, the dialog is
+          NOT destroyed like in the case of other non-2xx responses. Use
+          for testing only. Default value is 0.
+
+   init_timer_delay
+          Delay in seconds of timer which triggers loading data from
+          database after startup. This is needed due to dependencies on
+          other modules (pa/presence_b2b) - we need that these modules
+          will be successfully initialised before reading data from DB and
+          querying these modules.
+
+          Default value is 3.
+
+1.4. Functions
+
+   handle_rls_subscription
+          Handle subscription to resource list uri.
+
+          Parameters:
+
+        create_error_response (integer)
+                If set to 0 error responses are not sent to the client.
+                This may be useful, if used together with PA module.
+
+          This function handles resource list subscription. XCAP document
+          containing the list must be loaded before using one of query
+          function (query_rls_services, query_resource_list).
+
+          Example 5. handling subscription
+
+...
+if (method=="SUBSCRIBE") {
+        if (!t_newtran()) {
+                sl_reply_error();
+        };
+
+        if (query_rls_services()) {
+                handle_rls_subscription("1");
+        }
+        else {
+                # no such list exists -> process it with PA module
+                handle_subscription("registrar");
+        }
+        break;
+};
+...
+
+          In this case for every incomming SUBSCRIBE request SER asks for
+          "global resource list". If such list exists, the subscription is
+          processed like resource list subscription.
+
+   is_simple_rls_target
+          Test uri according to given template.
+
+          Parameters:
+
+        template (string)
+                Template to be compared with To URI.
+
+          Function tries to compare username in To URI with given
+          template. If there are different domains in To and From URIs,
+          the function fails. There can be used "$uid" in template and it
+          is replaced by value returned by get_from_uid.
+
+          In the future should be this function replaced by AVP operations
+          but I was not able to do it with them now...
+
+          Example 6. handling subscription
+
+...
+if (method=="SUBSCRIBE") {
+        if (!t_newtran()) {
+                sl_reply_error();
+                break;
+        };
+
+        if (lookup_domain("From")) {
+                if (lookup_user("From")) {
+                        if (is_simple_rls_target("$uid-list")) {
+                                # takes From UID and makes XCAP query
+                                # for user's list named "default"
+                                if (!query_resource_list("default")) {
+                                        t_reply("500", "XCAP query error");
+                                        break;
+                                }
+                                handle_rls_subscription("1");
+                                break;
+                        }
+                }
+        }
+}
+...
+
+          In this case if SUBSCRIBE request arrives and From is
+          smith@test-domain.com and To is smith-list@test-domain.com, the
+          function returns true and the subscription is handled like
+          subscription to "user's resource list" (not "global") as written
+          above.
+
+   query_rls_services
+          Get list from global rls-services document.
+
+          Function loads "global resource list" from XCAP server. This
+          list is then processed by RLS module using
+          handle_rls_subscription.
+
+   query_resource_list
+          Get user's resource list.
+
+          Parameters:
+
+        list_name (string)
+                Name of the requested list. If empty, it loads whole
+                user's resource-lists document as one list.
+
+          Function loads "user's resource list" from XCAP server. This
+          list is then processed by RLS module using
+          handle_rls_subscription.
+
+   have_flat_list
+          Test if a resource list is loaded.
+
+          Function tests if a list was loaded using one of query functions
+          (query_resource_list or query_rls_services) and returns 1 if yes
+          and -1 otherwise.
+
+Bibliography
+
+Note
+
+   There might be new versions of internet drafts and thus links to them
+   my be obsolete. In such case try increment version in link or find the
+   draft on IETF by name.
+
+XCAP
+
+   [xcap] draft-ietf-simple-xcap-12.txt - XCAP specification.
+
+   [xcap_diff] draft-ietf-simple-xcap-diff-01.txt - XCAP changes
+   notifications format.
+
+   [xcap_profiles] draft-ietf-sipping-config-framework-07.txt -XCAP user
+   profiles.
+
+Presence
+
+   [events] RFC 3265 - SIP Events.
+
+   [presence] RFC 3856 - Presence Event package.
+
+   [pidf] RFC 3863 - Presence Information Data Format.
+
+   [rpid] RFC 4480 - Rich Presence Extensions to the Presence Information
+   Data Format.
+
+   [publish] RFC 3903 - Event state publication.
+
+   [winfo] RFC 3857 - Watcher info event package.
+
+   [winfo_doc] RFC 3858 - Data Format for watcher info.
+
+   [reg] RFC 3680 - SIP Reg Events.
+
+Authorization
+
+   [common auth] draft-ietf-geopriv-common-policy-05.txt.
+
+   [presence auth] draft-ietf-simple-presence-rules-03.txt - presence
+   authorization XML based data format and usage with XCAP.
+
+Resource lists
+
+   [rls] draft-ietf-simple-xcap-list-usage-05.txt - XML formats for
+   representing resource lists.
+
+   [sip rls] draft-ietf-simple-event-list-07.txt - Event Notification
+   Extension for Resource Lists.

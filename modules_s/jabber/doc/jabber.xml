@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="jabber" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Daniel</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>mierla@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Jabber Module</title>
+
+    <section id="jabber.overview">
+	<title>Overview</title>
+	<para>
+	    This is new version of Jabber module that integrates XODE
+	    <acronym>XML</acronym> parser for parsing Jabber messages. That
+	    introduces a new module dependency: expat library.
+	</para>
+	<para>
+	    Expat is a common <acronym>XML</acronym> library and is the fastest
+	    available for Linux/Unix, the second over all, after msxml
+	    library. It is integrated in most of well known Linux
+	    distributions.
+	</para>
+
+	<section id="new_features">
+	    <title>New Features</title>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			Presence support (see doc/xxjab.cfg for a sample cfg file) (January 2003).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			SIP to Jabber conference support (December 2003).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Possibility to manage all kinds of Jabber messages (message/presence/iq)
+			(December 2003).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Aliases -- Possibility to set host aliases for addresses (see parameter's
+			desc.) (December 2003).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Send received SIP MESSAGE messages to different IM networks (Jabber, ICQ,
+			MSN, AIM, Yahoo) using a Jabber server (December 2003).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Send incoming Jabber instant messages as IM MESSAGE messages.		
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Gateways detection -- Ability to see whether an IM gateway is up or down.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+    </section>
+
+
+    <section id="jabber.dep">
+	<title>Dependencies</title>
+	<section>
+	    <title>SER Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    A database module.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>pa</emphasis> (Optionally) - Presence Agent.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>tm</emphasis> - Transaction Manager.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	
+	<section id="external">
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed
+		before running SER with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>Expat</emphasis> library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+
+    <section id="users_guide">
+	<title>User's Guide</title>
+	<para>
+	    The user must activate his Jabber account associated with his SIP
+	    id. For each other IM network on which he wants to send messages,
+	    he must set an account for that IM network. The gateway is not able
+	    to create new account in foreign networks, excepting local Jabber
+	    server.
+	</para>
+	<para>
+	    When you want to send a message to someone in other IM network, you
+	    must set the destination of the message according with the pattern
+	    corresponding to that IM network (see last part of <xref linkend="jabber.admin"/>).
+	</para>
+	<para>
+	    Sending a message to user@jabber.xxx.org which is in Jabber
+	    network, the destination must be:
+	    user&lt;delim&gt;jabber.xxx.org@jabber_alias.
+	</para>
+	<para>
+	    For someone who is in Yahoo network the destination must be:
+	    user@yahoo_alias
+	</para>
+	<note>
+	    <para>
+		The SER administrator have to set the Jabber transports for
+		each IM network in order to be able to send messages to those
+		networks. The alias of each IM network can be found out from
+		SER admin.
+	    </para>
+	    <para>
+		You cannot send messages from your SIP client to your
+		associated Jabber account--is something like sending messages
+		to yourself.
+	    </para>
+	</note>
+    </section>
+
+    <xi:include href="admin.xml"/>
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+
+

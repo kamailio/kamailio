@@ -1,0 +1,88 @@
+Jabber module (SIP*IM Gateway) FAQ
+==================================
+
+[   OBSOLETED   ]
+
+1. Description
+--------------
+
+1.1 What is SIP to IM Gateway?
+A: SIP to IM gateway is a module for SER that allows SIP clients to send/receive
+ instant messages to/from other IM networks (like ICQ, AIM, MSN ...).
+
+1.2 How does the gateway work?
+A: The gateway uses Jabber server for sending/receiving messages to/from IM
+ networks. The modules translate SIP messages to Jabber format and send them to
+ Jabber server, which is able to send instant messages across many IM networks.
+ Actually, the module is a gateway between SIP and Jabber protocol.
+
+2. End-User questions
+---------------------
+2.1 What I need to use the gateway?
+A: Anyone who wants to use the gateway MUST have a SIP account on 'iptel.org'.
+ Next step (IM Gateway registration) consists in registering your IM id for each
+ network that you want to communicate with. For this, you have to fill the
+ registration form at 'http://www.iptel.org/im/subscribe.php'.
+
+2.2 How can I change my IM accounts from IM gateway?
+A: To change the IM account just fill again the subscription for the appropriate
+ IM network and press 'Subscribe'.
+
+2.3 How can I remove my IM account from IM gateway?
+A: To remove an IM account just select the appropriate IM network and press
+ 'Unsubscribe'.
+
+2.4 How destination must be set?
+A: For each IM network exists a destination address format. Usually is like:
+ 'user_id@im.iptel.org', where 'im' must be replaced with IM network id (icq,
+ aim, msn, yahoo, ...).
+Examples:
+- ICQ: icq_number@icq.iptel.org
+- MSN: user_name%hotmail.com@msn.iptel.org or user_name%msn.com@msn.iptel.org
+- AIM: user_name@aim.iptel.org
+
+2.5 How could IM users send messages to SIP users?
+A: They must sent messages to the IM id that SIP users have set at IM gateway
+ registration.
+
+2.6 I also need a Jabber user id?
+A: No, Jabber user associated to you is created on IM gateway registration.
+ There is used an internal Jabber server and that avoids Jabber ids conflict.
+
+3. Configuration questions
+--------------------------
+
+3.1 How is the gateway started?
+A: Load the module in SER, after you have set the right parameters and, also,
+ start the jabber server. There should be a file 'imgwd' in subfolder 'etc/' of
+ sources that can be used as starting/stopping script (be sure you set the
+ correct paths).
+
+3.2 What are the parameters?
+A: The parameters are:
+- "contact" - contact header of SIM message - if is not set the header is filled
+with the content of the 'from' address
+- "db_url" - MySQL database url - including user, password, host, port and
+database name
+- "jaddress" - address (IP or hostname) of the Jabber server
+- "jport" - Jabber server port
+- "workers" - number of workers
+- "max_jobs" - maximum number of jobs per worker
+- "cache_time" - time (in seconds) to keep alive a Jabber connection
+- "delay_time" - time (in seconds) to keep first messages before sending them to
+ Jabber - to avoid the sending before Jabber server connects to IM networks
+- "sleep_time" - time (in seconds) between checking for expired connections
+
+4. Technical questions
+----------------------
+
+4.1 What SIP IM software clients should be use?
+A: Any application that supports SIP for instant messaging. MSN Messager is the
+ only one of the well known IM application clients that supports SIP. Other SIP
+ IM clients are JSIP and HotSIP.
+
+
+5. References
+-------------
+- http://www.iptel.org
+- info contact: Daniel MIERLA <mierla@fokus.gmd.de>

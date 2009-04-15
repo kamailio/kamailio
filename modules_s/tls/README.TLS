@@ -1,0 +1,414 @@
+[NOTE: this file is obsolete, use README instead]
+
+
+free-TLS core module
+
+Created By: Peter Griffiths
+Mantainer: Cesc Santasusana
+
+Edited by
+
+Cesc Santasusana
+
+Copyright © 2005 Cesc Santasusana
+     _________________________________________________________
+
+   TABLE OF CONTENTS
+1. CHAPTER 1. USER'S GUIDE	2
+	1.1. OVERVIEW	2
+	1.2. DEPENDENCIES	2
+		1.2.1. SER Core and patches	2
+		1.2.2. SER Modules	2
+		1.2.3. External Libraries or Applications	2
+	1.3. HOW TO INSTALL	3
+		1.3.1. File Structure
+		1.3.2. Patches
+		1.3.3. Test Configuration in tls/etc
+		1.3.4. Tools to create certificates in tls/tools
+	1.4. HOW TO COMPILE	3
+	1.5. CONFIG FILE PARAMETERS	3
+		1.5.1. disable_tls	4
+		1.5.2. listen	4
+		1.5.3. tls_certificate	4
+		1.5.4. tls_private_key	4
+		1.5.5. tls_ca_list	4
+		1.5.6. tls_ciphers_list	4
+		1.5.7. tls_method	4
+		1.5.8. tls_verify and tls_require_certificate	4
+		1.5.9. tls_handshake_timeout and tls_send_timeout	5
+		1.5.10. tls_domain[IP_2:port2]	5
+	1.6. SSL/TLS AUTHENTICATION: CLIENT AND SERVER	5
+	1.7. EXPORTED FUNCTIONS	6
+2. CHAPTER 2. DEVELOPER'S GUIDE	6
+	2.1. TLS_CONFIG	6
+	2.2. TLS_INIT	6
+		2.2.1. default ssl context	6
+		2.2.2. init_tls(void)	6
+		2.2.3. destroy_tls(void)	6
+		2.2.4. tls_init(struct socket_info *)	7
+		2.2.5. ser_malloc, ser_realloc, ser_free	7
+	2.3. TLS_SERVER	7
+		2.3.1. SSL data per connection	7
+		2.3.2. tls_print_errstack(void)	7
+		2.3.3. tls_tcpconn_init( struct tcp_connection *, int)	7
+		2.3.4. tls_tcpconn_clean( struct tcp_connection *)	7
+		2.3.5. tls_close( struct tcp_connection *, int )	7
+		2.3.6. tls_blocking_write( struct tcp_connection, int, const char, size_t )	7
+		2.3.7. tls_read( struct tcp_connection *)	8
+		2.3.8. tls_fix_read_conn( struct tcp_connection )	8
+	2.4. TLS_DOMAIN	8
+		2.4.1. tls_domains	8
+		2.4.2. tls_find_domain( struct ip_addr *, unsigned short)	8
+		2.4.3. tls_new_domain( struct ip_addr *, unsigned *)	8
+		2.4.4. tls_free_domains(void)	8
+3. CHAPTER 3. FREQUENTLY ASKED QUESTIONS	8
+	3.1. WHERE CAN I FIND MORE ABOUT SER?	8
+	3.2. WHERE CAN I POST A QUESTION ABOUT THIS MODULE?	8
+	3.3. HOW CAN I REPORT A BUG?	9
+	3.4. WHAT IS THE DIFFERENCE WITH OpenSER-TLS?
+	3.5. I AM NOT HAPPY WITH THIS README ... NOW WHAT?
+
+     _________________________________________________________
+
+1. CHAPTER 1. USER'S GUIDE
+	1.1. OVERVIEW
+	TLS is an optional part of the core, not a module.
+	TLS, as defined in SIP RFC, is a mandatory feature for proxies and can be used to secure the SIP signalling 
+	on a hop-by-hop basis (not end-to-end). TLS works on top of TCP (DTLS, or TLS over UDP is already 
+	defined by IETF and may become available in the future).
+     _________________________________________________________
+
+1.2. DEPENDENCIES
+	1.2.1. SER Core and patches
+	Core must be compiled with TCP support and the patched cfg.y and cfg.lex, and some 
+	modification in Makefile.defs. 
+	The Makefile.defs file is where the library and include paths are set (where to locate Openssl) 
+	Read more on this below on the "external libraries" dependencies.
+	The cfg.XXX patch provide configuration features from the ser.cfg file, usefull and necessary.
+	This core module has been compiled successfully with ser branch rel_0_9_0 (updated
+		as of June 2005, ser-0.9.3). It should compile in HEAD too without problem.
+	It has been tested for functionality (successfully) with rel_0_9_0 (ser-0.9.0).
+	Report on success/failure stories to the mantainer. Tks!
+		 _________________________________________________________
+
+	1.2.2. SER Modules
+		No dependencies on SER modules
+		 _________________________________________________________
+	
+	1.2.3. External Libraries or Applications
+	The following libraries or applications must be installed before running SER with this module loaded:
+	* OpenSSL v0.9.7 or higher (OpenSSL v0.9.6 also compiles, though not recommended).
+	Out of OpenSSL, you need:
+	* libssl
+	* libcrypto
+	* openssl/*.h
+	Locate this, usually in:
+	/usr/local/lib (for libraries)
+	/usr/local/ssl/include/openssl (for header files)
+	Depending on your distro, these paths may vary. In this case, you need to modify Makefile.defs file in 
+	$SERROOT. At the bottom of the file, look for
+		ifneq ($(TLS),)
+		  LIBS+= -L$SOMEPATH/lib -lssl  -lcrypto
+		  DEFS+= -I$SOMEPATH/ssl/include
+		endif
+	Change the LIBS entry to include the folder where the libssl and libcrypto files are. 
+	Change the DEFS entry to include the folder where the openssl/ folder is.
+	NOTE: RedHat ships by default with a very strange setup of the paths, as well as not usual compilation of 
+	the libraries, which resumes in ... trouble. Look for solutions in Google, or locally compile OpenSSL 
+	sources on your system.
+	________________________________________________________
+1.3. HOW TO INSTALL
+	1.3.1. File Structure
+	This is the file structure that needs to be created:
+	$SER_ROOT/tls/tls_config.h and .c
+	$SER_ROOT/tls/tls_init.h and .c
+	$SER_ROOT/tls/tls_server.h and .c
+	$SER_ROOT/tls/tls_domain.h and .c
+	
+	The files that (may) need to be patched or modified
+	$SER_ROOT/Makefile.defs
+	$SER_ROOT/cfg.y
+	$SER_ROOT/cfg.lex
+	NOTE: patches can be found in the tls/patches. See above for Makefile.defs tweaking to locate OpenSSL.
+	
+	1.3.2. Patches
+	In the experimental/tls/patches folder, there are the following files:
+	- cfg.lex.patch and cfg.y.patch, to be used to patch the corresponding
+		files in $SERROOT.
+		> cp cfg.XXX.patch $SERROOT/
+		> cd $SERROOT
+		> patch -p0 < cfg.XXX.patch
+	- cfg.y and cfg.lex: these are the full files, taken from the cvs rel_0_9_0 and patched
+		with the above patches (for lazy people :D ). 
+	Use the patches if you have modified your cfg.y or cfg.lex files or if it is a different
+		branch. Use the full files if you don't want to patch the files, or have the standard
+		cvs rel_0_9_0 branch files.
+	
+	1.3.3. Test configuration
+	In the folder tls/etc you can find a sample config file, along with test certificates ready to use.
+	Note that in the tls/etc/tls.ser.cfg, the path to certificates and private keys are set to
+	          /usr/local/etc/ser/certs and /usr/local/etc/ser/private
+		  (change according to your local configuration)
+	
+	1.3.4. Tools to create certificates
+	In the folder tls/tools there are script and configuration files to be used with openssl application
+	to create certificate (root CA and user certs).
+	Read the README.tls.tools file there for more info.
+	________________________________________________________
+
+1.4. HOW TO COMPILE
+	Easy ;)  Add the TLS=1 flag when compiling, for example:
+	>	make TLS=1 install
+	If you have problems compiling the TLS code, such as header files not found, or linking problems related 
+	to SSL_* functions, check the paths in Makefile.defs (at the bottom, the DEFS+= and LIB+=, and check if 
+	the openssl/ folder is there, and if the libssl.so and libcrypto.so files are in the specified folders).
+	________________________________________________________
+	
+1.5. CONFIG FILE PARAMETERS
+	All these parameters can be used from the ser.cfg file, to configure the behavior of SER-tls.
+	________________________________________________________
+	1.5.1. disable_tls
+	Disables TLS (no server is created on the listen addresses, no outgoing connections can be set up).
+	It only exhists if TLS=1 is used at compile time.
+			Default_value: disable_tls=0
+	________________________________________________________
+	1.5.2. listen
+	Not specific to TLS. Allows to specify the protocol (udp, tcp, tls), the IP address and the port 
+	where the listening server will be.
+			listen=tls:IP:port
+	________________________________________________________
+	1.5.3. tls_certificate
+	NOTE: To be able to use most of this configuration parameters, you need to have patched cfg.y and cfg.lex 
+	(and recompile :D )
+		Public certificate file for SER. It will be used as server-side certificate for incoming TLS 
+	connections,  and as a client-side certificate for outgoing TLS connections.
+		default: "CFG_DIR/cert.pem"
+			example: tls_certificate="/mycerts/certs/ser_server_cert.pem"
+	________________________________________________________
+	1.5.4. tls_private_key
+		Private key of the above certificate ... keep it in a safe place with tight permissions!
+		default: CFG_DIR/cert.pem
+			example: tls_private_key="/mycerts/private/prik.pem"
+	________________________________________________________
+	1.5.5. tls_ca_list
+		List of trusted CAs. The file contains the certificates accepted, one after the other ( cat x >> 
+	ca.list). It MUST be a file, not a folder (for now).
+		default: "" (no ca_list)
+			example: tls_ca_list="/mycerts/certs/ca_list.pem"
+	________________________________________________________
+	1.5.6. tls_ciphers_list
+		We can specify the list of algorithms for authentication and encryption that we allow.
+		To obtain a list of ciphers and then choose, use the openssl application:
+		> openssl ciphers 'ALL:eNULL:!LOW:!EXPORT'
+		Do not use the NULL algorithms ... only for testing!!!
+		Default: no change, use the default ciphers choosen by OpenSSL.
+			Example: tls_ciphers_list="NULL-SHA:NULL-MD5:AES256-SHA:AES128-SHA"
+	________________________________________________________
+	1.5.7. tls_method
+		Protocol version to use. Best is to use sslv23, for extended compatibility. Using any of the other 
+	will restrict the version to just that one version. In fact, sslv2 is disabled in the source code... to use it, you 
+	need to edit tls_init.c
+		Default: sslv23
+			tls_method= [sslv2 | sslv23 | sslv3 | tlsv1]  
+	________________________________________________________
+	1.5.8. tls_verify and tls_require_certificate
+	This two variables highly effect the final security of your deployment. READ carefully!
+		Technically, tls_verify activates SSL_VERIFY_PEER in the ssl_context.
+		tls_require_certificate does the same with SSL_VERIFY_FAIL_IF_NO_PEER_CERT, which is 
+	only possible if SSL_VERIFY_PEER is also turned on.
+		See the "how does verification work" for more info
+		default is 0 for both.
+			Example: tls_verify = 1
+							tls_require_certificate = 1
+			(this example turns on the strictest and strongest authentication possible)
+	________________________________________________________
+	1.5.9. tls_handshake_timeout and tls_send_timeout
+		Timeouts ... advanced users only.
+		default is 120 seconds for both.
+			Example: tls_handshake_timeout=119    [number of seconds]
+			Example: tls_send_timeout=121              [number of seconds]
+	________________________________________________________
+	1.5.10. tls_domain[IP_2:port2]
+	Note: domains are only possible if cfg.y and cfg.lex are patched.
+			If you only run one domain, the main one is enough. If you are running several tls servers (that is, 
+	you have more than one listen:tls:ip:port entry in the config file), you can specify some parameters for each 
+	of them separately (not all the above). 
+			tls_domain[IP_2:port2] {
+			#specify parameters for a domain in particular, otherwise, 
+			#it will use the default. These are the possible parameters to
+			#change for each domain
+			tls_certificate="new_cert"
+			tls_private_key="new_cert_key"
+			tls_ca_list="other ca"
+			tls_method="tlsv1"
+			}
+			tls_domain[IP_3:port3] {
+		...
+			}
+			NOTE: For now, tls_ciphers_list cannot be specified on a per domain basis. When I have the time 
+	to thoroughly test tls_domains, I will add this.
+     _________________________________________________________
+
+1.6. SSL/TLS AUTHENTICATION: CLIENT AND SERVER
+	TLS provides for strong authentication mechanism, as well as encryption following authentication. Of 
+	course, null encryption can be used, as well as weak authentication mechanisms (for example, anonymous, 
+	that is, no authentication).
+	How does verification work?
+	Verification is the process by which the authentication data provided by the peers is checked. This data 
+	consists usually of a peer certificate, plus a chain of trusted certification authorities. If for whatever reason, 
+	either of the peers thinks that the handshake is not valid, the ssl connection is not established.
+	The reasons could be many: untrusted server certficate, too-weak algorithm, invalid client cert, no client 
+	authentication, ...
+	The "tls_verify" and "tls_require_certificate" are SER-names for the 
+	OpenSSL defined flags:
+	- SSL_VERIFY_PEER is tls_verify) and 
+	- SSL_VERIFY_FAIL_IF_NO_PEER_CERT is tls_require_certificate (tls_require_certificate is only used 
+	if tls_verify=1)
+	
+	If we are acting as a server, we always send our server-side certificate to the client. 
+	- If tls_verify=0, we do not request the client a client-certificate. This means that the client is not 
+		authenticated.
+	- If tls_verify=1, we (the server) send a client-certificate request to the client. But the client is free 
+		to not provide any. In this case,  tls_require_certificate comes into play:
+			_ if tls_require_cert=0, the verification process will succedd if
+				the client does not provide a certificate, or if it provides
+				one, it verifies correctly against the server's list of 
+				trusted certification authorities.
+			_ if tls_require_cert=1, the verification process will only succeed
+				if the client provides a certificate and this verifies correctly
+				against the server's list of trusted CAs.
+     _________________________________________________________
+
+1.7. EXPORTED FUNCTIONS
+	Functions are accessible by including the appropriate tls/tls_xxx.h file.
+
+     _________________________________________________________
+
+2. CHAPTER 2. DEVELOPER'S GUIDE
+	________________________________________________________
+2.1. TLS_CONFIG
+	It contains configuration variables for ser's tls (timeouts, file paths, etc).
+	________________________________________________________
+2.2. TLS_INIT
+	Initialization related functions and parameters.
+	________________________________________________________
+	2.2.1. default ssl context
+		extern SSL_CTX *default_ctx;
+		It is the common context for all tls sockets. If domains are used, each has its own.
+		________________________________________________________
+	2.2.2. init_tls(void)
+		Called once to initialize the tls subsystem, from the main().
+		int init_tls(void);
+		________________________________________________________
+	2.2.3. destroy_tls(void)
+		Called once, just before cleanup.
+		void destroy_tls(void);
+		________________________________________________________
+	2.2.4. tls_init(struct socket_info *)
+		Called once for each tls socket created.
+		int tls_init(struct socket_info *si);
+		________________________________________________________
+	2.2.5. ser_malloc, ser_realloc, ser_free
+		Wrapper functions around the shm_* functions. OpenSSL uses non-shared memory to create its objects, 
+		thus it would not work in SER. By creating these wrappers and configuring OpenSSL to use them instead 
+		of its default memory functions, we have all OpenSSL objects in shared memory, ready to use.
+		________________________________________________________
+2.3. TLS_SERVER
+	________________________________________________________
+	2.3.1. SSL data per connection
+		Each TLS connection, incoming or outgoing, creates an SSL * object, where configuration inherited from 
+		the SSL_CTX * and particular info on that socket are stored. This SSL * structure is kept in SER as long as 
+		the connection is alive, as part of the struct tcp_connection * object:
+		struct tcp_connection *c;
+		SSL *ssl;
+		//create somehow SSL object
+		c->extra_data = (void *) ssl; 
+		ssl = (SSL *) c->extra_data;
+		________________________________________________________
+	2.3.2. tls_print_errstack(void)
+		/*
+		 * dump ssl error stack 
+		 */
+		void            tls_print_errstack(void);
+		________________________________________________________
+	2.3.3. tls_tcpconn_init( struct tcp_connection *, int)
+		/*
+		 * Called when new tcp connection is accepted 
+		 */
+		int             tls_tcpconn_init(struct tcp_connection *c, int sock);
+		________________________________________________________
+	2.3.4. tls_tcpconn_clean( struct tcp_connection *)
+		/*
+		 * clean the extra data upon connection shut down 
+		 */
+		void            tls_tcpconn_clean(struct tcp_connection *c);
+		________________________________________________________
+	2.3.5. tls_close( struct tcp_connection *, int )
+		/*
+		 * shut down the TLS connection 
+		 */
+		void            tls_close(struct tcp_connection *c, int fd);
+		________________________________________________________
+	2.3.6. tls_blocking_write( struct tcp_connection, int, const char, size_t )
+		size_t          tls_blocking_write(struct tcp_connection *c, int fd,
+						   const char *buf, size_t len);
+		________________________________________________________
+	2.3.7. tls_read( struct tcp_connection *)
+		size_t          tls_read(struct tcp_connection *c);
+		________________________________________________________
+	2.3.8. tls_fix_read_conn( struct tcp_connection )
+		int             tls_fix_read_conn(struct tcp_connection *c);
+		________________________________________________________
+2.4. TLS_DOMAIN
+	________________________________________________________
+	2.4.1. tls_domains
+		extern struct tls_domain *tls_domains;
+	
+		________________________________________________________
+	2.4.2. tls_find_domain( struct ip_addr *, unsigned short)
+		/*
+		 * find domain with given ip and port 
+		 */
+		struct tls_domain *tls_find_domain(struct ip_addr *ip,
+						   unsigned short port);
+		________________________________________________________
+	2.4.3. tls_new_domain( struct ip_addr *, unsigned *)
+		/*
+		 * create a new domain 
+		 */
+		int             tls_new_domain(struct ip_addr *ip, unsigned short port);
+	
+		________________________________________________________
+	2.4.4. tls_free_domains(void)
+		/*
+		 * clean up 
+		 */
+		void            tls_free_domains(void);
+	
+	________________________________________________________
+CHAPTER 3. FREQUENTLY ASKED QUESTIONS
+
+		________________________________________________________
+	3.1.    WHERE CAN I FIND MORE ABOUT SER?
+		Take a look at http://iptel.org/ser and http://www.openser.org
+		________________________________________________________
+	3.2.    WHERE CAN I POST A QUESTION ABOUT THIS MODULE?
+		In the webpages above there is access to mailing list. Use the users list for normal user support, use the dev 
+		list for development questions (bugs, fixes, etc). 
+		________________________________________________________
+	3.3.    HOW CAN I REPORT A BUG?
+		At the dev lists on the above webpages, and also at:
+		http://bugs.sip-router.org
+		________________________________________________________
+	3.4.    WHAT IS THE DIFFERENCE WITH OpenSER-TLS?
+		None. At least for now. The initial commit in both repositories 
+		(experimental tree for SER, HEAD for OpenSER) come from the same source:
+		an extended version of that released sometime late in 2004 by Peter Griffiths 
+		and modified by Cesc Santasusana.
+		________________________________________________________
+	3.5.    I AM NOT HAPPY WITH THIS README ... NOW WHAT?
+		Three things: 
+		1 - Complain to the maintainer.
+		2 - Contribute yourself with your acquired knowledge. It is welcome.
+		3 - Take a look at OpenSER tutorials for TLS: http://openser.org/docs/tls.html
+		

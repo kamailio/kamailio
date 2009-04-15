@@ -1,0 +1,159 @@
+
+Enum Module
+
+Juha Heinanen
+
+   Copyright © 2002, 2003 Juha Heinanen
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
+
+              1.3.1. domain_suffix (string)
+              1.3.2. tel_uri_params (string)
+
+        1.4. Exported Functions
+
+              1.4.1. enum_query(),enum_query("suffix"),
+                      enum_query("suffix", "service")
+
+              1.4.2. is_from_user_e164()
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Setting domain_suffix module parameter
+   1-2. Setting tel_uri_params module parameter
+   1-3. enum_query usage
+   1-4. is_from_user_e164 usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Enum module implements enum_query function that makes an enum
+   query based on the user part of the current Request-URI. The
+   function assumes that the user part consists of an
+   international phone number of the form +decimal-digits, where
+   the number of digits is at least 2 and at most 15. Out of this
+   number enum_query forms a domain name, where the digits are in
+   reverse order and separated by dots followed by domain suffix
+   that by default is "e164.arpa.". For example, if the user part
+   is +35831234567, the domain name will be
+   "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.".
+
+   After forming the domain name, enum_query queries DNS for its
+   NAPTR records. From the possible response enum_query chooses
+   those records, whose flags field has string value "u", and
+   whose services field has string value "e2u+[service:]sip"
+   (case is ignored in both cases), and whose regexp field is of
+   the form !pattern!replacement!.
+
+   Then enum_query sorts the chosen NAPTR records based on their
+   <order, preference>. After sorting, enum_query replaces the
+   current Request URI by applying regexp of the most preferred
+   NAPTR record its user part and appends to the request new
+   branches by applying regexp of each remaining NAPTR record to
+   the user part of the current Request URI. If a new URI is a
+   tel URI, enum_query appends to it as tel URI parameters the
+   value of tel_uri_params module parameter. Finally, enum_query
+   associates a q value with each new URI based on the <order,
+   preference> of the corresponding NAPTR record.
+
+   Enum query returns 1 if the current Request URI was replaced
+   and -1 if not.
+
+   Enum module also implements is_from_user_e164 function that
+   checks if the user part of from URI is an E164 number.
+     _________________________________________________________
+
+1.2. Dependencies
+
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
+
+     * No dependencies.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. domain_suffix (string)
+
+   The domain suffix to be added to the domain name obtained from
+   the digits of an E164 number. Can be overridden by a parameter
+   to enum_query.
+
+   Default value is "e164.arpa."
+
+   Example 1-1. Setting domain_suffix module parameter
+modparam("enum", "domain_suffix", "e1234.arpa.")
+     _________________________________________________________
+
+1.3.2. tel_uri_params (string)
+
+   A string whose contents is appended to each new tel URI in the
+   request as tel URI parameters.
+
+   Note
+
+   Currently SER does not support tel URIs. This means that at
+   present tel_uri_params is appended as URI parameters to every
+   URI.
+
+   Default value is ""
+
+   Example 1-2. Setting tel_uri_params module parameter
+modparam("enum", "tel_uri_params", ";npdi")
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. enum_query(),enum_query("suffix"), enum_query("suffix",
+"service")
+
+   The function performs an enum query and rewrites the
+   Request-URI with the result of the query. See Section 1.1> for
+   more information.
+
+   Meaning of the parameters is as follows:
+
+     * suffix - Suffix to be appended to the domain name.
+     * service - Service string to be used in the service field.
+
+   Example 1-3. enum_query usage
+...
+enum_query("freenum.org.");
+...
+     _________________________________________________________
+
+1.4.2. is_from_user_e164()
+
+   Checks if the user part of from URI an E164 number of the form
+   +[0-9]{2,15}. Returns 1 if yes and -1 if not.
+
+   Example 1-4. is_from_user_e164 usage
+...
+if (is_from_user_e164()) {
+    ....
+};
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   To be done.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. What is the meaning of life ?
+
+   3.1. What is the meaning of life ?
+
+   42

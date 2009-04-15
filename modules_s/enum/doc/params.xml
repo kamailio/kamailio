@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="enum.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="domain_suffix">
+	<title><varname>domain_suffix</varname> (string)</title>
+	<para>
+	    The domain suffix to be added to the domain name obtained from the
+	    digits of an <acronym>E164</acronym> number. Can be overridden by a
+	    parameter to enum_query.
+	</para>
+	<para>
+	    Default value is "e164.arpa.".
+	</para>
+	<example>
+	    <title>Setting domain_suffix module parameter</title>
+	    <programlisting>
+modparam("enum", "domain_suffix", "e1234.arpa.")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="tel_uri_params">
+	<title><varname>tel_uri_params</varname> (string)</title>
+	<para>
+	    A string whose contents is appended to each new tel URI in the
+	    request as tel URI parameters.
+	</para>
+	<note>
+	    <para>
+		Currently SER does not support tel URIs. This means that at
+		present tel_uri_params is appended as URI parameters to every
+		URI.
+	    </para>
+	</note>
+	<para>
+	    Default value is "".
+	</para>
+	<example>
+	    <title>Setting tel_uri_params module parameter</title>
+	    <programlisting>
+modparam("enum", "tel_uri_params", ";npdi")
+	    </programlisting>
+	</example>
+    </section>
+</section>

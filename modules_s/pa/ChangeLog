@@ -1,0 +1,240 @@
+2006-01-12
+	* updated module documentation
+
+2006-12-14
+	* corrected typing error in column name
+	* corrected bug - tuple extensions were not stored into database
+	* corrected XMLRPC - after changes in xmlrpc module CDATA sections didn't
+	work as before and had to be thrown out
+
+2006-12-13
+	* database column names are stored in variables and configurable via
+	module parameters
+
+2006-12-07
+	* updated doc to be compilable standalone
+
+2006-11-06
+	* bug correction - noninitialized variable in ask_auth_rules and added
+	return code from xcap_get_pres_rules verification - reported and patched
+	by Bogdan
+
+2006-04-09
+	* corrected bug (failed prepare_notify in handle_new_subscription caused
+	watcher destroying but he wasn't removed from presentity's watcher list)
+
+2006-03-09
+	* updated DB manipulation functions
+
+2006-07-26
+	* first step for PIDF extensions support (storing/loading into/from DB not
+	finished yet)
+
+2006-07-24
+	* litle xcap_params optimization (allocation together with parent
+	structure)
+
+2006-07-21
+	* watcher lists replaced by double linked lists (better for remove)
+	* db schema updates
+
+2006-07-20
+	* get_presentity_uid doesn't allocate memory
+	* removed db_update_presentity (only one - ineffective - call replaced by
+	call to db_update_presence_tuple)
+	* improved process_tuple_change - two possible DB updates reduced to one
+	* clarified add_watcher/remove_watcher functions
+	* removed notify_all_watchers, notify_all_winfo_watchers (not called)
+	* removed common.h (function str_append was moved into CDS library is it
+	needed?)
+
+2006-07-19
+	* splitted code from presentity.c and presentity.h into smaller pieces
+	(pres_timer.c/h, tuple.c/h, ...)
+	* finished structures rewriting (joined PA structures with structures
+	from presence library -> no translations between them for presence doc
+	creation)
+
+2006-07-12
+	* improved and tested dialog refreshing (contacts in NOTIFY responses and
+	renewal SUBSCRIBE requests)
+	* ??? PA structures contains common presence structures
+
+2006-07-10
+	* added parameter async_auth_queries for switching between sync/async
+	loading of auth rules (synchronous dowload is done from inside of critical
+	section locked by pdomain mutext, which is not good for performance)
+	* added parameter max_auth_requests_per_tick for async. auth queries
+	* added parameter auth_rules_refresh_time for control how often are auth.
+	rules refreshed (we have no "XCAP change" notifications) - it could be
+	better than refresh on resubscription (criticised)
+
+2006-07-07
+	* asynchronous loading of authorization rules (better response than
+	synchronous)
+
+2006-07-04
+	* removed unused parts from code (old which were rewritten; location
+	related which need to be completely rewritten; resource lists which are
+	better in RLS module)
+	* cosmetical changes
+
+2006-07-03
+	* improved handling new subscription - most work moved outside of critical
+	secion
+
+2006-06-30
+	* added short description of state aggregation
+
+2006-06-29
+	* rearranged work with mimetypes
+	* cleaned code of PA:
+		- less tests - most left on parse_hfs and check_message
+		- separated handling renewal and new subscription (better
+		performance?)
+		- removed location stuff
+
+2006-05-25
+	* added Max-Forwards header into NOTIFY requests
+
+2006-05-15
+	* added reaction on failed NOTIFY into non-winfo subscriptions
+	* added parameter ignore_408_on_notify
+
+2006-05-10
+	* corrected bug in PUBLISH handling (refreshing state with empty body
+	destroyed notes and person elements and did not store tuples into DB)
+	* corrected RPC function pa.publish (accepts empty file for status
+	refreshes)
+
+2006-05-09
+	* removed unused parameter xcap_root
+
+2006-04-20
+	* added uid and uri into error log for "resubscription to nonexisting
+	presentity"
+	* rpc_trace doesn't put empty strings as separators (more readable using
+	new serctl)
+
+2006-04-18
+	* added profiling
+
+2006-04-13
+	* added parameters subscribe_to_users and pa_subscription_uri (prepared
+	for subscriptions to clients)
+
+2006-04-12
+	* added missing parsing From header into message authorization function
+
+2006-04-11
+	* changed QSA (reduced memory allocations)
+	* changed parameter of "authorize_message" function (filename with
+	im-rules instead of XCAP root)
+
+2006-04-10
+	* changed QSA - corrected content-type propagation
+
+2006-04-07
+	* added function check_subscription_status and removed AVP operations due
+	to problems with them (after sending NOTIFY in handle_subscription are
+	AVPs lost!)
+	* store_offline_winfo and check_subscription_status uses global variable
+	with last subscription status instead of AVP (see above)
+	* added parameter pres_rules_file which specifies filename used in XCAP
+	queries instead of default presence-rules.xml
+
+2006-04-06
+	* xcap queries moved into xcap module
+
+2006-04-04
+	* sending empty string in NOTIFY bodies - TCP requires content-length and
+	if sending message with NULL body, it is not set
+	* handle_subscription sets AVP subscription_status (pending, terminated,
+	error)
+	* store_offline_winfo stores status from AVP subscription_status
+
+2006-04-03
+	* function for server contact extraction was moved into common libraries
+	(it is used by RLS too)
+
+2006-03-29
+	* added function for MESSAGE authorization
+
+2006-03-28
+	* added parameter max_publish_expiration (max time for expiration of
+	information published via PUBLISH request)
+
+2006-03-27
+	* added (empty) function for message authorization
+	* corrected bug in offline watcherinfo dumping (removed were messages with
+	id less or equal than requested instead of equal only)
+
+2006-03-23
+	* added debugging messages into send_winfo_notify due to problems with
+	messages (Long UDP messages are sometimes ignored by clients; sometimes
+	are too big to be sent. But there are problems with TCP too!)
+
+2006-03-22
+	* using get_content_length instead of strlen(body)
+
+2006-03-21
+	* flag (PFLAG_WATCHERINFO_CHANGED, WFLAG_SUBSCRIPTION_CHANGED) settings in
+	internals, not in handle_subscription
+	* sets subscription status for internal subscriptions (QSA)
+
+2006-03-20
+	* setting flag PFLAG_WATCHERINFO_CHANGED only for new subscriptions
+	because we don't send expiration in watcherinfo documents and thus it is
+	only "spamming" if we send watcherinfo for resubscriptions too
+
+2006-03-17
+	* changed XCAP query parameters
+
+2006-03-02
+	* improved robustness of libs (CDS, presence) and PA
+	* cosmetical changes
+
+2006-03-01
+	* corrected BUG - Contact was sent in 200 response, now in all 2xx
+	responses
+	* cleaning WFLAG_SUBSCRIPTION_CHANGED after notification sent (in
+	handle_subscription)
+	* small cosmetical and robustness improving changes
+
+2006-02-28
+	* call to timer_presentity in handle_subscription replaced by call to
+	send_notify and remove_watcher_if_expired (i.e. sending notification to
+	all watchers immediately -> sending notification to new/updated watcher)
+
+2006-02-27
+	* corrected BUGs - mostly used dstr_get_str instead of dstr_get_data
+	because there were some cases when was allocated memory buffers of zero
+	length (this consumes memory using shm_malloc), but this memory was NOT
+	freed then
+
+2006-02-15
+	* RPC function pa.publish uses UID instead of uri!
+	* XCAP uris for authorization documents contain UID instead of username!
+	* added configurable max_subscription_expiration (undocumented)
+
+2006-02-14
+	* added parameter for disabling processing internal subscriptions
+
+2006-02-02
+	* added handling of <person> element from RPID (whole <person> elements
+	are stored and put into NOTIFY messages; they are not processed in any
+	way due to its complexity - see the rpid draft) => this will be changed 
+	to process ALL unknown elements from PIDF documents
+	* improved documentation (offline winfo, parameters, ...)
+
+2006-02-01
+	* added functions for storing offline auth. info (store_winfo and
+	dump_stored_winfo) into database [they don't work in memory],
+	documentation will be added soon
+
+2006-01-30
+	* added function target_online
+	* added parameter use_callbacks (int) - [if set to 0, no callback are
+	used]
+	* corrected handle_publish - returns 4xx for unsupported events instead of
+	OK

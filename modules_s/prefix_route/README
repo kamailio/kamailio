@@ -1,0 +1,97 @@
+Prefix route module
+Alfred E. Heggestad
+
+Sponsored by Telio Telecom
+
+
+
+
+Overview
+
+   The prefix_route module does routing based on a set of prefixes from the
+   database. The prefix rule-set is loaded from the database into a binary
+   tree in memory, either on startup or when issuing the "prefix_route.reload" RPC
+   command. When calling the "prefix_route()" function from the ser.cfg
+   configuration script, it will try to match the user part of the request URI
+   with the best matching route. If a route is found, it will be used for
+   further processing. If not found normal processing will continue.
+
+
+
+
+Exported Parameters
+
+   db_url (string)
+
+   Database URL.
+
+   Default value is "mysql://ser@localhost/ser". 
+
+   Example. Set the "db_url" parameter
+   ...
+   modparam("prefix_route", "db_url", "mysql://user:passwd@host.com/dbname")
+   ...
+
+
+   db_table (string)
+
+   The name of table where to read prefix route set
+
+   Default value is "prefix_route". 
+
+   Example. Set the "db_table" parameter
+   ...
+   modparam("prefix_route", "db_table", "prefix_route")
+   ...
+
+
+
+
+Exported Functions
+
+   prefix_route()
+
+   This function tries to find a route from the user part of the request URI.
+   If a route is found, it will be used for further processing. Otherwise the
+   function will return false.
+
+   Example:
+
+        if (!prefix_route()) {
+                xlog("L_ERR", "prefix_route(): no matching routes\n");
+        }
+
+
+
+
+RPC commands
+
+   "prefix_route.reload" - Reload prefix route tree from the database.
+                           Validation is done and the prefix route tree will
+                           only be reloaded if there are no errors.
+
+   "prefix_route.dump"   - Dump the current prefix route tree.
+
+
+
+
+Database schema
+
+   A prefix route set consists of three fields:
+
+     - prefix   varchar(64)  Prefix rule
+     - route    varchar(64)  Route name
+     - comment  varchar(64)  Free-form comment
+
+
+   Example:
+
+   +--------+-------+---------------+
+   | prefix | route | comment       |
+   +--------+-------+---------------+
+   | 46     | SE    | Sweden        | 
+   | 47     | NO    | Norway        | 
+   | 479    | NOMOB | Norway mobile | 
+   | 49     | DE    | Deutschland   | 
+   | 39     | IT    | Italy         | 
+   +--------+-------+---------------+

@@ -1,0 +1,750 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+
+<refentry xml:id="module.avp_db"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>avp_db</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>avp_db</refname>
+    <refpurpose>Storage of Attributes in a Database</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>avp_db</command> module provides a number of function
+      that allow access to attributes stored in a database.
+    </para>
+    <para>
+      The module provides two features. For one, it loads attributes
+      associated to users and URIs by means of the
+      <serdoc:func>load_attrs</serdoc:func> function.
+    </para>
+    <para>
+      Additionally, it can store and load attributes in a database in
+      so called extra attribute groups. See <serdoc:link
+        linkend="module.avp_db.extra_attribute_groups">Extra Attribute
+        Groups</serdoc:link> below for more on those.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.load_attrs">
+      <title>
+        <function>load_attrs</function>
+        (<symbol>group</symbol>, <symbol>id</symbol>)
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>load_attrs()</function> function loads the attributes
+        assigned to a certain user or a URI. The action performed is
+        specified by the <symbol>group</symbol>. It contain an attribute
+        group prefix. The loaded attributes will be placed in that group.
+        Additionally, it specifies the meaning of the <symbol>id</symbol>
+        argument.
+      </para>
+      <para>
+        If the group prefix refers to one of the user groups,
+        ie., it is <literal>$fu</literal> or <literal>$tu</literal>, the
+        <symbol>id</symbol> argument contains the user ID of the user
+        whose attributes should be loaded.
+      </para>
+      <para>
+        If the group prefix refers to one of the URI groups, ie., it is
+        <literal>$fr</literal> or <literal>$tr</literal>, the
+        <symbol>id</symbol> argument contains the URI whose attributes
+        should be loaded.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.load_extra_attrs">
+      <title>
+        <function>load_extra_attrs</function>
+        (<symbol>group</symbol>, <symbol>key</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>load_extra_attrs()</function> function loads the
+        attributes of the extra attribute group identified by the argument
+        <symbol>group</symbol> that have been stored previously with the
+        key given by the argument <symbol>key</symbol>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.lock_extra_attrs">
+      <title>
+        <function>lock_extra_attrs</function>
+        (<symbol>group</symbol>, <symbol>key</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>lock_extra_attrs()</function> function places a
+        lock on the key given by the argument <symbol>key</symbol>
+        of the extra attribute group given by the
+        argument <symbol>group</symbol>.
+      </para>
+      <para>
+        Despite the name, the function actually enters a mutex assigned
+        to the group. Thus, what really happens is that if you try to
+        call the function again before
+        <serdoc:func>unlock_extra_attrs</serdoc:func> has been called,
+        processing will halt until such a call. It does not actually lock
+        access to the database.
+      </para>
+      <para>
+        Be extra careful when using the function. If you exit from
+        processing without calling
+        <serdoc:func>unlock_extra_attrs</serdoc:func>, you may eventually
+        block SER completely.
+      </para>
+      <para>
+        Note that currently, the mutex is on the group only and not on
+        the key.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.remove_extra_attrs">
+      <title>
+        <function>remove_extra_attrs</function>
+        (<symbol>group</symbol>, <symbol>key</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>remove_extra_attrs()</function> deletes all
+        attributes assigned to the key given by the argument
+        <symbol>key</symbol> from the extra attribute group given by the
+        argument <symbol>group</symbol>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.save_extra_attrs">
+      <title>
+        <function>save_extra_attrs</function>
+        (<symbol>group</symbol>, <symbol>key</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>save_extra_attrs()</function> function stores all
+        attributes with the attribute flag stated in the extra attribute
+        group definition given by the argument <symbol>group</symbol> in
+        the database given in that group definition. The attributes will
+        be stored using the key given by the argument
+        <symbol>key</symbol>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.unlock_extra_attrs">
+      <title>
+        <function>unlock_extra_attrs</function>
+        (<symbol>group</symbol>, <symbol>key</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>unlock_extra_attrs()</function> function releaes the
+        lock on the key given by the argument <symbol>key</symbol>
+        of the extra attribute group given by the argument
+        <symbol>group</symbol> previously imposed by a call to the function
+        <serdoc:func>lock_extra_attrs</serdoc:func>.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Module Parameters</title>
+
+    <refsect2 xml:id="module.avp_db.attr_group">
+      <title><parameter>attr_group</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>attr_group</parameter> parameter defines a extra
+        attribute group. See <serdoc:link
+          linkend="module.avp_db.extra_attribute_groups">Extra Attribute
+        Groups</serdoc:link> below for more information on the content
+        and usage of the parameter.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.db_url">
+      <title><parameter>db_url</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"mysql://serro:47serro11@localhost/ser"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>db_url</parameter> parameter specifies the database
+        to be used in form of a URL. See the module of you intended database
+        for information on the format of the URL for that database.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.did_column">
+      <title><parameter>did_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"did"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>did_column</parameter> parameter specifies the name
+        of the database column for the
+        <serdoc:field table="uri_attrs">did</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.flags_column">
+      <title><parameter>flags_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>flags</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>flags_column</parameter> parameter specifies the name
+        of the database column for the
+        <serdoc:field table="user_attrs">flags</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.name_column">
+      <title><parameter>name_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"name"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>name_column</parameter> parameter specifies the name
+        of the database column for the
+        <serdoc:field table="user_attrs">name</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.scheme_column">
+      <title><parameter>scheme_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"scheme"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>scheme_column</parameter> parameter specifies the
+        name of the database column for the
+        <serdoc:field table="uri_attrs">scheme</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.type_column">
+      <title><parameter>type_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"type"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>type_column</parameter> parameter specifies the name
+        of the database column for the
+        <serdoc:field table="user_attrs">type</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.uid_column">
+      <title><parameter>uid_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"uid"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>uid_column</parameter> parameter specifies the name
+        of the database column for the
+        <serdoc:field table="user_attrs">uid</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.uri_attrs_table">
+      <title><parameter>uri_attrs_table</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"uri_attrs"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>uri_attrs_table</parameter> parameter specifies the
+        name of the database table that holds the attributes assigned to
+        URIs.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.user_attrs_table">
+      <title><parameter>user_attrs_table</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"user_attrs"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>user_attrs_table</parameter> parameter specifies the
+        name of the database table that contains the attributes assigned to
+        users.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.username_column">
+      <title><parameter>username_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"username"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>username_column</parameter> parameter specifies
+        the name of the database column for the
+        <serdoc:field table="uri_attrs">username</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.value_column">
+      <title><parameter>value_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"value"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>value_column</parameter> parameter specifies the name
+        of the database column for the 
+        <serdoc:field table="user_attrs">value</serdoc:field> field.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 xml:id="module.avp_db.extra_attribute_groups">
+    <title>Extra Attribute Groups</title>
+    <para>
+      Extra attributes allow it to load an arbitrary set of attributes.
+      The set is identified by a pair of values: First, the extra attribute
+      group defines the database where the attributes can be found. Within
+      each group the specific attributes are identified by a key which is
+      simply a string.
+    </para>
+    <para>
+      Extra attribute groups are defined through the module parameter
+      <serdoc:modparam module="avp_db">attr_group</serdoc:modparam>. Each
+      occurence of the parameter defines a group. The value of the parameter
+      contains key/value pairs. Key and value are separated by an equals
+      sign, several pairs are separated by a comma.
+    </para>
+    <para>
+      The following keys exist:
+    </para>
+
+    <refsect2>
+      <title><parameter>id</parameter></title>
+      <para>
+        The <parameter>id</parameter> key defines the name of the extra
+        attribute group as it will be used to address the group in the
+        functions.
+      </para><para>
+        The key must be present.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>flag</parameter></title>
+      <para>
+        The <parameter>flag</parameter> key indentifies the name of the
+        attribute flag that must be set on an attribute in order to be
+        included in the attributes stored with the
+        <serdoc:func>store_extra_attrs</serdoc:func> function.
+      </para>
+      <para>
+        The key must be present.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>flags_column</parameter></title>
+      <para>
+        The <parameter>flags_column</parameter> key specifies the name of the
+        database column that contains the
+        <serdoc:field table="extra_attrs">flags</serdoc:field> field.
+      </para>
+      <para>
+        If the key is missing, the default of <literal>"flags"</literal>
+        will be used.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>key_column</parameter></title>
+      <para>
+        The <parameter>key_column</parameter> key specifies the name of the
+        database column that contains the
+        <serdoc:field table="extra_attrs">key</serdoc:field> field.
+      </para>
+      <para>
+        If the key is missing, the default of <literal>"id"</literal>
+        will be used.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>name_column</parameter></title>
+      <para>
+        The <parameter>name_column</parameter> key specifies the name of
+        the database column that contains the
+        <serdoc:field table="extra_attrs">name</serdoc:field> field.
+      </para>
+      <para>
+        If the key is missing, the default of <literal>"name"</literal>
+        will be used.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>table</parameter></title>
+      <para>
+        The <parameter>table</parameter> key defines the name of the
+        database table to be used for the group.
+      </para>
+      <para>
+        The key must be present.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>type_column</parameter></title>
+      <para>
+        The <parameter>type_column</parameter> key specifies the name of
+        the database column for the
+        <serdoc:field table="extra_attrs">type</serdoc:field> field.
+      </para>
+      <para>
+        If the key is missing, the default of <literal>"type"</literal>
+        will be used.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><parameter>value_column</parameter></title>
+      <para>
+        The <parameter>value_column</parameter> key specifies the name of
+        the database column for the
+        <serdoc:field table="extra_attrs">value</serdoc:field> field.
+      </para>
+      <para>
+        If the key is missing, the default of <literal>"value"</literal>
+        will be used.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title>Example</title>
+      <para>
+        Since this all looks a bit tricky, here are two examples for the
+        definition of a extra attribute group.
+      </para>
+      <programlisting>
+        modparam("avp_db", "attr_group",
+                 "id=dlg,flag=dialog_flag,table=dlg_attrs,key_column=dlg_id")
+      </programlisting>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 xml:id="module.avp_db.database">
+    <title>Database Scheme</title>
+
+    The <command>avp_db</command> uses three different database schemes.
+    The attributes associated with a user are stored in the
+    user_attrs table. The attributes associated with a
+    URI are stored in the uri_attrs table. Finally, the
+    extra attributes use various tables which shall be described here as the
+    extra_attrs table.
+
+    <refsect2 xml:id="module.avp_db.database.user_attrs">
+      <title>The user_attrs table</title>
+
+      <variablelist>
+        <varlistentry xml:id="table.user_attrs.uid">
+          <term><varname>uid</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(64) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>uid</varname> field contains the user ID of the user
+              the attribute is assigned to. It is used as the key for lookups.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="tyble.user_attrs.flags">
+          <term><varname>flags</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>
+                INT UNSIGNED NOT NULL DEFAULT 0
+              </serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>flags</varname> field is a bitfield with flags
+              regarding the usage of the database entry. Only the
+              <literal>DB_LOAD_SER</literal> flag in bit 0 is being used.
+              The bit must be set in the <varname>flags</varname> field
+              for SER to load the attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.user_attrs.name">
+          <term><varname>name</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(32) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>name</varname> field contains the name of the
+              attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.user_attrs.type">
+          <term><varname>type</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>INT NOT NULL DEFAULT 0</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>type</varname> field defines the type of the
+              attribute. If it is set to 2, the attribute is of type string.
+              Otherwise, it is of type integer.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.user_attrs.value">
+          <term><varname>value</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>value</varname> field contans the value of the
+              attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.database.uri_attrs">
+      <title>The uri_attrs table</title>
+
+      <variablelist>
+        <varlistentry xml:id="table.uri_attrs.did">
+          <term><varname>did</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(64) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>did</varname> field contains the domain ID of the
+              domain in the domain part of the URI the attribute is assigned
+              to. The field is used as part of the key for lookups into the
+              table.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="tyble.uri_attrs.flags">
+          <term><varname>flags</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>
+                INT UNSIGNED NOT NULL DEFAULT 0
+              </serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>flags</varname> field is a bitfield with flags
+              regarding the usage of the database entry. Only the
+              <literal>DB_LOAD_SER</literal> flag in bit 0 is being used.
+              The bit must be set in the <varname>flags</varname> field
+              for SER to load the attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.uri_attrs.username">
+          <term><varname>username</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(64) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>username</varname> field contains the username
+              part of the URI the attribute is assigned to. The field is
+              used as part of the key for lookups into the table.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.uri_attrs.name">
+          <term><varname>name</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(32) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>name</varname> field contains the name of the
+              attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.uri_attrs.scheme">
+          <term><varname>scheme</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>
+                VARCHAR(8) NOT NULL DEFAULT 'sip'
+              </serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>scheme</varname> field contains the scheme part
+              of the URI the attribute is assigned to. Recognized schemes
+              are <literal>sip</literal>, <literal>sips</literal>, and
+              <literal>tel</literal>. The field is used as part of the key
+              for lookups into the table.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.uri_attrs.type">
+          <term><varname>type</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>INT NOT NULL DEFAULT 0</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>type</varname> field defines the type of the
+              attribute. If it is set to 2, the attribute is of type string.
+              Otherwise, it is of type integer.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.uri_attrs.value">
+          <term><varname>value</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>value</varname> field contans the value of the
+              attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+
+    <refsect2 xml:id="module.avp_db.database.extra_attrs">
+      <title>The Tables for Extra Attributes</title>
+      <para>
+        This section describes the schema for the extra attribute tables.
+        Unlike most other tables, these tables don’t have a default name.
+        Instead, the name is defined by the <parameter>table</parameter> key
+        in the <serdoc:modparam module="avp_db">attr_group</serdoc:modparam>
+        module parameter.
+      </para>
+
+      <variablelist>
+        <varlistentry xml:id="table.extra_attrs.flags">
+          <term><varname>flags</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>
+                INT UNSIGNED NOT NULL DEFAULT 0
+              </serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>flags</varname> field is a bitfield with flags
+              regarding the usage of the database entry. Only the
+              <literal>DB_LOAD_SER</literal> flag in bit 0 is being used.
+              The bit must be set in the <varname>flags</varname> field
+              for SER to load the attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry  xml:id="table.extra_attrs.key">
+          <term><varname>key</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(255) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>key</varname> field contains the key for lookups
+              into the extra attribute table.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.extra_attrs.name">
+          <term><varname>name</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(32) NOT NULL</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>name</varname> field contains the name of the
+              attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.extra_attrs.type">
+          <term><varname>type</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>INT NOT NULL DEFAULT 0</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>type</varname> field defines the type of the
+              attribute. If it is set to 2, the attribute is of type string.
+              Otherwise, it is of type integer.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry xml:id="table.extra_attrs.value">
+          <term><varname>value</varname></term>
+          <listitem>
+            <serdoc:fieldinfo>
+              <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+            </serdoc:fieldinfo>
+            <para>
+              The <varname>value</varname> field contans the value of the
+              attribute.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>avp</serdoc:module></member>
+      <member><serdoc:module>avp_radius</serdoc:module></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+
+<!-- vim:sw=2 sta et sts=2 ai tw=76
+  -->

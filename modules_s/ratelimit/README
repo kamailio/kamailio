@@ -1,0 +1,147 @@
+
+Ratelimit Module
+
+Hendrik Scholz
+
+   <hscholz@raisdorf.net>
+
+   Copyright © 2006 Freenet Cityline GmbH
+   Revision History
+   Revision $Revision$ $Date$
+     _________________________________________________________________
+
+Overview
+
+   This module implements rate limiting for SIP requests. In contrast to
+   the PIKE module this limits the flow based on a per SIP request type
+   basis and not per source IP. The XML-RPC interface can be used to
+   change tunables while running SER. Currently supported requests are
+   INVITE, REGISTER and SUBSCRIBE.
+
+Use Cases
+
+   Limiting the rate messages are processed on a system directly
+   influences the load. The ratelimit module can be used to protect a
+   single host or to protect a SER cluster when run on the dispatching
+   box in front.
+
+   A sample configuration snippet might look like this:
+if (method=="INVITE" || method="REGISTER" || method=="SUBSCRIBE") {
+        if (!rl_check()) {
+                sl_send_reply("503", "Service Unavailable");
+                break;
+        }
+};
+
+   Upon every incoming request listed above rl_check is invoked. It
+   returns an OK code if the current per request load is below the
+   configured threshold. If the load is exceeded the function returns an
+   error and an administrator can discard requests with a stateless
+   response.
+
+Rate Limiting Algorithms
+
+   As of writing the ratelimit module supports two different algorithms
+   to be used by rl_check to determine whether a message should be
+   blocked or not.
+
+Tail drop
+
+   This is a trivial algorithm that imposes some risks when used in
+   conjunction with long timer intervals. At the start of each interval
+   an internal counter is reset and incremented for each incoming
+   message. Once the counter hits the configured limit rl_check returns
+   an error.
+
+   The downside of this algorithm is that it can lead to SIP client
+   synchronization. During a relatively long interval only the first
+   requests (i.e. REGISTERs) would make it through. Following messages
+   (i.e. RE-REGISTERs) will all hit the SIP proxy at the same time when a
+   common Expire timer expired. Other requests will be retransmissed
+   after given time, the same on all devices with the same firmware/by
+   the same vendor.
+
+Random Early Detection (RED)
+
+   Random Early Detection tries to circumvent the synchronization problem
+   imposed by the tail drop algorithm by measuring the average load and
+   adapting the drop rate dynamically. When running with the RED
+   algorithm (enabled by default) SER will return errors to the SER
+   routing engine every n'th packet trying to evenly spread the measured
+   load of the last timer interval onto the current interval. As a
+   negative side effect SER might drop messages although the limit might
+   not be reached within the interval. Decrease the timer interval if you
+   encounter this.
+
+Parameters
+
+timer_interval (integer)
+
+   The initial length of a timer interval in seconds. All amounts of
+   messages have to be divided by this timer to get a messages per second
+   value.
+
+   Default value is 5 seconds.
+
+invite_limit (integer)
+
+   The initial number of allowed INVITE requests per timer interval. Once
+   this number has been reached within one interval rl_check returns an
+   error. If running in Random Early Detection (RED) mode (default)
+   rl_check preemtively starts dropping packets.
+
+   Default value is 0 which means unlimited requests are permitted.
+
+register_limit (integer)
+
+   The initial number of allowed REGISTER requests per timer interval.
+   Once this number has been reached within one interval rl_check returns
+   an error. If running in Random Early Detection (RED) mode (default)
+   rl_check preemtively starts dropping packets.
+
+   Default value is 0 which means unlimited requests are permitted.
+
+subscribe_limit (integer)
+
+   The initial number of allowed SUBSCRIBE requests per timer interval.
+   Once this number has been reached within one interval rl_check returns
+   an error. If running in Random Early Detection (RED) mode (default)
+   rl_check preemtively starts dropping packets.
+
+   Default value is 0 which means unlimited requests are permitted.
+
+Functions
+
+rl.check()
+
+   Add the current request to the internal counters and determine if this
+   request is above the limit. The ratelimit module has different
+   internal counters for the supported request types and if a counter is
+   exceeded the function returns an error code.
+
+   Example 1. rl.check usage
+...
+if (method==INVITE) {
+  if (!rl_check()) {
+    sl_send_reply("503", "Service Unavailable");
+    break;
+  }
+}
+...
+
+FIFO Interface
+
+   The number of allowed requests per interval as well as the interval
+   length itself can be modified over the FIFO interface of SER. In
+   addition rate limiting statistics are provided upon request.
+     * rl.stats - Get current per request limits as well as current load
+       levels for all request types.
+     * rl.invite_limit - Set the number of allowed INVITE requests per
+       interval to the given value as the sole parameter. A limit of 0
+       turns of rate limiting of INVITE messages.
+     * rl.register_limit - Set the number of allowed REGISTER requests
+       per interval to the given value as the sole parameter. A limit of
+       0 turns of rate limiting of REGISTER messages.
+     * rl.subscribe_limit - Set the number of allowed SUBSCRIBE requests
+       per interval to the given value as the sole parameter. A limit of
+       0 turns of rate limiting of SUBSCRIBE messages.

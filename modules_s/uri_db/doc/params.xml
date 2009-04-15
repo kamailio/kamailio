@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="uri_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="uri_db.db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    URL of the database to be used.
+	</para>
+	<para>
+	    Default value is "mysql://serro:47serro11@localhost/ser".
+	</para>
+	<example>
+	    <title>Set <varname>db_url</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "db_url", "mysql://username:password@localhost/ser")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="uri_table">
+	<title><varname>uri_table</varname> (string)</title>
+	<para>
+	    Table containing list of allowed URIs for each user.
+	</para>
+	<para>
+	    Default value is "uri".
+	</para>
+	<example>
+	    <title>Set <varname>uri_table</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "uri_table", "uri")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="uri_user_column">
+	<title><varname>uri_user_column</varname> (string)</title>
+	<para>
+	    Column holding usernames in the URI table.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+	<example>
+	    <title>Set <varname>uri_user_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "uri_user_column", "username")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="uri_domain_column">
+	<title><varname>uri_domain_column</varname> (string)</title>
+	<para>
+	    Column holding domain in the URI table.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title>Set <varname>uri_domain_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "uri_domain_column", "domain")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="uri_uriuser_column">
+	<title><varname>uri_uriuser_column</varname> (string)</title>
+	<para>
+	    Column holding URI username in the URI table.
+	</para>
+	<para>
+	    Default value is "uri_user".
+	</para>
+	<example>
+	    <title>Set <varname>uri_uriuser_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "uri_uriuser_column", "uri_user")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="subscriber_table">
+	<title><varname>subscriber_table</varname> (string)</title>
+	<para>
+	    Name of the subscriber table.
+	</para>
+	<para>
+	    Default value is "subscriber".
+	</para>
+	<example>
+	    <title>Set <varname>subscriber_table</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "subscriber_table", "subscriber")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="subscriber_user_column">
+	<title><varname>subscriber_user_column</varname> (string)</title>
+	<para>
+	    Column holding username in subscriber table.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+	<example>
+	    <title>Set <varname>subscriber_user_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "subscriber_user_column", "username")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="subscriber_domain_column">
+	<title><varname>subscriber_domain_column</varname> (string)</title>
+	<para>
+	    Column holding domains in the subscriber table.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title>Set <varname>subscriber_domain_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "subscriber_domain_column", "domain")
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="avpops.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="avp_url">
+	<title><varname>avp_url</varname> (string)</title>
+	<para>
+	    DB URL for database connection.
+	</para>
+	<para>
+	    This parameter is optional, it's default value being NULL.
+	</para>
+	<example>
+	    <title>Set <varname>avp_url</varname> parameter</title>
+	    <programlisting>
+...
+modparam("avpops","avp_url","mysql://user:passwd@host/database")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="avp_table">
+	<title><varname>avp_table</varname> (string)</title>
+	<para>
+	    DB table to be used.
+	</para>
+	<para>
+	    This parameter is optional, it's default value being NULL.
+	</para>
+	<example>
+	    <title>Set <varname>avp_table</varname> parameter</title>
+	    <programlisting>
+...
+modparam("avpops","avp_table","avptable")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avp_aliases">
+	<title><varname>avp_aliases</varname> (string)</title>
+	<para>
+	    Contains a multiple definition of aliases for AVP names.
+	</para>
+	<para>
+	    This parameter is optional.
+	</para>
+	<example>
+	    <title>Set <varname>avp_aliases</varname> parameter</title>
+	    <programlisting>
+...
+modparam("avpops","avp_aliases","uid=I:660;email=s:email_addr;fwd=i:753")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avpops.use_domain">
+	<title><varname>use_domain</varname> (integer)</title>
+	<para>
+	    If the domain part of the an URI should be used for identifying an
+	    AVP in DB operations.
+	</para>
+	<para>
+	    Default value is 0 (no).
+	</para>
+	<example>
+	    <title>Set <varname>use_domain</varname> parameter
+	    </title>
+	    <programlisting>
+...
+modparam("avpops","use_domain","1")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avpops.uid_column">
+	<title><varname>uid_column</varname> (string)</title>
+	<para>
+	    Name of column containing the uid (unique user id).
+	</para>
+	<para>
+	    Default value is "uid".
+	</para>
+	<example>
+	    <title>Set <varname>uid_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("avpops","uid_column","uid")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avpops.username_column">
+	<title><varname>username_column</varname> (string)</title>
+	<para>
+	    Name of column containing the username.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+	<example>
+	    <title>Set <varname>username_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("avpops","username_column","username")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section>
+	<title><varname>domain_column</varname> (string)</title>
+	<para>
+	    Name of column containing the domain name.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title>Set <varname>domain_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("avpops","domain_column","domain")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="attribute_column">
+	<title><varname>attribute_column</varname> (string)</title>
+	<para>
+	    Name of column containing the attribute name (AVP name).
+	</para>
+	<para>
+	    Default value is "attribute".
+	</para>
+	<example>
+	    <title>Set <varname>attribute_column</varname> parameter
+	    </title>
+	    <programlisting>
+...
+modparam("avpops","attribute_column","attribute")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="value_column">
+	<title><varname>value_column</varname> (string)</title>
+	<para>
+	    Name of column containing the AVP value.
+	</para>
+	<para>
+	    Default value is "value".
+	</para>
+	<example>
+	    <title>Set <varname>value_column</varname> parameter
+	    </title>
+	    <programlisting>
+...
+modparam("avpops","value_column","value")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="type_column">
+	<title><varname>type_column</varname> (string)</title>
+	<para>
+	    Name of column containing the AVP type.
+	</para>
+	<para>
+	    Default value is "type".
+	</para>
+	<example>
+	    <title>Set <varname>type_column</varname> parameter
+	    </title>
+	    <programlisting>
+...
+modparam("avpops","type_column","type")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="db_scheme">
+	<title><varname>db_scheme</varname> (string)</title>
+	<para>
+	    Definition of a DB schemeto be used for non-standard access to
+	    Database information.
+	</para>
+	<para>
+	    Default value is "NULL".
+	</para>
+	<example>
+	    <title>Set <varname>db_scheme</varname> parameter
+	    </title>
+	    <programlisting>
+...
+modparam("avpops","db_scheme", "scheme1:table=subscriber;uid_column=uid;value_column=first_name")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

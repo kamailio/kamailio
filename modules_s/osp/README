@@ -1,0 +1,564 @@
+                  OSP Module for Secure, Multi-Lateral Peering
+
+  Ulrich Abend
+
+   FhG Fokus
+
+    Edited by
+
+  Di-Shi Sun
+
+   Copyright (c) 2003 FhG Fokus
+
+   ---------------------------------------------------------------------------
+
+   Table of Contents
+
+   [1]User's Guide
+
+                [2]Overview
+
+                [3]Dependencies
+
+                [4]Exported Parameters
+
+                             [5]sp1_uri, sp2_uri
+
+                             [6]device_ip
+
+                             [7]token_format
+
+                             [8]private_key, local_certificate,
+                             ca_certificates
+
+                             [9]sp1_weight, sp2_weight
+
+                             [10]device_port
+
+                             [11]enable_crypto_hardware_support
+
+                             [12]ssl_lifetime
+
+                             [13]persistence
+
+                             [14]retry_delay
+
+                             [15]retry_limit
+
+                             [16]timeout
+
+                             [17]max_destinations
+
+                             [18]validate_call_id
+
+                [19]Exported Functions
+
+                             [20]checkospheader()
+
+                             [21]validateospheader()
+
+                             [22]requestosprouting()
+
+                             [23]preparefirstosproute()
+
+                             [24]preparenextosproute()
+
+                             [25]prepareallosproute()
+
+                             [26]reportospusage()
+
+   [27]Developer's Guide
+
+   [28]Frequently Asked Questions
+
+   ---------------------------------------------------------------------------
+
+                                  User's Guide
+
+Overview
+
+   The OSP module enables SER to support secure, multi-lateral peering using
+   the OSP standard defined by ETSI (TS 101 321 V4.1.1). This module will
+   enable your SER to:
+
+     * Send a peering authorization request to a peering server.
+
+     * Validate a digitally signed peering authorization token received in a
+       SIP INVITE message.
+
+     * Report usage information to a peering server.
+
+   ---------------------------------------------------------------------------
+
+Dependencies
+
+   The OSP module depends on the following modules which must be loaded
+   before the OSP module.
+
+     * textops -- text based operation
+
+     * OSP Toolkit -- The OSP Toolkit, available from www.sipfoundry.org/OSP,
+       must be built before building SER with the OSP Module. See the
+       document "Multi-lateral Peering with SER", located at
+       http://developer.berlios.de/docman/?group_id=3799 for build
+       instructions.
+
+   ---------------------------------------------------------------------------
+
+Exported Parameters
+
+  sp1_uri, sp2_uri
+
+   These string parameters define peering servers to be used for requesting
+   peering authorization and routing information. sp1_uri must be configured.
+   sp2_uri is required only if there are two peering servers. Each peering
+   server address takes the form of a standard URL, and consists of up to
+   four components:
+
+     * An optional indication of the protocol to be used for communicating
+       with the peering server. Both HTTP and HTTP secured with SSL/TLS are
+       supported and are indicated by "http://" and "https://" respectively.
+       If the protocol is not explicitly indicated, the SER defaults to HTTP
+       secured with SSL.
+
+     * The Internet domain name for the peering server. An IP address may
+       also be used, provided it is enclosed in square brackets such as
+       [172.16.1.1].
+
+     * An optional TCP port number for communicating with the peering server.
+       If the port number is omitted, the SER defaults to port 1080 (for
+       HTTP) or port 1443 (for HTTP secured with SSL).
+
+       The uniform resource identifier for requests to the peering server.
+       This component is not optional and must be included.
+
+   Example 1. Setting the OSP servers
+
+   modparam ("osp", "sp1_uri", "http://osptestserver.transnexus.com:1080/osp") 
+   modparam ("osp", "sp2_uri", "https://[1.2.3.4]:1443/osp")                   
+                                                                               
+
+   ---------------------------------------------------------------------------
+
+  device_ip
+
+   device_ip (string) is a recommended parameter that explicitly defines the
+   IP address of SER in an peering request message (as SourceAlternate
+   type=transport). The IP address must be in brackets as shown in the
+   example below.
+
+   Example 2. Setting the device IP address
+
+   modparam ("osp", "device_ip", "[1.1.1.1]")                                 
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  token_format
+
+   When SER receives a SIP INVITE with a peering token, the OSP Module will
+   validate the token to determine whether or not the call has been
+   authorized by a peering server. Peering tokens may, or may not, be
+   digitally signed. The token format (integer) parameter defines if SER will
+   validate signed or unsigned tokens or both. The values for token format
+   are defined below. The default value is 2.
+
+   0 - Validate only signed tokens. Calls with valid signed tokens are
+   allowed.
+
+   1 - Validate only unsigned tokens. Calls with valid unsigned tokens are
+   allowed.
+
+   2 - Validate both signed and unsigned tokens are allowed. Calls with valid
+   tokens are allowed.
+
+   Example 3. Setting the token format
+
+   modparam ("osp", "token_format", 2)                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  private_key, local_certificate, ca_certificates
+
+   These parameters identify files are used for validating peering
+   authorization tokens and establishing a secure channel between SER and a
+   peering server using SSL. The files are generated using the 'Enroll'
+   utility from the OSP Toolkit. By default, the proxy will look for
+   pkey.pem, localcert.pem, and cacart_0.pem in the default configuration
+   directory. The default config directory is set at compile time using
+   CFG_DIR and defaults to /usr/local/etc/ser/. The files may be copied to
+   the expected file location or the parameters below may be changed.
+
+   Example 4. Set authorization files
+
+   If the default CFG_DIR value was used at compile time, the files will be
+   loaded from:
+
+   modparam ("osp", "private_key", "/usr/local/etc/ser/pkey.pem")             
+   modparam ("osp", "local_certificate", "/usr/local/etc/ser/localcert.pem")  
+   modparam ("osp", "ca_certificates", "/usr/local/etc/ser/cacert.pem")       
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  sp1_weight, sp2_weight
+
+   These sp_weight (integer) parameters are used for load balancing peering
+   requests to peering servers. These parameters are most effective when
+   configured as factors of 1000. For example, if sp1_uri should manage twice
+   the traffic load of sp2_uri, then set sp1_weight to 2000 and sp2_weight to
+   1000. Shared load balancing between peering servers is recommended.
+   However, peering servers can be configured as primary and backup by
+   assigning a sp_weight of 0 to the primary server and a non-zero sp_weight
+   to the back-up server. The default values for sp1_weight and sp2_weight
+   are 1000.
+
+   Example 5. Setting the OSP server weights
+
+   modparam ("osp", "sp1_weight", 1000)                                       
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  device_port
+
+   The device_port (string) parameter is an optional field which includes the
+   SIP port being used by SER in the peering request (as SourceAlternate
+   type=network) to the peering server. If is not configured, this
+   information is not included in the peering request. This field is useful
+   if multiple SERs are running on the same Linux computer since it enables
+   the peering server to administer different peering policies based on
+   different SIP proxies.
+
+   Example 6. Setting the device port
+
+   modparam ("osp", "device_port", "5060")                                    
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  enable_crypto_hardware_support
+
+   The enable_crypto_hardware_support (integer) parameter is used to set the
+   cryptographic hardware acceleration engine in the openssl library. The
+   default value is 0 (no crypto hardware is present). If crypto hardware is
+   used, the value should be set to 1.
+
+   Example 7. Setting the hardware support
+
+   modparam ("osp", "enable_crypto_hardware_support", 0)                      
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  ssl_lifetime
+
+   The ssl_lifetime (integer) parameter defines the lifetime, in seconds, of
+   a single SSL session key. Once this time limit is exceeded, the OSP Module
+   will negotiate a new session key. Communication exchanges in progress will
+   not be interrupted when this time limit expires. This is an optional field
+   with default value is 200 seconds.
+
+   Example 8. Setting the ssl lifetime
+
+   modparam ("osp", "ssl_lifetime", 200)                                      
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  persistence
+
+   The persistence (integer) parameter defines the time, in seconds, that an
+   HTTP connection should be maintained after the completion of a
+   communication exchange. The OSP Module will maintain the connection for
+   this time period in anticipation of future communication exchanges to the
+   same peering server.
+
+   Example 9. Setting the persistence
+
+   modparam ("osp", "persistence", 1000)                                      
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  retry_delay
+
+   The retry_delay (integer) parameter defines the time, in seconds, between
+   retrying connection attempts to an OSP peering server. After exhausting
+   all peering servers the OSP Module will delay for this amount of time
+   before resuming connection attempts. This is an optional field with
+   default value is 1 second.
+
+   Example 10. Setting the retry delay
+
+   modparam ("osp", "retry_delay", 1)                                         
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  retry_limit
+
+   The retry_limit (integer) parameter defines the maximum number of retries
+   for connection attempts to an peering server. If no connection is
+   established after this many retry attempts to all peering servers, the OSP
+   Module will cease connection attempts and return appropriate error codes.
+   This number does not count the initial connection attempt, so that a
+   retry_limit of 1 will result in a total of two connection attempts to
+   every peering server. The default value is 2.
+
+   Example 11. Setting the retry limit
+
+   modparam ("osp", "retry_limit", 2)                                         
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  timeout
+
+   The timeout (integer) parameter defines the maximum time in milliseconds,
+   to wait for a response from an peering server. If no response is received
+   within this time, the current connection is aborted and the OSP Module
+   attempts to contact the next peering server. The default value is 10
+   seconds.
+
+   Example 12. Setting the timeout
+
+   modparam ("osp", "timeout", 10)                                            
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  max_destinations
+
+   The max_destinations (integer) parameter defines the maximum number of
+   destinations that SER requests the peering server to return in a peering
+   response. The default value is 5.
+
+   Example 13. Setting the number of destination
+
+   modparam ("osp", "max_destinations", 5)                                    
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  validate_call_id
+
+   The validate_call_id (integer) parameter instructs the OSP module to
+   validate call id in the peering token. If this value is set to 1, the OSP
+   Module validates that the call id in the SIP INVITE message matches the
+   call id in the peering token. If they do not match the INVITE is rejected.
+   If this value is set to 0, the OSP Module will not validate the call id in
+   the peering token. The default value is 1
+
+   Example 14. Instructing the module to validate call id
+
+   modparam ("osp", "validate_call_id", 1)                                    
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+Exported Functions
+
+  checkospheader()
+
+   This function checks for the existence of the OSP-Auth-Token header field.
+
+   Example 15. checkospheader usage
+
+   ...                                                                        
+   if (checkospheader()) {                                                    
+     log("OSP header field found.\n");                                        
+   } else {                                                                   
+     log("no OSP header field present\n");                                    
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  validateospheader()
+
+   This function validates an OSP-Token specified in the OSP-Auth-Tokenheader
+   field of the SIP message. If a peering token is present, it will be
+   validated locally. If no OSP header is found or the header token is
+   invalid or expired, -1 is returned; on successful validation 1 is
+   returned.
+
+   Example 16. validateospheader usage
+
+   ...                                                                        
+   if (validateospheader()) {                                                 
+     log("valid OSP header found\n");                                         
+   } else {                                                                   
+     log("OSP header not found, invalid or expired\n");                       
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  requestosprouting()
+
+   This function launches a query to the peering server requesting the IP
+   address of one or more destination peers serving the called party. If
+   destination peers are available, the peering server will return the IP
+   address and a peering authorization token for each destination peer. The
+   OSP-Auth-Token Header field is inserted into the SIP message and the SIP
+   uri is rewritten to the IP address of destination peer provided by the
+   peering server.
+
+   The address of the called party must be a valid E164 number, otherwise
+   this function returns -1. If the transaction was accepted by the peering
+   server, the uri is being rewritten and 1 returned, on errors (peering
+   servers are not available, authentication failed or there is no route to
+   destination or the route is blocked) -1 is returned.
+
+   Example 17. requestosprouting usage
+
+   ...                                                                        
+   if (requestosprouting()) {                                                 
+     log("successfully queried OSP server, now relaying call\n");             
+   } else {                                                                   
+     log("Authorization request was rejected from OSP server\n");             
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  preparefirstosproute()
+
+   This function tries to prepare the INVITE to be forwarded or redirected
+   using the first destination in the list returned by the peering server. If
+   the route could not be prepared, the function returns 'FALSE' back to the
+   script, which can then decide how to handle the failure.
+
+   Example 18. preparefirstosproute usage
+
+   ...                                                                        
+   if (preparefirstosproute ()) {                                             
+     log("successfully prepared the first route, now relaying call\n");       
+   } else {                                                                   
+     log("could not prepare the route. The first destination was blocked\n"); 
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  preparenextosproute()
+
+   Once the call could not be completed through the first destination, this
+   function tries to prepare the INVITE message using the next destination in
+   the list returned by the peering Server. If it succeeds in preparing the
+   route, the message is either redirected or relayed on (using the t_relay
+   call), or else the function returns 'FALSE' back to the script, which can
+   then decide how to handle the failure.
+
+   Example 19. preparenextosproute usage
+
+   ...                                                                        
+   if (preparenextosproute ()) {                                              
+     log("successfully prepared the next route, now relaying call\n");        
+   } else {                                                                   
+     log("could not prepare the route. No next destination available\n");     
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  prepareallosproute()
+
+   This function tries to prepare all the routes in the list returned by the
+   peering server. The message is then either forked off or redirected to the
+   destination. If unsuccessful in preparing the routes a SIP 500 is sent
+   back and a trace message is logged.
+
+   Example 20. prepareallosproute usage
+
+...                                                                                      
+if (prepareallosproute ()) {                                                             
+  log("successfully prepared the routes, now either forking or redirecting the call\n"); 
+} else {                                                                                 
+  log("could not prepare the route. No destination available\n");                        
+};                                                                                       
+...                                                                                      
+                                                                                         
+
+   ---------------------------------------------------------------------------
+
+  reportospusage()
+
+   This function should be called after receiving a BYE message. If the
+   message contains an OSP cookie, the function will forward originating
+   and/or terminating duration usage information to a peering server. The
+   function returns TRUE if the BYE includes an OSP cookie. The actual usage
+   message will be send on a different thread and will not delay BYE
+   processing. The function should be called before relaying the message.
+
+   Example 21. reportospusage usage
+
+...                                                                                                  
+if (reportospusage ()) {                                                                             
+  log("OSP call duration usage will be reported\n");                                                 
+} else {                                                                                             
+  log("The BYE message does not include OSP information, it was not authorized by an OSP server\n"); 
+};                                                                                                   
+...                                                                                                  
+                                                                                                     
+
+   ---------------------------------------------------------------------------
+
+                               Developer's Guide
+
+   The functions of the OSP modules are not used by other SER modules.
+
+   ---------------------------------------------------------------------------
+
+                           Frequently Asked Questions
+
+   Q: [29]What platforms does this module work on?
+
+   Q: [30]Where can I get more information on this module?
+
+   Q: [31]Where can I get more information on OSP?
+
+   Q: [32]How do I obtain an OSP server for testing?
+
+   Q: [33]How are the exported functions used by the OSP module?
+
+   Q: What platforms does this module work on?
+
+   A: The module has been implemented using Linux, the underlying toolkit and
+   the module code itself should compile and work on Solaris, *BSD, and
+   probably most other unix platforms with ssl and pthreads available, but
+   the OSP Module has only been tested Linux.
+
+   Q: Where can I get more information on this module?
+
+   A: Please see the document "Multi-Lateral Peering with SER" located at
+   http://developer.berlios.de/docman/?group_id=3799 or post a message on the
+   SER mailing list. You may also send an e-mail to support@transnexus.com.
+
+   Q: Where can I get more information on OSP?
+
+   A: The OSP technical specification (ETSI TS 101 321) may be obtained from
+   www.etsi.org. Additional documentation on OSP is available from
+   www.sipfoundry.org.
+
+   Q: How do I obtain an OSP server for testing?
+
+   A: OSP peering servers are available from the following sources:
+
+     * OpenOSP server from www.sipfoundry.org is a complete OSP server
+
+     * RAMS from www.sipfoundry.org is a new java based open source OSP
+
+     * TransNexus provides free access to a hosted OSP peering server on the
+       Internet for testing. Contact support@transnexus.com.
+
+   Q: How are the exported functions used by the OSP module?
+
+   A: See sample-osp-ser.cfg in modules/osp/etc for examples

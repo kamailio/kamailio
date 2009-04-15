@@ -1,0 +1,260 @@
+#
+# $Id$
+#
+# This is the default LDAP schema of SER for OpenLDAP.
+# Written by Jan Janak <jan@iptel.org>.
+#
+
+#
+# The root OID of IANA private enterprise numbers
+#
+objectIdentifier ianaPrivate 1.3.6.1.4.1
+
+#
+# The root OID of many LDAPv3 attributes
+#
+objectIdentifier ldap3OID ianaPrivate:1466
+
+#
+# The root OID assigned by the IANA to iptel.org
+#
+objectIdentifier iptelorg ianaPrivate:24960
+
+#
+# SER related objects and attributes
+#
+objectIdentifier ser	          iptelorg:0
+objectIdentifier serLDAP          ser:1
+objectIdentifier serAttributeType serLDAP:0
+objectIdentifier serObjectClass   serLDAP:1
+
+#
+# Convenience macros for commonly used syntax OIDs
+#
+objectIdentifier ldapSyntax            ldap3OID:115.121.1
+objectIdentifier stringSyntax          ldapSyntax:15
+objectIdentifier octetStringSyntax     ldapSyntax:40
+objectIdentifier bitStringSyntax       ldapSyntax:6
+objectIdentifier intSyntax             ldapSyntax:27
+objectIdentifier numericStringSyntax   ldapSyntax:36
+objectIdentifier binarySyntax          ldapSyntax:5
+objectIdentifier boolSyntax            ldapSyntax:7
+objectIdentifier genTimeSyntax         ldapSyntax:24 
+
+#
+# This is the parent attribute type for various UID attributes of SER, such
+# as serUID and serDID.
+#
+attributeType ( serAttributeType:0 
+	NAME 'serUUID'
+	DESC 'SER Universally Unique Identifier'
+	SYNTAX stringSyntax
+	SINGLE-VALUE 
+ )
+
+#
+# serUID attribute stores universally unique identifiers of SER users, the
+# identifier is an opaque string by default.
+#
+attributeType ( serAttributeType:1 NAME 'serUID'
+	DESC 'SER User Identifier'
+	SUP serUUID 
+ )
+
+#
+# serDID attributes contain universally unique identifiers of virtual SER
+# domains. They are used to group a bunch of domain names together in a
+# single virtual domain.
+#
+attributeType ( serAttributeType:2 NAME 'serDID'
+	DESC 'SER Domain Identifier'
+	SUP serUUID
+ )
+
+#
+# digesetUsername attribute contains the value of username field from
+# digest authentication credentials as specified in RFC2617. This attribute,
+# together with digestRealm, is used by SER during digest authentication to
+# lookup credentaials of a particular user.
+#
+attributeType ( serAttributeType:3 NAME 'digestUsername'
+	DESC 'SIP Digest Authentication username'
+	SYNTAX stringSyntax
+	EQUALITY caseIgnoreMatch
+	SINGLE-VALUE
+ )
+
+#
+# digestRealm attribute contains the value of realm field from digest
+# authentication credentials as specified in RFC2617. This attribute, 
+# together with digestUsername, is used by SER during digest authentication 
+# to lookup credentials of a particular user.
+#
+attributeType ( serAttributeType:4 NAME 'digestRealm'
+	DESC 'SIP Digest Authentication realm attribute'
+	SYNTAX stringSyntax
+	EQUALITY caseIgnoreMatch
+	SINGLE-VALUE
+ )
+
+#
+# digestPassword attribute contains the plain-text password for digest 
+# authentication (see RFC2617)
+#
+attributeType ( serAttributeType:5 NAME 'digestPassword'
+	DESC 'SIP Digest Authentication password'
+	SYNTAX octetStringSyntax
+	EQUALITY octetStringMatch
+	SINGLE-VALUE
+ )
+
+#
+# The attribute serFlags contains various SER and SERWeb related flags,
+# the flags are used to mark entries as deleted or disabled, they are
+# used to mark entries that are exclusively for SER or SERWeb, and so on.
+# The maximum length of the bit string fields is 32 bits, the most
+# significant bits of values longer than 32 will be ignored.
+#
+attributeType ( serAttributeType:6 NAME 'serFlags'
+	DESC 'SER flags'
+	SYNTAX bitStringSyntax
+	EQUALITY bitStringMatch
+	SINGLE-VALUE
+ )
+
+#
+# This attribute contains the HA1 string as defined in RFC2617. The 
+# string is an MD5 hash of digest username, realm, and password. 
+# See RFC2617 for more details. SER is using either HA1 or plain-text
+# password (depending on configuration) when verifying digest credentials.
+#
+attributeType ( serAttributeType:7 NAME 'digestHA1'
+    DESC 'Digest Authentication HA1 String'
+    SYNTAX octetStringSyntax
+    EQUALITY octetStringMatch
+    SINGLE-VALUE
+ )
+
+#
+# This attribute contains the HA1 string as defined in RFC2617. This is
+# similar to digestHA1 attribute, except that the MD5 hash in digestHA1b
+# also includes a domain part in username, so the username is of form
+# user@domain. This is sometimes needed when authenticating user agents
+# that put user@domain into the digest username field.
+#
+attributeType ( serAttributeType:8 NAME 'digestHA1b'
+    DESC 'Digest Authentication HA1 String (includes domain in username)'
+    SYNTAX octetStringSyntax
+    EQUALITY octetStringMatch
+    SINGLE-VALUE
+ )
+
+#
+# This attribute stores a domain name within a virtual domain handled
+# by a SER server. SER users this value to determine whether the SIP
+# requests are to/from one of its virtual domains.
+#
+attributeType ( serAttributeType:9 NAME 'serDomain'
+    DESC 'Domain Name'
+    SYNTAX stringSyntax
+    EQUALITY caseIgnoreMatch
+    SINGLE-VALUE
+ )
+
+#
+# SER attributes is a generic mechanism for storing configuration data.
+# This attribute contains the name of an SER attribute.
+#
+attributeType ( serAttributeType:10 NAME 'serAttrName'
+    DESC 'SER Attribute Name'
+	SYNTAX stringSyntax
+    EQUALITY caseExactMatch
+    SINGLE-VALUE
+ )
+
+#
+# SER attributes is a generic mechanism for storing configuration data.
+# This attribute contains SER attribute type. There are two types of
+# SER attributes: integer and string.
+#
+attributeType ( serAttributeType:11 NAME 'serAttrType'
+    DESC 'SER Attribute Type'
+    SYNTAX intSyntax
+	SINGLE-VALUE
+ )
+
+#
+# SER attributes is a generic mechanism for storing configuration data.
+# This attribute contains the value (as string) of a SER attribute.
+#
+attributeType ( serAttributeType:12 NAME 'serAttrValue'
+    DESC 'SER Attribute Value'
+    SYNTAX stringSyntax
+    EQUALITY caseExactMatch
+    SINGLE-VALUE
+ )
+
+#
+# digestAuthCredentials objects are used by SER to perform digest
+# authentication as defined in RFC3261 and RFC2617. Every object must
+# contain a username, a realm, and a UID of the user who owns the
+# credentials. In addition to that the object can contains either
+# password in plain-text format, or the HA1 string, or both. Which of
+# them will be used by SER depends on the configuration.
+#
+# This is an analogy to 'credentials' table found in SER relational
+# database schema.
+#
+objectClass ( serObjectClass:0 NAME 'digestAuthCredentials'
+	DESC 'Credentials for SIP Digest Authentication'
+	MUST ( digestUsername $ digestRealm $ serUID $ serFlags )
+	MAY ( serDID $ digestPassword $ digestHA1 $ digestHA1b )	
+ )
+
+#
+# serDomain objects are used to store the information about virtual
+# domains supported by a SER server. The purpose of the object is
+# to map domain names (which appear in SIP messages) to universally
+# unique domain identifiers and vice versa. 
+#
+# This is an analogy to 'domain' table found in SER relational database
+# schema.
+#
+objectClass ( serObjectClass:1 NAME 'serDomain'
+    DESC 'SER Virtual Domains'
+    MUST ( serDID $ serDomain $ serFlags )
+ )
+
+#
+# This is an abstract class that can be used as a base for other classes
+# storing SER uri/user/domain/global attributes. An object storing SER 
+# attributes must contain serAttrName, serAttrType, serAttrValue, and 
+# serFlags attributes.
+#
+objectClass ( serObjectClass:2 NAME 'serAttrAbstract'
+    ABSTRACT
+    MUST ( serAttrName $ serAttrType $ serAttrValue $ serFlags )
+ )
+
+#
+# An auxiliary class that can be used to extend other objects in an LDAP
+# directory with the possibility to store SER attributes.
+#
+objectClass ( serObjectClass:3 NAME 'serAttr'
+    AUXILIARY
+    SUP serAttrAbstract
+ )
+
+#
+# This class is used to store domain level attributes. Domain level
+# attributes are attributes used to store configuration information related
+# to a virtual domain (i.e. common configuration for all users/URIs within
+# that virtual domain), such as digest authentication realm or default 
+# language.
+#
+objectClass ( serObjectClass:4 NAME 'serDomainAttr'
+    DESC 'SER Domain Attributes'
+    SUP serAttrAbstract
+    MUST ( serDID )
+ )
+

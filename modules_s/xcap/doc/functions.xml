@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>Functions</title>
+<para>
+<variablelist>
+<varlistentry>
+	<term>set_xcap_root(string xcap_root)</term>
+	<listitem><para>Overrides XCAP root settings for one config script call. The
+	parameter has to be string (AVP not allowed now).
+	</para></listitem>
+</varlistentry>
+<!--
+<varlistentry>
+	<term>set_xcap_filename</term>
+	<listitem><para>Overrides default file name for one config script call. (<xref
+	linkend="xcap.funcs.sample"/>
+	</para></listitem>
+</varlistentry> -->
+
+<varlistentry>
+	<term>xcap_query</term>
+	<listitem><para>This function does the XCAP query. It is no accessible from
+	script, it can be called only internaly. It is by default called from XCAP
+	library.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>fill_xcap_params</term>
+	<listitem><para>This function fills internal data structure with XCAP query
+	parameters according to XCAP module settings. It can not be called from
+	script. (Prepared for authentication to XCAP server, ...)
+	</para></listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+
+<example id="xcap.funcs.sample"><title>XCAP module functions usage</title>
+<para>This example shows config file overridding XCAP root settings.
+<programlisting><![CDATA[
+...
+modparam("xcap", "xcap_root", "http://xcap/xcap")
+...
+
+route {
+
+	...
+	
+	if (lookup_domain("To")) {
+		if ($t.did == "domain1") {
+			# change XCAP root for domain1
+			set_xcap_root("http://xcap/xcap-for-domain1/");
+		}
+		# else leave default XCAP root and file names
+	}
+
+	...
+
+]]>
+</programlisting>
+</para>
+</example>
+
+</section>

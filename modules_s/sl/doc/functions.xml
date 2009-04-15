@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="sl.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="sl_send_reply">
+	<title>
+	    <function>sl_send_reply(code, reason)</function>
+	</title>
+	<para>
+	    For the current request, a reply is sent back having the given code
+	    and text reason. The reply is sent stateless, totally independent
+	    of the Transaction module and with no retransmission for the
+	    INVITE's replies.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>code</emphasis> - Return code.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>reason</emphasis> - Reason phrase.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>sl_send_reply</function> usage</title>
+	    <programlisting>
+...
+sl_send_reply("404", "Not found");
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="sl_reply_error">
+	<title>
+	    <function>sl_reply_error()</function>
+	</title>
+	<para>
+	    Sends back an error reply describing the nature of the last
+	    internal error.  Usually this function should be used after a
+	    script function that returned an error code.
+	</para>
+	<example>
+	    <title><function>sl_reply_error</function> usage</title>
+	    <programlisting>
+...
+sl_reply_error();
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

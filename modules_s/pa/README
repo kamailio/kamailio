@@ -1,0 +1,207 @@
+
+pa Module
+
+Jan Janak
+
+   FhG FOKUS
+
+Edited by
+
+Jan Janak
+Jamey Hicks
+
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. default_expires (integer)
+	      1.3.2. default_priority_percentage (integer)
+	      1.3.3. db_url (string)
+	      1.3.4. pa_domain (string)
+	      
+
+        1.4. Exported Functions
+
+              1.4.1. handle_subscription(domain)
+              1.4.2. handle_publish(domain)
+              1.4.3. pa_handle_registration(domain)
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set default_expires parameter
+   1-2. handle_subscription usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module implements a presence server, i.e. entity that
+   receives SUBSCRIBE messages and sends NOTIFY when presence
+   status of a user changes. Currently the presence server can be
+   connected to registrar and jabber module so SIP users can see
+   presence of jabber users.  This module also acts as a presence
+   aggregator, receiving PUBLISH messages to update extended status
+   and generating NOTIFY messages.
+
+   This module currently cannot work as a B2BUA, i.e. it cannot
+   subscribe to presence of users using SIP. We are currently
+   working on that feature.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other SER modules.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. default_expires (integer)
+
+   Default expires value to be used when the client doesn't
+   supply one (in seconds).
+
+   Default value is "3600". 
+
+   Example 1-1. Set default_expires parameter
+...
+modparam("pa", "default_expires", 3600)
+...
+
+1.3.2. default_priority_percentage (integer)
+
+   Default priority value to be used when not included in a PUBLISH
+   message, expressed as a percentage.
+
+   Default value is "50". 
+
+   Example 1-2. Set default_expires parameter
+...
+modparam("pa", "default_expires", 50)
+...
+
+1.3.3. db_url (string)
+
+   URL of the database containing presence-agent data.
+
+   Example 1-3. Set db_url parameter
+...
+modparam("pa", "db_url", "mysql:ser:heslo@localhost/ser")
+...
+
+1.3.4. pa_domain (string)
+
+   Hostname of xcap server associated with presence agent.
+
+   Example 1-4. Set default_expires parameter
+...
+modparam("pa", "pa_domain", "ser.example.com")
+...
+
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. handle_subscription(domain)
+
+   This function processes SUBSCRIBE and generates NOTIFY.
+
+   Meaning of the parameters is as follows:
+
+     * domain - This can be either "registrar" or "jabber".
+
+   Example 1-5. handle_subscription usage
+...
+if (method=="SUBSCRIBE") {
+    if (!t_newtran()) {
+       log(1, "newtran error\n");
+       sl_reply_error();
+    };
+    handle_subscription("registrar");
+    break;
+};
+...
+
+1.4.2. handle_publish(domain)
+
+   This function processes PUBLISH and generates NOTIFY.
+
+   Meaning of the parameters is as follows:
+
+     * domain - This can be either "registrar" or "jabber".
+
+   Example 1-6. handle_publish usage
+...
+if (method=="PUBLISH") {
+    if (!t_newtran()) {
+       log(1, "newtran error\n");
+       sl_reply_error();
+    };
+    handle_publish("registrar");
+    break;
+};
+...
+
+1.4.3. pa_handle_registration(domain)
+
+   This function is no longer used.
+
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs

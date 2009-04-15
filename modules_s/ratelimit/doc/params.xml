@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ratelimit.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="timer_interval">
+	<title><varname>timer_interval</varname> (integer)</title>
+	<para>
+		The initial length of a timer interval in seconds.
+		All amounts of messages have to be divided by this timer to get a
+		messages per second value.
+	</para>
+	<para>
+	    Default value is 5 seconds.
+	</para>
+    </section>
+
+    <section id="invite_limit">
+	<title><varname>invite_limit</varname> (integer)</title>
+	<para>
+		The initial number of allowed INVITE requests per timer interval.
+		Once this number has been reached within one interval
+		<function>rl_check</function> returns an error.
+		If running in Random Early Detection (RED) mode (default)
+		<function>rl_check</function> preemtively starts dropping packets.
+	</para>
+	<para>
+	    Default value is 0 which means unlimited requests are permitted.
+	</para>
+    </section>
+
+    <section id="register_limit">
+	<title><varname>register_limit</varname> (integer)</title>
+	<para>
+		The initial number of allowed REGISTER requests per timer interval.
+		Once this number has been reached within one interval
+		<function>rl_check</function> returns an error.
+		If running in Random Early Detection (RED) mode (default)
+		<function>rl_check</function> preemtively starts dropping packets.
+	</para>
+	<para>
+	    Default value is 0 which means unlimited requests are permitted.
+	</para>
+    </section>
+
+    <section id="subscribe_limit">
+	<title><varname>subscribe_limit</varname> (integer)</title>
+	<para>
+		The initial number of allowed SUBSCRIBE requests per timer interval.
+		Once this number has been reached within one interval
+		<function>rl_check</function> returns an error.
+		If running in Random Early Detection (RED) mode (default)
+		<function>rl_check</function> preemtively starts dropping packets.
+	</para>
+	<para>
+	    Default value is 0 which means unlimited requests are permitted.
+	</para>
+    </section>
+    
+</section>

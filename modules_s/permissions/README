@@ -1,0 +1,640 @@
+
+permissions Module
+
+Miklos Tirpak
+
+Edited by
+
+Miklos Tirpak
+
+   Copyright © 2003 Miklos Tirpak
+   Copyright (C) 2006 iptelorg GmbH
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+
+              1.1.1. Call Routing
+              1.1.2. Registration Permissions
+              1.1.3. Refer-To Permissions
+              1.1.4. Messages catching
+
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. default_allow_file (string)
+              1.3.2. default_deny_file (string)
+              1.3.3. check_all_branches (integer)
+              1.3.4. allow_suffix (string)
+              1.3.5. deny_suffix (string)
+              1.3.6. max_rule_files (int)
+              1.3.7. safe_file_load (int)
+              1.3.8. db_url (string)
+              1.3.9. db_mode (int)
+
+        1.4. Exported Functions
+
+              1.4.1. allow_routing()
+              1.4.2. allow_routing(basename)
+              1.4.3. allow_routing(allow_file, deny_file)
+              1.4.4. allow_register(basename)
+              1.4.5. allow_register(allow_file, deny_file)
+              1.4.6. allow_refer_to(basename)
+              1.4.7. allow_refer_to(allow_file, deny_file)
+              1.4.8. ipmatch (string/AVP/select, [avp])
+              1.4.9. ipmatch_onsend (string)
+
+        1.5. XML-RPC interface
+
+              1.5.1. ipmatch.reload
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set default_allow_file parameter
+   1-2. Set default_deny_file parameter
+   1-3. Set check_all_branches parameter
+   1-4. Set allow_suffix parameter
+   1-5. Set deny_suffix parameter
+   1-6. allow_routing usage
+   1-7. allow_routing(basename) usage
+   1-8. allow_routing(allow_file, deny_file) usage
+   1-9. allow_register(basename) usage
+   1-10. allow_register(allow_file, deny_file) usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+1.1.1. Call Routing
+
+   The module can be used to determine if a call has appropriate
+   permission to be established. Permission rules are stored in
+   plaintext configuration files similar to hosts.allow and
+   hosts.deny files used by tcpd.
+
+   When allow_routing function is called it tries to find a rule
+   that matches selected fields of the message.
+
+   SER is a forking proxy and therefore a single message can be
+   sent to different destinations simultaneously. When checking
+   permissions all the destinations must be checked and if one of
+   them fails, the forwarding will fail.
+
+   The matching algorithm is as follows, first match wins:
+
+     * Create a set of pairs of form (From, R-URI of branch 1),
+       (From, R-URI of branch 2), etc.
+     * Routing will be allowed when all pairs match an entry in
+       the allow file.
+     * Otherwise routing will be denied when one of pairs matches
+       an entry in the deny file.
+     * Otherwise, routing will be allowed.
+
+   A non-existing permission control file is treated as if it
+   were an empty file. Thus, permission control can be turned off
+   by providing no permission control files.
+
+   From header field and Request-URIs are always compared with
+   regular expressions! For the syntax see the sample file:
+   config/permissions.allow.
+     _________________________________________________________
+
+1.1.2. Registration Permissions
+
+   In addition to call routing it is also possible to check
+   REGISTER messages and decide--based on the configuration
+   files--whether the message should be allowed and the
+   registration accepted or not.
+
+   Main purpose of the function is to prevent registration of
+   "prohibited" IP addresses. One example, when a malicious user
+   registers a contact containing IP address of a PSTN gateway,
+   he might be able to bypass authorization checks performed by
+   the SIP proxy. That is undesirable and therefore attempts to
+   register IP address of a PSTN gateway should be rejected.
+   Files config/register.allow and config/register.deny contain
+   an example configuration.
+
+   Function for registration checking is called allow_register
+   and the algorithm is very similar to the algorithm described
+   in Section 1.1.1. The only difference is in the way how pairs
+   are created.
+
+   Instead of From header field the function uses To header field
+   because To header field in REGISTER messages contains the URI
+   of the person being registered. Instead of the Request-URI of
+   branches the function uses Contact header field.
+
+   Thus, pairs used in matching will look like this: (To, Contact
+   1), (To, Contact 2), (To, Contact 3), and so on..
+
+   The algorithm of matching is same as described in Section
+   1.1.1.
+     _________________________________________________________
+
+1.1.3. Refer-To Permissions
+
+   In addition to call routing and REGISTER it is also possible to check
+   REFER messages and decide--based on the configuration files--
+   whether or not the message should be accepted for forwarding.
+
+   Main purpose of the function is to prevent referring a SIP UA to
+   "prohibited" IP addresses. One example is user sending a REFER
+   request to PSTN gateway trying to refer it to an expensive phone
+   number.
+
+   Function for Refer-To checking is called allow_refer_to
+   and the algorithm is very similar to the algorithm described
+   in Section 1.1.1. The only difference is in the way how pairs
+   are created.
+
+   Instead of Request-URI the function uses Refer-To header field
+   because Refer-To header field in REFER messages contains the URI
+   to which the UA is being referred to.  The algorithm of matching is
+   same as described in Section 1.1.1.
+     _________________________________________________________
+
+1.1.4. Messages catching
+
+   The module can be also used for catching messages coming from
+   or going to specific network elements, for example gateways or
+   peering partners.
+
+   Users can register or forward the calls to the address of
+   a gateway resulting unauthorized access to them. Such calls
+   must be catched and dropped, see ipmatch functions for details.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * database module
+     * xmlrpc module
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. default_allow_file (string)
+
+   Default allow file used by functions without parameters. If
+   you don't specify full pathname then the directory in which is
+   the main config file is located will be used.
+
+   Default value is "permissions.allow". 
+
+   Example 1-1. Set default_allow_file parameter
+...
+modparam("permissions", "default_allow_file", "/etc/permissions.allow")
+...
+     _________________________________________________________
+
+1.3.2. default_deny_file (string)
+
+   Default file containing deny rules. The file is used by
+   functions without parameters. If you don't specify full
+   pathname then the directory in which the main config file is
+   located will be used.
+
+   Default value is "permissions.deny". 
+
+   Example 1-2. Set default_deny_file parameter
+...
+modparam("permissions", "default_deny_file", "/etc/permissions.deny")
+...
+
+   If both of the default file parameters are set to "" the module
+   does not try to load them.
+     _________________________________________________________
+
+1.3.3. check_all_branches (integer)
+
+   If set then allow_routing functions will check Request-URI of
+   all branches (default). If disabled then only Request-URI of
+   the first branch will be checked.
+
+   Warning
+
+   Do not disable this parameter unless you really know what you
+   are doing.
+
+   Default value is 1. 
+
+   Example 1-3. Set check_all_branches parameter
+...
+modparam("permissions", "check_all_branches", 0)
+...
+     _________________________________________________________
+
+1.3.4. allow_suffix (string)
+
+   Suffix to be appended to basename to create filename of the
+   allow file when version with one parameter of either
+   allow_routing or allow_register is used.
+
+   Note
+
+   Including leading dot.
+
+   Default value is ".allow". 
+
+   Example 1-4. Set allow_suffix parameter
+...
+modparam("permissions", "allow_suffix", ".allow")
+...
+     _________________________________________________________
+
+1.3.5. deny_suffix (string)
+
+   Suffix to be appended to basename to create filename of the
+   deny file when version with one parameter of either
+   allow_routing or allow_register is used.
+
+   Note
+
+   Including leading dot.
+
+   Default value is ".deny". 
+
+   Example 1-5. Set deny_suffix parameter
+...
+modparam("permissions", "deny_suffix", ".deny")
+...
+     _________________________________________________________
+
+1.3.6. max_rule_files (int)
+
+   Maximum number of allow/deny file pairs.
+
+   Default value is 64.
+     _________________________________________________________
+
+1.3.7. safe_file_load (int)
+
+   Module initialization fails in case of a missing config file if
+   safe_file_load is true.
+
+   Default value is 0 (false).
+     _________________________________________________________
+
+1.3.8. db_url (string)
+
+   URL of the database to be used.
+     _________________________________________________________
+
+1.3.9. db_mode (int)
+
+   Disables/enables database cache.
+
+   Default value is 0 (cache is disabled)
+
+   NOTE: ipmatch functions can operate only in cache mode, set db_mode
+         to 1 if you want to use them.
+     _________________________________________________________
+
+1.3.10. ipmatch_table (string)
+
+   Name of the table containing ipmatch entries.
+
+   Default value is "ipmatch".
+     _________________________________________________________
+
+
+1.4. Exported Functions
+
+1.4.1. allow_routing()
+
+   Returns true if all pairs constructed as described in Section
+   1.1.1 have appropriate permissions according to the
+   configuration files. This function uses default configuration
+   files specified in default_allow_file and default_deny_file.
+
+   Example 1-6. allow_routing usage
+...
+if (allow_routing()) {
+    t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.2. allow_routing(basename)
+
+   Returns true if all pairs constructed as described in Section
+   1.1.1 have appropriate permissions according to the
+   configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-7. allow_routing(basename) usage
+...
+if (allow_routing("basename")) {
+    t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.3. allow_routing(allow_file, deny_file)
+
+   Returns true if all pairs constructed as described in Section
+   1.1.1 have appropriate permissions according to the
+   configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-8. allow_routing(allow_file, deny_file) usage
+...
+if (allow_routing("rules.allow", "rules.deny")) {
+    t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.4. allow_register(basename)
+
+   The function returns true if all pairs constructed as
+   described in Section 1.1.2 have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-9. allow_register(basename) usage
+...
+if (method=="REGISTER") {
+    if (allow_register("register")) {
+        save("location");
+        break;
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+     _________________________________________________________
+
+1.4.5. allow_register(allow_file, deny_file)
+
+   The function returns true if all pairs constructed as
+   described in Section 1.1.2 have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-10. allow_register(allow_file, deny_file) usage
+...
+if (method=="REGISTER") {
+    if (allow_register("register.allow", "register.deny")) {
+        save("location");
+        break;
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+     _________________________________________________________
+
+1.4.6. allow_refer_to(basename)
+
+   The function returns true if all pairs constructed as
+   described in Section 1.1.2 have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-11. allow_refer_to(basename) usage
+...
+if (method=="REFER") {
+    if (allow_refer_to("refer")) {
+       ...
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+     _________________________________________________________
+
+1.4.7. allow_refer_to(allow_file, deny_file)
+
+   The function returns true if all pairs constructed as
+   described in Section 1.1.2 have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-11. allow_register(allow_file, deny_file) usage
+...
+if (method=="REFER") {
+    if (allow_register("refer.allow", "refer.deny")) {
+       ...
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+     _________________________________________________________
+
+1.4.8. ipmatch (string/AVP/select, [avp])
+
+   The function tries to find an IP address and port pair
+   (defined by the first function parameter) in the cached
+   database table. Port is optional, it is compared only if
+   both the function parameter and the database entry contain it. 
+
+   The first parameter can be:
+   - string:
+        "src": the source address of the packet is used
+        "via2": the ip address of the 2nd via line is used
+        other values are not defined currently
+   - AVP:
+        e.g. "$myavp"
+   - Select call:
+        e.g. "@via[0].host"
+
+   The second parameter is optional, it is used to set an AVP
+   value from the database. Suitable for assigning logical
+   identifiers to gateways.
+
+
+   Note that IPv6 addresses must be enclosed in square brackets
+   in case of port is defined: [1111:2222::3333]:5060
+
+     _________________________________________________________
+
+1.4.9. ipmatch_onsend (string)
+
+   ipmatch() function replacement for onsend_route block.
+
+   The function accepts only string parameter, because even AVP
+   reading is unsafe in onsend_route.
+
+   the parameter can be:
+   - "dst":
+        the destination address is used
+   - "ruri":
+        the ip:port pair is extracted from the Request URI
+
+   The function can be used for example to catch unauthorized requests
+   going to gateways: Use a flag to mark the call as PSTN either
+   in request or in failure_route, and do not touch it in onreply_route.
+   See the examples below.
+     _________________________________________________________
+
+1.4.10. ipmatch_filter (unsigned int)
+
+   Entries in the database can be marked to group the different kind
+   of network elements. The function sets the filter which is used on
+   the mark while comparing the IP addresses. The mark must be the
+   power of 2 in the database!
+
+   Note that ipmatch() and ipmatch_onsend() functions reset the filter!
+
+Example:
+
++-----------------+-------------------+------+------+
+| ip              | avp_val           | mark | flag |
++-----------------+-------------------+------+------+
+| 1111:2222::1001 | first_gw          |    1 |    1 |
+| 10.38.2.10:5060 | second_gw         |    1 |    1 |
+| 10.0.0.10       | first_peering     |    2 |    1 |
++-----------------+-------------------+------+------+
+
+
+route[0] {
+  # is this a request from a GW?
+  ipmatch_filter("1");
+  if (ipmatch("src", "$gw_id")) {
+    # yes, it is from a GW
+    ...
+  } else {
+    # is this a request from a peering partner?
+    ipmatch_filter("2");
+    if (ipmatch("src", "$peering_id")) {
+       # yes, it is from a peering partner
+       ...
+    };
+  }
+  ...
+  # request goes to PSTN
+  setflag(PSTN);
+}
+
+onsend_route[0] {
+  if (method == "INVITE" && (!isflagset(PSTN))) {
+     # is this a request to a GW?
+     ipmatch_filter("1");
+     if (ipmatch_onsend("dst")) {
+        # request is not marked with PSTN flag, but it goes to a gateway
+        drop;
+     }
+  }
+  ...
+}
+     _________________________________________________________
+
+1.5. XML-RPC interface
+
+1.5.1. ipmatch.reload
+
+   Reloads the cached ipmatch table. The original table remains
+   active in case of any failure.
+     _________________________________________________________
+
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs

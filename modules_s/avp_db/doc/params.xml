@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="avp_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<!-- following is not needed in every section - it is needless here? 
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>-->
+
+    <title>Parameters</title>
+
+    <section id="avp_db.db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    The URL of the database to be used.
+	</para>
+	<para>
+	    Default value is "mysql://ser:heslo@localhost/ser".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>user_attrs_table</varname> (string)</title>
+	<para>
+	    Name of the table with user attributes.
+	</para>
+	<para>
+	    Default value is "user_attrs".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>uri_attrs_table</varname> (string)</title>
+	<para>
+	    Name of the table with uri attributes.
+	</para>
+	<para>
+	    Default value is "uri_attrs".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>uid_column</varname> (string)</title>
+	<para>
+	    Name of the column that stores UID in the user attributes table.
+	</para>
+	<para>
+	    Default value is "uid".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>username_column</varname> (string)</title>
+	<para>
+	    Name of the column containing the username of the subscriber in uri
+		attributes table.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>did_column</varname> (string)</title>
+	<para>
+		Name of the column in uri attributes table containing the ID of domain
+		that the subscriber belongs to.
+	</para>
+	<para>
+	    Default value is "did".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>name</varname> (string)</title>
+	<para>
+	    The name of the column containing attribute names.
+	</para>
+	<para>
+	    Default value is "name".
+	</para>
+    </section>
+    
+    <section>
+	<title><varname>value_column</varname> (string)</title>
+	<para>
+	    The name of the column containing attribute values.
+	</para>
+	<para>
+	    Default value is "value".
+	</para>
+    </section>
+    
+	<section>
+	<title><varname>type_column</varname> (string)</title>
+	<para>
+	    The name of the column containing attribute value type.
+	</para>
+	<para>
+	    Default value is "type".
+	</para>
+    </section>
+
+    <section>
+	<title><varname>flags_column</varname> (string)</title>
+	<para>
+	    The name of the column containing attribute flags.
+	</para>
+	<para>
+	    Default value is "flags".
+	</para>
+    </section>
+    
+	<section>
+	<title><varname>scheme_column</varname> (string)</title>
+	<para>
+		The name of the column containing subscriber's scheme in uri attributes.
+	</para>
+	<para>
+	    Default value is "scheme".
+	</para>
+    </section>
+
+    <section id="extra_attr_group">
+	<title><varname>attr_group</varname> (string)</title>
+	<para>
+		'Extra attribute' group definition. It can be repeated to define more
+		attribute groups.
+	</para>
+	<para>
+		The group definition contains one or more assignments in the form
+		key=value. Possible keys are:
+		<variablelist>
+		
+		<varlistentry>
+			<term>id</term>
+			<listitem><para>Attribute group identifier. Must be set.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>table</term>
+			<listitem><para>Table name used for storing attributes from this
+			attribute group. Must be set.
+			</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>flag</term>
+			<listitem><para>Attribute flag name used to mark attributes in this
+			group. Must be set.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>key_column</term>
+			<listitem><para>Column name holding key. Default value is
+			<quote>id</quote>.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>name_column</term>
+			<listitem><para>Column name used for storing attribute name. Default
+			value is <quote>name</quote>.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>value_column</term>			
+			<listitem><para>Column name used for storing attribute
+			value. Default value is <quote>value</quote>.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>type_column</term>
+			<listitem><para>Column name used for storing attribute type. Default
+			value is <quote>type</quote>.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>flags_column</term>			
+			<listitem><para>Column name used for storing attribute
+			flags. Default value is <quote>flags</quote>.</para></listitem>
+		</varlistentry>
+		</variablelist>
+	</para>
+	<para>
+	    None defined by default.
+	</para>
+	<para><example><title>attribute group definition</title>
+	<programlisting>modparam("avp_db", "attr_group", "id=dlg,flag=dialog_flag,table=dlg_attrs,key_column=dlg_id");</programlisting>
+	<para>Table used for these attributes:
+	<programlisting>mysql> describe dlg_attrs;  
++--------+------------------+------+-----+---------+-------+
+| Field  | Type             | Null | Key | Default | Extra |
++--------+------------------+------+-----+---------+-------+
+| dlg_id | varchar(256)     | NO   | MUL |         |       | 
+| name   | varchar(32)      | NO   |     |         |       | 
+| value  | varchar(255)     | YES  |     | NULL    |       | 
+| type   | int(11)          | NO   |     | 0       |       | 
+| flags  | int(10) unsigned | NO   |     | 0       |       | 
++--------+------------------+------+-----+---------+-------+
+5 rows in set (0.00 sec)
+	</programlisting>
+	</para>
+	<para>Setting flags from code (all attrs beginning with <quote>dlg_</quote>):
+	<programlisting>avpflags dialog_flag;
+...
+route {
+	...
+	setavpflag("$f./^dlg_/", "dialog_flag");
+	...
+}
+</programlisting>
+	</para>
+	</example>
+	</para>
+    </section>
+
+    <section id="auto_unlock_extra_attrs">
+	<title><varname>auto_unlock_extra_attrs</varname> (string)</title>
+	<para>
+		Determines the action when any of the 'extra attributes' lock is detected when
+		routing script execution was finished.
+
+		When the value of this parameter is zero (default) BUG level message is logged, 
+		but the lock is kept, so another process trying to obtain the lock might get stuck.
+
+		If the value is nonzero, DEBUG level message is sent to the log and all the locks are released.
+	</para>
+	<para>
+		Default value is 0.
+	</para>
+    </section>
+</section>

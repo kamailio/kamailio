@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="domain.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="domain.db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    This is <acronym>URL</acronym> of the database to be used.
+	</para>
+	<para>
+	    Default value is "mysql://serro:47serro11@localhost/ser"
+	</para>
+	<example>
+	    <title>Setting db_url parameter</title>
+	    <programlisting>
+modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="db_mode">
+	<title><varname>db_mode</varname> (integer)</title>
+	<para>
+	    Database mode. 0 means non-caching, 1 means caching.
+	</para>
+	<para>
+	    Default value is 0 (non-caching).
+	</para>
+	<example>
+	    <title>nonce_expire example</title>
+	    <programlisting>
+modparam("domain", "db_mode", 1)   # Use caching
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="domain_table">
+	<title><varname>domain_table</varname> (string)</title>
+	<para>
+	    Name of table containing names of local domains that the proxy is
+	    responsible for.  Local users must have in their sip uri a host
+	    part that is equal to one of these domains.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title>Setting domain_table parameter</title>
+	    <programlisting>
+modparam("domain", "domain_table", "new_name")
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="domain.domain_column">
+	<title><varname>domain_column</varname> (string)</title>
+	<para>
+	    Name of column containing domains in domain table.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title>Setting domain_column parameter</title>
+	    <programlisting>
+modparam("domain", "domain_column", "domain_col")
+	    </programlisting>
+	</example>
+    </section>
+</section>

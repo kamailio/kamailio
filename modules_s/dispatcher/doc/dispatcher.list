@@ -1,0 +1,12 @@
+# $Id$
+# dispatcher destination sets
+#
+
+# proxies
+2 sip:127.0.0.1:5080
+2 sip:127.0.0.1:5082
+
+# gateways
+1 sip:127.0.0.1:7070
+1 sip:127.0.0.1:7072
+1 sip:127.0.0.1:7074

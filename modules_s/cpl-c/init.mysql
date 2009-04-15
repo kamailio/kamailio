@@ -1,0 +1,3 @@
+USE ser;
+CREATE TABLE IF NOT EXISTS cpl ( user VARCHAR(50) NOT NULL PRIMARY KEY,
+ cpl_xml BLOB, cpl_bin BLOB, UNIQUE (user));

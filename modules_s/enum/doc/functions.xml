@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="enum.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="enum_query"> 
+	<title><function>enum_query(),enum_query("suffix"), enum_query("suffix","service")</function></title>
+	    <para>
+	    The function performs an enum query and rewrites the Request-URI
+	    with the result of the query. See <xref linkend="enum_overview"/>
+	    for more information.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>suffix</emphasis> - Suffix to be appended to the domain name.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>service</emphasis> - Service string to be used in
+		    the service field.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>enum_query</function> usage</title>
+	    <programlisting>
+...
+# search for "e2u+sip" in freenum.org 
+enum_query("freenum.org.");
+...
+# search for "e2u+sip" in default tree (configured as parameter)
+enum_query();
+...
+# search for "e2u+voice:sip" in e164.arpa
+enum_query("e164.arpa.","voice");
+...
+# search for service type "sip" or "voice:sip" or "video:sip"
+# note the '+' sign in front of the second parameter
+enum_query("e164.arpa.","+sip+voice:sip+video:sip");
+...
+# quering for service sip and voice:sip
+enum_query("e164.arpa.");
+enum_query("e164.arpa.","voice");
+# or use instead
+enum_query("e164.arpa.","+sip+voice:sip");
+...
+</programlisting>
+	</example>
+    </section>
+    
+    <section id="is_from_user_e164">
+	<title><function>is_from_user_e164()</function></title>
+	<para>
+	    Checks if the user part of from <abbrev>URI</abbrev> an <abbrev>E164</abbrev> number
+	    of the form +[0-9]{2,15}. Returns 1 if yes and -1 if not.
+	</para>
+	<example>
+	    <title><function>is_from_user_e164</function> usage</title>
+	    <programlisting>
+...
+if (is_from_user_e164()) {
+    ....
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

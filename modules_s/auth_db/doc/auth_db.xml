@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="auth_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Jakob</firstname>
+		<surname>Schlyter</surname>
+		<email>jakob@schlyter.se</email>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    <title>Auth_db Module</title>
+    
+    <section id="auth_db.overview">
+	<title>Overview</title>
+	<para>
+	    This module contains all authentication related functions that need
+	    the access to the database. This module should be used together
+	    with auth module, it cannot be used independently because it
+	    depends on the module. Select this module if you want to use
+	    database to store authentication information like subscriber
+	    usernames and passwords. If you want to use radius authentication,
+	    then use auth_radius instead.
+	</para>
+    </section>
+
+    <section id="auth_db.dep">
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the listed modules
+	    must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <formalpara>
+			<title>auth</title>
+			<para>
+			    Generic authentication functions.
+			</para>
+		    </formalpara>
+		</listitem>
+		<listitem>
+		    <formalpara>
+			<title>database</title>
+			<para>
+			    Any database module (currently mysql, postgres, dbtext)
+			</para>
+		    </formalpara>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>

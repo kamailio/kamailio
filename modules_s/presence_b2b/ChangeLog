@@ -1,0 +1,72 @@
+2006-07-24
+	* corrected memory leak
+
+2006-07-12
+	* improved dialog refreshing
+
+2006-06-13
+	* few common functions moved into cds/sip_utils
+
+2006-06-06
+	* corrected BUG reported by Luis Silva - added missing call to
+	parse_from_header
+
+2006-05-25
+	* added Max-Forwards header into SUBSCRIBE requests
+	* removed unnecessary TM/DIALOG binding function call in module
+	initialization
+
+2006-04-27
+	* added parameter for delayed sending of SUBSCRIBE requests
+	(max_subscribe_delay)
+
+2006-04-21
+	* added parameter presence_outbound_proxy (may be used instead of
+	presence_route or both together) - presence subscriptions are sent there
+	if set
+
+2006-04-11
+	* changed QSA (reduced memory allocations)
+
+2006-04-10
+	* changed QSA - corrected content-type propagation
+	* added parameter additional_presence_headers which holds additional
+	headers put into SUBSCRIBE requests for presence events
+
+2006-04-04
+	* sending empty string in SUBSCRIBE bodies - TCP requires content-length and
+	if sending message with NULL body, it is not set
+
+2006-03-22
+	* using get_content_length instead of strlen(body)
+	* added "Content-Length: 0" into outgoing SUBSCRIBE requests (such message
+	is otherwise not parsed by SER when using TCP transport)
+
+2006-03-21
+	* subscription status propagation through QSA
+
+2006-03-17
+	* trace function not writing into file (was due to memory leaks in fifo)
+
+2006-03-09
+	* improved behavior if low memory
+	* added new error transitions into state machine
+	* corrected memory leaks in predestroyed state
+
+2006-03-07
+	* improved robustness
+
+2006-02-17
+	* corrected BUG (resubscribe without contact)
+	* added parameters: wait_for_term_notify, resubscribe_delta,
+	min_resubscribe_time
+	* added documentation
+
+2006-02-16
+	* corrected BUG (bad and missing state machine transitions)
+	* added parameters: default_expiration, on_error_retry_time
+	
+2006-02-14
+	* created module 
+	* QSA notifier for "presence" - does SIP subscription as result of QSA
+	subscription, SUBSCRIBE can use preset route (parameter presence_route)

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="presence_b2b.functions"><title>Functions</title>
+<variablelist>
+<varlistentry>
+	<term><varname>handle_notify()</varname></term>
+	<listitem>
+		<para>Handles NOTIFY request.</para>
+		<para>The module tries to find subscription to which the NOTIFY belongs
+		to (it tries both - confirmed and unconfirmed subscriptions because
+		NOTIFY may arrive before 2xx response on SUBSCRIBE request). If no such
+		subscription exists, the function returns -1, otherwise it processes the
+		request (generates internal notification, ...) and returns 1.</para>
+	</listitem>
+</varlistentry>
+</variablelist>
+
+</section>
+

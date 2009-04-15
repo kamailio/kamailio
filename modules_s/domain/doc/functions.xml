@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="domain.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="is_from_local">
+	<title><function>is_from_local()</function></title>
+	<para>
+	    Checks based on domain table if host part of From header uri is one
+	    of the local domains that the proxy is responsible for
+	</para>
+	<example>
+	    <title>is_from_local usage</title>
+	    <programlisting>
+...
+if (is_from_local()) {
+    ...
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="is_uri_host_local">
+	<title><function>is_uri_host_local()</function></title>
+	<para>
+	    Checks based on domain table if host part of Request-URI is one of
+	    the local domains that the proxy is responsible for
+	</para>
+	<example>
+	    <title>is_uri_host_local_local usage</title>
+	    <programlisting>
+...
+if (is_uri_host_local()) {
+    ...
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

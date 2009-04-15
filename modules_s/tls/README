@@ -1,0 +1,573 @@
+
+TLS Module
+
+Andrei Pelinescu-Onciul
+
+   iptelorg GmbH
+
+   Copyright © 2007 iptelorg GmbH
+   Revision History
+   Revision $Revision$ $Date$
+     _________________________________________________________________
+
+Overview
+
+   This module implements the TLS transport for ser using the openssl
+   library (http://www.openssl.org). To enable the TLS support this
+   module must be loaded and enable_tls=yes must be added to the ser
+   config file
+
+Quick Start
+
+   Make sure you have a proper certificate and private key and either use
+   the certificate and private_key module parameters, or make sure the
+   certificate and key are in the same PEM file, named cert.pem an placed
+   in [your-cfg-install-prefix]/etc/ser/. Don't forget to load the tls
+   module and to enable tls (add enable_tls=yes to your config).
+
+   Example 1. quick start config
+#...
+loadmodule "modules/tls/tls.so"
+
+modparam("tls", "private_key", "./andrei-test.pem")
+modparam("tls", "certificate", "./andrei-test.pem")
+modparam("tls", "ca_list", "./calist.pem")
+
+enable_tls=yes
+
+route{
+        # ....
+}
+
+Important Notes
+
+   The tls module needs some special options enabled when compiling ser.
+   These options are enabled by default, however in case you're using a
+   modified ser version or Makefile, make sure that you enable -DUSE_TLS
+   and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care
+   of both options). To quickly check if your ser version was compiled
+   with these options, run ser -V and look for USE_TLS and TLS_HOOKS
+   among the flags.
+
+   This module includes several workarounds for various openssl bugs
+   (like compression and kerberos using the wrong memory allocations
+   functions, low memory problems a.s.o). On startup it will try to
+   enable the needed workarounds based on the openssl library version.
+   Each time a known problem is detected and a workaround is enabled, a
+   message will be logged. In general it is recommended to compile this
+   module on the same machine or a similar machine to where ser will be
+   run or to link it statically with libssl. For example if on the
+   compile machine openssl does not have the kerberos support enabled,
+   but on the target machine a kerberos enabled openssl library is
+   installed, ser cannot apply the needed workarounds and will refuse to
+   start. The same thing will happen if the openssl versions are too
+   different (to force ser startup anyway, see the tls_force_run module
+   parameter).
+
+   Try to avoid using keys larger then 1024 bytes. Large keys
+   significantly slow down the TLS connection handshake, thus limiting
+   the maximum ser TLS connection rate.
+
+   Compression is fully supported and used by default, if you have a new
+   enough openssl version (starting with 0.9.8). Although there are some
+   problems with zlib compression in currently deployed openssl versions
+   (up to and including 0.9.8d, see openssl bug #1468), the tls module
+   will automatically switch to its own fixed version. There's no need to
+   force-disable the compression.
+
+   The tls module includes workarounds for the following known openssl
+   bugs: openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if
+   compression is enabled, for versions between 0.9.8 and 0.9.8c),
+   openssl #1468 (fix zlib compression memory allocation), openssl #1467
+   (kerberos support will be disabled if the openssl version is less than
+   0.9.8e-beta1) and openssl #1491 (stop using tls in low memory
+   situations due to the very high risk of openssl crashing or leaking
+   memory). The bug reports can be viewed at http://rt.openssl.org/.
+
+Compiling the TLS Module
+
+   In most case compiling the TLS module is as simple as:
+make modules modules=modules/tls
+
+   or
+cd modules/tls
+make
+
+   or (compiling whole ser and the tls module)
+make all include_modules=tls
+
+   .
+
+   However in some cases the openssl library requires linking with other
+   libraries. For example compiling the openssl library with kerberos and
+   zlib-shared support will require linking the tls module with libkrb5
+   and libz. In this case just add TLS_EXTRA_LIBS="library list" to
+   make's command line. E.g.:
+make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
+
+   In general, if ser fails to start with a symbol not found error when
+   trying to load the tls module (check the log), it means some needed
+   library was not linked and it must be added to TLS_EXTRA_LIBS
+
+TLS and Low Memory
+
+   The openssl library doesn't handle very well low memory situations. If
+   memory allocations start to fail (due to memory shortage), openssl can
+   crash or cause memory leaks (making the memory shortage even worse).
+   As of this writing all openssl versions were affected (includind
+   0.9.8e), see openssl bug #1491. The tls module has some workarounds
+   for preventing this problem (see low_mem_treshold1 and
+   low_mem_threshold2), however starting ser with enough shared memory is
+   higly recommended. When this is not possible a quick way to
+   significantly reduce openssl memory usage it to disable compression
+   (see tls_disable_compression).
+
+Known Limitations
+
+   The private key must not encrypted (ser cannot ask you for a password
+   on startup).
+
+   The tls certificate verifications ignores the certificate name,
+   altname and ip extensions, it just checks if the certificate is signed
+   by a recognized CA. One can use the select framework to try to
+   overcome this limitation (check in the script for the contents of
+   various certificate fields), but this is not only slow, but also not
+   exactly standard conforming (the verification should happen during TLS
+   connection establishment and not after).
+
+   TLS specific config reloading is not safe, so for now better don't use
+   it, especially under heavy traffic.
+
+   This documentation is incomplete. The select framework and rpc
+   sections are completely missing.
+
+Quick Certificate Howto
+
+   Revision History
+   Revision $Revision$ $Date$
+
+   There are various ways to create, sign certificates and manage small
+   CAs (Certificate Authorities). If you want a GUI, try tinyca
+   (http://tinyca.sm-zone.net/), a very nice and small CA management
+   application. If you are in a hurry and everything you have are the
+   installed openssl libraries and utilities, read on.
+
+   Assumptions: we run our own CA.
+
+   Warning: in this example no key is encrypted. The client and server
+   private keys must not be encrypted (ser doesn't support encrypted
+   keys), so make sure the corresponding files are readable only by
+   trusted people. You should use a password for your CA private key.
+
+Creating CA certificate
+-----------------------
+1. create CA dir
+        mkdir ca
+        cd ca
+
+2. create ca dir structure and files  (see ca(1))
+        mkdir demoCA #default CA name, edit /etc/ss/openssl.cnf
+        mkdir  demoCA/private
+        mkdir demoCA/newcerts
+        touch demoCA/index.txt
+        echo 01 >demoCA/serial
+
+2. create CA private key
+        openssl genrsa -out demoCA/private/cakey.pem 2048
+        chmod 600 demoCA/private/cakey.pem
+
+3. create CA self-signed certificate
+        openssl req -out demoCA/cacert.pem   -x509 -new -key demoCA/private/cak
+ey.pem
+
+
+Creating a server/client certificate
+------------------------------------
+1. create a certificate request (and its private key in privkey.pem)
+        openssl req -out ser1_cert_req.pem -new -nodes
+   WARNING: the organization name should be the same as in the ca certificate.
+
+2. sign it with the ca certificate
+        openssl ca -in ser1_cert_req.pem -out ser1_cert.pem
+
+3. copy ser1_cert.pem to your ser config. dir
+
+
+Setting ser to use the certificate
+----------------------------------
+1. create the ca list file:
+        for each of your ca certificates that you intend to use do:
+                cat cacert.pem >>calist.pem
+
+2. copy your ser certificate, private key and ca list file to your
+        intended machine (preferably in your ser cfg. directory, this is the
+        default place ser searches for)
+
+3. set up ser.cfg to use the certificate
+        if your ser certificate name is different from cert.pem or it is not
+        placed in ser cfg. directory, add to your ser.cfg:
+                modparam("tls", "certificate", "/path/cert_file_name")
+
+4. set up ser to use the private key
+        if your private key is not contained in the certificate (or the
+         certificate name is not the default cert.pem), add to your ser.cfg:
+                modparam("tls", "private_key", "/path/private_key_file")
+
+5. set up ser to use the ca list (optional)
+        add to your ser.cfg:
+                modparam("tls", "ca_list", "/path/ca_list_file")
+
+6. set up tls authentication options:
+                modparam("tls", "verify_certificate", 1)
+                modparam("tls", "require_certificate", 1)
+        (for more information see the module parameters documentation)
+
+Parameters
+
+   Revision History
+   Revision $Revision$ $Date$
+
+tls_method (string)
+
+   Sets the SSL protocol method. Possible values are:
+     * TLSv1 - only TLSv1 connections are accepted. This is the default
+       and recommended method (if you want to be rfc3261 conformant don't
+       change it).
+     * SSLv3 - only SSLv3 connections are accepted
+     * SSLv2 - only SSLv2 connections, for old clients. Note: you
+       shouldn't use SSLv2 for anything which should be highly secure.
+     * SSLv23 - any of the above methods will be accepted, with the
+       following limitation: the initial SSL hello message must be V2 (in
+       the initial hello all the supported protocols are advertised
+       enabling switching to a higher and more secure version). This
+       means connections from SSLv3 or TLSv1 clients will not be
+       accepted.
+
+   If rfc3261 conformance is desired, TLSv1 must be used. For
+   compatibility with older clients SSLv23 is a good option.
+
+   Example 2. Set tls_method parameter
+...
+modparam("tls", "tls_method", "TLSv1")
+...
+
+certificate (string)
+
+   Sets the certificate file name. The certificate file can also contain
+   the private key.
+
+   Warning: try not to use certificate with keys longer then 1024 bytes.
+   Longer keys will severely impact performance, in particular the tls
+   connection rate.
+
+   The default value is [SER_CFG_DIR]/cert.pem.
+
+   Example 3. Set certificate parameter
+...
+modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
+...
+
+private_key (string)
+
+   Sets the private key file name.
+
+   Note: the private key can be contained in the same file as the
+   certificate (just append it to the certificate file, e.g.: cat
+   pkey.pem >> cert.pem)
+
+   The default value is [SER_CFG_DIR]/cert.pem.
+
+   Example 4. Set private_key parameter
+...
+modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
+...
+
+ca_list (string)
+
+   Sets the CA list file name. This file contains a list of all the
+   trusted CAs certificates. If a signature in a certificate chain
+   belongs to one of the listed CAs, the authentication will succeed. See
+   also verify_certificate, verify_depth and require_certificate.
+
+   By default the CA file is not set.
+
+   An easy way to create the CA list is to append each trusted trusted CA
+   certificate in the PEM format to one file, e.g.: for f in
+   trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done .
+
+   Example 5. Set ca_list parameter
+...
+modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
+...
+
+verify_certificate (boolean)
+
+   If enabled it will force certificate verification. For more
+   information see the verify(1) openssl man page.
+
+   Note: the certificate verification will always fail if the ca_list is
+   empty.
+
+   See also: ca_list, require_certificate, verify_depth.
+
+   By default the certificate verification is off.
+
+   Example 6. Set verify_certificate parameter
+...
+modparam("tls", "verify_certificate", 1)
+...
+
+verify_depth (integer)
+
+   Sets how far up the certificate chain will the certificate
+   verification go in the search for a trusted CA.
+
+   See also: ca_list, require_certificate, verify_certificate,
+
+   The default value is 9.
+
+   Example 7. Set verify_depth parameter
+...
+modparam("tls", "verify_depth", 9)
+...
+
+require_certificate (boolean)
+
+   When enabled it will require a certificate from a client. If the
+   client does not offer a certificate and verify_certificate is on, the
+   certificate verification will fail.
+
+   The default value is off.
+
+   Example 8. Set require_certificate parameter
+...
+modparam("tls", "require_certificate", 1)
+...
+
+cipher_list (string)
+
+   Sets the list of accepted ciphers. The list consists of cipher strings
+   separated by colons. For more information on the cipher list format
+   see the cipher(1) openssl man page.
+
+   The default value is not set (all the openssl supported ciphers are
+   enabled).
+
+   Example 9. Set cipher_list parameter
+...
+modparam("tls", "cipher_list", "HIGH")
+...
+
+send_timeout (int)
+
+   Sets the maximum interval of time after which ser will give up trying
+   to send a message over tls (time after a tls send will be aborted and
+   the corresponding tls connection closed). The value is in seconds.
+
+   The default value is 120 s.
+
+   Example 10. Set send_timeout parameter
+...
+modparam("tls", "send_timeout", 1)
+...
+
+handshake_timeout (int)
+
+   Sets the maximum interval of time after which ser will give up trying
+   to accept a tls connection or connect to a tls peer. The value is in
+   seconds.
+
+   The default value is 120 s.
+
+   Example 11. Set handshake_timeout parameter
+...
+modparam("tls", "handshake_timeout", 1)
+...
+
+connection_timeout (int)
+
+   Sets the amount of time after which an idle tls connection will be
+   closed. This is similar to tcp_connection_lifetime. The value is
+   expressed in seconds.
+
+   The default value is 10 min.
+
+   If the value set is -1, the connection will never be close on idle.
+
+   Example 12. Set connection_timeout parameter
+...
+modparam("tls", "connection_timeout", 60)
+...
+
+tls_disable_compression (boolean)
+
+   If set compression over SSL/TLS will be disabled.
+
+   By default compression is enabled.
+
+   Example 13. Set tls_disable_compression parameter
+...
+modparam("tls", "tls_disable_compression", 1)
+...
+
+tls_log (int)
+
+   Sets the log level at which tls related messages will be logged.
+
+   The default value is 3.
+
+   Example 14. Set tls_log parameter
+...
+# ignore tls messages if ser is started with debug less than 10
+modparam("tls", "tls_log", 10)
+...
+
+low_mem_threshold1 (integer)
+
+   Sets the minimal free memory from which new tls connection will start
+   to fail. The value is expressed in KB.
+
+   The default value depends on whether the openssl library used handles
+   well low memory situations (openssl bug #1491). As of this writing
+   this is not true for any openssl version (including 0.9.8e).
+
+   If an ill-behaved openssl version is detected, a very conservative
+   value is choosed, which depends on the maximum possible number of
+   simultaneously created tls connections (and hence on the process
+   number).
+
+   The following values have a special meaning:
+     * -1 - use the default value
+     * 0 - disable (tls connections will not fail preemptively)
+
+   See also low_mem_threshold2.
+
+   Example 15. Set low_memory_threshold1 parameter
+...
+modparam("tls", "low_memory_threshold1", -1)
+...
+
+low_mem_threshold2 (integer)
+
+   Sets the minimal free memory from which tls operations on already
+   established tls connections will start to fail preemptively. The value
+   is expressed in KB.
+
+   The default value depends on whether the openssl library used handles
+   well low memory situations (openssl bug #1491). As of this writing
+   this is not true for any openssl version (including 0.9.8e).
+
+   If an ill-behaved openssl version is detected, a very conservative
+   value is choosed, which depends on the maximum possible number of
+   simultaneously created tls connections (and hence on the process
+   number).
+
+   The following values have a special meaning:
+     * -1 - use the default value
+     * 0 - disable (tls operations will not fail preemptively)
+
+   See also low_mem_threshold1.
+
+   Example 16. Set low_memory_threshold2 parameter
+...
+modparam("tls", "low_memory_threshold2", -1)
+...
+
+tls_force_run (boolean)
+
+   If enabled ser will start even if some of the openssl sanity checks
+   fail (turn it on at your own risk).
+
+   Currently failing any of the following sanity checks will not allow
+   ser to start:
+     * the version of the library the tls module was compiled with is
+       "too different" from the library used at runtime. The versions
+       should have the same major, minor and fix level (e.g.: 0.9.8a and
+       0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
+     * the openssl library used at compile time and the one used at
+       runtime have different kerberos options
+
+   By default tls_force_run is disabled.
+
+   Example 17. Set tls_force_run parameter
+...
+modparam("tls", "tls_force_run", 11)
+...
+
+config (string)
+
+   Sets the name of the TLS specific config file.
+
+   If set the tls module will load a special config file, in which
+   different tls parameters can be specified on a per role (server or
+   client) and domain basis (for now only IPs). The corresponding module
+   parameters will be ignored.
+
+   By default no config file is specified.
+
+   The following parameters can be set in the config file, for each
+   domain:
+     * tls_method
+     * verify_certificate
+     * require_certificate
+     * private_key
+     * certificate
+     * verify_depth
+     * ca_list
+     * cipher_list
+
+   ser acts as a server when it accepts a connection and as a client when
+   it initiates a new connection by itself (it connects to something).
+
+   Example 18. Short config file
+[server:default]
+method = TLSv1
+verify_certificate = no
+require_certificate = no
+private_key = default_key.pem
+certificate = default_cert.pem
+ca_list = default_ca.pem
+
+[client:default]
+verify_certificate = yes
+require_certificate = yes
+
+#more relaxed for connection on the loopback interface
+[server:127.0.0.1:5061]
+method = SSLv23
+verify_certificate = yes
+require_certificate = no
+private_key = local_key.pem
+certificate = local_cert.pem
+verify_depth = 3
+ca_list = local_ca.pem
+
+   For a more complete example check the tls.cfg distributed with the ser
+   source (sip_router/modules/tls/tls.cfg).
+
+   Example 19. Set config parameter
+...
+modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
+...
+
+Functions
+
+   Revision History
+   Revision $Revision$ $Date$
+
+History
+
+   Revision History
+   Revision $Revision$ $Date$
+
+   This module was put together by Jan Janak <jan@iptel.org> from code
+   from the experimental tls core addon
+   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/),
+   code originally written by Peter Griffiths and later maintained by
+   Cesc Santasusana and from an iptelorg tls code addon, written by
+   Andrei Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for
+   multiple domains, a tls specific config, config reloading and a tls
+   specific select framework.
+
+   The code is currently maintained by Andrei Pelinescu-Onciul
+   <andrei@iptel.org>.

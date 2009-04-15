@@ -1,0 +1,241 @@
+<!--    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jamey</firstname>
+		<surname>Hicks</surname>
+		<affiliation><orgname>Hewlett-Packard Company</orgname></affiliation>
+		<address>
+		    <email>jamey.hicks@hp.com</email>
+		</address>
+	    </author>	    
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	    <holder>Hewlett-Packard Company</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>-->
+    
+    <section id="pa.overview">
+	<title>Overview</title>
+	<para>
+<!--	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages
+	    and sends NOTIFY when presence status of a user changes. Currently the presence server
+	    can be connected to registrar and jabber module so SIP users can see presence of jabber
+	    users.-->
+		This module implements a presence server, i.e. entity that receives
+		SUBSCRIBE requests and sends NOTIFY when presence status of a user
+		changes and allows user to use PUBLISH request for publishing presence
+		status information. 
+	</para>
+	
+	<section><title>Features</title>
+	<para><itemizedlist>
+		<listitem><para>handle SUBSCRIBE requests</para></listitem>
+		<listitem><para>handle PUBLISH requests</para></listitem>
+		<listitem><para>XCAP authorization of subscriptions</para></listitem>
+		<listitem><para>failover - all subscription's data including SIP dialogs
+		can be stored into database and reloaded on startup</para></listitem>
+		<listitem><para>offline watcher info - watchers can be stored into
+		database when presentity is offline and sent in watcher info
+		notification when presentity subscribes to its watcherinfo
+		again</para></listitem>
+	</itemizedlist>
+	</para>
+	</section>
+	
+	<section><title>Presence status</title>
+	<para>User's presence status is hold internaly (in memory); it can be taken from:
+	<itemizedlist>
+		<listitem><para>registrar - online/offline information with
+		contact</para></listitem>
+		<listitem><para>published information by user (see <xref
+		linkend="pres_rfc_publish"/>) </para></listitem>
+		<listitem><para>to be done: from reg events subscriptions</para></listitem>
+		<listitem><para>to be done: from subscriptions to users</para></listitem>
+	</itemizedlist>
+	</para>
+	<para>TODO: cache mode needed by large setups, when the presence status
+	will be in memory only cached, not fully stored (limited size of cache,
+	possibility to switch it off). [status: design in progress, coding will
+	start after	Ottendorf will be branched]</para>
+	</section>
+
+	<section><title>Supported document formats</title>
+	<para>Supported document formats in PUBLISH:
+	<itemizedlist>
+		<listitem><para>PIDF - see <xref linkend="pres_rfc_pidf"/></para></listitem>
+		<listitem><para>CPIM-PIDF (last version which differs from PIDF only in
+		namespaces and MIME type name)</para></listitem>
+		<listitem><para>PIDF extensions (like RPID <xref linkend="pres_rpid"/>)</para></listitem>
+	</itemizedlist>
+	</para>
+	
+	<para>Supported document formats in NOTIFY:
+	<itemizedlist>
+		<listitem><para>PIDF - see <xref linkend="pres_rfc_pidf"/></para></listitem>
+		<listitem><para>CPIM-PIDF (last version which differs from PIDF only in
+		namespaces and MIME type name)</para></listitem>
+		<listitem><para>LPIDF</para></listitem>
+		<listitem><para>XPIDF (MS variant used by Windows Messenger 4.7)</para></listitem>
+		<listitem><para>PIDF extensions (like RPID <xref linkend="pres_rpid"/>)</para></listitem>
+	</itemizedlist>
+	</para>
+	</section>
+	
+    </section>
+	
+	<section id="pa.dependencies"><title>Dependencies</title>
+	<itemizedlist><title>Modules</title>
+		<listitem><para><application>tm</application></para></listitem>
+		<listitem><para><application>dialog</application></para></listitem>
+		<listitem><para><application>usrloc</application></para></listitem>
+		<listitem><para>optionaly database module
+		(<application>mysql</application>, ...)</para></listitem>
+		<listitem><para>optionaly <application>xcap</application> module for XCAP
+		authorization</para></listitem>
+	</itemizedlist>
+	<itemizedlist><title>Libraries</title>
+			<listitem><para><application>libxml2</application> - external
+			library for parsing XML documents</para></listitem>
+			<listitem><para><application>libcds (internal)</application></para></listitem>
+			<listitem><para><application>libxcap (internal)</application> - XCAP queries
+			(authorization)</para></listitem>
+			<listitem><para><application>libpresence (internal)</application> - used for
+			internal subscriptions from RLS</para></listitem>
+	</itemizedlist>
+	</section>
+
+<section><title>Behaviour</title>
+<para>Short notes to be remembered...
+</para>
+
+<!--
+
+<para>Authorization and re-authorization can be done in two ways:
+<itemizedlist>
+	<listitem><para>asynchronously by timer - recommended for higher performance</para></listitem>
+	<listitem><para>synchronously - always when processing SUBSCRIBE request.
+	This can slow down the processing of SUBSCRIBE request quite much and
+	watcher reauthorization is done only when resubscribing which can be
+	insufficient.</para></listitem>
+</itemizedlist>
+
+-->
+
+<para>There are two possibilities how to get authorization rules from XCAP when
+creating new presentity (controled by module parameter
+<parameter>async_auth_queries</parameter>):
+<itemizedlist>
+	<listitem><para>asynchronously - XCAP is not queried when processing SUBSCRIBE
+	request which created presentity what results into 202 response and delayed
+	authorization of such first watcher. First NOTIFY in this case will carry no
+	information and "pending" status; later (as soon as will be authorization
+	rules got from XCAP) will be generated
+	other NOTIFY with correct authorization status.</para></listitem>
+	<listitem><para>synchronously - XCAP is queried for presence rules immediately,
+	but this slows down processing of such SUBSCRIBE request and may bring
+	problems under heavy load so it is not recommended. In this case first
+	NOTIFY contains correct subscription status and data.</para></listitem>
+</itemizedlist>
+</para>
+
+<para>Other SUBSCRIBE requests than the first one which creates the presentity
+already have authorization document which is stored within presentity's data and
+don't need to wait for XCAP. But this can consume lots of memory [TODO: this
+will be solved by intelligent document caching within XCAP module only].</para> 
+
+<para>Re-authorization is done by timer - authorization document queries for
+each presentity are sent time after time and all presentity's watchers are
+reauthorized.  This is due to missing implementation of notification mechanism
+for XCAP server data changes (might be implemented in the future, but XCAP
+server able to do it is needed!).</para>
+
+<para>One of reasons which lead to timer-based reauthorization was that previous
+method, when reauthorization was done only when watcher is resubscribing, was
+not acceptable for users which want to propagate changes in authorization
+document immediately.</para>
+
+<para>When a non-2xx final response to a NOTIFY comes, the subscription is
+destroyed (really needed under high load). It is possible to say that 408
+responses are ignored (see parameter
+<parameter>ignore_408_on_notify</parameter>) but this should be used for testing
+only.
+</para>
+</section>
+
+<section><title>State aggregation</title>
+<para>PA modules does state aggregation from multiple sources:
+<variablelist>
+	<varlistentry><term>registrar</term>
+	<listitem><para>Information from registrar is taken by callbacks
+	to usrloc module. Each registered contact is taken as a standalone tuple.
+	Status may be <quote>open</quote> or <quote>closed</quote>, contact for the
+	tuple is taken from contact registration. Priority of such tuples is taken
+	from parameter <varname>default_priority_percentage</varname>. It is
+	recommended to have this value lower than priority of tuples published by
+	PUBLISH.</para>
+	<para>You can ommit this source by setting <varname>use_callbacks</varname>
+	to 0.</para></listitem></varlistentry>
+
+	<varlistentry><term>published state</term>
+	<listitem><para>State published by clients using PUBLISH request according
+	to RFC 3903. There can be more published tuples, each of them is identified
+	by its id in PIDF document. This id is used for tuple identification in
+	re-publications, but it is NOT used as id in NOTIFYs sent from PA. Instead
+	of it is used newly generated tuple id because this id must be
+	unique (across all presentity's UACs).</para>
+	<para>It is NOT possible to replace existing tuple with
+	publishing information for tuple with the same id - this would be against
+	RFC 3903! When publishing status it is only possible to have influence on
+	tuples published with the same entity tag (see Sip-If-Match and SIP-ETag
+	header fields).</para>
+	
+	<para>PA understoods only basic PIDF, but it can handle PIDF extensions like
+	RPID too. PIDF extensions are hold as whole XML elements without knowing
+	about their definition and thus publishing client is responsible for correct
+	content of them. PA ignores "mustUnderstand" attribute (see <xref
+	linkend="pres_rfc_pidf"/>). [Are there any problems with it?]</para>
+	
+	<para>You can control this source by PUBLISH request handling in config
+	script (function <function>handle_publish</function>).</para>
+	
+	</listitem></varlistentry>
+
+<!--
+	<varlistentry><term>UACs</term>
+		<listitem><para>PA module is able to send subscriptions using
+		presence_b2b module through internal API (QSA) and handle received
+		NOTIFY requests like PUBLISH.
+		</para></listitem>
+	</varlistentry>
+	-->
+	
+</variablelist>
+</para>
+</section>
+
+    <include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
+    <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+    <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+
+<!--
+<section><title>Development</title>
+<include xmlns="http://www.w3.org/2001/XInclude" href="auth.xml"/>
+</section>
+-->

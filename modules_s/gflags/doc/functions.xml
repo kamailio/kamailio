@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="gflags.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="set_gflag">
+	<title><function>set_gflag(flag_num)</function></title>
+	<para>
+	    Set the flag identified by flag_num to 1. The range of
+	    flag_num is 0 to 31.
+	</para>
+	<example>
+	    <title><function>set_gflag</function> usage</title>
+	    <programlisting>
+...
+set_gflag("2");
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="reset_gflag">
+	<title><function>reset_gflag(flag_num)</function></title>
+	<para>
+	    Set the flag identified by flag_num to 0. The range of
+	    flag_num is 0 to 31.
+	</para>
+	<example>
+	    <title><function>reset_gflag</function> usage</title>
+	    <programlisting>
+...
+reset_gflag("2");
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="is_gflag">
+	<title><function moreinfo="none">is_gflag(flag_num)</function></title>
+	<para>
+	    Returns 1 when flag identified by flag_num is set, 0
+	    otherwise. The range of flag_num parameter is 0 to 31.
+	</para>
+    </section>
+
+</section>

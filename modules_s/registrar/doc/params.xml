@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="registrar.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="registar.default_expires">
+	<title><varname>default_expires</varname> (integer)</title>
+	<para>
+	    If the processed message contains neither Expires
+	    <acronym>HFs</acronym> nor expires contact parameters, this value
+	    will be used for newly created usrloc records. The parameter
+	    contains number of second to expire (for example use 3600 for one
+	    hour).
+	</para>
+	<para>
+	    Default value is 3600.
+	</para>
+	<example>
+	    <title>Set <varname>default_expires</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "default_expires", 1800)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="min_expires">
+	<title><varname>min_expires</varname> (integer)</title>
+	<para>
+	    The minimum expires value of a Contact, values lower than this
+	    minimum will be automatically set to the minimum. Value 0 disables
+	    the checking.
+	</para>
+	<para>
+	    Default value is 60.
+	</para>
+	<example>
+	    <title>Set <varname>min_expires</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "min_expires", 60)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="max_expires">
+	<title><varname>max_expires</varname> (integer)</title>
+	<para>
+	    The maximum expires value of a Contact, values higher than this
+	    maximum will be automatically set to the maximum. Value 0 disables
+	    the checking.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>max_expires</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "max_expires", 120)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="default_q">
+	<title><varname>default_q</varname> (integer)</title>
+	<para>
+	    The parameter represents default q value for new contacts. Because
+	    ser doesn't support float parameter types, the value in the
+	    parameter is divided by 100 and stored as float. For example, if
+	    you want default_q to be 0.38, use value 38 here.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>default_q</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "default_q", 100)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="append_branches">
+	<title><varname>append_branches</varname> (integer)</title>
+	<para>
+	    The parameter controls how lookup function processes multiple
+	    contacts.  If there are multiple contacts for the given username in
+	    usrloc and this parameter is set to 1, Request-URI will be
+	    overwritten with the highest-q rated contact and the rest will be
+	    appended to sip_msg structure and can be later used by tm for
+	    forking. If the parameter is set to 0, only Request-URI will be
+	    overwritten with the highest-q rated contact and the rest will be
+	    left unprocessed.
+	</para>
+	<para>
+	    Default value is 1.
+	</para>
+	<example>
+	    <title>Set <varname>append_branches</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "append_branches", 0)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="registrar.use_domain">
+	<title><varname>use_domain</varname> (integer)</title>
+	<para>
+	    If set to 1 then the registrar will use username@domain as address
+	    of record. If the variable is set to 0 then only username will be
+	    used as the address of record.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>use_domain</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "use_domain", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="case_sensitive">
+	<title><varname>case_sensitive</varname> (integer)</title>
+	<para>
+	    If set to 1 then <acronym>AOR</acronym> comparison will be case
+	    sensitive, if set to 0 then <acronym>AOR</acronym> comparison will
+	    be case insensitive--This is recommended.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>case_sensitive</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "case_sensitive", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="desc_time_order">
+	<title><varname>desc_time_order</varname> (integer)</title>
+	<para>
+	    If set to 1 then all contacts will be ordered in descending
+	    modification time order. In this case the most recently
+	    updated/created contact will be used.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>desc_time_order</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "desc_time_order", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="registrar.received_avp">
+	<title><varname>received_avp</varname> (integer)</title>
+	<para>
+	    Registrar will store the value of the AVP configured by this
+	    parameter in the received column in the user location database. It
+	    will leave the column empty if the AVP is empty. The AVP should
+	    contain a SIP URI consisting of the source IP, port, and protocol
+	    of the REGISTER message being processed.
+	</para>
+	<note>
+	    <para>
+		The value of this parameter should be the same as the value of
+		corresponding parameter of nathelper module.
+	    </para>
+	</note>
+	<para>
+	    Default value is 42.
+	</para>
+	<example>
+	    <title>Set <varname>received_avp</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "received_avp", 43)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="received_param">
+	<title><varname>received_param</varname> (integer)</title>
+	<para>
+	    The name of the parameter that will be appended to Contacts of 200
+	    OK when the received URI was set by nathelper module.
+	</para>
+	<para>
+	    Default value is "received".
+	</para>
+	<example>
+	    <title>Set <varname>received_param</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "received_param", "rcv")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="max_contacts">
+	<title><varname>max_contacts</varname> (integer)</title>
+	<para>
+	    The parameter can be used to limit the number of contacts per AOR
+	    (Address of Record) in the user location database. Value 0 disables
+	    the check.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>max_contacts</varname> parameter</title>
+	    <programlisting>
+...
+# Allow no more than 10 contacts per AOR
+modparam("registrar", "max_contacts", 10)
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="retry_after">
+	<title><varname>retry_after</varname> (integer)</title>
+	<para>
+	    The registrar can generate 5xx reply to REGISTER in various
+	    situations. It can, for example, happen when the
+	    <varname>max_contacts</varname> parameter is set and the processing
+	    of REGISTER request would exceed the limit. In this case the
+	    registrar would generate "503 Service Unavailable" response.
+	</para>
+	<para>
+	    If you want to add the Retry-After header field in 5xx replies, set
+	    this parameter to a value grater than zero (0 means do not add the
+	    header field). See section 20.33 of RFC3261 for more details.
+	</para>
+	<para>
+	    Default value is 0 (disabled).
+	</para>
+	<example>
+	    <title>Set <varname>retry_after</varname> parameter</title>
+	    <programlisting>
+...
+modparam("registrar", "retry_after", 30)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

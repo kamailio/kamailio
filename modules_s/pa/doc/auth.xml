@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>Authorization implementation</title>
+<para>Authorization is one of key elements within presence server. PA module
+supports only XCAP authorization now.</para>
+<para>Internal subscriptions may use default settings only (XCAP root, XCAP
+parameters) which is insufficient! Can we use separate route in config to
+set this? Or manipulate directly with XCAP module data members/functions for
+setting them?
+</para>
+
+<para>We will use <quote>delayed authorization</quote> from now. When is the
+presentity created, authorization rules are empty and they are asynchronously
+requested from XCAP. As soon as they arrive all watchers for presentity are
+reauthorized. Authorization rules are checked after some amount of time
+according to settings (this eliminates need of notification changes from XCAP
+for now).</para>
+
+</section>

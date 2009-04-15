@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ratelimit.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="rl.check">
+	<title><function>rl.check()</function></title>
+	<para>
+		Add the current request to the internal counters and determine
+		if this request is above the limit.
+		The ratelimit module has different internal counters for the
+		supported request types and if a counter is exceeded the function
+		returns an error code.
+	</para>
+	<example>
+	    <title><function>rl.check</function> usage</title>
+	    <programlisting>
+...
+if (method==INVITE) {
+  if (!rl_check()) {
+    sl_send_reply("503", "Service Unavailable");
+    break;
+  }
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+</section>

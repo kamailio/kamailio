@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+		<!ENTITY base SYSTEM "rls_base.xml" >
+	]>
+
+<section id="pres_rls"><title>RLS (Resource List Server)</title>
+	    
+    <sectioninfo><authorgroup>
+	<author>
+		<firstname>Vaclav</firstname>
+		<surname>Kubart</surname>
+		<affiliation><orgname>Iptel/Tekelec</orgname></affiliation>
+		<email>vaclav.kubart@iptel.org</email>
+	</author>
+	</authorgroup></sectioninfo>
+
+&base;
+
+<!-- bibliography needed for standalone compilation -->
+<include xmlns="http://www.w3.org/2001/XInclude" 
+	href="../../../doc/presence/biblio.xml"/>
+
+</section>
+

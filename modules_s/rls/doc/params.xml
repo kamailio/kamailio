@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="rls.parameters"><title>Parameters</title>
+
+<variablelist>
+<varlistentry>
+	<term><varname>min_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Minimal subscription expiration timeout in seconds.</para>
+		<para>If client supplies 
+		value, which is less than value of <varname>min_expiration</varname>,
+		the server returns response "423 Interval too small" as described
+		in <xref linkend="pres_rfc_events"/>.</para>
+		<para>Default value is 60.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>max_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Maximal subscription expiration timeout in seconds.</para>
+		<para>If client supplies 
+		value, which is more than value of <varname>max_expiration</varname>,
+		the server shortens this value to value of this variable as described
+		in <xref linkend="pres_rfc_events"/>.</para>
+		<para>Default value is 7200.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>default_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Default subscription expiration timeout in seconds.</para>
+		<para>If client doesn't supply subscription expiration timeout this 
+		value is used.</para>
+		<para>Default value is 3761.</para>
+	</listitem>
+</varlistentry>
+<varlistentry><term><varname>auth</varname> (string)</term>
+	<listitem>
+	<para>This variable specifies authorization type for list watchers. 
+	Value can be one of:
+	<variablelist>
+	<varlistentry>
+		<term>none</term>
+		<listitem><para>All watchers are <emphasis>always authorized</emphasis>. This is not recommended
+		because it ignores user's wish.</para></listitem>
+	</varlistentry>
+	<varlistentry>
+		<term>implicit</term>
+		<listitem><para>In this case is implicit authorization done. This means,
+		that for list URIs in the form
+		<quote><literal>&lt;username&gt;-list@domain</literal></quote> is subscription allowed
+		only for user with username <literal>&lt;username&gt;</literal>,
+		rejected for others.</para>
+		<para>If the URI is not in the form presented above, the subscription is
+		marked as pending.</para></listitem>
+	</varlistentry>
+	<!--
+	<varlistentry>
+		<term>xcap</term>
+		<listitem><para>This type of authorization means, that authorization rules
+		are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
+		In this case the <varname>auth_xcap_root</varname> must be set.</para></listitem>
+	</varlistentry>
+	-->
+	</variablelist>
+	</para>
+	<para>Default value is empty. In this case <quote>implict</quote> authorization
+	is used with an error message.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>reduce_xcap_needs</varname> (int)</term>
+	<listitem><para>If set to 1 the module tries to do simplify XCAP queries -
+	queries will be done for whole documents, not partial, thus the XCAP server may be simulated
+	using standard web server. It has influence only on querying resource lists
+	and it will work correctly only if there are no links to resource
+	lists containg partial documents URIs (lists should be contained directly in
+	main rls-services document).
+	</para>
+	<para>Default value is 0.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>db_mode</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1, RLS module stores all subscription data into database
+		and reloads them on startup. Requires <varname>db_url</varname> to be
+		set.</para> 
+		<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>db_url</varname> (integer)</term>
+	<listitem>
+		<para>Database connection URL. It has to be specified if
+		<varname>db_mode</varname> is set.</para>
+		<para>Default value is empty.</para>
+		<example><title><varname>db_url</varname> settings</title>
+<programlisting>
+...
+modparam("rls", "db_mode", 1)
+modparam("rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+...
+</programlisting>
+		</example>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>max_notifications_at_once</term>
+	<listitem><para>Max. number of notifications sent within one timer tick
+	(experimental). It might be used to reduce SER's machine load if there are
+	lots of changes in presence status.</para>
+	<para>Default value is 1000000. (Too high number which in praxis means
+	unlimited.)</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>timer_interval</term>
+	<listitem><para>Interval in seconds when are processed internal
+	notifications and sent NOTIFYs to subscribers.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>max_nesting_level</term>
+	<listitem><para>Maximum number of nested lists. For example if set to 2, it
+	it possible to use "list nested in list nested in root list".</para>
+	<para>Default value	is -1 what means <quote>unlimited</quote>.</para>
+	<para>It is possible to use this for speedup - if you know, that you will
+	need only <quote>flat</quote> lists (no nested lists), you can set this to
+	0. In this case RLS doesn't try to query XCAP server for <quote>possibly
+	netsted list URIs</quote> and directly creates subscription to URIs in list
+	like if they are URIs of standalone users.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>expiration_timer_period</term>
+	<listitem><para>Interval in seconds of timer which removes expired
+	subscriptions.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>ignore_408_on_notify</term>
+	<listitem><para>If set to 1 and 408 response to NOTIFY arrives, the dialog
+	is NOT destroyed like in the case of other non-2xx responses. Use for
+	testing only. Default value is 0.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>init_timer_delay</term>
+	<listitem><para>Delay in seconds of timer which triggers loading data from
+	database after startup. This is needed due to dependencies on other modules
+	(pa/presence_b2b) - we need that these modules will be successfully
+	initialised before reading data from DB and querying these modules.</para>
+	<para>Default value is 3.</para></listitem>
+</varlistentry>
+
+</variablelist>
+</section>
+

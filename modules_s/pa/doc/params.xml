@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="pa.parameters"><title>Parameters</title>
+
+<variablelist>
+
+<varlistentry>
+	<term><varname>default_expires</varname> (integer)</term>
+	<listitem>
+		<para>Default expiration value to be used when the client
+		doesn't supply one (in seconds). It is used for both subscriptions and
+		publications.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>max_subscription_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Maximal subscription expiration value in seconds.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>max_publish_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Maximal expiration of presence status information published via
+		PUBLISH in seconds.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>use_db</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1, PA module stores all subscription data into database
+		and reloads them on startup. Requires <varname>db_url</varname> to be
+		set.</para> 
+		<para>Default value is 1.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>db_url</varname> (integer)</term>
+	<listitem>
+		<para>Database connection URL. It has to be specified if
+		<varname>use_db</varname> or <varname>use_offline_winfo</varname> is
+		set.</para>
+		<para>Default value is empty.</para>
+		<example><title><varname>db_url</varname> settings</title>
+<programlisting>
+...
+modparam("pa", "use_db", 1)
+modparam("pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+...
+</programlisting>
+		</example>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>use_callbacks</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1 callbacks to registrar/jabber will be used, if set to 0
+		callbacks will not be used, thus it will work only with published
+		information.</para>
+		<para>Default value is 1.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>accept_internal_subscriptions</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1 PA module will accept internal subscriptions via
+		Querry Status API otherwise not. Set this to 1 if you want RLS module
+		to be using internal subscriptions to PA. You can't use presence B2B UA
+		in this case!</para>
+		<para>Default value is 0.</para>
+		<para><warning>Internal subscriptions are not handled in configuration
+		script thus they use default values of parameters (like XCAP root
+		settings for authorization, ...)</warning>
+		</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term id="pa.param.watcherinfo_notify"><varname>watcherinfo_notify</varname> (integer)</term>
+	<listitem>
+		<para>Set this to 1 if you want to enable subscriptions to
+		"presence.winfo" events. If set to 0, watcherinfo subscriptions are
+		denied.</para>
+		<para>Default value is 1.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>use_offline_winfo</varname> (integer)</term>
+	<listitem>
+		<para>Set this to 1 if you want to use offline watcher info
+		notifications. In such case can be watcher information stored in database
+		and later dumped to presentity in watcher info notification, requires
+		<varname>db_url</varname> to be set. See functions for example.</para>
+		<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>offline_winfo_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Expiration time of stored "offline watcher information" in seconds.
+		After this time is the information removed from database.</para>
+		<para>Default value is 259200.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>offline_winfo_timer</varname> (integer)</term>
+	<listitem>
+		<para>Number of seconds after which is triggered automatic cleanup of
+		expired offline watcherinfo.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>auth</varname> (string)</term>
+	<listitem>
+		<para>This variable specifies authorization type for presence watchers (event
+		package is <quote>presence</quote>). Value can be one of:
+		<variablelist>
+		<varlistentry>
+			<term>none</term>
+			<listitem><para>All watchers are <emphasis>always authorized</emphasis>. This is not recommended
+			because it ignores user's wish.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>implicit</term>
+			<listitem><para>All watchers are <emphasis>always pending</emphasis>. This is not recommended
+			because it means, that no presence data is sent to all watchers.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>xcap</term>
+			<listitem><para>This type of authorization means, that authorization rules
+			are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
+			In this case the <application>xcap</application> module must be loaded.</para></listitem>
+		</varlistentry>
+		</variablelist>
+		</para>
+		<para>Default value is empty. In this case <quote>implict</quote> authorization
+		is used with an error message.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>winfo_auth</varname> (string)</term>
+	<listitem>
+		<para>This variable specifies authorization type for watcher info watchers (event
+		package is <quote>presence.winfo</quote>). Value can be one of:
+		<variablelist>
+		<varlistentry>
+			<term>none</term>
+			<listitem><para>All watcher info watchers are <emphasis>always authorized</emphasis>. 
+			This is not recommended.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>implicit</term>
+			<listitem><para>This value means, that presentity can subscribe to its
+			own watcher info data and nobody else. This is done via comparing watcher's
+			and presentity's uri. If these values equals, the subscription is allowed.
+			In other cases is the subscription rejected.
+			</para></listitem>
+		</varlistentry>
+		</variablelist>
+		</para>
+		<para>Default value is <quote>implict</quote></para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>pres_rules_file</term>
+	<listitem><para>Name of the file with presence rules on XCAP server. The filename is
+	by default <quote>presence-rules.xml</quote>. It is common for all
+	subscriptions/users which seems to be insufficient. It will be replaced by
+	holding this information for each user separately in user attributes (TODO).
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>ignore_408_on_notify</term>
+	<listitem><para>If set to 1 the 408 response to NOTIFY is ignored, otherwise
+	all 4xx responses including 408 destroys the subscription.</para>
+	<para>Reason for this parameter is that some clients are not able to process
+	two NOTIFY requests received shortly in sequence and unresponded NOTIFY
+	resulting in generated 408 response destroyed subscription created by
+	them.</para>
+	<para>Default value is 0.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>timer_interval</term>
+	<listitem><para>Interval in seconds when the timer runs and clears expired
+	watchers/tuples and send NOTIFYs for changed presentities.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>default_priority_percentage</term>
+	<listitem><para>Priority value used for tuples created by registration in
+	percents. Default value is 0.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>auth_rules_refresh_time</term>
+	<listitem><para>Time interval specifying amount of time between re-reading
+	of authorization documents stored on XCAP server. In other words it means
+	the time interval of subscription reauthorization.</para>
+	<para>Default value is 300.</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>async_auth_queries</term>
+	<listitem><para>Set to 1 if you want to use asynchronous XCAP queries
+	(recommended), 0 otherwise.</para>
+	<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term>max_auth_requests_per_tick</term>
+	<listitem><para>Maximum number of asynchronous XCAP requests done at once
+	(within one second).</para>
+	<para>Default value is 600.</para></listitem>
+</varlistentry>
+
+</variablelist>
+</section>

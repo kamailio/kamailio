@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="avpops" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Ramona-Elena</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>Voice Sistem</orgname></affiliation>
+		<address>
+		    <email>ramona@voice-system.ro</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+		<year>2004</year>
+		<holder>Voice Sistem</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+			<revnumber>$Revision$</revnumber>
+			<date>$Date$</date>
+		</revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Avpops Module</title>
+    
+    <section id="avpops.overview">
+	<title>Overview</title>
+	<para>
+	    AVPops (AVP-operations) modules implements a set of script
+	    functions which allow access and manipulation of user AVPs
+	    (preferences). AVPs are a powerful tool for implementing
+	    services/preferences per user/domain. Now they are usable directly
+	    from configuration script. Functions for interfacing DB resources
+	    (loading/storing/removing), functions for swapping information
+	    between AVPs and SIP messages, function for testing/checking the
+	    value of an AVP.
+	</para>
+	<para>
+	    An up-to-date tutorial providing more information (detailed
+	    explanations and commented examples) can be found on Voice Sistem
+	    documentation web page at <ulink
+	    url="http://voice-system.ro/docs/avpops">http://voice-system.ro/docs/avpops</ulink>.
+	</para>
+    </section>
+
+    <section id="avpops.dep">
+	<title>Dependencies</title>
+	<section id="modules">
+	    <title>SER Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>Optionally a database module</emphasis>
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="faq.xml"/>
+
+</section>

@@ -1,0 +1,144 @@
+
+WARNING! This module is experimental and may crash SER or create
+unexpected results. You use the module at your own risk.
+Please submit bugs at http://bugs.sip-router.org/.
+
+=================
+Preliminary notes
+=================
+
+Copyright (C) 2005 RingCentral Inc.
+
+
+Dependencies
+------------
+
+The following binaries were used during the development and testing:
+
+instantclient-basic-linux32-10.1.0.4-20050525.zip
+instantclient-sdk-linux32-10.1.0.4-20050525.zip
+
+WARNING! 10.2.0.1 version is unstable, and is not recommended for Debian Linux.
+
+(You do not need to install 'sdk' package if using binary SER distribution.)
+
+instantclient-sqlplus-linux32-10.1.0.4-20050525.zip
+might be required in future for automated creation of SER DB.
+
+The packages could be downloaded from "Downloads" section of www.oracle.com
+web site. (You'll be asked to register first.)
+
+Unzip the contents of the packages to /usr/local and make /usr/local/instantclient
+symbolic link to the created folder. Also make the following  symlink:
+libclntsh.so -> libclntsh.so.10.1.
+
+
+Core sources patching
+---------------------
+
+Recompile SER with the following macros added to the proper part of Makefile.defs
+below "#os specific stuff":
+
+DEFS += -DLINUX -D_GNU_SOURCE -D_REENTRANT
+LIBS += -lpthread
+
+I took them from Makefile example of the instantclient SDK.
+(Probably, -DLINUX could be omitted.)
+
+There were some warnings about redefinition of _XOPEN_SOURCE,
+_XOPEN_SOURCE_EXTENDED, and __USE_XOPEN_EXTENDED macros inside
+daemonize.c. So, I protected them with '#ifndef _XOPEN_SOURCE'
+condition.
+
+
+Getting started from command line
+---------------------------------
+
+export CVSROOT=:pserver:anonymous@cvs.berlios.de:/cvsroot/ser
+cvs -z4 co -r rel_0_9_0 experimental/oracle
+cvs -z4 co -r rel_0_9_0 sip_router
+cp -a experimental/oracle sip_router/modules/
+# download instantclient archives to $HOME as described above, then:
+sudo unzip $HOME/instantclient-sdk-linux32-10.1.0.5-20060511.zip -d /usr/local
+sudo unzip $HOME/instantclient-basic-linux32-10.1.0.5-20060511.zip -d /usr/local
+sudo ln -s libclntsh.so.10.1 /usr/local/instantclient10_1/libclntsh.so
+sudo ln -s instantclient10_1 /usr/local/instantclient
+cd sip_router
+# patch Makefile.defs and daemonize.c as described above, then:
+make modules=modules/oracle modules
+
+
+Usage
+-----
+
+For basic SER set up add/change the following lines to your ser.cfg:
+
+  fifo_db_url="oracle://username:passwd@/ser"
+
+  loadmodule "/path/to/ser/lib/ser/modules/oracle.so"
+
+  modparam("usrloc", "db_url", "oracle://username:passwd@/ser")
+  modparam("auth_db", "db_url", "oracle://username:passwd@/ser")
+
+Additional SER modules may require similar changes to ser.cfg.
+See documentation for corresponding modules.
+ 
+
+db_url format: "oracle://username:password@/dbname"
+
+Additional parameters are taken from tnsnames.ora file which must be located
+inside $TNS_ADMIN folder.
+
+Example contents of tnsnames.ora:
+
+ -- begin --
+SER =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = <your.db.host.com>)(PORT = <port>))
+    )
+    (CONNECT_DATA =
+      (SERVICE_NAME = <sevice.name.com>)
+    )
+  )
+ -- end --
+
+Example 'version' table schema (NUMBER precision is important!):
+
+ -- begin --
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ TABLE_NAME                                NOT NULL VARCHAR2(64)
+ TABLE_VERSION                             NOT NULL NUMBER(5)
+ -- end --
+
+
+Implementation
+--------------
+
+OCI API is utilized. It is recommended to use Oracle Instant Client package.
+
+db_raw_query() is not implemented.
+
+
+TODO
+----
+
+ - commit patch for core sources
+ - poorly tested with respect to call stress-load.
+ - insert will fail if more than single date is inserted.
+ - BLOBs are limited to 4000 bytes, and untested.
+ - returned column names are not filled with proper data.
+ - timezone related stuff should be reviewed
+ - Review why checks for NULL argument to pkg_free() are required?
+ - remove const prefix from db_val_t:val.string_val
+ - yet not robust against hackish parameters.
+ - use pool of connections, (like in mysql?)
+ - additional TODOs are marked with XXX throughout the code.
+
+
+Contacts
+--------
+
+Dmitry Semyonov <dsemyonov@dins.ru> (primary),
+                <dsemyonov@ringcentral.com> (secondary).

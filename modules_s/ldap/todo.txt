@@ -1,0 +1,150 @@
+X Simple Authentication
+
+  Implement support for simple LDAP authentication with username and password.
+  This will take a change in the URI parser because the one provided by
+  libldap (which we use to parse the URI right now) does not support embedded
+  usernames and passwords in the URI.
+
+* SASL Authentication Support (SER-392)
+ 
+  The driver supports no authentication method at the moment, we should
+  include support for simple authentication at least, but better SASL.
+
+* TLS/SSL Support (SER-394)
+  
+  The driver should support encrypted connections to LDAP servers and some
+  level of certificate validation. Currently there are no options or
+  parameters to configure SSL/TLS certificates and keys to use.
+
+* Copy Data from Config Data Structure (SER-395)
+
+  The driver maintains an internal data structure that gets initialized from
+  the supplied configuration file. The structure contains things like search
+  filters and field mapping tables. The LDAP specific extension structures
+  make a shallow copy of strings from the configuration data structure, they
+  should rather copy the whole string so that they do not depend on the config
+  structure.
+
+X Implement Support For < And > Operators
+
+  The LDAP search filter syntax (RFC4515) does not support < and > operators,
+  only <= and >=. Currently the ldap driver simply uses <= instead of < and >=
+  instead of >. We need a better implementation of this.
+
+X Implement Support For Other Than str Parameters
+
+X Escape Values of Parameters Injected Into the Search Filter
+
+  see RFC4515 for description of escaping.
+
+* Proper handling of NULL Values in Parameter (SER-396).
+
+  Is it correct that parameters with NULL values are represented as paramName=
+  in the filter?
+
+* Use Asynchronous API Functions Instead of Synchronous (SER-397)
+
+  This would be useful when we have support for multiple database drivers
+  within one database context, then we could initiate multiple searches
+  simultaneously without being blocked waiting for the result.
+
+* Support For Multi-Value Attributes (SER-398)
+
+  The module should support multi-value attributes. Objects containing
+  attributes with multi-values should be returned as multiple records, each
+  record containing one value of the multi-value attribute. Currently the
+  module will report an error if it encounters a multi-value attribute.
+
+* Support For Time Zones in Generalized Times (SER-399)
+  
+  The time conversion functions ignore time zones in GeneralizedTime
+  attributes, this should be fixed.
+
+* Handle Fractions of Seconds in Generalized Time (SER-400)
+ 
+  There is no need to account fractions of seconds because we store time
+  internally as time_t, but the parses should be able to skip fractions of
+  seconds gracefully.
+
+X Eliminate Use of All libldap Functions Marked as Deprecated (SER-401)
+
+  We should eliminate the use of all functions that are marked as deprecated
+  in the header field and remove LDAP_DEPRECATED define from all files.
+  
+X Support for Bool Attribute Types
+
+  The module should be able to convert boolean attributes from the LDAP result
+  into int fields.
+
+X Support for Syntax Specification in the Config File
+
+  There is no easy or portable way of retrieving syntaxes of attributes from
+  the LDAP server, so it might be necessary to specify the syntax of
+  attributes in the configuration file so that the module knows how to convert
+  DB API fields into attribute values in command parameters.
+
+X Support DB_NEQ Operator in Integer Attributes (SER-402)
+ 
+  fld!=10 could be converted to the search filter as: (|(fld<=9)(fld>=11))
+
+X Indicate Underflow/Overflow in Integer Attributes (SER-403)
+
+  The operators < and > cannot be used in LDAP search filter, RFC4515 only
+  supports <= and >= so we create the search filter like this: fld<10 ->
+  (fld<=9) fld>10 -> (fld>=11) The module should issue an warning when the
+  incremented/decremented field value overflows/underflows.
+
+X Support for Older LDAP Libraries
+
+  Older versions of the openldap client library might not contain
+  LDAP_SCOPE_CHILDREN. We need to handle this case in a graceful manner and
+  make sure that the module compiles.
+
+* Check that we escape strings properly according to RFC4514 (SER-404)
+
+* Support for server side comparison (SER-405)
+
+  Support for server-side compare operation (could be used for authentication
+  where the client would send the digest credentials and the server replies
+  whether or not they are valid, similar to RADIUS digest authentication)
+
+* Support for alias-dereferencing (SER-406)
+ 
+  Aliases represent links to other entries or partitions of the namespace.
+  When the distinguished name of an alias is used, the entry accessed is the
+  entry to which the alias refers.  Alias dereferencing specifies if aliases
+  are dereferenced-- that is, if the alias entry itself or the entry it points
+  to is used. Aliases can be dereferenced or not when locating the base object
+  and/or when searching under the base object.
+
+* Support for handling of NULL Values in configuration parameters (SER-407)
+
+  When an optional attribute is missing and also when the attribute is present
+  but has no value; e.g. DN=NULL for anonymous authentication.
+
+* Support for unsolicited notifications (SER-408)
+
+  The only standardized unsolicited notification seems to be "notice of
+  disconnection" so all that we can do is just log incoming asynchronous
+  notifications from the server
+
+* Support for asynchronous notifications (SER-409)
+
+  Support for subscribing to notifications of changes in the DIT (optional)
+  This could be useful for updating data that is cached in SER, such as the
+  list of supported domains. This is a "nice to have" type of feature, so no
+  time estimation for implementation.
+
+* Support for automatic reconnects (SER-410)
+  
+  (check if we do it and if we do it properly).
+
+* Support for referrals (SER-411)
+
+  Implement support for referrals (in the ldap module, not in the libldap
+  library).  Including loop detection.
+
+* Support for time limited search operations (SER-412)
+
+* Support for size limited search operations (SER-413)
+

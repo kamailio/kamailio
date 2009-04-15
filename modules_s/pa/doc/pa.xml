@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+		<!ENTITY base SYSTEM "pa_base.xml" >
+	]>
+
+<section id="pa"><title>PA module</title>
+	
+	<sectioninfo><title>Authors</title><authorgroup>
+	    <author>
+			<firstname>Vaclav</firstname>
+			<surname>Kubart</surname>
+			<affiliation><orgname>Iptel</orgname></affiliation>
+			<authorblurb><para>Current maintainer.</para></authorblurb>
+			<contrib>Nowadays module maintainer.</contrib>
+			<email>vaclav.kubart@iptel.org</email>
+	    </author>
+	    <author>
+			<firstname>Jamey</firstname>
+			<surname>Hicks</surname>
+			<affiliation><orgname>Hewlett-Packard Company</orgname></affiliation>
+			<email>jamey.hicks@hp.com</email>
+	    </author>	    
+	    <author>
+			<firstname>Jan</firstname>
+			<surname>Janak</surname>
+			<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+			<email>jan@iptel.org</email>
+	    </author>
+	</authorgroup></sectioninfo>
+
+
+&base;
+
+<!-- bibliography needed for standalone compilation -->
+<include xmlns="http://www.w3.org/2001/XInclude" 
+	href="pa_db.xml"/>
+
+<!-- bibliography needed for standalone compilation -->
+<include xmlns="http://www.w3.org/2001/XInclude" 
+	href="../../../doc/presence/biblio.xml"/>
+
+<!-- our im-rules draft -->
+
+<include xmlns="http://www.w3.org/2001/XInclude" 
+	href="../../../doc/presence/draft_iptel_im_rules.xml"/>
+
+
+</section>
+

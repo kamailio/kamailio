@@ -1,0 +1,116 @@
+2006-12-14
+	* removed CDATA wrapping of XML documents in XMLRPC output
+
+2006-12-01
+	* allowed standalone documentation generation - bibliograpy appended in
+	this case
+
+2006-07-12
+	* improved dialog refreshing
+
+2006-05-26
+	* removed unused xcap_root parameter
+
+2006-05-25
+	* added Max-Forwards header into NOTIFY requests
+
+2006-05-15
+	* handling responses on NOTIFY
+	* added parameter ignore_408_on_notify
+
+2006-04-21
+	* added parameter expiration_timer_period (timer interval for checking
+	expirations)
+
+2006-04-20
+	* rls_trace function puts XML datafile in CDATA section
+	* rls_trace doesn't put empty strings as separators (more readable using
+	new serctl)
+	* rls_trace has optional number argument - if nonzero it displays stored
+	status documents
+	* added parameter max_list_nesting_level for control over nested list
+	processing
+
+2006-04-18
+	* added profiling
+
+2006-04-13
+	* modified optimizations of sent notifications, added parameter
+	max_notifications_at_once
+
+2006-04-11
+	* changed QSA (reduced memory allocations)
+
+2006-04-10
+	* changed QSA - corrected content-type propagation
+
+2006-04-06
+	* xcap queries moved into xcap module
+
+2006-04-04
+	* sending empty string in NOTIFY bodies - TCP requires content-length and
+	if sending message with NULL body, it is not set
+
+2006-04-03
+	* using function from common libraries for server contact extraction
+	* RLMI document contains always fullState="true"
+
+2006-03-24
+	* removed parameter 'mode' from code (it was not needed due to explicit xcap query
+	needs before resource list subscription. There is query functions for
+	simplified usage: query_resource_list)
+
+2006-03-22
+	* corrected memory leak
+	* reduced sent NOTIFY request count
+
+2006-03-21
+	* accepts subscription status through QSA
+
+2006-03-20
+	* multiple message queues (one for each virtual subscription) replaced by
+	only one message queue for QSA notifications shared by all virtual
+	subscriptions
+	* xcap_root for resource list subscription stored into database (needed
+	for subscription recreation)
+	* notification is not propagated if document and content type didn't
+	change (non-internal subscriptions only) -> reduced count of NOTIFY
+	messages to the subscriber
+
+2006-03-17
+	* changed parameters of XCAP queries
+
+2006-03-16
+	* internal RLS subscriptions rewritten (i.e. nested lists handling)
+	* added xcap_root and xcap_params into rl_subscription structure (needed
+	for requeries, future XCAP notifications, ...)
+
+2006-03-15
+	* removed parameter "mode" (now is query done before handle_subscription
+	function and nested subscriptions can not be handled as "simple"
+	subscriptions
+	* added functions query_rls_services, query_resource_list, have_flat_list
+
+2006-03-07
+	* corrected BUG - improper adding virtual subscriptions into list
+
+2006-02-28
+	* corrected BUG - one shot timer used for DB initialization was not in
+	shared memory
+
+2006-02-27
+	* corrected BUGs - mostly used dstr_get_str instead of dstr_get_data
+	because there were some cases when was allocated memory buffers of zero
+	length (this consumes memory using shm_malloc), but this memory was NOT
+	freed then
+
+2006-02-16
+	* removed parts of code prepared for doing "remote" subscriptions - all is
+	solved using internal (QSA) subscriptions now (to PA or PRESENCE_B2B or
+	RLS itself)
+	* UID used instead of username when mode=simple (i.e. "simple" list URIs
+	have to be in the form sip:<uid>-list@domain.com)
+	* reduced trace messages
+
+2006-02-14
+	* separated B2B UA for presence into standalone module presence_b2b

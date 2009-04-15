@@ -1,0 +1,50 @@
+List of relevant standards and RFCs
+===================================
+
+RFC2307: An Approach for Using LDAP as a Network Information Service
+
+  This document is experimental and based on RFC2251, which has been obsoleted
+  by RFC 4510, RFC 4511, RFC 4513, RFC 4512 and updated by RFC 3377 and RFC
+  3771.  Anyhow, AFAIK RFC 2307 is not obsoleted.
+
+RFC2256: A summary of the X.500(96) user Schema for use with LDAPv3
+
+  This rfc contains a collection of attribute types and object classes
+  collected from various ITU documents. Attribute types such as objectClass or
+  cn are defined here.
+
+  This document has been obsoleted by RFC 4510 and updated by RFC 4512, RFC
+  4517 and RFC 4519.
+
+
+RFC2587: Internet X.509 Public Key Infrastructure LDAPv2 Schema
+
+  This document has been obsoleted by RFC 4523.
+
+
+RFC1274: The COSINE and Internet X.500 Schema
+
+  This document has been obsoleted by RFC 4524.
+
+RFC2798: Definition of the inetOrgPerson LDAP Object Class
+
+  This document has been updated by RFC 3698, RFC 4519 and RFC 4524.
+
+RFC4514: Lightweight Directory Access Protocol (LDAP): String Representation
+        of Distinguished Names
+
+RFC4515: Lightweight Directory Access Protocol (LDAP): String Representation
+         of Search Filters
+
+RFC4530: LDAP entryUUID Operational Attribute
+
+  This RFC defines the entryUUID operational attribute which can be used by
+  the server to assign unique identifiers to objects in the directory. Such
+  identifiers can be used to identify the object even when the dn of the
+  object changes. Unfortunately the entryUUID attribute cannot by modified by
+  the user and thus it is not directly usable for us.
+
+RFC2252 LDAPv3: Attribute Syntax Definitions
+
+  This document has been obsoleted by RFC 4510, RFC 4517, RFC 4523, RFC 4512
+  and updated by RFC 3377

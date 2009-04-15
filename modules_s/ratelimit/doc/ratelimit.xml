@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ratelimit" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Hendrik</firstname>
+		<surname>Scholz</surname>
+		<email>hscholz@raisdorf.net</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2006</year>
+	    <holder>Freenet Cityline GmbH</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Ratelimit Module</title>
+
+    <section id="ratelimit.overview">
+	<title>Overview</title>
+	<para>
+		This module implements rate limiting for SIP requests.
+		In contrast to the PIKE module this limits the flow based on a
+		per SIP request type basis and not per source IP.
+		The XML-RPC interface can be used to change tunables while
+		running SER.
+		Currently supported requests are INVITE, REGISTER and SUBSCRIBE.
+	</para>
+	</section>
+	<section id="ratelimit.usecases">
+	<title>Use Cases</title>
+	<para>
+		Limiting the rate messages are processed on a system directly
+		influences the load. The ratelimit module can be used to protect
+		a single host or to protect a SER cluster when run on the
+		dispatching box in front.
+	</para>
+	<para>
+		A sample configuration snippet might look like this:
+	</para>
+	<programlisting>
+if (method=="INVITE" || method="REGISTER" || method=="SUBSCRIBE") {
+	if (!rl_check()) {
+		sl_send_reply("503", "Service Unavailable");
+		break;
+	}
+};
+	</programlisting>
+	<para>
+		Upon every incoming request listed above <function>rl_check</function>
+		is invoked. It returns an OK code if the current per request
+		load is below the configured threshold.
+		If the load is exceeded the function returns an error and an
+		administrator can discard requests with a stateless
+		response.
+	</para>
+    </section>
+
+	<section id="ratelimit.algorithms">
+	<title>Rate Limiting Algorithms</title>
+	<para>
+		As of writing the ratelimit module supports two different
+		algorithms to be used by <function>rl_check</function> to
+		determine whether a message should be blocked or not.
+	</para>
+	</section>
+	<section id="ratelimit.taildrop">
+	<title>Tail drop</title>
+	<para>
+		This is a trivial algorithm that imposes some risks when used
+		in conjunction with long timer intervals.
+		At the start of each interval an internal counter is reset and
+		incremented for each incoming message. Once the counter hits
+		the configured limit <function>rl_check</function> returns
+		an error.
+	</para>
+	<para>
+		The downside of this algorithm is that it can lead to
+		SIP client synchronization. During a relatively long interval only
+		the first requests (i.e. REGISTERs) would make it through. Following
+		messages (i.e. RE-REGISTERs) will all hit the SIP proxy at the
+		same time when a common Expire timer expired.
+		Other requests will be retransmissed after given time, the
+		same on all devices with the same firmware/by the same vendor.
+	</para>
+	</section>
+	<section id="ratelimit.red">
+	<title>Random Early Detection (RED)</title>
+	<para>
+		Random Early Detection tries to circumvent the synchronization
+		problem imposed by the tail drop algorithm by measuring the
+		average load and adapting the drop rate dynamically.
+		When running with the RED algorithm (enabled by default) SER will
+		return errors to the SER routing engine every n'th packet
+		trying to evenly spread the measured load of the last timer
+		interval onto the current interval.
+		As a negative side effect SER might drop messages although the
+		limit might not be reached within the interval. Decrease the
+		timer interval if you encounter this.
+	</para>
+	</section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="fifo.xml"/>
+
+</section>

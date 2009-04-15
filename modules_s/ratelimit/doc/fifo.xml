@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ratelimit.fifo" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>FIFO Interface</title>
+
+    <para>
+	The number of allowed requests per interval as well as the interval
+	length itself can be modified over the FIFO interface of SER.
+	In addition rate limiting statistics are provided upon request.
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<emphasis>rl.stats</emphasis> - Get current per request limits
+		as well as current load levels for all request types.
+	    </para>
+	</listitem>
+	<!--
+	<listitem>
+	    <para>
+		<emphasis>rl.timer_interval</emphasis> - Set the timer interval
+		length to the provided value in seconds. This function takes
+		one parameter.
+	    </para>
+	</listitem>
+	-->
+	<listitem>
+	    <para>
+		<emphasis>rl.invite_limit</emphasis> - Set the number of allowed
+		INVITE requests per interval to the given value as the sole
+		parameter. A limit of 0 turns of rate limiting of INVITE messages.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>rl.register_limit</emphasis> - Set the number of allowed
+		REGISTER requests per interval to the given value as the sole
+		parameter. A limit of 0 turns of rate limiting of REGISTER messages.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>rl.subscribe_limit</emphasis> - Set the number of allowed
+		SUBSCRIBE requests per interval to the given value as the sole
+		parameter. A limit of 0 turns of rate limiting of SUBSCRIBE messages.
+	    </para>
+	</listitem>
+    </itemizedlist>
+</section>

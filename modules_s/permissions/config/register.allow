@@ -1,0 +1,16 @@
+#
+# $Id$
+#
+# Files register.allow and register.deny could be used
+# by allow_register function to prevent registration of
+# certain IP addresses. This (allow) file is empty because
+# we only want to restrict IPs that can be registered and
+# therefore we use register.deny file only.
+#
+# If you have a privileged user that should be able to
+# register anything than you might want to uncomment the
+# following line. WARNING: Do not uncomment unless you
+# really know what are you doing !
+#
+# "^sip:username@foo\.bar$" : ALL
+#

@@ -1,0 +1,128 @@
+
+Iptrtpproxy module
+
+Tomas Mandys
+
+   Iptel.org
+
+   Copyright © 2007 Tomas Mandys
+   Revision History
+   Revision $Revision$ $Date$
+     _________________________________________________________________
+
+Overview
+
+   It  provides  similar functionality as nathelper but communicates with
+   netfilter kernel xt_RTPPROXY module using libipt_RTPPROXY userspace library.
+   See http://www.2p.cz/en/netfilter_rtp_proxy All RTP streams are manipulated
+   directly in kernel space, no data are copied from kernel to userspace and
+   back, it reduces load and delay.
+
+   The ser module is written as light-weighted, there is not implemented any
+   dialog managment as in nathelper, the reason is that such API should be
+   provided by core or specialized dialog manager module. Because such module
+   is not in CVS, session information may be stored in extra attributes of
+   avp_db  module and session id itself in record route as cookie, see rr
+   module.
+
+   It should be able to support all cases as re-invites when SIP client offers
+   media change in SDP and when number of medias in offer/answer are different.
+
+   Nathelper may be still used for testing if client is behind the NAT.
+
+   Limitations:
+     * only IPv4 addresses are supported.
+     * more media streams per session supported
+
+Dependencies
+
+   The following libraries or applications must be installed before running SER
+   with this module loaded:
+     * netfilter       xt_RTPROXY       &       libipt_RTPPROXY,      see
+       http://www.2p.cz/en/netfilter_rtp_proxy
+
+Parameters
+
+switchboard (string)
+
+   References xt_RTPPROXY switchboard for usage by ser module.
+
+   The format is:
+  name "=" value * ( ";" name "=" value )
+
+  name =  "name" | ( ( "addr-" | "port-" | "learning-timeout-" | "always-learn-
+") ("a" | "b") )
+
+   The meaning of parameters is described in libipt_RTPROXY and iptrtpproxy
+   documentation.
+
+   The name" is identifier that will be used by script functions and references
+   switchboard. It's mandatory parameter. More switchboards may be declared.
+
+   Example 1. Declare switchboard
+        ...
+        modparam("iptrtpproxy", "switchboard", "name=my;addr-a=1.2.3.4;port-a=5
+0000");
+        ...
+
+Functions
+
+iptrtpproxy_alloc(gate_a_to_b, switchboard_id)
+
+   Parses SDP content and allocates for each RTP media stream one RTP proxy
+   session. SDP is updates to reflect allocated sessions.
+     * if gate_a_to_b non equal to zero then SDP regards to gate-a to gate-b
+       direction.
+     * switchboard_id is reference to a switchboard with name declared as
+       switchboard modparam.
+     * function returns true is a session was created, identifier is available
+       via select @iptrtpproxy.session_ids.
+
+   Example 2. iptrtpproxy_alloc usage
+        ...
+        if (iptrtpproxy_alloc("1", "my")) {
+          $sess_ids = @iptrtpproxy.session_ids;
+          # save sess_ids in dialog
+        }
+        ...
+
+iptrtpproxy_update(gate_a_to_b, session_ids)
+
+   Parses SDP content and updates sessions provided by session_ids and updates
+   SDP. If succesfull then session_ids may be changed (in case e.g. media
+   stream  has  port  zero particular session is released), the result of
+   @iptrtpproxy.session_ids should be stored for future in-dialog usage.
+     * if gate_a_to_b non equal to zero then SDP regards to gate-a to gate-b
+       direction.
+
+   Example 3. iptrtpproxy_update usage
+        ...
+        # load $sess_ids from dialog
+        if (iptrtpproxy_update("0", $sess_ids)) {
+          $sess_ids = @iptrtpproxy.session_ids;
+          # save sess_ids in dialog
+        }
+        ...
+
+iptrtpproxy_delete(session_ids)
+
+   Delete sessions identified by session_ids. May be used when dialog is being
+   destroyed (BYE) or when INVITE failed in failure route.
+
+   Example 4. iptrtpproxy_delete usage
+        ...
+        # load $sess_ids from dialog
+        iptrtpproxy_delete($sess_ids);
+        ...
+
+@iptrtpproxy.session_ids
+
+   Returns sessions allocated/updated in iptrtpproxy_alloc/update.
+
+   The format is:
+        switchboard_name [ ":" [ session_id *( "," session_id) ] ]
+        session_id = *( [0-9] )   ; empty when no session allocated
+
+@iptrtpproxy.sdp_ip
+
+   Return first rewritten IP provided in SDP c= line.

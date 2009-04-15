@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+		<address>
+		    <email>andrei@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>iptelorg GmbH</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Dbg Module</title>
+
+    <section id="dbg.overview">
+	<title>Overview</title>
+	<para>
+		This is a module used for debugging. It should contain only test and
+		 debugging related functions. For example it contains functions to
+		  simulate delays and to dump core.
+	</para>
+	<para>
+		This modules <emphasis>should not be used</emphasis> in production.
+	</para>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+

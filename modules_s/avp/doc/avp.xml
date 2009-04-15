@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="avp" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jiri@iptel.org</email>
+	    </author>
+		<author>
+		<firstname>Michal</firstname>
+		<surname>Matyska</surname>
+		<affiliation><orgname>iptel</orgname></affiliation>
+		<email>michal@iptel.org</email>
+		</author>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <year>2005</year>
+	    <holder>FhG FOKUS</holder>
+		<year>2006</year>
+		<holder>iptelorg GmbH</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Avp Module</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module contains several functions that can be used to
+	    manipulate the contents of AVPs (Attribute-Value pairs). The AVPs
+	    are variables attached to the SIP message being processed. Each
+	    variable has its name and value. AVPs can be used to store
+	    arbitrary data or as a means of inter-module comminication.
+	</para>
+	<para>
+	    You may also want to check the avpops module which is more flexible
+	    and contains more functions. In future SER releases the avp module
+	    will be probably deprecated in favor of avpops module.
+	</para>
+    </section>
+
+    <xi:include href="functions.xml"/>
+    <xi:include href="params.xml"/>
+
+</section>
+
+

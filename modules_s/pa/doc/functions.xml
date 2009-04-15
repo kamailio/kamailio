@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="pa.functions"><title>Functions</title>
+
+<variablelist>
+
+<varlistentry>
+	<term><varname>handle_subscription(domain)</varname></term>
+	<listitem>
+		<para>This function processes SUBSCRIBE requests to "presence" and
+		"presence.winfo" (see <link
+		linkend="pa.param.watcherinfo_notify">watcherinfo_notify
+		parameter</link>) events. </para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+			<para><emphasis>domain</emphasis> - This can be either "registrar" or "jabber".
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+			<title><function>handle_subscription</function> usage</title>
+			<programlisting>
+...
+handle_subscription("registrar");
+...
+			</programlisting>
+		</example>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>handle_publish(domain)</varname></term>
+	<listitem><para>Processes PUBLISH request and generates response to it.
+	</para></listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>target_online(domain)</varname></term>
+	<listitem><para>This function returns 1 if the target (using get_to_uid on
+	current message) is online, -1 otherwise.
+	</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>check_subscription_status(status)</varname></term>
+	<listitem><para>This function returns 1 if last subscription is in status
+	given by parameter, -1 otherwise. The <parameter>status</parameter> can have
+	values: 
+	
+	<variablelist>
+	<varlistentry>
+		<term>pending</term>
+		<listitem><para>Subscription was created but no status information will
+		be sent to the watcher.</para></listitem>
+	</varlistentry>
+	<varlistentry>
+		<term>active</term>
+		<listitem><para>Subscription was established and all presence
+		information will be sent to the watcher.</para></listitem>
+	</varlistentry>
+<!--	<varlistentry>
+		<term>rejected</term>
+		<listitem><para>Subscription was not established due to authorization
+		rules.</para></listitem>
+	</varlistentry>-->
+	<varlistentry>
+		<term>terminated</term>
+		<listitem><para>Subscription was terminated.</para></listitem>
+	</varlistentry>
+	
+	</variablelist>
+	
+	</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>store_winfo(domain)</varname></term>
+	<listitem><para>This function stores data about currently created
+	subscription into database for later dumping in the form of watcherinfo
+	notification. It should be called after handle_subscription
+	during processing SUBSCRIBE request.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>dump_stored_winfo(domain, event_package)</varname></term>
+	<listitem><para>This function tries to send stored watcherinfo data
+	in the context of existing watcherinfo subscription. It uses get_to_uid as 
+	target for notification. If there is no watcherinfo subscription to such
+	presentity, no information is sent.</para>
+	<para>If the client responds with 2xx on generated NOTIFY request, the
+	stored information is removed from database.
+	</para>
+<example><title><function>target_online</function>,
+<function>store_winfo</function>, <function>dump_stored_winfo</function> usage</title>
+<programlisting>
+...
+if (method=="SUBSCRIBE") {
+	if (!t_newtran()) {
+		sl_reply_error();
+		break;
+	};
+	
+	if (handle_subscription("registrar")) {; # uses uid from AVP (get_to_uid)
+		if (@msg.event=~"presence\.winfo") {
+			log(1, "subscription to watcherinfo\n");
+			dump_stored_winfo("registrar", "presence");
+			log(1, "OFFLINE AUTH: watcherinfo dumped\n");
+		}
+		else {
+			if ((@msg.event=~"presence") &amp;&amp;	(check_subscription_status("pending"))) {
+				log(1, "pending subscription to presence\n");
+				# if offline user and new "pending" subscription
+				if (!target_online("registrar") &amp;&amp; (@to.tag=="")) {
+					log(1, "OFFLINE AUTH: storing for offline user\n");
+					store_winfo("registrar");
+				}
+			}
+		}
+	}
+	break;
+};
+...
+</programlisting>
+</example>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>authorize_message(filename)</varname></term>
+	<listitem><para>This function reads and processes IM authorization data and
+	returns 1 if message can be accepted by destination user. If there is no IM
+	authorization document on given XCAP server, it returns 1 too (MESSAGE is
+	enabled by default). If the sender is blocked by recipient rules, this
+	function returns -1. For more details about authorization documents see
+	<xref linkend="im_rules"/>.
+	</para>
+	<para>Filename parameter specifies the name of file on XCAP server which
+	contains message authorization rules. It is <quote>im-rules.xml</quote> by
+	default.
+	</para>
+<example><title><function>authorize_message</function> usage</title>
+<programlisting>
+...
+if (method=="MESSAGE") {
+	if (authorize_message("im-rules.xml")) {
+		if (!lookup("location")) {
+			sl_reply("404", "Not Found");
+			break;
+		};
+		if (!t_relay()) { sl_reply_error(); };
+	}
+	else {
+		sl_reply("403", "Forbidden");
+	}
+	break;
+}
+...
+</programlisting>
+</example>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</section>

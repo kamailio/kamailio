@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="jabber.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="jab_send_message">
+	<title>
+	    <function>jab_send_message()</function>
+	</title>
+	<para>
+	    Converts SIP MESSAGE message to a Jabber message and sends it to
+	    Jabber server.
+	</para>
+	<example>
+	    <title><function>jab_send_message()</function> usage</title>
+	    <programlisting>
+...
+jab_send_message();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="jab_join_jconf">
+	<title>
+	    <function>jab_join_jconf()</function>
+	</title>
+	<para>
+	    Join a Jabber conference--the nickname, room name and conference
+	    server address should be included in To header as:
+	    nickname%roomname%conference_server@jdomain . If the nickname is
+	    missing, then the SIP username is used.
+	</para>
+	<example>
+	    <title><function>jab_join_jconf()</function> usage</title>
+	    <programlisting>
+...
+jab_join_jconf();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="jab_exit_jconf">
+	<title>
+	    <function>jab_exit_jconf()</function>
+	</title>
+	<para>
+	    Leave a Jabber conference--the nickname, room name and conference
+	    server address should be included in To header as:
+	    nickname%roomname%conference_server@jdomain .
+	</para>
+	<example>
+	    <title><function>jab_exit_jconf()</function> usage</title>
+	    <programlisting>
+...
+jab_exit_jconf();
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="jab_go_online">
+	<title>
+	    <function>jab_go_online()</function>
+	</title>
+	<para>
+	    Register to the Jabber server with associated Jabber <abbrev>ID</abbrev> of the SIP user.
+	</para>
+	<example>
+	    <title><function>jab_go_online()</function> usage</title>
+	    <programlisting>
+...
+jab_go_online();
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="jab_go_offline">
+	<title>
+	    <function>jab_go_offline()</function>
+	</title>
+	<para>
+	    Log off from Jabber server the associated Jabber <abbrev>ID</abbrev> of the SIP user.
+	</para>
+	<example>
+	    <title><function>jab_go_offline()</function> usage</title>
+	    <programlisting>
+...
+jab_go_offline();
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+</section>

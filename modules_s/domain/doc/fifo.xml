@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="domain.fifo" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>FIFO Interface</title>
+
+    <section id="domain_reload">
+	<title><function>domain_reload</function></title>
+	<para>
+	    Causes domain module to re-read the contents of domain table
+	    into cache memory.
+	</para>
+    </section>
+
+    <section id="domain_dump">
+	<title><function>domain_dump</function></title>
+	<para>
+	    Causes domain module to dump hash indexes and domain names in its
+	    cache memory.
+	</para>
+    </section>
+    
+</section>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="jabber.admin" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Administator's Guide</title>
+
+    <note>
+	<para>
+	    A more complete guide about SIMPLE2Jabber gateway can be found at
+	    <ulink url="http://iptel.org/ser">SER Homepage</ulink>. The part
+	    below will be removed soon, only the manual from web will be
+	    updated.
+	</para>
+    </note>
+
+    <para>
+	The Jabber server setup is not a subject of this guide. Check <ulink
+	    url="http://www.jabber.org">http://www.jabber.org</ulink> for that.
+    </para>
+    <para>
+	Useful scripts, for creating Jabber Gateway database, or for managing
+	the Jabber accounts form web are located in 'doc' subdirectory of the
+	module.
+    </para>
+    <para>
+	Main steps of using the Jabber gateway:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		Create the MySQL database.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Setup the local Jabber server.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Set the module parameter values in cfg file of SER, load the dependent
+		modules, set up the routing rules for Jabber gateway.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Run SER.
+	    </para>
+	</listitem>
+    </itemizedlist>
+    <para>
+	The administrator of SER/Jabber gateway <emphasis>must</emphasis>
+	inform the users what are the aliases for Jabber/Other IM
+	networks. Other IM systems could be <acronym>AIM</acronym>,
+	<acronym>ICQ</acronym>, <acronym>MSN</acronym>, Yahoo, and so on.
+    </para>
+    <para>
+	These aliases depend on the server hostname where runs SER and how local Jabber
+	server is setup.
+    </para>
+    <para>
+	Next is presented a use case. Prologue:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		SER is running on "server.org".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Local Jabber server is running on "jabsrv.server.org".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Jabber network alias (first part of "jdomain") is
+		"jabber.server.org"
+	    </para>
+	</listitem>
+    </itemizedlist>
+    <para>
+	The aliases for other IM networks <emphasis>must</emphasis> be the
+	same as <acronym>JID</acronym> set in Jabber configuration file for
+	each IM transport.
+    </para>
+    <para>
+	The <acronym>JIDs</acronym> of Jabber transports
+	<emphasis>must</emphasis> start with the name of the network. For
+	<acronym>AIM</acronym>, <acronym>JID</acronym> must start with "aim.",
+	for <acronym>ICQ</acronym> with "icq" (that because I use icqv7-t), for
+	<acronym>MSN</acronym> with "msn." and for Yahoo with "yahoo.". The
+	gateway needs these to find out what transport is working and which
+	not. For our use case these could be like
+	"aim.server.org", "icq.server.org",
+	"msn.server.org", "yahoo.server.org".
+    </para>
+    <para>
+	It is indicated to have these aliases in <acronym>DNS</acronym>, thus
+	the client application can resolve the <acronym>DNS</acronym>
+	name. Otherwise there must be set the outbound proxy to SER server.
+    </para>
+    <para>
+	*** Routing rules for Jabber gateway First step is to configure SER
+	to recognize messages for Jabber gateway. Look at
+	"doc/xjab.cfg" to see a sample. The idea is to look in
+	messages for destination address and if it contains Jabber alias or
+	other IM alias, that means the message is for Jabber gateway.
+    </para>
+    <para>
+	Next step is to find out what means that message for Jabber gateway. It could be a
+	special message what triggers the gateway to take an action or is a simple message which
+	should be delivered to Jabber network (using the method
+	"jab_send_message").
+    </para>
+    <para>
+	The special messages are for: 
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		Registering to Jabber server (go online in Jabber
+		network)--here must be called "jab_go_online" method.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Leaving the Jabber network (go offline in Jabber network)--here must be called
+		<quote>jab_go_offline</quote> method.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Joining a Jabber conference room--here must be called "jab_join_jconf".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Leaving a Jabber conference room--here must be called "jab_exit_jconf".
+	    </para>
+	</listitem>
+    </itemizedlist>
+    <para>
+	The destination address <emphasis>must</emphasis> follow the following patterns:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		For Jabber network: "username&lt;delim&gt;jabber_server@jabber_alias".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		For Jabber conference: "nickname&lt;delim&gt;room&lt;delim&gt;conference_server@jabber_alias".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		For <acronym>AIM</acronym> network: "aim_username@aim_alias".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		For <acronym>ICQ</acronym> network: "icq_number@icq_alias".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		For <acronym>MSN</acronym> network:
+		"msn_username&lt;delim&gt;msn_server@msn_alias". msn_server can
+		be "msn.com" or "hotmail.com".
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		For YAHOO network: "yahoo_username@yahoo_alias".
+	    </para>
+	</listitem>
+    </itemizedlist>
+    <note>
+	<para>
+	    "jabber_alias" is the first part of "jdomain".
+	</para>
+    </note>
+</section>

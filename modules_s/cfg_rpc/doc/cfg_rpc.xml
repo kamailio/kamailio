@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="gflags" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Miklos</firstname>
+		<surname>Tirpak</surname>
+		<email>miklos@iptel.org</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>iptelorg GmbH</holder>
+	</copyright>
+    </sectioninfo>
+
+    <title>cfg_rpc Module</title>
+
+    <section id="cfg_rpc.overview">
+	<title>Overview</title>
+	<para>
+	    The module implements RPC functions to set and get
+	    configuration variables on-the-fly, that are declared
+	    by SER core and by the modules. It can be used to fine-tune
+	    or debug SER without the need of restart.
+	</para>
+    </section>
+
+    <xi:include href="rpc.xml"/>
+
+</section>
+

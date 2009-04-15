@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="enum" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@song.fi</email>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>Juha Heinanen</holder>
+	</copyright>
+
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>ENUM Module</title>
+
+    <section id="enum_overview">
+	<title>Overview</title>
+	<para>
+	    Enum module implements enum_query function that makes an enum query
+	    based on the user part of the current Request-URI. The function
+	    assumes that the user part consists of an international phone
+	    number of the form +decimal-digits, where the number of digits is
+	    at least 2 and at most 15. Out of this number
+	    <function>enum_query</function> forms a domain name, where the
+	    digits are in reverse order and separated by dots followed by
+	    domain suffix that by default is "e164.arpa.". For example, if the
+	    user part is +35831234567, the domain name will be
+	    "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.".
+	</para>
+	<para>
+	    After forming the domain name, <function>enum_query</function>
+	    queries DNS for its NAPTR records. From the possible response
+	    <function>enum_query</function> chooses those records, whose flags
+	    field has string value "u", and whose services field has string
+	    value "e2u+[service:]sip" or
+	    "e2u+type[:subtype][+type[:subtype]...]" (case is ignored in both
+	    cases), and whose regexp field is of the form
+	    !pattern!replacement!.
+	</para>
+	<para>
+	    Then <function>enum_query</function> sorts the chosen NAPTR records
+	    based on their &lt;order, preference&gt;.  After sorting,
+	    <function>enum_query</function> replaces the current Request URI by
+	    applying regexp of the most preferred NAPTR record its user part
+	    and appends to the request new branches by applying regexp of each
+	    remaining NAPTR record to the user part of the current Request
+	    URI. If a new URI is a tel URI, <function>enum_query</function>
+	    appends to it as tel URI parameters the value of tel_uri_params
+	    module parameter. Finally, <function>enum_query</function>
+	    associates a q value with each new URI based on the &lt;order,
+	    preference&gt; of the corresponding NAPTR record.
+	</para>
+	<para>
+	    When using <function>enum_query</function> without any parameters,
+	    it searches for NAPTRs with service type "e2u+sip" in the default
+	    enum tree. When using <function>enum_query</function> with a single
+	    parameter, this parameter will be used as enum tree. When using
+	    <function>enum_query</function> with two
+	    parameters, the functionality depends on the first letter in the
+	    second parameter. When the first letter is not a '+' sign, the
+	    second parameter will be used to search for NAPTRs with service
+	    type "e2u+parameter:sip". When the second parameter starts with a
+	    '+' sign, the ENUM lookup also supports compound NAPTRs (e.g.
+	    "e2u+voice:sip+video:sip") and searching for multiple service types
+	    within one lookup.  Multiple service types must be separeted by a
+	    '+' sign.
+	</para>
+	<para>
+	    Enum query returns 1 if the current Request URI was replaced and -1 if not.
+	</para>
+	<para>
+	    Enum module also implements is_from_user_e164 function that checks if the user part of
+	    from URI is an E164 number.
+	</para>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>

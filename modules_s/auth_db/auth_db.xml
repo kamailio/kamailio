@@ -1,0 +1,541 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+
+
+<refentry xml:id="module.auth_db"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>auth_db</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>auth_db</refname>
+    <refpurpose>Digest Authentication Using a Database</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>auth_db</command> SER module provides digest
+      authentication using credentials stored in a database.
+    </para>
+    <para>
+      The <command>auth_db</command> module needs the
+      <serdoc:module>auth</serdoc:module> module and a database module such
+      as the <serdoc:module>mysql</serdoc:module> module. 
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.proxy_authenticate">
+      <title>
+        <function>proxy_authenticate</function>
+        (<symbol>realm</symbol>, <symbol>table</symbol>)
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>proxy_authenticate()</function> function verifies
+        credentials provided by the client for the realm given by the
+        <symbol>realm</symbol>. The username and digest response
+        provided by the client are checked against the credentials
+        stored in the database table <symbol>table</symbol>.
+      </para>
+      <para>
+        The <function>proxy_authenticate()</function> function takes
+        the credentials from the Proxy-Authorize header field. If the
+        credentials their match an entry in the
+        credentials database table, <function>proxy_authenticate()</function>
+        stores the user ID matching the credentials in the attribute
+        <varname>$fu.uid</varname> and returns <literal>true</literal>.
+      </para>
+      <para>
+        Otherwise, it creates a digest challenge which should be included
+        in an error response sent back to the client. The challenge will
+        be stored in the attribute defined by the
+        <serdoc:modparam module="auth">challenge_attr</serdoc:modparam>
+        of the <serdoc:module>auth</serdoc:module> module,
+        usually <varname>$digest_challenge</varname>. You should add
+        the content of this attribute to the response using the
+        <serdoc:func>append_to_reply</serdoc:func> function from
+        the <serdoc:module>textops</serdoc:module> module.
+      </para>
+      <para>
+        The reason for the failure can be determined from the interger
+        return value stored in the <varname>$?</varname> attribute.
+        A value of <literal>-3</literal> indicates that it was impossible
+        to retrieve credentials from the request. A 400 (Bad Request)
+        response is the usual way to handle this. The value of
+        <literal>-2</literal> indicates that something went wrong
+        internally and the client is not to be blamed.
+      </para>
+      <para>
+        The typical usage of <function>proxy_authenticate()</function> looks
+        like this:
+      </para>
+      <informalexample>
+        <programlisting>
+	if (!proxy_authenticate("$fd.digest_realm", "credentials")) {
+		if ($? == -2) {
+			sl_reply("500", "Internal Server Error");
+		}
+		else if ($? == -3) {
+			sl_reply("400", "Bad Request");
+		}
+		else {
+			if ($digest_challenge) {
+				append_to_reply("%$digest_challenge");
+			}
+			sl_reply("401", "Unauthorized");
+		}
+		drop;
+	}
+        </programlisting>
+      </informalexample>
+    </refsect2>
+
+    <refsect2 xml:id="function.proxy_authorize">
+      <title>
+        <function>proxy_authorize</function>
+        (<symbol>realm</symbol>, <symbol>table</symbol>)
+      </title>
+      <para>
+        The <function>proxy_authorize()</function> function is an
+        alternative name for the
+        <serdoc:func>proxy_authenticate</serdoc:func> function. It is
+        deprecated and is likely to be removed in future version.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.www_authenticate">
+      <title>
+        <function>www_authenticate</function>
+        (<symbol>realm</symbol>, <symbol>table</symbol>)
+      </title>
+      <para>
+        The <function>www_authenticate()</function> function behaves
+        similarly to the <serdoc:func>proxy_authenticate()</serdoc:func>
+        function. The only difference is that it takes the credentials
+        from the Authorization header field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.www_authorize">
+      <title>
+        <function>www_authorize</function>
+        (<symbol>realm</symbol>, <symbol>table</symbol>)
+      </title>
+      <para>
+        The <function>www_authorize()</function> function is an
+        alternative name for the
+        <serdoc:func>www_authenticate</serdoc:func> function. It is
+        deprecated and is likely to be removed in future version.
+      </para>
+    </refsect2>
+  </refsect1>
+
+  <refsect1 xml:id="module.auth_db.parameters">
+    <title>Module Parameters</title>
+
+    <refsect2 xml:id="module.auth_db.calculate_ha1">
+      <title><parameter>calculate_ha1</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>calculate_ha1</parameter> parameter determines
+        whether the <command>auth_db</command> module uses the hash
+        values stored in the database or the plaintext password. If left at
+        default value <literal>no</literal>, the hashes from the columns
+        specified by the parameters
+        <serdoc:modparam module="auth_db">password_column</serdoc:modparam>
+        and
+        <serdoc:modparam module="auth_db">password_column2</serdoc:modparam>
+        are used. If it is set to <literal>yes</literal>, the hashes are
+        calculated from the various fields, including the plaintext password
+        stored in the column specified by
+        <serdoc:modparam module="auth_db">
+          plain_password_column</serdoc:modparam>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.db_url">
+      <title><parameter>db_url</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>
+          mysql://serro:47serro11@localhost/ser
+        </serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>db_url</parameter> parameter contains the URL used to
+        connect to the database. The scheme identifies the database module in
+        use. Check the reference for the database you intend to use for
+        more information.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.did_column">
+      <title><parameter>did_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>did</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>did_column</parameter> parameter specifies the
+        name of the <varname>did</varname> database field. See
+        <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.flags_column">
+      <title><parameter>flags_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>flags</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>flags_column</parameter> parameter specifies the
+        name of the <varname>flags</varname> database field. See
+        <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.load_credentials">
+      <title><parameter>load_credentials</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>uid</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>load_credentials</parameter> parameter contains a
+        list of attributes, that should be loaded upon successful
+        authentication with a certain credentials.
+      </para>
+      <para>
+        The list contains the name names of both the attribute without the
+        leading dollar sign and any prefix which doubles as the name of
+        the database field which contains the value for the attribute.
+        The names are separated by vertical bar <literal>|</literal>.
+        The attributes will be loaded into the <varname>$fu</varname>
+        namespace.
+      </para>
+      <para>
+        In the default setup, the only attribute loaded this way is the
+        user ID of the user associated with the credentials. It is stored
+        in the database field <varname>uid</varname> and loaded into the
+        attribute <varname>$fu.uid</varname> upon successful
+        authentication.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.password_column">
+      <title><parameter>password_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>ha1</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>password_column</parameter> parameter specifies
+        the name of the <varname>ha1</varname> database field. See
+        <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.password_column_2">
+      <title><parameter>password_column_2</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>ha1b</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>password_column_2</parameter> parameter specifies
+        the name of the <varname>ha1b</varname> database field. See
+        <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.plain_password_column">
+      <title><parameter>password_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>password</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>plain_password_column</parameter> parameter
+        specifies the name of the <varname>password</varname> database
+        field. See <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+       </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.realm_column">
+      <title><parameter>realm_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>realm</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>realm_column</parameter> parameter specifies
+        the name of the <varname>realm</varname> database field. See
+        <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.username_column">
+      <title><parameter>username_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>auth_username</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>username_column</parameter> parameter specifies
+        the name of the <varname>auth_username</varname> database field. See
+        <serdoc:link linkend="module.auth_db.database">Database
+        Scheme</serdoc:link> below.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_db.use_did">
+      <title><parameter>use_did</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>use_did</parameter> specifies whether the
+        domain ID stored in the database should be considered when
+        loading credentials from the database. If it is changed to
+        <literal>yes</literal>, only those rows are loaded where the
+        domain ID in the column specified by the 
+        <serdoc:modparam module="auth_db">did_column</serdoc:modparam>
+        parameter matches that determined from the domain in the
+        To header field.
+      </para>
+    </refsect2>
+
+    <!--
+    <refsect2 xml:id="module.auth_db.">
+      <title><parameter></parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype></serdoc:paramtype>
+        <serdoc:paramdefault></serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+      </para>
+    </refsect2>
+    -->
+
+  </refsect1>
+
+  <refsect1 xml:id="module.auth_db.database">
+    <title>Database Scheme</title>
+
+
+    <refsect2 xml:id="table.credentials.auth_username">
+      <title><varname>auth_username</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64) NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>auth_username</varname> field contains the username
+        used for authentication. It is passed by the client in the
+        <varname>username</varname> parameter of the
+        <varname>Authorize</varname> or <varname>Proxy-Authorize</varname>
+        header field. Most commonly, it is equal to the username part of
+        the URI for which the client is registering or which it uses as
+        the From URI.
+      </para>
+      <para>
+        The field is used as part of the key for finding the correct
+        credentials.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.credentials.did">
+      <title><varname>did</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>
+          VARCHAR(64) NOT NULL DEFAULT '_default'
+        </serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>did</varname> field contains the domain ID of the
+        domain to which the credentials apply. The field is used as part
+        of the key for finding the correct credentials if the
+        <serdoc:modparam module="auth_db">use_did</serdoc:modparam>
+        parameter is set to <literal>yes</literal>. In this case, the
+        domain ID is taken from the <varname>$t.did</varname> attribute
+        if the method of the request is <varname>REGISTER</varname> or
+        <varname>$f.did</varname> otherwise. 
+      </para>
+      <para>
+        If <serdoc:modparam module="auth_db">use_did</serdoc:modparam>
+        is kept at its default <literal>no</literal>, the field is ignored.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.credentials.realm">
+      <title><varname>realm</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64) NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>realm</varname> field contains the realm of the
+        credentials.
+        The realm is a string used to distinguish the various credentials
+        that a request may contains. It is also presented to the user so
+        that they will be able to figure out which username and password
+        are requested. It is recommended to put the name of the domain
+        name associated with the credentials into the realm.
+      </para>
+      <para>
+        The field is used as part of the key for finding the correct
+        credentials.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.credentials.password">
+      <title><varname>password</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(28) NOT NULL DEFAULT ''</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>password</varname> field contains the plaintext
+        password. The field is only used if the
+        <serdoc:modparam module="auth">calculate_ha1</serdoc:modparam>
+        parameter is set to <literal>yes</literal>. Otherwise, the
+        hashes in the <varname>ha1</varname> and <varname>ha1b</varname>
+        fields are used and this field is ignored.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.credentials.flags">
+      <title><varname>flags</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT NOT NULL DEFAULT '0'</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>flags</varname> field contains the database flags,
+        a bitfield of various values. The <command>auth_db</command> module
+        uses the following bit values:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term><literal>1</literal></term>
+          <listitem>
+            (name: <literal>LOAD_SER</literal>,
+            serctl letter: <literal>s</literal>)
+            the entry will only be considered if this flag is set;
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>2</literal></term>
+          <listitem>
+            (name: <literal>DISABLED</literal>,
+            serctl letter: <literal>d</literal>)
+            the entry will be ignored if this flag is set.
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+
+    <refsect2 id="table.credentials.ha1">
+      <title><varname>ha1</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(32) NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>ha1</varname> contains an MD5 hash used in calculating
+        the <varname>response</varname> parameter of the digest response.
+      </para>
+      <para>
+        In order to not transmit the password in plain text over a
+        potentially tapped wire, the digest authentication scheme only
+        transmits a hash generated over certain values. Among other things,
+        this includes an MD5 hash called H(A1) generated over the username,
+        realm, and
+        plaintext password concatenated with colons in between. Since
+        these three values never change for given credentials, the hash
+        can be stored in the database. This will save some work.
+      </para>
+      <para>
+        The tool <serdoc:bin>ser_cred</serdoc:bin> automatically generates
+        these hash values when creating or updating credentials. If you
+        are filling the database yourself, you can use the tool
+        <serdoc:sbin>gen_ha1</serdoc:sbin> to generate the hash.
+      </para>
+      <para>
+        Alteratively, you can also let the <command>auth_db</command>
+        module calculate the hash by setting the
+        <serdoc:modparam module="auth">calculate_ha1</serdoc:modparam>
+        parameter to <literal>yes</literal>. In this case, the field
+        <varname>ha1</varname> is ignored and the plain text password
+        in the <varname>password</varname> field is used instead.
+      </para>
+    </refsect2>
+
+    <refsect2 id="table.credentials.ha1b">
+      <title><varname>ha1b</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(32) NOT NULL DEFAULT ''</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>ha1b</varname> field contains an MD5 hash used in
+        calculating the <varname>response</varname> parameter of the
+        digest response.
+      </para>
+      <para>
+        The hash stored in this field is the same as in the
+        <varname>ha1</varname>. However, some clients put the combination
+        of username and domain into the <varname>username</varname>
+        parameter of their digest response. The hash then needs to be
+        calculated over a concatenation of username and domain separated
+        by an at sign, followed by the realm and password separated by a
+        colon.
+      </para>
+    </refsect2>
+
+    <refsect2 id="table.credentials.uid">
+      <title><varname>uid</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64) NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>uid</varname> field contains the user ID of the user
+        associated with the credentials. If a request using the credentials
+        is successfully authenticated, the user ID is stored in the
+        attribute <varname>$fu.uid</varname>.
+      </para>
+    </refsect2>
+
+
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>auth</serdoc:module></member>
+      <member><serdoc:module>auth_diameter</serdoc:module></member>
+      <member><serdoc:module>auth_identity</serdoc:module></member>
+      <member><serdoc:module>auth_radius</serdoc:module></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+
+<!-- vim:sw=2 sta et sts=2 ai
+  -->

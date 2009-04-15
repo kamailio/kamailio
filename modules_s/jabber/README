@@ -1,0 +1,549 @@
+
+jabber Module
+
+Daniel Mierla
+
+   FhG FOKUS
+
+Edited by
+
+Daniel Mierla
+
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+
+              1.1.1. New Features
+
+        1.2. Admin's Guide
+        1.3. User's Guide
+        1.4. Dependencies
+
+              1.4.1. SER Modules
+              1.4.2. External Libraries or Applications
+
+        1.5. Exported Parameters
+
+              1.5.1. db_url (string)
+              1.5.2. jaddress (string)
+              1.5.3. jport (integer)
+              1.5.4. jdomain (string)
+              1.5.5. aliases (string)
+              1.5.6. proxy (string)
+              1.5.7. registrar (string)
+              1.5.8. workers (integer)
+              1.5.9. max_jobs (integer)
+              1.5.10. cache_time (integer)
+              1.5.11. delay_time (integer)
+              1.5.12. sleep_time (integer)
+              1.5.13. check_time (integer)
+
+        1.6. Exported Functions
+
+              1.6.1. jab_send_message()
+              1.6.2. jab_send_message()
+              1.6.3. jab_join_jconf()
+              1.6.4. jab_exit_jconf()
+              1.6.5. jab_go_online()
+              1.6.6. jab_go_offline()
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set jaddress parameter
+   1-3. Set jport parameter
+   1-4. Set jdomain parameter
+   1-5. Set jdomain parameter
+   1-6. Set proxy parameter
+   1-7. Set registrar parameter
+   1-8. Set workers parameter
+   1-9. Set max_jobs parameter
+   1-10. Set cache_time parameter
+   1-11. Set delay_time parameter
+   1-12. Set sleep_time parameter
+   1-13. Set check_time parameter
+   1-14. jab_send_message() usage
+   1-15. jab_send_message() usage
+   1-16. jab_join_jconf() usage
+   1-17. jab_exit_jconf() usage
+   1-18. jab_go_online() usage
+   1-19. jab_go_offline() usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This is new version of Jabber module that integrates XODE XML
+   parser for parsing Jabber messages. That introduces a new
+   module dependency: expat library.
+
+   Expat is a common XML library and is the fastest available for
+   Linux/Unix, the second over all, after msxml library. It is
+   integrated in most of well known Linux distributions.
+     _________________________________________________________
+
+1.1.1. New Features
+
+     * Presence support (see doc/xxjab.cfg for a sample cfg file)
+       (January 2003).
+     * SIP to Jabber conference support (December 2003).
+     * Possibility to manage all kinds of Jabber messages
+       (message/presence/iq) (December 2003).
+     * Aliases -- Possibility to set host aliases for addresses
+       (see parameter's desc.) (December 2003).
+     * Send received SIP MESSAGE messages to different IM
+       networks (Jabber, ICQ, MSN, AIM, Yahoo) using a Jabber
+       server (December 2003).
+     * Send incoming Jabber instant messages as SIP MESSAGE
+       messages.
+     * Gateways detection -- Ability to see whether an IM gateway
+       is up or down.
+     _________________________________________________________
+
+1.2. Admin's Guide
+
+   Note
+
+   A more complete guide about SIMPLE2Jabber gateway can be found
+   at http://iptel.org/ser. The part below will be removed soon,
+   only the manual from web will be updated.
+
+   The Jabber server setup is not a subject of this guide. Check
+   http://www.jabber.org for that.
+
+   Useful scripts, for creating Jabber Gateway database, or for
+   managing the Jabber accounts form web are located in 'doc'
+   subdirectory of the module.
+
+   Main steps of using the Jabber gateway:
+
+     * Create the MySQL database.
+     * Setup the local Jabber server.
+     * Set the module parameter values in cfg file of SER, load
+       the dependent modules, set up the routing rules for Jabber
+       gateway.
+     * Run SER.
+
+   The administrator of SER/Jabber gateway must inform the users
+   what are the aliases for Jabber/Other IM networks. Other IMs
+   could be AIM, ICQ, MSN, Yahoo, and so on.
+
+   These aliases depend on the server hostname where runs SER and
+   how local Jabber server is setup.
+
+   Next is presented a use case. Prologue:
+
+     * SER is running on "server.org".
+     * Local Jabber server is running on "jabsrv.server.org".
+     * Jabber network alias (first part of "jdomain") is
+       "jabber.server.org"
+
+   The aliases for other IM networks must be the same as JID set
+   in Jabber configuration file for each IM transport.
+
+   The JIDs of Jabber transports must start with the name of the
+   network. For AIM, JID must start with "aim.", for ICQ with
+   "icq" (that because I use icqv7-t), for MSN with "msn." and
+   for Yahoo with "yahoo.". The gateway needs these to find out
+   what transport is working and which not. For our use case
+   these could be like "aim.server.org", "icq.server.org",
+   "msn.server.org", "yahoo.server.org".
+
+   It is indicated to have these aliases in DNS, thus the client
+   application can resolve the DNS name. Otherwise there must be
+   set the outbound proxy to SER server.
+
+   *** Routing rules for Jabber gateway First step is to
+   configure SER to recognize messages for Jabber gateway. Look
+   at "doc/xjab.cfg" to see a sample. The idea is to look in
+   messages for destination address and if it contains Jabber
+   alias or other IM alias, that means the message is for Jabber
+   gateway.
+
+   Next step is to find out what means that message for Jabber
+   gateway. It could be a special message what triggers the
+   gateway to take an action or is a simple message which should
+   be delivered to Jabber network (using the method
+   "jab_send_message").
+
+   The special messages are for:
+
+     * Registering to Jabber server (go online in Jabber
+       network)--here must be called "jab_go_online" method.
+     * Leaving the Jabber network (go offline in Jabber
+       network)--here must be called "jab_go_offline" method.
+     * Joining a Jabber conference room--here must be called
+       "jab_join_jconf".
+     * Leaving a Jabber conference room--here must be called
+       "jab_exit_jconf".
+
+   The destination address must follow the following patterns:
+
+     * For Jabber network:
+       "username<delim>jabber_server@jabber_alias".
+     * For Jabber conference:
+       "nickname<delim>room<delim>conference_server@jabber_alias"
+       .
+     * For AIM network: "aim_username@aim_alias".
+     * For ICQ network: "icq_number@icq_alias".
+     * For MSN network:
+       "msn_username<delim>msn_server@msn_alias". msn_server can
+       be "msn.com" or "hotmail.com".
+     * For YAHOO network: "yahoo_username@yahoo_alias".
+
+   Note
+
+   "jabber_alias" is the first part of "jdomain".
+     _________________________________________________________
+
+1.3. User's Guide
+
+   The user must activate his Jabber account associated with his
+   SIP id. For each other IM network on which he wants to send
+   messages, he must set an account for that IM network. The
+   gateway is not able to create new account in foreign networks,
+   excepting local Jabber server.
+
+   When you want to send a message to someone in other IM
+   network, you must set the destination of the message according
+   with the pattern corresponding to that IM network (see last
+   part of "Admin guide" chapter).
+
+   Sending a message to user@jabber.xxx.org which is in Jabber
+   network, the destination must be:
+   user<delim>jabber.xxx.org@jabber_alias.
+
+   For someone who is in Yahoo network the destination must be:
+   user@yahoo_alias
+
+   Note
+
+   The SER administrator have to set the Jabber transports for
+   each IM network in order to be able to send messages to those
+   networks. The alias of each IM network can be found out from
+   SER admin.
+
+   You cannot send messages from your SIP client to your
+   associated Jabber account--is something like sending messages
+   to yourself.
+     _________________________________________________________
+
+1.4. Dependencies
+
+1.4.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * A database module.
+     * pa (Optionally) - Presence Agent.
+     * tm - Transaction Manager.
+     _________________________________________________________
+
+1.4.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * Expat library.
+     _________________________________________________________
+
+1.5. Exported Parameters
+
+1.5.1. db_url (string)
+
+   SQL URL of database.
+
+   Default value is "mysql://root@127.0.0.1/sip_jab". 
+
+   Example 1-1. Set db_url parameter
+...
+modparam("jabber", "db_url", "mysql://username:password@host/sip_jab")
+...
+     _________________________________________________________
+
+1.5.2. jaddress (string)
+
+   IP or hostname of Jabber server -- it must be the same as the
+   value from <host> tag of Jabber server config file.
+
+   Default value is "127.0.0.1". 
+
+   Example 1-2. Set jaddress parameter
+...
+modparam("jabber", "jaddress", "1.2.3.4")
+...
+     _________________________________________________________
+
+1.5.3. jport (integer)
+
+   Port number of Jabber server.
+
+   Default value is "5222". 
+
+   Example 1-3. Set jport parameter
+...
+modparam("jabber", "jport", 1234)
+...
+     _________________________________________________________
+
+1.5.4. jdomain (string)
+
+   Format: jabber.sipserver.com=<delim>. If the destination is
+   for Jabber network the URI should be like:
+   username<delim>jabber_server@jdomain or
+   nickname<delim>roomname<delim>conference_server@jdomain
+
+   <delim> must be a un-reserved character. By default this
+   character is * . The destination will be transformed to
+   username@jabber_server or roomname@conference_server/nickname
+   before the message is sent to Jabber server.
+
+   Default value is none. 
+
+   Example 1-4. Set jdomain parameter
+...
+modparam("jabber", "jdomain", "jabber.sipserver.com=*")
+...
+     _________________________________________________________
+
+1.5.5. aliases (string)
+
+   Aliases for IM networks.
+
+   Format: "N;alias1=<delim1>;...;aliasN=<delimN>;" Destinations
+   like '*@aliasX' could have other format than those specified
+   for Jabber network. All <delim> from user part of the
+   destination address will be changed to <delimX> if the
+   destination address contains <aliasX>.
+
+   (Ex: jdomain is 'jabber.x.com=*' and msn_alias is
+   'msn.x.com=%'. The destination address forM MSN Network, on
+   SIP side, is like 'username*hotmail.com@msn.x.com'. The
+   destination address will be transformed to
+   'username%hotmail.com@msn.x.com'. 'msn.x.com' must be the same
+   as the JID associated with MSN transport in Jabber
+   configuration file (usually is 'jabberd.xml'))
+
+   Default value is none. 
+
+   Example 1-5. Set jdomain parameter
+...
+modparam("jabber", "aliases", "1;msn.x.com=%")
+...
+     _________________________________________________________
+
+1.5.6. proxy (string)
+
+   Outbound proxy address.
+
+   Format: ip_address:port hostname:port
+
+   All SIP messages generated by gateway will be sent to that
+   address. If is missing, the message will be delivered to the
+   hostname of the destination address
+
+   Default value is none.
+
+   Example 1-6. Set proxy parameter
+...
+modparam("jabber", "proxy", "10.0.0.1:5060 sipserver.com:5060")
+...
+     _________________________________________________________
+
+1.5.7. registrar (string)
+
+   The address in whose behalf the INFO and ERROR messages are
+   sent.
+
+   Default value is "jabber_gateway@127.0.0.1". 
+
+   Example 1-7. Set registrar parameter
+...
+modparam("jabber", "registrar", "jabber_gateway@127.0.0.1")
+...
+     _________________________________________________________
+
+1.5.8. workers (integer)
+
+   Number of workers.
+
+   Default value is 2. 
+
+   Example 1-8. Set workers parameter
+...
+modparam("jabber", "workers", 2)
+...
+     _________________________________________________________
+
+1.5.9. max_jobs (integer)
+
+   Maximum jobs per worker.
+
+   Default value is 10. 
+
+   Example 1-9. Set max_jobs parameter
+...
+modparam("jabber", "max_jobs", 10)
+...
+     _________________________________________________________
+
+1.5.10. cache_time (integer)
+
+   Cache time of a Jabber connection.
+
+   Default value is 600. 
+
+   Example 1-10. Set cache_time parameter
+...
+modparam("jabber", "cache_time", 600)
+...
+     _________________________________________________________
+
+1.5.11. delay_time (integer)
+
+   Time to keep a SIP message (in seconds).
+
+   Default value is 90 seconds. 
+
+   Example 1-11. Set delay_time parameter
+...
+modparam("jabber", "delay_time", 90)
+...
+     _________________________________________________________
+
+1.5.12. sleep_time (integer)
+
+   Time between expired Jabber connections checking (in seconds).
+
+   Default value is 20 seconds. 
+
+   Example 1-12. Set sleep_time parameter
+...
+modparam("jabber", "sleep_time", 20)
+...
+     _________________________________________________________
+
+1.5.13. check_time (integer)
+
+   Time between checking the status of JabberGW workers (in
+   seconds).
+
+   Default value is 20 seconds. 
+
+   Example 1-13. Set check_time parameter
+...
+modparam("jabber", "check_time", 20)
+...
+     _________________________________________________________
+
+1.6. Exported Functions
+
+1.6.1. jab_send_message()
+
+   Converts SIP MESSAGE message to a Jabber message and sends it
+   to Jabber server.
+
+   Example 1-14. jab_send_message() usage
+...
+jab_send_message();
+...
+     _________________________________________________________
+
+1.6.2. jab_send_message()
+
+   Converts SIP MESSAGE message to a Jabber message and sends it
+   to Jabber server.
+
+   Example 1-15. jab_send_message() usage
+...
+jab_send_message();
+...
+     _________________________________________________________
+
+1.6.3. jab_join_jconf()
+
+   Join a Jabber conference--the nickname, room name and
+   conference server address should be included in To header as:
+   nickname%roomname%conference_server@jdomain . If the nickname
+   is missing, then the SIP username is used.
+
+   Example 1-16. jab_join_jconf() usage
+...
+jab_join_jconf();
+...
+     _________________________________________________________
+
+1.6.4. jab_exit_jconf()
+
+   Leave a Jabber conference--the nickname, room name and
+   conference server address should be included in To header as:
+   nickname%roomname%conference_server@jdomain .
+
+   Example 1-17. jab_exit_jconf() usage
+...
+jab_exit_jconf();
+...
+     _________________________________________________________
+
+1.6.5. jab_go_online()
+
+   Register to the Jabber server with associated Jabber ID of the
+   SIP user.
+
+   Example 1-18. jab_go_online() usage
+...
+jab_go_online();
+...
+     _________________________________________________________
+
+1.6.6. jab_go_offline()
+
+   Log off from Jabber server the associated Jabber ID of the SIP
+   user.
+
+   Example 1-19. jab_go_offline() usage
+...
+jab_go_offline();
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="iptrtpproxy" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Tomas</firstname>
+		<surname>Mandys</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>tomas dot mandys at iptel dot org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Tomas Mandys</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+
+    </sectioninfo>
+
+    <title>Iptrtpproxy module</title>
+
+    <section id="iptrtpproxy.overview">
+	<title>Overview</title>
+	<para>
+	It provides similar functionality as <emphasis>nathelper</emphasis> but
+	communicates with <emphasis>netfilter</emphasis> kernel <emphasis>xt_RTPPROXY</emphasis> module using
+	<emphasis>libipt_RTPPROXY</emphasis> userspace library. 
+	See <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">http://www.2p.cz/en/netfilter_rtp_proxy</ulink>
+	All RTP streams are 
+	manipulated directly in kernel space, no data are copied from 
+	kernel to userspace and back, it reduces load and delay. 
+	</para>
+
+	<para>
+	The ser module is written as light-weighted, there is not implemented
+	any dialog managment as in <emphasis>nathelper</emphasis>, the reason is that such API
+	should be provided by core or specialized dialog manager module.
+	Because such module is not in CVS, session information may be stored 
+	in extra attributes of <emphasis>avp_db</emphasis> module and
+	session id itself in record route as cookie, see <emphasis>rr</emphasis> module.
+	</para>
+
+	<para>
+	It should be able to support all cases as re-invites when SIP client offers media change in SDP and
+	when number of medias in offer/answer are different. 
+	</para>
+
+	<para>
+	<emphasis>Nathelper</emphasis> may be still used for testing if client is behind the NAT.
+	</para>
+
+
+	<para>
+	Limitations:
+	<itemizedlist>
+		<listitem>
+			<para>
+		 only IPv4 addresses are supported.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+		 more media streams per session supported
+			</para>
+		</listitem>
+	</itemizedlist>
+	</para>
+    </section>
+
+	<section id="iptrtpproxy.dep">
+	<title>Dependencies</title>
+				   
+	<para>
+	The following libraries or applications must be installed before
+	running SER with this module loaded:
+	<itemizedlist>
+		<listitem>
+		<para>
+		netfilter xt_RTPROXY &amp; libipt_RTPPROXY,
+	    see <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">http://www.2p.cz/en/netfilter_rtp_proxy</ulink>
+		</para>
+		</listitem>
+	</itemizedlist>
+	</para>
+	</section>
+
+	<section id="iptrtpproxy.parameters">
+
+		<title>Parameters</title>
+
+		<section id="switchboard">
+		<title><varname>switchboard</varname> (string)</title>
+		<para>
+  References <emphasis>xt_RTPPROXY</emphasis> switchboard for usage by ser module. 
+		</para>
+		<para>
+		The format is:
+		</para>
+			<programlisting>
+  name "=" value * ( ";" name "=" value )
+
+  name =  "name" | ( ( "addr-" | "port-" | "learning-timeout-" | "always-learn-") ("a" | "b") )
+			</programlisting>
+
+		<para>
+  The meaning of parameters is described in <emphasis>libipt_RTPROXY</emphasis> and <emphasis>iptrtpproxy</emphasis> documentation.
+		</para>
+		<para>
+  The <emphasis>name</emphasis>" is identifier that will be used by script functions and references switchboard. 
+  It's mandatory parameter. More switchboards may be declared.
+		</para>
+		<example>
+			<title>Declare <varname>switchboard</varname></title>
+			<programlisting>
+	...
+	modparam("iptrtpproxy", "switchboard", "name=my;addr-a=1.2.3.4;port-a=50000");
+	...
+			</programlisting>
+		</example>
+		</section>
+
+	</section>
+
+	<section id="iptrtpproxy.functions">
+		<title>Functions</title>
+
+		<section id="iptrtpproxy_alloc">
+		<title>
+			<function>iptrtpproxy_alloc(gate_a_to_b, switchboard_id)</function>
+		</title>
+		<para>
+			Parses SDP content and allocates for each RTP media stream one RTP proxy session.
+			SDP is updates to reflect allocated sessions.
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				if <emphasis>gate_a_to_b</emphasis> non equal to zero
+				then SDP regards to gate-a to gate-b direction.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>switchboard_id</emphasis> is reference to a switchboard with name declared as
+				<varname>switchboard</varname> modparam.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				function returns true is a session was created, identifier is available
+				via select <function>@iptrtpproxy.session_ids</function>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+			<title><function>iptrtpproxy_alloc</function> usage</title>
+			<programlisting>
+	...
+	if (iptrtpproxy_alloc("1", "my")) {
+	  $sess_ids = @iptrtpproxy.session_ids;
+	  # save sess_ids in dialog
+	}
+	...
+			</programlisting>
+		</example>
+		</section>
+
+		<section id="iptrtpproxy_update">
+		<title>
+			<function>iptrtpproxy_update(gate_a_to_b, session_ids)</function>
+		</title>
+		<para>
+		Parses SDP content and updates sessions provided by <emphasis>session_ids</emphasis> and
+		updates SDP. If succesfull then session_ids may be changed (in case e.g. media 
+		stream has port zero particular session is released), the
+		result of <function>@iptrtpproxy.session_ids</function> should be stored for future in-dialog usage.
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				if <emphasis>gate_a_to_b</emphasis> non equal to zero
+				then SDP regards to gate-a to gate-b direction.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+			<title><function>iptrtpproxy_update</function> usage</title>
+			<programlisting>
+	...
+	# load $sess_ids from dialog
+	if (iptrtpproxy_update("0", $sess_ids)) {
+	  $sess_ids = @iptrtpproxy.session_ids;
+	  # save sess_ids in dialog
+	}
+	...
+			</programlisting>
+		</example>
+		</section>
+
+		<section id="iptrtpproxy_delete">
+		<title>
+			<function>iptrtpproxy_delete(session_ids)</function>
+		</title>
+		<para>
+		Delete sessions identified by <emphasis>session_ids</emphasis>. May be used when dialog is being
+		destroyed (BYE) or when INVITE failed in failure route.
+		</para>
+		<example>
+			<title><function>iptrtpproxy_delete</function> usage</title>
+			<programlisting>
+	...
+	# load $sess_ids from dialog
+	iptrtpproxy_delete($sess_ids);
+	...
+			</programlisting>
+		</example>
+		</section>
+
+
+		<section id="iptrtpproxy.session_ids">
+		<title>
+			<function>@iptrtpproxy.session_ids</function>
+		</title>
+		<para>
+		Returns sessions allocated/updated in <function>iptrtpproxy_alloc/update</function>.
+		</para>
+
+		<para>
+		The format is:
+		</para>
+
+		<programlisting>
+
+	switchboard_name [ ":" [ session_id *( "," session_id) ] ]
+	session_id = *( [0-9] )   ; empty when no session allocated
+		</programlisting>
+
+		</section>
+
+		<section id="iptrtpproxy.sdp_ip">
+		<title>
+			<function>@iptrtpproxy.sdp_ip</function>
+		</title>
+		<para>
+		Return first rewritten IP provided in SDP <emphasis>c=</emphasis> line.
+		</para>
+
+		</section>
+	</section>
+
+</section>
+

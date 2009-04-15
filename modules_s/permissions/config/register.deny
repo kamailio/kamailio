@@ -1,0 +1,16 @@
+#
+# $Id$
+#
+# Suppose that we have a PSTN gateway with IP address 1.2.3.4
+# We should prevent REGISTER messages that contain that IP
+# address in Contact header field because that can cause serious
+# security hole (a malicious user might be able to register such
+# a contact and bypass security checks performed by the SIP proxy).
+#
+# The following line prevents registering Contacts with IP 1.2.3.4
+# (Don't forget to list also all hostnames that can be used to
+#  reach the PSTN gateway)
+#
+
+ALL : "^sip:.*1\.2\.3\.4$"
+

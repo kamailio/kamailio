@@ -1,0 +1,14 @@
+#
+# Lines starting with a '#' character or empty lines are ignored.
+# Put a User-Agent name or regular expression per line.
+# Check is case insensitive.
+#
+# This file should only list SIP clients that are asymmetric regarding
+# the SIP signaling. For clients that are asymmetric regarding the RTP
+# media streams, use the equivalent RTP version of this file.
+# Clients that are asymmetric for both SIP signaling as well as RTP media
+# streams should go in both files.
+#
+
+ipDialog SipTone.*
+

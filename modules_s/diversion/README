@@ -1,0 +1,189 @@
+
+Diversion Module
+
+Jan Janak
+
+   FhG FOKUS
+
+Edited by
+
+Jan Janak
+
+   Copyright © 2004 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. suffix (string)
+
+        1.4. Exported Functions
+
+              1.4.1. add_diversion(reason)
+              1.4.2. Diversion Example
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. suffix usage
+   1-2. add_diversion usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   The module implements the Diversion extensions as per
+   draft-levy-sip-diversion-08. The diversion extensions are
+   useful in various scenarios involving call forwarding.
+   Typically one needs to communicate the original recipient of
+   the call to the PSTN gateway and this is what the diversion
+   extensions can be used for.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   None.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. suffix (string)
+
+   The suffix to be appended to the end of the header field. You
+   can use the parameter to specify additional parameters to be
+   added to the header field, see the example.
+
+   Default value is "" (empty string).
+
+   Example 1-1. suffix usage
+modparam("diversion", "suffix", ";privacy=full")
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. add_diversion(reason)
+
+   The function adds a new diversion header field before any
+   other existing Diversion header field in the message (the
+   newly added Diversion header field will become the topmost
+   Diversion header field). The inbound (without any
+   modifications done by the proxy server) Request-URI will be
+   used as the Diversion URI.
+
+   Meaning of the parameters is as follows:
+
+     * reason - The reason string to be added as the reason
+       parameter
+
+   Example 1-2. add_diversion usage
+...
+add_diversion("user-busy");
+...
+     _________________________________________________________
+
+1.4.2. Diversion Example
+
+   The following example shows a Diversion header field added to
+   INVITE message. The INVITE message was diverted by the user
+   agent of sip:jiri@iptel.org because the user was talking to
+   someone else and the new destination is sip:jan@iptel.org.
+INVITE sip:jan@iptel.org SIP/2.0
+From: "5060" <sip:5060@iptel.org>;tag=ldgheoihege
+To: "Jan Janak" <sip:jan@iptel.org>
+Call-ID: adgasdkgjhkjha@1.2.3.4
+CSeq: 3 INVITE
+Diversion: <sip:jiri@iptel.org>;reason=user-busy
+Via: SIP/2.0/UDP 1.2.3.4:5060
+Contact: <sip:5060@2.3.4.5>
+Content-Length: 0
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   According to the specification new Diversion header field
+   should be inserted as the topmost Diversion header field in
+   the message, that means before any other existing Diversion
+   header field in the message. In addition to that,
+   add_diversion function can be called several times and each
+   time it should insert the new Diversion header field as the
+   topmost one.
+
+   In order to implement this, add_diversion function creates the
+   anchor in data_lump lists as a static variable to ensure that
+   the next call of the function will use the same anchor and
+   would insert new Diversion headers before the one created in
+   the previous execution. To my knowledge this is the only way
+   of inserting the diversion header field before any other
+   created in previous runs of the function.
+
+   The anchor kept this way is only valid for a single message
+   and we have to invalidate it when another message is being
+   processed. For this reason, the function also stores the id of
+   the message in another static variable and compares the value
+   of that variable with the id of the SIP message being
+   processed. If they differ then the anchor will be invalidated
+   and the function creates a new one.
+
+   The following code snippet shows the code that invalidates the
+   anchor, new anchor will be created when the anchor variable is
+   set to 0.
+static inline int add_diversion_helper(struct sip_msg* msg, str* s)
+{
+    static struct lump* anchor = 0;
+    static int msg_id = 0;
+
+    if (msg_id != msg->id) {
+        msg_id = msg->id;
+        anchor = 0;
+    }
+...
+}
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs

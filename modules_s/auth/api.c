@@ -1,0 +1,195 @@
+/*
+ * $Id$
+ *
+ * Digest Authentication Module
+ *
+ * Copyright (C) 2001-2003 FhG Fokus
+ *
+ * This file is part of ser, a free SIP server.
+ *
+ * ser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+/*
+ * History:
+ * --------
+ *  ...
+ * 2008-07-01 set c->stale in auth_check_hdr_md5 (andrei)
+ */
+
+#include <string.h>
+#include "api.h"
+#include "../../dprint.h"
+#include "../../parser/digest/digest.h"
+#include "../../sr_module.h"
+#include "../../ut.h"
+#include "auth_mod.h"
+#include "nonce.h"
+
+static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
+
+/*
+ * Purpose of this function is to find credentials with given realm,
+ * do sanity check, validate credential correctness and determine if
+ * we should really authenticate (there must be no authentication for
+ * ACK and CANCEL
+ * @param hdr output param where the Authorize headerfield will be returned.
+ * @param check_hdr  pointer to the function checking Authorization header field
+ */
+auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
+						struct hdr_field**  hdr, check_auth_hdr_t check_auth_hdr)
+{
+	int ret;
+	auth_body_t* c;
+	check_auth_hdr_t check_hf;
+	auth_result_t    auth_rv;
+
+	static str prack = STR_STATIC_INIT("PRACK");
+
+	     /* ACK and CANCEL must be always authenticated, there is
+	      * no way how to challenge ACK and CANCEL cannot be
+	      * challenged because it must have the same CSeq as
+	      * the request to be canceled
+	      */
+
+	if ((msg->REQ_METHOD == METHOD_ACK) ||  (msg->REQ_METHOD == METHOD_CANCEL)) return AUTHENTICATED;
+	     /* PRACK is also not authenticated */
+	if ((msg->REQ_METHOD == METHOD_OTHER)) {
+		if (msg->first_line.u.request.method.len == prack.len &&
+		    !memcmp(msg->first_line.u.request.method.s, prack.s, prack.len))
+			return AUTHENTICATED;
+	}
+
+	     /* Try to find credentials with corresponding realm
+	      * in the message, parse them and return pointer to
+	      * parsed structure
+	      */
+	ret = find_credentials(msg, realm, hftype, hdr);
+	if (ret < 0) {
+		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
+		return ERROR;
+	} else if (ret > 0) {
+		DBG("auth:pre_auth: Credentials with realm '%.*s' not found\n", realm->len, ZSW(realm->s));
+		return NOT_AUTHENTICATED;
+	}
+
+	     /* Pointer to the parsed credentials */
+	c = (auth_body_t*)((*hdr)->parsed);
+
+	    /* digest headers are in c->digest */
+	DBG("auth: digest-algo: %.*s parsed value: %d\n", c->digest.alg.alg_str.len, c->digest.alg.alg_str.s, c->digest.alg.alg_parsed);
+
+	    /* check authorization header field's validity */
+	if (check_auth_hdr == NULL) {
+		check_hf = auth_check_hdr_md5;
+	}
+	else {	/* use check function of external authentication module */
+		check_hf = check_auth_hdr;
+	}
+	/* use the right function */
+	if (!check_hf(msg, c, &auth_rv)) {
+		return auth_rv;
+	}
+	
+	return DO_AUTHENTICATION;
+}
+
+/**
+ * TODO move it to rfc2617.c 
+ * 
+ * @param auth_res return value of authentication. Maybe the it will be not affected.
+ * @result if authentication should continue (1) or not (0)
+ * 
+ */
+static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth, auth_result_t* auth_res)
+{
+	int ret;
+	
+	    /* Check credentials correctness here */
+	if (check_dig_cred(&auth->digest) != E_DIG_OK) {
+		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
+		*auth_res = BAD_CREDENTIALS;
+		return 0;
+	}
+
+	ret = check_nonce(auth, &secret1, &secret2, msg);
+	if (ret!=0){
+		if (ret==3 || ret==4){
+			/* failed auth_extra_checks or stale */
+			auth->stale=1; /* we mark the nonce as stale 
+			 				(hack that makes our life much easier) */
+		} else {
+			DBG("auth:pre_auth: Invalid nonce value received\n");
+			*auth_res = NOT_AUTHENTICATED;
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/*
+ * Purpose of this function is to do post authentication steps like
+ * marking authorized credentials and so on.
+ */
+auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
+{
+	int res = AUTHENTICATED;
+	auth_body_t* c;
+
+	c = (auth_body_t*)((hdr)->parsed);
+
+	if (c->stale ) {
+		if ((msg->REQ_METHOD == METHOD_ACK) || 
+		    (msg->REQ_METHOD == METHOD_CANCEL)) {
+			     /* Method is ACK or CANCEL, we must accept stale
+			      * nonces because there is no way how to challenge
+			      * with new nonce (ACK has no response associated 
+			      * and CANCEL must have the same CSeq as the request 
+			      * to be canceled)
+			      */
+		} else {
+			c->stale = 1;
+			res = NOT_AUTHENTICATED;
+		}
+	}
+
+	if (mark_authorized_cred(msg, hdr) < 0) {
+		LOG(L_ERR, "auth:post_auth: Error while marking parsed credentials\n");
+		res = ERROR;
+	}
+
+	return res;
+}
+
+
+int bind_auth(auth_api_t* api)
+{
+	if (!api) {
+		LOG(L_ERR, "bind_auth: Invalid parameter value\n");
+		return -1;
+	}
+
+	api->pre_auth = pre_auth;
+	api->post_auth = post_auth;
+	api->build_challenge = build_challenge_hf;
+	api->qop = &qop;
+	api->calc_HA1 = calc_HA1;
+	api->calc_response = calc_response;
+	return 0;
+}

@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="rls.xcap"><title>RLS and XCAP</title>
+
+<section><title>Used terms</title>
+<para>
+<variablelist><title></title>
+<varlistentry>
+	<term>RLS</term>
+	<listitem><para>Resource List Server - server processing subscriptions to
+	special URIs (RL-URIs) which represent more resources than only one like "normal URIs".
+	</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term>RL-URI</term>
+	<listitem><para>Resource list URI. URI which represents a list of resources instead of
+	a single user.
+	</para></listitem>
+</varlistentry>
+</variablelist>
+</para>
+</section>
+
+<section><title>Processing subscriptions</title>
+<!--
+<para>There are two kinds of documents containing lists of resources described
+in the draft <xref linkend="pres_draft_rls"/>:
+<itemizedlist>
+	<listitem><para>rls-services</para></listitem>
+	<listitem><para>resource-lists</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+The specification says that only rls-services documents should be handled by
+Resource List Server [RLS] but there are no clients supporting rls-services
+documents at this moment. [Are they?]
+</para>
+
+<para>We use <emphasis>rls-services</emphasis> documents for <quote>global</quote>
+resource lists like <quote>technical-support</quote> mentioned above and
+<emphasis>resource-lists</emphasis> documents for holding resource lists for
+standalone users - <quote>buddy lists</quote>.
+</para>-->
+
+<para>Specification says that each time a SUBSCRIBE request to a RL-URI comes,
+RLS has to ask XCAP server for coresponding &lt;service&gt; in default
+rls-services document. The XCAP query in this case is for document like
+&lt;xcap-root&gt;/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;AOR&gt;%22].
+Returned &lt;service&gt; is processed according to specification then and the
+result of it is flat list of URIs to subscribe to.
+</para>
+
+<para>This processing has its weaknesses.
+<itemizedlist>
+	<listitem><para>In case of such processing is one &lt;service&gt; element in
+	rls-services needed for every user who wants to have his <quote>buddies</quote>
+	stored on XCAP server. Such &lt;service&gt; will (for user's
+	records) mostly point into his resource-lists document and thus another XCAP
+	query for result list is needed.
+	</para></listitem>
+
+	<listitem><para>Another problem is, that each user has to modify global
+	rls-services document. This is security problem and there is no client
+	software doing this itself. [Exists something?] </para></listitem>
+</itemizedlist>
+These reasons lead to separation of resource lists into "global lists" and
+"users lists".</para>
+
+<para>Global lists are not stored/modified by regular users; they are
+managed by administrators and they are handled according the draft. Example of
+such lists may be "technical support", "human resources", ...
+</para>
+
+<para>Resource lists for users are stored only in their
+resource-lists documents and the &lt;service&gt; element in global rls-services
+document is ommited (it is <quote>implicit</quote>). In this case RLS reads
+directly user's resource-lists document instead of trying to find it in global
+rls-services document.
+</para>
+</section> <!-- processing subscriptions -->
+
+<section><title>Global resource lists</title> <!-- global resource lists -->
+
+<para>As said above, resources described in rls-services documents are
+global resources accessible by all users. No regular user should have acces
+rights to modify global rls-services document on XCAP server.
+</para>
+
+<section><title>rls-services document URI</title>
+<para>The construction of rls-services document URI is described in <xref
+linkend="pres_draft_rls"/>. Only in short: the AOR from SIP SUBSCRIBE request is
+combined with XCAP root given in configuration like this:</para>
+<para>
+<filename>&lt;xcap-root&gt;/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;AOR&gt;%22]</filename>.
+</para>
+<para><emphasis>
+This URI doesn't not specify namespaces as mentioned in definition, but this is 
+due to problems with XCAP server used for tests (problems querying
+parts of documents with namespaces).</emphasis></para>
+<example><title>rls-services uri example</title>
+<para>Let us assume
+<itemizedlist>
+	<listitem><para><varname>xcap-root</varname> = <literal>http://localhost/xcap-root</literal></para></listitem>
+	<listitem><para><varname>AOR of SUBSCRIBE request</varname> =
+	<literal>sip:technical-support@someorg.org</literal></para></listitem>
+</itemizedlist></para>
+<para>Resulting document describing the list will be get from URI:
+<filename>http://localhost/xcap-root/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;technical-support@someorg.org&gt;%22]</filename>,
+which means the <literal>service</literal> element with
+<parameter>uri</parameter> parameter value
+<literal>technical-support@someorg.org</literal> stored in rls-services document
+named index.</para></example>
+</section>
+
+<example><title>rls-services document</title>
+<para>There is example rls-services document describing resources
+<quote>technical-support@test-domain.com</quote>,
+<quote>hr@test-domain.com</quote> and <quote>work@test-domain.com</quote> which
+puts previous two into itself. This document should be stored on xcap server in
+file &lt;xcap-root&gt;/rls-services/global/index.</para>
+<programlisting><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<rls-services>
+
+	<service uri="sip:technical-support@test-domain.com">
+		<list name="Our technical support">
+			<entry uri="sip:smith@test-domain.com">
+				<display-name>Smith</display-name>
+			</entry>
+			<entry uri="sip:joe@test-domain.com">
+				<display-name>Joe</display-name>
+			</entry>
+			<entry uri="sip:agatha@test-domain.com">
+				<display-name>Agatha</display-name>
+			</entry>
+		</list>
+		<packages>
+			<package>presence</package>
+		</packages>
+	</service>
+	
+	<service uri="sip:hr@test-domain.com">
+		<list name="Human resources">
+			<entry uri="sip:johny@test-domain.com">
+				<display-name>Johny V</display-name>
+			</entry>
+			<entry uri="sip:joe@test-domain.com">
+				<display-name>Joe</display-name>
+			</entry>
+		</list>
+		<packages>
+			<package>presence</package>
+		</packages>
+	</service>
+	
+	<service uri="sip:work@test-domain.com">
+		<list name="Employee resources">
+			<entry uri="sip:technical-support@test-domain.com">
+				<display-name>Technical support</display-name>
+			</entry>
+			<entry uri="sip:hr@test-domain.com">
+				<display-name>Human resources</display-name>
+			</entry>
+		</list>
+		<packages>
+			<package>presence</package>
+		</packages>
+	</service>
+	
+</rls-services>]]></programlisting>
+</example>
+
+<section><title>Disadvantages</title>
+<para>Working with URIs presented in this section have one big disadvantage - it
+needs full XCAP server which is able to work with partial documents and able to
+process XPointer expressions in XCAP queries.</para>
+
+<para>Due to unavailability of free XCAP servers is there a possibility to use
+SER's RLS server in mode of <emphasis>reduced XCAP server needs</emphasis> (see
+<link linkend="rls.parameters">RLS module parameters</link>). If operating in
+this mode, RLS requests full rls-service document from uri
+<filename>&lt;xcap-root&gt;/rls-services/global/index</filename>, inspects it
+and finds requested resource list according to URI and AOR by itself.  (Only if
+possible! There can't be links to partial documents in rls-services document.)
+</para>
+</section> <!-- disadvantages -->
+
+</section> <!-- global resource lists -->
+
+<section><title>User's resource lists</title>
+<para>Opposite to global resource lists are resource lists of standalone users.
+As was told above, these lists are stored as resource-lists documents under
+user's directories. These resource-lists documents are accessed directly without
+searching for them in rls-services document - they behave like if they have
+implicit link there.
+</para>
+
+<example><title>User's resource lists</title>
+<para>Let us assume
+<itemizedlist>
+	<listitem><para>xcap root = http://localhost/xcap-root</para></listitem>
+	<listitem><para>user smith (sends SUBSCRIBE with smith@... in From URI)</para></listitem>
+	<listitem><para>Smith's UUID = smith</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+The document below for user Smith can be stored on XCAP server in
+http://localhost/xcap-root/resource-lists/users/smith/resource-lists.xml. It
+contains two resource lists: <quote>default</quote> and <quote>contacts</quote>.
+<programlisting><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<resource-lists 
+   xmlns="urn:ietf:params:xml:ns:resource-lists"
+>
+  <list name="default">
+    <display-name>Buddy List</display-name>
+    <entry uri="sip:joe@test-domain.com">
+      <display-name>Joe</display-name>
+    </entry>
+    <entry uri="sip:jan@test-domain.com">
+      <display-name>Jan</display-name>
+    </entry>
+  </list>
+  
+  <list name="contacts">
+    <display-name>Contact List</display-name>
+    <entry uri="sip:alois@test-domain.com">
+      <display-name>Alois</display-name>
+    </entry>
+  </list>
+  
+</resource-lists>
+]]></programlisting></para>
+</example>
+</section> <!-- user's resource lists -->
+
+<section><title>Standard incompliances</title>
+<para>SER's resource lists support is not finished yet, there are some standard
+incompliances now:
+<itemizedlist>
+	<listitem><para>uri canonicalization not done yet according to definition</para></listitem>
+	<listitem><para>full status documents only</para></listitem>
+</itemizedlist>
+</para>
+</section>
+
+</section>
+

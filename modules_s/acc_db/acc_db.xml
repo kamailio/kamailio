@@ -1,0 +1,1171 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+
+<refentry xml:id="module.acc_db"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>acc_db</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>acc_db</refname>
+    <refpurpose>Transaction Accounting into a Database</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>acc_db</command> SER module stores information about
+      processed SIP transactions in a database. 
+    </para>
+    <para>
+      Unlike most other modules, <command>acc_db</command> is normally
+      not used by calling one of its functions. Instead, it is
+      invoked by setting a certain flag and then starting a transaction
+      by calling a function from the <serdoc:module>tm</serdoc:module>
+      module, usually <serdoc:func>t_relay</serdoc:func>.
+    </para>
+    <para>
+      There are two flags. Their names are determined by the module
+      parameters <serdoc:modparam module="acc_db">log_flag</serdoc:modparam>
+      and <serdoc:modparam module="acc_db">log_missed_flag</serdoc:modparam>
+      respectively. The former is intended to be used for all transactions
+      that are involved in a successfully established call. If the flag is
+      set, information on the transaction (an "accounting entry") is written
+      to the database table given by the parameter
+      <serdoc:modparam module="acc_db">acc_table</serdoc:modparam>.
+      The second flag is to be used for transactions of a failed call
+      attempt. Information on transactions for which this flag is set are
+      then written to the table given by the
+      <serdoc:modparam module="acc_db">mc_table</serdoc:modparam> (for
+      "missed calls table") parameter.
+    </para>
+    <para>
+      Neither flag is set by default. In order to activate the writing of
+      accounting entries, you have to explicitely choose flags by setting
+      the module parameters.
+    </para>
+    <para>
+      Normally, you can use the same flag for both parameters since
+      <command>acc_db</command>'s internal logic takes care of distinguishing
+      between the two tables. It only writes an accounting entry to the
+      <serdoc:modparam module="acc_db">acc_table</serdoc:modparam> if the
+      transaction ended with a final response sent upstream with a 2xx
+      status, ie., was successful. Likewise, the module only writes to
+      the <serdoc:modparam module="acc_db">mc_table</serdoc:modparam>
+      if the final response sent upstream had a status of 300 or up.
+    </para>
+    <para>
+      If you want to write all accounting entries into one table, you
+      either give the same table name two both
+      <serdoc:modparam module="acc_db">acc_table</serdoc:modparam> and
+      <serdoc:modparam module="acc_db">mc_table</serdoc:modparam> or
+      set the module parameter
+      <serdoc:modparam module="acc_db">failed_transactions</serdoc:modparam>
+      to <literal>yes</literal>. The latter causes the restriction on
+      <serdoc:modparam module="acc_db">acc_table</serdoc:modparam> to be
+      lifted and entries to be written regardless of the status code of
+      the final response.
+    </para>
+    <para>
+      Note that the <command>acc_db</command> module only writes accounting
+      entries for individual transactions. A call usually consists at least
+      of an INVITE and a BYE transaction for the start and end of a call.
+      Searching the accounting records for the call and translating them
+      into call detail records is not performed by the module.
+    </para>
+  </refsect1>
+
+  <refsect1 xml:id="module.acc_db.functions">
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.acc_db_log">
+      <title>
+        <function>acc_db_log</function>
+        ([<symbol>status</symbol>])
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>acc_db_log()</function> forces
+        <command>acc_db</command> to write information taken from the
+        currently processed request into the database table determined
+        by the parameter
+        <serdoc:modparam module="acc_db">acc_table</serdoc:modparam>.
+      </para>
+      <para>
+        If the argument <symbol>status</symbol> is given, it contains the
+        status code that should be stored in the field
+        <varname>sip_status</varname>. If it is missing, the field will
+        be set to <literal>0</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.acc_db_missed">
+      <title>
+        <function>acc_db_missed</function>
+        ([<symbol>status</symbol>])
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>acc_db_missed()</function> forces
+        <command>acc_db</command> to write information taken from the
+        currently processed request into the database table determined
+        by the parameter
+        <serdoc:modparam module="acc_db">mc_table</serdoc:modparam>.
+      </para>
+      <para>
+        If the argument <symbol>status</symbol> is given, it contains the
+        status code that should be stored in the field
+        <varname>sip_status</varname>. If it is missing, the field will
+        be set to <literal>0</literal>.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 xml:id="module.acc_db.parameters">
+    <title>Module Parameters</title>
+
+    <refsect2 xml:id="module.acc_db.acc_table">
+      <title><parameter>acc_table</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>acc</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>acc_table</parameter> parameter sets the name
+        of the database table into which information for successfully
+        established calls should be written. Transaction belonging to
+        such a call are indicated by the flag named through the parameter
+        <serdoc:modparam module="acc_db">log_flag</serdoc:modparam> being
+        set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.attrs">
+      <title><parameter>attrs</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>""</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>attrs</parameter> parameter contains a comma 
+        separated list of those attributes whose values should be written
+        to the database. See the description of the field
+        <serdoc:field table="acc">attrs</serdoc:field> for information on
+        how these values are stored in the database.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.attrs_column">
+      <title><parameter>attrs_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"attrs"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>attrs_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">attrs</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.callid_column">
+      <title><parameter>callid_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"sip_callid"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>callid_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">sip_callid</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.cseq_column">
+      <title><parameter>cseq_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"sip_cseq"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>cseq_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">sip_cseq</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.db_url">
+      <title><parameter>db_url</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>
+          mysql://ser:heslo@localhost/ser
+        </serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>db_url</parameter> parameter contains the URL used
+        to connect to the database. The scheme identifies the database module
+        in use. Check the reference for the database you intend to use
+        for more information.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.digreal_column">
+      <title><parameter>digrealm_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"digest_realm"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>digrealm_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">digest_realm</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.diguser_column">
+      <title><parameter>diguser_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"digest_username"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>diguser_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">digest_user</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.early_media">
+      <title><parameter>early_media</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>early_media</parameter> parameter determines,
+        whether the arrival of a reponse 183 (Session Progress) should
+        trigger the writing of information, too. If the parameter is
+        set to <literal>yes</literal>,
+        a 183 response will be treated as a successful response and
+        information stored in the
+        <serdoc:modparam module="acc_db">acc_table</serdoc:modparam> if
+        the <serdoc:modparam module="acc_db">log_flag</serdoc:modparam> is
+        set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.failed_transactions">
+      <title><parameter>failed_transactions</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>failed_transactions</parameter> parameter determines,
+        whether transaction with a final response indicating a failure
+        (ie., status codes of 300 and up) should be accounted too if the
+        <serdoc:modparam module="acc_db">log_flag</serdoc:modparam> is set.
+      </para>
+      <para>
+        The value of the <parameter>failed_transactions</parameter> parameter
+        has no influence on accounting if the
+        <serdoc:modparam module="acc_db">log_missed_flag</serdoc:modparam>
+        is set, in which case the transaction will be accounted for only
+        if the final response indicates a failure.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.flags_column">
+      <title><parameter>flags_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"flags"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>flags_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">flags</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.from_column">
+      <title><parameter>from_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"sip_from"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>from_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">sip_from</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.fromdid_column">
+      <title><parameter>fromdid_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>from_did</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>fromdid_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">from_did</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.fromtag_column">
+      <title><parameter>fromtag_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"from_tag"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>fromtag_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">from_tag</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.fromuid_column">
+      <title><parameter>fromuid_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"from_uid"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>fromuid_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">from_uid</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.fromuri_column">
+      <title><parameter>fromuri_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"from_uri"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>fromuri_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">from_uri</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.iuri_column">
+      <title><parameter>iuri_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"in_ruri"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>iuri_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">in_ruri</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.log_flag">
+      <title><parameter>log_flag</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>flag name</serdoc:paramtype>
+        <serdoc:paramdefault>none</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_flag</parameter> parameter sets the name of the
+        flag that decides whether information about a succeeeded
+        transaction (ie., one with a final response from the 2xx group) is
+        to be stored in the
+        <serdoc:modparam module="acc_db">acc_table</serdoc:modparam>.
+      </para>
+      <para>
+        By setting the
+        <serdoc:modparam module="acc_db">early_media</serdoc:modparam>
+        and
+        <serdoc:modparam module="acc_db">failed_transactions</serdoc:modparam>
+        to <literal>yes</literal> setting the <parameter>log_flag</parameter>
+        also triggers writing for 183 provisional responses and failed
+        transactions respectively.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.log_fmt">
+      <title><parameter>log_fmt</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"acdfgimnoprstuxDFIMPRSTUX"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_fmt</parameter> parameter determines, which
+        information is written to the database. Its value is a string.
+        The various fields described in the section
+        <serdoc:link linkend="module.acc_db.database">Database
+        Schema</serdoc:link> below are assigned a letter. If the letter
+        for the field is included in the string, the field will be written.
+      </para>
+      <para>
+        The mapping between letters and fields is as follows:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term><literal>a</literal></term>
+          <listitem><serdoc:field table="acc">attr</serdoc:field></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>c</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_callid</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>d</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_tag</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>f</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_from</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>g</literal></term>
+          <listitem>
+            <serdoc:field table="acc">flags</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>i</literal></term>
+          <listitem>
+            <serdoc:field table="acc">in_ruri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>m</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_method</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>n</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_cseq</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>o</literal></term>
+          <listitem>
+            <serdoc:field table="acc">out_ruri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>p</literal></term>
+          <listitem>
+            <serdoc:field table="acc">src_ip</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>r</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_tag</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>t</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_to</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>u</literal></term>
+          <listitem>
+            <serdoc:field table="acc">digest_username</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>x</literal></term>
+          <listitem>
+            <serdoc:field table="acc">request_timestamp</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>D</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_did</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>F</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_uri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>I</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_uid</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>M</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_did</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>P</literal></term>
+          <listitem>
+            <serdoc:field table="acc">src_port</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>R</literal></term>
+          <listitem>
+            <serdoc:field table="acc">digest_realm</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>S</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_status</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>T</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_uri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>U</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_uid</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>X</literal></term>
+          <listitem>
+            <serdoc:field table="acc">response_timestamp</serdoc:field>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>
+        By default, all of the fields are active.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.log_missed_flag">
+      <title><parameter>log_missed_flag</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>flag name</serdoc:paramtype>
+        <serdoc:paramdefault>none</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_missed_flag</parameter> parameter determines the
+        flag which control whether information on a failed transaction
+        (ie., one with a final response with status code 300 or up) is to be
+        written to the
+        <serdoc:modparam module="acc_db">mc_table</serdoc:modparam> table.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.mc_table">
+      <title><parameter>mc_table</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>missed_calls</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>mc_table</parameter> parameter sets the name of the
+        database table where information on transaction for failed call
+        attempts should be stored.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.method_column">
+      <title><parameter>method_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"sip_method"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>method_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">sip_method</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.ouri_column">
+      <title><parameter>ouri_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"out_ruri"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>ouri_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">out_ruri</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.report_ack">
+      <title><parameter>report_ack</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>report_ack</parameter> parameter determines,
+        whether a separate accounting entry should be written for the
+        ACK following a 200 OK response.
+      </para>
+      <para>
+        Usually, having the entry for the first transaction is enough
+        and no additional entry is necessary. There is, however, a chance
+        that the ACK does not reach its destination and the call does
+        in fact not start. If you need to know about those cases, you can
+        enable the <parameter>report_ack</parameter> parameter and check
+        that there is an ACK for every INVITE.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.report_cancels">
+      <title><parameter>report_cancels</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>report_cancels</parameter> parameter determines,
+        whether accounting entries should be made for CANCEL transactions.
+      </para>
+      <para>
+        You can recognize a canceled transaction by its status 487 in the
+        <serdoc:field table="acc">sip_status</serdoc:field> field.
+        Because of this, there is usually no need for the extra entries
+        the CANCEL transaction itself may create.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.reqtimestamp_column">
+      <title><parameter>reqtimestamp_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"request_timestamp"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>reqtimestamp_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">request_timestamp</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.restimestamp_column">
+      <title><parameter>restimestamp_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"response_timestamp"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>restimestamp_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">response_timestamp</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.server_id_column">
+      <title><parameter>server_id_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"server_id"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>server_id_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">server_id_column</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.src_ip_column">
+      <title><parameter>src_ip_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"src_ip"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>src_ip_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">src_ip</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.src_port_column">
+      <title><parameter>src_port_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>src_port</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>src_port_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">src_port</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.status_column">
+      <title><parameter>status_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"sip_status"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>status_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">sip_status</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.to_column">
+      <title><parameter>to_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"sip_to"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>to_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">sip_to</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.todid_column">
+      <title><parameter>todid_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"to_did"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>todid_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">to_did</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.totag_column">
+      <title><parameter>totag_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"to_tag"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>totag_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">to_tag</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.touid_column">
+      <title><parameter>touid_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"to_uid"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>touid_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">to_uid</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_db.touri_column">
+      <title><parameter>touri_column</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"to_uri"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>touri_column</parameter> parameter contains
+        the name of the database column for the
+        <serdoc:field table="acc">to_uri</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <!--
+    <refsect2 xml:id="module.acc_db.">
+      <title><parameter></parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype></serdoc:paramtype>
+        <serdoc:paramdefault></serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <serdoc:todo />
+    </refsect2>
+    -->
+
+  </refsect1>
+
+  <refsect1 xml:id="module.acc_db.database">
+    <title>Database Scheme</title>
+
+    <!-- XXX Sort alphabetically. -->
+
+    <refsect2 xml:id="table.acc.id">
+      <title><varname>id</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT AUTO_INCREMENT NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>id</varname> field is not directly written to by the
+        <command>acc_db</command>. Instead, as an auto-increment database
+        field, it is set by the database itself and gives every entry its
+        own unique numeric identifier.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.server_id">
+      <title><varname>server_id</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT NOT NULL DEFAULT '0'</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>server_id</varname> field will contain the server ID
+        of the SER instance that processed the transaction. This is useful
+        in a cluster of several SER machines. By giving each machine its
+        own
+        <serdoc:link linkend="core.parameter.server_id">server_id</serdoc:link>
+        you can later determine, which server the accounting entry
+        originated from.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.from_uid">
+      <title><varname>from_uid</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>from_uid</varname> field will contain the user ID
+        determined for the callee and stored in the
+        <varname>$fu.uid</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.to_uid">
+      <title><varname>to_uid</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>to_uid</varname> field will contain the user ID
+        determined for the caller and stored in the
+        <varname>$tu.uid</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.to_did">
+      <title><varname>to_did</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>to_did</varname> field will contain the domain ID
+        determined for the caller's domain and stored in the
+        <varname>$td.did</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.from_did">
+      <title><varname>from_did</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>from_did</varname> field will contain the domain ID
+        determined for the callee's domain and stored in the
+        <varname>$fd.did</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.sip_from">
+      <title><varname>sip_from</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>sip_from</varname> field will contain the content
+        of the From header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.sip_to">
+      <title><varname>sip_to</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>sip_to</varname> field will contain the content of the
+        To header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.sip_status">
+      <title><varname>sip_status</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>sip_status</varname> field will contain the status code
+        of the final response or, if
+        <serdoc:modparam module="acc_db">early_media</serdoc:modparam> is set,
+        183 response transmitted upstream for the transaction.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.sip_method">
+      <title><varname>sip_method</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(16)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>sip_method</varname> field will contain the method
+        of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.in_ruri">
+      <title><varname>in_ruri</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>in_ruri</varname> field will contain the Request-URI
+        the request arrived with.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.out_ruri">
+      <title><varname>out_ruri</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>out_ruri</varname> field will contain the Request-URI
+        of the winning branch, ie., of that relayed request which caused
+        the final response that was sent upstram.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.from_uri">
+      <title><varname>from_uri</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>from_uri</varname> field will contain the URI of the
+        From header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.to_uri">
+      <title><varname>to_uri</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>to_uri</varname> field will contain the URI of the
+        To header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.sip_callid">
+      <title><varname>sip_callid</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>sip_callid</varname> field will contain the content
+        of the Call-ID header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.sip_cseq">
+      <title><varname>sip_cseq</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>sip_cseq</varname> field will contain the sequence
+        number contained in the CSeq header field of the request. The
+        method in that header field (which should be identical to the
+        method of the request) can be found in the
+        <serdoc:field table="acc">sip_method</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.digest_username">
+      <title><varname>digest_username</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(64)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>digest_username</varname> field will contain the
+        username used in authenticating the request. If no
+        authentication was done or the authentication failed, the field
+        will be <literal>NULL</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.digest_realm">
+      <title><varname>digest_realm</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>digest_realm</varname> field will contain the realm
+        used in authenticating the request. If no authentication was done
+        or it failed, the field will be <literal>NULL</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.from_tag">
+      <title><varname>from_tag</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(128)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>from_tag</varname> field will contain the value of the
+        tag parameter of the From header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.to_tag">
+      <title><varname>to_tag</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(128)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>to_tag</varname> field will contain the value of the
+        tag parameter of the response sent upstream or <literal>NULL</literal>
+        if the response was missing this parameter.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.src_ip">
+      <title><varname>src_ip</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT UNSIGNED</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>src_ip</varname> field will contain the source IP
+        address of the received request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.src_port">
+      <title><varname>src_port</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>SMALLINT UNSIGNED</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>src_port</varname> field will contain the source port
+        of the received request.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.request_timestamp">
+      <title><varname>request_timestamp</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>DATETIME NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>request_timestamp</varname> field will contain the
+        date and time when the request was received, ie., when the
+        transaction started.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.response_timestamp">
+      <title><varname>response_timestamp</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>DATETIME NOT NULL</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>response_timestamp</varname> field will contain the
+        date and time when the response was sent upstream, ie. when the
+        transaction ended.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.flags">
+      <title><varname>flags</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>INT UNSIGNED NOT NULL DEFAULT '0'</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>flags</varname> field will contain the combined
+        numerical value of the flags that where set for the transaction
+        when the entry was written. The value is determined by treating
+        the flags as a bit field with the flag's number as the number of
+        the corresponding bit.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="table.acc.attrs">
+      <title><varname>attrs</varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <para>
+        The <varname>attrs</varname> field will contain the attribute and
+        their values that have been selected for storing with the accounting
+        entry.
+      </para>
+      <para>
+        The field will contain a comma separated list of entries. Each
+        entry will start with the name of the attribute, followed by a
+        colon, followed by its value enclosed in double quotation marks.
+        Which attributes will be in the list is controlled by the
+        <serdoc:modparam module="acc_db">attrs</serdoc:modparam> module
+        parameter.
+      </para>
+    </refsect2>
+
+    <!--
+    <refsect2 xml:id="table.acc.">
+      <title><varname></varname></title>
+      <serdoc:fieldinfo>
+        <serdoc:fieldsql></serdoc:fieldsql>
+      </serdoc:fieldinfo>
+      <serdoc:todo />
+    </refsect2>
+
+    -->
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>acc_radius</serdoc:module></member>
+      <member><serdoc:module>acc_syslog</serdoc:module></member>
+      <member><serdoc:module>tm</serdoc:module></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+<!-- vim:sw=2 sta et sts=2 ai
+  -->

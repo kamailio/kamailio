@@ -1,0 +1,16 @@
+2006-06-26
+	* added documentation
+
+2006-04-10
+	* reduced trace logs
+
+2006-04-07
+	* using global variables instead of AVPs for modifying parameters like
+	XCAP_ROOT
+
+2006-04-06
+	* all XCAP queries done from XCAP module
+
+2006-04-05
+	* created XCAP module
+

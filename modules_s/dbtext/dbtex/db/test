@@ -1,0 +1,5 @@
+id(int,auto) name(str,null) flag(double) desc(str,null)
+1:aaa\:sss:0.34:ddd\tffff\tggggg
+2:xxx\tzzz:-3.75:ccccc
+3:wwwww:2.50:qqqqqqqq
+
