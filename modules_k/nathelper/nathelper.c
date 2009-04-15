@@ -204,7 +204,7 @@
 #include "../../timer.h"
 #include "../../trim.h"
 #include "../../ut.h"
-#include "../../mi/attr.h"
+#include "../../lib/kmi/attr.h"
 #include "../../pvar.h"
 #include "../../msg_translator.h"
 #include "../../usr_avp.h"
