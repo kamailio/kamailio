@@ -94,7 +94,7 @@
 #include <dmalloc.h>
 #endif
 
-
+int _last_returned_code  = 0;
 struct onsend_info* p_onsend=0; /* onsend route send info */
 
 /* ret= 0! if action -> end of list(e.g DROP),
@@ -462,6 +462,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
 			ret=run_actions(h, main_rt.rlist[a->val[0].u.number], msg);
 			h->last_retcode=ret;
+			_last_returned_code = h->last_retcode;
 			h->run_flags&=~(RETURN_R_F|BREAK_R_F); /* absorb return & break */
 			break;
 		case EXEC_T:
@@ -846,6 +847,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -863,6 +865,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -878,6 +881,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -894,6 +898,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -911,6 +916,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -924,6 +930,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 										);
 				if (ret==0) h->run_flags|=EXIT_R_F;
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -1220,6 +1227,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	if (h->rec_lev==1){
 		h->run_flags=0;
 		h->last_retcode=0;
+		_last_returned_code = h->last_retcode;
 #ifdef USE_LONGJMP
 		if (setjmp(h->jmp_env)){
 			h->rec_lev=0;
@@ -1243,6 +1251,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			if (h->run_flags & EXIT_R_F){
 #ifdef USE_LONGJMP
 				h->last_retcode=ret;
+				_last_returned_code = h->last_retcode;
 				longjmp(h->jmp_env, ret);
 #endif
 			}
