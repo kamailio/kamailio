@@ -204,6 +204,8 @@
 #include "../../timer.h"
 #include "../../trim.h"
 #include "../../ut.h"
+#include "../../pt.h"
+#include "../../timer_proc.h"
 #include "../../lib/kmi/attr.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../pvar.h"
@@ -1125,13 +1127,7 @@ mod_init(void)
 			init_sip_ping();
 		}
 
-		for( i=0 ; i<natping_processes ; i++ ) {
-			if (register_timer_process( nh_timer, (void*)(unsigned long)i, 1,
-			TIMER_PROC_INIT_FLAG)<0) {
-				LM_ERR("failed to register timer routine as process\n");
-				return -1;
-			}
-		}
+		register_procs(natping_processes);
 	}
 
 	/* Prepare 1918 networks list */
@@ -1163,11 +1159,23 @@ mod_init(void)
 static int
 child_init(int rank)
 {
-	int n;
+	int n, i;
 	char *cp;
 	struct addrinfo hints, *res;
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
+
+	if (rank==PROC_MAIN && natping_interval > 0) {
+		for( i=0 ; i<natping_processes ; i++ ) {
+			if(fork_dummy_timer(PROC_TIMER, "TIMER NH", 1 /*socks flag*/,
+								nh_timer, (void*)(unsigned long)i,
+								1 /*sec*/)<0) {
+				LM_ERR("failed to register timer routine as process\n");
+				return -1;
+				/* error */
+			}
+		}
+	}
 
 	if (rank<=0 && rank!=PROC_TIMER)
 		return 0;
