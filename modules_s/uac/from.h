@@ -35,7 +35,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
-#include "../tm/t_hooks.h"
+#include "../../modules/tm/t_hooks.h"
 
 #define FROM_NO_RESTORE      (0)
 #define FROM_AUTO_RESTORE    (1)

@@ -35,7 +35,7 @@
 #ifndef _AVP_OPS_DB_H_
 #define _AVP_OPS_DB_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../str.h"
 #include "../../sr_module.h"
 

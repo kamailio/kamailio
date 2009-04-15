@@ -31,7 +31,7 @@
 #ifndef _DOMAIN_MOD_H
 #define _DOMAIN_MOD_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../str.h"
 #include "../../usr_avp.h"
 #include "../../parser/msg_parser.h"

@@ -32,7 +32,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include <termios.h>
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 
 #define MAX_MODEMS    5       /* max number of modems */

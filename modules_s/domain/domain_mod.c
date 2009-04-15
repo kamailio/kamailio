@@ -413,7 +413,7 @@ static int db_get_did(str* did, str* domain)
 		/* Test flags first, we are only interested in rows
 		 * that are not disabled
 		 */
-		if (rec->fld[1].flags & DB_NULL || (rec->fld[1].v.bitmap & DB_DISABLED)) {
+		if (rec->fld[1].flags & DB_NULL || (rec->fld[1].v.bitmap & SRDB_DISABLED)) {
 			db_res_free(res);
 			return 0;
 		}

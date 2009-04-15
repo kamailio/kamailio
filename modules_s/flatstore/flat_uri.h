@@ -32,8 +32,8 @@
  * The functions parsing and interpreting flatstore: URIs.
  */
 
-#include "../../db/db_uri.h"
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_uri.h"
+#include "../../lib/srdb2/db_drv.h"
 
 /** Flatstore driver specific payload to attach to db_uri structures.  
  * This is the flatstore specific structure that will be attached to generic

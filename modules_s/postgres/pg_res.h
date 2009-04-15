@@ -40,8 +40,8 @@
  * servers.
  */
 
-#include "../../db/db_drv.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb2/db_drv.h"
+#include "../../lib/srdb2/db_res.h"
 
 #include <libpq-fe.h>
 

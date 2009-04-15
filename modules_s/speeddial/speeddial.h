@@ -33,7 +33,7 @@
 #ifndef _SPEEDDIAL_H_
 #define _SPEEDDIAL_H_
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../sl/sl.h"
 #include "../../parser/msg_parser.h"
 

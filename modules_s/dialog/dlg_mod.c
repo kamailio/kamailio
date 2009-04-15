@@ -27,7 +27,7 @@
 #include "db_dlg.h"
 #include "serialize_dlg.h"
 #include "../../sr_module.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include <cds/sstr.h>
 #include "dlg_utils.h"
 #include "dlg_request.h"

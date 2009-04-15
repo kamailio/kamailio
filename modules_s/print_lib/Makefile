@@ -15,4 +15,6 @@ SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/print/print
 
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

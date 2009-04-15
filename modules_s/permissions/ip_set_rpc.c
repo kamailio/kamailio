@@ -32,7 +32,7 @@
  */
 
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../mem/shm_mem.h"
 #include "permissions.h"
 #include "ip_set.h"

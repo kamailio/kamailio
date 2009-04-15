@@ -50,7 +50,7 @@
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../ut.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
@@ -231,7 +231,7 @@ static int load_attrs(avp_list_t* global_avps)
 			goto skip;
 		}
 
-		if ((rec->fld[3].v.int4 & DB_LOAD_SER) == 0) goto skip;
+		if ((rec->fld[3].v.int4 & SRDB_LOAD_SER) == 0) goto skip;
 
 		name.s = rec->fld[0].v.lstr;
 
@@ -365,7 +365,7 @@ int save_gflags(unsigned int flags)
 	save_gflags_cmd->vals[0].v.cstr = AVP_GFLAGS;
 	save_gflags_cmd->vals[1].v.int4 = 0;
 	save_gflags_cmd->vals[2].v.lstr = fl;
-	save_gflags_cmd->vals[3].v.bitmap = DB_LOAD_SER;
+	save_gflags_cmd->vals[3].v.bitmap = SRDB_LOAD_SER;
 
 	if (db_exec(NULL, save_gflags_cmd) < 0) {
 		LOG(L_ERR, "gflags:save_gflag: Unable to store new value\n");

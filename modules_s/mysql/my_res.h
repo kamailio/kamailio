@@ -29,8 +29,8 @@
 #ifndef _MY_RES_H
 #define _MY_RES_H  1
 
-#include "../../db/db_drv.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb2/db_drv.h"
+#include "../../lib/srdb2/db_res.h"
 
 struct my_res {
 	db_drv_t gen;

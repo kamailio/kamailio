@@ -44,7 +44,7 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../usr_avp.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"

@@ -45,5 +45,7 @@ LIBS+=-lssl -lcrypto -lpthread -lm
 
 
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 

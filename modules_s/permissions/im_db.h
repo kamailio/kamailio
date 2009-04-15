@@ -29,7 +29,7 @@
 #ifndef _IM_DB_H
 #define _IM_DB_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 
 /* prepare the DB cmds */
 int init_im_db(void);

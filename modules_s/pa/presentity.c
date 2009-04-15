@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../dprint.h"
 #include "../../id.h"
 #include "../../mem/shm_mem.h"

@@ -6,7 +6,7 @@
 #include "events_uac.h"
 #include <cds/hash_table.h>
 #include <cds/ref_cntr.h>
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "trace.h"
 
 typedef struct {

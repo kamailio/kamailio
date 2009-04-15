@@ -29,7 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../rpc.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"

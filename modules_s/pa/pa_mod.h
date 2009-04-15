@@ -31,8 +31,8 @@
 #define PA_MOD_H
 
 #include "../../parser/msg_parser.h"
-#include "../tm/tm_load.h"
-#include "../../db/db.h"
+#include "../../modules/tm/tm_load.h"
+#include "../../lib/srdb2/db.h"
 #include "../dialog/dlg_mod.h"
 #include "auth.h"
 

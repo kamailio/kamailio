@@ -31,7 +31,7 @@
   */
 
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../dprint.h"
 #include "cpl_db.h"
 

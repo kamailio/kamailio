@@ -26,7 +26,7 @@
 #ifndef __SERIALIZE_DLG_H
 #define __SERIALIZE_DLG_H
 
-#include "../tm/dlg.h"
+#include "../../modules/tm/dlg.h"
 #include <cds/serialize.h>
 
 int serialize_dlg(sstream_t *ss, dlg_t *dlg);

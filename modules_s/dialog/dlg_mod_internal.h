@@ -26,7 +26,7 @@
 #ifndef __DLG_MOD_INTERNAL_H
 #define __DLG_MOD_INTERNAL_H
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "dlg_mod.h"
 
 extern struct tm_binds tmb;

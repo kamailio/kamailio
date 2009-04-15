@@ -41,7 +41,7 @@
 #include "permissions.h"
 #include "trusted_hash.h"
 #include "../../config.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../ip_addr.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"

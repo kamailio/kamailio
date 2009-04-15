@@ -63,10 +63,10 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../cfg/cfg_struct.h"
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #ifdef HAVE_IHTTP
 #include "../ihttp/ih_load.h"

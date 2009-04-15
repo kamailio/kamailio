@@ -9,5 +9,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=avp.so
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 

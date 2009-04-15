@@ -59,7 +59,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_disposition.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../cfg/cfg_struct.h"
 #include "cpl_run.h"
 #include "cpl_env.h"

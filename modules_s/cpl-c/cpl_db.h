@@ -28,7 +28,7 @@
 #ifndef _CPL_DB_H
 #define _CPL_DB_H
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 
 
 int cpl_db_bind(char* db_url);

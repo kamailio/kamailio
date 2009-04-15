@@ -31,7 +31,7 @@
 #include "domain_mod.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../ut.h"
 
 
@@ -199,7 +199,7 @@ int db_load_domain_attrs(domain_t* d)
 			goto skip;
 		}
 		
-		if ((rec->fld[3].v.int4 & DB_LOAD_SER) == 0) goto skip;
+		if ((rec->fld[3].v.int4 & SRDB_LOAD_SER) == 0) goto skip;
 	
 		/* Get AVP name */
 		name.s = rec->fld[0].v.lstr;
@@ -270,9 +270,9 @@ int load_domains(domain_t** dest)
 		flags = rec->fld[2].v.int4;
 		
 		/* Skip entries that are disabled/scheduled for removal */
-		if (flags & DB_DISABLED) goto skip;
+		if (flags & SRDB_DISABLED) goto skip;
 		     /* Skip entries that are for serweb/ser-ctl only */
-		if (!(flags & DB_LOAD_SER)) goto skip;
+		if (!(flags & SRDB_LOAD_SER)) goto skip;
 		
 		DBG("domain:load_domains: Processing entry (%.*s, %.*s, %u)\n",
 		    rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s),

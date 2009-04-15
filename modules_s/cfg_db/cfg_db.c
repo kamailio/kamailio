@@ -32,7 +32,7 @@
 #include "../../sr_module.h"
 #include "../../cfg/cfg.h"
 #include "../../cfg/cfg_ctx.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../error.h"
 #include "../../ut.h"
 #include <unistd.h>

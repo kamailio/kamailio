@@ -38,7 +38,7 @@
 #define PERMISSIONS_H 1
 
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "rule.h"
 
 #define DEFAULT_ALLOW_FILE "permissions.allow"

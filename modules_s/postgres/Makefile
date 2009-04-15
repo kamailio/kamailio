@@ -14,4 +14,8 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/pgsql/include  \
 	-I/usr/include/pgsql/
 LIBS=-L$(LOCALBASE)/lib -L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql -L /usr/lib -lpq
 
+DEFS+=-DSER_MOD_INTERFACE
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules

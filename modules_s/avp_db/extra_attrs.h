@@ -3,7 +3,7 @@
 
 
 #include "../../parser/msg_parser.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../sr_module.h"
 
 int declare_attr_group(modparam_t type, char* param);

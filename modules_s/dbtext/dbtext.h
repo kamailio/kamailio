@@ -38,8 +38,8 @@
 #ifndef _DBTEXT_H_
 #define _DBTEXT_H_
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb2/db_con.h"
+#include "../../lib/srdb2/db_res.h"
 #include "../../db/db_key.h"
 #include "../../db/db_op.h"
 #include "../../db/db_val.h"

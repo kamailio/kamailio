@@ -43,7 +43,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_param.h"
 #include "../../ut.h"                   /* Handy utilities */
-#include "../../db/db.h"                /* Database API */
+#include "../../lib/srdb2/db.h"                /* Database API */
 #include "../../dset.h"
 #include "uri_mod.h"
 #include "checks.h"

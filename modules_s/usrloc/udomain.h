@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include "../../locking.h"
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "urecord.h"
 #include "hslot.h"
 

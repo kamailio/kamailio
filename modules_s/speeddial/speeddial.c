@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../../sr_module.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"

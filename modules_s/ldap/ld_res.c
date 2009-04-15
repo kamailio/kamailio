@@ -37,7 +37,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_gen.h"
+#include "../../lib/srdb2/db_gen.h"
 
 
 static void ld_res_free(db_res_t* res, struct ld_res* payload)

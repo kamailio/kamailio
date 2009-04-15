@@ -26,8 +26,8 @@
 #ifndef __DB_DLG_H
 #define __DB_DLG_H
 
-#include "../tm/dlg.h"
-#include "../../db/db.h"
+#include "../../modules/tm/dlg.h"
+#include "../../lib/srdb2/db.h"
 #include <cds/sstr.h>
 
 int db_store_dlg(db_con_t* conn, dlg_t *dlg, str *dst_id);

@@ -38,9 +38,9 @@
 
 struct ld_cfg;
 
-#include "../../db/db_gen.h"
-#include "../../db/db_fld.h"
-#include "../../db/db_cmd.h"
+#include "../../lib/srdb2/db_gen.h"
+#include "../../lib/srdb2/db_fld.h"
+#include "../../lib/srdb2/db_cmd.h"
 
 #include <ldap.h>
 

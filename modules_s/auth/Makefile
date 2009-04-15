@@ -14,4 +14,6 @@ LIBS=
 #       -DUSE_OT_NONCE - compile with one-time nonces support
 DEFS+=-DUSE_NC -DUSE_OT_NONCE
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

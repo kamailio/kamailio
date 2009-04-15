@@ -1,8 +1,8 @@
 #ifndef __RLS_MOD_H
 #define __RLS_MOD_H
 
-#include "../tm/tm_load.h"
-#include "../../db/db.h"
+#include "../../modules/tm/tm_load.h"
+#include "../../lib/srdb2/db.h"
 #include "rl_subscription.h"
 #include "../dialog/dlg_mod.h"
 #include "rls_data.h"

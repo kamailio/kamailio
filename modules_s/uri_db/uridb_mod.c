@@ -48,7 +48,7 @@
 #include "../../id.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "uridb_mod.h"
 #include "../../usr_avp.h"
 #include "../domain/domain.h"
@@ -218,7 +218,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 
 	if (id == USE_FROM) {
 		get_from_did(&did, msg);
-		flag = DB_IS_FROM;
+		flag = SRDB_IS_FROM;
 
 		if (parse_from_header(msg) < 0) {
 			LOG(L_ERR, "uri_db:lookup_uid: Error while parsing From header\n");
@@ -254,10 +254,10 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 		}
 		lookup_uid_cmd->match[0].v.lstr = puri.user;
 		uri_type_to_str(puri.type, &(lookup_uid_cmd->match[2].v.lstr));
-		flag = DB_IS_TO;
+		flag = SRDB_IS_TO;
 	} else {
 		get_to_did(&did, msg);
-		flag = DB_IS_TO;
+		flag = SRDB_IS_TO;
 
 		if (parse_sip_msg_uri(msg) < 0) return -1;
 		lookup_uid_cmd->match[0].v.lstr = msg->parsed_uri.user;
@@ -284,8 +284,8 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			goto skip;
 		}
 
-		if ((rec->fld[1].v.int4 & DB_DISABLED)) goto skip; /* Skip disabled entries */
-		if ((rec->fld[1].v.int4 & DB_LOAD_SER) == 0) goto skip; /* Not for SER */
+		if ((rec->fld[1].v.int4 & SRDB_DISABLED)) goto skip; /* Skip disabled entries */
+		if ((rec->fld[1].v.int4 & SRDB_LOAD_SER) == 0) goto skip; /* Not for SER */
 		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;        /* Not allowed in the header we are interested in */
 		goto found;
 
@@ -304,7 +304,7 @@ static int lookup_uid(struct sip_msg* msg, long id, int store)
 			set_to_uid(&uid);
 			if (id == USE_RURI) {
 				     /* store as str|int avp if alias is canonical or not (1,0) */
-				if ((rec->fld[1].v.int4 & DB_CANON) != 0) {
+				if ((rec->fld[1].v.int4 & SRDB_CANON) != 0) {
 					avp_name.s = canonical_avp;
 					avp_val.s = canonical_avp_val;
 					add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
@@ -351,9 +351,9 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
     }
 
     if (avp->flags & AVP_TRACK_TO) {
-		flag = DB_IS_TO;
+		flag = SRDB_IS_TO;
     } else {
-		flag = DB_IS_FROM;
+		flag = SRDB_IS_FROM;
     }
 
     if (get_str_fparam(&uri, msg, (fparam_t*)select) != 0) {
@@ -400,8 +400,8 @@ static int lookup_user_2(struct sip_msg* msg, char* attr, char* select)
 			goto skip;
 		}
 		
-		if ((rec->fld[1].v.int4 & DB_DISABLED)) goto skip; /* Skip disabled entries */
-		if ((rec->fld[1].v.int4 & DB_LOAD_SER) == 0) goto skip; /* Not for SER */
+		if ((rec->fld[1].v.int4 & SRDB_DISABLED)) goto skip; /* Skip disabled entries */
+		if ((rec->fld[1].v.int4 & SRDB_LOAD_SER) == 0) goto skip; /* Not for SER */
 		if ((rec->fld[1].v.int4 & flag) == 0) goto skip;        /* Not allowed in the header we are interested in */
 		goto found;
 

@@ -101,8 +101,8 @@ static int load_db(im_entry_t **hash)
 		/* start with flags */
 		if (rec->fld[3].flags & DB_NULL) goto skip;
 		flags = rec->fld[3].v.bitmap;
-		if ((flags & DB_DISABLED)
-		|| ((flags & DB_LOAD_SER) == 0)) goto skip;
+		if ((flags & SRDB_DISABLED)
+		|| ((flags & SRDB_LOAD_SER) == 0)) goto skip;
 
 		found++;
 		/* get IP address */

@@ -13,4 +13,6 @@ NAME=avp_radius.so
 
 
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

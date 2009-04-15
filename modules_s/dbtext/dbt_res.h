@@ -39,7 +39,7 @@
 #define _DBT_RES_H_
 
 #include "../../db/db_op.h"
-#include "../../db/db_res.h"
+#include "../../lib/srdb2/db_res.h"
 
 #include "dbt_lib.h"
 

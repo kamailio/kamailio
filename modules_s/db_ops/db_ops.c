@@ -35,7 +35,7 @@
 #include "../../error.h"
 #include "../../config.h"
 #include "../../trim.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../select.h"
 #include "../../script_cb.h"
 #include "../xlog/xl_lib.h"

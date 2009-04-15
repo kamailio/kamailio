@@ -17,4 +17,8 @@ ORACLE_INCLUDES = $(ORACLE_ROOT)/rdbms/public
 DEFS += -I$(ORACLE_INCLUDES)
 LIBS += -L$(ORACLE_LIBS) -lclntsh
 
+DEFS+=-DSER_MOD_INTERFACE
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules

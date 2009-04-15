@@ -12,4 +12,6 @@ LIBS=
 
 DEFS+=-I../.. -I../usrloc
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

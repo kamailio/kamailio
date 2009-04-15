@@ -3,7 +3,7 @@
 
 #include <cds/sstr.h>
 #include "time_event_manager.h"
-#include "../tm/dlg.h"
+#include "../../modules/tm/dlg.h"
 #include "trace.h"
 
 struct _subscription_data_t;

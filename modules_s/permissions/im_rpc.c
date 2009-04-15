@@ -26,7 +26,7 @@
  *
  */
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "permissions.h"
 #include "im_db.h"
 #include "im_rpc.h"

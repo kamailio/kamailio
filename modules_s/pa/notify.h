@@ -33,7 +33,7 @@
 
 #include "presentity.h"
 #include "watcher.h"
-#include "../tm/uac.h"
+#include "../../modules/tm/uac.h"
 
 int send_notify(struct presentity* _p, struct watcher* _w);
 

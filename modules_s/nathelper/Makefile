@@ -10,5 +10,7 @@ auto_gen=
 NAME=nathelper.so
 LIBS=
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 

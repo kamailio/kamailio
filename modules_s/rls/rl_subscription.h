@@ -1,7 +1,7 @@
 #ifndef __RL_SUBSCRIPTION_H
 #define __RL_SUBSCRIPTION_H
 
-#include "../tm/dlg.h"
+#include "../../modules/tm/dlg.h"
 #include "../../lock_ops.h"
 #include "subscription_manager.h"
 #include <xcap/resource_lists_parser.h>

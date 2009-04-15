@@ -38,8 +38,8 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
-#include "../tm/tm_load.h"
-#include "../tm/t_hooks.h"
+#include "../../modules/tm/tm_load.h"
+#include "../../modules/tm/t_hooks.h"
 
 #include "from.h"
 #include "auth.h"

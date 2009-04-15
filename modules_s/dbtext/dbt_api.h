@@ -39,8 +39,8 @@
 #define _DBT_API_H_
 
 #include "../../db/db_op.h"
-#include "../../db/db_res.h"
-#include "../../db/db_con.h"
+#include "../../lib/srdb2/db_res.h"
+#include "../../lib/srdb2/db_con.h"
 #include "../../db/db_row.h"
 
 int dbt_free_columns(db_res_t* _r);

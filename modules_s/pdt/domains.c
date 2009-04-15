@@ -41,7 +41,7 @@
 
 #include "../../sr_module.h"
 #include "../../parser/parse_fline.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"

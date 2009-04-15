@@ -12,4 +12,6 @@ NAME=ratelimit.so
 
 LIBS=
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

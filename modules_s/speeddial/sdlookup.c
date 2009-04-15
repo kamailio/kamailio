@@ -37,7 +37,7 @@
 #include "../../config.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../id.h"
 #include "../../dset.h"
 

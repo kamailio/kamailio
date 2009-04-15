@@ -52,9 +52,9 @@
 
 #ifdef DEMO
 
-#include "../tm/t_hooks.h"
-#include "../tm/tm_load.h"
-#include "../tm/h_table.h"
+#include "../../modules/tm/t_hooks.h"
+#include "../../modules/tm/tm_load.h"
+#include "../../modules/tm/h_table.h"
 struct tm_binds tmb;
 
 #endif

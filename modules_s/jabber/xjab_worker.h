@@ -40,9 +40,9 @@
 #define _XJAB_WORKER_H_
 
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../locking.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "xjab_util.h"
 #include "tree234.h"

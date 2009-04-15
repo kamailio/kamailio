@@ -35,7 +35,7 @@
 
 #include <signal.h>
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "subscribe.h"

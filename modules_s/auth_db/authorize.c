@@ -40,7 +40,7 @@
 #include <string.h>
 #include "../../ut.h"
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
 #include "../../parser/hf.h"
@@ -91,10 +91,10 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 			LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
 				username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
 		} else {
-			if ((*row)->fld[1].v.int4 & DB_DISABLED) {
+			if ((*row)->fld[1].v.int4 & SRDB_DISABLED) {
 				/* disabled rows ignored */
 			} else {
-				if ((*row)->fld[1].v.int4 & DB_LOAD_SER) {
+				if ((*row)->fld[1].v.int4 & SRDB_LOAD_SER) {
 					/* *row = i; */
 					break;
 				}
@@ -269,11 +269,11 @@ static inline int check_all_ha1(struct sip_msg* msg, struct hdr_field* hdr,
 			    dig->username.user.len, ZSW(dig->username.user.s), realm->len, ZSW(realm->s));
 		}
 		else {
-			if (row->fld[1].v.int4 & DB_DISABLED) {
+			if (row->fld[1].v.int4 & SRDB_DISABLED) {
 				/* disabled rows ignored */
 			}
 			else {
-				if (row->fld[1].v.int4 & DB_LOAD_SER) {
+				if (row->fld[1].v.int4 & SRDB_LOAD_SER) {
 					result.s = row->fld[0].v.cstr;
 					result.len = strlen(result.s);
 					if (calc_ha1) {

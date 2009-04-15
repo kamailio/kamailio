@@ -9,5 +9,7 @@ NAME=xmlrpc.so
 DEFS += -I/usr/include/libxml2 -I/usr/local/include/libxml2 -I/usr/local/include
 LIBS +=-lxml2
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 

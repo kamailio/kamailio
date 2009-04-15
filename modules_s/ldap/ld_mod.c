@@ -41,7 +41,7 @@
 #include "../../sr_module.h"
 
 #ifdef LD_TEST
-#include "../../db/db_cmd.h"
+#include "../../lib/srdb2/db_cmd.h"
 #include <limits.h>
 #include <float.h>
 #endif

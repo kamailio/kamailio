@@ -19,4 +19,8 @@ DEFS += -I$(LOCALBASE)/include/db44
 LIBS  = -L$(LOCALBASE)/lib -ldb-4.4
 
 
+DEFS+=-DSER_MOD_INTERFACE
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules

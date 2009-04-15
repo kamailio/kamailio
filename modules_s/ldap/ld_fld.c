@@ -38,7 +38,7 @@
 
 #include "ld_fld.h"
 
-#include "../../db/db_drv.h"
+#include "../../lib/srdb2/db_drv.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"

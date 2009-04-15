@@ -299,7 +299,7 @@ static int read_avps(db_res_t *res, avp_flags_t flag) /* id must not be NULL */
 		get_str_val(row->fld[2], value);
 		get_int_val(row->fld[3], flags);
 
-		if (flags & DB_LOAD_SER) {
+		if (flags & SRDB_LOAD_SER) {
 			if (type == AVP_VAL_STR) val.s = value;
 			else str2int(&value, (unsigned int *)&val.n); /* FIXME */
 

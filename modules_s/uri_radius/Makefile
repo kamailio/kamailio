@@ -11,4 +11,6 @@ include ../../Makefile.radius
 auto_gen=
 NAME=uri_radius.so
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

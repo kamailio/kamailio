@@ -28,7 +28,7 @@
  */
 
 #include "paerrno.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../dprint.h"
 #include "../../parser/parse_event.h"
 #include "../../mem/shm_mem.h"

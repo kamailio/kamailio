@@ -35,7 +35,7 @@
 #include "../../usr_avp.h"
 #include "../sl/sl.h"
 #include "../usrloc/usrloc.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 struct cpl_enviroment {
 	char  *log_dir;         /* dir where the user log should be dumped */

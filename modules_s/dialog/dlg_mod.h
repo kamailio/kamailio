@@ -26,9 +26,9 @@
 #ifndef __DLG_MOD_H
 #define __DLG_MOD_H
 
-#include "../tm/dlg.h"
-#include "../../db/db.h"
-#include "../tm/t_hooks.h"
+#include "../../modules/tm/dlg.h"
+#include "../../lib/srdb2/db.h"
+#include "../../modules/tm/t_hooks.h"
 #include <cds/serialize.h>
 
 /* Prototype of function for storing dialog into database.

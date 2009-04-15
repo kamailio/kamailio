@@ -40,7 +40,7 @@
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../ut.h"
 #include "../../parser/parse_param.h"
 #include "../../parser/parse_uri.h"

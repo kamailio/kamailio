@@ -12,4 +12,6 @@ LIBS=
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/cds/ser_cds
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules

@@ -41,7 +41,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../ip_addr.h"
 #include "../../globals.h"
 #include "../../ser_time.h"

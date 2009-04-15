@@ -14,5 +14,7 @@ NAME=iptrtpproxy.so
 LIBS += $(iptdir)/iptables.o -L $(iptdir)/libiptc -liptc -L $(iptdir)/extensions -lext
 DEFS += -I $(iptdir)/include
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 

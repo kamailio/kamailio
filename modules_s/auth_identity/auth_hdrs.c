@@ -35,7 +35,7 @@
 #include "../../parser/keys.h"
 #include "../../parser/contact/parse_contact.h"
 
-#include "../tm/ut.h"
+#include "../../modules/tm/ut.h"
 #include "../../data_lump.h"
 #include "../../msg_translator.h"
 #include "auth_identity.h"

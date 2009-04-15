@@ -32,7 +32,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_gen.h"
+#include "../../lib/srdb2/db_gen.h"
 
 #include <mysql/mysql.h>
 

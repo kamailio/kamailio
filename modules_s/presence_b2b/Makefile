@@ -22,4 +22,7 @@ SER_LIBS=$(SERLIBPATH)/presence/ser_presence $(SERLIBPATH)/cds/ser_cds \
 			
 # not used: $(SERLIBPATH)/xcap/ser_xcap
 
+DEFS+=-DSER_MOD_INTERFACE
+
+SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules

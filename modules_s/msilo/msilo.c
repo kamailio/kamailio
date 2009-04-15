@@ -59,14 +59,14 @@
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../resolve.h"
 #include "../../id.h"
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #define CONTACT_PREFIX "Content-Type: text/plain"CRLF"Contact: <"
 #define CONTACT_SUFFIX  ">;msilo=yes"CRLF

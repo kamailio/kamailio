@@ -10,5 +10,7 @@ LIBS=
 # fifo support
 DEFS+=-DUSE_FIFO
 
+DEFS+=-DSER_MOD_INTERFACE
+
 include ../../Makefile.modules
 

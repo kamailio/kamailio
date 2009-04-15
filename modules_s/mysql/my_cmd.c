@@ -42,7 +42,7 @@
 
 #include "../../mem/mem.h"
 #include "../../str.h"
-#include "../../db/db_cmd.h"
+#include "../../lib/srdb2/db_cmd.h"
 #include "../../ut.h"
 
 #include <stdlib.h>

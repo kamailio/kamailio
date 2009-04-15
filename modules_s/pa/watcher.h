@@ -31,8 +31,8 @@
 #define WATCHER_H
 
 #include "../../str.h"
-#include "../tm/dlg.h"
-#include "../../db/db.h"
+#include "../../modules/tm/dlg.h"
+#include "../../lib/srdb2/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_event.h" /* EVENT_PRESENCE, EVENT_PRESENCE_WINFO, ... */
 #include <stdio.h>

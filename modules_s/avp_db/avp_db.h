@@ -25,7 +25,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 
 extern db_ctx_t* ctx;
 extern int auto_unlock;

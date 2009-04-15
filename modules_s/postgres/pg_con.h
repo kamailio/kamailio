@@ -41,9 +41,9 @@
 
 #include "pg_oid.h"
 
-#include "../../db/db_pool.h"
-#include "../../db/db_con.h"
-#include "../../db/db_uri.h"
+#include "../../lib/srdb2/db_pool.h"
+#include "../../lib/srdb2/db_con.h"
+#include "../../lib/srdb2/db_uri.h"
 
 #include <time.h>
 #include <libpq-fe.h>

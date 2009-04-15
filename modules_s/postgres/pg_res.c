@@ -41,7 +41,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_gen.h"
+#include "../../lib/srdb2/db_gen.h"
 
 
 static void pg_res_free(db_res_t* res, struct pg_res* payload)

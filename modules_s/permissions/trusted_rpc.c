@@ -34,7 +34,7 @@
  */
 
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "permissions.h"
 #include "trusted_hash.h"
 #include "trusted.h"

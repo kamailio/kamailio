@@ -45,7 +45,7 @@
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
 #include "../../data_lump_rpl.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../usrloc/usrloc.h"
 #include "CPL_tree.h"
 #include "loc_set.h"

@@ -36,7 +36,7 @@
 
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../dprint.h"
 #include "avpops_parse.h"
 #include "avpops_db.h"

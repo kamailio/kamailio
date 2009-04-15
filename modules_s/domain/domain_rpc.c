@@ -28,7 +28,7 @@
  */
 
 #include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "hash.h"

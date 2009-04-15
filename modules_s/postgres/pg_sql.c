@@ -39,8 +39,8 @@
 
 #include "pg_sql.h"
 
-#include "../../db/db_cmd.h"
-#include "../../db/db_fld.h"
+#include "../../lib/srdb2/db_cmd.h"
+#include "../../lib/srdb2/db_fld.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"

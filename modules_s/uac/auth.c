@@ -37,7 +37,7 @@
 #include "../../dprint.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "auth.h"
 #include "auth_alg.h"

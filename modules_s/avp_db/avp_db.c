@@ -40,7 +40,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../str.h"
-#include "../../db/db.h"
+#include "../../lib/srdb2/db.h"
 #include "../../config.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
@@ -210,7 +210,7 @@ static void read_attrs(db_res_t *res, unsigned long flags)
 			continue;
 		}
 
-		if ((row->fld[3].v.int4 & DB_LOAD_SER) == 0) {
+		if ((row->fld[3].v.int4 & SRDB_LOAD_SER) == 0) {
 			row = db_next(res);
 			continue;
 		}
