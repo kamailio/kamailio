@@ -55,6 +55,7 @@
 #include "../../dset.h"
 #include "../../ip_addr.h"
 #include "../../config.h"
+#include "../../route.h"
 #include "lcr_rpc.h"
 #include "lcr_mod.h"
 
@@ -737,7 +738,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	
     memset(&act, 0, sizeof(act));
 	init_run_actions_ctx(&ra_ctx);
-    if (*(tmb.route_mode) == MODE_REQUEST) {
+    if (is_route_type(REQUEST_ROUTE)) {
 		
 		act.type = SET_URI_T;
 		act.val[0].type = STRING_ST;
@@ -1001,7 +1002,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
     int rval;
 	struct run_act_ctx ra_ctx;
 
-    if (*(tmb.route_mode) == MODE_REQUEST) {
+    if (is_route_type(REQUEST_ROUTE)) {
 		
 		/* Find first lcr_contact_avp value */
 		avp = search_first_avp(contact_avp_name_str, contact_name, &val, &st);
