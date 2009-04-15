@@ -1004,7 +1004,7 @@ static int get_natping_socket(char *socket,
 	lproto = PROTO_UDP;
 	*port = lport?(unsigned short)lport:SIP_PORT;
 
-	he = sip_resolvehost( &host, port, (unsigned short*)(void*)&lproto, 0, 0);
+	he = sip_resolvehost( &host, port, (char*)(void*)&lproto);
 	if (he==0) {
 		LM_ERR("could not resolve hostname:\"%.*s\"\n", host.len, host.s);
 		return -1;
@@ -3023,7 +3023,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	struct hostent* he;
 	struct socket_info* send_sock;
 	unsigned int flags;
-	unsigned short proto;
+	char proto;
 
 	if((*natping_state) == 0)
 		goto done;
@@ -3105,7 +3105,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		proto = curi.proto;
 		/* we sholud get rid of this resolve (to ofen and to slow); for the
 		 * moment we are lucky since the curi is an IP -bogdan */
-		he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 0, 0);
+		he = sip_resolvehost(&curi.host, &curi.port_no, &proto);
 		if (he == NULL){
 			LM_ERR("can't resolve_host\n");
 			continue;
