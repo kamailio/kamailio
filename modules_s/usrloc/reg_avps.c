@@ -54,7 +54,7 @@ static inline avp_t *avp_dup(avp_t *avp)
 	return NULL;
 }
 
-static void destroy_avps(avp_t *avp)
+static void reg_destroy_avps(avp_t *avp)
 {
 	avp_t *n;
 
@@ -104,7 +104,7 @@ static int save_reg_avps_impl(struct ucontact *c)
 
 	/* destroy old AVPs */
 	/* if (c->avps) db_delete_reg_avps(c); */
-	destroy_avps(c->avps);
+	reg_destroy_avps(c->avps);
 
 	last = NULL;
 	first = NULL;
@@ -177,7 +177,7 @@ static int restore_reg_avps(struct ucontact *info)
 static int delete_reg_avps_impl(struct ucontact *info)
 {
 /*	db_delete_reg_avps(info); */
-	if (info->avps) destroy_avps(info->avps);
+	if (info->avps) reg_destroy_avps(info->avps);
 	info->avps = NULL;
 	return 0;
 }
@@ -315,7 +315,7 @@ int dup_reg_avps(struct ucontact *dst, struct ucontact *src)
 	
 	/* destroy old AVPs */
 	/* if (dst->avps) db_delete_reg_avps(dst); */
-	destroy_avps(dst->avps);
+	reg_destroy_avps(dst->avps);
 
 	last = NULL;
 	first = NULL;
