@@ -37,7 +37,7 @@
 #define PA_MOD_H
 
 #include "../../parser/msg_parser.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../sl/sl_api.h"
 #include "../../lib/srdb1/db.h"
 #include "../../parser/parse_from.h"

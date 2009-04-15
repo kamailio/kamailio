@@ -39,8 +39,8 @@
 #include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
-#include "../tm/h_table.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/h_table.h"
+#include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 
 #include "from.h"

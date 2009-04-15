@@ -44,7 +44,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../socket_info.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "sms_funcs.h"
 #include "sms_report.h"
 #include "libsms_modem.h"

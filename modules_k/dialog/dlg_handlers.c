@@ -60,7 +60,7 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"

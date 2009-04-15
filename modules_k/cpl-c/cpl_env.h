@@ -30,7 +30,7 @@
 #include "../../str.h"
 #include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../sl/sl_api.h"
 
 struct cpl_enviroment {

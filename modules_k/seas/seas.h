@@ -26,7 +26,7 @@
 #include "../../str.h"/*str*/
 #include "../../ip_addr.h"/*ip_addr*/
 #include "../../sr_module.h" /*version,etc*/
-#include "../tm/tm_load.h"/*tm_binds*/
+#include "../../modules/tm/tm_load.h"/*tm_binds*/
 #include "ha.h"
 #include "cluster.h"
 #define MAX_AS_NR 5

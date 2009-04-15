@@ -63,7 +63,7 @@
 #include "../../parser/digest/digest.h"
 #include "../../resolve.h"
 #include "../../lvalue.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
 #include "../../str.h"

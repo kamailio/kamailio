@@ -29,7 +29,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../pua/pua_bind.h"
 #include "../pua/pidf.h"
 

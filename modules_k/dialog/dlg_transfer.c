@@ -31,7 +31,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/msg_parser.h"
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "dlg_req_within.h"
 #include "dlg_transfer.h"

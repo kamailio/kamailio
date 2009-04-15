@@ -28,7 +28,7 @@
 #ifndef _IMC_H_
 #define _IMC_H_
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 extern str imc_cmd_start_str;
 extern char imc_cmd_start_char;

@@ -64,7 +64,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "hash.h"

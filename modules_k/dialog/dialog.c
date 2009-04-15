@@ -55,7 +55,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../lvalue.h"
 #include "../../parser/parse_to.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"

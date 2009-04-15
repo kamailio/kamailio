@@ -41,7 +41,7 @@
 #include "../../parser/parse_cseq.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_rr.h"
-#include "../tm/dlg.h"
+#include "../../modules/tm/dlg.h"
 #include "../presence/utils_func.h"
 #include "../presence/hash.h"
 #include "../../lib/kcore/hash_func.h"

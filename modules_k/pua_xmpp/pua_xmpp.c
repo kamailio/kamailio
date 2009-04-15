@@ -44,7 +44,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/msg_parser.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../xmpp/xmpp_api.h"
 #include "../pua/pua_bind.h"
 

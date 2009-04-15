@@ -51,7 +51,7 @@
 #include "../../timer.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "xjab_worker.h"
 #include "xjab_util.h"

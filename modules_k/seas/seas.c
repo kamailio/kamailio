@@ -34,9 +34,9 @@
 #include "../../mem/shm_mem.h" /*shm_malloc*/
 #include "../../dprint.h" /*LM_**/
 #include "../../error.h" /*ser_error*/
-#include "../tm/tm_load.h" /*load_tm_api*/
-#include "../tm/h_table.h" /*cell*/
-#include "../tm/t_lookup.h" /*T_UNDEFINED*/
+#include "../../modules/tm/tm_load.h" /*load_tm_api*/
+#include "../../modules/tm/h_table.h" /*cell*/
+#include "../../modules/tm/t_lookup.h" /*T_UNDEFINED*/
 
 #include "encode_msg.h" /*encode_msg*/
 

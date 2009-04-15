@@ -35,7 +35,7 @@
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
 #include "../../locking.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "xjab_util.h"
 #include "tree234.h"

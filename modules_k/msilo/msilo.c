@@ -64,7 +64,7 @@
 #include "../../usr_avp.h"
 #include "../../mod_fix.h"
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "ms_msg_list.h"
 #include "msfuncs.h"

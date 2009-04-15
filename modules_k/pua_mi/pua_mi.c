@@ -39,7 +39,7 @@
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../pt.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../pua/pua_bind.h"
 #include "mi_func.h"
 

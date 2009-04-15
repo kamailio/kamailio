@@ -33,7 +33,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include "../../pvar.h"
-#include "../tm/t_hooks.h"
+#include "../../modules/tm/t_hooks.h"
 #include "dlg_timer.h"
 
 #define MAX_DLG_RR_PARAM_NAME 32

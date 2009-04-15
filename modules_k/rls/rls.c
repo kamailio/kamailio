@@ -43,7 +43,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../sl/sl_api.h"
 #include "../presence/bind_presence.h"
 #include "../presence/hash.h"

@@ -23,7 +23,7 @@
 #include <time.h>
 #include "../../lib/kcore/hash_func.h"/* for TABLE_ENTRIES define*/
 #include "../../locking.h"/* for TABLE_ENTRIES define*/
-#include "../tm/h_table.h"/* for struct cell*/
+#include "../../modules/tm/h_table.h"/* for struct cell*/
 #define STATS_CELLS 50
 #define UAS_T 0
 #define UAC_T 1

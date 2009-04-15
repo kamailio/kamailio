@@ -41,8 +41,8 @@
 #include "../../error.h"
 #include "../../pvar.h"
 #include "../../mem/mem.h"
-#include "../tm/tm_load.h"
-#include "../tm/t_hooks.h"
+#include "../../modules/tm/tm_load.h"
+#include "../../modules/tm/t_hooks.h"
 #include "../rr/api.h"
 
 #include "from.h"

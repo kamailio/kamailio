@@ -32,7 +32,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../sr_module.h"
 #include "../../str.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../acc/acc_logic.h"
 
 typedef int (*tm_get_trans_f)( struct sip_msg*, struct cell**);

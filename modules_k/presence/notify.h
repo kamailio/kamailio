@@ -33,7 +33,7 @@
 
 
 #include "../../str.h"
-#include "../tm/dlg.h"
+#include "../../modules/tm/dlg.h"
 #include "subscribe.h"
 #include "presentity.h"
 

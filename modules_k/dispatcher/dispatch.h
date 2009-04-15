@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 
 #define DS_HASH_USER_ONLY	1  /*!< use only the uri user part for hashing */

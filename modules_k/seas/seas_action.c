@@ -54,9 +54,9 @@
 #include "../../parser/parse_uri.h" /*parse_uri*/
 #include "../../parser/msg_parser.h"
 #include "encode_msg.h"
-#include "../tm/t_lookup.h"
-#include "../tm/h_table.h"
-#include "../tm/dlg.h"
+#include "../../modules/tm/t_lookup.h"
+#include "../../modules/tm/h_table.h"
+#include "../../modules/tm/dlg.h"
 #include "seas.h"
 #include "statistics.h"
 #include "seas_action.h"

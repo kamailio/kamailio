@@ -105,7 +105,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #include "xode.h"
 #include "xmpp.h"

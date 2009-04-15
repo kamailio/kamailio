@@ -33,7 +33,7 @@
 #include "../../str.h"
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../pua/pua.h"
 #include "pua_usrloc.h"
 

@@ -59,7 +59,7 @@
 #include "../../parser/parse_from.h"
 #include "../../lib/srdb1/db.h"
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 #ifdef HAVE_IHTTP
 #include "../ihttp/ih_load.h"

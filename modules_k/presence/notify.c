@@ -45,7 +45,7 @@
 #include "../../lib/srdb1/db_val.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../socket_info.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../pua/hash.h"
 #include "presentity.h"
 #include "presence.h"

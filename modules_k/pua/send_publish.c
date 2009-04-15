@@ -41,7 +41,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kcore/hash_func.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "pua.h"
 #include "hash.h"
 #include "send_publish.h"

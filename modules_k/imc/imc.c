@@ -50,7 +50,7 @@
 #include "../../lib/kcore/hash_func.h"
 #include "../../lib/kmi/mi.h"
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 
 
 #include "imc_mng.h"

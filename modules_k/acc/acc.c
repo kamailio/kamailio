@@ -56,7 +56,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/digest/digest.h"
-#include "../tm/t_funcs.h"
+#include "../../modules/tm/t_funcs.h"
 #include "acc_mod.h"
 #include "acc.h"
 #include "acc_extra.h"

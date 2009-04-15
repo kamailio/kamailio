@@ -63,7 +63,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "../sl/sl_api.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"

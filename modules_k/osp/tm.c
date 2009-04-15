@@ -32,7 +32,7 @@
  *  2006-03-13  TM functions are loaded via API function (bogdan)
  */
 
-#include "../tm/tm_load.h"
+#include "../../modules/tm/tm_load.h"
 #include "tm.h"
 #include "destination.h"
 
