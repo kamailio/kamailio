@@ -205,6 +205,7 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../lib/kmi/attr.h"
+#include "../../lib/kcore/km_ut.h"
 #include "../../pvar.h"
 #include "../../msg_translator.h"
 #include "../../usr_avp.h"
