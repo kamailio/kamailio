@@ -541,7 +541,7 @@ install-$(1)-man: $(1)-man $(man_prefix)/$(man_dir)/man7
 				$$(call try_err,\
 				  $(INSTALL_TOUCH) $(man_prefix)/$(man_dir)/man7/"$$$$r".7 );\
 				$$(call try_err,\
-					$(INSTALL_MAN)  modules/"$$$$r"/"$$$$r".7  \
+					$(INSTALL_MAN)  $(1)/"$$$$r"/"$$$$r".7  \
 									$(man_prefix)/$(man_dir)/man7 ); \
 			fi ; \
 		fi ; \
