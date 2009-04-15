@@ -1,0 +1,130 @@
+IM Gateway - capabilities and limitations - v1.0
+================================================
+
+The gateway allows the message passing between SIP users and other
+IM users (ICQ, AIM, Yahoo ...).
+
+IM Gateway uses for this a Jabber server which has the facility of supporting
+many IM protocols (they are called IM transports). So, in fact, the gateway is
+between SIP and Jabber.
+
+Because the most of the IM protocols are not open source and they are the
+property of some companies, Jabber does not provide full support for these
+protocols. From time to time, the owner of the protocol changes the protocol
+structure, and for a while, that transport is no longer available. There are 
+some guys doing some kind of reverse engineering on these protocols. But not
+whole protocol structure is discovered, each transport has its own limitations.
+
+In additions, many of the IM native clients allow only one user to be online at
+a moment, and IM servers could easy say that the hosts which have more than one
+open connection are not using a native client and block those addresses or the
+accounts.
+
+Next, are presented the IM transports that are running on our Jabber server, or
+they are wanted to be available. The capabilities and limitations are what can
+be found on the net about transports.
+
+
+AIM transport
+-------------
+It is only one well known version of aim-transport.
+(web location: http://aim-transport.jabberstudio.org/)
+AIM-t provides basic interoperability between Jabber and AIM/ICQ network.
+Currently AIM-t is undergoing massive changes. It will be a standalone component
+once this is finished.
+
+* capabilities
+- currently supporting basic presence and messaging.
+- reliable messaging (via server only)
+- simple user info retrieval (ICQ only)
+  may take some time, just wait...
+- SMS sending (ICQ)
+  send "SEND-SMS:number:text" to any ICQ user, for example
+  "SEND-SMS:+4917012345:Test"
+- away message retrieval (AIM only)
+- offline messages (ICQ only)
+
+* limitations
+- NO file transfer
+- NO multichat
+- NO user search
+- NO incoming SMS
+- NO import of server buddy lists
+- NO handling of incoming ICQ auth requests
+- ICQ messages may get dropped by AOL servers if your contact uses an old
+  ICQv5 client.
+
+
+ICQ transport
+-------------
+Excepting the AIM transport, there exists another distribution for ICQ
+transport.
+(web location: http://icqv7-t.sourceforge.net/)
+
+* capabilities
+- messaging (through server only)
+- presence notification
+- SMS support
+
+* limitations
+- no file transfer
+
+The AIM transport for ICQ.
+- see AIM transport
+
+A new versions of ICQ transport seems to be available now. But now place from
+where it can be downloaded - I sent a mail asking for a distribution.
+
+A short description can be found at
+http://mailman.jabber.org/pipermail/jdev/2002-July/012343.html
+
+
+IRC transport
+-------------
+(web location: http://download.jabber.org/contrib/irc-transport.tar.gz)
+This version of IRC transport is a beta version
+
+* capabilities
+- It will connect to irc servers and allow you to talk to them, but it is still
+  in heavy development
+
+* limitations
+- private messaging does not yet function
+- transport registration/notify will not be supported
+- groupchat 1.0 and 1.1 will not be supported in favor of the 2.0
+  iq:conferenec/iq:browse protocol you will be able to log into and create
+  password protected groups now (although this may not work yet)
+- there still may be some other bugs but they aren't caught yet.
+- in testing, it has been fairly stable, although some functionality may
+  not be there yet.
+- requires jabberd version 1.4 several functions used, including MIO,
+  MTQ, and xhash functions were not available in previous jabber server
+  versions
+
+
+MSN transport
+-------------
+(web location: http://msn-transport.jabberstudio.org/)
+* capabilities
+- provides basic interoperability between Jabber and MSN (messaging/presence)
+* limitations
+- there are memory leaks in MSN-t so is better to be run in a seperate process
+  and restart it from time to time
+- MSN-t uses TCP port 1863 for incoming connections so you have to open this
+  port if you use a firewall.
+- the other parts excepting messaging/presence
+
+Yahoo transport
+---------------
+(web location: http://yahoo-transport.jabberstudio.org/)
+
+As of 2002-07-10 this transport has ceased functioning (probably due to YIM
+ protocol changes).
+The transport is being worked on - see JDEV mailing list :
+http://mailman.jabber.org/pipermail/jdev/2002-July/012327.html
+
+* capabilities
+- log into Yahoo Messenger server, and send/recv messages.
+* limitations
+
+

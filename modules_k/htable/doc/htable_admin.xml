@@ -1,0 +1,528 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module adds a hash table container to configuration language. The
+		hash table is stored in shared memory and the access to it can be
+		done via pseudo-variables: $sht(htname=&gt;name).
+	</para>
+	<para>
+		The <quote>name</quote> can be a static string or can include pseudo-
+		variables that will be replaced at runtime.
+	</para>
+	<example>
+		<title>Accessing $sht(htname=&gt;key)</title>
+	<programlisting format="linespecific">
+...
+modparam("htable", "htable", "a=&gt;size=4;")
+...
+$sht(a=&gt;test) = 1;
+$sht(a=&gt;$ci::srcip) = $si;
+...
+</programlisting>
+	</example>
+	<para>
+		Next example shows a way to protect against dictionary attacks. If
+		someone fails to authenticate 3 times, it is forbidden for 15min.
+		Authenticatin against database is expensive as it does a select
+		on subscriber table. By disabling the DB auth for 15min, resources
+		on server as saved and time to discover the password is increased
+		substantially. Additional alerting can be done by writing a message
+		to syslog or sending email, etc.
+	</para>
+	<para>
+		To implement the logic, two hash table variables are user: one counting
+		the failed authentications per user and one for storing the time of 
+		last authentication attempt. To ensure unique name per user, the
+		hash table uses a combination of authentication username and text
+		<quote>::auth_count</quote> and <quote>::last_auth</quote>.
+	</para>
+	<example>
+	<title>Dictionary attack limitation</title>
+	<programlisting format="linespecific">
+...
+modparam("htable", "htable", "a=&gt;size=4;")
+...
+if(is_present_hf("Authorization"))
+{
+    if($sht(a=&gt;$au::auth_count)==3)
+    {
+		$var(exp) = $Ts - 900;
+        if($sht(a=&gt;$au::last_auth) &gt; $var(exp))
+        {
+            sl_send_reply("403", "Try later");
+            exit;
+        } else {
+            $sht(a=&gt;$au::auth_count) = 0;
+        }
+    }
+    if(!www_authorize(""))
+    {
+        switch ($retcode) {
+            case -1:
+                sl_send_reply("403", "Forbidden");
+            exit;
+            case -2:
+                if($sht(a=&gt;$au::auth_count) == null)
+                    $sht(a=&gt;$au::auth_count) = 0;
+                $sht(a=&gt;$au::auth_count) = $sht(a=&gt;$au::auth_count) + 1;
+                if($sht(a=&gt;$au::auth_count) == 3)
+                    xlog("auth failed 3rd time - src ip: $si\n");
+                $sht(a=&gt;$au::last_auth) = $Ts;
+            break;
+        }
+        www_challenge(""/*realm*/,"0"/*qop*/);
+        exit;
+    }
+    $sht(a=&gt;$au::auth_count) = 0;
+} else {
+    www_challenge("","0");
+    exit;
+}
+...
+</programlisting>
+	</example>
+
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>Loading from database</title>
+		<para>
+		The module is able to load values in hash table at startup upon
+		providing a DB URL and table name.
+		</para>
+		<para>
+			The structure of the table must contain:
+		</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>key name</emphasis> - string containing the name of
+				the key.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>key type</emphasis> - the type of the key
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>0</emphasis> - simple key - the key is added
+					as 'key_name'.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>1</emphasis> - array key - the key is added
+					as 'key_name[n]'. n is incremented for each key with this
+					name to build an array in hash table.
+				</para>
+				</listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>value type</emphasis> - the type of the key value
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>0</emphasis> - value is string.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>1</emphasis> - value is integer.
+				</para>
+				</listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>key value</emphasis> - string containing the value of
+				the key.
+			</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>htable</varname> (str)</title>
+		<para>
+		The definition of a hash table. The value of the parameter must have the
+		following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"htname=&gt;size=_number_;autoexpire=_number_;dbtable=_string_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more hash tables in
+			same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>htname</emphasis> - string specifying the name of
+			the hash table. This string is used by $sht(...) to refer to the
+			hash table.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>size</emphasis> - number specifying the size of hash
+			table. The number of entries in the table is 2^size
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>autoexpire</emphasis> -time in seconds to delete an item
+			from hash table if no update was done to it. If is missing or set
+			to 0, the items won't expire.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>dbtable</emphasis> - name of database to be loaded at
+			startup in hash table. If empty or missing, no data will be loaded.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
+modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+			The URL to connect to database for loading values in hash
+			table at start up.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (do not connect).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>key_name_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table key name.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'key_name'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "key_name_column", "kname")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>key_type_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table key type.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'key_type'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "key_type_column", "ktype")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>value_type_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table value type.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'value_type'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>value_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "value_type", "vtype")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>key_value_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table key value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'key_value'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "key_value", "kvalue")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>array_size_suffix</varname> (str)</title>
+		<para>
+			The suffix to be added to store the number of items in an
+			array.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '::size'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>array_size_suffix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "array_size_suffix", "-count")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>fetch_rows</varname> (integer)</title>
+		<para>
+		How many rows to fetch at once from database.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 100.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "fetch_rows", 1000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>timer_interval</varname> (integer)</title>
+		<para>
+		Interval in seconds to check for expired htable values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 20.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "timer_interval", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>timer_mode</varname> (integer)</title>
+		<para>
+		If set to 1, will start a new timer process. If set to 0
+		will use default timer process to check for expired htable
+		values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "timer_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sht_print()</function>
+		</title>
+		<para>
+			Dump content of hash table to L_ERR log level. Intended for debug
+			purposes.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_print</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_print();
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sht_rm_name_re(htable=>regexp)</function>
+		</title>
+		<para>
+			Delete all entries in the htable that match the name against
+			regular expression.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_rm_name_re</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_rm_name_re("ha=>.*");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sht_rm_value_re(htable=>regexp)</function>
+		</title>
+		<para>
+			Delete all entries in the htable that match the value against
+			regular expression.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_rm_value_re</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_rm_value_re("ha=>.*");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+		<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$sht(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtex(htable=>key)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sht_reload</function>
+		</title>
+		<para>
+		Reload a hash table from database.
+		</para>
+		<para>
+		Name: <emphasis>sht_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>_hash_table_name_</emphasis> - the name
+		of hash table to reload.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:ds_list:_reply_fifo_file_
+		_hah_table_name_
+		_empty_line_
+		</programlisting>
+    </section>
+    </section>
+
+</chapter>
+

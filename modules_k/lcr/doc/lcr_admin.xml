@@ -1,0 +1,913 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	Least cost routing (LCR) module implements capability to
+	serially forward a request to one or more gateways so that the
+	order in which the gateways is tried is based on admin defined
+	"least cost".
+	</para>
+	<para>
+	For the purpose of facilitating least cost routing of requests,
+	each gateway belongs to a gateway group and each gateway group
+	is associated with one or more &lt;prefix, from pattern, priority&gt;
+	tuples.  A gateway matches a request if	user part of Request URI
+	matches a prefix and caller's URI matches a from pattern in a
+	tuple that belongs to the group of the gateway.
+	</para>
+	<para>
+	When function load_gws() is called, matching gateways are ordered
+	for forwarding purpose (1) according to longest user part match,
+	(2) according to  
+	tuple's priority, and (3) gateway's randomized weight within its
+	group.  Prefix is a string of characters or NULL.  From
+	pattern is a regular expression (see 'man 
+	pcresyntax' for syntax), an empty string, or NULL.  Empty or
+	NULL from pattern or prefix matches anything. 
+	Smaller priority value means higher priority (highest priority
+	value being 0).  Weight is an integer value from 1 to 254.
+	</para>
+	<para>
+        Function next_gw() can then be used to select one gateway at a
+	time for forwarding.  Upon each call, user part of original
+	Request URI is first stripped by the number of characters as
+	specified by the gateway's strip count and then prefixed by
+	gateway's tag.  Upon first call, if gateway's hostname is NULL,
+	Request URI is rewritten based on gateway's URI scheme, IP
+	address, port, and transport protocol.  If hostname is not NULL,
+	Request-URI is rewritten based on gateway's URI scheme and
+	hostname, and destination URI is set based on gateway's URI
+	scheme, IP address, port, and transport protocol.  Upon
+	subsequent calls, the same is done, but instead of rewriting
+	Request URI, a new branch is added.
+	</para>
+        <para>
+        Valid URI scheme values are NULL = sip, 1 = sip and 2
+	= sips.  Currently valid transport protocol values are NULL =
+	none, 1 = udp, 2 = tcp, 3 = tls, and 4 = sctp.
+	</para>
+	<para>
+	As a side effect of gateway selection, gateway's flags (that may
+	contain information about capabilities of the gateway)
+	are stored into an AVP.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+	<title>&kamailio; modules</title>
+	<para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>TM module</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>A database module like mysql, postgres or 
+			dbtext</emphasis>.
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+	<section>
+	<title>External libraries or applications</title>
+	<para>
+		The following libraries or applications must be installed before
+		running &kamailio; with this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+	</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		&url; of the database table to be used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 
+			<quote>&defaultrodb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>db_url</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","db_url","&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>gw_table</varname> (string)</title>
+		<para>
+		Name of the table holding the gateways definitions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>gw</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_table</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","gw_table","gw")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>gw_name_column</varname> (string)</title>
+		<para>
+		Name of the column holding the gateway name.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>gw_name</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_name_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","gw_name_column","gw_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>grp_id_column</varname> (string)</title>
+		<para>
+		Name of the column holding the group ID of gateway both
+		in gw and lcr tables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>grp_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>grp_id_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","grp_id_column","grp_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ip_addr_column</varname> (string)</title>
+		<para>
+		Name of the column holding the IP address of the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>ip_addr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>ip_addr_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","ip_addr_column","ip_addr")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>hostname_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway's hostname that is
+		used in Request-URI, when request is sent to the
+		gateway.  Note that request is not forwarded based on
+		hostname, but based on gateway's IP address in
+		destination uri.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>hostname</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>hostname_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "hostname_column","host")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>port_column</varname> (string)</title>
+		<para>
+		Name of the column holding the port number of the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>port</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>port_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","port_column","port")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>uri_scheme_column</varname> (string)</title>
+		<para>
+		Name of the column holding the uri scheme of the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>uri_scheme</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>uri_scheme_column</varname> module 
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","uri_scheme_column","scheme")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>transport_column</varname> (string)</title>
+		<para>
+		Name of the column holding the transport type to be used for 
+		the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>transport</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>transport_column</varname> module 
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","transport_column","transport")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>strip_column</varname> (string)</title>
+		<para>
+		Name of the column holding the number of characters
+		to be stripped from the front of Request URI user part
+		before inserting tag.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>strip</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>strip_column</varname> module 
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","strip_column","strip_count")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>tag_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway specific tag string.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>tag</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>tag_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","tag_column","gw_tag")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>weight_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway's weight within its group.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>weight</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>weight_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","weight_column","gw_weight")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>flags_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway specific flag values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>flags</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>flags_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","flags_column","gw_flags")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>lcr_table</varname> (string)</title>
+		<para>
+		Name of the table holding the LCR rules.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>lcr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>lcr_table</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","lcr_table","lcr")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>prefix_column</varname> (string)</title>
+		<para>
+		Name of the column holding prefix of Request URI user
+		part.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>prefix</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>prefix_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","prefix_column","prefix")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>from_uri_column</varname> (string)</title>
+		<para>
+		Name of the column holding the FROM (source) URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>from_uri</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>from_uri_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","from_uri_column","from_uri")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>priority_column</varname> (string)</title>
+		<para>
+		Name of the column holding the priority of the rule.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>priority</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>priority_column</varname> module parameter
+			</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","priority_column","priority")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>gw_uri_avp</varname> (AVP string)</title>
+		<para>
+   Internal AVP that load_gws function uses to store information of
+   matching gateways.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in kamailio.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_uri_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "gw_uri_avp", "$avp(i:709)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>rpid_avp</varname> (AVP string)</title>
+		<para>
+		An AVP that contains caller's RPID (if any).
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in kamailio.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>rpid_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ruri_user_avp</varname> (AVP string)</title>
+		<para>
+   Internal AVP that next_gw function uses to store Request-URI user for
+   subsequent next_gw calls.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in kamailio.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>ruri_user_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "ruri_user_avp", "$avp(i:500)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>flags_avp</varname> (AVP string)</title>
+		<para>
+		An AVP where successful next_gw and from_gw functions
+		store gateway's flags.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, thus this variable must
+			be defined in kamailio.cfg.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>flags_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "flags_avp", "$avp(i:712)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>lcr_hash_size</varname> (integer)</title>
+		<para>
+		Defines the size of hash table used to store &lt;prefix,
+		from_pattern, priority&gt; tuples.  Hashing is done based
+		on prefix.  Larger value means less collisions with
+		other prefixes.  Hash size value should be a power of
+		2.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 128.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Setting <varname>lcr_hash_size</varname> module
+		parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "lcr_hash_size", 1024)
+...
+</programlisting>
+                </example>
+	</section>
+
+	<section>
+		<title><varname>fetch_rows</varname> (integer)</title>
+		<para>
+		The number of the rows to be fetched at once from database
+		when loading data from lcr table. This value can be used to tune
+		the load time at startup.  For 1MB of private memory (default)
+		it should be below 3750. In order for this parameter to
+		have effect, database driver must support fetch_result()
+		capability.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>2000</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "fetch_rows", 3000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">load_gws([pvar])</function>
+		</title>
+		<para>
+		Loads URI schemes, IP addresses, hostnames, ports, and
+		transports of matching gateways to gw_uri_avp
+		(see Overview section). If optional pseudo variable
+		argument is included, caller's URI is taken from it.
+		If pseudo variable argument is not included, caller's
+		URI is taken from rpid_avp or, if rpid_avp value is
+		empty, from From URI. Returns 1 or -1 depending on
+		success.
+		</para>
+		<para>
+		Execution time of load_gws() function is O(N) * O(M),
+		where N is number of different prefix lengths and M
+		is number of collisions for matching prefix(es) in lcr
+		hash table.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>load_gws</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!load_gws("$var(caller_uri)")) {
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">load_gws_from_grp(group-id)</function>
+		</title>
+		<para>
+		Loads URI schemes, IP addresses, hostnames, ports, and
+		transports of 
+		gateways that belong to a given group to gw_uri_avp.
+		group-id argument is a string that may contain 
+		pseudo-variables.  Its value must be a a string of
+		digits that are converted to an integer group id.
+		Returns 1 or -1 depending on success. 
+		</para>
+		<para>
+		Execution time of load_gws_from_grp() function is O(N),
+		where N is number of gateways.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>load_gws_from_grp</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!load_gws_from_grp("1")) {
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
+	exit;
+};
+...
+
+if (!load_gws_from_grp("$avp(s:gateway_group)")) {
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">next_gw()</function>
+		</title>	
+		<para>
+		Upon first call, replaces URI scheme, host,
+		port, and transport of Request-URI by the values stored
+		in first gw_uri_avp and destroys that AVP (see
+		Overview section).  Saves user part of Request-URI into
+		ruri_user_avp for use in subsequent next_gw() calls.
+		</para>
+		<para>
+		Upon subsequent calls, appends a new branch URI to
+		the request, where URI scheme, host, port, and transport of
+		are taken from values stored in the first gw_uri_avp
+		and destroys that AVP.  URI user is taken from
+		ruri_user_avp.
+		</para>
+		<para>
+		As a side effect, stores gateway's flags to flags_avp.
+		</para>
+		<para>
+		Returns 1 on success and -1 if there were no gateways
+		left or if an error occurred (see syslog).
+		</para>
+		<para>
+		Must be preceded by successful load_gws() call.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>next_gw</function> usage from a route block</title>
+		<programlisting format="linespecific">
+...
+if (!next_gw()) {
+	sl_send_reply("503", "Service not available - No gateways");
+	exit;
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>next_gw</function> usage from a failure route block
+			</title>
+		<programlisting format="linespecific">
+...
+if (!next_gw()) {
+	t_reply("503", "Service not available - No more gateways");
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">from_gw([pvar])</function>
+		</title>
+		<para>
+			Checks if request came from IP address of a
+			gateway.  IP address to be checked is either
+			taken from source IP address of the request or
+			(if present) from pseudo variable argument.
+			As a side effect, stores gateway's flags to
+			flags_avp.
+		</para>
+		<para>
+		Execution time of from_gw() function is O(log N),
+		where N is number of gateways.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>from_gw</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (from_gw()) {
+	...
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>from_gw</function> usage with pseudo
+		variable argument</title>
+		<programlisting format="linespecific">
+...
+if (from_gw("$si")) {
+	...
+};
+...
+</programlisting>
+		</example>
+		</section>
+	<section>
+		<title>
+		<function moreinfo="none">from_gw_grp(group-id)</function>
+		</title>
+		<para>
+			Checks if request came from IP address of a
+			gateway that belongs to the given group
+			(integer string).  Sets
+			or resets a message flag depending on whether
+			the gateway supports directed media. 
+		</para>
+		<para>
+		Execution time of from_gw_grp() function is O(log N),
+		where N is number of gateways.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>from_gw_grp</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (from_gw_grp("1")) {
+	...
+};
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title>
+		<function moreinfo="none">to_gw([group-id])</function>
+		</title>
+		<para>
+		Checks if in-dialog request goes to a
+			gateway. If an optional 
+			group-id (integer string) is given,
+			only gateways belonging to
+			this group are checked.
+		</para>
+		<para>
+		Execution time of to_gw() function is O(log N),
+		where N is number of gateways.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>to_gw</function> usage</title>
+		<programlisting format = "linespecific">
+...
+if (to_gw()) {
+	...
+	exit;
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>to_gw</function> usage with group-id</title>
+		<programlisting format = "linespecific">
+...
+if (to_gw("1")) {
+	...
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Exported MI Commands</title>
+		<section>
+		<title><function>lcr_reload</function></title>
+		<para>
+			Causes lcr module to re-read the contents of gateway table
+			into memory.
+		</para>
+		<para>
+		Name: <emphasis>lcr_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:lcr_reload:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
+		</section>
+		
+		<section>
+		<title><function>lcr_gw_dump</function></title>
+		<para>
+			Causes lcr module to dump the contents of its
+			in-memory gw table. 
+		</para>
+		<para>
+		Name: <emphasis>lcr_gw_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:lcr_gw_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
+		</section>
+		
+		<section>
+		<title><function>lcr_lcr_dump</function></title>
+		<para>
+			Causes lcr module to dump the contents of its
+			in-memory lcr table. 
+		</para>
+		<para>
+		Name: <emphasis>lcr_lcr_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:lcr_gw_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
+		</section>
+	</section>
+	<section>
+	<title>Known Limitations</title>
+	<para>
+		In-memory gateway and in-memory lcr table are switched
+		by two consecutive machine instructions. If lcr reload
+		process is interrupted after the first one, in-memory
+		gateway table does not match in-memory lcr table until
+		execution of lcr reload process is resumed.
+	</para>
+	</section>
+</chapter>

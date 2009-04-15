@@ -1,0 +1,416 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>The modules is a Resource List Server implementation following the
+	specification in RFC 4662 and RFC 4826. 
+	</para>
+	<para>
+	The server is independent from local presence servers, retrieving presence
+	information with Subscribe-Notify messages.
+	</para>
+	<para>
+	The module uses the presence module as a library, as it requires a resembling
+	mechanism for handling Subscribe. Therefore, in case the local presence server
+	is not collocated on the same machine with the RL server, the presence module
+	should be loaded in a library mode only (see doc for presence module).
+	</para>
+
+	<para>
+	It handles subscription to lists in an event independent way.The default event
+	is presence, but if some other events are to be handled by the server, they
+	should be added using the module parameter "rls_events".
+	</para>
+	<para>
+	It works with XCAP server for storage. There is also the possibility to
+	configure it to work in an integrated_xcap server mode, when it only
+	queries database for the resource lists documents. This is useful in a
+	small architecture when all the clients use an integrated server and there
+	are no references to exterior documents in their lists.
+	</para>
+	<para>
+	The same as presence module, it has a caching mode with periodical update
+	in database for subscribe information. The information retrieved with Notify
+	messages is stored in database only. 
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a database module</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>presence- in a library mode</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+
+		</section>
+	</section>
+	
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname>(str)</title>
+		<para>
+		The database url.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>&defaultdb;</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xcap_table</varname>(str)</title>
+		<para>
+		The name of the xcap table in which the integrated server
+		or the xcap_client module writes. If integrated_xcap_server
+		parameter not set, the name of the table must be the same as
+		the one set for the xcap_client module.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>xcap</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xcap_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "xcap_table", "xcaps");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>rlsubs_table</varname>(str)</title>
+		<para>
+		The name of the db table where resource lists subscription 
+		information is stored. 
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>rls_watchers</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rlsubs_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "rlsubs_table", "rls_subscriptions")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>rlpres_table</varname>(str)</title>
+		<para>
+		The name of the db table where notified event specific
+		information is stored. 
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>rls_presentity</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rlpres_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "rlpres_table", "rls_notify")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>clean_period</varname> (int)</title>
+		<para>
+		The period at which to check for expired information.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>100</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>clean_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "clean_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>waitn_time</varname> (int)</title>
+		<para>
+	 The timer period at which the server should attempt to send
+	 Notifies with the updated presence state of the subscribed list
+	 or watcher information.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>50</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>waitn_time</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "waitn_time", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>max_expires</varname> (int)</title>
+		<para>
+		The maximum accepted expires for a subscription to a list. 
+		</para>
+		<para>
+		<emphasis>Default value is <quote>7200</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "max_expires", 10800)
+...
+		</programlisting>
+		</example>
+	</section>
+ 	
+	<section>
+		<title><varname>hash_size</varname> (int)</title>
+		<para>
+        The dimension of the hash table used to store subscription to a list.
+        This parameter will be used as the power of 2 when computing table size.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>9 (512)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "hash_size", 11)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>xcap_root</varname> (str)</title>
+		<para>
+		The address of the xcap server.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "xcap_root", "http://192.168.2.132/xcap-root:800")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>integrated_xcap_server</varname> (int)</title>
+		<para>
+		This parameter should be set if only integrated xcap servers
+		are used to store resource lists.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>integrated_xcap_server</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "integrated_xcap_server", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title><varname>to_presence_code</varname> (int)</title>
+		<para>
+		The code to be returned by rls_handle_subscribe function 
+		if the processed Subscribe is not a resource list Subscribe.
+		This code can be used in an architecture with presence and rls
+		servers collocated on the same machine, to call handle_subscribe
+		on the message causing this code.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>to_presence_code</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "to_presence_code", 10)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>rls_event</varname> (str)</title>
+		<para>
+		The default event that RLS handles is presence. If some other
+		events should also be handled by RLS they should be added using
+		this parameter. It can be set more than once.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>"presence"</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rls_event</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "rls_event", "dialog;sla")
+...
+		</programlisting>
+		</example>
+	</section>
+
+</section>
+
+<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">rls_handle_subscribe()</function>
+		</title>
+		<para>
+		This function detects if a Subscribe message should be
+		handled by RLS. If not it replies with the configured 
+		to_presence_code. If it is, it extracts the dialog info and sends
+		aggregate Notify requests with information for the list.	
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>rls_handle_subscribe</function> usage</title>
+		<programlisting format="linespecific">
+...
+For presence and rls on the same machine:
+	modparam("rls", "to_presence_code", 10)
+
+	if(is_method("SUBSCRIBE"))
+	{	
+		$var(ret_code)= rls_handle_subscribe();
+
+		if($var(ret_code)== 10)
+				handle_subscribe();
+
+		t_release();
+	}
+
+For rls only:
+	if(is_method("SUBSCRIBE"))
+	{
+		rls_handle_subscribe();
+		t_release();
+	}
+
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">rls_handle_notify()</function>
+		</title>
+		<para>
+			
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>rls_handle_notify</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(method=="NOTIFY")
+    rls_handle_notify();
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+
+<section>
+	<title>Installation</title>
+	<para>
+	The module requires 2 table in Kamailio database: rls_presentity
+	and rls_watchers.The SQL syntax to create them can be found in
+	rls-create.sql script in the database directories in
+	the kamailio/scripts folder.
+	You can also find the complete database documentation on the
+	project webpage, &kamailiodbdocslink;.
+	</para>
+</section>
+
+</chapter>
+

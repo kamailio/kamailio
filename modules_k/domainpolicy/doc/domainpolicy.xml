@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY admin SYSTEM "domainpolicy_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Domain Policy Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Otmar</firstname>
+		<surname>Lendl</surname>
+		<email>otmar.lendl@enum.at</email>
+	    </author>
+	    <author>
+		<firstname>Klaus</firstname>
+		<surname>Darilion</surname>
+		<email>klaus.darilion@enum.at</email>
+	    </author>
+	    <editor>
+		<firstname>Otmar</firstname>
+		<surname>Lendl</surname>
+		<email>otmar.lendl@enum.at</email>
+	    </editor>
+	    <editor>
+		<firstname>Klaus</firstname>
+		<surname>Darilion</surname>
+		<email>klaus.darilion@enum.at</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <year>2006</year>
+	    <holder>Juha Heinanen, Otmar Lendl, Klaus Darilion</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &admin;
+    &faq;
+
+</book>

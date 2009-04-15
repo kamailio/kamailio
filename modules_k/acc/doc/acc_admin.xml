@@ -1,0 +1,1055 @@
+<!-- Acc Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		ACC module is used to account transactions information to different
+		backends like syslog, <abbrev>SQL</abbrev>,
+		<acronym>RADIUS</acronym> and <acronym>DIAMETER</acronym> 
+		(beta version).
+	</para>
+	<para>
+		To account a transaction and to choose which set of backends to be 
+		used, the script writer just has to set some flags (see the module
+		parameters section for flag definitions <xref linkend="ACC-param-id"/>).
+		If the accounting flag for a specific backend is set, the acc module 
+		will then report on completed transaction. A typical usage of the 
+		module takes no acc-specific script command -- the functionality 
+		binds invisibly through transaction processing. Script writers just 
+		need to mark the transaction for accounting with proper setflag. 
+		Even so, the module allows the script writter to force accounting in 
+		special cases via some script functions.
+	</para>
+	<para>
+		The accounting module will log by default a fixed set of attributes 
+		for the transaction - if you customize your accounting by adding more
+		information to be logged, please see the next chapter about extra
+		accounting - <xref linkend="ACC-extra-id"/>.
+	</para>
+	<para>
+		The fixed minimal accounting information is: 
+		<itemizedlist>
+		<listitem>
+			<para>Request Method name</para>
+		</listitem>
+		<listitem>
+			<para>From header TAG parameter</para>
+		</listitem>
+		<listitem>
+			<para>To header TAG parameter</para>
+		</listitem>
+		<listitem>
+			<para>Call-Id</para>
+		</listitem>
+		<listitem>
+			<para>3-digit Status code from final reply</para>
+		</listitem>
+		<listitem>
+			<para>Reason phrase from final reply</para>
+		</listitem>
+		<listitem>
+			<para>Time stamp when transaction was completed</para>
+		</listitem>
+		</itemizedlist>
+		If a value is not present in request, the empty string is accounted 
+		instead.
+	</para>
+	<para>
+		Note that:
+		<itemizedlist>
+		<listitem>
+			<para>
+			A single INVITE may produce multiple accounting reports -- that's
+			due to SIP forking feature.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			All flags related to accounting need to be set in request processing
+			route - only the "missed-call" flag may be toggled from other
+			types of routes.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			There is no session/dialog accounting (yet) -- &kamailio; maintains
+			no sessions. If one needs to correlate INVITEs with BYEs for 
+			generating proper CDRs for example for purpose of billing, then 
+			it is better done in the entity which processes accounting 
+			information.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			If a UA fails in middle of conversation, a proxy will never 
+			find out about it. In general, a better practice is to account from an 
+			end-device (such as PSTN gateway), which best knows about call 
+			status (including media status and PSTN status in case of the 
+			gateway).
+			</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		The SQL backend support is compiled in the module. For RADIUS and
+		DIAMETER you need to enable it by recompiling the module with properly
+		set defines: uncomment the RAD_ACC or DDIAM_ACC lines in
+		modules/acc/Makefile. To compile RADIUS support, 
+		you need to have radiusclient-ng (only versions higher or equal 
+		to 0.5.0) installed on your system which is available from
+		<ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
+		http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+		The radius client needs to be configured properly. To do so, use the 
+		template at etc/radiusclient.conf and make sure
+		that module's radius_config parameter points to its location.
+		In particular, accounting secret must match that one configured in
+		server and proper dictionary is used (one is available at 
+		etc/sip_dictionary). Also note that Debian radiusclient-ng uses
+		/var/run/radius.seq as seqfile but Kamailio Debian init script expects
+		/var/run/kamailio/kamailio_radius.seq, so is needed to change it in
+		radiusclient-ng configuration or in Kamailio Debian init script (if not,
+		Kamailio can't create the seq file when not running as root). Uses along
+		with FreeRadius (<ulink url='http://www.freeradius.org/'>
+		http://www.freeradius.org/</ulink>) and Radiator 
+		(<ulink url='http://www.open.com.au/radiator/'>
+		http://www.open.com.au/radiator/</ulink>) servers have been
+		reported to us.
+        </para>
+	<para>
+	NOTE: diameter support was developed for DISC (DIameter Server Client 
+	project at http://developer.berlios.de/projects/disc/). This project 
+	seems to be no longer maintained and DIAMETER specifications were updated
+	in the meantime. Thus, the DIAMETER part in the module is obsolete and 
+	needs rework to be usable with opendiameter or other DIAMETER servers.
+	</para>
+	<section>
+		<title>General Example</title>
+		<programlisting format="linespecific">
+loadmodule "modules/acc/acc.so"
+modparam("acc", "log_level", 1)
+modparam("acc", "log_flag", 1)
+
+if (uri=~"sip:+40") /* calls to Romania */ {
+    if (!proxy_authorize("sip_domain.net" /* realm */,
+    "subscriber" /* table name */))  {
+        proxy_challenge("sip_domain.net" /* realm */, "0" /* no qop */ );
+        exit;
+    }
+
+    if (method=="INVITE" &amp;&amp; !check_from()) {
+        log("from!=digest\n");
+        sl_send_reply("403","Forbidden");
+    }
+
+    setflag(1); /* set for accounting (the same value as in log_flag!)
+    t_relay(); 	/* enter stateful mode now */
+};
+</programlisting>
+	</section>
+	</section>
+
+	<section id="ACC-extra-id">
+		<title>Extra accounting</title>
+		<section>
+			<title>Overview</title>
+			<para>
+			Along the static default information, ACC modules 
+			allows dynamical selection of extra information to be logged. 
+			This allows you to log any pseudo-variable (AVPs, parts of 
+			the request, etc).
+			</para>
+		</section>
+		<section>
+			<title>Definitions and syntax</title>
+			<para>
+			Selection of extra information is done via 
+			<emphasis>xxx_extra</emphasis> parameters by specifying the names
+			of additional information you want to log. This information is 
+			defined via pseudo-variables and may include headers, AVPs values
+			or other message or system values. The syntax of the parameter is:
+			</para>
+			<itemizedlist>
+				<listitem><para><emphasis>
+				xxx_extra = extra_definition (';'extra_definition)*
+				</emphasis></para></listitem>
+				<listitem><para><emphasis>
+				extra_definition = log_name '=' pseudo_variable
+				</emphasis></para></listitem>
+			</itemizedlist>
+			<para>
+			The full list of supported pseudo-variables in &kamailio; is
+			available at: 
+			<ulink url="http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel">
+			http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel</ulink>
+			</para>
+			<para>
+			Via <emphasis>log_name</emphasis> you define how/where the 
+			<emphasis>data</emphasis> will be logged. Its meaning depends 
+			of the accounting support which is used:
+			<itemizedlist>
+				<listitem><para><emphasis>LOG accounting</emphasis> - log_name
+				will be just printed along with the data in <emphasis>
+				log_name=data</emphasis> format;
+				</para></listitem>
+				<listitem><para><emphasis>DB accounting</emphasis> - log_name 
+				will be the name of the DB column where the data will be 
+				stored.<emphasis>IMPORTANT</emphasis>: add in db 
+				<emphasis>acc</emphasis> table the columns corresponding to 
+				each extra data;
+				</para></listitem>
+				<listitem><para><emphasis>RADIUS accounting</emphasis> - 
+				log_name will be the AVP name used for packing the data into 
+				RADIUS message. The log_name will be translated to AVP number 
+				via the dictionary. <emphasis>IMPORTANT</emphasis>: add in 
+				RADIUS dictionary the <emphasis>log_name</emphasis> attribute.
+				</para></listitem>
+				<listitem><para><emphasis>DIAMETER accounting</emphasis> - 
+				log_name will be the AVP code used for packing the data 
+				into DIAMETER message. The AVP code is given directly as 
+				integer, since DIAMETER has no dictionary support yet.
+				<emphasis>IMPORTANT</emphasis>:	<emphasis>log_name</emphasis>
+				must be a number.
+				</para></listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>How it works</title>
+			<para>
+			Some pseudo variables may return more than one value (like 
+			headers or AVPs). In this case, the returned values are
+			embedded in a single string in a comma-separated format.
+			</para>
+		</section>
+	</section>
+
+	<section id="multi-call-legs">
+		<title>Multi Call-Legs accounting</title>
+		<section>
+			<title>Overview</title>
+			<para>
+			A SIP call can have multiple legs due forwarding actions. For 
+			example user A calls user B which forwards the call to user C. 
+			There is only one SIP call but with 2 legs ( A to B and B to C). 
+			Accounting the legs of a call is required for proper billing of 
+			the calls (if C is a PSTN number and the call is billed, user B 
+			must pay for the call - as last party modifing the call 
+			destination-, and not A - as initiator of the call. Call 
+			forwarding on server is only one example which shows the 
+			necessity of the having an accounting engine with multiple legs 
+			support.
+			</para>
+		</section>
+		<section>
+			<title>Configuration</title>
+			<para>
+			First how it works: The idea is to have a set of AVPs and for each
+			call leg to store a set of values in the AVPs. The meaning of
+			the AVP content is stricly decided by the script writer - it can
+			be the origin and source of the leg, its status or any other 
+			related information. If you have a set of 4 AVPS (AVP1, AVP2, AVP3,
+			AVP4), then for the "A call B and B forwards to C" example, 
+			you need to set a different set of values for the AVPs
+			for each leg ([A,B] and [B,C]) .
+			The script writer must take care and properly insert all 
+			these AVP from the script (in proper order and with the correct type).
+			</para>
+			<para>
+			When the accounting information for the call will be written/sent, 
+			all the call-leg pairs will be added (based on the found AVP sets).
+			</para>
+			<para>
+			By default, the multiple call-leg support is disabled - it can be
+			enabled just be setting the per-leg set of AVPs via the 
+			<varname>multi_leg_info</varname> module parameter.
+			</para>
+		</section>
+		<section>
+			<title>Logged data</title>
+			<para>
+			For each call, all the values of the AVP set (which defines a 
+			call-leg) will be logged. How the information will be actually
+			logged, depends of the data backend:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>syslog</emphasis> -- all leg-sets will be added
+				to one record string as AVP1=xxx, AVP2=xxxx ,... sets.
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>database</emphasis> -- each pair will be 
+				separately logged (due DB data structure constraints); several
+				records will be written, the difference between them being 
+				only the fields corresponding to the call-leg info.
+				</para>
+				<note><para>You will need to add in your DB (all acc related
+				tables) the colums for call-leg info (a column for each AVP
+				of the set).
+				</para></note>
+				</listitem>
+				<listitem>
+				<para><emphasis>Radius</emphasis> -- all sets will be added
+				to the same Radius accounting message as RADIUS AVPs - for each
+				call-leg a set of RADIUS AVPs will be added (corresponding
+				to the per-leg AVP set)
+				</para>
+				<note><para>You will need to add in your dictionary the
+				RADIUS AVPs used in call-leg AVP set definition.
+				</para></note>
+				</listitem>
+				<listitem>
+				<para><emphasis>Diameter</emphasis> same as for RADIUS.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>tm</emphasis> -- Transaction Manager</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>a database module</emphasis> -- If SQL 
+				support is used.</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>rr</emphasis> -- Record Route, if 
+				<quote>detect_direction</quote> module parameter is enabled.
+				</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				if compiled with RADIUS support. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section id="ACC-param-id">
+	<title>Exported Parameters</title>
+	<!-- Generic ACC parameters -->
+	<section>
+		<title><varname>early_media</varname> (integer)</title>
+		<para>
+		Should be early media (any provisional reply with body) accounted too ?
+		</para>
+		<para>
+		Default value is 0 (no).
+		</para>
+		<example>
+		<title>early_media example</title>
+		<programlisting format="linespecific">
+modparam("acc", "early_media", 1)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>failed_transaction_flag</varname> (integer)</title>
+		<para>
+		Per transaction flag which says if the transaction should be 
+		accounted also in case of failure (status>=300).
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>failed_transaction_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "failed_transaction_flag", 4)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>report_ack</varname> (integer)</title>
+		<para>
+		Shall acc attempt to account e2e ACKs too ? Note that this is really 
+		only an attempt, as e2e ACKs may take a different path 
+		(unless RR enabled) and mismatch original INVITE (e2e ACKs are 
+		a separate transaction).
+		</para>
+		<para>
+		Default value is 0 (no).
+		</para>
+		<example>
+		<title>report_ack example</title>
+		<programlisting format="linespecific">
+modparam("acc", "report_ack", 1)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>report_cancels</varname> (integer)</title>
+		<para>
+		By default, CANCEL reporting is disabled -- most accounting
+		applications wants to see INVITE's cancellation status.
+		Turn on if you explicitly want to account CANCEL transactions.
+		</para>
+		<para>
+		Default value is 0 (no).
+		</para>
+		<example>
+		<title>report_cancels example</title>
+		<programlisting format="linespecific">
+modparam("acc", "report_cancels", 1)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>detect_direction</varname> (integer)</title>
+		<para>
+		Controlles the direction detection for sequential requests. If 
+		enabled (non zero value), for sequential requests with upstream
+		direction (from callee to caller), the FROM and TO will be swapped
+		(the direction will be preserved as in the original request).
+		</para>
+		<para>
+		It affects all values related to TO and FROM headers (body, URI, 
+		username, domain, TAG).
+		</para>
+		<para>
+		Default value is 0 (disabled).
+		</para>
+		<example>
+		<title>detect_direction example</title>
+		<programlisting format="linespecific">
+modparam("acc", "detect_direction", 1)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>multi_leg_info</varname> (string)</title>
+		<para>
+		Defines the AVP set to be used in per-call-leg accounting.
+		See <xref linkend="multi-call-legs"/> for a 
+		detailed description of the Multi Call-Legs accounting.
+		</para>
+		<para>
+		If empty, the multi-leg accounting support will be disabled.
+		</para>
+		<para>
+		Default value is 0 (disabled).
+		</para>
+		<example>
+		<title>multi_leg_info example</title>
+		<programlisting format="linespecific">
+# for syslog-based accounting, use any text you want to be printed
+modparam("acc", "multi_leg_info",
+    "text1=$avp(src);text2=$avp(dst)")
+# for mysql-based accounting, use the names of the columns
+modparam("acc", "multi_leg_info",
+    "leg_src=$avp(src);leg_dst=$avp(dst)")
+# for RADIUS-based accounting, use the names of the RADIUS AVPs
+modparam("acc", "multi_leg_info",
+    "RAD_LEG_SRC=$avp(src);RAD_LEG_SRC=$avp(dst)")
+# for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
+modparam("acc", "multi_leg_info",
+    "2345=$avp(src);2346=$avp(dst)")
+</programlisting>
+		</example>
+	</section>
+	<!-- SYSLOG specific ACC parameters -->
+	<section>
+		<title><varname>log_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a transaction via syslog.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>log_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>log_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed calls via syslog.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>log_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>log_level</varname> (integer)</title>
+		<para>
+		Log level at which accounting messages are issued to syslog.
+		</para>
+		<para>
+		Default value is L_NOTICE.
+		</para>
+		<example>
+		<title>log_level example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_level", 2)   # Set log_level to 2
+</programlisting>
+		</example>
+	</section>
+		<section>
+		<title><varname>log_facility</varname> (string)</title>
+		<para>
+		Log facility to which accounting messages are issued to syslog.
+		This allows to easily seperate the accounting specific logging
+		from the other log messages.
+		</para>
+		<para>
+		Default value is LOG_DAEMON.
+		</para>
+		<example>
+		<title>log_facility example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_facility", "LOG_DAEMON")
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>log_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>log_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
+</programlisting>
+		</example>
+	</section>
+	<!-- RADIUS specific ACC parameters -->
+	<section>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		<emphasis>This parameter is radius specific.</emphasis> Path to 
+		radius client configuration file, set the referred config file 
+		correctly and specify there address of server, shared secret 
+		(should equal that in /usr/local/etc/raddb/clients for
+		freeRadius servers) and dictionary, see etc for an example of 
+		config file and dictionary.
+		</para>
+		<para>
+		If the parameter is set to empty string, the RADIUS accounting support
+		will be disabled (even if compiled).
+		</para>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title>radius_config example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- RADIUS specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>radius_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- RADIUS specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>radius_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>service_type</varname> (integer)</title>
+		<para>
+		Radius service type used for accounting.
+		</para>
+		<para>
+		Default value is 15 (SIP).
+		</para>
+		<example>
+		<title>service_type example</title>
+		<programlisting format="linespecific">
+modparam("acc", "service_type", 16)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged via RADIUS - RADIUS specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>radius_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+</programlisting>
+		</example>
+	</section>
+	<!-- SQL specific ACC parameters -->
+	<section>
+		<title><varname>db_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- database specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>db_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- database specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>db_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table_acc</varname> (string)</title>
+		<para>
+		Table name of accounting successfull calls -- database specific.
+		</para>
+		<para>
+		Default value is <quote>acc</quote>
+		</para>
+		<example>
+		<title>db_table_acc example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_table_acc", "myacc_table")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table_missed_calls</varname> (string)</title>
+		<para>
+		Table name for accounting missed calls -- database specific.
+		</para>
+		<para>
+		Default value is <quote>missed_calls</quote>
+		</para>
+		<example>
+		<title>db_table_missed_calls example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_table_missed_calls", "myMC_table")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		SQL address -- database specific. If is set to NULL or emty string,
+		the SQL support is disabled.
+		</para>
+		<para>
+		Default value is <quote>NULL</quote> (SQL disabled).
+		</para>
+		<example>
+		<title>db_url example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_url", "mysql://user:password@localhost/openser")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_method_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the request's method name as
+		string.
+		</para>
+		<para>
+		Default value is <quote>method</quote>.
+		</para>
+		<example>
+		<title>acc_method_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_method_column", "method")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_from_tag_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the From header TAG parameter.
+		</para>
+		<para>
+		Default value is <quote>from_tag</quote>.
+		</para>
+		<example>
+		<title>acc_from_tag_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_from_tag_column", "from_tag")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_to_tag_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the To header TAG parameter.
+		</para>
+		<para>
+		Default value is <quote>to_tag</quote>.
+		</para>
+		<example>
+		<title>acc_to_tag_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_to_tag_column", "to_tag")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_callid_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the request's Callid value.
+		</para>
+		<para>
+		Default value is <quote>callid</quote>.
+		</para>
+		<example>
+		<title>acc_callid_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_callid_column", "callid")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_code_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the final reply's numric code
+		value in string format.
+		</para>
+		<para>
+		Default value is <quote>sip_code</quote>.
+		</para>
+		<example>
+		<title>acc_sip_code_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_code_column", "sip_code")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_reason_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the final reply's reason
+		phrase value.
+		</para>
+		<para>
+		Default value is <quote>sip_reason</quote>.
+		</para>
+		<example>
+		<title>acc_sip_reason_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_reason_column", "sip_reason")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_time_column</varname> (string)</title>
+		<para>
+		Column name in accounting table to store the time stamp of the 
+		transaction completion in date-time format.
+		</para>
+		<para>
+		Default value is <quote>time</quote>.
+		</para>
+		<example>
+		<title>acc_time_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_time_column", "time")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged into database - DB specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>db_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
+</programlisting>
+		</example>
+	</section>
+	<!-- DIAMETER specific ACC parameters -->
+	<section>
+		<title><varname>diameter_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>diameter_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>diameter_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_client_host</varname> (string)</title>
+		<para>
+		Hostname of the machine where the DIAMETER Client is 
+		running -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is <quote>localhost</quote>.
+		</para>
+		<example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_client_host", "3a_server.net")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_client_port</varname> (int)</title>
+		<para>
+		Port number where the Diameter Client is 
+		listening -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is 3000.
+		</para>
+		<example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_client_port", 3000)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged via DIAMETER - DIAMETER specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>diameter_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+			<function moreinfo="none">acc_log_request(comment)</function>
+		</title>
+		<para>
+		<function moreinfo="none">acc_request</function> reports on a request, 
+		for example, it can be used to report on missed calls to off-line users 
+		who are replied 404 - Not Found. To avoid multiple reports on UDP 
+		request retransmission, you would need to embed the
+		action in stateful processing.
+		</para> 
+		<para>
+		Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title>acc_log_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_log_request("Some comment");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">acc_db_request(comment, table)</function>
+		</title>
+		<para>
+		Like <function moreinfo="none">acc_log_request</function>, 
+		<function moreinfo="none">acc_db_request</function> reports on a 
+		request. The report is sent to database at <quote>db_url</quote>, in 
+		the table referred to in the second action parameter.
+		</para>
+		<para>
+		Meaning of the parameters is as follows:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>comment</emphasis> - Comment to be appended.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>table</emphasis> - Database table to be used.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title>acc_db_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_log_request("Some comment", "Some table");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">acc_rad_request(comment)</function>
+		</title>
+		<para>
+		Like <function moreinfo="none">acc_log_request</function>, 
+		<function moreinfo="none">acc_rad_request</function> reports on 
+		a request. It reports to radius server as configured in 
+		<quote>radius_config</quote>.
+		</para>
+		<para>
+		Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title>acc_rad_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_rad_request("Some comment");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">acc_diam_request(comment)</function>
+		</title>
+		<para>
+		Like <function moreinfo="none">acc_log_request</function>, 
+		<function moreinfo="none">acc_diam_request</function> reports on 
+		a request. It reports to the configured Diameter server.
+		</para> 
+		<para>
+		Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title>acc_diam_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_diam_request("Some comment");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

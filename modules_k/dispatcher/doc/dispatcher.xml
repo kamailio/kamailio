@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY admin SYSTEM "dispatcher_admin.xml">
+<!ENTITY faq SYSTEM "dispatcher_faq.xml">
+
+<!ENTITY dispatcherlist SYSTEM "dispatcher.list">
+<!ENTITY dispatchercfg SYSTEM "dispatcher.cfg">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>DISPATCHER Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+	    </author>
+	    <editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+	    </editor>
+            <editor>
+                <firstname>Carsten</firstname>
+                <surname>Bock</surname>
+                <affiliation><orgname>BASIS AudioNet GmbH</orgname></affiliation>
+                <address>
+                <email>bock@basis-audionet.de</email>
+                </address>
+            </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<copyright>
+	    <year>2005</year>
+	    <holder>Voice-System.RO</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &admin;
+    &faq;
+
+</book>

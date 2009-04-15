@@ -1,0 +1,74 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    
+    <title>&develguide;</title>
+    <para>
+	One single tree (for both IPv4 and IPv6) is used. Each node contains a byte, the &ip;
+	addresses stretching from root to the leafs.
+    </para>
+    <example>
+	<title>Tree of &ip; addresses</title>
+	<programlisting format="linespecific">
+	   / 193 - 175 - 132 - 164
+tree root /                  \ 142
+	  \ 195 - 37 - 78 - 163
+	   \ 79 - 134
+</programlisting>
+	</example>
+    <para>
+	To detect the whole address, step by step, from the root to the leafs, the nodes corresponding
+	to each byte of the ip address are expanded. In order to be expended a node has to be hit
+	for a given number of times (possible by different addresses; in the previous example, the
+	node <quote>37</quote> was expended by the 195.37.78.163 and 195.37.79.134 hits).
+    </para>
+    <para>
+	For 193.175.132.164 with x= reqs_density_per_unit:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		After first req hits -> the <quote>193</quote> node is built.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		After x more hits, the <quote>175</quote> node is build; the hits of
+		<quote>193</quote> node are split between itself and its child--both of them gone
+		have x/2.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		And so on for node <quote>132</quote> and <quote>164</quote>.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		Once <quote>164</quote> build the entire address can be found in the
+		tree. <quote>164</quote> becomes a leaf. After it will be hit as a leaf for x
+		times, it will become <quote>RED</quote> (further request from this address will
+		be blocked).
+	    </para>
+	</listitem>
+    </itemizedlist>
+    <para>
+	So, to build and block this address were needed 3*x hits. Now, if reqs start coming from
+	193.175.132.142, the first 3 bytes are already in the tree (they are shared with the previous
+	address), so I will need only x hits (to build node <quote>142</quote> and to make it
+	<quote>RED</quote>) to make this address also to be blocked.  This is the reason for the
+	variable number of hits necessary to block an &ip;.
+    </para>
+    <para>
+	The maximum number of hits to turn an address red are (n is the address's number of bytes):
+    </para>
+    <para>
+	1 (first byte) + x (second byte) + (x / 2) * (n - 2) (for the rest of the bytes) + (n - 1)
+	(to turn the node to red).
+    </para>
+    <para>
+	So, for IPv4 (n = 4) will be 3x and for IPv6 (n = 16) will be 9x. The minimum number of hits
+	to turn an address red is x.
+    </para>
+</chapter>
+

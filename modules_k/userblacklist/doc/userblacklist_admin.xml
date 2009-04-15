@@ -1,0 +1,227 @@
+<chapter>
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	The userblacklist module allows Kamailio to handle blacklists
+	on a per user basis. This information is stored in a database
+	table, which is queried to decide if the number (more exactly,
+	the request URI user) is blacklisted or not.
+	</para>
+	<para>
+	An additional functionality that this module provides is the ability
+	to handle global blacklists. This lists are loaded on startup into
+	memory, thus providing a better performance then in the userblacklist
+	case. This global blacklists are useful to only allow calls to certain 
+	international destinations, i.e. block all not whitelisted numbers.
+	They could also used to prevent the blacklisting of important	
+	numbers, as whitelisting is supported too. This is useful for example
+	to prevent the customer from blocking emergency call number or service
+	hotlines.
+	</para>
+	<para>
+	The module exports two functions, <emphasis>check_blacklist</emphasis>
+	and <emphasis>check_user_blacklist</emphasis> for usage in the config
+	file. Furthermore its provide a FIFO function to reload the global
+	blacklist cache.
+	</para>
+	<para>
+	Please note that only numerical strings for matching are supported at the
+	moment (the used library supports this already, but its not yet implemented
+	in the module). Non-digits on the beginning of the matched string are skipped,
+	any later non-digits will stop the matching on this position.
+	</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>database</emphasis> -- Any database module</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+
+	<section>
+	<title>Exported Parameters</title>
+    <section>
+	    <title><varname>use_domain</varname> (integer)</title>
+	    <para>
+			If set to non-zero value, the domain column in the userblacklist is used.
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>0</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>use_domain</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("userblacklist", "use_domain", 0)
+...
+		    </programlisting>
+	    </example>
+    </section>
+</section>
+<section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">check_user_blacklist (string user, string domain, string number, string table)</function>
+	    </title>
+	    <para>
+		Finds the longest prefix that matches the request URI user (or the number
+		parameter) for the given user and domain name in the database.
+		If a match is found and it is not set to whitelist, false is returned.
+		Otherwise, true is returned. Pseudo-variables or AVPs can be used for
+		the user, domain and number parameters. The number and table variables
+		are optional, the defaults are used if they are ommited. The number
+		parameter can be used to check for example against the from URI user.
+	    </para>
+	<example>
+		<title><function>check_user_blacklist</function> usage</title>
+		<programlisting format="linespecific">
+...
+$avp(i:80) = $rU;
+# rewrite the R-URI
+if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)"))
+	sl_send_reply("403", "Forbidden");
+	exit;
+}
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">check_blacklist (string table)</function>
+	    </title>
+	    <para>
+		Finds the longest prefix that matches the request URI for the
+		given table. If a match is found and it is not set to whitelist,
+		false is returned. Otherwise, true is returned.
+	    </para>
+	<example>
+		<title><function>check_blacklist</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!check_blacklist("global_blacklist")))
+	sl_send_reply("403", "Forbidden");
+	exit;
+}
+...
+		</programlisting>
+	    </example>
+	</section>
+</section>
+
+<section>
+	    <title><acronym>MI</acronym> Commands</title>
+		<section>
+	    <title>
+		<function moreinfo="none">reload_blacklist</function>
+	    </title>
+	    <para>
+		Reload the internal global blacklist cache. This is necessary after
+		the database tables for the global blacklist have been changed.
+	    </para>
+	<example>
+		<title><function>reload_blacklists</function> usage</title>
+		<programlisting format="linespecific">
+...
+kamctl fifo reload_blacklist
+...
+		</programlisting>
+	    </example>
+	</section>
+</section>
+    <section>
+	<title>Installation and Running</title>
+	<section>
+		<title>Database setup</title>
+		<para>
+			Before running &kamailio; with userblacklist, you have to setup the database 
+			table where the module will read the blacklist data. For that, if 
+			the table was not created by the installation script or you choose
+			to install everything by yourself you can use the userblacklist-create.sql
+			<acronym>SQL</acronym> script in the database directories in the 
+			kamailio/scripts folder as template. 
+			Database and table name can be set with module parameters so they 
+			can be changed, but the name of the columns must be as they are 
+			in the <acronym>SQL</acronym> script.
+			You can also find the complete database documentation on the
+			project webpage, &kamailiodbdocs;.
+		</para>
+
+	<example>
+		<title>Example database content - globalblacklist table</title>
+		<programlisting format="linespecific">
+...
++----+-----------+-----------+
+| id | prefix    | whitelist |
++----+-----------+-----------+
+|  1 |           |         0 |
+|  2 | 1         |         1 |
+|  3 | 123456    |         0 |
+|  4 | 123455787 |         0 |
++----+-----------+-----------+
+...
+		</programlisting>
+	</example>
+	<para>
+		This table will setup a global blacklist for all numbers, only allowing calls
+		starting with <quote>1</quote>. Numbers that starting with <quote>123456</quote>
+		and <quote>123455787</quote> are also blacklisted, because the longest prefix
+		will be matched.
+	</para>
+
+	<example>
+		<title>Example database content - userblacklist table</title>
+		<programlisting format="linespecific">
+...
++----+----------------+-------------+-----------+-----------+
+| id | username       | domain      | prefix    | whitelist |
++----+----------------+-------------+-----------+-----------+
+| 23 | 49721123456788 |             | 1234      |         0 |
+| 22 | 49721123456788 |             | 123456788 |         1 |
+| 21 | 49721123456789 |             | 12345     |         0 |
+| 20 | 494675231      |             | 499034133 |         1 |
+| 19 | 494675231      | test        | 499034132 |         0 |
+| 18 | 494675453      | test.domain | 49901     |         0 |
+| 17 | 494675454      |             | 49900     |         0 |
++----+----------------+-------------+-----------+-----------+
+...
+		</programlisting>
+	</example>
+	<para>
+		This table will setup user specific blacklists for certain usernames. For example
+		for user <quote>49721123456788</quote> the prefix <quote>1234</quote> will be not
+		allowed, but the number <quote>123456788</quote> is allowed. Additionally a domain
+		could be specified that is used for username matching if the <quote>use_domain</quote>
+		parameter is set.
+	</para>
+</section>
+</section>
+</chapter>

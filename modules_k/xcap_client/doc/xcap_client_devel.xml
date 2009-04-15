@@ -1,0 +1,173 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    
+    <title>&develguide;</title>
+	<para>
+		The module exports a number of functions that allow selecting 
+		and retrieving an element from an xcap server and also registering
+		a callback to be called when a MI command refreshXcapDoc is received
+		and the document in question is retrieved.
+   </para>
+   <section>
+      <title>
+	     <function moreinfo="none">bind_xcap_api(xcap_api_t* api)</function>
+     </title>
+		<para>
+		This function allows binding the needed functions. 
+		</para>
+			<example>
+			<title><function>xcap_api</function> structure</title>
+			<programlisting format="linespecific">
+...
+typedef struct xcap_api {
+	
+	/* xcap node selection and retrieving functions*/
+	xcap_get_elem_t get_elem;
+	xcap_nodeSel_init_t int_node_sel;
+	xcap_nodeSel_add_step_t add_step;
+	xcap_nodeSel_add_terminal_t add_terminal;
+	xcap_nodeSel_free_t free_node_sel;
+	xcapGetNewDoc_t getNewDoc; /* an initial request for the module 
+	fo fetch this document that does not exist in xcap db table
+	and handle its update*/
+
+	/* function to register a callback to document changes*/
+	register_xcapcb_t register_xcb;
+}xcap_api_t;
+...
+			</programlisting>
+			</example>
+	</section>
+	
+	<section>
+		<title>
+			<function moreinfo="none">get_elem</function>
+		</title>
+		<para>
+			Field type:
+				<programlisting format="linespecific">
+...
+typedef char* (*xcap_get_elem_t)(char* xcap_root,
+xcap_doc_sel_t* doc_sel, xcap_node_sel_t* node_sel);
+...
+				</programlisting>
+		</para>		
+		<para>
+			This function sends a HTTP request and gets the specified information
+			from the xcap server.
+		</para>
+		<para>
+		The parameters signification:
+		</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>xcap_root</emphasis>-
+				the XCAP server address;
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>doc_sel</emphasis>-
+				structure with document selection info;
+			</para>
+			<programlisting format="linespecific">
+Parameter type:
+...
+typedef struct xcap_doc_sel
+{
+	str auid; /* application defined Unique ID*/
+	int type; /* the type of the path segment
+				after the AUID  which must either
+				be GLOBAL_TYPE (for "global") or
+				USERS_TYPE (for "users") */ 
+	str xid; /* the XCAP User Identifier 
+				if type is USERS_TYPE */
+	str filename; 
+}xcap_doc_sel_t;
+...
+</programlisting>
+</listitem>
+			
+<listitem>
+<para>
+<emphasis>node_sel</emphasis>-
+structure with node selection info;
+</para>
+<programlisting format="linespecific">
+Parameter type:
+...
+typedef struct xcap_node_sel
+{
+	step_t* steps;
+	step_t* last_step;
+	int size;
+	ns_list_t* ns_list;
+	ns_list_t* last_ns;
+	int ns_no;
+
+}xcap_node_sel_t;
+
+typedef struct step
+{
+	str val;
+	struct step* next;
+}step_t;
+
+typedef struct ns_list
+{
+	int name;
+	str value;
+	struct ns_list* next;
+}ns_list_t;
+...
+
+</programlisting>
+		<para>
+		The node selector is represented like a list of steps that will
+		be represented in the path string separated by '/' signs. 
+		The namespaces for the nodes are stored also in a list, as an
+		association of name and value, where the value is to be included
+		in the respective string val field of the step.
+		</para>
+		<para>
+		To construct the node structure the following functions in the xcap_api
+		structure should be used: 'int_node_sel', 'add_step' and if needed, 
+		'add_terminal'.
+		</para>
+		<para>
+		If the intention is to retrieve the whole document this argument must
+		be NULL.
+		</para>
+		</listitem>
+		</itemizedlist>	
+	
+		</section>
+<section>
+		<title>
+			<function moreinfo="none">register_xcb</function>
+		</title>
+		<para>
+			Field type:
+				<programlisting format="linespecific">
+...
+typedef int (*register_xcapcb_t)(int types, xcap_cb f);
+...
+	</programlisting>
+	</para>
+	<para>
+	- 'types' parameter can have a combined value of PRES_RULES, RESOURCE_LIST,
+	RLS_SERVICES and PIDF_MANIPULATION.
+	</para>
+	<para>
+	-the callback function has type :
+	<programlisting format="linespecific">
+...
+typedef int (xcap_cb)(int doc_type, str xid, char* doc);
+...
+	</programlisting>
+	</para>
+	</section>	
+	</chapter>
+

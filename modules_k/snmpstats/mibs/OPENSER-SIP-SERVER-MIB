@@ -1,0 +1,776 @@
+-- ***********************************************************************
+--
+-- This MIB provides information related to the OpenSER SIP Router.
+-- 
+-- Copyright (c) The Internet Society (2006)
+-- Ammendments (c) Soma Networks, Inc. (2006)
+--
+-- All rights reserved.
+-- *****************************************************************
+
+
+OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
+
+      IMPORTS
+           MODULE-IDENTITY,
+           OBJECT-TYPE,
+           OBJECT-IDENTITY,
+           Counter32,
+           Unsigned32,
+           Gauge32
+                FROM SNMPv2-SMI
+
+           TruthValue,
+           DateAndTime,
+           RowStatus
+                FROM SNMPv2-TC
+
+           MODULE-COMPLIANCE,
+           OBJECT-GROUP
+                FROM SNMPv2-CONF
+
+           SnmpAdminString
+                FROM SNMP-FRAMEWORK-MIB
+
+           openserModules, 
+           openserSIPServerMIB
+                FROM OPENSER-REG-MIB;
+
+      openserSIPServerModule MODULE-IDENTITY
+           LAST-UPDATED   "200603281700Z"
+           ORGANIZATION   "OpenSER"
+           CONTACT-INFO
+                   "http://www.openser.org"
+                   
+           DESCRIPTION
+                "
+                Adapted from the draft-ietf-sip-mib-10.txt:
+                
+                    SIP WG email: sip@ietf.org
+
+                    Co-editor  Kevin Lingle
+                               Cisco Systems, Inc.
+                    postal:    7025 Kit Creek Road
+                               P.O. Box 14987
+                               Research Triangle Park, NC 27709
+                               USA
+                    email:     klingle@cisco.com
+                    phone:     +1 919 392 2029
+
+                    Co-editor  Joon Maeng
+                    email:     jmaeng@austin.rr.com
+
+                    Co-editor  Jean-Francois Mule
+                               CableLabs
+                    postal:    858 Coal Creek Circle
+                               Louisville, CO 80027
+                               USA
+                    email:     jf.mule@cablelabs.com
+                    phone:     +1 303 661 3708
+
+                    Co-editor  Dave Walker
+                    email:     drwalker@rogers.com
+
+                 Session Initiation Protocol (SIP) Server MIB module.
+
+                 SIP is an application-layer signaling protocol for
+                 creating, modifying and terminating multimedia
+                 sessions with one or more participants. These sessions
+                 include Internet multimedia conferences and Internet
+                 telephone calls.  SIP is defined in RFC 3261 (June
+                 2002).
+
+                 This MIB is defined for the management of SIP Proxy,
+                 Redirect and Registrar Servers.
+
+                 A Proxy Server acts as both a client and a server.
+                 It accepts requests from other clients, either
+                 responding to them or passing them on to other
+                 servers, possibly after modification.
+
+                 A Redirect Server accepts requests from clients and
+                 returns zero or more addresses to that client.
+                 Unlike a User Agent Server it does not accept calls.
+
+                 A Registrar is a server that accepts REGISTER
+                 requests.  A Registrar is typically co-located with a
+                 Proxy or Redirect Server.
+
+                 Copyright (C) The Internet Society (2006).
+                 This version of this MIB module is part of RFC XXXX;
+                  see the RFC itself for full legal notices."
+              REVISION        "200603281700Z"
+              DESCRIPTION
+                   "Added openserSIPRegUserLookupTable."
+
+              REVISION        "200603231200Z"
+              DESCRIPTION
+                   "made OpenSER specific and changed sipRegUserTable."
+                   
+              REVISION        "200603021700Z"
+              DESCRIPTION
+                   "Initial version of the IETF SIP-SERVER-MIB module."
+           
+        ::= { openserModules 4 }
+
+--
+-- Top-Level Components of this MIB.
+--
+
+      openserSIPServerObjects  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for accessible objects in the MIB." 
+        ::= { openserSIPServerMIB 1 }
+        
+      openserSIPServerConform  OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for conformance specifications." 
+        ::= { openserSIPServerMIB 2 }
+
+--
+-- These groups contain objects common to all SIP servers.
+--
+
+      openserSIPServerCfg   OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for server configuration objects." 
+        ::= { openserSIPServerObjects 1 }
+
+--
+-- Common Server Configuration Objects
+--
+
+--
+-- This group contains MIB objects related to SIP Proxy Servers.
+--
+    
+      openserSIPProxyCfg OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for proxy server configuration objects." 
+        ::= { openserSIPServerObjects 3 }
+      
+      openserSIPProxyStats    OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for proxy server statistics objects."  
+        ::= { openserSIPServerObjects 4 }
+
+--
+-- Proxy Server Configuration
+--
+      openserSIPProxyStatefulness OBJECT-TYPE
+          SYNTAX     INTEGER {
+                              stateless(1),
+                              transactionStateful(2),
+                              callStateful(3)
+                      }
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects the default mode of operation for
+                the Proxy Server entity.
+
+                A stateless proxy is a logical entity that does not
+                maintain the client or server transaction state machines
+                when it processes requests. A stateless proxy forwards
+                every request it receives downstream and every response
+                it receives upstream. If the value of this object is
+                stateless(1), the proxy defaults to stateless
+                operations.
+
+                A transaction stateful proxy, or simply a 'stateful
+                proxy', is a logical entity that maintains the client
+                and server transaction state machines during the
+                processing of a request. A (transaction) stateful proxy
+                is not the same as a call stateful proxy. If the value
+                if this object is transactionStateful(2), the proxy is
+                stateful on a transaction basis.
+
+                A call stateful proxy is a logical entity if it retains
+                state for a dialog from the initiating INVITE to the
+                terminating BYE request.  A call stateful proxy is
+                always transaction stateful, but the converse is not
+                necessarily true. If the value of this object is
+                callStateful(3), the proxy is call stateful."
+          REFERENCE
+                "RFC 3261, Section 16"
+          ::= { openserSIPProxyCfg 1 }
+
+
+      openserSIPProxyRecordRoute OBJECT-TYPE
+          SYNTAX     TruthValue
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects whether or not the proxy adds itself
+                to the Record-Route header as a default action.  This
+                header is used to list the proxies that insist on being in
+                the signaling path for subsequent requests related to the
+                call-leg.
+
+                If the value of this object is 'true', the proxy adds itself
+                to the end of the Record-Route header, creating the header
+                if required.  If the value is 'false', the proxy does
+                not add itself to the Record-Route header."
+          REFERENCE
+                "RFC 3261, Section 20.30"
+          ::= { openserSIPProxyCfg 3 }
+
+--
+-- Security
+--
+      openserSIPProxyAuthMethod OBJECT-TYPE
+          SYNTAX     BITS {
+                             none(0),
+                             tls(1),
+                             digest(2)
+                     }
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects the authentication methods that
+                MAY be used to authenticate request originators.
+
+                bit 0  no authentication is performed
+                bit 1  TLS is used
+                bit 2  HTTP Digest is used."
+          REFERENCE
+              "RFC 3261 Sections 22, 23, 26, 26.2.3"
+          ::= { openserSIPProxyCfg 4 }
+
+
+--
+-- Proxy Server Statistics
+--
+      openserSIPNumProxyRequireFailures OBJECT-TYPE
+          SYNTAX     Counter32
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains the number of occurrences of
+                unsupported options being specified in received Proxy-
+                Require headers.  Such occurrences result in a 420 Bad
+                Extension status code being
+                returned."
+          ::= { openserSIPProxyStats 1 }
+
+--
+-- This group contains MIB objects related to SIP Registrars.
+--
+      openserSIPRegCfg OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for SIP Registrar Configuration."
+        ::= { openserSIPServerObjects 5 }
+        
+      openserSIPRegStats OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for SIP Registrar Statistics." 
+        ::= { openserSIPServerObjects 6 }
+
+--
+-- Registrar Configuration
+--
+
+      openserSIPRegMaxContactExpiryDuration OBJECT-TYPE
+          SYNTAX     Unsigned32 (0..4294967295)
+          UNITS      "seconds"
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects the maximum expiry that may be
+                requested by a User Agent for a particular Contact.
+
+                User Agents can specify expiry using either an Expiry
+                header in a REGISTER request, or using an Expires parameter
+                in a Contact header in a REGISTER request.  If the value
+                requested by the User Agent is greater than the value
+                of this object, then the contact information is given the
+                duration specified by this object, and that duration
+                is indicated to the User Agent in the response."
+          ::= { openserSIPRegCfg 2 }
+
+      openserSIPRegMaxUsers OBJECT-TYPE
+          SYNTAX     Unsigned32 (1..4294967295)
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects the maximum number of users that
+                the Registrar supports.  The current number of users is
+                reflected by sipRegCurrentUsers."
+          ::= { openserSIPRegCfg 3 }
+
+      openserSIPRegCurrentUsers OBJECT-TYPE
+          SYNTAX     Gauge32 (0..4294967295)
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects the number of users currently
+                registered with the Registrar."
+          ::= { openserSIPRegCfg 4 }
+
+      openserSIPRegDfltRegActiveInterval OBJECT-TYPE
+          SYNTAX     Unsigned32 (1..4294967295)
+          UNITS      "seconds"
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object reflects the default time interval the
+                Registrar considers registrations to be active.  The
+                value is used to compute the Expires header in the
+                REGISTER response.  If a user agent requests a time
+                interval shorter than specified by this object, the
+                Registrar SHOULD honor that request.  If a Contact
+                entry does not have an 'expires' parameter, the value
+                of the Expires header field is used instead. If a
+                Contact entry has no 'expires' parameter and no the
+                Expires header field is present, the value of this
+                object is used as the default value.
+                This object SHOULD be non-volatile and its value SHOULD
+                be kept at reboot."
+          REFERENCE "RFC 3261, Section 10.2"
+          ::= { openserSIPRegCfg 5 }
+
+--
+-- Per User Information
+--
+      openserSIPRegUserTable OBJECT-TYPE
+          SYNTAX     SEQUENCE OF OpenSERSIPRegUserEntry
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "This table contains information on all users registered
+                to each Registrar in this system."
+          ::= { openserSIPRegCfg 6 }
+
+      openserSIPRegUserEntry OBJECT-TYPE
+          SYNTAX     OpenSERSIPRegUserEntry
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "This entry contains information for a single user
+                registered to this Registrar.
+
+                Each row represents those objects for a particular SIP
+                server present in this system."
+          INDEX { openserSIPUserIndex }
+          ::= { openserSIPRegUserTable 1 }
+
+      OpenSERSIPRegUserEntry ::=
+          SEQUENCE {
+                   openserSIPUserIndex                     Unsigned32,
+                   openserSIPUserUri                       SnmpAdminString,
+                   openserSIPUserAuthenticationFailures    Counter32
+          }
+
+        openserSIPUserIndex OBJECT-TYPE
+             SYNTAX     Unsigned32 (1..4294967295)
+             MAX-ACCESS not-accessible
+             STATUS     current
+             DESCRIPTION
+                  "This object uniquely identifies a conceptual row in
+                  the table."
+             ::= { openserSIPRegUserEntry 1 }
+             
+      openserSIPUserUri OBJECT-TYPE
+          SYNTAX     SnmpAdminString
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains the user's address-of-record.  It
+                is the main form by which the Registrar knows the user.
+                The format is typically 'user@domain'.  It is contained
+                in the To header for all REGISTER requests."
+          ::= { openserSIPRegUserEntry 2 }
+
+      openserSIPUserAuthenticationFailures OBJECT-TYPE
+          SYNTAX     Counter32
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains a count of the number of times the
+                user has failed authentication."
+          ::= { openserSIPRegUserEntry 3 }
+
+--
+-- Per Contact Information
+--
+      openserSIPContactTable OBJECT-TYPE
+          SYNTAX     SEQUENCE OF OpenSERSipContactEntry
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "This table contains information on every location where
+                a registered user (specified by sipUserIndex) wishes to
+                be found (i.e. the user has provided Contact information
+                to each SIP Registrar in this system)."
+          ::= { openserSIPRegCfg 7 }
+
+      openserSIPContactEntry OBJECT-TYPE
+          SYNTAX     OpenSERSipContactEntry
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "This entry contains information for a single Contact.
+                Multiple contacts may exist for a single user."
+          INDEX { openserSIPUserIndex, openserSIPContactIndex }
+          ::= { openserSIPContactTable 1 }
+
+      OpenSERSipContactEntry ::=
+          SEQUENCE {
+                   openserSIPContactIndex                Unsigned32,
+                   openserSIPContactDisplayName          SnmpAdminString,
+                   openserSIPContactURI                  SnmpAdminString,
+                   openserSIPContactLastUpdated          DateAndTime,
+                   openserSIPContactExpiry               DateAndTime,
+                   openserSIPContactPreference           SnmpAdminString
+          }
+
+      openserSIPContactIndex OBJECT-TYPE
+          SYNTAX     Unsigned32 (1..4294967295)
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "Along with the sipUserIndex, this object uniquely
+                identifies a conceptual row in the table."
+          ::= { openserSIPContactEntry 1 }
+
+      openserSIPContactDisplayName OBJECT-TYPE
+          SYNTAX     SnmpAdminString
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains the display name for the Contact.
+                For example, 'Santa at Home', or 'Santa on his Sled',
+                corresponding to contact URIs of
+                sip:BigGuy@sip.northpole.ca or
+                sip:sclaus817@sip.mobile.com, respectively."
+          ::= { openserSIPContactEntry 2 }
+
+      openserSIPContactURI OBJECT-TYPE
+          SYNTAX     SnmpAdminString
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains a SIP URI where
+                the user can be contacted.  This URI is normally returned
+                to a client from a Redirect Server, or is used as the
+                RequestURI in a SIP request line for requests forwarded
+                by a proxy."
+          ::= { openserSIPContactEntry 3 }
+
+      openserSIPContactLastUpdated OBJECT-TYPE
+          SYNTAX     DateAndTime
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object indicates the time when this contact
+                information was accepted.  If the contact information
+                is updated via a subsequent REGISTER of the same
+                information, this object is also updated."
+          ::= { openserSIPContactEntry 4 }
+
+      openserSIPContactExpiry OBJECT-TYPE
+          SYNTAX     DateAndTime
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains the date and time when the contact
+                information will no longer be valid.  Such times may be
+                specified by the user at registration (Expires header
+                or expiry parameter in the Contact information), or a
+                system default can be applied."
+          ::= { openserSIPContactEntry 5 }
+
+      openserSIPContactPreference OBJECT-TYPE
+          SYNTAX     SnmpAdminString
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object indicates a relative preference for the
+                particular Contact header field value compared to other
+                bindings for this address-of-record. A registering user
+                may provide this preference as a 'qvalue'parameter in
+                the Contact header.
+
+                The format of this item is a decimal number between 0
+                and 1 (for example 0.9).  Higher values indicate
+                locations preferred by the user."
+          REFERENCE
+               "RFC 3261, Section 10.2.1.2, 16.6 and 20.10"
+          ::= { openserSIPContactEntry 6 }
+
+--
+-- The regUser lookup table. Clients can use this structure to do a search on 
+-- the SIPRegUserTable and hence the SIPContactTable by URI, to avoid having to 
+-- walk the entire table. 
+--
+-- Clients first get an index by doing a 'get' on the LookupCounter: they can 
+-- do a 'set' on the table, providing their index and the URI they wish to find.
+-- They set the row-status to 'createAndGo'. 
+--
+-- The Agent will then search internally through the RegUserTable and populate
+-- the RegUserIndex column with the RegUserIndex associated with the provided 
+-- URI. Until the index is set, the row-status will be 'notReady', when the 
+-- agent has finished, the row-status will be set to 'active.
+--
+-- When the client has completed the transaction, it should set the row to 
+-- status to 'destroy', so the agent can remove the row and keep this table
+-- size small.
+--
+-- It is not the intention of this table to keep mappings very long, or update 
+-- them if the RegUserTable changes. Clients should always verify the URI they 
+-- get from the RegUserTable is consitent with what they expect; this is SNMP
+-- and there are no guarantees between requests.
+--
+      openserSIPRegUserLookupCounter OBJECT-TYPE
+            SYNTAX      Counter32
+            MAX-ACCESS  read-only
+            STATUS      current
+            DESCRIPTION
+                 "This is a monotonically increasing value that increases by 1
+                  each time and SNMP-GET is performed on this object. Clients 
+                  should read this object, then use the result as an index into
+                  the openserSIPRegUserLookupTable.
+                  
+                  This ensures that every row-set in the 
+                  openserSIPRegUserTable is unique, and each client request 
+                  will have a unique index to use."
+            ::= { openserSIPRegCfg 8 }
+            
+       openserSIPRegUserLookupTable  OBJECT-TYPE
+          SYNTAX     SEQUENCE OF OpenSERSIPRegUserLookupEntry
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "This table contains the index mapping between a user's URI and
+                the index into the openserSIPRegUserTable.
+                
+                To use this table, a client must first get an index by doing a
+                SNMP GET on openserSIPRegUserLookupCounter. Then it must do an
+                SNMP SET on this table and create a new row in the table: it
+                needs to set the index, the URI the client is looking for, and
+                set the row-status to createAndGo.
+                
+                Then the client can do an SNMP GET on this table with the 
+                aquired index. If the row-status is 'active', then the 
+                openserSIPRegUserIndex is the index into the 
+                openserSIPRegUserTable that has the specified URI (0 zero 
+                indicates no such URI). The client should then set the 
+                row-status to 'destroy' in order to clean up this entry. Note
+                that after some time the entry will be automatically removed
+                regardless."
+          ::= { openserSIPRegCfg 9 }
+
+      openserSIPRegUserLookupEntry OBJECT-TYPE
+          SYNTAX     OpenSERSIPRegUserLookupEntry
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "This entry contains a mapping from a given URI to the index in
+                the openserSIPRegUserTable."
+          INDEX { openserSIPRegUserLookupIndex }
+          ::= { openserSIPRegUserLookupTable 1 }
+
+      OpenSERSIPRegUserLookupEntry ::=
+          SEQUENCE {
+                   openserSIPRegUserLookupIndex          Unsigned32,
+                   openserSIPRegUserLookupURI            SnmpAdminString,
+                   openserSIPRegUserIndex                Unsigned32,
+                   openserSIPRegUserLookupRowStatus      RowStatus
+          }
+
+      openserSIPRegUserLookupIndex OBJECT-TYPE
+          SYNTAX     Unsigned32
+          MAX-ACCESS not-accessible
+          STATUS     current
+          DESCRIPTION
+               "The specific lookup index for a client's request. Rows are 
+                automatically reaped, so this table remains small."
+          ::= { openserSIPRegUserLookupEntry 1 }
+
+      openserSIPRegUserLookupURI OBJECT-TYPE
+          SYNTAX     SnmpAdminString
+          MAX-ACCESS read-create
+          STATUS     current
+          DESCRIPTION
+               "This object is the URI to locate in the openserSIPRegUserTable.
+                The client must provide this data."
+          ::= { openserSIPRegUserLookupEntry 2 }
+
+      openserSIPRegUserIndex OBJECT-TYPE
+          SYNTAX     Unsigned32
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object is the index of the specified URI in the 
+                openserSIPRegUserTable. 0 (zero) indicates the URI is not in
+                the openserSIPRegUserTable. This value is provided by the agent
+                when the row-status is set to 'active'."
+          ::= { openserSIPRegUserLookupEntry 3 }
+
+      openserSIPRegUserLookupRowStatus OBJECT-TYPE
+          SYNTAX     RowStatus
+          MAX-ACCESS read-create
+          STATUS     current
+          DESCRIPTION
+               "This is the row status for the row:
+                  createAndGo: clients set the value to this when they create
+                      the row, to indicate they wish the agent to proceed.
+                  notReady: the agent has not yet finished processing the 
+                      request.
+                  active: the agent has completed its search and populated the 
+                    openserSIPRegUserIndex column.
+                  destroy: the client sets this value to indicate it has 
+                    finished with the row. The agent will remove it from the 
+                    table."
+          ::= { openserSIPRegUserLookupEntry 4 }
+
+--
+-- Registrar Statistics
+--
+      openserSIPRegAcceptedRegistrations OBJECT-TYPE
+          SYNTAX     Counter32
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains a count of the number of REGISTER
+                requests that have been accepted (status code 200) by
+                the Registrar.  This includes additions of new contact
+                information, refreshing contact information, as well as
+                requests for deletion of contact information."
+          ::= { openserSIPRegStats 1 }
+
+      openserSIPRegRejectedRegistrations OBJECT-TYPE
+          SYNTAX     Counter32
+          MAX-ACCESS read-only
+          STATUS     current
+          DESCRIPTION
+               "This object contains a count of the number REGISTER
+                requests that have been rejected by the Registrar."
+          ::= { openserSIPRegStats 2 }
+
+--
+-- Conformance
+--
+      openserSIPServerCompliances OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for server compliences."  
+        ::= { openserSIPServerConform 1 }
+
+      openserSIPServerGroups OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for server group compliences."
+        ::= { openserSIPServerConform 2 }
+
+--
+-- Compliance Statements
+--
+      openserSIPProxyServerCompliance MODULE-COMPLIANCE
+          STATUS     current
+          DESCRIPTION
+               "The compliance statement for SIP entities acting
+                as Proxy Servers."
+          MODULE -- this module
+               MANDATORY-GROUPS { openserSIPProxyConfigGroup,
+                                  openserSIPProxyStatsGroup }
+          ::= { openserSIPServerCompliances 1 }
+
+      openserSIPRegistrarServerCompliance MODULE-COMPLIANCE
+          STATUS     current
+          DESCRIPTION
+               "The compliance statement for SIP entities acting
+                as Registrars."
+          MODULE -- this module
+               MANDATORY-GROUPS { openserSIPRegistrarConfigGroup,
+                                  openserSIPRegistrarStatsGroup }
+          GROUP openserSIPRegistrarUsersGroup
+          DESCRIPTION
+               "This is an optional group."
+          ::= { openserSIPServerCompliances 3 }
+
+--
+-- Units of Conformance
+--
+
+      openserSIPProxyConfigGroup OBJECT-GROUP
+          OBJECTS {
+                  openserSIPProxyStatefulness,
+                  openserSIPProxyRecordRoute,
+                  openserSIPProxyAuthMethod
+          }
+          STATUS  current
+          DESCRIPTION
+               "A collection of objects providing configuration for
+                SIP Proxy servers."
+          ::= { openserSIPServerGroups 2 }
+
+      openserSIPProxyStatsGroup OBJECT-GROUP
+          OBJECTS {
+                  openserSIPNumProxyRequireFailures
+          }
+          STATUS  current
+          DESCRIPTION
+               "A collection of objects providing statistics for
+                SIP Proxy servers."
+          ::= { openserSIPServerGroups 3 }
+
+      openserSIPRegistrarConfigGroup OBJECT-GROUP
+          OBJECTS {
+                  openserSIPRegMaxContactExpiryDuration,
+                  openserSIPRegMaxUsers,
+                  openserSIPRegCurrentUsers,
+                  openserSIPRegDfltRegActiveInterval
+          }
+          STATUS  current
+          DESCRIPTION
+               "A collection of objects providing configuration for
+                SIP Registrars."
+          ::= { openserSIPServerGroups 4 }
+
+      openserSIPRegistrarStatsGroup OBJECT-GROUP
+          OBJECTS {
+                  openserSIPRegAcceptedRegistrations,
+                  openserSIPRegRejectedRegistrations
+          }
+          STATUS  current
+          DESCRIPTION
+               "A collection of objects providing statistics for
+                SIP Registrars."
+          ::= { openserSIPServerGroups 5 }
+
+      openserSIPRegistrarUsersGroup OBJECT-GROUP
+          OBJECTS {
+                  openserSIPUserUri,
+                  openserSIPUserAuthenticationFailures,
+                  openserSIPContactDisplayName,
+                  openserSIPContactURI,
+                  openserSIPContactLastUpdated,
+                  openserSIPContactExpiry,
+                  openserSIPContactPreference
+          }
+          STATUS  current
+          DESCRIPTION
+               "A collection of objects related to registered users."
+          ::= {openserSIPServerGroups 6 }
+          
+      openserSIPRegistrarLookupGroup OBJECT-GROUP
+          OBJECTS {
+                  openserSIPRegUserLookupCounter,
+                  openserSIPRegUserLookupURI,
+                  openserSIPRegUserIndex,
+                  openserSIPRegUserLookupRowStatus
+          }
+          STATUS  current
+          DESCRIPTION
+               "A collection of objects related to registered user lookups."
+          ::= {openserSIPServerGroups 7 }
+
+END

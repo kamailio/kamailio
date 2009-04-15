@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "utils_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general Kamailio documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>utils</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>TutPro Inc.</orgname></affiliation>
+		<address>
+			<email>jh@tutpro.com</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2008</year>
+		<holder>Juha Heinanen</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	&admin;
+	&faq;
+	
+</book>

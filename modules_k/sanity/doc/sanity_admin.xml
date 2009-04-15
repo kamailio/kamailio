@@ -1,0 +1,262 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module aims to implement several sanity checks on incoming
+		requests which are suggested or even required by a RFC.
+	</para>
+	<para>
+		This checks are not required by &kamailio; itself for its functionality.
+		But on the other side it makes not much sence if a broken
+		request traverses through a SIP network if it is rejected sooner
+		or later by a SIP device any way. As every sanity cost extra
+		performance because of additional parsing and evaluation it
+		is now with this module up to the &kamailio; adminstrator which checks
+		should be done on which request.
+	</para>
+	<para>
+		The following checks are available:
+		<itemizedlist>
+		<listitem>
+			<para>
+			ruri sip version - (1) - checks if the SIP version in the request
+			URI is supported, currently only 2.0.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			ruri scheme - (2) - checks if the URI scheme of the request URI is
+			supported (sip[s]|tel[s]) by &kamailio;.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			required headers - (4) -checks if the minimum set of required headers
+			to, from, cseq, callid and via is present in the request.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			via sip version - (8) - not working because parser fails already 
+			when another version then 2.0 is present.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			via protocol - (16) - not working because parser fails already if an
+			unsupported transport is present.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			cseq method - (32) - checks if the method from the cseq header is equal
+			to the request method.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			cseq value - (64) - checks if the number in the cseq header is a valid
+			unsigend integer.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			content length - (128) - checks if the size of the body matches with the
+			value from the content length header.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			expires value - (256) - checks if the value of the expires header is a
+			valid unsigned integer.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			proxy require - (512) - checks if all items of the proxy require header
+			are present in the list of the extensions from the module 
+			parameter proxy_require.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			parse uri's - (1024) - checks if the specified URIs are present and
+			parseable by the &kamailio; parsers
+			</para>
+		</listitem>
+		<listitem>
+		    <para>
+			digest credentials (2048) Check all instances of digest credentials in a
+			message. The test checks whether there are all required
+			digest parameters and have meaningful values.
+			</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis> - send reply.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+   <section>
+	<title><varname>default_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which of the checks from the sanity
+		module are executed if no parameter was given to the sanity_check
+		function call. By default all implemented checks are included
+		in the execution of the sanity_check function. The integer value
+		is the sum of the check numbers which should be executed by default.
+	</para>
+	<para>
+	    Default value is 999. This resolves to the following list of
+		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
+		cseq_method (32), cseq_value (64), content_length (128), 
+		expires_value (256), proxy_require (512).
+	</para>
+	<example>
+	    <title>Set <varname>default_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "default_checks", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section>
+	<title><varname>uri_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which URIs are going to be checked
+		if the 'parse uri' will be executed.
+	</para>
+	<para>
+		Default value is 7. This resolves to the following list of
+		parsed URIs: Request RUI (1), From URI (2) and To URI (4).
+	</para>
+	</section>
+
+	<section>
+	<title><varname>proxy_require</varname> (string)</title>
+	<para>
+		This parameter set the list of supported extensions for this &kamailio;.
+		The value is expected as comma seperated list of the extensions.
+		This list is seperated into single tokens. Each token from
+		a proxy require header will be compare to the tokens from this
+		list.
+	</para>
+	<example>
+	    <title>Set <varname>proxy_require</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "proxy_require", "foo, bar")
+...
+	    </programlisting>
+	</example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+    <section id="sanity_check">
+	    <title>
+		<function>sanity_check([checks, [uri_checks]])</function>
+	    </title>
+	<para>
+		This function makes a row of sanity checks on the given request.
+		The function returns true if one of the checks failed. If one
+		of the checks fails the module sends a precise error reply via 
+		sl_send_reply. Thus their is no need to reply with a generic 
+		error message.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage</title>
+	    <programlisting>
+<![CDATA[
+...
+if (sanity_check()) {
+	xlog("malformed message from $si:$sp\n");
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes an integer argument which overwrites
+		the global module parameter default_checks. This allows to make
+		certain test from script regions. The integer value is again the sum
+		of the checks (like for the module parameter) which should be executed
+		at this function call.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage with parameter</title>
+	    <programlisting>
+<![CDATA[
+...
+if (method=="REGISTER" && sanity_check("256")) {
+	/* the register contains an invalid expires value and is replied with a 400 */
+	xlog("malformed message from $si:$sp\n");
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes a second integer argument which
+		overwrites the global module parameter uri_checks and thus determines
+		which URIs will be checked if the parse uri test will be executed.
+	</para>
+	<example>
+		<title><function>sanity_check</function> usage with two parameters</title>
+		<programlisting>
+<![CDATA[
+...
+if (method=="INVITE" && sanity_check("1024", "6")) {
+	/* the INVITE contains an invalid From or To header and is replied with a 400 */
+	xlog("malformed message from $si:$sp\n");
+	exit;
+}
+...
+]]>
+		</programlisting>
+	</example>
+    </section>
+    </section>
+
+</chapter>
+

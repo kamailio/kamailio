@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "perlvdb_admin.xml">
+<!ENTITY devel SYSTEM "perlvdb_devel.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>Perl Virtual Database Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Bastian</firstname>
+		<surname>Friedrich</surname>
+		<affiliation><orgname>Collax GmbH</orgname></affiliation>
+		<address>
+			<email>bastian.friedrich@collax.com</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Bastian</firstname>
+		<surname>Friedrich</surname>
+		<address>
+			<email>bastian.friedrich@collax.com</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<holder>Collax GmbH</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date: 2007-03-21 09:53:33 +0100 (Mi, 21 Mär 2007) $</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&admin;
+	&devel;
+	&faq;
+	
+</book>

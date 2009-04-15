@@ -1,0 +1,245 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides the possibility to print user formatted log or
+		debug messages from &kamailio; scripts, similar to printf function. 
+		A C-style printf specifier is replaced with a part of the &sip; request or other
+		variables from system.
+		<xref linkend="sec-implemented-specifiers"/> shows what can be printed
+		out.
+	</para>
+	</section>
+	<section id="sec-implemented-specifiers">
+	<title>Implemented Specifiers</title>
+	<para>
+	In the xlog function, you use pseudo-variables, that are a part
+	of &kamailio; core and are used by other modules as well (e.g., avpops
+	in the function avp_printf())
+	</para>
+	<para>
+	The most important changes from earlier versions of Kamailio are:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+		- '%' has been replaced by '$'
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		- to print a header, use now $hdr(header_name[index]) instead of
+		%{header_name[index]}
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		- to print an AVP, use now $avp([si]:avp_id[index]) instead of
+		%{[si]:avp_id[index]} or $avp([$avp_alias[index]) instead of
+		%{[$avp_alias[index]}
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+	The full list of available pseudo-variables in &kamailio; is
+	available at:
+	<ulink url="http://kamailio.org/dokuwiki/">
+	http://kamailio.org/dokuwiki/</ulink>
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>buf_size</varname> (integer)</title>
+		<para>
+		Maximum size of the log message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 4096.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "buf_size", 8192)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>force_color</varname> (integer)</title>
+		<para>
+		When set to 1, forces color printing even if log_stderror=0.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>force_color</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "force_color", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">xlog([level,] format)</function>
+		</title>
+		<para>
+		Print a formated message using LOG function.
+		</para>
+		<para>Meaning of the parameters are as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				L_ALERT - log level -3
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_CRIT - log level -2
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_ERR - log level -1
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_WARN - log level 1
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_NOTICE - log level 2
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_INFO - log level 3
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_DBG - log level 4
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				$pv - any valid pseudo-variable, that has an integer value.
+				See above options for valid log levels.
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			If it is not a pseudo-variable, then what really matters is the
+			third letter of the value. If the log level is higher than the
+			<quote>debug</quote> global parameter, the message is not printed
+			to syslog.
+			</para>
+			<para>
+			If this parameter is missing, the implicit log level is 'L_ERR'.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed. 
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>xlog</function> usage</title>
+		<programlisting format="linespecific">
+...
+xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
+...
+xlog("time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
+...
+$var(loglevel) = 2;
+xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">xdbg(format)</function>
+		</title>
+		<para>
+		Print a formatted message using DBG function.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xdbg</function> usage</title>
+		<programlisting format="linespecific">
+...
+xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+

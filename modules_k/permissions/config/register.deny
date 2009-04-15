@@ -1,0 +1,26 @@
+#
+# $Id$
+#
+# Suppose that we have a PSTN gateway with IP address 1.2.3.4
+# We should prevent REGISTER messages that contain that IP
+# address in Contact header field because that can cause serious
+# security hole (a malicious user might be able to register such
+# a contact and bypass security checks performed by the SIP proxy).
+#
+# The following line prevents registering Contacts with IP 1.2.3.4
+
+ALL : "^sip:.*1\.2\.3\.4$"
+
+# This can be bypassed by the insertion of one or more '0' in the
+# IP address. To prevent this the following line could be used.
+#
+#ALL : "^sip:.*0*1\.0*2\.0*3\.0*4"
+
+# Don't forget to list also all hostnames that can be used to
+# reach the PSTN gateway. Please keep in mind that this don't
+# provide a perfect security, as everybody can register arbitrary
+# domains that point to any IP. To prevent this the usage of hostnames
+# and domains in the Contact header field should be avoided.
+# A better solution to this problem is the usage of the dst_blacklist
+# feature in the openser core. All "critical" IPs should be added to
+# this list.

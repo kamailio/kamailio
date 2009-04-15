@@ -1,0 +1,192 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module collects the core pseudo-variables that can be used in
+		configuration file. They are listed in Dokuwiki:
+		<ulink url="http://www.kamailio.org/dokuwiki/">http://www.kamailio.org/dokuwiki/</ulink>,
+		in Pseudo-Variables section
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>shvset</varname> (string)</title>
+		<para>
+		Set the value of a shared variable ($shv(name)). The parameter
+		can be set many times.
+		</para>
+		<para>
+		The value of the parameter has the format:
+		_name_ '=' _type_ ':' _value_
+		</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			 <itemizedlist>
+	    <listitem><para> <quote>i</quote>: integer value </para></listitem> 
+		<listitem><para> <quote>s</quote>: string value </para></listitem>	
+		      </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title><varname>shvset</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("pv", "shvset", "debug=i:1")
+modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>varset</varname> (string)</title>
+		<para>
+		Set the value of a script variable ($var(name)). The parameter
+		can be set many times.
+		</para>
+		<para>
+		The value of the parameter has the format:
+		_name_ '=' _type_ ':' _value_
+		</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			 <itemizedlist>
+	     <listitem><para> <quote>i</quote>: integer value </para></listitem> 
+		 <listitem><para> <quote>s</quote>: string value </para></listitem>	
+			 </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title><varname>varset</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("pv", "varset", "init=i:1")
+modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<para>None</para>
+	</section>
+	<section>
+		<title><acronym>MI</acronym> Commands</title>
+		<section>
+			<title><function moreinfo="none">shv_set</function></title>
+			<para>
+				Set the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	    <listitem><para> <quote>int</quote>: integer value </para></listitem> 
+		<listitem><para> <quote>str</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:shv_set:_reply_fifo_file_
+		_name_
+		_type_
+		_value_
+		_empty_line_
+		</programlisting>
+			<example>
+			<title><function moreinfo="none">shv_set</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ kamctl fifo shv_set debug int 0
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">shv_get</function></title>
+			<para>
+				Get the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name. If this parameter
+			is missing, all shared variables are returned.</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:shv_get:_reply_fifo_file_
+		_name_
+		_empty_line_
+		</programlisting>
+			<example>
+			<title><function moreinfo="none">shv_get</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ kamctl fifo shv_get debug
+$ kamctl fifo shv_get
+...
+</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>
+

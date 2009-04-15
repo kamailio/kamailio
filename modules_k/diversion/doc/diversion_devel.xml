@@ -1,0 +1,45 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    
+    <title>&develguide;</title>
+    <para>
+	According to the specification new Diversion header field should be inserted as the topmost
+	Diversion header field in the message, that means before any other existing Diversion header
+	field in the message. In addition to that, <function
+	moreinfo="none">add_diversion</function> function can be called several times and each time
+	it should insert the new Diversion header field as the topmost one.
+    </para>
+    <para>
+	In order to implement this, add_diversion function creates the anchor in data_lump lists as
+	a static variable to ensure that the next call of the function will use the same anchor and
+	would insert new Diversion headers before the one created in the previous execution. To my
+	knowledge this is the only way of inserting the diversion header field before any other
+	created in previous runs of the function.
+    </para>
+    <para>
+	The anchor kept this way is only valid for a single message and we have to invalidate it
+	when another message is being processed. For this reason, the function also stores the id of
+	the message in another static variable and compares the value of that variable with the id
+	of the SIP message being processed. If they differ then the anchor will be invalidated and
+	the function creates a new one.
+    </para>
+    <para>
+	The following code snippet shows the code that invalidates the anchor, new anchor will be
+	created when the <varname>anchor</varname> variable is set to 0.
+    </para>
+    <programlisting format="linespecific">
+static inline int add_diversion_helper(struct sip_msg* msg, str* s)
+{
+    static struct lump* anchor = 0;
+    static int msg_id = 0;
+
+    if (msg_id != msg->id) {
+        msg_id = msg->id;
+        anchor = 0;
+    }
+...
+}
+</programlisting>
+</chapter>
+

@@ -1,0 +1,434 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>The module contains record routing logic</para>
+	</section>
+
+
+	<section id="RR-dialog-id">
+	<title>Dialog support</title>
+	<para>&kamailio; is basically <emphasis>only</emphasis> a transaction statefull 
+	proxy, without any dialog support build in. There are many features/services
+	which actually requires a dialog awareness, like storing the information in 
+	the dialog creation stage, information which will be used during the whole 
+	dialog existence.
+	</para>
+	<para>
+	The most urging example is NAT traversal, in dealing with the within the 
+	dialog INVITEs (re-INVITEs). When processing the initial INVITE, the proxy 
+	detects if the caller or callee is behind some NAT and fixes the signalling 
+	and media parts - since not all the detection mechanism are available for 
+	within the dialog requests (like usrloc), to be able to fix correspondingly 
+	the sequential requests, the proxy must remember that the original request 
+	was NAT processed. There are many other cases where dialog awareness fixes 
+	or helps.
+	</para>
+	<para>
+	The solution is to store additional dialog-related information in the 
+	routing set (Record-Route/Route headers), headers which show up in all 
+	sequential requests. So any information added to the Record-Route header
+	will be found (with no direction dependencies) in Route header 
+	(corresponding to the proxy address).
+	</para>
+	<para>
+	As storage container, the parameters of the Record-Route / Route header
+	will be used - Record-Route parameters mirroring are reinforced by 
+	RFC 3261 (see 12.1.1 UAS behavior).
+	</para>
+	<para>
+	For this purpose, the modules offers the following functions:
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para>add_rr_param() - see <xref linkend="add-rr-param-id"/>
+			</para>
+		</listitem>
+		<listitem>
+			<para>check_route_param() - see 
+				<xref linkend="check-route-param-id"/>
+			</para>
+		</listitem>
+	</itemizedlist>
+	<example>
+		<title>Dialog support in RR module</title>
+		<programlisting format="linespecific">
+  
+UAC                       Kamailio PROXY                          UAS
+
+---- INVITE ------&gt;       record_route()          ----- INVITE ----&gt;
+                     add_rr_param(";foo=true")
+
+--- reINVITE -----&gt;        loose_route()          ---- reINVITE ---&gt;
+                    check_route_param(";foo=true")
+
+&lt;-- reINVITE ------        loose_route()          &lt;--- reINVITE ----
+                    check_route_param(";foo=true")
+
+&lt;------ BYE -------        loose_route()          &lt;----- BYE -------
+                    check_route_param(";foo=true")
+  
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>enable_full_lr</varname> (integer)</title>
+		<para>
+		If set to 1 then <quote>;lr=on</quote> instead of just 
+		<quote>;lr</quote> will be used. This is to overcome problems with 
+		broken &ua;s which strip <quote>;lr</quote> parameter when generating 
+		Route header fields from Record-Route (<quote>;lr=on</quote> seems 
+		to help).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_full_lr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "enable_full_lr", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="append-fromtag-id">
+		<title><varname>append_fromtag</varname> (integer)</title>
+		<para>
+		If turned on, request's from-tag is appended to record-route; that's 
+		useful for understanding whether subsequent requests (such as BYE) come 
+		from caller (route's from-tag==BYE's from-tag) or callee 
+		(route's from-tag==BYE's to-tag)
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (yes).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>append_fromtag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "append_fromtag", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>enable_double_rr</varname> (integer)</title>
+		<para>
+		There are some situations when the server needs to insert two 
+		Record-Route header fields instead of one. For example when using 
+		two disconnected networks or doing cross-protocol forwarding from 
+		UDP->TCP. This parameter enables inserting of 2
+		Record-Routes. The server will later remove both of them.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (yes).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_double_rr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "enable_double_rr", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>add_username</varname> (integer)</title>
+		<para>
+		If set to a non 0 value (which means yes), the username part will
+		be also added in the Record-Route URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>add_username</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "add_username", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Functions</title>
+	<section id="loose-route-id">
+		<title>
+		<function moreinfo="none">loose_route()</function>
+		</title>
+		<para>
+		The function performs routing of SIP requests which contain a route 
+		set. The name is a little bit confusing, as this function also routes 
+		requests which are in the <quote>strict router</quote> format.
+		</para>
+		<para>
+		This function is usually used to route in-dialog requests (like ACK, 
+		BYE, reINVITE). Nevertheless also out-of-dialog requests can have a 
+		<quote>pre-loaded route set</quote> and my be routed with loose_route. 
+		It also takes care of translating between strict-routers and 
+		loose-router.
+		</para>
+		<para>
+		The loose_route function analyzes the Route: headers in the requests. 
+		If there is no Route: header, the function returns FALSE and routing 
+		should be done with normal lookup functions. If a Route: header is 
+		found, the function returns 1 and behaves as described in section 
+		16.12 of RFC 3261. There is only one exception: If the request is 
+		out-of-dialog (no to-tag) and there is only one Route: header 
+		indicating the local proxy, then the Route: header is removed and 
+		the function returns FALSE.
+		</para>
+		<para>
+		Make sure your loose_routing function can't be used by attackers to 
+		bypass proxy authorization.
+		</para>
+		<para>
+		The loose_routing topic is very complex. See the RFC3261 for more 
+		details (grep for <quote>route set</quote> is a good starting point in 
+		this comprehensive RFC).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>loose_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+loose_route();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="record-route-id">
+		<title>
+		<function moreinfo="none">record_route()</function> and 
+		<function moreinfo="none">record_route(string)</function>
+		</title>
+		<para>
+		The function adds a new Record-Route header field. The header field 
+		will be inserted in the message before any other Record-Route header 
+		fields.
+		</para>
+		<para>
+		If any string is passed as parameter, it will be appended as URI
+		parameter to the Record-Route header. The string must follow the 
+		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>record_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">record_route_preset(string)</function>
+		</title>
+		<para>
+		This function will put the string into Record-Route, don't use 
+		unless you know what you are doing.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>string</emphasis> - String to be inserted into the 
+				header field; it may contain pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>record_route_preset</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route_preset("1.2.3.4:5090");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="add-rr-param-id">
+		<title>
+		<function moreinfo="none">add_rr_param(param)</function>
+		</title>
+		<para>
+		Adds a parameter to the Record-Route URI (param must be in 
+		<quote>;name=value</quote> format. The function may be called also 
+		before or after the record_route() call 
+		(see <xref linkend="record-route-id"/>).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>param</emphasis> - String containing the URI parameter to
+			be added. It must follow the <quote>;name=value</quote> scheme; it 
+			may contain pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>add_rr_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+add_rr_param(";nat=yes");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="check-route-param-id">
+		<title>
+		<function moreinfo="none">check_route_param(re)</function>
+		</title>
+		<para>The function checks if the URI parameters of the local Route 
+		header (corresponding to the local server) matches the given regular 
+		expression. It must be call after loose_route() 
+		(see <xref linkend="loose-route-id"/>).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>re</emphasis> - regular expression to check against the
+			Route URI parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>check_route_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (check_route_param("nat=yes")) {
+    setflag(6);
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_direction(dir)</function>
+		</title>
+		<para>The function checks the flow direction of the request.
+		As for checking it's used the <quote>ftag</quote> Route header 
+		parameter, the append_fromtag (see <xref linkend="append-fromtag-id"/> 
+		module parameter must be enabled. Also this must be called only after 
+		loose_route() (see <xref linkend="loose-route-id"/>).
+		</para>
+		<para>
+		The function returns true if the <quote>dir</quote> is the same with
+		the request's flow direction.
+		</para>
+		<para>
+		The <quote>downstream</quote> (UAC to UAS) direction is relative to the
+		initial request that created the dialog.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>dir</emphasis> - string containing the direction to be 
+				checked. It may be <quote>upstream</quote> (from UAS to UAC) or 
+				<quote>downstream</quote> (UAC to UAS).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>is_direction</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_direction("upstream")) {
+    xdbg("upstream request ($rm)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+
+
+
+	</section>
+</chapter>
+

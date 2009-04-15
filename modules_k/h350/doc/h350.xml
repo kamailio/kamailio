@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY admin SYSTEM "h350_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+<!ENTITY biblio SYSTEM "h350_biblio.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+        <bookinfo>
+        <title>H350 Module</title>
+        <productname class="trade">&kamailio;</productname>
+        <authorgroup>
+                <author>
+                <firstname>Christian</firstname>
+                <surname>Schlatter</surname>
+                <affiliation><orgname>University of North Carolina</orgname></affiliation>
+                <email>cs@unc.edu</email>
+                </author>
+        </authorgroup>
+        <copyright>
+                <year>2007</year>
+                <holder>University of North Carolina</holder>
+        </copyright>
+        <revhistory>
+                <revision>
+                <revnumber>0.1</revnumber>
+                <date>05-17-2007</date>
+                </revision>
+        </revhistory>
+        </bookinfo>
+        <toc></toc>
+
+        &admin;
+        &faq;
+	&biblio;
+
+</book>

@@ -1,0 +1,169 @@
+mi_fifo Module
+
+Bogdan-Andrei Iancu
+
+   voice-system.ro
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+   Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. FIFO command syntax
+        1.3. Dependencies
+
+              1.3.1. Kamailio Modules
+              1.3.2. External Libraries or Applications
+
+        1.4. Exported Parameters
+
+              1.4.1. fifo_name (string)
+              1.4.2. fifo_mode (integer)
+              1.4.3. fifo_group (integer) fifo_group (string)
+              1.4.4. fifo_user (integer) fifo_group (string)
+              1.4.5. reply_dir (string)
+              1.4.6. reply_indent (string)
+
+        1.5. Exported Functions
+        1.6. Example
+
+   List of Examples
+
+   1.1. Set fifo_name parameter
+   1.2. Set fifo_mode parameter
+   1.3. Set fifo_group parameter
+   1.4. Set fifo_user parameter
+   1.5. Set reply_dir parameter
+   1.6. Set reply_indent parameter
+   1.7. FIFO request
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This is a module which provides a FIFO transport layer
+   implementation for Management Interface.
+
+1.2. FIFO command syntax
+
+   The external commands issued via FIFO interface must follow the
+   following syntax:
+     * request = first_line argument*
+     * first_line = ':'command_name':'reply_fifo'\n'
+     * argument = (arg_name '::' (arg_value)? ) | (arg_value)
+     * arg_name = not-quoted_string
+     * arg_value = not-quoted_string | '"' string '"'
+     * not-quoted_string = string - {',",\n,\r}
+
+1.3. Dependencies
+
+1.3.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+1.3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * none
+
+1.4. Exported Parameters
+
+1.4.1. fifo_name (string)
+
+   The name of the FIFO file to be created for listening and
+   reading external commands.
+
+   Default value is NONE.
+
+   Example 1.1. Set fifo_name parameter
+...
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
+...
+
+1.4.2. fifo_mode (integer)
+
+   Permission to be used for creating the listening FIFO file. It
+   follows the UNIX conventions.
+
+   Default value is 0660 (rw-rw----).
+
+   Example 1.2. Set fifo_mode parameter
+...
+modparam("mi_fifo", "fifo_mode", 0600)
+...
+
+1.4.3. fifo_group (integer) fifo_group (string)
+
+   Group to be used for creating the listening FIFO file.
+
+   Default value is the inherited one.
+
+   Example 1.3. Set fifo_group parameter
+...
+modparam("mi_fifo", "fifo_group", 0)
+modparam("mi_fifo", "fifo_group", "root")
+...
+
+1.4.4. fifo_user (integer) fifo_group (string)
+
+   User to be used for creating the listening FIFO file.
+
+   Default value is the inherited one.
+
+   Example 1.4. Set fifo_user parameter
+...
+modparam("mi_fifo", "fifo_user", 0)
+modparam("mi_fifo", "fifo_user", "root")
+...
+
+1.4.5. reply_dir (string)
+
+   Directory to be used for creating the reply FIFO files.
+
+   Default value is "/tmp/"
+
+   Example 1.5. Set reply_dir parameter
+...
+modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
+...
+
+1.4.6. reply_indent (string)
+
+   Strings to be used for line indentation. As the MI data
+   structure is tree oriendeted, the depth level will printed as
+   indentation.
+
+   Default value is ""\t" (TAB)".
+
+   Example 1.6. Set reply_indent parameter
+...
+modparam("mi_fifo", "reply_indent", "    ")
+...
+
+1.5. Exported Functions
+
+   No function exported to be used from configuration file.
+
+1.6. Example
+
+   This is an example showing the FIFO format for the
+   "get_statistics dialog: tm:" MI commad: response.
+
+   Example 1.7. FIFO request
+
+:get_statistics:reply_fifo\n
+dialog:\n
+tm:\n
+\n

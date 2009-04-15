@@ -1,0 +1,128 @@
+
+  <bibliography>
+    <title>Resources</title>
+
+    <bibliodiv>
+      <biblioentry id="RFC4510" xreflabel="[RFC4510]">
+        <abbrev>RFC4510</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc4510">Lightweight
+        Directory Access Protocol (LDAP): Technical Specification Road
+        Map</ulink></title>
+
+        <date>June 2006</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="RFC4511" xreflabel="[RFC4511]">
+        <abbrev>RFC4511</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc4511">Lightweight
+        Directory Access Protocol (LDAP): The Protocol</ulink></title>
+
+        <date>June 2006</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="RFC4514" xreflabel="[RFC4514]">
+        <abbrev>RFC4514</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc4514">Lightweight
+        Directory Access Protocol (LDAP): String Representation of
+        Distinguished Names</ulink></title>
+
+        <date>June 2006</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="RFC4515" xreflabel="[RFC4515]">
+        <abbrev>RFC4515</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc4515">Lightweight
+        Directory Access Protocol (LDAP): String Representation of Search
+        Filters</ulink></title>
+
+        <date>June 2006</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="RFC4516" xreflabel="[RFC4516]">
+        <abbrev>RFC4516</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc4516">Lightweight
+        Directory Access Protocol (LDAP): Uniform Resource
+        Locator</ulink></title>
+
+        <date>June 2006</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="RFC2617" xreflabel="[RFC2617]">
+        <abbrev>RFC2617</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc2617">HTTP
+        Authentication: Basic and Digest Access Authentication</ulink></title>
+
+        <date>June 1999</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="RFC3261" xreflabel="[RFC3261]">
+        <abbrev>RFC3261</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc3261">SIP: Session
+        Initiation Protocol</ulink></title>
+
+        <date>June 2002</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="H350" xreflabel="[H.350]">
+        <abbrev>H.350</abbrev>
+
+        <title><ulink url="http://www.itu.int/rec/T-REC-H.350/en">Directory
+        Services Architecture for Multimedia Conferencing</ulink></title>
+
+        <date>August 2003</date>
+
+        <publisher>
+          <publishername>ITU-T</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="H350-4" xreflabel="[H.350.4]">
+        <abbrev>H.350.4</abbrev>
+
+        <title><ulink url="http://www.itu.int/rec/T-REC-H.350.4/en">Directory
+        services architecture for SIP</ulink></title>
+
+        <date>August 2003</date>
+
+        <publisher>
+          <publishername>ITU-T</publishername>
+        </publisher>
+      </biblioentry>
+    </bibliodiv>
+  </bibliography>
+

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY admin SYSTEM "seas_admin.xml">
+<!ENTITY devel SYSTEM "seas_devel.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+]>
+<book>
+  <bookinfo>
+    <title>Seas Module</title>
+
+    <productname class="trade">Seas Module</productname>
+
+    <authorgroup>
+      <author>
+        <firstname>Elias</firstname>
+
+        <surname>Baixas</surname>
+
+        <affiliation>
+          <orgname>VozTelecom Sistemas</orgname>
+          <orgdiv><ulink url="http://www.wesip.eu">www.wesip.eu</ulink></orgdiv>
+          <address>Ronda Can Fatjo, 9, 1p Parc Tecnologic del Valles Cerdanyola, 08520 (SPAIN) 
+	  Phone:+34 933968800 
+	  www.voztele.com
+	  <email>elias.baixas@voztele.com</email>
+	  </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+
+    <copyright>
+      <year>2006</year>
+
+      <holder>VozTelecom Sistemas</holder>
+    </copyright>
+  </bookinfo>
+
+  <toc></toc>
+
+  <!-- External Entity Refs -->
+  &admin;
+  &devel;
+  &faq;
+</book>

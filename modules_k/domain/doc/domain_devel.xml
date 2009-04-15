@@ -1,0 +1,26 @@
+<!-- Domain Module Developer's Guide -->
+
+<chapter>
+    
+    <title>&develguide;</title>
+    <para>
+	The module provides is_domain_local <acronym>API</acronym>
+    function for use by other &kamailio; modules.
+    </para>
+    <section>
+	<title>Available Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">is_domain_local(domain)</function>
+		</title>
+		<para>
+		Checks if domain given in str* parameter is local.
+		</para>
+		<para>
+		The function returns 1 if domain is local and -1 if
+		domain is not local or if an error occurred.
+		</para>
+	</section>
+    </section>
+</chapter>
+

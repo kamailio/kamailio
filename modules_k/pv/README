@@ -1,0 +1,156 @@
+Pseudo-Variables Module
+
+Daniel-Constantin Modroiu
+
+   asipto.com
+   <daniel@asipto.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <daniel@asipto.com>
+
+   Copyright © 2008 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. shvset (string)
+              1.3.2. varset (string)
+
+        1.4. Exported Functions
+        1.5. MI Commands
+
+              1.5.1. shv_set
+              1.5.2. shv_get
+
+   List of Examples
+
+   1.1. shvset parameter usage
+   1.2. varset parameter usage
+   1.3. shv_set usage
+   1.4. shv_get usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module collects the core pseudo-variables that can be used
+   in configuration file. They are listed in Dokuwiki:
+   http://www.kamailio.org/dokuwiki/, in Pseudo-Variables section
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.3. Exported Parameters
+
+1.3.1. shvset (string)
+
+   Set the value of a shared variable ($shv(name)). The parameter
+   can be set many times.
+
+   The value of the parameter has the format: _name_ '=' _type_
+   ':' _value_
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "i": integer value
+          + "s": string value
+     * _value_: value to be set
+
+   Default value is "NULL".
+
+   Example 1.1. shvset parameter usage
+...
+modparam("pv", "shvset", "debug=i:1")
+modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
+...
+
+1.3.2. varset (string)
+
+   Set the value of a script variable ($var(name)). The parameter
+   can be set many times.
+
+   The value of the parameter has the format: _name_ '=' _type_
+   ':' _value_
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "i": integer value
+          + "s": string value
+     * _value_: value to be set
+
+   Default value is "NULL".
+
+   Example 1.2. varset parameter usage
+...
+modparam("pv", "varset", "init=i:1")
+modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
+...
+
+1.4. Exported Functions
+
+   None
+
+1.5. MI Commands
+
+1.5.1. shv_set
+
+   Set the value of a shared variable ($shv(name)).
+
+   Parameters:
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "int": integer value
+          + "str": string value
+     * _value_: value to be set
+
+   MI FIFO Command Format:
+                :shv_set:_reply_fifo_file_
+                _name_
+                _type_
+                _value_
+                _empty_line_
+
+   Example 1.3. shv_set usage
+...
+$ kamctl fifo shv_set debug int 0
+...
+
+1.5.2. shv_get
+
+   Get the value of a shared variable ($shv(name)).
+
+   Parameters:
+     * _name_: shared variable name. If this parameter is missing,
+       all shared variables are returned.
+
+   MI FIFO Command Format:
+                :shv_get:_reply_fifo_file_
+                _name_
+                _empty_line_
+
+   Example 1.4. shv_get usage
+...
+$ kamctl fifo shv_get debug
+$ kamctl fifo shv_get
+...

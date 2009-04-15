@@ -1,0 +1,72 @@
+
+  <bibliography>
+    <title>Resources</title>
+
+    <bibliodiv>
+      <biblioentry id="H350" xreflabel="[H.350]">
+        <abbrev>H.350</abbrev>
+
+        <title><ulink url="http://www.itu.int/rec/T-REC-H.350/en">Directory
+        Services Architecture for Multimedia Conferencing</ulink></title>
+
+        <date>August 2003</date>
+
+        <publisher>
+          <publishername>ITU-T</publishername>
+        </publisher>
+      </biblioentry>
+
+      <biblioentry id="H350-4" xreflabel="[H.350.4]">
+        <abbrev>H.350.4</abbrev>
+
+        <title><ulink url="http://www.itu.int/rec/T-REC-H.350.4/en">Directory
+        services architecture for SIP</ulink></title>
+
+        <date>August 2003</date>
+
+        <publisher>
+          <publishername>ITU-T</publishername>
+        </publisher>
+      </biblioentry>
+      
+      <biblioentry id="H350-6" xreflabel="[H.350.6]">
+        <abbrev>H.350.6</abbrev>
+
+        <title><ulink url="http://www.itu.int/rec/T-REC-H.350.6/en">Directory services architecture for call forwarding and preferences</ulink></title>
+
+        <date>March 2004</date>
+
+        <publisher>
+          <publishername>ITU-T</publishername>
+        </publisher>
+      </biblioentry>
+      
+      <biblioentry id="vide-H350-cookbook" xreflabel="[vide-h.350-cb]">
+        <abbrev>ViDe-H.350-Cookbook</abbrev>
+
+        <title><ulink url="http://www.vide.net/cookbookh350/">ViDe H.350 Cookbook</ulink></title>
+
+        <date>2005</date>
+
+        <publisher>
+          <publishername>ViDe</publishername>
+        </publisher>
+      </biblioentry>
+        
+      <biblioentry id="RFC4510" xreflabel="[RFC4510]">
+        <abbrev>RFC4510</abbrev>
+
+        <title><ulink url="http://tools.ietf.org/html/rfc4510">Lightweight
+        Directory Access Protocol (LDAP): Technical Specification Road
+        Map</ulink></title>
+
+        <date>June 2006</date>
+
+        <publisher>
+          <publishername>Internet Engineering Task Force</publishername>
+        </publisher>
+      </biblioentry>
+
+    </bibliodiv>
+  </bibliography>
+

@@ -1,0 +1,324 @@
+Resource List Server
+
+Anca-Maria Vamanu
+
+   voice-system.ro
+
+Edited by
+
+Anca-Maria Vamanu
+
+   Copyright © 2007 voice-system.ro
+   Revision History
+   Revision $Revision: 2492 $ $Date: 2007-07-20 14:04:13 +0300
+                              (Fri, 20 Jul 2007) $
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url(str)
+              1.3.2. xcap_table(str)
+              1.3.3. rlsubs_table(str)
+              1.3.4. rlpres_table(str)
+              1.3.5. clean_period (int)
+              1.3.6. waitn_time (int)
+              1.3.7. max_expires (int)
+              1.3.8. hash_size (int)
+              1.3.9. xcap_root (str)
+              1.3.10. integrated_xcap_server (int)
+              1.3.11. to_presence_code (int)
+              1.3.12. rls_event (str)
+
+        1.4. Exported Functions
+
+              1.4.1. rls_handle_subscribe()
+              1.4.2. rls_handle_notify()
+
+        1.5. Installation
+
+   2. Developer Guide
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set xcap_table parameter
+   1.3. Set rlsubs_table parameter
+   1.4. Set rlpres_table parameter
+   1.5. Set clean_period parameter
+   1.6. Set waitn_time parameter
+   1.7. Set max_expires parameter
+   1.8. Set hash_size parameter
+   1.9. Set hash_size parameter
+   1.10. Set integrated_xcap_server parameter
+   1.11. Set to_presence_code parameter
+   1.12. Set rls_event parameter
+   1.13. rls_handle_subscribe usage
+   1.14. rls_handle_notify usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   The modules is a Resource List Server implementation following
+   the specification in RFC 4662 and RFC 4826.
+
+   The server is independent from local presence servers,
+   retrieving presence information with Subscribe-Notify messages.
+
+   The module uses the presence module as a library, as it
+   requires a resembling mechanism for handling Subscribe.
+   Therefore, in case the local presence server is not collocated
+   on the same machine with the RL server, the presence module
+   should be loaded in a library mode only (see doc for presence
+   module).
+
+   It handles subscription to lists in an event independent
+   way.The default event is presence, but if some other events are
+   to be handled by the server, they should be added using the
+   module parameter "rls_events".
+
+   It works with XCAP server for storage. There is also the
+   possibility to configure it to work in an integrated_xcap
+   server mode, when it only queries database for the resource
+   lists documents. This is useful in a small architecture when
+   all the clients use an integrated server and there are no
+   references to exterior documents in their lists.
+
+   The same as presence module, it has a caching mode with
+   periodical update in database for subscribe information. The
+   information retrieved with Notify messages is stored in
+   database only.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * a database module.
+     * sl.
+     * tm.
+     * presence- in a library mode.
+     * pua.
+
+1.2.2. External Libraries or Applications
+
+     * libxml.
+
+1.3. Exported Parameters
+
+1.3.1. db_url(str)
+
+   The database url.
+
+   Default value is "mysql://openser:openserrw@localhost/openser".
+
+   Example 1.1. Set db_url parameter
+...
+modparam("rls", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+1.3.2. xcap_table(str)
+
+   The name of the xcap table in which the integrated server or
+   the xcap_client module writes. If integrated_xcap_server
+   parameter not set, the name of the table must be the same as
+   the one set for the xcap_client module.
+
+   Default value is "xcap".
+
+   Example 1.2. Set xcap_table parameter
+...
+modparam("rls", "xcap_table", "xcaps");
+...
+
+1.3.3. rlsubs_table(str)
+
+   The name of the db table where resource lists subscription
+   information is stored.
+
+   Default value is "rls_watchers".
+
+   Example 1.3. Set rlsubs_table parameter
+...
+modparam("rls", "rlsubs_table", "rls_subscriptions")
+...
+
+1.3.4. rlpres_table(str)
+
+   The name of the db table where notified event specific
+   information is stored.
+
+   Default value is "rls_presentity".
+
+   Example 1.4. Set rlpres_table parameter
+...
+modparam("rls", "rlpres_table", "rls_notify")
+...
+
+1.3.5. clean_period (int)
+
+   The period at which to check for expired information.
+
+   Default value is "100".
+
+   Example 1.5. Set clean_period parameter
+...
+modparam("rls", "clean_period", 100)
+...
+
+1.3.6. waitn_time (int)
+
+   The timer period at which the server should attempt to send
+   Notifies with the updated presence state of the subscribed list
+   or watcher information.
+
+   Default value is "50".
+
+   Example 1.6. Set waitn_time parameter
+...
+modparam("rls", "waitn_time", 10)
+...
+
+1.3.7. max_expires (int)
+
+   The maximum accepted expires for a subscription to a list.
+
+   Default value is "7200".
+
+   Example 1.7. Set max_expires parameter
+...
+modparam("rls", "max_expires", 10800)
+...
+
+1.3.8. hash_size (int)
+
+   The dimension of the hash table used to store subscription to a
+   list. This parameter will be used as the power of 2 when
+   computing table size.
+
+   Default value is "9 (512)".
+
+   Example 1.8. Set hash_size parameter
+...
+modparam("rls", "hash_size", 11)
+...
+
+1.3.9. xcap_root (str)
+
+   The address of the xcap server.
+
+   Default value is "NULL".
+
+   Example 1.9. Set hash_size parameter
+...
+modparam("rls", "xcap_root", "http://192.168.2.132/xcap-root:800")
+...
+
+1.3.10. integrated_xcap_server (int)
+
+   This parameter should be set if only integrated xcap servers
+   are used to store resource lists.
+
+   Default value is "0".
+
+   Example 1.10. Set integrated_xcap_server parameter
+...
+modparam("rls", "integrated_xcap_server", 1)
+...
+
+1.3.11. to_presence_code (int)
+
+   The code to be returned by rls_handle_subscribe function if the
+   processed Subscribe is not a resource list Subscribe. This code
+   can be used in an architecture with presence and rls servers
+   collocated on the same machine, to call handle_subscribe on the
+   message causing this code.
+
+   Default value is "0".
+
+   Example 1.11. Set to_presence_code parameter
+...
+modparam("rls", "to_presence_code", 10)
+...
+
+1.3.12. rls_event (str)
+
+   The default event that RLS handles is presence. If some other
+   events should also be handled by RLS they should be added using
+   this parameter. It can be set more than once.
+
+   Default value is ""presence"".
+
+   Example 1.12. Set rls_event parameter
+...
+modparam("rls", "rls_event", "dialog;sla")
+...
+
+1.4. Exported Functions
+
+1.4.1.  rls_handle_subscribe()
+
+   This function detects if a Subscribe message should be handled
+   by RLS. If not it replies with the configured to_presence_code.
+   If it is, it extracts the dialog info and sends aggregate
+   Notify requests with information for the list.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.13. rls_handle_subscribe usage
+...
+For presence and rls on the same machine:
+        modparam("rls", "to_presence_code", 10)
+
+        if(is_method("SUBSCRIBE"))
+        {
+                $var(ret_code)= rls_handle_subscribe();
+
+                if($var(ret_code)== 10)
+                                handle_subscribe();
+
+                t_release();
+        }
+
+For rls only:
+        if(is_method("SUBSCRIBE"))
+        {
+                rls_handle_subscribe();
+                t_release();
+        }
+
+...
+
+1.4.2.  rls_handle_notify()
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.14. rls_handle_notify usage
+...
+if(method=="NOTIFY")
+    rls_handle_notify();
+...
+
+1.5. Installation
+
+   The module requires 2 table in Kamailio database:
+   rls_presentity and rls_watchers.The SQL syntax to create them
+   can be found in rls-create.sql script in the database
+   directories in the kamailio/scripts folder. You can also find
+   the complete database documentation on the project webpage,
+   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+Chapter 2. Developer Guide
+
+   The module provides no functions to be used in other Kamailio
+   modules.

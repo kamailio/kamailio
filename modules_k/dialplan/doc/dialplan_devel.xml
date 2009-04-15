@@ -1,0 +1,16 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1.1 $</revnumber>
+		<date>$Date: 2007/08/30 13:16:22 $</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>Developer's Guide</title>
+	<para>
+	The module does not provide any <acronym>API</acronym> to use in other &kamailio; modules.
+	</para>
+</chapter>

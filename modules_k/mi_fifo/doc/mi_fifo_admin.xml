@@ -1,0 +1,235 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This is a module which provides a FIFO transport layer 
+		implementation for Management Interface.
+	</para>
+	</section>
+
+	<section>
+	<title>FIFO command syntax</title>
+	<para>
+		The external commands issued via FIFO interface must follow the
+		following syntax:
+		<itemizedlist>
+			<listitem><para><emphasis>
+			request = first_line argument*
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			first_line = ':'command_name':'reply_fifo'\n'
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			argument = (arg_name '::' (arg_value)? ) | (arg_value)
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			arg_name = not-quoted_string
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			arg_value = not-quoted_string | '"' string '"'
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			not-quoted_string = string - {',",\n,\r}
+			</emphasis></para></listitem>
+		</itemizedlist>
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>fifo_name</varname> (string)</title>
+		<para>
+		The name of the FIFO file to be created for listening and 
+		reading external commands.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NONE.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fifo_mode</varname> (integer)</title>
+		<para>
+		Permission to be used for creating the listening FIFO file. It 
+		follows the UNIX conventions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0660 (rw-rw----).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mi_fifo", "fifo_mode", 0600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fifo_group</varname> (integer)
+		<varname>fifo_group</varname> (string)</title>
+		<para>
+		Group to be used for creating the listening FIFO file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_group</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mi_fifo", "fifo_group", 0)
+modparam("mi_fifo", "fifo_group", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fifo_user</varname> (integer)
+		<varname>fifo_group</varname> (string)</title>
+		<para>
+		User to be used for creating the listening FIFO file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fifo_user</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mi_fifo", "fifo_user", 0)
+modparam("mi_fifo", "fifo_user", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>reply_dir</varname> (string)</title>
+		<para>
+		Directory to be used for creating the reply FIFO files.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>/tmp/</quote>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reply_dir</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>reply_indent</varname> (string)</title>
+		<para>
+		Strings to be used for line indentation. As the MI data structure 
+		is tree oriendeted, the depth level will printed as indentation.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>"\t" (TAB)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reply_indent</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mi_fifo", "reply_indent", "    ")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+
+	<title>Exported Functions</title>
+		<para>
+		No function exported to be used from configuration file.
+		</para>
+	</section>
+
+	<section>
+	<title>Example</title>
+		<para>
+		This is an example showing the FIFO format for the 
+		<quote>get_statistics dialog: tm:</quote> MI commad:
+		response.
+		</para>
+		<example>
+		<title>FIFO request</title>
+		<programlisting format="linespecific">
+
+:get_statistics:reply_fifo\n
+dialog:\n
+tm:\n
+\n
+
+</programlisting>
+		</example>
+
+	</section>
+
+
+</chapter>
+

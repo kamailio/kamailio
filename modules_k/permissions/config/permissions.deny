@@ -1,0 +1,15 @@
+# SIP Express Router permissions module config file
+#
+# Syntax: 
+#	from_list [EXCEPT from_list] : req_uri_list [EXCEPT req_uri_list]
+#
+# 	from_list and req_uri_list are comma separated expressions
+# 	Expressions are treated as case insensitive POSIX Extended Regular Expressions.
+# 	Keyword ALL matches any expression.
+#
+# Examples:
+#	ALL : "^sip:361[0-9]*@abc\.com$" EXCEPT "^sip:361[0-9]*3@abc\.com$", "^sip:361[0-9]*4@abc\.com$"
+#
+#	"^sip:3677[0-9]*@abc\.com$" :  "^sip:361[0-9]*@abc\.com$"
+#
+#	All : ALL

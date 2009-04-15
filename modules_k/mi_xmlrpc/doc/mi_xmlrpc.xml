@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "mi_xmlrpc_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>mi_xmlrpc Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Lavinia-Andreea</firstname>
+		<surname>Andrei</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<email>lavinia@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Lavinia-Andreea</firstname>
+		<surname>Andrei</surname>
+		<address>
+		    <email>lavinia@voice-system.ro</email>
+		</address>
+	    </editor>
+	    <editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<address>
+		    <email>jh@tutpro.com</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2006</year>
+	    <holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+  </bookinfo>
+    <toc></toc>
+    
+    &admin;
+    &faq;
+    
+</book>
+
+

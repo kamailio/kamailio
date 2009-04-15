@@ -1,0 +1,1212 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module implements text based operations over the SIP message
+		processed by Kamailio. SIP is a text based protocol and the module
+		provides a large set of very useful functions to manipulate the
+		message at text level, e.g., regular expression search and replace,
+		Perl-like substitutions, checks for method type, header presence,
+		insert of new header and date, etc.
+	</para>
+	<section>
+		<title>Known Limitations</title>
+		<para>
+		search ignores folded lines. For example, 
+		search(<quote>(From|f):.*@foo.bar</quote>)
+		doesn't match the following From header field:
+		</para>
+		<programlisting format="linespecific">
+From: medabeda 
+ &lt;sip:medameda@foo.bar&gt;;tag=1234
+</programlisting>
+	</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">search(re)</function>
+		</title>
+		<para>
+		Searches for the re in the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">search_body(re)</function>
+		</title>
+		<para>
+		Searches for the re in the body of the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">search_append(re, txt)</function>
+		</title>
+		<para>
+		Searches for the first match of re and appends txt after it.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+search_append("[Oo]pen[Ss]er", " SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">search_append_body(re, txt)</function>
+		</title>
+		<para>
+		Searches for the first match of re in the body of the message
+		and appends txt after it.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_append_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace(re, txt)</function>
+		</title>
+		<para>
+		Replaces the first occurrence of re with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace("openser", "Kamailio SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace_body(re, txt)</function>
+		</title>
+		<para>
+		Replaces the first occurrence of re in the body of the message
+		with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body("openser", "Kamailio SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace_all(re, txt)</function>
+		</title>
+		<para>
+		Replaces all occurrence of re with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_all</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_all("openser", "Kamailio SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace_body_all(re, txt)</function>
+		</title>
+		<para>
+		Replaces all occurrence of re in the body of the message
+		with txt. Matching is done on a per-line basis.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body_all</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body_all("openser", "Kamailio SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace_body_atonce(re, txt)</function>
+		</title>
+		<para>
+		Replaces all occurrence of re in the body of the message
+		with txt. Matching is done over the whole body.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body_atonce</function> usage</title>
+		<programlisting format="linespecific">
+...
+# strip the whole body from the message:
+if(has_body() &amp;&amp; replace_body_atonce("^.+$", ""))
+        remove_hf("Content-Type"); 
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subst('/re/repl/flags')</function>
+		</title>
+		<para>
+		Replaces re with repl (sed or perl like).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>subst</function> usage</title>
+		<programlisting format="linespecific">
+...
+# replace the uri in to: with the message uri (just an example)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
+
+# replace the uri in to: with the value of avp sip_address (just an example)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') ) {};
+
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subst_uri('/re/repl/flags')</function>
+		</title>
+		<para>
+		Runs the re substitution on the message uri (like subst but works
+		 only on the uri)
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>subst_uri</function> usage</title>
+		<programlisting format="linespecific">
+...
+# adds 3463 prefix to numeric uris, and save the original uri (\0 match)
+# as a parameter: orig_uri (just an example)
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
+
+# adds the avp 'uri_prefix' as prefix to numeric uris, and save the original
+# uri (\0 match) as a parameter: orig_uri (just an example)
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
+
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subst_user('/re/repl/flags')</function>
+		</title>
+		<para>
+		Runs the re substitution on the message uri (like subst_uri but works
+		 only on the user portion of the uri)
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>subst</function> usage</title>
+		<programlisting format="linespecific">
+...
+# adds 3463 prefix to uris ending with 3642 (just an example)
+if (subst_user('/3642$/36423463/')){$
+
+...
+# adds avp 'user_prefix' as prefix to username in r-uri ending with 3642
+if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
+
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subst_body('/re/repl/flags')</function>
+		</title>
+		<para>
+		Replaces re with repl (sed or perl like) in the body of the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>subst_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( subst_body('/^o=(.*) /o=$fU /') ) {};
+
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">set_body(txt,content_type)</function>
+		</title>
+		<para>
+		Set body to a SIP message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - text for the body, can include
+				pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>set_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_body("test", "text/plain");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">set_reply_body(txt,content_type)</function>
+		</title>
+		<para>
+		Set body to a SIP reply to be generated by &kamailio;.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - text for the body, can include
+				pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>set_reply_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_reply_body("test", "text/plain");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">filter_body(content_type)</function>
+		</title>
+		<para>
+		Filters multipart body by leaving out all other body
+		parts except the first body part of given type.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>content_type</emphasis> -
+				Content type to be left in the body.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>filter_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (has_body("multipart/mixed")) {
+    if (filter_body("application/sdp") {
+        remove_hf("Content-Type");
+        append_hf("Content-Type: application/sdp\r\n");
+    } else {
+        xlog("Body part application/sdp not found\n");
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_to_reply(txt)</function>
+		</title>
+		<para>
+		Append txt as header to the reply.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String which may contains
+			pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+		FAILURE_ROUTE, ERROR_ROUTE.
+		</para>
+		<example>
+		<title><function>append_to_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_to_reply("Foo: bar\r\n");
+append_to_reply("Foo: $rm at $Ts\r\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_hf(txt)</function>
+		</title>
+		<para>
+			Appends 'txt' as header after the last header field. 
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be appended. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Note: Headers which are added in main route cannot be removed in further routes
+		(e.g. failure routes). So, the idea is not to add there any headers that you 
+		might want to remove later. To add headers temporarely use the branch route 
+		because the changes you do there are per-branch.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>append_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("P-hint: VOICEMAIL\r\n");
+append_hf("From-username: $fU\r\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_hf(txt, hdr)</function>
+		</title>
+		<para>
+		Appends 'txt' as header after first 'hdr' header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be appended. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>hdr</emphasis> - Header name after which the 'txt'
+			is appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>append_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
+append_hf("From-username: $fU\r\n", "Call-ID");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">insert_hf(txt)</function>
+		</title>
+		<para>
+		Inserts 'txt' as header before the first header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be inserted. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>insert_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+insert_hf("P-hint: VOICEMAIL\r\n");
+insert_hf("To-username: $tU\r\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
+		<title>
+		<function moreinfo="none">insert_hf(txt, hdr)</function>
+		</title>
+		<para>
+		Inserts 'txt' as header before first 'hdr' header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be inserted. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>hdr</emphasis> - Header name before which the 'txt'
+			is inserted.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>insert_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+insert_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
+insert_hf("To-username: $tU\r\n", "Call-ID");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_urihf(prefix, suffix)</function>
+		</title>
+		<para>
+		Append header field name with original <acronym>Request-URI</acronym> 
+		in middle.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>prefix</emphasis> - string (usually at least 
+			header field name).
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>suffix</emphasis> - string (usually at least 
+			line terminator).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>append_urihf</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_urihf("CC-Diversion: ", "\r\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_present_hf(hf_name)</function>
+		</title>
+		<para>
+		Return true if a header field is present in message.
+		</para>
+		<note>
+		<para>
+			The function is also able to distinguish the compact names. For
+			exmaple <quote>From</quote> will match with <quote>f</quote>
+		</para>
+		</note>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hf_name</emphasis> - Header field name.(long or 
+			compact form)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>is_present_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_present_hf("From")) log(1, "From HF Present");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_present_hf_re(hf_name_re)</function>
+		</title>
+		<para>
+		Return true if a header field whose name matches regular expression
+		'hf_name_re' is present in message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hf_name_re</emphasis> - Regular expression to
+				match header field name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>is_present_hf_re</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_time()</function>
+		</title>
+		<para>
+		Adds a time header to the reply of the request. You must use it
+		before functions that are likely to send a reply, e.g., save()
+		from 'registrar' module. Header format is: 
+		<quote>Date: %a, %d %b %Y %H:%M:%S GMT</quote>, with the legend:
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>%a</emphasis> abbreviated week of day name (locale)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%d</emphasis> day of month as decimal number
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%b</emphasis> abbreviated month name (locale)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%Y</emphasis> year with century
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%H</emphasis> hour
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%M</emphasis> minutes
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%S</emphasis> seconds
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		Return true if a header was succesfully appended.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>append_time</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_time();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_method(name)</function>
+		</title>
+		<para>
+		Check if the method of the message matches the name. If name is a
+		known method (invite, cancel, ack, bye, options, info, update, register,
+		message, subscribe, notify, refer, prack), the function performs method
+		ID testing (integer comparison) instead of ignore case string
+		comparison.
+		</para>
+		<para>
+		The 'name' can be a list of methods in the form of
+		'method1|method2|...'. In this case, the function returns true if the
+		SIP message's method is one from the list. IMPORTANT NOTE: in the list
+		must be only methods defined in &kamailio; with ID (invite, cancel, ack,
+		bye, options, info, update, register, message, subscribe, notify,
+		refer, prack, publish; for more see:
+		<ulink url="http://www.iana.org/assignments/sip-parameters">
+			http://www.iana.org/assignments/sip-parameters</ulink>).
+		</para>
+		<para>
+		If used for replies, the function tests the value of method field from
+		CSeq header.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>name</emphasis> - SIP method name
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>is_method</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_method("INVITE"))
+{
+    # process INVITEs here
+}
+if(is_method("OPTION|UPDATE"))
+{
+    # process OPTIONs and UPDATEs here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">remove_hf(hname)</function>
+		</title>
+		<para>
+		Remove from message all headers with name <quote>hname</quote>
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hname</emphasis> - header name to be removed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf("User-Agent"))
+{
+    # User Agent header removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">remove_hf_re(re)</function>
+		</title>
+		<para>
+			Remove from message all headers with name matching regular
+			expression <quote>re</quote>
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - regular expression to match
+				the header name to be removed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_re</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_re("^P-"))
+{
+    # All headers starting with "P-" removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">has_body()</function>,
+		<function moreinfo="none">has_body(mime)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if the SIP message
+		has a body attached. The checked includes also the 
+		<quote>Content-Lenght</quote> header presence and value.
+		</para>
+		<para>
+		If a parameter is given, the mime described will be also checked against
+		the <quote>Content-Type</quote> header.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>mime</emphasis> - mime to be checked against the 
+				<quote>Content-Type</quote> header. If not present or 0, this
+				check will be disabled.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>has_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(has_body("application/sdp"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_privacy(privacy_type)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+                the SIP message has a Privacy header field that includes
+                the given privacy_type among its privacy values.  See
+				<ulink url="http://www.iana.org/assignments/sip-priv-values">
+                http://www.iana.org/assignments/sip-priv-values</ulink>
+                for possible privacy type values.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>is_privacy</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_privacy("id"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">cmp_str(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the two parameters matches as string case sensitive comparison.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_str("$rU", "kamailio"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">cmp_istr(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the two parameters matches as string case insensitive comparison.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_istr("$rU@you", "kamailio@YOU"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+		<title>Known Limitations</title>
+		<para>
+			Search functions are applied to the original request,
+			i.e., they ignore all changes resulting from message
+			processing in &kamailio; script.
+		</para>
+	</section>
+</chapter>
+

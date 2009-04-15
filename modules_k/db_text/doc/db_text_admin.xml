@@ -1,0 +1,343 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module implements a simplified database engine based on text
+		files. It can be used by &kamailio; DB interface instead of other
+		database module (like MySQL).
+	</para>
+	<para>
+		The module is meant for use in demos or small devices that do not
+		support other DB modules. It keeps everything in memory and if you deal
+		with large amount of data you may run quickly out of memory. Also, it
+		has not implemented all standard database facilities (like order by),
+		it includes minimal functionality to work properly (who knows ?!?)
+		with &kamailio;.
+	</para>
+	<para>
+		NOTE: the timestamp is printed in an integer value from time_t
+		structure. If you use it in a system that cannot do this conversion,
+		it will fail (support for such situation is in to-do list).
+	</para>
+	<para>
+		NOTE: even when is in non-caching mode, the module does not write
+		back to hard drive after changes. In this mode, the module checks if
+		the corresponding file on disk has changed, and reloads it. The write
+		on disk happens at openser shut down.
+	</para>
+		<section>
+		<title>Design of dbtext engine</title>
+		<para>
+		The dbtext database system architecture:
+			<itemizedlist>
+			<listitem>
+				<para>
+				a database is represented by a directory in the local file
+				system.
+				NOTE: when you use <emphasis>dbtext</emphasis> in &kamailio;,
+				the	database URL for modules must be the path to the directory
+				where the table-files are located, prefixed by 
+				<quote>dbtext://</quote>, e.g., 
+				<quote>dbtext:///var/dbtext/ser</quote>. If there is no
+				<quote>/</quote> after <quote>dbtext://</quote> then
+				<quote>CFG_DIR/</quote> is inserted at the beginning of the
+				database path. So, either you provide an absolute path to
+				database directory or a relative one to <quote>CFG_DIR</quote>
+				directory.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				a table is represented by a text file inside database directory.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		</section>
+		<section>
+		<title>Internal format of a dbtext table</title>
+		<para>
+		First line is the definition of the columns. Each column must be
+		declared as follows:
+			<itemizedlist>
+			<listitem>
+				<para>
+				the name of column must not include white spaces.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				the format of a column definition is: 
+				<emphasis>name(type,attr)</emphasis>.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				between two column definitions must be a white space, e.g., 
+				<quote>first_name(str) last_name(str)</quote>.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				the type of a column can be: 
+					<itemizedlist>
+					<listitem>
+					<para>
+					<emphasis>int</emphasis> - integer numbers.
+					</para>
+					</listitem>
+					<listitem>
+					<para>
+					<emphasis>double</emphasis> - real numbers with two
+					decimals.
+					</para>
+					</listitem>
+					<listitem>
+					<para>
+					<emphasis>str</emphasis> - strings with maximum size of 4KB.
+					</para>
+					</listitem>
+					</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				a column can have one of the attributes: 
+					<itemizedlist>
+					<listitem>
+					<para>
+					<emphasis>auto</emphasis> - only for 'int' columns,
+					the maximum value in that column is incremented and stored
+					in this field if it is not provided in queries.
+					</para>
+					</listitem>
+					<listitem>
+					<para>
+					<emphasis>null</emphasis> - accept null values in column
+					fields.
+					</para>
+					</listitem>
+					<listitem>
+					<para>
+					if no attribute is set, the fields of the column cannot have
+					null value.
+					</para>
+					</listitem>
+					</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				each other line is a row with data. The line ends with
+				<quote>\n</quote>.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				the fields are separated by <quote>:</quote>.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				no value between two ':' (or between ':' and start/end of a row)
+				means <quote>null</quote> value.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				next characters must be escaped in strings: <quote>\n</quote>,
+				<quote>\r</quote>, <quote>\t</quote>, <quote>:</quote>.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				 <emphasis>0</emphasis> -- the zero value must be escaped too.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<example>
+		<title>Sample of a dbtext table</title>
+<programlisting format="linespecific">
+...
+id(int,auto) name(str) flag(double) desc(str,null)
+1:nick:0.34:a\tgood\: friend
+2:cole:-3.75:colleague
+3:bob:2.50:
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Minimal &kamailio; location dbtext table definition</title>
+<programlisting format="linespecific">
+...
+username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Minimal &kamailio; subscriber dbtext table example</title>
+<programlisting format="linespecific">
+...
+username(str) password(str) ha1(str) domain(str) ha1b(str)
+suser:supasswd:xxx:alpha.org:xxx
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title>Existing limitations</title>
+		<para>This database interface don't support the data insertion with
+				default values. All such values specified in the database template
+				are ignored. So its advisable to specify all data for a column at
+				insertion operations.
+		</para>
+		</section>
+	</section>
+	<section>
+	<title>Dependencies</title>
+		<section>
+			<title>&kamailio; modules</title>
+		<para>
+			The next modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>none</emphasis>.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		</section>
+		<section>
+			<title>External libraries or applications</title>
+		<para>
+			The next libraries or applications must be installed before running
+			&kamailio; with this module:
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>none</emphasis>.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+		<para>
+			<emphasis>None</emphasis>.
+	   	</para>
+		<section>
+			<title><varname>db_mode</varname> (integer)</title>
+		<para>
+		Set caching mode (0) or non-caching mode (1). In caching mode, data
+		is loaded at startup. In non-caching mode, the module check every time
+		a table is requested whether the corresponding file on disk has
+		changed, and if yes, will re-load table from file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_text", "db_mode", 1)
+...
+</programlisting>
+		</example>
+		</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+		<para>
+			<emphasis>None</emphasis>.
+	   	</para>
+	</section>
+	<section>
+		<title>Installation and Running</title>
+		<para>
+		Compile the module and load it instead of mysql or other DB modules.
+		</para>
+		<para>
+		REMINDER: when you use <emphasis>dbtext</emphasis> in &kamailio;,
+		the	database URL for modules must be the path to the directory
+		where the table-files are located, prefixed by
+		<quote>dbtext://</quote>, e.g., 
+		<quote>dbtext:///var/dbtext/ser</quote>. If there is no <quote>/</quote>
+		after <quote>dbtext://</quote> then <quote>CFG_DIR/</quote> is inserted
+		at the beginning of the database path. So, either you provide an
+		absolute path to database directory or a relative one to 
+		<quote>CFG_DIR</quote> directory.
+		</para>
+		<example>
+		<title>Load the dbtext module</title>
+<programlisting format="linespecific">
+...
+loadmodule "/path/to/kamailio/modules/db_text.so"
+...
+modparam("module_name", "database_URL", "text:///path/to/dbtext/database")
+...
+</programlisting>
+		</example>
+		<section>
+			<title>Using dbtext with basic &kamailio; configuration</title>
+		<para>
+		Here are the definitions for most important table as well as a basic 
+		configuration file to use dbtext with &kamailio;. The table structures
+		may change in time and you will have to adjust next examples. These are 
+		know to work with upcoming &kamailio; v0.9.x
+		</para>
+		<para>
+		You have to populate the table 'subscriber' by hand with user profiles 
+		in order to have authentication. To use with the given configuration
+		file, the table files must be placed in the '/tmp/serdb' directory.
+		</para>
+		<example>
+		<title>Definition of 'subscriber' table (one line)</title>
+<programlisting format="linespecific">
+...
+username(str) domain(str) password(str) first_name(str) last_name(str) phone(str) email_address(str) datetime_created(int) datetime_modified(int) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,null)
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Definition of 'location' and 'aliases' tables (one line)</title>
+<programlisting format="linespecific">
+...
+username(str) domain(str,null) contact(str,null) received(str) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) user_agent(str) socket(str) 
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Definition of 'version' table and sample records</title>
+<programlisting format="linespecific">
+...
+table_name(str) table_version(int)
+subscriber:3
+location:6
+aliases:6
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Configuration file</title>
+<programlisting format="linespecific">
+...
+&dbtextsercfg;
+...
+</programlisting>
+		</example>
+		</section>
+	</section>
+</chapter>
+

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "regex_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+		<title>Regex Module</title>
+		<productname class="trade">&kamailioname;</productname>
+		<authorgroup>
+			<author>
+				<firstname>Iñaki</firstname>
+				<surname>Baz Castillo</surname>
+				<email>ibc@aliax.net</email>
+			</author>
+			<editor>
+				<firstname>Iñaki</firstname>
+				<surname>Baz Castillo</surname>
+				<email>ibc@aliax.net</email>
+			</editor>
+		</authorgroup>
+		<copyright>
+			<year>2009</year>
+			<holder>Iñaki Baz Castillo</holder>
+		</copyright>
+		<revhistory>
+			<revision>
+				<revnumber>$Revision$</revnumber>
+				<date>$Date$</date>
+			</revision>
+		</revhistory>
+	</bookinfo>
+	<toc></toc>
+
+    &admin;
+    &faq;
+
+</book>
+
+

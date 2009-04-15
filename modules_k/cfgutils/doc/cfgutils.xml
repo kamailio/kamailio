@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY admin SYSTEM "cfgutils_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>cfgutils Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Henning</firstname>
+		<surname>Westerholt</surname>
+		<affiliation><orgname>1und1 Internet AG</orgname></affiliation>
+		<email>henning.westerholt@1und1.de</email>
+		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>BASIS AudioNet GmbH</orgname></affiliation>
+		<address>
+		<email>bock@basis-audionet.de</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>rosdev.ro</orgname></affiliation>
+		<email>ramona@rosdev.ro</email>
+		</author>
+		<author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+		</author>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<year>2008</year>
+		<year>2004</year>
+		<holder>1und1 Internet AG</holder>
+		<holder>BASIS AudioNet GmbH</holder>
+		<holder>Elena-Ramona Modroiu</holder>
+		<holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&admin;
+	&faq;
+
+</book>

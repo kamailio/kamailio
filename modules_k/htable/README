@@ -1,0 +1,374 @@
+HTable Module
+
+Elena-Ramona Modroiu
+
+   asipto.com
+   <ramona@rosdev.ro>
+
+Edited by
+
+Elena-Ramona Modroiu
+
+   <ramona@rosdev.ro>
+
+   Copyright © 2008 http://www.asipto.com
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+              1.2.3. Loading from database
+
+        1.3. Exported Parameters
+
+              1.3.1. htable (str)
+              1.3.2. db_url (str)
+              1.3.3. key_name_column (str)
+              1.3.4. key_type_column (str)
+              1.3.5. value_type_column (str)
+              1.3.6. key_value_column (str)
+              1.3.7. array_size_suffix (str)
+              1.3.8. fetch_rows (integer)
+              1.3.9. timer_interval (integer)
+              1.3.10. timer_mode (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. sht_print()
+              1.4.2. sht_rm_name_re(htable=>regexp)
+              1.4.3. sht_rm_value_re(htable=>regexp)
+
+        1.5. Exported pseudo-variables
+        1.6. Exported MI Functions
+
+              1.6.1. sht_reload
+
+   List of Examples
+
+   1.1. Accessing $sht(htname=>key)
+   1.2. Dictionary attack limitation
+   1.3. Set hash_size parameter
+   1.4. Set db_url parameter
+   1.5. Set key_name parameter
+   1.6. Set key_name parameter
+   1.7. Set value_type parameter
+   1.8. Set key_value parameter
+   1.9. Set array_size_suffix parameter
+   1.10. Set fetch_rows parameter
+   1.11. Set timer_interval parameter
+   1.12. Set timer_mode parameter
+   1.13. sht_print usage
+   1.14. sht_rm_name_re usage
+   1.15. sht_rm_value_re usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   The module adds a hash table container to configuration
+   language. The hash table is stored in shared memory and the
+   access to it can be done via pseudo-variables:
+   $sht(htname=>name).
+
+   The "name" can be a static string or can include pseudo-
+   variables that will be replaced at runtime.
+
+   Example 1.1. Accessing $sht(htname=>key)
+...
+modparam("htable", "htable", "a=>size=4;")
+...
+$sht(a=>test) = 1;
+$sht(a=>$ci::srcip) = $si;
+...
+
+   Next example shows a way to protect against dictionary attacks.
+   If someone fails to authenticate 3 times, it is forbidden for
+   15min. Authenticatin against database is expensive as it does a
+   select on subscriber table. By disabling the DB auth for 15min,
+   resources on server as saved and time to discover the password
+   is increased substantially. Additional alerting can be done by
+   writing a message to syslog or sending email, etc.
+
+   To implement the logic, two hash table variables are user: one
+   counting the failed authentications per user and one for
+   storing the time of last authentication attempt. To ensure
+   unique name per user, the hash table uses a combination of
+   authentication username and text "::auth_count" and
+   "::last_auth".
+
+   Example 1.2. Dictionary attack limitation
+...
+modparam("htable", "htable", "a=>size=4;")
+...
+if(is_present_hf("Authorization"))
+{
+    if($sht(a=>$au::auth_count)==3)
+    {
+                $var(exp) = $Ts - 900;
+        if($sht(a=>$au::last_auth) > $var(exp))
+        {
+            sl_send_reply("403", "Try later");
+            exit;
+        } else {
+            $sht(a=>$au::auth_count) = 0;
+        }
+    }
+    if(!www_authorize(""))
+    {
+        switch ($retcode) {
+            case -1:
+                sl_send_reply("403", "Forbidden");
+            exit;
+            case -2:
+                if($sht(a=>$au::auth_count) == null)
+                    $sht(a=>$au::auth_count) = 0;
+                $sht(a=>$au::auth_count) = $sht(a=>$au::auth_count) + 1;
+                if($sht(a=>$au::auth_count) == 3)
+                    xlog("auth failed 3rd time - src ip: $si\n");
+                $sht(a=>$au::last_auth) = $Ts;
+            break;
+        }
+        www_challenge(""/*realm*/,"0"/*qop*/);
+        exit;
+    }
+    $sht(a=>$au::auth_count) = 0;
+} else {
+    www_challenge("","0");
+    exit;
+}
+...
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.2.3. Loading from database
+
+   The module is able to load values in hash table at startup upon
+   providing a DB URL and table name.
+
+   The structure of the table must contain:
+     * key name - string containing the name of the key.
+     * key type - the type of the key
+          + 0 - simple key - the key is added as 'key_name'.
+          + 1 - array key - the key is added as 'key_name[n]'. n
+            is incremented for each key with this name to build an
+            array in hash table.
+     * value type - the type of the key value
+          + 0 - value is string.
+          + 1 - value is integer.
+     * key value - string containing the value of the key.
+
+1.3. Exported Parameters
+
+1.3.1. htable (str)
+
+   The definition of a hash table. The value of the parameter must
+   have the following format:
+     * "htname=>size=_number_;autoexpire=_number_;dbtable=_string_
+       "
+
+   The parameter can be set multiple times to get more hash tables
+   in same configuration file.
+     * htname - string specifying the name of the hash table. This
+       string is used by $sht(...) to refer to the hash table.
+     * size - number specifying the size of hash table. The number
+       of entries in the table is 2^size
+     * autoexpire -time in seconds to delete an item from hash
+       table if no update was done to it. If is missing or set to
+       0, the items won't expire.
+     * dbtable - name of database to be loaded at startup in hash
+       table. If empty or missing, no data will be loaded.
+
+   Default value is NULL.
+
+   Example 1.3. Set hash_size parameter
+...
+modparam("htable", "htable", "a=>size=4;autoexpire=7200;dbtable=htable_a
+;")
+modparam("htable", "htable", "a=>size=4;autoexpire=7200;dbtable=htable_a
+;")
+...
+
+1.3.2. db_url (str)
+
+   The URL to connect to database for loading values in hash table
+   at start up.
+
+   Default value is NULL (do not connect).
+
+   Example 1.4. Set db_url parameter
+...
+modparam("htable", "db_url", "mysql://openser:openserrw@localhost/opense
+r")
+...
+
+1.3.3. key_name_column (str)
+
+   The name of the column containing hash table key name.
+
+   Default value is 'key_name'.
+
+   Example 1.5. Set key_name parameter
+...
+modparam("htable", "key_name_column", "kname")
+...
+
+1.3.4. key_type_column (str)
+
+   The name of the column containing hash table key type.
+
+   Default value is 'key_type'.
+
+   Example 1.6. Set key_name parameter
+...
+modparam("htable", "key_type_column", "ktype")
+...
+
+1.3.5. value_type_column (str)
+
+   The name of the column containing hash table value type.
+
+   Default value is 'value_type'.
+
+   Example 1.7. Set value_type parameter
+...
+modparam("htable", "value_type", "vtype")
+...
+
+1.3.6. key_value_column (str)
+
+   The name of the column containing hash table key value.
+
+   Default value is 'key_value'.
+
+   Example 1.8. Set key_value parameter
+...
+modparam("htable", "key_value", "kvalue")
+...
+
+1.3.7. array_size_suffix (str)
+
+   The suffix to be added to store the number of items in an
+   array.
+
+   Default value is '::size'.
+
+   Example 1.9. Set array_size_suffix parameter
+...
+modparam("htable", "array_size_suffix", "-count")
+...
+
+1.3.8. fetch_rows (integer)
+
+   How many rows to fetch at once from database.
+
+   Default value is 100.
+
+   Example 1.10. Set fetch_rows parameter
+...
+modparam("htable", "fetch_rows", 1000)
+...
+
+1.3.9. timer_interval (integer)
+
+   Interval in seconds to check for expired htable values.
+
+   Default value is 20.
+
+   Example 1.11. Set timer_interval parameter
+...
+modparam("htable", "timer_interval", 10)
+...
+
+1.3.10. timer_mode (integer)
+
+   If set to 1, will start a new timer process. If set to 0 will
+   use default timer process to check for expired htable values.
+
+   Default value is 0.
+
+   Example 1.12. Set timer_mode parameter
+...
+modparam("htable", "timer_mode", 1)
+...
+
+1.4. Exported Functions
+
+1.4.1.  sht_print()
+
+   Dump content of hash table to L_ERR log level. Intended for
+   debug purposes.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
+
+   Example 1.13. sht_print usage
+...
+sht_print();
+...
+
+1.4.2.  sht_rm_name_re(htable=>regexp)
+
+   Delete all entries in the htable that match the name against
+   regular expression.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
+
+   Example 1.14. sht_rm_name_re usage
+...
+sht_rm_name_re("ha=>.*");
+...
+
+1.4.3.  sht_rm_value_re(htable=>regexp)
+
+   Delete all entries in the htable that match the value against
+   regular expression.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
+
+   Example 1.15. sht_rm_value_re usage
+...
+sht_rm_value_re("ha=>.*");
+...
+
+1.5. Exported pseudo-variables
+
+     * $sht(htable=>key)
+     * $shtex(htable=>key)
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.
+
+1.6. Exported MI Functions
+
+1.6.1.  sht_reload
+
+   Reload a hash table from database.
+
+   Name: sht_reload
+
+   Parameters: _hash_table_name_ - the name of hash table to
+   reload.
+
+   MI FIFO Command Format:
+                :ds_list:_reply_fifo_file_
+                _hah_table_name_
+                _empty_line_

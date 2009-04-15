@@ -1,0 +1,127 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		 The pua_usrloc is the connector between usrloc and pua modules.
+		 It creates the environment to send PUBLISH requests for user
+		 location records, on specific events (e.g., when new record is
+		 added in usrloc, a PUBLISH with status open (online) is issued;
+		 when expires, it sends closed (offline)).
+	</para>
+	<para>
+		Using this module, phones which have no support for presence can
+		be seen as online/offline. 
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>usrloc</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>default_domain</varname> (str)</title>
+		<para>
+		The default domain to use when constructing the presentity
+		uri if it is missing from recorded aor. 
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_usrloc", "default_domain", "kamailio.org")
+...
+</programlisting>
+		</example>
+</section>
+	<section>
+		<title><varname>entity_prefix</varname> (str)</title>
+		<para>
+		The prefix when construstructing entity attribute to be added to
+		presence node in xml pidf.
+		(ex: pres:user@domain ).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>presentity_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_usrloc", "entity_prefix", "pres")
+...
+</programlisting>
+		</example>
+</section>
+
+</section>
+<section>
+	<title>Exported Functions</title>
+		<section>
+				<title>
+				<function moreinfo="none">pua_set_publish()</function>
+				</title>
+			<para>
+				The function is used to mark REGISTER requests that have to
+				issue a PUBLISH. The PUBLISH is issued when REGISTER is saved
+				in location table.
+			</para>
+			<para>
+			</para>
+		<example>
+		<title><function>pua_set_publish</function> usage</title>
+	<programlisting format="linespecific">
+...
+if(is_method("REGISTER") &amp;&amp; from_uri=~"john@kamailio.org") 
+	pua_set_publish();		
+...
+</programlisting>
+		</example>
+
+		</section>
+
+</section>		
+
+</chapter>
+

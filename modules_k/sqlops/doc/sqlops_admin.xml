@@ -1,0 +1,283 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The module adds support for raw SQL queries in configuration file.
+	</para>
+	<para>
+		Among features:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>many DB connections</emphasis> - the module can connect
+			to many databases on different servers using different DB
+			driver modules at the same time.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>many DB results</emphasis> - the module can store
+			many results of different SQL queries in separate structures at
+			the same time. Thus is possible to work in parallel with several
+			DB results.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>access via pseudo-variables</emphasis> - the content
+			of SQL query result is accessible via pseudo-variables. Please
+			note that only integer and string variables are supported at the
+			moment because of the internal usage of <quote>AVPs</quote> to hold
+			the values. So its not possible for example to return floating point
+			or big integer values this way.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>array indexes</emphasis> - fast access to result values
+			via array possition: [row,column].
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>persistence in process space</emphasis> - a result can
+			be used many times in same worker process. Query once, use many
+			times.
+		</para>
+		</listitem>
+
+	</itemizedlist>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a DB SQL module (mysql, postgres, ...)</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>sqlcon</varname> (str)</title>
+		<para>
+		The definition of DB connection. The value of the parameter must have
+		the following format:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"connection_name=&gt;database_url"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get many DB connections
+			in same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>connection_name</emphasis> - string specifying the name
+			of DB connection. This string is used by sql_query() function to
+			refer to the DB connection.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>database_url</emphasis> - URL to connect to database.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sqlcon</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","cb=&gt;mysql://openser:abc@10.10.1.1/testdb")
+modparam("sqlops","sqlcon","ca=&gt;mysql://openser:abc@localhost/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sql_query(connection, query, result)</function>
+		</title>
+		<para>
+			Make a SQL query using 'connection' and store data in 'result'.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for query (defined via sqlcon parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string, can contain
+				pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>result</emphasis> - string name to identify the
+				result. Will be used by $dbr(...) pseudo-variable to access
+				result attributes.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_query()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;mysql://openser:abc@localhost/openser")
+...
+sql_query("ca", "select * from domain", "ra");
+xlog("number of rows in table domain: $dbr(ra=&gt;rows)\n");
+sql_result_free("ra");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sql_result_free(result)</function>
+		</title>
+		<para>
+			Free data in SQL 'result'.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_result_free()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;mysql://openser:abc@localhost/openser")
+...
+sql_query("ca", "select * from domain", "ra");
+xlog("number of rows in table domain: $dbr(ra=&gt;rows)\n");
+...
+sql_result_free("ra");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported pseudo-variables</title>
+		
+		<section>
+			<title><varname>$dbr(result=>key)</varname></title>
+			<para>
+				Access hash table entries.
+			</para>
+			<para>
+				The <quote>result</quote> must be the name identifying a SQL
+				result (third parameter of sql_query(...)).
+			</para>
+
+			<para>
+			The <quote>key</quote> can be:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>rows</emphasis> - return number of rows in
+						result</para>
+				</listitem>	  
+				<listitem>
+					<para><emphasis>cols</emphasis> - return the number of
+						columns in result.</para>
+				</listitem>	  
+				<listitem>
+					<para><emphasis>[row,col]</emphasis> - return the value
+						at position (row,col) in result. 'row' and 'col' must
+					be integer or pseudo-variable holding an integer.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>colname[N]</emphasis> - return the name
+						of the N-th column in result.</para>
+				</listitem>	  
+			</itemizedlist>
+
+			<example>
+				<title><function moreinfo="none">$dbr(result=&gt;key)</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;mysql://openser:abc@localhost/openser")
+...
+sql_query("ca", "select * from domain", "ra");
+xlog("rows: $dbr(ra=&gt;rows) cols: $dbr(ra=&gt;cols)\n");
+if($dbr(ra=>rows)>0)
+{
+    $var(i) = 0;
+    while($var(i)&lt;$dbr(ra=&gt;cols))
+    {
+        xlog("--- SCRIPT: column[$var(i)] = $dbr(ra=&gt;colname[$var(i)])\n");
+        $var(i) = $var(i) + 1;
+    }
+    $var(i) = 0;
+    while($var(i)&lt;$dbr(ra=&gt;rows))
+    {
+        $var(j) = 0;
+        while($var(j)&lt;$dbr(ra=&gt;cols))
+        {
+            xlog("[$var(i),$var(j)] = $dbr(ra=&gt;[$var(i),$var(j)])\n");
+            $var(j) = $var(j) + 1;
+        }
+        $var(i) = $var(i) + 1;
+    }
+}
+sql_result_free("ra");
+...
+				 </programlisting>
+			</example>
+	</section>
+	</section>
+</chapter>
+

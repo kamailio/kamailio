@@ -1,0 +1,317 @@
+imc Module
+
+Anca-Maria Vamanu
+
+   voice-system.ro
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Stefan Popescu
+
+Edited by
+
+Anca-Maria Vamanu
+
+   Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url (str)
+              1.3.2. rooms_table (str)
+              1.3.3. members_table (str)
+              1.3.4. hash_size (integer)
+              1.3.5. imc_cmd_start_char (str)
+              1.3.6. outbound_proxy (str)
+
+        1.4. Exported Functions
+
+              1.4.1. imc_manager()
+
+        1.5. Exported MI Functions
+
+              1.5.1. imc_list_rooms
+              1.5.2. imc_list_members
+
+        1.6. Exported Statistics
+
+              1.6.1. active_rooms
+
+        1.7. IMC Commands
+        1.8. Installation
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set rooms_table parameter
+   1.3. Set members_table parameter
+   1.4. Set hash_size parameter
+   1.5. Set imc_cmd_start_char parameter
+   1.6. Set outbound_proxy parameter
+   1.7. Usage of imc_manager() function
+   1.8. List of commands
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module offers support for instant message conference. It
+   follows the architecture of IRC channels, you can send commands
+   embedded in MESSAGE body, because there are no SIP UA clients
+   which have GUI for IM conferencing.
+
+   You have to define an URI corresponding to im conferencing
+   manager, where user can send commands to create a new
+   conference room. Once the conference room is created, users can
+   send commands directly to conferece's URI.
+
+   To ease the integration in the configuration file, the
+   interpreter of the IMC commands are embeded in the module, from
+   configuration poin of view, there is only one function which
+   has to be executed for both messages and commands.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * mysql.
+     * tm.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.3. Exported Parameters
+
+1.3.1. db_url (str)
+
+   The database url.
+
+   The default value is
+   "mysql://openser:openserrw@localhost/openser".
+
+   Example 1.1. Set db_url parameter
+...
+modparam("imc", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+1.3.2. rooms_table (str)
+
+   The name of the table storing IMC rooms.
+
+   The default value is "imc_rooms".
+
+   Example 1.2. Set rooms_table parameter
+...
+modparam("imc", "rooms_table", "rooms")
+...
+
+1.3.3. members_table (str)
+
+   The name of the table storing IMC members.
+
+   The default value is "imc_members".
+
+   Example 1.3. Set members_table parameter
+...
+modparam("imc", "rooms_table", "members")
+...
+
+1.3.4. hash_size (integer)
+
+   The power of 2 to get the size of the hash table used for
+   storing members and rooms.
+
+   The default value is 4 (resultimg in hash size 16).
+
+   Example 1.4. Set hash_size parameter
+...
+modparam("imc", "hash_size", 8)
+...
+
+1.3.5. imc_cmd_start_char (str)
+
+   The character which indicates that the body of the message is a
+   command.
+
+   The default value is "#".
+
+   Example 1.5. Set imc_cmd_start_char parameter
+...
+modparam("imc", "imc_cmd_start_char", "#")
+...
+
+1.3.6. outbound_proxy (str)
+
+   The SIP address used as next hop when sending the message. Very
+   useful when using Kamailio with a domain name not in DNS, or
+   when using a separate Kamailio instance for imc processing. If
+   not set, the message will be sent to the address in destination
+   URI.
+
+   Default value is NULL.
+
+   Example 1.6. Set outbound_proxy parameter
+...
+modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
+...
+
+1.4. Exported Functions
+
+1.4.1.  imc_manager()
+
+   Handles Message method.It detects if the body of the message is
+   a conference command.If so it executes it, otherwise it sends
+   the message to all the members in the room.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.7. Usage of imc_manager() function
+...
+# the rooms will be named chat-xyz to avoid overlapping
+# with usernames
+if(is_method("MESSAGE)
+        && (uri=~ "sip:chat-[0-9]+@" || (uri=~ "sip:chat-manager@")
+    imc_manager();
+...
+
+1.5. Exported MI Functions
+
+1.5.1.  imc_list_rooms
+
+   Lists of the IM Conferencing rooms.
+
+   Name: imc_list_rooms
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :imc_list_rooms:_reply_fifo_file_
+                _empty_line_
+
+1.5.2.  imc_list_members
+
+   Listing of the members in IM Conferencing rooms.
+
+   Name: imc_list_members
+
+   Parameters:
+     * _room_ : the room for which you want to list the members
+
+   MI FIFO Command Format:
+                :imc_list_members:_reply_fifo_file_
+                _room_
+                _empty_line_
+
+1.6. Exported Statistics
+
+1.6.1.  active_rooms
+
+   Number of active IM Conferencing rooms.
+
+1.7. IMC Commands
+
+   A command is identified by the starting character. A command
+   must be written in one line. By default, the starting character
+   is '#'. You can change it via "imc_cmd_start_char" parameter.
+
+   Next picture presents the list of commands and their
+   parameters.
+
+   Example 1.8. List of commands
+...
+
+1.create
+  -creates a conference room
+  -takes 2 parameters:
+     1) the name of the room
+     2)optional- "private" -if present the created room is private
+           and new members can be added only though invitations
+  -the user is added as the first member and owner of the room
+  -eg:  #create chat-000 private
+
+2.join
+  -makes the user member of a room
+  -takes one optional parameter - the address of the room -if not
+    present it will be considered to be the address in the To
+    header of the message
+  -if the room does not exist the command is treated as create
+  -eg:join sip:chat-000@kamailio.org,
+      or just, #join, sent to sip:chat-000@kamailio.org
+
+3.invite
+  -invites a user to become a member of a room
+  -takes 2 parameters:
+     1)the complete address of the user
+     2)the address of the room -if not present it will be considered
+           to be the address in the To header of the message
+  -only certain users have the right to invite other user: the owner
+    and the administrators
+  -eg: #invite sip:john@kamailio.org sip:chat-000@kamailio.org
+    or  #invite john@kamailio.org sent to sip:chat-000@kamailio.org
+
+4.accept
+  -accepting an invitation
+  -takes one optional parameter - the address of the room - if not
+    present it will be considered to be the address in the To header
+    of the message
+  -eg: #accept sip:john@kamailio.org
+
+5.deny
+  -rejects an invitation
+  -the parameter is the same as for accept
+
+6.remove
+  -deletes a member from a room
+  -takes 2 parameters:
+    1)the complete address of the member
+    2)the address of the room -if not present it will be considered
+          to be the address in the To header of the message
+  -only certain members have the right to remove other members
+  -eg: #remove sip:john@kamailio.org, sent to sip:chat-000@kamailio.org
+
+7.exit
+  -leaving a room
+  -takes one optional parameter - the address of the room - if not
+    present it will be considered to be the address in the To header
+    of the message
+  -if the user is the owner of the room, the room will be destroyed
+
+8.destroy
+  -removing a room
+  -the parameter is the same as for exit
+  -only the owner of a room has the right to destroy it
+
+9.list
+  -list members in a room
+
+...
+
+1.8. Installation
+
+   Before running Kamailio with IMC, you have to setup the
+   database tables where the module will store the data. For that,
+   if the tables were not created by the installation script or
+   you choose to install everything by yourself you can use the
+   imc-create.sql SQL script in the database directories in the
+   kamailio/scripts folder as template. You can also find the
+   complete database documentation on the project webpage,
+   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.

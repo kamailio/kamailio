@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "benchmark_admin.xml">
+<!ENTITY devel SYSTEM "benchmark_devel.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Benchmark Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Bastian</firstname>
+		<surname>Friedrich</surname>
+		<affiliation><orgname>Collax GmbH</orgname></affiliation>
+		    <email>bastian.friedrich@collax.com</email>
+	    </author>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		    <email>miconda@gmail.com</email>
+	    </author>
+	    <editor>
+		<firstname>Bastian</firstname>
+		<surname>Friedrich</surname>
+		    <email>bastian.friedrich@collax.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Collax GmbH</holder>
+	</copyright>
+	<copyright>
+	    <year>2007</year>
+	    <holder>Voice System SRL</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 1.1.1.1 $</revnumber>
+		<date>$Date: 2007-04-11 14:40:39 +0200 (Mi, 11 Apr 2007) $</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &admin;
+    &devel;
+    &faq;
+    
+</book>

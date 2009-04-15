@@ -1,0 +1,381 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>
+		UAC (User Agent Client) module provides some basic UAC
+		functionalities like FROM header manipulation (anonymization)
+		or client authentication. From version 1.5.0 it has function to
+		send SIP message from configuration file.
+		</para>
+		<para>
+		Known limitations in this version:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				authentication does not support qop auth-int, just qop auth;
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				CSeq not increased during authentication - the response 
+				may be rejected.
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>TM - Transaction Module</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>RR - Record-Route Module</emphasis>, but only if
+				restore mode for FROM URI is set to <quote>auto</quote>.
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed 
+				before running &kamailio; with this module loaded:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>None</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>rr_store_param</varname> (string)</title>
+			<para>
+			Name of Record-Route header parameter that will be used to store 
+			(encoded) the original FROM URI.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being 
+					<quote>vsf</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>rr_store_param</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","rr_store_param","my_param")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>from_restore_mode</varname> (string)</title>
+			<para>
+			There are 3 mode of restoring the original FROM URI:
+			<itemizedlist>
+			<listitem>
+				<para>
+				<quote>none</quote> - no information about original URI is 
+				stored; restoration is not possible.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>manual</quote> - all following replies will be restored,
+				but not also the sequential requests - this must be manually 
+				updated based on original URI.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>auto</quote> - all sequential requests and replies will 
+				be automatically updated based on stored original URI.
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being 
+					<quote>auto</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>from_restore_mode</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","from_restore_mode","auto")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>from_passwd</varname> (string)</title>
+			<para>
+			String password to be used to encrypt the RR storing parameter. If
+			empty, no encryption will be used.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is empty.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>from_passwd</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","from_passwd","my_secret_passwd")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>credential</varname> (string)</title>
+			<para>
+			Contains a multiple definition of credentials used to perform
+			authentication.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is required if UAC authentication is used.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>credential</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","credential","username:domain:password")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="auth-realm-avp-id">
+			<title><varname>auth_realm_avp</varname> (string)</title>
+			<para>
+			The definition of an AVP that might contain the realm to be used
+			to perform authentication.
+			</para>
+			<para><emphasis>
+				If you define it, you also need to define 
+				<quote>auth_username_avp</quote> 
+				(<xref linkend="auth-username-avp-id"/>) and 
+				<quote>auth_username_avp</quote> 
+				(<xref linkend="auth-password-avp-id"/>).
+			</emphasis></para>
+			<example>
+				<title>Set <varname>auth_realm_avp</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","auth_realm_avp","$avp(i:10)")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="auth-username-avp-id">
+			<title><varname>auth_username_avp</varname> (string)</title>
+			<para>
+			The definition of an AVP that might contain the username to be used
+			to perform authentication.
+			</para>
+			<para><emphasis>
+				If you define it, you also need to define 
+				<quote>auth_realm_avp</quote> 
+				(<xref linkend="auth-realm-avp-id"/>) and 
+				<quote>auth_username_avp</quote> 
+				(<xref linkend="auth-password-avp-id"/>).
+			</emphasis></para>
+			<example>
+				<title>Set <varname>auth_username_avp</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","auth_username_avp","$avp(i:11)")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="auth-password-avp-id">
+			<title><varname>auth_password_avp</varname> (string)</title>
+			<para>
+			The definition of an AVP that might contain the password to be used
+			to perform authentication.
+			</para>
+			<para><emphasis>
+				If you define it, you also need to define 
+				<quote>auth_password_avp</quote> 
+				(<xref linkend="auth-password-avp-id"/>) and 
+				<quote>auth_username_avp</quote> 
+				(<xref linkend="auth-password-avp-id"/>).
+			</emphasis></para>
+			<example>
+				<title>Set <varname>auth_password_avp</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","auth_password_avp","$avp(i:12)")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Exported Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">uac_replace_from(display,uri)</function>
+			</title>
+			<para>
+			Replace in FROM header the <emphasis>display</emphasis> name and
+			the <emphasis>URI</emphasis> part.
+			</para>
+			<para>
+			<emphasis>display</emphasis> and <emphasis>URI</emphasis> parameters
+			can include pseudo-variables.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_replace_from</function> usage</title>
+				<programlisting format="linespecific">
+...
+# replace both display and uri
+uac_replace_from("$avp(s:display)","$avp(s:uri)");
+# replace only display and do not touch uri
+uac_replace_from("batman","");
+# remove display and replace uri
+uac_replace_from("","sip:robin@gotham.org");
+# remove display and do not touch uri
+uac_replace_from("","");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_replace_from(uri)</function>
+			</title>
+			<para>
+				Replace in FROM header the <emphasis>URI</emphasis> part
+				without altering the display name.
+			</para>
+			<para>
+			<emphasis>URI</emphasis> parameter can include pseudo-variables.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_replace_from</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_replace_from("sip:batman@gotham.org");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_restore_from()</function>
+			</title>
+			<para>
+			This function will check if the FROM URI was modified and will
+			use the information stored in header parameter to restore
+			the original FROM URI value.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_restore_from</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_restore_from();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_auth()</function>
+			</title>
+			<para>
+			This function can be called only from failure route and will 
+			build the authentication response header and insert it into the
+			request without sending anything.
+			</para>
+			<para>
+			This function can be used from FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_auth</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_auth();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_req_send()</function>
+			</title>
+			<para>
+			This function sends a SIP message from the configuration file.
+			The message is built out of $uac_req(...) pseudo-variable.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_req_send</function> usage</title>
+				<programlisting format="linespecific">
+...
+$uac_req(method)="OPTIONS";
+$uac_req(ruri)="sip:kamailio.org";
+$uac_req(furi)="sip:kamailio.org";
+$uac_req(turi)="sip:kamailio.org";
+uac_req_send();
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$uac_req(key)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+</chapter>
+

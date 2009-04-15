@@ -1,0 +1,378 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module offers support for instant message conference. It
+		follows the architecture of IRC channels, you can send commands
+		embedded in MESSAGE body, because there are no SIP UA clients
+		which have GUI for IM conferencing.
+	</para>
+	<para>
+	You have to define an URI corresponding to im conferencing manager, where
+	user can send commands to create a new conference room. Once the conference
+	room is created, users can send commands directly to conferece's URI.
+	</para>
+	<para>
+	To ease the integration in the configuration file, the interpreter of
+	the IMC commands are embeded in the module, from configuration poin of
+	view, there is only one function which has to be executed for both
+	messages and commands.
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>mysql</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		The database url.
+		</para>
+		<para>
+		<emphasis>	
+		The default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>rooms_table</varname> (str)</title>
+		<para>
+		The name of the table storing IMC rooms.
+		</para>
+		<para>
+		<emphasis>
+		The default value is "imc_rooms".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rooms_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "rooms_table", "rooms")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>members_table</varname> (str)</title>
+		<para>
+		The name of the table storing IMC members.
+		</para>
+		<para>
+		<emphasis>
+		The default value is "imc_members".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>members_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "rooms_table", "members")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>hash_size</varname> (integer)</title>
+		<para>
+		The power of 2 to get the size of the hash table used for storing
+		members and rooms.
+		</para>
+		<para>
+		<emphasis>
+		The default value is 4 (resultimg in hash size 16).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "hash_size", 8)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>imc_cmd_start_char</varname> (str)</title>
+		<para>
+	The character which indicates that the body of the message is a command.
+		</para>
+		<para>
+		<emphasis>
+		The default value is "#".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>imc_cmd_start_char</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "imc_cmd_start_char", "#")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>outbound_proxy</varname> (str)</title>
+		<para>
+	   The SIP address used as next hop when sending the message. Very
+   useful when using Kamailio with a domain name not in DNS, or
+   when using a separate Kamailio instance for imc processing. If
+   not set, the message will be sent to the address in destination
+   URI.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">imc_manager()</function>
+		</title>
+		<para>
+		Handles Message method.It detects if the body of the message is a
+		conference command.If so it executes it, otherwise it sends the
+		message to all the members in the room. 
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>Usage of <varname>imc_manager()</varname> function</title>
+		<programlisting format="linespecific">
+...
+# the rooms will be named chat-xyz to avoid overlapping
+# with usernames
+if(is_method("MESSAGE)
+        &amp;&amp; (uri=~ "sip:chat-[0-9]+@" || (uri=~ "sip:chat-manager@")
+    imc_manager();
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">imc_list_rooms</function>
+		</title>
+		<para>
+		Lists of the IM Conferencing rooms.
+		</para>
+		<para>
+		Name: <emphasis>imc_list_rooms</emphasis>
+		</para>
+		<para>Parameters: none</para>
+
+        <para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:imc_list_rooms:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+	</section>
+
+    <section>
+		<title>
+		<function moreinfo="none">imc_list_members</function>
+		</title>
+		<para>
+		Listing of the members in IM Conferencing rooms.
+		</para>
+		<para>
+		Name: <emphasis>imc_list_members</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_room_ : the room for which you want to list the members</para></listitem>
+        </itemizedlist>
+
+        <para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:imc_list_members:_reply_fifo_file_
+		_room_
+		_empty_line_
+		</programlisting>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Statistics</title>
+	<section>
+		<title>
+		<function moreinfo="none">active_rooms</function>
+		</title>
+		<para>
+		Number of active IM Conferencing rooms.
+		</para>
+		
+	</section>
+	</section>
+
+	
+	<section>
+	<title>IMC Commands</title>
+		<para>
+		A command is identified by the starting character. A command must be
+		written in one line. By default, the starting character is '#'. You
+		can change it via "imc_cmd_start_char" parameter.
+		</para>
+		<para>
+		Next picture presents the list of commands and their parameters.
+		</para>
+
+		<example>
+		<title>List of commands</title>
+		<programlisting format="linespecific">
+...
+
+1.create
+  -creates a conference room
+  -takes 2 parameters:
+     1) the name of the room
+     2)optional- "private" -if present the created room is private
+	   and new members can be added only though invitations
+  -the user is added as the first member and owner of the room
+  -eg:  #create chat-000 private
+
+2.join
+  -makes the user member of a room
+  -takes one optional parameter - the address of the room -if not
+    present it will be considered to be the address in the To
+    header of the message
+  -if the room does not exist the command is treated as create
+  -eg:join sip:chat-000@kamailio.org,
+      or just, #join, sent to sip:chat-000@kamailio.org
+
+3.invite
+  -invites a user to become a member of a room
+  -takes 2 parameters:
+     1)the complete address of the user
+     2)the address of the room -if not present it will be considered
+	   to be the address in the To header of the message
+  -only certain users have the right to invite other user: the owner
+    and the administrators
+  -eg: #invite sip:john@kamailio.org sip:chat-000@kamailio.org
+    or  #invite john@kamailio.org sent to sip:chat-000@kamailio.org
+
+4.accept
+  -accepting an invitation
+  -takes one optional parameter - the address of the room - if not
+    present it will be considered to be the address in the To header
+    of the message
+  -eg: #accept sip:john@kamailio.org
+
+5.deny
+  -rejects an invitation
+  -the parameter is the same as for accept
+
+6.remove
+  -deletes a member from a room
+  -takes 2 parameters:
+    1)the complete address of the member
+    2)the address of the room -if not present it will be considered
+	  to be the address in the To header of the message
+  -only certain members have the right to remove other members
+  -eg: #remove sip:john@kamailio.org, sent to sip:chat-000@kamailio.org
+
+7.exit
+  -leaving a room
+  -takes one optional parameter - the address of the room - if not
+    present it will be considered to be the address in the To header
+    of the message
+  -if the user is the owner of the room, the room will be destroyed
+
+8.destroy
+  -removing a room
+  -the parameter is the same as for exit
+  -only the owner of a room has the right to destroy it
+
+9.list
+  -list members in a room
+
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+	<title>Installation</title>
+		<para>
+		Before running &kamailio; with IMC, you have to setup the database 
+		tables where the module will store the data. For that, if the 
+		tables were not created by the installation script or you choose
+		to install everything by yourself you can use the imc-create.sql
+		<acronym>SQL</acronym> script in the database directories in the 
+		kamailio/scripts folder as template. 
+		You can also find the complete database documentation on the
+		project webpage, &kamailiodbdocslink;.
+		</para>
+	</section>
+
+</chapter>
+

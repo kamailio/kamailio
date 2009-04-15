@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "db_unixodbc_admin.xml">
+<!ENTITY devel SYSTEM "db_unixodbc_devel.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>unixodbc Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Marco</firstname>
+		<surname>Lorrai</surname>
+		<affiliation><orgname>abbeynet.it</orgname></affiliation>
+		<address>
+			<email>marco.lorrai@abbeynet.it</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Marco</firstname>
+		<surname>Lorrai</surname>
+		<address>
+			<email>marco.lorrai@abbeynet.it</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2005</year>
+		<year>2006</year>
+		<holder>Marco Lorrai</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&admin;
+	&devel;
+	&faq;
+	
+</book>

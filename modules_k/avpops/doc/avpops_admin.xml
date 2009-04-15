@@ -1,0 +1,1086 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>
+		AVPops (AVP-operations) modules implements a set of script
+		functions which allow access and manipulation of user AVPs
+		(preferences) and pseudo-variables. AVPs are a powerful tool
+		for implementing services/preferences per user/domain. Now they
+		are usable directly from configuration script. Functions for
+		interfacing DB resources (loading/storing/removing), functions
+		for swapping information between AVPs and SIP messages, function for 
+		testing/checking the value of an AVP.
+		</para>
+		<para>
+		AVPs are persistent per SIP transaction, being available in "route", 
+		"branch_route" and "failure_route". To make them available in 
+		"onreply_route" armed via TM module, set "onreply_avp_mode" parameter
+		of TM module (note that in the default "onreply_route", the AVPs of
+		the transaction are not available).
+		</para>
+		<para>
+		An up-to-date tutorial providing more information (detailed
+		explanations and commented examples) can be found on Voice Sistem
+		documentation web page at http://voice-system.ro/docs/avpops .
+		</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>Optionally a database module</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed 
+				before running &kamailio; with this module loaded:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>None</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>AVP naming format</title>
+		<para>
+		The format of the parameters specifying an AVP in functions exported
+		by this module is:
+			<emphasis role="bold">$avp(avp_flags:avp_name)</emphasis> or
+			<emphasis role="bold">$avp(avp_alias)</emphasis>.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>avp_flags</emphasis> = type_flags [script_flags]; type_flags = 'I' | 'i' | 'S' | 's'; script_flags = 0..255
+		</para>
+		<para>
+		'I' or 'i' means that the type of avp name is integer (ID)
+		</para>
+		<para>
+		'S' or 's' means that the type of avp name is string
+		</para>
+		<para>
+		The type flag is mandatory.
+		</para>
+		<para>
+		script_flags must be an 8 bit unsigned number, therefore can be set
+		up to 8 flags. If no script flag is provided, the name will
+		match all AVPs, regardless they have or not a script flag set (preserves
+		the compatibility with the old naming schema).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>avp_name</emphasis> = string | integer
+		</para>
+		<para>
+		string - might be any alphanumeric string, wich contain following
+		characters: [a-z] [A-Z] [0-9] '_'
+		</para>
+		<para>
+		integer - might be an unsigned integer, greater than zero, up to 2^16-1
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>avp_alias</emphasis> = string
+		</para>
+		<para>
+		string - might be any alphanumeric string, wich contain following
+		characters: [a-z] [A-Z] [0-9] '_'
+		</para>
+		</listitem>
+		</itemizedlist>
+			<example>
+				<title>AVP naming examples</title>
+				<programlisting format="linespecific">
+...
+$avp(i:11) - the AVP identified by integer 11
+$avp(s:foo) - the AVP identified by the string 'foo'
+$avp(bar) - the AVP identified by the AVP alias 'bar'
+$avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
+    and 2 set
+...
+				</programlisting>
+			</example>
+	</section>
+	<section>
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>db_url</varname> (string)</title>
+			<para>
+			DB URL for database connection.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being NULL.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>db_url</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","db_url","mysql://user:passwd@host/database")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>avp_table</varname> (string)</title>
+			<para>
+			DB table to be used.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being NULL. But if
+					you specify a db_url, you need also setup this parameter.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>avp_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","avp_table","avptable")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>use_domain</varname> (integer)</title>
+			<para>
+				If the domain part of the an URI should be used for 
+				identifying an AVP in DB operations.
+			</para>
+			<para>
+				<emphasis>Default value is 0 (no).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>use_domain</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","use_domain",1)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>uuid_column</varname> (string)</title>
+			<para>
+				Name of column containing the uuid (unique user id).
+			</para>
+			<para>
+				<emphasis>Default value is <quote>uuid</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>uuid_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","uuid_column","uuid")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>username_column</varname> (string)</title>
+			<para>
+				Name of column containing the username.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>username</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>username_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","username_column","username")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>domain_column</varname> (string)</title>
+			<para>
+				Name of column containing the domain name.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>domain</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>domain_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","domain_column","domain")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>attribute_column</varname> (string)</title>
+			<para>
+				Name of column containing the attribute name (AVP name).
+			</para>
+			<para>
+				<emphasis>Default value is <quote>attribute</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>attribute_column</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","attribute_column","attribute")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>value_column</varname> (string)</title>
+			<para>
+				Name of column containing the AVP value.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>value</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>value_column</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","value_column","value")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>type_column</varname> (string)</title>
+			<para>
+				Name of integer column containing the AVP type.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>type</quote>.
+				</emphasis>
+			</para>
+			<para>
+			Possible column values are 
+			<itemizedlist>
+			<listitem><para><emphasis>
+				0 - AVP with string name and string value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+				1 - AVP with string name and integer value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+				2 - AVP with integer name and string value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+				3 - AVP with integer name and integer value
+			</emphasis></para></listitem>
+			</itemizedlist>
+			</para>
+
+			<example>
+				<title>Set <varname>type_column</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","type_column","type")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>db_scheme</varname> (string)</title>
+			<para>
+				Definition of a DB scheme to be used for non-standard
+				access to Database information.
+			</para>
+			<para>
+			Definition of a DB scheme. Scheme syntax is:
+			<itemizedlist>
+				<listitem><para><emphasis>
+				db_scheme = name':'element[';'element]*
+				</emphasis></para></listitem>
+				<listitem><para><emphasis>element</emphasis> =
+					<itemizedlist>
+						<listitem><para>'uuid_col='string
+						</para></listitem>
+						<listitem><para>'username_col='string
+						</para></listitem>
+						<listitem><para>'domain_col='string
+						</para></listitem>
+						<listitem><para>'value_col='string
+						</para></listitem>
+						<listitem><para>'value_type='('integer'|'string')
+						</para></listitem>
+						<listitem><para>'table='string
+						</para></listitem>
+					</itemizedlist>
+				</para></listitem>
+			</itemizedlist>
+			</para>
+			<para>
+				<emphasis>Default value is <quote>NULL</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>db_scheme</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","db_scheme",
+"scheme1:table=subscriber;uuid_col=uuid;value_col=first_name")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Exported Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_load(source,name)
+				</function>
+			</title>
+			<para>
+			Loads from DB into memory the AVPs corresponding to the given
+			<emphasis>source</emphasis>. If given, it sets the script flags
+			for loaded AVPs. It returns true if it loaded some values 
+			in AVPs, false otherwise (db error, no avp loaded ...).
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>source</emphasis> - what info is used for 
+				identifying the AVPs. Parameter syntax:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					source = (pvar|str_value)
+					['/'('username'|'domain'|'uri'|'uuid')])
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					pvar = any pseudo variable defined in &kamailio;. If
+					the pvar is $ru (request uri), $fu (from uri), $tu (to uri)
+					or $ou (original uri), then the implicit flag is 'uri'.
+					Otherwise, the implicit flag is 'uuid'.
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVPs will be loaded
+				from DB into memory. Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = avp_spec['/'(table_name|'$'db_scheme)]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					avp_spec = matching_flags|$avp(avp_name)|$avp(avp_alias)
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					matching_flags = 'a' | 'A' | 'i' | 'I' | 's' | 'S'
+					[script_flags]
+					</emphasis></para><para>'a' or 'A' means matching any of
+					AVP name types ('i' and 's') (NOTE: matching_flags cannot
+					be used with $db_scheme because the name of AVP to save in 
+					cannot be specified), the rest have the
+					meaning descriped in 'AVP naming format' chapter.</para>
+					</listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			
+			<example>
+				<title><function>avp_db_load</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_load("$fu","$(i:678)");
+avp_db_load("$ru/domain","i:/domain_preferences");
+avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
+avp_db_load("$ru","$avp(i1:123)/$some_scheme");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_store(source,name)</function>
+			</title>
+			<para>
+			Stores to DB the AVPs corresponding to the given
+			<emphasis>source</emphasis>.
+			</para>
+			<para>The meaning and usage of the parameters are identical as for
+			<emphasis>avp_db_load(source,name)</emphasis>
+			function. Please refer to its description.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			
+			<example>
+				<title><function>avp_db_store</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_store("$tu","$avp(i:678)");
+avp_db_store("$ru/username","$avp(email)");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_delete(source,name)</function>
+			</title>
+			<para>
+			Deletes from DB the AVPs corresponding to the given
+			<emphasis>source</emphasis>.
+			</para>
+			<para>The meaning and usage of the parameters are identical as for
+			<emphasis>avp_db_load(source,name)</emphasis>
+			function. Please refer to its description.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_db_delete</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_delete("$tu","$avp(i:678)");
+avp_db_delete("$ru/username","$avp(email)");
+avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_query(query[,dest])</function>
+			</title>
+			<para>
+			Make a database query and store the result in AVPs.
+			</para>
+			<para>
+			The meaning and usage of the parameters:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>query</emphasis> - must be a valid SQL
+				query. The parameter can contain pseudo-variables.</para>
+				<para>You must escape any pseudo-variables manually to prevent
+				SQL injection attacks. You can use the existing transformations
+				<emphasis>escape.common</emphasis> and 
+				<emphasis>unescape.common</emphasis>
+				to escape and unescape the content of any pseudo-variable.
+				Failing to escape the variables used in the query makes you 
+				vulnerable to SQL injection, e.g. make it possible for an 
+				outside attacker to alter your database content.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>dest</emphasis> - a list with AVP names where
+				to store the result. The format is
+				<quote>$avp(name1);$avp(name2);...</quote>. If this parameter
+				is ommited, the result is stored in 
+				<quote>$avp(i:1);$avp(i:2);...</quote>. If the result gives
+				many rows, then multiple AVPs with corresponding name will
+				be added. The value type of the AVP (string or integer) will
+				be derived from the type of the columns. Please note that only
+				this two datatypes are supported, so its not possible for
+				example to return floating point or big integer values this way.
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>The function delivers the following return-codes:</para>
+			<itemizedlist>
+			<listitem><para>
+			<emphasis>-1</emphasis> - An error occured while querying the database
+			(e.g. wrong SQL or database error)
+			</para></listitem>
+			<listitem><para>
+			<emphasis>1</emphasis> - Query was successful
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-2</emphasis> - Query was successful, but no rows where returned.
+			</para></listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_db_query</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_query("select password, ha1 from subscriber where username='$tu'",
+	"$avp(i:678);$avp(i:679)");
+avp_db_query("delete from subscriber");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_delete(name)
+				</function>
+			</title>
+			<para>
+			Deletes from memory the AVPs with <emphasis>name</emphasis> or,
+			if empty, all AVPs.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVPs will be deleted
+				from memory.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = (matching_flags|avp_name|avp_alias)['/'flag]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					matching_flags = please refer to avp_db_load() function
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flag = 'g'|'G'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_delete</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_delete("$avp(i:678)/g");
+avp_delete("$avp(email)");
+avp_delete("i");
+avp_delete("a3");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_pushto(destination,name)
+				</function>
+			</title>
+			<para>
+			Pushes the value of AVP(s) into the SIP message.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>destination</emphasis> - as what will be the
+				AVP value pushed into SIP message.
+				Parameter syntax:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					destination = '$ru' ['/'('username'|'domain')] | '$du' |
+					'$br'
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					$ru '['/'('username'|'domain')] - write the AVP in the
+					request URI or in username/domain part of it
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					$du - write the AVP in 'dst_uri' field
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					$br - write the AVP directly as a new branch (does not 
+					affect RURI)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVP(s)/pseudo-variable
+				should be pushed
+				into the SIP message.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias | pvar_name )['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' - effective only with AVPs
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_pushto</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_pushto("$ru/domain","$fd");
+avp_pushto("$ru","$avp(i:678)");
+avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
+avp_pushto("$du","$avp(i:679)");
+avp_pushto("$br","$avp(i:680)");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_check(name,op_value)
+				</function>
+			</title>
+			<para>
+			Checks the value of the AVP(s) against an operator and value.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVP(s) should be 
+				checked.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( pseudo-variable )
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>op_value</emphasis> - define the operator, 
+				the value and flags for checking.
+				Parameter syntax is:
+				</para>
+				<itemizedlist>
+					<listitem><para><emphasis>
+					op_value = operator '/' value ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					operator = 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
+					| 're' | 'fm' | 'and' | 'or' | 'xor'
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					value = pseudo-variable | fix_value
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					fix_value = 'i:'integer | 's:'string | string
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'i' | 'I'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				<para>
+				Operator meaning:
+				</para>
+				<itemizedlist>
+					<listitem><para><emphasis>eq
+					</emphasis> - equal</para></listitem>
+					<listitem><para><emphasis>ne
+					</emphasis> - not equal</para></listitem>
+					<listitem><para><emphasis>lt
+					</emphasis> - less than</para></listitem>
+					<listitem><para><emphasis>le
+					</emphasis> - less or equal</para></listitem>
+					<listitem><para><emphasis>gt
+					</emphasis> - greater than</para></listitem>
+					<listitem><para><emphasis>ge
+					</emphasis> - greater or equal</para></listitem>
+					<listitem><para><emphasis>re
+					</emphasis> - regexp (regular exression match)</para>
+					</listitem>
+					<listitem><para><emphasis>fm
+					</emphasis> - fast match (see: man fnmatch)</para>
+					</listitem>
+					<listitem><para><emphasis>and
+					</emphasis> - bitwise 'and'</para></listitem>
+					<listitem><para><emphasis>or
+					</emphasis> - bitwise 'or'</para></listitem>
+					<listitem><para><emphasis>xor
+					</emphasis> - bitwise 'xor'</para></listitem>
+				</itemizedlist>
+				<para>
+				Integer values can be given in hexadecimal using notation:
+				'i:0xhex_number' (e.g.,: 'i:0xabcd');
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_check</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_check("$avp(i:678)", "lt/i:345/g");
+avp_check("$fd","eq/$td/I");
+avp_check("$avp(s:foo)","gt/$avp($bar)/g");
+avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
+avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_copy(old_name,new_name)
+				</function>
+			</title>
+			<para>
+			Copy / move an avp under a new name.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name1</emphasis> - which AVP(s) should be 
+				copied/moved.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name2</emphasis> - the new name of the 
+				copied/moved AVP(s).
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias ) ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'd' | 'D' | 'n' | 'N' | 's' | 'S'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_copy</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_copy("$avp(i:678)", "$avp(s:345)/g");
+avp_copy("$avp(old)","$avp(new)/gd");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_printf(dest, format)
+				</function>
+			</title>
+			<para>
+			NOTE: since &kamailio; 1.3.0 the function has been moved to core
+			and it is an alias to pv_printf().
+			</para>
+			<para>
+			Prints the formatted string 'format' in the AVP 'dest'. The
+			'format' parameter can include any pseudo-variable defined in
+			&kamailio;. The list with all pseudo-variables in &kamailio; can
+			be found at:	
+			<ulink url="http://kamailio.org/dokuwiki/">
+			http://kamailio.org/dokuwiki/</ulink>.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>dest</emphasis> - in which AVP should be 
+				stored the result.
+				Parameter syntax is:
+				</para>
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+				</itemizedlist>
+			</listitem>
+			<listitem>
+				<para><emphasis>format</emphasis> - the formatted string
+				to be printed in 'dest' AVP.
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_printf</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-id)");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_subst(avps, subst)</function>
+			</title>
+			<para>
+			Perl/sed-like subst applied to AVPs having string value.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>avps</emphasis> - source AVP, destination AVP
+				and flags. Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					avps = src_avp [ '/' dst_avp [ '/' flags ] ]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					src_avp = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					dst_avp = ( avp_name | avp_alias ) - if dst_avp is missing
+					then the value of src_avp will be replaced
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = ( d | D | g | G ) -- (d, D - delete source avp;
+					g, G - apply to all avps matching src_avp name)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>subst</emphasis> - perl/sed-like reqular expression.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					subst = "/regexp/replacement/flags"
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					regexp - regular expression
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					replacement - replacement string, can include 
+					pseudo-variables and \1, ..., \9 for matching tokens, 
+					\0 for whole matching text
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'i' | 'i' (g, G - replace all 
+					matching tokens; i, I - match ignore case)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_subst</function> usage</title>
+				<programlisting format="linespecific">
+...
+# if avp i:678 has a string value in e-mail format, replace the
+# domain part with the value of domain part from R-URI
+avp_subst("$avp(i:678)", "/(.*)@(.*)/\1@$rd/");
+
+# if any avp i:678 has a string value in e-mail format, replace the
+# domain part with the value of domain part from R-URI
+# and place the result in avp i:679
+avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
+...
+				</programlisting>
+			</example>
+			<para>
+			IMPORTANT NOTE: if the replacement string includes src_avp
+			or dst_avp you will get something that you may not expect.
+			In case you have many src_avp and you make the substitution
+			to be applied to all of them, after the first src_avp is
+			processed, it will be added in avp list and next
+			processing will use it.
+			</para>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_op(name,op_value)
+				</function>
+			</title>
+			<para>
+			Different integer operations with avps.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis>
+				- 'source_avp/destination_avp' - which AVP(s) should be 
+				processed and where to store the result. If 'destination_avp'
+				is missing, same name as 'source_avp' is used to store the
+				result.
+				</para>
+				<para>
+				Parameter syntax is:
+				</para>
+				<itemizedlist>
+					<listitem>
+					<para><emphasis>
+					name = ( source_avp[/destination_avp] )
+					</emphasis></para>
+					<para><emphasis>
+					source_avp = ( avp_name | avp_alias )
+					</emphasis></para>
+					<para><emphasis>
+					destination_avp = ( avp_name | avp_alias )
+					</emphasis></para>
+					</listitem>
+				</itemizedlist>
+			</listitem>
+			<listitem>
+				<para><emphasis>op_value</emphasis> - define the operation, 
+				the value and flags.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					op_value = operator '/' value ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					operator = 'add' | 'sub' | 'mul' | 'div' | 'mod'
+					| 'and' | 'or' | 'xor' | 'not'
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					value = pseudo-variable | fix_value
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					fix_value = 'i:'integer
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'd' | 'D'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+				<para>
+				Integer values can be given in hexadecimal using notation
+				'i:0xhex_number' (e.g.,: 'i:0xabcd');
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_op</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_op("$avp(i:678)", "add/i:345/g");
+avp_op("$avp(number)","sub/$avp(number2)/d");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">is_avp_set(name)
+				</function>
+			</title>
+			<para>
+			Check if any AVP with <emphasis>name</emphasis> is set.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis> - name of AVP to look for.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = avp_name|avp_alias [ '/' flags ])
+					</emphasis></para>
+					<para><emphasis>
+					flags = ('e'|'s'|'n') - e = empty value; s = value string;
+					n = value number (int)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>is_avp_set</function> usage</title>
+				<programlisting format="linespecific">
+...
+if(is_avp_set("$avp(i:678)"))
+    log("AVP with integer id 678 exists\n");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_print()
+				</function>
+			</title>
+			<para>
+			Prints the list with all the AVPs from memory. This is only a
+			helper/debug function.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_print</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_print();
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+</chapter>
+

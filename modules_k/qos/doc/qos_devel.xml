@@ -1,0 +1,74 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+	<section>
+	<title>Available Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">register_qoscb (qos, type, cb, param)</function>
+		</title>
+		<para>Register a new callback to the qos.</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>struct qos_ctx_st* qos</emphasis> - qos to 
+			register callback to. If maybe NULL only for QOSCB_CREATED callback
+			type, which is not a per qos type.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>int type</emphasis> - types of callbacks; more
+			types may be register for the same callback function; only 
+			QOSCB_CREATED must be register alone. Possible types:
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>QOSCB_CREATED</emphasis> - called when a new 
+				qos context is created - it's a global type (not associated to 
+				any qos).
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>QOSCB_ADD_SDP</emphasis> - called when a new SDP
+				was added to the qos context - it's a per qos type.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>QOSCB_UPDATE_SDP</emphasis> - called when an
+				existing SDP is updated - it's a per qos type.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>QOSCB_REMOVE_SDP</emphasis> - called when an 
+				existing SDP is removed - it's a per qos type.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>QOSCB_TERMINATED</emphasis> - called when the 
+				qos is terminated.
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>qos_cb cb</emphasis> - callback function to be 
+			called. Prototype is: <quote>void (qos_cb) 
+			(struct qos_ctx_st *qos, int type, struct qos_cb_params *params);
+			</quote>
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>void *param</emphasis> - parameter to be passed to
+			the callback function.
+			</para>
+		</listitem>
+		</itemizedlist>
+	</section>
+
+	</section>
+
+</chapter>
+

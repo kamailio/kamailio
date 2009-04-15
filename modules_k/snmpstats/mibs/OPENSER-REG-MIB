@@ -1,0 +1,204 @@
+-- *******************************************************************
+-- OPENSER-REG-MIB: OpenSER Global Registration MIB file
+--
+-- Date of Creation: March 2006
+-- Mike Varley
+--
+-- Copyright (c) The Internet Society (2006)
+-- Ammendments (c) Soma Networks, Inc. (2006)            
+--
+-- Modeled after recommedations in 'Understanding SNMP MIBs'
+-- (Perkins, McGinnis) Prentice Hall 1997, chapter 8.
+--
+-- using SMIv2 syntax.
+--
+-- *******************************************************************
+
+OPENSER-REG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY,
+    enterprises, OBJECT-IDENTITY
+        FROM SNMPv2-SMI;
+
+openserRegMibModule MODULE-IDENTITY
+    LAST-UPDATED    "200702150430Z"
+    ORGANIZATION    "OpenSER"
+    CONTACT-INFO
+        "http://www.openser.org open source project."
+    DESCRIPTION
+        "OpenSER Global Registration MIB"
+
+    REVISION "200702150430Z"
+    DESCRIPTION
+        "Moved the OpenSER MIBs from the experimental branch to the IANA
+         assigned enterprise branch 27483"       
+
+    REVISION "200603211200Z"
+    DESCRIPTION
+        "Initial OpenSER Mib Release"
+    ::= { openserModules 1 }
+
+-- top level enterprise identification
+openser OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "The IANA has assigned enterprise branch 27483 to OpenSER."
+    ::= { enterprises 27483 }
+
+-- namespace management sub-trees    
+openserReg OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for identification of Modules and logical components."
+    ::= { openser 1 }
+
+openserGeneric OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for objects and events common to OpenSER products."
+    ::= { openser 2 }
+    
+openserProducts OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for objects and events for specific OpenSER products and modules."
+    ::= { openser 3 }
+    
+-- Agent implementation profiles: Agents which implement the product MIBs 
+-- can publish under this branch which portions they support or exclude.
+openserCaps OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for agent implementation profiles."
+    ::= { openser 4 }
+
+openserReqs OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for Management Application module requirements."
+    ::= { openser 5 }
+    
+-- Experimental branch, for development
+openserExpr   OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for experimental definitions and new development."
+    ::= { openser 6 }
+
+
+--
+-- The Registration sub-tree
+--
+openserModules  OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree to register the values assigned to modules with the 
+     MODULE-IDENTITY construct. Core MIBs are registered under this branch."
+    ::= { openserReg 1 }
+
+openserPlugins OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION
+    "Sub-tree to register plugin modules. Plugins with their own specific MIBs
+     are registered under this branch."
+    ::= {openserReg 2 }
+    
+--
+-- Generic Sub-tree: currently there are no generic object or event definitions
+-- for the openSER group.
+--
+
+--
+-- Products Sub-tree: this is the sub-tree where all product specific object
+-- and events are defined.
+--
+
+openserCoreMIB  OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for all objects and events related to the core OpenSER MIBs"
+    ::= { openserProducts 1 }
+
+openserPluginMIB OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "Sub-tree for all objects and events related to plugins for OpenSER."
+    ::= { openserProducts 2 }
+ 
+--
+-- Agent Capabilities Sub-tree: currently there are no agent capability MIBs
+-- defined.
+--   
+
+-- 
+-- Requirements Sub-tree: currently there are no Management Application
+-- requirement MIBs defined.
+--
+
+--
+-- Experimental Sub-tree: currently there are no experimental MIBs defined.
+--
+
+
+--
+-- Module Registrations: each MIB needs a registration entry here, referenced
+-- by the MODULE-IDENTITY construct.
+--
+-- The following are just Module Identifier definitions; the actual OID 
+-- registration takes place in the MIBs themselves. This is for reference,
+-- if someone is looking to add a new module.
+--
+
+-- openserRegMibModule ::= { openserModules 1 } is this files MODULE-IDENTITY
+
+-- The Text Conventions used by the OpenSER product tree.
+openserTcModule OBJECT IDENTIFIER ::= { openserModules 2 }
+
+-- The OpenSER version of the SIP-COMMON-MIB.
+openserSIPCommonModule OBJECT IDENTIFIER ::= { openserModules 3 }
+
+-- The OpenSER version of the SIP-SERVER-MIB.
+openserSIPServerModule OBJECT IDENTIFIER ::= { openserModules 4 }
+
+-- The OpenSER MIB Module, containing internal statistics and state
+-- information.
+openserModule OBJECT IDENTIFIER ::= { openserModules 5 }
+
+--
+-- Plugin Module Registrations: add any OpenSER plugin MIB Module registrations
+-- here, under openserPlugins.
+--
+
+--
+-- Product Core MIBs: this section has the actual MIB objects registered.
+-- The MIB files will define objects that use the following as their parent.
+--
+
+openserSIPCommonMIB OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "The OpenSER version of the SIP-COMMON-MIB. All objects and events are
+     defined under this branch."
+    ::= { openserCoreMIB 1 }
+
+openserSIPServerMIB OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "The OpenSER version of the SIP-SERVER-MIB. All objects and events are
+     defined under this branch."
+    ::= { openserCoreMIB 2 }
+    
+openserMIB OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION 
+    "The OpenSER MIB object and event definitons."
+    ::= { openserCoreMIB 3 }
+
+--
+-- Product Plugin MIBs: add any specific OpenSER plugin MIBs here, under 
+-- openserPluginMIB
+--
+
+
+END

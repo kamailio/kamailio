@@ -1,0 +1,102 @@
+<!-- Module FAQ -->
+
+<chapter>
+	
+	<title>&faqguide;</title>
+	<qandaset defaultlabel="number">
+
+	<qandaentry>
+		<question>
+		<para>What happend with old log_fmt parameter</para>
+		</question>
+		<answer>
+		<para>
+			The parameter became obsolete with the restructure of the data
+			logged by ACC module (refer to the Overview chapter). For similar
+			behaviour you can use the extra accouting (see the coresponding
+			chapter).
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>What happend with old multi_leg_enabled parameter</para>
+		</question>
+		<answer>
+		<para>
+			The parameter becaome obsolete by the addition of the new
+			multi_leg_info parameter. The multi-leg accouting is automatically
+			enabled when multi_leg_info is defined.
+			</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+			<para>What happend with old src_leg_avp_id and dst_leg_avp_id
+				parameters</para>
+		</question>
+		<answer>
+		<para>
+			The parameter was replaced by the more generic new parameter
+			multi_leg_info. This allows logging (per-leg) of more information
+			than just dst and src.
+			</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Where can I find more about &kamailio;?</para>
+		</question>
+		<answer>
+		<para>
+			Take a look at &kamailiohomelink;.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Where can I post a question about this module?</para>
+		</question>
+		<answer>
+		<para>
+			First at all check if your question was already answered on one of
+			our mailing lists: 
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>User Mailing List - &kamailiouserslink;</para>
+			</listitem>
+			<listitem>
+			<para>Developer Mailing List - &kamailiodevlink;</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			E-mails regarding any stable &kamailio; release should be sent to 
+			&kamailiousersmail; and e-mails regarding development versions
+			should be sent to &kamailiodevmail;.
+		</para>
+		<para>
+			If you want to keep the mail private, send it to 
+			&kamailiohelpmail;.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>How can I report a bug?</para>
+		</question>
+		<answer>
+		<para>
+			Please follow the guidelines provided at:
+			&kamailiobugslink;.
+		</para>
+		</answer>
+	</qandaentry>
+	</qandaset>
+</chapter>
+

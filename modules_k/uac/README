@@ -1,0 +1,284 @@
+UAC Module
+
+Ramona-Elena Modroiu
+
+   <ramona@rosdev.ro>
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Ramona-Elena Modroiu
+
+   <ramona@rosdev.ro>
+
+   Copyright © 2005 Voice Sistem
+
+   Copyright © 2009 Asipto.com
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. rr_store_param (string)
+              1.3.2. from_restore_mode (string)
+              1.3.3. from_passwd (string)
+              1.3.4. credential (string)
+              1.3.5. auth_realm_avp (string)
+              1.3.6. auth_username_avp (string)
+              1.3.7. auth_password_avp (string)
+
+        1.4. Exported Functions
+
+              1.4.1. uac_replace_from(display,uri)
+              1.4.2. uac_replace_from(uri)
+              1.4.3. uac_restore_from()
+              1.4.4. uac_auth()
+              1.4.5. uac_req_send()
+
+        1.5. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Set rr_store_param parameter
+   1.2. Set from_restore_mode parameter
+   1.3. Set from_passwd parameter
+   1.4. Set credential parameter
+   1.5. Set auth_realm_avp parameter
+   1.6. Set auth_username_avp parameter
+   1.7. Set auth_password_avp parameter
+   1.8. uac_replace_from usage
+   1.9. uac_replace_from usage
+   1.10. uac_restore_from usage
+   1.11. uac_auth usage
+   1.12. uac_req_send usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   UAC (User Agent Client) module provides some basic UAC
+   functionalities like FROM header manipulation (anonymization)
+   or client authentication. From version 1.5.0 it has function to
+   send SIP message from configuration file.
+
+   Known limitations in this version:
+     * authentication does not support qop auth-int, just qop
+       auth;
+     * CSeq not increased during authentication - the response may
+       be rejected.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * TM - Transaction Module
+     * RR - Record-Route Module, but only if restore mode for FROM
+       URI is set to "auto".
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None
+
+1.3. Exported Parameters
+
+1.3.1. rr_store_param (string)
+
+   Name of Record-Route header parameter that will be used to
+   store (encoded) the original FROM URI.
+
+   This parameter is optional, it's default value being "vsf".
+
+   Example 1.1. Set rr_store_param parameter
+...
+modparam("uac","rr_store_param","my_param")
+...
+
+1.3.2. from_restore_mode (string)
+
+   There are 3 mode of restoring the original FROM URI:
+     * "none" - no information about original URI is stored;
+       restoration is not possible.
+     * "manual" - all following replies will be restored, but not
+       also the sequential requests - this must be manually
+       updated based on original URI.
+     * "auto" - all sequential requests and replies will be
+       automatically updated based on stored original URI.
+
+   This parameter is optional, it's default value being "auto".
+
+   Example 1.2. Set from_restore_mode parameter
+...
+modparam("uac","from_restore_mode","auto")
+...
+
+1.3.3. from_passwd (string)
+
+   String password to be used to encrypt the RR storing parameter.
+   If empty, no encryption will be used.
+
+   Default value of this parameter is empty.
+
+   Example 1.3. Set from_passwd parameter
+...
+modparam("uac","from_passwd","my_secret_passwd")
+...
+
+1.3.4. credential (string)
+
+   Contains a multiple definition of credentials used to perform
+   authentication.
+
+   This parameter is required if UAC authentication is used.
+
+   Example 1.4. Set credential parameter
+...
+modparam("uac","credential","username:domain:password")
+...
+
+1.3.5. auth_realm_avp (string)
+
+   The definition of an AVP that might contain the realm to be
+   used to perform authentication.
+
+   If you define it, you also need to define "auth_username_avp"
+   (Section 1.3.6, "auth_username_avp (string)") and
+   "auth_username_avp" (Section 1.3.7, "auth_password_avp
+   (string)").
+
+   Example 1.5. Set auth_realm_avp parameter
+...
+modparam("uac","auth_realm_avp","$avp(i:10)")
+...
+
+1.3.6. auth_username_avp (string)
+
+   The definition of an AVP that might contain the username to be
+   used to perform authentication.
+
+   If you define it, you also need to define "auth_realm_avp"
+   (Section 1.3.5, "auth_realm_avp (string)") and
+   "auth_username_avp" (Section 1.3.7, "auth_password_avp
+   (string)").
+
+   Example 1.6. Set auth_username_avp parameter
+...
+modparam("uac","auth_username_avp","$avp(i:11)")
+...
+
+1.3.7. auth_password_avp (string)
+
+   The definition of an AVP that might contain the password to be
+   used to perform authentication.
+
+   If you define it, you also need to define "auth_password_avp"
+   (Section 1.3.7, "auth_password_avp (string)") and
+   "auth_username_avp" (Section 1.3.7, "auth_password_avp
+   (string)").
+
+   Example 1.7. Set auth_password_avp parameter
+...
+modparam("uac","auth_password_avp","$avp(i:12)")
+...
+
+1.4. Exported Functions
+
+1.4.1.  uac_replace_from(display,uri)
+
+   Replace in FROM header the display name and the URI part.
+
+   display and URI parameters can include pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE and from
+   BRANCH_ROUTE.
+
+   Example 1.8. uac_replace_from usage
+...
+# replace both display and uri
+uac_replace_from("$avp(s:display)","$avp(s:uri)");
+# replace only display and do not touch uri
+uac_replace_from("batman","");
+# remove display and replace uri
+uac_replace_from("","sip:robin@gotham.org");
+# remove display and do not touch uri
+uac_replace_from("","");
+...
+
+1.4.2.  uac_replace_from(uri)
+
+   Replace in FROM header the URI part without altering the
+   display name.
+
+   URI parameter can include pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE and from
+   BRANCH_ROUTE.
+
+   Example 1.9. uac_replace_from usage
+...
+uac_replace_from("sip:batman@gotham.org");
+...
+
+1.4.3.  uac_restore_from()
+
+   This function will check if the FROM URI was modified and will
+   use the information stored in header parameter to restore the
+   original FROM URI value.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. uac_restore_from usage
+...
+uac_restore_from();
+...
+
+1.4.4.  uac_auth()
+
+   This function can be called only from failure route and will
+   build the authentication response header and insert it into the
+   request without sending anything.
+
+   This function can be used from FAILURE_ROUTE.
+
+   Example 1.11. uac_auth usage
+...
+uac_auth();
+...
+
+1.4.5.  uac_req_send()
+
+   This function sends a SIP message from the configuration file.
+   The message is built out of $uac_req(...) pseudo-variable.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
+
+   Example 1.12. uac_req_send usage
+...
+$uac_req(method)="OPTIONS";
+$uac_req(ruri)="sip:kamailio.org";
+$uac_req(furi)="sip:kamailio.org";
+$uac_req(turi)="sip:kamailio.org";
+uac_req_send();
+...
+
+1.5. Exported pseudo-variables
+
+     * $uac_req(key)
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.

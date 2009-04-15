@@ -1,0 +1,549 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para> The Presence module implements the core functionality of SIP event notification.
+	It handles PUBLISH and SUBSCRIBE messages and generates
+	NOTIFY messages in a general, event independent way. It is extensible and allows registering 
+	events to it from other &kamailio; modules.
+	Supported SIP event packages are presence, presence.winfo, dialog;sla from the presence_xml
+	module and message-summary from the presence_mwi module.
+	</para>
+	<para>
+	The module uses database storage and memory caching (to improve performance).
+	The SIP SUBSCRIBE dialog information is stored in memory and 
+	is periodically updated in the database, while for PUBLISH only the presence
+	or absence of stored info for a certain resource is maintained in memory
+	to avoid unnecessary, costly database operations. 
+	It is possible to disable in-memory caching by configurng a fallback to database mode 
+	(by setting module parameter "fallback2db"). In this mode, in case a searched record is not 
+	found in cache, the search is continued	in database. This is useful for
+	an architecture in which processing and memory load might be divided on 
+	several Kamailio instances, maybe on different servers using the same database.
+	</para>
+	<para>The module implements several API functions, that can be used by other
+	modules. In fact, it can be used only as a resource module, or "library".
+	This mode of operation is enabled if the db_url parameter is not set to any value.
+	</para>
+	<para>
+	The Kamailio Presence module implements the specifications in: RFC3265, RFC3856, RFC3857, 
+	RFC3858.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>a database module</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+
+		</section>
+	</section>
+	
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname>(str)</title>
+		<para>
+		The database url.
+		</para>
+		<para>If set, the module is a fully operational
+		presence server. Otherwise, it is used as a 'library', for 
+		its exported functions.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "db_url", 
+	"mysql://openser:openserrw@192.168.2.132/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>presentity_table</varname>(str)</title>
+		<para>
+		The name of the db table where PUBLISH presence information is stored.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>presentity</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>presentity_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "presentity_table", "presentity")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>active_watchers_table</varname>(str)</title>
+		<para>
+		The name of the db table where active subscription information is stored. 
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>active_watchers</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>active_watchers_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "active_watchers_table", "active_watchers")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>watchers_table</varname>(str)</title>
+		<para>
+		The name of the db table where subscription states are stored.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>watchers</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>watchers_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "watchers_table", "watchers")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>clean_period</varname> (int)</title>
+		<para>
+		The period in seconds between checks if there are expired messages stored in database.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>100</quote>. A zero or negative value disables this activity.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>clean_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "clean_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_update_period</varname> (int)</title>
+		<para>
+		The period at which to synchronize cached subscriber info with the
+		database.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>100</quote>. A zero or negative value disables synchronization.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_update_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "db_update_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>to_tag_pref</varname> (str)</title>
+		<para>
+		The prefix used when generating to_tag when sending replies for
+		SUBSCRIBE requests.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>10</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>to_tag_pref</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "to_tag_pref", 'pres')
+...
+	</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>expires_offset</varname> (int)</title>
+		<para>
+		The value in seconds that should be subtracted from the expires value when
+		sending a 200OK for a publish. It is used for forcing the client
+		cu send an update before the old publish expires.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_offset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "expires_offset", 10)
+...
+</programlisting>
+		</example>
+
+</section>
+       <section>
+               <title><varname>max_expires</varname> (int)</title>
+               <para>
+               The the maximum admissible expires value for PUBLISH/SUBSCRIBE
+               message (in seconds).
+               </para>
+               <para>
+               <emphasis>Default value is <quote>3600</quote>.
+               </emphasis>
+               </para>
+               <example>
+               <title>Set <varname>max_expires</varname> parameter</title>
+               <programlisting format="linespecific">
+...
+modparam("presence", "max_expires", 3600)
+...
+</programlisting>
+               </example>
+       </section>
+
+<section>
+		<title><varname>server_address</varname> (str)</title>
+		<para>
+		The presence server address which will become the value of Contact header filed 
+		for 200OK replies to Subscribe and Publish and in Notify messages.
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "server_address", "sip:10.10.10.10:5060")
+...
+</programlisting>
+		</example>
+	</section>
+<section>
+		<title><varname>fallback2db</varname> (int)</title>
+		<para>
+		Setting this parameter enables a fallback to db mode of operation.
+		In this mode, in case a searched record is not found in cache, 
+		the search is continued	in database. Useful for an architecture in
+		which processing and memory load might be divided on more servers
+		using the same database.
+		</para>
+		<example>
+		<title>Set <varname>fallback2db</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "fallback2db", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>subs_htable_size</varname> (int)</title>
+		<para>
+		The size of the in-memory hash table to store subscription dialogs.
+        This parameter will be used as the power of 2 when computing table size.
+        </para>
+		<para>
+		<emphasis>Default value is <quote>9 (512)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>subs_htable_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "subs_htable_size", 11)
+...
+	</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>pres_htable_size</varname> (int)</title>
+		<para>
+        The size of the in-memory hash table to store publish records.
+        This parameter will be used as the power of 2 when computing table size.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>9 (512)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>pres_htable_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "pres_htable_size", 11)
+...
+	</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>enable_sphere_check</varname> (int)</title>
+		<para>
+		This parameter is a flag that should be set if permission rules include
+		sphere checking.
+		The sphere information is expected to be present in the RPID body
+		published by the presentity. The flag is introduced as this check requires
+		extra processing that should be avoided if this feature is not supported
+		by the clients.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0 </quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_sphere_check</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "enable_sphere_check", 1)
+...
+	</programlisting>
+		</example>
+	</section>
+
+</section>
+
+<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">handle_publish(char* sender_uri)</function>
+		</title>
+		<para>
+		Handles PUBLISH requests by storing and updating 
+		published information in memory cach and database, then calls functions to send 
+		NOTIFY messages when changes in the published information occur.
+		It takes one argument -> sender_uri. The parameter was added 
+		for enabling BLA implementation. If present, Notification of
+		a change in published state is not sent to the respective uri
+		even though a subscription exists.
+		It should be taken from the Sender header. It was left at the
+		decision of the administrator whether or not to transmit the 
+		content of this header as parameter for handle_publish, to 
+		prevent security problems.  
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if success</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if error</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+			The module sends an appropriate stateless reply
+			in all cases.
+		</para>
+
+		<example>
+		<title><function>handle_publish</function> usage</title>
+		<programlisting format="linespecific">
+...
+	if(is_method("PUBLISH"))
+	{
+		if($hdr(Sender)!= NULL)
+			handle_publish("$hdr(Sender)");
+		else
+			handle_publish();
+		t_release();
+	} 
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">handle_subscribe()</function>
+		</title>
+		<para>
+		The function which handles SUBSCRIBE requests. It stores or 
+		updates information in memory and database and calls functions to send Notify 
+		messages when a SUBSCRIBE which initiate a dialog is received
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if success</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if error</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+			The module sends an appropriate stateless reply
+			in all cases.
+		</para>
+
+		<example>
+		<title><function>handle_subscribe</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(method=="SUBSCRIBE")
+    handle_subscribe();
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+
+<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">refreshWatchers</function>
+		</title>
+		<para>
+		Triggers sending Notify messages to watchers if a change in watchers
+		authorization or in published state occurred.
+		</para>
+		<para>
+		Name: <emphasis>refreshWatchers</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>presentity_uri : the uri of the user who made the change
+				and whose watchers should be informed</para>
+			</listitem>
+			<listitem>
+				<para>event : the event package</para>
+			</listitem>
+			<listitem>
+				<para>refresh type : it distinguishes between the two different types of events
+						that can trigger a refresh: 
+						<itemizedlist>
+							<listitem>
+								<para> a change in watchers authentication: refresh type= 0 ; </para>
+							</listitem>
+							<listitem>
+								<para>
+									a statical update in published state (either through direct 
+									update in db table or by modifying the pidf manipulation document,
+									if pidf_manipulation parameter is set): refresh type!= 0.
+								</para>
+							</listitem>
+						</itemizedlist>
+				</para>
+			</listitem>
+        </itemizedlist>
+
+        <para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:refreshWatchers:fifo_reply
+		sip:11@192.168.2.132
+		presence
+		1
+		_empty_line_
+		</programlisting>
+	</section>
+
+	<section>
+	  <title>
+		<function moreinfo="none">cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions for watchers and presentity tables. Useful if you
+		have set <varname>clean_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>cleanup</emphasis>
+	  </para>
+	  <para>Parameters:<emphasis>none.</emphasis>emphasis></para>
+
+	  <para>
+		MI FIFO Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+		:cleanup:fifo_reply
+		_empty_line_
+	  </programlisting>
+	</section>
+
+   	</section>
+
+
+
+<section>
+	<title>Installation</title>
+	<para>
+	The module requires 3 tables in the Kamailio database: "presentity",
+	"active_watchers" and "watchers". The SQL 
+	syntax to create them can be found in presence-create.sql     
+	script in the database directories in the kamailio/scripts folder.
+	You can also find the complete database documentation on the
+	project webpage, &kamailiodbdocslink;.
+	</para>
+</section>
+
+</chapter>
+

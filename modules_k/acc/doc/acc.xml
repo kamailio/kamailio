@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY admin SYSTEM "acc_admin.xml">
+<!ENTITY faq SYSTEM "acc_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>Acc Module</title>
+	<productname class="trade">&kamailio;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>iptel.org</orgname></affiliation>
+		<email>jiri@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</author>
+		<author>
+		<firstname>Ramona-Elena</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>rosdev.ro</orgname></affiliation>
+		<email>ramona@rosdev.ro</email>
+		</author>
+		<editor>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2002</year>
+		<year>2003</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2004</year>
+		<year>2006</year>
+		<holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&admin;
+	&faq;
+
+</book>

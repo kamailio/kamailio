@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY admin SYSTEM "domain_admin.xml">
+<!ENTITY devel SYSTEM "domain_devel.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Domain Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+	    </author>
+	    <editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@tutpro.com</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2002-2008</year>
+	    <holder>Juha Heinanen</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &admin;
+    &devel;
+    &faq;
+
+</book>

@@ -1,0 +1,118 @@
+Statistics Module
+
+Bogdan Iancu
+
+   voice-system.ro
+
+Edited by
+
+Bogdan Iancu
+
+   Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. variable (string)
+
+        1.4. Exported Functions
+
+              1.4.1. update_stat(variable,value)
+              1.4.2. reset_stat(variable)
+
+   List of Examples
+
+   1.1. variable example
+   1.2. update_stat usage
+   1.3. reset_stat usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   The Statistics module is a wrapper over the internal statistics
+   manager, allowing the script writer to dynamically define and
+   use of statistic variables.
+
+   By bringing the statistics support into the script, it takes
+   advantage of the script flexibility in defining logics, making
+   possible implementation of any kind of statistic scenario.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.3. Exported Parameters
+
+1.3.1. variable (string)
+
+   Name of a new statistic variable. The name may be followed by
+   additional flag which describe the variable behavior:
+     * no_reset : variable cannot be reset.
+
+   Example 1.1. variable example
+modparam("statistics", "variable", "register_counter")
+modparam("statistics", "variable", "active_calls/no_reset")
+
+1.4. Exported Functions
+
+1.4.1.  update_stat(variable,value)
+
+   Updates the value of the statistic variable with the new value.
+
+   Meaning of the parameters is as follows:
+     * variable - variable to be updated (it can be a string or a
+       pseudovariable);
+     * value - value to update with; it may be also negative.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   FAILURE_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.2. update_stat usage
+...
+update_stat("register_counter", "+1");
+...
+$var(a_calls) = "active_calls";
+update_stat("$var(a_calls)", "-1");
+...
+
+1.4.2.  reset_stat(variable)
+
+   Resets to zero the value of the statistic variable.
+
+   Meaning of the parameters is as follows:
+     * variable - variable to be reset-ed (it can be a string or a
+       pseudovariable).
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   FAILURE_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.3. reset_stat usage
+...
+reset_stat("register_counter");
+...
+$var(reg_counter) = "register_counter";
+update_stat("$var(reg_counter)");
+...
