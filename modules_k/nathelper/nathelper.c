@@ -992,8 +992,7 @@ static int get_natping_socket(char *socket,
 	int lport;
 	int lproto;
 
-	if (parse_phostport( socket, strlen(socket), &host.s, &host.len,
-	&lport, &lproto)!=0){
+	if (parse_phostport( socket, &host.s, &host.len, &lport, &lproto)!=0){
 		LM_CRIT("invalid natping_socket parameter <%s>\n",natping_socket);
 		return -1;
 	}
