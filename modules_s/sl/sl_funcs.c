@@ -57,6 +57,7 @@
 #include "../../action.h"
 #include "../../config.h"
 #include "../../tags.h"
+#include "../../parser/parse_to.h"
 #include "sl_stats.h"
 #include "sl_funcs.h"
 
