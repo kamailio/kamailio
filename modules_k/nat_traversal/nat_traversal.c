@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2007-2008 Dan Pascu
+ * Copyright (C) 2007-2009 Dan Pascu
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -1406,23 +1406,26 @@ NAT_Keepalive(struct sip_msg *msg)
 static int
 FixContact(struct sip_msg *msg)
 {
-    str before_host, after;
+    str before_host, after, newip;
+    unsigned short port, newport;
     contact_t* contact;
     struct lump* anchor;
     struct sip_uri uri;
-    char *newip, *buf;
-    int len, newiplen, offset;
+    int len, offset;
+    char *buf;
 
     if (!get_contact_uri(msg, &uri, &contact))
         return -1;
 
-    newip = ip_addr2a(&msg->rcv.src_ip);
-    newiplen = strlen(newip);
+    newip.s = ip_addr2a(&msg->rcv.src_ip);
+    newip.len = strlen(newip.s);
+    newport = msg->rcv.src_port;
 
-    // Don't do anything if the IP's are the same, just return success.
-    if (newiplen==uri.host.len && memcmp(uri.host.s, newip, newiplen)==0) {
+    port = uri.port_no ? uri.port_no : 5060;
+
+    // Don't do anything if the address is the same, just return success.
+    if (STR_MATCH_STR(uri.host, newip) && port==newport)
         return 1;
-    }
 
     if (uri.port.len == 0)
         uri.port.s = uri.host.s + uri.host.len;
@@ -1432,7 +1435,7 @@ FixContact(struct sip_msg *msg)
     after.s   = uri.port.s + uri.port.len;
     after.len = contact->uri.s + contact->uri.len - after.s;
 
-    len = before_host.len + newiplen + after.len + 20;
+    len = before_host.len + newip.len + after.len + 20;
 
     // first try to alloc mem. if we fail we don't want to have the lump
     // deleted and not replaced. at least this way we keep the original.
@@ -1451,7 +1454,7 @@ FixContact(struct sip_msg *msg)
     }
 
     len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
-                  newip, msg->rcv.src_port, after.len, after.s);
+                  newip.s, newport, after.len, after.s);
 
     if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_F) == 0) {
         pkg_free(buf);
