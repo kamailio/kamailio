@@ -43,6 +43,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../pt.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
@@ -170,6 +171,9 @@ static int mi_mod_init(void)
 		}
 	}
 
+	/* add space for one extra process */
+	register_procs(1);
+
 	return 0;
 }
 
@@ -177,10 +181,22 @@ static int mi_mod_init(void)
 /*! \brief Initialize module for child processes */
 static int mi_child_init(int rank)
 {
+	int pid;
+
 	if (rank==PROC_TIMER || rank>0 ) {
 		if ( mi_writer_init(read_buf_size, mi_reply_indent)!=0 ) {
 			LM_CRIT("failed to init the reply writer\n");
 			return -1;
+		}
+	}
+
+	if (rank==PROC_MAIN) {
+		pid=fork_process(100, "MI FIFO", 1);
+		if (pid<0)
+			return -1; /* error */
+		if(pid==0){
+			/* child */
+			fifo_process(1);
 		}
 	}
 
