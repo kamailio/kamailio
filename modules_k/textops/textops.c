@@ -1811,3 +1811,39 @@ int fixup_regexpNL_none(void** param, int param_no)
 	*param=re;
 	return 0;
 }
+
+/*! \brief
+ * fixup for functions that get two parameters
+ * - first parameter is converted to regular expression structure
+ * - second parameter is not converted
+ */
+int fixup_regexp_none(void** param, int param_no)
+{
+	if (param_no != 1 && param_no != 2 )
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	if (param_no == 1)
+		return fixup_regexp_null(param, 1);
+	return 0;
+}
+
+/**
+ * fixup free for functions that get two parameters
+ * - first parameter was converted to regular expression
+ * - second parameter was notconverted
+ */
+int fixup_free_regexp_none(void** param, int param_no)
+{
+	if (param_no != 1 && param_no != 2 )
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	if (param_no == 1)
+		return fixup_free_regexp_null(param, 1);
+	return 0;
+}
+
+
