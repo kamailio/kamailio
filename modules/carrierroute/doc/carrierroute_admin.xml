@@ -53,11 +53,10 @@
 		AVPs to the routing functions.
 	</para>
 	<para>
-		Basically this module could be used as an replacement for the lcr and the 
-		dispatcher module, if you have certain performance, flexibility and/or 
-		integration requirements that these modules don't handle properly. But for 
-		small installations it probably make more sense to use the lcr and dispatcher
-		module.
+		Basically this module could be used as an replacement for the lcr and the
+		dispatcher module, if you have certain flexibility, integration and/or performance
+		requirements that can't be satisfied with these modules. But for smaller
+		installations it probably make more sense to use the lcr and dispatcher module.
 	</para>
 	<para>
 		If you want to use this module in failure routes, then you need to call
