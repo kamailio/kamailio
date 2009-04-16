@@ -64,6 +64,7 @@
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
+#include "../../lib/kcore/km_ut.h"
 #include "../usrloc/ul_mod.h"
 #include "../sl/sl_api.h"
 #include "../../mod_fix.h"
