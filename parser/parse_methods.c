@@ -155,9 +155,14 @@ int parse_method(str* _next, enum request_method* _method)
  			_next->len -= 5;
  			_next->s += 5;
  			return 1;
- 		} else {
- 			goto unknown;
  		}
+ 		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ublish", 6)) {
+ 			*_method = METHOD_PUBLISH;
+ 			_next->len -= 7;
+ 			_next->s += 7;
+ 			return 1;
+ 		}
+ 		goto unknown;
 
  	case 'R':
  	case 'r':
@@ -221,7 +226,7 @@ int parse_method(str* _next, enum request_method* _method)
  
  /* 
   * Parse comma separated list of methods pointed by _body and assign their
-  * enum bits to _methods.  Returns 1 on success and 0 on failure.
+  * enum bits to _methods.  Returns 0 on success and -1 on failure.
   */
  int parse_methods(str* _body, unsigned int* _methods)
  {
@@ -232,7 +237,7 @@ int parse_method(str* _next, enum request_method* _method)
  
 	if (!_body || !_methods) {
 		LOG(L_ERR, "parse_methods: Invalid parameter value\n");
-		return 0;
+		return -1;
 	}
 
 	next.len = _body->len;
@@ -240,19 +245,18 @@ int parse_method(str* _next, enum request_method* _method)
  
  	trim_leading(&next);
  
+  	*_methods = 0;
+ 
  	if (next.len == 0) {
- 		LOG(L_ERR, "ERROR: parse_methods: Empty body\n");
  		return 0;
  	}
 
-  	*_methods = 0;
- 
  	while (1) {
  		if (parse_method(&next, &method)) {
  			*_methods |= method;
  		} else {
  			LOG(L_ERR, "ERROR: parse_methods: Invalid method\n");
- 			return 0;
+ 			return -1;
  		}
 		
  		trim_leading(&next);
@@ -267,12 +271,12 @@ int parse_method(str* _next, enum request_method* _method)
  				}
  			} else {
  				LOG(L_ERR, "ERROR: parse_methods: Comma expected\n");
- 				return 0;
+ 				return -1;
  			}
  		} else {
  			break;
  		}
  	}
 
- 	return 1;
+ 	return 0;
  }
