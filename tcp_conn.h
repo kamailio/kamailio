@@ -188,6 +188,31 @@ struct tcp_connection{
 };
 
 
+/* helper macros */
+
+#define TCP_RCV_INFO(c) (&(c)->rcv)
+
+#define TCP_RCV_LADDR(r) (&((r).dst_ip))
+#define TCP_RCV_LPORT(r) ((r).dst_port)
+#define TCP_RCV_PADDR(r)  (&((r).src_ip))
+#define TCP_RCV_PPORT(r)  ((r).src_port)
+#define TCP_RCV_PSU(r)   (&(r).src_su)
+#define TCP_RCV_SOCK_INFO(r)  ((r).bind_address)
+#define TCP_RCV_PROTO(r)      ((r).proto)
+#ifdef USE_COMP
+#define TCP_RCV_COMP(r)       ((r).comp)
+#else
+#define TCP_RCV_COMP(r)  0
+#endif /* USE_COMP */
+
+#define TCP_LADDR(c) TCP_RCV_LADDR(c->rcv)
+#define TCP_LPORT(c) TCP_RCV_LPORT(c->rcv)
+#define TCP_PADDR(c) TCP_RCV_PADDR(c->rcv)
+#define TCP_PPORT(c) TCP_RCV_PPORT(c->rcv)
+#define TCP_PSU(c)   TCP_RCV_PSU(c->rcv)
+#define TCP_SOCK_INFO(c) TCP_RCV_SOCK_INFO(c->rcv)
+#define TCP_PROTO(c) TCP_RCV_PROTO(c->rcv)
+#define TCP_COMP(c) TCP_RCV_COMP(c->rcv)
 
 
 
