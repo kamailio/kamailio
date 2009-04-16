@@ -698,6 +698,7 @@ void free_sip_msg(struct sip_msg* msg)
 {
 	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
 	if (msg->dst_uri.s) { pkg_free(msg->dst_uri.s); msg->dst_uri.len=0; }
+	if (msg->path_vec.s) { pkg_free(msg->path_vec.s); msg->path_vec.len=0; }
 	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->body && msg->body->free) msg->body->free(&msg->body);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
@@ -750,6 +751,32 @@ void reset_dst_uri(struct sip_msg* msg)
 	msg->dst_uri.len = 0;
 }
 
+int set_path_vector(struct sip_msg* msg, str* path)
+{
+	char* ptr;
+
+	if (!msg || !path) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (msg->path_vec.s && (msg->path_vec.len >= path->len)) {
+		memcpy(msg->path_vec.s, path->s, path->len);
+		msg->path_vec.len = path->len;
+	} else {
+		ptr = (char*)pkg_malloc(path->len);
+		if (!ptr) {
+			LM_ERR("not enough pkg memory\n");
+			return -1;
+		}
+
+		memcpy(ptr, path->s, path->len);
+		if (msg->path_vec.s) pkg_free(msg->path_vec.s);
+		msg->path_vec.s = ptr;
+		msg->path_vec.len = path->len;
+	}
+	return 0;
+}
 
 struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
 {

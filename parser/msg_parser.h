@@ -328,6 +328,7 @@ typedef struct sip_msg {
 	str set_global_port;
 	struct socket_info* force_send_socket; /* force sending on this socket,
 											  if ser */
+	str path_vec;
 } sip_msg_t;
 
 /* pointer to a fakes message which was never received ;
@@ -437,4 +438,5 @@ void reset_dst_uri(struct sip_msg* msg);
 struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht);
 struct hdr_field* next_sibling_hdr(struct hdr_field *hf);
 
+int set_path_vector(struct sip_msg* msg, str* path);
 #endif
