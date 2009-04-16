@@ -1,0 +1,169 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module collects extensions from Kamailio core.
+	</para>
+	<para>
+	Kamailio Core CookBook is available at:
+	<ulink url="http://kamailio.org/dokuwiki/">
+	http://kamailio.org/dokuwiki/</ulink>
+	</para>
+	</section>
+	
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">arg</function>
+		</title>
+		<para>
+		Print command line arguments.
+		</para>
+		<para>
+		Name: <emphasis>arg</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:arg:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">kill</function>
+		</title>
+		<para>
+		Kill the application.
+		</para>
+		<para>
+		Name: <emphasis>kill</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:kill:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">pwd</function>
+		</title>
+		<para>
+		Print working directory.
+		</para>
+		<para>
+		Name: <emphasis>pwd</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:pwd:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">uptime</function>
+		</title>
+		<para>
+		Print uptime.
+		</para>
+		<para>
+		Name: <emphasis>uptime</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:uptime:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">version</function>
+		</title>
+		<para>
+		Print version information.
+		</para>
+		<para>
+		Name: <emphasis>version</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:version:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">which</function>
+		</title>
+		<para>
+		Print list of available MI commands.
+		</para>
+		<para>
+		Name: <emphasis>which</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis>.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:which:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
+    </section>
+
+</chapter>
+
