@@ -250,6 +250,15 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 		}
 		repl_nb++;
 	}
+	/* anything left? */
+	if( repl_nb && token.offset+token.size < repl_comp->replacement.len){
+		/*copy from the replacing string*/
+		memcpy(result->s + result->len,
+			repl_comp->replacement.s + token.offset+token.size, 
+			repl_comp->replacement.len -(token.offset+token.size) );
+			result->len +=repl_comp->replacement.len-(token.offset+token.size);
+	}
+
 	result->s[result->len] = '\0';
 	return 0;
 
