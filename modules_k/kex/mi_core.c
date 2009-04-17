@@ -46,7 +46,7 @@
 #include "../../ut.h"
 #include "../../pt.h"
 #include "../../mem/mem.h"
-#include "mi.h"
+#include "../../lib/kmi/mi.h"
 #include "../../version.h"
 
 #define BUILD_STR __FILE__ " compiled on "__TIME__ " " __DATE__ " with " COMPILER "\n"

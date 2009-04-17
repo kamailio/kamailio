@@ -1,0 +1,130 @@
+KEx Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2009 Daniel-Constantin Mierla
+     __________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported MI Functions
+
+              1.3.1. arg
+              1.3.2. kill
+              1.3.3. pwd
+              1.3.4. uptime
+              1.3.5. version
+              1.3.6. which
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module collects extensions from Kamailio core.
+
+   Kamailio Core CookBook is available at:
+   http://kamailio.org/dokuwiki/
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running Kamailio with this module loaded:
+     * None.
+
+1.3. Exported MI Functions
+
+1.3.1.  arg
+
+   Print command line arguments.
+
+   Name: arg
+
+   Parameters: none.
+
+   MI FIFO Command Format:
+                :arg:_reply_fifo_file_
+                _empty_line_
+
+1.3.2.  kill
+
+   Kill the application.
+
+   Name: kill
+
+   Parameters: none.
+
+   MI FIFO Command Format:
+                :kill:_reply_fifo_file_
+                _empty_line_
+
+1.3.3.  pwd
+
+   Print working directory.
+
+   Name: pwd
+
+   Parameters: none.
+
+   MI FIFO Command Format:
+                :pwd:_reply_fifo_file_
+                _empty_line_
+
+1.3.4.  uptime
+
+   Print uptime.
+
+   Name: uptime
+
+   Parameters: none.
+
+   MI FIFO Command Format:
+                :uptime:_reply_fifo_file_
+                _empty_line_
+
+1.3.5.  version
+
+   Print version information.
+
+   Name: version
+
+   Parameters: none.
+
+   MI FIFO Command Format:
+                :version:_reply_fifo_file_
+                _empty_line_
+
+1.3.6.  which
+
+   Print list of available MI commands.
+
+   Name: which
+
+   Parameters: none.
+
+   MI FIFO Command Format:
+                :which:_reply_fifo_file_
+                _empty_line_
