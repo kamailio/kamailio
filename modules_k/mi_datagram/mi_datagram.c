@@ -282,7 +282,7 @@ static int mi_child_init(int rank)
 				return -1; /* error */
 			if(pid==0) {
 				/* child */
-				datagram_process(1);
+				datagram_process(i);
 				return 0;
 			}
 		}
