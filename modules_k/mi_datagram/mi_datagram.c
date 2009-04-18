@@ -55,6 +55,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../ip_addr.h"
+#include "../../pt.h"
 #include "mi_datagram.h"
 #include "datagram_fnc.h"
 #include "mi_datagram_parser.h"
@@ -208,7 +209,7 @@ static int mi_mod_init(void)
 			return -1;
 		}
 		mi_socket_domain = host->h_addrtype;
-		return 0;
+		goto done;
 	} 
 	/* in case of a Unix socket*/
 	LM_DBG("we have an UNIX socket\n");
@@ -249,15 +250,45 @@ static int mi_mod_init(void)
 	mi_dtgram_addr.unix_addr.sun_family = AF_LOCAL;
 	memcpy( mi_dtgram_addr.unix_addr.sun_path, mi_socket, strlen(mi_socket));
 
+done:
+	/* add space for extra processes */
+	register_procs(mi_procs[0].no);
+
 	return 0;
 }
 
 
 static int mi_child_init(int rank)
 {
+	int i;
+	int pid;
+
 	if (rank==PROC_TIMER || rank>0 ) {
 		if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE , mi_reply_indent )!= 0) {
 			LM_CRIT("failed to initiate mi_datagram_writer\n");
+			return -1;
+		}
+	}
+	if (rank==PROC_MAIN) {
+		if(pre_datagram_process()!=0)
+		{
+			LM_ERR("pre-fork function failed\n");
+			return -1;
+		}
+		for(i=0; i<mi_procs[0].no; i++)
+		{
+			pid=fork_process(100, "MI DATAGRAM", 1);
+			if (pid<0)
+				return -1; /* error */
+			if(pid==0) {
+				/* child */
+				datagram_process(1);
+				return 0;
+			}
+		}
+		if(post_datagram_process()!=0)
+		{
+			LM_ERR("post-fork function failed\n");
 			return -1;
 		}
 	}
