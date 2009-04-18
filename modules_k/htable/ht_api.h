@@ -86,5 +86,6 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
 
 int ht_rm_cell_re(str *sre, ht_t *ht, int mode);
+int ht_count_cells_re(str *sre, ht_t *ht, int mode);
 
 #endif

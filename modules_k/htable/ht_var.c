@@ -235,3 +235,31 @@ int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	str htname;
+	ht_pv_t *hpv;
+	int cnt = 0;
+
+	hpv = (ht_pv_t*)param->pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL)
+			return pv_get_null(msg, param, res);
+	}
+	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
+	{
+		LM_ERR("cannot get $ht name\n");
+		return -1;
+	}
+	
+	cnt = ht_count_cells_re(&htname, hpv->ht, 0);
+
+	/* integer */
+	return pv_get_sintval(msg, param, res, cnt);
+}
+
+

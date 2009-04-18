@@ -62,6 +62,8 @@ static pv_export_t mod_pvs[] = {
 	{ {"shtex", sizeof("shtex")-1}, PVT_OTHER, pv_get_ht_cell_expire,
 		pv_set_ht_cell_expire,
 		pv_parse_ht_name, 0, 0, 0 },
+	{ {"shtcn", sizeof("shtcn")-1}, PVT_OTHER, pv_get_ht_cn, 0,
+		pv_parse_ht_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

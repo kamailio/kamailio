@@ -34,5 +34,7 @@ int pv_get_ht_cell_expire(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
+int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
 
 #endif

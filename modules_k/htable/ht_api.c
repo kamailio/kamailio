@@ -855,3 +855,47 @@ int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 	return 0;
 }
 
+int ht_count_cells_re(str *sre, ht_t *ht, int mode)
+{
+	ht_cell_t *it;
+	ht_cell_t *it0;
+	int i;
+	regex_t re;
+	regmatch_t pmatch;
+	int cnt = 0;
+
+	if(sre==NULL || sre->len<=0 || ht==NULL)
+		return 0;
+
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+	{
+		LM_ERR("bad re %s\n", sre->s);
+		return 0;
+	}
+
+	for(i=0; i<ht->htsize; i++)
+	{
+		/* free entries */
+		lock_get(&ht->entries[i].lock);
+		it = ht->entries[i].first;
+		while(it)
+		{
+			it0 = it->next;
+			if(mode==0)
+			{
+				/* match by name */
+				if (regexec(&re, it->name.s, 1, &pmatch, 0)==0)
+					cnt++;
+			} else {
+				if(it->flags&AVP_VAL_STR)
+					if (regexec(&re, it->value.s.s, 1, &pmatch, 0)==0)
+						cnt++;
+			}
+			it = it0;
+		}
+		lock_release(&ht->entries[i].lock);
+	}
+	regfree(&re);
+	return cnt;
+}
+
