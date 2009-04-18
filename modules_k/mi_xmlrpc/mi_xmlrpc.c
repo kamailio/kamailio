@@ -62,6 +62,7 @@
 
 #include "../../sr_module.h"
 #include "../../str.h"
+#include "../../pt.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 
@@ -74,6 +75,7 @@ int rpl_opt = 0;
 /* module functions */
 static int mod_init();
 static void destroy(void);
+static int child_init(int rank);
 static void xmlrpc_process(int rank);
 
 static int port = 8080;
@@ -111,7 +113,7 @@ struct module_exports exports = {
 	mod_init,                           /* module initialization function */
 	0,                                  /* response handling function */
 	destroy,                            /* destroy function */
-	0                                   /* per-child init function */
+	child_init                          /* per-child init function */
 };
 
 
@@ -129,9 +131,26 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* add space for extra processes */
+	register_procs(1);
+
 	return 0;
 }
 
+static int child_init(int rank)
+{
+	int pid;
+	if (rank==PROC_MAIN) {
+		pid=fork_process(100, "MI XMLRPC", 1);
+		if (pid<0)
+			return -1; /* error */
+		if(pid==0){
+			/* child */
+			xmlrpc_process(1);
+		}
+	}
+	return 0;
+}
 
 static void xmlrpc_sigchld( int sig )
 {
