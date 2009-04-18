@@ -34,11 +34,10 @@
 #include "mem/shm_mem.h"
 #include "ut.h"
 #include "dprint.h"
-#include "hash_func.h"
+#include "hashes.h"
 #include "pvar.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
-#define core_hash(in, a, b) get_hash1_raw((in)->s, (in)->len)
 
 #define PV_TABLE_SIZE	16
 #define TR_TABLE_SIZE	4
@@ -113,7 +112,7 @@ int pv_table_add(pv_export_t *e)
 	}
 	found = 0;
 	//pvid = get_hash1_raw(in->s, in->len);
-	pvid = core_hash(in, 0, 0);
+	pvid = get_hash1_raw(in->s, in->len);
 
 	pvi = _pv_table[pvid%PV_TABLE_SIZE];
 	while(pvi)
@@ -325,7 +324,7 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 
 	/* search in PV table */
 	// pvid = get_hash1_raw(pvname->s, pvname->len);
-	pvid = core_hash(pvname, 0, 0);
+	pvid = get_hash1_raw(pvname->s, pvname->len);
 	pvi = _pv_table[pvid%PV_TABLE_SIZE];
 	while(pvi)
 	{
@@ -1357,7 +1356,7 @@ int tr_table_add(tr_export_t *e)
 
 	found = 0;
 	// trid = get_hash1_raw(e->tclass.s, e->tclass.len);
-	trid = core_hash(&e->tclass, 0, 0);
+	trid = get_hash1_raw(e->tclass.s, e->tclass.len);
 
 	tri = _tr_table[trid%TR_TABLE_SIZE];
 	while(tri)
@@ -1460,7 +1459,7 @@ tr_export_t* tr_lookup_class(str *tclass)
 
 	/* search in TR table */
 	// trid = get_hash1_raw(tclass->s, tclass->len);
-	trid = core_hash(tclass, 0, 0);
+	trid = get_hash1_raw(tclass->s, tclass->len);
 	tri = _tr_table[trid%TR_TABLE_SIZE];
 	while(tri)
 	{
