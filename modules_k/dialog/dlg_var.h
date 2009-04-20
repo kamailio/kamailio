@@ -54,4 +54,6 @@ int dlg_cfg_cb(struct sip_msg *foo, void *bar);
 void dlg_set_ctx_dialog(struct dlg_cell *dlg);
 struct dlg_cell* dlg_get_ctx_dialog(void);
 
+dlg_ctx_t* dlg_get_dlg_ctx(void);
+
 #endif

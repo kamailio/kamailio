@@ -509,8 +509,10 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLER_LEG], 	values, 16);
 		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG], 	values, 17);
 
-		VAL_INT(values+18)		= cell->sflags;
-		VAL_INT(values+19)		= cell->toroute;
+		VAL_NULL(values+18) = 0;
+		VAL_INT(values+18)  = cell->sflags;
+		VAL_NULL(values+19) = 0;
+		VAL_INT(values+19)  = cell->toroute;
 
 		if((dialog_dbf.insert(dialog_db_handle, insert_keys, values, 
 								DIALOG_TABLE_COL_NO)) !=0){

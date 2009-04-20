@@ -682,9 +682,14 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 	unsigned int size;
 	pv_value_t val;
 
-	pve = (pv_elem_t *)value;
-	sp_dest = (pv_spec_t *)result;
-
+	if(result!=NULL)
+	{
+		pve = (pv_elem_t *)value;
+		sp_dest = (pv_spec_t *)result;
+	} else {
+		pve = NULL;
+		sp_dest = (pv_spec_t *)value;
+	}
 	if ( pve!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
 		if ( pv_printf_s(msg, pve, &val_s)!=0 || 
 		val_s.len == 0 || val_s.s == NULL) {
@@ -711,7 +716,7 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 {
-	struct dlg_cell *dlg;
+	dlg_ctx_t *dctx;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -721,17 +726,19 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 	}
 	if(val<0 || val>31)
 		return -1;
-	if ( (dlg=dlg_get_ctx_dialog())==NULL )
+	if ( (dctx=dlg_get_dlg_ctx())==NULL )
 		return -1;
 
-	dlg->sflags |= 1<<val;
+	dctx->flags |= 1<<val;
+	if(dctx->dlg)
+		dctx->dlg->sflags |= 1<<val;
 	return 1;
 }
 
 
 static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 {
-	struct dlg_cell *dlg;
+	dlg_ctx_t *dctx;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -742,17 +749,19 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 	if(val<0 || val>31)
 		return -1;
 
-	if ( (dlg=dlg_get_ctx_dialog())==NULL )
+	if ( (dctx=dlg_get_dlg_ctx())==NULL )
 		return -1;
 
-	dlg->sflags &= ~(1<<val);
+	dctx->flags &= ~(1<<val);
+	if(dctx->dlg)
+		dctx->dlg->sflags &= ~(1<<val);
 	return 1;
 }
 
 
 static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 {
-	struct dlg_cell *dlg;
+	dlg_ctx_t *dctx;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -763,10 +772,12 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 	if(val<0 || val>31)
 		return -1;
 
-	if ( (dlg=dlg_get_ctx_dialog())==NULL )
+	if ( (dctx=dlg_get_dlg_ctx())==NULL )
 		return -1;
 
-	return (dlg->sflags&(1<<val))?1:-1;
+	if(dctx->dlg)
+		return (dctx->dlg->sflags&(1<<val))?1:-1;
+	return (dctx->flags&(1<<val))?1:-1;
 }
 
 static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)

@@ -372,3 +372,7 @@ struct dlg_cell* dlg_get_ctx_dialog(void)
 	return _dlg_ctx.dlg;
 }
 
+dlg_ctx_t* dlg_get_dlg_ctx(void)
+{
+	return &_dlg_ctx;
+}

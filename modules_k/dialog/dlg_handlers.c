@@ -485,7 +485,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 		return -1;
 	}
 
-	current_dlg_pointer = dlg;
+	set_current_dialog(msg, dlg);
 	_dlg_ctx.dlg = dlg;
 
 	link_dlg(dlg, 2/* extra ref for the callback and current dlg hook */);
