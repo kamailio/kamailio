@@ -308,6 +308,12 @@ static int mod_init(void)
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
 	}
+
+	if (cfg_get(tcp, tcp_cfg, async) && !tls_force_run){
+		ERR("tls does not support tcp in async mode, please use"
+				" tcp_async=no in the config file\n");
+		return -1;
+	}
 	     /* Convert tls_method parameter to integer */
 	method = tls_parse_method(&tls_method);
 	if (method < 0) {
