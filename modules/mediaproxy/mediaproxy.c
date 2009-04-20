@@ -46,8 +46,8 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
 #include "../../msg_translator.h"
-#include "../dialog/dlg_load.h"
-#include "../dialog/dlg_hash.h"
+#include "../../modules_k/dialog/dlg_load.h"
+#include "../../modules_k/dialog/dlg_hash.h"
 
 
 MODULE_VERSION

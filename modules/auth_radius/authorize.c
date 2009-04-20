@@ -41,7 +41,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../pvar.h"
-#include "../auth/api.h"
+#include "../../modules_k/auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
 #include "authrad_mod.h"
