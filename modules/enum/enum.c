@@ -880,7 +880,7 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			LM_DBG("TXT found for %s. Defaulting to %d\n",
 			       name, cc_len);
 		} else {
-			sdl = atoi(((struct txt_rdata*)head->rdata)->txt);
+			sdl = atoi(((struct txt_rdata*)head->rdata)->txt[0].cstr);
 			LM_DBG("TXT record for %s is %d.\n", name, sdl);
 
 			if ((sdl < 0) || (sdl > 10)) {
