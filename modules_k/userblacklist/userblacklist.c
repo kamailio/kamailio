@@ -550,6 +550,12 @@ struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param)
 
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	userblacklist_db_vars();
 
 	if (userblacklist_db_init() != 0) return -1;
