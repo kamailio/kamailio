@@ -204,6 +204,12 @@ static int mod_init(void)
 {
 	pv_spec_t avp_spec;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (dst_avp_param.s)
 		dst_avp_param.len = strlen(dst_avp_param.s);
 	if (grp_avp_param.s)
