@@ -104,6 +104,10 @@ static cfg_t * parse_config(void) {
 	                   };
 
 	cfg = cfg_init(opts, CFGF_NONE);
+	if (cfg == NULL) {
+		LM_ERR("could not initialize configuration\n");
+		return NULL;
+	}
 
 	cfg_set_error_function(cfg, conf_error);
 
