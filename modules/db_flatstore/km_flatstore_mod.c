@@ -101,6 +101,12 @@ struct kam_module_exports km_exports = {
 
 int km_mod_init(void)
 {
+	if(register_mi_mod(km_exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (strlen(km_flat_delimiter) != 1) {
 		LM_ERR("delimiter has to be exactly one character\n");
 		return -1;
