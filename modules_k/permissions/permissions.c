@@ -574,6 +574,12 @@ static int double_fixup(void** param, int param_no)
  */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (db_url.s)
 		db_url.len = strlen(db_url.s);
 	trusted_table.len = strlen(trusted_table.s);
