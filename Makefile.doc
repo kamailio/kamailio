@@ -59,6 +59,21 @@ FO_XSL ?= $(ROOT_DIR)/doc/stylesheets/fo.xsl
 # 
 VALIDATE ?= 0
 
+#
+# K docbook style
+#
+ifeq ($(DOCBOOK_MODE), k)
+	HTML_CSS=/css/kam-module-docbook.css
+	XSLTPROC_FLAGS+= --stringparam section.autolabel 1 \
+				--stringparam section.label.includes.component.label 1 \
+				--stringparam generate.toc "book toc,title,figure,table,example"
+endif
+
+#
+# Default CSS used in generated HTMLs
+#
+HTML_CSS ?= ser.css
+
 CATALOG=$(ROOT_DIR)/doc/catalog.xml
 
 LYNX     ?= lynx
@@ -102,6 +117,7 @@ drupal: $(html_files)
         --stringparam base.dir "$(OUTPUT_DIR)/" \
         --stringparam root.filename "$(basename $<)" \
         --stringparam html.ext ".xhtml" \
+        --stringparam html.stylesheet $(HTML_CSS) \
         $(XHTML_XSL) $<
 
 %.html: %.xml %.d $(alldep) $(HTML_XSL)
@@ -110,7 +126,7 @@ drupal: $(html_files)
         --stringparam base.dir "$(OUTPUT_DIR)/" \
         --stringparam root.filename "$(basename $<)" \
         --stringparam html.ext ".html" \
-	--stringparam html.stylesheet ser.css \
+        --stringparam html.stylesheet $(HTML_CSS) \
         $(HTML_XSL) $<
 
 %.fo: %.xml $(alldep) $(FO_XSL)
