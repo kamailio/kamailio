@@ -388,6 +388,12 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if(init_shvars()<0)
 	{
 		LM_ERR("init shvars failed\n");
