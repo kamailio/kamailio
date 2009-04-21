@@ -87,6 +87,12 @@ static int mod_init(void)
 	LM_DBG("...\n");
 	bind_pua_t bind_pua;
 	
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
