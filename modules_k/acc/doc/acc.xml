@@ -6,7 +6,7 @@
 <!ENTITY faq SYSTEM "acc_faq.xml">
 
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../doc/kam_entities.xml">
 %docentities;
 
 ]>
