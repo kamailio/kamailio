@@ -121,6 +121,12 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if(ht_shm_init()!=0)
 		return -1;
 	ht_db_init_params();
