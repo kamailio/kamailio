@@ -214,6 +214,12 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	/* Compute the lengths of string parameters */
 	user_col.len = strlen(user_col.s);
 	domain_col.len = strlen(domain_col.s);
