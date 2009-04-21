@@ -1033,6 +1033,12 @@ mod_init(void)
 	pv_spec_t avp_spec;
 	str s;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (rcv_avp_param && *rcv_avp_param) {
 		s.s = rcv_avp_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
