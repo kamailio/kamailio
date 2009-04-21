@@ -541,8 +541,8 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		return 0;
 	if(node->value.s== NULL || node->value.len== 0)
 	{
-		LM_ERR( "empty event parameter\n");
-		return init_mi_tree(400, "Empty event parameter", 21);		
+		LM_ERR( "empty refresh type parameter\n");
+		return init_mi_tree(400, "Empty refresh type parameter", 28);
 	}
 	if(str2int(&node->value, &refresh_type)< 0)
 	{
