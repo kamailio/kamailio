@@ -142,6 +142,12 @@ static int mod_init(void)
 	bind_presence_t bind_presence;
 	presence_api_t pres;
 		
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
 	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
