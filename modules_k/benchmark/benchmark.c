@@ -182,6 +182,12 @@ struct module_exports exports = {
  * Called by openser at init time
  */
 static int mod_init(void) {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
 	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
 	bm_mycfg->enable_global = bm_enable_global;
