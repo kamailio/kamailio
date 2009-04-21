@@ -187,6 +187,12 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
 	presentity_table.len = strlen(presentity_table.s);
