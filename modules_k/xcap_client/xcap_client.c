@@ -120,6 +120,12 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
 	xcap_db_table.len = xcap_db_table.s ? strlen(xcap_db_table.s) : 0;
 	
