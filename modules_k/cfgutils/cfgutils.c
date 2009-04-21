@@ -693,6 +693,12 @@ static int cfg_unlock(struct sip_msg *msg, char *key, char *s2)
 
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (!hash_file) {
 		LM_INFO("no hash_file given, disable hash functionality\n");
 	} else {
