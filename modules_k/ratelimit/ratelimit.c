@@ -433,6 +433,12 @@ static int mod_init(void)
 {
 	int i;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	rl_lock = lock_alloc();
 	if (! rl_lock) {
 		LM_ERR("oom in lock_alloc()\n");
