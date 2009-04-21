@@ -1,0 +1,268 @@
+BODY {
+  padding: 20px;
+  margin: 5px 50px 5px 50px;
+  background: #ffffff;
+  color: #000000;
+  width: 700px;
+  border: solid 2px #888888;
+  font-family: Helvetica,Arial;
+}
+
+P {
+  font-family: Helvetica,Arial;
+  font-size: 12;
+  text-align: justify;
+}
+
+P.C2 {
+  COLOR: #ffffff ;
+  BACKGROUND-color: #a0a0d0;
+  BORDER: solid 1px #606090;
+  PADDING: 1px
+}
+
+A {
+  color: #041fc5;
+  text-decoration: none;
+}
+
+A:hover {
+  color: #990000;
+  text-decoration: underline;
+}
+
+DIV.ABSTRACT {
+  border: solid 2px;
+  padding-left: 10pt;
+  padding-right: 10pt;
+}
+PRE.SCREEN {
+  font-family:monospace;
+  white-space: pre;
+  background-color: #fefeee;
+  border:solid;
+  color: #000000;
+  border-color: #99CCCC;
+  border-left: solid #99CCCC 1px;
+  border-right: solid #99CCCC 1px;
+  border-top: solid #99CCCC 1px;
+  border-bottom: solid #99CCCC 1px;
+  padding-left: 15pt;
+}
+
+PRE.PROGRAMLISTING {
+  font-family:monospace;
+  white-space: pre;
+  background-color: #fefeee;
+  border:solid;
+  color: #000000;
+  border-color: #99CCCC;
+  border-left: solid #99CCCC 1px;
+  border-right: solid #99CCCC 1px;
+  border-top: solid #99CCCC 1px;
+  border-bottom: solid #99CCCC 1px;
+  padding-left: 15pt;
+}
+
+H1 {
+  color: #000000;
+  border: solid 2px #a0a0a0;
+  background-color: #DCDCDC;
+  font-variant: small-caps;
+  font-size: 16;
+  padding-left: 5px;
+}
+
+.TITLE a {
+  color: #000000; 
+  text-decoration: none;
+}
+
+.TITLE a:active {
+  color: #000000; 
+  text-decoration: none;
+}
+
+.TITLE a:visited {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H2 {       
+  COLOR: #000000 ;
+  font-style: italic;
+  border: solid 1px #b0b0b0;
+  background-color: #ECECEC;
+  padding-left: 5px;
+  font-family: Helvetica,Arial;
+  font-weight: bold;
+  font-size: 14;
+}
+
+H2 a {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H2 a:active {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H2 a:visited {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H2 a:hover {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H3.SECTION {       
+  COLOR: #000000 ;
+  font-style: italic;
+  border: solid 1px #c0c0c0;
+  background-color: #F2F2F2;
+  padding-left: 5px;
+  font-family: Helvetica,Arial;
+  font-weight: bold;
+  font-size: 13;
+}
+
+H3 a {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H3 a:active {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H3 a:visited {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H3 a:hover {
+  color: #000000; 
+  text-decoration: none;
+}
+
+H3.AUTHOR {
+  font-family: Helvetica,Arial;
+  font-weight: bold;
+  font-size: 13;
+}
+
+H3.EDITOR {
+  font-family: Helvetica,Arial;
+  font-weight: bold;
+  font-style: italic;
+  font-size: 11;
+}
+
+H4 {
+  font-family: Helvetica,Arial;
+  font-weight: bold;
+  font-size: 12;
+}
+
+TABLE.IMPORTANT {
+  font-style:italic;
+  border: solid 2px #ff0000;
+  width: 70%;
+  margin-left: 15%;       
+}
+
+TABLE.CAUTION {
+  font-style:italic;
+  border: ridge 2px #ffff00;
+  width: 70%;
+  margin-left: 15%;       
+}
+
+TABLE.NOTE {
+  font-style:italic;
+  border: solid 1px #000000;
+  width: 70%;
+  margin-left: 15%;       
+}
+
+TABLE.TIP {
+  font-style:italic;
+  border: solid 1px #000000;
+  width: 70%;
+  margin-left: 15%;       
+}
+
+TABLE.WARNING {
+  font-style:italic;
+  font-weight: bold;
+  border: ridge 4px #ff0000;
+  width: 70%;
+  margin-left: 15%;       
+}
+
+DIV.VARIABLELIST {
+  font-family: sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  padding-left: 20px;
+}
+
+.VARLISTENTRY {
+  font-weight: bold;
+  margin-top: 10px;
+  COLOR: #ffffff ;
+  BACKGROUND-color: #a0a0d0;
+  BORDER: solid 1px #606090;
+  PADDING: 1px
+}
+
+DIV.NAVFOOTER {
+  color: #000000;
+  background-color: #EFEFF8;
+  padding: 5px;
+  margin-top: 10px;
+  width: 100%;
+  border: thin solid #a0a0d0;
+}
+
+DIV.NUKEFOOTER {
+  color: #000000;
+  background-color: #B0E0E6;
+  padding: 5px;
+  margin-top: 10px;
+  width: 100%;
+  border: thin solid #a0a0d0;
+}
+
+DIV.NAVHEADER {
+  color: #000000;
+  background-color: #EFEFF8;
+  padding: 5px;
+  margin-bottom: 10px;
+  width: 100%;
+  border: thin solid #a0a0d0;
+}
+
+DIV.SECT1,DIV.SECT2,DIV.SECT3 {
+  margin-left: 20px;
+}
+
+DIV.EXAMPLE,DIV.TOC {
+  border: thin dotted #70AAE5;
+  padding-left: 10px;
+  padding-right: 10px;
+  color: #000000;
+  background-color: #EFF8F8;
+}
+
+DIV.TOC {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+
