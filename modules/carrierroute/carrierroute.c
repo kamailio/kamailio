@@ -157,6 +157,12 @@ struct module_exports exports = {
 static int mod_init(void) {
 	struct stat fs;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	subscriber_table.len = strlen(subscriber_table.s);
 	subscriber_username_col.len = strlen(subscriber_username_col.s);
 	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
