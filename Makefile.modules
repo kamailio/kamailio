@@ -95,7 +95,7 @@ ifneq (,$(wildcard doc/Makefile))
 
 README: doc/*.xml
 	$(MAKE) -C doc $(MOD_NAME).txt
-	cp doc/$(MOD_NAME).txt $@
+	mv doc/$(MOD_NAME).txt $@
 
 else
 # do nothing
