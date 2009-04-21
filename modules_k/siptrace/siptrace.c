@@ -190,6 +190,12 @@ static int mod_init(void)
 {
 	pv_spec_t avp_spec;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	db_url.len = strlen(db_url.s);
 	siptrace_table.len = strlen(siptrace_table.s);
 	date_column.len = strlen(date_column.s);
