@@ -161,6 +161,12 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 	sdomain_column.len = strlen(sdomain_column.s);
