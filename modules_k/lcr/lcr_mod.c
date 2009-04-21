@@ -424,6 +424,12 @@ static int mod_init(void)
     str s;
     unsigned short avp_flags;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
     /* Update length of module variables */
     db_url.len = strlen(db_url.s);
     gw_table.len = strlen(gw_table.s);
