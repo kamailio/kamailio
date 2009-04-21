@@ -159,6 +159,12 @@ static void destroy_shmlock(void)
 /* Module initialization function */
 static int mod_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	/* Initialize curl */
 	if (curl_global_init(CURL_GLOBAL_ALL)) {
 		LM_ERR("curl_global_init failed\n");
