@@ -106,6 +106,12 @@ int km_mod_init(void)
 {
 	db_parms_t p;
 	
+	if(register_mi_mod(kam_exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	p.auto_reload = auto_reload;
 	p.log_enable = log_enable;
 	p.cache_size  = (4 * 1024 * 1024); //4Mb
