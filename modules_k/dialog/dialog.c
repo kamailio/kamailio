@@ -362,6 +362,12 @@ static int mod_init(void)
 {
 	unsigned int n;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if(faked_msg_init()<0)
 		return -1;
 
