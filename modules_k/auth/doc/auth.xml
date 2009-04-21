@@ -3,10 +3,10 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 <!ENTITY admin SYSTEM "auth_admin.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+<!ENTITY faq SYSTEM "../../../doc/kam_module_faq.xml">
 
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../doc/kam_entities.xml">
 %docentities;
 
 ]>
