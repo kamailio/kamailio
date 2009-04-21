@@ -320,6 +320,12 @@ static int mod_init(void) {
 
 	int ret = 0;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (!filename) {
 		LM_ERR("insufficient module parameters. Module not loaded.\n");
 		return -1;
