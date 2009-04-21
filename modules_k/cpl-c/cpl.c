@@ -233,6 +233,12 @@ static int cpl_init(void)
 	pv_spec_t avp_spec;
 	unsigned short avp_type;
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 	if (timer_avp.s) timer_avp.len = strlen(timer_avp.s);
