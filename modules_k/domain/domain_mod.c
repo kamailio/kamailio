@@ -144,10 +144,16 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-        int i;
+	int i;
 
 	LM_DBG("Initializing\n");
 	
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	db_url.len = strlen(db_url.s);
 	domain_table.len = strlen(domain_table.s);
 	domain_col.len = strlen(domain_col.s);
