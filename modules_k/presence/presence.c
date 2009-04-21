@@ -74,6 +74,7 @@
 #include "event_list.h"
 #include "bind_presence.h"
 #include "notify.h"
+#include "../../mod_fix.h"
 
 MODULE_VERSION
 
@@ -117,6 +118,7 @@ static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 static int mi_child_init(void);
+static int auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
 
 int counter =0;
 int pid = 0;
@@ -138,6 +140,7 @@ static cmd_export_t cmds[]=
 	{"handle_publish",  (cmd_function)handle_publish,  0,fixup_presence,0, REQUEST_ROUTE},
 	{"handle_publish",  (cmd_function)handle_publish,  1,fixup_presence, 0, REQUEST_ROUTE},
 	{"handle_subscribe",(cmd_function)handle_subscribe,0,fixup_subscribe,0, REQUEST_ROUTE},
+ 	{"auth_status",     (cmd_function)auth_status, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
 	{"bind_presence",   (cmd_function)bind_presence,   1,     0,         0,  0},
 	{ 0,                    0,                         0,     0,         0,  0}
 };
@@ -1073,4 +1076,97 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
     lock_release(&subs_htable[hash_code].lock);
 	
     return 0;
+}
+
+static int auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+{
+    pv_spec_t *sp;
+    pv_value_t pv_val;
+    str watcher_uri, presentity_uri, event;
+    struct sip_uri uri;
+    pres_ev_t* ev;
+    str* rules_doc = NULL;
+    subs_t subs;
+    int res;
+
+    sp = (pv_spec_t *)_sp1;
+
+    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    watcher_uri = pv_val.rs;
+	    if (watcher_uri.len == 0 || watcher_uri.s == NULL) {
+		LM_ERR("missing watcher uri\n");
+		return -1;
+	    }
+	} else {
+	    LM_ERR("watcher pseudo variable value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("cannot get watcher pseudo variable value\n");
+	return -1;
+    }
+
+    sp = (pv_spec_t *)_sp2;
+
+    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    presentity_uri = pv_val.rs;
+	    if (presentity_uri.len == 0 || presentity_uri.s == NULL) {
+		LM_DBG("missing presentity uri\n");
+		return -1;
+	    }
+	} else {
+	    LM_ERR("presentity pseudo variable value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("cannot get presentity pseudo variable value\n");
+	return -1;
+    }
+
+    event.s = "presence";
+    event.len = 8;
+
+    ev = contains_event(&event, NULL);
+    if (ev == NULL) {
+	LM_ERR("event is not registered\n");
+	return -1;
+    }
+    if (ev->get_rules_doc == NULL) {
+	LM_DBG("event does not require authorization");
+	return ACTIVE_STATUS;
+    }
+    if (parse_uri(presentity_uri.s, presentity_uri.len, &uri) < 0) {
+	LM_ERR("failed to parse presentity uri\n");
+	return -1;
+    }
+    res = ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
+    if ((res < 0) || (rules_doc == NULL) || (rules_doc->s == NULL)) {
+	LM_DBG( "no xcap rules doc found for presentity uri\n");
+	return PENDING_STATUS;
+    }
+
+    if (parse_uri(watcher_uri.s, watcher_uri.len, &uri) < 0) {
+	LM_ERR("failed to parse watcher uri\n");
+	goto err;
+    }
+
+    subs.from_user = uri.user;
+    subs.from_domain = uri.host;
+    subs.pres_uri = presentity_uri;
+    subs.auth_rules_doc = rules_doc;
+    if (ev->get_auth_status(&subs) < 0) {
+	LM_ERR( "getting status from rules document\n");
+	goto err;
+    }
+    LM_INFO("subs.status= %d\n", subs.status);
+    pkg_free(rules_doc->s);
+    pkg_free(rules_doc);
+    return subs.status;
+
+ err:
+    pkg_free(rules_doc->s);
+    pkg_free(rules_doc);
+    return -1;
 }
