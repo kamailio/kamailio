@@ -110,6 +110,12 @@ struct module_exports exports= {
 
 static int pike_init(void)
 {
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	/* alloc the timer lock */
 	timer_lock=lock_alloc();
 	if (timer_lock==0) {
