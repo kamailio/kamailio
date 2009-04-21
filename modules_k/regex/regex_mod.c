@@ -176,9 +176,14 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	
 	LM_INFO("initializing module...\n");
 	
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	/* Group matching feature */
 	if (file == NULL) {
 		LM_NOTICE("'file' parameter is not set, group matching disabled\n");
