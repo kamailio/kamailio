@@ -235,6 +235,7 @@ static int t_is_expired(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
+static int t_check_trans(struct sip_msg* msg, char* foo, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -373,6 +374,8 @@ static cmd_export_t cmds[]={
 			FAILURE_ROUTE},
 	{"t_save_lumps",      w_t_save_lumps,           0, 0,
 			REQUEST_ROUTE},
+	{"t_check_trans",	t_check_trans,				0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
 
 
 	/* not applicable from the script */
@@ -1725,3 +1728,41 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
 	return w_t_reply(m, (char *)&c, (char*)&r);
 }
 
+
+
+/** script function, check if a msg is assoc. to a transaction.
+ * @return -1 (not), 1 (reply, ack or cancel for an existing transaction),
+ *          0 (request retransmission)
+ * Note: the e2e ack matching works only for local e2e acks or for
+ *       transactions with E2EACK* callbacks installed (but even in this
+ *       case matching E2EACKs on proxied transaction is not entirely
+ *       reliable: if the ACK  is delayed the proxied transaction might
+ *       be already deleted when it reaches the proxy (wait_timeout))
+ */
+static int t_check_trans(struct sip_msg* msg, char* foo, char* bar)
+{
+	struct cell* t;
+	
+	if (msg->first_line.type==SIP_REPLY)
+		return w_t_check(msg, 0 ,0);
+	else if (msg->REQ_METHOD==METHOD_CANCEL)
+		return w_t_lookup_cancel(msg, 0, 0);
+	else{
+		switch(t_check_msg(msg, 0)){
+			case -2: /* possible e2e ack */
+				return 1;
+			case 1: /* found */
+				if (msg->REQ_METHOD==METHOD_ACK)
+					/* ack to neg. reply */
+					return 1;
+				/* else retransmission */
+				t=get_t();
+				t_retransmit_reply(t);
+				UNREF(t);
+				set_t(0);
+				return 0;
+		}
+		/* not found or error */
+	}
+	return -1;
+}
