@@ -147,15 +147,25 @@ clean:
 	@rm -f $(pdf_files)
 	@rm -f $(html_files)
 
-.PHONY: proper realclean distclean
-proper realclean distclean: clean
+.PHONY: proper distclean realclean maintainer-clean
+proper realclean distclean maintainer-clean: clean
 	@rm -f $(dep_files) *~
+
+maintainer-clean: clean-tmp
+
+.PHONY: clean-tmp
+clean-tmp:
+	-rm -f TAGS tags *.dbg .*.swp
+
 
 
 ifeq (,$(MAKECMDGOALS))
 include $(dep_files) 
+else
+ifeq (,$(strip $(nodep_targets)))
+include $(ROOT_DIR)/Makefile.targets
 endif
-ifneq (,$(filter-out clean proper realclean distclean check, $(MAKECMDGOALS)))
+ifneq (,$(filter-out $(nodep_targets) check, $(MAKECMDGOALS)))
 include $(dep_files)
 endif
-
+endif
