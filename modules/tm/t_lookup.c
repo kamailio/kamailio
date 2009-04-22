@@ -468,11 +468,12 @@ e2eack_found:
 }
 
 
-/* function returns:
- *      negative - transaction wasn't found
- *			(-2 = possibly e2e ACK matched )
- *      positive - transaction found
- * It also sets *cancel if there is already a cancel transaction
+/** find the transaction corresponding to a request.
+ *  @return - negative - transaction wasn't found (-1) or
+ *                        possible e2eACK match (-2).
+ *            1        - transaction found
+ *            0        - parse error
+ * It also sets *cancel if there is already a cancel transaction.
  */
 
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
@@ -846,8 +847,8 @@ found:
 
 
 
-/* Returns 0 - nothing found
- *         1  - T found
+/** get the transaction corresponding to a reply.
+ * @return -1 - nothing found,  1  - T found
  */
 int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
@@ -1037,19 +1038,22 @@ nomatch2:
 
 
 
-/* Determine current transaction
+/** Determine current transaction (w/ e2eack support).
  *
- *                   Found      Not Found     Error (e.g. parsing)
- *  Return Value     1          0             -1
- *  T                ptr        0             T_UNDEFINED
+ * script/t_lookup_request  return convention:
+ *                   Found      Not Found     Error (e.g. parsing) E2E ACK
+ *  @return          1         -1              0                  -2
+ *  T                ptr        0              T_UNDEFINED| 0      0
  */
-int t_check( struct sip_msg* p_msg , int *param_branch )
+int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 {
 	int local_branch;
 	int canceled;
-
+	int ret;
+	
+	ret=0;
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_check: msg id=%d global id=%d T start=%p\n", 
+	DBG("DEBUG: t_check_msg: msg id=%d global id=%d T start=%p\n", 
 		p_msg->id,global_msg_id,T);
 	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
 	{
@@ -1060,8 +1064,8 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			/* force parsing all the needed headers*/
 			prefetch_loc_r(p_msg->unparsed+64, 1);
 			if (parse_headers(p_msg, HDR_EOH_F, 0 )==-1) {
-				LOG(L_ERR, "ERROR: t_check: parsing error\n");
-				return -1;
+				LOG(L_ERR, "ERROR: t_check_msg: parsing error\n");
+				goto error;
 			}
 			/* in case, we act as UAS for INVITE and reply with 200,
 			 * we will need to run dialog-matching for subsequent
@@ -1070,11 +1074,11 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			 */
 			if (p_msg->REQ_METHOD==METHOD_INVITE 
 							&& parse_from_header(p_msg)==-1) {
-				LOG(L_ERR, "ERROR: t_check: from parsing failed\n");
-				return -1;
+				LOG(L_ERR, "ERROR: t_check_msg: from parsing failed\n");
+				goto error;
 			}
-			t_lookup_request( p_msg , 0 /* unlock before returning */,
-								&canceled);
+			ret=t_lookup_request( p_msg , 0 /* unlock before returning */,
+									&canceled);
 		} else {
 			/* we need Via for branch and Cseq method to distinguish
 			   replies with the same branch/cseqNr (CANCEL)
@@ -1090,46 +1094,74 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 				}
 			}else if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F, 0 )==-1) {
 				LOG(L_ERR, "ERROR: reply cannot be parsed\n");
-				return -1;
+				goto error;
 			}
 			if ((p_msg->via1==0) || (p_msg->cseq==0)){
-				LOG(L_ERR, "ERROR: reply doesn't have a via or cseq header\n");
-				return -1;
+				LOG(L_ERR, "ERROR: reply doesn't have a via or cseq"
+							" header\n");
+				goto error;
 			}
 			/* if that is an INVITE, we will also need to-tag
 			   for later ACK matching
 			*/
-            if ( get_cseq(p_msg)->method.len==INVITE_LEN 
-				&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN )==0 ) {
-					if (parse_headers(p_msg, HDR_TO_F, 0)==-1
-						|| !p_msg->to)  {
-						LOG(L_ERR, "ERROR: INVITE reply cannot be parsed\n");
-						return -1;
-					}
+			if ( get_cseq(p_msg)->method.len==INVITE_LEN 
+				&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN )==0)
+			{
+				if (parse_headers(p_msg, HDR_TO_F, 0)==-1 || !p_msg->to) {
+					LOG(L_ERR, "ERROR: INVITE reply cannot be parsed\n");
+					goto error;
+				}
 			}
-
-			t_reply_matching( p_msg ,
-				param_branch!=0?param_branch:&local_branch );
-
+			ret=t_reply_matching( p_msg ,
+							param_branch!=0?param_branch:&local_branch );
 		}
 #ifdef EXTRA_DEBUG
 		if ( T && T!=T_UNDEFINED && T->flags & (T_IN_AGONY)) {
 			LOG( L_WARN, "WARNING: transaction %p scheduled for deletion "
-				"and called from t_check (flags=%x) (but it might be ok)\n",
-				T, T->flags);
+				"and called from t_check_msg (flags=%x) (but it might be ok)"
+				"\n", T, T->flags);
 		}
 #endif
-		DBG("DEBUG: t_check: msg id=%d global id=%d T end=%p\n",
+		DBG("DEBUG: t_check_msg: msg id=%d global id=%d T end=%p\n",
 			p_msg->id,global_msg_id,T);
-	} else {
-		if (T)
-			DBG("DEBUG: t_check: T already found!\n");
-		else
-			DBG("DEBUG: t_check: T previously sought and not found\n");
+	} else { /*  ( p_msg->id == global_msg_id && T!=T_UNDEFINED ) */
+		if (T){
+			DBG("DEBUG: t_check_msg: T already found!\n");
+			ret=1;
+		}else{
+			DBG("DEBUG: t_check_msg: T previously sought and not found\n");
+			ret=-1;
+		}
 	}
-
-	return T ? (T==T_UNDEFINED ? -1 : 1 ) : 0;
+	return ret;
+error:
+	return 0;
 }
+
+
+
+/** Determine current transaction (old version).
+ *
+ *                   Found      Not Found     Error (e.g. parsing)
+ *  @return          1          0             -1
+ *  T                ptr        0             T_UNDEFINED | 0
+ */
+int t_check( struct sip_msg* p_msg , int *param_branch )
+{
+	int ret;
+
+	ret=t_check_msg(p_msg, param_branch);
+	/* fix t_check_msg return */
+	switch(ret){
+		case -2: /* e2e ack */     return 0;  /* => not found */
+		case -1: /* not found */   return 0;  /* => not found */
+		case  0: /* parse error */ return -1; /* => error */
+		case  1: /* found */       return ret; /* =>  found */
+	};
+	return ret;
+}
+
+
 
 int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 {

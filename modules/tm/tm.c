@@ -900,7 +900,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
-	return t_check( msg , 0  ) ? 1 : -1;
+	return (t_check_msg( msg , 0  )==1) ? 1 : -1;
 }
 
 inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)

@@ -68,11 +68,11 @@ int add_branch_label( struct cell *trans,
 int t_unref( struct sip_msg *p_msg);
 typedef int (*tunref_f)( struct sip_msg *p_msg);
 
-/* function returns:
- *      -1 - transaction wasn't found
- *       1 - transaction found
- */
-int t_check( struct sip_msg* , int *branch );
+
+/* old t_check version (no e2eack support) */
+int t_check(struct sip_msg* , int *branch );
+/* new version, e2eack and different return convention */
+int t_check_msg(struct sip_msg* , int *branch );
 
 typedef struct cell * (*tgett_f)(void);
 struct cell *get_t();
