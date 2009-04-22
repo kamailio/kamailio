@@ -256,7 +256,6 @@ static struct mi_root *mi_which(struct mi_root *cmd, void *param)
 }
 
 
-#if 0
 static struct mi_root *mi_ps(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
@@ -272,7 +271,7 @@ static struct mi_root *mi_ps(struct mi_root *cmd, void *param)
 		return 0;
 	rpl = &rpl_tree->node;
 
-	for ( i=0 ; i<counted_processes ; i++ ) {
+	for ( i=0 ; i<get_proc_no() ; i++ ) {
 		node = add_mi_node_child(rpl, 0, MI_SSTR("Process"), 0, 0 );
 		if (node==0)
 			goto error;
@@ -299,7 +298,6 @@ error:
 	free_mi_tree(rpl_tree);
 	return 0;
 }
-#endif
 
 
 static struct mi_root *mi_kill(struct mi_root *cmd, void *param)
@@ -358,8 +356,8 @@ static mi_export_t mi_core_cmds[] = {
 	{ "arg",      mi_arg,      MI_NO_INPUT_FLAG,  0,  0 },
 	{ "which",    mi_which,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ "kill",     mi_kill,     MI_NO_INPUT_FLAG,  0,  0 },
-#if 0
 	{ "ps",       mi_ps,       MI_NO_INPUT_FLAG,  0,  0 },
+#if 0
 	{ "debug",    mi_debug,                   0,  0,  0 },
 #endif
 	{ 0, 0, 0, 0, 0}
