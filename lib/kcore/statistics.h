@@ -133,10 +133,7 @@ module_stats* get_stat_module(str *module);
 	#define update_stat( _var, _n) \
 		do { \
 			if ( !((_var)->flags&STAT_IS_FUNC) ) {\
-				if (_n>=0) \
-					atomic_add( _n, (_var)->u.val);\
-				else \
-					atomic_sub( -(_n), (_var)->u.val);\
+				atomic_add((_var)->u.val, _n);\
 			}\
 		}while(0)
 	#define reset_stat( _var) \
