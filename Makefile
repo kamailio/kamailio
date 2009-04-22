@@ -59,6 +59,8 @@
 #  2009-04-02  workaround for export not supported in gnu make 3.80
 #               target specific variables: use mk_params for each
 #               $(MAKE) invocation (andrei)
+#  2009-04-22  don't rebuild config.mak or modules.lst if not needed
+#              (e.g. on clean) (andrei)
 #
 
 # check make version
@@ -76,6 +78,8 @@ auto_gen_others=cfg.tab.h  # auto generated, non-c
 
 #include  source related defs
 include Makefile.sources
+#include special targets lists
+include Makefile.targets
 
 # whether or not the entire build process should fail if building a module or
 #  an utility fails
@@ -93,7 +97,15 @@ skip_modules?=
 # Alternatives are txt, html, xhtml, and pdf (see Makefile.doc)
 doc_format?=html
 
+# don't force modules.lst generation if the makefile goals do not
+# require it (but if present use it)
+ifeq (,$(strip $(filter-out $(clean_targets) $(aux_targets),$(MAKECMDGOALS))))
+ifneq (,$(strip $(wildcard modules.lst)))
+-include modules.lst
+endif
+else
 include modules.lst
+endif # ifneq (,$(strip $(filter-out ...,$(MAKECMDGOALS))))
 
 #if called with group_include, ignore the modules from modules.lst
 ifneq ($(group_include),)
@@ -221,15 +233,17 @@ ALLDEP=config.mak Makefile Makefile.sources Makefile.rules
 #C_DEFS:=
 
 
-# try saved cfg, unless we are in the process of building it
-ifeq (,$(filter config.mak config cfg cfg-defs,$(MAKECMDGOALS)))
+# try saved cfg, unless we are in the process of building it or if we're doing
+# a clean
+ifeq (,$(strip \
+	$(filter config.mak config cfg cfg-defs $(clean_targets),$(MAKECMDGOALS))))
 include config.mak
 ifeq ($(makefile_defs),1)
 $(info config.mak loaded)
 # config_make valid & used
 config_mak=1
 endif
-else
+else # config.mak doesn't need to be used
 ifneq (,$(filter cfg config cfg-defs,$(word 1,$(MAKECMDGOALS))))
 # needed here to avoid starting a config submake 
 # (e.g. rm -f config.mak; make config.mak), which would either require 
@@ -318,7 +332,6 @@ ifneq ($(TLS),)
 endif
 
 # include the common rules
-include Makefile.targets
 include Makefile.rules
 
 #extra targets 
@@ -366,13 +379,14 @@ modules.lst:
 	@$(call cfg_save_var2,modules,$@)
 	@echo "modules_configured:=1" >>$@
 
+
 .PHONY: cfg config cfg-defs
 cfg-defs: config.mak
 
 cfg config: cfg-defs modules-cfg
 
 .PHONY: modules-cfg modules-list modules-lst
-modules-cfg modules-list modules-lst: 
+modules-cfg modules-list modules-lst:
 	rm -f modules.lst
 	$(MAKE) modules.lst
 
@@ -806,8 +820,8 @@ proper-all realclean-all distclean-all: modules=$(modules_all)
 proper-all realclean-all distclean-all: proper
 
 
-.PHONY: clean_cfg
-clean_cfg:
+.PHONY: clean_cfg clean-cfg
+clean_cfg clean-cfg:
 	rm -f config.mak
 
 .PHONY: clean_modules_cfg clean-modules-cfg

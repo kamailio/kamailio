@@ -353,7 +353,7 @@ make proper-all (like make proper but for all the  modules in modules/*)
 
 Config clean:
 
-make clean_cfg (cleans the compile config)
+make clean-cfg (cleans the compile config)
 make clean-modules-cfg (cleans the modules list)
 
 "Reduced" clean:

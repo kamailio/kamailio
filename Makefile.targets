@@ -15,7 +15,7 @@
 
 clean_targets:=	clean proper distclean realclean maintainer-clean local-clean \
 				clean-all proper-all distclean-all realclean-all \
-				clean_cfg clean_modules_cfg clean-modules-cfg \
+				clean_cfg clean-cfg clean_modules_cfg clean-modules-cfg \
 				clean-modules proper-modules realclean-modules \
 				distclean-modules maintainer-clean-modules \
 				clean-utils proper-utils realclean-utils distclean-utils \
@@ -28,7 +28,8 @@ doc_targets:=	modules-doc modules-readme README modules-man man \
 		install-modules-man
 # auxiliary: maintance, debugging, etc. (don't affect code/objects)
 aux_targets:=	TAGS tar dist cfg-defs cfg config config.mak print-modules \
-		dbg dbinstall librpath.lst makecfg.lst modules.lst
+		dbg dbinstall librpath.lst makecfg.lst modules.lst modules-cfg \
+		modules-list modules-lst
 # other targets that don't produce code in the current directory ("external")
 ext_targets:=	modules libs utils \
 		install-cfg install-modules install-utils  install-modules-all \
