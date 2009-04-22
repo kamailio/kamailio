@@ -32,10 +32,11 @@
  */
 
 
-#ifndef _STATISTICS_H_
-#define _STATISTICS_H_
+#ifndef _KSTATISTICS_H_
+#define _KSTATISTICS_H_
 
-#include "hash_func.h"
+#include <string.h>
+#include "../../str.h"
 #include "../../atomic_ops.h"
 
 #define STATS_HASH_POWER   8
@@ -48,11 +49,7 @@
 #define STAT_SHM_NAME  (1<<2)
 #define STAT_IS_FUNC   (1<<3)
 
-#ifdef NO_ATOMIC_OPS
-typedef unsigned int stat_val;
-#else
 typedef atomic_t stat_val;
-#endif
 
 typedef unsigned long (*stat_function)(void);
 
@@ -116,11 +113,8 @@ unsigned int get_stat_val( stat_var *var );
  */
 stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
 
-
-#ifdef NO_ATOMIC_OPS
-#include "locking.h"
-extern gen_lock_t *stat_lock;
-#endif
+stats_collector* get_stats_collector(void);
+module_stats* get_stat_module(str *module);
 
 #else
 	#define init_stats_collector()  0
@@ -130,56 +124,29 @@ extern gen_lock_t *stat_lock;
 	#define get_stat( _name )  0
 	#define get_stat_val( _var ) 0
 	#define get_stat_var_from_num_code( _n_code, _in_code) NULL
+	#define get_stats_collector() NULL
+	#define get_stat_module(_module) NULL
 #endif
 
 
 #ifdef STATISTICS
-	#ifdef NO_ATOMIC_OPS
-		#define update_stat( _var, _n) \
-			do { \
-				if ( !((_var)->flags&STAT_IS_FUNC) ) {\
-					if ((_var)->flags&STAT_NO_SYNC) {\
-						*((_var)->u.val) += _n;\
-					} else {\
-						lock_get(stat_lock);\
-						*((_var)->u.val) += _n;\
-						lock_release(stat_lock);\
-					}\
-				}\
-			}while(0)
-		#define reset_stat( _var) \
-			do { \
-				if ( ((_var)->flags&(STAT_NO_RESET|STAT_IS_FUNC))==0 ) {\
-					if ((_var)->flags&STAT_NO_SYNC) {\
-						*((_var)->u.val) = 0;\
-					} else {\
-						lock_get(stat_lock);\
-						*((_var)->u.val) = 0;\
-						lock_release(stat_lock);\
-					}\
-				}\
-			}while(0)
-		#define get_stat_val( _var ) ((unsigned long)\
-			((_var)->flags&STAT_IS_FUNC)?(_var)->u.f():*((_var)->u.val))
-	#else
-		#define update_stat( _var, _n) \
-			do { \
-				if ( !((_var)->flags&STAT_IS_FUNC) ) {\
-					if (_n>=0) \
-						atomic_add( _n, (_var)->u.val);\
-					else \
-						atomic_sub( -(_n), (_var)->u.val);\
-				}\
-			}while(0)
-		#define reset_stat( _var) \
-			do { \
-				if ( ((_var)->flags&(STAT_NO_RESET|STAT_IS_FUNC))==0 ) {\
-					atomic_set( (_var)->u.val, 0);\
-				}\
-			}while(0)
-		#define get_stat_val( _var ) ((unsigned long)\
-			((_var)->flags&STAT_IS_FUNC)?(_var)->u.f():(_var)->u.val->counter)
-	#endif /* NO_ATOMIC_OPS */
+	#define update_stat( _var, _n) \
+		do { \
+			if ( !((_var)->flags&STAT_IS_FUNC) ) {\
+				if (_n>=0) \
+					atomic_add( _n, (_var)->u.val);\
+				else \
+					atomic_sub( -(_n), (_var)->u.val);\
+			}\
+		}while(0)
+	#define reset_stat( _var) \
+		do { \
+			if ( ((_var)->flags&(STAT_NO_RESET|STAT_IS_FUNC))==0 ) {\
+				atomic_set( (_var)->u.val, 0);\
+			}\
+		}while(0)
+	#define get_stat_val( _var ) ((unsigned long)\
+		((_var)->flags&STAT_IS_FUNC)?(_var)->u.f():(_var)->u.val->val)
 
 	#define if_update_stat(_c, _var, _n) \
 		do { \
@@ -239,7 +206,6 @@ int get_socket_list_from_proto(int **ipList, int protocol);
  *       why this is so can be found in network_stats.c
  */
 int get_total_bytes_waiting(void);
-
 
 
 #endif
