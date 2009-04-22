@@ -158,54 +158,78 @@ dep: $(depends)
 .PHONY: static
 static: $(objs)
 
-.PHONY: clean
-clean: 
+# clean only the current directory (no modules or utils)
+# (it's usefull to have it separated from clean for speeding up make proper)
+.PHONY: local-clean
+local-clean:
 	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst 2>/dev/null
+
+.PHONY: clean
+clean: local-clean
+
+.PHONY: clean-modules
+clean-modules:
 	-@for r in $(modules) $(static_modules_path) "" ; do \
 		if [ -d "$$r" ]; then \
 			echo "module $$r" ; \
-			$(MAKE) -C $$r clean ; \
-			$(MAKE) -C $$r/doc clean ; \
+			$(MAKE) -C "$$r" clean ; \
+			[ -d "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc clean ; \
 		fi ; \
-	done 
+	done
+
+.PHONY: clean-utils
+clean-utils:
 	@if [ -n "$(modules)" ]; then \
 		for r in $(utils_compile) "" ; do \
 			if [ -d "$$r" ]; then \
-				 $(MAKE) -C $$r clean ; \
+				 $(MAKE) -C "$$r" clean ; \
 			fi ; \
 		done \
 	fi
 
+# make proper for the local directory
 .PHONY: proper
 .PHONY: distclean
 .PHONY: realclean
-proper realclean distclean: mrproper
-
-mrproper: clean 
+.PHONY: maintainer-clean
+proper distclean realclean maintainer-clean: local-clean
 	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) \
 			makecfg.lst 2>/dev/null
+
+maintainer-clean: clean-tmp
+
+.PHONY: proper-modules
+.PHONY: distclean-modules
+.PHONY: realclean-modules
+.PHONY: maintainer-clean-modules
+proper-modules realclean-modules distclean-modules maintainer-clean-modules: \
+ clean_target=$(patsubst %-modules,%,$@)
+proper-modules realclean-modules distclean-modules maintainer-clean-modules:
 	-@for r in $(modules) "" ; do \
 		if [ -d "$$r" ]; then \
-			$(MAKE) -C $$r proper ; \
-			$(MAKE) -C $$r/doc proper ; \
+			$(MAKE) -C "$$r" $(clean_target); \
+			[ -r "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc $(clean_target);\
 		fi ; \
-	done 
+	done
+
+.PHONY: proper-utils
+.PHONY: distclean-utils
+.PHONY: realclean-utils
+.PHONY: maintainer-clean-utils
+proper-utils realclean-utils distclean-utils maintainer-clean-utils: \
+ clean_target=$(patsubst %-utils,%,$@)
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
 	@if [ -n "$(modules)" ]; then \
 		for r in $(utils_compile) "" ; do \
 			if [ -d "$$r" ]; then \
-				 $(MAKE) -C $$r proper ; \
+				 $(MAKE) -C "$$r" $(clean_target); \
 			fi ; \
 		done \
 	fi
 
-.PHONY: maintainer-clean
-maintainer-clean: distclean
-	-rm -f TAGS tags *.dbg .*.swp
-	-@for r in $(modules) "" ; do \
-		if [ -d "$$r" ]; then \
-			$(MAKE) -C $$r maintainer-clean; \
-		fi ; \
-	 done 
+.PHONY: clean-tmp
+clean-tmp:
+	-@rm -f TAGS tags *.dbg .*.swp
 
 
 .PHONY: doxygen

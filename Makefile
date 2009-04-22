@@ -763,23 +763,40 @@ install-modules-man: modules-man $(man_prefix)/$(man_dir)/man7
 	done; true
 
 
-.PHONY: clean_libs
+# libs cleaning targets
+.PHONY: clean-libs
+clean-libs:
+			$(MAKE) -C lib clean
 
-clean_libs:
-			$(MAKE) -C lib proper
+.PHONY: proper-libs realclean-libs distclean-libs maintainer-clean-libs
+proper-libs realclean-libs distclean-libs maintainer-clean-libs:
+			$(MAKE) -C lib $(patsubst %-libs,%,$@)
 
 
+# clean modules on make clean
+clean: clean-modules
+# clean utils on make clean
+clean: clean-utils
 # cleaning in libs always when cleaning ser
-clean:	clean_libs
+clean: clean-libs
+
+# proper/distclean a.s.o modules, utils and libs too
+
+proper: proper-modules proper-utils proper-libs
+distclean: distclean-modules distclean-utils distclean-libs
+realclean: realclean-modules realclean-utils realclean-libs
+maintainer-clean: maintainer-clean-modules maintainer-clean-utils \
+ maintainer-clean-libs
 
 #try to clean everything (including all the modules, even ones that are not
 # configured/compiled normally
 .PHONY: clean-all
 clean-all: modules=$(modules_all)
 clean-all: clean
+maintainer-clean: modules=$(modules_all)
 
 # on make proper clean also the build config (w/o module list)
-proper realclean distclean: clean_cfg 
+proper realclean distclean maintainer-clean: clean_cfg
 
 # on maintainer clean, remove also the configured module list
 maintainer-clean: clean_modules_cfg

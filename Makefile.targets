@@ -13,9 +13,16 @@
 #  2008-06-26  initial version (andrei) 
 #
 
-clean_targets:=	clean proper distclean realclean maintainer-clean clean_libs \
+clean_targets:=	clean proper distclean realclean maintainer-clean local-clean \
 				clean-all proper-all distclean-all realclean-all \
-				clean_cfg clean_modules_cfg clean-modules-cfg
+				clean_cfg clean_modules_cfg clean-modules-cfg \
+				clean-modules proper-modules realclean-modules \
+				distclean-modules maintainer-clean-modules \
+				clean-utils proper-utils realclean-utils distclean-utils \
+				maintaner-clean-utils \
+				clean-libs proper-libs realclean-libs distclean-libs \
+				maintainer-clean-libs \
+				clean-tmp clean_doxygen
 doc_targets:=	modules-doc modules-readme README modules-man man \
 		install-doc install-modules-doc install-man install-ser-man \
 		install-modules-man
