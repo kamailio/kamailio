@@ -42,7 +42,7 @@
  *
  *	cfg_set_options(parser, options);
  *
- *	if (cfg_parse(parser) < 0) {
+ *	if (sr_cfg_parse(parser) < 0) {
  *		ERR("Error while parsing configuration file\n");
  *      cfg_parser_close(parser);
  *		return -1;
@@ -668,7 +668,7 @@ static int process_option(cfg_parser_t* st, cfg_option_t* opt)
 }
 
 
-int cfg_parse(cfg_parser_t* st)
+int sr_cfg_parse(cfg_parser_t* st)
 {
 	int ret;
 	cfg_token_t t;

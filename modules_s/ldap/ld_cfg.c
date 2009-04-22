@@ -491,7 +491,7 @@ int ld_load_cfg(str* filename)
 
 	cfg_section_parser(parser, parse_section, NULL);
 
-	if (cfg_parse(parser)) {
+	if (sr_cfg_parse(parser)) {
 		if (cfg == NULL) {
 			ERR("ldap: A table name (i.e. [table_name]) is missing in the "
 				"configuration file.\n");

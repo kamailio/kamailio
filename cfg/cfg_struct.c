@@ -266,15 +266,15 @@ static void cfg_destory_groups(unsigned char *block)
 }
 
 /* initiate the cfg framework */
-int cfg_init(void)
+int sr_cfg_init(void)
 {
 	cfg_global_lock = lock_alloc();
 	if (!cfg_global_lock) {
-		LOG(L_ERR, "ERROR: cfg_init(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): not enough shm memory\n");
 		goto error;
 	}
 	if (lock_init(cfg_global_lock) == 0) {
-		LOG(L_ERR, "ERROR: cfg_init(): failed to init lock\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): failed to init lock\n");
 		lock_dealloc(cfg_global_lock);
 		cfg_global_lock = 0;
 		goto error;
@@ -282,11 +282,11 @@ int cfg_init(void)
 
 	cfg_writer_lock = lock_alloc();
 	if (!cfg_writer_lock) {
-		LOG(L_ERR, "ERROR: cfg_init(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): not enough shm memory\n");
 		goto error;
 	}
 	if (lock_init(cfg_writer_lock) == 0) {
-		LOG(L_ERR, "ERROR: cfg_init(): failed to init lock\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): failed to init lock\n");
 		lock_dealloc(cfg_writer_lock);
 		cfg_writer_lock = 0;
 		goto error;
@@ -294,21 +294,21 @@ int cfg_init(void)
 
 	cfg_global = (cfg_block_t **)shm_malloc(sizeof(cfg_block_t *));
 	if (!cfg_global) {
-		LOG(L_ERR, "ERROR: cfg_init(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): not enough shm memory\n");
 		goto error;
 	}
 	*cfg_global = NULL;
 
 	cfg_child_cb_first = (cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
 	if (!cfg_child_cb_first) {
-		LOG(L_ERR, "ERROR: cfg_init(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): not enough shm memory\n");
 		goto error;
 	}
 	*cfg_child_cb_first = NULL;
 
 	cfg_child_cb_last = (cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
 	if (!cfg_child_cb_last) {
-		LOG(L_ERR, "ERROR: cfg_init(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: sr_cfg_init(): not enough shm memory\n");
 		goto error;
 	}
 	*cfg_child_cb_last = NULL;

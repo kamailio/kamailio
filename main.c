@@ -1934,7 +1934,7 @@ try_again:
 		LOG(L_CRIT, "could not initialize base* framework\n");
 		goto error;
 	}
-	if (cfg_init() < 0) {
+	if (sr_cfg_init() < 0) {
 		LOG(L_CRIT, "could not initialize configuration framework\n");
 		goto error;
 	}

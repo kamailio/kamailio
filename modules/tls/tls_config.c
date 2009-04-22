@@ -344,7 +344,7 @@ tls_cfg_t* tls_load_config(str* filename)
 
 	cfg_section_parser(parser, parse_domain, NULL);
 
-	if (cfg_parse(parser)) goto error;
+	if (sr_cfg_parse(parser)) goto error;
 	cfg_parser_close(parser);
 	return cfg;
 

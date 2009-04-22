@@ -119,7 +119,7 @@ extern cfg_child_cb_t	*cfg_child_cb;
 #define CFG_INPUT_TYPE(var)	CFG_INPUT_MASK((var)->def->type)
 
 /* initiate the cfg framework */
-int cfg_init(void);
+int sr_cfg_init(void);
 
 /* destroy the memory allocated for the cfg framework */
 void cfg_destroy(void);

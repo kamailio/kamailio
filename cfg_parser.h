@@ -145,7 +145,7 @@ void cfg_section_parser(struct cfg_parser* st, cfg_func_f parser, void* param);
 
 void cfg_set_options(struct cfg_parser* st, struct cfg_option* options);
 
-int cfg_parse(struct cfg_parser* st);
+int sr_cfg_parse(struct cfg_parser* st);
 
 void cfg_parser_close(struct cfg_parser* st);
 
