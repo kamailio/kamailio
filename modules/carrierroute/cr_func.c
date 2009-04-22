@@ -351,13 +351,13 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
  * @param user the localpart of the uri to be rewritten
  * @param hash_source the SIP header used for hashing
  * @param alg the algorithm used for hashing
- * @param dstavp the name of the destination AVP where the used host name is stored
+ * @param descavp the name of the AVP where the description is stored
  *
  * @return 0 on success, -1 on failure, 1 on empty rule list
  */
 static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest,
 		struct sip_msg * msg, const str * user, const enum hash_source hash_source,
-		const enum hash_algorithm alg, gparam_t *dstavp) {
+		const enum hash_algorithm alg, gparam_t *descavp) {
 	struct route_flags * rf;
 	struct route_rule * rr;
 	int prob;
@@ -426,7 +426,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			LM_ERR("invalid hash algorithm\n");
 			return -1;
 	}
-	return actually_rewrite(rr, dest, msg, user, dstavp);
+	return actually_rewrite(rr, dest, msg, user, descavp);
 }
 
 
@@ -443,14 +443,14 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
  * @param user the localpart of the uri to be rewritten
  * @param hash_source the SIP header used for hashing
  * @param alg the algorithm used for hashing
- * @param dstavp the name of the destination AVP where the used host name is stored
+ * @param descavp the name of the AVP where the description is stored
  *
  * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
 static int rewrite_uri_recursor(struct dtrie_node_t * node,
 		const str * pm, flag_t flags, str * dest, struct sip_msg * msg, const str * user,
 		const enum hash_source hash_source, const enum hash_algorithm alg,
-		gparam_t *dstavp) {
+		gparam_t *descavp) {
 	str re_pm = *pm;
 	void **ret;
 	
@@ -465,7 +465,7 @@ static int rewrite_uri_recursor(struct dtrie_node_t * node,
 		LM_INFO("URI or prefix tree nodes empty, empty rule list\n");
 		return 1;
 	}
-	else return rewrite_on_rule(*ret, flags, dest, msg, user, hash_source, alg, dstavp);
+	else return rewrite_on_rule(*ret, flags, dest, msg, user, hash_source, alg, descavp);
 }
 
 
@@ -633,17 +633,17 @@ int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user, gparam_t *_doma
  * @param _prefix_matching the user to be used for prefix matching
  * @param _rewrite_user the localpart of the URI to be rewritten
  * @param _hsrc the SIP header used for hashing
- * @param _dstavp the name of the destination AVP where the used host name is stored
+ * @param _descavp the name of the AVP where the description is stored
  *
  * @return 1 on success, -1 on failure
  */
 int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
 		gparam_t *_domain, gparam_t *_prefix_matching,
 		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_dstavp)
+		gparam_t *_descavp)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
-		_rewrite_user, _hsrc, alg_crc32, _dstavp);
+		_rewrite_user, _hsrc, alg_crc32, _descavp);
 }
 
 
@@ -657,17 +657,17 @@ int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
  * @param _prefix_matching the user to be used for prefix matching
  * @param _rewrite_user the localpart of the URI to be rewritten
  * @param _hsrc the SIP header used for hashing
- * @param _dstavp the name of the destination AVP where the used host name is stored
+ * @param _descavp the name of the AVP where the description is stored
  *
  * @return 1 on success, -1 on failure
  */
 int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
 		gparam_t *_domain, gparam_t *_prefix_matching,
 		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_dstavp)
+		gparam_t *_descavp)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
-		_rewrite_user, _hsrc, alg_prime, _dstavp);
+		_rewrite_user, _hsrc, alg_prime, _descavp);
 }
 
 
