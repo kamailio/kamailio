@@ -118,7 +118,7 @@ static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 static int mi_child_init(void);
-static int auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
+static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
 
 int counter =0;
 int pid = 0;
@@ -140,7 +140,7 @@ static cmd_export_t cmds[]=
 	{"handle_publish",  (cmd_function)handle_publish,  0,fixup_presence,0, REQUEST_ROUTE},
 	{"handle_publish",  (cmd_function)handle_publish,  1,fixup_presence, 0, REQUEST_ROUTE},
 	{"handle_subscribe",(cmd_function)handle_subscribe,0,fixup_subscribe,0, REQUEST_ROUTE},
- 	{"auth_status",     (cmd_function)auth_status, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
+ 	{"pres_auth_status",     (cmd_function)pres_auth_status, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
 	{"bind_presence",   (cmd_function)bind_presence,   1,     0,         0,  0},
 	{ 0,                    0,                         0,     0,         0,  0}
 };
@@ -1078,7 +1078,7 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
     return 0;
 }
 
-static int auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 {
     pv_spec_t *sp;
     pv_value_t pv_val;

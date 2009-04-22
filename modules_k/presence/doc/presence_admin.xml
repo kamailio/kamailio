@@ -455,11 +455,11 @@ if(method=="SUBSCRIBE")
 
 	<section>
 		<title>
-		<function moreinfo="none">auth_status(watcher_uri, presentity_uri)</function>
+		<function moreinfo="none">pres_auth_status(watcher_uri, presentity_uri)</function>
 		</title>
 		<para>
 		The function checks if watcher is authorized to subscribe
-		presence of presentity.  Both watcher_uri and
+		event 'presence' of presentity.  Both watcher_uri and
 		presentity_uri are pseudo variables.  Function returns
 		ACTIVE_STATUS, if subscription is allowed and
 		PENDING_STATUS, TERMINATED_STATUS, or WAITING_STATUS
@@ -472,11 +472,16 @@ if(method=="SUBSCRIBE")
 		</para>
 
 		<example>
-		<title><function>auth_status</function> usage</title>
+		<title><function>pres_auth_status</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if((method=="MESSAGE") &amp;&amp; (auth_status("$fu", $ru"))) {
-    t_relay();
+if (method=="MESSAGE") {
+    pres_auth_status("$fu", $ru");
+    if ($retcode == 1) {
+        t_relay();
+    } else {
+        send_reply("403", "Forbidden");
+    }
 }
 ...
 </programlisting>
