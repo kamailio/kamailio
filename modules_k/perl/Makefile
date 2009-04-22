@@ -6,7 +6,7 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
-auto_gen=
+auto_gen=openserxs.c
 NAME=perl.so
 LIBS=
 
@@ -26,7 +26,6 @@ DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi
-include ../../Makefile.modules
 
 PODFILES=openserxs.xs `find lib/perl -name *.pm`
 
@@ -37,20 +36,15 @@ ifeq ($(TYPEMAP),)
 	TYPEMAP=$(PERLLIBPATH)/ExtUtils/typemap
 endif
 
+include ../../Makefile.modules
+
 perl.d: openserxs.o
 perl.o: perl.c openserxs.o
 
-openserxs.o: openserxs.c openserxs.d
-	$(CC) $(MOD_CFLAGS) -Wno-unused $(DEFS) -c -o openserxs.o openserxs.c
+openserxs.o: CFLAGS+=-Wno-unused
 
 openserxs.c: openserxs.xs typemap
 	xsubpp -typemap $(TYPEMAP) -typemap typemap openserxs.xs > openserxs.c
-
-clean:	clean-special
-
-.PHONY: clean-special
-clean-special:
-	rm -f openserxs.c openserxs.o openserxs.d
 
 .PHONY: perlpod
 perlpod: doc/perl_pod.sgml
