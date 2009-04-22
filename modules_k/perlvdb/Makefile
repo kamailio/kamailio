@@ -5,8 +5,10 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=perlvdb.so
-LIBS=`perl -MExtUtils::Embed -e ldopts`
-DEFS+=`perl -MExtUtils::Embed -e ccopts`
+LIBS:=$(shell perl -MExtUtils::Embed -e ldopts)
+PERL_DEFS:=$(shell perl -MExtUtils::Embed -e ccopts)
+DEFS+=$(PERL_DEFS)
+
 
 
 DEFS+=-DOPENSER_MOD_INTERFACE
