@@ -198,12 +198,12 @@ mrproper: clean
 		done \
 	fi
 
-.PHONY: mantainer-cleaan
-mantainer-clean: distclean
+.PHONY: maintainer-clean
+maintainer-clean: distclean
 	-rm -f TAGS tags *.dbg .*.swp
 	-@for r in $(modules) "" ; do \
 		if [ -d "$$r" ]; then \
-			$(MAKE) -C $$r mantainer-clean; \
+			$(MAKE) -C $$r maintainer-clean; \
 		fi ; \
 	 done 
 
