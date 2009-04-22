@@ -28,6 +28,7 @@
 #include "../../dprint.h"
 
 #include "mi_core.h"
+#include "core_stats.h"
 
 
 MODULE_VERSION
@@ -72,6 +73,12 @@ static int mod_init(void)
 {
 	if(init_mi_core()<0)
 		return -1;
+#ifdef STATISTICS
+	if(register_core_stats()<0)
+		return -1;
+	if(register_mi_stats()<0)
+		return -1;
+#endif
 	return 0;
 }
 
@@ -80,6 +87,9 @@ static int mod_init(void)
  */
 void destroy(void)
 {
+#ifdef STATISTICS
+	destroy_stats_collector();
+#endif
 	return;
 }
 
