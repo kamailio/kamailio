@@ -1160,7 +1160,9 @@ static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 	LM_ERR( "getting status from rules document\n");
 	goto err;
     }
-    LM_INFO("subs.status= %d\n", subs.status);
+    LM_DBG("auth status of watcher <%.*s> on presentity <%.*s> is %d\n",
+	   watcher_uri.len, watcher_uri.s, presentity_uri.len, presentity_uri.s,
+	   subs.status);
     pkg_free(rules_doc->s);
     pkg_free(rules_doc);
     return subs.status;
