@@ -1,0 +1,81 @@
+#
+# $Id$
+#
+# utils Makefile
+#(to be included from each util/ subdirectory)
+#
+# History:
+# --------
+#  2009-04-23  initial version derived from Makefile.modules (andrei)
+
+
+# default path to the core makefiles
+COREPATH ?=../..
+
+ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
+ $(COREPATH)/Makefile.utils $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
+
+#override modules value, an util cannot have submodules
+override modules=
+override static_modules=
+override static_modules_path=
+
+ifneq ($(makefile_defs_included),1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
+ifeq ($(MAKELEVEL), 0)
+# make called directly in the module dir!
+
+else
+# called by the main Makefile
+
+ALLDEP+=$(COREPATH)/Makefile
+
+endif
+
+include $(COREPATH)/Makefile.sources
+
+
+# if config was not loaded (makefile_defs!=1) ignore
+# the rest of makefile and try only to remake the config
+ifeq ($(makefile_defs),1)
+
+
+include $(COREPATH)/Makefile.dirs
+include $(COREPATH)/Makefile.targets
+include $(COREPATH)/Makefile.rules
+
+modules:
+
+# README build rules
+ifneq (,$(wildcard doc/Makefile))
+#doc/Makefile present => we can generate README
+
+README: doc/*.xml
+	$(MAKE) -C doc $(MOD_NAME).txt
+	mv doc/$(MOD_NAME).txt $@
+
+else
+# do nothing
+
+README:
+endif
+
+#man page build rules
+ifneq (,$(wildcard $(MOD_NAME).xml))
+
+$(MOD_NAME).7: $(MOD_NAME).xml
+	docbook2x-man -s ../../doc/stylesheets/serdoc2man.xsl $<
+
+man: $(MOD_NAME).7
+
+else
+
+man:
+
+endif
+
+endif # ifeq($(makefile_defs),1)
+
+include $(COREPATH)/Makefile.cfg

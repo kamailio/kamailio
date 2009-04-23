@@ -1,7 +1,7 @@
 # $Id$
-
-include ../../Makefile.defs
-include ../../Makefile.targets
+COREPATH=../..
+include $(COREPATH)/Makefile.defs
+include $(COREPATH)/Makefile.targets
 
 auto_gen=
 NAME=sercmd
@@ -43,8 +43,7 @@ ifeq ($(use_readline),1)
 endif
 
 
-include ../../Makefile.sources
-include ../../Makefile.rules
+include $(COREPATH)/Makefile.utils
 
 ifeq (,$(quiet))
 ifeq ($(use_readline),1)
