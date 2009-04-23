@@ -25,6 +25,7 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):	
 			-@echo "Making $(sub_goals) in $@" ; $(MAKE) $(sub_goals) -C $@
 
+COREPATH=..
 include ../Makefile.targets
 
 all:	subdirs

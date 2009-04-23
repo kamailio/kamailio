@@ -14,6 +14,7 @@ DOCUMENTS ?= index
 # Makefiles
 #
 ROOT_DIR ?= ../../..
+COREPATH  ?=$(ROOT_DIR)
 
 #
 # Output directory where files produced by XSL stylesheets should be stored,
@@ -179,7 +180,7 @@ ifeq (,$(MAKECMDGOALS))
 include $(dep_files) 
 else
 ifeq (,$(strip $(nodep_targets)))
-include $(ROOT_DIR)/Makefile.targets
+include $(COREPATH)/Makefile.targets
 endif
 ifneq (,$(filter-out $(nodep_targets) check, $(MAKECMDGOALS)))
 include $(dep_files)

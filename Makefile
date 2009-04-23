@@ -77,6 +77,7 @@ endif
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
 
+COREPATH=.
 #include  source related defs
 include Makefile.sources
 #include special targets lists
@@ -389,7 +390,6 @@ include Makefile.shared
 
 ifeq ($(config_mak),1)
 
-COREPATH=.
 include Makefile.cfg
 
 else
