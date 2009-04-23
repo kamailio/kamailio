@@ -249,6 +249,15 @@ static int mod_init(void)
 	str s;
 	bind_usrloc_t bind_usrloc;
 
+
+#ifdef STATISTICS
+	/* register statistics */
+	if (register_module_stats( exports.name, mod_stats)!=0 ) {
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}
+#endif
+
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
 		LM_ERR("can't load SL API\n");
