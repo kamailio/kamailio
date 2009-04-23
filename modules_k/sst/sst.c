@@ -159,6 +159,18 @@ static int mod_init(void)
 		exports.stats = 0;
 	}
 
+#ifdef STATISTICS
+	/* register statistics */
+	if (sst_enable_stats!=0)
+	{
+		if (register_module_stats( exports.name, mod_stats)!=0 ) {
+			LM_ERR("failed to register core statistics\n");
+			return -1;
+		}
+	}
+#endif
+
+
 	if (sst_flag == -1) {
 		LM_ERR("no sst flag set!!\n");
 		return -1;
