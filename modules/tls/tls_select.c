@@ -39,6 +39,7 @@
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_mod.h"
+#include "tls_init.h" /* features macros */
 
 enum {
 	CERT_LOCAL = 1,   /* Select local certificate */
@@ -932,7 +933,7 @@ static int sel_cert(str* res, select_t* s, struct sip_msg* msg)
 
 
 #ifdef OPENSSL_NO_TLSEXT
-static int get_tlsext_sn(str* res, int type, sip_msg_t* msg)
+static int get_tlsext_sn(str* res, sip_msg_t* msg)
 {
 	ERR("TLS extension 'server name' is not available! "
 		"please install openssl with TLS extension support and recompile "

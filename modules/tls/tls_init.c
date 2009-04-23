@@ -84,6 +84,11 @@ to compile on the  _target_ system)"
 #endif /* OPENSSL_VERSION_NUMBER */
 #endif /* TLS_KSSL_WORKARROUND */
 
+/* openssl < 1. 0 */
+#if OPENSSL_VERSION_NUMBER < 0x01000000L
+#	warning "openssl < 1.0: no TLS extensions or server name support"
+#endif /* OPENSSL_VERION < 1.0 */
+
 
 
 #ifndef OPENSSL_NO_COMP

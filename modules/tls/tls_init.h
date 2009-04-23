@@ -36,6 +36,11 @@
 #include "../../ip_addr.h"
 #include "tls_domain.h"
 
+/* openssl < 1. 0 */
+#if OPENSSL_VERSION_NUMBER < 0x01000000L
+/* alternative: check ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME */
+#define OPENSSL_NO_TLSEXT
+#endif /* OPENSSL_VERION < 1.0 */
 #ifndef OPENSSL_NO_KRB5
 /* enable workarround for openssl kerberos wrong malloc bug
  * (kssl code uses libc malloc/free/calloc instead of OPENSSL_malloc & 
