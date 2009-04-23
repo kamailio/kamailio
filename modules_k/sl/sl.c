@@ -154,6 +154,17 @@ static int mod_init(void)
 	if (sl_enable_stats==0)
 		exports.stats = 0;
 
+#ifdef STATISTICS
+	/* register statistics */
+	if (sl_enable_stats!=0)
+	{
+		if (register_module_stats( exports.name, mod_stats)!=0 ) {
+			LM_ERR("failed to register core statistics\n");
+			return -1;
+		}
+	}
+#endif
+
 	/* filter all ACKs before script */
 	if (register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )!=0) {
 		LM_ERR("register_script_cb failed\n");
