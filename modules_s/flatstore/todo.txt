@@ -1,2 +1,0 @@
-* Create the directory if it does not exist and check permissions
-
