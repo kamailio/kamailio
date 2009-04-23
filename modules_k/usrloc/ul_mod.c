@@ -214,6 +214,14 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+#ifdef STATISTICS
+	/* register statistics */
+	if (register_module_stats( exports.name, mod_stats)!=0 ) {
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}
+#endif
+	
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
