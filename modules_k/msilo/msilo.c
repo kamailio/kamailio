@@ -256,6 +256,13 @@ static int mod_init(void)
 {
 	pv_spec_t avp_spec;
 
+#ifdef STATISTICS
+	/* register statistics */
+	if (register_module_stats( exports.name, msilo_stats)!=0 ) {
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}
+#endif
 	ms_db_url.len = strlen (ms_db_url.s);
 	ms_db_table.len = strlen (ms_db_table.s);
 	sc_mid.len = strlen(sc_mid.s);
