@@ -799,6 +799,62 @@ again:
 }
 
 
+
+/* nonblocking version */
+int tls_h_nonblocking_write(struct tcp_connection *c, int fd, const char *buf,
+			  unsigned int len)
+{
+	int err, n;
+	
+	n = 0;
+	if (tls_update_fd(c, fd) < 0) goto error;
+again:
+	err = 0;
+	if (c->state == S_CONN_CONNECT) {
+		if (tls_connect(c, &err) < 0) goto error;
+	} else if (c->state == S_CONN_ACCEPT) {
+		if (tls_accept(c, &err) < 0) goto error;
+	}
+	if (c->state!=S_CONN_CONNECT && c->state!=S_CONN_ACCEPT){
+		n = tls_write(c, buf, len, &err);
+		if (n < 0) {
+			DBG("tls_write error %d (ssl %d)\n", n, err);
+			goto error;
+		} else if (n==len){
+			goto end;
+		}else{
+			DBG("%ld bytes still need to be written\n", 
+				(long)(len - n));
+		}
+	}else
+		n=0; /* no bytes written */
+
+		switch(err){
+			/* TODO: set some flag: WANT_READ, WANT_WRITE */
+			case 0:
+			case SSL_ERROR_WANT_WRITE:
+				break;
+			case SSL_ERROR_WANT_READ:
+				break;
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
+			case SSL_ERROR_WANT_ACCEPT:
+#endif
+			case SSL_ERROR_WANT_CONNECT:
+				DBG("re-trying accept/connect\n");
+				break;
+			default:
+				BUG("Unhandled SSL error %d\n", err);
+				goto error;
+		}
+	
+error:
+	return -1;
+end:
+	return n;
+}
+
+
+
 /*
  * called only when a connection is in S_CONN_OK, we do not have to care
  * about accepting or connecting here, each modification of ssl data
@@ -813,7 +869,7 @@ int tls_h_read(struct tcp_connection * c)
 	SSL* ssl;
 
 	r = &c->req;
-	bytes_free = TCP_BUF_SIZE - (int)(r->pos - r->buf);
+	bytes_free = c->req.b_size - (int)(r->pos - r->buf);
 	
 	if (bytes_free == 0) {
 		ERR("Buffer overrun, dropping\n");
