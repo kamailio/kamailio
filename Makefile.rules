@@ -254,7 +254,7 @@ ifeq (,$(MAKECMDGOALS))
 -include $(depends)
 else
 ifeq (,$(strip $(nodep_targets)))
-include Makefile.targets
+include $(COREPATH)/Makefile.targets
 endif
 ifneq (,$(filter-out $(nodep_targets),$(MAKECMDGOALS)))
 -include $(depends)
