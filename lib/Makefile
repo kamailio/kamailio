@@ -7,7 +7,10 @@
 #
 
 
-SUBDIRS=binrpc cds xcap presence shm_regex
+#SUBDIRS=binrpc cds xcap presence shm_regex
+
+SUBDIRS=$(filter-out CVS doc $(lib_exclude), $(strip \
+			$(patsubst %/Makefile,%,$(wildcard */Makefile))))
 
 .PHONY: subdirs $(SUBDIRS) 
 
@@ -22,11 +25,11 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):	
 			-@echo "Making $(sub_goals) in $@" ; $(MAKE) $(sub_goals) -C $@
 
+include ../Makefile.targets
+
 all:	subdirs
 
-proper:	clean
-
-clean:	subdirs
+$(clean_targets): subdirs
 
 install:	subdirs
 

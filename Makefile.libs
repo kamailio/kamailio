@@ -123,16 +123,13 @@ link_clean:
 	-@rm -f $(LIB_RUNTIME_NAME)
 	-@rm -f $(LIB_LINK_NAME)
 
-clean: link_clean
+local-clean: link_clean
 
-ifneq ($(strip $(LIBINAME_F)),)
 .PHONY: libiname_clean
-
 libiname_clean:
-	-@rm -f "$(LIBINAME_F)"
+	-@rm -f libiname.lst
 
-clean: libiname_clean
-endif
+local-clean: libiname_clean
 
 $(lib_prefix)/$(lib_dir):
 	mkdir -p $(lib_prefix)/$(lib_dir)

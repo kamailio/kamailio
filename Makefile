@@ -60,6 +60,8 @@
 #  2009-04-02  workaround for export not supported in gnu make 3.80
 #               target specific variables: use mk_params for each
 #               $(MAKE) invocation (andrei)
+#  2009-04-22  don't rebuild config.mak or modules.lst if not needed
+#              (e.g. on clean) (andrei)
 #
 
 # check make version
@@ -77,6 +79,8 @@ auto_gen_others=cfg.tab.h  # auto generated, non-c
 
 #include  source related defs
 include Makefile.sources
+#include special targets lists
+include Makefile.targets
 
 # whether or not the entire build process should fail if building a module or
 #  an utility fails
@@ -97,7 +101,15 @@ include Makefile.dirs
 # Alternatives are txt, html, xhtml, and pdf (see Makefile.doc)
 doc_format?=html
 
+# don't force modules.lst generation if the makefile goals do not
+# require it (but if present use it)
+ifeq (,$(strip $(filter-out $(clean_targets) $(aux_targets),$(MAKECMDGOALS))))
+ifneq (,$(strip $(wildcard modules.lst)))
+-include modules.lst
+endif
+else
 include modules.lst
+endif # ifneq (,$(strip $(filter-out ...,$(MAKECMDGOALS))))
 
 #if called with group_include, ignore the modules from modules.lst
 ifneq ($(group_include),)
@@ -230,15 +242,17 @@ ALLDEP=config.mak Makefile Makefile.dirs Makefile.sources Makefile.rules
 #C_DEFS:=
 
 
-# try saved cfg, unless we are in the process of building it
-ifeq (,$(filter config.mak config cfg cfg-defs,$(MAKECMDGOALS)))
+# try saved cfg, unless we are in the process of building it or if we're doing
+# a clean
+ifeq (,$(strip \
+	$(filter config.mak config cfg cfg-defs $(clean_targets),$(MAKECMDGOALS))))
 include config.mak
 ifeq ($(makefile_defs),1)
 $(info config.mak loaded)
 # config_make valid & used
 config_mak=1
 endif
-else
+else # config.mak doesn't need to be used
 ifneq (,$(filter cfg config cfg-defs,$(word 1,$(MAKECMDGOALS))))
 # needed here to avoid starting a config submake 
 # (e.g. rm -f config.mak; make config.mak), which would either require 
@@ -351,7 +365,6 @@ ifneq ($(TLS),)
 endif
 
 # include the common rules
-include Makefile.targets
 include Makefile.rules
 
 #extra targets 
@@ -411,13 +424,14 @@ modules.lst:
 		$(call cfg_save_var2,$(mods),$@))
 	@echo "modules_configured:=1" >>$@
 
+
 .PHONY: cfg config cfg-defs
 cfg-defs: config.mak
 
 cfg config: cfg-defs modules-cfg
 
 .PHONY: modules-cfg modules-list modules-lst
-modules-cfg modules-list modules-lst: 
+modules-cfg modules-list modules-lst:
 	rm -f modules.lst
 	$(MAKE) modules.lst
 
@@ -851,23 +865,40 @@ install-man:  install-ser-man install-every-module-man
 
 
 
-.PHONY: clean_libs
+# libs cleaning targets
+.PHONY: clean-libs
+clean-libs:
+			$(MAKE) -C lib clean
 
-clean_libs:
-			$(MAKE) -C lib proper
+.PHONY: proper-libs realclean-libs distclean-libs maintainer-clean-libs
+proper-libs realclean-libs distclean-libs maintainer-clean-libs:
+			$(MAKE) -C lib $(patsubst %-libs,%,$@)
 
 
+# clean modules on make clean
+clean: clean-modules
+# clean utils on make clean
+clean: clean-utils
 # cleaning in libs always when cleaning ser
-clean:	clean_libs
+clean: clean-libs
+
+# proper/distclean a.s.o modules, utils and libs too
+
+proper: proper-modules proper-utils proper-libs
+distclean: distclean-modules distclean-utils distclean-libs
+realclean: realclean-modules realclean-utils realclean-libs
+maintainer-clean: maintainer-clean-modules maintainer-clean-utils \
+ maintainer-clean-libs
 
 #try to clean everything (including all the modules, even ones that are not
 # configured/compiled normally
 .PHONY: clean-all
 clean-all: cmodules=$(all_modules_lst)
 clean-all: clean
+maintainer-clean: modules=$(modules_all)
 
 # on make proper clean also the build config (w/o module list)
-proper realclean distclean: clean_cfg 
+proper realclean distclean maintainer-clean: clean_cfg
 
 # on maintainer clean, remove also the configured module list
 maintainer-clean: clean_modules_cfg
@@ -877,8 +908,8 @@ proper-all realclean-all distclean-all: cmodules=$(all_modules_lst)
 proper-all realclean-all distclean-all: proper
 
 
-.PHONY: clean_cfg
-clean_cfg:
+.PHONY: clean_cfg clean-cfg
+clean_cfg clean-cfg:
 	rm -f config.mak
 
 .PHONY: clean_modules_cfg clean-modules-cfg

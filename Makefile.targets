@@ -17,9 +17,16 @@ ifeq (,$(strip $(modules_dirs)))
 include $(COREPATH)/Makefile.dirs
 endif
 
-clean_targets:=	clean proper distclean realclean mantainer-clean clean_libs \
+clean_targets:=	clean proper distclean realclean maintainer-clean local-clean \
 				clean-all proper-all distclean-all realclean-all \
-				clean_cfg clean_modules_cfg clean-modules-cfg
+				clean_cfg clean-cfg clean_modules_cfg clean-modules-cfg \
+				clean-modules proper-modules realclean-modules \
+				distclean-modules maintainer-clean-modules \
+				clean-utils proper-utils realclean-utils distclean-utils \
+				maintaner-clean-utils \
+				clean-libs proper-libs realclean-libs distclean-libs \
+				maintainer-clean-libs \
+				clean-tmp clean_doxygen
 doc_targets:=	README man install-doc install-man install-ser-man \
 		install-every-module-doc install-every-module-man \
 		$(foreach m,$(modules_dirs),$(m)-doc $(m)-readme $(m)-man) \
@@ -27,8 +34,8 @@ doc_targets:=	README man install-doc install-man install-ser-man \
 
 # auxiliary: maintance, debugging, etc. (don't affect code/objects)
 aux_targets:=	TAGS tar dist cfg-defs cfg config config.mak print-modules \
-		dbg dbinstall librpath.lst makecfg.lst \
-		modules-cfg modules-list modules-lst modules.lst mk-install_dirs
+		dbg dbinstall librpath.lst makecfg.lst modules.lst modules-cfg \
+		modules-list modules-lst mk-install_dirs
 # other targets that don't produce code in the current directory ("external")
 ext_targets:=	every-module $(modules_dirs) libs utils \
 		install-cfg install-utils  install-modules-all install-every-module\

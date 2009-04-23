@@ -3499,11 +3499,21 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			}
 			if (unlikely(ev & POLLERR)){
 				if (unlikely(tcpconn->state=S_CONN_CONNECT)){
+#ifdef USE_DST_BLACKLIST
+					if (cfg_get(core, core_cfg, use_dst_blacklist))
+						dst_blacklist_su(BLST_ERR_CONNECT, tcpconn->rcv.proto,
+											&tcpconn->rcv.src_su, 0);
+#endif /* USE_DST_BLACKLIST */
 					TCP_EV_CONNECT_ERR(0, TCP_LADDR(tcpconn),
 										TCP_LPORT(tcpconn), TCP_PSU(tcpconn),
 										TCP_PROTO(tcpconn));
 					TCP_STATS_CONNECT_FAILED();
 				}else{
+#ifdef USE_DST_BLACKLIST
+					if (cfg_get(core, core_cfg, use_dst_blacklist))
+						dst_blacklist_su(BLST_ERR_SEND, tcpconn->rcv.proto,
+											&tcpconn->rcv.src_su, 0);
+#endif /* USE_DST_BLACKLIST */
 					TCP_STATS_CON_RESET(); /* FIXME: it could != RST */
 				}
 			}
