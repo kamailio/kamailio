@@ -1094,6 +1094,7 @@ inline static int int_strop1(int* res, enum rval_expr_op op, str* s1)
 			break;
 		default:
 			BUG("rv unsupported int_strop1 %d\n", op);
+			*res=0;
 			return -1;
 	}
 	return 0;
@@ -1355,6 +1356,7 @@ error:
 
 /** integer operation on rval evaluated as string.
  * Can use cached rvalues (c1 & c2).
+ * @param res - will be set to the result
  * @return 0 success, -1 on error
  */
 inline static int rval_int_strop1(struct run_act_ctx* h,
@@ -1375,38 +1377,39 @@ inline static int rval_int_strop1(struct run_act_ctx* h,
 	rval_destroy(rv1); 
 	return ret;
 error:
+	*res=0;
 	rval_destroy(rv1); 
-	return 0;
+	return -1;
 }
 
 
 
 /** checks if rv is defined.
- * @return 1 defined, 0 not defined, -1 on error
+ * @param res - set to the result 1 - defined, 0 not defined
+ * @return 0 on success, -1 on error
  * Can use cached rvalues (c1).
  * Note: a rv can be undefined if it's an undefined avp or pvar or
  * if it's NONE
  */
 inline static int rv_defined(struct run_act_ctx* h,
-						 struct sip_msg* msg,
+						 struct sip_msg* msg, int* res,
 						 struct rvalue* rv, struct rval_cache* cache)
 {
 	avp_t* r_avp;
 	int_str avp_val;
 	pv_value_t pval;
-	int ret;
 	
-	ret=1;
+	*res=1;
 	switch(rv->type){
 		case RV_AVP:
 			if (unlikely(cache && cache->cache_type==RV_CACHE_AVP)){
 				if (cache->val_type==RV_NONE)
-					ret=0;
+					*res=0;
 			}else{
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
 											&avp_val, rv->v.avps.index);
 				if (unlikely(r_avp==0)){
-					ret=0;
+					*res=0;
 				}
 			}
 			break;
@@ -1414,42 +1417,44 @@ inline static int rv_defined(struct run_act_ctx* h,
 			/* PV_VAL_NULL or pv_get_spec_value error => undef */
 			if (unlikely(cache && cache->cache_type==RV_CACHE_PVAR)){
 				if (cache->val_type==RV_NONE)
-					ret=0;
+					*res=0;
 			}else{
 				memset(&pval, 0, sizeof(pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
 					if ((pval.flags & PV_VAL_NULL) &&
 							! (pval.flags & (PV_VAL_INT|PV_VAL_STR))){
-						ret=0;
+						*res=0;
 					}
 					pv_value_destroy(&pval);
 				}else{
-					ret=0; /* in case of error, consider it undef */
+					*res=0; /* in case of error, consider it undef */
 				}
 			}
 			break;
 		case RV_NONE:
-			ret=0;
+			*res=0;
 			break;
 		default:
 			break;
 	}
-	return 1; /* defined */
+	return 0;
 }
 
 
 /** defined (integer) operation on rve.
- * @return 1 defined, 0 not defined, -1 on error
+ * @param res - set to  1 defined, 0 not defined
+ * @return - 0 on success, -1 on error
  */
 inline static int int_rve_defined(struct run_act_ctx* h,
-						 struct sip_msg* msg,
+						 struct sip_msg* msg, int* res,
 						 struct rval_expr* rve)
 {
 	/* only a rval can be undefined, any expression consisting on more
 	   then one rval => defined */
 	if (likely(rve->op==RVE_RVAL_OP))
-		return rv_defined(h, msg, &rve->left.rval, 0);
-	return 1;
+		return rv_defined(h, msg, res, &rve->left.rval, 0);
+	*res=1;
+	return 0;
 }
 
 
@@ -1580,7 +1585,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			ret=-1;
 			break;
 		case RVE_DEFINED_OP:
-			ret=int_rve_defined(h, msg, rve->left.rve);
+			ret=int_rve_defined(h, msg, res, rve->left.rve);
 			break;
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
@@ -2799,6 +2804,9 @@ int fix_rval_expr(void** p)
 		case RVE_UMINUS_OP: /* unary operators */
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			ret=fix_rval_expr((void**)&rve->left.rve);
 			if (ret<0) return ret;
 			break;
