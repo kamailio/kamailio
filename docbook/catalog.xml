@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!DOCTYPE catalog PUBLIC "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+         "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="public">
+	<!-- Uncomment the following entry if you have docbook DTDs in unusual
+	     location or if you would like to validate the documentation against
+	     newer docbook version -->
+	<!--
+	<public publicId="-//OASIS//DTD DocBook XML V4.3//EN"
+            uri="file:///home/janakj/docbook/dtd/docbookx.dtd"/>
+      -->
+
+    <!-- Uncomment the following entry if you have docbook XSL stylesheets in
+         unusual location, the value of rewritePrefix parameter should point
+         to the top level directory of your XSL stylesheets -->
+    <!--
+    <rewriteURI uriStartString="http://docbook.sourceforge.net/release/xsl/current/"
+                rewritePrefix="file:///home/janakj/docbook/xsl/"/>
+      -->
+
+    <!-- Try the system wide catalogs as the last step before reverting to
+         using the value of system identifiers and URI references from the
+         documents being processed (they usualy contain HTTP URIs). -->
+    <delegatePublic publicIdStartString="" catalog="file:///etc/xml/catalog"/>
+    <delegateURI    uriStartString=""      catalog="file:///etc/xml/catalog"/>
+
+    <!-- If xsltproc gets here while searching the catalog then no entry was
+         found in the catalog files for the requested resource and in this
+         case xsltproc will attempt to download the resource from the internet
+         using the HTTP protocol. It will use the HTTP URIs from system
+         identifiers and URI references (therefore the XSL customization
+         stylesheets in SR refer to the original XSL stylesheets using HTTP
+         URIs). Note: Downloading DTDs and XSL stylesheets can be very slow,
+         because each file will be downloaded several times, xsltproc does not
+         cache downloaded files.
+      -->
+</catalog>

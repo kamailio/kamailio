@@ -1,0 +1,66 @@
+This directory contains a number of auxiliary files that are used by the
+docbook build system to convert the documentation in docbook-xml format to
+various output formats.
+
+* catalog.xml:
+    This is a XML catalog file. The file is used by the tools that process
+    docbook sources to map public identifiers, which are commonly found in
+    docbook source files, such as 
+      "-//OASIS//DTD DocBook XML V4.3//EN"
+    to local files. The default version of the file refers to a generic 
+    catalog file that is commonly found in /etc/xml/catalog.
+
+    You can modify the file if you want to use a particular version of docbook
+    schema files or XSL stylesheets to produce the output. This is very useful
+    because there is no need to modify source docbook files, the catalog file
+    can be used to re-map the public identifier in those files to a local (and
+    possibly customized) version of the schema or stylesheets.
+
+* common.xsl:
+    This file contains docbook XSL stylesheet customizations that are shared
+    by all output-specific XSL files, for example, the code that strips
+    leading and trailing whitespace in <screen> sections is located here.
+
+* dep.xsl:
+    This file contains a special XSL stylesheet which can be used to produce a
+    file with dependencies for any given docbook source file. The stylesheet
+    traverses docbook documents and looks for files included with the
+    xi:include mechanism, or for files included by docbook tags, such as
+    images, screen listings, etc. The list of dependencies is then written in
+    a separate file and the file can be included in a Makefile that is used to
+    build documentation. This is all done by the docbook makefile system.
+
+* html.chunked.xsl: 
+    The stylesheet in this file is used to generate HTML output split in
+    multiple files. This is useful if you need to generate HTML files with
+    documentation for browsers that do not support XHTML.
+
+* Makefile:
+    This is the main Makefile of the Docbook build system. Rules implemented
+    in this Makefile can be used to validate docbook documents, generate lists
+    of dependendies, generate HTML, plain-text, READMEs, and other output
+    formats out of docbook documents. This file is not meant to be used
+    directly. Instead, each directory with docbook source files should have
+    its own minimal Makefile which includes this file.
+
+* man.xsl:
+    This stylesheet can be used to convert docbook sources into man pages. The
+    docbook build system uses this stylesheet to convert docbook files with
+    man pages contents to real man pages, some modules contain such docbook
+    files.
+
+* readme.xsl:
+	This stylesheet is used to generate module README files from docbook sources.
+
+* sr-doc.css:
+    The CSS stylesheets that are used for online HTML documentation generated
+    from docbook sources.
+
+* txt.xsl:
+    The XSL stylesheet used to generate plain text version of the
+    documentation.  XHTML stylesheets are used to generate XHTML code that is
+    then fed to lynx to produce plain a text version. This stylesheet contains
+    XHTML customization that are applied only when a plain-text output is
+    desired.
+
+  -- Jan Janak <jan@iptel.org>

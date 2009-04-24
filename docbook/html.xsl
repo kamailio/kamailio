@@ -6,5 +6,6 @@
     <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/onechunk.xsl"/>
 
     <!-- Common XHTML customization -->
-    <xsl:import href="xhtml.common.xsl"/>
+    <xsl:import href="html.common.xsl"/>
+
 </xsl:stylesheet>

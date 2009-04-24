@@ -1,8 +1,7 @@
-<!-- $Id: entities.xml 5591 2009-02-11 15:07:42Z henningw $ -->
-
 <!-- Entities often used in the documentation -->
 
 <!ENTITY fhg "FhG FOKUS">
+<!ENTITY iptel "<ulink url='http://iptel.org'>iptel.org</ulink>">
 
 <!ENTITY kamailio "Kamailio">
 <!ENTITY kamailioname "Kamailio SIP Server Platform">
@@ -33,11 +32,22 @@
 <!ENTITY develguide "Developer Guide">
 <!ENTITY faqguide "Frequently Asked Questions">
 
+<!ENTITY ser "SER">
+<!ENTITY sername "SIP Express Router">
+
+<!ENTITY serhome "http://iptel.org/ser">
+<!ENTITY serbugs "http://iptel.org/ser/bugs">
+<!ENTITY serusers "http://mail.iptel.org/mailman/listinfo/serusers">
+<!ENTITY serdev "http://mail.iptel.org/mailman/listinfo/serdev">
+
 <!ENTITY serhomelink "<ulink url='&serhome;'>&serhome;</ulink>">
 <!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs;</ulink>">
 <!ENTITY serhelplink "<ulink url='&serhelp;'>&serhelp;</ulink>">
 <!ENTITY seruserslink "<ulink url='&serusers;'>&serusers;</ulink>">
 <!ENTITY serdevlink "<ulink url='&serdev;'>&serdev;</ulink>">
+
+<!ENTITY serusersmail "<email>serusers@iptel.org</email>">
+<!ENTITY serdevmail "<email>serdev@iptel.org</email>">
 
 <!ENTITY defaultdb "mysql://openser:openserrw@localhost/openser">
 <!ENTITY defaultrodb "mysql://openserro:openserro@localhost/openser">

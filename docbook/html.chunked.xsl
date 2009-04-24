@@ -6,7 +6,7 @@
     <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/chunk.xsl"/>
 
     <!-- Commmon XHTML customization -->
-    <xsl:import href="xhtml.common.xsl"/>
+    <xsl:import href="html.common.xsl"/>
 
 <!-- Chunking -->
     <xsl:param name="use.id.as.filename">yes</xsl:param>

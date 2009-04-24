@@ -1,0 +1,10 @@
+* XSLT stylesheet included from other stylesheet are not among dependencies
+  (if you modify html.common.xsl) then the html output won't be rebuilt
+
+* Support for man pages
+
+* Support for embedded css stylesheets in generated HTML documents
+
+* There is an issue with .d files, they are not sometimes regenerated when
+  one of the files included gets changed to a non-existent file and back
+  (maybe it happens only when you run make clean html)

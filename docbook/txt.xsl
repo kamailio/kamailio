@@ -6,7 +6,7 @@
     <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/docbook.xsl"/>
 
     <!-- Common XHTML customization -->
-    <xsl:import href="xhtml.common.xsl"/>
+    <xsl:import href="html.common.xsl"/>
 
 	<!-- Display all subsections in in the toc of READMEs -->
   	<xsl:param name="toc.section.depth">4</xsl:param>

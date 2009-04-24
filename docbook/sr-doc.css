@@ -1,4 +1,4 @@
-BODY {
+body {
   padding: 20px;
   margin: 5px 50px 5px 50px;
   background: #ffffff;
@@ -8,35 +8,36 @@ BODY {
   font-family: Helvetica,Arial;
 }
 
-P {
+p {
   font-family: Helvetica,Arial;
   font-size: 12;
   text-align: justify;
 }
 
-P.C2 {
+p.c2 {
   COLOR: #ffffff ;
   BACKGROUND-color: #a0a0d0;
   BORDER: solid 1px #606090;
   PADDING: 1px
 }
 
-A {
+a {
   color: #041fc5;
   text-decoration: none;
 }
 
-A:hover {
+a:hover {
   color: #990000;
   text-decoration: underline;
 }
 
-DIV.ABSTRACT {
+div.abstract {
   border: solid 2px;
   padding-left: 10pt;
   padding-right: 10pt;
 }
-PRE.SCREEN {
+
+pre.screen {
   font-family:monospace;
   white-space: pre;
   background-color: #fefeee;
@@ -50,7 +51,7 @@ PRE.SCREEN {
   padding-left: 15pt;
 }
 
-PRE.PROGRAMLISTING {
+pre.programlisting {
   font-family:monospace;
   white-space: pre;
   background-color: #fefeee;
@@ -64,7 +65,7 @@ PRE.PROGRAMLISTING {
   padding-left: 15pt;
 }
 
-H1 {
+h1 {
   color: #000000;
   border: solid 2px #a0a0a0;
   background-color: #DCDCDC;
@@ -73,22 +74,22 @@ H1 {
   padding-left: 5px;
 }
 
-.TITLE a {
+.title a {
   color: #000000; 
   text-decoration: none;
 }
 
-.TITLE a:active {
+.title a:active {
   color: #000000; 
   text-decoration: none;
 }
 
-.TITLE a:visited {
+.title a:visited {
   color: #000000; 
   text-decoration: none;
 }
 
-H2 {       
+h2 {       
   COLOR: #000000 ;
   font-style: italic;
   border: solid 1px #b0b0b0;
@@ -99,27 +100,27 @@ H2 {
   font-size: 14;
 }
 
-H2 a {
+h2 a {
   color: #000000; 
   text-decoration: none;
 }
 
-H2 a:active {
+h2 a:active {
   color: #000000; 
   text-decoration: none;
 }
 
-H2 a:visited {
+h2 a:visited {
   color: #000000; 
   text-decoration: none;
 }
 
-H2 a:hover {
+h2 a:hover {
   color: #000000; 
   text-decoration: none;
 }
 
-H3.SECTION {       
+h3.section {       
   COLOR: #000000 ;
   font-style: italic;
   border: solid 1px #c0c0c0;
@@ -130,74 +131,74 @@ H3.SECTION {
   font-size: 13;
 }
 
-H3 a {
+h3 a {
   color: #000000; 
   text-decoration: none;
 }
 
-H3 a:active {
+h3 a:active {
   color: #000000; 
   text-decoration: none;
 }
 
-H3 a:visited {
+h3 a:visited {
   color: #000000; 
   text-decoration: none;
 }
 
-H3 a:hover {
+h3 a:hover {
   color: #000000; 
   text-decoration: none;
 }
 
-H3.AUTHOR {
+h3.author {
   font-family: Helvetica,Arial;
   font-weight: bold;
   font-size: 13;
 }
 
-H3.EDITOR {
+h3.editor {
   font-family: Helvetica,Arial;
   font-weight: bold;
   font-style: italic;
   font-size: 11;
 }
 
-H4 {
+h4 {
   font-family: Helvetica,Arial;
   font-weight: bold;
   font-size: 12;
 }
 
-TABLE.IMPORTANT {
+table.important {
   font-style:italic;
   border: solid 2px #ff0000;
   width: 70%;
   margin-left: 15%;       
 }
 
-TABLE.CAUTION {
+table.caution {
   font-style:italic;
   border: ridge 2px #ffff00;
   width: 70%;
   margin-left: 15%;       
 }
 
-TABLE.NOTE {
+table.note {
   font-style:italic;
   border: solid 1px #000000;
   width: 70%;
   margin-left: 15%;       
 }
 
-TABLE.TIP {
+table.tip {
   font-style:italic;
   border: solid 1px #000000;
   width: 70%;
   margin-left: 15%;       
 }
 
-TABLE.WARNING {
+table.warning {
   font-style:italic;
   font-weight: bold;
   border: ridge 4px #ff0000;
@@ -205,14 +206,14 @@ TABLE.WARNING {
   margin-left: 15%;       
 }
 
-DIV.VARIABLELIST {
+div.variablelist {
   font-family: sans-serif;
   font-style: normal;
   font-weight: normal;
   padding-left: 20px;
 }
 
-.VARLISTENTRY {
+.varlistentry {
   font-weight: bold;
   margin-top: 10px;
   COLOR: #ffffff ;
@@ -221,7 +222,7 @@ DIV.VARIABLELIST {
   PADDING: 1px
 }
 
-DIV.NAVFOOTER {
+div.navfooter {
   color: #000000;
   background-color: #EFEFF8;
   padding: 5px;
@@ -230,7 +231,7 @@ DIV.NAVFOOTER {
   border: thin solid #a0a0d0;
 }
 
-DIV.NUKEFOOTER {
+div.nukefooter {
   color: #000000;
   background-color: #B0E0E6;
   padding: 5px;
@@ -239,7 +240,7 @@ DIV.NUKEFOOTER {
   border: thin solid #a0a0d0;
 }
 
-DIV.NAVHEADER {
+div.navheader {
   color: #000000;
   background-color: #EFEFF8;
   padding: 5px;
@@ -248,11 +249,11 @@ DIV.NAVHEADER {
   border: thin solid #a0a0d0;
 }
 
-DIV.SECT1,DIV.SECT2,DIV.SECT3 {
+div.sect1,div.sect2,div.sect3 {
   margin-left: 20px;
 }
 
-DIV.EXAMPLE,DIV.TOC {
+div.example,div.toc {
   border: thin dotted #70AAE5;
   padding-left: 10px;
   padding-right: 10px;
@@ -260,7 +261,7 @@ DIV.EXAMPLE,DIV.TOC {
   background-color: #EFF8F8;
 }
 
-DIV.TOC {
+div.toc {
   margin-left: 20px;
   margin-right: 20px;
 }
