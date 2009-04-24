@@ -23,6 +23,7 @@
  * History:
  * --------
  *  2008-12-01  initial version (andrei)
+ *  2009-04-24  added support for defined, strempty, strlen (andrei)
  */
 
 #include "rvalue.h"
@@ -390,6 +391,9 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 		case RVE_IPLUS_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			return RV_INT;
 		case RVE_PLUS_OP:
 			/* '+' evaluates to the type of the left operand */
@@ -429,6 +433,9 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			return rve_is_constant(rve->left.rve);
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
@@ -478,6 +485,9 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			return 1;
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
@@ -610,6 +620,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					return 1;
 				}
 			}
+			break;
 		case RVE_CONCAT_OP:
 			*type=RV_STR;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
@@ -632,6 +643,21 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					return 1;
 				}
 			}
+			break;
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
+			*type=RV_INT;
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (type1==RV_INT){
+					if (bad_rve) *bad_rve=rve->left.rve;
+					if (bad_t) *bad_t=type1;
+					if (exp_t) *exp_t=RV_STR;
+					return 0;
+				}
+				return 1;
+			}
+			break;
 		case RVE_NONE_OP:
 			break;
 	}
@@ -974,7 +1000,7 @@ inline static int int_intop1(int* res, enum rval_expr_op op, int v)
 
 
 
-/** integer operation: *res= op v.
+/** integer operation: *res= v1 op v2
   * @return 0 on succes, \<0 on error
   */
 inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
@@ -1049,6 +1075,27 @@ inline static int bool_strop2( enum rval_expr_op op, int* res,
 		*res= op==RVE_EQ_OP;
 	else
 		*res= op==RVE_DIFF_OP;
+	return 0;
+}
+
+
+
+/** integer returning operation on string: *res= op str (returns integer)
+  * @return 0 on succes, \<0 on error
+  */
+inline static int int_strop1(int* res, enum rval_expr_op op, str* s1)
+{
+	switch(op){
+		case RVE_STRLEN_OP:
+			*res=s1->len;
+			break;
+		case RVE_STREMPTY_OP:
+			*res=(s1->len==0);
+			break;
+		default:
+			BUG("rv unsupported int_strop1 %d\n", op);
+			return -1;
+	}
 	return 0;
 }
 
@@ -1306,6 +1353,107 @@ error:
 
 
 
+/** integer operation on rval evaluated as string.
+ * Can use cached rvalues (c1 & c2).
+ * @return 0 success, -1 on error
+ */
+inline static int rval_int_strop1(struct run_act_ctx* h,
+						 struct sip_msg* msg,
+						 int* res,
+						 enum rval_expr_op op,
+						 struct rvalue* l,
+						 struct rval_cache* c1)
+{
+	struct rvalue* rv1;
+	int ret;
+	
+	rv1=0;
+	ret=0;
+	if ((rv1=rval_convert(h, msg, RV_STR, l, c1))==0)
+		goto error;
+	ret=int_strop1(res, op, &rv1->v.s);
+	rval_destroy(rv1); 
+	return ret;
+error:
+	rval_destroy(rv1); 
+	return 0;
+}
+
+
+
+/** checks if rv is defined.
+ * @return 1 defined, 0 not defined, -1 on error
+ * Can use cached rvalues (c1).
+ * Note: a rv can be undefined if it's an undefined avp or pvar or
+ * if it's NONE
+ */
+inline static int rv_defined(struct run_act_ctx* h,
+						 struct sip_msg* msg,
+						 struct rvalue* rv, struct rval_cache* cache)
+{
+	avp_t* r_avp;
+	int_str avp_val;
+	pv_value_t pval;
+	int ret;
+	
+	ret=1;
+	switch(rv->type){
+		case RV_AVP:
+			if (unlikely(cache && cache->cache_type==RV_CACHE_AVP)){
+				if (cache->val_type==RV_NONE)
+					ret=0;
+			}else{
+				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
+											&avp_val, rv->v.avps.index);
+				if (unlikely(r_avp==0)){
+					ret=0;
+				}
+			}
+			break;
+		case RV_PVAR:
+			/* PV_VAL_NULL or pv_get_spec_value error => undef */
+			if (unlikely(cache && cache->cache_type==RV_CACHE_PVAR)){
+				if (cache->val_type==RV_NONE)
+					ret=0;
+			}else{
+				memset(&pval, 0, sizeof(pval));
+				if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
+					if ((pval.flags & PV_VAL_NULL) &&
+							! (pval.flags & (PV_VAL_INT|PV_VAL_STR))){
+						ret=0;
+					}
+					pv_value_destroy(&pval);
+				}else{
+					ret=0; /* in case of error, consider it undef */
+				}
+			}
+			break;
+		case RV_NONE:
+			ret=0;
+			break;
+		default:
+			break;
+	}
+	return 1; /* defined */
+}
+
+
+/** defined (integer) operation on rve.
+ * @return 1 defined, 0 not defined, -1 on error
+ */
+inline static int int_rve_defined(struct run_act_ctx* h,
+						 struct sip_msg* msg,
+						 struct rval_expr* rve)
+{
+	/* only a rval can be undefined, any expression consisting on more
+	   then one rval => defined */
+	if (likely(rve->op==RVE_RVAL_OP))
+		return rv_defined(h, msg, &rve->left.rval, 0);
+	return 1;
+}
+
+
+
 /** evals an integer expr  to an int.
  * 
  *  *res=(int)eval(rve)
@@ -1431,6 +1579,18 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			*res=0;
 			ret=-1;
 			break;
+		case RVE_DEFINED_OP:
+			ret=int_rve_defined(h, msg, rve->left.rve);
+			break;
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+			if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
+					ret=-1;
+					break;
+			}
+			ret=rval_int_strop1(h, msg, res, rve->op, rv1, 0);
+			rval_destroy(rv1);
+			break;
 		case RVE_NONE_OP:
 		/*default:*/
 			BUG("invalid rval int expression operation %d\n", rve->op);
@@ -1503,6 +1663,9 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 		case RVE_IPLUS_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			/* operator forces integer type */
 			ret=rval_expr_eval_int(h, msg, res_i, rve);
 			*res_rv=0;
@@ -1560,7 +1723,7 @@ error:
  * WARNING: result must be rval_destroy()'ed if non-null (it might be
  * a reference to another rval). The result can be modified only
  * if rv_chg_in_place() returns true.
- * @result rvalue on success, 0 on error
+ * @return rvalue on success, 0 on error
  */
 struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 								struct rval_expr* rve)
@@ -1598,6 +1761,9 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 		case RVE_IPLUS_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			/* operator forces integer type */
 			r=rval_expr_eval_int(h, msg, &i, rve);
 			if (likely(r==0)){
@@ -1800,6 +1966,9 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			break;
 		default:
 			BUG("unsupported unary operator %d\n", op);
@@ -1874,6 +2043,9 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			/* one operand expression => cannot be assoc. */
 			return 0;
 		case RVE_DIV_OP:
@@ -1911,6 +2083,9 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_STRLEN_OP:
+		case RVE_STREMPTY_OP:
+		case RVE_DEFINED_OP:
 			/* one operand expression => cannot be commut. */
 			return 0;
 		case RVE_DIV_OP:

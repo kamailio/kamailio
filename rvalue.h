@@ -64,8 +64,12 @@ enum rval_expr_op{
 	RVE_PLUS_OP,  /* generic plus (int or str) returns left + right */
 	RVE_EQ_OP,    /*  2 members, returns left == right  (int)*/
 	RVE_DIFF_OP,  /*  2 members, returns left != right  (int)*/
-	RVE_CONCAT_OP,/* string concatenation, returns left . right */
 	/* str only */
+	RVE_CONCAT_OP,/* 2 members, string concat, returns left . right (str)*/
+	RVE_STRLEN_OP, /* one member, string length:, returns strlen(val) (int)*/
+	RVE_STREMPTY_OP, /* one member, returns val=="" (bool) */
+	/* avp, pvars a.s.o */
+	RVE_DEFINED_OP, /* one member, returns is_defined(val) (bool) */
 };
 
 
