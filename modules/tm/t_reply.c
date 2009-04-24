@@ -563,17 +563,10 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* do UAC cleanup procedures in case we generated
 	   a final answer whereas there are pending UACs */
 	if (code>=200) {
-		if ( is_local(trans) ) {
-			DBG("DEBUG: local transaction completed from _reply\n");
-			if ( unlikely(has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED)) )
-				run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,
-					0, FAKED_REPLY, code);
-		} else {
-			if ( unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) )
-				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
-					trans->uas.request, FAKED_REPLY, code);
-		}
-
+		if (unlikely(is_local(trans) && 
+					has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) ))
+			run_trans_callbacks(TMCB_LOCAL_COMPLETED, trans,
+									0, FAKED_REPLY, code);
 		cleanup_uac_timers( trans );
 		if (is_invite(trans)) 
 			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
@@ -594,17 +587,20 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (!trans->uas.response.dst.send_sock) {
 		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
 	} else {
+		if (likely(SEND_PR_BUFFER( rb, buf, len )>=0)){
+			if (unlikely(code>=200 && !is_local(trans) &&
+						has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) )
+				run_trans_callbacks(TMCB_RESPONSE_OUT, trans,
+									trans->uas.request, FAKED_REPLY, code);
 #ifdef TMCB_ONSEND
-		if (SEND_PR_BUFFER( rb, buf, len )>=0)
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, 0, 0, rb, &rb->dst, 
 								buf, len, TMCB_LOCAL_F, rb->branch, code);
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, trans,
 										&onsend_params);
 			}
-#else
-		SEND_PR_BUFFER( rb, buf, len );
-#endif
+#endif /* TMCB_ONSEND */
+		}
 		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n",
 			buf, buf, rb->buffer, rb->buffer );
 	}
