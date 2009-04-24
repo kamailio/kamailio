@@ -167,16 +167,27 @@ struct cell;
  *  distinguish between the two, one would need to look at the method in
  *  Cseq (look at t_reply.c:1630 (reply_received()) for an example).
  *
- *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local
- *  or proxied) -- there is nothing more you can change from
- *  the callback, it is good for accounting-like uses. No lock is held.
- *  Known BUGS: it's called also for provisional replies for relayed replies.
- *  For local replies it's called only for the final reply.
- *    
- *    Note: the message passed to callback may also have
+ *  TMCB_RESPONSE_OUT -- a final or provisional reply was sent out
+ *  successfully (either a local reply  or a proxied one).
+ *  For final replies is called only for the first one (it's not called
+ *  for retransmissions).
+ *  For non-local replies (proxied) is called also for provisional responses
+ *  (NOTE: this might change and in the future it might be called only
+ *  for final replies --andrei).
+ *  For local replies is called _only_ for the final reply.
+ *  There is nothing more you can change from the callback, it is good for 
+ *  accounting-like uses. No lock is held.
+ *  Known oddities: it's called for provisional replies for relayed replies,
+ *  but not for local responses (see NOTE above).
+ *  Note: if the send fails or via cannot be resolved, this callback is 
+ *  _not_ called.
+ *  Note: local reply means locally generated reply (via t_reply() & friends)
+ *  and not local transaction.
+ *
+ *    Note: the message passed to the callback may also have
  *    value FAKED_REPLY (like other reply callbacks) which
- *    indicates a pseudo_reply caused by a timer. Check for
- *    this value before deferring -- you will cause a segfault
+ *    indicates a local reply caused by a timer, calling t_reply() a.s.o.
+*     Check for this value before deferring -- you will cause a segfault
  *    otherwise. Check for t->uas.request validity too if you
  *    need it ... locally initiated UAC transactions set it to 0.
  *
@@ -249,9 +260,12 @@ struct cell;
  *  transaction arrived. Message may be FAKED_REPLY. Can be called multiple
  *  times, no lock is held.
  *
- *  TMCB_LOCAL_REPONSE_OUT -- provisional reply for localy initiated 
+ *  TMCB_LOCAL_RESPONSE_OUT -- provisional reply for localy initiated 
  *  transaction. The message may be a FAKED_REPLY and the callback might be 
  *  called multiple time quasi-simultaneously. No lock is held.
+ *  Note: depends on tm.pass_provisional_replies.
+ *  Note: the name is very unfortunate and it will probably be changed
+ *   (e.g. TMCB_LOCAL_PROVISIONAL).
  *
  *  TMCB_NEG_ACK_IN -- an ACK to a negative reply was received, thus ending
  *  the transaction (this happens only when the final reply sent by tm is 
