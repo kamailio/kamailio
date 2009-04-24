@@ -2479,6 +2479,18 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					ret=1;
 				}
 				break;
+			case RVE_EQ_OP:
+				if (rv->v.s.len==0){
+					/* $v == "" -> strempty($v) 
+					   "" == $v -> strempty ($v) */
+					rve_destroy(ct_rve);
+					/* replace current expr. with strempty(rve) */
+					rve->op=RVE_STREMPTY_OP;
+					rve->left.rve=v_rve;
+					rve->right.rve=0;
+					ret=1;
+				}
+				break;
 			default:
 				break;
 		}
