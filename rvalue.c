@@ -785,7 +785,6 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 								struct rval_cache* tmp_cache)
 {
 	avp_t* r_avp;
-	pv_value_t pval;
 	int i;
 	
 	switch(rv->type){
@@ -857,18 +856,18 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 					tmpv->s=int2str(i, &tmpv->len);
 				}else goto error;
 			}else{
-				memset(&pval, 0, sizeof(pval));
+				memset(&tmp_cache->c.pval, 0, sizeof(tmp_cache->c.pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs,
 												&tmp_cache->c.pval)==0)){
-					if (likely(pval.flags & PV_VAL_STR)){
+					if (likely(tmp_cache->c.pval.flags & PV_VAL_STR)){
 						/*  the value is not destroyed, but saved instead
 							in tmp_cache so that it can be destroyed later
 							when no longer needed */
 						tmp_cache->cache_type=RV_CACHE_PVAR;
 						tmp_cache->val_type=RV_STR;
 						*tmpv=tmp_cache->c.pval.rs;
-					}else if (likely(pval.flags & PV_VAL_INT)){
-						i=pval.ri;
+					}else if (likely(tmp_cache->c.pval.flags & PV_VAL_INT)){
+						i=tmp_cache->c.pval.ri;
 						pv_value_destroy(&tmp_cache->c.pval);
 						tmpv->s=int2str(i, &tmpv->len);
 					}else{
