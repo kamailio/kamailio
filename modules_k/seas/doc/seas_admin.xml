@@ -1,3 +1,12 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 <chapter id="user">
     <title>The Sip Express Application Server User's Guide</title>
 
@@ -312,7 +321,7 @@ ServletException, IOException
 
             <mediaobject>
               <imageobject>
-				  <imagedata fileref="./seas/image024.png"/>
+				  <imagedata fileref="./images/image024.png"/>
               </imageobject>
             </mediaobject>
 		</figure>

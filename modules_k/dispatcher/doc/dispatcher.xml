@@ -2,19 +2,13 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<!ENTITY admin SYSTEM "dispatcher_admin.xml">
-<!ENTITY faq SYSTEM "dispatcher_faq.xml">
-
-<!ENTITY dispatcherlist SYSTEM "dispatcher.list">
-<!ENTITY dispatchercfg SYSTEM "dispatcher.cfg">
-
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/kam_entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
 	<title>DISPATCHER Module</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -55,7 +49,7 @@
     </bookinfo>
     <toc></toc>
     
-    &admin;
-    &faq;
+    <xi:include href="dispatcher_admin.xml"/>
+    <xi:include href="dispatcher_faq.xml"/>
 
 </book>

@@ -3,16 +3,13 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY admin SYSTEM "presence_admin.xml">
-<!ENTITY devel SYSTEM "presence_devel.xml">
-
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
 	<title>Presence Module</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -68,8 +65,8 @@
   </bookinfo>
     <toc></toc>
     
-    &admin;
-    &devel;
+    <xi:include href="presence_admin.xml"/>
+    <xi:include href="presence_devel.xml"/>
     
 </book>
 

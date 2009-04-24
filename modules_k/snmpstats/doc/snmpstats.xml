@@ -2,16 +2,13 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<!ENTITY admin SYSTEM "snmpstats_admin.xml">
-<!ENTITY faq SYSTEM "snmpstats_faq.xml">
-
 <!-- Include general OpenSER documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
 	<title>SNMPStats Module (Simple Network Management Protocal Statistic Module)</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -45,7 +42,7 @@
 	</bookinfo>
 	<toc></toc>
 	
-	&admin;
-	&faq;
+	<xi:include href="snmpstats_admin.xml"/>
+	<xi:include href="snmpstats_faq.xml"/>
 	
 </book>

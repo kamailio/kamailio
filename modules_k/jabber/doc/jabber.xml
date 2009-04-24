@@ -3,16 +3,13 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY admin SYSTEM "jabber_admin.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
 	<title>jabber Module</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -41,7 +38,7 @@
     </bookinfo>
     <toc></toc>
     
-    &admin;
-    &faq;
+    <xi:include href="jabber_admin.xml"/>
+    
     
 </book>

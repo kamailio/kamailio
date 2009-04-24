@@ -2,18 +2,13 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-
-<!ENTITY admin SYSTEM "presence_dialoginfo_admin.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-<!ENTITY sql SYSTEM "presence_dialoginfo.sql">
-
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
 	<title>presence_dialoginfo Module</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -56,8 +51,8 @@
   </bookinfo>
     <toc></toc>
     
-    &admin;
-    &faq;
+    <xi:include href="presence_dialoginfo_admin.xml"/>
+    
     
 </book>
 

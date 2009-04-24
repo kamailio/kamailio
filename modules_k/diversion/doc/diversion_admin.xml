@@ -1,3 +1,12 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 <!-- Module User's Guide -->
 
 <chapter>
@@ -16,7 +25,7 @@
 	</para>
 	<warning><para>
 		The draft-levy-sip-diversion-08 is expired!! See
-		<ulink url="https://datatracker.ietf.org/public/idindex.cgi?command=id_detail&and;id=6002"> IETF I-D tracker</ulink>.
+		<ulink url="https://datatracker.ietf.org/public/idindex.cgi?command=id_detail&amp;and;id=6002"> IETF I-D tracker</ulink>.
 	</para></warning>
 	</section>
 

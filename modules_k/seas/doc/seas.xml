@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding='ISO-8859-1'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
-<!ENTITY admin SYSTEM "seas_admin.xml">
-<!ENTITY devel SYSTEM "seas_devel.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 ]>
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
   <bookinfo>
     <title>Seas Module</title>
 
@@ -41,7 +39,7 @@
   <toc></toc>
 
   <!-- External Entity Refs -->
-  &admin;
-  &devel;
-  &faq;
+  <xi:include href="seas_admin.xml"/>
+  <xi:include href="seas_devel.xml"/>
+  
 </book>

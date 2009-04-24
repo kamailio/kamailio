@@ -2,18 +2,12 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-
-<!ENTITY admin SYSTEM "carrierroute_admin.xml">
-<!ENTITY db SYSTEM "carrierroute_db.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-
-<!-- Include general Kamailio documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
 	<title>carrierroute</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -58,9 +52,7 @@
 	</revhistory>
 	</bookinfo>
 	<toc></toc>
-	
-	&admin;
-	&db;
-	&faq;
-	
+
+	<xi:include href="carrierroute_admin.xml"/>
+	<xi:include href="carrierroute_db.xml"/>
 </book>

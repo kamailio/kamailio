@@ -1,6 +1,15 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 <!-- Module User's Guide -->
 
-<chapter>
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
 	
 	<title>&adminguide;</title>
 	
@@ -255,7 +264,7 @@ if(uri=~"sip:[0-9]{2}@.*")
 		<title>&kamailio; config script - sample speeddial usage</title>
 		<programlisting format="linespecific">
 ...
-&speeddialcfg;
+<xi:include href="speeddial.cfg" parse="text"/>
 ...
 		</programlisting>
 		</example>

@@ -2,17 +2,13 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-
-<!ENTITY admin SYSTEM "uac_redirect_admin.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-
 <!-- Include general SER documentation entities -->
-<!ENTITY % serentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % serentities SYSTEM "../../../docbook/entities.xml">
 %serentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
 	<title>UAC_REDIRECT Module</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -46,7 +42,7 @@
 	</bookinfo>
 	<toc></toc>
 
-	&admin;
-	&faq;
+	<xi:include href="uac_redirect_admin.xml"/>
+	
 
 </book>

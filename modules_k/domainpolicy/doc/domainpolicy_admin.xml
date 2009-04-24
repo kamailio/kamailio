@@ -1,3 +1,12 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 <!-- Domain Policy Module User's Guide -->
 
 <chapter>
@@ -374,9 +383,6 @@ switch(retcode) {
 			Setting an override port disables NAPTR and
 			SRV lookups according to RFC 3263.
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 		<listitem>
 		<para>
@@ -385,9 +391,6 @@ switch(retcode) {
 			"tls").
 			Setting an override transport also disables NAPTR lookups, but retains 
 			an SRV lookup according to RFC 3263.
-		</para>
-		<para>
-		&nbsp;
 		</para>
 		</listitem>
 		<listitem>
@@ -399,9 +402,6 @@ switch(retcode) {
 			A non-terminal NAPTR and thus a referral to a new domain implicitly
 			sets <emphasis>domain_replacement_avp</emphasis> to the new domain.
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 		<listitem>
 		<para>
@@ -411,9 +411,6 @@ switch(retcode) {
 			"example.com" and the domain_prefix_avp contains "inbound", the domain 
 			in the destinaton URI is set to "inbound.example.com".
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 		<listitem>
 		<para>
@@ -422,9 +419,6 @@ switch(retcode) {
 			E.g. if the domain in the request URI is 
 			"example.com" and the domain_suffix_avp contains "myroot.com", the domain 
 			in the destination URI is set to "example.com.myroot.com".
-		</para>
-		<para>
-		&nbsp;
 		</para>
 		</listitem>
 		<listitem>
@@ -495,9 +489,6 @@ if (dp_apply_policy()) {
 			with other incoming connection. Thus we need to use tls_server_domain[] to
 			dedicate a TCP port for this federation. 
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		<programlisting format="linespecific">
 tls_server_domain[1.2.3.4:5066] {
  tls_certificate   = "/path/to/tlsfed/example-com.key"
@@ -508,9 +499,6 @@ tls_server_domain[1.2.3.4:5066] {
  tls_require_cleint_certificate = 1
 }
 		</programlisting>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 
 		<listitem>
@@ -521,9 +509,6 @@ tls_server_domain[1.2.3.4:5066] {
 			federation name as TLS client domain identifier. Therefore, the 
 			content of the "tls_client_domain_avp" must be set to this identifier 
 			(e.g. by putting it as rule into the domainpolicy table).
-		</para>
-		<para>
-		&nbsp;
 		</para>
 		<programlisting format="linespecific">
 tls_client_domain["tlsfed"] {
@@ -560,17 +545,11 @@ tls_client_domain["tlsfed"] {
 			The destination network announces its membership in this
 			federation.
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		<programlisting format="linespecific">
 $ORIGIN destination.example.org
 @ IN NAPTR 10 50   "U"  "D2P+SIP:fed" (
                  "!^.*$!http://HUBFED.org/!" . )
 		</programlisting>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 
 
@@ -581,9 +560,6 @@ $ORIGIN destination.example.org
 			The domainpolicy table just needs to list the federation and link
 			it to the central proxy's domain name:
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		<programlisting format="linespecific">
 mysql> select * from domainpolicy;
 +----+--------------------+------+-------------------+----------------+
@@ -592,9 +568,6 @@ mysql> select * from domainpolicy;
 | 1  | http://HUBFED.org/ | fed  | domainreplacement | sip.HUBFED.org |
 +----+--------------------+------+-------------------+----------------+
 		</programlisting>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 	</itemizedlist>
 	</section>
@@ -631,9 +604,6 @@ mysql> select * from domainpolicy;
 			The destination network announces its membership in this
 			federation.
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		<programlisting format="linespecific">
 $ORIGIN example.com
 @ IN NAPTR 10 50   "U"  "D2P+SIP:fed" (
@@ -644,9 +614,6 @@ _sip._udp.l3fe IN SRV 10 10 5060 l3fedsip.example.com.
 publicsip      IN A   193.XXX.YYY.ZZZ 
 l3fedsip       IN A   10.0.0.42
 		</programlisting>
-		<para>
-		&nbsp;
-		</para>
 		</listitem>
 
 
@@ -656,9 +623,6 @@ l3fedsip       IN A   10.0.0.42
 			The domainpolicy table just needs to link the federation identifier
 			to the agreed apon prefix:
 		</para>
-		<para>
-		&nbsp;
-		</para>
 		<programlisting format="linespecific">
 mysql> select * from domainpolicy;
 +----+-------------------+------+--------------+-------+
@@ -667,9 +631,7 @@ mysql> select * from domainpolicy;
 | 1  | http://l3fed.org/ | fed  | domainprefix | l3fed |
 +----+-------------------+------+--------------+-------+
 		</programlisting>
-		<para>
-		&nbsp;
-		</para>
+
 		</listitem>
 	</itemizedlist>
 	</section>

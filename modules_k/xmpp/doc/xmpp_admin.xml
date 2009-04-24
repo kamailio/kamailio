@@ -1,6 +1,15 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 <!-- Module User's Guide -->
 
-<chapter>
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
 	
 	<title>&adminguide;</title>
 	
@@ -324,7 +333,7 @@ xmpp_send_message();
 		</para>
 		<programlisting format="linespecific">
 ....
-&cfg;
+<xi:include href="openser-xmpp.cfg" parse="text"/>
 ....
 </programlisting>
 

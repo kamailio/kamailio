@@ -2,18 +2,13 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<!ENTITY admin SYSTEM "ldap_admin.xml">
-<!ENTITY devel SYSTEM "ldap_devel.xml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-<!ENTITY biblio SYSTEM "ldap_biblio.xml">
-
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
         <bookinfo>
         <title>LDAP Module</title>
         <productname class="trade">&kamailio;</productname>
@@ -38,10 +33,9 @@
         </bookinfo>
         <toc></toc>
 
-        &admin;
-        &devel;
-        &faq;
-		&biblio;
+        <xi:include href="ldap_admin.xml"/>
+        <xi:include href="ldap_devel.xml"/>
+		<xi:include href="ldap_biblio.xml"/>
 
 </book>
 

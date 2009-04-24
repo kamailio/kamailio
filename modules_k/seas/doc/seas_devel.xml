@@ -1,3 +1,12 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 <chapter id="devel">
     
 
@@ -49,7 +58,7 @@
 
           <mediaobject>
             <imageobject>
-				<imagedata fileref="./seas/image056.gif"/>
+				<imagedata fileref="./images/image056.gif"/>
             </imageobject>
           </mediaobject>
 	  </figure>
@@ -61,7 +70,7 @@
 
           <mediaobject>
             <imageobject>
-				<imagedata fileref="./seas/image058.gif"/>
+				<imagedata fileref="./images/image058.gif"/>
             </imageobject>
           </mediaobject>
         </figure>
@@ -236,7 +245,7 @@
 
             <mediaobject>
               <imageobject>
-                <imagedata fileref="./seas/image100.gif"/>
+                <imagedata fileref="./images/image100.gif"/>
               </imageobject>
             </mediaobject>
 		</figure><para>For example:</para>
@@ -246,7 +255,7 @@
 
             <mediaobject>
               <imageobject>
-				  <imagedata fileref="./seas/image101.gif"/>
+				  <imagedata fileref="./images/image101.gif"/>
               </imageobject>
             </mediaobject>
 		</figure>
@@ -267,7 +276,7 @@
 
               <mediaobject>
                 <imageobject>
-					<imagedata fileref="./seas/image102.gif"/>
+					<imagedata fileref="./images/image102.gif"/>
                 </imageobject>
               </mediaobject>
             </figure>
@@ -280,7 +289,7 @@
 
               <mediaobject>
                 <imageobject>
-					<imagedata fileref="./seas/image103.gif"/>
+					<imagedata fileref="./images/image103.gif"/>
                 </imageobject>
               </mediaobject>
 		  </figure>
@@ -326,7 +335,7 @@
 
               <mediaobject>
                 <imageobject>
-					<imagedata fileref="./seas/image104.gif"/>
+					<imagedata fileref="./images/image104.gif"/>
                 </imageobject>
               </mediaobject>
             </figure>
@@ -350,7 +359,7 @@
 
               <mediaobject>
                 <imageobject>
-					<imagedata fileref="./seas/image105.gif"/>
+					<imagedata fileref="./images/image105.gif"/>
                 </imageobject>
               </mediaobject>
             </figure>
@@ -370,7 +379,7 @@
 
               <mediaobject>
                 <imageobject>
-					<imagedata fileref="./seas/image106.gif"/>
+					<imagedata fileref="./images/image106.gif"/>
                 </imageobject>
               </mediaobject>
             </figure>
@@ -408,7 +417,7 @@
 
               <mediaobject>
                 <imageobject>
-					<imagedata fileref="./seas/image107.gif"/>
+					<imagedata fileref="./images/image107.gif"/>
                 </imageobject>
               </mediaobject>
             </figure>
@@ -494,7 +503,7 @@
 
                 <mediaobject>
                   <imageobject>
-					  <imagedata fileref="./seas/image108.gif"/>
+					  <imagedata fileref="./images/image108.gif"/>
                   </imageobject>
                 </mediaobject>
               </figure>
@@ -602,7 +611,7 @@
 
                 <mediaobject>
                   <imageobject>
-					  <imagedata fileref="./seas/image109.gif"/>
+					  <imagedata fileref="./images/image109.gif"/>
                   </imageobject>
                 </mediaobject>
 			</figure>
@@ -614,7 +623,7 @@
 
                 <mediaobject>
                   <imageobject>
-					  <imagedata fileref="./seas/image110.gif"/>
+					  <imagedata fileref="./images/image110.gif"/>
                   </imageobject>
                 </mediaobject>
               </figure>
@@ -684,7 +693,7 @@
 
                 <mediaobject>
                   <imageobject>
-					  <imagedata fileref="./seas/image111.gif"/>
+					  <imagedata fileref="./images/image111.gif"/>
                   </imageobject>
                 </mediaobject>
               </figure>
