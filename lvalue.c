@@ -23,6 +23,10 @@
  * History:
  * --------
  *  2008-11-30  initial version (andrei)
+ *  2009-04-24  delete avps after finding their new value and not before
+ *               (fixed $avp=$avp)
+ *              when assigning something undefined (e.g. non-existing avp),
+ *              delete the lvalue (similar to perl)  (andrei)
  */
 
 #include "lvalue.h"
@@ -53,19 +57,37 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	unsigned short flags;
 	struct search_state st;
 	int ret, v, destroy_pval;
+	int avp_add;
+
+#if 0
+	#define AVP_ASSIGN_NOVAL() \
+		/* unknown value => reset the avp in function of its type */ \
+		flags=avp->type; \
+		if (flags & AVP_VAL_STR){ \
+			value.s.s=""; \
+			value.s.len=0; \
+		}else{ \
+			value.n=0; \
+		}
+#endif
+	#define AVP_ASSIGN_NOVAL() \
+		/* no value => delete avp */ \
+		avp_add=0
 	
 	destroy_pval=0;
 	flags = 0;
 	avp=&lv->lv.avps;
 	ret=0;
-	/* If the left attr was specified without indexing brackets delete
-	 * existing AVPs before adding new ones */
-	if ((avp->type & AVP_INDEX_ALL) != AVP_INDEX_ALL)
-		delete_avp(avp->type, avp->name);
+	avp_add=1;
+	
 	switch(rv->type){
 		case RV_NONE:
 			BUG("non-intialized rval / rval expr \n");
-			goto error;
+			/* unknown value => reset the avp in function of its type */
+			flags=avp->type;
+			AVP_ASSIGN_NOVAL();
+			ret=-1;
+			break;
 		case RV_INT:
 			value.n=rv->v.l;
 			flags=avp->type & ~AVP_VAL_STR;
@@ -96,22 +118,22 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			ret=value.n;
 			break;
 		case RV_SEL:
+			flags=avp->type|AVP_VAL_STR;
 			v=run_select(&value.s, &rv->v.sel, msg);
 			if (unlikely(v!=0)){
+				value.s.s="";
+				value.s.len=0;
 				if (v<0){
 					ret=-1;
-					goto error;
-				}else { /* v>0 */
-					value.s.s="";
-					value.s.len=0;
-				}
+					break;
+				} /* v>0 */
 			}
-			flags=avp->type|AVP_VAL_STR;
 			ret=(value.s.len>0);
 			break;
 		case RV_AVP:
 			avp_mark=0;
 			if (unlikely((rv->v.avps.type & AVP_INDEX_ALL) == AVP_INDEX_ALL)){
+				/* special case: add the value to the avp */
 				r_avp = search_first_avp(rv->v.avps.type, rv->v.avps.name,
 											&value, &st);
 				while(r_avp){
@@ -136,6 +158,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				ret=1;
 				goto end;
 			}else{
+				/* normal case, value is replaced */
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
 											&value, rv->v.avps.index);
 				if (likely(r_avp)){
@@ -146,8 +169,11 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 									AVP_NAME_RE));
 					ret=1;
 				}else{
-					ret=-1;
-					goto error;
+					/* on error, keep the type of the assigned avp, but
+					   reset it to an empty value */
+					AVP_ASSIGN_NOVAL();
+					ret=0;
+					break;
 				}
 			}
 			break;
@@ -165,21 +191,22 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 					flags=avp->type | AVP_VAL_STR;
 				}else if (pval.flags==PV_VAL_NONE ||
 							(pval.flags & (PV_VAL_NULL|PV_VAL_EMPTY))){
-					value.s.s="";
-					value.s.len=0;
+					AVP_ASSIGN_NOVAL();
 					ret=0;
-					flags=avp->type | AVP_VAL_STR;
 				}
 			}else{
 				/* non existing pvar */
-				value.s.s="";
-				value.s.len=0;
+				/* on error, keep the type of the assigned avp, but
+				   reset it to an empty value */
+				AVP_ASSIGN_NOVAL();
 				ret=0;
-				flags=avp->type | AVP_VAL_STR;
 			}
 			break;
 	}
-	if (add_avp(flags & ~AVP_INDEX_ALL, avp->name, value) < 0) {
+	/* If the left attr was specified without indexing brackets delete
+	 * existing AVPs before adding the new value */
+	delete_avp(avp->type, avp->name);
+	if (avp_add && (add_avp(flags & ~AVP_INDEX_ALL, avp->name, value) < 0)) {
 		ERR("failed to assign value to avp\n");
 		goto error;
 	}
@@ -218,6 +245,10 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	int v;
 	int destroy_pval;
 	
+	#define PVAR_ASSIGN_NOVAL() \
+		/* no value found => "undefine" */ \
+		pv_get_null(msg, 0, &pval)
+	
 	destroy_pval=0;
 	pvar=&lv->lv.pvs;
 	if (unlikely(!pv_is_w(pvar))){
@@ -229,7 +260,9 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	switch(rv->type){
 		case RV_NONE:
 			BUG("non-intialized rval / rval expr \n");
-			goto error;
+			PVAR_ASSIGN_NOVAL();
+			ret=-1;
+			break;
 		case RV_INT:
 			pval.flags=PV_TYPE_INT|PV_VAL_INT;
 			pval.ri=rv->v.l;
@@ -263,12 +296,12 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			pval.flags=PV_VAL_STR;
 			v=run_select(&pval.rs, &rv->v.sel, msg);
 			if (unlikely(v!=0)){
+				pval.flags|=PV_VAL_EMPTY;
+				pval.rs.s="";
+				pval.rs.len=0;
 				if (v<0){
 					ret=-1;
-					goto error;
-				}else { /* v>0 */
-					pval.rs.s="";
-					pval.rs.len=0;
+					break;
 				}
 			}
 			ret=(pval.rs.len)>0;
@@ -287,8 +320,9 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 						ret=!(!pval.ri);
 					}
 				}else{
-					ret=-1;
-					goto error;
+					PVAR_ASSIGN_NOVAL();
+					ret=0; /* avp not defined (valid case) */
+					break;
 				}
 			break;
 		case RV_PVAR:
@@ -299,14 +333,13 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				}else if (pval.flags & PV_VAL_STR){
 					ret=(pval.rs.len>0);
 				}else{
-					ERR("no value in pvar assignment rval\n");
-					ret=-1;
-					goto error;
+					/* no value / not defined (e.g. avp) -> keep the flags */
+					ret=0;
 				}
 			}else{
 				ERR("non existing right pvar\n");
+				PVAR_ASSIGN_NOVAL();
 				ret=-1;
-				goto error;
 			}
 			break;
 	}
