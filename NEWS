@@ -6,6 +6,14 @@ $Id$
 sip-router changes
 
 core:
+  - new script operators: defined, strlen, strempty
+      defined expr - returns true if expr is defined, and false if not.
+                     Note: only a standalone avp or pvar can be
+                     undefined, everything else is defined.
+      strlen(expr) - returns the lenght of expr evaluated as string.
+      strempty(expr) - returns true if expr evaluates to the empty
+                       string (equivalent to expr=="").
+    e.g.: if (defined $v && !strempty($v)) $len=strlen($v);
   - module search path support: loadpath takes now a list of directories
     separated by ':'. The list is searched in-order. For each directory d
     $d/${module_name}.so and $d/${module_name}/${module_name}.so are tried.
@@ -23,10 +31,12 @@ config script changes:
   - support for kamailio style pvars
   - C-like switch()/case (integer only)
   - while()
-  - max_while_loops - maximum iterations allowed for a while, can be changed
-    at runtime. Default 100.
 build system:
   - multiple modules directories are now supported (defined in Makefile.dirs)
+
+new config variables:
+  - max_while_loops - maximum iterations allowed for a while  (can be changed
+       at runtime). Default 100.
 
 
 

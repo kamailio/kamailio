@@ -489,7 +489,12 @@ static int case_check_default(struct case_stms* stms);
 %left PLUS MINUS
 %left STAR SLASH
 %right NOT
+%right DEFINED
 %left DOT
+
+/* no precedence, they use () */
+%token STRLEN
+%token STREMPTY
 
 /* values */
 %token <intval> NUMBER
@@ -2247,6 +2252,9 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr LOG_AND rval_expr	{ $$=mk_rve2(RVE_LAND_OP, $1, $3);}
 		| rval_expr LOG_OR rval_expr	{ $$=mk_rve2(RVE_LOR_OP, $1, $3);}
 		| LPAREN rval_expr RPAREN		{ $$=$2;}
+		| STRLEN LPAREN rval_expr RPAREN { $$=mk_rve1(RVE_STRLEN_OP, $3);}
+		| STREMPTY LPAREN rval_expr RPAREN {$$=mk_rve1(RVE_STREMPTY_OP, $3);}
+		| DEFINED rval_expr				{ $$=mk_rve1(RVE_DEFINED_OP, $2);}
 		| rve_un_op %prec NOT error		{ yyerror("bad expression"); }
 		| rval_expr PLUS error			{ yyerror("bad expression"); }
 		| rval_expr MINUS error			{ yyerror("bad expression"); }
@@ -2260,6 +2268,9 @@ rval_expr: rval						{ $$=$1;
 			{ yyerror("bad expression"); }
 		| rval_expr LOG_AND error		{ yyerror("bad expression"); }
 		| rval_expr LOG_OR error		{ yyerror("bad expression"); }
+		| STRLEN LPAREN error RPAREN	{ yyerror("bad expression"); }
+		| STREMPTY LPAREN error RPAREN	{ yyerror("bad expression"); }
+		| DEFINED error					{ yyerror("bad expression"); }
 		;
 
 assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 

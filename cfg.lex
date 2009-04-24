@@ -78,6 +78,7 @@
  *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
  *  2008-12-11  added support for "string1" "string2" (andrei)
  *  2009-03-10  added SET_USERPHONE action (Miklos)
+ *  2009-04-24  addd strlen, strempty and defined operators (andrei)
 */
 
 
@@ -244,6 +245,9 @@ LOG_OR		"or"|"||"
 BIN_OR          "|"
 PLUS	"+"
 MINUS	"-"
+STRLEN	"strlen"
+STREMPTY	"strempty"
+DEFINED		"defined"
 
 /* Attribute specification */
 ATTR_MARK   "%"
@@ -765,6 +769,9 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{BIN_OR}	{ count(); return BIN_OR;  }
 <INITIAL>{PLUS}		{ count(); return PLUS; }
 <INITIAL>{MINUS}	{ count(); return MINUS; }
+<INITIAL>{STRLEN}	{ count(); return STRLEN; }
+<INITIAL>{STREMPTY}	{ count(); return STREMPTY; }
+<INITIAL>{DEFINED}	{ count(); return DEFINED; }
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
 <SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
