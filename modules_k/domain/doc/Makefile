@@ -1,4 +1,4 @@
-docs = dispatcher.xml
+docs = domain.xml
 
 docbook_dir = ../../../docbook
 include $(docbook_dir)/Makefile.module
