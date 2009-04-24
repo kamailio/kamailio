@@ -1,4 +1,4 @@
-docs = tm.xml
+docs = carrierroute.xml
 
 docbook_dir = ../../../docbook
 include $(docbook_dir)/Makefile.module
