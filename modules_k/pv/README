@@ -12,66 +12,101 @@ Daniel-Constantin Mierla
    <daniel@asipto.com>
 
    Copyright © 2008 Daniel-Constantin Mierla (asipto.com)
-     __________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. shvset (string)
-              1.3.2. varset (string)
+              3.1. shvset (string)
+              3.2. varset (string)
 
-        1.4. Exported Functions
-        1.5. MI Commands
+        4. Exported Functions
 
-              1.5.1. shv_set
-              1.5.2. shv_get
+              4.1. pv_isset(pvar)
+              4.2. pv_unset(pvar)
+
+        5. MI Commands
+
+              5.1. shv_set
+              5.2. shv_get
 
    List of Examples
 
    1.1. shvset parameter usage
    1.2. varset parameter usage
-   1.3. shv_set usage
-   1.4. shv_get usage
+   1.3. pv_isset usage
+   1.4. pv_unset usage
+   1.5. shv_set usage
+   1.6. shv_get usage
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This module collects the core pseudo-variables that can be used
-   in configuration file. They are listed in Dokuwiki:
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. shvset (string)
+        3.2. varset (string)
+
+   4. Exported Functions
+
+        4.1. pv_isset(pvar)
+        4.2. pv_unset(pvar)
+
+   5. MI Commands
+
+        5.1. shv_set
+        5.2. shv_get
+
+1. Overview
+
+   This module collects the core pseudo-variables that can be used in
+   configuration file. They are listed in Dokuwiki:
    http://www.kamailio.org/dokuwiki/, in Pseudo-Variables section
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. shvset (string)
+   3.1. shvset (string)
+   3.2. varset (string)
 
-   Set the value of a shared variable ($shv(name)). The parameter
-   can be set many times.
+3.1. shvset (string)
 
-   The value of the parameter has the format: _name_ '=' _type_
-   ':' _value_
+   Set the value of a shared variable ($shv(name)). The parameter can be
+   set many times.
+
+   The value of the parameter has the format: _name_ '=' _type_ ':'
+   _value_
      * _name_: shared variable name
      * _type_: type of the value
           + "i": integer value
@@ -86,13 +121,13 @@ modparam("pv", "shvset", "debug=i:1")
 modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
 ...
 
-1.3.2. varset (string)
+3.2. varset (string)
 
-   Set the value of a script variable ($var(name)). The parameter
-   can be set many times.
+   Set the value of a script variable ($var(name)). The parameter can be
+   set many times.
 
-   The value of the parameter has the format: _name_ '=' _type_
-   ':' _value_
+   The value of the parameter has the format: _name_ '=' _type_ ':'
+   _value_
      * _name_: shared variable name
      * _type_: type of the value
           + "i": integer value
@@ -107,13 +142,48 @@ modparam("pv", "varset", "init=i:1")
 modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-   None
+   4.1. pv_isset(pvar)
+   4.2. pv_unset(pvar)
 
-1.5. MI Commands
+4.1. pv_isset(pvar)
 
-1.5.1. shv_set
+   Return true if a PV value is different than 'null'.
+
+   Meaning of the parameters is as follows:
+     * pvar - pvar identifier.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. pv_isset usage
+...
+if(pv_isset("$avp("s:x")"))
+{
+    ...
+}
+...
+
+4.2. pv_unset(pvar)
+
+   Unset the value of the PV (e.g., delete AVP, set to null).
+
+   Meaning of the parameters is as follows:
+     * pvar - pvar identifier.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.4. pv_unset usage
+...
+pv_unset("$avp("s:x")");
+...
+
+5. MI Commands
+
+   5.1. shv_set
+   5.2. shv_get
+
+5.1. shv_set
 
    Set the value of a shared variable ($shv(name)).
 
@@ -131,25 +201,25 @@ modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
                 _value_
                 _empty_line_
 
-   Example 1.3. shv_set usage
+   Example 1.5. shv_set usage
 ...
 $ kamctl fifo shv_set debug int 0
 ...
 
-1.5.2. shv_get
+5.2. shv_get
 
    Get the value of a shared variable ($shv(name)).
 
    Parameters:
-     * _name_: shared variable name. If this parameter is missing,
-       all shared variables are returned.
+     * _name_: shared variable name. If this parameter is missing, all
+       shared variables are returned.
 
    MI FIFO Command Format:
                 :shv_get:_reply_fifo_file_
                 _name_
                 _empty_line_
 
-   Example 1.4. shv_get usage
+   Example 1.6. shv_get usage
 ...
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get

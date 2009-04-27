@@ -127,8 +127,61 @@ modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
 	</section>
 	<section>
 	<title>Exported Functions</title>
-	<para>None</para>
+		<section>
+		<title><function moreinfo="none">pv_isset(pvar)</function></title>
+		<para>
+			Return true if a PV value is different than 'null'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>pvar</emphasis> - pvar identifier.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pv_isset</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(pv_isset("$avp("s:x")"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">pv_unset(pvar)</function></title>
+		<para>
+			Unset the value of the PV (e.g., delete AVP, set to null).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>pvar</emphasis> - pvar identifier.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pv_unset</function> usage</title>
+		<programlisting format="linespecific">
+...
+pv_unset("$avp("s:x")");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
+
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
 		<section>
