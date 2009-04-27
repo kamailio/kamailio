@@ -7,8 +7,21 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=lcr.so
-DEFS+=-I$(LOCALBASE)/include
-LIBS=-L$(LOCALBASE)/lib -lpcre
+
+BUILDER = $(shell which pcre-config)
+
+ifeq ($(BUILDER),)
+	PCREDEFS=-I$(LOCALBASE)/include -I/usr/local/include -I/opt/include \
+	-I/usr/sfw/include
+	PCRELIBS=-L$(LOCALBASE)/lib -L/usr/local/lib -L/usr/sfw/lib \
+	-L/opt/lib -lpcre
+else
+	PCREDEFS = $(shell pcre-config --cflags)
+	PCRELIBS = $(shell pcre-config --libs)
+endif
+
+DEFS+=$(PCREDEFS)
+LIBS=$(PCRELIBS)
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 
