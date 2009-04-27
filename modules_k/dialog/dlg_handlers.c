@@ -207,7 +207,9 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		/* was the 200 OK received or local generated */
 		skip_recs = dlg->from_rr_nb +
 			((t->relayed_reply_branch>=0)?
-				(t->uac[t->relayed_reply_branch].added_rr):0);
+				((t->uac[t->relayed_reply_branch].flags&TM_UAC_FLAG_R2)?2:
+				 ((t->uac[t->relayed_reply_branch].flags&TM_UAC_FLAG_RR)?1:0))
+				:0);
 	}
 
 	if(msg->record_route){
@@ -267,7 +269,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
-	if (type==TMCB_TRANS_DELETED)
+	if (type==TMCB_DESTROY)
 		event = DLG_EVENT_TDEL;
 	else if (param->code<200)
 		event = DLG_EVENT_RPL1xx;
@@ -427,9 +429,14 @@ void unref_new_dialog(void *dialog)
 	struct tmcb_params p;
 
 	p.param = (void*)&dialog;
-	dlg_onreply(0, TMCB_TRANS_DELETED, &p);
+	dlg_onreply(0, TMCB_DESTROY, &p);
 }
 
+
+void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param)
+{
+	return;
+}
 
 int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 {
@@ -498,7 +505,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	}
 
 	if ( d_tmb.register_tmcb( msg, t,
-				TMCB_RESPONSE_PRE_OUT|TMCB_RESPONSE_FWDED,
+				TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED,
 				dlg_onreply, (void*)dlg, unref_new_dialog)<0 ) {
 		LM_ERR("failed to register TMCB\n");
 		goto error;
@@ -511,8 +518,16 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	if (_dlg_ctx.to_bye!=0)
 		dlg->dflags |= DLG_FLAG_TOBYE;
 
-	if (t)
+	if (t) {
+		if ( d_tmb.register_tmcb( msg, t, TMCB_MAX,
+					dlg_tmcb_dummy, (void*)dlg, 0)<0 ) {
+			LM_ERR("failed cache in T the shortcut to dlg\n");
+			goto error;
+		}
+	}
+#if 0
 		t->dialog_ctx = (void*) dlg;
+#endif
 
 	run_create_callbacks( dlg, msg);
 

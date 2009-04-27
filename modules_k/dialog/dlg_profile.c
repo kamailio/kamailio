@@ -42,6 +42,7 @@
 #include "../../route.h"
 #include "../../modules/tm/tm_load.h"
 #include "dlg_hash.h"
+#include "dlg_handlers.h"
 #include "dlg_profile.h"
 
 
@@ -323,6 +324,7 @@ int profile_cleanup( struct sip_msg *msg, void *param )
 static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 {
 	struct cell *trans;
+	struct tm_callback* x;
 
 	if (route_type==REQUEST_ROUTE) {
 		/* use the per-process static holder */
@@ -338,7 +340,15 @@ static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 		trans = d_tmb.t_gett();
 		if (trans==NULL || trans==T_UNDEFINED)
 			return NULL;
-		return (struct dlg_cell*)trans->dialog_ctx;
+		x=(struct tm_callback*)(trans->tmcb_hl.first);
+		while(x){
+			membar_depends();
+			if (x->types==TMCB_MAX && x->callback==dlg_tmcb_dummy){
+				return (struct dlg_cell*)(x->param);
+			}
+			x=x->next;
+		}
+		return NULL;
 	}
 }
 

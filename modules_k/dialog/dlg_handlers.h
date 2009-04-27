@@ -63,4 +63,6 @@ int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
 
 int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
+
+void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param);
 #endif
