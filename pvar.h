@@ -134,6 +134,9 @@ typedef int (*pv_parse_name_f)(pv_spec_p sp, str *in);
 typedef int (*pv_parse_index_f)(pv_spec_p sp, str *in);
 typedef int (*pv_init_param_f)(pv_spec_p sp, int param);
 
+#define pv_alter_context(pv)	((pv)->type==PVT_CONTEXT \
+									|| (pv)->type==PVT_BRANCH)
+
 /*! \brief
  * PV spec format:
  * - $class_name
@@ -166,6 +169,8 @@ typedef struct _pv_elem
 char* pv_parse_spec2(str *in, pv_spec_p sp, int silent);
 #define pv_parse_spec(in, sp) pv_parse_spec2((in), (sp), 0)
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value);
+int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
+		pv_value_t *value);
 int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);
 int pv_elem_free_all(pv_elem_p log);
 void pv_value_destroy(pv_value_t *val);

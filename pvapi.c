@@ -35,6 +35,7 @@
 #include "ut.h"
 #include "dprint.h"
 #include "hashes.h"
+#include "route.h"
 #include "pvar.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
@@ -918,6 +919,16 @@ int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 	if(sp->trans)
 		return tr_exec(msg, (trans_t*)sp->trans, value);
 	return ret;
+}
+
+int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
+		pv_value_t *value)
+{
+	if(sp==NULL || !pv_is_w(sp))
+		return 0; /* no op */
+	if(pv_alter_context(sp) && is_route_type(LOCAL_ROUTE))
+		return 0; /* no op */
+	return sp->setf(msg, &sp->pvp, op, value);
 }
 
 /**
