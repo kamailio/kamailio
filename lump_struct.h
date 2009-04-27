@@ -75,8 +75,11 @@ enum lump_conditions {	COND_FALSE,         /* always false */
 						   proto = protocol (tcp, udp, tls)
 						*/
 
-enum lump_flag { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2, LUMPFLAG_BRANCH=4 };
+enum lump_flag { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2,
+	LUMPFLAG_BRANCH=4, LUMPFLAG_COND_TRUE=8 };
 
+#define LUMP_SET_COND_TRUE(_lump)	 (_lump)->flags |= LUMPFLAG_COND_TRUE
+#define LUMP_IS_COND_TRUE(_lump)	 ((_lump)->flags & LUMPFLAG_COND_TRUE)
 
 struct lump{
 	enum _hdr_types_t type; /* HDR_VIA_T, HDR_OTHER_T (0), ... */
@@ -123,7 +126,8 @@ struct lump{
 
 /* frees the content of a lump struct */
 void free_lump(struct lump* l);
-/*frees an entire lump list, recursively */
+/* frees an entire lump list, recursively */
 void free_lump_list(struct lump* lump_list);
-
+/* count applied lumps in a list having a specific type */
+unsigned int count_applied_lumps(struct lump *ll, int type);
 #endif

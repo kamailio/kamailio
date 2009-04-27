@@ -596,3 +596,22 @@ void del_nonshm_lump( struct lump** lump_list )
 	}
 }
 
+unsigned int count_applied_lumps(struct lump *ll, int type)
+{
+	unsigned int n = 0;
+	struct lump *l = 0;
+
+	for(l=ll; l; l=l->next) {
+		if (l->op==LUMP_NOP && l->type==type) {
+			if (l->after && l->after->op==LUMP_ADD_OPT) {
+				if (LUMP_IS_COND_TRUE(l->after)) {
+					n++;
+				}
+			} else {
+				n++;
+			}
+		}
+	}
+	return n;
+}
+

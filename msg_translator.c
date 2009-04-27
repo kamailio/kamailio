@@ -487,7 +487,7 @@ char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff,
 
 /* checks if a lump opt condition
  * returns 1 if cond is true, 0 if false */
-static inline int lump_check_opt(	enum lump_conditions cond,
+static inline int lump_check_opt(	struct lump *l,
 									struct sip_msg* msg,
 									struct dest_info* snd_i
 									)
@@ -511,10 +511,11 @@ static inline int lump_check_opt(	enum lump_conditions cond,
 				proto=msg->rcv.proto; \
 			} \
 
-	switch(cond){
+	switch(l->u.cond){
 		case COND_FALSE:
 			return 0;
 		case COND_TRUE:
+			LUMP_SET_COND_TRUE(l);
 			return 1;
 		case COND_IF_DIFF_REALMS:
 			get_ip_port_proto;
@@ -526,28 +527,43 @@ static inline int lump_check_opt(	enum lump_conditions cond,
 #endif
 					(ip_addr_cmp(ip, &snd_i->send_sock->address)))
 				return 0;
-			else return 1;
+			else {
+				LUMP_SET_COND_TRUE(l);
+				return 1;
+			}
 		case COND_IF_DIFF_AF:
 			get_ip_port_proto;
-			if (ip->af!=snd_i->send_sock->address.af) return 1;
-			else return 0;
+			if (ip->af!=snd_i->send_sock->address.af) {
+				LUMP_SET_COND_TRUE(l);
+				return 1;
+			} else return 0;
 		case COND_IF_DIFF_PROTO:
 			get_ip_port_proto;
-			if (proto!=snd_i->send_sock->proto) return 1;
-			else return 0;
+			if (proto!=snd_i->send_sock->proto) {
+				LUMP_SET_COND_TRUE(l);
+				return 1;
+			} else return 0;
 		case COND_IF_DIFF_PORT:
 			get_ip_port_proto;
-			if (port!=snd_i->send_sock->port_no) return 1;
-			else return 0;
+			if (port!=snd_i->send_sock->port_no) {
+				LUMP_SET_COND_TRUE(l);
+				return 1;
+			} else return 0;
 		case COND_IF_DIFF_IP:
 			get_ip_port_proto;
 			if (ip_addr_cmp(ip, &snd_i->send_sock->address)) return 0;
-			else return 1;
+			else {
+				LUMP_SET_COND_TRUE(l);
+				return 1;
+			}
 		case COND_IF_RAND:
-			return (rand()>=RAND_MAX/2);
+			if(rand()>=RAND_MAX/2) {
+				LUMP_SET_COND_TRUE(l);
+				return 1;
+			} else return 0;
 		default:
 			LOG(L_CRIT, "BUG: lump:w_check_opt: unknown lump condition %d\n",
-					cond);
+					l->u.cond);
 	}
 	return 0; /* false */
 }
@@ -778,7 +794,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 
 	for(t=lumps;t;t=t->next){
 		/* skip if this is an OPT lump and the condition is not satisfied */
-		if ((t->op==LUMP_ADD_OPT)&& !lump_check_opt(t->u.cond, msg, send_info))
+		if ((t->op==LUMP_ADD_OPT)&& !lump_check_opt(t, msg, send_info))
 			continue;
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
@@ -791,7 +807,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				case LUMP_ADD_OPT:
 					/* skip if this is an OPT lump and the condition is
 					 * not satisfied */
-					if (!lump_check_opt(r->u.cond, msg, send_info))
+					if (!lump_check_opt(r, msg, send_info))
 						goto skip_before;
 					break;
 				default:
@@ -847,7 +863,7 @@ skip_before:
 				case LUMP_ADD_OPT:
 					/* skip if this is an OPT lump and the condition is
 					 * not satisfied */
-					if (!lump_check_opt(r->u.cond, msg, send_info))
+					if (!lump_check_opt(r, msg, send_info))
 						goto skip_after;
 					break;
 				default:
@@ -1200,7 +1216,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 				/* skip if this is an OPT lump and the condition is
 				 * not satisfied */
 				if ((t->op==LUMP_ADD_OPT) &&
-						(!lump_check_opt(t->u.cond, msg, send_info)))
+						(!lump_check_opt(t, msg, send_info)))
 					continue;
 				/* just add it here! */
 				/* process before  */
@@ -1217,7 +1233,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_info))
+							if (!lump_check_opt(r, msg, send_info))
 								goto skip_before;
 							break;
 						default:
@@ -1258,7 +1274,7 @@ skip_before:
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_info))
+							if (!lump_check_opt(r, msg, send_info))
 								goto skip_after;
 							break;
 						default:
@@ -1299,7 +1315,7 @@ skip_after:
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_info))
+							if (!lump_check_opt(r, msg, send_info))
 								goto skip_nop_before;
 							break;
 						default:
@@ -1328,7 +1344,7 @@ skip_nop_before:
 						case LUMP_ADD_OPT:
 							/* skip if this is an OPT lump and the condition is
 					 		* not satisfied */
-							if (!lump_check_opt(r->u.cond, msg, send_info))
+							if (!lump_check_opt(r, msg, send_info))
 								goto skip_nop_after;
 							break;
 						default:
