@@ -26,6 +26,7 @@
 
 #include "../../sr_module.h"
 #include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../lib/kmi/mi.h"
 
 #include "pv_branch.h"
@@ -372,12 +373,24 @@ static mi_export_t mi_cmds[] = {
 
 static int mod_init(void);
 static void mod_destroy(void);
+static int pv_isset(struct sip_msg* msg, char* pvid, char *foo);
+static int pv_unset(struct sip_msg* msg, char* pvid, char *foo);
+
+static cmd_export_t cmds[]={
+	{"pv_isset",  (cmd_function)pv_isset,  1, fixup_pvar_null, 0, 
+		ANY_ROUTE },
+	{"pv_unset",  (cmd_function)pv_unset,  1, fixup_pvar_null, 0, 
+		ANY_ROUTE },
+	{0,0,0,0,0,0}
+};
+
+
 
 /** module exports */
 struct module_exports exports= {
 	"pv",
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,
+	cmds,
 	params,
 	0,          /* exported statistics */
 	mi_cmds,    /* exported MI functions */
@@ -414,5 +427,31 @@ static void mod_destroy(void)
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	return register_trans_mod(path, mod_trans);
+}
+
+static int pv_isset(struct sip_msg* msg, char* pvid, char *foo)
+{
+	pv_spec_t *sp;
+	pv_value_t value;
+	int ret;
+
+	sp = (pv_spec_t*)pvid;
+	if(pv_get_spec_value(msg, sp, &value)!=0)
+		return -1;
+	ret =1;
+	if(value.flags & (PV_VAL_EMPTY|PV_VAL_NULL))
+		ret = -1;
+	pv_value_destroy(&value);
+	return ret;
+}
+
+static int pv_unset(struct sip_msg* msg, char* pvid, char *foo)
+{
+	pv_spec_t *sp;
+	
+	sp = (pv_spec_t*)pvid;
+	pv_set_spec_value(msg, sp, 0, NULL);
+
+	return 1;
 }
 
