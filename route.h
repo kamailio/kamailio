@@ -52,6 +52,7 @@
 #define ONSEND_ROUTE  (1 << 4)
 #define ERROR_ROUTE   (1 << 5)
 #define LOCAL_ROUTE   (1 << 6)
+#define ANY_ROUTE     (0xFFFFFFFF)
 
 /* The value of this variable is one of the route types defined above and it
  * determines the type of the route being executed, module functions can use
