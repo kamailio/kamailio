@@ -115,6 +115,8 @@ struct cell;
 #endif
 #define TMCB_MAX              ((1<<(TMCB_MAX_N+1))-1)
 
+/* response ready - might need to be executed before sending reply out */
+#define TMCB_RESPONSE_READY		TMCB_RESPONSE_OUT
 
 /*
  *  Caution: most of the callbacks work with shmem-ized messages
