@@ -192,6 +192,13 @@ typedef struct ua_server
 
 /* User Agent Client content */
 
+#define TM_UAC_FLAGS
+#ifdef TM_UAC_FLAGS
+/* UAC internal flags */
+#define TM_UAC_FLAG_RR	1	/* Record-Route applied */
+#define TM_UAC_FLAG_R2	2	/* 2nd Record-Route applied */
+#endif
+
 typedef struct ua_client
 {
 	/* if we store a reply (branch picking), this is where it is */
@@ -212,6 +219,11 @@ typedef struct ua_client
 	str              uri;
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
+
+#ifdef TM_UAC_FLAGS
+	/* internal flags per tm uac */
+	unsigned int flags;
+#endif
 #ifdef WITH_AS_SUPPORT
 	/**
 	 * Resent for every rcvd 2xx reply.

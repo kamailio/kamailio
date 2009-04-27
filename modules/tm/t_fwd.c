@@ -443,6 +443,13 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=uri->len;
+#ifdef TM_UAC_FLAGS
+	len = count_applied_lumps(request->add_rm, HDR_RECORDROUTE_T);
+	if(len==1)
+		t->uac[branch].flags = TM_UAC_FLAG_RR;
+	else if(len==2)
+		t->uac[branch].flags = TM_UAC_FLAG_RR|TM_UAC_FLAG_R2;
+#endif
 	membar_write(); /* to allow lockless ops (e.g. which_cancel()) we want
 					   to be sure everything above is fully written before
 					   updating branches no. */
