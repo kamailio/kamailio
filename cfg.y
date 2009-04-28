@@ -484,7 +484,7 @@ static int case_check_default(struct case_stms* stms);
 %left LOG_AND
 %left BIN_OR
 %left BIN_AND
-%left EQUAL_T DIFF MATCH
+%left EQUAL_T DIFF MATCH INTEQ INTDIFF STREQ STRDIFF
 %left GT LT GTE LTE
 %left PLUS MINUS
 %left STAR SLASH
@@ -1580,6 +1580,8 @@ exp:	rval_expr
 equalop:
 	EQUAL_T {$$=EQUAL_OP; }
 	| DIFF	{$$=DIFF_OP; }
+	| STREQ	{$$=EQUAL_OP; }  /* for expr. elems equiv. to EQUAL_T*/
+	| STRDIFF {$$=DIFF_OP; } /* for expr. elems. equiv. to DIFF */
 	;
 cmpop:
 	  GT	{$$=GT_OP; }
@@ -1597,6 +1599,10 @@ strop:
 rve_equalop:
 	EQUAL_T {$$=RVE_EQ_OP; }
 	| DIFF	{$$=RVE_DIFF_OP; }
+	| INTEQ	{$$=RVE_IEQ_OP; }
+	| INTDIFF {$$=RVE_IDIFF_OP; }
+	| STREQ	{$$=RVE_STREQ_OP; }
+	| STRDIFF {$$=RVE_STRDIFF_OP; }
 	;
 rve_cmpop:
 	  GT	{$$=RVE_GT_OP; }

@@ -248,6 +248,10 @@ MINUS	"-"
 STRLEN	"strlen"
 STREMPTY	"strempty"
 DEFINED		"defined"
+STREQ	eq
+INTEQ	ieq
+STRDIFF	ne
+INTDIFF	ine
 
 /* Attribute specification */
 ATTR_MARK   "%"
@@ -772,6 +776,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{STRLEN}	{ count(); return STRLEN; }
 <INITIAL>{STREMPTY}	{ count(); return STREMPTY; }
 <INITIAL>{DEFINED}	{ count(); return DEFINED; }
+<INITIAL>{STREQ}	{ count(); return STREQ; }
+<INITIAL>{INTEQ}	{ count(); return INTEQ; }
+<INITIAL>{STRDIFF}	{ count(); return STRDIFF; }
+<INITIAL>{INTDIFF}	{ count(); return INTDIFF; }
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
 <SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
