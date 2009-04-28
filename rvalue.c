@@ -24,6 +24,9 @@
  * --------
  *  2008-12-01  initial version (andrei)
  *  2009-04-24  added support for defined, strempty, strlen (andrei)
+ *  2009-04-28  int and str automatic conversions: (int)undef=0,
+ *               (str)undef="", (int)""=0, (int)"123"=123, (int)"abc"=0
+ *               (andrei)
  */
 
 #include "rvalue.h"
@@ -686,12 +689,19 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 	avp_t* r_avp;
 	int_str avp_val;
 	pv_value_t pval;
+	str tmp;
+	str* s;
+	int r;
+	int destroy_pval;
 	
+	destroy_pval=0;
+	s=0;
 	switch(rv->type){
 		case RV_INT:
 			*i=rv->v.l;
 			break;
 		case RV_STR:
+			s=&rv->v.s;
 			goto rv_str;
 		case RV_BEXPR:
 			*i=eval_expr(h, rv->v.bexpr, msg);
@@ -707,14 +717,23 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 				*i=0;
 			break;
 		case RV_SEL:
+			r=run_select(&tmp, &rv->v.sel, msg);
+			if (unlikely(r!=0)){
+				if (r<0)
+					goto eval_error;
+				else /* i>0  => undefined */
+					goto undef;
+			}
+			s=&tmp;
 			goto rv_str;
 		case RV_AVP:
 			if (unlikely(cache && cache->cache_type==RV_CACHE_AVP)){
 				if (likely(cache->val_type==RV_INT)){
 					*i=cache->c.avp_val.n;
-				}else if (cache->val_type==RV_STR)
+				}else if (cache->val_type==RV_STR){
+					s=&cache->c.avp_val.s;
 					goto rv_str;
-				else if (cache->val_type==RV_NONE)
+				}else if (cache->val_type==RV_NONE)
 					goto undef;
 				else goto error_cache;
 			}else{
@@ -722,6 +741,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 											&avp_val, rv->v.avps.index);
 				if (likely(r_avp)){
 					if (unlikely(r_avp->flags & AVP_VAL_STR)){
+						s=&avp_val.s;
 						goto rv_str;
 					}else{
 						*i=avp_val.n;
@@ -736,9 +756,10 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 				if (likely((cache->val_type==RV_INT) || 
 								(cache->c.pval.flags & PV_VAL_INT))){
 					*i=cache->c.pval.ri;
-				}else if (cache->val_type==RV_STR)
+				}else if (cache->val_type==RV_STR){
+					s=&cache->c.pval.rs;
 					goto rv_str;
-				else if (cache->val_type==RV_NONE)
+				}else if (cache->val_type==RV_NONE)
 					goto undef;
 				else goto error_cache;
 			}else{
@@ -748,7 +769,8 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 						*i=pval.ri;
 						pv_value_destroy(&pval);
 					}else if (likely(pval.flags & PV_VAL_STR)){
-						pv_value_destroy(&pval);
+						destroy_pval=1; /* we must pv_value_destroy() later*/
+						s=&pval.rs;
 						goto rv_str;
 					}else{
 						/* no PV_VAL_STR and no PV_VAL_INT => undef
@@ -775,8 +797,16 @@ error_cache:
 	BUG("invalid cached value:cache type %d, value type %d\n",
 			cache?cache->cache_type:0, cache?cache->val_type:0);
 rv_str:
-	/* rv is of string type => error */
-	/* ERR("string in int expression\n"); */
+	/* rv is of string type => try to convert it to int */
+	/* if "" => 0 (most likely case) */
+	if (likely(s->len==0)) *i=0;
+	else if (unlikely(str2sint(s, i)!=0)){
+		/* error converting to int => non numeric => 0 */
+		*i=0;
+	}
+	if (destroy_pval)
+		pv_value_destroy(&pval);
+	return 0;
 error:
 	*i=0;
 	return -1;
