@@ -995,7 +995,12 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			if(_tr_tobody.param_lst!=NULL)
 			{
 				val->rs.s = _tr_tobody.param_lst->name.s;
-				val->rs.len = _tr_tobody.body.s+_tr_tobody.body.len-val->rs.s;
+				if(_tr_tobody.last_param->value.s!=NULL)
+					val->rs.len = _tr_tobody.last_param->value.s
+							+_tr_tobody.last_param->value.len - val->rs.s;
+				else
+					val->rs.len = _tr_tobody.last_param->name.s
+							+_tr_tobody.last_param->name.len - val->rs.s;
 			} else val->rs = _tr_empty;
 			break;
 
