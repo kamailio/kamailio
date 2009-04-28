@@ -6,6 +6,33 @@ $Id$
 sip-router changes
 
 core:
+  - new operators eq, ne for string compares and ieq, ine for interger 
+    compares. The names are not yet final (use them at your own risk).
+    Future version might use ==/!= only for ints (ieq/ine) and eq/ne for
+    strings (under debate).
+    They are almost equivalent to == or !=, but they force the conversion 
+	of their operands (eq to string and ieq to int), allowing among other
+	things better type checking on startup and more optimizations.
+    Non equiv. examples: 0 == "" (true) is not equivalent to 0 eq ""
+    (false: it evaluates to "0" eq ""). "a" ieq "b" (true: (int)"a" is 0
+     and (int)"b" is 0) is not equivalent to "a" == "b" (false).
+    Note: internally == and != are converted on startup to eq/ne/ieq/ine 
+    whenever possible (both operand types can be safely determined at
+    start time and they are the same).
+  - try to guess what the user wanted when operators that support multiple
+     types are used on different typed operands. In general convert the
+     the right operand to the type of the left operand and then perform the
+     operation. Exception: the left operand is undef.
+     This applies to the following operators: +, == and !=.
+     Special case: undef as left operand:
+     For +: undef + expr -> undef is converted to string => "" + expr.
+     For == and !=:   undef == expr -> undef is converted to type_of expr.
+     If expr is undef, then undef == undef is true (internally is converted
+     to string).
+  - expression evaluation changes: auto-convert to interger or string
+     in function of the operators: 
+       int(undef)==0,  int("")==0, int("123")==123, int("abc")==0
+       str(undef)=="", str(123)=="123".
   - new script operators: defined, strlen, strempty
       defined expr - returns true if expr is defined, and false if not.
                      Note: only a standalone avp or pvar can be
