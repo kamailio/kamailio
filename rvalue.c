@@ -2341,10 +2341,10 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
-		case RVE_EQ_OP:
+		case RVE_CONCAT_OP:
 			return 0;
 		case RVE_DIFF_OP:
-		case RVE_CONCAT_OP:
+		case RVE_EQ_OP:
 #if !defined(UNDEF_EQ_ALWAYS_FALSE) && !defined(UNDEF_EQ_UNDEF_TRUE)
 			return 1;
 #else
@@ -2834,6 +2834,25 @@ static int rve_optimize(struct rval_expr* rve)
 			}else if (l_type==RV_STR){
 				rve->op=RVE_CONCAT_OP;
 				DBG("FIXUP RVE (%d,%d-%d,%d): changed + into string concat\n",
+						rve->fpos.s_line, rve->fpos.s_col,
+						rve->fpos.e_line, rve->fpos.e_col);
+			}
+		}
+		/* e1 EQ_OP e2 -> change op if we know e1 basic type
+		   e1 DIFF_OP e2 -> change op if we know e2 basic type */
+		if (rve->op==RVE_EQ_OP || rve->op==RVE_DIFF_OP){
+			l_type=rve_guess_type(rve->left.rve);
+			if (l_type==RV_INT){
+				rve->op=(rve->op==RVE_EQ_OP)?RVE_IEQ_OP:RVE_IDIFF_OP;
+				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into interger"
+						" ==/!=\n",
+						rve->fpos.s_line, rve->fpos.s_col,
+						rve->fpos.e_line, rve->fpos.e_col);
+			}else if (l_type==RV_STR){
+				rve->op=RVE_CONCAT_OP;
+				rve->op=(rve->op==RVE_EQ_OP)?RVE_STREQ_OP:RVE_STRDIFF_OP;
+				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into string"
+						" ==/!=\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col);
 			}
