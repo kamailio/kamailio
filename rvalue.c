@@ -668,6 +668,15 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 
 /** get the integer value of an rvalue.
   * *i=(int)rv
+  * if rv == undefined select, avp or pvar, return 0.
+  * if an error occurs while evaluating a select, avp or pvar, behave as
+  * for the undefined case (and return success).
+  * @param h - script context handle
+  * @param msg - sip msg
+  * @param i   - pointer to int, where the conversion result will be stored
+  * @param rv   - rvalue to be converted
+  * @param cache - cached rv value (read-only), can be 0
+  *
   * @return 0 on success, \<0 on error and EXPR_DROP on drop
  */
 int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
@@ -705,7 +714,9 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 					*i=cache->c.avp_val.n;
 				}else if (cache->val_type==RV_STR)
 					goto rv_str;
-				else goto error;
+				else if (cache->val_type==RV_NONE)
+					goto undef;
+				else goto error_cache;
 			}else{
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
 											&avp_val, rv->v.avps.index);
@@ -716,7 +727,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 						*i=avp_val.n;
 					}
 				}else{
-					goto error;
+					goto undef;
 				}
 			}
 			break;
@@ -727,7 +738,9 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 					*i=cache->c.pval.ri;
 				}else if (cache->val_type==RV_STR)
 					goto rv_str;
-				else goto error;
+				else if (cache->val_type==RV_NONE)
+					goto undef;
+				else goto error_cache;
 			}else{
 				memset(&pval, 0, sizeof(pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
@@ -738,11 +751,13 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 						pv_value_destroy(&pval);
 						goto rv_str;
 					}else{
+						/* no PV_VAL_STR and no PV_VAL_INT => undef
+						   (PV_VAL_NULL) */
 						pv_value_destroy(&pval);
-						goto error;
+						goto undef;
 					}
 				}else{
-					goto error;
+					goto eval_error;
 				}
 			}
 			break;
@@ -751,10 +766,19 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			goto error;
 	}
 	return 0;
+undef:
+eval_error: /* same as undefined */
+	/* handle undefined => result 0, return success */
+	*i=0;
+	return 0;
+error_cache:
+	BUG("invalid cached value:cache type %d, value type %d\n",
+			cache?cache->cache_type:0, cache?cache->val_type:0);
 rv_str:
 	/* rv is of string type => error */
 	/* ERR("string in int expression\n"); */
 error:
+	*i=0;
 	return -1;
 }
 
@@ -762,6 +786,9 @@ error:
 
 /** get the string value of an rv in a tmp variable
   * *s=(str)rv
+  * if rv == undefined select, avp or pvar, return "".
+  * if an error occurs while evaluating a select, avp or pvar, behave as
+  * for the undefined case (and return success).
   * The result points either to a temporary string or inside
   * new_cache. new_cache must be non zero, initialized previously,
   * and it _must_ be rval_cache_clean(...)'ed when done.
@@ -771,9 +798,9 @@ error:
   * @param h - script context handle
   * @param msg - sip msg
   * @param tmpv - str return value (pointer to a str struct that will be
-  *               be filled.
+  *               be filled with the conversion result)
   * @param rv   - rvalue to be converted
-  * @param cache - cached rv value (read-only)
+  * @param cache - cached rv value (read-only), can be 0
   * @param tmp_cache - used for temporary storage (so that tmpv will not
   *                 point to possible freed data), it must be non-null,
   *                 initialized and cleaned afterwards.
@@ -814,10 +841,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 			i=run_select(tmpv, &rv->v.sel, msg);
 			if (unlikely(i!=0)){
 				if (i<0){
-					goto error;
-				}else { /* i>0 */
-					tmpv->s="";
-					tmpv->len=0;
+					goto eval_error;
+				}else { /* i>0  => undefined */
+					goto undef;
 				}
 			}
 			break;
@@ -828,7 +854,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 				}else if (cache->val_type==RV_INT){
 					i=cache->c.avp_val.n;
 					tmpv->s=int2str(i, &tmpv->len);
-				}else goto error;
+				}else if (cache->val_type==RV_NONE){
+					goto undef;
+				}else goto error_cache;
 			}else{
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
 											&tmp_cache->c.avp_val,
@@ -842,9 +870,7 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 						i=tmp_cache->c.avp_val.n;
 						tmpv->s=int2str(i, &tmpv->len);
 					}
-				}else{
-					goto error;
-				}
+				}else goto undef;
 			}
 			break;
 		case RV_PVAR:
@@ -854,7 +880,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 				}else if (cache->val_type==RV_INT){
 					i=cache->c.pval.ri;
 					tmpv->s=int2str(i, &tmpv->len);
-				}else goto error;
+				}else if (cache->val_type==RV_NONE){
+					goto undef;
+				}else goto error_cache;
 			}else{
 				memset(&tmp_cache->c.pval, 0, sizeof(tmp_cache->c.pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs,
@@ -871,11 +899,13 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 						pv_value_destroy(&tmp_cache->c.pval);
 						tmpv->s=int2str(i, &tmpv->len);
 					}else{
+						/* no PV_VAL_STR and no PV_VAL_INT => undef
+						   (PV_VAL_NULL) */
 						pv_value_destroy(&tmp_cache->c.pval);
-						goto error;
+						goto undef;
 					}
 				}else{
-					goto error;
+					goto eval_error;
 				}
 			}
 			break;
@@ -884,7 +914,18 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 			goto error;
 	}
 	return 0;
+undef:
+eval_error: /* same as undefined */
+	/* handle undefined => result "", return success */
+	tmpv->s="";
+	tmpv->len=0;
+	return 0;
+error_cache:
+	BUG("invalid cached value:cache type %d, value type %d\n",
+			cache?cache->cache_type:0, cache?cache->val_type:0);
 error:
+	tmpv->s="";
+	tmpv->len=0;
 	return -1;
 }
 
