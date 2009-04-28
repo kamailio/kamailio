@@ -118,7 +118,8 @@ struct rval_expr{
 enum rval_cache_type{
 	RV_CACHE_EMPTY,
 	RV_CACHE_PVAR,
-	RV_CACHE_AVP
+	RV_CACHE_AVP,
+	RV_CACHE_SELECT
 };
 
 /** value cache for a rvalue struct.

@@ -1386,9 +1386,11 @@ error:
 /** checks if rv is defined.
  * @param res - set to the result 1 - defined, 0 not defined
  * @return 0 on success, -1 on error
- * Can use cached rvalues (c1).
- * Note: a rv can be undefined if it's an undefined avp or pvar or
+ * Can use cached rvalues (cache).
+ * Note: a rv can be undefined if it's an undefined avp or pvar or select or
  * if it's NONE
+ * Note2: an error in the avp, pvar or select search is equivalent to 
+ *  undefined (and it's not reported)
  */
 inline static int rv_defined(struct run_act_ctx* h,
 						 struct sip_msg* msg, int* res,
@@ -1397,13 +1399,21 @@ inline static int rv_defined(struct run_act_ctx* h,
 	avp_t* r_avp;
 	int_str avp_val;
 	pv_value_t pval;
+	str tmp;
 	
 	*res=1;
 	switch(rv->type){
+		case RV_SEL:
+			if (unlikely(cache && cache->cache_type==RV_CACHE_SELECT)){
+				*res=(cache->val_type!=RV_NONE);
+			}else
+				/* run select returns 0 on success, -1 on error and >0 on 
+				   undefined. error is considered undefined */
+				*res=(run_select(&tmp, &rv->v.sel, msg)==0);
+			break;
 		case RV_AVP:
 			if (unlikely(cache && cache->cache_type==RV_CACHE_AVP)){
-				if (cache->val_type==RV_NONE)
-					*res=0;
+				*res=(cache->val_type!=RV_NONE);
 			}else{
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,
 											&avp_val, rv->v.avps.index);
@@ -1415,8 +1425,7 @@ inline static int rv_defined(struct run_act_ctx* h,
 		case RV_PVAR:
 			/* PV_VAL_NULL or pv_get_spec_value error => undef */
 			if (unlikely(cache && cache->cache_type==RV_CACHE_PVAR)){
-				if (cache->val_type==RV_NONE)
-					*res=0;
+				*res=(cache->val_type==RV_NONE);
 			}else{
 				memset(&pval, 0, sizeof(pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
