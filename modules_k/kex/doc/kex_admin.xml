@@ -57,6 +57,199 @@
 	</section>
 
 	<section>
+	<title>Exported Functions</title>
+		<section>
+		<title><function moreinfo="none">setsflag(flag)</function></title>
+		<para>
+			Set the script flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the script flag to
+				be set. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setsflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+setsflag("1");
+...
+$var(flag) = 11;
+setsflag("$var(flag)");
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">issflagset(flag)</function></title>
+		<para>
+			Return true of the script flag is set.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the script flag to
+				be tested. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setsflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(issflagset("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">resetsflag(flag)</function></title>
+		<para>
+			Reset the script flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the script flag to
+				be reset. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>resetsflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetsflag("1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">setbflag(flag [, branch])</function></title>
+		<para>
+			Set the branch flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the branch flag to
+				be set. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>branch</emphasis> - the index of the branch whose
+				flag to be set. Can be integer or pseudo-variable with integer
+				value. If omitted, then branch 0 is used (R-URI).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setbflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+setbflag("1");
+...
+$var(flag) = 11;
+setbflag("$var(flag)", "1");
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">isbflagset(flag [, branch])</function></title>
+		<para>
+			Return true of the branch flag is set.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the branch flag to
+				be tested. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>branch</emphasis> - the index of the branch whose
+				flag to be set. Can be integer or pseudo-variable with integer
+				value. If omitted, then branch 0 is used (R-URI).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setbflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(isbflagset("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">resetsflag(flag [, branch])</function></title>
+		<para>
+			Reset the script flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the script flag to
+				be reset. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>branch</emphasis> - the index of the branch whose
+				flag to be set. Can be integer or pseudo-variable with integer
+				value. If omitted, then branch 0 is used (R-URI).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>resetsflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetbflag("1");
+...
+</programlisting>
+		</example>
+		</section>
+	</section>
+
+	<section>
 	<title>Exported MI Functions</title>
 	<section>
 		<title>
