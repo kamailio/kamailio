@@ -155,6 +155,10 @@ void init_branch_iterator(void)
 	branch_iterator = 0;
 }
 
+int get_branch_iterator(void)
+{
+	return branch_iterator;
+}
 
 /*
  * Return the next branch from the dset

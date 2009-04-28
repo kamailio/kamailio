@@ -53,6 +53,10 @@ int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
  */
 void init_branch_iterator(void);
 
+/* 
+ * Return branch iterator position 
+ */
+int get_branch_iterator(void);
 
 /*
  * Get the next branch in the current transaction
