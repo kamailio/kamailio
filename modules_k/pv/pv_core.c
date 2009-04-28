@@ -483,7 +483,7 @@ int pv_get_bflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	flag_t flags;
-	if (getbflags(&flags, 0) < 0) {
+	if (getbflagsval(0, &flags) < 0) {
 		ERR("pv_get_bflags: Error while obtainig values of branch flags\n");
 		return -1;
 	}
@@ -498,7 +498,7 @@ int pv_get_hexbflags(struct sip_msg *msg, pv_param_t *param,
 	if(res==NULL)
 		return -1;
 
-	if (getbflags(&flags, 0) < 0) {
+	if (getbflagsval(0, &flags) < 0) {
 		ERR("pv_get_hexbflags: Error while obtaining values of branch flags\n");
 		return -1;
 	}
