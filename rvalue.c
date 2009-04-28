@@ -114,7 +114,7 @@ void rve_destroy(struct rval_expr* rve)
 
 void rval_cache_clean(struct rval_cache* rvc)
 {
-	if (rvc->cache_type==RV_CACHE_PVAR){
+	if ((rvc->cache_type==RV_CACHE_PVAR) && (rvc->val_type!=RV_NONE)){
 		pv_value_destroy(&rvc->c.pval);
 	}
 	rvc->cache_type=RV_CACHE_EMPTY;
@@ -264,7 +264,7 @@ struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size)
   * rval_cache_clean()'en when no longer needed.
   *
   * @param rv - target rvalue
-  * @param val_cache - value cache, might be filled if non-null, 
+  * @param val_cache - write-only: value cache, might be filled if non-null,
   *                    it _must_ be rval_cache_clean()'en when done.
   * @return - basic type or RV_NONE on error
   */
@@ -291,6 +291,7 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 		case RV_PVAR:
 			if (likely(val_cache && val_cache->cache_type==RV_CACHE_EMPTY)){
 				pv=&val_cache->c.pval;
+				val_cache->cache_type=RV_CACHE_PVAR;
 			}else{
 				val_cache=0;
 				pv=&tmp_pval;
@@ -298,24 +299,26 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 			memset(pv, 0, sizeof(tmp_pval));
 			if (likely(pv_get_spec_value(msg, &rv->v.pvs, pv)==0)){
 				if (pv->flags & PV_VAL_STR){
-					if (unlikely(val_cache==0)) pv_value_destroy(pv);
-					else{
-						val_cache->cache_type=RV_CACHE_PVAR;
+					if (likely(val_cache!=0))
 						val_cache->val_type=RV_STR;
-					}
+					else
+						pv_value_destroy(pv);
 					return RV_STR;
 				}else if (pv->flags & PV_TYPE_INT){
-					if (unlikely(val_cache==0)) pv_value_destroy(pv);
-					else{
-						val_cache->cache_type=RV_CACHE_PVAR;
+					if (likely(val_cache!=0))
 						val_cache->val_type=RV_INT;
-					}
+					else
+						pv_value_destroy(pv);
 					return RV_INT;
 				}else{
 					pv_value_destroy(pv);
+					if (likely(val_cache!=0))
+						val_cache->val_type=RV_NONE; /* undefined */
 					goto error;
 				}
 			}else{
+				if (likely(val_cache!=0))
+					val_cache->val_type=RV_NONE; /* undefined */
 				goto error;
 			}
 			break;
@@ -340,7 +343,6 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 				}
 			}else{
 				*ptype=RV_NONE;
-				if (val_cache) val_cache->cache_type=RV_CACHE_EMPTY;
 				goto error;
 			}
 			break;
@@ -753,7 +755,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_PVAR:
 			if (unlikely(cache && cache->cache_type==RV_CACHE_PVAR)){
-				if (likely((cache->val_type==RV_INT) || 
+				if (likely((cache->val_type==RV_INT) ||
 								(cache->c.pval.flags & PV_VAL_INT))){
 					*i=cache->c.pval.ri;
 				}else if (cache->val_type==RV_STR){
@@ -1496,7 +1498,7 @@ inline static int rv_defined(struct run_act_ctx* h,
 		case RV_PVAR:
 			/* PV_VAL_NULL or pv_get_spec_value error => undef */
 			if (unlikely(cache && cache->cache_type==RV_CACHE_PVAR)){
-				*res=(cache->val_type==RV_NONE);
+				*res=(cache->val_type!=RV_NONE);
 			}else{
 				memset(&pval, 0, sizeof(pval));
 				if (likely(pv_get_spec_value(msg, &rv->v.pvs, &pval)==0)){
