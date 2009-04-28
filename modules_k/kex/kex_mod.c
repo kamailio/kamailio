@@ -3,9 +3,9 @@
  *
  * Copyright (C) 2009
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SIP-Router.org, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify
+ * SIP-Router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -26,7 +26,11 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../flags.h"
+#include "../../dset.h"
+#include "../../mod_fix.h"
 
+#include "flags.h"
 #include "mi_core.h"
 #include "core_stats.h"
 
@@ -38,10 +42,28 @@ MODULE_VERSION
 
 /** module functions */
 static int mod_init(void);
-
 void destroy(void);
 
 static cmd_export_t cmds[]={
+	{"setsflag", (cmd_function)w_setsflag,          1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"resetsflag", (cmd_function)w_resetsflag,      1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"issflagset", (cmd_function)w_issflagset,      1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"setbflag", (cmd_function)w_setbflag,          1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"setbflag", (cmd_function)w_setbflag,          2,fixup_igp_igp,
+			0, ANY_ROUTE },
+	{"resetbflag", (cmd_function)w_resetbflag,      1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"resetbflag", (cmd_function)w_resetbflag,      2,fixup_igp_igp,
+			0, ANY_ROUTE },
+	{"isbflagset", (cmd_function)w_isbflagset,      1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"isbflagset", (cmd_function)w_isbflagset,      2,fixup_igp_igp,
+			0, ANY_ROUTE },
+
 	{0,0,0,0,0,0}
 };
 
@@ -92,4 +114,5 @@ void destroy(void)
 #endif
 	return;
 }
+
 
