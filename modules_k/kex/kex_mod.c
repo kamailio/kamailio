@@ -31,6 +31,7 @@
 #include "../../mod_fix.h"
 
 #include "flags.h"
+#include "km_core.h"
 #include "mi_core.h"
 #include "core_stats.h"
 
@@ -63,6 +64,10 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"isbflagset", (cmd_function)w_isbflagset,      2,fixup_igp_igp,
 			0, ANY_ROUTE },
+	{"km_append_branch", (cmd_function)w_km_append_branch, 0, 0,
+			0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"km_append_branch", (cmd_function)w_km_append_branch, 1, fixup_spve_null,
+			0, REQUEST_ROUTE | FAILURE_ROUTE },
 
 	{0,0,0,0,0,0}
 };
