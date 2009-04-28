@@ -26,7 +26,23 @@
  *  2009-04-24  added support for defined, strempty, strlen (andrei)
  *  2009-04-28  int and str automatic conversions: (int)undef=0,
  *               (str)undef="", (int)""=0, (int)"123"=123, (int)"abc"=0
- *               (andrei)
+ *              handle undef == expr, in function of the UNDEF_EQ_* defines.
+ *              (andrei)
+ */
+
+/* special defines:
+ *
+ *  UNDEF_EQ_* - how to behave when undef is on the right side of a generic
+ *               compare operator
+ *  UNDEF_EQ_ALWAYS_FALSE:  undef  == something  is always false
+ *  UNDEF_EQ_UNDEF_TRUE  :  undef == something false except for undef==undef
+ *                          which is true
+ *  no UNDEF_EQ* define  :  undef == expr => convert undef to typeof(expr)
+ *                          and perorm normal ==. undef == undef will be
+ *                          converted to string and it will be true
+ *                          ("" == "")
+ * NOTE: expr == undef, with defined(expr) is always evaluated this way:
+         expr == (type_of(expr))undef
  */
 
 #include "rvalue.h"
@@ -1549,7 +1565,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 						int* res, struct rval_expr* rve)
 {
 	int i1, i2, ret;
-	struct rval_cache c1;
+	struct rval_cache c1, c2;
 	struct rvalue* rv1;
 	struct rvalue* rv2;
 	
@@ -1616,10 +1632,14 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
 			/* if left is string, eval left & right as string and
-			   use string diff, else eval as int */
+			 *   use string diff.
+			 * if left is int eval as int using int diff
+			 * if left is undef, look at right and convert to right type
+			 */
 			rval_cache_init(&c1);
 			if (unlikely( (ret=rval_expr_eval_rvint(h, msg, &rv1, &i1,
 													rve->left.rve, &c1))<0)){
+				/* error */
 				rval_cache_clean(&c1);
 				break;
 			}
@@ -1628,20 +1648,67 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 				rval_cache_clean(&c1);
 				if (unlikely( (ret=rval_expr_eval_int(h, msg, &i2,
 														rve->right.rve)) <0) )
-					break;
+					break;  /* error */
 				ret=int_intop2(res, rve->op, i1, i2);
 			}else{
-				if (unlikely((rv2=rval_expr_eval(h, msg,
-													rve->right.rve))==0)){
-					rval_destroy(rv1);
+				/* not int => str or undef */
+				/* check for undefined left operand */
+				if (unlikely( c1.cache_type!=RV_CACHE_EMPTY &&
+								c1.val_type==RV_NONE)){
+#ifdef UNDEF_EQ_ALWAYS_FALSE
+					/* undef == something  always false
+					   undef != something  always true*/
+					ret=(rve->op==RVE_DIFF_OP);
+#elif defined UNDEF_EQ_UNDEF_TRUE
+					/* undef == something defined always false
+					   undef == undef true */
+					if (int_rve_defined(h, msg, &i2, rve->right.rve)<0){
+						/* error */
+						rval_cache_clean(&c1);
+						rval_destroy(rv1);
+						break;
+					}
+					ret=(!i2) ^ (rve->op==RVE_DIFF_OP);
+#else  /* ! UNDEF_EQ_* */
+					/*  undef == val
+					 *  => convert to (type_of(val)) (undef) == val */
+					rval_cache_init(&c2);
+					if (unlikely( (ret=rval_expr_eval_rvint(h, msg, &rv2, &i2,
+													rve->right.rve, &c2))<0)){
+						/* error */
+						rval_cache_clean(&c1);
+						rval_cache_clean(&c2);
+						rval_destroy(rv1);
+						break;
+					}
+					if (rv2==0){
+						/* int */
+						ret=int_intop2(res, rve->op, 0 /* undef */, i2);
+					}else{
+						/* str or undef */
+						ret=rval_str_lop2(h, msg, res, rve->op, rv1, &c1,
+											rv2, &c2);
+						rval_cache_clean(&c2);
+						rval_destroy(rv2);
+					}
+#endif /* UNDEF_EQ_* */
 					rval_cache_clean(&c1);
-					ret=-1;
-					break;
+					rval_destroy(rv1);
+				}else{ 
+					/* left value == defined and != int => str
+					 * => lval == (str) val */
+					if (unlikely((rv2=rval_expr_eval(h, msg,
+														rve->right.rve))==0)){
+						/* error */
+						rval_destroy(rv1);
+						rval_cache_clean(&c1);
+						break;
+					}
+					ret=rval_str_lop2(h, msg, res, rve->op, rv1, &c1, rv2, 0);
+					rval_cache_clean(&c1);
+					rval_destroy(rv1);
+					rval_destroy(rv2);
 				}
-				ret=rval_str_lop2(h, msg, res, rve->op, rv1, &c1, rv2, 0);
-				rval_cache_clean(&c1);
-				rval_destroy(rv1);
-				rval_destroy(rv2);
 			}
 			break;
 #if 0
