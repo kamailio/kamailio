@@ -32,6 +32,7 @@ Daniel-Constantin Mierla
               3.4. setbflag(flag [, branch])
               3.5. isbflagset(flag [, branch])
               3.6. resetsflag(flag [, branch])
+              3.7. km_append_branch([uri])
 
         4. Exported MI Functions
 
@@ -50,6 +51,7 @@ Daniel-Constantin Mierla
    1.4. setbflag usage
    1.5. setbflag usage
    1.6. resetsflag usage
+   1.7. km_append_branch usage
 
 Chapter 1. Admin Guide
 
@@ -69,6 +71,7 @@ Chapter 1. Admin Guide
         3.4. setbflag(flag [, branch])
         3.5. isbflagset(flag [, branch])
         3.6. resetsflag(flag [, branch])
+        3.7. km_append_branch([uri])
 
    4. Exported MI Functions
 
@@ -109,6 +112,7 @@ Chapter 1. Admin Guide
    3.4. setbflag(flag [, branch])
    3.5. isbflagset(flag [, branch])
    3.6. resetsflag(flag [, branch])
+   3.7. km_append_branch([uri])
 
 3.1. setsflag(flag)
 
@@ -219,6 +223,24 @@ if(isbflagset("1"))
    Example 1.6. resetsflag usage
 ...
 resetbflag("1");
+...
+
+3.7. km_append_branch([uri])
+
+   Append a new branch to SIP request.
+
+   Meaning of the parameters is as follows:
+     * uri - SIP URI of the new destination. If omitted then the R-URI is
+       used. It can be static string or a string with pseudo-variables
+       that will be evaluated at runtime.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.7. km_append_branch usage
+...
+km_append_branch();
+...
+km_append_branch("sip:alice@sip-router.org");
 ...
 
 4. Exported MI Functions

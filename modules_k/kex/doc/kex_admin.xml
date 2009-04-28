@@ -247,6 +247,36 @@ resetbflag("1");
 </programlisting>
 		</example>
 		</section>
+		<section>
+		<title><function moreinfo="none">km_append_branch([uri])</function></title>
+		<para>
+			Append a new branch to SIP request.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>uri</emphasis> - SIP URI of the new destination. If
+				omitted then the R-URI is used. It can be static string or
+				a string with pseudo-variables that will be evaluated at
+				runtime.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>km_append_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+km_append_branch();
+...
+km_append_branch("sip:alice@sip-router.org");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
