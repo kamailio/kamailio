@@ -109,6 +109,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	struct cell	*t;
 	struct sip_msg	faked_req;
 	int	branch;
+	struct ua_client *uac =NULL;
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
 		LOG(L_ERR, "ERROR: t_continue: transaction not found\n");
@@ -136,13 +137,14 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		 * a failure rute => deadlock, because both
 		 * of them need the reply lock to be held. */
 		t->uac[branch].last_received=500;
+		uac = &t->uac[branch];
 	}
 	/* else
 		Not a huge problem, fr timer will fire, but CANCEL
 		will not be sent. last_received will be set to 408. */
 
 	/* fake the request and the environment, like in failure_route */
-	if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */)) {
+	if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {
 		LOG(L_ERR, "ERROR: t_continue: fake_req failed\n");
 		UNLOCK_REPLIES(t);
 		return -1;

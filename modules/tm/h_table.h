@@ -70,6 +70,7 @@
 #include "../../md5utils.h"
 #include "../../usr_avp.h"
 #include "../../timer.h"
+#include "../../flags.h"
 #include "../../atomic_ops.h"
 #include "../../hash_func.h"
 #include "config.h"
@@ -85,6 +86,7 @@ struct entry;
 struct cell;
 struct timer;
 struct retr_buf;
+struct ua_client;
 
 #include "../../mem/shm_mem.h"
 #include "lock.h"
@@ -224,6 +226,7 @@ typedef struct ua_client
 	/* internal flags per tm uac */
 	unsigned int flags;
 #endif
+	flag_t branch_flags;
 #ifdef WITH_AS_SUPPORT
 	/**
 	 * Resent for every rcvd 2xx reply.

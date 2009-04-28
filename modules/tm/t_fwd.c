@@ -450,6 +450,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	else if(len==2)
 		t->uac[branch].flags = TM_UAC_FLAG_RR|TM_UAC_FLAG_R2;
 #endif
+	getbflagsval(0, &t->uac[branch].branch_flags);
 	membar_write(); /* to allow lockless ops (e.g. which_cancel()) we want
 					   to be sure everything above is fully written before
 					   updating branches no. */
@@ -1005,6 +1006,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int lock_replies;
 	str dst_uri;
 	struct socket_info* si, *backup_si;
+	flag_t backup_bflags = 0;
+	flag_t bflags = 0;
 	
 
 	/* make -Wall happy */
@@ -1028,6 +1031,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	}
 
 	backup_si = p_msg->force_send_socket;
+	getbflagsval(0, &backup_bflags);
+
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_UNSPEC;
 	/* branches added */
@@ -1072,6 +1077,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len, &si))) {
 		try_new++;
 		p_msg->force_send_socket = si;
+		getbflagsval(get_branch_iterator(), &bflags);
+		setbflagsval(0, bflags);
+
 		branch_ret=add_uac( t, p_msg, &current_uri, 
 				    (dst_uri.len) ? (&dst_uri) : &current_uri, 
 				    proxy, proto);
@@ -1088,6 +1096,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	clear_branches();
 
 	p_msg->force_send_socket = backup_si;
+	setbflagsval(0, backup_bflags);
 
 	/* don't forget to clear all branches processed so far */
 

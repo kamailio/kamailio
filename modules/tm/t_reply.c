@@ -730,7 +730,7 @@ void faked_env( struct cell *t,struct sip_msg *msg)
 
 
 int fake_req(struct sip_msg *faked_req,
-							struct sip_msg *shmem_msg, int extra_flags)
+		struct sip_msg *shmem_msg, int extra_flags, struct ua_client *uac)
 {
 	/* on_negative_reply faked msg now copied from shmem msg (as opposed
 	 * to zero-ing) -- more "read-only" actions (exec in particular) will
@@ -771,6 +771,8 @@ int fake_req(struct sip_msg *faked_req,
 			faked_req->dst_uri.len);
 		faked_req->dst_uri.s[faked_req->dst_uri.len]=0;
 	}
+	if(uac) setbflagsval(0, uac->branch_flags);
+	else setbflagsval(0, 0);
 
 	return 1;
 error00:
@@ -836,7 +838,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req, shmem_msg, extra_flags)) {
+	if (!fake_req(&faked_req, shmem_msg, extra_flags, &t->uac[picked_branch])) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
@@ -1953,10 +1955,13 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+		setbflagsval(0, uac->branch_flags);
 		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
+		getbflagsval(0, &uac->branch_flags);
+
 		/* restore original avp list */
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from );
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to );
