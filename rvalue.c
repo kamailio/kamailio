@@ -38,7 +38,7 @@
  *  UNDEF_EQ_UNDEF_TRUE  :  undef == something false except for undef==undef
  *                          which is true
  *  no UNDEF_EQ* define  :  undef == expr => convert undef to typeof(expr)
- *                          and perorm normal ==. undef == undef will be
+ *                          and perform normal ==. undef == undef will be
  *                          converted to string and it will be true
  *                          ("" == "")
  * NOTE: expr == undef, with defined(expr) is always evaluated this way:
@@ -411,6 +411,10 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_IPLUS_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
@@ -471,6 +475,10 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
@@ -523,6 +531,10 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
@@ -585,6 +597,8 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
 		case RVE_IPLUS_OP:
 			*type=RV_INT;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
@@ -649,6 +663,30 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 									exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) && 
+							!(type1==RV_STR && type2==RV_INT)){
+						if (bad_rve) *bad_rve=rve->right.rve;
+						if (bad_t) *bad_t=type2;
+						if (exp_t) *exp_t=type1;
+						return 0;
+					}
+					if (type1==RV_INT){
+						if (bad_rve) *bad_rve=rve->left.rve;
+						if (bad_t) *bad_t=type1;
+						if (exp_t) *exp_t=RV_STR;
+						return 0;
+					}
+					return 1;
+				}
+			}
+			break;
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
+			*type=RV_INT;
+			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
+				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
+									exp_t)){
+					if ((type2!=type1) && (type1!=RV_NONE) &&
+							(type2!=RV_NONE) &&
 							!(type1==RV_STR && type2==RV_INT)){
 						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
@@ -1136,9 +1174,11 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
 			*res=v1 <= v2;
 			break;
 		case RVE_EQ_OP:
+		case RVE_IEQ_OP:
 			*res=v1 == v2;
 			break;
 		case RVE_DIFF_OP:
+		case RVE_IDIFF_OP:
 			*res=v1 != v2;
 			break;
 		case RVE_CONCAT_OP:
@@ -1157,12 +1197,19 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
 inline static int bool_strop2( enum rval_expr_op op, int* res,
 								str* s1, str* s2)
 {
-	if (s1->len!=s2->len)
-		*res= op==RVE_DIFF_OP;
-	else if (memcmp(s1->s, s2->s, s1->len)==0)
-		*res= op==RVE_EQ_OP;
-	else
-		*res= op==RVE_DIFF_OP;
+	switch(op){
+		case RVE_EQ_OP:
+		case RVE_STREQ_OP:
+			*res= (s1->len==s2->len) && (memcmp(s1->s, s2->s, s1->len)==0);
+			break;
+		case RVE_DIFF_OP:
+		case RVE_STRDIFF_OP:
+			*res= (s1->len!=s2->len) || (memcmp(s1->s, s2->s, s1->len)!=0);
+			break;
+		default:
+			BUG("rv unsupported intop %d\n", op);
+			return -1;
+	}
 	return 0;
 }
 
@@ -1593,6 +1640,8 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
 			if (unlikely(
 					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
 				break;
@@ -1735,6 +1784,21 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_DEFINED_OP:
 			ret=int_rve_defined(h, msg, res, rve->left.rve);
 			break;
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
+			if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
+				ret=-1;
+				break;
+			}
+			if (unlikely((rv2=rval_expr_eval(h, msg, rve->right.rve))==0)){
+				rval_destroy(rv1);
+				ret=-1;
+				break;
+			}
+			ret=rval_str_lop2(h, msg, res, rve->op, rv1, 0, rv2, 0);
+			rval_destroy(rv1);
+			rval_destroy(rv2);
+			break;
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 			if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
@@ -1815,7 +1879,11 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
 		case RVE_IPLUS_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -1913,7 +1981,11 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
 		case RVE_IPLUS_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -2168,6 +2240,10 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_IPLUS_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_CONCAT_OP:
 			break;
 		default:
@@ -2220,6 +2296,10 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 			return 0;
 	}
 	return 0;
@@ -2250,18 +2330,26 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 		case RVE_MUL_OP:
 		case RVE_BAND_OP:
 		case RVE_BOR_OP:
-			return 1;
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 			return 1;
 		case RVE_GT_OP:
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
 		case RVE_EQ_OP:
+			return 0;
 		case RVE_DIFF_OP:
 		case RVE_CONCAT_OP:
-			return 0;
+#if !defined(UNDEF_EQ_ALWAYS_FALSE) && !defined(UNDEF_EQ_UNDEF_TRUE)
+			return 1;
+#else
+			return 0 /* asymmetrical undef handling */;
+#endif
 	}
 	return 0;
 }
@@ -2633,6 +2721,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				}
 				break;
 			case RVE_EQ_OP:
+			case RVE_STREQ_OP:
 				if (rv->v.s.len==0){
 					/* $v == "" -> strempty($v) 
 					   "" == $v -> strempty ($v) */
@@ -2973,6 +3062,10 @@ int fix_rval_expr(void** p)
 		case RVE_IPLUS_OP:
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
+		case RVE_IEQ_OP:
+		case RVE_IDIFF_OP:
+		case RVE_STREQ_OP:
+		case RVE_STRDIFF_OP:
 		case RVE_CONCAT_OP:
 			ret=fix_rval_expr((void**)&rve->left.rve);
 			if (ret<0) return ret;
