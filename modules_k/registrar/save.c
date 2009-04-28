@@ -278,7 +278,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* set flags */
 		ci.flags  = _f;
-		getbflags(&ci.flags, 0);
+		getbflagsval(0, &ci.flags);
 
 		/* get received */
 		if (path_received.len && path_received.s) {
