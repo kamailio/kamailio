@@ -2281,6 +2281,9 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_MINUS_OP:
 			return 0;
 		case RVE_PLUS_OP:
+			/* the generic plus is not assoc, e.g.
+			   "a" + 1 + "2" => "a12" in one case and "a3" in the other */
+			return 0;
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
 		case RVE_MUL_OP:
@@ -2308,7 +2311,7 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 
 
 /** returns true if the operator is commutative. */
-static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
+static int rve_op_is_commutative(enum rval_expr_op op)
 {
 	switch(op){
 		case RVE_NONE_OP:
@@ -2325,7 +2328,10 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 		case RVE_MINUS_OP:
 			return 0;
 		case RVE_PLUS_OP:
-			return type==RV_INT; /* commutative only for INT*/
+			/* non commut. when diff. type 
+			   (e.g 1 + "2" != "2" + 1 ) => non commut. in general
+			   (specific same type versions are covered by IPLUS & CONCAT) */
+			return 0;
 		case RVE_IPLUS_OP:
 		case RVE_MUL_OP:
 		case RVE_BAND_OP:
@@ -2345,11 +2351,11 @@ static int rve_op_is_commutative(enum rval_expr_op op, enum rval_type type)
 			return 0;
 		case RVE_DIFF_OP:
 		case RVE_EQ_OP:
-#if !defined(UNDEF_EQ_ALWAYS_FALSE) && !defined(UNDEF_EQ_UNDEF_TRUE)
-			return 1;
-#else
+			/* non. commut. in general, only for same type e.g.:
+			   "" == 0  diff. 0 == "" ( "" == "0" and 0 == 0)
+			   same type versions are covered by IEQ, IDIFF, STREQ, STRDIFF
+			 */
 			return 0 /* asymmetrical undef handling */;
-#endif
 	}
 	return 0;
 }
@@ -2658,8 +2664,19 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 			case RVE_PLUS_OP:
 			case RVE_IPLUS_OP:
 				/* we must make sure that this is an int PLUS
-				   (because "foo"+0 is valid => "foo0") */
-				if ((i==0) && ((op==RVE_IPLUS_OP)||(rve_type==RV_INT))){
+				   (because "foo"+0 is valid => "foo0")
+				  Even if overall type is RV_INT, it's still not safe
+				  to optimize a generic PLUS: 0 + $v is not always equivalent
+				  to $v (e.g. 0+"1" ==1 != "1") => optimize only if
+				  IPLUS (always safe since it converts to int first) or
+				  if generic PLUS and result is integer (rve_type) and
+				  expression is of the form $v+ct (and not ct+$v).
+				  TODO: dropping PLUS_OP all together and relying on the
+				   optimizer replacing safe PLUS_OP with IPLUS_OP or CONCAT_OP
+				   will simplify things.
+				 */
+				if ((i==0) && ((op==RVE_IPLUS_OP)||
+							(rve_type==RV_INT && ct_rve==rve->right.rve))){
 					/* $v +  0 -> $v
 					 *  0 + $v -> $v */
 					rve_destroy(ct_rve);
@@ -2908,7 +2925,7 @@ static int rve_optimize(struct rval_expr* rve)
 								trv->v.s.len, trv->v.s.s, rve->op);
 					ret=1;
 				}else if (rve_is_constant(rve->left.rve->left.rve) &&
-							rve_op_is_commutative(rve->op, type)){
+							rve_op_is_commutative(rve->op)){
 					/* op(op(a, $v), b) => op(op(a, b), $v) */
 					/* rv= op(a, b) */
 					tmp_rve.op=rve->op;
@@ -2950,7 +2967,7 @@ static int rve_optimize(struct rval_expr* rve)
 			if ((rve->op==rve->right.rve->op) && rve_op_is_assoc(rve->op)){
 				/* op(a, op(...)) */
 				if (rve_is_constant(rve->right.rve->right.rve) &&
-						rve_op_is_commutative(rve->op, type)){
+						rve_op_is_commutative(rve->op)){
 					/* op(a, op($v, b)) => op(op(a, b), $v) */
 					/* rv= op(a, b) */
 					tmp_rve.op=rve->op;
