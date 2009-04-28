@@ -126,11 +126,11 @@ int isbflagset(unsigned int branch, flag_t flag);
  *
  * This function returns the value of all branch flags
  * combined in a single variable.
- * @param res A pointer to a variable to store the result
  * @param branch Number of the branch (0 for the main Request-URI branch)
+ * @param res A pointer to a variable to store the result
  * @return 1 on success, -1 on failure
  */
-int getbflags(flag_t* res, unsigned int branch);
+int getbflagsval(unsigned int branch, flag_t* res);
 
 /**
  * Set the value of all branch flags at once for a given branch.

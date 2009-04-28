@@ -126,7 +126,7 @@ int resetbflag(unsigned int branch, flag_t flag)
 }
 
 
-int getbflags(flag_t* res, unsigned int branch)
+int getbflagsval(unsigned int branch, flag_t* res)
 {
 	flag_t* flags;
 	if (res == NULL) return -1;
