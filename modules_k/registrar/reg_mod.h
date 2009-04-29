@@ -98,7 +98,7 @@ extern int path_use_params;
 extern str sock_hdr_name;
 extern int sock_flag;
 
-usrloc_api_t ul;  /*!< Structure containing pointers to usrloc functions */
+extern usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 
 extern struct sl_binds slb;
 
