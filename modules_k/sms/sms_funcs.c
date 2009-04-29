@@ -61,7 +61,6 @@ int nr_of_modems;
 int max_sms_parts;
 int *queued_msgs;
 int use_contact;
-int sms_report_type;
 struct tm_binds tmb;
 
 
