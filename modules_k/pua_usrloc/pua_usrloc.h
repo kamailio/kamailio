@@ -26,8 +26,8 @@
 #define _PUA_UL
 #include "../pua/pua_bind.h"
 
-send_publish_t pua_send_publish;
-send_subscribe_t pua_send_subscribe;
+extern send_publish_t pua_send_publish;
+extern send_subscribe_t pua_send_subscribe;
 void ul_publish(ucontact_t* c, int type, void* param);
 int pua_unset_publish(struct sip_msg* msg , void* param);
 
