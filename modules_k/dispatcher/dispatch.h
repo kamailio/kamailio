@@ -76,7 +76,7 @@ extern str ds_setid_pvname;
 extern pv_spec_t ds_setid_pv;
 
 /* Structure containing pointers to TM-functions */
-struct tm_binds tmb;
+extern struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
 extern int probing_threshhold; /*!< number of failed requests,
