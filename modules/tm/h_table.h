@@ -424,7 +424,8 @@ struct s_table
 
 /* pointer to the big table where all the transaction data
    lives */
-struct s_table*  _tm_table; /* private internal stuff, don't touch directly */
+extern struct s_table*  _tm_table; /* private internal stuff, don't touch
+									  directly */
 
 #define list_entry(ptr, type, member) \
 	((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
