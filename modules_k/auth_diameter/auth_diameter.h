@@ -41,8 +41,8 @@ extern int diameter_client_port;
 /** SL binds */
 extern struct sl_binds slb;
 
-int sockfd;
-int use_domain;
+extern int sockfd;
+extern int use_domain;
 extern rd_buf_t *rb;
 
 
