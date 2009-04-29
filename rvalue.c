@@ -314,18 +314,18 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 			}
 			memset(pv, 0, sizeof(tmp_pval));
 			if (likely(pv_get_spec_value(msg, &rv->v.pvs, pv)==0)){
-				if (pv->flags & PV_VAL_STR){
-					if (likely(val_cache!=0))
-						val_cache->val_type=RV_STR;
-					else
-						pv_value_destroy(pv);
-					return RV_STR;
-				}else if (pv->flags & PV_TYPE_INT){
+				if (pv->flags & PV_TYPE_INT){
 					if (likely(val_cache!=0))
 						val_cache->val_type=RV_INT;
 					else
 						pv_value_destroy(pv);
 					return RV_INT;
+				}else if (pv->flags & PV_VAL_STR){
+					if (likely(val_cache!=0))
+						val_cache->val_type=RV_STR;
+					else
+						pv_value_destroy(pv);
+					return RV_STR;
 				}else{
 					pv_value_destroy(pv);
 					if (likely(val_cache!=0))
@@ -339,7 +339,7 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 			}
 			break;
 		case RV_AVP:
-			if (likely(val_cache && val_cache==RV_CACHE_EMPTY)){
+			if (likely(val_cache && val_cache->cache_type==RV_CACHE_EMPTY)){
 				ptype=&val_cache->val_type;
 				avpv=&val_cache->c.avp_val;
 				val_cache->cache_type=RV_CACHE_AVP;
@@ -718,6 +718,11 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 			}
 			break;
 		case RVE_NONE_OP:
+		default:
+			BUG("unexpected rve op %d\n", rve->op);
+			if (bad_rve) *bad_rve=rve;
+			if (bad_t) *bad_t=RV_NONE;
+			if (exp_t) *exp_t=RV_STR;
 			break;
 	}
 	return 0;
@@ -2041,6 +2046,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 					}
 					break;
 				case RV_STR:
+				case RV_NONE:
 					rv2=rval_expr_eval(h, msg, rve->right.rve);
 					if (unlikely(rv2==0)){
 						ERR("rval expression evaluation failed\n");
@@ -2051,9 +2057,6 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 					break;
 				default:
 					BUG("rv unsupported basic type %d\n", type);
-				case RV_NONE:
-					rval_cache_clean(&c1);
-					goto error;
 			}
 			rval_cache_clean(&c1);
 			break;
