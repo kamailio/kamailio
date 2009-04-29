@@ -84,7 +84,6 @@ str    domain;
 int    *queued_msgs    = 0;
 int    use_contact     = 0;
 int    sms_report_type = NO_REPORT;
-struct tm_binds tmb;
 
 
 static cmd_export_t cmds[]={
