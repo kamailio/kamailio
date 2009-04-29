@@ -70,8 +70,8 @@ from the last group
 
 
 
-regex_t *portExpression;
-regex_t *ipExpression;
+extern regex_t *portExpression;
+extern regex_t *ipExpression;
 
 
 
