@@ -46,7 +46,7 @@ typedef struct avp_save_item_t {
 
 extern regex_t* cookie_filter_re;
 extern unsigned short crc_secret;
-avp_flags_t avp_flag_dialog;
+extern avp_flags_t avp_flag_dialog;
 
 int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2);
 str *rr_get_avp_cookies(void);
