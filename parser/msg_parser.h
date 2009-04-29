@@ -188,6 +188,11 @@ struct sip_uri {
 	str host;     /* Host name */
 	str port;     /* Port number */
 	str params;   /* Parameters */
+	str sip_params; /* Parameters of the sip: URI.
+			  * (If a tel: URI is embedded in a sip: URI, then
+			  * params points to the parameters of the tel: URI,
+			  * and sip_params to the parameters of the sip: URI. 
+			  */
 	str headers;
 	unsigned short port_no;
 	unsigned short proto; /* from transport */

@@ -123,7 +123,6 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct rvalue* rv1;
 	struct rval_cache c1;
 	str s;
-	int orig_p2t;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -538,7 +537,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					ret=1;
 					break;
 				}
-				if ((msg->parsed_uri_ok==0) || ((uri.flags & URI_SIP_USER_PHONE)!=0)) {
+				if (msg->parsed_uri_ok==0) {
 					if (msg->new_uri.s) {
 						tmp=msg->new_uri.s;
 						len=msg->new_uri.len;
@@ -546,18 +545,12 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						tmp=msg->first_line.u.request.uri.s;
 						len=msg->first_line.u.request.uri.len;
 					}
-					/* don't convert sip:user=phone to tel, otherwise we loose parameters */
-					orig_p2t=phone2tel;
-					phone2tel=0;
-					msg->parsed_uri_ok=0;
 					if (parse_uri(tmp, len, &uri)<0){
-						phone2tel=orig_p2t;
 						LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
 									" packet\n", tmp);
 						ret=E_UNSPEC;
 						break;
 					}
-					phone2tel=orig_p2t;
 				} else {
 					uri=msg->parsed_uri;
 				}
@@ -701,6 +694,17 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					*crt=':'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
+				/* tel: URI parameters */
+				if ((uri.type==TEL_URI_T)
+					|| (uri.type==TELS_URI_T)
+				) {
+					tmp=uri.params.s;
+					if (tmp){
+						len=uri.params.len; if(crt+len+1>end) goto error_uri;
+						*crt=';'; crt++;
+						memcpy(crt,tmp,len);crt+=len;
+					}
+				}
 				/* host */
 				if ((a->type==SET_HOST_T)
 						|| (a->type==SET_HOSTPORT_T)
@@ -747,17 +751,20 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* params */
-				if ((a->type==SET_HOSTPORTTRANS_T) && uri.transport.s) {
+				if ((a->type==SET_HOSTPORTTRANS_T)
+					&& uri.sip_params.s
+					&& uri.transport.s
+				) {
 					/* bypass the transport parameter */
-					if (uri.params.s < uri.transport.s) {
+					if (uri.sip_params.s < uri.transport.s) {
 						/* there are parameters before transport */
-						len = uri.transport.s - uri.params.s - 1;
+						len = uri.transport.s - uri.sip_params.s - 1;
 							/* ignore the ';' at the end */
 						if (crt+len+1>end) goto error_uri;
 						*crt=';'; crt++;
-						memcpy(crt,uri.params.s,len);crt+=len;
+						memcpy(crt,uri.sip_params.s,len);crt+=len;
 					}
-					len = (uri.params.s + uri.params.len) -
+					len = (uri.sip_params.s + uri.sip_params.len) -
 						(uri.transport.s + uri.transport.len);
 					if (len > 0) {
 						/* there are parameters after transport */
@@ -766,9 +773,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						memcpy(crt,tmp,len);crt+=len;
 					}
 				} else {
-					tmp=uri.params.s;
+					tmp=uri.sip_params.s;
 					if (tmp){
-						len=uri.params.len; if(crt+len+1>end) goto error_uri;
+						len=uri.sip_params.len; if(crt+len+1>end) goto error_uri;
 						*crt=';'; crt++;
 						memcpy(crt,tmp,len);crt+=len;
 					}

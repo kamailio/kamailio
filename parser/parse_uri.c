@@ -1102,6 +1102,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	switch(uri->type){
 		case SIPS_URI_T:
 		case SIP_URI_T:
+			/* save the original sip: URI parameters in sip_params */
+			uri->sip_params=uri->params;
 			if ((phone2tel) &&
 			     (uri->user_param_val.len == 5) &&
 				 (strncmp(uri->user_param_val.s, "phone", 5) == 0)
@@ -1120,6 +1122,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					uri->params.len=uri->user.s+uri->user.len-uri->params.s;
 					uri->user.len=p-uri->user.s;
 				} else {
+					uri->params.s=0;
 					uri->params.len=0;
 				}
 			} else {
