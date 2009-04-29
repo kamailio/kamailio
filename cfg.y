@@ -1565,7 +1565,10 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 
 exp:	rval_expr
 		{
-			if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
+			if ($1==0){
+				yyerror("invalid expression");
+				$$=0;
+			}else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression");
 				$$=0;
 			}else if (i_tmp!=RV_INT && i_tmp!=RV_NONE){
@@ -2220,9 +2223,9 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 	| fcmd				{$$=mk_rve_rval(RV_ACTION_ST, $1); }
 	| exp_elem { $$=mk_rve_rval(RV_BEXPR, $1); }
 	| LBRACE actions RBRACE	{$$=mk_rve_rval(RV_ACTION_ST, $2); }
-	| LBRACE error RBRACE	{ yyerror("bad command block"); }
+	| LBRACE error RBRACE	{ $$=0; yyerror("bad command block"); }
 	| LPAREN assign_action RPAREN	{$$=mk_rve_rval(RV_ACTION_ST, $2); }
-	| LPAREN error RPAREN	{ yyerror("bad expression"); }
+	| LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 	;
 
 
@@ -2240,10 +2243,11 @@ rve_op:		PLUS		{ $$=RVE_PLUS_OP; }
 */
 
 rval_expr: rval						{ $$=$1;
-											if ($$==0){
+										/*	if ($$==0){
 												yyerror("out of memory\n");
 												YYABORT;
 											}
+											*/
 									}
 		| rve_un_op %prec NOT rval_expr	{$$=mk_rve1($1, $2); }
 		| rval_expr PLUS rval_expr		{$$=mk_rve2(RVE_PLUS_OP, $1, $3); }
@@ -2261,7 +2265,7 @@ rval_expr: rval						{ $$=$1;
 		| STRLEN LPAREN rval_expr RPAREN { $$=mk_rve1(RVE_STRLEN_OP, $3);}
 		| STREMPTY LPAREN rval_expr RPAREN {$$=mk_rve1(RVE_STREMPTY_OP, $3);}
 		| DEFINED rval_expr				{ $$=mk_rve1(RVE_DEFINED_OP, $2);}
-		| rve_un_op %prec NOT error		{ yyerror("bad expression"); }
+		| rve_un_op %prec NOT error		{ $$=0; yyerror("bad expression"); }
 		| rval_expr PLUS error			{ yyerror("bad expression"); }
 		| rval_expr MINUS error			{ yyerror("bad expression"); }
 		| rval_expr STAR error			{ yyerror("bad expression"); }
@@ -2274,9 +2278,9 @@ rval_expr: rval						{ $$=$1;
 			{ yyerror("bad expression"); }
 		| rval_expr LOG_AND error		{ yyerror("bad expression"); }
 		| rval_expr LOG_OR error		{ yyerror("bad expression"); }
-		| STRLEN LPAREN error RPAREN	{ yyerror("bad expression"); }
-		| STREMPTY LPAREN error RPAREN	{ yyerror("bad expression"); }
-		| DEFINED error					{ yyerror("bad expression"); }
+		| STRLEN LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
+		| STREMPTY LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
+		| DEFINED error					{ $$=0; yyerror("bad expression"); }
 		;
 
 assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
@@ -2904,13 +2908,19 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 	
 	if ((rve1==0) || (rve2==0))
 		return 0;
+	bad_rve=0;
+	bad_t=0;
+	exp_t=0;
 	cfg_pos_join(&pos, &rve1->fpos, &rve2->fpos);
 	ret=mk_rval_expr2(op, rve1, rve2, &pos);
 	if (ret && (rve_check_type(&type, ret, &bad_rve, &bad_t, &exp_t)!=1)){
-		yyerror_at(&pos, "bad expression: type mismatch:"
+		if (bad_rve)
+			yyerror_at(&pos, "bad expression: type mismatch:"
 						" %s instead of %s at (%d,%d)",
 						rval_type_name(bad_t), rval_type_name(exp_t),
 						bad_rve->fpos.s_line, bad_rve->fpos.s_col);
+		else
+			yyerror("BUG: unexpected null \"bad\" expression\n");
 	}
 	return ret;
 }
