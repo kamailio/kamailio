@@ -59,6 +59,7 @@
 #include "error.h"
 #include "timer.h"
 #include "sctp_stats.h"
+#include "sctp_ev.h"
 
 
 
@@ -1793,6 +1794,8 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_REMOTE_ERROR:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_remote_error), si, su,
 								"SCTP_REMOTE_ERROR");
+			SCTP_EV_REMOTE_ERROR(&si->address, si->port_no, su, 
+									ntohs(snp->sn_remote_error.sre_error) );
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_REMOTE_ERROR:"
 					" %d, len %d\n, assoc_id %d",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1805,6 +1808,8 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_SEND_FAILED:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_send_failed), si, su,
 								"SCTP_SEND_FAILED");
+			SCTP_EV_SEND_FAILED(&si->address, si->port_no, su, 
+									snp->sn_send_failed.ssf_error);
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_SEND_FAILED:"
 					" error %d, assoc_id %d, flags %x\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1816,6 +1821,10 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_PEER_ADDR_CHANGE:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_paddr_change), si, su,
 								"SCTP_PEER_ADDR_CHANGE");
+			SCTP_EV_PEER_ADDR_CHANGE(&si->address, si->port_no, su, 
+					sctp_paddr_change_state2s(snp->sn_paddr_change.spc_state),
+					snp->sn_paddr_change.spc_state,
+					&snp->sn_paddr_change.spc_aaddr);
 			strcpy(su_buf, su2a((union sockaddr_union*)
 									&snp->sn_paddr_change.spc_aaddr, 
 									sizeof(snp->sn_paddr_change.spc_aaddr)));
@@ -1831,6 +1840,7 @@ static int sctp_handle_notification(struct socket_info* si,
 			SCTP_STATS_REMOTE_SHUTDOWN();
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_shutdown_event), si, su,
 								"SCTP_SHUTDOWN_EVENT");
+			SCTP_EV_SHUTDOWN_EVENT(&si->address, si->port_no, su);
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_SHUTDOWN_EVENT:"
 					" assoc_id %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1839,6 +1849,9 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_ASSOC_CHANGE:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_assoc_change), si, su,
 								"SCTP_ASSOC_CHANGE");
+			SCTP_EV_ASSOC_CHANGE(&si->address, si->port_no, su, 
+					sctp_assoc_change_state2s(snp->sn_assoc_change.sac_state),
+					snp->sn_assoc_change.sac_state);
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_ASSOC_CHANGE"
 					": %s: assoc_id %d, ostreams %d, istreams %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1877,6 +1890,7 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_SENDER_DRY_EVENT:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_sender_dry_event),
 								si, su, "SCTP_SENDER_DRY_EVENT");
+			SCTP_EV_REMOTE_ERROR(&si->address, si->port_no, su);
 			SNOT("sctp notification from %s on %.*s:%d: "
 					"SCTP_SENDER_DRY_EVENT on %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
