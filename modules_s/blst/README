@@ -1,0 +1,82 @@
+1. Blst Module
+
+Andrei Pelinescu-Onciul
+
+   iptelorg GmbH
+
+   Copyright © 2007 iptelorg GmbH
+   Revision History
+   Revision $Revision$ $Date$
+     __________________________________________________________________
+
+   1.1. Overview
+   1.2. Functions
+
+        1.2.1. blst_add([timeout])
+        1.2.2. blst_add_retry_after(min, max)
+        1.2.3. blst_del()
+        1.2.4. blst_is_blacklisted()
+
+1.1. Overview
+
+   This module exports blacklist related functions to the script.
+
+1.2. Functions
+
+   Revision History
+   Revision $Revision$ $Date$
+
+1.2.1.  blst_add([timeout])
+
+   Adds the source of the current message to the blacklist for timeout
+   seconds. If timeout is missing or 0 it uses the default blacklist
+   timeout (dst_blacklist_expire).
+
+   Example 1. blst_add usage
+...
+if (src_ip==10.0.0.0/9)
+    blst_add(30); # 30 s
+else
+    blst_add();  # use default blacklist timeout
+...
+
+1.2.2.  blst_add_retry_after(min, max)
+
+   Adds the source of the current message to the blacklist for the time
+   interval specified in the Retry-After header. If the Retry-After header
+   is missing, it will fail (returns false). If the Retry-After value is
+   less then min, then min seconds will be used instead. If the
+   Retry-After value is greater then max, then max seconds will be used
+   instead.
+
+   Example 2. blst_add_retry_after usage
+...
+# on_reply route
+if (msg_status==503){ # blacklist 503 source for Retry-After seconds
+    if (! blst_add_retry_after(30, 3600))
+        blst_add(60); # if no retry_after header add it for 60s
+}
+...
+
+1.2.3.  blst_del()
+
+   Removes the source of the current message from the blacklist. If the
+   address is not present in the blacklist at the time of the call it
+   returns false.
+
+   Example 3. blst_del usage
+...
+    blst_del();
+...
+
+1.2.4.  blst_is_blacklisted()
+
+   Returns true if the source of the current message is blacklisted.
+
+   Example 4. blst_is_blacklisted usage
+...
+    if (blst_is_blacklisted()){
+        log("message from a blacklisted source");
+        drop;
+   }
+...
