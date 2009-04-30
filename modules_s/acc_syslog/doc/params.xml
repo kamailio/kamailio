@@ -14,25 +14,6 @@
 
     <title>Parameters</title>
 
-    <section id="secret">
-	<title><varname>secret</varname> (string)</title>
-	<para>
-	    The secret string used to generate nonce. Inclusion of this string
-	    in nonce ensures that only the proxy server that knows the secret
-	    string will be able to generate the nonce and verify it later when
-	    received from the user agent.
-	</para>
-	<para>
-	    Default value is randomly generated string.
-	</para>
-	<example>
-	    <title>Setting secret module parameter</title>
-	    <programlisting>
-modparam("auth", "secret", "johndoessecretphrase")
-	    </programlisting>
-	</example>
-    </section>
-
     <section id="log_level">
 	<title><varname>log_level</varname> (integer)</title>
 	<para>

@@ -14,26 +14,25 @@ Jiri Kuthan
    1.2. Dependencies
    1.3. Parameters
 
-        1.3.1. secret (string)
-        1.3.2. log_level (integer)
-        1.3.3. log_fmt (string)
-        1.3.4. early_media (integer)
-        1.3.5. failed_transactions (integer)
-        1.3.6. log_flag (integer)
-        1.3.7. log_missed_flag (integer)
-        1.3.8. report_ack (integer)
-        1.3.9. report_cancels (integer)
-        1.3.10. radius_config (string)
-        1.3.11. service_type (integer)
-        1.3.12. radius_flag (integer)
-        1.3.13. radius_missed_flag (integer)
-        1.3.14. db_url (string)
-        1.3.15. db_flag (integer)
-        1.3.16. db_missed_flag (integer)
-        1.3.17. diameter_flag (integer)
-        1.3.18. diameter_missed_flag (integer)
-        1.3.19. diameter_client_host (string)
-        1.3.20. diameter_client_port (int)
+        1.3.1. log_level (integer)
+        1.3.2. log_fmt (string)
+        1.3.3. early_media (integer)
+        1.3.4. failed_transactions (integer)
+        1.3.5. log_flag (integer)
+        1.3.6. log_missed_flag (integer)
+        1.3.7. report_ack (integer)
+        1.3.8. report_cancels (integer)
+        1.3.9. radius_config (string)
+        1.3.10. service_type (integer)
+        1.3.11. radius_flag (integer)
+        1.3.12. radius_missed_flag (integer)
+        1.3.13. db_url (string)
+        1.3.14. db_flag (integer)
+        1.3.15. db_missed_flag (integer)
+        1.3.16. diameter_flag (integer)
+        1.3.17. diameter_missed_flag (integer)
+        1.3.18. diameter_client_host (string)
+        1.3.19. diameter_client_port (int)
 
    1.4. Functions
 
@@ -97,10 +96,8 @@ Note
    http://developer.berlios.de/projects/radiusclient-ng/. The radius
    client needs to be configured properly. To do so, use the template in
    sip_router/etc/radiusclient.conf and make sure that module's
-   radius_config parameter points to its location. In particular,
-   accounting secret must match that one configured in server and proper
-   dictionary is used (one is available in ). Uses along with FreeRADIUS
-   and Radiator servers have been reported to us.
+   radius_config parameter points to its location. Uses along with
+   FreeRADIUS and Radiator servers have been reported to us.
 
    Both mysql and radius libraries must be dynamically linkable. You need
    to configure your OS so that SER, when started, will find them.
@@ -142,75 +139,63 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Revision History
    Revision $Revision$ $Date$
 
-1.3.1. secret (string)
-
-   The secret string used to generate nonce. Inclusion of this string in
-   nonce ensures that only the proxy server that knows the secret string
-   will be able to generate the nonce and verify it later when received
-   from the user agent.
-
-   Default value is randomly generated string.
-
-   Example 2. Setting secret module parameter
-modparam("auth", "secret", "johndoessecretphrase")
-
-1.3.2. log_level (integer)
+1.3.1. log_level (integer)
 
    Log level at which accounting messages are issued to syslog.
 
    Default value is L_NOTICE.
 
-   Example 3. log_level example
+   Example 2. log_level example
 modparam("acc", "log_level", 2)   # Set log_level to 2
 
-1.3.3. log_fmt (string)
+1.3.2. log_fmt (string)
 
    Defines what parts of header fields will be printed to syslog, see
    "overview" for list of accepted values.
 
    Default value is "miocfs".
 
-   Example 4. log_fmt example
+   Example 3. log_fmt example
 modparam("acc", "log_fmt", "mfs")
 
-1.3.4. early_media (integer)
+1.3.3. early_media (integer)
 
    Should be early media (183) accounted too ?
 
    Default value is 0 (no).
 
-   Example 5. early_media example
+   Example 4. early_media example
 modparam("acc", "early_media", 1)
 
-1.3.5. failed_transactions (integer)
+1.3.4. failed_transactions (integer)
 
    This parameter controls whether failed transactions (with final reply
    >= 300) should be accounted too.
 
    Default value is 0 (no).
 
-   Example 6. failed_transactions example
+   Example 5. failed_transactions example
 modparam("acc", "failed_transactions", 1)
 
-1.3.6. log_flag (integer)
+1.3.5. log_flag (integer)
 
    Request flag which needs to be set to account a transaction.
 
    Default value is 1.
 
-   Example 7. log_flag example
+   Example 6. log_flag example
 modparam("acc", "log_flag", 2)
 
-1.3.7. log_missed_flag (integer)
+1.3.6. log_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls.
 
    Default value is 2.
 
-   Example 8. log_missed_flag example
+   Example 7. log_missed_flag example
 modparam("acc", "log_missed_flag", 3)
 
-1.3.8. report_ack (integer)
+1.3.7. report_ack (integer)
 
    Shall acc attempt to account e2e ACKs too ? Note that this is really
    only an attempt, as e2e ACKs may take a different path (unless RR
@@ -219,10 +204,10 @@ modparam("acc", "log_missed_flag", 3)
 
    Default value is 1 (yes).
 
-   Example 9. report_ack example
+   Example 8. report_ack example
 modparam("acc", "report_ack", 0)
 
-1.3.9. report_cancels (integer)
+1.3.8. report_cancels (integer)
 
    By default, CANCEL reporting is disabled -- most accounting
    applications are happy to see INVITE's cancellation status. Turn on if
@@ -230,10 +215,10 @@ modparam("acc", "report_ack", 0)
 
    Default value is 0 (no).
 
-   Example 10. report_cancels example
+   Example 9. report_cancels example
 modparam("acc", "report_cancels", 1)
 
-1.3.10. radius_config (string)
+1.3.9. radius_config (string)
 
    This parameter is radius specific. Path to radius client configuration
    file, set the referred config file correctly and specify there address
@@ -243,105 +228,105 @@ modparam("acc", "report_cancels", 1)
 
    Default value is "/usr/local/etc/radiusclient/radiusclient.conf".
 
-   Example 11. radius_config example
+   Example 10. radius_config example
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
 
-1.3.11. service_type (integer)
+1.3.10. service_type (integer)
 
    Radius service type used for accounting.
 
    Default value is 15 (SIP).
 
-   Example 12. service_type example
+   Example 11. service_type example
 modparam("acc", "service_type", 16)
 
-1.3.12. radius_flag (integer)
+1.3.11. radius_flag (integer)
 
    Request flag which needs to be set to account a transaction -- RADIUS
    specific.
 
    Default value is 1.
 
-   Example 13. radius_flag example
+   Example 12. radius_flag example
                 modparam("acc", "radius_flag", 2)
 
-1.3.13. radius_missed_flag (integer)
+1.3.12. radius_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls -- RADIUS
    specific.
 
    Default value is 2.
 
-   Example 14. radius_missed_flag example
+   Example 13. radius_missed_flag example
 modparam("acc", "radius_missed_flag", 3)
 
-1.3.14. db_url (string)
+1.3.13. db_url (string)
 
    SQL address -- database specific.
 
    Default value is "mysql://ser:heslo@localhost/ser"
 
-   Example 15. db_url example
+   Example 14. db_url example
 modparam("acc", "db_url", "mysql://user:password@localhost/ser")
 
-1.3.15. db_flag (integer)
+1.3.14. db_flag (integer)
 
    Request flag which needs to be set to account a transaction -- database
    specific.
 
    Default value is 1.
 
-   Example 16. db_flag example
+   Example 15. db_flag example
 modparam("acc", "db_flag", 2)
 
-1.3.16. db_missed_flag (integer)
+1.3.15. db_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls -- database
    specific.
 
    Default value is 2.
 
-   Example 17. db_missed_flag example
+   Example 16. db_missed_flag example
 modparam("acc", "db_missed_flag", 3)
 
-1.3.17. diameter_flag (integer)
+1.3.16. diameter_flag (integer)
 
    Request flag which needs to be set to account a transaction -- DIAMETER
    specific.
 
    Default value is 1.
 
-   Example 18. diameter_flag example
+   Example 17. diameter_flag example
 modparam("acc", "diameter_flag", 2)
 
-1.3.18. diameter_missed_flag (integer)
+1.3.17. diameter_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls -- DIAMETER
    specific.
 
    Default value is 2.
 
-   Example 19. diameter_missed_flag example
+   Example 18. diameter_missed_flag example
 modparam("acc", "diameter_missed_flag", 3)
 
-1.3.19. diameter_client_host (string)
+1.3.18. diameter_client_host (string)
 
    Hostname of the machine where the DIAMETER Client is running --
    DIAMETER specific.
 
    Default value is "localhost".
 
-   Example 20. diameter_client_host example
+   Example 19. diameter_client_host example
 modparam("acc", "diameter_client_host", "iptel.org")
 
-1.3.20. diameter_client_port (int)
+1.3.19. diameter_client_port (int)
 
    Port number where the Diameter Client is listening -- DIAMETER
    specific.
 
    Default value is 3000.
 
-   Example 21. diameter_client_host example
+   Example 20. diameter_client_host example
 modparam("acc", "diameter_client_port", 3000)
 
 1.4. Functions
@@ -359,7 +344,7 @@ modparam("acc", "diameter_client_port", 3000)
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
-   Example 22. acc_log_request usage
+   Example 21. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
@@ -374,7 +359,7 @@ acc_log_request("Some comment");
      * comment - Comment to be appended.
      * table - Database table to be used.
 
-   Example 23. acc_db_request usage
+   Example 22. acc_db_request usage
 ...
 acc_log_request("Some comment", "Some table");
 ...
@@ -387,7 +372,7 @@ acc_log_request("Some comment", "Some table");
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
-   Example 24. acc_rad_request usage
+   Example 23. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
@@ -400,7 +385,7 @@ acc_rad_request("Some comment");
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
-   Example 25. acc_diam_request usage
+   Example 24. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...

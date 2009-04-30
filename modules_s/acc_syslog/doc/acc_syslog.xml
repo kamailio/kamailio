@@ -139,9 +139,11 @@
 	    radius client needs to be configured properly. To do so, use the
 	    template in <filename>sip_router/etc/radiusclient.conf</filename>
 	    and make sure that module's <varname>radius_config</varname>
-	    parameter points to its location.  In particular, accounting secret
+	    parameter points to its location.
+	    <!-- FIXME In particular, accounting secret
 	    must match that one configured in server and proper dictionary is
-	    used (one is available in ). Uses along with <ulink
+	    used (one is available in ). -->
+	    Uses along with <ulink
 	    url="http://www.freeradius.org">FreeRADIUS</ulink> and <ulink
 	    url="http://www.open.com.au/radiator">Radiator</ulink> servers have
 	    been reported to us.
