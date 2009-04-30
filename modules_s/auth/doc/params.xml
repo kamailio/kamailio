@@ -24,7 +24,7 @@
 	    These three module parameters control which optional integrity
          checks will be performed on the SIP message carrying digest response
         during digest authentication. <varname>auth_check_register</varname>
-        controls integrity checks to be peformed on REGISTER messages,
+        controls integrity checks to be performed on REGISTER messages,
         <varname>auth_checks_no_dlg</varname> controls which optional
         integrity checks will be performed on SIP requests that have no To
         header field or no To tag (in other words the requests either

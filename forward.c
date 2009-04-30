@@ -407,7 +407,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}
 	}
 	/* try to send the message until success or all the ips are exhausted
-	 *  (if dns lookup is peformed && the dns cache used ) */
+	 *  (if dns lookup is performed && the dns cache used ) */
 #ifdef USE_DNS_FAILOVER
 	do{
 #endif
