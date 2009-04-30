@@ -44,86 +44,91 @@
 #include "dlg_cb.h"
 
 
-#define DLG_STATE_UNCONFIRMED  1
-#define DLG_STATE_EARLY        2
-#define DLG_STATE_CONFIRMED_NA 3
-#define DLG_STATE_CONFIRMED    4
-#define DLG_STATE_DELETED      5
+/* states of a dialog */
+#define DLG_STATE_UNCONFIRMED  1 /*!< unconfirmed dialog */
+#define DLG_STATE_EARLY        2 /*!< early dialog */
+#define DLG_STATE_CONFIRMED_NA 3 /*!< confirmed dialog without a ACK yet */
+#define DLG_STATE_CONFIRMED    4 /*!< confirmed dialog */
+#define DLG_STATE_DELETED      5 /*!< deleted dialog */
 
-#define DLG_EVENT_TDEL         1
-#define DLG_EVENT_RPL1xx       2
-#define DLG_EVENT_RPL2xx       3
-#define DLG_EVENT_RPL3xx       4
-#define DLG_EVENT_REQPRACK     5
-#define DLG_EVENT_REQACK       6
-#define DLG_EVENT_REQBYE       7
-#define DLG_EVENT_REQ          8
+/* events for dialog processing */
+#define DLG_EVENT_TDEL         1 /*!< transaction was destroyed */
+#define DLG_EVENT_RPL1xx       2 /*!< 1xx request */
+#define DLG_EVENT_RPL2xx       3 /*!< 2xx request */ 
+#define DLG_EVENT_RPL3xx       4 /*!< 3xx request */
+#define DLG_EVENT_REQPRACK     5 /*!< PRACK request */
+#define DLG_EVENT_REQACK       6 /*!< ACK request */
+#define DLG_EVENT_REQBYE       7 /*!< BYE request */
+#define DLG_EVENT_REQ          8 /*!< other requests */
 
-#define DLG_FLAG_NEW           (1<<0)
-#define DLG_FLAG_CHANGED       (1<<1)
-#define DLG_FLAG_HASBYE        (1<<2)
-#define DLG_FLAG_TOBYE         (1<<3)
-#define DLG_FLAG_CALLERBYE     (1<<4)
-#define DLG_FLAG_CALLEEBYE     (1<<5)
-#define DLG_FLAG_LOCALDLG      (1<<6)
+/* dialog flags */
+#define DLG_FLAG_NEW           (1<<0) /*!< new dialog */
+#define DLG_FLAG_CHANGED       (1<<1) /*!< dialog was changed */
+#define DLG_FLAG_HASBYE        (1<<2) /*!< bye was received */
+#define DLG_FLAG_TOBYE         (1<<3) /*!< flag from dialog context */
+#define DLG_FLAG_CALLERBYE     (1<<4) /*!< bye from caller */
+#define DLG_FLAG_CALLEEBYE     (1<<5) /*!< bye from callee */
+#define DLG_FLAG_LOCALDLG      (1<<6) /*!< local dialog, unused */
 
-#define DLG_CALLER_LEG         0
-#define DLG_CALLEE_LEG         1
+#define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
+#define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
 
-#define DLG_DIR_NONE           0
-#define DLG_DIR_DOWNSTREAM     1
-#define DLG_DIR_UPSTREAM       2
+#define DLG_DIR_NONE           0 /*!< dialog has no direction */
+#define DLG_DIR_DOWNSTREAM     1 /*!< dialog has downstream direction */
+#define DLG_DIR_UPSTREAM       2 /*!< dialog has upstream direction */
 
 
-
+/*! entries in the dialog list */
 struct dlg_cell
 {
-	volatile int         ref;
-	struct dlg_cell      *next;
-	struct dlg_cell      *prev;
-	unsigned int         h_id;
-	unsigned int         h_entry;
-	unsigned int         state;
-	unsigned int         lifetime;
-	unsigned int         start_ts;    /* start time  (absolute UNIX ts)*/
-	unsigned int         dflags;
-	unsigned int         sflags;
-	unsigned int         toroute;
-	unsigned int         from_rr_nb;
-	struct dlg_tl        tl;
-	str                  callid;
-	str                  from_uri;
-	str                  to_uri;
-	str                  tag[2];
-	str                  cseq[2];
-	str                  route_set[2];
-	str                  contact[2];
-	struct socket_info * bind_addr[2];
-	struct dlg_head_cbl  cbs;
-	struct dlg_profile_link *profile_links;
+	volatile int         ref;		/*!< reference counter */
+	struct dlg_cell      *next;		/*!< next entry in the list */
+	struct dlg_cell      *prev;		/*!< previous entry in the list */
+	unsigned int         h_id;		/*!< id of the hash table entry */
+	unsigned int         h_entry;		/*!< number of hash entry */
+	unsigned int         state;		/*!< dialog state */
+	unsigned int         lifetime;		/*!< dialog lifetime */
+	unsigned int         start_ts;		/*!< start time  (absolute UNIX ts)*/
+	unsigned int         dflags;		/*!< internal dialog flags */
+	unsigned int         sflags;		/*!< script dialog flags */
+	unsigned int         toroute;		/*!< index of route that is executed on timeout */
+	unsigned int         from_rr_nb;	/*!< information from record routing */
+	struct dlg_tl        tl;		/*!< dialog timer list */
+	str                  callid;		/*!< callid from SIP message */
+	str                  from_uri;		/*!< from uri from SIP message */
+	str                  to_uri;		/*!< to uri from SIP message */
+	str                  tag[2];		/*!< from tags of caller and to tag of callee */
+	str                  cseq[2];		/*!< CSEQ of caller and callee */
+	str                  route_set[2];	/*!< route set of caller and callee */
+	str                  contact[2];	/*!< contact of caller and callee */
+	struct socket_info * bind_addr[2];	/*! binded address of caller and callee */
+	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
+	struct dlg_profile_link *profile_links; /*!< dialog profiles */
 };
 
 
+/*! entries in the main dialog table */
 struct dlg_entry
 {
-	struct dlg_cell    *first;
-	struct dlg_cell    *last;
-	unsigned int        next_id;
-	unsigned int       lock_idx;
+	struct dlg_cell    *first;	/*!< dialog list */
+	struct dlg_cell    *last;	/*!< optimisation, end of the dialog list */
+	unsigned int       next_id;	/*!< next id */
+	unsigned int       lock_idx;	/*!< lock index */
 };
 
 
-
+/*! main dialog table */
 struct dlg_table
 {
-	unsigned int       size;
-	struct dlg_entry   *entries;
-	unsigned int       locks_no;
-	gen_lock_set_t     *locks;
+	unsigned int       size;	/*!< size of the dialog table */
+	struct dlg_entry   *entries;	/*!< dialog hash table */
+	unsigned int       locks_no;	/*!< number of locks */
+	gen_lock_set_t     *locks;	/*!< lock table */
 };
 
-
+/*! global dialog table */
 extern struct dlg_table *d_table;
+/*! point to the current dialog */
 extern struct dlg_cell  *current_dlg_pointer;
 
 #define dlg_lock(_table, _entry) \
@@ -131,7 +136,14 @@ extern struct dlg_cell  *current_dlg_pointer;
 #define dlg_unlock(_table, _entry) \
 		lock_set_release( (_table)->locks, (_entry)->lock_idx);
 
+
 inline void unlink_unsafe_dlg(struct dlg_entry *d_entry, struct dlg_cell *dlg);
+
+
+/*!
+ * \brief Destroy a dialog, run callbacks and free memory
+ * \param dlg destroyed dialog
+ */
 inline void destroy_dlg(struct dlg_cell *dlg);
 
 #define ref_dlg_unsafe(_dlg,_cnt)     \
@@ -165,20 +177,79 @@ inline void destroy_dlg(struct dlg_cell *dlg);
 	}while(0)
 
 
+/*!
+ * \brief Initialize the global dialog table
+ * \param size size of the table
+ * \return 0 on success, -1 on failure
+ */
 int init_dlg_table(unsigned int size);
 
+
+/*!
+ * \brief Destroy the global dialog table
+ */
 void destroy_dlg_table(void);
 
+
+/*!
+ * \brief Create a new dialog structure for a SIP dialog
+ * \param callid dialog callid
+ * \param from_uri dialog from uri
+ * \param to_uri dialog to uri
+ * \param from_tag dialog from tag
+ * \return created dialog structure on success, NULL otherwise
+ */
 struct dlg_cell* build_new_dlg(str *callid, str *from_uri,
 		str *to_uri, str *from_tag);
 
+
+/*!
+ * \brief Set the leg information for an existing dialog
+ * \param dlg dialog
+ * \param tag from tag or to tag
+ * \param rr record-routing information
+ * \param contact caller or callee contact
+ * \param cseq CSEQ of caller or callee
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \return 0 on success, -1 on failure
+ */
 int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		str *cseq, unsigned int leg);
 
+
+/*!
+ * \brief Update or set the CSEQ for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param cseq CSEQ of caller or callee
+ * \return 0 on success, -1 on failure
+ */
 int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq);
 
+
+/*!
+ * \brief Lookup a dialog in the global list
+ * \param h_entry number of the hash table entry
+ * \param h_id id of the hash table entry
+ * \return dialog on success, NULL on failure
+ */
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
+
+/*!
+ * \brief Get dialog that correspond to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:                 
+ * "The combination of the To tag, From tag, and Call-ID completely  
+ * defines a peer-to-peer SIP relationship between [two UAs] and is 
+ * referred to as a dialog."
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure
+ */
 struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 void link_dlg(struct dlg_cell *dlg, int n);
@@ -190,9 +261,33 @@ void ref_dlg(struct dlg_cell *dlg, unsigned int cnt);
 void next_state_dlg(struct dlg_cell *dlg, int event,
 		int *old_state, int *new_state, int *unref);
 
+
+/*!
+ * \brief Output all dialogs via the MI interface
+ * \param cmd_tree MI root node
+ * \param param unused
+ * \return a mi node with the dialog information, or NULL on failure
+ */
 struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
+
+
+/*!
+ * \brief Print a dialog context via the MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return mi node with the dialog information, or NULL on failure
+ */
 struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd, void *param );
 
+
+/*!
+ * \brief Check if a dialog structure matches to a SIP message dialog
+ * \param dlg dialog structure
+ * \param ftag SIP message from tag
+ * \param ttag SIP message to tag
+ * \param dir direction of the message, if DLG_DIR_NONE it will set
+ * \return 1 if dialog structure and message content matches, 0 otherwise
+ */
 static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 							   str *ftag, str *ttag, unsigned int *dir) {
 	if (dlg->tag[DLG_CALLEE_LEG].len == 0) {
@@ -275,6 +370,14 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 	return 0;
 }
 
+
+/*!
+ * \brief Check if a downstream dialog structure matches a SIP message dialog
+ * \param dlg dialog structure
+ * \param callid SIP message callid
+ * \param ftag SIP message from tag
+ * \return 1 if dialog structure matches the SIP dialog, 0 otherwise
+ */
 static inline int match_downstream_dialog(struct dlg_cell *dlg, str *callid, str *ftag)
 {
 	if (dlg->callid.len!=callid->len ||
@@ -286,6 +389,13 @@ static inline int match_downstream_dialog(struct dlg_cell *dlg, str *callid, str
 }
 
 
+/*!
+ * \brief Output a dialog via the MI interface
+ * \param rpl MI node that should be filled
+ * \param dlg printed dialog
+ * \param with_context if 1 then the dialog context will be also printed
+ * \return 0 on success, -1 on failure
+ */
 int mi_print_dlg(struct mi_node *rpl, struct dlg_cell *dlg, int with_context);
 
 #endif

@@ -26,6 +26,7 @@
 #include "../../pvar.h"
 #include "dlg_hash.h"
 
+/*! dialog context */
 typedef struct _dlg_ctx {
 	int on;
 	unsigned int flags;

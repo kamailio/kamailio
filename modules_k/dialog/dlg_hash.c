@@ -57,8 +57,15 @@
 #define MIN_LDG_LOCKS  2
 
 
+/*! global dialog table */
 struct dlg_table *d_table = 0;
 
+
+/*!
+ * \brief Initialize the global dialog table
+ * \param size size of the table
+ * \return 0 on success, -1 on failure
+ */
 int init_dlg_table(unsigned int size)
 {
 	unsigned int n;
@@ -109,7 +116,10 @@ error0:
 }
 
 
-
+/*!
+ * \brief Destroy a dialog, run callbacks and free memory
+ * \param dlg destroyed dialog
+ */
 inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	int ret = 0;
@@ -157,7 +167,9 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 }
 
 
-
+/*!
+ * \brief Destroy the global dialog table
+ */
 void destroy_dlg_table(void)
 {
 	struct dlg_cell *dlg, *l_dlg;
@@ -188,9 +200,16 @@ void destroy_dlg_table(void)
 }
 
 
-
+/*!
+ * \brief Create a new dialog structure for a SIP dialog
+ * \param callid dialog callid
+ * \param from_uri dialog from uri
+ * \param to_uri dialog to uri
+ * \param from_tag dialog from tag
+ * \return created dialog structure on success, NULL otherwise
+ */
 struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
-																str *from_tag)
+		str *from_tag)
 {
 	struct dlg_cell *dlg;
 	int len;
@@ -237,7 +256,16 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 }
 
 
-
+/*!
+ * \brief Set the leg information for an existing dialog
+ * \param dlg dialog
+ * \param tag from tag or to tag
+ * \param rr record-routing information
+ * \param contact caller or callee contact
+ * \param cseq CSEQ of caller or callee
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \return 0 on success, -1 on failure
+ */
 int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 					str *cseq, unsigned int leg)
 {
@@ -277,7 +305,13 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 }
 
 
-
+/*!
+ * \brief Update or set the CSEQ for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param cseq CSEQ of caller or callee
+ * \return 0 on success, -1 on failure
+ */
 int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
 {
 	if ( dlg->cseq[leg].s ) {
@@ -304,7 +338,12 @@ error:
 }
 
 
-
+/*!
+ * \brief Lookup a dialog in the global list
+ * \param h_entry number of the hash table entry
+ * \param h_id id of the hash table entry
+ * \return dialog on success, NULL on failure
+ */
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 {
 	struct dlg_cell *dlg;
@@ -338,7 +377,15 @@ not_found:
 }
 
 
-
+/*!
+ * \brief Helper function to get a dialog corresponding to a SIP message
+ * \see get_dlg
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure
+ */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 						str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
@@ -374,11 +421,20 @@ not_found:
 
 
 
-/* Get dialog that correspond to CallId, From Tag and To Tag         */
-/* See RFC 3261, paragraph 4. Overview of Operation:                 */
-/* "The combination of the To tag, From tag, and Call-ID completely  */
-/* defines a peer-to-peer SIP relationship between [two UAs] and is  */
-/* referred to as a dialog."*/
+/*!
+ * \brief Get dialog that correspond to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:                 
+ * "The combination of the To tag, From tag, and Call-ID completely  
+ * defines a peer-to-peer SIP relationship between [two UAs] and is 
+ * referred to as a dialog."
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure
+ */
 struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
 	struct dlg_cell *dlg;
@@ -423,7 +479,7 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 
 inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
-													struct dlg_cell *dlg)
+		struct dlg_cell *dlg)
 {
 	if (dlg->next)
 		dlg->next->prev = dlg->prev;
@@ -464,7 +520,7 @@ void unref_dlg(struct dlg_cell *dlg, unsigned int cnt)
 }
 
 
-/**
+/*!
  * Small logging helper functions for next_state_dlg.
  * \param event logged event
  * \param dlg dialog data
@@ -620,6 +676,14 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 
 
 /**************************** MI functions ******************************/
+/*!
+ * \brief Helper method that output a dialog via the MI interface
+ * \see mi_print_dlg
+ * \param rpl MI node that should be filled
+ * \param dlg printed dialog
+ * \param with_context if 1 then the dialog context will be also printed
+ * \return 0 on success, -1 on failure
+ */
 static inline int internal_mi_print_dlg(struct mi_node *rpl,
 									struct dlg_cell *dlg, int with_context)
 {
@@ -747,12 +811,25 @@ error:
 }
 
 
+/*!
+ * \brief Output a dialog via the MI interface
+ * \param rpl MI node that should be filled
+ * \param dlg printed dialog
+ * \param with_context if 1 then the dialog context will be also printed
+ * \return 0 on success, -1 on failure
+ */
 int mi_print_dlg(struct mi_node *rpl, struct dlg_cell *dlg, int with_context)
 {
 	return internal_mi_print_dlg( rpl, dlg, with_context);
 }
 
-
+/*!
+ * \brief Helper function that output all dialogs via the MI interface
+ * \see mi_print_dlgs
+ * \param rpl MI node that should be filled
+ * \param with_context if 1 then the dialog context will be also printed
+ * \return 0 on success, -1 on failure
+ */
 static int internal_mi_print_dlgs(struct mi_node *rpl, int with_context)
 {
 	struct dlg_cell *dlg;
@@ -832,6 +909,12 @@ static inline struct mi_root* process_mi_params(struct mi_root *cmd_tree,
 }
 
 
+/*!
+ * \brief Output all dialogs via the MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return mi node with the dialog information, or NULL on failure
+ */
 struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 {
 	struct mi_root* rpl_tree= NULL;
@@ -863,6 +946,12 @@ error:
 }
 
 
+/*!
+ * \brief Print a dialog context via the MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return mi node with the dialog information, or NULL on failure
+ */
 struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd_tree, void *param )
 {
 	struct mi_root* rpl_tree= NULL;
@@ -892,6 +981,3 @@ error:
 	free_mi_tree(rpl_tree);
 	return NULL;
 }
-
-
-
