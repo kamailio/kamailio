@@ -72,7 +72,7 @@ UA2 ---- NAT2 ----| 5090    |
 	    agents.
 	</para>
 	<para>
-	    In addition to the publi IP and port of the NAT device, registrar
+	    In addition to the public IP and port of the NAT device, registrar
 	    would also remember the destination IP and port of the REGISTER
 	    request (the IP and port used in SER). If registrar did not store
 	    this information, it would not know what outbound socket it should
@@ -111,7 +111,7 @@ UA2 ---- NAT2 X <----+       |  5090  |
 ]]>
 	</programlisting>
 	<para>
-	    That is the reason why registrar and usrloc also need to remmember
+	    That is the reason why registrar and usrloc also need to remember
 	    the IP and port used on the server side, that information would be
 	    used later when forwarding INVITEs:
 	</para>

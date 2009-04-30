@@ -70,12 +70,12 @@ UA2 ---- NAT2 ----| 5090    |
    Registrar and usrloc would store the public IP of NAT with each
    registered contact, thus it would know how to reach both user agents.
 
-   In addition to the publi IP and port of the NAT device, registrar would
-   also remember the destination IP and port of the REGISTER request (the
-   IP and port used in SER). If registrar did not store this information,
-   it would not know what outbound socket it should use when sending SIP
-   messages to the registered contact. It would use the default port
-   number (often 5060) for such outgoing requests.
+   In addition to the public IP and port of the NAT device, registrar
+   would also remember the destination IP and port of the REGISTER request
+   (the IP and port used in SER). If registrar did not store this
+   information, it would not know what outbound socket it should use when
+   sending SIP messages to the registered contact. It would use the
+   default port number (often 5060) for such outgoing requests.
 
    When an INVITE for UA1 comes, everything would work because UA1 used
    port 5060 when registering and that is also the destination port in the
@@ -98,7 +98,7 @@ UA1 ---- NAT1        +------ |  5060  | <---------------
 UA2 ---- NAT2 X <----+       |  5090  |
                              +--------+
 
-   That is the reason why registrar and usrloc also need to remmember the
+   That is the reason why registrar and usrloc also need to remember the
    IP and port used on the server side, that information would be used
    later when forwarding INVITEs:
                                  SER
