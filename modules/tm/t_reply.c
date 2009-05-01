@@ -747,6 +747,19 @@ int fake_req(struct sip_msg *faked_req,
 	faked_req->parsed_uri_ok = 0;
 	
 	faked_req->msg_flags|=extra_flags; /* set the extra tm flags */
+
+	/* dst_uri can change ALSO!!! -- make a private copy */
+	if (shmem_msg->dst_uri.s!=0 && shmem_msg->dst_uri.len!=0) {
+		faked_req->dst_uri.s=pkg_malloc(shmem_msg->dst_uri.len+1);
+		if (!faked_req->dst_uri.s) {
+			LOG(L_ERR, "ERROR: fake_req: no uri/pkg mem\n");
+			goto error01;
+		}
+		faked_req->dst_uri.len=shmem_msg->dst_uri.len;
+		memcpy( faked_req->dst_uri.s, shmem_msg->dst_uri.s,
+			faked_req->dst_uri.len);
+		faked_req->dst_uri.s[faked_req->dst_uri.len]=0;
+	}
 	/* new_uri can change -- make a private copy */
 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
 		faked_req->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
@@ -759,23 +772,16 @@ int fake_req(struct sip_msg *faked_req,
 			faked_req->new_uri.len);
 		faked_req->new_uri.s[faked_req->new_uri.len]=0;
 	}
-	/* dst_uri can change ALSO!!! -- make a private copy */
-	if (shmem_msg->dst_uri.s!=0 && shmem_msg->dst_uri.len!=0) {
-		faked_req->dst_uri.s=pkg_malloc(shmem_msg->dst_uri.len+1);
-		if (!faked_req->dst_uri.s) {
-			LOG(L_ERR, "ERROR: fake_req: no uri/pkg mem\n");
-			goto error00;
-		}
-		faked_req->dst_uri.len=shmem_msg->dst_uri.len;
-		memcpy( faked_req->dst_uri.s, shmem_msg->dst_uri.s,
-			faked_req->dst_uri.len);
-		faked_req->dst_uri.s[faked_req->dst_uri.len]=0;
-	}
 	if(uac) setbflagsval(0, uac->branch_flags);
 	else setbflagsval(0, 0);
 
 	return 1;
 error00:
+	if (faked_req->dst_uri.s) {
+		pkg_free(faked_req->dst_uri.s);
+		faked_req->dst_uri.s = 0;
+	}
+error01:
 	return 0;
 }
 
