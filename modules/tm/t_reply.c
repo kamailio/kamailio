@@ -1833,6 +1833,7 @@ int reply_received( struct sip_msg  *p_msg )
 	if ( (t==0)||(t==T_UNDEFINED))
 		goto trans_not_found;
 
+	tm_ctx_set_branch_index(branch);
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;
 
@@ -2070,6 +2071,7 @@ int reply_received( struct sip_msg  *p_msg )
 	} /* provisional replies */
 
 done:
+	tm_ctx_set_branch_index(0);
 	/* we are done with the transaction, so unref it - the reference
 	 * was incremented by t_check() function -bogdan*/
 	t_unref(p_msg);

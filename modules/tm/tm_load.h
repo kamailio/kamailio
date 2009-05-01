@@ -140,6 +140,11 @@ struct tm_binds {
 	generate_fromtag_f generate_fromtag;
 	tlookup_request_f t_lookup_request;
 	tcheck_f t_check;
+#ifdef WITH_TM_CTX
+	tm_ctx_get_f tm_ctx_get;
+#else
+	void* reserved5;
+#endif
 };
 
 extern int tm_init;

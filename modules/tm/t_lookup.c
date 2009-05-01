@@ -1869,3 +1869,24 @@ int t_reset_max_lifetime()
 	return 1;
 }
 
+#ifdef WITH_TM_CTX
+
+tm_ctx_t _tm_ctx;
+
+tm_ctx_t* tm_ctx_get(void)
+{
+	return &_tm_ctx;
+}
+
+void tm_ctx_init(void)
+{
+	memset(&_tm_ctx, 0, sizeof(tm_ctx_t));
+}
+
+void tm_ctx_set_branch_index(int v)
+{
+	_tm_ctx.branch_index = v;
+}
+
+#endif
+

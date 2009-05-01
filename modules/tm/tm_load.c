@@ -233,5 +233,9 @@ int load_tm( struct tm_binds *tmb)
 	tmb->generate_fromtag = generate_fromtag;
 	tmb->t_lookup_request = t_lookup_request;
 	tmb->t_check = t_check;
+
+#ifdef WITH_TM_CTX
+	tmb->tm_ctx_get = tm_ctx_get;
+#endif
 	return 1;
 }

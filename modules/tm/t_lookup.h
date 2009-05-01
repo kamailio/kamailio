@@ -123,4 +123,28 @@ typedef int (*t_get_canceled_ident_f)(struct sip_msg *msg,
 		unsigned int *hash_index, unsigned int *label);
 #endif /* WITH_AS_SUPPORT */
 
+/**
+ * required by TMX (K/O extensions)
+ */
+#define WITH_TM_CTX
+#ifdef WITH_TM_CTX
+
+typedef struct _tm_ctx {
+	int branch_index;
+} tm_ctx_t;
+
+typedef tm_ctx_t* (*tm_ctx_get_f)(void);
+
+tm_ctx_t* tm_ctx_get(void);
+void tm_ctx_init(void);
+void tm_ctx_set_branch_index(int v);
+
+#else
+
+#define tm_ctx_get()
+#define tm_ctx_init()
+#define tm_ctx_set_branch_index(v)
+
+#endif /* WITH_TM_CTX */
+
 #endif

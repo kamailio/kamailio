@@ -190,10 +190,11 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	if (unlikely(branch_route)) {
 		     /* run branch_route actions if provided */
 		set_route_type(BRANCH_ROUTE);
-		
+		tm_ctx_set_branch_index(branch+1);
 		if (run_top_route(branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_top_route\n");
 		}
+		tm_ctx_set_branch_index(0);
 	}
 
 	/* run the specific callbacks for this transaction */
