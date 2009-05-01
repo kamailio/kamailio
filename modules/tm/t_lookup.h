@@ -141,7 +141,7 @@ void tm_ctx_set_branch_index(int v);
 
 #else
 
-#define tm_ctx_get()
+#define tm_ctx_get() NULL
 #define tm_ctx_init()
 #define tm_ctx_set_branch_index(v)
 
