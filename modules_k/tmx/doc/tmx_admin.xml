@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module collects extensions from Kamailio TM module.
+	</para>
+	<para>
+	Kamailio TM (Transaction Management) module documentation is available at:
+	<ulink url="http://www.kamailio.org/docs/modules/1.5.x/tm.html">
+	http://www.kamailio.org/docs/modules/1.5.x/tm.html</ulink>
+	</para>
+	</section>
+	
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis> -  transaction management.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$T_branch_idx</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_reply_code</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_req(pv)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_rpl(pv)</emphasis>
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+	</section>
+
+
+	<section>
+	<title>Exported MI Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_uac_dlg</function>
+		</title>
+		<para>
+		Generates and sends a local SIP request.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>method</emphasis> - request method
+			</para></listitem>
+			<listitem><para>
+				<emphasis>RURI</emphasis> - request SIP URI
+			</para></listitem>
+			<listitem><para>
+				<emphasis>NEXT HOP</emphasis> - next hop SIP URI (OBP);
+				use <quote>.</quote> if no value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>socket</emphasis> - local socket to be used for
+				sending the request; use <quote>.</quote> if no value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>headers</emphasis> - set of additional headers to
+				be added to the request; at least 
+				<quote>From</quote> and <quote>To</quote> headers must be
+				specify)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				request body (if present, requires the 
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_uac_cancel</function>
+		</title>
+		<para>
+		Generates and sends a CANCEL for an existing local SIP request.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - callid of the INVITE request
+				to be cancelled.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - cseq of the INVITE request to be
+				cancelled.
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_hash</function>
+		</title>
+		<para>
+		Gets information about the load of TM internal hash table.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>none</emphasis>
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_reply</function>
+		</title>
+		<para>
+		Generates and sends a reply for an existing inbound SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>code</emphasis> - reply code
+			</para></listitem>
+			<listitem><para>
+				<emphasis>reason</emphasis> - reason phrase.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>trans_id</emphasis> - transaction identifier
+				(has the hash_entry:label format)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to_tag</emphasis> - To tag to be added to TO header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>new_headers</emphasis> - extra headers to be
+				appended to the reply; use a dot (<quote>.</quote>) char 
+				only if there are no headers;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				reply body (if present, requires the 
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
+
+	</section>
+
+
+	<section>
+		<title>Exported statistics</title>
+		<para>
+		Exported statistics are listed in the next sections. All statistics
+		except <quote>inuse_transactions</quote> can be reset.
+		</para>
+		<section>
+		<title>received_replies</title>
+			<para>
+			Total number of total replies received by TM module.
+			</para>
+		</section>
+		<section>
+		<title>relayed_replies</title>
+			<para>
+			Total number of replies received and relayed by TM module.
+			</para>
+		</section>
+		<section>
+		<title>local_replies</title>
+			<para>
+			Total number of replies local generated by TM module.
+			</para>
+		</section>
+		<section>
+		<title>UAS_transactions</title>
+			<para>
+			Total number of transactions created by received requests.
+			</para>
+		</section>
+		<section>
+		<title>UAC_transactions</title>
+			<para>
+			Total number of transactions created by local generated requests.
+			</para>
+		</section>
+		<section>
+		<title>2xx_transactions</title>
+			<para>
+			Total number of transactions completed with 2xx replies.
+			</para>
+		</section>
+		<section>
+		<title>3xx_transactions</title>
+			<para>
+			Total number of transactions completed with 3xx replies.
+			</para>
+		</section>
+		<section>
+		<title>4xx_transactions</title>
+			<para>
+			Total number of transactions completed with 4xx replies.
+			</para>
+		</section>
+		<section>
+		<title>5xx_transactions</title>
+			<para>
+			Total number of transactions completed with 5xx replies.
+			</para>
+		</section>
+		<section>
+		<title>6xx_transactions</title>
+			<para>
+			Total number of transactions completed with 6xx replies.
+			</para>
+		</section>
+		<section>
+		<title>inuse_transactions</title>
+			<para>
+			Number of transactions existing in memory at current time.
+			</para>
+		</section>
+	</section>
+</chapter>
+
