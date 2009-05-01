@@ -78,6 +78,7 @@
 
 MODULE_VERSION
 
+usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 
 /*! \brief Module init & destroy function */
 static int  mod_init(void);
