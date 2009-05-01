@@ -88,7 +88,7 @@ typedef int (*ack_local_uac_f)(struct cell *trans, str *hdrs, str *body);
 typedef int (*prepare_request_within_f)(uac_req_t *uac_r,
 		struct retr_buf **dst_req);
 typedef void (*send_prepared_request_f)(struct retr_buf *request_dst);
-
+typedef void (*generate_fromtag_f)(str*, str*);
 
 /*
  * Generate a fromtag based on given Call-ID

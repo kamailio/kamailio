@@ -49,6 +49,8 @@ int init_callid(void);
 int child_init_callid(int rank);
 
 
+typedef void (*generate_callid_f)(str*);
+
 /*
  * Get a unique Call-ID
  */

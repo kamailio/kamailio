@@ -46,6 +46,7 @@
 #include "t_lookup.h"
 #include "t_reply.h"
 #include "dlg.h"
+#include "callid.h"
 #include "t_cancel.h"
 #include "t_suspend.h"
 
@@ -134,6 +135,11 @@ struct tm_binds {
 	t_continue_f	t_continue;
 	tget_reply_totag_f t_get_reply_totag;
 	tget_picked_f t_get_picked_branch;
+	tlookup_callid_f t_lookup_callid;
+	generate_callid_f generate_callid;
+	generate_fromtag_f generate_fromtag;
+	tlookup_request_f t_lookup_request;
+	tcheck_f t_check;
 };
 
 extern int tm_init;

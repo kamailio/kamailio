@@ -55,7 +55,10 @@ void init_t();
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
 struct cell* t_lookupOriginalT( struct sip_msg* p_msg );
 int t_reply_matching( struct sip_msg* , int* );
-int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
+
+typedef int (*tlookup_request_f)(struct sip_msg*, int, int*);
+
+int t_lookup_request( struct sip_msg* p_msg, int leave_new_locked,
 						int* canceled);
 int t_newtran( struct sip_msg* p_msg );
 
@@ -68,6 +71,7 @@ int add_branch_label( struct cell *trans,
 int t_unref( struct sip_msg *p_msg);
 typedef int (*tunref_f)( struct sip_msg *p_msg);
 
+typedef int (*tcheck_f)(struct sip_msg*, int*);
 
 /* old t_check version (no e2eack support) */
 int t_check(struct sip_msg* , int *branch );
@@ -91,6 +95,7 @@ typedef int (*tnewtran_f)(struct sip_msg*);
 typedef int (*tget_ti_f)(struct sip_msg*, unsigned int*, unsigned int*);
 typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
 typedef int (*trelease_f)(struct sip_msg*);
+typedef int (*tlookup_callid_f)(struct cell **, str, str);
 
 int t_is_local(struct sip_msg*);
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);

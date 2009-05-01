@@ -228,5 +228,10 @@ int load_tm( struct tm_binds *tmb)
 
 	tmb->t_get_reply_totag = t_get_reply_totag;
 	tmb->t_get_picked_branch = t_get_picked_branch;
+	tmb->t_lookup_callid = t_lookup_callid;
+	tmb->generate_callid = generate_callid;
+	tmb->generate_fromtag = generate_fromtag;
+	tmb->t_lookup_request = t_lookup_request;
+	tmb->t_check = t_check;
 	return 1;
 }
