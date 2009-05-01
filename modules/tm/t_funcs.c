@@ -447,4 +447,7 @@ int fr_inv_avp2timer(unsigned int* timer)
 		return 1;
 }
 
-
+void unref_cell(struct cell *t)
+{
+	UNREF(t);
+}

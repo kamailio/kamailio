@@ -150,6 +150,8 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
 
 
+typedef void (*unref_cell_f)(struct cell *t);
+void unref_cell(struct cell *t);
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
