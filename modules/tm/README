@@ -838,7 +838,7 @@ t_reply("404", "Not found");
 
    Checks if a transaction exists. Returns a positive value if so,
    negative otherwise. Most likely you will not want to use it, as a
-   typical application of a looku-up is to introduce a new transaction if
+   typical application of a look-up is to introduce a new transaction if
    none was found. However this is safely (atomically) done using
    t_newtran.
 
