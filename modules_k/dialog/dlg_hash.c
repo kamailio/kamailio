@@ -490,27 +490,45 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 
 /*!
- * \brief Unlink a dialog from the list without locking
- * \see unref_dlg_unsafe
- * \param d_entry unlinked entry
- * \param dlg unlinked dialog
+ * \brief Reference a dialog without locking
+ * \param _dlg dialog
+ * \param _cnt increment for the reference counter
  */
-inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
-		struct dlg_cell *dlg)
-{
-	if (dlg->next)
-		dlg->next->prev = dlg->prev;
-	else
-		d_entry->last = dlg->prev;
-	if (dlg->prev)
-		dlg->prev->next = dlg->next;
-	else
-		d_entry->first = dlg->next;
+#define ref_dlg_unsafe(_dlg,_cnt)     \
+	do { \
+		(_dlg)->ref += (_cnt); \
+		LM_DBG("ref dlg %p with %d -> %d\n", \
+			(_dlg),(_cnt),(_dlg)->ref); \
+	}while(0)
 
-	dlg->next = dlg->prev = 0;
 
-	return;
-}
+/*!
+ * \brief Unreference a dialog without locking
+ * \param _dlg dialog
+ * \param _cnt decrement for the reference counter
+ */
+#define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
+	do { \
+		(_dlg)->ref -= (_cnt); \
+		LM_DBG("unref dlg %p with %d -> %d\n",\
+			(_dlg),(_cnt),(_dlg)->ref);\
+		if ((_dlg)->ref<0) {\
+			LM_CRIT("bogus ref %d with cnt %d for dlg %p [%u:%u] "\
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",\
+				(_dlg)->ref, _cnt, _dlg,\
+				(_dlg)->h_entry, (_dlg)->h_id,\
+				(_dlg)->callid.len, (_dlg)->callid.s,\
+				(_dlg)->tag[DLG_CALLER_LEG].len,\
+				(_dlg)->tag[DLG_CALLER_LEG].s,\
+				(_dlg)->tag[DLG_CALLEE_LEG].len,\
+				(_dlg)->tag[DLG_CALLEE_LEG].s); \
+		}\
+		if ((_dlg)->ref<=0) { \
+			unlink_unsafe_dlg( _d_entry, _dlg);\
+			LM_DBG("ref <=0 for dialog %p\n",_dlg);\
+			destroy_dlg(_dlg);\
+		}\
+	}while(0)
 
 
 /*!
