@@ -44,6 +44,9 @@ struct tm_binds _tmx_tmb;
 static int mod_init(void);
 void destroy(void);
 
+static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
+static int fixup_cancel_branches(void** param, int param_no);
+
 /* statistic variables */
 stat_var *tm_rcv_rpls;
 stat_var *tm_rld_rpls;
@@ -101,6 +104,8 @@ static mi_export_t mi_cmds [] = {
 
 
 static cmd_export_t cmds[]={
+	{"t_cancel_branches", (cmd_function)t_cancel_branches,  1,
+		fixup_cancel_branches, 0, ONREPLY_ROUTE },
 	{0,0,0,0,0,0}
 };
 
@@ -163,4 +168,70 @@ void destroy(void)
 	return;
 }
 
+static int fixup_cancel_branches(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"others")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"this")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
+{
+	branch_bm_t cb = 0;
+	struct cell *t = 0;
+	tm_ctx_t *tcx = 0;
+	int n=0;
+	int idx = 0;
+	t=_tmx_tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED || !is_invite(t))
+		return -1;
+	tcx = _tmx_tmb.tm_ctx_get();
+	if(tcx != NULL)
+		idx = tcx->branch_index;
+	n = (int)k;
+	switch(n) {
+		case 1:
+			LOCK_REPLIES(t);
+			_tmx_tmb.which_cancel(t, &cb);
+			if(t->uac[idx].local_cancel.buffer==BUSY_BUFFER)
+				t->uac[idx].local_cancel.buffer=NULL;
+			UNLOCK_REPLIES(t);
+			cb &= ~(1<<idx);
+		case 2:
+			if(msg->first_line.u.reply.statuscode>=200)
+				break;
+			cb = 1<<idx;
+		break;
+		default:
+			LOCK_REPLIES(t);
+			_tmx_tmb.which_cancel(t, &cb);
+			UNLOCK_REPLIES(t);
+			if (msg->first_line.u.reply.statuscode>=200)
+				cb &= ~(1<<idx);
+	}
+	LM_DBG("canceling %d/%d\n", n, (int)cb);
+	if(cb==0)
+		return -1;
+	_tmx_tmb.cancel_uacs(t, cb, 0);
+	return 1;
+}
 
