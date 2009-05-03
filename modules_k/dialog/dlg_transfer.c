@@ -34,6 +34,7 @@
 #include "../../modules/tm/tm_load.h"
 
 #include "dlg_req_within.h"
+#include "dlg_handlers.h"
 #include "dlg_transfer.h"
 
 #define DLG_HOLD_SDP "v=0\r\no=kamailio-bridge 0 0 IN IP4 0.0.0.0\r\ns=kamailio\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"

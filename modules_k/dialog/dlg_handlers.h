@@ -71,6 +71,21 @@ void destroy_dlg_handlers(void);
 
 
 /*!
+ * \brief Parse SIP message and populate leg informations
+ *
+ * Parse SIP message and populate leg informations. 
+ * \param dlg the dialog to add cseq, contact & record_route
+ * \param msg sip message
+ * \param flag  0-for a request(INVITE), 1- for a reply(200 ok)
+ * \return 0 on success, -1 on failure
+ * \note for a request: get record route in normal order, for a reply get
+ * in reverse order, skipping the ones from the request and the proxies' own
+ */
+int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
+	struct cell* t, unsigned int leg, str *tag);
+
+
+/*!
  * \brief Function that is registered as TM callback and called on requests
  * \param t transaction, used to created the dialog
  * \param type type of the entered callback

@@ -293,10 +293,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct sip_msg *rpl;
 	struct dlg_cell *dlg;
-	int new_state;
-	int old_state;
-	int unref;
-	int event;
+	int new_state, old_state, unref, event;
 	str tag;
 
 	dlg = (struct dlg_cell *)(*param->param);
@@ -403,12 +400,16 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 
 /*!
- * \brief Run dialog callbacks on forwarded requests in upstream direction
+ * \brief Helper function that run dialog callbacks on forwarded requests
+ * \see dlg_seq_up_onreply
+ * \see dlg_seq_down_onreply
  * \param t transaction, unused
  * \param type type of the callback, should be TMCB_RESPONSE_FWDED
  * \param param saved dialog structure inside the callback
+ * \param direction direction of the request
  */
-static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *param)
+static void dlg_seq_onreply_helper(struct cell* t, int type,
+		struct tmcb_params *param, const int direction)
 {
 	struct dlg_cell *dlg;
 
@@ -418,7 +419,7 @@ static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *par
 
 	if (type==TMCB_RESPONSE_FWDED) {
 		run_dlg_callbacks(DLGCB_RESPONSE_WITHIN, dlg, param->rpl,
-			DLG_DIR_UPSTREAM, 0);
+			direction, 0);
 		return;
 	}
 
@@ -427,26 +428,28 @@ static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *par
 
 
 /*!
+ * \brief Run dialog callbacks on forwarded requests in upstream direction
+ * \see dlg_seq_onreply_helper
+ * \param t transaction, unused
+ * \param type type of the callback, should be TMCB_RESPONSE_FWDED
+ * \param param saved dialog structure inside the callback
+ */
+static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *param)
+{
+	return dlg_seq_onreply_helper(t, type, param, DLG_DIR_UPSTREAM);
+}
+
+
+/*!
  * \brief Run dialog callbacks on forwarded requests in downstream direction
+ * \see dlg_seq_onreply_helper
  * \param t transaction, unused
  * \param type type of the callback, should be TMCB_RESPONSE_FWDED
  * \param param saved dialog structure inside the callback
  */
 static void dlg_seq_down_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
-	struct dlg_cell *dlg;
-
-	dlg = (struct dlg_cell *)(*param->param);
-	if (shutdown_done || dlg==0)
-		return;
-
-	if (type==TMCB_RESPONSE_FWDED) {
-		run_dlg_callbacks(DLGCB_RESPONSE_WITHIN, dlg, param->rpl,
-			DLG_DIR_DOWNSTREAM, 0);
-		return;
-	}
-
-	return;
+	return dlg_seq_onreply_helper(t, type, param, DLG_DIR_DOWNSTREAM);
 }
 
 
@@ -492,7 +495,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
  * \see dlg_onreq
  * \param dialog unreferenced dialog
  */
-void unref_new_dialog(void *dialog)
+static void unref_new_dialog(void *dialog)
 {
 	struct tmcb_params p;
 
@@ -755,17 +758,8 @@ static void unreference_dialog(void *dialog)
 void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 {
 	struct dlg_cell *dlg;
-	str val;
-	str callid;
-	str ftag;
-	str ttag;
-	int h_entry;
-	int h_id;
-	int new_state;
-	int old_state;
-	int unref;
-	int event;
-	int timeout;
+	str val, callid, ftag, ttag;
+	int h_entry, h_id, new_state, old_state, unref, event, timeout;
 	unsigned int dir;
 	int ret = 0;
 
@@ -956,11 +950,6 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 }
 
 
-
-#define get_dlg_tl_payload(_tl_)  ((struct dlg_cell*)((char *)(_tl_)- \
-		(unsigned long)(&((struct dlg_cell*)0)->tl)))
-
-
 /*!
  * \brief Timer function that removes expired dialogs, run timeout route
  * \param tl dialog timer list
@@ -968,12 +957,12 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 void dlg_ontimeout( struct dlg_tl *tl)
 {
 	struct dlg_cell *dlg;
-	int new_state;
-	int old_state;
-	int unref;
+	int new_state, old_state, unref;
 	struct sip_msg *fmsg;
 
-	dlg = get_dlg_tl_payload(tl);
+	/* get the dialog tl payload */
+	dlg = ((struct dlg_cell*)((char *)(tl) -
+		(unsigned long)(&((struct dlg_cell*)0)->tl)));
 
 	if(dlg->toroute>0 && dlg->toroute<RT_NO)
 	{

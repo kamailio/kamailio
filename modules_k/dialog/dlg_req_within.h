@@ -49,9 +49,6 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param );
 
 dlg_t* build_dlg_t(struct dlg_cell * cell, int dir);
 int free_tm_dlg(dlg_t *td);
-int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
-	struct cell* t, unsigned int leg, str *tag);
-
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side);
 int dlg_bye_all(struct dlg_cell *dlg, str *hdrs);
 
