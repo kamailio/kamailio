@@ -18,57 +18,125 @@ Daniel-Constantin Mierla
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported pseudo-variables
-        1.4. Exported MI Functions
+        3. Exported Functions
 
-              1.4.1. t_uac_dlg
-              1.4.2. t_uac_cancel
-              1.4.3. t_hash
-              1.4.4. t_reply
+              3.1. t_cancel_branches(which)
 
-        1.5. Exported statistics
+        4. Exported pseudo-variables
+        5. Exported MI Functions
 
-              1.5.1. received_replies
-              1.5.2. relayed_replies
-              1.5.3. local_replies
-              1.5.4. UAS_transactions
-              1.5.5. UAC_transactions
-              1.5.6. 2xx_transactions
-              1.5.7. 3xx_transactions
-              1.5.8. 4xx_transactions
-              1.5.9. 5xx_transactions
-              1.5.10. 6xx_transactions
-              1.5.11. inuse_transactions
+              5.1. t_uac_dlg
+              5.2. t_uac_cancel
+              5.3. t_hash
+              5.4. t_reply
+
+        6. Exported statistics
+
+              6.1. received_replies
+              6.2. relayed_replies
+              6.3. local_replies
+              6.4. UAS_transactions
+              6.5. UAC_transactions
+              6.6. 2xx_transactions
+              6.7. 3xx_transactions
+              6.8. 4xx_transactions
+              6.9. 5xx_transactions
+              6.10. 6xx_transactions
+              6.11. inuse_transactions
+
+   List of Examples
+
+   1.1. t_cancel_branches usage
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Functions
+
+        3.1. t_cancel_branches(which)
+
+   4. Exported pseudo-variables
+   5. Exported MI Functions
+
+        5.1. t_uac_dlg
+        5.2. t_uac_cancel
+        5.3. t_hash
+        5.4. t_reply
+
+   6. Exported statistics
+
+        6.1. received_replies
+        6.2. relayed_replies
+        6.3. local_replies
+        6.4. UAS_transactions
+        6.5. UAC_transactions
+        6.6. 2xx_transactions
+        6.7. 3xx_transactions
+        6.8. 4xx_transactions
+        6.9. 5xx_transactions
+        6.10. 6xx_transactions
+        6.11. inuse_transactions
+
+1. Overview
 
    This module collects extensions from Kamailio TM module.
 
    Kamailio TM (Transaction Management) module documentation is available
    at: http://www.kamailio.org/docs/modules/1.5.x/tm.html
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * tm - transaction management.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-1.3. Exported pseudo-variables
+3. Exported Functions
+
+   3.1. t_cancel_branches(which)
+
+3.1.  t_cancel_branches(which)
+
+   Cancel branches of an active SIP transaction. The function can be
+   called for a SIP reply that will identify the current branch.
+
+   Parameter can be:.
+     * all - cancel all branches.
+     * others - cancel all branches but the current one.
+     * this - cancel current branch.
+
+   This function can be used in ONREPLY_ROUTE.
+
+   Example 1.1. t_cancel_branches usage
+...
+if (t_cancel_branches("all")) {
+        xlog("cancelled all branches\n");
+}
+...
+
+4. Exported pseudo-variables
 
      * $T_branch_idx
      * $T_reply_code
@@ -78,9 +146,14 @@ Chapter 1. Admin Guide
    Exported pseudo-variables are documented at
    http://www.kamailio.org/dokuwiki/.
 
-1.4. Exported MI Functions
+5. Exported MI Functions
 
-1.4.1.  t_uac_dlg
+   5.1. t_uac_dlg
+   5.2. t_uac_cancel
+   5.3. t_hash
+   5.4. t_reply
+
+5.1.  t_uac_dlg
 
    Generates and sends a local SIP request.
 
@@ -95,7 +168,7 @@ Chapter 1. Admin Guide
      * body - (optional, may not be present) request body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
-1.4.2.  t_uac_cancel
+5.2.  t_uac_cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -103,14 +176,14 @@ Chapter 1. Admin Guide
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-1.4.3.  t_hash
+5.3.  t_hash
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-1.4.4.  t_reply
+5.4.  t_reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -124,51 +197,63 @@ Chapter 1. Admin Guide
      * body - (optional, may not be present) reply body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
-1.5. Exported statistics
+6. Exported statistics
+
+   6.1. received_replies
+   6.2. relayed_replies
+   6.3. local_replies
+   6.4. UAS_transactions
+   6.5. UAC_transactions
+   6.6. 2xx_transactions
+   6.7. 3xx_transactions
+   6.8. 4xx_transactions
+   6.9. 5xx_transactions
+   6.10. 6xx_transactions
+   6.11. inuse_transactions
 
    Exported statistics are listed in the next sections. All statistics
    except "inuse_transactions" can be reset.
 
-1.5.1. received_replies
+6.1. received_replies
 
    Total number of total replies received by TM module.
 
-1.5.2. relayed_replies
+6.2. relayed_replies
 
    Total number of replies received and relayed by TM module.
 
-1.5.3. local_replies
+6.3. local_replies
 
    Total number of replies local generated by TM module.
 
-1.5.4. UAS_transactions
+6.4. UAS_transactions
 
    Total number of transactions created by received requests.
 
-1.5.5. UAC_transactions
+6.5. UAC_transactions
 
    Total number of transactions created by local generated requests.
 
-1.5.6. 2xx_transactions
+6.6. 2xx_transactions
 
    Total number of transactions completed with 2xx replies.
 
-1.5.7. 3xx_transactions
+6.7. 3xx_transactions
 
    Total number of transactions completed with 3xx replies.
 
-1.5.8. 4xx_transactions
+6.8. 4xx_transactions
 
    Total number of transactions completed with 4xx replies.
 
-1.5.9. 5xx_transactions
+6.9. 5xx_transactions
 
    Total number of transactions completed with 5xx replies.
 
-1.5.10. 6xx_transactions
+6.10. 6xx_transactions
 
    Total number of transactions completed with 6xx replies.
 
-1.5.11. inuse_transactions
+6.11. inuse_transactions
 
    Number of transactions existing in memory at current time.
