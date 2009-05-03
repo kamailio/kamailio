@@ -333,6 +333,7 @@ static int case_check_default(struct case_stms* stms);
 %token LOGFACILITY
 %token LISTEN
 %token ALIAS
+%token SR_AUTO_ALIASES
 %token DNS
 %token REV_DNS
 %token DNS_TRY_IPV6
@@ -1272,6 +1273,8 @@ assign_stm:
 		free_socket_id_lst($3);
 	}
 	| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
+	| SR_AUTO_ALIASES EQUAL NUMBER { sr_auto_aliases=$3; }
+	| SR_AUTO_ALIASES EQUAL error  { yyerror("boolean value expected"); }
 	| ADVERTISED_ADDRESS EQUAL listen_id {
 		default_global_address.s=$3;
 		default_global_address.len=strlen($3);

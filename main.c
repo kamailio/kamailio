@@ -348,6 +348,8 @@ int mhomed=0;
 /* use dns and/or rdns or to see if we need to add
    a ;received=x.x.x.x to via: */
 int received_dns = 0;
+/* add or not the rev dns names to aliases list */
+int sr_auto_aliases=1;
 char* working_dir = 0;
 char* chroot_dir = 0;
 char* user=0;

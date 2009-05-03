@@ -273,6 +273,7 @@ LOGSTDERROR	log_stderror
 LOGFACILITY	log_facility
 LISTEN		listen
 ALIAS		alias
+SR_AUTO_ALIASES	auto_aliases
 DNS		 dns
 REV_DNS	 rev_dns
 DNS_TRY_IPV6	dns_try_ipv6
@@ -550,6 +551,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
+<INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
+									return SR_AUTO_ALIASES; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
 <INITIAL>{DNS_TRY_IPV6}	{ count(); yylval.strval=yytext;

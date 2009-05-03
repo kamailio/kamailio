@@ -822,7 +822,8 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 	}
 	/* check if we got the official name */
 	if (strcasecmp(he->h_name, name->s)!=0){
-		if (add_alias(name->s, name->len, s->port_no, s->proto)<0){
+		if (sr_auto_aliases && 
+				add_alias(name->s, name->len, s->port_no, s->proto)<0){
 			LOG(L_ERR, "ERROR: fix_hostname: add_alias failed\n");
 		}
 		/* change the official name */
@@ -836,9 +837,9 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 		strncpy(name->s, he->h_name, name->len+1);
 	}
 	/* add the aliases*/
-	for(h=he->h_aliases; h && *h; h++)
+	for(h=he->h_aliases; sr_auto_aliases && h && *h; h++)
 		if (add_alias(*h, strlen(*h), s->port_no, s->proto)<0){
-				LOG(L_ERR, "ERROR: fix_hostname: add_alias failed\n");
+			LOG(L_ERR, "ERROR: fix_hostname: add_alias failed\n");
 		}
 	hostent2ip_addr(address, he, 0); /*convert to ip_addr format*/
 	if (type_flags){
@@ -853,7 +854,7 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 	strncpy(address_str->s, tmp, strlen(tmp)+1);
 	/* set is_ip (1 if name is an ip address, 0 otherwise) */
 	address_str->len=strlen(tmp);
-	if ((address_str->len==name->len) &&
+	if (sr_auto_aliases && (address_str->len==name->len) &&
 		(strncasecmp(address_str->s, name->s, address_str->len)==0)){
 		*flags|=SI_IS_IP;
 		/* do rev. DNS on it (for aliases)*/
