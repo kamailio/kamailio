@@ -27,6 +27,13 @@
  */
 
 
+/*!
+ * \file
+ * \brief Functions related to dialog handling
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
+
 #ifndef _DIALOG_DLG_HANDLERS_H_
 #define _DIALOG_DLG_HANDLERS_H_
 
@@ -43,26 +50,100 @@
 #define SEQ_MATCH_FALLBACK   1
 #define SEQ_MATCH_NO_ID      2
 
+
+/*!
+ * \brief Initialize the dialog handlers
+ * \param rr_param_p added record-route parameter
+ * \param dlg_flag_p dialog flag
+ * \param timeout_avp_p AVP for timeout setting
+ * \param default_timeout_p default timeout
+ * \param seq_match_mode_p matching mode
+ */
 void init_dlg_handlers(char *rr_param, int dlg_flag,
 		pv_spec_t *timeout_avp, int default_timeout,
 		int seq_match_mode);
 
+
+/*!
+ * \brief Shutdown operation of the module
+ */
 void destroy_dlg_handlers(void);
 
+
+/*!
+ * \brief Function that is registered as TM callback and called on requests
+ * \param t transaction, used to created the dialog
+ * \param type type of the entered callback
+ * \param param saved dialog structure in the callback
+ */
 void dlg_onreq(struct cell* t, int type, struct tmcb_params *param);
 
+
+/*!
+ * \brief Function that is registered as RR callback for dialog tracking
+ * 
+ * Function that is registered as RR callback for dialog tracking. It
+ * sets the appropriate events after the SIP method and run the state
+ * machine to update the dialog state. It updates then the saved
+ * dialogs and also the statistics.
+ * \param req SIP request
+ * \param route_params record-route parameter
+ * \param param unused
+ */
 void dlg_onroute(struct sip_msg* req, str *rr_param, void *param);
 
+
+/*!
+ * \brief Timer function that removes expired dialogs, run timeout route
+ * \param tl dialog timer list
+ */
 void dlg_ontimeout( struct dlg_tl *tl);
 
+
+/*!
+ * \brief Create a new dialog from a sip message
+ *
+ * Create a new dialog from a SIP message, register a callback
+ * to keep track of the dialog with help of the tm module.
+ * This function is either called from the request callback, or
+ * from the dlg_manage function in the configuration script.
+ * \see dlg_onreq
+ * \see w_dlg_manage
+ * \param msg SIP message
+ * \param t transaction
+ * \return 0 on success, -1 on failure
+ */ 
 int dlg_new_dialog(struct sip_msg *msg, struct cell *t);
 
-/* item/pseudo-variables functions */
+
+/*!
+ * \brief Function that returns the dialog lifetime as pseudo-variable
+ * \param msg SIP message
+ * \param param pseudo-variable parameter
+ * \param res pseudo-variable result
+ * \return 0 on success, -1 on failure
+ */
 int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+
+/*!
+ * \brief Function that returns the dialog state as pseudo-variable
+ * \param msg SIP message
+ * \param param pseudo-variable parameter
+ * \param res pseudo-variable result
+ * \return 0 on success, -1 on failure
+ */
 int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+
+/*!
+ * \brief Dummy callback just to keep the compiler happy
+ * \param t unused
+ * \param type unused
+ * \param param unused
+ */
 void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param);
+
 #endif

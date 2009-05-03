@@ -44,6 +44,13 @@
  */
 
 
+/*!
+ * \file
+ * \brief Functions related to dialog handling
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
+
 #include <string.h>
 #include <time.h>
 
@@ -71,30 +78,41 @@
 #include "dlg_profile.h"
 #include "dlg_var.h"
 
-static str       rr_param;
-static int       dlg_flag;
-static pv_spec_t *timeout_avp;
-static int       default_timeout;
-static int       seq_match_mode;
-static int       shutdown_done = 0;
+static str       rr_param;		/*!< record-route parameter for matching */
+static int       dlg_flag;		/*!< flag for dialog tracking */
+static pv_spec_t *timeout_avp;		/*!< AVP for timeout setting */
+static int       default_timeout;	/*!< default dialog timeout */
+static int       seq_match_mode;	/*!< dlg_match mode */ 
+static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 
-extern struct rr_binds d_rrb;
+extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
 
 /* statistic variables */
-extern stat_var *early_dlgs;
-extern stat_var *processed_dlgs;
-extern stat_var *expired_dlgs;
-extern stat_var *failed_dlgs;
+extern stat_var *early_dlgs; 		/*!< number of early dialogs */
+extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
+extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
+extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
 
 
-static unsigned int CURR_DLG_LIFETIME = 0;
-static unsigned int CURR_DLG_STATUS = 0;
-static unsigned int CURR_DLG_ID  = 0xffffffff;
+static unsigned int CURR_DLG_LIFETIME = 0;	/*!< current dialog lifetime */
+static unsigned int CURR_DLG_STATUS = 0;	/*!< current dialog state */
+static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
 
+
+/*! size of the dialog record-route parameter */
 #define RR_DLG_PARAM_SIZE  (2*2*sizeof(int)+3+MAX_DLG_RR_PARAM_NAME)
+/*! separator inside the record-route paramter */
 #define DLG_SEPARATOR      '.'
 
 
+/*!
+ * \brief Initialize the dialog handlers
+ * \param rr_param_p added record-route parameter
+ * \param dlg_flag_p dialog flag
+ * \param timeout_avp_p AVP for timeout setting
+ * \param default_timeout_p default timeout
+ * \param seq_match_mode_p matching mode
+ */
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 		pv_spec_t *timeout_avp_p ,int default_timeout_p,
 		int seq_match_mode_p)
@@ -110,14 +128,24 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 }
 
 
+/*!
+ * \brief Shutdown operation of the module
+ */
 void destroy_dlg_handlers(void)
 {
 	shutdown_done = 1;
 }
 
 
+/*!
+ * \brief Add record-route parameter for dialog tracking
+ * \param req SIP request
+ * \param entry dialog hash entry
+ * \param id dialog hash id
+ * \return 0 on success, -1 on failure
+ */
 static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
-													unsigned int id)
+		unsigned int id)
 {
 	static char buf[RR_DLG_PARAM_SIZE];
 	str s;
@@ -152,14 +180,16 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
 }
 
 
-/*usage: dlg: the dialog to add cseq, contact & record_route
- * 		 msg: sip message
- * 		 flag: 0-for a request(INVITE),
- * 		 		1- for a reply(200 ok)
+/*!
+ * \brief Parse SIP message and populate leg informations
  *
- *	for a request: get record route in normal order
- *	for a reply  : get in reverse order, skipping the ones from the request and
- *				   the proxies' own
+ * Parse SIP message and populate leg informations. 
+ * \param dlg the dialog to add cseq, contact & record_route
+ * \param msg sip message
+ * \param flag  0-for a request(INVITE), 1- for a reply(200 ok)
+ * \return 0 on success, -1 on failure
+ * \note for a request: get record route in normal order, for a reply get
+ * in reverse order, skipping the ones from the request and the proxies' own
  */
 int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	struct cell* t, unsigned int leg, str *tag)
@@ -247,6 +277,18 @@ error0:
 }
 
 
+/*!
+ * \brief Function that is registered as TM callback and called on replies
+ *
+ * Function that is registered as TM callback and called on replies. It
+ * parses the reply and set the appropriate event. This is then used to
+ * update the dialog state, run eventual dialog callbacks and save or
+ * update the necessary informations about the dialog.
+ * \see next_state_dlg
+ * \param t transaction, unused
+ * \param type type of the entered callback
+ * \param param saved dialog structure in the callback
+ */
 static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct sip_msg *rpl;
@@ -360,8 +402,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 }
 
 
-static void dlg_seq_up_onreply(struct cell* t, int type,
-													struct tmcb_params *param)
+/*!
+ * \brief Run dialog callbacks on forwarded requests in upstream direction
+ * \param t transaction, unused
+ * \param type type of the callback, should be TMCB_RESPONSE_FWDED
+ * \param param saved dialog structure inside the callback
+ */
+static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct dlg_cell *dlg;
 
@@ -379,9 +426,13 @@ static void dlg_seq_up_onreply(struct cell* t, int type,
 }
 
 
-
-static void dlg_seq_down_onreply(struct cell* t, int type,
-													struct tmcb_params *param)
+/*!
+ * \brief Run dialog callbacks on forwarded requests in downstream direction
+ * \param t transaction, unused
+ * \param type type of the callback, should be TMCB_RESPONSE_FWDED
+ * \param param saved dialog structure inside the callback
+ */
+static void dlg_seq_down_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct dlg_cell *dlg;
 
@@ -399,6 +450,11 @@ static void dlg_seq_down_onreply(struct cell* t, int type,
 }
 
 
+/*!
+ * \brief Return the timeout for a dialog
+ * \param req SIP message
+ * \return value from timeout AVP if present or default timeout
+ */
 inline static int get_dlg_timeout(struct sip_msg *req)
 {
 	pv_value_t pv_val;
@@ -412,7 +468,13 @@ inline static int get_dlg_timeout(struct sip_msg *req)
 }
 
 
-
+/*!
+ * \brief Function that is registered as TM callback and called on requests
+ * \see dlg_new_dialog
+ * \param t transaction, used to created the dialog
+ * \param type type of the entered callback
+ * \param param saved dialog structure in the callback
+ */
 void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct sip_msg *msg;
@@ -424,6 +486,12 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	dlg_new_dialog(msg, t);
 }
 
+
+/*!
+ * \brief Unreference a new dialog, helper function for dlg_onreq
+ * \see dlg_onreq
+ * \param dialog unreferenced dialog
+ */
 void unref_new_dialog(void *dialog)
 {
 	struct tmcb_params p;
@@ -433,11 +501,31 @@ void unref_new_dialog(void *dialog)
 }
 
 
+/*!
+ * \brief Dummy callback just to keep the compiler happy
+ * \param t unused
+ * \param type unused
+ * \param param unused
+ */
 void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param)
 {
 	return;
 }
 
+
+/*!
+ * \brief Create a new dialog from a sip message
+ *
+ * Create a new dialog from a SIP message, register a callback
+ * to keep track of the dialog with help of the tm module.
+ * This function is either called from the request callback, or
+ * from the dlg_manage function in the configuration script.
+ * \see dlg_onreq
+ * \see w_dlg_manage
+ * \param msg SIP message
+ * \param t transaction
+ * \return 0 on success, -1 on failure
+ */ 
 int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 {
 	struct dlg_cell *dlg;
@@ -542,8 +630,15 @@ error:
 }
 
 
-static inline int parse_dlg_rr_param(char *p, char *end,
-													int *h_entry, int *h_id)
+/*!
+ * \brief Parse the record-route parameter, to get dialog information back
+ * \param p start of parameter string
+ * \param end end of parameter string
+ * \param h_entry found dialog hash entry
+ * \param h_id found dialog hash id
+ * \return 0 on success, -1 on failure
+ */
+static inline int parse_dlg_rr_param(char *p, char *end, int *h_entry, int *h_id)
 {
 	char *s;
 
@@ -567,8 +662,16 @@ static inline int parse_dlg_rr_param(char *p, char *end,
 }
 
 
+/*!
+ * \brief Helper function to get the necessary content from SIP message
+ * \param req SIP request
+ * \param callid found callid
+ * \param ftag found from tag
+ * \param ttag found to tag
+ * \return 0 on succes, -1 on failure
+ */
 static inline int pre_match_parse( struct sip_msg *req, str *callid,
-														str *ftag, str *ttag)
+		str *ftag, str *ttag)
 {
 	if (parse_headers(req,HDR_CALLID_F|HDR_TO_F,0)<0 || !req->callid ||
 	!req->to ) {
@@ -597,8 +700,15 @@ static inline int pre_match_parse( struct sip_msg *req, str *callid,
 }
 
 
+/*!
+ * \brief Update the saved CSEQ information in dialog from SIP message
+ * \param dlg updated dialog
+ * \param req SIP request
+ * \param dir direction of request, must DLG_DIR_UPSTREAM or DLG_DIR_DOWNSTREAM
+ * \return 0 on success, -1 on failure
+ */
 static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
-															unsigned int dir)
+		unsigned int dir)
 {
 	if ( (!req->cseq && parse_headers(req,HDR_CSEQ_F,0)<0) || !req->cseq ||
 	!req->cseq->parsed) {
@@ -617,8 +727,12 @@ static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
 }
 
 
-static void
-unreference_dialog(void *dialog)
+/*!
+ * \brief Unreference a dialog, small wrapper to care for shutdown
+ * \see unref_dlg 
+ * \param dialog unreferenced dialog
+ */
+static void unreference_dialog(void *dialog)
 {
 	// if the dialog table is gone, it means the system is shutting down.
 	if (!d_table)
@@ -627,6 +741,17 @@ unreference_dialog(void *dialog)
 }
 
 
+/*!
+ * \brief Function that is registered as RR callback for dialog tracking
+ * 
+ * Function that is registered as RR callback for dialog tracking. It
+ * sets the appropriate events after the SIP method and run the state
+ * machine to update the dialog state. It updates then the saved
+ * dialogs and also the statistics.
+ * \param req SIP request
+ * \param route_params record-route parameter
+ * \param param unused
+ */
 void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 {
 	struct dlg_cell *dlg;
@@ -835,6 +960,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 #define get_dlg_tl_payload(_tl_)  ((struct dlg_cell*)((char *)(_tl_)- \
 		(unsigned long)(&((struct dlg_cell*)0)->tl)))
 
+
+/*!
+ * \brief Timer function that removes expired dialogs, run timeout route
+ * \param tl dialog timer list
+ */
 void dlg_ontimeout( struct dlg_tl *tl)
 {
 	struct dlg_cell *dlg;
@@ -895,9 +1025,14 @@ void dlg_ontimeout( struct dlg_tl *tl)
 }
 
 
-/* item/pseudo-variables functions */
-int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+/*!
+ * \brief Function that returns the dialog lifetime as pseudo-variable
+ * \param msg SIP message
+ * \param param pseudo-variable parameter
+ * \param res pseudo-variable result
+ * \return 0 on success, -1 on failure
+ */
+int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -920,8 +1055,14 @@ int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
 }
 
 
-int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+/*!
+ * \brief Function that returns the dialog state as pseudo-variable
+ * \param msg SIP message
+ * \param param pseudo-variable parameter
+ * \param res pseudo-variable result
+ * \return 0 on success, -1 on failure
+ */
+int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -942,4 +1083,3 @@ int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
 
 	return 0;
 }
-
