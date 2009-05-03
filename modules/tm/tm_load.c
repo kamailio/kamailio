@@ -234,6 +234,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_lookup_request = t_lookup_request;
 	tmb->t_check = t_check;
 	tmb->unref_cell = unref_cell;
+	tmb->which_cancel = which_cancel;
 
 #ifdef WITH_TM_CTX
 	tmb->tm_ctx_get = tm_ctx_get;

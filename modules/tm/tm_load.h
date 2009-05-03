@@ -141,6 +141,7 @@ struct tm_binds {
 	tlookup_request_f t_lookup_request;
 	tcheck_f t_check;
 	unref_cell_f unref_cell;
+	which_cancel_f which_cancel;
 #ifdef WITH_TM_CTX
 	tm_ctx_get_f tm_ctx_get;
 #else

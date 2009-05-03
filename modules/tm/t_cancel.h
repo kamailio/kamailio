@@ -84,6 +84,7 @@ typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
 								int flags );
 typedef int (*cancel_all_uacs_f)(struct cell *trans, int how);
 
+typedef void (*which_cancel_f)(struct cell *t, branch_bm_t *cancel_bm );
 
 
 /* 
