@@ -359,9 +359,12 @@ static pv_export_t mod_pvs[] = {
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
+static int add_avp_aliases(modparam_t type, void* val);
+
 static param_export_t params[]={ 
 	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
 	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
+	{"avp_aliases",         STR_PARAM|USE_FUNC_PARAM, (void*)add_avp_aliases },
 	{0,0,0}
 };
 
@@ -453,5 +456,16 @@ static int pv_unset(struct sip_msg* msg, char* pvid, char *foo)
 	pv_set_spec_value(msg, sp, 0, NULL);
 
 	return 1;
+}
+
+static int add_avp_aliases(modparam_t type, void* val)
+{
+	if (val!=0 && ((char*)val)[0]!=0)
+	{
+		if ( add_avp_galias_str((char*)val)!=0 )
+			return -1;
+	}
+
+	return 0;
 }
 
