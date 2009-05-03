@@ -124,6 +124,25 @@ modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
 </programlisting>
 	    </example>
 	</section>
+		<section>
+			<title><varname>avp_aliases</varname> (string)</title>
+			<para>
+			Define aliases for PV AVP names.
+			</para>
+			<para>
+				<emphasis>
+					Default value is NULL.
+				</emphasis>
+			</para>
+			<example>
+				<title><varname>avp_aliases</varname> parameter usage</title>
+				<programlisting format="linespecific">
+...
+modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Exported Functions</title>
