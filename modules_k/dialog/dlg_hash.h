@@ -34,6 +34,12 @@
  *             CONFIRMED_NA due delayed "200 OK" (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Functions and definitions related to dialog creation and searching
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
 
 #ifndef _DIALOG_DLG_HASH_H_
 #define _DIALOG_DLG_HASH_H_
@@ -126,17 +132,37 @@ struct dlg_table
 	gen_lock_set_t     *locks;	/*!< lock table */
 };
 
+
 /*! global dialog table */
 extern struct dlg_table *d_table;
 /*! point to the current dialog */
 extern struct dlg_cell  *current_dlg_pointer;
 
+
+/*!
+ * \brief Set a dialog lock
+ * \param _table dialog table
+ * \param _entry locked entry
+ */
 #define dlg_lock(_table, _entry) \
 		lock_set_get( (_table)->locks, (_entry)->lock_idx);
+
+
+/*!
+ * \brief Release a dialog lock
+ * \param _table dialog table
+ * \param _entry locked entry
+ */
 #define dlg_unlock(_table, _entry) \
 		lock_set_release( (_table)->locks, (_entry)->lock_idx);
 
 
+/*!
+ * \brief Unlink a dialog from the list without locking
+ * \see unref_dlg_unsafe
+ * \param d_entry unlinked entry
+ * \param dlg unlinked dialog
+ */
 inline void unlink_unsafe_dlg(struct dlg_entry *d_entry, struct dlg_cell *dlg);
 
 
@@ -146,6 +172,12 @@ inline void unlink_unsafe_dlg(struct dlg_entry *d_entry, struct dlg_cell *dlg);
  */
 inline void destroy_dlg(struct dlg_cell *dlg);
 
+
+/*!
+ * \brief Reference a dialog without locking
+ * \param _dlg dialog
+ * \param _cnt increment for the reference counter
+ */
 #define ref_dlg_unsafe(_dlg,_cnt)     \
 	do { \
 		(_dlg)->ref += (_cnt); \
@@ -153,6 +185,12 @@ inline void destroy_dlg(struct dlg_cell *dlg);
 			(_dlg),(_cnt),(_dlg)->ref); \
 	}while(0)
 
+
+/*!
+ * \brief Unreference a dialog without locking
+ * \param _dlg dialog
+ * \param _cnt decrement for the reference counter
+ */
 #define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
 	do { \
 		(_dlg)->ref -= (_cnt); \
@@ -252,12 +290,46 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
  */
 struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
+
+/*!
+ * \brief Link a dialog structure
+ * \param dlg dialog
+ * \param n extra increments for the reference counter
+ */
 void link_dlg(struct dlg_cell *dlg, int n);
 
+
+/*!
+ * \brief Unreference a dialog with locking
+ * \see unref_dlg_unsafe
+ * \param dlg dialog
+ * \param cnt decrement for the reference counter
+ */
 void unref_dlg(struct dlg_cell *dlg, unsigned int cnt);
 
+
+/*!
+ * \brief Refefence a dialog with locking
+ * \see ref_dlg_unsafe
+ * \param dlg dialog
+ * \param cnt increment for the reference counter
+ */
 void ref_dlg(struct dlg_cell *dlg, unsigned int cnt);
 
+
+/*!
+ * \brief Update a dialog state according a event and the old state
+ *
+ * This functions implement the main state machine that update a dialog
+ * state according a processed event and the current state. If necessary
+ * it will delete the processed dialog. The old and new state are also
+ * saved for reference.
+ * \param dlg updated dialog
+ * \param event current event
+ * \param old_state old dialog state
+ * \param new_state new dialog state
+ * \param unref set to 1 when the dialog was deleted, 0 otherwise
+ */
 void next_state_dlg(struct dlg_cell *dlg, int event,
 		int *old_state, int *new_state, int *unref);
 

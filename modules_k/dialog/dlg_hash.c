@@ -42,6 +42,14 @@
  *             CONFIRMED_NA due delayed "200 OK" (bogdan)
  */
 
+
+/*!
+ * \file
+ * \brief Functions related to dialog creation and searching
+ * \ingroup dialog
+ * Module: \ref dialog
+ */
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -450,7 +458,11 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 }
 
 
-
+/*!
+ * \brief Link a dialog structure
+ * \param dlg dialog
+ * \param n extra increments for the reference counter
+ */
 void link_dlg(struct dlg_cell *dlg, int n)
 {
 	struct dlg_entry *d_entry;
@@ -477,7 +489,12 @@ void link_dlg(struct dlg_cell *dlg, int n)
 }
 
 
-
+/*!
+ * \brief Unlink a dialog from the list without locking
+ * \see unref_dlg_unsafe
+ * \param d_entry unlinked entry
+ * \param dlg unlinked dialog
+ */
 inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
 		struct dlg_cell *dlg)
 {
@@ -496,6 +513,12 @@ inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
 }
 
 
+/*!
+ * \brief Refefence a dialog with locking
+ * \see ref_dlg_unsafe
+ * \param dlg dialog
+ * \param cnt increment for the reference counter
+ */
 void ref_dlg(struct dlg_cell *dlg, unsigned int cnt)
 {
 	struct dlg_entry *d_entry;
@@ -508,6 +531,12 @@ void ref_dlg(struct dlg_cell *dlg, unsigned int cnt)
 }
 
 
+/*!
+ * \brief Unreference a dialog with locking
+ * \see unref_dlg_unsafe
+ * \param dlg dialog
+ * \param cnt decrement for the reference counter
+ */
 void unref_dlg(struct dlg_cell *dlg, unsigned int cnt)
 {
 	struct dlg_entry *d_entry;
@@ -535,8 +564,21 @@ static inline void log_next_state_dlg(const int event, const struct dlg_cell *dl
 }
 
 
+/*!
+ * \brief Update a dialog state according a event and the old state
+ *
+ * This functions implement the main state machine that update a dialog
+ * state according a processed event and the current state. If necessary
+ * it will delete the processed dialog. The old and new state are also
+ * saved for reference.
+ * \param dlg updated dialog
+ * \param event current event
+ * \param old_state old dialog state
+ * \param new_state new dialog state
+ * \param unref set to 1 when the dialog was deleted, 0 otherwise
+ */
 void next_state_dlg(struct dlg_cell *dlg, int event,
-								int *old_state, int *new_state, int *unref)
+		int *old_state, int *new_state, int *unref)
 {
 	struct dlg_entry *d_entry;
 
