@@ -3002,7 +3002,7 @@ static int rve_optimize(struct rval_expr* rve)
 	if (rve->op == RVE_RVAL_OP) /* if rval, nothing to do */
 		return 0;
 	if (rve_is_constant(rve)){
-		if ((rv=rval_expr_eval(0, 0, rve))==0){
+		if ((rv=rval_expr_eval_new(0, 0, rve))==0){
 			ERR("optimization failure, bad expression\n");
 			goto error;
 		}
@@ -3035,7 +3035,7 @@ static int rve_optimize(struct rval_expr* rve)
 		}
 		/* $v - a => $v + (-a)  (easier to optimize)*/
 		if ((rve->op==RVE_MINUS_OP) && (rve_is_constant(rve->right.rve))){
-			if ((rv=rval_expr_eval(0, 0, rve->right.rve))==0){
+			if ((rv=rval_expr_eval_new(0, 0, rve->right.rve))==0){
 				ERR("optimization failure, bad expression\n");
 				goto error;
 			}
@@ -3114,7 +3114,7 @@ static int rve_optimize(struct rval_expr* rve)
 								" +(+($v, a), b) when typeof(a)==INT\n");
 						return 0;
 					}
-					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+					if ((rv=rval_expr_eval_new(0, 0, &tmp_rve))==0){
 						ERR("optimization failure, bad expression\n");
 						goto error;
 					}
@@ -3146,7 +3146,7 @@ static int rve_optimize(struct rval_expr* rve)
 					   cases are caught by rve_op_is_commutative()
 					   (in this case type will be typeof(a)) => ok only if
 					   typeof(a) is int) */
-					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+					if ((rv=rval_expr_eval_new(0, 0, &tmp_rve))==0){
 						ERR("optimization failure, bad expression\n");
 						goto error;
 					}
@@ -3188,7 +3188,7 @@ static int rve_optimize(struct rval_expr* rve)
 					   cases are caught by rve_op_is_commutative()
 					   (in this case type will be typeof(a)) => ok only if
 					   typeof(a) is int) */
-					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+					if ((rv=rval_expr_eval_new(0, 0, &tmp_rve))==0){
 						ERR("optimization failure, bad expression\n");
 						goto error;
 					}
@@ -3224,7 +3224,7 @@ static int rve_optimize(struct rval_expr* rve)
 								" +(a, +(b, $v)) when typeof(a)!=typeof(b)\n");
 						return 0;
 					}
-					if ((rv=rval_expr_eval(0, 0, &tmp_rve))==0){
+					if ((rv=rval_expr_eval_new(0, 0, &tmp_rve))==0){
 						ERR("optimization failure, bad expression\n");
 						goto error;
 					}
