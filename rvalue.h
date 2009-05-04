@@ -23,6 +23,8 @@
  * History:
  * --------
  *  2008-11-30  initial version (andrei)
+ *  2009-04-28  added string and interger versions for the EQ and DIFF
+ *              operators (andrei)
  */
 
 #ifndef _rvalue_h_
@@ -59,6 +61,8 @@ enum rval_expr_op{
 	RVE_GTE_OP,   /*  2 members, returns left >= right */
 	RVE_LT_OP,    /*  2 members, returns left  < right */
 	RVE_LTE_OP,   /*  2 members, returns left <= right */
+	RVE_IEQ_OP, /*  2 members, int == version, returns left == right */
+	RVE_IDIFF_OP,/* 2 members, int != version, returns left != right */
 	RVE_IPLUS_OP, /* 2 members, integer +, returns int(a)+int(b) */
 	/* common int & str */
 	RVE_PLUS_OP,  /* generic plus (int or str) returns left + right */
@@ -68,6 +72,8 @@ enum rval_expr_op{
 	RVE_CONCAT_OP,/* 2 members, string concat, returns left . right (str)*/
 	RVE_STRLEN_OP, /* one member, string length:, returns strlen(val) (int)*/
 	RVE_STREMPTY_OP, /* one member, returns val=="" (bool) */
+	RVE_STREQ_OP,  /* 2 members, string == , returns left == right (bool)*/
+	RVE_STRDIFF_OP,/* 2 members, string != , returns left != right (bool)*/
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /* one member, returns is_defined(val) (bool) */
 };
@@ -118,7 +124,8 @@ struct rval_expr{
 enum rval_cache_type{
 	RV_CACHE_EMPTY,
 	RV_CACHE_PVAR,
-	RV_CACHE_AVP
+	RV_CACHE_AVP,
+	RV_CACHE_SELECT
 };
 
 /** value cache for a rvalue struct.
