@@ -49,6 +49,7 @@
  *  2008-04-23  errors are treated as false during expression evaluation
  *  		unless the operator is DIFF_OP (Miklos)
  *  2008-12-03  fixups for rvalues in assignments (andrei)
+ *  2009-05-04  switched IF_T to rval_expr (andrei)
  */
 
 
@@ -674,24 +675,50 @@ int fix_actions(struct action* a)
 					}
 					break;
 			case IF_T:
-				if (t->val[0].type!=EXPR_ST){
+				if (t->val[0].type!=RVE_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
-								"%d for if (should be expr)\n",
+								"%d for if (should be rval expr)\n",
 								t->val[0].type);
 					return E_BUG;
-				}else if( (t->val[1].type!=ACTIONS_ST)&&(t->val[1].type!=NOSUBTYPE) ){
+				}else if( (t->val[1].type!=ACTIONS_ST) &&
+							(t->val[1].type!=NOSUBTYPE) ){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if() {...} (should be action)\n",
 								t->val[1].type);
 					return E_BUG;
-				}else if( (t->val[2].type!=ACTIONS_ST)&&(t->val[2].type!=NOSUBTYPE) ){
+				}else if( (t->val[2].type!=ACTIONS_ST) &&
+							(t->val[2].type!=NOSUBTYPE) ){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if() {} else{...}(should be action)\n",
 								t->val[2].type);
 					return E_BUG;
 				}
-				if (t->val[0].u.data){
-					if ((ret=fix_expr((struct expr*)t->val[0].u.data))<0)
+				rve=(struct rval_expr*)t->val[0].u.data;
+				if (rve){
+					err_rve=0;
+					if (!rve_check_type(&rve_type, rve, &err_rve,
+											&err_type, &expected_type)){
+						if (err_rve)
+							LOG(L_ERR, "fix_actions: invalid expression "
+									"(%d,%d): subexpression (%d,%d) has type"
+									" %s,  but %s is expected\n",
+									rve->fpos.s_line, rve->fpos.s_col,
+									err_rve->fpos.s_line, err_rve->fpos.s_col,
+									rval_type_name(err_type),
+									rval_type_name(expected_type) );
+						else
+							LOG(L_ERR, "fix_actions: invalid expression "
+									"(%d,%d): type mismatch?",
+									rve->fpos.s_line, rve->fpos.s_col);
+						return E_UNSPEC;
+					}
+					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
+								" bad type, integer expected\n",
+								rve->fpos.s_line, rve->fpos.s_col);
+						return E_UNSPEC;
+					}
+					if ((ret=fix_rval_expr((void**)&rve))<0)
 						return ret;
 				}
 				if ( (t->val[1].type==ACTIONS_ST)&&(t->val[1].u.data) ){
@@ -699,7 +726,8 @@ int fix_actions(struct action* a)
 						return ret;
 				}
 				if ( (t->val[2].type==ACTIONS_ST)&&(t->val[2].u.data) ){
-						if ((ret=fix_actions((struct action*)t->val[2].u.data))<0)
+						if ((ret=fix_actions((struct action*)t->val[2].u.data))
+								<0)
 						return ret;
 				}
 				break;

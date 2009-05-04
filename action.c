@@ -49,6 +49,7 @@
  *  2008-11-18  support for variable parameter module functions (andrei)
  *  2008-12-03  use lvalues/rvalues for assignments (andrei)
  *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
+ *  2009-05-04  switched IF_T to rval_expr (andrei)
  */
 
 
@@ -813,21 +814,14 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=1;
 				break;
 		case IF_T:
-				/* if null expr => ignore if? */
-				if ((a->val[0].type==EXPR_ST)&&a->val[0].u.data){
-					v=eval_expr(h, (struct expr*)a->val[0].u.data, msg);
-#if 0
-					if (v<0){
-						if (v==EXPR_DROP){ /* hack to quit on DROP*/
-							ret=0;
-							break;
-						}else{
-							LOG(L_WARN,"WARNING: do_action:"
-										"error in expression\n");
-						}
+					rve=(struct rval_expr*)a->val[0].u.data;
+					if (unlikely(rval_expr_eval_int(h, msg, &v, rve) != 0)){
+						ERR("if expression evaluation failed (%d,%d-%d,%d)\n",
+								rve->fpos.s_line, rve->fpos.s_col,
+								rve->fpos.e_line, rve->fpos.e_col);
+						v=0; /* false */
 					}
-#endif
-					if (h->run_flags & EXIT_R_F){
+					if (unlikely(h->run_flags & EXIT_R_F)){
 						ret=0;
 						break;
 					}
@@ -843,7 +837,6 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 							ret=run_actions(h,
 										(struct action*)a->val[2].u.data, msg);
 					}
-				}
 			break;
 		case MODULE_T:
 			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 

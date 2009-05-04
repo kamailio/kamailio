@@ -95,6 +95,7 @@
  *             NUMBER is now always positive; cleanup (andrei)
  * 2009-01-26  case/switch() support (andrei)
  * 2009-03-10  added SET_USERPHONE action (Miklos)
+ * 2009-05-04  switched if to rval_expr (andrei)
 */
 
 %{
@@ -212,6 +213,8 @@ static struct rval_expr* mk_rve_rval(enum rval_type, void* v);
 static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1);
 static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 									struct rval_expr* rve2);
+static int rval_expr_int_check(struct rval_expr *rve);
+static int warn_ct_rve(struct rval_expr *rve, char* name);
 static struct socket_id* mk_listen_id(char*, int, int);
 static struct name_lst* mk_name_lst(char* name, int flags);
 static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
@@ -520,7 +523,8 @@ static int case_check_default(struct case_stms* stms);
 
 
 /*non-terminals */
-%type <expr> exp exp_elem
+/*%type <expr> exp */
+%type <expr> exp_elem
 %type <intval> intno eint_op eint_op_onsend
 %type <intval> eip_op eip_op_onsend
 %type <action> action actions cmd fcmd if_cmd stm /*exp_stm*/ assign_action
@@ -1566,7 +1570,7 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 	| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
 	;
 
-exp:	rval_expr
+/*exp:	rval_expr
 		{
 			if ($1==0){
 				yyerror("invalid expression");
@@ -1581,6 +1585,7 @@ exp:	rval_expr
 				$$=mk_elem(NO_OP, RVEXP_O, $1, 0, 0);
 		}
 	;
+*/
 
 /* exp elem operators */
 equalop:
@@ -1852,8 +1857,18 @@ action:
 	| fcmd error { $$=0; yyerror("bad command: missing ';'?"); }
 	;
 if_cmd:
-	IF exp stm		{ $$=mk_action( IF_T, 3, EXPR_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0); }
-	| IF exp stm ELSE stm	{ $$=mk_action( IF_T, 3, EXPR_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5); }
+	IF rval_expr stm	{
+		if (rval_expr_int_check($2)==0){
+			warn_ct_rve($2, "if");
+		}
+		$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0);
+	}
+	| IF rval_expr stm ELSE stm	{ 
+		if (rval_expr_int_check($2)==0){
+			warn_ct_rve($2, "if");
+		}
+		$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5); 
+	}
 	;
 
 ct_rval: rval_expr {
@@ -2927,6 +2942,48 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 			yyerror("BUG: unexpected null \"bad\" expression\n");
 	}
 	return ret;
+}
+
+
+/** check if the expression is an int.
+ * if the expression does not evaluate to an int return -1 and
+ * log an error.
+ * @return 0 on success, -1 on error */
+static int rval_expr_int_check(struct rval_expr *rve)
+{
+	struct rval_expr* bad_rve;
+	enum rval_type type, bad_t, exp_t;
+	
+	if (rve==0){
+		yyerror("invalid expression");
+		return -1;
+	}else if (!rve_check_type(&type, rve, &bad_rve, &bad_t ,&exp_t)){
+		if (bad_rve)
+			yyerror_at(&rve->fpos, "bad expression: type mismatch:"
+						" %s instead of %s at (%d,%d)",
+						rval_type_name(bad_t), rval_type_name(exp_t),
+						bad_rve->fpos.s_line, bad_rve->fpos.s_col);
+		else
+			yyerror("BUG: unexpected null \"bad\" expression\n");
+		return -1;
+	}else if (type!=RV_INT && type!=RV_NONE){
+		yyerror_at(&rve->fpos, "invalid expression type, int expected\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+/** warn if the expression is constant.
+ * @return 0 on success (no warning), 1 when warning */
+static int warn_ct_rve(struct rval_expr *rve, char* name)
+{
+	if (rve && rve_is_constant(rve)){
+		warn_at(&rve->fpos, "constant value in %s%s",
+				name?name:"expression", name?"(...)":"");
+		return 1;
+	}
+	return 0;
 }
 
 
