@@ -1609,6 +1609,7 @@ rve_equalop:
 	| INTDIFF {$$=RVE_IDIFF_OP; }
 	| STREQ	{$$=RVE_STREQ_OP; }
 	| STRDIFF {$$=RVE_STRDIFF_OP; }
+	| MATCH	{$$=RVE_MATCH_OP; }
 	;
 rve_cmpop:
 	  GT	{$$=RVE_GT_OP; }

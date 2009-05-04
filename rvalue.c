@@ -71,17 +71,35 @@ inline static void rval_force_clean(struct rvalue* rv)
 		}
 		rv->flags&=~RV_CNT_ALLOCED_F;
 	}
+	if (rv->flags & RV_RE_ALLOCED_F){
+		if (rv->v.re.regex){
+			if (unlikely(rv->type!=RV_STR || !(rv->flags & RV_RE_F))){
+				BUG("RV_RE_ALLOCED_F not supported for type %d or "
+						"bad flags %x\n", rv->type, rv->flags);
+			}
+			regfree(rv->v.re.regex);
+			pkg_free(rv->v.re.regex);
+			rv->v.re.regex=0;
+		}
+		rv->flags&=~(RV_RE_ALLOCED_F|RV_RE_F);
+	}
 }
 
 
 
 /** frees a rval returned by rval_new(), rval_convert() or rval_expr_eval().
- *   Note: ir will be freed only when refcnt reaches 0
+ *   Note: it will be freed only when refcnt reaches 0
  */
 void rval_destroy(struct rvalue* rv)
 {
 	if (rv && rv_unref(rv)){
 		rval_force_clean(rv);
+		/* still an un-regfreed RE ? */
+		if ((rv->flags & RV_RE_F) && rv->v.re.regex){
+			if (unlikely(rv->type!=RV_STR))
+				BUG("RV_RE_F not supported for type %d\n", rv->type);
+			regfree(rv->v.re.regex);
+		}
 		if (rv->flags & RV_RV_ALLOCED_F){
 			pkg_free(rv);
 		}
@@ -138,7 +156,7 @@ void rval_cache_clean(struct rval_cache* rvc)
 }
 
 
-#define rv_chg_in_place(rv)  ((rv)->refcnt==1) 
+#define rv_chg_in_place(rv)  ((rv)->refcnt==1)
 
 
 
@@ -205,6 +223,46 @@ struct rvalue* rval_new_str(str* s, int extra_size)
 		rv->v.s.len=s->len;
 		memcpy(rv->v.s.s, s->s, s->len);
 		rv->v.s.s[s->len]=0;
+	}
+	return rv;
+}
+
+
+
+/** create a new pk_malloc'ed RE rv from a str re.
+  * It acts as rval_new_str, but also compiles a RE from the str
+  * and sets v->re.regex.
+  * @param s - pointer to str, must be non-null, zero-term'ed and a valid RE.
+  * @return new rv or 0 on error
+  */
+struct rvalue* rval_new_re(str* s)
+{
+	struct rvalue* rv;
+	long offs;
+	
+	offs=(long)&((struct rvalue*)0)->buf[0]; /* offset of the buf. member */
+	/* make sure we reserve enough space so that we can satisfy any regex_t
+	   alignment requirement (pointer) */
+	rv=rval_new_empty(ROUND_POINTER(offs)-offs+sizeof(*rv->v.re.regex)+
+						s->len+1/* 0 */);
+	if (likely(rv)){
+		rv->type=RV_STR;
+		/* make sure regex points to a properly aligned address
+		   (use max./pointer alignment to be sure ) */
+		rv->v.re.regex=(regex_t*)((char*)&rv->buf[0]+ROUND_POINTER(offs)-offs);
+		rv->v.s.s=(char*)rv->v.re.regex+sizeof(*rv->v.re.regex);
+		rv->v.s.len=s->len;
+		memcpy(rv->v.s.s, s->s, s->len);
+		rv->v.s.s[s->len]=0;
+		/* compile the regex */
+		/* same flags as for expr. =~ (fix_expr()) */
+		if (unlikely(regcomp(rv->v.re.regex, s->s,
+								REG_EXTENDED|REG_NOSUB|REG_ICASE))){
+			/* error */
+			pkg_free(rv);
+			rv=0;
+		}else /* success */
+			rv->flags|=RV_RE_F;
 	}
 	return rv;
 }
@@ -415,6 +473,7 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_IDIFF_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 		case RVE_IPLUS_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
@@ -479,6 +538,7 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_IDIFF_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
@@ -535,6 +595,7 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_IDIFF_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
 		case RVE_CONCAT_OP:
@@ -681,6 +742,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 			break;
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 			*type=RV_INT;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
@@ -1199,9 +1261,19 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
 
 
 
-inline static int bool_strop2( enum rval_expr_op op, int* res,
-								str* s1, str* s2)
+/** internal helper: compare 2 RV_STR RVs.
+  * Warning: rv1 & rv2 must be RV_STR
+  * @return 0 on success, -1 on error
+  */
+inline static int bool_rvstrop2( enum rval_expr_op op, int* res,
+								struct rvalue* rv1, struct rvalue* rv2)
 {
+	str* s1;
+	str* s2;
+	regex_t tmp_re;
+	
+	s1=&rv1->v.s;
+	s2=&rv2->v.s;
 	switch(op){
 		case RVE_EQ_OP:
 		case RVE_STREQ_OP:
@@ -1211,11 +1283,29 @@ inline static int bool_strop2( enum rval_expr_op op, int* res,
 		case RVE_STRDIFF_OP:
 			*res= (s1->len!=s2->len) || (memcmp(s1->s, s2->s, s1->len)!=0);
 			break;
+		case RVE_MATCH_OP:
+			if (likely(rv2->flags & RV_RE_F)){
+				*res=(regexec(rv2->v.re.regex, rv1->v.s.s, 0, 0, 0)==0);
+			}else{
+				/* we need to compile the RE on the fly */
+				if (unlikely(regcomp(&tmp_re, s2->s,
+										REG_EXTENDED|REG_NOSUB|REG_ICASE))){
+					/* error */
+					ERR("Bad regular expression \"%s\"\n", s2->s);
+					goto error;
+				}
+				*res=(regexec(&tmp_re, s1->s, 0, 0, 0)==0);
+				regfree(&tmp_re);
+			}
+			break;
 		default:
 			BUG("rv unsupported intop %d\n", op);
-			return -1;
+			goto error;
 	}
 	return 0;
+error:
+	*res=0; /* false */
+	return -1;
 }
 
 
@@ -1482,7 +1572,7 @@ inline static int rval_str_lop2(struct run_act_ctx* h,
 		goto error;
 	if ((rv2=rval_convert(h, msg, RV_STR, r, c2))==0)
 		goto error;
-	ret=bool_strop2(op, res, &rv1->v.s, &rv2->v.s);
+	ret=bool_rvstrop2(op, res, rv1, rv2);
 	rval_destroy(rv1); 
 	rval_destroy(rv2); 
 	return ret;
@@ -1791,6 +1881,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 			if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
 				ret=-1;
 				break;
@@ -1889,6 +1980,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_IPLUS_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -1991,6 +2083,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_IPLUS_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -2247,6 +2340,7 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_IDIFF_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 		case RVE_CONCAT_OP:
 			break;
 		default:
@@ -2306,6 +2400,7 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_IDIFF_OP:
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
+		case RVE_MATCH_OP:
 			return 0;
 	}
 	return 0;
@@ -2351,6 +2446,7 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_LT_OP:
 		case RVE_LTE_OP:
 		case RVE_CONCAT_OP:
+		case RVE_MATCH_OP:
 			return 0;
 		case RVE_DIFF_OP:
 		case RVE_EQ_OP:
@@ -2461,6 +2557,41 @@ static int fix_rval(struct rvalue* rv)
 
 
 
+/** helper function: replace a rve (in-place) with a constant rval_val.
+ * WARNING: since it replaces in-place, one should make sure that if
+ * rve is in fact a rval (rve->op==RVE_RVAL_OP), no reference is kept
+ * to the rval!
+ * @param rve - expression to be replaced (in-place)
+ * @param v   - pointer to a rval_val union containing the replacement
+ *              value.
+ * @param flags - value flags (how it was alloc'ed, e.g.: RV_CNT_ALLOCED_F)
+ * @return 0 on success, -1 on error */
+static int rve_replace_with_val(struct rval_expr* rve, enum rval_type type,
+								union rval_val* v, int flags)
+{
+	int refcnt;
+	
+	refcnt=1; /* replaced-in-place rval refcnt */
+	if (rve->op!=RVE_RVAL_OP){
+		rve_destroy(rve->left.rve);
+		if (rve_op_unary(rve->op)==0)
+			rve_destroy(rve->right.rve);
+	}else{
+		rval_destroy(&rve->left.rval);
+	}
+	rval_init(&rve->left.rval, type, v, flags);
+	rve->left.rval.refcnt=refcnt;
+	rval_init(&rve->right.rval, RV_NONE, 0, 0);
+	rve->op=RVE_RVAL_OP;
+	return 0;
+}
+
+
+
+/** helper function: replace a rve (in-place) with a constant rvalue.
+ * @param rve - expression to be replaced (in-place)
+ * @param rv   - pointer to the replacement _constant_ rvalue structure
+ * @return 0 on success, -1 on error */
 static int rve_replace_with_ct_rv(struct rval_expr* rve, struct rvalue* rv)
 {
 	enum rval_type type;
@@ -2481,21 +2612,89 @@ static int rve_replace_with_ct_rv(struct rval_expr* rve, struct rvalue* rv)
 			BUG("unexpected str evaluation failure\n");
 			return -1;
 		}
-		flags=RV_CNT_ALLOCED_F;
+		flags|=RV_CNT_ALLOCED_F;
 	}else{
 		BUG("unknown constant expression type %d\n", rv->type);
 		return -1;
 	}
-	if (rve->op!=RVE_RVAL_OP){
-		rve_destroy(rve->left.rve);
-		if (rve_op_unary(rve->op)==0)
-			rve_destroy(rve->right.rve);
-	}else
-		rval_destroy(&rve->left.rval);
-	rval_init(&rve->left.rval, type, &v, flags);
-	rval_init(&rve->right.rval, RV_NONE, 0, 0);
-	rve->op=RVE_RVAL_OP;
+	return rve_replace_with_val(rve, type, &v, flags);
+}
+
+
+
+/** try to replace the right side of the rve with a compiled regex.
+  * @return 0 on success and -1 on error.
+ */
+static int fix_match_rve(struct rval_expr* rve)
+{
+	struct rvalue* rv;
+	regex_t* re;
+	union rval_val v;
+	int flags;
+	int ret;
+
+	rv=0;
+	v.s.s=0;
+	v.re.regex=0;
+	/* normal fix-up for the  left side */
+	ret=fix_rval_expr((void**)&rve->left.rve);
+	if (ret<0) return ret;
+	
+	/* fixup the right side (RE) */
+	if (rve_is_constant(rve->right.rve)){
+		if ((rve_guess_type(rve->right.rve)!=RV_STR)){
+			ERR("fixup failure(%d,%d-%d,%d): left side of  =~ is not string"
+					" (%d,%d)\n",   rve->fpos.s_line, rve->fpos.s_col,
+									rve->fpos.e_line, rve->fpos.e_col,
+									rve->right.rve->fpos.s_line,
+									rve->right.rve->fpos.s_col);
+			goto error;
+		}
+		if ((rv=rval_expr_eval(0, 0, rve->right.rve))==0){
+			ERR("fixup failure(%d,%d-%d,%d):  bad RE expression\n",
+					rve->right.rve->fpos.s_line, rve->right.rve->fpos.s_col,
+					rve->right.rve->fpos.e_line, rve->right.rve->fpos.e_col);
+			goto error;
+		}
+		if (rval_get_str(0, 0, &v.s, rv, 0)<0){
+			BUG("fixup unexpected failure (%d,%d-%d,%d)\n",
+					rve->fpos.s_line, rve->fpos.s_col,
+					rve->fpos.e_line, rve->fpos.e_col);
+			goto error;
+		}
+		/* we have the str, we don't need the rv anymore */
+		rval_destroy(rv);
+		rv=0;
+		re=pkg_malloc(sizeof(*re));
+		if (re==0){
+			ERR("out of memory\n");
+			goto error;
+		}
+		/* same flags as for expr. =~ (fix_expr()) */
+		if (regcomp(re, v.s.s, REG_EXTENDED|REG_NOSUB|REG_ICASE)){
+			pkg_free(re);
+			ERR("Bad regular expression \"%s\"(%d,%d-%d,%d)\n", v.s.s,
+					rve->right.rve->fpos.s_line, rve->right.rve->fpos.s_col,
+					rve->right.rve->fpos.e_line, rve->right.rve->fpos.e_col);
+			goto error;
+		}
+		v.re.regex=re;
+		flags=RV_RE_F|RV_RE_ALLOCED_F|RV_CNT_ALLOCED_F;
+		if (rve_replace_with_val(rve->right.rve, RV_STR, &v, flags)<0)
+			goto error;
+	}else{
+		/* right side is not constant => normal fixup */
+		return fix_rval_expr((void**)&rve->right.rve);
+	}
 	return 0;
+error:
+	if (rv) rval_destroy(rv);
+	if (v.s.s) pkg_free(v.s.s);
+	if (v.re.regex){
+		regfree(v.re.regex);
+		pkg_free(v.re.regex);
+	}
+	return -1;
 }
 
 
@@ -3109,6 +3308,10 @@ int fix_rval_expr(void** p)
 			ret=fix_rval_expr((void**)&rve->left.rve);
 			if (ret<0) return ret;
 			ret=fix_rval_expr((void**)&rve->right.rve);
+			if (ret<0) return ret;
+			break;
+		case RVE_MATCH_OP:
+			ret=fix_match_rve(rve);
 			if (ret<0) return ret;
 			break;
 		default:

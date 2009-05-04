@@ -74,10 +74,16 @@ enum rval_expr_op{
 	RVE_STREMPTY_OP, /* one member, returns val=="" (bool) */
 	RVE_STREQ_OP,  /* 2 members, string == , returns left == right (bool)*/
 	RVE_STRDIFF_OP,/* 2 members, string != , returns left != right (bool)*/
+	RVE_MATCH_OP,  /* 2 members, string ~),  returns left matches re(right) */
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /* one member, returns is_defined(val) (bool) */
 };
 
+
+struct str_re{
+	str s;
+	regex_t* regex;
+};
 
 union rval_val{
 	void* p;
@@ -88,6 +94,7 @@ union rval_val{
 	pv_spec_t pvs;
 	struct action* action;
 	struct expr* bexpr;
+	struct str_re re;
 };
 
 
@@ -105,6 +112,8 @@ struct rvalue{
 #define RV_CNT_ALLOCED_F  1  /* free contents  (pkg mem allocated) */
 #define RV_RV_ALLOCED_F   2  /* free rv itself (pkg_free(rv)) */
 #define RV_ALL_ALLOCED_F  (RV_CNT_ALLOCED|RV_RV_ALLOCED)
+#define RV_RE_F  4 /* string is a RE with a valid v->re member */
+#define RV_RE_ALLOCED_F 8 /* v->re.regex must be freed */
 
 
 struct rval_expr{
