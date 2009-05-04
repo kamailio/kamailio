@@ -47,6 +47,8 @@
 
 #include "rvalue.h"
 
+#include <stdlib.h> /* abort() */
+
 /* minimum size alloc'ed for STR RVs (to accomodate
  * strops without reallocs) */
 #define RV_STR_EXTRA 80
@@ -2577,6 +2579,13 @@ static int rve_replace_with_val(struct rval_expr* rve, enum rval_type type,
 		if (rve_op_unary(rve->op)==0)
 			rve_destroy(rve->right.rve);
 	}else{
+		if (rve->left.rval.refcnt!=1){
+			BUG("trying to replace a referenced rval! (refcnt=%d)\n",
+					rve->left.rval.refcnt);
+			/* try to recover */
+			refcnt=rve->left.rval.refcnt;
+			abort(); /* find bugs quicker -- andrei */
+		}
 		rval_destroy(&rve->left.rval);
 	}
 	rval_init(&rve->left.rval, type, v, flags);
