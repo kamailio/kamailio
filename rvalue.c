@@ -28,6 +28,7 @@
  *               (str)undef="", (int)""=0, (int)"123"=123, (int)"abc"=0
  *              handle undef == expr, in function of the UNDEF_EQ_* defines.
  *              (andrei)
+ *  2009-05-05  casts operator for int & string (andrei)
  */
 
 /* special defines:
@@ -480,11 +481,13 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
 			return RV_INT;
 		case RVE_PLUS_OP:
 			/* '+' evaluates to the type of the left operand */
 			return rve_guess_type(rve->left.rve);
 		case RVE_CONCAT_OP:
+		case RVE_STR_OP:
 			return RV_STR;
 		case RVE_NONE_OP:
 			break;
@@ -522,6 +525,8 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
+		case RVE_STR_OP:
 			return rve_is_constant(rve->left.rve);
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
@@ -579,6 +584,8 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
+		case RVE_STR_OP:
 			return 1;
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
@@ -780,6 +787,14 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 				}
 				return 1;
 			}
+			break;
+		case RVE_INT_OP:
+			*type=RV_INT;
+			return 1;
+			break;
+		case RVE_STR_OP:
+			*type=RV_STR;
+			return 1;
 			break;
 		case RVE_NONE_OP:
 		default:
@@ -1726,6 +1741,9 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 				break;
 			ret=int_intop1(res, rve->op, i1);
 			break;
+		case RVE_INT_OP:
+			ret=rval_expr_eval_int(h, msg, res, rve->left.rve);
+			break;
 		case RVE_MUL_OP:
 		case RVE_DIV_OP:
 		case RVE_MINUS_OP:
@@ -1857,27 +1875,49 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 				}
 			}
 			break;
-#if 0
-		case RVE_MATCH_OP:
-				if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
-					ret=-1;
-					break;
-				}
-				if (unlikely((rv2=rval_expr_eval(h, msg,
-													rve->right.rve))==0)){
-					rval_destroy(rv1);
-					ret=-1;
-					break;
-				}
-				ret=rval_str_lop2(res, rve->op, rv1, 0, rv2, 0);
+		case RVE_CONCAT_OP:
+			/* eval expression => string */
+			if (unlikely((rv1=rval_expr_eval(h, msg, rve))==0)){
+				ret=-1;
+				break;
+			}
+			/* conver to int */
+			ret=rval_get_int(h, msg, res, rv1, 0); /* convert to int */
+			rval_destroy(rv1);
+			break;
+		case RVE_STR_OP:
+			/* (str)expr => eval expression */
+			rval_cache_init(&c1);
+			if (unlikely((ret=rval_expr_eval_rvint(h, msg, &rv1, res,
+													rve->left.rve, &c1))<0)){
+				/* error */
+				rval_cache_clean(&c1);
+				break;
+			}
+			if (unlikely(rv1)){
+				/* expr evaluated to string => (int)(str)v == (int)v */
+				ret=rval_get_int(h, msg, res, rv1, &c1); /* convert to int */
 				rval_destroy(rv1);
-				rval_destroy(rv2);
+				rval_cache_clean(&c1);
+			} /* else (rv1==0)
+				 => expr evaluated to int => 
+				 return (int)(str)v == (int)v => do nothing */
+			break;
+
+#if 0
+			/* same thing as above, but in a not optimized, easier to
+			   understand way */
+			/* 1. (str) expr => eval expr */
+			if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
+				ret=-1;
+				break;
+			}
+			/* 2. convert to str and then convert to int
+			   but since (int)(str)v == (int)v skip over (str)v */
+			ret=rval_get_int(h, msg, res, rv1, 0); /* convert to int */
+			rval_destroy(rv1);
 			break;
 #endif
-		case RVE_CONCAT_OP:
-			*res=0;
-			ret=-1;
-			break;
 		case RVE_DEFINED_OP:
 			ret=int_rve_defined(h, msg, res, rve->left.rve);
 			break;
@@ -1918,8 +1958,19 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 
 /** evals a rval expr. into an int or another rv(str).
  * WARNING: rv result (rv_res) must be rval_destroy()'ed if non-null
- * (it might be a reference to another rval). The result can be 
+ * (it might be a reference to another rval). The result can be
  * modified only if rv_chg_in_place() returns true.
+ * @param res_rv - pointer to rvalue result, if non-null it means the 
+ *                 expression evaluated to a non-int (str), which will be
+ *                 stored here.
+ * @param res_i  - pointer to int result, if res_rv==0 and the function
+ *                 returns success => the result is an int which will be 
+ *                 stored here.
+ * @param rve    - expression that will be evaluated.
+ * @param cache  - write-only value cache, it might be filled if non-null and
+ *                 empty (rval_cache_init()). If non-null, it _must_ be 
+ *                 rval_cache_clean()'ed when done. 
+ *
  * @result  0 on success, -1 on error,  sets *res_rv or *res_i.
  */
 int rval_expr_eval_rvint(			   struct run_act_ctx* h,
@@ -1986,6 +2037,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
 			/* operator forces integer type */
 			ret=rval_expr_eval_int(h, msg, res_i, rve);
 			*res_rv=0;
@@ -2020,6 +2072,7 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 			rval_cache_clean(&c1);
 			break;
 		case RVE_CONCAT_OP:
+		case RVE_STR_OP:
 			*res_rv=rval_expr_eval(h, msg, rve);
 			ret=-(*res_rv==0);
 			break;
@@ -2089,6 +2142,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
 			/* operator forces integer type */
 			r=rval_expr_eval_int(h, msg, &i, rve);
 			if (likely(r==0)){
@@ -2167,6 +2221,14 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 				goto error;
 			}
 			ret=rval_str_add2(h, msg, rv1, 0, rv2, 0);
+			break;
+		case RVE_STR_OP:
+			rv1=rval_expr_eval(h, msg, rve->left.rve);
+			if (unlikely(rv1==0)){
+				ERR("rval expression evaluation failed\n");
+				goto error;
+			}
+			ret=rval_convert(h, msg, RV_STR, rv1, 0);
 			break;
 		case RVE_NONE_OP:
 		/*default:*/
@@ -2292,6 +2354,8 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
+		case RVE_STR_OP:
 			break;
 		default:
 			BUG("unsupported unary operator %d\n", op);
@@ -2374,6 +2438,8 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
+		case RVE_STR_OP:
 			/* one operand expression => cannot be assoc. */
 			return 0;
 		case RVE_DIV_OP:
@@ -2422,6 +2488,8 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
+		case RVE_STR_OP:
 			/* one operand expression => cannot be commut. */
 			return 0;
 		case RVE_DIV_OP:
@@ -3291,6 +3359,8 @@ int fix_rval_expr(void** p)
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
+		case RVE_INT_OP:
+		case RVE_STR_OP:
 			ret=fix_rval_expr((void**)&rve->left.rve);
 			if (ret<0) return ret;
 			break;

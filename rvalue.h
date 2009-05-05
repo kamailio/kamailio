@@ -25,6 +25,7 @@
  *  2008-11-30  initial version (andrei)
  *  2009-04-28  added string and interger versions for the EQ and DIFF
  *              operators (andrei)
+ *  2009-05-05  casts operator for int & string (andrei)
  */
 
 #ifndef _rvalue_h_
@@ -77,6 +78,8 @@ enum rval_expr_op{
 	RVE_MATCH_OP,  /* 2 members, string ~),  returns left matches re(right) */
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /* one member, returns is_defined(val) (bool) */
+	RVE_INT_OP,   /* one member, returns (int)val  (int) */
+	RVE_STR_OP    /* one member, returns (str)val  (str) */
 };
 
 
