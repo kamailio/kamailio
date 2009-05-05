@@ -252,6 +252,8 @@ STREQ	eq
 INTEQ	ieq
 STRDIFF	ne
 INTDIFF	ine
+INTCAST	\(int\)
+STRCAST \(str\)
 
 /* Attribute specification */
 ATTR_MARK   "%"
@@ -783,6 +785,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{INTEQ}	{ count(); return INTEQ; }
 <INITIAL>{STRDIFF}	{ count(); return STRDIFF; }
 <INITIAL>{INTDIFF}	{ count(); return INTDIFF; }
+<INITIAL>{INTCAST}	{ count(); return INTCAST; }
+<INITIAL>{STRCAST}	{ count(); return STRCAST; }
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
 <SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);

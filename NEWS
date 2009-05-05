@@ -6,13 +6,14 @@ $Id$
 sip-router changes
 
 core:
+  - type casts operators: (int), (str).
   - new operators eq, ne for string compares and ieq, ine for interger 
     compares. The names are not yet final (use them at your own risk).
     Future version might use ==/!= only for ints (ieq/ine) and eq/ne for
     strings (under debate).
     They are almost equivalent to == or !=, but they force the conversion 
-	of their operands (eq to string and ieq to int), allowing among other
-	things better type checking on startup and more optimizations.
+    of their operands (eq to string and ieq to int), allowing among other
+    things better type checking on startup and more optimizations.
     Non equiv. examples: 0 == "" (true) is not equivalent to 0 eq ""
     (false: it evaluates to "0" eq ""). "a" ieq "b" (true: (int)"a" is 0
      and (int)"b" is 0) is not equivalent to "a" == "b" (false).

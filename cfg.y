@@ -494,6 +494,7 @@ static int case_check_default(struct case_stms* stms);
 %left STAR SLASH
 %right NOT
 %right DEFINED
+%right INTCAST STRCAST
 %left DOT
 
 /* no precedence, they use () */
@@ -2269,6 +2270,8 @@ rval_expr: rval						{ $$=$1;
 											*/
 									}
 		| rve_un_op %prec NOT rval_expr	{$$=mk_rve1($1, $2); }
+		| INTCAST rval_expr				{$$=mk_rve1(RVE_INT_OP, $2); }
+		| STRCAST rval_expr				{$$=mk_rve1(RVE_STR_OP, $2); }
 		| rval_expr PLUS rval_expr		{$$=mk_rve2(RVE_PLUS_OP, $1, $3); }
 		| rval_expr MINUS rval_expr		{$$=mk_rve2(RVE_MINUS_OP, $1, $3); }
 		| rval_expr STAR rval_expr		{$$=mk_rve2(RVE_MUL_OP, $1, $3); }
@@ -2285,6 +2288,8 @@ rval_expr: rval						{ $$=$1;
 		| STREMPTY LPAREN rval_expr RPAREN {$$=mk_rve1(RVE_STREMPTY_OP, $3);}
 		| DEFINED rval_expr				{ $$=mk_rve1(RVE_DEFINED_OP, $2);}
 		| rve_un_op %prec NOT error		{ $$=0; yyerror("bad expression"); }
+		| INTCAST error					{ $$=0; yyerror("bad expression"); }
+		| STRCAST error					{ $$=0; yyerror("bad expression"); }
 		| rval_expr PLUS error			{ yyerror("bad expression"); }
 		| rval_expr MINUS error			{ yyerror("bad expression"); }
 		| rval_expr STAR error			{ yyerror("bad expression"); }
