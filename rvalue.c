@@ -2792,6 +2792,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 	enum rval_expr_op op;
 	struct cfg_pos pos;
 	int right; /* debugging msg */
+	int dbg; /* debugging msg on/off */
 
 /* helper macro: replace in-place a <ctype> type rve with v (another rve).
  * if type_of(v)== <ctype> => rve:=*v (copy v contents into rve and free v)
@@ -2827,6 +2828,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 	rv=0;
 	ret=0;
 	right=0;
+	dbg=1;
 	
 	if (rve_is_constant(rve->right.rve)){
 		ct_rve=rve->right.rve;
@@ -2967,7 +2969,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				break;
 		}
 		/* debugging messages */
-		if (ret==1){
+		if (ret==1 && dbg){
 			if (right){
 				if (rve->op==RVE_RVAL_OP){
 					if (rve->left.rval.type==RV_INT)
@@ -3062,11 +3064,13 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					rve->left.rve=v_rve;
 					rve->right.rve=0;
 					ret=1;
-					DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
+					if (dbg)
+						DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, \"\") -> strempty($v)\n", 
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op);
+					dbg=0;
 				}
 				break;
 			default:
@@ -3078,7 +3082,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 	    can be determined only at runtime => we cannot optimize */
 		
 		/* debugging messages */
-		if (ret==1){
+		if (ret==1 && dbg){
 			if (right){
 				if (rve->op==RVE_RVAL_OP){
 					if (rve->left.rval.type==RV_STR)
@@ -3259,12 +3263,11 @@ static int rve_optimize(struct rval_expr* rve)
 			l_type=rve_guess_type(rve->left.rve);
 			if (l_type==RV_INT){
 				rve->op=(rve->op==RVE_EQ_OP)?RVE_IEQ_OP:RVE_IDIFF_OP;
-				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into interger"
+				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into integer"
 						" ==/!=\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col);
 			}else if (l_type==RV_STR){
-				rve->op=RVE_CONCAT_OP;
 				rve->op=(rve->op==RVE_EQ_OP)?RVE_STREQ_OP:RVE_STRDIFF_OP;
 				DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into string"
 						" ==/!=\n",
