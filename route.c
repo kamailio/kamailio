@@ -712,12 +712,16 @@ int fix_actions(struct action* a)
 									rve->fpos.s_line, rve->fpos.s_col);
 						return E_UNSPEC;
 					}
+					/* it's not an error anymore to have non-int in an if,
+					   only a script warning (to allow backward compat. stuff
+					   like if (@ruri) 
 					if (rve_type!=RV_INT && rve_type!=RV_NONE){
 						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
 						return E_UNSPEC;
 					}
+					*/
 					if ((ret=fix_rval_expr((void**)&rve))<0)
 						return ret;
 				}

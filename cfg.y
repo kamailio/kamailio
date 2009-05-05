@@ -1858,13 +1858,13 @@ action:
 	;
 if_cmd:
 	IF rval_expr stm	{
-		if (rval_expr_int_check($2)==0){
+		if (rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
 		}
 		$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0);
 	}
 	| IF rval_expr stm ELSE stm	{ 
-		if (rval_expr_int_check($2)==0){
+		if (rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
 		}
 		$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5); 
@@ -2806,7 +2806,8 @@ static void warn_at(struct cfg_pos* p, char* format, ...)
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_WARN, "warning in config file, from line %d, column %d to line %d, column %d: %s\n",
+		LOG(L_WARN, "warning in config file, from line %d, column %d to"
+					" line %d, column %d: %s\n",
 					p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
 		LOG(L_WARN, "warning in config file, line %d, column %d-%d: %s\n",
@@ -2828,7 +2829,8 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_CRIT, "parse error in config file, from line %d, column %d to line %d, column %d: %s\n",
+		LOG(L_CRIT, "parse error in config file, from line %d, column %d"
+					" to line %d, column %d: %s\n",
 					p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
 		LOG(L_CRIT, "parse error in config file, line %d, column %d-%d: %s\n",
@@ -2948,7 +2950,7 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 /** check if the expression is an int.
  * if the expression does not evaluate to an int return -1 and
  * log an error.
- * @return 0 on success, -1 on error */
+ * @return 0 success, no warnings; 1 success but warnings; -1 on error */
 static int rval_expr_int_check(struct rval_expr *rve)
 {
 	struct rval_expr* bad_rve;
@@ -2967,8 +2969,9 @@ static int rval_expr_int_check(struct rval_expr *rve)
 			yyerror("BUG: unexpected null \"bad\" expression\n");
 		return -1;
 	}else if (type!=RV_INT && type!=RV_NONE){
-		yyerror_at(&rve->fpos, "invalid expression type, int expected\n");
-		return -1;
+		warn_at(&rve->fpos, "non-int expression (you might want to use"
+				" casts)\n");
+		return 1;
 	}
 	return 0;
 }
