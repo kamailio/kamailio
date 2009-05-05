@@ -1859,16 +1859,18 @@ action:
 	;
 if_cmd:
 	IF rval_expr stm	{
-		if (rval_expr_int_check($2)>=0){
+		if ($2 && rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
-		}
-		$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0);
+			$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0);
+		}else
+			YYERROR;
 	}
 	| IF rval_expr stm ELSE stm	{ 
-		if (rval_expr_int_check($2)>=0){
+		if ($2 && rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
-		}
-		$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5); 
+			$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5);
+		}else
+			YYERROR;
 	}
 	;
 
@@ -2263,11 +2265,10 @@ rve_op:		PLUS		{ $$=RVE_PLUS_OP; }
 */
 
 rval_expr: rval						{ $$=$1;
-										/*	if ($$==0){
-												yyerror("out of memory\n");
-												YYABORT;
-											}
-											*/
+										if ($$==0){
+											yyerror("out of memory\n");
+											YYABORT;
+										}
 									}
 		| rve_un_op %prec NOT rval_expr	{$$=mk_rve1($1, $2); }
 		| INTCAST rval_expr				{$$=mk_rve1(RVE_INT_OP, $2); }
@@ -2290,18 +2291,18 @@ rval_expr: rval						{ $$=$1;
 		| rve_un_op %prec NOT error		{ $$=0; yyerror("bad expression"); }
 		| INTCAST error					{ $$=0; yyerror("bad expression"); }
 		| STRCAST error					{ $$=0; yyerror("bad expression"); }
-		| rval_expr PLUS error			{ yyerror("bad expression"); }
-		| rval_expr MINUS error			{ yyerror("bad expression"); }
-		| rval_expr STAR error			{ yyerror("bad expression"); }
-		| rval_expr SLASH error			{ yyerror("bad expression"); }
-		| rval_expr BIN_OR error		{ yyerror("bad expression"); }
-		| rval_expr BIN_AND error		{ yyerror("bad expression"); }
+		| rval_expr PLUS error			{ $$=0; yyerror("bad expression"); }
+		| rval_expr MINUS error			{ $$=0; yyerror("bad expression"); }
+		| rval_expr STAR error			{ $$=0; yyerror("bad expression"); }
+		| rval_expr SLASH error			{ $$=0; yyerror("bad expression"); }
+		| rval_expr BIN_OR error		{ $$=0; yyerror("bad expression"); }
+		| rval_expr BIN_AND error		{ $$=0; yyerror("bad expression"); }
 		| rval_expr rve_cmpop %prec GT error
-			{ yyerror("bad expression"); }
+			{ $$=0; yyerror("bad expression"); }
 		| rval_expr rve_equalop %prec EQUAL_T error
-			{ yyerror("bad expression"); }
-		| rval_expr LOG_AND error		{ yyerror("bad expression"); }
-		| rval_expr LOG_OR error		{ yyerror("bad expression"); }
+			{ $$=0; yyerror("bad expression"); }
+		| rval_expr LOG_AND error		{ $$=0; yyerror("bad expression"); }
+		| rval_expr LOG_OR error		{ $$=0; yyerror("bad expression"); }
 		| STRLEN LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 		| STREMPTY LPAREN error RPAREN	{ $$=0; yyerror("bad expression"); }
 		| DEFINED error					{ $$=0; yyerror("bad expression"); }
@@ -2915,6 +2916,8 @@ static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1)
 		yyerror_at(&rve1->fpos, "bad expression: type mismatch"
 					" (%s instead of %s)", rval_type_name(bad_t),
 					rval_type_name(exp_t));
+		rve_destroy(ret);
+		ret=0;
 	}
 	return ret;
 }
@@ -2947,6 +2950,8 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 						bad_rve->fpos.s_line, bad_rve->fpos.s_col);
 		else
 			yyerror("BUG: unexpected null \"bad\" expression\n");
+		rve_destroy(ret);
+		ret=0;
 	}
 	return ret;
 }
