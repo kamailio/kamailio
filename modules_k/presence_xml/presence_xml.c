@@ -87,7 +87,7 @@ int integrated_xcap_server= 0;
 xcap_serv_t* xs_list= NULL;
 int disable_presence = 0;
 int disable_winfo    = 0;
-int disable_bla      = 0;
+int disable_bla      = 1;
 
 /* SL bind */
 struct sl_binds slb;

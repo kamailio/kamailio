@@ -163,7 +163,7 @@ modparam("presence_xml", "disable_winfo", 1)
 		Set this parameter to disable the handling of the "dialog;sla" event.
 		</para>
 		<para>
-		<emphasis>Default value: <quote>0</quote>.
+		<emphasis>Default value: <quote>1</quote> (0 - enabled, 1 - disabled).
 		</emphasis>
 		</para>
 		<example>
