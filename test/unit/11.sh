@@ -31,9 +31,9 @@ fi ;
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"$SR_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -43,10 +43,8 @@ sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &
 sipsak -U -C sip:foobar1@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
 ret=$?
 
-cd ../scripts
-
 if [ "$ret" -eq 0 ]; then
-	./$CTL ul show | grep "AOR:: 49721123456789" &> /dev/null
+	$CTL ul show | grep "AOR:: 49721123456789" &> /dev/null
 	ret=$?
 fi;
 
@@ -106,7 +104,7 @@ if [ "$ret" -eq 0 ]; then
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	./$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
+	$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ]; then
 		ret=1
@@ -160,7 +158,7 @@ fi;
 $KILL
 
 # restart to test preload_udomain functionality
-../$BIN -w . -f ../test/$CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -173,7 +171,7 @@ fi;
 
 # check if the methods value is correct
 if [ "$ret" -eq 0 ]; then
-	./$CTL ul show | grep "Methods:: 4294967295" &> /dev/null
+	$CTL ul show | grep "Methods:: 4294967295" &> /dev/null
 	ret=$?
 fi;
 
@@ -181,8 +179,6 @@ fi;
 $MYSQL "delete from location where username like '49721123456789%';"
 
 $KILL
-
-cd ../test
 
 mv $CFG.bak $CFG
 

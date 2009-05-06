@@ -35,7 +35,7 @@ NR=50
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"$SR_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
 COUNTER=0
@@ -44,7 +44,7 @@ while [  $COUNTER -lt $NR ]; do
 	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___');"
 done
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

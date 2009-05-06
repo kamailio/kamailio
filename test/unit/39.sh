@@ -36,7 +36,7 @@ NR=25
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
+echo "loadmodule \"$SR_DIR/modules_k/db_unixodbc/db_unixodbc.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://openser:openserrw@localhost/openser\")" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
@@ -49,7 +49,7 @@ while [  $COUNTER -lt $NR ]; do
 	CNT=$(($CNT+10))
 done
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 2

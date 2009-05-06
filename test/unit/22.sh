@@ -30,10 +30,10 @@ fi ;
 CFG=11.cfg
 
 cp $CFG $CFG.tmp
-echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"$SR_DIR/modules/db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -41,10 +41,8 @@ sleep 1
 sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
 ret=$?
 
-cd ../scripts
-
 if [ "$ret" -eq 0 ]; then
-	./$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
+	$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
 fi;
 
@@ -61,7 +59,7 @@ if [ "$ret" -eq 0 ]; then
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	./$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
+	$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ]; then
 		ret=1
@@ -85,7 +83,7 @@ fi;
 $KILL
 
 # restart to test preload_udomain functionality
-../$BIN -w . -f ../test/$CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -98,7 +96,7 @@ fi;
 
 # check if the methods value is correct
 if [ "$ret" -eq 0 ]; then
-	./$CTL ul show | grep "Methods:: 4294967295" &> /dev/null
+	$CTL ul show | grep "Methods:: 4294967295" &> /dev/null
 	ret=$?
 fi;
 
@@ -106,7 +104,6 @@ $KILL
 
 $PSQL "delete from location where username like '49721123456789%';"
 
-cd ../test
 mv $CFG.tmp $CFG
 
 exit $ret
