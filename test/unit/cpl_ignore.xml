@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cpl>
+  <incoming>
+    <reject status="400" reason="Busy" />
+  </incoming>
+</cpl>

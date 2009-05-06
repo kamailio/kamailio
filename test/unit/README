@@ -1,0 +1,12 @@
+This directory contains some small "smoke tests", that should assure that
+basic functionality of the server work as required. This tests should consists
+of one shell script and a config file if needed. They should not need much time
+for execution, to allow the run of the complete test suite in a few seconds.
+All test scripts must be self-contained, should not have external dependencies
+and must clean up after they are run. The second line in each scripts should
+contain a small comment that describe the task of the test, it should not
+output any messages on successful runs.
+
+This tests should (in the current state) only run by developers who know
+what they do. They could delete your database, produce core dumps that fill
+your harddisk or do other nasty things..

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<scenario name="subscribe_notify__presence_scenario">
+
+    <!-- Send SUBSCRIBE for presence  and receive NOTIFY message -->
+
+    <send retrans="1000">
+    <![CDATA[
+
+
+SUBSCRIBE sip:[field2]@[field1] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Max-Forwards: 70
+Contact: sip:[field0]@[local_ip]:[local_port]
+To: <sip:[field2]@[field1]>
+From: "[field0]"<sip:[field0]@[field1]>;tag=[call_number]
+Call-ID: [call_id]
+CSeq: 1 SUBSCRIBE
+Expires: 3600
+Accept: multipart/related, application/rlmi+xml, application/pidf+xml
+Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO
+User-Agent: sipp
+Event: presence
+Content-Length: 0
+
+    ]]>
+  </send>
+
+  <recv response="202" rtd="true">
+  </recv>
+
+  <recv request="NOTIFY">
+  </recv>
+
+  <send crlf="true">
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      User-Agent: sipp
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+
