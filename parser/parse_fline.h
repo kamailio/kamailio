@@ -62,6 +62,8 @@
 #define OPTIONS_LEN 7
 #define PRACK_LEN 5
 #define UPDATE_LEN 6
+#define REFER_LEN 5
+#define PUBLISH_LEN 7
 
 struct msg_start {
 	int type;					/* Type of the Message - Request/Response */
