@@ -298,6 +298,50 @@ static char* get_proto_name(unsigned short proto)
 	}
 }
 
+/** Convert socket to its textual representation.
+ *
+ * This function converts the transport protocol, the IP address and the port
+ * number in a comma delimited string of form proto:ip:port. The resulting
+ * string is NOT zero terminated
+ *
+ * @param s is a pointer to the destination memory buffer
+ * @param len is a pointer to an integer variable. Initially the variable
+ *        should contain the size of the buffer in s. The value of the variable
+ *        will be changed to the length of the resulting string on success and
+ *        to the desired size of the destination buffer if it is too small
+ * @param si is a pointer to the socket_info structure to be printed
+ * @return -1 on error and 0 on success
+ */
+int socket2str(char* s, int* len, struct socket_info* si)
+{
+	str proto;
+	int l;
+	
+	proto.s = get_proto_name(si->proto);
+	proto.len = strlen(proto.s);
+	
+	l = proto.len + si->address_str.len + si->port_no_str.len + 2;
+	
+	if (*len < l) {
+		ERR("socket2str: Destionation buffer too short\n");
+		*len = l;
+		return -1;
+	}
+	
+	memcpy(s, proto.s, proto.len);
+	s += proto.len;
+	*s = ':'; s++;
+	memcpy(s, si->address_str.s, si->address_str.len);
+	s += si->address_str.len;
+	*s = ':'; s++;
+	memcpy(s, si->port_no_str.s, si->port_no_str.len);
+	s += si->port_no_str.len;
+
+	*len = l;
+	return 0;
+}
+
+
 
 /* Fill si->sock_str with string representing the socket_info structure,
  * format of the string is 'proto:address:port'. Returns 0 on success and
@@ -305,33 +349,20 @@ static char* get_proto_name(unsigned short proto)
  */
 static int fix_sock_str(struct socket_info* si)
 {
-	char* p;
-	str proto;
+	int len = MAX_SOCKET_STR;
 
 	if (si->sock_str.s) pkg_free(si->sock_str.s);
 	
-	proto.s = get_proto_name(si->proto);
-	proto.len = strlen(proto.s);
-	
-	si->sock_str.len = proto.len + si->address_str.len + 
-		si->port_no_str.len + 2;
-	
-	si->sock_str.s = pkg_malloc(si->sock_str.len + 1);
+	si->sock_str.s = pkg_malloc(len + 1);
 	if (si->sock_str.s == NULL) {
-		LOG(L_ERR, "fix_sock_str: No pkg memory left\n");
+		ERR("fix_sock_str: No memory left\n");
 		return -1;
 	}
-	p = si->sock_str.s;
-	memcpy(p, proto.s, proto.len);
-	p += proto.len;
-	*p = ':'; p++;
-	memcpy(p, si->address_str.s, si->address_str.len);
-	p += si->address_str.len;
-	*p = ':'; p++;
-	memcpy(p, si->port_no_str.s, si->port_no_str.len);
-	p += si->port_no_str.len;
-	*p = '\0';
-
+	if (socket2str(si->sock_str.s, &len, si) < 0) {
+		BUG("fix_sock_str: Error in socket2str\n");
+		return -1;
+	}
+	si->sock_str.s[len] = '\0';
 	return 0;
 }
 

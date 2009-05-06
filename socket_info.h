@@ -43,6 +43,13 @@
 #include "dprint.h"
 #include "globals.h"
 
+/* This macro evaluates to the maximum length of string buffer needed to print
+ * the text description of any socket, not counting the terminating zero added
+ * by socket2str */
+#define MAX_SOCKET_STR (sizeof("unknown") - 1 + IP_ADDR_MAX_STR_SIZE + \
+	INT2STR_MAX_LEN + 2)
+
+int socket2str(char* s, int* len, struct socket_info* si);
 
 
 /* struct socket_info is defined in ip_addr.h */
