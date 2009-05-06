@@ -35,11 +35,11 @@ cp $CFG $CFG.bak
 
 touch dispatcher.list
 
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")" >> $CFG
-
+##echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
+##echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")" >> $CFG
+cat $CFG > foobar
 # start
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
