@@ -1,6 +1,11 @@
+# all database modules
 DB_ALL_MOD="acc|alias_db|auth_db|avpops|dialog|dialplan|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist"
-CTLRC="kamctlrc"
-CTL="kamctl"
-DBCTL="kamdbctl"
-BIN="kamailio"
-KILL="killall -15 kamailio"
+# root directory relative to tests
+SR_DIR="../.."
+CTLRC="$SR_DIR/scripts/kamctlrc"
+CTL="$SR_DIR/scripts/kamctl"
+DBCTL="$SR_DIR/scripts/kamdbctl"
+BIN="$SR_DIR/ser"
+KILL="killall -15 $BIN"
+# test directory relative to root
+TEST_DIR="test/unit"

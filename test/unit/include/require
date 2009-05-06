@@ -16,8 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+
 function check_kamailio() {
-	if ! (test -e ../kamailio) ; then
+	if ! (test -e $BIN) ; then
 		echo "kamailio not found, not run"
 		return -1
 	fi;
@@ -30,8 +32,11 @@ function check_module() {
 		return -1
 	fi
 
-	if ! (test -e ../modules/$1/$1.so) ; then
-		echo "modules/$1/$1.so not found, not run"
+	if ! (test -e $SR_DIR/modules_k/$1/$1.so) ; then
+		echo "$SR_DIR/modules_k/$1/$1.so not found, try $SR_DIR/modules"
+	fi;
+	if ! (test -e $SR_DIR/modules/$1/$1.so) ; then
+		echo "$SR_DIR/modules/$1/$1.so not found, not run"
 		return -1
 	fi;
 	return 0
