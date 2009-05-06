@@ -100,6 +100,9 @@ static int ds_ping_interval = 0;
 int ds_probing_mode  = 0;
 int ds_append_branch = 1;
 
+/* tm */
+struct tm_binds tmb;
+
 /*db */
 str ds_db_url            = {NULL, 0};
 str ds_set_id_col        = str_init(DS_SET_ID_COL);
