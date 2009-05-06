@@ -34,6 +34,8 @@ function check_module() {
 
 	if ! (test -e $SR_DIR/modules_k/$1/$1.so) ; then
 		echo "$SR_DIR/modules_k/$1/$1.so not found, try $SR_DIR/modules"
+	else
+		return 0
 	fi;
 	if ! (test -e $SR_DIR/modules/$1/$1.so) ; then
 		echo "$SR_DIR/modules/$1/$1.so not found, not run"
