@@ -29,23 +29,20 @@ if ! (check_kamailio); then
 fi ;
 
 # setup config
-echo -e "loadmodule \"../modules/mi_fifo/mi_fifo.so\"" > $CFG
+echo -e "loadmodule \"$SR_DIR/modules_k/mi_fifo/mi_fifo.so\"" > $CFG
+echo -e "loadmodule \"$SR_DIR/modules_k/kex/kex.so\"" >> $CFG
 echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
 
 
         
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
-
-cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
 	sleep 1
-	./$CTL ps > /dev/null
+	$CTL version > /dev/null
 	ret=$?
 fi ;
-
-cd ../test
 
 $KILL
 

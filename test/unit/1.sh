@@ -24,9 +24,9 @@ source include/common
 CFG=1.cfg
 
 # setup config
-echo -e "debug=3" > $CFG
+echo -e "debug=2" > $CFG
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
