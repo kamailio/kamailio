@@ -133,7 +133,9 @@ int daemonize(char*  name)
 	if (pid_file!=0){
 		
 		if ((pid_stream=fopen(pid_file, "r"))!=NULL){
-			fscanf(pid_stream, "%d", &p);
+			if (fscanf(pid_stream, "%d", &p) < 0) {
+				LM_WARN("could not parse pid file %s\n", pid_file);
+			}
 			fclose(pid_stream);
 			if (p==-1){
 				LOG(L_CRIT, "pid file %s exists, but doesn't contain a valid"
@@ -161,7 +163,9 @@ int daemonize(char*  name)
 
 	if (pgid_file!=0){
 		if ((pid_stream=fopen(pgid_file, "r"))!=NULL){
-			fscanf(pid_stream, "%d", &p);
+			if (fscanf(pid_stream, "%d", &p) < 0) {
+				 LM_WARN("could not parse pgid file %s\n", pgid_file);
+			}
 			fclose(pid_stream);
 			if (p==-1){
 				LOG(L_CRIT, "pgid file %s exists, but doesn't contain a valid"
