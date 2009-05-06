@@ -234,7 +234,7 @@ share_prefix = $(basedir)$(prefix)
 # target dirs for various stuff
 cfg_target = $(prefix)/$(cfg_dir)
 bin_target = $(prefix)/$(bin_dir)
-modules_target = $(prefix)/$(modules_dir)
+#modules_target = $(prefix)/$(modules_dir)
 lib_target = $(prefix)/$(lib_dir)
 doc_target = $(prefix)/$(doc_dir)
 
@@ -1709,7 +1709,7 @@ saved_chg_vars:=\
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
 		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
 		share_prefix share_dir lib_prefix lib_dir \
-		cfg_target lib_target modules_target
+		cfg_target lib_target
 
 
 #export relevant variables to the sub-makes

@@ -382,7 +382,8 @@ nullstring=
 space=$(nullstring) $(nullstring)
 
 modules_search_path=$(subst $(space),:,$(strip\
-						$(addprefix $(modules_target),$(modules_dirs))))
+						$(foreach m,$(modules_dirs),$($(m)_target))))
+		#				$(addprefix $(modules_target),$(modules_dirs))))
 
 main.o: DEFS+=-DMODS_DIR='"$(modules_search_path)"'
 
@@ -455,6 +456,7 @@ print-modules:
 define MODULES_RULES_template
 
 $(1)_dst=$(modules_prefix)/$(modules_dir)$(1)
+$(1)_target=$(prefix)/$(modules_dir)$(1)
 
 .PHONY: $(1)
 $(1): modules.lst
@@ -738,7 +740,8 @@ $(man_prefix)/$(man_dir)/man5:
 
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
-		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
+		sed $(foreach m,$(modules_dirs),\
+				-e "s#/usr/[^:]*lib/ser/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 			< etc/ser-basic.cfg > $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
 		chmod 644 $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
@@ -746,7 +749,8 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 			mv -f $(cfg_prefix)/$(cfg_dir)ser.cfg.sample \
 				$(cfg_prefix)/$(cfg_dir)ser.cfg; \
 		fi
-		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
+		sed $(foreach m,$(modules_dirs),\
+			-e "s#/usr/[^:]*lib/ser/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 			< etc/ser-oob.cfg \
 			> $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
 		chmod 644 $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
@@ -850,13 +854,15 @@ install-doc: $(doc_prefix)/$(doc_dir) install-every-module-doc
 install-ser-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
-			-e "s#/usr/lib/ser/modules/#$(modules_target)#g" \
+			$(foreach m,$(modules_dirs),\
+				-e "s#/usr/lib/ser/$(m)\([^_]\)#$($(m)_target)\1#g") \
 			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
 			< ser.8 >  $(man_prefix)/$(man_dir)/man8/ser.8
 		chmod 644  $(man_prefix)/$(man_dir)/man8/ser.8
 		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
-			-e "s#/usr/lib/ser/modules/#$(modules_target)#g" \
+			$(foreach m,$(modules_dirs),\
+				-e "s#/usr/lib/ser/$(m)\([^_]\)#$($(m)_target)\1#g") \
 			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
 			< ser.cfg.5 >  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
 		chmod 644  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
