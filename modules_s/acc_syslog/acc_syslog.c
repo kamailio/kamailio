@@ -250,7 +250,7 @@ static inline int skip_cancel(struct sip_msg *msg)
     } while(0);
 
 
-#define append_str(buf, str)                  \
+#define str_append_str(buf, str)			  \
     do {                                      \
         memcpy((buf).s, (str).s, (str).len);  \
         (buf).s += (str).len;                 \
@@ -659,9 +659,9 @@ static int log_request(struct sip_msg* rq, str* ouri, struct hdr_field* to, str*
 
 	for (i = 0; i < attr_cnt; i++) {
 		append(buf, A_SEPARATOR);
-		append_str(buf, atr_arr[i]);
+		str_append_str(buf, atr_arr[i]);
 		append(buf, A_EQ);
-		append_str(buf, *(val_arr[i]))
+		str_append_str(buf, *(val_arr[i]))
 	}
 
 	     /* terminating text */
@@ -671,7 +671,7 @@ static int log_request(struct sip_msg* rq, str* ouri, struct hdr_field* to, str*
 	buf.s = log_msg;
 	buf.len = len;
 	append(buf, ACC);
-	append_str(buf, *txt);
+	str_append_str(buf, *txt);
 
 	LOG(log_level, "%s", log_msg);
 	pkg_free(log_msg);

@@ -149,6 +149,18 @@
 #endif
 
 
+#define append_str(_dest,_src,_len)				\
+	do{											\
+		memcpy( (_dest) , (_src) , (_len) );	\
+		(_dest) += (_len) ;						\
+	}while(0);									\
+
+	
+/*! append _c char to _dest string */
+#define append_chr(_dest,_c) \
+	*((_dest)++) = _c;
+
+
 /* links a value to a msgid */
 struct msgid_var{
 	union{

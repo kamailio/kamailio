@@ -167,37 +167,37 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	p = cancel_buf;
 
-	append_mem_block( p, method, method_len );
-	append_mem_block( p, " ", 1 );
-	append_str( p, Trans->uac[branch].uri);
-	append_mem_block( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
+	append_str( p, method, method_len );
+	append_str( p, " ", 1 );
+	append_str( p, Trans->uac[branch].uri.s, Trans->uac[branch].uri.len);
+	append_str( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
 
 	/* insert our via */
-	append_mem_block(p,via,via_len);
+	append_str(p,via,via_len);
 
 	/*other headers*/
-	append_str( p, Trans->from );
-	append_str( p, Trans->callid );
-	append_str( p, *to );
+	append_str( p, Trans->from.s, Trans->from.len );
+	append_str( p, Trans->callid.s, Trans->callid.len );
+	append_str( p, to->s, to->len );
 
-	append_str( p, Trans->cseq_n );
-	append_mem_block( p, " ", 1 );
-	append_mem_block( p, method, method_len );
-	append_mem_block( p, CRLF, CRLF_LEN );
+	append_str( p, Trans->cseq_n.s, Trans->cseq_n.len );
+	append_str( p, " ", 1 );
+	append_str( p, method, method_len );
+	append_str( p, CRLF, CRLF_LEN );
 
 	if (!is_local(Trans))  {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			if(hdr->type==HDR_ROUTE_T) {
-				append_mem_block(p, hdr->name.s, hdr->len );
+				append_str(p, hdr->name.s, hdr->len );
 			}
 	}
 
 	/* User Agent header */
 	if (server_signature) {
-		append_mem_block(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+		append_str(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
 	}
 	/* Content Length, EoM */
-	append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF ,
+	append_str(p, CONTENT_LENGTH "0" CRLF CRLF ,
 		CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
 	*p=0;
 
@@ -253,14 +253,14 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	d = cancel_buf;
 
 	/* method name + space */
-	append_mem_block(d, method, method_len);
+	append_str(d, method, method_len);
 	*d = ' ';
 	d++;
 	/* skip "INVITE " and copy the rest of the line including CRLF */
 	s += 7;
 	s1 = s;
 	s = eat_line(s, invite_buf_end - s);
-	append_mem_block(d, s1, s - s1);
+	append_str(d, s1, s - s1);
 
 	/* check every header field name,
 	we must exclude and modify some of the headers */
@@ -282,9 +282,9 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				while ((s < invite_buf_end)
 					&& ((*s == ':') || (*s == ' ') || (*s == '\t') || ((*s >= '0') && (*s <= '9')))
 					) s++;
-				append_mem_block(d, s1, s - s1);
-				append_mem_block(d, method, method_len);
-				append_mem_block(d, CRLF, CRLF_LEN);
+				append_str(d, s1, s - s1);
+				append_str(d, method, method_len);
+				append_str(d, CRLF, CRLF_LEN);
 				s = lw_next_line(s, invite_buf_end);
 				break;
 
@@ -292,7 +292,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				s = lw_next_line(s, invite_buf_end);
 				if (first_via) {
 					/* copy hf */
-					append_mem_block(d, s1, s - s1);
+					append_str(d, s1, s - s1);
 					first_via = 0;
 				} /* else skip this line, we need olny the first via */
 				break;
@@ -301,10 +301,10 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				if (to_len == 0) {
 					/* there is no To tag required, just copy paste the header */
 					s = lw_next_line(s, invite_buf_end);
-					append_mem_block(d, s1, s - s1);
+					append_str(d, s1, s - s1);
 				} else {
 					/* use the given To HF instead of the original one */
-					append_mem_block(d, to->s, to->len);
+					append_str(d, to->s, to->len);
 					/* move the pointer to the next line */
 					s = lw_next_line(s, invite_buf_end);
 				}
@@ -316,7 +316,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 			case HDR_MAXFORWARDS_T:
 				/* copy hf */
 				s = lw_next_line(s, invite_buf_end);
-				append_mem_block(d, s1, s - s1);
+				append_str(d, s1, s - s1);
 				break;
 
 			case HDR_REQUIRE_T:
@@ -327,15 +327,15 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 
 			case HDR_CONTENTLENGTH_T:
 				/* copy hf name with 0 value */
-				append_mem_block(d, s1, s - s1);
-				append_mem_block(d, ": 0" CRLF, 3 + CRLF_LEN);
+				append_str(d, s1, s - s1);
+				append_str(d, ": 0" CRLF, 3 + CRLF_LEN);
 				/* move the pointer to the next line */
 				s = lw_next_line(s, invite_buf_end);
 				break;
 
 			case HDR_EOH_T:
 				/* end of SIP message found */
-				append_mem_block(d, CRLF, CRLF_LEN);
+				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;
 				/* LOG(L_DBG, "DBG: build_local: %.*s\n", *len, cancel_buf); */
 				return cancel_buf;
@@ -349,7 +349,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 						cfg_get(tm, tm_cfg, ac_extra_hdrs).s,
 						cfg_get(tm, tm_cfg, ac_extra_hdrs).len) == 0)
 				) {
-					append_mem_block(d, s1, s - s1);
+					append_str(d, s1, s - s1);
 				} /* else skip this line */
 				break;
 		}
@@ -444,7 +444,7 @@ static inline char* print_rs(char* p, struct rte* list, str* contact)
 	if (contact) {
 		if (list) memapp(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
 		*p++ = '<';
-		append_str(p, *contact);
+		append_str(p, contact->s, contact->len);
 		*p++ = '>';
 	}
 	
@@ -1054,45 +1054,45 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	}
 	p = req_buf;
 	
-	append_mem_block( p, ACK, ACK_LEN );
-	append_mem_block( p, " ", 1 );
-	append_str(p, ruri);
-	append_mem_block( p, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
+	append_str( p, ACK, ACK_LEN );
+	append_str( p, " ", 1 );
+	append_str(p, ruri.s, ruri.len);
+	append_str( p, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
   	 
 	     /* insert our via */
-	append_mem_block(p, via, via_len);
+	append_str(p, via, via_len);
 	
 	     /*other headers*/
-	append_str(p, Trans->from);
-	append_str(p, Trans->callid);
-	append_str(p, *to);
+	append_str(p, Trans->from.s, Trans->from.len);
+	append_str(p, Trans->callid.s, Trans->callid.len);
+	append_str(p, to->s, to->len);
 	
-	append_str(p, Trans->cseq_n);
-	append_mem_block( p, " ", 1 );
-	append_mem_block( p, ACK, ACK_LEN);
-	append_mem_block(p, CRLF, CRLF_LEN);
+	append_str(p, Trans->cseq_n.s, Trans->cseq_n.len);
+	append_str( p, " ", 1 );
+	append_str( p, ACK, ACK_LEN);
+	append_str(p, CRLF, CRLF_LEN);
 	
 	     /* Routeset */
 	p = print_rs(p, list, cont);
 	
 	     /* User Agent header */
 	if (server_signature) {
-		append_mem_block(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+		append_str(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
 	}
 	
 	/* extra headers */
 	if (hdrs)
-		append_mem_block(p, hdrs->s, hdrs->len);
+		append_str(p, hdrs->s, hdrs->len);
 	
 	     /* Content Length, EoH, (body) */
 	if (body) {
-		append_mem_block(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		append_mem_block(p, body_len.s, body_len.len);
-		append_mem_block(p, /*end crr. header*/CRLF /*EoH*/CRLF, CRLF_LEN + 
+		append_str(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		append_str(p, body_len.s, body_len.len);
+		append_str(p, /*end crr. header*/CRLF /*EoH*/CRLF, CRLF_LEN + 
 				CRLF_LEN);
-		append_mem_block(p, body->s, body->len);
+		append_str(p, body->s, body->len);
 	} else {
-		append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF, 
+		append_str(p, CONTENT_LENGTH "0" CRLF CRLF, 
 				CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
 	}
 

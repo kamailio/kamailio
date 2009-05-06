@@ -86,22 +86,6 @@ extern int_str contacts_avp;
 #define FR_INV_TIMER_AVP  "callee_fr_inv_timer"
 
 
-#define append_str(_dest,_str) \
-	do{ \
-		memcpy( (_dest) , (_str).s , (_str).len );\
-		(_dest) += (_str).len ;\
-	}while(0);
-
-#define  append_mem_block(_d,_s,_len) \
-		do{\
-			memcpy((_d),(_s),(_len));\
-			(_d) += (_len);\
-		}while(0);
-
-#define append_chr(_dest,_c) \
-	*((_dest)++) = _c;
-
-
 /* send a private buffer: utilize a retransmission structure
    but take a separate buffer not referred by it; healthy
    for reducing time spend in REPLIES locks

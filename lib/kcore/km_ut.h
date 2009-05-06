@@ -41,17 +41,6 @@
 #endif
 
 
-#define append_str(_dest,_src,_len)				\
-	do{											\
-		memcpy( (_dest) , (_src) , (_len) );	\
-		(_dest) += (_len) ;						\
-	}while(0);									\
-	
-/*! append _c char to _dest string */
-#define append_chr(_dest,_c) \
-	*((_dest)++) = _c;
-
-
 /* INTeger-TO-Buffer-STRing : convers an unsigned long to a string 
  * IMPORTANT: the provided buffer must be at least INT2STR_MAX_LEN size !! */
 static inline char* int2bstr(unsigned long l, char *s, int* len)

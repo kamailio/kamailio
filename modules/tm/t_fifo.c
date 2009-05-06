@@ -105,7 +105,7 @@
 			append_chr(s,','); len++;\
 		}\
 		append_chr(s,'<');len++;\
-		append_mem_block(s,rs,rlen);\
+		append_str(s,rs,rlen);\
 		len += rlen; \
 		append_chr(s,'>');len++;\
 	} while(0)
@@ -824,7 +824,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		    "while copying optional header\n");
 		goto error;
 	}
-	append_mem_block(s,"P-MsgFlags: ",12);
+	append_str(s,"P-MsgFlags: ",12);
 	l = APPEND_BUFFER_MAX - (12+1); /* include trailing `\n'*/
 
 	if (int2reverse_hex(&s, &l, (int)msg->msg_flags) == -1) {
@@ -848,8 +848,8 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		    "copying command name\n");
 		goto error;
 	}
-	append_mem_block(s,"sip_request.",12);
-	append_str(s,twi->action);
+	append_str(s,"sip_request.",12);
+	append_str(s,twi->action.s, twi->action.len);
 	eol_line_len(1) = s - (char*)eol_line_s(1);
 
 	eol_line(2,REQ_LINE(msg).method);     /* method type */

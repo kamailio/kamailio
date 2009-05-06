@@ -143,12 +143,6 @@
 #include "forward.h"
 
 
-#define append_str(_dest,_src,_len) \
-	do{\
-		memcpy( (_dest) , (_src) , (_len) );\
-		(_dest) += (_len) ;\
-	}while(0);
-
 #define append_str_trans(_dest,_src,_len,_msg) \
 	append_str( (_dest), (_src), (_len) );
 

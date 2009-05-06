@@ -83,11 +83,11 @@ static inline int encode_branch_info(str *info, struct contact *con)
 		return 0;
     }
     at = info->s;
-    append_str(at, con->uri);
+    append_str(at, con->uri.s, con->uri.len);
     append_chr(at, '\n');
-    append_str(at, con->dst_uri);
+    append_str(at, con->dst_uri.s, con->dst_uri.len);
     append_chr(at, '\n');
-    append_str(at, con->path);
+    append_str(at, con->path.s, con->path.len);
     append_chr(at, '\n');
     if (con->sock) {
 		len = MAX_SOCKET_STR;
@@ -101,7 +101,7 @@ static inline int encode_branch_info(str *info, struct contact *con)
     at = at + len;
     append_chr(at, '\n');
     s = int2str(con->flags, &len);
-    append_mem_block(at, s, len);
+    append_str(at, s, len);
     append_chr(at, '\n');
     info->len = at - info->s + 1;
 
