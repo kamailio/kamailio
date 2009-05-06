@@ -334,7 +334,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		goto unsupported_event;
 
 	/* search event in the list */
-	event= search_event((event_t*)msg->event->type);
+	event= search_event((event_t*)msg->event->parsed);
 	if(event== NULL)
 	{
 		goto unsupported_event;
