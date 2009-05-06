@@ -561,6 +561,7 @@ static int case_check_default(struct case_stms* stms);
 %type <strval>	route_name;
 %type <intval> avpflag_oper
 %type <intval> rve_un_op
+%type <strval> cfg_var_id
 /* %type <intval> rve_op */
 
 /*%type <route_el> rules;
@@ -1361,29 +1362,37 @@ assign_stm:
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
+	
+cfg_var_id: ID 
+	| DEFAULT { $$="default" ; } /*needed to allow default as cfg var. name*/
+	;
+	
 cfg_var:
-	ID DOT ID EQUAL NUMBER {
+	cfg_var_id DOT cfg_var_id EQUAL NUMBER {
 		if (cfg_declare_int($1, $3, $5, 0, 0, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| ID DOT ID EQUAL STRING {
+	| cfg_var_id DOT cfg_var_id EQUAL STRING {
 		if (cfg_declare_str($1, $3, $5, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| ID DOT ID EQUAL NUMBER CFG_DESCRIPTION STRING {
+	| cfg_var_id DOT cfg_var_id EQUAL NUMBER CFG_DESCRIPTION STRING {
 		if (cfg_declare_int($1, $3, $5, 0, 0, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| ID DOT ID EQUAL STRING CFG_DESCRIPTION STRING {
+	| cfg_var_id DOT cfg_var_id EQUAL STRING CFG_DESCRIPTION STRING {
 		if (cfg_declare_str($1, $3, $5, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}
-	| ID DOT ID EQUAL error { yyerror("number or string expected"); }
+	| cfg_var_id DOT cfg_var_id EQUAL error { 
+		yyerror("number or string expected"); 
+	}
 	;
+
 module_stm:
 	LOADMODULE STRING {
 		DBG("loading module %s\n", $2);
@@ -2010,7 +2019,7 @@ select_param:
 		sel.params[sel.n].v.s.len = strlen($1);
 		sel.n++;
 	}
-	| ID LBRACK NUMBER RBRACK {
+	| ID LBRACK intno RBRACK {
 		if (sel.n >= MAX_SELECT_PARAMS-2) {
 			yyerror("Select identifier too long\n");
 		}
@@ -2071,8 +2080,8 @@ attr_spec:
 attr_mark:
 	ATTR_MARK {
 		s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-		if (!s_attr) { yyerror("No memory left"); }
-		s_attr->type = 0;
+		if (!s_attr) { yyerror("No memory left"); YYABORT; }
+		else s_attr->type = 0;
 	}
 	;
 attr_id:
@@ -2108,6 +2117,17 @@ attr_id_any:
 ;
 attr_id_any_str:
 	attr_id
+	| avp_pvar {
+		if ($1->type==LV_AVP){
+			s_attr = pkg_malloc(sizeof(struct avp_spec));
+			if (!s_attr) { yyerror("No memory left"); YYABORT; }
+			else{
+				*s_attr=$1->lv.avps;
+			}
+		}else
+			$$=0; /* not an avp, a pvar */
+		pkg_free($1);
+	}
 	| STRING {
 		avp_spec_t *avp_spec;
 		str s;
@@ -2266,8 +2286,8 @@ rve_op:		PLUS		{ $$=RVE_PLUS_OP; }
 
 rval_expr: rval						{ $$=$1;
 										if ($$==0){
-											yyerror("out of memory\n");
-											YYABORT;
+											/*yyerror("out of memory\n");*/
+											YYERROR;
 										}
 									}
 		| rve_un_op %prec NOT rval_expr	{$$=mk_rve1($1, $2); }
@@ -2589,6 +2609,13 @@ cmd:
 		if (i_tmp==0) yyerror("avpflag not declared");
 		$$=mk_action(AVPFLAG_OPER_T, 3, AVP_ST, $3, NUMBER_ST, (void*)(long)i_tmp, NUMBER_ST, (void*)$1);
 	}
+	| avpflag_oper LPAREN attr_id_any_str COMMA error RPAREN {
+		$$=0; yyerror("error parsing flag name");
+	}
+	| avpflag_oper LPAREN error COMMA flag_name RPAREN {
+		$$=0; yyerror("error parsing first parameter (avp or string)");
+	}
+	| avpflag_oper LPAREN error RPAREN { $$=0; yyerror("bad parameters"); }
 	| avpflag_oper error { $$=0; yyerror("missing '(' or ')'?"); }
 	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5); }
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
@@ -2765,7 +2792,7 @@ func_params:
 	| func_params error { yyerror("call params error\n"); }
 	;
 func_param:
-        NUMBER {
+        intno {
 		if (mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
 			mod_func_action->val[mod_func_action->val[1].u.number+2].type =
 				NUMBER_ST;
