@@ -42,6 +42,9 @@ core:
       strempty(expr) - returns true if expr evaluates to the empty
                        string (equivalent to expr=="").
     e.g.: if (defined $v && !strempty($v)) $len=strlen($v);
+  - msg:len max_len comparison obsoleted and removed (it did not make any
+    sense, msg:len > max_len was always false, use something like 
+    4096 or 16384 in its place).
   - module search path support: loadpath takes now a list of directories
     separated by ':'. The list is searched in-order. For each directory d
     $d/${module_name}.so and $d/${module_name}/${module_name}.so are tried.

@@ -1,0 +1,115 @@
+# $Id$
+#
+# History:
+# --------
+# 2009-05-06  created by andrei
+
+=============================================================
+= Config migration guide from ser or kamailio to sip-router =
+=============================================================
+
+
+ser 2.1 config migration
+========================
+
+1. Avps, selects and strings in if or other expressions
+
+The most important change is the different way in which avp and select are
+evaluated in boolean expressions (if ()).
+In ser "if ($v){}" or "if (@select){}" were true if the avp or select were
+"defined" and if their value was non-empty (!= "").
+In sip-router this changed: the ifs will be true if the avp or select are
+non-empty and they evaluate to a non-zero number. The catch is that a
+non-numeric string evaluates to 0 (e.g. "abc" evaluates to 0, "123" evaluates
+to 123, "" to 0, "0" to 0).
+Something like "if($v)" should be used only if $v is supposed to have a numeric
+value. "if (@select)" should not be used in general (it's probably not what you
+want).
+
+The equivalent sip-router checks are:
+
+instead of if ($v) use if ($v != "")
+instead of if (!$v) use if ($v == "") or if (strempty($v)).
+instead of if (@select) use if (@select != "")
+instead of if (!@select) use if (@select == "") or if (strempty(@select)).
+
+If the test is for value existence, then if ($v) can be replaced with
+ if (defined $v).
+
+E.g.:
+replace
+	if (! $f.did)
+with
+	if (strempty($f.did))
+
+replace
+	if (method=="INVITE" && !@to.tag)
+with
+	if (method=="INVITE" && strempty(@to.tag))
+
+replace
+	if ($f.did && ! $t.did)
+with
+	if ($f.did != ""  && $t.did == "")
+
+replace
+	if (@to.tag)
+with
+	if (@to.tag != "")
+
+
+2. Module path
+
+While in ser there was only a single directory holding the modules, now there
+are 3: modules (for common modules), modules_s (for ser modules) and modules_k
+(for kamailio modules).
+The easiest way to migrate a ser config is to add:
+
+	loadpath "/usr/lib/ser/modules:/usr/lib/ser/modules_s"
+
+at the beginning (before any loadmodule command).
+This will set the module search path to first look into the common modules and
+if not found in the ser modules.
+
+Make sure that all the loadmodule commands do not include the path to the
+module or the .so extension (or else they won't make use of the loadpath).
+E.g.:
+replace
+	loadmodule "/usr/lib/ser/modules/tm.so"
+with
+	loadmodule "tm"
+
+
+3. Module names
+
+Some of the modules changed their name (usually after being merged with the
+kamailio ones).
+The most common changes are mysql -> db_mysql and postgres -> db_postgres.
+
+E.g.:
+replace
+	loadmodule "mysql"
+with
+	loadmodule "db_mysql"
+
+
+4. msg:len and max_len
+
+max_len was removed. All the comparisons of msg:len with max_len must be
+changed to use a number (e.g. 4096 or 16384) instead of max_len.
+Comparing with max_len didn't make sense anyway since max_len was the size of
+the internal receive buffer on UDP. You could never exceed it, unless you were
+using TCP configured in a non-standard way.
+
+E.g.:
+replace
+	if (msg:len >= max_len)
+with
+	if (msg:len >= 4096)
+
+
+
+kamailio config migration
+=========================
+
+[TODO: probably most of the things from the ser section apply too]
