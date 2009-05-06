@@ -952,6 +952,7 @@ EAT_ABLE	[\ \t\b\r]
 <STRING1>{QUOTES} { count_more(); 
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
+						state=STR_BETWEEN_S;
 						BEGIN(STR_BETWEEN);
 					}
 <STRING2>{TICK}  { count_more(); state=old_state; BEGIN(old_initial);
