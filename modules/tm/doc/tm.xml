@@ -13,10 +13,19 @@
 		    <email>jiri@iptel.org</email>
 		</address>
 	    </author>
+		<author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+	        <email>jh@tutpro.com</email>
+		</author>
 	</authorgroup>
 	<copyright>
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2008</year>
+		<holder>Juha Heinanen</holder>
 	</copyright>
 	<revhistory>
 	    <revision>

@@ -52,6 +52,10 @@
 #define FR_TIME_OUT        30000 /* ms */
 #define INV_FR_TIME_OUT   120000 /* ms */
 
+/*! \brief final response timers to be used for serial forwarding */
+#define INV_FR_TIME_OUT_FIRST 90000 /* ms */
+#define INV_FR_TIME_OUT_NEXT  30000 /* ms */
+
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/
 #define WT_TIME_OUT       5000 /* ms */
@@ -129,6 +133,7 @@ struct cfg_group_tm {
 	unsigned int	tm_blst_methods_lookup;
 	unsigned int	cancel_b_flags;
 	int	reparse_on_dns_failover;
+	unsigned int fr_inv_timeout_next;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;

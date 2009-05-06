@@ -79,18 +79,6 @@
 		(_d) += (_len);\
 	}while(0)
 
-#define  append_mem_block(_d,_s,_len) \
-		do{\
-			memcpy((_d),(_s),(_len));\
-			(_d) += (_len);\
-		}while(0)
-
-#define append_str(_p,_str) \
-	do{  \
-		memcpy((_p), (_str).s, (_str).len); \
-		(_p)+=(_str).len;  \
- 	} while(0)
-
 
 /* Build a local request based on a previous request; main
    customers of this function are local ACK and local CANCEL
@@ -181,7 +169,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	append_mem_block( p, method, method_len );
 	append_mem_block( p, " ", 1 );
-	append_str( p, Trans->uac[branch].uri );
+	append_str( p, Trans->uac[branch].uri);
 	append_mem_block( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
 
 	/* insert our via */

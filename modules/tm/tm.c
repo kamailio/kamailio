@@ -132,6 +132,7 @@
 #include "timer.h"
 #include "t_msgbuilder.h"
 #include "select.h"
+#include "t_serial.h"
 
 MODULE_VERSION
 
@@ -242,6 +243,7 @@ static int t_check_trans(struct sip_msg* msg, char* foo, char* bar);
  * searched for nothing each time a new transaction is created */
 static char *fr_timer_param = 0 /*FR_TIMER_AVP*/;
 static char *fr_inv_timer_param = 0 /*FR_INV_TIMER_AVP*/;
+static char *contacts_avp_param = 0;
 
 static rpc_export_t tm_rpc[];
 
@@ -377,6 +379,10 @@ static cmd_export_t cmds[]={
 	{"t_check_trans",	t_check_trans,				0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
 
+	{"t_load_contacts", t_load_contacts,            0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"t_next_contacts", t_next_contacts,            0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
@@ -454,6 +460,10 @@ static param_export_t params[]={
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
 	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
+
+	{"fr_inv_timer_next",   PARAM_INT, &default_tm_cfg.fr_inv_timeout_next   },
+	{"contacts_avp",        PARAM_STRING, &contacts_avp_param                },
+
 	{0,0,0}
 };
 
@@ -757,8 +767,9 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (init_avp_params( fr_timer_param, fr_inv_timer_param)<0 ){
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
+	if (init_avp_params( fr_timer_param, fr_inv_timer_param,
+						 contacts_avp_param)<0 ){
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to process AVP params\n");
 		return -1;
 	}
 	tm_init = 1;

@@ -76,9 +76,30 @@ struct cell;
 extern int tm_error; /* delayed tm error */
 extern struct msgid_var user_auto_inv_100;
 
+extern int fr_inv_timer_avp_type;
+extern int_str fr_inv_timer_avp;
+extern int contacts_avp_type;
+extern int_str contacts_avp;
+
 /* default names for timer's AVPs  */
 #define FR_TIMER_AVP      "callee_fr_timer"
 #define FR_INV_TIMER_AVP  "callee_fr_inv_timer"
+
+
+#define append_str(_dest,_str) \
+	do{ \
+		memcpy( (_dest) , (_str).s , (_str).len );\
+		(_dest) += (_str).len ;\
+	}while(0);
+
+#define  append_mem_block(_d,_s,_len) \
+		do{\
+			memcpy((_d),(_s),(_len));\
+			(_d) += (_len);\
+		}while(0);
+
+#define append_chr(_dest,_c) \
+	*((_dest)++) = _c;
 
 
 /* send a private buffer: utilize a retransmission structure
@@ -147,7 +168,8 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 /*
  * Parse and fixup the fr_*_timer AVP specs
  */
-int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
+					char *contacts_avp_param);
 
 
 typedef void (*unref_cell_f)(struct cell *t);

@@ -90,6 +90,7 @@ struct cfg_group_tm	default_tm_cfg = {
 			 * for every method except BYE by default */
 	1,	/* cancel_b_method used for e2e and 6xx cancels*/
 	1,	/* reparse_on_dns_failover */
+	INV_FR_TIME_OUT_NEXT
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -179,5 +180,7 @@ cfg_def_t	tm_cfg_def[] = {
 		"if set to 1, the SIP message after a DNS failover is "
 		"constructed from the outgoing message buffer of the failed "
 		"branch instead of from the received request"},
+	{"fr_inv_timer_next",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
+		"The value of fr_inv_timer for subsequent branches during serial forking"},
 	{0, 0, 0, 0, 0, 0}
 };

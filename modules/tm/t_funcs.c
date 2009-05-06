@@ -79,10 +79,14 @@ static int     fr_timer_avp_type = 0;
 static int_str fr_timer_avp = {0};
 static str     fr_timer_str;
 static int     fr_timer_index = 0;
-static int     fr_inv_timer_avp_type = 0;
-static int_str fr_inv_timer_avp = {0};
+int     fr_inv_timer_avp_type = 0;
+int_str fr_inv_timer_avp = {0};
 static str     fr_inv_timer_str;
 static int     fr_inv_timer_index = 0;
+int     contacts_avp_type = 0;
+int_str contacts_avp = {0};
+static str     contacts_avp_str;
+static int     contacts_avp_index = 0;
 
 int tm_error = 0; /* delayed tm error */
 
@@ -370,9 +374,10 @@ done:
 
 /*
  * Initialize parameters containing the ID of
- * AVPs with variable timers
+ * AVPs with various timers
  */
-int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
+					char* contacts_avp_param)
 {
 	if (fr_timer_param && *fr_timer_param) {
 		fr_timer_str.s = fr_timer_param;
@@ -395,6 +400,18 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 			return -1;
 		}
 	}
+
+	if (contacts_avp_param && *contacts_avp_param) {
+		contacts_avp_str.s = contacts_avp_param;
+		contacts_avp_str.len = strlen(contacts_avp_str.s);
+		if (parse_avp_spec( &contacts_avp_str, &contacts_avp_type,
+							&contacts_avp, &contacts_avp_index)<0) {
+			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid contact_avp_params "
+				"AVP specs \"%s\"\n", contacts_avp_param);
+			return -1;
+		}
+	}
+
 	return 0;
 }
 

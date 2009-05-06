@@ -743,4 +743,55 @@ onreply_route["stateless_replies"] {
 	</example>
     </section>
 
+	<section>
+		<title><varname>fr_inv_timer_next</varname> (integer)</title>
+		<para>
+                Value of the Final Response timeout for INVITE
+                transactions to be used during serial forwarding:
+		</para>
+		<para>
+                Function t_next_contacts() sets fr_inv_timer to
+                fr_inv_timer_next value if, after t_next_contacts() is
+                called, there are still lower qvalue contacts available,
+                and to fr_inv_timer value if there are not.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fr_inv_timer_next</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_inv_timer_next", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>contacts_avp</varname> (string)</title>
+		<para>
+                Internal AVP that t_load_contacts() function uses to store
+                contacts of the destination set and that
+                t_next_contacts() function uses to restore those contacts.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "NULL"
+			(t_load_contacts()/t_next_contacts() functions
+			are disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contacts_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "contacts_avp", "$avp(i:25)")
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>

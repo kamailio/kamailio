@@ -1025,4 +1025,83 @@ failure_route[1] {
 	    </programlisting>
 	</example>
     </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_load_contacts()</function>
+		</title>
+		<para>
+                Loads contacts in destination set in increasing qvalue order as
+                values of contacts_avp. If all contacts in the destination set
+                have the same qvalue, t_load_contacts() does not do
+                anything thus 
+                minimizing performance impact of serial forking capability
+                when it is not needed. Returns 1 if loading of contacts
+                succeeded or there was nothing to do. Returns -1 on error (see
+                syslog).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>t_load_contacts</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!t_load_contacts()) {
+        sl_send_reply("500", "Server Internal Error - Cannot load contacts");
+        exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_next_contacts()</function>
+		</title>
+		<para>
+                If transaction does not exist when t_next_contacts() is
+                called, replaces Request-URI with the
+                first contacts_avp value, adds the remaining contacts_avp values
+                with the same qvalue as branches, and destroys those AVPs. It
+                does nothing if there are no contacts_avp values. Returns 1 if
+                there were no errors and -1 if an error occurred (see syslog).
+		</para>
+                <para>
+                If transaction does exist when t_next_contacts() is
+                called, adds the first contacts_avp value and all
+                following contacts_avp values with the 
+                same qvalue as new branches to request and destroys those AVPs.
+                Returns 1 if new branches were successfully added and -1 on
+                error (see syslog) or if there were no more contacts_avp
+                values.
+                </para>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>t_next_contacts</function> usage</title>
+		<programlisting format="linespecific">
+...
+# First call after t_load_contacts() when transaction does not exist yet
+# and contacts should be available
+if (!t_next_contacts()) {
+        sl_send_reply("500", "Server Internal Error - Cannot get contacts");
+} else {
+        t_relay();
+};
+...
+# Following call, when transaction exists and there may or may not be
+# contacts left
+if (!t_next_contacts()) {
+        t_reply("408", "Request Timeout");
+} else {
+        t_relay();
+};
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
