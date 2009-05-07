@@ -19,8 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Needs a mysql database, the root user password must be given
-# in the file 'dbrootpw' in the test directory
+# Needs a mysql database, the root user password must be assigned to
+# the 'PW' variable in the file 'dbrootpw' in the test directory, e.g.:
+# PW=sql_root_passwd
 
 source include/common
 
@@ -46,7 +47,7 @@ sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
 
 # set the mysql root password
 cp $DBCTL.mysql $DBCTL.mysql.bak
-sed -i "s/#PW=""/PW="$PW"/g" $DBCTL.mysql
+sed -i "s/#PW=\"\"/PW=\"$PW\"/g" $DBCTL.mysql
 
 ./$DBCTL create $tmp_name > /dev/null
 ret=$?
