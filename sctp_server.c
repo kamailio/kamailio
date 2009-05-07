@@ -23,6 +23,7 @@
  * --------
  *  2008-08-07  initial version (andrei)
  *  2009-02-27  blacklist support (andrei)
+ *  2009-04-28  sctp stats & events macros (andrei)
  */
 
 #ifdef USE_SCTP
@@ -57,6 +58,8 @@
 #include "clist.h"
 #include "error.h"
 #include "timer.h"
+#include "sctp_stats.h"
+#include "sctp_ev.h"
 
 
 
@@ -1496,6 +1499,10 @@ int init_sctp()
 	int ret;
 	
 	ret=0;
+	if (INIT_SCTP_STATS()!=0){
+		ERR("sctp init: failed to intialize sctp stats\n");
+		goto error;
+	}
 	/* sctp options must be initialized before  calling this function */
 	sctp_conn_no=shm_malloc(sizeof(*sctp_conn_tracked));
 	if ( sctp_conn_no==0){
@@ -1522,6 +1529,7 @@ void destroy_sctp()
 #ifdef SCTP_CONN_REUSE
 	destroy_sctp_con_tracking();
 #endif
+	DESTROY_SCTP_STATS();
 }
 
 
@@ -1613,6 +1621,7 @@ static int sctp_handle_send_failed(struct socket_info* si,
 	int ret;
 	
 	ret=-1;
+	SCTP_STATS_SEND_FAILED();
 	snp=(union sctp_notification*) buf;
 	retries=snp->sn_send_failed.ssf_info.sinfo_context;
 	
@@ -1623,6 +1632,7 @@ static int sctp_handle_send_failed(struct socket_info* si,
 	 */
 	if (retries && (snp->sn_send_failed.ssf_error==0)) {
 		DBG("sctp: RETRY-ing (%d)\n", retries);
+		SCTP_STATS_SEND_FORCE_RETRY();
 		retries--;
 		data=(char*)snp->sn_send_failed.ssf_data;
 		data_len=snp->sn_send_failed.ssf_length - 
@@ -1685,6 +1695,7 @@ static int sctp_handle_assoc_change(struct socket_info* si,
 	ret=-1;
 	switch(state){
 		case SCTP_COMM_UP:
+			SCTP_STATS_ESTABLISHED();
 			atomic_inc(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* new connection, track it */
@@ -1707,6 +1718,7 @@ again:
 #endif /* SCTP_CONN_REUSE */
 			break;
 		case SCTP_COMM_LOST:
+			SCTP_STATS_COMM_LOST();
 #ifdef USE_DST_BLACKLIST
 			/* blacklist only if send_retries is turned off (if on we don't
 			   know here if we did retry or we are at the first error) */
@@ -1732,6 +1744,7 @@ again:
 			/* do nothing on restart */
 			break;
 		case SCTP_CANT_STR_ASSOC:
+			SCTP_STATS_CONNECT_FAILED();
 			/* do nothing when failing to start an assoc
 			  (in this case we never see SCTP_COMM_UP so we never 
 			  track the assoc) */
@@ -1781,6 +1794,8 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_REMOTE_ERROR:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_remote_error), si, su,
 								"SCTP_REMOTE_ERROR");
+			SCTP_EV_REMOTE_ERROR(&si->address, si->port_no, su, 
+									ntohs(snp->sn_remote_error.sre_error) );
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_REMOTE_ERROR:"
 					" %d, len %d\n, assoc_id %d",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1793,6 +1808,8 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_SEND_FAILED:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_send_failed), si, su,
 								"SCTP_SEND_FAILED");
+			SCTP_EV_SEND_FAILED(&si->address, si->port_no, su, 
+									snp->sn_send_failed.ssf_error);
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_SEND_FAILED:"
 					" error %d, assoc_id %d, flags %x\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1804,6 +1821,10 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_PEER_ADDR_CHANGE:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_paddr_change), si, su,
 								"SCTP_PEER_ADDR_CHANGE");
+			SCTP_EV_PEER_ADDR_CHANGE(&si->address, si->port_no, su, 
+					sctp_paddr_change_state2s(snp->sn_paddr_change.spc_state),
+					snp->sn_paddr_change.spc_state,
+					&snp->sn_paddr_change.spc_aaddr);
 			strcpy(su_buf, su2a((union sockaddr_union*)
 									&snp->sn_paddr_change.spc_aaddr, 
 									sizeof(snp->sn_paddr_change.spc_aaddr)));
@@ -1816,8 +1837,10 @@ static int sctp_handle_notification(struct socket_info* si,
 					);
 			break;
 		case SCTP_SHUTDOWN_EVENT:
+			SCTP_STATS_REMOTE_SHUTDOWN();
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_shutdown_event), si, su,
 								"SCTP_SHUTDOWN_EVENT");
+			SCTP_EV_SHUTDOWN_EVENT(&si->address, si->port_no, su);
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_SHUTDOWN_EVENT:"
 					" assoc_id %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1826,6 +1849,9 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_ASSOC_CHANGE:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_assoc_change), si, su,
 								"SCTP_ASSOC_CHANGE");
+			SCTP_EV_ASSOC_CHANGE(&si->address, si->port_no, su, 
+					sctp_assoc_change_state2s(snp->sn_assoc_change.sac_state),
+					snp->sn_assoc_change.sac_state);
 			SNOT("sctp notification from %s on %.*s:%d: SCTP_ASSOC_CHANGE"
 					": %s: assoc_id %d, ostreams %d, istreams %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -1864,6 +1890,7 @@ static int sctp_handle_notification(struct socket_info* si,
 		case SCTP_SENDER_DRY_EVENT:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_sender_dry_event),
 								si, su, "SCTP_SENDER_DRY_EVENT");
+			SCTP_EV_REMOTE_ERROR(&si->address, si->port_no, su);
 			SNOT("sctp notification from %s on %.*s:%d: "
 					"SCTP_SENDER_DRY_EVENT on %d\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
@@ -2162,6 +2189,7 @@ again:
 			"one possible reason is the server is bound to localhost and\n"
 			"attempts to send to the net\n");
 		}else if (errno==EAGAIN || errno==EWOULDBLOCK){
+			SCTP_STATS_SENDQ_FULL();
 			LOG(L_ERR, "ERROR: sctp_msg_send: failed to send, send buffers"
 						" full\n");
 		}
