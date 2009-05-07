@@ -583,10 +583,9 @@ static int child_init(int rank)
 	 * for the rest of the processes will be the same as DB_MODE_NONE */
 	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_MAIN)
 		dlg_db_mode = DB_MODE_NONE;
-	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN or the ones
-	 * with negative rank will have no db connection */
+	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
 	if ( (dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
-			(rank<0 || rank==PROC_MAIN))
+			rank==PROC_MAIN)
 		dlg_db_mode = DB_MODE_NONE;
 
 	return 0;
