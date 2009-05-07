@@ -4,7 +4,7 @@ sercmd usage examples
 
 
 help:
-	sercmd  unixd:/tmp/unix_dgram -h
+	sercmd  -h
 
 use an udp ser control socket:
  ser config:
