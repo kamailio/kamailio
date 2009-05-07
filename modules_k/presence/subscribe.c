@@ -46,6 +46,8 @@
 #include "notify.h"
 #include "../pua/hash.h"
 
+#define ACTW_FETCH_SIZE  128
+
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
 		str* reply_str);
 int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
@@ -1620,8 +1622,8 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 int restore_db_subs(void)
 {
 	db_key_t result_cols[22]; 
-	db1_res_t *res= NULL;
-	db_row_t *row = NULL;	
+	db1_res_t *result= NULL;
+	db_row_t *rows = NULL;	
 	db_val_t *row_vals= NULL;
 	int i;
 	int n_result_cols= 0;
@@ -1635,6 +1637,7 @@ int restore_db_subs(void)
 	event_t parsed_event;
 	unsigned int expires;
 	unsigned int hash_code;
+	int nr_rows;
 
 	result_cols[pres_uri_col=n_result_cols++]	=&str_presentity_uri_col;
 	result_cols[expires_col=n_result_cols++]=&str_expires_col;
@@ -1669,142 +1672,166 @@ int restore_db_subs(void)
 		return -1;
 	}
 
-	if(pa_dbf.query(pa_db,0, 0, 0, result_cols,0, n_result_cols, 0,&res)< 0)
+	/* select the whole table and all the columns */
+	if (DB_CAPABILITY(pa_dbf, DB_CAP_FETCH)) 
 	{
-		LM_ERR("while querrying table\n");
-		if(res)
+		if(pa_dbf.query(pa_db,0,0,0,result_cols, 0,
+		n_result_cols, 0, 0) < 0) 
 		{
-			pa_dbf.free_result(pa_db, res);
-			res = NULL;
+			LM_ERR("Error while querying (fetch) database\n");
+			return -1;
 		}
-		return -1;
-	}
-	if(res== NULL)
-		return -1;
-
-	if(res->n<=0)
-	{
-		LM_INFO("The query returned no result\n");
-		pa_dbf.free_result(pa_db, res);
-		res = NULL;
-		return 0;
-	}
-
-	LM_DBG("found %d db entries\n", res->n);
-
-	for(i =0 ; i< res->n ; i++)
-	{
-		row = &res->rows[i];
-		row_vals = ROW_VALUES(row);
-		memset(&s, 0, sizeof(subs_t));
-
-		expires= row_vals[expires_col].val.int_val;
-		
-		if(expires< (int)time(NULL))
-			continue;
-	
-		s.pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
-		s.pres_uri.len= strlen(s.pres_uri.s);
-		
-		s.to_user.s=(char*)row_vals[to_user_col].val.string_val;
-		s.to_user.len= strlen(s.to_user.s);
-
-		s.to_domain.s=(char*)row_vals[to_domain_col].val.string_val;
-		s.to_domain.len= strlen(s.to_domain.s);
-
-		s.from_user.s=(char*)row_vals[from_user_col].val.string_val;
-		s.from_user.len= strlen(s.from_user.s);
-		
-		s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
-		s.from_domain.len= strlen(s.from_domain.s);
-
-		s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
-		s.to_tag.len= strlen(s.to_tag.s);
-
-		s.from_tag.s=(char*)row_vals[fromtag_col].val.string_val;
-		s.from_tag.len= strlen(s.from_tag.s);
-
-		s.callid.s=(char*)row_vals[callid_col].val.string_val;
-		s.callid.len= strlen(s.callid.s);
-
-		ev_sname.s= (char*)row_vals[event_col].val.string_val;
-		ev_sname.len= strlen(ev_sname.s);
-		
-		event= contains_event(&ev_sname, &parsed_event);
-		if(event== NULL)
+		if(pa_dbf.fetch_result(pa_db,&result,ACTW_FETCH_SIZE)<0)
 		{
-			LM_DBG("insert a new event structure in the list waiting"
-					" to be filled in\n");
-	
-			/*insert a new event structure in the list waiting to be filled in*/
-			event= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
-			if(event== NULL)
-			{
-				free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
-				ERR_MEM(SHM_MEM_STR);
-			}
-			memset(event, 0, sizeof(pres_ev_t));
-			event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
-			if(event->name.s== NULL)
-			{
-				free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
-				ERR_MEM(SHM_MEM_STR);
-			}
-			memcpy(event->name.s,ev_sname.s, ev_sname.len);
-			event->name.len= ev_sname.len;
-			
-			event->evp= shm_copy_event(&parsed_event);
-			if(event->evp== NULL)
-			{
-				LM_ERR("ERROR copying event_t structure\n");
-				free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
-				goto error;
-			}
-			event->next= EvList->events;
-			EvList->events= event;
+			LM_ERR("fetching rows failed\n");
+			return -1;
 		}
-			
-		free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
-
-		s.event= event;
-
-		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
-		if(s.event_id.s)
-			s.event_id.len= strlen(s.event_id.s);
-
-		s.remote_cseq= row_vals[remote_cseq_col].val.int_val;
-		s.local_cseq= row_vals[local_cseq_col].val.int_val;
-		s.version= row_vals[version_col].val.int_val;
-		
-		s.expires= expires- (int)time(NULL);
-		s.status= row_vals[status_col].val.int_val;
-
-		s.reason.s= (char*)row_vals[reason_col].val.string_val;
-		if(s.reason.s)
-			s.reason.len= strlen(s.reason.s);
-
-		s.contact.s=(char*)row_vals[contact_col].val.string_val;
-		s.contact.len= strlen(s.contact.s);
-
-		s.local_contact.s=(char*)row_vals[local_contact_col].val.string_val;
-		s.local_contact.len= strlen(s.local_contact.s);
-	
-		s.record_route.s=(char*)row_vals[record_route_col].val.string_val;
-		if(s.record_route.s)
-			s.record_route.len= strlen(s.record_route.s);
-	
-		s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
-		s.sockinfo_str.len= strlen(s.sockinfo_str.s);
-
-		hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
-		if(insert_shtable(subs_htable, hash_code, &s)< 0)
+	} else 
+	{
+		if (pa_dbf.query (pa_db, 0, 0, 0,result_cols,0, n_result_cols,
+					0, &result) < 0)
 		{
-			LM_ERR("adding new record in hash table\n");
+			LM_ERR("querying presentity\n");
 			goto error;
 		}
 	}
 
-	pa_dbf.free_result(pa_db, res);
+	nr_rows = RES_ROW_N(result);
+
+
+	do {
+		LM_DBG("loading information from database %i records\n", nr_rows);
+
+		rows = RES_ROWS(result);
+
+		/* for every row */
+		for(i=0; i<nr_rows; i++)
+		{
+
+			row_vals = ROW_VALUES(rows +i);
+			memset(&s, 0, sizeof(subs_t));
+
+			expires= row_vals[expires_col].val.int_val;
+		
+			if(expires< (int)time(NULL))
+			    continue;
+	
+			s.pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
+			s.pres_uri.len= strlen(s.pres_uri.s);
+		
+			s.to_user.s=(char*)row_vals[to_user_col].val.string_val;
+			s.to_user.len= strlen(s.to_user.s);
+			
+			s.to_domain.s=(char*)row_vals[to_domain_col].val.string_val;
+			s.to_domain.len= strlen(s.to_domain.s);
+			
+			s.from_user.s=(char*)row_vals[from_user_col].val.string_val;
+			s.from_user.len= strlen(s.from_user.s);
+			
+			s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
+			s.from_domain.len= strlen(s.from_domain.s);
+			
+			s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
+			s.to_tag.len= strlen(s.to_tag.s);
+
+			s.from_tag.s=(char*)row_vals[fromtag_col].val.string_val;
+			s.from_tag.len= strlen(s.from_tag.s);
+
+			s.callid.s=(char*)row_vals[callid_col].val.string_val;
+			s.callid.len= strlen(s.callid.s);
+
+			ev_sname.s= (char*)row_vals[event_col].val.string_val;
+			ev_sname.len= strlen(ev_sname.s);
+		
+			event= contains_event(&ev_sname, &parsed_event);
+			if(event== NULL)
+			    {
+				LM_DBG("insert a new event structure in the list waiting"
+				       " to be filled in\n");
+				
+				/*insert a new event structure in the list waiting to be filled in*/
+				event= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
+				if(event== NULL)
+				    {
+					free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
+					ERR_MEM(SHM_MEM_STR);
+				    }
+				memset(event, 0, sizeof(pres_ev_t));
+				event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
+				if(event->name.s== NULL)
+				    {
+					free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
+					ERR_MEM(SHM_MEM_STR);
+				    }
+				memcpy(event->name.s,ev_sname.s, ev_sname.len);
+				event->name.len= ev_sname.len;
+				
+				event->evp= shm_copy_event(&parsed_event);
+				if(event->evp== NULL)
+				    {
+					LM_ERR("ERROR copying event_t structure\n");
+					free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
+					goto error;
+				    }
+				event->next= EvList->events;
+				EvList->events= event;
+			    }
+			
+			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
+			
+			s.event= event;
+
+			s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
+			if(s.event_id.s)
+			    s.event_id.len= strlen(s.event_id.s);
+			
+			s.remote_cseq= row_vals[remote_cseq_col].val.int_val;
+			s.local_cseq= row_vals[local_cseq_col].val.int_val;
+			s.version= row_vals[version_col].val.int_val;
+		
+			s.expires= expires- (int)time(NULL);
+			s.status= row_vals[status_col].val.int_val;
+
+			s.reason.s= (char*)row_vals[reason_col].val.string_val;
+			if(s.reason.s)
+			    s.reason.len= strlen(s.reason.s);
+
+			s.contact.s=(char*)row_vals[contact_col].val.string_val;
+			s.contact.len= strlen(s.contact.s);
+			
+			s.local_contact.s=(char*)row_vals[local_contact_col].val.string_val;
+			s.local_contact.len= strlen(s.local_contact.s);
+			
+			s.record_route.s=(char*)row_vals[record_route_col].val.string_val;
+			if(s.record_route.s)
+			    s.record_route.len= strlen(s.record_route.s);
+	
+			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
+			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
+			
+			hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
+			if(insert_shtable(subs_htable, hash_code, &s)< 0)
+			{
+				LM_ERR("adding new record in hash table\n");
+				goto error;
+			}
+		}
+
+		/* any more data to be fetched ?*/
+		if (DB_CAPABILITY(pa_dbf, DB_CAP_FETCH)) {
+		    if (pa_dbf.fetch_result( pa_db, &result,
+					     ACTW_FETCH_SIZE ) < 0) {
+			LM_ERR("fetching more rows failed\n");
+			goto error;
+		    }
+		    nr_rows = RES_ROW_N(result);
+		} else {
+		    nr_rows = 0;
+		}
+
+	}while (nr_rows>0);
+
+	pa_dbf.free_result(pa_db, result);
 
 	/* delete all records */
 	if(pa_dbf.delete(pa_db, 0,0,0,0)< 0)
@@ -1816,8 +1843,8 @@ int restore_db_subs(void)
 	return 0;
 
 error:
-	if(res)
-		pa_dbf.free_result(pa_db, res);
+	if(result)
+		pa_dbf.free_result(pa_db, result);
 	return -1;
 
 }
