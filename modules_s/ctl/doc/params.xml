@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ctl.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</sectioninfo>
+
+	<title>Parameters</title>
+
+	<section id="binrpc">
+	<title><varname>binrpc</varname> (string)</title>
+	<para>
+		Specifies the transport used for the binrpc protocol.
+		The following transport protocol are supported: unix datagram
+		sockets, unix stream sockets, udp and tcp.
+	</para>
+	<para>
+		The format is: [ protocol:] address_port|path .
+	</para>
+	<para>
+	<itemizedlist>
+		<listitem><para>
+			For <emphasis>unix</emphasis> sockets:  [unixd|unixs|unix]:path
+			where <varname>"unixd"</varname> means unix datagram sockets and
+			<varname>"unix"</varname>  <varname>"unixs"</varname> mean unix
+			stream sockets.
+			Examples: "unixd:/tmp/unix_dgram", "unixs:/tmp/unix_stream",
+			"unix:/tmp/unix_stream".
+		</para></listitem>
+	<listitem><para>
+		For <emphasis>udp</emphasis> or <emphasis>tcp</emphasis> sockets:
+		[udp|tcp]:address:port.
+		If the address is "*" or missing, it will bind to all the local 
+		addresses (0.0.0.0).
+		Examples: "udp:localhost:2046", "tcp:localhost:2046",
+		"tcp:3012", "udp:*:3012".
+	</para></listitem>
+	</itemizedlist>
+	</para>
+	<para>
+		If the protocol part is missing and the address/path part looks like a
+		file system path it will default to a unix stream socket and if not to
+		an udp socket.
+		Examples:
+		<itemizedlist>
+			<listitem>
+				"/tmp/unix_test" - equivalent to "unixs:/tmp/unix_test".
+			</listitem>
+			<listitem>
+				"localhost:3000" - equivalent to "udp:localhost:3000".
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		Multiple transports / listen addresses can be specified, just by
+		setting the parameter multiple times.
+	</para>
+	<para>
+		<emphasis>Default:</emphasis>"unix:/tmp/ser_ctl" (unix stream socket).
+		The default value is used <emphasis>only</emphasis> if no
+		<varname>binrpc</varname> parameter is found in the config file.
+	</para>
+	<example>
+		<title>Set <varname>binrpc</varname> parameter</title>
+		<programlisting>
+loadmodule "ctl"
+# optional listen addresses, if no one is specified,
+# ctl will listen on unixs:/tmp/ser_ctl
+
+modparam("ctl", "binrpc", "unix:/tmp/ser_ctl") # default
+modparam("ctl", "binrpc", "udp:localhost:2046")
+modparam("ctl", "binrpc", "tcp:localhost:2046")
+modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")  # unix datagram
+modparam("ctl", "binrpc", "unixs:/tmp/unix_stream") # unix stream
+modparam("ctl", "binrpc", "unix:/tmp/unix_default") # unix stream
+modparam("ctl", "binrpc", "/tmp/unix_test")         # unix stream
+modparam("ctl", "binrpc", "localhost:3000")         # udp
+modparam("ctl", "binrpc", "tcp:3012")               # tcp any , port 3012
+modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="mode">
+	<title><varname>mode</varname> (integer)</title>
+	<para>
+		Permissions used for the created unix sockets or for the fifo.
+	</para>
+	<para>
+		Default: 0600.
+	</para>
+	<example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting>
+modparam("ctl", "mode", 0600) # permissions
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="user">
+	<title><varname>user</varname> (integer or string)</title>
+	<para>
+		Username or uid used for the created unix sockets or for the fifo.
+	</para>
+	<para>
+		Default: not set (the user under which ser runs).
+	</para>
+	<example>
+		<title>Set <varname>user</varname> parameter</title>
+		<programlisting>
+modparam("ctl", "user", "andrei")
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="group">
+	<title><varname>group</varname> (integer or string)</title>
+	<para>
+		Group name or gid used for the created unix sockets or for the fifo.
+	</para>
+	<para>
+		Default: not set (the group under which ser runs).
+	</para>
+	<example>
+		<title>Set <varname>group</varname> parameter</title>
+		<programlisting>
+modparam("ctl", "group", 100)
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="fifo">
+	<title><varname>fifo</varname> (integer)</title>
+	<para>
+		fifo used for the obsolete fifo protocol.
+		The fifo protocol can be run over a real fifo, over udp or over tcp.
+		Format: [protocol:]path|address.
+		If no protocol is specified the default is "fifo".
+		Examples: "fifo:/tmp/ser_fifo", "/tmp/ser_fifo2", "udp:*:2050",
+		"tcp:localhost:2050".
+		For more details on the udp and tcp formats see 
+		<varname>binrpc</varname>.
+		Multiple fifos or fifo transports can be used in the same time
+		(just by setting the <varname>fifo</varname> parameter multiple
+		times in the config).
+	</para>
+	<para>
+		Default: not set (no fifo will be used).
+	</para>
+	<example>
+		<title>Set <varname>fifo</varname> parameter</title>
+		<programlisting>
+# old fifo support
+modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
+modparam("ctl", "fifo", "/tmp/ser_fifo2")       
+modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
+modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
+		</programlisting>
+	</example>
+	</section>
+
+</section>

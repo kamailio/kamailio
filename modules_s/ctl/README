@@ -1,0 +1,196 @@
+1. Ctl Module
+
+Andrei Pelinescu-Onciul
+
+   iptelorg GmbH
+
+   Copyright © 2009 iptelorg GmbH
+   Revision History
+   Revision $Revision$ $Date$
+     __________________________________________________________________
+
+   1.1. Overview
+   1.2. BINRPC
+   1.3. Parameters
+
+        1.3.1. binrpc (string)
+        1.3.2. mode (integer)
+        1.3.3. user (integer or string)
+        1.3.4. group (integer or string)
+        1.3.5. fifo (integer)
+
+   1.4. RPC Functions
+
+        1.4.1. ctl.listen
+        1.4.2. ctl.connections
+        1.4.3. ctl.who
+
+1.1. Overview
+
+   This module implements the binrpc transport interface for ser rpcs. It
+   supports various transports over which it speaks binrpc: unix datagram
+   sockets, unix stream sockets, udp and tcp. It also supports a backward
+   compatible fifo interface (using the old ser fifo protocol).
+
+   By default (if no parameters are changed from the config file) it uses
+   a unix stream socket under /tmp: /tmp/ser_ctl. This socket is also the
+   default for sercmd.
+
+   In general it's used in conjunction with sercmd. sercmd it's a unix
+   tool for invoking ser/sip-router rpcs. It can be used both in
+   interactive mode (supports tab-completion and history) or command line
+   mode.
+
+   Example 1. sercmd example usage
+$ sercmd ps
+11262   attendant
+11268   udp receiver child=0 sock=127.0.0.1:5060
+11269   udp receiver child=1 sock=127.0.0.1:5060
+11270   udp receiver child=0 sock=192.168.1.101:5060
+11271   udp receiver child=1 sock=192.168.1.101:5060
+11272   slow timer
+11273   timer
+11274   ctl handler
+11275   tcp receiver child=0
+11276   tcp receiver child=1
+11277   tcp main process
+
+   See utils/sercmd/EXAMPLES for more examples.
+
+1.2. BINRPC
+
+   binrpc is a ser proprietary binary protocol for invoking ser-like rpcs.
+   It was designed such that it would minimize the packet sizes and it
+   would be very fast to parse (as opposed to xmlrpc).
+
+   The binrpc encoding format is fully documented inside
+   modules_s/ctl/binrpc.h.
+
+1.3. Parameters
+
+   Revision History
+   Revision $Revision$ $Date$
+
+1.3.1. binrpc (string)
+
+   Specifies the transport used for the binrpc protocol. The following
+   transport protocol are supported: unix datagram sockets, unix stream
+   sockets, udp and tcp.
+
+   The format is: [ protocol:] address_port|path .
+
+     * For unix sockets: [unixd|unixs|unix]:path where "unixd" means unix
+       datagram sockets and "unix" "unixs" mean unix stream sockets.
+       Examples: "unixd:/tmp/unix_dgram", "unixs:/tmp/unix_stream",
+       "unix:/tmp/unix_stream".
+     * For udp or tcp sockets: [udp|tcp]:address:port. If the address is
+       "*" or missing, it will bind to all the local addresses (0.0.0.0).
+       Examples: "udp:localhost:2046", "tcp:localhost:2046", "tcp:3012",
+       "udp:*:3012".
+
+   If the protocol part is missing and the address/path part looks like a
+   file system path it will default to a unix stream socket and if not to
+   an udp socket. Examples:
+     * "/tmp/unix_test" - equivalent to "unixs:/tmp/unix_test".
+     * "localhost:3000" - equivalent to "udp:localhost:3000".
+
+   Multiple transports / listen addresses can be specified, just by
+   setting the parameter multiple times.
+
+   Default:"unix:/tmp/ser_ctl" (unix stream socket). The default value is
+   used only if no binrpc parameter is found in the config file.
+
+   Example 2. Set binrpc parameter
+loadmodule "ctl"
+# optional listen addresses, if no one is specified,
+# ctl will listen on unixs:/tmp/ser_ctl
+
+modparam("ctl", "binrpc", "unix:/tmp/ser_ctl") # default
+modparam("ctl", "binrpc", "udp:localhost:2046")
+modparam("ctl", "binrpc", "tcp:localhost:2046")
+modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")  # unix datagram
+modparam("ctl", "binrpc", "unixs:/tmp/unix_stream") # unix stream
+modparam("ctl", "binrpc", "unix:/tmp/unix_default") # unix stream
+modparam("ctl", "binrpc", "/tmp/unix_test")         # unix stream
+modparam("ctl", "binrpc", "localhost:3000")         # udp
+modparam("ctl", "binrpc", "tcp:3012")               # tcp any , port 3012
+modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
+
+1.3.2. mode (integer)
+
+   Permissions used for the created unix sockets or for the fifo.
+
+   Default: 0600.
+
+   Example 3. Set mode parameter
+modparam("ctl", "mode", 0600) # permissions
+
+1.3.3. user (integer or string)
+
+   Username or uid used for the created unix sockets or for the fifo.
+
+   Default: not set (the user under which ser runs).
+
+   Example 4. Set user parameter
+modparam("ctl", "user", "andrei")
+
+1.3.4. group (integer or string)
+
+   Group name or gid used for the created unix sockets or for the fifo.
+
+   Default: not set (the group under which ser runs).
+
+   Example 5. Set group parameter
+modparam("ctl", "group", 100)
+
+1.3.5. fifo (integer)
+
+   fifo used for the obsolete fifo protocol. The fifo protocol can be run
+   over a real fifo, over udp or over tcp. Format:
+   [protocol:]path|address. If no protocol is specified the default is
+   "fifo". Examples: "fifo:/tmp/ser_fifo", "/tmp/ser_fifo2", "udp:*:2050",
+   "tcp:localhost:2050". For more details on the udp and tcp formats see
+   binrpc. Multiple fifos or fifo transports can be used in the same time
+   (just by setting the fifo parameter multiple times in the config).
+
+   Default: not set (no fifo will be used).
+
+   Example 6. Set fifo parameter
+# old fifo support
+modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
+modparam("ctl", "fifo", "/tmp/ser_fifo2")
+modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
+modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
+
+1.4. RPC Functions
+
+   Revision History
+   Revision $Revision$ $Date$
+
+1.4.1.  ctl.listen
+
+   List all the sockets on which the ctl module listens.
+
+   Example 7. print usage
+ $ sercmd -f"[%v] %v:%v %v\n" ctl.listen
+[binrpc] unix_stream:/tmp/ser_ctl
+
+# note: the above command is equivalent with sercmd listen
+
+1.4.2.  ctl.connections
+
+   Returns the number of open binrpc connections (to the ctl module).
+
+   Example 8. ctl.connections usage
+ $ sercmd ctl.connections
+1
+
+1.4.3.  ctl.who
+
+   List open binrpc connections (to the ctl module).
+
+   Example 9. ctl.who usage
+ $ sercmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
+[binrpc] unix_stream: <anonymous unix socket>  -> /tmp/ser_ctl
+
+# note the above command is equivalent to sercmd who
