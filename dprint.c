@@ -63,7 +63,8 @@ static int int_fac[]={LOG_AUTH ,  LOG_CRON , LOG_DAEMON ,
 
 struct log_level_info log_level_info[] = {
 	{"ALERT", LOG_ALERT},	  /* L_ALERT */
-	{"BUG", LOG_CRIT},        /* L_CRIT */
+	{"BUG", LOG_CRIT},         /* L_BUG */
+	{"",    LOG_CRIT},         /* L_CRIT */
 	{"ERROR", LOG_ERR},       /* L_ERR */
 	{"WARNING", LOG_WARNING}, /* L_WARN */
 	{"NOTICE", LOG_NOTICE},   /* L_NOTICE */
