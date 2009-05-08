@@ -274,6 +274,7 @@ int stm_e_param(modparam_t type, void *val)
 	stm_route_t *rt;
 	stm_timer_t *nt;
 	str s;
+	char c;
 
 	if(val==NULL)
 		return -1;
@@ -291,7 +292,7 @@ int stm_e_param(modparam_t type, void *val)
 			tmp.timer = pit->body;
 		} else if(pit->name.len==5
 				&& strncasecmp(pit->name.s, "route", 5)==0) {
-			str2int(&pit->body, &tmp.route);
+			s = pit->body;
 		}
 	}
 	if(tmp.timer.s==NULL)
@@ -315,10 +316,14 @@ int stm_e_param(modparam_t type, void *val)
 		free_params(params_list);
 		return -1;
 	}
-	if(tmp.route>=RT_NO)
+	c = s.s[s.len];
+	s.s[s.len] = '\0';
+	tmp.route = route_get(&main_rt, s.s);
+	s.s[s.len] = c;
+	if(tmp.route == -1)
 	{
-		LM_ERR("invalid route number: %u\n",
-				tmp.route);
+		LM_ERR("invalid route: %.*s\n",
+				s.len, s.s);
 		free_params(params_list);
 		return -1;
 	}
