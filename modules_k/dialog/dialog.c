@@ -301,7 +301,7 @@ static int fixup_get_profile2(void** param, int param_no)
 	if (param_no==1) {
 		return fixup_profile(param, 1);
 	} else if (param_no==2) {
-		ret = fixup_pvar(param);
+		ret = fixup_pvar_null(param, 1);
 		if (ret<0) return ret;
 		sp = (pv_spec_t*)(*param);
 		if (sp->type!=PVT_AVP && sp->type!=PVT_SCRIPTVAR) {
