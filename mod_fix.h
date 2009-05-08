@@ -117,7 +117,4 @@ int fixup_spve_null(void** param, int param_no);
 int fixup_spve_uint(void** param, int param_no);
 int fixup_spve_str(void** param, int param_no);
 
-
-int fixup_pvar(void **param);
-
 #endif
