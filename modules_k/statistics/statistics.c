@@ -122,7 +122,7 @@ static int fixup_stat(void** param, int param_no)
 		memset( sopv, 0 , sizeof(struct stat_or_pv) );
 		/* is it pv? */
 		if (s.s[0]=='$') {
-			if (fixup_pvar(param)!=0) {
+			if (fixup_pvar_null(param, 1)!=0) {
 				LM_ERR("invalid pv %.s as parameter\n",s.s);
 				return E_CFG;
 			}
