@@ -236,7 +236,7 @@ static int fixup_http_query(void** param, int param_no)
     }
 
     if (param_no == 2) {
-	if (fixup_pvar(param) != 0) {
+	if (fixup_pvar_null(param, 1) != 0) {
 	    LM_ERR("failed to fixup result pvar\n");
 	    return -1;
 	}
