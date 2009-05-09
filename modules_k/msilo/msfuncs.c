@@ -186,19 +186,20 @@ error:
 
 /** build MESSAGE headers 
  *
- * Add Content-Type, Contact and Date headers if they exist
+ * Add Content-Type, Contact, Date, and extra headers if they exist
  * expects - max buf len of the resulted body in body->len
  *         - body->s MUST be allocated
  * return: 0 OK ; -1 error
  * */
-int m_build_headers(str *buf, str ctype, str contact, time_t date)
+int m_build_headers(str *buf, str ctype, str contact, time_t date, str extra)
 {
 	char *p;
 	char strDate[48];
 	int lenDate = 0;
 
 	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0 || contact.len < 0
-			|| buf->len <= ctype.len+contact.len+14 /*Content-Type: */
+			|| buf->len <= ctype.len+contact.len+extra.len+14
+	   /*Content-Type: */
 				+CRLF_LEN+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN)
 		goto error;
 
@@ -227,6 +228,10 @@ int m_build_headers(str *buf, str ctype, str contact, time_t date)
 		p += contact.len;
 		strncpy(p, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
 		p += CONTACT_SUFFIX_LEN;
+	}
+	if (extra.len > 0) {
+	    strncpy(p, extra.s, extra.len);
+	    p += extra.len;
 	}
 	buf->len = p - buf->s;	
 	return 0;

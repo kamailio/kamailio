@@ -129,10 +129,12 @@ str  ms_outbound_proxy = {NULL, 0};
 
 char*  ms_from = NULL; /*"sip:registrar@example.org";*/
 char*  ms_contact = NULL; /*"Contact: <sip:registrar@example.org>\r\n";*/
+char*  ms_extra_hdrs = NULL; /*"X-foo: bar\r\nX-bar: foo\r\n";*/
 char*  ms_content_type = NULL; /*"Content-Type: text/plain\r\n";*/
 char*  ms_offline_message = NULL; /*"<em>I'm offline.</em>"*/
 void**  ms_from_sp = NULL;
 void**  ms_contact_sp = NULL;
+void**  ms_extra_hdrs_sp = NULL;
 void**  ms_content_type_sp = NULL;
 void**  ms_offline_message_sp = NULL;
 
@@ -185,6 +187,7 @@ static param_export_t params[]={
 	{ "db_table",         STR_PARAM, &ms_db_table.s           },
 	{ "from_address",     STR_PARAM, &ms_from                 },
 	{ "contact_hdr",      STR_PARAM, &ms_contact              },
+	{ "extra_hdrs",       STR_PARAM, &ms_extra_hdrs           },
 	{ "content_type_hdr", STR_PARAM, &ms_content_type         },
 	{ "offline_message",  STR_PARAM, &ms_offline_message      },
 	{ "reminder",         STR_PARAM, &ms_reminder.s           },
@@ -356,6 +359,21 @@ static int mod_init(void)
 		if(fixup_spve_null(ms_contact_sp, 1)!=0)
 		{
 			LM_ERR("bad contact parameter\n");
+			return -1;
+		}
+	}
+	if(ms_extra_hdrs!=NULL)
+	{
+		ms_extra_hdrs_sp = (void**)pkg_malloc(sizeof(void*));
+		if(ms_extra_hdrs_sp==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			return -1;
+		}
+		*ms_extra_hdrs_sp = (void*)ms_extra_hdrs;
+		if(fixup_spve_null(ms_extra_hdrs_sp, 1)!=0)
+		{
+			LM_ERR("bad extra_hdrs parameter\n");
 			return -1;
 		}
 	}
@@ -849,7 +867,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	struct sip_uri puri;
 	str owner_s;
 	uac_req_t uac_r;
-	str str_vals[4], hdr_str , body_str;
+	str str_vals[4], hdr_str, body_str, extra_hdrs_str;
 	time_t rtime;
 	
 	/* init */
@@ -1011,10 +1029,21 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		SET_STR_VAL(str_vals[3], db_res, i, 4); /* ctype */
 		rtime = 
 			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
-
+		
+		if (ms_extra_hdrs != NULL) {
+		    if (fixup_get_svalue(msg, (gparam_p)*ms_extra_hdrs_sp,
+					 &extra_hdrs_str) != 0) {
+			LM_ERR("unable to get extra_hdrs value\n");
+			goto error;
+		    }
+		} else {
+		    extra_hdrs_str.len = 0;
+		}
+		
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				str_vals[0]/*from*/, rtime /*Date*/) < 0)
+				   str_vals[0]/*from*/, rtime /*Date*/,
+				   extra_hdrs_str /*extra_hdrs*/) < 0)
 		{
 			LM_ERR("headers building failed [%d]\n", mid);
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
@@ -1196,7 +1225,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	str puri;
 	time_t ttime;
 	uac_req_t uac_r;
-	str str_vals[4], hdr_str , body_str;
+	str str_vals[4], hdr_str, body_str, extra_hdrs_str;
 	time_t stime;
 
 	if(ms_reminder.s==NULL)
@@ -1265,9 +1294,12 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		SET_STR_VAL(str_vals[2], db_res, i, 3); /* body */
 		SET_STR_VAL(str_vals[3], db_res, i, 4); /* ctype */
 
+		extra_hdrs_str.len = 0;
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				ms_reminder/*from*/,0/*Date*/) < 0)
+				   ms_reminder/*from*/,0/*Date*/,
+				   extra_hdrs_str/*extra*/)
+		   < 0)
 		{
 			LM_ERR("headers building failed [%d]\n", mid);
 			if (msilo_dbf.free_result(db_con, db_res) < 0)

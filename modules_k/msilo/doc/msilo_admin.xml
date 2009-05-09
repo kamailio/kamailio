@@ -177,6 +177,27 @@ modparam("msilo", "contact_hdr", "Contact: &lt;sip:null@example.com&gt;\r\n")
 		</example>
 	</section>
 	<section>
+		<title><varname>extra_hdrs</varname> (string)</title>
+		<para>
+		Extra headers (each ending with	\r\n) to be added in
+	messages sent from silo by m_dump.
+		It can contain pseudo-variables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>extra_hdrs</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "contact_hdr", "X-Extra: $tu\r\nY-Extra: foo\r\n")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>offline_message</varname> (string)</title>
 		<para>
 		The body of the notification message.
