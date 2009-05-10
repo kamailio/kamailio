@@ -411,6 +411,10 @@ make man
 Generates a manpage for all the modules that support it (.xml file in the
  module directory).
 
+make modules=modules_k/foo modules-readme
+
+Generates README file for modules_k/foo.
+
 Install:
 
 make prefix=/usr/local  install
