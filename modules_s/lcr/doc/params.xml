@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="lcr.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    The URL for accessing the database where the LCR tables reside
+	</para>
+	<para>
+	    Default value is NULL.
+	</para>
+	<example>
+	    <title>Set <varname>db_url</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "db_url", "mysql://ser:pwd@localhost/ser") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="gw_table">
+	<title><varname>gw_table</varname> (string)</title>
+	<para>
+	    The name of the table containing the list of gateways
+	</para>
+	<para>
+	    Default value is gw.
+	</para>
+	<example>
+	    <title>Set <varname>gw_table</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "gw_table", "mygateways") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="gw_name_column">
+	<title><varname>gw_name_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the actual name of the gateway
+	</para>
+	<para>
+	    Default value is gw_name.
+	</para>
+	<example>
+	    <title>Set <varname>gw_name_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "gw_name_column", "Agateway") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="ip_addr_column">
+	<title><varname>ip_addr_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the IP address for a specific gateway
+	</para>
+	<para>
+	    Default value is ip_addr.
+	</para>
+	<example>
+	    <title>Set <varname>ip_addr_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "ip_addr_column", "gatewayIPs") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="port_column">
+	<title><varname>port_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the port number through which this gateway communicates
+	</para>
+	<para>
+	    Default value is port.
+	</para>
+	<example>
+	    <title>Set <varname>port_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "port_column", "gatewayPort") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="uri_scheme_column ">
+	<title><varname>uri_scheme_column </varname> (string)</title>
+	<para>
+	    The name of the column that contains the scheme to be used when rewriting the R-URI
+	</para>
+	<para>
+	    Default value is uri_scheme.
+	</para>
+	<example>
+	    <title>Set <varname>uri_scheme_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "uri_scheme", "myURIScheme") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="transport_column ">
+	<title><varname>transport_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the transport to be used when contacting a gateway
+	</para>
+	<para>
+	    Default value is transport.
+	</para>
+	<example>
+	    <title>Set <varname>transport_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "transport", "mySIPXport") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="grp_id_column ">
+	<title><varname>grp_id_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the gateway group ID number
+	</para>
+	<para>
+	    Default value is grp_id.
+	</para>
+	<example>
+	    <title>Set <varname>grp_id_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "grp_id_column", "GwyGroups") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="lcr_table ">
+	<title><varname>lcr_table</varname> (string)</title>
+	<para>
+	    The name of the column that contains the LCR table
+	</para>
+	<para>
+	    Default value is lcr.
+	</para>
+	<example>
+	    <title>Set <varname>lcr_table</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "lcr_table", "lcr") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="prefix_column ">
+	<title><varname>prefix_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the prefix to be prepended to the R-URI user part.
+	</para>
+	<para>
+	    Default value is prefix.
+	</para>
+	<example>
+	    <title>Set <varname>prefix_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "prefix_column", "prefix") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="from_uri_column ">
+	<title><varname>from_uri_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains the From URI which must match in order to select this gateway.
+            Note that the values in this column may contain wildcard characters as mentioned earlier in this 
+            document.
+	</para>
+	<para>
+	    Default value is from_uri.
+	</para>
+	<example>
+	    <title>Set <varname>from_uri_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "from_uri_column", "FromURI") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="priority_column ">
+	<title><varname>priority_column</varname> (string)</title>
+	<para>
+	    The name of the column that contains a number indicating the priority of this gateway
+	</para>
+	<para>
+	    Default value is priority.
+	</para>
+	<example>
+	    <title>Set <varname>priority_column</varname> parameter</title>
+	    <programlisting>
+		...
+		modparam("lcr", "priority_column", "priority") 
+		...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

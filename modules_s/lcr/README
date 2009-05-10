@@ -1,0 +1,259 @@
+
+Least Cost Routing Module
+
+Juha Heinanen
+
+Edited by
+
+Juha Heinanen
+
+   Copyright © 2005 Juha Heinanen
+     _________________________________________________________
+
+   Table of Contents
+
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
+        1.4. Exported Functions
+        1.5. FIFO Commands
+        1.6. Known Limitations
+
+   2. TODO
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Least cost routing (LCR) module implements two related capabilities:
+
+   (1) sequential forwarding of a request to one or more gateways
+       (functions load_gws and next_gw),
+
+   (2) sequential forwarding to contacts if they don't share the
+       the same qvalue (functions load_contacts and next_contacts).
+
+   Gateway selection is based on caller's RPID URI (if available in
+   caller's RPID AVP after authentication) or From URI and user part of
+   Request-URI (telephone number).  Gateway patterns matching RPID or
+   From URI and telephone number are ordered for forwarding purpose (1)
+   according to longest user part match, (2) according to priority, and
+   (3) randomly.
+
+   Each gateway belongs to a gateway group either alone or among other
+   gateways.  All gateways in a group share the same priority.
+
+   Gateway and routing information is kept in two tables:  gw and lcr.
+
+   When a gateway is selected, Request-URI is rewritten with information
+   from gw table: URI scheme, prefix, IP address, port, and transport
+   protocol.  Valid URI scheme values are NULL = sip, 1 = sip and 2 =
+   sips.  Prefix is appended in front of Request-URI user part.
+   Currently valid transport protocol values are NULL = none, 1 = udp, 2
+   = tcp, and 3 = tls.
+
+   Table lcr contains prefix of user part of Request-URI, From URI,
+   gateway group id, and priority.  From URI can contain special
+   characters % and _ matching any number of any characters and any one
+   character, respectively.  
+
+   In addition to gw and lcr tables there is third table gw_grp that is
+   used for administrative purposes only to associate names with gateway
+   group ids.
+   _________________________________________________________
+
+1.2. Dependencies
+
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
+
+     * tm module
+     * mysql module
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+   LCR module exports the following database related parameters that
+   have usual purpose:
+
+     * db_url (default system default)
+     * gw_table (default "gw")
+     * gw_name_column (default "gw_name")
+     * ip_addr_column (default "ip_addr")
+     * port_column (default "port")
+     * uri_scheme_column (default "uri_scheme")
+     * transport_column (default "transport")
+     * grp_id_column (default "grp_id")
+     * lcr_table (default "lcr")
+     * prefix_column (default "prefix")
+     * from_uri_column (default "from_uri")
+     * priority_column (default "priority")
+
+   In addition there are parameters that can be used to override names
+   of the AVPs used by LCR module:
+
+     * gw_uri_avp	  (default "1400")
+     * contact_avp	  (default "1401")
+     * fr_inv_timer_avp	  (default "fr_inv_timer_avp")
+     * rpid_avp		  (default "rpid")
+
+   If string value of an AVP parameter contains only digits, the name of
+   the AVP is int value of the string.
+
+   Finally, the parameters used by sequential forwarding:
+
+     * fr_inv_timer		(default 90)
+     * fr_inv_timer_next	(default 30)
+     * fr_inv_timer_param	(default "")
+     * fr_inv_timer_next_param	(default "")
+
+   Function next_contacts() sets tm fr_inv_timer to fr_inv_timer_next
+   value if, after next contacts, there are still lower qvalue
+   contacts available, and to fr_inv_timer value if next contacts are
+   the last ones left. fr_inv_timer_param can define an AVP
+   overwriting fr_inv_timer value, and similarly, AVP defined by
+   fr_inv_timer_next_param can overwrite fr_inv_timer_next value.
+    _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. load_gws()
+
+   Loads URIs of gateways matching RPID AVP (if available) or From URI
+   and user part of Request-URI to gw_uri_avp AVPs.  Returns 1 or -1
+   depending on success.
+
+   Example:
+
+   if (!load_gws()) {
+      sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+      break;
+   };
+
+1.4.2. next_gw()
+
+   If called from a route block, replaces Request-URI by the first
+   gw_uri_avp AVP value and destroys that AVP.
+
+   If called from a failure route block, appends a new branch to request,
+   whose Request-URI is the first gw_uri_avp AVP value, and destroys that
+   AVP.
+
+   Returns 1 on success and -1 if there were no gateways left or if an
+   error occurred (see syslog).
+
+   Must be preceded by successful load_gws() call.
+
+   Example from route block:
+   
+   if (!next_gw()) {
+      sl_send_reply("503", "Service not available - No gateways");
+      break;
+    };
+
+   Example from failure route block:
+
+   if (!next_gw()) {
+      t_reply("503", "Service not available - No more gateways");
+      break;	     
+    };
+
+1.4.3. from_gw()
+
+   Checks if request came from IP address of a gateway.
+
+   Example:
+   
+   if (from_gw()) {
+      ...
+      break;
+   };
+
+1.4.4. to_gw()
+
+   Checks if in-dialog request goes to a gateway.
+
+   Example:
+   
+   if (to_gw()) {
+      ...
+      break;
+   };
+
+1.4.5. load_contacts()
+
+   Loads contacts in destination set in increasing qvalue order as
+   values of lcr_contact AVP.  If all contacts in the destination set
+   have the same qvalue, load_contacts() does not do anything thus
+   minimizing performance impact of sequential forking capability when
+   it is not needed.  Returns 1 if loading of contacts succeeded or
+   there was nothing to do.  Returns -1 on error (see syslog).
+
+   Example:
+
+   if (!load_contacts()) {
+      sl_send_reply("500", "Server Internal Error - Cannot load contacts");
+      break;
+   };
+
+1.4.6. next_contacts()
+
+   If called from a route block, replaces Request-URI with the first
+   lcr_contact AVP value, adds the remaining lcr_contact AVP values with
+   the same qvalue as branches, and destroys those AVPs.  It does
+   nothing if there are no lcr_contact AVPs.  Returns 1 if there were no
+   errors and -1 if an error occurred (see syslog).
+
+   If called from a failure route block, adds the first lcr_contact AVP
+   value and all following lcr_contact AVP values with the same qvalue
+   as new branches to request and destroys those AVPs.  Returns 1 if new
+   branches were successfully added and -1 on error (see syslog) or if
+   there were no more lcr_contact AVPs.
+
+   Must be preceded by successful load_contacts() call.
+
+   Example from route block:
+   
+   if (!next_contacts()) {
+       sl_send_reply("500", "Server Internal Error");
+        break;
+   } else {
+      t_relay();
+   };
+
+   Example from failure route block:
+   
+   if (next_contacts()) {
+       t_relay();
+   };
+
+
+1.5. FIFO Commands
+
+1.5.1. lcr_reload
+
+   Causes lcr module to re-read the contents of gateway table
+   into memory.
+
+1.5.2. lcr_dump
+
+   Causes lcr module to dump the contents of its in-memory gateway
+   table. 
+
+1.6. Known Limitations
+
+   There is an unlikely race condition on lcr reload. If a process uses
+   in memory gw table, which is reloaded at the same time twice through
+   FIFO, the second reload will delete the original table still in use
+   by the process.
+   _________________________________________________________
+
+2.0. TODO
+
+   Function load_gws() currently makes an SQL query for the matching
+   gateways.  In order to avoid the query, also lcr table should be
+   read into memory and the corresponding query should be rewritten in
+   C.
