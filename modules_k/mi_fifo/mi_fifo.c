@@ -191,7 +191,7 @@ static int mi_child_init(int rank)
 	}
 
 	if (rank==PROC_MAIN) {
-		pid=fork_process(100, "MI FIFO", 1);
+		pid=fork_process(PROC_NOCHLDINIT, "MI FIFO", 1);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
