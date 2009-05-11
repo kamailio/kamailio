@@ -686,4 +686,7 @@ Content-Length: 276
 	</para>
     </section>
 
+	<xi:include href="params.xml"/>
+	<xi:include href="functions.xml"/>
+
 </section>

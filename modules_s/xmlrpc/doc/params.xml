@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="xmlrpc.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</sectioninfo>
+
+	<title>Parameters</title>
+
+	<section id="route">
+	<title><varname>route</varname> (string)</title>
+	<para>
+		Name of the route called for XMLRPC messages.
+	</para>
+	<para>
+		This route will be called only for HTTP messages whose method is
+		either GET or POST. The message visible inside the route
+		will be a HTTP request converted to SIP (the uri will be fixed and
+		a fake via will be added).
+	</para>
+	<para>
+		The route should perform additional security checks to
+		ensure the client is authorized to execute management/RPC functions
+		and then it should call the <function>dispatch_rpc()</function>.
+	</para>
+	<para>
+		Default: the main route is used.
+	</para>
+	<example>
+		<title>Set <varname>route</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "route", "route_for_xmlrpcs")
+		</programlisting>
+	</example>
+	</section>
+
+	<!--
+	Seems to be obsolete (on always) -andrei
+	<section id="enable_introspection">
+	<title><varname>enable_introspection</varname> (integer)</title>
+	<para>
+		Enable/disable additional introspection methods. If set to 1 then
+		the functions defined in
+		http://scripts.incutio.com/xmlrpc/introspection.html
+		will be available on the server. If set to 0 then the functions will 
+		be disabled.
+	</para>
+	<para>
+		Default: 1 (enabled).
+	</para>
+	<example>
+		<title>Set <varname>enable_introspection</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "enable_introspection", 0)
+		</programlisting>
+	</example>
+	</section>
+	-->
+
+</section>
