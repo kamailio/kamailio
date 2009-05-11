@@ -277,7 +277,7 @@ static int mi_child_init(int rank)
 		}
 		for(i=0; i<mi_procs[0].no; i++)
 		{
-			pid=fork_process(100, "MI DATAGRAM", 1);
+			pid=fork_process(PROC_NOCHLDINIT, "MI DATAGRAM", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0) {
