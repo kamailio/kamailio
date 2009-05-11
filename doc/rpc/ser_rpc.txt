@@ -1,0 +1,523 @@
+1.  SER Management Interface
+     __________________________________________________________________
+
+   1.1. Overview of Operation
+   1.2. Module API
+
+        1.2.1. RPC Functions
+        1.2.2. Data Types
+        1.2.3. Getting Parameters
+
+              1.2.3.1. scan
+              1.2.3.2. struct_scan
+
+        1.2.4. Building Reply
+
+              1.2.4.1. fault
+              1.2.4.2. send
+              1.2.4.3. add
+              1.2.4.4. printf
+              1.2.4.5. struct_add
+
+        1.2.5. Real World Example
+
+   1.3. Client Examples
+   1.4. Implementing New Transports
+   1.5. Examples using xmlrpc
+
+1.1. Overview of Operation
+
+   The RPC (Remote Procedure Call) interface of SER is an interface for
+   communicating with external applications. Using it an external
+   application can call a function or procedure that will be executed
+   inside SER. Function parameters are supported as well as returning
+   multiple values as results.
+
+   By itself SER RPC consists of two APIs, one for defining RPC functions
+   in a transport independent way (called the rpc module api) and one for
+   implementing RPC transports.
+
+   The RPC transports are implemented by writting a RPC transport module.
+   The most used transport modules are ctl and xmlrpc . The first one
+   implements a ser-proprietary fast and space efficient RPC encoding over
+   different protocols (unix sockets, UDP, TCP, fifo). The second one uses
+   the de-facto XML-RPC standard encoding (over HTTP TCP or TLS). For more
+   information about the existing transport modules, please refer to their
+   documentation.
+
+   When writing a SER RPC procedure or function, one needs only use the
+   RPC API and it will work automatically with all the transports and
+   encodings. One needs only to load the desired RPC transport module
+   (e.g. xmlrpc).
+
+   The RPC interface (or API) was created in such a way that would allow
+   supporting XML-RPC (because XML-RPC is a de-facto standard), while in
+   the same time being very easy to use.
+
+1.2. Module API
+
+   Each SER module can export RPC functions just like it can export
+   parameters and functions to be called from the script. Whenever SER
+   receives an RPC request, it will search through the list of exported
+   RPC functions and the function with matching name will be executed. A
+   couple of essential RPC functions are also embedded into the SER core.
+
+   This section gives a detailed overview of the whole RPC API.
+   Section 1.2.1, "RPC Functions" describes the prototype and conventions
+   used in RPC functions. Section 1.2.2, "Data Types" gives a detailed
+   overview of available data types that can be used in function
+   parameters and return value. Section 1.2.3, "Getting Parameters"
+   describes functions of the RPC API that can be used to retrieve
+   parameters of the function, and finally Section 1.2.4, "Building Reply"
+   describes functions of the API that can be used to build the result
+   value that will be sent in the reply to the caller.
+
+   The whole RPC API is described in header file sip_router/rpc.h. This
+   file defines the set of functions that must be implemented by RPC
+   transport modules, as described in Section 1.4, "Implementing New
+   Transports", prototypes of RPC functions and structures used for the
+   communication between RPC transport modules and ordinary modules
+   exporting RPC functions.
+
+1.2.1. RPC Functions
+
+   RPC functions are standard C functions with the following prototype:
+typedef void (*rpc_function_t)(rpc_t* rpc);
+
+   RPC functions take one parameter, this parameter is a pointer to rpc_t
+   structure and is called RPC context. The context contains references to
+   all API functions available to the RPC function as well as all data
+   necessary to create the response. RPC functions do not return any
+   value, instead the return value is created using functions from the
+   context. The motivation for this decision is the fact that RPC
+   functions should always return a response and even the API functions
+   called from RPC functions should have the possibility to indicate an
+   error (and should not rely on RPC functions doing so).
+
+   If no reply is sent explicitely, the RPC transport module will
+   automatically send a "success" reply (e.g. 200 OK for XML-RPC) when the
+   RPC function finishes. If no values are added to the response, the
+   reponse will be an empty "success" reply (e.g. a 200 OK with empty body
+   for XML-RPC). RPC API functions will automatically send an error reply
+   upon a failure.
+
+   Each RPC function has associated an array of documentation strings. The
+   purpose of the documentation strings is to give a short overview of the
+   function, accepted parameters, and format of the reply. By convention
+   the name of the documentation string array is same as the name of the
+   function with "_doc" suffix.
+
+   Each module containing RPC functions has to export all the RPC
+   functions to SER core in order to make them visible to RPC transport
+   modules. For this purpose, the module_exports structure of SER module
+   API contains a new attribute called rpc_methods:
+struct module_exports {
+    char* name;                 /* null terminated module name */
+    cmd_export_t* cmds;         /* null terminated array of the exported command
+s */
+    rpc_export_t* rpc_methods;  /* null terminated array of exported rpc methods
+ */
+    param_export_t* params;     /* null terminated array of the exported module
+parameters */
+
+    init_function init_f;         /* Initialization function */
+    response_function response_f; /* function used for responses */
+    destroy_function destroy_f;   /* function called upon SER shutdown */
+    onbreak_function onbreak_f;
+    child_init_function init_child_f;  /* function called by all processes after
+ the fork */
+};
+
+
+typedef struct rpc_export {
+    const char* name;        /* Name of the RPC function (null terminated) */
+    rpc_function_t function; /* Pointer to the function */
+    const char** doc_str;    /* Documentation strings, method signature and desc
+ription */
+    unsigned int flags;      /* Various flags, reserved for future use */
+} rpc_export_t;
+
+   rpc_methods is pointer to an array of rpc_export_t structures. The last
+   element of the array is a bumper containing zeroes in all attributes of
+   the structure. The following program listing shows exported RPC
+   functions of usrloc module:
+struct module_exports exports = {
+    "usrloc",
+    cmds,      /* Exported functions */
+    ul_rpc,    /* RPC methods */
+    params,    /* Export parameters */
+    mod_init,  /* Module initialization function */
+    0,         /* Response function */
+    destroy,   /* Destroy function */
+    0,         /* OnCancel function */
+    child_init /* Child initialization function */ };
+
+
+rpc_export_t ul_rpc[] = {
+    {"usrloc.statistics",      rpc_stats,           rpc_stats_doc,          0},
+    {"usrloc.delete_aor",      rpc_delete_aor,      rpc_delete_aor_doc,     0},
+    {"usrloc.delete_contact",  rpc_delete_contact,  rpc_delete_contact_doc, 0},
+    {"usrloc.dump",            rpc_dump,            rpc_dump_doc,           0},
+    {"usrloc.flush",           rpc_flush,           rpc_flush_doc,          0},
+    {"usrloc.add_contact",     rpc_add_contact,     rpc_add_contact_doc,    0},
+    {"usrloc.show_contacts",   rpc_show_contacts,   rpc_show_contacts_doc,  0},
+    {0, 0, 0, 0}
+};
+
+   By convention the name of every exported function consists of two parts
+   delimited by a dot. The first part is the name of the module or SER
+   subsystem this function belongs to. The second part is the name of the
+   function.
+
+   Attribute flags of rpc_export structure is reserved for future use and
+   is currently unused.
+
+1.2.2. Data Types
+
+   The RPC API defines several basic and 1 compound data type that can be
+   used in communication with the caller of RPC functions. The RPC API
+   uses formating strings to describe data types. Each data type is
+   described by exactly one character in the formating string. For
+   example, if an RPC function calls function add of the RPC API and it
+   passes two parameters to it, the first one of type string and the
+   second one of type integer, the function parameters will look like:
+add("sd", string_param, int_param);
+
+   Character "s" in the formating string tells to the function that the
+   2nd parameter should be interpreted as string, character "d" in the
+   formating string tells to the function that the 3rd parameter should be
+   interpreted as signed integer.
+
+   Integer.  Integer type represents a signed 32-bit integer.
+   Corresponding character in the formating string is "d". This parameter
+   can be stored in C-style variable with type int.
+
+   Float.  Float type represents a signed floating point number.
+   Corresponding character in the formating string is "f". Data of this
+   type can be stored in C-style variables of type double.
+
+   String.  String type represents a string of characters. The string may
+   contain zeroes. This data type is represented by two characters in the
+   formatting string, either "s" or "S". "s" indicates to the conversion
+   function that the result should be stored in a variable of type char*
+   and it should be zero terminated. "S" indicates to the conversion
+   function that the result will be stored in a variable of type str which
+   contains both the pointer to the beginning of the string and its
+   length.
+
+   Structure.  Structure is the only compound data type currently defined
+   in the API. A structure is a collection of attributes. Each attribute
+   is identified using name (string) and each attribute can be one of the
+   basic data types, that is integer, float, or string. Nesting of
+   structures is not allowed (in other words, structure attributes cannot
+   be of type struct again). Corresponding character in the formatting
+   string is "{".
+
+   Table 1. Data Type Overview
+   Name    Formating String Char C-Style Variable
+   Integer d                     int
+   Float   f                     double
+   String  s                     char*
+   String  S                     str
+
+1.2.3. Getting Parameters
+
+   Each RPC function call can contain parameters. Parameters have no name,
+   their meaning is determined by their position in the parameter set.
+
+Note
+
+   You can pass all parameters to a function within a structure if you
+   want to make them position independent. Then each parameter can be
+   retrieved by its name regardless of its position.
+
+   There are two functions in the RPC API that can be used to obtain
+   function call parameters: scan and struct_scan.
+
+1.2.3.1. scan
+
+   Function scan can be used to retrieve parameters from the parameter
+   set. The function accepts variable number of parameters. The first
+   parameter is the formatting string that determines the type of the
+   parameters to be retrieved. Each parameter is represented by exactly
+   one character in the string. The variable part of parameters must
+   contain as many pointers to C variables as there are formatting
+   characters in the formatting string.
+
+Warning
+
+   The function will crash if you fail to provide enough parameters.
+
+   The function indicates success by returning 0. When a failure occurs
+   (incorrect parameter type or no more parameters in the parameter set)
+   then the function will return -1 and it will also automatically change
+   the reply that will be sent to the caller to indicate that a failure
+   has occurred on the server. Prototype of the function is:
+int scan(char* fmt, ...)
+
+   It is possible to either call the function once to scan all the
+   parameters:
+rpc->scan("sdf", &string_val, &int_val, &double_val);
+
+   Or you can call the same function several times and it will continue
+   where it left off previously:
+rpc->scan("s", &string_val);
+rpc->scan("d", &int_val);
+rpc->scan("f", &double_val);
+
+1.2.3.2. struct_scan
+
+   Function struct_scan can be used to retrieve named attributes from a
+   parameter of type structure. When retrieving a structure parameter from
+   the parameter set:
+rpc->scan("{", &handle);
+
+   The corresponding variable (named handlein the example above) will
+   contain the index of the structure parameter within the parameter set,
+   but the index cannot be used to retrieve the contents of the structure.
+   To retrieve the contents of the structure you can use function
+   struct_scan. The function gets the handle as the first parameter:
+rpc->struct_scan(handle, "sd", "str_attr", &str_val, "int_attr", &int_val);
+
+   The second parameter is the formatting string followed by pairs of
+   parameters. First parameter in each pair is the name of the attribute
+   to retrieve (string) and the second parameter in each pair is the
+   pointer to the variable to store the value of the parameter. The
+   function returns 0 on success and -1 on an error (just like scan
+   function). The function also indicates an error if a requested
+   attribute is missing in the structure.
+
+   Example 1. Retrieving Parameters
+static void rpc_delete_contact(rpc_t* rpc)
+{
+    str aor, contact;
+    char* table;
+    void *handle;
+    int   expires;
+    double q;
+
+    if (rpc->scan("sS{", &table, &aor, &handle) < 0) {
+        /* Reply is set automatically by scan upon failure,
+         * no need to do anything here
+         */
+        return;
+    }
+
+    if (rpc->struct_scan(handle, "Sdf", &contact, &expires, &q) < 0) {
+        /* Reply is set automatically by struct_scan upon failure,
+         * no need to do anything here
+         */
+        return;
+    }
+
+    /* Process retrieved parameters here */
+}
+
+1.2.4. Building Reply
+
+   The RPC API contains several functions that can be used to modify
+   and/or send a reply. The functions use formatting strings and parameter
+   lists just like functions described in Section 1.2.3, "Getting
+   Parameters".
+
+   Each RPC function call must return a reply. The reply can be either a
+   failure reply or success reply. Failure replies contain only the status
+   code and reason phrase. Success replies can have arbitrary amount of
+   data attached to them. Status codes 3xx, 4xx, 5xx, and 6xx indicate
+   failures. Status code 2xx indicates success.
+
+   The default reply is 200 OK with no data attached to it. This is what
+   will be returned by the RPC transport module if you do not call any of
+   the reply-related functions described in this section.
+
+   Example 2. Sending default reply
+static void rpc_dummy(rpc_t* rpc)
+{
+  /* 200 OK with no data will be returned */
+}
+
+1.2.4.1. fault
+
+   You can use fault function to indicate that an error has occurred on
+   the server to the caller. The function accepts two parameters. The
+   first parameter is the status code and the second parameter is the
+   reason phrase.
+static void rpc_my_function(rpc_t* rpc)
+{
+    rpc->fault(600, "Not Yet Implemented");
+}
+
+   If your function first creates some result using add, or printf
+   functions then all the data will be lost once you call fault function.
+   Failure replies must not contain any data:
+static void rpc_my_function(rpc_t* rpc)
+{
+    rpc->add("s", "result1");
+    rpc->add("d", variable);
+
+    /* Reply created by previous functions will be
+     * deleted and a failure reply 600 Not Yet Implemented
+     * will be created instead
+     */
+    rpc->fault(600, "Not Yet Implemented");
+
+    /* You can also add data here, but that will have no
+     * effect
+     */
+    rpc->add("s", "result2");
+}
+
+   Similarly you can also call add or printf functions after calling
+   fault, in this case they will have no effect:
+static void rpc_my_function(rpc_t* rpc)
+{
+    rpc->fault(600, "Not Yet Implemented");
+
+    /* You can also add data here, but that will have no
+     * effect and only 600 Not Yet Implemented will be returned
+     */
+    rpc->add("s", "result2");
+}
+
+1.2.4.2. send
+
+   RPC functions can use function send to explicitly send the reply. Each
+   RPC function call generates exactly one reply. No reply will be sent
+   after the function finishes if it already sent the reply using send
+   function explicitly. This function is especially useful if the RPC
+   function needs to perform some (potentially destructive) actions after
+   the reply has been sent.
+
+   Example 3. Kill the server
+static void core_kill(rpc_t* rpc)
+{
+    int sig_no;
+
+    if (rpc->scan("d", &sig_no) < 0) return;
+    rpc->send();     /* First send a reply */
+    kill(0, sig_no); /* Then kill the server */
+}
+
+1.2.4.3. add
+
+   Function add can be used to add arbitrary data to the result set. Its
+   parameters and use are analogical to scan function described in
+   Section 1.2.3.1, "scan". The first parameter of the function is the
+   formatting string that determines the types of additional parameters:
+static void rpc_func(rpc_t* rpc)
+{
+    str str_result;
+    int int_result;
+    void *handle;
+    double float_result;
+
+    if (rpc->add("Sdf{", &str_result, int_result, float_result, &handle) < 0) re
+turn;
+}
+
+   Naturally you can call this function several times, adding only one
+   piece of data at a time. The function returns 0 on success and -1 on an
+   error. In case of an error the reply is set automatically with
+   corresponding error code and reason phrase.
+
+   The last character in the formatting string of the function above
+   indicates that the last data to be added will be a structure. This
+   deserves some clarification. In this case, the function will create an
+   empty structure and the handle to the newly created structure will be
+   stored in handle variable (hence the last parameter is pointer to an
+   integer). In this particular example parameters str_result, int_result,
+   and float_result will be used for reading while parameter handle will
+   be used for writing by the function.
+
+   You can set the attributes of the newly created structure using
+   struct_add function described in Section 1.2.4.5, "struct_add".
+
+1.2.4.4. printf
+
+   printf is a convenience function. The function adds data of type string
+   to the result set. The first parameter of the function is again a
+   formatting string, but this time it is printf-like formatting string:
+if (rpc->printf("Unable to delete %d entries from table %s", num_entries, table_
+name) < 0) return;
+
+   The return value of the function is the same as of add function.
+
+1.2.4.5. struct_add
+
+   Function struct_add can be used to add attributes to a structure
+   (created previously by add function). The first parameter of the
+   function is handle obtained through add function, the second parameters
+   is formatting string that determines the types of attributes to be
+   added. There must be two parameters per each character in the
+   formatting string, the first one is the name of the attribute, the
+   second parameter is the value of the attribute. If a parameter with
+   such a name already exist in the structure then it will be overwritten
+   with the new value.
+static void rpc_func(rpc_t* rpc)
+{
+    void *handle;
+
+        /* Create empty structure and obtain its handle */
+    if (rpc->add("{", &handle) < 0) return;
+        /* Fill-in the structure */
+    if (rpc->struct_add(handle, "sd", "attr1", str_val, "attr2", int_val) < 0) r
+eturn;
+}
+
+   The function returns -1 on an error (and sets the status code and
+   reason phrase of the reply accordingly) and 0 on success.
+
+1.2.5. Real World Example
+
+   The following example illustrates the use of most of the functions from
+   the API together:
+
+   Example 4. Real World Example RPC Function
+static void rpc_register(rpc_t* rpc)
+{
+    char* domain;
+    str aor;
+    contact_t contact, new_contact;
+    void *handle;
+
+        /* Extract the domain, address of record from the request */
+    if (rpc->scan("sS{", &domain, &aor, &handle) < 0) return;
+        /* Extract the structure describing the contact to be processed */
+    if (rpc->struct_scan(handle, "Sdf", &contact.c, &contact.expires, &contact.q
+) < 0) return;
+
+        /* Process the contact, new_contact will contain updated value after pro
+cessing */
+    if (process_contact(domain, &aor, &new_contact, &contact) < 0) {
+           /* Processing failed, indicate the failure to the caller */
+        rpc->fault(500, "Error While Processing Contact");
+        return;
+    }
+
+        /* Return the domain and the address of record */
+    rpc->add("sS{", &domain, &aor, &handle) < 0) return;
+        /* And also add the new values for contact, q, and expires parameters */
+    rpc->struct_add(handle, "Sdf", &new_contact.c, &new_contact.expires, &new_co
+ntact.q);
+}
+
+1.3. Client Examples
+
+     * sercmd (C application that uses the binrpc interface implemented by
+       the ctl module).
+     * ser_ctl (python application that uses the XML-RPC interface
+       implemented by the xmlrpc module).
+     * serweb (php application that can use the XML-RPC interface to call
+       ser functions).
+
+1.4. Implementing New Transports
+
+   To be done.
+
+   Examples:
+     * ctl
+     * xmlrpc
+
+1.5. Examples using xmlrpc
+
+   See the xmlrpc module documentation: modules_s/xmlrpc/README.
