@@ -303,7 +303,9 @@ static void rpc_delete_contact(rpc_t* rpc)
         return;
     }
 
-    if (rpc->struct_scan(handle, "Sdf", &contact, &expires, &q) < 0) {
+    if (rpc->struct_scan(handle, "Sdf", "Contact", &contact,
+                                        "Expires", &expires,
+                                        "Q",       &q        ) < 0) {
         /* Reply is set automatically by struct_scan upon failure,
          * no need to do anything here
          */
@@ -460,8 +462,9 @@ static void rpc_func(rpc_t* rpc)
         /* Create empty structure and obtain its handle */
     if (rpc->add("{", &handle) < 0) return;
         /* Fill-in the structure */
-    if (rpc->struct_add(handle, "sd", "attr1", str_val, "attr2", int_val) < 0) r
-eturn;
+    if (rpc->struct_add(handle, "sd", "attr1", str_val,
+                                      "attr2", int_val ) < 0)
+        return;
 }
 
    The function returns -1 on an error (and sets the status code and
@@ -483,8 +486,10 @@ static void rpc_register(rpc_t* rpc)
         /* Extract the domain, address of record from the request */
     if (rpc->scan("sS{", &domain, &aor, &handle) < 0) return;
         /* Extract the structure describing the contact to be processed */
-    if (rpc->struct_scan(handle, "Sdf", &contact.c, &contact.expires, &contact.q
-) < 0) return;
+    if (rpc->struct_scan(handle, "Sdf", "Contact", &contact.c,
+                                        "Expires", &contact.expires,
+                                        "Q",       &contact.q       ) < 0)
+        return;
 
         /* Process the contact, new_contact will contain updated value after pro
 cessing */
@@ -497,8 +502,9 @@ cessing */
         /* Return the domain and the address of record */
     rpc->add("sS{", &domain, &aor, &handle) < 0) return;
         /* And also add the new values for contact, q, and expires parameters */
-    rpc->struct_add(handle, "Sdf", &new_contact.c, &new_contact.expires, &new_co
-ntact.q);
+    rpc->struct_add(handle, "Sdf", "Contact", &new_contact.c,
+                                   "Expires", &new_contact.expires,
+                                   "Q",       &new_contact.q       );
 }
 
 1.3. Client Examples
