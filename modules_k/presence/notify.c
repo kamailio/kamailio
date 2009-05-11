@@ -1096,14 +1096,14 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 		
-	//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
-	//		continue;
+		//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
+		//		continue;
 
-        if(row_vals[reason_col].val.string_val)
-        {
-            if(strlen(row_vals[reason_col].val.string_val) != 0)
-                continue;
-        }
+		if(row_vals[reason_col].val.string_val) {
+		    if(strlen(row_vals[reason_col].val.string_val) != 0)
+			continue;
+		}
+
 		//	s.reason.len= strlen(s.reason.s);
 
 		memset(&s, 0, sizeof(subs_t));
@@ -1148,7 +1148,11 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		
 		s.event= event;
 		s.local_cseq = row_vals[cseq_col].val.int_val;
-		s.expires = row_vals[expires_col].val.int_val -(int)time(NULL);
+		if(row_vals[expires_col].val.int_val < (int)time(NULL))
+		    s.expires = 0;
+		else
+		    s.expires = row_vals[expires_col].val.int_val -
+			(int)time(NULL);
 		s.version = row_vals[version_col].val.int_val;
 
 		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);
