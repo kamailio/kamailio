@@ -153,6 +153,7 @@
 #include "sctp_server.h"
 #endif
 #include "usr_avp.h"
+#include "rpc_lookup.h"
 #include "core_cmd.h"
 #include "flags.h"
 #include "lock_ops_init.h"
@@ -1630,6 +1631,8 @@ int main(int argc, char** argv)
 	}
 	if (init_routes()<0) goto error;
 	if (init_nonsip_hooks()<0) goto error;
+	if (init_rpcs()<0) goto error;
+	if (register_core_rpcs()!=0) goto error;
 
 	/* Fix the value of cfg_file variable.*/
 	if (fix_cfg_file() < 0) goto error;

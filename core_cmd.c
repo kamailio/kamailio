@@ -31,6 +31,7 @@
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "sr_module.h"
+#include "rpc_lookup.h"
 #include "dprint.h"
 #include "core_cmd.h"
 #include "globals.h"
@@ -229,18 +230,10 @@ static const char* system_listMethods_doc[] = {
 
 static void system_listMethods(rpc_t* rpc, void* c)
 {
-	struct sr_module* t;
-	rpc_export_t* ptr;
-
-	for(ptr = core_rpc_methods; ptr && ptr->name; ptr++) {
-		if (rpc->add(c, "s", ptr->name) < 0) return;
-	}
-
-	for(t = modules; t; t = t->next) {
-		if (t->mod_interface_ver!=0) continue;
-		for(ptr = t->exports->v0.rpc_methods; ptr && ptr->name; ptr++) {
-			if (rpc->add(c, "s", ptr->name) < 0) return;
-		}
+	int i;
+	
+	for(i=0; i<rpc_sarray_crt_size; i++){
+		if (rpc->add(c, "s", rpc_sarray[i]->name) < 0) return;
 	}
 }
 
@@ -262,40 +255,25 @@ static const char* system_methodHelp_doc[] = {
 
 static void system_methodHelp(rpc_t* rpc, void* c)
 {
-	struct sr_module* t;
-	rpc_export_t* ptr;
+	rpc_export_t* r;
 	char* name;
 
 	if (rpc->scan(c, "s", &name) < 1) {
 		rpc->fault(c, 400, "Method Name Expected");
 		return;
 	}
-
-	for(t = modules; t; t = t->next) {
-		if (t->mod_interface_ver!=0) continue;
-		for(ptr = t->exports->v0.rpc_methods; ptr && ptr->name; ptr++) {
-			if (strcmp(name, ptr->name) == 0) {
-				if (ptr->doc_str && ptr->doc_str[0]) {
-					rpc->add(c, "s", ptr->doc_str[0]);
-				} else {
-					rpc->add(c, "s", "undocumented");
-				}
-				return;
-			}
+	
+	r=rpc_lookup(name, strlen(name));
+	if (r==0){
+		rpc->fault(c, 400, "command not found");
+	}else{
+		if (r->doc_str && r->doc_str[0]) {
+			rpc->add(c, "s", r->doc_str[0]);
+		} else {
+			rpc->add(c, "s", "undocumented");
 		}
 	}
-	/* try the core methods too */
-	for (ptr=core_rpc_methods;ptr && ptr->name; ptr++){
-			if (strcmp(name, ptr->name) == 0) {
-				if (ptr->doc_str && ptr->doc_str[0]) {
-					rpc->add(c, "s", ptr->doc_str[0]);
-				} else {
-					rpc->add(c, "s", "undocumented");
-				}
-				return;
-			}
-	}
-	rpc->fault(c, 400, "command not found");
+	return;
 }
 
 
@@ -701,7 +679,7 @@ static void core_sctpinfo(rpc_t* rpc, void* c)
 /*
  * RPC Methods exported by this module
  */
-rpc_export_t core_rpc_methods[] = {
+static rpc_export_t core_rpc_methods[] = {
 	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
 	{"system.methodSignature", system_methodSignature, system_methodSignature_doc, 0        },
 	{"system.methodHelp",      system_methodHelp,      system_methodHelp_doc,      0        },
@@ -784,6 +762,28 @@ rpc_export_t core_rpc_methods[] = {
 #endif
 	{0, 0, 0, 0}
 };
+
+
+
+int register_core_rpcs(void)
+{
+	int i;
+	
+	i=rpc_register_array(core_rpc_methods);
+	if (i<0){
+		BUG("failed to register core RPCs\n");
+		goto error;
+	}else if (i>0){
+		ERR("%d duplicate RPCs name detected while registering core RPCs\n",
+			 i);
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
 
 int rpc_init_time(void)
 {

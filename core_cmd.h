@@ -30,8 +30,7 @@
 
 #include "rpc.h"
 
-extern rpc_export_t core_rpc_methods[];
-
+int register_core_rpcs(void);
 int rpc_init_time(void);
 
 #endif /* _CORE_CMD_H */

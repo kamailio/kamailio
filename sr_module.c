@@ -53,6 +53,7 @@
 #include "flags.h"
 #include "trim.h"
 #include "globals.h"
+#include "rpc_lookup.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -147,7 +148,7 @@ int register_builtin_modules()
 static int register_module(unsigned ver, union module_exports_u* e,
 					char* path, void* handle)
 {
-	int ret;
+	int ret, i;
 	struct sr_module* mod;
 
 	ret=-1;
@@ -166,8 +167,8 @@ static int register_module(unsigned ver, union module_exports_u* e,
 	mod->next=modules;
 	modules=mod;
 
-	/* register module pseudo-variables */
 	if (ver==1 && e->v1.items) {
+		/* register module pseudo-variables for kamailio modules */
 		LM_DBG("register PV from: %s\n", e->c.name);
 		if (register_pvars_mod(e->c.name, e->v1.items)!=0) {
 			LM_ERR("failed to register pseudo-variables for module %s\n",
@@ -175,6 +176,18 @@ static int register_module(unsigned ver, union module_exports_u* e,
 			pkg_free(mod);
 			return -1;
 		}
+	}else if (ver==0 && e->v0.rpc_methods){
+		/* register rpcs for ser modules */
+		i=rpc_register_array(e->v0.rpc_methods);
+		if (i<0){
+			ERR("failed to register RPCs for module %s\n", e->c.name);
+			goto error;
+		}else if (i>0){
+			ERR("%d duplicate RPCs name detected while registering RPCs"
+					" declared in modules %s\n", i, e->c.name);
+			goto error;
+		}
+		/* i==0 => success */
 	}
 
 	return 0;
@@ -489,31 +502,7 @@ cmd_function find_export(char* name, int param_no, int flags)
 
 rpc_export_t* find_rpc_export(char* name, int flags)
 {
-	struct sr_module* t;
-	rpc_export_t* rpc;
-
-	     /* Scan the list of core methods first, they are always
-	      * present
-	      */
-	for(rpc = core_rpc_methods; rpc && rpc->name; rpc++) {
-		if ((strcmp(name, rpc->name) == 0) &&
-		    ((rpc->flags & flags) == flags)
-		    ) {
-			return rpc;
-		}
-	}
-	     /* Continue with modules if not found */
-	for(t = modules; t; t = t->next) {
-		if (t->mod_interface_ver!=0) continue;
-		for(rpc = t->exports->v0.rpc_methods; rpc && rpc->name; rpc++) {
-			if ((strcmp(name, rpc->name) == 0) &&
-			    ((rpc->flags & flags) == flags)
-			   ) {
-				return rpc;
-			}
-		}
-	}
-	return 0;
+	return rpc_lookup((char*)name, strlen(name));
 }
 
 
