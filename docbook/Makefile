@@ -146,7 +146,7 @@ $(output_dir)/%.html: %.xml %.d $(single_html_xsl) $(all_deps)
         $(single_html_xsl) $<
 
 
-$(output_dir)/%.txt: %.xml %.d $(txt_xsl) $(all_dep)
+$(output_dir)/%.txt: %.xml %.d $(txt_xsl) $(all_deps)
 	XML_CATALOG_FILES=$(catalog) $(xsltproc) $(xsltproc_flags) \
 		--xinclude \
         $(txt_xsl) $< | $(lynx) $(lynx_flags) -stdin -dump > $@
