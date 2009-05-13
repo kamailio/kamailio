@@ -52,7 +52,7 @@
 	<listitem>
 	    <para>
 		<emphasis>cfg_rpc.rollback</emphasis> - Drop the prepared
-		configuration changed. The function does not have any
+		configuration changes. The function does not have any
 		parameters.
 	    </para>
 	</listitem>

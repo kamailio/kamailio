@@ -33,7 +33,7 @@ Miklos Tirpak
        accepts three parameters: group name, variable name, string value.
      * cfg_rpc.commit - Commit the previously prepared configuration
        changes. The function does not have any parameters.
-     * cfg_rpc.rollback - Drop the prepared configuration changed. The
+     * cfg_rpc.rollback - Drop the prepared configuration changes. The
        function does not have any parameters.
      * cfg_rpc.get - Get the value of a configuration variable. The
        function accepts two parameters: group name, variable name.
