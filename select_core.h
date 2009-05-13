@@ -153,6 +153,7 @@ SELECT_F(select_any_params)
 SELECT_F(select_any_uri)
 SELECT_F(select_uri_type)
 SELECT_F(select_uri_user)
+SELECT_F(select_uri_rn_user)
 SELECT_F(select_uri_pwd)
 SELECT_F(select_uri_host)
 SELECT_F(select_uri_port)
@@ -278,6 +279,7 @@ static select_row_t select_core[] = {
 	{ select_rr_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("type"), select_uri_type, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("user"), select_uri_user, 0},
+	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("rn_user"), select_uri_rn_user, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("pwd"), select_uri_pwd, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("host"), select_uri_host, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_uri_port, 0},

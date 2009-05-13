@@ -717,6 +717,74 @@ int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
 	RETURN0_res(uri.user);
 }
 
+/* search for a parameter with "name"
+ * Return value:
+ *	0: not found
+ *	1: found
+ *	-1: error
+ *
+ * val is set to the value of the parameter.
+ */
+static inline int search_param(str *params, char *name, int name_len,
+				str *val)
+{
+	param_hooks_t h;
+	param_t *p, *list;
+
+	if (params->s == NULL)
+		return 0;
+
+	if (parse_params(params, CLASS_ANY, &h, &list) < 0)
+		return -1;
+	for (p = list; p; p=p->next) {
+		if ((p->name.len == name_len)
+			&& (strncasecmp(p->name.s, name, name_len) == 0)
+		) {
+			*val=p->body;
+			free_params(list);
+			return 1;
+		}
+	}
+	free_params(list);
+	return 0;
+}
+
+/* Return the value of the "rn" parameter if exists, otherwise the user name.
+ * The user name is normalized if needed, i.e. visual separators are removed,
+ * the "rn" param is always normalized. */
+int select_uri_rn_user(str* res, select_t* s, struct sip_msg* msg)
+{
+	int	ret;
+	str	val;
+
+	if (parse_uri(res->s, res->len, &uri)<0)
+		return -1;
+
+	/* search for the "rn" parameter */
+	if ((ret = search_param(&uri.params, "rn", 2, &val)) != 0)
+		goto done;
+
+	if (uri.sip_params.s != uri.params.s) {
+		/* check also the original sip: URI parameters */
+		if ((ret = search_param(&uri.sip_params, "rn", 2, &val)) != 0)
+			goto done;
+	}
+
+	if ((uri.flags & URI_USER_NORMALIZE) == 0)
+		RETURN0_res(uri.user);
+	/* else normalize the user name */
+	val = uri.user;
+done:
+	if (ret < 0)
+		return -1; /* error */
+
+	if (!(res->s=get_static_buffer(val.len)))
+		return -1;
+	if ((res->len=normalize_tel_user(res->s, &val))==0)
+		return 1;
+	return 0;
+}
+
 int select_uri_pwd(str* res, select_t* s, struct sip_msg* msg)
 {
 	if (parse_uri(res->s, res->len, &uri)<0)
@@ -832,8 +900,6 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 
 int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 {
-	param_hooks_t h;
-	param_t *p, *list=NULL;
 	str* wanted;
 	int i;
 
@@ -851,20 +917,13 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 	wanted=&s->params[s->param_offset[select_level]+1].v.s;
 	
 	if (!res->len) return -1;
-	if (parse_params(res, CLASS_ANY, &h, &list)<0) return -1;
-	
-	for (p = list; p; p=p->next) {
-		if ((p->name.len==wanted->len) && 
-			 !strncasecmp(p->name.s, wanted->s,wanted->len)) {
-			*res=p->body;
-			free_params(list);
-			return (res->len ? 0 : 1);
-		}
-	}
-	free_params(list);
 
-	DBG("SELECT ...uri.params.%s NOT FOUND !\n", wanted->s);
-	return -1;
+	if (search_param(res, wanted->s, wanted->len, res) <= 0) {
+		DBG("SELECT ...uri.params.%s NOT FOUND !\n", wanted->s);
+		return -1;
+	} else {
+		return (res->len) ? 0 : 1;
+	}
 }
 
 int select_event(str* res, select_t* s, struct sip_msg* msg)
