@@ -126,24 +126,11 @@ typedef void (*rpc_function_t)(rpc_t* rpc);
 	    </para>
 	    <para>
 		Each module containing RPC functions has to export all the
-		RPC functions to SER core in order to make them visible to RPC
-		transport modules. For this purpose, the
-		<varname>module_exports</varname> structure of SER module API
-		contains a new attribute called <varname>rpc_methods</varname>:
+		RPC functions to SER core in order to make them visible to the RPC
+		transport modules.
+		The export process involves a <emphasis>rpc_export_t</emphasis> 
+		structure (either by itself or in an array):
 		<programlisting>
-struct module_exports {
-    char* name;                 /* null terminated module name */	
-    cmd_export_t* cmds;         /* null terminated array of the exported commands */
-    <emphasis>rpc_export_t* rpc_methods;</emphasis>  /* null terminated array of exported rpc methods */
-    param_export_t* params;     /* null terminated array of the exported module parameters */
-    
-    init_function init_f;         /* Initialization function */
-    response_function response_f; /* function used for responses */
-    destroy_function destroy_f;   /* function called upon SER shutdown */
-    onbreak_function onbreak_f;
-    child_init_function init_child_f;  /* function called by all processes after the fork */
-};
-
 <emphasis>
 typedef struct rpc_export {
     const char* name;        /* Name of the RPC function (null terminated) */
@@ -153,23 +140,25 @@ typedef struct rpc_export {
 } rpc_export_t;
 </emphasis>
 		</programlisting>
-		<varname>rpc_methods</varname> is pointer to an array of
-		rpc_export_t structures. The last element of the array is a
-		bumper containing zeroes in all attributes of the
-		structure. The following program listing shows exported RPC
-		functions of usrloc module:
-		<programlisting>
-struct module_exports exports = {
-    "usrloc",
-    cmds,      /* Exported functions */ 
-    <emphasis>ul_rpc</emphasis>,    /* RPC methods */
-    params,    /* Export parameters */ 
-    mod_init,  /* Module initialization function */ 
-    0,         /* Response function */ 
-    destroy,   /* Destroy function */ 
-    0,         /* OnCancel function */ 
-    child_init /* Child initialization function */ };
-
+		</para>
+		<para>
+		The <varname>flags</varname> attribute of the
+		<varname>rpc_export</varname> structure is reserved for future
+		use and is currently unused.
+	    </para>
+		<para>
+		There are several ways of exporting the RPC functions to the SER core:
+		<itemizedlist>
+			<listitem><para>
+				register a null terminated array of rpc_export_t structures
+				using the <function>rpc_register_array()</function> function
+				(defined in rpc_lookup.h), from the module init function
+				(mod_init()). This is the <emphasis>recommended</emphasis>
+				method for all the new modules.
+				<example>
+					The <varname>rpc_export_t</varname> array for the usrloc
+					module looks like:
+					<programlisting>
 <emphasis>
 rpc_export_t ul_rpc[] = {
     {"usrloc.statistics",      rpc_stats,           rpc_stats_doc,          0},
@@ -182,17 +171,80 @@ rpc_export_t ul_rpc[] = {
     {0, 0, 0, 0}
 };
 </emphasis>
-		</programlisting>
-		By convention the name of every exported function consists of
-		two parts delimited by a dot. The first part is the name of the
-		module or SER subsystem this function belongs to. The second
-		part is the name of the function. 
-	    </para>
-	    <para>
-		Attribute <varname>flags</varname> of
-		<varname>rpc_export</varname> structure is reserved for future
-		use and is currently unused.
-	    </para>
+					</programlisting>
+					To register it from the module init function one would use
+					something similar to:
+					<programlisting>
+	if (rpc_register_array(ul_rpc) != 0) {
+		ERR("failed to register RPC commands\n");
+		return -1;
+	}
+					</programlisting>
+				</example>
+			</para></listitem>
+			<listitem><para>
+				register RPCs one by one using the
+				<function>rpc_register_function()</function>
+				(defined in rpc_lookup.h), from the module init function.
+			</para></listitem>
+			<listitem><para>
+				register a null terminated array of rpc_export_t structures
+				using the SER module interface.
+				For this purpose, the
+				<varname>module_exports</varname> structure of SER module API
+				contains a new attribute called <varname>rpc_methods</varname>:
+				<programlisting>
+struct module_exports {
+    char* name;                 /* null terminated module name */	
+    cmd_export_t* cmds;         /* null terminated array of the exported commands */
+    <emphasis>rpc_export_t* rpc_methods;</emphasis>  /* null terminated array of exported rpc methods */
+    param_export_t* params;     /* null terminated array of the exported module parameters */
+    
+    init_function init_f;         /* Initialization function */
+    response_function response_f; /* function used for responses */
+    destroy_function destroy_f;   /* function called upon SER shutdown */
+    onbreak_function onbreak_f;
+    child_init_function init_child_f;  /* function called by all processes after the fork */
+};
+				</programlisting>
+				<varname>rpc_methods</varname> is a pointer to an array of
+				rpc_export_t structures. The last element of the array is a
+				bumper containing zeroes in all the attributes of the
+				structure. The following program listing shows the exported RPC
+				functions of the usrloc module, using the rpc_export_t array
+				<emphasis>ul_rpc</emphasis> defined above, in the 
+				rpc_register_array() example:
+				<example>
+					<programlisting>
+struct module_exports exports = {
+    "usrloc",
+    cmds,      /* Exported functions */ 
+    <emphasis>ul_rpc</emphasis>,    /* RPC methods */
+    params,    /* Export parameters */ 
+    mod_init,  /* Module initialization function */ 
+    0,         /* Response function */ 
+    destroy,   /* Destroy function */ 
+    0,         /* OnCancel function */ 
+    child_init /* Child initialization function */ };
+
+					</programlisting>
+				</example>
+				<note>
+					This mode works only with modules using the SER module
+					interface. It does not work for kamailio modules and it
+					will probably not work for future sip-router modules. It is
+					safer and recommended to use instead the
+					<function>rpc_register_array()</function> function.
+				</note>
+			</para></listitem>
+		</itemizedlist>
+		</para>
+		<para>
+			By convention the name of every exported function consists of
+			two parts delimited by a dot. The first part is the name of the
+			module or SER subsystem this function belongs to. The second
+			part is the name of the function.
+		</para>
 	</section>
 
 	<section id="rpc.data_types">
