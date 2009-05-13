@@ -910,6 +910,56 @@ if (to_gw("1")) {
 		</section>
 	</section>
 	<section>
+	<title>Exported RPC Commands</title>
+		<section>
+		<title><function>lcr.reload</function></title>
+		<para>
+			Causes lcr module to re-read the contents of gateway table
+			into memory.
+		</para>
+		<para>
+		Name: <emphasis>lcr.reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<example>
+		<title><function>lcr.reload</function> RPC example</title>
+		<programlisting  format="linespecific">
+		$ sercmd lcr.reload
+		</programlisting>
+		</example>
+		</section>
+		
+		<section>
+		<title><function>lcr.dump_gws</function></title>
+		<para>
+			Causes lcr module to dump the contents of its
+			in-memory gw table.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<example>
+		<title><function>lcr.dump_gws</function> RPC example</title>
+		<programlisting  format="linespecific">
+		$ sercmd lcr.dump_gws
+		</programlisting>
+		</example>
+		</section>
+		
+		<section>
+		<title><function>lcr.dump_lcr</function></title>
+		<para>
+			Causes lcr module to dump the contents of its
+			in-memory lcr table.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<example>
+		<title><function>lcr.dump_lcr</function> RPC example</title>
+        <programlisting  format="linespecific">
+		$ sercmd lcr.dump_lcr
+		</programlisting>
+		</example>
+		</section>
+	</section>
+	<section>
 	<title>Known Limitations</title>
 	<para>
 		In-memory gateway and in-memory lcr table are switched
