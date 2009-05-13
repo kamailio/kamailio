@@ -179,6 +179,7 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	urecord_t* r;
 	ucontact_t* ptr;
 	int res;
+	int_str match_callid;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
@@ -199,12 +200,15 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 
 	if (res == 0) {
 		
-		int_str match_callid;
 		if (reg_callid_avp_name.n) {
 			struct usr_avp *avp =
 				search_first_avp( reg_callid_avp_type, reg_callid_avp_name, &match_callid, 0);
 			if (!(avp && is_avp_str_val(avp)))
-				match_callid=(int_str)0;
+				match_callid.n = 0;
+				match_callid.s.s = NULL;
+		} else {
+			match_callid.n = 0;
+			match_callid.s.s = NULL;
 		}
 
 		for (ptr = r->contacts; ptr; ptr = ptr->next) {
