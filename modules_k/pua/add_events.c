@@ -114,10 +114,11 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 		LM_ERR("while extracting tuple node\n");
 		goto error;
 	}
+	tuple= *(tuple_param);
+
 	tuple_id= xmlNodeGetAttrContentByName(node, "id");
 	if(tuple_id== NULL)
 	{
-		tuple= *(tuple_param);
 
 		if(tuple== NULL)	// generate a tuple_id
 		{
@@ -144,7 +145,6 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			alloc_tuple= 1;
 
 			LM_DBG("allocated tuple_id\n\n");
-
 		}
 		else
 		{
@@ -152,7 +152,7 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			tuple_id_len= tuple->len;
 			memcpy(tuple_id, tuple->s, tuple_id_len);
 			tuple_id[tuple_id_len]= '\0';
-		}	
+		}
 		/* add tuple id */
 		if(!xmlNewProp(node, BAD_CAST "id", BAD_CAST tuple_id))
 		{
@@ -184,10 +184,10 @@ int pres_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple_pa
 			}
 			memcpy(tuple->s, tuple_id, tuple_id_len);
 			tuple->len= tuple_id_len;
+			*tuple_param= tuple;
 			alloc_tuple= 1;
-
-		}	
-	}	
+		}
+	}
 
 	node= xmlDocGetNodeByName(doc, "person", NULL);
 	if(node)
