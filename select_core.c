@@ -806,6 +806,7 @@ int select_uri_proto(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 {
+	int	ret;
 	if (!msg || !res) {
 		return select_any_params(res, s, msg);
 	}
@@ -817,7 +818,16 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 		RETURN0_res(uri.params);
 
 	*res=uri.params;
-	return select_any_params(res, s, msg);
+	ret = select_any_params(res, s, msg);
+	if ((ret < 0)
+		&& (uri.sip_params.s != NULL)
+		&& (uri.sip_params.s != uri.params.s)
+	) {
+		/* Search also in the original sip: uri parameters. */
+		*res = uri.sip_params;
+		ret = select_any_params(res, s, msg);
+	}
+	return ret;
 }
 
 int select_any_params(str* res, select_t* s, struct sip_msg* msg)
