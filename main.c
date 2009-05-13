@@ -496,6 +496,7 @@ void cleanup(show_status)
 					 some process crashed and let it locked; this will
 					 allow an almost gracious shutdown */
 #endif
+	destroy_rpcs();
 	destroy_modules();
 #ifdef USE_DNS_CACHE
 	destroy_dns_cache();
