@@ -699,27 +699,34 @@ static void free_shared_memory(void)
 {
     if (gws_1) {
         shm_free(gws_1);
+		gws_1=0;
     }
     if (gws_2) {
         shm_free(gws_2);
+		gws_2=0;
     }
     if (gws) {
         shm_free(gws);
+		gws=0;
     }
     if (lcrs_1) {
         lcr_hash_table_contents_free(lcrs_1);
         shm_free(lcrs_1);
+		lcrs_1=0;
     }
     if (lcrs_2) {
         lcr_hash_table_contents_free(lcrs_2);
         shm_free(lcrs_2);
+		lcrs_2=0;
     }
     if (lcrs) {
         shm_free(lcrs);
+		lcrs=0;
     }
     if (reload_lock) {
 	lock_destroy(reload_lock);
 	lock_dealloc(reload_lock);
+	reload_lock=0;
     }
 }
    
