@@ -34,9 +34,14 @@
 #include <pcre.h>
 #include "../../lib/kmi/mi.h"
 #include "../../locking.h"
+#include "../../parser/parse_uri.h"
 
 #define MAX_PREFIX_LEN 32
 #define MAX_URI_LEN 256
+#define MAX_HOST_LEN 64
+#define MAX_NO_OF_GWS 128
+#define MAX_TAG_LEN 16
+#define MAX_USER_LEN 64
 
 struct lcr_info {
     char prefix[MAX_PREFIX_LEN + 1];
@@ -50,9 +55,31 @@ struct lcr_info {
     struct lcr_info *next;
 };
 
+typedef enum sip_protos uri_transport;
+
+struct gw_info {
+    unsigned int ip_addr;
+    char hostname[MAX_HOST_LEN];
+    unsigned short hostname_len;
+    unsigned int port;
+    unsigned int grp_id;
+    uri_type scheme;
+    uri_transport transport;
+    unsigned int strip;
+    char tag[MAX_TAG_LEN + 1];
+    unsigned short tag_len;
+    unsigned short weight;
+    unsigned int flags;
+    unsigned short ping;
+    unsigned int next;  /* index of next gw in the same group */
+};
+
 extern unsigned int lcr_hash_size_param;
 
 extern gen_lock_t *reload_lock;
+
+extern struct gw_info **gws;
+extern struct lcr_info ***lcrs;
 
 int  mi_print_gws(struct mi_node* rpl);
 int  mi_print_lcrs(struct mi_node* rpl);

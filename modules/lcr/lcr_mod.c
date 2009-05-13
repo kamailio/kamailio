@@ -36,6 +36,7 @@
  *  2008-10-10: Database values are now checked and from/to_gw functions
  *              execute in O(logN) time.
  *  2008-11-26: Added timer based check of gateways (shurik)
+ *  2009-05-12  added RPC support (andrei)
  */
 
 #include <stdio.h>
@@ -53,7 +54,6 @@
 #include "../../lib/srdb1/db.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../usr_avp.h"
-#include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/msg_parser.h"
 #include "../../action.h"
@@ -69,6 +69,12 @@
 #include "../../mod_fix.h"
 #include "hash.h"
 #include "mi.h"
+#include "lcr_rpc.h" /* defines RPC_SUPPORT */
+#ifdef RPC_SUPPORT
+#include "../../rpc_lookup.h"
+#endif /* RPC_SUPPORT */
+
+
 
 MODULE_VERSION
 
@@ -86,6 +92,7 @@ MODULE_VERSION
 static void destroy(void);       /* Module destroy function */
 static int mi_child_init(void);
 static int mod_init(void);       /* Module initialization function */
+static int child_init(int rank); /* Per-child initialization function */
 static void free_shared_memory(void);
 static int fixstringloadgws(void **param, int param_count);
 
@@ -123,10 +130,6 @@ static int fixstringloadgws(void **param, int param_count);
 
 #define PRIORITY_COL "priority"
 
-#define MAX_NO_OF_GWS 128
-#define MAX_TAG_LEN 16
-#define MAX_HOST_LEN 64
-#define MAX_USER_LEN 64
 
 /* Default module parameter values */
 #define DEF_LCR_HASH_SIZE 128
@@ -140,25 +143,6 @@ static int fixstringloadgws(void **param, int param_count);
 
 /* TMB Structure */
 struct tm_binds tmb;
-
-typedef enum sip_protos uri_transport;
-
-struct gw_info {
-    unsigned int ip_addr;
-    char hostname[MAX_HOST_LEN];
-    unsigned short hostname_len;
-    unsigned int port;
-    unsigned int grp_id;
-    uri_type scheme;
-    uri_transport transport;
-    unsigned int strip;
-    char tag[MAX_TAG_LEN + 1];
-    unsigned short tag_len;
-    unsigned short weight;
-    unsigned int flags;
-    unsigned short ping;
-    unsigned int next;  /* index of next gw in the same group */
-};
 
 struct gw_grp {
     unsigned int grp_id;
@@ -362,7 +346,7 @@ struct module_exports exports = {
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
-	0          /* child initialization function */
+	child_init /* child initialization function */
 };
 
 
@@ -429,6 +413,14 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+#ifdef RPC_SUPPORT
+	if (rpc_register_array(lcr_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+#endif /* RPC_SUPPORT */
+
 
     /* Update length of module variables */
     db_url.len = strlen(db_url.s);
@@ -672,6 +664,26 @@ static int mod_init(void)
 err:
     free_shared_memory();
     return -1;
+}
+
+
+/* Module initialization function called in each child separately */
+static int child_init(int rank)
+{
+#ifdef RPC_SUPPORT
+	/* do nothing for the main process, tcp main process or timer */
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN ||
+		rank==PROC_TIMER)
+		return 0;
+	/* init db for the rest of the processes:
+	   - we need it for PROC_RPC and PROC_FIFO if we want db access from
+	     RPC accessed via the ctl module
+	   - we need it from all the ser tcp or tls processes if we want
+	     db access from RPC via the xmlrpc module */
+	return lcr_db_init(&db_url);
+#else
+	return 0;
+#endif /* RPC_SUPPORT */
 }
 
 
