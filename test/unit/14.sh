@@ -31,19 +31,17 @@ fi ;
 cp $CFG $CFG.bak
 
 # setup config
-echo "modparam(\"carrierroute\", \"config_file\", \"`pwd`/../test/carrierroute.cfg\")" >> $CFG
+echo "modparam(\"carrierroute\", \"config_file\", \"carrierroute.cfg\")" >> $CFG
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
 
-cd ../scripts
-
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
-	./$CTL fifo cr_dump_routes > $TMPFILE
+	$CTL fifo cr_dump_routes > $TMPFILE
 	ret=$?
 fi ;
 
@@ -77,8 +75,6 @@ Printing tree for domain 'other' (3)
 fi ;
 
 $KILL
-
-cd ../test
 
 mv $CFG.bak $CFG
 rm -f $TMPFILE
