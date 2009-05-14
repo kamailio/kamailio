@@ -29,26 +29,24 @@ if ! (check_netcat && check_kamailio); then
 	exit 0
 fi ;
 
-../$BIN -w . -f $CFG &> $TMPFILE
+$BIN -w . -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1
 
-# register a user
-cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
-
-cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
-	./$CTL ul show | grep "AOR:: 1000" > /dev/null
+	# register a user
+	cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
+	$CTL ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
+	# unregister the user
+	cat unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 fi ;
 
-# unregister the user
-cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 
 if [ "$ret" -eq 0 ] ; then
-	./$CTL ul show | grep "AOR:: 1000" > /dev/null
+	$CTL ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		ret=1
@@ -85,9 +83,7 @@ if [ "$ret" -eq 0 ] ; then
 		fi ;
 	fi ;
 fi ;
-
-cd ../test
-
+cat $TMPFILE
 $KILL
 rm $TMPFILE
 
