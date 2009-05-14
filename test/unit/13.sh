@@ -32,7 +32,7 @@ fi ;
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
@@ -65,18 +65,16 @@ mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '0', '0', 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
 mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '0', '0', '3');"
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 
 ret=$?
 
 sleep 1
 
-cd ../scripts
-
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
-	./$CTL fifo cr_dump_routes > $TMPFILE
+	$CTL fifo cr_dump_routes > $TMPFILE
 	ret=$?
 fi ;
 
@@ -123,8 +121,6 @@ $MYSQL "delete from carrierroute where carrier=3;"
 $MYSQL "delete from carrierfailureroute where carrier=1;"
 $MYSQL "delete from carrierfailureroute where carrier=2;"
 $MYSQL "delete from carrierfailureroute where carrier=3;"
-
-cd ../test
 
 mv $CFG.bak $CFG
 rm $TMPFILE
