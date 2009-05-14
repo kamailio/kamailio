@@ -1958,15 +1958,21 @@ case_stms:
 switch_cmd:
 	  SWITCH rval_expr LBRACE case_stms RBRACE { 
 		$$=0;
-		if ($2==0) yyerror("bad expression in switch(...)");
-		else if ($4==0) yyerror ("bad switch body");
-		else if (case_check_default($4)!=0)
+		if ($2==0){
+			yyerror("bad expression in switch(...)");
+			YYERROR;
+		}else if ($4==0){
+			yyerror ("bad switch body");
+			YYERROR;
+		}else if (case_check_default($4)!=0){
 			yyerror_at(&$2->fpos, "bad switch(): too many "
 							"\"default:\" labels\n");
-		else if (case_check_type($4)!=0)
+			YYERROR;
+		}else if (case_check_type($4)!=0){
 			yyerror_at(&$2->fpos, "bad switch(): mixed integer and"
 							" string/RE cases not allowed\n");
-		else{
+			YYERROR;
+		}else{
 			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, $4);
 			if ($$==0) {
 				yyerror("internal error");
@@ -1977,8 +1983,10 @@ switch_cmd:
 	| SWITCH rval_expr LBRACE RBRACE {
 		$$=0;
 		warn("empty switch()");
-		if ($2==0) yyerror("bad expression in switch(...)");
-		else{
+		if ($2==0){
+			yyerror("bad expression in switch(...)");
+			YYERROR;
+		}else{
 			/* it might have sideffects, so leave it for the optimizer */
 			$$=mk_action(SWITCH_T, 2, RVE_ST, $2, CASE_ST, 0);
 			if ($$==0) {
@@ -1994,12 +2002,13 @@ switch_cmd:
 
 while_cmd:
 	WHILE rval_expr stm {
-		if ($2){
-			if (rve_is_constant($2))
-				warn_at(&$2->fpos, "constant value in while(...)");
-		}else
+		if ($2 && rval_expr_int_check($2)>=0){
+			warn_ct_rve($2, "while");
+			$$=mk_action( WHILE_T, 2, RVE_ST, $2, ACTIONS_ST, $3);
+		}else{
 			yyerror_at(&$2->fpos, "bad while(...) expression");
-		$$=mk_action( WHILE_T, 2, RVE_ST, $2, ACTIONS_ST, $3);
+			YYERROR;
+		}
 	}
 ;
 
