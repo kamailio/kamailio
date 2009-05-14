@@ -529,7 +529,7 @@ static int case_check_default(struct case_stms* stms);
 %type <intval> intno eint_op eint_op_onsend
 %type <intval> eip_op eip_op_onsend
 %type <action> action actions cmd fcmd if_cmd stm /*exp_stm*/ assign_action
-%type <action> switch_cmd while_cmd
+%type <action> switch_cmd while_cmd ret_cmd
 %type <case_stms> single_case case_stms
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
@@ -1862,6 +1862,7 @@ action:
 	| if_cmd {$$=$1;}
 	| switch_cmd {$$=$1;}
 	| while_cmd { $$=$1; }
+	| ret_cmd SEMICOLON { $$=$1; }
 	| assign_action SEMICOLON {$$=$1;}
 	| SEMICOLON /* null action */ {$$=0;}
 	| fcmd error { $$=0; yyerror("bad command: missing ';'?"); }
@@ -2562,15 +2563,6 @@ cmd:
 	| SEND_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(SEND_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); }
 	| SEND_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SEND_TCP LPAREN error RPAREN { $$=0; yyerror("bad send_tcp argument"); }
-	| DROP LPAREN RPAREN		{$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); }
-	| DROP LPAREN NUMBER RPAREN	{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)$3, NUMBER_ST, (void*)EXIT_R_F); }
-	| DROP NUMBER 			{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)$2, NUMBER_ST, (void*)EXIT_R_F); }
-	| DROP RETCODE 			{$$=mk_action(DROP_T, 2, RETCODE_ST, 0, NUMBER_ST, (void*)EXIT_R_F); }
-	| DROP				{$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); }
-	| RETURN			{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST, (void*)RETURN_R_F); }
-	| RETURN NUMBER			{$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)$2, NUMBER_ST, (void*)RETURN_R_F);}
-	| RETURN RETCODE		{$$=mk_action(DROP_T, 2, RETCODE_ST, 0, NUMBER_ST, (void*)RETURN_R_F);}
-	| BREAK				{$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)BREAK_R_F); }
 	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST,
 										(void*)(L_DBG+1), STRING_ST, $3); }
 	| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)$3, STRING_ST, $5); }
@@ -2822,6 +2814,29 @@ func_param:
 		}
 	}
 	;
+
+ret_cmd:
+	DROP LPAREN RPAREN		{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
+	}
+	| DROP rval_expr	{
+		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST, (void*)EXIT_R_F);
+	}
+	| DROP				{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
+	}
+	| RETURN			{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
+						(void*)RETURN_R_F);
+	}
+	| RETURN rval_expr	{
+		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST, (void*)RETURN_R_F);
+	}
+	| BREAK				{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)BREAK_R_F); 
+	}
+	;
+
 %%
 
 extern int line;
