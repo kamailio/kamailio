@@ -32,7 +32,7 @@ CFG=13.cfg
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
@@ -51,17 +51,15 @@ insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','10','1','0','host6');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','10','1','0','premium.host.local');"
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
 
-cd ../scripts
-
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
-	./$CTL fifo cr_dump_routes > $TMPFILE
+	$CTL fifo cr_dump_routes > $TMPFILE
 	ret=$?
 fi ;
 
@@ -99,8 +97,6 @@ delete from domain_name where id = 10;
 delete from carrierroute where carrier=1;
 delete from carrierroute where carrier=2;
 delete from carrierroute where carrier=3;"
-
-cd ../test
 
 mv $CFG.bak $CFG
 rm $TMPFILE
