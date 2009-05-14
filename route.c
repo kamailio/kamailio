@@ -807,6 +807,43 @@ int fix_actions(struct action* a)
 					return ret;
 				}
 				break;
+			case DROP_T:
+				/* only RVEs need fixing for drop/return/break */
+				if (t->val[0].type!=RVE_ST)
+					break;
+				rve=(struct rval_expr*)t->val[0].u.data;
+				if (rve){
+					err_rve=0;
+					if (!rve_check_type(&rve_type, rve, &err_rve,
+											&err_type, &expected_type)){
+						if (err_rve)
+							LOG(L_ERR, "fix_actions: invalid expression "
+									"(%d,%d): subexpression (%d,%d) has type"
+									" %s,  but %s is expected\n",
+									rve->fpos.s_line, rve->fpos.s_col,
+									err_rve->fpos.s_line, err_rve->fpos.s_col,
+									rval_type_name(err_type),
+									rval_type_name(expected_type) );
+						else
+							LOG(L_ERR, "fix_actions: invalid expression "
+									"(%d,%d): type mismatch?",
+									rve->fpos.s_line, rve->fpos.s_col);
+						return E_UNSPEC;
+					}
+					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
+								" bad type, integer expected\n",
+								rve->fpos.s_line, rve->fpos.s_col);
+						return E_UNSPEC;
+					}
+					if ((ret=fix_rval_expr((void**)&rve))<0)
+						return ret;
+				}else{
+					LOG(L_CRIT, "BUG: fix_actions: null drop/return"
+							" expression\n");
+					return E_BUG;
+				}
+				break;
 			case ASSIGN_T:
 			case ADD_T:
 				if (t->val[0].type !=LVAL_ST) {

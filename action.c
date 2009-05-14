@@ -135,10 +135,22 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	ret=E_BUG;
 	switch ((unsigned char)a->type){
 		case DROP_T:
-				if (a->val[0].type==RETCODE_ST)
-					ret=h->last_retcode;
-				else
-					ret=(int) a->val[0].u.number;
+				switch(a->val[0].type){
+					case NUMBER_ST:
+						ret=(int) a->val[0].u.number;
+						break;
+					case RVE_ST:
+						rve=(struct rval_expr*)a->val[0].u.data;
+						rval_expr_eval_int(h, msg, &ret, rve);
+						break;
+					case RETCODE_ST:
+						ret=h->last_retcode;
+						break;
+					default:
+						BUG("unexpected subtype %d in DROP_T\n",
+								a->val[0].type);
+						ret=0;
+				}
 				h->run_flags|=(unsigned int)a->val[1].u.number;
 			break;
 		case FORWARD_T:
