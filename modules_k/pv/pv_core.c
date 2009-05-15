@@ -1536,7 +1536,7 @@ int pv_set_avp(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 
-	if(val == NULL)
+	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		if(idxf == PV_IDX_ALL)
 			destroy_avps(name_type, avp_name, 1);
