@@ -69,6 +69,16 @@
 
 int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 {
+	/* Parse the RURI even if it is not needed right now
+	 * because the nested select calls can access the
+	 * parsed URI in this case.
+	 * Go ahead even if the parsing fails, so the
+	 * value of the broken RURI can be accessed at least.
+	 * Subsequent select calls will fail when they try to parse
+	 * the URI anyway. (Miklos)
+	 */
+	parse_sip_msg_uri(msg);
+
 	if (msg->parsed_uri_ok)
 		select_uri_p = &msg->parsed_uri;
 
