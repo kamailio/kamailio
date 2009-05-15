@@ -69,6 +69,9 @@
 
 int select_ruri(str* res, select_t* s, struct sip_msg* msg)
 {
+	if (msg->parsed_uri_ok)
+		select_uri_p = &msg->parsed_uri;
+
 	if (msg->first_line.type==SIP_REQUEST) {
 		if(msg->new_uri.s) {
 			RETURN0_res(msg->new_uri);
@@ -94,9 +97,15 @@ int select_next_hop(str* res, select_t* s, struct sip_msg* msg)
 			RETURN0_res(msg->dst_uri);
 		}
 		else if(msg->new_uri.s) {
+			if (msg->parsed_uri_ok)
+				select_uri_p = &msg->parsed_uri;
 			RETURN0_res(msg->new_uri);
 		}
 		else {
+			if (msg->parsed_uri_ok)
+				select_uri_p = &msg->parsed_uri;
+			else if (msg->parsed_orig_ruri_ok)
+				select_uri_p = &msg->parsed_orig_ruri;
 			RETURN0_res(msg->first_line.u.request.uri);
 		}
 	}
@@ -691,30 +700,36 @@ static struct sip_uri uri;
 
 int select_uri_type(str* res, select_t* s, struct sip_msg* msg)
 {
-	trim(res);
-	if (parse_uri(res->s, res->len, &uri)<0)
+	if (select_uri_p == NULL) {
+		trim(res);
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
+
+	if (select_uri_p->type==ERROR_URI_T)
 		return -1;
 
-	if (uri.type==ERROR_URI_T)
-		return -1;
-
-	uri_type_to_str(uri.type, res);
+	uri_type_to_str(select_uri_p->type, res);
 	return 0;
 }
 
 int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
-
-	if (uri.flags & URI_USER_NORMALIZE) {
-		if (!(res->s=get_static_buffer(uri.user.len)))
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
 			return -1;
-		if ((res->len=normalize_tel_user(res->s, (&uri.user)))==0)
+		select_uri_p = &uri;
+	}
+
+	if (select_uri_p->flags & URI_USER_NORMALIZE) {
+		if (!(res->s=get_static_buffer(select_uri_p->user.len)))
+			return -1;
+		if ((res->len=normalize_tel_user(res->s, (&select_uri_p->user)))==0)
 			return 1;
 		return 0;
 	}
-	RETURN0_res(uri.user);
+	RETURN0_res(select_uri_p->user);
 }
 
 /* search for a parameter with "name"
@@ -757,23 +772,26 @@ int select_uri_rn_user(str* res, select_t* s, struct sip_msg* msg)
 	int	ret;
 	str	val;
 
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 
 	/* search for the "rn" parameter */
-	if ((ret = search_param(&uri.params, "rn", 2, &val)) != 0)
+	if ((ret = search_param(&select_uri_p->params, "rn", 2, &val)) != 0)
 		goto done;
 
-	if (uri.sip_params.s != uri.params.s) {
+	if (select_uri_p->sip_params.s != select_uri_p->params.s) {
 		/* check also the original sip: URI parameters */
-		if ((ret = search_param(&uri.sip_params, "rn", 2, &val)) != 0)
+		if ((ret = search_param(&select_uri_p->sip_params, "rn", 2, &val)) != 0)
 			goto done;
 	}
 
-	if ((uri.flags & URI_USER_NORMALIZE) == 0)
-		RETURN0_res(uri.user);
+	if ((select_uri_p->flags & URI_USER_NORMALIZE) == 0)
+		RETURN0_res(select_uri_p->user);
 	/* else normalize the user name */
-	val = uri.user;
+	val = select_uri_p->user;
 done:
 	if (ret < 0)
 		return -1; /* error */
@@ -787,26 +805,35 @@ done:
 
 int select_uri_pwd(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 
-	RETURN0_res(uri.passwd);
+	RETURN0_res(select_uri_p->passwd);
 }
 
 int select_uri_host(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 
-	RETURN0_res(uri.host);
+	RETURN0_res(select_uri_p->host);
 }
 
 int select_uri_port(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 
-	RETURN0_res(uri.port);
+	RETURN0_res(select_uri_p->port);
 }
 
 int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
@@ -814,31 +841,34 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 	char* p;
 	int size;
 	
-	if (parse_uri(res->s,res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 
-	if (!uri.host.len)
+	if (!select_uri_p->host.len)
 		return -1;
 	
-	if (uri.port.len) {
-		res->s=uri.host.s;
-		res->len=uri.host.len+uri.port.len+1;
+	if (select_uri_p->port.len) {
+		res->s=select_uri_p->host.s;
+		res->len=select_uri_p->host.len+select_uri_p->port.len+1;
 		return 0;
 	}
 	
-	size=uri.host.len+5;
+	size=select_uri_p->host.len+5;
 	if (!(p = get_static_buffer(size)))
 		return -1;
 			
-	strncpy(p, uri.host.s, uri.host.len);
-	switch (uri.type) {
+	strncpy(p, select_uri_p->host.s, select_uri_p->host.len);
+	switch (select_uri_p->type) {
 		case SIPS_URI_T:
 		case TELS_URI_T:
-			strncpy(p+uri.host.len, ":5061", 5); 
+			strncpy(p+select_uri_p->host.len, ":5061", 5); 
 			break;
 		case SIP_URI_T:
 		case TEL_URI_T:
-			strncpy(p+uri.host.len, ":5060", 5);
+			strncpy(p+select_uri_p->host.len, ":5060", 5);
 			break;
 		case ERROR_URI_T:
 			return -1;
@@ -850,13 +880,16 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_proto(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 
-	if (uri.proto != PROTO_NONE) {
-		proto_type_to_str(uri.proto, res);
+	if (select_uri_p->proto != PROTO_NONE) {
+		proto_type_to_str(select_uri_p->proto, res);
 	} else {
-		switch (uri.type) {
+		switch (select_uri_p->type) {
 			case SIPS_URI_T:
 			case TELS_URI_T:
 				proto_type_to_str(PROTO_TLS, res);
@@ -879,20 +912,23 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 		return select_any_params(res, s, msg);
 	}
 
-	if (parse_uri(res->s, res->len, &uri)<0)
-		return -1;
+	if (select_uri_p == NULL) {
+		if (parse_uri(res->s, res->len, &uri)<0)
+			return -1;
+		select_uri_p = &uri;
+	}
 	
 	if (s->param_offset[select_level+1]-s->param_offset[select_level]==1)
-		RETURN0_res(uri.params);
+		RETURN0_res(select_uri_p->params);
 
-	*res=uri.params;
+	*res=select_uri_p->params;
 	ret = select_any_params(res, s, msg);
 	if ((ret < 0)
-		&& (uri.sip_params.s != NULL)
-		&& (uri.sip_params.s != uri.params.s)
+		&& (select_uri_p->sip_params.s != NULL)
+		&& (select_uri_p->sip_params.s != select_uri_p->params.s)
 	) {
 		/* Search also in the original sip: uri parameters. */
-		*res = uri.sip_params;
+		*res = select_uri_p->sip_params;
 		ret = select_any_params(res, s, msg);
 	}
 	return ret;

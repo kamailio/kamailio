@@ -60,6 +60,13 @@ static select_table_t *select_list = &select_core_table;
  */
 int select_level = 0;
 
+/* pointer to the SIP uri beeing processed.
+ * Nested function calls can pass information to each
+ * other using this pointer. Only for performace reasons.
+ * (Miklos)
+ */
+struct sip_uri	*select_uri_p = NULL;
+
 /** parse a select identifier (internal version)
  * Parse select string into select structure s
  * moves pointer p to the first unused char.
@@ -398,6 +405,9 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}
 	DBG("Calling SELECT %p \n", s->f);
+
+	/* reset the uri pointer */
+	select_uri_p = NULL;
 
 	/* save and restore the original select_level
 	 * because of the nested selects */

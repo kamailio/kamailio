@@ -149,6 +149,13 @@ typedef struct select_table {
  */
 extern int select_level;
 
+/* pointer to the SIP uri beeing processed.
+ * Nested function calls can pass information to each
+ * other using this pointer. Only for performace reasons.
+ * (Miklos)
+ */
+extern struct sip_uri	*select_uri_p;
+
 /*
  * Lookup corresponding select function based on
  * the select parameters
