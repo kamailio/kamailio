@@ -1514,6 +1514,8 @@ int pv_set_avp(struct sip_msg* msg, pv_param_t *param,
 	int_str avp_val;
 	int flags;
 	unsigned short name_type;
+	int idxf;
+	int idx;
 	
 	if(param==NULL)
 	{
@@ -1521,20 +1523,28 @@ int pv_set_avp(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 
+	/* get the name */
 	if(pv_get_avp_name(msg, param, &avp_name, &name_type)!=0)
 	{
 		LM_ALERT("BUG in getting dst AVP name\n");
 		goto error;
 	}
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
+	{
+		LM_ERR("invalid index\n");
+		return -1;
+	}
+
 	if(val == NULL)
 	{
-		if(op == ASSIGN_T)
+		if(idxf == PV_IDX_ALL)
 			destroy_avps(name_type, avp_name, 1);
 		else
 			destroy_avps(name_type, avp_name, 0);
 		return 0;
 	}
-	if(op == ASSIGN_T)
+	if(idxf == PV_IDX_ALL)
 		destroy_avps(name_type, avp_name, 1);
 	flags = name_type;
 	if(val->flags&PV_TYPE_INT)
