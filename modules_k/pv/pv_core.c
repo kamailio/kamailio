@@ -1581,7 +1581,7 @@ int pv_set_scriptvar(struct sip_msg* msg, pv_param_t *param,
 		LM_ERR("error - cannot find svar\n");
 		goto error;
 	}
-	if(val == NULL)
+	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		avp_val.n = 0;
 		set_var_value((script_var_t*)param->pvn.u.dname, &avp_val, 0);
@@ -1616,7 +1616,7 @@ int pv_set_dsturi(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if(val == NULL)
+	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		reset_dst_uri(msg);
 		return 1;
@@ -1642,7 +1642,7 @@ int pv_set_ruri(struct sip_msg* msg, pv_param_t *param,
 	struct run_act_ctx h;
 	char backup;
 
-	if(msg==NULL || param==NULL || val==NULL)
+	if(msg==NULL || param==NULL || val==NULL || (val->flags&PV_VAL_NULL))
 	{
 		LM_ERR("bad parameters\n");
 		return -1;
@@ -1687,7 +1687,7 @@ int pv_set_ruri_user(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if(val == NULL)
+	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		memset(&act, 0, sizeof(act));
 		act.type = SET_USER_T;
@@ -1735,7 +1735,7 @@ int pv_set_ruri_host(struct sip_msg* msg, pv_param_t *param,
 	struct run_act_ctx h;
 	char backup;
 
-	if(msg==NULL || param==NULL || val==NULL)
+	if(msg==NULL || param==NULL || val==NULL || (val->flags&PV_VAL_NULL))
 	{
 		LM_ERR("bad parameters\n");
 		return -1;
@@ -1780,7 +1780,7 @@ int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if(val == NULL)
+	if(val == NULL || (val->flags&PV_VAL_NULL))
 	{
 		memset(&act, 0, sizeof(act));
 		act.type = SET_PORT_T;
@@ -1824,7 +1824,7 @@ error:
 int pv_set_branch(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
-	if(msg==NULL || param==NULL || val==NULL)
+	if(msg==NULL || param==NULL || val==NULL || (val->flags&PV_VAL_NULL))
 	{
 		LM_ERR("bad parameters\n");
 		return -1;
@@ -1862,7 +1862,7 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 
-	if(val==NULL)
+	if(val==NULL || (val->flags&PV_VAL_NULL))
 	{
 		msg->force_send_socket = NULL;
 		return 0;
@@ -1906,7 +1906,7 @@ int pv_set_mflags(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if(val == NULL)
+	if(val == NULL || (val->flags&PV_VAL_NULL))
 	{
 		msg->flags = 0;
 		return 0;
@@ -1932,7 +1932,7 @@ int pv_set_sflags(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if(val == NULL)
+	if(val == NULL || (val->flags&PV_VAL_NULL))
 	{
 		setsflagsval(0);
 		return 0;
@@ -1959,7 +1959,7 @@ int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if(val == NULL)
+	if(val == NULL || (val->flags&PV_VAL_NULL))
 	{
 		setbflagsval(0, 0);
 		return 0;
