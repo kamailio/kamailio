@@ -612,6 +612,7 @@ static int mod_init(void)
     gws = (struct gw_info **)shm_malloc(sizeof(struct gw_info *));
     if (gws == 0) {
 	LM_ERR("no memory for gw table pointer\n");
+	goto err;
     }
     gws_1[0].ip_addr = 0;    /* Number of gateways in table */
     *gws = gws_1;
