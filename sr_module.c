@@ -1360,6 +1360,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 	avp_t* avp;
 	pv_value_t pv_val;
 	static char pve_buf[256]; /* ugly hack needed for PVE */
+	memset(pve_buf, 0, sizeof(pve_buf));
 	
 	switch(param->type) {
 		case FPARAM_REGEX:
