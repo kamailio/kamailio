@@ -32,10 +32,10 @@ CFG=30.cfg
 cp $CFG $CFG.bak
 
 # setup config
-echo "modparam(\"carrierroute\", \"config_file\", \"`pwd`/../test/carrierroute-2.cfg\")" >> $CFG
+echo "modparam(\"carrierroute\", \"config_file\", \"carrierroute-2.cfg\")" >> $CFG
 
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -64,8 +64,6 @@ fi;
 
 $KILL
 killall -9 sipp
-
-cd ../test
 
 mv $CFG.bak $CFG
 

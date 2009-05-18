@@ -32,7 +32,7 @@ CFG=26.cfg
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"match_mode\", 128)" >> $CFG
 
@@ -75,7 +75,7 @@ $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('ab4-123
 $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('ab4-123456785', 3);"
 
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -114,7 +114,7 @@ $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_n
 flags, mask, next_domain) values ('5', '3', '1', 'ab4-', '127.0.0.1:10000', '486', '0', '0', '2');"
 
 if [ ! "$ret" -eq 0 ] ; then
-	../scripts/$CTL fifo cr_reload_routes
+	$CTL fifo cr_reload_routes
 	killall sipp &> /dev/null
 	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
 	sipp -sn uac -s ab4-123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
@@ -142,8 +142,6 @@ $MYSQL "delete from carrierfailureroute where carrier=3;"
 $MYSQL "delete from subscriber where username='ab4-123456786';"
 $MYSQL "delete from subscriber where username='ab4-123456785';"
 $MYSQL "alter table subscriber drop cr_preferred_carrier;"
-
-cd ../test
 
 mv $CFG.bak $CFG
 

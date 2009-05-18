@@ -31,11 +31,11 @@ fi ;
 CFG=2.cfg
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # start
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

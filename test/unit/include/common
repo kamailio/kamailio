@@ -2,9 +2,10 @@
 DB_ALL_MOD="acc|alias_db|auth_db|avpops|dialog|dialplan|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist"
 # root directory relative to tests
 SR_DIR="../.."
-CTLRC="$SR_DIR/scripts/kamctlrc"
-CTL="$SR_DIR/scripts/kamctl"
-DBCTL="$SR_DIR/scripts/kamdbctl"
+CTL_DIR="$SR_DIR/scripts"
+CTLRC="$CTL_DIR/kamctlrc"
+CTL="$CTL_DIR/kamctl"
+DBCTL="$CTL_DIR/kamdbctl"
 BIN="$SR_DIR/ser"
 KILL="killall -15 $BIN"
 # test directory relative to root

@@ -36,7 +36,7 @@ fi ;
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
@@ -62,16 +62,14 @@ while [  $COUNTER -lt $NR ]; do
 
 done
 
-../$BIN -m 128 -w . -f $CFG > /dev/null
+$BIN -m 128 -w . -f $CFG > /dev/null
 ret=$?
 
 # adjust if you have bigger rule sets
 sleep 20
 
-cd ../scripts
-
 if [ $ret -eq 0 ] ; then
-	tmp=`./$CTL fifo cr_dump_routes | grep "host-" | wc -l`
+	tmp=`$CTL fifo cr_dump_routes | grep "host-" | wc -l`
 	let "TMPNR = $NR * 10"
 	if ! [ $tmp -eq $TMPNR ]; then
 		ret=1
@@ -110,8 +108,6 @@ $MYSQL "delete from carrierroute where carrier=8;"
 $MYSQL "delete from carrierroute where carrier=9;"
 $MYSQL "delete from carrierroute where carrier=10;"
 $MYSQL "delete from carrierroute where carrier=11;"
-
-cd ../test
 
 mv $CFG.bak $CFG
 
