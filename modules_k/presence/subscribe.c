@@ -362,18 +362,18 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 
 		if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE)< 0)
 		{
-			if(fallback2db)
-			{
-				/* update in database table */
-				if(update_subs_db(subs, REMOTE_TYPE)< 0)
-				{
-					LM_ERR("updating subscription in database table\n");
-					goto error;
-				}
-			}
-			else
+			if(fallback2db==0)
 			{
 				LM_ERR("updating subscription record in hash table\n");
+				goto error;
+			}
+		}
+		if(fallback2db!=0)
+		{
+			/* update in database table */
+			if(update_subs_db(subs, REMOTE_TYPE)< 0)
+			{
+				LM_ERR("updating subscription in database table\n");
 				goto error;
 			}
 		}
@@ -1509,7 +1509,7 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 		while(s)
 		{
 			printf_subs(s);
-			if(s->expires < (int)time(NULL)- 50)	
+			if(s->expires < (int)time(NULL)- expires_offset)	
 			{
 				LM_DBG("Found expired record\n");
 				if(!no_lock)
@@ -1834,7 +1834,7 @@ int restore_db_subs(void)
 	pa_dbf.free_result(pa_db, result);
 
 	/* delete all records */
-	if(pa_dbf.delete(pa_db, 0,0,0,0)< 0)
+	if(fallback2db==0 && pa_dbf.delete(pa_db, 0,0,0,0)< 0)
 	{
 		LM_ERR("deleting all records from database table\n");
 		return -1;
