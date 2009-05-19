@@ -335,7 +335,7 @@ int _bm_log_timer(unsigned int id)
 	{
 		LM_GEN1(bm_mycfg->loglevel, "benchmark (timer %s [%d]): %llu ["
 			" msgs/total/min/max/avg - LR:"
-			" %i/%lld/%lld/%lld/%f | GB: %lld/%lld/%lld/%lld/%f]\n",
+			" %i/%llu/%llu/%llu/%f | GB: %llu/%llu/%llu/%llu/%f]\n",
 			bm_mycfg->tindex[id]->name,
 			id,
 			tdiff,
