@@ -174,7 +174,7 @@ static int child_init(int rank)
 		return 0;
 	
 	rt = route_get(&event_rt, "htable:mod-init");
-	if(rt>=0) {
+	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
 		LM_DBG("executing event_route[htable:mod-init] (%d)\n", rt);
 		if(faked_msg_init()<0)
 			return -1;
