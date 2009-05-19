@@ -130,9 +130,9 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 	/* minor validation */
 	if (size != def_size) {
-		LOG(L_ERR, "ERROR: register_cfg_def(): the specified size of the config "
-			"structure does not equal with the calculated size, check whether "
-			"the variable types are correctly defined!\n");
+		LOG(L_ERR, "ERROR: register_cfg_def(): the specified size (%i) of the config "
+			"structure does not equal with the calculated size (%i), check whether "
+			"the variable types are correctly defined!\n", def_size, size);
 		goto error;
 	}
 
