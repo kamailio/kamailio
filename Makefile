@@ -155,7 +155,7 @@ module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql\
 				speeddial
 
 # For radius
-module_group_radius=acc_radius auth_radius avp_radius
+module_group_radius=acc_radius auth_radius avp_radius misc_radius peering
 
 # For presence
 module_group_presence=dialog pa presence_b2b rls xcap
@@ -190,7 +190,7 @@ else
 							db_unixodbc memcached mi_xmlrpc \
 							nat_traversal perlvdb purple seas siptrace \
 							snmpstats uac_redirect xmpp \
-							carrierroute
+							carrierroute misc_radius peering
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
 	exclude_modules+= avpops  bdb dbtext iptrtpproxy pa rls
