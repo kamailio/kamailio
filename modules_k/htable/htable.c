@@ -32,6 +32,7 @@
 #include "../../timer.h"
 #include "../../route.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/faked_msg.h"
 
@@ -58,6 +59,7 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo);
 int ht_param(modparam_t type, void* val);
 
 static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param);
+static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param);
 
 static pv_export_t mod_pvs[] = {
 	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
@@ -74,6 +76,7 @@ static pv_export_t mod_pvs[] = {
 
 static mi_export_t mi_cmds[] = {
 	{ "sht_reload",     ht_mi_reload,  0,  0,  0},
+	{ "sht_dump",       ht_mi_dump,    0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -363,5 +366,74 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 	}
 	ht_db_close_con();
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+}
+
+static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param)
+{
+	struct mi_node* node;
+	struct mi_node* node2;
+	struct mi_root *rpl_tree;
+	struct mi_node *rpl;
+	str htname;
+	ht_t *ht;
+	ht_cell_t *it;
+	int i;
+	int len;
+	char *p;
+
+	node = cmd_tree->node.kids;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	htname = node->value;
+	if(htname.len<=0 || htname.s==NULL)
+	{
+		LM_ERR("bad hash table name\n");
+		return init_mi_tree( 500, "bad hash table name", 19);
+	}
+	ht = ht_get_table(&htname);
+	if(ht==NULL)
+	{
+		LM_ERR("bad hash table name\n");
+		return init_mi_tree( 500, "no such hash table", 18);
+	}
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==NULL)
+		return 0;
+	rpl = &rpl_tree->node;
+
+	for(i=0; i<ht->htsize; i++)
+	{
+		lock_get(&ht->entries[i].lock);
+		it = ht->entries[i].first;
+		if(it)
+		{
+			/* add entry node */
+			p = int2str((unsigned long)i, &len);
+			node = add_mi_node_child(rpl, MI_DUP_VALUE, "Entry", 5, p, len);
+			if (node==0)
+				goto error;
+			while(it)
+			{
+				if(it->flags&AVP_VAL_STR) {
+					node2 = add_mi_node_child(node, MI_DUP_VALUE, it->name.s, it->name.len,
+							it->value.s.s, it->value.s.len);
+				} else {
+					p = sint2str((long)it->value.n, &len);
+					node2 = add_mi_node_child(node, MI_DUP_VALUE, it->name.s, it->name.len,
+							p, len);
+				}
+				if (node2==0)
+					goto error;
+				it = it->next;
+			}
+		}
+		lock_release(&ht->entries[i].lock);
+	}
+
+	return rpl_tree;
+error:
+	free_mi_tree(rpl_tree);
+	return 0;
 }
 
