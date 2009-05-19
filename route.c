@@ -93,6 +93,7 @@ struct route_list onreply_rt;
 struct route_list failure_rt;
 struct route_list branch_rt;
 struct route_list onsend_rt;
+struct route_list event_rt;
 
 int route_type = REQUEST_ROUTE;
 
@@ -131,6 +132,7 @@ void destroy_routes()
 	destroy_rlist(&onreply_rt);
 	destroy_rlist(&failure_rt);
 	destroy_rlist(&branch_rt);
+	destroy_rlist(&event_rt);
 }
 
 
@@ -200,6 +202,8 @@ int init_routes()
 	if (init_rlist("branch", &branch_rt, BRANCH_RT_NO, RT_HASH_SIZE)<0)
 		goto error;
 	if (init_rlist("on_send", &onsend_rt, ONSEND_RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	if (init_rlist("event", &event_rt, EVENT_RT_NO, RT_HASH_SIZE)<0)
 		goto error;
 	return 0;
 error:
@@ -1807,6 +1811,8 @@ int fix_rls()
 		return ret;
 	if ((ret=fix_rl(&onsend_rt))!=0)
 		return ret;
+	if ((ret=fix_rl(&event_rt))!=0)
+		return ret;
 
 	return 0;
 }
@@ -1838,4 +1844,5 @@ void print_rls()
 	print_rl(&failure_rt, "failure");
 	print_rl(&branch_rt, "branch");
 	print_rl(&onsend_rt, "onsend");
+	print_rl(&event_rt, "event");
 }

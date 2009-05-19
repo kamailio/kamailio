@@ -161,6 +161,7 @@ ROUTE_FAILURE failure_route
 ROUTE_ONREPLY onreply_route
 ROUTE_BRANCH branch_route
 ROUTE_SEND onsend_route
+ROUTE_EVENT event_route
 EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
@@ -449,7 +450,7 @@ COLON		":"
 STAR		\*
 DOT			\.
 CR			\n
-
+EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*":"[a-zA-Z][0-9a-zA-Z-]*
 
 
 COM_LINE	#
@@ -492,6 +493,7 @@ EAT_ABLE	[\ \t\b\r]
 								return ROUTE_FAILURE; }
 <INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
 <INITIAL>{ROUTE_SEND} { count(); yylval.strval=yytext; return ROUTE_SEND; }
+<INITIAL>{ROUTE_EVENT} { count(); yylval.strval=yytext; return ROUTE_EVENT; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
@@ -940,6 +942,11 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DOT}		{ count(); return DOT; }
 <INITIAL>\\{CR}		{count(); } /* eat the escaped CR */
 <INITIAL>{CR}		{ count();/* return CR;*/ }
+<INITIAL>{EVENT_RT_NAME}	{ count();
+								addstr(&s_buf, yytext, yyleng);
+								yylval.strval=s_buf.s;
+								memset(&s_buf, 0, sizeof(s_buf));
+								return EVENT_RT_NAME; }
 
 
 <INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; 

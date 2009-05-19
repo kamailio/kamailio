@@ -52,6 +52,7 @@
 #define ONSEND_ROUTE  (1 << 4)
 #define ERROR_ROUTE   (1 << 5)
 #define LOCAL_ROUTE   (1 << 6)
+#define EVENT_ROUTE   REQUEST_ROUTE
 #define ANY_ROUTE     (0xFFFFFFFF)
 
 /* The value of this variable is one of the route types defined above and it
@@ -82,6 +83,7 @@ extern struct route_list onreply_rt;
 extern struct route_list failure_rt;
 extern struct route_list branch_rt;
 extern struct route_list onsend_rt;
+extern struct route_list event_rt;
 
 /* script optimization level */
 extern int scr_opt_lev;

@@ -269,6 +269,7 @@ static int case_check_default(struct case_stms* stms);
 %token ROUTE_ONREPLY
 %token ROUTE_BRANCH
 %token ROUTE_SEND
+%token ROUTE_EVENT
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
@@ -509,6 +510,7 @@ static int case_check_default(struct case_stms* stms);
 %token <strval> PVAR
 /* not clear yet if this is an avp or pvar */
 %token <strval> AVP_OR_PVAR
+%token <strval> EVENT_RT_NAME
 
 /* other */
 %token COMMA
@@ -589,6 +591,7 @@ statement:
 	| {rt=ONREPLY_ROUTE;} onreply_route_stm
 	| {rt=BRANCH_ROUTE;} branch_route_stm
 	| {rt=ONSEND_ROUTE;}   send_route_stm
+	| {rt=EVENT_ROUTE;}   event_route_stm
 	| SEMICOLON	/* null statement */
 	| CR	/* null statement*/
 	;
@@ -1578,6 +1581,21 @@ send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
 		push($6, &onsend_rt.rlist[i_tmp]);
 	}
 	| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
+	;
+event_route_stm: ROUTE_EVENT LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
+		i_tmp=route_get(&event_rt, $3);
+		if (i_tmp==-1){
+			yyerror("internal error");
+			YYABORT;
+		}
+		if (event_rt.rlist[i_tmp]){
+			yyerror("duplicate route");
+			YYABORT;
+		}
+		push($6, &event_rt.rlist[i_tmp]);
+	}
+
+	| ROUTE_EVENT error { yyerror("invalid event_route statement"); }
 	;
 
 /*exp:	rval_expr

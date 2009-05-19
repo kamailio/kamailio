@@ -62,6 +62,7 @@
 #define ONREPLY_RT_NO RT_NO /* on_reply routing tables number */
 #define BRANCH_RT_NO RT_NO /* branch_route routing tables number */
 #define ONSEND_RT_NO 1  /* onsend_route routing tables number */
+#define EVENT_RT_NO RT_NO /* event_route routing tables number */
 #define DEFAULT_RT 0 /* default routing table */
 
 #define MAX_REC_LEV 100 /* maximum number of recursive calls */
