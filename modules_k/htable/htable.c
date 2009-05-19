@@ -30,8 +30,10 @@
 
 #include "../../sr_module.h"
 #include "../../timer.h"
+#include "../../route.h"
 #include "../../dprint.h"
 #include "../../lib/kmi/mi.h"
+#include "../../lib/kcore/faked_msg.h"
 
 #include "../../pvar.h"
 #include "ht_api.h"
@@ -46,6 +48,7 @@ int  ht_timer_interval = 20;
 /** module functions */
 static int ht_print(struct sip_msg*, char*, char*);
 static int mod_init(void);
+static int child_init(int rank);
 void destroy(void);
 
 static int fixup_ht_rm(void** param, int param_no);
@@ -115,7 +118,7 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	0,
 	(destroy_function) destroy,
-	0           /* per-child init function */
+	child_init  /* per-child init function */
 };
 
 /**
@@ -156,6 +159,30 @@ static int mod_init(void)
 			LM_ERR("failed to register timer function\n");
 			return -1;
 		}
+	}
+	return 0;
+}
+
+
+static int child_init(int rank)
+{
+	struct sip_msg *fmsg;
+	int rtb, rt;
+
+	LM_DBG("rank is (%d)\n", rank);
+	if (rank!=PROC_INIT)
+		return 0;
+	
+	rt = route_get(&event_rt, "htable:mod-init");
+	if(rt>=0) {
+		LM_DBG("executing event_route[htable:mod-init] (%d)\n", rt);
+		if(faked_msg_init()<0)
+			return -1;
+		fmsg = faked_msg_next();
+		rtb = route_type;
+		set_route_type(REQUEST_ROUTE);
+		run_top_route(event_rt.rlist[rt], fmsg);
+		set_route_type(rtb);
 	}
 
 	return 0;
