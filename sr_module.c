@@ -1349,6 +1349,9 @@ int fixup_str_2(void** param, int param_no)
 }
 
 
+
+#define PV_PRINT_BUF_SIZE  1024
+#define PV_PRINT_BUF_NO    3
 /** Get the function parameter value as string.
  *  @return  0 - Success
  *          -1 - Cannot get value
@@ -1359,8 +1362,8 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 	int ret;
 	avp_t* avp;
 	pv_value_t pv_val;
-	static char pve_buf[256]; /* ugly hack needed for PVE */
-	memset(pve_buf, 0, sizeof(pve_buf));
+	static int buf_itr = 0; /* ugly hack needed for PVE */
+	static char pve_buf[PV_PRINT_BUF_NO][PV_PRINT_BUF_SIZE];
 	
 	switch(param->type) {
 		case FPARAM_REGEX:
@@ -1405,13 +1408,14 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			}
 			break;
 		case FPARAM_PVE:
-			dst->len=sizeof(pve_buf);
-			if (unlikely(pv_printf(msg, param->v.pve, pve_buf, &dst->len)!=0)){
+			dst->s=pve_buf[buf_itr];
+			dst->len=PV_PRINT_BUF_SIZE;
+			buf_itr = (buf_itr+1)%PV_PRINT_BUF_NO;
+			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
 				ERR("Could not convert the PV-formated string to str\n");
 				dst->len=0;
 				return -1;
 			};
-			dst->s=pve_buf;
 			break;
 	}
 	return 0;
