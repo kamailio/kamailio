@@ -185,49 +185,47 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		presentity= search_htable( hentity, hash_code);
 		if(presentity)
 		{
-			if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH &&
-					hentity->flag!= MI_ASYN_PUBLISH)
-			{
-				/* sent a PUBLISH within a dialog that no longer exists
-				 * send again an intial PUBLISH */
-				LM_DBG("received a 412 reply- send an INSERT_TYPE"
-						" publish request\n");
-				delete_htable(presentity, hash_code);
-				lock_release(&HashT->p_records[hash_code].lock);
-				publ_info_t publ;
-				memset(&publ, 0, sizeof(publ_info_t));
-				publ.pres_uri= hentity->pres_uri; 
-				publ.body= hentity->body;
-				
-				if(hentity->desired_expires== 0)
-					publ.expires= -1;
-				else
-				if(hentity->desired_expires<= (int)time(NULL))
-					publ.expires= 0;
-				else
-					publ.expires= hentity->desired_expires- (int)time(NULL)+ 3;
-
-				publ.source_flag|= hentity->flag;
-				publ.event|= hentity->event;
-				publ.content_type= hentity->content_type;	
-				publ.id= hentity->id;
-				publ.extra_headers= hentity->extra_headers;
-				publ.cb_param= hentity->cb_param;
-				if(send_publish(&publ)< 0)
-				{
-					LM_ERR("when trying to send PUBLISH\n");
-					goto error;
-				}
-			}
-			else 
-			{	
-				delete_htable(presentity, hash_code);
-				LM_DBG("***Delete from table\n");
-				lock_release(&HashT->p_records[hash_code].lock);
-			}
+			LM_DBG("Record found in table and deleted\n");
+			delete_htable(presentity, hash_code);
 		}
 		else
-			lock_release(&HashT->p_records[hash_code].lock);
+		{
+			LM_DBG("Record not found in table\n");
+		}
+		lock_release(&HashT->p_records[hash_code].lock);
+
+		if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH
+				&& hentity->flag!= MI_ASYN_PUBLISH)
+		{
+			/* sent a PUBLISH within a dialog that no longer exists
+			 * send again an intial PUBLISH */
+			LM_DBG("received a 412 reply- try again to send PUBLISH\n");
+			publ_info_t publ;
+			memset(&publ, 0, sizeof(publ_info_t));
+			publ.pres_uri= hentity->pres_uri; 
+			publ.body= hentity->body;
+			
+			if(hentity->desired_expires== 0)
+				publ.expires= -1;
+			else
+			if(hentity->desired_expires<= (int)time(NULL))
+				publ.expires= 0;
+			else
+				publ.expires= hentity->desired_expires- (int)time(NULL)+ 3;
+
+			publ.source_flag|= hentity->flag;
+			publ.event|= hentity->event;
+			publ.content_type= hentity->content_type;	
+			publ.id= hentity->id;
+			publ.extra_headers= hentity->extra_headers;
+			publ.cb_param= hentity->cb_param;
+
+			if(send_publish(&publ)< 0)
+			{
+				LM_ERR("when trying to send PUBLISH\n");
+				goto error;
+			}
+		}
 		goto done;
 	}
 	
@@ -380,6 +378,8 @@ error:
 		shm_free(*ps->param);
 		*ps->param= NULL;
 	}
+	if(presentity)
+		shm_free(presentity);
 
 	return;
 }	
@@ -432,7 +432,10 @@ int send_publish( publ_info_t* publ )
 	}
 
 	if(publ->flag & INSERT_TYPE)
+	{
+		LM_DBG("Insert flag set\n");
 		goto insert;
+	}
 	
 	if(presentity== NULL)
 	{
@@ -459,6 +462,7 @@ insert:
 	}
 	else
 	{
+		LM_DBG("record found in hash_table\n");
 		publ->flag= UPDATE_TYPE;
 		etag.s= (char*)pkg_malloc(presentity->etag.len* sizeof(char));
 		if(etag.s== NULL)
@@ -521,6 +525,8 @@ insert:
 send_publish:
 	
 	/* construct the callback parameter */
+	if(etag.s && etag.len)
+		publ->etag = &etag;
 
 	cb_param= publish_cbparam(publ, body, tuple_id, REQ_OTHER);
 	if(cb_param== NULL)
