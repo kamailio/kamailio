@@ -526,8 +526,29 @@ sht_rm_value_re("ha=>.*");
 		MI FIFO Command Format:
 		</para>
         <programlisting  format="linespecific">
-		:ds_list:_reply_fifo_file_
-		_hah_table_name_
+		:sht_reload:_reply_fifo_file_
+		_hash_table_name_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">sht_dump</function>
+		</title>
+		<para>
+		Dump content of a hash table via MI.
+		</para>
+		<para>
+		Name: <emphasis>sht_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>_hash_table_name_</emphasis> - the name
+		of hash table to dump.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:sht_dump:_reply_fifo_file_
+		_hash_table_name_
 		_empty_line_
 		</programlisting>
     </section>
