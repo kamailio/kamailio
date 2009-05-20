@@ -39,7 +39,7 @@
  */
 int parse_methods(str* _body, unsigned int* _methods);
 
-int parse_method(str* _next, enum request_method* _method);
+int parse_method_name(str* s, enum request_method* _method);
 
 
 #endif /* PARSE_METHODS_H */

@@ -43,24 +43,149 @@ static int token_char(char _c)
  		(_c == '*') || (_c == '_') || (_c == '+') || (_c == '`') ||
  		(_c == '\'') || (_c == '~') || (_c == '+') || (_c == '`');
  }
- 
- 
+
+
+
+/** Parse a string containing a method.
+ * Parse a method pointed by s & assign its enum bit to method. The string
+ * _must_ contain _only_ the method (without trailing or heading whitespace).
+ * @return 0 on success, -1 on error
+ */
+int parse_method_name(str* s, enum request_method* method)
+ {
+	if (unlikely(!s || !method)) {
+		LOG(L_ERR, "Invalid parameter value\n");
+		return -1;
+	}
+	
+	if (unlikely(!s->len || (s->s==0))) {
+		DBG("No input\n");
+		*method = METHOD_OTHER;
+		return 0;
+	}
+	
+	switch ((s->s)[0]) {
+		/* ordered after probability of aparition on a normal proxy */
+		case 'R':
+		case 'r':
+			if (likely((s->len == 8) &&
+					!strncasecmp(s->s + 1, "egister", 7))) {
+				*method = METHOD_REGISTER;
+				return 0;
+			}
+			if (likely((s->len==5) && !strncasecmp(s->s + 1, "efer", 4))) {
+				*method = METHOD_REFER;
+				return 0;
+			}
+			break;
+		case 'A':
+		case 'a':
+			if (likely((s->len==3) && !strncasecmp(s->s + 1, "ck", 2))) {
+				*method = METHOD_ACK;
+				return 0;
+			}
+			break;
+		case 'I':
+		case 'i':
+			if (likely((s->len==6) && !strncasecmp(s->s + 1, "nvite", 5))){
+				*method = METHOD_INVITE;
+				return 0;
+			}
+			if (likely((s->len==4) && !strncasecmp(s->s + 1, "nfo", 3))) {
+				*method = METHOD_INFO;
+				return 0;
+			}
+			break;
+		case 'P':
+		case 'p':
+			if (likely((s->len==5) && !strncasecmp(s->s + 1, "rack", 4))) {
+				*method = METHOD_PRACK;
+				return 0;
+			}
+			if (likely((s->len==7) && !strncasecmp(s->s + 1, "ublish", 6))) {
+				*method = METHOD_PUBLISH;
+				return 0;
+			}
+			break;
+		case 'C':
+		case 'c':
+			if (likely((s->len==6) && !strncasecmp(s->s + 1, "ancel", 5))) {
+				*method = METHOD_CANCEL;
+				return 0;
+			}
+			break;
+		case 'B':
+		case 'b':
+			if (likely((s->len==3) && !strncasecmp(s->s + 1, "ye", 2))) {
+				*method = METHOD_BYE;
+				return 0;
+			}
+			break;
+		case 'M':
+		case 'm':
+			if (likely((s->len==7) && !strncasecmp(s->s + 1, "essage", 6))) {
+				*method = METHOD_MESSAGE;
+				return 0;
+			}
+			break;
+		case 'O':
+		case 'o':
+			if (likely((s->len==7) && !strncasecmp(s->s + 1, "ptions", 6))) {
+				*method = METHOD_OPTIONS;
+				return 0;
+			}
+			break;
+		case 'S':
+		case 's':
+			if (likely((s->len==9) && !strncasecmp(s->s + 1, "ubscribe", 8))) {
+				*method = METHOD_SUBSCRIBE;
+				return 0;
+			}
+			break;
+		case 'N':
+		case 'n':
+			if (likely((s->len==6) && !strncasecmp(s->s + 1, "otify", 5))){
+				*method = METHOD_NOTIFY;
+				return 0;
+			}
+			break;
+		case 'U':
+		case 'u':
+			if (likely((s->len==6) && !strncasecmp(s->s + 1, "pdate", 5))){
+				*method = METHOD_UPDATE;
+				return 0;
+			}
+			break;
+		default:
+			break;
+	}
+/* unknown method */
+	*method = METHOD_OTHER;
+	return 0;
+}
+
+
+
  /*
   * Parse a method pointed by _next, assign its enum bit to _method, and update
   * _next past the method. Returns 1 if parse succeeded and 0 otherwise.
   */
-int parse_method(str* _next, enum request_method* _method) 
+static int parse_method_advance(str* _next, enum request_method* _method)
  {
-	 if (!_next || !_method) {
-		 LOG(L_ERR, "parse_method: Invalid parameter value\n");
+	char* end;
+	
+	 if (unlikely(!_next || !_method)) {
+		 LOG(L_ERR, "Invalid parameter value\n");
 		 return 0;
 	 }
 	 
-	 if (!_next->len || !_next->s) {
-		 DBG("parse_method: No input\n");
+	 if (unlikely(!_next->len || !_next->s)) {
+		 DBG("No input\n");
+ 		*_method = METHOD_OTHER;
 		 return 1;
 	 }
-
+	end=_next->s+_next->len;
+	
 	 switch ((_next->s)[0]) {
 	 case 'A':
 	 case 'a':
@@ -68,7 +193,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_ACK;
  			_next->len -= 3;
  			_next->s += 3;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -79,7 +204,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_BYE;
  			_next->len -= 3;
  			_next->s += 3;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -90,7 +215,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_CANCEL;
  			_next->len -= 6;
  			_next->s += 6;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -103,14 +228,14 @@ int parse_method(str* _next, enum request_method* _method)
  				*_method = METHOD_INFO;
  				_next->len -= 4;
  				_next->s += 4;
- 				return 1;
+				goto found;
  			}
 
  			if ((_next->len > 5) && !strncasecmp(_next->s + 2, "vite", 4)) {
  				*_method = METHOD_INVITE;
  				_next->len -= 6;
  				_next->s += 6;
- 				return 1;
+				goto found;
  			}
  		}
  		goto unknown;
@@ -121,7 +246,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_MESSAGE;
  			_next->len -= 7;
  			_next->s += 7;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -132,7 +257,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_NOTIFY;
  			_next->len -= 6;
  			_next->s += 6;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -143,7 +268,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_OPTIONS;
  			_next->len -= 7;
  			_next->s += 7;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -154,13 +279,13 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_PRACK;
  			_next->len -= 5;
  			_next->s += 5;
- 			return 1;
+			goto found;
  		}
  		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ublish", 6)) {
  			*_method = METHOD_PUBLISH;
  			_next->len -= 7;
  			_next->s += 7;
- 			return 1;
+			goto found;
  		}
  		goto unknown;
 
@@ -172,14 +297,14 @@ int parse_method(str* _next, enum request_method* _method)
  				*_method = METHOD_REFER;
  				_next->len -= 5;
  				_next->s += 5;
- 				return 1;
+				goto found;
  			}
 
  			if ((_next->len > 7) && !strncasecmp(_next->s + 2, "gister", 6)) {
  				*_method = METHOD_REGISTER;
  				_next->len -= 8;
  				_next->s += 8;
- 				return 1;
+				goto found;
  			}
  		}
  		goto unknown;
@@ -190,7 +315,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_SUBSCRIBE;
  			_next->len -= 9;
  			_next->s += 9;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -201,7 +326,7 @@ int parse_method(str* _next, enum request_method* _method)
  			*_method = METHOD_UPDATE;
  			_next->len -= 6;
  			_next->s += 6;
- 			return 1;
+			goto found;
  		} else {
  			goto unknown;
  		}
@@ -209,7 +334,7 @@ int parse_method(str* _next, enum request_method* _method)
  	default:
  		goto unknown;
  	}
- 
+
  unknown:
  	if (token_char(*(_next->s))) {
  		do { 
@@ -221,6 +346,9 @@ int parse_method(str* _next, enum request_method* _method)
  	} else {
  		return 0;
  	}
+found:
+	/* check if the method really ends here (if not return 0) */
+	return (_next->s>=end) || (!token_char(*(_next->s)));
  }
  
  
@@ -252,7 +380,7 @@ int parse_method(str* _next, enum request_method* _method)
  	}
 
  	while (1) {
- 		if (parse_method(&next, &method)) {
+ 		if (parse_method_advance(&next, &method)) {
  			*_methods |= method;
  		} else {
  			LOG(L_ERR, "ERROR: parse_methods: Invalid method\n");
