@@ -50,6 +50,10 @@ Elena-Ramona Modroiu
               6.1. sht_reload
               6.2. sht_dump
 
+        7. Event routes
+
+              7.1. htable:mod-init
+
    List of Examples
 
    1.1. Accessing $sht(htname=>key)
@@ -103,6 +107,10 @@ Chapter 1. Admin Guide
 
         6.1. sht_reload
         6.2. sht_dump
+
+   7. Event routes
+
+        7.1. htable:mod-init
 
 1. Overview
 
@@ -434,3 +442,18 @@ sht_rm_value_re("ha=>.*");
                 :sht_dump:_reply_fifo_file_
                 _hash_table_name_
                 _empty_line_
+
+7. Event routes
+
+   7.1. htable:mod-init
+
+7.1.  htable:mod-init
+
+   When defined, the module calls event_route[htable:mod-init] after all
+   modules have been initialised. A typical use case is to initialise
+   items in hash tables. The event route is executed only once.
+...
+event_route[htable:mod-init] {
+    $sht(a=>x) = 1;
+}
+...

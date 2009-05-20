@@ -553,6 +553,27 @@ sht_rm_value_re("ha=>.*");
 		</programlisting>
     </section>
     </section>
+	<section>
+	<title>Event routes</title>
+	<section>
+		<title>
+		<function moreinfo="none">htable:mod-init</function>
+		</title>
+		<para>
+			When defined, the module calls event_route[htable:mod-init] after
+			all modules have been initialised. A typical use case is to
+			initialise items in hash tables. The event route is executed only
+			once.
+		</para>
+        <programlisting  format="linespecific">
+...			
+event_route[htable:mod-init] {
+    $sht(a=>x) = 1;
+}
+...
+		</programlisting>
+    </section>
+    </section>
 
 </chapter>
 
