@@ -954,7 +954,7 @@ domain register {
    Example 1.24. Example database content - domain_name table
 ...
 +----+----------+
-| id | carrier  |
+| id | domain   |
 +----+----------+
 |  1 | domain1  |
 |  2 | domain2  |
