@@ -211,12 +211,19 @@ LCR_GW_FLAGS_COLUMN=flags
 LCR_GW_WEIGHT_COLUMN=weight
 LCR_GW_PING_COLUMN=ping
 
-# route_tree table
-if [ -z "$ROUTE_TREE_TABLE" ] ; then
-	ROUTE_TREE_TABLE=route_tree
+# carrier_name table
+if [ -z "$CARRIER_NAME_TABLE" ] ; then
+	CARRIER_NAME_TABLE=carrier_name
 fi
-CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN=id
-CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN=carrier
+CARRIERROUTE_CARRIER_NAME_ID_COLUMN=id
+CARRIERROUTE_CARRIER_NAME_CARRIER_COLUMN=carrier
+
+# domain_name table
+if [ -z "$DOMAIN_NAME_TABLE" ] ; then
+	DOMAIN_NAME_TABLE=domain_name
+fi
+CARRIERROUTE_DOMAIN_NAME_ID_COLUMN=id
+CARRIERROUTE_DOMAIN_NAME_DOMAIN_COLUMN=domain
 
 # carrierroute table
 if [ -z "$CARRIERROUTE_TABLE" ] ; then
@@ -384,8 +391,10 @@ cat <<EOF
  cr show ....................................................... show tables
  cr reload ..................................................... reload tables
  cr dump ....................................................... show in memory tables
- cr addrt <routing_tree_id> <routing_tree> ..................... add a tree
- cr rmrt  <routing_tree> ....................................... rm a tree
+ cr addcn <carrier id> <carrier name> .......................... add a carrier name
+ cr rmcn  <carrier id> ......................................... rm a carrier name
+ cr adddn <domain id> <domain name> ............................ add a domain name
+ cr rmdn  <domain id> .......................................... rm a domain name
  cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
                <prob> <strip> <rewrite_prefix> <rewrite_suffix> ...............
                <flags> <mask> <comment> .........................add a carrier

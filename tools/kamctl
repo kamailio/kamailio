@@ -1245,8 +1245,11 @@ cr() {
 	require_ctlengine
 	case $1 in
 		show)
-			mecho "cr routing tree"
-			QUERY="select * FROM $ROUTE_TREE_TABLE ORDER BY $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN; "
+			mecho "cr carrier names"
+			QUERY="select * FROM $CARRIER_NAME_TABLE ORDER BY $CARRIERROUTE_CARRIER_NAME_ID_COLUMN; "
+			$DBROCMD "$QUERY"
+			mecho "cr domain names"
+			QUERY="select * FROM $DOMAIN_NAME_TABLE ORDER BY $CARRIERROUTE_DOMAIN_NAME_ID_COLUMN; "
 			$DBROCMD "$QUERY"
 			mecho "cr routes"
 			QUERY="select * FROM $CARRIERROUTE_TABLE ORDER BY \
@@ -1264,15 +1267,15 @@ cr() {
 			$CTLCMD cr_dump
 			;;
 
-		addrt)
+		addcn)
 			shift
 			if [ $# -ne 2 ] ; then
-				merr "cr - missing route_tree"
+				merr "cr - missing carrier id or name"
 				exit 1
 			fi
-			QUERY="insert into $ROUTE_TREE_TABLE
-				( $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN, \
-				$CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN) \
+			QUERY="insert into $CARRIER_NAME_TABLE
+				( $CARRIERROUTE_CARRIER_NAME_ID_COLUMN, \
+				$CARRIERROUTE_CARRIER_NAME_CARRIER_COLUMN) \
 				VALUES ($1, '$2');"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
@@ -1282,13 +1285,46 @@ cr() {
 			minfo "execute '$0 cr reload' to synchronize cache and database"
 			;;
 
-		rmrt)
+		rmcn)
 			shift
 			if [ $# -ne 1 ] ; then
-				merr "cr - missing route_tree to be removed"
+				merr "cr - missing carrier id to be removed"
 				exit 1
 			fi
-			QUERY="delete from $ROUTE_TREE_TABLE where $CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN='$1';"
+			QUERY="delete from $CARRIER_NAME_TABLE where $CARRIERROUTE_CARRIER_NAME_ID_COLUMN='$1';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "cr - SQL Error"
+				exit 1 
+			fi
+			minfo "execute '$0 cr reload' to synchronize cache and database"
+			;;
+
+		adddn)
+			shift
+			if [ $# -ne 2 ] ; then
+				merr "cr - missing domain id or name"
+				exit 1
+			fi
+			QUERY="insert into $DOMAIN_NAME_TABLE
+				( $CARRIERROUTE_DOMAIN_NAME_ID_COLUMN, \
+				$CARRIERROUTE_DOMAIN_NAME_DOMAIN_COLUMN) \
+				VALUES ($1, '$2');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "cr - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 cr reload' to synchronize cache and database"
+			;;
+
+		rmdn)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "cr - missing domain id to be removed"
+				exit 1
+			fi
+			QUERY="delete from $DOMAIN_NAME_TABLE where $CARRIERROUTE_DOMAIN_NAME_ID_COLUMN='$1';"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "cr - SQL Error"
