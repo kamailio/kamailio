@@ -195,6 +195,8 @@ static int sctp_init_sock_opt_common(int s)
 {
 	struct sctp_event_subscribe es;
 	int optval;
+	int pd_point;
+	int saved_errno;
 	socklen_t optlen;
 	int sctp_err;
 	
@@ -267,13 +269,34 @@ static int sctp_init_sock_opt_common(int s)
 		/* try to continue */
 		optval=0;
 	}
-	if (setsockopt(s, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+#ifdef __OS_linux
+	optval/=2; /* in linux getsockopt() returns twice the set value */
+#endif
+	pd_point=optval;
+	saved_errno=0;
+	while(pd_point &&
+			setsockopt(s, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
+					(void*)&pd_point, sizeof(pd_point)) ==-1){
+		if (!saved_errno)
+			saved_errno=errno;
+		pd_point--;
+	}
+	
+	if (pd_point!=optval){
+		if (pd_point==0){
+			/* all attempts failed */
+			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 						"SCTP_PARTIAL_DELIVERY_POINT (%d): %s\n",
 						optval, strerror(errno));
-		sctp_err++;
-		/* try to continue */
+			sctp_err++;
+			/* try to continue */
+		}else{
+			/* success but to a lower value (might not be disabled) */
+			LOG(L_WARN, "setsockopt SCTP_PARTIAL_DELIVERY_POINT set to %d, but"
+				" the socket rcvbuf is %d (higher values fail with"
+				" \"%s\" [%d])\n",
+				pd_point, optval, strerror(saved_errno), saved_errno);
+		}
 	}
 #else
 #warning no sctp lib support for SCTP_PARTIAL_DELIVERY_POINT, consider upgrading
