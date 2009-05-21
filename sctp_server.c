@@ -193,14 +193,27 @@ error:
    WARNING: please keep it sync'ed w/ sctp_check_compiled_sockopts() */
 static int sctp_init_sock_opt_common(int s)
 {
-	struct sctp_event_subscribe es;
 	int optval;
 	int pd_point;
 	int saved_errno;
 	socklen_t optlen;
 	int sctp_err;
+#ifdef __OS_linux
+	union {
+		struct sctp_event_subscribe s;
+		char padding[sizeof(struct sctp_event_subscribe)+sizeof(__u8)];
+	} es;
+#else
+	struct sctp_event_subscribe es;
+#endif
+	struct sctp_event_subscribe* ev_s;
 	
 	sctp_err=0;
+#ifdef __OS_linux
+	ev_s=&es.s;
+#else
+	ev_s=&es;
+#endif
 	/* set tos */
 	optval = tos;
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
@@ -349,27 +362,50 @@ static int sctp_init_sock_opt_common(int s)
 	memset(&es, 0, sizeof(es));
 	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message
 	 *  information in sctp_sndrcvinfo */
-	es.sctp_data_io_event=1;
+	ev_s->sctp_data_io_event=1;
 	/* enable association event notifications */
-	es.sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
-	es.sctp_address_event=1;  /* enable address events notifications */
-	es.sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
-	es.sctp_peer_error_event=1;   /* SCTP_REMOTE_ERROR */
-	es.sctp_shutdown_event=1;     /* SCTP_SHUTDOWN_EVENT */
-	es.sctp_partial_delivery_event=1; /* SCTP_PARTIAL_DELIVERY_EVENT */
-	/* es.sctp_adaptation_layer_event=1; - not supported by lksctp<=1.0.6*/
-	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
+	ev_s->sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
+	ev_s->sctp_address_event=1;  /* enable address events notifications */
+	ev_s->sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
+	ev_s->sctp_peer_error_event=1;   /* SCTP_REMOTE_ERROR */
+	ev_s->sctp_shutdown_event=1;     /* SCTP_SHUTDOWN_EVENT */
+	ev_s->sctp_partial_delivery_event=1; /* SCTP_PARTIAL_DELIVERY_EVENT */
+	/* ev_s->sctp_adaptation_layer_event=1; - not supported by lksctp<=1.0.6*/
+	/* ev_s->sctp_authentication_event=1; -- not supported on linux 2.6.25 */
 	
 	/* enable the SCTP_EVENTS */
 #ifdef SCTP_EVENTS
-	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, &es, sizeof(es))==-1){
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(*ev_s))==-1){
+		/* on linux the checks for the struct sctp_event_subscribe size
+		   are too strict, making certain lksctp/kernel combination
+		   unworkable => since we don't use the extra information
+		   (sctp_authentication_event) added in newer version, we can
+		   try with different sizes) */
+#ifdef __OS_linux
+		/* 1. lksctp 1.0.9 with kernel < 2.6.26 -> kernel expects 
+		      the structure without the authentication event member */
+		if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(*ev_s)-1)==0)
+			goto ev_success;
+		/* 2. lksctp < 1.0.9? with kernel >= 2.6.26: the sctp.h structure
+		   does not have the authentication member, but the newer kernels 
+		   check only for optlen > sizeof(...) => we should never reach
+		   this point. */
+		/* 3. just to be foolproof if we reached this point, try
+		    with a bigger size before giving up  (out of desperation) */
+		if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(es))==0)
+			goto ev_success;
+
+#endif
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 				"SCTP_EVENTS: %s\n", strerror(errno));
 		sctp_err++;
-		/* non critical, try to continue */
+		goto error; /* critical */
 	}
+#ifdef __OS_linux
+ev_success:
+#endif
 #else
-#warning no sctp lib support for SCTP_EVENTS, consider upgrading
+#error no sctp lib support for SCTP_EVENTS, consider upgrading
 #endif /* SCTP_EVENTS */
 	
 	if (sctp_err){
