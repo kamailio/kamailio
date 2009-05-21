@@ -123,8 +123,8 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 	}
 	
 	if (parsed_uri.type==SIPS_URI_T){
-		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
-			LOG(L_ERR, "ERROR: uri2proxy: bad transport  for sips uri: %d\n",
+		if (parsed_uri.proto==PROTO_UDP) {
+			LOG(L_ERR, "ERROR: uri2proxy: bad transport for sips uri: %d\n",
 					parsed_uri.proto);
 			return 0;
 		}else
@@ -181,8 +181,8 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 	}
 	
 	if (parsed_uri.type==SIPS_URI_T){
-		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
-			LOG(L_ERR, "ERROR: get_uri_send_info: bad transport  for"
+		if (parsed_uri.proto==PROTO_UDP) {
+			LOG(L_ERR, "ERROR: get_uri_send_info: bad transport for"
 						" sips uri: %d\n", parsed_uri.proto);
 			return -1;
 		}else
@@ -254,8 +254,8 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 	}
 	
 	if (parsed_uri.type==SIPS_URI_T){
-		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
-			LOG(L_ERR, "ERROR: uri2dst: bad transport  for sips uri: %d\n",
+		if (parsed_uri.proto==PROTO_UDP) {
+			LOG(L_ERR, "ERROR: uri2dst: bad transport for sips uri: %d\n",
 					parsed_uri.proto);
 			return 0;
 		}else
