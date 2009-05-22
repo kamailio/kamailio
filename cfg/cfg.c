@@ -47,6 +47,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 {
 	int	i, num, size, group_name_len;
 	cfg_mapping_t	*mapping = NULL;
+	int types;
 
 	/* check the number of the variables */
 	for (num=0; def[num].name; num++);
@@ -57,13 +58,15 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		goto error;
 	}
 	memset(mapping, 0, sizeof(cfg_mapping_t)*num);
-
+	types=0;
 	/* calculate the size of the memory block that has to
 	be allocated for the cfg variables, and set the content of the 
 	cfg_mapping array the same time */
 	for (i=0, size=0; i<num; i++) {
 		mapping[i].def = &(def[i]);
 		mapping[i].name_len = strlen(def[i].name);
+		/* record all the types for sanity checks */
+		types|=CFG_VAR_MASK(def[i].type);
 
 		/* padding depends on the type of the next variable */
 		switch (CFG_VAR_MASK(def[i].type)) {
@@ -128,6 +131,10 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		}
 	}
 
+	/* fix the computed size (char*, str or pointer members will force 
+	   structure padding to multiple of sizeof(pointer)) */
+	if (types & (CFG_VAR_STRING|CFG_VAR_STR|CFG_VAR_POINTER))
+		size=ROUND_POINTER(size);
 	/* minor validation */
 	if (size != def_size) {
 		LOG(L_ERR, "ERROR: register_cfg_def(): the specified size (%i) of the config "
