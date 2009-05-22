@@ -105,6 +105,8 @@ int pv_t_update_req(struct sip_msg *msg)
 			return -1;
 		}
 	}
+	if(_pv_treq_p)
+		free_sip_msg(&_pv_treq);
 	memset(&_pv_treq, 0, sizeof(struct sip_msg));
 	memcpy(_pv_treq_buf, t->uas.request->buf, t->uas.request->len);
 	_pv_treq_buf[t->uas.request->len] = '\0';
@@ -115,7 +117,14 @@ int pv_t_update_req(struct sip_msg *msg)
 	_pv_T_req = t;
 
 
-	pv_t_copy_msg(t->uas.request, &_pv_treq);
+	if(pv_t_copy_msg(t->uas.request, &_pv_treq)!=0)
+	{
+		pkg_free(_pv_treq_buf);
+		_pv_treq_size = 0;
+		_pv_treq_buf = NULL;
+		_pv_T_req = NULL;
+		return -1;
+	}
 
 	return 0;
 }
@@ -171,6 +180,8 @@ int pv_t_update_rpl(struct sip_msg *msg)
 			return -1;
 		}
 	}
+	if(_pv_trpl_p)
+		free_sip_msg(&_pv_trpl);
 	memset(&_pv_trpl, 0, sizeof(struct sip_msg));
 	memcpy(_pv_trpl_buf, t->uac[branch].reply->buf, t->uac[branch].reply->len);
 	_pv_trpl_buf[t->uac[branch].reply->len] = '\0';
@@ -180,7 +191,14 @@ int pv_t_update_rpl(struct sip_msg *msg)
 	_pv_trpl_id = t->uac[branch].reply->id;
 	_pv_T_rpl = t;
 
-	pv_t_copy_msg(t->uac[branch].reply, &_pv_trpl);
+	if(pv_t_copy_msg(t->uac[branch].reply, &_pv_trpl)!=0)
+	{
+		pkg_free(_pv_trpl_buf);
+		_pv_trpl_buf = NULL;
+		_pv_trpl_size = 0;
+		_pv_T_rpl = 0;
+		return -1;
+	}
 
 	return 0;
 }
