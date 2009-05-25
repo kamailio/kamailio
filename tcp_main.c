@@ -3493,10 +3493,6 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			}
 			tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W|
 								F_CONN_WANTS_RD|F_CONN_WANTS_WR);
-			if (unlikely(!tcpconn_try_unhash(tcpconn))){
-				LOG(L_CRIT, "BUG: tcpconn_ev: unhashed connection %p\n",
-							tcpconn);
-			}
 			if (unlikely(ev & POLLERR)){
 				if (unlikely(tcpconn->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
@@ -3516,6 +3512,10 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 #endif /* USE_DST_BLACKLIST */
 					TCP_STATS_CON_RESET(); /* FIXME: it could != RST */
 				}
+			}
+			if (unlikely(!tcpconn_try_unhash(tcpconn))){
+				LOG(L_CRIT, "BUG: tcpconn_ev: unhashed connection %p\n",
+							tcpconn);
 			}
 			tcpconn_put_destroy(tcpconn);
 			goto error;
