@@ -172,14 +172,14 @@ static int mod_init(void) {
 	carrierroute_db_vars();
 
 	if (cr_match_mode != 10 && cr_match_mode != 128) {
-		LM_ERR("invalid matching mode %d specific, please use 10 or 128", cr_match_mode);
+		LM_ERR("invalid matching mode %d specific, please use 10 or 128\n", cr_match_mode);
 		return -1;
 	}
 
 	if (strcmp(config_source, "db") == 0) {
 		mode = CARRIERROUTE_MODE_DB;
 
-		LM_INFO("use database as configuration source");
+		LM_INFO("use database as configuration source\n");
 		if(carrierroute_db_init() < 0){
 			return -1;
 		}
@@ -191,13 +191,13 @@ static int mod_init(void) {
 	else if (strcmp(config_source, "file") == 0) {
 		mode = CARRIERROUTE_MODE_FILE;
 
-		LM_INFO("use file as configuration source");
+		LM_INFO("use file as configuration source\n");
 		if(stat(config_file, &fs) != 0){
 			LM_ERR("can't stat config file\n");
 			return -1;
 		}
 		if(fs.st_mode & S_IWOTH){
-			LM_WARN("insecure file permissions, routing data is world writeable");
+			LM_WARN("insecure file permissions, routing data is world writeable\n");
 		}
 		if( !( fs.st_mode & S_IWOTH) &&
 			!((fs.st_mode & S_IWGRP) && (fs.st_gid == getegid())) &&
