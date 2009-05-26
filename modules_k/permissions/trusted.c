@@ -479,6 +479,7 @@ int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
     
     if (proto_sp && (pv_get_spec_value(_msg, proto_sp, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_STR) {
+	    strlower(&(pv_val.rs));
 	    proto = pv_val.rs.s;
 	} else {
 	    LM_ERR("proto pvar value is not string\n");
@@ -489,13 +490,13 @@ int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
 	return -1;
     }
 
-    if (strcmp(proto, "UDP") == 0) {
+    if (strcmp(proto, "udp") == 0) {
 	proto_int = PROTO_UDP;
-    } else if (strcmp(proto, "TCP") == 0) {
+    } else if (strcmp(proto, "tcp") == 0) {
 	proto_int = PROTO_TCP;
-    } else if (strcmp(proto, "TLS") == 0) {
+    } else if (strcmp(proto, "tls") == 0) {
 	proto_int = PROTO_TLS;
-    } else if (strcmp(proto, "SCTP") == 0) {
+    } else if (strcmp(proto, "sctp") == 0) {
 	proto_int = PROTO_SCTP;
     } else {
 	LM_ERR("unknown protocol %s\n", proto);

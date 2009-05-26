@@ -1016,7 +1016,8 @@ if ($var(group) != -1) {
 		<para>
 		Source address and transport protocol given in pvar
 		arguments must be in string format.  Valid transport
-		protocol values are "UDP, "TCP", "TLS", and "SCTP".
+		protocol values are (ignoring case) "udp, "tcp", "tls",
+		and "sctp".
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
