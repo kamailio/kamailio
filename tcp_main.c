@@ -3699,12 +3699,19 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			TCP_EV_SEND_TIMEOUT(0, &c->rcv);
 			TCP_STATS_SEND_TIMEOUT();
 		}
+	}else{
+		/* idle timeout */
+		TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
+		TCP_STATS_CON_TIMEOUT();
 	}
 #else /* ! TCP_ASYNC */
 	if (TICKS_LT(t, c->timeout)){
 		/* timeout extended, exit */
 		return (ticks_t)(c->timeout - t);
 	}
+	/* idle timeout */
+	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
+	TCP_STATS_CON_TIMEOUT();
 #endif /* TCP_ASYNC */
 	DBG("tcp_main: timeout for %p\n", c);
 	if (likely(c->flags & F_CONN_HASHED)){
@@ -3726,8 +3733,6 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			c->flags&=~(F_CONN_READ_W|F_CONN_WRITE_W);
 		}
 	}
-	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
-	TCP_STATS_CON_TIMEOUT();
 	tcpconn_put_destroy(c);
 	return 0;
 }
