@@ -274,6 +274,8 @@ new config variables:
      assocation (default: 180 s).
   sctp_send_ttl = milliseconds - number of milliseconds before an unsent
      message/chunk is dropped (default: 32000 ms or 32 s).
+     Can be changed at runtime, e.g.:
+        $ sercmd cfg.set_now_int sctp send_ttl 180000
   sctp_send_retries - how many times to attempt re-sending a message on a
                       re-opened association, if the sctp stack did give up
                       sending it (it's not related to sctp protocol level
@@ -282,6 +284,7 @@ new config variables:
                       machine. WARNING: use with care and low values (e.g.
                       1-3) to avoid "multiplying" traffic to unresponding 
                       hosts (default: 0).
+                      Can be changed at runtime.
   server_id = number - A configurable unique server id that can be used to
                        discriminate server instances within a cluster of
                        servers when all other information, such as IP addresses

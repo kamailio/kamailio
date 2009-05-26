@@ -223,8 +223,8 @@ static int sctp_init_sock_opt_common(int s)
 	}
 	
 	/* set receive buffer: SO_RCVBUF*/
-	if (sctp_options.sctp_so_rcvbuf){
-		optval=sctp_options.sctp_so_rcvbuf;
+	if (cfg_get(sctp, sctp_cfg, so_rcvbuf)){
+		optval=cfg_get(sctp, sctp_cfg, so_rcvbuf);
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
@@ -234,8 +234,8 @@ static int sctp_init_sock_opt_common(int s)
 	}
 	
 	/* set send buffer: SO_SNDBUF */
-	if (sctp_options.sctp_so_sndbuf){
-		optval=sctp_options.sctp_so_sndbuf;
+	if (cfg_get(sctp, sctp_cfg, so_sndbuf)){
+		optval=cfg_get(sctp, sctp_cfg, so_sndbuf);
 		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
@@ -345,7 +345,7 @@ static int sctp_init_sock_opt_common(int s)
 	
 	/* set autoclose */
 #ifdef SCTP_AUTOCLOSE
-	optval=sctp_options.sctp_autoclose;
+	optval=cfg_get(sctp, sctp_cfg, autoclose);
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_AUTOCLOSE,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
@@ -1255,7 +1255,8 @@ again:
 					if (_sctp_con_del_id_locked(h, e)==0)
 						goto skip_unlock;
 				}else
-					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+					e->con.expire=now +
+								S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 				break;
 			}
 #if 0
@@ -1305,7 +1306,8 @@ again:
 					if (_sctp_con_del_assoc_locked(h, e)==0)
 						goto skip_unlock;
 				}else
-					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+					e->con.expire=now +
+								S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 				break;
 			}
 #if 0
@@ -1357,7 +1359,8 @@ again:
 					if (_sctp_con_del_addr_locked(h, e)==0)
 						goto skip_unlock;
 				}else
-					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+					e->con.expire=now +
+								S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 				break;
 			}
 #if 0
@@ -1414,7 +1417,8 @@ struct sctp_con_elem* sctp_con_new(unsigned id, unsigned assoc_id,
 	else
 		memset(&e->con.remote, 0, sizeof(e->con.remote));
 	e->con.start=get_ticks_raw();
-	e->con.expire=e->con.start+S_TO_TICKS(sctp_options.sctp_autoclose);
+	e->con.expire=e->con.start +
+				S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 	return e;
 error:
 	return 0;
@@ -1678,6 +1682,9 @@ static int sctp_handle_send_failed(struct socket_info* si,
 	unsigned data_len;
 	int retries;
 	int ret;
+#ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
+	int send_ttl;
+#endif
 	
 	ret=-1;
 	SCTP_STATS_SEND_FAILED();
@@ -1700,13 +1707,13 @@ static int sctp_handle_send_failed(struct socket_info* si,
 		memset(&sinfo, 0, sizeof(sinfo));
 		sinfo.sinfo_flags=SCTP_UNORDERED;
 #ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
-		if (sctp_options.sctp_send_ttl){
+		if ((send_ttl=cfg_get(sctp, sctp_cfg, send_ttl))){
 			sinfo.sinfo_pr_policy=SCTP_PR_SCTP_TTL;
-			sinfo.sinfo_pr_value=sctp_options.sctp_send_ttl;
+			sinfo.sinfo_pr_value=send_ttl;
 		}else
 			sinfo.info_pr_policy=SCTP_PR_SCTP_NONE;
 #else
-		sinfo.sinfo_timetolive=sctp_options.sctp_send_ttl;
+		sinfo.sinfo_timetolive=cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
 		sinfo.sinfo_context=retries;
 		
@@ -1722,7 +1729,7 @@ static int sctp_handle_send_failed(struct socket_info* si,
 	}
 #ifdef USE_DST_BLACKLIST
 	 else if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					sctp_options.sctp_send_retries) {
+					cfg_get(sctp, sctp_cfg, send_retries)) {
 		/* blacklist only if send_retries is on, if off we blacklist
 		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
 		   which is better (because we can tell connect errors from send
@@ -1782,7 +1789,7 @@ again:
 			/* blacklist only if send_retries is turned off (if on we don't
 			   know here if we did retry or we are at the first error) */
 			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(sctp_options.sctp_send_retries==0))
+					(cfg_get(sctp, sctp_cfg, send_retries)==0))
 						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
 #endif /* USE_DST_BLACKLIST */
 			/* no break */
@@ -1811,7 +1818,7 @@ again:
 			/* blacklist only if send_retries is turned off (if on we don't 
 			   know here if we did retry or we are at the first error) */
 			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(sctp_options.sctp_send_retries==0))
+					(cfg_get(sctp, sctp_cfg, send_retries)==0))
 						dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0);
 #endif /* USE_DST_BLACKLIST */
 			break;
@@ -2266,19 +2273,22 @@ again:
 int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
 {
 	struct sctp_sndrcvinfo sinfo;
+#ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
+	int send_ttl;
+#endif
 	
 	memset(&sinfo, 0, sizeof(sinfo));
 	sinfo.sinfo_flags=SCTP_UNORDERED;
 #ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
-	if (sctp_options.sctp_send_ttl){
+	if ((send_ttl=cfg_get(sctp, sctp_cfg, send_ttl))){
 		sinfo.sinfo_pr_policy=SCTP_PR_SCTP_TTL;
-		sinfo.sinfo_pr_value=sctp_options.sctp_send_ttl;
+		sinfo.sinfo_pr_value=send_ttl;
 	}else
 		sinfo->sinfo_pr_policy=SCTP_PR_SCTP_NONE;
 #else
-		sinfo.sinfo_timetolive=sctp_options.sctp_send_ttl;
+		sinfo.sinfo_timetolive=cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
-	sinfo.sinfo_context=sctp_options.sctp_send_retries;
+	sinfo.sinfo_context=cfg_get(sctp, sctp_cfg, send_retries);
 	return sctp_msg_send_raw(dst, buf, len, &sinfo);
 }
 

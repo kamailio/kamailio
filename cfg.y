@@ -1149,7 +1149,7 @@ assign_stm:
 	| SCTP_CHILDREN EQUAL error { yyerror("number expected"); }
 	| SCTP_SOCKET_RCVBUF EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_so_rcvbuf=$3;
+			sctp_default_cfg.so_rcvbuf=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1157,7 +1157,7 @@ assign_stm:
 	| SCTP_SOCKET_RCVBUF EQUAL error { yyerror("number expected"); }
 	| SCTP_SOCKET_SNDBUF EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_so_sndbuf=$3;
+			sctp_default_cfg.so_sndbuf=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1165,7 +1165,7 @@ assign_stm:
 	| SCTP_SOCKET_SNDBUF EQUAL error { yyerror("number expected"); }
 	| SCTP_AUTOCLOSE EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_autoclose=$3;
+			sctp_default_cfg.autoclose=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1173,7 +1173,7 @@ assign_stm:
 	| SCTP_AUTOCLOSE EQUAL error { yyerror("number expected"); }
 	| SCTP_SEND_TTL EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_send_ttl=$3;
+			sctp_default_cfg.send_ttl=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1181,7 +1181,7 @@ assign_stm:
 	| SCTP_SEND_TTL EQUAL error { yyerror("number expected"); }
 	| SCTP_SEND_RETRIES EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_send_retries=$3;
+			sctp_default_cfg.send_retries=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif

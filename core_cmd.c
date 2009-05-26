@@ -608,16 +608,17 @@ static void core_sctp_options(rpc_t* rpc, void* c)
 {
 #ifdef USE_SCTP
 	void *handle;
-	struct sctp_cfg_options t;
+	struct cfg_group_sctp t;
 
 	if (!sctp_disable){
 		sctp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddd",
-			"sctp_autoclose",		t.sctp_autoclose,
-			"sctp_send_ttl",	t.sctp_autoclose,
-			"sctp_socket_rcvbuf",	t.sctp_so_rcvbuf,
-			"sctp_socket_sndbuf",	t.sctp_so_sndbuf
+		rpc->struct_add(handle, "ddddd",
+			"sctp_autoclose",		t.autoclose,
+			"sctp_send_ttl",	t.send_ttl,
+			"sctp_send_retries",	t.send_retries,
+			"sctp_socket_rcvbuf",	t.so_rcvbuf,
+			"sctp_socket_sndbuf",	t.so_sndbuf
 		);
 	}else{
 		rpc->fault(c, 500, "sctp support disabled");

@@ -1941,6 +1941,12 @@ try_again:
 		goto error;
 	}
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+	if (sctp_register_cfg()){
+		LOG(L_CRIT, "could not register the sctp configuration\n");
+		goto error;
+	}
+#endif /* USE_SCTP */
 	/*init timer, before parsing the cfg!*/
 	if (init_timer()<0){
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
