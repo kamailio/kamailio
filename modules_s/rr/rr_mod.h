@@ -46,6 +46,7 @@ extern avp_ident_t next_route_avp_ident;
 extern int append_fromtag;
 extern int enable_double_rr;
 extern int enable_full_lr;
+extern int rr_force_send_socket;
 
 extern domain_get_did_t dm_get_did;
 extern fparam_t* fparam_username;

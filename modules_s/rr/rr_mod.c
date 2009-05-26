@@ -65,6 +65,7 @@ str next_route_avp = STR_NULL; /* AVP identification where next route (if exists
 static str crc_secret_str = STR_NULL;
 avp_ident_t user_part_avp_ident;
 avp_ident_t next_route_avp_ident;
+int rr_force_send_socket = 1; /* Force the send socket if 2 RR was added */
 
 fparam_t* fparam_username = NULL;
 
@@ -109,6 +110,7 @@ static param_export_t params[] ={
 	{"cookie_secret",    PARAM_STR,    &crc_secret_str  },
 	{"user_part_avp",    PARAM_STR,    &user_part_avp   },
 	{"next_route_avp",   PARAM_STR,    &next_route_avp  },
+	{"force_send_socket", PARAM_INT,    &rr_force_send_socket  },
 	{0, 0, 0 }
 };
 

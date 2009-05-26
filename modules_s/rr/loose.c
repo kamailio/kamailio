@@ -31,6 +31,7 @@
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2006-01-09 store user part of Route URI in AVP (if required) (mma)
+ * 2009-05-26 Force the send socket if two RR headers were added (Miklos)
  */
 
 
@@ -45,6 +46,7 @@
 #include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../dset.h"
+#include "../../socket_info.h"
 #include "loose.h"
 #include "rr_mod.h"
 #include "avp_cookie.h"
@@ -850,6 +852,7 @@ static inline int after_loose(struct sip_msg* _m, struct sip_uri* _pru, int _rou
 #endif
 	str* uri;
 	str avp_cookie;
+	struct sip_uri parsed_uri;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -891,6 +894,27 @@ static inline int after_loose(struct sip_msg* _m, struct sip_uri* _pru, int _rou
 		} else rt = rt->next;
 
 		if (enable_double_rr && is_2rr(&(_pru->params))) {
+			if (rr_force_send_socket) {
+				if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len,
+						&parsed_uri) < 0
+				) {
+					LOG(L_ERR, "after_loose: Error while parsing the second route header\n");
+					return RR_ERROR;
+				}
+				_m->force_send_socket = grep_sock_info(&parsed_uri.host,
+								parsed_uri.port_no,
+								parsed_uri.proto);
+				if (_m->force_send_socket == 0)
+					LOG(L_WARN, "after_loose: send socket cannot be set"
+						" based on the second route header\n");
+					/* Do not return error because there is still a chance
+					 * that the outgoing socket will be correct, especially
+					 * if mhomed is turned on. It can happen that the Route HF
+					 * contains a domain name as opposed to ip address therefore
+					 * the outgoing socket cannot be determined (easily) from the URI.
+					 * (Miklos)
+					 */
+			}
 			if (!rt->next) {
 				     /* No next route in the same header, remove the whole header
 				      * field immediately
