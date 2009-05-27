@@ -147,6 +147,13 @@ SocketCreate(const struct TSocketVtbl * const vtblP,
 
 
 void
+SocketClose(TSocket * const socketP) {
+    socketP->vtbl.close(socketP);
+}
+
+
+
+void
 SocketDestroy(TSocket * const socketP) {
 
     assert(socketP->signature == socketSignature);

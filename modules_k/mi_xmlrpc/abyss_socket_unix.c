@@ -102,6 +102,7 @@ SocketUnixTerm(void) {
 
 
 
+static SocketCloseImpl              socketClose;
 static SocketDestroyImpl            socketDestroy;
 static SocketWriteImpl              socketWrite;
 static SocketReadImpl               socketRead;
@@ -116,6 +117,7 @@ static SocketGetPeerNameImpl        socketGetPeerName;
 
 
 static struct TSocketVtbl const vtbl = {
+    &socketClose,
     &socketDestroy,
     &socketWrite,
     &socketRead,
@@ -189,14 +191,24 @@ SocketUnixCreateFd(int        const fd,
 }
 
 
+static void
+socketClose(TSocket * const socketP) {
+
+    struct socketUnix * const socketUnixP = socketP->implP;
+
+    if (!socketUnixP->userSuppliedFd && socketUnixP->fd ) {
+        close(socketUnixP->fd);
+        socketUnixP->fd = 0;
+    }
+}
+
 
 static void
 socketDestroy(TSocket * const socketP) {
 
     struct socketUnix * const socketUnixP = socketP->implP;
 
-    if (!socketUnixP->userSuppliedFd)
-        close(socketUnixP->fd);
+    socketClose(socketP);
 
     free(socketUnixP);
 }

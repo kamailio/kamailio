@@ -14,6 +14,8 @@
 
 typedef struct in_addr TIPAddr;
 
+typedef void SocketCloseImpl(TSocket * const socketP);
+
 typedef void SocketDestroyImpl(TSocket * const socketP);
 
 typedef void SocketWriteImpl(TSocket *             const socketP,
@@ -57,6 +59,7 @@ typedef void SocketGetPeerNameImpl(TSocket *    const socketP,
                                    abyss_bool * const successP);
 
 struct TSocketVtbl {
+    SocketCloseImpl              * close;
     SocketDestroyImpl            * destroy;
     SocketWriteImpl              * write;
     SocketReadImpl               * read;
@@ -90,6 +93,9 @@ SocketInit(void);
 
 void
 SocketTerm(void);
+
+void
+SocketClose(TSocket *       const socketP);
 
 void
 SocketCreate(const struct TSocketVtbl * const vtblP,
