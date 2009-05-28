@@ -37,6 +37,9 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../lib/kmi/mi.h"
 #include "../../dprint.h"
+#include "../../timer.h"
+#include "../../mem/meminfo.h"
+#include "../../mem/shm_mem.h"
 
 
 #ifdef STATISTICS
@@ -70,6 +73,23 @@ stat_export_t core_stats[] = {
 	{0,0,0}
 };
 
+unsigned long shm_stats_get_size(void);
+unsigned long shm_stats_get_used(void);
+unsigned long shm_stats_get_rused(void);
+unsigned long shm_stats_get_mused(void);
+unsigned long shm_stats_get_free(void);
+unsigned long shm_stats_get_frags(void);
+
+stat_export_t shm_stats[] = {
+	{"total_size" ,     STAT_IS_FUNC,    (stat_var**)shm_stats_get_size     },
+	{"used_size" ,      STAT_IS_FUNC,    (stat_var**)shm_stats_get_used     },
+	{"real_used_size" , STAT_IS_FUNC,    (stat_var**)shm_stats_get_rused    },
+	{"max_used_size" ,  STAT_IS_FUNC,    (stat_var**)shm_stats_get_mused    },
+	{"free_size" ,      STAT_IS_FUNC,    (stat_var**)shm_stats_get_free     },
+	{"fragments" ,      STAT_IS_FUNC,    (stat_var**)shm_stats_get_frags    },
+	{0,0,0}
+};
+
 static struct mi_root *mi_get_stats(struct mi_root *cmd, void *param);
 static struct mi_root *mi_reset_stats(struct mi_root *cmd, void *param);
 
@@ -82,7 +102,7 @@ static mi_export_t mi_stat_cmds[] = {
 int register_mi_stats(void)
 {
 	/* register MI commands */
-	if (register_mi_mod( "statistics", mi_stat_cmds)<0) {
+	if (register_mi_mod( "core", mi_stat_cmds)<0) {
 		LM_ERR("unable to register MI cmds\n");
 		return -1;
 	}
@@ -95,13 +115,11 @@ int register_core_stats(void)
 		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}
-#if 0
 	/* register sh_mem statistics */
 	if (register_module_stats( "shmem", shm_stats)!=0 ) {
 		LM_ERR("failed to register sh_mem statistics\n");
 		return -1;
 	}
-#endif
 	return 0;
 }
 
@@ -242,6 +260,55 @@ static struct mi_root *mi_reset_stats(struct mi_root *cmd, void *param)
 	}
 
 	return rpl_tree;
+}
+
+/*** shm stats ***/
+
+static struct mem_info _stats_shm_mi;
+static ticks_t _stats_shm_tm = 0;
+void stats_shm_update(void)
+{
+	ticks_t t;
+	t = get_ticks();
+	if(t!=_stats_shm_tm) {
+		shm_info(&_stats_shm_mi);
+		_stats_shm_tm = t;
+	}
+}
+unsigned long shm_stats_get_size(void)
+{
+	stats_shm_update();
+	return _stats_shm_mi.total_size;
+}
+
+unsigned long shm_stats_get_used(void)
+{
+	stats_shm_update();
+	return _stats_shm_mi.used;
+}
+
+unsigned long shm_stats_get_rused(void)
+{
+	stats_shm_update();
+	return _stats_shm_mi.real_used;
+}
+
+unsigned long shm_stats_get_mused(void)
+{
+	stats_shm_update();
+	return _stats_shm_mi.max_used;
+}
+
+unsigned long shm_stats_get_free(void)
+{
+	stats_shm_update();
+	return _stats_shm_mi.free;
+}
+
+unsigned long shm_stats_get_frags(void)
+{
+	stats_shm_update();
+	return _stats_shm_mi.total_frags;
 }
 
 #endif
