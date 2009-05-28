@@ -30,8 +30,4 @@
 
 #include "lib/kcore/statistics.h"
 
-#ifdef STATISTICS
-#warning "sorry sip-router does not support all STATISTICS"
-#endif
-
 #endif /* _STATISTICS_H_ */
