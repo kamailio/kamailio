@@ -165,38 +165,38 @@ endif
 CC_EXTRA_OPTS ?=
 
 # dirs 
-cfg_dir = etc/ser/
+cfg_dir = etc/$(MAIN_NAME)/
 bin_dir = sbin/
-share_dir = share/ser/
-# lib/ser/modules , lib/ser/modules-s, lib/ser/modules-k
-modules_dir = lib/ser/
-lib_dir = lib/ser/
+share_dir = share/$(MAIN_NAME)/
+# lib/$(MAIN_NAME)/modules , lib/$(MAIN_NAME)/modules-s, lib/$(MAIN_NAME)/modules-k
+modules_dir = lib/$(MAIN_NAME)/
+lib_dir = lib/$(MAIN_NAME)/
 ifeq ($(OS), linux)
-	doc_dir = share/doc/ser/
+	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = share/man/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), freebsd)
-	doc_dir = share/doc/ser/
+	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), openbsd)
-	doc_dir = share/doc/ser/
+	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), netbsd)
-	doc_dir = share/doc/ser
+	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	LOCALBASE ?= /usr/pkg
 else
 ifeq ($(OS), darwin)
-	doc_dir = share/doc/ser/
+	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	LOCALBASE ?= /usr/local
 else
-	doc_dir = doc/ser/
+	doc_dir = doc/$(MAIN_NAME)/
 	man_dir = man/
 	LOCALBASE ?= /usr/local
 endif
