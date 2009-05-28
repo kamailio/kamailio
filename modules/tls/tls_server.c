@@ -800,6 +800,7 @@ again:
 
 
 
+#if 0  /* not used for now */
 /* nonblocking version */
 int tls_h_nonblocking_write(struct tcp_connection *c, int fd, const char *buf,
 			  unsigned int len)
@@ -852,7 +853,7 @@ error:
 end:
 	return n;
 }
-
+#endif
 
 
 /*
