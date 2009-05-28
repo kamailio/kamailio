@@ -46,7 +46,7 @@
 static tls_cfg_t* cfg = NULL;
 static tls_domain_t* domain = NULL;
 
-
+#ifdef USE_IPV6
 static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token, 
 					  cfg_parser_t* st)
 {
@@ -74,6 +74,7 @@ static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token,
 	    st->file, token->start.line, token->start.col);
 	return -1;
 }
+#endif /* USE_IPV6 */
 
 
 static int parse_ipv4(struct ip_addr* ip, cfg_token_t* token, 
@@ -196,7 +197,15 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 	}
 
 	if (t.type == '[') {
+#ifdef USE_IPV6
 		if (parse_ipv6(ip, &t, st) < 0) return -1;
+#else
+		ERR("%s:%d:%d: IPv6 address  not supported (compiled without IPv6"
+				" support)\n", 
+		    st->file, t.start.line, t.start.col);
+		return -1;
+	}
+#endif /* USE_IPV6 */
 	} else if (t.type == CFG_TOKEN_ALPHA) {
 		opt = cfg_lookup_token(token_default, &t.val);
 		if (opt) {
