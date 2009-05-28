@@ -1115,6 +1115,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		ser_error=lowest_ret;
 		return lowest_ret;
 	}
+
+#ifdef TM_UAC_FLAGS
+	/* mark the fist branch in this fwd step */
+	t->uac[first_branch].flags |= TM_UAC_FLAG_FB;
+#endif
+
 	ser_error=0; /* clear branch adding errors */
 	/* send them out now */
 	success_branch=0;

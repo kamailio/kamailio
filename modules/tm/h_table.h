@@ -199,6 +199,7 @@ typedef struct ua_server
 /* UAC internal flags */
 #define TM_UAC_FLAG_RR	1	/* Record-Route applied */
 #define TM_UAC_FLAG_R2	2	/* 2nd Record-Route applied */
+#define TM_UAC_FLAG_FB	4	/* Mark first entry in new branch set */
 #endif
 
 typedef struct ua_client
