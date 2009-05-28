@@ -517,6 +517,9 @@ endif
 ifeq ($(TLS_HOOKS), 1)
 	C_DEFS+= -DUSE_TLS -DTLS_HOOKS
 endif
+ifeq ($(KMSTATS), 1)
+	C_DEFS+= -DSTATISTICS
+endif
 
 ifneq ($(STUN),)
 	C_DEFS+= -DUSE_STUN
