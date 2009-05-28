@@ -53,6 +53,7 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 	int cts_added;
 	int n;
 	int i;
+	int first_branch;
 
 	/* get transaction */
 	t = rd_tmb.t_gett();
@@ -61,14 +62,22 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 		LM_CRIT("no current transaction found\n");
 		goto error;
 	}
+	for(first_branch=t->nr_of_outgoings-1; first_branch>=0; first_branch--)
+		if(t->uac[first_branch].flags&TM_UAC_FLAG_FB)
+			break;
+	if(first_branch<0)
+	{
+		LM_CRIT("no current first branch found\n");
+		goto error;
+	}
 
-	LM_DBG("resume branch=%d\n", t->first_branch);
+	LM_DBG("resume branch=%d\n", first_branch);
 
 	cts_added = 0; /* no contact added */
 	backup_uri = msg->new_uri; /* shmcontact2dset will ater this value */
 
 	/* look if there are any 3xx branches starting from resume_branch */
-	for( i=t->first_branch ; i<t->nr_of_outgoings ; i++) {
+	for( i=first_branch ; i<t->nr_of_outgoings ; i++) {
 		LM_DBG("checking branch=%d (added=%d)\n", i, cts_added);
 		/* is a redirected branch? */
 		if (t->uac[i].last_received<300 || t->uac[i].last_received>399)
@@ -264,7 +273,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	/* add the sortet contacts as branches in dset and log this! */
 	for ( i=0 ; i<n ; i++ ) {
 		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len, scontacts[i]->uri.s);
-		if (append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], bflags, 0)<0) {
+		if (km_append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], bflags, 0)<0) {
 			LM_ERR("failed to add contact to dset\n");
 		} else {
 			added++;
@@ -272,7 +281,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 				/* log the redirect */
 				req->new_uri =  scontacts[i]->uri;
 				//FIXME
-				rd_acc_fct( req, (char*)reason, acc_db_table, NULL, NULL, NULL, NULL);
+				rd_acc_fct( req, (char*)reason, acc_db_table);
 			}
 		}
 	}
