@@ -20,6 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 		       
+#include "../../route.h"
+
 #include "dlg_var.h"
 
 dlg_ctx_t _dlg_ctx;
@@ -68,6 +70,8 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
 	int n;
+	char *rtp;
+
 	if(param==NULL)
 		return -1;
 
@@ -88,7 +92,17 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 			_dlg_ctx.to_bye = n;
 		break;
 		case 4:
-			_dlg_ctx.to_route = n;
+			if(val->flags&PV_VAL_STR) {
+				if(val->rs.s[val->rs.len]=='\0')
+					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);
+				else _dlg_ctx.to_route = 0;
+			} else {
+				if(n!=0) {
+					rtp = int2str(n, NULL);
+					_dlg_ctx.to_route = route_lookup(&main_rt, rtp);
+				} else _dlg_ctx.to_route = 0;
+			}
+			if(_dlg_ctx.to_route <0) _dlg_ctx.to_route = 0;
 		break;
 		default:
 			_dlg_ctx.on = n;

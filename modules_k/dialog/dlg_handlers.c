@@ -964,7 +964,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	dlg = ((struct dlg_cell*)((char *)(tl) -
 		(unsigned long)(&((struct dlg_cell*)0)->tl)));
 
-	if(dlg->toroute>0 && dlg->toroute<RT_NO)
+	if(dlg->toroute>0 && main_rt.rlist[dlg->toroute]!=NULL)
 	{
 		dlg_set_ctx_dialog(dlg);
 		fmsg = faked_msg_next();
