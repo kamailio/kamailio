@@ -204,7 +204,6 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 				" support)\n", 
 		    st->file, t.start.line, t.start.col);
 		return -1;
-	}
 #endif /* USE_IPV6 */
 	} else if (t.type == CFG_TOKEN_ALPHA) {
 		opt = cfg_lookup_token(token_default, &t.val);
