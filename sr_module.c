@@ -260,7 +260,7 @@ int load_module(char* mod_path)
 	unsigned* mod_if_ver;
 	struct sr_module* t;
 	struct stat stat_buf;
-	char* modname;
+	str modname;
 	char* mdir;
 	char* nxt_mdir;
 	char* path;
@@ -269,71 +269,114 @@ int load_module(char* mod_path)
 	int dlflags;
 	int new_dlflags;
 	int retries;
+	int path_type;
 
 #ifndef RTLD_NOW
 /* for openbsd */
 #define RTLD_NOW DL_LAZY
 #endif
 	path=mod_path;
-	if (!strchr(path, '/') && !strchr(path, '.')) {
+	path_type = 0;
+	modname.s = path;
+	modname.len = strlen(mod_path);
+	if(modname.len>3 && strcmp(modname.s+modname.len-3, ".so")==0) {
+		path_type = 1;
+		modname.len -= 3;
+	}
+	if (!strchr(path, '/'))
+		path_type |= 2;
+	if((path_type&2) || path[0] != '/') {
 		/* module name was given, we try to construct the path */
-		modname = path;
 		mdir=mods_dir; /* search path */
 		do{
 			nxt_mdir=strchr(mdir, ':');
 			if (nxt_mdir) mdir_len=(int)(nxt_mdir-mdir);
 			else mdir_len=strlen(mdir);
 			
-			/* try path <MODS_DIR>/<modname>.so */
-			path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
-									strlen(modname) + 3 /* ".so" */ + 1);
-			if (path==0) goto error;
-			memcpy(path, mdir, mdir_len);
-			len = mdir_len;
-			if (len != 0 && path[len - 1] != '/'){
-				path[len]='/';
-				len++;
-			}
-			path[len]=0;
-			strcat(path, modname);
-			strcat(path, ".so");
-
-			if (stat(path, &stat_buf) == -1) {
-				DBG("load_module: module file not found <%s>\n", path);
-				pkg_free(path);
-
-				/* try path <MODS_DIR>/<modname>/<modname>.so */
-				path = (char*)pkg_malloc(
-					mdir_len + 1 /* "/" */ +
-					strlen(modname) + 1 /* "/" */ +
-					strlen(modname) + 3 /* ".so" */ + 1);
+			if(path_type&2) {
+				/* try path <MODS_DIR>/<modname>.so */
+				path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
+									modname.len + 3 /* ".so" */ + 1);
 				if (path==0) goto error;
 				memcpy(path, mdir, mdir_len);
 				len = mdir_len;
-				if (len != 0 && path[len - 1] != '/') {
+				if (len != 0 && path[len - 1] != '/'){
 					path[len]='/';
 					len++;
 				}
 				path[len]=0;
-				strcat(path, modname);
-				strcat(path, "/");
-				strcat(path, modname);
-				strcat(path, ".so");
+				strcat(path, modname.s);
+				if(!(path_type&1))
+					strcat(path, ".so");
 
 				if (stat(path, &stat_buf) == -1) {
 					DBG("load_module: module file not found <%s>\n", path);
 					pkg_free(path);
-					path=0;
+
+					/* try path <MODS_DIR>/<modname>/<modname>.so */
+					path = (char*)pkg_malloc(
+						mdir_len + 1 /* "/" */ +
+						modname.len + 1 /* "/" */ +
+						modname.len + 3 /* ".so" */ + 1);
+					if (path==0) goto error;
+					memcpy(path, mdir, mdir_len);
+					len = mdir_len;
+					if (len != 0 && path[len - 1] != '/') {
+						path[len]='/';
+						len++;
+					}
+					path[len]=0;
+					strncat(path, modname.s, modname.len);
+					strcat(path, "/");
+					strcat(path, modname.s);
+					if(!(path_type&1))
+						strcat(path, ".so");
+
+					if (stat(path, &stat_buf) == -1) {
+						DBG("load_module: module file not found <%s>\n", path);
+						pkg_free(path);
+						path=0;
+					}
+				}
+			} else {
+				/* try mod_path - S compat */
+				if(path==mod_path) {
+					if (stat(path, &stat_buf) == -1) {
+						DBG("load_module: module file not found <%s>\n", path);
+						path=0;
+					}
+				}
+				if(path==0) {
+					/* try path <MODS_DIR>/mod_path - K compat */
+					path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
+									strlen(mod_path) + 1);
+					if (path==0) goto error;
+					memcpy(path, mdir, mdir_len);
+					len = mdir_len;
+					if (len != 0 && path[len - 1] != '/'){
+						path[len]='/';
+						len++;
+					}
+					path[len]=0;
+					strcat(path, mod_path);
+
+					if (stat(path, &stat_buf) == -1) {
+						DBG("load_module: module file not found <%s>\n", path);
+						pkg_free(path);
+						path=0;
+					}
 				}
 			}
 			mdir=nxt_mdir?nxt_mdir+1:0;
 		}while(path==0 && mdir);
 		if (path==0){
-			LOG(L_ERR, "ERROR: load_module: could not find module <%s> in"
-						" <%s>\n", modname, mods_dir);
+			LOG(L_ERR, "ERROR: load_module: could not find module <%.*s> in"
+						" <%s>\n", modname.len, modname.s, mods_dir);
 			goto error;
 		}
 	}
+	DBG("load_module: trying to load <%s>\n", path);
+
 	retries=2;
 	dlflags=RTLD_NOW;
 reload:
