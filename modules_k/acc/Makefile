@@ -17,8 +17,8 @@ DEFS+=-DSQL_ACC
 #   (uncomment next line or 'ENABLE_RADIUS_ACC=true make all')
 #ENABLE_RADIUS_ACC=true
 ifeq ($(ENABLE_RADIUS_ACC),true)
-DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
-LIBS=-L$(LOCALBASE)/lib $(RADIUS_LIB)
+include ../../Makefile.radius
+DEFS+=-DRAD_ACC
 endif
 
 # set ENABLE_DIAMETER_ACC to true if you wish to enable DIAMETER accounting
