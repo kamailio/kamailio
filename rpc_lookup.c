@@ -67,8 +67,8 @@ void destroy_rpcs()
 			pkg_free(e);
 		}
 	}
-	pkg_free(rpc_hash_table.table);
-	pkg_free(rpc_sarray);
+	if (rpc_hash_table.table) pkg_free(rpc_hash_table.table);
+	if (rpc_sarray) pkg_free(rpc_sarray);
 	rpc_hash_table.table=0;
 	rpc_hash_table.size=0;
 	rpc_sarray=0;
