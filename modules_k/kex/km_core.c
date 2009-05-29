@@ -65,3 +65,33 @@ int w_km_append_branch(struct sip_msg *msg, char *uri, str *sq)
 	return ret;
 }
 
+int w_setdsturi(struct sip_msg *msg, char *uri, str *s2)
+{
+	str s;
+
+	/* todo: fixup */
+	s.s = uri;
+	s.len = strlen(uri);
+	
+	if(set_dst_uri(msg, &s)!=0)
+		return -1;
+	return 1;
+
+}
+
+int w_resetdsturi(struct sip_msg *msg, char *uri, str *s2)
+{
+	if(msg->dst_uri.s!=0)
+		pkg_free(msg->dst_uri.s);
+	msg->dst_uri.s = 0;
+	msg->dst_uri.len = 0;
+	return 1;
+}
+
+int w_isdsturiset(struct sip_msg *msg, char *uri, str *s2)
+{
+	if(msg->dst_uri.s==0 || msg->dst_uri.len<=0)
+		return -1;
+	return 1;
+}
+
