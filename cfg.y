@@ -172,6 +172,12 @@
 	#define IF_STUN(x) warn("stun support not compiled in")
 #endif
 
+#ifdef USE_SCTP
+	#define IF_SCTP(x) x
+#else
+	#define IF_SCTP(x) warn("sctp support not compiled in")
+#endif
+
 
 extern int yylex();
 static void yyerror(char* s);
@@ -396,6 +402,9 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SCTP_AUTOCLOSE
 %token SCTP_SEND_TTL
 %token SCTP_SEND_RETRIES
+%token SCTP_SRTO_INITIAL
+%token SCTP_SRTO_MAX
+%token SCTP_SRTO_MIN
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
 %token DISABLE_CORE
@@ -1187,6 +1196,18 @@ assign_stm:
 		#endif
 	}
 	| SCTP_SEND_RETRIES EQUAL error { yyerror("number expected"); }
+	| SCTP_SRTO_INITIAL EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.srto_initial=$3);
+	}
+	| SCTP_SRTO_INITIAL EQUAL error { yyerror("number expected"); }
+	| SCTP_SRTO_MAX EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.srto_max=$3);
+	}
+	| SCTP_SRTO_MAX EQUAL error { yyerror("number expected"); }
+	| SCTP_SRTO_MIN EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.srto_min=$3);
+	}
+	| SCTP_SRTO_MIN EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

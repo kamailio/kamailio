@@ -65,6 +65,8 @@
 
 static atomic_t* sctp_conn_no;
 
+
+
 /* check if the underlying OS supports sctp
    returns 0 if yes, -1 on error */
 int sctp_check_support()
@@ -189,14 +191,87 @@ error:
   * @param err_prefix - if 0 no error message is printed on failure, if !=0
   *                     it will be prepended to the error message.
   * @return 0 on success, -1 on error */
-int sctp_sockopt(struct socket_info* si, int level, int optname, void* optval,
-					socklen_t optlen, char* err_prefix)
+int sctp_setsockopt(int s, int level, int optname, 
+					void* optval, socklen_t optlen, char* err_prefix)
 {
-	if (setsockopt(si->socket, level, optname, optval, optlen) ==-1){
+	if (setsockopt(s, level, optname, optval, optlen) ==-1){
 		if (err_prefix)
 			ERR("%s: %s [%d]\n", err_prefix, strerror(errno), errno);
 		return -1;
 	}
+	return 0;
+}
+
+
+
+/** get a socket option (wrapper over getsockopt).
+  * @param err_prefix - if 0 no error message is printed on failure, if !=0
+  *                     it will be prepended to the error message.
+  * @return 0 on success, -1 on error */
+int sctp_getsockopt(int s, int level, int optname, 
+					void* optval, socklen_t* optlen, char* err_prefix)
+{
+	if (getsockopt(s, level, optname, optval, optlen) ==-1){
+		if (err_prefix)
+			ERR("%s: %s [%d]\n", err_prefix, strerror(errno), errno);
+		return -1;
+	}
+	return 0;
+}
+
+
+
+/** get the os defaults for cfg options with os correspondents.
+ *  @param s - intialized sctp socket
+ *  @param cfg - filled with the os defaults
+ *  @return -1 on error, 0 on success
+ */
+int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
+{
+	int optval;
+	socklen_t optlen;
+	int s;
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+#endif /* SCTP_RTOINFO */
+	
+	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
+	if (s==-1)
+		return -1;
+	
+	/* SO_RCVBUF */
+	optlen=sizeof(int);
+	if (sctp_getsockopt(s, SOL_SOCKET, SO_RCVBUF, (void*)&optval,
+							&optlen, "SO_RCVBUF")==0){
+		/* success => hack to set the "default" values*/
+		#ifdef __OS_linux
+			optval/=2; /* in linux getsockopt() returns 2*set_value */
+		#endif
+		cfg->so_rcvbuf=optval;
+	}
+	/* SO_SNDBUF */
+	optlen=sizeof(int);
+	if (sctp_getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void*)&optval,
+							&optlen, "SO_SNDBUF")==0){
+		/* success => hack to set the "default" values*/
+		#ifdef __OS_linux
+			optval/=2; /* in linux getsockopt() returns 2*set_value */
+		#endif
+		cfg->so_sndbuf=optval;
+	}
+	/* SCTP_RTOINFO -> srto_initial, srto_min, srto_max */
+#ifdef SCTP_RTOINFO
+	optlen=sizeof(rto);
+	rto.srto_assoc_id=0;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_RTOINFO, (void*)&rto,
+							&optlen, "SCTP_RTOINFO")==0){
+		/* success => hack to set the "default" values*/
+		cfg->srto_initial=rto.srto_initial;
+		cfg->srto_min=rto.srto_min;
+		cfg->srto_max=rto.srto_max;
+	}
+#endif /* SCTP_RTOINFO */
+	close(s);
 	return 0;
 }
 
@@ -215,6 +290,9 @@ static int sctp_init_sock_opt_common(int s)
 	int saved_errno;
 	socklen_t optlen;
 	int sctp_err;
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+#endif /* SCTP_RTOINFO */
 #ifdef __OS_linux
 	union {
 		struct sctp_event_subscribe s;
@@ -375,6 +453,23 @@ static int sctp_init_sock_opt_common(int s)
 #else
 #error SCTP_AUTOCLOSE not supported, please upgrade your sctp library
 #endif /* SCTP_AUTOCLOSE */
+	/* set rtoinfo options: srto_initial, srto_min, srto_max */
+#ifdef SCTP_RTOINFO
+	memset(&rto, 0, sizeof(rto));
+	rto.srto_initial=cfg_get(sctp, sctp_cfg, srto_initial);
+	rto.srto_min=cfg_get(sctp, sctp_cfg, srto_min);
+	rto.srto_max=cfg_get(sctp, sctp_cfg, srto_max);
+	if (rto.srto_initial || rto.srto_min || rto.srto_max){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_RTOINFO, (void*)&rto,
+							sizeof(rto), "setsockopt: SCTP_RTOINFO")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_RTOINFO, consider upgrading
+#endif /* SCTP_RTOINFO */
 	
 	memset(&es, 0, sizeof(es));
 	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message

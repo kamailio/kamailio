@@ -48,6 +48,9 @@ struct cfg_group_sctp sctp_default_cfg;
 
 
 static int set_autoclose(void* cfg_h, str* gname, str* name, void** val);
+static int set_srto_initial(void* cfg_h, str* gname, str* name, void** val);
+static int set_srto_max(void* cfg_h, str* gname, str* name, void** val);
+static int set_srto_min(void* cfg_h, str* gname, str* name, void** val);
 
 /** cfg_group_sctp description (for the config framework). */
 static cfg_def_t sctp_cfg_def[] = {
@@ -63,6 +66,13 @@ static cfg_def_t sctp_cfg_def[] = {
 		"milliseconds before aborting a send" },
 	{ "send_retries", CFG_VAR_INT| CFG_ATOMIC, 0, MAX_SCTP_SEND_RETRIES, 0, 0,
 		"re-send attempts on failure" },
+	{ "srto_initial", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_initial, 0,
+		"initial value of the retr. timeout, used in RTO calculations,"
+			" in msecs" },
+	{ "srto_max", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_max, 0,
+		"maximum value of the retransmission timeout (RTO), in msecs" },
+	{ "srto_min", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_min, 0,
+		"minimum value og the retransmission timeout (RTO), in msecs" },
 	{0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -75,8 +85,11 @@ void* sctp_cfg; /* sctp config handle */
 void init_sctp_options()
 {
 #ifdef USE_SCTP
+	sctp_get_os_defaults(&sctp_default_cfg);
+#if 0
 	sctp_default_cfg.so_rcvbuf=0; /* do nothing, use the kernel default */
 	sctp_default_cfg.so_sndbuf=0; /* do nothing, use the kernel default */
+#endif
 	sctp_default_cfg.autoclose=DEFAULT_SCTP_AUTOCLOSE; /* in seconds */
 	sctp_default_cfg.send_ttl=DEFAULT_SCTP_SEND_TTL;   /* in milliseconds */
 	sctp_default_cfg.send_retries=DEFAULT_SCTP_SEND_RETRIES;
@@ -139,23 +152,102 @@ int sctp_register_cfg()
 
 
 
+#define SCTP_SET_SOCKOPT_DECLS \
+	int err; \
+	struct socket_info* si
+
+#define SCTP_SET_SOCKOPT_BODY(lev, opt_name, val, err_prefix) \
+	err=0; \
+	for (si=sctp_listen; si; si=si->next){ \
+		err+=(sctp_setsockopt(si->socket, (lev), (opt_name), (void*)(&(val)), \
+							sizeof((val)), (err_prefix))<0); \
+	} \
+	return -(err!=0)
+
+
+
 static int set_autoclose(void* cfg_h, str* gname, str* name, void** val)
 {
 #ifdef SCTP_AUTOCLOSE
 	int optval;
-	int err;
-	struct socket_info* si;
+	SCTP_SET_SOCKOPT_DECLS;
 	
 	optval=(int)(long)(*val);
-	err=0;
-	for (si=sctp_listen; si; si=si->next){
-		err+=(sctp_sockopt(si, IPPROTO_SCTP, SCTP_AUTOCLOSE, (void*)&optval,
-							sizeof(optval), "cfg: setting SCTP_AUTOCLOSE")<0);
-	}
-	return -(err!=0);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_AUTOCLOSE, optval,
+							"cfg: setting SCTP_AUTOCLOSE");
 #else
 	ERR("no SCTP_AUTOCLOSE support, please upgrade your sctp library\n");
 	return -1;
 #endif /* SCTP_AUTOCLOSE */
 }
+
+
+
+static int set_srto_initial(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, srto_initial);
+		return 0;
+	}
+	memset(&rto, 0, sizeof(rto)); /* zero everything we don't care about */
+	rto.srto_assoc_id=0; /* all */
+	rto.srto_initial=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_RTOINFO, rto,
+							"cfg: setting SCTP_RTOINFO");
+#else
+	ERR("no SCTP_RTOINFO support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_RTOINFO */
+}
+
+
+
+static int set_srto_max(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, srto_max);
+		return 0;
+	}
+	memset(&rto, 0, sizeof(rto)); /* zero everything we don't care about */
+	rto.srto_assoc_id=0; /* all */
+	rto.srto_max=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_RTOINFO, rto,
+							"cfg: setting SCTP_RTOINFO");
+#else
+	ERR("no SCTP_RTOINFO support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_RTOINFO */
+}
+
+
+
+static int set_srto_min(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, srto_min);
+		return 0;
+	}
+	memset(&rto, 0, sizeof(rto)); /* zero everything we don't care about */
+	rto.srto_assoc_id=0; /* all */
+	rto.srto_min=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_RTOINFO, rto,
+							"cfg: setting SCTP_RTOINFO");
+#else
+	ERR("no SCTP_RTOINFO support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_RTOINFO */
+}
+
 #endif /* USE_SCTP */

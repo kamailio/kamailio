@@ -271,7 +271,7 @@ new config variables:
   sctp_socket_rcvbuf = number - size for the sctp socket receive buffer
   sctp_socket_sndbuf = number - size for the sctp socket send buffer
   sctp_autoclose = seconds - number of seconds before autoclosing an idle
-                   assocation (default: 180 s).
+                   association (default: 180 s).
                    Can be changed at runtime, but it will affect only new
                    associations. E.g.:
                    $ sercmd cfg.set_now_int sctp autoclose 120
@@ -288,6 +288,18 @@ new config variables:
                       1-3) to avoid "multiplying" traffic to unresponding 
                       hosts (default: 0).
                       Can be changed at runtime.
+  sctp_srto_initial = milliseconds - initial value of the retr. timeout,
+                      used in RTO calculations (default: OS specific).
+                      Can be changed at runtime (sctp srto_initial) but it
+                      will affect only new associations.
+  sctp_srto_max     = milliseconds - maximum value of the retransmission
+                      timeout (RTO) (default: OS specific).
+                      Can be changed at runtime (sctp srto_max) but it
+                      will affect only new associations.
+  sctp_srto_min     = milliseconds - minimum value of the retransmission
+                      timeout (RTO) (default: OS specific).
+                      Can be changed at runtime (sctp srto_min) but it 
+                      will affect only new associations.
   server_id = number - A configurable unique server id that can be used to
                        discriminate server instances within a cluster of
                        servers when all other information, such as IP addresses

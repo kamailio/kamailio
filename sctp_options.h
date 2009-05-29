@@ -40,6 +40,9 @@ struct cfg_group_sctp{
 	unsigned int autoclose; /* in seconds */
 	unsigned int send_ttl; /* in milliseconds */
 	unsigned int send_retries;
+	unsigned int srto_initial;
+	unsigned int srto_max;
+	unsigned int srto_min;
 };
 
 extern struct cfg_group_sctp sctp_default_cfg;
@@ -51,5 +54,6 @@ void init_sctp_options();
 void sctp_options_check();
 int sctp_register_cfg();
 void sctp_options_get(struct cfg_group_sctp *s);
+int sctp_get_os_defaults(struct cfg_group_sctp *s);
 
 #endif /* _sctp_options_h */
