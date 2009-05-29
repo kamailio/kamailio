@@ -407,7 +407,7 @@ SERVER_ID     "server_id"
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
-LOADPATH	loadpath
+LOADPATH	"loadpath"|"mpath"
 MODPARAM        modparam
 
 /* values */

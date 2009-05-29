@@ -1410,6 +1410,12 @@ module_stm:
 		mods_dir = $2;
 	}
 	| LOADPATH error	{ yyerror("string expected"); }
+	| LOADPATH EQUAL STRING {
+		DBG("loading modules under %s\n", $3);
+		printf("loading modules under %s\n", $3);
+		mods_dir = $3;
+	}
+	| LOADPATH EQUAL error	{ yyerror("string expected"); }
 	| MODPARAM LPAREN STRING COMMA STRING COMMA STRING RPAREN {
 		if (set_mod_param_regex($3, $5, PARAM_STRING, $7) != 0) {
 			 yyerror("Can't set module parameter");
