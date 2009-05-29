@@ -405,8 +405,6 @@ reload:
 		}
 	}
 	if (register_module(*mod_if_ver, exp, path, handle)<0) goto error1;
-	if (path && path!=mod_path)
-		pkg_free(path);
 	return 0;
 
 error1:
