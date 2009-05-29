@@ -26,16 +26,29 @@
  */
 
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/sctp.h>
+#include <errno.h>
 
 #include "sctp_options.h"
 #include "dprint.h"
 #include "cfg/cfg.h"
+#include "socket_info.h"
+#include "sctp_server.h"
 
 struct cfg_group_sctp sctp_default_cfg;
 
 
 
 #ifdef USE_SCTP
+
+
+static int set_autoclose(void* cfg_h, str* gname, str* name, void** val);
+
 /** cfg_group_sctp description (for the config framework). */
 static cfg_def_t sctp_cfg_def[] = {
 	/*   name        , type |input type| chg type, min, max, fixup, proc. cbk.
@@ -44,7 +57,7 @@ static cfg_def_t sctp_cfg_def[] = {
 		"socket receive buffer size (read-only)" },
 	{ "socket_sndbuf", CFG_VAR_INT| CFG_READONLY, 512, 102400, 0, 0,
 		"socket send buffer size (read-only)" },
-	{ "autoclose", CFG_VAR_INT| CFG_READONLY, 1, 1<<30, 0, 0,
+	{ "autoclose", CFG_VAR_INT| CFG_ATOMIC, 1, 1<<30, set_autoclose, 0,
 		"seconds before closing and idle connection (must be non-zero)" },
 	{ "send_ttl", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, 0, 0,
 		"milliseconds before aborting a send" },
@@ -122,5 +135,27 @@ int sctp_register_cfg()
 		return -1;
 	}
 	return 0;
+}
+
+
+
+static int set_autoclose(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_AUTOCLOSE
+	int optval;
+	int err;
+	struct socket_info* si;
+	
+	optval=(int)(long)(*val);
+	err=0;
+	for (si=sctp_listen; si; si=si->next){
+		err+=(sctp_sockopt(si, IPPROTO_SCTP, SCTP_AUTOCLOSE, (void*)&optval,
+							sizeof(optval), "cfg: setting SCTP_AUTOCLOSE")<0);
+	}
+	return -(err!=0);
+#else
+	ERR("no SCTP_AUTOCLOSE support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_AUTOCLOSE */
 }
 #endif /* USE_SCTP */

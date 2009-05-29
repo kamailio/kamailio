@@ -271,11 +271,14 @@ new config variables:
   sctp_socket_rcvbuf = number - size for the sctp socket receive buffer
   sctp_socket_sndbuf = number - size for the sctp socket send buffer
   sctp_autoclose = seconds - number of seconds before autoclosing an idle
-     assocation (default: 180 s).
+                   assocation (default: 180 s).
+                   Can be changed at runtime, but it will affect only new
+                   associations. E.g.:
+                   $ sercmd cfg.set_now_int sctp autoclose 120
   sctp_send_ttl = milliseconds - number of milliseconds before an unsent
-     message/chunk is dropped (default: 32000 ms or 32 s).
-     Can be changed at runtime, e.g.:
-        $ sercmd cfg.set_now_int sctp send_ttl 180000
+                  message/chunk is dropped (default: 32000 ms or 32 s).
+                  Can be changed at runtime, e.g.:
+                  $ sercmd cfg.set_now_int sctp send_ttl 180000
   sctp_send_retries - how many times to attempt re-sending a message on a
                       re-opened association, if the sctp stack did give up
                       sending it (it's not related to sctp protocol level
