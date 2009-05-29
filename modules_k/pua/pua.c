@@ -147,8 +147,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	load_tm_f  load_tm;
-
 	LM_DBG("...\n");
 	
 	if(min_expires< 0)
@@ -157,15 +155,8 @@ static int mod_init(void)
 	if(default_expires< 600)
 		default_expires= 3600;
 
-	/* import the TM auto-loading function */
-	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
-	{
-		LM_ERR("can't import load_tm\n");
-		return -1;
-	}
-	/* let the auto-loading function load all TM stuff */
-
-	if(load_tm(&tmb)==-1)
+	/* load TM API */
+	if(load_tm_api(&tmb)==-1)
 	{
 		LM_ERR("can't load tm functions\n");
 		return -1;
