@@ -243,11 +243,14 @@ static inline int version_control(void *handle, char *path)
 }
 
 /** load a sr module.
- * tries to load the module specified by path.
- * If modname does contain a '/' or a '.' it would be assumed to contain a 
- * path to the module and it will be used as give.
- * else <MODS_DIR>/<modname>.so will be tried and if this fails
+ * tries to load the module specified by mod_path.
+ * If mod_path is 'modname' or 'modname.so' then
+ *  <MODS_DIR>/<modname>.so will be tried and if this fails
  *  <MODS_DIR>/<modname>/<modname>.so
+ * If mod_path contain a '/' it is assumed to be the 
+ * path to the module and tried first. If fails and mod_path is not
+ * absolute path (not starting with '/') then will try:
+ *   <MODS_DIR>/mod_path
  * @param modname - path or module name
  * @return 0 on success , <0 on error
  */
