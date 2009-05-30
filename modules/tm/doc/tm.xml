@@ -98,6 +98,11 @@
 	    See t_uac prototype in uac.h for more details. Who wants to see the
 	    transaction result may register for a callback.
 	</para>
+	<note>
+		<para>Several Kamailio (OpenSER) TM module functionalities are now
+		implemented in the TMX module: <quote>modules_k/tmx</quote>. Check
+		it to see if what you are looking for is there.</para>
+	</note>
     </section>
     
     <section id="tm.known_issues">
