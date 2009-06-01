@@ -148,8 +148,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	load_tm_f load_tm;
-
 	/* if statistics are disabled, prevent their registration to core */
 	if (sl_enable_stats==0)
 		exports.stats = 0;
@@ -179,11 +177,10 @@ static int mod_init(void)
 
 	if(sl_bind_tm!=0)
 	{
-		if ( (load_tm=(load_tm_f)find_export("load_tm", 0, 0)))
+		if(load_tm_api(&tmb)==-1)
 		{
-			load_tm( &tmb );
-		} else {
-			LM_INFO("could not bind tm module - only stateless mode available\n");
+			LM_INFO("could not bind tm module - only stateless mode"
+					" available\n");
 			sl_bind_tm=0;
 		}
 	}
