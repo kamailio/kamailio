@@ -27,10 +27,12 @@
  * History:
  * --------
  *  2008-11-10	Initial version (Miklos)
+ *  2009-06-01  Pre- and post-script callbacks of failure route are executed (Miklos)
  *
  */
 
-#include "../../select_buf.h" /* reset_static_buffer() */
+#include "../../action.h"
+#include "../../script_cb.h"
 
 #include "sip_msg.h"
 #include "t_reply.h"
@@ -151,9 +153,15 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 	faked_env( t, &faked_req);
 
-	if (run_top_route(route, &faked_req)<0)
-		LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
-
+	/* The sip msg is a faked msg just like in failure route
+	 * therefore execute the pre- and post-script callbacks
+	 * of failure route (Miklos)
+	 */
+	if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
+		if (run_top_route(route, &faked_req)<0)
+			LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
+		exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE);
+	}
 	/* TODO: save_msg_lumps should clone the lumps to shm mem */
 
 	/* restore original environment and free the fake msg */

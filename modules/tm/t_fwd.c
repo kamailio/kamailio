@@ -78,6 +78,7 @@
  *              t saved, thus, are not available. Set reparse_on_dns_failover
  *              to 0 to revert the change. (Miklos)
  * 2008-06-04  T_CANCELED is now set each time a CANCEL is received (andrei)
+ * 2009-06-01  Pre- and post-script callbacks of branch route are executed (Miklos)
  */
 
 #include "defs.h"
@@ -98,6 +99,7 @@
 #include "../../onsend.h"
 #include "../../compiler_opt.h"
 #include "../../route.h"
+#include "../../script_cb.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -191,9 +193,12 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		     /* run branch_route actions if provided */
 		set_route_type(BRANCH_ROUTE);
 		tm_ctx_set_branch_index(branch+1);
-		if (run_top_route(branch_rt.rlist[branch_route], i_req) < 0) {
-			LOG(L_ERR, "ERROR: print_uac_request: Error in run_top_route\n");
-		}
+		if (exec_pre_script_cb(i_req, BRANCH_CB_TYPE)>0) {
+			if (run_top_route(branch_rt.rlist[branch_route], i_req) < 0) {
+				LOG(L_ERR, "ERROR: print_uac_request: Error in run_top_route\n");
+			}
+			exec_post_script_cb(i_req, BRANCH_CB_TYPE);
+		}		
 		tm_ctx_set_branch_index(0);
 	}
 

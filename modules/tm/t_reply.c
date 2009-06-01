@@ -89,6 +89,7 @@
  * 2008-03-12  use cancel_b_method on 6xx (andrei)
  * 2008-05-30  make sure the wait timer is started after we don't need t
  *             anymore to allow safe calls from fr_timer (andrei)
+ * 2009-06-01  Pre- and post-script callbacks of branch route are executed (Miklos)
  *
  */
 
@@ -106,6 +107,7 @@
 #include "../../timer.h"
 #include "../../error.h"
 #include "../../action.h"
+#include "../../script_cb.h"
 #include "../../dset.h"
 #include "../../tags.h"
 #include "../../route.h"
@@ -861,9 +863,12 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		 * on failure */
 		on_failure = t->on_negative;
 		t->on_negative=0;
-		/* run a reply_route action if some was marked */
-		if (run_top_route(failure_rt.rlist[on_failure], &faked_req)<0)
-			LOG(L_ERR, "ERROR: run_failure_handlers: Error in run_top_route\n");
+		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
+			/* run a reply_route action if some was marked */
+			if (run_top_route(failure_rt.rlist[on_failure], &faked_req)<0)
+				LOG(L_ERR, "ERROR: run_failure_handlers: Error in run_top_route\n");
+			exec_post_script_cb(&faked_req, FAILURE_CB_TYPE);
+		}
 	}
 
 	/* restore original environment and free the fake msg */
@@ -1963,6 +1968,9 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
 		setbflagsval(0, uac->branch_flags);
+		/* Pre- and post-script callbacks have already
+		 * been execueted by the core. (Miklos)
+		 */
 		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
@@ -2090,8 +2098,11 @@ done:
 trans_not_found:
 	/* transaction context was not found */
 	if (goto_on_sl_reply) {
-		/* the script writer has a chance to decide whether to
-		forward the reply or not */
+		/* The script writer has a chance to decide whether to
+		 * forward the reply or not.
+		 * Pre- and post-script callbacks have already
+		 * been execueted by the core. (Miklos)
+		 */
 		return run_top_route(onreply_rt.rlist[goto_on_sl_reply], p_msg);
 	} else {
 		/* let the core forward the reply */
