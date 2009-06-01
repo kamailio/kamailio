@@ -160,8 +160,8 @@ int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
 		abort();
 	}
 #endif
-	flags = PRE_SCRIPT_CB & (1<<(type-1));
-	for (cb=pre_script_cb[type]; cb ; cb=cb->next ) {
+	flags = PRE_SCRIPT_CB | (1<<(type-1));
+	for (cb=pre_script_cb[type-1]; cb ; cb=cb->next ) {
 		/* stop on error */
 		if (cb->cbf(msg, flags, cb->param)==0)
 			return 0;
@@ -183,8 +183,8 @@ int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type)
 		abort();
 	}
 #endif
-	flags = POST_SCRIPT_CB & (1<<(type-1));
-	for (cb=post_script_cb[type]; cb ; cb=cb->next){
+	flags = POST_SCRIPT_CB | (1<<(type-1));
+	for (cb=post_script_cb[type-1]; cb ; cb=cb->next){
 		cb->cbf(msg, flags, cb->param);
 	}
 	return 1;
