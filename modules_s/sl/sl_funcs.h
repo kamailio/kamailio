@@ -42,7 +42,7 @@ int sl_shutdown();
 typedef int (*sl_send_reply_f)(struct sip_msg* msg, int code, char* reason);
 int sl_send_reply(struct sip_msg* msg, int code, char* reason);
 
-int sl_filter_ACK(struct sip_msg*, void *bar );
+int sl_filter_ACK(struct sip_msg*, unsigned int flags, void *bar );
 int sl_reply_error(struct sip_msg *msg );
 
 

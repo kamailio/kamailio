@@ -50,7 +50,7 @@ int pv_get_dlg(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_parse_dlg_name(pv_spec_p sp, str *in);
 
-int dlg_cfg_cb(struct sip_msg *foo, void *bar);
+int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar);
 
 void dlg_set_ctx_dialog(struct dlg_cell *dlg);
 struct dlg_cell* dlg_get_ctx_dialog(void);

@@ -627,7 +627,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	return 0;
 error:
 	unref_dlg(dlg,1);
-	profile_cleanup(msg, NULL);
+	profile_cleanup(msg, 0, NULL);
 	update_stat(failed_dlgs, 1);
 	return -1;
 }
@@ -969,12 +969,12 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	{
 		dlg_set_ctx_dialog(dlg);
 		fmsg = faked_msg_next();
-		if (exec_pre_req_cb(fmsg)>0)
+		if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)>0)
 		{
 			LM_DBG("executing route %d on timeout\n", dlg->toroute);
 			set_route_type(REQUEST_ROUTE);
 			run_top_route(main_rt.rlist[dlg->toroute], fmsg);
-			exec_post_req_cb(fmsg);
+			exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
 		}
 	}
 

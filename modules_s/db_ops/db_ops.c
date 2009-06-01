@@ -963,12 +963,12 @@ static int dbops_close_query_func(struct sip_msg* m, char* handle, char* dummy) 
 	return 1;
 }
 
-static int dbops_pre_script_cb(struct sip_msg *msg, void *param) {
+static int dbops_pre_script_cb(struct sip_msg *msg, unsigned int flags, void *param) {
 	xlbuf_tail = xlbuf;
 	return 1;
 }
 
-static int dbops_post_script_cb(struct sip_msg *msg, void *param) {
+static int dbops_post_script_cb(struct sip_msg *msg, unsigned int flags, void *param) {
 	struct dbops_handle *a;
 	for (a = dbops_handles; a; a=a->next) {
 		dbops_close_query_func(msg, (char*) a, 0);
@@ -1051,8 +1051,8 @@ static int mod_init(void) {
 			return res;
 	}
 
-	register_script_cb(dbops_pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
-	register_script_cb(dbops_post_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| POST_SCRIPT_CB, 0);
+	register_script_cb(dbops_pre_script_cb, REQUEST_CB | ONREPLY_CB | PRE_SCRIPT_CB, 0);
+	register_script_cb(dbops_post_script_cb, REQUEST_CB | ONREPLY_CB | POST_SCRIPT_CB, 0);
 	register_select_table(sel_declaration);
 
 	return 0;
@@ -1492,8 +1492,8 @@ static int declare_handle(modparam_t type, char* param) {
 }
 
 static int dbops_proper_func(struct sip_msg* m, char* dummy1, char* dummy2) {
-	dbops_pre_script_cb(m, NULL);
-	dbops_post_script_cb(m, NULL);
+	dbops_pre_script_cb(m, 0, NULL);
+	dbops_post_script_cb(m, 0, NULL);
 	return 1;
 }
 

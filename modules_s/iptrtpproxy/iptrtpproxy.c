@@ -728,7 +728,7 @@ select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 
-static int mod_pre_script_cb(struct sip_msg *msg, void *param) {
+static int mod_pre_script_cb(struct sip_msg *msg, unsigned int flags, void *param) {
 	sdp_ip.s = "";
 	sdp_ip.len = 0;
 	global_session_ids = NULL;
@@ -758,7 +758,7 @@ static int mod_init(void) {
 		xt_RTPPROXY_release_switchboards(&handle, out_switchboard);
 	}
 
-	register_script_cb(mod_pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
+	register_script_cb(mod_pre_script_cb, REQUEST_CB | ONREPLY_CB | PRE_SCRIPT_CB, 0);
 	register_select_table(sel_declaration);
 	return 0;
 err:

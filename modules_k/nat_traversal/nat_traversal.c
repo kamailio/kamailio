@@ -183,7 +183,7 @@ static INLINE char* shm_strdup(char *source);
 
 static int  mod_init(void);
 static void mod_destroy(void);
-static int  preprocess_request(struct sip_msg *msg, void *param);
+static int  preprocess_request(struct sip_msg *msg, unsigned int flags, void *param);
 static int  reply_filter(struct sip_msg *reply);
 
 static int pv_parse_nat_contact_name(pv_spec_p sp, str *in);
@@ -1745,7 +1745,7 @@ mod_init(void)
         }
 
         // register a pre-script callback to automatically enable dialog tracing
-        if (register_script_cb(preprocess_request, PRE_SCRIPT_CB|REQ_TYPE_CB, 0)!=0) {
+        if (register_script_cb(preprocess_request, PRE_SCRIPT_CB|REQUEST_CB, 0)!=0) {
             LM_ERR("could not register request preprocessing callback\n");
             return -1;
         }
@@ -1815,7 +1815,7 @@ mod_destroy(void)
 // during the dialog and it is not renewed.
 //
 static int
-preprocess_request(struct sip_msg *msg, void *_param)
+preprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
 {
     str totag;
 

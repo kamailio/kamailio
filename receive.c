@@ -164,7 +164,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   (like presence of at least one via), so you can count
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
-		if (exec_pre_req_cb(msg)==0 )
+		if (exec_pre_script_cb(msg, REQUEST_CB_TYPE)==0 )
 			goto end; /* drop the request */
 
 		set_route_type(REQUEST_ROUTE);
@@ -185,7 +185,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 #endif
 
 		/* execute post request-script callbacks */
-		exec_post_req_cb(msg);
+		exec_post_script_cb(msg, REQUEST_CB_TYPE);
 	}else if (msg->first_line.type==SIP_REPLY){
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
@@ -206,7 +206,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   (like presence of at least one via), so you can count
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
-		if (exec_pre_rpl_cb(msg)==0 )
+		if (exec_pre_script_cb(msg, ONREPLY_CB_TYPE)==0 )
 			goto end; /* drop the request */
 
 		/* exec the onreply routing script */
@@ -232,7 +232,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 #endif
 
 		/* execute post reply-script callbacks */
-		exec_post_rpl_cb(msg);
+		exec_post_script_cb(msg, ONREPLY_CB_TYPE);
 	}
 
 end:
@@ -250,13 +250,13 @@ end:
 	return 0;
 error_rpl:
 	/* execute post reply-script callbacks */
-	exec_post_rpl_cb(msg);
+	exec_post_script_cb(msg, ONREPLY_CB_TYPE);
 	reset_avps();
 	goto error02;
 error_req:
 	DBG("receive_msg: error:...\n");
 	/* execute post request-script callbacks */
-	exec_post_req_cb(msg);
+	exec_post_script_cb(msg, REQUEST_CB_TYPE);
 	/* free possible loaded avps -bogdan */
 	reset_avps();
 error02:

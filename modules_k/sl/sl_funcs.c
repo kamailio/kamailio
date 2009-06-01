@@ -295,7 +295,7 @@ int sl_reply_error(struct sip_msg *msg )
  * Filter ACKs
  * \return 0 for ACKs to a local reply, -1 on error, 1 is not an ACK or a non-local ACK
  */
-int sl_filter_ACK(struct sip_msg *msg, void *bar )
+int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 {
 	str *tag_str;
 

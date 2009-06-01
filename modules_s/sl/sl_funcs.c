@@ -213,7 +213,7 @@ int sl_reply_error(struct sip_msg *msg )
     -1 : error
     1  : is not an ACK  or a non-local ACK
 */
-int sl_filter_ACK(struct sip_msg *msg, void *bar )
+int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 {
 	str *tag_str;
 

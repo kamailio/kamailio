@@ -58,7 +58,7 @@
 #include "../sl/sl.h"
 #include "../../nonsip_hooks.h"
 #include "../../action.h" /* run_actions */
-#include "../../script_cb.h" /* exec_*_req_cb */
+#include "../../script_cb.h" /* exec_*_script_cb */
 #include "../../route.h" /* route_get */
 #include "http.h"
 
@@ -1742,7 +1742,7 @@ static int em_receive_request(sip_msg_t* orig_msg,
 		BUG("xmlrpc: strange message: %.*s\n", msg->len, msg->buf);
 		goto error;
 	}
-	if (exec_pre_req_cb(msg) == 0) {
+	if (exec_pre_script_cb(msg, REQUEST_CB_TYPE) == 0) {
 		goto end; /* drop request */
 	}
 	/* exec routing script */
@@ -1752,7 +1752,7 @@ static int em_receive_request(sip_msg_t* orig_msg,
 		goto end;
 	}
  end:
-	exec_post_req_cb(msg); /* needed for example if tm is used */
+	exec_post_script_cb(msg, REQUEST_CB_TYPE); /* needed for example if tm is used */
 	/* reset_avps(); non needed, performed by the real receive_msg */
 	if (msg != orig_msg) { /* avoid double free (freed from receive_msg
 							  too) */

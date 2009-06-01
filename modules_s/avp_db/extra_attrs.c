@@ -426,7 +426,7 @@ int extra_attrs_fixup(void** param, int param_no)
 gen_lock_t *locks = NULL; /* set of mutexes allocated in shared memory */
 int lock_counters[LOCK_CNT]; /* set of counters (each proces has its own counters) */
 
-static int avpdb_post_script_cb(struct sip_msg *msg, void *param) {
+static int avpdb_post_script_cb(struct sip_msg *msg, unsigned int flags, void *param) {
 	int i;
 
 	for (i=0; i<LOCK_CNT; i++) {
@@ -468,7 +468,7 @@ int init_extra_avp_locks()
 		t = t->next;
 	}
 
-	register_script_cb(avpdb_post_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| POST_SCRIPT_CB, 0);
+	register_script_cb(avpdb_post_script_cb, REQUEST_CB | ONREPLY_CB | POST_SCRIPT_CB, 0);
 
 	return 0;
 }

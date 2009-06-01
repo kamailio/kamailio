@@ -182,7 +182,7 @@ static int mod_init(void)
 	pua_send_subscribe= pua.send_subscribe;
 	
 	/* register post-script pua_unset_publish unset function */
-	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0)
+	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQUEST_CB, 0)<0)
 	{
 		LM_ERR("failed to register POST request callback\n");
 		return -1;

@@ -184,7 +184,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		/* ... clear branches from previous message */
 		clear_branches();
 		reset_static_buffer();
-		if (exec_pre_req_cb(msg)==0 )
+		if (exec_pre_script_cb(msg, REQUEST_CB_TYPE)==0 )
 			goto end; /* drop the request */
 		/* exec the routing script */
 		timer_executed = a;
@@ -192,7 +192,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		run_actions(&ra_ctx, main_rt.rlist[a->route_no], msg);
 		timer_executed = 0;
 		/* execute post request-script callbacks */
-		exec_post_req_cb(msg);
+		exec_post_script_cb(msg, REQUEST_CB_TYPE);
 	end:
 		reset_avps();
 		DEBUG(MODULE_NAME": handler: cleaning up\n");

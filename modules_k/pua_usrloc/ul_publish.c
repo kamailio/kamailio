@@ -45,7 +45,7 @@ int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 	return 1;
 }
 
-int pua_unset_publish(struct sip_msg* msg , void* param)
+int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param)
 {
 	pua_ul_publish= 0;
 	return 1;

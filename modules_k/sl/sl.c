@@ -166,7 +166,7 @@ static int mod_init(void)
 #endif
 
 	/* filter all ACKs before script */
-	if (register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )!=0) {
+	if (register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB|REQUEST_CB, 0 )!=0) {
 		LM_ERR("register_script_cb failed\n");
 		return -1;
 	}

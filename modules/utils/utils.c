@@ -136,7 +136,7 @@ static int init_shmlock(void)
 }
 
 
-static int pre_script_filter(struct sip_msg *msg, void *unused)
+static int pre_script_filter(struct sip_msg *msg, unsigned int flags, void *unused)
 {
 	/* use id 0 for pre script callback */
 	utils_forward(msg, 0, PROTO_UDP);
@@ -198,11 +198,11 @@ static int mod_init(void)
 
 	if (forward_active == 1) {
 		/* register callback for id 0 */
-		if (register_script_cb(pre_script_filter, PRE_SCRIPT_CB|REQ_TYPE_CB, 0) < 0) {
+		if (register_script_cb(pre_script_filter, PRE_SCRIPT_CB|ONREPLY_CB, 0) < 0) {
 			LM_CRIT("cannot register script callback for requests.\n");
 			return -1;
 		}
-		if (register_script_cb(pre_script_filter, PRE_SCRIPT_CB|RPL_TYPE_CB, 0) < 0) {
+		if (register_script_cb(pre_script_filter, PRE_SCRIPT_CB|ONREPLY_CB, 0) < 0) {
 			LM_CRIT("cannot register script callback for replies.\n");
 			return -1;
 		}

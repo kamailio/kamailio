@@ -488,18 +488,18 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (register_script_cb( profile_cleanup, POST_SCRIPT_CB|REQ_TYPE_CB,0)<0) {
+	if (register_script_cb( profile_cleanup, POST_SCRIPT_CB|REQUEST_CB,0)<0) {
 		LM_ERR("cannot regsiter script callback");
 		return -1;
 	}
 	if (register_script_cb(dlg_cfg_cb,
-				PRE_SCRIPT_CB|REQ_TYPE_CB,0)<0)
+				PRE_SCRIPT_CB|REQUEST_CB,0)<0)
 	{
 		LM_ERR("cannot regsiter pre-script ctx callback\n");
 		return -1;
 	}
 	if (register_script_cb(dlg_cfg_cb,
-				POST_SCRIPT_CB|REQ_TYPE_CB,0)<0)
+				POST_SCRIPT_CB|REQUEST_CB,0)<0)
 	{
 		LM_ERR("cannot regsiter post-script ctx callback\n");
 		return -1;

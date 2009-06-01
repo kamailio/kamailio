@@ -635,13 +635,13 @@ static int fixup_t_check_status(void** param, int param_no)
 
 
 /***************************** init functions *****************************/
-static int w_t_unref( struct sip_msg *foo, void *bar)
+static int w_t_unref( struct sip_msg *foo, unsigned int flags, void *bar)
 {
 	return t_unref(foo);
 }
 
 
-static int script_init( struct sip_msg *foo, void *bar)
+static int script_init( struct sip_msg *foo, unsigned int flags, void *bar)
 {
 	/* we primarily reset all private memory here to make sure
 	 * private values left over from previous message will
@@ -756,12 +756,12 @@ static int mod_init(void)
 	}
 
 	/* register post-script clean-up function */
-	if (register_script_cb( w_t_unref, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
+	if (register_script_cb( w_t_unref, POST_SCRIPT_CB|REQUEST_CB, 0)<0 ) {
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to register POST request "
 			"callback\n");
 		return -1;
 	}
-	if (register_script_cb( script_init, PRE_SCRIPT_CB|REQ_TYPE_CB , 0)<0 ) {
+	if (register_script_cb( script_init, PRE_SCRIPT_CB|REQUEST_CB , 0)<0 ) {
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to register PRE request "
 			"callback\n");
 		return -1;

@@ -318,10 +318,11 @@ static int conv183(struct sip_msg *msg)
 /*!
  * \brief Callback function that does the work inside the server.
  * \param msg SIP message
+ * \param flags unused
  * \param bar unused
  * \return 1 on success, -1 on failure
  */
-int ring_filter(struct sip_msg *msg, void *bar)
+int ring_filter(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	int contains_callid;
 

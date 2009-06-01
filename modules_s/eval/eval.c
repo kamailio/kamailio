@@ -361,7 +361,7 @@ static int declare_register(modparam_t type, char* param) {
 	return 0;
 }
 
-static int mod_pre_script_cb(struct sip_msg *msg, void *param) {
+static int mod_pre_script_cb(struct sip_msg *msg, unsigned int flags, void *param) {
 	destroy_stack();
 	destroy_register_values();
 	return 1;
@@ -2000,7 +2000,7 @@ select_row_t sel_declaration[] = {
 
 static int mod_init() {
 
-	register_script_cb(mod_pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
+	register_script_cb(mod_pre_script_cb, REQUEST_CB | ONREPLY_CB | PRE_SCRIPT_CB, 0);
 	register_select_table(sel_declaration);
 	return 0;
 }

@@ -129,7 +129,7 @@ static int mod_init(void)
 			LM_CRIT("cannot initialize lock.\n");
 			return -1;
 		}
-		if (register_script_cb(ring_filter, PRE_SCRIPT_CB|RPL_TYPE_CB, 0) != 0) {
+		if (register_script_cb(ring_filter, PRE_SCRIPT_CB|ONREPLY_CB, 0) != 0) {
 			LM_ERR("could not insert callback");
 			return -1;
 		}

@@ -130,7 +130,7 @@ static int mod_init(void)
 	}
 
 	     /* if SL loaded, filter ACKs on beginning */
-	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )<0) {
+	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQUEST_CB, 0 )<0) {
 		ERR("Failed to install SCRIPT callback\n");
 		return -1;
 	}

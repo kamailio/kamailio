@@ -188,11 +188,11 @@ void stm_timer_exec(unsigned int ticks, void *param)
 		/* update local parameters */
 		_stm_msg.id=_stm_msg_no++;
 		clear_branches();
-		if (exec_pre_req_cb(&_stm_msg)==0 )
+		if (exec_pre_script_cb(&_stm_msg, REQUEST_CB_TYPE)==0 )
 			continue; /* drop the request */
 		set_route_type(REQUEST_ROUTE);
 		run_top_route(main_rt.rlist[rt->route], &_stm_msg);
-		exec_post_req_cb(&_stm_msg);
+		exec_post_script_cb(&_stm_msg, REQUEST_CB_TYPE);
 	}
 }
 

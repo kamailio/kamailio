@@ -26,7 +26,7 @@
 
 dlg_ctx_t _dlg_ctx;
 
-int dlg_cfg_cb(struct sip_msg *foo, void *bar)
+int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar)
 {
 	memset(&_dlg_ctx, 0, sizeof(dlg_ctx_t));
 
