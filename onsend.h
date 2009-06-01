@@ -28,6 +28,7 @@
  * History:
  * -------
  *  2005-12-11 created by andrei
+ *  2009-06-01 Pre- and post-script callbacks of onsend route are executed (Miklos)
  */
 
 
@@ -38,6 +39,7 @@
 #include "ip_addr.h"
 #include "action.h"
 #include "route.h"
+#include "script_cb.h"
 
 struct onsend_info{
 	union sockaddr_union* to;
@@ -60,18 +62,23 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	struct onsend_info onsnd_info;
 	int ret;
 	struct run_act_ctx ra_ctx;
-	
-	ret=1;
-	if (onsend_rt.rlist[DEFAULT_RT]){
-		onsnd_info.to=&dst->to;
-		onsnd_info.send_sock=dst->send_sock;
-		onsnd_info.buf=buf;
-		onsnd_info.len=len;
-		p_onsend=&onsnd_info;
-		set_route_type(ONSEND_ROUTE);
-		init_run_actions_ctx(&ra_ctx);
-		ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
-		p_onsend=0; /* reset it */
+
+	if (exec_pre_script_cb(orig_msg, ONSEND_CB_TYPE)>0) {
+		ret=1;
+		if (onsend_rt.rlist[DEFAULT_RT]){
+			onsnd_info.to=&dst->to;
+			onsnd_info.send_sock=dst->send_sock;
+			onsnd_info.buf=buf;
+			onsnd_info.len=len;
+			p_onsend=&onsnd_info;
+			set_route_type(ONSEND_ROUTE);
+			init_run_actions_ctx(&ra_ctx);
+			ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
+			p_onsend=0; /* reset it */
+		}
+		exec_post_script_cb(orig_msg, ONSEND_CB_TYPE);
+	} else {
+		ret = 0;
 	}
 	return ret;
 }
