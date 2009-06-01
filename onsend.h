@@ -63,22 +63,22 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	int ret;
 	struct run_act_ctx ra_ctx;
 
-	if (exec_pre_script_cb(orig_msg, ONSEND_CB_TYPE)>0) {
-		ret=1;
-		if (onsend_rt.rlist[DEFAULT_RT]){
-			onsnd_info.to=&dst->to;
-			onsnd_info.send_sock=dst->send_sock;
-			onsnd_info.buf=buf;
-			onsnd_info.len=len;
-			p_onsend=&onsnd_info;
-			set_route_type(ONSEND_ROUTE);
+	ret=1;
+	if (onsend_rt.rlist[DEFAULT_RT]){
+		onsnd_info.to=&dst->to;
+		onsnd_info.send_sock=dst->send_sock;
+		onsnd_info.buf=buf;
+		onsnd_info.len=len;
+		p_onsend=&onsnd_info;
+		set_route_type(ONSEND_ROUTE);
+		if (exec_pre_script_cb(orig_msg, ONSEND_CB_TYPE)>0) {
 			init_run_actions_ctx(&ra_ctx);
 			ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
-			p_onsend=0; /* reset it */
+			exec_post_script_cb(orig_msg, ONSEND_CB_TYPE);
+		} else {
+			ret=0; /* drop the message */
 		}
-		exec_post_script_cb(orig_msg, ONSEND_CB_TYPE);
-	} else {
-		ret = 0;
+		p_onsend=0; /* reset it */
 	}
 	return ret;
 }
