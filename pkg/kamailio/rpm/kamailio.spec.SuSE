@@ -17,7 +17,7 @@ Name:         %name
 Version:      %ver
 Release:      %rel
 
-Packager:     Daniel-Constantin Mierla <daniel@voice-system.ro>
+Packager:     Daniel-Constantin Mierla <miconda@gmail.com>
 Copyright:    GPL
 Group:        Networking/Daemons
 Source:       http://kamailio.org/pub/kamailio/stable/%{name}-%{ver}_src.tar.gz
@@ -374,10 +374,10 @@ sbin/insserv etc/init.d/
 - added packages for pa, postgres and unixodbc
 - added dialog, lcr, options, path, siptrace, statistics modules
 
-* Thu Oct 27 2005 Daniel-Constantin Mierla <daniel@voice-system.ro>
+* Thu Oct 27 2005 Daniel-Constantin Mierla <miconda@gmail.com>
 - version set to 1.0.0
 - added readme for flatstore
 - added uac and uac_redirect modules
 
-* Wed Jun 08 2005 Daniel-Constantin Mierla <daniel@voice-system.ro>
+* Wed Jun 08 2005 Daniel-Constantin Mierla <miconda@gmail.com>
 - First version of the spec file.

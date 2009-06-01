@@ -12,7 +12,7 @@ PORTVERSION= 1.2.0-notls
 CATEGORIES= net
 MASTER_SITES= http://kamailio.org/pub/kamailio/1.2.0/src/
 
-MAINTAINER= daniel@voice-system.ro
+MAINTAINER= miconda@gmail.com
 
 MAN8=kamailio.8
 MAN5=kamailio.cfg.5
