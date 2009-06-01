@@ -27,6 +27,8 @@
  * History:
  * --------
  *  2005-02-13  script callbacks devided into request and reply types (bogdan)
+ *  2009-06-01  Added pre- and post-script callback support for all types
+ *		of route blocks. (Miklos)
  */
 
 #ifndef _SCRIPT_CB_H_
@@ -34,30 +36,51 @@
 
 #include "parser/msg_parser.h"
 
-typedef int (cb_function)( struct sip_msg *msg, void *param );
+typedef int (cb_function)(struct sip_msg *msg, unsigned int flags, void *param);
 
 
-#define PRE_SCRIPT_CB    (1<<0)
-#define POST_SCRIPT_CB   (1<<1)
-#define REQ_TYPE_CB      (1<<2)
-#define RPL_TYPE_CB      (1<<3)
+#define PRE_SCRIPT_CB    (1<<30)
+#define POST_SCRIPT_CB   (1<<31)
 
+/* Pre- and post-script callback flags. Use these flags to register
+ * for the callbacks, and to check the type of the callback from the
+ * functions.
+ * (Power of 2 so more callbacks can be registered at once.)
+ */
+enum script_cb_flag { REQUEST_CB=1, FAILURE_CB=2, ONREPLY_CB=4,
+			BRANCH_CB=8, ONSEND_CB=16, ERROR_CB=32,
+			LOCAL_CB=64, EVENT_CB=128 };
+
+/* Callback types used for executing the callbacks.
+ * Keep in sync with script_cb_flag!!!
+ */
+enum script_cb_type { REQUEST_CB_TYPE=1, FAILURE_CB_TYPE, ONREPLY_CB_TYPE,
+			BRANCH_CB_TYPE, ONSEND_CB_TYPE, ERROR_CB_TYPE,
+			LOCAL_CB_TYPE, EVENT_CB_TYPE };
 
 struct script_cb{
 	cb_function *cbf;
 	struct script_cb *next;
-	unsigned int id;
 	void *param;
 };
 
-int register_script_cb( cb_function f, int type, void *param );
+/* Register pre- or post-script callbacks.
+ * Returns -1 on error, 0 on success
+ */
+int register_script_cb( cb_function f, unsigned int flags, void *param );
+
+int init_script_cb();
 void destroy_script_cb();
 
-int exec_pre_req_cb( struct sip_msg *msg);
-int exec_post_req_cb( struct sip_msg *msg);
+/* Execute pre-script callbacks of a given type.
+ * Returns 0 on error, 1 on success
+ */
+int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type);
 
-int exec_pre_rpl_cb( struct sip_msg *msg);
-int exec_post_rpl_cb( struct sip_msg *msg);
+/* Execute post-script callbacks of a given type.
+ * Always returns 1, success.
+ */
+int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type);
 
 #endif
 

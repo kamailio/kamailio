@@ -34,6 +34,8 @@
  *  2003-03-29  cleaning pkg allocation introduced (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2005-02-13  script callbacks devided into request and reply types (bogdan)
+ *  2009-06-01  Added pre- and post-script callback support for all types
+ *		of route blocks. (Miklos)
  */
 
 
@@ -43,15 +45,15 @@
 #include "error.h"
 #include "mem/mem.h"
 
-static struct script_cb *pre_req_cb=0;
-static struct script_cb *post_req_cb=0;
+/* Number of cb types = last cb type */
+#define SCRIPT_CB_NUM	EVENT_CB_TYPE
 
-static struct script_cb *pre_rpl_cb=0;
-static struct script_cb *post_rpl_cb=0;
+static struct script_cb *pre_script_cb[SCRIPT_CB_NUM];
+static struct script_cb *post_script_cb[SCRIPT_CB_NUM];
 
-static unsigned int cb_id=0;
-
-
+/* Add a script callback to the beginning of the linked list.
+ * Returns -1 on error
+ */
 static inline int add_callback( struct script_cb **list,
 	cb_function f, void *param)
 {
@@ -59,11 +61,10 @@ static inline int add_callback( struct script_cb **list,
 
 	new_cb=pkg_malloc(sizeof(struct script_cb));
 	if (new_cb==0) {
-		LOG(L_ERR, "ERROR:add_script_callback: out of memory\n");
+		LOG(L_CRIT, "add_script_callback: out of memory\n");
 		return -1;
 	}
 	new_cb->cbf = f;
-	new_cb->id = cb_id++;
 	new_cb->param = param;
 	/* link at the beginning of the list */
 	new_cb->next = *list;
@@ -71,50 +72,58 @@ static inline int add_callback( struct script_cb **list,
 	return 0;
 }
 
-
-int register_script_cb( cb_function f, int type, void *param )
+/* Register pre- or post-script callbacks.
+ * Returns -1 on error, 0 on success
+ */
+int register_script_cb( cb_function f, unsigned int flags, void *param )
 {
+	struct script_cb	**cb_array;
+	int	i;
+
 	/* type checkings */
-	if ( (type&(REQ_TYPE_CB|RPL_TYPE_CB))==0 ) {
-		LOG(L_CRIT,"BUG:register_script_cb: REQUEST or REPLY "
-			"type not specified\n");
-		goto error;
+	if ( (flags&((1<<SCRIPT_CB_NUM)-1))==0 ) {
+		LOG(L_BUG, "register_script_cb: callback flag not specified\n");
+		return -1;
 	}
-	if ( (type&(PRE_SCRIPT_CB|POST_SCRIPT_CB))==0 ||
-	(type&PRE_SCRIPT_CB && type&POST_SCRIPT_CB) ) {
-		LOG(L_CRIT,"BUG:register_script_cb: callback POST or PRE type must "
+	if ( (flags&(~(PRE_SCRIPT_CB|POST_SCRIPT_CB))) >= 1<<SCRIPT_CB_NUM ) {
+		LOG(L_BUG, "register_script_cb: unsupported callback flags: %u\n",
+			flags);
+		return -1;
+	}
+	if ( (flags&(PRE_SCRIPT_CB|POST_SCRIPT_CB))==0 ||
+	(flags&PRE_SCRIPT_CB && flags&POST_SCRIPT_CB) ) {
+		LOG(L_BUG, "register_script_cb: callback POST or PRE type must "
 			"be exactly one\n");
-		goto error;
+		return -1;
 	}
 
-	if (type&REQ_TYPE_CB) {
-		/* callback for request script */
-		if (type&PRE_SCRIPT_CB) {
-			if (add_callback( &pre_req_cb, f, param)<0)
-				goto add_error;
-		} else if (type&POST_SCRIPT_CB) {
-			if (add_callback( &post_req_cb, f, param)<0)
-				goto add_error;
-		}
-	}
-	if (type&RPL_TYPE_CB) {
-		/* callback (also) for reply script */
-		if (type&PRE_SCRIPT_CB) {
-			if (add_callback( &pre_rpl_cb, f, param)<0)
-				goto add_error;
-		} else if (type&POST_SCRIPT_CB) {
-			if (add_callback( &post_rpl_cb, f, param)<0)
-				goto add_error;
-		}
-	}
+	if (flags&PRE_SCRIPT_CB)
+		cb_array = pre_script_cb;
+	else
+		cb_array = post_script_cb;
 
+	/* Add the callback to the lists.
+	 * (as many times as many flags are set)
+	 */
+	for (i=0; i<SCRIPT_CB_NUM; i++) {
+		if ((flags&(1<<i)) == 0)
+			continue;
+		if (add_callback(&cb_array[i], f, param) < 0)
+			goto add_error;
+	}
 	return 0;
+
 add_error:
-	LOG(L_ERR,"ERROR:register_script_cb: failed to add callback\n");
-error:
+	LOG(L_ERR,"register_script_cb: failed to add callback\n");
 	return -1;
 }
 
+int init_script_cb()
+{
+	memset(pre_script_cb, 0, SCRIPT_CB_NUM * sizeof(struct script_cb *));
+	memset(post_script_cb, 0, SCRIPT_CB_NUM * sizeof(struct script_cb *));
+	return 0;
+}
 
 static inline void destroy_cb_list(struct script_cb **list)
 {
@@ -127,53 +136,56 @@ static inline void destroy_cb_list(struct script_cb **list)
 	}
 }
 
-
 void destroy_script_cb()
 {
-	destroy_cb_list( &pre_req_cb  );
-	destroy_cb_list( &post_req_cb );
-	destroy_cb_list( &pre_rpl_cb  );
-	destroy_cb_list( &post_req_cb );
+	int	i;
+
+	for (i=0; i<SCRIPT_CB_NUM; i++) {
+		destroy_cb_list(&pre_script_cb[i]);
+		destroy_cb_list(&post_script_cb[i]);
+	}
 }
 
-
-static inline int exec_pre_cb( struct sip_msg *msg, struct script_cb *cb)
+/* Execute pre-script callbacks of a given type.
+ * Returns 0 on error, 1 on success
+ */
+int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
 {
-	for ( ; cb ; cb=cb->next ) {
+	struct script_cb	*cb;
+	unsigned int	flags;
+
+#ifdef EXTRA_DEBUG
+	if (type >= SCRIPT_CB_NUM) {
+		LOG(L_BUG, "exec_pre_script_cb: Uknown callback type\n");
+		abort();
+	}
+#endif
+	flags = PRE_SCRIPT_CB & (1<<(type-1));
+	for (cb=pre_script_cb[type]; cb ; cb=cb->next ) {
 		/* stop on error */
-		if (cb->cbf(msg, cb->param)==0)
+		if (cb->cbf(msg, flags, cb->param)==0)
 			return 0;
 	}
 	return 1;
 }
 
-
-static inline int exec_post_cb( struct sip_msg *msg, struct script_cb *cb)
+/* Execute post-script callbacks of a given type.
+ * Always returns 1, success.
+ */
+int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type)
 {
-	for ( ; cb ; cb=cb->next){
-		cb->cbf( msg, cb->param);
+	struct script_cb	*cb;
+	unsigned int	flags;
+
+#ifdef EXTRA_DEBUG
+	if (type >= SCRIPT_CB_NUM) {
+		LOG(L_BUG, "exec_pre_script_cb: Uknown callback type\n");
+		abort();
+	}
+#endif
+	flags = POST_SCRIPT_CB & (1<<(type-1));
+	for (cb=post_script_cb[type]; cb ; cb=cb->next){
+		cb->cbf(msg, flags, cb->param);
 	}
 	return 1;
 }
-
-
-int exec_pre_req_cb( struct sip_msg *msg)
-{
-	return exec_pre_cb( msg, pre_req_cb);
-}
-
-int exec_pre_rpl_cb( struct sip_msg *msg)
-{
-	return exec_pre_cb( msg, pre_rpl_cb);
-}
-
-int exec_post_req_cb( struct sip_msg *msg)
-{
-	return exec_post_cb( msg, post_req_cb);
-}
-
-int exec_post_rpl_cb( struct sip_msg *msg)
-{
-	return exec_post_cb( msg, post_rpl_cb);
-}
-
