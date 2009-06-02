@@ -61,6 +61,8 @@
 #include "parser/parse_body.h"
 #include "dset.h"
 #include "sr_module.h"
+#include "resolve.h"
+#include "forward.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 #define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;} 
@@ -101,6 +103,55 @@ int select_next_hop(str* res, select_t* s, struct sip_msg* msg)
 		}
 	}
 	return -1;
+}
+
+int select_next_hop_src_ip(str* res, select_t* s, struct sip_msg* msg) {
+	struct socket_info* socket_info;
+	union sockaddr_union to;
+	char proto;
+	struct sip_uri *u, next_hop;
+	str *dst_host;
+
+	if (msg->first_line.type!=SIP_REQUEST) 
+		return -1;
+
+	if (msg->force_send_socket) {
+		*res = msg->force_send_socket->address_str;
+		return 0;
+	}
+
+	if (msg->dst_uri.len) {
+		if (parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop) < 0)
+			return -1;
+		u = &next_hop;
+	}
+	else {
+		if (parse_sip_msg_uri(msg) < 0)
+			return -1;
+		u = &msg->parsed_uri;
+	}
+#ifdef USE_TLS
+	if (u->type==SIPS_URI_T)
+		proto = PROTO_TLS;
+	else
+#endif
+		proto = u->proto;
+
+#ifdef HONOR_MADDR
+	if (u->maddr_val.s && u->maddr_val.len)
+		dst_host = &u->maddr_val;
+	else
+#endif
+		dst_host = &u->host;
+
+	if (sip_hostport2su(&to, dst_host, u->port_no, &proto) < 0)
+		return -1;
+	socket_info = get_send_socket(msg, &to, proto);
+	if (!socket_info)
+		return -1;
+
+	*res = socket_info->address_str;
+	return 0;
 }
 
 #define SELECT_uri_header(_name_) \
