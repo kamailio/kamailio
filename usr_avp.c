@@ -879,7 +879,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 	attr->index = 0;
 	DBG("Parsing '%.*s'\n", name->len, name->s);
 	if (name->len>=2 && name->s[1]==':') { /* old fashion i: or s: */
-		WARN("i: and s: avp name syntax is deprecated!\n");
+	        /* WARN("i: and s: avp name syntax is deprecated!\n"); */
 		c = name->s[0];
 		name->s += 2;
 		name->len -= 2;
