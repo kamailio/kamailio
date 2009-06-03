@@ -30,7 +30,7 @@
 
 extern int http_query_timeout;
 extern str xcap_table;
-extern db1_con_t *pxml_db;
-extern db_func_t pxml_dbf;
+extern db1_con_t *pres_dbh;
+extern db_func_t pres_dbf;
 
 #endif /* UTILS_H */

@@ -367,17 +367,17 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 
     result_cols[xcap_doc_col= n_result_cols++] = &tmp4;
 	
-    if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0) {
+    if (pres_dbf.use_table(pres_dbh, &xcap_table) < 0) {
 	LM_ERR("in use_table-[table]= %.*s\n", xcap_table.len, xcap_table.s);
 	return -1;
     }
 
-    if (pxml_dbf.query(pxml_db, query_cols, 0 , query_vals, result_cols, 
+    if (pres_dbf.query(pres_dbh, query_cols, 0 , query_vals, result_cols, 
 		       n_query_cols, 1, 0, &result) < 0) {
 	LM_ERR("while querying table xcap for [user]=%.*s\t[domain]= %.*s\n",
 	       user->len, user->s, domain->len, domain->s);
 	if (result)
-	    pxml_dbf.free_result(pxml_db, result);
+	    pres_dbf.free_result(pres_dbh, result);
 	return -1;
     }
 
@@ -388,7 +388,7 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	LM_DBG("No document found in db table for [user]=%.*s"
 	       "\t[domain]= %.*s\t[doc_type]= %d\n",user->len, user->s,
 	       domain->len, domain->s, type);
-	pxml_dbf.free_result(pxml_db, result);
+	pres_dbf.free_result(pres_dbh, result);
 	return 0;
     }	
 	
@@ -422,13 +422,13 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
     *rules_doc= doc;
 
     if (result)
-	pxml_dbf.free_result(pxml_db, result);
+	pres_dbf.free_result(pres_dbh, result);
 
     return 0;
 
 error:
     if (result)
-	pxml_dbf.free_result(pxml_db, result);
+	pres_dbf.free_result(pres_dbh, result);
 
     return -1;
 
@@ -449,7 +449,7 @@ int xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
     subs_t subs;
     int res;
 
-    if (pxml_db == 0) {
+    if (pres_dbh == 0) {
 	LM_ERR("function is disabled, to enable define pres_db_url\n");
 	return -1;
     }

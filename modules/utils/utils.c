@@ -46,7 +46,7 @@
 
 MODULE_VERSION
 
-#define XCAP_TABLE_VERSION  3
+#define XCAP_TABLE_VERSION 3
 
 /* Module parameter variables */
 int http_query_timeout = 4;
@@ -68,8 +68,8 @@ static struct mi_root* forward_fifo_filter(struct mi_root* cmd_tree, void* param
 static struct mi_root* forward_fifo_proxy(struct mi_root* cmd_tree, void* param);
 
 /* Database connection */
-db1_con_t *pxml_db = NULL;
-db_func_t pxml_dbf;
+db1_con_t *pres_dbh = NULL;
+db_func_t pres_dbf;
 
 /* Module management function prototypes */
 static int mod_init(void);
@@ -164,6 +164,51 @@ static void destroy_shmlock(void)
 }
 
 
+static void pres_db_close(void) {
+    if (pres_dbh) {
+	pres_dbf.close(pres_dbh);
+	pres_dbh = NULL;
+    }
+}
+
+static int pres_db_init(void) {
+    if (!pres_db_url.s || !pres_db_url.len) {
+	LM_INFO("xcap_auth_status function is disabled\n");
+	return 0;
+    }
+    if (db_bind_mod(&pres_db_url, &pres_dbf) < 0) {
+	LM_ERR("can't bind database module\n");
+	return -1;
+    }
+    if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
+	LM_ERR("can't connect to database\n");
+	return -1;
+    }
+    if (db_check_table_version(&pres_dbf, pres_dbh, &xcap_table,
+			       XCAP_TABLE_VERSION) < 0) {
+	LM_ERR("during table version check\n");
+	pres_db_close();
+	return -1;
+    }
+    pres_db_close();
+    return 0;
+}
+
+static int pres_db_open(void) {
+    if (!pres_db_url.s || !pres_db_url.len) {
+	return 0;
+    }
+    if (pres_dbh) {
+	pres_dbf.close(pres_dbh);
+    }
+    if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
+	LM_ERR("can't connect to database\n");
+	return -1;
+    }
+    return 0;
+}
+
+
 /* Module initialization function */
 static int mod_init(void)
 {
@@ -224,38 +269,10 @@ static int mod_init(void)
 	       pres_db_url.s);
 	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
 
-	if (pres_db_url.len == 0) {
-	    LM_DBG("xcap_auth_status() function disabled\n");
-	    return 0;
-	}
-
-	/* binding to mysql module */
-	if (db_bind_mod(&pres_db_url, &pxml_dbf)) {
-	    LM_ERR("Database module not found\n");
-	    return -1;
-	}
-	
-	if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
-	    LM_ERR("Database module does not implement all functions"
-		   " needed by xcap_auth_status() function\n");
+	if(pres_db_init() < 0) {
 	    return -1;
 	}
 
-	pxml_db = pxml_dbf.init(&pres_db_url);
-	if (!pxml_db) {
-	    LM_ERR("while connecting to database\n");
-	    return -1;
-	}
-
-	if (db_check_table_version(&pxml_dbf, pxml_db, &xcap_table,
-				   XCAP_TABLE_VERSION) < 0) {
-	    LM_ERR("error during table version check.\n");
-	    return -1;
-	}
-
-	pxml_dbf.close(pxml_db);
-	pxml_db = NULL;	
-	
 	return 0;
 }
 
@@ -263,30 +280,8 @@ static int mod_init(void)
 /* Child initialization function */
 static int child_init(int rank)
 {	
-    if (pres_db_url.len == 0)
-	return 0;
-
-    if (pxml_dbf.init==0) {
-	LM_CRIT("database not bound\n");
-	return -1;
-    }
-
-    pxml_db = pxml_dbf.init(&pres_db_url);
-    if (pxml_db == NULL) {
-	LM_ERR("while connecting database\n");
-	return -1;
-    }
-		
-    if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0) {
-	LM_ERR("in use_table SQL operation\n");
-	return -1;
-    }
-	
-    LM_DBG("database connection opened successfully\n");
-
-    return 0;
-}	
-
+    return pres_db_open();
+}
 
 static void destroy(void)
 {
@@ -295,6 +290,8 @@ static void destroy(void)
 	/* Cleanup forward */
 	conf_destroy();
 	destroy_shmlock();
+	/* Close pres db */
+	pres_db_close();
 }
 
 
@@ -319,7 +316,6 @@ static int fixup_http_query(void** param, int param_no)
 	    LM_ERR("result pvar is not writeble\n");
 	    return -1;
 	}
-	LM_INFO("leaving fixup_http_query\n");
 	return 0;
     }
 
