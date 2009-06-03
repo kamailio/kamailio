@@ -151,6 +151,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	struct sip_uri parsed_uri_bak;
 	int parsed_uri_ok_bak, uri_backed_up;
 	str msg_uri_bak;
+	int backup_route_type;
 
 	shbuf=0;
 	msg_uri_bak.s=0; /* kill warnings */
@@ -189,12 +190,14 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 
 	if (unlikely(branch_route)) {
 		     /* run branch_route actions if provided */
+		backup_route_type = get_route_type();
 		set_route_type(BRANCH_ROUTE);
 		tm_ctx_set_branch_index(branch+1);
 		if (run_top_route(branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_top_route\n");
 		}
 		tm_ctx_set_branch_index(0);
+		set_route_type(backup_route_type);
 	}
 
 	/* run the specific callbacks for this transaction */
