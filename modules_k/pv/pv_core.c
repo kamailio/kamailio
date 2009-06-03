@@ -896,6 +896,7 @@ int pv_get_content_type(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &msg->content_type->body);
 }
 
+
 int pv_get_content_length(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -936,6 +937,22 @@ int pv_get_msg_body(struct sip_msg *msg, pv_param_t *param,
 	}
     s.len = get_content_length(msg);
 	return pv_get_strval(msg, param, res, &s);
+}
+
+
+int pv_get_body_size(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	str s;
+    if(msg==NULL)
+		return -1;
+    
+	s.s = get_body( msg );
+
+	s.len = 0;
+	if (s.s != NULL)
+		s.len = msg->buf + msg->len - s.s;
+	return pv_get_sintval(msg, param, res, s.len);
 }
 
 

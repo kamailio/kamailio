@@ -104,6 +104,9 @@ static pv_export_t mod_pvs[] = {
 	{{"bR", (sizeof("bR")-1)}, /* */
 		PVT_CONTEXT, pv_get_branches, 0,
 		0, 0, 0, 0},
+	{{"bs", (sizeof("bs")-1)}, /* */
+		PVT_OTHER, pv_get_body_size, 0,
+		0, 0, 0, 0},
 	{{"ci", (sizeof("ci")-1)}, /* */
 		PVT_OTHER, pv_get_callid, 0,
 		0, 0, 0, 0},
