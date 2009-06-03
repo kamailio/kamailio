@@ -252,9 +252,9 @@ enum {
  * Function parameter
  */
 typedef struct fparam {
-        char* orig;                       /* The original value */
-        int type;                         /* Type of parameter */
-        union {
+	char* orig;                       /* The original value */
+	int type;                         /* Type of parameter */
+	union {
 		char* asciiz;             /* Zero terminated ASCII string */
 		struct _str str;          /* pointer/len string */
 		int i;                    /* Integer value */
@@ -265,6 +265,7 @@ typedef struct fparam {
 		pv_spec_t* pvs;    /* kamailo pseudo-vars */
 		pv_elem_t* pve;    /* kamailo pseudo-vars in a string */
 	} v;
+	void *fixed;
 } fparam_t;
 
 

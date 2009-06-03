@@ -1142,6 +1142,7 @@ int fix_param(int type, void** param)
 				p->v.pvs=0;
 				goto error;
 			}
+			p->fixed = p->v.pvs;
 			break;
 		case FPARAM_PVE:
 			name.s = (char*)*param;
@@ -1154,6 +1155,8 @@ int fix_param(int type, void** param)
 	}
 	
 	p->type = type;
+	if(p->fixed==NULL)
+		p->fixed = &p->v;
 	*param = (void*)p;
 	return 0;
 	
