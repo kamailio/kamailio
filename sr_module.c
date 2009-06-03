@@ -1056,6 +1056,7 @@ int fix_param(int type, void** param)
 		case FPARAM_STR:
 			p->v.str.s = (char*)*param;
 			p->v.str.len = strlen(p->v.str.s);
+			p->fixed = &p->v;
 			break;
 		case FPARAM_INT:
 			s.s = (char*)*param;
@@ -1068,11 +1069,12 @@ int fix_param(int type, void** param)
 				pkg_free(p);
 				return 1;
 			}
+			p->fixed = (void*)(long)num;
 			break;
 		case FPARAM_REGEX:
 			if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
 				ERR("No memory left\n");
-			goto error;
+				goto error;
 			}
 			if (regcomp(p->v.regex, *param,
 						REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
@@ -1081,6 +1083,7 @@ int fix_param(int type, void** param)
 				ERR("Bad regular expression '%s'\n", (char*)*param);
 				goto error;
 			}
+			p->fixed = &p->v;
 			break;
 		case FPARAM_AVP:
 			name.s = (char*)*param;
@@ -1097,6 +1100,7 @@ int fix_param(int type, void** param)
 				ERR("Error while parsing attribute name\n");
 				goto error;
 			}
+			p->fixed = &p->v;
 			break;
 		case FPARAM_SELECT:
 			name.s = (char*)*param;
@@ -1111,6 +1115,7 @@ int fix_param(int type, void** param)
 				ERR("Error while parsing select identifier\n");
 				goto error;
 			}
+			p->fixed = &p->v;
 			break;
 		case FPARAM_SUBST:
 			s.s = *param;
@@ -1120,6 +1125,7 @@ int fix_param(int type, void** param)
 				ERR("Error while parsing regex substitution\n");
 				goto error;
 			}
+			p->fixed = &p->v;
 			break;
 		case FPARAM_PVS:
 			name.s = (char*)*param;
@@ -1151,12 +1157,11 @@ int fix_param(int type, void** param)
 				ERR("bad PVE format: \"%.*s\"\n", name.len, name.s);
 				goto error;
 			}
+			p->fixed = &p->v;
 			break;
 	}
 	
 	p->type = type;
-	if(p->fixed==NULL)
-		p->fixed = &p->v;
 	*param = (void*)p;
 	return 0;
 	
