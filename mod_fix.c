@@ -100,7 +100,7 @@ int fixup_regexpNL_none(void** param, int param_no); /* textops */
 		int ret; \
 		if ((ret=fixup_fp_##suffix (param, param_no))!=0) \
 			return ret; \
-		*param=&((fparam_t*)*param)->v; \
+		*param=((fparam_t*)*param)->fixed; \
 		return 0; \
 	} \
 	int fixup_free_##suffix (void** param, int param_no) \

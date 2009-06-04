@@ -1,7 +1,7 @@
 /*
- * header file of utils.c
+ * headers of xcap_auth functions of utils module
  *
- * Copyright (C) 2008 Juha Heinanen
+ * Copyright (C) 2009 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -22,15 +22,17 @@
  */
 
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef XCAP_AUTH_FUNCTIONS_H
+#define XCAP_AUTH_FUNCTIONS_H
 
-#include "../../str.h"
-#include "../../lib/srdb1/db.h"
+#include "../../parser/msg_parser.h"
 
-extern int http_query_timeout;
-extern str xcap_table;
-extern db1_con_t *pres_dbh;
-extern db_func_t pres_dbf;
 
-#endif /* UTILS_H */
+/* 
+ * Checks from presence server xcap table if watcher is authorized
+ * to subscribe event 'presence' of presentity.
+ */
+int xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
+
+
+#endif /* XCAP_AUTH_FUNCTIONS_H */

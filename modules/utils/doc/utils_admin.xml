@@ -31,6 +31,11 @@
 	default, thus this functionality has no runtime overhead when its
 	deactivated.
 	</para>
+	<para>
+	Function xcap_auth_status can be used to check from presence
+	server database, if watcher is authorized to subscribe event
+	<quote>presence</quote> of presentity.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -41,7 +46,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>None</emphasis>.
+				<emphasis>a database module if
+	xcap_auth_status function is enabled</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -74,7 +80,8 @@
 			</para>
 			<para>
 			<emphasis>
-				Default value is <quote>4</quote>.
+				Default value is null, i.e.,
+				xcap_auth_status function is disabled.
 			</emphasis>
 			</para>
 			<example>
@@ -105,7 +112,45 @@ modparam("utils", "http_query_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
-
+		<section>
+			<title><varname>pres_db_url</varname> (string)</title>
+			<para>
+			Defines presence server database URL.  If not
+			given, xcap_auth_status function is disabled.
+			</para>
+			<para>
+			<emphasis>
+				There is no default value.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>pres_db_url</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>xcap_table</varname> (string)</title>
+			<para>
+			Defines name of xcap table in presence server database.
+			</para>
+			<para>
+			<emphasis>
+				Default value is <quote>xcap</quote>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>xcap_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "xcap_table", "pres_xcap")
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>
@@ -141,6 +186,44 @@ http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(
            "$var(result)")
 switch ($retcode) {
        ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">xcap_auth_status(watcher_uri, presentity_uri)</function>
+			</title>
+			<para>
+			Function checks from presence server database if
+			watcher is authorized to subscribe event
+			<quote>presence</quote> of presentity.  Sphere
+			checking is not included.
+			</para>
+			<para>
+			Both watcher_uri and presentity_uri are
+			pseudo variables. Function returns
+			ACTIVE_STATUS, if subscription is 
+			allowed and PENDING_STATUS, TERMINATED_STATUS,
+			or WAITING_STATUS otherwise. See
+			presence/subscribe.h for the corresponding integer
+			codes. In case of error, function returns -1.
+	    	        </para>
+			<para>
+			Function can be used from REQUEST_ROUTE.
+			</para>
+			<example>
+				<title><function>xcap_auth_status()</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (method=="MESSAGE") {
+    xcap_auth_status("$fu", $ru");
+    if ($retcode == 1) {
+        t_relay();
+    } else {
+        send_reply("403", "Forbidden");
+    }
 }
 ...
 				</programlisting>

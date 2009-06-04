@@ -37,24 +37,29 @@
 #include "../../locking.h"
 #include "../../script_cb.h"
 #include "../../mem/shm_mem.h"
+#include "../../lib/srdb1/db.h"
 
 #include "functions.h"
 #include "conf.h"
+#include "xcap_auth.h"
 
 
 MODULE_VERSION
 
+#define XCAP_TABLE_VERSION 3
 
-/* module parameters */
+/* Module parameter variables */
+int http_query_timeout = 4;
 static int forward_active = 0;
 static int   mp_max_id = 0;
 static char* mp_switch = "";
 static char* mp_filter = "";
 static char* mp_proxy  = "";
+str xcap_table= str_init("xcap");
+str pres_db_url = {0, 0};
 
 /* lock for configuration access */
 static gen_lock_t *conf_lock = NULL;
-
 
 /* FIFO interface functions */
 static struct mi_root* forward_fifo_list(struct mi_root* cmd_tree, void *param);
@@ -62,15 +67,14 @@ static struct mi_root* forward_fifo_switch(struct mi_root* cmd_tree, void* param
 static struct mi_root* forward_fifo_filter(struct mi_root* cmd_tree, void* param);
 static struct mi_root* forward_fifo_proxy(struct mi_root* cmd_tree, void* param);
 
+/* Database connection */
+db1_con_t *pres_dbh = NULL;
+db_func_t pres_dbf;
 
 /* Module management function prototypes */
 static int mod_init(void);
+static int child_init(int);
 static void destroy(void);
-
-
-/* Module parameter variables */
-int http_query_timeout = 4;
-
 
 /* Fixup functions to be defined later */
 static int fixup_http_query(void** param, int param_no);
@@ -84,14 +88,18 @@ static cmd_export_t cmds[] = {
     {"http_query", (cmd_function)http_query, 2, fixup_http_query,
      fixup_free_http_query,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+    {"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
+     fixup_free_pvar_pvar, REQUEST_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
 
 /* Exported parameters */
 static param_export_t params[] = {
+    {"pres_db_url", STR_PARAM, &pres_db_url.s},
+    {"xcap_table", STR_PARAM, &xcap_table.s},
     {"http_query_timeout", INT_PARAM, &http_query_timeout},
-    {"forward_active",     INT_PARAM, &forward_active},
+    {"forward_active", INT_PARAM, &forward_active},
     {0, 0, 0}
 };
 
@@ -116,7 +124,7 @@ struct module_exports exports = {
     mod_init,  /* module initialization function */
     0,         /* response function*/
     destroy,   /* destroy function */
-    0          /* per-child init function */
+    child_init /* per-child init function */
 };
 
 
@@ -153,6 +161,51 @@ static void destroy_shmlock(void)
 		lock_dealloc((void *)conf_lock);
 		conf_lock = NULL;
 	}
+}
+
+
+static void pres_db_close(void) {
+    if (pres_dbh) {
+	pres_dbf.close(pres_dbh);
+	pres_dbh = NULL;
+    }
+}
+
+static int pres_db_init(void) {
+    if (!pres_db_url.s || !pres_db_url.len) {
+	LM_INFO("xcap_auth_status function is disabled\n");
+	return 0;
+    }
+    if (db_bind_mod(&pres_db_url, &pres_dbf) < 0) {
+	LM_ERR("can't bind database module\n");
+	return -1;
+    }
+    if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
+	LM_ERR("can't connect to database\n");
+	return -1;
+    }
+    if (db_check_table_version(&pres_dbf, pres_dbh, &xcap_table,
+			       XCAP_TABLE_VERSION) < 0) {
+	LM_ERR("during table version check\n");
+	pres_db_close();
+	return -1;
+    }
+    pres_db_close();
+    return 0;
+}
+
+static int pres_db_open(void) {
+    if (!pres_db_url.s || !pres_db_url.len) {
+	return 0;
+    }
+    if (pres_dbh) {
+	pres_dbf.close(pres_dbh);
+    }
+    if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
+	LM_ERR("can't connect to database\n");
+	return -1;
+    }
+    return 0;
 }
 
 
@@ -209,9 +262,26 @@ static int mod_init(void)
 	} else {
 		LM_INFO("forward functionality disabled");
 	}
+
+	/* presence database */
+	pres_db_url.len = pres_db_url.s ? strlen(pres_db_url.s) : 0;
+	LM_DBG("pres_db_url=%s/%d/%p\n", ZSW(pres_db_url.s), pres_db_url.len,
+	       pres_db_url.s);
+	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
+
+	if(pres_db_init() < 0) {
+	    return -1;
+	}
+
 	return 0;
 }
 
+
+/* Child initialization function */
+static int child_init(int rank)
+{	
+    return pres_db_open();
+}
 
 static void destroy(void)
 {
@@ -220,6 +290,8 @@ static void destroy(void)
 	/* Cleanup forward */
 	conf_destroy();
 	destroy_shmlock();
+	/* Close pres db */
+	pres_db_close();
 }
 
 
@@ -244,7 +316,6 @@ static int fixup_http_query(void** param, int param_no)
 	    LM_ERR("result pvar is not writeble\n");
 	    return -1;
 	}
-	LM_INFO("leaving fixup_http_query\n");
 	return 0;
     }
 
