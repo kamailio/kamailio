@@ -492,7 +492,7 @@ static int case_check_default(struct case_stms* stms);
 %left EQUAL_T DIFF MATCH INTEQ INTDIFF STREQ STRDIFF
 %left GT LT GTE LTE
 %left PLUS MINUS
-%left STAR SLASH
+%left STAR SLASH MODULO
 %right NOT
 %right DEFINED
 %right INTCAST STRCAST
@@ -2315,6 +2315,7 @@ rve_op:		PLUS		{ $$=RVE_PLUS_OP; }
 		|	MINUS		{ $$=RVE_MINUS_OP; }
 		|	STAR		{ $$=RVE_MUL_OP; }
 		|	SLASH		{ $$=RVE_DIV_OP; }
+		|	MODULO		{ $$=RVE_MOD_OP; }
 	;
 */
 
@@ -2331,6 +2332,7 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr MINUS rval_expr		{$$=mk_rve2(RVE_MINUS_OP, $1, $3); }
 		| rval_expr STAR rval_expr		{$$=mk_rve2(RVE_MUL_OP, $1, $3); }
 		| rval_expr SLASH rval_expr		{$$=mk_rve2(RVE_DIV_OP, $1, $3); }
+		| rval_expr MODULO rval_expr	{$$=mk_rve2(RVE_MOD_OP, $1, $3); }
 		| rval_expr BIN_OR rval_expr	{$$=mk_rve2(RVE_BOR_OP, $1,  $3); }
 		| rval_expr BIN_AND rval_expr	{$$=mk_rve2(RVE_BAND_OP, $1,  $3);}
 		| rval_expr rve_cmpop %prec GT rval_expr { $$=mk_rve2( $2, $1, $3);}
@@ -2349,6 +2351,7 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr MINUS error			{ $$=0; yyerror("bad expression"); }
 		| rval_expr STAR error			{ $$=0; yyerror("bad expression"); }
 		| rval_expr SLASH error			{ $$=0; yyerror("bad expression"); }
+		| rval_expr MODULO error			{ $$=0; yyerror("bad expression"); }
 		| rval_expr BIN_OR error		{ $$=0; yyerror("bad expression"); }
 		| rval_expr BIN_AND error		{ $$=0; yyerror("bad expression"); }
 		| rval_expr rve_cmpop %prec GT error

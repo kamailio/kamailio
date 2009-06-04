@@ -246,6 +246,7 @@ LOG_OR		"or"|"||"
 BIN_OR          "|"
 PLUS	"+"
 MINUS	"-"
+MODULO	"mod"
 STRLEN	"strlen"
 STREMPTY	"strempty"
 DEFINED		"defined"
@@ -780,6 +781,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{BIN_OR}	{ count(); return BIN_OR;  }
 <INITIAL>{PLUS}		{ count(); return PLUS; }
 <INITIAL>{MINUS}	{ count(); return MINUS; }
+<INITIAL>{MODULO}	{ count(); return MODULO; }
 <INITIAL>{STRLEN}	{ count(); return STRLEN; }
 <INITIAL>{STREMPTY}	{ count(); return STREMPTY; }
 <INITIAL>{DEFINED}	{ count(); return DEFINED; }
