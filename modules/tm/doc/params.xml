@@ -794,4 +794,62 @@ modparam("tm", "contacts_avp", "$avp(i:25)")
 		</example>
 	</section>
 
+	<section id="fr_timer_avp">
+		<title><varname>fr_timer_avp</varname> (string)</title>
+		<para>
+			The value of fr_timer timer can be overriden on per-transaction
+			basis. The administrator can provide a value to be used for a
+			particular transaction in an AVP. This parameter contains the name
+			of the AVP that will be checked. If the AVP exists then its value
+			will be used for the fr_timer timer, effectively overriding the
+			value configured in <varname>fr_timer</varname> parameter for the
+			current transaction.
+		</para>
+		<para>
+			The value of this parameter is the the name of the AVP to be
+			checked, without the $ character or "$avp" prefix.
+		</para>
+		<para>
+			See also: <function>t_set_fr()</function>,
+			<varname>fr_timer</varname>.
+		</para>
+		<example>
+			<title>Set <varname>fr_timer_avp</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "fr_timer_avp", "i:708")
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section id="fr_inv_timer_avp">
+		<title><varname>fr_inv_timer_avp</varname> (string)</title>
+		<para>
+			The value of fr_inv_timer timer can be overriden on
+			per-transaction basis. The administrator can provide a value to be
+			used for a particular transaction in an AVP. This parameter
+			contains the name of the AVP that will be checked. If the AVP
+			exists then its value will be used for the fr_inv_timer timer,
+			effectively overriding the value configured in
+			<varname>fr_inv_timer</varname> parameter for the current
+			transaction.
+		</para>
+		<para>
+			The value of this parameter is the the name of the AVP to be
+			checked, without the $ character or "$avp" prefix.
+		</para>
+		<para>
+			See also: <function>t_set_fr()</function>,
+			<varname>fr_inv_timer</varname>.
+		</para>
+		<example>
+			<title>Set <varname>fr_inv_timer_avp</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
+...
+			</programlisting>
+		</example>
+	</section>
 </section>
