@@ -62,7 +62,8 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	struct onsend_info onsnd_info;
 	int ret;
 	struct run_act_ctx ra_ctx;
-
+	int backup_route_type;
+	
 	ret=1;
 	if (onsend_rt.rlist[DEFAULT_RT]){
 		onsnd_info.to=&dst->to;
@@ -70,6 +71,7 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 		onsnd_info.buf=buf;
 		onsnd_info.len=len;
 		p_onsend=&onsnd_info;
+		backup_route_type=get_route_type();
 		set_route_type(ONSEND_ROUTE);
 		if (exec_pre_script_cb(orig_msg, ONSEND_CB_TYPE)>0) {
 			init_run_actions_ctx(&ra_ctx);
@@ -78,6 +80,7 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 		} else {
 			ret=0; /* drop the message */
 		}
+		set_route_type(backup_route_type);
 		p_onsend=0; /* reset it */
 	}
 	return ret;

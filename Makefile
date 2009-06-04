@@ -65,8 +65,10 @@
 #
 
 # check make version
-# required 3.80, recommended 3.81
-req_ver=3.80
+# everything works with 3.80, except evals inside ifeq/endif
+# (see https://savannah.gnu.org/bugs/index.php?func=detailitem&item_id=1516).
+# recommended 3.81
+req_ver=3.81
 # the check below works for version number of the type x.yy or x.yy.z*
 # (from the GNU Make Cookbook)
 ifeq (,$(filter $(req_ver),$(firstword $(sort $(MAKE_VERSION) $(req_ver)))))

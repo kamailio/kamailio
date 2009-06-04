@@ -66,6 +66,8 @@ extern int route_type;
 		route_type = (type); \
 	} while(0)
 
+#define get_route_type()	route_type
+
 #define is_route_type(type) (route_type == (type))
 
 struct route_list{

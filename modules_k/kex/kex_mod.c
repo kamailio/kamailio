@@ -68,6 +68,14 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"km_append_branch", (cmd_function)w_km_append_branch, 1, fixup_spve_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"setdsturi", (cmd_function)w_setdsturi,     1, 0,
+			0, ANY_ROUTE },
+	{"resetdsturi", (cmd_function)w_resetdsturi, 0, 0,
+			0, ANY_ROUTE },
+	{"isdsturiset", (cmd_function)w_isdsturiset, 0, 0,
+			0, ANY_ROUTE },
+	{"pv_printf", (cmd_function)w_pv_printf,    2, pv_printf_fixup,
+			0, ANY_ROUTE },
 
 	{0,0,0,0,0,0}
 };

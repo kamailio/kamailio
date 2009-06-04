@@ -1523,7 +1523,7 @@ static int hname_fixup(void** param, int param_no)
 
 	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 	{
-		LM_INFO("using hdr type (%d) instead of <%.*s>\n",
+		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
 				hdr.type, gp->v.str.len, gp->v.str.s);
 		pkg_free(gp->v.str.s);
 		gp->v.str.s = NULL;
@@ -1531,7 +1531,7 @@ static int hname_fixup(void** param, int param_no)
 		gp->type = GPARAM_TYPE_INT;
 	} else {
 		gp->type = GPARAM_TYPE_STR;
-		LM_INFO("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
+		LM_DBG("using hdr type name <%.*s>\n", gp->v.str.len, gp->v.str.s);
 	}
 	
 	*param = (void*)gp;

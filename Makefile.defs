@@ -284,9 +284,14 @@ MKTAGS=ctags -R .
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
-	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3\
-				|sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
-				 	 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+	RPAREN=)
+	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|\
+				sed  -e 's/([^$(RPAREN)]*)//g' \
+					 -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
+					 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+#	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3\
+#				|sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
+#				 	 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sed with POSIX.1 regex doesn't support |, + or ? 
         # (darwin, solaris ...) => this complicated expression
 	MKDEP=$(CC) -MM 
