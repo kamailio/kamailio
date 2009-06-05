@@ -1083,7 +1083,7 @@ int fix_param(int type, void** param)
 				ERR("Bad regular expression '%s'\n", (char*)*param);
 				goto error;
 			}
-			p->fixed = &p->v;
+			p->fixed = p->v.regex;
 			break;
 		case FPARAM_AVP:
 			name.s = (char*)*param;
