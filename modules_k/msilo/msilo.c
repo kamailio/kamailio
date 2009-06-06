@@ -996,22 +996,25 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	db_vals[2].type = DB1_INT;
 	db_vals[2].nul = 0;
 	db_vals[2].val.int_val = 0;
-	
-	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
-	{
-		LM_ERR("failed to use_table\n");
-		goto error;
+
+	if (db_con == NULL) {
+	    LM_ERR("database connection has not been established\n");
+	    goto error;
 	}
 
-	if((msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
-				db_no_cols, ob_key, &db_res)!=0) || (RES_ROW_N(db_res) <= 0))
-	{
-		LM_DBG("no stored message for <%.*s>!\n", pto->uri.len,	pto->uri.s);
-		goto done;
+	if (msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
+			    db_no_cols, ob_key, &db_res) < 0) {
+	    LM_ERR("failed to query database\n");
+	    goto error;
+	}
+
+	if (RES_ROW_N(db_res) <= 0) {
+	    LM_DBG("no stored message for <%.*s>!\n", pto->uri.len, pto->uri.s);
+	    goto done;
 	}
 		
 	LM_DBG("dumping [%d] messages for <%.*s>!!!\n", 
-			RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
+	       RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
 
 	for(i = 0; i < RES_ROW_N(db_res); i++) 
 	{
@@ -1084,7 +1087,7 @@ done:
 	 * Free the result because we don't need it
 	 * anymore
 	 */
-	if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0)
+	if ((db_res !=NULL) && msilo_dbf.free_result(db_con, db_res) < 0)
 		LM_ERR("failed to free result of query\n");
 
 	return 1;
@@ -1271,8 +1274,13 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		return;
 	}
 
-	if((msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
-				db_no_cols, NULL,&db_res)!=0) || (RES_ROW_N(db_res) <= 0))
+	if (msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
+			    db_no_cols, NULL,&db_res) < 0) {
+	    LM_ERR("failed to query database\n");
+	    goto done;
+	}
+
+	if (RES_ROW_N(db_res) <= 0)
 	{
 		LM_DBG("no message for <%.*s>!\n", 24, ctime((const time_t*)&ttime));
 		goto done;
@@ -1350,7 +1358,7 @@ done:
 	/**
 	 * Free the result because we don't need it anymore
 	 */
-	if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0)
+	if ((db_res != NULL) && msilo_dbf.free_result(db_con, db_res) < 0)
 		LM_DBG("failed to free result of query\n");
 
 	return;
