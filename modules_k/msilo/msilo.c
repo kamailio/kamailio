@@ -1033,6 +1033,8 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		if (ms_extra_hdrs != NULL) {
 		    if (fixup_get_svalue(msg, (gparam_p)*ms_extra_hdrs_sp,
 					 &extra_hdrs_str) != 0) {
+			if (msilo_dbf.free_result(db_con, db_res) < 0)
+				LM_ERR("failed to free the query result\n");
 			LM_ERR("unable to get extra_hdrs value\n");
 			goto error;
 		    }
