@@ -1670,7 +1670,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 	if (type==T_A){
 		if ((ip=str2ip(name))!=0){
 				e=dns_cache_mk_ip_entry(name, ip);
-				if (e)
+				if (likely(e))
 					atomic_set(&e->refcnt, 1);/* because we ret. a ref. to it*/
 				goto end; /* we do not cache obvious stuff */
 		}
@@ -1679,7 +1679,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 	else if (type==T_AAAA){
 		if ((ip=str2ip6(name))!=0){
 				e=dns_cache_mk_ip_entry(name, ip);
-				if (e)
+				if (likely(e))
 					atomic_set(&e->refcnt, 1);/* because we ret. a ref. to it*/
 				goto end;/* we do not cache obvious stuff */
 		}
@@ -1701,12 +1701,12 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 	if (records){
 #ifdef CACHE_RELEVANT_RECS_ONLY
 		e=dns_cache_mk_rd_entry(name, type, &records);
-		if (e){
+		if (likely(e)){
 			l=e;
 			e=dns_get_related(l, type, &records);
 			/* e should contain the searched entry (if found) and l
 			 * all the entries (e and related) */
-			if (e){
+			if (likely(e)){
 				atomic_set(&e->refcnt, 1); /* 1 because we return a
 												ref. to it */
 			}else{
@@ -1747,9 +1747,12 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 #endif
 		free_rdata_list(records);
 	}else if (cfg_get(core, core_cfg, dns_neg_cache_ttl)){
-		e=dns_cache_mk_bad_entry(name, type, cfg_get(core, core_cfg, dns_neg_cache_ttl), DNS_BAD_NAME);
-		atomic_set(&e->refcnt, 1); /* 1 because we return a ref. to it */
-		dns_cache_add(e); /* refcnt++ inside*/
+		e=dns_cache_mk_bad_entry(name, type, 
+				cfg_get(core, core_cfg, dns_neg_cache_ttl), DNS_BAD_NAME);
+		if (likely(e)) {
+			atomic_set(&e->refcnt, 1); /* 1 because we return a ref. to it */
+			dns_cache_add(e); /* refcnt++ inside*/
+		}
 		goto end;
 	}
 #ifndef CACHE_RELEVANT_RECS_ONLY
