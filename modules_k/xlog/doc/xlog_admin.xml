@@ -131,6 +131,25 @@ modparam("xlog", "force_color", 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>prefix</varname> (str)</title>
+		<para>
+		Prefix to be printed before the log message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "&lt;script&gt;: ".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "prefix", "-xlog: ")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Exported Functions</title>
