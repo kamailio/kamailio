@@ -42,7 +42,8 @@
 
 MODULE_VERSION
 
-char *log_buf = NULL;
+char *_xlog_buf = NULL;
+char *_xlog_prefix = "<script>: ";
 
 /** parameters */
 int buf_size=4096;
@@ -97,6 +98,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"buf_size",     INT_PARAM, &buf_size},
 	{"force_color",  INT_PARAM, &force_color},
+	{"prefix",       STR_PARAM, &_xlog_prefix},
 	{0,0,0}
 };
 
@@ -122,8 +124,8 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	log_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
-	if(log_buf==NULL)
+	_xlog_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
+	if(_xlog_buf==NULL)
 	{
 		LM_ERR("no pkg memory left\n");
 		return -1;
@@ -142,11 +144,12 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (pv_elem_t*)frm, _xlog_buf, &log_len)<0)
 		return -1;
 
-	/* log_buf[log_len] = '\0'; */
-	LM_GEN1(L_ERR, "%.*s", log_len, log_buf);
+	/* _xlog_buf[log_len] = '\0'; */
+	LOG_(DEFAULT_FACILITY, L_ERR, _xlog_prefix,
+			"%.*s", log_len, _xlog_buf);
 
 	return 1;
 }
@@ -179,11 +182,12 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (pv_elem_t*)frm, _xlog_buf, &log_len)<0)
 		return -1;
 
-	/* log_buf[log_len] = '\0'; */
-	LM_GEN1((int)level, "%.*s", log_len, log_buf);
+	/* _xlog_buf[log_len] = '\0'; */
+	LOG_(DEFAULT_FACILITY, (int)level, _xlog_prefix,
+			"%.*s", log_len, _xlog_buf);
 
 	return 1;
 }
@@ -199,11 +203,12 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (pv_elem_t*)frm, _xlog_buf, &log_len)<0)
 		return -1;
 
-	/* log_buf[log_len] = '\0'; */
-	LM_GEN1(L_DBG, "%.*s", log_len, log_buf);
+	/* _xlog_buf[log_len] = '\0'; */
+	LOG_(DEFAULT_FACILITY, L_DBG, _xlog_prefix,
+			"%.*s", log_len, _xlog_buf);
 
 	return 1;
 }
@@ -213,8 +218,8 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
  */
 void destroy(void)
 {
-	if(log_buf)
-		pkg_free(log_buf);
+	if(_xlog_buf)
+		pkg_free(_xlog_buf);
 }
 
 static int xlog_fixup(void** param, int param_no)
