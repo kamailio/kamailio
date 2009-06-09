@@ -800,7 +800,7 @@ int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name)
 			name->flags = PV_VAL_INT|PV_TYPE_INT;
 		}
 		return 0;
-	} else if(ip->pvn.type==PV_NAME_INTSTR) {
+	} else if(ip->pvn.type==PV_NAME_PVAR) {
 		/* pvar */
 		if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), name)!=0)
 		{
