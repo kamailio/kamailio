@@ -163,7 +163,7 @@ int pv_parse_ht_name(pv_spec_p sp, str *in)
 	}
 	hpv->ht = ht_get_table(&hpv->htname);
 	sp->pvp.pvn.u.dname = (void*)hpv;
-	sp->pvp.pvn.type = PV_NAME_PVAR;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
 
 error:
