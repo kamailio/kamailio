@@ -174,7 +174,7 @@ static int child_init(int rank)
 		LM_ERR("cannot connect to db\n");
 		return -1;
 	}
-	return -1;
+	return 0;
 }
 
 void destroy(void)
