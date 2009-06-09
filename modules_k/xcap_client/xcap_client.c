@@ -53,6 +53,7 @@ MODULE_VERSION
 #define XCAP_TABLE_VERSION   3
 
 static int mod_init(void);
+static int child_init(int rank);
 void destroy(void);
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
@@ -112,7 +113,7 @@ struct module_exports exports= {
 	mod_init,					/* module initialization function */
 	0,							/* response handling function */
 	(destroy_function) destroy, /* destroy function */
-	0							/* per-child init function */
+	child_init					/* per-child init function */
 };
 
 /**
@@ -149,10 +150,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(db_check_table_version(&xcap_dbf, xcap_db, &xcap_db_table, XCAP_TABLE_VERSION) < 0) {
+	if(db_check_table_version(&xcap_dbf, xcap_db, &xcap_db_table,
+				XCAP_TABLE_VERSION) < 0) {
 		LM_ERR("error during table version check.\n");
 		return -1;
 	}
+	xcap_dbf.close(xcap_db);
+	xcap_db = NULL;
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -163,9 +167,21 @@ static int mod_init(void)
 	return 0;
 }
 
+static int child_init(int rank)
+{
+	if((xcap_db = xcap_dbf.init(&xcap_db_url))==NULL)
+	{
+		LM_ERR("cannot connect to db\n");
+		return -1;
+	}
+	return -1;
+}
+
 void destroy(void)
 {
 	curl_global_cleanup();
+	if(xcap_db != NULL)
+		xcap_dbf.close(xcap_db);
 }
 
 void query_xcap_update(unsigned int ticks, void* param)

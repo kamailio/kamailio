@@ -1610,7 +1610,7 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 			lock_release(&hash_table[i].lock);	
 	}
 
-	update_vals[0].val.int_val= (int)time(NULL)- 10;
+	update_vals[0].val.int_val= (int)time(NULL) - expires_offset;
 	update_ops[0]= OP_LT;
 	if(dbf.delete(db, update_cols, update_ops, update_vals, 1) < 0)
 	{
