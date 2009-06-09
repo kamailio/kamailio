@@ -1052,6 +1052,7 @@ int reload_gws_and_lcrs(void)
     }
 
     if (lcr_dbf.use_table(dbh, &gw_table) < 0) {
+	lcr_dbf.close(dbh);
 	LM_ERR("error while trying to use gw table\n");
 	return -1;
     }
@@ -1273,6 +1274,7 @@ int reload_gws_and_lcrs(void)
     }
 
     if (lcr_dbf.use_table(dbh, &lcr_table) < 0) {
+	lcr_dbf.close(dbh);
 	LM_ERR("error while trying to use lcr table\n");
 	return -1;
     }
