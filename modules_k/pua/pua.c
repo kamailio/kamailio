@@ -247,6 +247,9 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 	if (pua_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");

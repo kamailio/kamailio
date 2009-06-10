@@ -288,6 +288,9 @@ static int child_init(void)
 /* each child get a new connection to the database */
 static int mod_child_init(int r)
 {
+	if (r=PROC_INIT || r==PROC_MAIN || r==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 	if ( child_init()!=0 )
 		return -1;
 

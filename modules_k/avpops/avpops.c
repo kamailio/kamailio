@@ -201,7 +201,7 @@ static int avpops_child_init(int rank)
 	if (db_url.s==0)
 		return 0;
 	/* skip main process and TCP manager process */
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 	/* init DB connection */
 	return avpops_db_init(&db_url, &db_table, db_columns);

@@ -398,6 +398,9 @@ error:
 
 static int cpl_child_init(int rank)
 {
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 	return cpl_db_init(&db_url, &db_table);
 }
 

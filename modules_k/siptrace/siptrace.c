@@ -321,6 +321,9 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 	db_con = db_funcs.init(&db_url);
 	if (!db_con) {
 		LM_ERR("unable to connect to database. Please check configuration.\n");

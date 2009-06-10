@@ -226,6 +226,9 @@ error:
  */
 int init_child_trusted(int rank)
 {
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 	if (!db_url.s) {
 		return 0;
 	}

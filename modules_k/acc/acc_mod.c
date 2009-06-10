@@ -527,6 +527,9 @@ static int mod_init( void )
 
 static int child_init(int rank)
 {
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 #ifdef SQL_ACC
 	if(db_url.s && acc_db_init_child(&db_url)<0) {
 		LM_ERR("could not open database connection");

@@ -283,6 +283,9 @@ static int child_init(int rank)
 {
 	LM_DBG("[%d]  pid [%d]\n", rank, getpid());
 	
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
 	if (pxml_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
