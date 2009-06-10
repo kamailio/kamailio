@@ -51,6 +51,16 @@ static int set_autoclose(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_initial(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_max(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_min(void* cfg_h, str* gname, str* name, void** val);
+static int set_asocmaxrxt(void* cfg_h, str* gname, str* name, void** val);
+static int set_sinit_max_attempts(void* cfg_h, str* gname, str* name,
+										void** val);
+static int set_sinit_max_init_timeo(void* cfg_h, str* gname, str* name,
+										void** val);
+static int set_hbinterval(void* cfg_h, str* gname, str* name, void** val);
+static int set_pathmaxrxt(void* cfg_h, str* gname, str* name, void** val);
+static int set_sack_freq(void* cfg_h, str* gname, str* name, void** val);
+static int set_sack_delay(void* cfg_h, str* gname, str* name, void** val);
+static int set_max_burst(void* cfg_h, str* gname, str* name, void** val);
 
 /** cfg_group_sctp description (for the config framework). */
 static cfg_def_t sctp_cfg_def[] = {
@@ -72,7 +82,24 @@ static cfg_def_t sctp_cfg_def[] = {
 	{ "srto_max", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_max, 0,
 		"maximum value of the retransmission timeout (RTO), in msecs" },
 	{ "srto_min", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_min, 0,
-		"minimum value og the retransmission timeout (RTO), in msecs" },
+		"minimum value of the retransmission timeout (RTO), in msecs" },
+	{ "asocmaxrxt", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<10, set_asocmaxrxt, 0,
+		"maximum retransmission attempts per association" },
+	{ "init_max_attempts", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<10,
+		set_sinit_max_attempts, 0, "max INIT retransmission attempts" },
+	{ "init_max_timeo", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<10,
+		set_sinit_max_init_timeo, 0,
+		"max INIT retransmission timeout (RTO max for INIT), in msecs" },
+	{ "hbinterval", CFG_VAR_INT| CFG_ATOMIC, 0, 0, set_hbinterval, 0,
+		"heartbeat interval in msecs" },
+	{ "pathmaxrxt", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<10, set_pathmaxrxt, 0,
+		"maximum retransmission attempts per path" },
+	{ "sack_delay", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_sack_delay, 0,
+		"time since the last received packet before sending a SACK, in msecs"},
+	{ "sack_freq", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<10, set_sack_freq, 0,
+		"number of received packets that trigger the sending of a SACK"},
+	{ "max_burst", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<10, set_max_burst, 0,
+		"maximum burst of packets that can be emitted by an association"},
 	{0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -248,6 +275,204 @@ static int set_srto_min(void* cfg_h, str* gname, str* name, void** val)
 	ERR("no SCTP_RTOINFO support, please upgrade your sctp library\n");
 	return -1;
 #endif /* SCTP_RTOINFO */
+}
+
+
+
+static int set_asocmaxrxt(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_ASSOCINFO
+	struct sctp_assocparams ap;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, asocmaxrxt);
+		return 0;
+	}
+	memset(&ap, 0, sizeof(ap)); /* zero everything we don't care about */
+	ap.sasoc_assoc_id=0; /* all */
+	ap.sasoc_asocmaxrxt=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_ASSOCINFO, ap,
+							"cfg: setting SCTP_ASSOCINFO");
+#else
+	ERR("no SCTP_ASSOCINFO support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_ASSOCINFO */
+}
+
+
+
+static int set_sinit_max_init_timeo(void* cfg_h, str* gname, str* name,
+									void** val)
+{
+#ifdef SCTP_INITMSG
+	struct sctp_initmsg im;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, init_max_timeo);
+		return 0;
+	}
+	memset(&im, 0, sizeof(im)); /* zero everything we don't care about */
+	im.sinit_max_init_timeo=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_INITMSG, im,
+							"cfg: setting SCTP_INITMSG");
+#else
+	ERR("no SCTP_INITMSG support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_INITMSG */
+}
+
+
+
+static int set_sinit_max_attempts(void* cfg_h, str* gname, str* name,
+									void** val)
+{
+#ifdef SCTP_INITMSG
+	struct sctp_initmsg im;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, init_max_attempts);
+		return 0;
+	}
+	memset(&im, 0, sizeof(im)); /* zero everything we don't care about */
+	im.sinit_max_attempts=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_INITMSG, im,
+							"cfg: setting SCTP_INITMSG");
+#else
+	ERR("no SCTP_INITMSG support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_INITMSG */
+}
+
+
+
+static int set_hbinterval(void* cfg_h, str* gname, str* name,
+									void** val)
+{
+#ifdef SCTP_PEER_ADDR_PARAMS
+	struct sctp_paddrparams pp;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, hbinterval);
+		return 0;
+	}
+	memset(&pp, 0, sizeof(pp)); /* zero everything we don't care about */
+	if ((int)(long)(*val)!=-1){
+		pp.spp_hbinterval=(int)(long)(*val);
+		pp.spp_flags=SPP_HB_ENABLE;
+	}else{
+		pp.spp_flags=SPP_HB_DISABLE;
+	}
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, pp,
+							"cfg: setting SCTP_PEER_ADDR_PARAMS");
+#else
+	ERR("no SCTP_PEER_ADDR_PARAMS support, please upgrade your"
+			" sctp library\n");
+	return -1;
+#endif /* SCTP_PEER_ADDR_PARAMS */
+}
+
+
+
+static int set_pathmaxrxt(void* cfg_h, str* gname, str* name,
+									void** val)
+{
+#ifdef SCTP_PEER_ADDR_PARAMS
+	struct sctp_paddrparams pp;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, pathmaxrxt);
+		return 0;
+	}
+	memset(&pp, 0, sizeof(pp)); /* zero everything we don't care about */
+	pp.spp_pathmaxrxt=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, pp,
+							"cfg: setting SCTP_PEER_ADDR_PARAMS");
+#else
+	ERR("no SCTP_PEER_ADDR_PARAMS support, please upgrade your"
+			" sctp library\n");
+	return -1;
+#endif /* SCTP_PEER_ADDR_PARAMS */
+}
+
+
+
+static int set_sack_delay(void* cfg_h, str* gname, str* name, void** val)
+{
+#if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
+#ifdef SCTP_DELAYED_SACK
+	struct sctp_sack_info sa;
+#else /* old lib */
+	struct sctp_assoc_value sa;
+#endif /* SCTP_DELAYED_SACK */
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, sack_delay);
+		return 0;
+	}
+	memset(&sa, 0, sizeof(sa)); /* zero everything we don't care about */
+#ifdef SCTP_DELAYED_SACK
+	sa.sack_delay=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_DELAYED_SACK, sa,
+							"cfg: setting SCTP_DELAYED_SACK");
+#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
+	sa.assoc_value=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, sa,
+							"cfg: setting SCTP_DELAYED_ACK_TIME");
+#endif /* SCTP_DELAYED_SACK */
+#else
+	ERR("no SCTP_DELAYED_SACK support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_DELAYED_SACK | SCTP_DELAYED_ACK_TIME */
+}
+
+
+
+static int set_sack_freq(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_DELAYED_SACK
+	struct sctp_sack_info sa;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, sack_freq);
+		return 0;
+	}
+	memset(&sa, 0, sizeof(sa)); /* zero everything we don't care about */
+	sa.sack_freq=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_DELAYED_SACK, sa,
+							"cfg: setting SCTP_DELAYED_SACK");
+#else
+	ERR("no SCTP_DELAYED_SACK support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_DELAYED_SACK */
+}
+
+
+
+static int set_max_burst(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifdef SCTP_MAX_BURST
+	struct sctp_assoc_value av;
+	SCTP_SET_SOCKOPT_DECLS;
+	
+	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
+		*val=(void*)(long)cfg_get(sctp, cfg_h, max_burst);
+		return 0;
+	}
+	memset(&av, 0, sizeof(av)); /* zero everything we don't care about */
+	av.assoc_value=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_MAX_BURST, av,
+							"cfg: setting SCTP_MAX_BURST");
+#else
+	ERR("no SCTP_MAX_BURST support, please upgrade your sctp library\n");
+	return -1;
+#endif /* SCTP_MAX_BURST */
 }
 
 #endif /* USE_SCTP */

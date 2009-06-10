@@ -234,6 +234,23 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 #ifdef SCTP_RTOINFO
 	struct sctp_rtoinfo rto;
 #endif /* SCTP_RTOINFO */
+#ifdef SCTP_ASSOCINFO
+	struct sctp_assocparams ap;
+#endif /* SCTP_ASSOCINFO */
+#ifdef SCTP_INITMSG
+	struct sctp_initmsg im;
+#endif /* SCTP_INITMSG */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	struct sctp_paddrparams pp;
+#endif /* SCTP_PEER_ADDR_PARAMS */
+#ifdef SCTP_DELAYED_SACK
+	struct sctp_sack_info sa;
+#elif defined SCTP_DELAYED_ACK_TIME /* old version */
+	struct sctp_assoc_value sa;
+#endif /* SCTP_DELAYED_SACK */
+#ifdef SCTP_MAX_BURST
+	struct sctp_assoc_value av;
+#endif /* SCTP_MAX_BURST */
 	
 	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
 	if (s==-1)
@@ -271,6 +288,63 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 		cfg->srto_max=rto.srto_max;
 	}
 #endif /* SCTP_RTOINFO */
+#ifdef SCTP_ASSOCINFO
+	optlen=sizeof(ap);
+	ap.sasoc_assoc_id=0;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_ASSOCINFO, (void*)&ap,
+							&optlen, "SCTP_ASSOCINFO")==0){
+		/* success => hack to set the "default" values*/
+		cfg->asocmaxrxt=ap.sasoc_asocmaxrxt;
+	}
+#endif /* SCTP_ASSOCINFO */
+#ifdef SCTP_INITMSG
+	optlen=sizeof(im);
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_INITMSG, (void*)&im,
+							&optlen, "SCTP_INITMSG")==0){
+		/* success => hack to set the "default" values*/
+		cfg->init_max_attempts=im.sinit_max_attempts;
+		cfg->init_max_timeo=im.sinit_max_init_timeo;
+	}
+#endif /* SCTP_INITMSG */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	optlen=sizeof(pp);
+	memset(&pp, 0, sizeof(pp)); /* get defaults */
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, (void*)&pp,
+							&optlen, "SCTP_PEER_ADDR_PARAMS")==0){
+		/* success => hack to set the "default" values*/
+		cfg->hbinterval=pp.spp_hbinterval;
+		cfg->pathmaxrxt=pp.spp_pathmaxrxt;
+	}
+#endif /* SCTP_PEER_ADDR_PARAMS */
+#if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
+	optlen=sizeof(sa);
+	memset(&sa, 0, sizeof(sa));
+#ifdef SCTP_DELAYED_SACK
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sa,
+							&optlen, "SCTP_DELAYED_SACK")==0){
+		/* success => hack to set the "default" values*/
+		cfg->sack_delay=sa.sack_delay;
+		cfg->sack_freq=sa.sack_freq;
+	}
+#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, (void*)&sa,
+							&optlen, "SCTP_DELAYED_ACK_TIME")==0){
+		/* success => hack to set the "default" values*/
+		cfg->sack_delay=sa.assoc_value;
+		cfg->sack_freq=0; /* unknown */
+	}
+#endif /* SCTP_DELAYED_SACK */
+#endif /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
+#ifdef SCTP_MAX_BURST
+	optlen=sizeof(av);
+	av.assoc_id=0;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_MAX_BURST, (void*)&av,
+							&optlen, "SCTP_MAX_BURST")==0){
+		/* success => hack to set the "default" values*/
+		cfg->max_burst=av.assoc_value;
+	}
+#endif /* SCTP_MAX_BURST */
+	
 	close(s);
 	return 0;
 }
@@ -293,6 +367,24 @@ static int sctp_init_sock_opt_common(int s)
 #ifdef SCTP_RTOINFO
 	struct sctp_rtoinfo rto;
 #endif /* SCTP_RTOINFO */
+#ifdef SCTP_ASSOCINFO
+	struct sctp_assocparams ap;
+#endif /* SCTP_ASSOCINFO */
+#ifdef SCTP_INITMSG
+	struct sctp_initmsg im;
+#endif /* SCTP_INITMSG */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	struct sctp_paddrparams pp;
+#endif /* SCTP_PEER_ADDR_PARAMS */
+#ifdef SCTP_DELAYED_SACK
+	struct sctp_sack_info sa;
+#elif defined SCTP_DELAYED_ACK_TIME /* old version */
+	struct sctp_assoc_value sa;
+#endif /* SCTP_DELAYED_SACK */
+#ifdef SCTP_MAX_BURST
+	struct sctp_assoc_value av;
+#endif /* SCTP_MAX_BURST */
+	
 #ifdef __OS_linux
 	union {
 		struct sctp_event_subscribe s;
@@ -470,6 +562,105 @@ static int sctp_init_sock_opt_common(int s)
 #else
 #warning no sctp lib support for SCTP_RTOINFO, consider upgrading
 #endif /* SCTP_RTOINFO */
+	/* set associnfo options: assocmaxrxt */
+#ifdef SCTP_ASSOCINFO
+	memset(&ap, 0, sizeof(ap));
+	ap.sasoc_asocmaxrxt=cfg_get(sctp, sctp_cfg, asocmaxrxt);
+	if (ap.sasoc_asocmaxrxt){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_ASSOCINFO, (void*)&ap,
+							sizeof(ap), "setsockopt: SCTP_ASSOCINFO")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_ASSOCINFO, consider upgrading
+#endif /* SCTP_ASOCINFO */
+	/* set initmsg options: init_max_attempts & init_max_init_timeo */
+#ifdef SCTP_INITMSG
+	memset(&im, 0, sizeof(im));
+	im.sinit_max_attempts=cfg_get(sctp, sctp_cfg, init_max_attempts);
+	im.sinit_max_init_timeo=cfg_get(sctp, sctp_cfg, init_max_timeo);
+	if (im.sinit_max_attempts || im.sinit_max_init_timeo){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_INITMSG, (void*)&im,
+							sizeof(im), "setsockopt: SCTP_INITMSG")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_INITMSG, consider upgrading
+#endif /* SCTP_INITMSG */
+	/* set sctp peer addr options: hbinterval & pathmaxrxt */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	memset(&pp, 0, sizeof(pp));
+	pp.spp_hbinterval=cfg_get(sctp, sctp_cfg, hbinterval);
+	pp.spp_pathmaxrxt=cfg_get(sctp, sctp_cfg, pathmaxrxt);
+	if (pp.spp_hbinterval || pp.spp_pathmaxrxt){
+		if (pp.spp_hbinterval > 0)
+			pp.spp_flags=SPP_HB_ENABLE;
+		else if (pp.spp_hbinterval==-1){
+			pp.spp_flags=SPP_HB_DISABLE;
+			pp.spp_hbinterval=0;
+		}
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, (void*)&pp,
+						sizeof(pp), "setsockopt: SCTP_PEER_ADDR_PARAMS")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_PEER_ADDR_PARAMS, consider upgrading
+#endif /* SCTP_PEER_ADDR_PARAMS */
+	/* set delayed ack options: sack_delay & sack_freq */
+#if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
+	memset(&sa, 0, sizeof(sa));
+#ifdef SCTP_DELAYED_SACK
+	sa.sack_delay=cfg_get(sctp, sctp_cfg, sack_delay);
+	sa.sack_freq=cfg_get(sctp, sctp_cfg, sack_freq);
+	if (sa.sack_delay || sa.sack_freq){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sa,
+							sizeof(sa), "setsockopt: SCTP_DELAYED_SACK")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
+	sa.assoc_value=cfg_get(sctp, sctp_cfg, sack_delay);
+	if (sa.assoc_value){
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, (void*)&sa,
+						sizeof(sa), "setsockopt: SCTP_DELAYED_ACK_TIME")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+	if (cfg_get(sctp, sctp_cfg, sack_freq)){
+		WARN("could not set sctp sack_freq, please upgrade your sctp"
+				" library\n");
+		((struct cfg_group_sctp*)sctp_cfg)->sack_freq=0;
+	}
+#endif /* SCTP_DELAYED_SACK */
+#else /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK*/
+#warning no sctp lib support for SCTP_DELAYED_SACK, consider upgrading
+#endif /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
+	/* set max burst option */
+#ifdef SCTP_MAX_BURST
+	memset(&av, 0, sizeof(av));
+	av.assoc_value=cfg_get(sctp, sctp_cfg, max_burst);
+	if (av.assoc_value){
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_MAX_BURST, (void*)&av,
+							sizeof(av), "setsockopt: SCTP_MAX_BURST")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_MAX_BURST, consider upgrading
+#endif /* SCTP_MAX_BURST */
 	
 	memset(&es, 0, sizeof(es));
 	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message

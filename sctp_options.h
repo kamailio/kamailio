@@ -40,9 +40,17 @@ struct cfg_group_sctp{
 	unsigned int autoclose; /* in seconds */
 	unsigned int send_ttl; /* in milliseconds */
 	unsigned int send_retries;
-	unsigned int srto_initial;
-	unsigned int srto_max;
-	unsigned int srto_min;
+	unsigned int srto_initial; /** initial retr. timeout */
+	unsigned int srto_max;     /** max retr. timeout */
+	unsigned int srto_min;     /** min retr. timeout */
+	unsigned int asocmaxrxt; /** max. retr. attempts per association */
+	unsigned int init_max_attempts; /** max., INIT retr. attempts */
+	unsigned int init_max_timeo; /** rto max for INIT */
+	unsigned int hbinterval;  /** heartbeat interval in msecs */
+	unsigned int pathmaxrxt;  /** max. retr. attempts per path */
+	unsigned int sack_delay; /** msecs after which a delayed SACK is sent */
+	unsigned int sack_freq; /** no. of packets after which a SACK is sent */
+	unsigned int max_burst; /** maximum burst of packets per assoc. */
 };
 
 extern struct cfg_group_sctp sctp_default_cfg;
