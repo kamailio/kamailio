@@ -405,6 +405,14 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SCTP_SRTO_INITIAL
 %token SCTP_SRTO_MAX
 %token SCTP_SRTO_MIN
+%token SCTP_ASOCMAXRXT
+%token SCTP_INIT_MAX_ATTEMPTS
+%token SCTP_INIT_MAX_TIMEO
+%token SCTP_HBINTERVAL
+%token SCTP_PATHMAXRXT
+%token SCTP_SACK_DELAY
+%token SCTP_SACK_FREQ
+%token SCTP_MAX_BURST
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
 %token DISABLE_CORE
@@ -1208,6 +1216,38 @@ assign_stm:
 			IF_SCTP(sctp_default_cfg.srto_min=$3);
 	}
 	| SCTP_SRTO_MIN EQUAL error { yyerror("number expected"); }
+	| SCTP_ASOCMAXRXT EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.asocmaxrxt=$3);
+	}
+	| SCTP_ASOCMAXRXT EQUAL error { yyerror("number expected"); }
+	| SCTP_INIT_MAX_ATTEMPTS EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.init_max_attempts=$3);
+	}
+	| SCTP_INIT_MAX_ATTEMPTS EQUAL error { yyerror("number expected"); }
+	| SCTP_INIT_MAX_TIMEO EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.init_max_timeo=$3);
+	}
+	| SCTP_INIT_MAX_TIMEO EQUAL error { yyerror("number expected"); }
+	| SCTP_HBINTERVAL EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.hbinterval=$3);
+	}
+	| SCTP_HBINTERVAL EQUAL error { yyerror("number expected"); }
+	| SCTP_PATHMAXRXT EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.pathmaxrxt=$3);
+	}
+	| SCTP_PATHMAXRXT EQUAL error { yyerror("number expected"); }
+	| SCTP_SACK_DELAY EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.sack_delay=$3);
+	}
+	| SCTP_SACK_DELAY EQUAL error { yyerror("number expected"); }
+	| SCTP_SACK_FREQ EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.sack_freq=$3);
+	}
+	| SCTP_SACK_FREQ EQUAL error { yyerror("number expected"); }
+	| SCTP_MAX_BURST EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.max_burst=$3);
+	}
+	| SCTP_MAX_BURST EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

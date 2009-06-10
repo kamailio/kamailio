@@ -341,6 +341,15 @@ SCTP_SEND_RETRIES	"sctp_send_retries"
 SCTP_SRTO_INITIAL	"sctp_srto_initial"
 SCTP_SRTO_MAX		"sctp_srto_max"
 SCTP_SRTO_MIN		"sctp_srto_min"
+SCTP_ASOCMAXRXT		"sctp_asocmaxrxt"
+SCTP_INIT_MAX_ATTEMPTS		"sctp_init_max_attempts"
+SCTP_INIT_MAX_TIMEO			"sctp_init_max_timeo"
+SCTP_HBINTERVAL				"sctp_hbinterval"
+SCTP_PATHMAXRXT				"sctp_pathmaxrxt"
+SCTP_SACK_DELAY				"sctp_sack_delay"
+SCTP_SACK_FREQ				"sctp_sack_freq"
+SCTP_MAX_BURST				"sctp_max_burst"
+
 ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 DISABLE_CORE		"disable_core_dump"
@@ -676,6 +685,22 @@ EAT_ABLE	[\ \t\b\r]
 										return SCTP_SRTO_MAX; }
 <INITIAL>{SCTP_SRTO_MIN}	{ count(); yylval.strval=yytext;
 										return SCTP_SRTO_MIN; }
+<INITIAL>{SCTP_ASOCMAXRXT}	{ count(); yylval.strval=yytext;
+										return SCTP_ASOCMAXRXT; }
+<INITIAL>{SCTP_INIT_MAX_ATTEMPTS}	{ count(); yylval.strval=yytext;
+										return SCTP_INIT_MAX_ATTEMPTS; }
+<INITIAL>{SCTP_INIT_MAX_TIMEO}	{ count(); yylval.strval=yytext;
+										return SCTP_INIT_MAX_TIMEO; }
+<INITIAL>{SCTP_HBINTERVAL}	{ count(); yylval.strval=yytext;
+										return SCTP_HBINTERVAL; }
+<INITIAL>{SCTP_PATHMAXRXT}	{ count(); yylval.strval=yytext;
+										return SCTP_PATHMAXRXT; }
+<INITIAL>{SCTP_SACK_DELAY}	{ count(); yylval.strval=yytext;
+										return SCTP_SACK_DELAY; }
+<INITIAL>{SCTP_SACK_FREQ}	{ count(); yylval.strval=yytext;
+										return SCTP_SACK_FREQ; }
+<INITIAL>{SCTP_MAX_BURST}	{ count(); yylval.strval=yytext;
+										return SCTP_MAX_BURST; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;

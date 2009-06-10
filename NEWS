@@ -288,18 +288,64 @@ new config variables:
                       1-3) to avoid "multiplying" traffic to unresponding 
                       hosts (default: 0).
                       Can be changed at runtime.
-  sctp_srto_initial = milliseconds - initial value of the retr. timeout,
-                      used in RTO calculations (default: OS specific).
-                      Can be changed at runtime (sctp srto_initial) but it
-                      will affect only new associations.
-  sctp_srto_max     = milliseconds - maximum value of the retransmission
-                      timeout (RTO) (default: OS specific).
-                      Can be changed at runtime (sctp srto_max) but it
-                      will affect only new associations.
-  sctp_srto_min     = milliseconds - minimum value of the retransmission
-                      timeout (RTO) (default: OS specific).
-                      Can be changed at runtime (sctp srto_min) but it 
-                      will affect only new associations.
+  sctp_srto_initial = milliseconds - initial value of the retr. timeout, used
+     in RTO calculations (default: OS specific).
+     Can be changed at runtime (sctp srto_initial) but it will affect only new
+     associations.
+  sctp_srto_max = milliseconds - maximum value of the retransmission timeout
+     (RTO) (default: OS specific).
+     WARNING: values lower then the sctp sack_delay will cause lots of
+     retransmissions and connection instability (see sctp_srto_min for more
+     details).
+     Can be changed at runtime (sctp srto_max) but it will affect only new
+     associations.
+  sctp_srto_min = milliseconds - minimum value of the retransmission timeout
+     (RTO) (default: OS specific).
+     WARNING: values lower then the sctp sack_delay of any peer might cause
+     retransmissions and possible interoperability problems. According to the
+     standard the sack_delay should be between 200 and 500 ms, so avoid trying
+     values lower then 500 ms unless you control all the possible sctp peers
+     and you do make sure their sack_delay is higher or their sack_freq is 1.
+     Can be changed at runtime (sctp srto_min) but it will affect only new
+     associations.
+  sctp_asocmaxrxt   = number - maximum retransmissions attempts per association
+     (default: OS specific). It should be set to sctp_pathmaxrxt * no. of
+     expected paths.
+     Can be changed at runtime (sctp asocmaxrxt) but it will affect only new
+     associations.
+  sctp_init_max_attempts = number - maximum INIT retransmission attempts
+     (default: OS specific).
+     Can be changed at runtime (sctp init_max_attempts).
+  sctp_init_max_timeo = milliseconds - maximum INIT retransmission timeout (RTO
+     max for INIT). Default: OS specific.
+     Can be changed at runtime (sctp init_max_timeo).
+  sctp_hbinterval = milliseconds - sctp heartbeat interval. Setting it to -1
+     will disable the heartbeats. Default: OS specific.
+     Can be changed at runtime (sctp hbinterval) but it will affect only new
+     associations.
+  sctp_pathmaxrxt = number - maximum retransmission attempts per path (see also
+     sctp_asocmaxrxt). Default: OS specific.
+     Can be changed at runtime (sctp pathmaxrxt) but it will affect only new
+     associations.
+  sctp_sack_delay = milliseconds - delay until an ACK is generated after
+     receiving a packet. Default: OS specific.
+     WARNING: a value higher then srto_min can cause a lot of retransmissions
+     (and strange problems). A value higher then srto_max will result in very
+     high connections instability. According to the standard the sack_delay
+     value should be between 200 and 500 ms.
+     Can be changed at runtime (sctp sack_delay) but it will affect only new
+     associations.
+  sctp_sack_freq = number - number of packets received before an ACK is sent
+     (without waiting for the sack_delay to expire).  Default: OS specific.
+     Note: on linux with lksctp up to and including 1.0.9 is not possible to
+     set this value (having it in the config will produce a warning on
+     startup).
+     Can be changed at runtime (sctp sack_freq) but it will affect only new
+     associations.
+  sctp_max_burst = number - maximum burst of packets that can be emitted by an
+     association. Default: OS specific.
+     Can be changed at runtime (sctp max_burst) but it will affect only new 
+     associations.
   server_id = number - A configurable unique server id that can be used to
                        discriminate server instances within a cluster of
                        servers when all other information, such as IP addresses
