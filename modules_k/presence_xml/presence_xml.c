@@ -56,6 +56,7 @@
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
+#include "pv_xml.h"
 
 MODULE_VERSION
 #define S_TABLE_VERSION 3
@@ -88,6 +89,7 @@ xcap_serv_t* xs_list= NULL;
 int disable_presence = 0;
 int disable_winfo    = 0;
 int disable_bla      = 1;
+int passive_mode     = 0;
 
 /* SL bind */
 struct sl_binds slb;
@@ -110,12 +112,18 @@ static param_export_t params[]={
 	{ "disable_presence",	INT_PARAM, &disable_presence },
 	{ "disable_winfo",		INT_PARAM, &disable_winfo },
 	{ "disable_bla",		INT_PARAM, &disable_bla },
-	{ 0, 0, 0}
+	{ "passive_mode",		INT_PARAM, &passive_mode },	{ 0, 0, 0}
 };
 
 static mi_export_t mi_cmds[] = {
 	{ "dum",             dum,          0,  0,  mi_child_init},
 	{  0,                0,            0,  0,        0      }
+};
+
+static pv_export_t mod_pvs[] = {
+	{ {"xml", sizeof("xml")-1}, PVT_OTHER, pv_get_xml, pv_set_xml,
+		pv_parse_xml_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 /** module exports */
@@ -126,7 +134,7 @@ struct module_exports exports= {
 	 params,		/* exported parameters */
 	 0,				/* exported statistics */
 	 mi_cmds,		/* exported MI functions */
-	 0,				/* exported pseudo-variables */
+	 mod_pvs,		/* exported pseudo-variables */
 	 0,				/* extra processes */
 	 mod_init,		/* module initialization function */
 	 0,				/* response handling function */
@@ -141,7 +149,10 @@ static int mod_init(void)
 {
 	bind_presence_t bind_presence;
 	presence_api_t pres;
-		
+
+	if(passive_mode==1)
+		return 0;
+	
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
@@ -256,6 +267,9 @@ static int mod_init(void)
 
 static int mi_child_init(void)
 {	
+	if(passive_mode==1)
+		return 0;
+	
 	if (pxml_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
@@ -282,6 +296,9 @@ static int mi_child_init(void)
 static int child_init(int rank)
 {
 	LM_DBG("[%d]  pid [%d]\n", rank, getpid());
+	
+	if(passive_mode==1)
+		return 0;
 	
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
