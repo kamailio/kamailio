@@ -1116,15 +1116,10 @@ int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s)
 	static int buf_itr = 0;
 	static char buf[PV_PRINT_BUF_NO][PV_PRINT_BUF_SIZE];
 
-	if (list->next==0 && list->spec.getf==0) {
-		*s = list->text;
-		return 0;
-	} else {
-		s->s = buf[buf_itr];
-		s->len = PV_PRINT_BUF_SIZE;
-		buf_itr = (buf_itr+1)%PV_PRINT_BUF_NO;
-		return pv_printf( msg, list, s->s, &s->len);
-	}
+	s->s = buf[buf_itr];
+	s->len = PV_PRINT_BUF_SIZE;
+	buf_itr = (buf_itr+1)%PV_PRINT_BUF_NO;
+	return pv_printf( msg, list, s->s, &s->len);
 }
 
 /********************************************************
