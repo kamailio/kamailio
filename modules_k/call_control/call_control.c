@@ -236,11 +236,11 @@ has_to_tag(struct sip_msg *msg)
 
     if (!msg->to) {
         if (parse_headers(msg, HDR_TO_F, 0)==-1) {
-            LM_ERR("cannot parse 'To' header\n");
+            LOG(L_ERR, "cannot parse 'To' header\n");
             return False;
         }
         if (!msg->to) {
-            LM_ERR("missing 'To' header\n");
+            LOG(L_ERR, "missing 'To' header\n");
             return False;
         }
     }
@@ -312,13 +312,13 @@ get_diverter(struct sip_msg *msg)
             credentials = &((auth_body_t*)(header->parsed))->digest;
         } else {
             if (parse_headers(msg, HDR_PROXYAUTH_F, 0) == -1) {
-                LM_ERR("cannot parse Proxy-Authorization header\n");
+                LOG(L_ERR, "cannot parse Proxy-Authorization header\n");
                 return diverter;
             }
             if (!msg->proxy_auth)
                 return diverter;
             if (parse_credentials(msg->proxy_auth) != 0) {
-                LM_ERR("cannot parse credentials\n");
+                LOG(L_ERR, "cannot parse credentials\n");
                 return diverter;
             }
             credentials = &((auth_body_t*)(msg->proxy_auth->parsed))->digest;
@@ -362,13 +362,13 @@ get_call_info(struct sip_msg *msg, CallControlAction action)
     }
 
     if (parse_headers(msg, headers, 0) == -1) {
-        LM_ERR("cannot parse required headers\n");
+        LOG(L_ERR, "cannot parse required headers\n");
         return NULL;
     }
 
     if (headers & HDR_CALLID_F) {
         if (msg->callid == NULL) {
-            LM_ERR("missing Call-ID header\n");
+            LOG(L_ERR, "missing Call-ID header\n");
             return NULL;
         }
 
@@ -380,22 +380,22 @@ get_call_info(struct sip_msg *msg, CallControlAction action)
         struct to_body *from; // yeah. suggestive structure name ;)
 
         if (msg->from == NULL) {
-            LM_ERR("missing From header\n");
+            LOG(L_ERR, "missing From header\n");
             return NULL;
         }
         if (!msg->from->parsed && parse_from_header(msg)==-1) {
-            LM_ERR("cannot parse From header\n");
+            LOG(L_ERR, "cannot parse From header\n");
             return NULL;
         }
 
         from = get_from(msg);
 
         if (from->body.s==NULL || from->body.len==0) {
-            LM_ERR("missing From\n");
+            LOG(L_ERR, "missing From\n");
             return NULL;
         }
         if (from->tag_value.s==NULL || from->tag_value.len==0) {
-            LM_ERR("missing From tag\n");
+            LOG(L_ERR, "missing From tag\n");
             return NULL;
         }
 
@@ -440,7 +440,7 @@ make_request(CallInfo *call)
                        call->from_tag.len, call->from_tag.s);
 
         if (len >= sizeof(request)) {
-            LM_ERR("callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
+            LOG(L_ERR, "callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
             return NULL;
         }
 
@@ -456,7 +456,7 @@ make_request(CallInfo *call)
                        call->dialog_id.h_entry, call->dialog_id.h_id);
 
         if (len >= sizeof(request)) {
-            LM_ERR("callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
+            LOG(L_ERR, "callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
             return NULL;
         }
 
@@ -470,7 +470,7 @@ make_request(CallInfo *call)
                        call->callid.len, call->callid.s);
 
         if (len >= sizeof(request)) {
-            LM_ERR("callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
+            LOG(L_ERR, "callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
             return NULL;
         }
 
@@ -509,12 +509,12 @@ callcontrol_connect(void)
 
     callcontrol_socket.sock = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (callcontrol_socket.sock < 0) {
-        LM_ERR("can't create socket\n");
+        LOG(L_ERR, "can't create socket\n");
         callcontrol_socket.last_failure = time(NULL);
         return False;
     }
     if (connect(callcontrol_socket.sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        LM_ERR("failed to connect to %s: %s\n", callcontrol_socket.name, strerror(errno));
+        LOG(L_ERR, "failed to connect to %s: %s\n", callcontrol_socket.name, strerror(errno));
         close(callcontrol_socket.sock);
         callcontrol_socket.sock = -1;
         callcontrol_socket.last_failure = time(NULL);
@@ -561,19 +561,19 @@ send_command(char *command)
                     sent = bytes = 0;
                     continue;
                 } else {
-                    LM_ERR("connection with callcontrol did die\n");
+                    LOG(L_ERR, "connection with callcontrol did die\n");
                 }
                 break;
             case EACCES:
-                LM_ERR("permission denied sending to %s\n", callcontrol_socket.name);
+                LOG(L_ERR, "permission denied sending to %s\n", callcontrol_socket.name);
                 break;
             case EWOULDBLOCK:
                 // this shouldn't happen as we read back all the answer after a request.
                 // if it would block, it means there is an error.
-                LM_ERR("sending command would block!\n");
+                LOG(L_ERR, "sending command would block!\n");
                 break;
             default:
-                LM_ERR("%d: %s\n", errno, strerror(errno));
+                LOG(L_ERR, "%d: %s\n", errno, strerror(errno));
                 break;
             }
             callcontrol_disconnect();
@@ -581,7 +581,7 @@ send_command(char *command)
         }
     }
     if (sent < cmd_len) {
-        LM_ERR("couldn't send complete command after 3 tries\n");
+        LOG(L_ERR, "couldn't send complete command after 3 tries\n");
         callcontrol_disconnect();
         return NULL;
     }
@@ -599,11 +599,11 @@ send_command(char *command)
         while (count == -1 && errno == EINTR);
 
         if (count == -1) {
-            LM_ERR("select failed: %d: %s\n", errno, strerror(errno));
+            LOG(L_ERR, "select failed: %d: %s\n", errno, strerror(errno));
             callcontrol_disconnect();
             return NULL;
         } else if (count == 0) {
-            LM_ERR("did timeout waiting for an answer\n");
+            LOG(L_ERR, "did timeout waiting for an answer\n");
             callcontrol_disconnect();
             return NULL;
         } else {
@@ -611,11 +611,11 @@ send_command(char *command)
                 bytes = recv(callcontrol_socket.sock, callcontrol_socket.data+received, BUFFER_SIZE-1-received, 0);
             while (bytes == -1 && errno == EINTR);
             if (bytes == -1) {
-                LM_ERR("failed to read answer: %d: %s\n", errno, strerror(errno));
+                LOG(L_ERR, "failed to read answer: %d: %s\n", errno, strerror(errno));
                 callcontrol_disconnect();
                 return NULL;
             } else if (bytes == 0) {
-                LM_ERR("connection with callcontrol closed\n");
+                LOG(L_ERR, "connection with callcontrol closed\n");
                 callcontrol_disconnect();
                 return NULL;
             } else {
@@ -649,7 +649,7 @@ call_control_initialize(struct sip_msg *msg)
 
     call = get_call_info(msg, CAInitialize);
     if (!call) {
-        LM_ERR("can't retrieve call info\n");
+        LOG(L_ERR, "can't retrieve call info\n");
         return -5;
     }
     message = make_request(call);
@@ -688,7 +688,7 @@ call_control_start(struct sip_msg *msg, struct dlg_cell *dlg)
 
     call = get_call_info(msg, CAStart);
     if (!call) {
-        LM_ERR("can't retrieve call info\n");
+        LOG(L_ERR, "can't retrieve call info\n");
         return -5;
     }
 
@@ -788,9 +788,9 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
         return;
 
     if (dlg_api.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, __dialog_replies, NULL, NULL) != 0)
-        LM_ERR("cannot register callback for dialog confirmation\n");
+        LOG(L_ERR, "cannot register callback for dialog confirmation\n");
     if (dlg_api.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY, __dialog_ended, (void*)CCActive, NULL) != 0)
-        LM_ERR("cannot register callback for dialog termination\n");
+        LOG(L_ERR, "cannot register callback for dialog termination\n");
 
     // reset the flag to indicate that the dialog for callcontrol was created
     request->msg_flags &= ~FL_USE_CALL_CONTROL;
@@ -801,9 +801,9 @@ static void
 __dialog_loaded(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
     if (dlg_api.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED, __dialog_replies, NULL, NULL) != 0)
-        LM_ERR("cannot register callback for dialog confirmation\n");
+        LOG(L_ERR, "cannot register callback for dialog confirmation\n");
     if (dlg_api.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY, __dialog_ended, (void*)CCActive, NULL) != 0)
-        LM_ERR("cannot register callback for dialog termination\n");
+        LOG(L_ERR, "cannot register callback for dialog termination\n");
 }
 
 
@@ -826,7 +826,7 @@ CallControl(struct sip_msg *msg, char *str1, char *str2)
         return 2;
 
     if (msg->first_line.type!=SIP_REQUEST || msg->REQ_METHOD!=METHOD_INVITE || has_to_tag(msg)) {
-        LM_WARN("call_control should only be called for the first INVITE\n");
+        LOG(L_WARN, "call_control should only be called for the first INVITE\n");
         return -5;
     }
 
@@ -854,48 +854,48 @@ mod_init(void)
 
     // initialize the canonical_uri_avp structure
     if (canonical_uri_avp.spec.s==NULL || *(canonical_uri_avp.spec.s)==0) {
-        LM_ERR("missing/empty canonical_uri_avp parameter. using default.\n");
+        LOG(L_ERR, "missing/empty canonical_uri_avp parameter. using default.\n");
         canonical_uri_avp.spec.s = CANONICAL_URI_AVP_SPEC;
     }
     canonical_uri_avp.spec.len = strlen(canonical_uri_avp.spec.s);
     if (pv_parse_spec(&(canonical_uri_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
-        LM_CRIT("invalid AVP specification for canonical_uri_avp: `%s'\n", canonical_uri_avp.spec.s);
+        LOG(L_CRIT, "invalid AVP specification for canonical_uri_avp: `%s'\n", canonical_uri_avp.spec.s);
         return -1;
     }
     if (pv_get_avp_name(0, &(avp_spec.pvp), &(canonical_uri_avp.name), &(canonical_uri_avp.type))!=0) {
-        LM_CRIT("invalid AVP specification for canonical_uri_avp: `%s'\n", canonical_uri_avp.spec.s);
+        LOG(L_CRIT, "invalid AVP specification for canonical_uri_avp: `%s'\n", canonical_uri_avp.spec.s);
         return -1;
     }
 
     // initialize the signaling_ip_avp structure
     if (signaling_ip_avp.spec.s==NULL || *(signaling_ip_avp.spec.s)==0) {
-        LM_ERR("missing/empty signaling_ip_avp parameter. using default.\n");
+        LOG(L_ERR, "missing/empty signaling_ip_avp parameter. using default.\n");
         signaling_ip_avp.spec.s = SIGNALING_IP_AVP_SPEC;
     }
     signaling_ip_avp.spec.len = strlen(signaling_ip_avp.spec.s);
     if (pv_parse_spec(&(signaling_ip_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
-        LM_CRIT("invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
+        LOG(L_CRIT, "invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
         return -1;
     }
     if (pv_get_avp_name(0, &(avp_spec.pvp), &(signaling_ip_avp.name), &(signaling_ip_avp.type))!=0) {
-        LM_CRIT("invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
+        LOG(L_CRIT, "invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
         return -1;
     }
 
     // bind to the dialog API
     if (load_dlg_api(&dlg_api)!=0) {
-        LM_CRIT("cannot load the dialog module API\n");
+        LOG(L_CRIT, "cannot load the dialog module API\n");
         return -1;
     }
 
     // load dlg_flag and default_timeout parameters from the dialog module
     param = find_param_export(find_module_by_name("dialog"), "dlg_flag", INT_PARAM, &type);
     if (!param) {
-        LM_CRIT("cannot find dlg_flag parameter in the dialog module\n");
+        LOG(L_CRIT, "cannot find dlg_flag parameter in the dialog module\n");
         return -1;
     }
     if (type != INT_PARAM) {
-        LM_CRIT("dlg_flag parameter found but with wrong type: %d\n", type);
+        LOG(L_CRIT, "dlg_flag parameter found but with wrong type: %d\n", type);
         return -1;
     }
 
@@ -903,13 +903,13 @@ mod_init(void)
 
     // register dialog creation callback
     if (dlg_api.register_dlgcb(NULL, DLGCB_CREATED, __dialog_created, NULL, NULL) != 0) {
-        LM_CRIT("cannot register callback for dialog creation\n");
+        LOG(L_CRIT, "cannot register callback for dialog creation\n");
         return -1;
     }
 
     // register dialog loading callback
     if (dlg_api.register_dlgcb(NULL, DLGCB_LOADED, __dialog_loaded, NULL, NULL) != 0) {
-        LM_ERR("cannot register callback for dialogs loaded from the database\n");
+        LOG(L_ERR, "cannot register callback for dialogs loaded from the database\n");
     }
 
     // register a pre-script callback to automatically enable dialog tracing
@@ -952,11 +952,11 @@ postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
 
     // the FL_USE_CALL_CONTROL flag is still set => the dialog was not created
 
-    LM_WARN("dialog to trace controlled call was not created. discarding callcontrol.");
+    LOG(L_WARN, "dialog to trace controlled call was not created. discarding callcontrol.");
 
     call = get_call_info(msg, CAStop);
     if (!call) {
-        LM_ERR("can't retrieve call info\n");
+        LOG(L_ERR, "can't retrieve call info\n");
         return -1;
     }
     call_control_stop(msg, call->callid);
