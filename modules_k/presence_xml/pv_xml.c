@@ -101,12 +101,20 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
     int i;
 	xmlNodeSetPtr nodes;
 	char *p;
+	xmlChar *keyword;
+	xmlBufferPtr psBuf;
 
 	if(xdoc==NULL || xdoc->doc==NULL || xdoc->xpathCtx==NULL
 			|| xdoc->xpathObj==NULL)
 		return -1;
 
     nodes = xdoc->xpathObj->nodesetval;
+	if(nodes==NULL)
+	{
+		xdoc->outbuf.len = 0;
+		xdoc->outbuf.s[xdoc->outbuf.len] = '\0';
+		return 0;
+	}
 	size = nodes->nodeNr;
     p = xdoc->outbuf.s;
 	for(i = 0; i < size; ++i)
@@ -118,10 +126,33 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 			*p = ',';
 			p++;
 		}
-		if(nodes->nodeTab[i]->content!=NULL)
+		if(nodes->nodeTab[i]->type == XML_ATTRIBUTE_NODE)
 		{
-			strcpy(p, (char*)nodes->nodeTab[i]->content);
-			p += strlen((char*)nodes->nodeTab[i]->content);
+			keyword = xmlNodeListGetString(xdoc->doc,
+				nodes->nodeTab[i]->children, 0);
+			if(keyword != NULL)
+			{
+				strcpy(p, (char*)keyword);
+				p += strlen((char*)keyword);
+				xmlFree(keyword);
+				keyword = NULL;
+			}
+		} else {
+			if(nodes->nodeTab[i]->content!=NULL)
+			{
+				strcpy(p, (char*)nodes->nodeTab[i]->content);
+				p += strlen((char*)nodes->nodeTab[i]->content);
+			} else {
+				psBuf = xmlBufferCreate();
+				if(psBuf != NULL && xmlNodeDump(psBuf, xdoc->doc,
+						nodes->nodeTab[i], 0, 0)>0)
+				{
+					strcpy(p, (char*)xmlBufferContent(psBuf));
+					p += strlen((char*)xmlBufferContent(psBuf));
+				}
+				if(psBuf != NULL) xmlBufferFree(psBuf);
+				psBuf = NULL;
+			}
 		}
 	}
 	xdoc->outbuf.len = p - xdoc->outbuf.s;
@@ -144,6 +175,8 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 		return -1;
 	}
     nodes = xdoc->xpathObj->nodesetval;
+	if(nodes==NULL)
+		return 0;
     size = nodes->nodeNr;
 
 	value = (const xmlChar*)xdoc->outbuf.s;
