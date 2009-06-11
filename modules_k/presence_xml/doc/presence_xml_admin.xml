@@ -276,6 +276,27 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>passive_mode</varname>(int)</title>
+		<para>
+		If set to 1, module acts in passive mode - no bind to presence module,
+		no connection to database. Useful when needing only to use $xml(...)
+		pseudoc-variable.
+		</para>
+		<para>
+			<emphasis>Default value: <quote>0</quote> (0 - active mode,
+				1 - passive mode).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>passive_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "passive_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 <section>
 	<title>Exported Functions</title>
@@ -292,6 +313,18 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 	script in the database directories in the kamailio/scripts folder.
 	You can also find the complete database documentation on the
 	project webpage, &kamailiodbdocs;.
+	</para>
+</section>
+
+<section>
+	<title>Exported pseudo-variables</title>
+	<itemizedlist>
+		<listitem><para>
+			<emphasis>$xml(name=>spec)</emphasis>
+		</para></listitem>
+	</itemizedlist>
+	<para>
+	Exported pseudo-variables are documented at &kamwikilink;.
 	</para>
 </section>
 

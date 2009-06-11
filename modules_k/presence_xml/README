@@ -35,9 +35,11 @@ Anca-Maria Vamanu
               3.7. pidf_manipulation (int)
               3.8. integrated_xcap_server (int)
               3.9. xcap_server (str)
+              3.10. passive_mode(int)
 
         4. Exported Functions
         5. Installation
+        6. Exported pseudo-variables
 
    2. Developer Guide
 
@@ -52,6 +54,7 @@ Anca-Maria Vamanu
    1.7. Set pidf_manipulation parameter
    1.8. Set integrated_xcap_server parameter
    1.9. Set xcap_server parameter
+   1.10. Set passive_mode parameter
 
 Chapter 1. Admin Guide
 
@@ -74,9 +77,11 @@ Chapter 1. Admin Guide
         3.7. pidf_manipulation (int)
         3.8. integrated_xcap_server (int)
         3.9. xcap_server (str)
+        3.10. passive_mode(int)
 
    4. Exported Functions
    5. Installation
+   6. Exported pseudo-variables
 
 1. Overview
 
@@ -123,6 +128,7 @@ Chapter 1. Admin Guide
    3.7. pidf_manipulation (int)
    3.8. integrated_xcap_server (int)
    3.9. xcap_server (str)
+   3.10. passive_mode(int)
 
 3.1. db_url(str)
 
@@ -252,6 +258,19 @@ modparam("presence_xml", "xcap_server", "xcap_server.example.org")
 modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 ...
 
+3.10. passive_mode(int)
+
+   If set to 1, module acts in passive mode - no bind to presence module,
+   no connection to database. Useful when needing only to use $xml(...)
+   pseudoc-variable.
+
+   Default value: "0" (0 - active mode, 1 - passive mode).
+
+   Example 1.10. Set passive_mode parameter
+...
+modparam("presence_xml", "passive_mode", 1)
+...
+
 4. Exported Functions
 
    None to be used in configuration file.
@@ -263,6 +282,13 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+6. Exported pseudo-variables
+
+     * $xml(name=>spec)
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.
 
 Chapter 2. Developer Guide
 
