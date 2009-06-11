@@ -1742,8 +1742,9 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
 
 
 /** script function, check if a msg is assoc. to a transaction.
- * @return -1 (not), 1 (reply, ack or cancel for an existing transaction),
- *          0 (request retransmission)
+ * @return -1 (not), 1 (reply, e2e ack or cancel for an existing transaction),
+ *          0 (request retransmission, ack to negative reply or ack to local
+ *           transaction)
  * Note: the e2e ack matching works only for local e2e acks or for
  *       transactions with E2EACK* callbacks installed (but even in this
  *       case matching E2EACKs on proxied transaction is not entirely
@@ -1763,15 +1764,26 @@ static int t_check_trans(struct sip_msg* msg, char* foo, char* bar)
 			case -2: /* possible e2e ack */
 				return 1;
 			case 1: /* found */
-				if (msg->REQ_METHOD==METHOD_ACK)
-					/* ack to neg. reply */
-					return 1;
-				/* else retransmission */
 				t=get_t();
-				t_retransmit_reply(t);
-				UNREF(t);
-				set_t(0);
-				return 0;
+				if (msg->REQ_METHOD==METHOD_ACK){
+					/* ack to neg. reply  or ack to local trans.
+					   => process it and end the script */
+					/* FIXME: there's no way to distinguish here 
+					   between acks to local trans. and neg. acks */
+					if (unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN)))
+						run_trans_callbacks(TMCB_ACK_NEG_IN, t, msg,
+											0, msg->REQ_METHOD);
+					t_release_transaction(t);
+				} else {
+					/* is a retransmission */
+					if (unlikely(has_tran_tmcbs(t, TMCB_REQ_RETR_IN)))
+						run_trans_callbacks(TMCB_REQ_RETR_IN, t, msg,
+											0, msg->REQ_METHOD);
+					t_retransmit_reply(t);
+				}
+				/* no need for UNREF(t); set_t(0) - the end-of-script
+				   t_unref callback will take care of them */
+				return 0; /* return from the script */
 		}
 		/* not found or error */
 	}
