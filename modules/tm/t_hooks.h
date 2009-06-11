@@ -146,21 +146,13 @@ struct cell;
  * incomplete -- this callback is called in very early stage
  * before the message is shmem-ized (so that you can work
  * with it).
- * It's safe to install other TMCB callbacks from here.
  * Note: this callback MUST be installed before forking
  * (the req_in_tmcb_hl callback list does not live in shmem and has no access
  * protection), i.e., at best from mod_init functions.
  *
- * Note: all the other callbacks MUST be installed before or immediately after
- *  the transaction is created (they must not be installed from any place 
- *  where the transaction callbacks can be run or added simultaneously with 
- *  the add operation). Another safe way of installing them is to hold the
- *  REPLY lock prior to adding a callback.
- *  In general it's not safe to register callbacks from other TMCB callbacks,
- *  unless the contrary is explicitly stated in the TMCB callback description.
- *  For example a good place for installing them is from a TMCB_REQUEST_IN 
- *  callback.
- *
+ * Note: All the other callbacks can be safely installed when the
+ * transaction already exists, it does not need to be locked.
+ * 
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
  * an existing non-local transaction. It may or may not be a retransmission.
  * No lock is held here (yet).
