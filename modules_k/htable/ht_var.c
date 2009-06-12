@@ -83,7 +83,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 	}
 	LM_DBG("set value for $ht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
 			htname.len, htname.s);
-	if(val==NULL)
+	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		/* delete it */
 		ht_del_cell(hpv->ht, &htname);
