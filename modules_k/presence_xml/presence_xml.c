@@ -112,7 +112,9 @@ static param_export_t params[]={
 	{ "disable_presence",	INT_PARAM, &disable_presence },
 	{ "disable_winfo",		INT_PARAM, &disable_winfo },
 	{ "disable_bla",		INT_PARAM, &disable_bla },
-	{ "passive_mode",		INT_PARAM, &passive_mode },	{ 0, 0, 0}
+	{ "passive_mode",		INT_PARAM, &passive_mode },
+	{ "xml_ns",             STR_PARAM|USE_FUNC_PARAM, (void*)pv_xml_ns_param },
+	{ 0, 0, 0}
 };
 
 static mi_export_t mi_cmds[] = {

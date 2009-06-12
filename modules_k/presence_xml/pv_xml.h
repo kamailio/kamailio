@@ -23,6 +23,7 @@
 #ifndef _PV_XML_H_
 #define _PV_XML_H_
 
+#include "../../sr_module.h"
 #include "../../pvar.h"
 
 int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
@@ -31,5 +32,7 @@ int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
 int pv_parse_xml_name(pv_spec_p sp, str *in);
+
+int pv_xml_ns_param(modparam_t type, void *val);
 
 #endif

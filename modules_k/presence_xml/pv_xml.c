@@ -30,6 +30,7 @@
 #include <libxml/xpathInternals.h>
 
 #include "../../mem/mem.h"
+#include "../../parser/parse_param.h"
 #include "../../hashes.h"
 #include "../../dprint.h"
 
@@ -57,6 +58,8 @@ typedef struct _pv_xml_spec {
 } pv_xml_spec_t;
 
 pv_xml_t *_pv_xml_root = NULL;
+
+param_t *_pv_xml_ns_root = NULL;
 
 pv_xml_t *pv_xml_get_struct(str *name)
 {
@@ -159,6 +162,7 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 	xdoc->outbuf.s[xdoc->outbuf.len] = '\0';
 	return 0;
 }
+
 int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 {
 	xmlNodeSetPtr nodes;
@@ -220,6 +224,17 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 	xdoc->outbuf.s[0] = '\0';
 	xdoc->outbuf.len = 0;
 	return 0;
+}
+
+void pv_xml_register_ns(xmlXPathContextPtr xpathCtx)
+{
+	param_t *ns;
+	ns = _pv_xml_ns_root;
+	while(ns) {
+		xmlXPathRegisterNs(xpathCtx, (xmlChar*)ns->name.s,
+				(xmlChar*)ns->body.s);
+		ns = ns->next;
+	}
 }
 
 int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
@@ -286,6 +301,7 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 			}
 			
 			/* Evaluate xpath expression */
+			pv_xml_register_ns(pxs->xdoc->xpathCtx);
 			pxs->xdoc->xpathObj = xmlXPathEvalExpression(
 					(const xmlChar*)xpaths.s, pxs->xdoc->xpathCtx);
 			if(pxs->xdoc->xpathObj == NULL)
@@ -492,5 +508,43 @@ error:
 	if(pxs!=NULL)
 		pkg_free(pxs);
 	return -1;
+}
+
+int pv_xml_ns_param(modparam_t type, void *val)
+{
+	char *p;
+	param_t *ns;
+
+	if(val==NULL)
+		goto error;
+	ns = (param_t*)pkg_malloc(sizeof(param_t));
+
+	if(ns==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		goto error;
+	}
+	memset(ns, 0, sizeof(param_t));
+
+	p = strchr((const char*)val, '=');
+	if(p==NULL)
+	{
+		ns->name.s = "";
+		ns->body.s = (char*)val;
+		ns->body.len = strlen(ns->body.s);
+	} else {
+		*p = 0;
+		p++;
+		ns->name.s = (char*)val;
+		ns->name.len = strlen(ns->name.s);
+		ns->body.s = p;
+		ns->body.len = strlen(ns->body.s);
+	}
+	ns->next = _pv_xml_ns_root;
+	_pv_xml_ns_root = ns;
+	return 0;
+error:
+	return -1;
+
 }
 
