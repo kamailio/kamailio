@@ -863,14 +863,91 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 	regex_t re;
 	regmatch_t pmatch;
 	int cnt = 0;
+	int op = 0;
+	str sval;
+	str tval;
+	int ival = 0;
 
 	if(sre==NULL || sre->len<=0 || ht==NULL)
 		return 0;
 
-	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+	if(sre->len>=2)
 	{
-		LM_ERR("bad re %s\n", sre->s);
-		return 0;
+		switch(sre->s[0]) {
+			case '~':
+				switch(sre->s[1]) {
+					case '~':
+						op = 1; /* regexp */
+					break;
+					case '%':
+						op = 2; /* rlike */
+					break;
+				}
+			break;
+			case '%':
+				switch(sre->s[1]) {
+					case '~':
+						op = 3; /* llike */
+					break;
+				}
+			break;
+			case '=':
+				switch(sre->s[1]) {
+					case '=':
+						op = 4; /* str eq */
+					break;
+				}
+			break;
+			case 'e':
+				switch(sre->s[1]) {
+					case 'q':
+						op = 5; /* int eq */
+					break;
+				}
+			break;
+			case '*':
+				switch(sre->s[1]) {
+					case '*':
+						op = 6; /* int eq */
+					break;
+				}
+			break;
+		}
+	}
+
+	if(op==6) {
+		/* count all */
+		for(i=0; i<ht->htsize; i++)
+			cnt += ht->entries[i].esize;
+		return cnt;
+	}
+
+	if(op > 0) {
+		if(sre->len<=2)
+			return 0;
+		sval = *sre;
+		sval.s += 2;
+		sval.len -= 2;
+		if(op==5) {
+			if(mode==0)
+			{
+				/* match by name */
+				return 0;
+			}
+			str2sint(&sval, &ival);
+		}
+	} else {
+		sval = *sre;
+		op = 1;
+	}
+
+	if(op==1)
+	{
+		if (regcomp(&re, sval.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+		{
+			LM_ERR("bad re %s\n", sre->s);
+			return 0;
+		}
 	}
 
 	for(i=0; i<ht->htsize; i++)
@@ -881,21 +958,52 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 		while(it)
 		{
 			it0 = it->next;
-			if(mode==0)
+			if(op==5)
 			{
-				/* match by name */
-				if (regexec(&re, it->name.s, 1, &pmatch, 0)==0)
-					cnt++;
-			} else {
-				if(it->flags&AVP_VAL_STR)
-					if (regexec(&re, it->value.s.s, 1, &pmatch, 0)==0)
+				if(!(it->flags&AVP_VAL_STR))
+					if( it->value.n==ival)
 						cnt++;
+			} else {
+				tval.len = -1;
+				if(mode==0)
+				{
+					/* match by name */
+					tval = it->name;
+				} else {
+					if(it->flags&AVP_VAL_STR)
+						tval = it->value.s;
+				}
+				if(tval.len>-1) {
+					switch(op) {
+						case 1: /* regexp */
+							if (regexec(&re, tval.s, 1, &pmatch, 0)==0)
+								cnt++;
+						break;
+						case 2: /* rlike */
+							if(sval.len<=tval.len 
+									&& strncmp(sval.s,
+										tval.s+tval.len-sval.len, sval.len)==0)
+								cnt++;
+						break;
+						case 3: /* llike */
+							if(sval.len<=tval.len 
+									&& strncmp(sval.s, tval.s, sval.len)==0)
+								cnt++;
+						break;
+						case 4: /* str eq */
+							if(sval.len==tval.len 
+									&& strncmp(sval.s, tval.s, sval.len)==0)
+								cnt++;
+						break;
+					}
+				}
 			}
 			it = it0;
 		}
 		lock_release(&ht->entries[i].lock);
 	}
-	regfree(&re);
+	if(op==1)
+		regfree(&re);
 	return cnt;
 }
 
