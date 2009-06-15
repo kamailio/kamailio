@@ -892,7 +892,6 @@ error:
 #endif /* USE_SCTP_OO */
 
 
-#define SCTP_CONN_REUSE /* FIXME */
 #ifdef SCTP_CONN_REUSE
 
 /* we  need SCTP_ADDR_HASH for being able to make inquires related to existing
@@ -2462,7 +2461,8 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 	/* if dst->id is set it means we want to send on association with
 	   ser id dst->id if still opened and only if closed use dst->to */
 	assoc_id=0;
-	if ((dst->id) && (assoc_id=sctp_con_get_assoc(dst->id, &si, &to, 0))){
+	if (cfg_get(sctp, sctp_cfg, assoc_reuse) && (dst->id) &&
+			(assoc_id=sctp_con_get_assoc(dst->id, &si, &to, 0))){
 		DBG("sctp: sending on sctp assoc_id %d (ser id %d)\n",
 				assoc_id, dst->id);
 		sinfo->sinfo_assoc_id=assoc_id;

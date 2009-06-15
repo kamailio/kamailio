@@ -613,12 +613,13 @@ static void core_sctp_options(rpc_t* rpc, void* c)
 	if (!sctp_disable){
 		sctp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddddddddddddddd",
+		rpc->struct_add(handle, "ddddddddddddddddd",
 			"sctp_socket_rcvbuf",	t.so_rcvbuf,
 			"sctp_socket_sndbuf",	t.so_sndbuf,
 			"sctp_autoclose",		t.autoclose,
 			"sctp_send_ttl",	t.send_ttl,
 			"sctp_send_retries",	t.send_retries,
+			"sctp_assoc_reuse",	t.assoc_reuse,
 			"sctp_srto_initial",	t.srto_initial,
 			"sctp_srto_max",		t.srto_max,
 			"sctp_srto_min",		t.srto_min,

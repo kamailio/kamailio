@@ -338,6 +338,7 @@ SCTP_SOCKET_SNDBUF	"sctp_socket_sndbuf"|"sctp_socket_send_buffer"
 SCTP_AUTOCLOSE	"sctp_autoclose"
 SCTP_SEND_TTL	"sctp_send_ttl"
 SCTP_SEND_RETRIES	"sctp_send_retries"
+SCTP_ASSOC_REUSE	"sctp_assoc_reuse"
 SCTP_SRTO_INITIAL	"sctp_srto_initial"
 SCTP_SRTO_MAX		"sctp_srto_max"
 SCTP_SRTO_MIN		"sctp_srto_min"
@@ -679,6 +680,8 @@ EAT_ABLE	[\ \t\b\r]
 										return SCTP_SEND_TTL; }
 <INITIAL>{SCTP_SEND_RETRIES}	{ count(); yylval.strval=yytext;
 										return SCTP_SEND_RETRIES; }
+<INITIAL>{SCTP_ASSOC_REUSE}		{ count(); yylval.strval=yytext;
+										return SCTP_ASSOC_REUSE; }
 <INITIAL>{SCTP_SRTO_INITIAL}	{ count(); yylval.strval=yytext;
 										return SCTP_SRTO_INITIAL; }
 <INITIAL>{SCTP_SRTO_MAX}	{ count(); yylval.strval=yytext;

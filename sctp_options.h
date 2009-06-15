@@ -28,6 +28,11 @@
 #ifndef _sctp_options_h
 #define _sctp_options_h
 
+#ifndef NO_SCTP_CONN_REUSE
+/* SCTP connection reuse by default */
+#define SCTP_CONN_REUSE
+#endif
+
 #define DEFAULT_SCTP_AUTOCLOSE 180 /* seconds */
 #define DEFAULT_SCTP_SEND_TTL  32000 /* in ms (32s)  */
 #define DEFAULT_SCTP_SEND_RETRIES 0
@@ -40,6 +45,7 @@ struct cfg_group_sctp{
 	unsigned int autoclose; /* in seconds */
 	unsigned int send_ttl; /* in milliseconds */
 	unsigned int send_retries;
+	int assoc_reuse; /* reuse the request connection for sending the reply*/
 	unsigned int srto_initial; /** initial retr. timeout */
 	unsigned int srto_max;     /** max retr. timeout */
 	unsigned int srto_min;     /** min retr. timeout */

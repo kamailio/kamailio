@@ -48,6 +48,7 @@ struct cfg_group_sctp sctp_default_cfg;
 
 
 static int set_autoclose(void* cfg_h, str* gname, str* name, void** val);
+static int set_assoc_reuse(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_initial(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_max(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_min(void* cfg_h, str* gname, str* name, void** val);
@@ -76,6 +77,8 @@ static cfg_def_t sctp_cfg_def[] = {
 		"milliseconds before aborting a send" },
 	{ "send_retries", CFG_VAR_INT| CFG_ATOMIC, 0, MAX_SCTP_SEND_RETRIES, 0, 0,
 		"re-send attempts on failure" },
+	{ "assoc_reuse", CFG_VAR_INT| CFG_ATOMIC, 0, 1, set_assoc_reuse, 0,
+		"connection/association reuse (for now used only for replies)" },
 	{ "srto_initial", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_initial, 0,
 		"initial value of the retr. timeout, used in RTO calculations,"
 			" in msecs" },
@@ -120,6 +123,11 @@ void init_sctp_options()
 	sctp_default_cfg.autoclose=DEFAULT_SCTP_AUTOCLOSE; /* in seconds */
 	sctp_default_cfg.send_ttl=DEFAULT_SCTP_SEND_TTL;   /* in milliseconds */
 	sctp_default_cfg.send_retries=DEFAULT_SCTP_SEND_RETRIES;
+#ifdef SCTP_CONN_REUSE
+	sctp_default_cfg.assoc_reuse=1; /* on by default */
+#else
+	sctp_default_cfg.assoc_reuse=0;
+#endif /* SCTP_CONN_REUSE */
 #endif
 }
 
@@ -206,6 +214,19 @@ static int set_autoclose(void* cfg_h, str* gname, str* name, void** val)
 	ERR("no SCTP_AUTOCLOSE support, please upgrade your sctp library\n");
 	return -1;
 #endif /* SCTP_AUTOCLOSE */
+}
+
+
+
+static int set_assoc_reuse(void* cfg_h, str* gname, str* name, void** val)
+{
+#ifndef SCTP_CONN_REUSE
+	if ((int)(long)(*val)!=0){
+		ERR("no SCTP_CONN_REUSE support, please recompile with it enabled\n");
+		return -1;
+	}
+#endif /* SCTP_AUTOCLOSE */
+	return 0;
 }
 
 
