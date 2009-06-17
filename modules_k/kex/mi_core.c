@@ -48,6 +48,8 @@
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../version.h"
+#include "../../cfg/cfg.h"
+#include "../../cfg/cfg_ctx.h"
 
 #define BUILD_STR __FILE__ " compiled on "__TIME__ " " __DATE__ " with " COMPILER "\n"
 #define BUILD_STR_LEN (sizeof(BUILD_STR)-1)
@@ -58,6 +60,7 @@
 
 static time_t kmi_up_since;
 static str    kmi_up_since_ctime;
+static cfg_ctx_t	*_kex_cfg_ctx = NULL;
 
 static int init_mi_uptime(void)
 {
@@ -308,26 +311,30 @@ static struct mi_root *mi_kill(struct mi_root *cmd, void *param)
 }
 
 
-#if 0
 static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
 	struct mi_node *node;
 	char *p;
 	int len;
-	int new_debug;
+	int new_debug = 0;
+	str group_name = {"core", 4};
+	str var_name = {"debug", 5};
+	void *vval;
+	int set = 0;
+	unsigned int val_type;
 
-#ifdef CHANGEABLE_DEBUG_LEVEL
 	node = cmd->node.kids;
 	if (node!=NULL) {
 		if (str2sint( &node->value, &new_debug) < 0)
 			return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
-	} else
-		new_debug = *debug;
-#else
-		new_debug = debug;
-#endif
-
+		set = 1;
+	} else {
+		if(cfg_get_by_name(_kex_cfg_ctx, &group_name, &var_name, &vval,
+					&val_type)!=0)
+			return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
+		new_debug = *((int*)vval);
+	}
 	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
 	if (rpl_tree==0)
 		return 0;
@@ -340,13 +347,13 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 		return 0;
 	}
 
-#ifdef CHANGEABLE_DEBUG_LEVEL
-	*debug = new_debug;
-#endif
+	if(set==1) {
+		cfg_set_now(_kex_cfg_ctx, &group_name, &var_name,
+				(void *)(long)new_debug, CFG_VAR_INT);
+	}
 
 	return rpl_tree;
 }
-#endif
 
 
 static mi_export_t mi_core_cmds[] = {
@@ -357,9 +364,7 @@ static mi_export_t mi_core_cmds[] = {
 	{ "which",    mi_which,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ "kill",     mi_kill,     MI_NO_INPUT_FLAG,  0,  0 },
 	{ "ps",       mi_ps,       MI_NO_INPUT_FLAG,  0,  0 },
-#if 0
 	{ "debug",    mi_debug,                   0,  0,  0 },
-#endif
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -367,6 +372,11 @@ static mi_export_t mi_core_cmds[] = {
 
 int init_mi_core(void)
 {
+	if (cfg_register_ctx(&_kex_cfg_ctx, NULL)) {
+		LM_ERR("failed to register cfg context\n");
+		return -1;
+	}
+
 	if (register_mi_mod( "core", mi_core_cmds)<0) {
 		LM_ERR("unable to register core MI cmds\n");
 		return -1;
