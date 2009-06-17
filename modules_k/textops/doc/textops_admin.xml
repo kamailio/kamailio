@@ -606,7 +606,7 @@ set_reply_body("test", "text/plain");
 		<function moreinfo="none">filter_body(content_type)</function>
 		</title>
 		<para>
-		Filters multipart body by leaving out all other body
+		Filters multipart/mixed body by leaving out all other body
 		parts except the first body part of given type.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
