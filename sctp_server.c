@@ -309,6 +309,8 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 #ifdef SCTP_PEER_ADDR_PARAMS
 	optlen=sizeof(pp);
 	memset(&pp, 0, sizeof(pp)); /* get defaults */
+	/* set the AF, needed on older linux kernels even for INADDR_ANY */
+	pp.spp_address.ss_family=AF_INET;
 	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, (void*)&pp,
 							&optlen, "SCTP_PEER_ADDR_PARAMS")==0){
 		/* success => hack to set the "default" values*/
@@ -357,7 +359,7 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
    only a limited number of sctp socket options)
    returns 0 on success, -1 on error
    WARNING: please keep it sync'ed w/ sctp_check_compiled_sockopts() */
-static int sctp_init_sock_opt_common(int s)
+static int sctp_init_sock_opt_common(int s, int af)
 {
 	int optval;
 	int pd_point;
@@ -596,6 +598,7 @@ static int sctp_init_sock_opt_common(int s)
 	/* set sctp peer addr options: hbinterval & pathmaxrxt */
 #ifdef SCTP_PEER_ADDR_PARAMS
 	memset(&pp, 0, sizeof(pp));
+	pp.spp_address.ss_family=af;
 	pp.spp_hbinterval=cfg_get(sctp, sctp_cfg, hbinterval);
 	pp.spp_pathmaxrxt=cfg_get(sctp, sctp_cfg, pathmaxrxt);
 	if (pp.spp_hbinterval || pp.spp_pathmaxrxt){
@@ -804,7 +807,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 #endif
 
 	/* set sock opts */
-	if (sctp_init_sock_opt_common(sock_info->socket)!=0)
+	if (sctp_init_sock_opt_common(sock_info->socket, sock_info->address.af)!=0)
 		goto error;
 	/* SCTP_EVENTS for send dried out -> present in the draft not yet
 	 * present in linux (might help to detect when we could send again to
@@ -862,7 +865,7 @@ int sctp_init_sock_oo(struct socket_info* sock_info)
 	}
 	
 	/* set sock opts */
-	if (sctp_init_sock_opt_common(sock_info->socket)!=0)
+	if (sctp_init_sock_opt_common(sock_info->socket, sock_info->address.af)!=0)
 		goto error;
 	
 #ifdef SCTP_REUSE_PORT

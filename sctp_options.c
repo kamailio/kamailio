@@ -387,8 +387,15 @@ static int set_hbinterval(void* cfg_h, str* gname, str* name,
 	}else{
 		pp.spp_flags=SPP_HB_DISABLE;
 	}
-	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, pp,
-							"cfg: setting SCTP_PEER_ADDR_PARAMS");
+	err=0;
+	for (si=sctp_listen; si; si=si->next){
+		/* set the AF, needed on older linux kernels even for INADDR_ANY */
+		pp.spp_address.ss_family=si->address.af;
+		err+=(sctp_setsockopt(si->socket, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS,
+								(void*)(&pp), sizeof(pp),
+								"cfg: setting SCTP_PEER_ADDR_PARAMS")<0);
+	}
+	return -(err!=0);
 #else
 	ERR("no SCTP_PEER_ADDR_PARAMS support, please upgrade your"
 			" sctp library\n");
@@ -411,8 +418,15 @@ static int set_pathmaxrxt(void* cfg_h, str* gname, str* name,
 	}
 	memset(&pp, 0, sizeof(pp)); /* zero everything we don't care about */
 	pp.spp_pathmaxrxt=(int)(long)(*val);
-	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, pp,
-							"cfg: setting SCTP_PEER_ADDR_PARAMS");
+	err=0;
+	for (si=sctp_listen; si; si=si->next){
+		/* set the AF, needed on older linux kernels even for INADDR_ANY */
+		pp.spp_address.ss_family=si->address.af;
+		err+=(sctp_setsockopt(si->socket, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS,
+								(void*)(&pp), sizeof(pp),
+								"cfg: setting SCTP_PEER_ADDR_PARAMS")<0);
+	}
+	return -(err!=0);
 #else
 	ERR("no SCTP_PEER_ADDR_PARAMS support, please upgrade your"
 			" sctp library\n");
