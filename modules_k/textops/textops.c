@@ -63,6 +63,7 @@
 #include "../../parser/parse_hname2.h"
 #include "../../parser/parse_methods.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_param.h"
 #include "../../lib/kcore/parse_privacy.h"
 #include "../../mod_fix.h"
 #include "../../ut.h"
@@ -831,27 +832,77 @@ static inline int find_line_start(char *text, unsigned int text_len,
 }
 
 
-/* Filters multipart body by leaving out everything else except
+/* Filters multipart/mixed body by leaving out everything else except
  * first body part of given content type. */
 static int filter_body_f(struct sip_msg* msg, char* _content_type,
 			 char* ignored)
 {
 	char *start;
 	unsigned int len;
-	str *content_type, body;
+	str *content_type, body, params, boundary;
+	param_hooks_t hooks;
+	param_t *p, *list;
+	unsigned int mime;
 
 	body.s = get_body(msg);
 	if (body.s == 0) {
-		LM_ERR("Failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
 	body.len = msg->len - (int)(body.s - msg->buf);
 	if (body.len == 0) {
-		LM_DBG("Message body has zero length\n");
+		LM_DBG("message body has zero length\n");
 		return -1;
 	}
 	
 	content_type = (str *)_content_type;
+
+	mime = parse_content_type_hdr(msg);
+	if (mime <= 0) {
+	    LM_ERR("failed to parse Content-Type hdr\n");
+	    return -1;
+	}
+	if (mime != ((TYPE_MULTIPART << 16) + SUBTYPE_MIXED)) {
+	    LM_ERR("content type is not multipart/mixed\n");
+	    return -1;
+	}
+
+	params.s = memchr(msg->content_type->body.s, ';', 
+			  msg->content_type->body.len);
+	if (params.s == NULL) {
+	    LM_ERR("Content-Type hdr has no params\n");
+	    return -1;
+	}
+	params.len = msg->content_type->body.len - 
+	    (params.s - msg->content_type->body.s);
+	if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0) {
+	    LM_ERR("while parsing Content-Type params\n");
+	    return -1;
+	}
+	boundary.s = NULL;
+	for (p = list; p; p = p->next) {
+	    if ((p->name.len == 8)
+		&& (strncasecmp(p->name.s, "boundary", 8) == 0)) {
+		boundary.s = pkg_malloc(p->body.len + 2);
+		if (boundary.s == NULL) {
+		    free_params(list);
+		    LM_ERR("no memory for boundary string\n");
+		    return -1;
+		}
+		*(boundary.s) = '-';
+		*(boundary.s + 1) = '-';
+		memcpy(boundary.s + 2, p->body.s, p->body.len);
+		boundary.len = 2 + p->body.len;
+		LM_DBG("boundary is <%.*s>\n", boundary.len, boundary.s);
+		break;
+	    }
+	}
+	free_params(list);
+	if (boundary.s == NULL) {
+	    LM_ERR("no mandatory param \";boundary\"\n");
+	    return -1;
+	}
+	
 	start = body.s;
 	len = body.len;
 	
@@ -861,10 +912,12 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 	    if (len > content_type->len + 2) {
 		if (strncasecmp(start, content_type->s, content_type->len)
 		    == 0) {
+		    LM_DBG("found content type %.*s\n",
+			    content_type->len, content_type->s);
 		    start = start + content_type->len;
 		    if ((*start != 13) || (*(start + 1) != 10)) {
-			LM_ERR("No CRLF found after content type\n");
-			return -1;
+			LM_ERR("no CRLF found after content type\n");
+			goto err;
 		    }
 		    start = start + 2;
 		    len = len - content_type->len - 2;
@@ -874,27 +927,32 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 		    }
 		    if (del_lump(msg, body.s - msg->buf, start - body.s, 0)
 			== 0) {
-			LM_ERR("Deleting lump <%.*s> failed\n",
+			LM_ERR("deleting lump <%.*s> failed\n",
 			       (int)(start - body.s), body.s);
-			return -1;
+			goto err;
 		    }
-		    if (find_line_start("--Boundary", 10, &start, &len)) {
+		    if (find_line_start(boundary.s, boundary.len, &start,
+					&len)) { 
 			if (del_lump(msg, start - msg->buf, len, 0) == 0) {
-			    LM_ERR("Deleting lump <%.*s> failed\n",
+			    LM_ERR("deleting lump <%.*s> failed\n",
 				   len, start);
-			    return -1;
+			    goto err;
 			} else {
+			    pkg_free(boundary.s);
 			    return 1;
 			}
 		    } else {
-			LM_ERR("Boundary not found after content\n");
-			return -1;
+			LM_ERR("boundary not found after content\n");
+			goto err;
 		    }
 		}
 	    } else {
+		pkg_free(boundary.s);
 		return -1;
 	    }
 	}
+ err:
+	pkg_free(boundary.s);
 	return -1;
 }
 
