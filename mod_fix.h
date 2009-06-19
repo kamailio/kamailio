@@ -109,6 +109,9 @@ int fixup_igp_igp(void** param, int param_no);
 int fixup_igp_null(void** param, int param_no);
 int fixup_get_ivalue(struct sip_msg* msg, gparam_p gp, int *val);
 
+int fixup_igp_pvar(void** param, int param_no);
+int fixup_free_igp_pvar(void** param, int param_no);
+
 int fixup_igp_pvar_pvar(void** param, int param_no);
 int fixup_free_igp_pvar_pvar(void** param, int param_no);
 
