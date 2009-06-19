@@ -6,5 +6,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=drouting.so
 LIBS= 
+DEFS+=-DOPENSER_MOD_INTERFACE
 
 include ../../Makefile.modules
