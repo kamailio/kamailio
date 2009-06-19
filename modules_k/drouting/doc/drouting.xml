@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "drouting_admin.xml">
+<!ENTITY devel SYSTEM "drouting_devel.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>Dynamic Routing Module</title>
+	<productname class="trade">&osipsname;</productname>
+	<authorgroup>
+		<author>
+		<firstname></firstname>
+		<surname></surname>
+		<affiliation><orgname>&vsname;</orgname></affiliation>
+		<address>
+			<email>team@voice-system.ro</email>
+		<otheraddr>
+			<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+		</author>
+		<editor>
+		<firstname>Anca-Maria</firstname>
+		<surname>Vamanu</surname>
+		<address>
+			<email>team@voice-system.ro</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2005-2008</year>
+		<holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 4473 $</revnumber>
+		<date>$Date: 2008-07-12 00:16:22 +0300 (Sat, 12 Jul 2008) $</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+
+	&admin;
+	&devel;
+
+</book>
+
+

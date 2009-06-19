@@ -1,0 +1,11 @@
+<!-- Drouting Module Developer's Guide -->
+
+<chapter>
+
+	<title>&develguide;</title>
+	<para>
+		The module provides no function to be used
+		by other &osips; modules.
+	</para>
+</chapter>
+
