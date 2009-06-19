@@ -42,7 +42,7 @@
 	<section>
 	<title>Features</title>
 	<para>
-	The dynamic routing implementation for &osips; is designed with the
+	The dynamic routing implementation for &kamailio; is designed with the
 	following properties:
 	</para>
 	<itemizedlist>
@@ -790,7 +790,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&osips; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -1356,7 +1356,7 @@ if (is_from_gw("3","1") {
 	dr_gateways, dr_rules. The SQL syntax to create them can be
 	found in drouting-create.sql script in the database directories
 	in the opensips/scripts folder. You can also find the complete
-	database documentation on the project webpage, &osipsdbdocslink;.
+	database documentation on the project webpage, &kamailiodbdocslink;.
 	</para>
 </section>
 

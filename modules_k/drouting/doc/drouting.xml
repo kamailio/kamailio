@@ -7,7 +7,7 @@
 <!ENTITY devel SYSTEM "drouting_devel.xml">
 
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
@@ -15,7 +15,7 @@
 <book>
 	<bookinfo>
 	<title>Dynamic Routing Module</title>
-	<productname class="trade">&osipsname;</productname>
+	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 		<author>
 		<firstname></firstname>

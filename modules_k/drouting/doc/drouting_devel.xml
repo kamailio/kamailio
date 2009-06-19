@@ -5,7 +5,7 @@
 	<title>&develguide;</title>
 	<para>
 		The module provides no function to be used
-		by other &osips; modules.
+		by other &kamailio; modules.
 	</para>
 </chapter>
 
