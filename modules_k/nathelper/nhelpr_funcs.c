@@ -46,6 +46,8 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parser_f.h"
+#include "../../parser/sdp/sdp_helpr_funcs.h"
 
 #define READ(val) \
 	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
@@ -65,6 +67,12 @@
 
 
 
+/**
+ * return:
+ * -1: error
+ *  1: text or sdp
+ *  2: multipart
+ */
 int check_content_type(struct sip_msg *msg)
 {
 	static unsigned int appl[16] = {
@@ -101,6 +109,10 @@ int check_content_type(struct sip_msg *msg)
 	}
 
 	trim_len(str_type.len,str_type.s,msg->content_type->body);
+	if (str_type.len>=15 && (*str_type.s=='m' || *str_type.s=='M')
+			&& strncasecmp(str_type.s, "multipart/mixed", 15) == 0) {
+		return 2;
+    }
 	p = str_type.s;
 	advance(p,4,str_type,error_1);
 	x = READ(p-4);
@@ -157,6 +169,11 @@ int extract_body(struct sip_msg *msg, str *body )
 {
 	char c;
 	int skip;
+	int ret;
+	str mpdel;
+	char *rest, *p1, *p2;
+	struct hdr_field hf;
+	unsigned int mime;
 	
 	body->s = get_body(msg);
 	if (body->s==0) {
@@ -183,7 +200,7 @@ int extract_body(struct sip_msg *msg, str *body )
 	/* no need for parse_headers(msg, EOH), get_body will 
 	 * parse everything */
 	/*is the content type correct?*/
-	if (check_content_type(msg)==-1)
+	if((ret = check_content_type(msg))==1)
 	{
 		LM_ERR("content type mismatching\n");
 		goto error;
@@ -202,7 +219,57 @@ int extract_body(struct sip_msg *msg, str *body )
 
 	/*LM_DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);*/
 
-	return 1;
+	if(ret!=2)
+		return 1;
+	/* multipart body */
+	if(get_mixed_part_delimiter(&msg->content_type->body,&mpdel) < 0) {
+		goto error;
+	}
+	p1 = find_sdp_line_delimiter(body->s, body->s+body->len, mpdel);
+	if (p1 == NULL) {
+		LM_ERR("empty multipart content\n");
+		return -1;
+	}
+	p2=p1;
+	c = 0;
+	for(;;)
+	{
+		p1 = p2;
+		if (p1 == NULL || p1 >= body->s+body->len)
+			break; /* No parts left */
+		p2 = find_next_sdp_line_delimiter(p1, body->s+body->len,
+				mpdel, body->s+body->len);
+		/* p2 is text limit for application parsing */
+		rest = eat_line(p1 + mpdel.len + 2, p2 - p1 - mpdel.len - 2);
+		if ( rest > p2 ) {
+			LM_ERR("Unparsable <%.*s>\n", (int)(p1-p1), p1);
+			return -1;
+		}
+		while( rest<p2 ) {
+			memset(&hf,0, sizeof(struct hdr_field));
+			rest = get_sdp_hdr_field(rest, p2, &hf);
+			if(hf.type==HDR_EOH_T)
+				break;
+			if(hf.type==HDR_ERROR_T)
+				return -1;
+			if(hf.type==HDR_CONTENTTYPE_T) {
+				if(decode_mime_type(hf.body.s, hf.body.s + hf.body.len,
+						&mime)==NULL)
+					return -1;
+				if (((((unsigned int)mime)>>16) == TYPE_APPLICATION)
+						&& ((mime&0x00ff) == SUBTYPE_SDP)) {
+					c = 1;
+				}
+			}
+		} /* end of while */
+		if(c==1)
+		{
+			body->s = rest;
+			body->len = p2-rest;
+			return 1;
+		}
+	}
+
 error:
 	return -1;
 }
