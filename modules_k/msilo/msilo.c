@@ -928,32 +928,12 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	/**
 	 * check if has expires=0 (REGISTER)
 	 */
-	if(parse_headers(msg, HDR_EXPIRES_F, 0) >= 0)
+	if(msg->first_line.u.request.method_value==METHOD_REGISTER)
 	{
-		/* check 'expires' > 0 */
-		if(msg->expires && msg->expires->body.len > 0)
-		{
-			i = atoi(msg->expires->body.s);
-			if(i <= 0)
-			{ /* user goes offline */
-				LM_DBG("user <%.*s> goes offline - expires=%d\n",
-						pto->uri.len, pto->uri.s, i);
-				goto error;
-			}
-			else
-				LM_DBG("user <%.*s> online - expires=%d\n",
-						pto->uri.len, pto->uri.s, i);
+		if (check_message_support(msg)!=0) {
+		    LM_DBG("MESSAGE method not supported\n");
+			return -1;
 		}
-	}
-	else
-	{
-		LM_ERR("failed to parse 'expires'\n");
-		goto error;
-	}
-
-	if (check_message_support(msg)!=0) {
-	    LM_DBG("MESSAGE method not supported\n");
-	    return -1;
 	}
 	 
 	/* get the owner */
@@ -1416,6 +1396,7 @@ int check_message_support(struct sip_msg* msg)
 	unsigned int allow_hdr = 0;
 	str *methods_body;
 	unsigned int methods;
+	int expires;
 
 	/* Parse all headers in order to see all Allow headers */
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1)
@@ -1457,24 +1438,37 @@ int check_message_support(struct sip_msg* msg)
 	 */
 	while(c)
 	{
-		if (c->methods)
+		/* calculate expires */
+		expires=1; /* 0 is explicitely set in hdr or param */
+		if(c->expires==NULL || c->expires->body.len<=0)
 		{
-			methods_body = &(c->methods->body);
-			if (parse_methods(methods_body, &methods) < 0)
-			{
-				LM_ERR("failed to parse contact methods\n");
-				return -1;
-			}
-			if (methods & METHOD_MESSAGE)
-			{
-				LM_DBG("MESSAGE contact found\n");
-				return 0;
-			}
+			if(msg->expires!=NULL && msg->expires->body.len>0)
+				expires = atoi(msg->expires->body.s);
 		} else {
-			if (allow_message)
+			str2int(&c->expires->body, (unsigned int*)(&expires));
+		}
+		/* skip contacts with zero expires */
+		if (expires > 0)
+		{
+			if (c->methods)
 			{
-				LM_DBG("MESSAGE found in Allow Header\n");
-				return 0;
+				methods_body = &(c->methods->body);
+				if (parse_methods(methods_body, &methods) < 0)
+				{
+					LM_ERR("failed to parse contact methods\n");
+					return -1;
+				}
+				if (methods & METHOD_MESSAGE)
+				{
+					LM_DBG("MESSAGE contact found\n");
+					return 0;
+				}
+			} else {
+				if (allow_message)
+				{
+					LM_DBG("MESSAGE found in Allow Header\n");
+					return 0;
+				}
 			}
 		}
 		if (contact_iterator(&c, msg, c) < 0)
