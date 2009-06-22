@@ -416,8 +416,9 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 }
 
 
-/*
- * Get the FR_{INV}_TIMER from corresponding AVP
+/** Get the FR_{INV}_TIMER from corresponding AVP.
+ * @return 0 on success (use *timer) or 1 on failure (avp non-existent,
+ *  avp present  but empty/0, avp value not numeric).
  */
 static inline int avp2timer(unsigned int* timer, int type, int_str name)
 {
@@ -443,7 +444,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 		*timer = val_istr.n;
 	}
 
-	return 0;
+	return *timer==0; /* 1 if 0 (use default), 0 if !=0 (use *timer) */
 }
 
 
