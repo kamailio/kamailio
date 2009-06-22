@@ -1,0 +1,7 @@
+id(int,auto) username(string) domain(string) password(string) first_name(string,null) last_name(string,null) email_address(string) datetime_created(int,null) ha1(string) ha1b(string) timezone(string,null) rpid(string,null)
+1:monitor:test.com:monitor:::test-team@test.com:1202336326:88bb9163d2b15a3c62def3975fdca72d:27b0e1a4da287171989894532c9f783e::
+2:test1:test.com:password:::test-team@test.com:1202336326:fb43223b02f6331f917cc2491235aad8:9b090c888afe748e3bf5b8681e71f29e::
+3:test2:test.com:password:::test-team@test.com:1202336327:9fe9bfa1315b8202838838c3807a0a32:fac1f260ebda200719de4aa29880ee05::
+4:monitor:test.com:monitor:::test-team@test.com:1202336326:88bb9163d2b15a3c62def3975fdca72d:27b0e1a4da287171989894532c9f783e::
+5:test1:test.com:password:::test-team@test.com:1202336375:fb43223b02f6331f917cc2491235aad8:9b090c888afe748e3bf5b8681e71f29e::
+6:test1:test.com:password:::test-team@test.com:1202336375:fb43223b02f6331f917cc2491235aad8:9b090c888afe748e3bf5b8681e71f29e::

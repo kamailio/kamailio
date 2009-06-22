@@ -1,0 +1,1 @@
+id(int,auto) carrier(int) domain(int) scan_prefix(string) host_name(string) reply_code(string) flags(int) mask(int) next_domain(int) description(string,null) 

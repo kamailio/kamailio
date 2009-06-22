@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+id(int) rlsubs_did(str) resource_uri(str) content_type(str) presence_state(str) expires(int) updated(int) auth_state(int) reason(str)
+METADATA_KEY
+1 
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL

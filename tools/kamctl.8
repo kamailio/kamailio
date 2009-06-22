@@ -1,0 +1,238 @@
+.\" $Id$
+.TH kamctl 8 05.02.2009 Kamailio "Kamailio" 
+.\" Process with
+.\" groff -man -Tascii kamctl.8 
+.\"
+.SH NAME
+kamctl \- Kamailio control tool
+.SH SYNOPSIS
+.B kamctl
+.BI command
+[
+.BI parameters
+]
+
+.SH DESCRIPTION
+.B kamctl
+is a shell script to control
+.B Kamailio SIP server
+It can be used to manage users, domains, aliases and other server options.
+
+
+.SH COMMANDS
+.TP 16
+.I Daemon Commands:
+.TP
+.B start
+Start Kamalio 
+.TP
+.B restart
+Restart Kamalio 
+.TP
+.B stop
+Stop Kamalio 
+.TP
+.B online 
+Display online users
+.TP
+.B monitor
+Show server's internal status
+.TP
+.B ping <uri> 
+Ping <uri> with SIP OPTIONS
+
+
+.TP 16
+.I Access control list (acl)  managment commands:
+.TP
+.B acl show [<username>]
+Show user membership
+.TP 
+.B acl grant <username> <group>
+Grant user membership (*)
+.TP
+.B acl revoke <username> [<group>] 
+Grant user membership(s) (*)
+
+.TP 16
+.I  Least cost routes (lcr) managment command:
+.TP             
+.B lcr show 
+Show gateways and routes tables
+.TP
+.B lcr dump
+Show in memory gateways and routes tables
+.TP
+.B lcr reload 
+Reload lcr gateways and routes
+.TP
+.B lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname> <ping>
+Add a gateway with flags, tag, strip, weight, hostname, and ping (flags, tag, strip, weight, hostname, and ping are optional)
+.TP
+.B lcr rmgw <gw_name> 
+Delete a gateway
+.TP
+.B lcr addroute <prefix> <from> <grp_id> <prio>
+Add a route ( use '' to match anything in <from> )
+.TP
+.B lcr rmroute <prefix> <from> <grp_id> <prio>
+Delete a route
+
+.TP 16
+.I Carrierroute tables('cr') managment commands:
+.TP
+.B cr show 
+Show tables
+.TP
+.B cr reload 
+Reload tables
+.TP
+.B cr dump 
+Show in memory tables
+.TP
+.B cr addrt <routing_tree_id> <routing_tree> 
+Add a tree
+.TP
+.B cr rmrt  <routing_tree> 
+Remove a tree
+.TP
+.B cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> <prob> <strip> <rewrite_prefix> <rewrite_suffix> <flags> <mask> <comment> 
+Add a carrier (prob, strip, rewrite_prefix, rewrite_suffix, flags, mask and comment are optional arguments)
+.TP
+.B cr rmcarrier  <carrier> <scan_prefix> <domain> 
+Remove a carrier
+
+.TP 16
+.I Remote-Party-ID (RPID) managment commands:
+.TP
+.B rpid add <username> <rpid>
+Add rpid for a user (*)
+.TP
+.B rpid rm <username>
+Set rpid to NULL for a user (*)
+.TP
+.B rpid show <username>
+Show rpid of a user
+
+.TP 16
+.I Subscriber managment commands:
+.TP
+.B add <username> <password> 
+ Add a new subscriber (*)
+.TP
+.B passwd <username> <passwd>
+Change user's password (*)
+.TP
+.B rm <username> 
+Delete a user (*)
+
+.TP 16
+.I Commands to manage 'trusted':
+.TP
+.B trusted show 
+Show db content
+.TP
+.B trusted dump 
+Show cache content
+.TP
+.B trusted reload
+Reload db table into cache
+.TP
+.B trusted add <src_ip> <proto> <from_pattern> <tag>
+Add a new entry (from_pattern and tag are optional arguments)
+.TP
+.B trusted rm <src_ip>
+Remove all entres for the given src_ip
+
+.TP 16
+.I Dispatcher managment commands:
+.TP
+.B dispatcher show 
+Show dispatcher gateways
+.TP
+.B dispatcher reload 
+Reload dispatcher gateways
+.TP
+.B dispatcher dump 
+Show in memory dispatcher gateways
+.TP
+.B dispatcher addgw <setid> <destination> <flags> <description>
+Add gateway
+.TP
+.B dispatcher rmgw <id> 
+Delete gateway
+
+.TP 16
+.I Cisco restart command:
+.TP
+.B cisco_restart <uri> 
+Restart phone configured for <uri>
+
+.TP 16
+.I User location('ul') or aliases managment commands:
+.B ul show [<username>]
+Show in-RAM online users
+.TP
+.B ul show --brief
+Show in-RAM online users in short format
+.TP
+.B ul rm <username> [<contact URI>]
+Delete user's usrloc entries
+.TP
+.B ul add <username> <uri>
+Introduce a permanent usrloc entry
+.TP
+.B ul add <username> <uri> <expires>
+Introduce a temporary usrloc entry
+
+.TP 16
+.I Fifo commands:
+.TP
+.B fifo 
+Send raw FIFO command
+
+
+.SH FILES
+.PD 0
+.I /etc/kamailio/.kamctlrc
+.br
+.I /usr/local/etc/kamailio/.kamctlrc
+.br
+.I ~/.kamctlrc
+.br
+
+.SH NOTES
+.PP
+Commands labeled with (*) will prompt for a MySQL password.
+If the environment variable PW is set, the password will not be prompted.
+.PP
+IP addresses must be entered in dotted quad format e.g. 1.2.3.4
+<uri_scheme> and <transport> must be entered in integer or text,
+e.g. transport '2' is identical to transport 'tcp'.
+.br
+scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls
+.br
+Examples:
+.br
+lcr addgw level3 1.2.3.4 5080 sip tcp 1
+.br
+lcr addroute +1 '' 1 1
+
+.SH AUTHORS
+
+see 
+.B /usr/share/doc/kamailio/AUTHORS
+
+.SH SEE ALSO
+.BR kamailio(8),
+.BR kamailio.cfg(5)
+.PP
+Full documentation on Kamailio is available at
+.I http://www.kamailio.org/.
+.PP
+Mailing lists:
+.nf 
+users@lists.kamailio.org - Kamailio user community
+.nf 
+devel@lists.kamailio.org - Kamailio development, new features and unstable version
+

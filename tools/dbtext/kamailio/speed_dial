@@ -1,0 +1,1 @@
+id(int,auto) username(string) domain(string) sd_username(string) sd_domain(string) new_uri(string) fname(string) lname(string) description(string) 

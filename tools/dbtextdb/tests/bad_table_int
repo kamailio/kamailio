@@ -1,0 +1,4 @@
+col1(string) id(int) col2(string,null) col3(string)
+item1\::string:item2:asdf
+it\:em1:2:\::
+\:item3:3:asdf\::asdf
