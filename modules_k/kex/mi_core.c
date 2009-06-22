@@ -320,7 +320,7 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 	int new_debug = 0;
 	str group_name = {"core", 4};
 	str var_name = {"debug", 5};
-	void *vval;
+	void *vval = 0;
 	int set = 0;
 	unsigned int val_type;
 
@@ -333,7 +333,7 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 		if(cfg_get_by_name(_kex_cfg_ctx, &group_name, &var_name, &vval,
 					&val_type)!=0)
 			return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
-		new_debug = *((int*)vval);
+		new_debug = (int)(long)vval;
 	}
 	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
 	if (rpl_tree==0)
