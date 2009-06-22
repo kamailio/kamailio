@@ -809,6 +809,17 @@ modparam("tm", "contacts_avp", "$avp(i:25)")
 			The value of this parameter is the the name of the AVP to be
 			checked, without the $ character or "$avp" prefix.
 		</para>
+		<note><para>
+			The value of the AVP is expected to be expressed in 
+			<emphasis>seconds</emphasis> and not milliseconds (unlike the rest
+			of the timers).
+		</para></note>
+		<para>
+			This parameter is kept for backwards compatibility (hence its
+			value expressed in seconds instead of milliseconds and its arcane
+			way of specifying the avps). The recommended replacement is using
+			<function>t_set_fr()</function> on a per transaction basis.
+		</para>
 		<para>
 			See also: <function>t_set_fr()</function>,
 			<varname>fr_timer</varname>.
@@ -830,14 +841,25 @@ modparam("tm", "fr_timer_avp", "i:708")
 			per-transaction basis. The administrator can provide a value to be
 			used for a particular transaction in an AVP. This parameter
 			contains the name of the AVP that will be checked. If the AVP
-			exists then its value will be used for the fr_inv_timer timer,
-			effectively overriding the value configured in
-			<varname>fr_inv_timer</varname> parameter for the current
-			transaction.
+			exists, is non-empty and non-zero then its value will be used 
+			for the fr_inv_timer timer, effectively overriding the value 
+			configured in <varname>fr_inv_timer</varname> parameter for the
+			current transaction.
 		</para>
 		<para>
 			The value of this parameter is the the name of the AVP to be
 			checked, without the $ character or "$avp" prefix.
+		</para>
+		<note><para>
+			The value of the AVP is expected to be expressed in
+			<emphasis>seconds</emphasis> and not milliseconds (unlike the rest
+			of the timers).
+		</para></note>
+		<para>
+			This parameter is kept for backwards compatibility (hence its
+			value expressed in seconds instead of milliseconds and its arcane
+			way of specifying the avps). The recommended replacement is using
+			<function>t_set_fr()</function> on a per transaction basis.
 		</para>
 		<para>
 			See also: <function>t_set_fr()</function>,
