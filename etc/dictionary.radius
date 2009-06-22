@@ -1,0 +1,49 @@
+#
+# $Id$
+#
+# SIP RADIUS attributes
+#
+# Proprietary indicates an attribute that hasn't
+# been standardized
+#
+#
+# NOTE: All standard (IANA registered) attributes are 
+#       defined in the default dictionary of the 
+#       radiusclient-ng library.
+#
+
+
+#### Attributes ###
+ATTRIBUTE Sip-Uri-User         208  string     # Proprietary, auth_radius
+ATTRIBUTE Sip-Group            211  string     # Proprietary, group_radius
+ATTRIBUTE Sip-Rpid             213  string     # Proprietary, auth_radius
+ATTRIBUTE SIP-AVP              225  string     # Proprietary, avp_radius
+
+### Acct-Status-Type Values ###
+#VALUE Acct-Status-Type   Failed           15   # RFC2866, acc
+
+### Service-Type Values ###
+#VALUE Service-Type       Call-Check       10   # RFC2865, uri_radius
+VALUE Service-Type       Group-Check      12   # Proprietary, group_radius
+##VALUE Service-Type       Sip-Session      15   # Schulzrinne, acc, auth_radius
+VALUE Service-Type       SIP-Caller-AVPs  30   # Proprietary, avp_radius
+VALUE Service-Type       SIP-Callee-AVPs  31   # Proprietary, avp_radius
+
+### Sip-Method Values ###
+VALUE Sip-Method         Undefined      0
+VALUE Sip-Method         Invite         1
+VALUE Sip-Method         Cancel         2
+VALUE Sip-Method         Ack            4
+VALUE Sip-Method         Bye            8
+VALUE Sip-Method         Info           16
+VALUE Sip-Method         Options        32
+VALUE Sip-Method         Update         64
+VALUE Sip-Method         Register       128
+VALUE Sip-Method         Message        256
+VALUE Sip-Method         Subscribe      512
+VALUE Sip-Method         Notify         1024
+VALUE Sip-Method         Prack          2048
+VALUE Sip-Method         Refer          4096
+VALUE Sip-Method         Other          8192
+
+
