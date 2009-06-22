@@ -10,7 +10,7 @@
 
 <table id="gw" xmlns:db="http://docbook.org/ns/docbook">
     <name>gw</name>
-    <version>9</version>
+    <version>10</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
@@ -25,6 +25,12 @@
         <autoincrement/>
         <primary/>
         <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="lcr_id">
+        <name>lcr_id</name>
+        <type>unsigned short</type>
+        <description>LCR instance identifier</description>
     </column>
 
     <column id="gw_name">
@@ -101,13 +107,6 @@
     </column>
 
     <column>
-        <name>ping</name>
-        <type>unsigned char</type>
-        <default>0</default>
-        <description>Is gateway eligible for aliveness check (0 = no, 1 = yes)</description>
-    </column>
-
-    <column>
         <name>flags</name>
         <type>unsigned int</type>
         <default>&DEFAULT_FLAGS;</default>
@@ -115,14 +114,8 @@
     </column>
 
     <index>
-        <name>gw_name_idx</name>
-        <colref linkend="gw_name"/>
-        <unique/>
-    </index>
-
-    <index>
-        <name>grp_id_idx</name>
-        <colref linkend="grp_id"/>
+        <name>lcr_id_idx</name>
+        <colref linkend="lcr_id"/>
     </index>
 
 </table>
