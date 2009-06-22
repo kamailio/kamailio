@@ -1,0 +1,2 @@
+@comment $OpenBSD$
+lib/kamailio/modules/mi_xmlrpc.so

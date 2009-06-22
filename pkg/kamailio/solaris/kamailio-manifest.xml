@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+
+<!-- This is a manifest file to start, stop or restart the server automatically at
+     the Solaris 10 bootup. Setup and usage:
+     cp kamailio-manifest.xml to /var/svc/manifest/network/kamailio.xml
+     chmod 444 kamailio.xml
+     svccg -v import kamailio.xml
+     and finally enable the server to be a SMF service:
+     svcadm enable kamailio -->
+
+<service_bundle type='manifest' name='kamailio'>	
+	<service name='network/kamailio' type='service' version='1'>
+		<create_default_instance enabled='false' />
+		<single_instance/>
+
+		<dependency name='multi-user' grouping='require_all' restart_on='none' type='service'>
+			<service_fmri value='svc:/milestone/multi-user' />
+		</dependency>
+
+		<dependency name='multi-user-server' grouping='require_all' restart_on='none' type='service'>
+			<service_fmri value='svc:/milestone/multi-user-server' />
+		</dependency>
+
+		<dependency name='cswmysql5' grouping='require_all' restart_on='none' type='service'>
+			<!-- adapt if you use another mysql version -->
+			<service_fmri value='svc:/network/cswmysql5:default' />
+		</dependency>
+
+		<exec_method type='method' name='start' exec='/sbin/kamctl start' timeout_seconds='30' />
+
+		<exec_method type='method' name='stop' exec='/sbin/kamctl stop' timeout_seconds='60' /> 
+
+		<exec_method type='method' name='restart' exec='/sbin/kamctl restart' timeout_seconds='-1' />
+
+		<stability value='Unstable' />
+		<template>
+			<common_name>
+				<loctext xml:lang='C'> Kamailio </loctext> 
+			</common_name>
+		</template>
+	</service>
+</service_bundle>

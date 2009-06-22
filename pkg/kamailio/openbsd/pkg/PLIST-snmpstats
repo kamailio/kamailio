@@ -1,0 +1,10 @@
+@comment $OpenBSD$
+%%SHARED%%
+share/doc/kamailio/README.snmpstats
+share/snmp/
+share/snmp/mibs/
+share/snmp/mibs/OPENSER-MIB
+share/snmp/mibs/OPENSER-REG-MIB
+share/snmp/mibs/OPENSER-SIP-COMMON-MIB
+share/snmp/mibs/OPENSER-SIP-SERVER-MIB
+share/snmp/mibs/OPENSER-TC

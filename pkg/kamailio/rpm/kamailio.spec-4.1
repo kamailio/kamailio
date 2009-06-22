@@ -1,0 +1,403 @@
+%define name    kamailio
+%define ver     1.2.0
+%define rel     0
+
+%define EXCLUDED_MODULES	mysql jabber cpl-c avp_radius auth_radius group_radius uri_radius pa postgres osp tlsops unixodbc
+%define MYSQL_MODULES		mysql
+%define UNIXODBC_MODULES	unixodbc
+%define POSTGRES_MODULES	postgres
+%define JABBER_MODULES		jabber
+%define CPL_MODULES			cpl-c
+%define PA_MODULES			pa
+%define RADIUS_MODULES		avp_radius auth_radius group_radius uri_radius
+%define RADIUS_MOD_PATH		modules/avp_radius modules/auth_radius modules/group_radius modules/uri_radius
+
+Summary:      Kamailio, very fast and flexible SIP Proxy
+Name:         %name
+Version:      %ver
+Release:      %rel
+Packager:     Daniel-Constantin Mierla <miconda@gmail.com>
+Copyright:    GPL
+Group:        System Environment/Daemons
+Source:       http://kamailio.org/pub/kamailio/stable/%{name}-%{ver}_src.tar.gz
+Source2:      kamailio.init
+URL:          http://kamailio.org/
+Vendor:       kamailio.org
+BuildRoot:    /var/tmp/%{name}-%{ver}-root
+Conflicts:    kamailio-mysql < %ver, kamailio-jabber < %ver, kamailio-radius < %ver, kamailio-cpl < %ver, kamailio-unixodbc < %ver, kamailio-pa < %ver, kamailio-postgres < %ver
+BuildPrereq:  make flex bison
+
+
+%description
+Kamailio is a very fast and flexible SIP (RFC3261)
+proxy server. Written entirely in C, kamailio can handle thousands calls
+per second even on low-budget hardware. A C Shell like scripting language
+provides full control over the server's behaviour. It's modular
+architecture allows only required functionality to be loaded.
+Currently the following modules are available: digest authentication,
+CPL scripts, instant messaging, MySQL and UNIXODBC support, a presence agent,
+radius authentication, record routing, an SMS gateway, a jabber gateway, a 
+transaction and dialog module, OSP module, statistics support, 
+registrar and user location, SNMP, SIMPLE Presence and Perl programming
+interface.
+
+%package  mysql
+Summary:  MySQL connectivity for the Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  mysql-devel zlib-devel
+
+%description mysql
+The kamailio-mysql package contains MySQL database connectivity that you
+need to use digest authentication module or persistent user location
+entries.
+
+%package  postgres
+Summary:  MPOSTGRES connectivity for the Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  postgresql-devel
+
+%description postgres
+The kamailio-postgres package contains Postgres database connectivity that you
+need to use digest authentication module or persistent user location
+entries.
+
+%package  unixodbc
+Summary:  UNIXODBC connectivity for Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  unixodbc-dev
+
+%description unixodbc
+The kamailio-unixodbc package contains UNIXODBC database connectivity support
+that is required by other modules with database dependencies.
+
+%package  jabber
+Summary:  sip jabber message translation support for the Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  expat-devel
+
+%description jabber
+The kamailio-jabber package contains a sip to jabber message translator.
+
+%%package  cpl
+Summary:  CPL interpreter engine for the Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  libxml2-dev
+
+%description cpl
+The kamailio-cpl package contains a SIP CPL interpreter engine.
+
+%package  pa
+Summary:  sip presence agent support for the Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  libxml2-dev
+
+%description pa
+The kamailio-pa package contains a sip Presence Agent.
+
+%package  radius
+Summary:  kamailio radius authentication, group and uri check modules.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq:  radiusclient-devel
+
+%description radius
+The kamailio-radius package contains modules for radius authentication, group
+ membership and uri checking.
+
+%prep
+%setup
+
+%build
+make all skip_modules="%EXCLUDED_MODULES"         cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="modules/%MYSQL_MODULES"     cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="modules/%POSTGRES_MODULES"  cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="modules/%UNIXODBC_MODULES"  cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="modules/%JABBER_MODULES"    cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="modules/%CPL_MODULES"       cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="modules/%PA_MODULES"        cfg-target=/%{_sysconfdir}/kamailio/
+make modules modules="%RADIUS_MOD_PATH"           cfg-target=/%{_sysconfdir}/kamailio/
+
+
+%install
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
+
+make install skip_modules="%EXCLUDED_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="modules/%MYSQL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="modules/%MYSQL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="modules/%POSTGRES_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="modules/%POSTGRES_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="modules/%UNIXODBC_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="modules/%UNIXODBC_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="modules/%JABBER_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="modules/%JABBER_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="modules/%CPL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="modules/%CPL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="modules/%PA_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="modules/%PA_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-modules modules="%RADIUS_MOD_PATH" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+make install-doc modules="%RADIUS_MOD_PATH" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/kamailio/ 
+
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
+install -m755 $RPM_SOURCE_DIR/kamailio.init \
+              $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
+
+
+
+
+%clean
+rm -rf "$RPM_BUILD_ROOT"
+
+%post
+/sbin/chkconfig --add kamailio
+
+%preun
+if [ $1 = 0 ]; then
+    /sbin/service kamailio stop > /dev/null 2>&1
+    /sbin/chkconfig --del kamailio
+fi
+
+
+%files
+%defattr(-,root,root)
+%dir %{_docdir}/kamailio
+%doc %{_docdir}/kamailio/AUTHORS
+%doc %{_docdir}/kamailio/NEWS
+%doc %{_docdir}/kamailio/INSTALL
+%doc %{_docdir}/kamailio/README
+%doc %{_docdir}/kamailio/README-MODULES
+%doc %{_docdir}/kamailio/README.acc
+%doc %{_docdir}/kamailio/README.alias_db
+%doc %{_docdir}/kamailio/README.auth
+%doc %{_docdir}/kamailio/README.auth_db
+%doc %{_docdir}/kamailio/README.auth_diameter
+%doc %{_docdir}/kamailio/README.avpops
+%doc %{_docdir}/kamailio/README.dbtext
+%doc %{_docdir}/kamailio/README.dialog
+%doc %{_docdir}/kamailio/README.dispatcher
+%doc %{_docdir}/kamailio/README.diversion
+%doc %{_docdir}/kamailio/README.domain
+%doc %{_docdir}/kamailio/README.enum
+%doc %{_docdir}/kamailio/README.exec
+%doc %{_docdir}/kamailio/README.flatstore
+%doc %{_docdir}/kamailio/README.gflags
+%doc %{_docdir}/kamailio/README.group
+%doc %{_docdir}/kamailio/README.lcr
+%doc %{_docdir}/kamailio/README.mangler
+%doc %{_docdir}/kamailio/README.maxfwd
+%doc %{_docdir}/kamailio/README.mediaproxy
+%doc %{_docdir}/kamailio/README.msilo
+%doc %{_docdir}/kamailio/README.nathelper
+%doc %{_docdir}/kamailio/README.options
+%doc %{_docdir}/kamailio/README.path
+%doc %{_docdir}/kamailio/README.pdt
+%doc %{_docdir}/kamailio/README.permissions
+%doc %{_docdir}/kamailio/README.pike
+%doc %{_docdir}/kamailio/README.registrar
+%doc %{_docdir}/kamailio/README.rr
+%doc %{_docdir}/kamailio/README.siptrace
+%doc %{_docdir}/kamailio/README.sl
+%doc %{_docdir}/kamailio/README.sms
+%doc %{_docdir}/kamailio/README.speeddial
+%doc %{_docdir}/kamailio/README.statistics
+%doc %{_docdir}/kamailio/README.textops
+%doc %{_docdir}/kamailio/README.tm
+%doc %{_docdir}/kamailio/README.uac
+%doc %{_docdir}/kamailio/README.uac_redirect
+%doc %{_docdir}/kamailio/README.uri
+%doc %{_docdir}/kamailio/README.uri_db
+%doc %{_docdir}/kamailio/README.usrloc
+%doc %{_docdir}/kamailio/README.xlog
+
+%dir %{_sysconfdir}/kamailio
+%config(noreplace) %{_sysconfdir}/kamailio/*
+%config %{_sysconfdir}/rc.d/init.d/*
+
+%dir %{_libdir}/kamailio
+%dir %{_libdir}/kamailio/modules
+%{_libdir}/kamailio/modules/acc.so
+%{_libdir}/kamailio/modules/alias_db.so
+%{_libdir}/kamailio/modules/auth.so
+%{_libdir}/kamailio/modules/auth_db.so
+%{_libdir}/kamailio/modules/auth_diameter.so
+%{_libdir}/kamailio/modules/avpops.so
+%{_libdir}/kamailio/modules/dbtext.so
+%{_libdir}/kamailio/modules/dispatcher.so
+%{_libdir}/kamailio/modules/diversion.so
+%{_libdir}/kamailio/modules/domain.so
+%{_libdir}/kamailio/modules/enum.so
+%{_libdir}/kamailio/modules/exec.so
+%{_libdir}/kamailio/modules/flatstore.so
+%{_libdir}/kamailio/modules/gflags.so
+%{_libdir}/kamailio/modules/group.so
+%{_libdir}/kamailio/modules/lcr.so
+%{_libdir}/kamailio/modules/mangler.so
+%{_libdir}/kamailio/modules/maxfwd.so
+%{_libdir}/kamailio/modules/mediaproxy.so
+%{_libdir}/kamailio/modules/msilo.so
+%{_libdir}/kamailio/modules/nathelper.so
+%{_libdir}/kamailio/modules/options.so
+%{_libdir}/kamailio/modules/path.so
+%{_libdir}/kamailio/modules/pdt.so
+%{_libdir}/kamailio/modules/permissions.so
+%{_libdir}/kamailio/modules/pike.so
+%{_libdir}/kamailio/modules/registrar.so
+%{_libdir}/kamailio/modules/rr.so
+%{_libdir}/kamailio/modules/siptrace.so
+%{_libdir}/kamailio/modules/sl.so
+%{_libdir}/kamailio/modules/sms.so
+%{_libdir}/kamailio/modules/speeddial.so
+%{_libdir}/kamailio/modules/statistics.so
+%{_libdir}/kamailio/modules/textops.so
+%{_libdir}/kamailio/modules/tm.so
+%{_libdir}/kamailio/modules/uac.so
+%{_libdir}/kamailio/modules/uac_redirect.so
+%{_libdir}/kamailio/modules/uri.so
+%{_libdir}/kamailio/modules/uri_db.so
+%{_libdir}/kamailio/modules/usrloc.so
+%{_libdir}/kamailio/modules/xlog.so
+
+%{_sbindir}/kamailio
+%{_sbindir}/kamctl
+%{_libdir}/kamctl/kamctl.base
+%{_libdir}/kamctl/kamctl.sqlbase
+%{_libdir}/kamctl/kamctl.ctlbase
+%{_libdir}/kamctl/kamctl.fifo
+%{_libdir}/kamctl/kamctl.unixsock
+
+%{_mandir}/man5/*
+%{_mandir}/man8/*
+
+
+%files mysql
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.mysql
+
+%{_libdir}/kamailio/modules/mysql.so
+%{_sbindir}/kamailio_mysql.sh
+%{_libdir}/kamctl/kamctl.mysql
+
+%files postgres
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.postgres
+
+%{_libdir}/kamailio/modules/postgres.so
+%{_sbindir}/kamailio_postgres.sh
+%{_libdir}/kamctl/kamctl.pgsql
+
+%files unixodbc
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.unixodbc
+
+%{_libdir}/kamailio/modules/unixodbc.so
+
+%files jabber
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.jabber
+
+%{_libdir}/kamailio/modules/jabber.so
+
+%files cpl
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.cpl-c
+
+%{_libdir}/kamailio/modules/cpl-c.so
+
+%files pa
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.pa
+
+%{_libdir}/kamailio/modules/pa.so
+
+%files radius
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/README.avp_radius
+%doc %{_docdir}/kamailio/README.auth_radius
+%doc %{_docdir}/kamailio/README.group_radius
+%doc %{_docdir}/kamailio/README.uri_radius
+
+%{_libdir}/kamailio/modules/avp_radius.so
+%{_libdir}/kamailio/modules/auth_radius.so
+%{_libdir}/kamailio/modules/group_radius.so
+%{_libdir}/kamailio/modules/uri_radius.so
+
+
+%changelog
+
+* Fri Jun 30 2006 Bogdan-Andrei Iancu <bogdan@voice-system.ro>
+- version set to 1.1.0
+- added packages for pa, postgres and unixodbc
+- added dialog, lcr, options, path, siptrace, statistics modules
+
+* Thu Oct 27 2005 Daniel-Constantin Mierla <miconda@gmail.com>
+- version set to 1.0.0
+- added readme for flatstore
+- added uac and uac_redirect modules
+
+* Wed Jun 08 2005 Daniel-Constantin Mierla <miconda@gmail.com>
+- First version of the spec file.

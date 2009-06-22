@@ -1,0 +1,13 @@
+$OpenBSD$
+--- etc/kamailio.cfg.orig	Thu Oct 23 19:32:11 2008
++++ etc/kamailio.cfg	Thu Oct 23 19:33:14 2008
+@@ -18,6 +18,9 @@ log_facility=LOG_LOCAL0
+ fork=yes
+ children=4
+ 
++user="_kamailio"
++group="_kamailio"
++
+ /* uncomment the following lines to enable debugging */
+ #debug=6
+ #fork=no
