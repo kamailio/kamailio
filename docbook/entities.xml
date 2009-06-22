@@ -7,6 +7,10 @@
 <!ENTITY kamailioname "Kamailio SIP Server Platform">
 <!ENTITY kamailioconfig "kamailio.cfg">
 
+<!ENTITY siprouter "SIP Router">
+<!ENTITY siproutername "SIP Router Project">
+<!ENTITY siprouterconfig "sip-router.cfg">
+
 <!ENTITY kamwiki "http://www.kamailio.org/dokuwiki/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
 
