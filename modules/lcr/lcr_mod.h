@@ -70,19 +70,21 @@ struct gw_info {
     unsigned short tag_len;
     unsigned short weight;
     unsigned int flags;
-    unsigned short ping;
+    unsigned int defunct_until;
     unsigned int next;  /* index of next gw in the same group */
 };
 
 extern unsigned int lcr_hash_size_param;
 
+extern unsigned int lcr_count;
+
 extern gen_lock_t *reload_lock;
 
-extern struct gw_info **gws;
-extern struct lcr_info ***lcrs;
+extern struct gw_info **gwtp;
+extern struct lcr_info ***lcrtp;
 
 int  mi_print_gws(struct mi_node* rpl);
 int  mi_print_lcrs(struct mi_node* rpl);
-int  reload_gws_and_lcrs(void);
+int  reload_gws_and_lcrs(int id);
 
 #endif /* LCR_MOD_H */

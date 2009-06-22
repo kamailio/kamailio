@@ -19,11 +19,17 @@
 	Least cost routing (LCR) module implements capability to
 	serially forward a request to one or more gateways so that the
 	order in which the gateways is tried is based on admin defined
-	"least cost".
+	"least cost" rules.
+	</para>
+	<para>
+	LCR module supports many independent LCR instances (gateways and
+	least cost rules).  Each such instance has its own LCR
+	identifier.
 	</para>
 	<para>
 	For the purpose of facilitating least cost routing of requests,
-	each gateway belongs to a gateway group and each gateway group
+	each gateway of an LCR instance belongs to a gateway group and
+	each gateway group
 	is associated with one or more &lt;prefix, from pattern, priority&gt;
 	tuples.  A gateway matches a request if	user part of Request URI
 	matches a prefix and caller's URI matches a from pattern in a
@@ -70,7 +76,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-	<title>&kamailio; modules</title>
+	<title>&siprouter; modules</title>
 	<para>
 		The following modules must be loaded before this module:
 		<itemizedlist>
@@ -92,7 +98,7 @@
 	<title>External libraries or applications</title>
 	<para>
 		The following libraries or applications must be installed before
-		running &kamailio; with this module:
+		running &siprouter; with this module:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -130,7 +136,7 @@ modparam("lcr","db_url","&exampledb;")
 	<section>
 		<title><varname>gw_table</varname> (string)</title>
 		<para>
-		Name of the table holding the gateways definitions.
+		Name of the table holding gateways definitions.
 		</para>
 		<para>
 		<emphasis>
@@ -142,6 +148,27 @@ modparam("lcr","db_url","&exampledb;")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","gw_table","gw")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>lcr_id_column</varname> (string)</title>
+		<para>
+		Name of the column holding the identifier of LCR
+		instance.  Common to both gw and lcr tables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>lcr_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>lcr_id_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "lcr_id_column", "lcr_identifier")
 ...
 </programlisting>
 		</example>
@@ -461,15 +488,38 @@ modparam("lcr","priority_column","priority")
 	</section>
 
 	<section>
+		<title><varname>lcr_count</varname> (integer)</title>
+		<para>
+		Number of LCR instances.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Setting <varname>lcr_count</varname> module
+		parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "lcr_count", 10)
+...
+</programlisting>
+                </example>
+	</section>
+
+	<section>
 		<title><varname>gw_uri_avp</varname> (AVP string)</title>
 		<para>
-   Internal AVP that load_gws function uses to store information of
-   matching gateways.
+		Internal AVP that load_gws() function uses to store
+		information of matching gateways.
 		</para>
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in kamailio.cfg.
+			be defined in &siprouterconfig;.
 		</emphasis>
 		</para>
 		<example>
@@ -477,27 +527,6 @@ modparam("lcr","priority_column","priority")
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "gw_uri_avp", "$avp(i:709)")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>rpid_avp</varname> (AVP string)</title>
-		<para>
-		An AVP that contains caller's RPID (if any).
-		</para>
-		<para>
-		<emphasis>
-			There is NO default value, thus this variable must
-			be defined in kamailio.cfg.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>rpid_avp</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 ...
 </programlisting>
 		</example>
@@ -512,7 +541,7 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in kamailio.cfg.
+			be defined in &siprouterconfig;.
 		</emphasis>
 		</para>
 		<example>
@@ -534,7 +563,7 @@ modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in kamailio.cfg.
+			be defined in &siprouterconfig;.
 		</emphasis>
 		</para>
 		<example>
@@ -542,6 +571,75 @@ modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>defunct_capability</varname> (integer)</title>
+		<para>
+		Tells if defunct capability of (non-responsive) gateways is
+		supported.  Non-zero value turns on defunct capability.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Setting <varname>defunct_capability</varname> module
+		parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "defunct_capability", 1)
+...
+</programlisting>
+                </example>
+	</section>
+
+	<section>
+		<title><varname>lcr_id_avp</varname> (AVP string)</title>
+		<para>
+		Internal AVP that load_gws() function uses to store
+		LCR instance identifier of loaded gateways.  Only needed if
+		gateway defunct capability has been activated.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>lcr_id_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>defunct_gw_avp</varname> (AVP string)</title>
+		<para>
+		Internal AVP that next_gw() function uses to store
+		IP address of the selected gateway for later use by
+		defunct_gw() function.  Only needed if
+		gateway defunct capability has been activated.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>defunct_gw_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 ...
 </programlisting>
 		</example>
@@ -605,23 +703,25 @@ modparam("lcr", "fetch_rows", 3000)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws([pvar])</function>
+		<function moreinfo="none">load_gws(lcr_id, caller_uri)</function>
 		</title>
 		<para>
 		Loads URI schemes, IP addresses, hostnames, ports, and
 		transports of matching gateways to gw_uri_avp
-		(see Overview section). If optional pseudo variable
-		argument is included, caller's URI is taken from it.
-		If pseudo variable argument is not included, caller's
-		URI is taken from rpid_avp or, if rpid_avp value is
-		empty, from From URI. Returns 1 or -1 depending on
-		success.
+		(see Overview section).  Argument lcr_id specifies the used
+	        LCR instance.  It can be an integer or a pseudo
+		variable containing an integer value. 
+		Caller's URI is given by caller_uri argument, which
+		must be a pseudo variable.
+		</para>
+		<para>
+		Returns 1 on success and -1 on error.
 		</para>
 		<para>
 		Execution time of load_gws() function is O(N) * O(M),
 		where N is number of different prefix lengths and M
 		is number of collisions for matching prefix(es) in lcr
-		hash table.
+		hash table of the LCR instance.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -630,7 +730,7 @@ modparam("lcr", "fetch_rows", 3000)
 		<title><function>load_gws</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!load_gws("$var(caller_uri)")) {
+if (!load_gws("1", "$var(caller_uri)")) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
 	exit;
 };
@@ -638,44 +738,7 @@ if (!load_gws("$var(caller_uri)")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title>
-		<function moreinfo="none">load_gws_from_grp(group-id)</function>
-		</title>
-		<para>
-		Loads URI schemes, IP addresses, hostnames, ports, and
-		transports of 
-		gateways that belong to a given group to gw_uri_avp.
-		group-id argument is a string that may contain 
-		pseudo-variables.  Its value must be a a string of
-		digits that are converted to an integer group id.
-		Returns 1 or -1 depending on success. 
-		</para>
-		<para>
-		Execution time of load_gws_from_grp() function is O(N),
-		where N is number of gateways.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>load_gws_from_grp</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (!load_gws_from_grp("1")) {
-	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
-	exit;
-};
-...
 
-if (!load_gws_from_grp("$avp(s:gateway_group)")) {
-	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
-	exit;
-};
-...
-</programlisting>
-		</example>
-	</section>
 	<section>
 		<title>
 		<function moreinfo="none">next_gw()</function>
@@ -731,21 +794,59 @@ if (!next_gw()) {
 </programlisting>
 		</example>
 	</section>
+
 	<section>
 		<title>
-		<function moreinfo="none">from_gw([pvar])</function>
+		<function moreinfo="none">defunct_gw(period)</function>
+		</title>	
+		<para>
+		Defuncts gateway selected by preceding next_gw() call
+		for a period of seconds given as argument.  Argument
+		must be a positive integer constant or a pseudo variable
+		with positive integer value.
+		</para>
+		<para>
+		Returns 1 on success and -1 in case of error (see syslog).
+		</para>
+		<para>
+		Must be preceded by successful next_gw() call.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>defunct_gw</function> usage</title>
+		<programlisting format="linespecific">
+...
+defunct_gw("60");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">from_gw(lcr_id [, ip_addr])</function>
 		</title>
 		<para>
-			Checks if request came from IP address of a
-			gateway.  IP address to be checked is either
-			taken from source IP address of the request or
-			(if present) from pseudo variable argument.
-			As a side effect, stores gateway's flags to
-			flags_avp.
+		Checks if request comes from IP address of a
+		gateway in LCR instance specified by lcr_id argument,
+		which can be an integer constant or a pseudo variable
+		with integer value.
+		IP address to be checked is either 
+		taken from source IP address of the request or
+		(if present) from ip_addr pseudo variable argument.
+		</para>
+		<para>
+		If request comes from a gateway, gateway's flags are
+		stored into flags_avp as side effect.
+		</para>
+		<para>
+		Returns 1 on success and -1 on failure or on error.
 		</para>
 		<para>
 		Execution time of from_gw() function is O(log N),
-		where N is number of gateways.
+		where N is number of gateways in the LCR instance.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -755,68 +856,70 @@ if (!next_gw()) {
 		<title><function>from_gw</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (from_gw()) {
-	...
-};
-...
-</programlisting>
-		</example>
-		<example>
-		<title><function>from_gw</function> usage with pseudo
-		variable argument</title>
-		<programlisting format="linespecific">
-...
-if (from_gw("$si")) {
+if (from_gw("1", "$avp(s:real_source_addr)") {
 	...
 };
 ...
 </programlisting>
 		</example>
 		</section>
+
 	<section>
 		<title>
-		<function moreinfo="none">from_gw_grp(group-id)</function>
+		<function moreinfo="none">from_any_gw([ip_addr])</function>
 		</title>
 		<para>
-			Checks if request came from IP address of a
-			gateway that belongs to the given group
-			(integer string).  Sets
-			or resets a message flag depending on whether
-			the gateway supports directed media. 
+		Checks if request comes from IP address of
+		any gateway.  IP address to be checked is either
+		taken from source IP address of the request or
+		(if present) from ip_addr pseudo variable argument.
 		</para>
 		<para>
-		Execution time of from_gw_grp() function is O(log N),
-		where N is number of gateways.
+		If any gateway has the IP address, function returns LCR
+		identifier 
+		of the gateway.  Returns -1 on error or if request does
+		not come from a gateway. 
+		</para>
+		<para>
+		If request comes
+		from a gateway, gateway's flags are stored into flags_avp
+		as side effect.
+		</para>
+		<para>
+		Execution time of from_gw() function is M * O(log N),
+		where M is number of LCR instances and N is average number of
+		gateways in LCR instances.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE.
 		</para>
 		<example>
-		<title><function>from_gw_grp</function> usage</title>
+		<title><function>from_gw</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (from_gw_grp("1")) {
-	...
-};
+$var(lcr_id) = from_any_gw();
 ...
 </programlisting>
 		</example>
 		</section>
+
 		<section>
 		<title>
-		<function moreinfo="none">to_gw([group-id])</function>
+		<function moreinfo="none">to_gw(lcr_id [, ip_addr])</function>
 		</title>
 		<para>
-		Checks if in-dialog request goes to a
-			gateway. If an optional 
-			group-id (integer string) is given,
-			only gateways belonging to
-			this group are checked.
+		Checks if in-dialog request goes to a gateway in LCR
+		instance specified by lcr_id argument. IP address to be
+		checked is either taken from Request-URI hostpart or (if
+		present) from ip_addr pseudo variable argument. 
+		</para>
+		<para>
+		Returns 1 on success and -1 on failure and error.
 		</para>
 		<para>
 		Execution time of to_gw() function is O(log N),
-		where N is number of gateways.
+		where N is number of gateways in the LCR instance.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -825,15 +928,40 @@ if (from_gw_grp("1")) {
 		<title><function>to_gw</function> usage</title>
 		<programlisting format = "linespecific">
 ...
-if (to_gw()) {
+if (to_gw("1")) {
 	...
 	exit;
 };
 ...
 </programlisting>
 		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">to_any_gw([ip_addr])</function>
+		</title>
+		<para>
+		Checks if in-dialog request goes to any gateway.  IP
+		address to be checked is either taken from Request-URI
+		hostpart or (if present) from ip_addr pseudo variable
+		argument.
+		</para>
+		<para>
+		Execution time of to_any_gw() function is M * O(log N),
+		where M is number of LCR instances and N is average
+		number of gateways in LCR instances.
+		</para>
+		<para>
+		If any gateway has the IP address, returns LCR identifier
+		of the gateway.  Returns -1 if request does
+		not go to a gateway and on error.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
-		<title><function>to_gw</function> usage with group-id</title>
+		<title><function>to_gw</function> usage</title>
 		<programlisting format = "linespecific">
 ...
 if (to_gw("1")) {
@@ -852,8 +980,8 @@ if (to_gw("1")) {
 		<section>
 		<title><function>lcr_reload</function></title>
 		<para>
-			Causes lcr module to re-read the contents of gateway table
-			into memory.
+			Causes lcr module to re-read the contents of
+			gw and lcr tables into memory.
 		</para>
 		<para>
 		Name: <emphasis>lcr_reload</emphasis>
@@ -914,8 +1042,8 @@ if (to_gw("1")) {
 		<section>
 		<title><function>lcr.reload</function></title>
 		<para>
-			Causes lcr module to re-read the contents of gateway table
-			into memory.
+			Causes lcr module to re-read the contents of
+			gw and lcr tables into memory.
 		</para>
 		<para>
 		Name: <emphasis>lcr.reload</emphasis>
@@ -945,7 +1073,7 @@ if (to_gw("1")) {
 		</section>
 		
 		<section>
-		<title><function>lcr.dump_lcr</function></title>
+		<title><function>lcr.dump_lcrs</function></title>
 		<para>
 			Causes lcr module to dump the contents of its
 			in-memory lcr table.
@@ -954,7 +1082,7 @@ if (to_gw("1")) {
  		<example>
 		<title><function>lcr.dump_lcr</function> RPC example</title>
         <programlisting  format="linespecific">
-		$ sercmd lcr.dump_lcr
+		$ sercmd lcr.dump_lcrs
 		</programlisting>
 		</example>
 		</section>

@@ -83,8 +83,6 @@ struct lcr_info *lcr_hash_table_lookup(struct lcr_info **hash_table,
 {
     str prefix_str;
 
-    LM_DBG("looking for <%.*s>\n", prefix_len, prefix);
-
     prefix_str.len = prefix_len;
     prefix_str.s = prefix;
 
