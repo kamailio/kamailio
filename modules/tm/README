@@ -15,6 +15,97 @@ Juha Heinanen
    Revision $Revision$ $Date$
      __________________________________________________________________
 
+   1.1. Overview
+   1.2. Known Issues
+   1.3. Parameters
+
+        1.3.1. fr_timer (integer)
+        1.3.2. fr_inv_timer (integer)
+        1.3.3. max_inv_lifetime (integer)
+        1.3.4. max_noninv_lifetime (integer)
+        1.3.5. wt_timer (integer)
+        1.3.6. delete_timer (integer)
+        1.3.7. retr_timer1 (integer)
+        1.3.8. retr_timer2 (integer)
+        1.3.9. noisy_ctimer (integer)
+        1.3.10. restart_fr_on_each_reply (integer)
+        1.3.11. auto_inv_100 (integer)
+        1.3.12. auto_inv_100_reason (string)
+        1.3.13. unix_tx_timeout (integer)
+        1.3.14. aggregate_challenges (integer)
+        1.3.15. reparse_invite (integer)
+        1.3.16. ac_extra_hdrs (string)
+        1.3.17. blst_503 (integer)
+        1.3.18. blst_503_def_timeout (integer)
+        1.3.19. blst_503_min_timeout (integer)
+        1.3.20. blst_503_max_timeout (integer)
+        1.3.21. blst_methods_add (unsigned integer)
+        1.3.22. blst_methods_lookup (unsigned integer)
+        1.3.23. cancel_b_method (integer)
+        1.3.24. reparse_on_dns_failover (integer)
+        1.3.25. on_sl_reply (string)
+        1.3.26. fr_inv_timer_next (integer)
+        1.3.27. contacts_avp (string)
+        1.3.28. fr_timer_avp (string)
+        1.3.29. fr_inv_timer_avp (string)
+
+   1.4. Functions
+
+        1.4.1. t_relay_to_udp(ip, port), t_relay_to_udp(),
+                t_relay_to_tcp(ip, port) t_relay_to_tcp()
+                t_relay_to_tls(ip, port) t_relay_to_tls()
+                t_relay_to_sctp(ip, port) t_relay_to_sctp()
+
+        1.4.2. t_relay() t_relay(host, port)
+        1.4.3. t_on_failure(failure_route)
+        1.4.4. t_on_reply(onreply_route)
+        1.4.5. t_on_branch(branch_route)
+        1.4.6. append_branch()
+        1.4.7. t_newtran()
+        1.4.8. t_reply(code, reason_phrase)
+        1.4.9. t_lookup_request()
+        1.4.10. t_retransmit_reply()
+        1.4.11. t_release()
+        1.4.12. t_forward_nonack() t_forward_nonack(ip, port)
+                t_forward_nonack_udp(ip, port) t_forward_nonack_tcp(ip,
+                port) t_forward_nonack_tls(ip, port)
+                t_forward_nonack_sctp(ip, port)
+
+        1.4.13. t_set_fr(fr_inv_timeout [, fr_timeout])
+        1.4.14. t_reset_fr()
+        1.4.15. t_set_max_lifetime(inv_lifetime, noninv_lifetime)
+        1.4.16. t_reset_max_lifetime()
+        1.4.17. t_set_retr(retr_t1_interval, retr_t2_interval)
+        1.4.18. t_reset_retr()
+        1.4.19. t_set_auto_inv_100(0|1)
+        1.4.20. t_branch_timeout()
+        1.4.21. t_branch_replied()
+        1.4.22. t_any_timeout()
+        1.4.23. t_any_replied()
+        1.4.24. t_grep_status("code")
+        1.4.25. t_is_canceled()
+        1.4.26. t_is_expired()
+        1.4.27. t_relay_cancel()
+        1.4.28. t_lookup_cancel(), t_lookup_cancel(1)
+        1.4.29. t_drop_replies()
+        1.4.30. t_save_lumps()
+        1.4.31. t_load_contacts()
+        1.4.32. t_next_contacts()
+        1.4.33. t_check_trans()
+
+   1.5. TM Module API
+
+        1.5.1. Defines
+        1.5.2. Functions
+
+              1.5.2.1. register_tmcb(cb_type, cb_func)
+              1.5.2.2. load_tm(*import_structure)
+              1.5.2.3. int t_suspend(struct sip_msg *msg, unsigned int
+                      *hash_index, unsigned int *label)
+
+              1.5.2.4. int t_continue(unsigned int hash_index, unsigned
+                      int label, struct action *route)
+
 1.1. Overview
 
    TM module enables stateful processing of SIP transactions. The main use
@@ -617,6 +708,16 @@ modparam("tm", "contacts_avp", "$avp(i:25)")
    The value of this parameter is the the name of the AVP to be checked,
    without the $ character or "$avp" prefix.
 
+Note
+
+   The value of the AVP is expected to be expressed in seconds and not
+   milliseconds (unlike the rest of the timers).
+
+   This parameter is kept for backwards compatibility (hence its value
+   expressed in seconds instead of milliseconds and its arcane way of
+   specifying the avps). The recommended replacement is using t_set_fr()
+   on a per transaction basis.
+
    See also: t_set_fr(), fr_timer.
 
    Example 28. Set fr_timer_avp parameter
@@ -629,12 +730,23 @@ modparam("tm", "fr_timer_avp", "i:708")
    The value of fr_inv_timer timer can be overriden on per-transaction
    basis. The administrator can provide a value to be used for a
    particular transaction in an AVP. This parameter contains the name of
-   the AVP that will be checked. If the AVP exists then its value will be
-   used for the fr_inv_timer timer, effectively overriding the value
-   configured in fr_inv_timer parameter for the current transaction.
+   the AVP that will be checked. If the AVP exists, is non-empty and
+   non-zero then its value will be used for the fr_inv_timer timer,
+   effectively overriding the value configured in fr_inv_timer parameter
+   for the current transaction.
 
    The value of this parameter is the the name of the AVP to be checked,
    without the $ character or "$avp" prefix.
+
+Note
+
+   The value of the AVP is expected to be expressed in seconds and not
+   milliseconds (unlike the rest of the timers).
+
+   This parameter is kept for backwards compatibility (hence its value
+   expressed in seconds instead of milliseconds and its arcane way of
+   specifying the avps). The recommended replacement is using t_set_fr()
+   on a per transaction basis.
 
    See also: t_set_fr(), fr_inv_timer.
 
@@ -1349,6 +1461,56 @@ if (!t_next_contacts()) {
         t_relay();
 };
 ...
+
+1.4.33.  t_check_trans()
+
+   t_check_trans() can be used to quickly check if a message belongs or is
+   related to a transaction. It behaves differently for different types of
+   messages:
+     * For a SIP Reply it returns true if the reply belongs to an existing
+       transaction and false otherwise.
+     * For a CANCEL it behaves exactly as t_lookup_cancel(): returns true
+       if a corresponding INVITE transaction exists for the CANCEL and
+       false otherwise.
+     * For ACKs to negative replies or for ACKs to local transactions it
+       will terminate the script if the ACK belongs to a transaction (it
+       would make very little sense to process an ACK to a negative reply
+       for an existing transaction in some other way then to simply pass
+       it to tm) or return false if not.
+     * For end-to-end ACKs (ACKs to 2xx responses for forwarded INVITE
+       transactions) it will return true if the corresponding INVITE
+       transaction is found and still active and false if not.
+
+Note
+       Note that the e2e ACK matching is more of a hint then a certainty.
+       A delayed e2e ACK might arrive after the transaction wait time
+       elapses, when the INVITE transaction no longer exists and thus
+       would not match anything. There are also cases when tm would not
+       keep all the information needed for e2e ACK matching (since this is
+       not needed for a statefull proxy and it requires additional memory,
+       tm will not keep this information unless needed by some other
+       module or callbacks).
+     * For other requests (non ACKs and non CANCELs), it will terminate
+       the script for retransmissions and return false for new requests
+       (for which no transaction exists yet).
+
+Note
+
+   An important difference from kamailio version is that for an ACK to
+   negative reply or for a local transaction, the script execution will be
+   immediately stopped and the message handled by tm, instead of returning
+   true.
+
+   t_check_trans() functionality for requests, except for the e2e ACK
+   matching, can be replicated in the script using t_lookup_cancel() and
+   t_lookup_request().
+
+   See also: t_lookup_request(), t_lookup_cancel().
+
+   Example 62. t_check_trans usage
+if ( method == "CANCEL" && !t_check_trans())
+        sl_reply("403", "cancel out of the blue forbidden");
+# note: in this example t_check_trans() can be replaced by t_lookup_cancel()
 
 1.5. TM Module API
 
