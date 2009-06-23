@@ -25,18 +25,23 @@
 #include "tmx_mod.h"
 #include "t_var.h"
 
-static struct cell *_pv_T_req = NULL;
-static struct cell *_pv_T_rpl = NULL;
-static struct sip_msg _pv_treq;
-static struct sip_msg _pv_trpl;
-static struct sip_msg *_pv_treq_p = NULL;
-static struct sip_msg *_pv_trpl_p = NULL;
-static unsigned int _pv_treq_id = 0;
-static unsigned int _pv_trpl_id = 0;
-static char *_pv_treq_buf = NULL;
-static char *_pv_trpl_buf = NULL;
-static unsigned int _pv_treq_size = 0;
-static unsigned int _pv_trpl_size = 0;
+struct _pv_tmx_data {
+	struct cell *T;
+	struct sip_msg msg;
+	struct sip_msg *tmsgp;
+	unsigned int id;
+	char *buf;
+	int buf_size;
+};
+
+static struct _pv_tmx_data _pv_treq;
+static struct _pv_tmx_data _pv_trpl;
+
+void pv_tmx_data_init(void)
+{
+	memset(&_pv_treq, 0, sizeof(struct _pv_tmx_data));
+	memset(&_pv_trpl, 0, sizeof(struct _pv_tmx_data));
+}
 
 int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst)
 {
@@ -84,47 +89,48 @@ int pv_t_update_req(struct sip_msg *msg)
 	if(t->uas.request==NULL)
 		return 1;
 
-	if(_pv_T_req==t && t->uas.request==_pv_treq_p
-			&& t->uas.request->id==_pv_treq_id)
+	if(_pv_treq.T==t && t->uas.request==_pv_treq.tmsgp
+			&& t->uas.request->id==_pv_treq.id)
 		return 0;
 
 	/* make a copy */
-	if(_pv_treq_buf==NULL || _pv_treq_size<t->uas.request->len+1)
+	if(_pv_treq.buf==NULL || _pv_treq.buf_size<t->uas.request->len+1)
 	{
-		if(_pv_treq_buf!=NULL)
-			pkg_free(_pv_treq_buf);
-		if(_pv_treq_p)
-			free_sip_msg(&_pv_treq);
-		_pv_treq_p = NULL;
-		_pv_treq_id = 0;
-		_pv_T_req = NULL;
-		_pv_treq_size = t->uas.request->len+1;
-		_pv_treq_buf = (char*)pkg_malloc(_pv_treq_size*sizeof(char));
-		if(_pv_treq_buf==NULL)
+		if(_pv_treq.buf!=NULL)
+			pkg_free(_pv_treq.buf);
+		if(_pv_treq.tmsgp)
+			free_sip_msg(&_pv_treq.msg);
+		_pv_treq.tmsgp = NULL;
+		_pv_treq.id = 0;
+		_pv_treq.T = NULL;
+		_pv_treq.buf_size = t->uas.request->len+1;
+		_pv_treq.buf = (char*)pkg_malloc(_pv_treq.buf_size*sizeof(char));
+		if(_pv_treq.buf==NULL)
 		{
 			LM_ERR("no more pkg\n");
-			_pv_treq_size = 0;
+			_pv_treq.buf_size = 0;
 			return -1;
 		}
 	}
-	if(_pv_treq_p)
-		free_sip_msg(&_pv_treq);
-	memset(&_pv_treq, 0, sizeof(struct sip_msg));
-	memcpy(_pv_treq_buf, t->uas.request->buf, t->uas.request->len);
-	_pv_treq_buf[t->uas.request->len] = '\0';
-	_pv_treq.len = t->uas.request->len;
-	_pv_treq.buf = _pv_treq_buf;
-	_pv_treq_p = t->uas.request;
-	_pv_treq_id = t->uas.request->id;
-	_pv_T_req = t;
+	if(_pv_treq.tmsgp)
+		free_sip_msg(&_pv_treq.msg);
+	memset(&_pv_treq.msg, 0, sizeof(struct sip_msg));
+	memcpy(_pv_treq.buf, t->uas.request->buf, t->uas.request->len);
+	_pv_treq.buf[t->uas.request->len] = '\0';
+	_pv_treq.msg.len = t->uas.request->len;
+	_pv_treq.msg.buf = _pv_treq.buf;
+	_pv_treq.tmsgp = t->uas.request;
+	_pv_treq.id = t->uas.request->id;
+	_pv_treq.T = t;
 
 
-	if(pv_t_copy_msg(t->uas.request, &_pv_treq)!=0)
+	if(pv_t_copy_msg(t->uas.request, &_pv_treq.msg)!=0)
 	{
-		pkg_free(_pv_treq_buf);
-		_pv_treq_size = 0;
-		_pv_treq_buf = NULL;
-		_pv_T_req = NULL;
+		pkg_free(_pv_treq.buf);
+		_pv_treq.buf_size = 0;
+		_pv_treq.buf = NULL;
+		_pv_treq.tmsgp = NULL;
+		_pv_treq.T = NULL;
 		return -1;
 	}
 
@@ -159,46 +165,47 @@ int pv_t_update_rpl(struct sip_msg *msg)
 	if(t->uac[branch].reply==NULL || t->uac[branch].reply==FAKED_REPLY)
 		return 1;
 
-	if(_pv_T_rpl==t && t->uac[branch].reply==_pv_trpl_p
-			&& t->uac[branch].reply->id==_pv_trpl_id)
+	if(_pv_trpl.T==t && t->uac[branch].reply==_pv_trpl.tmsgp
+			&& t->uac[branch].reply->id==_pv_trpl.id)
 		return 0;
 
 	/* make a copy */
-	if(_pv_trpl_buf==NULL || _pv_trpl_size<t->uac[branch].reply->len+1)
+	if(_pv_trpl.buf==NULL || _pv_trpl.buf_size<t->uac[branch].reply->len+1)
 	{
-		if(_pv_trpl_buf!=NULL)
-			pkg_free(_pv_trpl_buf);
-		if(_pv_trpl_p)
-			free_sip_msg(&_pv_trpl);
-		_pv_trpl_p = NULL;
-		_pv_trpl_id = 0;
-		_pv_T_rpl = NULL;
-		_pv_trpl_size = t->uac[branch].reply->len+1;
-		_pv_trpl_buf = (char*)pkg_malloc(_pv_trpl_size*sizeof(char));
-		if(_pv_trpl_buf==NULL)
+		if(_pv_trpl.buf!=NULL)
+			pkg_free(_pv_trpl.buf);
+		if(_pv_trpl.tmsgp)
+			free_sip_msg(&_pv_trpl.msg);
+		_pv_trpl.tmsgp = NULL;
+		_pv_trpl.id = 0;
+		_pv_trpl.T = NULL;
+		_pv_trpl.buf_size = t->uac[branch].reply->len+1;
+		_pv_trpl.buf = (char*)pkg_malloc(_pv_trpl.buf_size*sizeof(char));
+		if(_pv_trpl.buf==NULL)
 		{
 			LM_ERR("no more pkg\n");
-			_pv_trpl_size = 0;
+			_pv_trpl.buf_size = 0;
 			return -1;
 		}
 	}
-	if(_pv_trpl_p)
-		free_sip_msg(&_pv_trpl);
-	memset(&_pv_trpl, 0, sizeof(struct sip_msg));
-	memcpy(_pv_trpl_buf, t->uac[branch].reply->buf, t->uac[branch].reply->len);
-	_pv_trpl_buf[t->uac[branch].reply->len] = '\0';
-	_pv_trpl.len = t->uac[branch].reply->len;
-	_pv_trpl.buf = _pv_trpl_buf;
-	_pv_trpl_p = t->uac[branch].reply;
-	_pv_trpl_id = t->uac[branch].reply->id;
-	_pv_T_rpl = t;
+	if(_pv_trpl.tmsgp)
+		free_sip_msg(&_pv_trpl.msg);
+	memset(&_pv_trpl.msg, 0, sizeof(struct sip_msg));
+	memcpy(_pv_trpl.buf, t->uac[branch].reply->buf, t->uac[branch].reply->len);
+	_pv_trpl.buf[t->uac[branch].reply->len] = '\0';
+	_pv_trpl.msg.len = t->uac[branch].reply->len;
+	_pv_trpl.msg.buf = _pv_trpl.buf;
+	_pv_trpl.tmsgp = t->uac[branch].reply;
+	_pv_trpl.id = t->uac[branch].reply->id;
+	_pv_trpl.T = t;
 
-	if(pv_t_copy_msg(t->uac[branch].reply, &_pv_trpl)!=0)
+	if(pv_t_copy_msg(t->uac[branch].reply, &_pv_trpl.msg)!=0)
 	{
-		pkg_free(_pv_trpl_buf);
-		_pv_trpl_buf = NULL;
-		_pv_trpl_size = 0;
-		_pv_T_rpl = 0;
+		pkg_free(_pv_trpl.buf);
+		_pv_trpl.buf_size = 0;
+		_pv_trpl.buf = NULL;
+		_pv_trpl.tmsgp = NULL;
+		_pv_trpl.T = NULL;
 		return -1;
 	}
 
@@ -217,7 +224,7 @@ int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
 	if(pv==NULL || pv_alter_context(pv))
 		return pv_get_null(msg, param, res);
 
-	return pv_get_spec_value(&_pv_treq, pv, res);
+	return pv_get_spec_value(&_pv_treq.msg, pv, res);
 }
 
 int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
@@ -232,7 +239,7 @@ int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
 	if(pv==NULL || pv_alter_context(pv))
 		return pv_get_null(msg, param, res);
 
-	return pv_get_spec_value(&_pv_trpl, pv, res);
+	return pv_get_spec_value(&_pv_trpl.msg, pv, res);
 }
 
 int pv_parse_t_var_name(pv_spec_p sp, str *in)
