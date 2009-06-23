@@ -200,7 +200,7 @@ int extract_body(struct sip_msg *msg, str *body )
 	/* no need for parse_headers(msg, EOH), get_body will 
 	 * parse everything */
 	/*is the content type correct?*/
-	if((ret = check_content_type(msg))==1)
+	if((ret = check_content_type(msg))==-1)
 	{
 		LM_ERR("content type mismatching\n");
 		goto error;
