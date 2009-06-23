@@ -175,6 +175,19 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 	/* rpc->fault(c, 100, "Trying"); */
 }
 
+int tm_get_stats(struct t_proc_stats *all)
+{
+	int i, pno;
+	if(all==NULL)
+		return -1;
+
+	pno = get_max_procs();
+	memset(all, 0, sizeof(struct t_proc_stats));
+	for(i = 0; i < pno; i++) {
+		tm_proc_stats_add(all, all, &tm_stats[i].s);
+	}
+	return 0;
+}
 
 
 /*  hash statistics */
