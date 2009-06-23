@@ -56,7 +56,10 @@ extern unsigned int     global_msg_id;
 
 void init_t();
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
+
+typedef struct cell* (*tlookup_original_f)( struct sip_msg* p_msg );
 struct cell* t_lookupOriginalT( struct sip_msg* p_msg );
+
 int t_reply_matching( struct sip_msg* , int* );
 
 typedef int (*tlookup_request_f)(struct sip_msg*, int, int*);

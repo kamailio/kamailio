@@ -232,6 +232,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->generate_callid = generate_callid;
 	tmb->generate_fromtag = generate_fromtag;
 	tmb->t_lookup_request = t_lookup_request;
+	tmb->t_lookup_original = t_lookupOriginalT;
 	tmb->t_check = t_check;
 	tmb->unref_cell = unref_cell;
 	tmb->which_cancel = which_cancel;
