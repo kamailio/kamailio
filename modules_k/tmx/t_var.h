@@ -25,6 +25,10 @@
 
 #include "../../pvar.h"
 
+void pv_tmx_data_init(void);
+
+int pv_get_t_var_inv(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
 int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,

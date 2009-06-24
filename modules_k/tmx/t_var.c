@@ -36,11 +36,13 @@ struct _pv_tmx_data {
 
 static struct _pv_tmx_data _pv_treq;
 static struct _pv_tmx_data _pv_trpl;
+static struct _pv_tmx_data _pv_tinv;
 
 void pv_tmx_data_init(void)
 {
 	memset(&_pv_treq, 0, sizeof(struct _pv_tmx_data));
 	memset(&_pv_trpl, 0, sizeof(struct _pv_tmx_data));
+	memset(&_pv_tinv, 0, sizeof(struct _pv_tmx_data));
 }
 
 int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst)
@@ -212,6 +214,79 @@ int pv_t_update_rpl(struct sip_msg *msg)
 	return 0;
 }
 
+int pv_t_update_inv(struct sip_msg *msg)
+{
+	struct cell * t;
+
+	if(msg==NULL)
+		return 1;
+	if (msg->REQ_METHOD!=METHOD_CANCEL)
+		return 1;
+
+	t = _tmx_tmb.t_lookup_original(msg);
+
+	if(t==NULL || t==T_UNDEFINED)
+		return 1;
+
+	if(t->uas.request==NULL) {
+		_tmx_tmb.unref_cell(t);
+		return 1;
+	}
+
+	if(_pv_tinv.T==t && t->uas.request==_pv_tinv.tmsgp
+			&& t->uas.request->id==_pv_tinv.id)
+		goto done;
+
+	/* make a copy */
+	if(_pv_tinv.buf==NULL || _pv_tinv.buf_size<t->uas.request->len+1)
+	{
+		if(_pv_tinv.buf!=NULL)
+			pkg_free(_pv_tinv.buf);
+		if(_pv_tinv.tmsgp)
+			free_sip_msg(&_pv_tinv.msg);
+		_pv_tinv.tmsgp = NULL;
+		_pv_tinv.id = 0;
+		_pv_tinv.T = NULL;
+		_pv_tinv.buf_size = t->uas.request->len+1;
+		_pv_tinv.buf = (char*)pkg_malloc(_pv_tinv.buf_size*sizeof(char));
+		if(_pv_tinv.buf==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			_pv_tinv.buf_size = 0;
+			goto error;
+		}
+	}
+	if(_pv_tinv.tmsgp)
+		free_sip_msg(&_pv_tinv.msg);
+	memset(&_pv_tinv.msg, 0, sizeof(struct sip_msg));
+	memcpy(_pv_tinv.buf, t->uas.request->buf, t->uas.request->len);
+	_pv_tinv.buf[t->uas.request->len] = '\0';
+	_pv_tinv.msg.len = t->uas.request->len;
+	_pv_tinv.msg.buf = _pv_tinv.buf;
+	_pv_tinv.tmsgp = t->uas.request;
+	_pv_tinv.id = t->uas.request->id;
+	_pv_tinv.T = t;
+
+
+	if(pv_t_copy_msg(t->uas.request, &_pv_tinv.msg)!=0)
+	{
+		pkg_free(_pv_tinv.buf);
+		_pv_tinv.buf_size = 0;
+		_pv_tinv.buf = NULL;
+		_pv_tinv.tmsgp = NULL;
+		_pv_tinv.T = NULL;
+		goto error;
+	}
+
+done:
+	_tmx_tmb.unref_cell(t);
+	return 0;
+
+error:
+	_tmx_tmb.unref_cell(t);
+	return -1;
+}
+
 int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
@@ -240,6 +315,21 @@ int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
 		return pv_get_null(msg, param, res);
 
 	return pv_get_spec_value(&_pv_trpl.msg, pv, res);
+}
+
+int pv_get_t_var_inv(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	pv_spec_t *pv=NULL;
+
+	if(pv_t_update_inv(msg))
+		return pv_get_null(msg, param, res);
+
+	pv = (pv_spec_t*)param->pvn.u.dname;
+	if(pv==NULL || pv_alter_context(pv))
+		return pv_get_null(msg, param, res);
+
+	return pv_get_spec_value(&_pv_tinv.msg, pv, res);
 }
 
 int pv_parse_t_var_name(pv_spec_p sp, str *in)

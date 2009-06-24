@@ -104,6 +104,8 @@ static pv_export_t mod_pvs[] = {
 	{ {"T_reply_code", sizeof("T_reply_code")-1}, PVT_OTHER,
 		pv_get_tm_reply_code, 0,
 		 0, 0, 0, 0 },
+	{ {"T_inv", sizeof("T_inv")-1}, PVT_OTHER, pv_get_t_var_inv, 0,
+		pv_parse_t_var_name, 0, 0, 0 },
 	{ {"T_req", sizeof("T_req")-1}, PVT_OTHER, pv_get_t_var_req, 0,
 		pv_parse_t_var_name, 0, 0, 0 },
 	{ {"T_rpl", sizeof("T_rpl")-1}, PVT_OTHER, pv_get_t_var_rpl, 0,
@@ -174,6 +176,8 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+	pv_tmx_data_init();
+
 	return 0;
 }
 
