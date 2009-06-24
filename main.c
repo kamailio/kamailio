@@ -176,6 +176,7 @@
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
+#include "autover.h"
 #include "version.h"
 
 /* define SIG_DEBUG by default */
@@ -186,7 +187,7 @@
 #endif
 
 static char id[]="@(#) $Id$";
-static char* version=SER_FULL_VERSION;
+static char* version=SER_FULL_VERSION " " REPO_VER;
 static char* flags=SER_COMPILE_FLAGS;
 char compiled[]= __TIME__ " " __DATE__ ;
 

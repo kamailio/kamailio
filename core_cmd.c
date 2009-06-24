@@ -28,6 +28,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <signal.h>
+#include "autover.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "sr_module.h"
@@ -298,7 +299,7 @@ static const char* core_version_doc[] = {
 
 static void core_version(rpc_t* rpc, void* c)
 {
-	rpc->add(c, "s", SERVER_HDR);
+	rpc->add(c, "s", SERVER_HDR " " REPO_VER );
 }
 
 
