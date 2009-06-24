@@ -62,6 +62,8 @@
 #               $(MAKE) invocation (andrei)
 #  2009-04-22  don't rebuild config.mak or modules.lst if not needed
 #              (e.g. on clean) (andrei)
+#  2009-06-24  auto-generate autover.h, containing the REPO_VER macro, defined
+#               to the top git commit sha (if git is found) (andrei)
 #
 
 # check make version
@@ -452,13 +454,17 @@ modules-cfg modules-list modules-lst:
 
 ifneq ($(wildcard .git),)
 # if .git/ exists
-repo_ver=$(shell git rev-parse --short=6 HEAD 2>/dev/null || echo "unknown" )
+repo_ver=$(shell  RV=`git rev-parse --verify --short=6 HEAD 2>/dev/null`;\
+					[ -n "$$RV" ] && \
+					test -n "`git diff-index --name-only HEAD >/dev/null`" && \
+						RV="$$RV"-dirty; echo "$$RV")
 autover_h_dep=.git
 else
 # else if .git/ does not exist
-repo_ver="unknown"
+repo_ver=
 autover_h_dep=
 endif
+
 
 autover.h: $(autover_h_dep)
 	@echo  "generating autover.h ($(autover_h_dep)) ..."
@@ -651,7 +657,7 @@ dbg: sip-router
 
 dist: tar
 
-tar: 
+tar: autover.h
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
