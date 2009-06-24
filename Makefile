@@ -735,7 +735,7 @@ install: install-bin install-every-module install-cfg \
 .PHONY: dbinstall
 dbinstall:
 	-@echo "Initializing $(MAIN_NAME) database"
-	scripts/mysql/$(MAIN_NAME)_mysql.sh create
+	scripts/mysql/$(SCR_NAME)_mysql.sh create
 	-@echo "Done"
 
 .PHONY: README
@@ -779,8 +779,9 @@ $(man_prefix)/$(man_dir)/man5:
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
 		sed $(foreach m,$(modules_dirs),\
-				-e "s#/usr/[^:]*lib/$(MAIN_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/$(MAIN_NAME)-basic.cfg > $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
+				-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+			< etc/$(CFG_NAME)-basic.cfg > \
+			$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
 		chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
 				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg ]; then \
@@ -788,23 +789,24 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg; \
 		fi
 		sed $(foreach m,$(modules_dirs),\
-			-e "s#/usr/[^:]*lib/$(MAIN_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/$(MAIN_NAME)-oob.cfg \
+			-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+			< etc/$(CFG_NAME)-oob.cfg \
 			> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
 		chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg ]; then \
+				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg ]; \
+		then \
 			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample \
 				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
 		fi
 		# radius dictionary
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(MAIN_NAME)
-		$(INSTALL_CFG) etc/dictionary.$(MAIN_NAME) $(cfg_prefix)/$(cfg_dir)
+		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
+		$(INSTALL_CFG) etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
 
 		# TLS configuration
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
 		$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
-		modules/tls/$(MAIN_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
+		modules/tls/$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
@@ -869,7 +871,8 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 	# FIXME: This is a hack, this should be (and will be) done properly in
     # per-module Makefiles
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
-		< scripts/mysql/$(MAIN_NAME)_mysql.sh > $(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
+		< scripts/mysql/$(SCR_NAME)_mysql.sh > \
+			$(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
 	chmod 755 $(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
 
 
@@ -889,23 +892,25 @@ install-doc: $(doc_prefix)/$(doc_dir) install-every-module-doc
 	$(INSTALL_DOC) README $(doc_prefix)/$(doc_dir)
 
 
-install-$(MAIN_NAME)-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
-		sed -e "s#/etc/$(MAIN_NAME)/$(MAIN_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
+install-sr-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
+		sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
-				-e "s#/usr/lib/$(MAIN_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
-			-e "s#/usr/share/doc/$(MAIN_NAME)/#$(doc_target)#g" \
-			< $(MAIN_NAME).8 >  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
+				-e "s#/usr/lib/$(CFG_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
+			-e "s#/usr/share/doc/$(CFG_NAME)/#$(doc_target)#g" \
+			< $(CFG_NAME).8 >  \
+							$(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
 		chmod 644  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
-		sed -e "s#/etc/$(MAIN_NAME)/$(MAIN_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
+		sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
-				-e "s#/usr/lib/$(MAIN_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
-			-e "s#/usr/share/doc/$(MAIN_NAME)/#$(doc_target)#g" \
-			< $(MAIN_NAME).cfg.5 >  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
+				-e "s#/usr/lib/$(CFG_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
+			-e "s#/usr/share/doc/$(CFG_NAME)/#$(doc_target)#g" \
+			< $(CFG_NAME).cfg.5 >  \
+			$(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
 		chmod 644  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
 
-install-man:  install-sip-router-man install-every-module-man
+install-man:  install-sr-man install-every-module-man
 
 
 
