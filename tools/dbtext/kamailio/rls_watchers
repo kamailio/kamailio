@@ -1,0 +1,1 @@
+id(int,auto) presentity_uri(string) to_user(string) to_domain(string) watcher_username(string) watcher_domain(string) event(string) event_id(string,null) to_tag(string) from_tag(string) callid(string) local_cseq(int) remote_cseq(int) contact(string) record_route(string,null) expires(int) status(int) reason(string) version(int) socket_info(string) local_contact(string) 

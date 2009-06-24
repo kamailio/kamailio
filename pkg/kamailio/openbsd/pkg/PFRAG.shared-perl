@@ -1,0 +1,3 @@
+@comment $OpenBSD$
+lib/kamailio/modules/perl.so
+lib/kamailio/modules/perlvdb.so

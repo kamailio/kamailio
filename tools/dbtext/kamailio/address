@@ -1,0 +1,1 @@
+id(int,auto) grp(int) ip_addr(string) mask(int) port(int) 

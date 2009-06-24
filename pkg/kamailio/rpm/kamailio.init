@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# Startup script for Kamailio
+#
+# chkconfig: 345 85 15
+# description: Kamailio is a fast SIP Proxy.
+#
+# processname: kamailio
+# pidfile: /var/run/kamailio.pid
+# config: /etc/kamailio/kamailio.cfg
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+oser=/usr/sbin/kamailio
+prog=kamailio
+RETVAL=0
+
+start() {
+	echo -n $"Starting $prog: "
+	daemon $oser $OPTIONS >/dev/null 2>/dev/null
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/kamailio
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $oser
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/kamailio /var/run/kamailio.pid
+}
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $oser
+		RETVAL=$?
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/run/kamailio.pid ] ; then
+			stop
+			start
+		fi
+		;;
+	*)
+		echo $"Usage: $prog {start|stop|restart|condrestart|status|help}"
+		exit 1
+esac
+
+exit $RETVAL

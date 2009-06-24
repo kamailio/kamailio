@@ -1,0 +1,1 @@
+id(int,auto) carrier(int) domain(int) scan_prefix(string) flags(int) mask(int) prob(double) strip(int) rewrite_host(string) rewrite_prefix(string) rewrite_suffix(string) description(string,null) 

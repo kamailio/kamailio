@@ -1,0 +1,141 @@
+#
+# $Id$
+#
+# control tool for maintaining Kamailio
+#
+#===================================================================
+
+##### ----------------------------------------------- #####
+### common variables and functions for SQL engines
+
+if [ -z "$DBNAME" ] ; then
+	DBNAME=openser
+fi
+if [ -z "$DBHOST" ] ; then
+	DBHOST=localhost
+fi
+if [ -z "$DBRWUSER" ] ; then
+	DBRWUSER=openser
+fi
+
+# the read-only user for whom password may be stored here
+if [ -z "$DBROUSER" ] ; then
+	DBROUSER=openserro
+fi
+if [ -z "$DBROPW" ] ; then
+	DBROPW=openserro
+fi
+
+# full privileges SQL user
+if [ -z "$DBROOTUSER" ]; then
+	DBROOTUSER="root"
+fi
+
+#params: none
+# output: DBRWPW
+prompt_pw() {
+	if [ -z "$DBRWPW" ] ; then
+		savetty=`stty -g`
+		if [ -z "$1" ] ; then
+			printf "Password: " > /dev/stderr
+		else
+			printf "$1: " > /dev/stderr
+		fi
+		stty -echo
+    	read DBRWPW
+		stty $savetty
+    	echo
+	fi
+}
+
+# dbtext don't support db_ops
+usage_db_ops() {
+	echo
+	mecho " -- command 'db' - database operations"
+	echo
+cat <<EOF
+ db exec <query> ..................... execute SQL query
+ db roexec <roquery> ................. execute read-only SQL query
+ db run <id> ......................... execute SQL query from \$id variable
+ db rorun <id> ....................... execute read-only SQL query from 
+                                       \$id variable
+ db show <table> ..................... display table content
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"
+
+# speeddial not implemented for dbtext
+usage_speeddial() {
+	echo
+	mecho " -- command 'speeddial' - manage speed dials (short numbers)"
+	echo
+cat <<EOF
+ speeddial show <speeddial-id> ....... show speeddial details
+ speeddial list <sip-id> ............. list speeddial for uri
+ speeddial add <sip-id> <sd-id> <new-uri> [<desc>] ... 
+           ........................... add a speedial (*)
+ speeddial rm <sip-id> <sd-id> ....... remove a speeddial (*)
+ speeddial help ...................... help message
+    - <speeddial-id>, <sd-id> must be an AoR (username@domain)
+    - <sip-id> must be an AoR (username@domain)
+    - <new-uri> must be a SIP AoR (sip:username@domain)
+    - <desc> a description for speeddial
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_speeddial"
+
+# avp operations not implemented for dbtext
+usage_avp() {
+	echo
+	mecho " -- command 'avp' - manage AVPs"
+	echo
+cat <<EOF
+ avp list [-T table] [-u <sip-id|uuid>]
+     [-a attribute] [-v value] [-t type] ... list AVPs
+ avp add [-T table] <sip-id|uuid>
+     <attribute> <type> <value> ............ add AVP (*)
+ avp rm [-T table]  [-u <sip-id|uuid>]
+     [-a attribute] [-v value] [-t type] ... remove AVP (*)
+ avp help .................................. help message
+    - -T - table name
+    - -u - SIP id or unique id
+    - -a - AVP name
+    - -v - AVP value
+    - -t - AVP name and type (0 (str:str), 1 (str:int),
+                              2 (int:str), 3 (int:int))
+    - <sip-id> must be an AoR (username@domain)
+    - <uuid> must be a string but not AoR
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_avp"
+
+# alias_db not implemented for dbtext
+usage_alias_db() {
+	echo
+	mecho " -- command 'alias_db' - manage database aliases"
+	echo
+cat <<EOF
+ alias_db show <alias> .............. show alias details
+ alias_db list <sip-id> ............. list aliases for uri
+ alias_db add <alias> <sip-id> ...... add an alias (*)
+ alias_db rm <alias> ................ remove an alias (*)
+ alias_db help ...................... help message
+    - <alias> must be an AoR (username@domain)"
+    - <sip-id> must be an AoR (username@domain)"
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_alias_db"
+
+usage_domain() {
+	echo
+	mecho " -- command 'domain' - manage local domains"
+	echo
+cat <<EOF
+ domain reload ....................... reload domains from disk
+ domain show ......................... show current domains in memory
+ domain showdb ....................... show domains in the database
+ domain add <domain> ................. add the domain to the database
+ domain rm <domain> .................. delete the domain from the database
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_domain"

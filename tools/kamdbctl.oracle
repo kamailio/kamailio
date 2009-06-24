@@ -1,0 +1,312 @@
+#!/bin/sh
+# $Id$
+#
+# Script for adding and dropping Kamailio Oracle tables
+#
+# History:
+
+##In you not have 'AS SYSDBA' access to database connect, comment next string
+##and Oracle administrator must create DBROOTUSER
+##(see scripts/oracle/admin/_create_as_sys.tmpl)
+DBSYSUSER="sys"
+
+
+# path to the database schemas
+DATA_DIR="/usr/local/share/kamailio"
+if [ -d "$DATA_DIR/oracle" ] ; then
+	DB_SCHEMA="$DATA_DIR/oracle"
+else
+	DB_SCHEMA="./oracle"
+fi
+
+
+##### ----------------------------------------------- #####
+### load ORACLE SQL base
+#
+if [ -f "$MYLIBDIR/kamdbfunc.oracle" ]; then
+	. "$MYLIBDIR/kamdbfunc.oracle"
+else
+	echo "Cannot load ORACLE core functions '$MYLIBDIR/kamdbfunc.oracle' - exiting ..."
+	exit -1
+fi
+
+if [ -z "$SQLPLUS" ] ; then
+	SQLPLUS=`which sqlplus 2>/dev/null`
+	if [ -z "$SQLPLUS" ]; then
+		merr "'sqlplus' tool not found: set SQLPLUS variable to correct tool path"
+		exit 1
+	fi
+	export SQLPLUS
+fi
+if [ -z "$OPENSER_ORASEL" ] ; then
+	OPENSER_ORASEL=`which kamailio_orasel 2>/dev/null`
+	if [ -n "$SQLPLUS" ]; then
+		export OPENSER_ORASEL
+	fi
+fi
+
+#################################################################
+ORALOG=/tmp/opensrdbctl.log
+
+if [ -z "$SED" ]; then
+	SED="sed"
+fi
+
+SED_ROOTUSER="$SED -e s/%DBROOTUSER%/$DBROOTUSER/g"
+SED_USERS="$SED_ROOTUSER;s/%DBROUSER%/$DBROUSER/g;s/%DBRWUSER%/$DBRWUSER/g"
+
+#################################################################
+# config vars
+#################################################################
+
+# 'db'-privileges (scheme) Oracle user
+if [ -z "$DBROOTUSER" ]; then
+	merr "scheme owner (pivileged user) 'DBROOTUSER' must be defined."
+	exit 1
+fi
+
+#################################################################
+oracle_root_cmd()
+{
+	prompt_oracle_pw root
+	SUFF=""
+	if [ -n "$1" ]; then
+		SUFF="@$1"
+	fi
+	ORACLE_ROOT_CMD="$SQLPLUS -S -L -R 3 $DBROOTUSER/${DBROOTPW}$SUFF"
+	export ORACLE_ROOT_CMD
+}
+
+
+openser_drop()  # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_drop function takes one params"
+	exit 1
+fi
+
+oracle_root_cmd $1
+
+echo "DROP USER $DBROUSER CASCADE;
+      DROP USER $DBRWUSER CASCADE;" | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	mwarn "Could not drop $DBRWUSER or $DBROUSER users, try to continue.."
+else
+	minfo "Database user deleted"
+fi
+
+$SED_ROOTUSER $DB_SCHEMA/inc/_dropsch.tmpl | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	merr "Dropping scheme for '$DBROOTUSER' in database '$1' failed!"
+	exit 1
+fi
+
+if [ -n "$DBSYSUSER" ]; then
+	get_answer "ask" "Remove user '$DBROOTUSER' (complete remove scheme)? (y/n): "
+	if [ "$ANSWER" = "y" ]; then
+		prompt_oracle_pw sys
+		SUFF=""
+		if [ -n "$1" ]; then
+			SUFF="@$1"
+		fi
+		SYSCMD="$SQLPLUS -S -L -R 3 $DBSYSUSER/${DBSYSPW}$SUFF AS SYSDBA"
+		echo "DROP USER $DBROOTUSER CASCADE;" | $SYSCMD	>$ORALOG
+		if [ $? -ne 0 ] || check_oracle_log ; then
+			merr "Dropping scheme in database '$1' failed!"
+			exit 1
+		fi
+	fi
+fi
+
+minfo "Scheme '$DBROOTUSER' in database '$1' dropped"
+} #openser_drop
+
+
+openser_create() # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_create function takes one param"
+	exit 1
+fi
+
+minfo "creating scheme for '$DBROOTUSER' in database '$1' ..."
+
+if [ -n "$DBSYSUSER" ]; then
+	get_answer "ask" "Create user '$DBROOTUSER' (is new scheme)? (y/n): "
+	if [ "$ANSWER" = "y" ]; then
+		prompt_oracle_pw sys
+		prompt_oracle_pw root
+		SUFF=""
+		if [ -n "$1" ]; then
+			SUFF="@$1"
+		fi
+		SYSCMD="$SQLPLUS -S -L -R 3 $DBSYSUSER/${DBSYSPW}$SUFF AS SYSDBA"
+
+		echo "create user $DBROOTUSER identified by $DBROOTPW
+		    default tablespace DATA temporary tablespace TEMP
+		    profile DEFAULT;" | $SYSCMD >$ORALOG
+		if [ $? -ne 0 ] || check_oracle_log ; then
+			mwarn "Create privileged user in database failed, perhaps they allready exist? Try to continue.."
+		fi
+
+		$SED_ROOTUSER $DB_SCHEMA/inc/_grantroot.tmpl | $SYSCMD >$ORALOG
+		if [ $? -ne 0 ] || check_oracle_log ; then
+			merr "Creating scheme in database '$1' failed!"
+			exit 1
+		fi
+	fi
+fi
+
+
+oracle_root_cmd $1
+
+$SED_ROOTUSER $DB_SCHEMA/inc/_createsch.tmpl | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	merr "Creating scheme for '$DBROOTUSER' in database '$1' failed!"
+	exit 1
+fi
+
+cat $DB_SCHEMA/inc/_create_compat.sql | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	merr "Creating compatibility functions for '$DBROOTUSER' in database '$1' failed!"
+	exit 1
+fi
+
+prompt_oracle_pw rw
+prompt_oracle_pw ro
+echo "create user $DBROUSER identified by $DBROPW
+    default tablespace DATA temporary tablespace TEMP profile DEFAULT;
+ grant connect to $DBROUSER;
+ create user $DBRWUSER identified by $DBRWPW
+    default tablespace DATA temporary tablespace TEMP profile DEFAULT;
+ grant connect to $DBRWUSER;" | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	mwarn "Create user in database scheme failed, perhaps they allready exist? Try to continue.."
+fi
+
+$SED_USERS $DB_SCHEMA/inc/_grantfunc.tmpl | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	merr "Make compatibility functions for users failed!"
+	exit 1
+fi
+
+
+for TABLE in $STANDARD_MODULES; do
+	mdbg "Creating core table: $TABLE"
+	cat $DB_SCHEMA/$TABLE-create.sql | $ORACLE_ROOT_CMD >$ORALOG
+	if [ $? -ne 0 ] || check_oracle_log ; then
+		merr "Creating core tables failed!"
+		exit 1
+	fi
+done
+
+if [ -e $DB_SCHEMA/extensions-create.sql ]; then
+	minfo "Creating custom extensions tables"
+	cat $DB_SCHEMA/extensions-create.sql | $ORACLE_ROOT_CMD >$ORALOG
+	if [ $? -ne 0 ] || check_oracle_log ; then
+		merr "Creating custom extensions tables failed!"
+		exit 1
+	fi
+fi
+
+minfo "Core Kamailio tables succesfully created."
+
+get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
+if [ "$ANSWER" = "y" ]; then
+	presence_create $1
+fi
+
+get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
+if [ "$ANSWER" = "y" ]; then
+	extra_create $1
+fi
+} # openser_create
+
+
+presence_create() # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "presence_create function takes one param"
+	exit 1
+fi
+
+minfo "creating presence tables..."
+oracle_root_cmd $1
+
+cat $DB_SCHEMA/presence-create.sql | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	merr "Failed to create presence tables!"
+	exit 1
+fi
+
+cat $DB_SCHEMA/rls-create.sql | $ORACLE_ROOT_CMD >$ORALOG
+if [ $? -ne 0 ] || check_oracle_log ; then
+	merr "Failed to create rls-presence tables!"
+	exit 1
+fi
+
+minfo "Presence tables succesfully created."
+}
+
+extra_create() # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "extra_create function takes one param"
+	exit 1
+fi
+
+minfo "creating extra tables..."
+oracle_root_cmd $1
+
+for TABLE in $EXTRA_MODULES; do
+	mdbg "Creating extra table: $TABLE"
+	cat $DB_SCHEMA/$TABLE-create.sql | $ORACLE_ROOT_CMD >$ORALOG
+	if [ $? -ne 0 ] || check_oracle_log ; then
+		merr "Creating extra tables failed!"
+		exit 1
+	fi
+done
+
+minfo "Extra tables succesfully created."
+}
+
+
+oracle_dump()
+{
+	if [ $# -ne 2 ] ; then
+		merr "oracle_dump function takes two params"
+		exit 1
+	fi
+	prompt_oracle_pw rw
+	if [ -n "$1" ]; then
+		SUFF="@$1"
+	fi
+	if [ -n "$OPENSER_ORASEL" ]; then
+		$OPENSER_ORASEL ${DBROUSER}/${DBROPW}$SUFF -BLNe \
+		    "select * from table(dump_tables('$DBROOTUSER'));" >$2
+	else
+		echo "set feed 0 lin 8000 pages 0
+		    select * from table(dump_tables('$DBROOTUSER'));" | \
+			$SQLPLUS -S -L -R 3 ${DBROUSER}/${DBROPW}$SUFF >$2
+	fi
+	return $?
+}
+
+oracle_restore()
+{
+	if [ $# -ne 2 ] ; then
+		merr "oracle_restore function takes two params"
+		exit 1
+	fi
+	prompt_oracle_pw rw
+	SUFF=""
+	if [ -n "$1" ]; then
+		SUFF="@$1"
+	fi
+	cat "$2" | $SQLPLUS -S -L -R 3 ${DBRWUSER}/${DBRWPW}$SUFF >$ORALOG
+	if [ $? -ne 0 ] || check_oracle_log ; then
+		return 1
+	fi
+	return 0
+}
+

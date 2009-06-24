@@ -1,0 +1,114 @@
+# $Id$
+#
+# Script for adding and dropping Kamailio DBTEXT tables
+#
+# History:
+# 2007-02-14  Branch from mysqldb.sh script and adapt minimal capabilities(Cesc Santasusana)
+#
+# 2007-05-31  Move common definitions to kamdbctl.base file (henningw)
+# 2007-06-13  Move database definitions out of this script, use a common
+#             control tool for database tasks, like the kamctl (henning)
+
+# path to the database schemas
+DATA_DIR="/usr/local/share/kamailio"
+if [ -d "$DATA_DIR/dbtext/kamailio" ] ; then
+	DB_SCHEMA="$DATA_DIR/dbtext/kamailio"
+else
+	DB_SCHEMA="./dbtext/kamailio"
+fi
+
+# path to the dbtext database
+if [ -z "$DB_PATH" ] ; then
+	DB_PATH="/usr/local/etc/kamailio/dbtext"
+fi
+
+openser_drop()  # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_drop function takes one param"
+	exit 1
+fi
+
+DB_PATH=$1
+
+minfo "DBTEXT ... erasing all files at: $DB_PATH"
+rm -rf $DB_PATH
+}
+
+openser_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_create function takes one param (DB_PATH)"
+	exit 1
+fi
+
+DB_PATH=$1
+
+minfo "creating DBTEXT tables at: $DB_PATH ..."
+
+mkdir -p $DB_PATH
+
+for TABLE in $STANDARD_TABLES; do
+    mdbg "Creating core table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DB_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating core tables failed!"
+	exit 1
+    fi
+done
+
+get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
+if [ "$ANSWER" = "y" ]; then
+	presence_create $1
+fi
+
+get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
+if [ "$ANSWER" = "y" ]; then
+	extra_create $1
+fi
+}
+
+presence_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "presence_create function takes one param (DB_PATH)"
+	exit 1
+fi
+
+DB_PATH=$1
+
+minfo "creating DBTEXT presence tables at: $DB_PATH ..."
+
+mkdir -p $DB_PATH
+
+for TABLE in $PRESENCE_TABLES; do
+    mdbg "Creating presence table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DB_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating presence tables failed!"
+	exit 1
+    fi
+done
+
+}  # end presence_create
+
+
+extra_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "extra_create function takes one param"
+	exit 1
+fi
+
+minfo "creating DBTEXT extra tables at: $DB_PATH ..."
+
+for TABLE in $EXTRA_TABLES; do
+    mdbg "Creating extra table: $TABLE"
+    cp $DB_SCHEMA/$TABLE $DB_PATH/$TABLE
+    if [ $? -ne 0 ] ; then
+	merr "Creating extra tables failed!"
+	exit 1
+    fi
+done
+
+}  # end extra_create

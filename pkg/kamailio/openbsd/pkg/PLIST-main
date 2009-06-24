@@ -1,0 +1,186 @@
+@comment $OpenBSD$
+@newgroup _kamailio:610
+@newuser _kamailio:610:610:daemon:Kamailio:/nonexistent:/sbin/nologin
+%%SHARED%%
+lib/kamailio/
+lib/kamailio/kamctl/
+lib/kamailio/kamctl/dbtextdb/
+lib/kamailio/kamctl/dbtextdb/dbtextdb.py
+lib/kamailio/kamctl/kamctl.base
+lib/kamailio/kamctl/kamctl.ctlbase
+lib/kamailio/kamctl/kamctl.dbtext
+lib/kamailio/kamctl/kamctl.fifo
+lib/kamailio/kamctl/kamctl.sqlbase
+lib/kamailio/kamctl/kamctl.unixsock
+lib/kamailio/kamctl/kamdbctl.base
+lib/kamailio/kamctl/kamdbctl.dbtext
+lib/kamailio/modules/
+@man man/man5/kamailio.cfg.5
+@man man/man8/kamailio.8
+@man man/man8/kamctl.8
+@man man/man8/kamunix.8
+@bin sbin/kamailio
+sbin/kamctl
+sbin/kamdbctl
+@bin sbin/kamunix
+share/doc/kamailio/
+share/doc/kamailio/AUTHORS
+share/doc/kamailio/INSTALL
+share/doc/kamailio/NEWS
+share/doc/kamailio/README
+share/doc/kamailio/README-MODULES
+share/doc/kamailio/README.acc
+share/doc/kamailio/README.alias_db
+share/doc/kamailio/README.auth
+share/doc/kamailio/README.auth_db
+share/doc/kamailio/README.auth_diameter
+share/doc/kamailio/README.avpops
+share/doc/kamailio/README.benchmark
+share/doc/kamailio/README.cfgutils
+share/doc/kamailio/README.cpl-c
+share/doc/kamailio/README.db_flatstore
+share/doc/kamailio/README.db_text
+share/doc/kamailio/README.dialog
+share/doc/kamailio/README.dialplan
+share/doc/kamailio/README.dispatcher
+share/doc/kamailio/README.diversion
+share/doc/kamailio/README.domain
+share/doc/kamailio/README.domainpolicy
+share/doc/kamailio/README.enum
+share/doc/kamailio/README.exec
+share/doc/kamailio/README.gflags
+share/doc/kamailio/README.group
+share/doc/kamailio/README.imc
+share/doc/kamailio/README.jabber
+share/doc/kamailio/README.lcr
+share/doc/kamailio/README.mangler
+share/doc/kamailio/README.maxfwd
+share/doc/kamailio/README.mediaproxy
+share/doc/kamailio/README.mi_datagram
+share/doc/kamailio/README.mi_fifo
+share/doc/kamailio/README.msilo
+share/doc/kamailio/README.nat_traversal
+share/doc/kamailio/README.nathelper
+share/doc/kamailio/README.options
+share/doc/kamailio/README.path
+share/doc/kamailio/README.pdt
+share/doc/kamailio/README.permissions
+share/doc/kamailio/README.pike
+share/doc/kamailio/README.presence
+share/doc/kamailio/README.presence_mwi
+share/doc/kamailio/README.presence_xml
+share/doc/kamailio/README.pua
+share/doc/kamailio/README.pua_bla
+share/doc/kamailio/README.pua_mi
+share/doc/kamailio/README.pua_usrloc
+share/doc/kamailio/README.pua_xmpp
+share/doc/kamailio/README.ratelimit
+share/doc/kamailio/README.registrar
+share/doc/kamailio/README.rls
+share/doc/kamailio/README.rr
+share/doc/kamailio/README.seas
+share/doc/kamailio/README.siptrace
+share/doc/kamailio/README.sl
+share/doc/kamailio/README.sms
+share/doc/kamailio/README.speeddial
+share/doc/kamailio/README.sst
+share/doc/kamailio/README.statistics
+share/doc/kamailio/README.textops
+share/doc/kamailio/README.tlsops
+share/doc/kamailio/README.tm
+share/doc/kamailio/README.uac
+share/doc/kamailio/README.uac_redirect
+share/doc/kamailio/README.uri
+share/doc/kamailio/README.uri_db
+share/doc/kamailio/README.userblacklist
+share/doc/kamailio/README.usrloc
+share/doc/kamailio/README.xlog
+share/doc/kamailio/README.xmpp
+share/examples/kamailio/
+@sample ${SYSCONFDIR}/kamailio/
+share/examples/kamailio/kamailio.cfg
+@sample ${SYSCONFDIR}/kamailio/kamailio.cfg
+share/examples/kamailio/kamctlrc
+@sample ${SYSCONFDIR}/kamailio/kamctlrc
+share/examples/kamailio/tls/
+@sample ${SYSCONFDIR}/kamailio/tls/
+share/examples/kamailio/tls/README
+@sample ${SYSCONFDIR}/kamailio/tls/README
+share/examples/kamailio/tls/ca.conf
+@sample ${SYSCONFDIR}/kamailio/tls/ca.conf
+share/examples/kamailio/tls/request.conf
+@sample ${SYSCONFDIR}/kamailio/tls/request.conf
+share/examples/kamailio/tls/rootCA/
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/
+share/examples/kamailio/tls/rootCA/cacert.pem
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/cacert.pem
+share/examples/kamailio/tls/rootCA/certs/
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/certs/
+share/examples/kamailio/tls/rootCA/certs/01.pem
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/certs/01.pem
+share/examples/kamailio/tls/rootCA/index.txt
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/index.txt
+share/examples/kamailio/tls/rootCA/private/
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/private/
+share/examples/kamailio/tls/rootCA/private/cakey.pem
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/private/cakey.pem
+share/examples/kamailio/tls/rootCA/serial
+@sample ${SYSCONFDIR}/kamailio/tls/rootCA/serial
+share/examples/kamailio/tls/user/
+@sample ${SYSCONFDIR}/kamailio/tls/user/
+share/examples/kamailio/tls/user.conf
+@sample ${SYSCONFDIR}/kamailio/tls/user.conf
+share/examples/kamailio/tls/user/user-calist.pem
+@sample ${SYSCONFDIR}/kamailio/tls/user/user-calist.pem
+share/examples/kamailio/tls/user/user-cert.pem
+@sample ${SYSCONFDIR}/kamailio/tls/user/user-cert.pem
+share/examples/kamailio/tls/user/user-cert_req.pem
+@sample ${SYSCONFDIR}/kamailio/tls/user/user-cert_req.pem
+share/examples/kamailio/tls/user/user-privkey.pem
+@sample ${SYSCONFDIR}/kamailio/tls/user/user-privkey.pem
+share/kamailio/
+share/kamailio/dbtext/
+share/kamailio/dbtext/kamailio/
+share/kamailio/dbtext/kamailio/acc
+share/kamailio/dbtext/kamailio/active_watchers
+share/kamailio/dbtext/kamailio/address
+share/kamailio/dbtext/kamailio/aliases
+share/kamailio/dbtext/kamailio/carrierfailureroute
+share/kamailio/dbtext/kamailio/carrierroute
+share/kamailio/dbtext/kamailio/cpl
+share/kamailio/dbtext/kamailio/dbaliases
+share/kamailio/dbtext/kamailio/dialog
+share/kamailio/dbtext/kamailio/dialplan
+share/kamailio/dbtext/kamailio/dispatcher
+share/kamailio/dbtext/kamailio/domain
+share/kamailio/dbtext/kamailio/domainpolicy
+share/kamailio/dbtext/kamailio/globalblacklist
+share/kamailio/dbtext/kamailio/grp
+share/kamailio/dbtext/kamailio/gw
+share/kamailio/dbtext/kamailio/imc_members
+share/kamailio/dbtext/kamailio/imc_rooms
+share/kamailio/dbtext/kamailio/lcr
+share/kamailio/dbtext/kamailio/location
+share/kamailio/dbtext/kamailio/missed_calls
+share/kamailio/dbtext/kamailio/pdt
+share/kamailio/dbtext/kamailio/presentity
+share/kamailio/dbtext/kamailio/pua
+share/kamailio/dbtext/kamailio/re_grp
+share/kamailio/dbtext/kamailio/rls_presentity
+share/kamailio/dbtext/kamailio/rls_watchers
+share/kamailio/dbtext/kamailio/route_tree
+share/kamailio/dbtext/kamailio/silo
+share/kamailio/dbtext/kamailio/sip_trace
+share/kamailio/dbtext/kamailio/speed_dial
+share/kamailio/dbtext/kamailio/subscriber
+share/kamailio/dbtext/kamailio/trusted
+share/kamailio/dbtext/kamailio/uri
+share/kamailio/dbtext/kamailio/userblacklist
+share/kamailio/dbtext/kamailio/usr_preferences
+share/kamailio/dbtext/kamailio/version
+share/kamailio/dbtext/kamailio/watchers
+share/kamailio/dbtext/kamailio/xcap
+@mode 700
+@owner _kamailio
+@sample /var/kamailio/
+@extraunexec rm -rf /var/kamailio/

@@ -1,0 +1,29 @@
+# $Id$
+#
+# control tool for maintaining Kamailio
+#
+#===================================================================
+
+##### ----------------------------------------------- #####
+### load SQL base
+#
+if [ -f "$MYLIBDIR/kamctl.sqlbase" ]; then
+	. "$MYLIBDIR/kamctl.sqlbase"
+else
+	echo "Cannot load SQL core functions '$MYLIBDIR/kamctl.sqlbase' - exiting ..."
+	exit -1
+fi
+
+if [ $TEST = "true" ]; then
+	DBTEXT_PATH="$MYLIBDIR/dbtext/kamailio/"
+fi;
+
+# path to the dbtext database
+if [ -z "$DBTEXT_PATH" ] ; then
+	DBTEXT_PATH="/usr/local/share/kamailio/dbtext/openser"
+fi
+
+export DBTEXT_PATH
+
+DBCMD=${MYLIBDIR}/dbtextdb/dbtextdb.py
+DBROCMD=${MYLIBDIR}/dbtextdb/dbtextdb.py

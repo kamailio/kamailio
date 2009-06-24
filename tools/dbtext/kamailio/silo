@@ -1,0 +1,1 @@
+id(int,auto) src_addr(string) dst_addr(string) username(string) domain(string) inc_time(int) exp_time(int) snd_time(int) ctype(string) body(string) 

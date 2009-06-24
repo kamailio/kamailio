@@ -1,0 +1,9 @@
+--create user %DBROOTUSER% identified by %DBROOTPW%
+-- default tablespace DATA temporary tablespace TEMP profile DEFAULT;
+
+grant connect to %DBROOTUSER% with admin option;
+
+grant resource, create any synonym, create role,
+      create user, drop user, unlimited tablespace to %DBROOTUSER%;
+
+grant select on sys.dba_role_privs to %DBROOTUSER%;

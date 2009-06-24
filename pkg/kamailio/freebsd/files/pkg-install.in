@@ -1,0 +1,12 @@
+#!/bin/sh
+
+[ "$2" != POST-INSTALL ] && exit
+
+rc_dir=$PKG_PREFIX/etc/kamailio/
+
+for f in %%RC_FILES%%; do
+	if ! [ -e $rc_dir/$f ]; then
+		/usr/bin/install -o root -g wheel -m 644 \
+			$rc_dir/$f.default $rc_dir/$f
+	fi
+done

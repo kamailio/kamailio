@@ -1,0 +1,1 @@
+id(int,auto) rlsubs_did(string) resource_uri(string) content_type(string) presence_state(string) expires(int) updated(int) auth_state(int) reason(string) 

@@ -1,0 +1,1 @@
+id(int,auto) username(string) domain(string) grp(string) last_modified(int) 

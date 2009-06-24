@@ -1,0 +1,6 @@
+id(int,auto) user(string) domain(string,null) number(int)
+1:fred:test.com:2125551234
+4:alex:test1.com:2125551237
+2:james:test4.com:2125551231
+3:mike:test2.com:2125551239
+5:john:test.com:2125551240
