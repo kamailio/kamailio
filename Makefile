@@ -183,6 +183,7 @@ ifneq ($(group_include)$(cfg_group_include),)
 	exclude_modules?=
 else
 	# Old defaults for backwards compatibility
+	# excluded because they depend on external libraries
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
 							auth_radius uri_radius avp_radius \
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
@@ -190,9 +191,15 @@ else
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_unixodbc memcached mi_xmlrpc \
-							nat_traversal perlvdb purple seas siptrace \
+							nat_traversal perl perlvdb purple seas siptrace \
 							snmpstats uac_redirect xmpp \
-							carrierroute misc_radius peering
+							carrierroute misc_radius peering \
+							dialplan lcr utils presence \
+							presence_dialoginfo presence_xml pua pua_bla \
+							pua_dialoginfo pua_usrloc pua_xmpp \
+							regex xcap_client
+	#excluded because they depend on external *.h files
+	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
 	exclude_modules+= avpops  bdb dbtext iptrtpproxy pa rls
