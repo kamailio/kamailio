@@ -100,7 +100,7 @@ export makefile_defs
 
 $(info normal Makefile.defs exec)
 # main binary name
-MAIN_NAME=sip-router
+MAIN_NAME=ser
 #prefix for various configs and scripts
 #config name/name-prefix for distributed configs
 CFG_NAME=sip-router
