@@ -221,9 +221,11 @@ static int_str defunct_gw_avp;
 static int     lcr_id_avp_type;
 static int_str lcr_id_avp;
 
-struct gw_info **gwtp;	/* Pointer to gw table pointer table */
+/* Pointer to gw table pointer table */
+struct gw_info **gwtp = (struct gw_info **)NULL;
 
-struct lcr_info ***lcrtp;  /* Pointer to lcr hash table pointer table */
+/* Pointer to lcr hash table pointer table */
+struct lcr_info ***lcrtp = (struct lcr_info ***)NULL;
 
 
 /*
@@ -571,10 +573,6 @@ static int mod_init(void)
     }
     lcr_dbf.close(dbh);
 
-    /* Reset all shm pointers */
-    gwtp = (struct gw_info **)NULL;
-    lcrtp = (struct lcr_info ***)NULL;
-
     /* Allocate gw related shared memory */
     /* gw table pointer table, index 0 points to temp gw table  */
     gwtp = (struct gw_info **)shm_malloc(sizeof(struct gw_info *) *
@@ -583,6 +581,7 @@ static int mod_init(void)
 	LM_ERR("no memory for gw table pointer table\n");
 	goto err;
     }
+    memset(gwtp, 0, sizeof(struct gw_info *) * (lcr_count + 1));
     /* gw tables */
     for (i = 0; i <= lcr_count; i++) {
 	gwtp[i] = (struct gw_info *)shm_malloc(sizeof(struct gw_info) *
@@ -602,6 +601,7 @@ static int mod_init(void)
 	LM_ERR("no memory for lcr hash table pointer table\n");
 	goto err;
     }
+    memset(lcrtp, 0, sizeof(struct lcr_info **) * (lcr_count + 1));
     /* lcr hash tables */
     /* Last entry in hash table contains list of different prefix lengths */
     for (i = 0; i <= lcr_count; i++) {
@@ -677,18 +677,18 @@ static void free_shared_memory(void)
 {
     int i;
     for (i = 0; i <= lcr_count; i++) {
-	if (gwtp[i]) {
+	if (gwtp && gwtp[i]) {
 	    shm_free(gwtp[i]);
 	    gwtp[i] = 0;
 	}
-	if (lcrtp[i]) {
+	if (lcrtp && lcrtp[i]) {
 	    lcr_hash_table_contents_free(lcrtp[i]);
 	    shm_free(lcrtp[i]);
 	    lcrtp[i] = 0;
 	}
     }
-    shm_free(gwtp);
-    shm_free(lcrtp);
+    if (gwtp) shm_free(gwtp);
+    if (lcrtp) shm_free(lcrtp);
     if (reload_lock) {
 	lock_destroy(reload_lock);
 	lock_dealloc(reload_lock);
