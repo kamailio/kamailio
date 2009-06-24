@@ -89,8 +89,8 @@ include Makefile.targets
 #  an utility fails
 err_fail?=1
 
-# whether or not to install sip-router.cfg or just sip-router.cfg.default
-# (sip-router.cfg will never be overwritten by make install, this is usefull
+# whether or not to install $(MAIN_NAME).cfg or just $(MAIN_NAME).cfg.default
+# ($(MAIN_NAME).cfg will never be overwritten by make install, this is usefull
 #  when creating packages)
 skip_cfg_install?=
 
@@ -345,7 +345,7 @@ utils_bin_install=	utils/gen_ha1/gen_ha1 utils/sercmd/sercmd
 utils_script_install=
 
 # This is the list of files to be installed into the arch-independent
-# shared directory (by default /usr/local/share/sip-router)
+# shared directory (by default /usr/local/share/$(MAIN_NAME))
 share_install= scripts/mysql/my_create.sql \
 			   scripts/mysql/my_data.sql   \
 			   scripts/mysql/my_drop.sql
@@ -632,9 +632,9 @@ tar:
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
-		--exclude=$(notdir $(CURDIR))/debian/sip-router \
-		--exclude=$(notdir $(CURDIR))/debian/sip-router-* \
-		--exclude=$(notdir $(CURDIR))/sip-router_tls* \
+		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME) \
+		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME)-* \
+		--exclude=$(notdir $(CURDIR))/$(MAIN_NAME)_tls* \
 		--exclude=CVS* \
 		--exclude=.svn* \
 		--exclude=.cvsignore \
@@ -646,7 +646,7 @@ tar:
 		--exclude=*.[do] \
 		--exclude=*.so \
 		--exclude=*.il \
-		--exclude=$(notdir $(CURDIR))/sip-router \
+		--exclude=$(notdir $(CURDIR))/$(MAIN_NAME) \
 		--exclude=*.gz \
 		--exclude=*.bz2 \
 		--exclude=*.tar \
@@ -667,10 +667,10 @@ tar:
 # binary dist. tar.gz
 .PHONY: bin
 bin:
-	mkdir -p tmp/sip-router/usr/local
-	$(MAKE) install basedir=tmp/sip-router $(mk_params)
-	$(TAR) -C tmp/sip-router/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
-	rm -rf tmp/sip-router
+	mkdir -p tmp/$(MAIN_NAME)/usr/local
+	$(MAKE) install basedir=tmp/$(MAIN_NAME) $(mk_params)
+	$(TAR) -C tmp/$(MAIN_NAME)/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
+	rm -rf tmp/$(MAIN_NAME)
 
 .PHONY: deb
 deb:
@@ -684,18 +684,18 @@ deb:
 
 .PHONY: sunpkg
 sunpkg:
-	mkdir -p tmp/sip-router
-	mkdir -p tmp/sip-router_sun_pkg
-	$(MAKE) install basedir=tmp/sip-router prefix=/usr/local $(mk_params)
+	mkdir -p tmp/$(MAIN_NAME)
+	mkdir -p tmp/$(MAIN_NAME)_sun_pkg
+	$(MAKE) install basedir=tmp/$(MAIN_NAME) prefix=/usr/local $(mk_params)
 	(cd pkg/solaris; \
-	pkgmk -r ../../tmp/sip-router/usr/local -o -d ../../tmp/sip-router_sun_pkg/ -v "$(RELEASE)" ;\
+	pkgmk -r ../../tmp/$(MAIN_NAME)/usr/local -o -d ../../tmp/$(MAIN_NAME)_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ../..)
 	cat /dev/null > ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
-	pkgtrans -s tmp/sip-router_sun_pkg/ ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local \
-		IPTELsip-router
+	pkgtrans -s tmp/$(MAIN_NAME)_sun_pkg/ ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local \
+		IPTEL$(MAIN_NAME)
 	gzip -9 ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
-	rm -rf tmp/sip-router
-	rm -rf tmp/sip-router_sun_pkg
+	rm -rf tmp/$(MAIN_NAME)
+	rm -rf tmp/$(MAIN_NAME)_sun_pkg
 
 
 .PHONY: install
@@ -705,8 +705,8 @@ install: install-bin install-every-module install-cfg \
 
 .PHONY: dbinstall
 dbinstall:
-	-@echo "Initializing sip-router database"
-	scripts/mysql/sip-router_mysql.sh create
+	-@echo "Initializing $(MAIN_NAME) database"
+	scripts/mysql/$(MAIN_NAME)_mysql.sh create
 	-@echo "Done"
 
 .PHONY: README
@@ -750,32 +750,32 @@ $(man_prefix)/$(man_dir)/man5:
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
 		sed $(foreach m,$(modules_dirs),\
-				-e "s#/usr/[^:]*lib/sip-router/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/sip-router-basic.cfg > $(cfg_prefix)/$(cfg_dir)sip-router.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)sip-router.cfg.sample
+				-e "s#/usr/[^:]*lib/$(MAIN_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+			< etc/$(MAIN_NAME)-basic.cfg > $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
+		chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)sip-router.cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)sip-router.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)sip-router.cfg; \
+				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg ]; then \
+			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample \
+				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg; \
 		fi
 		sed $(foreach m,$(modules_dirs),\
-			-e "s#/usr/[^:]*lib/sip-router/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/sip-router-oob.cfg \
-			> $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg.sample
+			-e "s#/usr/[^:]*lib/$(MAIN_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+			< etc/$(MAIN_NAME)-oob.cfg \
+			> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
+		chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg; \
+				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg ]; then \
+			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample \
+				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
 		fi
 		# radius dictionary
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.sip-router
-		$(INSTALL_CFG) etc/dictionary.sip-router $(cfg_prefix)/$(cfg_dir)
+		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(MAIN_NAME)
+		$(INSTALL_CFG) etc/dictionary.$(MAIN_NAME) $(cfg_prefix)/$(cfg_dir)
 
 		# TLS configuration
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
 		$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
-		modules/tls/sip-router_cert.sh -d $(cfg_prefix)/$(cfg_dir)
+		modules/tls/$(MAIN_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
@@ -840,8 +840,8 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 	# FIXME: This is a hack, this should be (and will be) done properly in
     # per-module Makefiles
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
-		< scripts/mysql/sip-router_mysql.sh > $(bin_prefix)/$(bin_dir)/sip-router_mysql.sh
-	chmod 755 $(bin_prefix)/$(bin_dir)/sip-router_mysql.sh
+		< scripts/mysql/$(MAIN_NAME)_mysql.sh > $(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
+	chmod 755 $(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
 
 
 install-modules-all: install-every-module install-every-module-doc
@@ -860,21 +860,21 @@ install-doc: $(doc_prefix)/$(doc_dir) install-every-module-doc
 	$(INSTALL_DOC) README $(doc_prefix)/$(doc_dir)
 
 
-install-sip-router-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
-		sed -e "s#/etc/sip-router/sip-router\.cfg#$(cfg_target)sip-router.cfg#g" \
+install-$(MAIN_NAME)-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
+		sed -e "s#/etc/$(MAIN_NAME)/$(MAIN_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
-				-e "s#/usr/lib/sip-router/$(m)\([^_]\)#$($(m)_target)\1#g") \
-			-e "s#/usr/share/doc/sip-router/#$(doc_target)#g" \
-			< sip-router.8 >  $(man_prefix)/$(man_dir)/man8/sip-router.8
-		chmod 644  $(man_prefix)/$(man_dir)/man8/sip-router.8
-		sed -e "s#/etc/sip-router/sip-router\.cfg#$(cfg_target)sip-router.cfg#g" \
+				-e "s#/usr/lib/$(MAIN_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
+			-e "s#/usr/share/doc/$(MAIN_NAME)/#$(doc_target)#g" \
+			< $(MAIN_NAME).8 >  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
+		chmod 644  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
+		sed -e "s#/etc/$(MAIN_NAME)/$(MAIN_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
-				-e "s#/usr/lib/sip-router/$(m)\([^_]\)#$($(m)_target)\1#g") \
-			-e "s#/usr/share/doc/sip-router/#$(doc_target)#g" \
-			< sip-router.cfg.5 >  $(man_prefix)/$(man_dir)/man5/sip-router.cfg.5
-		chmod 644  $(man_prefix)/$(man_dir)/man5/sip-router.cfg.5
+				-e "s#/usr/lib/$(MAIN_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
+			-e "s#/usr/share/doc/$(MAIN_NAME)/#$(doc_target)#g" \
+			< $(MAIN_NAME).cfg.5 >  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
+		chmod 644  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
 
 install-man:  install-sip-router-man install-every-module-man
 
