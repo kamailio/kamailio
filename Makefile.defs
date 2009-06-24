@@ -100,7 +100,7 @@ export makefile_defs
 
 $(info normal Makefile.defs exec)
 # main binary name
-MAIN_NAME=ser
+MAIN_NAME=sip-router
 
 #version number
 VERSION = 2

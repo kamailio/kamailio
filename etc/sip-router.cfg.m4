@@ -18,7 +18,7 @@ declare(failure, PSTN_FAILURE, _1_FAILURE)
 #
 # $Id$
 #
-# ser.cfg m4 template
+# sip-router.cfg m4 template
 #
 
 #
@@ -30,14 +30,14 @@ declare(failure, PSTN_FAILURE, _1_FAILURE)
 fork=yes
 port=5060
 log_stderror=no
-fifo="/tmp/ser_fifo"
+fifo="/tmp/sip-router_fifo"
 
 # uncomment to enter testing mode
 /*
 fork=no
 port=5064
 log_stderror=yes
-fifo="/tmp/ser_fifox"
+fifo="/tmp/sip-router_fifox"
  */
 
 debug=3
@@ -54,26 +54,26 @@ children=16
 # decimal value in there, e.g. dec(rw|rw|rw)=dec(666)=438
 fifo_mode=0666
 
-loadmodule "/usr/local/lib/ser/modules/tm.so"
-loadmodule "/usr/local/lib/ser/modules/sl.so"
-loadmodule "/usr/local/lib/ser/modules/acc.so"
-loadmodule "/usr/local/lib/ser/modules/rr.so"
-loadmodule "/usr/local/lib/ser/modules/maxfwd.so"
-loadmodule "/usr/local/lib/ser/modules/mysql.so"
-loadmodule "/usr/local/lib/ser/modules/usrloc.so"
-loadmodule "/usr/local/lib/ser/modules/registrar.so"
-loadmodule "/usr/local/lib/ser/modules/auth.so"
-loadmodule "/usr/local/lib/ser/modules/auth_db.so"
-loadmodule "/usr/local/lib/ser/modules/textops.so"
-loadmodule "/usr/local/lib/ser/modules/uri.so"
-loadmodule "/usr/local/lib/ser/modules/group.so"
-loadmodule "/usr/local/lib/ser/modules/msilo.so"
-loadmodule "/usr/local/lib/ser/modules/nathelper.so"
-loadmodule "/usr/local/lib/ser/modules/enum.so"
-loadmodule "/usr/local/lib/ser/modules/domain.so"
-#loadmodule "/usr/local/lib/ser/modules/permissions.so"
+loadmodule "/usr/local/lib/sip-router/modules/tm.so"
+loadmodule "/usr/local/lib/sip-router/modules/sl.so"
+loadmodule "/usr/local/lib/sip-router/modules/acc.so"
+loadmodule "/usr/local/lib/sip-router/modules/rr.so"
+loadmodule "/usr/local/lib/sip-router/modules/maxfwd.so"
+loadmodule "/usr/local/lib/sip-router/modules/mysql.so"
+loadmodule "/usr/local/lib/sip-router/modules/usrloc.so"
+loadmodule "/usr/local/lib/sip-router/modules/registrar.so"
+loadmodule "/usr/local/lib/sip-router/modules/auth.so"
+loadmodule "/usr/local/lib/sip-router/modules/auth_db.so"
+loadmodule "/usr/local/lib/sip-router/modules/textops.so"
+loadmodule "/usr/local/lib/sip-router/modules/uri.so"
+loadmodule "/usr/local/lib/sip-router/modules/group.so"
+loadmodule "/usr/local/lib/sip-router/modules/msilo.so"
+loadmodule "/usr/local/lib/sip-router/modules/nathelper.so"
+loadmodule "/usr/local/lib/sip-router/modules/enum.so"
+loadmodule "/usr/local/lib/sip-router/modules/domain.so"
+#loadmodule "/usr/local/lib/sip-router/modules/permissions.so"
 
-modparam("usrloc|acc|auth_db|group|msilo", "db_url", "sql://ser:heslo@localhost/ser")
+modparam("usrloc|acc|auth_db|group|msilo", "db_url", "sql://sip-router:heslo@localhost/sip-router")
 
 # -- usrloc params --
 /* 0 -- dont use mysql, 1 -- write_through, 2--write_back */

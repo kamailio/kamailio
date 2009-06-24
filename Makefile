@@ -89,8 +89,8 @@ include Makefile.targets
 #  an utility fails
 err_fail?=1
 
-# whether or not to install ser.cfg or just ser.cfg.default
-# (ser.cfg will never be overwritten by make install, this is usefull
+# whether or not to install sip-router.cfg or just sip-router.cfg.default
+# (sip-router.cfg will never be overwritten by make install, this is usefull
 #  when creating packages)
 skip_cfg_install?=
 
@@ -338,7 +338,7 @@ utils_bin_install=	utils/gen_ha1/gen_ha1 utils/sercmd/sercmd
 utils_script_install=
 
 # This is the list of files to be installed into the arch-independent
-# shared directory (by default /usr/local/share/ser)
+# shared directory (by default /usr/local/share/sip-router)
 share_install= scripts/mysql/my_create.sql \
 			   scripts/mysql/my_data.sql   \
 			   scripts/mysql/my_drop.sql
@@ -613,7 +613,7 @@ utils:
 	done; true
 
 
-dbg: ser
+dbg: sip-router
 	gdb -command debug.gdb
 
 .PHONY: tar
@@ -625,9 +625,9 @@ tar:
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
-		--exclude=$(notdir $(CURDIR))/debian/ser \
-		--exclude=$(notdir $(CURDIR))/debian/ser-* \
-		--exclude=$(notdir $(CURDIR))/ser_tls* \
+		--exclude=$(notdir $(CURDIR))/debian/sip-router \
+		--exclude=$(notdir $(CURDIR))/debian/sip-router-* \
+		--exclude=$(notdir $(CURDIR))/sip-router_tls* \
 		--exclude=CVS* \
 		--exclude=.svn* \
 		--exclude=.cvsignore \
@@ -639,7 +639,7 @@ tar:
 		--exclude=*.[do] \
 		--exclude=*.so \
 		--exclude=*.il \
-		--exclude=$(notdir $(CURDIR))/ser \
+		--exclude=$(notdir $(CURDIR))/sip-router \
 		--exclude=*.gz \
 		--exclude=*.bz2 \
 		--exclude=*.tar \
@@ -660,10 +660,10 @@ tar:
 # binary dist. tar.gz
 .PHONY: bin
 bin:
-	mkdir -p tmp/ser/usr/local
-	$(MAKE) install basedir=tmp/ser $(mk_params)
-	$(TAR) -C tmp/ser/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
-	rm -rf tmp/ser
+	mkdir -p tmp/sip-router/usr/local
+	$(MAKE) install basedir=tmp/sip-router $(mk_params)
+	$(TAR) -C tmp/sip-router/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
+	rm -rf tmp/sip-router
 
 .PHONY: deb
 deb:
@@ -677,18 +677,18 @@ deb:
 
 .PHONY: sunpkg
 sunpkg:
-	mkdir -p tmp/ser
-	mkdir -p tmp/ser_sun_pkg
-	$(MAKE) install basedir=tmp/ser prefix=/usr/local $(mk_params)
+	mkdir -p tmp/sip-router
+	mkdir -p tmp/sip-router_sun_pkg
+	$(MAKE) install basedir=tmp/sip-router prefix=/usr/local $(mk_params)
 	(cd pkg/solaris; \
-	pkgmk -r ../../tmp/ser/usr/local -o -d ../../tmp/ser_sun_pkg/ -v "$(RELEASE)" ;\
+	pkgmk -r ../../tmp/sip-router/usr/local -o -d ../../tmp/sip-router_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ../..)
 	cat /dev/null > ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
-	pkgtrans -s tmp/ser_sun_pkg/ ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local \
-		IPTELser
+	pkgtrans -s tmp/sip-router_sun_pkg/ ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local \
+		IPTELsip-router
 	gzip -9 ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
-	rm -rf tmp/ser
-	rm -rf tmp/ser_sun_pkg
+	rm -rf tmp/sip-router
+	rm -rf tmp/sip-router_sun_pkg
 
 
 .PHONY: install
@@ -698,8 +698,8 @@ install: install-bin install-every-module install-cfg \
 
 .PHONY: dbinstall
 dbinstall:
-	-@echo "Initializing ser database"
-	scripts/mysql/ser_mysql.sh create
+	-@echo "Initializing sip-router database"
+	scripts/mysql/sip-router_mysql.sh create
 	-@echo "Done"
 
 .PHONY: README
@@ -743,32 +743,32 @@ $(man_prefix)/$(man_dir)/man5:
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
 		sed $(foreach m,$(modules_dirs),\
-				-e "s#/usr/[^:]*lib/ser/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/ser-basic.cfg > $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
+				-e "s#/usr/[^:]*lib/sip-router/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+			< etc/sip-router-basic.cfg > $(cfg_prefix)/$(cfg_dir)sip-router.cfg.sample
+		chmod 644 $(cfg_prefix)/$(cfg_dir)sip-router.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)ser.cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)ser.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)ser.cfg; \
+				! -f $(cfg_prefix)/$(cfg_dir)sip-router.cfg ]; then \
+			mv -f $(cfg_prefix)/$(cfg_dir)sip-router.cfg.sample \
+				$(cfg_prefix)/$(cfg_dir)sip-router.cfg; \
 		fi
 		sed $(foreach m,$(modules_dirs),\
-			-e "s#/usr/[^:]*lib/ser/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/ser-oob.cfg \
-			> $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
+			-e "s#/usr/[^:]*lib/sip-router/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+			< etc/sip-router-oob.cfg \
+			> $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg.sample
+		chmod 644 $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)ser-advanced.cfg; \
+				! -f $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg ]; then \
+			mv -f $(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg.sample \
+				$(cfg_prefix)/$(cfg_dir)sip-router-advanced.cfg; \
 		fi
 		# radius dictionary
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser
-		$(INSTALL_CFG) etc/dictionary.ser $(cfg_prefix)/$(cfg_dir)
+		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.sip-router
+		$(INSTALL_CFG) etc/dictionary.sip-router $(cfg_prefix)/$(cfg_dir)
 
 		# TLS configuration
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
 		$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
-		modules/tls/ser_cert.sh -d $(cfg_prefix)/$(cfg_dir)
+		modules/tls/sip-router_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
@@ -833,8 +833,8 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 	# FIXME: This is a hack, this should be (and will be) done properly in
     # per-module Makefiles
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
-		< scripts/mysql/ser_mysql.sh > $(bin_prefix)/$(bin_dir)/ser_mysql.sh
-	chmod 755 $(bin_prefix)/$(bin_dir)/ser_mysql.sh
+		< scripts/mysql/sip-router_mysql.sh > $(bin_prefix)/$(bin_dir)/sip-router_mysql.sh
+	chmod 755 $(bin_prefix)/$(bin_dir)/sip-router_mysql.sh
 
 
 install-modules-all: install-every-module install-every-module-doc
@@ -853,23 +853,23 @@ install-doc: $(doc_prefix)/$(doc_dir) install-every-module-doc
 	$(INSTALL_DOC) README $(doc_prefix)/$(doc_dir)
 
 
-install-ser-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
-		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
+install-sip-router-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
+		sed -e "s#/etc/sip-router/sip-router\.cfg#$(cfg_target)sip-router.cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
-				-e "s#/usr/lib/ser/$(m)\([^_]\)#$($(m)_target)\1#g") \
-			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
-			< ser.8 >  $(man_prefix)/$(man_dir)/man8/ser.8
-		chmod 644  $(man_prefix)/$(man_dir)/man8/ser.8
-		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
+				-e "s#/usr/lib/sip-router/$(m)\([^_]\)#$($(m)_target)\1#g") \
+			-e "s#/usr/share/doc/sip-router/#$(doc_target)#g" \
+			< sip-router.8 >  $(man_prefix)/$(man_dir)/man8/sip-router.8
+		chmod 644  $(man_prefix)/$(man_dir)/man8/sip-router.8
+		sed -e "s#/etc/sip-router/sip-router\.cfg#$(cfg_target)sip-router.cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
-				-e "s#/usr/lib/ser/$(m)\([^_]\)#$($(m)_target)\1#g") \
-			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
-			< ser.cfg.5 >  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
-		chmod 644  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
+				-e "s#/usr/lib/sip-router/$(m)\([^_]\)#$($(m)_target)\1#g") \
+			-e "s#/usr/share/doc/sip-router/#$(doc_target)#g" \
+			< sip-router.cfg.5 >  $(man_prefix)/$(man_dir)/man5/sip-router.cfg.5
+		chmod 644  $(man_prefix)/$(man_dir)/man5/sip-router.cfg.5
 
-install-man:  install-ser-man install-every-module-man
+install-man:  install-sip-router-man install-every-module-man
 
 
 
@@ -887,7 +887,7 @@ proper-libs realclean-libs distclean-libs maintainer-clean-libs:
 clean: clean-modules
 # clean utils on make clean
 clean: clean-utils
-# cleaning in libs always when cleaning ser
+# cleaning in libs always when cleaning sip-router
 clean: clean-libs
 
 # proper/distclean a.s.o modules, utils and libs too

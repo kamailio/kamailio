@@ -10,19 +10,19 @@
 # chkconfig: 2345 20 80
 # description: controls execution of SIP router
 # processname: sr
-# config: /etc/ser/iptel.cfg
+# config: /etc/sip-router/iptel.cfg
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-# we use a ser symlink -- that allows us to have a different name
-# in process table so that killalls does not start other sers
+# we use a sip-router symlink -- that allows us to have a different name
+# in process table so that killalls does not start other sip-routers
 # run from somewhere else
 
 BINNAME=sr
 HM=/home/srouter
 SERDIR=$HM/sip_router
-ETC=/etc/ser/iptel.cfg
+ETC=/etc/sip-router/iptel.cfg
 PIDFILE=/var/run/sr.pid
 NOTIFY=sr@iptel.org
 USR=510
@@ -38,9 +38,9 @@ MYDIR=$HM/core
 CORE=$MYDIR/core
 TMP=/tmp/srcore.$$
 
-ser_start() {
+sip-router_start() {
 	if [ -r $BIN -a -r $CORE ] ; then
-		echo "before startup ser core found on `date` at $HOSTNAME" > $TMP
+		echo "before startup sip-router core found on `date` at $HOSTNAME" > $TMP
 		echo "----------------------------------" >> $TMP
 		DATE=`date "+%Y-%m-%d--%H-%M"`
 		NEWCORE=$MYDIR/core.$DATE
@@ -48,8 +48,8 @@ ser_start() {
 		echo core stored in $NEWCORE >> $TMP
 		gdb $BIN $NEWCORE -x test/bt.gdb -batch >> $TMP
 		chmod a+r $NEWCORE
-		cd $SERDIR; tar czf $MYDIR/ser.$DATE.tgz .
-		mail -s "ser core found" $NOTIFY < $TMP
+		cd $SERDIR; tar czf $MYDIR/sip-router.$DATE.tgz .
+		mail -s "sip-router core found" $NOTIFY < $TMP
 		rm -f $TMP
 	fi
 	cd $MYDIR
@@ -60,7 +60,7 @@ ser_start() {
 	echo
 }
 
-ser_stop() {
+sip-router_stop() {
 	echo "Stopping SIP router: "
 	killproc $BINNAME
 	RETVAL=$?
@@ -69,14 +69,14 @@ ser_stop() {
 
 monit_start() {
    echo "Command Monit to start Ser..."
-   ${MONIT} -c ${MONITRC} start ser
+   ${MONIT} -c ${MONITRC} start sip-router
    RETVAL=$?
    echo
 }
 
 monit_stop() {
    echo "Command Monit to stop Ser..."
-   ${MONIT} -c ${MONITRC} stop ser
+   ${MONIT} -c ${MONITRC} stop sip-router
    RETVAL=$?
    echo
 }
@@ -84,15 +84,15 @@ monit_stop() {
 # See how we were called.
 case "$1" in
   serstart)
-	ser_start
+	sip-router_start
 	;;
-  serstop)
-    ser_stop
+  sip-routerstop)
+    sip-router_stop
 	;;
-  serrestart)
-	ser_stop
+  sip-routerrestart)
+	sip-router_stop
 	echo
-	ser_start
+	sip-router_start
 	;;
   start)
     monit_start

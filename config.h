@@ -44,7 +44,7 @@
 #define SIP_PORT  5060
 #define SIPS_PORT 5061
 
-#define CFG_FILE CFG_DIR "ser.cfg"
+#define CFG_FILE CFG_DIR "sip-router.cfg"
 
 #define TLS_PKEY_FILE "cert.pem" 
 #define TLS_CERT_FILE "cert.pem"
