@@ -104,9 +104,9 @@ MAIN_NAME=sip-router
 
 #version number
 VERSION = 2
-PATCHLEVEL = 1
+PATCHLEVEL = 99
 SUBLEVEL =  0
-EXTRAVERSION = -dev23-make
+EXTRAVERSION = -dev01-serk
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
