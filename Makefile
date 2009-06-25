@@ -79,7 +79,8 @@ endif
 
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
-auto_gen_others=cfg.tab.h autover.h  # auto generated, non-c
+auto_gen_others=cfg.tab.h # auto generated, non-c
+auto_gen_keep=autover.h # auto generated, should be included in archives
 
 COREPATH=.
 #include  source related defs
@@ -397,11 +398,12 @@ modules_search_path=$(subst $(space),:,$(strip\
 		#				$(addprefix $(modules_target),$(modules_dirs))))
 
 # special depends for main.o
-main.o: autover.h
+main.d main.o: autover.h
 main.o: DEFS+=-DMODS_DIR='"$(modules_search_path)"'
 
+
 #special depends for core_cmd.o
-core_cmd.o: autover.h
+core_cmd.d core_cmd.o: autover.h
 
 include Makefile.shared
 
@@ -657,13 +659,14 @@ dbg: sip-router
 
 dist: tar
 
-tar: autover.h
+tar: $(auto_gen_keep)
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
 		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME) \
 		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME)-* \
 		--exclude=$(notdir $(CURDIR))/$(MAIN_NAME)_tls* \
+		--exclude=.git* \
 		--exclude=CVS* \
 		--exclude=.svn* \
 		--exclude=.cvsignore \
@@ -682,6 +685,7 @@ tar: autover.h
 		--exclude=*.patch \
 		--exclude=.\#* \
 		--exclude=*.swp \
+		--exclude=*.swo \
 		${tar_extra_args} \
 		-cf - $(notdir $(CURDIR)) | \
 			(mkdir -p tmp/_tar1; mkdir -p tmp/_tar2 ; \
