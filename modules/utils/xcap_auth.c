@@ -348,13 +348,13 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	   user->len, user->s, domain->len, domain->s);
 
     query_cols[n_query_cols] = &tmp1;
-    query_vals[n_query_cols].type = DB1_STRING;
+    query_vals[n_query_cols].type = DB1_STR;
     query_vals[n_query_cols].nul = 0;
     query_vals[n_query_cols].val.str_val = *user;
     n_query_cols++;
     
     query_cols[n_query_cols] = &tmp2;
-    query_vals[n_query_cols].type = DB1_STRING;
+    query_vals[n_query_cols].type = DB1_STR;
     query_vals[n_query_cols].nul = 0;
     query_vals[n_query_cols].val.str_val = *domain;
     n_query_cols++;
