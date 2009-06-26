@@ -83,6 +83,9 @@ static cfg_def_t sctp_cfg_def[] = {
 	{ "assoc_reuse", CFG_VAR_INT| CFG_ATOMIC, 0, 1, set_assoc_reuse, 0,
 		"connection/association reuse (for now used only for replies)"
 		", depends on assoc_tracking being set"},
+	{ "max_assocs", CFG_VAR_INT| CFG_ATOMIC, 0, 0, 0, 0,
+		"maximum allowed open associations (-1 = disable, "
+			"as many as allowed by the OS)"},
 	{ "srto_initial", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_initial, 0,
 		"initial value of the retr. timeout, used in RTO calculations,"
 			" in msecs" },
@@ -127,6 +130,7 @@ void init_sctp_options()
 	sctp_default_cfg.autoclose=DEFAULT_SCTP_AUTOCLOSE; /* in seconds */
 	sctp_default_cfg.send_ttl=DEFAULT_SCTP_SEND_TTL;   /* in milliseconds */
 	sctp_default_cfg.send_retries=DEFAULT_SCTP_SEND_RETRIES;
+	sctp_default_cfg.max_assocs=-1; /* as much as possible by default */
 #ifdef SCTP_CONN_REUSE
 	sctp_default_cfg.assoc_tracking=1; /* on by default */
 	sctp_default_cfg.assoc_reuse=1; /* on by default */
@@ -156,6 +160,7 @@ void sctp_options_check()
 	W_OPT_NSCTP(send_retries);
 	W_OPT_NSCTP(assoc_tracking);
 	W_OPT_NSCTP(assoc_reuse);
+	W_OPT_NSCTP(max_assocs);
 #else /* USE_SCTP */
 	if (sctp_default_cfg.send_retries>MAX_SCTP_SEND_RETRIES) {
 		WARN("sctp: sctp_send_retries too high (%d), setting it to %d\n",

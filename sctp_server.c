@@ -66,6 +66,8 @@
 static atomic_t* sctp_conn_no;
 
 
+#define ABORT_REASON_MAX_ASSOCS \
+	"Maximum configured number of open associations exceeded"
 
 /* check if the underlying OS supports sctp
    returns 0 if yes, -1 on error */
@@ -1927,8 +1929,13 @@ void destroy_sctp()
 
 
 
-static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
+static int sctp_msg_send_ext(struct dest_info* dst, char* buf, unsigned len,
 						struct sctp_sndrcvinfo* sndrcv_info);
+#define SCTP_SEND_FIRST_ASSOCID 1  /* sctp_raw_send flag */
+static int sctp_raw_send(int socket, char* buf, unsigned len,
+						union sockaddr_union* to,
+						struct sctp_sndrcvinfo* sndrcv_info,
+						int flags);
 
 
 
@@ -2055,7 +2062,7 @@ static int sctp_handle_send_failed(struct socket_info* si,
 		dst.comp=COMP_NONE;
 #endif
 		
-		ret=sctp_msg_send_raw(&dst, data, data_len, &sinfo);
+		ret=sctp_msg_send_ext(&dst, data, data_len, &sinfo);
 	}
 #ifdef USE_DST_BLACKLIST
 	 else if (cfg_get(core, core_cfg, use_dst_blacklist) &&
@@ -2083,10 +2090,17 @@ static int sctp_handle_send_failed(struct socket_info* si,
  */
 static int sctp_handle_assoc_change(struct socket_info* si,
 									union sockaddr_union* su,
-									int state,
-									int assoc_id)
+									union sctp_notification* snp
+									)
 {
 	int ret;
+	int state;
+	int assoc_id;
+	struct sctp_sndrcvinfo sinfo;
+	struct ip_addr ip; /* used only on error, for debugging */
+	
+	state=snp->sn_assoc_change.sac_state;
+	assoc_id=snp->sn_assoc_change.sac_assoc_id;
 	
 	ret=-1;
 	switch(state){
@@ -2113,6 +2127,23 @@ again:
 			}
 #endif
 #endif /* SCTP_CONN_REUSE */
+			if (unlikely((unsigned)atomic_get(sctp_conn_no) >
+							(unsigned)cfg_get(sctp, sctp_cfg, max_assocs))){
+				/* maximum assoc exceeded => we'll have to immediately 
+				   close it */
+				memset(&sinfo, 0, sizeof(sinfo));
+				sinfo.sinfo_flags=SCTP_UNORDERED | SCTP_ABORT;
+				sinfo.sinfo_assoc_id=assoc_id;
+				ret=sctp_raw_send(si->socket, ABORT_REASON_MAX_ASSOCS,
+											sizeof(ABORT_REASON_MAX_ASSOCS)-1,
+											su, &sinfo, 0);
+				if (ret<0){
+					su2ip_addr(&ip, su);
+					WARN("failed to ABORT new sctp association %d (%s:%d):"
+							" %s (%d)\n", assoc_id, ip_addr2a(&ip),
+							su_getport(su), strerror(errno), errno);
+				}
+			}
 			break;
 		case SCTP_COMM_LOST:
 			SCTP_STATS_COMM_LOST();
@@ -2259,8 +2290,7 @@ static int sctp_handle_notification(struct socket_info* si,
 					snp->sn_assoc_change.sac_outbound_streams,
 					snp->sn_assoc_change.sac_inbound_streams
 					);
-			sctp_handle_assoc_change(si, su, snp->sn_assoc_change.sac_state,
-										snp->sn_assoc_change.sac_assoc_id);
+			sctp_handle_assoc_change(si, su, snp);
 			break;
 #ifdef SCTP_ADAPTION_INDICATION
 		case SCTP_ADAPTION_INDICATION:
@@ -2442,11 +2472,155 @@ error:
 
 
 
+/** low level sctp non-blocking send.
+ * @param socket - sctp socket to send on.
+ * @param buf   - data.
+ * @param len   - lenght of the data.
+ * @param to    - destination in ser sockaddr_union format.
+ * @param sndrcv_info - sctp_sndrcvinfo structure pointer, pre-filled.
+ * @param flags - can have one of the following values (or'ed):
+ *                SCTP_SEND_FIRST_ASSOCID - try to send first to assoc_id
+ *                and only if that fails use "to".
+ * @return the numbers of bytes sent on success (>=0) and -1 on error.
+ * On error errno is set too.
+ */
+static int sctp_raw_send(int socket, char* buf, unsigned len,
+						union sockaddr_union* to,
+						struct sctp_sndrcvinfo* sndrcv_info,
+						int flags)
+{
+	int n;
+	int tolen;
+	int try_assoc_id;
+#if 0
+	struct ip_addr ip; /* used only on error, for debugging */
+#endif
+	struct msghdr msg;
+	struct iovec iov[1];
+	struct sctp_sndrcvinfo* sinfo;
+	struct cmsghdr* cmsg;
+	/* make sure msg_control will point to properly aligned data */
+	union {
+		struct cmsghdr cm;
+		char cbuf[CMSG_SPACE(sizeof(*sinfo))];
+	}ctrl_un;
+	
+	iov[0].iov_base=buf;
+	iov[0].iov_len=len;
+	msg.msg_iov=iov;
+	msg.msg_iovlen=1;
+	msg.msg_flags=0; /* not used on send (use instead sinfo_flags) */
+	msg.msg_control=ctrl_un.cbuf;
+	msg.msg_controllen=sizeof(ctrl_un.cbuf);
+	cmsg=CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level=IPPROTO_SCTP;
+	cmsg->cmsg_type=SCTP_SNDRCV;
+	cmsg->cmsg_len=CMSG_LEN(sizeof(*sinfo));
+	sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
+	*sinfo=*sndrcv_info;
+	/* some systems need msg_controllen set to the actual size and not
+	 * something bigger (e.g. openbsd) */
+	msg.msg_controllen=cmsg->cmsg_len;
+	try_assoc_id= ((flags & SCTP_SEND_FIRST_ASSOCID) && sinfo->sinfo_assoc_id);
+	/* if assoc_id is set it means we want to send on association assoc_id
+	   and only if it's not opened any longer use the addresses */
+	if (try_assoc_id){
+		/* on linux msg->name has priority over assoc_id. To try first assoc_id
+		 * and then "to", one has to call first sendmsg() with msg->name==0 and
+		 * sinfo->assoc_id set. If it returns EPIPE => association is no longer
+		 * open => call again sendmsg() this time with msg->name!=0.
+		 * on freebsd assoc_id has priority over msg->name and moreover the
+		 * send falls back automatically to the address if the assoc_id is
+		 * closed, so a single call to sendmsg(msg->name, sinfo->assoc_id ) is
+		 * enough.  If one tries calling with msg->name==0 and the association
+		 * is no longer open send will return ENOENT.
+		 * on solaris it seems one must always use a dst address (assoc_id
+		 * will be ignored).
+		 */
+#ifdef __OS_linux
+		msg.msg_name=0;
+		msg.msg_namelen=0;
+#elif defined __OS_freebsd
+		tolen=sockaddru_len(*to);
+		msg.msg_name=&to->s;
+		msg.msg_namelen=tolen;
+#else /* __OS_* */
+		/* fallback for solaris and others, sent back to
+		  the address recorded (not exactly what we want, but there's
+		  no way to fallback to "to") */
+		tolen=sockaddru_len(*to);
+		msg.msg_name=&to->s;
+		msg.msg_namelen=tolen;
+#endif /* __OS_* */
+	}else{
+		tolen=sockaddru_len(*to);
+		msg.msg_name=&to->s;
+		msg.msg_namelen=tolen;
+	}
+	
+again:
+	n=sendmsg(socket, &msg, MSG_DONTWAIT);
+	if (n==-1){
+#ifdef __OS_linux
+		if ((errno==EPIPE) && try_assoc_id){
+			/* try again, this time with null assoc_id and non-null msg.name */
+			DBG("sctp raw sendmsg: assoc already closed (EPIPE), retrying with"
+					" assoc_id=0\n");
+			tolen=sockaddru_len(*to);
+			msg.msg_name=&to->s;
+			msg.msg_namelen=tolen;
+			sinfo->sinfo_assoc_id=0;
+			try_assoc_id=0;
+			goto again;
+		}
+#elif defined __OS_freebsd
+		if ((errno==ENOENT)){
+			/* it didn't work, no retrying */
+			WARN("unexpected sendmsg() failure (ENOENT),"
+					" assoc_id %d\n", sinfo->sinfo_assoc_id);
+		}
+#else /* __OS_* */
+		if ((errno==ENOENT || errno==EPIPE) && try_assoc_id){
+			/* in case the sctp stack prioritises assoc_id over msg->name,
+			   try again with 0 assoc_id and msg->name set to "to" */
+			WARN("unexpected ENOENT or EPIPE (assoc_id %d),"
+					"trying automatic recovery... (please report along with"
+					"your OS version)\n", sinfo->sinfo_assoc_id);
+			tolen=sockaddru_len(*to);
+			msg.msg_name=&to->s;
+			msg.msg_namelen=tolen;
+			sinfo->sinfo_assoc_id=0;
+			try_assoc_id=0;
+			goto again;
+		}
+#endif /* __OS_* */
+#if 0
+		if (errno==EINTR) goto again;
+		su2ip_addr(&ip, to);
+		LOG(L_ERR, "ERROR: sctp_raw_send: sendmsg(sock,%p,%d,0,%s:%d,...):"
+				" %s(%d)\n", buf, len, ip_addr2a(&ip), su_getport(to),
+				strerror(errno), errno);
+		if (errno==EINVAL) {
+			LOG(L_CRIT,"CRITICAL: invalid sendmsg parameters\n"
+			"one possible reason is the server is bound to localhost and\n"
+			"attempts to send to the net\n");
+		}else if (errno==EAGAIN || errno==EWOULDBLOCK){
+			SCTP_STATS_SENDQ_FULL();
+			LOG(L_ERR, "ERROR: sctp_msg_send: failed to send, send buffers"
+						" full\n");
+		}
+#endif
+	}
+	return n;
+}
+
+
+
 /* send buf:len over sctp to dst using sndrcv_info (uses send_sock,
  * to and id from dest_info)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
  */
-static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
+static int sctp_msg_send_ext(struct dest_info* dst, char* buf, unsigned len,
 						struct sctp_sndrcvinfo* sndrcv_info)
 {
 	int n;
@@ -2521,8 +2695,8 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 		/* fallback for solaris and others, sent back to
 		  the address recorded (not exactly what we want, but there's 
 		  no way to fallback to dst->to) */
-		tolen=sockaddru_len(&to);
-		msg.msg_name=&to.s;
+		tolen=sockaddru_len(dst->to);
+		msg.msg_name=&dst->to.s;
 		msg.msg_namelen=tolen;
 #endif /* __OS_* */
 	}else{
@@ -2533,6 +2707,12 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 												&tmp_assoc_id, 0);
 			DBG("sctp send: timeout updated ser id %d, sctp assoc_id %d\n",
 					tmp_id, tmp_assoc_id);
+			if (tmp_id==0 /* not tracked/found */ &&
+					(unsigned)atomic_get(sctp_conn_tracked) >=
+						(unsigned)cfg_get(sctp, sctp_cfg, max_assocs)){
+				ERR("maximum number of sctp associations exceeded\n");
+				goto error;
+			}
 		}
 #endif /* SCTP_ADDR_HASH */
 		tolen=sockaddru_len(dst->to);
@@ -2597,11 +2777,17 @@ again:
 		}
 	}
 	return n;
+#ifdef SCTP_CONN_REUSE
+#ifdef SCTP_ADDR_HASH
+error:
+	return -1;
+#endif /* SCTP_ADDR_HASH */
+#endif /* SCTP_CONN_REUSE */
 }
 
 
 
-/* wrapper around sctp_msg_send_raw():
+/* wrapper around sctp_msg_send_ext():
  * send buf:len over udp to dst (uses only the to, send_sock and id members
  * from dst)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
@@ -2625,7 +2811,7 @@ int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
 		sinfo.sinfo_timetolive=cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
 	sinfo.sinfo_context=cfg_get(sctp, sctp_cfg, send_retries);
-	return sctp_msg_send_raw(dst, buf, len, &sinfo);
+	return sctp_msg_send_ext(dst, buf, len, &sinfo);
 }
 
 
