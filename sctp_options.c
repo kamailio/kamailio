@@ -48,6 +48,7 @@ struct cfg_group_sctp sctp_default_cfg;
 
 
 static int set_autoclose(void* cfg_h, str* gname, str* name, void** val);
+static int set_assoc_tracking(void* cfg_h, str* gname, str* name, void** val);
 static int set_assoc_reuse(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_initial(void* cfg_h, str* gname, str* name, void** val);
 static int set_srto_max(void* cfg_h, str* gname, str* name, void** val);
@@ -77,8 +78,11 @@ static cfg_def_t sctp_cfg_def[] = {
 		"milliseconds before aborting a send" },
 	{ "send_retries", CFG_VAR_INT| CFG_ATOMIC, 0, MAX_SCTP_SEND_RETRIES, 0, 0,
 		"re-send attempts on failure" },
+	{ "assoc_tracking", CFG_VAR_INT| CFG_ATOMIC, 0, 1, set_assoc_tracking, 0,
+		"connection/association tracking (see also assoc_reuse)" },
 	{ "assoc_reuse", CFG_VAR_INT| CFG_ATOMIC, 0, 1, set_assoc_reuse, 0,
-		"connection/association reuse (for now used only for replies)" },
+		"connection/association reuse (for now used only for replies)"
+		", depends on assoc_tracking being set"},
 	{ "srto_initial", CFG_VAR_INT| CFG_ATOMIC, 0, 1<<30, set_srto_initial, 0,
 		"initial value of the retr. timeout, used in RTO calculations,"
 			" in msecs" },
@@ -124,8 +128,10 @@ void init_sctp_options()
 	sctp_default_cfg.send_ttl=DEFAULT_SCTP_SEND_TTL;   /* in milliseconds */
 	sctp_default_cfg.send_retries=DEFAULT_SCTP_SEND_RETRIES;
 #ifdef SCTP_CONN_REUSE
+	sctp_default_cfg.assoc_tracking=1; /* on by default */
 	sctp_default_cfg.assoc_reuse=1; /* on by default */
 #else
+	sctp_default_cfg.assoc_tracking=0;
 	sctp_default_cfg.assoc_reuse=0;
 #endif /* SCTP_CONN_REUSE */
 #endif
@@ -148,13 +154,27 @@ void sctp_options_check()
 	W_OPT_NSCTP(autoclose);
 	W_OPT_NSCTP(send_ttl);
 	W_OPT_NSCTP(send_retries);
-#else
+	W_OPT_NSCTP(assoc_tracking);
+	W_OPT_NSCTP(assoc_reuse);
+#else /* USE_SCTP */
 	if (sctp_default_cfg.send_retries>MAX_SCTP_SEND_RETRIES) {
 		WARN("sctp: sctp_send_retries too high (%d), setting it to %d\n",
 				sctp_default_cfg.send_retries, MAX_SCTP_SEND_RETRIES);
 		sctp_default_cfg.send_retries=MAX_SCTP_SEND_RETRIES;
 	}
-#endif
+#ifndef CONN_REUSE
+	if (sctp_default_cfg.assoc_tracking || sctp_default_cfg.assoc_reuse){
+		WARN("sctp_options: assoc_tracking and assoc_reuse support cannnot"
+				" be enabled (CONN_REUSE support not compiled-in)\n");
+		sctp_default_cfg.assoc_tracking=0;
+		sctp_default_cfg.assoc_reuse=0;
+	}
+#else /* CONN_REUSE */
+	if (sctp_default_cfg.assoc_reuse && sctp_default_cfg.assoc_tracking==0){
+		sctp_default_cfg.assoc_tracking=1;
+	}
+#endif /* CONN_REUSE */
+#endif /* USE_SCTP */
 }
 
 
@@ -218,14 +238,55 @@ static int set_autoclose(void* cfg_h, str* gname, str* name, void** val)
 
 
 
-static int set_assoc_reuse(void* cfg_h, str* gname, str* name, void** val)
+static int set_assoc_tracking(void* cfg_h, str* gname, str* name, void** val)
 {
+	int optval;
+	
+	optval=(int)(long)(*val);
 #ifndef SCTP_CONN_REUSE
-	if ((int)(long)(*val)!=0){
+	if (optval!=0){
 		ERR("no SCTP_CONN_REUSE support, please recompile with it enabled\n");
 		return -1;
 	}
-#endif /* SCTP_AUTOCLOSE */
+#else /* SCTP_CONN_REUSE */
+	if (optval==0){
+		/* turn tracking off */
+		/* check if assoc_reuse is off */
+		if (cfg_get(sctp, cfg_h, assoc_reuse)!=0){
+			ERR("cannot turn sctp assoc_tracking off while assoc_reuse is"
+					" still on, please turn assoc_reuse off first\n");
+			return -1;
+		}
+		sctp_con_tracking_flush();
+	}else if (optval==1 && cfg_get(sctp, cfg_h, assoc_reuse)==0){
+		/* turning from off to on, make sure we flush the tracked list
+		   again, just incase the off flush was racing with a new connection*/
+		sctp_con_tracking_flush();
+	}
+#endif /* SCTP_CONN_REUSE */
+	return 0;
+}
+
+
+
+static int set_assoc_reuse(void* cfg_h, str* gname, str* name, void** val)
+{
+	int optval;
+	
+	optval=(int)(long)(*val);
+#ifndef SCTP_CONN_REUSE
+	if (optval!=0){
+		ERR("no SCTP_CONN_REUSE support, please recompile with it enabled\n");
+		return -1;
+	}
+#else /* SCTP_CONN_REUSE */
+	if (optval==1 && cfg_get(sctp, cfg_h, assoc_tracking)==0){
+		/* conn reuse on, but assoc_tracking off => not possible */
+		ERR("cannot turn sctp assoc_reuse on while assoc_tracking is"
+					" off, please turn assoc_tracking on first\n");
+		return -1;
+	}
+#endif /* SCTP_CONN_REUSE */
 	return 0;
 }
 

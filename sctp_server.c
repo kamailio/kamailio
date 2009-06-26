@@ -1526,6 +1526,29 @@ inline static int _sctp_con_del_addr_locked(unsigned h,
 
 
 
+/** delete all tracked associations entries.
+ */
+void sctp_con_tracking_flush()
+{
+	unsigned h;
+	struct sctp_con_elem* e;
+	struct sctp_con_elem* tmp;
+	
+	for (h=0; h<SCTP_ID_HASH_SIZE; h++){
+again:
+		LOCK_SCTP_ID_H(h);
+			clist_foreach_safe(&sctp_con_id_hash[h], e, tmp, l.next_id) {
+				if (_sctp_con_del_id_locked(h, e)==0){
+					/* unlocked, need to lock again and restart the list */
+					goto again;
+				}
+			}
+		UNLOCK_SCTP_ID_H(h);
+	}
+}
+
+
+
 /** using id, get the corresponding sctp assoc & socket. 
  *  @param id - ser unique assoc id
  *  @param si  - result parameter, filled with the socket info on success
@@ -1859,6 +1882,8 @@ error:
 
 
 
+#else /* SCTP_CONN_REUSE */
+void sctp_con_tracking_flush() {}
 #endif /* SCTP_CONN_REUSE */
 
 
@@ -2070,7 +2095,8 @@ static int sctp_handle_assoc_change(struct socket_info* si,
 			atomic_inc(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* new connection, track it */
-			sctp_con_track(assoc_id, si, su, SCTP_CON_UP_SEEN);
+			if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))
+					sctp_con_track(assoc_id, si, su, SCTP_CON_UP_SEEN);
 #if 0
 again:
 			id=atomic_add(sctp_id, 1);
@@ -2102,7 +2128,8 @@ again:
 			atomic_dec(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* connection down*/
-			sctp_con_track(assoc_id, si, su, SCTP_CON_DOWN_SEEN);
+			if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))
+				sctp_con_track(assoc_id, si, su, SCTP_CON_DOWN_SEEN);
 #if 0
 			if (unlikely(sctp_con_del_assoc(assoc_id, si)!=0))
 				WARN("sctp con: tried to remove inexistent connection\n");
@@ -2388,7 +2415,7 @@ int sctp_rcv_loop()
 		/* update the local config */
 		cfg_update();
 #ifdef SCTP_CONN_REUSE
-		if (likely(sinfo)){
+		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking) && sinfo)){
 			ri.proto_reserved1 = sctp_con_track(sinfo->sinfo_assoc_id,
 												ri.bind_address, 
 												&ri.src_su,
@@ -2464,7 +2491,8 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 	/* if dst->id is set it means we want to send on association with
 	   ser id dst->id if still opened and only if closed use dst->to */
 	assoc_id=0;
-	if (cfg_get(sctp, sctp_cfg, assoc_reuse) && (dst->id) &&
+	if ((dst->id) && cfg_get(sctp, sctp_cfg, assoc_reuse) &&
+			cfg_get(sctp, sctp_cfg, assoc_tracking) &&
 			(assoc_id=sctp_con_get_assoc(dst->id, &si, &to, 0))){
 		DBG("sctp: sending on sctp assoc_id %d (ser id %d)\n",
 				assoc_id, dst->id);
@@ -2500,10 +2528,12 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 	}else{
 #ifdef SCTP_ADDR_HASH
 		/* update timeout for the assoc identified  by (dst->to, dst->si) */
-		tmp_id=sctp_con_addr_get_id_assoc(&dst->to, dst->send_sock,
-											&tmp_assoc_id, 0);
-		DBG("sctp send: timeout updated ser id %d, sctp assoc_id %d\n",
-				tmp_id, tmp_assoc_id);
+		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking))){
+			tmp_id=sctp_con_addr_get_id_assoc(&dst->to, dst->send_sock,
+												&tmp_assoc_id, 0);
+			DBG("sctp send: timeout updated ser id %d, sctp assoc_id %d\n",
+					tmp_id, tmp_assoc_id);
+		}
 #endif /* SCTP_ADDR_HASH */
 		tolen=sockaddru_len(dst->to);
 		msg.msg_name=&dst->to.s;
@@ -2606,7 +2636,10 @@ void sctp_get_info(struct sctp_gen_info* i)
 	if (i){
 		i->sctp_connections_no=atomic_get(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
-		i->sctp_tracked_no=atomic_get(sctp_conn_tracked);
+		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))
+			i->sctp_tracked_no=atomic_get(sctp_conn_tracked);
+		else
+			i->sctp_tracked_no=-1;
 #else /* SCTP_CONN_REUSE */
 		i->sctp_tracked_no=-1;
 #endif /* SCTP_CONN_REUSE */

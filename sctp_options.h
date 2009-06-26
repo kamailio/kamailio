@@ -45,7 +45,9 @@ struct cfg_group_sctp{
 	unsigned int autoclose; /* in seconds */
 	unsigned int send_ttl; /* in milliseconds */
 	unsigned int send_retries;
-	int assoc_reuse; /* reuse the request connection for sending the reply*/
+	int assoc_tracking; /* track associations */
+	int assoc_reuse; /* reuse the request connection for sending the reply,
+					    depends on assoc_tracking */
 	unsigned int srto_initial; /** initial retr. timeout */
 	unsigned int srto_max;     /** max retr. timeout */
 	unsigned int srto_min;     /** min retr. timeout */
