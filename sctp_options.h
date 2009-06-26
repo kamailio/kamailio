@@ -22,10 +22,16 @@
  * History:
  * --------
  *  2008-08-07  initial version (andrei)
+ *  2009-05-26  runtime cfg support (andrei)
  */
 
 #ifndef _sctp_options_h
 #define _sctp_options_h
+
+#ifndef NO_SCTP_CONN_REUSE
+/* SCTP connection reuse by default */
+#define SCTP_CONN_REUSE
+#endif
 
 #define DEFAULT_SCTP_AUTOCLOSE 180 /* seconds */
 #define DEFAULT_SCTP_SEND_TTL  32000 /* in ms (32s)  */
@@ -33,18 +39,38 @@
 #define MAX_SCTP_SEND_RETRIES 9
 
 
-struct sctp_cfg_options{
-	int sctp_so_rcvbuf;
-	int sctp_so_sndbuf;
-	unsigned int sctp_autoclose; /* in seconds */
-	unsigned int sctp_send_ttl; /* in milliseconds */
-	unsigned int sctp_send_retries;
+struct cfg_group_sctp{
+	int so_rcvbuf;
+	int so_sndbuf;
+	unsigned int autoclose; /* in seconds */
+	unsigned int send_ttl; /* in milliseconds */
+	unsigned int send_retries;
+	int assoc_tracking; /* track associations */
+	int assoc_reuse; /* reuse the request connection for sending the reply,
+					    depends on assoc_tracking */
+	int max_assocs; /* maximum associations, -1 means disabled */
+	unsigned int srto_initial; /** initial retr. timeout */
+	unsigned int srto_max;     /** max retr. timeout */
+	unsigned int srto_min;     /** min retr. timeout */
+	unsigned int asocmaxrxt; /** max. retr. attempts per association */
+	unsigned int init_max_attempts; /** max., INIT retr. attempts */
+	unsigned int init_max_timeo; /** rto max for INIT */
+	unsigned int hbinterval;  /** heartbeat interval in msecs */
+	unsigned int pathmaxrxt;  /** max. retr. attempts per path */
+	unsigned int sack_delay; /** msecs after which a delayed SACK is sent */
+	unsigned int sack_freq; /** no. of packets after which a SACK is sent */
+	unsigned int max_burst; /** maximum burst of packets per assoc. */
 };
 
-extern struct sctp_cfg_options sctp_options;
+extern struct cfg_group_sctp sctp_default_cfg;
+
+/* sctp config handle */
+extern void* sctp_cfg;
 
 void init_sctp_options();
 void sctp_options_check();
-void sctp_options_get(struct sctp_cfg_options *s);
+int sctp_register_cfg();
+void sctp_options_get(struct cfg_group_sctp *s);
+int sctp_get_os_defaults(struct cfg_group_sctp *s);
 
 #endif /* _sctp_options_h */

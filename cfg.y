@@ -185,6 +185,12 @@
 	#define IF_STUN(x) warn("stun support not compiled in")
 #endif
 
+#ifdef USE_SCTP
+	#define IF_SCTP(x) x
+#else
+	#define IF_SCTP(x) warn("sctp support not compiled in")
+#endif
+
 
 extern int yylex();
 static void yyerror(char* s, ...);
@@ -439,6 +445,20 @@ static int case_check_default(struct case_stms* stms);
 %token SCTP_AUTOCLOSE
 %token SCTP_SEND_TTL
 %token SCTP_SEND_RETRIES
+%token SCTP_ASSOC_TRACKING
+%token SCTP_ASSOC_REUSE
+%token SCTP_MAX_ASSOCS
+%token SCTP_SRTO_INITIAL
+%token SCTP_SRTO_MAX
+%token SCTP_SRTO_MIN
+%token SCTP_ASOCMAXRXT
+%token SCTP_INIT_MAX_ATTEMPTS
+%token SCTP_INIT_MAX_TIMEO
+%token SCTP_HBINTERVAL
+%token SCTP_PATHMAXRXT
+%token SCTP_SACK_DELAY
+%token SCTP_SACK_FREQ
+%token SCTP_MAX_BURST
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
 %token DISABLE_CORE
@@ -1214,7 +1234,7 @@ assign_stm:
 	| SCTP_CHILDREN EQUAL error { yyerror("number expected"); }
 	| SCTP_SOCKET_RCVBUF EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_so_rcvbuf=$3;
+			sctp_default_cfg.so_rcvbuf=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1222,7 +1242,7 @@ assign_stm:
 	| SCTP_SOCKET_RCVBUF EQUAL error { yyerror("number expected"); }
 	| SCTP_SOCKET_SNDBUF EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_so_sndbuf=$3;
+			sctp_default_cfg.so_sndbuf=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1230,7 +1250,7 @@ assign_stm:
 	| SCTP_SOCKET_SNDBUF EQUAL error { yyerror("number expected"); }
 	| SCTP_AUTOCLOSE EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_autoclose=$3;
+			sctp_default_cfg.autoclose=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1238,7 +1258,7 @@ assign_stm:
 	| SCTP_AUTOCLOSE EQUAL error { yyerror("number expected"); }
 	| SCTP_SEND_TTL EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_send_ttl=$3;
+			sctp_default_cfg.send_ttl=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
@@ -1246,12 +1266,88 @@ assign_stm:
 	| SCTP_SEND_TTL EQUAL error { yyerror("number expected"); }
 	| SCTP_SEND_RETRIES EQUAL NUMBER {
 		#ifdef USE_SCTP
-			sctp_options.sctp_send_retries=$3;
+			sctp_default_cfg.send_retries=$3;
 		#else
 			warn("sctp support not compiled in");
 		#endif
 	}
 	| SCTP_SEND_RETRIES EQUAL error { yyerror("number expected"); }
+	| SCTP_ASSOC_TRACKING EQUAL NUMBER {
+		#ifdef USE_SCTP
+			#ifdef SCTP_CONN_REUSE
+				sctp_default_cfg.assoc_tracking=$3;
+			#else
+				if ($3)
+					warn("sctp association tracking/reuse (SCTP_CONN_REUSE) "
+							"support not compiled in");
+			#endif /* SCTP_CONN_REUSE */
+		#else
+			warn("sctp support not compiled in");
+		#endif /* USE_SCTP */
+	}
+	| SCTP_ASSOC_TRACKING EQUAL error { yyerror("number expected"); }
+	| SCTP_ASSOC_REUSE EQUAL NUMBER {
+		#ifdef USE_SCTP
+			#ifdef SCTP_CONN_REUSE
+				sctp_default_cfg.assoc_reuse=$3;
+			#else
+				if ($3)
+					warn("sctp association reuse (SCTP_CONN_REUSE) support"
+							" not compiled in");
+			#endif /* SCTP_CONN_REUSE */
+		#else
+			warn("sctp support not compiled in");
+		#endif /* USE_SCTP */
+	}
+	| SCTP_ASSOC_REUSE EQUAL error { yyerror("number expected"); }
+	| SCTP_MAX_ASSOCS EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.max_assocs=$3);
+	}
+	| SCTP_MAX_ASSOCS EQUAL error { yyerror("number expected"); }
+	| SCTP_SRTO_INITIAL EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.srto_initial=$3);
+	}
+	| SCTP_SRTO_INITIAL EQUAL error { yyerror("number expected"); }
+	| SCTP_SRTO_MAX EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.srto_max=$3);
+	}
+	| SCTP_SRTO_MAX EQUAL error { yyerror("number expected"); }
+	| SCTP_SRTO_MIN EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.srto_min=$3);
+	}
+	| SCTP_SRTO_MIN EQUAL error { yyerror("number expected"); }
+	| SCTP_ASOCMAXRXT EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.asocmaxrxt=$3);
+	}
+	| SCTP_ASOCMAXRXT EQUAL error { yyerror("number expected"); }
+	| SCTP_INIT_MAX_ATTEMPTS EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.init_max_attempts=$3);
+	}
+	| SCTP_INIT_MAX_ATTEMPTS EQUAL error { yyerror("number expected"); }
+	| SCTP_INIT_MAX_TIMEO EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.init_max_timeo=$3);
+	}
+	| SCTP_INIT_MAX_TIMEO EQUAL error { yyerror("number expected"); }
+	| SCTP_HBINTERVAL EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.hbinterval=$3);
+	}
+	| SCTP_HBINTERVAL EQUAL error { yyerror("number expected"); }
+	| SCTP_PATHMAXRXT EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.pathmaxrxt=$3);
+	}
+	| SCTP_PATHMAXRXT EQUAL error { yyerror("number expected"); }
+	| SCTP_SACK_DELAY EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.sack_delay=$3);
+	}
+	| SCTP_SACK_DELAY EQUAL error { yyerror("number expected"); }
+	| SCTP_SACK_FREQ EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.sack_freq=$3);
+	}
+	| SCTP_SACK_FREQ EQUAL error { yyerror("number expected"); }
+	| SCTP_MAX_BURST EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.max_burst=$3);
+	}
+	| SCTP_MAX_BURST EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

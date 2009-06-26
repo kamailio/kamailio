@@ -149,7 +149,7 @@ again:
 				bytes_read=0; /* nothing has been read */
 			}else if (errno == EINTR) goto again;
 			else{
-				if (unlikely(c->state=S_CONN_CONNECT)){
+				if (unlikely(c->state==S_CONN_CONNECT)){
 					switch(errno){
 						case ECONNRESET:
 #ifdef USE_DST_BLACKLIST

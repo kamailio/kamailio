@@ -627,16 +627,31 @@ static void core_sctp_options(rpc_t* rpc, void* c)
 {
 #ifdef USE_SCTP
 	void *handle;
-	struct sctp_cfg_options t;
+	struct cfg_group_sctp t;
 
 	if (!sctp_disable){
 		sctp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddd",
-			"sctp_autoclose",		t.sctp_autoclose,
-			"sctp_send_ttl",	t.sctp_autoclose,
-			"sctp_socket_rcvbuf",	t.sctp_so_rcvbuf,
-			"sctp_socket_sndbuf",	t.sctp_so_sndbuf
+		rpc->struct_add(handle, "ddddddddddddddddddd",
+			"sctp_socket_rcvbuf",	t.so_rcvbuf,
+			"sctp_socket_sndbuf",	t.so_sndbuf,
+			"sctp_autoclose",		t.autoclose,
+			"sctp_send_ttl",	t.send_ttl,
+			"sctp_send_retries",	t.send_retries,
+			"sctp_assoc_tracking",	t.assoc_tracking,
+			"sctp_assoc_reuse",	t.assoc_reuse,
+			"sctp_max_assocs", t.max_assocs,
+			"sctp_srto_initial",	t.srto_initial,
+			"sctp_srto_max",		t.srto_max,
+			"sctp_srto_min",		t.srto_min,
+			"sctp_asocmaxrxt",	t.asocmaxrxt,
+			"sctp_init_max_attempts",	t.init_max_attempts,
+			"sctp_init_max_timeo",t.init_max_timeo,
+			"sctp_hbinterval",	t.hbinterval,
+			"sctp_pathmaxrxt",	t.pathmaxrxt,
+			"sctp_sack_delay",	t.sack_delay,
+			"sctp_sack_freq",	t.sack_freq,
+			"sctp_max_burst",	t.max_burst
 		);
 	}else{
 		rpc->fault(c, 500, "sctp support disabled");
