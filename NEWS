@@ -312,6 +312,22 @@ new config variables:
      association will be automatically reused by the sctp stack.
      Can be changed at runtime (sctp assoc_reuse), but it can be turned on
      only if sctp_assoc_tracking is on.
+  sctp_max_assocs = number - maximum number of allowed open sctp associations.
+     -1 means maximum allowed by the OS. Default: -1.
+     Can be changed at runtime (e.g.:
+      sercmd cfg.set_now_int sctp max_assocs 10 ).
+     When the maximum associations number is exceeded and a new associations
+     is opened by a remote host, the association will be immediately closed.
+     However it is possible that some sip packets get through (especially if
+     they are sent early, as part of the 4-way handshake).
+     When ser/sip-router tries to open a new association and the max_assocs
+     is exceeded the exact behaviour depends on whether or not
+     sctp_assoc_tracking is on. If on, the send triggering the active open
+     will gracefully fail, before actually opening the new association and no
+     packet will be sent. However if sctp_assoc_tracking is off, the
+     association will first be opened and then immediately closed. In general
+     this means that the initial sip packet will be sent (as part of the 4-way
+     handshake).
   sctp_srto_initial = milliseconds - initial value of the retr. timeout, used
      in RTO calculations (default: OS specific).
      Can be changed at runtime (sctp srto_initial) but it will affect only new

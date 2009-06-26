@@ -404,6 +404,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SCTP_SEND_RETRIES
 %token SCTP_ASSOC_TRACKING
 %token SCTP_ASSOC_REUSE
+%token SCTP_MAX_ASSOCS
 %token SCTP_SRTO_INITIAL
 %token SCTP_SRTO_MAX
 %token SCTP_SRTO_MIN
@@ -1234,6 +1235,10 @@ assign_stm:
 		#endif /* USE_SCTP */
 	}
 	| SCTP_ASSOC_REUSE EQUAL error { yyerror("number expected"); }
+	| SCTP_MAX_ASSOCS EQUAL NUMBER {
+			IF_SCTP(sctp_default_cfg.max_assocs=$3);
+	}
+	| SCTP_MAX_ASSOCS EQUAL error { yyerror("number expected"); }
 	| SCTP_SRTO_INITIAL EQUAL NUMBER {
 			IF_SCTP(sctp_default_cfg.srto_initial=$3);
 	}
