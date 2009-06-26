@@ -402,6 +402,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SCTP_AUTOCLOSE
 %token SCTP_SEND_TTL
 %token SCTP_SEND_RETRIES
+%token SCTP_ASSOC_TRACKING
 %token SCTP_ASSOC_REUSE
 %token SCTP_SRTO_INITIAL
 %token SCTP_SRTO_MAX
@@ -1205,6 +1206,20 @@ assign_stm:
 		#endif
 	}
 	| SCTP_SEND_RETRIES EQUAL error { yyerror("number expected"); }
+	| SCTP_ASSOC_TRACKING EQUAL NUMBER {
+		#ifdef USE_SCTP
+			#ifdef SCTP_CONN_REUSE
+				sctp_default_cfg.assoc_tracking=$3;
+			#else
+				if ($3)
+					warn("sctp association tracking/reuse (SCTP_CONN_REUSE) "
+							"support not compiled in");
+			#endif /* SCTP_CONN_REUSE */
+		#else
+			warn("sctp support not compiled in");
+		#endif /* USE_SCTP */
+	}
+	| SCTP_ASSOC_TRACKING EQUAL error { yyerror("number expected"); }
 	| SCTP_ASSOC_REUSE EQUAL NUMBER {
 		#ifdef USE_SCTP
 			#ifdef SCTP_CONN_REUSE

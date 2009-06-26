@@ -288,6 +288,30 @@ new config variables:
                       1-3) to avoid "multiplying" traffic to unresponding 
                       hosts (default: 0).
                       Can be changed at runtime.
+  sctp_assoc_tracking = yes/no - controls whether or not sctp associations
+     are tracked inside ser/sip-router. Turning it off would result in
+     less memory being used and slightly better performance, but it will also
+     disable some other features that depend on it (e.g. sctp_assoc_reuse).
+     Default: yes.
+     Can be changed at runtime (sercmd sctp assoc_tracking 0), but changes
+     will be allowed only if all the other features that depend on it are
+     turned off (for example it can be turned off only if first
+     sctp_assoc_reuse was turned off).
+     Note: turning sctp_assoc_tracking on/off will delete all the tracking
+     information for all the currently tracked associations and might introduce
+     a small temporary delay in the sctp processing if lots of associations
+     were tracked.
+     Config options depending on sctp_assoc_tracking being on:
+      sctp_assoc_reuse.
+  sctp_assoc_reuse = yes/no - controls sctp association reuse. For now only
+     association reuse for replies is affected by it. Default: yes.
+     Depends on sctp_assoc_tracking being on.
+     Note that even if turned off, if the port in via corresponds to the
+     source port of the association the request was sent on or if rport is
+     turned on (force_rport() or via containing a rport option), the
+     association will be automatically reused by the sctp stack.
+     Can be changed at runtime (sctp assoc_reuse), but it can be turned on
+     only if sctp_assoc_tracking is on.
   sctp_srto_initial = milliseconds - initial value of the retr. timeout, used
      in RTO calculations (default: OS specific).
      Can be changed at runtime (sctp srto_initial) but it will affect only new
