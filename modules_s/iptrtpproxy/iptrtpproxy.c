@@ -32,8 +32,10 @@
 #include "../../error.h"
 #include "../../forward.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_content.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
+#include "../../parser/parse_body.h"
 #include "../../resolve.h"
 #include "../../trim.h"
 #include "../../ut.h"
@@ -70,6 +72,7 @@ MODULE_VERSION
 
 struct switchboard_item {
 	str name;
+	int ringing_timeout;
 	struct xt_rtpproxy_sockopt_in_switchboard in_switchboard;
 	struct xt_rtpproxy_sockopt_in_alloc_session in_session;
 
@@ -80,6 +83,8 @@ static char* global_session_ids;
 static str sdp_ip;
 static struct xt_rtpproxy_handle handle = {.sockfd = 0};
 static struct switchboard_item* switchboards = NULL;
+static struct switchboard_item* found_switchboard;
+static int found_direction;
 static int switchboard_count = 0;
 
 
@@ -120,6 +125,9 @@ static int rtpproxy_delete_fixup(void** param, int param_no) {
 	return rtpproxy_update_fixup(param, 2);
 }
 
+static int rtpproxy_find_fixup(void** param, int param_no) {
+	return fixup_var_str_12(param, param_no);
+}
 
 struct sdp_session {
 	unsigned int media_count;
@@ -137,6 +145,7 @@ struct ipt_session {
 	unsigned int stream_count;
 	struct {
 		int sess_id;
+		int created;
 		unsigned short proxy_port;
 	} streams[MAX_MEDIA_NUMBER];
 };
@@ -196,6 +205,16 @@ static int parse_sdp_content(struct sip_msg* msg, struct sdp_session *sess) {
 		STR_NULL
 	};
 	memset(sess, 0, sizeof(*sess));
+	
+	
+	/* try to get the body part with application/sdp */
+	body.s = get_body_part(msg, TYPE_APPLICATION, SUBTYPE_SDP, &body.len);
+	if (!body.s) {
+		ERR(MODULE_NAME": parse_sdp_content: failed to get the application/sdp body\n");
+		return -1;
+	}
+	
+	#if 0
 	body.s = get_body(msg);
 	if (body.s==0) {
 		ERR(MODULE_NAME": parse_sdp_content: failed to get the message body\n");
@@ -220,7 +239,7 @@ static int parse_sdp_content(struct sip_msg* msg, struct sdp_session *sess) {
 			return -1;
 		}
 	}
-
+	#endif
 	/*
 	 * Parsing of SDP body.
 	 * It can contain a few session descriptions (each starts with
@@ -439,7 +458,7 @@ static int update_sdp_content(struct sip_msg* msg, int gate_a_to_b, struct sdp_s
 
 /* null terminated result is allocated at static buffer */
 static void serialize_ipt_session(struct ipt_session* sess, str* session_ids) {
-	static char buf[MAX_SWITCHBOARD_NAME_LEN+1+(5+1)*MAX_MEDIA_NUMBER+1];
+	static char buf[MAX_SWITCHBOARD_NAME_LEN+1+(5+1+1+10)*MAX_MEDIA_NUMBER+1];
 	char *p;
 	int i;
 	buf[0] = '\0';
@@ -450,7 +469,7 @@ static void serialize_ipt_session(struct ipt_session* sess, str* session_ids) {
 	p++;
 	for (i=0; i<sess->stream_count; i++) {
 		if (sess->streams[i].sess_id >= 0) {
-			p += sprintf(p, "%u", sess->streams[i].sess_id);
+			p += sprintf(p, "%u/%u", sess->streams[i].sess_id, sess->streams[i].created);
 		}
 		*p = ',';
 		p++;
@@ -461,7 +480,7 @@ static void serialize_ipt_session(struct ipt_session* sess, str* session_ids) {
 	session_ids->len = p - buf;
 }
 
-/* switchboardname [":" [sess_id] [ * ( "," [sess_id] )] ] */
+/* switchboardname [":" [sess_id "/" created] [ * ( "," [sess_id "/" created] )] ] */
 static int unserialize_ipt_session(str* session_ids, struct ipt_session* sess) {
 	char *p, *pend, savec;
 	str s;
@@ -489,10 +508,11 @@ static int unserialize_ipt_session(str* session_ids, struct ipt_session* sess) {
 		p++;
 		sess->stream_count++;
 		sess->streams[sess->stream_count-1].sess_id = -1;
+		sess->streams[sess->stream_count-1].created = 0;
 		s.s = p;
 		while (p < pend && (*p >= '0' && *p <= '9')) p++;
-		if (p != pend && *p != ',') {
-			ERR(MODULE_NAME": unserialize_ipt_session: comma expected near '%.*s'\n", pend-p, p);
+		if (p != pend && *p != '/') {
+			ERR(MODULE_NAME": unserialize_ipt_session: '/' expected near '%.*s'\n", pend-p, p);
 			return -1;
 		}
 		s.len = p-s.s;
@@ -500,6 +520,21 @@ static int unserialize_ipt_session(str* session_ids, struct ipt_session* sess) {
 			savec = s.s[s.len];
 			s.s[s.len] = '\0';
 			sess->streams[sess->stream_count-1].sess_id = atol(s.s);
+			s.s[s.len] = savec;
+		}
+		p++;
+		s.s = p;
+		while (p < pend && (*p >= '0' && *p <= '9')) p++;
+		if (p != pend && *p != ',') {
+			sess->streams[sess->stream_count-1].sess_id = -1;
+			ERR(MODULE_NAME": unserialize_ipt_session: comma expected near '%.*s'\n", pend-p, p);
+			return -1;
+		}
+		s.len = p-s.s;
+		if (s.len > 0) {
+			savec = s.s[s.len];
+			s.s[s.len] = '\0';
+			sess->streams[sess->stream_count-1].created = atol(s.s);
 			s.s[s.len] = savec;
 		}
 	} while (p < pend);
@@ -514,6 +549,7 @@ static void delete_ipt_sessions(struct ipt_session* ipt_sess) {
 			j = i;
 			in_sess_id.sess_id_min = ipt_sess->streams[i].sess_id;
 			in_sess_id.sess_id_max = in_sess_id.sess_id_min;
+			in_sess_id.created = ipt_sess->streams[i].created;
 			/* group more sessions if possible */
 			for (; i < ipt_sess->stream_count-1; i++) {
 				if (ipt_sess->streams[i+1].sess_id >= 0) {
@@ -537,22 +573,30 @@ static void delete_ipt_sessions(struct ipt_session* ipt_sess) {
 	}
 }
 
-inline static void fill_in_session(int gate_a_to_b, int media_idx, struct sdp_session *sdp_sess, struct ipt_session *ipt_sess, struct xt_rtpproxy_sockopt_in_alloc_session *in_session) {
+#define GATE_FLAG 0x01
+#define RINGING_TIMEOUT_FLAG 0x02
+
+/* gate_a_to_b has index 0, gate_b_to_a 1 */
+#define GATE_A_TO_B(flags) (((flags) & GATE_FLAG) == 0)
+
+inline static void fill_in_session(int flags, int media_idx, struct sdp_session *sdp_sess, struct ipt_session *ipt_sess, struct xt_rtpproxy_sockopt_in_alloc_session *in_session) {
 	int j;
 	for (j=0; j<2; j++) {
-		in_session->source[gate_a_to_b].stream[j].flags =
+		in_session->source[GATE_A_TO_B(flags)].stream[j].flags = 
 			XT_RTPPROXY_SOCKOPT_FLAG_SESSION_ADDR |
-			ipt_sess->switchboard->in_session.source[gate_a_to_b].stream[j].flags;
-		in_session->source[gate_a_to_b].stream[j].learning_timeout =
-			ipt_sess->switchboard->in_session.source[gate_a_to_b].stream[j].learning_timeout;
-		in_session->source[gate_a_to_b].stream[j].addr.ip = sdp_sess->media[media_idx].ip;
-		in_session->source[gate_a_to_b].stream[j].addr.port = sdp_sess->media[media_idx].port+j;
+			ipt_sess->switchboard->in_session.source[GATE_A_TO_B(flags)].stream[j].flags |
+			((flags & RINGING_TIMEOUT_FLAG) ? XT_RTPPROXY_SOCKOPT_FLAG_SESSION_LEARNING_TIMEOUT : 0);
+		in_session->source[GATE_A_TO_B(flags)].stream[j].learning_timeout = (flags & RINGING_TIMEOUT_FLAG) ? 
+			ipt_sess->switchboard->ringing_timeout :
+			ipt_sess->switchboard->in_session.source[GATE_A_TO_B(flags)].stream[j].learning_timeout;
+		in_session->source[GATE_A_TO_B(flags)].stream[j].addr.ip = sdp_sess->media[media_idx].ip;
+		in_session->source[GATE_A_TO_B(flags)].stream[j].addr.port = sdp_sess->media[media_idx].port+j;
 	}
-	in_session->source[gate_a_to_b].always_learn = ipt_sess->switchboard->in_session.source[gate_a_to_b].always_learn;
+	in_session->source[GATE_A_TO_B(flags)].always_learn = ipt_sess->switchboard->in_session.source[GATE_A_TO_B(flags)].always_learn;
 }
 
-static int rtpproxy_alloc(struct sip_msg* msg, char* _gate_a_to_b, char* _switchboard_id) {
-	int gate_a_to_b;
+static int rtpproxy_alloc(struct sip_msg* msg, char* _flags, char* _switchboard_id) {
+	int flags;
 	struct switchboard_item* si = 0;
 	struct sdp_session sdp_sess;
 	struct ipt_session ipt_sess;
@@ -561,18 +605,26 @@ static int rtpproxy_alloc(struct sip_msg* msg, char* _gate_a_to_b, char* _switch
 	str s;
 	int i;
 
-	if (get_int_fparam(&gate_a_to_b, msg, (fparam_t*) _gate_a_to_b) < 0) {
+	if (get_int_fparam(&flags, msg, (fparam_t*) _flags) < 0) {
 		return -1;
 	}
-	gate_a_to_b = gate_a_to_b == 0;  /* gate_a_to_b has index 0, gate_b_to_a 1 */
 	if (get_str_fparam(&s, msg, (fparam_t*) _switchboard_id) < 0) {
 		return -1;
 	}
-	/* switchboard must be fully qualified, it simplifies helper because it's not necessary to store full identification to session_ids - name is sufficient */
-	si = find_switchboard(&s);
-	if (!si) {
-		ERR(MODULE_NAME": rtpproxy_alloc: switchboard '%.*s' not found\n", s.len, s.s);
-		return -1;
+	if (s.len) {
+		/* switchboard must be fully qualified, it simplifies helper because it's not necessary to store full identification to session_ids - name is sufficient */
+		si = find_switchboard(&s);
+		if (!si) {
+			ERR(MODULE_NAME": rtpproxy_alloc: switchboard '%.*s' not found\n", s.len, s.s);
+			return -1;
+		}
+	}
+	else {
+		if (!found_switchboard) {
+			ERR(MODULE_NAME": rtpproxy_alloc: no implicit switchboard\n");
+			return -1;
+		}
+		si = found_switchboard;
 	}
 	if (parse_sdp_content(msg, &sdp_sess) < 0)
 		return -1;
@@ -589,21 +641,23 @@ static int rtpproxy_alloc(struct sip_msg* msg, char* _gate_a_to_b, char* _switch
 				if (sdp_sess.media[j].active && sdp_sess.media[i].ip == sdp_sess.media[j].ip && sdp_sess.media[i].port == sdp_sess.media[j].port) {
 					ipt_sess.streams[i].sess_id = ipt_sess.streams[j].sess_id;
 					ipt_sess.streams[i].proxy_port = ipt_sess.streams[j].proxy_port;
+					ipt_sess.streams[i].created = ipt_sess.streams[j].created;
 					goto cont;
 				}
 			}
-			fill_in_session(gate_a_to_b, i, &sdp_sess, &ipt_sess, &in_session);
+			fill_in_session(flags, i, &sdp_sess, &ipt_sess, &in_session);
 			if (xt_RTPPROXY_alloc_session(&handle, &ipt_sess.switchboard->in_switchboard, &in_session, NULL, &out_session) < 0) {
 				ERR(MODULE_NAME": rtpproxy_alloc: xt_RTPPROXY_alloc_session error: %s (%d)\n", handle.err_str, handle.err_no);
 				delete_ipt_sessions(&ipt_sess);
 				return -1;
 			}
 			ipt_sess.streams[i].sess_id = out_session.sess_id;
-			ipt_sess.streams[i].proxy_port = out_session.gate[!gate_a_to_b].stream[0].port;
+			ipt_sess.streams[i].created = out_session.created;
+			ipt_sess.streams[i].proxy_port = out_session.gate[!GATE_A_TO_B(flags)].stream[0].port;
 		cont: ;
 		}
 	}
-	if (update_sdp_content(msg, gate_a_to_b, &sdp_sess, &ipt_sess) < 0) {
+	if (update_sdp_content(msg, GATE_A_TO_B(flags), &sdp_sess, &ipt_sess) < 0) {
 		delete_ipt_sessions(&ipt_sess);
 		return -1;
 	}
@@ -612,18 +666,17 @@ static int rtpproxy_alloc(struct sip_msg* msg, char* _gate_a_to_b, char* _switch
 	return 1;
 }
 
-static int rtpproxy_update(struct sip_msg* msg, char* _gate_a_to_b, char* _session_ids) {
+static int rtpproxy_update(struct sip_msg* msg, char* _flags, char* _session_ids) {
 	str session_ids;
-	int gate_a_to_b, i;
+	int flags, i;
 	struct sdp_session sdp_sess;
 	struct ipt_session ipt_sess;
 	struct xt_rtpproxy_sockopt_in_sess_id in_sess_id;
 	struct xt_rtpproxy_sockopt_in_alloc_session in_session;
 
-	if (get_int_fparam(&gate_a_to_b, msg, (fparam_t*) _gate_a_to_b) < 0) {
+	if (get_int_fparam(&flags, msg, (fparam_t*) _flags) < 0) {
 		return -1;
 	}
-	gate_a_to_b = gate_a_to_b == 0;  /* gate_a_to_b has index 0, gate_b_to_a 1 */
 	if (get_str_fparam(&session_ids, msg, (fparam_t*) _session_ids) < 0) {
 		return -1;
 	}
@@ -658,16 +711,17 @@ static int rtpproxy_update(struct sip_msg* msg, char* _gate_a_to_b, char* _sessi
 	for (i = 0; i < sdp_sess.media_count; i++) {
 		if (ipt_sess.streams[i].sess_id >= 0) {
 			in_sess_id.sess_id_min = ipt_sess.streams[i].sess_id;
+			in_sess_id.created = ipt_sess.streams[i].created;
 			in_sess_id.sess_id_max = in_sess_id.sess_id_min;
 			if (sdp_sess.media[i].active) {
-				fill_in_session(gate_a_to_b, i, &sdp_sess, &ipt_sess, &in_session);
+				fill_in_session(flags, i, &sdp_sess, &ipt_sess, &in_session);
 				if (xt_RTPPROXY_update_session(&handle, &ipt_sess.switchboard->in_switchboard, &in_sess_id, &in_session) < 0) {
 					ERR(MODULE_NAME": rtpproxy_alloc: xt_RTPPROXY_update_session error: %s (%d)\n", handle.err_str, handle.err_no);
 					/* delete all sessions ? */
 					return -1;
 				}
 				/* we don't know proxy port - it was known when being allocated so we got from switchboard - it's not too clear solution because it requires knowledge how ports are allocated */
-				ipt_sess.streams[i].proxy_port = ipt_sess.switchboard->in_switchboard.gate[!gate_a_to_b].port + 2*ipt_sess.streams[i].sess_id;
+				ipt_sess.streams[i].proxy_port = ipt_sess.switchboard->in_switchboard.gate[!GATE_A_TO_B(flags)].port + 2*ipt_sess.streams[i].sess_id;
 			}
 			else {
 				/* can we delete any session allocated during offer? */
@@ -678,12 +732,62 @@ static int rtpproxy_update(struct sip_msg* msg, char* _gate_a_to_b, char* _sessi
 			}
 		}
 	}
-	if (update_sdp_content(msg, gate_a_to_b, &sdp_sess, &ipt_sess) < 0) {
+serialize_ipt_session(&ipt_sess, &session_ids);
+	if (update_sdp_content(msg, GATE_A_TO_B(flags), &sdp_sess, &ipt_sess) < 0) {
 		/* delete all sessions ? */
 		return -1;
 	}
 	serialize_ipt_session(&ipt_sess, &session_ids);
 	global_session_ids = session_ids.s; /* it's static and null terminated */
+	return 1;
+}
+
+static int rtpproxy_adjust_timeout(struct sip_msg* msg, char* _flags, char* _session_ids) {
+	str session_ids;
+	int flags, i;
+	struct ipt_session ipt_sess;
+	struct xt_rtpproxy_sockopt_in_sess_id in_sess_id;
+	struct xt_rtpproxy_sockopt_in_alloc_session in_session;
+
+	if (get_int_fparam(&flags, msg, (fparam_t*) _flags) < 0) {
+		return -1;
+	}
+	if (get_str_fparam(&session_ids, msg, (fparam_t*) _session_ids) < 0) {
+		return -1;
+	}
+	if (unserialize_ipt_session(&session_ids, &ipt_sess) < 0) {
+		return -1;
+	}
+
+	memset(&in_session, 0, sizeof(in_session));
+	for (i = 0; i < ipt_sess.stream_count; i++) {
+		if (ipt_sess.streams[i].sess_id >= 0) {
+			int j;
+			in_sess_id.sess_id_min = ipt_sess.streams[i].sess_id;
+			in_sess_id.created = ipt_sess.streams[i].created;
+			in_sess_id.sess_id_max = in_sess_id.sess_id_min;
+
+
+			for (j=0; j<2; j++) {
+
+				in_session.source[GATE_A_TO_B(flags)].stream[j].flags = 
+					(flags & RINGING_TIMEOUT_FLAG) ? 
+						XT_RTPPROXY_SOCKOPT_FLAG_SESSION_LEARNING_TIMEOUT : 
+						(ipt_sess.switchboard->in_session.source[GATE_A_TO_B(flags)].stream[j].flags & XT_RTPPROXY_SOCKOPT_FLAG_SESSION_LEARNING_TIMEOUT)
+					;
+				in_session.source[GATE_A_TO_B(flags)].stream[j].learning_timeout = (flags & RINGING_TIMEOUT_FLAG) ? 
+					ipt_sess.switchboard->ringing_timeout :
+					ipt_sess.switchboard->in_session.source[GATE_A_TO_B(flags)].stream[j].learning_timeout;
+
+			}
+
+			if (xt_RTPPROXY_update_session(&handle, &ipt_sess.switchboard->in_switchboard, &in_sess_id, &in_session) < 0) {
+				ERR(MODULE_NAME": rtpproxy_alloc: xt_RTPPROXY_adjust_timeout error: %s (%d)\n", handle.err_str, handle.err_no);
+					return -1;
+			}
+		}
+	}
+	/* do not serialize sessions because it affect static buffer and more valuable values disappears */
 	return 1;
 }
 
@@ -697,9 +801,40 @@ static int rtpproxy_delete(struct sip_msg* msg, char* _session_ids, char* dummy)
 		return -1;
 	}
 	delete_ipt_sessions(&ipt_sess);
-	serialize_ipt_session(&ipt_sess, &session_ids);
-	global_session_ids = session_ids.s; /* it's static and null terminated */
+	/* do not serialize sessions because it affect static buffer and more valuable values disappears */
 	return 1;
+}
+
+static int rtpproxy_find(struct sip_msg* msg, char* _gate_a, char* _gate_b) {
+	unsigned int ip_a, ip_b;
+	str gate_a, gate_b;
+
+	if (get_str_fparam(&gate_a, msg, (fparam_t*) _gate_a) < 0) {
+		return -1;
+	}
+	ip_a = s2ip4(&gate_a);
+	if (get_str_fparam(&gate_b, msg, (fparam_t*) _gate_b) < 0) {
+		return -1;
+	}
+	ip_b = s2ip4(&gate_b);
+
+	found_direction = -1;
+	for (found_switchboard = switchboards; found_switchboard; found_switchboard=found_switchboard->next) {
+		if (ip_a == found_switchboard->in_switchboard.gate[0].ip) {
+			if (ip_b == found_switchboard->in_switchboard.gate[1].ip) {
+				found_direction = 1;
+				return 1;
+				break;
+			}
+		}
+		else if (ip_a == found_switchboard->in_switchboard.gate[1].ip) {
+			if (ip_b == found_switchboard->in_switchboard.gate[0].ip) {
+				found_direction = 0;
+				return 1;
+			}
+		}
+	}
+	return -1;
 }
 
 /* @select implementation */
@@ -720,10 +855,28 @@ static int sel_session_ids(str* res, select_t* s, struct sip_msg* msg) {
 	return 0;
 }
 
+static int sel_switchboard(str* res, select_t* s, struct sip_msg* msg) {
+	if (!found_switchboard)
+		return 1;
+	*res = found_switchboard->name;
+	return 0;
+}
+
+static int sel_direction(str* res, select_t* s, struct sip_msg* msg) {
+	static char buf[2] = {'0', '1'};
+	if (!found_direction < 0)
+		return 1;
+	res->s = buf+found_direction;
+	res->len = 1;
+	return 0;
+}
+
 select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT(MODULE_NAME), sel_rtpproxy, SEL_PARAM_EXPECTED},
 	{ sel_rtpproxy, SEL_PARAM_STR, STR_STATIC_INIT("sdp_ip"), sel_sdp_ip, 0 },
 	{ sel_rtpproxy, SEL_PARAM_STR, STR_STATIC_INIT("session_ids"), sel_session_ids, 0 },
+	{ sel_rtpproxy, SEL_PARAM_STR, STR_STATIC_INIT("switchboard"), sel_switchboard, 0 },
+	{ sel_rtpproxy, SEL_PARAM_STR, STR_STATIC_INIT("direction"), sel_direction, 0 },
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
@@ -731,6 +884,8 @@ select_row_t sel_declaration[] = {
 static int mod_pre_script_cb(struct sip_msg *msg, unsigned int flags, void *param) {
 	sdp_ip.s = "";
 	sdp_ip.len = 0;
+	found_switchboard = NULL;
+	found_direction = -1;
 	global_session_ids = NULL;
 	return 1;
 }
@@ -799,6 +954,7 @@ static int declare_switchboard(modparam_t type, void* val) {
 	enum param_id {
 		par_GateB =		8,
 		par_Name =		0x000001,
+		par_RingingTimeout =	0x000002,
 		par_Addr =		0x000100,
 		par_Port =		0x000200,
 		par_AlwaysLearn =	0x000400,
@@ -818,6 +974,7 @@ static int declare_switchboard(modparam_t type, void* val) {
 		{.name = "always-learn-b", .id = par_AlwaysLearn << par_GateB},
 		{.name = "learning-timeout-a", .id = par_LearningTimeout},
 		{.name = "learning-timeout-b", .id = par_LearningTimeout << par_GateB},
+		{.name = "ringing-timeout", .id = par_RingingTimeout},
 
 		{.name = 0, .id = 0}
 	};
@@ -832,6 +989,7 @@ static int declare_switchboard(modparam_t type, void* val) {
 	si = pkg_malloc(sizeof(*si));
 	if (!si) goto err_E_OUT_OF_MEM;
 	memset(si, 0, sizeof(*si));
+	si->ringing_timeout = 60;
 	while (*s) {
 		str p, val;
 		unsigned int id;
@@ -925,6 +1083,16 @@ static int declare_switchboard(modparam_t type, void* val) {
 				}
 				break;
 			}
+			case par_RingingTimeout: {
+				unsigned int u;
+				if (str2int(&val, &u) < 0) {
+					goto err_E_CFG2;
+				}
+				if (u) {
+					si->ringing_timeout = u;
+				}
+				break;
+			}
 			default:
 				BUG(MODULE_NAME": declare_switchboard: unknown id '%x\n", id);
 				goto err_E_CFG;
@@ -943,6 +1111,7 @@ static int declare_switchboard(modparam_t type, void* val) {
 	DEF_PARAMS(par_AlwaysLearn,in_session.source,always_learn);
 	for (i=0; i<2; i++) {
 		DEF_PARAMS(par_LearningTimeout,in_session.source,stream[i].learning_timeout);
+		DEF_PARAMS(par_LearningTimeout,in_session.source,stream[i].flags);
 	}
 	si->next = switchboards;
 	switchboards = si;
@@ -965,7 +1134,9 @@ err_E_CFG:
 static cmd_export_t cmds[] = {
 	{MODULE_NAME "_alloc",     rtpproxy_alloc,         2, rtpproxy_alloc_fixup,       REQUEST_ROUTE | ONREPLY_ROUTE },
 	{MODULE_NAME "_update",    rtpproxy_update,        2, rtpproxy_update_fixup,      REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{MODULE_NAME "_adjust_timeout", rtpproxy_adjust_timeout, 2, rtpproxy_update_fixup,      REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{MODULE_NAME "_delete",    rtpproxy_delete,        1, rtpproxy_delete_fixup,      REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{MODULE_NAME "_find",      rtpproxy_find,          2, rtpproxy_find_fixup,        REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 
 	{0, 0, 0, 0, 0}
 };
@@ -986,4 +1157,48 @@ struct module_exports exports = {
 	0, /* on_break */
 	child_init
 };
+
+
+#if !defined(NO_SHARED_LIBS) || NO_SHARED_LIBS==0
+/* make compiler happy and give it missing symbols */
+#include <iptables.h>
+#include <stdarg.h>
+void xtables_register_target(struct xtables_target *me) {
+}
+
+void exit_error(enum exittype status, const char *msg, ...)
+{
+	va_list args;
+	
+	va_start(args, msg);
+//	ERR(msg/*, args*/);  /* TODO: how to pass ... to macro? */
+	ERR(MODULE_NAME": %s", msg);
+	va_end(args);
+}
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+int check_inverse(const char option[], int *invert, int *optind, int argc)
+{
+	if (option && strcmp(option, "!") == 0) {
+		if (*invert)
+			exit_error(PARAMETER_PROBLEM, "Multiple `!' flags not allowed");
+		*invert = TRUE;
+		if (optind) {
+			*optind = *optind+1;
+			if (argc && *optind > argc)
+				exit_error(PARAMETER_PROBLEM, "no argument following `!'");
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+#endif
+
 
