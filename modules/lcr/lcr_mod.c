@@ -1713,9 +1713,9 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     lcrs = lcrtp[lcr_id];
 
     /* Find Request-URI user */
-    if (parse_sip_msg_uri(_m) < 0) {
-	    LM_ERR("error while parsing R-URI\n");
-	    return -1;
+    if ((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
+	LM_ERR("error while parsing R-URI\n");
+	return -1;
     }
     ruri_user = _m->parsed_uri.user;
 
