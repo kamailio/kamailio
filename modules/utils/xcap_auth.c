@@ -366,11 +366,6 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
     n_query_cols++;
 
     result_cols[xcap_doc_col= n_result_cols++] = &tmp4;
-	
-    if (pres_dbf.use_table(pres_dbh, &xcap_table) < 0) {
-	LM_ERR("in use_table-[table]= %.*s\n", xcap_table.len, xcap_table.s);
-	return -1;
-    }
 
     if (pres_dbf.query(pres_dbh, query_cols, 0 , query_vals, result_cols, 
 		       n_query_cols, 1, 0, &result) < 0) {
