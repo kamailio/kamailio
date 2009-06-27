@@ -58,8 +58,8 @@
 #define SVNREVISION "unknown"
 #endif
 
-static time_t kmi_up_since;
-static str    kmi_up_since_ctime;
+static time_t kmi_up_since = 0;
+static str    kmi_up_since_ctime = {0, 0};
 static cfg_ctx_t	*_kex_cfg_ctx = NULL;
 
 static int init_mi_uptime(void)
@@ -379,6 +379,10 @@ int init_mi_core(void)
 
 	if (register_mi_mod( "core", mi_core_cmds)<0) {
 		LM_ERR("unable to register core MI cmds\n");
+		return -1;
+	}
+
+	if(init_mi_uptime()<0) {
 		return -1;
 	}
 
