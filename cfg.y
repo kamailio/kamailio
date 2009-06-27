@@ -1300,7 +1300,7 @@ assign_stm:
 		#endif /* USE_SCTP */
 	}
 	| SCTP_ASSOC_REUSE EQUAL error { yyerror("number expected"); }
-	| SCTP_MAX_ASSOCS EQUAL NUMBER {
+	| SCTP_MAX_ASSOCS EQUAL intno {
 			IF_SCTP(sctp_default_cfg.max_assocs=$3);
 	}
 	| SCTP_MAX_ASSOCS EQUAL error { yyerror("number expected"); }
@@ -1328,7 +1328,7 @@ assign_stm:
 			IF_SCTP(sctp_default_cfg.init_max_timeo=$3);
 	}
 	| SCTP_INIT_MAX_TIMEO EQUAL error { yyerror("number expected"); }
-	| SCTP_HBINTERVAL EQUAL NUMBER {
+	| SCTP_HBINTERVAL EQUAL intno {
 			IF_SCTP(sctp_default_cfg.hbinterval=$3);
 	}
 	| SCTP_HBINTERVAL EQUAL error { yyerror("number expected"); }
