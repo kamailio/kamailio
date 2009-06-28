@@ -5,7 +5,7 @@ include $(COREPATH)/Makefile.targets
 
 auto_gen=
 NAME=sercmd
-RELEASE=0.1
+RELEASE=0.2
 
 readline_locations= /usr/include/readline/readline.h \
 					$(LOCALBASE)/include/readline/readline.h
