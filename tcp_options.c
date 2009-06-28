@@ -121,7 +121,11 @@ void init_tcp_options()
 	tcp_default_cfg.connect_timeout_s=DEFAULT_TCP_CONNECT_TIMEOUT;
 	tcp_default_cfg.send_timeout=S_TO_TICKS(DEFAULT_TCP_SEND_TIMEOUT);
 	tcp_default_cfg.con_lifetime=S_TO_TICKS(DEFAULT_TCP_CONNECTION_LIFETIME_S);
+#ifdef USE_TCP
 	tcp_default_cfg.max_connections=tcp_max_connections;
+#else /*USE_TCP*/
+	tcp_default_cfg.max_connections=0;
+#endif /*USE_TCP*/
 #ifdef TCP_ASYNC
 	tcp_default_cfg.async=1;
 	tcp_default_cfg.tcpconn_wq_max=32*1024; /* 32 k */
@@ -224,11 +228,19 @@ static int fix_max_conns(void* cfg_h, str* gname, str* name, void** val)
 {
 	int v;
 	v=(int)(long)*val;
+#ifdef USE_TCP
 	if (v>tcp_max_connections){
 		INFO("cannot override hard tcp_max_connections limit, please"
 				" restart and increase tcp_max_connections in the cfg.\n");
 		v=tcp_max_connections;
 	}
+#else /* USE_TCP */
+	if (v){
+		ERR("TCP support disabled at compile-time, tcp_max_connection is"
+				" hardwired to 0.\n");
+		v=0;
+	}
+#endif /*USE_TCP */
 	*val=(void*)(long)v;
 	return 0;
 }
@@ -325,7 +337,11 @@ void tcp_options_check()
 						MAX_TCP_CON_LIFETIME);
 	fix_timeout("tcp_connection_lifetime", &tcp_default_cfg.con_lifetime,
 						MAX_TCP_CON_LIFETIME, MAX_TCP_CON_LIFETIME);
+#ifdef USE_TCP
 	tcp_default_cfg.max_connections=tcp_max_connections;
+#else /* USE_TCP */
+	tcp_default_cfg.max_connections=0;
+#endif /* USE_TCP */
 	tcp_cfg_def_fix("rd_buf_size", (int*)&tcp_default_cfg.rd_buf_size);
 	tcp_cfg_def_fix("wq_blk_size", (int*)&tcp_default_cfg.wq_blk_size);
 }
