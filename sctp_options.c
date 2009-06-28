@@ -27,11 +27,13 @@
 
 #include <string.h>
 #include <sys/types.h>
+#ifdef USE_SCTP
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/sctp.h>
+#endif /* USE_SCTP */
 #include <errno.h>
 
 #include "sctp_options.h"
