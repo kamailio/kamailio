@@ -688,12 +688,13 @@ struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 */
 struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param)
 {
+#ifndef TM_HASH_STATS
+	return init_mi_tree( 500, "No TM hash stats", 16);
+#else
 	struct mi_root* rpl_tree= NULL;
 	struct mi_node* rpl;
 	struct mi_node* node;
-#ifdef TM_HASH_STATS
 	struct mi_attr* attr;
-#endif
 	struct s_table* tm_t;
 	char *p;
 	int i;
@@ -706,12 +707,15 @@ struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param)
 	tm_t = get_tm_table();
 
 	for (i=0; i<TABLE_ENTRIES; i++) {
+		if(tm_t->entries[i].cur_entries==0
+				&& tm_t->entries[i].acc_entries==0)
+			continue;
+
 		p = int2str((unsigned long)i, &len );
 		node = add_mi_node_child(rpl, MI_DUP_VALUE , 0, 0, p, len);
 		if(node == NULL)
 			goto error;
 
-#ifdef TM_HASH_STATS
 		p = int2str((unsigned long)tm_t->entries[i].cur_entries, &len );
 		attr = add_mi_attr(node, MI_DUP_VALUE, "Current", 7, p, len );
 		if(attr == NULL)
@@ -721,13 +725,13 @@ struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param)
 		attr = add_mi_attr(node, MI_DUP_VALUE, "Total", 5, p, len );
 		if(attr == NULL)
 			goto error;
-#endif
 	}
 
 	return rpl_tree;
 error:
 	free_mi_tree(rpl_tree);
 	return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
+#endif
 }
 
 
