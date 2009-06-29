@@ -1347,12 +1347,14 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	int read;
 	str line;
 	int nofault;
+	int modifiers;
 
 	va_list ap;
 	va_start(ap, fmt);
 
 	nofault = 0;
 	read = 0;
+	modifiers=0;
 	while(*fmt) {
 		if (read_line(&line.s, &line.len, &ctx->read_h) < 0) {
 			va_end(ap);
@@ -1363,6 +1365,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		switch(*fmt) {
 		case '*': /* start of optional parameters */
 			nofault = 1;
+			modifiers++;
 			break;
 		case 'b': /* Bool */
 		case 't': /* Date and time */
@@ -1429,11 +1432,11 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		read++;
 	}
 	va_end(ap);
-	return read;
+	return read-modifiers;
 
  error:
 	va_end(ap);
-	return -read;
+	return -(read-modifiers);
 }
 
 
