@@ -1187,18 +1187,24 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	xmlNodePtr value;
 	struct xmlrpc_reply* reply;
 	struct rpc_struct* p;
-
+	int modifiers;
 	va_list ap;
 
 	reply = &ctx->reply;
 	fmt_len = strlen(fmt);
 	va_start(ap, fmt);
+	modifiers=0;
 	read = 0;
 	while(*fmt) {
 		if (!ctx->act_param) goto error;
 		value = ctx->act_param->xmlChildrenNode;
 
 		switch(*fmt) {
+		case '*': /* start of optional parameters */
+			modifiers++;
+			/* no other action needed, for xmlrpc params are treated as
+			   optionals anyway */
+			break;
 		case 'b': /* Bool */
 		case 't': /* Date and time */
 		case 'd': /* Integer */
@@ -1245,11 +1251,11 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		fmt++;
 	}
 	va_end(ap);
-	return read;
+	return read-modifiers;
 
  error:
 	va_end(ap);
-	return -read;
+	return -(read-modifiers);
 }
 
 #define RPC_BUF_SIZE 1024
