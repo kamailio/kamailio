@@ -34,9 +34,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
 #include "../../dprint.h"
+#include "mi_mem.h"
 #include "tree.h"
 #include "fmt.h"
 
@@ -50,7 +49,7 @@ struct mi_root *init_mi_tree(unsigned int code, char *reason, int reason_len)
 	if (use_shm)
 		root = (struct mi_root *)shm_malloc(sizeof(struct mi_root));
 	else
-		root = (struct mi_root *)pkg_malloc(sizeof(struct mi_root));
+		root = (struct mi_root *)mi_malloc(sizeof(struct mi_root));
 	if (!root) {
 		LM_ERR("no more pkg mem\n");
 		return NULL;
@@ -83,7 +82,7 @@ static void free_mi_node(struct mi_node *parent)
 		shm_free(parent);
 	} else {
 		del_mi_attr_list(parent);
-		pkg_free(parent);
+		mi_free(parent);
 	}
 }
 
@@ -100,7 +99,7 @@ void free_mi_tree(struct mi_root *parent)
 	if (use_shm)
 		shm_free(parent);
 	else
-		pkg_free(parent);
+		mi_free(parent);
 }
 
 
@@ -135,7 +134,7 @@ static inline struct mi_node *create_mi_node(char *name, int name_len,
 	if (use_shm)
 		new = (struct mi_node *)shm_malloc(size_mem);
 	else
-		new = (struct mi_node *)pkg_malloc(size_mem);
+		new = (struct mi_node *)mi_malloc(size_mem);
 	if(!new) {
 		LM_ERR("no more pkg mem\n");
 		return NULL;
