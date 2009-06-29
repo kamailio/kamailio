@@ -31,6 +31,7 @@
  * --------
  *  2006-02-14  created by andrei
  *  2009-06-29  command line completion for cfg groups and vars (andrei)
+ *  2009-06-30  command line completion for mi cmds (andrei)
  */
 
 
@@ -51,7 +52,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define USE_CFG_VARS
+#define USE_CFG_VARS /* cfg group and vars completion */
+#define USE_MI  /* mi completion */
 #endif
 
 #include "parse_listen_id.h"
@@ -127,7 +129,6 @@ int rpc_no=0;
 
 #ifdef USE_CFG_VARS
 
-
 struct binrpc_val* cfg_vars_array;
 int cfg_vars_no;
 
@@ -142,6 +143,13 @@ struct cfg_var_grp* cfg_grp_lst; /** cfg groups list, allong with var names*/
 struct cfg_var_grp* crt_cfg_grp;
 #endif /* USE_CFG_VARS */
 
+#ifdef USE_MI
+struct binrpc_val* mi_which_array;
+int mi_which_no;
+
+str* mi_cmds;
+int mi_cmds_no;
+#endif /* USE_MI */
 
 
 
@@ -262,12 +270,16 @@ static struct sercmd_builtin builtins[]={
 #ifdef USE_READLINE
 
 enum complete_states {
-	COMPLETE_NOTHING,
+	COMPLETE_INIT,
 	COMPLETE_CMD_NAME,
 #ifdef USE_CFG_VARS
 	COMPLETE_CFG_GRP,
-	COMPLETE_CFG_VAR
+	COMPLETE_CFG_VAR,
 #endif /* USE_CFG_VARS */
+#ifdef USE_MI
+	COMPLETE_MI,
+#endif /* USE_Mi */
+	COMPLETE_NOTHING
 };
 
 /* instead of rl_attempted_completion_over which is not present in
@@ -297,6 +309,14 @@ char* complete_params_cfg_var[]={
 	0
 };
 #endif /* USE_CFG_VARS */
+
+#ifdef USE_MI
+/* commands for which we complete the first param with an mi command*/
+char* complete_params_mi[]={
+	"mi",
+	0
+};
+#endif /* USE_MI */
 
 #endif /* USE_READLINE */
 
@@ -1155,7 +1175,7 @@ static int get_sercmd_list(int s)
 			}
 			break;
 		case BINRPC_REPL:
-			rpc_no=10; /* default cmd list */
+			rpc_no=100; /* default cmd list */
 			if ((rpc_array=parse_reply_body(&rpc_no, &in_pkt, msg_body,
 												in_pkt.tlen))==0)
 				goto error;
@@ -1170,6 +1190,30 @@ error_send:
 error:
 	return -1;
 }
+
+
+
+#if defined(USE_CFG_VARS) || defined (USE_MI)
+/** check if cmd is a rpc command.
+ * Quick check (using the internal rpc_array) if cmd is a valid rpc command.
+ * @param cmd - null terminated ascii string
+ * @return 1 on success, 0 on failure.
+ */
+static int is_rpc_cmd(char* cmd)
+{
+	int r;
+	int cmd_len;
+	
+	cmd_len=strlen(cmd);
+	for (r=0; r<rpc_no; r++){
+		if ((rpc_array[r].type==BINRPC_T_STR) &&
+			(rpc_array[r].u.strval.len==cmd_len) &&
+			(strncmp(cmd, rpc_array[r].u.strval.s, cmd_len)==0))
+			return 1;
+	}
+	return 0;
+}
+#endif /* USE_CFG_VARS || USE_MI */
 
 
 
@@ -1193,6 +1237,7 @@ static int get_cfgvars_list(int s)
 	
 	cmd.method="cfg.list";
 	cmd.argc=0;
+	if (!is_rpc_cmd(cmd.method)) goto error;
 	
 	cookie=gen_cookie();
 	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
@@ -1321,6 +1366,132 @@ void free_cfg_grp_lst()
 
 
 
+#ifdef USE_MI
+/* retrieve the mi list */
+static int get_mi_list(int s)
+{
+	struct binrpc_cmd cmd;
+	int cookie;
+	unsigned char reply_buf[MAX_REPLY_SIZE];
+	unsigned char* msg_body;
+	struct binrpc_parse_ctx in_pkt;
+	char* p;
+	char* end;
+	str mi_name;
+	int mi_which_results;
+	int r;
+	int ret;
+	
+	cmd.method="mi";
+	cmd.argv[0].type=BINRPC_T_STR;
+	cmd.argv[0].u.strval.s="which";
+	cmd.argv[0].u.strval.len=strlen(cmd.argv[0].u.strval.s);
+	cmd.argc=1;
+	if (!is_rpc_cmd(cmd.method)) goto error;
+	
+	cookie=gen_cookie();
+	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
+		if (ret==-1) goto error_send;
+		else goto binrpc_err;
+	}
+	/* read reply */
+	memset(&in_pkt, 0, sizeof(in_pkt));
+	if ((ret=get_reply(s, reply_buf, MAX_REPLY_SIZE, cookie, &in_pkt,
+					&msg_body))<0){
+		goto error;
+	}
+	switch(in_pkt.type){
+		case BINRPC_FAULT:
+			if (print_fault(&in_pkt, msg_body, in_pkt.tlen)<0){
+				goto error;
+			}
+			break;
+		case BINRPC_REPL:
+			mi_which_no=25; /* default rpc list */
+			if ((mi_which_array=parse_reply_body(&mi_which_no, &in_pkt,
+												msg_body, in_pkt.tlen))==0)
+				goto error;
+			break;
+		default:
+			fprintf(stderr, "ERROR: not a reply\n");
+			goto error;
+	}
+	
+	
+	/* get the mi commands number */
+	mi_which_results=0;
+	for (r=0; r<mi_which_no; r++){
+		if (mi_which_array[r].type!=BINRPC_T_STR)
+			continue;
+		/* we are interestend only in lines starting with '+', e.g.:
+		   + :: version */
+		if ((mi_which_array[r].u.strval.len) &&
+			(mi_which_array[r].u.strval.s[0]=='+'))
+			mi_which_results++;
+	}
+	/* no mi commands */
+	if (mi_which_results==0)
+		goto error;
+	/* alloc the mi_cmds array */
+	mi_cmds=malloc(mi_which_results*sizeof(*mi_cmds));
+	if (mi_cmds==0) goto error_mem;
+	memset(mi_cmds, 0, mi_which_results* sizeof(mi_cmds));
+	/* get the mi names list */
+	for (r=0; r<mi_which_no; r++){
+		if (mi_which_array[r].type!=BINRPC_T_STR)
+			continue;
+		p=mi_which_array[r].u.strval.s;
+		end=p+mi_which_array[r].u.strval.len;
+		/* we are interestend only in lines starting with '+', e.g.:
+		   + :: version */
+		if ((p>=end) || (*p!='+'))
+			continue;
+		p++;
+		/* skip over to the first ':' */
+		for(;p<end && *p!=':'; p++);
+		if (p>=end) continue;
+		p++;
+		/* skip over to the next ':' */
+		for(;p<end && *p!=':'; p++);
+		if (p>=end) continue;
+		p++;
+		/* skip over spaces */
+		for(;p<end && (*p==' ' || *p=='\t'); p++);
+		if (p>=end) continue;
+		if (mi_cmds_no >= mi_which_results){
+			fprintf(stderr, "BUG: wrong mi cmds no (%d >= %d)\n",
+							mi_cmds_no, mi_which_results);
+			goto error;
+		}
+		mi_name.s=p;
+		mi_name.len=(int)(long)(end-p);
+		mi_cmds[mi_cmds_no]=mi_name;
+		mi_cmds_no++;
+	}
+	
+	return 0;
+binrpc_err:
+error_send:
+error:
+error_mem:
+	return -1;
+}
+
+
+
+void free_mi_cmds()
+{
+	if (mi_cmds){
+		free(mi_cmds);
+		mi_cmds=0;
+		mi_cmds_no=0;
+	}
+}
+#endif /* USE_MI */
+
+
+
+
 static void print_formatting(char* prefix, char* format, char* suffix)
 {
 	if (format){
@@ -1441,6 +1612,7 @@ static char* sercmd_generator(const char* text, int state)
 	static struct cfg_var_grp* grp;
 #endif
 	switch(attempted_completion_state){
+		case COMPLETE_INIT:
 		case COMPLETE_NOTHING:
 			return 0;
 		case COMPLETE_CMD_NAME:
@@ -1527,6 +1699,29 @@ static char* sercmd_generator(const char* text, int state)
 			}
 			break;
 #endif /* USE_CFG_VARS */
+#ifdef USE_MI
+		case COMPLETE_MI:
+			if (state==0){
+				/* init */
+				len=strlen(text);
+				idx=0;
+			}
+			while(idx < mi_cmds_no){
+				if (len<=mi_cmds[idx].len &&
+						memcmp(text, mi_cmds[idx].s, len)==0) {
+					/* zero-term copy of the var name */
+					name=malloc(mi_cmds[idx].len+1);
+					if (name){
+						memcpy(name, mi_cmds[idx].s, mi_cmds[idx].len);
+						name[mi_cmds[idx].len]=0;
+					}
+					idx++;
+					return name;
+				}
+				idx++;
+			}
+			break;
+#endif /* USE_MI */
 	}
 	/* no matches */
 	return 0;
@@ -1594,6 +1789,20 @@ char** sercmd_completion(const char* text, int start, int end)
 						goto end;
 				}
 			}
+#endif /* USE_CFG_VARS */
+#ifdef USE_MI
+			/* try complete_parms_mi */
+			for(i=0; complete_params_mi[i]; i++){
+				if ((cmd_len==strlen(complete_params_mi[i])) &&
+						(strncmp(&rl_line_buffer[cmd_start],
+								 complete_params_mi[i],
+								 cmd_len)==0)){
+						attempted_completion_state=COMPLETE_MI;
+						goto end;
+				}
+			}
+#endif /* USE_MI */
+#ifdef USE_CFG_VARS
 		}else if (crt_param_no==2){
 			if (attempted_completion_state!=COMPLETE_CFG_GRP){
 				for(i=0; complete_params_cfg_var[i]; i++){
@@ -1789,10 +1998,14 @@ int main(int argc, char** argv)
 		goto end;
 	}
 	/* interactive mode */
-	get_sercmd_list(s);
-#ifdef USE_CFG_VARS
-	get_cfgvars_list(s);
-#endif /* USE_CFG_VARS */
+	if (get_sercmd_list(s)==0){
+	#ifdef USE_CFG_VARS
+		get_cfgvars_list(s);
+	#endif /* USE_CFG_VARS */
+	#ifdef USE_MI
+		get_mi_list(s);
+	#endif /* USE_MI */
+	}
 	/* banners */
 	printf("%s %s\n", NAME, VERSION);
 	printf("%s\n", COPYRIGHT);
@@ -1845,9 +2058,21 @@ end:
 #ifdef USE_CFG_VARS
 	if (cfg_grp_lst)
 		free_cfg_grp_lst();
-	if (cfg_vars_array)
+	if (cfg_vars_array){
 		free_rpc_array(cfg_vars_array, cfg_vars_no);
+		cfg_vars_array=0;
+		cfg_vars_no=0;
+	}
 #endif /* USE_CFG_VARS */
+#ifdef USE_MI
+	if (mi_cmds)
+		free_mi_cmds();
+	if (mi_which_array){
+		free_rpc_array(mi_which_array, mi_which_no);
+		mi_which_array=0;
+		mi_which_no=0;
+	}
+#endif /* USE_MI */
 	cleanup();
 	exit(0);
 error:
@@ -1860,9 +2085,21 @@ error:
 #ifdef USE_CFG_VARS
 	if (cfg_grp_lst)
 		free_cfg_grp_lst();
-	if (cfg_vars_array)
+	if (cfg_vars_array){
 		free_rpc_array(cfg_vars_array, cfg_vars_no);
+		cfg_vars_array=0;
+		cfg_vars_no=0;
+	}
 #endif /* USE_CFG_VARS */
+#ifdef USE_MI
+	if (mi_cmds)
+		free_mi_cmds();
+	if (mi_which_array){
+		free_rpc_array(mi_which_array, mi_which_no);
+		mi_which_array=0;
+		mi_which_no=0;
+	}
+#endif /* USE_MI */
 	cleanup();
 	exit(-1);
 }
