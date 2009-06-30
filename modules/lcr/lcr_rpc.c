@@ -148,7 +148,7 @@ static void dump_lcrs(rpc_t* rpc, void* c)
 			from_uri.s=lcr_rec->from_uri;
 			from_uri.len=lcr_rec->from_uri_len;
 			rpc->struct_add(st, "dSSdd",
-					"lcr_id", &lcr_id,
+					"lcr_id", j,
 					"prefix", &prefix,
 					"from_uri", &from_uri,
 					"grp_id", lcr_rec->grp_id,
