@@ -59,6 +59,9 @@
 #include "nonsip_hooks.h"
 #include "dset.h"
 #include "usr_avp.h"
+#ifdef WITH_XAVP
+#include "xavp.h"
+#endif
 #include "select_buf.h"
 
 #include "tcp_server.h" /* for tcpconn_add_alias */
@@ -241,6 +244,9 @@ end:
 #endif
 	/* free possible loaded avps -bogdan */
 	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
 	DBG("receive_msg: cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
@@ -252,6 +258,9 @@ error_rpl:
 	/* execute post reply-script callbacks */
 	exec_post_script_cb(msg, ONREPLY_CB_TYPE);
 	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
 	goto error02;
 error_req:
 	DBG("receive_msg: error:...\n");
@@ -259,6 +268,9 @@ error_req:
 	exec_post_script_cb(msg, REQUEST_CB_TYPE);
 	/* free possible loaded avps -bogdan */
 	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
 error02:
 	free_sip_msg(msg);
 	pkg_free(msg);
