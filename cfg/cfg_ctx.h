@@ -108,6 +108,10 @@ int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 /* notify the drivers about the new config definition */
 void cfg_notify_drivers(char *group_name, int group_name_len, cfg_def_t *def);
 
+/* convert the value to the requested type */
+int convert_val(unsigned int val_type, void *val,
+			unsigned int var_type, void **new_val);
+
 /* initialize the handle for cfg_get_group_next() */
 #define cfg_get_group_init(handle) \
 	(*(handle)) = (void *)cfg_group

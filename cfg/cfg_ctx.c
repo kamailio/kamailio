@@ -129,7 +129,7 @@ void cfg_notify_drivers(char *group_name, int group_name_len, cfg_def_t *def)
 static char	*temp_string = NULL;
 
 /* convert the value to the requested type */
-static int convert_val(unsigned int val_type, void *val,
+int convert_val(unsigned int val_type, void *val,
 			unsigned int var_type, void **new_val)
 {
 	static str	s;
@@ -482,7 +482,7 @@ static int cfg_var_size(cfg_mapping_t *var)
 		return sizeof(void *);
 
 	default:
-		LOG(L_CRIT, "BUG: cfg_var_sizeK(): unknown type: %u\n",
+		LOG(L_CRIT, "BUG: cfg_var_size(): unknown type: %u\n",
 			CFG_VAR_TYPE(var));
 		return 0;
 	}
