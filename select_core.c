@@ -801,16 +801,16 @@ int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
  *
  * val is set to the value of the parameter.
  */
-static inline int search_param(str *params, char *name, int name_len,
+static inline int search_param(str params, char *name, int name_len,
 				str *val)
 {
 	param_hooks_t h;
 	param_t *p, *list;
 
-	if (params->s == NULL)
+	if (params.s == NULL)
 		return 0;
 
-	if (parse_params(params, CLASS_ANY, &h, &list) < 0)
+	if (parse_params(&params, CLASS_ANY, &h, &list) < 0)
 		return -1;
 	for (p = list; p; p=p->next) {
 		if ((p->name.len == name_len)
@@ -840,12 +840,12 @@ int select_uri_rn_user(str* res, select_t* s, struct sip_msg* msg)
 	}
 
 	/* search for the "rn" parameter */
-	if ((ret = search_param(&select_uri_p->params, "rn", 2, &val)) != 0)
+	if ((ret = search_param(select_uri_p->params, "rn", 2, &val)) != 0)
 		goto done;
 
 	if (select_uri_p->sip_params.s != select_uri_p->params.s) {
 		/* check also the original sip: URI parameters */
-		if ((ret = search_param(&select_uri_p->sip_params, "rn", 2, &val)) != 0)
+		if ((ret = search_param(select_uri_p->sip_params, "rn", 2, &val)) != 0)
 			goto done;
 	}
 
@@ -1015,7 +1015,7 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 	
 	if (!res->len) return -1;
 
-	if (search_param(res, wanted->s, wanted->len, res) <= 0) {
+	if (search_param(*res, wanted->s, wanted->len, res) <= 0) {
 		DBG("SELECT ...uri.params.%s NOT FOUND !\n", wanted->s);
 		return -1;
 	} else {
