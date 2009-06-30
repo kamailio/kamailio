@@ -119,6 +119,8 @@ int event_parser(char* s, int len, event_t* e)
 
 	if (tmp.s[0] == ';') {
 		/* We have parameters to parse */
+		tmp.s++;
+		tmp.len--;
 		if (e->type == EVENT_DIALOG) {
 			pclass = CLASS_EVENT_DIALOG;
 			phooks = (param_hooks_t*)&e->params.dialog;
@@ -184,11 +186,11 @@ void free_event(event_t** _e)
  */
 void print_event(event_t* e)
 {
-	printf("===Event===\n");
-	printf("name  : \'%.*s\'\n", STR_FMT(&e->name));
-	printf("type: %d\n", e->type);
+	fprintf(stderr, "===Event===\n");
+	fprintf(stderr, "name  : \'%.*s\'\n", STR_FMT(&e->name));
+	fprintf(stderr, "type: %d\n", e->type);
 	if (e->params.list) {
-		print_params(stdout, e->params.list);
+		print_params(stderr, e->params.list);
 	}
-	printf("===/Event===\n");
+	fprintf(stderr, "===/Event===\n");
 }
