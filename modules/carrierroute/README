@@ -854,17 +854,17 @@ domain register {
 +----+---------+--------+-------------+-------+------+---------------+
 | id | carrier | domain | scan_prefix | flags | prob | rewrite_host  |
 +----+---------+--------+-------------+-------+------+---------------+
-| 1  |       1 |      0 | 49          |     0 |  0.5 | de-1.carrier1 |
-| 2  |       1 |      0 | 49          |     0 |  0.5 | de-2.carrier1 |
-| 3  |       1 |      0 | 49          |    16 |    1 | de-3.carrier1 |
-| 4  |       1 |      0 |             |     0 |    1 | gw.carrier1-1 |
-| 5  |       1 |      1 | 49          |     0 |    1 | gw.carrier1-1 |
-| 6  |       1 |      2 |             |     0 |    1 | gw.carrier1-2 |
-| 7  |       1 |      3 |             |     0 |    1 | gw.carrier1-3 |
-| 8  |       2 |      0 | 49          |     0 |  0.5 | de-1.carrier2 |
-| 9  |       2 |      0 | 49          |     0 |  0.5 | de-2.carrier2 |
-| 10 |       2 |      0 |             |     0 |    1 | gw.carrier2   |
-| 11 |       2 |      1 | 49          |     0 |    1 | gw.carrier2   |
+| 1  |       1 |      1 | 49          |     0 |  0.5 | de-1.carrier1 |
+| 2  |       1 |      1 | 49          |     0 |  0.5 | de-2.carrier1 |
+| 3  |       1 |      1 | 49          |    16 |    1 | de-3.carrier1 |
+| 4  |       1 |      1 |             |     0 |    1 | gw.carrier1-1 |
+| 5  |       1 |      2 | 49          |     0 |    1 | gw.carrier1-1 |
+| 6  |       1 |      3 |             |     0 |    1 | gw.carrier1-2 |
+| 7  |       1 |      4 |             |     0 |    1 | gw.carrier1-3 |
+| 8  |       2 |      1 | 49          |     0 |  0.5 | de-1.carrier2 |
+| 9  |       2 |      1 | 49          |     0 |  0.5 | de-2.carrier2 |
+| 10 |       2 |      1 |             |     0 |    1 | gw.carrier2   |
+| 11 |       2 |      2 | 49          |     0 |    1 | gw.carrier2   |
 | 12 |       3 |      8 | 49          |     0 |    1 | de-gw.default |
 | 13 |       3 |      8 |             |     0 |    1 | gw.default    |
 +----+---------+--------+-------------+-------+------+---------------+
@@ -875,9 +875,9 @@ domain register {
    and carrier 1. The gateways for the default carrier will be
    used for functions that don't support the user specific carrier
    lookup. The routing rules for carrier 1 and carrier 2 for the
-   "49" prefix contains a additional rule with the domain 1, that
-   can be used for example as fallback if the gateways in domain 0
-   are not reachable. Two more fallback rules (domain 2 and 3) for
+   "49" prefix contains a additional rule with the domain 2, that
+   can be used for example as fallback if the gateways in domain 1
+   are not reachable. Two more fallback rules (domain 3 and 4) for
    carrier 1 are also supplied to support the functionality of the
    carrierfailureroute table example that is provided in the next
    section.
@@ -894,8 +894,8 @@ domain register {
 +----+---------+--------+---------------+------------+-------------+
 | id | carrier | domain | host_name     | reply_code | next_domain |
 +----+---------+--------+---------------+------------+-------------+
-|  1 |       1 | 0      | gw.carrier1-2 | ...        | 3           |
-|  2 |       1 | 0      | gw.carrier1-3 | ...        | 2           |
+|  1 |       1 | 1      | gw.carrier1-2 | ...        | 3           |
+|  2 |       1 | 1      | gw.carrier1-3 | ...        | 2           |
 +----+---------+--------+---------------+------------+-------------+
 ...
 
