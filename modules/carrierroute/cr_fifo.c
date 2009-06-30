@@ -162,7 +162,6 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 	}
 	release_data (rd);
 	return rpl_tree;
-	return 0;
 
 error:
 	release_data (rd);
