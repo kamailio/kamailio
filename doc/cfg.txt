@@ -166,6 +166,45 @@ cfg_get(foo, cfg_handle, s)
 cfg_get(foo, cfg_handle, p)
 
 
+It is also possible to access the variables of other modules or the core in two
+different ways:
+
+1) Include the header file of the other module/core that declares the cfg_group_*
+structure and the handle for it. Than use the handle of that module/core to access
+the variable:
+
+cfg_get(bar, cfg_handle_of_bar, j);
+
+2) Access the variables by their group and variable name:
+
+#include "../../cfg/cfg_select.h"
+
+struct cfg_read_handle var_bar_j;
+
+in the module init function:
+static int mod_init(void)
+{
+	if ((read_cfg_var_fixup("bar", "j", &var_bar_j)) < 0)
+		return -1;
+	/* Note that the variable may or may not exist at this point
+	 * depending on the module loading order. The fixup will still
+	 * be successful but the variable cannot be read if it has not been
+	 * declared yet. If the variable will not be declared at all
+	 * SER will fail to start
+	 */
+}
+
+int	j;
+if ((cfg_read_var_int(&var_bar_j, &j)) < 0) { error... }
+
+or similarly,
+str	s;
+if ((cfg_read_var_str(&var_bar_j, &s)) < 0) { error... }
+
+2) is a bit slower than 1) because the first solution returns the pointer directly
+to the variable, but 2) supports also the variables declared in the script that are
+not known at compile time.
+
 3. Using the framework in the core
 ===============================================================================
 

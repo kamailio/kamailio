@@ -274,13 +274,6 @@ int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_ha
 		return 0;
 	}
 
-	if (var->def->on_change_cb) {
-		/* fixup function is defined -- safer to return an error
-		than an incorrect value */
-		LOG(L_ERR, "ERROR: read_cfg_var_fixup(): variable cannot be retrieved\n");
-		return -1;
-	}
-
 	read_handle->group = (void *)group;
 	read_handle->var = (void *)var;
 	return 1;
