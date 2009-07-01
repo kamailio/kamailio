@@ -61,14 +61,6 @@ do {                         \
 
 
 /*
- * Make a shared memory copy of str string
- * Return value: -1 on error
- *                0 on success
- */
-int shm_str_dup(char** dest, str* val);
-
-
-/*
  * Make a shared memory copy of ASCII zero terminated string
  * Return value: -1 on error
  *                0 on success
