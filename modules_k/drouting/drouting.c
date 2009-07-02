@@ -632,7 +632,7 @@ static int use_next_gw(struct sip_msg* msg)
 
 	if (!avp) return -1;
 
-	if (rewrite_ruri(msg, &val.s.s)==-1) {
+	if (rewrite_ruri(msg, &val)==-1) {
 		LM_ERR("failed to rewite RURI\n");
 		return -1;
 	}
@@ -975,13 +975,15 @@ static int fixup_from_gw( void** param, int param_no)
 static int strip_username(struct sip_msg* msg, int strip)
 {
 	struct action act;
+   struct run_act_ctx ra_ctx;
  
 	act.type = STRIP_T;
-	act.elem[0].type = NUMBER_ST;
-	act.elem[0].u.number = strip;
+	act.val[0].type = NUMBER_ST;
+	act.val[0].u.number = strip;
 	act.next = 0;
 
-	if (do_action(&act, msg) < 0)
+   init_run_actions_ctx(&ra_ctx);
+   if (do_action(&ra_ctx, &act, msg) < 0)
 	{
 		LM_ERR( "Error in do_action\n");
 		return -1;
