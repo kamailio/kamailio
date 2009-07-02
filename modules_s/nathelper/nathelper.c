@@ -1916,6 +1916,52 @@ force_rtp_proxy2_f(struct sip_msg *msg, char *param1, char *param2)
 	return force_rtp_proxy(msg, param1, param2, offer);
 }
 
+struct options {
+	str s;
+	int oidx;
+};
+
+static int
+append_opts(struct options *op, char ch)
+{
+	void *p;
+
+	if (op->s.len <= op->oidx) {
+		p = pkg_realloc(op->s.s, op->oidx + 32);
+		if (p == NULL) {
+			return (-1);
+		}
+		op->s.s = p;
+		op->s.len = op->oidx + 32;
+	}
+	op->s.s[op->oidx++] = ch;
+	return (0);
+}
+
+static void
+free_opts(struct options *op1, struct options *op2, struct options *op3)
+{
+
+	if (op1->s.len > 0 && op1->s.s != NULL) {
+		pkg_free(op1->s.s);
+		op1->s.len = 0;
+	}
+	if (op2->s.len > 0 && op2->s.s != NULL) {
+		pkg_free(op2->s.s);
+		op2->s.len = 0;
+	}
+	if (op3->s.len > 0 && op3->s.s != NULL) {
+		pkg_free(op3->s.s);
+		op3->s.len = 0;
+	}
+}
+
+#define FORCE_RTP_PROXY_RET(e) \
+    do { \
+	free_opts(&opts, &rep_opts, &pt_opts); \
+	return (e); \
+    } while (0);
+
 static int
 force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 {
@@ -1923,18 +1969,19 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 	str callid, from_tag, to_tag, tmp, c1_oldip, payload_types;
 	str oldrtcp, newrtcp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
-	int oidx, pf, pf1, force, c1_pf, rep_oidx;
+	int pf, pf1, force, c1_pf;
+	struct options opts, rep_opts, pt_opts;
 	unsigned int node_idx, oldport_i;
-	char opts[32];
-	char rep_opts[16];
 	char *cp, *cp1;
 	char  *cpend, *next;
 	char **ap, *argv[10];
 	struct lump* anchor;
 	struct rtpp_node *node;
-	struct iovec v[16] = {
-		{NULL, 0},	/* command */
-		{NULL, 0},	/* options */
+	struct iovec v[] = {
+		{NULL, 0},	/* reserved (cookie) */
+		{NULL, 0},	/* command & common options */
+		{NULL, 0},	/* per-media/per-node options 1 */
+		{NULL, 0},	/* per-media/per-node options 2 */
 		{" ", 1},	/* separator */
 		{NULL, 0},	/* callid */
 		{" ", 1},	/* separator */
@@ -1972,10 +2019,15 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 		return -1;
 	}
 
-	v[1].iov_base=opts;
+	memset(&opts, '\0', sizeof(opts));
+	memset(&rep_opts, '\0', sizeof(rep_opts));
+	memset(&pt_opts, '\0', sizeof(pt_opts));
+	/* Leave space for U/L prefix TBD later */
+	if (append_opts(&opts, '?') == -1) {
+		LM_ERR("out of pkg memory\n");
+		FORCE_RTP_PROXY_RET (-1);
+	}
 	asymmetric = flookup = force = real = 0;
-	oidx = 1;
-	rep_oidx = 0;
 	node_idx = -1;
 	for (i=0; i<str1.len; i++) {
 		switch (str1.s[i]) {
@@ -1985,25 +2037,35 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 
 		case 'a':
 		case 'A':
-			opts[oidx++] = 'A';
+			if (append_opts(&opts, 'A') == -1) {
+				LM_ERR("out of pkg memory\n");
+				FORCE_RTP_PROXY_RET (-1);
+			}
 			asymmetric = 1;
 			real = 1;
 			break;
 
 		case 'i':
 		case 'I':
-			opts[oidx++] = 'I';
+			if (append_opts(&opts, 'I') == -1) {
+				LM_ERR("out of pkg memory\n");
+				FORCE_RTP_PROXY_RET (-1);
+			}
 			break;
 
 		case 'e':
 		case 'E':
-			opts[oidx++] = 'E';
+			if (append_opts(&opts, 'E') == -1) {
+				LM_ERR("out of pkg memory\n");
+				FORCE_RTP_PROXY_RET (-1);
+			}
 			break;
 
 		case 'l':
 		case 'L':
-			if (offer == 0)
-				return -1;
+			if (offer == 0) {
+				FORCE_RTP_PROXY_RET (-1);
+			}
 			flookup = 1;
 			break;
 
@@ -2027,22 +2089,29 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			if (s.len == 0) {
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: non-negative integer"
 					"should follow N option\n");
-				return -1;
+				FORCE_RTP_PROXY_RET (-1);
 			}
 			str2int(&s, &node_idx);
 			break;
 
 		case 'z':
 		case 'Z':
-			rep_opts[rep_oidx++] = 'Z';
+			if (append_opts(&rep_opts, 'Z') == -1) {
+				LM_ERR("out of pkg memory\n");
+				FORCE_RTP_PROXY_RET (-1);
+			}
 			/* If there are any digits following Z copy them into the command */
-			for (; i < str1.len - 1 && isdigit(str1.s[i + 1]); i++)
-				rep_opts[rep_oidx++] = str1.s[i + 1];
+			for (; i < str1.len - 1 && isdigit(str1.s[i + 1]); i++) {
+				if (append_opts(&rep_opts, str1.s[i + 1]) == -1) {
+					LM_ERR("out of pkg memory\n");
+					FORCE_RTP_PROXY_RET (-1);
+				}
+			}
 			break;
 
 		default:
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", str1.s[i]);
-			return -1;
+			FORCE_RTP_PROXY_RET (-1);
 		}
 	}
 
@@ -2057,23 +2126,24 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract body "
 		    "from the message\n");
-		return -1;
+		FORCE_RTP_PROXY_RET (-1);
 	}
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get Call-Id field\n");
-		return -1;
+		FORCE_RTP_PROXY_RET (-1);
 	}
 	if (get_to_tag(msg, &to_tag) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get To tag\n");
-		return -1;
+		FORCE_RTP_PROXY_RET (-1);
 	}
 	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get From tag\n");
-		return -1;
+		FORCE_RTP_PROXY_RET (-1);
 	}
 	if (flookup != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)) {
-		if (to_tag.len == 0)
-			return -1;
+		if (to_tag.len == 0) {
+			FORCE_RTP_PROXY_RET (-1);
+		}
 		tmp = from_tag;
 		from_tag = to_tag;
 		to_tag = tmp;
@@ -2091,8 +2161,9 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 		}
 		cp = cp1 + ANORTPPROXY_LEN;
 	}
-	if (proxied != 0 && force == 0)
-		return -1;
+	if (proxied != 0 && force == 0) {
+		FORCE_RTP_PROXY_RET (-1);
+	}
 	/*
 	 * Parsing of SDP body.
 	 * It can contain a few session descriptions (each starts with
@@ -2109,12 +2180,20 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 	v1p = find_sdp_line(body.s, bodylimit, 'v');
 	if (v1p == NULL) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: no sessions in SDP\n");
-		return -1;
+		FORCE_RTP_PROXY_RET (-1);
 	}
 	v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
 	media_multi = (v2p != bodylimit);
 	v2p = v1p;
 	medianum = 0;
+
+	opts.s.s[0] = (create == 0) ? 'L' : 'U';
+	v[1].iov_base = opts.s.s;
+	v[1].iov_len = opts.oidx;
+	STR2IOVEC(callid, v[5]);
+	STR2IOVEC(from_tag, v[11]);
+	STR2IOVEC(to_tag, v[15]);
+
 	for(;;) {
 		/* Per-session iteration. */
 		v1p = v2p;
@@ -2126,7 +2205,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 		/* Have this session media description? */
 		if (m1p == NULL) {
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: no m= in session\n");
-			return -1;
+			FORCE_RTP_PROXY_RET (-1);
 		}
 		/*
 		 * Find c1p only between session begin and first media.
@@ -2163,8 +2242,9 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				if (extract_mediaip(&tmpstr1, &oldip, &pf) == -1) {
 					LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
 					    " extract media IP from the message\n");
-					if (c1_oldip.s == NULL)
-						return -1;
+					if (c1_oldip.s == NULL) {
+						FORCE_RTP_PROXY_RET (-1);
+					}
 					/* Try to continue if we have the sess. header ip */
 					oldip = c1_oldip;
 					c2p = NULL;
@@ -2176,7 +2256,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				/* No "c=" */
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
 				    " find media IP in the message\n");
-				return -1;
+				FORCE_RTP_PROXY_RET (-1);
 			}
 			tmpstr1.s = m1p;
 			tmpstr1.len = m2p - m1p;
@@ -2184,7 +2264,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			    &payload_types) == -1) {
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
 				    " extract media port from the message\n");
-				return -1;
+				FORCE_RTP_PROXY_RET (-1);
 			}
 			/* Extract rtcp attribute */
 			tmpstr1.s = m1p;
@@ -2202,8 +2282,10 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			}
 			/* XXX must compare address families in all addresses */
 			if (pf == AF_INET6) {
-				opts[oidx] = '6';
-				oidx++;
+				if (append_opts(&opts, '6') == -1) {
+					LM_ERR("out of pkg memory\n");
+					FORCE_RTP_PROXY_RET (-1);
+				}
 			}
 			str2int(&oldport, &oldport_i);
 			/*
@@ -2216,42 +2298,38 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
 			medianum_str.s = medianum_buf;
 			medianum_str.len = strlen(medianum_buf);
-			opts[0] = (create == 0) ? 'L' : 'U';
-			v[1].iov_len = oidx;
-			STR2IOVEC(callid, v[3]);
-			STR2IOVEC(newip, v[5]);
-			STR2IOVEC(oldport, v[7]);
-			STR2IOVEC(from_tag, v[9]);
+			STR2IOVEC(newip, v[7]);
+			STR2IOVEC(oldport, v[9]);
 			if (1 || media_multi) /* XXX netch: can't choose now*/
 			{
-				STR2IOVEC(medianum_str, v[11]);
+				STR2IOVEC(medianum_str, v[13]);
 			} else {
-				v[10].iov_len = v[11].iov_len = 0;
+				v[12].iov_len = v[13].iov_len = 0;
 			}
-			STR2IOVEC(to_tag, v[13]);
-			STR2IOVEC(medianum_str, v[15]);
+			STR2IOVEC(medianum_str, v[17]);
 			do {
 				node = select_rtpp_node(callid, 1, node_idx);
 				if (!node) {
 					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
-					return -1;
+					FORCE_RTP_PROXY_RET (-1);
 				}
-				len = v[1].iov_len;
-				if (rep_oidx > 0) {
+				if (rep_opts.oidx > 0) {
 					if (node->rn_rep_supported == 0) {
 						LOG(L_WARN, "WARNING: force_rtp_proxy2: "
 						    "re-packetization is requested but is not "
 						    "supported by the selected RTP proxy node\n");
+						v[2].iov_len = 0;
 					} else {
-						memcpy((char *)v[1].iov_base + v[1].iov_len,
-						    rep_opts, rep_oidx);
-						v[1].iov_len += rep_oidx;
+						v[2].iov_base = rep_opts.s.s;
+						v[2].iov_len += rep_opts.oidx;
 					}
 				}
 				if (payload_types.len > 0 && node->rn_ptl_supported != 0) {
-					cp1 = (char *)v[1].iov_base + v[1].iov_len;
-					*cp1 = 'c';
-					cp1++;
+					pt_opts.oidx = 0;
+					if (append_opts(&pt_opts, 'c') == -1) {
+						LM_ERR("out of pkg memory\n");
+						FORCE_RTP_PROXY_RET (-1);
+					}
 					/*
 					 * Convert space-separated payload types list into
 					 * a comma-separated list.
@@ -2259,22 +2337,31 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 					for (cp = payload_types.s;
 					    cp < payload_types.s + payload_types.len; cp++) {
 						if (isdigit(*cp)) {
-							*cp1 = *cp;
-							cp1++;
+							if (append_opts(&pt_opts, *cp) == -1) {
+								LM_ERR("out of pkg memory\n");
+								FORCE_RTP_PROXY_RET (-1);
+							}
 							continue;
 						}
-						*cp1 = ',';
-						cp1++;
 						do {
 							cp++;
 						} while (!isdigit(*cp) &&
 						    cp < payload_types.s + payload_types.len);
+						/* Check EOL */
+						if (cp >= payload_types.s + payload_types.len)
+							break;
+						if (append_opts(&pt_opts, ',') == -1) {
+							LM_ERR("out of pkg memory\n");
+							FORCE_RTP_PROXY_RET (-1);
+						}
 						cp--;
 					}
-					v[1].iov_len = cp1 - (char *)v[1].iov_base;
+					v[3].iov_base = pt_opts.s.s;
+					v[3].iov_len = pt_opts.oidx;
+				} else {
+					v[3].iov_len = 0;
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
-				v[1].iov_len = len;
 			} while (cp == NULL);
 			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
@@ -2293,7 +2380,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			}
 			if (argc < 1) {
 				LOG(L_ERR, "force_rtp_proxy2: no reply from rtp proxy\n");
-				return -1;
+				FORCE_RTP_PROXY_RET (-1);
 			}
 			port = atoi(argv[0]);
 			if (port <= 0 || port > 65535) {
@@ -2305,7 +2392,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				 */
 				if (port != 0 || flookup == 0)
 					LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply from rtp proxy\n");
-				return -1;
+				FORCE_RTP_PROXY_RET (-1);
 			}
 
 			pf1 = (argc >= 3 && argv[2][0] == '6') ? AF_INET6 : AF_INET;
@@ -2340,8 +2427,9 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				/* Alter port. */
 				body1.s = m1p;
 				body1.len = bodylimit - body1.s;
-				if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
-					return -1;
+				if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1) {
+					FORCE_RTP_PROXY_RET (-1);
+				}
 			}
 			/*
 			 * Alter RTCP attribute if present. Inserting RTP port + 1 (as allocated
@@ -2354,8 +2442,9 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				/* Alter port. */
 				body1.s = m1p;
 				body1.len = bodylimit - body1.s;
-				if (alter_rtcp(msg, &body1, &oldrtcp, &newrtcp) == -1)
-					return -1;
+				if (alter_rtcp(msg, &body1, &oldrtcp, &newrtcp) == -1) {
+					FORCE_RTP_PROXY_RET (-1);
+				}
 			}
 			/*
 			 * Alter IP. Don't alter IP common for the session
@@ -2368,18 +2457,21 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				body1.s = c1p;
 				body1.len = bodylimit - body1.s;
 				if (alter_mediaip(msg, &body1, &c1_oldip, c1_pf,
-				    &newip, pf1, 0) == -1)
-					return -1;
+				    &newip, pf1, 0) == -1) {
+					FORCE_RTP_PROXY_RET (-1);
+				}
 				c1p_altered = 1;
 			}
 			if (c2p != NULL && oldip.s != c1_oldip.s) {
 				body1.s = c2p;
 				body1.len = bodylimit - body1.s;
-				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0) == -1)
-					return -1;
+				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0) == -1) {
+					FORCE_RTP_PROXY_RET (-1);
+				}
 			}
 		} /* Iterate medias in session */
 	} /* Iterate sessions */
+	free_opts(&opts, &rep_opts, &pt_opts);
 
 	if (proxied == 0) {
 		cp = pkg_malloc((ANORTPPROXY_LEN + CRLF_LEN) * sizeof(char));
