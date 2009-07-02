@@ -2361,7 +2361,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				} else {
 					v[3].iov_len = 0;
 				}
-				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
+				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 18 : 14);
 			} while (cp == NULL);
 			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
