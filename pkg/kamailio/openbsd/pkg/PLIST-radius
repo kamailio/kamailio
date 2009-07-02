@@ -1,0 +1,8 @@
+@comment $OpenBSD$
+%%SHARED%%
+share/doc/kamailio/README.auth_radius
+share/doc/kamailio/README.avp_radius
+share/doc/kamailio/README.group_radius
+share/doc/kamailio/README.peering
+share/doc/kamailio/README.uri_radius
+share/examples/kamailio/dictionary.radius

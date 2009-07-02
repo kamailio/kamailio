@@ -1,0 +1,12 @@
+$OpenBSD$
+--- scripts/kamctlrc.orig	Thu Oct 23 12:04:49 2008
++++ scripts/kamctlrc	Mon Nov  3 20:15:24 2008
+@@ -135,7 +135,7 @@
+ 
+ ## OPENSER START Options
+ ## PID file path - default is: /var/run/kamailio.pid
+-# PID_FILE=/var/run/kamailio.pid
++PID_FILE=/var/kamailio/kamailio.pid
+ 
+ ## Extra start options - default is: not set
+ # example: start Kamailio with 64MB share memory: STARTOPTIONS="-m 64"

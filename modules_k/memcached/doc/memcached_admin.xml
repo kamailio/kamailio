@@ -77,7 +77,7 @@ xlog("counter is now $mct(cnt)");
 	<section>
 		<title>Data safety</title>
 		<para>
-			Don't store data in memcached that you also have somewhere else. This system was
+			Don't store data in memcached that you don't also have somewhere else. This system was
 			designed as fast cache, and not for persistent storage. The memcached server can crash,
 			machines can reboot or are restarted. If the memcache storage pool gets fulls, it starts
 			to drop the least used items, even if they are not yet expired. So don't store any data in

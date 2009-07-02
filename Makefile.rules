@@ -7,9 +7,9 @@
 
 #
 # Uses: NAME, ALLDEP, CC, CFLAGS, C_DEFS, DEFS, C_INCLUDES, INCLUDES, LIBS, 
-#       MKDEP, auto_gen, 
-# auto_gen_others, depends, objs, extra_objs, static_modules, 
-# static_modules_path, LD_RPATH
+#       MKDEP, auto_gen, auto_gen_others, auto_gen_keep, 
+#       depends, objs, extra_objs, static_modules, static_modules_path,
+#       LD_RPATH
 # (all this must  be defined previously!,  see Makefile.defs & Makefile)
 # Optional: SER_LIBS - list of ser libraries that will be automatically
 #  built if necessary. Format: path/shortname, where shortname is the 
@@ -205,7 +205,7 @@ clean-utils:
 .PHONY: realclean
 .PHONY: maintainer-clean
 proper distclean realclean maintainer-clean: local-clean
-	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) \
+	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) $(auto_gen_keep) \
 			makecfg.lst 2>/dev/null
 
 maintainer-clean: clean-tmp

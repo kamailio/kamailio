@@ -29,7 +29,7 @@
 
 
 
-#ifdef USE_TCP /* for now it make sense only with tcp */
+#ifndef NO_IO_WAIT
 
 #ifdef HAVE_EPOLL
 #include <unistd.h> /* close() */
@@ -631,4 +631,4 @@ void destroy_io_wait(io_wait_h* h)
 
 
 
-#endif
+#endif /*ifndef NO_IO_WAIT */

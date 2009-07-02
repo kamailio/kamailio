@@ -1,0 +1,18 @@
+Kamailio is a very fast and flexible SIP (RFC3261)
+proxy server. Written entirely in C, ser can handle thousands calls
+per second even on low-budget hardware. C Shell like scripting language
+provides full control over the server's behaviour. It's modular
+architecture allows only required functionality to be loaded.
+Currently the following modules are available: Digest Authentication,
+CPL scripts, Instant Messaging, MySQL support, UNIXODBC support,
+OSP support, Radius Authentication, Record Routing, SMS Gateway,
+Jabber Gateway, Transaction Module, Dialog Module, Registrar and
+User Location, SIMPLE Presence, Perl programming interface, SNMP.
+
+
+WWW: http://www.kamailio.org/
+
+- Bogdan-Andrei Iancu
+bogdan@voice-system.ro
+- Daniel-Constantin Mierla
+miconda@gmail.com

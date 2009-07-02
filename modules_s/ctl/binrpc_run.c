@@ -593,11 +593,19 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 	struct binrpc_val v;
 	int err;
 	char* orig_fmt;
+	int nofault;
+	int modifiers;
 	
 	va_start(ap, fmt);
 	orig_fmt=fmt;
+	nofault = 0;
+	modifiers=0;
 	for (;*fmt; fmt++){
 		switch(*fmt){
+			case '*': /* start of optional parameters */
+				nofault = 1;
+				modifiers++;
+				break;
 			case 'b': /* bool */
 			case 't': /* time */
 			case 'd': /* int */
@@ -647,9 +655,10 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 		ctx->in.record_no++;
 	}
 	va_end(ap);
-	return (int)(fmt-orig_fmt);
+	return (int)(fmt-orig_fmt)-modifiers;
 error_read:
-	rpc_fault(ctx, 400, "error at parameter %d: expected %s type but"
+	if(nofault==0 || ((err!=E_BINRPC_MORE_DATA) && (err!=E_BINRPC_EOP)))
+		rpc_fault(ctx, 400, "error at parameter %d: expected %s type but"
 						" %s", ctx->in.record_no, rpc_type_name(v.type),
 						 binrpc_error(err));
 	/*
@@ -669,7 +678,7 @@ error_inv_param:
 						*fmt);
 error_ret:
 	va_end(ap);
-	return -(int)(fmt-orig_fmt);
+	return -((int)(fmt-orig_fmt)-modifiers);
 }
 
 

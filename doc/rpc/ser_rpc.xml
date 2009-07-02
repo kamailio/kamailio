@@ -31,11 +31,11 @@
 	<para>
 		The RPC transports are implemented by writting a RPC
 		transport module. The most used transport modules are
-		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/ctl/README'>
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules_s/ctl/ctl.html'>
 		<emphasis>ctl</emphasis>
 		</ulink>
 		and
-		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/README'>
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules_s/xmlrpc/xmlrpc.html'>
 		<emphasis>xmlrpc</emphasis>
 		</ulink>.
 		The first one implements a ser-proprietary fast and space efficient
@@ -313,6 +313,22 @@ add("sd", string_param, int_param);
 		    formatting string is "{".
 		</para>
 	    </formalpara>
+		<formalpara>
+		<title>Optional parameters</title>
+		<para>
+			Optional parameters can be used, but only in the
+			<function>scan</function> function.  For optional parameters the
+			<function>scan</function> function will not automatically generate
+			a rpc fault if the input ends. Note that in this case the
+			<function>scan</function> will still return a negative value
+			(minus the number of parameters successfully read).
+			Optional parameters can be marked in the format string by
+			preceding the first optional parameter type with a "*".
+			All the parameters following a "*" are considered to be optional.
+			For example for the format string "ds*dds", the last 3 parameters
+			(2 ints and a string) are optional.
+		</para>
+		</formalpara>
 	    <table>
 		<title>Data Type Overview</title>
 		<tgroup cols="3">
@@ -341,6 +357,11 @@ add("sd", string_param, int_param);
 			    <entry>String</entry>
 			    <entry>S</entry>
 			    <entry>str</entry>
+			</row>
+			<row>
+				<entry>Optional modifier</entry>
+				<entry>*</entry>
+				<entry>marks all further parameters as optional</entry>
 			</row>
 		    </tbody>
 		</tgroup>
@@ -373,22 +394,33 @@ add("sd", string_param, int_param);
 		    variable number of parameters. The first parameter is the
 		    formatting string that determines the type of the
 		    parameters to be retrieved. Each parameter is represented by
-		    exactly one character in the string. The variable part of
-		    parameters must contain as many pointers to C variables as
-		    there are formatting characters in the formatting
-		    string.
+		    exactly one parameter type character in the string.
+			The variable part of parameters must contain as many pointers to C
+			variables as there are formatting non-modifiers characters in the
+			formatting string.
+			The formatting string can also contain a "*" modifier that does not
+			have a correspondent in the variable part of the parameters. The
+			meaning of "*" is that any further parameters (defined by other
+			type characters in the formatting string) are optional (they
+			can be missing in the input and no rpc fault will automatically
+			be generated).
 		    <warning>
 			<para>
 			    The function will crash if you fail to provide
 			    enough parameters.
 			</para>
 		    </warning>
-		    The function indicates success by returning 0. When a
-		    failure occurs (incorrect parameter type or no more
-		    parameters in the parameter set) then the function will
-		    return -1 and it will also automatically change the reply
-		    that will be sent to the caller to indicate that a failure
-		    has occurred on the server. Prototype of the function is:
+			The function returns the number of parameters read on success
+			(a number greater or equal 0) and - (minus) the number of
+			parameters read on error (for example for an error after 
+			reading 2 parameters it will return -2).
+			When a failure occurs (incorrect parameter type or no more
+			parameters in the parameter set) the function will
+			return a negative number (- number of parameters read so far)
+			and it will also automatically change the reply that will be
+			sent to the caller to indicate that a failure has occurred on 
+			the server (unless the "*" is used and the error is lack
+			of more parameters). The prototype of the function is:
 		    <programlisting>
 int scan(char* fmt, ...)
 		    </programlisting>
@@ -409,15 +441,20 @@ rpc->scan("f", &amp;double_val);
 	    <section>
 		<title><function>struct_scan</function></title>
 		<para>
-		    Function <function>struct_scan</function> can be used to
-		    retrieve named attributes from a parameter of type
-		    structure. When retrieving a structure parameter from the
-		    parameter set:
+			Function <function>struct_scan</function> can be used to
+			retrieve named attributes from a parameter of type
+			structure.
+			<note>This function is obsolete and not implemented by all the
+			rpc transports (e.g.: ctl / binrpc). Consider using the normal
+			<function>scan</function> instead.
+			</note>
+			When retrieving a structure parameter from the
+			parameter set:
 		    <programlisting>
 rpc->scan("{", &amp;handle);
 		    </programlisting>
 		    The corresponding variable (named 
-		    <varname>handle</varname>in the example above) will contain
+		    <varname>handle</varname> in the example above) will contain
 		    the index of the structure parameter within the parameter
 		    set, but the index cannot be used to retrieve the contents
 		    of the structure. To retrieve the contents of the structure
@@ -430,10 +467,11 @@ rpc->struct_scan(handle, "sd", "str_attr", &amp;str_val, "int_attr", &amp;int_va
 		    pairs of parameters. First parameter in each pair is the
 		    name of the attribute to retrieve (string) and the second
 		    parameter in each pair is the pointer to the variable to
-		    store the value of the parameter. The function returns 0 on
-		    success and -1 on an error (just like
-		    <function>scan</function> function). The function also
-		    indicates an error if a requested attribute is missing in
+		    store the value of the parameter. The function returns the
+			number of parameters (name value pairs) read on
+		    success and - number of parameters read so far on an error
+			(just like the <function>scan</function> function). The function
+			also indicates an error if a requested attribute is missing in
 		    the structure.
 		</para>
 	    </section>
@@ -797,7 +835,7 @@ static void rpc_register(rpc_t* rpc)
 <section id="rpc.xmlrpc_examples">
 	<title>Examples using xmlrpc</title>
 	<para>See the <varname>xmlrpc</varname> module documentation:
-	<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/README'>modules_s/xmlrpc/README</ulink>.
+	<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules_s/xmlrpc/xmlrpc.html'>modules_s/xmlrpc/README</ulink>.
 	</para>
 </section>
 

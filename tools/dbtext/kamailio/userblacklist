@@ -1,0 +1,1 @@
+id(int,auto) username(string) domain(string) prefix(string) whitelist(int) 

@@ -46,7 +46,7 @@
 #include <string.h>
 
 #include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "mi_mem.h"
 #include "mi.h"
 
 static struct mi_cmd*  mi_cmds = 0;
@@ -138,7 +138,7 @@ int register_mi_cmd( mi_cmd_f f, char *name, void *param,
 		return -1;
 	}
 
-	cmds = (struct mi_cmd*)pkg_realloc( mi_cmds,
+	cmds = (struct mi_cmd*)mi_realloc( mi_cmds,
 			(mi_cmds_no+1)*sizeof(struct mi_cmd) );
 	if (cmds==0) {
 		LM_ERR("no more pkg memory\n");

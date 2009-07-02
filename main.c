@@ -176,6 +176,7 @@
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
+#include "autover.h"
 #include "version.h"
 
 /* define SIG_DEBUG by default */
@@ -186,7 +187,7 @@
 #endif
 
 static char id[]="@(#) $Id$";
-static char* version=SER_FULL_VERSION;
+static char* version=SER_FULL_VERSION " " REPO_VER;
 static char* flags=SER_COMPILE_FLAGS;
 char compiled[]= __TIME__ " " __DATE__ ;
 
@@ -1959,6 +1960,12 @@ try_again:
 		goto error;
 	}
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+	if (sctp_register_cfg()){
+		LOG(L_CRIT, "could not register the sctp configuration\n");
+		goto error;
+	}
+#endif /* USE_SCTP */
 	/*init timer, before parsing the cfg!*/
 	if (init_timer()<0){
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");

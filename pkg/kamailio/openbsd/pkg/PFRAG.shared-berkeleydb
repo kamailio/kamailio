@@ -1,0 +1,2 @@
+@comment $OpenBSD$
+lib/kamailio/modules/db_berkeley.so

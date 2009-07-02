@@ -26,7 +26,7 @@
  */
 
 /*
- * WARNING: Don't forget to update sip_router/etc/dictionary.ser if you 
+ * WARNING: Don't forget to update sip_router/etc/dictionary.sip-router if you 
  * update this file !
  */
 

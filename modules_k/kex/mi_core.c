@@ -58,8 +58,8 @@
 #define SVNREVISION "unknown"
 #endif
 
-static time_t kmi_up_since;
-static str    kmi_up_since_ctime;
+static time_t kmi_up_since = 0;
+static str    kmi_up_since_ctime = {0, 0};
 static cfg_ctx_t	*_kex_cfg_ctx = NULL;
 
 static int init_mi_uptime(void)
@@ -320,7 +320,7 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 	int new_debug = 0;
 	str group_name = {"core", 4};
 	str var_name = {"debug", 5};
-	void *vval;
+	void *vval = 0;
 	int set = 0;
 	unsigned int val_type;
 
@@ -333,7 +333,7 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 		if(cfg_get_by_name(_kex_cfg_ctx, &group_name, &var_name, &vval,
 					&val_type)!=0)
 			return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
-		new_debug = *((int*)vval);
+		new_debug = (int)(long)vval;
 	}
 	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
 	if (rpl_tree==0)
@@ -379,6 +379,10 @@ int init_mi_core(void)
 
 	if (register_mi_mod( "core", mi_core_cmds)<0) {
 		LM_ERR("unable to register core MI cmds\n");
+		return -1;
+	}
+
+	if(init_mi_uptime()<0) {
 		return -1;
 	}
 

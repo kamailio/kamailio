@@ -348,13 +348,13 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	   user->len, user->s, domain->len, domain->s);
 
     query_cols[n_query_cols] = &tmp1;
-    query_vals[n_query_cols].type = DB1_STRING;
+    query_vals[n_query_cols].type = DB1_STR;
     query_vals[n_query_cols].nul = 0;
     query_vals[n_query_cols].val.str_val = *user;
     n_query_cols++;
     
     query_cols[n_query_cols] = &tmp2;
-    query_vals[n_query_cols].type = DB1_STRING;
+    query_vals[n_query_cols].type = DB1_STR;
     query_vals[n_query_cols].nul = 0;
     query_vals[n_query_cols].val.str_val = *domain;
     n_query_cols++;
@@ -366,11 +366,6 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
     n_query_cols++;
 
     result_cols[xcap_doc_col= n_result_cols++] = &tmp4;
-	
-    if (pres_dbf.use_table(pres_dbh, &xcap_table) < 0) {
-	LM_ERR("in use_table-[table]= %.*s\n", xcap_table.len, xcap_table.s);
-	return -1;
-    }
 
     if (pres_dbf.query(pres_dbh, query_cols, 0 , query_vals, result_cols, 
 		       n_query_cols, 1, 0, &result) < 0) {

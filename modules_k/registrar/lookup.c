@@ -179,7 +179,7 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	urecord_t* r;
 	ucontact_t* ptr;
 	int res;
-	int_str match_callid;
+	int_str match_callid=(int_str)0;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;

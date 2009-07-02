@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+id(int) username(str) domain(str) doc(str) doc_type(int) etag(str) source(int) doc_uri(str) port(int)
+METADATA_KEY
+1 2 
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL

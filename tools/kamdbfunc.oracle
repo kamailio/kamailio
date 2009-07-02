@@ -1,0 +1,89 @@
+#!/bin/sh
+# $Id$
+#
+# Script for common functions for Oracle engine in Kamailio
+#
+# History:
+
+if [ -z "$EGREP" ]; then
+	EGREP="egrep"
+fi
+
+# read any password
+prompt_oracle_pw()
+{
+	case $1 in
+	    rw)
+		if [ -n "$DBRWPW" ]; then
+			return
+		fi
+		CURDBUSER="$DBRWUSER"
+		;;
+	    ro)
+		if [ -n "$DBROPW" ]; then
+			return
+		fi
+		CURDBUSER="$DBROUSER"
+		;;
+	    root)
+		if [ -n "$DBROOTPW" ]; then
+			return
+		fi
+		CURDBUSER="$DBROOTUSER"
+		;;
+	    sys)
+		if [ -n "$DBSYSPW" ]; then
+			return
+		fi
+		CURDBUSER="$DBSYSUSER"
+		;;
+	    *)
+		merr "prompt_oracle_pw: argument error"
+		exit 1
+		;;
+	esac
+	savetty=`stty -g`
+	echo -n "Oracle password for $CURDBUSER: "
+	stty -echo
+	case $1 in
+	    rw)
+		read DBRWPW
+		export DBRWPW
+		CURPW=$DBRWPW
+		;;
+	    ro)
+		read DBROPW
+		export DBROPW
+		CURPW=$DBROPW
+		;;
+	    root)
+		read DBROOTPW
+		export DBROOTPW
+		CURPW=$DBROOTPW
+		;;
+	    sys)
+		read DBSYSPW
+		export DBSYSPW
+		CURPW=$DBSYSPW
+		;;
+	esac
+	stty $savetty
+	echo
+	if [ -z "$CURPW" ]; then
+		merr "empty password is illegal"
+		exit 1
+	fi
+}
+
+check_oracle_log()
+{
+	if [ -f $ORALOG ]; then
+		$EGREP -qi "error" $ORALOG
+		if [ $? -eq 0 ]; then
+			echo "NOTE: last errors stored in $ORALOG"
+			return 0
+		fi
+		rm $ORALOG
+	fi
+	return 1
+}

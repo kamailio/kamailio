@@ -541,10 +541,12 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	int e_max, tcp_check;
 	struct sip_uri uri;
 #endif
+	int rc;
 
 	/* mem flag */
 	flags = mem_only;
 
+	rc = 0;
 	/* pack the contact_info */
 	if ( (ci=pack_ci( _m, 0, 0, flags))==0 ) {
 		LM_ERR("failed to initial pack contact info\n");
@@ -597,6 +599,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				LM_ERR("failed to insert contact\n");
 				goto error;
 			}
+			rc = 1;
 			if(_mode)
 			{
 				ptr=_r->contacts;
@@ -624,6 +627,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 					LM_ERR("failed to delete contact\n");
 					goto error;
 				}
+				rc = 3;
 			} else {
 				/* do update */
 				/* pack the contact specific info */
@@ -649,6 +653,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 					LM_ERR("failed to update contact\n");
 					goto error;
 				}
+				rc = 2;
 			}
 		}
 #ifdef USE_TCP
@@ -678,7 +683,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	}
 #endif
 
-	return 0;
+	return rc;
 error:
 	return -1;
 }
@@ -692,8 +697,10 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 								udomain_t* _d, str* _a, int _mode)
 {
 	int res;
+	int ret;
 	urecord_t* r;
 
+	ret = 0;
 	ul.lock_udomain(_d, _a);
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
@@ -704,7 +711,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update_contacts(_m, r, _c, _mode) < 0) {
+		if ((ret=update_contacts(_m, r, _c, _mode)) < 0) {
 			build_contact(r->contacts);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, _a);
@@ -717,9 +724,10 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 			ul.unlock_udomain(_d, _a);
 			return -4;
 		}
+		ret = 1;
 	}
 	ul.unlock_udomain(_d, _a);
-	return 0;
+	return ret;
 }
 
 
@@ -732,8 +740,10 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 	contact_t* c;
 	int st, mode;
 	str aor;
+	int ret;
 
 	rerrno = R_FINE;
+	ret = 1;
 
 	if (parse_message(_m) < 0) {
 		goto error;
@@ -756,12 +766,16 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 	if (c == 0) {
 		if (st) {
 			if (star((udomain_t*)_d, &aor) < 0) goto error;
+			else ret=3;
 		} else {
 			if (no_contacts((udomain_t*)_d, &aor) < 0) goto error;
+			else ret=4;
 		}
 	} else {
 		mode = is_cflag_set(REG_SAVE_REPL_FL)?1:0;
-		if (add_contacts(_m, c, (udomain_t*)_d, &aor, mode) < 0) goto error;
+		if ((ret=add_contacts(_m, c, (udomain_t*)_d, &aor, mode)) < 0)
+			goto error;
+		ret = (ret==0)?1:ret;
 	}
 
 	update_stat(accepted_registrations, 1);
@@ -769,7 +783,7 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 	if ((route_type == REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) && (send_reply(_m) < 0))
 		return -1;
 
-	return 1;
+	return ret;
 error:
 	update_stat(rejected_registrations, 1);
 

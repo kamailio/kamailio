@@ -1,0 +1,300 @@
+#!/bin/bash 
+#
+# $Id$
+#
+# control tool for maintaining Kamailio databases
+#
+#===================================================================
+
+PATH=$PATH:/usr/local/sbin/
+
+# for testing only, please don't enable this in production environments
+# as this introduce security risks
+TEST="false"
+
+### include resource files, if any
+if [ -f /etc/kamailio/kamctlrc ]; then
+	. /etc/kamailio/kamctlrc
+fi
+if [ -f /usr/local/etc/kamailio/kamctlrc ]; then
+	. /usr/local/etc/kamailio/kamctlrc
+fi
+if [ -f ~/.kamctlrc ]; then
+	. ~/.kamctlrc
+fi
+
+if [ $TEST = "true" ]; then
+	if [ -f ./kamctlrc ]; then
+		. ./kamctlrc
+	fi
+fi
+
+
+### version for this script
+VERSION='$Revision$'
+
+if [ -z "$MYDIR" ] ; then
+	MYDIR=`dirname $0`
+fi
+
+if [ -z "$MYLIBDIR" ] ; then
+	MYLIBDIR="/usr/local/lib/kamailio/kamctl"
+	if [ ! -d "$MYLIBDIR" ]; then
+		MYLIBDIR=$MYDIR
+	fi
+fi
+
+
+##### ------------------------------------------------ #####
+### load base functions
+#
+if [ -f "$MYLIBDIR/kamdbctl.base" ]; then
+	. "$MYLIBDIR/kamdbctl.base"
+else
+	echo -e "Cannot load core functions '$MYLIBDIR/kamdbctl.base' - exiting ...\n"
+	exit -1
+fi
+
+#
+##### ------------------------------------------------ #####
+### DBENGINE
+#
+unset USED_DBENGINE
+if [ -z "$DBENGINE" ] ; then
+	merr "database engine not specified, please setup one in the config script"
+	exit 1
+fi
+
+case $DBENGINE in
+	MYSQL|mysql|MySQL)
+		if [ -f "$MYLIBDIR/kamdbctl.mysql" ]; then
+			. "$MYLIBDIR/kamdbctl.mysql"
+			USED_DBENGINE="mysql"
+		else
+			merr "could not load the script in $MYLIBDIR/kamdbctl.mysql for database engine $DBENGINE"
+		fi
+		;;
+	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
+		if [ -f "$MYLIBDIR/kamdbctl.pgsql" ]; then
+			. "$MYLIBDIR/kamdbctl.pgsql"
+			USED_DBENGINE="postgres"
+		else
+			merr "could not load the script in $MYLIBDIR/kamdbctl.pgsql for database engine $DBENGINE"
+		fi
+		;;
+	ORACLE|oracle|Oracle)
+		if [ -f "$MYLIBDIR/kamdbctl.oracle" ]; then
+			. "$MYLIBDIR/kamdbctl.oracle"
+			USED_DBENGINE="oracle"
+		else
+			merr "could not load the script in $MYLIBDIR/kamdbctl.oracle for database engine $DBENGINE"
+		fi
+		;;
+	DBTEXT|dbtext|textdb)
+		if [ -f "$MYLIBDIR/kamdbctl.dbtext" ]; then
+			. "$MYLIBDIR/kamdbctl.dbtext"
+			USED_DBENGINE="dbtext"
+			DBNAME=$DB_PATH
+		else
+			merr "could not load the script in $MYLIBDIR/kamdbctl.dbtext for database engine $DBENGINE"
+		fi
+		;;
+	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
+		if [ -f "$MYLIBDIR/kamdbctl.db_berkeley" ]; then
+			. "$MYLIBDIR/kamdbctl.db_berkeley"
+			USED_DBENGINE="berkeley"
+			DBNAME=$DB_PATH
+		else
+			merr "could not load the script in $MYLIBDIR/kamdbctl.db_berkeley for database engine $DBENGINE"
+		fi
+		;;
+esac
+
+if [ -z "$USED_DBENGINE" ] ; then
+	merr "database engine not loaded - tried '$DBENGINE'"
+	exit 1
+else
+	mdbg "database engine '$USED_DBENGINE' loaded"
+fi
+
+
+# dump all rows
+openser_dump()  # pars: <database name>
+{
+	if [ $# -ne 2 ] ; then
+		merr "openser_dump function takes two param"
+		exit 1
+	fi
+	if [ "$USED_DBENGINE" == "oracle" ]; then
+		oracle_dump $1 $2
+	elif [ "$PW" = "" ] ; then
+		$DUMP_CMD $1 > $2
+	else
+		$DUMP_CMD "-p$PW" $1 > $2
+	fi
+	if [ "$?" -ne 0 ]; then
+			merr "db dump failed"
+			exit 1
+	fi
+	minfo "db dump successful"
+}
+
+
+openser_restore() #pars: <database name> <filename>
+{
+	if [ $# -ne 2 ] ; then
+		merr "openser_restore function takes two params"
+		exit 1
+	fi
+	if [ "$USED_DBENGINE" == "oracle" ]; then
+		oracle_restore $1 $2
+	else
+		sql_query $1 < $2
+	fi
+	if [ "$?" -ne 0 ]; then
+			merr "db restore failed"
+			exit 1
+	fi
+	minfo "db restore successful"
+}
+
+
+case $1 in
+	migrate)
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE don't support migrate operation"
+			exit 1
+		fi
+		if [ $# -ne 3 ] ; then
+			merr "migrate requires 2 parameters: old and new database"
+			exit 1
+		fi
+		# create new database
+		minfo "Creating new Database $3...."
+		NO_USER_INIT="yes"
+		openser_create $3
+		if [ "$?" -ne 0 ] ; then
+			echo "migrate: creating new database failed"
+			exit 1
+		fi
+		# migrate data
+		minfo "Migrating data from $2 to $3...."
+		migrate_db $2 $3
+		minfo "Migration successfully completed."
+		exit 0;
+		;;
+	copy)
+		# copy database to some other name
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		tmp_file=`mktemp /tmp/kamdbctl.XXXXXXXXXX` || exit 1
+		openser_dump $DBNAME $tmp_file
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		NO_USER_INIT="yes"
+		openser_create $1
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		openser_restore $1 $tmp_file
+		ret=$?
+		rm -f $tmp_file
+		exit $ret
+		;;
+	backup)
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
+			exit 1
+		fi
+		# backup current database
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		openser_dump $DBNAME $1
+		exit $?
+		;;
+	restore)
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
+			exit 1
+		fi
+		# restore database from a backup
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		openser_restore $DBNAME $1
+		exit $?
+		;;
+	create)
+		# create new database structures
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		openser_create $DBNAME
+		exit $?
+		;;
+	presence)
+		presence_create $DBNAME
+		exit $?
+		;;
+	extra)
+		extra_create $DBNAME
+		exit $?
+		;;
+	drop)
+		# delete openser database
+		# create new database structures
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		openser_drop $DBNAME
+		exit $?
+		;;
+	reinit)
+		# delete database and create a new one
+		# create new database structures
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+		openser_drop $DBNAME
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			exit $ret
+		fi
+		openser_create $DBNAME
+		exit $?
+		;;
+	bdb|db_berkeley)
+		shift
+		openser_berkeley "$@"
+		exit $?
+		;;
+	version)
+		echo  "$0 $VERSION"
+		;;
+	*)
+		usage
+		exit 1;
+		;;
+esac

@@ -87,7 +87,7 @@
 			<title>Set <varname>ring_timeout</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("utils", "ring_timeout", "30")
+modparam("siputils", "ring_timeout", 30)
 ...
 				</programlisting>
 			</example>
@@ -110,7 +110,7 @@ modparam("utils", "ring_timeout", "30")
 		<title>Set <varname>options_accept</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "options_accept", "application/*")
+modparam("siputils", "options_accept", "application/*")
 ...
 </programlisting>
 		</example>
@@ -131,7 +131,7 @@ modparam("options", "options_accept", "application/*")
 		<title>Set <varname>options_accept_encoding</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "options_accept_encoding", "gzip")
+modparam("siputils", "options_accept_encoding", "gzip")
 ...
 </programlisting>
 		</example>
@@ -159,7 +159,7 @@ modparam("options", "options_accept_encoding", "gzip")
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mangler", "contact_flds_separator", "-")
+modparam("siputils", "contact_flds_separator", "-")
 ...
 </programlisting>
 		</example>
@@ -188,7 +188,7 @@ modparam("mangler", "contact_flds_separator", "-")
 		<title>Set <varname>options_accept_language</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "options_accept_language", "de")
+modparam("siputils", "options_accept_language", "de")
 ...
 </programlisting>
 		</example>
@@ -209,7 +209,7 @@ modparam("options", "options_accept_language", "de")
 		<title>Set <varname>options_support</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("options", "options_support", "100rel")
+modparam("siputils", "options_support", "100rel")
 ...
 </programlisting>
 		</example>

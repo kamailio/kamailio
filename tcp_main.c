@@ -3493,12 +3493,8 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			}
 			tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W|
 								F_CONN_WANTS_RD|F_CONN_WANTS_WR);
-			if (unlikely(!tcpconn_try_unhash(tcpconn))){
-				LOG(L_CRIT, "BUG: tcpconn_ev: unhashed connection %p\n",
-							tcpconn);
-			}
 			if (unlikely(ev & POLLERR)){
-				if (unlikely(tcpconn->state=S_CONN_CONNECT)){
+				if (unlikely(tcpconn->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
 					if (cfg_get(core, core_cfg, use_dst_blacklist))
 						dst_blacklist_su(BLST_ERR_CONNECT, tcpconn->rcv.proto,
@@ -3516,6 +3512,10 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 #endif /* USE_DST_BLACKLIST */
 					TCP_STATS_CON_RESET(); /* FIXME: it could != RST */
 				}
+			}
+			if (unlikely(!tcpconn_try_unhash(tcpconn))){
+				LOG(L_CRIT, "BUG: tcpconn_ev: unhashed connection %p\n",
+							tcpconn);
 			}
 			tcpconn_put_destroy(tcpconn);
 			goto error;
@@ -3699,12 +3699,19 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			TCP_EV_SEND_TIMEOUT(0, &c->rcv);
 			TCP_STATS_SEND_TIMEOUT();
 		}
+	}else{
+		/* idle timeout */
+		TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
+		TCP_STATS_CON_TIMEOUT();
 	}
 #else /* ! TCP_ASYNC */
 	if (TICKS_LT(t, c->timeout)){
 		/* timeout extended, exit */
 		return (ticks_t)(c->timeout - t);
 	}
+	/* idle timeout */
+	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
+	TCP_STATS_CON_TIMEOUT();
 #endif /* TCP_ASYNC */
 	DBG("tcp_main: timeout for %p\n", c);
 	if (likely(c->flags & F_CONN_HASHED)){
@@ -3726,8 +3733,6 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			c->flags&=~(F_CONN_READ_W|F_CONN_WRITE_W);
 		}
 	}
-	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
-	TCP_STATS_CON_TIMEOUT();
 	tcpconn_put_destroy(c);
 	return 0;
 }

@@ -1,0 +1,11 @@
+--- modules/mysql/Makefile.orig	Thu Dec 13 20:15:16 2007
++++ modules/mysql/Makefile	Thu Dec 13 20:15:20 2007
+@@ -8,7 +8,7 @@
+ 
+ # set CROSS_COMPILE to true if you want to skip
+ # the autodetection
+-# CROSS_COMPILE=true
++CROSS_COMPILE=true
+ 
+ ifeq ($(CROSS_COMPILE),)
+ MYSQLCFG=$(shell which mysql_config)

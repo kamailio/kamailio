@@ -1,0 +1,57 @@
+.\" $Id$
+.TH kamunix 8 21.06.2006 kamailio "Kamailio" 
+.\" Process with
+.\" groff -man -Tascii kamunix.8 
+.\"
+.SH NAME
+kamunix \- Kamailio UNIX socket wrapper
+.SH SYNOPSIS
+.B kamunix
+.BI path_to_socket
+
+.SH DESCRIPTION
+.B kamunix
+is a wrapper for sending external commands
+.B to Kamailio SIP server
+via UNIX sockets interface.
+.br
+This is a binary alternative to the textual FIFO interface.
+.PP
+.B kamunix
+reads from standard input one
+.B Kamailio
+command along with its paramters (if any) and prints the response 
+to standard output.
+
+.SH PARAMETERS
+.TP 3
+.B path_to_socket
+full path of the UNIX socket file used by Kamailio to receive the
+external commands
+
+.SH EXAMPLES
+.PP
+An Kamailio commands consists in one ore more lines: first contains the
+command name enclosed between ":", the following lines containing the 
+command parameters, one per line.
+.PP
+echo ":uptime:" | kamunix /tmp/kamailio.sock
+
+
+.SH AUTHORS
+
+see 
+.B /usr/share/doc/kamailio/AUTHORS
+
+.SH SEE ALSO
+.BR kamailio(8), kamailio.cfg(5), kamctl(8)
+.PP
+Full documentation on Kamailio is available at
+.I http://www.kamailio.org/.
+.PP
+Mailing lists:
+.nf 
+users@lists.kamailio.org - Kamailio user community
+.nf 
+devel@lists.kamailio.org - Kamailio development, new features and unstable version
+

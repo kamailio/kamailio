@@ -54,10 +54,6 @@ struct tcp_child{
 #define TCP_ALIAS_FORCE_ADD 1
 #define TCP_ALIAS_REPLACE   2
 
-/* flags used for adding new aliases */
-extern int tcp_alias_flags;
-/* flags used for adding the default aliases of a new tcp connection */
-extern int tcp_new_conn_alias_flags;
 
 int init_tcp();
 void destroy_tcp();

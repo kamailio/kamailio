@@ -48,4 +48,8 @@ void sctp_get_info(struct sctp_gen_info* sinf);
 
 void destroy_sctp();
 
+int sctp_setsockopt(int s, int level, int optname,
+					void* optval, socklen_t optlen, char* err_prefix);
+
+void sctp_con_tracking_flush();
 #endif /* _sctp_server_h */

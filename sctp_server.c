@@ -65,6 +65,10 @@
 
 static atomic_t* sctp_conn_no;
 
+
+#define ABORT_REASON_MAX_ASSOCS \
+	"Maximum configured number of open associations exceeded"
+
 /* check if the underlying OS supports sctp
    returns 0 if yes, -1 on error */
 int sctp_check_support()
@@ -185,20 +189,222 @@ error:
 
 
 
+/** set a socket option (wrapper over setsockopt).
+  * @param err_prefix - if 0 no error message is printed on failure, if !=0
+  *                     it will be prepended to the error message.
+  * @return 0 on success, -1 on error */
+int sctp_setsockopt(int s, int level, int optname, 
+					void* optval, socklen_t optlen, char* err_prefix)
+{
+	if (setsockopt(s, level, optname, optval, optlen) ==-1){
+		if (err_prefix)
+			ERR("%s: %s [%d]\n", err_prefix, strerror(errno), errno);
+		return -1;
+	}
+	return 0;
+}
+
+
+
+/** get a socket option (wrapper over getsockopt).
+  * @param err_prefix - if 0 no error message is printed on failure, if !=0
+  *                     it will be prepended to the error message.
+  * @return 0 on success, -1 on error */
+int sctp_getsockopt(int s, int level, int optname, 
+					void* optval, socklen_t* optlen, char* err_prefix)
+{
+	if (getsockopt(s, level, optname, optval, optlen) ==-1){
+		if (err_prefix)
+			ERR("%s: %s [%d]\n", err_prefix, strerror(errno), errno);
+		return -1;
+	}
+	return 0;
+}
+
+
+
+/** get the os defaults for cfg options with os correspondents.
+ *  @param s - intialized sctp socket
+ *  @param cfg - filled with the os defaults
+ *  @return -1 on error, 0 on success
+ */
+int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
+{
+	int optval;
+	socklen_t optlen;
+	int s;
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+#endif /* SCTP_RTOINFO */
+#ifdef SCTP_ASSOCINFO
+	struct sctp_assocparams ap;
+#endif /* SCTP_ASSOCINFO */
+#ifdef SCTP_INITMSG
+	struct sctp_initmsg im;
+#endif /* SCTP_INITMSG */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	struct sctp_paddrparams pp;
+#endif /* SCTP_PEER_ADDR_PARAMS */
+#ifdef SCTP_DELAYED_SACK
+	struct sctp_sack_info sa;
+#elif defined SCTP_DELAYED_ACK_TIME /* old version */
+	struct sctp_assoc_value sa;
+#endif /* SCTP_DELAYED_SACK */
+#ifdef SCTP_MAX_BURST
+	struct sctp_assoc_value av;
+#endif /* SCTP_MAX_BURST */
+	
+	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
+	if (s==-1)
+		return -1;
+	
+	/* SO_RCVBUF */
+	optlen=sizeof(int);
+	if (sctp_getsockopt(s, SOL_SOCKET, SO_RCVBUF, (void*)&optval,
+							&optlen, "SO_RCVBUF")==0){
+		/* success => hack to set the "default" values*/
+		#ifdef __OS_linux
+			optval/=2; /* in linux getsockopt() returns 2*set_value */
+		#endif
+		cfg->so_rcvbuf=optval;
+	}
+	/* SO_SNDBUF */
+	optlen=sizeof(int);
+	if (sctp_getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void*)&optval,
+							&optlen, "SO_SNDBUF")==0){
+		/* success => hack to set the "default" values*/
+		#ifdef __OS_linux
+			optval/=2; /* in linux getsockopt() returns 2*set_value */
+		#endif
+		cfg->so_sndbuf=optval;
+	}
+	/* SCTP_RTOINFO -> srto_initial, srto_min, srto_max */
+#ifdef SCTP_RTOINFO
+	optlen=sizeof(rto);
+	rto.srto_assoc_id=0;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_RTOINFO, (void*)&rto,
+							&optlen, "SCTP_RTOINFO")==0){
+		/* success => hack to set the "default" values*/
+		cfg->srto_initial=rto.srto_initial;
+		cfg->srto_min=rto.srto_min;
+		cfg->srto_max=rto.srto_max;
+	}
+#endif /* SCTP_RTOINFO */
+#ifdef SCTP_ASSOCINFO
+	optlen=sizeof(ap);
+	ap.sasoc_assoc_id=0;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_ASSOCINFO, (void*)&ap,
+							&optlen, "SCTP_ASSOCINFO")==0){
+		/* success => hack to set the "default" values*/
+		cfg->asocmaxrxt=ap.sasoc_asocmaxrxt;
+	}
+#endif /* SCTP_ASSOCINFO */
+#ifdef SCTP_INITMSG
+	optlen=sizeof(im);
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_INITMSG, (void*)&im,
+							&optlen, "SCTP_INITMSG")==0){
+		/* success => hack to set the "default" values*/
+		cfg->init_max_attempts=im.sinit_max_attempts;
+		cfg->init_max_timeo=im.sinit_max_init_timeo;
+	}
+#endif /* SCTP_INITMSG */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	optlen=sizeof(pp);
+	memset(&pp, 0, sizeof(pp)); /* get defaults */
+	/* set the AF, needed on older linux kernels even for INADDR_ANY */
+	pp.spp_address.ss_family=AF_INET;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, (void*)&pp,
+							&optlen, "SCTP_PEER_ADDR_PARAMS")==0){
+		/* success => hack to set the "default" values*/
+		cfg->hbinterval=pp.spp_hbinterval;
+		cfg->pathmaxrxt=pp.spp_pathmaxrxt;
+	}
+#endif /* SCTP_PEER_ADDR_PARAMS */
+#if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
+	optlen=sizeof(sa);
+	memset(&sa, 0, sizeof(sa));
+#ifdef SCTP_DELAYED_SACK
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sa,
+							&optlen, "SCTP_DELAYED_SACK")==0){
+		/* success => hack to set the "default" values*/
+		cfg->sack_delay=sa.sack_delay;
+		cfg->sack_freq=sa.sack_freq;
+	}
+#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, (void*)&sa,
+							&optlen, "SCTP_DELAYED_ACK_TIME")==0){
+		/* success => hack to set the "default" values*/
+		cfg->sack_delay=sa.assoc_value;
+		cfg->sack_freq=0; /* unknown */
+	}
+#endif /* SCTP_DELAYED_SACK */
+#endif /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
+#ifdef SCTP_MAX_BURST
+	optlen=sizeof(av);
+	av.assoc_id=0;
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_MAX_BURST, (void*)&av,
+							&optlen, "SCTP_MAX_BURST")==0){
+		/* success => hack to set the "default" values*/
+		cfg->max_burst=av.assoc_value;
+	}
+#endif /* SCTP_MAX_BURST */
+	
+	close(s);
+	return 0;
+}
+
+
+
 /* set common (for one to many and one to one) sctp socket options
    tries to ignore non-critical errors (it will only log them), for
    improved portability (for example older linux kernel version support
    only a limited number of sctp socket options)
    returns 0 on success, -1 on error
    WARNING: please keep it sync'ed w/ sctp_check_compiled_sockopts() */
-static int sctp_init_sock_opt_common(int s)
+static int sctp_init_sock_opt_common(int s, int af)
 {
-	struct sctp_event_subscribe es;
 	int optval;
+	int pd_point;
+	int saved_errno;
 	socklen_t optlen;
 	int sctp_err;
+#ifdef SCTP_RTOINFO
+	struct sctp_rtoinfo rto;
+#endif /* SCTP_RTOINFO */
+#ifdef SCTP_ASSOCINFO
+	struct sctp_assocparams ap;
+#endif /* SCTP_ASSOCINFO */
+#ifdef SCTP_INITMSG
+	struct sctp_initmsg im;
+#endif /* SCTP_INITMSG */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	struct sctp_paddrparams pp;
+#endif /* SCTP_PEER_ADDR_PARAMS */
+#ifdef SCTP_DELAYED_SACK
+	struct sctp_sack_info sa;
+#elif defined SCTP_DELAYED_ACK_TIME /* old version */
+	struct sctp_assoc_value sa;
+#endif /* SCTP_DELAYED_SACK */
+#ifdef SCTP_MAX_BURST
+	struct sctp_assoc_value av;
+#endif /* SCTP_MAX_BURST */
+	
+#ifdef __OS_linux
+	union {
+		struct sctp_event_subscribe s;
+		char padding[sizeof(struct sctp_event_subscribe)+sizeof(__u8)];
+	} es;
+#else
+	struct sctp_event_subscribe es;
+#endif
+	struct sctp_event_subscribe* ev_s;
 	
 	sctp_err=0;
+#ifdef __OS_linux
+	ev_s=&es.s;
+#else
+	ev_s=&es;
+#endif
 	/* set tos */
 	optval = tos;
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
@@ -208,8 +414,8 @@ static int sctp_init_sock_opt_common(int s)
 	}
 	
 	/* set receive buffer: SO_RCVBUF*/
-	if (sctp_options.sctp_so_rcvbuf){
-		optval=sctp_options.sctp_so_rcvbuf;
+	if (cfg_get(sctp, sctp_cfg, so_rcvbuf)){
+		optval=cfg_get(sctp, sctp_cfg, so_rcvbuf);
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
@@ -219,8 +425,8 @@ static int sctp_init_sock_opt_common(int s)
 	}
 	
 	/* set send buffer: SO_SNDBUF */
-	if (sctp_options.sctp_so_sndbuf){
-		optval=sctp_options.sctp_so_sndbuf;
+	if (cfg_get(sctp, sctp_cfg, so_sndbuf)){
+		optval=cfg_get(sctp, sctp_cfg, so_sndbuf);
 		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
@@ -267,13 +473,34 @@ static int sctp_init_sock_opt_common(int s)
 		/* try to continue */
 		optval=0;
 	}
-	if (setsockopt(s, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+#ifdef __OS_linux
+	optval/=2; /* in linux getsockopt() returns twice the set value */
+#endif
+	pd_point=optval;
+	saved_errno=0;
+	while(pd_point &&
+			setsockopt(s, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
+					(void*)&pd_point, sizeof(pd_point)) ==-1){
+		if (!saved_errno)
+			saved_errno=errno;
+		pd_point--;
+	}
+	
+	if (pd_point!=optval){
+		if (pd_point==0){
+			/* all attempts failed */
+			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 						"SCTP_PARTIAL_DELIVERY_POINT (%d): %s\n",
 						optval, strerror(errno));
-		sctp_err++;
-		/* try to continue */
+			sctp_err++;
+			/* try to continue */
+		}else{
+			/* success but to a lower value (might not be disabled) */
+			LOG(L_WARN, "setsockopt SCTP_PARTIAL_DELIVERY_POINT set to %d, but"
+				" the socket rcvbuf is %d (higher values fail with"
+				" \"%s\" [%d])\n",
+				pd_point, optval, strerror(saved_errno), saved_errno);
+		}
 	}
 #else
 #warning no sctp lib support for SCTP_PARTIAL_DELIVERY_POINT, consider upgrading
@@ -309,7 +536,7 @@ static int sctp_init_sock_opt_common(int s)
 	
 	/* set autoclose */
 #ifdef SCTP_AUTOCLOSE
-	optval=sctp_options.sctp_autoclose;
+	optval=cfg_get(sctp, sctp_cfg, autoclose);
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_AUTOCLOSE,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
@@ -322,31 +549,171 @@ static int sctp_init_sock_opt_common(int s)
 #else
 #error SCTP_AUTOCLOSE not supported, please upgrade your sctp library
 #endif /* SCTP_AUTOCLOSE */
+	/* set rtoinfo options: srto_initial, srto_min, srto_max */
+#ifdef SCTP_RTOINFO
+	memset(&rto, 0, sizeof(rto));
+	rto.srto_initial=cfg_get(sctp, sctp_cfg, srto_initial);
+	rto.srto_min=cfg_get(sctp, sctp_cfg, srto_min);
+	rto.srto_max=cfg_get(sctp, sctp_cfg, srto_max);
+	if (rto.srto_initial || rto.srto_min || rto.srto_max){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_RTOINFO, (void*)&rto,
+							sizeof(rto), "setsockopt: SCTP_RTOINFO")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_RTOINFO, consider upgrading
+#endif /* SCTP_RTOINFO */
+	/* set associnfo options: assocmaxrxt */
+#ifdef SCTP_ASSOCINFO
+	memset(&ap, 0, sizeof(ap));
+	ap.sasoc_asocmaxrxt=cfg_get(sctp, sctp_cfg, asocmaxrxt);
+	if (ap.sasoc_asocmaxrxt){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_ASSOCINFO, (void*)&ap,
+							sizeof(ap), "setsockopt: SCTP_ASSOCINFO")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_ASSOCINFO, consider upgrading
+#endif /* SCTP_ASOCINFO */
+	/* set initmsg options: init_max_attempts & init_max_init_timeo */
+#ifdef SCTP_INITMSG
+	memset(&im, 0, sizeof(im));
+	im.sinit_max_attempts=cfg_get(sctp, sctp_cfg, init_max_attempts);
+	im.sinit_max_init_timeo=cfg_get(sctp, sctp_cfg, init_max_timeo);
+	if (im.sinit_max_attempts || im.sinit_max_init_timeo){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_INITMSG, (void*)&im,
+							sizeof(im), "setsockopt: SCTP_INITMSG")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_INITMSG, consider upgrading
+#endif /* SCTP_INITMSG */
+	/* set sctp peer addr options: hbinterval & pathmaxrxt */
+#ifdef SCTP_PEER_ADDR_PARAMS
+	memset(&pp, 0, sizeof(pp));
+	pp.spp_address.ss_family=af;
+	pp.spp_hbinterval=cfg_get(sctp, sctp_cfg, hbinterval);
+	pp.spp_pathmaxrxt=cfg_get(sctp, sctp_cfg, pathmaxrxt);
+	if (pp.spp_hbinterval || pp.spp_pathmaxrxt){
+		if (pp.spp_hbinterval > 0)
+			pp.spp_flags=SPP_HB_ENABLE;
+		else if (pp.spp_hbinterval==-1){
+			pp.spp_flags=SPP_HB_DISABLE;
+			pp.spp_hbinterval=0;
+		}
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_PEER_ADDR_PARAMS, (void*)&pp,
+						sizeof(pp), "setsockopt: SCTP_PEER_ADDR_PARAMS")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_PEER_ADDR_PARAMS, consider upgrading
+#endif /* SCTP_PEER_ADDR_PARAMS */
+	/* set delayed ack options: sack_delay & sack_freq */
+#if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
+	memset(&sa, 0, sizeof(sa));
+#ifdef SCTP_DELAYED_SACK
+	sa.sack_delay=cfg_get(sctp, sctp_cfg, sack_delay);
+	sa.sack_freq=cfg_get(sctp, sctp_cfg, sack_freq);
+	if (sa.sack_delay || sa.sack_freq){
+		/* if at least one is non-null => we have to set it */
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sa,
+							sizeof(sa), "setsockopt: SCTP_DELAYED_SACK")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
+	sa.assoc_value=cfg_get(sctp, sctp_cfg, sack_delay);
+	if (sa.assoc_value){
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, (void*)&sa,
+						sizeof(sa), "setsockopt: SCTP_DELAYED_ACK_TIME")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+	if (cfg_get(sctp, sctp_cfg, sack_freq)){
+		WARN("could not set sctp sack_freq, please upgrade your sctp"
+				" library\n");
+		((struct cfg_group_sctp*)sctp_cfg)->sack_freq=0;
+	}
+#endif /* SCTP_DELAYED_SACK */
+#else /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK*/
+#warning no sctp lib support for SCTP_DELAYED_SACK, consider upgrading
+#endif /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
+	/* set max burst option */
+#ifdef SCTP_MAX_BURST
+	memset(&av, 0, sizeof(av));
+	av.assoc_value=cfg_get(sctp, sctp_cfg, max_burst);
+	if (av.assoc_value){
+		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_MAX_BURST, (void*)&av,
+							sizeof(av), "setsockopt: SCTP_MAX_BURST")!=0){
+			sctp_err++;
+			/* non critical, try to continue */
+		}
+	}
+#else
+#warning no sctp lib support for SCTP_MAX_BURST, consider upgrading
+#endif /* SCTP_MAX_BURST */
 	
 	memset(&es, 0, sizeof(es));
 	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message
 	 *  information in sctp_sndrcvinfo */
-	es.sctp_data_io_event=1;
+	ev_s->sctp_data_io_event=1;
 	/* enable association event notifications */
-	es.sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
-	es.sctp_address_event=1;  /* enable address events notifications */
-	es.sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
-	es.sctp_peer_error_event=1;   /* SCTP_REMOTE_ERROR */
-	es.sctp_shutdown_event=1;     /* SCTP_SHUTDOWN_EVENT */
-	es.sctp_partial_delivery_event=1; /* SCTP_PARTIAL_DELIVERY_EVENT */
-	/* es.sctp_adaptation_layer_event=1; - not supported by lksctp<=1.0.6*/
-	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
+	ev_s->sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
+	ev_s->sctp_address_event=1;  /* enable address events notifications */
+	ev_s->sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
+	ev_s->sctp_peer_error_event=1;   /* SCTP_REMOTE_ERROR */
+	ev_s->sctp_shutdown_event=1;     /* SCTP_SHUTDOWN_EVENT */
+	ev_s->sctp_partial_delivery_event=1; /* SCTP_PARTIAL_DELIVERY_EVENT */
+	/* ev_s->sctp_adaptation_layer_event=1; - not supported by lksctp<=1.0.6*/
+	/* ev_s->sctp_authentication_event=1; -- not supported on linux 2.6.25 */
 	
 	/* enable the SCTP_EVENTS */
 #ifdef SCTP_EVENTS
-	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, &es, sizeof(es))==-1){
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(*ev_s))==-1){
+		/* on linux the checks for the struct sctp_event_subscribe size
+		   are too strict, making certain lksctp/kernel combination
+		   unworkable => since we don't use the extra information
+		   (sctp_authentication_event) added in newer version, we can
+		   try with different sizes) */
+#ifdef __OS_linux
+		/* 1. lksctp 1.0.9 with kernel < 2.6.26 -> kernel expects 
+		      the structure without the authentication event member */
+		if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(*ev_s)-1)==0)
+			goto ev_success;
+		/* 2. lksctp < 1.0.9? with kernel >= 2.6.26: the sctp.h structure
+		   does not have the authentication member, but the newer kernels 
+		   check only for optlen > sizeof(...) => we should never reach
+		   this point. */
+		/* 3. just to be foolproof if we reached this point, try
+		    with a bigger size before giving up  (out of desperation) */
+		if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, ev_s, sizeof(es))==0)
+			goto ev_success;
+
+#endif
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 				"SCTP_EVENTS: %s\n", strerror(errno));
 		sctp_err++;
-		/* non critical, try to continue */
+		goto error; /* critical */
 	}
+#ifdef __OS_linux
+ev_success:
+#endif
 #else
-#warning no sctp lib support for SCTP_EVENTS, consider upgrading
+#error no sctp lib support for SCTP_EVENTS, consider upgrading
 #endif /* SCTP_EVENTS */
 	
 	if (sctp_err){
@@ -442,7 +809,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 #endif
 
 	/* set sock opts */
-	if (sctp_init_sock_opt_common(sock_info->socket)!=0)
+	if (sctp_init_sock_opt_common(sock_info->socket, sock_info->address.af)!=0)
 		goto error;
 	/* SCTP_EVENTS for send dried out -> present in the draft not yet
 	 * present in linux (might help to detect when we could send again to
@@ -500,7 +867,7 @@ int sctp_init_sock_oo(struct socket_info* sock_info)
 	}
 	
 	/* set sock opts */
-	if (sctp_init_sock_opt_common(sock_info->socket)!=0)
+	if (sctp_init_sock_opt_common(sock_info->socket, sock_info->address.af)!=0)
 		goto error;
 	
 #ifdef SCTP_REUSE_PORT
@@ -530,7 +897,6 @@ error:
 #endif /* USE_SCTP_OO */
 
 
-#define SCTP_CONN_REUSE /* FIXME */
 #ifdef SCTP_CONN_REUSE
 
 /* we  need SCTP_ADDR_HASH for being able to make inquires related to existing
@@ -1162,6 +1528,29 @@ inline static int _sctp_con_del_addr_locked(unsigned h,
 
 
 
+/** delete all tracked associations entries.
+ */
+void sctp_con_tracking_flush()
+{
+	unsigned h;
+	struct sctp_con_elem* e;
+	struct sctp_con_elem* tmp;
+	
+	for (h=0; h<SCTP_ID_HASH_SIZE; h++){
+again:
+		LOCK_SCTP_ID_H(h);
+			clist_foreach_safe(&sctp_con_id_hash[h], e, tmp, l.next_id) {
+				if (_sctp_con_del_id_locked(h, e)==0){
+					/* unlocked, need to lock again and restart the list */
+					goto again;
+				}
+			}
+		UNLOCK_SCTP_ID_H(h);
+	}
+}
+
+
+
 /** using id, get the corresponding sctp assoc & socket. 
  *  @param id - ser unique assoc id
  *  @param si  - result parameter, filled with the socket info on success
@@ -1196,7 +1585,8 @@ again:
 					if (_sctp_con_del_id_locked(h, e)==0)
 						goto skip_unlock;
 				}else
-					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+					e->con.expire=now +
+								S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 				break;
 			}
 #if 0
@@ -1246,7 +1636,8 @@ again:
 					if (_sctp_con_del_assoc_locked(h, e)==0)
 						goto skip_unlock;
 				}else
-					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+					e->con.expire=now +
+								S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 				break;
 			}
 #if 0
@@ -1298,7 +1689,8 @@ again:
 					if (_sctp_con_del_addr_locked(h, e)==0)
 						goto skip_unlock;
 				}else
-					e->con.expire=now+S_TO_TICKS(sctp_options.sctp_autoclose);
+					e->con.expire=now +
+								S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 				break;
 			}
 #if 0
@@ -1355,7 +1747,8 @@ struct sctp_con_elem* sctp_con_new(unsigned id, unsigned assoc_id,
 	else
 		memset(&e->con.remote, 0, sizeof(e->con.remote));
 	e->con.start=get_ticks_raw();
-	e->con.expire=e->con.start+S_TO_TICKS(sctp_options.sctp_autoclose);
+	e->con.expire=e->con.start +
+				S_TO_TICKS(cfg_get(sctp, sctp_cfg, autoclose));
 	return e;
 error:
 	return 0;
@@ -1491,6 +1884,8 @@ error:
 
 
 
+#else /* SCTP_CONN_REUSE */
+void sctp_con_tracking_flush() {}
 #endif /* SCTP_CONN_REUSE */
 
 
@@ -1534,8 +1929,13 @@ void destroy_sctp()
 
 
 
-static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
+static int sctp_msg_send_ext(struct dest_info* dst, char* buf, unsigned len,
 						struct sctp_sndrcvinfo* sndrcv_info);
+#define SCTP_SEND_FIRST_ASSOCID 1  /* sctp_raw_send flag */
+static int sctp_raw_send(int socket, char* buf, unsigned len,
+						union sockaddr_union* to,
+						struct sctp_sndrcvinfo* sndrcv_info,
+						int flags);
 
 
 
@@ -1619,6 +2019,9 @@ static int sctp_handle_send_failed(struct socket_info* si,
 	unsigned data_len;
 	int retries;
 	int ret;
+#ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
+	int send_ttl;
+#endif
 	
 	ret=-1;
 	SCTP_STATS_SEND_FAILED();
@@ -1641,13 +2044,13 @@ static int sctp_handle_send_failed(struct socket_info* si,
 		memset(&sinfo, 0, sizeof(sinfo));
 		sinfo.sinfo_flags=SCTP_UNORDERED;
 #ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
-		if (sctp_options.sctp_send_ttl){
+		if ((send_ttl=cfg_get(sctp, sctp_cfg, send_ttl))){
 			sinfo.sinfo_pr_policy=SCTP_PR_SCTP_TTL;
-			sinfo.sinfo_pr_value=sctp_options.sctp_send_ttl;
+			sinfo.sinfo_pr_value=send_ttl;
 		}else
 			sinfo.info_pr_policy=SCTP_PR_SCTP_NONE;
 #else
-		sinfo.sinfo_timetolive=sctp_options.sctp_send_ttl;
+		sinfo.sinfo_timetolive=cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
 		sinfo.sinfo_context=retries;
 		
@@ -1659,11 +2062,11 @@ static int sctp_handle_send_failed(struct socket_info* si,
 		dst.comp=COMP_NONE;
 #endif
 		
-		ret=sctp_msg_send_raw(&dst, data, data_len, &sinfo);
+		ret=sctp_msg_send_ext(&dst, data, data_len, &sinfo);
 	}
 #ifdef USE_DST_BLACKLIST
 	 else if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					sctp_options.sctp_send_retries) {
+					cfg_get(sctp, sctp_cfg, send_retries)) {
 		/* blacklist only if send_retries is on, if off we blacklist
 		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
 		   which is better (because we can tell connect errors from send
@@ -1687,10 +2090,17 @@ static int sctp_handle_send_failed(struct socket_info* si,
  */
 static int sctp_handle_assoc_change(struct socket_info* si,
 									union sockaddr_union* su,
-									int state,
-									int assoc_id)
+									union sctp_notification* snp
+									)
 {
 	int ret;
+	int state;
+	int assoc_id;
+	struct sctp_sndrcvinfo sinfo;
+	struct ip_addr ip; /* used only on error, for debugging */
+	
+	state=snp->sn_assoc_change.sac_state;
+	assoc_id=snp->sn_assoc_change.sac_assoc_id;
 	
 	ret=-1;
 	switch(state){
@@ -1699,7 +2109,8 @@ static int sctp_handle_assoc_change(struct socket_info* si,
 			atomic_inc(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* new connection, track it */
-			sctp_con_track(assoc_id, si, su, SCTP_CON_UP_SEEN);
+			if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))
+					sctp_con_track(assoc_id, si, su, SCTP_CON_UP_SEEN);
 #if 0
 again:
 			id=atomic_add(sctp_id, 1);
@@ -1716,6 +2127,23 @@ again:
 			}
 #endif
 #endif /* SCTP_CONN_REUSE */
+			if (unlikely((unsigned)atomic_get(sctp_conn_no) >
+							(unsigned)cfg_get(sctp, sctp_cfg, max_assocs))){
+				/* maximum assoc exceeded => we'll have to immediately 
+				   close it */
+				memset(&sinfo, 0, sizeof(sinfo));
+				sinfo.sinfo_flags=SCTP_UNORDERED | SCTP_ABORT;
+				sinfo.sinfo_assoc_id=assoc_id;
+				ret=sctp_raw_send(si->socket, ABORT_REASON_MAX_ASSOCS,
+											sizeof(ABORT_REASON_MAX_ASSOCS)-1,
+											su, &sinfo, 0);
+				if (ret<0){
+					su2ip_addr(&ip, su);
+					WARN("failed to ABORT new sctp association %d (%s:%d):"
+							" %s (%d)\n", assoc_id, ip_addr2a(&ip),
+							su_getport(su), strerror(errno), errno);
+				}
+			}
 			break;
 		case SCTP_COMM_LOST:
 			SCTP_STATS_COMM_LOST();
@@ -1723,7 +2151,7 @@ again:
 			/* blacklist only if send_retries is turned off (if on we don't
 			   know here if we did retry or we are at the first error) */
 			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(sctp_options.sctp_send_retries==0))
+					(cfg_get(sctp, sctp_cfg, send_retries)==0))
 						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
 #endif /* USE_DST_BLACKLIST */
 			/* no break */
@@ -1731,7 +2159,8 @@ again:
 			atomic_dec(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* connection down*/
-			sctp_con_track(assoc_id, si, su, SCTP_CON_DOWN_SEEN);
+			if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))
+				sctp_con_track(assoc_id, si, su, SCTP_CON_DOWN_SEEN);
 #if 0
 			if (unlikely(sctp_con_del_assoc(assoc_id, si)!=0))
 				WARN("sctp con: tried to remove inexistent connection\n");
@@ -1752,7 +2181,7 @@ again:
 			/* blacklist only if send_retries is turned off (if on we don't 
 			   know here if we did retry or we are at the first error) */
 			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(sctp_options.sctp_send_retries==0))
+					(cfg_get(sctp, sctp_cfg, send_retries)==0))
 						dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0);
 #endif /* USE_DST_BLACKLIST */
 			break;
@@ -1861,8 +2290,7 @@ static int sctp_handle_notification(struct socket_info* si,
 					snp->sn_assoc_change.sac_outbound_streams,
 					snp->sn_assoc_change.sac_inbound_streams
 					);
-			sctp_handle_assoc_change(si, su, snp->sn_assoc_change.sac_state,
-										snp->sn_assoc_change.sac_assoc_id);
+			sctp_handle_assoc_change(si, su, snp);
 			break;
 #ifdef SCTP_ADAPTION_INDICATION
 		case SCTP_ADAPTION_INDICATION:
@@ -2017,7 +2445,7 @@ int sctp_rcv_loop()
 		/* update the local config */
 		cfg_update();
 #ifdef SCTP_CONN_REUSE
-		if (likely(sinfo)){
+		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking) && sinfo)){
 			ri.proto_reserved1 = sctp_con_track(sinfo->sinfo_assoc_id,
 												ri.bind_address, 
 												&ri.src_su,
@@ -2044,11 +2472,155 @@ error:
 
 
 
+/** low level sctp non-blocking send.
+ * @param socket - sctp socket to send on.
+ * @param buf   - data.
+ * @param len   - lenght of the data.
+ * @param to    - destination in ser sockaddr_union format.
+ * @param sndrcv_info - sctp_sndrcvinfo structure pointer, pre-filled.
+ * @param flags - can have one of the following values (or'ed):
+ *                SCTP_SEND_FIRST_ASSOCID - try to send first to assoc_id
+ *                and only if that fails use "to".
+ * @return the numbers of bytes sent on success (>=0) and -1 on error.
+ * On error errno is set too.
+ */
+static int sctp_raw_send(int socket, char* buf, unsigned len,
+						union sockaddr_union* to,
+						struct sctp_sndrcvinfo* sndrcv_info,
+						int flags)
+{
+	int n;
+	int tolen;
+	int try_assoc_id;
+#if 0
+	struct ip_addr ip; /* used only on error, for debugging */
+#endif
+	struct msghdr msg;
+	struct iovec iov[1];
+	struct sctp_sndrcvinfo* sinfo;
+	struct cmsghdr* cmsg;
+	/* make sure msg_control will point to properly aligned data */
+	union {
+		struct cmsghdr cm;
+		char cbuf[CMSG_SPACE(sizeof(*sinfo))];
+	}ctrl_un;
+	
+	iov[0].iov_base=buf;
+	iov[0].iov_len=len;
+	msg.msg_iov=iov;
+	msg.msg_iovlen=1;
+	msg.msg_flags=0; /* not used on send (use instead sinfo_flags) */
+	msg.msg_control=ctrl_un.cbuf;
+	msg.msg_controllen=sizeof(ctrl_un.cbuf);
+	cmsg=CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level=IPPROTO_SCTP;
+	cmsg->cmsg_type=SCTP_SNDRCV;
+	cmsg->cmsg_len=CMSG_LEN(sizeof(*sinfo));
+	sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
+	*sinfo=*sndrcv_info;
+	/* some systems need msg_controllen set to the actual size and not
+	 * something bigger (e.g. openbsd) */
+	msg.msg_controllen=cmsg->cmsg_len;
+	try_assoc_id= ((flags & SCTP_SEND_FIRST_ASSOCID) && sinfo->sinfo_assoc_id);
+	/* if assoc_id is set it means we want to send on association assoc_id
+	   and only if it's not opened any longer use the addresses */
+	if (try_assoc_id){
+		/* on linux msg->name has priority over assoc_id. To try first assoc_id
+		 * and then "to", one has to call first sendmsg() with msg->name==0 and
+		 * sinfo->assoc_id set. If it returns EPIPE => association is no longer
+		 * open => call again sendmsg() this time with msg->name!=0.
+		 * on freebsd assoc_id has priority over msg->name and moreover the
+		 * send falls back automatically to the address if the assoc_id is
+		 * closed, so a single call to sendmsg(msg->name, sinfo->assoc_id ) is
+		 * enough.  If one tries calling with msg->name==0 and the association
+		 * is no longer open send will return ENOENT.
+		 * on solaris it seems one must always use a dst address (assoc_id
+		 * will be ignored).
+		 */
+#ifdef __OS_linux
+		msg.msg_name=0;
+		msg.msg_namelen=0;
+#elif defined __OS_freebsd
+		tolen=sockaddru_len(*to);
+		msg.msg_name=&to->s;
+		msg.msg_namelen=tolen;
+#else /* __OS_* */
+		/* fallback for solaris and others, sent back to
+		  the address recorded (not exactly what we want, but there's
+		  no way to fallback to "to") */
+		tolen=sockaddru_len(*to);
+		msg.msg_name=&to->s;
+		msg.msg_namelen=tolen;
+#endif /* __OS_* */
+	}else{
+		tolen=sockaddru_len(*to);
+		msg.msg_name=&to->s;
+		msg.msg_namelen=tolen;
+	}
+	
+again:
+	n=sendmsg(socket, &msg, MSG_DONTWAIT);
+	if (n==-1){
+#ifdef __OS_linux
+		if ((errno==EPIPE) && try_assoc_id){
+			/* try again, this time with null assoc_id and non-null msg.name */
+			DBG("sctp raw sendmsg: assoc already closed (EPIPE), retrying with"
+					" assoc_id=0\n");
+			tolen=sockaddru_len(*to);
+			msg.msg_name=&to->s;
+			msg.msg_namelen=tolen;
+			sinfo->sinfo_assoc_id=0;
+			try_assoc_id=0;
+			goto again;
+		}
+#elif defined __OS_freebsd
+		if ((errno==ENOENT)){
+			/* it didn't work, no retrying */
+			WARN("unexpected sendmsg() failure (ENOENT),"
+					" assoc_id %d\n", sinfo->sinfo_assoc_id);
+		}
+#else /* __OS_* */
+		if ((errno==ENOENT || errno==EPIPE) && try_assoc_id){
+			/* in case the sctp stack prioritises assoc_id over msg->name,
+			   try again with 0 assoc_id and msg->name set to "to" */
+			WARN("unexpected ENOENT or EPIPE (assoc_id %d),"
+					"trying automatic recovery... (please report along with"
+					"your OS version)\n", sinfo->sinfo_assoc_id);
+			tolen=sockaddru_len(*to);
+			msg.msg_name=&to->s;
+			msg.msg_namelen=tolen;
+			sinfo->sinfo_assoc_id=0;
+			try_assoc_id=0;
+			goto again;
+		}
+#endif /* __OS_* */
+#if 0
+		if (errno==EINTR) goto again;
+		su2ip_addr(&ip, to);
+		LOG(L_ERR, "ERROR: sctp_raw_send: sendmsg(sock,%p,%d,0,%s:%d,...):"
+				" %s(%d)\n", buf, len, ip_addr2a(&ip), su_getport(to),
+				strerror(errno), errno);
+		if (errno==EINVAL) {
+			LOG(L_CRIT,"CRITICAL: invalid sendmsg parameters\n"
+			"one possible reason is the server is bound to localhost and\n"
+			"attempts to send to the net\n");
+		}else if (errno==EAGAIN || errno==EWOULDBLOCK){
+			SCTP_STATS_SENDQ_FULL();
+			LOG(L_ERR, "ERROR: sctp_msg_send: failed to send, send buffers"
+						" full\n");
+		}
+#endif
+	}
+	return n;
+}
+
+
+
 /* send buf:len over sctp to dst using sndrcv_info (uses send_sock,
  * to and id from dest_info)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
  */
-static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
+static int sctp_msg_send_ext(struct dest_info* dst, char* buf, unsigned len,
 						struct sctp_sndrcvinfo* sndrcv_info)
 {
 	int n;
@@ -2093,7 +2665,9 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 	/* if dst->id is set it means we want to send on association with
 	   ser id dst->id if still opened and only if closed use dst->to */
 	assoc_id=0;
-	if ((dst->id) && (assoc_id=sctp_con_get_assoc(dst->id, &si, &to, 0))){
+	if ((dst->id) && cfg_get(sctp, sctp_cfg, assoc_reuse) &&
+			cfg_get(sctp, sctp_cfg, assoc_tracking) &&
+			(assoc_id=sctp_con_get_assoc(dst->id, &si, &to, 0))){
 		DBG("sctp: sending on sctp assoc_id %d (ser id %d)\n",
 				assoc_id, dst->id);
 		sinfo->sinfo_assoc_id=assoc_id;
@@ -2121,17 +2695,25 @@ static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
 		/* fallback for solaris and others, sent back to
 		  the address recorded (not exactly what we want, but there's 
 		  no way to fallback to dst->to) */
-		tolen=sockaddru_len(&to);
-		msg.msg_name=&to.s;
+		tolen=sockaddru_len(dst->to);
+		msg.msg_name=&dst->to.s;
 		msg.msg_namelen=tolen;
 #endif /* __OS_* */
 	}else{
 #ifdef SCTP_ADDR_HASH
 		/* update timeout for the assoc identified  by (dst->to, dst->si) */
-		tmp_id=sctp_con_addr_get_id_assoc(&dst->to, dst->send_sock,
-											&tmp_assoc_id, 0);
-		DBG("sctp send: timeout updated ser id %d, sctp assoc_id %d\n",
-				tmp_id, tmp_assoc_id);
+		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking))){
+			tmp_id=sctp_con_addr_get_id_assoc(&dst->to, dst->send_sock,
+												&tmp_assoc_id, 0);
+			DBG("sctp send: timeout updated ser id %d, sctp assoc_id %d\n",
+					tmp_id, tmp_assoc_id);
+			if (tmp_id==0 /* not tracked/found */ &&
+					(unsigned)atomic_get(sctp_conn_tracked) >=
+						(unsigned)cfg_get(sctp, sctp_cfg, max_assocs)){
+				ERR("maximum number of sctp associations exceeded\n");
+				goto error;
+			}
+		}
 #endif /* SCTP_ADDR_HASH */
 		tolen=sockaddru_len(dst->to);
 		msg.msg_name=&dst->to.s;
@@ -2195,11 +2777,17 @@ again:
 		}
 	}
 	return n;
+#ifdef SCTP_CONN_REUSE
+#ifdef SCTP_ADDR_HASH
+error:
+	return -1;
+#endif /* SCTP_ADDR_HASH */
+#endif /* SCTP_CONN_REUSE */
 }
 
 
 
-/* wrapper around sctp_msg_send_raw():
+/* wrapper around sctp_msg_send_ext():
  * send buf:len over udp to dst (uses only the to, send_sock and id members
  * from dst)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
@@ -2207,20 +2795,23 @@ again:
 int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
 {
 	struct sctp_sndrcvinfo sinfo;
+#ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
+	int send_ttl;
+#endif
 	
 	memset(&sinfo, 0, sizeof(sinfo));
 	sinfo.sinfo_flags=SCTP_UNORDERED;
 #ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
-	if (sctp_options.sctp_send_ttl){
+	if ((send_ttl=cfg_get(sctp, sctp_cfg, send_ttl))){
 		sinfo.sinfo_pr_policy=SCTP_PR_SCTP_TTL;
-		sinfo.sinfo_pr_value=sctp_options.sctp_send_ttl;
+		sinfo.sinfo_pr_value=send_ttl;
 	}else
 		sinfo->sinfo_pr_policy=SCTP_PR_SCTP_NONE;
 #else
-		sinfo.sinfo_timetolive=sctp_options.sctp_send_ttl;
+		sinfo.sinfo_timetolive=cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
-	sinfo.sinfo_context=sctp_options.sctp_send_retries;
-	return sctp_msg_send_raw(dst, buf, len, &sinfo);
+	sinfo.sinfo_context=cfg_get(sctp, sctp_cfg, send_retries);
+	return sctp_msg_send_ext(dst, buf, len, &sinfo);
 }
 
 
@@ -2231,7 +2822,10 @@ void sctp_get_info(struct sctp_gen_info* i)
 	if (i){
 		i->sctp_connections_no=atomic_get(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
-		i->sctp_tracked_no=atomic_get(sctp_conn_tracked);
+		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))
+			i->sctp_tracked_no=atomic_get(sctp_conn_tracked);
+		else
+			i->sctp_tracked_no=-1;
 #else /* SCTP_CONN_REUSE */
 		i->sctp_tracked_no=-1;
 #endif /* SCTP_CONN_REUSE */

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+rc_dir=$PKG_PREFIX/etc/kamailio/
+
+if [ "$2" = DEINSTALL ]; then
+	for f in %%RC_FILES%%; do
+		if /usr/bin/cmp -s $rc_dir/$f.default $rc_dir/$f; then
+			/bin/rm -f $rc_dir/$f
+		fi
+	done
+elif [ "$2" = POST-DEINSTALL ]; then
+	rc_dirs=`for d in %%RC_DIRS%%; do echo $d; done | /usr/bin/sort -r`
+
+	for d in $rc_dirs ""; do
+		/bin/rmdir $rc_dir/$d 2>/dev/null || /usr/bin/true
+	done
+
+	if [ -e $rc_dir ]; then
+		echo "==============================================================================="
+		echo "If you are permanently removing this port, you should manually remove the"
+		echo "$rc_dir directory."
+		echo "==============================================================================="
+	fi
+fi

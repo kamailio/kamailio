@@ -1,0 +1,1 @@
+id(int,auto) sip_user(string) ext_user(string) ext_prot(string) ext_pass(string,null) 

@@ -3,7 +3,7 @@
 #
 # (c) 2003 iptel.org
 #
-# Rules to process ser.cfg templates
+# Rules to process sip-router.cfg templates
 #
 
 #id generator, usage: gen_id(`name'))

@@ -205,6 +205,10 @@ static int pres_db_open(void) {
 	LM_ERR("can't connect to database\n");
 	return -1;
     }
+    if (pres_dbf.use_table(pres_dbh, &xcap_table) < 0) {
+	LM_ERR("in use_table: %.*s\n", xcap_table.len, xcap_table.s);
+	return -1;
+    }
     return 0;
 }
 

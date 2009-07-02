@@ -625,7 +625,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 #ifdef EXTRA_DEBUG
 	/* dump parsed data */
 	if (msg->via1){
-		DBG(" first  via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
+		DBG("first via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
 			msg->via1->name.len,
 			ZSW(msg->via1->name.s),
 			msg->via1->version.len,
@@ -645,7 +645,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 		DBG ("\n");
 	}
 	if (msg->via2){
-		DBG(" first  via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
+		DBG("second via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
 			msg->via2->name.len,
 			ZSW(msg->via2->name.s),
 			msg->via2->version.len,

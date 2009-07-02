@@ -159,7 +159,6 @@ int add_event(pres_ev_t* event)
 		ev->name.s= (char*)shm_malloc(event->name.len* sizeof(char));
 		if(ev->name.s== NULL)
 		{
-			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 			ERR_MEM(SHARE_MEM);
 		}
 		memcpy(ev->name.s, event->name.s, event->name.len);
@@ -169,22 +168,20 @@ int add_event(pres_ev_t* event)
 		if(ev->evp== NULL)
 		{
 			LM_ERR("copying event_t structure\n");
-			free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 			goto error;
 		}
-		free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 	}
 	else
 	{
-		free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 		if(ev->content_type.s)
 		{
 			LM_DBG("Event already registered\n");
-			return 0;
+			goto done;
 		}
 	}
 
-	ev->content_type.s=(char*)shm_malloc(event->content_type.len* sizeof(char)) ;
+	ev->content_type.s=
+			(char*)shm_malloc(event->content_type.len* sizeof(char)) ;
 	if(ev->content_type.s== NULL)
 	{
 		ERR_MEM(SHARE_MEM);
@@ -192,32 +189,39 @@ int add_event(pres_ev_t* event)
 	ev->content_type.len= event->content_type.len;
 	memcpy(ev->content_type.s, event->content_type.s, event->content_type.len);
 
-	sep= strchr(event->name.s, '.');
+	for(sep=parsed_event.name.s; sep<parsed_event.name.s+parsed_event.name.len;
+			sep++)
+		if(*sep=='.') break;
+	if(sep>=parsed_event.name.s+parsed_event.name.len) sep=0;
 	if(sep && strncmp(sep+1, "winfo", 5)== 0)
 	{	
 		ev->type= WINFO_TYPE;
-		wipeer_name.s= event->name.s;
-		wipeer_name.len= sep - event->name.s;
+		wipeer_name.s= parsed_event.name.s;
+		wipeer_name.len= sep - parsed_event.name.s;
 		ev->wipeer= contains_event(&wipeer_name, NULL);
 		if (ev->wipeer) {
-			LM_DBG("Found wipeer event [%.*s] for event [%.*s]\n",wipeer_name.len,wipeer_name.s,event->name.len,event->name.s);
+			LM_DBG("Found wipeer event [%.*s] for event [%.*s]\n",
+					wipeer_name.len,wipeer_name.s,
+					parsed_event.name.len,parsed_event.name.s);
 		}
 	}
 	else
 	{	
 		ev->type= PUBL_TYPE;
-		if (event->name.len + 6 > 50) {
+		if (parsed_event.name.len + 6 > 50) {
 			LM_ERR("buffer too small\n");
 			goto error;
 		}
 		wipeer_name.s= buf;
-		memcpy(wipeer_name.s, event->name.s, event->name.len);
-		wipeer_name.len= event->name.len;
+		memcpy(wipeer_name.s, parsed_event.name.s, parsed_event.name.len);
+		wipeer_name.len= parsed_event.name.len;
 		memcpy(wipeer_name.s+ wipeer_name.len, ".winfo", 6);
 		wipeer_name.len+= 6;
 		ev->wipeer= contains_event(&wipeer_name, NULL);
 		if (ev->wipeer) {
-			LM_DBG("Found wipeer event [%.*s] for event [%.*s]\n",wipeer_name.len,wipeer_name.s,event->name.len,event->name.s);
+			LM_DBG("Found wipeer event [%.*s] for event [%.*s]\n",
+					wipeer_name.len,wipeer_name.s,
+					parsed_event.name.len,parsed_event.name.s);
 		}
 	}
 	
@@ -251,8 +255,11 @@ int add_event(pres_ev_t* event)
 	
 	LM_DBG("succesfully added event: %.*s - len= %d\n",ev->name.len,
 			ev->name.s, ev->name.len);
+done:
+	free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 	return 0;
 error:
+	free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 	if(ev && not_in_list)
 	{
 		free_pres_event(ev);	
@@ -295,21 +302,23 @@ evlist_t* init_evlist(void)
 pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 {
 	event_t event;
+	event_t *pe;
 	pres_ev_t* e;
 	
-	memset(&event, 0, sizeof(event_t));
-	if(event_parser(sname->s, sname->len, &event)< 0)
+	pe = (parsed_event)?parsed_event:&event;
+
+	memset(pe, 0, sizeof(event_t));
+	if(event_parser(sname->s, sname->len, pe)< 0)
 	{
 		LM_ERR("parsing event\n");
 		return NULL;
 	}
-	if(parsed_event)
-		*parsed_event= event;
-	else
+	e= search_event(pe);
+	if(parsed_event==0)
 	{
-		free_event_params(event.params.list, PKG_MEM_TYPE);
+		free_event_params(pe->params.list, PKG_MEM_TYPE);
+		pe->params.list = NULL;
 	}
-	e= search_event(&event);
 
 	return e;
 }
@@ -336,7 +345,8 @@ pres_ev_t* search_event(event_t* event)
 	pres_ev_t* pres_ev;
 	pres_ev= EvList->events;
 
-	LM_DBG("start event= [%.*s]\n", event->name.len, event->name.s);
+	LM_DBG("start event= [%.*s/%d]\n", event->name.len, event->name.s,
+			event->type);
 
 	while(pres_ev)
 	{

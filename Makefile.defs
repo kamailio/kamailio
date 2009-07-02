@@ -101,12 +101,17 @@ export makefile_defs
 $(info normal Makefile.defs exec)
 # main binary name
 MAIN_NAME=ser
+#prefix for various configs and scripts
+#config name/name-prefix for distributed configs
+CFG_NAME=sip-router
+#config name/name-prefix for distributed scripts
+SCR_NAME=sip-router
 
 #version number
 VERSION = 2
-PATCHLEVEL = 1
+PATCHLEVEL = 99
 SUBLEVEL =  0
-EXTRAVERSION = -dev23-make
+EXTRAVERSION = -dev01-serk
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -1698,7 +1703,7 @@ export exported_vars
 # variable changeable only at configure time (once saved in config.mak they
 #  cannot be overwritten from environment or command line, unless make cfg
 #  is run)
-saved_fixed_vars:=	MAIN_NAME \
+saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME \
 		RELEASE OS ARCH \
 		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
 		MOD_LDFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH \

@@ -10,7 +10,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright © 2005-2008 Juha Heinanen
+   Copyright © 2005-2009 Juha Heinanen
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -22,43 +22,48 @@ Juha Heinanen
         1. Overview
         2. Dependencies
 
-              2.1. Kamailio modules
+              2.1. SIP Router modules
               2.2. External libraries or applications
 
         3. Exported Parameters
 
               3.1. db_url (string)
               3.2. gw_table (string)
-              3.3. gw_name_column (string)
-              3.4. grp_id_column (string)
-              3.5. ip_addr_column (string)
-              3.6. hostname_column (string)
-              3.7. port_column (string)
-              3.8. uri_scheme_column (string)
-              3.9. transport_column (string)
-              3.10. strip_column (string)
-              3.11. tag_column (string)
-              3.12. weight_column (string)
-              3.13. flags_column (string)
-              3.14. lcr_table (string)
-              3.15. prefix_column (string)
-              3.16. from_uri_column (string)
-              3.17. priority_column (string)
-              3.18. gw_uri_avp (AVP string)
-              3.19. rpid_avp (AVP string)
-              3.20. ruri_user_avp (AVP string)
-              3.21. flags_avp (AVP string)
-              3.22. lcr_hash_size (integer)
-              3.23. fetch_rows (integer)
+              3.3. lcr_id_column (string)
+              3.4. gw_name_column (string)
+              3.5. grp_id_column (string)
+              3.6. ip_addr_column (string)
+              3.7. hostname_column (string)
+              3.8. port_column (string)
+              3.9. uri_scheme_column (string)
+              3.10. transport_column (string)
+              3.11. strip_column (string)
+              3.12. tag_column (string)
+              3.13. weight_column (string)
+              3.14. flags_column (string)
+              3.15. lcr_table (string)
+              3.16. prefix_column (string)
+              3.17. from_uri_column (string)
+              3.18. priority_column (string)
+              3.19. lcr_count (integer)
+              3.20. gw_uri_avp (AVP string)
+              3.21. ruri_user_avp (AVP string)
+              3.22. flags_avp (AVP string)
+              3.23. defunct_capability (integer)
+              3.24. lcr_id_avp (AVP string)
+              3.25. defunct_gw_avp (AVP string)
+              3.26. lcr_hash_size (integer)
+              3.27. fetch_rows (integer)
 
         4. Exported Functions
 
-              4.1. load_gws([pvar])
-              4.2. load_gws_from_grp(group-id)
-              4.3. next_gw()
-              4.4. from_gw([pvar])
-              4.5. from_gw_grp(group-id)
-              4.6. to_gw([group-id])
+              4.1. load_gws(lcr_id, caller_uri)
+              4.2. next_gw()
+              4.3. defunct_gw(period)
+              4.4. from_gw(lcr_id [, ip_addr])
+              4.5. from_any_gw([ip_addr])
+              4.6. to_gw(lcr_id [, ip_addr])
+              4.7. to_any_gw([ip_addr])
 
         5. Exported MI Commands
 
@@ -70,7 +75,7 @@ Juha Heinanen
 
               6.1. lcr.reload
               6.2. lcr.dump_gws
-              6.3. lcr.dump_lcr
+              6.3. lcr.dump_lcrs
 
         7. Known Limitations
 
@@ -78,39 +83,42 @@ Juha Heinanen
 
    1.1. Setting db_url module parameter
    1.2. Setting gw_table module parameter
-   1.3. Setting gw_name_column module parameter
-   1.4. Setting grp_id_column module parameter
-   1.5. Setting ip_addr_column module parameter
-   1.6. Setting hostname_column module parameter
-   1.7. Setting port_column module parameter
-   1.8. Setting uri_scheme_column module parameter
-   1.9. Setting transport_column module parameter
-   1.10. Setting strip_column module parameter
-   1.11. Setting tag_column module parameter
-   1.12. Setting weight_column module parameter
-   1.13. Setting flags_column module parameter
-   1.14. Setting lcr_table module parameter
-   1.15. Setting prefix_column module parameter
-   1.16. Setting from_uri_column module parameter
-   1.17. Setting priority_column module parameter
-   1.18. Setting gw_uri_avp module parameter
-   1.19. Setting rpid_avp module parameter
-   1.20. Setting ruri_user_avp module parameter
-   1.21. Setting flags_avp module parameter
-   1.22. Setting lcr_hash_size module parameter
-   1.23. Set fetch_rows parameter
-   1.24. load_gws usage
-   1.25. load_gws_from_grp usage
-   1.26. next_gw usage from a route block
-   1.27. next_gw usage from a failure route block
-   1.28. from_gw usage
-   1.29. from_gw usage with pseudo variable argument
-   1.30. from_gw_grp usage
-   1.31. to_gw usage
-   1.32. to_gw usage with group-id
-   1.33. lcr.reload RPC example
-   1.34. lcr.dump_gws RPC example
-   1.35. lcr.dump_lcr RPC example
+   1.3. Setting lcr_id_column module parameter
+   1.4. Setting gw_name_column module parameter
+   1.5. Setting grp_id_column module parameter
+   1.6. Setting ip_addr_column module parameter
+   1.7. Setting hostname_column module parameter
+   1.8. Setting port_column module parameter
+   1.9. Setting uri_scheme_column module parameter
+   1.10. Setting transport_column module parameter
+   1.11. Setting strip_column module parameter
+   1.12. Setting tag_column module parameter
+   1.13. Setting weight_column module parameter
+   1.14. Setting flags_column module parameter
+   1.15. Setting lcr_table module parameter
+   1.16. Setting prefix_column module parameter
+   1.17. Setting from_uri_column module parameter
+   1.18. Setting priority_column module parameter
+   1.19. Setting lcr_count module parameter
+   1.20. Setting gw_uri_avp module parameter
+   1.21. Setting ruri_user_avp module parameter
+   1.22. Setting flags_avp module parameter
+   1.23. Setting defunct_capability module parameter
+   1.24. Setting lcr_id_avp module parameter
+   1.25. Setting defunct_gw_avp module parameter
+   1.26. Setting lcr_hash_size module parameter
+   1.27. Set fetch_rows parameter
+   1.28. load_gws usage
+   1.29. next_gw usage from a route block
+   1.30. next_gw usage from a failure route block
+   1.31. defunct_gw usage
+   1.32. from_gw usage
+   1.33. from_gw usage
+   1.34. to_gw usage
+   1.35. to_gw usage
+   1.36. lcr.reload RPC example
+   1.37. lcr.dump_gws RPC example
+   1.38. lcr.dump_lcr RPC example
 
 Chapter 1. Admin Guide
 
@@ -119,43 +127,48 @@ Chapter 1. Admin Guide
    1. Overview
    2. Dependencies
 
-        2.1. Kamailio modules
+        2.1. SIP Router modules
         2.2. External libraries or applications
 
    3. Exported Parameters
 
         3.1. db_url (string)
         3.2. gw_table (string)
-        3.3. gw_name_column (string)
-        3.4. grp_id_column (string)
-        3.5. ip_addr_column (string)
-        3.6. hostname_column (string)
-        3.7. port_column (string)
-        3.8. uri_scheme_column (string)
-        3.9. transport_column (string)
-        3.10. strip_column (string)
-        3.11. tag_column (string)
-        3.12. weight_column (string)
-        3.13. flags_column (string)
-        3.14. lcr_table (string)
-        3.15. prefix_column (string)
-        3.16. from_uri_column (string)
-        3.17. priority_column (string)
-        3.18. gw_uri_avp (AVP string)
-        3.19. rpid_avp (AVP string)
-        3.20. ruri_user_avp (AVP string)
-        3.21. flags_avp (AVP string)
-        3.22. lcr_hash_size (integer)
-        3.23. fetch_rows (integer)
+        3.3. lcr_id_column (string)
+        3.4. gw_name_column (string)
+        3.5. grp_id_column (string)
+        3.6. ip_addr_column (string)
+        3.7. hostname_column (string)
+        3.8. port_column (string)
+        3.9. uri_scheme_column (string)
+        3.10. transport_column (string)
+        3.11. strip_column (string)
+        3.12. tag_column (string)
+        3.13. weight_column (string)
+        3.14. flags_column (string)
+        3.15. lcr_table (string)
+        3.16. prefix_column (string)
+        3.17. from_uri_column (string)
+        3.18. priority_column (string)
+        3.19. lcr_count (integer)
+        3.20. gw_uri_avp (AVP string)
+        3.21. ruri_user_avp (AVP string)
+        3.22. flags_avp (AVP string)
+        3.23. defunct_capability (integer)
+        3.24. lcr_id_avp (AVP string)
+        3.25. defunct_gw_avp (AVP string)
+        3.26. lcr_hash_size (integer)
+        3.27. fetch_rows (integer)
 
    4. Exported Functions
 
-        4.1. load_gws([pvar])
-        4.2. load_gws_from_grp(group-id)
-        4.3. next_gw()
-        4.4. from_gw([pvar])
-        4.5. from_gw_grp(group-id)
-        4.6. to_gw([group-id])
+        4.1. load_gws(lcr_id, caller_uri)
+        4.2. next_gw()
+        4.3. defunct_gw(period)
+        4.4. from_gw(lcr_id [, ip_addr])
+        4.5. from_any_gw([ip_addr])
+        4.6. to_gw(lcr_id [, ip_addr])
+        4.7. to_any_gw([ip_addr])
 
    5. Exported MI Commands
 
@@ -167,7 +180,7 @@ Chapter 1. Admin Guide
 
         6.1. lcr.reload
         6.2. lcr.dump_gws
-        6.3. lcr.dump_lcr
+        6.3. lcr.dump_lcrs
 
    7. Known Limitations
 
@@ -175,14 +188,17 @@ Chapter 1. Admin Guide
 
    Least cost routing (LCR) module implements capability to serially
    forward a request to one or more gateways so that the order in which
-   the gateways is tried is based on admin defined "least cost".
+   the gateways is tried is based on admin defined "least cost" rules.
+
+   LCR module supports many independent LCR instances (gateways and least
+   cost rules). Each such instance has its own LCR identifier.
 
    For the purpose of facilitating least cost routing of requests, each
-   gateway belongs to a gateway group and each gateway group is associated
-   with one or more <prefix, from pattern, priority> tuples. A gateway
-   matches a request if user part of Request URI matches a prefix and
-   caller's URI matches a from pattern in a tuple that belongs to the
-   group of the gateway.
+   gateway of an LCR instance belongs to a gateway group and each gateway
+   group is associated with one or more <prefix, from pattern, priority>
+   tuples. A gateway matches a request if user part of Request URI matches
+   a prefix and caller's URI matches a from pattern in a tuple that
+   belongs to the group of the gateway.
 
    When function load_gws() is called, matching gateways are ordered for
    forwarding purpose (1) according to longest user part match, (2)
@@ -214,10 +230,10 @@ Chapter 1. Admin Guide
 
 2. Dependencies
 
-   2.1. Kamailio modules
+   2.1. SIP Router modules
    2.2. External libraries or applications
 
-2.1. Kamailio modules
+2.1. SIP Router modules
 
    The following modules must be loaded before this module:
      * TM module
@@ -226,34 +242,38 @@ Chapter 1. Admin Guide
 2.2. External libraries or applications
 
    The following libraries or applications must be installed before
-   running Kamailio with this module:
+   running SIP Router with this module:
      * none.
 
 3. Exported Parameters
 
    3.1. db_url (string)
    3.2. gw_table (string)
-   3.3. gw_name_column (string)
-   3.4. grp_id_column (string)
-   3.5. ip_addr_column (string)
-   3.6. hostname_column (string)
-   3.7. port_column (string)
-   3.8. uri_scheme_column (string)
-   3.9. transport_column (string)
-   3.10. strip_column (string)
-   3.11. tag_column (string)
-   3.12. weight_column (string)
-   3.13. flags_column (string)
-   3.14. lcr_table (string)
-   3.15. prefix_column (string)
-   3.16. from_uri_column (string)
-   3.17. priority_column (string)
-   3.18. gw_uri_avp (AVP string)
-   3.19. rpid_avp (AVP string)
-   3.20. ruri_user_avp (AVP string)
-   3.21. flags_avp (AVP string)
-   3.22. lcr_hash_size (integer)
-   3.23. fetch_rows (integer)
+   3.3. lcr_id_column (string)
+   3.4. gw_name_column (string)
+   3.5. grp_id_column (string)
+   3.6. ip_addr_column (string)
+   3.7. hostname_column (string)
+   3.8. port_column (string)
+   3.9. uri_scheme_column (string)
+   3.10. transport_column (string)
+   3.11. strip_column (string)
+   3.12. tag_column (string)
+   3.13. weight_column (string)
+   3.14. flags_column (string)
+   3.15. lcr_table (string)
+   3.16. prefix_column (string)
+   3.17. from_uri_column (string)
+   3.18. priority_column (string)
+   3.19. lcr_count (integer)
+   3.20. gw_uri_avp (AVP string)
+   3.21. ruri_user_avp (AVP string)
+   3.22. flags_avp (AVP string)
+   3.23. defunct_capability (integer)
+   3.24. lcr_id_avp (AVP string)
+   3.25. defunct_gw_avp (AVP string)
+   3.26. lcr_hash_size (integer)
+   3.27. fetch_rows (integer)
 
 3.1. db_url (string)
 
@@ -268,7 +288,7 @@ modparam("lcr","db_url","dbdriver://username:password@dbhost/dbname")
 
 3.2. gw_table (string)
 
-   Name of the table holding the gateways definitions.
+   Name of the table holding gateways definitions.
 
    Default value is "gw".
 
@@ -277,41 +297,53 @@ modparam("lcr","db_url","dbdriver://username:password@dbhost/dbname")
 modparam("lcr","gw_table","gw")
 ...
 
-3.3. gw_name_column (string)
+3.3. lcr_id_column (string)
+
+   Name of the column holding the identifier of LCR instance. Common to
+   both gw and lcr tables.
+
+   Default value is "lcr_id".
+
+   Example 1.3. Setting lcr_id_column module parameter
+...
+modparam("lcr", "lcr_id_column", "lcr_identifier")
+...
+
+3.4. gw_name_column (string)
 
    Name of the column holding the gateway name.
 
    Default value is "gw_name".
 
-   Example 1.3. Setting gw_name_column module parameter
+   Example 1.4. Setting gw_name_column module parameter
 ...
 modparam("lcr","gw_name_column","gw_name")
 ...
 
-3.4. grp_id_column (string)
+3.5. grp_id_column (string)
 
    Name of the column holding the group ID of gateway both in gw and lcr
    tables.
 
    Default value is "grp_id".
 
-   Example 1.4. Setting grp_id_column module parameter
+   Example 1.5. Setting grp_id_column module parameter
 ...
 modparam("lcr","grp_id_column","grp_id")
 ...
 
-3.5. ip_addr_column (string)
+3.6. ip_addr_column (string)
 
    Name of the column holding the IP address of the gateway.
 
    Default value is "ip_addr".
 
-   Example 1.5. Setting ip_addr_column module parameter
+   Example 1.6. Setting ip_addr_column module parameter
 ...
 modparam("lcr","ip_addr_column","ip_addr")
 ...
 
-3.6. hostname_column (string)
+3.7. hostname_column (string)
 
    Name of the column holding gateway's hostname that is used in
    Request-URI, when request is sent to the gateway. Note that request is
@@ -320,186 +352,223 @@ modparam("lcr","ip_addr_column","ip_addr")
 
    Default value is "hostname".
 
-   Example 1.6. Setting hostname_column module parameter
+   Example 1.7. Setting hostname_column module parameter
 ...
 modparam("lcr", "hostname_column","host")
 ...
 
-3.7. port_column (string)
+3.8. port_column (string)
 
    Name of the column holding the port number of the gateway.
 
    Default value is "port".
 
-   Example 1.7. Setting port_column module parameter
+   Example 1.8. Setting port_column module parameter
 ...
 modparam("lcr","port_column","port")
 ...
 
-3.8. uri_scheme_column (string)
+3.9. uri_scheme_column (string)
 
    Name of the column holding the uri scheme of the gateway.
 
    Default value is "uri_scheme".
 
-   Example 1.8. Setting uri_scheme_column module parameter
+   Example 1.9. Setting uri_scheme_column module parameter
 ...
 modparam("lcr","uri_scheme_column","scheme")
 ...
 
-3.9. transport_column (string)
+3.10. transport_column (string)
 
    Name of the column holding the transport type to be used for the
    gateway.
 
    Default value is "transport".
 
-   Example 1.9. Setting transport_column module parameter
+   Example 1.10. Setting transport_column module parameter
 ...
 modparam("lcr","transport_column","transport")
 ...
 
-3.10. strip_column (string)
+3.11. strip_column (string)
 
    Name of the column holding the number of characters to be stripped from
    the front of Request URI user part before inserting tag.
 
    Default value is "strip".
 
-   Example 1.10. Setting strip_column module parameter
+   Example 1.11. Setting strip_column module parameter
 ...
 modparam("lcr","strip_column","strip_count")
 ...
 
-3.11. tag_column (string)
+3.12. tag_column (string)
 
    Name of the column holding gateway specific tag string.
 
    Default value is "tag".
 
-   Example 1.11. Setting tag_column module parameter
+   Example 1.12. Setting tag_column module parameter
 ...
 modparam("lcr","tag_column","gw_tag")
 ...
 
-3.12. weight_column (string)
+3.13. weight_column (string)
 
    Name of the column holding gateway's weight within its group.
 
    Default value is "weight".
 
-   Example 1.12. Setting weight_column module parameter
+   Example 1.13. Setting weight_column module parameter
 ...
 modparam("lcr","weight_column","gw_weight")
 ...
 
-3.13. flags_column (string)
+3.14. flags_column (string)
 
    Name of the column holding gateway specific flag values.
 
    Default value is "flags".
 
-   Example 1.13. Setting flags_column module parameter
+   Example 1.14. Setting flags_column module parameter
 ...
 modparam("lcr","flags_column","gw_flags")
 ...
 
-3.14. lcr_table (string)
+3.15. lcr_table (string)
 
    Name of the table holding the LCR rules.
 
    Default value is "lcr".
 
-   Example 1.14. Setting lcr_table module parameter
+   Example 1.15. Setting lcr_table module parameter
 ...
 modparam("lcr","lcr_table","lcr")
 ...
 
-3.15. prefix_column (string)
+3.16. prefix_column (string)
 
    Name of the column holding prefix of Request URI user part.
 
    Default value is "prefix".
 
-   Example 1.15. Setting prefix_column module parameter
+   Example 1.16. Setting prefix_column module parameter
 ...
 modparam("lcr","prefix_column","prefix")
 ...
 
-3.16. from_uri_column (string)
+3.17. from_uri_column (string)
 
    Name of the column holding the FROM (source) URI.
 
    Default value is "from_uri".
 
-   Example 1.16. Setting from_uri_column module parameter
+   Example 1.17. Setting from_uri_column module parameter
 ...
 modparam("lcr","from_uri_column","from_uri")
 ...
 
-3.17. priority_column (string)
+3.18. priority_column (string)
 
    Name of the column holding the priority of the rule.
 
    Default value is "priority".
 
-   Example 1.17. Setting priority_column module parameter
+   Example 1.18. Setting priority_column module parameter
 ...
 modparam("lcr","priority_column","priority")
 ...
 
-3.18. gw_uri_avp (AVP string)
+3.19. lcr_count (integer)
 
-   Internal AVP that load_gws function uses to store information of
+   Number of LCR instances.
+
+   Default value is 1.
+
+   Example 1.19.  Setting lcr_count module parameter
+...
+modparam("lcr", "lcr_count", 10)
+...
+
+3.20. gw_uri_avp (AVP string)
+
+   Internal AVP that load_gws() function uses to store information of
    matching gateways.
 
    There is NO default value, thus this variable must be defined in
-   kamailio.cfg.
+   sip-router.cfg.
 
-   Example 1.18. Setting gw_uri_avp module parameter
+   Example 1.20. Setting gw_uri_avp module parameter
 ...
 modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 ...
 
-3.19. rpid_avp (AVP string)
-
-   An AVP that contains caller's RPID (if any).
-
-   There is NO default value, thus this variable must be defined in
-   kamailio.cfg.
-
-   Example 1.19. Setting rpid_avp module parameter
-...
-modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
-...
-
-3.20. ruri_user_avp (AVP string)
+3.21. ruri_user_avp (AVP string)
 
    Internal AVP that next_gw function uses to store Request-URI user for
    subsequent next_gw calls.
 
    There is NO default value, thus this variable must be defined in
-   kamailio.cfg.
+   sip-router.cfg.
 
-   Example 1.20. Setting ruri_user_avp module parameter
+   Example 1.21. Setting ruri_user_avp module parameter
 ...
 modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 ...
 
-3.21. flags_avp (AVP string)
+3.22. flags_avp (AVP string)
 
    An AVP where successful next_gw and from_gw functions store gateway's
    flags.
 
    There is NO default value, thus this variable must be defined in
-   kamailio.cfg.
+   sip-router.cfg.
 
-   Example 1.21. Setting flags_avp module parameter
+   Example 1.22. Setting flags_avp module parameter
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
 
-3.22. lcr_hash_size (integer)
+3.23. defunct_capability (integer)
+
+   Tells if defunct capability of (non-responsive) gateways is supported.
+   Non-zero value turns on defunct capability.
+
+   Default value is 0.
+
+   Example 1.23.  Setting defunct_capability module parameter
+...
+modparam("lcr", "defunct_capability", 1)
+...
+
+3.24. lcr_id_avp (AVP string)
+
+   Internal AVP that load_gws() function uses to store LCR instance
+   identifier of loaded gateways. Only needed if gateway defunct
+   capability has been activated.
+
+   There is NO default value.
+
+   Example 1.24. Setting lcr_id_avp module parameter
+...
+modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
+...
+
+3.25. defunct_gw_avp (AVP string)
+
+   Internal AVP that next_gw() function uses to store IP address of the
+   selected gateway for later use by defunct_gw() function. Only needed if
+   gateway defunct capability has been activated.
+
+   There is NO default value.
+
+   Example 1.25. Setting defunct_gw_avp module parameter
+...
+modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
+...
+
+3.26. lcr_hash_size (integer)
 
    Defines the size of hash table used to store <prefix, from_pattern,
    priority> tuples. Hashing is done based on prefix. Larger value means
@@ -508,12 +577,12 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    Default value is 128.
 
-   Example 1.22.  Setting lcr_hash_size module parameter
+   Example 1.26.  Setting lcr_hash_size module parameter
 ...
 modparam("lcr", "lcr_hash_size", 1024)
 ...
 
-3.23. fetch_rows (integer)
+3.27. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when loading
    data from lcr table. This value can be used to tune the load time at
@@ -523,72 +592,46 @@ modparam("lcr", "lcr_hash_size", 1024)
 
    Default value is "2000".
 
-   Example 1.23. Set fetch_rows parameter
+   Example 1.27. Set fetch_rows parameter
 ...
 modparam("lcr", "fetch_rows", 3000)
 ...
 
 4. Exported Functions
 
-   4.1. load_gws([pvar])
-   4.2. load_gws_from_grp(group-id)
-   4.3. next_gw()
-   4.4. from_gw([pvar])
-   4.5. from_gw_grp(group-id)
-   4.6. to_gw([group-id])
+   4.1. load_gws(lcr_id, caller_uri)
+   4.2. next_gw()
+   4.3. defunct_gw(period)
+   4.4. from_gw(lcr_id [, ip_addr])
+   4.5. from_any_gw([ip_addr])
+   4.6. to_gw(lcr_id [, ip_addr])
+   4.7. to_any_gw([ip_addr])
 
-4.1.  load_gws([pvar])
+4.1.  load_gws(lcr_id, caller_uri)
 
    Loads URI schemes, IP addresses, hostnames, ports, and transports of
-   matching gateways to gw_uri_avp (see Overview section). If optional
-   pseudo variable argument is included, caller's URI is taken from it. If
-   pseudo variable argument is not included, caller's URI is taken from
-   rpid_avp or, if rpid_avp value is empty, from From URI. Returns 1 or -1
-   depending on success.
+   matching gateways to gw_uri_avp (see Overview section). Argument lcr_id
+   specifies the used LCR instance. It can be an integer or a pseudo
+   variable containing an integer value. Caller's URI is given by
+   caller_uri argument, which must be a pseudo variable.
+
+   Returns 1 on success and -1 on error.
 
    Execution time of load_gws() function is O(N) * O(M), where N is number
    of different prefix lengths and M is number of collisions for matching
-   prefix(es) in lcr hash table.
+   prefix(es) in lcr hash table of the LCR instance.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. load_gws usage
+   Example 1.28. load_gws usage
 ...
-if (!load_gws("$var(caller_uri)")) {
+if (!load_gws("1", "$var(caller_uri)")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gateways");
         exit;
 };
 ...
 
-4.2.  load_gws_from_grp(group-id)
-
-   Loads URI schemes, IP addresses, hostnames, ports, and transports of
-   gateways that belong to a given group to gw_uri_avp. group-id argument
-   is a string that may contain pseudo-variables. Its value must be a a
-   string of digits that are converted to an integer group id. Returns 1
-   or -1 depending on success.
-
-   Execution time of load_gws_from_grp() function is O(N), where N is
-   number of gateways.
-
-   This function can be used from REQUEST_ROUTE.
-
-   Example 1.25. load_gws_from_grp usage
-...
-if (!load_gws_from_grp("1")) {
-        sl_send_reply("500", "Server Internal Error - Cannot load gateways from
-group 1");
-        exit;
-};
-...
-
-if (!load_gws_from_grp("$avp(s:gateway_group)")) {
-        sl_send_reply("500", "Server Internal Error - Cannot load gateways");
-        exit;
-};
-...
-
-4.3.  next_gw()
+4.2.  next_gw()
 
    Upon first call, replaces URI scheme, host, port, and transport of
    Request-URI by the values stored in first gw_uri_avp and destroys that
@@ -609,7 +652,7 @@ if (!load_gws_from_grp("$avp(s:gateway_group)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. next_gw usage from a route block
+   Example 1.29. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -617,7 +660,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1.27. next_gw usage from a failure route block
+   Example 1.30. next_gw usage from a failure route block
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -625,72 +668,111 @@ if (!next_gw()) {
 };
 ...
 
-4.4.  from_gw([pvar])
+4.3.  defunct_gw(period)
 
-   Checks if request came from IP address of a gateway. IP address to be
-   checked is either taken from source IP address of the request or (if
-   present) from pseudo variable argument. As a side effect, stores
-   gateway's flags to flags_avp.
+   Defuncts gateway selected by preceding next_gw() call for a period of
+   seconds given as argument. Argument must be a positive integer constant
+   or a pseudo variable with positive integer value.
 
-   Execution time of from_gw() function is O(log N), where N is number of
-   gateways.
+   Returns 1 on success and -1 in case of error (see syslog).
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   ONREPLY_ROUTE.
-
-   Example 1.28. from_gw usage
-...
-if (from_gw()) {
-        ...
-};
-...
-
-   Example 1.29. from_gw usage with pseudo variable argument
-...
-if (from_gw("$si")) {
-        ...
-};
-...
-
-4.5.  from_gw_grp(group-id)
-
-   Checks if request came from IP address of a gateway that belongs to the
-   given group (integer string). Sets or resets a message flag depending
-   on whether the gateway supports directed media.
-
-   Execution time of from_gw_grp() function is O(log N), where N is number
-   of gateways.
-
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   ONREPLY_ROUTE.
-
-   Example 1.30. from_gw_grp usage
-...
-if (from_gw_grp("1")) {
-        ...
-};
-...
-
-4.6.  to_gw([group-id])
-
-   Checks if in-dialog request goes to a gateway. If an optional group-id
-   (integer string) is given, only gateways belonging to this group are
-   checked.
-
-   Execution time of to_gw() function is O(log N), where N is number of
-   gateways.
+   Must be preceded by successful next_gw() call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. to_gw usage
+   Example 1.31. defunct_gw usage
 ...
-if (to_gw()) {
+defunct_gw("60");
+...
+
+4.4.  from_gw(lcr_id [, ip_addr])
+
+   Checks if request comes from IP address of a gateway in LCR instance
+   specified by lcr_id argument, which can be an integer constant or a
+   pseudo variable with integer value. IP address to be checked is either
+   taken from source IP address of the request or (if present) from
+   ip_addr pseudo variable argument.
+
+   If request comes from a gateway, gateway's flags are stored into
+   flags_avp as side effect.
+
+   Returns 1 on success and -1 on failure or on error.
+
+   Execution time of from_gw() function is O(log N), where N is number of
+   gateways in the LCR instance.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE.
+
+   Example 1.32. from_gw usage
+...
+if (from_gw("1", "$avp(s:real_source_addr)") {
+        ...
+};
+...
+
+4.5.  from_any_gw([ip_addr])
+
+   Checks if request comes from IP address of any gateway. IP address to
+   be checked is either taken from source IP address of the request or (if
+   present) from ip_addr pseudo variable argument.
+
+   If any gateway has the IP address, function returns LCR identifier of
+   the gateway. Returns -1 on error or if request does not come from a
+   gateway.
+
+   If request comes from a gateway, gateway's flags are stored into
+   flags_avp as side effect.
+
+   Execution time of from_gw() function is M * O(log N), where M is number
+   of LCR instances and N is average number of gateways in LCR instances.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE.
+
+   Example 1.33. from_gw usage
+...
+$var(lcr_id) = from_any_gw();
+...
+
+4.6.  to_gw(lcr_id [, ip_addr])
+
+   Checks if in-dialog request goes to a gateway in LCR instance specified
+   by lcr_id argument. IP address to be checked is either taken from
+   Request-URI hostpart or (if present) from ip_addr pseudo variable
+   argument.
+
+   Returns 1 on success and -1 on failure and error.
+
+   Execution time of to_gw() function is O(log N), where N is number of
+   gateways in the LCR instance.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.34. to_gw usage
+...
+if (to_gw("1")) {
         ...
         exit;
 };
 ...
 
-   Example 1.32. to_gw usage with group-id
+4.7.  to_any_gw([ip_addr])
+
+   Checks if in-dialog request goes to any gateway. IP address to be
+   checked is either taken from Request-URI hostpart or (if present) from
+   ip_addr pseudo variable argument.
+
+   Execution time of to_any_gw() function is M * O(log N), where M is
+   number of LCR instances and N is average number of gateways in LCR
+   instances.
+
+   If any gateway has the IP address, returns LCR identifier of the
+   gateway. Returns -1 if request does not go to a gateway and on error.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.35. to_gw usage
 ...
 if (to_gw("1")) {
         ...
@@ -706,7 +788,8 @@ if (to_gw("1")) {
 
 5.1. lcr_reload
 
-   Causes lcr module to re-read the contents of gateway table into memory.
+   Causes lcr module to re-read the contents of gw and lcr tables into
+   memory.
 
    Name: lcr_reload
 
@@ -744,17 +827,18 @@ if (to_gw("1")) {
 
    6.1. lcr.reload
    6.2. lcr.dump_gws
-   6.3. lcr.dump_lcr
+   6.3. lcr.dump_lcrs
 
 6.1. lcr.reload
 
-   Causes lcr module to re-read the contents of gateway table into memory.
+   Causes lcr module to re-read the contents of gw and lcr tables into
+   memory.
 
    Name: lcr.reload
 
    Parameters: none
 
-   Example 1.33. lcr.reload RPC example
+   Example 1.36. lcr.reload RPC example
                 $ sercmd lcr.reload
 
 6.2. lcr.dump_gws
@@ -763,17 +847,17 @@ if (to_gw("1")) {
 
    Parameters: none
 
-   Example 1.34. lcr.dump_gws RPC example
+   Example 1.37. lcr.dump_gws RPC example
                 $ sercmd lcr.dump_gws
 
-6.3. lcr.dump_lcr
+6.3. lcr.dump_lcrs
 
    Causes lcr module to dump the contents of its in-memory lcr table.
 
    Parameters: none
 
-   Example 1.35. lcr.dump_lcr RPC example
-                $ sercmd lcr.dump_lcr
+   Example 1.38. lcr.dump_lcr RPC example
+                $ sercmd lcr.dump_lcrs
 
 7. Known Limitations
 

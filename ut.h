@@ -51,6 +51,7 @@
 #include "comp_defs.h"
 
 #include <sys/types.h>
+#include <sys/select.h>
 #include <sys/time.h>
 #include <limits.h>
 #include <time.h>

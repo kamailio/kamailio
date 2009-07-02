@@ -29,7 +29,6 @@
 #include "../../lib/srdb1/db.h"
 
 extern int http_query_timeout;
-extern str xcap_table;
 extern db1_con_t *pres_dbh;
 extern db_func_t pres_dbf;
 

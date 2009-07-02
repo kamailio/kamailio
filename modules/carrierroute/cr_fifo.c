@@ -155,14 +155,14 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 					node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for domain '%.*s' (%i)\n", tmp_str->len, tmp_str->s, rd->carriers[i]->domains[j]->id);
 					if(node == NULL)
 						goto error;
- 					dump_tree_recursor (&rpl_tree->node, rd->carriers[i]->domains[j]->tree, "");
-				}
+					if (dump_tree_recursor (&rpl_tree->node, rd->carriers[i]->domains[j]->tree, "") < 0) 
+						goto error;
+ 				}
  			}
 		}
 	}
 	release_data (rd);
 	return rpl_tree;
-	return 0;
 
 error:
 	release_data (rd);
@@ -394,7 +394,7 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
  * @param node pointer to the routing tree node
  * @param prefix carries the current scan prefix
  *
- * @return mi node containing the route rules
+ * @return 0 for success, negative result for error 
  */
 static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix) {
 	char s[256];
@@ -404,6 +404,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, c
 	struct route_rule *rr;
 	struct route_rule_p_list * rl;
 	double prob;
+	struct mi_node* tmp_node = NULL;
 
 	strcpy (s, prefix);
 	p = s + strlen (s);
@@ -411,7 +412,9 @@ static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, c
 	for (i = 0; i < cr_match_mode; ++i) {
 		if (node->child[i] != NULL) {
 			*p = i + '0';
-			dump_tree_recursor (msg->next, node->child[i], s);
+			/* if there is a problem in processing the child nodes .. return an error */
+			if(dump_tree_recursor (msg->next, node->child[i], s) < 0)
+				return -1;
 		}
 	}
 	*p = '\0';
@@ -422,21 +425,24 @@ static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, c
 			} else {
 				prob = rr->prob;
 			}
-			addf_mi_node_child(msg->next, 0, 0, 0, "%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'\n",
+			tmp_node = addf_mi_node_child(msg->next, 0, 0, 0, "%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'\n",
 												 strlen(prefix) > 0 ? prefix : "NULL", prob * 100, rr->host.len, rr->host.s,
 												 (rr->status ? "ON" : "OFF"), rr->strip,
 												 rr->local_prefix.len, rr->local_prefix.s,
 												 rr->local_suffix.len, rr->local_suffix.s,
 												 rr->comment.len, rr->comment.s);
+			if(!tmp_node) return -1;
 			if(!rr->status && rr->backup && rr->backup->rr){
-				addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
+				tmp_node = addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
+				if(!tmp_node) return -1;
 			}
 			if(rr->backed_up){
 				rl = rr->backed_up;
 				i=0;
 				while(rl){
 					if(rl->rr){
-						addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
+						tmp_node = addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
+						if(!tmp_node) return -1;
 					}
 					rl = rl->next;
 					i++;

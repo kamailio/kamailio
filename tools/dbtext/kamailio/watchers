@@ -1,0 +1,1 @@
+id(int,auto) presentity_uri(string) watcher_username(string) watcher_domain(string) event(string) status(int) reason(string,null) inserted_time(int) 

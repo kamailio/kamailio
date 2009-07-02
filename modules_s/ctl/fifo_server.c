@@ -1346,11 +1346,15 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	void** void_ptr;
 	int read;
 	str line;
+	int nofault;
+	int modifiers;
 
 	va_list ap;
 	va_start(ap, fmt);
 
+	nofault = 0;
 	read = 0;
+	modifiers=0;
 	while(*fmt) {
 		if (read_line(&line.s, &line.len, &ctx->read_h) < 0) {
 			va_end(ap);
@@ -1359,11 +1363,16 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		ctx->line_no++;
 
 		switch(*fmt) {
+		case '*': /* start of optional parameters */
+			nofault = 1;
+			modifiers++;
+			break;
 		case 'b': /* Bool */
 		case 't': /* Date and time */
 		case 'd': /* Integer */
 			if (!line.len) {
-				rpc_fault(ctx, 400, "Invalid parameter value on line %d", 
+				if(nofault==0)
+					rpc_fault(ctx, 400, "Invalid parameter value on line %d", 
 									ctx->line_no);
 				goto error;
 			}
@@ -1373,7 +1382,8 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
 		case 'f': /* double */
 			if (!line.len) {
-				rpc_fault(ctx, 400, "Invalid parameter value on line %d", 
+				if(nofault==0)
+					rpc_fault(ctx, 400, "Invalid parameter value on line %d", 
 								ctx->line_no);
 				goto error;
 			}
@@ -1385,8 +1395,10 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		case 'S': /* str structure */
 			l = new_chunk_unescape(&line);
 			if (!l) {
-				rpc_fault(ctx, 500, "Internal Server Error");
-				ERR("Not enough memory\n");
+				if(nofault==0) {
+					rpc_fault(ctx, 500, "Internal Server Error");
+					ERR("Not enough memory\n");
+				}
 				goto error;
 			}
 			     /* Make sure it gets released at the end */
@@ -1420,11 +1432,11 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		read++;
 	}
 	va_end(ap);
-	return read;
+	return read-modifiers;
 
  error:
 	va_end(ap);
-	return -read;
+	return -(read-modifiers);
 }
 
 

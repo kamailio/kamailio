@@ -61,6 +61,8 @@
 #include "parser/parse_body.h"
 #include "dset.h"
 #include "sr_module.h"
+#include "resolve.h"
+#include "forward.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 #define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;} 
@@ -120,6 +122,55 @@ int select_next_hop(str* res, select_t* s, struct sip_msg* msg)
 		}
 	}
 	return -1;
+}
+
+int select_next_hop_src_ip(str* res, select_t* s, struct sip_msg* msg) {
+	struct socket_info* socket_info;
+	union sockaddr_union to;
+	char proto;
+	struct sip_uri *u, next_hop;
+	str *dst_host;
+
+	if (msg->first_line.type!=SIP_REQUEST) 
+		return -1;
+
+	if (msg->force_send_socket) {
+		*res = msg->force_send_socket->address_str;
+		return 0;
+	}
+
+	if (msg->dst_uri.len) {
+		if (parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop) < 0)
+			return -1;
+		u = &next_hop;
+	}
+	else {
+		if (parse_sip_msg_uri(msg) < 0)
+			return -1;
+		u = &msg->parsed_uri;
+	}
+#ifdef USE_TLS
+	if (u->type==SIPS_URI_T)
+		proto = PROTO_TLS;
+	else
+#endif
+		proto = u->proto;
+
+#ifdef HONOR_MADDR
+	if (u->maddr_val.s && u->maddr_val.len)
+		dst_host = &u->maddr_val;
+	else
+#endif
+		dst_host = &u->host;
+
+	if (sip_hostport2su(&to, dst_host, u->port_no, &proto) < 0)
+		return -1;
+	socket_info = get_send_socket(msg, &to, proto);
+	if (!socket_info)
+		return -1;
+
+	*res = socket_info->address_str;
+	return 0;
 }
 
 #define SELECT_uri_header(_name_) \
@@ -750,16 +801,16 @@ int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
  *
  * val is set to the value of the parameter.
  */
-static inline int search_param(str *params, char *name, int name_len,
+static inline int search_param(str params, char *name, int name_len,
 				str *val)
 {
 	param_hooks_t h;
 	param_t *p, *list;
 
-	if (params->s == NULL)
+	if (params.s == NULL)
 		return 0;
 
-	if (parse_params(params, CLASS_ANY, &h, &list) < 0)
+	if (parse_params(&params, CLASS_ANY, &h, &list) < 0)
 		return -1;
 	for (p = list; p; p=p->next) {
 		if ((p->name.len == name_len)
@@ -789,12 +840,12 @@ int select_uri_rn_user(str* res, select_t* s, struct sip_msg* msg)
 	}
 
 	/* search for the "rn" parameter */
-	if ((ret = search_param(&select_uri_p->params, "rn", 2, &val)) != 0)
+	if ((ret = search_param(select_uri_p->params, "rn", 2, &val)) != 0)
 		goto done;
 
 	if (select_uri_p->sip_params.s != select_uri_p->params.s) {
 		/* check also the original sip: URI parameters */
-		if ((ret = search_param(&select_uri_p->sip_params, "rn", 2, &val)) != 0)
+		if ((ret = search_param(select_uri_p->sip_params, "rn", 2, &val)) != 0)
 			goto done;
 	}
 
@@ -964,7 +1015,7 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 	
 	if (!res->len) return -1;
 
-	if (search_param(res, wanted->s, wanted->len, res) <= 0) {
+	if (search_param(*res, wanted->s, wanted->len, res) <= 0) {
 		DBG("SELECT ...uri.params.%s NOT FOUND !\n", wanted->s);
 		return -1;
 	} else {

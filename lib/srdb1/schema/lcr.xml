@@ -9,7 +9,7 @@
 
 <table id="lcr" xmlns:db="http://docbook.org/ns/docbook">
     <name>lcr</name>
-    <version>2</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the lcr (Least Cost Routing) rules.
@@ -24,6 +24,12 @@
         <autoincrement/>
         <primary/>
         <type db="dbtext">int,auto</type>
+    </column>
+
+    <column id="lcr_id">
+        <name>lcr_id</name>
+        <type>unsigned short</type>
+        <description>LCR instance identifier</description>
     </column>
 
     <column id="prefix">
@@ -58,17 +64,8 @@
     </column>
 
     <index>
-        <name>prefix_idx</name>
-        <colref linkend="prefix"/>
+        <name>lcr_id_idx</name>
+        <colref linkend="lcr_id"/>
     </index>
 
-    <index>
-        <name>from_uri_idx</name>
-        <colref linkend="from_uri"/>
-    </index>
-
-    <index>
-        <name>grp_id_idx</name>
-        <colref linkend="grp_id"/>
-    </index>
 </table>

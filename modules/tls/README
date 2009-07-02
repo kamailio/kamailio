@@ -12,9 +12,9 @@ Andrei Pelinescu-Onciul
 
 Overview
 
-   This module implements the TLS transport for ser using the openssl
+   This module implements the TLS transport for sip-router using the openssl
    library (http://www.openssl.org). To enable the TLS support this
-   module must be loaded and enable_tls=yes must be added to the ser
+   module must be loaded and enable_tls=yes must be added to the sip-router
    config file
 
 Quick Start
@@ -22,7 +22,7 @@ Quick Start
    Make sure you have a proper certificate and private key and either use
    the certificate and private_key module parameters, or make sure the
    certificate and key are in the same PEM file, named cert.pem an placed
-   in [your-cfg-install-prefix]/etc/ser/. Don't forget to load the tls
+   in [your-cfg-install-prefix]/etc/sip-router/. Don't forget to load the tls
    module and to enable tls (add enable_tls=yes to your config).
 
    Example 1. quick start config
@@ -41,12 +41,12 @@ route{
 
 Important Notes
 
-   The tls module needs some special options enabled when compiling ser.
+   The tls module needs some special options enabled when compiling sip-router.
    These options are enabled by default, however in case you're using a
-   modified ser version or Makefile, make sure that you enable -DUSE_TLS
+   modified sip-router version or Makefile, make sure that you enable -DUSE_TLS
    and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care
-   of both options). To quickly check if your ser version was compiled
-   with these options, run ser -V and look for USE_TLS and TLS_HOOKS
+   of both options). To quickly check if your sip-router version was compiled
+   with these options, run sip-router -V and look for USE_TLS and TLS_HOOKS
    among the flags.
 
    This module includes several workarounds for various openssl bugs
@@ -55,18 +55,18 @@ Important Notes
    enable the needed workarounds based on the openssl library version.
    Each time a known problem is detected and a workaround is enabled, a
    message will be logged. In general it is recommended to compile this
-   module on the same machine or a similar machine to where ser will be
+   module on the same machine or a similar machine to where sip-router will be
    run or to link it statically with libssl. For example if on the
    compile machine openssl does not have the kerberos support enabled,
    but on the target machine a kerberos enabled openssl library is
-   installed, ser cannot apply the needed workarounds and will refuse to
+   installed, sip-router cannot apply the needed workarounds and will refuse to
    start. The same thing will happen if the openssl versions are too
-   different (to force ser startup anyway, see the tls_force_run module
+   different (to force sip-router startup anyway, see the tls_force_run module
    parameter).
 
    Try to avoid using keys larger then 1024 bytes. Large keys
    significantly slow down the TLS connection handshake, thus limiting
-   the maximum ser TLS connection rate.
+   the maximum sip-router TLS connection rate.
 
    Compression is fully supported and used by default, if you have a new
    enough openssl version (starting with 0.9.8). Although there are some
@@ -93,7 +93,7 @@ make modules modules=modules/tls
 cd modules/tls
 make
 
-   or (compiling whole ser and the tls module)
+   or (compiling whole sip-router and the tls module)
 make all include_modules=tls
 
    .
@@ -105,7 +105,7 @@ make all include_modules=tls
    make's command line. E.g.:
 make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 
-   In general, if ser fails to start with a symbol not found error when
+   In general, if sip-router fails to start with a symbol not found error when
    trying to load the tls module (check the log), it means some needed
    library was not linked and it must be added to TLS_EXTRA_LIBS
 
@@ -117,14 +117,14 @@ TLS and Low Memory
    As of this writing all openssl versions were affected (includind
    0.9.8e), see openssl bug #1491. The tls module has some workarounds
    for preventing this problem (see low_mem_treshold1 and
-   low_mem_threshold2), however starting ser with enough shared memory is
+   low_mem_threshold2), however starting sip-router with enough shared memory is
    higly recommended. When this is not possible a quick way to
    significantly reduce openssl memory usage it to disable compression
    (see tls_disable_compression).
 
 Known Limitations
 
-   The private key must not encrypted (ser cannot ask you for a password
+   The private key must not encrypted (sip-router cannot ask you for a password
    on startup).
 
    The tls certificate verifications ignores the certificate name,
@@ -155,7 +155,7 @@ Quick Certificate Howto
    Assumptions: we run our own CA.
 
    Warning: in this example no key is encrypted. The client and server
-   private keys must not be encrypted (ser doesn't support encrypted
+   private keys must not be encrypted (sip-router doesn't support encrypted
    keys), so make sure the corresponding files are readable only by
    trusted people. You should use a password for your CA private key.
 
@@ -184,37 +184,39 @@ ey.pem
 Creating a server/client certificate
 ------------------------------------
 1. create a certificate request (and its private key in privkey.pem)
-        openssl req -out ser1_cert_req.pem -new -nodes
+        openssl req -out sip-router1_cert_req.pem -new -nodes
    WARNING: the organization name should be the same as in the ca certificate.
 
 2. sign it with the ca certificate
-        openssl ca -in ser1_cert_req.pem -out ser1_cert.pem
+        openssl ca -in sip-router1_cert_req.pem -out sip-router1_cert.pem
 
-3. copy ser1_cert.pem to your ser config. dir
+3. copy sip-router1_cert.pem to your sip-router config. dir
 
 
-Setting ser to use the certificate
+Setting sip-router to use the certificate
 ----------------------------------
 1. create the ca list file:
         for each of your ca certificates that you intend to use do:
                 cat cacert.pem >>calist.pem
 
-2. copy your ser certificate, private key and ca list file to your
-        intended machine (preferably in your ser cfg. directory, this is the
-        default place ser searches for)
+2. copy your sip-router certificate, private key and ca list file to your
+        intended machine (preferably in your sip-router cfg. directory,
+        this is the default place sip-router searches for)
 
-3. set up ser.cfg to use the certificate
-        if your ser certificate name is different from cert.pem or it is not
-        placed in ser cfg. directory, add to your ser.cfg:
+3. set up sip-router.cfg to use the certificate
+        if your sip-router certificate name is different from cert.pem
+        or it is not placed in sip-router cfg. directory, add to your
+        sip-router.cfg: 
                 modparam("tls", "certificate", "/path/cert_file_name")
 
-4. set up ser to use the private key
+4. set up sip-router to use the private key
         if your private key is not contained in the certificate (or the
-         certificate name is not the default cert.pem), add to your ser.cfg:
+         certificate name is not the default cert.pem), add to your
+        sip-router.cfg: 
                 modparam("tls", "private_key", "/path/private_key_file")
 
-5. set up ser to use the ca list (optional)
-        add to your ser.cfg:
+5. set up sip-router to use the ca list (optional)
+        add to your sip-router.cfg:
                 modparam("tls", "ca_list", "/path/ca_list_file")
 
 6. set up tls authentication options:
@@ -264,7 +266,7 @@ certificate (string)
 
    Example 3. Set certificate parameter
 ...
-modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
+modparam("tls", "certificate", "/usr/local/etc/sip-router/my_certificate.pem")
 ...
 
 private_key (string)
@@ -279,7 +281,7 @@ private_key (string)
 
    Example 4. Set private_key parameter
 ...
-modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
+modparam("tls", "private", "/usr/local/etc/sip-router/my_pkey.pem")
 ...
 
 ca_list (string)
@@ -297,7 +299,7 @@ ca_list (string)
 
    Example 5. Set ca_list parameter
 ...
-modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
+modparam("tls", "ca_list", "/usr/local/etc/sip-router/ca_list.pem")
 ...
 
 verify_certificate (boolean)
@@ -360,7 +362,7 @@ modparam("tls", "cipher_list", "HIGH")
 
 send_timeout (int)
 
-   Sets the maximum interval of time after which ser will give up trying
+   Sets the maximum interval of time after which sip-router will give up trying
    to send a message over tls (time after a tls send will be aborted and
    the corresponding tls connection closed). The value is in seconds.
 
@@ -373,7 +375,7 @@ modparam("tls", "send_timeout", 1)
 
 handshake_timeout (int)
 
-   Sets the maximum interval of time after which ser will give up trying
+   Sets the maximum interval of time after which sip-router will give up trying
    to accept a tls connection or connect to a tls peer. The value is in
    seconds.
 
@@ -418,7 +420,7 @@ tls_log (int)
 
    Example 14. Set tls_log parameter
 ...
-# ignore tls messages if ser is started with debug less than 10
+# ignore tls messages if sip-router is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
@@ -475,11 +477,11 @@ modparam("tls", "low_memory_threshold2", -1)
 
 tls_force_run (boolean)
 
-   If enabled ser will start even if some of the openssl sanity checks
+   If enabled sip-router will start even if some of the openssl sanity checks
    fail (turn it on at your own risk).
 
    Currently failing any of the following sanity checks will not allow
-   ser to start:
+   sip-router to start:
      * the version of the library the tls module was compiled with is
        "too different" from the library used at runtime. The versions
        should have the same major, minor and fix level (e.g.: 0.9.8a and
@@ -516,7 +518,7 @@ config (string)
      * ca_list
      * cipher_list
 
-   ser acts as a server when it accepts a connection and as a client when
+   sip-router acts as a server when it accepts a connection and as a client when
    it initiates a new connection by itself (it connects to something).
 
    Example 18. Short config file
@@ -542,12 +544,12 @@ certificate = local_cert.pem
 verify_depth = 3
 ca_list = local_ca.pem
 
-   For a more complete example check the tls.cfg distributed with the ser
+   For a more complete example check the tls.cfg distributed with the sip-router
    source (sip_router/modules/tls/tls.cfg).
 
    Example 19. Set config parameter
 ...
-modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
+modparam("tls", "config", "/usr/local/etc/sip-router/tls.cfg")
 ...
 
 Functions
@@ -562,7 +564,7 @@ History
 
    This module was put together by Jan Janak <jan@iptel.org> from code
    from the experimental tls core addon
-   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/),
+   (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/sip-router/experimental/tls/),
    code originally written by Peter Griffiths and later maintained by
    Cesc Santasusana and from an iptelorg tls code addon, written by
    Andrei Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for

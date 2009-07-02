@@ -1,0 +1,142 @@
+# $Id$
+#
+# The Kamailio configuration file for the control tools.
+#
+# Here you can set variables used in the kamctl and kamdbctl setup
+# scripts. Per default all variables here are commented out, the control tools
+# will use their internal default values.
+
+## your SIP domain
+# SIP_DOMAIN=kamailio.org
+
+## chrooted directory
+# $CHROOT_DIR="/path/to/chrooted/directory"
+
+## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, or DBTEXT, by default none is loaded
+# If you want to setup a database with kamdbctl, you must at least specify
+# this parameter.
+# DBENGINE=MYSQL
+
+## database host
+# DBHOST=localhost
+
+## database name (for ORACLE this is TNS name)
+# DBNAME=openser
+
+# database path used by dbtext or db_berkeley
+# DB_PATH="/usr/local/etc/kamailio/dbtext"
+
+## database read/write user
+# DBRWUSER=openser
+
+## password for database read/write user
+# DBRWPW="openserrw"
+
+## database read only user
+# DBROUSER=openserro
+
+## password for database read only user
+# DBROPW=openserro
+
+## database super user (for ORACLE this is 'scheme-creator' user)
+# DBROOTUSER="root"
+
+# user name column
+# USERCOL="username"
+
+
+# SQL definitions
+# If you change this definitions here, then you must change them 
+# in db/schema/entities.xml too.
+# FIXME
+
+# FOREVER="2020-05-28 21:32:15"
+# DEFAULT_ALIASES_EXPIRES=$FOREVER
+# DEFAULT_Q="1.0"
+# DEFAULT_CALLID="Default-Call-ID"
+# DEFAULT_CSEQ="13"
+# DEFAULT_LOCATION_EXPIRES=$FOREVER
+
+
+# Program to calculate a message-digest fingerprint 
+# MD5="md5sum"
+
+# awk tool
+# AWK="awk"
+
+# If you use a system with a grep and egrep that is not 100% gnu grep compatible,
+# e.g. solaris, install the gnu grep (ggrep) and specify this below.
+#
+# grep tool
+# GREP="grep"
+
+# egrep tool
+# EGREP="egrep"
+
+# sed tool
+# SED="sed"
+
+# tail tool
+# LAST_LINE="tail -n 1"
+
+# expr tool
+# EXPR="expr"
+
+
+# Describe what additional tables to install. Valid values for the variables
+# below are yes/no/ask. With ask (default) it will interactively ask the user
+# for an answer, while yes/no allow for automated, unassisted installs.
+#
+
+# If to install tables for the modules in the EXTRA_MODULES variable.
+# INSTALL_EXTRA_TABLES=ask
+
+# If to install presence related tables.
+# INSTALL_PRESENCE_TABLES=ask
+
+# Define what module tables should be installed.
+# If you use the postgres database and want to change the installed tables, then you
+# must also adjust the STANDARD_TABLES or EXTRA_TABLES variable accordingly in the
+# kamdbctl.base script.
+
+# Kamailio standard modules
+# STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc msilo
+#                   alias_db uri_db speeddial avpops auth_db pdt dialog dispatcher
+#                   dialplan"
+
+# Kamailio extra modules
+# EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute userblacklist htable purple"
+
+
+## type of aliases used: DB - database aliases; UL - usrloc aliases
+## - default: none
+# ALIASES_TYPE="DB"
+
+## control engine: FIFO or UNIXSOCK
+## - default FIFO
+# CTLENGINE="FIFO"
+
+## path to FIFO file
+# OSER_FIFO="FIFO"
+
+## check ACL names; default on (1); off (0)
+# VERIFY_ACL=1
+
+## ACL names - if VERIFY_ACL is set, only the ACL names from below list
+## are accepted
+# ACL_GROUPS="local ld int voicemail free-pstn"
+
+## verbose - debug purposes - default '0'
+# VERBOSE=1
+
+## do (1) or don't (0) store plaintext passwords
+## in the subscriber table - default '1'
+# STORE_PLAINTEXT_PW=0
+
+## OPENSER START Options
+## PID file path - default is: /var/run/kamailio.pid
+# PID_FILE=/var/run/kamailio.pid
+
+## Extra start options - default is: not set
+# example: start Kamailio with 64MB share memory: STARTOPTIONS="-m 64"
+# STARTOPTIONS=

@@ -671,13 +671,15 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 }
 
-
-/*if msg is set -> it will fake the env. vars conforming with the msg; if NULL
- * the env. will be restore to original */
-void faked_env( struct cell *t,struct sip_msg *msg)
+/** create or restore a "fake environment" for running a failure_route.
+ *if msg is set -> it will fake the env. vars conforming with the msg; if NULL
+ * the env. will be restore to original.
+ */
+void faked_env( struct cell *t, struct sip_msg *msg)
 {
 	static int backup_route_type;
 	static struct cell *backup_t;
+	static int backup_branch;
 	static unsigned int backup_msgid;
 	static avp_list_t* backup_user_from, *backup_user_to;
 	static avp_list_t* backup_domain_from, *backup_domain_to;
@@ -699,10 +701,11 @@ void faked_env( struct cell *t,struct sip_msg *msg)
 		 */
 		/* backup */
 		backup_t=get_t();
+		backup_branch=get_t_branch();
 		backup_msgid=global_msg_id;
 		/* fake transaction and message id */
 		global_msg_id=msg->id;
-		set_t(t);
+		set_t(t, T_BR_UNDEFINED);
 		/* make available the avp list from transaction */
 
 		backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from );
@@ -716,7 +719,7 @@ void faked_env( struct cell *t,struct sip_msg *msg)
 		bind_address=t->uac[0].request.dst.send_sock;
 	} else {
 		/* restore original environment */
-		set_t(backup_t);
+		set_t(backup_t, backup_branch);
 		global_msg_id=backup_msgid;
 		set_route_type(backup_route_type);
 		/* restore original avp list */
@@ -1844,6 +1847,8 @@ int reply_received( struct sip_msg  *p_msg )
 	if ( (t==0)||(t==T_UNDEFINED))
 		goto trans_not_found;
 
+	if (unlikely(branch==T_BR_UNDEFINED))
+		BUG("invalid branch, please report to sr-dev@sip-router.org\n");
 	tm_ctx_set_branch_index(branch);
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;

@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+id(int) presentity_uri(str) watcher_username(str) watcher_domain(str) event(str) status(int) reason(str) inserted_time(int)
+METADATA_KEY
+1 4 
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|'presence'|NIL|NIL|NIL

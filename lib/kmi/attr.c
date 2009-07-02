@@ -36,8 +36,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "mi_mem.h"
 #include "attr.h"
 #include "fmt.h"
 
@@ -75,7 +75,7 @@ struct mi_attr *add_mi_attr(struct mi_node *node, int flags,
 		size_mem += value_len;
 	}
 
-	new = (struct mi_attr *)pkg_malloc(size_mem);
+	new = (struct mi_attr *)mi_malloc(size_mem);
 	if (!new) {
 		LM_ERR("no more pkg mem (%d)\n",size_mem);
 		return NULL;
@@ -167,7 +167,7 @@ void del_mi_attr_list(struct mi_node *node)
 
 	for(head = node->attributes; head ;){
 		p = head->next;
-		pkg_free(head);
+		mi_free(head);
 		head = p;
 	}
 

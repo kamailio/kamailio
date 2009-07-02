@@ -101,6 +101,8 @@
  *               which have E2EACK callbacks registered (andrei)
  * 2008-03-31  message flags are updated in shared memory even if they are set
  *             after t_newtran() (Miklos)
+ * 2009-06-24  added T_branch and changed set_t() to take also a branch
+ *              parameter (andrei)
  */
 
 #include "defs.h"
@@ -161,23 +163,40 @@ static struct cell *t_ack;
    transaction currently processed by a process; it it
    set by t_lookup_request or t_reply_matching; don't
    dare to change it anywhere else as it would
-   break ref_counting
+   break ref_counting.
+   It has a valid value only if:
+    - it's checked inside a failure or tm on_reply route (not core 
+      on_reply[0]!)
+    - global_msg_id == msg->id in all the other kinds of routes
+      Note that this is the safest check and is valid also for
+      failure routes (because fake_env() sets global_msg_id) or tm
+      tm onreply routes (the internal reply_received() t_check() will set
+      T and global_msg_id).
 */
-
 static struct cell *T;
+
+/* this is a global variable which keeps the current branch
+   for the transaction currently processed.
+   It has a valid value only if T is valid (global_msg_id==msg->id -- see
+   above, and T!=0 and T!=T_UNDEFINED).
+   For a request it's value is T_BR_UNDEFINED (it can have valid values only
+   for replies).
+*/
+static int T_branch;
 
 /* number of currently processed message; good to know
    to be able to doublecheck whether we are still working
    on a current transaction or a new message arrived;
-   don't even think of changing it
+   don't even think of changing it.
 */
 unsigned int     global_msg_id;
 
 
 
 struct cell *get_t() { return T; }
-void set_t(struct cell *t) { T=t; }
-void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
+void set_t(struct cell *t, int branch) { T=t; T_branch=branch; }
+void init_t() {global_msg_id=0; set_t(T_UNDEFINED, T_BR_UNDEFINED);}
+int get_t_branch() { return T_branch; }
 
 static inline int parse_dlg( struct sip_msg *msg )
 {
@@ -474,6 +493,8 @@ e2eack_found:
  *            1        - transaction found
  *            0        - parse error
  * It also sets *cancel if there is already a cancel transaction.
+ * Side-effects: sets T and T_branch 
+ * (T_branch is always set to T_BR_UNDEFINED).
  */
 
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
@@ -492,7 +513,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 	if (unlikely(check_transaction_quadruple(p_msg)==0))
 	{
 		LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
-		set_t(0);	
+		set_t(0, T_BR_UNDEFINED);
 		/* stop processing */
 		return 0;
 	}
@@ -517,7 +538,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 	 */
 	if (!p_msg->via1) {
 		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
-		set_t(0);	
+		set_t(0, T_BR_UNDEFINED);
 		return 0;
 	}
 	branch=p_msg->via1->branch;
@@ -683,7 +704,7 @@ notfound:
 	}
 		
 	/* no transaction found */
-	set_t(0);
+	set_t(0, T_BR_UNDEFINED);
 	if (!leave_new_locked) {
 		UNLOCK_HASH(p_msg->hash_index);
 	}
@@ -692,7 +713,7 @@ notfound:
 
 e2e_ack:
 	t_ack=p_cell;	/* e2e proxied ACK */
-	set_t(0);
+	set_t(0, T_BR_UNDEFINED);
 	if (!leave_new_locked) {
 		UNLOCK_HASH(p_msg->hash_index);
 	}
@@ -700,7 +721,7 @@ e2e_ack:
 	return -2;
 
 found:
-	set_t(p_cell);
+	set_t(p_cell, T_BR_UNDEFINED);
 	REF_UNSAFE( T );
 	set_kr(REQ_EXIST);
 	UNLOCK_HASH( p_msg->hash_index );
@@ -849,6 +870,7 @@ found:
 
 /** get the transaction corresponding to a reply.
  * @return -1 - nothing found,  1  - T found
+ * Side-effects: sets T and T_branch on success.
  */
 int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
@@ -989,7 +1011,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		/* we passed all disqualifying factors .... the transaction has been
 		   matched !
 		*/
-		set_t(p_cell);
+		set_t(p_cell, (int)branch_id);
 		*p_branch =(int) branch_id;
 		REF_UNSAFE( T );
 		UNLOCK_HASH(hash_index);
@@ -1031,7 +1053,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 nomatch2:
 	DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
 	*p_branch = -1;
-	set_t(0);
+	set_t(0, T_BR_UNDEFINED);
 	return -1;
 }
 
@@ -1044,6 +1066,7 @@ nomatch2:
  *                   Found      Not Found     Error (e.g. parsing) E2E ACK
  *  @return          1         -1              0                  -2
  *  T                ptr        0              T_UNDEFINED| 0      0
+ * Side-effects: sets T and T_branch.
  */
 int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 {
@@ -1058,7 +1081,7 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
 	{
 		global_msg_id = p_msg->id;
-		T = T_UNDEFINED;
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
 			/* force parsing all the needed headers*/
@@ -1132,6 +1155,8 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 			DBG("DEBUG: t_check_msg: T previously sought and not found\n");
 			ret=-1;
 		}
+		if (likely(param_branch))
+			*param_branch=T_branch;
 	}
 	return ret;
 error:
@@ -1145,6 +1170,8 @@ error:
  *                   Found      Not Found     Error (e.g. parsing)
  *  @return          1          0             -1
  *  T                ptr        0             T_UNDEFINED | 0
+ *
+ * Side-effects: sets T and T_branch.
  */
 int t_check( struct sip_msg* p_msg , int *param_branch )
 {
@@ -1285,6 +1312,15 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	new_cell->on_branch=get_on_branch();
 }
 
+
+
+/** creates a new transaction from a message.
+ * No checks are made if the transaction exists. It is created and
+ * added to the tm hashes. T is set to the new transaction.
+ * @param p_msg - pointer to sip message
+ * @return  >0 on success, <0 on error (an E_* error code, see error.h)
+ * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
+ */
 static inline int new_t(struct sip_msg *p_msg)
 {
 	struct cell *new_cell;
@@ -1312,7 +1348,7 @@ static inline int new_t(struct sip_msg *p_msg)
 									   hash and +1 because we set T to it */
 #endif
 	insert_into_hash_table_unsafe( new_cell, p_msg->hash_index );
-	set_t(new_cell);
+	set_t(new_cell, T_BR_UNDEFINED);
 #ifndef TM_DEL_UNREF
 	INIT_REF_UNSAFE(T);
 #endif
@@ -1323,18 +1359,18 @@ static inline int new_t(struct sip_msg *p_msg)
 	return 1;
 }
 
-/* atomic "new_tran" construct; it returns:
 
-	<0	on error
 
-	+1	if a request did not match a transaction
-		- if that was an ack, the calling function
-		  shall forward statelessly
-		- otherwise it means, a new transaction was
-		  introduced and the calling function
-		  shall reply/relay/whatever_appropriate
-
-	0 on retransmission
+/** if no transaction already exists for the message, create a new one.
+ * atomic "new_tran" construct; it returns:
+ *
+ * @return <0	on error
+ *          +1	if a request did not match a transaction
+ *           0	on retransmission
+ * On success, if the request was an ack, the calling function shall
+ * forward statelessly. Otherwise it means, a new transaction was
+ * introduced and the calling function shall reply/relay/whatever_appropriate.
+ * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
 */
 int t_newtran( struct sip_msg* p_msg )
 {
@@ -1361,7 +1397,7 @@ int t_newtran( struct sip_msg* p_msg )
 	}
 
 	global_msg_id = p_msg->id;
-	T = T_UNDEFINED;
+	set_t(T_UNDEFINED, T_BR_UNDEFINED);
 	/* first of all, parse everything -- we will store in shared memory 
 	   and need to have all headers ready for generating potential replies 
 	   later; parsing later on demand is not an option since the request 
@@ -1476,6 +1512,18 @@ new_err:
 }
 
 
+
+/** releases the current transaction (corresp. to p_msg).
+ * The current transaction (T) corresponding to the sip message being
+ * processed is released. Delayed replies are sent (if no other reply
+ * was sent in the script). Extra checks are made to see if the transaction
+ * was forwarded, explicitly replied or explicitly released. If not the
+ * transaction * is force-killed and a warning is logged (script error).
+ * @param p_msg - sip message being processed
+ * @return -1 on error, 1 on success.
+ * Side-effects: resets T and T_branch to T_UNDEFINED, T_BR_UNDEFINED,
+ *  resets tm_error.
+ */
 int t_unref( struct sip_msg* p_msg  )
 {
 	enum kill_reason kr;
@@ -1507,7 +1555,7 @@ int t_unref( struct sip_msg* p_msg  )
 	}
 	tm_error=0; /* clear it */
 	UNREF( T );
-	set_t(T_UNDEFINED);
+	set_t(T_UNDEFINED, T_BR_UNDEFINED);
 	return 1;
 }
 
@@ -1557,6 +1605,17 @@ int t_get_canceled_ident(struct sip_msg* msg, unsigned int* hash_index,
 }
 #endif /* WITH_AS_SUPPORT */
 
+
+
+/** lookup a transaction based on its identifier (hash_index:label).
+ * @param trans - double pointer to cell structure, that will be filled
+ *                with the result (a pointer to an existing transaction or
+ *                0).
+ * @param hash_index - searched transaction hash_index (part of the ident).
+ * @param label - searched transaction label (part of the ident).
+ * @return -1 on error/not found, 1 on success (found)
+ * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
+ */
 int t_lookup_ident(struct cell ** trans, unsigned int hash_index, 
 					unsigned int label)
 {
@@ -1581,7 +1640,7 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 		if(p_cell->label == label){
 			REF_UNSAFE(p_cell);
     			UNLOCK_HASH(hash_index);
-			set_t(p_cell);
+			set_t(p_cell, T_BR_UNDEFINED);
 			*trans=p_cell;
 			DBG("DEBUG: t_lookup_ident: transaction found\n");
 			return 1;
@@ -1589,7 +1648,7 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
     }
 	
 	UNLOCK_HASH(hash_index);
-	set_t(0);
+	set_t(0, T_BR_UNDEFINED);
 	*trans=p_cell;
 
 	DBG("DEBUG: t_lookup_ident: transaction not found\n");
@@ -1597,6 +1656,15 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
     return -1;
 }
 
+
+
+/** check if a transaction is local or not.
+ * Check if the transaction corresponding to the current message
+ * is local or not.
+ * @param p_msg - pointer to sip_msg
+ * @return -1 on error, 0 if the transaction is not local, 1 if it is local.
+ * Side-effects: sets T and T_branch.
+ */
 int t_is_local(struct sip_msg* p_msg)
 {
     struct cell* t;
@@ -1613,8 +1681,16 @@ int t_is_local(struct sip_msg* p_msg)
     return is_local(t);
 }
 
-/* lookup a transaction by callid and cseq, parameters are pure
- * header field content only, e.g. "123@10.0.0.1" and "11"
+/** lookup a transaction based on callid and cseq.
+ * The parameters are pure header field content only,
+ * e.g. "123@10.0.0.1" and "11"
+ * @param trans - double pointer to the transaction, filled with a pointer
+ *                to the found transaction on success and with 0 if the
+ *                transaction was not found.
+ * @param callid - callid for the searched transaction.
+ * @param cseq - cseq for the searched transaction.
+ * @return -1 on error/not found, 1 if found.
+ * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
  */
 int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	struct cell* p_cell;
@@ -1669,7 +1745,7 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 					p_cell->cseq_n.s);
 			REF_UNSAFE(p_cell);
 			UNLOCK_HASH(hash_index);
-			set_t(p_cell);
+			set_t(p_cell, T_BR_UNDEFINED);
 			*trans=p_cell;
 			DBG("DEBUG: t_lookup_callid: transaction found.\n");
 			return 1;

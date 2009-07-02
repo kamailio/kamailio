@@ -34,7 +34,7 @@
 
 #include <string.h>
 #include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "mi_mem.h"
 
 char *mi_fmt_buf = 0;
 int  mi_fmt_buf_len = 0;
@@ -42,7 +42,7 @@ int  mi_fmt_buf_len = 0;
 
 int mi_fmt_init( unsigned int size )
 {
-	mi_fmt_buf = (char*)pkg_malloc(size);
+	mi_fmt_buf = (char*)mi_malloc(size);
 	if (mi_fmt_buf==NULL) {
 		LM_ERR("no more pkg mem\n");
 		return -1;

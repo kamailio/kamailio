@@ -1,0 +1,1 @@
+id(int,auto) username(string) domain(string) cpl_xml(string,null) cpl_bin(string,null) 

@@ -33,6 +33,7 @@
 #include "../select.h"
 #include "../ut.h"
 #include "cfg_struct.h"
+#include "cfg_ctx.h"
 #include "cfg_select.h"
 
 /* It may happen that the select calls cannot be fixed up before shmizing
@@ -200,7 +201,7 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	if (!group || !var) return -1;
 
 	/* use the module's handle to access the variable, so the variables
-	are read from private memory */
+	are read from the local config */
 	p = *(group->handle) + var->offset;
 
 	switch (CFG_VAR_TYPE(var)) {
@@ -220,6 +221,138 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 		memcpy(res, p, sizeof(str));
 		break;
 
+	default:
+		LOG(L_DBG, "DEBUG: select_cfg_var(): unsupported variable type: %d\n",
+			CFG_VAR_TYPE(var));
+		return -1;
 	}
+	return 0;
+}
+
+/* fix-up function for read_cfg_var()
+ *
+ * return value:
+ * >0 - success
+ *  0 - the variable has not been declared yet, but it will be automatically
+ *	fixed-up later.
+ * <0 - error
+ */
+int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_handle)
+{
+	cfg_group_t	*group;
+	cfg_mapping_t	*var;
+	str		group_name, var_name;
+
+	if (!gname || !vname || !read_handle)
+		return -1;
+
+	group_name.s = gname;
+	group_name.len = strlen(gname);
+	var_name.s = vname;
+	var_name.len = strlen(vname);
+
+	/* look-up the group and the variable */
+	if (cfg_lookup_var(&group_name, &var_name, &group, &var)) {
+		if (cfg_shmized) {
+			LOG(L_ERR, "ERROR: read_cfg_var_fixup(): unknown variable: %.*s.%.*s\n",
+				group_name.len, group_name.s,
+				var_name.len, var_name.s);
+			return -1;
+		}
+		/* The variable was not found, add it to the non-fixed select list.
+		 * So we act as if the fixup was successful, and we retry it later */
+		if (cfg_new_select(&group_name, &var_name,
+					&read_handle->group, &read_handle->var))
+			return -1;
+
+		LOG(L_DBG, "DEBUG: read_cfg_var_fixup(): cfg read fixup is postponed: %.*s.%.*s\n",
+			group_name.len, group_name.s,
+			var_name.len, var_name.s);
+
+		read_handle->group = NULL;
+		read_handle->var = NULL;
+		return 0;
+	}
+
+	read_handle->group = (void *)group;
+	read_handle->var = (void *)var;
+	return 1;
+}
+
+/* read the value of a variable via a group and variable name previously fixed up
+ * Returns the type of the variable
+ */
+unsigned int read_cfg_var(struct cfg_read_handle *read_handle, void **val)
+{
+	cfg_group_t	*group;
+	cfg_mapping_t	*var;
+	void		*p;
+	static str	s;
+
+	if (!val || !read_handle || !read_handle->group || !read_handle->var)
+		return 0;
+
+	group = (cfg_group_t *)(read_handle->group);
+	var = (cfg_mapping_t *)(read_handle->var);
+
+	/* use the module's handle to access the variable, so the variables
+	are read from the local config */
+	p = *(group->handle) + var->offset;
+
+	switch (CFG_VAR_TYPE(var)) {
+	case CFG_VAR_INT:
+		*val = (void *)(long)*(int *)p;
+		break;
+
+	case CFG_VAR_STRING:
+		*val = (void *)*(char **)p;
+		break;
+
+	case CFG_VAR_STR:
+		memcpy(&s, p, sizeof(str));
+		*val = (void *)&s;
+		break;
+
+	case CFG_VAR_POINTER:
+		*val = *(void **)p;
+		break;
+
+	}
+	return CFG_VAR_TYPE(var);
+}
+
+/* wrapper function for read_cfg_var() -- convert the value to integer
+ * returns -1 on error, 0 on success
+ */
+int read_cfg_var_int(struct cfg_read_handle *read_handle, int *val)
+{
+	unsigned int	type;
+	void		*v1, *v2;
+
+	if ((type = read_cfg_var(read_handle, &v1)) == 0)
+		return -1;
+
+	if (convert_val(type, v1, CFG_INPUT_INT, &v2))
+		return -1;
+
+	*val = (int)(long)(v2);
+	return 0;
+}
+
+/* wrapper function for read_cfg_var() -- convert the value to str
+ * returns -1 on error, 0 on success
+ */
+int read_cfg_var_str(struct cfg_read_handle *read_handle, str *val)
+{
+	unsigned int	type;
+	void		*v1, *v2;
+
+	if ((type = read_cfg_var(read_handle, &v1)) == 0)
+		return -1;
+
+	if (convert_val(type, v1, CFG_INPUT_STR, &v2))
+		return -1;
+
+	*val = *(str *)(v2);
 	return 0;
 }

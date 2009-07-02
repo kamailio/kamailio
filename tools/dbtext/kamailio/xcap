@@ -1,0 +1,1 @@
+id(int,auto) username(string) domain(string) doc(string) doc_type(int) etag(string) source(int) doc_uri(string) port(int) 

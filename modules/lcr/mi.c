@@ -30,22 +30,25 @@
 #include "lcr_mod.h"
 #include "../../dprint.h"
 #include "../../lib/srdb1/db.h"
+#include "../../locking.h"
 #include "mi.h"
 
 
 /*
  * MI function to reload lcr table(s)
  */
-struct mi_root*  mi_lcr_reload(struct mi_root* cmd_tree, void* param)
+struct mi_root* mi_lcr_reload(struct mi_root* cmd_tree, void* param)
 {
+    int i;
     lock_get(reload_lock);
-    if (reload_gws_and_lcrs() == 1) {
-	lock_release(reload_lock);
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-    } else {
-	lock_release(reload_lock);
-	return init_mi_tree( 400, "Reload of gateways failed", 25);
+    for (i = 1; i <= lcr_count; i++) {
+	if (reload_gws_and_lcrs(i) < 0) {
+	    lock_release(reload_lock);
+	    return init_mi_tree( 400, "Reload of lcr gateways failed", 29);
+	}
     }
+    lock_release(reload_lock);
+    return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 
 

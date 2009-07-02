@@ -271,11 +271,10 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	/* parsing error, memory alloc, whatever ... if via is bad
 	   and we are forced to reply there, return with 0 (->break),
 	   pass error status otherwise
-
-       MMA: return value E_SCRIPT means that transaction was already started from the script
-	   so continue with that transaction
+	   MMA: return value E_SCRIPT means that transaction was already started
+	   from the script so continue with that transaction
 	*/
-	if (new_tran!=E_SCRIPT) {
+	if (likely(new_tran!=E_SCRIPT)) {
 		if (new_tran<0) {
 			ret = (ser_error==E_BAD_VIA && reply_to_via) ? 0 : new_tran;
 			goto done;
@@ -285,11 +284,30 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			ret = 1;
 			goto done;
 		}
+	}else if (unlikely(p_msg->REQ_METHOD==METHOD_ACK)) {
+			/* transaction previously found (E_SCRIPT) and msg==ACK
+			    => ack to neg. reply  or ack to local trans.
+			    => process it and exit */
+			/* FIXME: there's no way to distinguish here between acks to
+			   local trans. and neg. acks */
+			/* in normal operation we should never reach this point, if we
+			   do WARN(), it might hide some real bug (apart from possibly
+			   hiding a bug the most harm done is calling the TMCB_ACK_NEG
+			   callbacks twice) */
+			WARN("negative or local ACK caught, please report\n");
+			t=get_t();
+			if (unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN)))
+				run_trans_callbacks(TMCB_ACK_NEG_IN, t, p_msg, 0, 
+										p_msg->REQ_METHOD);
+			t_release_transaction(t);
+			ret=1;
+			goto done;
 	}
 
 	/* new transaction */
 
-	/* ACKs do not establish a transaction and are fwd-ed statelessly */
+	/* at this point if the msg is an ACK it is an e2e ACK and
+	   e2e ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
 		DBG( "SER: forwarding ACK  statelessly \n");
 		if (proxy==0) {
@@ -416,8 +434,9 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 }
 
 
-/*
- * Get the FR_{INV}_TIMER from corresponding AVP
+/** Get the FR_{INV}_TIMER from corresponding AVP.
+ * @return 0 on success (use *timer) or 1 on failure (avp non-existent,
+ *  avp present  but empty/0, avp value not numeric).
  */
 static inline int avp2timer(unsigned int* timer, int type, int_str name)
 {
@@ -443,7 +462,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 		*timer = val_istr.n;
 	}
 
-	return 0;
+	return *timer==0; /* 1 if 0 (use default), 0 if !=0 (use *timer) */
 }
 
 

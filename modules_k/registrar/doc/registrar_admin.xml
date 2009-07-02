@@ -640,6 +640,26 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>Return codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>-1</emphasis> - error.
+			</para>
+			<para>
+			<emphasis>1</emphasis> - contacts inserted.
+			</para>
+			<para>
+			<emphasis>2</emphasis> - contacts updated.
+			</para>
+			<para>
+			<emphasis>3</emphasis> - contacts deleted.
+			</para>
+			<para>
+			<emphasis>4</emphasis> - contacts returned.
+			</para>
+		</listitem>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 		</para>

@@ -1104,4 +1104,79 @@ if (!t_next_contacts()) {
 		</example>
 	</section>
 
+	<section id="t_check_trans">
+	<title>
+		<function>t_check_trans()</function>
+	</title>
+	<para>
+		<function>t_check_trans()</function> can be used to quickly check if
+		a message belongs or is related to a transaction. It behaves
+		differently for different types of messages:
+		<itemizedlist>
+			<listitem>
+				<para>For a SIP Reply it returns true if the reply belongs to
+				an existing transaction and false otherwise.</para>
+			</listitem>
+			<listitem>
+				<para>For a CANCEL it behaves exactly as
+				<function>t_lookup_cancel()</function>: returns true if a
+				corresponding INVITE transaction exists for the CANCEL and
+				false otherwise.</para>
+			</listitem>
+			<listitem>
+				<para>For ACKs to negative replies or for ACKs to local
+				transactions it will terminate the script if the ACK belongs
+				to a transaction (it would make very little sense to process
+				an ACK to a negative reply  for an existing transaction in
+				some other way then to simply pass it to tm) or return false
+				if not.</para>
+			</listitem>
+			<listitem>
+				<para>For end-to-end ACKs (ACKs to 2xx responses for forwarded
+				INVITE transactions) it will return true if the corresponding
+				INVITE transaction is found and still active and false if not.
+				</para>
+				<note>Note that the e2e ACK matching is more of a hint
+				then a certainty. A delayed e2e ACK might arrive after the
+				transaction wait time elapses, when the INVITE transaction no
+				longer exists and thus would not match anything. There are
+				also cases when tm would not keep all the information needed
+				for e2e ACK matching (since this is not needed for a statefull
+				proxy and it requires additional memory, tm will not keep this
+				information unless needed by some other module or callbacks).
+				</note>
+			</listitem>
+			<listitem>
+				<para>For other requests (non ACKs and non CANCELs), it will
+				terminate the script for retransmissions and return false for
+				new requests (for which no transaction exists yet).</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+	<note><para>
+		An important difference from kamailio version is that for an ACK to
+		negative reply or for a local transaction, the script execution will be
+		immediately stopped and the message handled by tm, instead of returning
+		true.
+	</para></note>
+	<para><function>t_check_trans()</function> functionality for requests,
+		except for the e2e ACK matching, can be replicated in the script
+		using <function>t_lookup_cancel()</function> and
+		<function>t_lookup_request()</function>.
+	</para>
+	<para>See also: <function>t_lookup_request()</function>,
+					<function>t_lookup_cancel()</function>.
+	</para>
+	<example>
+		<title><function>t_check_trans</function> usage</title>
+		<programlisting>
+
+if ( method == "CANCEL" &amp;&amp; !t_check_trans())
+	sl_reply("403", "cancel out of the blue forbidden");
+# note: in this example t_check_trans() can be replaced by t_lookup_cancel()
+
+		</programlisting>
+	</example>
+	</section>
+
 </section>

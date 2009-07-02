@@ -49,6 +49,7 @@
 #include "callid.h"
 #include "t_cancel.h"
 #include "t_suspend.h"
+#include "t_stats.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -139,9 +140,11 @@ struct tm_binds {
 	generate_callid_f generate_callid;
 	generate_fromtag_f generate_fromtag;
 	tlookup_request_f t_lookup_request;
+	tlookup_original_f t_lookup_original;
 	tcheck_f t_check;
 	unref_cell_f unref_cell;
 	which_cancel_f which_cancel;
+	tm_get_stats_f get_stats;
 #ifdef WITH_TM_CTX
 	tm_ctx_get_f tm_ctx_get;
 #else

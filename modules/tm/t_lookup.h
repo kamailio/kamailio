@@ -31,6 +31,7 @@
  *               nameser_compat.h (andrei)
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2005-12-09  added t_set_fr()  (andrei)
+ * 2009-06-24  changed set_t() to take also a branch parameter (andrei)
  */
 
 
@@ -47,13 +48,18 @@
 #define T_UNDEFINED  ( (struct cell*) -1 )
 #define T_NULL_CELL       ( (struct cell*) 0 )
 
+#define T_BR_UNDEFINED (-1)
+
 extern unsigned int     global_msg_id;
 
 
 
 void init_t();
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
+
+typedef struct cell* (*tlookup_original_f)( struct sip_msg* p_msg );
 struct cell* t_lookupOriginalT( struct sip_msg* p_msg );
+
 int t_reply_matching( struct sip_msg* , int* );
 
 typedef int (*tlookup_request_f)(struct sip_msg*, int, int*);
@@ -80,10 +86,11 @@ int t_check_msg(struct sip_msg* , int *branch );
 
 typedef struct cell * (*tgett_f)(void);
 struct cell *get_t();
+int get_t_branch();
 
 /* use carefully or better not at all -- current transaction is 
  * primarily set by lookup functions */
-void set_t(struct cell *t);
+void set_t(struct cell *t, int branch);
 
 
 #define T_GET_TI       "t_get_trans_ident"

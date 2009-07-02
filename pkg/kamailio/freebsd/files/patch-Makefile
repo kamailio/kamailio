@@ -1,0 +1,78 @@
+--- Makefile.orig	Thu Dec 13 18:49:12 2007
++++ Makefile	Thu Dec 13 21:49:54 2007
+@@ -48,11 +48,11 @@
+ skip_modules?=
+ 
+ # if not set on the cmd. line or the env, exclude this modules:
+-exclude_modules?= jabber cpl-c mysql postgres osp unixodbc \
+-	avp_radius auth_radius group_radius uri_radius xmpp \
++exclude_modules?= 	$(MYSQL) $(POSTGRESQL) $(CPL) $(SNMPSTATS) $(TLSOPS) $(UNIXODBC) \
++	jabber osp avp_radius auth_radius group_radius uri_radius xmpp \
+ 	presence presence_xml presence_mwi pua pua_bla pua_mi \
+ 	pua_usrloc pua_xmpp rls mi_xmlrpc perl snmpstats perlvdb \
+-	ldap carrierroute h350 xcap_client db_berkeley seas
++	ldap carrierroute h350 xcap_client db_berkeley
+ ifeq ($(TLS),)
+ 	exclude_modules+= tlsops
+ endif
+@@ -392,24 +392,11 @@
+ 		
+ # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
+ install-cfg: $(cfg-prefix)/$(cfg-dir)
+-		sed -e "s#/usr/.*lib/$(NAME)/modules/#$(modules-target)#g" \
+-			< etc/$(NAME).cfg > $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample0
+-		sed -e "s#/usr/.*etc/$(NAME)/tls/#$(cfg-target)tls/#g" \
+-			< $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample0 \
+-			> $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample
+-		rm -fr $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample0
+-		chmod 644 $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample
+-		if [ -z "${skip_cfg_install}" -a \
+-				! -f $(cfg-prefix)/$(cfg-dir)$(NAME).cfg ]; then \
+-			mv -f $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample \
+-				$(cfg-prefix)/$(cfg-dir)$(NAME).cfg; \
+-		fi
+ 		# radius dictionary
+-		$(INSTALL_TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.radius.sample
+-		$(INSTALL_CFG) etc/dictionary.radius \
+-			$(cfg-prefix)/$(cfg-dir)/dictionary.radius.sample
++		$(INSTALL_TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default
++		$(INSTALL_CFG) etc/dictionary.radius $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default
+ 		if [ ! -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius ]; then \
+-			mv -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius.sample \
++			cp -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default \
+ 				$(cfg-prefix)/$(cfg-dir)/dictionary.radius; \
+ 		fi
+ 		# kamctl config
+@@ -445,7 +432,7 @@
+ 		sed -e "s#/usr/local/lib/kamailio/#$(lib-target)#g" | \
+ 		sed -e "s#/usr/local/etc/kamailio/#$(cfg-target)#g"  >/tmp/kamctl
+ 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/kamctl
+-		$(INSTALL_BIN) /tmp/kamctl $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) /tmp/kamctl $(bin-prefix)/$(bin-dir)
+ 		rm -fr /tmp/kamctl
+ 		sed -e "s#/usr/local/sbin#$(bin-target)#g" \
+ 			< scripts/kamctl.base > /tmp/kamctl.base
+@@ -492,10 +479,10 @@
+ 		sed -e "s#/usr/local/lib/kamailio/#$(lib-target)#g" | \
+ 		sed -e "s#/usr/local/etc/kamailio/#$(cfg-target)#g"  >/tmp/kamdbctl
+ 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/kamdbctl
+-		$(INSTALL_BIN) /tmp/kamdbctl $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) /tmp/kamdbctl $(bin-prefix)/$(bin-dir)
+ 		rm -fr /tmp/kamdbctl
+ 		$(INSTALL_TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)unix
+-		$(INSTALL_BIN) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
+ 		# install dbtext stuff
+ 		mkdir -p $(modules-prefix)/$(lib-dir)/kamctl ; \
+ 		sed -e "s#/usr/local/share/kamailio/#$(data-target)#g" \
+@@ -624,9 +611,7 @@
+ 			if [ -f modules/"$$r"/README ]; then \
+ 				$(INSTALL_TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
+ 				$(INSTALL_DOC)  modules/"$$r"/README  \
+-									$(doc-prefix)/$(doc-dir)/README ; \
+-				mv -f $(doc-prefix)/$(doc-dir)/README \
+-						$(doc-prefix)/$(doc-dir)/README."$$r" ; \
++					$(doc-prefix)/$(doc-dir)/README."$$r" ; \
+ 			fi ; \
+ 		fi ; \
+ 	done 

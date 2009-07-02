@@ -1,0 +1,40 @@
+<html>
+<!-- $Id$ -->
+<header>
+<title>
+Click-To-Dial
+</title>
+</header>
+
+<body>
+<h1>
+Click-To-Dial (using REFER)
+</h1>
+
+<i>Unfortunately, this example does not work. The reason is use of
+REFER for third-party call-control has not been standardized due
+to resistance of proponents of B2BUA use (which is somewhat bloated
+and not always operational).
+</i>
+
+<form method=POST action=click_to_dial.php>
+<table>
+<tr>
+<td>
+Caller's SIP Address
+<td>
+<input name=caller>
+<tr>
+<td>
+Callee's SIP Address
+<td>
+<input name=callee>
+<tr>
+<td>Click to dial
+<td>
+<input type=submit value=now>
+</table>
+</form>
+
+
+</body>

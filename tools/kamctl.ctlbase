@@ -1,0 +1,74 @@
+#
+# $Id$
+#
+# control tool for maintaining Kamailio
+#
+#===================================================================
+
+##### ----------------------------------------------- #####
+### common variables and functions for CTL engines
+#
+
+# period in which stats are reprinted
+if [ -z "$WATCH_PERIOD" ] ; then
+	WATCH_PERIOD=2
+fi
+
+#
+##### ------------------------------------------------ #####
+### usage functions
+#
+usage_cisco_restart() {
+	echo
+	mecho " -- command 'cisco_restart' - restart CISCO phone (NOTIFY)"
+	echo
+cat <<EOF
+ cisco_restart <uri> ................ restart phone configured for <uri>
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_cisco_restart"
+
+usage_online() {
+	echo
+	mecho " -- command 'online' - dump online users from memory"
+	echo
+cat <<EOF
+ online ............................. display online users
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_online"
+
+usage_openser_monitor() {
+	echo
+	mecho " -- command 'monitor' - show internal status"
+	echo
+cat <<EOF
+ monitor ............................ show server's internal status
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_openser_monitor"
+
+usage_ping() {
+	echo
+	mecho " -- command 'ping' - ping a SIP URI (OPTIONS)"
+	echo
+cat <<EOF
+ ping <uri> ......................... ping <uri> with SIP OPTIONS
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ping"
+
+usage_usrloc() {
+	echo
+	mecho " -- command 'ul|alias' - manage user location or aliases"
+	echo
+cat <<EOF
+ ul show [<username>]................ show in-RAM online users
+ ul show --brief..................... show in-RAM online users in short format
+ ul rm <username> [<contact URI>].... delete user's usrloc entries
+ ul add <username> <uri> ............ introduce a permanent usrloc entry
+ ul add <username> <uri> <expires> .. introduce a temporary usrloc entry
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_usrloc"
+

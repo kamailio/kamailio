@@ -2608,7 +2608,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		if (to_tag.len == 0)
 			return -1;
 		create = 0;
-		if (swap != 0) {
+		if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)) {
 			tmp = from_tag;
 			from_tag = to_tag;
 			to_tag = tmp;
@@ -2779,7 +2779,9 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 					 * a comma-separated list.
 					 */
 					for (cp = payload_types.s;
-					    cp < payload_types.s + payload_types.len; cp++) {
+							(cp < payload_types.s + payload_types.len) &&
+							(cp1 - (char *)v[1].iov_base < sizeof(opts) - 1);
+							cp++) {
 						if (isdigit(*cp)) {
 							*cp1 = *cp;
 							cp1++;
