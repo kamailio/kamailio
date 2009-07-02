@@ -2779,7 +2779,9 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 					 * a comma-separated list.
 					 */
 					for (cp = payload_types.s;
-					    cp < payload_types.s + payload_types.len; cp++) {
+							(cp < payload_types.s + payload_types.len) &&
+							(cp1 - (char *)v[1].iov_base < sizeof(opts) - 1);
+							cp++) {
 						if (isdigit(*cp)) {
 							*cp1 = *cp;
 							cp1++;
