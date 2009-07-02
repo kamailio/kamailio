@@ -29,7 +29,7 @@
 #define _DR_DR_BL_H
 
 #include "../../sr_module.h"
-#include "../../blacklists.h"
+//#include "../../blacklists.h"
 #include "prefix_tree.h"
 
 #define MAX_TYPES_PER_BL 32

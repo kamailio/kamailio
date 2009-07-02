@@ -125,12 +125,12 @@ int init_dr_bls(void)
 		bl_lists[i] = NULL;
 
 		/* create backlist for it */
-		drbl->bl = create_bl_head( 131313, 0/*flags*/, NULL, NULL, &name);
-		if (drbl->bl==NULL) {
-			LM_ERR("failed to create bl <%.*s>\n",name.len,name.s);
-			shm_free(drbl);
-			return -1;
-		}
+		//drbl->bl = create_bl_head( 131313, 0/*flags*/, NULL, NULL, &name);
+		//if (drbl->bl==NULL) {
+		//	LM_ERR("failed to create bl <%.*s>\n",name.len,name.s);
+		//	shm_free(drbl);
+		//	return -1;
+		//}
 
 		/* link it */
 		drbl->next = drbl_lists;
@@ -181,21 +181,21 @@ int populate_dr_bls(pgw_addr_t *pgwa)
 						continue;
 					}
 					/* add this destination to the BL */
-					add_rule_to_list( &drbl_first, &drbl_last,
-						gw_net,
-						NULL/*body*/,
-						0/*port*/,
-						PROTO_NONE/*proto*/,
-						0/*flags*/);
+					//add_rule_to_list( &drbl_first, &drbl_last,
+					//	gw_net,
+					//	NULL/*body*/,
+					//	0/*port*/,
+					//	PROTO_NONE/*proto*/,
+					//	0/*flags*/);
 					pkg_free(gw_net);
 				}
 			}
 		}
 		/* the new content for the BL */
-		if (add_list_to_head( drbl->bl, drbl_first, drbl_last, 1, 0)!=0) {
-			LM_ERR("failed to update bl\n");
-			return -1;
-		}
+		//if (add_list_to_head( drbl->bl, drbl_first, drbl_last, 1, 0)!=0) {
+		//	LM_ERR("failed to update bl\n");
+		//	return -1;
+		//}
 	}
 
 	return 0;
