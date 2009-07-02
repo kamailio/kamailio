@@ -39,6 +39,7 @@
 #include "h_table.h"
 #include "t_lookup.h"
 #include "t_fwd.h"
+#include "t_funcs.h"
 #include "timer.h"
 #include "t_suspend.h"
 
@@ -145,6 +146,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		Not a huge problem, fr timer will fire, but CANCEL
 		will not be sent. last_received will be set to 408. */
 
+	reset_kr();
+
 	/* fake the request and the environment, like in failure_route */
 	if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {
 		LOG(L_ERR, "ERROR: t_continue: fake_req failed\n");
@@ -171,9 +174,44 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	/* update the flags */
 	t->uas.request->flags = faked_req.flags;
 
+	if (t->uas.status < 200) {
+		/* No final reply has been sent yet.
+		 * Check whether or not there is any pending branch.
+		 */
+		for (	branch = 0;
+			branch < t->nr_of_outgoings;
+			branch++
+		) {
+			if ((t->uac[branch].request.buffer != NULL)
+				&& (t->uac[branch].last_received < 200)
+			)
+				break;
+		}
+
+		if (branch == t->nr_of_outgoings) {
+			/* There is not any open branch so there is
+			 * no chance that a final response will be received.
+			 * The script has hopefully set the error code. If not,
+			 * let us reply with a default error.
+			 */
+			if ((kill_transaction_unsafe(t,
+				tm_error ? tm_error : E_UNSPEC)) <=0
+			) {
+				LOG(L_ERR, "ERROR: t_continue: "
+					"reply generation failed\n");
+				/* The transaction must be explicitely released,
+				no more timer is running */
+				UNLOCK_REPLIES(t);
+				t_release_transaction(t);
+				t_unref(t->uas.request);
+				return 0;
+		        }
+		}
+	}
+
 	UNLOCK_REPLIES(t);
 
-	/* release the transaction */
+	/* unref the transaction */
 	t_unref(t->uas.request);
 
 	return 0;
