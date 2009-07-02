@@ -351,8 +351,7 @@ add_dst(
 	}
 	/* note we discard the port discovered by the resolve function - we are
 	interested only in the port that was actually configured. */
-	if ( (he=sip_resolvehost( &uri.host, NULL, &uri.proto,
-	(uri.type==SIPS_URI_T), 0))==0 ) {
+	if ( (he=sip_resolvehost( &uri.host, NULL, (char*)(void*)&uri.proto)==0 )) {
 		if(dr_force_dns)
 		{
 			LM_ERR("cannot resolve <%.*s>\n",
