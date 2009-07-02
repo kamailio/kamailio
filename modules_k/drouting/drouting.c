@@ -76,7 +76,7 @@ static str drg_user_col = str_init("username");
 static str drg_domain_col = str_init("domain");
 static str drg_grpid_col = str_init("groupid");
 /* variables */
-static db_con_t  *db_hdl=0;     /* DB handler */
+static db1_con_t  *db_hdl=0;     /* DB handler */
 static db_func_t dr_dbf;        /* DB functions */
 
 /* current dr data - pointer to a pointer in shm */
@@ -205,6 +205,26 @@ struct module_exports exports = {
 };
 
 
+/**
+ * Rewrite Request-URI
+ */
+static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
+{
+   struct action act;
+   struct run_act_ctx ra_ctx;
+
+   memset(&act, '\0', sizeof(act));
+   act.type = SET_URI_T;
+   act.val[0].type = STRING_ST;
+   act.val[0].u.string = _s;
+   init_run_actions_ctx(&ra_ctx);
+   if (do_action(&ra_ctx, &act, _m) < 0)
+   {
+      LM_ERR("do_action failed\n");
+      return -1;
+   }
+   return 0;
+}
 
 static inline int dr_reload_data( void )
 {
@@ -478,20 +498,20 @@ static inline int get_group_id(struct sip_uri *uri)
 	db_key_t keys_ret[1];
 	db_key_t keys_cmp[2];
 	db_val_t vals_cmp[2];
-	db_res_t* res;
+	db1_res_t* res;
 	int n;
 
 
 	/* user */
 	keys_cmp[0] = &drg_user_col;
-	vals_cmp[0].type = DB_STR;
+	vals_cmp[0].type = DB1_STR;
 	vals_cmp[0].nul  = 0;
 	vals_cmp[0].val.str_val = uri->user;
 	n = 1;
 
 	if (use_domain) {
 		keys_cmp[1] = &drg_domain_col;
-		vals_cmp[1].type = DB_STR;
+		vals_cmp[1].type = DB1_STR;
 		vals_cmp[1].nul  = 0;
 		vals_cmp[1].val.str_val = uri->host;
 		n++;
@@ -511,7 +531,7 @@ static inline int get_group_id(struct sip_uri *uri)
 			uri->host.len, uri->host.s);
 		goto error;
 	}
-	if (res->rows[0].values[0].nul || res->rows[0].values[0].type!=DB_INT) {
+	if (res->rows[0].values[0].nul || res->rows[0].values[0].type!=DB1_INT) {
 		LM_ERR("null or non-integer group_id\n");
 		goto error;
 	}
@@ -612,7 +632,7 @@ static int use_next_gw(struct sip_msg* msg)
 
 	if (!avp) return -1;
 
-	if (set_ruri( msg, &val.s)==-1) {
+	if (rewrite_ruri(msg, &val.s.s)==-1) {
 		LM_ERR("failed to rewite RURI\n");
 		return -1;
 	}

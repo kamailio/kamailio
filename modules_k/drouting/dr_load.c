@@ -34,7 +34,7 @@
 
 
 #include "../../dprint.h"
-#include "../../db/db.h"
+//#include "../../db/db.h"
 #include "../../mem/shm_mem.h"
 
 #include "dr_load.h"
@@ -276,14 +276,14 @@ error:
 }
 
 
-rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db_con_t* db_hdl,
+rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db1_con_t* db_hdl,
 							str *drd_table, str *drl_table, str* drr_table )
 {
 	int    int_vals[4];
 	char * str_vals[4];
 	str tmp;
 	db_key_t columns[7];
-	db_res_t* res;
+	db1_res_t* res;
 	db_row_t* row;
 	rt_info_t *ri;
 	rt_data_t *rdata;
@@ -341,22 +341,22 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db_con_t* db_hdl,
 		for(i=0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 			/* DST_ID column */
-			check_val( ROW_VALUES(row), DB_INT, 1, 0);
+			check_val( ROW_VALUES(row), DB1_INT, 1, 0);
 			int_vals[0] = VAL_INT   (ROW_VALUES(row));
 			/* ADDRESS column */
-			check_val( ROW_VALUES(row)+1, DB_STRING, 1, 1);
+			check_val( ROW_VALUES(row)+1, DB1_STRING, 1, 1);
 			str_vals[0] = (char*)VAL_STRING(ROW_VALUES(row)+1);
 			/* STRIP column */
-			check_val( ROW_VALUES(row)+2, DB_INT, 1, 0);
+			check_val( ROW_VALUES(row)+2, DB1_INT, 1, 0);
 			int_vals[1] = VAL_INT   (ROW_VALUES(row)+2);
 			/* PREFIX column */
-			check_val( ROW_VALUES(row)+3, DB_STRING, 0, 0);
+			check_val( ROW_VALUES(row)+3, DB1_STRING, 0, 0);
 			str_vals[1] = (char*)VAL_STRING(ROW_VALUES(row)+3);
 			/* TYPE column */
-			check_val( ROW_VALUES(row)+4, DB_INT, 1, 0);
+			check_val( ROW_VALUES(row)+4, DB1_INT, 1, 0);
 			int_vals[2] = VAL_INT(ROW_VALUES(row)+4);
 			/* ATTRS column */
-			check_val( ROW_VALUES(row)+5, DB_STRING, 0, 0);
+			check_val( ROW_VALUES(row)+5, DB1_STRING, 0, 0);
 			str_vals[2] = (char*)VAL_STRING(ROW_VALUES(row)+5);
 
 			/* add the destinaton definition in */
@@ -421,10 +421,10 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db_con_t* db_hdl,
 			for(i=0; i < RES_ROW_N(res); i++) {
 				row = RES_ROWS(res) + i;
 				/* ID column */
-				check_val( ROW_VALUES(row), DB_INT, 1, 0);
+				check_val( ROW_VALUES(row), DB1_INT, 1, 0);
 				int_vals[0] = VAL_INT   (ROW_VALUES(row));
 				/* GWLIST column */
-				check_val( ROW_VALUES(row)+1, DB_STRING, 1, 1);
+				check_val( ROW_VALUES(row)+1, DB1_STRING, 1, 1);
 				str_vals[0] = (char*)VAL_STRING(ROW_VALUES(row)+1);
 
 				if (add_tmp_gw_list(int_vals[0], str_vals[0])!=0) {
@@ -487,13 +487,13 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db_con_t* db_hdl,
 		for(i=0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 			/* RULE_ID column */
-			check_val( ROW_VALUES(row), DB_INT, 1, 0);
+			check_val( ROW_VALUES(row), DB1_INT, 1, 0);
 			int_vals[0] = VAL_INT (ROW_VALUES(row));
 			/* GROUP column */
-			check_val( ROW_VALUES(row)+1, DB_STRING, 1, 1);
+			check_val( ROW_VALUES(row)+1, DB1_STRING, 1, 1);
 			str_vals[0] = (char*)VAL_STRING(ROW_VALUES(row)+1);
 			/* PREFIX column - it may be null or empty */
-			check_val( ROW_VALUES(row)+2, DB_STRING, 0, 0);
+			check_val( ROW_VALUES(row)+2, DB1_STRING, 0, 0);
 			if ((ROW_VALUES(row)+2)->nul || VAL_STRING(ROW_VALUES(row)+2)==0){
 				tmp.s = NULL;
 				tmp.len = 0;
@@ -503,16 +503,16 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db_con_t* db_hdl,
 				tmp.len = strlen(str_vals[1]);
 			}
 			/* TIME column */
-			check_val( ROW_VALUES(row)+3, DB_STRING, 1, 1);
+			check_val( ROW_VALUES(row)+3, DB1_STRING, 1, 1);
 			str_vals[2] = (char*)VAL_STRING(ROW_VALUES(row)+3);
 			/* PRIORITY column */
-			check_val( ROW_VALUES(row)+4, DB_INT, 1, 0);
+			check_val( ROW_VALUES(row)+4, DB1_INT, 1, 0);
 			int_vals[2] = VAL_INT   (ROW_VALUES(row)+4);
 			/* ROUTE_ID column */
-			check_val( ROW_VALUES(row)+5, DB_INT, 1, 0);
+			check_val( ROW_VALUES(row)+5, DB1_INT, 1, 0);
 			int_vals[3] = VAL_INT   (ROW_VALUES(row)+5);
 			/* DSTLIST column */
-			check_val( ROW_VALUES(row)+6, DB_STRING, 1, 1);
+			check_val( ROW_VALUES(row)+6, DB1_STRING, 1, 1);
 			str_vals[3] = (char*)VAL_STRING(ROW_VALUES(row)+6);
 			/* parse the time definition */
 			if ((time_rec=parse_time_def(str_vals[2]))==0) {
