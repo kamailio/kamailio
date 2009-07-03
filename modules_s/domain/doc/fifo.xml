@@ -15,15 +15,16 @@
     <title>FIFO Interface</title>
 
     <section id="domain_reload">
-	<title><function>domain_reload</function></title>
+	<title><function>domain.reload</function></title>
 	<para>
-	    Causes domain module to re-read the contents of domain table
-	    into cache memory.
+	    Causes domain module to re-read the contents of domain table into
+	    cache memory. If domain-level attributes are used then it will also
+	    re-load the contents of the domain_attrs table in the memory cache.
 	</para>
     </section>
 
     <section id="domain_dump">
-	<title><function>domain_dump</function></title>
+	<title><function>domain.dump</function></title>
 	<para>
 	    Causes domain module to dump hash indexes and domain names in its
 	    cache memory.

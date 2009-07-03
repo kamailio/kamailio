@@ -14,39 +14,123 @@
 
     <title>Functions</title>
 
-    <section id="is_from_local">
-	<title><function>is_from_local()</function></title>
-	<para>
-	    Checks based on domain table if host part of From header uri is one
-	    of the local domains that the proxy is responsible for
-	</para>
-	<example>
-	    <title>is_from_local usage</title>
-	    <programlisting>
+	<section id="is_local">
+		<title><function>is_local(domain)</function></title>
+		<para>
+			This function can be used to test whether a given domain name in
+			parameter belongs to one of the virtual domains defined in the
+			domain table. Such domain name is said to be local. The function
+			returns 1 if the domain name is found in the domain table and -1
+			otherwise.
+		</para>
+		<para>
+			The first parameter of the function can be anything that returns a
+			string with domain name. In its simplest form it can be a string
+			with domain name: is_local("iptel.org"). You can also test a
+			domain name stored in an attribute: is_local("$my_domain"). And
+			finally you can test a domain name present in the SIP message with
+			selects: is_local("@ruri.host").
+		</para>
+		<para>
+			Note: Unlike function <function>lookup_domain</function>, this
+			function does not make domain attributes of the virtual domain
+			available to the script. Domain attributes are simply ignored by
+			this function.
+		</para>
+		<example>
+			<title>is_uri_host_local_local usage</title>
+			<programlisting>
 ...
-if (is_from_local()) {
-    ...
-};
+if (is_local("@ruri.host")) {
+    /* Domain part of Request-URI is local */
+}
 ...
-	    </programlisting>
-	</example>
-    </section>
+			</programlisting>
+		</example>
+	</section>
 
-    <section id="is_uri_host_local">
-	<title><function>is_uri_host_local()</function></title>
-	<para>
-	    Checks based on domain table if host part of Request-URI is one of
-	    the local domains that the proxy is responsible for
-	</para>
-	<example>
-	    <title>is_uri_host_local_local usage</title>
-	    <programlisting>
-...
-if (is_uri_host_local()) {
-    ...
-};
-...
-	    </programlisting>
-	</example>
-    </section>
+	<section id="lookup_domain">
+		<title><function>lookup_domain(attr_group, domain)</function></title>
+		<para>
+			This is the main function of the domain module. It can be used to
+			implement support for virtual domains in the SIP server. Each
+			virtual domain is identified by a unique identifier (opaque
+			string) and it can have one or more associated domain names. Given
+			a domain name in the second parameter, this function finds the
+			associated virtual domain identifier (known as DID) and stores it
+			in an attribute for later user. In addition to that the function
+			also loads all domain-level attributes for the virtual domain and
+			makes them available to the configuration script.
+		</para>
+		<para>
+			The first parameter of the function identifies the group of
+			attributes where the DID and domain-level attributes shall be
+			stored. The value of the first parameter can be either "$fd" for
+			the domain-level attribute group that belongs to the calling party
+			(From), or "$td" for the domain-level attribute group that belongs
+			to the called party (Request-URI).
+		</para>
+		<para>
+			The value of the second parameter can be a simple string, an
+			attribute name, or a select. See the documentation of function
+			<function>is_local</function> for more details.
+		</para>
+		<para>
+			If a match is found then the DID of the virtual domain will be
+			stored either in $fd.did or in $td.did, depending on the value of
+			the first parameter. In addition to that domain-level attributes,
+			if any, will be available as either $fd.<name> or $td.</name>.
+		</para>
+		<para>
+			The function returns 1 when a matching virtual domain for the
+			given domain name was found and -1 otherwise.
+		</para>
+		<para>
+			The following example shows a typical use of the function. In a
+			multi domain setup, one has to typically figure out where the both
+			the calling and the called domains are local (i.e. configured on
+			the server as the domains the server is responsible for). This is
+			typically done by calling function
+			<function>lookup_domain</function> twice, once with the hostname
+			part of the From header as parameter and secondly with the
+			hostname part of the Request-URI as parameter.
+		</para>
+		<para>
+			The type of the situation can be then determined from the value of
+			corresponding attributes ($t.did and $f.did). A non-existing
+			attribute value indicates that the domain name is not local (it
+			does not belong to any virtual domain configured in the domain
+			table).
+		</para>
+		<example>
+			<title>lookup_domain usage</title>
+			<programlisting>
+lookup_domain("$fd", "@from.uri.host");
+lookup_domain("$td", "@ruri.host");
+
+if (strempty($f.did) &amp;&amp; strempty($t.did)) {
+    # Neither the calling nor the called domain is local
+    # This is a relaying attempt which should be forbidden
+    sl_reply("403", "Relaying Forbidden");
+    drop;
+}
+if (strempty($f.did) &amp;&amp; $t.did) {
+    # The calling domain is not local and the called domain
+    # is local, this is an inbound call from a 3rd party
+    # user to one of local users
+}
+if ($f.did &amp;&amp; strempty($t.did)) {
+    # The calling domain is local and the called domain
+    # is not local, this is an outbound call from one of
+    # our users to a 3rd party user
+}
+if ($f.did &amp;&amp; $t.did) {
+    # Both the calling and the called domains are local,
+    # one of our local users calls another local user,
+    # either in the same virtual domain or in another
+    # virtual domain hosted on the same server
+}
+			</programlisting>
+		</example>
+	</section>
 </section>

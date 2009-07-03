@@ -3,80 +3,267 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="domain.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </sectioninfo>
-
-    <title>Parameters</title>
-
-    <section id="domain.db_url">
-	<title><varname>db_url</varname> (string)</title>
-	<para>
-	    This is <acronym>URL</acronym> of the database to be used.
-	</para>
-	<para>
-	    Default value is "mysql://serro:47serro11@localhost/ser"
-	</para>
-	<example>
-	    <title>Setting db_url parameter</title>
-	    <programlisting>
+	<sectioninfo>
+		<revhistory>
+			<revision>
+				<revnumber>$Revision$</revnumber>
+				<date>$Date$</date>
+			</revision>
+		</revhistory>
+	</sectioninfo>
+	
+	<title>Parameters</title>
+	
+	<section id="domain.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+			This is <acronym>URL</acronym> of the database to be used.
+		</para>
+		<para>
+			Default value is "mysql://serro:47serro11@localhost/ser"
+		</para>
+		<example>
+			<title>Setting db_url parameter</title>
+			<programlisting>
 modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
-	    </programlisting>
-	</example>
-    </section>
-
-    <section id="db_mode">
-	<title><varname>db_mode</varname> (integer)</title>
-	<para>
-	    Database mode. 0 means non-caching, 1 means caching.
-	</para>
-	<para>
-	    Default value is 0 (non-caching).
-	</para>
-	<example>
-	    <title>nonce_expire example</title>
-	    <programlisting>
-modparam("domain", "db_mode", 1)   # Use caching
-	    </programlisting>
-	</example>
-    </section>
-
-    <section id="domain_table">
-	<title><varname>domain_table</varname> (string)</title>
-	<para>
-	    Name of table containing names of local domains that the proxy is
-	    responsible for.  Local users must have in their sip uri a host
-	    part that is equal to one of these domains.
-	</para>
-	<para>
-	    Default value is "domain".
-	</para>
-	<example>
-	    <title>Setting domain_table parameter</title>
-	    <programlisting>
+			</programlisting>
+		</example>
+	</section>
+	
+	<section id="db_mode">
+		<title><varname>db_mode</varname> (integer)</title>
+		<para>
+			Database mode. 0 means non-caching, 1 means caching is enabled. It
+			is highly recommended to enable caching if you want to use
+			domain-level attributes.
+		</para>
+		<para>
+			Default value is 1 (non-caching).
+		</para>
+		<example>
+			<title>nonce_expire example</title>
+			<programlisting>
+				modparam("domain", "db_mode", 1)   # Use caching
+			</programlisting>
+		</example>
+	</section>
+	
+	<section id="domain_table">
+		<title><varname>domain_table</varname> (string)</title>
+		<para>
+			Name of table containing names of local domains that the proxy is
+			responsible for.  Local users must have in their SIP URI a host
+			part that is equal to one of the domains stored in this table.
+		</para>
+		<para>
+			Default value is "domain".
+		</para>
+		<example>
+			<title>Setting domain_table parameter</title>
+			<programlisting>
 modparam("domain", "domain_table", "new_name")
-	    </programlisting>
-	</example>
-    </section>
-    
-    <section id="domain.domain_column">
-	<title><varname>domain_column</varname> (string)</title>
-	<para>
-	    Name of column containing domains in domain table.
-	</para>
-	<para>
-	    Default value is "domain".
-	</para>
-	<example>
-	    <title>Setting domain_column parameter</title>
-	    <programlisting>
-modparam("domain", "domain_column", "domain_col")
-	    </programlisting>
-	</example>
-    </section>
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domain.did_column">
+		<title><varname>did_col</varname> (string)</title>
+		<para>
+			This is the name of the column in domain table that contains the
+			unique identifiers of virtual domains. Domains names found in this
+			table are arranged into virtual domains. Each virtual domain must
+			have a unique identifier and it can contain one or more domain
+			names.
+		</para>
+		<para>
+			Default value is "did".
+		</para>
+		<example>
+			<title>Setting did_col parameter</title>
+			<programlisting>
+modparam("domain", "did_col", "did")
+			</programlisting>
+		</example>
+	</section>
+	
+	<section id="domain.domain_col">
+		<title><varname>domain_col</varname> (string)</title>
+		<para>
+			Name of column containing domain names in the domain table.
+		</para>
+		<para>
+			Default value is "domain".
+		</para>
+		<example>
+			<title>Setting domain_col parameter</title>
+			<programlisting>
+modparam("domain", "domain_col", "domain")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domain.flags_col">
+		<title><varname>flags_col</varname> (string)</title>
+		<para>
+			This is the name of the column in domain table which stores
+			various flags. Each row in the table has a bunch of generic flags
+			that can be used mark the row disabled, deleted, etc. The flags
+			allow for more flexible administration of the data in the database
+			and they are present in several other tables too.
+		</para>
+		<para>
+			Default value is "flags".
+		</para>
+		<example>
+			<title>Setting flags_col parameter</title>
+			<programlisting>
+modparam("domain", "flags_col", "domain")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domattr_table">
+		<title><varname>domattr_table</varname> (string)</title>
+		<para>
+			This parameter can be used to configure the name of the table that
+			is used to store domain-level attributes. Domain level attributes
+			are attributes that are associated with a particular virtual
+			domain. They are typically used to store additional domain-wide
+			settings that should apply to all users who belong to the domain.
+		</para>
+		<para>
+			Default value is "domain_attrs".
+		</para>
+		<example>
+			<title>Setting domattrs_table parameter</title>
+			<programlisting>
+modparam("domain", "domattr_table", "domain_attrs")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domattr_did">
+		<title><varname>domattr_did</varname> (string)</title>
+		<para>
+			Use this parameter to configure the name of the column in
+			domain_attrs table that is used to store the did of the virtual
+			domain the attribute belongs to. Normally there is no need to
+			configure this parameter, unless you want adapt to module to a
+			different database schema.
+		</para>
+		<para>
+			Default value is "did".
+		</para>
+		<example>
+			<title>Setting domattrs_did parameter</title>
+			<programlisting>
+modparam("domain", "domattr_did", "did")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domattr_name">
+		<title><varname>domattr_name</varname> (string)</title>
+		<para>
+			Use this parameter to configure the name of the column in
+			domain_attrs table that is used to store the name of the
+			attribute. Normally there is no need to configure this parameter,
+			unless you want adapt to module to a different database schema.
+		</para>
+		<para>
+			Default value is "name".
+		</para>
+		<example>
+			<title>Setting domattrs_name parameter</title>
+			<programlisting>
+modparam("domain", "domattr_name", "name")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domattr_type">
+		<title><varname>domattr_type</varname> (string)</title>
+		<para>
+			Use this parameter to configure the name of the column in
+			domain_attrs table that is used to store the type of the
+			attribute. Normally there is no need to configure this parameter,
+			unless you want adapt to module to a different database schema.
+		</para>
+		<para>
+			Default value is "type".
+		</para>
+		<example>
+			<title>Setting domattrs_type parameter</title>
+			<programlisting>
+modparam("domain", "domattr_type", "type")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domattr_value">
+		<title><varname>domattr_value</varname> (string)</title>
+		<para>
+			Use this parameter to configure the name of the column in
+			domain_attrs table that is used to store the value of the
+			attribute. Normally there is no need to configure this parameter,
+			unless you want adapt to module to a different database schema.
+		</para>
+		<para>
+			Default value is "value".
+		</para>
+		<example>
+			<title>Setting domattrs_value parameter</title>
+			<programlisting>
+modparam("domain", "domattr_value", "value")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="domattr_flags">
+		<title><varname>domattr_flags</varname> (string)</title>
+		<para>
+			This is the name of the column in domain_attrs table which stores
+			various flags. Each row in the table has a bunch of generic flags
+			that can be used mark the row disabled, deleted, etc. The flags
+			allow for more flexible administration of the data in the database
+			and they are present in several other tables too. You do not have
+			to touch this parameter under normal circumstances.
+		</para>
+
+		<para>
+			Default value is "flags".
+		</para>
+		<example>
+			<title>Setting domattrs_flags parameter</title>
+			<programlisting>
+modparam("domain", "domattr_flags", "flags")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="load_domain_attrs">
+		<title><varname>load_domain_attrs</varname> (integer)</title>
+		<para>
+			This parameter can be used to enable/disable user of domain-level
+			attributes. Domain-level attributes are variables that can be used
+			to store additional configuration that applies to the whole
+			virtual domain and all users within the virtual
+			domain. Domain-level attributes are stored in domain_attrs. If you
+			set this parameter to a non-zero value then the server will make
+			domain-level attributes available to the script every time you
+			call function <function>lookup_domain</function>. If you set the
+			parameter to 0 then domain-level attributes will be ignored, the
+			domain module will not load them from the database and the lookup
+			function will not make them available to the script.
+		</para>
+		<para>
+			Default value is 0.
+		</para>
+		<example>
+			<title>Setting load_domain_attrs parameter</title>
+			<programlisting>
+modparam("domain", "load_domain_attrs", 1)
+			</programlisting>
+		</example>
+	</section>
 </section>
