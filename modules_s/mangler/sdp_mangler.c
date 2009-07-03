@@ -50,6 +50,10 @@
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
 
+regex_t *portExpression;
+regex_t *ipExpression;
+
+
 
 int
 sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)

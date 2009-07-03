@@ -197,11 +197,17 @@
 /* maximum path length */
 #define PATH_MAX_GUESS	1024
 
-#define DEFAULT_DB_URL "mysql://ser:heslo@localhost/ser"
-#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
-
-#define DEFAULT_RODB_URL "mysql://serro:47serro11@localhost/ser"
-#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
+#ifdef OPENSER_MOD_INTERFACE
+	#define DEFAULT_DB_URL "mysql://openser:openserrw@localhost/openser"
+	#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
+	#define DEFAULT_RODB_URL "mysql://openserro:openserro@localhost/openser"
+	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
+#else
+	#define DEFAULT_DB_URL "mysql://ser:heslo@localhost/ser"
+	#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
+	#define DEFAULT_RODB_URL "mysql://serro:47serro11@localhost/ser"
+	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
+#endif
 
 /* table holding versions of other ser tables */
 #define VERSION_TABLE "version"
