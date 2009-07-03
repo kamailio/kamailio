@@ -1,0 +1,62 @@
+
+June 23, 2005
+  Implemented routing and authorization validation.  The module can:
+   o Request authorization and routing information from an OSP server
+   o Use provided routes to:
+     o Redirect the originating UI to all routes OR
+     o Try all routes simultaneously using parallel forking OR
+     o Try routes in the order they were received using sequential forking
+   o Add and retrieve P-OSP-Auth-Token header
+   o Perform local validation of the P-OSP-Auth-Token
+
+September 12, 2005
+   o Bug 4863 - the module will remove OSP Auth token from the incoming Invite
+     after validating the token and before forwarding Invite to the next hop.
+   o Bug 4891 - added a new flag 'validate_call_id' for disabling call id
+     validation in OSP tokens.  The value is optional, call id validation
+     can be turned off by setting the value to 0 (No).  It may be used for
+     interoperability issues with some OSP clients sending invalid call ids
+     in Authorization Requests.
+   o Bug 4986 - changed return value for 'prepareallosproutes' from
+     0 - stop routing logic to 1 - true
+   o Bug 5039 - changed return value for 'preparenextosproute' when there is
+     no more routes from 0 - stop routing logic to -1 - false
+   o Bug 5039 - changed return value for 'preparenextosproute' when there is
+   o Bug 4893 - sequential routing (in failure_route[1]) now checks for code 
+     487 (Canceled) before trying the next OSP route.
+     Note - this check does not work when UAC cancels the call while SER is 
+     trying to connect to an unresponsive UAS, code 408 (time out) masks
+     code 487.  See new function 't_was_cancelled' in the 'tm' module.
+   o Bug 4892 - removed trailing binary chars from some log messages.
+   o Bug 4987 - fixed a compile time error on Solaris
+   o Bug 4946 - added README file
+
+September 26, 2005
+   o Bug 5094 - don't route the call if OSP token validation fails.
+   o Bug 5109 - send "100 Trying" message before requesting OSP routes.
+   o Bug 5111 - fixed typos in error messages.
+   o Bug 5153 - removed trailing binary chars from P-OSP-Auth-Token header
+                value.
+
+October 3, 2005
+   o Report OSP usage indications after the call set-up and tear down
+     transactions complete.
+
+October 17, 2005
+   o Report call set-up usage indication after receiving either 200 or 202.
+   o Report termination cause code for duration usage indications as 10,016
+     instead of 1,016.
+   o Improved error checking and logging.
+   o Bug 5366 - removed a memory leak in usage reporting logic.
+
+October 31, 2005
+   o Copied files from cvs.berlios.de:/cvsroot/osp-module to cvs.berlios.de:/cvsroot/ser
+
+2006 September 5
+   o Using BRAND_ROUTE approach to add route specific header to avoid sending
+     an OSP token to a non-OSP destination.
+   o Using called number in Request-Line for token validation and auth request.
+   o Sending DeviceInfo in "[x.x.x.x]" format in OSP AuthReq messages.
+   o Using fromtag in RR to report who releases the call first.
+   o Using AVP to add RR paramters for inserting OSP cookies.
+
