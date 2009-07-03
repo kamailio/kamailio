@@ -1041,11 +1041,11 @@ int km_parse_avp_spec( str *name, int *type, int_str *avp_name)
 
 	p = (char*)memchr((void*)name->s, ':', name->len);
 	if (p==NULL) {
-		/* it's an avp alias */
-		return lookup_avp_galias( name, type, avp_name);
-	} else {
-		return parse_avp_name( name, type, avp_name, &index);
+		/* might be kamailio avp alias or ser avp name style */
+		if(lookup_avp_galias( name, type, avp_name)==0)
+			return 0; /* found */
 	}
+	return parse_avp_name( name, type, avp_name, &index);
 }
 
 
