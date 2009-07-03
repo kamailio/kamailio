@@ -66,7 +66,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		mapping[i].def = &(def[i]);
 		mapping[i].name_len = strlen(def[i].name);
 		/* record all the types for sanity checks */
-		types|=CFG_VAR_MASK(def[i].type);
+		types|=1 << CFG_VAR_MASK(def[i].type);
 
 		/* padding depends on the type of the next variable */
 		switch (CFG_VAR_MASK(def[i].type)) {
@@ -133,7 +133,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 	/* fix the computed size (char*, str or pointer members will force 
 	   structure padding to multiple of sizeof(pointer)) */
-	if (types & (CFG_VAR_STRING|CFG_VAR_STR|CFG_VAR_POINTER))
+	if (types & ((1<<CFG_VAR_STRING)|(1<<CFG_VAR_STR)|(1<<CFG_VAR_POINTER)))
 		size=ROUND_POINTER(size);
 	/* minor validation */
 	if (size != def_size) {
