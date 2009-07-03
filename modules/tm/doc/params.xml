@@ -874,4 +874,34 @@ modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 			</programlisting>
 		</example>
 	</section>
+
+	<section id="unmatched_cancel">
+		<title><varname>unmatched_cancel</varname> (string)</title>
+		<para>
+			This parameter selects between forwarding CANCELs
+			that do not match any transaction statefully (0,
+			default value), statelessly (1) or dropping them
+			(2). Note that the statefull forwarding has an
+			additional hidden advantage: tm will be able to
+			recognize INVITEs that arrive after their CANCEL.
+			Note also that this feature could be used to try
+			a memory exhaustion DOS attack against a proxy that
+			authenticates all requests, by continuously flooding
+			the victim with CANCELs to random destinations
+			(since the CANCEL cannot be authenticated, each
+			received bogus CANCEL will create a new transaction
+			that will live by default 30s).
+		</para>
+		<para>
+			Default value is 0.
+		</para>
+		<example>
+			<title>Set <varname>unmatched_cancel</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "unmatched_cancel", "2")
+...
+			</programlisting>
+		</example>
+	</section>
 </section>

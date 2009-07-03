@@ -48,6 +48,7 @@ Juha Heinanen
         1.3.27. contacts_avp (string)
         1.3.28. fr_timer_avp (string)
         1.3.29. fr_inv_timer_avp (string)
+        1.3.30. unmatched_cancel (string)
 
    1.4. Functions
 
@@ -755,6 +756,25 @@ Note
 modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 ...
 
+1.3.30. unmatched_cancel (string)
+
+   This parameter selects between forwarding CANCELs that do not match any
+   transaction statefully (0, default value), statelessly (1) or dropping
+   them (2). Note that the statefull forwarding has an additional hidden
+   advantage: tm will be able to recognize INVITEs that arrive after their
+   CANCEL. Note also that this feature could be used to try a memory
+   exhaustion DOS attack against a proxy that authenticates all requests,
+   by continuously flooding the victim with CANCELs to random destinations
+   (since the CANCEL cannot be authenticated, each received bogus CANCEL
+   will create a new transaction that will live by default 30s).
+
+   Default value is 0.
+
+   Example 30. Set unmatched_cancel parameter
+...
+modparam("tm", "unmatched_cancel", "2")
+...
+
 1.4. Functions
 
    Revision History
@@ -780,7 +800,7 @@ t_relay_to_sctp(ip, port) t_relay_to_sctp()
    derived from the message uri (using sip sepcific DNS lookups), but with
    the protocol corresponding to the function name.
 
-   Example 30. t_relay_to_udp usage
+   Example 31. t_relay_to_udp usage
 ...
 if (src_ip==10.0.0.0/8)
         t_relay_to_udp("1.2.3.4", "5060"); # sent to 1.2.3.4:5060 over udp
@@ -807,7 +827,7 @@ else
    Returns a negative value on failure--you may still want to send a
    negative reply upstream statelessly not to leave upstream UAC in lurch.
 
-   Example 31. t_relay usage
+   Example 32. t_relay usage
 ...
 if (!t_relay())
 {
@@ -836,7 +856,7 @@ if (!t_relay())
    Meaning of the parameters is as follows:
      * failure_route - Failure route block to be called.
 
-   Example 32. t_on_failure usage
+   Example 33. t_on_failure usage
 ...
 route {
     t_on_failure("1");
@@ -862,7 +882,7 @@ failure_route[1] {
    Meaning of the parameters is as follows:
      * onreply_route - Onreply route block to be called.
 
-   Example 33. t_on_reply usage
+   Example 34. t_on_reply usage
 ...
 loadmodule "/usr/local/lib/ser/modules/nathelper.so"
 ...
@@ -894,7 +914,7 @@ es');
    Meaning of the parameters is as follows:
      * branch_route - branch route block to be called.
 
-   Example 34. t_on_branch usage
+   Example 35. t_on_branch usage
 ...
 route {
         t_on_branch("1");
@@ -912,7 +932,7 @@ branch_route[1] {
    Similarly to t_fork_to, it extends destination set by a new entry. The
    difference is that current URI is taken as new entry.
 
-   Example 35. append_branch usage
+   Example 36. append_branch usage
 ...
 set_user("john");
 t_fork();
@@ -927,7 +947,7 @@ t_relay();
    the only way a script can add a new transaction in an atomic way.
    Typically, it is used to deploy a UAS.
 
-   Example 36. t_newtran usage
+   Example 37. t_newtran usage
 ...
 if (t_newtran()) {
     log("UAS logic");
@@ -946,7 +966,7 @@ if (t_newtran()) {
      * code - Reply code number.
      * reason_phrase - Reason string.
 
-   Example 37. t_reply usage
+   Example 38. t_reply usage
 ...
 t_reply("404", "Not found");
 ...
@@ -959,7 +979,7 @@ t_reply("404", "Not found");
    none was found. However this is safely (atomically) done using
    t_newtran.
 
-   Example 38. t_lookup_request usage
+   Example 39. t_lookup_request usage
 ...
 if (t_lookup_request()) {
     ...
@@ -970,7 +990,7 @@ if (t_lookup_request()) {
 
    Retransmits a reply sent previously by UAS transaction.
 
-   Example 39. t_retransmit_reply usage
+   Example 40. t_retransmit_reply usage
 ...
 t_retransmit_reply();
 ...
@@ -980,7 +1000,7 @@ t_retransmit_reply();
    Remove transaction from memory (it will be first put on a wait timer to
    absorb delayed messages).
 
-   Example 40. t_release usage
+   Example 41. t_release usage
 ...
 t_release();
 ...
@@ -995,7 +1015,7 @@ t_forward_nonack_tls(ip, port) t_forward_nonack_sctp(ip, port)
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 41. t_forward_nonack usage
+   Example 42. t_forward_nonack usage
 ...
 t_forward_nonack("1.2.3.4", "5060");
 ...
@@ -1018,7 +1038,7 @@ t_forward_nonack("1.2.3.4", "5060");
 
    See also: fr_timer, fr_inv_timer, t_reset_fr().
 
-   Example 42. t_set_fr usage
+   Example 43. t_set_fr usage
 ...
 route {
         t_set_fr(10000); # set only fr invite timeout to 10s
@@ -1045,7 +1065,7 @@ branch_route[1] {
 
    See also: fr_timer, fr_inv_timer, t_set_fr.
 
-   Example 43. t_reset_fr usage
+   Example 44. t_reset_fr usage
 ...
 route {
 ...
@@ -1071,7 +1091,7 @@ route {
 
    See also: max_inv_lifetime, max_noninv_lifetime, t_reset_max_lifetime.
 
-   Example 44. t_set_max_lifetime usage
+   Example 45. t_set_max_lifetime usage
 ...
 route {
     if (src_ip=1.2.3.4)
@@ -1093,7 +1113,7 @@ route {
 
    See also: max_inv_lifetime, max_noninv_lifetime, t_set_max_lifetime.
 
-   Example 45. t_reset_max_lifetime usage
+   Example 46. t_reset_max_lifetime usage
 ...
 route {
 ...
@@ -1131,7 +1151,7 @@ route {
 
    See also: retr_timer1, retr_timer2, t_reset_retr().
 
-   Example 46. t_set_retr usage
+   Example 47. t_set_retr usage
 ...
 route {
         t_set_retr(250, 0); # set only T1 to 250 ms
@@ -1158,7 +1178,7 @@ branch_route[1] {
 
    See also: retr_timer1, retr_timer2, t_set_retr.
 
-   Example 47. t_reset_retr usage
+   Example 48. t_reset_retr usage
 ...
 route {
 ...
@@ -1174,7 +1194,7 @@ route {
 
    See also: auto_inv_100.
 
-   Example 48. t_set_auto_inv_100 usage
+   Example 49. t_set_auto_inv_100 usage
 ...
 route {
 ...
@@ -1188,7 +1208,7 @@ route {
    Returns true if the failure route is executed for a branch that did
    timeout. It can be used only from the failure_route.
 
-   Example 49. t_branch_timeout usage
+   Example 50. t_branch_timeout usage
 ...
 failure_route[0]{
         if (t_branch_timeout()){
@@ -1203,7 +1223,7 @@ failure_route[0]{
    receive at least one reply in the past (the "current" reply is not
    taken into account). It can be used only from the failure_route.
 
-   Example 50. t_branch_replied usage
+   Example 51. t_branch_replied usage
 ...
 failure_route[0]{
         if (t_branch_timeout()){
@@ -1220,7 +1240,7 @@ failure_route[0]{
    Returns true if at least one of the current transactions branches did
    timeout.
 
-   Example 51. t_any_timeout usage
+   Example 52. t_any_timeout usage
 ...
 failure_route[0]{
         if (!t_branch_timeout()){
@@ -1237,7 +1257,7 @@ failure_route[0]{
    receive some reply in the past. If called from a failure or onreply
    route, the "current" reply is not taken into account.
 
-   Example 52. t_any_replied usage
+   Example 53. t_any_replied usage
 ...
 onreply_route[0]{
         if (!t_any_replied()){
@@ -1251,7 +1271,7 @@ onreply_route[0]{
    Returns true if "code" is the final reply received (or locally
    generated) in at least one of the current transactions branches.
 
-   Example 53. t_grep_status usage
+   Example 54. t_grep_status usage
 ...
 onreply_route[0]{
         if (t_grep_status("486")){
@@ -1264,7 +1284,7 @@ onreply_route[0]{
 
    Returns true if the current transaction was canceled.
 
-   Example 54. t_is_canceled usage
+   Example 55. t_is_canceled usage
 ...
 failure_route[0]{
         if (t_is_canceled()){
@@ -1278,7 +1298,7 @@ failure_route[0]{
    Returns true if the current transaction has already been expired, i.e.
    the max_inv_lifetime/max_noninv_lifetime interval has already elapsed.
 
-   Example 55. t_is_expired usage
+   Example 56. t_is_expired usage
 ...
 failure_route[0]{
         if (t_is_expired()){
@@ -1299,7 +1319,7 @@ failure_route[0]{
    CANCELs were successfully sent to the pending branches, true if the
    INVITE was not found, and false in case of any error.
 
-   Example 56. t_relay_cancel usage
+   Example 57. t_relay_cancel usage
 if (method == CANCEL) {
         if (!t_relay_cancel()) {  # implicit drop if relaying was successful,
                                   # nothing to do
@@ -1326,7 +1346,7 @@ if (method == CANCEL) {
    overwritten with the flags of the INVITE. isflagset() can be used to
    check the flags of the previously forwarded INVITE in this case.
 
-   Example 57. t_lookup_cancel usage
+   Example 58. t_lookup_cancel usage
 if (method == CANCEL) {
         if (t_lookup_cancel()) {
                 log("INVITE transaction exists");
@@ -1351,7 +1371,7 @@ if (method == CANCEL) {
    branch is added to the transaction, or it is explicitly replied in the
    script!
 
-   Example 58. t_drop_replies() usage
+   Example 59. t_drop_replies() usage
 ...
 failure_route[0]{
         if (t_check_status("5[0-9][0-9]")){
@@ -1382,7 +1402,7 @@ failure_route[0]{
    The transaction must be created by t_newtran() before calling
    t_save_lumps().
 
-   Example 59. t_save_lumps() usage
+   Example 60. t_save_lumps() usage
 route {
         ...
         t_newtran();
@@ -1418,7 +1438,7 @@ failure_route[1] {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 60. t_load_contacts usage
+   Example 61. t_load_contacts usage
 ...
 if (!t_load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load contacts");
@@ -1443,7 +1463,7 @@ if (!t_load_contacts()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 61. t_next_contacts usage
+   Example 62. t_next_contacts usage
 ...
 # First call after t_load_contacts() when transaction does not exist yet
 # and contacts should be available
@@ -1507,7 +1527,7 @@ Note
 
    See also: t_lookup_request(), t_lookup_cancel().
 
-   Example 62. t_check_trans usage
+   Example 63. t_check_trans usage
 if ( method == "CANCEL" && !t_check_trans())
         sl_reply("403", "cancel out of the blue forbidden");
 # note: in this example t_check_trans() can be replaced by t_lookup_cancel()
