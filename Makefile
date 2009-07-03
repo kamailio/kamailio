@@ -205,7 +205,7 @@ else
 	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
-	exclude_modules+= avpops  bdb dbtext iptrtpproxy pa rls
+	exclude_modules+= bdb dbtext iptrtpproxy pa rls
 endif
 
 # always exclude the CVS dir
