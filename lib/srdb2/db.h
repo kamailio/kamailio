@@ -67,6 +67,10 @@ extern "C" {
 #define SRDB_REQUIRED       (1 << 12) /* Attr_types table */
 #define SRDB_DIR            (1 << 13) /* Domain_settings table */
 
+#define RESERVED_1      (1 << 28) /* Reserved for private use */
+#define RESERVED_2      (1 << 29) /* Reserved for private use */
+#define RESERVED_3      (1 << 30) /* Reserved for private use */
+#define RESERVED_4      (1 << 31) /* Reserved for private use */
 
 struct db_gen;
 
