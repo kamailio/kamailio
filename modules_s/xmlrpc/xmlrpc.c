@@ -397,7 +397,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"enable_instrospection", PARAM_INT, &enable_introspection},
+	{"enable_introspection", PARAM_INT, &enable_introspection},
 	{"route", PARAM_STRING, &xmlrpc_route},
 	{0, 0, 0}
 };
