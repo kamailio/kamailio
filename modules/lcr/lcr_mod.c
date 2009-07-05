@@ -84,8 +84,8 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 9
-#define LCR_TABLE_VERSION 2
+#define GW_TABLE_VERSION 10
+#define LCR_TABLE_VERSION 3
 
 static void destroy(void);       /* Module destroy function */
 static int mi_child_init(void);
@@ -118,6 +118,8 @@ static void free_shared_memory(void);
 #define WEIGHT_COL "weight"
 
 #define FLAGS_COL "flags"
+
+#define DEFUNCT_COL "defunct"
 
 #define LCR_TABLE "lcr"
 
@@ -182,6 +184,7 @@ static str strip_col        = str_init(STRIP_COL);
 static str tag_col          = str_init(TAG_COL);
 static str weight_col       = str_init(WEIGHT_COL);
 static str flags_col        = str_init(FLAGS_COL);
+static str defunct_col      = str_init(DEFUNCT_COL);
 static str lcr_table        = str_init(LCR_TABLE);
 static str prefix_col       = str_init(PREFIX_COL);
 static str from_uri_col     = str_init(FROM_URI_COL);
@@ -631,7 +634,7 @@ static int mod_init(void)
     for (i = 1; i <= lcr_count; i++) {
 	if (reload_gws_and_lcrs(i) < 0) {
 	    lock_release(reload_lock);
-	    LM_CRIT("failed to reload gateways of lcr_id %if\n", i);
+	    LM_CRIT("failed to reload gateways of lcr_id %i\n", i);
 	    goto err;
 	}
     }
@@ -808,7 +811,8 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
 		     unsigned int grp_id, char *ip_string, unsigned int port,
 		     unsigned int scheme, unsigned int transport,
 		     unsigned int flags, unsigned int strip, char *tag,
-		     unsigned int tag_len, unsigned short weight)
+		     unsigned int tag_len, unsigned short weight,
+		     unsigned int defunct_until)
 {
     if (gw_unique(gws, i - 1, ip_addr, grp_id) == 0) {
 	LM_ERR("ip_addr/grp_id <%s/%u> of gw is not unique\n",
@@ -828,7 +832,7 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
     gws[i].tag_len = tag_len;
     if (tag_len) memcpy(&(gws[i].tag[0]), tag, tag_len);
     gws[i].weight = weight;
-    gws[i].defunct_until = 0;
+    gws[i].defunct_until = defunct_until;
     gws[i].next = 0;
 
     return 1;
@@ -932,7 +936,7 @@ int reload_gws_and_lcrs(int lcr_id)
 {
     unsigned int i, n, port, strip, tag_len, prefix_len, from_uri_len,
 	grp_id,	grp_cnt, priority, flags, first_gw, weight, gw_cnt,
-	hostname_len;
+	hostname_len, defunct_until;
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
@@ -966,6 +970,7 @@ int reload_gws_and_lcrs(int lcr_id)
     gw_cols[7] = &flags_col;
     gw_cols[8] = &weight_col;
     gw_cols[9] = &hostname_col;
+    gw_cols[10] = &defunct_col;
 
     lcr_cols[0] = &prefix_col;
     lcr_cols[1] = &from_uri_col;
@@ -991,7 +996,7 @@ int reload_gws_and_lcrs(int lcr_id)
 	return -1;
     }
 
-    if (lcr_dbf.query(dbh, key_cols, op, vals, gw_cols, 1, 10, 0, &res) < 0) {
+    if (lcr_dbf.query(dbh, key_cols, op, vals, gw_cols, 1, 11, 0, &res) < 0) {
 	LM_ERR("failed to query gw data\n");
 	lcr_dbf.close(dbh);
 	return -1;
@@ -1015,7 +1020,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 1)) {
 	    port = 0;
 	} else {
 	    if (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_INT) {
@@ -1030,7 +1035,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   port, ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 2)) {
 	    scheme = SIP_URI_T;
 	} else {
 	    if (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT) {
@@ -1045,7 +1050,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   "row <%u>\n", (unsigned int)scheme, ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 3)) {
 	    transport = PROTO_NONE;
 	} else {
 	    if (VAL_TYPE(ROW_VALUES(row) + 3) != DB1_INT) {
@@ -1067,7 +1072,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   "row <%u>\n", transport, ip_string, i); 
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 4)) {
 	    strip = 0;
 	} else {
 	    if (VAL_TYPE(ROW_VALUES(row) + 4) != DB1_INT) {
@@ -1082,7 +1087,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   strip, ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 5)) {
 	    tag_len = 0;
 	    tag = (char *)0;
 	} else {
@@ -1099,7 +1104,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   tag_len, ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 6) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 6)) {
 	    grp_id = 0;
 	} else {
 	    if (VAL_TYPE(ROW_VALUES(row) + 6) != DB1_INT) {
@@ -1117,7 +1122,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 8) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 8)) {
 	    weight = 1;
 	} else {
 	    if (VAL_TYPE(ROW_VALUES(row) + 8) != DB1_INT) {
@@ -1132,7 +1137,7 @@ int reload_gws_and_lcrs(int lcr_id)
 		   weight, ip_string, i);
 	    goto gw_err;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 9) == 1) {
+	if (VAL_NULL(ROW_VALUES(row) + 9)) {
 	    hostname_len = 0;
 	    hostname = (char *)0;
 	} else {
@@ -1149,10 +1154,20 @@ int reload_gws_and_lcrs(int lcr_id)
 		   hostname_len, ip_string, i);
 	    goto gw_err;
 	}
+	if (VAL_NULL(ROW_VALUES(row) + 10)) {
+	    defunct_until = 0;
+	} else {
+	    if (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
+		LM_ERR("defunct of gw <%s> at row <%u> is not int\n",
+		       ip_string, i);
+		goto gw_err;
+	    }
+	    defunct_until = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
+	}
 	if (!insert_gw(gws, i + 1, (unsigned int)ip_addr.s_addr, 
 		       hostname, hostname_len, grp_id,
 		       ip_string, port, scheme, transport, flags, strip,
-		       tag, tag_len, weight)) {
+		       tag, tag_len, weight, defunct_until)) {
 	    goto gw_err;
 	}
     }

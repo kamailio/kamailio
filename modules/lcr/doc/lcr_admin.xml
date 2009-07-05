@@ -36,7 +36,8 @@
 	tuple that belongs to the group of the gateway.
 	</para>
 	<para>
-	When function load_gws() is called, matching gateways are ordered
+	When function load_gws() is called, matching gateways (that are
+	not currently designated as defunct) are ordered
 	for forwarding purpose (1) according to longest user part match,
 	(2) according to  
 	tuple's priority, and (3) gateway's randomized weight within its
@@ -400,6 +401,27 @@ modparam("lcr","weight_column","gw_weight")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","flags_column","gw_flags")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>defunct_column</varname> (string)</title>
+		<para>
+		Name of the column holding UNIX timestamp telling the
+		time until which the gw is considered as defunct.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>defunct</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>defunct_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","defunct_column","defunct_until")
 ...
 </programlisting>
 		</example>
@@ -803,7 +825,8 @@ if (!next_gw()) {
 		Defuncts gateway selected by preceding next_gw() call
 		for a period of seconds given as argument.  Argument
 		must be a positive integer constant or a pseudo variable
-		with positive integer value.
+		with positive integer value.  Value of defunct column in
+		database is not updated.
 		</para>
 		<para>
 		Returns 1 on success and -1 in case of error (see syslog).
