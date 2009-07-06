@@ -1737,9 +1737,11 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 static int em_receive_request(sip_msg_t* orig_msg, 
 							  char* new_buf, unsigned int new_len)
 {
+	int ret;
 	sip_msg_t tmp_msg, *msg;
 	struct run_act_ctx ra_ctx;
 	
+	ret=0;
 	if (new_buf && new_len) {
 		memset(&tmp_msg, 0, sizeof(sip_msg_t));
 		tmp_msg.buf = new_buf;
@@ -1772,7 +1774,8 @@ static int em_receive_request(sip_msg_t* orig_msg,
 	/* exec routing script */
 	init_run_actions_ctx(&ra_ctx);
 	if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg) < 0) {
-		WARN("xmlrpc: error while trying script\n");
+		ret=-1;
+		DBG("xmlrpc: error while trying script\n");
 		goto end;
 	}
  end:
@@ -1782,7 +1785,7 @@ static int em_receive_request(sip_msg_t* orig_msg,
 							  too) */
 		free_sip_msg(msg);
 	}
-	return 0;
+	return ret;
  error:
 	return -1;
 }
@@ -1793,11 +1796,13 @@ static int em_receive_request(sip_msg_t* orig_msg,
  */
 static int process_xmlrpc(sip_msg_t* msg)
 {
+	int ret;
 	char* fake_msg;
 	int fake_msg_len;
 	unsigned char* method;
 	unsigned int method_len, n_method;
 	
+	ret=NONSIP_MSG_DROP;
 	if (IS_HTTP(msg)) {
 		method = (unsigned char*)msg->first_line.u.request.method.s;
 		method_len = msg->first_line.u.request.method.len;
@@ -1815,21 +1820,23 @@ static int process_xmlrpc(sip_msg_t* msg)
 				fake_msg = http_xmlrpc2sip(msg, &fake_msg_len);
 				if (fake_msg == 0) {
 					ERR("xmlrpc: out of memory\n");
+					ret=NONSIP_MSG_ERROR;
 				} else {
 					/* send it */
 					DBG("new fake xml msg created (%d bytes):\n<%.*s>\n",
 						fake_msg_len, fake_msg_len, fake_msg);
-					em_receive_request(msg, fake_msg, fake_msg_len);
-					/* ignore the return code */
+					if (em_receive_request(msg, fake_msg, fake_msg_len)<0)
+						ret=NONSIP_MSG_ERROR;
 					pkg_free(fake_msg);
 				}
-				return NONSIP_MSG_DROP; /* we "ate" the message, 
+				return ret; /* we "ate" the message, 
 										   stop processing */
 			} else { /* the message has a via */
 				DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n",
 					msg->len, msg->len, msg->buf);
-				em_receive_request(msg, 0, 0);
-				return NONSIP_MSG_DROP;
+				if (em_receive_request(msg, 0, 0)<0)
+					ret=NONSIP_MSG_ERROR;
+				return ret;
 			}
 		} else {
 			ERR("xmlrpc: bad HTTP request method: \"%.*s\"\n",
