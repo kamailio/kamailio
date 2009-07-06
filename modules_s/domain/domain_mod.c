@@ -208,14 +208,14 @@ static int init_db(void)
 	if (db_add_db(db, db_url.s) < 0) return -1;
 	if (db_connect(db) < 0) return -1;
 	
-	INFO("prepare load_domains_cmd\n");
+	DBG("prepare load_domains_cmd\n");
 	load_domains_cmd = db_cmd(DB_GET, db, domain_table.s, load_domains_columns, NULL, NULL);
 	if (load_domains_cmd == NULL) {
 		ERR("Error while preparing load_domains database command\n");
 		return -1;
 	}
 	
-	INFO("prepare get_did_cmd\n");
+	DBG("prepare get_did_cmd\n");
 	get_did_cmd = db_cmd(DB_GET, db, domain_table.s, get_did_columns, get_did_match, NULL);
 	if (get_did_cmd == NULL) {
 		ERR("Error while preparing get_did database command\n");
@@ -223,7 +223,7 @@ static int init_db(void)
 	}
 
 	if (load_domain_attrs) {
-		INFO("prepare load_attrs_cmd\n");
+		DBG("prepare load_attrs_cmd\n");
 		load_attrs_cmd = db_cmd(DB_GET, db, domattr_table.s, load_attrs_columns, load_attrs_match, NULL);
 		if (load_attrs_cmd == NULL) {
 			ERR("Error while preparing load_attrs database command\n");
@@ -528,7 +528,7 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
     track = 0;
     
     if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
-		DBG("Cannot get domain name to lookup\n");
+		ERR("Cannot get domain name to lookup\n");
 		return -1;
     }
     
@@ -540,7 +540,7 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
     memcpy(tmp.s, domain.s, domain.len);
     tmp.len = domain.len;
     strlower(&tmp);
-	
+
     if (db_mode) {
 		if (hash_lookup(&d, *active_hash, &tmp) == 1) {
 			set_avp_list((unsigned long)flags, &d->attrs);
