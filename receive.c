@@ -125,8 +125,11 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 	if (msg->first_line.type==SIP_REQUEST){
 		if (!IS_SIP(msg)){
-			if (nonsip_msg_run_hooks(msg)!=NONSIP_MSG_ACCEPT)
+			if ((ret=nonsip_msg_run_hooks(msg))!=NONSIP_MSG_ACCEPT){
+				if (unlikely(ret==NONSIP_MSG_ERROR))
+					goto error03;
 				goto end; /* drop the message */
+			}
 		}
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
@@ -257,6 +260,7 @@ error_req:
 	DBG("receive_msg: error:...\n");
 	/* execute post request-script callbacks */
 	exec_post_script_cb(msg, REQUEST_CB_TYPE);
+error03:
 	/* free possible loaded avps -bogdan */
 	reset_avps();
 error02:
