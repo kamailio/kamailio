@@ -54,6 +54,7 @@
 #include "trim.h"
 #include "globals.h"
 #include "rpc_lookup.h"
+#include "sr_compat.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -1052,7 +1053,7 @@ int fix_param(int type, void** param)
 			goto error;
 		case FPARAM_STRING:
 			p->v.asciiz = *param;
-		
+			/* no break */
 		case FPARAM_STR:
 			p->v.str.s = (char*)*param;
 			p->v.str.len = strlen(p->v.str.s);
@@ -1080,8 +1081,8 @@ int fix_param(int type, void** param)
 						REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
 				pkg_free(p->v.regex);
 				p->v.regex=0;
-				ERR("Bad regular expression '%s'\n", (char*)*param);
-				goto error;
+				/* not a valid regex */
+				goto no_match;
 			}
 			p->fixed = p->v.regex;
 			break;
@@ -1091,14 +1092,13 @@ int fix_param(int type, void** param)
 			trim(&name);
 			if (!name.len || name.s[0] != '$') {
 				/* Not an AVP identifier */
-				pkg_free(p);
-				return 1;
+				goto no_match;
 			}
 			name.s++;
 			name.len--;
 			if (parse_avp_ident(&name, &p->v.avp) < 0) {
-				ERR("Error while parsing attribute name\n");
-				goto error;
+				/* invalid avp identifier (=> no match) */
+				goto no_match;
 			}
 			p->fixed = &p->v;
 			break;
@@ -1108,8 +1108,7 @@ int fix_param(int type, void** param)
 			trim(&name);
 			if (!name.len || name.s[0] != '@') {
 				/* Not a select identifier */
-				pkg_free(p);
-				return 1;
+				goto no_match;
 			}
 			if (parse_select(&name.s, &p->v.select) < 0) {
 				ERR("Error while parsing select identifier\n");
@@ -1133,20 +1132,18 @@ int fix_param(int type, void** param)
 			trim(&name);
 			if (!name.len || name.s[0] != '$'){
 				/* not a pvs identifier */
-				pkg_free(p);
-				return 1;
+				goto no_match;
 			}
 			p->v.pvs=pkg_malloc(sizeof(pv_spec_t));
 			if (p->v.pvs==0){
 				ERR("out of memory while parsing pv_spec_t\n");
 				goto error;
 			}
-			if (pv_parse_spec(&name, p->v.pvs)==0){
-				ERR("unsupported user field indentifier \"%.*s\"\n",
-						name.len, name.s);
+			if (pv_parse_spec2(&name, p->v.pvs, 1)==0){
+				/* not a valid pvs identifier (but it might be an avp) */
 				pkg_free(p->v.pvs);
 				p->v.pvs=0;
-				goto error;
+				goto no_match;
 			}
 			p->fixed = p->v.pvs;
 			break;
@@ -1165,6 +1162,9 @@ int fix_param(int type, void** param)
 	*param = (void*)p;
 	return 0;
 	
+no_match:
+	pkg_free(p);
+	return 1;
 error:
 	pkg_free(p);
 	return E_UNSPEC;
@@ -1261,6 +1261,8 @@ int fix_param_types(int types, void** param)
 int fixup_var_str_12(void** param, int param_no)
 {
 	int ret;
+	if ((sr_cfg_compat!=SR_COMPAT_SER) &&
+		((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
 	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
@@ -1296,6 +1298,8 @@ int fixup_var_str_2(void** param, int param_no)
 int fixup_var_int_12(void** param, int param_no)
 {
 	int ret;
+	if ((sr_cfg_compat!=SR_COMPAT_SER) &&
+		((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
 	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;

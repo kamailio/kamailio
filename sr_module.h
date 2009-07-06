@@ -231,21 +231,25 @@ struct param_export_ {
 
 
 /** allowed parameter types.
-  * the types that cannot be deduced from the string, should
-  * be at the end (e.g. FPARAM_STR), to allow fallback 
-  * (e.g. fix_param_types(FPARAM_AVP|FPARAM_SELECT|FPARAM_STR, param))
+  * the types _must_ be in "fallback" order,
+  * e.g. FPARAM_STR should be the last to allow fallback to it,
+  *  F_PARAM_PVS should be in front of F_PARAM_AVP (so that
+  *  for fix_param_types(FPARAM_AVP|FPARAM_PVS|FPARAM_STR, param) and $foo
+  *  the pvars will be checked first and only if no pvar is found the
+  *  param will be resolved to an avp)
   */
 enum {
 	FPARAM_UNSPEC = 0,
 	FPARAM_INT    = (1 << 0),
-	FPARAM_REGEX  = (1 << 1),
-	FPARAM_AVP    = (1 << 2),
-	FPARAM_SELECT = (1 << 3),
-	FPARAM_SUBST  = (1 << 4),
-	FPARAM_PVS    = (1 << 5),
-	FPARAM_PVE    = (1 << 6),
-	FPARAM_STRING = (1 << 7),
-	FPARAM_STR    = (1 << 8)
+	FPARAM_SELECT = (1 << 1),
+	FPARAM_PVS    = (1 << 2),
+	FPARAM_AVP    = (1 << 3),
+	FPARAM_STRING = (1 << 4),
+	FPARAM_STR    = (1 << 5),
+	/* special types: no fallback between them possible */
+	FPARAM_REGEX  = (1 << 6),
+	FPARAM_SUBST  = (1 << 7),
+	FPARAM_PVE    = (1 << 8)
 };
 
 /*
