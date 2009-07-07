@@ -50,7 +50,6 @@
 #include "dr_load.h"
 #include "prefix_tree.h"
 #include "routing.h"
-#include "dr_bl.h"
 
 
 /*** DB relatede stuff ***/
@@ -174,7 +173,6 @@ static param_export_t params[] = {
 	{"sort_order",      INT_PARAM, &sort_order      },
 	{"fetch_rows",      INT_PARAM, &dr_fetch_rows   },
 	{"force_dns",       INT_PARAM, &dr_force_dns    },
-	{"define_blacklist",STR_PARAM|USE_FUNC_PARAM, (void*)set_dr_bl },
 	{0, 0, 0}
 };
 
@@ -261,9 +259,6 @@ static inline int dr_reload_data( void )
 	if (old_data)
 		free_rt_data( old_data, 1 );
 
-	/* generate new blacklist from the routing info */
-	populate_dr_bls((*rdata)->pgw_addr_l);
-
 	return 0;
 }
 
@@ -344,11 +339,6 @@ static int dr_init(void)
 				attrs_avp_spec.len, attrs_avp_spec.s);
 			return E_CFG;
 		}
-	}
-
-	if (init_dr_bls()!=0) {
-		LM_ERR("failed to init DR blacklists\n");
-		return E_CFG;
 	}
 
 	/* data pointer in shm */
@@ -466,9 +456,6 @@ static int dr_exit(void)
 		shm_free(reload_flag);
 	if(data_refcnt)
 		shm_free(data_refcnt);
-
-	/* destroy blacklists */
-	destroy_dr_bls();
 
 	return 0;
 }
