@@ -80,15 +80,6 @@
 	</para>
 	</listitem>
 
-	<listitem>
-	<para>
-	blacklisting - the module allows definition of backlists based on the
-	destination IPs. This blacklists are to be used to prevent malicious 
-	forwarding to GWs (based on DNS lookups) when the script logic does
-	none-GE forwarding (like foreign domains).
-	</para>
-	</listitem>
-
 	</itemizedlist>
 	</section>
 
@@ -999,30 +990,6 @@ modparam("drouting", "ruri_avp", '$avp(i:33)')
 ...
 modparam("drouting", "attrs_avp", '$avp(dr_attrs)')
 modparam("drouting", "atrrs_avp", '$avp(i:67)')
-...
-	</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>define_blacklist</varname> (str)</title>
-		<para>
-		Defines a backlist based on a list of GW types - the list will contain
-		the IPs (no port, all protocols) of the GWs with the specified types.
-		</para>
-		<para>
-		Multiple instances of this param are allowed.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>NULL</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>define_blacklist</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("drouting", "define_blacklist", 'bl_name= 3,5,25,23')
-modparam("drouting", "define_blacklist", 'list= 4,2')
 ...
 	</programlisting>
 		</example>
