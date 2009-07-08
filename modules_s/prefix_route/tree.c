@@ -34,6 +34,8 @@
 #include "../../atomic_ops.h"
 #include "../../mem/shm_mem.h"
 #include "../../str.h"
+#include "../../lock_alloc.h"
+#include "../../lock_ops.h"
 #include "tree.h"
 
 
@@ -59,7 +61,7 @@ struct tree {
 
 /* Local variables */
 static struct tree **shared_tree = NULL;
-static gen_lock_t shared_tree_lock;
+static gen_lock_t* shared_tree_lock;
 
 
 /**
@@ -286,9 +288,9 @@ static struct tree *tree_get(void)
 {
 	struct tree *tree;
 
-	lock_get(&shared_tree_lock);
+	lock_get(shared_tree_lock);
 	tree = *shared_tree;
-	lock_release(&shared_tree_lock);
+	lock_release(shared_tree_lock);
 
 	return tree;
 }
@@ -298,10 +300,10 @@ static struct tree *tree_ref(void)
 {
 	struct tree *tree;
 
-	lock_get(&shared_tree_lock);
+	lock_get(shared_tree_lock);
 	tree = *shared_tree;
 	atomic_inc(&tree->refcnt);
-	lock_release(&shared_tree_lock);
+	lock_release(shared_tree_lock);
 
 	return tree;
 }
@@ -318,11 +320,18 @@ struct tree *tree_deref(struct tree *tree)
 int tree_init(void)
 {
 	/* Initialize lock */
-	lock_init(&shared_tree_lock);
+	shared_tree_lock = lock_alloc();
+	if (NULL == shared_tree_lock) {
+		return -1;
+	}
+	lock_init(shared_tree_lock);
 
 	/* Pointer to global tree must be in shared memory */
 	shared_tree = (struct tree **)shm_malloc(sizeof(*shared_tree));
 	if (NULL == shared_tree) {
+		lock_destroy(shared_tree_lock);
+		lock_dealloc(shared_tree_lock);
+		shared_tree_lock=0;
 		return -1;
 	}
 
@@ -337,6 +346,11 @@ void tree_close(void)
 	if (shared_tree)
 		tree_flush(tree_get());
 	shared_tree = NULL;
+	if (shared_tree_lock) {
+		lock_destroy(shared_tree_lock);
+		lock_dealloc(shared_tree_lock);
+		shared_tree_lock=0;
+	}
 }
 
 
@@ -354,9 +368,9 @@ int tree_swap(struct tree_item *root)
 	old_tree = tree_get();
 
 	/* Critical - swap trees */
-	lock_get(&shared_tree_lock);
+	lock_get(shared_tree_lock);
 	*shared_tree = new_tree;
-	lock_release(&shared_tree_lock);
+	lock_release(shared_tree_lock);
 
 	/* Flush old tree */
 	tree_flush(old_tree);
