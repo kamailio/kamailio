@@ -109,6 +109,7 @@ enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 #define EXIT_R_F   1
 #define RETURN_R_F 2
 #define BREAK_R_F  4
+#define DROP_R_F   8
 
 
 struct cfg_pos{

@@ -149,7 +149,8 @@ FORWARD_TCP	forward_tcp
 FORWARD_UDP	forward_udp
 FORWARD_TLS	forward_tls
 FORWARD_SCTP	forward_sctp
-DROP	"drop"|"exit"
+DROP	"drop"
+EXIT	"exit"
 RETURN	"return"
 BREAK	"break"
 SEND	send
@@ -486,6 +487,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORWARD_SCTP}	{count(); yylval.strval=yytext; return FORWARD_SCTP;}
 <INITIAL>{FORWARD_UDP}	{count(); yylval.strval=yytext; return FORWARD_UDP; }
 <INITIAL>{DROP}	{ count(); yylval.strval=yytext; return DROP; }
+<INITIAL>{EXIT}	{ count(); yylval.strval=yytext; return EXIT; }
 <INITIAL>{RETURN}	{ count(); yylval.strval=yytext; return RETURN; }
 <INITIAL>{BREAK}	{ count(); yylval.strval=yytext; return BREAK; }
 <INITIAL>{SEND}	{ count(); yylval.strval=yytext; return SEND; }
