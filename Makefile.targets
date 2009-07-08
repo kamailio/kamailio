@@ -37,7 +37,7 @@ aux_targets:=	TAGS tar dist cfg-defs cfg config config.mak print-modules \
 		dbg dbinstall librpath.lst makecfg.lst modules.lst modules-cfg \
 		modules-list modules-lst mk-install_dirs autover.h deb
 # other targets that don't produce code in the current directory ("external")
-ext_targets:=	every-module $(modules_dirs) libs utils \
+ext_targets:=	every-module modules-all $(modules_dirs) libs utils \
 		install-cfg install-utils  install-modules-all install-every-module\
 		$(foreach m,$(modules_dirs),install-$(m)) \
 		install-share
