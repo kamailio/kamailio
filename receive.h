@@ -33,6 +33,6 @@
 #include "ip_addr.h"
 
 int receive_msg(char* buf, unsigned int len, struct receive_info *ri);
-
+unsigned int inc_msg_no(void);
 
 #endif

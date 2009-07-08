@@ -433,7 +433,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 #endif
 			if (buf) pkg_free(buf);
 			send_info->proto=proto;
-			buf = build_req_buf_from_sip_req(msg, &len, send_info);
+			buf = build_req_buf_from_sip_req(msg, &len, send_info, 0);
 			if (!buf){
 				LOG(L_ERR, "ERROR: forward_request: building failed\n");
 				ret=E_OUT_OF_MEM; /* most probable */
