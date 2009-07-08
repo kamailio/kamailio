@@ -23,6 +23,7 @@
 #              added ser-oob package
 #                (pavel)
 #  2007-10-31  updated for cvs head (pavel)
+#  2009-07-08  updated for sip-router (andrei)
 
 
 # Uncomment this to turn on verbose mode.
@@ -43,31 +44,23 @@ EXCLUDED_MODULES=	jabber xmlrpc postgres cpl cpl-c
 #EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt lcr msilo bdb dbtext iptrtpproxy ldap oracle osp pa rls
 EXTRA_EXCLUDED_MODULES=
 
-### modules depending on mysql
-##MYSQL_MODULES=mysql
-#jabber related modules
-JABBER_MODULES=jabber
-###module depending on radiusclient
-##RADIUS_MODULES=acc_radius auth_radius group_radius uri_radius avp_radius
-#cpl related modules
-CPL_MODULES=cpl-c
-### pa related modules
-##PA_MODULES=pa rls dialog presence_b2b xcap
 # postgres modules
-POSTGRES_MODULES=postgres
+POSTGRES_MODULES=db_postgres
+# tls module
+TLS_MODULES=tls
 # xmlrpc module
 XMLRPC_MODULES=xmlrpc
 
 # the same but with path prepended (needed for modules="...")
 ##MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
-JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
+JABBER_MOD_PATH=$(addprefix modules_s/, $(JABBER_MODULES))
 ##RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
-CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
+CPL_MOD_PATH=$(addprefix modules_s/, $(CPL_MODULES))
 ##PA_MOD_PATH=$(addprefix modules/, $(PA_MODULES))
 POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
-XMLRPC_MOD_PATH=$(addprefix modules/, $(XMLRPC_MODULES))
+TLS_MOD_PATH=$(addprefix modules/, $(TLS_MODULES))
+XMLRPC_MOD_PATH=$(addprefix modules_s/, $(XMLRPC_MODULES))
 
-SERCTL_PATH=tools/serctl
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -g
@@ -80,6 +73,11 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
+	$(MAKE) cfg prefix=/usr cfg-prefix=$(CURDIR)/debian/ser \
+			cfg_target=/etc/ser/ \
+			basedir=$(CURDIR)/debian/ser \
+			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
+			group_include="standard"
 
 	touch configure-stamp
 
@@ -88,41 +86,22 @@ build: build-stamp
 
 build-stamp: configure-stamp 
 	dh_testdir
-
 	# Add here commands to compile the package.
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
-	$(MAKE) all group_include="standard" skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" cfg-target=/etc/ser/ prefix=/usr
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
-	$(MAKE) modules group_include="mysql" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
-	$(MAKE) modules group_include="radius" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#$(MAKE) modules group_include="presence" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#$(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
-	$(MAKE) modules modules="$(XMLRPC_MOD_PATH)" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
+	$(MAKE) all
+	$(MAKE) every-module group_include="mysql"
+	$(MAKE) every-module group_include="radius"
+	$(MAKE) modules modules="$(POSTGRES_MOD_PATH)"
+	$(MAKE) modules modules="$(TLS_MOD_PATH)"
+	$(MAKE) modules modules="$(XMLRPC_MOD_PATH)"
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
-
 	touch build-stamp
 
 clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
-
 	# Add here commands to clean up after the build process.
-	#-$(MAKE) -C lib -f Makefile.ser proper
-	#-$(MAKE) include_modules=" $(JABBER_MODULES) $(CPL_MODULES) \
-	#	$(POSTGRES_MODULES) $(XMLRPC_MODULES)" proper
-	-$(MAKE) proper
-	-$(MAKE) clean_cfg
-	-$(MAKE) clean_modules_cfg
-
+	-$(MAKE) maintainer-clean
 	dh_clean
 
 install: build
@@ -130,89 +109,42 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-
 	# Add here commands to install the package into debian/ser
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
-	$(MAKE) install group_include="standard" skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
-		basedir=$(CURDIR)/debian/ser \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/ser \
-		cfg-target=/etc/ser/
-	# fix etc/ser dir location
-	mv -f $(CURDIR)/debian/ser/usr/etc $(CURDIR)/debian/ser
+	$(MAKE) install group_include="standard"
+	# fix etc/ser dir location -- not needed -- andrei
+	# mv -f $(CURDIR)/debian/ser/usr/etc $(CURDIR)/debian/ser
 	# install only the mysql module
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
 	$(MAKE) install-modules-all group_include="mysql" \
 		basedir=$(CURDIR)/debian/ser-mysql-modules \
-		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-mysql-modules \
-		cfg-target=/etc/ser/ \
-		doc-dir=share/doc/ser-mysql-modules \
-		skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#install only the jabber module
-	#$(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
-	#	basedir=$(CURDIR)/debian/ser-jabber-module \
-	#	prefix=/usr \
-	#	cfg-prefix=$(CURDIR)/debian/ser-jabber-module \
-	#	cfg-target=/etc/ser/ \
-	#	doc-dir=share/doc/ser-jabber-module \
-	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#install only the radius modules
-	#$(MAKE) install-modules-all group_include="radius"  \
-	#	basedir=$(CURDIR)/debian/ser-radius-modules \
-	#	prefix=/usr \
-	#	cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
-	#	cfg-target=/etc/ser/ \
-	#	doc-dir=share/doc/ser-radius-modules \
-	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#install only the cpl module
-	#$(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
-	#	basedir=$(CURDIR)/debian/ser-cpl-module \
-	#	prefix=/usr \
-	#	cfg-prefix=$(CURDIR)/debian/ser-cpl-module \
-	#	cfg-target=/etc/ser/ \
-	#	doc-dir=share/doc/ser-cpl-module \
-	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#install only the presence modules
-	#$(MAKE) install-modules-all group_include="presence"  \
-	#	basedir=$(CURDIR)/debian/ser-presence-modules \
-	#	prefix=/usr \
-	#	cfg-prefix=$(CURDIR)/debian/ser-presence-modules \
-	#	cfg-target=/etc/ser/ \
-	#	doc-dir=share/doc/ser-presence-modules \
-	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#install only the postgres module
-	#$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
-	#	basedir=$(CURDIR)/debian/ser-postgres-module \
-	#	prefix=/usr \
-	#	cfg-prefix=$(CURDIR)/debian/ser-postgres-module \
-	#	cfg-target=/etc/ser/ \
-	#	doc-dir=share/doc/ser-postgres-module \
-	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
-	#install only the xmlrpc module
-	$(MAKE) clean_cfg
-	$(MAKE) clean_modules_cfg
-	$(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)"  \
+		doc-dir=share/doc/ser-mysql-modules
+	$(MAKE) install-modules-all group_include="radius" \
+		basedir=$(CURDIR)/debian/ser-radius-modules \
+		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
+		doc-dir=share/doc/ser-radius-modules
+	$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)" \
+		modules_s="" modules_k="" \
+		basedir=$(CURDIR)/debian/ser-postgres-module \
+		doc-dir=share/doc/ser-postgress-module
+	$(MAKE) install-modules-all modules="$(TLS_MOD_PATH)" \
+		modules_s="" modules_k="" \
+		basedir=$(CURDIR)/debian/ser-tls-module \
+		doc-dir=share/doc/ser-tls-module
+	$(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)" \
+		modules_s="" modules_k="" \
 		basedir=$(CURDIR)/debian/ser-xmlrpc-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/ser-xmlrpc-module \
-		cfg-target=/etc/ser/ \
-		doc-dir=share/doc/ser-xmlrpc-module \
-		skip_modules="$(EXTRA_EXCLUDED_MODULES)"
+		doc-dir=share/doc/ser-xmlrpc-module
 	# install /etc/default/ser file
 	mkdir -p $(CURDIR)/debian/ser/etc/default
 	cp -f debian/ser.default $(CURDIR)/debian/ser/etc/default/ser
 	# install the *.sql files for ser_mysql.sh script
 	cp -f scripts/mysql/*.sql $(CURDIR)/debian/ser/usr/lib/ser/
 	# and fix path to the *.sql files in ser_mysql.sh script
-	sed -i 's#DEFAULT_SCRIPT_DIR=.*#DEFAULT_SCRIPT_DIR="/usr/lib/ser/"#' $(CURDIR)/debian/ser/usr/sbin/ser_mysql.sh
+	sed -i 's#DEFAULT_SCRIPT_DIR=.*#DEFAULT_SCRIPT_DIR="/usr/lib/ser/"#' \
+		$(CURDIR)/debian/ser/usr/sbin/ser_mysql.sh
 	# install advanced ser config file for ser-oob package
 	mkdir -p $(CURDIR)/debian/ser-oob/etc/ser
-	cp -f etc/ser-oob.cfg $(CURDIR)/debian/ser-oob/etc/ser/
-	# and remove it from main ser package
-	rm -f $(CURDIR)/debian/ser/etc/ser/ser-oob.cfg
+	cp -f etc/sip-router-oob.cfg $(CURDIR)/debian/ser-oob/etc/ser/ser-oob.cfg
 	#dh_movefiles
 
 

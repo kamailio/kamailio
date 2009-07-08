@@ -59,13 +59,20 @@ Description: contains the ser RADIUS modules
  depend upon libradius1. This modules will enable you to authenticate, 
  do group membership checking or check the messages uris using RADIUS.
 
-#Package: ser-postgres-module
-#Architecture: any
-#Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-#Description: contains the PostgreSQL database connectivity module
-# This has been split out of the main ser package, so that ser will not
-# depend upon libpq. This module will enable you to use the digest
-# authentication module or persistent user location entries.
+Package: ser-postgres-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Description: contains the PostgreSQL database connectivity module
+ This has been split out of the main ser package, so that ser will not
+ depend upon libpq. This module will enable you to use the digest
+ authentication module or persistent user location entries.
+
+Package: ser-tls-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Description: contains the TLS ser transport module
+ This has been split out of the main ser package, so that ser will not
+ depend on openssl. This module will enable you to use the TLS transport.
 
 Package: ser-xmlrpc-module
 Architecture: any
@@ -78,7 +85,7 @@ Description: contains the XML-RPC based interface to SER
 
 Package: ser-oob
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ser, ser-mysql-modules, ser-xmlrpc-module, serctl
+Depends: ser, ser-mysql-modules, ser-xmlrpc-module, serctl
 Suggests: rttpproxy, logrotate, ngrep, ntp
 Description: Sip Express Router - package for "out of the box" installation
  This package conatins advanced configuration file for ser - SIP Express Router
@@ -87,14 +94,14 @@ Description: Sip Express Router - package for "out of the box" installation
 
 Package: ser-nth
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, screen, gdb, binutils, gcc, bison, flex, ngrep, tcpdump, iftop, lsof, psmisc, vim, bvi, most, serctl, mc, sipsak
+Depends: screen, gdb, binutils, gcc, bison, flex, ngrep, tcpdump, iftop, lsof, psmisc, vim, bvi, most, serctl, mc, sipsak
 Description: Sip Express Router - package for "nice to have" installation
  This is a meta-package for easy installation various useful tools that may be
  handy on server with SER installed.
 
 Package: ser-ai1
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ser-oob, mysql-server, rtpproxy, mystun, sipsak, tcpdump, ngrep, iftop, serweb, sems
+Depends: ser-oob, mysql-server, rtpproxy, mystun, sipsak, tcpdump, ngrep, iftop, serweb, sems
 Suggests: ser-nth
 Description: Sip Express Router - package for "all in one" installation
  This is a meta-package for easy installation of complete server running ser - SIP Express

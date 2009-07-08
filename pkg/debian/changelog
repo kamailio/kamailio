@@ -1,3 +1,9 @@
+ser (2.99.0-dev01) unstable; urgency=low
+
+  * Update Debian specification for sip-router.
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Wed, 08 Jul 2009 14:13:11 +0200
+
 ser (2.1.0-0dev15) unstable; urgency=low
 
   * Added installation of *.sql files for ser_mysql.sh script.
