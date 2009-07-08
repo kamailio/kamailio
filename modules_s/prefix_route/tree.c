@@ -334,7 +334,9 @@ int tree_init(void)
 
 void tree_close(void)
 {
-	tree_flush(tree_get());
+	if (shared_tree)
+		tree_flush(tree_get());
+	shared_tree = NULL;
 }
 
 
