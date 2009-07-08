@@ -156,8 +156,8 @@ module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For mysql
-module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql\
-				speeddial
+module_group_mysql=acc_db auth_db avp_db db_ops db_mysql uri_db domain lcr \
+					msilo speeddial
 
 # For radius
 module_group_radius=acc_radius auth_radius avp_radius misc_radius peering
@@ -264,6 +264,9 @@ ifeq ($(makefile_defs),1)
 $(info config.mak loaded)
 # config_make valid & used
 config_mak=1
+ifeq ($(MAIN_NAME),)
+$(error "bad config.mak, try re-running make cfg")
+endif
 endif
 else # config.mak doesn't need to be used
 ifneq (,$(filter cfg config cfg-defs,$(word 1,$(MAKECMDGOALS))))
@@ -273,6 +276,9 @@ ifneq (,$(filter cfg config cfg-defs,$(word 1,$(MAKECMDGOALS))))
 # $(value ...) expansion or would cause some warning (if Makefile.defs exec. 
 # is skipped in the "main" makefile invocation).
 $(shell rm -rf config.mak)
+config_mak=0
+makefile_defs=0
+exported_vars=0
 endif
 endif
 

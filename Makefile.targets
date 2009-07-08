@@ -35,7 +35,7 @@ doc_targets:=	README man install-doc install-man install-ser-man \
 # auxiliary: maintance, debugging, etc. (don't affect code/objects)
 aux_targets:=	TAGS tar dist cfg-defs cfg config config.mak print-modules \
 		dbg dbinstall librpath.lst makecfg.lst modules.lst modules-cfg \
-		modules-list modules-lst mk-install_dirs autover.h
+		modules-list modules-lst mk-install_dirs autover.h deb
 # other targets that don't produce code in the current directory ("external")
 ext_targets:=	every-module $(modules_dirs) libs utils \
 		install-cfg install-utils  install-modules-all install-every-module\
