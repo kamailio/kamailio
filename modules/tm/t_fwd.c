@@ -211,7 +211,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 								-i_req->REQ_METHOD);
 
 	/* ... and build it now */
-	buf=build_req_buf_from_sip_req( i_req, len, dst);
+	buf=build_req_buf_from_sip_req( i_req, len, dst, 0);
 #ifdef DBG_MSG_QA
 	if (buf[*len-1]==0) {
 		LOG(L_ERR, "ERROR: print_uac_request: sanity check failed\n");
