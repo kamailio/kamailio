@@ -170,6 +170,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	struct sip_msg *fmsg;
+	struct run_act_ctx ctx;
 	int rtb, rt;
 
 	LM_DBG("rank is (%d)\n", rank);
@@ -184,7 +185,12 @@ static int child_init(int rank)
 		fmsg = faked_msg_next();
 		rtb = get_route_type();
 		set_route_type(REQUEST_ROUTE);
-		run_top_route(event_rt.rlist[rt], fmsg, 0);
+		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
+		if(ctx.run_flags&DROP_R_F)
+		{
+			LM_ERR("exit due to 'drop' in event route\n");
+			return -1;
+		}
 		set_route_type(rtb);
 	}
 
