@@ -48,9 +48,7 @@
 
 /* if defined support for ONSEND callbacks will be added and
  * the tmcb_params structure will get some additional members */
-/*
 #define TMCB_ONSEND
-*/
 #ifdef TMCB_ONSEND
 #include "../../ip_addr.h" /* dest_info */
 #endif
