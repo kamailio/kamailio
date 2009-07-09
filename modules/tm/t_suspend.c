@@ -161,7 +161,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	 * of failure route (Miklos)
 	 */
 	if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
-		if (run_top_route(route, &faked_req)<0)
+		if (run_top_route(route, &faked_req, 0)<0)
 			LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
 		exec_post_script_cb(&faked_req, FAILURE_CB_TYPE);
 	}

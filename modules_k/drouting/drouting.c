@@ -619,7 +619,7 @@ static int use_next_gw(struct sip_msg* msg)
 
 	if (!avp) return -1;
 
-	if (rewrite_ruri(msg, &val)==-1) {
+	if (rewrite_ruri(msg, val.s.s)==-1) {
 		LM_ERR("failed to rewite RURI\n");
 		return -1;
 	}
@@ -732,7 +732,7 @@ again:
 	}
 
 	if (rt_info->route_idx>0 && rt_info->route_idx<RT_NO) {
-		ret = run_top_route(main_rt.rlist[rt_info->route_idx], msg );
+		ret = run_top_route(main_rt.rlist[rt_info->route_idx], msg, 0);
 		if (ret<1) {
 			/* drop the action */
 			LM_DBG("script route %d drops routing "
