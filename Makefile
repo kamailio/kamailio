@@ -222,8 +222,8 @@ override exclude_modules+= CVS $(skip_modules)
 
 # Test for the groups and add to include_modules
 ifneq (,$(group_include))
-override include_modules+=$(foreach grp, $(group_include), \
-								$(module_group_$(grp)) )
+$(eval override include_modules+= $(foreach grp, $(group_include), \
+										$(module_group_$(grp)) ))
 endif
 
 # first 2 lines are excluded because of the experimental or incomplete
