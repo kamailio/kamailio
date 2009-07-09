@@ -1097,8 +1097,8 @@ static struct mi_root* sip_trace_mi(struct mi_root* cmd_tree, void* param )
 		*trace_on_flag = 1;
 		return init_mi_tree( 200, MI_SSTR(MI_OK));
 	} else if ( node->value.len==3 && (node->value.s[0]=='o'
-				|| node->value.s[0]=='O') 
-			&& (node->value.s[1]=='f'|| node->value.s[1]=='F') 
+				|| node->value.s[0]=='O')
+			&& (node->value.s[1]=='f'|| node->value.s[1]=='F')
 			&& (node->value.s[2]=='f'|| node->value.s[2]=='F')) {
 		*trace_on_flag = 0;
 		return init_mi_tree( 200, MI_SSTR(MI_OK));
