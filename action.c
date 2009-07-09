@@ -1296,9 +1296,15 @@ int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx *c)
 {
 	struct run_act_ctx ctx;
 	struct run_act_ctx *p;
+	int ret;
+	flag_t sfbk;
+
 	p = (c)?c:&ctx;
+	sfbk = getsflags();
 	setsflagsval(0);
 	reset_static_buffer();
 	init_run_actions_ctx(p);
-	return run_actions(p, a, msg);
+	ret = run_actions(p, a, msg);
+	setsflagsval(sfbk);
+	return ret;
 }
