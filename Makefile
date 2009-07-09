@@ -155,9 +155,17 @@ module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
 				db_ops domain lcr msilo mysql dialog pa postgres \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
+# For db use (db modules, excluding drivers)
+module_group_db=acc_db auth_db avp_db db_ops db_flatstore dbtext db_text \
+				uri_db domain lcr msilo speeddial
+
 # For mysql
-module_group_mysql=acc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql\
-				speeddial
+module_group_mysql_driver=db_mysql
+module_group_mysql=$(module_group_mysql_driver) $(module_group_db)
+
+# For postgress
+module_group_postgres_driver=db_postgres
+module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 
 # For radius
 module_group_radius=acc_radius auth_radius avp_radius misc_radius peering
@@ -212,32 +220,9 @@ endif
 override exclude_modules+= CVS $(skip_modules)
 
 # Test for the groups and add to include_modules
-ifneq (,$(findstring standard,$(group_include)))
-	override include_modules+= $(module_group_standard)
-endif
-
-ifneq (,$(findstring standard-dep,$(group_include)))
-	override include_modules+= $(module_group_standard_dep)
-endif
-
-ifneq (,$(findstring mysql,$(group_include)))
-	override include_modules+= $(module_group_mysql)
-endif
-
-ifneq (,$(findstring radius,$(group_include)))
-	override include_modules+= $(module_group_radius)
-endif
-
-ifneq (,$(findstring presence,$(group_include)))
-	override include_modules+= $(module_group_presence)
-endif
-
-ifneq (,$(findstring stable,$(group_include)))
-	override include_modules+= $(module_group_stable)
-endif
-
-ifneq (,$(findstring experimental,$(group_include)))
-	override include_modules+= $(module_group_experimental)
+ifneq (,$(group_include))
+override include_modules+=$(foreach grp, $(group_include), \
+								$(module_group_$(grp)) )
 endif
 
 # first 2 lines are excluded because of the experimental or incomplete
@@ -264,6 +249,9 @@ ifeq ($(makefile_defs),1)
 $(info config.mak loaded)
 # config_make valid & used
 config_mak=1
+ifeq ($(MAIN_NAME),)
+$(error "bad config.mak, try re-running make cfg")
+endif
 endif
 else # config.mak doesn't need to be used
 ifneq (,$(filter cfg config cfg-defs,$(word 1,$(MAKECMDGOALS))))
@@ -273,6 +261,9 @@ ifneq (,$(filter cfg config cfg-defs,$(word 1,$(MAKECMDGOALS))))
 # $(value ...) expansion or would cause some warning (if Makefile.defs exec. 
 # is skipped in the "main" makefile invocation).
 $(shell rm -rf config.mak)
+config_mak=0
+makefile_defs=0
+exported_vars=0
 endif
 endif
 
@@ -621,7 +612,7 @@ $(foreach mods,$(modules_dirs),$(eval $(call MODULES_RULES_template,$(mods))))
 #$(foreach mods,$(modules_dirs),$(eval  $(info DUMP: $(call MODULES_RULES_template,$(mods)))))
 
 # build all the modules
-every-module: $(modules_dirs)
+modules-all every-module: $(modules_dirs)
 
 $(extra_objs):
 	@echo "Extra objs: $(extra_objs)" 

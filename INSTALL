@@ -171,7 +171,11 @@ Compile SIP Router core only:
 make   #builds only sip-router core, equivalent to make sip-router
 
 Compile modules except some explicitly excepted (see below)
-make modules  
+make modules  - all modules in the modules/ directory (common modules)
+make modules_s - all modules in the modules_s/ directory (ser modules)
+make modules_k - all modules in the modules_k/ directory (kamailio modules)
+make modules-all or make every-module  - all the modules (modules, modules_s
+                                         and module_k)
 
 Compile all:
 make all
@@ -189,7 +193,12 @@ standard - Modules in this group are considered a standard part of SIP Router (d
     but they have no dependencies (note that some of these interplay with external systems.
     However, they don't have compile or link dependencies).
 
-standard-dep -  Modules in this group are considered a standard part of SIP Router (due to widespread usage)
+db - Modules in this group use databases and need a database driver to run.
+     Included are drivers for the text mode db (dbtext) and for dumping
+     large ammount of data to files (db_flatstore). See also the mysql or
+     postgres groups.
+
+standard_dep -  Modules in this group are considered a standard part of SIP Router (due to widespread usage)
     but they have dependencies that most be satisfied for compilation.
     NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
     group due to interdependencies
@@ -208,7 +217,9 @@ make group_include="standard standard-dep stable experimental" all
 
 There are also in addition some "convenience" groups:
 
-mysql - Include all modules dependent on mysql
+mysql - Include all the db modules dependent and the mysql db driver
+
+postgres - Include all the db modules and the postgres db driver
 
 radius - Include all modules on radiusclient
 

@@ -38,6 +38,8 @@
 #include "../../lib/kmi/mi.h"
 #include "../../dprint.h"
 #include "../../timer.h"
+#include "../../parser/msg_parser.h"
+#include "../../script_cb.h"
 #include "../../mem/meminfo.h"
 #include "../../mem/shm_mem.h"
 
@@ -102,12 +104,29 @@ static mi_export_t mi_stat_cmds[] = {
 int register_mi_stats(void)
 {
 	/* register MI commands */
-	if (register_mi_mod( "core", mi_stat_cmds)<0) {
+	if (register_mi_mod("core", mi_stat_cmds)<0) {
 		LM_ERR("unable to register MI cmds\n");
 		return -1;
 	}
 	return 0;
 }
+
+static int km_cb_req_stats(struct sip_msg *msg,
+		unsigned int flags, void *param)
+{
+	update_stat(rcv_reqs, 1);
+	if(msg->first_line.u.request.method_value==METHOD_OTHER)
+		update_stat(unsupported_methods, 1);
+	return 1;
+}
+
+static int km_cb_rpl_stats(struct sip_msg *msg,
+		unsigned int flags, void *param)
+{
+	update_stat(rcv_rpls, 1);
+	return 1;
+}
+
 int register_core_stats(void)
 {
 	/* register core statistics */
@@ -120,6 +139,15 @@ int register_core_stats(void)
 		LM_ERR("failed to register sh_mem statistics\n");
 		return -1;
 	}
+	if (register_script_cb(km_cb_req_stats, PRE_SCRIPT_CB|REQUEST_CB, 0)<0 ) {
+		LM_ERR("failed to register PRE request callback\n");
+		return -1;
+	}
+	if (register_script_cb(km_cb_rpl_stats, PRE_SCRIPT_CB|ONREPLY_CB, 0)<0 ) {
+		LM_ERR("failed to register PRE request callback\n");
+		return -1;
+	}
+
 	return 0;
 }
 

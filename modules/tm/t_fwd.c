@@ -196,7 +196,7 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		set_route_type(BRANCH_ROUTE);
 		tm_ctx_set_branch_index(branch+1);
 		if (exec_pre_script_cb(i_req, BRANCH_CB_TYPE)>0) {
-			if (run_top_route(branch_rt.rlist[branch_route], i_req) < 0) {
+			if (run_top_route(branch_rt.rlist[branch_route], i_req, 0) < 0) {
 				LOG(L_ERR, "ERROR: print_uac_request: Error in run_top_route\n");
 			}
 			exec_post_script_cb(i_req, BRANCH_CB_TYPE);

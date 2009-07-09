@@ -179,7 +179,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 		set_route_type(REQUEST_ROUTE);
 		/* exec the routing script */
-		if (run_top_route(main_rt.rlist[DEFAULT_RT], msg)<0){
+		if (run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error_req;
@@ -222,7 +222,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
 			set_route_type(ONREPLY_ROUTE);
-			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg);
+			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, 0);
 			if (ret<0){
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");

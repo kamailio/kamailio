@@ -265,6 +265,7 @@ static int case_check_default(struct case_stms* stms);
 %token FORWARD_UDP
 %token SEND
 %token SEND_TCP
+%token EXIT
 %token DROP
 %token RETURN
 %token BREAK
@@ -2940,15 +2941,31 @@ func_param:
 
 ret_cmd:
 	DROP LPAREN RPAREN		{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST,
+						(void*)(DROP_R_F|EXIT_R_F)); 
 	}
 	| DROP rval_expr	{
-		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST, (void*)EXIT_R_F);
+		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST,
+						(void*)(DROP_R_F|EXIT_R_F)); 
 	}
 	| DROP				{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, 
+						(void*)(DROP_R_F|EXIT_R_F)); 
+	}
+	| EXIT LPAREN RPAREN		{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
+	}
+	| EXIT rval_expr	{
+		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST, (void*)EXIT_R_F);
+	}
+	| EXIT				{
 		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
 	}
 	| RETURN			{
+		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
+						(void*)RETURN_R_F);
+	}
+	| RETURN  LPAREN RPAREN		{
 		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
 						(void*)RETURN_R_F);
 	}
