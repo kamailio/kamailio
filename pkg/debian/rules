@@ -44,23 +44,82 @@ EXCLUDED_MODULES=	jabber xmlrpc postgres cpl cpl-c
 #EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt lcr msilo bdb dbtext iptrtpproxy ldap oracle osp pa rls
 EXTRA_EXCLUDED_MODULES=
 
-# postgres modules
-POSTGRES_MODULES=db_postgres
-# tls module
-TLS_MODULES=tls
-# xmlrpc module
-XMLRPC_MODULES=xmlrpc
+# possible module directories that can appear in MODULES_SP
+# (only used for deducing a module name)
+MDIRS=modules modules_s modules_k
 
-# the same but with path prepended (needed for modules="...")
-##MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
-JABBER_MOD_PATH=$(addprefix modules_s/, $(JABBER_MODULES))
-##RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
-CPL_MOD_PATH=$(addprefix modules_s/, $(CPL_MODULES))
-##PA_MOD_PATH=$(addprefix modules/, $(PA_MODULES))
-POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
-TLS_MOD_PATH=$(addprefix modules/, $(TLS_MODULES))
-XMLRPC_MOD_PATH=$(addprefix modules_s/, $(XMLRPC_MODULES))
+# modules packaged in separate packages (complete with full modules_* path)
+# with the package name: ser-$(module_name)-module
+MODULES_SP=modules/db_mysql modules/db_postgress modules/tls modules_s/xmlrpc
 
+# module groups that are packaged in seperate packages
+# (with the name ser-$(group_name)-modules)
+# Note: the order is important (should be in dependency order, the one
+# on which other depend first)
+PACKAGE_GROUPS=db radius
+
+# directories with possible duplicate libraries (that should be deleted
+# from current module* packages)
+DUP_LIBS_DIRS=$(CURDIR)/debian/ser/usr/lib/ser \
+			$(CURDIR)/debian/ser-db-modules/usr/lib/ser
+
+# modules names out of modules sp
+MODULES_SP_NAMES=$(filter-out $(MDIRS),$(subst /, ,$(MODULES_SP)))
+
+# "function" to get package short name out of a dir/module_name
+# it also transforms db_foo into foo
+mod_name=$(subst db_,,$(lastword $(subst /, ,$(1))))
+
+define PACKAGE_GRP_BUILD_template
+	# package all the modules in PACKAGE_GROUPS in separate packages
+	$(foreach grp,$(PACKAGE_GROUPS),\
+		$(MAKE) every-module group_include="$(grp)"
+	)
+endef
+
+
+define PACKAGE_MODULE_BUILD_template
+	# package all the modules MODULES_SP in separate packages
+	$(foreach mod,$(MODULES_SP),\
+		$(MAKE) modules modules="$(mod)"
+	)
+endef
+
+
+define PACKAGE_GRP_INSTALL_template
+	$(foreach grp,$(PACKAGE_GROUPS),\
+		$(MAKE) install-modules-all group_include="$(grp)" \
+			basedir=$(CURDIR)/debian/ser-$(grp)-modules \
+			cfg_prefix=$(CURDIR)/debian/ser-$(grp)-modules \
+			doc-dir=share/doc/ser-$(grp)-modules
+		# eliminate duplicate libs
+		-for d in $(DUP_LIBS_DIRS); do \
+			test "$$d" != "$(CURDIR)/debian/ser-$(grp)-modules/usr/lib/ser" &&\
+			for r in $$d/lib*; do \
+				echo "removing $(grp) lib `basename $$r` present also in $$d";\
+				rm -f $(CURDIR)/debian/ser-$(grp)-modules/usr/lib/ser/`basename "$$r"` ; \
+			done ; \
+		done
+	)
+endef
+
+
+define PACKAGE_MODULE_INSTALL_template
+	$(foreach mod,$(MODULES_SP),
+		$(MAKE) install-modules-all modules="$(mod)" \
+				modules_s="" modules_k="" \
+				basedir=$(CURDIR)/debian/ser-$(call mod_name,$(mod))-module \
+				doc-dir=share/doc/ser-$(call mod_name,$(mod))-module
+		# eliminate duplicate libs
+		-for d in $(DUP_LIBS_DIRS); do \
+			test "$$d" != "$(CURDIR)/debian/ser-$(call mod_name,$(mod))-module/usr/lib/ser" &&\
+			for r in $$d/lib*; do \
+				echo "removing $(call mod_name, $(mod)) lib `basename $$r` present also in $$d";\
+				rm -f $(CURDIR)/debian/ser-$(call mod_name,$(mod))-module/usr/lib/ser/`basename "$$r"` ; \
+			done ; \
+		done
+	)
+endef
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -g
@@ -73,7 +132,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	$(MAKE) cfg prefix=/usr cfg-prefix=$(CURDIR)/debian/ser \
+	$(MAKE) cfg prefix=/usr cfg_prefix=$(CURDIR)/debian/ser \
 			cfg_target=/etc/ser/ \
 			basedir=$(CURDIR)/debian/ser \
 			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
@@ -88,11 +147,10 @@ build-stamp: configure-stamp
 	dh_testdir
 	# Add here commands to compile the package.
 	$(MAKE) all
-	$(MAKE) every-module group_include="mysql"
-	$(MAKE) every-module group_include="radius"
-	$(MAKE) modules modules="$(POSTGRES_MOD_PATH)"
-	$(MAKE) modules modules="$(TLS_MOD_PATH)"
-	$(MAKE) modules modules="$(XMLRPC_MOD_PATH)"
+	# make groups
+	$(call PACKAGE_GRP_BUILD_template)
+	# make single-module packages
+	$(call PACKAGE_MODULE_BUILD_template)
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
 	touch build-stamp
 
@@ -113,27 +171,10 @@ install: build
 	$(MAKE) install group_include="standard"
 	# fix etc/ser dir location -- not needed -- andrei
 	# mv -f $(CURDIR)/debian/ser/usr/etc $(CURDIR)/debian/ser
-	# install only the mysql module
-	$(MAKE) install-modules-all group_include="mysql" \
-		basedir=$(CURDIR)/debian/ser-mysql-modules \
-		cfg-prefix=$(CURDIR)/debian/ser-mysql-modules \
-		doc-dir=share/doc/ser-mysql-modules
-	$(MAKE) install-modules-all group_include="radius" \
-		basedir=$(CURDIR)/debian/ser-radius-modules \
-		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
-		doc-dir=share/doc/ser-radius-modules
-	$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)" \
-		modules_s="" modules_k="" \
-		basedir=$(CURDIR)/debian/ser-postgres-module \
-		doc-dir=share/doc/ser-postgress-module
-	$(MAKE) install-modules-all modules="$(TLS_MOD_PATH)" \
-		modules_s="" modules_k="" \
-		basedir=$(CURDIR)/debian/ser-tls-module \
-		doc-dir=share/doc/ser-tls-module
-	$(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)" \
-		modules_s="" modules_k="" \
-		basedir=$(CURDIR)/debian/ser-xmlrpc-module \
-		doc-dir=share/doc/ser-xmlrpc-module
+	# make group packages
+	$(call PACKAGE_GRP_INSTALL_template)
+	# make single module packages
+	$(call PACKAGE_MODULE_INSTALL_template)
 	# install /etc/default/ser file
 	mkdir -p $(CURDIR)/debian/ser/etc/default
 	cp -f debian/ser.default $(CURDIR)/debian/ser/etc/default/ser
@@ -174,7 +215,7 @@ binary-common:
 	dh_strip
 	dh_compress 
 	dh_fixperms
-#	dh_makeshlibs
+	dh_makeshlibs
 	dh_installdeb
 #	dh_perl
 	dh_shlibdeps

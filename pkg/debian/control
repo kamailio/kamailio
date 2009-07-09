@@ -9,7 +9,7 @@ Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Suggests: ser-mysql-modules, ser-jabber-module, ser-cpl-module, ser-presence-modules, ser-radius-modules
-Conflicts: ser-mysql-modules (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-presence-modules (<< ${Source-Version}), ser-postgres-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
+Conflicts: ser-mysql-module (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-presence-modules (<< ${Source-Version}), ser-postgres-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
 Description: Sip Express Router, very fast and configurable SIP proxy
  ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, ser can handle thousands calls
@@ -21,13 +21,22 @@ Description: Sip Express Router, very fast and configurable SIP proxy
  Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
  Module, Registrar and User Location.
 
-Package: ser-mysql-modules
+Package: ser-db-modules
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the MySQL database connectivity modules
- This has been split out of the main ser package, so that ser will not
- depend upon libmysqlclient. This module will enable you to use the digest
- authentication module or persistent user location entries.
+Suggests: ser-mysql-module, ser-postgres-module
+Conflicts: ser-mysql-modules
+Description: contains generic DB support and modules using a DB
+ These modules will enable usage of various DB related functionality.
+ Note that only basic DB drivers are included in this package (db_text and
+ db_flatstore). You probably want to install a more advanced db driver, like
+ the ones provided in ser-mysql-modules or ser-postgres-module packages.
+
+Package: ser-mysql-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version}), ser-db-modules (= ${Source-Version})
+Description: contains the MySQL database driver module
+ This package will enable using a MySQL database with ser.
 
 #Package: ser-jabber-module
 #Architecture: any
@@ -61,11 +70,9 @@ Description: contains the ser RADIUS modules
 
 Package: ser-postgres-module
 Architecture: any
-Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the PostgreSQL database connectivity module
- This has been split out of the main ser package, so that ser will not
- depend upon libpq. This module will enable you to use the digest
- authentication module or persistent user location entries.
+Depends: ${shlibs:Depends}, ser (= ${Source-Version}), ser-db-modules (= ${Source-Version})
+Description: contains the PostgreSQL database driver module
+ This package will enable using a PostgreSQL database with ser.
 
 Package: ser-tls-module
 Architecture: any

@@ -1,5 +1,15 @@
 ser (2.99.0-dev01) unstable; urgency=low
 
+  * Added the ser-db-modules package, containing database using modules and
+    basic DB drivers (db_text and db_flatstore).
+  * The ser-mysql-modules and ser-postgres-modules contain now only the DB
+    drivers and depend on ser-db-modules.
+  * Various minor packaging problems fixed.
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Wed, 09 Jul 2009 15:37:00 +0200
+
+ser (2.99.0-dev01) unstable; urgency=low
+
   * Update Debian specification for sip-router.
 
  -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Wed, 08 Jul 2009 14:13:11 +0200
