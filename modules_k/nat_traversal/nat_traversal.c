@@ -43,6 +43,7 @@
 #include "../../data_lump.h"
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
+#include "../../timer_proc.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -185,6 +186,7 @@ static Bool test_private_via(struct sip_msg *msg);
 static INLINE char* shm_strdup(char *source);
 
 static int  mod_init(void);
+static int  child_init(int rank);
 static void mod_destroy(void);
 static int  preprocess_request(struct sip_msg *msg, unsigned int flags, void *param);
 static int  reply_filter(struct sip_msg *reply);
@@ -275,7 +277,7 @@ struct module_exports exports = {
     mod_init,        // module init function (before fork. kids will inherit)
     reply_filter,    // reply processing function
     mod_destroy,     // destroy function
-    0                // child init function
+    child_init       // child init function
 };
 
 
@@ -1496,7 +1498,7 @@ send_keepalive(NAT_Contact *contact)
     static char *from_ip = from + sizeof(FROM_PREFIX) - 1;
     static struct socket_info *last_socket = NULL;
     struct hostent* hostent;
-    union sockaddr_union to;
+	struct dest_info dst;
     int nat_port, len;
     str nat_ip;
 
@@ -1537,14 +1539,17 @@ send_keepalive(NAT_Contact *contact)
         return;
     }
 
+	init_dest_info(&dst);
     //nat_ip.s = strchr(contact->uri, ':') + 1;
     nat_ip.s = &contact->uri[4]; // skip over "sip:"
     ptr = strchr(nat_ip.s, ':');
     nat_ip.len = ptr - nat_ip.s;
     nat_port = strtol(ptr+1, NULL, 10);
-    hostent = sip_resolvehost(&nat_ip, NULL, NULL, False, NULL);
-    hostent2su(&to, hostent, 0, nat_port);
-    udp_send(contact->socket, buffer, len, &to);
+    hostent = sip_resolvehost(&nat_ip, NULL, NULL);
+    hostent2su(&dst.to, hostent, 0, nat_port);
+	dst.proto=PROTO_UDP;
+	dst.send_sock=contact->socket;
+    udp_send(&dst, buffer, len);
 }
 
 
@@ -1665,7 +1670,7 @@ restore_keepalive_state(void)
             if (now > rtime && now > stime)
                 continue; // expired entry
 
-            if (parse_phostport(socket, strlen(socket), &host.s, &host.len, &port, &proto) < 0)
+            if (parse_phostport(socket, &host.s, &host.len, &port, &proto) < 0)
                 continue;
 
             sock = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
@@ -1698,6 +1703,7 @@ mod_init(void)
 {
     register_slcb_t register_sl_callback;
     int *param;
+	modparam_t type;
 
     if (keepalive_interval <= 0) {
         LM_NOTICE("keepalive functionality is disabled from the configuration\n");
@@ -1727,14 +1733,16 @@ mod_init(void)
         have_dlg_api = True;
 
         // load dlg_flag and default_timeout parameters from the dialog module
-        param = find_param_export("dialog", "dlg_flag", INT_PARAM);
+        param = find_param_export(find_module_by_name("dialog"),
+				"dlg_flag", INT_PARAM, &type);
         if (!param) {
             LM_ERR("cannot find dlg_flag parameter in the dialog module\n");
             return -1;
         }
         dialog_flag = *param;
 
-        param = find_param_export("dialog", "default_timeout", INT_PARAM);
+        param = find_param_export(find_module_by_name("dialog"),
+				"default_timeout", INT_PARAM, &type);
         if (!param) {
             LM_ERR("cannot find default_timeout parameter in the dialog module\n");
             return -1;
@@ -1788,14 +1796,23 @@ mod_init(void)
         LM_NOTICE("using 10 seconds for keepalive_interval\n");
         keepalive_interval = 10;
     }
-    if (register_timer_process(keepalive_timer, NULL, 1, TIMER_PROC_INIT_FLAG) < 0) {
-        LM_ERR("failed to register keepalive timer process\n");
-        return -1;
-    }
+	register_procs(1);
 
     return 0;
 }
 
+static int
+child_init(int rank)
+{
+	if (rank==PROC_MAIN) {
+		if(fork_dummy_timer(PROC_TIMER, "TIMER NT", 1 /*socks flag*/,
+					keepalive_timer, NULL, 1 /*sec*/)<0) {
+			LM_ERR("failed to register keepalive timer process\n");
+			return -1;
+		}
+	}
+	return 0;
+}
 
 static void
 mod_destroy(void)
