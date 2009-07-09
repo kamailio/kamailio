@@ -358,7 +358,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				/* run the route */
 				backup_route_type = get_route_type();
 				set_route_type(LOCAL_ROUTE);
-				run_top_route(event_rt.rlist[rt], &lreq);
+				run_top_route(event_rt.rlist[rt], &lreq, 0);
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
