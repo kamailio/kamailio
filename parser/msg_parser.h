@@ -110,11 +110,14 @@ enum request_method {
 #define FL_MTU_TLS_FB   (1 << 9)
 #define FL_MTU_SCTP_FB  (1 << 10)
 
-/* WARNING: Value (1 << 11) is temporarily reserved for use in kamailio acc
+/* WARNING: Value (1 << 29) is temporarily reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
 
-/* WARNING: Value (1 << 12) is temporarily reserved for use in kamailio
+/* WARNING: Value (1 << 30) is temporarily reserved for use in kamailio
  * media proxy module (flag FL_USE_MEDIA_PROXY)! */
+
+/* WARNING: Value (1 << 31) is temporarily reserved for use in kamailio
+ * nat_traversal module (flag FL_DO_KEEPALIVE)! */
 
 #define FL_MTU_FB_MASK  (FL_MTU_TCP_FB|FL_MTU_TLS_FB|FL_MTU_SCTP_FB)
 

@@ -79,7 +79,7 @@
  * projects. The value of the flag must be kept synchronized with other flags
  * defined in parser/msg_parser.h!
  */
-#define FL_REQ_UPSTREAM (1<<11)
+#define FL_REQ_UPSTREAM (1<<29)
 
 void acc_log_init(void);
 int  acc_log_request( struct sip_msg *req);
