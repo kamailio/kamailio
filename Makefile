@@ -156,8 +156,9 @@ module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For db use (db modules, excluding drivers)
-module_group_db=acc_db auth_db avp_db db_ops db_flatstore dbtext db_text \
+module_group_db=acc_db auth_db avp_db db_ops db_flatstore db_text \
 				uri_db domain lcr msilo speeddial
+				#dbtext (s) not migrated yet to the new db interface
 
 # For mysql
 module_group_mysql_driver=db_mysql
