@@ -65,7 +65,9 @@ int t_suspend(struct sip_msg *msg,
 
 	/* send a 100 Trying reply, because the INVITE processing
 	will probably take a long time */
-	if (msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100)) {
+	if (msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100)
+		&& (t->uas.status < 100)
+	) {
 		if (!t_reply( t, msg , 100 ,
 			"trying -- your call is important to us"))
 				DBG("SER: ERROR: t_suspend (100)\n");

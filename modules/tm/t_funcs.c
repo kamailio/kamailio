@@ -342,8 +342,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 
 	/* INVITE processing might take long, particularly because of DNS
 	   look-ups -- let upstream know we're working on it */
-	if (p_msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100))
-	{
+	if (p_msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100)
+		&& (t->uas.status < 100)
+	) {
 		DBG( "SER: new INVITE\n");
 		if (!t_reply( t, p_msg , 100 ,
 			cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
