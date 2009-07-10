@@ -34,6 +34,7 @@
 #include "../../action.h"
 #include "../../script_cb.h"
 
+#include "config.h"
 #include "sip_msg.h"
 #include "t_reply.h"
 #include "h_table.h"
@@ -69,7 +70,7 @@ int t_suspend(struct sip_msg *msg,
 		&& (t->uas.status < 100)
 	) {
 		if (!t_reply( t, msg , 100 ,
-			"trying -- your call is important to us"))
+			cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
 				DBG("SER: ERROR: t_suspend (100)\n");
 	}
 
