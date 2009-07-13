@@ -194,21 +194,23 @@ int cfg_shmize(void)
 			/* clone the strings to shm mem */
 			if (cfg_shmize_strings(group)) goto error;
 
-			/* copy the values to the new block,
-			and update the module's handle */
+			/* copy the values to the new block */
 			memcpy(block->vars+group->offset, group->vars, group->size);
-			*(group->handle) = block->vars+group->offset;
 		} else {
 			/* The group was declared with NULL values,
 			 * we have to fix it up.
 			 * The fixup function takes care about the values,
 			 * it fills up the block */
 			if (cfg_script_fixup(group, block->vars+group->offset)) goto error;
-			*(group->handle) = block->vars+group->offset;
 
-			/* notify the drivers about the new config definition */
+			/* Notify the drivers about the new config definition.
+			 * Temporary set the group handle so that the drivers have a chance to
+			 * overwrite the default values. The handle must be reset after this
+			 * because the main process does not have a local configuration. */
+			*(group->handle) = block->vars+group->offset;
 			cfg_notify_drivers(group->name, group->name_len,
 					group->mapping->def);
+			*(group->handle) = NULL;
 		}
 	}
 	/* try to fixup the selects that failed to be fixed-up previously */

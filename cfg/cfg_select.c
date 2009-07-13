@@ -203,6 +203,10 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	/* use the module's handle to access the variable, so the variables
 	are read from the local config */
 	p = *(group->handle) + var->offset;
+	if (p == NULL)
+		return -1;	/* The group is not yet ready.
+				 * (Trying to read the value from the
+				 * main process that has no local configuration) */
 
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:
@@ -295,9 +299,14 @@ unsigned int read_cfg_var(struct cfg_read_handle *read_handle, void **val)
 	group = (cfg_group_t *)(read_handle->group);
 	var = (cfg_mapping_t *)(read_handle->var);
 
+
 	/* use the module's handle to access the variable, so the variables
 	are read from the local config */
 	p = *(group->handle) + var->offset;
+	if (p == NULL)
+		return 0;	/* The group is not yet ready.
+				 * (Trying to read the value from the
+				 * main process that has no local configuration) */
 
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:

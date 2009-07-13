@@ -143,7 +143,6 @@ error:
 /* fix-up the dynamically declared group:
  *  - allocate memory for the arrays
  *  - set the values within the memory block
- *  - notify the drivers about the new group
  */
 int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 {
