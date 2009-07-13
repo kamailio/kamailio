@@ -314,6 +314,9 @@ char* complete_params_cfg_var[]={
 /* commands for which we complete the first param with an mi command*/
 char* complete_params_mi[]={
 	"mi",
+	"mi_fifo",
+	"mi_dg",
+	"mi_xmlrpc",
 	0
 };
 #endif /* USE_MI */
@@ -1423,10 +1426,10 @@ static int get_mi_list(int s)
 	for (r=0; r<mi_which_no; r++){
 		if (mi_which_array[r].type!=BINRPC_T_STR)
 			continue;
-		/* we are interestend only in lines starting with '+', e.g.:
-		   + :: version */
+		/* we are interestend only in lines starting with ':', e.g.:
+		   :: version */
 		if ((mi_which_array[r].u.strval.len) &&
-			(mi_which_array[r].u.strval.s[0]=='+'))
+			(mi_which_array[r].u.strval.s[0]==':'))
 			mi_which_results++;
 	}
 	/* no mi commands */
@@ -1442,14 +1445,10 @@ static int get_mi_list(int s)
 			continue;
 		p=mi_which_array[r].u.strval.s;
 		end=p+mi_which_array[r].u.strval.len;
-		/* we are interestend only in lines starting with '+', e.g.:
-		   + :: version */
-		if ((p>=end) || (*p!='+'))
+		/* we are interestend only in lines starting with ':', e.g.:
+			:: version */
+		if ((p>=end) || (*p!=':'))
 			continue;
-		p++;
-		/* skip over to the first ':' */
-		for(;p<end && *p!=':'; p++);
-		if (p>=end) continue;
 		p++;
 		/* skip over to the next ':' */
 		for(;p<end && *p!=':'; p++);
@@ -1457,14 +1456,15 @@ static int get_mi_list(int s)
 		p++;
 		/* skip over spaces */
 		for(;p<end && (*p==' ' || *p=='\t'); p++);
-		if (p>=end) continue;
+		if (p>=end || *p=='\n') continue;
 		if (mi_cmds_no >= mi_which_results){
 			fprintf(stderr, "BUG: wrong mi cmds no (%d >= %d)\n",
 							mi_cmds_no, mi_which_results);
 			goto error;
 		}
 		mi_name.s=p;
-		mi_name.len=(int)(long)(end-p);
+		for(; p<end && *p!=' ' && *p!='\t' && *p!='\n'; p++);
+		mi_name.len=(int)(long)(p-mi_name.s);
 		mi_cmds[mi_cmds_no]=mi_name;
 		mi_cmds_no++;
 	}
