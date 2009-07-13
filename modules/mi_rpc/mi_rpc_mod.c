@@ -40,7 +40,7 @@ static const char* rpc_mi_exec_doc[2] = {
 static void rpc_mi_exec(rpc_t* rpc, void* c);
 
 rpc_export_t mr_rpc[] = {
-	{"mi",  rpc_mi_exec,  rpc_mi_exec_doc,  0},
+	{"mi",  rpc_mi_exec,  rpc_mi_exec_doc,  RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
