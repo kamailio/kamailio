@@ -128,7 +128,7 @@ static domain_t dom_buf[2];
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"is_local",      is_local,              1, fixup_var_str_1,     REQUEST_ROUTE|FAILURE_ROUTE },
+    {"is_local",      is_local,              1, fixup_var_str_1,     REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
     {"lookup_domain", lookup_domain,         2, lookup_domain_fixup, REQUEST_ROUTE|FAILURE_ROUTE },
     {"get_did",       (cmd_function)get_did, 0, 0,                   0},
     {0, 0, 0, 0, 0}
