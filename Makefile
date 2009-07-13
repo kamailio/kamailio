@@ -132,7 +132,7 @@ endif
 # widespread usage) and have no external compile or link dependencies (note 
 # that some of these interplay with external systems).
 module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
-				eval exec fifo flatstore gflags maxfwd mediaproxy \
+				eval exec fifo db_flatstore gflags maxfwd mediaproxy \
 				nathelper options pdt permissions pike print ratelimit \
 				registrar rr sanity sl textops timer tm uac unixsock uri \
 				usrloc xlog cfg_rpc
@@ -140,9 +140,9 @@ module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
 # Modules in this group are considered a standard part of SER (due to 
 # widespread usage) but they have dependencies that must be satisfied for 
 # compilation.
-# acc_radius, auth_radius, avp_radius, uri_radius => radiusclient-ng
+# acc_radius, auth_radius, misc_radius => radiusclient-ng
 # acc_db, auth_db, avp_db, db_ops, domain, lcr, msilo, dialog, speeddial,
-# uri_db => database module (mysql, postgres, dbtext)
+# uri_db => database module (db_mysql, db_postgres, dbtext ...)
 # mysql, postgres => mysql server and client libraries or postgres server and
 #  client libraries or other database back-end (ex. mysql-devel)
 # pa, xmlrpc => libxml2
@@ -151,8 +151,8 @@ module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
 # NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been
 # included in this group due to interdependencies
 module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
-				avp_radius auth_identity \
-				db_ops domain lcr msilo mysql dialog pa postgres \
+				auth_identity db_ops domain lcr misc_radius \
+				msilo dialog pa \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For db use (db modules, excluding drivers)
@@ -169,7 +169,7 @@ module_group_postgres_driver=db_postgres
 module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 
 # For radius
-module_group_radius=acc_radius auth_radius avp_radius misc_radius peering
+module_group_radius=acc_radius auth_radius misc_radius peering
 
 # For presence
 module_group_presence=dialog pa presence_b2b rls xcap
@@ -197,7 +197,7 @@ else
 	# Old defaults for backwards compatibility
 	# excluded because they depend on external libraries
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
-							auth_radius uri_radius avp_radius \
+							auth_radius misc_radius \
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap \
