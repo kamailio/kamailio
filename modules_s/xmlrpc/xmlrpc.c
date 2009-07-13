@@ -1220,9 +1220,9 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		switch(*fmt) {
 		case '*': /* start of optional parameters */
 			modifiers++;
-			/* no other action needed, for xmlrpc params are treated as
-			   optionals anyway */
-			break;
+			read++;
+			fmt++;
+			continue; /* do not advance ctx->act-param */
 		case 'b': /* Bool */
 		case 't': /* Date and time */
 		case 'd': /* Integer */
