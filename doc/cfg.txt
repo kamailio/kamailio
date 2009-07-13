@@ -169,13 +169,15 @@ cfg_get(foo, cfg_handle, p)
 It is also possible to access the variables of other modules or the core in two
 different ways:
 
-1) Include the header file of the other module/core that declares the cfg_group_*
-structure and the handle for it. Than use the handle of that module/core to access
+1) For the core: include the header file that declares the cfg_group_*
+structure and the handle for it. Than use the handle of the core to access
 the variable:
 
-cfg_get(bar, cfg_handle_of_bar, j);
+#include "../../cfg_core.h"
+cfg_get(core, core_cfg, use_dst_blacklist)
 
-2) Access the variables by their group and variable name:
+2) For the core, module, or script: access the variables by their group
+and variable name:
 
 #include "../../cfg/cfg_select.h"
 
@@ -195,15 +197,15 @@ static int mod_init(void)
 }
 
 int	j;
-if ((cfg_read_var_int(&var_bar_j, &j)) < 0) { error... }
+if ((read_cfg_var_int(&var_bar_j, &j)) < 0) { error... }
 
 or similarly,
 str	s;
-if ((cfg_read_var_str(&var_bar_j, &s)) < 0) { error... }
+if ((read_cfg_var_str(&var_bar_j, &s)) < 0) { error... }
 
 2) is a bit slower than 1) because the first solution returns the pointer directly
-to the variable, but 2) supports also the variables declared in the script that are
-not known at compile time.
+to the variable, but 2) offers access also to the configuration of other modules
+and to the variables declared in the script that are not known at compile time.
 
 3. Using the framework in the core
 ===============================================================================
