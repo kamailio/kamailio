@@ -1426,7 +1426,7 @@ void uac_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
    }
 
    if(type == TMCB_LOCAL_COMPLETED && !ev_info->destroy_cb_set) {
-		if(seas_f.tmb.register_tmcb(NULL, t, TMCB_TRANS_DELETED, uac_cleanup_cb, (void*)ev_info, NULL) <= 0) {
+		if(seas_f.tmb.register_tmcb(NULL, t, TMCB_DESTROY, uac_cleanup_cb, (void*)ev_info, NULL) <= 0) {
 			LM_ERR( "register_tmcb for destroy callback failed\n");
 			goto error;
 		}
