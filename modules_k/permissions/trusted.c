@@ -72,6 +72,11 @@ int reload_trusted_table(void)
 	cols[2] = &from_col;
 	cols[3] = &tag_col;
 
+	if (db_handle == 0) {
+	    LM_ERR("no connection to database\n");
+	    return -1;
+	}
+
 	if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
 		LM_ERR("failed to use trusted table\n");
 		return -1;
@@ -226,27 +231,24 @@ error:
  */
 int init_child_trusted(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
-		return 0; /* do nothing for the main process */
+    	if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
+		return 0;
 
 	if (!db_url.s) {
 		return 0;
 	}
 	
-	/* Check if database is needed by child */
-	if (db_mode==DISABLE_CACHE && rank>0) {
-		db_handle = perm_dbf.init(&db_url);
-		if (!db_handle) {
-			LM_ERR("unable to connect database\n");
-			return -1;
-		}
+	db_handle = perm_dbf.init(&db_url);
+	if (!db_handle) {
+	    LM_ERR("unable to connect database\n");
+	    return -1;
+	}
 
-		if(db_check_table_version(&perm_dbf, db_handle, &trusted_table, TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		}
-
+	if (db_check_table_version(&perm_dbf, db_handle, &trusted_table,
+				   TABLE_VERSION) < 0) {
+	    LM_ERR("error during table version check.\n");
+	    perm_dbf.close(db_handle);
+	    return -1;
 	}
 
 	return 0;
