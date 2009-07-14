@@ -86,13 +86,14 @@ void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
 {
 	int i;
 	int branches_no;
+	branch_bm_t mask;
 	
 	*cancel_bm=0;
 	branches_no=t->nr_of_outgoings;
+	mask=~skip_branches;
 	membar_depends(); 
 	for( i=0 ; i<branches_no ; i++ ) {
-		if (!(skip_branches & (1<<i)) &&  prepare_cancel_branch(t, i, 1))
-			*cancel_bm |= 1<<i ;
+		*cancel_bm |= ((mask & (1<<i)) &&  prepare_cancel_branch(t, i, 1))<<i;
 	}
 }
 
