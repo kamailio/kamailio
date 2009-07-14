@@ -522,9 +522,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		DBG("DEBUG: _reply_light: response building failed\n");
 		/* determine if there are some branches to be canceled */
 		if ( is_invite(trans) ) {
-			if (lock) LOCK_REPLIES( trans );
 			prepare_to_cancel(trans, &cancel_bitmap, 0);
-			if (lock) UNLOCK_REPLIES( trans );
 		}
 		/* and clean-up, including cancellations, if needed */
 		goto error;
@@ -532,7 +530,6 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 	cancel_bitmap=0;
 	if (lock) LOCK_REPLIES( trans );
-	if ( is_invite(trans) ) prepare_to_cancel(trans, &cancel_bitmap, 0);
 	if (trans->uas.status>=200) {
 		LOG( L_ERR, "ERROR: _reply_light: can't generate %d reply"
 			" when a final %d was sent out\n", code, trans->uas.status);
@@ -570,8 +567,10 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			run_trans_callbacks(TMCB_LOCAL_COMPLETED, trans,
 									0, FAKED_REPLY, code);
 		cleanup_uac_timers( trans );
-		if (is_invite(trans)) 
+		if (is_invite(trans)){
+			prepare_to_cancel(trans, &cancel_bitmap, 0);
 			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
+		}
 		start_final_repl_retr(  trans );
 	}
 
@@ -618,13 +617,14 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	return 1;
 
 error3:
+	prepare_to_cancel(trans, &cancel_bitmap, 0);
 error2:
 	if (lock) UNLOCK_REPLIES( trans );
 	pkg_free ( buf );
 error:
 	/* do UAC cleanup */
 	cleanup_uac_timers( trans );
-	if ( is_invite(trans) )
+	if ( is_invite(trans) && cancel_bitmap )
 		cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL);
 	/* we did not succeed -- put the transaction on wait */
 	put_on_wait(trans);

@@ -360,9 +360,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 		return;
 	}
 	/*  find the branches that need cancel-ing */
-	LOCK_REPLIES(trans);
-		prepare_to_cancel(trans, &cancel_bm, 0);
-	UNLOCK_REPLIES(trans);
+	prepare_to_cancel(trans, &cancel_bm, 0);
 	 /* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
 	i=cancel_uacs(trans, cancel_bm, 0); /* don't fake 487s, 
