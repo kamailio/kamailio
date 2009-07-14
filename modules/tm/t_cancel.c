@@ -42,6 +42,10 @@
  * 2008-03-08  e2e_cancel handles non replied branches in 3 different ways,
  *              selectable by the tm cancel_b_method parameter: fake reply,
  *              retransmit request and send cancel on branch (andrei)
+ * 2009-07-14  renamed which_cancel() to prepare_to_cancel() for better
+ *              reflecting its purpose
+ *             prepare_to_cancel() takes now an additional skip_branches
+ *              bitmap parameter (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
@@ -62,13 +66,23 @@
 #include "t_hooks.h"
 
 
-/* determine which branches should be canceled; can be called 
-   without REPLY_LOCK, since should_cancel_branch() is atomic now
-   -- andrei
- WARNING: - has side effects, see should_cancel_branch()
-          - one _must_ call cancel_uacs(cancel_bm) if *cancel_bm!=0 or
-            you'll have some un-cancelable branches */
-void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
+/** Prepare to cancel a transaction.
+ * Determine which branches should be canceled and prepare them (internally
+ * mark them as "cancel in progress", see prepare_cancel_branch()).
+ * Can be called without REPLY_LOCK, since prepare_cancel_branch() is atomic 
+ *  now *  -- andrei
+ * WARNING: - has side effects, see prepare_cancel_branch()
+ *          - one _must_ call cancel_uacs(cancel_bm) if *cancel_bm!=0 or
+ *             you'll have some un-cancelable branches (because they remain
+ *             "marked" internally)
+ * @param t - transaction whose branches will be canceled
+ * @param cancel_bm - pointer to a branch bitmap that will be filled with
+*    the branches that must be canceled (must be passed to cancel_uacs() if
+*    !=0).
+*  @param skip - branch bitmap of branches that should not be canceled
+*/
+void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
+						branch_bm_t skip_branches)
 {
 	int i;
 	int branches_no;
@@ -77,7 +91,7 @@ void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
 	branches_no=t->nr_of_outgoings;
 	membar_depends(); 
 	for( i=0 ; i<branches_no ; i++ ) {
-		if (should_cancel_branch(t, i, 1)) 
+		if (!(skip_branches & (1<<i)) &&  prepare_cancel_branch(t, i, 1))
 			*cancel_bm |= 1<<i ;
 	}
 }
@@ -91,7 +105,7 @@ void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
  *                       canceled 
  *          flags     - how_to_cancel flags, see cancel_branch()
  * returns: bitmap with the still active branches (on fr timer)
- * WARNING: always fill cancel_bm using which_cancel(), supplying values
+ * WARNING: always fill cancel_bm using prepare_to_cancel(), supplying values
  *          in any other way is a bug*/
 int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 {
@@ -125,7 +139,7 @@ int cancel_all_uacs(struct cell *trans, int how)
 	DBG("Canceling T@%p [%u:%u]\n", trans, trans->hash_index, trans->label);
 	
 	cancel_bm=0;
-	which_cancel(trans, &cancel_bm);
+	prepare_to_cancel(trans, &cancel_bm, 0);
 	 /* tell tm to cancel the call */
 	i=cancel_uacs(trans, cancel_bm, how);
 	
@@ -151,7 +165,7 @@ int cancel_all_uacs(struct cell *trans, int how)
 
 
 /* should be called directly only if one of the condition bellow is true:
- *  - should_cancel_branch or which_cancel returned true for this branch
+ *  - prepare_cancel_branch or prepare_to_cancel returned true for this branch
  *  - buffer value was 0 and then set to BUSY in an atomic op.:
  *     if (atomic_cmpxchg_long(&buffer, 0, BUSY_BUFFER)==0).
  *
@@ -346,7 +360,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 	}
 	/*  find the branches that need cancel-ing */
 	LOCK_REPLIES(trans);
-		which_cancel(trans, &cancel_bm);
+		prepare_to_cancel(trans, &cancel_bm, 0);
 	UNLOCK_REPLIES(trans);
 	 /* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");

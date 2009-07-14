@@ -28,6 +28,7 @@
  * History:
  * --------
  * 2003-03-06  voicemail changes accepted
+ * 2009-07-14  renamed which_cancel* to prepare_to_cancel* (andrei)
  *
  */
 
@@ -143,7 +144,7 @@ struct tm_binds {
 	tlookup_original_f t_lookup_original;
 	tcheck_f t_check;
 	unref_cell_f unref_cell;
-	which_cancel_f which_cancel;
+	prepare_to_cancel_f prepare_to_cancel;
 	tm_get_stats_f get_stats;
 #ifdef WITH_TM_CTX
 	tm_ctx_get_f tm_ctx_get;

@@ -302,7 +302,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 	short do_cancel_branch;
 	enum rps reply_status;
 
-	do_cancel_branch = is_invite(t) && should_cancel_branch(t, branch, 0);
+	do_cancel_branch = is_invite(t) && prepare_cancel_branch(t, branch, 0);
 	/* mark branch as canceled */
 	t->uac[branch].request.flags|=F_RB_CANCELED;
 	if ( is_local(t) ) {

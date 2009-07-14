@@ -523,7 +523,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		/* determine if there are some branches to be canceled */
 		if ( is_invite(trans) ) {
 			if (lock) LOCK_REPLIES( trans );
-			which_cancel(trans, &cancel_bitmap );
+			prepare_to_cancel(trans, &cancel_bitmap, 0);
 			if (lock) UNLOCK_REPLIES( trans );
 		}
 		/* and clean-up, including cancellations, if needed */
@@ -532,7 +532,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 	cancel_bitmap=0;
 	if (lock) LOCK_REPLIES( trans );
-	if ( is_invite(trans) ) which_cancel(trans, &cancel_bitmap );
+	if ( is_invite(trans) ) prepare_to_cancel(trans, &cancel_bitmap, 0);
 	if (trans->uas.status>=200) {
 		LOG( L_ERR, "ERROR: _reply_light: can't generate %d reply"
 			" when a final %d was sent out\n", code, trans->uas.status);
@@ -1085,7 +1085,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			if (new_code>=600 && new_code<=699){
 				if (!(Trans->flags & T_6xx)){
 					/* cancel only the first time we get a 6xx */
-					which_cancel(Trans, cancel_bitmap);
+					prepare_to_cancel(Trans, cancel_bitmap, 0);
 					Trans->flags|=T_6xx;
 				}
 			}
@@ -1205,9 +1205,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* really no more pending branches -- return lowest code */
 		*should_store=0;
 		*should_relay=picked_branch;
-		/* we dont need 'which_cancel' here -- all branches
+		/* we dont need 'prepare_to_cancel' here -- all branches
 		   known to have completed */
-		/* which_cancel( Trans, cancel_bitmap ); */
+		/* prepare_to_cancel( Trans, cancel_bitmap, 0 ); */
 		return RPS_COMPLETED;
 	}
 
@@ -1225,7 +1225,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->uac[branch].last_received=new_code;
 		*should_relay= new_code==100? -1 : branch;
 		if (new_code>=200 ) {
-			which_cancel( Trans, cancel_bitmap );
+			prepare_to_cancel( Trans, cancel_bitmap, 0);
 			return RPS_COMPLETED;
 		} else return RPS_PROVISIONAL;
 	}
@@ -1789,7 +1789,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	return reply_status;
 
 error:
-	which_cancel(t, cancel_bitmap);
+	prepare_to_cancel(t, cancel_bitmap, 0);
 	UNLOCK_REPLIES(t);
 	cleanup_uac_timers(t);
 	if ( get_cseq(p_msg)->method.len==INVITE_LEN

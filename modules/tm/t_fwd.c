@@ -358,7 +358,7 @@ int add_blind_uac( /*struct cell *t*/ )
 	}
 	/* make sure it will be replied */
 	t->flags |= T_NOISY_CTIMER_FLAG;
-	membar_write(); /* to allow lockless which_cancel() we want to be sure 
+	membar_write(); /* to allow lockless prepare_to_cancel() we want to be sure
 					   all the writes finished before updating branch number*/
 	t->nr_of_outgoings=(branch+1);
 	/* start FR timer -- protocol set by default to PROTO_NONE,
@@ -460,7 +460,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		t->uac[branch].flags = TM_UAC_FLAG_RR|TM_UAC_FLAG_R2;
 #endif
 	getbflagsval(0, &t->uac[branch].branch_flags);
-	membar_write(); /* to allow lockless ops (e.g. which_cancel()) we want
+	membar_write(); /* to allow lockless ops (e.g. prepare_to_cancel()) we want
 					   to be sure everything above is fully written before
 					   updating branches no. */
 	t->nr_of_outgoings=(branch+1);
@@ -538,7 +538,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request, str *uri, 
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=uri->len;
-	membar_write(); /* to allow lockless ops (e.g. which_cancel()) we want
+	membar_write(); /* to allow lockless ops (e.g. prepare_to_cancel()) we want
 					   to be sure everything above is fully written before
 					   updating branches no. */
 	t->nr_of_outgoings=(branch+1);
@@ -729,7 +729,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	}
 	
 	/* determine which branches to cancel ... */
-	which_cancel( t_invite, &cancel_bm );
+	prepare_to_cancel(t_invite, &cancel_bm, 0);
 #ifdef E2E_CANCEL_HOP_BY_HOP
 	/* we don't need to set t_cancel label to be the same as t_invite if
 	 * we do hop by hop cancel. The cancel transaction will have a different 

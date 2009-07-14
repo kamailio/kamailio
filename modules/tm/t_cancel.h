@@ -32,6 +32,9 @@
  *               no response or with response <100 (andrei)
  *  2007-06-04  should_cancel_branch() takes another parameter and it is safe
  *               to be called w/o REPLY_LOCK held (andrei)
+ *  2009-07-14  should_cancel_branch() renamed to prepare_cancel_branch() to
+ *               better reflect its purpose
+ *              which_cancel() renamed to prepare_to_cancel() (andrei)
  */
 
 
@@ -75,7 +78,7 @@
 #define F_CANCEL_UNREF 16 /* unref the trans after canceling */
 
 
-void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
+void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
 int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags );
 int cancel_all_uacs(struct cell *trans, int how);
 int cancel_branch( struct cell *t, int branch, int flags );
@@ -84,10 +87,11 @@ typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
 								int flags );
 typedef int (*cancel_all_uacs_f)(struct cell *trans, int how);
 
-typedef void (*which_cancel_f)(struct cell *t, branch_bm_t *cancel_bm );
+typedef void (*prepare_to_cancel_f)(struct cell *t, branch_bm_t *cancel_bm,
+									branch_bm_t skip_branches);
 
 
-/* 
+/** Check if one branch needs CANCEL-ing and prepare it if it does.
  * Can be called w/o REPLY_LOCK held
  *  between this call and the call to cancel_uacs()/cancel_branch()
  *  if noreply is set to 1 it will return true even if no reply was received
@@ -96,8 +100,18 @@ typedef void (*which_cancel_f)(struct cell *t, branch_bm_t *cancel_bm );
  *  if noreply is set to 0 it will return true only if no cancel has already 
  *   been sent and a provisional (<200) reply >=100 was received.
  *  WARNING: has side effects: marks branches that should be canceled
- *   and a second call won't return them again */
-inline short static should_cancel_branch( struct cell *t, int b, int noreply )
+ *   and a second call won't return them again.
+ * @param t - transaction
+ * @param b - branch number
+ * @param noreply - 0 or 1. If 1 it will consider a branch with no replies
+ *  received so far as cancel-able. If 0 only branches that have received
+ * a provisional reply (>=100 <200) will be considered.
+ *
+ * @return 1 if the branch must be canceled (it will be internally marked as
+ *  cancel-in-progress) and 0 if it doesn't (either a CANCEL is not needed or a
+ *  CANCEL is in progress: somebody else is trying to CANCEL in the same time).
+ */
+inline short static prepare_cancel_branch( struct cell *t, int b, int noreply )
 {
 	int last_received;
 	unsigned long old;
