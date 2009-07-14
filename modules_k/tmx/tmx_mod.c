@@ -231,23 +231,19 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 	n = (int)k;
 	switch(n) {
 		case 1:
-			LOCK_REPLIES(t);
 			/* prepare cancel for every branch except idx */
 			_tmx_tmb.prepare_to_cancel(t, &cb, 1<<idx);
-			UNLOCK_REPLIES(t);
 		case 2:
 			if(msg->first_line.u.reply.statuscode>=200)
 				break;
 			cb = 1<<idx;
 		break;
 		default:
-			LOCK_REPLIES(t);
 			if (msg->first_line.u.reply.statuscode>=200)
 				/* prepare cancel for every branch except idx */
 				_tmx_tmb.prepare_to_cancel(t, &cb, 1<<idx);
 			else
 				_tmx_tmb.prepare_to_cancel(t, &cb, 0);
-			UNLOCK_REPLIES(t);
 	}
 	LM_DBG("canceling %d/%d\n", n, (int)cb);
 	if(cb==0)
