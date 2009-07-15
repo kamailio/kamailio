@@ -57,7 +57,7 @@ extern str userblacklist_whitelist_col;
 /* table version */
 extern const unsigned int userblacklist_version;
 
-#define globalblacklist_DB_TABLE { "globalblacklist_table", STR_PARAM, &userblacklist_table.s },
+#define globalblacklist_DB_TABLE { "globalblacklist_table", STR_PARAM, &globalblacklist_table.s },
 
 extern str globalblacklist_table;
 

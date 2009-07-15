@@ -71,7 +71,7 @@ extern str carrierroute_description_col;
 /* table version */
 extern const unsigned int carrierroute_version;
 
-#define carrierfailureroute_DB_TABLE { "carrierfailureroute_table", STR_PARAM, &carrierroute_table.s },
+#define carrierfailureroute_DB_TABLE { "carrierfailureroute_table", STR_PARAM, &carrierfailureroute_table.s },
 
 extern str carrierfailureroute_table;
 
@@ -101,7 +101,7 @@ extern str carrierfailureroute_description_col;
 /* table version */
 extern const unsigned int carrierfailureroute_version;
 
-#define carrier_name_DB_TABLE { "carrier_name_table", STR_PARAM, &carrierroute_table.s },
+#define carrier_name_DB_TABLE { "carrier_name_table", STR_PARAM, &carrier_name_table.s },
 
 extern str carrier_name_table;
 
@@ -115,7 +115,7 @@ extern str carrier_name_carrier_col;
 /* table version */
 extern const unsigned int carrier_name_version;
 
-#define domain_name_DB_TABLE { "domain_name_table", STR_PARAM, &carrierroute_table.s },
+#define domain_name_DB_TABLE { "domain_name_table", STR_PARAM, &domain_name_table.s },
 
 extern str domain_name_table;
 
