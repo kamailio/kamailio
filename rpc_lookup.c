@@ -27,6 +27,7 @@
 #include "rpc.h"
 #include "str_hash.h"
 #include "ut.h"
+#include "dprint.h"
 
 #define RPC_HASH_SIZE	32
 #define RPC_SARRAY_SIZE	32 /* initial size */
@@ -186,8 +187,10 @@ int rpc_register(rpc_export_t* rpc)
 {
 	
 	/* check if the entry is already registered */
-	if (rpc_lookup(rpc->name, strlen(rpc->name)))
+	if (rpc_lookup(rpc->name, strlen(rpc->name))){
+		WARN("duplicate rpc \"%s\"\n", rpc->name);
 		return 1;
+	}
 	if (rpc_hash_add(rpc)!=0) return -1;
 	return 0;
 }
