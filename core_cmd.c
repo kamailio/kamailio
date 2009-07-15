@@ -279,15 +279,43 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 
 
 static const char* core_prints_doc[] = {
-	"Returns the string given as parameter.",   /* Documentation string */
-	0                                           /* Method signature(s) */
+	"Returns the strings given as parameters.",   /* Documentation string */
+	0                                             /* Method signature(s) */
 };
 
 
 static void core_prints(rpc_t* rpc, void* c)
 {
 	char* string = 0;
-	if (rpc->scan(c, "s", &string)>0)
+	while((rpc->scan(c, "*s", &string)>0))
+		rpc->add(c, "s", string);
+}
+
+
+static const char* core_printi_doc[] = {
+	"Returns the integers given as parameters.",  /* Documentation string */
+	0                                             /* Method signature(s) */
+};
+
+
+static void core_printi(rpc_t* rpc, void* c)
+{
+	int i;
+	while((rpc->scan(c, "*d", &i)>0))
+		rpc->add(c, "d", i);
+}
+
+
+static const char* core_echo_doc[] = {
+	"Returns back its parameters.",              /* Documentation string */
+	0                                             /* Method signature(s) */
+};
+
+
+static void core_echo(rpc_t* rpc, void* c)
+{
+	char* string = 0;
+	while((rpc->scan(c, "*.s", &string)>0))
 		rpc->add(c, "s", string);
 }
 
@@ -699,7 +727,12 @@ static rpc_export_t core_rpc_methods[] = {
 	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
 	{"system.methodSignature", system_methodSignature, system_methodSignature_doc, 0        },
 	{"system.methodHelp",      system_methodHelp,      system_methodHelp_doc,      0        },
-	{"core.prints",            core_prints,            core_prints_doc,            0        },
+	{"core.prints",            core_prints,            core_prints_doc,
+	RET_ARRAY},
+	{"core.printi",            core_printi,            core_printi_doc,
+	RET_ARRAY},
+	{"core.echo",              core_echo,              core_echo_doc,
+	RET_ARRAY},
 	{"core.version",           core_version,           core_version_doc,           0        },
 	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
