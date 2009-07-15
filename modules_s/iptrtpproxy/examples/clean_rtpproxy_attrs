@@ -23,6 +23,8 @@ my $defmysqluser = 'ser';
 my $mysqluser = $defmysqluser;
 my $defmysqlpassword = 'heslo';
 my $mysqlpassword = $defmysqlpassword;
+my $defmysqlsock = "";
+my $mysqlsock = $defmysqlsock;
 
 use Config::IniFiles;
 
@@ -81,9 +83,10 @@ $scriptName =~ s!^.*/!!;
 
 sub printUsage {
 	print "$scriptName, Version: $version\n";
-	print "usage: $scriptName [-f <iptrtpproxy_config>] [-v] [-h] [-H <db_host>] [-D <db_name>] [-u <db_user>] [-p <db_password>]\n";
+	print "usage: $scriptName [-f <iptrtpproxy_config>] [-v] [-h] [-H <db_host>] [-S <db_sock>] [-D <db_name>] [-u <db_user>] [-p <db_password>]\n";
 	print "  iptrtpproxy_config .. iptrtpproxy_helper config, default: $defConfigFile\n";
 	print "  db_host .. database MYSQL  host, default: $defmysqlhost\n";
+	print "  db_sock .. MYSQL socket, default: $defmysqlsock\n";
 	print "  db_name .. database name, default: $defmysqldb\n";
 	print "  db_user .. database user, default: $defmysqluser\n";
 	$_ = substr $defmysqlpassword, 1, length($defmysqlpassword)-2;
@@ -138,6 +141,14 @@ while ($#ARGV >= 0) {
 		} else {
 			$mysqlhost = shift(@ARGV);
 		}
+	} elsif ($arg eq '-S') {
+		if ($#ARGV < 0) {
+			print STDERR "ERROR: socket required\n";
+			&printUsage();
+			exit(1);
+		} else {
+			$mysqlsock = shift(@ARGV);
+		}
 	} elsif ($arg eq '-v') {
 		$verbose++;
 	} elsif ($arg eq '-h') {
@@ -153,7 +164,10 @@ while ($#ARGV >= 0) {
 dbg "Verbose: $verbose";
 
 dbg "Connecting: mysql://$mysqluser\@$mysqlhost/$mysqldb";
-myexit("Cannot connect database", 2) unless my $dbh = DBI->connect("dbi:mysql:database=$mysqldb;host=$mysqlhost", $mysqluser, $mysqlpassword);
+myexit("Cannot connect database", 2) unless my $dbh = DBI->connect("dbi:mysql:database=$mysqldb".
+	($mysqlhost?";host=$mysqlhost":'').
+	($mysqlsock?";mysql_socket=$mysqlsock":'')
+	, $mysqluser, $mysqlpassword);
 
 dbg "Reading rtpproxy_attrs";
 my %attrs = ();
