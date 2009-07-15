@@ -277,11 +277,12 @@ static str name_suffix    = STR_STATIC_INIT("</name>");
 static struct garbage {
 	enum {
 		JUNK_XMLCHAR,
-		JUNK_RPCSTRUCT    /**< This type indicates that the memory block was
+		JUNK_RPCSTRUCT,    /**< This type indicates that the memory block was
 						   * allocated for the RPC structure data type, this
 						   * type needs to be freed differently as it may
 						   * contain more allocated memory blocks
 						   */
+		JUNK_PKGCHAR 	  /** This type indicates a pkg_malloc'ed string */
 	} type;               /**< Type of the memory block */
 	void* ptr;            /**< Pointer to the memory block obtained from
 							 pkg_malloc */
@@ -389,6 +390,9 @@ sl_api_t sl;
 #endif
 
 static int xmlrpc_route_no=DEFAULT_RT;
+/* if set, try autoconverting to the requested type if possible
+  (e.g. convert 1 to "1" if string is requested) */
+static int autoconvert=0;
 
 
 /*
@@ -407,6 +411,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"enable_introspection", PARAM_INT, &enable_introspection},
 	{"route", PARAM_STRING, &xmlrpc_route},
+	{"autoconversion", PARAM_INT, &autoconvert},
 	{0, 0, 0}
 };
 
@@ -688,6 +693,13 @@ static void collect_garbage(void)
 			s = (struct rpc_struct*)p->ptr;
 			if (s && s->struct_out.buf.s) pkg_free(s->struct_out.buf.s);
 			if (s) pkg_free(s);
+			break;
+
+		case JUNK_PKGCHAR:
+			if (p->ptr){
+				pkg_free(p->ptr);
+				p->ptr=0;
+			}
 			break;
 
 		default:
@@ -1045,6 +1057,45 @@ static time_t xmlrpc2time(const char* str)
 }
 
 
+
+/* get_* flags: */
+#define GET_X_AUTOCONV 1
+#define GET_X_NOREPLY 2
+
+/* xml value types */
+enum xmlrpc_val_type{
+	XML_T_STR,
+	XML_T_INT,
+	XML_T_BOOL,
+	XML_T_DATE,
+	XML_T_DOUBLE,
+	XML_T_ERR=-1
+};
+
+
+
+/** Returns the XML-RPC value type.
+ * @return value type (>= on success, XML_T_ERR on error/unknown type)
+ */
+static enum xmlrpc_val_type xml_get_type(xmlNodePtr value)
+{
+	if (!xmlStrcmp(value->name, BAD_CAST "string")){
+		return XML_T_STR;
+	} else if ( !xmlStrcmp(value->name, BAD_CAST "i4") ||
+				!xmlStrcmp(value->name, BAD_CAST "int")) {
+		return XML_T_INT;
+	} else if (!xmlStrcmp(value->name, BAD_CAST "boolean")) {
+		return XML_T_BOOL;
+	} else if (!xmlStrcmp(value->name, BAD_CAST "dateTime.iso8601")) {
+		return XML_T_DATE;
+	}else if (!(xmlStrcmp(value->name, BAD_CAST "double"))){
+		return XML_T_DOUBLE;
+	}
+	return XML_T_ERR;
+}
+
+
+
 /** Converts an XML-RPC encoded parameter into integer if possible.
  *
  * This function receives a pointer to a parameter encoded in XML-RPC format
@@ -1059,46 +1110,82 @@ static time_t xmlrpc2time(const char* str)
  * @param doc A pointer to the XML-RPC request document.  
  * @param value A pointer to the element containing the parameter to be 
  *              converted within the document.
+ * @param flags : GET_X_AUTOCONV - try autoconverting
+ *                GET_X_NOREPLY - do not reply
+ * @return <0 on error, 0 on success
  */
 static int get_int(int* val, struct xmlrpc_reply* reply, 
-				   xmlDocPtr doc, xmlNodePtr value)
+				   xmlDocPtr doc, xmlNodePtr value, int flags)
 {
-	int type;
+	enum xmlrpc_val_type type;
+	int ret;
 	xmlNodePtr i4;
 	char* val_str;
+	char* end_ptr;
 
 	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		set_fault(reply, 400, "Invalid parameter value");
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Invalid parameter value");
 		return -1;
 	}
 
 	i4 = value->xmlChildrenNode;
-	if (!xmlStrcmp(i4->name, BAD_CAST "i4") || 
-		!xmlStrcmp(i4->name, BAD_CAST "int")) {
-		type = 1;
-	} else if (!xmlStrcmp(i4->name, BAD_CAST "boolean")) {
-		type = 1;
-	} else if (!xmlStrcmp(i4->name, BAD_CAST "dateTime.iso8601")) {
-		type = 2;
-	} else {
-		set_fault(reply, 400, "Invalid Parameter Type");
+	if (!i4){
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
+	}
+	type=xml_get_type(i4);
+	switch(type){
+		case XML_T_INT:
+		case XML_T_BOOL:
+		case XML_T_DATE:
+			break;
+		case XML_T_DOUBLE:
+		case XML_T_STR:
+			if (flags & GET_X_AUTOCONV)
+				break;
+		case XML_T_ERR:
+			if (!(flags & GET_X_NOREPLY))
+				set_fault(reply, 400, "Invalid Parameter Type");
+			return -1;
 	}
 
 	val_str = (char*)xmlNodeListGetString(doc, i4->xmlChildrenNode, 1);
 	if (!val_str) {
-		set_fault(reply, 400, "Empty Parameter Value");
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Empty Parameter Value");
 		return -1;
 	}
-	if (type == 1) {
-		     /* Integer/bool conversion */
-		*val = strtol(val_str, 0, 10);
-	} else {
-		*val = xmlrpc2time(val_str);
+	ret=0;
+	switch(type){
+		case XML_T_INT:
+		case XML_T_BOOL:
+		case XML_T_STR:
+			/* Integer/bool conversion */
+			*val = strtol(val_str, &end_ptr, 10);
+			if (val_str==end_ptr)
+				ret=-1;
+			break;
+		case XML_T_DATE:
+			*val = xmlrpc2time(val_str);
+			break;
+		case XML_T_DOUBLE:
+			*val = (int)strtod(val_str, &end_ptr);
+			if (val_str==end_ptr)
+				ret=-1;
+			break;
+		case XML_T_ERR:
+			*val=0;
+			ret=-1;
+			break;
 	}
 	xmlFree(val_str);
-	return 0;
+	if (ret==-1 && !(flags & GET_X_NOREPLY))
+		set_fault(reply, 400, "Invalid Value");
+	return ret;
 }
+
 
 
 /** Converts an XML-RPC encoded parameter into double if possible.
@@ -1114,34 +1201,75 @@ static int get_int(int* val, struct xmlrpc_reply* reply,
  * @param doc A pointer to the XML-RPC request document.
  * @param value A pointer to the element containing the parameter to be 
  *              converted within the document.
+ * @param flags : GET_X_AUTOCONV - try autoconverting
+ *                GET_X_NOREPLY - do not reply
+ * @return <0 on error, 0 on success
  */
 static int get_double(double* val, struct xmlrpc_reply* reply, 
-					  xmlDocPtr doc, xmlNodePtr value)
+					  xmlDocPtr doc, xmlNodePtr value, int flags)
 {
 	xmlNodePtr dbl;
 	char* val_str;
+	char* end_ptr;
+	enum xmlrpc_val_type type;
+	int ret;
 
 	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		set_fault(reply, 400, "Invalid Parameter Value");
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Invalid Parameter Value");
 		return -1;
 	}
 
 	dbl = value->xmlChildrenNode;
-	if (!dbl || (xmlStrcmp(dbl->name, BAD_CAST "double") && 
-				 xmlStrcmp(dbl->name, BAD_CAST "int") && 
-				 xmlStrcmp(dbl->name, BAD_CAST "int4"))) {
-		set_fault(reply, 400, "Invalid Parameter Type");
+	if (!dbl){
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
+	}
+	type=xml_get_type(dbl);
+	switch(type){
+		case XML_T_DOUBLE:
+		case XML_T_INT:
+			break;
+		case XML_T_BOOL:
+		case XML_T_DATE:
+		case XML_T_STR:
+			if (flags & GET_X_AUTOCONV)
+				break;
+		case XML_T_ERR:
+			if (!(flags & GET_X_NOREPLY))
+				set_fault(reply, 400, "Invalid Parameter Type");
+			return -1;
 	}
 
 	val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
 	if (!val_str) {
-		set_fault(reply, 400, "Empty Double Parameter");
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Empty Double Parameter");
 		return -1;
 	}
-	*val = strtod(val_str, 0);
+	ret=0;
+	switch(type){
+		case XML_T_DOUBLE:
+		case XML_T_INT:
+		case XML_T_BOOL:
+		case XML_T_STR:
+			*val = strtod(val_str, &end_ptr);
+			if (val_str==end_ptr)
+				ret=-1;
+			break;
+		case XML_T_DATE:
+			*val = (double)xmlrpc2time(val_str);
+			break;
+		case XML_T_ERR:
+			*val=0;
+			ret=-1;
+			break;
+	}
 	xmlFree(val_str);
-	return 0;
+	if (ret==-1 && !(flags & GET_X_NOREPLY))
+		set_fault(reply, 400, "Invalid Value");
+	return ret;
 }
 
 
@@ -1154,35 +1282,102 @@ static int get_double(double* val, struct xmlrpc_reply* reply,
  * @param doc A pointer to the XML-RPC request document.
  * @param value A pointer to the element containing the parameter to be 
  *              converted within the document.
+ * @param flags : GET_X_AUTOCONV - try autoconverting
+ *                GET_X_NOREPLY - do not reply
+ * @return <0 on error, 0 on success
  */
 static int get_string(char** val, struct xmlrpc_reply* reply, 
-					  xmlDocPtr doc, xmlNodePtr value)
+					  xmlDocPtr doc, xmlNodePtr value, int flags)
 {
 	static char* null_str = "";
 	xmlNodePtr dbl;
 	char* val_str;
+	char* end_ptr;
+	char* s;
+	char* p;
+	int i;
+	int len;
+	enum xmlrpc_val_type type;
+	int ret;
 
 	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		set_fault(reply, 400, "Invalid Parameter Value");
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Invalid Parameter Value");
 		return -1;
 	}
 
 	dbl = value->xmlChildrenNode;
-	if (!dbl || xmlStrcmp(dbl->name, BAD_CAST "string")) {
-		set_fault(reply, 400, "Invalid Parameter Type");
+	if (!dbl){
+		if (!(flags & GET_X_NOREPLY))
+			set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
 	}
-
+	type=xml_get_type(dbl);
+	switch(type){
+		case XML_T_STR:
+			break;
+		case XML_T_INT:
+		case XML_T_BOOL:
+		case XML_T_DATE:
+		case XML_T_DOUBLE:
+			if (flags & GET_X_AUTOCONV)
+				break;
+		case XML_T_ERR:
+			if (!(flags & GET_X_NOREPLY))
+				set_fault(reply, 400, "Invalid Parameter Type");
+			return -1;
+	}
 	val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
 	if (!val_str) {
-		*val = null_str;
-		return 0;
+		if (type==XML_T_STR){
+			*val = null_str;
+			return 0;
+		}else{
+			if (!(flags & GET_X_NOREPLY))
+				set_fault(reply, 400, "Empty Parameter Value");
+			return -1;
+		}
 	}
-
-	if (add_garbage(JUNK_XMLCHAR, val_str, reply) < 0) return -1;
-	*val = val_str;
-	return 0;
+	ret=0;
+	switch(type){
+		case XML_T_STR:
+		case XML_T_DATE:  /* no special conversion */
+		case XML_T_DOUBLE: /* no special conversion */
+			if (add_garbage(JUNK_XMLCHAR, val_str, reply) < 0){
+				xmlFree(val_str);
+				return -1;
+			}
+			*val = val_str;
+			break;
+		case XML_T_INT:
+		case XML_T_BOOL:
+			/* convert str to int an back to str */
+			i = strtol(val_str, &end_ptr, 10);
+			if (val_str==end_ptr){
+				ret=-1;
+			}else{
+				s=sint2str(i, &len);
+				p=pkg_malloc(len+1);
+				if (p && add_garbage(JUNK_PKGCHAR, p, reply) == 0){
+					memcpy(p, s, len);
+					p[len]=0;
+					*val=p;
+				}else{
+					ret=-1;
+					if (p) pkg_free(p);
+				}
+			}
+			xmlFree(val_str);
+			break;
+		case XML_T_ERR:
+			xmlFree(val_str);
+			ret=-1;
+			break;
+	}
+	return ret;
 }
+
+
 
 /** Implementation of rpc->scan function required by the management API in
  * SER.
@@ -1206,6 +1401,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	struct xmlrpc_reply* reply;
 	struct rpc_struct* p;
 	int modifiers;
+	int f;
 	va_list ap;
 
 	reply = &ctx->reply;
@@ -1213,6 +1409,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	va_start(ap, fmt);
 	modifiers=0;
 	read = 0;
+	f=autoconvert?GET_X_AUTOCONV:0;
 	while(*fmt) {
 		if (!ctx->act_param) goto error;
 		value = ctx->act_param->xmlChildrenNode;
@@ -1223,28 +1420,35 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			read++;
 			fmt++;
 			continue; /* do not advance ctx->act-param */
+		case '.': /* autoconvert */
+			modifiers++;
+			read++;
+			fmt++;
+			f|=GET_X_AUTOCONV;
+			continue; /* do not advance ctx->act-param */
 		case 'b': /* Bool */
 		case 't': /* Date and time */
 		case 'd': /* Integer */
 			int_ptr = va_arg(ap, int*);
-			if (get_int(int_ptr, reply, ctx->doc, value) < 0) goto error;
+			if (get_int(int_ptr, reply, ctx->doc, value, f) < 0) goto error;
 			break;
 			
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
-			if (get_double(double_ptr, reply, ctx->doc, value) < 0) {
+			if (get_double(double_ptr, reply, ctx->doc, value, f) < 0) {
 				goto error;
 			}
 			break;
 
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
-			if (get_string(char_ptr, reply, ctx->doc, value) < 0) goto error;
+			if (get_string(char_ptr, reply, ctx->doc, value, f) < 0)
+				goto error;
 			break;
 
 		case 'S': /* str structure */
 			str_ptr = va_arg(ap, str*);
-			if (get_string(&str_ptr->s, reply, ctx->doc, value) < 0) {
+			if (get_string(&str_ptr->s, reply, ctx->doc, value, f) < 0) {
 				goto error;
 			}
 			str_ptr->len = strlen(str_ptr->s);
@@ -1265,6 +1469,8 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			goto error;
 		}
 		ctx->act_param = ctx->act_param->next;
+		/* clear autoconv if not globally on */
+		f=autoconvert?GET_X_AUTOCONV:(f&~GET_X_AUTOCONV);
 		read++;
 		fmt++;
 	}
@@ -1525,22 +1731,24 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 		case 't': /* Date and time */
 		case 'd': /* Integer */
 			int_ptr = va_arg(ap, int*);
-			if (get_int(int_ptr, reply, s->doc, value) < 0) goto error;
+			if (get_int(int_ptr, reply, s->doc, value, 0) < 0) goto error;
 			break;
 
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
-			if (get_double(double_ptr, reply, s->doc, value) < 0) goto error;
+			if (get_double(double_ptr, reply, s->doc, value, 0) < 0)
+				goto error;
 			break;
 
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
-			if (get_string(char_ptr, reply, s->doc, value) < 0) goto error;
+			if (get_string(char_ptr, reply, s->doc, value, 0) < 0) goto error;
 			break;
 
 		case 'S': /* str structure */
 			str_ptr = va_arg(ap, str*);
-			if (get_string(&str_ptr->s, reply, s->doc, value) < 0) goto error;
+			if (get_string(&str_ptr->s, reply, s->doc, value, 0) < 0)
+				goto error;
 			str_ptr->len = strlen(str_ptr->s);
 			break;
 		default:
