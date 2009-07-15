@@ -870,7 +870,7 @@ static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
 	struct addr_info* ail;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if(new_sock2list(ail->name.s, 0, port_no, proto, ail->flags | flags,
+		if(new_sock2list(ail->name.s, 0, port, proto, ail->flags | flags,
 							list)==0)
 			return -1;
 	}
@@ -892,7 +892,7 @@ static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 	struct socket_info* new_si;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if((new_si=new_sock2list_after(ail->name.s, 0, port_no, proto,
+		if((new_si=new_sock2list_after(ail->name.s, 0, port, proto,
 								ail->flags | flags, el))==0)
 			return -1;
 		el=new_si;
