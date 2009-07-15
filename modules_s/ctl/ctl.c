@@ -66,6 +66,10 @@ static int usock_mode=0600; /* permissions, default rw-------*/
 static int usock_uid=-1; /* username and group for the unix sockets*/
 static int usock_gid=-1;
 
+/* if set try to automatically convert values to the requested type in
+   rpc->scan (default: not set) */
+extern int autoconvert; 
+
 static int add_binrpc_socket(modparam_t type, void * val);
 #ifdef USE_FIFO
 static int add_fifo_socket(modparam_t type, void * val);
@@ -98,6 +102,7 @@ static param_export_t params[]={
 	{"mode",		PARAM_INT,						&usock_mode				 },
 	{"user",		PARAM_STRING|PARAM_USE_FUNC,	fix_user				 },
 	{"group",		PARAM_STRING|PARAM_USE_FUNC,	fix_group				 },
+	{"autoconversion",	PARAM_INT,					&autoconvert			 },
 	{0,0,0} 
 }; /* no params */
 

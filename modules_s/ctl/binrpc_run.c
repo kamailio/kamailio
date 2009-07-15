@@ -39,11 +39,19 @@
 #include "io_listener.h"
 
 #include <stdio.h>  /* vsnprintf */
+#include <stdlib.h> /* strtod */
 #include <stdarg.h>
+
+/* if set try to automatically convert values to the requested type in
+   rpc->scan (default: not set) */
+int autoconvert=0;
+
 
 #define BINRPC_MAX_BODY	4096  /* maximum body for send */
 #define STRUCT_MAX_BODY	1024
 #define MAX_MSG_CHUNKS	96
+
+#define BINRPC_GC_IBSIZE 4 /* initial gc block size (pointers no.) */
 
 struct rpc_struct_head{
 	struct rpc_struct_l* next;
@@ -72,11 +80,21 @@ struct binrpc_recv_ctx{
 	int in_struct;
 };
 
+
+struct binrpc_gc_block{
+	unsigned short p_no; /**< array size */
+	unsigned short idx;  /**< current/last used pos. in the array */
+	struct binrpc_gc_block* next;
+	void* p[1]; /**< array of pointers that will be free'd */
+};
+
+
 struct binrpc_ctx{
 	struct binrpc_recv_ctx in;
 	struct binrpc_send_ctx out;
 	void* send_h; /* send handle */
 	char* method;
+	struct binrpc_gc_block* gc; /**< garbage collection */
 	int replied;
 };
 
@@ -111,6 +129,51 @@ static rpc_t binrpc_callbacks={
 	(rpc_struct_printf_f)	rpc_struct_printf
 };
 
+
+
+/** mark a pointer for freeing when the ctx is destroyed.
+ * @return 0 on success, -1 on error
+ */
+inline static int binrpc_gc_track(struct binrpc_ctx* ctx, void* p)
+{
+	struct binrpc_gc_block* b;
+	int n;
+	
+	b=ctx->gc;
+	if (b==0 || (b->idx>=b->p_no)){
+		n=(b==0)?BINRPC_GC_IBSIZE:b->p_no*2;
+		b=pkg_malloc(sizeof(*b)+n*sizeof(void*)-sizeof(b->p));
+		if (b==0)
+			return -1;
+		b->p_no=n;
+		b->idx=0;
+		/* link in front */
+		b->next=ctx->gc;
+		ctx->gc=b;
+	}
+	b->p[b->idx]=p;
+	b->idx++;
+	return 0;
+}
+
+
+
+/** free all the tracked pointer from ctx->gc.
+ */
+inline static void binrpc_gc_collect(struct binrpc_ctx* ctx)
+{
+	struct binrpc_gc_block* b;
+	struct binrpc_gc_block* next;
+	int i;
+	
+	for(b=ctx->gc; b; b=next){
+		next=b->next;
+		for (i=0; i<b->idx; i++)
+			pkg_free(b->p[i]);
+		pkg_free(b);
+	}
+	ctx->gc=0;
+}
 
 
 static struct rpc_struct_l* new_rpc_struct()
@@ -322,6 +385,7 @@ inline void destroy_binrpc_ctx(struct binrpc_ctx* ctx)
 		pkg_free(ctx->out.pkt.body);
 		ctx->out.pkt.body=0;
 	}
+	binrpc_gc_collect(ctx);
 }
 
 
@@ -583,6 +647,88 @@ static char* rpc_type_name(int type)
 
 
 
+/** converts a binrpc_val to int.
+  *@return int val on success, 0 and sets err on error (E_BINRPC_TYPE) */
+inline static int binrpc_val_conv_int( struct binrpc_val* v, int* err)
+{
+	int ret;
+	
+	*err=0;
+	switch(v->type){
+		case BINRPC_T_INT:
+			return v->u.intval;
+		case BINRPC_T_DOUBLE:
+			return (int) v->u.fval;
+		case BINRPC_T_STR:
+			if (str2sint(&v->u.strval, &ret)==0)
+				return ret;
+	}
+	*err=E_BINRPC_TYPE;
+	return 0;
+}
+
+
+
+/** converts a binrpc_val to double.
+  *@return double val on success, 0 and sets err on error (E_BINRPC_TYPE) */
+inline static double binrpc_val_conv_double( struct binrpc_val* v, int* err)
+{
+	double ret;
+	char* end;
+	
+	*err=0;
+	switch(v->type){
+		case BINRPC_T_DOUBLE:
+			return v->u.fval;
+		case BINRPC_T_INT:
+			return (double)v->u.intval;
+		case BINRPC_T_STR:
+			ret=strtod(v->u.strval.s, &end);
+			if (end!=v->u.strval.s)
+				return ret;
+	}
+	*err=E_BINRPC_TYPE;
+	return 0;
+}
+
+
+
+/** converts a binrpc_val to str.
+  *@return str val pointer on success, 0 and sets err on error (E_BINRPC_TYPE)*/
+inline static str* binrpc_val_conv_str(struct binrpc_ctx* ctx,
+										struct binrpc_val* v, int* err)
+{
+	str* ret;
+	char* s;
+	int len;
+	
+	*err=0;
+	switch(v->type){
+		case BINRPC_T_STR:
+			return &v->u.strval;
+		case BINRPC_T_INT:
+			s=int2str(v->u.intval, &len);
+			ret=pkg_malloc(sizeof(*ret)+len+1);
+			if (ret==0 || binrpc_gc_track(ctx, ret)!=0){
+				*err=E_BINRPC_OVERFLOW;
+				return 0;
+			}
+			ret->s=(char*)ret+sizeof(*ret);
+			ret->len=len;
+			memcpy(ret->s, s, len);
+			ret->s[len]=0;
+			return ret;
+		case BINRPC_T_DOUBLE:
+			/* for now the double to string conversion is not supported*/
+			*err=E_BINRPC_BUG;
+			return 0;
+	}
+	*err=E_BINRPC_TYPE;
+	return 0;
+}
+
+
+
 /* rpc interface functions */
 
 /* returns the number of parameters read
@@ -595,45 +741,61 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 	char* orig_fmt;
 	int nofault;
 	int modifiers;
+	int autoconv;
+	int i;
+	double d;
+	str* s;
 	
 	va_start(ap, fmt);
 	orig_fmt=fmt;
 	nofault = 0;
 	modifiers=0;
+	autoconv=autoconvert;
 	for (;*fmt; fmt++){
 		switch(*fmt){
 			case '*': /* start of optional parameters */
 				nofault = 1;
 				modifiers++;
-				break;
+				continue;
+			case '.': /* autoconv. on for the next parameter */
+				modifiers++;
+				autoconv=1;
+				continue;
 			case 'b': /* bool */
 			case 't': /* time */
 			case 'd': /* int */
-				v.type=BINRPC_T_INT;
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_INT;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
 												ctx->in.end, &v, &err);
-				if (err<0) goto error_read;
-				*(va_arg(ap, int*))=v.u.intval;
+				if (err<0 || ((i=binrpc_val_conv_int(&v, &err))==0 && err<0))
+						goto error_read;
+				*(va_arg(ap, int*))=i;
 				break;
 			case 'f':
-				v.type=BINRPC_T_DOUBLE;
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_DOUBLE;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
 												ctx->in.end, &v, &err);
-				if (err<0) goto error_read;
-				*(va_arg(ap, double*))=v.u.fval;
+				if (err<0 || ((d=binrpc_val_conv_double(&v, &err))==0 &&
+						err<0))
+					goto error_read;
+				*(va_arg(ap, double*))=d;
 				break;
 			case 's': /* asciiz */
 			case 'S': /* str */
-				v.type=BINRPC_T_STR;
-				v.u.strval.s="if you get this string, you don't"
-							"check rpc_scan return code !!! (very bad)";
-				v.u.strval.len=strlen(v.u.strval.s);
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_STR;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s, 
 												ctx->in.end, &v,&err);
+				if (err<0 || ((s=binrpc_val_conv_str(ctx, &v, &err))==0 &&
+							err<0)){
+					v.u.strval.s="if you get this string, you don't"
+								"check rpc_scan return code !!! (very bad)";
+					v.u.strval.len=strlen(v.u.strval.s);
+					s=&v.u.strval;
+				}
 				if (*fmt=='s'){
-					*(va_arg(ap, char**))=v.u.strval.s; /* 0 term by proto*/
+					*(va_arg(ap, char**))=s->s; /* 0 term by proto*/
 				}else{
-					*(va_arg(ap, str*))=v.u.strval;
+					*(va_arg(ap, str*))=*s;
 				}
 				if (err<0) goto error_read;
 				break;
@@ -652,6 +814,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 			default:
 				goto error_inv_param;
 		}
+		autoconv=autoconvert; /* reset autoconv*/
 		ctx->in.record_no++;
 	}
 	va_end(ap);
