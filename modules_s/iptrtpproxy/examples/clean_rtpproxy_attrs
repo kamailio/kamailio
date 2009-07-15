@@ -15,10 +15,14 @@ my $defConfigFile = "/etc/iptrtpproxy.cfg";
 my $configFile = $defConfigFile;
 my $verbose = 0;
 
-my $mysqlhost = 'localhost';
-my $mysqldb = 'ser';
-my $mysqluser = 'ser';
-my $mysqlpassword = 'heslo';
+my $defmysqlhost = 'localhost';
+my $mysqlhost = $defmysqlhost;
+my $defmysqldb = 'ser';
+my $mysqldb = $defmysqldb;
+my $defmysqluser = 'ser';
+my $mysqluser = $defmysqluser;
+my $defmysqlpassword = 'heslo';
+my $mysqlpassword = $defmysqlpassword;
 
 use Config::IniFiles;
 
@@ -77,8 +81,16 @@ $scriptName =~ s!^.*/!!;
 
 sub printUsage {
 	print "$scriptName, Version: $version\n";
-	print "usage: $scriptName [-f <config>] [-v] [-h] [-H <db_host>] [-D <database_name>] [-u <user>] [-p <password>]\n";
-	
+	print "usage: $scriptName [-f <iptrtpproxy_config>] [-v] [-h] [-H <db_host>] [-D <db_name>] [-u <db_user>] [-p <db_password>]\n";
+	print "  iptrtpproxy_config .. iptrtpproxy_helper config, default: $defConfigFile\n";
+	print "  db_host .. database MYSQL  host, default: $defmysqlhost\n";
+	print "  db_name .. database name, default: $defmysqldb\n";
+	print "  db_user .. database user, default: $defmysqluser\n";
+	$_ = substr $defmysqlpassword, 1, length($defmysqlpassword)-2;
+	s/./\*/g;
+	my $psw = substr($defmysqlpassword, 0, 1) . $_ . substr($defmysqlpassword, length($defmysqlpassword)-1, 1);
+	print "  db_password .. database password, default: $psw\n";
+	print "  -v .. verbose\n";
 }
 
 my $command = '';
