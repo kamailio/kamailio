@@ -89,7 +89,7 @@ struct mi_root *mi_rpc_read_params(rpc_t *rpc, void *ctx)
 	}
 	node = &root->node;
 
-	while (rpc->scan(ctx, "*S", &value) == 1)
+	while (rpc->scan(ctx, "*.S", &value) == 1)
 	{
 		name.s   = 0;
 		name.len = 0;
@@ -104,7 +104,7 @@ struct mi_root *mi_rpc_read_params(rpc_t *rpc, void *ctx)
 			}
 
 			/* value */
-			if(rpc->scan(ctx, "*S", &value) != 1)
+			if(rpc->scan(ctx, "*.S", &value) != 1)
 			{
 				LM_ERR("value expected\n");
 				goto error;
