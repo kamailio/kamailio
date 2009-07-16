@@ -363,6 +363,11 @@ add("sd", string_param, int_param);
 				<entry>*</entry>
 				<entry>marks all further parameters as optional</entry>
 			</row>
+			<row>
+				<entry>Autoconvert modifier</entry>
+				<entry>.</entry>
+				<entry>requires auto-conversion for the next parameter</entry>
+			</row>
 		    </tbody>
 		</tgroup>
 	    </table>
@@ -398,18 +403,34 @@ add("sd", string_param, int_param);
 			The variable part of parameters must contain as many pointers to C
 			variables as there are formatting non-modifiers characters in the
 			formatting string.
-			The formatting string can also contain a "*" modifier that does not
-			have a correspondent in the variable part of the parameters. The
-			meaning of "*" is that any further parameters (defined by other
-			type characters in the formatting string) are optional (they
-			can be missing in the input and no rpc fault will automatically
-			be generated).
 		    <warning>
 			<para>
 			    The function will crash if you fail to provide
 			    enough parameters.
 			</para>
 		    </warning>
+		</para>
+		<para>
+			Besides characters representing parameter types, the formatting
+			string can contain two special modifiers: "*" and ".". The
+			modifiers do not have a correspondent in the variable part of the
+			parameters.
+		</para>
+		<para>
+			The meaning of "*" modifier is that any further parameters
+			(defined by other type characters in the formatting string) are
+			optional (they can be missing in the input and no rpc fault will
+			automatically be generated).
+		</para>
+		<para>
+			The '.' modifiers turns on type autoconversion for the next
+			parameter. This means that if the type of the next parameter 
+			differs from the type specified in the formatting string, the
+			parameter will be automatically converted to the formatting string
+			type (if possible) and if the automatic conversion succeeds, no
+			fault will be generated.
+		</para>
+		<para>
 			The function returns the number of parameters read on success
 			(a number greater or equal 0) and - (minus) the number of
 			parameters read on error (for example for an error after 
@@ -420,7 +441,10 @@ add("sd", string_param, int_param);
 			and it will also automatically change the reply that will be
 			sent to the caller to indicate that a failure has occurred on 
 			the server (unless the "*" is used and the error is lack
-			of more parameters). The prototype of the function is:
+			of more parameters).
+		</para>
+		<para>
+			The prototype of the function is:
 		    <programlisting>
 int scan(char* fmt, ...)
 		    </programlisting>
@@ -436,6 +460,8 @@ rpc->scan("s", &amp;string_val);
 rpc->scan("d", &amp;int_val);
 rpc->scan("f", &amp;double_val);
 		    </programlisting>
+		</para>
+		<para>
 		</para>
 	    </section>
 	    <section>
@@ -506,6 +532,26 @@ static void rpc_delete_contact(rpc_t* rpc)
 
     /* Process retrieved parameters here */
 }
+
+/* variable number of parameters:
+   echo back all the parameters, string type required */
+static void core_prints(rpc_t* rpc, void* c)
+{
+	char* string = 0;
+	while((rpc->scan(c, "*s", &string)>0))
+		rpc->add(c, "s", string);
+}
+
+/* variable number of parameters and auto conversion:
+   echo back all the parameters, works with any type (everything is 
+   internally converted to string, notice the '.' modifier) */
+static void core_echo(rpc_t* rpc, void* c)
+{
+	char* string = 0;
+	while((rpc->scan(c, "*.s", &string)>0))
+		rpc->add(c, "s", string);
+}
+
 ]]>
 		</programlisting>
 	    </example>
