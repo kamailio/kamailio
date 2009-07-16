@@ -38,6 +38,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../usr_avp.h"
+#include "domain_api.h"
 #include "domain_rpc.h"
 #include "hash.h"
 #include "domain.h"
@@ -124,6 +125,7 @@ static cmd_export_t cmds[] = {
 	{"lookup_domain", lookup_domain,         2, lookup_domain_fixup,
 	 REQUEST_ROUTE|FAILURE_ROUTE },
 	{"get_did",       (cmd_function)get_did, 0, 0, 0},
+	{"bind_domain",   (cmd_function)bind_domain, 0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
