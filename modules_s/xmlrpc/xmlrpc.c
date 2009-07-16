@@ -376,7 +376,6 @@ static rpc_t func_param;
  * will be available on the server. If set to 0 then the functions will be
  * disabled.
  */
-int enable_introspection = 1;
 static char* xmlrpc_route=0; /* default is the main route */
 
 
@@ -409,7 +408,6 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"enable_introspection", PARAM_INT, &enable_introspection},
 	{"route", PARAM_STRING, &xmlrpc_route},
 	{"autoconversion", PARAM_INT, &autoconvert},
 	{0, 0, 0}
