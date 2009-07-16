@@ -15,11 +15,13 @@ Jan Janak
         1.3.2. Replies
         1.3.3. Type Conversion
         1.3.4. Limitations
+        1.3.5. Interoperability Problems
 
    1.4. Client Examples
    1.5. Parameters
 
         1.5.1. route (string)
+        1.5.2. autoconversion (string)
 
    1.6. Functions
 
@@ -217,10 +219,10 @@ if (method == "POST" || method == "GET") {
    SER receives GET or POST requests. These two method names indicate
    HTTP.
 
-   Step 4. Function dispatch_rpc scans through the list of all exported
-   RPC functions searching for statistics function of usrloc module. The
-   SER RPC Module API describes in detail how modules export RPC
-   functions.
+   Step 4. The function dispatch_rpc scans through the list of all
+   exported RPC functions searching for the statistics function of the
+   usrloc module. The SER RPC Module API describes in detail how modules
+   export RPC functions.
 
    Step 5. As the RPC function from usrloc module is running and gathering
    statistics, it calls functions of RPC interface to prepare the result
@@ -366,7 +368,7 @@ Content-Length: 150
    If an RPC function adds just a single item (it calls add once with just
    one character in the formatting string) then the data will be converted
    to XML-RPC representation according to the rules described in SER RPC
-   Type Converion and the reply will contain just the single value:
+   Type Conversion and the reply will contain just the single value:
 HTTP/1.0 200 OK
 Via: SIP/2.0/TCP 127.0.0.1:3793
 Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
@@ -438,9 +440,39 @@ Content-Length: 276
    need all the bells and whistles of XML-RPC. Parsing and interpreting
    nested structures is complex and we try to avoid it.
 
+1.3.5. Interoperability Problems
+
+   Due to a bug in Python xmlrpclib there is an interoperability problem
+   with basic clients using it: by default an xmlrpclib client expects the
+   server to immediately close the connection after answering and if the
+   server does not close the connections the xmlrpclib client will wait
+   forever.
+
+   There are 2 ways to work around this problem: write a "fixed" Transport
+   class and initialize xmlpclib using it (recommended) or make ser close
+   the tcp connection after each request.
+
+   The examples/xmlrpc_test.py provides a very simple example of using
+   xmlrpclib with a Transport class that works.
+
+   For the second solution (force closing tcp connections after answering)
+   the XMLRPC route should end with a return -1, exit -1 or drop -1.
+
+   Example 1.
+route[XMLRPC]{
+        dispatch_rpc();
+        # close connection only for xmlrpclib user agents
+        if search("^User-Agent:.*xmlrpclib"))
+                return -1 ;
+}
+
 1.4. Client Examples
 
-     * ser_ctl (python application that uses the XML-RPC interface
+     * examples/xmlrpc_test.pl (basic perl application that builds and
+       sends an XMLRPC request from its commandline parameters).
+     * examples/xmlrpc_test.py (basic python application that builds and
+       sends an XMLRPC request from its commandline parameters).
+     * ser_ctl (complex python application that uses the XML-RPC interface
        implemented by the xmlrpc module).
      * serweb (php application that can use the XML-RPC interface to call
        ser functions).
@@ -465,8 +497,25 @@ Content-Length: 276
 
    Default: the main route is used.
 
-   Example 1. Set route parameter
+   Example 2. Set route parameter
 modparam("xmlrpc", "route", "route_for_xmlrpcs")
+
+1.5.2. autoconversion (string)
+
+   Enable or disable automatic parameter type conversion globally, for all
+   the methods parameters. If on, a type mismatch in a method parameter
+   will not cause a fault if it is possible to automatically convert it to
+   the type expected by the method.
+
+   Default: off.
+
+   It is recommended to leave this parameter to its default off value and
+   fix instead the client application (which should use the proper types)
+   or to modify the target rpc to accept any type (see the rpc scan '.'
+   modifier).
+
+   Example 3. Set the autoconversion parameter
+modparam("xmlrpc", "autoconversion", 1)
 
 1.6. Functions
 
@@ -489,7 +538,7 @@ modparam("xmlrpc", "route", "route_for_xmlrpcs")
    function with matching name. If such a function is found then
    dispatch_rpc() will pass control to the function to handle the request.
 
-   Example 2. dispatch_rpc usage
+   Example 4. dispatch_rpc usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
@@ -502,7 +551,7 @@ route[XMLRPC]{
    This function can be called from the config script to directly generate
    an XML-RPC reply.
 
-   Example 3. xmlrpc_reply usage
+   Example 5. xmlrpc_reply usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...

@@ -302,11 +302,11 @@ if (method == "POST" || method == "GET") {
 	    indicate HTTP.
 	</para>
 	<para>
-	    <emphasis>Step 4.</emphasis> Function
+	    <emphasis>Step 4.</emphasis> The function
 	    <function>dispatch_rpc</function> scans through the list of all
-	    exported RPC functions searching for
-	    <function>statistics</function> function of usrloc module. The
-		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=doc/rpc/ser_rpc.txt'>
+	    exported RPC functions searching for the
+	    <function>statistics</function> function of the usrloc module. The
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/rpc/ser_rpc.html'>
 		SER RPC Module API</ulink>
 		describes in detail how modules export RPC functions.
 	</para>
@@ -491,8 +491,8 @@ Content-Length: 150
 		with just one character in the formatting string) then the data
 		will be converted to XML-RPC representation according to the
 		rules described in
-		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=doc/rpc/ser_rpc.txt'>
-		SER RPC Type Converion</ulink> and
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/rpc/ser_rpc.html#rpc.data_types'>
+		SER RPC Type Conversion</ulink> and
 		the reply will contain just the single value:
 		<programlisting>
 <![CDATA[
@@ -655,6 +655,43 @@ Content-Length: 276
 		complex and we try to avoid it.
 	    </para>
 	</section>
+	<section id="xmlrpc.interoperability_problems">
+	    <title>Interoperability Problems</title>
+	    <para>
+		Due to a bug in Python xmlrpclib there is an interoperability 
+		problem with basic clients using it: by default an xmlrpclib client 
+		expects the server to immediately close the connection after answering
+		and if the server does not close the connections the xmlrpclib client
+		will wait forever.
+		</para>
+		<para>
+		There are 2 ways to work around this problem: write a "fixed"
+		Transport class and initialize xmlpclib using it (recommended) or
+		make ser close the tcp connection after each request.
+		</para>
+		<para>
+		The <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/examples/xmlrpc_test.py'>
+		examples/xmlrpc_test.py
+		</ulink> provides a very simple example of using xmlrpclib with a
+		Transport class that works.
+		</para>
+		<para>
+		For the second solution (force closing tcp connections after answering)
+		the XMLRPC route should end with a return -1, exit -1 or drop -1.
+		<example>
+		<programlisting>
+<![CDATA[
+route[XMLRPC]{
+	dispatch_rpc();
+	# close connection only for xmlrpclib user agents
+	if search("^User-Agent:.*xmlrpclib"))
+		return -1 ;
+}
+]]>
+		</programlisting>
+		</example>
+		</para>
+	</section>
     </section>
 
 	<section id="xmlrpc.client_examples">
@@ -673,12 +710,32 @@ Content-Length: 276
 	<para>
 	<itemizedlist>
 		<listitem><para>
-			<emphasis>ser_ctl</emphasis> (python application that uses the
-			<emphasis>XML-RPC</emphasis> interface implemented by the
+			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/examples/xmlrpc_test.pl'>
+			<emphasis>examples/xmlrpc_test.pl</emphasis>
+			</ulink> (basic perl application that builds and sends an
+			<emphasis>XMLRPC</emphasis> request from its commandline
+			parameters).
+		</para></listitem>
+		<listitem><para>
+			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/examples/xmlrpc_test.py'>
+			<emphasis>examples/xmlrpc_test.py</emphasis>
+			</ulink> (basic python application that builds and sends an
+			<emphasis>XMLRPC</emphasis> request from its commandline
+			parameters).
+		</para></listitem>
+		<listitem><para>
+			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=ser;a=tree;f=ser_ctl'>
+			<emphasis>ser_ctl</emphasis>
+			</ulink>
+			(complex python application that 
+			uses the <emphasis>XML-RPC</emphasis> interface implemented by the
 			<emphasis>xmlrpc</emphasis> module).
 		</para></listitem>
 		<listitem><para>
-			<emphasis>serweb</emphasis> (php application that can use
+			<ulink uri='http://www.iptel.org/serweb'>
+			<emphasis>serweb</emphasis>
+			</ulink>
+			(php application that can use
 			the <emphasis>XML-RPC</emphasis> interface to call ser 
 			functions).
 		</para></listitem>
