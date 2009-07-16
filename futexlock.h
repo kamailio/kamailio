@@ -49,6 +49,12 @@
                           between linux-libc-dev andlibc headers
                           in recent (6.08.2008) x86_64 debian sid
                           installations */
+/* hack to work with old linux/futex.h versions, that depend on sched.h in
+   __KERNEL__ mode (futex.h < 2.6.20) */
+#include <linux/types.h>
+typedef __u32 u32;
+struct task_struct;
+/* end of the hack */
 #include <linux/futex.h>
 #include <sys/syscall.h>
 #include <unistd.h>
