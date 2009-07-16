@@ -166,4 +166,30 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 	</example>
 	</section>
 
+	<section id="autoconversion">
+	<title><varname>autoconversion</varname> (integer)</title>
+	<para>
+		Enable or disable automatic type conversion globally, for all the
+		methods parameters.
+		If on, a type mismatch in a method parameter will not cause a fault
+		if it is possible to automatically convert it to the expected type.
+	</para>
+	<para>
+		Default: off 
+	</para>
+	<para>
+		It is recommended to leave this parameter to its default off value
+		and fix instead the client application (which should use the
+		proper types) or to modify the target rpc to accept any type
+		(see the rpc scan '.' modifier).
+	</para>
+	<example>
+		<title>Set the <varname>autoconversion</varname> parameter
+		</title>
+		<programlisting>
+modparam("ctl", "autoconversion", 1)
+		</programlisting>
+	</example>
+	</section>
+
 </section>
