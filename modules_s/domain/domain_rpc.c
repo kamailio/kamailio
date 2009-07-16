@@ -50,10 +50,10 @@ static void dump_domain(rpc_t* rpc, void* ctx, domain_t* d)
 		name = get_avp_name(a);
 		get_avp_val(a, &val);
 		if (a->flags & AVP_VAL_STR) {
-			if (rpc->struct_printf(st, "attr", "%.*s=%.*s", 
+			if (rpc->struct_printf(st, "attr", "%.*s=%.*s",
 								   STR_FMT(name), STR_FMT(&val.s)) < 0) return;
 		} else {
-			if (rpc->struct_printf(st, "attr", "%.*s=%d", 
+			if (rpc->struct_printf(st, "attr", "%.*s=%d",
 								   STR_FMT(name), val.n) < 0) return;
 		}
 		a = a->next;

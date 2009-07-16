@@ -35,7 +35,7 @@ static domain_t* domain_search(domain_t* list, str* did)
 {
 	while(list) {
 		if (list->did.len == did->len &&
-		    !memcmp(list->did.s, did->s, did->len)) {
+			!memcmp(list->did.s, did->s, did->len)) {
 			return list;
 		}
 		list = list->next;
@@ -54,7 +54,7 @@ static int domain_add(domain_t* d, str* domain, unsigned int flags)
 	str dom;
 
 	if (!d || !domain) {
-		LOG(L_ERR, "domain:domain_add: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -66,9 +66,10 @@ static int domain_add(domain_t* d, str* domain, unsigned int flags)
 
 	p1 = (str*)shm_realloc(d->domain, sizeof(str) * (d->n + 1));
 	if (!p1) goto error;
-	p2 = (unsigned int*)shm_realloc(d->flags, sizeof(unsigned int) * (d->n + 1));
+	p2 = (unsigned int*)shm_realloc(d->flags,
+									sizeof(unsigned int) * (d->n + 1));
 	if (!p2) goto error;
-	
+
 	d->domain = p1;
 	d->domain[d->n] = dom;
 	d->flags = p2;
@@ -77,7 +78,7 @@ static int domain_add(domain_t* d, str* domain, unsigned int flags)
 	return 0;
 
  error:
-	LOG(L_ERR, "domain:domain_add: Unable to add new domain name (out of memory)\n");
+	ERR("Unable to add new domain name (out of memory)\n");
 	if (dom.s) shm_free(dom.s);
 	return -1;
 }
@@ -129,21 +130,22 @@ static domain_t* new_domain(str* did, str* domain, unsigned int flags)
 	memcpy(d->domain[0].s, domain->s, domain->len);
 	d->domain[0].len = domain->len;
 	strlower(d->domain);
-	
+
 	d->flags = (unsigned int*)shm_malloc(sizeof(unsigned int));
 	if (!d->flags) goto error;
 	d->flags[0] = flags;
 	d->n = 1;
 
-	     /* Create an attribute containing did of the domain */
+	/* Create an attribute containing did of the domain */
 	name.s = name_s;
 	val.s = *did;
-	if (add_avp_list(&d->attrs, AVP_CLASS_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) goto error;
+	if (add_avp_list(&d->attrs, AVP_CLASS_DOMAIN | AVP_NAME_STR | AVP_VAL_STR,
+					 name, val) < 0) goto error;
 
 	return d;
 
  error:
-	LOG(L_ERR, "domain:new_domain: Unable to create new domain structure\n");
+	ERR("Unable to create new domain structure\n");
 	free_domain(d);
 	return 0;
 }
@@ -170,19 +172,19 @@ void free_domain_list(domain_t* list)
  */
 int db_load_domain_attrs(domain_t* d)
 {
-    int_str name, v;
+	int_str name, v;
 	str avp_val;
-    db_res_t* res;
+	db_res_t* res;
 	db_rec_t* rec;
-    unsigned short flags;
-    
+	unsigned short flags;
+
 	load_attrs_cmd->match[0].v.lstr = d->did;
 
 	if (db_exec(&res, load_attrs_cmd) < 0) {
 		ERR("Error while quering database\n");
 		return -1;
-    }
-    
+	}
+
 	rec = db_first(res);
 	while(rec) {
 		if (rec->fld[0].flags & DB_NULL ||
@@ -191,12 +193,12 @@ int db_load_domain_attrs(domain_t* d)
 			ERR("Skipping row containing NULL entries\n");
 			goto skip;
 		}
-		
+
 		if ((rec->fld[3].v.int4 & SRDB_LOAD_SER) == 0) goto skip;
-	
+
 		/* Get AVP name */
 		name.s = rec->fld[0].v.lstr;
-		
+
 		/* Test for NULL value */
 		if (rec->fld[2].flags & DB_NULL) {
 			avp_val.s = 0;
@@ -204,7 +206,7 @@ int db_load_domain_attrs(domain_t* d)
 		} else {
 			avp_val = rec->fld[2].v.lstr;
 		}
-		
+
 		flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
 		if (rec->fld[1].v.int4 == AVP_VAL_STR) {
 			/* String AVP */
@@ -214,18 +216,18 @@ int db_load_domain_attrs(domain_t* d)
 			/* Integer AVP */
 			str2int(&avp_val, (unsigned*)&v.n);
 		}
-		
+
 		if (add_avp_list(&d->attrs, flags, name, v) < 0) {
-			LOG(L_ERR, "domain:db_load_domain_attrs: Error while adding domain attribute %.*s to domain %.*s, skipping\n",
-				name.s.len, ZSW(name.s.s),
+			ERR("Error while adding domain attribute %.*s to domain %.*s, "
+				"skipping\n", name.s.len, ZSW(name.s.s),
 				d->did.len, ZSW(d->did.s));
 		}
-		
+
 	skip:
 		rec = db_next(res);
-    }
-    db_res_free(res);
-    return 0;
+	}
+	db_res_free(res);
+	return 0;
 }
 
 
@@ -249,35 +251,35 @@ int load_domains(domain_t** dest)
 	rec = db_first(res);
 
 	while(rec) {
-		     /* Do not assume that the database server performs any constrain
-		      * checking (dbtext does not) and perform sanity checks here to
-		      * make sure that we only load good entried
-		      */
-		if (rec->fld[0].flags & DB_NULL || 
-			rec->fld[1].flags & DB_NULL || 
+		/* Do not assume that the database server performs any constrain
+		 * checking (dbtext does not) and perform sanity checks here to
+		 * make sure that we only load good entried
+		 */
+		if (rec->fld[0].flags & DB_NULL ||
+			rec->fld[1].flags & DB_NULL ||
 			rec->fld[2].flags & DB_NULL) {
 			ERR("Row with NULL column(s), skipping\n");
 			goto skip;
 		}
 
 		flags = rec->fld[2].v.int4;
-		
+
 		/* Skip entries that are disabled/scheduled for removal */
 		if (flags & SRDB_DISABLED) goto skip;
-		     /* Skip entries that are for serweb/ser-ctl only */
+		/* Skip entries that are for serweb/ser-ctl only */
 		if (!(flags & SRDB_LOAD_SER)) goto skip;
-		
-		DBG("domain:load_domains: Processing entry (%.*s, %.*s, %u)\n",
-		    rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s),
-		    rec->fld[1].v.lstr.len, ZSW(rec->fld[1].v.lstr.s),
-		    flags);
+
+		DBG("Processing entry (%.*s, %.*s, %u)\n",
+			rec->fld[0].v.lstr.len, ZSW(rec->fld[0].v.lstr.s),
+			rec->fld[1].v.lstr.len, ZSW(rec->fld[1].v.lstr.s),
+			flags);
 
 		d = domain_search(list, &rec->fld[0].v.lstr);
 		if (d) {
 			/* DID exists in the list, update it */
 			if (domain_add(d, &rec->fld[1].v.lstr, flags) < 0) goto error;
 		} else {
-			     /* DID does not exist yet, create a new entry */
+			/* DID does not exist yet, create a new entry */
 			d = new_domain(&rec->fld[0].v.lstr, &rec->fld[1].v.lstr, flags);
 			if (!d) goto error;
 			d->next = list;

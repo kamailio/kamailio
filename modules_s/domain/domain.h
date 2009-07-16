@@ -28,28 +28,29 @@
 #include "../../usr_avp.h"
 
 
-/* 
- * Flags stored in flags column and their meaning 
+/*
+ * Flags stored in flags column and their meaning
  */
 enum domain_flags {
-	DOMAIN_DISABLED  = (1 << 0), /* Domain has been disabled and should not be loaded from the database */
-	DOMAIN_CANONICAL = (1 << 1) /* Canonical domain name (to be used in user interfaces a.s.o.) */
+	DOMAIN_DISABLED  = (1 << 0), /* Domain has been disabled and should not be
+								  * loaded from the database */
+	DOMAIN_CANONICAL = (1 << 1) /* Canonical domain name (to be used in user
+								 * interfaces a.s.o.) */
 };
 
 
 /*
- * This structure represents a virtual domain within SER
- * Each virtual domain is identified by unique domain ID.
- * Each domain can have several domain names (also called
- * aliases
+ * This structure represents a virtual domain within SER Each virtual domain
+ * is identified by unique domain ID.  Each domain can have several domain
+ * names (also called aliases
  */
 typedef struct domain {
-	str did;                /* Unique domain ID */
-	int n;                  /* Number of domain names */
-	str* domain;            /* Array of all domains associated with did */
-	unsigned int* flags;    /* Flags of each domain in the domain array */
-	avp_list_t attrs;       /* List of domain attributes */
-	struct domain* next;    /* Next domain in the list */
+	str did;             /* Unique domain ID */
+	int n;               /* Number of domain names */
+	str* domain;         /* Array of all domains associated with did */
+	unsigned int* flags; /* Flags of each domain in the domain array */
+	avp_list_t attrs;    /* List of domain attributes */
+	struct domain* next; /* Next domain in the list */
 } domain_t;
 
 
@@ -58,8 +59,8 @@ typedef struct domain {
  */
 int load_domains(domain_t** dest);
 
-/* 
- * Load domain attributes from database 
+/*
+ * Load domain attributes from database
  */
 int db_load_domain_attrs(domain_t* dest);
 

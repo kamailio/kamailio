@@ -30,22 +30,22 @@
 #include "hash.h"
 
 
-/* 
- * String hash function 
+/*
+ * String hash function
  */
 static unsigned int calc_hash(str *key)
 {
 	char *p;
 	unsigned int h, len, i;
-	
+
 	h = 0;
 	p = key->s;
 	len = key->len;
-	
+
 	for (i = 0; i < len; i++) {
 		h = ( h << 5 ) - h + *(p + i);
 	}
-	
+
 	return h % HASH_SIZE;
 }
 
@@ -58,13 +58,13 @@ static struct hash_entry* new_hash_entry(str* key, domain_t* domain)
 	struct hash_entry* e;
 
 	if (!key || !domain) {
-		LOG(L_ERR, "domain:new_hash_entry: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return 0;
 	}
 
 	e = (struct hash_entry*)shm_malloc(sizeof(struct hash_entry));
 	if (!e) {
-		LOG(L_ERR, "domain:new_hash_entry: Not enough memory left\n");
+		ERR("Not enough memory left\n");
 		return 0;
 	}
 	e->key = *key;
@@ -113,7 +113,7 @@ int gen_domain_table(struct hash_entry** table, domain_t* list)
 	int i;
 
 	if (!table) {
-		LOG(L_ERR, "domain:gen_domain_table: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -145,7 +145,7 @@ int gen_did_table(struct hash_entry** table, domain_t* list)
 	struct hash_entry* e;
 
 	if (!table) {
-		LOG(L_ERR, "domain:gen_did_table: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -172,8 +172,8 @@ int hash_lookup(domain_t** d, struct hash_entry** table, str* key)
 	struct hash_entry* np;
 
 	for (np = table[calc_hash(key)]; np != NULL; np = np->next) {
-		if ((np->key.len == key->len) && 
-		    (strncmp(np->key.s, key->s, key->len) == 0)) {
+		if ((np->key.len == key->len) &&
+			(strncmp(np->key.s, key->s, key->len) == 0)) {
 			if (d) *d = np->domain;
 			return 1;
 		}

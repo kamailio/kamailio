@@ -34,7 +34,7 @@
  */
 struct hash_entry {
 	str key;                  /* Hash key */
-        domain_t* domain;         /* Pointer to the domain structure */
+	domain_t* domain;         /* Pointer to the domain structure */
 	struct hash_entry* next;  /* Next element in hash table colision slot */
 };
 
