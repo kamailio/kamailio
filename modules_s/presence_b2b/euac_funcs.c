@@ -34,8 +34,10 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 	parse_from_header(m);
 	
 	memset(&id, 0, sizeof(id));
-	if (m->to) id.loc_tag = ((struct to_body*)m->to->parsed)->tag_value;
-	if (m->from) id.rem_tag = ((struct to_body*)m->from->parsed)->tag_value;
+	if (m->to && m->to->parsed) 
+		id.loc_tag = ((struct to_body*)m->to->parsed)->tag_value;
+	if (parse_from_header(m)==0 && m->from->parsed)
+		id.rem_tag = ((struct to_body*)m->from->parsed)->tag_value;
 	if (m->callid) id.call_id = m->callid->body;
 
 	uac = (events_uac_t*)ht_find(&euac_internals->ht_confirmed, &id);
