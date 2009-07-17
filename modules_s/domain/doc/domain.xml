@@ -241,5 +241,6 @@ iptel
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
 	<xi:include href="fifo.xml"/>
+	<xi:include href="domain_api.xml"/>
 	
 </section>

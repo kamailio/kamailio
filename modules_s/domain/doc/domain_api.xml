@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="domain.api" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Internal API</title>
+	<para>The domain module has an internal API which can be used to access
+	additional functions of the module (i.e. functions that are normally not
+	available from the routing script). Currently the API exports only the
+	function <function>is_domain_local</function>. That function can be used
+	to determine whether a given domain name is on the list of locally
+	configured domain names.</para>
+
+	<para>If you want to use the internal API of domain module from your
+	module then you need to include the header file
+	<filename>domain_api.h</filename> and call
+	<function>load_domain_api</function> first.</para>
+	
+	<example>
+		<title>Calling <function>load_domain_api</function></title>
+		<programlisting>
+#include "../domain/domain_api.h"
+
+domain_api_t dom_api;
+
+if (load_domain_api(&amp;dom_api) != 0) {
+    /* error */
+}
+</programlisting>
+	</example>
+
+	<para>After that you can call function
+	<function>is_domain_local</function> whose pointer is stored in the
+	initialized data structure:</para>
+	
+	<programlisting>
+str tmp = STR_STATIC_INIT("mydomain.com");
+
+if (dom_api.is_domain_local(&amp;tmp) == 1) {
+    /* Domain is local */
+} else {
+    /* Domain is not local or an error was encountered */
+}
+	</programlisting>
+</section>
+
+		
