@@ -939,7 +939,7 @@ static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
 	struct addr_info* ail;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if(new_sock2list(ail->name.s, 0, port_no, proto, ail->flags | flags,
+		if(new_sock2list(ail->name.s, 0, port, proto, ail->flags | flags,
 							list)==0)
 			return -1;
 	}
@@ -961,7 +961,7 @@ static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 	struct socket_info* new_si;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if((new_si=new_sock2list_after(ail->name.s, 0, port_no, proto,
+		if((new_si=new_sock2list_after(ail->name.s, 0, port, proto,
 								ail->flags | flags, el))==0)
 			return -1;
 		el=new_si;
@@ -1148,7 +1148,9 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 					)
 					add_alias(del_si->name.s, del_si->name.len,
 								l->port_no, l->proto);
-						
+				/* make sure next_si doesn't point to del_si */
+				if (del_si==next_si)
+					next_si=next_si->next;
 				/* remove del_si*/
 				sock_listrm(list, del_si);
 				free_sock_info(del_si);

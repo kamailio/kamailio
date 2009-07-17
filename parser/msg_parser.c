@@ -309,13 +309,15 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 	end=msg->buf+msg->len;
 	tmp=msg->unparsed;
 
-	if (next) {
+	if (unlikely(next)) {
 		orig_flag = msg->parsed_flag;
 		msg->parsed_flag &= ~flags;
 	}else
 		orig_flag=0;
 
+#ifdef EXTRA_DEBUG
 	DBG("parse_headers: flags=%llx\n", (unsigned long long)flags);
+#endif
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		prefetch_loc_r(tmp+64, 1);
 		hf=pkg_malloc(sizeof(struct hdr_field));
@@ -549,12 +551,15 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 	}
 skip:
 	msg->unparsed=tmp;
+	/* restore original flags */
+	msg->parsed_flag |= orig_flag;
 	return 0;
 
 error:
 	ser_error=E_BAD_REQ;
 	if (hf) pkg_free(hf);
-	if (next) msg->parsed_flag |= orig_flag;
+	/* restore original flags */
+	msg->parsed_flag |= orig_flag;
 	return -1;
 }
 

@@ -193,6 +193,9 @@
 
 
 extern int yylex();
+/* safer then using yytext which can be array or pointer */
+extern char* yy_number_str;
+
 static void yyerror(char* s, ...);
 static void yyerror_at(struct cfg_pos* pos, char* s, ...);
 static char* tmp;
@@ -526,6 +529,7 @@ static int case_check_default(struct case_stms* stms);
 /* values */
 %token <intval> NUMBER
 %token <strval> ID
+%token <strval> NUM_ID
 %token <strval> STRING
 %token <strval> IPV6ADDR
 %token <strval> PVAR
@@ -556,7 +560,7 @@ static int case_check_default(struct case_stms* stms);
 %type <case_stms> single_case case_stms
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
-%type <strval> host
+%type <strval> host host_or_if host_if_id
 %type <strval> listen_id
 %type <name_l> listen_id_lst
 %type <name_l> listen_id2
@@ -618,18 +622,20 @@ statement:
 	;
 listen_id:
 	ip {
-		tmp=ip_addr2a($1);
-		if (tmp==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: bad ip "
-					"address.\n");
-			$$=0;
-		} else {
-			$$=pkg_malloc(strlen(tmp)+1);
-			if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: out of "
-						"memory.\n");
+		if ($1){
+			tmp=ip_addr2a($1);
+			if (tmp==0) {
+				LOG(L_CRIT, "ERROR: cfg. parser: bad ip "
+						"address.\n");
+				$$=0;
 			} else {
-				strncpy($$, tmp, strlen(tmp)+1);
+				$$=pkg_malloc(strlen(tmp)+1);
+				if ($$==0) {
+					LOG(L_CRIT, "ERROR: cfg. parser: out of "
+							"memory.\n");
+				} else {
+					strncpy($$, tmp, strlen(tmp)+1);
+				}
 			}
 		}
 	}
@@ -642,13 +648,15 @@ listen_id:
 				strncpy($$, $1, strlen($1)+1);
 		}
 	}
-	| host {
-		$$=pkg_malloc(strlen($1)+1);
-		if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: out of "
-						"memory.\n");
-		} else {
-				strncpy($$, $1, strlen($1)+1);
+	| host_or_if {
+		if ($1){
+			$$=pkg_malloc(strlen($1)+1);
+			if ($$==0) {
+					LOG(L_CRIT, "ERROR: cfg. parser: out of "
+							"memory.\n");
+			} else {
+					strncpy($$, $1, strlen($1)+1);
+			}
 		}
 	}
 	;
@@ -695,7 +703,7 @@ listen_phostport:
 
 id_lst:
 	listen_phostport		{  $$=$1 ; }
-	| listen_phostport id_lst	{ $$=$1; $$->next=$2; }
+	| listen_phostport id_lst	{ $$=$1;  if ($$) $$->next=$2; }
 	;
 
 intno: NUMBER
@@ -1366,7 +1374,8 @@ assign_stm:
 		}
 		free_socket_id_lst($3);
 	}
-	| LISTEN EQUAL  error { yyerror("ip address or hostname expected"); }
+	| LISTEN EQUAL  error { yyerror("ip address, interface name or"
+									" hostname expected"); }
 	| ALIAS EQUAL  id_lst {
 		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
 			add_alias(	lst_tmp->addr_lst->name,
@@ -1382,8 +1391,10 @@ assign_stm:
 	| SR_AUTO_ALIASES EQUAL NUMBER { sr_auto_aliases=$3; }
 	| SR_AUTO_ALIASES EQUAL error  { yyerror("boolean value expected"); }
 	| ADVERTISED_ADDRESS EQUAL listen_id {
-		default_global_address.s=$3;
-		default_global_address.len=strlen($3);
+		if ($3){
+			default_global_address.s=$3;
+			default_global_address.len=strlen($3);
+		}
 	}
 	| ADVERTISED_ADDRESS EQUAL error {yyerror("ip address or hostname expected"); }
 	| ADVERTISED_PORT EQUAL NUMBER {
@@ -1908,33 +1919,83 @@ ipnet:
 host:
 	ID { $$=$1; }
 	| host DOT ID {
-		$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
-		if ($$==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: memory allocation failure while parsing host\n");
-		} else {
-			memcpy($$, $1, strlen($1));
-			$$[strlen($1)]='.';
-			memcpy($$+strlen($1)+1, $3, strlen($3));
-			$$[strlen($1)+1+strlen($3)]=0;
+		if ($1){
+			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+			if ($$==0) {
+				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+							" failure while parsing host\n");
+			} else {
+				memcpy($$, $1, strlen($1));
+				$$[strlen($1)]='.';
+				memcpy($$+strlen($1)+1, $3, strlen($3));
+				$$[strlen($1)+1+strlen($3)]=0;
+			}
+			pkg_free($1);
 		}
-		pkg_free($1);
-		pkg_free($3);
 	}
 	| host MINUS ID {
-		$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
-		if ($$==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: memory allocation failure while parsing host\n");
-		} else {
-			memcpy($$, $1, strlen($1));
-			$$[strlen($1)]='-';
-			memcpy($$+strlen($1)+1, $3, strlen($3));
-			$$[strlen($1)+1+strlen($3)]=0;
+		if ($1){
+			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+			if ($$==0) {
+				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+							" failure while parsing host\n");
+			} else {
+				memcpy($$, $1, strlen($1));
+				$$[strlen($1)]='-';
+				memcpy($$+strlen($1)+1, $3, strlen($3));
+				$$[strlen($1)+1+strlen($3)]=0;
+			}
+			pkg_free($1);
 		}
-		pkg_free($1);
-		pkg_free($3);
 	}
 	| host DOT error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
+	| host MINUS error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
 	;
+
+host_if_id: ID
+		| NUM_ID
+		| NUMBER { $$=yy_number_str /* text version */; }
+		;
+
+host_or_if:
+	host_if_id { $$=$1; }
+	| host_or_if DOT host_if_id {
+		if ($1){
+			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+			if ($$==0) {
+				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+							" failure while parsing host/interface name\n");
+			} else {
+				memcpy($$, $1, strlen($1));
+				$$[strlen($1)]='.';
+				memcpy($$+strlen($1)+1, $3, strlen($3));
+				$$[strlen($1)+1+strlen($3)]=0;
+			}
+			pkg_free($1);
+		}
+	}
+	| host_or_if MINUS host_if_id {
+		if ($1){
+			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+			if ($$==0) {
+				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+							" failure while parsing host/interface name\n");
+			} else {
+				memcpy($$, $1, strlen($1));
+				$$[strlen($1)]='-';
+				memcpy($$+strlen($1)+1, $3, strlen($3));
+				$$[strlen($1)+1+strlen($3)]=0;
+			}
+			pkg_free($1);
+		}
+	}
+	| host_or_if DOT error { $$=0; pkg_free($1);
+								yyerror("invalid host or interface name"); }
+	| host_or_if MINUS error { $$=0; pkg_free($1);
+								yyerror("invalid host or interface name"); }
+	;
+
+
 /* filtered cmd */
 fcmd:
 	cmd {
@@ -2834,7 +2895,7 @@ cmd:
 			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
 		} else {
 			str_tmp->s=$3;
-			str_tmp->len=strlen($3);
+			str_tmp->len=$3?strlen($3):0;
 			$$=mk_action(SET_ADV_ADDR_T, 1, STR_ST, str_tmp);
 		}
 	}
@@ -3194,6 +3255,7 @@ static int warn_ct_rve(struct rval_expr *rve, char* name)
 static struct name_lst* mk_name_lst(char* host, int flags)
 {
 	struct name_lst* l;
+	if (host==0) return 0;
 	l=pkg_malloc(sizeof(struct name_lst));
 	if (l==0) {
 		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
@@ -3209,6 +3271,7 @@ static struct name_lst* mk_name_lst(char* host, int flags)
 static struct socket_id* mk_listen_id(char* host, int proto, int port)
 {
 	struct socket_id* l;
+	if (host==0) return 0;
 	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0) {
 		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
@@ -3243,6 +3306,7 @@ static struct socket_id* mk_listen_id2(struct name_lst* addr_l, int proto,
 										int port)
 {
 	struct socket_id* l;
+	if (addr_l==0) return 0;
 	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0) {
 		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
