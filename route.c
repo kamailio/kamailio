@@ -525,6 +525,41 @@ int fix_expr(struct expr* exp)
 								exp->op);
 		}
 	}else if (exp->type==ELEM_T){
+			/* first fix & optimize rve/rvals (they might be optimized
+			   to non-rvals, e.g. string, avp a.s.o) */
+			if (exp->l_type==RVEXP_O){
+				if ((ret=fix_rval_expr(&exp->l.param))<0){
+					ERR("Unable to fix left rval expression\n");
+					return ret;
+				}
+				if (scr_opt_lev>=2)
+					exp_optimize_left(exp);
+			}
+			if (exp->r_type==RVE_ST){
+				if ((ret=fix_rval_expr(&exp->r.param))<0){
+					ERR("Unable to fix right rval expression\n");
+					return ret;
+				}
+				if (scr_opt_lev>=2)
+					exp_optimize_right(exp);
+			}
+			
+			/* Calculate lengths of strings */
+			if (exp->l_type==STRING_ST) {
+				int len;
+				if (exp->l.string) len = strlen(exp->l.string);
+				else len = 0;
+				exp->l.str.s = exp->l.string;
+				exp->l.str.len = len;
+			}
+			if (exp->r_type==STRING_ST) {
+				int len;
+				if (exp->r.string) len = strlen(exp->r.string);
+				else len = 0;
+				exp->r.str.s = exp->r.string;
+				exp->r.str.len = len;
+			}
+			
 			if (exp->op==MATCH_OP){
 				     /* right side either has to be string, in which case
 				      * we turn it into regular expression, or it is regular
@@ -562,21 +597,6 @@ int fix_expr(struct expr* exp)
 					return ret;
 				}
 			}
-			     /* Calculate lengths of strings */
-			if (exp->l_type==STRING_ST) {
-				int len;
-				if (exp->l.string) len = strlen(exp->l.string);
-				else len = 0;
-				exp->l.str.s = exp->l.string;
-				exp->l.str.len = len;
-			}
-			if (exp->r_type==STRING_ST) {
-				int len;
-				if (exp->r.string) len = strlen(exp->r.string);
-				else len = 0;
-				exp->r.str.s = exp->r.string;
-				exp->r.str.len = len;
-			}
 			if (exp->l_type==SELECT_O) {
 				if ((ret=resolve_select(exp->l.select)) < 0) {
 					BUG("Unable to resolve select\n");
@@ -590,22 +610,6 @@ int fix_expr(struct expr* exp)
 					print_select(exp->l.select);
 					return ret;
 				}
-			}
-			if (exp->l_type==RVEXP_O){
-				if ((ret=fix_rval_expr(&exp->l.param))<0){
-					ERR("Unable to fix left rval expression\n");
-					return ret;
-				}
-				if (scr_opt_lev>=2)
-					exp_optimize_left(exp);
-			}
-			if (exp->r_type==RVE_ST){
-				if ((ret=fix_rval_expr(&exp->r.param))<0){
-					ERR("Unable to fix right rval expression\n");
-					return ret;
-				}
-				if (scr_opt_lev>=2)
-					exp_optimize_right(exp);
 			}
 			/* PVAR don't need fixing */
 			ret=0;
