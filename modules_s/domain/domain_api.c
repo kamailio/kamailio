@@ -31,5 +31,6 @@ int bind_domain(domain_api_t* api)
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
+	api->is_domain_local = is_domain_local;
 	return 0;
 }

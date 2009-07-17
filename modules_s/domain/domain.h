@@ -72,4 +72,21 @@ void free_domain_list(domain_t* list);
 
 typedef int (*domain_get_did_t)(str* did, str* domain);
 
+
+/* Retrieve did directly from database, without using memory cache. Use 0 as
+ * the value of first parameter if you only want to know whether the entry is
+ * in the database. The function returns 1 if there is such entry, 0 if not,
+ * and -1 on error.  The result is allocated using pkg_malloc and must be
+ * freed.
+ */
+int db_get_did(str* did, str* domain);
+
+/* Check if the domain name given in the parameter is one
+ * of the locally configured domain names.
+ * Returns 1 if yes and -1 otherwise
+ */
+typedef int (*is_domain_local_f)(str* domain);
+int is_domain_local(str* domain);
+
+
 #endif /* _DOMAIN_H */

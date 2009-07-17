@@ -25,9 +25,10 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "domain.h"
 
 typedef struct domain_api {
-
+	is_domain_local_f is_domain_local;
 } domain_api_t;
 
 typedef int (*bind_domain_f)(domain_api_t* api);

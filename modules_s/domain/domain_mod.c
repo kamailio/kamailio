@@ -381,107 +381,20 @@ static void destroy(void)
 }
 
 
-/* Retrieve did directly from database, without using memory cache. Use 0 as
- * the value of first parameter if you only want to know whether the entry is
- * in the database. The function returns 1 if there is such entry, 0 if not,
- * and -1 on error.  The result is allocated using pkg_malloc and must be
- * freed.
- */
-static int db_get_did(str* did, str* domain)
-{
-	db_res_t* res = NULL;
-	db_rec_t* rec;
-
-	if (!domain) {
-		ERR("BUG:Invalid parameter value\n");
-		goto err;
-	}
-
-	get_did_cmd->match[0].v.lstr = *domain;
-
-	if (db_exec(&res, get_did_cmd) < 0) {
-		ERR("Error in database query\n");
-		goto err;
-	}
-
-	rec = db_first(res);
-	if (rec) {
-		/* Test flags first, we are only interested in rows
-		 * that are not disabled
-		 */
-		if (rec->fld[1].flags & DB_NULL || (rec->fld[1].v.bitmap &
-											SRDB_DISABLED)) {
-			db_res_free(res);
-			return 0;
-		}
-
-		if (did) {
-			if (rec->fld[0].flags & DB_NULL) {
-				did->len = 0;
-				did->s = 0;
-				WARN("Domain '%.*s' has NULL did\n",
-					 domain->len, ZSW(domain->s));
-			} else {
-				did->s = pkg_malloc(rec->fld[0].v.lstr.len);
-				if (!did->s) {
-					ERR("No memory left\n");
-					goto err;
-				}
-				memcpy(did->s, rec->fld[0].v.lstr.s, rec->fld[0].v.lstr.len);
-				did->len = rec->fld[0].v.lstr.len;
-			}
-		}
-
-		db_res_free(res);
-		return 1;
-	} else {
-		db_res_free(res);
-		return 0;
-	}
-
- err:
-	if (res) db_res_free(res);
-	return -1;
-}
-
 
 /*
  * Check if domain is local
  */
 static int is_local(struct sip_msg* msg, char* fp, char* s2)
 {
-	str domain, tmp;
+	str domain;
 
 	if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
 		ERR("Unable to get domain to check\n");
 		return -1;
 	}
 
-	tmp.s = pkg_malloc(domain.len);
-	if (!tmp.s) {
-		ERR("No memory left\n");
-		return -1;
-	}
-	memcpy(tmp.s, domain.s, domain.len);
-	tmp.len = domain.len;
-	strlower(&tmp);
-
-	if (!db_mode) {
-		switch(db_get_did(0, &tmp)) {
-		case 1:  goto found;
-		default: goto not_found;
-		}
-	} else {
-		if (hash_lookup(0, *active_hash, &tmp) == 1) goto found;
-		else goto not_found;
-	}
-
- found:
-	pkg_free(tmp.s);
-	return 1;
- not_found:
-	pkg_free(tmp.s);
-	return -1;
+	return is_domain_local(&domain);
 }
 
 
