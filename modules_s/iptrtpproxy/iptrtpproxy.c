@@ -329,10 +329,10 @@ static int parse_sdp_content(struct sip_msg* msg, struct sdp_session *sess) {
 				}
 				break;
 			invalidate:
-					if (sess_fl == 2) {
-						sess->media[sess->media_count-1].active = 0;
-					}
-					break;
+				if (sess_fl == 2) {
+					sess->media[sess->media_count-1].active = 0;
+				}
+				break;
 			case 'm':
 				/* Media Announcements: m=<media> <port>[/<number of ports>] <transport> <fmt list>, eg. m=audio 49170 RTP/AVP 0 */
 				switch (sess_fl) {
@@ -492,17 +492,17 @@ static int unserialize_ipt_session(str* session_ids, struct ipt_session* sess) {
 	s.len = p-s.s;
 	sess->switchboard = find_switchboard(&s);
 	if (!sess->switchboard) {
-		ERR(MODULE_NAME": unserialize_ipt_session: switchboard '%.*s' not found\n", s.len, s.s);
+		ERR(MODULE_NAME": unserialize_ipt_session: '%.*s', switchboard '%.*s' not found\n", session_ids->len, session_ids->s, s.len, s.s);
 		return -1;
 	}
 	if (p == pend) return 0;
 	if (*p != ':') {
-		ERR(MODULE_NAME": unserialize_ipt_session: colon expected near '%.*s'\n", pend-p, p);
+		ERR(MODULE_NAME": unserialize_ipt_session: '%.*s', colon expected near '%.*s'\n", session_ids->len, session_ids->s, pend-p, p);
 		return -1;
 	}
 	do {
 		if (sess->stream_count >= MAX_MEDIA_NUMBER) {
-		ERR(MODULE_NAME": unserialize_ipt_session: max.media number (%d) exceeded\n", MAX_MEDIA_NUMBER);
+		ERR(MODULE_NAME": unserialize_ipt_session: '%.*s', max.media number (%d) exceeded\n", session_ids->len, session_ids->s, MAX_MEDIA_NUMBER);
 			return -1;
 		}
 		p++;
@@ -512,7 +512,7 @@ static int unserialize_ipt_session(str* session_ids, struct ipt_session* sess) {
 		s.s = p;
 		while (p < pend && (*p >= '0' && *p <= '9')) p++;
 		if (p != pend && *p != '/') {
-			ERR(MODULE_NAME": unserialize_ipt_session: '/' expected near '%.*s'\n", pend-p, p);
+			ERR(MODULE_NAME": unserialize_ipt_session: '%.*s', '/' expected near '%.*s'\n", session_ids->len, session_ids->s, pend-p, p);
 			return -1;
 		}
 		s.len = p-s.s;
@@ -527,7 +527,7 @@ static int unserialize_ipt_session(str* session_ids, struct ipt_session* sess) {
 		while (p < pend && (*p >= '0' && *p <= '9')) p++;
 		if (p != pend && *p != ',') {
 			sess->streams[sess->stream_count-1].sess_id = -1;
-			ERR(MODULE_NAME": unserialize_ipt_session: comma expected near '%.*s'\n", pend-p, p);
+			ERR(MODULE_NAME": unserialize_ipt_session: '%.*s', comma expected near '%.*s'\n", session_ids->len, session_ids->s, pend-p, p);
 			return -1;
 		}
 		s.len = p-s.s;
@@ -732,7 +732,6 @@ static int rtpproxy_update(struct sip_msg* msg, char* _flags, char* _session_ids
 			}
 		}
 	}
-serialize_ipt_session(&ipt_sess, &session_ids);
 	if (update_sdp_content(msg, GATE_A_TO_B(flags), &sdp_sess, &ipt_sess) < 0) {
 		/* delete all sessions ? */
 		return -1;
