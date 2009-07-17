@@ -1932,6 +1932,7 @@ host:
 			}
 			pkg_free($1);
 		}
+		if ($3) pkg_free($3);
 	}
 	| host MINUS ID {
 		if ($1){
@@ -1947,6 +1948,7 @@ host:
 			}
 			pkg_free($1);
 		}
+		if ($3) pkg_free($3);
 	}
 	| host DOT error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
 	| host MINUS error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
@@ -1954,7 +1956,12 @@ host:
 
 host_if_id: ID
 		| NUM_ID
-		| NUMBER { $$=yy_number_str /* text version */; }
+		| NUMBER {
+			/* get string version */
+			$$=pkg_malloc(strlen(yy_number_str)+1);
+			if ($$)
+				strcpy($$, yy_number_str);
+		}
 		;
 
 host_or_if:
@@ -1973,6 +1980,7 @@ host_or_if:
 			}
 			pkg_free($1);
 		}
+		if ($3) pkg_free($3);
 	}
 	| host_or_if MINUS host_if_id {
 		if ($1){
@@ -1988,6 +1996,7 @@ host_or_if:
 			}
 			pkg_free($1);
 		}
+		if ($3) pkg_free($3);
 	}
 	| host_or_if DOT error { $$=0; pkg_free($1);
 								yyerror("invalid host or interface name"); }
