@@ -112,6 +112,7 @@
 	int line=1;
 	int column=1;
 	int startcolumn=1;
+	char* yy_number_str=0; /* str correspondent for the current NUMBER token */
 
 	static char* addchar(struct str_buf *, char);
 	static char* addstr(struct str_buf *, char*, int);
@@ -403,6 +404,7 @@ LETTER		[a-zA-Z]
 DIGIT		[0-9]
 ALPHANUM	{LETTER}|{DIGIT}|[_]
 ID			{LETTER}{ALPHANUM}*
+NUM_ID		{ALPHANUM}+
 HEX			[0-9a-fA-F]
 HEXNUMBER	0x{HEX}+
 OCTNUMBER	0[0-7]+
@@ -784,10 +786,14 @@ EAT_ABLE	[\ \t\b\r]
 <SELECT>{DOT}           { count(); return DOT; }
 <SELECT>{LBRACK}        { count(); return LBRACK; }
 <SELECT>{RBRACK}        { count(); return RBRACK; }
-<SELECT>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
-<SELECT>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16); return NUMBER; }
-<SELECT>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8); return NUMBER; }
-<SELECT>{BINNUMBER}     { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
+<SELECT>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);
+						yy_number_str=yytext; return NUMBER; }
+<SELECT>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16);
+						yy_number_str=yytext; return NUMBER; }
+<SELECT>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8);
+						yy_number_str=yytext; return NUMBER; }
+<SELECT>{BINNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 2);
+						yy_number_str=yytext; return NUMBER; }
 
 
 <INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
@@ -804,7 +810,8 @@ EAT_ABLE	[\ \t\b\r]
 <ATTR>{LBRACK}          { count(); return LBRACK; }
 <ATTR>{RBRACK}          { count(); return RBRACK; }
 <ATTR>{STAR}		{ count(); return STAR; }
-<ATTR>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<ATTR>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);
+						yy_number_str=yytext; return NUMBER; }
 <ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
                            yylval.strval=s_buf.s;
 			   memset(&s_buf, 0, sizeof(s_buf));
@@ -814,26 +821,32 @@ EAT_ABLE	[\ \t\b\r]
                         }
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
-<INITIAL>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<INITIAL>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);
+								yy_number_str=yytext; return NUMBER; }
 <INITIAL>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16);
-							return NUMBER; }
+							yy_number_str=yytext; return NUMBER; }
 <INITIAL>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8);
 							return NUMBER; }
-<INITIAL>{BINNUMBER}    { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
-<INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
-<INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
+<INITIAL>{BINNUMBER}    { count(); yylval.intval=(int)strtol(yytext, 0, 2);
+							yy_number_str=yytext; return NUMBER; }
+<INITIAL>{YES}			{ count(); yylval.intval=1;
+							yy_number_str=yytext; return NUMBER; }
+<INITIAL>{NO}			{ count(); yylval.intval=0;
+							yy_number_str=yytext; return NUMBER; }
 <INITIAL>{TCP}			{ count(); return TCP; }
 <INITIAL>{UDP}			{ count(); return UDP; }
 <INITIAL>{TLS}			{ count(); return TLS; }
 <INITIAL>{SCTP}			{ count(); return SCTP; }
-<INITIAL>{INET}			{ count(); yylval.intval=AF_INET; return NUMBER; }
+<INITIAL>{INET}			{ count(); yylval.intval=AF_INET;
+							yy_number_str=yytext; return NUMBER; }
 <INITIAL>{INET6}		{ count();
 						#ifdef USE_IPV6
 						  yylval.intval=AF_INET6;
 						#else
 						  yylval.intval=-1; /* no match*/
 						#endif
-						  return NUMBER; }
+						yy_number_str=yytext;
+						return NUMBER; }
 <INITIAL>{SSLv23}		{ count(); yylval.strval=yytext; return SSLv23; }
 <INITIAL>{SSLv2}		{ count(); yylval.strval=yytext; return SSLv2; }
 <INITIAL>{SSLv3}		{ count(); yylval.strval=yytext; return SSLv3; }
@@ -907,6 +920,10 @@ EAT_ABLE	[\ \t\b\r]
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
 									return ID; }
+<INITIAL>{NUM_ID}			{ count(); addstr(&s_buf, yytext, yyleng);
+									yylval.strval=s_buf.s;
+									memset(&s_buf, 0, sizeof(s_buf));
+									return NUM_ID; }
 
 <SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 

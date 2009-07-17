@@ -180,6 +180,9 @@
 
 
 extern int yylex();
+/* safer then using yytext which can be array or pointer */
+extern char* yy_number_str;
+
 static void yyerror(char* s);
 static char* tmp;
 static int i_tmp;
@@ -477,6 +480,7 @@ static void free_socket_id_lst(struct socket_id* i);
 /* values */
 %token <intval> NUMBER
 %token <strval> ID
+%token <strval> NUM_ID
 %token <strval> STRING
 %token <strval> IPV6ADDR
 
@@ -501,7 +505,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %type <action> action actions cmd fcmd if_cmd stm exp_stm assign_action
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
-%type <strval> host
+%type <strval> host host_or_if host_if_id
 %type <strval> listen_id
 %type <name_l> listen_id_lst
 %type <name_l> listen_id2
@@ -582,7 +586,7 @@ listen_id:
 				strncpy($$, $1, strlen($1)+1);
 		}
 	}
-	| host {
+	| host_or_if {
 		if ($1){
 			$$=pkg_malloc(strlen($1)+1);
 			if ($$==0) {
@@ -1920,10 +1924,37 @@ host:
 			}
 			pkg_free($1);
 		}
-		pkg_free($3);
 	}
 	| host DOT error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
 	;
+
+host_if_id: ID
+		| NUM_ID
+		| NUMBER { $$=yy_number_str /* text version */; }
+		;
+
+host_or_if:
+	host_if_id { $$=$1; }
+	| host_or_if host_sep host_if_id {
+		if ($1){
+			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+			if ($$==0) {
+				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+							" failure while parsing host/interface name\n");
+			} else {
+				memcpy($$, $1, strlen($1));
+				$$[strlen($1)]=*$2;
+				memcpy($$+strlen($1)+1, $3, strlen($3));
+				$$[strlen($1)+1+strlen($3)]=0;
+			}
+			pkg_free($1);
+		}
+	}
+	| host_or_if host_sep error { $$=0; pkg_free($1);
+								yyerror("invalid host or interface name"); }
+	;
+
+
 /* filtered cmd */
 fcmd:
 	cmd {
@@ -2561,6 +2592,7 @@ func_param:
 extern int line;
 extern int column;
 extern int startcolumn;
+
 static void warn(char* s)
 {
 	LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", line, startcolumn,
