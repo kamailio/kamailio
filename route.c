@@ -435,6 +435,7 @@ static int exp_optimize_right(struct expr* exp)
 					if (exp->r.str.s){
 						exp->r.str.len=rval->v.s.len;
 						memcpy(exp->r.str.s, rval->v.s.s, rval->v.s.len);
+						exp->r.str.s[exp->r.str.len]=0;
 						exp->r_type=STRING_ST;
 						rval_destroy(rval);
 						pkg_free(rve);
@@ -503,6 +504,7 @@ int fix_expr(struct expr* exp)
 {
 	regex_t* re;
 	int ret;
+	int len;
 
 	ret=E_BUG;
 	if (exp==0){
@@ -525,8 +527,17 @@ int fix_expr(struct expr* exp)
 								exp->op);
 		}
 	}else if (exp->type==ELEM_T){
-			/* first fix & optimize rve/rvals (they might be optimized
-			   to non-rvals, e.g. string, avp a.s.o) */
+			/* first calculate lengths of strings  (only right side, since 
+			  left side can never be a string) */
+			if (exp->r_type==STRING_ST) {
+				if (exp->r.string) len = strlen(exp->r.string);
+				else len = 0;
+				exp->r.str.s = exp->r.string;
+				exp->r.str.len = len;
+			}
+			/* then fix & optimize rve/rvals (they might be optimized
+			   to non-rvals, e.g. string, avp a.s.o and needs to be done
+			   before MATCH_OP and other fixups) */
 			if (exp->l_type==RVEXP_O){
 				if ((ret=fix_rval_expr(&exp->l.param))<0){
 					ERR("Unable to fix left rval expression\n");
@@ -544,21 +555,6 @@ int fix_expr(struct expr* exp)
 					exp_optimize_right(exp);
 			}
 			
-			/* Calculate lengths of strings */
-			if (exp->l_type==STRING_ST) {
-				int len;
-				if (exp->l.string) len = strlen(exp->l.string);
-				else len = 0;
-				exp->l.str.s = exp->l.string;
-				exp->l.str.len = len;
-			}
-			if (exp->r_type==STRING_ST) {
-				int len;
-				if (exp->r.string) len = strlen(exp->r.string);
-				else len = 0;
-				exp->r.str.s = exp->r.string;
-				exp->r.str.len = len;
-			}
 			
 			if (exp->op==MATCH_OP){
 				     /* right side either has to be string, in which case
