@@ -803,8 +803,8 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 
 		# TLS configuration
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
-		$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
-		modules/tls/$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
+		#$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
+		#modules/tls/$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
