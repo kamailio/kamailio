@@ -1202,9 +1202,10 @@ match_cleanup:
 			else
 				ret=v;
 			break;
-
+/*
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
+*/
 	}
 skip:
 	return ret;

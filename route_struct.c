@@ -113,7 +113,8 @@ error:
 	return 0;
 }
 
-struct expr* mk_elem(int op, int ltype, void* lparam, int rtype, void* rparam)
+struct expr* mk_elem(int op, expr_l_type ltype, void* lparam,
+							 expr_r_type rtype, void* rparam)
 {
 	struct expr * e;
 	e=(struct expr*)pkg_malloc(sizeof (struct expr));
@@ -131,7 +132,15 @@ error:
 }
 
 
-struct action* mk_action(int type, int count/* of couples {type,val} */, .../* int type1, void *val1 [, int type2, void *val2, ...] */) {
+/** create an action structure (parser use).
+ * @param type - type of the action
+ * @param count - count of couples {param_type,val}
+ * @param ... -   count {param_type, val} pairs, where param_type is
+ *                action_param_type.
+ * @return  new action structure on success (pkg_malloc'ed) or 0 on error.
+ */
+struct action* mk_action(enum action_type type, int count, ...)
+{
 	va_list args;
 	int i;
 	struct action* a;

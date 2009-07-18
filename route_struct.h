@@ -60,15 +60,26 @@
  */
 
 
-enum { EXP_T=1, ELEM_T };
-enum { LOGAND_OP=1, LOGOR_OP, NOT_OP, BINAND_OP, BINOR_OP };
-enum { EQUAL_OP=10, MATCH_OP, GT_OP, LT_OP, GTE_OP, LTE_OP, DIFF_OP, NO_OP };
-enum { METHOD_O=1, URI_O, FROM_URI_O, TO_URI_O, SRCIP_O, SRCPORT_O,
-	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, MSGLEN_O, DEFAULT_O, ACTION_O,
+/* expression type */
+enum expr_type { EXP_T=1, ELEM_T };
+enum expr_op {
+	/* expression operator if type==EXP_T */
+	LOGAND_OP=1, LOGOR_OP, NOT_OP, BINAND_OP, BINOR_OP,
+	/* expression operator if type==ELEM_T */
+	EQUAL_OP=10, MATCH_OP, GT_OP, LT_OP, GTE_OP, LTE_OP, DIFF_OP, NO_OP
+};
+/* expression left member "special" type (if type==ELEM_T)
+  (start at 51 for debugging purposes: it's better to not overlap with 
+   expr_r_type)
+*/
+enum _expr_l_type{
+	   METHOD_O=51, URI_O, FROM_URI_O, TO_URI_O, SRCIP_O, SRCPORT_O,
+	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, MSGLEN_O, ACTION_O,
 	   NUMBER_O, AVP_O, SNDIP_O, SNDPORT_O, TOIP_O, TOPORT_O, SNDPROTO_O,
 	   SNDAF_O, RETCODE_O, SELECT_O, PVAR_O, RVEXP_O};
-
-enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
+/* action types */
+enum action_type{
+		FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T,
 		SET_PORT_T, SET_URI_T, SET_HOSTPORTTRANS_T, SET_HOSTALL_T,
 		SET_USERPHONE_T,
@@ -96,7 +107,10 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		ADD_T,
 		UDP_MTU_TRY_PROTO_T
 };
-enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
+/* parameter types for actions or types for expression right operands
+   (WARNING right operands only, not working for left operands) */
+enum _operand_subtype{
+		NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		EXPR_ST, ACTIONS_ST, MODEXP_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,
 		MYSELF_ST, STR_ST, SOCKID_ST, SOCKETINFO_ST, ACTION_ST, AVP_ST,
 		SELECT_ST, PVAR_ST,
@@ -104,6 +118,10 @@ enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		RETCODE_ST, CASE_ST,
 		BLOCK_ST, JUMPTABLE_ST, CONDTABLE_ST, MATCH_CONDTABLE_ST
 };
+
+typedef enum _expr_l_type expr_l_type;
+typedef enum _operand_subtype expr_r_type;
+typedef enum _operand_subtype action_param_type;
 
 /* run flags */
 #define EXIT_R_F   1
@@ -134,15 +152,16 @@ union exp_op {
 };
 
 struct expr{
-	int type; /* exp, exp_elem */
-	int op; /* and, or, not | ==,  =~ */
-	int l_type, r_type;
+	enum expr_type type; /* exp, exp_elem */
+	enum expr_op op; /* and, or, not | ==,  =~ */
+	expr_l_type l_type;
+	expr_r_type r_type;
 	union exp_op l;
 	union exp_op r;
 };
 
 typedef struct {
-	int type;
+	action_param_type type;
 	union {
 		long number;
 		char* string;
@@ -160,16 +179,20 @@ typedef struct {
 #define MAX_ACTIONS (2+6)
 
 struct action{
-	int type;  /* forward, drop, log, send ...*/
+	enum action_type type;  /* forward, drop, log, send ...*/
 	int count;
 	struct action* next;
 	action_u_t val[MAX_ACTIONS];
 };
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);
-struct expr* mk_elem(int op, int ltype, void* lparam, int rtype, void* rparam);
+struct expr* mk_elem(int op, expr_l_type ltype, void* lparam,
+							 expr_r_type rtype, void* rparam);
 
-struct action* mk_action(int type, int count/* of couples {type,val} */, .../* int type1, void *val1 [, int type2, void *val2, ...] */);
+/* @param type - type of the action
+   @param count - count of couples {type,val} (variable number of parameters)*/
+struct action* mk_action(enum action_type type, int count, ...);
+
 struct action* append_action(struct action* a, struct action* b);
 
 void print_action(struct action* a);

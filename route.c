@@ -623,6 +623,7 @@ int fix_actions(struct action* a)
 	struct proxy_l* p;
 	char *tmp;
 	int ret;
+	int i;
 	union cmd_export_u* cmd;
 	str s;
 	struct hostent* he;
@@ -886,7 +887,6 @@ int fix_actions(struct action* a)
 			case MODULEX_T:
 				cmd = t->val[0].u.data;
 				if (cmd && cmd->c.fixup) {
-					int i;
 					DBG("fixing %s()\n", cmd->c.name);
 					if (t->val[1].u.number==0) {
 						ret = cmd->c.fixup(0, 0);
@@ -975,6 +975,9 @@ int fix_actions(struct action* a)
 									" udp_mtu_try_proto (%d)\n", 
 									(unsigned int)t->val[0].u.number);
 				}
+				break;
+			default:
+				/* no fixup required for the rest */
 				break;
 		}
 	}
@@ -1699,10 +1702,11 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 	case PVAR_O:
 		ret=comp_pvar(e->op, e->l.param, e->r_type, &e->r, msg, h);
 		break;
-
+/*
 	default:
 		LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",
 		    e->l_type);
+*/
 	}
 	return ret;
 error:
