@@ -62,9 +62,26 @@
 #include "compiler_opt.h"
 
 
+enum ss_mismatch {
+	SS_MISMATCH_OK=0,
+	SS_MISMATCH_PROTO, /* proto mismatch, but found same addr:port */
+	SS_MISMATCH_ADDR,  /* proto and addr:port mismatch */
+	SS_MISMATCH_AF,    /* af mismatch */
+	SS_MISMATCH_MCAST  /* mcast forced send socket */
+};
 
-struct socket_info* get_send_socket(struct sip_msg* msg,
-									union sockaddr_union* su, int proto);
+struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
+									union sockaddr_union* su, int proto,
+									enum ss_mismatch* mismatch);
+
+
+inline static struct socket_info* get_send_socket(struct sip_msg* msg,
+									union sockaddr_union* su, int proto)
+{
+	return get_send_socket2(msg?msg->force_send_socket:0, su, proto, 0);
+}
+
+
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto);
 int check_self(str* host, unsigned short port, unsigned short proto);
 int check_self_port(unsigned short port, unsigned short proto);

@@ -151,43 +151,58 @@ error:
 
 
 
-/* returns a socket_info pointer to the sending socket or 0 on error
- * params: sip msg (can be null), destination socket_union pointer, protocol
- * if msg!=null and msg->force_send_socket, the force_send_socket will be
- * used
+/** get the sending socket for a corresponding destination.
+ * @param force_send_socket - if !=0 and the protocol and af correspond
+ *                            with the destination, it will be returned.
+ *                            If the protocol or af check fail, a look-alike
+ *                            socket will be searched for and mismatch will be
+ *                            set. If no look-alike socket is found it will
+ *                            fallback to normal resolution.
+ * @param to - destination
+ * @param proto - protocol
+ * @param mismatch - result parameter, set if a force_send_socket was used, but
+ *                   there was an error matching it exactly to the destination.
+ *                   Possible values: 0 ok, SS_MISMATCH_PROTO,
+ *                   SS_MISMATCH_ADDR, SS_MISMATCH_AF, SS_MISMATCH_MCAST.
+ * @return a socket_info pointer to the sending socket on success (and possibly
+ *         sets mismatch) or 0 on error.
  */
-struct socket_info* get_send_socket(struct sip_msg *msg, 
-										union sockaddr_union* to, int proto)
+struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
+										union sockaddr_union* to, int proto,
+										enum ss_mismatch* mismatch)
 {
 	struct socket_info* send_sock;
 	
+	if (likely(mismatch)) *mismatch=0;
 	/* check if send interface is not forced */
-	if (unlikely(msg && msg->force_send_socket)){
-		if (unlikely(msg->force_send_socket->proto!=proto)){
-			DBG("get_send_socket: force_send_socket of different proto"
-					" (%d)!\n", proto);
-			msg->force_send_socket=find_si(&(msg->force_send_socket->address),
-											msg->force_send_socket->port_no,
+	if (unlikely(force_send_socket)){
+		if (unlikely(force_send_socket->proto!=proto)){
+			force_send_socket=find_si(&(force_send_socket->address),
+											force_send_socket->port_no,
 											proto);
-			if (unlikely(msg->force_send_socket == 0)){
+			if (unlikely(force_send_socket == 0)){
+				if (likely(mismatch)) *mismatch=SS_MISMATCH_ADDR;
 				LOG(L_WARN, "WARNING: get_send_socket: "
 						"protocol/port mismatch\n");
 				goto not_forced;
 			}
+			if (likely(mismatch)) *mismatch=SS_MISMATCH_PROTO;
 		}
-		if (unlikely(msg->force_send_socket->address.af!=to->s.sa_family)){
+		if (unlikely(force_send_socket->address.af!=to->s.sa_family)){
 			DBG("get_send_socket: force_send_socket of different af (dst %d,"
 					" forced %d)\n",
-					to->s.sa_family, msg->force_send_socket->address.af);
+					to->s.sa_family, force_send_socket->address.af);
+			if (likely(mismatch)) *mismatch=SS_MISMATCH_AF;
 			goto not_forced;
 		}
-		if (likely((msg->force_send_socket->socket!=-1) &&
-					!(msg->force_send_socket->flags & SI_IS_MCAST)))
-				return msg->force_send_socket;
+		if (likely((force_send_socket->socket!=-1) &&
+					!(force_send_socket->flags & SI_IS_MCAST)))
+				return force_send_socket;
 		else{
-			if (!(msg->force_send_socket->flags & SI_IS_MCAST))
+			if (!(force_send_socket->flags & SI_IS_MCAST))
 				LOG(L_WARN, "WARNING: get_send_socket: not listening"
 							 " on the requested socket, no fork mode?\n");
+			else if (likely(mismatch)) *mismatch=SS_MISMATCH_MCAST;
 		}
 	};
 not_forced:
