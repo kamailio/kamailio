@@ -233,11 +233,13 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",uac_r->dialog->hooks.next_hop->len,
 			uac_r->dialog->hooks.next_hop->s);
-	/* it's a new message, so we will take the default socket */
+	/* new message => take the dialog send_socket if set, or the default
+	  send_socket if not*/
 #ifdef USE_DNS_FAILOVER
 	if (cfg_get(core, core_cfg, use_dns_failover)){
 		dns_srv_handle_init(&dns_h);
-		if ((uri2dst(&dns_h, &dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0)
+		if ((uri2dst2(&dns_h, &dst, uac_r->dialog->send_sock,
+							uac_r->dialog->hooks.next_hop, PROTO_NONE)==0)
 				|| (dst.send_sock==0)){
 			dns_srv_handle_put(&dns_h);
 			ser_error = E_NO_SOCKET;
@@ -247,7 +249,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		}
 		dns_srv_handle_put(&dns_h); /* not needed anymore */
 	}else{
-		if ((uri2dst(0, &dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
+		if ((uri2dst2(0, &dst, uac_r->dialog->send_sock,
+						uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
 				(dst.send_sock==0)){
 			ser_error = E_NO_SOCKET;
 			ret=ser_error;
@@ -255,15 +258,16 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 			goto error2;
 		}
 	}
-#else
-	if ((uri2dst(&dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
+#else /* USE_DNS_FAILOVER */
+	if ((uri2dst2(&dst, uac_r->dialog->send_sock,
+					uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
 			(dst.send_sock==0)){
 		ser_error = E_NO_SOCKET;
 		ret=ser_error;
 		LOG(L_ERR, "t_uac: no socket found\n");
 		goto error2;
 	}
-#endif
+#endif /* USE_DNS_FAILOVER */
 
 	new_cell = build_cell(0); 
 	if (!new_cell) {
