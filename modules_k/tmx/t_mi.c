@@ -623,6 +623,7 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 	{
 		uac_r.cb = mi_uac_dlg_hdl;
 		uac_r.cbp = (void*)cmd_tree->async_hdl;
+		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 	}
 	n = _tmx_tmb.t_uac(&uac_r);
 
