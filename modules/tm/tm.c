@@ -133,6 +133,7 @@
 #include "t_msgbuilder.h"
 #include "select.h"
 #include "t_serial.h"
+#include "rpc_uac.h"
 
 MODULE_VERSION
 
@@ -1715,6 +1716,8 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.reply",  rpc_reply,    rpc_reply_doc,    0},
 	{"tm.stats",  tm_rpc_stats, tm_rpc_stats_doc, 0},
 	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
+	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
+	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
