@@ -209,7 +209,8 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 
 
 /*
- * Convert a URI into a dest_info structure
+ * Convert a URI into a dest_info structure.
+ * Same as uri2dst, but uses directly force_send_socket instead of msg.
  * If the uri host resolves to multiple ips and dns_h!=0 the first ip for 
  *  which a send socket is found will be used. If no send_socket are found,
  *  the first ip is selected.
@@ -218,9 +219,8 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  *                 null. If null or use_dns_failover==0 normal dns lookup will
  *                 be performed (no failover).
  *         dst   - will be filled
- *         msg   -  sip message used to set dst->send_sock, if 0 dst->send_sock
- *                 will be set to the default w/o using msg->force_send_socket 
- *                 (see get_send_socket()) 
+ *         force_send_sock - if 0 dst->send_sock will be set to the default 
+ *                 (see get_send_socket2()) 
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
  *                 uri_proto, otherwise the uri proto will be used if set or
@@ -228,14 +228,14 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  * returns 0 on error, dst on success
  */
 #ifdef USE_DNS_FAILOVER
-inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
+inline static struct dest_info *uri2dst2(struct dns_srv_handle* dns_h,
 										struct dest_info* dst,
-										struct sip_msg *msg, str *uri, 
-											int proto )
+										struct socket_info *force_send_socket,
+										str *uri, int proto )
 #else
-inline static struct dest_info *uri2dst(struct dest_info* dst,
-										struct sip_msg *msg, str *uri, 
-											int proto )
+inline static struct dest_info *uri2dst2(struct dest_info* dst,
+										struct socket_info *force_send_socket,
+										str *uri, int proto )
 #endif
 {
 	struct sip_uri parsed_uri;
@@ -297,7 +297,8 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 				dst->to=to;
 				ip_found=1;
 			}
-			dst->send_sock = get_send_socket(msg, &to, dst->proto);
+			dst->send_sock = get_send_socket2(force_send_socket, &to,
+												dst->proto, 0);
 			if (dst->send_sock){
 				dst->to=to;
 				return dst; /* found a good one */
@@ -313,7 +314,8 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 		ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
 		return 0;
 	}
-	dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
+	dst->send_sock = get_send_socket2(force_send_socket, &dst->to,
+										dst->proto, 0);
 	if (dst->send_sock==0) {
 		ERR("no corresponding socket for af %d\n", dst->to.s.sa_family);
 		/* ser_error = E_NO_SOCKET;*/
@@ -321,6 +323,45 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 	}
 	return dst;
 }
+
+
+
+/*
+ * Convert a URI into a dest_info structure
+ * If the uri host resolves to multiple ips and dns_h!=0 the first ip for 
+ *  which a send socket is found will be used. If no send_socket are found,
+ *  the first ip is selected.
+ *
+ * params: dns_h - pointer to a valid dns_srv_handle structure (intialized!) or
+ *                 null. If null or use_dns_failover==0 normal dns lookup will
+ *                 be performed (no failover).
+ *         dst   - will be filled
+ *         msg   -  sip message used to set dst->send_sock, if 0 dst->send_sock
+ *                 will be set to the default w/o using msg->force_send_socket 
+ *                 (see get_send_socket()) 
+ *         uri   - uri in str form
+ *         proto - if != PROTO_NONE, this protocol will be forced over the
+ *                 uri_proto, otherwise the uri proto will be used if set or
+ *                 the proto obtained from the dns lookup
+ * returns 0 on error, dst on success
+ */
+#ifdef USE_DNS_FAILOVER
+inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
+										struct dest_info* dst,
+										struct sip_msg *msg, str *uri, 
+											int proto )
+{
+	return uri2dst2(dns_h, dst, msg?msg->force_send_socket:0, uri, proto);
+}
+#else
+inline static struct dest_info *uri2dst(struct dest_info* dst,
+										struct sip_msg *msg, str *uri, 
+											int proto )
+{
+	return uri2dst2(dst, msg?msg->force_send_socket:0, uri, proto);
+}
+#endif /* USE_DNS_FAILOVER */
+
 
 
 #if 0
