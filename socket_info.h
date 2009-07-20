@@ -97,7 +97,7 @@ struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 
 struct socket_info** get_sock_info_list(unsigned short proto);
 
-struct name_lst* parse_phostport(char* s, char** host, int* hlen,
+int parse_phostport(char* s, char** host, int* hlen,
 								 int* port, int* proto);
 
 /* helper function:

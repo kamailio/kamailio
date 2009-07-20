@@ -963,7 +963,21 @@ error:
  * returns  fills proto, port, host and returns list of addresses on success
  * (pkg malloc'ed) and 0 on failure
  */
-struct name_lst* parse_phostport(char* s, char** host, int* hlen,
+/** get protocol host and port from a string representation.
+ * parses [proto:]host[:port]  or
+ *  [proto:](host_1, host_2, ... host_n)[:port]
+ * where proto= udp|tcp|tls|sctp
+ * @param s  - string (like above)
+ * @param host - will be filled with the host part
+ *               Note: for multi-homing it wil contain all the addresses
+ *               (e.g.: "sctp:(1.2.3.4, 5.6.7.8)" => host="(1.2.3.4, 5.6.7.8)")
+ * @param hlen - will be filled with the length of the host part.
+ * @param port - will be filled with the port if present or 0 if it's not.
+ * @param proto - will be filled with the protocol if present or PROTO_NONE
+ *                if it's not.
+ * @return  fills proto, port, host and returns 0 on success and -1 on failure.
+ */
+int parse_phostport(char* s, char** host, int* hlen,
 								 int* port, int* proto)
 {
 	char* first; /* first ':' occurrence */
@@ -997,7 +1011,7 @@ struct name_lst* parse_phostport(char* s, char** host, int* hlen,
 				break;
 		}
 	}
-	if (p==s) return 0;
+	if (p==s) return -1;
 	if (*(p-1)==':') goto error_colons;
 
 	if (first==0){ /* no ':' => only host */
@@ -1030,20 +1044,46 @@ struct name_lst* parse_phostport(char* s, char** host, int* hlen,
 		*hlen=(int)(first-*host);
 	}
 end:
-	return parse_name_lst(*host, *hlen);
+	return 0;
 error_brackets:
 	LOG(L_ERR, "ERROR: parse_phostport: too many brackets in %s\n", s);
-	return 0;
+	return -1;
 error_colons:
 	LOG(L_ERR, "ERROR: parse_phostport: too many colons in %s\n", s);
-	return 0;
+	return -1;
 error_proto:
 	LOG(L_ERR, "ERROR: parse_phostport: bad protocol in %s\n", s);
-	return 0;
+	return -1;
 error_port:
 	LOG(L_ERR, "ERROR: parse_phostport: bad port number in %s\n", s);
+	return -1;
+}
+
+
+
+/** get protocol host, port and MH addresses list from a string representation.
+ * parses [proto:]host[:port]  or
+ *  [proto:](host_1, host_2, ... host_n)[:port]
+ * where proto= udp|tcp|tls|sctp
+ * @param s  - string (like above)
+ * @param host - will be filled with the host part
+ *               Note: for multi-homing it wil contain all the addresses
+ *               (e.g.: "sctp:(1.2.3.4, 5.6.7.8)" => host="(1.2.3.4, 5.6.7.8)")
+ * @param hlen - will be filled with the length of the host part.
+ * @param port - will be filled with the port if present or 0 if it's not.
+ * @param proto - will be filled with the protocol if present or PROTO_NONE
+ *                if it's not.
+ * @return  fills proto, port, host and returns list of addresses on success
+ * (pkg malloc'ed) and 0 on failure
+ */
+static struct name_lst* parse_phostport_mh(char* s, char** host, int* hlen,
+								 int* port, int* proto)
+{
+	if (parse_phostport(s, host, hlen, port, proto)==0)
+		return parse_name_lst(*host, *hlen);
 	return 0;
 }
+
 
 
 /** Update \c cfg_file variable to contain full pathname. The function updates
@@ -1712,7 +1752,7 @@ try_again:
 					}
 					break;
 			case 'l':
-					if ((n_lst=parse_phostport(optarg, &tmp, &tmp_len,
+					if ((n_lst=parse_phostport_mh(optarg, &tmp, &tmp_len,
 											&port, &proto))==0){
 						fprintf(stderr, "bad -l address specifier: %s\n",
 										optarg);
