@@ -610,8 +610,9 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 
 	dlg.loc_uri = tmp_msg.from->body;
 	dlg.rem_uri = tmp_msg.to->body;
-	dlg.hooks.request_uri = ruri;
-	dlg.hooks.next_hop = (nexthop ? nexthop : ruri);
+	dlg.rem_target = *ruri;
+	if (nexthop)
+		dlg.dst_uri = *nexthop;
 	dlg.send_sock = sock;
 
 	memset(&uac_r, 0, sizeof(uac_req_t));
