@@ -414,6 +414,10 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
 	}
 
 	/* set the new buffer, but only if not already set (concurrent 2xx) */
+	/* a memory write barrier is needed to make sure the local_ack
+	   content is fully written, before we try to add it to the transaction
+	   -- andrei */
+	membar_write_atomic_op();
 	if ((old_lack = (struct retr_buf *)atomic_cmpxchg_long(
 			(void *)&trans->uac[0].local_ack, 0, (long)local_ack))) {
 		/* buffer already set: trash current and use the winning one */
