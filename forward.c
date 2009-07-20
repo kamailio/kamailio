@@ -195,7 +195,12 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 			if (likely(mismatch)) *mismatch=SS_MISMATCH_AF;
 			goto not_forced;
 		}
-		if (likely((force_send_socket->socket!=-1) &&
+		/* check if listening on the socket (the check does not work
+		   for TCP and TLS, for them socket==-1 on all the processes
+		   except tcp_main(), see close_extra_socks() */
+		if (likely((force_send_socket->socket!=-1 ||
+						force_send_socket->proto==PROTO_TCP ||
+						force_send_socket->proto==PROTO_TLS) &&
 					!(force_send_socket->flags & SI_IS_MCAST)))
 				return force_send_socket;
 		else{
