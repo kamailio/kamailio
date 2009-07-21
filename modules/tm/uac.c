@@ -90,6 +90,11 @@
 
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
 
+#ifdef WITH_EVENT_LOCAL_REQUEST
+/* where to go for the local request route ("tm:local-request") */
+int goto_on_local_req=-1; /* default disabled */
+#endif /* WITH_EVEN_LOCAL_REQuEST */
+
 static char from_tag[FROM_TAG_LEN + 1];
 
 /*
@@ -200,7 +205,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #endif
 	long nhtype;
 #ifdef WITH_EVENT_LOCAL_REQUEST
-	int rt;
 	static struct sip_msg lreq;
 	char *buf1;
 	int buf_len1;
@@ -325,13 +329,12 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	}
 
 #ifdef WITH_EVENT_LOCAL_REQUEST
-	/* todo: cache this at startup */
-	rt = route_lookup(&event_rt, "tm:local-request");
-	if (rt>=0 && event_rt.rlist[rt]!=NULL) {
-		LM_DBG("executing event_route[tm:local-request]\n");
-		if(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())==0) {
+	if (unlikely(goto_on_local_req>=0)) {
+		DBG("executing event_route[tm:local-request]\n");
+		if(likely(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())
+					== 0)) {
 			/* fill some field in sip_msg */
-			if (set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop)) {
+			if (unlikely(set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop))) {
 				LM_ERR("failed to set dst_uri");
 				free_sip_msg(&lreq);
 			} else {
@@ -365,7 +368,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				/* run the route */
 				backup_route_type = get_route_type();
 				set_route_type(LOCAL_ROUTE);
-				run_top_route(event_rt.rlist[rt], &lreq, 0);
+				run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
@@ -378,20 +381,20 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to);
 				setsflagsval(sflag_bk);
 
-				if (lreq.new_uri.s)
+				if (unlikely(lreq.new_uri.s))
 				{
 					pkg_free(lreq.new_uri.s);
 					lreq.new_uri.s=0;
 					lreq.new_uri.len=0;
 				}
-				if (lreq.dst_uri.s)
+				if (unlikely(lreq.dst_uri.s))
 				{
 					pkg_free(lreq.dst_uri.s);
 					lreq.dst_uri.s=0;
 					lreq.dst_uri.len=0;
 				}
 
-				if (lreq.add_rm || lreq.body_lumps) {
+				if (unlikely(lreq.add_rm || lreq.body_lumps)) {
 					LM_DBG("apply new updates to sip msg\n");
 					buf1 = build_req_buf_from_sip_req(&lreq,
 							(unsigned int*)&buf_len1,

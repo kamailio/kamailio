@@ -73,6 +73,12 @@ typedef struct uac_req {
 		(_req)->cbp = (_cbp); \
 	} while (0)
 
+
+#ifdef WITH_EVENT_LOCAL_REQUEST
+/* where to go for the local request route ("tm:local-request") */
+extern int goto_on_local_req;
+#endif /* WITH_EVEN_LOCAL_REQuEST */
+
 /*
  * Function prototypes
  */
