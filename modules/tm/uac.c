@@ -397,14 +397,15 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 							(unsigned int*)&buf_len1,
 							&dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE|
 							BUILD_IN_SHM);
-					if (!buf1) {
-						free_sip_msg(&lreq);
-					} else {
+					if (likely(buf1)){
 						shm_free(buf);
 						buf = buf1;
 						buf_len = buf_len1;
+						/* a possible change of the method is not handled! */
 					}
 				}
+				lreq.buf=0; /* covers the obsolete DYN_BUF */
+				free_sip_msg(&lreq);
 			}
 		}
 	}
