@@ -48,6 +48,10 @@
 
 /*#define MAX_CONTENT_LEN_BUF INT2STR_MAX_LEN *//* see ut.h/int2str() */
 
+#define BUILD_NO_LOCAL_VIA		(1<<0)
+#define BUILD_NO_VIA1_UPDATE	(1<<1)
+#define BUILD_IN_SHM			(1<<2)
+
 #include "parser/msg_parser.h"
 #include "ip_addr.h"
 
@@ -76,7 +80,8 @@ struct hostport {
 	}while(0)
 
 char * build_req_buf_from_sip_req (	struct sip_msg* msg, 
-				unsigned int *returned_len, struct dest_info* send_info);
+				unsigned int *returned_len, struct dest_info* send_info,
+				unsigned int mode);
 
 char * build_res_buf_from_sip_res(	struct sip_msg* msg,
 				unsigned int *returned_len);
@@ -152,4 +157,6 @@ char * build_all( struct sip_msg* msg, int adjust_clen,
 /** cfg framework fixup */
 void fix_global_req_flags(str* gname, str* name);
 
+int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
+		unsigned int id);
 #endif

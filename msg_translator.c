@@ -1522,8 +1522,8 @@ error:
   */
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
-								struct dest_info* send_info
-								)
+								struct dest_info* send_info,
+								unsigned int mode)
 {
 	unsigned int len, new_len, received_len, rport_len, uri_len, via_len,
 				 body_delta;
@@ -1551,6 +1551,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	received_buf=0;
 	rport_buf=0;
 	line_buf=0;
+	via_len=0;
 
 	flags=msg->msg_flags|global_req_flags;
 	/* Calculate message body difference and adjust Content-Length */
@@ -1560,6 +1561,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 				" Content-Length\n");
 		goto error00;
 	}
+
+	if(unlikely(mode&BUILD_NO_LOCAL_VIA))
+		goto after_local_via;
 
 	/* create the via header */
 	branch.s=msg->add_to_branch_s;
@@ -1571,6 +1575,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 					"memory allocation failure\n");
 		goto error00;
 	}
+after_local_via:
+	if(unlikely(mode&BUILD_NO_VIA1_UPDATE))
+		goto after_update_via1;
 	/* check if received needs to be added */
 	if ( received_test(msg) ) {
 		if ((received_buf=received_builder(msg,&received_len))==0){
@@ -1645,6 +1652,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 
 	}
 
+after_update_via1:
 	/* compute new msg len and fix overlapping zones*/
 	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_info)+via_len;
 #ifdef XL_DEBUG
@@ -1653,7 +1661,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	udp_mtu=cfg_get(core, core_cfg, udp_mtu);
 	di.proto=PROTO_NONE;
 	if (unlikely((send_info->proto==PROTO_UDP) && udp_mtu && 
-					(flags & FL_MTU_FB_MASK) && (new_len>udp_mtu))){
+					(flags & FL_MTU_FB_MASK) && (new_len>udp_mtu)
+					&& (!(mode&BUILD_NO_LOCAL_VIA)))){
 
 		di=*send_info; /* copy whole struct - will be used in the Via builder */
 		di.proto=PROTO_NONE; /* except the proto */
@@ -1681,7 +1690,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		
 		if (di.proto!=PROTO_NONE){
 			new_len-=via_len;
-			pkg_free(line_buf);
+			if(likely(line_buf)) pkg_free(line_buf);
 			line_buf = create_via_hf( &via_len, msg, &di, &branch);
 			if (!line_buf){
 				LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: "
@@ -1694,17 +1703,21 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
 	/* add first via, as an anchor for second via*/
-	via_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
-	if (via_anchor==0) goto error04;
-	if ((via_lump=insert_new_lump_before(via_anchor, line_buf, via_len,
+	if(likely(line_buf)) {
+		via_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
+		if (via_anchor==0) goto error04;
+		if ((via_lump=insert_new_lump_before(via_anchor, line_buf, via_len,
 											HDR_VIA_T))==0)
-		goto error04;
-
+			goto error04;
+	}
 	if (msg->new_uri.s){
 		uri_len=msg->new_uri.len;
 		new_len=new_len-msg->first_line.u.request.uri.len+uri_len;
 	}
-	new_buf=(char*)pkg_malloc(new_len+1);
+	if(unlikely(mode&BUILD_IN_SHM))
+		new_buf=(char*)shm_malloc(new_len+1);
+	else
+		new_buf=(char*)pkg_malloc(new_len+1);
 	if (new_buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
@@ -2543,3 +2556,28 @@ char * build_all( struct sip_msg* msg, int touch_clen,
 	*returned_len = offset;
 	return new_buf;	
 }
+
+
+
+/**
+ * parse buf in msg and fill several fields
+ */
+int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
+		unsigned int id)
+{
+	if(msg==0 || buf==0)
+		return -1;
+
+	memset(msg, 0, sizeof(sip_msg_t));
+	msg->id = id;
+	msg->buf = buf;
+	msg->len = len;
+	if (parse_msg(buf, len, msg)!=0) {
+		LM_ERR("parsing failed");
+		return -1;
+	}
+	msg->set_global_address=default_global_address;
+	msg->set_global_port=default_global_port;
+	return 0;
+}
+

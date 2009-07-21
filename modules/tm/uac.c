@@ -82,9 +82,18 @@
 #include "../../dns_cache.h"
 #include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
-
+#ifdef WITH_EVENT_LOCAL_REQUEST
+#include "../../receive.h"
+#include "../../route.h"
+#include "../../action.h"
+#endif
 
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
+
+#ifdef WITH_EVENT_LOCAL_REQUEST
+/* where to go for the local request route ("tm:local-request") */
+int goto_on_local_req=-1; /* default disabled */
+#endif /* WITH_EVEN_LOCAL_REQuEST */
 
 static char from_tag[FROM_TAG_LEN + 1];
 
@@ -187,7 +196,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	struct cell *new_cell;
 	struct retr_buf *request;
 	char* buf;
-        int buf_len, ret;
+	int buf_len, ret;
 	unsigned int hi;
 	int is_ack;
 	ticks_t lifetime;
@@ -195,6 +204,13 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	struct dns_srv_handle dns_h;
 #endif
 	long nhtype;
+#ifdef WITH_EVENT_LOCAL_REQUEST
+	static struct sip_msg lreq;
+	char *buf1;
+	int buf_len1;
+	int sflag_bk;
+	int backup_route_type;
+#endif
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -281,10 +297,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	new_cell->rt_t2_timeout=cfg_get(tm, tm_cfg, rt_t2_timeout);
 #endif
 
-	/* better reset avp list now - anyhow, it's useless from
-	 * this point (bogdan) */
-	reset_avps();
-
 	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;
@@ -308,6 +320,77 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		ret=E_OUT_OF_MEM;
 		goto error1;
 	}
+
+#ifdef WITH_EVENT_LOCAL_REQUEST
+	if (unlikely(goto_on_local_req>=0)) {
+		DBG("executing event_route[tm:local-request]\n");
+		if(likely(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())
+					== 0)) {
+			/* fill some field in sip_msg */
+			if (unlikely(set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop))) {
+				LM_ERR("failed to set dst_uri");
+				free_sip_msg(&lreq);
+			} else {
+				lreq.force_send_socket = uac_r->dialog->send_sock;
+				lreq.rcv.proto = dst.send_sock->proto;
+				lreq.rcv.src_ip = dst.send_sock->address;
+				lreq.rcv.src_port = dst.send_sock->port_no;
+				lreq.rcv.dst_port = su_getport(&dst.to);
+				su2ip_addr(&lreq.rcv.dst_ip, &dst.to);
+				lreq.rcv.src_su=dst.send_sock->su;
+				lreq.rcv.bind_address=dst.send_sock;
+			#ifdef USE_COMP
+				lreq.rcv.comp=dst.comp;
+			#endif /* USE_COMP */
+				/* AVPs are reset anyway afterwards, so no need to 
+				   backup/restore them*/
+				sflag_bk = getsflags();
+
+				/* run the route */
+				backup_route_type = get_route_type();
+				set_route_type(LOCAL_ROUTE);
+				run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
+				set_route_type( backup_route_type );
+
+				/* restore original environment */
+				setsflagsval(sflag_bk);
+
+				if (unlikely(lreq.new_uri.s))
+				{
+					pkg_free(lreq.new_uri.s);
+					lreq.new_uri.s=0;
+					lreq.new_uri.len=0;
+				}
+				if (unlikely(lreq.dst_uri.s))
+				{
+					pkg_free(lreq.dst_uri.s);
+					lreq.dst_uri.s=0;
+					lreq.dst_uri.len=0;
+				}
+
+				if (unlikely(lreq.add_rm || lreq.body_lumps)) {
+					LM_DBG("apply new updates to sip msg\n");
+					buf1 = build_req_buf_from_sip_req(&lreq,
+							(unsigned int*)&buf_len1,
+							&dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE|
+							BUILD_IN_SHM);
+					if (likely(buf1)){
+						shm_free(buf);
+						buf = buf1;
+						buf_len = buf_len1;
+						/* a possible change of the method is not handled! */
+					}
+				}
+				lreq.buf=0; /* covers the obsolete DYN_BUF */
+				free_sip_msg(&lreq);
+			}
+		}
+	}
+#endif
+
+	/* better reset avp list now - anyhow, it's useless from
+	 * this point (bogdan) */
+	reset_avps();
 
 	new_cell->method.s = buf;
 	new_cell->method.len = uac_r->method->len;

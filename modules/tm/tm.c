@@ -436,7 +436,7 @@ static param_export_t params[]={
 	{"max_noninv_lifetime", PARAM_INT, &default_tm_cfg.tm_max_noninv_lifetime},
 	{"noisy_ctimer",        PARAM_INT, &default_tm_cfg.noisy_ctimer          },
 	{"auto_inv_100",        PARAM_INT, &default_tm_cfg.tm_auto_inv_100       },
-	{"auto_inv_100_reason", PARAM_STRING, &default_tm_cfg.tm_auto_inv_100_r  },    
+	{"auto_inv_100_reason", PARAM_STRING, &default_tm_cfg.tm_auto_inv_100_r  },
 	{"unix_tx_timeout",     PARAM_INT, &default_tm_cfg.tm_unix_tx_timeout    },
 	{"restart_fr_on_each_reply", PARAM_INT,
 									&default_tm_cfg.restart_fr_on_each_reply},
@@ -461,10 +461,8 @@ static param_export_t params[]={
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
 	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
-
 	{"fr_inv_timer_next",   PARAM_INT, &default_tm_cfg.fr_inv_timeout_next   },
 	{"contacts_avp",        PARAM_STRING, &contacts_avp_param                },
-
 	{0,0,0}
 };
 
@@ -769,6 +767,11 @@ static int mod_init(void)
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process AVP params\n");
 		return -1;
 	}
+#ifdef WITH_EVENT_LOCAL_REQUEST
+	goto_on_local_req=route_lookup(&event_rt, "tm:local-request");
+	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
+		goto_on_local_req=-1; /* disable */
+#endif /* WITH_EVENT_LOCAL_REQUEST */
 	tm_init = 1;
 	return 0;
 }

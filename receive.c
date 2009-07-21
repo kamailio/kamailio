@@ -76,6 +76,13 @@ str default_global_port={0,0};
 str default_via_address={0,0};
 str default_via_port={0,0};
 
+/**
+ * increment msg_no and return the new value
+ */
+unsigned int inc_msg_no(void)
+{
+	return ++msg_no;
+}
 
 
 /* WARNING: buf must be 0 terminated (buf[len]=0) or some things might 
