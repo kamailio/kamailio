@@ -336,9 +336,16 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				free_sip_msg(&lreq);
 			} else {
 				lreq.force_send_socket = uac_r->dialog->send_sock;
-				lreq.rcv.proto = uac_r->dialog->send_sock->proto;
-				lreq.rcv.src_ip = uac_r->dialog->send_sock->address;
-				lreq.rcv.src_port = uac_r->dialog->send_sock->port_no;
+				lreq.rcv.proto = dst.send_sock->proto;
+				lreq.rcv.src_ip = dst.send_sock->address;
+				lreq.rcv.src_port = dst.send_sock->port_no;
+				lreq.rcv.dst_port = su_getport(&dst.to);
+				su2ip_addr(&lreq.rcv.dst_ip, &dst.to);
+				lreq.rcv.src_su=dst.send_sock->su;
+				lreq.rcv.bind_address=dst.send_sock;
+			#ifdef USE_COMP
+				lreq.rcv.comp=dst.comp;
+			#endif /* USE_COMP */
 				/* backup environment (e.g., AVP lists, ...) */
 				backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,
 					&new_cell->uri_avps_from);
