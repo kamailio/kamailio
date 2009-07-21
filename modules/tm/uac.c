@@ -210,9 +210,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	int buf_len1;
 	int sflag_bk;
 	int backup_route_type;
-	avp_list_t* backup_user_from, *backup_user_to;
-	avp_list_t* backup_domain_from, *backup_domain_to;
-	avp_list_t* backup_uri_from, *backup_uri_to;
 #endif
 
 	ret=-1;
@@ -300,10 +297,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	new_cell->rt_t2_timeout=cfg_get(tm, tm_cfg, rt_t2_timeout);
 #endif
 
-	/* better reset avp list now - anyhow, it's useless from
-	 * this point (bogdan) */
-	reset_avps();
-
 	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[0].request;
@@ -349,20 +342,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 			#ifdef USE_COMP
 				lreq.rcv.comp=dst.comp;
 			#endif /* USE_COMP */
-				/* backup environment (e.g., AVP lists, ...) */
-				backup_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,
-					&new_cell->uri_avps_from);
-				backup_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI,
-					&new_cell->uri_avps_to);
-				backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,
-					&new_cell->user_avps_from);
-				backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER,
-					&new_cell->user_avps_to);
-				backup_domain_from = set_avp_list(
-					AVP_TRACK_FROM | AVP_CLASS_DOMAIN,
-					&new_cell->domain_avps_from);
-				backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN,
-					&new_cell->domain_avps_to);
+				/* AVPs are reset anyway afterwards, so no need to 
+				   backup/restore them*/
 				sflag_bk = getsflags();
 
 				/* run the route */
@@ -372,13 +353,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
-				set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from);
-				set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to);
-				set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from);
-				set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to);
-				set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN,
-						backup_domain_from);
-				set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to);
 				setsflagsval(sflag_bk);
 
 				if (unlikely(lreq.new_uri.s))
@@ -413,6 +387,10 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		}
 	}
 #endif
+
+	/* better reset avp list now - anyhow, it's useless from
+	 * this point (bogdan) */
+	reset_avps();
 
 	new_cell->method.s = buf;
 	new_cell->method.len = uac_r->method->len;
