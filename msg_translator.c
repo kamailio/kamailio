@@ -1551,6 +1551,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	received_buf=0;
 	rport_buf=0;
 	line_buf=0;
+	via_len=0;
 
 	flags=msg->msg_flags|global_req_flags;
 	/* Calculate message body difference and adjust Content-Length */
