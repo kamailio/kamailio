@@ -73,6 +73,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
     long stat;
     pv_spec_t *dst;
     pv_value_t val;
+    double download_size;
 
     if (fixup_get_svalue(_m, (gparam_p)_url, &value) != 0) {
 	LM_ERR("cannot get page value\n");
@@ -113,12 +114,17 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
 
     curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
     if ((stat >= 200) && (stat < 400)) {
-	at = index(stream, (char)10);  /* search for line feed */
+	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
+	LM_DBG("http_query download size: %u\n", (unsigned int)download_size);
+	/* search for line feed */
+	at = memchr(stream, (char)10, download_size);
 	if (at == NULL) {
-	    at = stream;  /* set empty string */
+	    /* not found: use whole stream */
+	    at = stream + (unsigned int)download_size;
 	}
 	val.rs.s = stream;
 	val.rs.len = at - stream;
+	LM_DBG("http)query result: %.*s\n", val.rs.len, val.rs.s);
 	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_dst;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
