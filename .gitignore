@@ -31,3 +31,6 @@ utils/sercmd/sercmd
 *~
 # Emacs file locks
 .#*
+# MacOSX auto-generated files
+libiname.lst
+*.dylib
