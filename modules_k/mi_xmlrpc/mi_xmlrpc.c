@@ -263,7 +263,7 @@ error:
 }
 
 
-void destroy(void)
+static void destroy(void)
 {
 	destroy_async_lock();
 }

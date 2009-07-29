@@ -153,7 +153,7 @@ str str_doc_col = str_init("doc");
 static int mod_init(void);
 static int child_init(int);
 int rls_handle_subscribe(struct sip_msg*, char*, char*);
-void destroy(void);
+static void destroy(void);
 int rlsubs_table_restore();
 void rlsubs_table_update(unsigned int ticks,void *param);
 int add_rls_event(modparam_t type, void* val);
@@ -492,7 +492,7 @@ static int child_init(int rank)
 /*
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	LM_DBG("start\n");
 	

@@ -50,7 +50,7 @@ int  ht_timer_interval = 20;
 static int ht_print(struct sip_msg*, char*, char*);
 static int mod_init(void);
 static int child_init(int rank);
-void destroy(void);
+static void destroy(void);
 
 static int fixup_ht_rm(void** param, int param_no);
 static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo);
@@ -200,7 +200,7 @@ static int child_init(int rank)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	ht_destroy();
 }

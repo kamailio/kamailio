@@ -215,7 +215,7 @@ static int add_pipe_params(modparam_t, void *);
 /* RESERVED for future use
 static int set_load_source(modparam_t, void *);
 */
-void destroy(void);
+static void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,               0,               REQUEST_ROUTE|LOCAL_ROUTE},
@@ -593,7 +593,7 @@ static int mod_init(void)
 }
 
 
-void destroy(void)
+static void destroy(void)
 {
 	int i;
 

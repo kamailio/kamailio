@@ -42,7 +42,7 @@ MODULE_VERSION
 static int sql_query(struct sip_msg*, char*, char*, char*);
 static int sql_rfree(struct sip_msg*, char*, char*);
 static int child_init(int rank);
-void destroy(void);
+static void destroy(void);
 
 static int fixup_sql_query(void** param, int param_no);
 static int fixup_sql_rfree(void** param, int param_no);
@@ -97,7 +97,7 @@ static int child_init(int rank)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	sql_destroy();
 }

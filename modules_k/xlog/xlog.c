@@ -59,7 +59,7 @@ static int xdbg(struct sip_msg*, char*, char*);
 static int xlog_fixup(void** param, int param_no); 
 static int xdbg_fixup(void** param, int param_no); 
 
-void destroy(void);
+static void destroy(void);
 
 int pv_parse_color_name(pv_spec_p sp, str *in);
 static int pv_get_color(struct sip_msg *msg, pv_param_t *param, 
@@ -216,7 +216,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	if(_xlog_buf)
 		pkg_free(_xlog_buf);

@@ -88,7 +88,7 @@ static int imc_manager(struct sip_msg*, char *, char *);
 static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd, void* param);
 static struct mi_root* imc_mi_list_members(struct mi_root* cmd, void* param);
 
-void destroy(void);
+static void destroy(void);
 
 /** TM bind */
 struct tm_binds tmb;
@@ -608,7 +608,7 @@ error:
 /**
  * destroy module
  */
-void destroy(void)
+static void destroy(void)
 {
 	imc_room_p irp = NULL;
 	imc_member_p member = NULL;

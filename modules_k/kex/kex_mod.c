@@ -43,7 +43,7 @@ MODULE_VERSION
 
 /** module functions */
 static int mod_init(void);
-void destroy(void);
+static void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"setsflag", (cmd_function)w_setsflag,          1,fixup_igp_null,
@@ -120,7 +120,7 @@ static int mod_init(void)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 #ifdef STATISTICS
 	destroy_stats_collector();

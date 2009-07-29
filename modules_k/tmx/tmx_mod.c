@@ -42,7 +42,7 @@ struct tm_binds _tmx_tmb;
 
 /** module functions */
 static int mod_init(void);
-void destroy(void);
+static void destroy(void);
 
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
 static int fixup_cancel_branches(void** param, int param_no);
@@ -184,7 +184,7 @@ static int mod_init(void)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	return;
 }

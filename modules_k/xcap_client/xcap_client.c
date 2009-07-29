@@ -54,7 +54,7 @@ MODULE_VERSION
 
 static int mod_init(void);
 static int child_init(int rank);
-void destroy(void);
+static void destroy(void);
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
 str xcap_db_table = str_init("xcap");
@@ -180,7 +180,7 @@ static int child_init(int rank)
 	return 0;
 }
 
-void destroy(void)
+static void destroy(void)
 {
 	curl_global_cleanup();
 	if(xcap_db != NULL)
