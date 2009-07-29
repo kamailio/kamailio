@@ -41,6 +41,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../modules/tm/tm_load.h"
