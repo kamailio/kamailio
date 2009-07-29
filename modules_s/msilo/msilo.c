@@ -125,7 +125,7 @@ static int child_init(int);
 static int m_store(struct sip_msg*, char*, char*);
 static int m_dump(struct sip_msg*, char*, char*);
 
-void destroy(void);
+static void destroy(void);
 
 void m_clean_silo(unsigned int ticks, void *);
 
@@ -319,7 +319,7 @@ static int child_init(int rank)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	DBG("MSILO: destroy module ...\n");
 	msg_list_free(ml);

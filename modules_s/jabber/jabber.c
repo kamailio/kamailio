@@ -148,7 +148,7 @@ static int xj_exit_jconf(struct sip_msg*, char*, char*);
 static int xj_go_online(struct sip_msg*, char*, char*);
 static int xj_go_offline(struct sip_msg*, char*, char*);
 
-void destroy(void);
+static void destroy(void);
 
 /*
  * Exported functions
@@ -671,7 +671,7 @@ error:
 /**
  * destroy function of module
  */
-void destroy(void)
+static void destroy(void)
 {
 	int i;
 #ifdef XJ_EXTRA_DEBUG

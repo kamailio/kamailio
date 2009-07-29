@@ -77,7 +77,7 @@ static int rl_limit_check(int, int, int);
 static int rl_limit_check(int, int);
 #endif
 static void timer(unsigned int, void *);
-void destroy(void);
+static void destroy(void);
 
 static rpc_export_t rpc_methods[];
 
@@ -165,7 +165,7 @@ static int child_init(int rank)
 	DBG("RATELIMIT:init_child #%d / pid <%d>\n", rank, getpid());
 	return 0;
 }
-void destroy(void)
+static void destroy(void)
 {
 	DBG("RATELIMIT: destroy module ...\n");
 }

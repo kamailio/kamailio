@@ -60,7 +60,7 @@ static int child_init(int);
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
 static int w_ds_select_new(struct sip_msg*, char*, char*);
 
-void destroy(void);
+static void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"ds_select_dst", w_ds_select_dst, 2, fixup_var_int_12, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -157,7 +157,7 @@ static int w_ds_select_new(struct sip_msg* msg, char* set, char* alg)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	DBG("DISPATCHER: destroy module ...\n");
 	ds_destroy_lists();

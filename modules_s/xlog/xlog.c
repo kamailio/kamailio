@@ -60,7 +60,7 @@ static int xdbg(struct sip_msg*, char*, char*);
 static int xlog_fixup(void** param, int param_no);
 static int xdbg_fixup(void** param, int param_no);
 
-void destroy(void);
+static void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
@@ -166,7 +166,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	DBG("XLOG: destroy module ...\n");
 	if(log_buf)
