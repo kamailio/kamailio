@@ -780,7 +780,7 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 
 	update_stat(accepted_registrations, 1);
 	/* Only send reply upon request, not upon reply */
-	if ((route_type == REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) && (send_reply(_m) < 0))
+	if ((route_type == REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
 		return -1;
 
 	return ret;
@@ -788,7 +788,7 @@ error:
 	update_stat(rejected_registrations, 1);
 
 	if ((route_type == REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) )
-		send_reply(_m);
+		reg_send_reply(_m);
 
 	return 0;
 }

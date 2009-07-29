@@ -365,7 +365,7 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
 /*! \brief
  * Send a reply
  */
-int send_reply(struct sip_msg* _m)
+int reg_send_reply(struct sip_msg* _m)
 {
 	str unsup = str_init(SUPPORTED_PATH_STR);
 	long code;
