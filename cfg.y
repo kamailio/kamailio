@@ -2325,6 +2325,7 @@ attr_id_any_str:
 			else{
 				*s_attr=$1->lv.avps;
 			}
+			$$=s_attr;
 		}else
 			$$=0; /* not an avp, a pvar */
 		pkg_free($1);
