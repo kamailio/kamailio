@@ -44,7 +44,6 @@
 #ifndef _FIX_LUMPS_H
 #define _FIX_LUMPS_H
 
-#include "defs.h"
 
 
 /* used to delete attached via lumps from msg; msg can

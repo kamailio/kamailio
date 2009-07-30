@@ -107,7 +107,7 @@
 #include "t_cancel.h"
 #include "t_lookup.h"
 #include "t_fwd.h"
-#include "fix_lumps.h"
+#include "../../fix_lumps.h"
 #include "config.h"
 #ifdef USE_DNS_FAILOVER
 #include "../../dns_cache.h"
