@@ -60,6 +60,7 @@
 #endif
 
 #include "compiler_opt.h"
+#include "events.h"
 
 
 enum ss_mismatch {
@@ -114,9 +115,14 @@ int forward_reply( struct sip_msg* msg);
  *         that generated them; use 0 if you don't want this)
  * buf, len = buffer
  * returns: 0 if ok, -1 on error*/
+
 static inline int msg_send(struct dest_info* dst, char* buf, int len)
 {
 	struct dest_info new_dst;
+	str outb;
+	outb.s = buf;
+	outb.len = len;
+	sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
 	
 	if (likely(dst->proto==PROTO_UDP)){
 		if (unlikely((dst->send_sock==0) || 
@@ -129,7 +135,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			}
 			dst=&new_dst;
 		}
-		if (unlikely(udp_send(dst, buf, len)==-1)){
+		if (unlikely(udp_send(dst, outb.s, outb.len)==-1)){
 			STATS_TX_DROPS;
 			LOG(L_ERR, "msg_send: ERROR: udp_send failed\n");
 			goto error;
@@ -143,7 +149,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 					" support is disabled\n");
 			goto error;
 		}else{
-			if (unlikely(tcp_send(dst, 0, buf, len)<0)){
+			if (unlikely(tcp_send(dst, 0, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
 				goto error;
@@ -158,7 +164,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 					" support is disabled\n");
 			goto error;
 		}else{
-			if (unlikely(tcp_send(dst, 0, buf, len)<0)){
+			if (unlikely(tcp_send(dst, 0, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
 				goto error;
@@ -184,7 +190,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 				}
 				dst=&new_dst;
 			}
-			if (unlikely(sctp_msg_send(dst, buf, len)<0)){
+			if (unlikely(sctp_msg_send(dst, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: sctp_msg_send failed\n");
 				goto error;
@@ -196,8 +202,12 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", dst->proto);
 			goto error;
 	}
+	if(outb.s != buf)
+		pkg_free(outb.s);
 	return 0;
 error:
+	if(outb.s != buf)
+		pkg_free(outb.s);
 	return -1;
 }
 
