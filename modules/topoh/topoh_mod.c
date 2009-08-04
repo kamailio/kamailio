@@ -1,0 +1,332 @@
+/**
+ * $Id$
+ *
+ * Copyright (C) 2009 SIP-Router.org
+ *
+ * This file is part of Extensible SIP Router, a free SIP server.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "../../sr_module.h"
+#include "../../events.h"
+#include "../../dprint.h"
+#include "../../ut.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_from.h"
+
+#include "th_mask.h"
+#include "th_msg.h"
+
+MODULE_VERSION
+
+
+/** module parameters */
+str _th_key = { "aL9.n8~Hm]Z", 0 };
+str th_cookie_name = {"TH", 0};
+str th_cookie_value = {0, 0};
+str th_ip = {"10.1.1.2", 0};
+str th_uparam_name = {"line", 0};
+str th_uparam_prefix = {"sr-", 0};
+str th_vparam_name = {"branch", 0};
+str th_vparam_prefix = {"z9hG4bKsr-", 0};
+
+str th_via_prefix = {0, 0};
+str th_uri_prefix = {0, 0};
+
+int th_param_mask_callid = 0;
+
+int th_msg_received(void *data);
+int th_msg_sent(void *data);
+
+/** module functions */
+static int mod_init(void);
+
+static param_export_t params[]={
+	{"mask_key",		STR_PARAM, &_th_key.s},
+	{"mask_callid",		INT_PARAM, &th_param_mask_callid},
+	{"uparam_name",		STR_PARAM, &th_uparam_name.s},
+	{"uparam_prefix",	STR_PARAM, &th_uparam_prefix.s},
+	{"vparam_name",		STR_PARAM, &th_vparam_name.s},
+	{"vparam_prefix",	STR_PARAM, &th_vparam_prefix.s},
+	{0,0,0}
+};
+
+
+/** module exports */
+struct module_exports exports= {
+	"topoh",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,
+	params,
+	0,          /* exported statistics */
+	0,          /* exported MI functions */
+	0,          /* exported pseudo-variables */
+	0,          /* extra processes */
+	mod_init,   /* module initialization function */
+	0,
+	0,
+	0           /* per-child init function */
+};
+
+/**
+ * init module function
+ */
+static int mod_init(void)
+{
+	th_cookie_name.len = strlen(th_cookie_name.s);
+	th_ip.len = strlen(th_ip.s);
+	th_uparam_name.len = strlen(th_uparam_name.s);
+	th_uparam_prefix.len = strlen(th_uparam_prefix.s);
+	th_vparam_name.len = strlen(th_vparam_name.s);
+	th_vparam_prefix.len = strlen(th_vparam_prefix.s);
+
+	/* 'SIP/2.0/UDP ' + ip + ';' + param + '=' + prefix (+ '\0') */
+	th_via_prefix.len = 12 + th_ip.len + 1 + th_vparam_name.len + 1
+		+ th_vparam_prefix.len;
+	th_via_prefix.s = (char*)pkg_malloc(th_via_prefix.len+1);
+	if(th_via_prefix.s==NULL)
+		goto error;
+	/* 'sip:' + ip + ';' + param + '=' + prefix (+ '\0') */
+	th_uri_prefix.len = 4 + th_ip.len + 1 + th_uparam_name.len + 1
+		+ th_uparam_prefix.len;
+	th_uri_prefix.s = (char*)pkg_malloc(th_uri_prefix.len+1);
+	if(th_uri_prefix.s==NULL)
+		goto error;
+	/* build via prefix */
+	memcpy(th_via_prefix.s, "SIP/2.0/UDP ", 12);
+	memcpy(th_via_prefix.s+12, th_ip.s, th_ip.len);
+	th_via_prefix.s[12+th_ip.len] = ';';
+	memcpy(th_via_prefix.s+12+th_ip.len+1, th_vparam_name.s, th_vparam_name.len);
+	th_via_prefix.s[12+th_ip.len+1+th_vparam_name.len] = '=';
+	memcpy(th_via_prefix.s+12+th_ip.len+1+th_vparam_name.len+1,
+			th_vparam_prefix.s, th_vparam_prefix.len);
+	th_via_prefix.s[th_via_prefix.len] = '\0';
+	LM_DBG("VIA prefix: [%s]\n", th_via_prefix.s);
+	/* build uri prefix */
+	memcpy(th_uri_prefix.s, "sip:", 4);
+	memcpy(th_uri_prefix.s+4, th_ip.s, th_ip.len);
+	th_uri_prefix.s[4+th_ip.len] = ';';
+	memcpy(th_uri_prefix.s+4+th_ip.len+1, th_uparam_name.s, th_uparam_name.len);
+	th_uri_prefix.s[4+th_ip.len+1+th_uparam_name.len] = '=';
+	memcpy(th_uri_prefix.s+4+th_ip.len+1+th_uparam_name.len+1,
+			th_uparam_prefix.s, th_uparam_prefix.len);
+	th_uri_prefix.s[th_uri_prefix.len] = '\0';
+	LM_DBG("URI prefix: [%s]\n", th_uri_prefix.s);
+
+	th_mask_init();
+	sr_event_register_cb(SREV_NET_DATA_IN, th_msg_received);
+	sr_event_register_cb(SREV_NET_DATA_OUT, th_msg_sent);
+	return 0;
+error:
+	return -1;
+}
+
+int th_prepare_msg(sip_msg_t *msg)
+{
+	if (parse_msg(msg->buf, msg->len, msg)!=0)
+	{
+		LM_DBG("outbuf buffer parsing failed!");
+		return 1;
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0)==-1)
+	{
+		LM_DBG("parsing headers failed");
+		return 2;
+	}
+
+	if(parse_from_header(msg)<0)
+	{
+		LM_ERR("cannot parse FROM header\n");
+		return 3;
+	}
+	
+	return 0;
+}
+
+int th_msg_received(void *data)
+{
+	sip_msg_t msg;
+	str *obuf;
+	char *nbuf;
+	int direction;
+	int dialog;
+
+	obuf = (str*)data;
+	memset(&msg, 0, sizeof(sip_msg_t));
+	msg.buf = obuf->s;
+	msg.len = obuf->len;
+
+	th_prepare_msg(&msg);
+
+	if(th_skip_msg(&msg))
+	{
+		goto done;
+	}
+
+	direction = 0;
+	th_cookie_value.s = "xx";
+	th_cookie_value.len = 2;
+	if(msg.first_line.type==SIP_REQUEST)
+	{
+		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
+		if(dialog)
+		{
+			direction = th_route_direction(&msg);
+			if(direction<0)
+			{
+				LM_ERR("not able to detect direction\n");
+				goto done;
+			}
+			th_cookie_value.s = (direction==0)?"dc":"uc";
+		} else {
+			th_cookie_value.s = "di";
+		}
+		if(dialog)
+		{
+			/* dialog request */
+			th_unmask_ruri(&msg);
+			th_unmask_route(&msg);
+			if(direction==1)
+			{
+				th_unmask_callid(&msg);
+			}
+		}
+	} else {
+		/* reply */
+		th_unmask_via(&msg, &th_cookie_value);
+		th_flip_record_route(&msg, 0);
+		if(th_cookie_value.s[0]=='u')
+		{
+			th_cookie_value.s = "dc";
+		} else {
+			th_cookie_value.s = "uc";
+			th_unmask_callid(&msg);
+		}
+		th_cookie_value.len = 2;
+	}
+
+	th_add_cookie(&msg);
+	nbuf = th_msg_update(&msg, (unsigned int*)&obuf->len);
+
+	if(obuf->len>=BUF_SIZE)
+	{
+		LM_ERR("new buffer overflow (%d)\n", obuf->len);
+		pkg_free(nbuf);
+		return -1;
+	}
+	memcpy(obuf->s, nbuf, obuf->len);
+	obuf->s[obuf->len] = '\0';
+
+done:
+	free_sip_msg(&msg);
+	return 0;
+}
+
+int th_msg_sent(void *data)
+{
+	sip_msg_t msg;
+	str *obuf;
+	int direction;
+	int dialog;
+	int local;
+
+	obuf = (str*)data;
+	memset(&msg, 0, sizeof(sip_msg_t));
+	msg.buf = obuf->s;
+	msg.len = obuf->len;
+
+	th_prepare_msg(&msg);
+
+	if(th_skip_msg(&msg))
+	{
+		goto done;
+	}
+
+	th_cookie_value.s = th_get_cookie(&msg, &th_cookie_value.len);
+	LM_DBG("the COOKIE is [%.*s]\n", th_cookie_value.len, th_cookie_value.s);
+	if(th_cookie_value.s[0]!='x')
+		th_del_cookie(&msg);
+	if(msg.first_line.type==SIP_REQUEST)
+	{
+		direction = (th_cookie_value.s[0]=='u')?1:0; /* upstream/downstram */
+		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
+		local = (th_cookie_value.s[0]!='d'&&th_cookie_value.s[0]!='u')?1:0;
+		/* local generated requests */
+		if(local)
+		{
+			/* ACK and CANCEL go downstream */
+			if(get_cseq(&msg)->method_id==METHOD_ACK
+					|| get_cseq(&msg)->method_id==METHOD_CANCEL)
+			{
+				th_mask_callid(&msg);
+				goto ready;
+			} else {
+				/* should be for upstream */
+				goto done;
+			}
+		}
+		th_mask_via(&msg);
+		th_mask_contact(&msg);
+		th_mask_record_route(&msg);
+		if(dialog)
+		{
+			/* dialog request */
+			if(direction==0)
+			{
+				/* downstream */
+				th_mask_callid(&msg);
+			}
+		} else {
+			/* initial request */
+			th_mask_callid(&msg);
+		}
+	} else {
+		/* reply */
+		if(th_cookie_value.s[th_cookie_value.len-1]=='x')
+		{
+			/* ?!?! - we should have a cookie in any reply case */
+			goto done;
+		}
+		if(th_cookie_value.s[th_cookie_value.len-1]=='v')
+		{
+			/* reply generated locally - direction was set by request */
+			if(th_cookie_value.s[0]=='u')
+			{
+				th_mask_callid(&msg);
+			}
+		} else {
+			th_flip_record_route(&msg, 1);
+			th_mask_contact(&msg);
+			if(th_cookie_value.s[0]=='d')
+			{
+				th_mask_callid(&msg);
+			}
+		}
+	}
+
+ready:
+	obuf->s = th_msg_update(&msg, (unsigned int*)&obuf->len);
+
+done:
+	free_sip_msg(&msg);
+	return 0;
+}
+
