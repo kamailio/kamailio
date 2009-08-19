@@ -89,8 +89,8 @@ static cmd_export_t cmds[]={
 	{"cr_user_carrier", (cmd_function)cr_load_user_carrier,  3, cr_load_user_carrier_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_route",        (cmd_function)cr_route,              5, cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_route",        (cmd_function)cr_route,              6, cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_route",  (cmd_function)cr_route,              5, cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_route",  (cmd_function)cr_route,              6, cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_route",  (cmd_function)cr_prime_route,        5, cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_route",  (cmd_function)cr_prime_route,        6, cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_next_domain",  (cmd_function)cr_load_next_domain,   6, cr_load_next_domain_fixup,  0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
