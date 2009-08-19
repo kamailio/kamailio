@@ -233,7 +233,7 @@ static int set_next_domain_recursor(struct dtrie_node_t *failure_node,
 /**
  * searches for a rule int rt with hash_index prob - 1
  * If the rule with the desired hash index is deactivated,
- * the next working rule is used.
+ * the backup rule is used if available.
  *
  * @param rf the route_flags node to search for rule
  * @param prob the hash index
