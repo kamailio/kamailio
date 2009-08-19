@@ -164,11 +164,11 @@ modparam("auth_db", "password_column_2", "ha1_2")
 	<section>
 		<title><varname>calculate_ha1</varname> (integer)</title>
 		<para>
-		This parameter tells the server whether it should use plaintext 
-		passwords or a pre-calculated HA1 string for authentification.
+		This parameter tells the server whether it should use a pre-calculated
+		HA1 string or plaintext passwords for authentification.
 		</para>
 		<para>
-		If the parameter is set to 1 and the username parameter of credentials
+		If the parameter is set to 0 and the username parameter of credentials
 		contains also <quote>@domain</quote> (some user agents append the
 		domain to the username parameter), then the server will use the HA1
 		values from the column specified in the 
@@ -177,7 +177,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		column given in the <quote>password_column</quote>parameter.
 		</para>
 		<para>
-		If the parameter is set to 0 then the HA1 value will be calculated
+		If the parameter is set to 1 then the HA1 value will be calculated
 		from the column specified in the <quote>password_column</quote>
 		parameter.
 		</para>
