@@ -511,8 +511,16 @@ rewrite_user, hash_source, descavp)
    the destination or the number of channels. This function is
    only usable with rewrite_user and prefix_matching containing a
    valid string. This string needs to be numerical if the
-   match_mode parameter is set to 10. It uses the prime hash
-   algorithm to calculate the hash values.
+   match_mode parameter is set to 10.
+
+   It uses the prime hash algorithm to calculate the hash values.
+   This means that the fuction behaves different then the normal
+   routing function. If you don't know what this prime
+   functionality is, you should just use the cr_route function.
+   The prime routing algorithm not use the configured
+   probabilities in order to route requests, it just uses a fixed
+   hash distribution. If one of the hash targets is not available,
+   and no backup rule is configured, the function will return -1.
 
    Meaning of the parameters is as follows:
      * carrier - The routing tree to be used. Additional to a
