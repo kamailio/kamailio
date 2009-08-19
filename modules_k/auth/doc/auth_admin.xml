@@ -295,6 +295,10 @@ modparam("auth", "nonce_reuse", 1)
 		request. For more information regarding digest authentication 
 		see RFC2617.
 		</para>
+		<para>
+		In case the reply cannot be sent, this method returns "-1"; in case a
+		reply was sent, it just terminates further script processing.
+		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
@@ -358,6 +362,10 @@ if (!www_authorize("siphub.net", "subscriber")) {
 		server is processing and send the reply. Upon reception of such a 
 		reply the user agent should compute credentials and retry the request.
 		For more information regarding digest authentication see RFC2617.
+		</para>
+		<para>
+		In case the reply cannot be sent, this method returns "-1"; in case a
+		reply was sent, it just terminates further script processing.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

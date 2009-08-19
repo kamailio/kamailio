@@ -214,7 +214,10 @@ static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 			&auth_hf_len, _qop, _challenge_msg);
 	if (!auth_hf) {
 		LM_ERR("failed to generate nonce\n");
-		return -1;
+		if (send_resp(_msg, 500, &auth_500_err, 0, 0)==-1)
+			return -1;
+		else
+			return 0;
 	}
 
 	reason.s = _message;
