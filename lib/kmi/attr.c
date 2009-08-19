@@ -101,14 +101,6 @@ struct mi_attr *add_mi_attr(struct mi_node *node, int flags,
 			new->value.s = value;
 		}
 	}
-	if(flags & MI_DUP_NAME){
-		name_pos = size_mem;
-		size_mem += name_len * sizeof(char);
-	}
-	if(flags & MI_DUP_VALUE){
-		value_pos = size_mem;
-		size_mem += value_len * sizeof(char);
-	}
 
 	if(!(node->attributes)){
 		new->next = NULL;
