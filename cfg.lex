@@ -166,6 +166,7 @@ ROUTE_SEND onsend_route
 ROUTE_EVENT event_route
 EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
+ADD_LOCAL_RPORT		"add_local_rport"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
@@ -534,6 +535,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SET_USERPHONE}	{ count(); yylval.strval=yytext;
 								return SET_USERPHONE; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
+<INITIAL>{ADD_LOCAL_RPORT}	{ count(); yylval.strval=yytext;
+								return ADD_LOCAL_RPORT; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
 <INITIAL>{UDP_MTU}	{ count(); yylval.strval=yytext; return UDP_MTU; }

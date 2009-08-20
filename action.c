@@ -1129,6 +1129,10 @@ match_cleanup:
 			msg->msg_flags|=FL_FORCE_RPORT;
 			ret=1; /* continue processing */
 			break;
+		case ADD_LOCAL_RPORT_T:
+			msg->msg_flags|=FL_ADD_LOCAL_RPORT;
+			ret=1; /* continue processing */
+			break;
 		case UDP_MTU_TRY_PROTO_T:
 			msg->msg_flags|= (unsigned int)a->val[0].u.number & FL_MTU_FB_MASK;
 			ret=1; /* continue processing */

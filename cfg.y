@@ -295,6 +295,7 @@ static int case_check_default(struct case_stms* stms);
 %token SET_URI
 %token REVERT_URI
 %token FORCE_RPORT
+%token ADD_LOCAL_RPORT
 %token FORCE_TCP_ALIAS
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
@@ -2886,6 +2887,8 @@ cmd:
 	| REVERT_URI { $$=mk_action(REVERT_URI_T, 0); }
 	| FORCE_RPORT LPAREN RPAREN	{ $$=mk_action(FORCE_RPORT_T, 0); }
 	| FORCE_RPORT	{$$=mk_action(FORCE_RPORT_T, 0); }
+	| ADD_LOCAL_RPORT LPAREN RPAREN	{ $$=mk_action(ADD_LOCAL_RPORT_T, 0); }
+	| ADD_LOCAL_RPORT	{$$=mk_action(ADD_LOCAL_RPORT_T, 0); }
 	| FORCE_TCP_ALIAS LPAREN NUMBER RPAREN	{
 		#ifdef USE_TCP
 			$$=mk_action(FORCE_TCP_ALIAS_T, 1, NUMBER_ST, (void*)$3);

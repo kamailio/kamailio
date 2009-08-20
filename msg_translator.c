@@ -2382,14 +2382,31 @@ char* create_via_hf( unsigned int *len,
 	}
 #endif /* USE_TCP || USE_SCTP */
 
+	/* test and add rport parameter to local via - rfc3581 */
+	if(msg->msg_flags&FL_ADD_LOCAL_RPORT) {
+		/* params so far + ';rport' + '\0' */
+		via = (char*)pkg_malloc(extra_params.len+RPORT_LEN);
+		if(via==0) {
+			LM_ERR("building local rport via param failed\n");
+			if (extra_params.s) pkg_free(extra_params.s);
+			return 0;
+		}
+		if(extra_params.len!=0) {
+			memcpy(via, extra_params.s, extra_params.len);
+			pkg_free(extra_params.s);
+		}
+		memcpy(via + extra_params.len, RPORT, RPORT_LEN-1);
+		extra_params.s = via;
+		extra_params.len += RPORT_LEN-1;
+		extra_params.s[extra_params.len]='\0';
+	}
+
 	set_hostport(&hp, msg);
 	via = via_builder( len, send_info, branch,
 							extra_params.len?&extra_params:0, &hp);
 
-#if defined USE_TCP || defined USE_SCTP
-	/* we do not need id_buf any more, the id is already in the new via header */
-	if (id_buf) pkg_free(id_buf);
-#endif
+	/* we do not need extra_params any more, already in the new via header */
+	if (extra_params.s) pkg_free(extra_params.s);
 	return via;
 }
 

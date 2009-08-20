@@ -109,6 +109,7 @@ enum request_method {
 #define FL_MTU_TCP_FB   (1 << 8)
 #define FL_MTU_TLS_FB   (1 << 9)
 #define FL_MTU_SCTP_FB  (1 << 10)
+#define FL_ADD_LOCAL_RPORT  (1 << 11) /* add 'rport' to local via hdr */
 
 /* WARNING: Value (1 << 29) is temporarily reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
