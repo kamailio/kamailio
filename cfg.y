@@ -390,6 +390,8 @@ static int case_check_default(struct case_stms* stms);
 %token MEMDBG
 %token SIP_WARNING
 %token SERVER_SIGNATURE
+%token SERVER_HEADER
+%token USER_AGENT_HEADER
 %token REPLY_TO_VIA
 %token LOADMODULE
 %token LOADPATH
@@ -1362,6 +1364,14 @@ assign_stm:
 	| SCTP_MAX_BURST EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
+	| SERVER_HEADER EQUAL STRING { server_hdr.s=$3;
+			server_hdr.len=strlen(server_hdr.s);
+	}
+	| SERVER_HEADER EQUAL error { yyerror("string value expected"); }
+	| USER_AGENT_HEADER EQUAL STRING { user_agent_hdr.s=$3;
+			user_agent_hdr.len=strlen(user_agent_hdr.s);
+	}
+	| USER_AGENT_HEADER EQUAL error { yyerror("string value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
 	| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
 	| LISTEN EQUAL id_lst {

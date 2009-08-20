@@ -108,6 +108,8 @@ extern int syn_branch;
 extern int child_rank;
 extern int sip_warning;
 extern int server_signature;
+extern str server_hdr;
+extern str user_agent_hdr;
 extern char* user;
 extern char* group;
 extern char* sock_user;

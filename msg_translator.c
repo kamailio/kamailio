@@ -1953,7 +1953,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	}
 	/* server header */
 	if (server_signature)
-		len += SERVER_HDR_LEN + CRLF_LEN;
+		len += server_hdr.len + CRLF_LEN;
 	/* warning hdr */
 	if (sip_warning) {
 		warning_buf = warning_builder(msg,&warning_len);
@@ -2092,8 +2092,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		}
 	/* server header */
 	if (server_signature) {
-		memcpy( p, SERVER_HDR , SERVER_HDR_LEN );
-		p+=SERVER_HDR_LEN;
+		memcpy( p, server_hdr.s, server_hdr.len );
+		p+=server_hdr.len;
 		memcpy( p, CRLF, CRLF_LEN );
 		p+=CRLF_LEN;
 	}

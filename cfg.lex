@@ -329,6 +329,8 @@ MEMLOG		"memlog"|"mem_log"
 MEMDBG		"memdbg"|"mem_dbg"
 SIP_WARNING sip_warning
 SERVER_SIGNATURE server_signature
+SERVER_HEADER server_header
+USER_AGENT_HEADER user_agent_header
 REPLY_TO_VIA reply_to_via
 USER		"user"|"uid"
 GROUP		"group"|"gid"
@@ -765,6 +767,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SCTP_MAX_BURST}	{ count(); yylval.strval=yytext;
 										return SCTP_MAX_BURST; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
+<INITIAL>{SERVER_HEADER}	{ count(); yylval.strval=yytext; return SERVER_HEADER; }
+<INITIAL>{USER_AGENT_HEADER}	{ count(); yylval.strval=yytext; return USER_AGENT_HEADER; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;
 									return ADVERTISED_ADDRESS; }
