@@ -154,7 +154,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	/* User Agent */
 	if (server_signature) {
-		*len += USER_AGENT_LEN + CRLF_LEN;
+		*len += user_agent_hdr.len + CRLF_LEN;
 	}
 	/* Content Length, EoM */
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN;
@@ -194,7 +194,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	/* User Agent header */
 	if (server_signature) {
-		append_str(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+		append_str(p, user_agent_hdr.s, user_agent_hdr.len );
+		append_str(p, CRLF, CRLF_LEN );
 	}
 	/* Content Length, EoM */
 	append_str(p, CONTENT_LENGTH "0" CRLF CRLF ,
@@ -1026,7 +1027,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	*len += calc_routeset_len(list, cont);
 	
 	     /* User Agent */
-	if (server_signature) *len += USER_AGENT_LEN + CRLF_LEN;
+	if (server_signature) *len += user_agent_hdr.len + CRLF_LEN;
 		/* extra headers */
 	if (hdrs)
 		*len += hdrs->len;
@@ -1077,7 +1078,8 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	
 	     /* User Agent header */
 	if (server_signature) {
-		append_str(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+		append_str(p, user_agent_hdr.s, user_agent_hdr.len);
+		append_str(p, CRLF, CRLF_LEN);
 	}
 	
 	/* extra headers */
@@ -1342,7 +1344,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	*len += calculate_routeset_length(dialog);                                                   /* Route set */
 	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-
 																	 Length */
-	*len += (server_signature ? (USER_AGENT_LEN + CRLF_LEN) : 0);                                /* Signature */
+	*len += (server_signature ? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
 	*len += (headers ? headers->len : 0);                                                        /* Additional headers */
 	*len += (body ? body->len : 0);                                                              /* Message body */
 	*len += CRLF_LEN;                                                                            /* End of Header */
@@ -1369,7 +1371,10 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	memapp(w, CRLF, CRLF_LEN);
 	
 	     /* Server signature */
-	if (server_signature) memapp(w, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+	if (server_signature) {
+		memapp(w, user_agent_hdr.s, user_agent_hdr.len);
+		memapp(w, CRLF, CRLF_LEN);
+	}
 	if (headers) memapp(w, headers->s, headers->len);
 	memapp(w, CRLF, CRLF_LEN);
      	if (body) memapp(w, body->s, body->len);
