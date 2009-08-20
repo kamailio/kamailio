@@ -345,6 +345,7 @@ static int case_check_default(struct case_stms* stms);
 %token FORK
 %token LOGSTDERROR
 %token LOGFACILITY
+%token LOGNAME
 %token LISTEN
 %token ALIAS
 %token SR_AUTO_ALIASES
@@ -758,6 +759,8 @@ assign_stm:
 			default_core_cfg.log_facility=i_tmp;
 	}
 	| LOGFACILITY EQUAL error { yyerror("ID expected"); }
+	| LOGNAME EQUAL STRING { log_name=$3; }
+	| LOGNAME EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }

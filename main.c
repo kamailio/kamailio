@@ -321,6 +321,8 @@ int sig_flag = 0;              /* last signal received */
 int dont_fork = 0;
 int dont_daemonize = 0;
 int log_stderr = 0;
+/* set custom app name for syslog printing */
+char *log_name = 0;
 pid_t creator_pid = (pid_t) -1;
 int config_check = 0;
 /* check if reply first via host==us */
@@ -2059,7 +2061,7 @@ try_again:
 #endif /* USE_SCTP */
 	/* init_daemon? */
 	if (!dont_fork){
-		if ( daemonize(argv[0]) <0 ) goto error;
+		if ( daemonize((log_name==0)?argv[0]:log_name) <0 ) goto error;
 	}
 	if (install_sigs() != 0){
 		fprintf(stderr, "ERROR: could not install the signal handlers\n");

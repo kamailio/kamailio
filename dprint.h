@@ -109,6 +109,7 @@ struct log_level_info {
 
 #define is_printable(level) (cfg_get(core, core_cfg, debug)>=(level))
 extern struct log_level_info log_level_info[];
+extern char *log_name;
 
 #ifndef NO_SIG_DEBUG
 /* protection against "simultaneous" printing from signal handlers */
