@@ -98,6 +98,14 @@
 
 		<title>Parameters</title>
 
+		<section id="config">
+		<title><varname>config</varname> (string)</title>
+		<para>
+  References <emphasis>iptrtpproxy.cfg</emphasis>, see <emphasis>iptrtpproxy_helper</emphasis>. Default value
+		is <emphasis>/etc/iptrtpproxy.cfg</emphasis>.
+		</para>
+		</section>
+
 		<section id="switchboard">
 		<title><varname>switchboard</varname> (string)</title>
 		<para>
@@ -109,7 +117,7 @@
 			<programlisting>
   name "=" value * ( ";" name "=" value )
 
-  name =  "name" | ( "ringing-timeout " ) | ( ( "addr-" | "port-" | "learning-timeout-" | "always-learn-") ("a" | "b") )
+  name =  "name" | "*" | ( "ringing-timeout " ) | ( ( "learning-timeout-" | "always-learn-") ("a" | "b") )
 			</programlisting>
 
 		<para>
@@ -119,13 +127,16 @@
 		</para>
 		<para>
   The <emphasis>name</emphasis>" is identifier that will be used by script functions and references switchboard. 
-  It's mandatory parameter. More switchboards may be declared.
+  It's mandatory parameter. More switchboards may be declared. The special name <emphasis>*</emphasis> set values
+  for all switchboards.
 		</para>
 		<example>
 			<title>Declare <varname>switchboard</varname></title>
 			<programlisting>
 	...
-	modparam("iptrtpproxy", "switchboard", "name=my;addr-a=1.2.3.4;port-a=50000");
+	modparam("iptrtpproxy", "config", "/etc/iptrtpproxy.cfg");
+	modparam("iptrtpproxy", "switchboard", "name=*;learning-timeout-a=10;learning-timeout-b=10;ringing-timeout=90");
+	modparam("iptrtpproxy", "switchboard", "name=my;ringing-timeout=60");
 	...
 			</programlisting>
 		</example>
