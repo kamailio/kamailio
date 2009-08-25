@@ -406,9 +406,17 @@ done:
 		goto error;
 	}	
 
+	pkg_free(res_id->s);
+	pkg_free(res_id);
+
 	return 1;
 
 error:
+	if(res_id!=NULL)
+	{
+		pkg_free(res_id->s);
+		pkg_free(res_id);
+	}
 	return -1;
 }
 /* callid, from_tag, to_tag parameters must be allocated */
@@ -563,11 +571,6 @@ void timer_send_notify(unsigned int ticks,void *param)
 				 goto error;
 			 }
 			xmlFree(rlmi_cont.s);
-			if(buf_len)		
-			{	
-				pkg_free(buf);
-				buf= NULL;
-			}
 			xmlFreeDoc(rlmi_doc);
 			rlmi_doc= NULL;
 			pkg_free(rl_uri);
@@ -576,14 +579,16 @@ void timer_send_notify(unsigned int ticks,void *param)
 			dialog= NULL;
 		}
 
-		if(prev_did== NULL || strcmp(prev_did, curr_did)) /*if first or different*/
+		/*if first or different*/
+		if(prev_did==NULL || strcmp(prev_did, curr_did)!=0)
 		{
 			/* search the subscription in rlsubs_table*/		
 			if( parse_rlsubs_did(curr_did, &callid, &from_tag, &to_tag)< 0)
 			{
 				LM_ERR("bad format for "
 					"resource list Subscribe dialog indentifier(rlsubs did)\n");
-				goto done;
+				prev_did = NULL;
+				continue;
 
 			}
 			hash_code= core_hash(&callid, &to_tag, hash_size);
@@ -598,6 +603,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 						callid.len, callid.s,from_tag.len,from_tag.s,
 						to_tag.len,to_tag.s);
 				lock_release(&rls_table[hash_code].lock);
+				prev_did = NULL;
 				continue;
 			}
 			LM_DBG("Found rl-subs record in hash table\n");
@@ -634,8 +640,10 @@ void timer_send_notify(unsigned int ticks,void *param)
 			rl_uri[dialog->pres_uri.len]= '\0';
 
 			xmlNewProp(list_node, BAD_CAST "uri", BAD_CAST rl_uri);
-			xmlNewProp(list_node, BAD_CAST "xmlns", BAD_CAST "urn:ietf:params:xml:ns:rlmi");
-			xmlNewProp(list_node, BAD_CAST "version", BAD_CAST int2str(dialog->version, &len));
+			xmlNewProp(list_node, BAD_CAST "xmlns",
+					BAD_CAST "urn:ietf:params:xml:ns:rlmi");
+			xmlNewProp(list_node, BAD_CAST "version",
+					BAD_CAST int2str(dialog->version, &len));
 			xmlNewProp(list_node, BAD_CAST "fullState", BAD_CAST "false");
 
 			xmlDocSetRootElement(rlmi_doc, list_node);
@@ -702,7 +710,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 					REALLOC_BUF
 				}
 				buf_len+= sprintf(buf+ buf_len, "--%s\r\n\r\n", bstr.s);
-				buf_len+= sprintf(buf+ buf_len, "Content-Transfer-Encoding: binary\r\n");
+				buf_len+= sprintf(buf+ buf_len,
+						"Content-Transfer-Encoding: binary\r\n");
 				buf_len+= sprintf(buf+ buf_len, "Content-ID: <%s>\r\n", cid);
 				buf_len+= sprintf(buf+ buf_len, "Content-Type: %s\r\n\r\n",  
 						row_vals[content_type_col].val.string_val);
@@ -750,11 +759,6 @@ void timer_send_notify(unsigned int ticks,void *param)
 			 goto error;
 		}
 		xmlFree(rlmi_cont.s);
-		if(buf_len)		
-		{	
-			pkg_free(buf);
-			buf= NULL;
-		}
 		pkg_free(rl_uri);
 		rl_uri= NULL;
 		pkg_free(dialog);

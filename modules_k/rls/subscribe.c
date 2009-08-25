@@ -688,6 +688,21 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	memcpy(subs->pres_uri.s, s->pres_uri.s, s->pres_uri.len);
 	subs->pres_uri.len= s->pres_uri.len;
 
+	if(s->record_route.s!=NULL && s->record_route.len>0)
+	{
+		subs->record_route.s =
+				(char*)pkg_malloc(s->record_route.len* sizeof(char));
+		if(subs->record_route.s==NULL)
+		{
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(subs->record_route.s, s->record_route.s, s->record_route.len);
+		subs->record_route.len= s->record_route.len;
+	}
+
+	subs->local_cseq= s->local_cseq;
+	subs->version= s->version;
+
 	if(subs->expires== 0)
 	{
 		/* delete record from hash table */
@@ -710,15 +725,7 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 		ps->next= s->next;
 		shm_free(s);
 	}
-	else
-	{
-		s->remote_cseq= subs->remote_cseq;
-		s->expires= subs->expires+ (int)time(NULL);
-	}
 	
-	subs->local_cseq= s->local_cseq;
-	subs->version= s->version;
-
 	lock_release(&rls_table[hash_code].lock);
 
 	return 0;
@@ -745,7 +752,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 	char* uri= NULL;
 	subs_info_t s;
 	str wuri= {0, 0};
-	static char buf[64];
+	static char buf[256];
 	str extra_headers;
 	str did_str= {0, 0};
 		

@@ -216,13 +216,13 @@ int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 
 	cid= generate_cid(rl_uri->s, rl_uri->len);
 
-	len= 2*strlen(boundary_string)+ 4+ 102+ strlen(cid)+ 2+ rlmi_body->len+50;
+	len= 2*strlen(boundary_string)+4+102+strlen(cid)+2+rlmi_body->len+50;
 	if(multipart_body)
 		len+= multipart_body->len;
 	
 	init_len= len;
 
-	body.s= (char*)pkg_malloc(len* sizeof(char));
+	body.s= (char*)pkg_malloc((len+1)* sizeof(char));
 	if(body.s== NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);
@@ -469,6 +469,7 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 	db_val_t *row_vals;
 	char* content_id= NULL;
 	str body= {0, 0};
+	str ctype= {0, 0};
 	int antet_len;
 	str* multi_body= NULL;
 	
@@ -489,6 +490,11 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 		if(row_vals[auth_state_col].val.int_val!= ACTIVE_STATE)
 			continue;
 	
+		body.s= (char*)row_vals[pres_state_col].val.string_val;
+		body.len= strlen(body.s);
+		ctype.s = (char*)row_vals[content_type_col].val.string_val;
+		ctype.len = strlen(ctype.s);
+
 		if(length+ antet_len+ body.len+ 4 > size)
 		{
 			REALLOC_BUF
@@ -505,13 +511,10 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 		}
 
 		length+= sprintf(buf+ length, "Content-ID: <%s>\r\n",content_id);
-		length+= sprintf(buf+ length, "Content-Type: %s\r\n\r\n",
-				row_vals[content_type_col].val.string_val);
+		length+= sprintf(buf+ length, "Content-Type: %.*s\r\n\r\n",
+				ctype.len, ctype.s);
 		
-		body.s= (char*)row_vals[pres_state_col].val.string_val;
-		body.len= strlen(body.s);
-
-		length+= sprintf(buf+length,"%s\r\n\r\n", body.s);
+		length+= sprintf(buf+length,"%.*s\r\n\r\n", body.len, body.s);
 	}
 
 	if(length+ strlen( boundary_string)+ 7> size )
