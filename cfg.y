@@ -3070,7 +3070,7 @@ extern int line;
 extern int column;
 extern int startcolumn;
 extern int startline;
-
+extern char *finame;
 
 static void get_cpos(struct cfg_pos* pos)
 {
@@ -3078,6 +3078,9 @@ static void get_cpos(struct cfg_pos* pos)
 	pos->e_line=line;
 	pos->s_col=startcolumn;
 	pos->e_col=column-1;
+	if(finame==0)
+		finame = (cfg_file!=0)?cfg_file:"default";
+	pos->fname=finame;
 }
 
 
@@ -3090,15 +3093,15 @@ static void warn_at(struct cfg_pos* p, char* format, ...)
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_WARN, "warning in config file, from line %d, column %d to"
+		LOG(L_WARN, "warning in config file %s, from line %d, column %d to"
 					" line %d, column %d: %s\n",
-					p->s_line, p->s_col, p->e_line, p->e_col, s);
+					p->fname, p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
-		LOG(L_WARN, "warning in config file, line %d, column %d-%d: %s\n",
-					p->s_line, p->s_col, p->e_col, s);
+		LOG(L_WARN, "warning in config file %s, line %d, column %d-%d: %s\n",
+					p->fname, p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_WARN, "warning in config file, line %d, column %d: %s\n",
-				p->s_line, p->s_col, s);
+		LOG(L_WARN, "warning in config file %s, line %d, column %d: %s\n",
+				p->fname, p->s_line, p->s_col, s);
 	cfg_warnings++;
 }
 
@@ -3113,15 +3116,15 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_CRIT, "parse error in config file, from line %d, column %d"
+		LOG(L_CRIT, "parse error in config file %s, from line %d, column %d"
 					" to line %d, column %d: %s\n",
-					p->s_line, p->s_col, p->e_line, p->e_col, s);
+					p->fname, p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
-		LOG(L_CRIT, "parse error in config file, line %d, column %d-%d: %s\n",
-					p->s_line, p->s_col, p->e_col, s);
+		LOG(L_CRIT,"parse error in config file %s, line %d, column %d-%d: %s\n",
+					p->fname, p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_CRIT, "parse error in config file, line %d, column %d: %s\n",
-					p->s_line, p->s_col, s);
+		LOG(L_CRIT, "parse error in config file %s, line %d, column %d: %s\n",
+					p->fname, p->s_line, p->s_col, s);
 	cfg_errors++;
 }
 

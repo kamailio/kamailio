@@ -136,6 +136,7 @@ struct cfg_pos{
 	int e_line;
 	unsigned short s_col;
 	unsigned short e_col;
+	char *fname;
 };
 
 

@@ -122,6 +122,7 @@
 	int column=1;
 	int startcolumn=1;
 	int startline=1;
+	char *finame = 0;
 	static int ign_lines=0;
 	static int ign_columns=0;
 	char* yy_number_str=0; /* str correspondent for the current NUMBER token */
@@ -132,12 +133,30 @@
 	static void count_more();
 	static void count_ignore();
 
+	#define MAX_INCLUDE_DEPTH 10
+	static struct sr_yy_state {
+		YY_BUFFER_STATE state;
+		int line;
+		int column;
+		int startcolumn;
+		int startline;
+		char *finame;
+	} include_stack[MAX_INCLUDE_DEPTH];
+	static int include_stack_ptr = 0;
+
+	static int sr_push_yy_state(char *fin);
+	static int sr_pop_yy_state();
+
+	static struct sr_yy_fname {
+		char *fname;
+		struct sr_yy_fname *next;
+	} *sr_yy_fname_list = 0;
 
 %}
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
-%x PVARID
+%x PVARID INCL
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -200,6 +219,8 @@ SWITCH			"switch"
 CASE			"case"
 DEFAULT			"default"
 WHILE			"while"
+
+INCLUDE         "include"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -555,6 +576,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CASE}	{ count(); yylval.strval=yytext; return CASE; }
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
+
+<INITIAL>{INCLUDE}  { BEGIN(INCL); }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
@@ -1097,6 +1120,13 @@ EAT_ABLE	[\ \t\b\r]
 
 <SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 
+<INCL>[ \t]*      /* eat the whitespace */
+<INCL>[^ \t\n]+   { /* get the include file name */
+				if(sr_push_yy_state(yytext)<0)
+					exit(-1);
+				BEGIN(INITIAL);
+}
+
 
 <<EOF>>							{
 									switch(state){
@@ -1141,7 +1171,8 @@ EAT_ABLE	[\ \t\b\r]
 													" while parsing"
 													" avp or pvar name\n");
 									}
-									return 0;
+									if(sr_pop_yy_state()<0)
+										return 0;
 								}
 
 %%
@@ -1253,3 +1284,127 @@ int yywrap()
 {
 	return 1;
 }
+
+static int sr_push_yy_state(char *fin)
+{
+	struct sr_yy_fname *fn = NULL;
+	char *x = NULL;
+	char *newf = NULL;
+
+	if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
+	{
+		LOG(L_CRIT, "too many includes\n");
+		return -1;
+	}
+
+	include_stack[include_stack_ptr].state = YY_CURRENT_BUFFER;
+	include_stack[include_stack_ptr].line = line;
+	include_stack[include_stack_ptr].column = column;
+	include_stack[include_stack_ptr].startline = startline;
+	include_stack[include_stack_ptr].startcolumn = startcolumn;
+	include_stack[include_stack_ptr].finame = finame;
+	include_stack_ptr++;
+
+	line=1;
+	column=1;
+	startline=1;
+	startcolumn=1;
+
+	yyin = fopen(fin, "r" );
+
+	if ( ! yyin )
+	{
+		finame = (finame==0)?cfg_file:finame;
+		if(finame==0 || fin[0]=='/')
+		{
+			LOG(L_CRIT, "cannot open included file: %s\n", fin);
+			return -1;
+		}
+		x = strrchr(finame, '/');
+		if(x)
+		{
+			newf = (char*)pkg_malloc(x-finame+strlen(fin)+2);
+			if(newf==0)
+			{
+				LOG(L_CRIT, "no more pkg\n");
+				return -1;
+			}
+			newf[0] = '\0';
+			strncat(newf, finame, x-finame);
+			strcat(newf, "/");
+			strcat(newf, fin);
+		}
+		yyin = fopen(newf, "r" );
+		if ( ! yyin )
+		{
+			LOG(L_CRIT, "cannot open included file: %s (%s)\n", fin, newf);
+			return -1;
+		}
+		LOG(L_DBG, "including file: %s (%s)\n", fin, newf);
+	} else {
+		newf = fin;
+	}
+
+	fn = sr_yy_fname_list;
+	while(fn!=0)
+	{
+		if(strcmp(fn->fname, newf)==0)
+		{
+			if(newf!=fin)
+				pkg_free(newf);
+			newf = fin;
+			break;
+		}
+		fn = fn->next;
+	}
+	if(fn==0)
+	{
+		fn = (struct sr_yy_fname*)pkg_malloc(sizeof(struct sr_yy_fname));
+		if(fn==0)
+		{
+			if(newf!=fin)
+				pkg_free(newf);
+			LOG(L_CRIT, "no more pkg\n");
+			return -1;
+		}
+		if(newf==fin)
+		{
+			fn->fname = (char*)pkg_malloc(strlen(fin)+1);
+			if(fn->fname==0)
+			{
+				pkg_free(fn);
+				LOG(L_CRIT, "no more pkg!\n");
+				return -1;
+			}
+			strcpy(fn->fname, fin);
+		} else {
+			fn->fname = newf;
+		}
+		fn->next = sr_yy_fname_list;
+		sr_yy_fname_list = fn;
+	}
+
+	finame = fn->fname;
+
+	yy_switch_to_buffer( yy_create_buffer(yyin, YY_BUF_SIZE ) );
+
+	return 0;
+
+}
+
+static int sr_pop_yy_state()
+{
+	include_stack_ptr--;
+	if (include_stack_ptr<0 )
+		return -1;
+
+	yy_delete_buffer( YY_CURRENT_BUFFER );
+	yy_switch_to_buffer(include_stack[include_stack_ptr].state);
+	line=include_stack[include_stack_ptr].line;
+	column=include_stack[include_stack_ptr].column;
+	startline=include_stack[include_stack_ptr].startline;
+	startcolumn=include_stack[include_stack_ptr].startcolumn;
+	finame = include_stack[include_stack_ptr].finame;
+	return 0;
+}
+
