@@ -476,7 +476,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		lock_release(&rls_table[hash_code].lock);
 	}
 
-/*** verify if it contains the 'Support: eventlist' header
+/*** verify if it contains the 'Supported: eventlist' header
  * and if not - reply with '421 (Extension Required)' */
 
 /*
@@ -490,7 +490,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	hdr= msg->headers;
 	while(hdr)
 	{
-		if(cmp_hdrname_strzn(&hdr->name, "Support", 7)== 0)
+		if(cmp_hdrname_strzn(&hdr->name, "Supported", 9)== 0)
 			break;
 		hdr= hdr->next;
 	}
