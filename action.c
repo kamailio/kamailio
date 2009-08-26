@@ -150,6 +150,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						BUG("unexpected subtype %d in DROP_T\n",
 								a->val[0].type);
 						ret=0;
+						goto error;
 				}
 				h->run_flags|=(unsigned int)a->val[1].u.number;
 			break;
@@ -192,7 +193,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				if (ret<0) {
 					LOG(L_ERR, "ERROR: do_action: forward: bad_uri "
 								" dropping packet\n");
-					break;
+					goto error;
 				}
 
 				switch (a->val[1].type){
@@ -275,6 +276,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad forward() types %d, %d\n",
 						a->val[0].type, a->val[1].type);
 				ret=E_BUG;
+				goto error;
 			}
 			break;
 		case SEND_T:
@@ -283,7 +285,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad send() types %d, %d\n",
 						a->val[0].type, a->val[1].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			/* init dst */
 			init_dest_info(&dst);
@@ -316,7 +318,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 #endif
 			}else{
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			proxy_mark((struct proxy_l*)a->val[0].u.data, ret);
 			if (ret>=0) ret=1;
@@ -327,7 +329,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad log() types %d, %d\n",
 						a->val[0].type, a->val[1].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			LOG_(DEFAULT_FACILITY, a->val[0].u.number, "<script>: ", "%s", 
 				 a->val[1].u.string);
@@ -340,7 +342,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad append_branch_t %d\n",
 					a->val[0].type );
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			ret=append_branch( msg, a->val[0].u.string,
 					   a->val[0].u.string ? strlen(a->val[0].u.string):0,
@@ -353,7 +355,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad len_gt type %d\n",
 					a->val[0].type );
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			/* DBG("XXX: message length %d, max %d\n",
 				msg->len, a->val[0].u.number ); */
@@ -368,11 +370,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad setflag() type %d\n",
 					a->val[0].type );
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			if (!flag_in_range( a->val[0].u.number )) {
 				ret=E_CFG;
-				break;
+				goto error;
 			}
 			setflag( msg, a->val[0].u.number );
 			ret=1;
@@ -383,11 +385,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad resetflag() type %d\n",
 					a->val[0].type );
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			if (!flag_in_range( a->val[0].u.number )) {
 				ret=E_CFG;
-				break;
+				goto error;
 			}
 			resetflag( msg, a->val[0].u.number );
 			ret=1;
@@ -398,11 +400,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad isflagset() type %d\n",
 					a->val[0].type );
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			if (!flag_in_range( a->val[0].u.number )) {
 				ret=E_CFG;
-				break;
+				goto error;
 			}
 			ret=isflagset( msg, a->val[0].u.number );
 			break;
@@ -452,7 +454,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad error() types %d, %d\n",
 						a->val[0].type, a->val[1].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			LOG(L_NOTICE, "WARNING: do_action: error(\"%s\", \"%s\") "
 					"not implemented yet\n", a->val[0].u.string, a->val[1].u.string);
@@ -463,13 +465,13 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad route() type %d\n",
 						a->val[0].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			if ((a->val[0].u.number>=main_rt.idx)||(a->val[0].u.number<0)){
 				LOG(L_ERR, "ERROR: invalid routing table number in"
 							"route(%lu)\n", a->val[0].u.number);
 				ret=E_CFG;
-				break;
+				goto error;
 			}
 			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
 			ret=run_actions(h, main_rt.rlist[a->val[0].u.number], msg);
@@ -482,7 +484,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				LOG(L_CRIT, "BUG: do_action: bad exec() type %d\n",
 						a->val[0].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			LOG(L_NOTICE, "WARNING: exec(\"%s\") not fully implemented,"
 						" using dumb version...\n", a->val[0].u.string);
@@ -519,14 +521,14 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->val[0].type);
 						ret=E_BUG;
-						break;
+						goto error;
 					}
 				} else if (a->type!=SET_USERPHONE_T) {
 					if (a->val[0].type!=STRING_ST) {
 						LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->val[0].type);
 						ret=E_BUG;
-						break;
+						goto error;
 					}
 				}
 				if (a->type==SET_URI_T){
@@ -541,7 +543,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						LOG(L_ERR, "ERROR: do_action: memory allocation"
 								" failure\n");
 						ret=E_OUT_OF_MEM;
-						break;
+						goto error;
 					}
 					memcpy(msg->new_uri.s, a->val[0].u.string, len);
 					msg->new_uri.s[len]=0;
@@ -562,7 +564,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
 									" packet\n", tmp);
 						ret=E_UNSPEC;
-						break;
+						goto error;
 					}
 				} else {
 					uri=msg->parsed_uri;
@@ -584,7 +586,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				) {
 					LOG(L_ERR, "ERROR: do_action: port number of a tel: URI cannot be set\n");
 					ret=E_UNSPEC;
-					break;
+					goto error;
 				}
 
 				new_uri=pkg_malloc(MAX_URI_SIZE);
@@ -592,7 +594,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					LOG(L_ERR, "ERROR: do_action: memory allocation "
 								" failure\n");
 					ret=E_OUT_OF_MEM;
-					break;
+					goto error;
 				}
 				end=new_uri+MAX_URI_SIZE;
 				crt=new_uri;
@@ -862,6 +864,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+				goto error;
 			}
 			break;
 		/* instead of using the parameter number, we use different names
@@ -880,6 +883,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+				goto error;
 			}
 			break;
 		case MODULE4_T:
@@ -896,6 +900,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+				goto error;
 			}
 			break;
 		case MODULE5_T:
@@ -913,6 +918,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+				goto error;
 			}
 			break;
 		case MODULE6_T:
@@ -931,6 +937,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+				goto error;
 			}
 			break;
 		case MODULEX_T:
@@ -945,6 +952,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				_last_returned_code = h->last_retcode;
 			} else {
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+				goto error;
 			}
 			break;
 		case EVAL_T:
@@ -1115,7 +1123,7 @@ match_cleanup:
 								rve->fpos.s_line, rve->fpos.s_col,
 								cfg_get(core, core_cfg, max_while_loops));
 					ret=-1;
-					break;
+					goto error;
 				}
 				if (likely(a->val[1].u.data)){
 					ret=run_actions(h, (struct action*)a->val[1].u.data, msg);
@@ -1142,7 +1150,7 @@ match_cleanup:
 				LOG(L_CRIT, "BUG: do_action: bad set_advertised_address() "
 						"type %d\n", a->val[0].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			msg->set_global_address=*((str*)a->val[0].u.data);
 			ret=1; /* continue processing */
@@ -1152,7 +1160,7 @@ match_cleanup:
 				LOG(L_CRIT, "BUG: do_action: bad set_advertised_port() "
 						"type %d\n", a->val[0].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			msg->set_global_port=*((str*)a->val[0].u.data);
 			ret=1; /* continue processing */
@@ -1171,14 +1179,14 @@ match_cleanup:
 					LOG(L_CRIT, "BUG: do_action: bad force_tcp_alias"
 							" port type %d\n", a->val[0].type);
 					ret=E_BUG;
-					break;
+					goto error;
 				}
 
 				if (tcpconn_add_alias(msg->rcv.proto_reserved1, port,
 									msg->rcv.proto)!=0){
 					LOG(L_ERR, " ERROR: receive_msg: tcp alias failed\n");
 					ret=E_UNSPEC;
-					break;
+					goto error;
 				}
 			}
 #endif
@@ -1189,7 +1197,7 @@ match_cleanup:
 				LOG(L_CRIT, "BUG: do_action: bad force_send_socket argument"
 						" type: %d\n", a->val[0].type);
 				ret=E_BUG;
-				break;
+				goto error;
 			}
 			msg->force_send_socket=(struct socket_info*)a->val[0].u.data;
 			ret=1; /* continue processing */
@@ -1217,9 +1225,12 @@ skip:
 error_uri:
 	LOG(L_ERR, "ERROR: do_action: set*: uri too long\n");
 	if (new_uri) pkg_free(new_uri);
+	LM_ERR("run action error at: %s:%d\n", (a->cfile)?a->cfile:"", a->cline);
 	return E_UNSPEC;
 error_fwd_uri:
 	/*free_uri(&uri); -- not needed anymore, using msg->parsed_uri*/
+error:
+	LM_ERR("run action error at: %s:%d\n", (a->cfile)?a->cfile:"", a->cline);
 	return ret;
 }
 
