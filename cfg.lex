@@ -1290,12 +1290,61 @@ static int sr_push_yy_state(char *fin)
 	struct sr_yy_fname *fn = NULL;
 	char *x = NULL;
 	char *newf = NULL;
+#define MAX_INCLUDE_FNAME	128
+	char fbuf[MAX_INCLUDE_FNAME];
+	int i, j, l;
 
 	if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
 	{
 		LOG(L_CRIT, "too many includes\n");
 		return -1;
 	}
+	l = strlen(fin);
+	if(l>=MAX_INCLUDE_FNAME)
+	{
+		LOG(L_CRIT, "included file name too long\n");
+		return -1;
+	}
+	if(fin[0]!='"' || fin[l-1]!='"')
+	{
+		LOG(L_CRIT, "included file name must be between quotes\n");
+		return -1;
+	}
+	j = 0;
+	for(i=1; i<l-1; i++)
+	{
+		switch(fin[i]) {
+			case '\\':
+				if(i+1==l-1)
+				{
+					LOG(L_CRIT, "invalid escape in included file name\n");
+					return -1;
+				}
+				i++;
+				switch(fin[i]) {
+					case 't':
+						fbuf[j++] = '\t';
+					break;
+					case 'n':
+						fbuf[j++] = '\n';
+					break;
+					case 'r':
+						fbuf[j++] = '\r';
+					break;
+					default:
+						fbuf[j++] = fin[i];
+				}
+			break;
+			default:
+				fbuf[j++] = fin[i];
+		}
+	}
+	if(j==0)
+	{
+		LOG(L_CRIT, "invalid included file name\n");
+		return -1;
+	}
+	fbuf[j] = '\0';
 
 	include_stack[include_stack_ptr].state = YY_CURRENT_BUFFER;
 	include_stack[include_stack_ptr].line = line;
@@ -1310,12 +1359,12 @@ static int sr_push_yy_state(char *fin)
 	startline=1;
 	startcolumn=1;
 
-	yyin = fopen(fin, "r" );
+	yyin = fopen(fbuf, "r" );
 
 	if ( ! yyin )
 	{
 		finame = (finame==0)?cfg_file:finame;
-		if(finame==0 || fin[0]=='/')
+		if(finame==0 || fbuf[0]=='/')
 		{
 			LOG(L_CRIT, "cannot open included file: %s\n", fin);
 			return -1;
@@ -1323,7 +1372,7 @@ static int sr_push_yy_state(char *fin)
 		x = strrchr(finame, '/');
 		if(x)
 		{
-			newf = (char*)pkg_malloc(x-finame+strlen(fin)+2);
+			newf = (char*)pkg_malloc(x-finame+strlen(fbuf)+2);
 			if(newf==0)
 			{
 				LOG(L_CRIT, "no more pkg\n");
@@ -1332,27 +1381,28 @@ static int sr_push_yy_state(char *fin)
 			newf[0] = '\0';
 			strncat(newf, finame, x-finame);
 			strcat(newf, "/");
-			strcat(newf, fin);
+			strcat(newf, fbuf);
 		}
 		yyin = fopen(newf, "r" );
 		if ( ! yyin )
 		{
-			LOG(L_CRIT, "cannot open included file: %s (%s)\n", fin, newf);
+			LOG(L_CRIT, "cannot open included file: %s (%s)\n", fbuf, newf);
 			return -1;
 		}
-		LOG(L_DBG, "including file: %s (%s)\n", fin, newf);
+		LOG(L_DBG, "including file: %s (%s)\n", fbuf, newf);
 	} else {
-		newf = fin;
+		newf = fbuf;
 	}
 
+	/* make a copy in PKG if does not exist */
 	fn = sr_yy_fname_list;
 	while(fn!=0)
 	{
 		if(strcmp(fn->fname, newf)==0)
 		{
-			if(newf!=fin)
+			if(newf!=fbuf)
 				pkg_free(newf);
-			newf = fin;
+			newf = fbuf;
 			break;
 		}
 		fn = fn->next;
@@ -1362,21 +1412,21 @@ static int sr_push_yy_state(char *fin)
 		fn = (struct sr_yy_fname*)pkg_malloc(sizeof(struct sr_yy_fname));
 		if(fn==0)
 		{
-			if(newf!=fin)
+			if(newf!=fbuf)
 				pkg_free(newf);
 			LOG(L_CRIT, "no more pkg\n");
 			return -1;
 		}
-		if(newf==fin)
+		if(newf==fbuf)
 		{
-			fn->fname = (char*)pkg_malloc(strlen(fin)+1);
+			fn->fname = (char*)pkg_malloc(strlen(fbuf)+1);
 			if(fn->fname==0)
 			{
 				pkg_free(fn);
 				LOG(L_CRIT, "no more pkg!\n");
 				return -1;
 			}
-			strcpy(fn->fname, fin);
+			strcpy(fn->fname, fbuf);
 		} else {
 			fn->fname = newf;
 		}
