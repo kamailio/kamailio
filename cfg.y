@@ -236,6 +236,21 @@ static int case_check_type(struct case_stms* stms);
 static int case_check_default(struct case_stms* stms);
 
 
+extern int line;
+extern int column;
+extern int startcolumn;
+extern int startline;
+extern char *finame;
+
+#define set_cfg_pos(x) \
+	do{\
+		if(x) {\
+		(x)->cline = line;\
+		(x)->cfile = (finame!=0)?finame:((cfg_file!=0)?cfg_file:"default");\
+		}\
+	}while(0)
+
+
 %}
 
 %union {
@@ -2077,6 +2092,7 @@ if_cmd:
 		if ($2 && rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
 			$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, NOSUBTYPE, 0);
+			set_cfg_pos($$);
 		}else
 			YYERROR;
 	}
@@ -2084,6 +2100,7 @@ if_cmd:
 		if ($2 && rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
 			$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5);
+			set_cfg_pos($$);
 		}else
 			YYERROR;
 	}
@@ -2184,6 +2201,7 @@ switch_cmd:
 				yyerror("internal error");
 				YYABORT;
 			}
+			set_cfg_pos($$);
 		}
 	}
 	| SWITCH rval_expr LBRACE RBRACE {
@@ -2199,6 +2217,7 @@ switch_cmd:
 				yyerror("internal error");
 				YYABORT;
 			}
+			set_cfg_pos($$);
 		}
 	}
 	| SWITCH error { $$=0; yyerror ("bad expression in switch(...)"); }
@@ -2211,6 +2230,7 @@ while_cmd:
 		if ($2 && rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "while");
 			$$=mk_action( WHILE_T, 2, RVE_ST, $2, ACTIONS_ST, $3);
+			set_cfg_pos($$);
 		}else{
 			yyerror_at(&$2->fpos, "bad while(...) expression");
 			YYERROR;
@@ -2549,6 +2569,7 @@ rval_expr: rval						{ $$=$1;
 
 assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
 														 	  RVE_ST, $3);
+											set_cfg_pos($$);
 										}
 	;
 
@@ -2569,42 +2590,42 @@ avpflag_oper:
 	| ISAVPFLAGSET { $$ = -1; }
 	;
 cmd:
-	FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| FORWARD LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| FORWARD LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); }
-	| FORWARD LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| FORWARD LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| FORWARD LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); }
-	| FORWARD LPAREN URIHOST COMMA URIPORT RPAREN { $$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); }
-	| FORWARD LPAREN URIHOST COMMA NUMBER RPAREN {$$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); }
-	| FORWARD LPAREN URIHOST RPAREN { $$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); }
+	FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD LPAREN URIHOST COMMA URIPORT RPAREN { $$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$); }
+	| FORWARD LPAREN URIHOST COMMA NUMBER RPAREN {$$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD LPAREN URIHOST RPAREN { $$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); set_cfg_pos($$); }
 	| FORWARD error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| FORWARD LPAREN error RPAREN { $$=0; yyerror("bad forward argument"); }
-	| FORWARD_UDP LPAREN host RPAREN	{ $$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| FORWARD_UDP LPAREN STRING RPAREN	{ $$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| FORWARD_UDP LPAREN ip RPAREN	{ $$=mk_action(FORWARD_UDP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); }
-	| FORWARD_UDP LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| FORWARD_UDP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| FORWARD_UDP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_UDP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); }
-	| FORWARD_UDP LPAREN URIHOST COMMA URIPORT RPAREN {$$=mk_action(FORWARD_UDP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); }
-	| FORWARD_UDP LPAREN URIHOST COMMA NUMBER RPAREN { $$=mk_action(FORWARD_UDP_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); }
-	| FORWARD_UDP LPAREN URIHOST RPAREN { $$=mk_action(FORWARD_UDP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); }
+	| FORWARD_UDP LPAREN host RPAREN	{ $$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN STRING RPAREN	{ $$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN ip RPAREN	{ $$=mk_action(FORWARD_UDP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_UDP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_UDP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN URIHOST COMMA URIPORT RPAREN {$$=mk_action(FORWARD_UDP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN URIHOST COMMA NUMBER RPAREN { $$=mk_action(FORWARD_UDP_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_UDP LPAREN URIHOST RPAREN { $$=mk_action(FORWARD_UDP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); set_cfg_pos($$); }
 	| FORWARD_UDP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| FORWARD_UDP LPAREN error RPAREN { $$=0; yyerror("bad forward_udp argument"); }
-	| FORWARD_TCP LPAREN host RPAREN	{ $$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| FORWARD_TCP LPAREN STRING RPAREN	{ $$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| FORWARD_TCP LPAREN ip RPAREN	{ $$=mk_action(FORWARD_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); }
-	| FORWARD_TCP LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| FORWARD_TCP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| FORWARD_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); }
-	| FORWARD_TCP LPAREN URIHOST COMMA URIPORT RPAREN {$$=mk_action(FORWARD_TCP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); }
-	| FORWARD_TCP LPAREN URIHOST COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); }
-	| FORWARD_TCP LPAREN URIHOST RPAREN { $$=mk_action(FORWARD_TCP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); }
+	| FORWARD_TCP LPAREN host RPAREN	{ $$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN STRING RPAREN	{ $$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN ip RPAREN	{ $$=mk_action(FORWARD_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN URIHOST COMMA URIPORT RPAREN {$$=mk_action(FORWARD_TCP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN URIHOST COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| FORWARD_TCP LPAREN URIHOST RPAREN { $$=mk_action(FORWARD_TCP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); set_cfg_pos($$); }
 	| FORWARD_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| FORWARD_TCP LPAREN error RPAREN { $$=0; yyerror("bad forward_tcp argument"); }
 	| FORWARD_TLS LPAREN host RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2612,7 +2633,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN STRING RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2620,7 +2641,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN ip RPAREN	{
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_TLS_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2628,7 +2649,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN host COMMA NUMBER RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5);
+			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2636,7 +2657,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN STRING COMMA NUMBER RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5);
+			$$=mk_action(FORWARD_TLS_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2644,7 +2665,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN ip COMMA NUMBER RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5);
+			$$=mk_action(FORWARD_TLS_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2652,7 +2673,7 @@ cmd:
 					}
 	| FORWARD_TLS LPAREN URIHOST COMMA URIPORT RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, URIHOST_ST, 0, URIPORT_ST, 0);
+			$$=mk_action(FORWARD_TLS_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2660,7 +2681,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN URIHOST COMMA NUMBER RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5);
+			$$=mk_action(FORWARD_TLS_T, 2, URIHOST_ST, 0, NUMBER_ST, (void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2668,7 +2689,7 @@ cmd:
 	}
 	| FORWARD_TLS LPAREN URIHOST RPAREN {
 		#ifdef USE_TLS
-			$$=mk_action(FORWARD_TLS_T, 2, URIHOST_ST, 0, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_TLS_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2679,7 +2700,7 @@ cmd:
 									yyerror("bad forward_tls argument"); }
 	| FORWARD_SCTP LPAREN host RPAREN {
 		#ifdef USE_SCTP
-			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2687,7 +2708,7 @@ cmd:
 	}
 	| FORWARD_SCTP LPAREN STRING RPAREN {
 		#ifdef USE_SCTP
-			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2695,7 +2716,7 @@ cmd:
 	}
 	| FORWARD_SCTP LPAREN ip RPAREN	{
 		#ifdef USE_SCTP
-			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2704,7 +2725,7 @@ cmd:
 	| FORWARD_SCTP LPAREN host COMMA NUMBER RPAREN {
 		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST,
-							(void*)$5);
+							(void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2713,7 +2734,7 @@ cmd:
 	| FORWARD_SCTP LPAREN STRING COMMA NUMBER RPAREN {
 		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST,
-							(void*)$5);
+							(void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2722,7 +2743,7 @@ cmd:
 	| FORWARD_SCTP LPAREN ip COMMA NUMBER RPAREN {
 		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 
-							(void*)$5);
+							(void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2730,7 +2751,7 @@ cmd:
 					}
 	| FORWARD_SCTP LPAREN URIHOST COMMA URIPORT RPAREN {
 		#ifdef USE_SCTP
-			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0);
+			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2739,7 +2760,7 @@ cmd:
 	| FORWARD_SCTP LPAREN URIHOST COMMA NUMBER RPAREN {
 		#ifdef USE_SCTP
 			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST,
-							(void*)$5);
+							(void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("sctp support not compiled in");
@@ -2747,7 +2768,7 @@ cmd:
 	}
 	| FORWARD_SCTP LPAREN URIHOST RPAREN {
 		#ifdef USE_SCTP
-			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0);
+			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0); set_cfg_pos($$);
 		#else
 			$$=0;
 			yyerror("tls support not compiled in");
@@ -2756,25 +2777,26 @@ cmd:
 	| FORWARD_SCTP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| FORWARD_SCTP LPAREN error RPAREN { $$=0; 
 									yyerror("bad forward_tls argument"); }
-	| SEND LPAREN host RPAREN	{ $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| SEND LPAREN STRING RPAREN { $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| SEND LPAREN ip RPAREN		{ $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); }
-	| SEND LPAREN host COMMA NUMBER RPAREN	{ $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| SEND LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| SEND LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); }
+	| SEND LPAREN host RPAREN	{ $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| SEND LPAREN STRING RPAREN { $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| SEND LPAREN ip RPAREN		{ $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| SEND LPAREN host COMMA NUMBER RPAREN	{ $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| SEND LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| SEND LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
 	| SEND error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SEND LPAREN error RPAREN { $$=0; yyerror("bad send argument"); }
-	| SEND_TCP LPAREN host RPAREN	{ $$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| SEND_TCP LPAREN STRING RPAREN { $$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
-	| SEND_TCP LPAREN ip RPAREN	{ $$=mk_action(SEND_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); }
-	| SEND_TCP LPAREN host COMMA NUMBER RPAREN	{ $$=mk_action(	SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5);}
-	| SEND_TCP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); }
-	| SEND_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(SEND_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); }
+	| SEND_TCP LPAREN host RPAREN	{ $$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| SEND_TCP LPAREN STRING RPAREN { $$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| SEND_TCP LPAREN ip RPAREN	{ $$=mk_action(SEND_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| SEND_TCP LPAREN host COMMA NUMBER RPAREN	{ $$=mk_action(	SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$);}
+	| SEND_TCP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
+	| SEND_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(SEND_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
 	| SEND_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SEND_TCP LPAREN error RPAREN { $$=0; yyerror("bad send_tcp argument"); }
 	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST,
-										(void*)(L_DBG+1), STRING_ST, $3); }
-	| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)$3, STRING_ST, $5); }
+										(void*)(L_DBG+1), STRING_ST, $3);
+									set_cfg_pos($$); }
+	| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)$3, STRING_ST, $5); set_cfg_pos($$); }
 	| LOG_TOK error 		{ $$=0; yyerror("missing '(' or ')' ?"); }
 	| LOG_TOK LPAREN error RPAREN	{ $$=0; yyerror("bad log argument"); }
 	| SETFLAG LPAREN NUMBER RPAREN	{
@@ -2782,42 +2804,49 @@ cmd:
 								yyerror("bad flag value");
 							$$=mk_action(SETFLAG_T, 1, NUMBER_ST,
 													(void*)$3);
+							set_cfg_pos($$);
 									}
 	| SETFLAG LPAREN flag_name RPAREN	{
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(SETFLAG_T, 1, NUMBER_ST,
 										(void*)(long)i_tmp);
+							set_cfg_pos($$);
 									}
 	| SETFLAG error			{ $$=0; yyerror("missing '(' or ')'?"); }
 	| RESETFLAG LPAREN NUMBER RPAREN {
 							if (check_flag($3)==-1)
 								yyerror("bad flag value");
 							$$=mk_action(RESETFLAG_T, 1, NUMBER_ST, (void*)$3);
+							set_cfg_pos($$);
 									}
 	| RESETFLAG LPAREN flag_name RPAREN	{
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(RESETFLAG_T, 1, NUMBER_ST,
 										(void*)(long)i_tmp);
+							set_cfg_pos($$);
 									}
 	| RESETFLAG error		{ $$=0; yyerror("missing '(' or ')'?"); }
 	| ISFLAGSET LPAREN NUMBER RPAREN {
 							if (check_flag($3)==-1)
 								yyerror("bad flag value");
 							$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST, (void*)$3);
+							set_cfg_pos($$);
 									}
 	| ISFLAGSET LPAREN flag_name RPAREN	{
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST,
 										(void*)(long)i_tmp);
+							set_cfg_pos($$);
 									}
 	| ISFLAGSET error { $$=0; yyerror("missing '(' or ')'?"); }
 	| avpflag_oper LPAREN attr_id_any_str COMMA flag_name RPAREN {
 		i_tmp=get_avpflag_no($5);
 		if (i_tmp==0) yyerror("avpflag not declared");
 		$$=mk_action(AVPFLAG_OPER_T, 3, AVP_ST, $3, NUMBER_ST, (void*)(long)i_tmp, NUMBER_ST, (void*)$1);
+		set_cfg_pos($$);
 	}
 	| avpflag_oper LPAREN attr_id_any_str COMMA error RPAREN {
 		$$=0; yyerror("error parsing flag name");
@@ -2827,7 +2856,9 @@ cmd:
 	}
 	| avpflag_oper LPAREN error RPAREN { $$=0; yyerror("bad parameters"); }
 	| avpflag_oper error { $$=0; yyerror("missing '(' or ')'?"); }
-	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5); }
+	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5);
+			set_cfg_pos($$);
+	}
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error argument"); }
 	| ROUTE LPAREN route_name RPAREN	{
@@ -2837,23 +2868,24 @@ cmd:
 							YYABORT;
 						}
 						$$=mk_action(ROUTE_T, 1, NUMBER_ST,(void*)(long)i_tmp);
+						set_cfg_pos($$);
 										}
 	| ROUTE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ROUTE LPAREN error RPAREN { $$=0; yyerror("bad route argument"); }
-	| EXEC LPAREN STRING RPAREN	{ $$=mk_action(EXEC_T, 1, STRING_ST, $3); }
-	| SET_HOST LPAREN STRING RPAREN { $$=mk_action(SET_HOST_T, 1, STRING_ST, $3); }
+	| EXEC LPAREN STRING RPAREN	{ $$=mk_action(EXEC_T, 1, STRING_ST, $3); set_cfg_pos($$); }
+	| SET_HOST LPAREN STRING RPAREN { $$=mk_action(SET_HOST_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_HOST error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_HOST LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| PREFIX LPAREN STRING RPAREN { $$=mk_action(PREFIX_T, 1, STRING_ST,  $3); }
+	| PREFIX LPAREN STRING RPAREN { $$=mk_action(PREFIX_T, 1, STRING_ST,  $3); set_cfg_pos($$); }
 	| PREFIX error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| PREFIX LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| STRIP_TAIL LPAREN NUMBER RPAREN { $$=mk_action(STRIP_TAIL_T, 1, NUMBER_ST, (void*)$3); }
+	| STRIP_TAIL LPAREN NUMBER RPAREN { $$=mk_action(STRIP_TAIL_T, 1, NUMBER_ST, (void*)$3); set_cfg_pos($$); }
 	| STRIP_TAIL error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| STRIP_TAIL LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
-	| STRIP LPAREN NUMBER RPAREN { $$=mk_action(STRIP_T, 1, NUMBER_ST, (void*) $3); }
+	| STRIP LPAREN NUMBER RPAREN { $$=mk_action(STRIP_T, 1, NUMBER_ST, (void*) $3); set_cfg_pos($$); }
 	| STRIP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
-	| SET_USERPHONE LPAREN RPAREN { $$=mk_action(SET_USERPHONE_T, 0); }
+	| SET_USERPHONE LPAREN RPAREN { $$=mk_action(SET_USERPHONE_T, 0); set_cfg_pos($$); }
 	| SET_USERPHONE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN {
 		qvalue_t q;
@@ -2861,37 +2893,39 @@ cmd:
 			yyerror("bad argument, q value expected");
 		}
 		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)(long)q);
+		set_cfg_pos($$);
 	}
-	| APPEND_BRANCH LPAREN STRING RPAREN { $$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)Q_UNSPECIFIED); }
-	| APPEND_BRANCH LPAREN RPAREN { $$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0, NUMBER_ST, (void *)Q_UNSPECIFIED); }
-	| APPEND_BRANCH {  $$=mk_action( APPEND_BRANCH_T, 1, STRING_ST, 0); }
-	| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORT_T, 1, STRING_ST, $3); }
+	| APPEND_BRANCH LPAREN STRING RPAREN { $$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)Q_UNSPECIFIED); set_cfg_pos($$); }
+	| APPEND_BRANCH LPAREN RPAREN { $$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0, NUMBER_ST, (void *)Q_UNSPECIFIED); set_cfg_pos($$); }
+	| APPEND_BRANCH {  $$=mk_action( APPEND_BRANCH_T, 1, STRING_ST, 0); set_cfg_pos($$); }
+	| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORT_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| SET_HOSTPORTTRANS LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORTTRANS_T, 1, STRING_ST, $3); }
+	| SET_HOSTPORTTRANS LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORTTRANS_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_HOSTPORTTRANS error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_HOSTPORTTRANS LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| SET_PORT LPAREN STRING RPAREN { $$=mk_action(SET_PORT_T, 1, STRING_ST, $3); }
+	| SET_PORT LPAREN STRING RPAREN { $$=mk_action(SET_PORT_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_PORT error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| SET_USER LPAREN STRING RPAREN { $$=mk_action(SET_USER_T, 1, STRING_ST, $3); }
+	| SET_USER LPAREN STRING RPAREN { $$=mk_action(SET_USER_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_USER error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_USER LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| SET_USERPASS LPAREN STRING RPAREN { $$=mk_action(SET_USERPASS_T, 1, STRING_ST, $3); }
+	| SET_USERPASS LPAREN STRING RPAREN { $$=mk_action(SET_USERPASS_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_USERPASS error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_USERPASS LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| SET_URI LPAREN STRING RPAREN { $$=mk_action(SET_URI_T, 1, STRING_ST,$3); }
+	| SET_URI LPAREN STRING RPAREN { $$=mk_action(SET_URI_T, 1, STRING_ST,$3); set_cfg_pos($$); }
 	| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-	| REVERT_URI LPAREN RPAREN { $$=mk_action(REVERT_URI_T, 0); }
-	| REVERT_URI { $$=mk_action(REVERT_URI_T, 0); }
-	| FORCE_RPORT LPAREN RPAREN	{ $$=mk_action(FORCE_RPORT_T, 0); }
-	| FORCE_RPORT	{$$=mk_action(FORCE_RPORT_T, 0); }
-	| ADD_LOCAL_RPORT LPAREN RPAREN	{ $$=mk_action(ADD_LOCAL_RPORT_T, 0); }
-	| ADD_LOCAL_RPORT	{$$=mk_action(ADD_LOCAL_RPORT_T, 0); }
+	| REVERT_URI LPAREN RPAREN { $$=mk_action(REVERT_URI_T, 0); set_cfg_pos($$); }
+	| REVERT_URI { $$=mk_action(REVERT_URI_T, 0); set_cfg_pos($$); }
+	| FORCE_RPORT LPAREN RPAREN	{ $$=mk_action(FORCE_RPORT_T, 0); set_cfg_pos($$); }
+	| FORCE_RPORT	{$$=mk_action(FORCE_RPORT_T, 0); set_cfg_pos($$); }
+	| ADD_LOCAL_RPORT LPAREN RPAREN	{ $$=mk_action(ADD_LOCAL_RPORT_T, 0); set_cfg_pos($$); }
+	| ADD_LOCAL_RPORT	{$$=mk_action(ADD_LOCAL_RPORT_T, 0); set_cfg_pos($$); }
 	| FORCE_TCP_ALIAS LPAREN NUMBER RPAREN	{
 		#ifdef USE_TCP
 			$$=mk_action(FORCE_TCP_ALIAS_T, 1, NUMBER_ST, (void*)$3);
+			set_cfg_pos($$);
 		#else
 			yyerror("tcp support not compiled in");
 		#endif
@@ -2899,6 +2933,7 @@ cmd:
 	| FORCE_TCP_ALIAS LPAREN RPAREN	{
 		#ifdef USE_TCP
 			$$=mk_action(FORCE_TCP_ALIAS_T, 0);
+			set_cfg_pos($$);
 		#else
 			yyerror("tcp support not compiled in");
 		#endif
@@ -2906,13 +2941,14 @@ cmd:
 	| FORCE_TCP_ALIAS				{
 		#ifdef USE_TCP
 			$$=mk_action(FORCE_TCP_ALIAS_T, 0);
+			set_cfg_pos($$);
 		#else
 			yyerror("tcp support not compiled in");
 		#endif
 	}
 	| FORCE_TCP_ALIAS LPAREN error RPAREN	{$$=0; yyerror("bad argument, number expected"); }
 	| UDP_MTU_TRY_PROTO LPAREN proto RPAREN
-		{ $$=mk_action(UDP_MTU_TRY_PROTO_T, 1, NUMBER_ST, $3); }
+		{ $$=mk_action(UDP_MTU_TRY_PROTO_T, 1, NUMBER_ST, $3); set_cfg_pos($$); }
 	| UDP_MTU_TRY_PROTO LPAREN error RPAREN
 		{ $$=0; yyerror("bad argument, UDP, TCP, TLS or SCTP expected"); }
 	| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
@@ -2923,6 +2959,7 @@ cmd:
 			str_tmp->s=$3;
 			str_tmp->len=$3?strlen($3):0;
 			$$=mk_action(SET_ADV_ADDR_T, 1, STR_ST, str_tmp);
+			set_cfg_pos($$);
 		}
 	}
 	| SET_ADV_ADDRESS LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
@@ -2939,6 +2976,7 @@ cmd:
 				memcpy(str_tmp->s, tmp, i_tmp);
 				str_tmp->len=i_tmp;
 				$$=mk_action(SET_ADV_PORT_T, 1, STR_ST, str_tmp);
+				set_cfg_pos($$);
 			}
 		}
 	}
@@ -2946,6 +2984,7 @@ cmd:
 	| SET_ADV_PORT  error {$$=0; yyerror("missing '(' or ')' ?"); }
 	| FORCE_SEND_SOCKET LPAREN phostport RPAREN { 
 		$$=mk_action(FORCE_SEND_SOCKET_T, 1, SOCKID_ST, $3);
+		set_cfg_pos($$);
 	}
 	| FORCE_SEND_SOCKET LPAREN error RPAREN {
 		$$=0; yyerror("bad argument, [proto:]host[:port] expected");
@@ -2994,6 +3033,7 @@ cmd:
 			}
 		}
 		$$ = mod_func_action;
+		set_cfg_pos($$);
 	}
 	| ID error					{ yyerror("'('')' expected (function call)");}
 	;
@@ -3029,48 +3069,47 @@ func_param:
 ret_cmd:
 	DROP LPAREN RPAREN		{
 		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST,
-						(void*)(DROP_R_F|EXIT_R_F)); 
+						(void*)(DROP_R_F|EXIT_R_F)); set_cfg_pos($$);
 	}
 	| DROP rval_expr	{
 		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST,
-						(void*)(DROP_R_F|EXIT_R_F)); 
+						(void*)(DROP_R_F|EXIT_R_F)); set_cfg_pos($$);
 	}
 	| DROP				{
 		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, 
-						(void*)(DROP_R_F|EXIT_R_F)); 
+						(void*)(DROP_R_F|EXIT_R_F)); set_cfg_pos($$);
 	}
 	| EXIT LPAREN RPAREN		{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F);
+		set_cfg_pos($$);
 	}
 	| EXIT rval_expr	{
 		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST, (void*)EXIT_R_F);
+		set_cfg_pos($$);
 	}
 	| EXIT				{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F); 
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F);
+		set_cfg_pos($$);
 	}
 	| RETURN			{
 		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
-						(void*)RETURN_R_F);
+						(void*)RETURN_R_F); set_cfg_pos($$);
 	}
 	| RETURN  LPAREN RPAREN		{
 		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
-						(void*)RETURN_R_F);
+						(void*)RETURN_R_F); set_cfg_pos($$);
 	}
 	| RETURN rval_expr	{
 		$$=mk_action(DROP_T, 2, RVE_ST, $2, NUMBER_ST, (void*)RETURN_R_F);
+		set_cfg_pos($$);
 	}
 	| BREAK				{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)BREAK_R_F); 
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)BREAK_R_F);
+		set_cfg_pos($$);
 	}
 	;
 
 %%
-
-extern int line;
-extern int column;
-extern int startcolumn;
-extern int startline;
-extern char *finame;
 
 static void get_cpos(struct cfg_pos* pos)
 {

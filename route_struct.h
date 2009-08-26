@@ -181,6 +181,8 @@ typedef struct {
 #define MAX_ACTIONS (2+6)
 
 struct action{
+	int cline;
+	char *cfile;
 	enum action_type type;  /* forward, drop, log, send ...*/
 	int count;
 	struct action* next;
