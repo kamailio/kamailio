@@ -42,6 +42,7 @@
 #include "../../action.h"
 #include "../../flags.h"
 #include "../../pvar.h"
+#include "../../dset.h"
 #include "../../mem/mem.h"
 #include "../../route_struct.h"
 #include "../../qvalue.h"
@@ -1185,11 +1186,8 @@ append_branch(self, branch = NULL, qval = NULL)
 	char *qval;
   PREINIT:
 	struct sip_msg *msg = sv2msg(self);
-	action_u_t elems[MAX_ACTIONS];
-	qvalue_t q;
-	int err = 0;
-	struct action *act = NULL;
-	struct run_act_ctx ra_ctx;
+	qvalue_t q = Q_UNSPECIFIED;
+	str b = {0, 0};
   INIT:
   CODE:
   	if (!msg) {
@@ -1200,43 +1198,17 @@ append_branch(self, branch = NULL, qval = NULL)
 			if (str2q(&q, qval, strlen(qval)) < 0) {
 				LM_ERR("append_branch: Bad q value.");
 			} else { /* branch and qval set */
-				elems[0].type = STRING_ST;
-				elems[0].u.data = branch;
-				elems[1].type = NUMBER_ST;
-				elems[1].u.data = (void *)(long)q;
-				act = mk_action(APPEND_BRANCH_T,
-						2,
-						elems,
-						0);
+				b.s = branch;
+				b.len = strlen(branch);
 			}
 		} else {
 			if (branch) { /* branch set, qval unset */
-				elems[0].type = STRING_ST;
-				elems[0].u.data = branch;
-				elems[1].type = NUMBER_ST;
-				elems[1].u.data = (void *)Q_UNSPECIFIED;
-				act = mk_action(APPEND_BRANCH_T,
-						2,
-						elems,
-						0);
-			} else { /* neither branch nor qval set */
-				elems[0].type = STRING_ST;
-				elems[0].u.data = NULL;
-				elems[1].type = NUMBER_ST;
-				elems[1].u.data = (void *)Q_UNSPECIFIED;
-				act = mk_action(APPEND_BRANCH_T,
-						2,
-						elems,
-						0);
+				b.s = branch;
+				b.len = strlen(branch);
 			}
 		}
 
-		if (act) {
-		    init_run_actions_ctx(&ra_ctx);
-			RETVAL = do_action(&ra_ctx, act, msg);
-		} else {
-			RETVAL = -1;
-		}
+		RETVAL = km_append_branch(msg, (b.s!=0)?&b:0, 0, 0, q, 0, 0);
 	}
   OUTPUT:
 	RETVAL
