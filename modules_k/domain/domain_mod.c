@@ -40,6 +40,7 @@
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../pvar.h"
+#include "../../forward.h"
 #include "../../mod_fix.h"
 #include "domain.h"
 #include "mi.h"
@@ -151,6 +152,11 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(register_check_self_func(domain_check_self)<0)
+	{
+		LM_ERR("failed to register check self function\n");
 		return -1;
 	}
 

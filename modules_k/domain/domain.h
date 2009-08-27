@@ -54,6 +54,8 @@ int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2);
 
 int is_domain_local(str* domain);
 
+int domain_check_self(str* host, unsigned short port, unsigned short proto);
+
 int domain_db_bind(const str* db_url);
 int domain_db_init(const str* db_url);
 void domain_db_close(void);

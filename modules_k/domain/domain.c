@@ -220,6 +220,12 @@ int w_is_domain_local(struct sip_msg* _msg, char* _sp, char* _s2)
     }
 }
 
+int domain_check_self(str* host, unsigned short port, unsigned short proto)
+{
+	if(is_domain_local(host)>0)
+		return 1;
+	return 0;
+}
 
 /*
  * Reload domain table to new hash table and when done, make new hash table
