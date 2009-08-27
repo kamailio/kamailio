@@ -301,7 +301,44 @@ not_forced:
 	return send_sock;
 }
 
+static struct _check_self_func {
+	check_self_f fself;
+	struct _check_self_func *next;
+} *_check_self_func_list = NULL;
 
+/* register a function to be called when matching for myself
+ * - return 0 on success, -1 on error
+ * - f must have same prototype as check_self() and return same kind of values
+ */
+int register_check_self_func(check_self_f f)
+{
+	struct _check_self_func *nf = 0;
+	nf=(struct _check_self_func*)pkg_malloc(sizeof(struct _check_self_func));
+	if(nf==0)
+	{
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	nf->fself = f;
+	nf->next = _check_self_func_list;
+	_check_self_func_list = nf;
+	return 0;
+}
+
+/* run registered check self functions
+ * returns 1 if true, 0 if false
+ */
+int run_check_self_func(str* host, unsigned short port, unsigned short proto)
+{
+	struct _check_self_func *sf = 0;
+
+	if(_check_self_func_list==NULL)
+		return 0;
+	for(sf=_check_self_func_list; sf; sf=sf->next)
+		if(sf->fself(host, port, proto)==1)
+			return 1;
+	return 0;
+}
 
 /* checks if the proto: host:port is one of the address we listen on;
  * if port==0, the  port number is ignored
@@ -316,7 +353,8 @@ int check_self(str* host, unsigned short port, unsigned short proto)
 	/* try to look into the aliases*/
 	if (grep_aliases(host->s, host->len, port, proto)==0){
 		DBG("check_self: host != me\n");
-		return 0;
+		return (_check_self_func_list==NULL)?0:run_check_self_func(host,
+														port, proto);
 	}
 found:
 	return 1;
