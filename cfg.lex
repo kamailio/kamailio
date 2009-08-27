@@ -577,7 +577,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
-<INITIAL>{INCLUDE}  { BEGIN(INCL); }
+<INITIAL>{INCLUDE}  { count(); BEGIN(INCL); }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
