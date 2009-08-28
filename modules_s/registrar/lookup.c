@@ -44,6 +44,7 @@
 #include "../usrloc/usrloc.h"
 #include "../../error.h"
 #include "../../id.h"
+#include "../../sr_module.h"
 #include "common.h"
 #include "regtime.h"
 #include "reg_mod.h"

@@ -46,6 +46,7 @@
 #include "../../qvalue.h"
 #include "../../id.h"
 #include "../../globals.h"
+#include "../../sr_module.h"
 #include "common.h"
 #include "sip_msg.h"
 #include "rerrno.h"
