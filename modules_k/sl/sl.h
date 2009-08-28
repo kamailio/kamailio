@@ -31,24 +31,9 @@
  * - Module: \ref sl
  */
 
-#ifndef _SL_H_
-#define _SL_H_
+#ifndef _SL_K_H_
+#define _SL_K_H_
 
-#include "../../lib/kcore/statistics.h"
-
-/* module parameter */
-extern int sl_enable_stats;
-
-/* statistic variables */
-extern stat_var *tx_1xx_rpls;
-extern stat_var *tx_2xx_rpls;
-extern stat_var *tx_3xx_rpls;
-extern stat_var *tx_4xx_rpls;
-extern stat_var *tx_5xx_rpls;
-extern stat_var *tx_6xx_rpls;
-extern stat_var *sent_rpls;
-extern stat_var *sent_err_rpls;
-extern stat_var *rcv_acks;
-
+#include "../../modules_s/sl/sl.h"
 
 #endif

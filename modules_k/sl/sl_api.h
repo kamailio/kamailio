@@ -36,13 +36,13 @@
 typedef int (*get_reply_totag_f)(struct sip_msg *msg, str *tag);
 typedef int (*send_reply_f)(struct sip_msg *msg, int code, str *reason);
 typedef int (*sl_get_reply_totag_f)(struct sip_msg *msg, str *tag);
-typedef int (*sl_send_reply_f)(struct sip_msg *msg, int code, str *reason);
+typedef int (*sl_send_reply_str_f)(struct sip_msg *msg, int code, str *reason);
 typedef int (*sl_send_reply_dlg_f)(struct sip_msg *msg, int code, str *reason,
 		str *tag);
 
 /*! SL API bindings */
 struct sl_binds {
-	sl_send_reply_f reply;
+	sl_send_reply_str_f reply;
 	sl_send_reply_dlg_f reply_dlg;
 	sl_get_reply_totag_f sl_get_reply_totag;
 	send_reply_f send_reply;

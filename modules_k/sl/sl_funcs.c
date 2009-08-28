@@ -67,6 +67,23 @@
 #include "sl_cb.h"
 #include "../../usr_avp.h"
 #include <string.h>
+#include "../../lib/kcore/statistics.h"
+
+/* module parameter */
+extern int sl_enable_stats;
+
+/* statistic variables */
+extern stat_var *tx_1xx_rpls;
+extern stat_var *tx_2xx_rpls;
+extern stat_var *tx_3xx_rpls;
+extern stat_var *tx_4xx_rpls;
+extern stat_var *tx_5xx_rpls;
+extern stat_var *tx_6xx_rpls;
+extern stat_var *sent_rpls;
+extern stat_var *sent_err_rpls;
+extern stat_var *rcv_acks;
+
+
 /* to-tag including pre-calculated and fixed part */
 static char           sl_tag_buf[TOTAG_VALUE_LEN];
 static str            sl_tag = {sl_tag_buf,TOTAG_VALUE_LEN};
@@ -254,6 +271,15 @@ error:
 int sl_send_reply(struct sip_msg *msg ,int code, str *text)
 {
 	return sl_send_reply_helper(msg, code, text, 0);
+}
+
+/*! small wrapper around sl_send_reply_helper */
+int sl_send_reply_sz(struct sip_msg *msg ,int code, char *text)
+{
+	str r;
+	r.s = text;
+	r.len = strlen(text);
+	return sl_send_reply_helper(msg, code, &r, 0);
 }
 
 

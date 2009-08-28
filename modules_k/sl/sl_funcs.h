@@ -39,6 +39,7 @@
 int sl_startup(void);
 int sl_shutdown(void);
 int sl_send_reply( struct sip_msg *msg, int code, str *reason);
+int sl_send_reply_sz( struct sip_msg *msg, int code, char *reason);
 int sl_send_reply_dlg( struct sip_msg *msg, int code, str *reason, str *tag);
 int sl_filter_ACK( struct sip_msg *msg, unsigned int flags, void *foo );
 int sl_reply_error( struct sip_msg *msg );
