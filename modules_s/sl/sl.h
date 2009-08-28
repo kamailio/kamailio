@@ -27,7 +27,9 @@
 #ifndef _SL_H
 #define _SL_H
 
-#include "sl_funcs.h"
+#include "../../parser/msg_parser.h"
+
+typedef int (*sl_send_reply_f)(struct sip_msg* msg, int code, char* reason);
 
 typedef struct sl_api {
 	sl_send_reply_f reply;  /* Send stateless reply */
