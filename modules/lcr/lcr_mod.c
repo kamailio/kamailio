@@ -448,7 +448,7 @@ static int mod_init(void)
 
     /* Check value of lcr_count */
     if (lcr_count < 1) {
-	LM_ERR("invalid lcr_count value <%d>\n", lcr_count);
+	LM_ERR("invalid lcr_count module parameter value <%d>\n", lcr_count);
 	return -1;
     }
 
@@ -953,7 +953,7 @@ int reload_gws_and_lcrs(int lcr_id)
     struct gw_grp gw_grps[MAX_NO_OF_GWS];
     struct gw_info *gws, *gwtp_tmp;
     struct lcr_info **lcrs, **lcrtp_tmp;
-
+	
     key_cols[0] = &lcr_id_col;
     op[0] = OP_EQ;
     VAL_TYPE(vals) = DB1_INT;
@@ -1704,13 +1704,13 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     struct lcr_info **lcrs, *lcr_rec, *pl;
     struct gw_info *gws;
 
-    /* Get parameter values */
+    /* Get and check parameter values */
     if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
 	LM_ERR("no lcr_id param value\n");
 	return -1;
     }
-    if ((lcr_id < 1) && (lcr_id > lcr_count)) {
-	LM_ERR("invalid lcr_id param value\n");
+    if ((lcr_id < 1) || (lcr_id > lcr_count)) {
+	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
 
@@ -2096,7 +2096,7 @@ static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
 {
     struct gw_info *res, *gws;
     int_str val;
-
+	
     /* Use gws with index lcr_id */
     gws = gwtp[lcr_id];
 
@@ -2126,19 +2126,20 @@ static int from_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
     int lcr_id;
     unsigned int src_addr;
 
-    /* Get parameter values */
+    /* Get and check parameter value */
     if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
 	LM_ERR("no lcr_id param value\n");
 	return -1;
     }
-    if ((lcr_id < 1) && (lcr_id > lcr_count)) {
-	LM_ERR("invalid lcr_id param value\n");
+    if ((lcr_id < 1) || (lcr_id > lcr_count)) {
+	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
 
     /* Get source address */
     src_addr = _m->rcv.src_ip.u.addr32[0];
 
+    /* Do test */
     return do_from_gw(_m, lcr_id, src_addr);
 }
 
@@ -2153,15 +2154,16 @@ static int from_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
     pv_value_t pv_val;
     struct ip_addr *ip;
 
-    /* Get parameter values */
+    /* Get and check parameter values */
     if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
 	LM_ERR("no lcr_id param value\n");
 	return -1;
     }
-    if ((lcr_id < 1) && (lcr_id > lcr_count)) {
-	LM_ERR("invalid lcr_id param value\n");
+    if ((lcr_id < 1) || (lcr_id > lcr_count)) {
+	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
+
     if (_addr && (pv_get_spec_value(_m, (pv_spec_t *)_addr, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_INT) {
 	    src_addr = pv_val.ri;
@@ -2280,13 +2282,13 @@ static int to_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
     unsigned int dst_addr;
     struct ip_addr *ip;
 
-    /* Get parameter value */
+    /* Get and check parameter value */
     if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
 	LM_ERR("no lcr_id param value\n");
 	return -1;
     }
-    if ((lcr_id < 1) && (lcr_id > lcr_count)) {
-	LM_ERR("invalid lcr_id param value\n");
+    if ((lcr_id < 1) || (lcr_id > lcr_count)) {
+	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
 
@@ -2323,15 +2325,16 @@ static int to_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
     pv_value_t pv_val;
     struct ip_addr *ip;
 
-    /* Get parameter values */
+    /* Get and check parameter values */
     if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
 	LM_ERR("no lcr_id param value\n");
 	return -1;
     }
-    if ((lcr_id < 1) && (lcr_id > lcr_count)) {
-	LM_ERR("invalid lcr_id param value\n");
+    if ((lcr_id < 1) || (lcr_id > lcr_count)) {
+	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
+
     if (_addr && (pv_get_spec_value(_m, (pv_spec_t *)_addr, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_INT) {
 	    dst_addr = pv_val.ri;
