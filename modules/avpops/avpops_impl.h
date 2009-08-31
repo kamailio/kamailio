@@ -41,7 +41,7 @@
 
 /* flags used inside avps */
 /* IMPORTANT: flagss 0-4 are reserved by core; 8-15 by script */
-#define AVP_IS_IN_DB    (1<<7)
+#define AVP_IS_IN_DB    (1<<12)
 
 /* DB flags */
 #define AVPOPS_DB_NAME_INT   (1<<1)

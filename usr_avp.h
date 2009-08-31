@@ -153,7 +153,11 @@ typedef struct avp_spec {
 #define AVP_INDEX_BACKWARD	(1<<11)
 #define AVP_INDEX_ALL		(AVP_INDEX_FORWARD | AVP_INDEX_BACKWARD)
 
-#define AVP_CUSTOM_FLAGS	12
+/* AVP DB flag used by avpops module - defined in avpops
+ * - kept here for reference */
+// #define AVP_IS_IN_DB    (1<<12)
+
+#define AVP_CUSTOM_FLAGS	13
 
 #define GALIAS_CHAR_MARKER  '$'
 
