@@ -220,7 +220,7 @@ if(is_present_hf("Authorization"))
 		<listitem>
 		<para>
 			<emphasis>size</emphasis> - number specifying the size of hash
-			table. The number of entries in the table is 2^size
+			table.  Larger value means less collisions. The number of entries in the table is 2^size.
 		</para>
 		</listitem>
 		<listitem>
