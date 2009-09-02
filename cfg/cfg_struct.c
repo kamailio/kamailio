@@ -371,12 +371,49 @@ void cfg_destroy(void)
 	}
 }
 
-/* per-child process init function */
+/* Register num number of child processes that will
+ * keep updating their local configuration.
+ * This function needs to be called from mod_init
+ * before any child process is forked.
+ */
+void cfg_register_child(int num)
+{
+	/* Increase the reference counter of the first list item
+	 * with the number of child processes.
+	 * If the counter was increased after forking then it
+	 * could happen that a child process is forked and updates
+	 * its local config very fast before the other processes have
+	 * a chance to refer to the list item. The result is that the
+	 * item is freed by the "fast" child process and the other
+	 * processes do not see the beginning of the list and miss
+	 * some config changes.
+	 */
+	atomic_add(&((*cfg_child_cb_first)->refcnt), num);
+}
+
+/* per-child process init function.
+ * It needs to be called from the forked process.
+ * cfg_register_child() must be called before this function!
+ */
 int cfg_child_init(void)
 {
 	/* set the callback list pointer to the beginning of the list */
 	cfg_child_cb = *cfg_child_cb_first;
-	atomic_inc(&cfg_child_cb->refcnt);
+
+	return 0;
+}
+
+/* Child process init function that can be called
+ * without cfg_register_child().
+ * Note that the child process may miss some configuration changes.
+ */
+int cfg_late_child_init(void)
+{
+	/* set the callback list pointer to the beginning of the list */
+	CFG_LOCK();
+	atomic_inc(&((*cfg_child_cb_first)->refcnt));
+	cfg_child_cb = *cfg_child_cb_first;
+	CFG_UNLOCK();
 
 	return 0;
 }

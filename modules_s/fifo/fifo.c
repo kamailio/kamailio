@@ -33,6 +33,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../pt.h"
+#include "../../cfg/cfg_struct.h"
 #include "fifo_server.h"
 #include "fifo.h"
 
@@ -82,7 +83,12 @@ static int mod_init(void)
 	     /* Signal to the core that we will be creating one
 	      * additional process
 	      */
-	if (fifo) register_procs(1);
+	if (fifo) {
+		register_procs(1);
+		/* The child process will keep updating its
+		 * local configuration */
+		cfg_register_child(1);
+	}
 	return 0;
 }
 

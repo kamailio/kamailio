@@ -334,6 +334,14 @@ update its own local configuration the following way:
 
 #include "../../cfg/cfg_struct.h"
 
+int mod_init(void)
+{
+	/* register the number of children
+	 * that will keep updating their local
+	 * configuration */
+	cfg_register_child(1);
+}
+
 void loop_forever(void)
 {
 	while(1) {
@@ -373,8 +381,13 @@ int new_process(void)
 	if (pid == 0) {
 		/* This is the child process */
 
-		/* initialize the config framework */
-		if (cfg_child_init()) return -1;
+		/* initialize the config framework
+		 * There is no chance to register the
+		 * number of forked processes from mod_init,
+		 * hence the late version of ...child_init()
+		 * needs to be called.
+		 */
+		if (cfg_late_child_init()) return -1;
 
 		loop_forever(); /* the function may return */
 

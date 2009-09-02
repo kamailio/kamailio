@@ -36,6 +36,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../pt.h"
+#include "../../cfg/cfg_struct.h"
 #include "ctrl_socks.h"
 #include "io_listener.h"
 
@@ -270,6 +271,8 @@ static int mod_init(void)
 		/* we will fork */
 		register_procs(1); /* we will be creating an extra process */
 		register_fds(fd_no);
+		/* The child process will keep updating its local configuration */
+		cfg_register_child(1);
 	}
 #ifdef USE_FIFO
 	fifo_rpc_init();
