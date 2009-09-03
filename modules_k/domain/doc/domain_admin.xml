@@ -117,6 +117,24 @@ modparam("domain", "domain_col", "domain_name")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>register_myself</varname> (integer)</title>
+		<para>
+			Register the list of domains to match 'myself' check:
+			0 means no myself registration, 1 means enable myself
+			registration.
+		</para>
+		<para>
+		Default value is 0 (disable).
+		</para>
+		<example>
+		<title>register_myself example</title>
+		<programlisting format="linespecific">
+modparam("domain", "register_myself", 1)
+</programlisting>
+		</example>
+	</section>
+
 	
 	</section>
 	<section>

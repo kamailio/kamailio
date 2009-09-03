@@ -77,6 +77,7 @@ static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 int db_mode = 0;			/* Database usage mode: 0 = no cache, 1 = cache */
 str domain_table = {DOMAIN_TABLE, DOMAIN_TABLE_LEN}; /* Name of domain table */
 str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};       /* Name of domain column */
+int domain_reg_myself = 0;
 
 /*
  * Other module variables
@@ -110,6 +111,7 @@ static param_export_t params[] = {
 	{"db_mode",        INT_PARAM, &db_mode       },
 	{"domain_table",   STR_PARAM, &domain_table.s},
 	{"domain_col",     STR_PARAM, &domain_col.s  },
+	{"register_myself",INT_PARAM, &domain_reg_myself},
 	{0, 0, 0}
 };
 
@@ -154,10 +156,13 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
-	if(register_check_self_func(domain_check_self)<0)
+	if(domain_reg_myself!=0)
 	{
-		LM_ERR("failed to register check self function\n");
-		return -1;
+		if(register_check_self_func(domain_check_self)<0)
+		{
+			LM_ERR("failed to register check self function\n");
+			return -1;
+		}
 	}
 
 	db_url.len = strlen(db_url.s);
