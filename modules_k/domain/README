@@ -12,41 +12,41 @@ Juha Heinanen
 
    Copyright © 2002-2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
-                              (Sa, 08 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date$
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
-        1.3. Exported Parameters
+        1. Overview
+        2. Dependencies
+        3. Exported Parameters
 
-              1.3.1. db_url (string)
-              1.3.2. db_mode (integer)
-              1.3.3. domain_table (string)
-              1.3.4. domain_col (string)
+              3.1. db_url (string)
+              3.2. db_mode (integer)
+              3.3. domain_table (string)
+              3.4. domain_col (string)
+              3.5. register_myself (integer)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. is_from_local()
-              1.4.2. is_uri_host_local()
-              1.4.3. is_domain_local(pseudo_variable)
+              4.1. is_from_local()
+              4.2. is_uri_host_local()
+              4.3. is_domain_local(pseudo_variable)
 
-        1.5. Exported MI Functions
+        5. Exported MI Functions
 
-              1.5.1. domain_reload
-              1.5.2. domain_dump
+              5.1. domain_reload
+              5.2. domain_dump
 
-        1.6. Known Limitations
+        6. Known Limitations
 
    2. Developer Guide
 
-        2.1. Available Functions
+        1. Available Functions
 
-              2.1.1. is_domain_local(domain)
+              1.1. is_domain_local(domain)
 
    List of Examples
 
@@ -54,51 +54,81 @@ Juha Heinanen
    1.2. db_mode example
    1.3. Setting domain_table parameter
    1.4. Setting domain_col parameter
-   1.5. is_from_local usage
-   1.6. is_uri_host_local usage
-   1.7. is_domain_local usage
+   1.5. register_myself example
+   1.6. is_from_local usage
+   1.7. is_uri_host_local usage
+   1.8. is_domain_local usage
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   Domain module implements checks that based on domain table
-   determine if a host part of an URI is "local" or not. A "local"
-   domain is one that the proxy is responsible for.
+   1. Overview
+   2. Dependencies
+   3. Exported Parameters
 
-   Domain module operates in caching or non-caching mode depending
-   on value of module parameter db_mode. In caching mode domain
-   module reads the contents of domain table into cache memory
-   when the module is loaded. After that domain table is re-read
-   only when module is given domain_reload fifo command. Any
-   changes in domain table must thus be followed by
-   "domain_reload" command in order to reflect them in module
-   behavior. In non-caching mode domain module always queries
-   domain table in the database.
+        3.1. db_url (string)
+        3.2. db_mode (integer)
+        3.3. domain_table (string)
+        3.4. domain_col (string)
+        3.5. register_myself (integer)
 
-   Caching is implemented using a hash table. The size of the hash
-   table is given by HASH_SIZE constant defined in domain_mod.h.
-   Its "factory default" value is 128.
+   4. Exported Functions
 
-1.2. Dependencies
+        4.1. is_from_local()
+        4.2. is_uri_host_local()
+        4.3. is_domain_local(pseudo_variable)
 
-   The module depends on the following modules (in the other words
-   the listed modules must be loaded before this module):
+   5. Exported MI Functions
+
+        5.1. domain_reload
+        5.2. domain_dump
+
+   6. Known Limitations
+
+1. Overview
+
+   Domain module implements checks that based on domain table determine if
+   a host part of an URI is "local" or not. A "local" domain is one that
+   the proxy is responsible for.
+
+   Domain module operates in caching or non-caching mode depending on
+   value of module parameter db_mode. In caching mode domain module reads
+   the contents of domain table into cache memory when the module is
+   loaded. After that domain table is re-read only when module is given
+   domain_reload fifo command. Any changes in domain table must thus be
+   followed by "domain_reload" command in order to reflect them in module
+   behavior. In non-caching mode domain module always queries domain table
+   in the database.
+
+   Caching is implemented using a hash table. The size of the hash table
+   is given by HASH_SIZE constant defined in domain_mod.h. Its "factory
+   default" value is 128.
+
+2. Dependencies
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
      * database -- Any database module
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. db_mode (integer)
+   3.3. domain_table (string)
+   3.4. domain_col (string)
+   3.5. register_myself (integer)
+
+3.1. db_url (string)
 
    This is URL of the database to be used.
 
-   Default value is
-   "mysql://openserro:openserro@localhost/openser"
+   Default value is "mysql://openserro:openserro@localhost/openser"
 
    Example 1.1. Setting db_url parameter
 modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 
-1.3.2. db_mode (integer)
+3.2. db_mode (integer)
 
    Database mode: 0 means non-caching, 1 means caching.
 
@@ -107,18 +137,18 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
    Example 1.2. db_mode example
 modparam("domain", "db_mode", 1)   # Use caching
 
-1.3.3. domain_table (string)
+3.3. domain_table (string)
 
-   Name of table containing names of local domains that the proxy
-   is responsible for. Local users must have in their sip uri a
-   host part that is equal to one of these domains.
+   Name of table containing names of local domains that the proxy is
+   responsible for. Local users must have in their sip uri a host part
+   that is equal to one of these domains.
 
    Default value is "domain".
 
    Example 1.3. Setting domain_table parameter
 modparam("domain", "domain_table", "new_name")
 
-1.3.4. domain_col (string)
+3.4. domain_col (string)
 
    Name of column containing domains in domain table.
 
@@ -127,58 +157,70 @@ modparam("domain", "domain_table", "new_name")
    Example 1.4. Setting domain_col parameter
 modparam("domain", "domain_col", "domain_name")
 
-1.4. Exported Functions
+3.5. register_myself (integer)
 
-1.4.1. is_from_local()
+   Register the list of domains to match 'myself' check: 0 means no myself
+   registration, 1 means enable myself registration.
 
-   Checks based on domain table if host part of From header uri is
-   one of the local domains that the proxy is responsible for
+   Default value is 0 (disable).
+
+   Example 1.5. register_myself example
+modparam("domain", "register_myself", 1)
+
+4. Exported Functions
+
+   4.1. is_from_local()
+   4.2. is_uri_host_local()
+   4.3. is_domain_local(pseudo_variable)
+
+4.1. is_from_local()
+
+   Checks based on domain table if host part of From header uri is one of
+   the local domains that the proxy is responsible for
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.5. is_from_local usage
+   Example 1.6. is_from_local usage
 ...
 if (is_from_local()) {
         ...
 };
 ...
 
-1.4.2. is_uri_host_local()
+4.2. is_uri_host_local()
 
-   If called from route or failure route block, checks based on
-   domain table if host part of Request-URI is one of the local
-   domains that the proxy is responsible for. If called from
-   branch route, the test is made on host part of URI of first
-   branch, which thus must have been appended to the transaction
-   before is_uri_host_local() is called.
+   If called from route or failure route block, checks based on domain
+   table if host part of Request-URI is one of the local domains that the
+   proxy is responsible for. If called from branch route, the test is made
+   on host part of URI of first branch, which thus must have been appended
+   to the transaction before is_uri_host_local() is called.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.6. is_uri_host_local usage
+   Example 1.7. is_uri_host_local usage
 ...
 if (is_uri_host_local()) {
         ...
 };
 ...
 
-1.4.3. is_domain_local(pseudo_variable)
+4.3. is_domain_local(pseudo_variable)
 
-   This function checks if the domain contained in the
-   pseudo_variable is local.
+   This function checks if the domain contained in the pseudo_variable is
+   local.
 
    This function is a generalized form of the is_from_local() and
-   is_uri_host_local() functions, being able to completely replace
-   them and also extends them by allowing the domain to be taken
-   from any of the above mentioned sources. The following
-   equivalences exist:
+   is_uri_host_local() functions, being able to completely replace them
+   and also extends them by allowing the domain to be taken from any of
+   the above mentioned sources. The following equivalences exist:
      * is_domain_local("$rd") is same as is_uri_host_local()
      * is_domain_local("$fd") is same as is_from_local()
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.7. is_domain_local usage
+   Example 1.8. is_domain_local usage
 ...
 if (is_domain_local("$rd")) {
         ...
@@ -197,12 +239,15 @@ if (is_domain_local("$avp(s:some_avp)")) {
 };
 ...
 
-1.5. Exported MI Functions
+5. Exported MI Functions
 
-1.5.1. domain_reload
+   5.1. domain_reload
+   5.2. domain_dump
 
-   Causes domain module to re-read the contents of domain table
-   into cache memory.
+5.1. domain_reload
+
+   Causes domain module to re-read the contents of domain table into cache
+   memory.
 
    Name: domain_reload
 
@@ -212,10 +257,10 @@ if (is_domain_local("$avp(s:some_avp)")) {
                 :domain_reload:_reply_fifo_file_
                 _empty_line_
 
-1.5.2. domain_dump
+5.2. domain_dump
 
-   Causes domain module to dump hash indexes and domain names in
-   its cache memory.
+   Causes domain module to dump hash indexes and domain names in its cache
+   memory.
 
    Name: domain_dump
 
@@ -225,23 +270,31 @@ if (is_domain_local("$avp(s:some_avp)")) {
                 :domain_dump:_reply_fifo_file_
                 _empty_line_
 
-1.6. Known Limitations
+6. Known Limitations
 
-   There is an unlikely race condition on domain list update. If a
-   process uses a table, which is reloaded at the same time twice
-   through FIFO, the second reload will delete the original table
-   still in use by the process.
+   There is an unlikely race condition on domain list update. If a process
+   uses a table, which is reloaded at the same time twice through FIFO,
+   the second reload will delete the original table still in use by the
+   process.
 
 Chapter 2. Developer Guide
 
-   The module provides is_domain_local API function for use by
-   other Kamailio modules.
+   Table of Contents
 
-2.1. Available Functions
+   1. Available Functions
 
-2.1.1.  is_domain_local(domain)
+        1.1. is_domain_local(domain)
+
+   The module provides is_domain_local API function for use by other
+   Kamailio modules.
+
+1. Available Functions
+
+   1.1. is_domain_local(domain)
+
+1.1.  is_domain_local(domain)
 
    Checks if domain given in str* parameter is local.
 
-   The function returns 1 if domain is local and -1 if domain is
-   not local or if an error occurred.
+   The function returns 1 if domain is local and -1 if domain is not local
+   or if an error occurred.
