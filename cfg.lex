@@ -156,7 +156,7 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
-%x PVARID INCL
+%x PVARID INCLF
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -220,7 +220,7 @@ CASE			"case"
 DEFAULT			"default"
 WHILE			"while"
 
-INCLUDE         "include"
+INCLUDEFILE     "include_file"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -577,7 +577,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
-<INITIAL>{INCLUDE}  { count(); BEGIN(INCL); }
+<INITIAL>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
@@ -1120,8 +1120,8 @@ EAT_ABLE	[\ \t\b\r]
 
 <SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 
-<INCL>[ \t]*      /* eat the whitespace */
-<INCL>[^ \t\n]+   { /* get the include file name */
+<INCLF>[ \t]*      /* eat the whitespace */
+<INCLF>[^ \t\n]+   { /* get the include file name */
 				if(sr_push_yy_state(yytext)<0)
 					exit(-1);
 				BEGIN(INITIAL);
