@@ -109,10 +109,13 @@ natpinger_init(void)
 		 * Use timer only in single process. For forked SER,
 		 * use separate process (see natpinger_child_init())
 		 */
-		if (dont_fork)
+		if (dont_fork) {
 			register_timer(natping, NULL, natping_interval);
-		else
+		} else {
 			register_procs(1); /* register the separate natpinger process */
+			/* The process will keep updating its configuration */
+			cfg_register_child(1);
+		}
 
 		if (natping_method == NULL) {
 			if (natping_crlf == 0)

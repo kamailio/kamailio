@@ -375,6 +375,10 @@ static int cpl_init(void)
 		strlower( &cpl_env.realm_prefix );
 	}
 
+	/* Register a child process that will keep updating
+	 * its local configuration */
+	cfg_register_child(1);
+
 	return 0;
 error:
 	return -1;

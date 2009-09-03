@@ -628,6 +628,10 @@ int global_init()
 		goto error;
 	}
 	*queued_msgs = 0;
+	
+	/* register nr_of_modems number of child processes that will
+	 * update their local configuration */
+	cfg_register_child(nr_of_modems);
 
 	return 1;
 error:

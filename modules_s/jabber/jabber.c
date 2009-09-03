@@ -280,6 +280,10 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* register nrw + 1 number of children that will keep
+	 * updating their local configuration */
+	cfg_register_child(nrw + 1);
+
 	DBG("XJAB:mod_init: initialized ...\n");
 	return 0;
 }
@@ -850,8 +854,11 @@ void xjab_check_workers(int mpid)
 			}
 
 
-			/* initialize the config framework */
-			if (cfg_child_init()) return;
+			/* initialize the config framework
+			 * The child process was not registered under
+			 * the framework during mod_init, therefore the
+			 * late version needs to be called. (Miklos) */
+			if (cfg_late_child_init()) return;
 
 			ctx = db_ctx("jabber");
 			if (ctx == NULL) goto dberror;
