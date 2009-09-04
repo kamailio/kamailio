@@ -197,6 +197,8 @@ static inline int no_contacts(udomain_t* _d, str* _a)
 	if (res == 0) {  /* Contacts found */
 		build_contact(r->contacts);
 		ul.release_urecord(r);
+	} else {  /* No contacts found */
+		build_contact(NULL);
 	}
 	ul.unlock_udomain(_d, _a);
 	return 0;
