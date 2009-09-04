@@ -448,7 +448,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 				return -1;
 			}
 
-			if (km_append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
+			if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
 				LM_ERR("appending branch failed\n");
 				destroy_avp(avp);
 				return -1;
@@ -488,8 +488,8 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 				destroy_avp(avp);
 				return -1;
 			}
-	    
-			if (km_append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
+	
+			if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
 				LM_ERR("appending branch failed\n");
 				destroy_avp(avp);
 				return -1;

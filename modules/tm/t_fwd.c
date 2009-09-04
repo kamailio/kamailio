@@ -1013,7 +1013,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int success_branch;
 	int try_new;
 	int lock_replies;
-	str dst_uri;
+	str dst_uri, path;
 	struct socket_info* si, *backup_si;
 	flag_t backup_bflags = 0;
 	flag_t bflags = 0;
@@ -1083,10 +1083,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	init_branch_iterator();
-	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len, &si))) {
+	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
+										&bflags, &si))) {
 		try_new++;
 		p_msg->force_send_socket = si;
-		getbflagsval(get_branch_iterator(), &bflags);
 		setbflagsval(0, bflags);
 
 		branch_ret=add_uac( t, p_msg, &current_uri, 
