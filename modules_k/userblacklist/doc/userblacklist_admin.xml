@@ -30,10 +30,10 @@
 	hotlines.
 	</para>
 	<para>
-	The module exports two functions, <emphasis>check_blacklist</emphasis>
-	and <emphasis>check_user_blacklist</emphasis> for usage in the config
-	file. Furthermore its provide a FIFO function to reload the global
-	blacklist cache.
+	The module exports three functions, <emphasis>check_blacklist</emphasis>
+	<emphasis>check_user_blacklist</emphasis> and <emphasis>check_user_whitelist</emphasis>
+	for usage in the config file. Furthermore its provide a FIFO function to
+	reload the global blacklist cache.
 	</para>
 	<para>
 	Please note that only numerical strings for matching are supported at the
@@ -117,6 +117,33 @@ $avp(i:80) = $rU;
 # rewrite the R-URI
 if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)"))
 	sl_send_reply("403", "Forbidden");
+	exit;
+}
+...
+		</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">check_user_whitelist (string user, string domain, string number, string table)</function>
+	    </title>
+	    <para>
+		Finds the longest prefix that matches the request URI user (or the number
+		parameter) for the given user and domain name in the database.
+		If a match is found and it is set to whitelist, true is returned.
+		Otherwise, false is returned. Pseudo-variables or AVPs can be used for
+		the user, domain and number parameters. The number and table variables
+		are optional, the defaults are used if they are ommited. The number
+		parameter can be used to check for example against the from URI user.
+	    </para>
+	<example>
+		<title><function>check_user_blacklist</function> usage</title>
+		<programlisting format="linespecific">
+...
+$avp(i:80) = $rU;
+# rewrite the R-URI
+if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
+	# process request
 	exit;
 }
 ...

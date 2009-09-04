@@ -13,62 +13,65 @@ Henning Westerholt
 
    Copyright © 2008 1&1 Internet AG
    Revision History
-   Revision $Revision: 4863 $ $Date: 2008-09-05 13:11:33 +0200
-                              (Fr, 05 Sep 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date$
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. use_domain (integer)
+              3.1. use_domain (integer)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. check_user_blacklist (string user, string
-                      domain, string number, string table)
+              4.1. check_user_blacklist (string user, string domain,
+                      string number, string table)
 
-              1.4.2. check_blacklist (string table)
+              4.2. check_user_whitelist (string user, string domain,
+                      string number, string table)
 
-        1.5. MI Commands
+              4.3. check_blacklist (string table)
 
-              1.5.1. reload_blacklist
+        5. MI Commands
 
-        1.6. Installation and Running
+              5.1. reload_blacklist
 
-              1.6.1. Database setup
+        6. Installation and Running
+
+              6.1. Database setup
 
    2. Module parameter for database access.
 
-        2.1. db_url (String)
-        2.2. userblacklist_table (String)
-        2.3. userblacklist_id_col (string)
-        2.4. userblacklist_username_col (string)
-        2.5. userblacklist_domain_col (string)
-        2.6. userblacklist_prefix_col (string)
-        2.7. userblacklist_whitelist_col (string)
-        2.8. globalblacklist_table (String)
-        2.9. globalblacklist_id_col (string)
-        2.10. globalblacklist_prefix_col (string)
-        2.11. globalblacklist_whitelist_col (string)
-        2.12. globalblacklist_description_col (string)
+        1. db_url (String)
+        2. userblacklist_table (String)
+        3. userblacklist_id_col (string)
+        4. userblacklist_username_col (string)
+        5. userblacklist_domain_col (string)
+        6. userblacklist_prefix_col (string)
+        7. userblacklist_whitelist_col (string)
+        8. globalblacklist_table (String)
+        9. globalblacklist_id_col (string)
+        10. globalblacklist_prefix_col (string)
+        11. globalblacklist_whitelist_col (string)
+        12. globalblacklist_description_col (string)
 
    List of Examples
 
    1.1. Set use_domain parameter
    1.2. check_user_blacklist usage
-   1.3. check_blacklist usage
-   1.4. reload_blacklists usage
-   1.5. Example database content - globalblacklist table
-   1.6. Example database content - userblacklist table
+   1.3. check_user_blacklist usage
+   1.4. check_blacklist usage
+   1.5. reload_blacklists usage
+   1.6. Example database content - globalblacklist table
+   1.7. Example database content - userblacklist table
    2.1. Set db_url parameter
    2.2. Set userblacklist_table parameter
    2.3. Set userblacklist_id_col parameter
@@ -84,55 +87,88 @@ Henning Westerholt
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The userblacklist module allows Kamailio to handle blacklists
-   on a per user basis. This information is stored in a database
-   table, which is queried to decide if the number (more exactly,
-   the request URI user) is blacklisted or not.
+   1. Overview
+   2. Dependencies
 
-   An additional functionality that this module provides is the
-   ability to handle global blacklists. This lists are loaded on
-   startup into memory, thus providing a better performance then
-   in the userblacklist case. This global blacklists are useful to
-   only allow calls to certain international destinations, i.e.
-   block all not whitelisted numbers. They could also used to
-   prevent the blacklisting of important numbers, as whitelisting
-   is supported too. This is useful for example to prevent the
-   customer from blocking emergency call number or service
-   hotlines.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-   The module exports two functions, check_blacklist and
-   check_user_blacklist for usage in the config file. Furthermore
-   its provide a FIFO function to reload the global blacklist
-   cache.
+   3. Exported Parameters
 
-   Please note that only numerical strings for matching are
-   supported at the moment (the used library supports this
-   already, but its not yet implemented in the module). Non-digits
-   on the beginning of the matched string are skipped, any later
-   non-digits will stop the matching on this position.
+        3.1. use_domain (integer)
 
-1.2. Dependencies
+   4. Exported Functions
 
-1.2.1. Kamailio Modules
+        4.1. check_user_blacklist (string user, string domain, string
+                number, string table)
 
-   The module depends on the following modules (in the other words
-   the listed modules must be loaded before this module):
+        4.2. check_user_whitelist (string user, string domain, string
+                number, string table)
+
+        4.3. check_blacklist (string table)
+
+   5. MI Commands
+
+        5.1. reload_blacklist
+
+   6. Installation and Running
+
+        6.1. Database setup
+
+1. Overview
+
+   The userblacklist module allows Kamailio to handle blacklists on a per
+   user basis. This information is stored in a database table, which is
+   queried to decide if the number (more exactly, the request URI user) is
+   blacklisted or not.
+
+   An additional functionality that this module provides is the ability to
+   handle global blacklists. This lists are loaded on startup into memory,
+   thus providing a better performance then in the userblacklist case.
+   This global blacklists are useful to only allow calls to certain
+   international destinations, i.e. block all not whitelisted numbers.
+   They could also used to prevent the blacklisting of important numbers,
+   as whitelisting is supported too. This is useful for example to prevent
+   the customer from blocking emergency call number or service hotlines.
+
+   The module exports three functions, check_blacklist
+   check_user_blacklist and check_user_whitelist for usage in the config
+   file. Furthermore its provide a FIFO function to reload the global
+   blacklist cache.
+
+   Please note that only numerical strings for matching are supported at
+   the moment (the used library supports this already, but its not yet
+   implemented in the module). Non-digits on the beginning of the matched
+   string are skipped, any later non-digits will stop the matching on this
+   position.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The module depends on the following modules (in the other words the
+   listed modules must be loaded before this module):
      * database -- Any database module
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * none
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. use_domain (integer)
+   3.1. use_domain (integer)
 
-   If set to non-zero value, the domain column in the
-   userblacklist is used.
+3.1. use_domain (integer)
+
+   If set to non-zero value, the domain column in the userblacklist is
+   used.
 
    Default value is "0".
 
@@ -141,19 +177,26 @@ Chapter 1. Admin Guide
 modparam("userblacklist", "use_domain", 0)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  check_user_blacklist (string user, string domain, string
-number, string table)
+   4.1. check_user_blacklist (string user, string domain, string number,
+          string table)
 
-   Finds the longest prefix that matches the request URI user (or
-   the number parameter) for the given user and domain name in the
-   database. If a match is found and it is not set to whitelist,
-   false is returned. Otherwise, true is returned.
-   Pseudo-variables or AVPs can be used for the user, domain and
-   number parameters. The number and table variables are optional,
-   the defaults are used if they are ommited. The number parameter
-   can be used to check for example against the from URI user.
+   4.2. check_user_whitelist (string user, string domain, string number,
+          string table)
+
+   4.3. check_blacklist (string table)
+
+4.1.  check_user_blacklist (string user, string domain, string number, string
+table)
+
+   Finds the longest prefix that matches the request URI user (or the
+   number parameter) for the given user and domain name in the database.
+   If a match is found and it is not set to whitelist, false is returned.
+   Otherwise, true is returned. Pseudo-variables or AVPs can be used for
+   the user, domain and number parameters. The number and table variables
+   are optional, the defaults are used if they are ommited. The number
+   parameter can be used to check for example against the from URI user.
 
    Example 1.2. check_user_blacklist usage
 ...
@@ -165,13 +208,34 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)"))
 }
 ...
 
-1.4.2.  check_blacklist (string table)
+4.2.  check_user_whitelist (string user, string domain, string number, string
+table)
 
-   Finds the longest prefix that matches the request URI for the
-   given table. If a match is found and it is not set to
-   whitelist, false is returned. Otherwise, true is returned.
+   Finds the longest prefix that matches the request URI user (or the
+   number parameter) for the given user and domain name in the database.
+   If a match is found and it is set to whitelist, true is returned.
+   Otherwise, false is returned. Pseudo-variables or AVPs can be used for
+   the user, domain and number parameters. The number and table variables
+   are optional, the defaults are used if they are ommited. The number
+   parameter can be used to check for example against the from URI user.
 
-   Example 1.3. check_blacklist usage
+   Example 1.3. check_user_blacklist usage
+...
+$avp(i:80) = $rU;
+# rewrite the R-URI
+if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
+        # process request
+        exit;
+}
+...
+
+4.3.  check_blacklist (string table)
+
+   Finds the longest prefix that matches the request URI for the given
+   table. If a match is found and it is not set to whitelist, false is
+   returned. Otherwise, true is returned.
+
+   Example 1.4. check_blacklist usage
 ...
 if (!check_blacklist("global_blacklist")))
         sl_send_reply("403", "Forbidden");
@@ -179,36 +243,38 @@ if (!check_blacklist("global_blacklist")))
 }
 ...
 
-1.5. MI Commands
+5. MI Commands
 
-1.5.1.  reload_blacklist
+   5.1. reload_blacklist
 
-   Reload the internal global blacklist cache. This is necessary
-   after the database tables for the global blacklist have been
-   changed.
+5.1.  reload_blacklist
 
-   Example 1.4. reload_blacklists usage
+   Reload the internal global blacklist cache. This is necessary after the
+   database tables for the global blacklist have been changed.
+
+   Example 1.5. reload_blacklists usage
 ...
 kamctl fifo reload_blacklist
 ...
 
-1.6. Installation and Running
+6. Installation and Running
 
-1.6.1. Database setup
+   6.1. Database setup
 
-   Before running Kamailio with userblacklist, you have to setup
-   the database table where the module will read the blacklist
-   data. For that, if the table was not created by the
-   installation script or you choose to install everything by
-   yourself you can use the userblacklist-create.sql SQL script in
-   the database directories in the kamailio/scripts folder as
-   template. Database and table name can be set with module
-   parameters so they can be changed, but the name of the columns
-   must be as they are in the SQL script. You can also find the
+6.1. Database setup
+
+   Before running Kamailio with userblacklist, you have to setup the
+   database table where the module will read the blacklist data. For that,
+   if the table was not created by the installation script or you choose
+   to install everything by yourself you can use the
+   userblacklist-create.sql SQL script in the database directories in the
+   kamailio/scripts folder as template. Database and table name can be set
+   with module parameters so they can be changed, but the name of the
+   columns must be as they are in the SQL script. You can also find the
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.5. Example database content - globalblacklist table
+   Example 1.6. Example database content - globalblacklist table
 ...
 +----+-----------+-----------+
 | id | prefix    | whitelist |
@@ -220,12 +286,12 @@ kamctl fifo reload_blacklist
 +----+-----------+-----------+
 ...
 
-   This table will setup a global blacklist for all numbers, only
-   allowing calls starting with "1". Numbers that starting with
-   "123456" and "123455787" are also blacklisted, because the
-   longest prefix will be matched.
+   This table will setup a global blacklist for all numbers, only allowing
+   calls starting with "1". Numbers that starting with "123456" and
+   "123455787" are also blacklisted, because the longest prefix will be
+   matched.
 
-   Example 1.6. Example database content - userblacklist table
+   Example 1.7. Example database content - userblacklist table
 ...
 +----+----------------+-------------+-----------+-----------+
 | id | username       | domain      | prefix    | whitelist |
@@ -240,28 +306,42 @@ kamctl fifo reload_blacklist
 +----+----------------+-------------+-----------+-----------+
 ...
 
-   This table will setup user specific blacklists for certain
-   usernames. For example for user "49721123456788" the prefix
-   "1234" will be not allowed, but the number "123456788" is
-   allowed. Additionally a domain could be specified that is used
-   for username matching if the "use_domain" parameter is set.
+   This table will setup user specific blacklists for certain usernames.
+   For example for user "49721123456788" the prefix "1234" will be not
+   allowed, but the number "123456788" is allowed. Additionally a domain
+   could be specified that is used for username matching if the
+   "use_domain" parameter is set.
 
 Chapter 2. Module parameter for database access.
 
-2.1. db_url (String)
+   Table of Contents
+
+   1. db_url (String)
+   2. userblacklist_table (String)
+   3. userblacklist_id_col (string)
+   4. userblacklist_username_col (string)
+   5. userblacklist_domain_col (string)
+   6. userblacklist_prefix_col (string)
+   7. userblacklist_whitelist_col (string)
+   8. globalblacklist_table (String)
+   9. globalblacklist_id_col (string)
+   10. globalblacklist_prefix_col (string)
+   11. globalblacklist_whitelist_col (string)
+   12. globalblacklist_description_col (string)
+
+1. db_url (String)
 
    URL to the database containing the data.
 
-   Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://openserro:openserro@localhost/openser".
 
    Example 2.1. Set db_url parameter
 ...
-modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost
-/dbname")
+modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost/dbname"
+)
 ...
 
-2.2. userblacklist_table (String)
+2. userblacklist_table (String)
 
    Name of the userblacklist table for the userblacklist module.
 
@@ -272,7 +352,7 @@ modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost
 modparam("userblacklist", "userblacklist_table", "userblacklist")
 ...
 
-2.3. userblacklist_id_col (string)
+3. userblacklist_id_col (string)
 
    unique ID
 
@@ -281,7 +361,7 @@ modparam("userblacklist", "userblacklist_table", "userblacklist")
 modparam("userblacklist", "userblacklist_id_col", "id")
 ...
 
-2.4. userblacklist_username_col (string)
+4. userblacklist_username_col (string)
 
    The user that is used for the blacklist lookup.
 
@@ -290,7 +370,7 @@ modparam("userblacklist", "userblacklist_id_col", "id")
 modparam("userblacklist", "userblacklist_username_col", "username")
 ...
 
-2.5. userblacklist_domain_col (string)
+5. userblacklist_domain_col (string)
 
    The domain that is used for the blacklist lookup.
 
@@ -299,7 +379,7 @@ modparam("userblacklist", "userblacklist_username_col", "username")
 modparam("userblacklist", "userblacklist_domain_col", "domain")
 ...
 
-2.6. userblacklist_prefix_col (string)
+6. userblacklist_prefix_col (string)
 
    The prefix that is matched for the blacklist.
 
@@ -308,7 +388,7 @@ modparam("userblacklist", "userblacklist_domain_col", "domain")
 modparam("userblacklist", "userblacklist_prefix_col", "prefix")
 ...
 
-2.7. userblacklist_whitelist_col (string)
+7. userblacklist_whitelist_col (string)
 
    Specify if this a blacklist (0) or a whitelist (1) entry.
 
@@ -317,7 +397,7 @@ modparam("userblacklist", "userblacklist_prefix_col", "prefix")
 modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
 ...
 
-2.8. globalblacklist_table (String)
+8. globalblacklist_table (String)
 
    Name of the globalblacklist table for the userblacklist module.
 
@@ -328,7 +408,7 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
 modparam("userblacklist", "globalblacklist_table", "globalblacklist")
 ...
 
-2.9. globalblacklist_id_col (string)
+9. globalblacklist_id_col (string)
 
    unique ID
 
@@ -337,7 +417,7 @@ modparam("userblacklist", "globalblacklist_table", "globalblacklist")
 modparam("userblacklist", "globalblacklist_id_col", "id")
 ...
 
-2.10. globalblacklist_prefix_col (string)
+10. globalblacklist_prefix_col (string)
 
    The prefix that is matched for the blacklist.
 
@@ -346,7 +426,7 @@ modparam("userblacklist", "globalblacklist_id_col", "id")
 modparam("userblacklist", "globalblacklist_prefix_col", "prefix")
 ...
 
-2.11. globalblacklist_whitelist_col (string)
+11. globalblacklist_whitelist_col (string)
 
    Specify if this a blacklist (0) or a whitelist (1) entry.
 
@@ -355,12 +435,11 @@ modparam("userblacklist", "globalblacklist_prefix_col", "prefix")
 modparam("userblacklist", "globalblacklist_whitelist_col", "whitelist")
 ...
 
-2.12. globalblacklist_description_col (string)
+12. globalblacklist_description_col (string)
 
    A comment for the entry.
 
    Example 2.12. Set globalblacklist_description_col parameter
 ...
-modparam("userblacklist", "globalblacklist_description_col", "descriptio
-n")
+modparam("userblacklist", "globalblacklist_description_col", "description")
 ...

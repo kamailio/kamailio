@@ -81,6 +81,7 @@ static int check_user_blacklist_fixup(void** param, int param_no);
 
 /* ---- exported commands: */
 static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
+static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
 static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
 
 /* ---- module init functions: */
@@ -95,8 +96,11 @@ struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usag
 
 static cmd_export_t cmds[]={
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -200,7 +204,7 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 }
 
 
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4, int listtype)
 {
 	str user = { .len = 0, .s = NULL };
 	str domain = { .len = 0, .s = NULL};
@@ -285,13 +289,30 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 			return 1; /* found, but is whitelisted */
 		}
 	} else {
-		/* LM_ERR("not found"); */
-		return 1; /* not found is ok */
+		if(!listtype) {
+			/* LM_ERR("not found return 1"); */
+			return 1; /* not found is ok */
+		} else {
+			/* LM_ERR("not found return -1"); */
+			return -1; /* not found is not ok */
+		}
 	}
-
 	LM_DBG("entry %s is blacklisted\n", req_number);
 	return -1;
 }
+
+
+static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+{
+	return check_user_list(msg, str1, str2, str3, str4, 1);
+}
+
+
+static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+{
+	return check_user_list(msg, str1, str2, str3, str4, 0);
+}
+
 
 
 /**
