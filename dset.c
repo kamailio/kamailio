@@ -160,41 +160,6 @@ int get_branch_iterator(void)
 	return branch_iterator;
 }
 
-/*
- * Return the next branch from the dset
- * array, 0 is returned if there are no
- * more branches
- */
-char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct socket_info** force_socket)
-{
-	unsigned int i;
-
-	i = branch_iterator;
-	if (i < nr_branches) {
-		branch_iterator++;
-		*len = branches[i].len;
-		*q = branches[i].q;
-		if (dst_uri && dst_len) {
-			*dst_uri = branches[i].dst_uri;
-			*dst_len = branches[i].dst_uri_len;
-		}
-		if (force_socket) {
-			*force_socket = branches[i].force_send_socket;
-		}
-		return branches[i].uri;
-	} else {
-		*len = 0;
-		*q = Q_UNSPECIFIED;
-		if (dst_uri && dst_len) {
-			*dst_uri = 0;
-			*dst_len = 0;
-		}
-		if (force_socket) {
-			*force_socket = 0;
-		}
-		return 0;
-	}
-}
 
 
 /** \brief Get a branch from the destination set
@@ -203,7 +168,8 @@ char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct so
  * more branches
  */
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-				 str* path, unsigned int *flags, struct socket_info** force_socket)
+				 str* path, unsigned int *flags,
+				 struct socket_info** force_socket)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -228,12 +194,33 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 			dst_uri->s = 0;
 			dst_uri->len = 0;
 		}
+		if (path) {
+			path->s = 0;
+			path->len = 0;
+		}
 		if (force_socket)
 			*force_socket = 0;
 		if (flags)
 			*flags = 0;
 		return 0;
 	}
+}
+
+
+
+/** Return the next branch from the dset array.
+ * 0 is returned if there are no more branches
+ */
+char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
+					unsigned int* flags, struct socket_info** force_socket)
+{
+	char* ret;
+	
+	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
+					force_socket);
+	if (likely(ret))
+		branch_iterator++;
+	return ret;
 }
 
 
@@ -247,84 +234,32 @@ void clear_branches(void)
 }
 
 
-/* 
- * Add a new branch to current transaction 
+
+/**  Add a new branch to the current transaction.
+ * @param msg - sip message, used for getting the uri if not specified (0).
+ * @param uri - uri, can be 0 (in which case the uri is taken from msg)
+ * @param dst_uri - destination uri, can be 0.
+ * @param path - path vector (passed in a string), can be 0.
+ * @param q  - q value.
+ * @param flags - per branch flags.
+ * @param force_socket - socket that should be used when sending.
+ *
+ * @return  <0 (-1) on failure, 1 on success (script convention).
  */
-int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, int dst_uri_len, 
-		  qvalue_t q, struct socket_info* force_socket)
-{
-	     /* if we have already set up the maximum number
-	      * of branches, don't try new ones 
-	      */
-	if (nr_branches == MAX_BRANCHES - 1) {
-		LOG(L_ERR, "ERROR: append_branch: max nr of branches exceeded\n");
-		ser_error = E_TOO_MANY_BRANCHES;
-		return -1;
-	}
-
-	if (uri_len > MAX_URI_SIZE - 1) {
-		LOG(L_ERR, "ERROR: append_branch: too long uri: %.*s\n",
-		    uri_len, uri);
-		return -1;
-	}
-	
-	if (dst_uri_len > MAX_URI_SIZE - 1) {
-		LOG(L_ERR, "ERROR: append_branch: too long dst_uri: %.*s\n",
-		    dst_uri_len, ZSW(dst_uri));
-		return -1;
-	}
-
-	     /* if not parameterized, take current uri */
-	if (uri == 0) {
-		if (msg->new_uri.s) { 
-			uri = msg->new_uri.s;
-			uri_len = msg->new_uri.len;
-		} else {
-			uri = msg->first_line.u.request.uri.s;
-			uri_len = msg->first_line.u.request.uri.len;
-		}
-	}
-	
-	memcpy(branches[nr_branches].uri, uri, uri_len);
-	     /* be safe -- add zero termination */
-	branches[nr_branches].uri[uri_len] = 0;
-	branches[nr_branches].len = uri_len;
-	branches[nr_branches].q = q;
-	
- 	if (dst_uri && dst_uri_len) {
-  		memcpy(branches[nr_branches].dst_uri, dst_uri, dst_uri_len);
-  		branches[nr_branches].dst_uri[dst_uri_len] = 0;
-  		branches[nr_branches].dst_uri_len = dst_uri_len;
- 	} else {
- 		branches[nr_branches].dst_uri[0] = '\0';
- 		branches[nr_branches].dst_uri_len = 0;
-	}
-
-	branches[nr_branches].force_send_socket = force_socket;
-	
-	nr_branches++;
-	return 1;
-}
-
-
-/* ! \brief
- * Add a new branch to current transaction using str parameters
- * Kamailio compatibility version
- */
-int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		qvalue_t q, unsigned int flags, struct socket_info* force_socket)
 {
 	str luri;
 
 #ifdef USE_LOCAL_ROUTE
-	if (dset_state==0)
+	if (unlikely(dset_state==0))
 		return -1;
 #endif
 
 	/* if we have already set up the maximum number
 	 * of branches, don't try new ones 
 	 */
-	if (nr_branches == MAX_BRANCHES - 1) {
+	if (unlikely(nr_branches == MAX_BRANCHES - 1)) {
 		LOG(L_ERR, "max nr of branches exceeded\n");
 		ser_error = E_TOO_MANY_BRANCHES;
 		return -1;
@@ -340,16 +275,15 @@ int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		luri = *uri;
 	}
 
-	if (luri.len > MAX_URI_SIZE - 1) {
+	if (unlikely(luri.len > MAX_URI_SIZE - 1)) {
 		LOG(L_ERR, "too long uri: %.*s\n", luri.len, luri.s);
 		return -1;
 	}
 
 	/* copy the dst_uri */
 	if (dst_uri && dst_uri->len && dst_uri->s) {
-		if (dst_uri->len > MAX_URI_SIZE - 1) {
-			LOG(L_ERR, "too long dst_uri: %.*s\n",
-				dst_uri->len, dst_uri->s);
+		if (unlikely(dst_uri->len > MAX_URI_SIZE - 1)) {
+			LOG(L_ERR, "too long dst_uri: %.*s\n", dst_uri->len, dst_uri->s);
 			return -1;
 		}
 		memcpy(branches[nr_branches].dst_uri, dst_uri->s, dst_uri->len);
@@ -361,8 +295,8 @@ int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	}
 
 	/* copy the path string */
-	if (path && path->len && path->s) {
-		if (path->len > MAX_PATH_SIZE - 1) {
+	if (unlikely(path && path->len && path->s)) {
+		if (unlikely(path->len > MAX_PATH_SIZE - 1)) {
 			LOG(L_ERR, "too long path: %.*s\n", path->len, path->s);
 			return -1;
 		}
@@ -413,7 +347,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0))) {
 		cnt++;
 		*len += uri.len;
 		if (q != Q_UNSPECIFIED) {
@@ -454,7 +388,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0))) {
 		if (i) {
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;
