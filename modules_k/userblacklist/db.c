@@ -78,7 +78,11 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 					/* LM_DBG("insert into tree prefix %s, whitelist %d",
 						RES_ROWS(res)[i].values[0].val.string_val,
 						RES_ROWS(res)[i].values[1].val.int_val); */
-					if (RES_ROWS(res)[i].values[1].val.int_val == 0) nodeflags=(void *)MARK_BLACKLIST;
+					if (RES_ROWS(res)[i].values[1].val.int_val == 0) {
+						nodeflags=(void *)MARK_BLACKLIST;
+					} else {
+						nodeflags=(void *)MARK_WHITELIST;
+					}
 					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
 						nodeflags, 10) < 0) LM_ERR("could not insert values into trie.\n");
 					n++;
