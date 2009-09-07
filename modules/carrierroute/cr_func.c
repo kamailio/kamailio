@@ -52,6 +52,8 @@
 enum hash_algorithm {
 	alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
 	alg_prime, /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
+	alg_crc32_nofallback, /*!< same algorithm as alg_crc32, with only a backup rule, but no fallback tree is chosen
+                           if there is something wrong. */
 	alg_error
 };
 
@@ -422,7 +424,25 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 				}
 			}
 			break;
-		default: 
+		case alg_crc32_nofallback:
+			if(rf->dice_max == 0) {
+				LM_ERR("invalid dice_max value\n");
+				return -1;
+			}
+			if ((prob = hash_func(msg, hash_source, rf->dice_max)) < 0) {
+				LM_ERR("could not hash message with CRC32");
+				return -1;
+			}
+			/* Instead of search the whole rule_list if there is something broken
+			 * this function just tries only a backup rule and otherwise
+			 * returns -1. This way we get an error
+			 */
+			if ((rr = get_rule_by_hash(rf, prob)) == NULL) {
+				LM_CRIT("no route found\n");
+				return -1;
+			}
+			break;
+		default:
 			LM_ERR("invalid hash algorithm\n");
 			return -1;
 	}
@@ -668,6 +688,31 @@ int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_prime, _descavp);
+}
+
+/**
+ * rewrites the request URI of msg after determining the
+ * new destination URI with the crc32 hash algorithm. The difference
+ * to cr_route is that no fallback rule is chosen if there is something
+ * wrong (like cr_prime_route)
+ *
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
+ * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _rewrite_user the localpart of the URI to be rewritten
+ * @param _hsrc the SIP header used for hashing
+ * @param _dstavp the name of the destination AVP where the used host name is stored
+ *
+ * @return 1 on success, -1 on failure
+ */
+int cr_nofallback_route(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc,
+		gparam_t *_dstavp)
+{
+	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, _hsrc, alg_crc32_nofallback, _dstavp);
 }
 
 

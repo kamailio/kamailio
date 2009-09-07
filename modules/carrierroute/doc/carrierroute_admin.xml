@@ -519,6 +519,11 @@ cr_tree_rewrite_uri(tree, domain)
         one of the hash targets is not available, and no backup rule is
         configured, the function will return -1.
 	    </para>
+	    <para>
+	Please not that this function is deprecated and will be removed in
+	the next stable release. Please consider using the
+	<emphasis>cr_nofallback_route</emphasis> function instead.
+	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
         <listitem>
@@ -558,6 +563,76 @@ cr_tree_rewrite_uri(tree, domain)
 		      <para><emphasis>descavp</emphasis> - Name of the AVP where to store the description.
 			This parameter is optional.
   		    </para>
+        </listitem>
+	    </itemizedlist>
+	</section>
+
+		<section>
+	    <title>
+		<function moreinfo="none">cr_nofallback_route(carrier, domain, prefix_matching, rewrite_user, hash_source, descavp)</function>
+	    </title>
+	    <para>
+        This function searches for the longest match for the user given
+        in prefix_matching at the given domain in the given carrier tree.
+        The Request URI is rewritten using rewrite_user and the given
+        hash source and algorithm. Returns -1 if there is no data found
+        or an empty rewrite host on the longest match is found. On success
+        also the description is stored in the given AVP (if obmitted, nothing
+        is stored in an AVP). This is useful if you need some additional
+        informations that belongs to each gw, like the destination or the
+        number of channels.
+        This function is only usable with rewrite_user and prefix_matching
+        containing a valid string. This string needs to be numerical if the match_mode
+        parameter is set to 10.
+	    </para>
+	    <para>
+		It uses the standard CRC32 algorithm to calculate the hash values. In contrast
+		to the normal <emphasis>cr_route</emphasis> function the backup
+		rules of cr_prime_route is used. This means not the configured
+		probabilities will be used, only a fixed hash distribution. This
+		makes sense to distribute incoming register requests e.g. to a bunch of
+		registrar servers. If one of the hash targets is not available and
+		backup rule is configured, the function will return -1.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+        <listitem>
+		      <para><emphasis>carrier</emphasis> - The routing tree to be used. Additional to a string
+            any pseudo-variable could be used as input.
+		      </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
+            Additional to a string any pseudo-variable could
+            be used as input.
+		      </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>prefix_matching</emphasis> - User name to be used for prefix matching
+            in the routing tree.
+            Additional to a string any pseudo-variable could
+            be used as input.
+		      </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>rewrite_user</emphasis> - The user name to be used for applying the
+            rewriting rule. Usually this is the user part of the request
+            URI. Additional to a string any pseudo-variable could
+            be used as input.
+		      </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>hash_source</emphasis> - The hash values of the destination set must
+            be a contiguous range starting at 1, limited by the
+            configuration parameter max_targets. Possible values for
+            hash_source are: call_id, from_uri, from_user, to_uri
+            and to_user.
+		      </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>descavp</emphasis> - Name of the AVP where to store the description.
+			This parameter is optional.
+		      </para>
         </listitem>
 	    </itemizedlist>
 	</section>
