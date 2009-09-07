@@ -144,7 +144,7 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} while(1);
 	
 done:
-	LM_ERR("command: [%.*s]\n", cmd->name.len, cmd->name.s);
+	LM_DBG("command: [%.*s]\n", cmd->name.len, cmd->name.s);
 	for(i=0; i<IMC_CMD_MAX_PARAM; i++)
 	{
 		if(cmd->param[i].len<=0)
