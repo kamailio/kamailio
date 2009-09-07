@@ -45,6 +45,7 @@
  * - \b shs_from_user   the username part of the URI in the From header field
  * - \b shs_to_uri      the entire URI in the To header field
  * - \b shs_to_user     the username part of the URI in the To header field
+ * - \b shs_rand	some random data which is not related to any header field
  * - \b shs_error       no hash specified
 */
 enum hash_source {
@@ -53,6 +54,7 @@ enum hash_source {
 	shs_from_user,
 	shs_to_uri,
 	shs_to_user,
+	shs_rand,
 	shs_error
 };
 

@@ -103,6 +103,8 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
 		return shs_to_uri;
 	} else if (strcasecmp("to_user", my_hash_source) == 0) {
 		return shs_to_user;
+	} else if (strcasecmp("rand", my_hash_source) == 0) {
+		return shs_rand;
 	} else {
 		return shs_error;
 	}

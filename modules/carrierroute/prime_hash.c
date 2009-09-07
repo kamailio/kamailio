@@ -34,9 +34,13 @@
 #include "../../lib/kcore/km_crc.h"
 
 #include <ctype.h>
+#include <stdio.h> /* for snprintf */
+#include <stdlib.h> /* for rand */
 
 #include "prime_hash.h"
 
+#define CR_RANDBUF_S 20
+static char cr_randbuf[CR_RANDBUF_S];
 
 static int determine_source(struct sip_msg *msg, enum hash_source source,
                             str *source_string);
@@ -44,6 +48,7 @@ static int validate_msg(struct sip_msg * msg);
 static int determine_call_id (struct sip_msg *msg, str *source_string);
 static int determine_fromto_uri (struct to_body *fromto, str *source_string);
 static int determine_fromto_user (struct to_body *fromto, str *source_string);
+static int determine_fromrand(str* source_string);
 static int first_token (str *source_string);
 
 
@@ -56,6 +61,7 @@ int hash_func (struct sip_msg * msg,
 	if(determine_source (msg, source, &source_string) == -1) {
 		return -1;
 	}
+
 	crc32_uint(&source_string, &hash);
 
 	ret = hash % denominator;
@@ -128,6 +134,8 @@ static int determine_source (struct sip_msg *msg, enum hash_source source,
 			return determine_fromto_uri (get_to(msg), source_string);
 			case shs_to_user:
 			return determine_fromto_user (get_to(msg), source_string);
+			case shs_rand:
+			return determine_fromrand(source_string); /* msg is not needed */
 			default:
 			LM_ERR("unknown hash source %i.\n",
 			     (int) source);
@@ -187,6 +195,17 @@ static int determine_fromto_user (struct to_body *fromto, str *source_string) {
 	}
 	source_string->s = uri.user.s;
 	source_string->len = uri.user.len;
+	return 0;
+}
+
+static int determine_fromrand(str* source_string){
+
+	snprintf(&cr_randbuf[0], CR_RANDBUF_S , "%d", rand());
+
+	LM_NOTICE("randbuf is %s\n", cr_randbuf);
+	source_string->s = cr_randbuf;
+	source_string->len = strlen(source_string->s);
+
 	return 0;
 }
 

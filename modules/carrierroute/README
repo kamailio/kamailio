@@ -493,7 +493,7 @@ hash_source, descavp)
        be a contiguous range starting at 1, limited by the
        configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri and
-       to_user.
+       to_user and rand.
      * decsavp - Name of the AVP where to store the description.
        This parameter is optional.
 
@@ -537,8 +537,8 @@ rewrite_user, hash_source, descavp)
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_targets. Possible values for
-       hash_source are: call_id, from_uri, from_user, to_uri and
-       to_user.
+       hash_source are: call_id, from_uri, from_user, to_uri ,
+       to_user and rand
      * descavp - Name of the AVP where to store the description.
        This parameter is optional.
 

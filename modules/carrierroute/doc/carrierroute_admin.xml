@@ -480,8 +480,8 @@ cr_tree_rewrite_uri(tree, domain)
 		      <para><emphasis>hash_source</emphasis> - The hash values of the destination set must
             be a contiguous range starting at 1, limited by the
             configuration parameter max_targets. Possible values for
-            hash_source are: call_id, from_uri, from_user, to_uri
-            and to_user.
+            hash_source are: call_id, from_uri, from_user, to_uri,
+            to_user and rand
   		    </para>
         </listitem>
         <listitem>
@@ -551,7 +551,7 @@ cr_tree_rewrite_uri(tree, domain)
             be a contiguous range starting at 1, limited by the
             configuration parameter max_targets. Possible values for
             hash_source are: call_id, from_uri, from_user, to_uri
-            and to_user.
+            to_user and rand
   		    </para>
         </listitem>
         <listitem>
