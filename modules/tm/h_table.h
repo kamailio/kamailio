@@ -219,7 +219,8 @@ typedef struct ua_client
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
-	str              uri;
+	str uri;
+	str path;
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
 

@@ -561,6 +561,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		memcpy( p , org_msg->dst_uri.s , org_msg->dst_uri.len);
 		p += ROUND4(org_msg->dst_uri.len);
 	}
+	/* path_vec is not cloned (it's reset instead) */
+	new_msg->path_vec.s=0;
+	new_msg->path_vec.len=0;
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->buf, org_msg->len);
 	/* ZT to be safer */

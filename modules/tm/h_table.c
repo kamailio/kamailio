@@ -176,6 +176,9 @@ void free_cell( struct cell* dead_cell )
 		}
 		dns_srv_handle_put_shm_unsafe(&dead_cell->uac[i].dns_h);
 #endif
+		if (unlikely(dead_cell->uac[i].path.s)) {
+			shm_free_unsafe(dead_cell->uac[i].path.s);
+		}
 	}
 
 #ifdef WITH_AS_SUPPORT
