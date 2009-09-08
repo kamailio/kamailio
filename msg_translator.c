@@ -1495,7 +1495,9 @@ error:
 /** builds a request in memory from another sip request.
   *
   * Side-effects: - it adds lumps to the msg which are _not_ cleaned.
-  * All the added lumps are HDR_VIA_T.
+  * The added lumps are HDR_VIA_T (almost always added), HDR_CONTENLENGTH_T
+  * and HDR_ROUTE_T (when a Route: header is added as a result of a non-null
+  * msg->path_vec).
   *               - it might change send_info->proto and send_info->send_socket
   *                 if proto fallback is enabled (see below).
   *
@@ -1516,8 +1518,16 @@ error:
   *                       message > mtu and send_info->proto==PROTO_UDP. 
   *                       It will also update send_info->proto.
   *                     - FL_FORCE_RPORT: add rport to via
+  * @param mode - flags for building the message, can be a combination of:
+  *                 * BUILD_NO_LOCAL_VIA - don't add a local via
+  *                 * BUILD_NO_VIA1_UPDATE - don't update first via (rport,
+  *                    received a.s.o)
+  *                 * BUILD_NO_PATH - don't add a Route: header with the 
+  *                   msg->path_vec content.
+  *                 * BUILD_IN_SHM - build the result in shm memory
   *
-  * @return pointer to the new request (pkg_malloc'ed, needs freeing when
+  * @return pointer to the new request (pkg_malloc'ed or shm_malloc'ed,
+  * depending on the presence of the BUILD_IN_SHM flag, needs freeing when
   *   done) and sets returned_len or 0 on error.
   */
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
@@ -1532,10 +1542,13 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char* rport_buf;
 	char* new_buf;
 	char* buf;
+	str path_buf;
 	unsigned int offset, s_offset, size;
 	struct lump* via_anchor;
 	struct lump* via_lump;
 	struct lump* via_insert_param;
+	struct lump* path_anchor;
+	struct lump* path_lump;
 	str branch;
 	unsigned int flags;
 	unsigned int udp_mtu;
@@ -1552,6 +1565,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	rport_buf=0;
 	line_buf=0;
 	via_len=0;
+	path_buf.s=0;
+	path_buf.len=0;
 
 	flags=msg->msg_flags|global_req_flags;
 	/* Calculate message body difference and adjust Content-Length */
@@ -1653,6 +1668,42 @@ after_local_via:
 	}
 
 after_update_via1:
+	/* add route with path content */
+	if(unlikely(!(mode&BUILD_NO_PATH) && msg->path_vec.s &&
+					msg->path_vec.len)){
+		path_buf.len=ROUTE_PREFIX_LEN+msg->path_vec.len+CRLF_LEN;
+		path_buf.s=pkg_malloc(path_buf.len+1);
+		if (unlikely(path_buf.s==0)){
+			LOG(L_ERR, "out of memory\n");
+			ser_error=E_OUT_OF_MEM;
+			goto error00;
+		}
+		memcpy(path_buf.s, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
+		memcpy(path_buf.s+ROUTE_PREFIX_LEN, msg->path_vec.s,
+					msg->path_vec.len);
+		memcpy(path_buf.s+ROUTE_PREFIX_LEN+msg->path_vec.len, CRLF, CRLF_LEN);
+		path_buf.s[path_buf.len]=0;
+		/* insert Route header either before the other routes
+		   (if present & parsed) or after the local via */
+		if (msg->route){
+			path_anchor=anchor_lump(msg, msg->route->name.s-buf, 0, 
+									HDR_ROUTE_T);
+		}else if (likely(msg->via1)){
+			path_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, 
+									HDR_ROUTE_T);
+		}else{
+			/* if no via1 (theoretically possible for non-sip messages,
+			   e.g. http xmlrpc) */
+			path_anchor=anchor_lump(msg, msg->headers->name.s-buf, 0, 
+									HDR_ROUTE_T);
+		}
+		if (unlikely(path_anchor==0))
+			goto error05;
+		if (unlikely((path_lump=insert_new_lump_after(path_anchor, path_buf.s,
+														path_buf.len,
+														HDR_ROUTE_T))==0))
+			goto error05;
+	}
 	/* compute new msg len and fix overlapping zones*/
 	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_info)+via_len;
 #ifdef XL_DEBUG
@@ -1767,6 +1818,8 @@ error03:
 	if (rport_buf) pkg_free(rport_buf);
 error04:
 	if (line_buf) pkg_free(line_buf);
+error05:
+	if (path_buf.s) pkg_free(path_buf.s);
 error00:
 	*returned_len=0;
 	return 0;
