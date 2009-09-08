@@ -781,6 +781,11 @@ static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domai
 						}
 						if (opts->new_host.len > 0) {
 							LM_INFO("deactivating host %.*s\n", rr->host.len, rr->host.s);
+							if ( opts->new_host.s && (strcmp(opts->new_host.s, rr->host.s) == 0)){
+								LM_ERR("Backup host the same as initial host %.*s",rr->host.len, rr->host.s);
+								FIFO_ERR(E_WRONGOPT);
+								return -1;
+							}
 							if (opts->new_host.len == 1 && opts->new_host.s[0] == 'a') {
 								if ((backup = find_auto_backup(rf, rr)) == NULL) {
 									LM_ERR("didn't find auto backup route\n");
