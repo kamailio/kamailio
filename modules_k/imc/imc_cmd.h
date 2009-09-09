@@ -64,7 +64,7 @@
 #define IMC_ROOM_PRIVATE_LEN	(sizeof(IMC_ROOM_PRIVATE)-1)
 
 #define IMC_HELP_MSG	"\r\n"IMC_CMD_START_STR IMC_CMD_CREATE" <room_name> - \
-create new connference room\r\n\
+create new conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_JOIN" [<room_name>] - \
 join the conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_INVITE" <user_name> [<room_name>] - \
