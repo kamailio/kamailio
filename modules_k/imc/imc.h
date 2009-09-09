@@ -34,5 +34,7 @@ extern str imc_cmd_start_str;
 extern char imc_cmd_start_char;
 extern struct tm_binds tmb;
 extern str outbound_proxy;
+extern str all_hdrs;
+extern str extra_hdrs;
 
 #endif

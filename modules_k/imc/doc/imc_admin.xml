@@ -191,6 +191,27 @@ modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>extra_hdrs</varname> (str)</title>
+		<para>
+		Extra headers (each ending with \r\n) to be added in
+		messages sent out from imc server.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>extra_hdrs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 	<title>Exported Functions</title>

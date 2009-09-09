@@ -58,6 +58,11 @@
 
 MODULE_VERSION
 
+/** header variables */
+str imc_hdr_ctype = { "Content-Type: text/plain\r\n",  26};
+char hdr_buf[1024];
+str all_hdrs;
+
 /** parameters */
 
 db1_con_t *imc_db = NULL;
@@ -78,6 +83,7 @@ imc_hentry_p _imc_htable = NULL;
 int imc_hash_size = 4;
 str imc_cmd_start_str = str_init(IMC_CMD_START_STR);
 char imc_cmd_start_char;
+str extra_hdrs = {NULL, 0};
 
 /** module functions */
 static int mod_init(void);
@@ -109,6 +115,7 @@ static param_export_t params[]={
 	{"rooms_table",			STR_PARAM, &rooms_table.s},
 	{"members_table",		STR_PARAM, &members_table.s},
 	{"outbound_proxy",		STR_PARAM, &outbound_proxy.s},
+	{"extra_hdrs",                  STR_PARAM, &extra_hdrs.s},
 	{0,0,0}
 };
 
@@ -371,6 +378,21 @@ static int mod_init(void)
 
 	rooms_table.len = strlen(rooms_table.s);
 	members_table.len = strlen(members_table.s);
+
+	if (extra_hdrs.s) {
+	    extra_hdrs.len = strlen(extra_hdrs.s);
+	    if (extra_hdrs.len + imc_hdr_ctype.len > 1024) {
+		LM_ERR("extra_hdrs too long\n");
+		return -1;
+	    }
+	    all_hdrs.s = &(hdr_buf[0]);
+	    memcpy(all_hdrs.s, imc_hdr_ctype.s, imc_hdr_ctype.len);
+	    memcpy(all_hdrs.s + imc_hdr_ctype.len, extra_hdrs.s,
+		   extra_hdrs.len);
+	    all_hdrs.len = extra_hdrs.len + imc_hdr_ctype.len;
+	} else {
+	    all_hdrs = imc_hdr_ctype;
+	}
 
 	/*  binding to mysql module */
 	db_url.len = strlen(db_url.s);

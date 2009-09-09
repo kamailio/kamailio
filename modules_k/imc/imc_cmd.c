@@ -42,7 +42,6 @@
 static char imc_body_buf[IMC_BUF_SIZE];
 
 static str imc_msg_type = { "MESSAGE", 7 };
-static str imc_hdr_ctype = { "Content-Type: text/plain\r\n",  26};
 
 int imc_send_message(str *src, str *dst, str *headers, str *body);
 int imc_room_broadcast(imc_room_p room, str *ctype, str *body);
@@ -199,7 +198,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		/* send info message */
 		body.s = "*** room was created";
 		body.len = sizeof("*** room was created")-1;
-		imc_send_message(&room->uri, &member->uri, &imc_hdr_ctype, &body);
+		imc_send_message(&room->uri, &member->uri, &all_hdrs, &body);
 		goto done;
 	}
 	
@@ -227,7 +226,7 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 				"*** <%.*s> has joined the room",
 				member->uri.len, member->uri.s);
 			if(body.len>0)
-				imc_room_broadcast(room, &imc_hdr_ctype, &body);
+				imc_room_broadcast(room, &all_hdrs, &body);
 
 			if(body.len>=IMC_BUF_SIZE)
 				LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
@@ -285,7 +284,7 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 		/* send info message */
 		body.s = "*** room was created";
 		body.len = sizeof("*** room was created")-1;
-		imc_send_message(&room->uri, &member->uri, &imc_hdr_ctype, &body);
+		imc_send_message(&room->uri, &member->uri, &all_hdrs, &body);
 		goto done;
 	}
 
@@ -330,7 +329,7 @@ build_inform:
 	body.len = snprintf(body.s, IMC_BUF_SIZE, "*** <%.*s> has joined the room",
 					member->uri.len, member->uri.s);
 	if(body.len>0)
-		imc_room_broadcast(room, &imc_hdr_ctype, &body);
+		imc_room_broadcast(room, &all_hdrs, &body);
 
 	if(body.len>=IMC_BUF_SIZE)
 		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
@@ -492,7 +491,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	cback_param->inv_uri = member->uri;
 	/*?!?! possible race with 'remove user' */
 
-	set_uac_req(&uac_r, &imc_msg_type, &imc_hdr_ctype, &body, 0, 0,
+	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0,
 				imc_inv_callback, (void*)(cback_param));
 	result= tmb.t_request(&uac_r,
 				&member->uri,							/* Request-URI */
@@ -556,7 +555,7 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.len = snprintf(body.s, IMC_BUF_SIZE, "*** <%.*s> has joined the room",
 					member->uri.len, member->uri.s);
 	if(body.len>0)
-		imc_room_broadcast(room, &imc_hdr_ctype, &body);
+		imc_room_broadcast(room, &all_hdrs, &body);
 
 	if(body.len>=IMC_BUF_SIZE)
 		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
@@ -690,7 +689,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	LM_DBG("to: [%.*s]\nfrom: [%.*s]\nbody: [%.*s]\n",
 			member->uri.len, member->uri.s , room->uri.len, room->uri.s,
 			body.len, body.s);
-	imc_send_message(&room->uri, &member->uri, &imc_hdr_ctype, &body);
+	imc_send_message(&room->uri, &member->uri, &all_hdrs, &body);
 
 	member->flags |= IMC_MEMBER_DELETED;
 	imc_del_member(room, &inv_uri.user, &inv_uri.host);
@@ -699,7 +698,7 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.len = snprintf(body.s, IMC_BUF_SIZE, "*** <%.*s> has joined the room",
 					member->uri.len, member->uri.s);
 	if(body.len>0)
-		imc_room_broadcast(room, &imc_hdr_ctype, &body);
+		imc_room_broadcast(room, &all_hdrs, &body);
 
 	if(body.len>=IMC_BUF_SIZE)
 		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
@@ -753,7 +752,7 @@ int imc_handle_deny(struct sip_msg* msg, imc_cmd_t *cmd,
 			"The user [%.*s] has denied the invitation",
 			src->user.len, src->user.s);
 	if(body.len>0)
-		imc_send_message(&room->uri, &memeber->uri, &imc_hdr_ctype, &body);
+	    imc_send_message(&room->uri, &memeber->uri, &all_hdrs, &body);
 #endif
 	LM_ERR("user [%.*s] declined invitation in room [%.*s]!\n", 
 			src->user.len, src->user.s,	room_name.len, room_name.s);
@@ -831,7 +830,7 @@ int imc_handle_list(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.s   = imc_body_buf;
 	body.len = p-body.s;
 	LM_DBG("members = [%.*s]\n", body.len, body.s);
-	imc_send_message(&room->uri, &member->uri, &imc_hdr_ctype, &body);
+	imc_send_message(&room->uri, &member->uri, &all_hdrs, &body);
 
 
 	return 0;
@@ -880,7 +879,7 @@ int imc_handle_exit(struct sip_msg* msg, imc_cmd_t *cmd,
 		body.s = imc_body_buf;
 		strcpy(body.s, "The room has been destroyed");
 		body.len = strlen(body.s);
-		imc_room_broadcast(room, &imc_hdr_ctype, &body);
+		imc_room_broadcast(room, &all_hdrs, &body);
 
 		imc_release_room(room);
 		
@@ -896,7 +895,7 @@ int imc_handle_exit(struct sip_msg* msg, imc_cmd_t *cmd,
 				"The user [%.*s] has left the room",
 				src->user.len, src->user.s);
 		if(body.len>0)
-			imc_room_broadcast(room, &imc_hdr_ctype, &body);
+			imc_room_broadcast(room, &all_hdrs, &body);
 
 		if(body.len>=IMC_BUF_SIZE)
 			LM_ERR("user name %.*s truncated\n", src->user.len, src->user.s);
@@ -957,7 +956,7 @@ int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
 	body.len = strlen(body.s);
 
 	/* braodcast message */
-	imc_room_broadcast(room, &imc_hdr_ctype, &body);
+	imc_room_broadcast(room, &all_hdrs, &body);
 
 	imc_release_room(room);
 
@@ -984,7 +983,7 @@ int imc_handle_help(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 	body.len = IMC_HELP_MSG_LEN;
 
 	LM_DBG("to: [%.*s] from: [%.*s]\n", src->len, src->s, dst->len, dst->s);
-	set_uac_req(&uac_r, &imc_msg_type, &imc_hdr_ctype, &body, 0, 0, 0, 0);
+	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
 				src,									/* To */
@@ -1014,7 +1013,7 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 	}
 
 	LM_DBG("to: [%.*s] from: [%.*s]\n", src->len, src->s, dst->len, dst->s);
-	set_uac_req(&uac_r, &imc_msg_type, &imc_hdr_ctype, &body, 0, 0, 0, 0);
+	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 				NULL,									/* Request-URI */
 				src,									/* To */
@@ -1065,7 +1064,7 @@ int imc_handle_message(struct sip_msg* msg, str *msgbody,
 	body.s[body.len] = '\0';
 
 	member->flags |= IMC_MEMBER_SKIP;
-	imc_room_broadcast(room, &imc_hdr_ctype, &body);
+	imc_room_broadcast(room, &all_hdrs, &body);
 	member->flags &= ~IMC_MEMBER_SKIP;
 
 	imc_release_room(room);
@@ -1209,7 +1208,7 @@ send_message:
 
 	LM_DBG("to: %.*s\nfrom: %.*s\nbody: %.*s\n", to_uri_s.len, to_uri_s.s,
 			from_uri_s.len, from_uri_s.s, body_final.len, body_final.s);
-	set_uac_req(&uac_r, &imc_msg_type, 0, &body_final, 0, 0, 0, 0);
+	set_uac_req(&uac_r, &imc_msg_type, &extra_hdrs, &body_final, 0, 0, 0, 0);
 	tmb.t_request(&uac_r,
 					NULL,									/* Request-URI */
 					&to_uri_s,								/* To */
