@@ -180,7 +180,7 @@ module_group_presence=dialog pa presence_b2b rls xcap
 # jabber => expat (library)
 # osp => OSP Toolkit (sipfoundry)
 # sms => none (external modem)
-module_group_stable=cpl-c dbtext jabber osp sms
+module_group_stable=cpl-c dbtext jabber osp sms pdb
 
 # Modules in this group are either not complete, untested, or without enough
 # reports of usage to allow the module into the stable group. They may or may
