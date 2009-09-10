@@ -234,21 +234,28 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 
    4.1. imc_manager()
 
-4.1.  imc_manager()
+4.1. imc_manager()
 
    Handles Message method.It detects if the body of the message is a
    conference command.If so it executes it, otherwise it sends the message
    to all the members in the room.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE. See command description
+   for error codes returned by this function.
 
    Example 1.8. Usage of imc_manager() function
 ...
 # the rooms will be named chat-xyz to avoid overlapping
 # with usernames
 if(is_method("MESSAGE)
-        && (uri=~ "sip:chat-[0-9]+@" || (uri=~ "sip:chat-manager@")
-    imc_manager();
+    && (uri=~ "sip:chat-[0-9]+@" || (uri=~ "sip:chat-manager@"))
+{
+    if(imc_manager())
+        sl_send_reply("200", "ok");
+    else
+        sl_send_reply("500", "command error");
+    exit;
+}
 ...
 
 5. Exported MI Functions
@@ -256,7 +263,7 @@ if(is_method("MESSAGE)
    5.1. imc_list_rooms
    5.2. imc_list_members
 
-5.1.  imc_list_rooms
+5.1. imc_list_rooms
 
    Lists of the IM Conferencing rooms.
 
@@ -268,7 +275,7 @@ if(is_method("MESSAGE)
                 :imc_list_rooms:_reply_fifo_file_
                 _empty_line_
 
-5.2.  imc_list_members
+5.2. imc_list_members
 
    Listing of the members in IM Conferencing rooms.
 
@@ -286,7 +293,7 @@ if(is_method("MESSAGE)
 
    6.1. active_rooms
 
-6.1.  active_rooms
+6.1. active_rooms
 
    Number of active IM Conferencing rooms.
 
@@ -309,6 +316,7 @@ if(is_method("MESSAGE)
            and new members can be added only though invitations
   -the user is added as the first member and owner of the room
   -eg:  #create chat-000 private
+  -error case: return codes: -30 -- -39
 
 2.join
   -makes the user member of a room
@@ -318,6 +326,7 @@ if(is_method("MESSAGE)
   -if the room does not exist the command is treated as create
   -eg:join sip:chat-000@kamailio.org,
       or just, #join, sent to sip:chat-000@kamailio.org
+  -error case: return codes: -40 -- -49
 
 3.invite
   -invites a user to become a member of a room
@@ -329,6 +338,7 @@ if(is_method("MESSAGE)
     and the administrators
   -eg: #invite sip:john@kamailio.org sip:chat-000@kamailio.org
     or  #invite john@kamailio.org sent to sip:chat-000@kamailio.org
+  -error case: return codes: -50 -- -59
 
 4.accept
   -accepting an invitation
@@ -336,10 +346,12 @@ if(is_method("MESSAGE)
     present it will be considered to be the address in the To header
     of the message
   -eg: #accept sip:john@kamailio.org
+  -error case: return codes: -60 -- -69
 
 5.deny
   -rejects an invitation
   -the parameter is the same as for accept
+  -error case: return codes: -70 -- -79
 
 6.remove
   -deletes a member from a room
@@ -349,6 +361,7 @@ if(is_method("MESSAGE)
           to be the address in the To header of the message
   -only certain members have the right to remove other members
   -eg: #remove sip:john@kamailio.org, sent to sip:chat-000@kamailio.org
+  -error case: return codes: -80 -- -89
 
 7.exit
   -leaving a room
@@ -356,14 +369,17 @@ if(is_method("MESSAGE)
     present it will be considered to be the address in the To header
     of the message
   -if the user is the owner of the room, the room will be destroyed
+  -error case: return codes: -90 -- -99
 
 8.destroy
   -removing a room
   -the parameter is the same as for exit
   -only the owner of a room has the right to destroy it
+  -error case: return codes: -110 -- -119
 
 9.list
   -list members in a room
+  -error case: return codes: -100 -- -109
 
 ...
 

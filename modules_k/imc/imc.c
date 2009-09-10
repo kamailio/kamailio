@@ -477,6 +477,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 	str body;
 	struct sip_uri from_uri, *pto_uri=NULL, *pfrom_uri=NULL;
 	struct to_body *pfrom;
+	int ret = -1;
 
 	body.s = get_body( msg );
 	if (body.s==0) 
@@ -525,6 +526,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 		if(imc_parse_cmd(body.s, body.len, &cmd)<0)
 		{
 			LM_ERR("failed to parse imc cmd!\n");
+			ret = -20;
 			goto error;
 		}
 
@@ -534,6 +536,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_create(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'create'\n");
+				ret = -30;
 				goto error;
 			}
 		break;
@@ -541,6 +544,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_join(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'join'\n");
+				ret = -40;
 				goto error;
 			}
 		break;
@@ -548,6 +552,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_invite(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'invite'\n");
+				ret = -50;
 				goto error;
 			}
 		break;
@@ -555,6 +560,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_accept(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'accept'\n");
+				ret = -60;
 				goto error;
 			}
 		break;
@@ -562,6 +568,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_deny(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'deny'\n");
+				ret = -70;
 				goto error;
 			}
 		break;
@@ -569,6 +576,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_remove(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'remove'\n");
+				ret = -80;
 				goto error;
 			}
 		break;
@@ -576,6 +584,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_exit(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'exit'\n");
+				ret = -90;
 				goto error;
 			}
 		break;
@@ -583,6 +592,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_list(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'list'\n");
+				ret = -100;
 				goto error;
 			}
 		break;
@@ -590,6 +600,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_destroy(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
 				LM_ERR("failed to handle 'destroy'\n");
+				ret = -110;
 				goto error;
 			}
 		break;
@@ -598,6 +609,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			(msg->new_uri.s)?&msg->new_uri:&msg->first_line.u.request.uri)<0)
 			{
 				LM_ERR("failed to handle 'help'\n");
+				ret = -120;
 				goto error;
 			}
 		break;
@@ -606,6 +618,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			(msg->new_uri.s)?&msg->new_uri:&msg->first_line.u.request.uri)<0)
 			{
 				LM_ERR("failed to handle 'unknown'\n");
+				ret = -130;
 				goto error;
 			}
 		}
@@ -616,6 +629,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 	if(imc_handle_message(msg, &body, pfrom_uri, pto_uri)<0)
 	{
 		LM_ERR("failed to handle 'message'\n");
+		ret = -200;
 		goto error;
 	}
 
@@ -623,8 +637,7 @@ done:
 	return 1;
 
 error:
-
-	return -1;	
+	return ret;
 }
 
 /**
