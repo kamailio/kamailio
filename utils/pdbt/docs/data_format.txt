@@ -1,0 +1,29 @@
+* File format off the number portability data *
+
+The number portability data consists only from the number or number block in
+the internation format followed by an semi-colon and the carrier identity.
+Each entry must be in a separate line.
+
+Format [0-9]{n,m}; [0-9][0-9][0-9]
+
+For example: 
+
+495041748;012
+493687413;009
+
+The meaning of this entry is that the first number or block 495041748 belongs
+to the carrier 12, the second to the carrier 9.
+
+
+* File format of the carrier name file *
+
+Each carrier id and name must be in a separate line.
+
+Format: D[0-9][0-9][0-9] <name>
+
+For example:
+
+D001 Deutsche Telekom AG, Bonn
+D012 BT Germany GmbH & Co. OHG
+
+This means that the 495041748 block belongs to British Telecom Germany.
