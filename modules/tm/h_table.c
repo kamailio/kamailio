@@ -266,6 +266,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	struct cell* new_cell;
 	int          sip_msg_len;
 	avp_list_t* old;
+	struct tm_callback *cbs, *cbs_tmp;
 
 	/* allocs a new cell */
 	/* if syn_branch==0 add space for md5 (MD5_LEN -sizeof(struct cell.md5)) */
@@ -343,6 +344,21 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	return new_cell;
 
 error:
+	/* Other modules may have already registered some
+	 * transaction callbacks and may also allocated
+	 * additional memory for their parameters,
+	 * hence TMCB_DESTROY needs to be called. (Miklos)
+	 */
+	if (unlikely(has_tran_tmcbs(new_cell, TMCB_DESTROY)))
+		run_trans_callbacks(TMCB_DESTROY, new_cell, 0, 0, 0);
+
+	/* free the callback list */
+	for( cbs=(struct tm_callback*)new_cell->tmcb_hl.first ; cbs ; ) {
+		cbs_tmp = cbs;
+		cbs = cbs->next;
+		shm_free_unsafe( cbs_tmp );
+	}
+	
 	destroy_avp_list(&new_cell->user_avps_from);
 	destroy_avp_list(&new_cell->user_avps_to);
 	destroy_avp_list(&new_cell->uri_avps_from);
