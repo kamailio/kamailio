@@ -1,0 +1,19 @@
+Source: pdbt
+Section: net
+Priority: optional
+Maintainer: Henning Westerholt <henning.westerholt@1und1.de>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: pdb-tools
+Architecture: any
+Depends: ui-pdb-tools-config
+Description: Tools for handling the PDB
+ Tools for building a mmap image of the PDB and running queries on this
+ mmap image.
+
+Package: pdb-server
+Architecture: any
+Description: Service for querying the carrier id via UDP.
+ Provides a service for querying the carrier id of any German phone
+ number via UDP. Needs a prebuilt mmap image of the PDB.

@@ -1,0 +1,3 @@
+debian/pdbt/usr/bin/pdbt usr/bin/
+debian/copyright usr/share/doc/pdb-tools/
+

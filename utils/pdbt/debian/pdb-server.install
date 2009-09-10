@@ -1,0 +1,3 @@
+debian/pdbt/usr/bin/pdb_server usr/bin/
+debian/pdbt/etc/pdb_server.conf etc/
+debian/copyright usr/share/doc/pdb-server/
