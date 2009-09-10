@@ -356,7 +356,10 @@ error:
 	for( cbs=(struct tm_callback*)new_cell->tmcb_hl.first ; cbs ; ) {
 		cbs_tmp = cbs;
 		cbs = cbs->next;
-		shm_free_unsafe( cbs_tmp );
+		if (cbs_tmp->release) {
+			cbs_tmp->release(cbs_tmp->param);
+		}
+		shm_free( cbs_tmp );
 	}
 	
 	destroy_avp_list(&new_cell->user_avps_from);
