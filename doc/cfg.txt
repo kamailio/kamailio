@@ -120,6 +120,17 @@ Each row consists of the following items:
 	- CFG_READONLY		The variable is read-only, its value cannot
 				be changed.
 
+	- CFG_CB_ONLY_ONCE	The per-child process callback is called only once
+				after the changes to the global config have been
+				committed. (The first child process that updates
+				its local config calls the callback, and no other child
+				process does so.)
+				The per-child process cb is intended to be used to
+				update the config variables that are stored outside
+				of the cfg framework. By default this callback is
+				called by all the child processes separately,
+				this can be changed with this flag.
+
 - minimum value for integers (optional)
 - maximum value for integers (optional)
 - fixup function (optional) that is called when the variable is going to be
@@ -132,7 +143,8 @@ Each row consists of the following items:
   typedef int (*cfg_on_change)(void *temp_handle, str *group_name, str *var_name, void **value);
 
 - per-child process callback function (optional) that is called by each child
-  process separately, after the new values have been committed, and the
+  process separately (unless the CFG_CB_ONLY_ONCE flag is set, see above)
+  after the new values have been committed, and the
   child process is updating its local configuration. The old value will no
   longer be used by the process. (Useful for fix-ups that cannot be done
   in shm memory, for example regexp compilation.)
