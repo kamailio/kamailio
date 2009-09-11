@@ -319,7 +319,7 @@ int sr_cfg_init(void)
 	This stucture will be the entry point for the child processes, and
 	will be freed later, when none of the processes refers to it */
 	*cfg_child_cb_first = *cfg_child_cb_last =
-		cfg_child_cb_new(NULL, NULL, NULL);
+		cfg_child_cb_new(NULL, NULL, NULL, 0);
 
 	if (!*cfg_child_cb_first) goto error;
 
@@ -591,7 +591,9 @@ void cfg_install_global(cfg_block_t *block, char **replaced,
 }
 
 /* creates a structure for a per-child process callback */
-cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name, cfg_on_set_child cb)
+cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
+			cfg_on_set_child cb,
+			unsigned int type)
 {
 	cfg_child_cb_t	*cb_struct;
 
@@ -611,6 +613,22 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name, cfg_on_set_child cb)
 	}
 	cb_struct->cb = cb;
 	atomic_set(&cb_struct->refcnt, 0);
+
+	if (type & CFG_CB_ONLY_ONCE) {
+		/* The callback needs to be executed only once.
+		 * Set the cb_count value to 1, so the first child
+		 * process that executes the callback will decrement
+		 * it to 0, and no other children will execute the
+		 * callback again.
+		 */
+		atomic_set(&cb_struct->cb_count, 1);
+	} else {
+		/* Set the cb_count to a high value, i.e. max signed integer,
+		 * so all the child processes will execute the callback,
+		 * the counter will never reach 0.
+		 */
+		atomic_set(&cb_struct->cb_count, (1U<<(sizeof(int)*8-1))-1);
+	}
 
 	return cb_struct;
 }

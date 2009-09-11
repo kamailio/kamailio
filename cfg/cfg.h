@@ -55,6 +55,8 @@
 #define CFG_ATOMIC		(1U<<(2*CFG_INPUT_SHIFT))
 /* variable is read-only */
 #define CFG_READONLY		(1U<<(2*CFG_INPUT_SHIFT+1))
+/* per-child process callback needs to be called only once */
+#define CFG_CB_ONLY_ONCE	(1U<<(2*CFG_INPUT_SHIFT+2))
 
 typedef int (*cfg_on_change)(void *, str *, str *, void **);
 typedef void (*cfg_on_set_child)(str *, str *);

@@ -98,6 +98,12 @@ typedef struct _cfg_block {
 typedef struct _cfg_child_cb {
 	atomic_t		refcnt; /* number of child processes
 					referring to the element */
+	atomic_t		cb_count;	/* This counter is used to track
+						 * how many times the callback needs
+						 * to be executed.
+						 * >0 the cb needs to be executed
+						 * <=0 the cb no longer needs to be executed
+						 */
 	str			gname, name;	/* name of the variable that has changed */
 	cfg_on_set_child	cb;	/* callback function that has to be called */
 
@@ -247,8 +253,11 @@ static inline void cfg_update_local(void)
 				CFG_UNLOCK();
 			}
 		}
-		/* execute the callback */
-		cfg_child_cb->cb(&cfg_child_cb->gname, &cfg_child_cb->name);
+		if (atomic_add(&cfg_child_cb->cb_count, -1) >= 0) /* the new value is returned
+								by atomic_add() */
+			/* execute the callback */
+			cfg_child_cb->cb(&cfg_child_cb->gname, &cfg_child_cb->name);
+		/* else the callback no longer needs to be executed */
 	}
 }
 
@@ -296,7 +305,9 @@ void cfg_install_global(cfg_block_t *block, char **replaced,
 			cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
 
 /* creates a structure for a per-child process callback */
-cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name, cfg_on_set_child cb);
+cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
+			cfg_on_set_child cb,
+			unsigned int type);
 
 /* free the memory allocated for a child cb list */
 void cfg_child_cb_free(cfg_child_cb_t *child_cb_first);

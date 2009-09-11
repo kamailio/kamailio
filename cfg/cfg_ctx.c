@@ -317,7 +317,8 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		s2.s = var->def->name;
 		s2.len = var->name_len;
 		child_cb = cfg_child_cb_new(&s, &s2,
-					var->def->on_set_child_cb);
+					var->def->on_set_child_cb,
+					var->def->type);
 		if (!child_cb) {
 			LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
 			goto error0;
@@ -749,7 +750,8 @@ int cfg_commit(cfg_ctx_t *ctx)
 			s2.s = changed->var->def->name;
 			s2.len = changed->var->name_len;
 			child_cb = cfg_child_cb_new(&s, &s2,
-					changed->var->def->on_set_child_cb);
+					changed->var->def->on_set_child_cb,
+					changed->var->def->type);
 			if (!child_cb) goto error0;
 
 			if (child_cb_last)
