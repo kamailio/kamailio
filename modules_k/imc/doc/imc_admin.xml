@@ -123,7 +123,7 @@ modparam("imc", "rooms_table", "rooms")
 		<title>Set <varname>members_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("imc", "rooms_table", "members")
+modparam("imc", "members_table", "members")
 ...
 </programlisting>
 		</example>
