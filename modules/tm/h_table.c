@@ -142,7 +142,13 @@ void free_cell( struct cell* dead_cell )
 		cbs_tmp = cbs;
 		cbs = cbs->next;
 		if (cbs_tmp->release) {
+			/* It is safer to release the shm memory lock
+			 * otherwise the release function must to be aware of
+			 * the lock state (Miklos)
+			 */
+			shm_unlock();
 			cbs_tmp->release(cbs_tmp->param);
+			shm_lock();
 		}
 		shm_free_unsafe( cbs_tmp );
 	}
