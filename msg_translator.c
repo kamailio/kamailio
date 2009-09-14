@@ -1563,6 +1563,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	new_buf=0;
 	received_buf=0;
 	rport_buf=0;
+	via_anchor=0;
 	line_buf=0;
 	via_len=0;
 	path_buf.s=0;
@@ -1584,8 +1585,10 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	branch.s=msg->add_to_branch_s;
 	branch.len=msg->add_to_branch_len;
 
+	via_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
+	if (unlikely(via_anchor==0)) goto error00;
 	line_buf = create_via_hf( &via_len, msg, send_info, &branch);
-	if (!line_buf){
+	if (unlikely(!line_buf)){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: "
 					"memory allocation failure\n");
 		goto error00;
@@ -1684,10 +1687,13 @@ after_update_via1:
 		memcpy(path_buf.s+ROUTE_PREFIX_LEN+msg->path_vec.len, CRLF, CRLF_LEN);
 		path_buf.s[path_buf.len]=0;
 		/* insert Route header either before the other routes
-		   (if present & parsed) or after the local via */
+		   (if present & parsed), after the local via or after in front of
+		    the first via if we don't add a local via*/
 		if (msg->route){
 			path_anchor=anchor_lump(msg, msg->route->name.s-buf, 0, 
 									HDR_ROUTE_T);
+		}else if (likely(via_anchor)){
+			path_anchor=via_anchor;
 		}else if (likely(msg->via1)){
 			path_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, 
 									HDR_ROUTE_T);
@@ -1755,8 +1761,6 @@ after_update_via1:
 	/* try to add it before msg. 1st via */
 	/* add first via, as an anchor for second via*/
 	if(likely(line_buf)) {
-		via_anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
-		if (via_anchor==0) goto error04;
 		if ((via_lump=insert_new_lump_before(via_anchor, line_buf, via_len,
 											HDR_VIA_T))==0)
 			goto error04;
