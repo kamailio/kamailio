@@ -221,6 +221,7 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  *         dst   - will be filled
  *         force_send_sock - if 0 dst->send_sock will be set to the default 
  *                 (see get_send_socket2()) 
+ *         sflags - send flags
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
  *                 uri_proto, otherwise the uri proto will be used if set or
@@ -231,10 +232,12 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 inline static struct dest_info *uri2dst2(struct dns_srv_handle* dns_h,
 										struct dest_info* dst,
 										struct socket_info *force_send_socket,
+										snd_flags_t sflags,
 										str *uri, int proto )
 #else
 inline static struct dest_info *uri2dst2(struct dest_info* dst,
 										struct socket_info *force_send_socket,
+										snd_flags_t sflags,
 										str *uri, int proto )
 #endif
 {
@@ -268,6 +271,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 #ifdef USE_COMP
 	dst->comp=parsed_uri.comp;
 #endif
+	dst->send_flags=sflags;
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
 		host=&parsed_uri.maddr_val;
@@ -336,9 +340,10 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
  *                 null. If null or use_dns_failover==0 normal dns lookup will
  *                 be performed (no failover).
  *         dst   - will be filled
- *         msg   -  sip message used to set dst->send_sock, if 0 dst->send_sock
- *                 will be set to the default w/o using msg->force_send_socket 
- *                 (see get_send_socket()) 
+ *         msg   -  sip message used to set dst->send_sock and dst->send_flags,
+ *                 if 0 dst->send_sock will be set to the default w/o using 
+ *                  msg->force_send_socket (see get_send_socket()) and the 
+ *                  send_flags will be set to 0.
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
  *                 uri_proto, otherwise the uri proto will be used if set or
@@ -351,14 +356,16 @@ inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
 										struct sip_msg *msg, str *uri, 
 											int proto )
 {
-	return uri2dst2(dns_h, dst, msg?msg->force_send_socket:0, uri, proto);
+	return uri2dst2(dns_h, dst, msg?msg->force_send_socket:0,
+						msg?msg->fwd_send_flags:0, uri, proto);
 }
 #else
 inline static struct dest_info *uri2dst(struct dest_info* dst,
 										struct sip_msg *msg, str *uri, 
 											int proto )
 {
-	return uri2dst2(dst, msg?msg->force_send_socket:0, uri, proto);
+	return uri2dst2(dst, msg?msg->force_send_socket:0,
+						msg?msg->fwd_send_flags:0, uri, proto);
 }
 #endif /* USE_DNS_FAILOVER */
 
