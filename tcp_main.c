@@ -100,7 +100,9 @@
  *  2009-02-26  direct blacklist support (andrei)
  *  2009-03-20  s/wq_timeout/send_timeout ; send_timeout is now in ticks
  *              (andrei)
- * 2009-04-09  tcp ev and tcp stats macros added (andrei)
+ *  2009-04-09  tcp ev and tcp stats macros added (andrei)
+ *  2009-09-15  support for force connection reuse and close after send
+ *               send flags (andrei)
  */
 
 
@@ -1762,18 +1764,24 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 			if (likely(port)){
 				/* try again w/o id */
 				c=tcpconn_get(0, &ip, port, from, con_lifetime);
-				goto no_id;
 			}else{
 				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
 						dst->id);
 				return -1;
 			}
-		}else goto get_fd;
+		}
 	}
-no_id:
-		if (unlikely(c==0)){
+/* no_id: */
+		if (unlikely((c==0) || tcpconn_close_after_send(c))){
+			if (unlikely(c)){
+				/* can't use c if it's marked as close-after-send  =>
+				   release it and try opening new one */
+				tcpconn_chld_put(c); /* release c (dec refcnt & free on 0) */
+				c=0;
+			}
 			/* check if connect() is disabled */
-			if (cfg_get(tcp, tcp_cfg, no_connect))
+			if (unlikely((dst->send_flags & SND_F_FORCE_CON_REUSE) ||
+							cfg_get(tcp, tcp_cfg, no_connect)))
 				return -1;
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
@@ -1814,6 +1822,7 @@ no_id:
 					return -1;
 				}
 				c->flags|=F_CONN_PENDING|F_CONN_FD_CLOSED;
+				tcpconn_set_send_flags(c, dst->send_flags);
 				atomic_set(&c->refcnt, 2); /* ref from here and from main hash
 											 table */
 				/* add it to id hash and aliases */
@@ -1918,6 +1927,14 @@ no_id:
 				}
 				LOG(L_INFO, "tcp_send: quick connect for %p\n", c);
 				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
+				if (unlikely(dst->send_flags & SND_F_CON_CLOSE)){
+					/* if close-after-send requested, don't bother
+					   sending the fd back to tcp_main, try closing it
+					   immediately (no other tcp_send should use it,
+					   because it is marked as close-after-send before
+					   being added to the hash */
+					goto conn_wait_close;
+				}
 				c->state=S_CONN_OK;
 				/* send to tcp_main */
 				response[0]=(long)c;
@@ -1938,6 +1955,7 @@ no_id:
 								su2a(&dst->to, sizeof(dst->to)));
 				return -1;
 			}
+			tcpconn_set_send_flags(c, dst->send_flags);
 			if (likely(c->state==S_CONN_OK))
 				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
 			atomic_set(&c->refcnt, 2); /* ref. from here and it will also
@@ -1962,7 +1980,7 @@ no_id:
 			}
 			goto send_it;
 		}
-get_fd:
+/* get_fd: */
 #ifdef TCP_ASYNC
 		/* if data is already queued, we don't need the fd any more */
 		if (unlikely(cfg_get(tcp, tcp_cfg, async) &&
@@ -2048,6 +2066,8 @@ get_fd:
 send_it:
 	DBG("tcp_send: sending...\n");
 	lock_get(&c->write_lock);
+	/* update connection send flags with the current ones */
+	tcpconn_set_send_flags(c, dst->send_flags);
 #ifdef TCP_ASYNC
 	if (likely(cfg_get(tcp, tcp_cfg, async))){
 		if (_wbufq_non_empty(c)
@@ -2203,6 +2223,31 @@ error:
 			TCP_STATS_ESTABLISHED(c->state);
 			c->state=S_CONN_OK;
 	}
+	if (unlikely(dst->send_flags & SND_F_CON_CLOSE)){
+		/* close after write => send EOF request to tcp_main */
+		c->state=S_CONN_BAD;
+		c->timeout=get_ticks_raw();
+		/* tell "main" it should drop this*/
+		response[0]=(long)c;
+		response[1]=CONN_EOF;
+		if (send_all(unix_tcp_sock, response, sizeof(response))<=0){
+			LOG(L_CRIT, "BUG: tcp_send: error return failed (write):%s (%d)\n",
+					strerror(errno), errno);
+			tcpconn_chld_put(c); /* deref. it manually */
+			n=-1;
+		}
+		/* CONN_EOF will auto-dec refcnt => we must not call tcpconn_put 
+		 * if it succeeds */
+#ifdef TCP_FD_CACHE
+		if (unlikely(fd_cache_e)){
+			tcp_fd_cache_rm(fd_cache_e);
+			fd_cache_e=0;
+			close(fd);
+		}else
+#endif /* TCP_FD_CACHE */
+		if (do_close_fd) close(fd);
+		goto end_no_conn;
+	}
 end:
 #ifdef TCP_FD_CACHE
 	if (unlikely((fd_cache_e==0) && use_fd_cache)){
@@ -2216,11 +2261,14 @@ end_no_conn:
 	return n;
 #ifdef TCP_CONNECT_WAIT
 conn_wait_error:
-	/* connect or send failed on newly created connection which was not
-	 * yet sent to tcp_main (but was already hashed) => don't send to main,
-	 * unhash and destroy directly (if refcnt>2 it will be destroyed when the 
-	 * last sender releases the connection (tcpconn_chld_put(c))) or when
-	 * tcp_main receives a CONN_ERROR it*/
+	n=-1;
+conn_wait_close:
+	/* connect or send failed or immediate close-after-send was requested on
+	 * newly created connection which was not yet sent to tcp_main (but was
+	 * already hashed) => don't send to main, unhash and destroy directly
+	 * (if refcnt>2 it will be destroyed when the last sender releases the
+	 * connection (tcpconn_chld_put(c))) or when tcp_main receives a
+	 * CONN_ERROR it*/
 	c->state=S_CONN_BAD;
 	TCPCONN_LOCK;
 		if (c->flags & F_CONN_HASHED){
@@ -2234,7 +2282,7 @@ conn_wait_error:
 			TCPCONN_UNLOCK;
 	/* dec refcnt -> mark it for destruction */
 	tcpconn_chld_put(c);
-	return -1;
+	return n;
 #endif /* TCP_CONNET_WAIT */
 }
 
@@ -3025,11 +3073,12 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			LOG(L_ERR, "handle_ser_child: ERROR: received CON_ERROR for %p"
 					" (id %d), refcnt %d\n", 
 					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt));
+		case CONN_EOF: /* forced EOF after full send, due to send flags */
 #ifdef TCP_CONNECT_WAIT
 			/* if the connection is pending => it might be on the way of
 			 * reaching tcp_main (e.g. CONN_NEW_COMPLETE or 
 			 *  CONN_NEW_PENDING_WRITE) =>  it cannot be destroyed here */
-			if ( !(tcpconn->flags & F_CONN_PENDING) && 
+			if ( !(tcpconn->flags & F_CONN_PENDING) &&
 					tcpconn_try_unhash(tcpconn) )
 				tcpconn_put(tcpconn);
 #else /* ! TCP_CONNECT_WAIT */
@@ -3155,7 +3204,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 					}
 				}
 			}else{
-				LOG(L_WARN, "tcp_main: hanlder_ser_child: connection %p"
+				LOG(L_WARN, "tcp_main: handler_ser_child: connection %p"
 							" already watched for write\n", tcpconn);
 			}
 			break;
@@ -3466,8 +3515,10 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 	empty_q=0; /* warning fix */
 	if (unlikely((ev & (POLLOUT|POLLERR|POLLHUP)) &&
 					(tcpconn->flags & F_CONN_WRITE_W))){
-		if (unlikely((ev & (POLLERR|POLLHUP)) || 
-					(wbufq_run(tcpconn->s, tcpconn, &empty_q)<0))){
+		if (unlikely((ev & (POLLERR|POLLHUP)) ||
+					(wbufq_run(tcpconn->s, tcpconn, &empty_q)<0) ||
+					(empty_q && tcpconn_close_after_send(tcpconn))
+			)){
 			if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)<0)){
 				LOG(L_ERR, "ERROR: handle_tcpconn_ev: io_watch_del(1) failed:"
 							" for %p, fd %d\n", tcpconn, tcpconn->s);
