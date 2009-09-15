@@ -62,13 +62,30 @@ config script changes:
   - support for kamailio style pvars
   - C-like switch()/case (integer only)
   - while()
+  - include file support: include_file "somefile"
+  - event route support: event_route[module_name:eventid]
+
 build system:
   - multiple modules directories are now supported (defined in Makefile.dirs)
 
 new config variables:
   - max_while_loops - maximum iterations allowed for a while  (can be changed
        at runtime). Default 100.
+  - log_name - set the application name used when printing to syslog.
 
+new script commands:
+  add_local_rport() - adds the rport parameter to the added via header
+       (rfc3581).
+  set_forward_no_connect() - the message will be forwarded only if there is
+       already an existing connection to the destination (it applies only to
+       connection oriented protocols like tcp, tls and in the future sctp).
+  set_reply_no_connect() - like set_forward_no_connect(),  but works for
+       replies to the current message.
+  set_forward_close()  - try to close the connection after forwarding the
+       current message (it applies only when the underlying protocol is
+       connection oriented).
+  set_reply_close() - like set_forward_close(), but it works for replies to
+       the current message.
 
 
 
