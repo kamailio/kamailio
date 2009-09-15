@@ -168,6 +168,7 @@ int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 #ifdef USE_COMP
 	dst.comp=msg->via1->comp_no;
 #endif
+	dst.send_flags=msg->rpl_send_flags;
 	ret = msg_send(&dst, buf, len);
 	mhomed=backup_mhomed;
 	pkg_free(buf);
