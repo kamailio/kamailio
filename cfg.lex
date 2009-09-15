@@ -215,6 +215,10 @@ ELSE			"else"
 SET_ADV_ADDRESS	"set_advertised_address"
 SET_ADV_PORT	"set_advertised_port"
 FORCE_SEND_SOCKET	"force_send_socket"
+SET_FWD_NO_CONNECT		"set_forward_no_connect"
+SET_RPL_NO_CONNECT	"set_reply_no_connect"
+SET_FWD_CLOSE	"set_forward_close"
+SET_RPL_CLOSE	"set_reply_close"
 SWITCH			"switch"
 CASE			"case"
 DEFAULT			"default"
@@ -572,6 +576,14 @@ EAT_ABLE	[\ \t\b\r]
 										return SET_ADV_PORT; }
 <INITIAL>{FORCE_SEND_SOCKET}	{	count(); yylval.strval=yytext;
 									return FORCE_SEND_SOCKET; }
+<INITIAL>{SET_FWD_NO_CONNECT}	{ count(); yylval.strval=yytext;
+									return SET_FWD_NO_CONNECT; }
+<INITIAL>{SET_RPL_NO_CONNECT}	{ count(); yylval.strval=yytext;
+									return SET_RPL_NO_CONNECT; }
+<INITIAL>{SET_FWD_CLOSE}		{ count(); yylval.strval=yytext;
+									return SET_FWD_CLOSE; }
+<INITIAL>{SET_RPL_CLOSE}		{ count(); yylval.strval=yytext;
+									return SET_RPL_CLOSE; }
 <INITIAL>{SWITCH}	{ count(); yylval.strval=yytext; return SWITCH; }
 <INITIAL>{CASE}	{ count(); yylval.strval=yytext; return CASE; }
 <INITIAL>{DEFAULT}	{ count(); yylval.strval=yytext; return DEFAULT; }

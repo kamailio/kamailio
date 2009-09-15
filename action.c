@@ -50,6 +50,7 @@
  *  2008-12-03  use lvalues/rvalues for assignments (andrei)
  *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
  *  2009-05-04  switched IF_T to rval_expr (andrei)
+ *  2009-09-15  added SET_{FWD,RPL}_NO_CONNECT, SET_{FWD,RPL}_CLOSE (andrei)
  */
 
 
@@ -1213,6 +1214,22 @@ match_cleanup:
 				ret=0;
 			else
 				ret=v;
+			break;
+		case SET_FWD_NO_CONNECT_T:
+			msg->fwd_send_flags|= SND_F_FORCE_CON_REUSE;
+			ret=1; /* continue processing */
+			break;
+		case SET_RPL_NO_CONNECT_T:
+			msg->rpl_send_flags|= SND_F_FORCE_CON_REUSE;
+			ret=1; /* continue processing */
+			break;
+		case SET_FWD_CLOSE_T:
+			msg->fwd_send_flags|= SND_F_CON_CLOSE;
+			ret=1; /* continue processing */
+			break;
+		case SET_RPL_CLOSE_T:
+			msg->rpl_send_flags|= SND_F_CON_CLOSE;
+			ret=1; /* continue processing */
 			break;
 /*
 		default:
