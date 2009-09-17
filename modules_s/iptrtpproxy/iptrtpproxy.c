@@ -44,6 +44,7 @@
 #include "../../select.h"
 #include "../../select_buf.h"
 #include "../../script_cb.h"
+#include "../../cfg_parser.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -75,6 +76,7 @@ struct switchboard_item {
 	int ringing_timeout;
 	struct xt_rtpproxy_sockopt_in_switchboard in_switchboard;
 	struct xt_rtpproxy_sockopt_in_alloc_session in_session;
+	unsigned int param_ids;
 
 	struct switchboard_item* next;
 };
@@ -86,6 +88,8 @@ static struct switchboard_item* switchboards = NULL;
 static struct switchboard_item* found_switchboard;
 static int found_direction;
 static int switchboard_count = 0;
+static str iptrtpproxy_cfg_filename = STR_STATIC_INIT("/etc/iptrtpproxy.cfg");
+static int iptrtpproxy_cfg_flag = 0;
 
 
 static struct switchboard_item* find_switchboard(str *name) {
@@ -889,10 +893,219 @@ static int mod_pre_script_cb(struct sip_msg *msg, unsigned int flags, void *para
 	return 1;
 }
 
+static struct {
+	int flag;
+	struct switchboard_item *si;
+	struct xt_rtpproxy_sockopt_in_switchboard in_switchboard;
+} parse_config_vals;
+
+
+int cfg_parse_addr_port(void* param, cfg_parser_t* st, unsigned int flags) {
+	struct xt_rtpproxy_sockopt_in_switchboard *sw;
+	int i, ret;
+	cfg_token_t t;
+	ret = cfg_get_token(&t, st, 0);
+	if (ret < 0) return ret;
+	if (ret > 0) return 0;
+	if (t.type != '-') return 0;
+	ret = cfg_get_token(&t, st, 0);
+	if (ret < 0) return ret;
+	if (ret > 0) return 0;
+	if (parse_config_vals.flag == 1) {
+		sw = &parse_config_vals.in_switchboard;
+	}
+	else {
+		sw = &parse_config_vals.si->in_switchboard;
+	}
+	if (t.type == CFG_TOKEN_ALPHA && t.val.len == 1) {
+		switch (t.val.s[0]) {
+			case 'a':
+			case 'b':				
+				i = t.val.s[0]-'a';
+				ret = cfg_get_token(&t, st, 0);
+				if (ret < 0) return ret;
+				if (ret > 0) return 0;
+				if (t.type != '=') break;
+
+				if (param == NULL) {
+					str val;
+					char buff[50];
+					val.s = buff;
+					val.len = sizeof(buff)-1;
+					if (cfg_parse_str(&val, st, CFG_STR_STATIC|CFG_EXTENDED_ALPHA) < 0) return -1;
+					sw->gate[i].ip = s2ip4(&val);
+					if (sw->gate[i].ip == 0) {
+						ERR(MODULE_NAME": parse_switchboard_section: bad ip address '%.*s'\n", val.len, val.s);
+						return -1;
+					}
+				}
+				else {
+					int val;
+					if (cfg_parse_int(&val, st, 0) < 0) 
+						return -1;
+					sw->gate[i].port = val;
+				}
+				break;
+			default:;
+		}
+	}
+	return 0;
+}
+
+int cfg_parse_dummy(void* param, cfg_parser_t* st, unsigned int flags) {
+	int ret;
+	cfg_token_t t;
+	str val;
+	do {
+		ret = cfg_get_token(&t, st, 0);
+		if (ret < 0) return ret;
+		if (ret > 0) return 0;
+	}
+	while (t.type != '=');
+	if (cfg_parse_str(&val, st, CFG_EXTENDED_ALPHA) < 0) return -1;
+	return 0;
+}
+
+static cfg_option_t section_options[] = {
+        {"addr", .f = cfg_parse_addr_port, .flags = CFG_PREFIX|CFG_CASE_SENSITIVE, .param = NULL},
+        {"port", .f = cfg_parse_addr_port, .flags = CFG_PREFIX|CFG_CASE_SENSITIVE, .param = (void*) 1},
+	{NULL, .flags = CFG_DEFAULT, .f = cfg_parse_dummy},
+};
+
+#define DEFAULT_SECTION "default"
+#define SWITCHBOARD_PREFIX "switchboard"
+
+static int parse_switchboard_section(void* param, cfg_parser_t* st, unsigned int flags) {
+	str name;
+	cfg_token_t t;
+	int ret, fl;
+	parse_config_vals.flag = 0;
+	ret = cfg_get_token(&t, st, 0);
+	if (ret != 0) return ret;
+	if (t.type != CFG_TOKEN_ALPHA) 
+		goto skip;
+	if (t.val.len == (sizeof(DEFAULT_SECTION)-1) && strncmp(t.val.s, DEFAULT_SECTION, t.val.len) == 0) 
+		fl = 1;
+	else if (t.val.len == (sizeof(SWITCHBOARD_PREFIX)-1) && strncmp(t.val.s, SWITCHBOARD_PREFIX, t.val.len) == 0) 
+		fl = 2;
+	else
+		goto skip;
+	ret = cfg_get_token(&t, st, 0);
+	if (ret != 0) return ret;
+	if (t.type != ':') 
+		goto skip;
+	name.s = NULL; name.len = 0;	
+	ret = cfg_parse_section(&name, st, CFG_STR_PKGMEM);
+	if (ret != 0) return ret;
+
+	if (fl==1 && name.len == (sizeof(SWITCHBOARD_PREFIX)-1) && strncmp(name.s, SWITCHBOARD_PREFIX, name.len) == 0) {
+		parse_config_vals.flag = 1;		
+		if (name.s) 
+			pkg_free(name.s);
+
+	}
+	else if (fl == 2) {
+		int i;
+		if (find_switchboard(&name)) {
+			ERR(MODULE_NAME": parse_switchboard_section: name '%.*s' already declared\n", name.len, name.s);
+			return -1;
+		}
+		for (i=0; i<name.len; i++) {
+			if (!is_alpha(name.s[i])) {
+				ERR(MODULE_NAME": parse_switchboard_section: bad section name '%.*s'\n", name.len, name.s);
+				return -1;
+			}
+		}
+		if (name.len > MAX_SWITCHBOARD_NAME_LEN) {
+			ERR(MODULE_NAME": parse_switchboard_section: name '%.*s' is too long (%d>%d)\n", name.len, name.s, name.len, MAX_SWITCHBOARD_NAME_LEN);
+			return -1;
+		}
+ 	
+		parse_config_vals.si = pkg_malloc(sizeof(*parse_config_vals.si));
+		if (!parse_config_vals.si) {
+			ERR(MODULE_NAME": parse_switchboard_section: not enough pkg memory\n");
+			return -1;
+		}
+		memset(parse_config_vals.si, 0, sizeof(*parse_config_vals.si));
+		parse_config_vals.si->name = name;
+		parse_config_vals.si->ringing_timeout = 60;
+		parse_config_vals.si->next = switchboards;
+		switchboards = parse_config_vals.si;
+
+		parse_config_vals.flag = 2;		
+	}
+	return 0;
+skip:
+	while (t.type != ']') {
+		ret = cfg_get_token(&t, st, 0);
+		if (ret != 0) return ret;
+	}
+	return cfg_eat_eol(st, 0);
+}
+
+static int parse_iptrtpproxy_cfg() {
+	cfg_parser_t* parser = NULL;
+	struct switchboard_item *si;
+	if ((parser = cfg_parser_init(&iptrtpproxy_cfg_filename)) == NULL) {
+		ERR(MODULE_NAME"parse_iptrtpproxy_cfg: Error while initializing configuration file parser.\n");
+		return -1;
+        }
+	cfg_section_parser(parser, parse_switchboard_section, NULL);
+	cfg_set_options(parser, section_options);
+	memset(&parse_config_vals, 0, sizeof(parse_config_vals));
+	if (cfg_parse(parser)) {
+		return -1;
+	}
+	cfg_parser_close(parser);
+	
+	for (si = switchboards; si; si = si->next) {
+		int i;
+		for (i=0; i<2; i++) {
+			if (!si->in_switchboard.gate[i].ip) 
+				si->in_switchboard.gate[i].ip = parse_config_vals.in_switchboard.gate[i].ip;
+			if (!si->in_switchboard.gate[i].port) 
+				si->in_switchboard.gate[i].port = parse_config_vals.in_switchboard.gate[i].port;
+		}
+		for (i=0; i<2; i++) {
+			if (!si->in_switchboard.gate[i^1].ip)
+				si->in_switchboard.gate[i^1].ip = si->in_switchboard.gate[i].ip;
+			if (!si->in_switchboard.gate[i^1].port)
+				si->in_switchboard.gate[i^1].port = si->in_switchboard.gate[i].port;
+		}
+	}
+	return 0;
+}
+
 /* module initialization */
 static int mod_init(void) {
 	struct switchboard_item *si;
 	int i;
+	if (iptrtpproxy_cfg_flag == 0) {
+		if (parse_iptrtpproxy_cfg() < 0)
+			return E_CFG;
+	}
+
+	for (si = switchboards; si; si=si->next) {
+		str ips[2];
+		char buf[17];
+		ip42s(si->in_switchboard.gate[0].ip, ips+0);
+		strncpy(buf, ips[0].s, sizeof(buf)-1);
+		ips[0].s = buf;
+		ip42s(si->in_switchboard.gate[1].ip, ips+1);
+
+		DBG(MODULE_NAME": mod_init: name=%.*s;addr-a=%.*s;port-a=%d;addr-b=%.*s;port-b=%d;learning-timeout-a=%d;learning-timeout-b=%d;always-learn-a=%d;always-learn-b=%d;ringing-timeout=%d\n", 
+			STR_FMT(&si->name),
+			STR_FMT(ips+0),
+			si->in_switchboard.gate[0].port,
+			STR_FMT(ips+1),
+			si->in_switchboard.gate[1].port,
+			si->in_session.source[0].stream[0].learning_timeout,
+			si->in_session.source[1].stream[0].learning_timeout,
+			si->in_session.source[0].always_learn,
+			si->in_session.source[1].always_learn,
+			si->ringing_timeout
+		);
+	}
 	if (xt_RTPPROXY_open(&handle) < 0) goto err;
 	for (si = switchboards; si; si=si->next) {
 		struct xt_rtpproxy_switchboard *out_switchboard;
@@ -935,27 +1148,45 @@ static int child_init(int rank) {
 	return 0;
 }
 
+
 #define eat_spaces(_p) \
 	while( *(_p)==' ' || *(_p)=='\t' ){\
 	(_p)++;}
 
-#define DEF_PARAMS(_id,_s,_fld) \
-	if ( (param_ids & (_id)) && !(param_ids & ((_id) << par_GateB)) )  \
-		si->_s[1]._fld = si->_s[0]._fld; \
-	if ( !(param_ids & (_id)) && (param_ids & ((_id) << par_GateB)) )  \
-		si->_s[0]._fld = si->_s[1]._fld;
 
+static int declare_config(modparam_t type, void* val) {
+	if (!val) return 0;
+	if (iptrtpproxy_cfg_flag == 0) {
 
-static int declare_switchboard(modparam_t type, void* val) {
+		iptrtpproxy_cfg_flag = 1;
+		iptrtpproxy_cfg_filename = * (str*) val;
+		if (parse_iptrtpproxy_cfg() == 0)
+			return 0;
+	}
+	else {
+		switch (iptrtpproxy_cfg_flag) {
+			case 1:
+				ERR(MODULE_NAME": declare_config: config param may be used only once\n");
+				break;
+			case 2:
+				ERR(MODULE_NAME": declare_config: config param may not be used after 'switchboard'\n");
+				break;
+			default:
+				BUG(MODULE_NAME": declare_config: unexpected 'iptrtpproxy_cfg_filename' value %d\n", iptrtpproxy_cfg_flag);
+		}				
+	}
+	return E_CFG;
+}
+
+static int declare_switchboard_param(modparam_t type, void* val) {
+
 	char *s, *c;
-	int i;
+	int i, all_flag;
 	struct switchboard_item *si = NULL;
 	enum param_id {
 		par_GateB =		8,
 		par_Name =		0x000001,
 		par_RingingTimeout =	0x000002,
-		par_Addr =		0x000100,
-		par_Port =		0x000200,
 		par_AlwaysLearn =	0x000400,
 		par_LearningTimeout =	0x000800
 	};
@@ -965,10 +1196,6 @@ static int declare_switchboard(modparam_t type, void* val) {
 		unsigned int id;
 	} params[] = {
 		{.name = "name", .id = par_Name},
-		{.name = "addr-a", .id = par_Addr},
-		{.name = "addr-b", .id = par_Addr << par_GateB},
-		{.name = "port-a", .id = par_Port},
-		{.name = "port-b", .id = par_Port << par_GateB},
 		{.name = "always-learn-a", .id = par_AlwaysLearn},
 		{.name = "always-learn-b", .id = par_AlwaysLearn << par_GateB},
 		{.name = "learning-timeout-a", .id = par_LearningTimeout},
@@ -977,18 +1204,20 @@ static int declare_switchboard(modparam_t type, void* val) {
 
 		{.name = 0, .id = 0}
 	};
-	unsigned int param_ids = 0;
 
 	if (!val) return 0;
+	if (iptrtpproxy_cfg_flag == 0) {
+		iptrtpproxy_cfg_flag = 2;
+		if (parse_iptrtpproxy_cfg() < 0)
+			return E_CFG;
+	}
+
 	s = val;
+	all_flag = -1;
 
 	eat_spaces(s);
 	if (!*s) return 0;
 	/* parse param: name=;addr-a=;addr-b=;port-a=;port-b=; */
-	si = pkg_malloc(sizeof(*si));
-	if (!si) goto err_E_OUT_OF_MEM;
-	memset(si, 0, sizeof(*si));
-	si->ringing_timeout = 60;
 	while (*s) {
 		str p, val;
 		unsigned int id;
@@ -998,7 +1227,7 @@ static int declare_switchboard(modparam_t type, void* val) {
 			c++;
 		}
 		if (c == s) {
-			ERR(MODULE_NAME": declare_switchboard: param name expected near '%s'\n", s);
+			ERR(MODULE_NAME": declare_switchboard_param: param name expected near '%s'\n", s);
 			goto err_E_CFG;
 		}
 		p.s = s;
@@ -1006,7 +1235,7 @@ static int declare_switchboard(modparam_t type, void* val) {
 		eat_spaces(c);
 		s = c;
 		if (*c != '=') {
-			ERR(MODULE_NAME": declare_switchboard: equal char expected near '%s'\n", s);
+			ERR(MODULE_NAME": declare_switchboard_param: equal char expected near '%s'\n", s);
 			goto err_E_CFG;
 		}
 		c++;
@@ -1027,105 +1256,98 @@ static int declare_switchboard(modparam_t type, void* val) {
 			}
 		}
 		if (!id) {
-			ERR(MODULE_NAME": declare_switchboard: unknown param name '%.*s'\n", p.len, p.s);
+			ERR(MODULE_NAME": declare_switchboard_param: unknown param name '%.*s'\n", p.len, p.s);
 			goto err_E_CFG;
 		}
-		if (param_ids & id) {
-			ERR(MODULE_NAME": declare_switchboard: param '%.*s' used more than once\n", p.len, p.s);
+		if (all_flag >= 0 && id == par_Name) {
+			ERR(MODULE_NAME": declare_switchboard_param: name must be the first param\n");
 			goto err_E_CFG;
 		}
-
-		switch (id) {
-			case par_Name:
-				if (val.len > MAX_SWITCHBOARD_NAME_LEN) {
-					ERR(MODULE_NAME": declare_switchboard: name is too long (%d>%d)\n", val.len, MAX_SWITCHBOARD_NAME_LEN);
+		if (id == par_Name) {
+			all_flag = 0;
+			si = find_switchboard(&val);
+			if (!si) {
+				if (val.len == 1 && val.s[0] == '*')
+					all_flag = 1;
+				else {
+					ERR(MODULE_NAME": declare_switchboard_param: switchboard '%.*s' not found\n", val.len, val.s);
 					goto err_E_CFG;
 				}
-				si->name = val;
-				break;
-			case par_Addr:
-			case par_Addr << par_GateB:
-				si->in_switchboard.gate[IS_GATE_B(id)].ip = s2ip4(&val);
-				if (si->in_switchboard.gate[IS_GATE_B(id)].ip == 0) {
-					goto err_E_CFG2;
-				}
-				break;
-			case par_Port:
-			case par_Port << par_GateB: {
-				unsigned int u;
-				if (str2int(&val, &u) < 0) {
-					goto err_E_CFG2;
-				}
-				si->in_switchboard.gate[IS_GATE_B(id)].port = u;
-				break;
 			}
-			case par_AlwaysLearn:
-			case par_AlwaysLearn <<par_GateB: {
-				unsigned int u;
-				if (str2int(&val, &u) < 0) {
-					goto err_E_CFG2;
-				}
-				si->in_session.source[IS_GATE_B(id)].always_learn = u != 0;
-				break;
-			}
-			case par_LearningTimeout:
-			case par_LearningTimeout << par_GateB:{
-				unsigned int u;
-				if (str2int(&val, &u) < 0) {
-					goto err_E_CFG2;
-				}
-				if (u) {
-					for (i=0; i<2; i++) {
-						si->in_session.source[IS_GATE_B(id)].stream[i].learning_timeout = u;
-						si->in_session.source[IS_GATE_B(id)].stream[i].flags = XT_RTPPROXY_SOCKOPT_FLAG_SESSION_LEARNING_TIMEOUT;
+		}
+		else {
+			if (all_flag)
+				si = switchboards;
+			while (si) {
+
+				switch (id) {
+					case par_Name:
+						break;
+					case par_AlwaysLearn:
+					case par_AlwaysLearn << par_GateB: {
+						unsigned int u;
+						if (str2int(&val, &u) < 0) {
+							goto err_E_CFG;
+						}
+						si->in_session.source[IS_GATE_B(id)].always_learn = u != 0;
+						break;
 					}
+					case par_LearningTimeout:
+					case par_LearningTimeout << par_GateB: {
+						unsigned int u;
+						if (str2int(&val, &u) < 0) {
+							goto err_E_CFG;
+						}
+						if (u) {
+							for (i=0; i<2; i++) {
+								si->in_session.source[IS_GATE_B(id)].stream[i].learning_timeout = u;
+								si->in_session.source[IS_GATE_B(id)].stream[i].flags = XT_RTPPROXY_SOCKOPT_FLAG_SESSION_LEARNING_TIMEOUT;
+							}
+						}
+						break;
+					}
+					case par_RingingTimeout: {
+						unsigned int u;
+						if (str2int(&val, &u) < 0) {
+							goto err_E_CFG;
+						}
+						if (u) {
+							si->ringing_timeout = u;
+						}
+						break;
+					}
+					default:
+						BUG(MODULE_NAME": declare_switchboard_param: unknown id '%x\n", id);
+						goto err_E_CFG;
 				}
-				break;
+				si->param_ids |= id;
+				if (!all_flag) break;
+				si = si->next;
 			}
-			case par_RingingTimeout: {
-				unsigned int u;
-				if (str2int(&val, &u) < 0) {
-					goto err_E_CFG2;
-				}
-				if (u) {
-					si->ringing_timeout = u;
-				}
-				break;
-			}
-			default:
-				BUG(MODULE_NAME": declare_switchboard: unknown id '%x\n", id);
-				goto err_E_CFG;
 		}
 		s = c;
-		param_ids |= id;
+	}
+	if (all_flag) {
+		return 0;
 	}
 
-	if (find_switchboard(&si->name)) {
-		ERR(MODULE_NAME": declare_switchboard: name '%.*s' already declared\n", si->name.len, si->name.s);
-		goto err_E_CFG;
-	}
-	DEF_PARAMS(par_Addr,in_switchboard.gate,ip);
-	DEF_PARAMS(par_Port,in_switchboard.gate,port);
+#define DEF_PARAMS(_id,_s,_fld) \
+	if ( (si->param_ids & (_id)) && !(si->param_ids & ((_id) << par_GateB)) )  \
+		si->_s[1]._fld = si->_s[0]._fld; \
+	if ( !(si->param_ids & (_id)) && (si->param_ids & ((_id) << par_GateB)) )  \
+		si->_s[0]._fld = si->_s[1]._fld;
 
 	DEF_PARAMS(par_AlwaysLearn,in_session.source,always_learn);
 	for (i=0; i<2; i++) {
 		DEF_PARAMS(par_LearningTimeout,in_session.source,stream[i].learning_timeout);
 		DEF_PARAMS(par_LearningTimeout,in_session.source,stream[i].flags);
 	}
-	si->next = switchboards;
-	switchboards = si;
 	switchboard_count++;
 
 	return 0;
 
-err_E_OUT_OF_MEM:
-	ERR(MODULE_NAME": declare_switchboard(#%d): not enough pkg memory\n", switchboard_count);
-	return E_OUT_OF_MEM;
-
-err_E_CFG2:
-	ERR(MODULE_NAME": declare_switchboard(#%d): parse error near \"%s\"\n", switchboard_count, s);
 err_E_CFG:
-	if (si) pkg_free(si);
+	ERR(MODULE_NAME": declare_switchboard_param(#%d): parse error near \"%s\"\n", switchboard_count, s);
 
 	return E_CFG;
 }
@@ -1141,7 +1363,8 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"switchboard",           PARAM_STRING | PARAM_USE_FUNC, &declare_switchboard},
+	{"config",                PARAM_STR | PARAM_USE_FUNC, &declare_config}, 
+	{"switchboard",           PARAM_STRING | PARAM_USE_FUNC, &declare_switchboard_param},
 	{0, 0, 0}
 };
 
