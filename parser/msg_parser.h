@@ -246,6 +246,8 @@ typedef struct msg_body {
 
 typedef struct sip_msg {
 	unsigned int id;               /* message id, unique/process*/
+	snd_flags_t fwd_send_flags;    /* send flags for forwarding */
+	snd_flags_t rpl_send_flags;    /* send flags for replies */
 	struct msg_start first_line;   /* Message first line */
 	struct via_body* via1;         /* The first via */
 	struct via_body* via2;         /* The second via */

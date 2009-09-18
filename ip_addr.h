@@ -34,6 +34,7 @@
  *  2006-04-21  added init_dst_from_rcv (andrei)
  *  2007-06-26  added ip_addr_mk_any() (andrei)
  *  2008-05-21  added su2a(), ip_addr2sbuf(), ip4tosbuf(), ip62sbuf() (andrei)
+ *  2009-09-14  added send flags support to dest_info (andrei)
  */
 
 #ifndef ip_addr_h
@@ -136,11 +137,18 @@ struct receive_info{
 };
 
 
+/* send flags */
+#define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
+#define SND_F_CON_CLOSE			2 /* close the connection after sending */
+
+typedef unsigned char  snd_flags_t;
+
 struct dest_info{
 	struct socket_info* send_sock;
 	union sockaddr_union to;
 	int id; /* tcp stores the connection id here */ 
 	char proto;
+	snd_flags_t send_flags;
 #ifdef USE_COMP
 	short comp;
 #endif
@@ -748,6 +756,7 @@ inline static void init_dst_from_rcv(struct dest_info* dst,
 		dst->to=rcv->src_su;
 		dst->id=rcv->proto_reserved1;
 		dst->proto=rcv->proto;
+		dst->send_flags=0;
 #ifdef USE_COMP
 		dst->comp=rcv->comp;
 #endif

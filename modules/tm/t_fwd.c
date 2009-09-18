@@ -413,6 +413,8 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		t->uac[branch].request.dst.send_sock =
 		get_send_socket( request, &t->uac[branch].request.dst.to,
 								t->uac[branch].request.dst.proto);
+		t->uac[branch].request.dst.send_flags=request?
+												request->fwd_send_flags:0;
 	}else {
 #ifdef USE_DNS_FAILOVER
 		if (uri2dst(&t->uac[branch].dns_h, &t->uac[branch].request.dst,
@@ -1083,15 +1085,16 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	init_branch_iterator();
-	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len, &si))) {
+	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s,
+										&dst_uri.len, &si))) {
 		try_new++;
 		p_msg->force_send_socket = si;
 		getbflagsval(get_branch_iterator(), &bflags);
 		setbflagsval(0, bflags);
 
 		branch_ret=add_uac( t, p_msg, &current_uri, 
-				    (dst_uri.len) ? (&dst_uri) : &current_uri, 
-				    proxy, proto);
+							(dst_uri.len) ? (&dst_uri) : &current_uri, 
+							proxy, proto);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative

@@ -106,7 +106,11 @@ enum action_type{
 		FORCE_SEND_SOCKET_T,
 		ASSIGN_T,
 		ADD_T,
-		UDP_MTU_TRY_PROTO_T
+		UDP_MTU_TRY_PROTO_T,
+		SET_FWD_NO_CONNECT_T,
+		SET_RPL_NO_CONNECT_T,
+		SET_FWD_CLOSE_T,
+		SET_RPL_CLOSE_T
 };
 /* parameter types for actions or types for expression right operands
    (WARNING right operands only, not working for left operands) */

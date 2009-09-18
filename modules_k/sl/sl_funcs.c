@@ -245,10 +245,11 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 	/* use for sending the received interface -bogdan*/
 	dst.proto=msg->rcv.proto;
 	dst.send_sock=msg->rcv.bind_address;
-	dst.id=msg->rcv.proto_reserved1;	
+	dst.id=msg->rcv.proto_reserved1;
 #ifdef USE_COMP
 	dst.comp=msg->via1->comp_no;
 #endif
+	dst.send_flags=msg->rpl_send_flags;
 	ret = msg_send(&dst, buf.s, buf.len);
 	mhomed=backup_mhomed;
 	pkg_free(buf.s);

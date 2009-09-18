@@ -170,7 +170,8 @@ struct tcp_connection{
 	struct tcp_req req; /* request data */
 	atomic_t refcnt;
 	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
-	int flags; /* connection related flags */
+	unsigned short flags; /* connection related flags */
+	unsigned short send_flags; /* special send flags */
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
@@ -189,6 +190,10 @@ struct tcp_connection{
 
 
 /* helper macros */
+
+#define tcpconn_set_send_flags(c, snd_flags) ((c)->send_flags|=(snd_flags))
+
+#define tcpconn_close_after_send(c)	((c)->send_flags & SND_F_CON_CLOSE)
 
 #define TCP_RCV_INFO(c) (&(c)->rcv)
 

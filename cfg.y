@@ -319,6 +319,10 @@ extern char *finame;
 %token SET_ADV_ADDRESS
 %token SET_ADV_PORT
 %token FORCE_SEND_SOCKET
+%token SET_FWD_NO_CONNECT
+%token SET_RPL_NO_CONNECT
+%token SET_FWD_CLOSE
+%token SET_RPL_CLOSE
 %token SWITCH
 %token CASE
 %token DEFAULT
@@ -2990,6 +2994,30 @@ cmd:
 		$$=0; yyerror("bad argument, [proto:]host[:port] expected");
 	}
 	| FORCE_SEND_SOCKET error {$$=0; yyerror("missing '(' or ')' ?"); }
+	| SET_FWD_NO_CONNECT LPAREN RPAREN	{
+		$$=mk_action(SET_FWD_NO_CONNECT_T, 0); set_cfg_pos($$);
+	}
+	| SET_FWD_NO_CONNECT	{
+		$$=mk_action(SET_FWD_NO_CONNECT_T, 0); set_cfg_pos($$);
+	}
+	| SET_RPL_NO_CONNECT LPAREN RPAREN	{
+		$$=mk_action(SET_RPL_NO_CONNECT_T, 0); set_cfg_pos($$);
+	}
+	| SET_RPL_NO_CONNECT	{
+		$$=mk_action(SET_RPL_NO_CONNECT_T, 0); set_cfg_pos($$);
+	}
+	| SET_FWD_CLOSE LPAREN RPAREN	{
+		$$=mk_action(SET_FWD_CLOSE_T, 0); set_cfg_pos($$);
+	}
+	| SET_FWD_CLOSE	{
+		$$=mk_action(SET_FWD_CLOSE_T, 0); set_cfg_pos($$);
+	}
+	| SET_RPL_CLOSE LPAREN RPAREN	{
+		$$=mk_action(SET_RPL_CLOSE_T, 0); set_cfg_pos($$);
+	}
+	| SET_RPL_CLOSE	{
+		$$=mk_action(SET_RPL_CLOSE_T, 0); set_cfg_pos($$);
+	}
 	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST,
 			0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data = 

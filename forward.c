@@ -384,9 +384,12 @@ int check_self_port(unsigned short port, unsigned short proto)
  *               default port or non srv. lookup is desired, the port must
  *               be !=0 
  *   port      - used only if dst!=0 (else the port in send_info->to is used)
- *   send_info - filled dest_info structure:
- *               if the send_socket member is null, a send_socket will be 
- *               chosen automatically
+ *   send_info - value/result partially filled dest_info structure:
+ *                 - send_info->proto and comp are used
+ *                 - send_info->to will be filled (dns)
+ *                 - send_info->send_flags is filled from the message
+ *                 - if the send_socket member is null, a send_socket will be 
+ *                   chosen automatically
  * WARNING: don't forget to zero-fill all the  unused members (a non-zero 
  * random id along with proto==PROTO_TCP can have bad consequences, same for
  *   a bogus send_socket value)
@@ -438,13 +441,14 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto error;
 		}
 	}/* dst */
+	send_info->send_flags=msg->fwd_send_flags;
 	/* calculate branch for outbound request;  if syn_branch is turned off,
 	   calculate is from transaction key, i.e., as an md5 of From/To/CallID/
 	   CSeq exactly the same way as TM does; good for reboot -- than messages
 	   belonging to transaction lost due to reboot will still be forwarded
 	   with the same branch parameter and will be match-able downstream
-
-       if it is turned on, we don't care about reboot; we simply put a simple
+	
+	   if it is turned on, we don't care about reboot; we simply put a simple
 	   value in there; better for performance
 	*/
 	if (syn_branch ) {
@@ -694,6 +698,7 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	dst.proto=msg->via2->proto;
+	dst.send_flags=msg->fwd_send_flags | msg->rpl_send_flags;
 	if (update_sock_struct_from_via( &dst.to, msg, msg->via2 )==-1) goto error;
 #ifdef USE_COMP
 	dst.comp=msg->via2->comp_no;

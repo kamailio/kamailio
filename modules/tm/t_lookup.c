@@ -1218,6 +1218,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 #ifdef USE_COMP
 	rb->dst.comp=via->comp_no;
 #endif
+	rb->dst.send_flags=msg->rpl_send_flags;
 	/* turn off mhomed for generating replies -- they are ideally sent to where
 	   request came from to make life with NATs and other beasts easier
 	*/
