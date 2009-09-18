@@ -2270,6 +2270,9 @@ conn_wait_close:
 	 * connection (tcpconn_chld_put(c))) or when tcp_main receives a
 	 * CONN_ERROR it*/
 	c->state=S_CONN_BAD;
+	/* we are here only if we opened a new fd (and not reused a cached or
+	   a reader one) => if the connect was successful close the fd */
+	if (fd>=0) close(fd);
 	TCPCONN_LOCK;
 		if (c->flags & F_CONN_HASHED){
 			/* if some other parallel tcp_send did send CONN_ERROR to
