@@ -300,6 +300,156 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 }
 
 
+#define RPC_ROUTE_PREFIX	"Route: "
+#define RPC_ROUTE_PREFIX_LEN	(sizeof(RPC_ROUTE_PREFIX)-1)
+#define RPC_ROUTE_SEPARATOR	", "
+#define RPC_ROUTE_SEPARATOR_LEN	(sizeof(RPC_ROUTE_SEPARATOR)-1)
+
+
+/** internal print routes into rpc reply function.
+ *  Prints the dialog routes. It's used internally by
+ *  rpx_print_uris (called from rpc_uac_callback()).
+ *  @param rpc
+ *  @param c - rpc context
+ *  @param reply - sip reply
+ */
+static void  rpc_print_routes(rpc_t* rpc, void* c,
+								dlg_t* d)
+{
+	rr_t* ptr;
+	int size;
+	char* buf;
+	char* p;
+	
+	
+	if (d->hooks.first_route == 0){
+		rpc->add(c, "s", "");
+		return;
+	}
+	size=RPC_ROUTE_PREFIX_LEN;
+	for (ptr=d->hooks.first_route; ptr; ptr=ptr->next)
+		size+=ptr->len+(ptr->next!=0)*RPC_ROUTE_SEPARATOR_LEN;
+	if (d->hooks.last_route)
+		size+=RPC_ROUTE_SEPARATOR_LEN + 1 /* '<' */ + 
+				d->hooks.last_route->len +1 /* '>' */;
+
+	buf=pkg_malloc(size+1);
+	if (buf==0){
+		ERR("out of memory\n");
+		rpc->add(c, "s", "");
+		return;
+	}
+	p=buf;
+	memcpy(p, RPC_ROUTE_PREFIX, RPC_ROUTE_PREFIX_LEN);
+	p+=RPC_ROUTE_PREFIX_LEN;
+	for (ptr=d->hooks.first_route; ptr; ptr=ptr->next){
+		memcpy(p, ptr->nameaddr.name.s, ptr->len);
+		p+=ptr->len;
+		if (ptr->next!=0){
+			memcpy(p, RPC_ROUTE_SEPARATOR, RPC_ROUTE_SEPARATOR_LEN);
+			p+=RPC_ROUTE_SEPARATOR_LEN;
+		}
+	}
+	if (d->hooks.last_route){
+		memcpy(p, RPC_ROUTE_SEPARATOR, RPC_ROUTE_SEPARATOR_LEN);
+		p+=RPC_ROUTE_SEPARATOR_LEN;
+		*p='<';
+		p++;
+		memcpy(p, d->hooks.last_route->s, d->hooks.last_route->len);
+		p+=d->hooks.last_route->len;
+		*p='>';
+		p++;
+	}
+	*p=0;
+	rpc->add(c, "s", buf);
+	pkg_free(buf);
+	return;
+}
+
+
+/** internal print uri into rpc reply function.
+ *  Prints the uris into rpc reply. It's used internally by
+ *  rpc_uac_callback().
+ *  @param rpc
+ *  @param c - rpc context
+ *  @param reply - sip reply
+ */
+static void  rpc_print_uris(rpc_t* rpc, void* c, struct sip_msg* reply)
+{
+	dlg_t* dlg;
+	dlg=shm_malloc(sizeof(dlg_t));
+	if (dlg==0){
+		ERR("out of memory (shm)\n");
+		return;
+	}
+	memset(dlg, 0, sizeof(dlg_t));
+	if (dlg_response_uac(dlg, reply, TARGET_REFRESH_UNKNOWN) < 0) {
+		ERR("failure while filling dialog structure\n");
+		free_dlg(dlg);
+		return;
+	}
+	if (dlg->state != DLG_CONFIRMED) {
+		free_dlg(dlg);
+		return;
+	}
+	if (dlg->hooks.request_uri->s){
+		rpc->add(c, "S", dlg->hooks.request_uri);
+	}else{
+		rpc->add(c, "s", "");
+	}
+	if (dlg->hooks.next_hop->s) {
+		rpc->add(c, "S", dlg->hooks.next_hop);
+	} else {
+		rpc->add(c, "s", "");
+	}
+	rpc_print_routes(rpc, c, dlg);
+	free_dlg(dlg);
+	return;
+}
+
+
+
+/* t_uac callback */
+static void rpc_uac_callback(struct cell* t, int type, struct tmcb_params* ps)
+{
+	rpc_delayed_ctx_t* dctx;
+	str text;
+	rpc_t* rpc;
+	void* c;
+	int code;
+	str* preason;
+	
+	dctx=(rpc_delayed_ctx_t*)*ps->param;
+	*ps->param=0;
+	if (dctx==0){
+		BUG("null delayed reply ctx\n");
+		return;
+	}
+	rpc=&dctx->rpc;
+	c=dctx->reply_ctx;
+	if (ps->rpl==FAKED_REPLY) {
+		text.s=error_text(ps->code);
+		text.len=strlen(text.s);
+		code=ps->code;
+		preason=&text;
+		rpc->add(c, "dS", code, preason);
+		rpc->add(c, "s", ""); /* request uri (rpc_print_uris)*/
+		rpc->add(c, "s", ""); /* next hop (rpc_print_uris) */
+		rpc->add(c, "s", ""); /* dialog routes (rpc_print_routes) */
+		rpc->add(c, "s", ""); /* rest of the reply */
+	}else{
+		code=ps->rpl->first_line.u.reply.statuscode;
+		preason=&ps->rpl->first_line.u.reply.reason;
+		rpc->add(c, "dS", code, preason);
+		rpc_print_uris(rpc, c, ps->rpl);
+		/* print all the reply (from the first header) */
+		rpc->add(c, "s", ps->rpl->headers->name.s);
+	}
+	rpc->delayed_ctx_close(dctx);
+	ps->param=0;
+}
+
+
 
 /** rpc t_uac version-
   * It expects the following list of strings as parameters:
@@ -339,11 +489,14 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	char err_buf[MAX_REASON_LEN];
 	dlg_t dlg;
 	uac_req_t uac_req;
+	rpc_delayed_ctx_t* dctx;
 	
 	body.s=0;
 	body.len=0;
-	if (reply_wait){
-		rpc->fault(c, 600, "Reply wait/async mode not supported");
+	if (reply_wait && (rpc->capabilities == 0 ||
+						!(rpc->capabilities(c) & RPC_DELAYED_REPLY))) {
+		rpc->fault(c, 600, "Reply wait/async mode not supported"
+							" by this rpc transport");
 		return;
 	}
 	ret=rpc->scan(c, "SSSSS*S",
@@ -442,6 +595,16 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	uac_req.headers=&hfb;
 	uac_req.body=body.len?&body:0;
 	uac_req.dialog=&dlg;
+	if (reply_wait){
+		dctx=rpc->delayed_ctx_new(c);
+		if (dctx==0){
+			rpc->fault(c, 500, "internal error: failed to create context");
+			return;
+		}
+		uac_req.cb=rpc_uac_callback;
+		uac_req.cbp=dctx;
+		uac_req.cb_flags=TMCB_LOCAL_COMPLETED;
+	}
 	ret = t_uac(&uac_req);
 	
 	if (ret <= 0) {

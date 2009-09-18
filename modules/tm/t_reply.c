@@ -134,7 +134,7 @@
 #include "t_msgbuilder.h"
 #include "t_lookup.h"
 #include "t_fwd.h"
-#include "fix_lumps.h"
+#include "../../fix_lumps.h"
 #include "t_stats.h"
 #include "uac.h"
 

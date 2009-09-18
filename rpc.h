@@ -37,7 +37,13 @@ enum rpc_flags {
 	RET_ARRAY = (1 << 0),
 	RET_VALUE = (1 << 1)
 };
-	
+
+typedef enum rpc_capabilities {
+	RPC_DELAYED_REPLY = (1 <<0)  /* delayed reply support */
+} rpc_capabilities_t;
+
+struct rpc_delayed_ctx;
+
 
 /* Send the result to the caller */
 typedef int (*rpc_send_f)(void* ctx);                                      /* Send the reply to the client */
@@ -48,6 +54,13 @@ typedef int (*rpc_printf_f)(void* ctx, char* fmt, ...);                    /* Ad
 typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /* Create a new structure */
 typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);               /* Scan attributes of a structure */
 typedef int (*rpc_struct_printf_f)(void* ctx, char* name, char* fmt, ...); /* Struct version of rpc_printf */
+
+/* returns the supported capabilities */
+typedef rpc_capabilities_t (*rpc_capabilities_f)(void* ctx);
+/* create a special "context" for delayed replies */
+typedef struct rpc_delayed_ctx* (*rpc_delayed_ctx_new_f)(void* ctx);
+/* close the special "context" for delayed replies */
+typedef void (*rpc_delayed_ctx_close_f)(struct rpc_delayed_ctx* dctx);
 
 /*
  * RPC context, this is what RPC functions get as a parameter and use
@@ -63,7 +76,17 @@ typedef struct rpc {
 	rpc_struct_add_f struct_add;
 	rpc_struct_scan_f struct_scan;
 	rpc_struct_printf_f struct_printf;
+	rpc_capabilities_f capabilities;
+	rpc_delayed_ctx_new_f delayed_ctx_new;
+	rpc_delayed_ctx_close_f delayed_ctx_close;
 } rpc_t;
+
+
+typedef struct rpc_delayed_ctx{
+	rpc_t rpc;
+	void* reply_ctx;
+	/* more private data might follow */
+} rpc_delayed_ctx_t;
 
 
 /*

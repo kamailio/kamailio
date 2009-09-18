@@ -63,7 +63,7 @@
 #include "t_cancel.h"
 #include "t_stats.h"
 #include "h_table.h"
-#include "fix_lumps.h" /* free_via_clen_lump */
+#include "../../fix_lumps.h" /* free_via_clen_lump */
 #include "timer.h"
 #include "uac.h" /* free_local_ack */
 
