@@ -188,16 +188,17 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 			case 0:
 				switch (status)
 				{
-#ifndef NO_PINGTEL_TAG_HACK
 					case TAG3:
 						param->type = TAG_PARAM;
-						param->name.len = 3;
+					case PARA_NAME:
+					case TAG1:
+					case TAG2:
+						param->name.len = tmp-param->name.s;
 						status = S_EQUAL;
 					case S_EQUAL:
 					case S_PARA_VALUE:
 						saved_status=status;
 						goto endofheader;
-#endif
 					case PARA_VALUE_TOKEN:
 						status = E_PARA_VALUE;
 						param->value.len = tmp-param->value.s;
@@ -261,23 +262,21 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 				{
 					case PARA_VALUE_QUOTED:
 						break;
-#ifndef NO_PINGTEL_TAG_HACK
 					case TAG3:
 						param->type = TAG_PARAM;
-						param->name.len = 3;
+					case PARA_NAME:
+					case TAG1:
+					case TAG2:
+						param->name.len = tmp-param->name.s;
 					case S_EQUAL:
+						param->value.s = 0;
+						param->value.len = 0;
+						goto semicolon_add_param;
 					case S_PARA_VALUE:
-						if (param->type==TAG_PARAM)
-							param->value.s = tmp;
-						else {
-							LOG( L_ERR , "ERROR: parse_to_param : unexpected "
-								"char [%c] in status %d: <<%.*s>> .\n",
-								*tmp,status, (int)(tmp-buffer), ZSW(buffer));
-							goto error;
-						}
-#endif
+						param->value.s = tmp;
 					case PARA_VALUE_TOKEN:
 						param->value.len=tmp-param->value.s;
+semicolon_add_param:
 						add_param(param,to_b);
 					case E_PARA_VALUE:
 						param = (struct to_param*)
@@ -466,18 +465,47 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 				}
 		}/*switch*/
 	}/*for*/
+	if (!(status==F_CR || status==F_LF || status==F_CRLF))
+		saved_status=status;
 
 
 endofheader:
-#ifndef NO_PINGTEL_TAG_HACK
-	if (param->type==TAG_PARAM 
-	&& (saved_status==S_EQUAL||saved_status==S_PARA_VALUE) ) {
-			saved_status = E_PARA_VALUE;
-			param->value.s= 0;
+	switch(saved_status){
+		case TAG3:
+			param->type = TAG_PARAM; /* tag at the end */
+			/* no break */
+		case PARA_NAME:
+		case TAG1:
+		case TAG2:
+			param->name.len = tmp-param->name.s;
+			/* no break */
+		case S_EQUAL:
+			/* parameter without '=', e.g. foo */
+			param->value.s=0;
 			param->value.len=0;
 			add_param(param, to_b);
+			saved_status=E_PARA_VALUE;
+			break;
+		case S_PARA_VALUE:
+			/* parameter with null value, e.g. foo= */
+			param->value.s=tmp;
+			param->value.len=0;
+			add_param(param, to_b);
+			saved_status=E_PARA_VALUE;
+			break;
+		case PARA_VALUE_TOKEN:
+			param->value.len=tmp-param->value.s;
+			add_param(param, to_b);
+			saved_status=E_PARA_VALUE;
+			break;
+		case E_PARA_VALUE:
+			break;
+		default:
+			LOG( L_ERR , "ERROR: parse_to_param : unexpected end of header,"
+						" status %d: <<%.*s>> .\n",
+						saved_status, (int)(tmp-buffer), ZSW(buffer));
+			goto error;
 	}
-#endif
 	*returned_status=saved_status;
 	return tmp;
 
