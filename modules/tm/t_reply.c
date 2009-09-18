@@ -1607,6 +1607,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				if (branch!=relay) {
 					free_via_clen_lump(&relayed_msg->add_rm);
 				}
+				/* update send_flags with possible additions from the
+				   reply route */
+				uas_rb->dst.send_flags|=relayed_msg->rpl_send_flags;
 			}
 		}
 		update_reply_stats( relayed_code );
@@ -1978,7 +1981,7 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
 		setbflagsval(0, uac->branch_flags);
 		/* Pre- and post-script callbacks have already
-		 * been execueted by the core. (Miklos)
+		 * been executed by the core. (Miklos)
 		 */
 		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg, 0)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");

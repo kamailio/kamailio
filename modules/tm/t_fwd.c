@@ -144,6 +144,23 @@ unsigned int get_on_branch(void)
 }
 
 
+/** create a branch "buffer".
+ * Creates the buffer used in the branch rb and runs the on_branch route.
+ * @param t  - transaction
+ * @param i_req - corresponding sip_msg, must be non-null, flags might be
+ *                be modified (on_branch route)
+ * @param branch - branch no
+ * @param uri
+ * @param path  - path vector (list of route like destination in text form,
+ *                 e.g.: "<sip:1.2.3.4;lr>, <sip:5.6.7.8;lr>")
+ * @param len - resul parameter, it will be filled with the created buffer 
+ *              lenght.
+ * @param dst - value/result parameter. It will be used to generate the
+ *              message. All the values except the send_flags are read-only.
+ *              send_flags it's updated.
+ * @return pointer to shm alloc'ed buffer on success (*len and dst->send_flags
+ *  are filled/modified), 0 on failure
+ */
 static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	int branch, str *uri, str* path, unsigned int *len, struct dest_info* dst)
 {
@@ -156,6 +173,8 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	str path_bak;
 	int path_backed_up;
 	int backup_route_type;
+	snd_flags_t fwd_snd_flags_bak;
+	snd_flags_t rpl_snd_flags_bak;
 
 	shbuf=0;
 	msg_uri_bak.s=0; /* kill warnings */
@@ -208,11 +227,20 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		set_route_type(BRANCH_ROUTE);
 		tm_ctx_set_branch_index(branch+1);
 		if (exec_pre_script_cb(i_req, BRANCH_CB_TYPE)>0) {
+			/* backup ireq msg send flags */
+			fwd_snd_flags_bak=i_req->fwd_send_flags;;
+			rpl_snd_flags_bak=i_req->rpl_send_flags;
+			i_req->fwd_send_flags=dst->send_flags /* intial value  */;
 			if (run_top_route(branch_rt.rlist[branch_route], i_req, 0) < 0) {
 				LOG(L_ERR, "Error in run_top_route\n");
 			}
+			/* update dst send_flags */
+			dst->send_flags=i_req->fwd_send_flags;
+			/* restore ireq_msg flags */
+			i_req->fwd_send_flags=fwd_snd_flags_bak;
+			i_req->rpl_send_flags=rpl_snd_flags_bak;
 			exec_post_script_cb(i_req, BRANCH_CB_TYPE);
-		}		
+		}
 		tm_ctx_set_branch_index(0);
 		set_route_type(backup_route_type);
 	}
