@@ -43,6 +43,9 @@
 modparam("xmlrpc", "route", "XMLRPC");
 #...
 route[XMLRPC]{
+	if search("^User-Agent:.*xmlrpclib"))
+		set_reply_close();
+	set_reply_no_connect(); # optional
 	dispatch_rpc();
 }
 		</programlisting>
@@ -74,6 +77,9 @@ route[XMLRPC]{
 		xmlrpc_reply("400", "Unauthorized");
 		return;
 	}
+	if search("^User-Agent:.*xmlrpclib"))
+		set_reply_close();
+	set_reply_no_connect(); # optional
 	dispatch_rpc();
 }
 		</programlisting>

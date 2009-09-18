@@ -456,14 +456,21 @@ Content-Length: 276
    xmlrpclib with a Transport class that works.
 
    For the second solution (force closing tcp connections after answering)
-   the XMLRPC route should end with a return -1, exit -1 or drop -1.
+   the XMLRPC route should have a set_reply_close() command before
+   dispatch_rpc(). set_reply_no_connect() is also recommended (avoid
+   trying to open tcp connection to xmlrpc clients that closed it).
+   Alternatively ending the XMLRPC route with return -1, exit -1 or drop
+   -1 can also be used, but note that this will not work for async rpcs
+   (it will close the connection immeidately and not on the async
+   response).
 
    Example 1.
 route[XMLRPC]{
-        dispatch_rpc();
         # close connection only for xmlrpclib user agents
         if search("^User-Agent:.*xmlrpclib"))
-                return -1 ;
+                set_reply_close();
+        set_reply_no_connect(); # optional
+        dispatch_rpc();
 }
 
 1.4. Client Examples
@@ -543,6 +550,9 @@ modparam("xmlrpc", "autoconversion", 1)
 modparam("xmlrpc", "route", "XMLRPC");
 #...
 route[XMLRPC]{
+        if search("^User-Agent:.*xmlrpclib"))
+                set_reply_close();
+        set_reply_no_connect(); # optional
         dispatch_rpc();
 }
 
@@ -566,5 +576,8 @@ route[XMLRPC]{
                 xmlrpc_reply("400", "Unauthorized");
                 return;
         }
+        if search("^User-Agent:.*xmlrpclib"))
+                set_reply_close();
+        set_reply_no_connect(); # optional
         dispatch_rpc();
 }
