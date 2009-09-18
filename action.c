@@ -345,7 +345,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				goto error;
 			}
-			ret=append_branch( msg, a->val[0].u.string,
+			ret=ser_append_branch( msg, a->val[0].u.string,
 					   a->val[0].u.string ? strlen(a->val[0].u.string):0,
 					   0, 0, a->val[1].u.number, 0);
 			break;

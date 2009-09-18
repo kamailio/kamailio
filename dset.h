@@ -37,18 +37,39 @@ struct sip_msg;
 extern unsigned int nr_branches;
 
 
-/* 
+
+/*
  * Add a new branch to current transaction 
  */
-int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, int dst_uri_len, 
-		  qvalue_t q, struct socket_info* force_socket);
+int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
+					 qvalue_t q, unsigned int flags,
+					 struct socket_info* force_socket);
+
+/* kamailio compatible version */
+#define km_append_branch(msg, uri, dst_uri, path, q, flags, force_socket) \
+	append_branch(msg, uri, dst_uri, path, q, flags, force_socket)
+
+/** ser compatible append_branch version.
+ *  append_branch version compatible with ser: no path or branch flags support
+ *  and no str parameters.
+ */
+static inline int ser_append_branch(struct sip_msg* msg,
+									char* uri, int uri_len,
+									char* dst_uri, int dst_uri_len,
+									qvalue_t q,
+									struct socket_info* force_socket)
+{
+	str s_uri, s_dst_uri;
+	s_uri.s=uri;
+	s_uri.len=uri_len;
+	s_dst_uri.s=dst_uri;
+	s_dst_uri.len=dst_uri_len;
+	return append_branch(msg, &s_uri, &s_dst_uri, 0, q, 0, force_socket);
+}
 
 
-int km_append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
-					 qvalue_t q, unsigned int flags, struct socket_info* force_socket);
 
-
-/* 
+/*
  * Iterate through the list of transaction branches 
  */
 void init_branch_iterator(void);
@@ -58,14 +79,19 @@ void init_branch_iterator(void);
  */
 int get_branch_iterator(void);
 
-/*
- * Get the next branch in the current transaction
+
+/** Get the next branch in the current transaction.
+ * @return pointer to the uri of the next branch (which the length written in
+ *  *len) or 0 if there are no more branches.
  */
-char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct socket_info** force_socket);
+char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
+					unsigned int* flags, struct socket_info** force_socket);
 
 
 char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-				  str* path, unsigned int *flags, struct socket_info** force_socket);
+				  str* path, unsigned int *flags,
+				  struct socket_info** force_socket);
+
 
 
 /*

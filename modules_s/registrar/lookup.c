@@ -164,7 +164,7 @@ skip_rewrite_uri:
 					LOG(L_ERR, "ERROR: lookup(): branch: out of memory\n");
 					goto cont; /* try to continue */
 				}
-				if (append_branch(_m, new_uri.s, new_uri.len, 0, 0, ptr->q, 0) == -1) {
+				if (append_branch(_m, &new_uri, 0, 0, ptr->q, 0, 0) == -1) {
 					LOG(L_ERR, "lookup(): Error while appending a branch\n");
 					pkg_free(new_uri.s);
 					if (ser_error==E_TOO_MANY_BRANCHES) goto skip;
@@ -173,8 +173,8 @@ skip_rewrite_uri:
 				}
 				pkg_free(new_uri.s); /* append_branch doesn't free it */
 			}else{
-				if (append_branch(_m, ptr->c.s, ptr->c.len, ptr->received.s,
-							ptr->received.len, ptr->q, ptr->sock) == -1) {
+				if (append_branch(_m, &ptr->c, &ptr->received, 0 /* path */,
+									ptr->q, 0 /* brflags*/, ptr->sock) == -1) {
 					LOG(L_ERR, "lookup(): Error while appending a branch\n");
 					goto skip; /* Return OK here so the function succeeds */
 				}
@@ -326,7 +326,7 @@ skip_rewrite_uri:
 					ERR("branch: out of memory\n");
 					goto cont; /* try to continue */
 				}
-				if (append_branch(msg, new_uri.s, new_uri.len, 0, 0, ptr->q, 0) == -1) {
+				if (append_branch(msg, &new_uri, 0, 0, ptr->q, 0, 0) == -1) {
 					ERR("Error while appending a branch\n");
 					pkg_free(new_uri.s);
 					if (ser_error == E_TOO_MANY_BRANCHES) goto skip;
@@ -335,8 +335,8 @@ skip_rewrite_uri:
 				}
 				pkg_free(new_uri.s); /* append_branch doesn't free it */
 			} else {
-				if (append_branch(msg, ptr->c.s, ptr->c.len, ptr->received.s,
-							ptr->received.len, ptr->q, ptr->sock) == -1) {
+				if (append_branch(msg, &ptr->c, &ptr->received, 0 /* path */,
+									 ptr->q, 0, ptr->sock) == -1) {
 					ERR("Error while appending a branch\n");
 					goto skip; /* Return OK here so the function succeeds */
 				}

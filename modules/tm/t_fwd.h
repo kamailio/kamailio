@@ -59,8 +59,8 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 */
 void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite );
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite, int branch );
-int add_uac(	struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
-				struct proxy_l *proxy, int proto );
+int add_uac(struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
+				str* path, struct proxy_l *proxy, int proto );
 #ifdef USE_DNS_FAILOVER
 int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg, 
 									struct ua_client* old_uac,

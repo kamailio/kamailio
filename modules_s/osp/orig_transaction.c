@@ -452,7 +452,8 @@ static int ospPrepareDestination(
             if (isfirst == OSP_FIRST_ROUTE) {
                 rewrite_uri(msg, &newuri);
             } else {
-                append_branch(msg, newuri.s, newuri.len, NULL, 0, Q_UNSPECIFIED, NULL);
+                append_branch(msg, &newuri, NULL, NULL, Q_UNSPECIFIED,
+                              0, NULL);
             }
 
             result = MODULE_RETURNCODE_TRUE;
