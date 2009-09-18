@@ -55,6 +55,7 @@ extern struct onsend_info* p_onsend;
 
 /*
  * returns: 0 drop the message, >= ok, <0 error (but forward the message)
+ * it also migh change dst->send_flags!
  * WARNING: buf must be 0 terminated (to allow regex matches on it) */
 static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 								char* buf, int len)
@@ -63,6 +64,8 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	int ret;
 	struct run_act_ctx ra_ctx;
 	int backup_route_type;
+	snd_flags_t fwd_snd_flags_bak;
+	snd_flags_t rpl_snd_flags_bak;
 	
 	ret=1;
 	if (onsend_rt.rlist[DEFAULT_RT]){
@@ -74,8 +77,17 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 		backup_route_type=get_route_type();
 		set_route_type(ONSEND_ROUTE);
 		if (exec_pre_script_cb(orig_msg, ONSEND_CB_TYPE)>0) {
+			/* backup orig_msg send flags */
+			fwd_snd_flags_bak=orig_msg->fwd_send_flags;
+			rpl_snd_flags_bak=orig_msg->rpl_send_flags;
+			orig_msg->fwd_send_flags=dst->send_flags; /* intial value */
 			init_run_actions_ctx(&ra_ctx);
 			ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
+			/* update dst send_flags */
+			dst->send_flags=orig_msg->fwd_send_flags;
+			/* restore orig_msg flags */
+			orig_msg->fwd_send_flags=fwd_snd_flags_bak;
+			orig_msg->rpl_send_flags=rpl_snd_flags_bak;
 			exec_post_script_cb(orig_msg, ONSEND_CB_TYPE);
 		} else {
 			ret=0; /* drop the message */

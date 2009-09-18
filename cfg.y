@@ -2053,6 +2053,10 @@ fcmd:
 				case ISFLAGSET_T:
 				case IF_T:
 				case MODULE_T:
+				case SET_FWD_NO_CONNECT_T:
+				case SET_RPL_NO_CONNECT_T:
+				case SET_FWD_CLOSE_T:
+				case SET_RPL_CLOSE_T:
 					$$=$1;
 					break;
 				default:
