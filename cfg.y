@@ -1820,7 +1820,6 @@ eint_op_onsend:
 /* boolean expression integer operands */
 eint_op:	SRCPORT		{ $$=SRCPORT_O; }
 		|	DSTPORT		{ $$=DSTPORT_O; }
-		|	PROTO		{ $$=PROTO_O; }
 		|	AF			{ $$=AF_O; }
 		|	MSGLEN		{ $$=MSGLEN_O; }
 		|	RETCODE		{ $$=RETCODE_O; }
@@ -1862,6 +1861,12 @@ exp_elem:
 	| eint_op cmpop error   { $$=0; yyerror("number expected"); }
 	| eint_op equalop error { $$=0; yyerror("number expected"); }
 	| eint_op error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
+	| PROTO equalop %prec EQUAL_T proto
+		{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
+	| PROTO equalop %prec EQUAL_T rval_expr
+		{ $$=mk_elem($2, PROTO_O, 0, RVE_ST, $3 ); }
+	| PROTO equalop error
+		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
 	| eip_op strop %prec EQUAL_T ipnet { $$=mk_elem($2, $1, 0, NET_ST, $3); }
 	| eip_op strop %prec EQUAL_T rval_expr {
 			s_tmp.s=0;
