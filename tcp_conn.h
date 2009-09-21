@@ -75,6 +75,7 @@
 #define F_CONN_WR_ERROR  2048 /* write error on the fd */
 #define F_CONN_WANTS_RD  4096  /* conn. should be watched for READ */
 #define F_CONN_WANTS_WR  8192  /* conn. should be watched for WRITE */
+#define F_CONN_PASSIVE  16384 /* conn. created via accept() and not connect()*/
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,

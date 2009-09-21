@@ -3433,6 +3433,7 @@ static inline int handle_new_connect(struct socket_info* si)
 	/* add socket to list */
 	tcpconn=tcpconn_new(new_sock, &su, dst_su, si, si->proto, S_CONN_ACCEPT);
 	if (likely(tcpconn)){
+		tcpconn->flags|=F_CONN_PASSIVE;
 #ifdef TCP_PASS_NEW_CONNECTION_ON_DATA
 		atomic_set(&tcpconn->refcnt, 1); /* safe, not yet available to the
 											outside world */
