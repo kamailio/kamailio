@@ -651,11 +651,11 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 		req=&con->req;
 #ifdef USE_TLS
 		if (con->type==PROTO_TLS){
-			if (tls_fix_read_conn(con)!=0){
+			ret=tls_fix_read_conn(con);
+			if (unlikely(ret<0)){
 				resp=CONN_ERROR;
 				goto end_req;
-			}
-			if (unlikely(con->state!=S_CONN_OK && con->state!=S_CONN_ACCEPT))
+			}else if (unlikely(ret==0))
 				goto end_req; /* not enough data */
 		}
 #endif

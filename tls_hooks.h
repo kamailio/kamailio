@@ -51,7 +51,11 @@ struct tls_hooks{
 	/* checks if a tls connection is fully established before a read, and if 
 	 * not it runs tls_accept() or tls_connect() as needed
 	 * (tls_accept and tls_connect are deferred to the "reader" process for
-	 *  performance reasons) */
+	 *  performance reasons)
+	 * returns 1 if the read can continue, 0 if the connection is not yet
+	 * ready for the read and fix_read_con() should be attempted at a latter
+	 * time and <0 on error.
+	 */
 	int (*fix_read_con)(struct tcp_connection* c);
 	
 	/* per listening socket init, called on ser startup (after modules,
