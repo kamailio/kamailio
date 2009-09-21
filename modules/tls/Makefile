@@ -16,6 +16,11 @@ LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto \
 #       have to add -lz -lkrb5   (zlib and kerberos5).
 #       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
 
+
+DEFS+=-DOPENSER_MOD_INTERFACE
+
+include ../../Makefile.modules
+
 $(cfg_prefix)/$(cfg_dir):
 		mkdir -p $(cfg_prefix)/$(cfg_dir)
 
@@ -24,8 +29,3 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 	./$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
 install: install-cfg
-
-
-DEFS+=-DOPENSER_MOD_INTERFACE
-
-include ../../Makefile.modules
