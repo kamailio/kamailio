@@ -36,9 +36,17 @@
 #include "../../tcp_conn.h"
 #include "tls_domain.h"
 
+enum tls_conn_states {
+						S_TLS_NONE = 0,
+						S_TLS_ACCEPTING,
+						S_TLS_CONNECTING,
+						S_TLS_ESTABLISHED
+					};
+
 struct tls_extra_data {
 	tls_cfg_t* cfg; /* Configuration used for this connection */
 	SSL* ssl;       /* SSL context used for the connection */
+	enum  tls_conn_states state;
 };
 
 /*

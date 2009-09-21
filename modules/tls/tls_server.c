@@ -33,6 +33,8 @@
  * --------
  *  2007-01-26  openssl kerberos malloc bug detection/workaround (andrei)
  *  2007-02-23  openssl low memory bugs workaround (andrei)
+ *  2009-09-21  tls connection state is now kept in c->extra_data (no
+ *               longer shared with tcp state) (andrei)
  */
 
 #include <sys/poll.h>
@@ -68,6 +70,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	tls_domain_t* dom;
 	struct tls_extra_data* data = 0;
 	tls_cfg_t* cfg;
+	enum tls_conn_states state;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
@@ -90,12 +93,17 @@ static int tls_complete_init(struct tcp_connection* c)
 	      */
 	cfg->ref_count++;
 
-	if (c->state == S_CONN_ACCEPT) {
-		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port);
-	} else if (c->state == S_CONN_CONNECT) {
-		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip, c->rcv.dst_port);
+	if (c->flags & F_CONN_PASSIVE) {
+		state=S_TLS_ACCEPTING;
+		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV,
+								&c->rcv.dst_ip, c->rcv.dst_port);
 	} else {
-		BUG("Invalid connection state (bug in TCP code)\n");
+		state=S_TLS_CONNECTING;
+		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
+								&c->rcv.dst_ip, c->rcv.dst_port);
+	}
+	if (unlikely(c->state<0)) {
+		BUG("Invalid connection (state %d)\n", c->state);
 		goto error;
 	}
 	DBG("Using TLS domain %s\n", tls_domain_str(dom));
@@ -108,6 +116,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	data->ssl = SSL_new(dom->ctx[process_no]);
 	data->cfg = cfg;
+	data->state = state;
 
 	if (data->ssl == 0) {
 		TLS_ERR("Failed to create SSL structure:");
@@ -127,7 +136,6 @@ static int tls_complete_init(struct tcp_connection* c)
 	cfg->ref_count--;
 	if (data) shm_free(data);
  error2:
-	c->state = S_CONN_BAD;
 	return -1;
 }
 
@@ -300,24 +308,27 @@ static int tls_accept(struct tcp_connection *c, int* error)
 	int ret, err, ssl_err;
 	SSL *ssl;
 	X509* cert;
+	struct tls_extra_data* tls_c;
 
-	if (c->state != S_CONN_ACCEPT) {
-		BUG("Invalid connection state (bug in TLS code)\n");
-		     /* Not critical */
-		return 0;
-	}
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		goto err;
 	}
-
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
+	
+	tls_c=(struct tls_extra_data*)c->extra_data;
+	ssl=tls_c->ssl;
+	
+	if (tls_c->state != S_TLS_ACCEPTING) {
+		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
+		/* Not critical */
+		return 0;
+	}
 	ret = SSL_accept(ssl);
 	if (ret == 1) {
 		DBG("TLS accept successful\n");
-		c->state = S_CONN_OK;
-		LOG(tls_log, "tls_accept: new connection from %s:%d using %s %s %d\n", 
+		tls_c->state = S_TLS_ESTABLISHED;
+		LOG(tls_log, "tls_accept: new connection from %s:%d using %s %s %d\n",
 		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl), 
 		    SSL_get_cipher_bits(ssl, 0)
@@ -383,8 +394,7 @@ static int tls_accept(struct tcp_connection *c, int* error)
 		}
 	}
 	return 0;
- err:
-	c->state = S_CONN_BAD;
+err:
 	return -1;
 }
 
@@ -397,23 +407,26 @@ static int tls_connect(struct tcp_connection *c, int* error)
 	SSL *ssl;
 	int ret, err, ssl_err;
 	X509* cert;
+	struct tls_extra_data* tls_c;
 
-	if (c->state != S_CONN_CONNECT) {
-		BUG("Invalid connection state\n");
-		     /* Not critical */
-		return 0;
-	}
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		goto err;
 	}
 
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
+	tls_c=(struct tls_extra_data*)c->extra_data;
+	ssl=tls_c->ssl;
+	
+	if (tls_c->state != S_TLS_CONNECTING) {
+		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
+		/* Not critical */
+		return 0;
+	}
 	ret = SSL_connect(ssl);
 	if (ret == 1) {
 		DBG("TLS connect successuful\n");
-		c->state = S_CONN_OK;
+		tls_c->state = S_TLS_ESTABLISHED;
 		LOG(tls_log, "tls_connect: new connection to %s:%d using %s %s %d\n", 
 		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl),
@@ -481,8 +494,7 @@ static int tls_connect(struct tcp_connection *c, int* error)
 		}
 	}
 	return 0;
- err:
-	c->state = S_CONN_BAD;
+err:
 	return -1;
 }
 
@@ -707,17 +719,19 @@ int tls_h_blocking_write(struct tcp_connection *c, int fd, const char *buf,
 	int err, n, ticks, tout;
 	fd_set sel_set;
 	struct timeval timeout;
+	struct tls_extra_data* tls_c;
 	
 	n = 0;
 	if (tls_update_fd(c, fd) < 0) goto error;
+	tls_c=(struct tls_extra_data*)c->extra_data;
 again:
 	err = 0;
 	     /* first try  a "fast" write -- avoid the extra select call,
 	      * we might get lucky and not need it */
-	if (c->state == S_CONN_CONNECT) {
+	if (tls_c->state == S_TLS_CONNECTING) {
 		if (tls_connect(c, &err) < 0) goto error;
 		tout = tls_handshake_timeout;
-	} else if (c->state == S_CONN_ACCEPT) {
+	} else if (tls_c->state == S_TLS_ACCEPTING) {
 		if (tls_accept(c, &err) < 0) goto error;
 		tout = tls_handshake_timeout;
 	} else {
@@ -806,17 +820,19 @@ int tls_h_nonblocking_write(struct tcp_connection *c, int fd, const char *buf,
 			  unsigned int len)
 {
 	int err, n;
+	struct tls_extra_data* tls_c;
 	
 	n = 0;
 	if (tls_update_fd(c, fd) < 0) goto error;
+	tls_c=(struct tls_extra_data*)c->extra_data;
 again:
 	err = 0;
-	if (c->state == S_CONN_CONNECT) {
+	if (tls_c->state == S_TLS_CONNECTING) {
 		if (tls_connect(c, &err) < 0) goto error;
-	} else if (c->state == S_CONN_ACCEPT) {
+	} else if (tls_c->state == S_TLS_ACCEPTING) {
 		if (tls_accept(c, &err) < 0) goto error;
 	}
-	if (c->state!=S_CONN_CONNECT && c->state!=S_CONN_ACCEPT){
+	if (tls_c->state!=S_TLS_CONNECTING && tls_c->state!=S_TLS_ACCEPTING){
 		n = tls_write(c, buf, len, &err);
 		if (n < 0) {
 			DBG("tls_write error %d (ssl %d)\n", n, err);
@@ -857,8 +873,8 @@ end:
 
 
 /*
- * called only when a connection is in S_CONN_OK, we do not have to care
- * about accepting or connecting here, each modification of ssl data
+ * called only when a connection is in S_TLS_ESTABLISHED, we do not have to
+ * care about accepting or connecting here. Each modification of ssl data
  * structures has to be protected, another process might ask for the same
  * connection and attempt write to it which would result in updating the
  * ssl structures 
@@ -945,40 +961,67 @@ int tls_h_read(struct tcp_connection * c)
 
 /*
  * called before tls_read, the this function should attempt tls_accept or
- * tls_connect depending on the state of the connection, if this function
- * does not transit a connection into S_CONN_OK then tcp layer would not
+ * tls_connect depending on the state of the connection.
+ * If this function does not return 1, then the tcp layer would not
  * call tcp_read 
+ * @return  1 success, 0 try again (don't attempt tls_read()), -1 error
  */
 int tls_h_fix_read_conn(struct tcp_connection *c)
 {
 	int ret;
-	ret = 0;
-
-	switch (c->state) {
-	case S_CONN_ACCEPT:
+	struct tls_extra_data* tls_c;
+	
+	ret = -1;
+	tls_c = 0;
+	if (unlikely(c->extra_data==0)){
 		lock_get(&c->write_lock);
-		     /* It might have changed meanwhile */
-		if (c->state == S_CONN_ACCEPT) {
-			ret = tls_update_fd(c, c->fd);
-			if (ret == 0) ret = tls_accept(c, 0);
-			else ret = -1;
-		}
+			if (unlikely(tls_update_fd(c, c->fd) < 0)){
+				ret = -1;
+			} else {
+				tls_c=(struct tls_extra_data*)c->extra_data;
+				switch(tls_c->state){
+					case S_TLS_ACCEPTING:
+						ret=tls_accept(c, 0);
+						break;
+					case S_TLS_CONNECTING:
+						ret=tls_connect(c, 0);
+						break;
+					default:
+						/* fall through */
+						ret=1;
+						break;
+				}
+			}
 		lock_release(&c->write_lock);
-		break;
-		
-	case S_CONN_CONNECT:
-		lock_get(&c->write_lock);
-		     /* It might have changed meanwhile */
-		if (c->state == S_CONN_CONNECT) {
-			ret = tls_update_fd(c, c->fd);
-			if (ret == 0) ret = tls_connect(c, 0);
-			else ret = -1;
+	} else {
+		tls_c=(struct tls_extra_data*)c->extra_data;
+		switch (tls_c->state) {
+			case S_TLS_ACCEPTING:
+				lock_get(&c->write_lock);
+					tls_c=(struct tls_extra_data*)c->extra_data;
+					/* It might have changed meanwhile */
+					if (likely(tls_c->state == S_TLS_ACCEPTING)) {
+						ret = tls_update_fd(c, c->fd);
+						if (ret == 0) ret = tls_accept(c, 0);
+						else ret = -1;
+					}
+				lock_release(&c->write_lock);
+			break;
+			case S_TLS_CONNECTING:
+				lock_get(&c->write_lock);
+					tls_c=(struct tls_extra_data*)c->extra_data;
+					/* It might have changed meanwhile */
+					if (likely(tls_c->state == S_TLS_CONNECTING)) {
+						ret = tls_update_fd(c, c->fd);
+						if (ret == 0) ret = tls_connect(c, 0);
+						else ret = -1;
+					}
+				lock_release(&c->write_lock);
+			break;
+		default: /* fall through */
+			ret=1;
+			break;
 		}
-		lock_release(&c->write_lock);
-		break;
-		
-	default: /* fall through */
-		break;
 	}
-	return ret;
+	return (ret>=0)?(tls_c->state==S_TLS_ESTABLISHED):ret;
 }
