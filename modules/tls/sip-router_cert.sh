@@ -28,12 +28,12 @@ MAILNAME=`cat /etc/mailname 2> /dev/null || echo $FQDN`
 
 # test if we have the normal or enhanced getopt
 getopt -T >/dev/null
-if [ $? == 4 ]; then
+if [ $? = 4 ]; then
 	LONGOPTS_SUPPORTED=1
 fi
 
 longopts() {
-	if [ -z "${LONGOPTS_SUPPORTED}"]; then
+	if [ -z "${LONGOPTS_SUPPORTED}" ]; then
 		exit;
 	fi
 	case "$1" in
