@@ -1813,7 +1813,6 @@ uri_type:
 eint_op_onsend:
 			SNDPORT		{ $$=SNDPORT_O; }
 		|	TOPORT		{ $$=TOPORT_O; }
-		|	SNDPROTO	{ $$=SNDPROTO_O; }
 		|	SNDAF		{ $$=SNDAF_O; }
 		;
 
@@ -1866,6 +1865,12 @@ exp_elem:
 	| PROTO equalop %prec EQUAL_T rval_expr
 		{ $$=mk_elem($2, PROTO_O, 0, RVE_ST, $3 ); }
 	| PROTO equalop error
+		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
+	| SNDPROTO equalop %prec EQUAL_T proto
+		{ $$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST, (void*)$3 ); }
+	| SNDPROTO equalop %prec EQUAL_T rval_expr
+		{ $$=mk_elem($2, SNDPROTO_O, 0, RVE_ST, $3 ); }
+	| SNDPROTO equalop error
 		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
 	| eip_op strop %prec EQUAL_T ipnet { $$=mk_elem($2, $1, 0, NET_ST, $3); }
 	| eip_op strop %prec EQUAL_T rval_expr {
