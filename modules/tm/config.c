@@ -90,7 +90,9 @@ struct cfg_group_tm	default_tm_cfg = {
 			 * for every method except BYE by default */
 	1,	/* cancel_b_method used for e2e and 6xx cancels*/
 	1,	/* reparse_on_dns_failover */
-	INV_FR_TIME_OUT_NEXT
+	INV_FR_TIME_OUT_NEXT, /* fr_inv_timeout_next -> for serial forking subseq.
+							 branches */
+	0 /* disable_6xx, by default off */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -182,5 +184,7 @@ cfg_def_t	tm_cfg_def[] = {
 		"branch instead of from the received request"},
 	{"fr_inv_timer_next",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
 		"The value of fr_inv_timer for subsequent branches during serial forking"},
+	{"disable_6xx_block",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"if set to 1, 6xx is treated like a normal reply (breaks rfc)"},
 	{0, 0, 0, 0, 0, 0}
 };

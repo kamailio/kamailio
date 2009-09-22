@@ -134,6 +134,7 @@ struct cfg_group_tm {
 	unsigned int	cancel_b_flags;
 	int	reparse_on_dns_failover;
 	unsigned int fr_inv_timeout_next;
+	int disable_6xx;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;
