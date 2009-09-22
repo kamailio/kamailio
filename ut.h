@@ -174,7 +174,7 @@ struct msgid_var{
 
 /* return the value or 0 if the msg_id doesn't match */
 #define get_msgid_val(var, id, type)\
-	(type)((type)((var).msgid!=(id))-1)&((var).u.type##_val)
+	((type)((type)((var).msgid!=(id))-1)&((var).u.type##_val))
 
 #define set_msgid_val(var, id, type, value)\
 	do{\
