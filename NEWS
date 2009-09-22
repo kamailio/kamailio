@@ -87,6 +87,15 @@ new script commands:
   set_reply_close() - like set_forward_close(), but it works for replies to
        the current message.
 
+tm:
+  disable_6xx_block parameter - if set, will treat 6xx replies like normal
+       replies (non rfc conformant). Default: off.
+       See also t_set_disable_6xx().
+  t_set_disable_6xx(0|1) - can be used to turn off/on the special 6xx handling
+       on a per transaction basis.
+  t_set_disable_failover(0|1) - can be used to turn off/on dns failover on a
+       per transaction basis.
+
 
 
 2.1.0 changes

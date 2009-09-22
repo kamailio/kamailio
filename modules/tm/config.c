@@ -138,7 +138,7 @@ cfg_def_t	tm_cfg_def[] = {
 		"restart final response timer on each provisional reply"},
 	{"pass_provisional_replies",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"enable/disable passing of provisional replies "
-		"to FIFO applications"},
+		"to TMCB_LOCAL_RESPONSE_OUT callbacks"},
 	{"aggregate_challenges",	CFG_VAR_INT /* not atomic */,	0, 1, 0, 0,
 		"if the final response is a 401 or a 407, aggregate all the "
 		"authorization headers (challenges) "

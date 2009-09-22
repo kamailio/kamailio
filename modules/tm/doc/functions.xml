@@ -1179,4 +1179,59 @@ if ( method == "CANCEL" &amp;&amp; !t_check_trans())
 	</example>
 	</section>
 
+	<section id="t_set_disable_6xx">
+	<title>
+		<function>t_set_disable_6xx(0|1)</function>
+	</title>
+	<para>
+		Turn off/on 6xx replies special rfc conformant handling on a per
+		transaction basis. If turned off
+		(<function>t_set_disable_6xx("1")</function>) 6XXs will be treated
+		like normal replies.
+	</para>
+	<para>
+		It overrides the <varname>disable_6xx_block</varname> value for
+		the current transaction.
+	</para>
+	<para>
+		See also: <varname>disable_6xx_block</varname>.
+	</para>
+	<example>
+		<title><function>t_set_disable_6xx</function> usage</title>
+		<programlisting>
+...
+route {
+...
+	if (src_ip==1.2.3.4) # bad user agent that sends 603
+		t_set_disable_6xx(1); # turn off 6xx special handling
+...
+}
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="t_set_disable_failover">
+	<title>
+		<function>t_set_disable_failover(0|1)</function>
+	</title>
+	<para>
+		Turn off/on dns failover on a per transaction basis.
+	</para>
+	<para>
+		See also: <varname>use_dns_failover</varname>.
+	</para>
+	<example>
+		<title><function>t_set_disable_failover</function> usage</title>
+		<programlisting>
+...
+route {
+...
+	if (uri=~"@foo.bar$")
+		t_set_disable_failover(1); # turn off dns failover
+...
+}
+		</programlisting>
+	</example>
+	</section>
+
 </section>

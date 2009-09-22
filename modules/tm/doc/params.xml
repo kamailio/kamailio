@@ -904,4 +904,180 @@ modparam("tm", "unmatched_cancel", "2")
 			</programlisting>
 		</example>
 	</section>
+
+	<section id="ruri_matching">
+	<title><varname>ruri_matching</varname> (integer)</title>
+	<para>
+		If set it will also try to match the request uri  when doing
+		pre-3261 transaction matching (the via branch parameter does
+		not contain the 3261 cookie).
+	</para>
+	<para>
+		The only reason to have it not set is for interoperability with old,
+		broken implementations.
+	</para>
+	<para>
+		Default value is 1 (on).
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_int tm ruri_matching 0
+		</programlisting>
+	</para>
+	<example>
+		<title>Set <varname>ruri_matching</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "ruri_matching", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="via1_matching">
+	<title><varname>via1_matching</varname> (integer)</title>
+	<para>
+		If set it will also try to match the topmost via when doing
+		pre-3261 transaction matching (the via branch parameter does
+		not contain the 3261 cookie).
+	</para>
+	<para>
+		The only reason to have it not set is for interoperability with old,
+		broken implementations.
+	</para>
+	<para>
+		Default value is 1 (on).
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_int tm via1_matching 0
+		</programlisting>
+	</para>
+	<example>
+		<title>Set <varname>via1_matching</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "via1_matching", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="pass_provisional_replies">
+	<title><varname>pass_provisional_replies</varname> (integer)</title>
+	<para>
+		If set, TMCB_LOCAL_REPONSE_OUT tm registered callbacks will be called
+		also for provisional replies.
+	</para>
+	<para>
+		Default value is 0 (off).
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_int tm pass_provisional_replies 1
+		</programlisting>
+	</para>
+	<example>
+		<title>Set <varname>pass_provisional_replies</varname> parameter
+		</title>
+		<programlisting>
+...
+modparam("tm", "pass_provisional_replies", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="default_code">
+	<title><varname>default_code</varname> (integer)</title>
+	<para>
+		Default response code sent by <function>t_reply()</function> if it
+		cannot retrieve its parameters (e.g. inexistent avp).
+		Valid values are between 400 and 699.
+	</para>
+	<para>
+		Default value is 500.
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_int tm default_code 505
+		</programlisting>
+	</para>
+	<example>
+		<title>Set <varname>default_code</varname> parameter </title>
+		<programlisting>
+...
+modparam("tm", "default_code", 501)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="default_reason">
+	<title><varname>default_reason</varname> (string)</title>
+	<para>
+		Default SIP reason phrase sent by <function>t_reply()</function> if it
+		cannot retrieve its parameters (e.g. inexistent avp).
+	</para>
+	<para>
+		Default value is "Server Internal Error".
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_string tm default_reason "Unknown error"
+		</programlisting>
+	</para>
+	<example>
+		<title>Set <varname>default_reason</varname> parameter </title>
+		<programlisting>
+...
+modparam("tm", "default_reason", "Unknown reason")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="disable_6xx_block">
+	<title><varname>disable_6xx_block</varname> (integer)</title>
+	<para>
+		If set tm will treat all the 6xx replies like normal replies 
+		(warning: this would be non-rfc conformant behaviour).
+	</para>
+	<para>
+		If not set (default) receiving a 6xx will cancel all the running
+		parallel branches, will stop dns failover and forking. However
+		serial forking using <function>append_branch()</function> in the
+		<function>failure_route</function> will still work.
+	</para>
+	<para>
+		It can be overwritten on a per transaction basis using
+		<function>t_set_disable_6xx()</function>.
+	</para>
+	<para>
+		Default value is 0 (off, rfc conformant behaviour).
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_int tm disable_6xx_block 0
+		</programlisting>
+	</para>
+	<para>
+		See also: <function>t_set_disable_6xx()</function>.
+	</para>
+	<example>
+		<title>Set <varname>disable_6xx_block</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "disable_6xx_block", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
 </section>
