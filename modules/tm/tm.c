@@ -228,6 +228,8 @@ static int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_set_max_lifetime(struct sip_msg* msg, char* inv, char* noninv);
 static int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar);
 static int t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
+static int t_set_disable_6xx(struct sip_msg* msg, char* on_off, char* foo);
+static int t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -361,6 +363,10 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_auto_inv_100", t_set_auto_inv_100,       1, fixup_var_int_1,
 													  REQUEST_ROUTE},
+	{"t_set_disable_6xx", t_set_disable_6xx,         1, fixup_var_int_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_set_disable_failover", t_set_disable_failover, 1, fixup_var_int_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
 	{"t_any_timeout",     t_any_timeout,            0, 0, 
@@ -1525,31 +1531,62 @@ int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar)
 	return t_reset_max_lifetime();
 }
 
+
+
+/* helper macro, builds a function for setting a cell flag from the script.
+   e.g. T_SET_FLAG_GEN_FUNC(t_set_foo, T_FOO) =>
+   static int t_set_foo(struct sip_msg* msg, char*, char* )
+   that will expect fparam as first param and will set or reset T_FOO
+   in the current or next to be created transaction. */
+#define T_SET_FLAG_GEN_FUNC(fname, T_FLAG_NAME) \
+static int fname(struct sip_msg* msg, char* p1, char* p2) \
+{ \
+	int state; \
+	struct cell* t; \
+	unsigned int set_flags; \
+	unsigned int reset_flags; \
+	 \
+	if (get_int_fparam(&state, msg, (fparam_t*)p1) < 0) return -1; \
+	t=get_t(); \
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction; \
+	 * in REQUEST_ROUTE T will be set only if the transaction was already  \
+	 * created; if not -> use the static variables */ \
+	if (!t || t==T_UNDEFINED ){ \
+		set_flags=get_msgid_val(user_cell_set_flags, msg->id, int); \
+		reset_flags=get_msgid_val(user_cell_reset_flags, msg->id, int); \
+		if (state){ \
+			/* set */ \
+			set_flags|= T_FLAG_NAME; \
+			reset_flags&=~T_FLAG_NAME; \
+		}else{ \
+			/* reset */ \
+			set_flags&=~T_FLAG_NAME; \
+			reset_flags|=T_FLAG_NAME; \
+		} \
+		set_msgid_val(user_cell_set_flags, msg->id, int, set_flags); \
+		set_msgid_val(user_cell_reset_flags, msg->id, int, reset_flags); \
+	}else{ \
+		if (state) \
+			t->flags|=T_FLAG_NAME; \
+		else \
+			t->flags&=~T_FLAG_NAME; \
+	} \
+	return 1; \
+}
+
+
+
 /* set automatically sending 100 replies on/off for the current or
  * next to be created transaction */
-static int t_set_auto_inv_100(struct sip_msg* msg, char* p1, char* p2)
-{
-	int state;
-	struct cell* t;
-	
-	if (get_int_fparam(&state, msg, (fparam_t*)p1) < 0) return -1;
-	t=get_t();
-	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
-	 * in REQUEST_ROUTE T will be set only if the transaction was already
-	 * created; if not -> use the static variables */
-	if (!t || t==T_UNDEFINED ){
-		if (state)
-			set_msgid_val(user_auto_inv_100, msg->id, int, 1); /* set */
-		else
-			set_msgid_val(user_auto_inv_100, msg->id, int, -1); /* reset */
-	}else{
-		if (state)
-			t->flags|=T_AUTO_INV_100;
-		else
-			t->flags&=~T_AUTO_INV_100;
-	}
-	return 1;
-}
+T_SET_FLAG_GEN_FUNC(t_set_auto_inv_100, T_AUTO_INV_100)
+
+
+/* set 6xx handling for the current or next to be created transaction */
+T_SET_FLAG_GEN_FUNC(t_set_disable_6xx, T_DISABLE_6xx)
+
+
+/* disable dns failover for the current transaction */
+T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 
 
 

@@ -273,6 +273,9 @@ struct totag_elem {
 	/* don't generate automatically an ACK for local transaction */
 #	define T_NO_AUTO_ACK	(1<<7)
 #endif
+
+#define T_DISABLE_6xx (1<<8) /* treat 6xx as a normal reply */
+#define T_DISABLE_FAILOVER (1<<9) /* don't perform dns failover */
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>

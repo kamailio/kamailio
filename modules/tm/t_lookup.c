@@ -1243,7 +1243,6 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	struct sip_msg *shm_msg;
 	unsigned int timeout; /* avp timeout gets stored here (in s) */
 	ticks_t lifetime;
-	int v;
 
 	shm_msg=new_cell->uas.request;
 	new_cell->from.s=shm_msg->from->name.s;
@@ -1259,13 +1258,17 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 
 	new_cell->method=new_cell->uas.request->first_line.u.request.method;
 	if (p_msg->REQ_METHOD==METHOD_INVITE){
-		new_cell->flags |= T_IS_INVITE_FLAG;
-		if (unlikely(v=get_msgid_val(user_auto_inv_100, p_msg->id, int)))
-			/* 1 = set, -1 = reset */
-			new_cell->flags|=T_AUTO_INV_100 & (!(v+1)-1);
-		else
-			new_cell->flags|=T_AUTO_INV_100 &
+		/* set flags */
+		new_cell->flags |= T_IS_INVITE_FLAG |
+			get_msgid_val(user_cell_set_flags, p_msg->id, int);
+		new_cell->flags|=T_AUTO_INV_100 &
 					(!cfg_get(tm, tm_cfg, tm_auto_inv_100) -1);
+		new_cell->flags|=T_DISABLE_6xx &
+					(!cfg_get(tm, tm_cfg, disable_6xx) -1);
+		/* reset flags */
+		new_cell->flags &=
+			(~ get_msgid_val(user_cell_reset_flags, p_msg->id, int));
+		
 		lifetime=(ticks_t)get_msgid_val(user_inv_max_lifetime,
 												p_msg->id, int);
 		if (likely(lifetime==0))

@@ -649,8 +649,9 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 	int ret;
 	
 	ret=-1;
-	if (cfg_get(core, core_cfg, use_dns_failover) && 
-			!((t->flags & T_DONT_FORK) || uac_dont_fork(old_uac)) &&
+	if (cfg_get(core, core_cfg, use_dns_failover) &&
+			!((t->flags & (T_DONT_FORK|T_DISABLE_FAILOVER)) ||
+				uac_dont_fork(old_uac)) &&
 			dns_srv_handle_next(&old_uac->dns_h, 0)){
 			if (lock_replies){
 				/* use reply lock to guarantee nobody is adding a branch

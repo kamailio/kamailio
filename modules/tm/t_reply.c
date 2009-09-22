@@ -1086,10 +1086,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		if (picked_branch==-2) { /* branches open yet */
 			*should_store=1;
 			*should_relay=-1;
-			if (new_code>=600 && new_code<=699 &&
-					!cfg_get(tm, tm_cfg, disable_6xx)){
-				if (!(Trans->flags & T_6xx)){
-					/* cancel only the first time we get a 6xx */
+			if (new_code>=600 && new_code<=699){
+				if (!(Trans->flags & (T_6xx | T_DISABLE_6xx))){
+					/* cancel only the first time we get a 6xx and only
+					  if the 6xx handling is not disabled */
 					prepare_to_cancel(Trans, cancel_bitmap, 0);
 					Trans->flags|=T_6xx;
 				}

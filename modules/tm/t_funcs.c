@@ -90,7 +90,8 @@ static int     contacts_avp_index = 0;
 
 int tm_error = 0; /* delayed tm error */
 
-struct msgid_var user_auto_inv_100;
+struct msgid_var user_cell_set_flags;   /* extra cell->flags to be set */
+struct msgid_var user_cell_reset_flags; /* extra cell->flags to be reset */
 
 /* ----------------------------------------------------- */
 int send_pr_buffer(	struct retr_buf *rb, void *buf, int len

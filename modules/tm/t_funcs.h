@@ -74,7 +74,8 @@ struct entry;
 struct cell;
 
 extern int tm_error; /* delayed tm error */
-extern struct msgid_var user_auto_inv_100;
+extern struct msgid_var user_cell_set_flags;
+extern struct msgid_var user_cell_reset_flags;
 
 extern int fr_inv_timer_avp_type;
 extern int_str fr_inv_timer_avp;
