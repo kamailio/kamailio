@@ -98,55 +98,55 @@ struct cfg_group_tm	default_tm_cfg = {
 void	*tm_cfg = &default_tm_cfg;
 
 cfg_def_t	tm_cfg_def[] = {
-	{"ruri_matching",	CFG_VAR_INT,	0, 1, 0, 0,
-		"perform Request URI check in tranaction matching"},
-	{"via1_matching",	CFG_VAR_INT,	0, 1, 0, 0,
-		"perform first Via header check in tranaction matching"},
-	{"fr_timer",		CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"ruri_matching",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"perform Request URI check in transaction matching"},
+	{"via1_matching",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"perform first Via header check in transaction matching"},
+	{"fr_timer",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"timer which hits if no final reply for a request "
 		"or ACK for a negative INVITE reply arrives "
 		"(in milliseconds)"},
-	{"fr_inv_timer",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"fr_inv_timer",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"timer which hits if no final reply for an INVITE arrives "
 		"after a provisional message was received (in milliseconds)"},
-	{"wt_timer",		CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"wt_timer",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"time for which a transaction stays in memory to absorb "
 		"delayed messages after it completed"},
-	{"delete_timer",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"delete_timer",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"time after which a to-be-deleted transaction currently "
 		"ref-ed by a process will be tried to be deleted again."},
-	{"retr_timer1",		CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"retr_timer1",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"initial retransmission period (in milliseconds)"},
-	{"retr_timer2",		CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"retr_timer2",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"maximum retransmission period (in milliseconds)"},
-	{"max_inv_lifetime",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"max_inv_lifetime",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"maximum time an invite transaction can live "
 		"from the moment of creation"},
-	{"max_noninv_lifetime",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
+	{"max_noninv_lifetime",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"maximum time a non-invite transaction can live "
 		"from the moment of creation"},
 	{"noisy_ctimer",	CFG_VAR_INT,	0, 1, 0, 0,
 		"if set, INVITE transactions that time-out (FR INV timer) "
 		"will be always replied"},
-	{"auto_inv_100",	CFG_VAR_INT,	0, 1, 0, 0,
+	{"auto_inv_100",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"automatically send 100 to an INVITE"},
 	{"auto_inv_100_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
 		"reason text of the automatically send 100 to an INVITE"},   
 	{"unix_tx_timeout",	CFG_VAR_INT,	0, 0, 0, 0,
 		"Unix socket transmission timeout, in milliseconds"},
-	{"restart_fr_on_each_reply",	CFG_VAR_INT,	0, 1, 0, 0,
+	{"restart_fr_on_each_reply",	CFG_VAR_INT | CFG_ATOMIC ,	0, 1, 0, 0,
 		"restart final response timer on each provisional reply"},
-	{"pass_provisional_replies",	CFG_VAR_INT,	0, 1, 0, 0,
+	{"pass_provisional_replies",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"enable/disable passing of provisional replies "
 		"to FIFO applications"},
-	{"aggregate_challenges",	CFG_VAR_INT,	0, 1, 0, 0,
+	{"aggregate_challenges",	CFG_VAR_INT /* not atomic */,	0, 1, 0, 0,
 		"if the final response is a 401 or a 407, aggregate all the "
 		"authorization headers (challenges) "
 		"(rfc3261 requires this to be on)"},
 	{"unmatched_cancel",	CFG_VAR_INT,	0, 2, 0, 0,
 		"determines how CANCELs with no matching transaction are handled "
 		"(0: statefull forwarding, 1: stateless forwarding, 2: drop)"},
-	{"default_code",	CFG_VAR_INT,	400, 699, 0, 0,
+	{"default_code",	CFG_VAR_INT | CFG_ATOMIC,	400, 699, 0, 0,
 		"default SIP response code sent by t_reply(), if the function "
 		"cannot retrieve its parameters"},
 	{"default_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
@@ -160,25 +160,26 @@ cfg_def_t	tm_cfg_def[] = {
 		"header fields prefixed by this parameter value are included "
 		"in the CANCEL and negative ACK messages if they were present "
 		"in the outgoing INVITE (depends on reparse_invite)"},
-	{"blst_503",		CFG_VAR_INT,	0, 1, 0, 0,
+	{"blst_503",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, blacklist 503 SIP response sources"},
-	{"blst_503_def_timeout",	CFG_VAR_INT,	0, 0, 0, 0,
+	{"blst_503_def_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"default 503 blacklist time (in s), when no Retry-After "
 		"header is present"},
-	{"blst_503_min_timeout",	CFG_VAR_INT,	0, 0, 0, 0,
+	{"blst_503_min_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"minimum 503 blacklist time (in s)"},
-	{"blst_503_max_timeout",	CFG_VAR_INT,	0, 0, 0, 0,
+	{"blst_503_max_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"maximum 503 blacklist time (in s)"},
-	{"blst_methods_add",	CFG_VAR_INT,	0, 0, 0, 0,
+	{"blst_methods_add",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"bitmap of method types that trigger blacklisting on "
 		"transaction timeouts"},
-	{"blst_methods_lookup",	CFG_VAR_INT,	0, 0, 0, 0,
+	{"blst_methods_lookup",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"Bitmap of method types that are looked-up in the blacklist "
 		"before statefull forwarding"},
 	{"cancel_b_method",	CFG_VAR_INT,	0, 2, cancel_b_flags_fixup, 0,
 		"How to cancel branches on which no replies were received: 0 - fake"
 		" reply, 1 - retransmitting the request, 2 - send cancel"},
-	{"reparse_on_dns_failover",	CFG_VAR_INT,	0, 1, reparse_on_dns_failover_fixup, 0,
+	{"reparse_on_dns_failover",	CFG_VAR_INT | CFG_ATOMIC,	0, 1,
+		reparse_on_dns_failover_fixup, 0,
 		"if set to 1, the SIP message after a DNS failover is "
 		"constructed from the outgoing message buffer of the failed "
 		"branch instead of from the received request"},
