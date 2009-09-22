@@ -54,21 +54,21 @@ doc/perl_pod.sgml: openserxs.xs
 
 install_module_custom:
 	echo "installing Perl OpenSER packages ..."
-	mkdir -p $(modules-prefix)/$(lib-dir)/perl
-	$(INSTALL_CFG) lib/perl/*.pm $(modules-prefix)/$(lib-dir)/perl
-	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl
+	$(INSTALL_CFG) lib/perl/*.pm $(modules_prefix)/$(lib_dir)/perl
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER
 	$(INSTALL_CFG) lib/perl/OpenSER/*.pm \
-		$(modules-prefix)/$(lib-dir)/perl/OpenSER
-	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/LDAPUtils
+		$(modules_prefix)/$(lib_dir)/perl/OpenSER
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/LDAPUtils
 	$(INSTALL_CFG) lib/perl/OpenSER/LDAPUtils/*.pm \
-		$(modules-prefix)/$(lib-dir)/perl/OpenSER/LDAPUtils
-	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
+		$(modules_prefix)/$(lib_dir)/perl/OpenSER/LDAPUtils
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/Utils
 	$(INSTALL_CFG) lib/perl/OpenSER/Utils/*.pm \
-		$(modules-prefix)/$(lib-dir)/perl/OpenSER/Utils
-	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB
+		$(modules_prefix)/$(lib_dir)/perl/OpenSER/Utils
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB
 	$(INSTALL_CFG) lib/perl/OpenSER/VDB/*.pm \
-		$(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB
-	mkdir -p $(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB/Adapter
+		$(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB/Adapter
 	$(INSTALL_CFG) lib/perl/OpenSER/VDB/Adapter/*.pm \
-		$(modules-prefix)/$(lib-dir)/perl/OpenSER/VDB/Adapter
+		$(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB/Adapter
 
