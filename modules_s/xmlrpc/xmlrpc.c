@@ -392,6 +392,8 @@ static int xmlrpc_route_no=DEFAULT_RT;
 /* if set, try autoconverting to the requested type if possible
   (e.g. convert 1 to "1" if string is requested) */
 static int autoconvert=0;
+/* in replies, escape CR to &#xD (according to the xml specs) */
+static int escape_cr=1; /* default on */
 
 
 /*
@@ -410,6 +412,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"route", PARAM_STRING, &xmlrpc_route},
 	{"autoconversion", PARAM_INT, &autoconvert},
+	{"escape_cr", PARAM_INT, &escape_cr},
 	{0, 0, 0}
 };
 
@@ -430,6 +433,7 @@ struct module_exports exports = {
 
 #define ESC_LT "&lt;"
 #define ESC_AMP "&amp;"
+#define ESC_CR  "&#xD;"
 
 
 static void clean_context(rpc_ctx_t* ctx);
@@ -483,6 +487,14 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
 			reply->body.len += sizeof(ESC_AMP) - 1;
 			break;
 			
+		case '\r':
+			if (likely(escape_cr)){
+				memcpy(reply->body.s + reply->body.len, ESC_CR,
+					sizeof(ESC_CR) - 1);
+				reply->body.len += sizeof(ESC_CR) - 1;
+				break;
+			}
+			/* no break */
 		default:
 			reply->body.s[reply->body.len] = text->s[i];
 			reply->body.len++;
