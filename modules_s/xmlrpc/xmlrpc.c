@@ -394,6 +394,9 @@ static int xmlrpc_route_no=DEFAULT_RT;
 static int autoconvert=0;
 /* in replies, escape CR to &#xD (according to the xml specs) */
 static int escape_cr=1; /* default on */
+/* convert double LF to CR LF (when on, LFLF becomes an escape for CRLF, needed
+ with some xmlrpc clients that are not escaping CR to &#xD; )*/
+static int lflf2crlf=0; /* default off */
 
 
 /*
@@ -413,6 +416,7 @@ static param_export_t params[] = {
 	{"route", PARAM_STRING, &xmlrpc_route},
 	{"autoconversion", PARAM_INT, &autoconvert},
 	{"escape_cr", PARAM_INT, &escape_cr},
+	{"double_lf_to_crlf", PARAM_INT, &lflf2crlf},
 	{0, 0, 0}
 };
 
@@ -1080,6 +1084,7 @@ static time_t xmlrpc2time(const char* str)
 /* get_* flags: */
 #define GET_X_AUTOCONV 1
 #define GET_X_NOREPLY 2
+#define GET_X_LFLF2CRLF 4  /* replace "\n\n" with "\r\n" */
 
 /* xml value types */
 enum xmlrpc_val_type{
@@ -1294,14 +1299,16 @@ static int get_double(double* val, struct xmlrpc_reply* reply,
 
 /** Convert a parameter encoded in XML-RPC to a zero terminated string.
  *
- * @param val A pointer to an integer variable where the result will be 
-              stored.
+ * @param val A pointer to a char* variable where the result will be 
+ *            stored (the result is dynamically allocated, but it's garbage
+ *            collected, so it doesn't have to be freed)
  * @param reply A pointer to XML-RPC reply being constructed (used to indicate
  *              conversion errors).
  * @param doc A pointer to the XML-RPC request document.
  * @param value A pointer to the element containing the parameter to be 
  *              converted within the document.
  * @param flags : GET_X_AUTOCONV - try autoconverting
+ *                GET_X_LFLF2CRLF - replace double '\n' with `\r\n'
  *                GET_X_NOREPLY - do not reply
  * @return <0 on error, 0 on success
  */
@@ -1360,6 +1367,18 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 	ret=0;
 	switch(type){
 		case XML_T_STR:
+			if (flags & GET_X_LFLF2CRLF){
+				p=val_str;
+				while(*p){
+					if (*p=='\n' && *(p+1)=='\n'){
+						*p='\r';
+						p+=2;
+						continue;
+					}
+					p++;
+				}
+			}
+			/* no break */
 		case XML_T_DATE:  /* no special conversion */
 		case XML_T_DOUBLE: /* no special conversion */
 			if (add_garbage(JUNK_XMLCHAR, val_str, reply) < 0){
@@ -1428,7 +1447,8 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	va_start(ap, fmt);
 	modifiers=0;
 	read = 0;
-	f=autoconvert?GET_X_AUTOCONV:0;
+	f=(autoconvert?GET_X_AUTOCONV:0) |
+		(lflf2crlf?GET_X_LFLF2CRLF:0);
 	while(*fmt) {
 		if (!ctx->act_param) goto error;
 		value = ctx->act_param->xmlChildrenNode;
@@ -1737,8 +1757,11 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 	char* member_name;
 	struct xmlrpc_reply* reply;
 	int ret;
+	int f;
 
 	read = 0;
+	f=(autoconvert?GET_X_AUTOCONV:0) |
+		(lflf2crlf?GET_X_LFLF2CRLF:0);
 	va_start(ap, fmt);
 	while(*fmt) {
 		member_name = va_arg(ap, char*);
@@ -1751,23 +1774,23 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 		case 't': /* Date and time */
 		case 'd': /* Integer */
 			int_ptr = va_arg(ap, int*);
-			if (get_int(int_ptr, reply, s->doc, value, 0) < 0) goto error;
+			if (get_int(int_ptr, reply, s->doc, value, f) < 0) goto error;
 			break;
 
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
-			if (get_double(double_ptr, reply, s->doc, value, 0) < 0)
+			if (get_double(double_ptr, reply, s->doc, value, f) < 0)
 				goto error;
 			break;
 
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
-			if (get_string(char_ptr, reply, s->doc, value, 0) < 0) goto error;
+			if (get_string(char_ptr, reply, s->doc, value, f) < 0) goto error;
 			break;
 
 		case 'S': /* str structure */
 			str_ptr = va_arg(ap, str*);
-			if (get_string(&str_ptr->s, reply, s->doc, value, 0) < 0)
+			if (get_string(&str_ptr->s, reply, s->doc, value, f) < 0)
 				goto error;
 			str_ptr->len = strlen(str_ptr->s);
 			break;
