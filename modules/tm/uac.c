@@ -86,6 +86,7 @@
 #include "../../receive.h"
 #include "../../route.h"
 #include "../../action.h"
+#include "t_lookup.h"
 #endif
 
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
@@ -205,6 +206,9 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #endif
 	long nhtype;
 #ifdef WITH_EVENT_LOCAL_REQUEST
+	struct cell *backup_t;
+	int backup_branch;
+	unsigned int backup_msgid;
 	static struct sip_msg lreq;
 	char *buf1;
 	int buf_len1;
@@ -353,7 +357,17 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				/* run the route */
 				backup_route_type = get_route_type();
 				set_route_type(LOCAL_ROUTE);
+				/* set T to the current transaction */
+				backup_t=get_t();
+				backup_branch=get_t_branch();
+				backup_msgid=global_msg_id;
+				/* fake transaction and message id */
+				global_msg_id=lreq.id;
+				set_t(new_cell, T_BR_UNDEFINED);
 				run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
+				/* restore original environment */
+				set_t(backup_t, backup_branch);
+				global_msg_id=backup_msgid;
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
