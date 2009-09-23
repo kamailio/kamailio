@@ -504,7 +504,7 @@ static int fixup_routes(char* r_type, struct route_list* rt, void** param)
 		LOG(L_ERR, "ERROR: tm: fixup_routes: route_get failed\n");
 		return E_UNSPEC;
 	}
-	if (rt->rlist[i]==0){
+	if (r_type && rt->rlist[i]==0){
 		LOG(L_WARN, "WARNING: %s(\"%s\"): empty/non existing route\n",
 				r_type, (char*)*param);
 	}
@@ -557,7 +557,7 @@ static int fixup_on_sl_reply(modparam_t type, void* val)
 		return -1;
 	}
 
-	if (fixup_routes("on_sl_reply", &onreply_rt, &val))
+	if (fixup_routes(0, &onreply_rt, &val))
 		return -1;
 
 	goto_on_sl_reply = (int)(long)val;
@@ -779,6 +779,8 @@ static int mod_init(void)
 	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
 		goto_on_local_req=-1; /* disable */
 #endif /* WITH_EVENT_LOCAL_REQUEST */
+	if (goto_on_sl_reply && onreply_rt.rlist[goto_on_sl_reply]==0)
+		WARN("empty/non existing on_sl_reply route\n");
 	tm_init = 1;
 	return 0;
 }
