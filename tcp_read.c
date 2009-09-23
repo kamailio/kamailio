@@ -964,7 +964,8 @@ again:
 			con=(struct tcp_connection*)fm->data;
 			if (unlikely(con->state==S_CONN_BAD)){
 				resp=CONN_ERROR;
-				LOG(L_WARN, "WARNING: tcp_receive: handle_io: F_TCPCONN"
+				if (!(con->send_flags & SND_F_CON_CLOSE))
+					LOG(L_WARN, "WARNING: tcp_receive: handle_io: F_TCPCONN"
 							" connection marked as bad: %p id %d refcnt %d\n",
 							con, con->id, atomic_get(&con->refcnt));
 				goto read_error;
