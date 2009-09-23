@@ -22,6 +22,8 @@ Jan Janak
 
         1.5.1. route (string)
         1.5.2. autoconversion (string)
+        1.5.3. escape_cr (integer)
+        1.5.4. double_lf_to_crlf (integer)
 
    1.6. Functions
 
@@ -473,6 +475,14 @@ route[XMLRPC]{
         dispatch_rpc();
 }
 
+   Another common problem is CRLF handling. According to the xml spec CR
+   ('\r') must be escaped (to &#xD;) or they will be "normalized" when
+   parsing the xml document. However some xmlrpc clients do not follow
+   this rule (e.g. clients based on the python or php xmlrpclib) and send
+   CRLF unescaped. A possible workaround is to enable automatic LFLF to
+   CRLF conversion (using the double_lf_to_crlf modules parameter) and
+   replace CRLF with LFLF in the client queries.
+
 1.4. Client Examples
 
      * examples/xmlrpc_test.pl (basic perl application that builds and
@@ -524,6 +534,37 @@ modparam("xmlrpc", "route", "route_for_xmlrpcs")
    Example 3. Set the autoconversion parameter
 modparam("xmlrpc", "autoconversion", 1)
 
+1.5.3. escape_cr (integer)
+
+   Enable CR ('\r') escaping in replies. If enabled each '\r' in the
+   xmlrpc reply will be replaced with "&#xD;", according to the xml spec.
+
+   It should be turned off only if you suspect interoperability problems
+   with older clients.
+
+   Default: on.
+
+   Example 4. Set the escape_cr parameter
+modparam("xmlrpc", "escape_cr", 1)
+
+1.5.4. double_lf_to_crlf (integer)
+
+   When enabled double LFs ('\n\n') in the input xmlrpc strings will be
+   replaced with CR LF ('\r\n'). This makes LF LF behave like an escape
+   character for CR LF and is needed for compatibility with kamailio tools
+   and to work around buggy xmlrpc clients that don't escape the CR in CR
+   LF ('\r' should be escaped to "&#xD;" otherwise according to the xml
+   spec "\r\n" will be transformed to '\n'), but need to send CR LF in the
+   strings (e.g. they use tm.t_uac_wait).
+
+   Note: when this option is turned on, there is no way to send a double
+   LF ('\n\n'), it will always be transformed in CR LF ('\r\n').
+
+   Default: off.
+
+   Example 5. Set the double_lf_to_crlf parameter
+modparam("xmlrpc", "double_lf_to_crlf", 1)
+
 1.6. Functions
 
    Revision History
@@ -545,7 +586,7 @@ modparam("xmlrpc", "autoconversion", 1)
    function with matching name. If such a function is found then
    dispatch_rpc() will pass control to the function to handle the request.
 
-   Example 4. dispatch_rpc usage
+   Example 6. dispatch_rpc usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
@@ -561,7 +602,7 @@ route[XMLRPC]{
    This function can be called from the config script to directly generate
    an XML-RPC reply.
 
-   Example 5. xmlrpc_reply usage
+   Example 7. xmlrpc_reply usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...

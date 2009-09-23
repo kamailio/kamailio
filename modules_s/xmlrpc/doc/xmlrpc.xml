@@ -699,6 +699,16 @@ route[XMLRPC]{
 		</programlisting>
 		</example>
 		</para>
+	    <para>
+		Another common problem is CRLF handling. According to the xml spec
+		CR ('\r') must be escaped (to &amp;#xD;) or they will be "normalized"
+		when parsing the xml document. However some xmlrpc clients do not
+		follow this rule (e.g. clients based on the python or php xmlrpclib)
+		and send CRLF unescaped. A possible workaround is to enable
+		automatic LFLF to CRLF conversion (using the
+		<varname>double_lf_to_crlf</varname> modules parameter) and replace
+		CRLF with LFLF in the client queries.
+		</para>
 	</section>
     </section>
 
