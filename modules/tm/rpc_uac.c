@@ -493,6 +493,7 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	
 	body.s=0;
 	body.len=0;
+	dctx=0;
 	if (reply_wait && (rpc->capabilities == 0 ||
 						!(rpc->capabilities(c) & RPC_DELAYED_REPLY))) {
 		rpc->fault(c, 600, "Reply wait/async mode not supported"
@@ -604,6 +605,10 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 		uac_req.cb=rpc_uac_callback;
 		uac_req.cbp=dctx;
 		uac_req.cb_flags=TMCB_LOCAL_COMPLETED;
+		/* switch to dctx, in case adding the callback fails and we
+		   want to still send a reply */
+		rpc=&dctx->rpc;
+		c=dctx->reply_ctx;
 	}
 	ret = t_uac(&uac_req);
 	
@@ -616,6 +621,8 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 		} else {
 			rpc->fault(c, 500, "RPC/UAC error");
 		}
+		if (dctx)
+			rpc->delayed_ctx_close(dctx);
 		goto error01;
 	}
 error01:
