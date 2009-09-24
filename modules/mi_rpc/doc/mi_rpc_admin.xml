@@ -20,8 +20,7 @@
 	</para>
 	<para>
 		The other way around not implemented (MI command to execute RPC)
-		-- to be investigated if worth the effort. Also, execution of 
-		asynchronous MI command is not yet supported.
+		-- to be investigated if worth the effort.
 	</para>
 
 	</section>
@@ -69,9 +68,35 @@
 	<section>
 		<title>
 		<function moreinfo="none">mi</function>
+		<function moreinfo="none">mi_dg</function>
+		<function moreinfo="none">mi_fifo</function>
+		<function moreinfo="none">mi_xmlrpc</function>
 		</title>
 		<para>
 		Execute a MI command.
+		</para>
+		<para>
+		Depending on the version (e.g. mi, mi_dg) it formats the output in a
+		similar way to the corresponding kamailio mi module:
+		<itemizedlist>
+			<listitem>
+				<function>mi</function> - uses a special, "pretty" format
+				which generates nicer (more readable) output when used with
+				sercmd.
+			</listitem>
+			<listitem>
+				<function>mi_dg</function> - uses an output format similar to
+				the kamailio mi_datagram module.
+			</listitem>
+			<listitem>
+				<function>mi_fifo</function> - uses an output format similar
+				to the kamailio mi_fifo module.
+			</listitem>
+			<listitem>
+				<function>mi_xmlrpc</function> - uses an output format similar
+				to the kamailio mi_xmlrpc module.
+			</listitem>
+		</itemizedlist>
 		</para>
 		<para>
 		Name: <emphasis>mi</emphasis>
@@ -90,11 +115,9 @@
 		</para>
 		<programlisting  format="linespecific">
 sercmd> mi uptime
-200 OK
-
-+ Now:: Sun Jun 28 12:45:37 2009
-+ Up since:: Sun Jun 28 12:24:27 2009
-+ Up time:: 1270 [sec]
+Now:: Thu Sep 24 18:17:15 2009
+Up since:: Thu Sep 24 17:35:45 2009
+Up time:: 2490 [sec]
 		</programlisting>
     </section>
     </section>

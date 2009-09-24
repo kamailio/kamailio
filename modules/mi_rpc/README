@@ -18,54 +18,83 @@ Daniel-Constantin Mierla
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
-        1.4. Exported Functions
-        1.5. Exported RPC commands
+        3. Exported Parameters
+        4. Exported Functions
+        5. Exported RPC commands
 
-              1.5.1. mi
+              5.1. mi mi_dg mi_fifo mi_xmlrpc
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+   4. Exported Functions
+   5. Exported RPC commands
+
+        5.1. mi mi_dg mi_fifo mi_xmlrpc
+
+1. Overview
 
    The module exports a RPC command to execute MI commands.
 
    The other way around not implemented (MI command to execute RPC) -- to
-   be investigated if worth the effort. Also, execution of asynchronous MI
-   command is not yet supported.
+   be investigated if worth the effort.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
    none
 
-1.4. Exported Functions
+4. Exported Functions
 
    none
 
-1.5. Exported RPC commands
+5. Exported RPC commands
 
-1.5.1.  mi
+   5.1. mi mi_dg mi_fifo mi_xmlrpc
+
+5.1.  mi mi_dg mi_fifo mi_xmlrpc
 
    Execute a MI command.
+
+   Depending on the version (e.g. mi, mi_dg) it formats the output in a
+   similar way to the corresponding kamailio mi module:
+     * mi - uses a special, "pretty" format which generates nicer (more
+       readable) output when used with sercmd.
+     * mi_dg - uses an output format similar to the kamailio mi_datagram
+       module.
+     * mi_fifo - uses an output format similar to the kamailio mi_fifo
+       module.
+     * mi_xmlrpc - uses an output format similar to the kamailio mi_xmlrpc
+       module.
 
    Name: mi
 
@@ -77,8 +106,6 @@ Chapter 1. Admin Guide
 
    Example using 'sercmd':
 sercmd> mi uptime
-200 OK
-
-+ Now:: Sun Jun 28 12:45:37 2009
-+ Up since:: Sun Jun 28 12:24:27 2009
-+ Up time:: 1270 [sec]
+Now:: Thu Sep 24 18:17:15 2009
+Up since:: Thu Sep 24 17:35:45 2009
+Up time:: 2490 [sec]
