@@ -987,7 +987,7 @@ if (to_gw("1")) {
 		<title><function>to_gw</function> usage</title>
 		<programlisting format = "linespecific">
 ...
-if (to_gw("1")) {
+if (to_any_gw()) {
 	...
 	exit;
 };

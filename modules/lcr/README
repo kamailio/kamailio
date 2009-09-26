@@ -792,7 +792,7 @@ if (to_gw("1")) {
 
    Example 1.36. to_gw usage
 ...
-if (to_gw("1")) {
+if (to_any_gw()) {
         ...
         exit;
 };
