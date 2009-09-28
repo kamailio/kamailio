@@ -72,7 +72,7 @@
 
 #include <net-snmp/library/snmp_assert.h>
 
-#include "openserSIPRegUserLookupTable.h"
+#include "snmpSIPRegUserLookupTable.h"
 #include "snmpstats_globals.h"
 #include "hashTable.h"
 #include "interprocess_buffer.h"

@@ -82,7 +82,7 @@
 
 #include <net-snmp/library/snmp_assert.h>
 
-#include "openserSIPStatusCodesTable.h"
+#include "snmpSIPStatusCodesTable.h"
 #include "snmpstats_globals.h"
 
 static netsnmp_handler_registration *my_handler = NULL;

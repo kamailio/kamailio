@@ -38,7 +38,7 @@
 
 #include <string.h>
 
-#include "openserObjects.h"
+#include "snmpObjects.h"
 
 #include "../../dprint.h"
 #include "../../lib/kcore/statistics.h"

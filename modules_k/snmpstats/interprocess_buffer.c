@@ -47,8 +47,8 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
 #include "interprocess_buffer.h"
-#include "openserSIPContactTable.h"
-#include "openserSIPRegUserTable.h"
+#include "snmpSIPContactTable.h"
+#include "snmpSIPRegUserTable.h"
 #include "hashTable.h"
 #include "utilities.h"
 

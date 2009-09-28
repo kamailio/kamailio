@@ -72,7 +72,7 @@
 #include "hashTable.h"
 #include "interprocess_buffer.h"
 #include "utilities.h"
-#include "openserSIPContactTable.h"
+#include "snmpSIPContactTable.h"
 #include "snmpstats_globals.h"
 
 #include "../../mem/mem.h"

@@ -40,7 +40,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
 #include "snmpstats_globals.h"
-#include "openserMIBNotifications.h"
+#include "snmpMIBNotifications.h"
 #include "../../dprint.h"
 #include "../../config.h"
 

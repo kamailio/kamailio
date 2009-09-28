@@ -47,7 +47,7 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
-#include "openserSIPCommonObjects.h"
+#include "snmpSIPCommonObjects.h"
 #include "snmpstats_globals.h"
 #include "utilities.h"
 

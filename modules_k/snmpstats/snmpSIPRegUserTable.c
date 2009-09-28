@@ -82,7 +82,7 @@
 #include "hashTable.h"
 #include "interprocess_buffer.h"
 #include "utilities.h"
-#include "openserSIPRegUserTable.h"
+#include "snmpSIPRegUserTable.h"
 #include "snmpstats_globals.h"
 
 #include "../../sr_module.h"

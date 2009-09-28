@@ -51,18 +51,18 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
 /* Bring in the initialization functions for all scalars */
-#include "openserSIPCommonObjects.h"
-#include "openserSIPServerObjects.h"
-#include "openserObjects.h"
+#include "snmpSIPCommonObjects.h"
+#include "snmpSIPServerObjects.h"
+#include "snmpObjects.h"
 
 /* Bring in the initialization functions for all tables */
-#include "openserSIPPortTable.h"
-#include "openserSIPMethodSupportedTable.h"
-#include "openserSIPStatusCodesTable.h"
-#include "openserSIPRegUserTable.h"
-#include "openserSIPContactTable.h"
-#include "openserSIPRegUserLookupTable.h"
-#include "openserMIBNotifications.h"
+#include "snmpSIPPortTable.h"
+#include "snmpSIPMethodSupportedTable.h"
+#include "snmpSIPStatusCodesTable.h"
+#include "snmpSIPRegUserTable.h"
+#include "snmpSIPContactTable.h"
+#include "snmpSIPRegUserLookupTable.h"
+#include "snmpMIBNotifications.h"
 
 #include "../../dprint.h"
 

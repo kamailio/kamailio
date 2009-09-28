@@ -43,8 +43,8 @@
 #include "alarm_checks.h"
 #include "sub_agent.h"
 #include "utilities.h"
-#include "openserObjects.h"
-#include "openserMIBNotifications.h"
+#include "snmpObjects.h"
+#include "snmpMIBNotifications.h"
 
 /*! Returns the number of bytes currently waiting in the msg queue if they exceed
  * the threshold, and zero otherwise.  If threshold_to_compare_to is < 0, then

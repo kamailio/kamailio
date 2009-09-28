@@ -51,7 +51,7 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "openserSIPRegUserTable.h"
+#include "snmpSIPRegUserTable.h"
 
 
 /*! Calculates and returns a hash index to a hash table.  The index is calculated
