@@ -40,6 +40,7 @@
  *  2006-04-07  s/DBG/MDBG (andrei)
  *  2007-02-23  added fm_available() (andrei)
  *  2007-06-23  added hash bitmap (andrei)
+ *  2009-09-28  added fm_sums() (patch from Dragos Vingarzan)
  */
 
 
@@ -710,5 +711,86 @@ unsigned long fm_available(struct fm_block* qm)
 	return ((unsigned long)-1);
 #endif
 }
+
+
+#ifdef DBG_F_MALLOC
+
+typedef struct _mem_counter{
+	const char *file;
+	const char *func;
+	unsigned long line;
+	
+	unsigned long size;
+	int count;
+	
+	struct _mem_counter *next;
+} mem_counter;
+
+static mem_counter* get_mem_counter(mem_counter **root,struct fm_frag* f)
+{
+	mem_counter *x;
+	
+	if (!*root) goto make_new;
+	for(x=*root;x;x=x->next)
+		if (x->file == f->file && x->func == f->func && x->line == f->line)
+			return x;
+make_new:	
+	x = malloc(sizeof(mem_counter));
+	x->file = f->file;
+	x->func = f->func;
+	x->line = f->line;
+	x->count = 0;
+	x->size = 0;
+	x->next = *root;
+	*root = x;
+	return x;
+}
+
+
+
+void fm_sums(struct fm_block* qm)
+{
+	struct fm_frag* f;
+	struct fm_frag* free_frag;
+	int i, hash;
+	mem_counter *root,*x;
+	
+	root=0;
+	if (!qm) return;
+
+	LOG(memlog, "summarizing all alloc'ed. fragments:\n");
+	
+	for (f=qm->first_frag, i=0; (char*)f<(char*)qm->last_frag;
+			f=FRAG_NEXT(f), i++){
+		if (f->u.nxt_free==0){
+			/* it might be in-use or the last free fragm. in a free list 
+			   => search the free frags of the same size for a possible
+			   match --andrei*/
+			hash=GET_HASH(f->size);
+			for(free_frag=qm->free_hash[hash].first;
+					free_frag && (free_frag!=f);
+					free_frag=free_frag->u.nxt_free);
+			if (free_frag==0){ /* not found among the free frag */
+				x = get_mem_counter(&root,f);
+				x->count++;
+				x->size+=f->size;
+			}
+		}
+	}
+	x = root;
+	while(x){
+		LOG(memlog, " count=%6d size=%10lu bytes from %s: %s(%ld)\n",
+			x->count,x->size,
+			x->file, x->func, x->line
+			);
+		root = x->next;
+		free(x);
+		x = root;
+	}
+	LOG(memlog, "-----------------------------\n");
+}
+#endif /* DBG_F_MALLOC */
+
+
 
 #endif

@@ -98,6 +98,7 @@
 #	define shm_free_unsafe shm_free
 #	define shm_available	sfm_available(shm_block)
 #	define shm_status() sfm_status(shm_block)
+#	define shm_sums() do{}while(0)
 #	define shm_malloc_init sfm_malloc_init
 #	define shm_malloc_destroy(b) sfm_malloc_destroy(b)
 #	define shm_malloc_on_fork()	sfm_pool_reset()
@@ -124,6 +125,7 @@
 #	define shm_free_unsafe shm_free
 #	define shm_available	sfm_available(shm_block)
 #	define shm_status() sfm_status(shm_block)
+#	define shm_sums() do{}while(0)
 #	define shm_malloc_init sfm_malloc_init
 #	define shm_malloc_destroy(b) sfm_malloc_destroy(b)
 #	define shm_malloc_on_fork()	sfm_pool_reset()
@@ -133,6 +135,7 @@
 #	define MY_MALLOC vqm_malloc
 #	define MY_FREE vqm_free
 #	define MY_STATUS vqm_status
+#	define MY_SUMS do{}while(0)
 #	define  shm_malloc_init vqm_malloc_init
 #	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_malloc_on_fork() do{}while(0)
@@ -145,6 +148,7 @@
 #	define MY_REALLOC fm_realloc
 #	define MY_STATUS fm_status
 #	define MY_MEMINFO	fm_info
+#	define MY_SUMS	fm_sums
 #	define  shm_malloc_init fm_malloc_init
 #	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_available() fm_available(shm_block)
@@ -156,6 +160,7 @@
 #	define MY_FREE mspace_free
 #	define MY_REALLOC mspace_realloc
 #	define MY_STATUS(...) 0
+#	define MY_SUMS do{}while(0)
 #	define MY_MEMINFO	mspace_info
 #	define  shm_malloc_init(buf, len) create_mspace_with_base(buf, len, 0)
 #	define shm_malloc_destroy(b) do{}while(0)
@@ -168,6 +173,7 @@
 #	define MY_REALLOC qm_realloc
 #	define MY_STATUS qm_status
 #	define MY_MEMINFO	qm_info
+#	define MY_SUMS	qm_sums
 #	define  shm_malloc_init qm_malloc_init
 #	define shm_malloc_destroy(b) do{}while(0)
 #	define shm_available() qm_available(shm_block)
@@ -317,6 +323,16 @@ do{\
 	MY_MEMINFO(shm_block, mi); \
 	shm_unlock(); \
 }while(0)
+
+#ifdef MY_SUMS
+#define shm_sums() \
+	do { \
+		shm_lock(); \
+		MY_SUMS(shm_block); \
+		shm_unlock(); \
+	}while(0)
+	
+#endif /* MY_SUMS */
 
 #endif /* ! SHM_SAFE_MALLOC */
 

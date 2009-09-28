@@ -120,20 +120,24 @@
 #		define pkg_status()    fm_status(mem_block)
 #		define pkg_info(mi)    fm_info(mem_block, mi)
 #		define pkg_available() fm_available(mem_block)
+#		define pkg_sums()      fm_sums(mem_block)
 #	elif defined DL_MALLOC
 #		define pkg_status()  0
 #		define pkg_info(mi)  0
 #		define pkg_available()  0
+#		define pkg_sums()  0
 #	else
 #		define pkg_status()    qm_status(mem_block)
 #		define pkg_info(mi)    qm_info(mem_block, mi)
 #		define pkg_available() qm_available(mem_block)
+#		define pkg_sums()      qm_sums(mem_block)
 #	endif
 #elif defined(SHM_MEM) && defined(USE_SHM_MEM)
 #	include "shm_mem.h"
 #	define pkg_malloc(s) shm_malloc((s))
 #	define pkg_free(p)   shm_free((p))
 #	define pkg_status()  shm_status()
+#	define pkg_sums()    shm_sums()
 #else
 #	include <stdlib.h>
 #	include "memdbg.h"
@@ -147,6 +151,7 @@
 	    ____v123; } )
 #	define pkg_free(p)  do{ MDBG("free %p\n", (p)); free((p)); }while(0);
 #	define pkg_status()
+#	define pkg_sums()
 #endif
 
 int init_pkg_mallocs();

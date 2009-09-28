@@ -532,6 +532,8 @@ void cleanup(show_status)
 	if (show_status){
 		LOG(memlog, "Memory status (pkg):\n");
 		pkg_status();
+		LOG(memlog, "Memory still-in-use summary (pkg):\n");
+		pkg_sums();
 	}
 #endif
 #ifdef SHM_MEM
@@ -540,6 +542,8 @@ void cleanup(show_status)
 	if (show_status){
 			LOG(memlog, "Memory status (shm):\n");
 			shm_status();
+			LOG(memlog, "Memory still-in-use summary (shm):\n");
+			shm_sums();
 	}
 	/* zero all shmem alloc vars that we still use */
 	shm_mem_destroy();

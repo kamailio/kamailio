@@ -40,6 +40,7 @@
  *  2006-02-03  fixed realloc out of mem. free bug (andrei)
  *  2006-04-07  s/DBG/MDBG (andrei)
  *  2007-02-23  added fm_available() (andrei)
+ *  2009-09-28  added fm_sums() (patch from Dragos Vingarzan)
  */
 
 
@@ -777,6 +778,75 @@ unsigned long qm_available(struct qm_block* qm)
 {
 	return qm->size-qm->real_used;
 }
+
+
+
+#ifdef DBG_QM_MALLOC
+
+typedef struct _mem_counter{
+	const char *file;
+	const char *func;
+	unsigned long line;
+	
+	unsigned long size;
+	int count;
+	
+	struct _mem_counter *next;
+} mem_counter;
+
+static mem_counter* get_mem_counter(mem_counter **root, struct qm_frag* f)
+{
+	mem_counter *x;
+	if (!*root) goto make_new;
+	for(x=*root;x;x=x->next)
+		if (x->file == f->file && x->func == f->func && x->line == f->line)
+			return x;
+make_new:	
+	x = malloc(sizeof(mem_counter));
+	x->file = f->file;
+	x->func = f->func;
+	x->line = f->line;
+	x->count = 0;
+	x->size = 0;
+	x->next = *root;
+	*root = x;
+	return x;
+}
+
+
+
+void qm_sums(struct qm_block* qm)
+{
+	struct qm_frag* f;
+	int i;
+	mem_counter *root, *x;
+	
+	root=0;
+	if (!qm) return;
+	
+	LOG(memlog, "summarizing all alloc'ed. fragments:\n");
+	
+	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;
+			f=FRAG_NEXT(f),i++){
+		if (! f->u.is_free){
+			x = get_mem_counter(&root,f);
+			x->count++;
+			x->size+=f->size;
+		}
+	}
+	x = root;
+	while(x){
+		LOG(memlog, " count=%6d size=%10lu bytes from %s: %s(%ld)\n",
+			x->count,x->size,
+			x->file, x->func, x->line
+			);
+		root = x->next;
+		free(x);
+		x = root;
+	}
+	LOG(memlog, "-----------------------------\n");
+}
+#endif /* DBG_QM_MALLOC */
 
 
 #endif

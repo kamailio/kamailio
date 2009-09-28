@@ -153,4 +153,10 @@ void  qm_info(struct qm_block*, struct mem_info*);
 
 unsigned long qm_available(struct qm_block* qm);
 
+#ifdef DBG_QM_MALLOC
+void qm_sums(struct qm_block* qm);
+#else
+#define qm_sums(v) do{}while(0)
+#endif /*DBQ_QM_MALLOC */
+
 #endif

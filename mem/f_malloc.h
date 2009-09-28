@@ -155,4 +155,10 @@ void  fm_info(struct fm_block*, struct mem_info*);
 
 unsigned long fm_available(struct fm_block*);
 
+#ifdef DBG_F_MALLOC
+void fm_sums(struct fm_block*);
+#else
+#define fm_sums(v) do{}while(0)
+#endif /* DBG_F_MALLOC */
+
 #endif
