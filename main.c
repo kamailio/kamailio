@@ -510,6 +510,10 @@ void cleanup(show_status)
 	/* restore the original core configuration before the
 	 * config block is freed, otherwise even logging is unusable,
 	 * it can case segfault */
+	cfg_update();
+	/* copy current config into default_core_cfg */
+	if (core_cfg)
+		default_core_cfg=*((struct cfg_group_core*)core_cfg);
 	core_cfg = &default_core_cfg;
 	cfg_destroy();
 #ifdef USE_TCP
@@ -775,6 +779,7 @@ void sig_usr(int signo)
 					LOG(L_INFO, "INFO: signal %d received\n", signo);
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
+					cfg_update(); /* make sure we have current values */
 					memlog=cfg_get(core, core_cfg, memlog);
 					if (memlog <= cfg_get(core, core_cfg, debug)){
 						if (cfg_get(core, core_cfg, mem_summary) & 1) {
@@ -1529,6 +1534,8 @@ int main_loop()
 			unix_tcp_sock=-1;
 		}
 #endif
+		/* init cfg, but without per child callbacks support */
+		cfg_child_no_cb_init();
 
 #ifdef EXTRA_DEBUG
 		for (r=0; r<*process_count; r++){
@@ -1540,6 +1547,7 @@ int main_loop()
 		for(;;){
 			handle_sigs();
 			pause();
+			cfg_update();
 		}
 	
 	}
