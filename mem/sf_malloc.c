@@ -44,6 +44,7 @@
 #include "../dprint.h"
 #include "../globals.h"
 #include "memdbg.h"
+#include "../cfg/cfg.h" /* memlog */
 
 #define MAX_POOL_FRAGS 10000 /* max fragments per pool hash bucket */
 #define MIN_POOL_FRAGS 10    /* min fragments per pool hash bucket */
@@ -990,7 +991,9 @@ void sfm_status(struct sfm_block* qm)
 	int unused;
 	unsigned long size;
 	int k;
+	int memlog;
 
+	memlog=cfg_get(core, core_cfg, memlog);
 	LOG(memlog, "sfm_status (%p):\n", qm);
 	if (!qm) return;
 

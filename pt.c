@@ -525,17 +525,21 @@ end:
 void mem_dump_pkg_cb(str *gname, str *name)
 {
 	int	old_memlog;
+	int memlog;
 
 	if (cfg_get(core, core_cfg, mem_dump_pkg) == my_pid()) {
 		/* set memlog to ALERT level to force
 		printing the log messages */
-		old_memlog = memlog;
+		old_memlog = cfg_get(core, core_cfg, memlog);
 		memlog = L_ALERT;
+		/* ugly hack to temporarily switch memlog to something visible,
+		   possible race with a parallel cfg_set */
+		((struct cfg_group_core*)core_cfg)->memlog=memlog;
 
 		LOG(memlog, "Memory status (pkg) of process %d:\n", my_pid());
 		pkg_status();
 
-		memlog = old_memlog;
+		((struct cfg_group_core*)core_cfg)->memlog=old_memlog;
 	}
 }
 #endif
@@ -548,17 +552,21 @@ void mem_dump_pkg_cb(str *gname, str *name)
 int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val)
 {
 	int	old_memlog;
+	int memlog;
 
 	if ((long)(void*)(*val)) {
 		/* set memlog to ALERT level to force
 		printing the log messages */
-		old_memlog = memlog;
+		old_memlog = cfg_get(core, core_cfg, memlog);
 		memlog = L_ALERT;
+		/* ugly hack to temporarily switch memlog to something visible,
+		   possible race with a parallel cfg_set */
+		((struct cfg_group_core*)core_cfg)->memlog=memlog;
 
 		LOG(memlog, "Memory status (shm)\n");
 		shm_status();
 
-		memlog = old_memlog;
+		((struct cfg_group_core*)core_cfg)->memlog=old_memlog;
 		*val = (void*)(long)0;
 	}
 	return 0;

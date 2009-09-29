@@ -860,9 +860,9 @@ assign_stm:
 	| PHONE2TEL EQUAL error { yyerror("boolean value expected"); }
 	| SYN_BRANCH EQUAL NUMBER { syn_branch=$3; }
 	| SYN_BRANCH EQUAL error { yyerror("boolean value expected"); }
-	| MEMLOG EQUAL intno { memlog=$3; }
+	| MEMLOG EQUAL intno { default_core_cfg.memlog=$3; }
 	| MEMLOG EQUAL error { yyerror("int value expected"); }
-	| MEMDBG EQUAL intno { memdbg=$3; }
+	| MEMDBG EQUAL intno { default_core_cfg.memdbg=$3; }
 	| MEMDBG EQUAL error { yyerror("int value expected"); }
 	| MEMSUM EQUAL intno { default_core_cfg.mem_summary=$3; }
 	| MEMSUM EQUAL error { yyerror("int value expected"); }

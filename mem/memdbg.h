@@ -25,6 +25,8 @@
 #ifndef _memdbg_h
 #define _memdbg_h
 
+#include "../cfg/cfg.h" /* memdbg*/
+
 extern int memdbg;
 
 #ifdef NO_DEBUG
@@ -35,9 +37,10 @@ extern int memdbg;
 	#endif
 #else /* NO_DEBUG */
 	#ifdef __SUNPRO_C
-		#define MDBG(...) LOG(memdbg, __VA_ARGS__)
+		#define MDBG(...) LOG(cfg_get(core, core_cfg, memdbg), __VA_ARGS__)
 	#else
-		#define MDBG(fmt, args...) LOG(memdbg, fmt,  ## args)
+		#define MDBG(fmt, args...) \
+			LOG(cfg_get(core, core_cfg, memdbg), fmt,  ## args)
 	#endif
 #endif /* NO_DEBUG */
 

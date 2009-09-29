@@ -48,6 +48,7 @@
 struct cfg_group_core default_core_cfg = {
 	L_WARN, 	/*  print only msg. < L_WARN */
 	LOG_DAEMON,	/* log_facility -- see syslog(3) */
+	L_DBG,  /* memdbg */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	0, /* dst blacklist is disabled by default */
@@ -93,6 +94,7 @@ struct cfg_group_core default_core_cfg = {
 	0, /* udp_mtu (disabled by default) */
 	0, /* udp_mtu_try_proto -> default disabled */
 	0,  /* force_rport */
+	L_DBG, /* memlog */
 	1 /* mem_summary -flags: 0 off, 1 shm/pkg_status, 2 shm/pkg_sums */
 };
 
@@ -103,6 +105,8 @@ cfg_def_t core_cfg_def[] = {
 		"debug level"},
 	{"log_facility",	CFG_VAR_INT|CFG_INPUT_STRING,	0, 0, log_facility_fixup, 0,
 		"syslog facility, see \"man 3 syslog\""},
+	{"memdbg",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"log level for memory debugging messages"},
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	{"use_dst_blacklist",	CFG_VAR_INT,	0, 1, use_dst_blacklist_fixup, 0,
@@ -192,8 +196,11 @@ cfg_def_t core_cfg_def[] = {
 		"if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp)"},
 	{"force_rport",     CFG_VAR_INT, 0, 1,  0, fix_global_req_flags,
 		"force rport for all the received messages" },
+	{"memlog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"log level for memory status/summary information"},
 	{"mem_summary",	CFG_VAR_INT|CFG_ATOMIC,	0, 3, 0, 0,
 		"memory debugging information displayed on exit (flags): "
-		" 0 - off, 1 - dump all used blocks, 2 - summary of used blocks" },
+		" 0 - off, 1 - dump all the used blocks (status),"
+		" 2 - summary of used blocks" },
 	{0, 0, 0, 0, 0, 0}
 };

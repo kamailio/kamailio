@@ -3,26 +3,19 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of sip-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * History:
@@ -54,6 +47,7 @@
 #include "../dprint.h"
 #include "../globals.h"
 #include "memdbg.h"
+#include "../cfg/cfg.h" /* memlog */
 
 
 /*useful macros*/
@@ -637,7 +631,9 @@ void qm_check(struct qm_block* qm)
 {
 	struct qm_frag* f;
 	long fcount = 0;
+	int memlog;
 	
+	memlog=cfg_get(core, core_cfg, memlog);
 	LOG(memlog, "DEBUG: qm_check()\n");
 	f = qm->first_frag;
 	while ((char*)f < (char*)qm->last_frag_end) {
@@ -693,32 +689,43 @@ void qm_status(struct qm_block* qm)
 	int i,j;
 	int h;
 	int unused;
+	int memlog;
 
-	LOG(memlog, "qm_status (%p):\n", qm);
+
+	memlog=cfg_get(core, core_cfg, memlog);
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ", "(%p):\n", qm);
 	if (!qm) return;
 
-	LOG(memlog, " heap size= %lu\n", qm->size);
-	LOG(memlog, " used= %lu, used+overhead=%lu, free=%lu\n",
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ", "heap size= %lu\n",
+			qm->size);
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			"used= %lu, used+overhead=%lu, free=%lu\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG(memlog, " max used (+overhead)= %lu\n", qm->max_real_used);
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			"max used (+overhead)= %lu\n", qm->max_real_used);
 	
-	LOG(memlog, "dumping all alloc'ed. fragments:\n");
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			"dumping all alloc'ed. fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
 		if (! f->u.is_free){
-			LOG(memlog, "    %3d. %c  address=%p frag=%p size=%lu used=%d\n",
-				i, 
+			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+					"   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
+				i,
 				(f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f, f->size, FRAG_WAS_USED(f));
 #ifdef DBG_QM_MALLOC
-			LOG(memlog, "            %s from %s: %s(%ld)\n",
+			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+					"          %s from %s: %s(%ld)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
-			LOG(memlog, "        start check=%lx, end check= %lx, %lx\n",
+			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+					"         start check=%lx, end check= %lx, %lx\n",
 				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 #endif
 		}
 	}
-	LOG(memlog, "dumping free list stats :\n");
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			"dumping free list stats :\n");
 	for(h=0,i=0;h<QM_HASH_SIZE;h++){
 		unused=0;
 		for (f=qm->free_hash[h].head.u.nxt_free,j=0; 
@@ -726,7 +733,8 @@ void qm_status(struct qm_block* qm)
 				if (!FRAG_WAS_USED(f)){
 					unused++;
 #ifdef DBG_QM_MALLOC
-					LOG(memlog, "unused fragm.: hash = %3d, fragment %p,"
+					LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+						"unused fragm.: hash = %3d, fragment %p,"
 						" address %p size %lu, created from %s: %s(%lu)\n",
 					    h, f, (char*)f+sizeof(struct qm_frag), f->size,
 						f->file, f->func, f->line);
@@ -734,7 +742,8 @@ void qm_status(struct qm_block* qm)
 				}
 		}
 
-		if (j) LOG(memlog, "hash= %3d. fragments no.: %5d, unused: %5d\n"
+		if (j) LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+				"hash= %3d. fragments no.: %5d, unused: %5d\n"
 					"\t\t bucket size: %9lu - %9ld (first %9lu)\n",
 					h, j, unused, UN_HASH(h),
 					((h<=QM_MALLOC_OPTIMIZE/ROUNDTO)?1:2)*UN_HASH(h),
@@ -746,7 +755,8 @@ void qm_status(struct qm_block* qm)
 		}
 
 	}
-	LOG(memlog, "-----------------------------\n");
+	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+			"-----------------------------\n");
 }
 
 
@@ -820,11 +830,14 @@ void qm_sums(struct qm_block* qm)
 	struct qm_frag* f;
 	int i;
 	mem_counter *root, *x;
+	int memlog;
 	
 	root=0;
 	if (!qm) return;
 	
-	LOG(memlog, "summarizing all alloc'ed. fragments:\n");
+	memlog=cfg_get(core, core_cfg, memlog);
+	LOG_(DEFAULT_FACILITY, memlog, "qm_sums: ",
+			"summarizing all alloc'ed. fragments:\n");
 	
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;
 			f=FRAG_NEXT(f),i++){
@@ -836,7 +849,8 @@ void qm_sums(struct qm_block* qm)
 	}
 	x = root;
 	while(x){
-		LOG(memlog, " count=%6d size=%10lu bytes from %s: %s(%ld)\n",
+		LOG_(DEFAULT_FACILITY, memlog, "qm_sums: ",
+				" count=%6d size=%10lu bytes from %s: %s(%ld)\n",
 			x->count,x->size,
 			x->file, x->func, x->line
 			);
@@ -844,7 +858,8 @@ void qm_sums(struct qm_block* qm)
 		free(x);
 		x = root;
 	}
-	LOG(memlog, "-----------------------------\n");
+	LOG_(DEFAULT_FACILITY, memlog, "qm_sums: ",
+			"-----------------------------\n");
 }
 #endif /* DBG_QM_MALLOC */
 

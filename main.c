@@ -331,10 +331,6 @@ int check_via =  0;
 int phone2tel = 1;
 /* shall use stateful synonym branches? faster but not reboot-safe */
 int syn_branch = 1;
-/* debugging level for memory stats */
-int memlog = L_DBG;
-/* debugging level for the malloc debug messages */
-int memdbg = L_DBG;
 /* debugging level for timer debugging */
 int timerlog = L_WARN;
 /* should replies include extensive warnings? by default yes,
@@ -494,6 +490,8 @@ char* pgid_file = 0;
 /* call it before exiting; if show_status==1, mem status is displayed */
 void cleanup(show_status)
 {
+	int memlog;
+	
 	/*clean-up*/
 #ifndef SHM_SAFE_MALLOC
 	if (mem_lock)
@@ -528,6 +526,7 @@ void cleanup(show_status)
 	destroy_nonsip_hooks();
 	destroy_routes();
 	destroy_atomic_ops();
+	memlog=cfg_get(core, core_cfg, memlog);
 #ifdef PKG_MALLOC
 	if (show_status && memlog <= cfg_get(core, core_cfg, debug)){
 		if (cfg_get(core, core_cfg, mem_summary) & 1) {
@@ -645,6 +644,7 @@ void handle_sigs()
 {
 	pid_t	chld;
 	int	chld_status;
+	int memlog;
 
 	switch(sig_flag){
 		case 0: break; /* do nothing*/
@@ -671,6 +671,7 @@ void handle_sigs()
 #ifdef STATS
 			dump_all_statistic();
 #endif
+		memlog=cfg_get(core, core_cfg, memlog);
 #ifdef PKG_MALLOC
 		if (memlog <= cfg_get(core, core_cfg, debug)){
 			if (cfg_get(core, core_cfg, mem_summary) & 1) {
@@ -748,6 +749,9 @@ void handle_sigs()
 void sig_usr(int signo)
 {
 
+#ifdef PKG_MALLOC
+	int memlog;
+#endif
 
 	if (is_main){
 		if (sig_flag==0) sig_flag=signo;
@@ -771,6 +775,7 @@ void sig_usr(int signo)
 					LOG(L_INFO, "INFO: signal %d received\n", signo);
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
+					memlog=cfg_get(core, core_cfg, memlog);
 					if (memlog <= cfg_get(core, core_cfg, debug)){
 						if (cfg_get(core, core_cfg, mem_summary) & 1) {
 							LOG(memlog, "Memory status (pkg):\n");

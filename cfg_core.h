@@ -47,6 +47,7 @@ extern void	*core_cfg;
 struct cfg_group_core {
 	int	debug;
 	int	log_facility;
+	int memdbg; /** < log level for memory debugging messages */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	int	use_dst_blacklist; /* 1 if blacklist is enabled */
@@ -89,6 +90,7 @@ struct cfg_group_core {
 	int udp_mtu; /**< maximum send size for udp, if > try another protocol*/
 	int udp_mtu_try_proto; /**< if packet> udp_mtu, try proto (e.g. TCP) */
 	int force_rport; /**< if set rport will always be forced*/
+	int memlog; /** < log level for memory status/summary info */
 	int mem_summary; /**< display memory status/summary info on exit */
 };
 
