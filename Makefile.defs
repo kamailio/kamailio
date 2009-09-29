@@ -69,6 +69,7 @@
 #  2009-03-10  replaced DEFS with C_DEFS and INCLUDES with C_INCLUDES (DEFS
 #              and INCLUDES are now used only for "temporary" defines/includes
 #              inside modules or libs) (andrei)
+#  2009-09-20  for gcc 4.2+ use -fno-strict-overflow (andrei)
 
 
 # check if already included/exported
@@ -305,8 +306,9 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
 				 sed -e 's/2\.9.*/2.9x/' -e 's/3\.[0-3]\..*/3.0/' -e \
 				 	's/3\.[0-3]/3.0/' -e 's/3\.[4-9]\..*/3.4/' -e \
-					's/3\.[4-9]/3.4/' -e 's/4\.[0-9]\..*/4.x/' -e \
-					's/4\.[0-9]/4.x/' )
+					's/3\.[4-9]/3.4/' -e 's/4\.[0-1]\..*/4.x/' -e \
+					's/4\.[0-1]/4.x/' -e 's/4\.[2-9]\..*/4.2+/' -e \
+					's/4\.[2-9]$$/4.2+/')
 endif
 
 ifneq (, $(findstring Sun, $(CC_LONGVER)))
@@ -670,6 +672,15 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CPU ?= athlon64
+					CFLAGS+=-minline-all-stringops \
+							-falign-loops \
+							-ftree-vectorize \
+							-fno-strict-overflow \
+							-mtune=$(CPU)
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= athlon64
@@ -707,6 +718,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
@@ -732,6 +744,15 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-m64 -g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 				LDFLAGS+=-m64
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CPU ?= opteron
+					CFLAGS+=-minline-all-stringops \
+							-falign-loops \
+							-ftree-vectorize \
+							-fno-strict-overflow \
+							-mtune=$(CPU)
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= opteron
@@ -769,6 +790,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
@@ -800,6 +822,15 @@ ifeq		($(CC_NAME), gcc)
 				# -m32 for 32 bit (default on solaris),
 				# nothing for arch. default
 				LDFLAGS+=-m64
+				#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CPU ?= ultrasparc
+					#use 32bit for now
+					CFLAGS+=-mcpu=ultrasparc  \
+							-mtune=$(CPU) \
+							-fno-strict-overflow \
+							-ftree-vectorize
+else
 				#if gcc 4.x
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= ultrasparc
@@ -849,6 +880,7 @@ endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
+endif			#CC_SHORTVER, 4.2+
 	
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
@@ -872,6 +904,15 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes 
+				#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CPU ?= v8 
+					#use 32bit for now
+					CFLAGS+= -minline-all-stringops \
+							-mtune=$(CPU) \
+							-fno-strict-overflow \
+							-ftree-vectorize
+else
 				#if gcc 4.x
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= v8 
@@ -907,6 +948,7 @@ endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
+endif			#CC_SHORTVER, 4.2+
 	
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
@@ -927,6 +969,11 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-O9 -funroll-loops $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CFLAGS+= -ftree-vectorize -fno-strict-overflow
+					# not supported on arm: -minline-all-stringops 
+else
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= -ftree-vectorize
@@ -954,7 +1001,8 @@ $(warning			You are using an old and unsupported gcc \
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
-endif			# CC_SHORTVER, 4.0
+endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -970,6 +1018,10 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-march=armv6 -O9 -funroll-loops \
 						$(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CFLAGS+= -ftree-vectorize -fno-strict-overflow
+else
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= -ftree-vectorize
@@ -996,7 +1048,8 @@ $(warning			You are using an old and unsupported gcc \
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
-endif			# CC_SHORTVER, 4.0
+endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -1011,6 +1064,11 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CFLAGS+=-march=r3000 -minline-all-stringops \
+							-ftree-vectorize -fno-strict-overflow
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+=-march=r3000 -minline-all-stringops \
@@ -1038,6 +1096,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -1052,6 +1111,11 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CFLAGS+=-minline-all-stringops -ftree-vectorize \
+							-fno-strict-overflow
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+=-minline-all-stringops -ftree-vectorize
@@ -1077,6 +1141,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -1091,6 +1156,11 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips64 -O9 -funroll-loops $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CFLAGS+=-minline-all-stringops -ftree-vectorize \
+							-fno-strict-overflow
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+=-minline-all-stringops -ftree-vectorize
@@ -1116,6 +1186,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -1130,6 +1201,11 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CFLAGS+= -fno-strict-overflow
+					# not supported: -minline-all-stringops
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= 
@@ -1156,6 +1232,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -1170,6 +1247,13 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CPU ?= powerpc
+					CFLAGS+=-ftree-vectorize \
+							-fno-strict-overflow \
+							-mtune=$(CPU) -maltivec
+else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= powerpc
@@ -1197,6 +1281,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -1211,6 +1296,14 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -O9 -funroll-loops $(PROFILE)
+			#if gcc 4.2+
+ifeq			($(CC_SHORTVER), 4.2+)
+					CPU ?= powerpc64
+					CFLAGS+=-ftree-vectorize \
+							-fno-strict-overflow \
+							-mtune=$(CPU) -maltivec
+else
+			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= powerpc64
 					CFLAGS+=-ftree-vectorize \
@@ -1237,6 +1330,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.2+
 	
 else		# CC_NAME, gcc
 				#other compilers
