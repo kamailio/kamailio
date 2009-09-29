@@ -418,6 +418,22 @@ int cfg_late_child_init(void)
 	return 0;
 }
 
+
+/* per-child init function for non-cb executing processes.
+ * Mark this process as not wanting to execute any per-child config
+ * callback (it will have only limited config functionality, but is useful
+ * when a process needs only to watch some non-callback cfg. values,
+ * e.g. the main attendant process, debug and memlog).
+ * It needs to be called from the forked process.
+ * cfg_register_child must _not_ be called.
+ */
+int cfg_child_no_cb_init(void)
+{
+	/* set the callback list pointer to the beginning of the list */
+	cfg_child_cb = CFG_NO_CHILD_CBS;
+	return 0;
+}
+
 /* per-child process destroy function
  * Should be called only when the child process exits,
  * but SER continues running
@@ -436,7 +452,7 @@ void cfg_child_destroy(void)
 		cfg_local = NULL;
 	}
 
-	if (!cfg_child_cb) return;
+	if (!cfg_child_cb || cfg_child_cb==CFG_NO_CHILD_CBS) return;
 
 	/* The lock must be held to make sure that the global config
 	is not replaced meantime, and the other child processes do not

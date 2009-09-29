@@ -120,6 +120,10 @@ extern cfg_child_cb_t	**cfg_child_cb_first;
 extern cfg_child_cb_t	**cfg_child_cb_last;
 extern cfg_child_cb_t	*cfg_child_cb;
 
+/* magic value for cfg_child_cb for processes that do not want to
+   execute per-child callbacks */
+#define CFG_NO_CHILD_CBS ((void*)(long)(-1))
+
 /* macros for easier variable access */
 #define CFG_VAR_TYPE(var)	CFG_VAR_MASK((var)->def->type)
 #define CFG_INPUT_TYPE(var)	CFG_INPUT_MASK((var)->def->type)
@@ -148,6 +152,16 @@ int cfg_child_init(void);
  * Note that the child process may miss some configuration changes.
  */
 int cfg_late_child_init(void);
+
+/* per-child init function for non-cb executing processes.
+ * Mark this process as not wanting to execute any per-child config
+ * callback (it will have only limited config functionality, but is useful
+ * when a process needs only to watch some non-callback cfg. values,
+ * e.g. the main attendant process, debug and memlog).
+ * It needs to be called from the forked process.
+ * cfg_register_child must _not_ be called.
+ */
+int cfg_child_no_cb_init(void);
 
 /* per-child process destroy function
  * Should be called only when the child process exits,
@@ -233,6 +247,8 @@ static inline void cfg_update_local(void)
 	)
 		*(group->handle) = cfg_local->vars + group->offset;
 
+	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS))
+		return;
 	/* call the per-process callbacks */
 	while (cfg_child_cb != last_cb) {
 		prev_cb = cfg_child_cb;
