@@ -72,6 +72,13 @@ new config variables:
   - max_while_loops - maximum iterations allowed for a while  (can be changed
        at runtime). Default 100.
   - log_name - set the application name used when printing to syslog.
+  - mem_summary - memory debugging info logged on exit or on SIGUSR1.
+       The value is a combination of flags: 0 - off,
+       1 - dump all used memory blocks and some statistics (lots of output),
+       2 - dump a summary of the used memory blocks (works only if
+           compiled with DBG_QM_MALLOC or DBG_F_MALLOC).
+       Default: 1.
+       Can be changed at runtime.
 
 new script commands:
   add_local_rport() - adds the rport parameter to the added via header

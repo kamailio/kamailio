@@ -92,7 +92,8 @@ struct cfg_group_core default_core_cfg = {
 	DEFAULT_MAX_WHILE_LOOPS, /* max_while_loops */
 	0, /* udp_mtu (disabled by default) */
 	0, /* udp_mtu_try_proto -> default disabled */
-	0  /* force_rport */ 
+	0,  /* force_rport */
+	1 /* mem_summary -flags: 0 off, 1 shm/pkg_status, 2 shm/pkg_sums */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -191,5 +192,8 @@ cfg_def_t core_cfg_def[] = {
 		"if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp)"},
 	{"force_rport",     CFG_VAR_INT, 0, 1,  0, fix_global_req_flags,
 		"force rport for all the received messages" },
+	{"mem_summary",	CFG_VAR_INT|CFG_ATOMIC,	0, 3, 0, 0,
+		"memory debugging information displayed on exit (flags): "
+		" 0 - off, 1 - dump all used blocks, 2 - summary of used blocks" },
 	{0, 0, 0, 0, 0, 0}
 };

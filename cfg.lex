@@ -353,6 +353,7 @@ PHONE2TEL	phone2tel
 SYN_BRANCH syn_branch
 MEMLOG		"memlog"|"mem_log"
 MEMDBG		"memdbg"|"mem_dbg"
+MEMSUM		"mem_summary"
 SIP_WARNING sip_warning
 SERVER_SIGNATURE server_signature
 SERVER_HEADER server_header
@@ -688,6 +689,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SYN_BRANCH}	{ count(); yylval.strval=yytext; return SYN_BRANCH; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
 <INITIAL>{MEMDBG}	{ count(); yylval.strval=yytext; return MEMDBG; }
+<INITIAL>{MEMSUM}	{ count(); yylval.strval=yytext; return MEMSUM; }
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }

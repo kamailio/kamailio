@@ -89,6 +89,7 @@ struct cfg_group_core {
 	int udp_mtu; /**< maximum send size for udp, if > try another protocol*/
 	int udp_mtu_try_proto; /**< if packet> udp_mtu, try proto (e.g. TCP) */
 	int force_rport; /**< if set rport will always be forced*/
+	int mem_summary; /**< display memory status/summary info on exit */
 };
 
 extern struct cfg_group_core default_core_cfg;

@@ -408,6 +408,7 @@ extern char *finame;
 %token SYN_BRANCH
 %token MEMLOG
 %token MEMDBG
+%token MEMSUM
 %token SIP_WARNING
 %token SERVER_SIGNATURE
 %token SERVER_HEADER
@@ -863,6 +864,8 @@ assign_stm:
 	| MEMLOG EQUAL error { yyerror("int value expected"); }
 	| MEMDBG EQUAL intno { memdbg=$3; }
 	| MEMDBG EQUAL error { yyerror("int value expected"); }
+	| MEMSUM EQUAL intno { default_core_cfg.mem_summary=$3; }
+	| MEMSUM EQUAL error { yyerror("int value expected"); }
 	| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
 	| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
 	| USER EQUAL STRING     { user=$3; }

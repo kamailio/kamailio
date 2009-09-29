@@ -529,21 +529,29 @@ void cleanup(show_status)
 	destroy_routes();
 	destroy_atomic_ops();
 #ifdef PKG_MALLOC
-	if (show_status){
-		LOG(memlog, "Memory status (pkg):\n");
-		pkg_status();
-		LOG(memlog, "Memory still-in-use summary (pkg):\n");
-		pkg_sums();
+	if (show_status && memlog <= cfg_get(core, core_cfg, debug)){
+		if (cfg_get(core, core_cfg, mem_summary) & 1) {
+			LOG(memlog, "Memory status (pkg):\n");
+			pkg_status();
+		}
+		if (cfg_get(core, core_cfg, mem_summary) & 2) {
+			LOG(memlog, "Memory still-in-use summary (pkg):\n");
+			pkg_sums();
+		}
 	}
 #endif
 #ifdef SHM_MEM
 	if (pt) shm_free(pt);
 	pt=0;
-	if (show_status){
+	if (show_status && memlog <= cfg_get(core, core_cfg, debug)){
+		if (cfg_get(core, core_cfg, mem_summary) & 1) {
 			LOG(memlog, "Memory status (shm):\n");
 			shm_status();
+		}
+		if (cfg_get(core, core_cfg, mem_summary) & 2) {
 			LOG(memlog, "Memory still-in-use summary (shm):\n");
 			shm_sums();
+		}
 	}
 	/* zero all shmem alloc vars that we still use */
 	shm_mem_destroy();
@@ -664,12 +672,28 @@ void handle_sigs()
 			dump_all_statistic();
 #endif
 #ifdef PKG_MALLOC
-			LOG(memlog, "Memory status (pkg):\n");
-			pkg_status();
+		if (memlog <= cfg_get(core, core_cfg, debug)){
+			if (cfg_get(core, core_cfg, mem_summary) & 1) {
+				LOG(memlog, "Memory status (pkg):\n");
+				pkg_status();
+			}
+			if (cfg_get(core, core_cfg, mem_summary) & 2) {
+				LOG(memlog, "Memory still-in-use summary (pkg):\n");
+				pkg_sums();
+			}
+		}
 #endif
 #ifdef SHM_MEM
-			LOG(memlog, "Memory status (shm):\n");
-			shm_status();
+		if (memlog <= cfg_get(core, core_cfg, debug)){
+			if (cfg_get(core, core_cfg, mem_summary) & 1) {
+				LOG(memlog, "Memory status (shm):\n");
+				shm_status();
+			}
+			if (cfg_get(core, core_cfg, mem_summary) & 2) {
+				LOG(memlog, "Memory still-in-use summary (shm):\n");
+				shm_sums();
+			}
+		}
 #endif
 			break;
 
@@ -747,8 +771,17 @@ void sig_usr(int signo)
 					LOG(L_INFO, "INFO: signal %d received\n", signo);
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
-					LOG(memlog, "Memory status (pkg):\n");
-					pkg_status();
+					if (memlog <= cfg_get(core, core_cfg, debug)){
+						if (cfg_get(core, core_cfg, mem_summary) & 1) {
+							LOG(memlog, "Memory status (pkg):\n");
+							pkg_status();
+						}
+						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+							LOG(memlog, "Memory still-in-use summary (pkg):"
+									"\n");
+							pkg_sums();
+						}
+					}
 					#endif
 #endif
 					_exit(0);
