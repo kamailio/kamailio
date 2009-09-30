@@ -1603,7 +1603,7 @@ static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
 		DEBUG("fix up for attribute '%.*s'\n", STR_FMT(&attr_name));
 
 		if (! (avp_ident = pkg_malloc(sizeof(avp_ident_t)))) {
-			ERR("out of mem; requested: %zd.\n", sizeof(avp_ident_t));
+			ERR("out of mem; requested: %d.\n", (int)sizeof(avp_ident_t));
 			return -1;
 		}
 		memset(avp_ident, 0, sizeof(avp_ident_t));
