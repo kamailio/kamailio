@@ -99,9 +99,6 @@ static char *concat(char *buff, size_t buffsize, const char *first, int second)
 
 static void pike_top(rpc_t *rpc, void *c)
 {
-
-	DBG("pike: top");
-
 	int i;
 	void *handle;
 	struct TopListItem_t *top_list_root;
@@ -117,9 +114,10 @@ static void pike_top(rpc_t *rpc, void *c)
 	size_t leaf_hits_curr_size = 0;
 	size_t expires_size = 0;
 	size_t status_size = 0;
-	
 	char *stropts;
 	int   options = 0;
+
+	DBG("pike: top");
 	
 	/* obtain params */
 	if (rpc->scan(c, "s", &stropts) <= 0)

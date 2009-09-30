@@ -46,9 +46,13 @@ static char *print_addr(unsigned char *ip, int iplen)
 
 int pike_top_add_entry( unsigned char *ip_addr, int addr_len, unsigned int leaf_hits[2], unsigned int hits[2], unsigned int expires, node_status_t status )
 {
-	print_addr(ip_addr, addr_len);
-	DBG("pike_top_add_enrty(ip: %s, leaf_hits[%d,%d], hits[%d,%d], expires: %d, status: %d)", buff, leaf_hits[0], leaf_hits[1], hits[0], hits[1], expires, status);
 	struct TopListItem_t *new_item = (struct TopListItem_t *)malloc(sizeof(struct TopListItem_t));
+	
+	print_addr(ip_addr, addr_len);
+	DBG("pike_top_add_enrty(ip: %s, leaf_hits[%d,%d], hits[%d,%d],"
+			" expires: %d, status: %d)",
+			buff, leaf_hits[0], leaf_hits[1], hits[0], hits[1],
+			expires, status);
 	assert(new_item != 0);
 	
 	memset( (void *)new_item, 0, sizeof(struct TopListItem_t) );
@@ -73,9 +77,9 @@ int pike_top_add_entry( unsigned char *ip_addr, int addr_len, unsigned int leaf_
 
 void pike_top_list_clear()
 {
-	top_list_iter = top_list_root;
 	struct TopListItem_t *ptr;
 	
+	top_list_iter = top_list_root;
 	while (top_list_iter) {
 		ptr = top_list_iter->next;
 		free(top_list_iter);
