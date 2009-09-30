@@ -69,7 +69,9 @@
 #  2009-03-10  replaced DEFS with C_DEFS and INCLUDES with C_INCLUDES (DEFS
 #              and INCLUDES are now used only for "temporary" defines/includes
 #              inside modules or libs) (andrei)
-#  2009-09-20  for gcc 4.2+ use -fno-strict-overflow (andrei)
+#  2009-09-29  for gcc 4.2+ use -fno-strict-overflow (andrei)
+#  2009-09-30  find the target architecture from the compiler and not
+#              from the host (andrei)
 
 
 # check if already included/exported
@@ -129,18 +131,18 @@ else
 	GETARCH=uname -m
 endif
 
-ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4[uv]/sparc64/  \
+HOST_ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4[uv]/sparc64/  \
 			-e s/armv[3-5].*/arm/  -e s/armv6.*/arm6/ \
 			-e "s/Power Macintosh/ppc/" \
 			-e "s/cobalt/mips2/" \
 			-e s/amd64/x86_64/ -e s/sparcv9/sparc64/ )
 # fix sparc -> sparc64
-ifeq ($(ARCH),sparc)
+ifeq ($(HOST_ARCH),sparc)
 	ifeq ($(shell uname -m),sun4u)
-		ARCH := sparc64
+		HOST_ARCH := sparc64
 	endif
 	ifeq ($(shell uname -m),sun4v)
-		ARCH := sparc64
+		HOST_ARCH := sparc64
 	endif
 endif
 
@@ -340,6 +342,84 @@ $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, sun cc, intel icc )
 endif
 
+# ARCH detection
+# predefined compiler macros for different architectures
+# (see http://predef.sourceforge.net/prearch.html for a more complete list)
+i386_macros= i386 __i386__ __i486__ __i586__ __i686__ \
+			__i386 _M_IX86 __X86__ _X86_
+x86_64_macros= __amd64__ __amd64 __x86_64__ __x86_64 _M_X64
+
+sparc_macros= __sparc__ __sparc __sparcv8
+sparc64_macros= __sparcv9 __sparc_v9__
+
+arm_macros= __arm__ __thumb__
+arm6_macros= __ARM_ARCH_6__
+
+ppc_macros= __powerpc __powerpc__ __POWERPC__ __ppc__ _ARCH_PPC
+ppc64_macros= __ppc64__ _ARCH_PPC64
+
+mips_macros= __mips__ __mips _MIPS_ARCH_MIPS1
+mips2_macros= _MIPS_ISA_MIPS2 _MIPS_ISA_MIPS3 _MIPS_ISA_MIPS4 \
+			_MIPS_ARCH_MIPS2 _MIPS_ARCH_MIPS3 _MIPS_ARCH_MIPS4
+mips64_macros= _MIPS_ISA_MIPS64 _MIPS_ARCH_MIPS64
+
+alpha_macros= __alpha__ __alpha _M_ALPHA_
+
+ifeq ($(CC_NAME),gcc)
+#if gcc use gcc arch
+predef_macros:=$(shell $(CC) -dM -E -x c $(CC_EXTRA_OPTS) $(extra_defs) \
+					$(CFLAGS) /dev/null)
+
+ifneq ($(strip $(filter $(i386_macros), $(predef_macros))),)
+CC_ARCH=i386
+else ifneq ($(strip $(filter $(x86_64_macros), $(predef_macros))),)
+CC_ARCH=x86_64
+else ifneq ($(strip $(filter $(sparc_macros), $(predef_macros))),)
+
+ifneq ($(strip $(filter $(sparc64_macros), $(predef_macros))),)
+CC_ARCH=sparc64
+else # sparc64_macros
+CC_ARCH=sparc
+endif # sparc64_macros
+
+else ifneq ($(strip $(filter $(arm_macros), $(predef_macros))),)
+
+ifneq ($(strip $(filter $(arm6_macros), $(predef_macros))),)
+CC_ARCH=arm6
+else # arm6_macros
+CC_ARCH=arm
+endif # arm6_macros
+
+else ifneq ($(strip $(filter $(ppc64_macros), $(predef_macros))),)
+CC_ARCH=ppc64
+else ifneq ($(strip $(filter $(ppc_macros), $(predef_macros))),)
+CC_ARCH=ppc
+else ifneq ($(strip $(filter $(mips_macros), $(predef_macros))),)
+
+ifneq ($(strip $(filter $(mips64_macros), $(predef_macros))),)
+CC_ARCH=mips64
+else ifneq ($(strip $(filter $(mips2_macros), $(predef_macros))),)
+CC_ARCH=mips2
+else # mips2_macros
+CC_ARCH=mips
+endif # mips64_macros
+
+else ifneq ($(strip $(filter $(alpha_macros), $(predef_macros))),)
+CC_ARCH=alpha
+else
+
+$(warn "Unknown target compiler architecture")
+
+endif # predefined macros tests (x86_macros, ...)
+
+endif # gcc
+
+ifdef CC_ARCH
+$(info "target architecture <$(CC_ARCH)>, host architecture <$(HOST_ARCH)>")
+ARCH:=$(CC_ARCH)
+else
+ARCH:=$(HOST_ARCH)
+endif
 
 # compile-time options
 #
@@ -671,7 +751,8 @@ ifeq	($(ARCH), i386)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+				CFLAGS=-m32 -g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+				LDFLAGS+=-m32
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= athlon64
@@ -908,8 +989,7 @@ ifeq		($(CC_NAME), gcc)
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= v8 
 					#use 32bit for now
-					CFLAGS+= -minline-all-stringops \
-							-mtune=$(CPU) \
+					CFLAGS+= -mtune=$(CPU) \
 							-fno-strict-overflow \
 							-ftree-vectorize
 else
@@ -917,8 +997,7 @@ else
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= v8 
 					#use 32bit for now
-					CFLAGS+= -minline-all-stringops \
-							-mtune=$(CPU) \
+					CFLAGS+= -mtune=$(CPU) \
 							-ftree-vectorize
 else
 				#if gcc 3.4
