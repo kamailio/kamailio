@@ -514,8 +514,9 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 			
 		p = (rr_t*)ptr->parsed;
 		while(p) {
-			if (! (t = (struct rte*)pkg_malloc(sizeof(struct rte)))) {
-				ERR("out of pkg mem (asked for: %zd).\n", sizeof(struct rte));
+			if (! (t = pkg_malloc(sizeof(struct rte)))) {
+				ERR("out of pkg mem (asked for: %d).\n",
+						(int)sizeof(struct rte));
 				goto err;
 			}
 			if (is_req) {
@@ -763,10 +764,10 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	orig_inv.buf = inv_rb->buffer;
 	orig_inv.len = inv_rb->buffer_len;
 	DEBUG("reparsing retransmission buffer of original INVITE:\n%.*s\n",
-			orig_inv.len, orig_inv.buf);
+			(int)orig_inv.len, orig_inv.buf);
 	if (parse_msg(orig_inv.buf, orig_inv.len, &orig_inv) != 0) {
-		ERR("failed to parse retr buffer (weird!): \n%.*s\n", orig_inv.len,
-				orig_inv.buf);
+		ERR("failed to parse retr buffer (weird!): \n%.*s\n",
+				(int)orig_inv.len, orig_inv.buf);
 		return -1;
 	}
 
@@ -774,14 +775,14 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	if ((parse_headers(&orig_inv, HDR_TO_F, 0) < 0) || (! orig_inv.to)) {
 		/* the bug is at message assembly */
 		BUG("failed to parse INVITE retr. buffer and/or extract 'To' HF:"
-				"\n%.*s\n", orig_inv.len, orig_inv.buf);
+				"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
 		goto end;
 	}
 	if (((struct to_body *)orig_inv.to->parsed)->tag_value.len) {
 		DEBUG("building ACK for in-dialog INVITE (using RS in orig. INV.)\n");
 		if (parse_headers(&orig_inv, HDR_EOH_F, 0) < 0) {
 			BUG("failed to parse INVITE retr. buffer to EOH:"
-					"\n%.*s\n", orig_inv.len, orig_inv.buf);
+					"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
 			goto end;
 		}
 		sipmsg = &orig_inv;
@@ -863,8 +864,8 @@ eval_flags:
 				 * it can be done along with rte chunk, independent of Route
 				 * header parser's allocator (using pkg/shm) */
 				chklen = sizeof(struct rte) + sizeof(rr_t);
-				if (! (t = (struct rte *)pkg_malloc(chklen))) {
-					ERR("out of pkg memory (%zd required)\n", chklen);
+				if (! (t = pkg_malloc(chklen))) {
+					ERR("out of pkg memory (%d required)\n", (int)chklen);
 					goto end;
 				}
 				/* this way, .free_rr is also set to 0 (!!!) */
