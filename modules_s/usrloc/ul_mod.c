@@ -207,7 +207,6 @@ static int mod_init(void)
 
 static int build_db_cmds(void)
 {
-	INFO("usrloc: build_db_cmds()\n");
 	db_fld_t del_contact_match[] = {
 		{.name = uid_col.s, .type = DB_STR},
 		{.name = contact_col.s, .type = DB_STR},
@@ -234,6 +233,7 @@ static int build_db_cmds(void)
 	dlist_t* ptr;
 	int i;
 
+	INFO("usrloc: build_db_cmds()\n");
 	for(cmd_n = 0, ptr = root; ptr; cmd_n++, ptr = ptr->next);
 
 	del_contact = pkg_malloc(cmd_n);
