@@ -113,9 +113,19 @@
         <description>Gateway specific flags</description>
     </column>
 
+    <column>
+        <name>defunct</name>
+        <type>unsigned int</type>
+        <null/>
+        <default><null/></default>
+        <description>If not null, contains unix timestamp telling when gw becomes operational.</description>
+    </column>
+
     <index>
-        <name>lcr_id_idx</name>
+        <name>lcr_id_gw_name_idx</name>
         <colref linkend="lcr_id"/>
+        <colref linkend="gw_name"/>
+        <unique/>
     </index>
 
 </table>
