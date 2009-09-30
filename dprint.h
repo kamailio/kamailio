@@ -212,33 +212,34 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 						if (unlikely(log_stderr)) { \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
 									process_no, my_pid(), \
-									LOG_LEVEL2NAME(level),(prefix), ## args);\
+									LOG_LEVEL2NAME(level), \
+									(prefix) , ## args);\
 						} else { \
 							syslog(LOG2SYSLOG_LEVEL(level) |\
 								   (((facility) != DEFAULT_FACILITY) ? \
 									(facility) : \
 									cfg_get(core, core_cfg, log_facility)), \
 									"%s: %s" fmt, LOG_LEVEL2NAME(level),\
-									(prefix), ## args); \
+									(prefix) , ## args); \
 						} \
 					} else { \
 						if (log_stderr) { \
 							fprintf(stderr, "%2d(%d) %s" fmt, \
 										process_no, my_pid(), \
-										(prefix), ## args); \
+										(prefix) , ## args); \
 						} else { \
 							if ((level)<L_ALERT) \
 								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
 									   (((facility) != DEFAULT_FACILITY) ? \
 										(facility) : \
 										cfg_get(core, core_cfg, log_facility)),\
-										"%s" fmt, (prefix), ## args); \
+										"%s" fmt, (prefix) , ## args); \
 							else \
 								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
 									   (((facility) != DEFAULT_FACILITY) ? \
 										(facility) : \
 										cfg_get(core, core_cfg, log_facility)),\
-										"%s" fmt, (prefix), ## args); \
+										"%s" fmt, (prefix) , ## args); \
 						} \
 					} \
 					DPRINT_CRIT_EXIT; \
@@ -246,9 +247,9 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 			} while(0)
 			
 #		define LOG(level, fmt, args...) \
-	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt, ## args)
+	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt , ## args)
 #		define LOG_FC(facility, level, fmt, args...) \
-	LOG_((facility), (level), LOC_INFO, fmt, ## args)
+	LOG_((facility), (level), LOC_INFO, fmt , ## args)
 		
 #	endif /* __SUNPRO_C */
 #endif /* NO_LOG */
@@ -276,22 +277,22 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 #	define DEBUG(...) DBG(__VA_ARGS__)
 
 #else /* ! __SUNPRO_C */
-#	define ALERT(fmt, args...)  LOG(L_ALERT,  fmt, ## args)
-#	define BUG(fmt, args...)    LOG(L_BUG,   fmt, ## args)
-#	define ERR(fmt, args...)    LOG(L_ERR,    fmt, ## args)
-#	define WARN(fmt, args...)   LOG(L_WARN,   fmt, ## args)
-#	define NOTICE(fmt, args...) LOG(L_NOTICE, fmt, ## args)
-#	define INFO(fmt, args...)   LOG(L_INFO,   fmt, ## args)
-#	define CRIT(fmt, args...)   LOG(L_CRIT2,   fmt, ## args)
+#	define ALERT(fmt, args...)  LOG(L_ALERT,  fmt , ## args)
+#	define BUG(fmt, args...)    LOG(L_BUG,   fmt , ## args)
+#	define ERR(fmt, args...)    LOG(L_ERR,    fmt , ## args)
+#	define WARN(fmt, args...)   LOG(L_WARN,   fmt , ## args)
+#	define NOTICE(fmt, args...) LOG(L_NOTICE, fmt , ## args)
+#	define INFO(fmt, args...)   LOG(L_INFO,   fmt , ## args)
+#	define CRIT(fmt, args...)   LOG(L_CRIT2,   fmt , ## args)
 
 #	ifdef NO_DEBUG
 #		define DBG(fmt, args...)
 #	else
-#		define DBG(fmt, args...)    LOG(L_DBG, fmt, ## args)
+#		define DBG(fmt, args...)    LOG(L_DBG, fmt , ## args)
 #	endif		
 
 /* obsolete, do not use */
-#	define DEBUG(fmt, args...) DBG(fmt, ## args)
+#	define DEBUG(fmt, args...) DBG(fmt , ## args)
 		
 #endif /* __SUNPRO_C */
 
