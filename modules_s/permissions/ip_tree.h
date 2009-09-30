@@ -88,7 +88,7 @@
 struct ip_tree_leaf {
 	unsigned int prefix_match_len;  /* next prefix_match_len must be equal to next bit in IP address being compared */
 	struct ip_tree_leaf *next[2];	 /* tree goes on in leaf based on first bit following prefix_match, if next[0] && next[1] are null then IP matches - it's subnet address */
-	unsigned char prefix_match[];  /* match_bits div 8 + 1, the same representation as ip address */
+	unsigned char prefix_match[0]; /* match_bits div 8 + 1, the same representation as ip address */
 };
 
 struct ip_tree_find {

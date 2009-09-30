@@ -574,7 +574,7 @@ struct ip_set_param {
 		struct {
 			struct ip_set_list_item *ip_set;
 		} global;			
-	};
+	}u;
 };
 
 #define MODULE_NAME "permissions"
@@ -621,7 +621,7 @@ static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 	int kind;
 	kind = ((struct ip_set_param*)_ip_set)->kind;
 	if (kind == IP_SET_PARAM_KIND_LOCAL) {
-		if (get_str_fparam(&ip_set_s, msg, ((struct ip_set_param*)_ip_set)->local.fparam) < 0) {
+		if (get_str_fparam(&ip_set_s, msg, ((struct ip_set_param*)_ip_set)->u.local.fparam) < 0) {
 		    ERR(MODULE_NAME": ip_is_trusted: Error while obtaining ip_set parameter value\n");
 			return -1;
 		}
@@ -634,10 +634,10 @@ static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 			kind = IP_SET_PARAM_KIND_GLOBAL;
 			goto force_global;
 		}		
-		ip_set = &((struct ip_set_param*)_ip_set)->local.ip_set;
+		ip_set = &((struct ip_set_param*)_ip_set)->u.local.ip_set;
 	}
 	else {
-		isli = ((struct ip_set_param*)_ip_set)->global.ip_set;
+		isli = ((struct ip_set_param*)_ip_set)->u.global.ip_set;
 	force_global:
 		if (!isli->ip_set) return -1; /* empty ip set */
 		
@@ -693,28 +693,28 @@ static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 
 	/* test if ip_set string has changed since last call */
 	if (kind == IP_SET_PARAM_KIND_LOCAL) {
-		if (((struct ip_set_param*)_ip_set)->local.s.len != ip_set_s.len || 
-			memcmp(((struct ip_set_param*)_ip_set)->local.s.s, ip_set_s.s, ip_set_s.len) != 0) {
+		if (((struct ip_set_param*)_ip_set)->u.local.s.len != ip_set_s.len || 
+			memcmp(((struct ip_set_param*)_ip_set)->u.local.s.s, ip_set_s.s, ip_set_s.len) != 0) {
 
 			ip_set_init(&new_ip_set, 0);
 			if (ip_set_add_list(&new_ip_set, ip_set_s) < 0) {
 				ip_set_destroy(&new_ip_set);
 				return -1;
 			};
-			if (((struct ip_set_param*)_ip_set)->local.sz < ip_set_s.len) {
+			if (((struct ip_set_param*)_ip_set)->u.local.sz < ip_set_s.len) {
 				void *p;
-				p = pkg_realloc(((struct ip_set_param*)_ip_set)->local.s.s, ip_set_s.len);
+				p = pkg_realloc(((struct ip_set_param*)_ip_set)->u.local.s.s, ip_set_s.len);
 				if (!p) {
 					ip_set_destroy(&new_ip_set);
 					return E_OUT_OF_MEM;
 				}
-				((struct ip_set_param*)_ip_set)->local.s.s = p;			
-				((struct ip_set_param*)_ip_set)->local.sz = ip_set_s.len;			
+				((struct ip_set_param*)_ip_set)->u.local.s.s = p;			
+				((struct ip_set_param*)_ip_set)->u.local.sz = ip_set_s.len;			
 			}
-			memcpy(((struct ip_set_param*)_ip_set)->local.s.s, ip_set_s.s, ip_set_s.len);
-			((struct ip_set_param*)_ip_set)->local.s.len = ip_set_s.len;
-			ip_set_destroy(&((struct ip_set_param*)_ip_set)->local.ip_set);
-			((struct ip_set_param*)_ip_set)->local.ip_set = new_ip_set;
+			memcpy(((struct ip_set_param*)_ip_set)->u.local.s.s, ip_set_s.s, ip_set_s.len);
+			((struct ip_set_param*)_ip_set)->u.local.s.len = ip_set_s.len;
+			ip_set_destroy(&((struct ip_set_param*)_ip_set)->u.local.ip_set);
+			((struct ip_set_param*)_ip_set)->u.local.ip_set = new_ip_set;
 		}
 	}
 /* ip_set_print(stderr, &ip_set); */
@@ -740,8 +740,8 @@ static int fixup_ip_is_trusted(void** param, int param_no) {
 		s.len = strlen(s.s);
 
 		if (is_ip_set_name(&s)) {
-			p->global.ip_set = ip_set_list_find_by_name(s);
-			if (!p->global.ip_set) {
+			p->u.global.ip_set = ip_set_list_find_by_name(s);
+			if (!p->u.global.ip_set) {
 				ERR(MODULE_NAME": fixup_ip_is_trusted: ip set '%.*s' is not declared\n", s.len, s.s);			
 				goto err;
 			}
@@ -749,8 +749,8 @@ static int fixup_ip_is_trusted(void** param, int param_no) {
 		} else {
 			ret = fixup_var_str_12(param, param_no);
 			if (ret < 0) goto err;
-			ip_set_init(&p->local.ip_set, 0);
-			p->local.fparam = *param;
+			ip_set_init(&p->u.local.ip_set, 0);
+			p->u.local.fparam = *param;
 			*param = p;
 			p->kind = IP_SET_PARAM_KIND_LOCAL;
 		}
