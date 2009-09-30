@@ -1983,19 +1983,20 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 /* get_fd: */
 #ifdef TCP_ASYNC
 		/* if data is already queued, we don't need the fd any more */
+#ifdef TCP_CONNECT_WAIT
 		if (unlikely(cfg_get(tcp, tcp_cfg, async) &&
-						(_wbufq_non_empty(c)
-#ifdef TCP_CONNECT_WAIT
-											|| (c->flags&F_CONN_PENDING)
+						(_wbufq_non_empty(c) || (c->flags&F_CONN_PENDING)) ))
+#else /* ! TCP_CONNECT_WAIT */
+		if (unlikely(cfg_get(tcp, tcp_cfg, async) && (_wbufq_non_empty(c)) ))
 #endif /* TCP_CONNECT_WAIT */
-						) )){
+		{
 			lock_get(&c->write_lock);
-				if (likely(_wbufq_non_empty(c)
 #ifdef TCP_CONNECT_WAIT
-							|| (c->flags&F_CONN_PENDING)
+				if (likely(_wbufq_non_empty(c) || (c->flags&F_CONN_PENDING)))
+#else /* ! TCP_CONNECT_WAIT */
+				if (likely(_wbufq_non_empty(c)))
 #endif /* TCP_CONNECT_WAIT */
-
-							)){
+				{
 					do_close_fd=0;
 					if (unlikely(_wbufq_add(c, buf, len)<0)){
 						lock_release(&c->write_lock);

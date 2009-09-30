@@ -94,13 +94,17 @@ static int rpc_hash_add(struct rpc_export* rpc)
 	doc0_len=rpc->doc_str[0]?strlen(rpc->doc_str[0]):0;
 	doc1_len=rpc->doc_str[1]?strlen(rpc->doc_str[1]):0;
 	/* alloc everything into one block */
-	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry))
+	
 #ifdef RPC_COPY_EXPORT
+	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry))
 								+ROUND_POINTER(sizeof(*rpc))+2*sizeof(char*)+
 								+name_len+1+doc0_len+(rpc->doc_str[0]!=0)
 								+doc1_len+(rpc->doc_str[1]!=0)
-#endif /* RPC_COPY_EXPORT */
 								);
+#else /* RPC_COPY_EXPORT */
+	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry)));
+#endif /* RPC_COPY_EXPORT */
+	
 	if (e==0){
 		ERR("out of memory\n");
 		goto error;
