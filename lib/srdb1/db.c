@@ -340,27 +340,26 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	db_val_t val[1];
 	db1_res_t* res = NULL;
 	db_val_t* ver = 0;
+	str version = str_init(VERSION_TABLE);
+	str tmp1 = str_init(TABLENAME_COLUMN);
+	str tmp2 = str_init(VERSION_COLUMN);
+	int ret;
 
 	if (!dbf||!connection || !table || !table->s) {
 		LM_CRIT("invalid parameter value\n");
 		return -1;
 	}
 
-	str version = str_init(VERSION_TABLE);
-	int ret;
-
 	if (dbf->use_table(connection, &version) < 0) {
 		LM_ERR("error while changing table\n");
 		return -1;
 	}
-	str tmp1 = str_init(TABLENAME_COLUMN);
 	key[0] = &tmp1;
 
 	VAL_TYPE(val) = DB1_STR;
 	VAL_NULL(val) = 0;
 	VAL_STR(val) = *table;
 	
-	str tmp2 = str_init(VERSION_COLUMN);
 	col[0] = &tmp2;
 	
 	if (dbf->query(connection, key, 0, val, col, 1, 1, 0, &res) < 0) {
