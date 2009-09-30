@@ -447,6 +447,7 @@ static int avpdb_post_script_cb(struct sip_msg *msg, unsigned int flags, void *p
 int init_extra_avp_locks()
 {
 	int i;
+	registered_table_t *t = tables;
 
 	/* zero all 'lock counters' */
 	memset(lock_counters, 0, sizeof(lock_counters));
@@ -461,7 +462,6 @@ int init_extra_avp_locks()
 	}
 
 	/* initializes mutexes for extra AVPs */
-	registered_table_t *t = tables;
 	i = 0;
 	while (t) {
 		t->group_mutex_idx = get_hash1_raw(t->table_name, strlen(t->table_name)) % LOCK_CNT;
