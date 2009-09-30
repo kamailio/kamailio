@@ -415,7 +415,7 @@ endif # predefined macros tests (x86_macros, ...)
 endif # gcc
 
 ifdef CC_ARCH
-$(info "target architecture <$(CC_ARCH)>, host architecture <$(HOST_ARCH)>")
+$(info target architecture <$(CC_ARCH)>, host architecture <$(HOST_ARCH)>)
 ARCH:=$(CC_ARCH)
 else
 ARCH:=$(HOST_ARCH)
@@ -751,38 +751,41 @@ ifeq	($(ARCH), i386)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-m32 -g -O9 -funroll-loops  -Wcast-align $(PROFILE)
-				LDFLAGS+=-m32
+				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= athlon64
-					CFLAGS+=-minline-all-stringops \
+					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
 							-fno-strict-overflow \
 							-mtune=$(CPU)
+					LDFLAGS+=-m32
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= athlon64
-					CFLAGS+=-minline-all-stringops \
+					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
 							-mtune=$(CPU) 
+					LDFLAGS+=-m32
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
 					CPU ?= athlon
-					CFLAGS+=-minline-all-stringops \
+					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-mtune=$(CPU) 
+					LDFLAGS+=-m32
 else
 			#if gcc 3.0+
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= athlon
 					CFLAGS+=-minline-all-stringops \
 							-falign-loops \
-							-mcpu=$(CPU) 
+							-mcpu=$(CPU)
+					# -m32 supported since gcc 3.2
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
@@ -823,30 +826,32 @@ ifeq	($(ARCH), x86_64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-m64 -g -O9 -funroll-loops  -Wcast-align $(PROFILE)
-				LDFLAGS+=-m64
+				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= opteron
-					CFLAGS+=-minline-all-stringops \
+					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
 							-fno-strict-overflow \
 							-mtune=$(CPU)
+					LDFLAGS+=-m64
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= opteron
-					CFLAGS+=-minline-all-stringops \
+					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
 							-mtune=$(CPU) 
+					LDFLAGS+=-m64
 else
 			#if gcc 3.4
 ifeq			($(CC_SHORTVER), 3.4)
 					CPU ?= athlon64
-					CFLAGS+=-minline-all-stringops \
+					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops 
+					LDFLAGS+=-m64
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
@@ -855,6 +860,7 @@ ifeq			($(CC_SHORTVER), 3.0)
 							-falign-loops 
 							#-mcpu=$(CPU) \ # not working on all x86_64 gccs
 							#-mcpu=athlon
+					#-m64 on x86_64/x86 works starting with gcc 3.2
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
@@ -895,46 +901,49 @@ ifeq	($(ARCH), sparc64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
 				#common stuff
-				CFLAGS=-m64 -g -O9 -funroll-loops  $(PROFILE) \
+				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes 
-				# use -m64 to force 64 bit (but add it also to LDFLAGS and
-				#  don't forget to define SPARC64_MODE)
-				# -m32 for 32 bit (default on solaris),
-				# nothing for arch. default
-				LDFLAGS+=-m64
 				#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+=-mcpu=ultrasparc  \
+					CFLAGS+=-m64 -mcpu=ultrasparc  \
 							-mtune=$(CPU) \
 							-fno-strict-overflow \
 							-ftree-vectorize
+					# use -m64 to force 64 bit (but add it also to LDFLAGS and
+					#  don't forget to define SPARC64_MODE)
+					# -m32 for 32 bit (default on solaris),
+					# nothing for arch. default
+					LDFLAGS+=-m64
 else
 				#if gcc 4.x
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+=-mcpu=ultrasparc  \
+					CFLAGS+=-m64 -mcpu=ultrasparc  \
 							-mtune=$(CPU) \
 							-ftree-vectorize
+					LDFLAGS+=-m64
 else
 				#if gcc 3.4
 ifeq			($(CC_SHORTVER), 3.4)
 					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)
+					CFLAGS+=-m64 -mcpu=ultrasparc -mtune=$(CPU)
+					LDFLAGS+=-m64
 else
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)   \
+					CFLAGS+=-m64 -mcpu=ultrasparc -mtune=$(CPU)   \
 					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
 					#-mno-epilogue #try to inline function exit code
 					#-mflat # omit save/restore
 					#-,faster-structs #faster non Sparc ABI structure copy ops
+					LDFLAGS+=-m64
 else			# CC_SHORTVER, 3.0
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
@@ -943,6 +952,7 @@ ifneq				($(OS), netbsd)
 						# on netbsd/sparc64,  gcc 2.95.3 does not compile
 						# ser with -mv8
 						CFLAGS+= -mv9 
+						# -m64/-m32 on sparc works starting with gcc 3.0
 endif
 ifeq					($(ASTYPE), solaris)
 							CFLAGS+= -Wa,-xarch=v8plus
