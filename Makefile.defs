@@ -72,6 +72,8 @@
 #  2009-09-29  for gcc 4.2+ use -fno-strict-overflow (andrei)
 #  2009-09-30  find the target architecture from the compiler and not
 #              from the host (andrei)
+#  2009-10-01  use -fsigned-char for gcc on ppc, ppc64, arm and arm6
+#              (on those archs char is unsigned by default) (andrei)
 
 
 # check if already included/exported
@@ -1057,7 +1059,7 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-O9 -funroll-loops $(PROFILE)
+				CFLAGS=-O9 -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
@@ -1105,7 +1107,7 @@ ifeq	($(ARCH), arm6)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-march=armv6 -O9 -funroll-loops \
+				CFLAGS=-march=armv6 -O9 -funroll-loops -fsigned-char \
 						$(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
@@ -1335,7 +1337,7 @@ ifeq	($(ARCH), ppc)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops $(PROFILE)
+				CFLAGS= -O9 -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= powerpc
@@ -1384,7 +1386,7 @@ ifeq	($(ARCH), ppc64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= -O9 -funroll-loops $(PROFILE)
+				CFLAGS= -O9 -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
 					CPU ?= powerpc64
