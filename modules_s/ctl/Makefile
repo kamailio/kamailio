@@ -7,6 +7,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=ctl.so
 LIBS=
+MOD_INSTALL_UTILS=../../utils/sercmd
 # fifo support
 DEFS+=-DUSE_FIFO
 
