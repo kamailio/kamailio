@@ -152,33 +152,33 @@ db_berkeley_clean:
 docbook:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/doc/database" \
+		--stringparam dir "$(ROOT)/doc/databases/kamailio" \
 		--stringparam prefix "$$FILE-" \
 		$(DOCBOOK_XSL) kamailio-"$$FILE".xml ; \
 	done ; \
 
 	# link all documents to one file, to get nicer output
-	echo "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook V4.4//EN\" \"http://www.oasis-open.org/docbook/sgml/4.4/docbook.dtd\"[" > "$(ROOT)/doc/database/tables.sgml"
+	echo "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook V4.4//EN\" \"http://www.oasis-open.org/docbook/sgml/4.4/docbook.dtd\"[" > "$(ROOT)/doc/databases/kamailio/tables.sgml"
 	
 	# create entities, as xi:include is not available in sgml docbook
 	# substitute '-' for '_', docbook smgl don't like this
-	for FILE in $(wildcard $(ROOT)/doc/database/*.xml); do \
-		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/database/tables.sgml" ; \
+	for FILE in $(wildcard $(ROOT)/doc/databases/kamailio/*.xml); do \
+		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
 	done ; \
 	#Include general documentation entities
-	echo "  <!ENTITY % docentities SYSTEM \"../entities.xml\"> %docentities;" >> "$(ROOT)/doc/database/tables.sgml" ; \
-	echo "]>" >> "$(ROOT)/doc/database/tables.sgml"
+	echo "  <!ENTITY % docentities SYSTEM \"../entities.xml\"> %docentities;" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
+	echo "]>" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
 	# add bookinfo
-	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" >> "$(ROOT)/doc/database/tables.sgml"
+	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
 	# actually include the entities
-	for FILE in $(wildcard $(ROOT)/doc/database/*.xml); do \
-		echo "    &`basename "$$FILE" | sed -e 's#_#-#g'`" >> "$(ROOT)/doc/database/tables.sgml" ; \
+	for FILE in $(wildcard $(ROOT)/doc/databases/kamailio/*.xml); do \
+		echo "    &`basename "$$FILE" | sed -e 's#_#-#g'`" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
 	done ; \
-	echo "</book>" >> "$(ROOT)/doc/database/tables.sgml"
+	echo "</book>" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
 
 docbook_clean:
-	-@rm -f $(ROOT)/doc/database/*.xml
-	-@rm -f $(ROOT)/doc/database/tables.sgml
+	-@rm -f $(ROOT)/doc/databases/kamailio/*.xml
+	-@rm -f $(ROOT)/doc/databases/kamailio/tables.sgml
 
 .PHONY: modules modules_clean
 modules:
