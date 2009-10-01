@@ -949,3 +949,9 @@ clean_cfg clean-cfg:
 .PHONY: clean_modules_cfg clean-modules-cfg
 clean_modules_cfg clean-modules-cfg:
 	rm -f modules.lst
+
+.PHONY: dbschema
+dbschema:
+	-@echo "Build database schemas"
+	$(MAKE) -C lib/srdb1/schema
+	-@echo "Done"
