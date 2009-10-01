@@ -8,6 +8,24 @@
 # --------
 #  2009-04-23  initial version derived from Makefile.modules (andrei)
 
+#
+# Variables that should be defined in the util Makefiles, prior to including
+# this makefile:
+#
+# NAME - util binary name, with no path (MUST).
+#
+# COREPATH - path to the main/core directory (OPTIONAL, default ../..)
+#
+# DEFS - local extra defines (OPTIONAL)
+#
+# LIBS - local extra libs (OPTIONAL)
+#
+# SER_LIBS - ser/sr libs that should be compiled, linked against and installed
+#           along the binary. The format is: <path>/<shortname>, e.g.
+#           SER_LIBS=../../lib/srdb2/srdb2 for libsrdb2 with the sources
+#            in ../../lib/srdb2. (OPTIONAL)
+#
+
 UTIL_NAME=$(NAME)
 
 # default path to the core makefiles
@@ -66,10 +84,16 @@ install: $(NAME) $(util_dst) install-libs
 	$(INSTALL_TOUCH) $(util_dst)/$(NAME)
 	$(INSTALL_BIN)  $(NAME)  $(util_dst)
 
+ifneq (,$(SER_LIBS))
 install-libs:
 	@for lib in $(dir $(SER_LIBS)); do \
 		$(call try_err, $(MAKE) -C "$${lib}" install-if-newer ) ;\
-	done
+	done; true
+
+else
+install-libs:
+
+endif # $(SER_LIBS)
 
 .PHONY: install-if-newer
 install-if-newer: $(util_dst)/$(NAME)
