@@ -9,7 +9,7 @@
 
 <table id="dialog" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dialog</name>
-	<version>2</version>
+	<version>3</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>Persistent dialog information for the dialog module. More 
@@ -163,6 +163,22 @@
 		<type>unsigned int</type>
 		<size>10</size>
 		<description>The timestamp (unix time) when the dialog will expire.
+		</description>
+	</column>
+
+	<column>
+		<name>sflags</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The flags to set for dialog and usable from config file.
+		</description>
+	</column>
+
+	<column>
+		<name>toroute</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The route to be executed at dialog timeout.
 		</description>
 	</column>
 
