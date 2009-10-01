@@ -16,11 +16,11 @@ domain_name:1
 domainpolicy:2
 globalblacklist:1
 grp:2
-gw:9
+gw:10
 htable:1
 imc_members:1
 imc_rooms:1
-lcr:2
+lcr:3
 location:1004
 missed_calls:3
 pdt:1

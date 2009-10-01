@@ -1,6 +1,7 @@
-INSERT INTO version (table_name, table_version) values ('gw','9');
+INSERT INTO version (table_name, table_version) values ('gw','10');
 CREATE TABLE gw (
     id NUMBER(10) PRIMARY KEY,
+    lcr_id NUMBER(5),
     gw_name VARCHAR2(128),
     grp_id NUMBER(10),
     ip_addr VARCHAR2(15),
@@ -11,9 +12,9 @@ CREATE TABLE gw (
     strip NUMBER(5),
     tag VARCHAR2(16) DEFAULT NULL,
     weight NUMBER(10),
-    ping NUMBER(5) DEFAULT 0 NOT NULL,
     flags NUMBER(10) DEFAULT 0 NOT NULL,
-    CONSTRAINT gw_gw_name_idx  UNIQUE (gw_name)
+    defunct NUMBER(10) DEFAULT NULL,
+    CONSTRAINT gw_lcr_id_gw_name_idx  UNIQUE (lcr_id, gw_name)
 );
 
 CREATE OR REPLACE TRIGGER gw_tr
@@ -24,11 +25,10 @@ END gw_tr;
 /
 BEGIN map2users('gw'); END;
 /
-CREATE INDEX gw_grp_id_idx  ON gw (grp_id);
-
-INSERT INTO version (table_name, table_version) values ('lcr','2');
+INSERT INTO version (table_name, table_version) values ('lcr','3');
 CREATE TABLE lcr (
     id NUMBER(10) PRIMARY KEY,
+    lcr_id NUMBER(5),
     prefix VARCHAR2(16) DEFAULT NULL,
     from_uri VARCHAR2(64) DEFAULT NULL,
     grp_id NUMBER(10),
@@ -43,7 +43,5 @@ END lcr_tr;
 /
 BEGIN map2users('lcr'); END;
 /
-CREATE INDEX lcr_prefix_idx  ON lcr (prefix);
-CREATE INDEX lcr_from_uri_idx  ON lcr (from_uri);
-CREATE INDEX lcr_grp_id_idx  ON lcr (grp_id);
+CREATE INDEX lcr_lcr_id_idx  ON lcr (lcr_id);
 

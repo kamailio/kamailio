@@ -1,6 +1,7 @@
-INSERT INTO version (table_name, table_version) values ('gw','9');
+INSERT INTO version (table_name, table_version) values ('gw','10');
 CREATE TABLE gw (
     id SERIAL PRIMARY KEY NOT NULL,
+    lcr_id SMALLINT NOT NULL,
     gw_name VARCHAR(128) NOT NULL,
     grp_id INTEGER NOT NULL,
     ip_addr VARCHAR(15) NOT NULL,
@@ -11,23 +12,20 @@ CREATE TABLE gw (
     strip SMALLINT,
     tag VARCHAR(16) DEFAULT NULL,
     weight INTEGER,
-    ping SMALLINT DEFAULT 0 NOT NULL,
     flags INTEGER DEFAULT 0 NOT NULL,
-    CONSTRAINT gw_gw_name_idx UNIQUE (gw_name)
+    defunct INTEGER DEFAULT NULL,
+    CONSTRAINT gw_lcr_id_gw_name_idx UNIQUE (lcr_id, gw_name)
 );
 
-CREATE INDEX gw_grp_id_idx ON gw (grp_id);
-
-INSERT INTO version (table_name, table_version) values ('lcr','2');
+INSERT INTO version (table_name, table_version) values ('lcr','3');
 CREATE TABLE lcr (
     id SERIAL PRIMARY KEY NOT NULL,
+    lcr_id SMALLINT NOT NULL,
     prefix VARCHAR(16) DEFAULT NULL,
     from_uri VARCHAR(64) DEFAULT NULL,
     grp_id INTEGER NOT NULL,
     priority SMALLINT NOT NULL
 );
 
-CREATE INDEX lcr_prefix_idx ON lcr (prefix);
-CREATE INDEX lcr_from_uri_idx ON lcr (from_uri);
-CREATE INDEX lcr_grp_id_idx ON lcr (grp_id);
+CREATE INDEX lcr_lcr_id_idx ON lcr (lcr_id);
 
