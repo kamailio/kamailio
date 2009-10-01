@@ -14,7 +14,40 @@
 #  2009-03-10  replaced DEFS with C_DEFS and INCLUDES with C_INCLUDES (DEFS
 #              and INCLUDES are now used only for "temporary" defines/includes
 #              inside modules or libs) (andrei)
+#  2009-10-01  added support for automatically installing extra utils,
+#               scripts and cfg files (andrei)
 #
+
+#
+# Variables that should be defined in the modules, prior to including
+# this makefile:
+#
+# NAME - module binary name, complete with .so and no path (MUST).
+#
+# COREPATH - path to the main/core directory (OPTIONAL, default ../..)
+#
+# DEFS - per module extra defines (OPTIONAL)
+#
+# LIBS - per module extra libs (OPTIONAL)
+#
+# SER_LIBS - ser/sr libs that should be compiled, linked against and installed
+#           along the module. The format is: <path>/<shortname>, e.g.
+#           SER_LIBS=../../lib/srdb2/srdb2 for libsrdb2 with the sources
+#            in ../../lib/srdb2. (OPTIONAL)
+#
+# MOD_INSTALL_UTILS - list of utils directories that should be compiled and
+#                     installed along the module. The utils must know how to
+#                     install themselves (make install).
+#                     E.g.: MOD_INSTALL_UTILS=../../utils/sercmd
+#                     (OPTIONAL)
+#
+# MOD_INSTALL_SCRIPTS - list of scripts (complete path including the file name)
+#                       that should be installed along the module.
+#                       E.g.: MOD_INSTALL_SCRIPTS=../../scripts/foo/foo.sh
+#                       (OPTIONAL)
+#
+# MOD_INSTALL_CFGS - list of extra config files that should be installed in
+#                    the main config directory, along the module (OPTIONAL).
 
 MOD_NAME=$(NAME:.so=)
 
@@ -82,14 +115,88 @@ LIBS:=$(filter-out -ldl -lresolv, $(LIBS))
 
 .PHONY: install
 .PHONY: install-libs
-install: $(NAME) $(mods_dst) install-libs
+.PHONY: install-utils
+.PHONY: install-scripts
+.PHONY: install-cfgs
+install: $(NAME) $(mods_dst) install-libs install-utils install-scripts \
+		install-cfg
 	$(INSTALL_TOUCH) $(mods_dst)/$(NAME)
 	$(INSTALL_MODULES)  $(NAME)  $(mods_dst)
 
+ifneq (,$(SER_LIBS))
 install-libs:
-	@for lib in $(dir $(SER_LIBS)); do \
+	@for lib in $(dir $(SER_LIBS)) ; do \
 		$(call try_err, $(MAKE) -C "$${lib}" install-if-newer ) ;\
-	done
+	done; true
+
+else
+install-libs:
+
+endif # $(SER_LIBS)
+
+ifneq (,$(MOD_INSTALL_UTILS))
+install-utils:
+	@for ut in $(MOD_INSTALL_UTILS) ; do \
+		$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
+	done; true
+
+else
+install-utils:
+
+endif # $(MOD_INSTALL_UTILS)
+
+ifneq (,$(MOD_INSTALL_SCRIPTS))
+install-scripts: $(bin_prefix)/$(bin_dir)
+	@for r in $(MOD_INSTALL_SCRIPTS) ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(call try_err, $(INSTALL_TOUCH) \
+					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_SCRIPT)  "$$r"  $(bin_prefix)/$(bin_dir) ); \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ; \
+		fi ; \
+	done; true
+
+else
+install-scripts:
+
+endif # $(MOD_INSTALL_SCRIPTS)
+
+ifneq (,$(MOD_INSTALL_CFGS))
+install-cfg: $(cfg_prefix)/$(cfg_dir)
+	@for r in $(MOD_INSTALL_CFGS) ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(call try_err, $(INSTALL_TOUCH) \
+					$(cfg_prefix)/$(cfg_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_CFG)  "$$r"  $(cfg_prefix)/$(cfg_dir) ); \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ; \
+		fi ; \
+	done; true
+
+else
+install-cfg:
+
+endif # $(MOD_INSTALL_CFGS)
+
+
+$(bin_prefix)/$(bin_dir):
+	mkdir -p $@
+
+$(cfg_prefix)/$(cfg_dir):
+	mkdir -p $@
 
 # README build rules
 ifneq (,$(wildcard doc/Makefile))
