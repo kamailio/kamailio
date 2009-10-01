@@ -48,6 +48,11 @@
 #
 # MOD_INSTALL_CFGS - list of extra config files that should be installed in
 #                    the main config directory, along the module (OPTIONAL).
+#
+# MOD_INSTALL_SHARE - list of files to install into the arch-independent
+#                     shared directory (by default
+#                     /usr/local/share/$(MAIN_NAME))
+#
 
 MOD_NAME=$(NAME:.so=)
 
@@ -119,7 +124,7 @@ LIBS:=$(filter-out -ldl -lresolv, $(LIBS))
 .PHONY: install-scripts
 .PHONY: install-cfgs
 install: $(NAME) $(mods_dst) install-libs install-utils install-scripts \
-		install-cfg
+		install-cfg install-share
 	$(INSTALL_TOUCH) $(mods_dst)/$(NAME)
 	$(INSTALL_MODULES)  $(NAME)  $(mods_dst)
 
@@ -191,11 +196,37 @@ install-cfg:
 
 endif # $(MOD_INSTALL_CFGS)
 
+ifneq (,$(MOD_INSTALL_SHARE))
+install-share: $(share_prefix)/$(share_dir)
+	@for r in $(MOD_INSTALL_SHARE) ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(call try_err, $(INSTALL_TOUCH) \
+					$(share_prefix)/$(share_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_SHARE)  "$$r"  $(share_prefix)/$(share_dir) ); \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ; \
+		fi ; \
+	done; true
+
+else
+install-share:
+
+endif # $(MOD_INSTALL_SHARE)
+
 
 $(bin_prefix)/$(bin_dir):
 	mkdir -p $@
 
 $(cfg_prefix)/$(cfg_dir):
+	mkdir -p $@
+
+$(share_prefix)/$(share_dir):
 	mkdir -p $@
 
 # README build rules
