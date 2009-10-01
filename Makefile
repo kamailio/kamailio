@@ -341,9 +341,7 @@ utils_script_install=
 
 # This is the list of files to be installed into the arch-independent
 # shared directory (by default /usr/local/share/$(MAIN_NAME))
-share_install= scripts/mysql/my_create.sql \
-			   scripts/mysql/my_data.sql   \
-			   scripts/mysql/my_drop.sql
+share_install=
 
 
 
