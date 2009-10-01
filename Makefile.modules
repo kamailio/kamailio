@@ -64,10 +64,12 @@ LDFLAGS:=$(MOD_LDFLAGS)
 endif
 
 
+err_fail?=1
 
 include $(COREPATH)/Makefile.dirs
 include $(COREPATH)/Makefile.targets
 include $(COREPATH)/Makefile.rules
+include $(COREPATH)/Makefile.shared
 
 # default: if not overwritten by the main Makefile, install in modules
 mods_dst=$(modules_prefix)/$(modules_dir)/modules
@@ -86,7 +88,7 @@ install: $(NAME) $(mods_dst) install-libs
 
 install-libs:
 	@for lib in $(dir $(SER_LIBS)); do \
-		$(MAKE) -C "$${lib}" install-if-newer ;\
+		$(call try_err, $(MAKE) -C "$${lib}" install-if-newer ) ;\
 	done
 
 # README build rules
