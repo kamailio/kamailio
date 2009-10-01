@@ -1,0 +1,35 @@
+<book>
+<title>&kamailio; database tables</title>
+<bookinfo>
+	<productname class="trade">&kamailio;</productname>
+	<authorgroup>
+		<author>
+			<firstname>&kamailio;</firstname>
+			<surname>Development Team</surname>
+			<affiliation><orgname>&kamailiohomelink;</orgname></affiliation>
+			<address>&kamailiodevmail;</address>
+		</author>
+		<editor>
+			<firstname>Henning</firstname>
+			<surname>Westerholt</surname>
+			<affiliation><orgname>1und1 Internet AG</orgname></affiliation>
+			<address>
+				<email>henning.westerholt@1und1.de</email>
+			</address>
+		</editor>
+		<editor>
+			<firstname>Norman</firstname>
+			<surname>Brandinger</surname>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<holder>&kamailio; development Team</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+			<revnumber>$Revision: 4594 $</revnumber>
+			<date>$Date: 2008-08-06 12:08:33 +0200 (Mi, 06 Aug 2008) $</date>
+		</revision>
+	</revhistory>
+</bookinfo>
