@@ -336,7 +336,7 @@ cmodules=$(foreach mods,$(modules_dirs), $($(mods)))
 # which utils need compilation (directory path) and which to install
 # (full path including file name)
 utils_compile=	utils/gen_ha1 utils/sercmd
-utils_bin_install=	utils/gen_ha1/gen_ha1 utils/sercmd/sercmd
+utils_bin_install=	utils/gen_ha1/gen_ha1 # sercmd is now installed by ctl
 utils_script_install=
 
 # This is the list of files to be installed into the arch-independent
@@ -801,11 +801,6 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
 		$(INSTALL_CFG) etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
 
-		# TLS configuration
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
-		#$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
-		#modules/tls/$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
-
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
 		$(INSTALL_BIN) $(NAME) $(bin_prefix)/$(bin_dir)
@@ -866,12 +861,6 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 			fi ;\
 		fi ; \
 	done; true
-	# FIXME: This is a hack, this should be (and will be) done properly in
-    # per-module Makefiles
-	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
-		< scripts/mysql/$(SCR_NAME)_mysql.sh > \
-			$(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
-	chmod 755 $(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
 
 
 install-modules-all: install-every-module install-every-module-doc
