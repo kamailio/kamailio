@@ -152,9 +152,10 @@ endif
 
 
 .PHONY:install-if-newer
-install-if-newer: $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) 
+install-if-newer: $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME)
 
-$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME) $(LIBINAME_F) install
+$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME) $(LIBINAME_F)
+	@$(MAKE) install
 
 
 ifneq ($(strip $(LIBINAME_F)),)
