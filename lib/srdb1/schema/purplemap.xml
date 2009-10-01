@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="purplemap" xmlns:db="http://docbook.org/ns/docbook">
+    <name>purplemap</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for the purple module. More information can be found at: &KAMAILIO_MOD_DOC;purple.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="sip_user">
+        <name>sip_user</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>SIP user's URI</description>
+        <natural/>
+    </column>
+
+    <column id="ext_user">
+        <name>ext_user</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>External (MSN, GTalk, ...) user's URI/Login</description>
+        <natural/>
+    </column>
+
+    <column id="ext_prot">
+        <name>ext_prot</name>
+        <type>string</type>
+        <size>&method_len;</size>
+        <description>External protocol to use</description>
+        <natural/>
+    </column>
+
+    <column id="ext_pass">
+        <name>ext_pass</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>External user's password</description>
+        <null/>
+    </column>
+
+</table>
