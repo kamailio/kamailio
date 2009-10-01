@@ -123,7 +123,7 @@ static inline int decode_from( str *src , str *dst)
 	int idx;
 	int end;
 	int i,j;
-	char c;
+	signed char c;
 
 	/* Count '-' at end and disregard them */
 	for( n=0,i=src->len-1; src->s[i]=='-'; i--)
