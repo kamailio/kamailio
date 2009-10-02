@@ -404,9 +404,9 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 	db_val_t vals[1];
 	db_key_t cols[3];
 	
-	if (!db_url.s) {
-		LM_ERR("db_url parameter has not been set\n");
-		return -1;
+	if (db_handle == 0) {
+	    LM_ERR("no connection to database\n");
+	    return -1;
 	}
 
 	if (db_mode == DISABLE_CACHE) {
@@ -427,7 +427,6 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 3, 0,
 				   &res) < 0){
 			LM_ERR("failed to query database\n");
-			perm_dbf.close(db_handle);
 			return -1;
 		}
 
