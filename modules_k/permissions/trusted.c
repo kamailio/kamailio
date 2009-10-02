@@ -403,13 +403,14 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 	db_key_t keys[1];
 	db_val_t vals[1];
 	db_key_t cols[3];
-	
-	if (db_handle == 0) {
-	    LM_ERR("no connection to database\n");
-	    return -1;
-	}
 
 	if (db_mode == DISABLE_CACHE) {
+	
+	        if (db_handle == 0) {
+		    LM_ERR("no connection to database\n");
+		    return -1;
+	        }
+
 		keys[0] = &source_col;
 		cols[0] = &proto_col;
 		cols[1] = &from_col;
