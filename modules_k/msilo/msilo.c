@@ -1044,7 +1044,13 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 			
 		/** sending using TM function: t_uac */
 		body_str.len = 1024;
-		n = m_build_body(&body_str, rtime, str_vals[2/*body*/], 0);
+		/* send composed body only if content type is text/plain */
+		if ((str_vals[3].len == 10) &&
+		    (strncmp(str_vals[3].s, "text/plain", 10) == 0)) {
+		    n = m_build_body(&body_str, rtime, str_vals[2/*body*/], 0);
+		} else {
+		    n = -1;
+		}
 		if(n<0)
 			LM_DBG("sending simple body\n");
 		else
