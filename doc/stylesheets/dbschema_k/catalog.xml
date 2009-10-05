@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+
+<!--
+    * $Id: catalog.xml 4566 2008-08-05 15:03:51Z klaus_darilion $
+    *
+    * XSL converter script for docbook
+    *
+    * Copyright (C) 2001-2007 FhG Fokus
+    *
+    * This file is part of Kamailio, a free SIP server.
+    *
+    * Kamailio is free software; you can redistribute it and/or modify
+    * it under the terms of the GNU General Public License as published by
+    * the Free Software Foundation; either version 2 of the License, or
+    * (at your option) any later version
+    *
+    * Kamailio is distributed in the hope that it will be useful,
+    * but WITHOUT ANY WARRANTY; without even the implied warranty of
+    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    * GNU General Public License for more details.
+    *
+    * You should have received a copy of the GNU General Public License 
+    * along with this program; if not, write to the Free Software 
+    * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    *
+    */
+    -->
+
+<!DOCTYPE catalog PUBLIC "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+         "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="public">
+
+    <!-- DTDs and XSL stylesheets for DBSchema are bundled with Kamailio
+         so we will just redirect xsltproc to their location in the
+	 source tree
+      -->
+
+    <public publicId="-//kamailio.org//DTD DBSchema V1.1//EN"
+            uri="dtd/dbschema.dtd"/>
+
+    <rewriteURI uriStartString="http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/"
+                rewritePrefix="dtd/"/> 
+
+    <rewriteURI uriStartString="http://kamailio.org/dbschema/xsl/current/"
+                rewritePrefix="xsl/"/> 
+
+    <!-- Uncomment the following entry if you have docbook DTDs in unusual
+         location or if you would like to validate the documentation against
+	 newer docbook version
+      -->
+    <!--
+    <public publicId="-//OASIS//DTD DocBook XML V4.3//EN"
+            uri="file:///home/henning/docbook/dtd/docbookx.dtd"/>
+      -->
+
+    <!-- Uncomment the following entry if you have docbook XSL stylesheets
+         in unusual location, the value of rewritePrefix parameter should
+	 point to the top level directory of your XSL stylesheets
+      -->
+    <!--
+    <rewriteURI uriStartString="http://docbook.sourceforge.net/release/xsl/current/"
+                rewritePrefix="file:///home/henning/docbook/xsl/"/>
+      -->
+
+    <!-- Try the system wide catalogs as the last step before reverting
+         to using the value of system identifiers and URI references
+	 from the documents being processed (they usualy contain HTTP
+	 URIs).
+      -->
+    <delegatePublic publicIdStartString="" catalog="file:///etc/xml/catalog"/>
+    <delegateURI    uriStartString=""      catalog="file:///etc/xml/catalog"/>
+
+    <!-- If xsltproc gets here while searching the catalog then no entry was
+         found in the catalog files for the requested resource and in this case
+	 xsltproc will attempt to download the resource from the internet using
+	 the HTTP protocol. It will use the HTTP URIs from system identifiers
+	 and URI references (therefore the XSL customization stylesheets in SER
+	 refer to the original XSL stylesheets using HTTP URIs).
+
+	 Note: Downloading DTDs and XSL stylesheets can be very slow, because
+	       each file will be downloaded several times, because xsltproc
+	       does not cache downloaded files.
+      -->
+</catalog>
