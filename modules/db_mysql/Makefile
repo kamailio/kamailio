@@ -25,6 +25,8 @@ MOD_INSTALL_SHARE= ../../scripts/mysql/my_create.sql \
 				   ../../scripts/mysql/my_data.sql   \
 				   ../../scripts/mysql/my_drop.sql
 
+include ../../Makefile.modules
+
 install-mysql-script: $(bin_prefix)/$(bin_dir)
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
 	< ../../scripts/mysql/$(SCR_NAME)_mysql.sh > \
@@ -33,4 +35,3 @@ install-mysql-script: $(bin_prefix)/$(bin_dir)
 
 install-scripts: install-mysql-script
 
-include ../../Makefile.modules
