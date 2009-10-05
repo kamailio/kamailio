@@ -43,7 +43,7 @@ VALIDATE = 0
 VERBOSE = 0
 
 # XML Catalog used to resolve entities
-CATALOG = $(ROOT)/docbook/catalog.xml
+CATALOG = $(ROOT)/doc/stylesheets/dbschema_k/catalog.xml
 
 XSLTPROC = /usr/bin/xsltproc
 XSLTPROC_FLAGS = --xinclude
