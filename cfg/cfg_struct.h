@@ -219,8 +219,10 @@ static inline void cfg_block_free(cfg_block_t *block)
 /* updates all the module handles and calls the
  * per-child process callbacks -- not intended to be used
  * directly, use cfg_update() instead!
+ * params:
+ *   no_cbs - if 1, do not call per child callbacks
  */
-static inline void cfg_update_local(void)
+static inline void cfg_update_local(int no_cbs)
 {
 	cfg_group_t	*group;
 	cfg_child_cb_t	*last_cb;
@@ -247,7 +249,7 @@ static inline void cfg_update_local(void)
 	)
 		*(group->handle) = cfg_local->vars + group->offset;
 
-	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS))
+	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS || no_cbs))
 		return;
 	/* call the per-process callbacks */
 	while (cfg_child_cb != last_cb) {
@@ -287,7 +289,17 @@ static inline void cfg_update_local(void)
 #define cfg_update() \
 	do { \
 		if (unlikely(cfg_local != *cfg_global)) \
-			cfg_update_local(); \
+			cfg_update_local(0); \
+	} while(0)
+
+/* like cfg_update(), but does not execute callbacks
+ * (it should be used sparingly only in special cases, since it
+ *  breaks an important cfg framework feature)
+ */
+#define cfg_update_no_cbs() \
+	do { \
+		if (unlikely(cfg_local != *cfg_global)) \
+			cfg_update_local(1); \
 	} while(0)
 
 /* searches a group by name */

@@ -779,7 +779,11 @@ void sig_usr(int signo)
 					LOG(L_INFO, "INFO: signal %d received\n", signo);
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
-					cfg_update(); /* make sure we have current values */
+					/* make sure we have current cfg values, but update only
+					  the safe part (values not requiring callbacks), to
+					  account for processes that might not have registered
+					  config support */
+					cfg_update_no_cbs();
 					memlog=cfg_get(core, core_cfg, memlog);
 					if (memlog <= cfg_get(core, core_cfg, debug)){
 						if (cfg_get(core, core_cfg, mem_summary) & 1) {
