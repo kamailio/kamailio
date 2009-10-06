@@ -807,7 +807,7 @@ route {
         # route calls based on hash over callid
         # choose route domain 0 of the default carrier
 
-        if(!cr_route("default", "0", "$rU", "$rU", "call_id", "crc32")){
+        if(!cr_route("default", "0", "$rU", "$rU", "call_id")){
                 sl_send_reply("403", "Not allowed");
         } else {
                 # In case of failure, re-route the request
@@ -821,7 +821,7 @@ failure_route[1] {
         # In case of failure, send it to an alternative route:
         if (t_check_status("408|5[0-9][0-9]")) {
                 #choose route domain 1 of the default carrier
-        if(!cr_route("default", "1", "$rU", "$rU", "call_id", "crc32")){
+        if(!cr_route("default", "1", "$rU", "$rU", "call_id")){
                         t_reply("403", "Not allowed");
                 } else {
                         t_on_failure("2");
