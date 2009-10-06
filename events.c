@@ -60,26 +60,34 @@ int sr_event_exec(int type, void *data)
 	str *p;
 	switch(type) {
 		case SREV_NET_DATA_IN:
-				if(_sr_events_list.net_data_in!=0)
+				if(unlikely(_sr_events_list.net_data_in!=0))
 				{
 					p = (str*)data;
+#ifdef EXTRA_DEBUG
 					LM_DBG("PRE-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
+#endif /* EXTRA_DEBUG */
 					ret = _sr_events_list.net_data_in(data);
+#ifdef EXTRA_DEBUG
 					LM_DBG("POST-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
+#endif /* EXTRA_DEBUG */
 					return ret;
 				} else return 1;
 			break;
 		case SREV_NET_DATA_OUT:
-				if(_sr_events_list.net_data_out!=0)
+				if(unlikely(_sr_events_list.net_data_out!=0))
 				{
 					p = (str*)data;
+#ifdef EXTRA_DEBUG
 					LM_DBG("PRE-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
+#endif /* EXTRA_DEBUG */
 					ret = _sr_events_list.net_data_out(data);
+#ifdef EXTRA_DEBUG
 					LM_DBG("POST-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
+#endif /* EXTRA_DEBUG */
 					return ret;
 				} else return 1;
 			break;
