@@ -73,7 +73,7 @@ void pv_init_table(void)
 static int is_pv_valid_char(char c)
 {
 	if((c>='0' && c<='9') || (c>='a' && c<='z') || (c>='A' && c<='Z')
-			|| (c=='_') || (c=='.'))
+			|| (c=='_') || (c=='.') || (c=='?') /* ser $? */)
 		return 1;
 	return 0;
 }

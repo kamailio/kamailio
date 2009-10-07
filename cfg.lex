@@ -78,7 +78,8 @@
  *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
  *  2008-12-11  added support for "string1" "string2" (andrei)
  *  2009-03-10  added SET_USERPHONE action (Miklos)
- *  2009-04-24  addd strlen, strempty and defined operators (andrei)
+ *  2009-04-24  add strlen, strempty and defined operators (andrei)
+ *  2009-03-07  RETCODE, it's now  a core pvar (andrei)
 */
 
 
@@ -256,7 +257,7 @@ PROTO	proto
 AF		af
 MYSELF	myself
 MSGLEN			"msg:len"
-RETCODE	\$\?|\$retcode
+RETCODE	\$\?|\$retcode|\$rc
 /* operators */
 EQUAL	=
 EQUAL_T	==
@@ -535,7 +536,6 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{ISAVPFLAGSET}	{ count(); yylval.strval=yytext; return ISAVPFLAGSET; }
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
-<INITIAL>{RETCODE}	{ count(); yylval.strval=yytext; return RETCODE; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
@@ -969,6 +969,8 @@ EAT_ABLE	[\ \t\b\r]
 								return PVAR;
 							}
 
+	/* if found retcode => it's a built-in pvar */
+<INITIAL>{RETCODE}			{ count(); yylval.strval=yytext; return PVAR; }
 
 <INITIAL>{VAR_MARK}			{
 								switch(sr_cfg_compat){

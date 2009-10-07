@@ -354,7 +354,6 @@ extern char *finame;
 %token AF
 %token MYSELF
 %token MSGLEN
-%token RETCODE
 %token UDP
 %token TCP
 %token TLS
@@ -1824,7 +1823,6 @@ eint_op:	SRCPORT		{ $$=SRCPORT_O; }
 		|	DSTPORT		{ $$=DSTPORT_O; }
 		|	AF			{ $$=AF_O; }
 		|	MSGLEN		{ $$=MSGLEN_O; }
-		|	RETCODE		{ $$=RETCODE_O; }
 		| eint_op_onsend
 	;
 
@@ -2418,7 +2416,7 @@ pvar:	PVAR {
 			memset(pv_spec, 0, sizeof(*pv_spec));
 			s_tmp.s=$1; s_tmp.len=strlen($1);
 			if (pv_parse_spec(&s_tmp, pv_spec)==0){
-				yyerror("unknown script pseudo variable");
+				yyerror("unknown script pseudo variable %s", $1 );
 				pkg_free(pv_spec);
 				pv_spec=0;
 				YYABORT;
