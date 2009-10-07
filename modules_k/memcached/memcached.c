@@ -71,6 +71,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_mcd_name, 0, 0, 0 },
 	{ {"mcdec", sizeof("mcdec")-1}, PVT_OTHER, pv_get_mcd_value, pv_dec_mcd_value,
 		pv_parse_mcd_name, 0, 0, 0 },
+	{ {"mctex", sizeof("mctex")-1}, PVT_OTHER, pv_get_null, pv_set_mcd_expire,
+		pv_parse_mcd_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -255,7 +257,7 @@ static int mod_init(void) {
 	LM_INFO("connected to server %s:%s\n", server, port);
 	pkg_free(server);
 
-	LM_INFO("memcached client version is %s\n", MEMCACHE_VER);
+	LM_INFO("memcached client version is %s, released on %d\n", mc_version(), mc_reldate());
 	return 0;
 }
 

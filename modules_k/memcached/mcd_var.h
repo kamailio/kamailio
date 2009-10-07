@@ -74,6 +74,19 @@ int pv_dec_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t 
 
 
 /*!
+ * \brief Set the expire value in the cache of memcached
+ * \note The memcache library don't provide functions to change the expiration
+ * time for a certain key after creation, so we need to do a get and set here.
+ * \param msg SIP message
+ * \param param parameter
+ * \param op not used
+ * \param val value
+ * \return 0 on success, -1 on failure
+ */
+int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+
+
+/*!
  * \brief Parse the pseudo-variable specification parameter
  * \param sp pseudo-variable specification
  * \param in parameter string
