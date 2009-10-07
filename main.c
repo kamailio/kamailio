@@ -473,6 +473,9 @@ unsigned long shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
 int my_argc;
 char **my_argv;
 
+/* set to 1 when the cfg framework and core cfg is initialized/registered */
+static int cfg_ok=0;
+
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
 
@@ -511,10 +514,12 @@ void cleanup(show_status)
 	/* restore the original core configuration before the
 	 * config block is freed, otherwise even logging is unusable,
 	 * it can case segfault */
-	cfg_update();
-	/* copy current config into default_core_cfg */
-	if (core_cfg)
-		default_core_cfg=*((struct cfg_group_core*)core_cfg);
+	if (cfg_ok){
+		cfg_update();
+		/* copy current config into default_core_cfg */
+		if (core_cfg)
+			default_core_cfg=*((struct cfg_group_core*)core_cfg);
+	}
 	core_cfg = &default_core_cfg;
 	cfg_destroy();
 #ifdef USE_TCP
@@ -2080,6 +2085,7 @@ try_again:
 		LOG(L_CRIT, "could not declare the core configuration\n");
 		goto error;
 	}
+	cfg_ok=1;
 #ifdef USE_TCP
 	if (tcp_register_cfg()){
 		LOG(L_CRIT, "could not register the tcp configuration\n");
