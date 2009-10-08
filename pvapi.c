@@ -36,6 +36,7 @@
 #include "dprint.h"
 #include "hashes.h"
 #include "route.h"
+#include "pvapi_init.h"
 #include "pvar.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
@@ -196,9 +197,9 @@ int pv_table_free(void)
 			xe = xe->next;
 			pkg_free(xe1);
 		}
-		memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
-		_pv_table_set = 0;
 	}
+	memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
+	_pv_table_set = 0;
 	
 	return 0;
 }
@@ -1445,9 +1446,9 @@ int tr_table_free(void)
 			te = te->next;
 			pkg_free(te1);
 		}
-		memset(_tr_table, 0, sizeof(tr_item_t*)*TR_TABLE_SIZE);
-		_tr_table_set = 0;
 	}
+	memset(_tr_table, 0, sizeof(tr_item_t*)*TR_TABLE_SIZE);
+	_tr_table_set = 0;
 	
 	return 0;
 }
@@ -1478,8 +1479,23 @@ tr_export_t* tr_lookup_class(str *tclass)
 	return NULL;
 }
 
-void pv_api_destroy(void)
+
+/** init pv api (optional).
+ * @return 0 on success, -1 on error
+ */
+int init_pv_api(void)
+{
+	pv_init_table();
+	tr_init_table();
+	return 0;
+}
+
+
+/** destroy pv api. */
+void destroy_pv_api(void)
 {
 	/* free PV and TR hash tables */
+	pv_table_free();
+	tr_table_free();
 	return;
 }

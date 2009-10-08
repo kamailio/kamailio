@@ -184,7 +184,6 @@ int pv_parse_format(str *in, pv_elem_p *el);
 int pv_parse_index(pv_spec_p sp, str *in);
 int pv_init_iname(pv_spec_p sp, int param);
 int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s);
-void pv_api_destroy(void);
 
 typedef struct _pvname_list {
 	pv_spec_t sname;

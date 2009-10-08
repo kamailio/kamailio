@@ -172,6 +172,7 @@
 #include "cfg_core.h"
 #include "endianness.h" /* init */
 #include "basex.h" /* init */
+#include "pvapi_init.h" /* init */
 #include "pv_core.h" /* register core pvars */
 
 #ifdef DEBUG_DMALLOC
@@ -532,6 +533,7 @@ void cleanup(show_status)
 	destroy_sctp();
 #endif
 	destroy_timer();
+	destroy_pv_api();
 	destroy_script_cb();
 	destroy_nonsip_hooks();
 	destroy_routes();
@@ -1764,9 +1766,10 @@ int main(int argc, char** argv)
 	if (init_routes()<0) goto error;
 	if (init_nonsip_hooks()<0) goto error;
 	if (init_script_cb()<0) goto error;
+	if (init_pv_api()<0) goto error;
+	if (pv_register_core_vars()!=0) goto error;
 	if (init_rpcs()<0) goto error;
 	if (register_core_rpcs()!=0) goto error;
-	if (pv_register_core_vars()!=0) goto error;
 
 	/* Fix the value of cfg_file variable.*/
 	if (fix_cfg_file() < 0) goto error;
