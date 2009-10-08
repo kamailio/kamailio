@@ -1528,7 +1528,7 @@ endif # CC_NAME=suncc
 endif # CC_NAME=icc
 endif # CC_NAME=gcc
 
-#*FLAGS used for compiling the modules
+#CFLAGS used for compiling the modules, libraries and utils
 ifeq	($(CC_NAME), gcc)
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
 LIB_CFLAGS=-fPIC -DPIC $(CFLAGS)
@@ -1542,6 +1542,9 @@ ifeq	($(CC_NAME), suncc)
 MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
 LIB_CFLAGS=-xcode=pic32  $(CFLAGS)
 endif
+UTILS_CFLAGS=$(CFLAGS)
+# LDFLAGS uses for compiling the utils
+UTILS_LDFLAGS=$(LDFLAGS)
 
 ifeq ($(LEX),)
 	LEX=flex
@@ -1891,7 +1894,7 @@ export exported_vars
 saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME \
 		RELEASE OS ARCH \
 		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
-		MOD_LDFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH \
+		MOD_LDFLAGS LIB_LDFLAGS UTILS_LDFLAGS LIB_SONAME LD_RPATH \
 		LIB_SUFFIX LIB_PREFIX \
 		LIBS \
 		LEX YACC YACC_FLAGS \
@@ -1903,7 +1906,7 @@ saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME \
 # variable changeable at compile time
 # extra: prefix DESTDIR BASEDIR basedirt
 saved_chg_vars:=\
-		CC_EXTRA_OPTS CPU CFLAGS_RM CFLAGS MOD_CFLAGS LIB_CFLAGS	\
+		CC_EXTRA_OPTS CPU CFLAGS_RM CFLAGS MOD_CFLAGS LIB_CFLAGS UTILS_CFLAGS \
 		BASEDIR basedir DESTDIR \
 		PREFIX prefix\
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \

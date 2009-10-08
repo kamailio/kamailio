@@ -40,7 +40,7 @@ override static_modules=
 override static_modules_path=
 
 # temporary def (visible only in the util makefile, not exported)
-DEFS +=
+DEFS += -DMOD_NAME="utils/$(UTIL_NAME)"
 
 ifneq ($(makefile_defs_included),1)
 $(error "the local makefile does not include Makefile.defs!")
@@ -62,6 +62,10 @@ include $(COREPATH)/Makefile.sources
 # if config was not loaded (makefile_defs!=1) ignore
 # the rest of makefile and try only to remake the config
 ifeq ($(makefile_defs),1)
+
+# set CFLAGS & LDFLAGS
+CFLAGS:=$(UTILS_CFLAGS)
+LDFLAGS:=$(UTILS_LDFLAGS)
 
 err_fail?=1
 
