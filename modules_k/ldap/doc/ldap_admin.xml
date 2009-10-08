@@ -205,6 +205,7 @@
           <listitem>
             <para>OpenLDAP library (libldap) v2.1 or greater, libldap header files
             (libldap-dev) are needed for compilation</para>
+            <para>OpenSSL library if you compile your OpenLDAP library with SSL/TLS support.</para>
           </listitem>
         </itemizedlist>
       </section>
