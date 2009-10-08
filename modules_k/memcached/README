@@ -85,8 +85,8 @@ Chapter 1. Admin Guide
 ...
 $mct(test) = 1;
 xlog("stored value is $mct(test)");
-$mct(test) = null; # delete it
-xlog("stored value is $mct(test)"); # will return <null>
+$mct(test) = $null; # delete it
+xlog("stored value is $mct(test)"); # will return <null> or empty string
 ...
 
    Example 1.2. Using atomic operations

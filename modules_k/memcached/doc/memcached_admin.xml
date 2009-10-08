@@ -30,8 +30,8 @@
 ...
 $mct(test) = 1;
 xlog("stored value is $mct(test)");
-$mct(test) = null; # delete it
-xlog("stored value is $mct(test)"); # will return &lt;null&gt;
+$mct(test) = $null; # delete it
+xlog("stored value is $mct(test)"); # will return &lt;null&gt; or empty string
 ...
 			</programlisting>
 		</example>
