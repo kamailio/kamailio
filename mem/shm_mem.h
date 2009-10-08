@@ -187,12 +187,10 @@ void shm_mem_destroy();
 
 #ifdef DBG_QM_MALLOC
 
-#ifdef __SUNPRO_C
-		#define __FUNCTION__ ""  /* gcc specific */
-#endif
+#include "src_loc.h"
 
 #define shm_malloc_unsafe(_size ) \
-	MY_MALLOC(shm_block, (_size), __FILE__, __FUNCTION__, __LINE__ )
+	MY_MALLOC(shm_block, (_size), _SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_ )
 
 
 inline static void* _shm_malloc(unsigned int size, 
@@ -218,15 +216,15 @@ inline static void* _shm_realloc(void *ptr, unsigned int size,
 }
 
 #define shm_malloc( _size ) _shm_malloc((_size), \
-	__FILE__, __FUNCTION__, __LINE__ )
+	_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_ )
 
 #define shm_realloc( _ptr, _size ) _shm_realloc( (_ptr), (_size), \
-	__FILE__, __FUNCTION__, __LINE__ )
+	_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_ )
 
 
 
 #define shm_free_unsafe( _p  ) \
-	MY_FREE( shm_block, (_p), __FILE__, __FUNCTION__, __LINE__ )
+	MY_FREE( shm_block, (_p), _SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_ )
 
 #define shm_free(_p) \
 do { \
@@ -240,7 +238,7 @@ do { \
 void* _shm_resize(void* ptr, unsigned int size, const char* f, const char* fn,
 					int line);
 #define shm_resize(_p, _s ) _shm_resize((_p), (_s), \
-		__FILE__, __FUNCTION__, __LINE__ )
+		_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_ )
 /*#define shm_resize(_p, _s ) shm_realloc( (_p), (_s))*/
 
 

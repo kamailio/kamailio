@@ -62,23 +62,22 @@
 
 
 #	ifdef DBG_QM_MALLOC
-#ifdef __SUNPRO_C
-		#define __FUNCTION__ ""  /* gcc specific */
-#endif
+
+#	include "src_loc.h" /* src location macros: _SRC_* */
 #		ifdef F_MALLOC
-#			define pkg_malloc(s) fm_malloc(mem_block, (s),__FILE__, \
-				__FUNCTION__, __LINE__)
-#			define pkg_free(p)   fm_free(mem_block, (p), __FILE__,  \
-				__FUNCTION__, __LINE__)
-#			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s),__FILE__, \
-				__FUNCTION__, __LINE__)
+#			define pkg_malloc(s) fm_malloc(mem_block, (s), _SRC_LOC_, \
+				_SRC_FUNCTION_, _SRC_LINE_)
+#			define pkg_free(p)   fm_free(mem_block, (p), _SRC_LOC_,  \
+				_SRC_FUNCTION_, _SRC_LINE_)
+#			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s), \
+					_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_)
 #		else
-#			define pkg_malloc(s) qm_malloc(mem_block, (s),__FILE__, \
-				__FUNCTION__, __LINE__)
-#			define pkg_realloc(p, s) qm_realloc(mem_block, (p), (s),__FILE__, \
-				__FUNCTION__, __LINE__)
-#			define pkg_free(p)   qm_free(mem_block, (p), __FILE__,  \
-				__FUNCTION__, __LINE__)
+#			define pkg_malloc(s) qm_malloc(mem_block, (s),_SRC_LOC_, \
+				_SRC_FUNCTION_, _SRC_LINE_)
+#			define pkg_realloc(p, s) qm_realloc(mem_block, (p), (s), \
+				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_)
+#			define pkg_free(p)   qm_free(mem_block, (p), _SRC_LOC_,  \
+				_SRC_FUNCTION_, _SRC_LINE_)
 #		endif
 #	else
 #		ifdef F_MALLOC
