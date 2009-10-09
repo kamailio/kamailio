@@ -7,83 +7,86 @@
 #
 
 Overview
+--------
 
- The dns subsystem in ser can either directly use libresolv and a combination
+ The dns subsystem in sip-router can either directly use libresolv and a combination
   of the locally configured dns server, /etc/hosts and the local Network 
   Information Service (NIS/YP a.s.o) or cache the query results (both positive
   and negative) and look first in its internal cache.
- When its internal dns cache is enabled, ser can also use dns failover: if
-  one destination resolves to multiple addresses ser can try all of them until
+ When its internal dns cache is enabled, sip-router can also use dns failover: if
+  one destination resolves to multiple addresses sip-router can try all of them until
   it finds one to which it can successfully send the packet or it exhausts all 
-  of them. ser (tm to be more precise) uses the dns failover also when the
-  destination host doesn't send any reply to a forwarded invite within the
-  sip timeout interval (whose value can be configured using the tm fr_timer
-   parameter).
- When SRV based load balancing is enabled ser can even do DNS based load 
- balancing (see RFC2782 and the dns_srv_lb option below).
+  of them. sip-router (The tm module to be more precise) uses the DNS failover also 
+  when the destination host doesn't send any reply to a forwarded invite within the
+  SIP timeout interval (whose value can be configured using the tm fr_timer
+  parameter).
+  When SRV based load balancing is enabled sip-router can even do DNS based load 
+  balancing (see RFC2782 and the dns_srv_lb option below).
 
 
 DNS Cache and Failover Drawbacks
+--------------------------------
 
- Using the dns cache and the dns failover has also some drawbacks: 
+ Using the DNS cache and the DNS failover has also some drawbacks: 
 
-  1. only the locally configured dns server (usually in /etc/resolv.conf) is
+  1. only the locally configured DNS server (usually in /etc/resolv.conf) is
   used for the requests (/etc/hosts and the local Network Information Service
   are ignored). 
-     Workaround: disable the dns cache (use_dns_cache=off or
-  compile without -DUSE_DNS_CACHE).
+     Workaround: disable the dns cache (use_dns_cache=off or compile without -DUSE_DNS_CACHE).
 
-  2. the dns cache uses extra memory
-      Workaround: disable the dns cache.
+  2. the DNS cache uses extra memory
+      Workaround: disable the DNS cache.
 
-  3. the dns failover introduces a very small performance penalty 
-     Workaround: disable the dns failover (use_dns_failover=off).
+  3. the DNS failover introduces a very small performance penalty 
+     Workaround: disable the DNS failover (use_dns_failover=off).
 
-  4. the dns failover increases the memory usage (the internal structures
-  used to represent the transaction are bigger when the dns failover support is
-  compiled).
-     Workaround: compile without dns failover support (-DUSE_DNS_FAILOVER).
-  Turning it off from the config file is not enough in this case (the extra
-   memory will still be used).
+  4. the DNS failover increases the memory usage (the internal structures
+     used to represent the transaction are bigger when the DNS failover support is
+     compiled).
+     Workaround: compile without DNS failover support (-DUSE_DNS_FAILOVER).
+     Turning it off from the config file is not enough in this case (the extra
+     memory will still be used).
  
- On the other hand using the dns cache saves lots of DNS queries and makes
+ On the other hand using the DNS cache saves lots of DNS queries and makes
  DNS based failover and DNS based load balancing possible. If the destination
- blacklist is enabled, ser can do failover even if forwarding in stateless 
+ blacklist is enabled, sip-router can do failover even if forwarding in stateless 
  mode.
- In the ideal case with dns cache enabled ser will do only one query for
+ In the ideal case with the DNS cache enabled sip-router will do only one query for
  a NAPTR (if enabled) or SRV lookup and then it will use the results for the
  record's TTL (for example if all the resulting records have 1 minute TTL,
-  ser won't make another query for this domain for 1 minute). Even negative
+ the server won't make another query for this domain for 1 minute). Even negative
  answers will be cached.
- Without the dns cache, each NAPTR or SRV lookup will result in at least 2 
+ Without the DNS cache, each NAPTR or SRV lookup will result in at least 2 
  queries. These queries will happen every time, for each message (even if 
  all of them go to the same domain).
 
 
 DNS Resolver Options
+--------------------
 
- The DNS resolver options control how ser will interact with the external
+ The DNS resolver options control how sip-router will interact with the external
  DNS servers. These options (with the dns_try_ipv6 exception) are passed to
  libresolv and are used each time a dns request is made.
+
  The default values are system specific and generally depend on the
  /etc/resolv.conf content. For servers doing a lot of DNS requests it is
- highly recommended to change the default values in the ser config file
-  (even if using ser's internal dns cache).
+ highly recommended to change the default values in the sip-router config file
+  (even if using sip-router's internal dns cache).
 
-   dns_try_ipv6 = on | off - if on and ser listens on at least one ipv6 socket,
+   dns_try_ipv6 = on | off - if on and sip-router listens on at least one ipv6 socket,
       ipv6 (AAAA) lookups will be performed if the ipv4 (A) lookups fail. 
       If off only ipv4 (A) lookups will be used.
-      Default: on if ser is compiled with ipv6 support.
+      Default: on if sip-router is compiled with ipv6 support.
 
-   dns_try_naptr = on | off - if on ser will first try a NAPTR lookup for
+   dns_try_naptr = on | off - if on sip-router will first try a NAPTR lookup for
       destinations that don't have the protocol or port specified and 
       are not simple ip addresses (as described in RFC 3263). This will 
       introduce a slight performance penalty and will probably cause extra
       DNS lookups. For example a lookup for a non-existing domain will
       produce one extra query: NAPTR(domain), SRV(_sip._udp.domain) 
       and A/AAAA(domain).
-      If the result of a query contains several NAPTR records, ser will select
-      among them according to the RFC2915 and ser preference towards a
+      If the result of a query contains several NAPTR records, sip-router will select
+      among them according to the RFC2915 and sip-router preference towards a
       specific protocol (see dns_udp_pref, dns_tcp_pref and dns_tls_pref 
       below). For an RFC3263 compliant configuration (choose the remote side
       preferred protocol if supported), set dns_udp_pref, dns_tcp_pref and
@@ -166,6 +169,7 @@ DNS Resolver Options
 
 
 DNS Resolver Compile Options
+----------------------------
 
    USE_NAPTR - if defined the naptr lookup support will be compiled in.
       NAPTR support still has to be enabled from ser's config file (it's
@@ -179,6 +183,7 @@ DNS Resolver Compile Options
 
 
 DNS Cache and Failover Config Variables
+---------------------------------------
 
    use_dns_cache = on | off - if off the dns cache won't be used (all dns
       lookups will result into a dns request).  When on all the dns request
@@ -270,6 +275,7 @@ DNS Cache and Failover Config Variables
       Default: on
 
 DNS Cache Compile Options
+-------------------------
 
    USE_DNS_CACHE - if defined the dns cache support will be compiled in 
       (default). If not needed/wanted the dns_cache can be disabled from the
@@ -309,8 +315,8 @@ DNS Cache Compile Options
    DNS_CACHE_DEBUG - if defined the dns cache will be very verbose (it will
        log lots of messages at the L_DBG levell).
  
- Note: To remove a compile options,  edit ser's Makefile.defs and remove it 
-   form DEFS list. To add a compile options add it to the make command line,
+ Note: To remove a compile options,  edit sip-router's Makefile.defs and remove it 
+   from DEFS list. To add a compile options add it to the make command line,
      e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
    or for a permanent solution, edit Makefile.defs and add it to DEFS 
    (don't foget to prefix it with -D). Some options require editing 
