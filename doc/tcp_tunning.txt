@@ -10,15 +10,16 @@ TCP Tunning/monitoring for lots of open connections
 ----------------
 
 This document describes very briefly various settings that should improve
- ser+tcp performance for sites handling a lot of tcp traffic (> 1000 open
-  connections or very high connection/disconnection rates).
-For now it deals only with linux specific optimizations.
+ser+tcp performance for sites handling a lot of tcp traffic (> 1000 open
+connections or very high connection/disconnection rates).
+
+For now it deals only with Linux specific optimizations.
 
 
-1. Usefull kernel settings
----------------------------
+1. Useful kernel settings
+-------------------------
 
-1.1 connection rate/pending connections: by default the connection rate is
+1.1 Connection rate/pending connections: by default the connection rate is
  too small
 
 net.core.somaxconn             -  limit of the listen() backlog, default 128
@@ -27,7 +28,9 @@ net.ipv4.tcp_timestamps        - default on., should be on (along with
                                  tcp_tw_recycle and timestamp supporting
                                  peers allows for fast connections rates)
 
-1.2 connection in close_wait: connection should stay as little as possible
+1.2 connection in close_wait
+
+ Connection should stay as little as possible
  in close_wait to quickly free the fd/resources for new connections attempts
  WARNING: this could break normal tcp use, use it only if you know what you are
   doing
@@ -44,10 +47,11 @@ net.ipv4.tcp_tw_reuse       - allows reusing of time-wait sockets (default off)
 net.ipv4.tcp_syncookies     - default off, in this case it's probably better to
                               keep it off
 
-1.3 port range
+1.3 Port range
 net.ipv4.ip_local_port_range - should be increased (e.g. 4096-65534)
 
-1.4  open fds
+1.4 Open file descriptors
+
 fs.file-max                 - maximum number of fds that will be allocated
                               (you probably need to increase it, default 
                                depends on installed memory)
@@ -59,20 +63,23 @@ fs.epoll.max_user_instances - maximum number of devices - per user (2.6.27.8+)
 fs.epoll.max_user_watches   - maximum number of "watched" fds - per user
                               (2.6.27.8+)
 
-iptables  - remove the ip_conntrack module (it limits the maximum tcp
- connections, adds extra overhead (slow)). It's probably better to remove
-  all the iptables modules.
-
 net.ipv4.tcp_max_orphans    - might be worth a look if things go wrong
 net.core.netdev_max_backlog - maximum device backlog
 
+Related applications
+--------------------
 ifconfig <dev> txqueuelen <val> - set device transmission queue len
+
+iptables  - remove the ip_conntrack module (it limits the maximum tcp
+  connections, adds extra overhead (slow)). It's probably better to remove
+  all the iptables modules.
+
 
 
 2. Monitoring (values to watch for)
 -----------------------------------
 
-2.1 FDs
+2.1 File descriptors
 
 fs.dentry-state  - format: nr. dentries, nr. unused, age_limit, want_pages
 fs.file-nr       - format: allocated, unused, max (==fs.file-max)
@@ -87,14 +94,15 @@ fs.inode-state  -  format: nr. allocated, nr. free, preshrink
 /proc/net/sockstat
 
 
-3. Ser settings
+3. Sip-router settings
+----------------------
 
-- don't forget to increase tcp_max_connections and the amount of shared memory
-- you should increase the number of ser "tcp_children" processes (-N no)
-As a rule of thumb, (maximum simultaneous connections)/2000 should be ok
-- you might have to decrease TCP_BUF_SIZE to a smaller value (e.g 8K)
-- you might want to increase PKG_MEM_POOL_SIZE (for large queues)
+- Don't forget to increase tcp_max_connections and the amount of shared memory
+- You should increase the number of ser "tcp_children" processes (-N no)
+  As a rule of thumb, (maximum simultaneous connections)/2000 should be ok
+- You might have to decrease TCP_BUF_SIZE to a smaller value (e.g 8K)
+- You might want to increase PKG_MEM_POOL_SIZE (for large queues)
 
-- you might need to increase the maximum open fds limit before starting ser
- (e.g. ulimit -n 1000000)
+- You might need to increase the maximum open fds limit before starting ser
+  (e.g. ulimit -n 1000000)
 
