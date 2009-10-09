@@ -55,7 +55,7 @@
 #include "../../msg_translator.h"
 #include "../../select.h"
 #include "../../receive.h" /* needed by process_rpc / receive_msg() */
-#include "../sl/sl.h"
+#include "../../modules_s/sl/sl.h"
 #include "../../nonsip_hooks.h"
 #include "../../action.h" /* run_actions */
 #include "../../script_cb.h" /* exec_*_script_cb */
