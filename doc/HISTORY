@@ -6,7 +6,6 @@
 This is a short ser history based mainly on my memory and my old mail archive. I've tried to mention only the important events. I'm sure I have missed a lot of things and/or people. If this is your case, please don't feel offended, send me an email and I will straighten things up.
 
 
-
 Three years ago on 4 September 2001 I committed the first working ser version on a private cvs. In fact I started writting ser 2 days before, on 2nd September.
  I was supposed to write some kind of sip glue for a Cisco PSTN gateway in 1 week, but of course I did it in the last 2 days :-)
 
@@ -29,7 +28,7 @@ At the beginning of 2002 we were joined by Daniel. Jan introduced the mysql, usr
 Ser first public appearance was at the April 2002 Sipit. We ran it on a pda an still managed to be faster than the testing tools that were used against us :-)
 
 In May 2002 ser got ipv6 support.
-In August 2002 Nils commited sipsak to berlios (very usefull testing tool).
+In August 2002 Nils commited sipsak to berlios (very useful testing tool).
 In September 2002 ser went public: it was GPL'ed and the cvs tree was moved to berlios. During the same month Jiri introduced  the FIFO interface, Karel committed serweb and we had the first GPL'ed release: ser 0.8.8.
 In December 2002 ser got its first big external contribution: the enum module, written by  Juha Heinanen.
 In January 2003 Raphael commited sems on berlios.
