@@ -52,9 +52,33 @@ endif
 
 ALLDEP+=makecfg.lst
 
+# returns current type: "" core/unknown, "M" module, "L" libray, "U" util
+crt_type=$(if $(MOD_NAME),M,$(if $(LIB_NAME),L,$(if $(UTIL_NAME),U)))
+
+cmd_CC=$(CC) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) -c $< -o $@
+cmd_LD=$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(ALL_LIBS) $(SER_RPATH) \
+	-o $(NAME)
+
+# what will be displayed if quiet==silent
+silent_cmd_CC=CC ($(CC)) [$(strip $(crt_type) $(NAME))]		$@
+silent_cmd_LD=LD ($(LD)) [$(strip $(crt_type) $(NAME))]		$@
+
+ifneq (,$(filter 1 yes on, $(Q) $(QUIET)))
+quiet=silent
+Q=1
+else
+Q=0
+quiet=verbose
+endif
+
+quote:= "
+escall= $(subst $$,$$$$,$(subst $(quote),\$(quote),$1))
+exec_cmd= $(if $($(quiet)_cmd_$(1)),\
+			@echo "$(call escall,$($(quiet)_cmd_$(1)))" ;) $(cmd_$(1))
+
 #implicit rules
 %.o:%.c  $(ALLDEP)
-	$(CC) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) -c $< -o $@
+	$(call exec_cmd,CC)
 
 %.d: %.c $(ALLDEP)
 	@set -e; $(MKDEP) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) $<\
@@ -149,7 +173,7 @@ endif
 
 # normal rules
 $(NAME): $(objs) $(ALLDEP)
-	$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(ALL_LIBS) $(SER_RPATH) -o $(NAME)
+	$(call exec_cmd,LD)
 
 
 librpath.lst: $(ALLDEP)
