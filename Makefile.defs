@@ -111,13 +111,32 @@ export makefile_defs
 ifeq ($(quiet),verbose)
 $(info normal Makefile.defs exec)
 endif # verbose
+
+# flavour: sip-router, ser or kamailio
+FLAVOUR=sip-router
+
+ifeq ($(FLAVOUR),sip-router)
 # main binary name
 MAIN_NAME=ser
+else ifeq ($(FLAVOUR),ser)
+# main binary name
+MAIN_NAME=ser
+else ifeq ($(FLAVOUR),kamailio)
+# main binary name
+MAIN_NAME=kamailio
+else # default:
+# main binary name
+MAIN_NAME=sip-router
+endif
+
 #prefix for various configs and scripts
 #config name/name-prefix for distributed configs
 CFG_NAME=sip-router
 #config name/name-prefix for distributed scripts
 SCR_NAME=sip-router
+
+# what to install
+INSTALL_FLAVOUR=$(FLAVOUR)
 
 #version number
 VERSION = 2
@@ -1898,7 +1917,7 @@ export exported_vars
 # variable changeable only at configure time (once saved in config.mak they
 #  cannot be overwritten from environment or command line, unless make cfg
 #  is run)
-saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME \
+saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
 		RELEASE OS ARCH \
 		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
 		MOD_LDFLAGS LIB_LDFLAGS UTILS_LDFLAGS LIB_SONAME LD_RPATH \

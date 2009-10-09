@@ -26,7 +26,7 @@ clean_targets:=	clean proper distclean realclean maintainer-clean local-clean \
 				maintaner-clean-utils \
 				clean-libs proper-libs realclean-libs distclean-libs \
 				maintainer-clean-libs \
-				clean-tmp clean_doxygen
+				clean-tmp clean_doxygen clean-extra-names
 doc_targets:=	README man install-doc install-man install-ser-man \
 		install-every-module-doc install-every-module-man \
 		$(foreach m,$(modules_dirs),$(m)-doc $(m)-readme $(m)-man) \

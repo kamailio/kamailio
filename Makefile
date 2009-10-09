@@ -915,6 +915,8 @@ proper-libs realclean-libs distclean-libs maintainer-clean-libs:
 			$(MAKE) -C lib $(patsubst %-libs,%,$@)
 
 
+# clean extra binary names (common "flavour" names)
+clean: clean-extra-names
 # clean modules on make clean
 clean: clean-modules
 # clean utils on make clean
@@ -922,9 +924,13 @@ clean: clean-utils
 # cleaning in libs always when cleaning sip-router
 clean: clean-libs
 
+.PHONY: clean-extra-names
+clean-extra-names:
+	@rm -f $(filter-out $(MAIN_NAME), sip-router ser kamailio)
+
 # proper/distclean a.s.o modules, utils and libs too
 
-proper: proper-modules proper-utils proper-libs
+proper: clean-extra-names proper-modules proper-utils proper-libs
 distclean: distclean-modules distclean-utils distclean-libs
 realclean: realclean-modules realclean-utils realclean-libs
 maintainer-clean: maintainer-clean-modules maintainer-clean-utils \
