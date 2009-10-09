@@ -66,9 +66,14 @@ silent_cmd_LD=LD ($(LD)) [$(strip $(crt_type) $(NAME))]		$@
 ifneq (,$(filter 1 yes on, $(Q) $(QUIET)))
 quiet=silent
 Q=1
+MAKE+= --no-print-directory
+#shell optional print
+oecho=
 else
-Q=0
+override Q:=
 quiet=verbose
+#shell optional print
+oecho=echo $(1)
 endif
 
 quote:= "
@@ -156,14 +161,14 @@ $(SER_IPATH_LST): FORCE
 		$(@) 1>/dev/null 2>/dev/null ; \
 	then :; \
 	else \
-		echo "re-building $(@D)" ; \
+		$(call oecho,"re-building $(@D)" ;) \
 		$(MAKE) -wC $(@D) compile_for_install=$(lib_compile_for_install) ; \
 	fi
 
 .PHONY: FORCE-BUILD-LIBS
 FORCE-BUILD-LIBS:
 	@for r in $(SER_LIBS_DIRS) ; do \
-		echo building lib $$r; \
+		$(call oecho,building lib $$r ;) \
 		$(MAKE) -wC $$r compile_for_install=$(lib_compile_for_install) ; \
 	done
 
@@ -207,7 +212,7 @@ clean: local-clean
 clean-modules:
 	-@for r in $(cmodules) $(static_modules_path) "" ; do \
 		if [ -d "$$r" ]; then \
-			echo "module $$r" ; \
+			$(call oecho,"module $$r" ;) \
 			$(MAKE) -C "$$r" clean ; \
 			[ -d "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc clean ; \
 		fi ; \

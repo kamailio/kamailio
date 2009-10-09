@@ -20,7 +20,9 @@ endif
 
 ifneq	(,$(filter install% %install install, $(MAKECMDGOALS)))
 compile_for_install:=yes
+ifeq ($(quiet),verbose)
 $(info install mode)
+endif # verbose
 endif
 
 ifeq ($(NAME),)
