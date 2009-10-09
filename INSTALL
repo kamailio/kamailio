@@ -9,19 +9,26 @@ $Id$
 
      ===========================================
 
+  Welcome to the SIP router! This is an amazingly flexible, robust
+  and secure SIP server built on years of experience in several Open 
+  Source projects. It's a merge of the SIP Express Router and the
+  OpenSER/Kamailio products produced by a joint development team.
+
   This memo gives you hints how to set up SIP Router quickly. To 
   understand how SIP Router works and how to configure it properly,
-  read admin's guide available from SIP Router website. We also
-  urge you to read latest ISSUES (available from SIP Router website 
+  please read the admin's guide available from the SIP Router website. 
+
+  We also urge you to read latest ISSUES (available from SIP Router website 
   too) and check for potential problems in this release.
-  Users of previous releases are encouraged to read NEWS to
-  learn how to move to this new SIP Router version.
+  Users of previous releases are encouraged to read NEWS to learn how to move to 
+  this new SIP Router version.
   
 
-TOC
+Table of Contents
+=================
 
 1. Supported Architectures and Requirements
-2. Howto Build sip-router From Source Distribution
+2. Howto Build sip-router From the Source Distribution
 3. Quick-Start Installation Guide
    A) Getting Help
    B) Disclaimers
@@ -34,11 +41,11 @@ TOC
 1. Supported Architectures and Requirements
 -------------------------------------------
 
-Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, Darwin
-Partially supported: Windows+Cygwin (core + static modules only, no
-  IPv6, no TCP, no dynamic modules)
-Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc,
-  powerpc64
+Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, OS/X Darwin
+Partially supported: Windows+Cygwin (core + static modules only, no IPv6, no TCP, 
+no dynamic modules)
+
+Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc, powerpc64
 Experimental architectures: mips1, mips2, sparc32, alpha
 
 (for other architectures the Makefiles might need to be edited)
@@ -52,19 +59,19 @@ Requirements:
   but it might require some options tweaking for best performance)
 - bison or yacc (Berkley yacc)
 - flex
-- GNU make (on Linux this is the standard "make", on *BSD and Solaris is
+- GNU make (on Linux this is the standard "make", on *BSD and Solaris it is
   called "gmake") version >= 3.80 (recommended 3.81).
 - sed and tr (used in the makefiles)
 - GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
 - GNU install, BSD install or Solaris install if you want "make
   install", "make bin", "make sunpkg" to work
-- libmysqlclient & libz (zlib) if you want mysql support (the mysql module)
-- libexpat if you want the jabber gateway support (the jabber module)
+- libmysqlclient & libz (zlib) if you want Mysql support (the db_mysql module)
+- libexpat if you want the XMPP/Jabber gateway support (the jabber module)
 - libxml2 if you want to compile the cpl-c (CPL support) or pa (presence) 
    modules
 - libradiusclient-ng (> 5.0) if you need radius support (the auth_radius,
   group_radius, uri_radius and avp_radius modules)
-- libpq if you need postgres support (the postgres module)
+- libpq if you need PostgreSQL support (the db_postgres module)
 
 
 OS Notes:
@@ -72,12 +79,12 @@ OS Notes:
  FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed.
   
   FreeBSD 5.4:
-  
+  ------------
   If you want to compile all the modules, you will need the following packages:
   - mysql-client-* (any version, install one of the mysql*-client ports) for
-  libmysqlclient
+    libmysqlclient
   - postgresql-libpqxx-2.4.2_1 (/usr/ports/databases/postgresql-libpqxx) for
-  libpq
+    libpq
   - expat-1.95.8 (/usr/ports/textproc/expat2) for libexpat
   - libxml2-2.6.18 (/usr/ports/textproc/libxml2) for libxml2
   - radiusclient-0.4.7 (/usr/ports/net/radiusclient) for libradiusclient-ng 
@@ -88,6 +95,7 @@ OS Notes:
      gmake bin radiusclient_ng=4 include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
 
   OpenBSD 3.7
+  -----------
   - mysql-client-4.0.23 (/usr/ports/databases/mysql) for libmysqlclient
   - expat-1.95.6 (/usr/ports/textproc/expat) for libexpat
   - libxml-2.6.16p0 (/usr/ports/textproc/libxml) for libxml2
@@ -95,10 +103,12 @@ OS Notes:
    http://download.berlios.de/radiusclient-ng/radiusclient-ng-0.5.1.tar.gz
    (you need to download and install it, since there is no "official" 
    openbsd port for it) for libradiusclient-ng 
+
   Compile example (all the modules and sip-router in a tar.gz):
      gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
 
   NetBSD 2.0
+  ----------
   - mysql-client-4.1.12 (/usr/pkgsrc/databases/mysql4-client) for libmysqlclient
   - expat-1.95.8nb2 (/usr/pkgsrc/textproc/expat) for libexpat
   - libxml2-2.6.19 (/usr/pkgsrc/textproc/libxml2) for libxml2
@@ -107,10 +117,10 @@ OS Notes:
   Compile example (all the modules and sip-router in a tar.gz):
      gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
 
- Solaris 10
- 
-  As above; you can use Solaris's yacc instead of bison. You might
-  need also gtar and ginstall. If you don't have ginstall you can use Solaris
+  Solaris 10
+  ----------
+  As above; you can use Solaris's yacc instead of bison. You might also
+  need gtar and ginstall. If you don't have ginstall you can use Solaris
   install, just make sure it's in the PATH (it's usually in /usr/sbin) and
   add INSTALL=install either to the environment or to the make command line
   (e.g.: gmake INSTALL=install all).
@@ -121,10 +131,10 @@ OS Notes:
   Compile example (all the modules and sip-router in a tar.gz):
      gmake bin INSTALL=install include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
 
- Linux
-
- Needed packages for compiling all the modules:
-  Debian:
+  Linux
+  -----
+  Needed packages for compiling all the modules:
+  * Debian:
       - libmysqlclient-dev for libmysqlclient
       - libpq-dev for libpq
       - libexpat1-dev for libexpat
@@ -141,7 +151,7 @@ OS Notes:
        apt-get install sip-router sip-router-cpl-module sip-router-jabber-module sip-router-mysq-module sip-router-pa-module sip-router-postgres-module sip-router-radius-modules )
 
  Cygwin  (alpha state, partial support)
-
+ --------------------------------------
  make sure make, bison, flex, minires and minires-devel (needed for the
  resolver functions) are installed.
  
@@ -163,306 +173,267 @@ OS Notes:
 
 (NOTE: if make doesn't work try gmake  instead)
 
-SIP Router is split in four main parts: The core, the modules, the
-utilties, and scripts/examples.  When you build, you can decide to build
-only the core, the modules, both, or all.
+  SIP Router is split in four main parts: The core, the modules, the
+  utilties, and scripts/examples.  When you build, you can decide to build
+  only the core, the modules, both, or all.
 
-Compile SIP Router core only:
-make   #builds only sip-router core, equivalent to make sip-router
+* Compile SIP Router core only:
+	make   #builds only sip-router core, equivalent to make sip-router
 
 Compile modules except some explicitly excepted (see below)
-make modules  - all modules in the modules/ directory (common modules)
-make modules_s - all modules in the modules_s/ directory (ser modules)
-make modules_k - all modules in the modules_k/ directory (kamailio modules)
-make modules-all or make every-module  - all the modules (modules, modules_s
+	make modules  - all modules in the modules/ directory (common modules)
+	make modules_s - all modules in the modules_s/ directory (ser modules)
+	make modules_k - all modules in the modules_k/ directory (kamailio modules)
+	make modules-all or make every-module  - all the modules (modules, modules_s
                                          and module_k)
 
-Compile all:
-make all
+* Compile all:
+	make all
 
-Explicitly excepted modules (default in <=0.9.x):
-By default make all will not build modules that require external libraries or
-that are considered to be "experimental". The modules that have external
-dependencies are: mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
-avp_radius, postgres, pa.
+* Explicitly excepted modules:
+  By default make all will not build modules that require external libraries or
+  that are considered to be "experimental". The modules that have external
+  dependencies are: db_mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
+  avp_radius, db_postgres, db_berkely, carrierroute, pa.
 
-Including groups of modules (available in >0.9.x):
-Instead of compiling the default modules only, you can specify groups of
-modules to include, according to their status:
-standard - Modules in this group are considered a standard part of SIP Router (due to widespread usage)
+Including groups of modules:
+  Instead of compiling the default modules only, you can specify groups of
+  modules to include, according to their status:
+  - standard - Modules in this group are considered a standard part of SIP Router (due to widespread usage)
     but they have no dependencies (note that some of these interplay with external systems.
     However, they don't have compile or link dependencies).
 
-db - Modules in this group use databases and need a database driver to run.
+  - db - Modules in this group use databases and need a database driver to run.
      Included are drivers for the text mode db (dbtext) and for dumping
      large ammount of data to files (db_flatstore). See also the mysql or
      postgres groups.
 
-standard_dep -  Modules in this group are considered a standard part of SIP Router (due to widespread usage)
+  - standard_dep -  Modules in this group are considered a standard part of SIP Router (due to widespread usage)
     but they have dependencies that most be satisfied for compilation.
     NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
     group due to interdependencies
 
-stable - Modules in this group satisfy specific or niche applications, but are considered
+  - stable - Modules in this group satisfy specific or niche applications, but are considered
     stable for production use. They may or may not have dependencies
 
-experimental - Modules in this group are either not complete, untested, or without enough reports
+  - experimental - Modules in this group are either not complete, untested, or without enough reports
     of usage to allow the module into the stable group. They may or may not have dependencies.
 
-To compile core with standard modules:
-make group_include="standard" all
+* To compile core with standard modules:
+	make group_include="standard" all
 
-To compile all modules (provided you have all the required libraries installed) use:
-make group_include="standard standard-dep stable experimental" all
+* To compile all modules (provided you have all the required libraries installed) use:
+	make group_include="standard standard-dep stable experimental" all
 
-There are also in addition some "convenience" groups:
+  There are also in addition some "convenience" groups:
 
-mysql - Include all the db modules dependent and the mysql db driver
+	mysql 		- Include all the db modules dependent and the mysql db driver
+	postgres 	- Include all the db modules and the postgres db driver
+	radius 		- Include all modules on radiusclient
+	presence 	- Include all the presence modules
 
-postgres - Include all the db modules and the postgres db driver
+  Ex. to make a standard installation with Mysql, use:
+	make group_include="standard mysql" all
 
-radius - Include all modules on radiusclient
+  In addition to group_include (or instead), you can use 
+	include_modules="modA modB"
+  to specify exactly the modules you want to include, ex.
+	make include_modules="mymodule" modules
 
-presence - Include all the presence modules
+  You can also explicitly skip modules using skip_modules. Let's say you want all the standard
+  and standard-dep modules except domain:
+	make group_include="standard standard-dep" skip_modules="domain" all
 
-Ex. to make a standard installation with mysql, use:
-make group_include="standard mysql" all
+  NOTE!!! As this mechanism is very powerful, you may be uncertain which
+  modules that will be included. Just replace all (or modules) with print-modules and you will 
+  see which modules will be included and excluded, ex:
+	make print-modules
+  will show which modules are excluded by default.
 
-In addition to group_include (or instead), you can use 
-include_modules="modA modB"
-to specify exactly the modules you want to include, ex.
-make include_modules="mymodule" modules
-
-You can also explicitly skip modules using skip_modules. Let's say you want all the standard
- and standard-dep modules except domain:
-make group_include="standard standard-dep" skip_modules="domain" all
-
-NOTE!!! As this mechanism is very powerful, you may be uncertain which
-modules wwill be included.
-Just replace all (or modules) with print-modules and you will see which
-modules will be included and excluded, ex:
-
-make print-modules
-
-will show which modules are excluded by default.
-
-If you want to install or to build a binary package (a tar.gz with
-sip-router and the modules), substitute "all" in the above command with
-"install" or "bin".
+  If you want to install or to build a binary package (a tar.gz with
+  sip-router and the modules), substitute "all" in the above command with
+  "install" or "bin".
 
 
-More compile examples:
+* More compile examples:
 
-- compile with profiling
-
-make PROFILE=-pg all
-
--compile debug mode version
-
-make mode=debug all
-
--compile debug version with profiling
-
-make mode=debug PROFILE=-pg all
-
--compile only the print module
-
-make modules=modules/print modules
-
-- compile by default only the print module, in debuging mode and with 
- profiling:
-
-make cfg modules=modules/print mode=debug PROFILE=-pg
-make all
-
-- change & save the  modules list without rebuilding the whole config
- (so that already compiled modules won't be re-compiled by 
-  make all/make modules):
-
-make modules-cfg include_modules="mysql postgress"
-
-- change only the compile/build options, without changing the modules list:
-
-make cfg-defs CPU=ultrasparc PROFILE=-pg
-
-- compile by default all the usual modules + mysql and postgres, optimized 
-for pentium-m and for space (saves both the build options and the module 
- list)
-
-make cfg include_modules="mysql postgres" CPU=pentium-m CC_EXTRA_OPTS=-Os
-make all
-
--compile all the "default" modules except textops and vm
-
-make skip_modules="textops vm" modules
-
-- save the above option in the make config, so that all make commands
-will use it by default:
-
-make cfg skip_modules="textops vm"
-
--compile all default modules and include uri_radius (not compiled by default):
-
-make include_modules="uri_radius" modules
-
--compile all the modules from the modules subdirectory (even the one excluded
-by default):
-
-make exclude_modules="" modules
-
--compile all the modules from the modules subdirectory excluding vm:
-
-make exclude_modules=vm modules
-
-or
-
-make exclude_modules="" skip_modules=vm modules
-
-
--compile with the "tm" module statically linked and with profiling
-
-make static_modules=tm PROFILE=-pg all
-
--compile with gcc-3.2 instead of gcc
-
-make CC=gcc-3.2 all
-
-or
-
-CC=gcc-3.2 make all
-
-
+  - compile with profiling
+	make PROFILE=-pg all
+  - compile debug mode version
+	make mode=debug all
+  - compile debug version with profiling
+	make mode=debug PROFILE=-pg all
+  - compile only the print module
+	make modules=modules/print modules
+  - compile by default only the print module, in debuging mode and with 
+    profiling:
+	make cfg modules=modules/print mode=debug PROFILE=-pg
+	make all
+  - change & save the  modules list without rebuilding the whole config
+    (so that already compiled modules won't be re-compiled by 
+    make all/make modules):
+	make modules-cfg include_modules="mysql postgress"
+  - change only the compile/build options, without changing the modules list:
+	make cfg-defs CPU=ultrasparc PROFILE=-pg
+  - compile by default all the usual modules + mysql and postgres, optimized 
+     for pentium-m and for space (saves both the build options and the module 
+     list)
+	make cfg include_modules="mysql postgres" CPU=pentium-m CC_EXTRA_OPTS=-Os
+	make all
+   - compile all the "default" modules except textops and vm
+	make skip_modules="textops vm" modules
+   - save the above option in the make config, so that all make commands
+     will use it by default:
+	make cfg skip_modules="textops vm"
+   - compile all default modules and include uri_radius (not compiled by default):
+	make include_modules="uri_radius" modules
+   - compile all the modules from the modules subdirectory (even the one excluded
+     by default):
+	make exclude_modules="" modules
+   - compile all the modules from the modules subdirectory excluding vm:
+	make exclude_modules=vm modules
+     or
+	make exclude_modules="" skip_modules=vm modules
+   - compile with the "tm" module statically linked and with profiling
+	make static_modules=tm PROFILE=-pg all
+   - compile with gcc-3.2 instead of gcc
+	make CC=gcc-3.2 all
+     or
+	CC=gcc-3.2 make all
 
 Make targets:
+=============
 
 Configure:
+----------
 
-make cfg or make config (force config and module list regeneration)
+  * make cfg or make config - force config and module list regeneration
+  
 
-Example: make cfg include_modules=mysql mode=debug  (all future make 
-invocations will include the mysql module and will build in debug mode)
+  Example: 
+	make cfg include_modules=mysql mode=debug
+  All future make invocations will include the mysql module and will build in debug mode
 
-Note: if config.mak doesn't exist (e.g. initial checkout or after a make 
-proper) or if Makefile.defs was changed, the config will be re-generated
-automatically by the first make command. For example:
- make cfg  include_modules=mysql; make all is equivalent to 
- rm config.mak modules.lst; make include_modules=mysql.
+  Note: if config.mak doesn't exist (e.g. initial checkout or after a make 
+  proper) or if Makefile.defs was changed, the config will be re-generated
+  automatically by the first make command. For example:
+  	make cfg  include_modules=mysql; make all
+  is equivalent to 
+ 	rm config.mak modules.lst; make include_modules=mysql.
 
-make cfg-defs  (force config regeneration, but don't touch the module list)
+  * make cfg-defs  (force config regeneration, but don't touch the module list)
 
-Example: make cfg-defs CPU=ultrasparc CC_EXTRA_OPTS=-Os PROFILE=-pg
+  Example:
+	make cfg-defs CPU=ultrasparc CC_EXTRA_OPTS=-Os PROFILE=-pg
 
-make modules-cfg or
-make modules-list    (saves the module list, without regenerating the 
-                       build config)
-Example: make modules-list include_modules="tls" skip_modules="print"
+	make modules-cfg
+  or
+	make modules-list
+  saves the module list, without regenerating the build config
+  Example:
+	make modules-list include_modules="tls" skip_modules="print"
 
 Clean:
+------
 
-make clean   (clean the modules too)
-make proper  (clean also the dependencies and the config, but not the module
-  list)
-make distclean (the same as proper)
-make maintainer-clean (clean everything, including make's config, saved 
-  module list, auto generated files, tags, *.dbg a.s.o)
-make clean-all (clean all the modules in modules/*)
-make proper-all (like make proper but for all the  modules in modules/*)
+  * make clean   	- clean the base and modules too
+  * make proper  	- clean also the dependencies and the config, but not the module list
+  * make distclean 	- the same as proper
+  * make maintainer-clean - clean everything, including make's config, saved 
+  			  module list, auto generated files, tags, *.dbg a.s.o
+  * make clean-all	- clean all the modules in modules/*
+  * make proper-all 	- like make proper but for all the  modules in modules/*
 
-Config clean:
+  Config clean:
 
-make clean-cfg (cleans the compile config)
-make clean-modules-cfg (cleans the modules list)
+  * make clean-cfg (cleans the compile config)
+  * make clean-modules-cfg (cleans the modules list)
 
-"Reduced" clean:
+  Reduced" clean:
 
-make local-clean    (cleans only the core, no libs, utils or modules)
-make clean-modules  (like make clean, but cleans only the modules)
-make clean-libs     (like make clean, but cleans only the libs)
-make clean-utils    (like make clean, but cleans only the utils
-make proper-modules (like make proper, but only for modules)
-make proper-libs    (like make proper, but only for libs)
-make proper-utils   (like make proper, but only for utils)
+  * make local-clean  	- cleans only the core, no libs, utils or modules
+  * make clean-modules  - like make clean, but cleans only the modules
+  * make clean-libs     - like make clean, but cleans only the libs
+  * make clean-utils    - like make clean, but cleans only the utils
+  * make proper-modules - like make proper, but only for modules
+  * make proper-libs    - like make proper, but only for libs
+  * make proper-utils   - like make proper, but only for utils
 
 Compile:
+--------
+  * make proper
+  optional: make cfg  <various cfg. options that should be saved>
+  * make
+  or gmake on non-Linux systems
+  * make modules 
+  or make modules exclude_modules="CVS print" etc.
 
-make proper
-optional: make cfg  <various cfg. options that should be saved>
-make
-(or gmake on non-Linux systems)
-make modules 
-or make modules exclude_modules="CVS print" etc.
+Other make targets:
+-------------------
+  Make tags:
+	make TAGS
 
-Make tags:
+  Create a tar.gz with the sources (in ../):
+	make tar
 
-make TAGS
+  Create a tar.gz with the binary distribution (in ../):
+	make bin
 
-Create a tar.gz with the sources (in ../):
+  Create a gzipped solaris package (in ../):
+	make sunpkg
 
-make tar
+  Create debian packages (in ../):
+	make deb
 
-Create a tar.gz with the binary distribution (in ../):
-
-make bin
-
-Create a gzipped solaris package (in ../):
-
-make sunpkg
-
-Create debian packages (in ../):
-
-make deb
-
-or
-
-dpkg-buildpackage
+  or
+	dpkg-buildpackage
 
 Documentation:
+--------------
 
-make README
+  Regenerate the README for all the "default" modules (include_modules,
+  skip_modules a.s.o can be used to alter the module list).
+	make README
 
-Regenerates the README for all the "default" modules (include_modules,
- skip_modules a.s.o can be used to alter the module list).
+  Generates a manpage for all the modules that support it (.xml file in the
+  module directory).
+	make man
 
-make man
-
-Generates a manpage for all the modules that support it (.xml file in the
- module directory).
-
-make modules=modules_k/foo modules-readme
-
-Generates README file for modules_k/foo.
+  Generates README file for modules_k/foo.
+	make modules=modules_k/foo modules-readme
 
 Install:
+--------
 
-make prefix=/usr/local  install
+	make prefix=/usr/local  install
 
-Note: If you use prefix parameter in make install then you also need
-to use this parameter in previous make commands, i.e. make, make modules,
-or make all. If you fail to do this then SIP Router will look for the default
-configuration file in a wrong directory, because the directory of the
-default configuration file is hard coded into sip-router during compile time. 
-When you use a different prefix parameter when installing then the 
-directory hard coded in sip-router and the directory in which the file will be 
-installed by make install will not match. (You can specify exact location
-of the configuration file using -f parameter of sip-router).
+  Note: If you use prefix parameter in make install then you also need
+  to use this parameter in previous make commands, i.e. make, make modules,
+  or make all. If you fail to do this then SIP Router will look for the default
+  configuration file in a wrong directory, because the directory of the
+  default configuration file is hard coded into sip-router during compile time. 
+  When you use a different prefix parameter when installing then the 
+  directory hard coded in sip-router and the directory in which the file will be 
+  installed by make install will not match. (You can specify exact location
+  of the configuration file using -f parameter of sip-router).
 
-For example, if you do the following:
-make all
-make prefix=/ install
+  For example, if you do the following:
+	make all
+	make prefix=/ install
 
-Then the installation will put the default configuration file into
-/etc/sip-router/sip-router.cfg (because prefix is /), but sip-router
-will look for the file in /usr/local/etc/sip-router/sip-router.cfg
-(because there was no prefix parameter make all and /usr/local is the
-default value of prefix).
+  Then the installation will put the default configuration file into
+  /etc/sip-router/sip-router.cfg (because prefix is /), but sip-router
+  will look for the file in /usr/local/etc/sip-router/sip-router.cfg
+  (because there was no prefix parameter make all and /usr/local is the
+  default value of prefix).
 
-Workaround is trivial, use the same parameters in all make commands:
-make prefix=/ all
-make prefix=/ install
-or save the desired prefix in the make config (e.g.: make cfg prefix=/).
+  Workaround is trivial, use the same parameters in all make commands:
+	make prefix=/ all
+	make prefix=/ install
+  or save the desired prefix in the make config (e.g.: make cfg prefix=/).
 
-That applies to other make parameters as well (for example parameters
-"modules" or "excluded_modules").
+  That applies to other make parameters as well (for example parameters
+  "modules" or "excluded_modules").
 
 
 3. Quick-Start Installation Guide
@@ -470,87 +441,84 @@ That applies to other make parameters as well (for example parameters
 
 A) Getting Help
 
-This guide gives you instructions on how to set up the SIP Router
-(sip-router) on your box quickly. In case the default configuration
-does not fly, check documentation at sip-router site
-  http://sip-router.org
-to learn how to configure SIP Router for your site.
+  This guide gives you instructions on how to set up the SIP Router
+  (sip-router) on your box quickly. In case the default configuration
+  does not fly, please check the documentation at the sip-router web site
+  http://sip-router.org to learn how to configure SIP Router for your site.
 
-If the documentation does not resolve your problem you may try contacting 
-our user forum by E-mail at sr-users@lists.sip-router.org -- that is the
-mailing list of ser community. To participate in the mailing list,
-subscribe at the following web address:
+  If the documentation does not resolve your problem you may try contacting 
+  our user forum by E-mail at sr-users@lists.sip-router.org -- that is the
+  mailing list of the sip-router community. To participate in the mailing list,
+  please subscribe at the following web address:
 
   http://lists.sip-router.org/cgi-bin/mailman/listinfo
 
-To participate in our commercial support program, contact info@iptel.org.
-The support program will provide you with most timely and accurate help
-for configuration, integration, development and any other technical
-activity.
-
+  To participate in our commercial support program, contact info@iptel.org.
+  The support program will provide you with most timely and accurate help
+  for configuration, integration, development and any other technical
+  activity.
 
 B) Disclaimers
  
-Note well the default "quick-start" configuration is very simple in order 
-to be easily installable. It provides minimum features. Particularly, 
-authentication is by default disabled, which means anyone can register using
-any name with the server. (This is on purpose to avoid installation 
-dependencies on MySQL which is needed for storing user credentials.)
-
+  Note well the default "quick-start" configuration is very simple in order 
+  to be easily installable. It provides minimum features. Particularly, 
+  authentication is by default disabled, which means anyone can register using
+  any name with the server. (This is on purpose to avoid installation 
+  dependencies on a database, which is needed for storing user credentials.)
 
 C) Quick Start
 
-The following step-by step guide gives you instructions how to install the 
-sql-free distribution of sip-router. If you need persistence and
-authentication, then you have to install additional MySql support --
-proceed to section D) after you are finished with C).
+  The following step-by step guide gives you instructions how to install the 
+  SQL-free distribution of sip-router. If you need persistence and
+  authentication, then you have to install additional database support --
+  proceed to section D) after you are finished with C).
 
-1) Download an RPM or debian package from site
+  1) Download an RPM or debian package from site
 
     ****** site not available yet
 
-If you don't use an rpm or debian based distribution, try our tar.gz'ed
-binaries
+  If you don't use an rpm or debian based distribution, try our tar.gz'ed
+  binaries
 
   ******* not available yet
 
-If you use Solaris 8 you can try our solaris package.
-If you use Gentoo Linux you do not have to download a package.
+  If you use Solaris 8 you can try our solaris package.
+  If you use Gentoo Linux you do not have to download a package.
 
-2) install the package
-RPM:
-    rpm -i <package_name>
-debian:
-    dpkg -i <package_name>
-gentoo:
-    emerge sip-router
-	(or if use only stable packets:
-	 ACCEPT_KEYWORDS="~x86" emerge sip-router)
-tar.gz:
-    cd /; tar zxvf <package_name>_os_arch.tar.gz
-    (it will install in /usr/local/, and the configuration file in
-     /usr/local/etc/sip-router/sip-router.cfg)
-Solaris:
-    gunzip <package_name>.gz ; pkgadd -d <package_name>
-*BSD:
-    pkg_add package_name
+2) Install the package
+	RPM:
+    		rpm -i <package_name>
+	debian:
+    		dpkg -i <package_name>
+	gentoo:
+    		emerge sip-router
+		(or if use only stable packets: ACCEPT_KEYWORDS="~x86" emerge sip-router)
+	tar.gz:
+    		cd /; tar zxvf <package_name>_os_arch.tar.gz
+    		(it will install in /usr/local/, and the configuration file in
+     		/usr/local/etc/sip-router/sip-router.cfg)
+	Solaris:
+    		gunzip <package_name>.gz ; pkgadd -d <package_name>
+	*BSD:
+    		pkg_add package_name
     
-3) start the server
-RPM + gentoo:
-    /etc/init.d/sip-router start
-debian:
-    sip-router is started automatically after the install
-    (in case something fails you can start it with /etc/init.d/sip-router start)
-tar.gz:
-    the tar.gz does not include an init.d script, you'll have to create one of
-    your own or adapt one from the source distribution (debian/init.d,
-    rpm/sip-router.init.*, gentoo/sip-router.init)
-    You can start sip-router directly with /usr/local/sbin/sip-router.
-Solaris:
-    see tar.gz.
+3) Start the server
+
+	RPM + gentoo:
+    		/etc/init.d/sip-router start
+	debian:
+    		sip-router is started automatically after the install
+    		(in case something fails you can start it with /etc/init.d/sip-router start)
+	tar.gz:
+	Solaris:
+    		the tar.gz does not include an init.d script, you'll have to create one of
+    		your own or adapt one from the source distribution (debian/init.d,
+    		rpm/sip-router.init.*, gentoo/sip-router.init)
+    		You can start sip-router directly with /usr/local/sbin/sip-router.
     
 4) optionally, watch server's health using the
-   serctl utility
+   	serctl utility
+
     - to do so, first set the environment variable SIP_DOMAIN to your domain 
       name, e.g., in Bourne shell, call
         export SIP_DOMAIN="myserver.foobar.com"
@@ -563,29 +531,31 @@ Solaris:
         /usr/local/sbin/serctl moni (if you installed from a tar.gz or solaris
         package)
 
-5) Register with the server using your favorite
-   SIP User Agent. You may want to look at configuration
-   hints for use of iptel.org site at
+5) Connect SIP phones
+
+  Register with the server using your favorite SIP User Agent. You may want to look 
+  at configuration hints for use of various clients on iptel.org site at
      http://www.iptel.org/phpBB/viewforum.php?forum=1&8
-   For example, users of Windows Messenger need to set
-   in Tools->Options->Accounts the following values:
-     Sign-in Name: <username>@<your_server_address>
-     Advanced->Configure Settings (on)
-     Advanced->Server: <your_server_address>
-     Connect Using: UDP
 
+  In most cases, you need to set the following options:
 
+	Proxy server:	host name of your server
+	Domain:		the sip domain your server is configured to handle
+	User name:	the account name for your device
+	Auth user:	the ID used for authentication
+	Secret/Password:	The configured authentication password
 
 D) sip-router with Persistent Data Storage
+------------------------------------------
 
-The default configuration is very simple and features many simplifications. 
-In particular, it does not authenticate users and loses User Location database 
-on reboot. To provide persistence, keep user credentials and remember users' 
-locations across reboots, ser can be configured to use MySQL. Before you
-proceed, you need to make sure MySQL is installed on your box. Your
-MySQL server must be configured to deal with a large number of
-connection. To increase it, set the following line in [mysqld] section
-of your configuration file:
+  The default configuration is very simple and features many simplifications. 
+  In particular, it does not authenticate users and loses User Location database 
+  on reboot. To provide persistence, keep user credentials and remember users' 
+  locations across reboots, sip-router can be configured to use a database, like MySQL. 
+  Before you proceed, you need to make sure MySQL is installed on your box. Your
+  MySQL server must be configured to deal with a large number of
+  connection. To increase it, set the following line in [mysqld] section
+  of your my.ini configuration file:
 
    set-variable    = max_connections=500
 
@@ -598,6 +568,7 @@ of your configuration file:
      from the source).
 	For gentoo please include 'mysql' to your USE variable in /etc/make.conf
 	or give it as variable to the emerge command.
+
 2) install the package
     rpm -i <package_name>
     or
@@ -606,6 +577,7 @@ of your configuration file:
 	emerge sip-router
 	(if do not want to put 'mysql' into your USE variable you can type:
 	 USE="mysql" emerge sip-router)
+
 3) create MySQL tables
 	- if you have a previously installed SIP Router on your system, use
     	/usr/sbin/sip-router_mysql.sh reinstall 
@@ -614,6 +586,7 @@ of your configuration file:
     	/usr/sbin/sip-router_mysql.sh create
 	  to create SIP Router database structures
    (you will be prompted for password of MySql "root" user)
+
 4) configure sip-router to use SQL
     uncomment all lines in configuration file sip-router.cfg which are related to 
     authentication:
@@ -637,6 +610,7 @@ of your configuration file:
       }
 6) restart the server
     /etc/init.d/sip-router restart
+
 7) you can now start  managing the server using the serctl utility; 
    you need to first set the environment variable SIP_DOMAIN to your 
    local SIP realm, e.g.,
