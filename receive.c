@@ -98,6 +98,12 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	struct timezone tz;
 	unsigned int diff;
 #endif
+	str inb;
+
+	inb.s = buf;
+	inb.len = len;
+	sr_event_exec(SREV_NET_DATA_IN, (void*)&inb);
+	len = inb.len;
 
 	msg=pkg_malloc(sizeof(struct sip_msg));
 	if (msg==0) {

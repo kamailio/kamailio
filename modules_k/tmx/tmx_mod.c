@@ -228,7 +228,7 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 	tcx = _tmx_tmb.tm_ctx_get();
 	if(tcx != NULL)
 		idx = tcx->branch_index;
-	n = (int)k;
+	n = (int)(long)k;
 	switch(n) {
 		case 1:
 			/* prepare cancel for every branch except idx */

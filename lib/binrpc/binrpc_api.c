@@ -457,7 +457,7 @@ static int get_reply(struct binrpc_handle *handle,
 			if (n == 0)
 				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 					"get_reply: read unexpected EOF: received %d bytes"
-					" of reply", crt - handle->buf);
+					" of reply", (int)(long)(crt - handle->buf));
 			else
 				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 					"get_reply: read reply failed: %s (%d)",

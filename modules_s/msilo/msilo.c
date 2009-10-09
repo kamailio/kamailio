@@ -561,6 +561,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	str next_hop = STR_NULL;
 	uac_req_t	uac_r;
 	
+	i=0; /* fix warning in DBG() */
 	if (str1) {
 		next_hop.s = str1;
 		next_hop.len = strlen(str1);

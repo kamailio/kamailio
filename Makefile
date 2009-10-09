@@ -247,7 +247,9 @@ ifeq (,$(strip \
 	$(filter config.mak config cfg cfg-defs $(clean_targets),$(MAKECMDGOALS))))
 include config.mak
 ifeq ($(makefile_defs),1)
+ifeq ($(quiet),verbose)
 $(info config.mak loaded)
+endif # verbose
 # config_make valid & used
 config_mak=1
 ifeq ($(MAIN_NAME),)
@@ -265,6 +267,10 @@ $(shell rm -rf config.mak)
 config_mak=0
 makefile_defs=0
 exported_vars=0
+else
+# config.mak not strictly needed, but try to load it if exists for $(Q)
+config_mak=skip
+-include config.mak
 endif
 endif
 
@@ -401,7 +407,7 @@ ifeq ($(config_mak),1)
 
 include Makefile.cfg
 
-else
+else ifneq ($(config_mak),skip)
 
 config.mak: Makefile.defs
 	@echo making config...
@@ -494,8 +500,8 @@ $(1)_target=$(prefix)/$(modules_dir)$(1)
 $(1): modules.lst
 	@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" -a -r "$$$$r/Makefile" ]; then \
-			echo  "" ; \
-			echo  "" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
 			if  $(MAKE) -C $$$$r $$(mk_params) || [ ${err_fail} != 1 ] ; then \
 				:; \
 			else \
@@ -508,8 +514,8 @@ $(1): modules.lst
 $(1)-doc: modules.lst
 	@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
-			echo  "" ; \
-			echo  "" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \\
 			$(MAKE) -C $$$$r/doc $(doc_format) $$(mk_params); \
 		fi ; \
 	done
@@ -519,8 +525,8 @@ $(1)-doc: modules.lst
 $(1)-readme: modules.lst
 	-@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
-			echo  "" ; \
-			echo  "" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
 			if  $(MAKE) -C $$$$r $$(mk_params) README || [ ${err_fail} != 1 ];\
 			then \
 				:; \
@@ -534,8 +540,8 @@ $(1)-readme: modules.lst
 $(1)-man: modules.lst
 	-@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
-			echo  "" ; \
-			echo  "" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
 			if  $(MAKE) -C $$$$r $$(mk_params) man || [ ${err_fail} != 1 ] ;\
 			then \
 				:; \
@@ -550,8 +556,8 @@ $(1)-man: modules.lst
 install-$(1): modules.lst $$($(1)_dst)
 	@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" -a -r "$$$$r/Makefile" ]; then \
-			echo  "" ; \
-			echo  "" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
 			if  $(MAKE) -C $$$$r install mods_dst=$$($(1)_dst) $$(mk_params) \
 				|| [ ${err_fail} != 1 ] ; then \
 				:; \
@@ -617,8 +623,8 @@ $(extra_objs):
 	@echo "Extra objs: $(extra_objs)" 
 	@for r in $(static_modules_path) "" ; do \
 		if [ -n "$$r" -a -r "$$r/Makefile"  ]; then \
-			echo  "" ; \
-			echo  "Making static module $r" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "Making static module $r" ;) \
 			if $(MAKE) -C $$r static $(mk_params) ; then  \
 				:; \
 			else \
@@ -631,8 +637,8 @@ $(extra_objs):
 utils:
 	@for r in $(utils_compile) "" ; do \
 		if [ -n "$$r" ]; then \
-			echo  "" ; \
-			echo  "" ; \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
 			if  $(MAKE) -C $$r $(mk_params) || [ ${err_fail} != 1 ] ; \
 			then \
 				:; \
@@ -774,22 +780,22 @@ $(man_prefix)/$(man_dir)/man5:
 
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
-		sed $(foreach m,$(modules_dirs),\
+		@sed $(foreach m,$(modules_dirs),\
 				-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 			< etc/$(CFG_NAME)-basic.cfg > \
 			$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
-		if [ -z "${skip_cfg_install}" -a \
+		@chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
+		@if [ -z "${skip_cfg_install}" -a \
 				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg ]; then \
 			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample \
 				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg; \
 		fi
-		sed $(foreach m,$(modules_dirs),\
+		@sed $(foreach m,$(modules_dirs),\
 			-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
 			< etc/$(CFG_NAME)-oob.cfg \
 			> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
-		if [ -z "${skip_cfg_install}" -a \
+		@chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
+		@if [ -z "${skip_cfg_install}" -a \
 				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg ]; \
 		then \
 			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample \
@@ -878,22 +884,22 @@ install-doc: $(doc_prefix)/$(doc_dir) install-every-module-doc
 
 
 install-sr-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
-		sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
+		@sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
 				-e "s#/usr/lib/$(CFG_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
 			-e "s#/usr/share/doc/$(CFG_NAME)/#$(doc_target)#g" \
 			< $(CFG_NAME).8 >  \
 							$(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
-		chmod 644  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
-		sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
+		@chmod 644  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
+		@sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			$(foreach m,$(modules_dirs),\
 				-e "s#/usr/lib/$(CFG_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
 			-e "s#/usr/share/doc/$(CFG_NAME)/#$(doc_target)#g" \
 			< $(CFG_NAME).cfg.5 >  \
 			$(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
-		chmod 644  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
+		@chmod 644  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
 
 install-man:  install-sr-man install-every-module-man
 

@@ -7,7 +7,7 @@ TABLES := $(patsubst kamailio-%.xml,%,$(wildcard kamailio-*.xml))
 
 ROOT=../../../
 STYLESHEETS=$(ROOT)/doc/stylesheets/dbschema_k/xsl
-SCHEME=$(ROOT)/tools/kamctl/
+SCHEME=$(ROOT)/utils/kamctl/
 
 # Stylesheet used to generate MySQL database schema
 MYSQL_XSL = $(STYLESHEETS)/mysql.xsl

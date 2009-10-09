@@ -75,15 +75,18 @@
 #  2009-10-01  use -fsigned-char for gcc on ppc, ppc64, arm and arm6
 #              (on those archs char is unsigned by default) (andrei)
 
+quiet?=$(if $(filter 1 yes on,$(Q)),silent,verbose)
 
 # check if already included/exported
-
 
 # used for sanity checks for Makefile.defs inclusion (!= makefile_defs which
 # specifies if we have a set of valid defs)
 override makefile_defs_included:=1
 ifeq ($(makefile_defs),1)
+ifeq ($(quiet),verbose)
 $(info Makefile.defs defs skipped)
+endif # verbose
+
 else
 
 ifeq (,$(main_makefile))
@@ -94,7 +97,9 @@ ifeq (,$(main_makefile))
 # don't export the vars)
 COREPATH?= ../..
 include $(COREPATH)/config.mak
+ifeq ($(quiet),verbose)
 $(info config.mak included)
+endif # verbose
 # config.mak should set makefile_defs if complete
 export makefile_defs
 
@@ -103,7 +108,9 @@ override makefile_defs=1
 export makefile_defs
 
 
+ifeq ($(quiet),verbose)
 $(info normal Makefile.defs exec)
+endif # verbose
 # main binary name
 MAIN_NAME=ser
 #prefix for various configs and scripts
@@ -417,11 +424,11 @@ endif # predefined macros tests (x86_macros, ...)
 endif # gcc
 
 ifdef CC_ARCH
-$(info target architecture <$(CC_ARCH)>, host architecture <$(HOST_ARCH)>)
 ARCH:=$(CC_ARCH)
 else
 ARCH:=$(HOST_ARCH)
 endif
+$(info target architecture <$(ARCH)>, host architecture <$(HOST_ARCH)>)
 
 # compile-time options
 #
@@ -1901,7 +1908,8 @@ saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME \
 		PREFIX LOCALBASE \
 		TAR \
 		INSTALL INSTALL_CFG INSTALL_BIN INSTALL_MODULES INSTALL_DOC \
-		INSTALL_MAN INSTALL_LIB INSTALL_TOUCH INSTALL_SHARE
+		INSTALL_MAN INSTALL_LIB INSTALL_TOUCH INSTALL_SHARE \
+		Q
 
 # variable changeable at compile time
 # extra: prefix DESTDIR BASEDIR basedirt
