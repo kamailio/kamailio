@@ -1,370 +1,204 @@
-# $Id$
 
-=========================================
-NOTE!!! THIS FILE IS NO LONGER IN USE.
-PLEASE REFER TO:
-http://www.iptel.org/views/moduledocs
-FOR AN UPDATED LIST OF OFFICIAL MODULES.
-=========================================
 
-'Owner' field contains a developers CVS username, see file
-AUTHORS for more details.
+SIP-ROUTER modules
+==================
 
-'Use' tells how deployable a module is. Regular indicates
-we deploy and use this feature in our infrastructure.
-Experimental tells we are still gaining operation experience.
-Temporary labels modules which momentarily fix some
-bugs/lacks and will disappear later. Example modules
-are primarily useful as educational source code for
-ser programmers.
+This is the first release of the combined project. In order to be able to support
+an upgrade path for both Kamailio/OpenSER and SER current users, we have been forced to
+provide some modules in two versions, which means that we have three set of modules:
 
-'Maturity' is label as stable if a module has been deployed
-for longer time, alpha if it is still being developed and
-beta if it is under test.
+ - modules: 	the SIP router modules
+ - modules_k: 	Kamailio modules
+ - modules_s: 	SER modules
 
-'Depends on' field tells which modules the module needs. 
+All modules are compatible with the core, so regardless if you are a new user or 
+an existing, you are free to make a choice between the three sets.
+Note that if you are currently using one product, you want to select the module
+that exists in the K/S directories first to get a smooth upgrade path.
 
-Modules underway include firewall control, and more. 
-If you are interested in any of these or other modules, 
-write us to info@iptel.org.
+As sip-router development progress, we will move as many modules as possible
+into the core and only keep k/s modules for backwards compatibility when required.
 
-List of currently available ser modules:
+What is a module?
+=================
+A module consists of a lot of functions that enhance the core. Some of the modules
+depends on other modules. It's all properly documented in the README that belongs
+to each module (available as web pages on the sip-router.org web site).
 
-Name:       acc
-Owner:      jiri
-Use:        regular
-Maturity:   stable
-Depends on: tm
-Purpose:    Transaction accounting/example (the module server also as an
-            example of how to bind to transaction management)
+A module providers up to three different APIs:
 
-Name:       auth
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: sl
-Purpose:    Common functions for digest authentication
+- Enhancements to the core SIP-router routing script (functions)
+- Commands for the management interface (MI)
+- Development interface for other modules
 
-Name:       auth_db
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: mysql auth
-Purpose:    Database support for digest authentication
+A single module may provide a selection of this, maybe only one of them.
 
-Name:       auth_radius
-Owner:      janakj
-Use:        experimental
-Maturity:   beta
-Depends on: auth
-Purpose:    Radius support for digest authentication
+Core modules
+------------
+auth_radius		Radius authentication
+avpops			Attribute-value pair operations ("variables")
+carrierroute		A telephony routing module
+db_berkeley		Database :: Berkeley DB (Oracle)
+db_flatstore		Database :: Flatstore
+db_mysql		Database :: Mysql
+db_postgres		Database :: PostgreSQL
+dialplan		Dialplan management
+enum			Enum support
+lcr			Least cost routing
+mediaproxy		Nat traversal :: Mediaproxy (AG projects)
+mi_rpc			Management Interface :: XML RPC support
+misc_radius		Various Radius functions
+pdb			???
+peering			SIP peering between service providers
+tls			SSL/TLS support
+tm			SIP transaction support (stateful proxy)
+utils			Various utilities (http query, xcap status)
 
-Name:       avp
-Owner:      jiri
-Use:        regular
-Maturity:   beta
-Depends on: -
-Purpose:    Loads and checks avps per caller or callee
+Kamailio modules
+----------------
+acc			Accounting
+alias_db		Alias management in database modules
+auth			MD5 digest authentication support
+auth_db			Authentication using a database module
+auth_diameter		Authentication based on Diameter
+benchmark		Development benchmark module
+call_control		Call timeouts and management (depends on Dialog module)
+cfgutils		Various configuration utilities
+cpl-c
+db_oracle		Database :: Oracle support
+db_text			Database :: Text support
+db_unixodbc		Database :: Unix ODBC support
+dialog			Dialog ("call") state module
+dispatcher		Load balancing and failover
+diversion		Call redirect support (SIP Diversion: header)
+domain			Proxy :: Multiple domain support using databases
+domainpolicy
+drouting		Proxy :: Dynamic routing
+exec
+group			Utils :: Group membership checking
+h350			LDAP/ITU H.350 multimedia schema support
+htable			Utils :: Hash table support
+imc			IM :: Instant messaging conference
+jabber			IM :: Jabber gateway
+kex			Proxy :: Kamailio core functions (backwards compatibility)
+ldap			LDAP Directory access
+maxfwd			SIP loop detection prevention (max-forwards header - "ttl")
+memcached		Utils :: In-memory caching support (memcached)
+mi_datagram		Management interface :: UDP
+mi_fifo			Management Interface :: Unix FIFO
+mi_xmlrpc		Management Interface :: XML-rpc
+msilo			Text message storage
+nat_traversal		NAT :: NAT traversal module
+nathelper		NAT :: NAT traversal module :: RTPproxy (SIPPY software)
+osp			Open Settlement Protocol support
+path			Path: header support
+pdt			Proxy :: Routing based on numeric prefix
+perl			Perl-based module interface
+perlvdb			Database :: Use perl database functions
+permissions		Security :: TCP-wrapper-like ACL functions
+pike			Security :: DOS-attack prevention
+presence		Presence :: Core presence module
+presence_dialoginfo	Presence :: Dialog info
+presence_mwi		Presence :: Message waiting indication
+presence_xml		Presence :: XML handler
+pua
+pua_bla
+pua_dialoginfo
+pua_mi			Presence :: Management interface
+pua_usrloc
+pua_xmpp		Presence :: XMPP/Jabber gateway
+purple			Presence :: Libpurple support
+pv
+qos			Dialogs :: SDP management 
+ratelimit		Security :: Rate limit
+regex			Regular expression support
+registrar		Registrar/location server support
+rls			Presence :: Resource list server
+rr			Proxy :: Record routing
+rtimer			Utils :: Timer based routing script processing
+sanity			Syntax checking for incoming SIP requests
+seas			Application server interface
+siptrace		Store SIP messages in database
+siputils		Various utilities for SIP call handling
+sl			Proxy :: Stateless handling of SIP messages
+sms			SMS gateway support
+snmpstats		SNMP support (net-snmp agentx)
+speeddial
+sqlops
+sst
+statistics
+textops			Text operations
+tmx			Proxy :: Kamailio transaction extensions (TM module)
+uac
+uac_redirect
+uri_db
+userblacklist
+usrloc			Proxy :: Location server
+xcap_client		Presence :: XCAP support
+xlog			Utils :: Extended logging support
+xmpp			Presence/IM :: XMPP/jabber gateway
 
-Name:       avp_db
-Owner:      janakj
-Use:        regular
-Maturity:   beta
-Depends on: mysql avp
-Purpose:    Database support for avps
-
-Name:       avp_db
-Owner:      janakj
-Use:        regular
-Maturity:   beta
-Depends on: avp
-Purpose:    Radius support for avps
-
-Name:       avpops
-Owner:      ramona
-Use:        regular
-Maturity:   beta
-Depends on: 
-Purpose:    avp operations, pseudo-variable support
-
-Name:       cpl-c
-Owner:      bogdan
-Use:        regular
-Maturity:   beta
-Depends on: -
-Purpose:    Call Processing Language
-
-Name:       dbtext
-Owner:      dcm
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Database emulation in plaintext files
-
-Name:       dispatcher
-Owner:      dcm
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Implements a dispatcher for incoming requests using hashes
-
-Name:       diversion
-Owner:      janakj
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Support for the Diversion extensions (draft-levy-sip-diversion-08)
-
-Name:       exec
-Owner:      jiri
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Execution of external URI processing logic
-
-Name:       ext
-Owner:      bogdan
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Execution of external URI processing logic
-
-Name:       extcmd
-Owner:      bogdan
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Execution of external commands
-
-Name:       flatstore
-Owner:      janakj
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Very fast accounting in flat text files
-
-Name:       gflags
-Owner:      jiri
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    global flags that can be changed by fifo commands
-
-Name:       group
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: database
-Purpose:    Group membership checking using database
-
-Name:       group_radius
-Owner:      janakj
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Group membership checking using Radius
-
-Name:       jabber
-Owner:      dcm
-Use:        experimental
-Maturity:   beta
-Depends on: database tm
-Purpose:    SIMPLE 2 Jabber gateway
-
-Name:       maxfwd
-Owner:      bogdan
-Use:        regular
-Maturity:   stable
-Depends on: -
-Purpose:    Max-Forwards check
-
-Name:       msilo
-Owner:      dcm
-Use:        experimental
-Maturity:   beta
-Depends on: database tm
-Purpose:    Message store
-
-Name:       mysql
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: -
-Purpose:    MySQL database support
-
-Name:       options
-Owner:      calrissian
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Answers server options requests
-
-Name:       pa
-Owner:      janakj
-Use:        experimental
-Maturity:   alpha
-Depends on: tm (usrloc jabber)
-Purpose:    Presence agent
-
-Name:       pike
-Owner:      bogdan
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Excessive load detection
-
-Name:       print
-Owner:      andrei
-Use:        example
-Maturity:   stable
-Depends on: -
-Purpose:    Printing messages to stdout
-
-Name:       registrar
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: usrloc sl
-Purpose:    Registrar
-
-Name:       rr
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: -
-Purpose:    Routing and Record-Routing
-
-Name:       sl
-Owner:      bogdan
-Use:        regular
-Maturity:   stable
-Depends on: -
-Purpose:    Stateless replies
-
-Name:       sms
-Owner:      bogdan
-Use:        regular
-Maturity:   stable
-Depends on: tm
-Purpose:    SMS gateway
-
-Name:       snmp
-Owner:      ric
-Use:        removed
-Maturity:   removed
-Depends on: -
-Purpose:    SNMP Management
-
-Name:       speeddial
-Owner:      ramona
-Use:        regular
-Maturity:   beta
-Depends on: -
-Purpose:    On-server speed dial facilities
-
-Name:       textops
-Owner:      andrei
-Use:        regular
-Maturity:   stable
-Depends on: -
-Purpose:    Message Textual Operations
-
-Name:       tm
-Owner:      jiri
-Use:        regular
-Maturity:   beta
-Depends on: -
-Purpose:    Transaction Management
-
-Name:       uri
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: database
-Purpose:    Various URI checks
-
-Name:       uri_db
-Owner:      janakj
-Use:        experimental
-Maturity:   beta
-Depends on: mysql uri
-Purpose:    URI checking using DB
-
-Name:       uri_radius
-Owner:      janakj
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    URI checking using Radius
-
-Name:       usrloc
-Owner:      janakj
-Use:        regular
-Maturity:   stable
-Depends on: database
-Purpose:    User location support
-
-Name:       vm
-Owner:      rco
-Use:        removed (functionality moved in tm)
-Maturity:   removed
-Depends on: tm
-Purpose:    Voicemail interface
-
-Name:       xlog
-Owner:      ramona
-Use:        regular
-Maturity:   stable
-Depends on: 
-Purpose:    formatted logging (printf style)
-
-Contributions
--------------
-Name:       domain
-Owner:      jih
-Use:        experimental
-Maturity:   beta
-Depends on: mysql
-Purpose:    Local domain lists and related functions
-
-Name:       enum
-Owner:      jih
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Enum support
-
-Name:       domain
-Owner:      jih
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    support for maintenance of multiple domains
-
-Name:       mediaproxy
-Owner:      danp, agprojects
-Use:        regular
-Maturity:   stable
-Depends on: mediaproxy media relay
-Purpose:    nat traversal
-
-Name:       nathelper
-Owner:      sobomax
-Use:        regular
-Maturity:   stable
-Depends on: rtpproxy
-Purpose:    nat traversal
-
-Name:		permissions
-Owner:		tirpi
-Use:		experimental
-Maturity:	beta
-Depends on:	-
-Purpose:	hosts.allow-like ACLs
-
-Name:       postgress
-Owner:      lgfausak
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Postgress DB support
+SER modules
+-----------
+acc_db
+acc_radius
+acc_syslog
+auth
+auth_db
+auth_identity
+avp
+avp_db
+bdb
+blst
+cfg_db
+cfg_rpc
+cpl-c
+ctl
+db_ops
+dbg
+dbtext
+dialog
+dispatcher
+diversion		Proxy :: Call redirection support (Diversion: header)
+domain			Proxy :: Multiple domain support
+eval
+exec			Proxy :: External script support (modify route set)
+fifo		
+gflags			Proxy :: Global flags
+iptrtpproxy		NAT traversal :: Kernel based RTP proxy
+jabber			IM :: Jabber gateway
+ldap			LDAP directory server support
+mangler
+maxfwd			Proxy :: Loop prevention (max-forwards header)
+msilo
+nathelper		NAT traversal :: RTP proxy (SIPPY software)
+options			Proxy :: Support for SIP OPTION request
+oracle			Database :: Oracle
+osp			Open Settlement Protocol
+pa
+pdt
+permissions		Security :: ACL support like TCP wrappers
+pike
+prefix_route
+presence_b2b
+print
+print_lib
+ratelimit
+registrar
+rls
+rr
+sanity
+sl
+sms
+speeddial
+textops
+timer
+tls
+uac
+unixsock
+uri
+uri_db
+usrloc
+xcap
+xlog			Extended logging support
+xmlrpc
