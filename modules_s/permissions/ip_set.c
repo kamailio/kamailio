@@ -101,6 +101,7 @@ int ip_set_add_list(struct ip_set *ip_set, str ip_set_s){
 		ip_set_s.s += ip_s.len;
 		ip_set_s.len -= ip_s.len;
 		mask_s.len = 0;
+		mask_s.s=0;
 		if (ip_set_s.len && ip_set_s.s[0] == '/') {
 			ip_set_s.s++;
 			ip_set_s.len--;

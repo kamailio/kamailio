@@ -182,6 +182,7 @@ static void get_uri_and_skip_until_params(str *param_area, str *uri) {
 	int i, quoted, uri_pos, uri_done;
 
 	uri->len = 0;
+	uri->s = 0;
 	uri_done = 0;
 	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {	/* [ *(token LSW)/quoted-string ] "<" addr-spec ">" | addr-spec */
 		/* skip name */

@@ -488,7 +488,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 		}
 
 #ifdef DEBUG
-		fprintf (stdout, "Decoding %.*s\n",end-start,start);
+		fprintf (stdout, "Decoding %.*s\n", (int)(long)(end-start), start);
 #endif
 	
 	state = EX_PREFIX;

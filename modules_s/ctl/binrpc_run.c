@@ -302,6 +302,7 @@ error:
 
 
 
+#if 0
 /* expects an initialized new_b */
 static int build_structs(struct binrpc_pkt *new_b, struct binrpc_pkt* body, 
 							struct rpc_struct_head* sl_head)
@@ -323,6 +324,7 @@ static int build_structs(struct binrpc_pkt *new_b, struct binrpc_pkt* body,
 error:
 	return ret;
 }
+#endif
 
 
 
