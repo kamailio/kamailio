@@ -13,6 +13,13 @@
 	<section>
 	<title>Overview</title>
 	<para>
+	This is a module for fast number portability handling. The client is this module
+	and the server exists in the /utils/pdbt directory.
+	The PDB module and server supports load-balancing and aggressive timeouts.i
+	Normally it does not need more than a few ms to query the remote server and return
+	the reply to the configuration script.
+	</para>
+	<para>
 	The pdb module allows Kamailio to send queries to a list of servers
   and store the answer in an AVP. The idea is to ask all servers in
   parallel and use the first answer, that comes back. A timeout for the
@@ -43,7 +50,7 @@
 			</para>
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>none</emphasis></para>
+				<para><emphasis>The PDB server</emphasis></para>
 				</listitem>
 			</itemizedlist>
 		</section>
