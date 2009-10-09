@@ -86,6 +86,12 @@ typedef struct AVP_Param {
     unsigned short type;
 } AVP_Param;
 
+typedef struct AVP_List {
+    pv_spec_p pv;
+    str name;
+    struct AVP_List *next;
+} AVP_List;
+
 #define RETRY_INTERVAL 10
 #define BUFFER_SIZE    8192
 
@@ -103,8 +109,12 @@ static int CallControl(struct sip_msg *msg, char *str1, char *str2);
 
 static int mod_init(void);
 static int child_init(int rank);
-static int postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param);
+static void destroy(void);
+static int postprocess_request(struct sip_msg *msg, void *_param);
 
+int parse_param_init(unsigned int type, void *val);
+int parse_param_start(unsigned int type, void *val);
+int parse_param_stop(unsigned int type, void *val);
 
 /* Local global variables */
 static CallControlSocket callcontrol_socket = {
@@ -128,6 +138,9 @@ static AVP_Param signaling_ip_avp = {str_init(SIGNALING_IP_AVP_SPEC), {0}, 0};
 struct dlg_binds dlg_api;
 static int dialog_flag = -1;
 
+AVP_List *cc_init_avps = NULL, *cc_start_avps = NULL, *cc_stop_avps = NULL;
+
+pv_elem_t *model;
 
 static cmd_export_t commands[] = {
     {"call_control",  (cmd_function)CallControl, 0, 0, 0, REQUEST_ROUTE },
@@ -135,6 +148,9 @@ static cmd_export_t commands[] = {
 };
 
 static param_export_t parameters[] = {
+    {"init",                STR_PARAM | USE_FUNC_PARAM, parse_param_init},
+    {"start",               STR_PARAM | USE_FUNC_PARAM, parse_param_start},
+    {"stop",                STR_PARAM | USE_FUNC_PARAM, parse_param_stop},
     {"disable",             INT_PARAM, &disable},
     {"socket_name",         STR_PARAM, &(callcontrol_socket.name)},
     {"socket_timeout",      INT_PARAM, &(callcontrol_socket.timeout)},
@@ -155,7 +171,7 @@ struct module_exports exports = {
     NULL,            // extra processes
     mod_init,        // module init function (before fork. kids will inherit)
     NULL,            // reply processing function
-    NULL,            // destroy function
+    destroy,         // destroy function
     child_init       // child init function
 };
 
@@ -189,6 +205,117 @@ typedef struct CallInfo {
     str from;
     str from_tag;
 } CallInfo;
+
+
+
+#define CHECK_COND(cond) \
+    if ((cond) == 0) { \
+        LM_ERR("malformed modparam\n"); \
+        return -1;                            \
+    }
+
+#define CHECK_ALLOC(p) \
+    if (!(p)) {    \
+        LM_ERR("no memory left\n"); \
+        return -1;    \
+    }
+
+
+void
+destroy_list(AVP_List *list) {
+	AVP_List *cur, *next;
+
+	cur = list;
+	while (cur) {
+		next = cur->next;
+		pkg_free(cur);
+		cur = next;
+	}
+}
+
+
+int
+parse_param(void *val, AVP_List** avps) {
+
+    char *p;
+    str *s, content;
+    AVP_List *mp = NULL;
+
+    //LM_DBG("%.*s\n", content.len, content.s);
+
+    content.s = (char*) val;
+    content.len = strlen(content.s);
+
+
+    p = (char*) pkg_malloc (content.len + 1);
+    CHECK_ALLOC(p);
+
+    p[content.len] = '\0';
+    memcpy(p, content.s, content.len);
+
+    s = (str*) pkg_malloc(sizeof(str));
+    CHECK_ALLOC(s);
+
+    for (;*p != '\0';) {
+
+        mp = (AVP_List*) pkg_malloc (sizeof(AVP_List));
+        CHECK_ALLOC(mp);
+        mp->next = *avps;
+        mp->pv = (pv_spec_p) pkg_malloc (sizeof(pv_spec_t));
+        CHECK_ALLOC(mp->pv);
+
+        for (; isspace(*p); p++);
+        CHECK_COND(*p != '\0');
+
+        mp->name.s = p;
+
+        for(; isgraph(*p) && *p != '='; p++)
+            CHECK_COND(*p != '\0');
+
+        mp->name.len = p - mp->name.s;
+
+        for (; isspace(*p); p++);
+        CHECK_COND(*p != '\0' && *p == '=');
+        p++;
+
+        //LM_DBG("%.*s\n", mp->name.len, mp->name.s);
+
+        for (; isspace(*p); p++);
+        CHECK_COND(*p != '\0' && *p == '$');
+
+        s->s = p;
+        s->len = strlen(p);
+
+        p = pv_parse_spec(s, mp->pv);
+
+        for (; isspace(*p); p++);
+        *avps = mp;
+    }
+
+    return 0;
+}
+
+
+int
+parse_param_init(unsigned int type, void *val) {
+    if (parse_param(val, &cc_init_avps) == -1)
+        return E_CFG;
+    return 0;
+}
+
+int
+parse_param_start(unsigned int type, void *val) {
+    if (parse_param(val, &cc_start_avps) == -1)
+        return E_CFG;
+    return 0;
+}
+
+int
+parse_param_stop(unsigned int type, void *val) {
+    if (parse_param(val, &cc_stop_avps) == -1)
+        return E_CFG;
+    return 0;
+}
 
 
 // Functions dealing with strings
@@ -414,9 +541,55 @@ get_call_info(struct sip_msg *msg, CallControlAction action)
     return &call_info;
 }
 
+static char*
+make_custom_request(struct sip_msg *msg, CallInfo *call)
+{
+    static char request[8192];
+    int len = 0;
+    AVP_List *al;
+    pv_value_t pt;
+
+    switch (call->action) {
+    case CAInitialize:
+        al = cc_init_avps;
+        break;
+    case CAStart:
+        al = cc_start_avps;
+        break;
+    case CAStop:
+        al = cc_stop_avps;
+        break;
+    default:
+        // should never get here, but keep gcc from complaining
+        assert(False);
+        return NULL;
+    }
+
+    for (; al; al = al->next) {
+        pv_get_spec_value(msg, al->pv, &pt);
+        if (pt.flags & PV_VAL_INT) {
+            len += snprintf(request + len, sizeof(request),
+                      "%.*s = %d ", al->name.len, al->name.s,
+                   pt.ri);
+        } else    if (pt.flags & PV_VAL_STR) {
+            len += snprintf(request + len, sizeof(request),
+                      "%.*s = %.*s ", al->name.len, al->name.s,
+                   pt.rs.len, pt.rs.s);
+        }
+
+          if (len >= sizeof(request)) {
+               LM_ERR("callcontrol request is longer than %ld bytes\n", (unsigned long)sizeof(request));
+            return NULL;
+             }
+    }
+
+
+    return request;
+}
+
 
 static char*
-make_request(CallInfo *call)
+make_default_request(CallInfo *call)
 {
     static char request[8192];
     int len;
@@ -645,18 +818,25 @@ static int
 call_control_initialize(struct sip_msg *msg)
 {
     CallInfo *call;
-    char *message, *result;
+    char *message, *result = NULL;
+
 
     call = get_call_info(msg, CAInitialize);
     if (!call) {
         LOG(L_ERR, "can't retrieve call info\n");
         return -5;
     }
-    message = make_request(call);
+
+
+    if (!cc_init_avps)
+        message = make_default_request(call);
+    else
+        message = make_custom_request(msg, call);
+
     if (!message)
         return -5;
 
-    result = send_command(message);
+   result = send_command(message);
 
     if (result==NULL) {
         return -5;
@@ -695,7 +875,11 @@ call_control_start(struct sip_msg *msg, struct dlg_cell *dlg)
     call->dialog_id.h_entry = dlg->h_entry;
     call->dialog_id.h_id = dlg->h_id;
 
-    message = make_request(call);
+    if (!cc_start_avps)
+        message = make_default_request(call);
+    else
+        message = make_custom_request(msg, call);
+
     if (!message)
         return -5;
 
@@ -728,7 +912,11 @@ call_control_stop(struct sip_msg *msg, str callid)
     call.action = CAStop;
     call.callid = callid;
 
-    message = make_request(&call);
+    if (!cc_stop_avps)
+        message = make_default_request(&call);
+    else
+        message = make_custom_request(msg, &call);
+
     if (!message)
         return -5;
 
@@ -933,6 +1121,19 @@ child_init(int rank)
 }
 
 
+static void
+destroy(void) {
+	if (cc_init_avps)
+		destroy_list(cc_init_avps);
+
+	if (cc_start_avps)
+		destroy_list(cc_start_avps);
+
+	if (cc_stop_avps)
+		destroy_list(cc_stop_avps);
+}
+
+
 // Postprocess a request after the main script route is done.
 //
 // After all script processing is done, check if the dialog was actually
@@ -943,7 +1144,7 @@ child_init(int rank)
 // would remain dangling until it expires.
 //
 static int
-postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
+postprocess_request(struct sip_msg *msg, void *_param)
 {
     CallInfo *call;
 
