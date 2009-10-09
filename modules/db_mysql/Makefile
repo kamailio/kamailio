@@ -21,11 +21,18 @@ LIBS=-L/usr/lib/mysql -L$(LOCALBASE)/lib -L$(LOCALBASE)/lib/mysql \
 
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
+ifneq (,$(filter sip-router ser, $(INSTALL_FLAVOUR)))
 MOD_INSTALL_SHARE= ../../scripts/mysql/my_create.sql \
 				   ../../scripts/mysql/my_data.sql   \
 				   ../../scripts/mysql/my_drop.sql
+else ifeq ($(INSTALL_FLAVOUR),kamailio)
+#TODO
+endif
 
 include ../../Makefile.modules
+
+ifneq (,$(filter sip-router ser, $(INSTALL_FLAVOUR)))
+# extra install for ser and sip-router
 
 install-mysql-script: $(bin_prefix)/$(bin_dir)
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
@@ -35,3 +42,4 @@ install-mysql-script: $(bin_prefix)/$(bin_dir)
 
 install-scripts: install-mysql-script
 
+endif # INSTALL_FLAVOUR
