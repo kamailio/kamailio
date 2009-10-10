@@ -276,8 +276,12 @@ clean-tmp:
 .PHONY: doxygen
 doxygen:
 	-@mkdir -p $(doxygen_dir)
-	doxygen ./$(COREPATH)/doc/doxygen/ser.doxygen
-
+	-@echo "Create Doxygen documentation"
+	# disable call graphes, because of the DOT dependencies
+	(cat ./$(COREPATH)/doc/doxygen/ser.doxygen; \
+	echo "HAVE_DOT=no" ;\
+	echo "PROJECT_NUMBER=$(NAME)-$(RELEASE)" )| doxygen -
+	-@echo "Doxygen documentation created"
 
 .PHONY: clean_doxygen
 clean_doxygen:
