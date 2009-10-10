@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="ser_radius" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -23,19 +29,19 @@
 	</revhistory>
     </sectioninfo>
 
-    <title>SER RADIUS Howto</title>
+    <title>SIP-router RADIUS Howto</title>
 
     <section id="radius_intro">
 	<title>Introduction</title>
 	<simpara>
-	    SER can be configured to use RADIUS server for authentication,
+	    SIP-router can be configured to use RADIUS server for authentication,
 	    accounting, and group membership checking. Since configuration of
 	    RADIUS seems to be a common source of problems, we decided to put
 	    together this HOWTO.
 	</simpara>
 	<simpara>
 	    The HOWTO covers installation and configuration of FreeRADIUS
-	    server only. There are also other RADIUS servers available and as
+	    server only. There are other RADIUS servers available and as
 	    long as they support digest authentication, they should work
 	    too. Any volunteers willing to describe setup of other RADIUS
 	    servers are encouraged to contact the author.
@@ -44,7 +50,7 @@
 	<section id="prerequisities">
 	    <title>Prerequisites</title>
 	    <simpara>
-		To setup RADIUS support in SER you will need the following:
+		To setup RADIUS support in SIP-router you will need the following:
 	    </simpara>
 	    <itemizedlist>
 		<listitem>
@@ -66,13 +72,13 @@
 		</listitem>
 		<listitem>
 		    <simpara>
-			SER, get it from <ulink url="http://iptel.org/ser">http://iptel.org/ser</ulink>
+			SIP-router, get it from <ulink url="&serhome;">&serhome;</ulink>
 		    </simpara>
 		</listitem>
 		<listitem>
 		    <simpara>
 			You should also have some experience in configuring
-			SER. Before you enable RADIUS authentication or
+			SIP-router. Before you enable RADIUS authentication or
 			accounting make sure that the basic server is running
 			and that you know how to customize it to your taste.
 		    </simpara>
@@ -80,13 +86,13 @@
 		<listitem>
 		    <simpara>
 			If you want to use RADIUS accounting then you will have
-			to compile SER from sources so you should know how to
+			to compile SIP-router from sources so you should know how to
 			do it.
 		    </simpara>
 		</listitem>
 	    </itemizedlist>
 	    <simpara>
-		Various unix/linux distributions might include binary packages
+		Various Unix/Linux distributions might include binary packages
 		of the mentioned applications. In that case you can safely use
 		the packages, there shouldn't be any problem. Location of some
 		files may be different, though. We will describe how to install
@@ -192,7 +198,7 @@ acctserver      localhost
 	    <simpara>
 		Radiusclient library contains file called
 		<filename>dictionary.ser</filename>. That file includes all the
-		attributes that are needed by SER. Include the file in the
+		attributes that are needed by SIP-router. Include the file in the
 		main <filename>dictionary</filename> file. To
 		include the file, put the following line at the end of
 		<filename>dictionary</filename> file:
@@ -376,7 +382,7 @@ root@/usr/local/src# radclient -f digest localhost auth &lt;shared_secret&gt;
 		    package. That also means that you have to enable access
 		    from localhost in your <filename>clients.conf</filename>
 		    file. Don't forget to replace &lt;shared_secret&gt; with
-		    the shared secret configured for locahost clients in
+		    the shared secret configured for localhost clients in
 		    <filename>clients.conf</filename>.
 		</simpara>
 	    </note>
@@ -392,18 +398,18 @@ Received response ID 224, code 2, length = 45
 	<section id="auth_configuration">
 	    <title>Authentication Configuration</title>
 	    <simpara>
-		To create user "joe" in domain "iptel.org" with password
+		To create user "joe" in domain "sip-router.org" with password
 		"heslo" put the following into file
 		<filename>/usr/local/etc/raddb/users</filename>:
 	    </simpara>
 	    <programlisting>
-joe@iptel.org Auth-Type := Digest, User-Password == "heslo"
+joe@sip-router.org Auth-Type := Digest, User-Password == "heslo"
      Reply-Message = "Authenticated",
      Sip-Rpid = "1234"
 	    </programlisting>
 	    <simpara>
 		Attribute "Sip-Rpid" is optional. The attribute
-		contains a phone number associated to the user. SER can be
+		contains a phone number associated to the user. SIP-router can be
 		configured to put the phone number into Remote-Party-ID header
 		field of the SIP message. The header field can be then used
 		by PSTN gateways to display the number as the number of the
@@ -415,7 +421,7 @@ joe@iptel.org Auth-Type := Digest, User-Password == "heslo"
 	<section id="accounting_configuration_server"> 
 	    <title>Accounting Configuration</title>
 	    <simpara>
-		By default FreeRADIUS server will log all accounting requests
+		By default the FreeRADIUS server will log all accounting requests
 		into <filename>/usr/local/var/log/radius/radacct</filename>
 		directory in form of plain text files. The server will
 		create one file for each hostname in the directory. The
@@ -470,43 +476,29 @@ Tue Jun 24 00:20:56 2003
 	<section id="group_checking">
 	    <title>Group Checking Configuration</title>
 	    <simpara>
-		If you want to make user "joe" in domain "iptel.org" member of
+		If you want to make user "joe" in domain "sip-router.org" member of
 		group "pstn" then add the following to your
 		<filename>/usr/local/etc/raddb/users</filename> file:
 	    </simpara>
 	    <programlisting>
-joe@iptel.org Sip-Group == "pstn", Auth-Type := Accept
+joe@sip-router.org Sip-Group == "pstn", Auth-Type := Accept
         Reply-Message = "Authorized"
 	    </programlisting>
 	</section>
     </section>
     
     <section id="ser_config">
-	<title>SER Configuration</title>
+	<title>SIP-router Configuration</title>
 	<simpara>
 	    We will describe installation from sources here. If you use binary
 	    packages then there is an additional package containing RADIUS
 	    related modules. You will need to install the package.
 	</simpara>
-	<warning>
-	    <simpara>
-		Due to a mistake the binary packages for RADIUS do not include
-		RADIUS-enabled version of acc (accounting) module. The packages
-		contain modules for RADIUS authentication and group membership
-		checking only.
-	    </simpara>
-	    <simpara>
-		If you need accounting over RADIUS then you will have to
-		compile RADIUS-enabled version of acc module from the
-		sources. This will be fixed in one of future releases, we
-		apologize for any inconvenience.
-	    </simpara>
-	</warning>
 	<simpara>
 	    RADIUS-related modules are not compiled by default. To compile
 	    them, edit <filename>Makefile</filename>, find variable
 	    <varname>exclude_modules</varname> and you should see
-	    "auth_radius", "group_radius", and "uri_radius" among excluded
+	    "auth_radius", "acc_radius", and "misc_radius" among excluded
 	    modules. Simply remove the three modules from the list.
 	</simpara>
 	<simpara>
@@ -518,7 +510,7 @@ DEFS+=-DRAD_ACC
 LIBS=-L$(LOCALBASE)/lib -lradiusclient
 	</programlisting>
 	<simpara>
-	    Then recompile and re-install SER:
+	    Then recompile and re-install SIP-router:
 	</simpara>
 	<screen>
 root@localhost:/usr/local/src/sip_router# make proper
@@ -529,7 +521,7 @@ root@localhost:/usr/local/src/sip_router# make install
 	<section id="auth_configuration_client">
 	    <title>Authentication Configuration</title>
 	    <simpara>
-		Edit configuration file of SER and instead of
+		Edit configuration file of SIP-router and instead of
 		<filename>auth_db.so</filename> load
 		<filename>auth_radius.so</filename> and also replace
 		<function>www_authorize</function> with
@@ -574,8 +566,8 @@ root@localhost:/usr/local/src/sip_router# make install
 	    <qandaentry>
 		<question>
 		    <simpara>
-			I compiled SER RADIUS modules and installed
-			radiusclient library, but when I try to start ser I get
+			I compiled SIP-router RADIUS modules and installed
+			radiusclient library, but when I try to start the server I get
 			the following error message:
 		    </simpara>
 		    <programlisting>
