@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * Kamailio is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -20,7 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
+/*!
  * \file cr_domain.h
  * \brief Contains the functions to manage routing domains.
  * \ingroup carrierroute
