@@ -17,19 +17,19 @@
 	<title>Overview</title>
 	<para>
 		This module hides the routing headers that show topology details.
-		It it is not affected by the server being transaction statless or
+		It it is not affected by the server being transaction stateless or
 		stateful. The script interpretor gets the SIP messages decoded,
 		so all functionality existing so far is preserved.
 	</para>
 	<para>
-		The module is transparent for config writer. It only needs to be
-		loaded (tune the parameters if wanted). The SIP server can be restarted
+		The module is transparent for the configuration writer. It only needs to be
+		loaded (tune the parameters if needed). The SIP server can be restarted
 		whitout affecting ongoing calls - once it is up, can encode/decode
-		topology details, thus no call is lost.
+		topology details, thus no call will be lost.
 	</para>
 	<para>
 		By using same mask_key, many SIP servers can decode the message,
-		for examlple, applicable for servers behind load balancers.
+		for example, applicable for servers behind load balancers.
 	</para>
 	</section>
 	<section>
@@ -88,11 +88,11 @@ modparam("topoh", "mask_key", "some secret here")
 	<section>
 		<title><varname>mask_callid</varname> (integer)</title>
 		<para>
-			Whether to encode or not the call-id. Some SIP extensions include
-			the call-id in SIP message payload or header, so it is safe to
-			not encode call-id in such cases. Well-known extensions such as
+			Whether to encode the Call-id: header. Some SIP extensions include
+			the Call-id in the SIP message payload or header, so it is safe to
+			not encode Call-id in such cases. Well-known extensions such as
 			call transfer or conference join will be added to work with encoded
-			call-id.
+			Call-id.
 		</para>
 		<para>
 		<emphasis>
@@ -149,7 +149,7 @@ modparam("topoh", "uparam_prefix", "xyz")
 		<section>
 		<title><varname>vparam_name</varname> (str)</title>
 		<para>
-		Name of Via param where to store encoded value.
+		Name of Via: parameter where to store encoded value.
 		</para>
 		<para>
 		<emphasis>
@@ -168,7 +168,7 @@ modparam("topoh", "vparam_name", "myv")
 	<section>
 		<title><varname>vparam_prefix</varname> (str)</title>
 		<para>
-		Prefix to be added in encoded Via params.
+		Prefix to be added in encoded Via: parameters.
 		</para>
 		<para>
 		<emphasis>

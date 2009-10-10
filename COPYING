@@ -2,18 +2,19 @@
 -------------------------------------------------------------------------
 IMPORTANT NOTES
 
-1) The GPL applies to this copy of SIP Express Router software (ser).
+1) The GPL applies to this copy of SIP Router software (sip-router).
 
-2) ser software allows programmers to plug-in external modules to the
+2) SIP-router software allows programmers to plug-in external modules to the
    core part. Note that GPL mandates all plug-ins developed for the
-   ser software released under GPL license to be GPL-ed or use a GPL
-   compatible free software license.
+   SIP-router software are to be released under GPL license to be GPL-ed or 
+   use a GPL compatible free software license.
 
    (see http://www.gnu.org/copyleft/gpl-faq.html#GPLAndPlugins
     for a detailed explanation)
 
 3) Note that the GPL bellow is copyrighted by the Free Software Foundation,
-   but the ser software is copyrighted by FhG
+   but the SIP-router software is copyrighted by multiple individuals and
+   companies.
 
 -------------------------------------------------------------------------
 
@@ -22,11 +23,12 @@ GNU Licence FAQ
 This FAQ provides answers to most frequently asked questions. To fully
 understand implications of the GNU license, read it.
 
-- you can run SER for any purpose
+- you can run SIP-router for any purpose
 - you can redistribute it as long as you include source code and
   license conditions with the distribution
-- you cannot release programs derived from SER without releasing
+- you cannot release programs derived from SIP-router without releasing
   their source code
+- you can not change the copyright of any part of SIP-router
 
 
 -------------------------------------------------------------------------
