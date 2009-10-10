@@ -15,8 +15,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This is a module which integrates the Berkeley DB into Kamailio.
-		It implements the DB API defined in Kamailio.
+		This is a module which integrates the Berkeley DB into SIP-router.
+		It implements the DB API defined in SIP-router.
 	</para>
 	</section>
 
@@ -44,7 +44,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>Berkeley Berkeley DB 4.6</emphasis> - an embedded database.
+				<emphasis>Berkeley Berkeley DB</emphasis> - an embedded database. Version >= 4.6.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -167,7 +167,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		</para>
 		
 		<para>
-		Next, prepare to compile Kamailio with the db_berkeley module. 
+		Next, prepare to compile SIP-router with the db_berkeley module. 
 		In the directory /modules/db_berkeley, modify the Makefile to point 
 		to your distribution of Berkeley DB. You may also define 'BDB_EXTRA_DEBUG' 
 		to compile in extra debug logs. However, it is not a recommended 
@@ -196,10 +196,10 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		</itemizedlist>
 		
 		<para>
-		Installation of Kamailio is performed by simply running make install
+		Installation of SIP-router is performed by simply running make install
 		as root user of the main directory. This will install the binaries 
 		in /usr/local/sbin/.
-		If this was successful, openser control engine files should now 
+		If this was successful, SIP-router control engine files should now 
 		be installed as /usr/local/sbin/kamdbctl.
 		</para>
 		
@@ -207,13 +207,13 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		Decide where (on the filesystem) you want to install the Berkeley DB files.
 		For instance, '/usr/local/etc/kamailio/db_berkeley' directory.
 		Make note of this directory as we need to add this path to the kamctlrc file.
-		Note: Kamailio will not startup without these DB files.
+		Note: SIP-router will not startup without these DB files.
 		</para>
 		
 		<para>
 		Edit kamctlrc - There are two parameters in this file that should be 
-		configured before openserctrdb script can work properly: DBENGINE and DB_PATH.
-		Edit file: '/usr/local/etc/kamailio/kamctlrc'
+		configured before kamdbctl script can work properly: DBENGINE and DB_PATH.
+		Edit file: '/usr/local/etc/sip-router/kamctlrc'
 		</para>
 	        <programlisting  format="linespecific">
 		## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT, by default none is loaded
@@ -228,7 +228,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		The DB files are initially seeded with necessary meta-data. 
 		This is a good time to review the meta-data section details,
 		before making modifications to your tables dbschema.
-		By default, the files are installed in '/usr/local/share/kamailio/db_berkeley/openser'
+		By default, the files are installed in '/usr/local/share/sip-router/db_berkeley/sip-router'
 		By default these tables are created Read/Write and without any journalling as 
 		shown. These settings can be modified on a per table basis.
 		Note: If you plan to use kambdb_recover, you must change the LOGFLAGS.
@@ -252,7 +252,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		</programlisting>
 		
 		<para>
-		Modify the Kamailio configuration file to use db_berkeley module. 
+		Modify the SIP-router configuration file to use db_berkeley module. 
 		The database URL for modules must be the path to the directory where 
 		the Berkeley DB table-files are located, prefixed by "berkeley://", 
 		e.g., "berkeley:///usr/local/etc/kamailio/db_berkeley". 
@@ -499,7 +499,7 @@ username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(str) last_
 	<title>DB Maintaince Script : kamdbctl </title>
 	
 	<para>
-	Use the kamdbctl script for maintaining Kamailio Berkeley DB tables.
+	Use the kamdbctl script for maintaining SIP-router Berkeley DB tables.
 	This script assumes you have DBENGINE and DB_PATH setup correctly in kamctlrc.
 	Note Unsupported commands are- backup, restore, migrate, copy, serweb.
 	<example>
@@ -526,7 +526,7 @@ usage: kamdbctl create
 	The db_berkeley module uses the Concurrent Data Store (CDS) architecture. 
 	As such, no transaction or journaling is provided by the DB natively. 
 	The application kambdb_recover is specifically written to recover data from 
-	journal files that Kamailio creates.  
+	journal files that SIP-router creates.  
 	The kambdb_recover application requires an additional text file that contains 
 	the table schema.
 	</para>

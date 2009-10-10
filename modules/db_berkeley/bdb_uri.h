@@ -1,18 +1,18 @@
 /*
  * $Id$
  *
- * BDB Database Driver for SER
+ * BDB Database Driver for SIP-router
  *
  * Copyright (C) 2008 iptelorg GmbH
  *
- * This file is part of SER, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * SER is free software; you can redistribute it and/or modify it under the
+ * SIP-router is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
  *
- * SER is distributed in the hope that it will be useful, but WITHOUT ANY
+ * SIP-router is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
  * details.
@@ -29,17 +29,20 @@
  * @{
  */
 
-/** \file
- * The functions parsing and interpreting bdb: URIs.
+/*! \file
+ * Berkeley DB : The functions parsing and interpreting bdb: URIs.
+ *
+ * \ingroup database
  */
+
 
 #include "../../lib/srdb2/db_uri.h"
 #include "../../lib/srdb2/db_drv.h"
 
 #include <db.h>
 
-/** LDAP driver specific payload to attach to db_uri structures.
- * This is the LDAP specific structure that will be attached
+/*! BDB driver specific payload to attach to db_uri structures.
+ * This is the BDB specific structure that will be attached
  * to generic db_uri structures in the database API in SER. The
  * structure contains parsed elements of the ldap: URI.
  */
@@ -50,7 +53,7 @@ typedef struct bdb_uri {
 } bdb_uri_t, *bdb_uri_p;
 
 
-/** Create a new bdb_uri structure and parse the URI in parameter.
+/*! Create a new bdb_uri structure and parse the URI in parameter.
  * This function builds a new bdb_uri structure from the body of
  * the generic URI given to it in parameter.
  * @param uri A generic db_uri structure.
