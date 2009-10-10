@@ -58,28 +58,28 @@ Creating a server/client certificate
 3. copy ser1_cert.pem to your ser config. dir
 
 
-Setting ser to use the certificate
-----------------------------------
+Setting sip-router to use the certificate
+-----------------------------------------
 1. create the ca list file:
 	for each of your ca certificates that you intend to use do:
 		cat cacert.pem >>calist.pem
 	
-2. copy your ser certificate, private key and ca list file to your 
-	intended machine (preferably in your ser cfg. directory, this is the 
-	default place ser searches for)
+2. copy your sip-router certificate, private key and ca list file to your 
+	intended machine (preferably in your sip-router configuration directory, this is the 
+	default place sip-router searches for)
 	
-3. set up ser.cfg to use the certificate
+3. set up sip-router.cfg to use the certificate
 	if your ser certificate name is different from cert.pem or it is not
-	placed in ser cfg. directory, add to your ser.cfg:
+	placed in sip-router cfg. directory, add to your sip-router.cfg:
 		modparam("tls", "certificate", "/path/cert_file_name")
 	
-4. set up ser to use the private key
-	if your private key is not contained in the certificate (or the
-	 certificate name is not the default cert.pem), add to your ser.cfg:
+4. set up sip-router to use the private key
+	if your private key is not contained in the same file as the certificate (or the
+	 certificate name is not the default cert.pem), add to your sip-router.cfg:
 		modparam("tls", "private_key", "/path/private_key_file")
 	
-5. set up ser to use the ca list (optional)
-	add to your ser.cfg:
+5. set up sip-router to use the ca list (optional)
+	add to your sip-router.cfg:
 		modparam("tls", "ca_list", "/path/ca_list_file")
 	
 6. set up tls authentication options:

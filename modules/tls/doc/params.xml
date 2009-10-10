@@ -17,7 +17,7 @@
 	<section id="tls_method">
 	<title><varname>tls_method</varname> (string)</title>
 	<para>
-		Sets the SSL protocol method. Possible values are:
+		Sets the SSL/TLS protocol method. Possible values are:
 	</para>
 	<itemizedlist>
 			<listitem>
@@ -57,10 +57,10 @@ modparam("tls", "tls_method", "TLSv1")
 	<section id="certificate">
 	<title><varname>certificate</varname> (string)</title>
 	<para>
-		Sets the certificate file name. The certificate file can also contain the private key.
+		Sets the certificate file name. The certificate file can also contain the private key in PEM format.
 	</para>
 	<para>
-		<emphasis>Warning:</emphasis> try not to use certificate with keys longer then 1024 bytes. Longer keys will severely impact performance, in particular the tls connection rate.
+		<emphasis>Warning:</emphasis> try not to use certificate with keys longer then 1024 bytes. Longer keys will severely impact performance, in particular the TLS connection rate.
 	</para>
 	<para>
 		The default value is [SER_CFG_DIR]/cert.pem.
@@ -186,7 +186,7 @@ modparam("tls", "require_certificate", 1)
 		Sets the list of accepted ciphers. The list consists of cipher strings separated by colons. For more information on the cipher list format see the <ulink url="http://www.openssl.org/docs/apps/ciphers.html">cipher(1)</ulink> openssl man page.
 	</para>
 	<para>
-		The default value is not set (all the openssl supported ciphers are enabled).
+		The default value is not set (all the Openssl supported ciphers are enabled).
 	</para>
 	<example>
 	    <title>Set <varname>cipher_list</varname> parameter</title>
@@ -201,7 +201,7 @@ modparam("tls", "cipher_list", "HIGH")
 	<section id="send_timeout">
 	<title><varname>send_timeout</varname> (int)</title>
 	<para>
-		Sets the maximum interval of time after which ser will give up trying to send a message over tls (time after a tls send will be aborted and the corresponding tls connection closed). The value is in seconds.
+		Sets the maximum interval of time after which SIP-router will give up trying to send a message over TLS (time after a TLS send will be aborted and the corresponding TLS connection closed). The value is in seconds.
 	</para>
 	<para>
 		The default value is 120 s.
@@ -219,7 +219,7 @@ modparam("tls", "send_timeout", 1)
 	<section id="handshake_timeout">
 	<title><varname>handshake_timeout</varname> (int)</title>
 	<para>
-		Sets the maximum interval of time after which ser will give up trying to accept a tls connection or connect to a tls peer. The value is in seconds.
+		Sets the maximum interval of time after which SIP-router will give up trying to accept a TLS connection or connect to a TLS peer. The value is in seconds.
 	</para>
 	<para>
 		The default value is 120 s.
@@ -237,7 +237,7 @@ modparam("tls", "handshake_timeout", 1)
 	<section id="connection_timeout">
 	<title><varname>connection_timeout</varname> (int)</title>
 	<para>
-		Sets the amount of time after which an idle tls connection will be closed. This is similar to tcp_connection_lifetime. The value is expressed in seconds.
+		Sets the amount of time after which an idle TLS connection will be closed. This is similar to tcp_connection_lifetime. The value is expressed in seconds.
 	</para>
 	<para>
 		The default value is 10 min.
@@ -276,7 +276,7 @@ modparam("tls", "tls_disable_compression", 1)
 	<section id="tls_log">
 	<title><varname>tls_log</varname> (int)</title>
 	<para>
-		Sets the log level at which tls related messages will be logged.
+		Sets the log level at which TLS related messages will be logged.
 	</para>
 	<para>
 		The default value is 3.
@@ -285,7 +285,7 @@ modparam("tls", "tls_disable_compression", 1)
 		<title>Set <varname>tls_log</varname> parameter</title>
 		<programlisting>
 ...
-# ignore tls messages if ser is started with debug less than 10
+# ignore TLS messages if SIP-router is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 		</programlisting>
@@ -295,13 +295,13 @@ modparam("tls", "tls_log", 10)
 <section id="low_mem_threshold1">
 	<title><varname>low_mem_threshold1</varname> (integer)</title>
 	<para>
-		Sets the minimal free memory from which new tls connection will start to fail. The value is expressed in KB.
+		Sets the minimal free memory from which new TLS connection will start to fail. The value is expressed in KB.
 	</para>
 	<para>
 		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
 	</para>
 	<para>
-		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created tls connections (and hence on the process number).
+		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created TLS connections (and hence on the process number).
 	</para>
 	<para>
 		The following values have a special meaning:
@@ -314,7 +314,7 @@ modparam("tls", "tls_log", 10)
 			</listitem>
 			<listitem>
 				<para>
-					0 - disable (tls connections will not fail preemptively)
+					0 - disable (TLS connections will not fail preemptively)
 				</para>
 			</listitem>
 	</itemizedlist>
@@ -334,13 +334,13 @@ modparam("tls", "low_memory_threshold1", -1)
 <section id="low_mem_threshold2">
 	<title><varname>low_mem_threshold2</varname> (integer)</title>
 	<para>
-		Sets the minimal free memory from which tls operations on already established tls connections will start to fail preemptively.  The value is expressed in KB.
+		Sets the minimal free memory from which TLS operations on already established TLS connections will start to fail preemptively.  The value is expressed in KB.
 	</para>
 	<para>
 		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
 	</para>
 	<para>
-		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created tls connections (and hence on the process number).
+		If an ill-behaved openssl version is detected, a very conservative value is choosed, which depends on the maximum possible number of simultaneously created TLS connections (and hence on the process number).
 	</para>
 	<para>
 		The following values have a special meaning:
@@ -353,7 +353,7 @@ modparam("tls", "low_memory_threshold1", -1)
 			</listitem>
 			<listitem>
 				<para>
-					0 - disable (tls operations will not fail preemptively)
+					0 - disable (TLS operations will not fail preemptively)
 				</para>
 			</listitem>
 	</itemizedlist>
@@ -373,15 +373,15 @@ modparam("tls", "low_memory_threshold2", -1)
 	<section id="tls_force_run">
 	<title><varname>tls_force_run</varname> (boolean)</title>
 	<para>
-		If enabled ser will start even if some of the openssl sanity checks fail (turn it on at your own risk).
+		If enabled SIP-router will start even if some of the openssl sanity checks fail (turn it on at your own risk).
 	</para>
 	<para>
-		Currently failing any of the following sanity checks will not allow ser to start:
+		Currently failing any of the following sanity checks will not allow SIP-router to start:
 	</para>
 	<itemizedlist>
 			<listitem>
 				<para>
-					the version of the library the tls module was compiled with is "too different" from the library used at runtime. The versions should have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
+					the version of the library the TLS module was compiled with is "too different" from the library used at runtime. The versions should have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
 				</para>
 			</listitem>
 			<listitem>
@@ -409,7 +409,7 @@ modparam("tls", "tls_force_run", 11)
 		Sets the name of the TLS specific config file.
 	</para>
 	<para>
-		If set the tls module will load a special config file, in which different tls parameters can be specified on a per role (server or client) and domain basis (for now only IPs). The corresponding module parameters will be ignored.
+		If set the TLS module will load a special config file, in which different TLS parameters can be specified on a per role (server or client) and domain basis (for now only IPs). The corresponding module parameters will be ignored.
 	</para>
 	<para>
 		By default no config file is specified.
@@ -428,7 +428,7 @@ modparam("tls", "tls_force_run", 11)
 			<listitem><para>cipher_list</para></listitem>
 	</itemizedlist>
 	<para>
-		ser acts as a server when it accepts a connection and as a client when it initiates a new connection by itself (it connects to something).
+		SIP-router acts as a server when it accepts a connection and as a client when it initiates a new connection by itself (it connects to something).
 	</para>
 	<example>
 		<title>Short config file</title>
@@ -458,7 +458,7 @@ ca_list = local_ca.pem
 	</programlisting>
 	</example>
 	<para>
-		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed with the ser source (sip_router/modules/tls/tls.cfg).
+		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed with the SIP-router source (sip_router/modules/tls/tls.cfg).
 	</para>
 	<example>
 		<title>Set <varname>config</varname> parameter</title>
