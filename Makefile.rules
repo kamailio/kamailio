@@ -40,7 +40,7 @@ LIB_NOREBUILD_DEFS=
 # NOREBUILD_INCLUDES
 ifneq ($(strip $(filter-out $(NOREBUILD_DEFS),\
 		$(C_DEFS) $(DEFS))),$(strip $(CFG_DEFS)))
-#$(warning different defs: <$(strip $(DEFS))> != )
+#$(warning different defs: <$(strip $(C_DEFS) $(DEFS))> != )
 #$(warning               : <$(strip $(CFG_DEFS))>)
 $(shell rm -f makecfg.lst)
 endif
@@ -77,7 +77,7 @@ oecho=echo $(1)
 endif
 
 quote:= "
-escall= $(subst $$,$$$$,$(subst $(quote),\$(quote),$1))
+escall= $(subst $$,\$$,$(subst $(quote),\$(quote),$1))
 exec_cmd= $(if $($(quiet)_cmd_$(1)),\
 			@echo "$(call escall,$($(quiet)_cmd_$(1)))" ;) $(cmd_$(1))
 
@@ -185,11 +185,11 @@ librpath.lst: $(ALLDEP)
 	@echo LIB_RPATH_LST:=$(SER_RPATH_LST) >librpath.lst
 
 makecfg.lst:
-	@echo CFG_DEFS:=$(subst ',\', $(subst ",\",$(strip \
-			$(filter-out $(NOREBUILD_DEFS), $(C_DEFS) $(DEFS))))) >>$@
-	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\",$(strip \
+	@echo "CFG_DEFS:=$(call escall,$(strip \
+			$(filter-out $(NOREBUILD_DEFS), $(C_DEFS) $(DEFS))))" >>$@
+	@echo "CFG_INCLUDES:=$(call escall,$(strip \
 			$(filter-out $(NOREBUILD_INCLUDES),\
-				$(C_INCLUDES) $(INCLUDES))))) >>$@
+				$(C_INCLUDES) $(INCLUDES))))" >>$@
 .PHONY: all
 all: $(NAME) every-module
 
