@@ -35,15 +35,20 @@ A single module may provide a selection of this, maybe only one of them.
 
 Core modules
 ------------
+auth_identity
 auth_radius		Radius authentication
 avpops			Attribute-value pair operations ("variables")
 carrierroute		A telephony routing module
+cfg_db
+cfg_rpc
+ctl
 db_berkeley		Database :: Berkeley DB (Oracle)
 db_flatstore		Database :: Flatstore
 db_mysql		Database :: Mysql
 db_postgres		Database :: PostgreSQL
 dialplan		Dialplan management
 enum			Enum support
+iptrtpproxy		NAT traversal :: Kernel based RTP proxy
 lcr			Least cost routing
 mediaproxy		Nat traversal :: Mediaproxy (AG projects)
 mi_rpc			Management Interface :: XML RPC support
@@ -52,7 +57,9 @@ pdb			???
 peering			SIP peering between service providers
 tls			SSL/TLS support
 tm			SIP transaction support (stateful proxy)
+topoh
 utils			Various utilities (http query, xcap status)
+xmlrpc
 
 Kamailio modules
 ----------------
@@ -145,15 +152,11 @@ acc_radius
 acc_syslog
 auth
 auth_db
-auth_identity
 avp
 avp_db
 bdb
 blst
-cfg_db
-cfg_rpc
 cpl-c
-ctl
 db_ops
 dbg
 dbtext
@@ -165,7 +168,6 @@ eval
 exec			Proxy :: External script support (modify route set)
 fifo		
 gflags			Proxy :: Global flags
-iptrtpproxy		NAT traversal :: Kernel based RTP proxy
 jabber			IM :: Jabber gateway
 ldap			LDAP directory server support
 mangler
@@ -201,4 +203,3 @@ uri_db
 usrloc
 xcap
 xlog			Extended logging support
-xmlrpc
