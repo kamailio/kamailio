@@ -29,6 +29,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Configuration file parser
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 #include "tls_config.h"
 #include "tls_domain.h"

@@ -22,6 +22,13 @@
  * --------
  *  2007-01-22  created by andrei
  */
+/*!
+ * \file
+ * \brief SIP-router TLS support ::  tls locking and atomic ops related init functions
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 #ifndef _tls_locking_h
 #define _tls_locking_h

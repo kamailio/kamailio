@@ -18,6 +18,13 @@
  *    version).
  *  -- andrei
  */
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Zlib functions
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 
 #ifdef TLS_FIX_ZLIB_COMPRESSION

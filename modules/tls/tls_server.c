@@ -36,6 +36,13 @@
  *  2009-09-21  tls connection state is now kept in c->extra_data (no
  *               longer shared with tcp state) (andrei)
  */
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Main server part
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 #include <sys/poll.h>
 #include <openssl/err.h>

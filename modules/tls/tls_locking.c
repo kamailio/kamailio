@@ -22,6 +22,13 @@
  * --------
  *  2007-01-22  created by andrei
  */
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Locking
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 #include <stdlib.h> /* abort() */
 #include <openssl/crypto.h>

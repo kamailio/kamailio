@@ -35,6 +35,24 @@
  *  2007-02-23  openssl low memory bugs workaround (andrei)
  */
 
+/*! \defgroup tls SIP-router TLS support
+ *
+ * This modules implements SIP over TCP with TLS encryption.
+ * Make sure you read the README file that describes configuration
+ * of TLS for single servers and servers hosting multiple domains,
+ * and thus using multiple SSL/TLS certificates.
+ *
+ *
+ */
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Initialization
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
+
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <netinet/in_systm.h>

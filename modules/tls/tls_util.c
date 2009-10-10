@@ -37,6 +37,13 @@
 #include "../../globals.h"
 #include "tls_mod.h"
 #include "tls_util.h"
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Common functions
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 
 /*

@@ -32,6 +32,14 @@
 #include "../../dprint.h"
 #include "tls_verify.h"
 
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Certificate verification
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
+
 /* FIXME: remove this and use the value in domains instead */
 #define VERIFY_DEPTH_S 3
 

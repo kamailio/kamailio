@@ -39,6 +39,13 @@
  * 2007-02-09  updated to the new tls_hooks api and renamed tls hooks hanlder
  *              functions to avoid conflicts: s/tls_/tls_h_/   (andrei)
  */
+/*!
+ * \file
+ * \brief SIP-router TLS support :: Module interface
+ * \ingroup tls
+ * Module: \ref tls
+ */
+
 
 #include <sys/types.h>
 #include <sys/socket.h>
