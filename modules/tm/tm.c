@@ -30,19 +30,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -92,6 +87,58 @@
  *  2008-08-11  sctp support: t_relay_to_sctp, t_replicate_sctp,
  *               t_forward_nonack_sctp (andrei)
  *  2009-03-18  added a new param: auto_inv_100_reason (aheise) 
+ */
+
+/*!
+ * \file 
+ * \brief TM :: Module API (core)
+ * \ingroup tm
+ */
+
+/*!
+ * \defgroup tm TM :: Transaction stateful proxy support
+ *
+   The TM module enables stateful processing of SIP transactions. The main use
+   of stateful logic, which is costly in terms of memory and CPU, is some
+   services that inherently need state. 
+
+   For example, transaction-based accounting (module acc) needs to process 
+   transaction state as opposed to individual messages, and any kinds of 
+   forking must be implemented statefully. Other use of stateful processing 
+   is it trading CPU caused by retransmission processing for memory. 
+   That however only makes sense if CPU consumption per request is huge. 
+   For example, if you want to avoid costly DNS resolution for every 
+   retransmission of a request to an unresolvable destination, use stateful 
+   mode. Then, only the initial message burdens server by DNS queries, 
+   subsequent retransmissions will be dropped and will not result in more 
+   processes blocked by DNS resolution. The price is more memory consumption 
+   and higher processing latency.
+
+ *
+\code
+ * ***************************************************
+ * * Jiri's Source Memorial                          *
+ * *                                                 *
+ * * Welcome, pilgrim ! This is the greatest place   *
+ * * where dramatic changes happend. There are not   *
+ * * many places with a history like this, as there  *
+ * * are not so many people like Jiri, one of the    *
+ * * ser's fathers, who brought everywhere the wind  *
+ * * of change, the flood of clean-up. We all felt   *
+ * * his fatherly eye watching over us day and night.*
+ * *                                                 *
+ * * Please, preserve this codework heritage, as     *
+ * * it's unlikely for fresh, juicy pieces of code to  *
+ * * arise to give him the again the chance to       *
+ * * demonstrate his clean-up and improvement skills.*
+ * *                                                 *
+ * * Hereby, we solicit you to adopt this historical *
+ * * piece of code. For $100, your name will be      *
+ * * be printed in this banner and we will use       *
+ * * collected funds to create and display an ASCII  *
+ * * statue of Jiri  .                               *
+ * ***************************************************
+\endcode
  */
 
 
