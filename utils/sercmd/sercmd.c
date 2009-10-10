@@ -59,9 +59,9 @@
 #include "parse_listen_id.h"
 #include "license.h"
 
-#include "../../modules_s/ctl/ctl_defaults.h" /* default socket & port */
-#include "../../modules_s/ctl/binrpc.h"
-#include "../../modules_s/ctl/binrpc.c" /* ugly hack */
+#include "../../modules/ctl/ctl_defaults.h" /* default socket & port */
+#include "../../modules/ctl/binrpc.h"
+#include "../../modules/ctl/binrpc.c" /* ugly hack */
 
 
 #ifndef NAME
