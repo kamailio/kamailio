@@ -12,7 +12,9 @@ provide some modules in two versions, which means that we have three set of modu
  - modules_s: 	SER modules
 
 All modules are compatible with the core, so regardless if you are a new user or 
-an existing, you are free to make a choice between the three sets.
+an existing, you are free to make a choice between the three sets as well as
+mix and match between them.
+
 Note that if you are currently using one product, you want to select the module
 that exists in the K/S directories first to get a smooth upgrade path.
 
