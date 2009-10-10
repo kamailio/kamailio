@@ -21,6 +21,14 @@
  *
  */
 
+/*!
+ * \file
+ * \brief SIP-router utils :: Core
+ * \ingroup utils
+ * Module: \ref utils
+ */
+
+
 
 #ifndef UTILS_H
 #define UTILS_H

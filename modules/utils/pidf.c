@@ -27,8 +27,8 @@
  */
 
 /*! \file
- * \brief Kamailio Presence_XML ::  PIDF handling
- * \ingroup presence_xml
+ * \brief SIP-router ::  PIDF handling
+ * \ingroup utils
  */
 
 /**

@@ -26,6 +26,17 @@
  *
  */
 
+/*! \file
+ * \brief SIP-router utils :: Module core
+ * \ingroup utils
+ */
+
+/*! \defgroup Utils SIP-router :: Various utilities
+ *
+ */
+
+
+
 
 #include <curl/curl.h>
 

@@ -22,6 +22,13 @@
  */
 
 
+/*!
+ * \file
+ * \brief SIP-router utils :: 
+ * \ingroup utils
+ * Module: \ref utils
+ */
+
 #ifndef XCAP_AUTH_FUNCTIONS_H
 #define XCAP_AUTH_FUNCTIONS_H
 

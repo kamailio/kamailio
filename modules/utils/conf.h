@@ -20,6 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router utils :: 
+ * \ingroup utils
+ * Module: \ref utils
+ */
+
 
 #ifndef CONF_H
 #define CONF_H

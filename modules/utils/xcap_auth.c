@@ -27,6 +27,13 @@
  *  2009-06-03  util version (jh)
  */
 
+/*!
+ * \file
+ * \brief SIP-router utils :: 
+ * \ingroup utils
+ * Module: \ref utils
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -21,6 +21,13 @@
  *
  */
 
+/*!
+ * \file
+ * \brief SIP-router utils :: 
+ * \ingroup utils
+ * Module: \ref utils
+ */
+
 
 #include <curl/curl.h>
 
