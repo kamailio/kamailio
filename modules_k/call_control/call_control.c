@@ -110,7 +110,7 @@ static int CallControl(struct sip_msg *msg, char *str1, char *str2);
 static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
-static int postprocess_request(struct sip_msg *msg, void *_param);
+static int postprocess_request(struct sip_msg *, unsigned int, void *);
 
 int parse_param_init(unsigned int type, void *val);
 int parse_param_start(unsigned int type, void *val);
@@ -1144,7 +1144,7 @@ destroy(void) {
 // would remain dangling until it expires.
 //
 static int
-postprocess_request(struct sip_msg *msg, void *_param)
+postprocess_request(struct sip_msg *msg, unsigned int flags, void *_param)
 {
     CallInfo *call;
 
