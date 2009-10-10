@@ -20,7 +20,7 @@
 	</copyright>
     </sectioninfo>
 
-    <title>Auth Identity Module</title>
+    <title>SIP Authenticated Identity Module</title>
 
     <section>
 	<title>Overview</title>
@@ -47,7 +47,7 @@
 	<itemizedlist>
 	    <listitem>
 		<para>
-			authorizer and verifier support only SIP requests except for
+			authorizer and verifier support all SIP requests except for
 			<emphasis>CANCEL</emphasis> and <emphasis>REGISTER</emphasis>
 		</para>
 	    </listitem>
@@ -79,7 +79,7 @@
 			</listitem>
 			<listitem>
 				<para>
-					<emphasis>libcURL</emphasis> for HTTP, HTTPS functions
+					<emphasis>libcurl</emphasis> for HTTP, HTTPS functions
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -91,11 +91,11 @@
 	<section id="auth_identity.install_and_run">
 	<title>Installation And Running</title>
 	<para>
-		<emphasis>Authorizer</emphasis> service needs an opportunity to make the public key,
+		the <emphasis>Authorizer</emphasis> service needs to make the public key,
 		which conveyed in a certificate, available over HTTPS or HTTP for
 		verifiers. The domain the authorizer is responsible for and the
 		domain part of the URL of the certificate must be the same. This
-		service needs its private key too.
+		service needs access to the private key too.
 	</para>
     </section>
 
@@ -197,9 +197,9 @@ modparam("auth_identity","msg_timeout",600)
 				If a message, the auth service should authorize, contains Date header
 				then this function checks whether it falls in message timeout (set by
 				<emphasis>msg_timeout</emphasis> parameter). If there is not any Date
-				header then adds one. This function also checks whether the certificate
-				of auth service (set by <emphasis>certificate_path</emphasis> parameter)
-				has not been expired.
+				header then the module adds one. This function also checks whether the certificate
+				of the authentication service (set by <emphasis>certificate_path</emphasis> parameter)
+				has been expired.
 			</para>
 			<section>
 				<title>Dependencies</title>
@@ -215,8 +215,8 @@ modparam("auth_identity","msg_timeout",600)
 			</title>
 			<para>
 				Assembles digest-string from the message, calculates its SHA1 hash,
-				encrypt it with the private key (set by <emphasis>privatekey_path</emphasis>
-				parameter) of authorizer service, base64 encodes it and adds to the
+				encrypts it with the private key (set by <emphasis>privatekey_path</emphasis>
+				parameter) of the authorizer service, base64 encodes it and adds to the
 				outgoing message as the value of <emphasis>Identity</emphasis> header.
 				This function also adds Identity-Info header which contains an URI
 				(set by <emphasis>certificate_url</emphasis> parameter) from which
@@ -362,7 +362,7 @@ modparam("auth_identity","certificate_cache_limit",4096)
 			<para>
 				A file of trusted certificates. The file should contain multiple
 				certificates in PEM format concatenated together. It could be useful
-				for verifying a certificate not signed by a trusted CA.
+				for verifying a certificate signed by a private CA.
 			</para>
 			<para>
 				This parameter is optional. It has not got default value.
