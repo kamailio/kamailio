@@ -31,6 +31,13 @@
  *  2006-02-02  named flags support (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include <limits.h>
 #include "sr_module.h"

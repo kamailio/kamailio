@@ -30,6 +30,13 @@
  * 2003-04-04 phrase length corrected not to include trailer 0 (jiri)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include <stdio.h>
 #include "error.h"

@@ -24,6 +24,13 @@
  *  2009-03-05  use cfg framework (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "tcp_options.h"
 #include "dprint.h"
 #include "globals.h"

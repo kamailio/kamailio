@@ -34,6 +34,13 @@
  *               returns a lump_rpl**, making a specific lump removal much
  *               more easy (andrei)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #include <string.h>

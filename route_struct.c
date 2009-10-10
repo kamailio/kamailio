@@ -36,6 +36,13 @@
  *  2005-12-19  select framework added SELECT_O and SELECT_ST (mma)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #include  "route_struct.h"

@@ -35,6 +35,13 @@
  *  2007-06-07  added mlock_pages (no swap) support (andrei)
   *             added set_rt_prio() (andrei)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #include <sys/types.h>

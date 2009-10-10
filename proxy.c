@@ -34,6 +34,13 @@
   *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
   */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #include "config.h"

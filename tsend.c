@@ -34,6 +34,13 @@
  *  2006-02-03  tsend* will wait forever if timeout==-1 (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include <string.h>
 #include <errno.h>
 #include <sys/poll.h>

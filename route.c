@@ -53,6 +53,13 @@
  */
 
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <regex.h>

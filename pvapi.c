@@ -22,8 +22,11 @@
 
 /*!
  * \file
- * \brief PV API specification
+ * \brief SIP-router core ::  PV API specification
+ * \ingroup core
+ * Module: \ref core
  */
+
 
 #include <stdio.h>
 #include <string.h>

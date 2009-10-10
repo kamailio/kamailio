@@ -24,6 +24,13 @@
  *  2009-05-11  initial version (andrei)
 */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "rpc.h"
 #include "str_hash.h"
 #include "ut.h"

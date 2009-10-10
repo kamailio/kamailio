@@ -24,6 +24,13 @@
  *  2009-07-22  initial version: functions moved from tm/sip_msg.c (andrei)
 */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "sip_msg_clone.h"
 
 

@@ -41,6 +41,12 @@
  *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
 
 #include "sr_module.h"
 #include "dprint.h"

@@ -36,6 +36,13 @@
   *  2008-04-30  added MSG_WAITALL emulation for cygwin (andrei)
   */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #ifdef USE_TCP
 
 #include "pass_fd.h"

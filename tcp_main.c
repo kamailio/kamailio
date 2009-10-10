@@ -105,6 +105,13 @@
  *               send flags (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #ifdef USE_TCP
 

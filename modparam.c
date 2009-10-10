@@ -33,6 +33,13 @@
  * 2005-07-01  PARAM_STRING & PARAM_STR support
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "modparam.h"
 #include "dprint.h"

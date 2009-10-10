@@ -22,6 +22,13 @@ jku: added support to deal with vectors
 
 */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #define MD 5
 
 #include <stdio.h>

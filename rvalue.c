@@ -46,6 +46,13 @@
          expr == (type_of(expr))undef
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "rvalue.h"
 
 #include <stdlib.h> /* abort() */

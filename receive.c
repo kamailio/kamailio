@@ -40,6 +40,13 @@
  * 2006-11-29 nonsip_msg hooks called for non-sip msg (e.g HTTP) (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include <string.h>
 #include <stdlib.h>

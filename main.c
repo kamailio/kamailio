@@ -80,6 +80,20 @@
  *                (e.g. -l (eth0, 1.2.3.4, foo.bar) ) (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
+/*! \defgroup core SIP-router core
+ *
+ * This modules implements a SIP server with a module interface
+ * for extendability.
+ *
+ */
+
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -29,6 +29,13 @@
  */
 
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>

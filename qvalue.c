@@ -31,6 +31,14 @@
  * 2004-04-25 created (janakj)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core ::  Handling of the q value
+ * \ingroup core
+ * Module: \ref core
+ */
+
+
 #include "error.h"
 #include "qvalue.h"
 

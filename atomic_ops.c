@@ -24,6 +24,13 @@
  *  2006-03-08  created by andrei
  *  2007-05-11  added lock_set support (andrei)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "atomic_ops_init.h"
 #include "atomic_ops.h"

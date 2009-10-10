@@ -34,6 +34,13 @@
  *  2003-10-28  added extra checks (paranoia) for {anchor,del}_lump (andrei)
  *  2005-03-24  the type of type attribute changed to enum _hdr_types_t (janakj)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #include "data_lump.h"

@@ -32,6 +32,13 @@
  *  2007-01-26  date, identity, identity_info support added (gergo)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include <stdlib.h> 
 #include "select.h"
 #include "select_core.h"

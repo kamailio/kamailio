@@ -32,6 +32,13 @@
  *  2005-10-05  split from main.c  (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "signals.h"
 #include "dprint.h"
 

@@ -30,6 +30,13 @@
  *  2006-12-14  fixed calculation of body length (vlada) 
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #ifdef USE_STUN 
  
 #include <arpa/inet.h>

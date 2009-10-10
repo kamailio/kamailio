@@ -34,6 +34,13 @@
  *  2006-02-03  created by andrei
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "timer.h"
 #include "timer_funcs.h"

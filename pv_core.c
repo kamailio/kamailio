@@ -22,6 +22,13 @@
  * absolutely necessary (use/create a new module instead).
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "pv_core.h"
 #include "pvar.h"
 #include "str.h"

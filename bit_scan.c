@@ -23,6 +23,13 @@
  * --------
  *  2007-06-23  created by andrei
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "bit_scan.h"
 

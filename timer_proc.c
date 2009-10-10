@@ -25,6 +25,13 @@
  *  2009-03-10  initial version (andrei)
 */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "timer_proc.h"
 #include "pt.h"
 #include "mem/shm_mem.h"

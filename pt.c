@@ -38,6 +38,13 @@
  *  2007-07-04	added register_fds() and get_max_open_fds(() (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "pt.h"
 #include "tcp_init.h"

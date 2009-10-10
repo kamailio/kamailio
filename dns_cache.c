@@ -48,6 +48,13 @@
  *  2009-03-30  EBL record support (andrei)
  *  2009-04-01  PTR record support (andrei)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #ifdef USE_DNS_CACHE
 

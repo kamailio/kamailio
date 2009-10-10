@@ -24,6 +24,14 @@
  *  2007-05-14  created by andrei
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
+
 #include "ut.h"
 #include "dprint.h"
 #include "lock_ops.h"

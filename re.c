@@ -33,6 +33,13 @@
  *   2004-11-12  minor api extension, added *count (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core ::  regexp and regexp substitutions implementations
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "dprint.h"
 #include "mem/mem.h"

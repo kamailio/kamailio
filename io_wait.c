@@ -27,6 +27,13 @@
  *  2005-07-04  added /dev/poll (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #ifndef NO_IO_WAIT

@@ -29,6 +29,13 @@
  *  2007-12-03	Initial version (Miklos)
  *  2008-01-31  added DNS resolver parameters (Miklos)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "dprint.h"
 #ifdef USE_DST_BLACKLIST

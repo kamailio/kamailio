@@ -23,6 +23,13 @@
  *  2008-06-13  created by andrei
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "endianness.h"
 
 int _endian_test_int=1 /* used for the runtime endian tests */;

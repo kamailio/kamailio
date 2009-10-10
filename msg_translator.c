@@ -117,6 +117,13 @@
  *--andrei
 */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>

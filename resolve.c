@@ -49,6 +49,13 @@
  *  2009-04-01  PTR record support (andrei)
  */ 
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include <sys/types.h>
 #include <netinet/in.h>

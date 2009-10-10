@@ -44,6 +44,13 @@
  * 2009-04-09  tcp ev and tcp stats macros added (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #ifdef USE_TCP
 
 #include <stdio.h>

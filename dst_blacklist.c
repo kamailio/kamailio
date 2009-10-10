@@ -37,6 +37,13 @@
  *  2009-02-26  added dst_blacklist_su* variant (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #ifdef USE_DST_BLACKLIST
 

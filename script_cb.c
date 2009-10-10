@@ -38,6 +38,13 @@
  *		of route blocks. (Miklos)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include <stdlib.h>
 #include "script_cb.h"

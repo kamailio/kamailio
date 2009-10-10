@@ -29,6 +29,13 @@
  *              delete the lvalue (similar to perl)  (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "lvalue.h"
 #include "dprint.h"
 #include "route.h"

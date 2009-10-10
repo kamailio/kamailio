@@ -26,6 +26,13 @@
  *  2009-04-28  sctp stats & events macros (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #ifdef USE_SCTP
 
 #include <stdlib.h>

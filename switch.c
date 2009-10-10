@@ -25,6 +25,13 @@
  *  2009-02-19  string and RE switch support added (andrei)
 */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "switch.h"
 #include "rvalue.h"
 #include "route.h"

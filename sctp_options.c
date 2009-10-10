@@ -25,6 +25,13 @@
  *  2009-05-26  runtime cfg support (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include <string.h>
 #include <sys/types.h>
 #ifdef USE_SCTP

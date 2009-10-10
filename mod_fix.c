@@ -25,6 +25,13 @@
  *  2008-11-25  initial version (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #include "mod_fix.h"
 #include "mem/mem.h"
 

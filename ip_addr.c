@@ -34,6 +34,13 @@
  *  2004-10-01  mk_net fixes bad network addresses now (andrei)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include <stdlib.h>
 #include <stdio.h>

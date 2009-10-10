@@ -32,6 +32,13 @@
  * 2003-03-19: added support for route type in find_export (janakj)
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #ifdef STATS
 #include "stats.h"

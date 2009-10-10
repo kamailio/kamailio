@@ -26,6 +26,13 @@
  * --------
  *  2008-06-11  created by andrei
  */
+/*!
+ * \file
+ * \brief SIP-router core :: 
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #include "basex.h"
 
