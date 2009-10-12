@@ -1548,6 +1548,7 @@ int main_loop()
 #endif
 		/* init cfg, but without per child callbacks support */
 		cfg_child_no_cb_init();
+		cfg_ok=1;
 
 #ifdef EXTRA_DEBUG
 		for (r=0; r<*process_count; r++){
@@ -2088,7 +2089,6 @@ try_again:
 		LOG(L_CRIT, "could not declare the core configuration\n");
 		goto error;
 	}
-	cfg_ok=1;
 #ifdef USE_TCP
 	if (tcp_register_cfg()){
 		LOG(L_CRIT, "could not register the tcp configuration\n");
