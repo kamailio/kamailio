@@ -277,14 +277,13 @@ int pg_con_connect(db_con_t* con)
 	/* Override default notice processor */
 	PQsetNoticeProcessor(pcon->con, notice_processor, 0);
 	
-	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
-	    PQprotocolVersion(pcon->con),
 #ifdef HAVE_PGSERVERVERSION
-	    PQserverVersion(pcon->con)
+	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
+	    PQprotocolVersion(pcon->con), PQserverVersion(pcon->con));
 #else
-	    0
+	DBG("postgres: Connected. Protocol version=%d, Server version=%d\n", 
+	    PQprotocolVersion(pcon->con), 0 );
 #endif
-	    );
 
 	ret = timestamp_format(pcon->con);
 	if (ret == 1 || ret == -1) {
