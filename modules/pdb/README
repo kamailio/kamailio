@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
 
    This is a module for fast number portability handling. The client is
    this module and the server exists in the /utils/pdbt directory. The PDB
-   module and server supports load-balancing and aggressive timeouts.i
+   module and server supports load-balancing and aggressive timeouts.
    Normally it does not need more than a few ms to query the remote server
    and return the reply to the configuration script.
 
