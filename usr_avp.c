@@ -306,10 +306,10 @@ inline str* get_avp_name(avp_t *avp)
 			return 0;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			return &((struct str_int_data*)&avp->d.data[0])->name;
+			return &((struct str_int_data*)avp->d.p)->name;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
-			return &((struct str_str_data*)&avp->d.data[0])->name;
+			return &((struct str_str_data*)avp->d.p)->name;
 	}
 
 	LOG(L_ERR,"BUG:avp:get_avp_name: unknown avp type (name&val) %d\n",
@@ -331,15 +331,15 @@ inline void get_avp_val(avp_t *avp, avp_value_t *val)
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			val->n = ((struct str_int_data*)&avp->d.data[0])->val;
+			val->n = ((struct str_int_data*)avp->d.p)->val;
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
-			val->s = *(str*)&avp->d.data[0];
+			val->s = *(str*)avp->d.p;
 			break;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
-			val->s = ((struct str_str_data*)&avp->d.data[0])->val;
+			val->s = ((struct str_str_data*)avp->d.p)->val;
 			break;
 	}
 }

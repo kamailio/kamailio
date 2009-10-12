@@ -727,7 +727,7 @@ int fix_actions(struct action* a)
 						return E_UNSPEC;
 					}
 					*/
-					if ((ret=fix_rval_expr((void**)&rve))<0)
+					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
 						return ret;
 				}
 				if ( (t->val[1].type==ACTIONS_ST)&&(t->val[1].u.data) ){
@@ -800,7 +800,7 @@ int fix_actions(struct action* a)
 								rve->fpos.s_line, rve->fpos.s_col);
 						return E_UNSPEC;
 					}
-					if ((ret=fix_rval_expr((void**)&rve))<0)
+					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
 						return ret;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null while()"
@@ -841,7 +841,7 @@ int fix_actions(struct action* a)
 								rve->fpos.s_line, rve->fpos.s_col);
 						return E_UNSPEC;
 					}
-					if ((ret=fix_rval_expr((void**)&rve))<0)
+					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
 						return ret;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null drop/return"
