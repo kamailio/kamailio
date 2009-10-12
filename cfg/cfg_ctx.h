@@ -37,6 +37,17 @@
 #include "cfg.h"
 #include "cfg_struct.h"
 
+
+/* variable values */
+union cfg_var_value{
+	void* vp;
+	long vlong;
+	int vint;
+	str vstr;
+	unsigned char	vraw[1]; /* variable length */
+};
+
+
 /* linked list of variables with their new values */
 typedef struct _cfg_changed_var {
 	cfg_group_t	*group;
@@ -44,7 +55,7 @@ typedef struct _cfg_changed_var {
 	struct _cfg_changed_var	*next;
 
 	/* blob that contains the new value */
-	unsigned char	new_val[1];
+	union cfg_var_value new_val; /* variable size */
 } cfg_changed_var_t;
 
 /* callback that is called when a new group is declared */

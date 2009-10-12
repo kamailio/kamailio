@@ -573,7 +573,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 				if (changed->group != group) continue;
 
 				memcpy(	temp_handle + changed->var->offset,
-					changed->new_val,
+					changed->new_val.vraw,
 					cfg_var_size(changed->var));
 			}
 		} else {
@@ -595,7 +595,8 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	}
 
 	/* everything went ok, we can add the new value to the list */
-	size = sizeof(cfg_changed_var_t) + cfg_var_size(var) - 1;
+	size = sizeof(cfg_changed_var_t) -
+			sizeof(((cfg_changed_var_t*)0)->new_val) + cfg_var_size(var);
 	changed = (cfg_changed_var_t *)shm_malloc(size);
 	if (!changed) {
 		LOG(L_ERR, "ERROR: cfg_set_delayed(): not enough shm memory\n");
@@ -608,7 +609,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	switch (CFG_VAR_TYPE(var)) {
 
 	case CFG_VAR_INT:
-		*(int *)changed->new_val = (int)(long)v;
+		changed->new_val.vint = (int)(long)v;
 		break;
 
 	case CFG_VAR_STRING:
@@ -616,18 +617,18 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		s.s = v;
 		s.len = (s.s) ? strlen(s.s) : 0;
 		if (cfg_clone_str(&s, &s)) goto error;
-		*(char **)changed->new_val = s.s;
+		changed->new_val.vp = s.s;
 		break;
 
 	case CFG_VAR_STR:
 		/* clone the string to shm mem */
 		s = *(str *)v;
 		if (cfg_clone_str(&s, &s)) goto error;
-		memcpy(changed->new_val, &s, sizeof(str));
+		changed->new_val.vstr=s;
 		break;
 
 	case CFG_VAR_POINTER:
-		*(void **)changed->new_val = v;
+		changed->new_val.vp=v;
 		break;
 
 	}
@@ -804,7 +805,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 		}
 
 		memcpy(	p,
-			changed->new_val,
+			changed->new_val.vraw,
 			cfg_var_size(changed->var));
 	}
 
@@ -870,8 +871,8 @@ int cfg_rollback(cfg_ctx_t *ctx)
 
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
 		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
-			if (*(char **)(changed->new_val))
-				shm_free(*(char **)(changed->new_val));
+			if (changed->new_val.vp)
+				shm_free(changed->new_val.vp);
 		}
 		shm_free(changed);
 	}
@@ -1016,7 +1017,7 @@ int cfg_diff_next(void **h,
 			unsigned int *val_type)
 {
 	cfg_changed_var_t	*changed;
-	void	*p;
+	union cfg_var_value* pval;
 	static str	old_s, new_s;	/* we need the value even
 					after the function returns */
 
@@ -1031,29 +1032,30 @@ int cfg_diff_next(void **h,
 	/* use the module's handle to access the variable
 	It means that the variable is read from the local config
 	after forking */
-	p = *(changed->group->handle) + changed->var->offset;
+	pval = (union cfg_var_value*)
+			(*(changed->group->handle) + changed->var->offset);
 
 	switch (CFG_VAR_TYPE(changed->var)) {
 	case CFG_VAR_INT:
-		*old_val = (void *)(long)*(int *)p;
-		*new_val = (void *)(long)*(int *)changed->new_val;
+		*old_val = (void *)(long)pval->vint;
+		*new_val = (void *)(long)changed->new_val.vint;
 		break;
 
 	case CFG_VAR_STRING:
-		*old_val = (void *)*(char **)p;
-		*new_val = (void *)*(char **)changed->new_val;
+		*old_val = pval->vp;
+		*new_val = changed->new_val.vp;
 		break;
 
 	case CFG_VAR_STR:
-		memcpy(&old_s, p, sizeof(str));
+		old_s=pval->vstr;
 		*old_val = (void *)&old_s;
-		memcpy(&new_s, changed->new_val, sizeof(str));
+		new_s=changed->new_val.vstr;
 		*new_val = (void *)&new_s;
 		break;
 
 	case CFG_VAR_POINTER:
-		*old_val = *(void **)p;
-		*new_val = *(void **)changed->new_val;
+		*old_val = pval->vp;
+		*new_val = changed->new_val.vp;
 		break;
 
 	}
