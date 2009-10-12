@@ -66,11 +66,11 @@ str *rr_get_avp_cookies(void) {
 
 			if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
 				/* avp type str, int value */
-				avp_name = &  ((struct str_int_data*)&avp->d.data[0])->name;
+				avp_name = &  ((struct str_int_data*)avp->d.p)->name;
 			}
 			else if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == (AVP_NAME_STR|AVP_VAL_STR)) {
 				/* avp type str, str value */
-				avp_name = & ((struct str_str_data*)&avp->d.data[0])->name;
+				avp_name = & ((struct str_str_data*)avp->d.p)->name;
 			}
 			else
 				avp_name = 0;  /* dummy */
