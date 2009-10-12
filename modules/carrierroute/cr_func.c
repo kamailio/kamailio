@@ -267,11 +267,10 @@ static struct route_rule * get_rule_by_hash(const struct route_flags * rf,
 /**
  * does the work for rewrite_on_rule, writes the new URI into dest
  *
- * @param rs the route rule used for rewriting
- * @param dest the returned new destination URI
- * @param msg the sip message
- * @param user the localpart of the uri to be rewritten
- * @param descavp the name of the AVP where the description is stored
+ * @param rs the route rule used for rewriting, not NULL
+ * @param dest the returned new destination URI, not NULL
+ * @param msg the sip message, not NULL
+ * @param user the localpart of the uri to be rewritten, not NULL
  *
  * @return 0 on success, -1 on failure
  *
@@ -284,11 +283,23 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	int_str avp_val;
 	int strip = 0;
 
+	str l_user = *user;
+	
 	strip = (rs->strip > user->len ? user->len : rs->strip);
 	strip = (strip < 0 ? 0 : strip);
 
-	len = rs->local_prefix.len + user->len + rs->local_suffix.len +
-	      AT_SIGN.len + rs->host.len - strip;
+	if ( strcmp(user->s, "<null>") == 0 || user->len == 0)
+	{
+		l_user.s = NULL;
+		l_user.len = 0;
+		len = rs->host.len;
+		strip = 0;
+	}
+	else{
+		len = rs->local_prefix.len + l_user.len + rs->local_suffix.len +
+                       AT_SIGN.len + rs->host.len - strip;
+	}
+	
 	if (msg->parsed_uri.type == SIPS_URI_T) {
 		len += SIPS_URI.len;
 	} else {
@@ -309,11 +320,11 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		memcpy(p, SIP_URI.s, SIP_URI.len);
 		p += SIP_URI.len;
 	}
-	if (user->len) {
+	if (l_user.len) {
 		memcpy(p, rs->local_prefix.s, rs->local_prefix.len);
 		p += rs->local_prefix.len;
-		memcpy(p, user->s + strip, user->len - strip);
-		p += user->len - strip;
+		memcpy(p, l_user.s + strip, l_user.len - strip);
+		p += l_user.len - strip;
 		memcpy(p, rs->local_suffix.s, rs->local_suffix.len);
 		p += rs->local_suffix.len;
 		memcpy(p, AT_SIGN.s, AT_SIGN.len);
