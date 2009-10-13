@@ -341,8 +341,8 @@ cmodules=$(foreach mods,$(modules_dirs), $($(mods)))
 
 # which utils need compilation (directory path) and which to install
 # (full path including file name)
-utils_compile=	utils/gen_ha1 utils/sercmd
-utils_bin_install=	utils/gen_ha1/gen_ha1 # sercmd is now installed by ctl
+utils_compile=	utils/sercmd
+utils_bin_install=	utils/kamctl # sercmd is now installed by ctl
 utils_script_install=
 
 # This is the list of files to be installed into the arch-independent
@@ -836,29 +836,11 @@ install-every-module-man: $(foreach mods,$(modules_dirs),install-$(mods)-man)
 
 install-utils: utils $(bin_prefix)/$(bin_dir)
 	@for r in $(utils_bin_install) "" ; do \
-		if [ -n "$$r" ]; then \
-			if [ -f "$$r" ]; then \
-				$(call try_err, $(INSTALL_TOUCH) \
-						$(bin_prefix)/$(bin_dir)/`basename "$$r"` ); \
-				$(call try_err,\
-					$(INSTALL_BIN)  "$$r"  $(bin_prefix)/$(bin_dir) ); \
+		if [ -d "$$r" ]; then \
+			if [ -f "$$r/Makefile" ]; then \
+				make -C "$$r" install; \
 			else \
-				echo "ERROR: $$r not compiled" ; \
-				if [ ${err_fail} = 1 ] ; then \
-					exit 1; \
-				fi ; \
-			fi ;\
-		fi ; \
-	done; true
-	@for r in $(utils_script_install) "" ; do \
-		if [ -n "$$r" ]; then \
-			if [ -f "$$r" ]; then \
-				$(call try_err, $(INSTALL_TOUCH) \
-						$(bin_prefix)/$(bin_dir)/`basename "$$r"` ); \
-				$(call try_err,\
-					$(INSTALL_SCRIPT)  "$$r"  $(bin_prefix)/$(bin_dir) ); \
-			else \
-				echo "ERROR: $$r not compiled" ; \
+				echo "ERROR: $$r has no Makefile to install" ; \
 				if [ ${err_fail} = 1 ] ; then \
 					exit 1; \
 				fi ; \
