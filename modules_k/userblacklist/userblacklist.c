@@ -380,6 +380,8 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 {
 	char *table = (char *)(*arg);
 	struct dtrie_node_t *node = NULL;
+	struct check_blacklist_fs_t *new_arg;
+	
 	if (arg_no != 1) {
 		LM_ERR("wrong number of parameters\n");
 		return -1;
@@ -402,7 +404,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 		return -1;
 	}
 
-	struct check_blacklist_fs_t *new_arg = (struct check_blacklist_fs_t*)pkg_malloc(sizeof(struct check_blacklist_fs_t));
+	new_arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
 	if (!new_arg) {
 		PKG_MEM_ERROR;
 		return -1;
@@ -475,15 +477,17 @@ static int reload_sources(void)
 {
 	int result = 0;
 	str tmp;
+	struct source_t *src;
+	int n;
 
 	/* critical section start: avoids dirty reads when updating d-tree */
 	lock_get(lock);
 
-	struct source_t *src = sources->head;
+	src = sources->head;
 	while (src) {
 		tmp.s = src->table;
 		tmp.len = strlen(src->table);
-		int n = db_reload_source(&tmp, src->dtrie_root);
+		n = db_reload_source(&tmp, src->dtrie_root);
 		if (n < 0) {
 			LM_ERR("cannot reload source from '%.*s'\n", tmp.len, tmp.s);
 			result = -1;

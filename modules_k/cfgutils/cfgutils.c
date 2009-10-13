@@ -488,11 +488,6 @@ error:
   */
 static int MD5File(char *dest, const char *file_name)
 {
-	if (!dest || !file_name) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
 	MD5_CTX context;
 	FILE *input;
 	unsigned char buffer[32768];
@@ -500,6 +495,12 @@ static int MD5File(char *dest, const char *file_name)
 	unsigned int counter, size;
 	
 	struct stat stats;
+	
+	if (!dest || !file_name) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
     if (stat(file_name, &stats) != 0) {
 		LM_ERR("could not stat file %s\n", file_name);
 		return -1;
@@ -588,12 +589,13 @@ static int get_prob(struct sip_msg *bar, char *foo1, char *foo2)
 
 static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 {
+	double tmp;
 	/* most of the time this will be disabled completly. Tis will also fix the
 	 * problem with the corner cases if rand() returned zero or RAND_MAX */
 	if ((*probability) == 0) return -1;
 	if ((*probability) == 100) return 1;
 
-	double tmp = ((double) rand() / RAND_MAX);
+	tmp = ((double) rand() / RAND_MAX);
 	LM_DBG("generated random %f\n", tmp);
 	if (tmp < ((double) (*probability) / 100)) {
 		LM_DBG("return true\n");

@@ -46,6 +46,10 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	db_key_t key[2] = { &userblacklist_username_col, &userblacklist_domain_col };
 
 	db_val_t val[2];
+	db1_res_t *res;
+	int i;
+	int n = 0;
+	void *nodeflags;
 	VAL_TYPE(val) = VAL_TYPE(val + 1) = DB1_STR;
 	VAL_NULL(val) = VAL_NULL(val + 1) = 0;
 	VAL_STR(val).s = username->s;
@@ -53,10 +57,6 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	VAL_STR(val + 1).s = domain->s;
 	VAL_STR(val + 1).len = domain->len;
 
-	db1_res_t *res;
-	int i;
-	int n = 0;
-	void *nodeflags;
 	
 	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
 		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);

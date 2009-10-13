@@ -84,8 +84,9 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	LM_DBG("...\n");
 	bind_pua_t bind_pua;
+	
+	LM_DBG("...\n");
 	
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{

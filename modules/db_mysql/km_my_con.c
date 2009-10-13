@@ -136,9 +136,10 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
  */
 void db_mysql_free_connection(struct pool_con* con)
 {
+	struct my_con * _c;
+	
 	if (!con) return;
 
-	struct my_con * _c;
 	_c = (struct my_con*) con;
 
 	if (_c->res) mysql_free_result(_c->res);

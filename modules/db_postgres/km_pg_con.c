@@ -108,9 +108,10 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 void db_postgres_free_connection(struct pool_con* con)
 {
 
+	struct pg_con * _c;
+	
 	if (!con) return;
 
-	struct pg_con * _c;
 	_c = (struct pg_con*)con;
 
 	if (_c->res) {
