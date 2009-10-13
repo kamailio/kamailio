@@ -339,15 +339,27 @@ cmodules=$(foreach mods,$(modules_dirs), $($(mods)))
 #modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 
 
-# which utils need compilation (directory path) and which to install
-# (full path including file name)
-utils_compile=	utils/gen_ha1 utils/sercmd
-utils_bin_install=	utils/gen_ha1/gen_ha1 # sercmd is now installed by ctl
-utils_script_install=
 
-# This is the list of files to be installed into the arch-independent
-# shared directory (by default /usr/local/share/$(MAIN_NAME))
-share_install=
+# list of utils directories that should be compiled by make utils
+C_COMPILE_UTILS=	utils/gen_ha1 utils/sercmd
+# list of binaries that should be installed alongside
+# (they should be created after make utils, see C_COMPILE_UTILS)
+C_INSTALL_BIN=	utils/gen_ha1/gen_ha1 # sercmd is now installed by ctl
+
+# which utils know to install themselves and should be installed
+# along the core (list of utils directories)
+C_INSTALL_UTILS=
+# list of scripts that should be installed along the core 
+# (here a script is something that doesn't have a Makefile)
+C_INSTALL_SCRIPTS=
+# list of extra configs that should be installed along the core
+# Note: all the paths of the form /usr/*lib/$(CFG_NAME)/<module_dir>
+# will be updated to the directory where the modules will be installed.
+C_INSTALL_CFGS=
+# list of files that should be installed in the arch-independent 
+# directory (by default /usr/local/share/$(MAIN_NAME)))
+C_INSTALL_SHARE=
+
 
 
 
@@ -635,7 +647,7 @@ $(extra_objs):
 
 .PHONY: utils
 utils:
-	@for r in $(utils_compile) "" ; do \
+	@for r in $(C_COMPILE_UTILS) "" ; do \
 		if [ -n "$$r" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
@@ -801,6 +813,30 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample \
 				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
 		fi
+		# other configs
+		@for r in $(C_INSTALL_CFGS) ; do \
+			if [ -n "$$r" ]; then \
+				if [ -f "$$r" ]; then \
+					n=`basename "$$r"` ; \
+					sed $(foreach m,$(modules_dirs),\
+							-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+						< "$$r" \
+						> "$(cfg_prefix)/$(cfg_dir)$$n.sample" ; \
+					chmod 644 "$(cfg_prefix)/$(cfg_dir)$$n.sample" ; \
+					if [ -z "${skip_cfg_install}" -a \
+							! -f "$(cfg_prefix)/$(cfg_dir)$$n" ]; \
+					then \
+						mv -f "$(cfg_prefix)/$(cfg_dir)$$n.sample" \
+								"$(cfg_prefix)/$(cfg_dir)$$n"; \
+					fi ; \
+				else \
+					echo "ERROR: $$r not found" ; \
+					if [ ${err_fail} = 1 ] ; then \
+						exit 1; \
+					fi ; \
+				fi ; \
+			fi ; \
+		done; true
 		# radius dictionary
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
 		$(INSTALL_CFG) etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)
@@ -811,7 +847,7 @@ install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 
 
 install-share: $(share_prefix)/$(share_dir)
-	@for r in $(share_install) "" ; do \
+	@for r in $(C_INSTALL_SHARE) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
 				$(call try_err, $(INSTALL_TOUCH) \
@@ -835,7 +871,7 @@ install-every-module-doc: $(foreach mods,$(modules_dirs),install-$(mods)-doc)
 install-every-module-man: $(foreach mods,$(modules_dirs),install-$(mods)-man)
 
 install-utils: utils $(bin_prefix)/$(bin_dir)
-	@for r in $(utils_bin_install) "" ; do \
+	@for r in $(C_INSTALL_BIN) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
 				$(call try_err, $(INSTALL_TOUCH) \
@@ -850,7 +886,7 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 			fi ;\
 		fi ; \
 	done; true
-	@for r in $(utils_script_install) "" ; do \
+	@for r in $(C_INSTALL_SCRIPTS) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
 				$(call try_err, $(INSTALL_TOUCH) \
@@ -864,6 +900,9 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 				fi ; \
 			fi ;\
 		fi ; \
+	done; true
+	@for ut in $(C_INSTALL_UTILS) ; do \
+		$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
 	done; true
 
 
