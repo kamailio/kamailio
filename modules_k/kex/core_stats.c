@@ -36,6 +36,7 @@
 
 #include "../../lib/kcore/statistics.h"
 #include "../../lib/kmi/mi.h"
+#include "../../events.h"
 #include "../../dprint.h"
 #include "../../timer.h"
 #include "../../parser/msg_parser.h"
@@ -127,6 +128,49 @@ static int km_cb_rpl_stats(struct sip_msg *msg,
 	return 1;
 }
 
+
+static int sts_update_core_stats(void *data)
+{
+	int type;
+
+	type = (int)data;
+	switch(type) {
+		case 1:
+			/* fwd_requests */
+			update_stat(fwd_reqs, 1);
+		break;
+		case 2:
+			/* fwd_replies */
+			update_stat(fwd_rpls, 1);
+		break;
+		case 3:
+			/* drop_requests */
+			update_stat(drp_reqs, 1);
+		break;
+		case 4:
+			/* drop_replies */
+			update_stat(drp_rpls, 1);
+		break;
+		case 5:
+			/* err_requests */
+			update_stat(err_reqs, 1);
+		break;
+		case 6:
+			/* err_replies */
+			update_stat(err_rpls, 1);
+		break;
+		case 7:
+			/* bad_URIs_rcvd */
+			update_stat(bad_URIs, 1);
+		break;
+		case 8:
+			/* bad_msg_hdr */
+			update_stat(bad_msg_hdr, 1);
+		break;
+	}
+	return 0;
+}
+
 int register_core_stats(void)
 {
 	/* register core statistics */
@@ -147,6 +191,7 @@ int register_core_stats(void)
 		LM_ERR("failed to register PRE request callback\n");
 		return -1;
 	}
+	sr_event_register_cb(SREV_CORE_STATS, sts_update_core_stats);
 
 	return 0;
 }
