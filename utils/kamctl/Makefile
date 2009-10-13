@@ -5,6 +5,8 @@ include $(COREPATH)/Makefile.defs
 all:
 		@echo "No compilation needed for kamctl"
 
+install-if-newer: install
+
 install: install-cfg install-bin install-man install-modules
 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
