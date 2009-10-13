@@ -25,12 +25,14 @@
 
 #define SREV_NET_DATA_IN	1
 #define SREV_NET_DATA_OUT	2
+#define SREV_CORE_STATS		3
 
 typedef int (*sr_event_cb_f)(void *data);
 
 typedef struct sr_event_cb {
 	sr_event_cb_f net_data_in;
 	sr_event_cb_f net_data_out;
+	sr_event_cb_f core_stats;
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);
