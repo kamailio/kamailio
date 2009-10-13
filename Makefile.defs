@@ -113,7 +113,7 @@ $(info normal Makefile.defs exec)
 endif # verbose
 
 # flavour: sip-router, ser or kamailio
-FLAVOUR=sip-router
+FLAVOUR=kamailio
 
 ifeq ($(FLAVOUR),sip-router)
 # main binary name
@@ -139,10 +139,10 @@ SCR_NAME=sip-router
 INSTALL_FLAVOUR=$(FLAVOUR)
 
 #version number
-VERSION = 2
-PATCHLEVEL = 99
-SUBLEVEL =  99
-EXTRAVERSION = -pre3
+VERSION = 3
+PATCHLEVEL = 0
+SUBLEVEL = 0
+EXTRAVERSION = -pre1
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -637,6 +637,7 @@ endif
 ifeq ($(TLS_HOOKS), 1)
 	C_DEFS+= -DUSE_TLS -DTLS_HOOKS
 endif
+KMSTATS ?= 1
 ifeq ($(KMSTATS), 1)
 	C_DEFS+= -DSTATISTICS
 endif
