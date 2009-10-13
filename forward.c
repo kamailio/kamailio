@@ -72,6 +72,7 @@
 #include "config.h"
 #include "parser/msg_parser.h"
 #include "route.h"
+#include "events.h"
 #include "dprint.h"
 #include "globals.h"
 #include "cfg_core.h"
@@ -581,6 +582,8 @@ end:
 #endif
 	if (buf) pkg_free(buf);
 	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
+	if(ret==0)
+		sr_event_exec(SREV_CORE_STATS, (void*)1);
 	return ret;
 }
 
