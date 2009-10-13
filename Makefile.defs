@@ -115,6 +115,12 @@ endif # verbose
 # flavour: sip-router, ser or kamailio
 FLAVOUR=kamailio
 
+#prefix for various configs and scripts
+#config name/name-prefix for distributed configs
+CFG_NAME=sip-router
+#config name/name-prefix for distributed scripts
+SCR_NAME=sip-router
+
 ifeq ($(FLAVOUR),sip-router)
 # main binary name
 MAIN_NAME=ser
@@ -124,16 +130,11 @@ MAIN_NAME=ser
 else ifeq ($(FLAVOUR),kamailio)
 # main binary name
 MAIN_NAME=kamailio
+CFG_NAME=kamailio
 else # default:
 # main binary name
 MAIN_NAME=sip-router
 endif
-
-#prefix for various configs and scripts
-#config name/name-prefix for distributed configs
-CFG_NAME=sip-router
-#config name/name-prefix for distributed scripts
-SCR_NAME=sip-router
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
