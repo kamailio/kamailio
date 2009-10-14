@@ -34,7 +34,7 @@ CFG=18.cfg
 echo -e "debug=3" > $CFG
 
 # start:
-../$BIN -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
+$BIN -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
 
 ret=$?
 
@@ -44,4 +44,7 @@ sleep 1
 $KILL
 
 rm $CFG
+rm -f ./pid.out
+rm -f ./pgid.out 
+
 exit $ret
