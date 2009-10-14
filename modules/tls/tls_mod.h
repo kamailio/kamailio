@@ -38,7 +38,7 @@
 
 
 #ifndef _TLS_MOD_H
-#iefine _TLS_MOD_H
+#define _TLS_MOD_H
 
 #include "../../str.h"
 #include "../../locking.h"
