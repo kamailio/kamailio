@@ -53,7 +53,7 @@
     <column>
         <name>tag</name>
         <type>string</type>
-        <size>32</size>
+        <size>64</size>
         <null/>
         <description>Tag</description>
     </column>
