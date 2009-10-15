@@ -5,7 +5,6 @@ d none etc/ser 0755 bin bin
 e none etc/ser/dictionary.ser 0644 bin bin
 e none etc/ser/ser.cfg 0644 bin bin
 d none sbin 0755 bin bin
-f none sbin/gen_ha1 0755 bin bin
 f none sbin/ser 0755 bin bin
 f none sbin/ser_mysql.sh 0755 bin bin
 f none sbin/serctl 0755 bin bin

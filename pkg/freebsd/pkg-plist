@@ -47,7 +47,6 @@ lib/ser/modules/uri_db.so
 lib/ser/modules/usrloc.so
 lib/ser/modules/xlog.so
 lib/ser/modules/xmlrpc.so
-sbin/gen_ha1
 sbin/ser
 sbin/ser_mysql.sh
 sbin/serunix

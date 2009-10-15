@@ -220,7 +220,6 @@ sbin/insserv etc/init.d/
 %{_sbindir}/ser
 %{_sbindir}/serctl
 %{_sbindir}/serunix
-%{_sbindir}/gen_ha1
 /usr/sbin/rcser
 
 %{_mandir}/man5/*

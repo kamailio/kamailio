@@ -56,10 +56,8 @@ src_install () {
 	# fix what the Makefile don't do
 	exeinto /usr/sbin
 	newexe scripts/harv_ser.sh harv_ser.sh
-	rm ${D}/usr/sbin/gen_ha1
 	if [ "`use mysql`" ]; then
 		exeinto /usr/bin
-		newexe utils/gen_ha1/gen_ha1 gen_ha1
 	else
 		rm ${D}/usr/sbin/ser_mysql.sh
 	fi

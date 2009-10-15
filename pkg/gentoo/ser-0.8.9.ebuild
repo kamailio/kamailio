@@ -32,8 +32,6 @@ src_compile() {
 		prefix=${D}/ \
 		cfg-prefix=/ \
 		cfg-target=/etc/ser/ || die
-	cd utils/gen_ha1
-	make all || die
 }
 
 src_install () {
@@ -54,7 +52,6 @@ src_install () {
 	exeinto /etc/init.d
 	newexe gentoo/ser.init ser
 	exeinto /usr/bin
-	newexe utils/gen_ha1/gen_ha1 gen_ha1
 	exeinto /usr/sbin
 	newexe scripts/harv_ser.sh harv_ser.sh
 	newexe scripts/sc serctl
