@@ -192,10 +192,10 @@ static void remove_timeout(unsigned int index)
 static void insert(str callid)
 {
 	unsigned int index = hash(callid.s, callid.len) & HASHTABLEMASK;
-
+	struct ring_record_t* rr;
+	
 	remove_timeout(index);
-
-	struct ring_record_t* rr = shm_malloc(sizeof(struct ring_record_t));
+	rr = shm_malloc(sizeof(struct ring_record_t));
 	assert(rr);
 
 	rr->next = NULL;
@@ -224,10 +224,11 @@ static void insert(str callid)
 static int contains(str callid)
 {
 	unsigned int index = hash(callid.s, callid.len) & HASHTABLEMASK;
+	struct ring_record_t* rr;
 
 	remove_timeout(index);
 
-	struct ring_record_t* rr = (*hashtable)[index].head;
+	rr = (*hashtable)[index].head;
 	while (rr) {
 		if (strncmp(rr->callid, callid.s, callid.len) == 0) return 1;
 		rr = rr->next;
@@ -245,25 +246,38 @@ static int conv183(struct sip_msg *msg)
 	/* content-length and content-type headers are removed */
 	char *del1_start = strstr(msg->buf, "Content-Length:");
 	char *del2_start = strstr(msg->buf, "Content-Type:");
+	char *del1_end;
+	char *del2_end;
+	char *eoh;
+	char *chunk1_start;
+	int chunk1_len;
+	char *chunk1_dst;
+	char *chunk2_start;
+	int chunk2_len;
+	char *chunk2_dst;
+	char *chunk3_start;
+	int chunk3_len;
+	char *chunk3_dst;
+	
 	if (del1_start>del2_start) {
 		char *tmp = del1_start;
 		del1_start = del2_start;
 		del2_start = tmp;
 	}
 
-	char *del1_end = NULL;
+	del1_end = NULL;
 	if (del1_start) {
 		del1_end = strstr(del1_start, "\r\n");
 		if (del1_end) del1_end+=2;
 	}
-	char *del2_end = NULL;
+	del2_end = NULL;
 	if (del2_start) {
 		del2_end = strstr(del2_start, "\r\n");
 		if (del2_end) del2_end+=2;
 	}
 
 	/* 180 message does not need session description */
-	char *eoh = strstr(msg->buf, "\r\n\r\n");
+	eoh = strstr(msg->buf, "\r\n\r\n");
 	if (eoh) eoh+=2;
 
 	if ((!del1_start) || (!del2_start) || (!del1_end) || (!del2_end) || (!eoh)) {
@@ -288,17 +302,17 @@ static int conv183(struct sip_msg *msg)
 	strncpy(msg->first_line.u.reply.reason.s, "Ringing                                           ", msg->first_line.u.reply.reason.len);
 
 	/* calculate addresses of chunks to be moved */
-	char *chunk1_start = del1_end;
-	int chunk1_len     = del2_start-del1_end;
-	char *chunk1_dst   = del1_start;
+	chunk1_start = del1_end;
+	chunk1_len     = (int)(long)(del2_start-del1_end);
+	chunk1_dst   = del1_start;
 
-	char *chunk2_start = del2_end;
-	int chunk2_len     = eoh-del2_end;
-	char *chunk2_dst   = chunk1_dst+chunk1_len;
+	chunk2_start = del2_end;
+	chunk2_len     = (int)(long)(eoh-del2_end);
+	chunk2_dst   = chunk1_dst+chunk1_len;
 
-	char *chunk3_start = "Content-Length: 0\r\n\r\n";
-	int chunk3_len     = strlen(chunk3_start);
-	char *chunk3_dst   = chunk2_dst+chunk2_len;
+	chunk3_start = "Content-Length: 0\r\n\r\n";
+	chunk3_len     = strlen(chunk3_start);
+	chunk3_dst   = chunk2_dst+chunk2_len;
 
 	// move chunks
 	memmove(chunk1_dst, chunk1_start, chunk1_len);

@@ -123,7 +123,7 @@ static int fixup_stat(void** param, int param_no)
 		/* is it pv? */
 		if (s.s[0]=='$') {
 			if (fixup_pvar_null(param, 1)!=0) {
-				LM_ERR("invalid pv %.s as parameter\n",s.s);
+				LM_ERR("invalid pv %s as parameter\n",s.s);
 				return E_CFG;
 			}
 			sopv->pv = (pv_spec_t*)(*param);

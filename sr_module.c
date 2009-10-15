@@ -1195,7 +1195,7 @@ void fparam_free_contents(fparam_t* fp)
 		case FPARAM_INT:
 		case FPARAM_STR:
 			/* nothing to do */
-			return;
+			break;
 		case FPARAM_REGEX:
 			if (fp->v.regex){
 				regfree(fp->v.regex);
@@ -1230,6 +1230,10 @@ void fparam_free_contents(fparam_t* fp)
 				fp->v.pve=0;
 			}
 			break;
+	}
+	if (fp->orig){
+		pkg_free(fp->orig);
+		fp->orig=0;
 	}
 }
 

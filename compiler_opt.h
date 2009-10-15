@@ -52,7 +52,7 @@
 
 #else /* __GNUC__ */
 
-#warning "No compiler optimizations supported try gcc 4.x"
+/* #warning "No compiler optimizations supported try gcc 4.x" */
 #define likely(expr) (expr)
 #define unlikely(expr) (expr)
 

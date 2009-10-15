@@ -399,6 +399,7 @@ static int mod_init(void)
     str s;
     unsigned short avp_flags;
     unsigned int i;
+    db1_con_t* dbh;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -556,7 +557,6 @@ static int mod_init(void)
     }
 
     /* Check table version */
-    db1_con_t* dbh;
     if (lcr_dbf.init==0){
 	LM_CRIT("unbound database\n");
 	return -1;
@@ -1277,7 +1277,7 @@ int reload_gws_and_lcrs(int lcr_id)
 	    first_gw = find_first_gw(gw_grps, grp_cnt, grp_id);
 	    if (first_gw == 0) {
 		LM_ERR("gw grp_id <%u> of prefix <%.*s> has no gateways\n",
-		       grp_id, prefix_len, prefix);
+		       grp_id, (int)prefix_len, prefix);
 		goto lcr_err;
 	    }
 	    if ((VAL_NULL(ROW_VALUES(row) + 3) == 1) ||
@@ -1892,7 +1892,7 @@ static int generate_uris(char *r_uri, str *r_uri_user, unsigned int *r_uri_len,
     destroy_avp(gu_avp);
 	
     LM_DBG("r_uri <%.*s>, dst_uri <%.*s>\n",
-	   *r_uri_len, r_uri, *dst_uri_len, dst_uri);
+	   (int)*r_uri_len, r_uri, (int)*dst_uri_len, dst_uri);
 
     return 1;
 }
