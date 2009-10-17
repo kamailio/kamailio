@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="ctl" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -31,27 +37,27 @@
 	<section id="ctl.overview">
 	<title>Overview</title>
 	<para>
-		This module implements the binrpc transport interface for ser rpcs.
+		This module implements the binrpc transport interface for &ser; rpcs.
 		It supports various transports over which it speaks binrpc:
-		unix datagram sockets, unix stream sockets, udp and tcp.
-		It also supports a backward compatible fifo interface (using the old
-		ser fifo protocol).
+		Unix datagram sockets, Unix stream sockets, UDP and TCP.
+		It also supports a backward compatible FIFO interface (using the old
+		ser FIFO protocol).
 	</para>
 	<para>
 		By default (if no parameters are changed from the config file) it uses
-		a unix stream socket under /tmp: /tmp/ser_ctl. This socket is also the
-		default for sercmd.
+		a Unix stream socket under /tmp: /tmp/&ctlsocket;. This socket is also the
+		default for &sercmd;.
 	</para>
 	<para>
-		In general it's used in conjunction with sercmd. sercmd it's a unix
+		In general it's used in conjunction with &sercmd;. &sercmd; it's a unix
 		tool for invoking ser/sip-router rpcs. It can be used both in
 		interactive mode (supports tab-completion and history) or command
 		line mode.
 		<example>
-		<title><function>sercmd example</function> usage</title>
+		<title><function>&sercmd; example</function> usage</title>
 		<programlisting>
 
-$ sercmd ps
+$ &sercmd; ps
 11262	attendant
 11268	udp receiver child=0 sock=127.0.0.1:5060
 11269	udp receiver child=1 sock=127.0.0.1:5060
@@ -65,16 +71,16 @@ $ sercmd ps
 11277	tcp main process
 		</programlisting>
 		</example>
-	See <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/sercmd/EXAMPLES' >utils/sercmd/EXAMPLES</ulink>
+	See <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/sercmd/EXAMPLES' >utils/&sercmd;/EXAMPLES</ulink>
 	for more examples.
 	</para>
 	</section>
 	<section id="ctl.binrpc">
 	<title>BINRPC</title>
 	<para>
-		binrpc is a ser proprietary binary protocol for invoking ser-like rpcs.
+		binrpc is a ser proprietary binary protocol for invoking rpcs.
 		It was designed such that it would minimize the packet sizes and it
-		would be very fast to parse (as opposed to xmlrpc).
+		would be very fast to parse (as opposed to XML-rpc).
 	</para>
 	<para>
 		The binrpc encoding format is fully documented inside

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="ctl.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
@@ -12,7 +18,7 @@
 	</revhistory>
 	</sectioninfo>
 
-	<title>RPC Functions</title>
+	<title>SIP-router RPC Functions</title>
 
 	<section id="ctl.listen">
 	<title> <function>ctl.listen</function></title>
@@ -22,10 +28,10 @@
 	<example>
 		<title><function>print</function> usage</title>
 		<programlisting>
- $ sercmd -f"[%v] %v:%v %v\n" ctl.listen
-[binrpc] unix_stream:/tmp/ser_ctl
+ $ &sercmd; -f"[%v] %v:%v %v\n" ctl.listen
+[binrpc] unix_stream:/tmp/&ctlsocket;
  
-# note: the above command is equivalent with sercmd listen
+# note: the above command is equivalent with &sercmd; listen
 		</programlisting>
 	</example>
 	</section>
@@ -38,7 +44,7 @@
 	<example>
 		<title><function>ctl.connections</function> usage</title>
 		<programlisting>
- $ sercmd ctl.connections
+ $ &sercmd; ctl.connections
 1
 		</programlisting>
 	</example>
@@ -52,10 +58,10 @@
 	<example>
 		<title><function>ctl.who</function> usage</title>
 		<programlisting>
- $ sercmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
-[binrpc] unix_stream: &lt;anonymous unix socket&gt;  -> /tmp/ser_ctl
+ $ &sercmd; -f"[%v] %v: %v %v -> %v %v\n" ctl.who
+[binrpc] unix_stream: &lt;anonymous unix socket&gt;  -> /tmp/&ctlsocket;
 
-# note the above command is equivalent to sercmd who
+# note the above command is equivalent to &sercmd; who
 		</programlisting>
 	</example>
 	</section>
