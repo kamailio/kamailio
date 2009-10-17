@@ -744,38 +744,77 @@ onreply_route["stateless_replies"] {
     </section>
 
 	<section>
-		<title><varname>fr_inv_timer_next</varname> (integer)</title>
-		<para>
-                Value of the Final Response timeout for INVITE
-                transactions to be used during serial forwarding:
-		</para>
-		<para>
-                Function t_next_contacts() sets fr_inv_timer to
-                fr_inv_timer_next value if, after t_next_contacts() is
-                called, there are still lower qvalue contacts available,
-                and to fr_inv_timer value if there are not.
-		</para>
-		<para>
+	  <title><varname>fr_inv_timer_next</varname> (integer)</title>
+	  <para>
+		This parameter can be used to configure an alternative value for the
+		fr_inv_timer timer. This alternative value is used in place
+		of <varname>fr_inv_timer</varname> when serial forking takes place. It
+		is used for all branches during serial forking except the last one.
+		The last branch (or a set of parallel branches) use the original value
+		from <varname>fr_inv_timer</varname> again.
+	  </para>
+	  <para>
+		The purpose of the timer is to allow an administrator to configure a
+		shorter version of <varname>fr_inv_timer</varname> that is used only
+		when serial forking takes place. Forwarding branches one after another
+		is much more time consuming, because every serial branch has to wait
+		for the result of the previous one. That can take up to the value
+		of <varname>fr_inv_timer</varname> and this timer is configured to two
+		minutes by default. Hence, if you have three serial branches then
+		completing the transaction can take six minutes with default timer values.
+	  </para>
+	  <para>
+		In practise, the transaction will be terminated sooner, because the
+		timer <varname>max_inv_lifetime</varname> hits after three minutes.
+		Thus, some of the serial branches might not be forwarded at all. And
+		this is exactly what <varname>fr_inv_timer_next</varname> is for. You
+		can configure the timer to a shorter value to ensure that all serial
+		branches are tried before the
+		timer <varname>max_inv_lifetime</varname> hits.
+	  </para>
+	  <para>
+		Note that if there is only one branch or if the current serial branch
+		is the last one (i.e. no more serial forking takes place after this
+		branch is finished) then <varname>fr_inv_timer_next</varname> is not
+		used, instead the branch uses the
+		longer <varname>fr_inv_timer</varname>.
+	  </para>
+	  <para>
+        Function <function>t_next_contacts()</function>
+        sets <varname>fr_inv_timer</varname>
+        to <varname>fr_inv_timer_next</varname> if serial forking takes place
+        and there is more than one serial branch.
+	  </para>
+	  <para>
+		The administrator can configure the value of this timer using the
+		configuration framework on the fly. But
+		unlike <varname>fr_inv_timer</varname>, it is not possible to
+		configure the value of this timer on per-transaction basis.
+	  </para>
+	  <para>
 		<emphasis>
-			Default value is 30.
+		  The value of this timer is to be specified in milliseconds. The
+		  default value is 30000ms.
 		</emphasis>
-		</para>
-		<example>
+	  </para>
+	  <example>
 		<title>Set <varname>fr_inv_timer_next</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "fr_inv_timer_next", 10)
+modparam("tm", "fr_inv_timer_next", 10000)
 ...
-</programlisting>
-		</example>
+		</programlisting>
+	  </example>
 	</section>
-
+	
 	<section>
 		<title><varname>contacts_avp</varname> (string)</title>
 		<para>
-                Internal AVP that t_load_contacts() function uses to store
-                contacts of the destination set and that
-                t_next_contacts() function uses to restore those contacts.
+		  This is the name or Id of an AVP
+                that <function>t_load_contacts()</function> function uses to
+                store contacts of the destination set and that
+                <function>t_next_contacts()</function> function uses to
+                restore those contacts.
 		</para>
 		<para>
 		<emphasis>

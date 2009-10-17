@@ -48,6 +48,7 @@ struct cfg_group_tm	default_tm_cfg = {
 	1,	/* via1_matching */
 	FR_TIME_OUT,	/* fr_timeout */
 	INV_FR_TIME_OUT,	/* fr_inv_timeout */
+	INV_FR_TIME_OUT_NEXT, /* fr_inv_timeout_next */
 	WT_TIME_OUT,	/* wait_timeout */
 	DEL_TIME_OUT,	/* delete_timeout */
 	RETR_T1,	/* rt_t1_timeout */
@@ -90,8 +91,6 @@ struct cfg_group_tm	default_tm_cfg = {
 			 * for every method except BYE by default */
 	1,	/* cancel_b_method used for e2e and 6xx cancels*/
 	1,	/* reparse_on_dns_failover */
-	INV_FR_TIME_OUT_NEXT, /* fr_inv_timeout_next -> for serial forking subseq.
-							 branches */
 	0 /* disable_6xx, by default off */
 };
 
@@ -109,6 +108,8 @@ cfg_def_t	tm_cfg_def[] = {
 	{"fr_inv_timer",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"timer which hits if no final reply for an INVITE arrives "
 		"after a provisional message was received (in milliseconds)"},
+	{"fr_inv_timer_next",	CFG_VAR_INT,	0, 0, 0, 0,
+		"The value [ms] of fr_inv_timer for subsequent branches during serial forking."},
 	{"wt_timer",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"time for which a transaction stays in memory to absorb "
 		"delayed messages after it completed"},
@@ -183,8 +184,6 @@ cfg_def_t	tm_cfg_def[] = {
 		"if set to 1, the SIP message after a DNS failover is "
 		"constructed from the outgoing message buffer of the failed "
 		"branch instead of from the received request"},
-	{"fr_inv_timer_next",	CFG_VAR_INT,	0, 0, timer_fixup, 0,
-		"The value of fr_inv_timer for subsequent branches during serial forking"},
 	{"disable_6xx_block",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, 6xx is treated like a normal reply (breaks rfc)"},
 	{0, 0, 0, 0, 0, 0}
