@@ -1031,14 +1031,58 @@ failure_route[1] {
 		<function moreinfo="none">t_load_contacts()</function>
 		</title>
 		<para>
-                Loads contacts in destination set in increasing qvalue order as
-                values of contacts_avp. If all contacts in the destination set
-                have the same qvalue, t_load_contacts() does not do
-                anything thus 
-                minimizing performance impact of serial forking capability
-                when it is not needed. Returns 1 if loading of contacts
-                succeeded or there was nothing to do. Returns -1 on error (see
-                syslog).
+		  This is the first of the two functions that can be used to implement
+		  serial/parallel forking based on the q value of individual branches
+		  in a destination set.
+		</para>
+		<para>
+		  The function <function>t_load_contacts()</function> takes all
+		  branches from the current destination set and encodes them into the
+		  AVP whose name or ID is configured with the
+		  parameter <varname>contacts_avp</varname>. Note that you have to
+		  configure this parameter before you can use the function, the
+		  parameter is set to NULL by default, which disables the function.
+		</para>
+		<para>
+		  If the destination set contains only one branch (the Request-URI) or
+		  if all branches have the same q value then the function does nothing
+		  to minimize performance impact. In such case all branches should be
+		  tried in parallel and that is the default mode of operation of
+		  functions like <function>t_relay()</function>, so there is no need
+		  to create the AVP or sort the branches.
+		</para>
+		<para>
+		  If the current destination set contains more than one branch and not
+		  all branches have the same q value then the function sorts them
+		  according to the increasing value of the q parameter. The resulting
+		  sorted list of branches is then encoded into the AVP.
+		</para>
+		<para>
+		  The q parameter contains a value from a range of 0 to 1.0 and it
+		  expresses relative preferrence of the branch among all branches in
+		  the destination set. The higher the q value the more preferrence the
+		  user agent gave to the branch. Branches with higher q values will be
+		  tried first when serial forking takes place.
+		</para>
+		<para>
+		  After that the function clears all branches and you have to
+		  call <function>t_next_contacts</function> to retrieve them sorted
+		  according to their q value. Note that if you
+		  use <function>t_load_contacts</function> then you also have to
+		  use <function>t_next_contacts</function> before
+		  calling <function>t_relay</function>.
+		</para>
+		<para>
+		  The AVP created by the function may contain multiple values, with
+		  one encoded branch per value. The first value will contain the
+		  branch with the highest q value. Each value contains the
+		  Request-URI, the destination URI, the path vector, the outgoing
+		  socket description and branch flags. All these fields are delimited
+		  with the LF character.
+		</para>
+		<para>
+          The function returns 1 if loading of contacts succeeded or there was
+          nothing to do. Returns -1 on error (see syslog).
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -1061,24 +1105,61 @@ if (!t_load_contacts()) {
 		<function moreinfo="none">t_next_contacts()</function>
 		</title>
 		<para>
-                If transaction does not exist when t_next_contacts() is
-                called, replaces Request-URI with the
-                first contacts_avp value, adds the remaining contacts_avp values
-                with the same qvalue as branches, and destroys those AVPs. It
-                does nothing if there are no contacts_avp values. Returns 1 if
-                there were no errors and -1 if an error occurred (see syslog).
+		  The function <function>t_next_contacts</function> is the second of
+		  the two functions that can be used to implement serial/parallel
+		  forking based on the q value of individual branches in a destination
+		  set.
 		</para>
-                <para>
-                If transaction does exist when t_next_contacts() is
-                called, adds the first contacts_avp value and all
-                following contacts_avp values with the 
-                same qvalue as new branches to request and destroys those AVPs.
-                Returns 1 if new branches were successfully added and -1 on
-                error (see syslog) or if there were no more contacts_avp
-                values.
-                </para>
 		<para>
-		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		  This function takes the AVP created
+		  by <function>t_load_contacts</function> and extracts branches with
+		  highest q value from it into the destination set when called for the
+		  first time. When you call the function second time it extracts
+		  branches with lower q value, and so on until all branches have been
+		  extracted.	  
+		</para>
+		<para>
+          If no transaction exist when <function>t_next_contacts()</function>
+          is called, this usually happens when you call the function from a
+          request route block before you call <function>t_relay</function>, it
+          replaces the Request-URI with the first contacts_avp value, adds the
+          remaining contacts_avp values with the same q value as branches, and
+          destroys those AVPs. 
+		</para>
+        <para>
+          If transaction does exist when t_next_contacts() is called, it adds
+          the first <varname>contacts_avp</varname> value and all following
+          <varname>contacts_avp</varname> values with the same q value as new
+          branches to request and destroys those AVPs. 
+        </para>
+		<para>
+		  When you call the function repeatedly from a failure_route branch,
+		  it looks for more AVP values each time and adds branches that have
+		  same q value from the AVP as additional destination set branches. It
+		  always stops when it reaches a branch that has a lower q value. Used
+		  AVP values are always destroyed.,
+		</para>
+		<para>
+		  The function does nothing if there are
+		  no <varname>contact_avp</varname> values.
+		</para>
+		<para>
+          The function returns 1 if there were no errors and -1 if an error
+          occurred (see syslog). This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<para>
+		  Note that if use use <function>t_load_contacts</function>
+		  and <function>t_next_contacts</function> functions then you should
+		  also set the value of <varname>restart_fr_on_each_reply</varname>
+		  parameter to 0. If you do not do that then it can happen that a
+		  broken user agent that retransmits 180 periodically will keep
+		  resetting the fr_inv_timer value and serial forking never happens.
+		</para>
+		<para>
+		  Also make sure that you
+		  configured <varname>fr_inv_timer_next</varname> with lower value,
+		  especially if you expect to have many serially forked branches. See
+		  the documentation of that parameter for more details.
 		</para>
 		<example>
 		<title><function>t_next_contacts</function> usage</title>
