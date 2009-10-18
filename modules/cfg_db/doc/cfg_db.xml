@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="cfg_db" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -31,34 +36,32 @@
 	<section id="cfg_db.overview">
 		<title>Overview</title>
 		<para>
-		The module implements driver for config params API. When
-		config parameters are being declared (typically when is starting)
-		API then driver is notified and has chance set value (of any
+		The module implements a database driver for the configuration parameters API. When
+		configuration parameters are being declared (typically when starting)
+		API then driver is notified and has chance to set value (of any
 		parameter) based on value taken from database. It's primarily
 		targeted for interfacing with 3rd party software which is aware
 		of configuration.
 		</para>
 		<para>
 		Parameter is uniquely identified by <emphasis>group_name</emphasis> plus 
-		<emphasis>name</emphasis>. Hence the driver checks a value can be found
-		regarding particular parameter. Because configuration parameters may
-		be spread in many tables, translation table telling where parameters 
-		will be sniffed, is used first. More look-up tables may be defined for
-		single parameter, tables are sniffed in the first round by exact match
+		<emphasis>name</emphasis>, which is used by the driver to check if a value can be found.
+		Because configuration parameters may be spread in many tables, a translation table 
+		is used to indicate where to start searching.  Multiple look-up tables may be 
+		defined for single parameter, tables are searched in the first round by exact match
 		until parameter is found, all tables listed with wildcard (asterisk) in group name
-		are sniffed in the second round. If parameter is not found
-		then its value is left unchanged.
+		are searched in the second round. If a parameter is not found then its value is left unchanged.
 		</para>
 		<para>
-		Config parameters are normally declared in C code and this module
+		Configuration parameters are normally declared in C code and this module
 		additionally supports also declaring custom parameters in extra table.
 		Such parameters may be used typically in script only. All parameters
 		listed in the table are declared in the first step, values are initialized
-		in the second step using the same procedure as C-code params.
+		in the second step using the same procedure as C-code parameters.
 		</para>
 		<para>
-		The module does not reflect changes made in parameters when ser is running.
-		It just declares variable and assings value when ser is starting. That's all.
+		The module does not reflect changes made in parameters when &ser; is running.
+		It just declares variables and assigns values when &ser; is starting. That's all.
 		</para>
 	</section>
 
@@ -92,7 +95,7 @@
 	loadmodule("mysql.so");
 	loadmodule("cfg_db.so");
 	...
-	modparam("cfg_db", "db_url", "mysql://ser:123@127.0.0.1:12345/ser");
+	modparam("cfg_db", "db_url", "mysql://&ser;:123@127.0.0.1:12345/&ser;");
 	...
 				</programlisting>
 			</example>
@@ -102,7 +105,7 @@
 			<title><varname>transl_tbl</varname> (string) := "cfg_transl"</title>
 			<para>
 				Name of table used for pointing group_name+name into
-				config table. If empty/null field values are found
+				configuration table. If empty/null field values are found
 				then default values will be used. The default
 				values are declared in record having <emphasis>group_name</emphasis>
 				called <emphasis>&lt;default&gt;</emphasis>. The C-code

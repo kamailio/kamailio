@@ -39,6 +39,22 @@
  *  2009-06-21  Added support for more than one lcr instance and
                 gw defunct capability (jh)
  */
+/*!
+ * \file
+ * \brief SIP-router LCR :: Module interface
+ * \ingroup lcr
+ * Module: \ref lcr
+ */
+
+/*! \defgroup lcr SIP-router Least Cost Routing Module
+ *
+ * The Least Cost Routing (LCR) module implements capability to serially
+ * forward a request to one or more gateways so that the order in which
+ * the gateways is tried is based on admin defined "least cost" rules.
+
+ * The LCR module supports many independent LCR instances (gateways and
+ * least cost rules). Each such instance has its own LCR identifier.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

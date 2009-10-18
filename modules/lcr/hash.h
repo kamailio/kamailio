@@ -20,6 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router lcr :: Header file for hash table functions
+ * \ingroup lcr
+ * Module: \ref lcr
+ */
 
 #ifndef _LCR_HASH_H_
 #define _LCR_HASH_H_

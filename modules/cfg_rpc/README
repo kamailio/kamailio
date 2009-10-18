@@ -13,8 +13,9 @@ Miklos Tirpak
 1.1. Overview
 
    The module implements RPC functions to set and get configuration
-   variables on-the-fly, that are declared by SER core and by the modules.
-   It can be used to fine-tune or debug SER without the need of restart.
+   variables on-the-fly, that are declared by SIP Router core and by the
+   modules. It can be used to fine-tune or debug SIP Router without the
+   need of restart.
 
 1.2. RPC Interface
 

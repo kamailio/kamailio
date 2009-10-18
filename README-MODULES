@@ -41,7 +41,7 @@ auth_identity
 auth_radius		Radius authentication
 avpops			Attribute-value pair operations ("variables")
 carrierroute		A telephony routing module
-cfg_db
+cfg_db			Database driver for configuration API
 cfg_rpc
 ctl
 db_berkeley		Database :: Berkeley DB (Oracle)

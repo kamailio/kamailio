@@ -189,48 +189,52 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Least cost routing (LCR) module implements capability to serially
+   The Least Cost Routing (LCR) module implements capability to serially
    forward a request to one or more gateways so that the order in which
    the gateways is tried is based on admin defined "least cost" rules.
 
-   LCR module supports many independent LCR instances (gateways and least
-   cost rules). Each such instance has its own LCR identifier.
+   The LCR module supports many independent LCR instances (gateways and
+   least cost rules). Each such instance has its own LCR identifier.
 
    For the purpose of facilitating least cost routing of requests, each
    gateway of an LCR instance belongs to a gateway group and each gateway
    group is associated with one or more <prefix, from pattern, priority>
-   tuples. A gateway matches a request if user part of Request URI matches
-   a prefix and caller's URI matches a from pattern in a tuple that
-   belongs to the group of the gateway.
+   tuples. A gateway matches a request if the user part of the Request URI
+   matches a "prefix" and the caller's URI matches a "from" pattern in a
+   tuple that belongs to the group of the gateway.
 
-   When function load_gws() is called, matching gateways (that are not
-   currently designated as defunct) are ordered for forwarding purpose (1)
-   according to longest user part match, (2) according to tuple's
-   priority, and (3) gateway's randomized weight within its group. Prefix
-   is a string of characters or NULL. From pattern is a regular expression
-   (see 'man pcresyntax' for syntax), an empty string, or NULL. Empty or
-   NULL from pattern or prefix matches anything. Smaller priority value
-   means higher priority (highest priority value being 0). Weight is an
-   integer value from 1 to 254.
+   When the function load_gws() is called, matching gateways (that are not
+   currently designated as defunct) are ordered for forwarding purposes in
+   the following order:
+     * (1) according to longest user part match
+     * (2) according to tuple's priority
+     * (3) gateway's randomized weight within its group
 
-   Function next_gw() can then be used to select one gateway at a time for
-   forwarding. Upon each call, user part of original Request URI is first
-   stripped by the number of characters as specified by the gateway's
-   strip count and then prefixed by gateway's tag. Upon first call, if
-   gateway's hostname is NULL, Request URI is rewritten based on gateway's
-   URI scheme, IP address, port, and transport protocol. If hostname is
-   not NULL, Request-URI is rewritten based on gateway's URI scheme and
-   hostname, and destination URI is set based on gateway's URI scheme, IP
-   address, port, and transport protocol. Upon subsequent calls, the same
-   is done, but instead of rewriting Request URI, a new branch is added.
+   Prefix is a string of characters or NULL. From pattern is a regular
+   expression (see 'man pcresyntax' for syntax), an empty string, or NULL.
+   An empty or NULL from pattern or prefix matches anything. Smaller
+   priority value means higher priority (highest priority value being 0).
+   Weight is an integer value from 1 to 254.
+
+   The function next_gw() can then be used to select one gateway at a time
+   for forwarding. Upon each call, the user part of the original request
+   URI is first stripped by the number of characters as specified by the
+   gateway's strip count and then prefixed by the gateway's tag. Upon
+   first call, if a gateway's hostname is NULL, the request URI will be
+   rewritten based on gateway's URI scheme, IP address, port, and
+   transport protocol. If hostname is not NULL, the request-URI is
+   rewritten based on the gateway's URI scheme and hostname, and
+   destination URI is set based on gateway's URI scheme, IP address, port,
+   and transport protocol. Upon subsequent calls, the same is done, but
+   instead of rewriting the Request URI, a new branch is added.
 
    Valid URI scheme values are NULL = sip, 1 = sip and 2 = sips. Currently
    valid transport protocol values are NULL = none, 1 = udp, 2 = tcp, 3 =
    tls, and 4 = sctp.
 
-   As a side effect of gateway selection, gateway's flags (that may
-   contain information about capabilities of the gateway) are stored into
-   an AVP.
+   As a side effect of the gateway selection, the gateway's flags (that
+   may contain information about capabilities of the gateway) are stored
+   into an AVP.
 
 2. Dependencies
 
@@ -304,7 +308,7 @@ modparam("lcr","gw_table","gw")
 
 3.3. lcr_id_column (string)
 
-   Name of the column holding the identifier of LCR instance. Common to
+   Name of the column holding the identifier of an LCR instance. Common to
    both gw and lcr tables.
 
    Default value is "lcr_id".
@@ -353,13 +357,13 @@ modparam("lcr","ip_addr_column","ip_addr")
    Name of the column holding gateway's hostname that is used in
    Request-URI, when request is sent to the gateway. Note that request is
    not forwarded based on hostname, but based on gateway's IP address in
-   destination uri.
+   destination URI.
 
    Default value is "hostname".
 
    Example 1.7. Setting hostname_column module parameter
 ...
-modparam("lcr", "hostname_column","host")
+modparam("lcr", "hostname_column","hostname")
 ...
 
 3.8. port_column (string)
@@ -381,7 +385,7 @@ modparam("lcr","port_column","port")
 
    Example 1.9. Setting uri_scheme_column module parameter
 ...
-modparam("lcr","uri_scheme_column","scheme")
+modparam("lcr","uri_scheme_column","uri_scheme")
 ...
 
 3.10. transport_column (string)
@@ -503,7 +507,7 @@ modparam("lcr","priority_column","priority")
 
    Default value is 1.
 
-   Example 1.20.  Setting lcr_count module parameter
+   Example 1.20. Setting lcr_count module parameter
 ...
 modparam("lcr", "lcr_count", 10)
 ...
@@ -554,7 +558,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    Default value is 0.
 
-   Example 1.24.  Setting defunct_capability module parameter
+   Example 1.24. Setting defunct_capability module parameter
 ...
 modparam("lcr", "defunct_capability", 1)
 ...
@@ -594,7 +598,7 @@ modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 
    Default value is 128.
 
-   Example 1.27.  Setting lcr_hash_size module parameter
+   Example 1.27. Setting lcr_hash_size module parameter
 ...
 modparam("lcr", "lcr_hash_size", 1024)
 ...
@@ -602,10 +606,10 @@ modparam("lcr", "lcr_hash_size", 1024)
 3.28. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when loading
-   data from lcr table. This value can be used to tune the load time at
-   startup. For 1MB of private memory (default) it should be below 3750.
-   In order for this parameter to have effect, database driver must
-   support fetch_result() capability.
+   data from the lcr table. This value can be used to tune the load time
+   at startup. For 1MB of private memory (default) it should be below
+   3750. In order for this parameter to have effect, the database driver
+   must support fetch_result() capability.
 
    Default value is "2000".
 
@@ -624,7 +628,7 @@ modparam("lcr", "fetch_rows", 3000)
    4.6. to_gw(lcr_id [, ip_addr])
    4.7. to_any_gw([ip_addr])
 
-4.1.  load_gws(lcr_id, caller_uri)
+4.1. load_gws(lcr_id, caller_uri)
 
    Loads URI schemes, IP addresses, hostnames, ports, and transports of
    matching gateways to gw_uri_avp (see Overview section). Argument lcr_id
@@ -648,7 +652,7 @@ if (!load_gws("1", "$var(caller_uri)")) {
 };
 ...
 
-4.2.  next_gw()
+4.2. next_gw()
 
    Upon first call, replaces URI scheme, host, port, and transport of
    Request-URI by the values stored in first gw_uri_avp and destroys that
@@ -685,7 +689,7 @@ if (!next_gw()) {
 };
 ...
 
-4.3.  defunct_gw(period)
+4.3. defunct_gw(period)
 
    Defuncts gateway selected by preceding next_gw() call for a period of
    seconds given as argument. Argument must be a positive integer constant
@@ -703,7 +707,7 @@ if (!next_gw()) {
 defunct_gw("60");
 ...
 
-4.4.  from_gw(lcr_id [, ip_addr])
+4.4. from_gw(lcr_id [, ip_addr])
 
    Checks if request comes from IP address of a gateway in LCR instance
    specified by lcr_id argument, which can be an integer constant or a
@@ -729,17 +733,17 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 };
 ...
 
-4.5.  from_any_gw([ip_addr])
+4.5. from_any_gw([ip_addr])
 
    Checks if request comes from IP address of any gateway. IP address to
    be checked is either taken from source IP address of the request or (if
    present) from ip_addr pseudo variable argument.
 
    If any gateway has the IP address, function returns LCR identifier of
-   the gateway. Returns -1 on error or if request does not come from a
+   the gateway. Returns -1 on error or if the request does not come from a
    gateway.
 
-   If request comes from a gateway, gateway's flags are stored into
+   If request comes from a gateway, the gateway's flags are stored into
    flags_avp as side effect.
 
    Execution time of from_gw() function is M * O(log N), where M is number
@@ -753,7 +757,7 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 $var(lcr_id) = from_any_gw();
 ...
 
-4.6.  to_gw(lcr_id [, ip_addr])
+4.6. to_gw(lcr_id [, ip_addr])
 
    Checks if in-dialog request goes to a gateway in LCR instance specified
    by lcr_id argument. IP address to be checked is either taken from
@@ -775,7 +779,7 @@ if (to_gw("1")) {
 };
 ...
 
-4.7.  to_any_gw([ip_addr])
+4.7. to_any_gw([ip_addr])
 
    Checks if in-dialog request goes to any gateway. IP address to be
    checked is either taken from Request-URI hostpart or (if present) from

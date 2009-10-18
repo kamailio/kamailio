@@ -26,6 +26,13 @@
  *  2006-10-05  created (bogdan)
  */
 
+/*!
+ * \file
+ * \brief SIP-router lcr :: Kamailio MI functions
+ * \ingroup lcr
+ * Module: \ref lcr
+ */
+
 
 #include "lcr_mod.h"
 #include "../../dprint.h"

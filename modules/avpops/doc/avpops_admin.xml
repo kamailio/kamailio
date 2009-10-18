@@ -18,13 +18,14 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		AVPops (AVP-operations) modules implements a set of script
-		functions which allow access and manipulation of user AVPs
-		(preferences) and pseudo-variables. AVPs are a powerful tool
-		for implementing services/preferences per user/domain. Now they
-		are usable directly from configuration script. Functions for
+		The AVPops (AVP-operations) module implements a set of script
+		functions which allow access and manipulation of user attribute-value pairs (AVPs,
+		preferences) and pseudo-variables. AVPs are a powerful tool
+		for implementing services/preferences per user/domain. With this module, they
+		are usable directly from configuration script. </para>
+		<para>The module implement functions for
 		interfacing DB resources (loading/storing/removing), functions
-		for swapping information between AVPs and SIP messages, function for 
+		for swapping information between AVPs and SIP messages and a function for 
 		testing/checking the value of an AVP.
 		</para>
 		<para>
@@ -36,8 +37,8 @@
 		</para>
 		<para>
 		An up-to-date tutorial providing more information (detailed
-		explanations and commented examples) can be found on Voice Sistem
-		documentation web page at http://voice-system.ro/docs/avpops .
+		explanations and commented examples) can be found on the SIP-router
+		web site.
 		</para>
 	</section>
 	<section>
@@ -85,13 +86,14 @@
 			<emphasis>avp_flags</emphasis> = type_flags [script_flags]; type_flags = 'I' | 'i' | 'S' | 's'; script_flags = 0..255
 		</para>
 		<para>
-		'I' or 'i' means that the type of avp name is integer (ID)
+		'I' or 'i' means that the type of avp name is an integer (ID)
 		</para>
 		<para>
 		'S' or 's' means that the type of avp name is string
 		</para>
 		<para>
 		The type flag is mandatory.
+		Please note that the type flag only indicates type of name, not type of variable. An avp with name type "i" may very well contain text strings.
 		</para>
 		<para>
 		script_flags must be an 8 bit unsigned number, therefore can be set
@@ -179,7 +181,7 @@ modparam("avpops","avp_table","avptable")
 		<section>
 			<title><varname>use_domain</varname> (integer)</title>
 			<para>
-				If the domain part of the an URI should be used for 
+				If the domain part of the URI should be used for 
 				identifying an AVP in DB operations.
 			</para>
 			<para>
