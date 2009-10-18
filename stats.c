@@ -34,7 +34,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: Stats reporting code
  * \ingroup core
  * Module: \ref core
  */
