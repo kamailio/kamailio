@@ -20,8 +20,8 @@
 /*!
  * \file
  * \brief SIP-router topoh :: 
- * \ingroup lcr
- * Module: \ref lcr
+ * \ingroup topoh
+ * Module: \ref topoh
  */
 
 #include <string.h>
