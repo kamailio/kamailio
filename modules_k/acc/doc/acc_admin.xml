@@ -119,10 +119,10 @@
 		In particular, accounting secret must match that one configured in
 		server and proper dictionary is used (one is available at 
 		etc/sip_dictionary). Also note that Debian radiusclient-ng uses
-		/var/run/radius.seq as seqfile but Kamailio Debian init script expects
+		/var/run/radius.seq as seqfile but &kamailio; Debian init script expects
 		/var/run/kamailio/kamailio_radius.seq, so is needed to change it in
-		radiusclient-ng configuration or in Kamailio Debian init script (if not,
-		Kamailio can't create the seq file when not running as root). Uses along
+		radiusclient-ng configuration or in &kamailio; Debian init script (if not,
+		&kamailio; can't create the seq file when not running as root). Uses along
 		with FreeRadius (<ulink url='http://www.freeradius.org/'>
 		http://www.freeradius.org/</ulink>) and Radiator 
 		(<ulink url='http://www.open.com.au/radiator/'>

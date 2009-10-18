@@ -252,7 +252,7 @@ km_append_branch("sip:alice@sip-router.org");
    4.5. version
    4.6. which
 
-4.1.  arg
+4.1. arg
 
    Print command line arguments.
 
@@ -264,7 +264,7 @@ km_append_branch("sip:alice@sip-router.org");
                 :arg:_reply_fifo_file_
                 _empty_line_
 
-4.2.  kill
+4.2. kill
 
    Kill the application.
 
@@ -276,7 +276,7 @@ km_append_branch("sip:alice@sip-router.org");
                 :kill:_reply_fifo_file_
                 _empty_line_
 
-4.3.  pwd
+4.3. pwd
 
    Print working directory.
 
@@ -288,7 +288,7 @@ km_append_branch("sip:alice@sip-router.org");
                 :pwd:_reply_fifo_file_
                 _empty_line_
 
-4.4.  uptime
+4.4. uptime
 
    Print uptime.
 
@@ -300,7 +300,7 @@ km_append_branch("sip:alice@sip-router.org");
                 :uptime:_reply_fifo_file_
                 _empty_line_
 
-4.5.  version
+4.5. version
 
    Print version information.
 
@@ -312,7 +312,7 @@ km_append_branch("sip:alice@sip-router.org");
                 :version:_reply_fifo_file_
                 _empty_line_
 
-4.6.  which
+4.6. which
 
    Print list of available MI commands.
 

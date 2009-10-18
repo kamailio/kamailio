@@ -895,7 +895,7 @@ if (method=="REGISTER") {
 		</listitem>
 		<listitem>
 			<para><emphasis>pvar</emphasis> - Any
-			pseudo-variable defined in Kamailio.
+			pseudo-variable defined in &kamailio;.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1111,7 +1111,7 @@ if (allow_trusted("$si", "$proto")) {
 		<para>
 		Tests if (URI, Contact) pair is allowed according to
 		allow/deny files.  The files must already have been
-		 loaded by Kamailio.
+		 loaded by &kamailio;.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>

@@ -117,7 +117,7 @@ Chapter 1. Admin Guide
 
    3.1. t_cancel_branches(which)
 
-3.1.  t_cancel_branches(which)
+3.1. t_cancel_branches(which)
 
    Cancel branches of an active SIP transaction. The function can be
    called for a SIP reply that will identify the current branch.
@@ -153,7 +153,7 @@ if (t_cancel_branches("all")) {
    5.3. t_hash
    5.4. t_reply
 
-5.1.  t_uac_dlg
+5.1. t_uac_dlg
 
    Generates and sends a local SIP request.
 
@@ -168,7 +168,7 @@ if (t_cancel_branches("all")) {
      * body - (optional, may not be present) request body (if present,
        requires the "Content-Type" and "Content-length" headers)
 
-5.2.  t_uac_cancel
+5.2. t_uac_cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -176,14 +176,14 @@ if (t_cancel_branches("all")) {
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.3.  t_hash
+5.3. t_hash
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.4.  t_reply
+5.4. t_reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 

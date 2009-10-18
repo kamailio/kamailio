@@ -157,7 +157,7 @@ modparam("xlog", "prefix", "-xlog: ")
    5.1. xlog([level,] format)
    5.2. xdbg(format)
 
-5.1.  xlog([level,] format)
+5.1. xlog([level,] format)
 
    Print a formated message using LOG function.
 
@@ -191,7 +191,7 @@ $var(loglevel) = 2;
 xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
 ...
 
-5.2.  xdbg(format)
+5.2. xdbg(format)
 
    Print a formatted message using DBG function.
 

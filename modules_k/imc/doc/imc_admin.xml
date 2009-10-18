@@ -171,8 +171,8 @@ modparam("imc", "imc_cmd_start_char", "#")
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
 	   The SIP address used as next hop when sending the message. Very
-   useful when using Kamailio with a domain name not in DNS, or
-   when using a separate Kamailio instance for imc processing. If
+   useful when using &kamailio; with a domain name not in DNS, or
+   when using a separate &kamailio; instance for imc processing. If
    not set, the message will be sent to the address in destination
    URI.
 		</para>

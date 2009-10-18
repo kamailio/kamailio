@@ -49,7 +49,7 @@
 				<itemizedlist>
 					<listitem>
 						<para>
-							<emphasis>No dependencies on other Kamailio modules</emphasis>.
+							<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 						</para>
 					</listitem>
 				</itemizedlist>

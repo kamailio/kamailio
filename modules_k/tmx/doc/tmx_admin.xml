@@ -16,10 +16,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	This module collects extensions from Kamailio TM module.
+	This module collects extensions from &kamailio; TM module.
 	</para>
 	<para>
-	Kamailio TM (Transaction Management) module documentation is available at:
+	&kamailio; TM (Transaction Management) module documentation is available at:
 	<ulink url="http://www.kamailio.org/docs/modules/1.5.x/tm.html">
 	http://www.kamailio.org/docs/modules/1.5.x/tm.html</ulink>
 	</para>

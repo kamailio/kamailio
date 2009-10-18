@@ -18,7 +18,7 @@
 	<para>
 		This module provides on-server speed dial facilities. An user can store
 		records consisting of pairs short numbers (2 digits) and SIP addresses
-		into a table of Kamailio. Then it can dial the two digits whenever it
+		into a table of &kamailio;. Then it can dial the two digits whenever it
 		wants to call the SIP address associated with them.
 	</para>
 	</section>

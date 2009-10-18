@@ -31,14 +31,14 @@
 	(by setting module parameter "fallback2db"). In this mode, in case a searched record is not 
 	found in cache, the search is continued	in database. This is useful for
 	an architecture in which processing and memory load might be divided on 
-	several Kamailio instances, maybe on different servers using the same database.
+	several &kamailio; instances, maybe on different servers using the same database.
 	</para>
 	<para>The module implements several API functions, that can be used by other
 	modules. In fact, it can be used only as a resource module, or "library".
 	This mode of operation is enabled if the db_url parameter is not set to any value.
 	</para>
 	<para>
-	The Kamailio Presence module implements the specifications in: RFC3265, RFC3856, RFC3857, 
+	The &kamailio; Presence module implements the specifications in: RFC3265, RFC3856, RFC3857, 
 	RFC3858.
 	</para>
 	</section>
@@ -580,7 +580,7 @@ if (method=="MESSAGE") {
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires 3 tables in the Kamailio database: "presentity",
+	The module requires 3 tables in the &kamailio; database: "presentity",
 	"active_watchers" and "watchers". The SQL 
 	syntax to create them can be found in presence-create.sql     
 	script in the database directories in the kamailio/scripts folder.

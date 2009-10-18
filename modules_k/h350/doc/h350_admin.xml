@@ -14,7 +14,7 @@
         <title>Overview</title>
 
         <para>
-			The Kamailio H350 module enables an Kamailio SIP proxy server to access SIP account data stored in an LDAP <xref linkend="RFC4510"/> directory containing H.350 <xref linkend="H350"/> <emphasis>commObjects</emphasis>. ITU-T Recommendation H.350 standardizes LDAP object classes to store Real-Time Communication (RTC) account data. In particular, <emphasis>H.350.4</emphasis> <xref linkend="H350-4"/> defines an object class called <emphasis>sipIdentity</emphasis> that includes attribute specifications for SIP account data like SIP URI, SIP digest username/password, or service level. This allows to store SIP account data in a vendor neutral way and lets different entities, like SIP proxies, provisioning, or billing applications, access the data in a standardized format.  
+			The &kamailio; H350 module enables an &kamailio; SIP proxy server to access SIP account data stored in an LDAP <xref linkend="RFC4510"/> directory containing H.350 <xref linkend="H350"/> <emphasis>commObjects</emphasis>. ITU-T Recommendation H.350 standardizes LDAP object classes to store Real-Time Communication (RTC) account data. In particular, <emphasis>H.350.4</emphasis> <xref linkend="H350-4"/> defines an object class called <emphasis>sipIdentity</emphasis> that includes attribute specifications for SIP account data like SIP URI, SIP digest username/password, or service level. This allows to store SIP account data in a vendor neutral way and lets different entities, like SIP proxies, provisioning, or billing applications, access the data in a standardized format.  
         </para>
         
         <para>
@@ -22,7 +22,7 @@
         </para>
         
         <para>
-            The H350 module uses the Kamailio LDAP module to import H.350 attribute values into the Kamailio routing script variable space. The module exports functions to parse and store the H.350 attribute values from the Kamailio routing script. It allows a script writer to implement H.350 based SIP digest authentication, call forwarding, SIP URI alias to AOR rewriting, and service level parsing. 
+            The H350 module uses the &kamailio; LDAP module to import H.350 attribute values into the &kamailio; routing script variable space. The module exports functions to parse and store the H.350 attribute values from the &kamailio; routing script. It allows a script writer to implement H.350 based SIP digest authentication, call forwarding, SIP URI alias to AOR rewriting, and service level parsing. 
         </para>
 
     <section>
@@ -90,7 +90,7 @@ objectClass                   top
       <title>Dependencies</title>
 
       <section>
-        <title>Kamailio Modules</title>
+        <title>&kamailio; Modules</title>
 
         <para>The module depends on the following modules (the listed modules
         must be loaded before this module):</para>
@@ -106,7 +106,7 @@ objectClass                   top
         <title>External Libraries or Applications</title>
 
         <para>The following libraries or applications must be installed before
-        running Kamailio with this module loaded:</para>
+        running &kamailio; with this module loaded:</para>
 
         <itemizedlist>
           <listitem>
@@ -188,7 +188,7 @@ modparam("h350", "search_scope", "sub");
         <title>h350_sipuri_lookup(sip_uri)</title>
         
         <para>
-            This function performs an LDAP search query for an H.350 commObject with a SIPIdentitySIPURI of <varname>sip_uri</varname>. The <varname>sip_uri</varname> parameter first gets escaped according the rules for LDAP filter strings. The result of the LDAP search is stored internally and can be accessed either by one of the <emphasis>h350_result*</emphasis> or one of the <emphasis>ldap_result*</emphasis> functions from the Kamailio LDAP module.
+            This function performs an LDAP search query for an H.350 commObject with a SIPIdentitySIPURI of <varname>sip_uri</varname>. The <varname>sip_uri</varname> parameter first gets escaped according the rules for LDAP filter strings. The result of the LDAP search is stored internally and can be accessed either by one of the <emphasis>h350_result*</emphasis> or one of the <emphasis>ldap_result*</emphasis> functions from the &kamailio; LDAP module.
         </para>
         
         <para>
@@ -207,7 +207,7 @@ modparam("h350", "search_scope", "sub");
 
                 <listitem>
                     <para>
-                        H.350 SIPIdentitySIPURI to search for in directory. Included Kamailio variables do get expanded.
+                        H.350 SIPIdentitySIPURI to search for in directory. Included &kamailio; variables do get expanded.
                     </para>
                 </listitem>
             </varlistentry>
@@ -314,7 +314,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
 
                 <listitem>
                     <para>
-                        H.350 SIPIdentityUserName to search for in directory. Included Kamailio variables do get expanded.
+                        H.350 SIPIdentityUserName to search for in directory. Included &kamailio; variables do get expanded.
                     </para>
                 </listitem>
             </varlistentry>
@@ -558,7 +558,7 @@ AVP value = argument / 1000
         </para>
         
         <para>
-            These AVPs can then be used to implement the desired behavior in the Kamailio routing script.
+            These AVPs can then be used to implement the desired behavior in the &kamailio; routing script.
         </para>
         
         <para>
@@ -688,7 +688,7 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
         <title>h350_result_service_level(avp_name_prefix)</title>
         
         <para>
-			<emphasis>Directory services architecture for SIP</emphasis> <xref linkend="H350-4"/> defines a multi-valued LDAP attribute named SIPIdentityServiceLevel, which can be used to store SIP account service level values in an LDAP directory. This function parses the SIPIdentityServiceLevel attribute and stores all service level values as AVPs for later retrieval in the Kamailio routing script. The function accesses the H.350 commObject fetched by a call to <emphasis>h350_*_lookup</emphasis> or <emphasis>ldap_search</emphasis>. 
+			<emphasis>Directory services architecture for SIP</emphasis> <xref linkend="H350-4"/> defines a multi-valued LDAP attribute named SIPIdentityServiceLevel, which can be used to store SIP account service level values in an LDAP directory. This function parses the SIPIdentityServiceLevel attribute and stores all service level values as AVPs for later retrieval in the &kamailio; routing script. The function accesses the H.350 commObject fetched by a call to <emphasis>h350_*_lookup</emphasis> or <emphasis>ldap_search</emphasis>. 
         </para>
         
         <para>

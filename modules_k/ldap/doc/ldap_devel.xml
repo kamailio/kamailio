@@ -14,7 +14,7 @@
 	<section>
 		<title>Overview</title>
 		<para>
-			The LDAP module API can be used by other Kamailio modules to implement LDAP search functionality. This frees the module implementer from having to care about LDAP connection management and configuration. 
+			The LDAP module API can be used by other &kamailio; modules to implement LDAP search functionality. This frees the module implementer from having to care about LDAP connection management and configuration. 
 		</para>
 		<para>
 			In order to use this API, a module has to load the API using the <varname>load_ldap_api</varname> function which returns a pointer to a <varname>ldap_api</varname> structure. This structure includes pointers to the API functions described below. The LDAP module source file <varname>api.h</varname> includes all declarations needed to load the API, it has to be included in the file that loads the API. Loading the API is typically done inside a module's <varname>mod_init</varname> call as the following example shows:			
@@ -440,7 +440,7 @@ typedef int (*ldap_rfc4515_escape_t)(str *sin, str *sout, int url_encode);
 		<section>
 			<title>get_ldap_handle</title>
 			<para>
-				Returns the OpenLDAP LDAP handle for a specific LDAP session. This allows a module implementor to use the OpenLDAP API functions directly, instead of using the API functions exported by the Kamailio LDAP module. The <varname>LDAP</varname> structure is defined in OpenLDAP's <varname>ldap.h</varname>, which has to be included.
+				Returns the OpenLDAP LDAP handle for a specific LDAP session. This allows a module implementor to use the OpenLDAP API functions directly, instead of using the API functions exported by the &kamailio; LDAP module. The <varname>LDAP</varname> structure is defined in OpenLDAP's <varname>ldap.h</varname>, which has to be included.
 			</para>
 			<programlisting><![CDATA[
 typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);

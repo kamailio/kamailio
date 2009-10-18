@@ -67,7 +67,7 @@
     modparam("snmpstats", "dlg_minor_threshold", 600)
 		</programlisting>
 		<para>
-		Then either Kamailio is not reaching these thresholds (which is a good thing),
+		Then either &kamailio; is not reaching these thresholds (which is a good thing),
 		or you haven't set up the trap monitor correctly.  To prove this to yourself,
 		you can start NetSNMP with:
 		</para>
@@ -119,7 +119,7 @@
 	</qandaentry>
 	<qandaentry>
 	    <question>
-		<para>Kamailio refuses to load the SNMPStats module.  Why is it displaying "load_module: could not open module snmpstats.so"?
+		<para>&kamailio; refuses to load the SNMPStats module.  Why is it displaying "load_module: could not open module snmpstats.so"?
 		</para>
 	    </question>
 	    <answer>
@@ -189,7 +189,7 @@
 			</listitem>
 			<listitem>
 				<para>
-				Try starting Kamailio again.
+				Try starting &kamailio; again.
 				</para>
 			</listitem>
 		</orderedlist>
@@ -280,7 +280,7 @@
     		</programlisting>
 
 		For example, consider an snmpget on the openserSIPEntityType scalar, 
-		run on the same machine running the Kamailio instance, with the default
+		run on the same machine running the &kamailio; instance, with the default
 		"public" community string.  The command would be:
 
 		<programlisting format="linespecific">
@@ -311,7 +311,7 @@
     		</programlisting>
 
 		For example, consider the openserSIPRegUserTable.  If we run the snmptable
-		command on the same machine as the running Kamailio instance, configured with
+		command on the same machine as the running &kamailio; instance, configured with
 		the default "public" community string.  The command would be:
 
 		<programlisting format="linespecific">

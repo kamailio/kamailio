@@ -412,7 +412,7 @@ if(method=="NOTIFY")
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires 2 table in Kamailio database: rls_presentity
+	The module requires 2 tables in &kamailio; database: rls_presentity
 	and rls_watchers.The SQL syntax to create them can be found in
 	rls-create.sql script in the database directories in
 	the kamailio/scripts folder.
