@@ -19,7 +19,7 @@
 	<para>
 		Enum module implements [i_]enum_query functions that make an enum query 
 		based on the user part of the current Request-URI. These functions
-		assume that the user part consists of an international phone number 
+		assume that the Request URI user part consists of an international phone number 
 		of the form +decimal-digits, where the number of digits is at
 		least 2 and at most 15. Out of this number 
 		<function moreinfo="none">enum_query</function> forms a domain name, 
@@ -34,7 +34,7 @@
 	<para>
 		After forming the domain name, 
 		<function moreinfo="none">enum_query</function> queries
-		DNS for its NAPTR records. From the possible response 
+		DNS for enum NAPTR records. From the possible responses
 		<function moreinfo="none">enum_query</function> chooses those records, 
 		whose flags field has string value "u", and whose services field has 
 		string value "e2u+[service:]sip" or 
@@ -45,11 +45,11 @@
 		Then <function moreinfo="none">enum_query</function> sorts the chosen 
 		NAPTR records based on their &lt;order, preference&gt;.  After sorting, 
 		<function moreinfo="none">enum_query</function> replaces the current 
-		Request URI by applying regexp of the most preferred NAPTR record its 
-		user part and appends to the request new branches by applying regexp of 
+		Request URI by applying the regular expression of the most preferred NAPTR record 
+		to its user part and appends to the request new branches by applying regexp of 
 		each remaining NAPTR record to the user part of the
-		current Request URI. If a new URI is a tel URI, 
-		<function moreinfo="none">enum_query</function> appends to it as tel 
+		current Request URI. If a new URI is a tel: URI, 
+		<function moreinfo="none">enum_query</function> appends to it as tel:
 		URI parameters the value of tel_uri_params module parameter. Finally, 
 		<function moreinfo="none">enum_query</function> associates a q value 
 		with each new URI based on the &lt;order, preference&gt; of the 
@@ -94,7 +94,7 @@
 	<section>
 	<title>Dependencies</title>
 	<para>
-		The module depends on the following modules (in the other words the 
+		The module depends on the following modules (in other words the 
 		listed modules must be loaded before this module):
 		<itemizedlist>
 		<listitem>
@@ -186,7 +186,7 @@ modparam("enum", "branchlabel", "i")
                 branches off the user ENUM tree.
                 </para>
                 <para>
-                If set to "cc", i_enum_query() will always inserts the
+                If set to "cc", i_enum_query() will always insert the
                 label at the country-code level.
                 Examples: i.1.e164.arpa, i.3.4.e164.arpa, i.2.5.3.e164.arpa
                 </para>

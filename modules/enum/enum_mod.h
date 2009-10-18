@@ -22,6 +22,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router enum :: Enum and E164 related functions (module headers)
+ * \ingroup enum
+ * Module: \ref enum
+ */
+
 
 #ifndef ENUM_MOD_H
 #define ENUM_MOD_H
