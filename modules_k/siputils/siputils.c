@@ -25,11 +25,11 @@
  * \file
  * \brief Module with several utiltity functions related to SIP messages handling
  * \ingroup siputils
- * - Module; \ref siputils
+ * - Module \ref siputils
  */
 
 /*!
- * \defgroup siputils UTILS :: Various SIP message handling functions
+ * \defgroup siputils SIPUTILS :: Various SIP message handling functions
  *
  * \note A Kamailio module (modules_k)
  *
