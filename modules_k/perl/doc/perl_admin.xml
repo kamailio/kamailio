@@ -30,7 +30,7 @@
 	<section>
 		<title>Installing the module</title>
 		<para>
-		This Perl module is loaded in kamailio.cfg (just like all the other modules) with
+		This Perl module is loaded in &kamailioconfig; (just like all the other modules) with
 		loadmodule("/path/to/perl.so");.
 		</para>
 

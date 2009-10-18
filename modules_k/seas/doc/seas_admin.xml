@@ -488,7 +488,7 @@ ServletException, IOException
             <para>this attribute MUST match one of the listening points
             declared within Kamailio in the "listen" parameters.</para>
 
-            <para>For example in kamailio.cfg:<programlisting>listen = tcp:localhost:5060
+            <para>For example in &kamailioconfig;:<programlisting>listen = tcp:localhost:5060
 listen = udp:localhost:5060</programlisting></para>
           </warning>
 
@@ -680,7 +680,7 @@ listen = udp:localhost:5060</programlisting></para>
         <para/>
 
         <section>
-          <title>kamailio.cfg in standalone</title>
+          <title>&kamailioconfig; in standalone</title>
 
           <para><programlisting>debug=3            # debug level (cmd line: -dddddddddd)
 fork=yes
@@ -746,7 +746,7 @@ route[1] {
         </section>
 
         <section>
-          <title>kamailio.cfg working as WeSIP front-end</title>
+          <title>&kamailioconfig; working as WeSIP front-end</title>
 
           <para><programlisting>debug=9            # debug level (cmd line: -dddddddddd)
 fork=yes

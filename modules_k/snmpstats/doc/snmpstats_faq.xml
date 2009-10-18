@@ -56,7 +56,7 @@
 	    </question>
 	    <answer>
 		<para>
-		Assuming you've configured the trap thresholds in kamailio.cfg with something similar to:
+		Assuming you've configured the trap thresholds in &kamailioconfig; with something similar to:
 		</para>
 
 		<programlisting format="linespecific">
