@@ -4,14 +4,14 @@
  * Copyright (C) 2008-2009 1&1 Internet AG
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * Kamailio is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -21,15 +21,38 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
+/*!
  * \file
  * \brief Module with several utiltity functions related to SIP messages handling
- * \ingroup utils
- * - Module; \ref utils
+ * \ingroup siputils
+ * - Module; \ref siputils
  */
 
 /*!
- * \defgroup utils UTILS :: Module definitions
+ * \defgroup siputils UTILS :: Various SIP message handling functions
+ *
+ * \note A Kamailio module (modules_k)
+ *
+   This module implement various functions and checks related to
+   SIP message handling and URI handling.
+
+   It offers some functions related to handle ringing. In a
+   parallel forking scenario you get several 183s with SDP. You
+   don't want that your customers hear more than one ringtone or
+   answer machine in parallel on the phone. So its necessary to
+   drop the 183 in this cases and send a 180 instead.
+
+   This module provides a function to answer OPTIONS requests
+   which are directed to the server itself. This means an OPTIONS
+   request which has the address of the server in the request
+   URI, and no username in the URI. The request will be answered
+   with a 200 OK which the capabilities of the server.
+
+   To answer OPTIONS request directed to your server is the
+   easiest way for is-alive-tests on the SIP (application) layer
+   from remote (similar to ICMP echo requests, also known as
+   "ping", on the network layer).
+
  */
 
 #include <assert.h>

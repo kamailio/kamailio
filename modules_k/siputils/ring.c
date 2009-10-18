@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2008-2009 1&1 Internet AG
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * Kamailio is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,16 +22,15 @@
 
 /**
  * \file
- * \brief Only allow one 183 message per call-id
- * \ingroup utils
- * - Module; \ref utils
- */
-
-/*!
- * \defgroup utils UTILS :: Ringing functionality
- * In a parallel forking scenario you get several 183s with SDP. You don't want
+ * \brief SIP-utils :: Only allow one 183 message per call-id
+ * \ingroup siputils
+ * - Module; \ref siputils
+ *
+ * \section ring_utils UTILS :: Ringing functionality
+ *
+ * In a parallel forking scenario you may get several 183s with SDP. You don't want
  * that your customers hear more than one ringtone or answer machine in parallel
- * on the phone. So its necessary to drop the 183 in this cases and send a 180 instead.
+ * on the phone. So its necessary to drop the 183 in these cases and send a 180 instead.
  */
 
 
