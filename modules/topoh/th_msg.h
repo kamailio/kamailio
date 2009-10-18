@@ -18,6 +18,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*!
+ * \file
+ * \brief SIP-router topoh ::
+ * \ingroup topoh
+ * Module: \ref topoh
+ */
+
 #ifndef _TH_MSG_H_
 #define _TH_MSG_H_
 

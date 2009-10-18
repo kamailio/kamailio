@@ -18,6 +18,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*!
+ * \file
+ * \brief SIP-router topoh ::
+ * \ingroup topoh
+ * Module: \ref topoh
+ */
+
 #include <string.h>
 
 #include "../../dprint.h"

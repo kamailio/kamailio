@@ -18,6 +18,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*!
+ * \file
+ * \brief SIP-router topoh :: Module interface
+ * \ingroup topoh
+ * Module: \ref topoh
+ */
+
+/*! \defgroup topoh SIP-router :: Topology hiding
+ *
+ * This module hides the SIP routing headers that show topology details.
+ * It it is not affected by the server being transaction stateless or
+ * stateful. The script interpreter gets the SIP messages decoded, so all
+ * existing functionality is preserved.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
