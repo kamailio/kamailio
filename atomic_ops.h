@@ -15,8 +15,18 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/*!
+ * \file
+ * \brief SIP-router core :: Atomic operations and memory barriers
+ * \ingroup core
+ * Module: \ref core
+ * See \ref atomicops
+ */
+
 /*
- *  atomic operations and memory barriers
+ * \page atomicops  Atomic operations and memory barriers
+ *
  *  WARNING: atomic ops do not include memory barriers
  *  
  *  memory barriers:

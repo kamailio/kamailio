@@ -25,12 +25,41 @@
  * \file
  * \brief SIP-router core :: 
  * \ingroup core
+ *
  * Module: \ref core
+ *
+ * See \ref ConfigEngine
+ *
+ * \page ConfigEngine
+ * In file \ref cfg_parser.c 
+ * Configuration examples
+ * - \ref ConfigExample1
+ * - \ref ConfigExample2
+ * - \ref ConfigExample3
+ * - \ref ConfigExample4
+ * - \ref ConfigExample5
+ * - \ref ConfigExample6
+ * - \ref ConfigExample7
+ * - \ref ConfigExample8
+ *
+ * <b>Run-time Allocated Destination Variables</b>
+ * - the destination variable pointers in arrays are assigned at compile time
+ * - The address of variables allocated on the heap (typically in dynamically allocated
+ *   structures) is not know and thus we need to assign NULL initially and change the pointer
+ *   at runtime.
+ *   (provide an example).
+ *
+ * <b>Built-in parsing functions</b>
+ *
+ * *_val functions parse the whole option body (including =)
+ */
+
  */
 
 
-/** Example 1: Options without values
+/*! \page ConfigExample1  Configuration engine Example 1: Options without values
  *
+\verbatim
  *	str file = STR_STATIC_INIT("test.cfg");
  *	cfg_parser_t* parser;
  *	int feature_a = 0, feature_b = 0;
@@ -56,17 +85,21 @@
  *	}
  *
  *	cfg_parser_close(parser);
+\endverbatim
  */
 
-/** Example 2: Options with integer values
+/*! \page ConfigExample2  Configuration engine Example 2: Options with integer values
+\verbatim
  * 	cfg_option_t options[] = {
  *		{"max_number",   .param = &max_number,   .f = cfg_parse_int_val },
  *		{"extra_checks", .param = &extra_checks, .f = cfg_parse_bool_val},
  *		{0}
  *	};
+\endverbatim
  */
 
-/** Example 3: Enum options
+/*! \page ConfigExample3 Configuration engine Example 3: Enum options
+\verbatim
  * int scope;
  *
  *	cfg_option_t scopes[] = {
@@ -83,10 +116,12 @@
  *		{"scope", .param = scopes, .f = cfg_parse_enum_val},
  *		{0}
  *	};
+\endverbatim
  */
 
-/** Example 4: Options with string values
- * 	str filename = STR_NULL;
+/*! \page ConfigExample4 Configuration engine Example 4: Options with string values
+\verbatim
+* 	str filename = STR_NULL;
  *
  *	cfg_option_t options[] = {
  *		{"filename", .param = &filename, .f = cfg_parse_str_val},
@@ -97,35 +132,25 @@
  *   by a subsequent call
  * - There are flags to tell the function to copy the resuting string in a pkg, shm, glibc,
  *   or static buffers
+\endverbatim
  */
 
-/** Example 5: Custom value parsing
+/*! \page ConfigExample5 Configuration engine Example 5: Custom value parsing
  * TBD
  */
 
-/** Example 6: Parsing Sections
+/*! \page ConfigExample6 Configuration engine Example 6: Parsing Sections
  * TBD
  */
 
-/** Example 7: Default Options
+/*! \page ConfigExample7 Configuration engine Example 7: Default Options
  * TBD
  */
 
-/** Example 8: Memory management of strings
- * - Data types with fixed size are easy, they can be copied into a pre-allocated memory
+/*! \page ConfigExample8 Configuration engine Example 8: Memory management of strings
+ *
+ * Data types with fixed size are easy, they can be copied into a pre-allocated memory
  * buffer, strings cannot because their length is unknown.
- */
-
-/** Run-time Allocated Destination Variables
- * - the destination variable pointers in arrays are assigned at compile time
- * - The address of variables allocated on the heap (typically in dynamically allocated
- *   structures) is not know and thus we need to assign NULL initially and change the pointer
- *   at runtime.
- *   (provide an example).
- */
-
-/** Built-in parsing functions
- * *_val functions parse the whole option body (including =)
  */
 
 #include "cfg_parser.h"
@@ -142,20 +167,20 @@
 #include <libgen.h>
 
 
-/* The states of the lexical scanner */
+/*! \brief The states of the lexical scanner */
 enum st {
-	ST_S,  /**< Begin */
-	ST_A,  /**< Alphanumeric */
-	ST_AE, /**< Alphanumeric escaped */
-	ST_Q,  /**< Quoted */
-	ST_QE, /**< Quoted escaped */
-	ST_C,  /**< Comment */
-	ST_CE, /**< Comment escaped */
-	ST_E,  /**< Escaped */
+	ST_S,  /*!< Begin */
+	ST_A,  /*!< Alphanumeric */
+	ST_AE, /*!< Alphanumeric escaped */
+	ST_Q,  /*!< Quoted */
+	ST_QE, /*!< Quoted escaped */
+	ST_C,  /*!< Comment */
+	ST_CE, /*!< Comment escaped */
+	ST_E,  /*!< Escaped */
 };
 
 
-/* Test for alphanumeric characters */
+/*! \brief Test for alphanumeric characters */
 #define IS_ALPHA(c) \
     (((c) >= 'a' && (c) <= 'z') || \
      ((c) >= 'A' && (c) <= 'Z') || \
@@ -163,7 +188,7 @@ enum st {
      (c) == '_')
 
 
-/* Test for delimiter characters */
+/*! \brief Test for delimiter characters */
 #define IS_DELIM(c) \
     ((c) == '=' || \
      (c) == ':' || \
@@ -188,7 +213,7 @@ enum st {
      (c) == '\'')
 
 
-/* Whitespace characters */
+/*! \brief Whitespace characters */
 #define IS_WHITESPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\r') 
 #define IS_QUOTE(c)      ((c) == '\"')  /* Quote characters */
 #define IS_COMMENT(c)    ((c) == '#')   /* Characters that start comments */
@@ -196,9 +221,8 @@ enum st {
 #define IS_EOL(c)        ((c) == '\n')  /* End of line */
 
 
-/*
- * Append character to the value of current
- * token
+/*! \brief
+ * Append character to the value of current token
  */
 #define PUSH(c)                            \
     if (token->val.len >= MAX_TOKEN_LEN) { \
@@ -213,7 +237,7 @@ enum st {
     token->val.s[token->val.len++] = (c);
 
 
-/*
+/*! \brief
  * Return current token from the lexical analyzer
  */
 #define RETURN(c)               \
@@ -224,7 +248,7 @@ enum st {
     return 0;
 
 
-/*
+/*! \brief
  * Get next character and update counters
  */
 #define READ_CHAR      \

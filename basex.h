@@ -17,42 +17,38 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+/*!
+ * \file
+ * \brief SIP-router core :: convert/decode to/from ascii using various bases
+ *
+ * \ingroup core
+ *
+ * Module: \ref core
+ *
+ *
  * Functions:
- *  init_basex()                              - inits internal lookup tables
- *  HEX_HI(unsigned char c)                   - returns the first 4 bits of
- *                                              c converted to a hex digit
- *  HEX_LOW(unsigned char c)                  - returns the low 4 bits of
- *                                              c converted to a hex digit
- *  UNHEX(unsigned char hex_digit)            - converts hex_digit to a
+ *  - init_basex()                    : inits internal lookup tables
+ *  - HEX_HI(unsigned char c)         : returns the first 4 bits of c converted to a hex digit
+ *  - HEX_LOW(unsigned char c)         : returns the low 4 bits of converted to a hex digit
+ *  - UNHEX(unsigned char hex_digit)            : converts hex_digit to a
  *                                              number (0..15); it might
  *                                              return 0xff for invalid 
  *                                              digit (but with some compile
  *                                              option it won't check)
  *
- *  base16_enc(src, src_len, dst, dst_len)    - encode to standard hex
- *  base16_dec(src, src_len, dst, dst_len)    - decode from standard hex
- *  base16_enc_len(len)                       - length needed to encode len
- *                                              bytes (macro)
- *  base16_max_dec_len(len)                   - length needed to decode a 
- *                                              string of size len
+ *  - base16_enc(src, src_len, dst, dst_len)    : encode to standard hex
+ *  - base16_dec(src, src_len, dst, dst_len)    : decode from standard hex
+ *  - base16_enc_len(len)                       : length needed to encode len bytes (macro)
+ *  - base16_max_dec_len(len)                   : length needed to decode a string of size len
  *
- *  base64_enc(src, src_len, dst, dst_len)    - encode to base64, standard
- *                                              alphabet
- *  base64_dec(src, src_len, dst, dst_len)    - decode from base64, standard
- *                                              alphabet
- *  base64_enc_len(len)                       - length needed to encode
- *                                               len bytes (macro)
- *  base64_max_dec_len(len)                   - maximum length needed to
- *                                               decode len bytes (macro)
- *  base64_dec_len(str, len)                  - size of the decoded str 
+ *  - base64_enc(src, src_len, dst, dst_len)    : encode to base64, standard alphabet
+ *  - base64_dec(src, src_len, dst, dst_len)    : decode from base64, standard  alphabet
+ *  - base64_enc_len(len)                       : length needed to encode len bytes (macro)
+ *  - base64_max_dec_len(len)                   : maximum length needed to decode len bytes (macro)
+ *  - base64_dec_len(str, len)                  : size of the decoded str 
+ *  - q_base64_enc(src, src_len, dst, dst_len)  : encode to special base64 alphabet (non standard)
+ *  - q_base64_dec(src, src_len, dst, dst_len)  - decode from special non-standard base64 alphabet
  *
- *
- *  q_base64_enc(src, src_len, dst, dst_len)  - encode to special base64
- *                                              alphabet (non standard)
- *
- *  q_base64_dec(src, src_len, dst, dst_len)  - decode from special non-
- *                                              standard base64 alphabet
  *  All the above functions return the size used (in dst) on success and
  *   0 or a negative number (which is -1*size_needed) on error.
  *
@@ -65,6 +61,7 @@
  *  for some interesting tests and ideeas).
  *
  *  Test results for 40 bytes  (typical ser nounce) in average cpu cycles:
+<verbatim>
  *                    lookup   lookup_large lookup8k no-lookup
  *  base16_enc           211/231  218/199      -       1331
  *  base16_dec           252/251  236          -       1226
@@ -73,22 +70,23 @@
  *  q_base64_enc         -                              288
  *  q_base64_dec         -                              281
  *  (see test/basex.txt for more results)
+</verbatim>
  *
  * Defines:
- *  BASE64_LOOKUP_TABLE/NO_BASE64_LOOKUP_TABLE - use (default)/don't use
+ *  - BASE64_LOOKUP_TABLE/NO_BASE64_LOOKUP_TABLE : use (default)/don't use
  *     small lookup tables for conversions (faster in general).
- *  BASE64_LOOKUP_LARGE    - use large lookup tables (2560 bytes for 
+ *  - BASE64_LOOKUP_LARGE    : use large lookup tables (2560 bytes for 
  *    encoding and 256 bytes for decoding; without it 64 bytes are used for
  *    encoding and 85 bytes for decoding.
- *  BASE64_LOOKUP_8K - use even larger lookup tables (8K for encoding and
+ *  - BASE64_LOOKUP_8K : use even larger lookup tables (8K for encoding and
  *    256 for decoding); also try to write 2 bytes at a time (short) if
  *    the destination is 2 byte aligned
  *
- *  BASE16_LOOKUP_TABLE/NO_BASE16_LOOKUP_TABLE - use (default)/don't use
+ *  - BASE16_LOOKUP_TABLE/NO_BASE16_LOOKUP_TABLE : use (default)/don't use
  *     small lookup tables for conversions (faster in general).
- *  BASE16_LOOKUP_LARGE  - use large lookup tables (512 bytes for 
+ *  - BASE16_LOOKUP_LARGE  : use large lookup tables (512 bytes for 
  *    encoding and 256 bytes for decoding
- *  BASE16_READ_WHOLE_INTS - read an int at a time
+ *  - BASE16_READ_WHOLE_INTS : read an int at a time
  *
  * History:
  * --------
@@ -129,7 +127,7 @@
 	defined BASE64_LOOKUP_8K
 #include "endianness.h"
 
-/* aligns p to a type* pointer, type must have a 2^k size */
+/*! \brief aligns p to a type* pointer, type must have a 2^k size */
 #define ALIGN_POINTER(p, type) \
 	((type*) ((long)((char*)(p)+sizeof(type)-1)&~(long)(sizeof(type)-1)))
 
@@ -141,7 +139,7 @@
 #ifdef BASE16_LOOKUP_TABLE
 
 #ifdef BASE16_LOOKUP_LARGE
-/* use large tables: 512 for lookup and 256 for decode */
+/*! \brief use large tables: 512 for lookup and 256 for decode */
 
 extern unsigned char _bx_hexdig_hi[256];
 extern unsigned char _bx_hexdig_low[256];
@@ -154,7 +152,7 @@ extern unsigned char _bx_unhexdig256[256];
 #define UNHEX(h)	_bx_unhexdig256[(h)]
 
 #else /* BASE16_LOOKUP_LARGE */
-/* use small tabes: 16 bytes for lookup and 32 for decode */
+/*! \brief use small tabes: 16 bytes for lookup and 32 for decode */
 
 extern unsigned char _bx_hexdig[16+1];
 
@@ -254,39 +252,40 @@ extern unsigned char _bx_ub64[0x54+1];
 
 
 
-/* lenght needed for encoding l bytes */
+/*! \brief lenght needed for encoding l bytes */
 #define base16_enc_len(l) (l*2)
-/* maximum lenght needed for decoding l bytes */
+/*! \brief maximum lenght needed for decoding l bytes */
 #define base16_max_dec_len(l) (l/2)
-/* actual space needed for decoding a string b of size l */
+/*! \brief actual space needed for decoding a string b of size l */
 #define base16_dec_len(b, l) base16_max_dec_len(l)
-/* minimum valid source len for decoding */
+/*! \brief minimum valid source len for decoding */
 #define base16_dec_min_len() 2
-/* minimum valid source len for encoding */
+/*! \brief minimum valid source len for encoding */
 #define base16_enc_min_len() 0
 
-/* space needed for encoding l bytes */
+/*! \brief space needed for encoding l bytes */
 #define base64_enc_len(l) (((l)+2)/3*4)
-/* maximum space needed for encoding l bytes */
+/*! \brief maximum space needed for encoding l bytes */
 #define base64_max_dec_len(l) ((l)/4*3)
-/* actual space needed for decoding a string b of size l, l>=4 */
+/*! \brief actual space needed for decoding a string b of size l, l>=4 */
 #define base64_dec_len(b, l) \
 	(base64_max_dec_len(l)-((b)[(l)-2]=='=') -((b)[(l)-1]=='='))
-/* minimum valid source len for decoding */
+/*! \brief minimum valid source len for decoding */
 #define base64_dec_min_len() 4
-/* minimum valid source len for encoding */
+/*! \brief minimum valid source len for encoding */
 #define base64_enc_min_len() 0
 
 
 #ifdef BASE16_READ_WHOLE_INTS
 
-/* params: 
- * returns: size used from the output buffer (dst) on success,
+/*! 
+ * \params: 
+ * \return: size used from the output buffer (dst) on success,
  *          -size_needed on error
+ *
  * WARNING: the output string is not 0-term
  */
-inline static int base16_enc(unsigned char* src, int slen,
-							 unsigned char*  dst, int dlen)
+inline static int base16_enc(unsigned char* src, int slen, unsigned char*  dst, int dlen)
 {
 	unsigned int* p;
 	unsigned char* end;
@@ -454,10 +453,11 @@ inline static int base16_enc(unsigned char* src, int slen,
 #else /* BASE16_READ_WHOLE_INTS */
 
 
-/* params: 
- * returns: size used from the output buffer (dst) on success,
+/*!
+ * \return : size used from the output buffer (dst) on success,
  *          -size_needed on error
- * WARNING: the output string is not 0-term
+ *
+ * \note WARNING: the output string is not 0-term
  */
 inline static int base16_enc(unsigned char* src, int slen,
 							 unsigned char*  dst, int dlen)
@@ -479,8 +479,7 @@ inline static int base16_enc(unsigned char* src, int slen,
 
 #endif /* BASE16_READ_WHOLE_INTS */
 
-inline static int base16_dec(unsigned char* src, int slen,
-							 unsigned char* dst, int dlen)
+inline static int base16_dec(unsigned char* src, int slen, unsigned char* dst, int dlen)
 {
 	unsigned char* end;
 	int osize;
@@ -498,8 +497,8 @@ inline static int base16_dec(unsigned char* src, int slen,
 
 
 
-/* helper internal function: encodes v (6 bits value)
- * returns char ascii encoding on success and 0xff on error
+/*! \brief helper internal function: encodes v (6 bits value)
+ * \return char ascii encoding on success and 0xff on error
  * (value out of range) */
 inline static unsigned char base64_enc_char(unsigned char v)
 {
@@ -519,8 +518,8 @@ inline static unsigned char base64_enc_char(unsigned char v)
 	return 0xff;
 }
 
-/* helper internal function: decodes a base64 "digit",
- * returns value on success (0-63) and 0xff on error (invalid)*/
+/*! \brief helper internal function: decodes a base64 "digit",
+ * \return value on success (0-63) and 0xff on error (invalid)*/
 inline static unsigned base64_dec_char(unsigned char v)
 {
 	switch(v){
@@ -557,10 +556,11 @@ inline static unsigned base64_dec_char(unsigned char v)
 
 
 #ifdef BASE64_LOOKUP_8K
-/* params: 
- * returns: size used from the output buffer (dst) on success ((slen+2)/3*4)
+/*!
+ * \return : size used from the output buffer (dst) on success ((slen+2)/3*4)
  *          -size_needed on error
- * WARNING: the output string is not 0-term
+ *
+ * \note WARNING: the output string is not 0-term
  */
 inline static int base64_enc(unsigned char* src, int slen,
 							unsigned char* dst,  int dlen)
@@ -614,10 +614,10 @@ inline static int base64_enc(unsigned char* src, int slen,
 	return osize;
 }
 #else /*BASE64_LOOKUP_8K*/
-/* params: 
- * returns: size used from the output buffer (dst) on success ((slen+2)/3*4)
+/*! \brief Convert to base64
+ * \return size used from the output buffer (dst) on success ((slen+2)/3*4)
  *          -size_needed on error
- * WARNING: the output string is not 0-term
+ * \note WARNING: the output string is not 0-term
  */
 inline static int base64_enc(unsigned char* src, int slen,
 							unsigned char* dst,  int dlen)
@@ -655,10 +655,10 @@ inline static int base64_enc(unsigned char* src, int slen,
 
 
 
-/* params: 
- * returns: size used from the output buffer (dst) on success (max: slen/4*3)
+/*! \brief
+ * \return size used from the output buffer (dst) on success (max: slen/4*3)
  *          -size_needed on error or 0 on bad base64 encoded string
- * WARNING: the output string is not 0-term
+ * \note WARNING: the output string is not 0-term
  */
 inline static int base64_dec(unsigned char* src, int slen,
 							unsigned char* dst,  int dlen)
@@ -721,13 +721,12 @@ inline static int base64_dec(unsigned char* src, int slen,
 
 
 
-/*
- * same as base64_enc but with a different alphabet, that allows simpler and
+/*! \brief
+ * same as \ref base64_enc() but with a different alphabet, that allows simpler and
  *  faster enc/dec
- * params: 
- * returns: size used from the output buffer (dst) on success ((slen+2)/3*4)
+ * \return size used from the output buffer (dst) on success ((slen+2)/3*4)
  *          -size_needed on error
- * WARNING: the alphabet includes ":;<>?@[]\`", so it might not be suited
+ * \note WARNING: the alphabet includes ":;<>?@[]\`", so it might not be suited
  *  in all cases (e.g. encoding something in a sip uri).
  */
 inline static int q_base64_enc(unsigned char* src, int slen,
@@ -769,14 +768,13 @@ inline static int q_base64_enc(unsigned char* src, int slen,
 
 
 
-/*
- * same as base64_enc but with a different alphabet, that allows simpler and
+/*! \brief
+ * same as \ref base64_enc() but with a different alphabet, that allows simpler and
  *  faster enc/dec
- * params: 
- * params: 
- * returns: size used from the output buffer (dst) on success (max: slen/4*3)
+ *
+ * \return size used from the output buffer (dst) on success (max: slen/4*3)
  *          -size_needed on error or 0 on bad base64 encoded string
- * WARNING: the output string is not 0-term
+ * \note WARNING: the output string is not 0-term
  */
 inline static int q_base64_dec(unsigned char* src, int slen,
 							unsigned char* dst,  int dlen)

@@ -24,10 +24,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*
- * atomic_ops init functions
- * (needed for lock intializing if no native asm locks are available
- *  for the current arch./compiler combination, see atomic_ops.c)
+/*!
+ * \file
+ * \brief SIP-router core :: atomic_ops init functions
+ *
+ * \ingroup core
+ * Module: \ref core
+ *
+ * Needed for lock intializing if no native asm locks are available
+ *  for the current arch./compiler combination, see \ref atomic_ops.c
  */
 /* 
  * History:
@@ -38,9 +43,9 @@
 #ifndef __atomic_ops_init_h
 #define __atomic_ops_init_h
 
-/* init atomic ops */
+/*! \brief init atomic ops */
 int init_atomic_ops();
-/* destroy atomic ops (e.g. frees the locks, if locks are used) */
+/*! \brief destroy atomic ops (e.g. frees the locks, if locks are used) */
 void destroy_atomic_ops();
 
 #endif

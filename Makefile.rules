@@ -280,6 +280,7 @@ doxygen:
 	# disable call graphes, because of the DOT dependencies
 	(cat ./$(COREPATH)/doc/doxygen/ser.doxygen; \
 	echo "HAVE_DOT=no" ;\
+	echo "PROJECT_NAME=SIP-ROUTER" ;\
 	echo "PROJECT_NUMBER=$(NAME)-$(RELEASE)" )| doxygen -
 	-@echo "Doxygen documentation created"
 

@@ -28,7 +28,7 @@
  */
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: convert/decode to/from ascii using various bases
  * \ingroup core
  * Module: \ref core
  */
