@@ -677,6 +677,14 @@ int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
 		_rewrite_user, _hsrc, alg_crc32, _descavp);
 }
 
+int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc)
+{
+	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, _hsrc, alg_crc32, NULL);
+}
+
 
 /**
  * rewrites the request URI of msg after determining the
@@ -701,6 +709,13 @@ int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
 		_rewrite_user, _hsrc, alg_prime, _descavp);
 }
 
+int cr_prime_route5(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc)
+{
+	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, _hsrc, alg_prime, NULL);
+}
 /**
  * rewrites the request URI of msg after determining the
  * new destination URI with the crc32 hash algorithm. The difference
@@ -724,6 +739,14 @@ int cr_nofallback_route(struct sip_msg * _msg, gparam_t *_carrier,
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32_nofallback, _dstavp);
+}
+
+int cr_nofallback_route5(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc)
+{
+	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, _hsrc, alg_crc32_nofallback, NULL);
 }
 
 
