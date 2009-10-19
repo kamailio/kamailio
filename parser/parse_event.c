@@ -117,10 +117,16 @@ int event_parser(char* s, int len, event_t* e)
 	tmp.s = end;
 	trim_leading(&tmp);
 
-	if (tmp.s[0] == ';') {
+	e->params.list = NULL;
+	
+	if (tmp.len && (tmp.s[0] == ';')) {
+		/* Shift the semicolon and skip any leading whitespace, this is needed
+		 * for parse_params to work correctly. */
+		tmp.s++; tmp.len--;
+		trim_leading(&tmp);
+		if (!tmp.len) return 0;
+
 		/* We have parameters to parse */
-		tmp.s++;
-		tmp.len--;
 		if (e->type == EVENT_DIALOG) {
 			pclass = CLASS_EVENT_DIALOG;
 			phooks = (param_hooks_t*)&e->params.dialog;
@@ -130,10 +136,7 @@ int event_parser(char* s, int len, event_t* e)
 			ERR("event_parser: Error while parsing parameters parameters\n");
 			return -1;
 		}
-	} else {
-		e->params.list = NULL;
 	}
-
 	return 0;
 }
 

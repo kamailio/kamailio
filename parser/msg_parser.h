@@ -464,4 +464,7 @@ struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht);
 struct hdr_field* next_sibling_hdr(struct hdr_field *hf);
 
 int set_path_vector(struct sip_msg* msg, str* path);
+
+void reset_path_vector(struct sip_msg* msg);
+
 #endif

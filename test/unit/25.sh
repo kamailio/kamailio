@@ -46,17 +46,17 @@ fi ;
 CFG=25.cfg
 
 # add an registrar entry to the db;
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456789\",\"sip:123456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456789\",\"sip:123456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456788\",\"sip:123456788@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456788\",\"sip:123456788@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456787\",\"sip:123456787@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456787\",\"sip:123456787@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456786\",\"sip:123456786@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456786\",\"sip:123456786@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456785\",\"sip:223456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456785\",\"sip:223456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456784\",\"sip:2.23456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456784\",\"sip:2.23456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
 
 # setup userblacklist, first some dummy data
@@ -75,10 +75,10 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('1'
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('','0','_test_');"
 
 
-../$BIN -w . -f $CFG &> /dev/null
+$BIN -w . -f $CFG &> /dev/null
 sleep 1
 
-sipp -sn uas -bg -i localhost -p 5060 &> /dev/null
+sipp -sn uas -bg -i 127.0.0.1 -p 5060 #&> /dev/null
 
 sipp -sn uac -s 49721123456789 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
@@ -108,7 +108,7 @@ if [ "$ret" -ne 1 ] ; then
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456786','1','_test_');"
-../scripts/$CTL fifo reload_blacklist
+$CTL fifo reload_blacklist
 
 sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
@@ -131,7 +131,7 @@ ret=$?
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('2','1','_test_');"
 
-../scripts/$CTL fifo reload_blacklist
+$CTL fifo reload_blacklist
 
 if [ "$ret" -ne 1 ] ; then
 	cleanup 1

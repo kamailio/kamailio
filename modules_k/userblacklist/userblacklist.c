@@ -82,6 +82,10 @@ static int check_user_blacklist_fixup(void** param, int param_no);
 /* ---- exported commands: */
 static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
 static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
+static int check_user_blacklist2(struct sip_msg *msg, char* str1, char* str2);
+static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2);
+static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
+static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
 static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
 
 /* ---- module init functions: */
@@ -95,10 +99,10 @@ struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usag
 
 
 static cmd_export_t cmds[]={
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist2, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist3, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist3, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
@@ -313,6 +317,27 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 	return check_user_list(msg, str1, str2, str3, str4, 0);
 }
 
+static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2)
+{
+	return check_user_list(msg, str1, str2, NULL, NULL, 1);
+}
+
+
+static int check_user_blacklist2(struct sip_msg *msg, char* str1, char* str2)
+{
+	return check_user_list(msg, str1, str2, NULL, NULL, 0);
+}
+
+static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3)
+{
+	return check_user_list(msg, str1, str2, str3, NULL, 1);
+}
+
+
+static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3)
+{
+	return check_user_list(msg, str1, str2, str3, NULL, 0);
+}
 
 
 /**
