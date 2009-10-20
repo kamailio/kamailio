@@ -4,6 +4,7 @@
 <!ENTITY iptel "<ulink url='http://iptel.org'>iptel.org</ulink>">
 
 <!ENTITY kamailio "Kamailio">
+<!ENTITY kamailiobinary "kamailio">
 <!ENTITY kamailioname "Kamailio SIP Server Platform">
 <!ENTITY kamailioconfig "kamailio.cfg">
 
