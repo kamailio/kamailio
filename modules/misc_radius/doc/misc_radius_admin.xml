@@ -18,15 +18,16 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	Module misc_radius implements various RADIUS related functions.
-	Currently functions exist for loading caller's or callee's
+	The <emphasis>misc_radius</emphasis> module implements various 
+	RADIUS related functions.
+	Functions exist for loading caller's or callee's
 	attributes into AVPs, checking if user belongs to a group, and
-	checking if URI belongs to a user.  It thus replaces old
+	checking if a specific URI belongs to a user.  It thus replaces old
 	avp_radius, group_radius, and uri_radius modules.
 	</para>
 	<para>
 	All functions of this module load AVPs from SIP-AVP reply items
-	received from RADIUS upon a successful request.  Value of
+	received from RADIUS upon a successful request. Value of the
 	SIP-AVP reply item must be a string of form:
 	<itemizedlist>
 		<listitem><para><emphasis>

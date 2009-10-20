@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module provides the possibility to print user formatted log or
-   debug messages from Kamailio scripts, similar to printf function. A
+   debug messages from Kamailio scripts, similar to the printf function. A
    C-style printf specifier is replaced with a part of the SIP request or
    other variables from system. Section 2, "Implemented Specifiers" shows
    what can be printed out.

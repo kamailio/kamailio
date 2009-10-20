@@ -58,6 +58,7 @@
 <!ENTITY defaultdb "mysql://openser:openserrw@localhost/openser">
 <!ENTITY defaultrodb "mysql://openserro:openserro@localhost/openser">
 <!ENTITY exampledb "dbdriver://username:password@dbhost/dbname">
+<!ENTITY exampleotherdb "postgres://proxy:frog23@db.sip-router.org/sipdb">
 
 <!-- Often used acronyms -->
 

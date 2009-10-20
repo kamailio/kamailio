@@ -18,7 +18,7 @@
 	<para>
 		The Domain Policy module implements draft-lendl-domain-policy-ddds-02 in
 		combination with draft-lendl-speermint-federations-02 and 
-		draft-lendl-speermint-technical-policy-00. These drafts
+		draft-lendl-speermint-technical-policy-00. These IETF drafts
 		define <acronym>DNS</acronym> records with which a domain can
 		announce its federation memberships. A local database can be
 		used to map policy rules to routing policy decisions.
@@ -52,13 +52,13 @@
 		</para>
 		<para>
 		Default value is 
-			<quote>mysql://openserro:openserro@localhost/openser</quote>
+			<quote>&defaultdb;</quote>
 		</para>
 		<example>
 		<title>Setting db_url parameter</title>
 		<programlisting format="linespecific">
-modparam("domainpolicy", "db_url", "postgresql://openserro:pass@db_host/openser")
-</programlisting>
+modparam("domainpolicy", "db_url", "&exampleotherdb;")
+		</programlisting>
 		</example>
 	</section>
 	<section>
@@ -234,7 +234,7 @@ modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
 		send socket (the payload of this AVP) must be in the format
 		[proto:]ip_address[:port]. The function dp_apply_policy will 
 		look for this AVP and if defined, it will force the send socket
-		to its value (smilar to the force_send_socket core function).
+		to its value (similar to the force_send_socket core function).
 		</para>
 		<para>
 		Default value is <quote>sendsocket</quote>.
@@ -452,7 +452,7 @@ if (dp_apply_policy()) {
 	</section>
 
 	<section>
-	<title><acronym>FIFO</acronym> Commands</title>
+	<title><acronym>RPC</acronym> Commands</title>
 	<para>
 	</para>
 	</section>
@@ -486,7 +486,7 @@ if (dp_apply_policy()) {
 		</para><para>
 			Calls from other members are expected to use TLS and authenticate
 			using a client-CERT. To implement this, we cannot share a TCP/TLS port
-			with other incoming connection. Thus we need to use tls_server_domain[] to
+			with other incoming connections. Thus we need to use tls_server_domain[] to
 			dedicate a TCP port for this federation. 
 		</para>
 		<programlisting format="linespecific">
@@ -504,7 +504,7 @@ tls_server_domain[1.2.3.4:5066] {
 		<listitem>
 		<para><emphasis>Outgoing SIP configuration</emphasis>
 		</para><para>
-			Calls to other members also must use the proper client cert. 
+			Calls to other members must also use the proper client cert. 
 			Therefore, a TLS client domain must be configured. We use the 
 			federation name as TLS client domain identifier. Therefore, the 
 			content of the "tls_client_domain_avp" must be set to this identifier 
