@@ -17,38 +17,39 @@
 	<title>Overview</title>
 	<para>
 		Purple module is a multi-protocol instant-messaging gateway module
-		which use libpurple, the library on bottom of Pidgin (ex-gaim).
+		which use <emphasis>libpurple</emphasis>, the library that Pidgin 
+		(ex-gaim) is based on.
 	</para>
 	<para>
-		This plugin was wrote in order to proof the concept of gateway between
+		This plugin was written as a  proof of concept gateway between
 		SIP and MSN/Live networks. As libpurple is written to code
 		multi-protocol graphic IM clients, it provides a high level API in
 		order to manipulate accounts, contacts, contacts lists,
 		conversations and more.
 	</para>
 	<para>
-		So this module provides a multi-protocol IM/Presence client running
-		inside &kamailio; with an account for each protocols used by each
-		SIP user whereas libpurple is designed for a graphic client for
+		This module provides a multi-protocol IM/Presence client running
+		inside &kamailio; with an account for each protocol used by each
+		SIP user. libpurple is designed for a graphic client for
 		only one user.
 	</para>
 	<para>
 		It's no really adapted to a production environment with a huge user
-		count but can be used in order to demonstrate the concept or to use
-		it in SOHO environment.
+		count but can be used in order to demonstrate the concept or in a
+		SOHO environment.
 	</para>
 	<para>
 		By default, there's some undefined symbol errors with libpurple
-		shared object when using inside &kamailio;. To solve it, you have to
+		shared object when using it inside &kamailio;. To solve it, you have to
 		force preload of the library by setting up LD_PRELOAD environment
 		variable.
 	</para>
 	<para>
 		Before starting &kamailio; use (adapt the path to your environment):
 	</para>
-	<para>
+	<programlisting>
 		export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
-	</para>
+	</programlisting>
 	<para>
 		Limitations: doesn't implement authorization requests from external
 		accounts to SIP.
@@ -123,23 +124,23 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>sip_user</emphasis> user's SIP URI.
+				<emphasis>sip_user</emphasis>: user's SIP URI.
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>ext_user</emphasis> user's external account login.
+				<emphasis>ext_user</emphasis>: user's external account login.
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>ext_prot</emphasis> purple plugin id to use, except
+				<emphasis>ext_prot</emphasis>: purple plugin id to use, except
 				for gtalk.
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>ext_pass</emphasis> user's external account password.
+				<emphasis>ext_pass</emphasis>: user's external account password.
 			</para>
 			</listitem>
 		</itemizedlist>

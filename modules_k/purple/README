@@ -12,31 +12,31 @@ Eric Ptak
    <eric.ptak@atosorigin.com>
 
    Copyright © 2008 Atos Worldline
-     __________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Database
-        1.4. Exported Parameters
+        3. Database
+        4. Exported Parameters
 
-              1.4.1. db_url (str)
-              1.4.2. db_table (str)
-              1.4.3. httpProxy_host (str)
-              1.4.4. httpProxy_port (int)
+              4.1. db_url (str)
+              4.2. db_table (str)
+              4.3. httpProxy_host (str)
+              4.4. httpProxy_port (int)
 
-        1.5. Exported Functions
+        5. Exported Functions
 
-              1.5.1. purple_send_message()
-              1.5.2. purple_handle_publish()
-              1.5.3. purple_handle_subscribe()
+              5.1. purple_send_message()
+              5.2. purple_handle_publish()
+              5.3. purple_handle_subscribe()
 
    List of Examples
 
@@ -53,59 +53,77 @@ Eric Ptak
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   Purple module is a multi-protocol instant-messaging gateway
-   module which use libpurple, the library on bottom of Pidgin
-   (ex-gaim).
+   1. Overview
+   2. Dependencies
 
-   This plugin was wrote in order to proof the concept of gateway
-   between SIP and MSN/Live networks. As libpurple is written to
-   code multi-protocol graphic IM clients, it provides a high
-   level API in order to manipulate accounts, contacts, contacts
-   lists, conversations and more.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-   So this module provides a multi-protocol IM/Presence client
-   running inside Kamailio with an account for each protocols used
-   by each SIP user whereas libpurple is designed for a graphic
-   client for only one user.
+   3. Database
+   4. Exported Parameters
 
-   It's no really adapted to a production environment with a huge
-   user count but can be used in order to demonstrate the concept
-   or to use it in SOHO environment.
+        4.1. db_url (str)
+        4.2. db_table (str)
+        4.3. httpProxy_host (str)
+        4.4. httpProxy_port (int)
 
-   By default, there's some undefined symbol errors with libpurple
-   shared object when using inside Kamailio. To solve it, you have
-   to force preload of the library by setting up LD_PRELOAD
-   environment variable.
+   5. Exported Functions
 
-   Before starting Kamailio use (adapt the path to your
-   environment):
+        5.1. purple_send_message()
+        5.2. purple_handle_publish()
+        5.3. purple_handle_subscribe()
 
-   export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
+1. Overview
 
-   Limitations: doesn't implement authorization requests from
-   external accounts to SIP.
+   Purple module is a multi-protocol instant-messaging gateway module
+   which use libpurple, the library that Pidgin (ex-gaim) is based on.
 
-1.2. Dependencies
+   This plugin was written as a proof of concept gateway between SIP and
+   MSN/Live networks. As libpurple is written to code multi-protocol
+   graphic IM clients, it provides a high level API in order to manipulate
+   accounts, contacts, contacts lists, conversations and more.
 
-1.2.1. Kamailio Modules
+   This module provides a multi-protocol IM/Presence client running inside
+   Kamailio with an account for each protocol used by each SIP user.
+   libpurple is designed for a graphic client for only one user.
+
+   It's no really adapted to a production environment with a huge user
+   count but can be used in order to demonstrate the concept or in a SOHO
+   environment.
+
+   By default, there's some undefined symbol errors with libpurple shared
+   object when using it inside Kamailio. To solve it, you have to force
+   preload of the library by setting up LD_PRELOAD environment variable.
+
+   Before starting Kamailio use (adapt the path to your environment):
+                export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
+
+   Limitations: doesn't implement authorization requests from external
+   accounts to SIP.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * presence*.
      * pua.
      * database driver module (db_mysql, ...).
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * libpurple, e.g. from pidgin 2.5.2.
 
-1.3. Database
+3. Database
 
-   The database is used to map SIP URIs with external accounts
-   (eg. MSN).
+   The database is used to map SIP URIs with external accounts (eg. MSN).
 
    Example 1.1. Database table description
 ...
@@ -121,10 +139,10 @@ Chapter 1. Admin Guide
 ...
 
    The meaning of columns:
-     * sip_user user's SIP URI.
-     * ext_user user's external account login.
-     * ext_prot purple plugin id to use, except for gtalk.
-     * ext_pass user's external account password.
+     * sip_user: user's SIP URI.
+     * ext_user: user's external account login.
+     * ext_prot: purple plugin id to use, except for gtalk.
+     * ext_pass: user's external account password.
 
    Example 1.2. Database sample records
 ...
@@ -149,22 +167,25 @@ CREATE TABLE purplemap (
 );
 ...
 
-1.4. Exported Parameters
+4. Exported Parameters
 
-1.4.1. db_url (str)
+   4.1. db_url (str)
+   4.2. db_table (str)
+   4.3. httpProxy_host (str)
+   4.4. httpProxy_port (int)
+
+4.1. db_url (str)
 
    The URL to connect to database.
 
-   Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://openserro:openserro@localhost/openser".
 
    Example 1.4. Set db_url parameter
 ...
-modparam("purple", "db_url", "dbdriver://username:password@dbhost/dbname
-")
+modparam("purple", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-1.4.2. db_table (str)
+4.2. db_table (str)
 
    Database table name.
 
@@ -175,7 +196,7 @@ modparam("purple", "db_url", "dbdriver://username:password@dbhost/dbname
 modparam("purple", "db_table", "purplemap")
 ...
 
-1.4.3. httpProxy_host (str)
+4.3. httpProxy_host (str)
 
    Address of HTTP proxy.
 
@@ -186,7 +207,7 @@ modparam("purple", "db_table", "purplemap")
 modparam("purple", "httpProxy_host", "10.26.52.12")
 ...
 
-1.4.4. httpProxy_port (int)
+4.4. httpProxy_port (int)
 
    Port of HTTP proxy.
 
@@ -197,9 +218,13 @@ modparam("purple", "httpProxy_host", "10.26.52.12")
 modparam("purple", "httpProxy_port", 3128)
 ...
 
-1.5. Exported Functions
+5. Exported Functions
 
-1.5.1.  purple_send_message()
+   5.1. purple_send_message()
+   5.2. purple_handle_publish()
+   5.3. purple_handle_subscribe()
+
+5.1. purple_send_message()
 
    Send message to a purple destination.
 
@@ -216,7 +241,7 @@ if (is_method("MESSAGE")) {
 }
 ...
 
-1.5.2.  purple_handle_publish()
+5.2. purple_handle_publish()
 
    Handle PUBLISH to a purple destination.
 
@@ -231,7 +256,7 @@ if(is_method("PUBLISH")) {
 }
 ...
 
-1.5.3.  purple_handle_subscribe()
+5.3. purple_handle_subscribe()
 
    Handle SUBSCRIBE to a purple destination.
 
