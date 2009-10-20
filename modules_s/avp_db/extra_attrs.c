@@ -143,7 +143,7 @@ int declare_attr_group(modparam_t type, char* _param)
 		return -1;
 	}
 	param = *((str*)_param);
-	ERR("group def: %.*s\n", param.len, param.s);
+    DBG("group def: %.*s\n", param.len, param.s);
 	
 	rt = pkg_malloc(param.len + sizeof(*rt) + 1);
 	if (!rt) {
