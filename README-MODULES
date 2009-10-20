@@ -35,6 +35,14 @@ A module providers up to three different APIs:
 
 A single module may provide a selection of this, maybe only one of them.
 
+Why do we have two modules with the same name?
+==============================================
+Some modules exists both in modules_k and modules_s - like xlog. If you are
+upgrading from Kamailio, we recommend using the one in modules_k for backwards
+compatibility, if you are using SER then select the one in modules_s.
+In the future the development team will try to integrate modules that are
+split like this into one integrated module.
+
 Core modules
 ------------
 auth_identity
