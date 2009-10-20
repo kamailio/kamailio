@@ -87,6 +87,8 @@ DELETE FROM global_attrs WHERE name='sw_uname_assign_mode';
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_uname_assign_mode', '2', 'fcfs', '32');
 DELETE FROM global_attrs WHERE name='domain_data_version';
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('domain_data_version', '0', '0', '33');
+DELETE FROM global_attrs WHERE name='gattr_timestamp';
+INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('gattr_timestamp', '0', '0', '33');
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_show_status', '0', '1', '32');
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_require_conf', '0', '1', '32');
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('lang', '2', 'en', '33');

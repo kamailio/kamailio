@@ -5,7 +5,7 @@
 # File containing SER database description
 DOC_ROOT = ser.xml
 
-ROOT=../..
+ROOT=../../..
 STYLESHEETS=$(ROOT)/doc/stylesheets/dbschema/xsl
 
 # Stylesheet used to generate MySQL database schema
