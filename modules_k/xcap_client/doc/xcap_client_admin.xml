@@ -16,29 +16,29 @@
 	<section>
 	<title>Overview</title>
 	<para> 
-	The modules is an XCAP client for &kamailio; that can be used by other modules.
+	The modules is a XCAP client for &kamailio; that can be used by other modules.
 	It fetches XCAP elements, either documents or part of them, by sending 
-	HTTP GET requests. It also offers support for conditional queries.
-	It uses libcurl library as a client-side HTTP transfer library.
+	HTTP GET requests to an XCAP server. It also offers support for 
+	conditional queries.  It uses the <emphasis>libcurl</emphasis> library as a 
+	client-side HTTP transfer library.
 	</para>
 	<para>
-	The module offers an xcap client interface with general functions that
-	allow requesting for an specific element from an xcap server.
-	In addition to that it also offers the service of storing and update
-	in database the documents it receives. In this case only an initial
-	request to the module is required - xcapGetNewDoc-which is like a 
+	The module offers a XCAP client interface with general functions that
+	allow requesting for a specific element from a XCAP server.
+	In addition to that it also offers the service of storing and updating
+	the documents it receives. In this case only an initial
+	request to the module is required - xcapGetNewDoc - which is like a 
 	request to the module to handle from that point on the referenced
 	document so as to promise that the newest version will always be
 	present in database.
 	</para>
 	<para>
-	The update method is also configurable, 
-	either through periodical queries, applicable to any kind of xcap
-	server or with an MI command that should be sent by the server
-	upon an update.
+	The update method is also configurable, either through periodical
+	queries, applicable to any kind of XCAP server or with an management command 
+	that should be sent by the server upon an update.
 	</para>
 	<para>
-	The module is currently used by the presence_xml module, if the 
+	The module is currently used by the <quote>presence_xml</quote> module, if the 
 	'integrated_xcap_server' parameter is not set.
 	</para>
 	</section>
@@ -81,7 +81,7 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>&defaultdb;</quote>.	
+		<emphasis>Default value is <quote>&defaultdb;</quote>.	
 		</emphasis>
 		</para>
 		<example>
@@ -99,7 +99,7 @@ modparam("xcap_client", "db_url", "&exampledb;")
 		The name of the db table where XCAP documents are stored.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>xcap</quote>.
+		<emphasis>Default value is <quote>xcap</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -116,15 +116,15 @@ modparam("xcap_client", "xcap_table", "xcaps")
 		<para>
 		A flag to disable periodical query as an update method for
 		the documents the module is responsible for. It could be
-		disabled when the xcap server is capable to send the exported
-		MI command when a change occurs or when another module in &kamailio;
+		disabled when the XCAP server is capable to send the exported
+		management command when a change occurs or when another module in &kamailio;
 		handles updates.
 		</para>
 		<para>
 		To disable it set this parameter to 0.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>1</quote>.
+		<emphasis>Default value is <quote>1</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -140,14 +140,14 @@ modparam("xcap_client", "periodical_query", 0)
 		<title><varname>query_period</varname>(int)</title>
 		<para>
 		Should be set if periodical query is not disabled. 
-		Represents the time interval the xcap servers should be 
-		queried for an update
+		Represents the time interval the XCAP servers should be 
+		queried for an update.
 		</para>
 		<para>
 		To disable it set this parameter to 0.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>100</quote>.
+		<emphasis>Default value is <quote>100</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -169,13 +169,13 @@ modparam("xcap_client", "query_period", 50)
 </section>
 
 <section>
-	<title>Exported MI Functions</title>
+	<title>Exported Management Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">refreshXcapDoc</function>
 		</title>
 		<para>
-		MI command that should be sent by an xcap server when a
+		Management command that should be sent by an XCAP server when a
 		stored document changes.
 		</para>
 		<para>
@@ -192,7 +192,7 @@ modparam("xcap_client", "query_period", 50)
 		 </itemizedlist>
 
         <para>
-		MI FIFO Command Format:
+		Management FIFO Command Format:
 		</para>
         <programlisting  format="linespecific">
 ...
