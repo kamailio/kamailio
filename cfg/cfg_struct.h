@@ -3,19 +3,14 @@
  *
  * Copyright (C) 2007 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -41,71 +36,71 @@
 #include "../compiler_opt.h"
 #include "cfg.h"
 
-/* indicates that the variable has been already shmized */
+/*! \brief indicates that the variable has been already shmized */
 #define cfg_var_shmized	1U
 
-/* structure used for variable - pointer mapping */
+/*! \brief structure used for variable - pointer mapping */
 typedef struct _cfg_mapping {
-	cfg_def_t	*def;		/* one item of the cfg structure definition */
-	int		name_len;	/* length of def->name */
+	cfg_def_t	*def;		/*!< one item of the cfg structure definition */
+	int		name_len;	/*!< length of def->name */
 
 	/* additional information about the cfg variable */
-	int		offset; /* offest within the memory block */
-	unsigned int	flag;	/* flag indicating the state of the variable */
+	int		offset; /*!< offest within the memory block */
+	unsigned int	flag;	/*!< flag indicating the state of the variable */
 } cfg_mapping_t;
 
-/* linked list of registered groups */
+/*! \brief linked list of registered groups */
 typedef struct _cfg_group {
-	int		num;		/* number of variables within the group */
-	cfg_mapping_t	*mapping;	/* describes the mapping betweeen
+	int		num;		/*!< number of variables within the group */
+	cfg_mapping_t	*mapping;	/*!< describes the mapping betweeen
 					the cfg variable definition and the memory block */
-	char		*vars;		/* pointer to the memory block where the values
+	char		*vars;		/*!< pointer to the memory block where the values
 					are stored -- used only before the config is
 					shmized. */
-	int		size;		/* size of the memory block that has to be
+	int		size;		/*!< size of the memory block that has to be
 					allocated to store the values */
-	int		offset;		/* offset of the group within the
+	int		offset;		/*!< offset of the group within the
 					shmized memory block */
-	void		**handle;	/* per-process handle that can be used
+	void		**handle;	/*!< per-process handle that can be used
 					by the modules to access the variables.
 					It is registered when the group is created,
 					and updated every time the block is replaced */
 
-	unsigned char	dynamic;	/* indicates whether the variables within the group
+	unsigned char	dynamic;	/*!< indicates whether the variables within the group
 					are dynamically	allocated or not */
 	struct _cfg_group	*next;
 	int		name_len;	
 	char		name[1];
 } cfg_group_t;
 
-/* single memoy block that contains all the cfg values */
+/*! \brief single memoy block that contains all the cfg values */
 typedef struct _cfg_block {
-	atomic_t	refcnt;		/* reference counter,
+	atomic_t	refcnt;		/*!< reference counter,
 					the block is automatically deleted
 					when it reaches 0 */
-	char		**replaced;	/* set of the strings that must be freed
+	char		**replaced;	/*!< set of the strings that must be freed
 					together with the block. The content depends
 					on the block that replaces this one */
-	unsigned char	vars[1];	/* blob that contains the values */
+	unsigned char	vars[1];	/*!< blob that contains the values */
 } cfg_block_t;
 
-/* Linked list of per-child process callbacks.
+/*! \brief Linked list of per-child process callbacks.
  * Each child process has a local pointer, and executes the callbacks
  * when the pointer is not pointing to the end of the list.
  * Items from the begginning of the list are deleted when the starter
  * pointer is moved, and no more child process uses them.
  */
 typedef struct _cfg_child_cb {
-	atomic_t		refcnt; /* number of child processes
+	atomic_t		refcnt; /*!< number of child processes
 					referring to the element */
-	atomic_t		cb_count;	/* This counter is used to track
+	atomic_t		cb_count;	/*!< This counter is used to track
 						 * how many times the callback needs
 						 * to be executed.
 						 * >0 the cb needs to be executed
 						 * <=0 the cb no longer needs to be executed
 						 */
-	str			gname, name;	/* name of the variable that has changed */
-	cfg_on_set_child	cb;	/* callback function that has to be called */
+	str			gname, name;	/*!< name of the variable that has changed */
+	cfg_on_set_child	cb;	/*!< callback function that has to be called */
 
 	struct _cfg_child_cb	*next;
 } cfg_child_cb_t;

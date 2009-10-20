@@ -3,19 +3,14 @@
  *
  * Copyright (C) 2007 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -37,7 +32,7 @@
 #include "cfg.h"
 #include "cfg_struct.h"
 
-/* linked list of variables with their new values */
+/*! \brief linked list of variables with their new values */
 typedef struct _cfg_changed_var {
 	cfg_group_t	*group;
 	cfg_mapping_t	*var;
@@ -47,10 +42,10 @@ typedef struct _cfg_changed_var {
 	unsigned char	new_val[1];
 } cfg_changed_var_t;
 
-/* callback that is called when a new group is declared */
+/*! \brief callback that is called when a new group is declared */
 typedef void (*cfg_on_declare)(str *, cfg_def_t *);
 
-/* linked list of registered contexts */
+/*! \brief linked list of registered contexts */
 typedef struct _cfg_ctx {
 	/* variables that are already changed
 	but have not been committed yet */
@@ -70,14 +65,14 @@ typedef struct _cfg_ctx {
 #define CFG_CTX_LOCK(ctx)	lock_get(&(ctx)->lock)
 #define CFG_CTX_UNLOCK(ctx)	lock_release(&(ctx)->lock)
 
-/* creates a new config context that is an interface to the
+/*! \brief creates a new config context that is an interface to the
  * cfg variables with write permission */
 int cfg_register_ctx(cfg_ctx_t **handle, cfg_on_declare on_declare_cb);
 
-/* free the memory allocated for the contexts */
+/*! \brief free the memory allocated for the contexts */
 void cfg_ctx_destroy(void);
 
-/* set the value of a variable without the need of explicit commit */
+/*! \brief set the value of a variable without the need of explicit commit */
 int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			void *val, unsigned int val_type);
 int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val);
@@ -91,33 +86,34 @@ int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val)
 int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val);
 int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val);
 
-/* commits the previously prepared changes within the context */
+/*! \brief commits the previously prepared changes within the context */
 int cfg_commit(cfg_ctx_t *ctx);
 
-/* drops the not yet committed changes within the context */
+/*! \brief drops the not yet committed changes within the context */
 int cfg_rollback(cfg_ctx_t *ctx);
 
-/* returns the value of a variable */
+/*! \brief returns the value of a variable */
 int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			void **val, unsigned int *val_type);
 
-/* returns the description of a variable */
+/*! \brief returns the description of a variable */
 int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			char **ch, unsigned int *input_type);
 
-/* notify the drivers about the new config definition */
+/*! \brief notify the drivers about the new config definition */
 void cfg_notify_drivers(char *group_name, int group_name_len, cfg_def_t *def);
 
-/* convert the value to the requested type */
+/*! \brief convert the value to the requested type */
 int convert_val(unsigned int val_type, void *val,
 			unsigned int var_type, void **new_val);
 
-/* initialize the handle for cfg_get_group_next() */
+/*! \brief initialize the handle for cfg_get_group_next() */
 #define cfg_get_group_init(handle) \
 	(*(handle)) = (void *)cfg_group
 
-/* returns the group name and the cfg structure definition,
+/*! \brief returns the group name and the cfg structure definition,
  * and moves the handle to the next group
+ *
  * Return value:
  *	0: no more group
  *	1: group exists
@@ -133,15 +129,16 @@ int convert_val(unsigned int val_type, void *val,
 int cfg_get_group_next(void **h,
 			str *gname, cfg_def_t **def);
 
-/* Initialize the handle for cfg_diff_next()
+/*! \brief Initialize the handle for cfg_diff_next()
  * WARNING: keeps the context lock held, do not forget
  * to release it with cfg_diff_release()
  */
 int cfg_diff_init(cfg_ctx_t *ctx,
 		void **h);
 
-/* return the pending changes that have not been
+/*! \brief return the pending changes that have not been
  * committed yet
+ *
  * can be used as follows:
  *
  * void *handle;
@@ -160,7 +157,7 @@ int cfg_diff_next(void **h,
 			void **old_val, void **new_val,
 			unsigned int *val_type);
 
-/* destroy the handle of cfg_diff_next() */
+/*! \brief destroy the handle of cfg_diff_next() */
 void cfg_diff_release(cfg_ctx_t *ctx);
 
 #endif /* _CFG_CTX_H */
