@@ -54,8 +54,6 @@
  * *_val functions parse the whole option body (including =)
  */
 
- */
-
 
 /*! \page ConfigExample1  Configuration engine Example 1: Options without values
  *
