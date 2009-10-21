@@ -26,11 +26,24 @@
  */
 /*!
  * \file
- * \brief SIP-router core ::  Core configuration
+ * \brief SIP-router core ::  Core configuration parser
  * \ingroup core
  * Module: \ref core
+ *
+ * See 
+ * - \ref ConfigCoreDoc
+ * - \ref ConfigEngine
+ * - \ref cfg_core.h
  */
-
+/*!
+ * \page ConfigCoreDoc Documentation of configuration parser
+ * \section ConfigParser Configuration parser
+ * Further information
+ * - \ref ConfigEngine
+ * - \ref cfg_core.h
+ * \verbinclude cfg.txt
+ *
+ */
 
 #include "dprint.h"
 #ifdef USE_DST_BLACKLIST
