@@ -4,20 +4,21 @@
 # --------
 # 2006-01-26  created by andrei
 
-TCP Tunning/monitoring for lots of open connections
+SIP-router TCP Tunning/monitoring for lots of open connections
+==============================================================
 
 0. Introduction
 ----------------
 
 This document describes very briefly various settings that should improve
-ser+tcp performance for sites handling a lot of tcp traffic (> 1000 open
+sip-router+TCP performance for sites handling a lot of TCP traffic (> 1000 open
 connections or very high connection/disconnection rates).
 
 For now it deals only with Linux specific optimizations.
 
 
-1. Useful kernel settings
--------------------------
+1. Useful Linux kernel settings
+-------------------------------
 
 1.1 Connection rate/pending connections: by default the connection rate is
  too small
@@ -32,7 +33,7 @@ net.ipv4.tcp_timestamps        - default on., should be on (along with
 
  Connection should stay as little as possible
  in close_wait to quickly free the fd/resources for new connections attempts
- WARNING: this could break normal tcp use, use it only if you know what you are
+ WARNING: this could break normal TCP use, use it only if you know what you are
   doing
  
 net.ipv4.tcp_max_tw_buckets - maximum number of timewait sockets
@@ -48,6 +49,7 @@ net.ipv4.tcp_syncookies     - default off, in this case it's probably better to
                               keep it off
 
 1.3 Port range
+
 net.ipv4.ip_local_port_range - should be increased (e.g. 4096-65534)
 
 1.4 Open file descriptors

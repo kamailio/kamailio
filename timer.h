@@ -29,7 +29,24 @@
  */
 /* History:
  * --------
- *  2005-07-27  complete re-design/re-implemnetation (andrei)
+ *  2005-07-27  complete re-design/re-implementation (andrei)
+ */
+
+/**
+ * @file
+ * @brief SIP-router core :: timer related functions (public interface)
+ * @ingroup core
+ *
+ * Module: \ref core
+ *
+ * - \ref TimerDoc
+ */
+
+
+/**
+ * @page TimerDoc SIP-router's timer documentation
+ * @verbinclude timers.txt
+ *
  */
 
 
