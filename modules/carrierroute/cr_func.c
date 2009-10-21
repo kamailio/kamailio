@@ -436,11 +436,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			}
 			break;
 		case alg_crc32_nofallback:
-			if(rf->max_targets == 0) {
-				LM_ERR("invalid dice_max value\n");
-				return -1;
-			}
-			if ((prob = (hash_func(msg, hash_source, rf->dice_max) + 1)) < 0) {
+			if ((prob = (hash_func(msg, hash_source, rf->max_targets) + 1)) < 0) {
 				LM_ERR("could not hash message with CRC32");
 				return -1;
 			}
