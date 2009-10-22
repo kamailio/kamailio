@@ -157,59 +157,59 @@ xmpp			Presence/IM :: XMPP/jabber gateway
 
 SER modules
 -----------
-acc_db
-acc_radius
-acc_syslog
-auth
-auth_db
-avp
-avp_db
-bdb
-blst
-cpl-c
-db_ops
-dbg
-dbtext
+acc_db			Authentication :: acc module is used to report on transactions to database
+acc_radius		Authentication :: acc module is used to report on transactions to RADIUS.
+acc_syslog		Authentication :: acc module is used to report on transactions to syslog
+auth			Authentication backend (needs additional modules)
+auth_db			Database authentication
+avp			functions used to manipulate the contents of Attribute-Value pairs
+avp_db			Attribute-value pairs in database
+bdb			Database :: Berkeley DB (Oracle)
+blst			Blacklist management
+cpl-c			CPL support in SIP-router
+db_ops			Database :: SQL operations from configurtion script
+dbg			Debugging support
+dbtext			Database :: Text
 dialog
-dispatcher
+dispatcher		Load balancing ::  a dispatcher for destination addresses
 diversion		Proxy :: Call redirection support (Diversion: header)
 domain			Proxy :: Multiple domain support
-eval
+eval			implements expression evaluation in route script
 exec			Proxy :: External script support (modify route set)
 fifo		
 gflags			Proxy :: Global flags
 jabber			IM :: Jabber gateway
 ldap			LDAP directory server support
-mangler
+mangler			SDP mangling
 maxfwd			Proxy :: Loop prevention (max-forwards header)
-msilo
+msilo			Offline message storage
 nathelper		NAT traversal :: RTP proxy (SIPPY software)
 options			Proxy :: Support for SIP OPTION request
 oracle			Database :: Oracle
 osp			Open Settlement Protocol
-pa
-pdt
+pa			Presence :: server
+pdt			Proxy :: Simple routing on number prefixes
 permissions		Security :: ACL support like TCP wrappers
-pike
-prefix_route
-presence_b2b
-print
+pike			Security :: Rate limit control
+prefix_route		Proxy :: Routing based on a set of prefixes from the database
+presence_b2b		Presence :: Back2back UA
+print			Example module for developers
 print_lib
-ratelimit
-registrar
-rls
-rr
-sanity
-sl
-sms
-speeddial
-textops
-timer
-tls
-uac
+ratelimit		Security :: Rate limit of SIP requests
+registrar		Registrar (for REGISTER requests)
+rls			Resource list server (for presence)
+rr			Proxy :: Record routing logic
+sanity			Implement several sanity checks on incoming requests
+sl			Proxy :: Stateless replies
+sms			SMS gateway
+speeddial		Proxy :: Speed dialing for users
+textops			Text operations (search, replace)
+timer			triggering specific route block on timer
+tls			TLS module
+uac			User agent client
 unixsock
-uri
-uri_db
-usrloc
-xcap
+uri			URI checks
+uri_db			URI checks with database support
+usrloc			Location server
+xcap			Presence :: XCAP integration
 xlog			Extended logging support
