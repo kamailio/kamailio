@@ -25,20 +25,21 @@ Nils Ohlmeier
 
    This module aims to implement several sanity checks on incoming
    requests which are suggested or even required by a RFC, but are not
-   available yet in the core of SER.
+   available yet in the core of SIP-router.
 
-   This checks are not required by SER itself for its functionality. But
-   on the other side it makes not much sence if a broken request traverses
-   through a SIP network if it is rejected sooner or later by a SIP device
-   any way. As every sanity cost extra performance because of additional
-   parsing and evaluation it is now with this module up to the SER
-   adminstrator which checks should be done on which request.
+   This checks are not required by SIP-router itself for its
+   functionality. But on the other side it makes not much sence if a
+   broken request traverses through a SIP network if it is rejected sooner
+   or later by a SIP device any way. As every sanity cost extra
+   performance because of additional parsing and evaluation it is now with
+   this module up to the SIP-router adminstrator which checks should be
+   done on which request.
 
    The following checks are available:
      * ruri sip version - (1) - checks if the SIP version in the request
        URI is supported, currently only 2.0.
      * ruri scheme - (2) - checks if the URI scheme of the request URI is
-       supported (sip[s]|tel[s]) by SER.
+       supported (sip[s]|tel[s]) by SIP-router.
      * required headers - (4) -checks if the minimum set of required
        headers to, from, cseq, callid and via is present in the request.
      * via sip version - (8) - not working because parser fails already
@@ -57,7 +58,7 @@ Nils Ohlmeier
        header are present in the list of the extensions from the module
        parameter proxy_require.
      * parse uri's - (1024) - checks if the specified URIs are present and
-       parseable by the SER parsers
+       parseable by the SIP-router parsers
      * digest credentials (2048) Check all instances of digest credentials
        in a message. The test checks whether there are all required digest
        parameters and have meaningful values.
@@ -100,10 +101,10 @@ modparam("sanity", "default_checks", "1")
 
 1.3.3. proxy_require (string)
 
-   This parameter set the list of supported extensions for this SER. The
-   value is expected as comma seperated list of the extensions. This list
-   is seperated into single tokens. Each token from a proxy require header
-   will be compare to the tokens from this list.
+   This parameter set the list of supported extensions for this
+   SIP-router. The value is expected as comma separated list of the
+   extensions. This list is separated into single tokens. Each token from
+   a proxy require header will be compare to the tokens from this list.
 
    Example 2. Set proxy_require parameter
 ...
@@ -115,7 +116,7 @@ modparam("sanity", "proxy_require", "foo, bar")
    Revision History
    Revision $Revision$ $Date$
 
-1.4.1.  sanity_check()
+1.4.1. sanity_check()
 
    This function makes a row of sanity checks on the given request. The
    function returns true if one of the checks failed. If one of the checks

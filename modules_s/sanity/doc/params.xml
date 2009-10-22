@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="sanity.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -54,9 +60,9 @@ modparam("sanity", "default_checks", "1")
 	<section id="proxy_require">
 	<title><varname>proxy_require</varname> (string)</title>
 	<para>
-		This parameter set the list of supported extensions for this SER.
-		The value is expected as comma seperated list of the extensions.
-		This list is seperated into single tokens. Each token from
+		This parameter set the list of supported extensions for this SIP-router.
+		The value is expected as comma separated list of the extensions.
+		This list is separated into single tokens. Each token from
 		a proxy require header will be compare to the tokens from this
 		list.
 	</para>
