@@ -23,7 +23,7 @@
  */
 
 #ifndef _PUA_UL_
-#define _PUA_UL
+#define _PUA_UL_
 #include "../pua/pua_bind.h"
 
 extern send_publish_t pua_send_publish;
