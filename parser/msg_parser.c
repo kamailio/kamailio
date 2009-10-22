@@ -783,6 +783,17 @@ int set_path_vector(struct sip_msg* msg, str* path)
 	return 0;
 }
 
+
+void reset_path_vector(struct sip_msg* msg)
+{
+	if(msg->path_vec.s != 0) {
+		pkg_free(msg->path_vec.s);
+	}
+	msg->path_vec.s = 0;
+	msg->path_vec.len = 0;
+}
+
+
 struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
 {
 	struct hdr_field *hdr;

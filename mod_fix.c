@@ -197,7 +197,6 @@ FIXUP_F2FP_T(igp_pvar_pvar, 1, 3, 1, FPARAM_INT|FPARAM_PVS, FPARAM_PVS)
 		int ret; \
 		char * bkp; \
 		fparam_t* fp; \
-		bkp=*param; \
 		if (param_no<=(no1)){ \
 			if ((ret=fix_param_types(FPARAM_PVE, param))<0){ \
 				ERR("Cannot convert function parameter %d to" #type2 "\n", \
@@ -206,6 +205,8 @@ FIXUP_F2FP_T(igp_pvar_pvar, 1, 3, 1, FPARAM_INT|FPARAM_PVS, FPARAM_PVS)
 			} else{ \
 				fp=(fparam_t*)*param; \
 				if ((ret==0) && (fp->v.pve->spec.getf==0)){ \
+					bkp=fp->orig; \
+					fp->orig=0; /* make sure orig string is not freed */ \
 					fparam_free_contents(fp); \
 					pkg_free(fp); \
 					*param=bkp; \

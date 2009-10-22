@@ -434,6 +434,7 @@ static param_export_t params[]={
 	{"via1_matching",       PARAM_INT, &default_tm_cfg.via1_matching         },
 	{"fr_timer",            PARAM_INT, &default_tm_cfg.fr_timeout            },
 	{"fr_inv_timer",        PARAM_INT, &default_tm_cfg.fr_inv_timeout        },
+	{"fr_inv_timer_next",   PARAM_INT, &default_tm_cfg.fr_inv_timeout_next   },
 	{"wt_timer",            PARAM_INT, &default_tm_cfg.wait_timeout          },
 	{"delete_timer",        PARAM_INT, &default_tm_cfg.delete_timeout        },
 	{"retr_timer1",         PARAM_INT, &default_tm_cfg.rt_t1_timeout         },
@@ -467,7 +468,6 @@ static param_export_t params[]={
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
 	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
-	{"fr_inv_timer_next",   PARAM_INT, &default_tm_cfg.fr_inv_timeout_next   },
 	{"contacts_avp",        PARAM_STRING, &contacts_avp_param                },
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
 	{0,0,0}

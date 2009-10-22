@@ -2149,6 +2149,8 @@ again:
 					WARN("failed to ABORT new sctp association %d (%s:%d):"
 							" %s (%d)\n", assoc_id, ip_addr2a(&ip),
 							su_getport(su), strerror(errno), errno);
+				}else{
+					SCTP_STATS_LOCAL_REJECT();
 				}
 			}
 			break;

@@ -250,11 +250,13 @@ static int mod_init(void)
 						payload_proto_name(l->data_proto), l->name,
 						l->port?l->port:DEFAULT_CTL_PORT);
 				break;
+#ifdef USE_FIFO
 			case FIFO_SOCK:
 				DBG("        [%s:fifo]         %s\n",
 						payload_proto_name(l->data_proto), l->name);
 				fd_no++; /* fifos use 2 fds */
 				break;
+#endif
 			default:
 				LOG(L_CRIT, "BUG: ctrl: listen protocol %d not supported\n",
 						l->proto);
