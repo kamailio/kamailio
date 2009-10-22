@@ -15,26 +15,26 @@ Vaclav Kubart
    future it will do subscriptions to reg events and presence with
    resource lists too.
 
-   It is accessible only using internal Querry Status API (QSA).
-   Everywhere (in C code) you need subscriptions to presentity status, you
-   only create an internal subscription to it and the rest is done by this
-   module. It processes internal subscription and creates a SIP
-   subscription (SUBSCRIBE-NOTIFY dialog) to requested presentity. Every
-   NOTIFY request produces new QSA message with status information into
-   destination message queue.
+   It is accessible only using the internal Query Status API (QSA).
+   Everywhere (in the C code) where you need subscriptions to presentity
+   status, you only create an internal subscription to it and the rest is
+   done by this module. It processes the internal subscription and creates
+   a SIP subscription (SUBSCRIBE-NOTIFY dialog) to requested presentity.
+   Every NOTIFY request produces new QSA message with status information
+   into destination message queue.
 
    Instead of this module can be used PA module with parameter
    accept_internal_subscriptions set to 1. In that case the subscription
    will be only to internal status hold by PA.
 
-   For every requested (record, subscriber) is created new SIP
-   subscription! This is due to authorization of such subscriptions - B2B
-   UA can't decide about authorization rules, thus it has to leave it on
-   the presence server to which it creates the subscription and this
-   means, that it has to create the subscription as the subscriber. There
-   is a possibility to do subscriptions with the same To + From only once,
-   but this is left for future optimalizations (it will probably not help
-   a lot).
+   For every requested (record, subscriber) a new SIP subscription is
+   created. This is due to authorization of such subscriptions - B2B UA
+   can't decide about authorization rules, thus it has to leave it on the
+   presence server to which it creates the subscription and this means,
+   that it has to create the subscription as a subscriber. There is a
+   possibility to do subscriptions with the same To + From only once, but
+   this is left for future optimalizations (it will probably not help a
+   lot).
 
 1.1. Dependencies
 
@@ -130,7 +130,7 @@ Vaclav Kubart
    handle_notify()
           Handles NOTIFY request.
 
-          The module tries to find subscription to which the NOTIFY
+          The module tries to find the subscription to which the NOTIFY
           belongs to (it tries both - confirmed and unconfirmed
           subscriptions because NOTIFY may arrive before 2xx response on
           SUBSCRIBE request). If no such subscription exists, the function

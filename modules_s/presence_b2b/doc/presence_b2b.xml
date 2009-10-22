@@ -1,6 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="presence_b2b"><title>Presence B2B UA</title>
 
@@ -17,12 +23,12 @@
 future it will do subscriptions to reg events and presence with resource lists
 too.</para>
 
-<para>It is accessible only using internal Querry Status API (QSA). Everywhere
-(in C code) you need subscriptions to presentity status, you only create an internal
-subscription to it and the rest is done by this module. It processes internal
-subscription and creates a SIP subscription (SUBSCRIBE-NOTIFY dialog) to
-requested presentity. Every NOTIFY request produces new QSA message with status
-information into destination message queue.
+<para>It is accessible only using the internal Query Status API (QSA). Everywhere
+(in the C code) where you need subscriptions to presentity status, you only create
+an internal subscription to it and the rest is done by this module. 
+It processes the internal subscription and creates a SIP subscription 
+(SUBSCRIBE-NOTIFY dialog) to requested presentity. Every NOTIFY request produces 
+new QSA message with status information into destination message queue.
 </para>
 
 <para>Instead of this module can be used PA module with parameter
@@ -30,11 +36,11 @@ information into destination message queue.
 subscription will be only to internal status hold by PA.
 </para>
 
-<para>For every requested (record, subscriber) is created new SIP subscription!
+<para>For every requested (record, subscriber) a new SIP subscription is created.
 This is due to authorization of such subscriptions - B2B UA can't decide about
 authorization rules, thus it has to leave it on the presence server to which it
 creates the subscription and this means, that it has to create the subscription
-as the subscriber. There is a possibility to do subscriptions with the same
+as a subscriber. There is a possibility to do subscriptions with the same
 To + From only once, but this is left for future optimalizations (it will
 probably not help a lot).
 </para>

@@ -23,6 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: version and compile flag macros
+ * \ingroup core
+ *
+ * Module: \ref core
+ */
+
 #ifndef version_h
 #define version_h
 
