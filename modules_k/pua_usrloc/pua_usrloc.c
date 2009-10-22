@@ -63,6 +63,8 @@ static int mod_init(void);
 
 int pua_set_publish(struct sip_msg* , char*, char*);
 
+send_publish_t pua_send_publish;
+send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {
