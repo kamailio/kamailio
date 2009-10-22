@@ -15,26 +15,32 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * timer_proc.h - separate process timers
- * (unrelated to the main fast and slow timers)
- */
+
 /*
  * History:
  * --------
  *  2009-03-10  initial version (andrei)
 */
 
+/**
+ * @file
+ * @brief SIP-router core :: timer_proc.h - separate process timers
+ *
+ * (unrelated to the main fast and slow timers)
+ * @ingroup core
+ * Module: @ref core
+ */
+
 #ifndef __timer_proc_h
 #define __timer_proc_h
 
 #include "local_timer.h"
 
-/* forks a separate simple sleep() periodic timer */
+/** @brief forks a separate simple sleep() periodic timer */
 int fork_dummy_timer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int interval);
 
-/* forks a timer process based on the local timer */
+/** @briefforks a timer process based on the local timer */
 int fork_local_timer_process(int child_id, char* desc, int make_sock,
 						struct local_timer** lt_h);
 
