@@ -225,7 +225,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
 		if (exec_pre_script_cb(msg, ONREPLY_CB_TYPE)==0 )
+		{
+			sr_event_exec(SREV_CORE_STATS, (void*)4);
 			goto end; /* drop the request */
+		}
 
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
@@ -235,8 +238,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");
 				goto error_rpl;
-			}else if (ret==0) goto skip_send_reply; /* drop the message, 
-													   no error */
+			}else if (ret==0){
+				sr_event_exec(SREV_CORE_STATS, (void*)4);
+				goto skip_send_reply; /* drop the message, no error */
+			}
 		}
 		/* send the msg */
 		forward_reply(msg);

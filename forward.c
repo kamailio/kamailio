@@ -736,7 +736,11 @@ int forward_reply(struct sip_msg* msg)
 				
 	} 
 #endif
-	if (msg_send(&dst, new_buf, new_len)<0) goto error;
+	if (msg_send(&dst, new_buf, new_len)<0)
+	{
+		sr_event_exec(SREV_CORE_STATS, (void*)4);
+		goto error;
+	}
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
