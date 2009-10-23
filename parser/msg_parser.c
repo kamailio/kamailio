@@ -54,6 +54,7 @@
 #include "../data_lump_rpl.h"
 #include "../mem/mem.h"
 #include "../error.h"
+#include "../events.h"
 #include "../globals.h"
 #include "parse_hname2.h"
 #include "parse_uri.h"
@@ -276,6 +277,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	return tmp;
 error:
 	DBG("get_hdr_field: error exit\n");
+	sr_event_exec(SREV_CORE_STATS, (void*)8);
 	hdr->type=HDR_ERROR_T;
 	hdr->len=tmp-hdr->name.s;
 	return tmp;
