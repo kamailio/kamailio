@@ -34,7 +34,7 @@ silo:5
 sip_trace:2
 speed_dial:2
 subscriber:6
-trusted:4
+trusted:5
 uri:1
 userblacklist:1
 usr_preferences:2
