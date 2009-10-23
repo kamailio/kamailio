@@ -149,6 +149,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
+			sr_event_exec(SREV_CORE_STATS, (void*)5);
 			goto error02;
 		}
 		/* check if necessary to add receive?->moved to forward_req */
