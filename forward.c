@@ -584,6 +584,8 @@ end:
 	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
 	if(ret==0)
 		sr_event_exec(SREV_CORE_STATS, (void*)1);
+	else
+		sr_event_exec(SREV_CORE_STATS, (void*)3);
 	return ret;
 }
 

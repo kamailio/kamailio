@@ -182,7 +182,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
 		if (exec_pre_script_cb(msg, REQUEST_CB_TYPE)==0 )
+		{
+			sr_event_exec(SREV_CORE_STATS, (void*)3);
 			goto end; /* drop the request */
+		}
 
 		set_route_type(REQUEST_ROUTE);
 		/* exec the routing script */
