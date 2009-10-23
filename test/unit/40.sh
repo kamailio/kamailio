@@ -35,24 +35,24 @@ if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); t
 fi ;
 
 # add an registrar entry to the db;
-$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
+$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
 # start
-../$BIN -w . -f $CFG &> /dev/null
+$BIN -w . -f $CFG &> /dev/null
 ret=$?
 
 # this should work
 if [ "$ret" -eq 0 ]; then
-	sipp -sn uas -bg -i localhost -m 10 -p $UAS &> /dev/null
-	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -p $UAC &> /dev/null
+	sipp -sn uas -bg -i 127.0.0.1 -m 10 -p $UAS &> /dev/null
+	sipp -sn uac -s foo 127.0.0.1:$SRV -i 127.0.0.1 -m 10 -p $UAC &> /dev/null
 	ret=$?
 fi;
 
 # this should be trigger the blocking
 if [ "$ret" -eq 0 ]; then
 	killall -9 sipp > /dev/null 2>&1
-	sipp -sn uas -bg -i localhost -m 11 -p $UAS &> /dev/null
-	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 11 -p $UAC &> /dev/null
+	sipp -sn uas -bg -i 127.0.0.1 -m 11 -p $UAS &> /dev/null
+	sipp -sn uac -s foo 127.0.0.1:$SRV -i 127.0.0.1 -m 11 -p $UAC &> /dev/null
 	ret=$?
 fi;
 
@@ -60,8 +60,8 @@ fi;
 if [ "$ret" -eq 1 ]; then
 	sleep 7
 	killall -9 sipp > /dev/null 2>&1
-	sipp -sn uas -bg -i localhost -m 15 -p $UAS &> /dev/null
-	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 15 -p $UAC &> /dev/null
+	sipp -sn uas -bg -i 127.0.0.1 -m 15 -p $UAS &> /dev/null
+	sipp -sn uac -s foo 127.0.0.1:$SRV -i 127.0.0.1 -m 15 -p $UAC &> /dev/null
 	ret=$?
 fi;
 
@@ -69,5 +69,5 @@ sleep 1
 $KILL
 killall -9 sipp > /dev/null 2>&1
 
-$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
+$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1:$UAS\") and (user_agent = \"ser_test\"));"
 exit $ret
