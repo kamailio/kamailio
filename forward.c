@@ -745,6 +745,7 @@ int forward_reply(struct sip_msg* msg)
 			msg->via2->host.len, msg->via2->host.s,
 			(unsigned short) msg->via2->port);
 
+	sr_event_exec(SREV_CORE_STATS, (void*)2);
 	pkg_free(new_buf);
 skip:
 	return 0;
