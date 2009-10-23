@@ -31,10 +31,10 @@ CFG=11.cfg
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
 
 # 1768 contacts should fit into 1 MB of PKG memory
-../$BIN -V | grep "PKG_MALLOC" > /dev/null
+$BIN -V | grep "PKG_MALLOC" > /dev/null
 if [ $? -eq 0 ]; then
 	NR=176
 else
@@ -44,16 +44,25 @@ fi;
 COUNTER=0
 while [  $COUNTER -lt $NR ]; do
 	COUNTER=$(($COUNTER+1))
-	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___');"
+	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___'); \
+	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___');"
 done
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 if [ $ret -eq 0 ]; then
 	sleep 1
 	for ((i=1;i<=100;i+=1)); do
-		tmp=`../scripts/$CTL fifo ul_dump | grep "AOR" | wc -l`
+		tmp=$($CTL fifo ul_dump | grep "User-agent:: ___test___" | wc -l)
 		NR_=$(($NR * 10))
 		if ! [ $tmp -eq $NR_ ]; then
 			ret=1
