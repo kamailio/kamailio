@@ -226,7 +226,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
 		if (exec_pre_script_cb(msg, ONREPLY_CB_TYPE)==0 )
+		{
+			sr_event_exec(SREV_CORE_STATS, (void*)4);
 			goto end; /* drop the request */
+		}
 
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
@@ -240,6 +243,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			}else
 #endif /* NO_ONREPLY_ROUTE_ERROR */
 			if (unlikely(ret==0 || (ctx.run_flags&DROP_R_F))){
+				sr_event_exec(SREV_CORE_STATS, (void*)4);
 				goto skip_send_reply; /* drop the message, no error */
 			}
 		}
