@@ -194,7 +194,7 @@ pike			Security :: Rate limit control
 prefix_route		Proxy :: Routing based on a set of prefixes from the database
 presence_b2b		Presence :: Back2back UA
 print			Example module for developers
-print_lib
+print_lib		Example module for developers
 ratelimit		Security :: Rate limit of SIP requests
 registrar		Registrar (for REGISTER requests)
 rls			Resource list server (for presence)
@@ -207,7 +207,7 @@ textops			Text operations (search, replace)
 timer			triggering specific route block on timer
 tls			TLS module * DEPRECATED * Use the modules/tls module instead
 uac			User agent client
-unixsock
+unixsock		Obsolete :: This module is replaced by the modules/ctl module
 uri			URI checks
 uri_db			URI checks with database support
 usrloc			Location server
