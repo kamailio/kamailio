@@ -15,6 +15,11 @@
 	
 	<section>
 	<title>Overview</title>
+	<para><emphasis>
+		This modules is considered obsolete. The drafts mentioned here
+		has expired. If you use this module, please send a note to the
+		sr-dev mailing list.
+	</emphasis></para>
 	<para>
 		The Domain Policy module implements draft-lendl-domain-policy-ddds-02 in
 		combination with draft-lendl-speermint-federations-02 and 

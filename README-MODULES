@@ -89,7 +89,7 @@ dialog			Dialog ("call") state module
 dispatcher		Load balancing and failover
 diversion		Call redirect support (SIP Diversion: header)
 domain			Proxy :: Multiple domain support using databases
-domainpolicy
+domainpolicy		Proxy :: Obsolete module - This module is no longer maintained
 drouting		Proxy :: Dynamic routing
 exec
 group			Utils :: Group membership checking
