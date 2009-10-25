@@ -176,7 +176,7 @@ diversion		Proxy :: Call redirection support (Diversion: header)
 domain			Proxy :: Multiple domain support
 eval			implements expression evaluation in route script
 exec			Proxy :: External script support (modify route set)
-fifo		
+fifo			Obsolete :: This module is replaced by the modules/ctl module
 gflags			Proxy :: Global flags
 jabber			IM :: Jabber gateway
 ldap			LDAP directory server support
