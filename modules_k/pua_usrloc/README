@@ -10,28 +10,27 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date$
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. default_domain (str)
-              1.3.2. entity_prefix (str)
+              3.1. default_domain (str)
+              3.2. entity_prefix (str)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. pua_set_publish()
+              4.1. pua_set_publish()
 
    List of Examples
 
@@ -41,37 +40,60 @@ Anca-Maria Vamanu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The pua_usrloc is the connector between usrloc and pua modules.
-   It creates the environment to send PUBLISH requests for user
-   location records, on specific events (e.g., when new record is
-   added in usrloc, a PUBLISH with status open (online) is issued;
-   when expires, it sends closed (offline)).
+   1. Overview
+   2. Dependencies
 
-   Using this module, phones which have no support for presence
-   can be seen as online/offline.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-1.2. Dependencies
+   3. Exported Parameters
 
-1.2.1. Kamailio Modules
+        3.1. default_domain (str)
+        3.2. entity_prefix (str)
+
+   4. Exported Functions
+
+        4.1. pua_set_publish()
+
+1. Overview
+
+   The pua_usrloc module is the connector between the usrloc and pua
+   modules. It creates the environment to send PUBLISH requests for user
+   location records, on specific events (e.g., when new record is added in
+   usrloc, a PUBLISH with status open (online) is issued; when expires, it
+   sends closed (offline)).
+
+   Using this module, phones which have no support for presence can be
+   seen as online/offline.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * usrloc.
      * pua.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * libxml.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. default_domain (str)
+   3.1. default_domain (str)
+   3.2. entity_prefix (str)
 
-   The default domain to use when constructing the presentity uri
-   if it is missing from recorded aor.
+3.1. default_domain (str)
+
+   The default domain to use when constructing the presentity URI if it is
+   missing from recorded AOR.
 
    Default value is "NULL".
 
@@ -80,10 +102,10 @@ Chapter 1. Admin Guide
 modparam("pua_usrloc", "default_domain", "kamailio.org")
 ...
 
-1.3.2. entity_prefix (str)
+3.2. entity_prefix (str)
 
-   The prefix when construstructing entity attribute to be added
-   to presence node in xml pidf. (ex: pres:user@domain ).
+   The prefix when construstructing entity attribute to be added to
+   presence node in XML PIDF. (ex: pres:user@domain ).
 
    Default value is "NULL".
 
@@ -92,13 +114,15 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 modparam("pua_usrloc", "entity_prefix", "pres")
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  pua_set_publish()
+   4.1. pua_set_publish()
 
-   The function is used to mark REGISTER requests that have to
-   issue a PUBLISH. The PUBLISH is issued when REGISTER is saved
-   in location table.
+4.1. pua_set_publish()
+
+   The function is used to mark REGISTER requests that have to issue a
+   PUBLISH. The PUBLISH is issued when REGISTER is saved in location
+   table.
 
    Example 1.3. pua_set_publish usage
 ...

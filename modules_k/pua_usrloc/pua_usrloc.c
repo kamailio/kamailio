@@ -26,6 +26,14 @@
  *  2006-11-29  initial version (anca)
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Usrloc module
+ * \ingroup core
+ * Module: \ref core
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +62,7 @@ int pua_ul_publish= 0;
 pua_api_t pua;
 str pres_prefix= {0, 0};
 
-/* Structure containing pointers to usrloc functions */
+/*! \brief Structure containing pointers to usrloc functions */
 usrloc_api_t ul;
 
 /** module functions */
@@ -79,21 +87,21 @@ static param_export_t params[]={
 };
 
 struct module_exports exports= {
-	"pua_usrloc",				/* module name */
-	DEFAULT_DLFLAGS,			/* dlopen flags */
-	cmds,						/* exported functions */
-	params,						/* exported parameters */
-	0,							/* exported statistics */
-	0,							/* exported MI functions */
-	0,							/* exported pseudo-variables */
-	0,							/* extra processes */
-	mod_init,					/* module initialization function */
-	0,							/* response handling function */
-	0,							/* destroy function */
-	0							/* per-child init function */
+	"pua_usrloc",				/*!< module name */
+	DEFAULT_DLFLAGS,			/*!< dlopen flags */
+	cmds,						/*!< exported functions */
+	params,						/*!< exported parameters */
+	0,							/*!< exported statistics */
+	0,							/*!< exported MI functions */
+	0,							/*!< exported pseudo-variables */
+	0,							/*!< extra processes */
+	mod_init,					/*!< module initialization function */
+	0,							/*!< response handling function */
+	0,							/*!< destroy function */
+	0							/*!< per-child init function */
 };
 	
-/**
+/*! \brief
  * init module function
  */
 static int mod_init(void)

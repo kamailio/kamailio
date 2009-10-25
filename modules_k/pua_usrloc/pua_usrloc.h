@@ -22,6 +22,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Usrloc module
+ * \ingroup core
+ * Module: \ref core
+ */
+
+
 #ifndef _PUA_UL_
 #define _PUA_UL_
 #include "../pua/pua_bind.h"
