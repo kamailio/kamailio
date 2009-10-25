@@ -45,7 +45,7 @@ split like this into one integrated module.
 
 Core modules
 ------------
-auth_identity
+auth_identity		SIP Identity support (RFC 4474)
 auth_radius		Radius authentication
 avpops			Attribute-value pair operations ("variables")
 carrierroute		A telephony routing module
@@ -63,11 +63,11 @@ lcr			Least cost routing
 mediaproxy		Nat traversal :: Mediaproxy (AG projects)
 mi_rpc			Management Interface :: XML RPC support
 misc_radius		Various Radius functions
-pdb			???
+pdb			Number portabilityusing external server
 peering			SIP peering between service providers
 tls			SSL/TLS support
 tm			SIP transaction support (stateful proxy)
-topoh
+topoh			Topology hinding
 utils			Various utilities (http query, xcap status)
 xmlrpc
 
@@ -81,7 +81,7 @@ auth_diameter		Authentication based on Diameter
 benchmark		Development benchmark module
 call_control		Call timeouts and management (depends on Dialog module)
 cfgutils		Various configuration utilities
-cpl-c
+cpl-c			Implementation of SIP Call Processing Language (RFC 3880)
 db_oracle		Database :: Oracle support
 db_text			Database :: Text support
 db_unixodbc		Database :: Unix ODBC support
@@ -91,7 +91,7 @@ diversion		Call redirect support (SIP Diversion: header)
 domain			Proxy :: Multiple domain support using databases
 domainpolicy		Proxy :: Obsolete module - This module is no longer maintained
 drouting		Proxy :: Dynamic routing
-exec
+exec			External exec module
 group			Utils :: Group membership checking
 h350			LDAP/ITU H.350 multimedia schema support
 htable			Utils :: Hash table support
@@ -118,14 +118,14 @@ presence		Presence :: Core presence module
 presence_dialoginfo	Presence :: Dialog info
 presence_mwi		Presence :: Message waiting indication
 presence_xml		Presence :: XML handler
-pua
-pua_bla
-pua_dialoginfo
+pua			Presence :: Common module
+pua_bla			Presence :: BLA
+pua_dialoginfo		Presence :: Dialog Info support
 pua_mi			Presence :: Management interface
-pua_usrloc
+pua_usrloc		Presence :: USRLOC integration
 pua_xmpp		Presence :: XMPP/Jabber gateway
 purple			Presence :: Libpurple support
-pv
+pv			Pseudo-variable implementation
 qos			Dialogs :: SDP management 
 ratelimit		Security :: Rate limit
 regex			Regular expression support
@@ -140,16 +140,16 @@ siputils		Various utilities for SIP call handling
 sl			Proxy :: Stateless handling of SIP messages
 sms			SMS gateway support
 snmpstats		SNMP support (net-snmp agentx)
-speeddial
-sqlops
-sst
-statistics
+speeddial		Per-user speed-dial controller module
+sqlops			SQL operations
+sst			SIP Session Timers implementation
+statistics		Script statistics support
 textops			Text operations
 tmx			Proxy :: Kamailio transaction extensions (TM module)
-uac
-uac_redirect
-uri_db
-userblacklist
+uac			UAC functions (From: mangling and UAC auth)
+uac_redirect		UAC redirection support
+uri_db			URI operation with database support
+userblacklist		User-specific blacklists
 usrloc			Proxy :: Location server
 xcap_client		Presence :: XCAP support
 xlog			Utils :: Extended logging support
