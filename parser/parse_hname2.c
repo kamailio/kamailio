@@ -67,7 +67,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 /*! \name 
  * Parser macros
  */
-/*! { */
+/*@{ */
 #include "case_via.h"      /* Via */
 #include "case_from.h"     /* From */
 #include "case_to.h"       /* To */
@@ -107,7 +107,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_path.h"     /* Path */
 #include "case_priv.h"
 
-/*! } */
+/*@} */
 
 #define READ(val) \
 (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
