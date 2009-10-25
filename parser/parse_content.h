@@ -44,7 +44,8 @@ struct mime_type {
 /*! \name MimeTypes
  * Mimes types/subtypes that are recognized
  */
-/*! { */
+/*@{ */
+
 #define TYPE_TEXT            1
 #define TYPE_MESSAGE         2
 #define TYPE_APPLICATION     3
@@ -69,7 +70,7 @@ struct mime_type {
 #define SUBTYPE_ALL          0xfe
 #define SUBTYPE_UNKNOWN      0xff
 
-/*! } */
+/*@} */
 
 /*! \brief taken from PA module - will be useful here */
 #define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))

@@ -23,6 +23,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
  
+/*! \file
+ * \brief Parser :: Remote-party-id: header parser
+ *
+ * \ingroup parser
+ */
  
 #ifndef PARSE_RPID_H
 #define PARSE_RPID_H
@@ -30,7 +35,7 @@
 #include "msg_parser.h"
  
  
-/* casting macro for accessing RPID body */
+/*! \brief casting macro for accessing RPID body */
 #define get_rpid(p_msg)  ((struct to_body*)(p_msg)->rpid->parsed)
 
 

@@ -41,6 +41,12 @@
  *
  */
 
+/** @file
+ * @brief Parser :: Parse URI's
+ *
+ * @ingroup parser
+ */
+
 
 #include "../globals.h"
 #include "parse_uri.h"

@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,13 +20,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse Methods
+ *
+ * \ingroup parser
+ */
+
 #include <strings.h>
 #include "../dprint.h"
 #include "../trim.h"
 #include "parse_methods.h"
 
 
-/*
+/*! \brief
  * Check if argument is valid RFC3261 token character.
  */
 static int token_char(char _c)
@@ -46,10 +47,11 @@ static int token_char(char _c)
 
 
 
-/** Parse a string containing a method.
+/*! \brief Parse a string containing a method.
+ *
  * Parse a method pointed by s & assign its enum bit to method. The string
  * _must_ contain _only_ the method (without trailing or heading whitespace).
- * @return 0 on success, -1 on error
+ * \return 0 on success, -1 on error
  */
 int parse_method_name(str* s, enum request_method* method)
  {
@@ -159,14 +161,14 @@ int parse_method_name(str* s, enum request_method* method)
 		default:
 			break;
 	}
-/* unknown method */
+	/* unknown method */
 	*method = METHOD_OTHER;
 	return 0;
 }
 
 
 
- /*
+ /*! \brief
   * Parse a method pointed by _next, assign its enum bit to _method, and update
   * _next past the method. Returns 1 if parse succeeded and 0 otherwise.
   */
@@ -352,7 +354,7 @@ found:
  }
  
  
- /* 
+ /*! \brief
   * Parse comma separated list of methods pointed by _body and assign their
   * enum bits to _methods.  Returns 0 on success and -1 on failure.
   */

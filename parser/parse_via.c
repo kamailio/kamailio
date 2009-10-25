@@ -28,7 +28,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+/** @file
+ * @brief Parser :: Via parsing automation
+ *
+ * @ingroup parser
+ */
 
 /* 
  *  2003-01-21  added rport parsing code, contributed by
@@ -67,7 +71,7 @@
 
 
 
-/* main via states (uri:port ...) */
+/** \brief main via states (uri:port ...) */
 enum {	         
 	F_HOST, P_HOST,
 	L_PORT, F_PORT, P_PORT,
@@ -82,7 +86,7 @@ enum {
 };
 
 
-/* first via part state */
+/** \brief first via part state */
 enum {
 	F_SIP = 100,
 	SIP1, SIP2, FIN_SIP,
@@ -96,7 +100,7 @@ enum {
 };
 
 
-/* param related states
+/** \brief param related states
  * WARNING: keep in sync with parse_via.h, PARAM_HIDDEN, ...
  */
 enum {	

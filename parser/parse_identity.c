@@ -25,6 +25,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse Identity header field
+ *
+ * \ingroup parser
+ */
+
 
 #include <string.h>
 #include "parse_identity.h"
@@ -50,7 +56,7 @@ inline static int isendofhash (char* p, char* end)
 }
 
 
-/*
+/*! \brief
  * If the value of Identity header contains any LWS then we've to create
  * a new buffer and move there the LWSless part
  */

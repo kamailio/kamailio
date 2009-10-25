@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,6 +24,12 @@
  *  2007-07-27  created by andrei
  */
 
+/*! \file
+ * \brief Parser :: Retry-After: header parser
+ *
+ * \ingroup parser
+ */
+ 
 
 #include "../comp_defs.h"
 #include "parse_retry_after.h"
@@ -37,7 +38,7 @@
 #include "../dprint.h"
 #include "../mem/mem.h"
 
-/* Parse the Retry-after header field */
+/*! \brief Parse the Retry-after header field */
 char* parse_retry_after(char *buf, char* end, unsigned* after, int* err)
 {
 	char *t;

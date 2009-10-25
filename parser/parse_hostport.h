@@ -25,6 +25,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse domain/hostname and port argument
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef PARSE_HOSTPORT_H
 #define PARSE_HOSTPORT_H

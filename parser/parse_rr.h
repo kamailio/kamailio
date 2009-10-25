@@ -27,6 +27,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Route & Record-Route header field parser
+ *
+ * \ingroup parser
+ */
 
 #ifndef PARSE_RR_H
 #define PARSE_RR_H
@@ -38,15 +43,15 @@
 #include "hf.h"
 
 
-/*
+/*! \brief
  * Structure representing a Route & Record-Route HF body
  */
 typedef struct rr {
-	name_addr_t nameaddr; /* Name-addr part */
-	param_t* r2;          /* Hook to r2 parameter */
-	param_t* params;      /* Linked list of other parameters */
-	int len;              /* Length of the whole route field */
-	struct rr* next;      /* Next RR in the list */
+	name_addr_t nameaddr; /*!< Name-addr part */
+	param_t* r2;          /*!< Hook to r2 parameter */
+	param_t* params;      /*!< Linked list of other parameters */
+	int len;              /*!< Length of the whole route field */
+	struct rr* next;      /*!< Next RR in the list */
 } rr_t;
 
 

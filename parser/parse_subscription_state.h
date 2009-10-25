@@ -1,3 +1,9 @@
+/*! \file
+ * \brief Parser :: Parse subscription-state in NOTIFY
+ *
+ * \ingroup parser
+ */
+
 #ifndef __PARSE_SUBSCRIPTION_STATE_H
 #define __PARSE_SUBSCRIPTION_STATE_H
 

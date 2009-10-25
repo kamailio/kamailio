@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,6 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse Identity header field
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef PARSE_IDENTITY
 #define PARSE_IDENTITY
@@ -33,24 +34,28 @@
 #include "msg_parser.h"
 
 struct identity_body{
-	int error;  		/* Error code */
-	int ballocated;  	/* Does hash point to an allocated area */
+	int error;  		/*!< Error code */
+	int ballocated;  	/*!< Does hash point to an allocated area */
 	str hash;
 };
 
 
-/* casting macro for accessing IDENTITY body */
+/*! \brief casting macro for accessing IDENTITY body */
 #define get_identity(p_msg) ((struct identity_body*)(p_msg)->identity->parsed)
 
 
-/*
+/*! \brief
  * Parse Identity header field
  */
 void parse_identity(char *buf, char *end, struct identity_body *ib);
+
+/*! \brief
+ * Parse Identity header field
+ */
 int parse_identity_header(struct sip_msg *msg);
 
 
-/*
+/*! \brief
  * Free all associated memory
  */
 void free_identity(struct identity_body *ib);

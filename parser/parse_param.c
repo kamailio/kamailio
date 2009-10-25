@@ -12,11 +12,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -31,6 +26,12 @@
  * 2003-03-24 Created by janakj
  * 2003-04-07 shm duplication added (janakj)
  * 2003-04-07 URI class added (janakj)
+ */
+
+/*! \file
+ * \brief Parser :: Generic Parameter Parser
+ *
+ * \ingroup parser
  */
 
 #include <string.h>
@@ -103,7 +104,7 @@ static inline void parse_event_dialog_class(param_hooks_t* h, param_t* p)
 }
 
 
-/*
+/*! \brief
  * Try to find out parameter name, recognized parameters
  * are q, expires and methods
  */
@@ -164,7 +165,7 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Try to find out parameter name, recognized parameters
  * are transport, lr, r2, maddr
  */
@@ -245,7 +246,7 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Parse quoted string in a parameter body
  * return the string without quotes in _r
  * parameter and update _s to point behind the
@@ -292,7 +293,7 @@ static inline int parse_quoted_param(str* _s, str* _r)
 }
 
 
-/*
+/*! \brief
  * Parse unquoted token in a parameter body
  * let _r point to the token and update _s
  * to point right behind the token
@@ -354,7 +355,7 @@ static inline int parse_token_param(str* _s, str* _r)
 }
 
 
-/*
+/*! \brief
  * Parse a parameter name
  */
 static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, param_t* _p)
@@ -397,7 +398,7 @@ static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, par
 
 
 
-/*
+/*! \brief
  * Parse body of a parameter. It can be quoted string or
  * a single token.
  */
@@ -419,7 +420,7 @@ static inline int parse_param_body(str* _s, param_t* _c)
 }
 
 
-/**
+/*!  \brief
  * Only parse one parameter
  * Returns:
  * 	t: out parameter
@@ -491,13 +492,14 @@ error:
 
 
 
-/*
+/*! \brief
  * Parse parameters
- * _s is string containing parameters, it will be updated to point behind the parameters
- * _c is class of parameters
- * _h is pointer to structure that will be filled with pointer to well known parameters
- * linked list of parsed parameters will be stored in
- * the variable _p is pointing to
+ *  \param _s is string containing parameters, it will be updated to point behind the parameters
+ *  \param _c is class of parameters
+ *  \param _h is pointer to structure that will be filled with pointer to well known parameters
+ *  \param the variable _p is pointing to
+ * linked list of parsed parameters will be stored
+ *
  * The function returns 0 on success and negative number
  * on an error
  */
@@ -548,7 +550,7 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 }
 
 
-/*
+/*! \brief
  * Free linked list of parameters
  */
 static inline void do_free_params(param_t* _p, int _shm)
@@ -564,7 +566,7 @@ static inline void do_free_params(param_t* _p, int _shm)
 }
 
 
-/*
+/*! \brief
  * Free linked list of parameters
  */
 void free_params(param_t* _p)
@@ -573,7 +575,7 @@ void free_params(param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Free linked list of parameters
  */
 void shm_free_params(param_t* _p)
@@ -582,7 +584,7 @@ void shm_free_params(param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Print a parameter structure, just for debugging
  */
 static inline void print_param(FILE* _o, param_t* _p)
@@ -622,7 +624,7 @@ static inline void print_param(FILE* _o, param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Print linked list of parameters, just for debugging
  */
 void print_params(FILE* _o, param_t* _p)
@@ -637,7 +639,7 @@ void print_params(FILE* _o, param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Duplicate linked list of parameters
  */
 static inline int do_duplicate_params(param_t** _n, param_t* _p, int _shm)
@@ -679,7 +681,7 @@ static inline int do_duplicate_params(param_t** _n, param_t* _p, int _shm)
 }
 
 
-/*
+/*! \brief
  * Duplicate linked list of parameters
  */
 int duplicate_params(param_t** _n, param_t* _p)
@@ -688,7 +690,7 @@ int duplicate_params(param_t** _n, param_t* _p)
 }
 
 
-/*
+/*! \brief
  * Duplicate linked list of parameters
  */
 int shm_duplicate_params(param_t** _n, param_t* _p)

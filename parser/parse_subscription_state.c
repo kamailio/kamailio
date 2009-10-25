@@ -1,3 +1,9 @@
+/*! \file
+ * \brief Parser :: Parse subscription-state in NOTIFY
+ *
+ * \ingroup parser
+ */
+
 #include "parse_subscription_state.h"
 #include "../dprint.h"
 #include "../trim.h"

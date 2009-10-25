@@ -25,6 +25,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse Methods
+ *
+ * \ingroup parser
+ */
+
+
 #ifndef PARSE_METHODS_H
 #define PARSE_METHODS_H
 

@@ -32,11 +32,17 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
+/** @file
+ * @brief Parser :: helper functions
+ *
+ * @ingroup parser
+ */
+
 
 #include  "parser_f.h"
 #include "../ut.h"
 
-/* returns pointer to next line or after the end of buffer */
+/** @brief returns pointer to next line or after the end of buffer */
 char* eat_line(char* buffer, unsigned int len)
 {
 	char* nl;
