@@ -31,6 +31,13 @@
  *  2006-07-23  created by andrei
  */
 
+/**
+ * @file
+ * @brief SIP-router core :: resolver related functions
+ * @ingroup core
+ * Module: @ref core
+ */
+
 #ifndef __dns_wrappers_h
 #define __dns_wrappers_h
 
