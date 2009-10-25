@@ -32,6 +32,13 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
+/*! \file 
+ * \brief Parser ::  Require, Request-Disposition Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef CASE_REQU_H
 #define CASE_REQU_H

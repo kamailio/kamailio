@@ -31,6 +31,12 @@
  *  2007-07-27  created by andrei
  */
 
+/*! \file 
+ * \brief Parser ::  Expires Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef CASE_RETR_H
 #define CASE_RETR_H

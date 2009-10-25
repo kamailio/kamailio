@@ -31,6 +31,13 @@
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  */
 
+/*! \file 
+ * \brief Parser :: Via Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef CASE_VIA_H
 #define CASE_VIA_H

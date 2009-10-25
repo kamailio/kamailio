@@ -12,11 +12,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -34,17 +29,27 @@
  * 2007-01-26 Macros for Identity, Identity-info, Date added (gergo)
  */
 
+/*! \file 
+ * \brief Parser :: Fast 32-bit Header Field Name Parser -- keys
+ *
+ * \ingroup parser
+ */
+
 #ifndef KEYS_H
 #define KEYS_H
 
-/*
+/*! \name Parser definitions
+\verbatim
  * a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z  :  ' ' -
  * 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 3a 20  2d
+\endverbatim
  *
  * Test manually/visually if dword is intended string using:
  * awk '/^#define/ {printf("%s \"%c%c%c%c\" ... %s \n",  $3,strtonum("0x" substr($3,9,2)),strtonum("0x" substr($3,7,2)),strtonum("0x" substr($3,5,2)),strtonum("0x" substr($3,3,2)),$5)}' keys.h
  *
  */
+
+/*!{ */
 
 #define _acce_ 0x65636361   /* "acce" */
 #define _allo_ 0x6f6c6c61   /* "allo" */
@@ -184,5 +189,7 @@
 #define _priv_ 0x76697270   /* "priv" */
 #define _acy2_ 0x20796361   /* "acy " */
 #define _acy1_ 0x3a796361   /* "acy:" */
+
+/*!} */
 
 #endif /* KEYS_H */

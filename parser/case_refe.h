@@ -1,6 +1,4 @@
 /*
- * Refer-To Header Field Name Parsing Macros
- *
  * Refer-To, Referred-By Header Field Name Parsing Macros
  *
  * Copyright (C) 2005 Juha Heinanen
@@ -26,6 +24,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/*! \file 
+ * \brief Parser :: Refer-To, Referred-By Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef CASE_REFE_H
 #define CASE_REFE_H

@@ -35,6 +35,13 @@
  * 2007-07-27 HDR_RETRY_AFTER_[TF] added (andrei)
  */
 
+/*! \file 
+ * \brief Parser :: ???
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef HF_H
 #define HF_H
@@ -44,7 +51,9 @@
 
 
 
-/* header type enum
+/*! \brief header type enum
+ * 
+ * \note
  * if you add a new type:
  *  - make sure it's not greater than 63
  *  - make sure you add the corresponding flag to the hdr_flags_t defs below
@@ -55,78 +64,79 @@
  */
 
 enum _hdr_types_t {
-	HDR_ERROR_T					= -1   /* Error while parsing */,
-	HDR_OTHER_T					=  0   /* Some other header field */,
-	HDR_VIA_T					=  1   /* Via header field */,
-	HDR_VIA1_T					=  1   /* First Via header field */,
-	HDR_VIA2_T					=  2   /* only used as flag */,
-	HDR_TO_T					       /* To header field */,
-	HDR_FROM_T					       /* From header field */,
-	HDR_CSEQ_T					       /* CSeq header field */,
-	HDR_CALLID_T				       /* Call-Id header field */,
-	HDR_CONTACT_T				       /* Contact header field */,
-	HDR_MAXFORWARDS_T			       /* MaxForwards header field */,
-	HDR_ROUTE_T					       /* Route header field */,
-	HDR_RECORDROUTE_T			       /* Record-Route header field */,
-	HDR_CONTENTTYPE_T			       /* Content-Type header field */,
-	HDR_CONTENTLENGTH_T			       /* Content-Length header field */,
-	HDR_AUTHORIZATION_T			       /* Authorization header field */,
-	HDR_EXPIRES_T				       /* Expires header field */,
-	HDR_PROXYAUTH_T				       /* Proxy-Authorization hdr field */,
-	HDR_SUPPORTED_T				       /* Supported  header field */,
-	HDR_REQUIRE_T				       /* Require header */,
-	HDR_PROXYREQUIRE_T			       /* Proxy-Require header field */,
-	HDR_UNSUPPORTED_T			       /* Unsupported header field */,
-	HDR_ALLOW_T					       /* Allow header field */,
-	HDR_EVENT_T					       /* Event header field */,
-	HDR_ACCEPT_T				       /* Accept header field */,
-	HDR_ACCEPTLANGUAGE_T		       /* Accept-Language header field */,
-	HDR_ORGANIZATION_T			       /* Organization header field */,
-	HDR_PRIORITY_T				       /* Priority header field */,
-	HDR_SUBJECT_T				       /* Subject header field */,
-	HDR_USERAGENT_T				       /* User-Agent header field */,
-	HDR_SERVER_T				       /* Server header field */,
-	HDR_ACCEPTDISPOSITION_T		       /* Accept-Disposition hdr field */,
-	HDR_CONTENTDISPOSITION_T	       /* Content-Disposition hdr field */,
-	HDR_DIVERSION_T				       /* Diversion header field */,
-	HDR_RPID_T					       /* Remote-Party-ID header field */,
-	HDR_REFER_TO_T				       /* Refer-To header fiels */,
-	HDR_SIPIFMATCH_T			       /* SIP-If-Match header field */,
-	HDR_SESSIONEXPIRES_T		       /* Session-Expires header */,
-	HDR_MIN_SE_T				       /* Min-SE */,
-	HDR_SUBSCRIPTION_STATE_T	       /* Subscription-State */,
-	HDR_ACCEPTCONTACT_T			       /* Accept-Contact header */,
-	HDR_ALLOWEVENTS_T			       /* Allow-Events header */,
-	HDR_CONTENTENCODING_T		       /* Content-Encoding header */,
-	HDR_REFERREDBY_T			       /* Referred-By header */,
-	HDR_REJECTCONTACT_T			       /* Reject-Contact header */,
-	HDR_REQUESTDISPOSITION_T	       /* Request-Disposition header */,
-	HDR_WWW_AUTHENTICATE_T		       /* WWW-Authenticate header field */,
-	HDR_PROXY_AUTHENTICATE_T	       /* Proxy-Authenticate header field */,
-	HDR_DATE_T			       /* Date header field */,
-	HDR_IDENTITY_T			       /* Identity header field */,
-	HDR_IDENTITY_INFO_T		       /* Identity-info header field */,
-	HDR_RETRY_AFTER_T		           /* Retry-After header field */,
-	HDR_PPI_T                          /**< P-Preferred-Identity header field */,
-	HDR_PAI_T                          /**< P-Asserted-Identity header field */,
-	HDR_PATH_T                         /**< Path header field */,
-	HDR_PRIVACY_T				       /**< Privacy header field */,
-	HDR_EOH_T					       /* End of message header */
+	HDR_ERROR_T					= -1   /*!< Error while parsing */,
+	HDR_OTHER_T					=  0   /*!< Some other header field */,
+	HDR_VIA_T					=  1   /*!< Via header field */,
+	HDR_VIA1_T					=  1   /*!< First Via header field */,
+	HDR_VIA2_T					=  2   /*!< only used as flag */,
+	HDR_TO_T					       /*!< To header field */,
+	HDR_FROM_T					       /*!< From header field */,
+	HDR_CSEQ_T					       /*!< CSeq header field */,
+	HDR_CALLID_T				       /*!< Call-Id header field */,
+	HDR_CONTACT_T				       /*!< Contact header field */,
+	HDR_MAXFORWARDS_T			       /*!< MaxForwards header field */,
+	HDR_ROUTE_T					       /*!< Route header field */,
+	HDR_RECORDROUTE_T			       /*!< Record-Route header field */,
+	HDR_CONTENTTYPE_T			       /*!< Content-Type header field */,
+	HDR_CONTENTLENGTH_T			       /*!< Content-Length header field */,
+	HDR_AUTHORIZATION_T			       /*!< Authorization header field */,
+	HDR_EXPIRES_T				       /*!< Expires header field */,
+	HDR_PROXYAUTH_T				       /*!< Proxy-Authorization hdr field */,
+	HDR_SUPPORTED_T				       /*!< Supported  header field */,
+	HDR_REQUIRE_T				       /*!< Require header */,
+	HDR_PROXYREQUIRE_T			       /*!< Proxy-Require header field */,
+	HDR_UNSUPPORTED_T			       /*!< Unsupported header field */,
+	HDR_ALLOW_T					       /*!< Allow header field */,
+	HDR_EVENT_T					       /*!< Event header field */,
+	HDR_ACCEPT_T				       /*!< Accept header field */,
+	HDR_ACCEPTLANGUAGE_T		       /*!< Accept-Language header field */,
+	HDR_ORGANIZATION_T			       /*!< Organization header field */,
+	HDR_PRIORITY_T				       /*!< Priority header field */,
+	HDR_SUBJECT_T				       /*!< Subject header field */,
+	HDR_USERAGENT_T				       /*!< User-Agent header field */,
+	HDR_SERVER_T				       /*!< Server header field */,
+	HDR_ACCEPTDISPOSITION_T		       /*!< Accept-Disposition hdr field */,
+	HDR_CONTENTDISPOSITION_T	       /*!< Content-Disposition hdr field */,
+	HDR_DIVERSION_T				       /*!< Diversion header field */,
+	HDR_RPID_T					       /*!< Remote-Party-ID header field */,
+	HDR_REFER_TO_T				       /*!< Refer-To header fiels */,
+	HDR_SIPIFMATCH_T			       /*!< SIP-If-Match header field */,
+	HDR_SESSIONEXPIRES_T		       /*!< Session-Expires header */,
+	HDR_MIN_SE_T				       /*!< Min-SE */,
+	HDR_SUBSCRIPTION_STATE_T	       /*!< Subscription-State */,
+	HDR_ACCEPTCONTACT_T			       /*!< Accept-Contact header */,
+	HDR_ALLOWEVENTS_T			       /*!< Allow-Events header */,
+	HDR_CONTENTENCODING_T		       /*!< Content-Encoding header */,
+	HDR_REFERREDBY_T			       /*!< Referred-By header */,
+	HDR_REJECTCONTACT_T			       /*!< Reject-Contact header */,
+	HDR_REQUESTDISPOSITION_T	       /*!< Request-Disposition header */,
+	HDR_WWW_AUTHENTICATE_T		       /*!< WWW-Authenticate header field */,
+	HDR_PROXY_AUTHENTICATE_T	       /*!< Proxy-Authenticate header field */,
+	HDR_DATE_T			       /*!< Date header field */,
+	HDR_IDENTITY_T			       /*!< Identity header field */,
+	HDR_IDENTITY_INFO_T		       /*!< Identity-info header field */,
+	HDR_RETRY_AFTER_T		           /*!< Retry-After header field */,
+	HDR_PPI_T                          /*!< P-Preferred-Identity header field */,
+	HDR_PAI_T                          /*!< P-Asserted-Identity header field */,
+	HDR_PATH_T                         /*!< Path header field */,
+	HDR_PRIVACY_T				       /*!< Privacy header field */,
+	HDR_EOH_T					       /*!< End of message header */
 };
 
 
 typedef unsigned long long hdr_flags_t;
 
-/* type to flag conversion
+/*! \brief type to flag conversion
  * WARNING: HDR_ERROR_T has no corresponding FLAG ! */
 #define HDR_T2F(type)	\
 		(((type)!=HDR_EOH_T)?((hdr_flags_t)1<<(type)):(~(hdr_flags_t)0))
 
-/* helper macro for easy defining and keeping in sync. the flags enum */
+/*! \brief helper macro for easy defining and keeping in sync. the flags enum */
 #define HDR_F_DEF(name)		HDR_T2F(HDR_##name##_T)
 
-/* flags definitions
+/*! \name flags definitions
  * (enum won't work with all the compiler (e.g. icc) due to the 64bit size) */
+/*!{ */
 #define HDR_EOH_F					HDR_F_DEF(EOH)
 #define HDR_VIA_F					HDR_F_DEF(VIA)
 #define HDR_VIA1_F					HDR_F_DEF(VIA1)
@@ -185,23 +195,25 @@ typedef unsigned long long hdr_flags_t;
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
+/*!} */ /* Doxygen end marker*/
+
 typedef enum _hdr_types_t hdr_types_t;
 
-/*
+/*! \brief
  * Format: name':' body
  */
 typedef struct hdr_field {
-	hdr_types_t type;       /* Header field type */
-	str name;               /* Header field name */
-	str body;               /* Header field body (may not include CRLF) */
-	int len;		/* length from hdr start until EoHF (incl.CRLF) */
-	void* parsed;           /* Parsed data structures */
-	struct hdr_field* next; /* Next header field in the list */
+	hdr_types_t type;       /*!< Header field type */
+	str name;               /*!< Header field name */
+	str body;               /*!< Header field body (may not include CRLF) */
+	int len;		/*!< length from hdr start until EoHF (incl.CRLF) */
+	void* parsed;           /*!< Parsed data structures */
+	struct hdr_field* next; /*!< Next header field in the list */
 } hdr_field_t;
 
 
 
-/* returns true if the header links allocated memory on parse field */
+/*! \brief returns true if the header links allocated memory on parse field */
 static inline int hdr_allocs_parse(struct hdr_field* hdr)
 {
 	switch(hdr->type){
@@ -227,13 +239,13 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 	}
 }
 
-/* frees a hdr_field structure,
+/*! \brief frees a hdr_field structure,
  * WARNING: it frees only parsed (and not name.s, body.s)
  */
 void clean_hdr_field(struct hdr_field* hf);
 
 
-/* frees a hdr_field list,
+/*! \brief frees a hdr_field list,
  * WARNING: frees only ->parsed and ->next
  */
 void free_hdr_field_lst(struct hdr_field* hf);

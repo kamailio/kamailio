@@ -45,6 +45,12 @@
  *  2007-03-14  added SIP_MSG_START(msg) macro
  */
 
+/*! \file 
+ * \brief Parser :: ???
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef msg_parser_h
 #define msg_parser_h
@@ -66,50 +72,52 @@
 #include "../error.h"
 
 
-/* convenience short-cut macros */
+/*! \name convenience short-cut macros */
+/*! { */
 #define REQ_LINE(_msg) ((_msg)->first_line.u.request)
 #define REQ_METHOD first_line.u.request.method_value
 #define REPLY_STATUS first_line.u.reply.statuscode
 #define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
+/*! } */
 
-/* start of "actual" sip msg (start of first line) */
+/*! \brief start of "actual" sip msg (start of first line) */
 #define SIP_MSG_START(m)	((m)->first_line.u.request.method.s)
 
-/* number methods as power of two to allow bitmap matching */
+/*! \brief number methods as power of two to allow bitmap matching */
 enum request_method {
-	METHOD_UNDEF=0,           /* 0 - --- */
-	METHOD_INVITE=1,          /* 1 - 2^0 */
-	METHOD_CANCEL=2,          /* 2 - 2^1 */
-	METHOD_ACK=4,             /* 3 - 2^2 */
-	METHOD_BYE=8,             /* 4 - 2^3 */
-	METHOD_INFO=16,           /* 5 - 2^4 */
-	METHOD_REGISTER=32,       /* 6 - 2^5 */
-	METHOD_SUBSCRIBE=64,      /* 7 - 2^6 */
-	METHOD_NOTIFY=128,        /* 8 - 2^7 */
-	METHOD_MESSAGE=256,       /* 9 - 2^8 */
-	METHOD_OPTIONS=512,       /* 10 - 2^9 */
-	METHOD_PRACK=1024,        /* 11 - 2^10 */
-	METHOD_UPDATE=2048,       /* 12 - 2^11 */
-	METHOD_REFER=4096,        /* 13 - 2^12 */
-	METHOD_PUBLISH=8192,      /* 14 - 2^13 */
-	METHOD_OTHER=16384        /* 15 - 2^14 */
+	METHOD_UNDEF=0,           /*!< 0 - --- */
+	METHOD_INVITE=1,          /*!< 1 - 2^0 */
+	METHOD_CANCEL=2,          /*!< 2 - 2^1 */
+	METHOD_ACK=4,             /*!< 3 - 2^2 */
+	METHOD_BYE=8,             /*!< 4 - 2^3 */
+	METHOD_INFO=16,           /*!< 5 - 2^4 */
+	METHOD_REGISTER=32,       /*!< 6 - 2^5 */
+	METHOD_SUBSCRIBE=64,      /*!< 7 - 2^6 */
+	METHOD_NOTIFY=128,        /*!< 8 - 2^7 */
+	METHOD_MESSAGE=256,       /*!< 9 - 2^8 */
+	METHOD_OPTIONS=512,       /*!< 10 - 2^9 */
+	METHOD_PRACK=1024,        /*!< 11 - 2^10 */
+	METHOD_UPDATE=2048,       /*!< 12 - 2^11 */
+	METHOD_REFER=4096,        /*!< 13 - 2^12 */
+	METHOD_PUBLISH=8192,      /*!< 14 - 2^13 */
+	METHOD_OTHER=16384        /*!< 15 - 2^14 */
 };
 
-#define FL_FORCE_RPORT  (1 << 0)  /* force rport */
-#define FL_FORCE_ACTIVE (1 << 1)  /* force active SDP */
-#define FL_SDP_IP_AFS   (1 << 2)  /* SDP IP rewritten */
-#define FL_SDP_PORT_AFS (1 << 3)  /* SDP port rewritten */
-#define FL_SHM_CLONE    (1 << 4)  /* msg cloned in SHM as a single chunk */
-#define FL_TIMEOUT      (1 << 5)  /* message belongs to an "expired" branch
+#define FL_FORCE_RPORT  (1 << 0)  /*!< force rport */
+#define FL_FORCE_ACTIVE (1 << 1)  /*!< force active SDP */
+#define FL_SDP_IP_AFS   (1 << 2)  /*!< SDP IP rewritten */
+#define FL_SDP_PORT_AFS (1 << 3)  /*!< SDP port rewritten */
+#define FL_SHM_CLONE    (1 << 4)  /*!< msg cloned in SHM as a single chunk */
+#define FL_TIMEOUT      (1 << 5)  /*!< message belongs to an "expired" branch
 									 (for failure route use) */
-#define FL_REPLIED      (1 << 6)  /* message branch received at least one reply
+#define FL_REPLIED      (1 << 6)  /*!< message branch received at least one reply
 									 (for failure route use) */
-#define FL_HASH_INDEX   (1 << 7)  /* msg->hash_index contains a valid value (tm use)*/
+#define FL_HASH_INDEX   (1 << 7)  /*!< msg->hash_index contains a valid value (tm use)*/
 
 #define FL_MTU_TCP_FB   (1 << 8)
 #define FL_MTU_TLS_FB   (1 << 9)
 #define FL_MTU_SCTP_FB  (1 << 10)
-#define FL_ADD_LOCAL_RPORT  (1 << 11) /* add 'rport' to local via hdr */
+#define FL_ADD_LOCAL_RPORT  (1 << 11) /*!< add 'rport' to local via hdr */
 
 /* WARNING: Value (1 << 29) is temporarily reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
@@ -143,7 +151,7 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
     !strncasecmp((req)->first_line.u.request.version.s,             \
 		SIP_VERSION, SIP_VERSION_LEN))
 
-/*
+/*! \brief
  * Return a URI to which the message should be really sent (not what should
  * be in the Request URI. The following fields are tried in this order:
  * 1) dst_uri
@@ -155,7 +163,7 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 (((m)->new_uri.s && (m)->new_uri.len) ? (&(m)->new_uri) : (&(m)->first_line.u.request.uri)))
 
 
-/*
+/*! \brief
  * Return the Reqeust URI of a message.
  * The following fields are tried in this order:
  * 1) new_uri
@@ -186,37 +194,37 @@ enum _uri_flags{
 }; /* bit fields */
 typedef enum _uri_flags uri_flags;
 
+/*! \brief The SIP uri object */
 struct sip_uri {
-	str user;     /* Username */
-	str passwd;   /* Password */
-	str host;     /* Host name */
-	str port;     /* Port number */
-	str params;   /* Parameters */
-	str sip_params; /* Parameters of the sip: URI.
+	str user;     /*!< Username */
+	str passwd;   /*!< Password */
+	str host;     /*!< Host name */
+	str port;     /*!< Port number */
+	str params;   /*!< Parameters */
+	str sip_params; /*!< Parameters of the sip: URI.
 			  * (If a tel: URI is embedded in a sip: URI, then
 			  * params points to the parameters of the tel: URI,
 			  * and sip_params to the parameters of the sip: URI. 
 			  */
 	str headers;
 	unsigned short port_no;
-	unsigned short proto; /* from transport */
-	uri_type type; /* uri scheme */
+	unsigned short proto; /*!< from transport */
+	uri_type type; /*!< uri scheme */
 	uri_flags flags;
-	/* parameters */
+	/*!< parameters */
 	str transport;
 	str ttl;
 	str user_param;
 	str maddr;
 	str method;
 	str lr;
-	str r2; /* ser specific rr parameter */
-	/* values */
-	str transport_val;
-	str ttl_val;
-	str user_param_val;
-	str maddr_val;
-	str method_val;
-	str lr_val; /* lr value placeholder for lr=on a.s.o*/
+	str r2; /*!< ser specific rr parameter */
+	str transport_val; /*!< transport value */
+	str ttl_val;	 /*!< TTL value */
+	str user_param_val; /*!< User= param value */
+	str maddr_val; /*!< Maddr= param value */
+	str method_val; /*!< Method value */
+	str lr_val; /*!< lr value placeholder for lr=on a.s.o*/
 	str r2_val;
 #ifdef USE_COMP
 	unsigned short comp;
@@ -232,8 +240,10 @@ typedef enum msg_body_type {
 	MSG_BODY_SDP
 } msg_body_type_t;
 
-/* This structure represents a generic SIP message body, regardless of the
- * body type. Body parsers are supposed to cast this structure to some other
+/*! \brief This structure represents a generic SIP message body, regardless of the
+ * body type.
+ * 
+ * Body parsers are supposed to cast this structure to some other
  * body-type specific structure, but the body type specific structure must
  * retain msg_body_type variable and a pointer to the free function as the 
  * first two variables within the structure.
@@ -244,16 +254,17 @@ typedef struct msg_body {
 } msg_body_t;
 
 
+/*! \brief The SIP message */
 typedef struct sip_msg {
-	unsigned int id;               /* message id, unique/process*/
-	snd_flags_t fwd_send_flags;    /* send flags for forwarding */
-	snd_flags_t rpl_send_flags;    /* send flags for replies */
-	struct msg_start first_line;   /* Message first line */
-	struct via_body* via1;         /* The first via */
-	struct via_body* via2;         /* The second via */
-	struct hdr_field* headers;     /* All the parsed headers*/
-	struct hdr_field* last_header; /* Pointer to the last parsed header*/
-	hdr_flags_t parsed_flag;    /* Already parsed header field types */
+	unsigned int id;               /*!< message id, unique/process*/
+	snd_flags_t fwd_send_flags;    /*!< send flags for forwarding */
+	snd_flags_t rpl_send_flags;    /*!< send flags for replies */
+	struct msg_start first_line;   /*!< Message first line */
+	struct via_body* via1;         /*!< The first via */
+	struct via_body* via2;         /*!< The second via */
+	struct hdr_field* headers;     /*!< All the parsed headers*/
+	struct hdr_field* last_header; /*!< Pointer to the last parsed header*/
+	hdr_flags_t parsed_flag;    /*!< Already parsed header field types */
 
 	     /* Via, To, CSeq, Call-Id, From, end of header*/
 	     /* pointers to the first occurrences of these headers;
@@ -307,43 +318,42 @@ typedef struct sip_msg {
 
 	struct msg_body* body;
 
-	char* eoh;        /* pointer to the end of header (if found) or null */
-	char* unparsed;   /* here we stopped parsing*/
+	char* eoh;        /*!< pointer to the end of header (if found) or null */
+	char* unparsed;   /*!< here we stopped parsing*/
 
-	struct receive_info rcv; /* source & dest ip, ports, proto a.s.o*/
+	struct receive_info rcv; /*!< source & dest ip, ports, proto a.s.o*/
 
-	char* buf;        /* scratch pad, holds a modified message,
+	char* buf;        /*!< scratch pad, holds a modified message,
 					   *  via, etc. point into it */
-	unsigned int len; /* message len (orig) */
+	unsigned int len; /*!< message len (orig) */
 
 	     /* modifications */
 
-	str new_uri; /* changed first line uri, when you change this
+	str new_uri; /*!< changed first line uri, when you change this
 	                don't forget to set parsed_uri_ok to 0*/
 
-	str dst_uri; /* Destination URI, must be forwarded to this URI if len != 0 */
+	str dst_uri; /*!< Destination URI, must be forwarded to this URI if len != 0 */
 
 	/* current uri */
-	int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not, set if to 0
+	int parsed_uri_ok; /*!< 1 if parsed_uri is valid, 0 if not, set if to 0
 	                      if you modify the uri (e.g change new_uri)*/
-	struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
-	/* the same for original uri */
-	int parsed_orig_ruri_ok;
-	struct sip_uri parsed_orig_ruri;
+	struct sip_uri parsed_uri; /*!< speed-up > keep here the parsed uri*/
+	int parsed_orig_ruri_ok; /*!< 1 if parsed_orig_uri is valid, 0 if not, set if to 0
+                              if you modify the uri (e.g change new_uri)*/
+	struct sip_uri parsed_orig_ruri; /*!< speed-up > keep here the parsed orig uri*/
 
-	struct lump* add_rm;       /* used for all the forwarded requests/replies */
-	struct lump* body_lumps;     /* Lumps that update Content-Length */
-	struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
+	struct lump* add_rm;       /*!< used for all the forwarded requests/replies */
+	struct lump* body_lumps;     /*!< Lumps that update Content-Length */
+	struct lump_rpl *reply_lump; /*!< only for localy generated replies !!!*/
 
-	/* str add_to_branch;
+	/*! \brief str add_to_branch;
 	   whatever whoever want to append to branch comes here
 	*/
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
 
-	     /* index to TM hash table; stored in core to avoid unnecessary calculations */
-	unsigned int  hash_index;
-	unsigned int msg_flags; /* flags used by core */
+	unsigned int  hash_index; /*!< index to TM hash table; stored in core to avoid unnecessary calculations */
+	unsigned int msg_flags; /*!< flags used by core */
 	     /* allows to set various flags on the message; may be used for
 	      *	simple inter-module communication or remembering processing state
 	      * reached
@@ -356,7 +366,7 @@ typedef struct sip_msg {
 	str path_vec;
 } sip_msg_t;
 
-/* pointer to a fakes message which was never received ;
+/*! \brief pointer to a fakes message which was never received ;
    (when this message is "relayed", it is generated out
     of the original request)
 */
@@ -372,12 +382,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr);
 
 void free_sip_msg(struct sip_msg* msg);
 
-/* make sure all HFs needed for transaction identification have been
-   parsed; return 0 if those HFs can't be found
- */
-
-
-/* make sure all HFs needed for transaction identification have been
+/*! \brief make sure all HFs needed for transaction identification have been
    parsed; return 0 if those HFs can't be found
 */
 inline static int check_transaction_quadruple( struct sip_msg* msg )
@@ -393,7 +398,7 @@ inline static int check_transaction_quadruple( struct sip_msg* msg )
 
 
 
-/* calculate characteristic value of a message -- this value
+/*! \brief calculate characteristic value of a message -- this value
    is used to identify a transaction during the process of
    reply matching
  */
@@ -427,7 +432,7 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 }
 
 
-/* returns a pointer to the begining of the msg's body
+/*! \brief returns a pointer to the begining of the msg's body
  */
 inline static char* get_body(struct sip_msg *msg)
 {
@@ -452,12 +457,12 @@ inline static char* get_body(struct sip_msg *msg)
 }
 
 
-/*
+/*! \brief
  * Make a private copy of the string and assign it to dst_uri
  */
 int set_dst_uri(struct sip_msg* msg, str* uri);
 
-/* If the dst_uri is set to an URI then reset it */
+/*! \brief If the dst_uri is set to an URI then reset it */
 void reset_dst_uri(struct sip_msg* msg);
 
 struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht);

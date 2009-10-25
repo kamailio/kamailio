@@ -41,6 +41,18 @@
  *		header fields (gergo)
  */
 
+/*! \file 
+ * \brief Parser :: SIP Message header proxy parser
+ *
+ * \ingroup parser
+ */
+
+/*! \defgroup parser
+ * 
+ * The SIP message parser
+ *
+ */
+
 
 #include <string.h>
 #include <stdlib.h>

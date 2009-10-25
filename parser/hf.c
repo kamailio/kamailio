@@ -33,6 +33,12 @@
  * 2007-07-27 added HDR_RETRY_AFTER_T (andrei)
  */
 
+/*! \file 
+ * \brief Parser :: 
+ *
+ * \ingroup parser
+ */
+
 
 #include "hf.h"
 #include "parse_via.h"
@@ -55,8 +61,7 @@
 #include "parse_allow.h"
 #include "../ut.h"
 
-
-/*
+/*! \brief
  * Frees a hdr_field structure,
  * WARNING: it frees only parsed (and not name.s, body.s)
  */
@@ -225,7 +230,7 @@ void clean_hdr_field(struct hdr_field* hf)
 }
 
 
-/*
+/*! \brief
  * Frees a hdr_field list,
  * WARNING: frees only ->parsed and ->next*/
 void free_hdr_field_lst(struct hdr_field* hf)
