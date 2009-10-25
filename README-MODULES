@@ -205,7 +205,7 @@ sms			SMS gateway
 speeddial		Proxy :: Speed dialing for users
 textops			Text operations (search, replace)
 timer			triggering specific route block on timer
-tls			TLS module
+tls			TLS module * DEPRECATED * Use the modules/tls module instead
 uac			User agent client
 unixsock
 uri			URI checks
