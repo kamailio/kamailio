@@ -27,8 +27,8 @@
 	is periodically updated in the database, while for PUBLISH only the presence
 	or absence of stored info for a certain resource is maintained in memory
 	to avoid unnecessary, costly database operations. 
-	It is possible to disable in-memory caching by configurng a fallback to database mode 
-	(by setting module parameter "fallback2db"). In this mode, in case a searched record is not 
+	It is possible to disable in-memory caching by configuring a fallback to database mode 
+	(by setting the module parameter "fallback2db"). In this mode, in case a searched record is not 
 	found in cache, the search is continued	in database. This is useful for
 	an architecture in which processing and memory load might be divided on 
 	several &kamailio; instances, maybe on different servers using the same database.
@@ -102,7 +102,7 @@
 		<programlisting format="linespecific">
 ...
 modparam("presence", "db_url", 
-	"mysql://openser:openserrw@192.168.2.132/openser")
+	"&defaultdb;")
 ...
 </programlisting>
 		</example>
@@ -225,7 +225,7 @@ modparam("presence", "to_tag_pref", 'pres')
 		<para>
 		The value in seconds that should be subtracted from the expires value when
 		sending a 200OK for a publish. It is used for forcing the client
-		cu send an update before the old publish expires.
+		to send an update before the old publish expires.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
@@ -265,7 +265,7 @@ modparam("presence", "max_expires", 3600)
 		<title><varname>server_address</varname> (str)</title>
 		<para>
 		The presence server address which will become the value of Contact header filed 
-		for 200OK replies to Subscribe and Publish and in Notify messages.
+		for 200 OK replies to SUBSCRIBE and PUBLISH and in NOTIFY messages.
 		</para>
 		<example>
 		<title>Set <varname>server_address</varname> parameter</title>
@@ -299,8 +299,8 @@ modparam("presence", "fallback2db", 1)
 		<title><varname>subs_htable_size</varname> (int)</title>
 		<para>
 		The size of the in-memory hash table to store subscription dialogs.
-        This parameter will be used as the power of 2 when computing table size.
-        </para>
+        	This parameter will be used as the power of 2 when computing table size.
+        	</para>
 		<para>
 		<emphasis>Default value is <quote>9 (512)</quote>.
 		</emphasis>
@@ -318,8 +318,8 @@ modparam("presence", "subs_htable_size", 11)
 	<section>
 		<title><varname>pres_htable_size</varname> (int)</title>
 		<para>
-        The size of the in-memory hash table to store publish records.
-        This parameter will be used as the power of 2 when computing table size.
+        	The size of the in-memory hash table to store publish records.
+        	This parameter will be used as the power of 2 when computing table size.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>9 (512)</quote>.
@@ -368,10 +368,10 @@ modparam("presence", "enable_sphere_check", 1)
 		</title>
 		<para>
 		Handles PUBLISH requests by storing and updating 
-		published information in memory cach and database, then calls functions to send 
+		published information in memory cache and database, then calls functions to send 
 		NOTIFY messages when changes in the published information occur.
 		It takes one argument -> sender_uri. The parameter was added 
-		for enabling BLA implementation. If present, Notification of
+		for enabling BLA implementation. If present, notification of
 		a change in published state is not sent to the respective uri
 		even though a subscription exists.
 		It should be taken from the Sender header. It was left at the
@@ -425,7 +425,7 @@ modparam("presence", "enable_sphere_check", 1)
 		</title>
 		<para>
 		The function which handles SUBSCRIBE requests. It stores or 
-		updates information in memory and database and calls functions to send Notify 
+		updates information in memory and database and calls functions to send NOTIFY 
 		messages when a SUBSCRIBE which initiate a dialog is received
 		</para>
 		<para>
