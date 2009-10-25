@@ -24,6 +24,14 @@
  *  2007-05-1  initial version (jih)
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Message-waiting indication support
+ * \ingroup presence
+ * Module: \ref presence
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,14 +39,14 @@
 #include "../presence/event_list.h"
 #include "presence_mwi.h"
 
-/* utility function that skips spaces and tabs */
+/*! \brief utility function that skips spaces and tabs */
 inline char *eat_sp_tab(char *at, char *over)
 {
     while((at < over) && ((*at == ' ') || (*at == '\t'))) at++;
     return at;
 }
 
-/* utility function that skips printable ascii chars */
+/*! \brief utility function that skips printable ascii chars */
 inline char *eat_printable(char *at, char *over)
 {
     while ((at < over) && ((*at == '\t') || ((*at >= 32) && (*at <= 126))))
@@ -46,7 +54,7 @@ inline char *eat_printable(char *at, char *over)
     return at;
 }
 
-/*
+/*! \brief
  * event specific publish handling - check if body format is ok
  */
 int mwi_publ_handl(struct sip_msg* msg)

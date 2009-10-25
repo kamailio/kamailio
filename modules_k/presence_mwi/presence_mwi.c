@@ -24,6 +24,14 @@
  *  2007-05-1  initial version (jih)
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Message waiting indication
+ * \ingroup presence
+ * Module: \ref presence
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

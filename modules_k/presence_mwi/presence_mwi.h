@@ -24,6 +24,14 @@
  *  2007-05-1  initial version (jih)
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Message waiting indication
+ * \ingroup presence
+ * Module: \ref presence
+ */
+
+
 #ifndef _PRES_MWI_H_
 #define _PRES_MWI_H_
 
