@@ -175,7 +175,7 @@
 
 #include "atomic/atomic_native.h"
 
-/* if no native operations, emulate them using locks */
+/*! \brief if no native operations, emulate them using locks */
 #if  ! defined HAVE_ASM_INLINE_ATOMIC_OPS || ! defined HAVE_ASM_INLINE_MEMBAR
 
 #include "atomic/atomic_unknown.h"

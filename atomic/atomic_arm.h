@@ -15,7 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+
+/** @file	@brief
  *  atomic ops and memory barriers for arm (>= v3)
  *  see atomic_ops.h for more details 
  *

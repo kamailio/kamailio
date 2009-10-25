@@ -79,6 +79,7 @@ struct sip_uri	*select_uri_p = NULL;
  * moves pointer p to the first unused char.
  *
  * The select identifier must be of the form:
+\verbatim
  *   [@] <sel_id> [ '.' <sel_id> ...]
  *   
  * Where 
@@ -96,6 +97,7 @@ struct sip_uri	*select_uri_p = NULL;
  *     @eval.pop[-1]
  *     contact.uri.params.maddr
  *     cfg_get.rtp_proxy.enabled 
+\endverbatim
  *
  * @return -1 error
  *			  p points to the first unconsumed char
@@ -186,6 +188,7 @@ error:
  * Parse select string into select structure s and
  * moves pointer p to the first unused char.
  * 
+\verbatim
  * The select identifier must be of the form:
  *   [@] <sel_id> [ '.' <sel_id> ...]
  *   
@@ -204,6 +207,7 @@ error:
  *     @eval.pop[-1]
  *     contact.uri.params.maddr
  *     cfg_get.rtp_proxy.enabled 
+\endverbatim
   *
   * @param p - double string (asciiz) pointer, *p is moved to the first char
   *            after the select identifier

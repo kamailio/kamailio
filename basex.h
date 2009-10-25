@@ -17,6 +17,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*!
  * \file
  * \brief SIP-router core :: convert/decode to/from ascii using various bases
@@ -27,15 +28,6 @@
  *
  *
  * Functions:
- *  - init_basex()                    : inits internal lookup tables
- *  - HEX_HI(unsigned char c)         : returns the first 4 bits of c converted to a hex digit
- *  - HEX_LOW(unsigned char c)         : returns the low 4 bits of converted to a hex digit
- *  - UNHEX(unsigned char hex_digit)            : converts hex_digit to a
- *                                              number (0..15); it might
- *                                              return 0xff for invalid 
- *                                              digit (but with some compile
- *                                              option it won't check)
- *
  *  - base16_enc(src, src_len, dst, dst_len)    : encode to standard hex
  *  - base16_dec(src, src_len, dst, dst_len)    : decode from standard hex
  *  - base16_enc_len(len)                       : length needed to encode len bytes (macro)
@@ -61,7 +53,7 @@
  *  for some interesting tests and ideeas).
  *
  *  Test results for 40 bytes  (typical ser nounce) in average cpu cycles:
-<verbatim>
+\verbatim
  *                    lookup   lookup_large lookup8k no-lookup
  *  base16_enc           211/231  218/199      -       1331
  *  base16_dec           252/251  236          -       1226
@@ -70,7 +62,7 @@
  *  q_base64_enc         -                              288
  *  q_base64_dec         -                              281
  *  (see test/basex.txt for more results)
-</verbatim>
+\endverbatim
  *
  * Defines:
  *  - BASE64_LOOKUP_TABLE/NO_BASE64_LOOKUP_TABLE : use (default)/don't use
@@ -144,11 +136,17 @@
 extern unsigned char _bx_hexdig_hi[256];
 extern unsigned char _bx_hexdig_low[256];
 
+/*! \brief returns the first 4 bits of c converted to a hex digit */
 #define HEX_HI(h)	_bx_hexdig_hi[(unsigned char)(h)]
+/*! \brief returns the low 4 bits of converted to a hex digit */
 #define HEX_LOW(h)	_bx_hexdig_low[(unsigned char)(h)]
 
 extern unsigned char _bx_unhexdig256[256];
 
+/*! \brief  converts hex_digit to a number (0..15); it might
+ *      \return 0xff for invalid digit (but with some compile
+ *      option it won't check)
+ */
 #define UNHEX(h)	_bx_unhexdig256[(h)]
 
 #else /* BASE16_LOOKUP_LARGE */
@@ -861,6 +859,7 @@ inline static int q_base64_dec(unsigned char* src, int slen,
 #undef q_b64_pad
 }
 
+/*! \brief inits internal lookup tables */
 int init_basex();
 
 

@@ -47,7 +47,7 @@
  * \ingroup parser
  */
 
-/*! \defgroup parser
+/*! \defgroup parser SIP-router SIP message parser
  * 
  * The SIP message parser
  *
