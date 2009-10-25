@@ -34,6 +34,12 @@
  * 2003-04-26 ZSW (jiri)
  */
 
+/*! \file
+ * \brief Parser :: SIP first line parsing automaton
+ *
+ * \ingroup parser
+ */
+
 
 #include "../comp_defs.h"
 #include "../dprint.h"

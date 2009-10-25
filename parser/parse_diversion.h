@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,6 +19,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/*! \file
+ * \brief Parser :: Diversion header
+ * 
+ * \ingroup parser
+ */
+
  
 #ifndef PARSE_DIVERSION_H
 #define PARSE_DIVERSION_H
@@ -31,16 +33,16 @@
 #include "msg_parser.h"
  
 
-/* casting macro for accessing Diversion body */
+/*! \brief casting macro for accessing Diversion body */
 #define get_diversion(p_msg)  ((struct to_body*)(p_msg)->diversion->parsed)
  
  
-/*
+/*! \brief
  * Diversion header field parser
  */
 int parse_diversion_header(struct sip_msg *msg);
  
-/**
+/*! \brief
  * Get the value of a given diversion parameter
  */
 str *get_diversion_param(struct sip_msg *msg, str* name);

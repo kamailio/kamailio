@@ -25,6 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: SIP From header parsing
+ *
+ * \ingroup parser
+ */
 
 #include "parse_from.h"
 #include "parse_to.h"
@@ -35,8 +40,10 @@
 #include "../ut.h"
 #include "../mem/mem.h"
 
-/*
- * This method is used to parse the from header. It was decided not to parse
+/*! \brief
+ * This method is used to parse the from header.
+ *
+ * \note It was decided not to parse
  * anything in core that is not *needed* so this method gets called by 
  * rad_acc module and any other modules that needs the FROM header.
  *

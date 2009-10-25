@@ -31,6 +31,14 @@
  * 2003-04-26 ZSW (jiri)
  */
 
+/*! \file
+ * \brief Parser :: Expires header field body parser.
+ *
+ *
+ * \ingroup parser
+ */
+
+
 
 #include "parse_expires.h"
 #include <stdio.h>          /* printf */
@@ -99,7 +107,7 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 }
 
 
-/*
+/*! \brief
  * Parse expires header field body
  */
 int parse_expires(struct hdr_field* _h)
@@ -129,7 +137,7 @@ int parse_expires(struct hdr_field* _h)
 }
 
 
-/*
+/*! \brief
  * Free all memory associated with exp_body_t
  */
 void free_expires(exp_body_t** _e)
@@ -139,7 +147,7 @@ void free_expires(exp_body_t** _e)
 }
 
 
-/*
+/*! \brief
  * Print exp_body_t content, for debugging only
  */
 void print_expires(exp_body_t* _e)

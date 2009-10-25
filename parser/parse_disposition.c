@@ -11,11 +11,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,6 +22,12 @@
  *
  * History:
  * 2003-09-09 created (bogdan)
+ */
+
+/*! \file
+ * \brief Parser :: Content-Disposition header
+ *
+ * \ingroup parser
  */
 
 
@@ -41,7 +42,7 @@
 
 
 
-/* parse a string that supposed to be a disposition and fills up the structure
+/*! \brief parse a string that supposed to be a disposition and fills up the structure
  * Returns: -1 : error
  *           o : success */
 int parse_disposition( str *s, struct disposition *disp)
@@ -346,7 +347,7 @@ error:
 
 
 
-/* Frees the entire disposition structure (params + itself) */
+/*! \brief Frees the entire disposition structure (params + itself) */
 void free_disposition( struct disposition **disp)
 {
 	struct disposition_param *param;
@@ -363,7 +364,7 @@ void free_disposition( struct disposition **disp)
 
 
 
-/* looks inside the message, gets the Content-Disposition hdr, parse it, builds
+/*! \brief looks inside the message, gets the Content-Disposition hdr, parse it, builds
  * and fills a disposition structure for it what will be attached to hdr as
  * parsed link.
  * Returns:  -1 : error
@@ -413,7 +414,7 @@ error:
 }
 
 
-/* Prints recursive a disposition structure */
+/*! \brief Prints recursive a disposition structure */
 void print_disposition( struct disposition *disp)
 {
 	struct disposition_param *param;

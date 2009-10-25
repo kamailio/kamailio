@@ -25,6 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: SIP first line parsing automaton
+ *
+ * \ingroup parser
+ */
 
 #ifndef PARSE_FLINE_H
 #define PARSE_FLINE_H
@@ -66,20 +71,20 @@
 #define PUBLISH_LEN 7
 
 struct msg_start {
-	int type;					/* Type of the Message - Request/Response */
-	int len; 					/* length including delimiter */
+	int type;					/*!< Type of the Message - Request/Response */
+	int len; 					/*!< length including delimiter */
 	union {
 		struct {
-			str method;       /* Method string */
-			str uri;          /* Request URI */
-			str version;      /* SIP version */
+			str method;       /*!< Method string */
+			str uri;          /*!< Request URI */
+			str version;      /*!< SIP version */
 			int method_value;
 		} request;
 		struct {
-			str version;      /* SIP version */
-			str status;       /* Reply status */
-			str reason;       /* Reply reason phrase */
-			unsigned int /* statusclass,*/ statuscode;
+			str version;      /*!< SIP version */
+			str status;       /*!< Reply status */
+			str reason;       /*!< Reply reason phrase */
+			unsigned int /*!< statusclass,*/ statuscode;
 		} reply;
 	}u;
 };

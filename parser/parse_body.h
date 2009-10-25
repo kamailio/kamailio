@@ -25,11 +25,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+/*! \file
+ * \brief Parser :: Body handling
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef PARSE_BODY_H
 #define PARSE_BODY_H
 
-/* Returns the pointer within the msg body to the given type/subtype,
+/*! \brief Returns the pointer within the msg body to the given type/subtype,
  * and sets the length.
  * The result can be the whole msg body, or a part of a multipart body.
  */
