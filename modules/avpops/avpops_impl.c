@@ -660,7 +660,6 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 
 	n =0 ;
 	memset(&st, 0, sizeof(struct search_state));
-	int counter = 1;
 	if ((dbp->a.opd&AVPOPS_VAL_NONE)==0)
 	{
 		/* avp name is known ->set it and its type */
