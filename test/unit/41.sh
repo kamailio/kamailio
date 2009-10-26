@@ -38,17 +38,18 @@ if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); t
 fi ;
 
 # add an registrar entry to the db;
-$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
+$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
 $MYSQL "INSERT INTO usr_preferences (uuid, attribute, type, value) VALUES (\"foobar\", \"679\", 0, \"foobar!!!!!\");"
 
 # start
-../$BIN -w . -f $CFG &> /dev/null
+
+$BIN -w . -f $CFG &> /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ]; then
-	sipp -sn uas -bg -i localhost -m $NR -r $RT -p $UAS &> /dev/null
-	sipp -sn uac -s foo 127.0.0.1:$SRV -r $RT -i localhost -m $NR -p $UAC &> /dev/null
+	sipp -sn uas -bg  -i 127.0.0.1 -m $NR -r $RT -p $UAS &> /dev/null
+	sipp -sn uac -s foo 127.0.0.1:$SRV -r $RT -i 127.0.0.1 -m $NR -p $UAC &> /dev/null
 	ret=$?
 fi;
 
@@ -56,6 +57,7 @@ sleep 1
 $KILL
 killall -9 sipp > /dev/null 2>&1
 
-$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
+$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1:$UAS\") and (user_agent = \"ser_test\"));"
 $MYSQL "DELETE FROM usr_preferences;"
 exit $ret
+
