@@ -76,11 +76,10 @@ static void remove_spaces(char *s)
 {
 	char *p, *dst;
 
-	for (p = s, dst = s; *p != '\0'; ++p, ++dst) {
+	for (p = s, dst = s; *dst != '\0'; ++p, ++dst) {
 		while (isspace(*p)) ++p;
 		*dst = *p;
 	}
-	*dst = '\0';
 }
 
 
