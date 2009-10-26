@@ -1397,8 +1397,8 @@ int parse_sip_msg_uri(struct sip_msg* msg)
 		tmp_len=msg->first_line.u.request.uri.len;
 	}
 	if (parse_uri(tmp, tmp_len, &msg->parsed_uri)<0){
-		LOG(L_ERR, "ERROR: parse_sip_msg_uri: bad uri <%.*s>\n",
-					tmp_len, tmp);
+		DBG("ERROR: parse_sip_msg_uri: bad uri <%.*s>\n",
+			tmp_len, tmp);
 		msg->parsed_uri_ok=0;
 		return -1;
 	}
