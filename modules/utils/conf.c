@@ -75,11 +75,11 @@ static int fwd_max_id = 0;
 static void remove_spaces(char *s)
 {
 	char *p, *dst;
-
-	for (p = s, dst = s; *dst != '\0'; ++p, ++dst) {
-		while (isspace(*p)) ++p;
-		*dst = *p;
+	for (p = s, dst = s; *p != '\0'; ++p) {
+		if (!isspace(*p)) *dst++ = *p;
 	}
+	*dst = '\0';
+
 }
 
 
