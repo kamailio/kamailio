@@ -28,37 +28,41 @@ if ! (check_kamailio && check_module "utils" && check_module "db_mysql" && check
 fi ;
 
 CFG=43.cfg
-TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
-
+TMPFILE=`mktemp -t kamailio-test.XXXXXXXXX`
 # setup config
-echo "mpath=\"../modules\"" >> $CFG
+echo "mpath=\"../../modules_k\"" > $CFG
+echo "loadmodule \"../../modules/tm/tm.so\"" >> $CFG
 echo "loadmodule \"sl/sl.so\"" >> $CFG
 echo "loadmodule \"mi_fifo/mi_fifo.so\"" >> $CFG
-echo "loadmodule \"utils/utils.so\"" >> $CFG
+echo "loadmodule \"../../modules/utils/utils.so\"" >> $CFG
 echo "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
 echo "modparam(\"utils\", \"forward_active\", 1)" >> $CFG
 echo "route {sl_send_reply(\"404\", \"forbidden\");}" >> $CFG
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
+
 
 ret=$?
 
 sleep 1
 
-../scripts/$CTL fifo forward_list &> /dev/null
-../scripts/$CTL fifo forward_filter 0=REGISTER:INVITE &> /dev/null
-../scripts/$CTL fifo forward_list &> /dev/null
-../scripts/$CTL fifo forward_proxy 0=localhost:7000 &> /dev/null
-../scripts/$CTL fifo forward_list > $TMPFILE 
+$CTL fifo forward_list &> /dev/null
+$CTL fifo forward_filter 0=REGISTER:INVITE &> /dev/null
+$CTL fifo forward_list &> /dev/null
+$CTL fifo forward_proxy 0=127.0.0.1:7000 &> /dev/null
+$CTL fifo forward_list > $TMPFILE 
+
+
 
 tmp=`grep -v "Printing forwarding information:
 id switch                         filter proxy
- 0 off                    REGISTER:INVITE localhost:7000" $TMPFILE`
+ 0 off                    REGISTER:INVITE 127.0.0.1:7000" $TMPFILE`
 if [ "$tmp" = "" ] ; then
 	ret=0
 else
 	ret=1
 fi ;
+
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -sn uac -s 123456787 127.0.0.1:5060 -i 127.0.0.1 -m 1 -nr &> /dev/null
@@ -66,18 +70,18 @@ if [ "$ret" -eq 0 ] ; then
 	killall sipp &> /dev/null
 fi;
 
+
 if ! [ "$ret" -eq 0 ] ; then
-	../scripts/$CTL fifo forward_switch 0=on
-	../scripts/$CTL fifo forward_list > $TMPFILE
+	$CTL fifo forward_switch 0=on
+	$CTL fifo forward_list > $TMPFILE
 	tmp=`grep -v "Printing forwarding information:
 id switch                         filter proxy
- 0 on                    REGISTER:INVITE localhost:7000" $TMPFILE`
+ 0 on                    REGISTER:INVITE 127.0.0.1:7000" $TMPFILE`
 	if [ "$tmp" = "" ] ; then
 		ret=0
 	else
 		ret=1
 	fi ;
-
 	nc -l -u -p 7000 1> $TMPFILE 2> /dev/null &
 	sipp -sn uac -s 123456787 127.0.0.1:5060 -i 127.0.0.1 -m 1 -nr  &> /dev/null
 	killall sipp &> /dev/null
