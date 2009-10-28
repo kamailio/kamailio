@@ -134,6 +134,8 @@ endif
 CFG_NAME=sip-router
 #config name/name-prefix for distributed scripts
 SCR_NAME=sip-router
+#name in source tree
+SRC_NAME=sip-router
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
@@ -1919,7 +1921,7 @@ export exported_vars
 #  cannot be overwritten from environment or command line, unless make cfg
 #  is run)
 saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
-		RELEASE OS ARCH \
+		SRC_NAME RELEASE OS ARCH \
 		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
 		MOD_LDFLAGS LIB_LDFLAGS UTILS_LDFLAGS LIB_SONAME LD_RPATH \
 		LIB_SUFFIX LIB_PREFIX \
