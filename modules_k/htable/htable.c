@@ -185,6 +185,7 @@ static int child_init(int rank)
 		fmsg = faked_msg_next();
 		rtb = get_route_type();
 		set_route_type(REQUEST_ROUTE);
+		init_run_actions_ctx(&ctx);
 		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
 		if(ctx.run_flags&DROP_R_F)
 		{
