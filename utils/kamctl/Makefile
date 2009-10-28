@@ -1,6 +1,7 @@
 # $Id$
 COREPATH=../..
 include $(COREPATH)/Makefile.defs
+include $(COREPATH)/config.mak
 
 all:
 		@echo "No compilation needed for kamctl"
