@@ -1864,6 +1864,7 @@ int reply_received( struct sip_msg  *p_msg )
 #ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
 #endif
+	struct run_act_ctx ctx;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -2006,8 +2007,10 @@ int reply_received( struct sip_msg  *p_msg )
 		/* lock onreply_route, for safe avp usage */
 		LOCK_REPLIES( t );
 		replies_locked=1;
-		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg, 0)<0)
-			LOG(L_ERR, "ERROR: on_reply processing failed\n");
+		run_top_route(onreply_rt.rlist[t->on_reply], p_msg, &ctx);
+		if ((ctx.run_flags&DROP_R_F)  && (msg_status<200)) {
+			goto done;
+		}
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		getbflagsval(0, &uac->branch_flags);
