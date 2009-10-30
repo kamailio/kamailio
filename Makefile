@@ -527,7 +527,7 @@ $(1)-doc: modules.lst
 	@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
 			$(call oecho, "" ;) \
-			$(call oecho, "" ;) \\
+			$(call oecho, "" ;) \
 			$(MAKE) -C $$$$r/doc $(doc_format) $$(mk_params); \
 		fi ; \
 	done
