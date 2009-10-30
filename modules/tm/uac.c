@@ -409,6 +409,9 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	/* better reset avp list now - anyhow, it's useless from
 	 * this point (bogdan) */
 	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
 
 	new_cell->method.s = buf;
 	new_cell->method.len = uac_r->method->len;
