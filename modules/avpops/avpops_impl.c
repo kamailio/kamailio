@@ -659,13 +659,13 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	/* set uuid/(username and domain) fields */
 
 	n =0 ;
-
+	memset(&st, 0, sizeof(struct search_state));
 	if ((dbp->a.opd&AVPOPS_VAL_NONE)==0)
 	{
 		/* avp name is known ->set it and its type */
 		store_vals[1].val.str_val = dbp->sa; /*attr name*/
-		avp = search_first_avp( name_type, avp_name, &i_s, 0);
-		for( ; avp; avp=search_first_avp( name_type, avp_name, &i_s, &st))
+		avp = search_first_avp( name_type, avp_name, &i_s, &st);
+		for( ; avp; avp=search_next_avp( &st, &i_s))
 		{
 			/* don't insert avps which were loaded */
 			if (avp->flags&AVP_IS_IN_DB)

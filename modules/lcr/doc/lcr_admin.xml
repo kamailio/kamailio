@@ -1007,6 +1007,15 @@ if (to_any_gw()) {
 			gw and lcr tables into memory.
 		</para>
 		<para>
+			Reload fails if number of
+			gateways is larger than value of constant
+			MAX_NO_OF_GWS in file lcr_mod.h, which
+			defaults to 128.  If you have more than 128
+			gateways, you need
+			to increase the value of this constant and recompile
+			lcr module.
+		</para>
+		<para>
 		Name: <emphasis>lcr_reload</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>

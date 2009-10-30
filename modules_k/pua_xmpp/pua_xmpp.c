@@ -136,11 +136,12 @@ static int mod_init(void)
 	server_address.len= strlen(server_address.s);
 
 	/* import the TM auto-loading function */
-	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
+	if((load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))==NULL)
 	{
 		LM_ERR("can't import load_tm\n");
 		return -1;
 	}
+
 	/* let the auto-loading function load all TM stuff */
 
 	if(load_tm(&tmb)==-1)

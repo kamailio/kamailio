@@ -122,9 +122,18 @@
     </column>
 
     <index>
-        <name>lcr_id_gw_name_idx</name>
+        <name>lcr_id_grp_id_gw_name_idx</name>
         <colref linkend="lcr_id"/>
+        <colref linkend="grp_id"/>
         <colref linkend="gw_name"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>lcr_id_grp_id_ip_addr_idx</name>
+        <colref linkend="lcr_id"/>
+        <colref linkend="grp_id"/>
+        <colref linkend="ip_addr"/>
         <unique/>
     </index>
 

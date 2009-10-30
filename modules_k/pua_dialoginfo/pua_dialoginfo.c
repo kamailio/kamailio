@@ -75,6 +75,7 @@ int override_lifetime   = DEF_OVERRIDE_LIFETIME;
 int caller_confirmed    = DEF_CALLER_ALWAYS_CONFIRMED;
 
 
+send_publish_t pua_send_publish;
 /** module functions */
 
 static int mod_init(void);
