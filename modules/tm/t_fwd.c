@@ -232,8 +232,6 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 #endif
 	add_rm_backup = i_req->add_rm;
 	body_lumps_backup = i_req->body_lumps;
-	i_req->add_rm=0;
-	i_req->body_lumps=0;
 	if (unlikely(i_req->add_rm)){
 		i_req->add_rm = dup_lump_list(i_req->add_rm);
 		if (unlikely(i_req->add_rm==0)){
