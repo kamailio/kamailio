@@ -106,6 +106,12 @@
 	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
 	#define PVARID_S                8  /* $foo.bar...*/
 	#define STR_BETWEEN_S		9
+	#define LINECOMMENT_S            10
+	#define DEFINE_S                11
+	#define DEFINE_EOL_S            12
+	#define IFDEF_S                    13
+	#define IFDEF_EOL_S                14
+	#define IFDEF_SKIP_S            15
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -153,11 +159,19 @@
 		struct sr_yy_fname *next;
 	} *sr_yy_fname_list = 0;
 
+	static int  pp_define(int len, const char * text);
+	static int  pp_ifdef_type(int pos);
+	static void pp_ifdef_var(int len, const char * text);
+	static void pp_ifdef();
+	static void pp_else();
+	static void pp_endif();
+
 %}
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
 %x PVARID INCLF
+%x LINECOMMENT DEFINE_ID DEFINE_EOL IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -475,8 +489,9 @@ TLSv1			"tlsv1"|"TLSv1"|"TLSV1"
 
 LETTER		[a-zA-Z]
 DIGIT		[0-9]
-ALPHANUM	{LETTER}|{DIGIT}|[_]
-ID			{LETTER}{ALPHANUM}*
+LETTER_     {LETTER}|[_]
+ALPHANUM    {LETTER_}|{DIGIT}
+ID          {LETTER_}{ALPHANUM}*
 NUM_ID		{ALPHANUM}+
 HEX			[0-9a-fA-F]
 HEXNUMBER	0x{HEX}+
@@ -506,6 +521,12 @@ EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*":"[a-zA-Z][0-9a-zA-Z-]*
 COM_LINE	#
 COM_START	"/\*"
 COM_END		"\*/"
+
+DEFINE       define
+IFDEF        ifdef
+IFNDEF       ifndef
+ENDIF        endif
+/* else is already defined */
 
 EAT_ABLE	[\ \t\b\r]
 
@@ -1123,7 +1144,38 @@ EAT_ABLE	[\ \t\b\r]
 											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
 												sr_cfg_compat=SR_COMPAT_MAX;}
-<INITIAL>{COM_LINE}.*{CR}	{ count(); }
+
+<INITIAL>{COM_LINE}!{DEFINE}{EAT_ABLE}+        { count();
+										state = DEFINE_S; BEGIN(DEFINE_ID); }
+<DEFINE_ID>{ID}                                { count();
+								if (pp_define(yyleng, yytext)) return 1;
+								state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
+<DEFINE_EOL>{EAT_ABLE}*{CR}                    { count();
+									state = INITIAL; BEGIN(INITIAL); }
+
+<INITIAL,IFDEF_SKIP>{COM_LINE}!{IFDEF}{EAT_ABLE}+    { count();
+								if (pp_ifdef_type(1)) return 1;
+								state = IFDEF_S; BEGIN(IFDEF_ID); }
+<INITIAL,IFDEF_SKIP>{COM_LINE}!{IFNDEF}{EAT_ABLE}+    { count();
+								if (pp_ifdef_type(0)) return 1;
+								state = IFDEF_S; BEGIN(IFDEF_ID); }
+<IFDEF_ID>{ID}                { count();
+                                pp_ifdef_var(yyleng, yytext);
+                                state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
+<IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
+
+<INITIAL,IFDEF_SKIP>{COM_LINE}!{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
+
+<INITIAL,IFDEF_SKIP>{COM_LINE}!{ENDIF}{EAT_ABLE}*{CR}    { count();
+															pp_endif(); }
+
+ /* we're in an ifdef that evaluated to false -- throw it away */
+<IFDEF_SKIP>.|{CR}    { count(); }
+
+ /* this is split so the shebangs match more, giving them priority */
+<INITIAL>{COM_LINE}        { count(); state = LINECOMMENT_S;
+								BEGIN(LINECOMMENT); }
+<LINECOMMENT>.*{CR}        { count(); state = INITIAL_S; BEGIN(INITIAL); }
 
 <INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng);
 									yylval.strval=s_buf.s;
@@ -1472,5 +1524,104 @@ static int sr_pop_yy_state()
 	startcolumn=include_stack[include_stack_ptr].startcolumn;
 	finame = include_stack[include_stack_ptr].finame;
 	return 0;
+}
+
+/* define/ifdef support */
+
+#define MAX_DEFINES    1024
+static str pp_defines[MAX_DEFINES];
+static int pp_num_defines = 0;
+
+/* pp_ifdef_stack[i] is 1 if the ifdef test at depth i is either
+ * ifdef(defined), ifndef(undefined), or the opposite of these
+ * two, but in an else branch
+ */
+#define MAX_IFDEFS    128
+static int pp_ifdef_stack[MAX_IFDEFS];
+static int pp_sptr = 0; /* stack pointer */
+
+static int pp_lookup(int len, const char * text)
+{
+	str var = {(char *)text, len};
+	int i;
+
+	for (i=0; i<pp_num_defines; i++)
+		if (STR_EQ(pp_defines[i], var))
+			return i;
+
+	return -1;
+}
+
+static int pp_define(int len, const char * text)
+{
+	if (pp_num_defines == MAX_DEFINES) {
+		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
+		return -1;
+	}
+
+	if (pp_lookup(len, text) >= 0) {
+		LOG(L_CRIT, "ERROR: already defined: %.*s\n", len, text);
+		return -1;
+	}
+
+	pp_defines[pp_num_defines].len = len;
+	pp_defines[pp_num_defines].s = (char*)pkg_malloc(len+1);
+	memcpy(pp_defines[pp_num_defines].s, text, len);
+	pp_num_defines++;
+
+	return 0;
+}
+
+static int pp_ifdef_type(int type)
+{
+	if (pp_sptr == MAX_IFDEFS) {
+		LOG(L_CRIT, "ERROR: too many nested ifdefs -- adjust MAX_IFDEFS\n");
+		return -1;
+	}
+
+	pp_ifdef_stack[pp_sptr] = type;
+	return 0;
+}
+
+/* this sets the result of the if[n]def expr:
+ * ifdef  defined   -> 1
+ * ifdef  undefined -> 0
+ * ifndef defined   -> 0
+ * ifndef undefined -> 1
+ */
+static void pp_ifdef_var(int len, const char * text)
+{
+	pp_ifdef_stack[pp_sptr] ^= (pp_lookup(len, text) < 0);
+}
+
+static void pp_update_state()
+{
+	int i;
+
+	for (i=0; i<pp_sptr; i++)
+		if (! pp_ifdef_stack[i]) {
+			state = IFDEF_SKIP_S; BEGIN(IFDEF_SKIP);
+			return;
+		}
+
+	state = INITIAL; BEGIN(INITIAL);
+}
+
+static void pp_ifdef()
+{
+	pp_sptr++;
+	pp_update_state();
+}
+
+static void pp_else()
+{
+	pp_ifdef_stack[pp_sptr-1] ^= 1;
+	pp_update_state();
+}
+
+static void pp_endif()
+{
+	pp_sptr--;
+	pp_update_state();
 }
 
