@@ -437,24 +437,6 @@ qvalue_t get_ruri_q(void)
 
 
 /*
- * Get actual Request-URI
- */
-int get_request_uri(struct sip_msg* _m, str* _u)
-{
-	     /* Use new_uri if present */
-	if (_m->new_uri.s) {
-		_u->s = _m->new_uri.s;
-		_u->len = _m->new_uri.len;
-	} else {
-		_u->s = _m->first_line.u.request.uri.s;
-		_u->len = _m->first_line.u.request.uri.len;
-	}
-
-	return 0;
-}
-
-
-/*
  * Rewrite Request-URI
  */
 int rewrite_uri(struct sip_msg* _m, str* _s)
@@ -478,8 +460,6 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
         _m->new_uri.s = buf;
         _m->new_uri.len = _s->len;
 
-        DBG("rewrite_uri: Rewriting Request-URI with '%.*s'\n", _s->len, 
-																		   buf);
         return 1;
 }
 
