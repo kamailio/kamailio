@@ -231,6 +231,7 @@ void clear_branches(void)
 {
 	nr_branches = 0;
 	ruri_q = Q_UNSPECIFIED;
+	ruri_bflags = 0;
 }
 
 
