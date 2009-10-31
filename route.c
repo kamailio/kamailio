@@ -976,6 +976,17 @@ int fix_actions(struct action* a)
 									(unsigned int)t->val[0].u.number);
 				}
 				break;
+			case APPEND_BRANCH_T:
+				if (t->val[0].type!=STRING_ST){
+					BUG("invalid subtype%d for append_branch_t\n",
+								t->val[0].type);
+					return E_BUG;
+				}
+				s.s=t->val[0].u.string;
+				s.len=(s.s)?strlen(s.s):0;
+				t->val[0].u.str=s;
+				t->val[0].type=STR_ST;
+				break;
 			default:
 				/* no fixup required for the rest */
 				break;
