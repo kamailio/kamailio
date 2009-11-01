@@ -244,6 +244,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_PROXY_AUTHENTICATE_T:
 	    case HDR_PATH_T:
 	    case HDR_PRIVACY_T:
+	    case HDR_PAI_T:
+	    case HDR_PPI_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -529,6 +531,14 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 		    case HDR_PRIVACY_T:
 				if (msg->privacy==0) msg->privacy=hf;
 				msg->parsed_flag|=HDR_PRIVACY_F;
+				break;
+		    case HDR_PAI_T:
+				if (msg->pai==0) msg->pai=hf;
+				msg->parsed_flag|=HDR_PAI_F;
+				break;
+		    case HDR_PPI_T:
+				if (msg->ppi==0) msg->ppi=hf;
+				msg->parsed_flag|=HDR_PPI_F;
 				break;
 			default:
 				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",
