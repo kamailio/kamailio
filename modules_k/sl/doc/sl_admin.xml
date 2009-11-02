@@ -99,6 +99,25 @@ modparam("sl", "enable_stats", 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+               <title><varname>load_tm</varname> (integer)</title>
+               <para>
+               If the module should use transaction support for sending the
+               replies. A zero value means disabled.
+               </para>
+               <para>
+               Module tm should be loaded before of this one
+               </para>
+               <para>
+               Default value is 1 (enabled).
+               </para>
+               <example>
+               <title>load_tm example</title>
+               <programlisting format="linespecific">
+modparam("sl", "load_tm", 0)
+</programlisting>
+               </example>
+       </section>
 	</section>
 
 	<section>
@@ -259,4 +278,3 @@ sl_reply_error();
 	</section>
 	
 </chapter>
-
