@@ -63,6 +63,8 @@
 #include "../../hash_func.h"
 #include "../../dset.h"
 #include "../../mem/mem.h"
+#include "../../sr_compat.h"
+#include "../../pvar.h"
 #include "defs.h"
 #include "t_funcs.h"
 #include "t_fwd.h"
@@ -399,36 +401,88 @@ done:
 int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 					char* contacts_avp_param)
 {
+	pv_spec_t avp_spec;
+
 	if (fr_timer_param && *fr_timer_param) {
 		fr_timer_str.s = fr_timer_param;
 		fr_timer_str.len = strlen(fr_timer_str.s);
-		if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
-		&fr_timer_avp, &fr_timer_index)<0) {
-			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_timer "
-				"AVP specs \"%s\"\n", fr_timer_param);
-			return -1;
+
+		if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+			if (pv_parse_spec(&fr_timer_str, &avp_spec)==0
+			        || avp_spec.type!=PVT_AVP) {
+			        LM_ERR("malformed or non AVP %s AVP definition\n",
+							fr_timer_param);
+				return -1;
+			}
+
+			if(pv_get_avp_name(0, &avp_spec.pvp, &fr_timer_avp, 
+						(unsigned short*)&fr_timer_avp_type)!=0)
+			{
+				LM_ERR("[%s]- invalid AVP definition\n", fr_timer_param);
+				return -1;
+			}
+		} else {
+			if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
+			&fr_timer_avp, &fr_timer_index)<0) {
+				LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_timer "
+					"AVP specs \"%s\"\n", fr_timer_param);
+				return -1;
+			}
 		}
 	}
 
 	if (fr_inv_timer_param && *fr_inv_timer_param) {
 		fr_inv_timer_str.s = fr_inv_timer_param;
 		fr_inv_timer_str.len = strlen(fr_inv_timer_str.s);
-		if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
-		&fr_inv_timer_avp, &fr_inv_timer_index)<0) {
-			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_inv_timer "
-				"AVP specs \"%s\"\n", fr_inv_timer_param);
-			return -1;
+
+		if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+			if (pv_parse_spec(&fr_inv_timer_str, &avp_spec)==0
+					|| avp_spec.type!=PVT_AVP) {
+				LM_ERR("malformed or non AVP %s AVP definition\n",
+					fr_inv_timer_param);
+				return -1;
+			}
+
+			if(pv_get_avp_name(0, &avp_spec.pvp, &fr_inv_timer_avp,
+						(unsigned short*)&fr_inv_timer_avp_type)!=0)
+			{
+				LM_ERR("[%s]- invalid AVP definition\n", fr_inv_timer_param);
+				return -1;
+			}
+		} else {
+			if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
+			&fr_inv_timer_avp, &fr_inv_timer_index)<0) {
+				LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_inv_timer "
+					"AVP specs \"%s\"\n", fr_inv_timer_param);
+				return -1;
+			}
 		}
 	}
 
 	if (contacts_avp_param && *contacts_avp_param) {
 		contacts_avp_str.s = contacts_avp_param;
 		contacts_avp_str.len = strlen(contacts_avp_str.s);
-		if (parse_avp_spec( &contacts_avp_str, &contacts_avp_type,
-							&contacts_avp, &contacts_avp_index)<0) {
-			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid contact_avp_params "
-				"AVP specs \"%s\"\n", contacts_avp_param);
-			return -1;
+
+		if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+			if ((pv_parse_spec(&contacts_avp_str, &avp_spec) == 0) 
+					|| (avp_spec.type != PVT_AVP)) {
+				LM_ERR("malformed or non AVP definition <%s>\n",
+					contacts_avp_param);
+				return -1;
+			}
+
+			if(pv_get_avp_name(0, &(avp_spec.pvp), &contacts_avp,
+						(unsigned short*)&contacts_avp_type) != 0) {
+				LM_ERR("invalid AVP definition <%s>\n", contacts_avp_param);
+				return -1;
+			}
+		} else {
+			if (parse_avp_spec( &contacts_avp_str, &contacts_avp_type,
+								&contacts_avp, &contacts_avp_index)<0) {
+				LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid contact_avp_params "
+					"AVP specs \"%s\"\n", contacts_avp_param);
+				return -1;
+			}
 		}
 	}
 
