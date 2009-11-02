@@ -518,6 +518,13 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 		*timer = val_istr.n;
 	}
 
+	if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+		if(*timer>0 && *timer<=120) {
+			LM_WARN("too small given timer value: %ums (using T*1000)\n",
+					*timer);
+			*timer *= 1000;
+		}
+	}
 	return *timer==0; /* 1 if 0 (use default), 0 if !=0 (use *timer) */
 }
 

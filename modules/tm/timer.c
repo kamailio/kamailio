@@ -131,7 +131,8 @@
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer_ticks.h"
-#include "../../compiler_opt.h"
+#include "../../compiler_opt.h" 
+#include "../../sr_compat.h" 
 #include "t_funcs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
@@ -173,6 +174,29 @@ struct msgid_var user_noninv_max_lifetime;
 /* fix timer values to ticks */
 int tm_init_timers()
 {
+	if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+		if(default_tm_cfg.fr_timeout<=120) {
+			LM_WARN("too small given fr_timer value: %ums (using T*1000)\n",
+					default_tm_cfg.fr_timeout);
+			default_tm_cfg.fr_timeout *= 1000;
+		}
+		if(default_tm_cfg.fr_inv_timeout<=120) {
+			LM_WARN("too small given fr_inv_timer value: %ums (using T*1000)\n",
+					default_tm_cfg.fr_inv_timeout);
+			default_tm_cfg.fr_inv_timeout *= 1000;
+		}
+		if(default_tm_cfg.wait_timeout<=120) {
+			LM_WARN("too small given wait_timer value: %ums (using T*1000)\n",
+					default_tm_cfg.wait_timeout);
+			default_tm_cfg.wait_timeout *= 1000;
+		}
+		if(default_tm_cfg.delete_timeout<=120) {
+			LM_WARN("too small given delete_timer value: %ums (using T*1000)\n",
+					default_tm_cfg.delete_timeout);
+			default_tm_cfg.delete_timeout *= 1000;
+		}
+	}
+
 	default_tm_cfg.fr_timeout=MS_TO_TICKS(default_tm_cfg.fr_timeout); 
 	default_tm_cfg.fr_inv_timeout=MS_TO_TICKS(default_tm_cfg.fr_inv_timeout);
 	default_tm_cfg.wait_timeout=MS_TO_TICKS(default_tm_cfg.wait_timeout);
