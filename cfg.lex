@@ -104,7 +104,6 @@
 	#define SELECT_S                5
 	#define AVP_PVAR_S              6  /* avp or pvar */
 	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
-	#define PVARID_S                8  /* $foo.bar...*/
 	#define STR_BETWEEN_S		9
 	#define LINECOMMENT_S            10
 	#define DEFINE_S                11
@@ -170,7 +169,7 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
-%x PVARID INCLF
+%x INCLF
 %x LINECOMMENT DEFINE_ID DEFINE_EOL IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -983,13 +982,6 @@ EAT_ABLE	[\ \t\b\r]
 <PVAR_P>{LPAREN}			{ p_nest++; yymore(); }
 <PVAR_P>.					{ yymore(); }
 
-<PVARID>{ID}|'.'			{yymore(); }
-<PVARID>{LPAREN}			{	state = PVAR_P_S; BEGIN(PVAR_P);
-								p_nest=1; yymore(); }
-<PVARID>.					{ yyless(0); state=INITIAL_S; BEGIN(INITIAL);
-								return PVAR;
-							}
-
 	/* if found retcode => it's a built-in pvar */
 <INITIAL>{RETCODE}			{ count(); yylval.strval=yytext; return PVAR; }
 
@@ -1001,9 +993,6 @@ EAT_ABLE	[\ \t\b\r]
 										return ATTR_MARK;
 										break;
 									case SR_COMPAT_KAMAILIO:
-										state=PVARID_S; BEGIN(PVARID);
-										yymore();
-										break;
 									case SR_COMPAT_MAX:
 									default: 
 										state=AVP_PVAR_S; BEGIN(AVP_PVAR);
@@ -1226,8 +1215,6 @@ EAT_ABLE	[\ \t\b\r]
 													" while parsing"
 													" avp name\n");
 											break;
-										case PVARID_S:
-											p_nest=0;
 										case PVAR_P_S: 
 											LOG(L_CRIT, "ERROR: unexpected EOF"
 													" while parsing pvar name"
