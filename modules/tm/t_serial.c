@@ -447,7 +447,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		else reset_dst_uri(msg);
 		if (path.s && path.len) set_path_vector(msg, &path);
 		else reset_path_vector(msg);
-		msg->force_send_socket = sock;
+		set_force_socket(msg, sock);
 		setbflagsval(0, flags);
 
 		if (avp->flags & Q_FLAG) {
