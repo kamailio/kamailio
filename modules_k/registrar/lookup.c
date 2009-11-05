@@ -134,7 +134,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		setbflagsval( 0, ptr->cflags);
 
 		if (ptr->sock)
-			_m->force_send_socket = ptr->sock;
+			set_force_socket(_m, ptr->sock);
 
 		ptr = ptr->next;
 	}
