@@ -52,6 +52,8 @@ int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst)
 	dst->set_global_address=src->set_global_address;
 	dst->set_global_port=src->set_global_port;
 	dst->flags = src->flags;
+	dst->fwd_send_flags = src->fwd_send_flags;
+	dst->rpl_send_flags = src->rpl_send_flags;
 	dst->force_send_socket = src->force_send_socket;
 
 	if (parse_msg(dst->buf, dst->len, dst)!=0)
