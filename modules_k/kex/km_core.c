@@ -44,7 +44,7 @@ int w_km_append_branch(struct sip_msg *msg, char *uri, str *sq)
 		ret = km_append_branch(msg, 0, &msg->dst_uri, &msg->path_vec,
 			q, branch_flags, msg->force_send_socket);
 		/* reset all branch info */
-		msg->force_send_socket = 0;
+		reset_force_socket(msg);
 		setbflagsval(0, 0);
 		if(msg->dst_uri.s!=0)
 			pkg_free(msg->dst_uri.s);
