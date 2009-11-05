@@ -467,4 +467,23 @@ int set_path_vector(struct sip_msg* msg, str* path);
 
 void reset_path_vector(struct sip_msg* msg);
 
+
+/** force a specific send socket for forwarding a request.
+ * @param msg - sip msg.
+ * @param fsocket - forced socket, pointer to struct socket_info, can be 0 (in
+ *                  which case it's equivalent to reset_force_socket()).
+ */
+#define set_force_socket(msg, fsocket) \
+	do { \
+		(msg)->force_send_socket=(fsocket); \
+		if ((msg)->force_send_socket) \
+			(msg)->fwd_send_flags |= SND_F_FORCE_SOCKET; \
+		else \
+			(msg)->fwd_send_flags &= ~SND_F_FORCE_SOCKET; \
+	} while (0)
+
+/** reset a previously forced send socket. */
+#define reset_force_socket(msg) set_force_socket(msg, 0)
+
+
 #endif

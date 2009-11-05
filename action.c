@@ -1201,7 +1201,7 @@ match_cleanup:
 				ret=E_BUG;
 				goto error;
 			}
-			msg->force_send_socket=(struct socket_info*)a->val[0].u.data;
+			set_force_socket(msg, (struct socket_info*)a->val[0].u.data);
 			ret=1; /* continue processing */
 			break;
 

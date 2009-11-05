@@ -140,6 +140,7 @@ struct receive_info{
 /* send flags */
 #define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */
 #define SND_F_CON_CLOSE			2 /* close the connection after sending */
+#define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
 
 typedef unsigned char  snd_flags_t;
 
