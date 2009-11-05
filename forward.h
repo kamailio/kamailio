@@ -123,6 +123,11 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 {
 	struct dest_info new_dst;
 	str outb;
+#ifdef USE_TCP 
+	union sockaddr_union* from;
+	union sockaddr_union local_addr;
+#endif
+	
 	outb.s = buf;
 	outb.len = len;
 	sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
@@ -152,7 +157,14 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 					" support is disabled\n");
 			goto error;
 		}else{
-			if (unlikely(tcp_send(dst, 0, outb.s, outb.len)<0)){
+			from=0;
+			if (unlikely((dst->send_flags & SND_F_FORCE_SOCKET) &&
+						dst->send_sock)) {
+				local_addr=dst->send_sock->su;
+				su_setport(&local_addr, 0); /* any local port will do */
+				from=&local_addr;
+			}
+			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
 				goto error;
@@ -167,7 +179,14 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 					" support is disabled\n");
 			goto error;
 		}else{
-			if (unlikely(tcp_send(dst, 0, outb.s, outb.len)<0)){
+			from=0;
+			if (unlikely((dst->send_flags & SND_F_FORCE_SOCKET) &&
+						dst->send_sock)) {
+				local_addr=dst->send_sock->su;
+				su_setport(&local_addr, 0); /* any local port will do */
+				from=&local_addr;
+			}
+			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
 				goto error;
