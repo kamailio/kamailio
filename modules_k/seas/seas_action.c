@@ -817,7 +817,9 @@ int ac_sl_msg(as_p the_as,char *action,int len)
    }else{
       uri = GET_RURI(my_msg);
    }
-   my_msg->force_send_socket=grep_sock_info(&my_msg->via1->host,my_msg->via1->port,my_msg->via1->proto);
+   set_force_socket(my_msg, grep_sock_info(&my_msg->via1->host,
+                                            my_msg->via1->port,
+                                            my_msg->via1->proto) );
    /* or also could be:
       my_msg->force_send_socket=the_as->binds[processor_id].bind_address;
       not sure which is better...
