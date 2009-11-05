@@ -850,7 +850,7 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 		}
 		si = grep_sock_info( &host, (unsigned short) port, (unsigned short) proto);
 		if (si) {
-			_msg->force_send_socket = si;
+			set_force_socket(_msg, si);
 		} else {
 			LM_WARN("could not find socket for"
 					"send_socket '%.*s'\n", val.s.len, ZSW(val.s.s));
