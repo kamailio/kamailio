@@ -885,8 +885,8 @@ insert:
 		}
 		hentity->flag= flag;
 
-		set_uac_req(&uac_r, &met, str_hdr, 0, 0, 0,subs_cback_func, 
-					(void*)hentity);
+		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
+				subs_cback_func, (void*)hentity);
 		result= tmb.t_request
 			(&uac_r,						  /* Type of the message */
 		subs->remote_target?subs->remote_target:subs->pres_uri,/* Request-URI*/
@@ -971,8 +971,8 @@ insert:
 	//	hentity->flag= flag;
 		LM_DBG("event parameter: %d\n", hentity->event);	
 
-		set_uac_req(&uac_r, &met, str_hdr, 0, td, 0,subs_cback_func, 
-					(void*)hentity);
+		set_uac_req(&uac_r, &met, str_hdr, 0, td, TMCB_LOCAL_COMPLETED,
+				subs_cback_func, (void*)hentity);
 		result= tmb.t_request_within(&uac_r);
 		if(result< 0)
 		{
