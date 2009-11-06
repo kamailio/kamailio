@@ -198,13 +198,13 @@ else
 	# excluded because they depend on external libraries
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
 							auth_radius misc_radius \
-							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
+							acc_radius pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_unixodbc memcached mi_xmlrpc \
-							nat_traversal perl perlvdb purple seas siptrace \
-							snmpstats uac_redirect xmpp \
+							perl perlvdb purple seas \
+							snmpstats xmpp \
 							carrierroute misc_radius peering \
 							dialplan lcr utils presence \
 							presence_dialoginfo presence_xml pua pua_bla \
