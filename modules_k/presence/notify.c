@@ -1569,8 +1569,8 @@ jump_over_body:
 		goto error;	
 	}	
 
-	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, 0, p_tm_callback,
-				(void*)cb_param);
+	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
+			p_tm_callback, (void*)cb_param);
 	result = tmb.t_request_within(&uac_r);
 	if(result< 0)
 	{
