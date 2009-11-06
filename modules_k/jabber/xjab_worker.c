@@ -1184,7 +1184,8 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 #ifdef XJ_EXTRA_DEBUG
 		LM_DBG("uac callback parameter [%p==%d]\n", cbp, *cbp);
 #endif
-		set_uac_req(&uac_r, &msg_type, &str_hdr, msg, 0, 0, xj_tuac_callback, (void*)cbp);
+		set_uac_req(&uac_r, &msg_type, &str_hdr, msg, 0, TMCB_LOCAL_COMPLETED,
+				xj_tuac_callback, (void*)cbp);
 	} else {
 		set_uac_req(&uac_r, &msg_type, &str_hdr, msg, 0, 0, 0, 0);		
 	}
