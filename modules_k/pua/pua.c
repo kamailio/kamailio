@@ -660,8 +660,8 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			goto error;
 		}	
 		
-		set_uac_req(&uac_r, &met, str_hdr, 0, 0, 0, publ_cback_func, 
-					(void*)cb_param);
+		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
+				publ_cback_func, (void*)cb_param);
 
 		result= tmb.t_request(&uac_r,
 				p->pres_uri,					/* Request-URI */
@@ -705,8 +705,8 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 
 		}	
 
-		set_uac_req(&uac_r, &met, str_hdr, 0, td, 0, subs_cback_func, 
-					(void*)cb_param);
+		set_uac_req(&uac_r, &met, str_hdr, 0, td, TMCB_LOCAL_COMPLETED,
+				subs_cback_func, (void*)cb_param);
 		
 		result= tmb.t_request_within(&uac_r);
 		if(result< 0)
