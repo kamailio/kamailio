@@ -160,7 +160,7 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 			CRLF, CRLF_LEN);
 
 	memset(&uac_r, '\0', sizeof(uac_req_t));
-	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, 0,
+	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
 				dlg_refer_tm_callback, (void*)dtc);
 	result = d_tmb.t_request_within(&uac_r);
 
@@ -320,6 +320,7 @@ int dlg_bridge(str *from, str *to, str *op)
 	uac_r.method = &s_method;
 	uac_r.headers = &s_hdrs;
 	uac_r.body = &s_body;
+	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 	uac_r.cb = dlg_bridge_tm_callback;
 	uac_r.cbp = (void*)(long)dtc;
 	ret = d_tmb.t_request(&uac_r, /* UAC Req */

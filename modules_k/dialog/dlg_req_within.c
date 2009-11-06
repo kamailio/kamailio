@@ -252,7 +252,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	ref_dlg(cell, 1);
 
 	memset(&uac_r,'\0', sizeof(uac_req_t));
-	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, 0,
+	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
 				bye_reply_cb, (void*)cell);
 	result = d_tmb.t_request_within(&uac_r);
 
