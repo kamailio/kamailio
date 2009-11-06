@@ -383,6 +383,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 	uac_r.method = &_uac_req.s_method;
 	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
 	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
+	uac_r.cb_flags =(_uac_req.onreply > 0) ? TMCB_LOCAL_COMPLETED : 0;
 	uac_r.cb  = (_uac_req.onreply > 0) ? uac_send_tm_callback : NULL;
 	/* Callback function */
 	uac_r.cbp = (_uac_req.onreply > 0) ? (void*)(long)_uac_req.onreply : 0;
