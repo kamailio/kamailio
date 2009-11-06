@@ -686,8 +686,8 @@ int rls_send_notify(subs_t* subs, str* body, char* start_cid,
 	}
 	LM_DBG("str_hdr= %.*s\n", str_hdr->len, str_hdr->s);
 
-	set_uac_req(&uac_r, &met, str_hdr, body, td, 0, rls_notify_callback,
-				(void*)cb_param);
+	set_uac_req(&uac_r, &met, str_hdr, body, td, TMCB_LOCAL_COMPLETED,
+			rls_notify_callback, (void*)cb_param);
 
 	rt = tmb.t_request_within(&uac_r);
 	if(rt < 0)
