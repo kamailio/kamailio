@@ -168,12 +168,17 @@ modparam("xlog", "prefix", "-xlog: ")
 			<itemizedlist>
 			<listitem>
 				<para>
-				L_ALERT - log level -3
+				L_ALERT - log level -5
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_CRIT - log level -2
+				L_BUG - log level -4
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				L_CRIT - log level -3
 				</para>
 			</listitem>
 			<listitem>
@@ -183,22 +188,22 @@ modparam("xlog", "prefix", "-xlog: ")
 			</listitem>
 			<listitem>
 				<para>
-				L_WARN - log level 1
+				L_WARN - log level 0
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_NOTICE - log level 2
+				L_NOTICE - log level 1
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_INFO - log level 3
+				L_INFO - log level 2
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_DBG - log level 4
+				L_DBG - log level 3
 				</para>
 			</listitem>
 			<listitem>
