@@ -967,13 +967,14 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	if(dlg->toroute>0 && dlg->toroute<main_rt.entries
 			&& main_rt.rlist[dlg->toroute]!=NULL)
 	{
-		dlg_set_ctx_dialog(dlg);
 		fmsg = faked_msg_next();
 		if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)>0)
 		{
+			dlg_set_ctx_dialog(dlg);
 			LM_DBG("executing route %d on timeout\n", dlg->toroute);
 			set_route_type(REQUEST_ROUTE);
 			run_top_route(main_rt.rlist[dlg->toroute], fmsg, 0);
+			dlg_set_ctx_dialog(0);
 			exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
 		}
 	}
