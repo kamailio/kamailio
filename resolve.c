@@ -786,7 +786,7 @@ again:
 			goto error;
 		}
 		rd->type=rtype;
-		rd->class=class;
+		rd->pclass=class;
 		rd->ttl=ttl;
 		rd->next=0;
 		memcpy(rd->name, rec_name, rec_name_len);
@@ -930,7 +930,7 @@ again:
 			goto error;
 		}
 		rd->type=T_CNAME;
-		rd->class=fullname_rd->class;
+		rd->pclass=fullname_rd->pclass;
 		rd->ttl=fullname_rd->ttl;
 		rd->next=head;
 		memcpy(rd->name, name, name_len);

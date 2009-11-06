@@ -88,7 +88,7 @@ union dns_query{
 /* rdata struct*/
 struct rdata {
 	unsigned short type;
-	unsigned short class;
+	unsigned short pclass;
 	unsigned int   ttl;
 	void* rdata;
 	struct rdata* next;
