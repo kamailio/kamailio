@@ -47,14 +47,14 @@
         <description>ID of gateway's group</description>
     </column>
 
-    <column>
+    <column id="ip_addr">
         <name>ip_addr</name>
         <type>string</type>
         <size>15</size>
         <description>IP Address of the gateway</description>
     </column>
 
-    <column>
+    <column id="hostname">
         <name>hostname</name>
         <type>string</type>
         <size>64</size>
@@ -62,35 +62,35 @@
         <description>Hostname of the gateway</description>
     </column>
 
-    <column>
+    <column id="port">
         <name>port</name>
         <type>unsigned short</type>
         <null/>
         <description>Port of the gateway</description>
     </column>
 
-    <column>
+    <column id="uri_scheme">
         <name>uri_scheme</name>
         <type>unsigned char</type>
         <null/>
         <description>URI scheme of gateway</description>
     </column>
 
-    <column>
+    <column id="transport">
         <name>transport</name>
         <type>unsigned char</type>
         <null/>
         <description>Transport type to be used for the gateway</description>
     </column>
 
-    <column>
+    <column id="strip">
         <name>strip</name>
         <type>unsigned char</type>
         <null/>
         <description>The number of digits to strip from Request URI user part before inserting tag</description>
     </column>
 
-    <column>
+    <column id="tag">
         <name>tag</name>
         <type>string</type>
         <size>16</size>
@@ -99,21 +99,21 @@
         <description>Request URI user part tag</description>
     </column>
 
-    <column>
+    <column id="weight">
         <name>weight</name>
         <type>unsigned int</type>
         <null/>
         <description>Weight of gateway within gw_grp.  Valid values are 1-254.</description>
     </column>
 
-    <column>
+    <column id="flags">
         <name>flags</name>
         <type>unsigned int</type>
         <default>&DEFAULT_FLAGS;</default>
         <description>Gateway specific flags</description>
     </column>
 
-    <column>
+    <column id="defunct">
         <name>defunct</name>
         <type>unsigned int</type>
         <null/>
