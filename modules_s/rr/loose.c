@@ -901,9 +901,9 @@ static inline int after_loose(struct sip_msg* _m, struct sip_uri* _pru, int _rou
 					LOG(L_ERR, "after_loose: Error while parsing the second route header\n");
 					return RR_ERROR;
 				}
-				_m->force_send_socket = grep_sock_info(&parsed_uri.host,
-								parsed_uri.port_no,
-								parsed_uri.proto);
+				set_force_socket(_m, grep_sock_info(&parsed_uri.host,
+													parsed_uri.port_no,
+													parsed_uri.proto) );
 				if (_m->force_send_socket == 0)
 					LOG(L_WARN, "after_loose: send socket cannot be set"
 						" based on the second route header\n");

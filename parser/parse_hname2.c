@@ -170,6 +170,24 @@ static inline char* skip_ws(char* p, unsigned int size)
         }
 
 
+int hdr_update_type(struct hdr_field* hdr)
+{
+	if(hdr==0 || hdr->name.s==0)
+		return -1;
+	switch(hdr->name.len) {
+		case 19:
+			if(strncasecmp(hdr->name.s, "P-Asserted-Identity", 19)==0)
+				hdr->type = HDR_PAI_T;
+		break;
+		case 20:
+			if(strncasecmp(hdr->name.s, "P-Preferred-Identity", 20)==0)
+				hdr->type = HDR_PPI_T;
+		break;
+	}
+
+	return 0;
+}
+
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 {
 	register char* p;
@@ -249,6 +267,8 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	} else {
 		hdr->type = HDR_OTHER_T;
 		hdr->name.len = p - hdr->name.s;
+		hdr_update_type(hdr);
 		return (p + 1);
 	}
 }
+

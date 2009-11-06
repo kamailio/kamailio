@@ -347,15 +347,16 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 		/* jku -- introduce a new branch */
 		case APPEND_BRANCH_T:
-			if ((a->val[0].type!=STRING_ST)) {
+			if (unlikely(a->val[0].type!=STR_ST)) {
 				LOG(L_CRIT, "BUG: do_action: bad append_branch_t %d\n",
 					a->val[0].type );
 				ret=E_BUG;
 				goto error;
 			}
-			ret=ser_append_branch( msg, a->val[0].u.string,
-					   a->val[0].u.string ? strlen(a->val[0].u.string):0,
-					   0, 0, a->val[1].u.number, 0);
+			getbflagsval(0, (flag_t*)&flags);
+			ret=append_branch(msg, &a->val[0].u.str, &msg->dst_uri,
+								&msg->path_vec, a->val[1].u.number,
+								(flag_t)flags, msg->force_send_socket);
 			break;
 
 		/* jku begin: is_length_greater_than */
@@ -1208,7 +1209,7 @@ match_cleanup:
 				ret=E_BUG;
 				goto error;
 			}
-			msg->force_send_socket=(struct socket_info*)a->val[0].u.data;
+			set_force_socket(msg, (struct socket_info*)a->val[0].u.data);
 			ret=1; /* continue processing */
 			break;
 

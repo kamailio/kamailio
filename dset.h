@@ -33,8 +33,8 @@
 #include "ip_addr.h"
 #include "qvalue.h"
 #include "flags.h"
+#include "parser/msg_parser.h"
 
-struct sip_msg;
 
 extern unsigned int nr_branches;
 
@@ -118,7 +118,19 @@ void set_ruri_q(qvalue_t q);
  */
 qvalue_t get_ruri_q(void);
 
-int get_request_uri(struct sip_msg* _m, str* _u);
+
+
+/*
+ * Get actual Request-URI
+ */
+inline static int get_request_uri(struct sip_msg* _m, str* _u)
+{
+	*_u=*GET_RURI(_m);
+	return 0;
+}
+
+
+
 int rewrite_uri(struct sip_msg* _m, str* _s);
 
 /*! \brief

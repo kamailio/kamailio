@@ -1882,7 +1882,7 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 
 	if(val==NULL || (val->flags&PV_VAL_NULL))
 	{
-		msg->force_send_socket = NULL;
+		reset_force_socket(msg);
 		return 0;
 	}
 
@@ -1904,7 +1904,7 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 	si = grep_sock_info(&host, (unsigned short)port, (unsigned short)proto);
 	if (si!=NULL)
 	{
-		msg->force_send_socket = si;
+		set_force_socket(msg, si);
 	} else {
 		LM_WARN("no socket found to match [%.*s]\n",
 				val->rs.len, val->rs.s);
