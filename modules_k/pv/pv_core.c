@@ -205,7 +205,7 @@ int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 	} else if(param->pvn.u.isname.name.n==4) /* protocol */ {
 		if(parsed_uri->transport_val.s==NULL)
 			return pv_get_udp(msg, param, res);
-		return pv_get_strintval(msg, param, res, &parsed_uri->transport,
+		return pv_get_strintval(msg, param, res, &parsed_uri->transport_val,
 				(int)parsed_uri->proto);
 	}
 	LM_ERR("unknown specifier\n");
