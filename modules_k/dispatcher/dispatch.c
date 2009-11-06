@@ -1653,7 +1653,8 @@ void ds_check_timer(unsigned int ticks, void* param)
 				 * int request(str* m, str* ruri, str* to, str* from, str* h,
 				 *		str* b, str *oburi,
 				 *		transaction_cb cb, void* cbp); */
-				set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0, 0, ds_options_callback,
+				set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0,
+						TMCB_LOCAL_COMPLETED, ds_options_callback,
 							(void*)(long)list->id);
 				if (tmb.t_request(&uac_r,
 							&list->dlist[j].uri,
