@@ -4066,16 +4066,19 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
  *
  * Currently only A, AAAA, and SRV records are supported.
  */
-static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
+int dns_cache_add_record(unsigned short type,
+			str *name,
+			int ttl,
+			str *value,
+			int priority,
+			int weight,
+			int port,
+			int flags)
 {
 	struct dns_hash_entry *old=NULL, *new=NULL;
 	struct dns_rr *rr;
-	str name;
-	int ttl;
-	str ip, rr_name;
-	int flags;
+	str rr_name;
 	struct ip_addr *ip_addr;
-	int priority, weight, port;
 	ticks_t expire;
 	int err, h;
 	int size;
@@ -4083,63 +4086,52 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	/* eliminate gcc warnings */
 	ip_addr = 0;
 	size = 0;
+	rr_name.s = NULL;
+	rr_name.len = 0;
 
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
-		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
-		return;
+		LOG(L_ERR, "ERROR: dns cache support disabled (see use_dns_cache)\n");
+		return -1;
 	}
 	
-	switch(type) {
-	case T_A:
-	case T_AAAA:
-		if (rpc->scan(ctx, "SdSd", &name, &ttl, &ip, &flags) < 4)
-			return;
-		break;
-	case T_SRV:
-		if (rpc->scan(ctx, "SddddSd", &name, &ttl, &priority, &weight, &port,
-							&rr_name, &flags) < 7)
-			return;
-		break;
-	case T_CNAME:
-	case T_NAPTR:
-	case T_TXT:
-	case T_EBL:
-	case T_PTR:
-		rpc->fault(ctx, 400, "not implemented");
-		return;
-	default:
-		rpc->fault(ctx, 400, "unknown type");
-		return;
+	if ((type != T_A) && (type != T_AAAA) && (type != T_SRV)) {
+		LOG(L_ERR, "ERROR: rr type %d is not implemented\n",
+			type);
+		return -1;
 	}
 
 	if (!flags) {
 		/* fix-up the values */
 		switch(type) {
 		case T_A:
-			ip_addr = str2ip(&ip);
+			ip_addr = str2ip(value);
 			if (!ip_addr) {
-				rpc->fault(ctx, 400, "Malformed ip address");
-				goto error;
+				LOG(L_ERR, "ERROR: Malformed ip address: %.*s\n",
+					value->len, value->s);
+				return -1;
 			}
 			break;
 		case T_AAAA:
 #ifdef USE_IPV6
-			ip_addr = str2ip6(&ip);
+			ip_addr = str2ip6(value);
 			if (!ip_addr) {
-				rpc->fault(ctx, 400, "Malformed ip address");
-				goto error;
+				LOG(L_ERR, "ERROR: Malformed ip address: %.*s\n",
+					value->len, value->s);
+				return -1;
 			}
 			break;
 #else /* USE_IPV6 */
-			rpc->fault(ctx, 400, "IPv6 support disabled ");
-			return;
+			LOG(L_ERR, "ERROR: IPv6 support is disabled\n");
+			return -1;
 #endif /* USE_IPV6 */
-		/* case T_SRV: nothing to do */
+		case T_SRV:
+			rr_name = *value;
+			break;
 		}
 	}
 
 	/* check whether there is a matching entry in the cache */
-	old = dns_hash_get(&name, type, &h, &err);
+	old = dns_hash_get(name, type, &h, &err);
 	if (old && old->type!=type) {
 		/* probably we found a CNAME instead of the specified type,
 		it is not needed */
@@ -4150,9 +4142,10 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	/* prepare the entry */
 	if (flags) {
 		/* negative entry */
-		new = dns_cache_mk_bad_entry(&name, type, ttl, flags);
+		new = dns_cache_mk_bad_entry(name, type, ttl, flags);
 		if (!new) {
-			rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+			LOG(L_ERR, "ERROR: Failed to create a negative "
+					"DNS cache entry\n");
 			goto error;
 		}
 	} else {
@@ -4163,10 +4156,9 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 			switch(type) {
 			case T_A:
 			case T_AAAA:
-				new = dns_cache_mk_ip_entry(&name, ip_addr);
+				new = dns_cache_mk_ip_entry(name, ip_addr);
 				if (!new) {
-					rpc->fault(ctx, 400, "Failed to add the entry to"
-										" the cache");
+					LOG(L_ERR, "ERROR: Failed to create an A/AAAA record\n");
 					goto error;
 				}
 				/* fix the expiration time, dns_cache_mk_ip_entry() sets it 
@@ -4176,11 +4168,10 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 				new->rr_lst->expire = expire;
 				break;
 			case T_SRV:
-				new = dns_cache_mk_srv_entry(&name, priority, weight, port,
+				new = dns_cache_mk_srv_entry(name, priority, weight, port,
 												&rr_name, ttl);
 				if (!new) {
-					rpc->fault(ctx, 400, "Failed to add the entry to"
-											" the cache");
+					LOG(L_ERR, "ERROR: Failed to create an SRV record\n");
 					goto error;
 				}
 			}
@@ -4206,8 +4197,8 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 				/* the rr was found in the list */
 				new = dns_cache_clone_entry(old, 0, 0, 0);
 				if (!new) {
-					rpc->fault(ctx, 400, "Failed to add the entry to "
-											"the cache");
+					LOG(L_ERR, "ERROR: Failed to clone an existing "
+							"DNS cache entry\n");
 					goto error;
 				}
 				/* let the rr point to the new structure */
@@ -4243,8 +4234,8 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 				}
 				new = dns_cache_clone_entry(old, size, ttl, &rr);
 				if (!new) {
-					rpc->fault(ctx, 400, "Failed to add the entry to"
-											" the cache");
+					LOG(L_ERR, "ERROR: Failed to clone an existing "
+							"DNS cache entry\n");
 					goto error;
 				}
 
@@ -4269,7 +4260,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 
 	LOCK_DNS_HASH();
 	if (dns_cache_add_unsafe(new)) {
-		rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+		LOG(L_ERR, "ERROR: Failed to add the entry to the cache\n");
 		UNLOCK_DNS_HASH();
 		goto error;
 	} else {
@@ -4281,7 +4272,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 
 	if (old)
 		dns_hash_put(old);
-	return;
+	return 0;
 
 error:
 	/* leave the old entry in the list, and free the new one */
@@ -4289,6 +4280,7 @@ error:
 		dns_hash_put(old);
 	if (new)
 		dns_destroy_entry(new);
+	return -1;
 }
 
 
@@ -4356,20 +4348,74 @@ void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx)
 /* wrapper functions for adding and deleting records */
 void dns_cache_add_a(rpc_t* rpc, void* ctx)
 {
-	dns_cache_add_record(rpc, ctx, T_A);
+	str	name;
+	int	ttl;
+	str	ip;
+	int	flags;
+
+	if (rpc->scan(ctx, "SdSd", &name, &ttl, &ip, &flags) < 4)
+		return;
+
+	if (dns_cache_add_record(T_A,
+				&name,
+				ttl,
+				&ip,
+				0 /* priority */,
+				0 /* weight */,
+				0 /* port */,
+				flags)
+	)
+		rpc->fault(ctx, 400, "Failed to add the entry to the cache");
 }
 
 
 void dns_cache_add_aaaa(rpc_t* rpc, void* ctx)
 {
-	dns_cache_add_record(rpc, ctx, T_AAAA);
-}
+	str	name;
+	int	ttl;
+	str	ip;
+	int	flags;
 
+	if (rpc->scan(ctx, "SdSd", &name, &ttl, &ip, &flags) < 4)
+		return;
+
+	if (dns_cache_add_record(T_AAAA,
+				&name,
+				ttl,
+				&ip,
+				0 /* priority */,
+				0 /* weight */,
+				0 /* port */,
+				flags)
+	)
+		rpc->fault(ctx, 400, "Failed to add the entry to the cache");
+}
 
 void dns_cache_add_srv(rpc_t* rpc, void* ctx)
 {
-	dns_cache_add_record(rpc, ctx, T_SRV);
+	str	name;
+	int	ttl, priority, weight, port;
+	str	rr_name;
+	int	flags;
+
+	if (rpc->scan(ctx, "SddddSd", &name, &ttl, &priority, &weight, &port,
+					&rr_name, &flags) < 7
+	)
+		return;
+
+	if (dns_cache_add_record(T_SRV,
+				&name,
+				ttl,
+				&rr_name,
+				priority,
+				weight,
+				port,
+				flags)
+	)
+		rpc->fault(ctx, 400, "Failed to add the entry to the cache");
 }
+
+
 
 
 void dns_cache_delete_a(rpc_t* rpc, void* ctx)

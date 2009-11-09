@@ -350,4 +350,21 @@ void dns_set_server_state(int state);
 int dns_get_server_state(void);
 #endif /* DNS_WATCHDOG_SUPPORT */
 
+/* Adds a new record to the cache.
+ * If there is an existing record with the same name and value
+ * (ip address in case of A/AAAA record, name in case of SRV record)
+ * only the remaining fields are updated.
+ *
+ * Currently only A, AAAA, and SRV records are supported.
+ */
+int dns_cache_add_record(unsigned short type,
+			str *name,
+			int ttl,
+			str *value,
+			int priority,
+			int weight,
+			int port,
+			int flags);
+
+
 #endif
