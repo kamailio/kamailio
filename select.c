@@ -237,6 +237,12 @@ void free_select(select_t *s)
 		pkg_free(s);
 }
 
+void shm_free_select(select_t *s)
+{
+	if (s)
+		shm_free(s);
+}
+
 int shm_parse_select (char** p, select_t** s)
 {
 	select_t* sel;

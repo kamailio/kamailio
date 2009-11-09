@@ -204,6 +204,12 @@ void free_select(select_t *s);
  */
 int shm_parse_select (char** p, select_t** s);
 
+/**
+ * Frees the select obtained with shm_parse_select().
+ */
+void shm_free_select(select_t *s);
+
+
 #define SELECT_F(function) extern int function (str* res, select_t* s, struct sip_msg* msg);
 #define ABSTRACT_F(function) int function (str* res, select_t* s, struct sip_msg* msg) {return -1;}
 
