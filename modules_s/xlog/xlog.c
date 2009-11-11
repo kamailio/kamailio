@@ -67,10 +67,15 @@ static cmd_export_t cmds[]={
 		 ONREPLY_ROUTE | BRANCH_ROUTE},
 	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"xprint", (cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
-	{"xparse", (cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
-	{"xfree",  (cmd_function)xl_elog_free_all, NO_SCRIPT, 0, 0},
-	{"xnulstr", (cmd_function)xl_get_nulstr, NO_SCRIPT, 0, 0},
+	{"xbind",	(cmd_function)xl_bind, NO_SCRIPT, 0, 0},
+	{"xprint",	(cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
+	{"xparse",	(cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
+	{"shm_xparse",	(cmd_function)xl_shm_parse_format, NO_SCRIPT, 0, 0},
+	{"xparse2",	(cmd_function)xl_parse_format2, NO_SCRIPT, 0, 0},
+	{"shm_xparse2",	(cmd_function)xl_shm_parse_format2, NO_SCRIPT, 0, 0},
+	{"xfree",	(cmd_function)xl_elog_free_all, NO_SCRIPT, 0, 0},
+	{"shm_xfree",	(cmd_function)xl_elog_shm_free_all, NO_SCRIPT, 0, 0},
+	{"xnulstr",	(cmd_function)xl_get_nulstr, NO_SCRIPT, 0, 0},
 	{0,0,0,0,0}
 };
 

@@ -44,6 +44,7 @@
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../trim.h"
 #include "../../dset.h"
@@ -935,6 +936,13 @@ static void xl_free_select(str *hp)
 		free_select((select_t*)hp->s);
 }
 
+/* shared memory version of xl_free_select() */
+static void xl_shm_free_select(str *hp)
+{
+	if (hp && hp->s)
+		shm_free_select((select_t*)hp->s);
+}
+
 static int xl_get_avp(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int_str name, val;
@@ -987,7 +995,35 @@ static int xl_get_special(struct sip_msg *msg, str *res, str *hp, int hi, int hf
 	return 0;
 }
 
-int xl_parse_format(char *s, xl_elog_p *el)
+static int _xl_elog_free_all(xl_elog_p log, int shm)
+{
+	xl_elog_p t;
+	while(log)
+	{
+		t = log;
+		log = log->next;
+		if (t->free_f)
+			(*t->free_f)(&(t->hparam));
+		if (shm)
+			shm_free(t);
+		else
+			pkg_free(t);
+	}
+	return 0;
+}
+
+/* Parse an xl-formatted string pointed by s.
+ * el points to the resulted linked list that is allocated
+ * in shared memory when shm==1 otherwise in pkg memory.
+ * If parse_cb is not NULL then regular expression back references
+ * are passed to the parse_cb function that is supposed to farther parse
+ * the back reference and fill in the xl_elog_t structure.
+ *
+ * Return value:
+ *   0: success
+ *  -1: error
+ */
+static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_cb)
 {
 	char *p, c;
 	int n = 0;
@@ -1010,7 +1046,10 @@ int xl_parse_format(char *s, xl_elog_p *el)
 	while(*p)
 	{
 		e0 = e;
-		e = pkg_malloc(sizeof(xl_elog_t));
+		if (shm)
+			e = shm_malloc(sizeof(xl_elog_t));
+		else
+			e = pkg_malloc(sizeof(xl_elog_t));
 		if(!e)
 			goto error;
 		memset(e, 0, sizeof(xl_elog_t));
@@ -1046,6 +1085,35 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				case 't':
 					e->itf = xl_get_special;
 					e->hindex = '\t';
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					/* Regular expression back reference found */
+					if (!parse_cb) {
+						/* There is no callback function, hence the
+						 * result will be written as it is. */
+						e->itf = xl_get_special;
+						e->hindex = *p;
+						break;
+					}
+					name.s = p;
+					/* eat all the numeric characters */
+					while ((*(p+1) >= '0') && (*(p+1) <= '9'))
+						p++;
+					name.len = p - name.s + 1;
+					if (parse_cb(&name, shm, e)) {
+						ERR("xlog: xl_parse_format: failed to parse '%.*s'\n",
+							name.len, name.s);
+						goto error;
+					}
 					break;
 				default:
 					/* not a special character, it will be just
@@ -1506,14 +1574,17 @@ int xl_parse_format(char *s, xl_elog_p *el)
 			case '@':
 					/* fill select structure and call resolve_select */
 				DBG("xlog: xl_parse_format: @\n");
-				n=parse_select(&p, &sel);
+				if (shm)
+					n=shm_parse_select(&p, &sel);
+				else
+					n=parse_select(&p, &sel);
 				if (n<0) {
 					ERR("xlog: xl_parse_format: parse_select returned error\n");
 					goto error;
 				}
 				e->itf = xl_get_select;
 				e->hparam.s = (char*)sel;
-				e->free_f = xl_free_select;
+				e->free_f = (shm) ? xl_shm_free_select : xl_free_select;
 				p--;
 				break;
 			case '%':
@@ -1537,9 +1608,41 @@ cont:
 	return 0;
 
 error:
-	xl_elog_free_all(*el);
+	_xl_elog_free_all(*el, shm);
 	*el = NULL;
 	return -1;
+}
+
+/* wrapper function for _xl_parse_format()
+ * pkg memory version
+ */
+int xl_parse_format(char *s, xl_elog_p *el)
+{
+	return _xl_parse_format(s, el, 0 /* pkg mem */, NULL /* callback */);
+}
+
+/* wrapper function for _xl_parse_format()
+ * shm memory version
+ */
+int xl_shm_parse_format(char *s, xl_elog_p *el)
+{
+	return _xl_parse_format(s, el, 1 /* shm mem */, NULL /* callback */);
+}
+
+/* wrapper function for _xl_parse_format()
+ * pkg memory version
+ */
+int xl_parse_format2(char *s, xl_elog_p *el, xl_parse_cb cb)
+{
+	return _xl_parse_format(s, el, 0 /* pkg mem */, cb);
+}
+
+/* wrapper function for _xl_parse_format()
+ * shm memory version
+ */
+int xl_shm_parse_format2(char *s, xl_elog_p *el, xl_parse_cb cb)
+{
+	return _xl_parse_format(s, el, 1 /* shm mem */, cb);
 }
 
 int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
@@ -1624,17 +1727,32 @@ done:
 	return 0;
 }
 
+/* wrapper function for _xl_elog_free_all()
+ * pkg memory version
+ */
 int xl_elog_free_all(xl_elog_p log)
 {
-	xl_elog_p t;
-	while(log)
-	{
-		t = log;
-		log = log->next;
-		if (t->free_f)
-			(*t->free_f)(&(t->hparam));
-		pkg_free(t);
-	}
+	return _xl_elog_free_all(log, 0 /* pkg mem */);
+}
+
+/* wrapper function for _xl_elog_free_all()
+ * shm memory version
+ */
+int xl_elog_shm_free_all(xl_elog_p log)
+{
+	return _xl_elog_free_all(log, 1 /* shm mem */);
+}
+
+int xl_bind(xl_api_t *xl_api)
+{
+	xl_api->xprint = xl_print_log;
+	xl_api->xparse = xl_parse_format;
+	xl_api->shm_xparse = xl_shm_parse_format;
+	xl_api->xparse2 = xl_parse_format2;
+	xl_api->shm_xparse2 = xl_shm_parse_format2;
+	xl_api->xfree = xl_elog_free_all;
+	xl_api->shm_xfree = xl_elog_shm_free_all;
+	xl_api->xnulstr = xl_get_nulstr;
 	return 0;
 }
 
