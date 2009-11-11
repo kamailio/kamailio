@@ -271,9 +271,9 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 		if (i->tag.len==tag->len
 				&& memcmp(i->tag.s, tag->s, tag->len)==0) {
 			DBG("DEBUG: totag for e2e ACK found: %d\n", i->acked);
-			/* mark totag as acked and return 0 if this was the first ack
-			 * and 1 otherwise */
-			return atomic_get_and_set_int(&i->acked, 1);
+			/* mark totag as acked and return 1 if this was the first ack
+			 * and 0 otherwise */
+			return (atomic_get_and_set_int(&i->acked, 1)==0);
 		}
 		i=i->next;
 	}
