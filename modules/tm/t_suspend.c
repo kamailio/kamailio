@@ -64,6 +64,14 @@ int t_suspend(struct sip_msg *msg,
 		return -1;
 	}
 
+	if (t->flags & T_CANCELED) {
+		/* The transaction has already been canceled */
+		LOG(L_DBG, "DEBUG: t_suspend: " \
+			"trying to suspend an already canceled transaction\n");
+		ser_error = E_CANCELED;
+		return 1;
+	}
+
 	/* send a 100 Trying reply, because the INVITE processing
 	will probably take a long time */
 	if (msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100)
@@ -116,10 +124,18 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	struct sip_msg	faked_req;
 	int	branch;
 	struct ua_client *uac =NULL;
+	int	ret;
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
 		LOG(L_ERR, "ERROR: t_continue: transaction not found\n");
 		return -1;
+	}
+
+	if (t->flags & T_CANCELED) {
+		/* The transaction has already been canceled,
+		 * needless to continue */
+		UNREF(t); /* t_unref would kill the transaction */
+		return 1;
 	}
 
 	/* The transaction has to be locked to protect it
@@ -134,13 +150,23 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 	if (branch >= 0) {
 		stop_rb_timers(&t->uac[branch].request);
+
+		if (t->uac[branch].last_received != 0) {
+			/* Either t_continue() has already been
+			 * called or the branch has already timed out.
+			 * Needless to continue. */
+			UNLOCK_REPLIES(t);
+			UNREF(t); /* t_unref would kill the transaction */
+			return 1;
+		}
+
 		/* Set last_received to something >= 200,
 		 * the actual value does not matter, the branch
 		 * will never be picked up for response forwarding.
 		 * If last_received is lower than 200,
 		 * then the branch may tried to be cancelled later,
 		 * for example when t_reply() is called from
-		 * a failure rute => deadlock, because both
+		 * a failure route => deadlock, because both
 		 * of them need the reply lock to be held. */
 		t->uac[branch].last_received=500;
 		uac = &t->uac[branch];
@@ -154,8 +180,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	/* fake the request and the environment, like in failure_route */
 	if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {
 		LOG(L_ERR, "ERROR: t_continue: fake_req failed\n");
-		UNLOCK_REPLIES(t);
-		return -1;
+		ret = -1;
+		goto kill_trans;
 	}
 	faked_env( t, &faked_req);
 
@@ -168,6 +194,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			LOG(L_ERR, "ERROR: t_continue: Error in run_top_route\n");
 		exec_post_script_cb(&faked_req, FAILURE_CB_TYPE);
 	}
+
 	/* TODO: save_msg_lumps should clone the lumps to shm mem */
 
 	/* restore original environment and free the fake msg */
@@ -193,22 +220,9 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 		if (branch == t->nr_of_outgoings) {
 			/* There is not any open branch so there is
-			 * no chance that a final response will be received.
-			 * The script has hopefully set the error code. If not,
-			 * let us reply with a default error.
-			 */
-			if ((kill_transaction_unsafe(t,
-				tm_error ? tm_error : E_UNSPEC)) <=0
-			) {
-				LOG(L_ERR, "ERROR: t_continue: "
-					"reply generation failed\n");
-				/* The transaction must be explicitely released,
-				no more timer is running */
-				UNLOCK_REPLIES(t);
-				t_release_transaction(t);
-				t_unref(t->uas.request);
-				return 0;
-		        }
+			 * no chance that a final response will be received. */
+			ret = 0;
+			goto kill_trans;
 		}
 	}
 
@@ -216,6 +230,87 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 	/* unref the transaction */
 	t_unref(t->uas.request);
+
+	return 0;
+
+kill_trans:
+	/* The script has hopefully set the error code. If not,
+	 * let us reply with a default error. */
+	if ((kill_transaction_unsafe(t,
+		tm_error ? tm_error : E_UNSPEC)) <=0
+	) {
+		LOG(L_ERR, "ERROR: t_continue: "
+			"reply generation failed\n");
+		/* The transaction must be explicitely released,
+		 * no more timer is running */
+		UNLOCK_REPLIES(t);
+		t_release_transaction(t);
+	} else {
+		UNLOCK_REPLIES(t);
+	}
+
+	t_unref(t->uas.request);
+	return ret;
+}
+
+/* Revoke the suspension of the SIP request, i.e.
+ * cancel the fr timer of the blind uac.
+ * This function can be called when something fails
+ * after t_suspend() has already been executed in the same
+ * process, and it turns out that the transaction should
+ * not have been suspended.
+ * 
+ * Return value:
+ * 	0  - success
+ * 	<0 - failure
+ */
+int t_cancel_suspend(unsigned int hash_index, unsigned int label)
+{
+	struct cell	*t;
+	int	branch;
+	
+	t = get_t();
+	if (!t || t == T_UNDEFINED) {
+		LOG(L_ERR, "ERROR: t_revoke_suspend: " \
+			"no active transaction\n");
+		return -1;
+	}
+	/* Only to double-check the IDs */
+	if ((t->hash_index != hash_index)
+		|| (t->label != label)
+	) {
+		LOG(L_ERR, "ERROR: t_revoke_suspend: " \
+			"transaction id mismatch\n");
+		return -1;
+	}
+	/* The transaction does not need to be locked because this
+	 * function is either executed from the original route block
+	 * or from failure route which already locks */
+
+	reset_kr(); /* the blind UAC of t_suspend has set kr */
+
+	/* Try to find the blind UAC, and cancel its fr timer.
+	 * We assume that the last blind uac called this function. */
+	for (	branch = t->nr_of_outgoings-1;
+		branch >= 0 && t->uac[branch].request.buffer;
+		branch--);
+
+	if (branch >= 0) {
+		stop_rb_timers(&t->uac[branch].request);
+		/* Set last_received to something >= 200,
+		 * the actual value does not matter, the branch
+		 * will never be picked up for response forwarding.
+		 * If last_received is lower than 200,
+		 * then the branch may tried to be cancelled later,
+		 * for example when t_reply() is called from
+		 * a failure rute => deadlock, because both
+		 * of them need the reply lock to be held. */
+		t->uac[branch].last_received=500;
+	} else {
+		/* Not a huge problem, fr timer will fire, but CANCEL
+		will not be sent. last_received will be set to 408. */
+		return -1;
+	}
 
 	return 0;
 }

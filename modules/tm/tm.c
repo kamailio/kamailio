@@ -488,6 +488,7 @@ static cmd_export_t cmds[]={
 #endif
 	{"t_suspend",          (cmd_function)t_suspend,         NO_SCRIPT,   0, 0},
 	{"t_continue",         (cmd_function)t_continue,        NO_SCRIPT,   0, 0},
+	{"t_cancel_suspend",   (cmd_function)t_cancel_suspend,  NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
 

@@ -239,6 +239,34 @@ end of body
 	    </itemizedlist>
 	    <para>Return value: 0 - success, &lt;0 - error.</para>
 	</section>
-    </section>
     
+	<section id="t_cancel_suspend">
+	    <title>
+	    	<function>int t_cancel_suspend(unsigned int hash_index, unsigned int label)</function>
+	    </title>
+	    <para>
+	    	For programmatic use only.
+		This function is for revoking t_suspend() from the
+		same process as it was executed before. t_cancel_suspend() can be
+		used when something fails after t_suspend() has already been executed
+		and it turns out that the transcation should not have been
+		suspended. The function cancels the FR timer of the transacation.
+	    </para>
+	    <para>
+		The message lumps are saved by t_suspend() which cannot be restored.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>hash_index</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>label</emphasis> - transaction identifier.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+    </section>
 </section>

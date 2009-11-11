@@ -225,6 +225,11 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_continue' not found\n");
 		return -1;
 	}
+	if (! (tmb->t_cancel_suspend=(t_cancel_suspend_f)find_export("t_cancel_suspend",
+			NO_SCRIPT, 0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_cancel_suspend' not found\n");
+		return -1;
+	}
 
 	tmb->t_get_reply_totag = t_get_reply_totag;
 	tmb->t_get_picked_branch = t_get_picked_branch;

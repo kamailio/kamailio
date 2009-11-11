@@ -39,4 +39,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 typedef int (*t_continue_f)(unsigned int hash_index, unsigned int label,
 		struct action *route);
 
+int t_cancel_suspend(unsigned int hash_index, unsigned int label);
+typedef int (*t_cancel_suspend_f)(unsigned int hash_index, unsigned int label);
+
+
 #endif /* _T_SUSPEND_H */

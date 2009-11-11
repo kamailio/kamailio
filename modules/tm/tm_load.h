@@ -135,6 +135,7 @@ struct tm_binds {
 #endif
 	t_suspend_f	t_suspend;
 	t_continue_f	t_continue;
+	t_cancel_suspend_f	t_cancel_suspend;
 	tget_reply_totag_f t_get_reply_totag;
 	tget_picked_f t_get_picked_branch;
 	tlookup_callid_f t_lookup_callid;
