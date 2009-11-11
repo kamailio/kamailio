@@ -36,6 +36,7 @@
 #include "../../ut.h"
 #include "../../select.h"
 #include "../../select_buf.h"
+#include "../../parser/msg_parser.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 
@@ -121,6 +122,26 @@ static int select_tm_uas_response(str* res, select_t* s, struct sip_msg* msg) {
 	return 0;	
 }
 
+/* TODO: implement a general select function that works with any
+ * kind of requests not only with negative ACKs
+ */
+static int select_tm_uas_request_neg_ack_retransmission(str* res, select_t* s, struct sip_msg* msg) {
+        int rv;
+
+	SELECT_check(msg);
+        rv = ((msg->REQ_METHOD == METHOD_ACK)
+		&& (t->uas.status >= 300)
+		/* Misuse the timer flag of the 200 retransmission buffer
+		 * to check whether or not this is an ACK retransmission.
+		 * Warning: this check is not 100% fail-safe because two
+		 * ACKs can be processed in parallel and none of them
+		 * may be considered a retransmission - Miklos */
+		&& (t->uas.response.t_active == 0)) ? 1 : -1;
+
+        return int_to_static_buffer(res, rv);
+}
+
+
 static ABSTRACT_F(select_tm_uac);
 
 static int select_tm_uac_count(str* res, select_t* s, struct sip_msg* msg) {
@@ -134,6 +155,76 @@ static int select_tm_uac_relayed(str* res, select_t* s, struct sip_msg* msg) {
 }
 
 static ABSTRACT_F(select_tm_uac_branch);
+
+/**
+ * Get last_status from current branch. Helper function.
+ * @see selects select_tm_uac_last_status
+ * @see select_tm_uac_response_retransmission
+ */
+static int get_last_status(struct sip_msg* msg, int *last_status)
+{
+	unsigned int branch;
+	char *bptr;
+	int blen;
+	struct cell *t;
+
+/*	DBG("select_tm_uac_last_status: branch param name: '%.*s', value: '%.*s'\n",
+			msg->via1->branch->name.len,
+			msg->via1->branch->name.s,
+			msg->via1->branch->value.len,
+			msg->via1->branch->value.s);
+*/
+	
+	/* branch ID consist of MAGIC '.' HASHID '.'  BRANCH_ID */
+	blen = 0;
+	for (bptr = msg->via1->branch->value.s + msg->via1->branch->value.len - 1;
+	     bptr != msg->via1->branch->value.s;
+	     bptr--, blen++)
+	{
+		if (*bptr == '.') break;
+	}
+	bptr++;
+	/* we have a pointer to the branch number */
+/*	DBG("branch number: '%.*s'\n", blen, bptr); */
+	if (reverse_hex2int(bptr, blen, &branch) < 0) {
+		ERR("Wrong branch number in Via1 branch param\n");
+		return -1;
+	}
+	
+	t = get_t();
+	if ( (t == NULL) || (t == T_UNDEFINED) ) {
+		ERR("get_last_status: no transaction\n");
+		return -1;
+	}
+
+/*	DBG("select_tm_uac_last_status: branch = %d\n", branch); */
+	*last_status = t->uac[branch].last_received;
+	return 1;
+}
+/**
+ * Get last status in current branch.
+ */
+static int select_tm_uac_last_status(str* res, select_t* s, struct sip_msg* msg) {
+	int last_status;
+	if (get_last_status(msg, &last_status) < 0) return -1;
+	return int_to_static_buffer(res, last_status);
+}
+/**
+ * Comparison function which compares current status and last status
+ * in current branch.
+ * It is a simplified method how to detect incoming retransmited responses.
+ * @return  1 if @status is less or equal @tm.uac.last_status (retransmited response)
+ *          otherwise returns -1 (not retransmited response).
+ * @see get_last_status
+ */
+static int select_tm_uac_response_retransmission(str* res, select_t* s, struct sip_msg* msg) {
+	int last_status, rv;
+	if (get_last_status(msg, &last_status) < 0) return -1;
+	rv = msg->first_line.u.reply.statuscode <= last_status ? 1 : -1;
+
+/*	DBG("select_tm_uac_response_retransmission: %d\n", rv); */
+	return int_to_static_buffer(res, rv);
+}
 
 static int select_tm_uac_status(str* res, select_t* s, struct sip_msg* msg) {
 	SELECT_check_branch(s, msg);
@@ -174,10 +265,13 @@ static select_row_t select_declaration[] = {
 	{ select_tm_uas, SEL_PARAM_STR, STR_STATIC_INIT("local_to_tag"), select_tm_uas_local_to_tag, 0},
 	{ select_tm_uas, SEL_PARAM_STR, STR_STATIC_INIT("response"), select_tm_uas_response, 0},
 	{ select_tm_uas, SEL_PARAM_STR, STR_STATIC_INIT("resp"), select_tm_uas_response, 0},
+	{ select_tm_uas_request, SEL_PARAM_STR, STR_STATIC_INIT("neg_ack_retransmission"), select_tm_uas_request_neg_ack_retransmission, 0},
 
 	{ select_tm, SEL_PARAM_STR, STR_STATIC_INIT("uac"), select_tm_uac, SEL_PARAM_EXPECTED},
 	{ select_tm_uac, SEL_PARAM_STR, STR_STATIC_INIT("count"), select_tm_uac_count, 0},
 	{ select_tm_uac, SEL_PARAM_STR, STR_STATIC_INIT("relayed"), select_tm_uac_relayed, 0},
+	{ select_tm_uac, SEL_PARAM_STR, STR_STATIC_INIT("last_status"), select_tm_uac_last_status, 0},  /* last status of current branch */
+	{ select_tm_uac, SEL_PARAM_STR, STR_STATIC_INIT("response_retransmission"), select_tm_uac_response_retransmission, 0},  /* last status of current branch */
 	{ select_tm_uac, SEL_PARAM_INT, STR_NULL, select_tm_uac_branch, SEL_PARAM_EXPECTED},
 	{ select_tm_uac_branch, SEL_PARAM_STR, STR_STATIC_INIT("status"), select_tm_uac_status, 0},
 	{ select_tm_uac_branch, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_tm_uac_uri, 0},
