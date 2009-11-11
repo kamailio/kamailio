@@ -296,5 +296,6 @@
 
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
+    <xi:include href="api.xml"/>
 
 </section>

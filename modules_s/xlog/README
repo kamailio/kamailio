@@ -1,54 +1,50 @@
-
-xlog Module
+1. Xlog Module
 
 Elena-Ramona Modroiu
 
    Voice Sistem
 
-Edited by
-
-Elena-Ramona Modroiu
-
    Copyright © 2003 FhG FOKUS
-     _________________________________________________________
+   Revision History
+   Revision $Revision$ $Date$
+     __________________________________________________________________
 
-   Table of Contents
-   1. User's Guide
+   1.1. Overview
+   1.2. Implemented Specifiers
+   1.3. Parameters
 
-        1.1. Overview
-        1.2. Implemented Specifiers
-        1.3. Dependencies
+        1.3.1. buf_size (integer)
 
-              1.3.1. SER Modules
-              1.3.2. External Libraries or Applications
+   1.4. Functions
 
-        1.4. Exported Parameters
+        1.4.1. xlog(level, format)
+        1.4.2. xdbg(format)
 
-              1.4.1. buf_size (integer)
+   1.5. Module API
 
-        1.5. Exported Functions
+        1.5.1. Functions
 
-              1.5.1. xlog(level, format)
-              1.5.2. xdbg(format)
+              1.5.1.1. int xbind(xl_api_t *xl_api)
+              1.5.1.2. int xparse(char *s, xl_elog_p *el)
+              1.5.1.3. int shm_xparse(char *s, xl_elog_p *el)
+              1.5.1.4. int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
+              1.5.1.5. int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb
+                      cb)
 
-   List of Examples
-   1-1. Set buf_size parameter
-   1-2. xlog usage
-   1-3. xdbg usage
-     _________________________________________________________
+              1.5.1.6. xfree(xl_elog_p el)
+              1.5.1.7. shm_xfree(xl_elog_p el)
+              1.5.1.8. int xprint(struct sip_msg* msg, xl_elog_p el, char
+                      *buf, int *len)
 
-Chapter 1. User's Guide
+              1.5.1.9. str *xnulstr()
 
 1.1. Overview
 
-   This module provides the possibility to print user formatted
-   log or debug messages from SER scripts, similar to printf
-   function but now a specifier is replaced with a part of the
-   SIP request. Section 1.2 shows what can be printed out.
-     _________________________________________________________
+   This module provides the possibility to print user formatted log or
+   debug messages from SER scripts, similar to printf function but now a
+   specifier is replaced with a part of the SIP request. Section 1.2,
+   "Implemented Specifiers" shows what can be printed out.
 
 1.2. Implemented Specifiers
 
@@ -58,26 +54,34 @@ Chapter 1. User's Guide
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
-     * %Cxy : color printing based on escape sequences (x -
-       foreground color, y - background color). The values for
-       colors: x - default color of the terminal; s - Black; r -
-       Red; g - Green; y - Yellow; b - Blue; p - Purple; c -
-       Cyan; w - White
+     * %Cxy : color printing based on escape sequences (x - foreground
+       color, y - background color). The values for colors: x - default
+       color of the terminal; s - Black; r - Red; g - Green; y - Yellow; b
+       - Blue; p - Purple; c - Cyan; w - White
      * %ds : destination set
      * %fu : 'From' uri
      * %ft : 'From' tag
+     * %Hn : host's hostname (if system hostname is FQDN, part before
+       first .)
+     * %Hd : host's domain (if system hosntame is FQDN, part behind first
+       .)
+     * %Hf : host's FQDN hostname
+     * %Hi : host's IP address
      * %mb : whole SIP message buffer
      * %mf : flags set for current SIP request
      * %mi : SIP message id
      * %ml : SIP message length
+     * %mx : SIP message id (in hex notation)
+     * %nh : message's next hop
      * %pp : process id (pid)
+     * %px : process id (pid) (in hex notation)
      * %rm : request's method
      * %ru : request's r-uri
      * %rr : reply's reason
      * %rs : reply's status
      * %rt : 'Refer-To' uri
-     * %Ri : IP address of the interface where the request has
-       been received
+     * %Ri : IP address of the interface where the request has been
+       received
      * %Rp : received port
      * %si : IP source address
      * %sp : source port
@@ -85,64 +89,65 @@ Chapter 1. User's Guide
      * %tt : 'To' tag
      * %Ts : unix time stamp
      * %Tf : string formatted time
+     * %Tx : unix time stamp (in hex notation)
      * %ua : User agent header field
-     * %{name[N]} : print the body of the Nth header identified
-       by 'name'. If [N] is omitted then the body of the first
-       header is printed. The first header is got when N=0, for
-       the second N=1, a.s.o. To print the last header of that
-       type, use -1, no other negative values are supported now.
-       No white spaces are allowed inside the specifier (before
-       }, before or after {, [, ] symbols). When N='*', all
+     * %uq : unique id (per SER's process) - to make really unique id use
+       %uq-%px-%mx or %uq-%px-%Tx
+     * %{name[N]} : print the body of the Nth header identified by 'name'.
+       If [N] is omitted then the body of the first header is printed. The
+       first header is got when N=0, for the second N=1, a.s.o. To print
+       the last header of that type, use -1, no other negative values are
+       supported now. No white spaces are allowed inside the specifier
+       (before }, before or after {, [, ] symbols). When N='*', all
        headers of that type are printed.
-       The module should identify most of compact header names
-       (the ones recognized by ser which should be all at this
-       moment), if not, the compact form has to be specified
-       explicitely. It is recommended to use dedicated specifiers
-       for headers (e.g., %ua for user agent header), if they are
-       available -- they are faster.
-     _________________________________________________________
+       The module should identify most of compact header names (the ones
+       recognized by ser which should be all at this moment), if not, the
+       compact form has to be specified explicitely. It is recommended to
+       use dedicated specifiers for headers (e.g., %ua for user agent
+       header), if they are available -- they are faster.
+     * %<name[N]> : print the value of AVP optionally %indexed by the [N]
+       value It uses AVPs subindexing, e.g. if you don't specify subindex
+       and there are more AVPs with the same name, the result is NULL. To
+       specify first AVP use [1], negative values are indexes counted
+       backward through the list.
+     * %@select.framework[N].value : print the value of select framework
+       call. For detailed info what calls are available see select
+       framework documentation (and modules documentation, as modules can
+       extend select framework calls).
+     * %| or %(space) : end of %@select.framework identifier. If you need
+       to concatenate select framework call and another non-whitespace
+       literal, you need to explicitelly set the end of the select
+       framework identifier.
+       E.g. %@ruri.user%|@%@ruri.host converts all featured request uri
+       into user@host form only.
 
-1.3. Dependencies
+1.3. Parameters
 
-1.3.1. SER Modules
+   Revision History
+   Revision $Revision$ $Date$
 
-   The following modules must be loaded before this module:
-
-     * No dependencies on other SER modules.
-     _________________________________________________________
-
-1.3.2. External Libraries or Applications
-
-   The following libraries or applications must be installed
-   before running SER with this module loaded:
-
-     * None.
-     _________________________________________________________
-
-1.4. Exported Parameters
-
-1.4.1. buf_size (integer)
+1.3.1. buf_size (integer)
 
    Maximum size of the log message.
 
-   Default value is 4096. 
+   Default value is 4096.
 
-   Example 1-1. Set buf_size parameter
+   Example 1. Set buf_size parameter
 ...
 modparam("xlog", "buf_size", 8192)
 ...
-     _________________________________________________________
 
-1.5. Exported Functions
+1.4. Functions
 
-1.5.1. xlog(level, format)
+   Revision History
+   Revision $Revision$ $Date$
+
+1.4.1.  xlog(level, format)
 
    Print a formated message using LOG function.
 
    Meaning of the parameters is as follows:
-
-     * level - The level that will be used in LOG function. It
-       can be:
+     * level - The level that will be used in LOG function. It can be:
           + L_ALERT
           + L_CRIT
           + L_ERR
@@ -153,60 +158,114 @@ modparam("xlog", "buf_size", 8192)
        What really matters is the third letter of the value.
      * format - The formatted string to be printed.
 
-   Example 1-2. xlog usage
+   Example 2. xlog usage
 ...
-xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\
-n");
+xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
-     _________________________________________________________
 
-1.5.2. xdbg(format)
+1.4.2.  xdbg(format)
 
    Print a formatted message using DBG function.
 
    Meaning of the parameters is as follows:
-
      * format - The formatted string to be printed.
 
-   Example 1-3. xdbg usage
+   Example 3. xdbg usage
 ...
 xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
-     _________________________________________________________
 
-Chapter 2. Developer's Guide
+1.5. Module API
 
-   The module does not provide any sort of API to use in other
-   SER modules.
-     _________________________________________________________
+   Revision History
+   Revision $Revision$ $Date$
 
-Chapter 3. Frequently Asked Questions
+1.5.1. Functions
 
-   3.1. Where can I find more about SER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
+1.5.1.1.  int xbind(xl_api_t *xl_api)
 
-   3.1. Where can I find more about SER?
+   Bind to the xlog module API.
 
-   Take a look at http://iptel.org/ser.
+   Meaning of the parameters is as follows:
+     * xl_api - structure that the xlog module functions are bind to. The
+       functions can be executed as xl_api.xparse(), xl_api.xprint()...
 
-   3.2. Where can I post a question about this module?
+   Return value: 0 - success, <0 - error.
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+1.5.1.2.  int xparse(char *s, xl_elog_p *el)
 
-     * http://mail.iptel.org/mailman/listinfo/serusers
-     * http://mail.iptel.org/mailman/listinfo/serdev
+   Parse an xl-formatted string in private memory.
 
-   E-mails regarding any stable version should be sent to
-   <serusers@iptel.org> and e-mail regarding development versions
-   or CVS snapshots should be send to <serdev@iptel.org>.
+   Meaning of the parameters is as follows:
+     * s - string to be parsed.
+     * el - returned xl-lib list.
 
-   If you want to keep the mail private, send it to
-   <ramona@voice-system.ro>.
+   Return value: 0 - success, <0 - error.
 
-   3.3. How can I report a bug?
+1.5.1.3.  int shm_xparse(char *s, xl_elog_p *el)
 
-   Please follow the guidelines provided at:
-   http://iptel.org/ser/bugs and send me a mail with cc to one of
-   the SER mailing lists.
+   Parse an xl-formatted string in shared memory. See xparse() function
+   for details.
+
+1.5.1.4.  int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+
+   Parse an xl-formatted string in private memory. This function is able
+   to identify regular expression back references, for example \1, \2,
+   \3... When a back reference is found the callback function is called
+   that is supposed to farther parse the back reference and fill in the
+   xl_elog structure.
+
+   Meaning of the parameters is as follows:
+     * s - string to be parsed.
+     * el - returned xl-lib list.
+     * cb - callback function for parsing the regular expression back
+       references.
+
+   The prototype of the callback function is: typedef int (*xl_parse_cb)
+   (str *s, int shm, xl_elog_p el);
+
+   Parameters of the callback function:
+     * s - regular expression back reference to be parsed (without the
+       leading '\' character).
+     * shm - indicates whether or not shared memory needs to be used. (1:
+       shared memory, 0: private memory)
+     * el - pointer to the xl-lib list item that is supposed to be filled
+       in.
+
+   Return value: 0 - success, <0 - error.
+
+1.5.1.5.  int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+
+   Parse an xl-formatted string in shared memory supporting regular
+   expression back references. See xparse2() function for details.
+
+1.5.1.6.  xfree(xl_elog_p el)
+
+   Free the xl-lib list allocated by xparse() or xparse2().
+
+   Meaning of the parameters is as follows:
+     * el - xl-lib list to be freed.
+
+1.5.1.7.  shm_xfree(xl_elog_p el)
+
+   Free the xl-lib list allocated by shm_xparse() or shm_xparse2().
+
+   Meaning of the parameters is as follows:
+     * el - xl-lib list to be freed.
+
+1.5.1.8.  int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
+
+   Evaluate the xl-formatted string and print the result into a buffer.
+
+   Meaning of the parameters is as follows:
+     * msg - SIP message pointer.
+     * el - xl-lib list to be evaluated.
+     * buf - pre-allocated buffer that is filled in with the result.
+     * len - length of the printed string. len needs to be set to the
+       maximum length of the result buffer before calling this function.
+
+   Return value: 0 - success, <0 - error.
+
+1.5.1.9.  str *xnulstr()
+
+   Return the string "<null>".
