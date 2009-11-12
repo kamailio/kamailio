@@ -2052,16 +2052,9 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
          * failure route block => append new branch. */
 	uri_str.s = r_uri;
 	uri_str.len = r_uri_len;
-	memset(&act, '\0', sizeof(act));
-	act.type = APPEND_BRANCH_T;
-	act.val[0].type = STRING_ST;
-	act.val[0].u.str = uri_str;
-	act.val[1].type = NUMBER_ST;
-	act.val[1].u.number = 0;
-	init_run_actions_ctx(&ra_ctx);
-	rval = do_action(&ra_ctx, &act, _m);
-	if (rval != 1) {
-	    LM_ERR("do_action failed with return value <%d>\n", rval);
+	LM_DBG("appending branch <%.*s>\n", uri_str.len, uri_str.s);
+	if (append_branch(_m, &uri_str, 0, 0, Q_UNSPECIFIED, 0, 0) == -1) {
+	    LM_ERR("when appending branch <%.*s>\n", rval);
 	    return -1;
 	}
     }
