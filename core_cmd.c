@@ -435,21 +435,54 @@ static void core_shmmem(rpc_t* rpc, void* c)
 {
 	struct mem_info mi;
 	void *handle;
+	char* param;
+	long rs;
 
+	rs=0;
+	/* look for optional size/divisor parameter */
+	if (rpc->scan(c, "*s", &param)>0){
+		switch(*param){
+			case 'b':
+			case 'B':
+				rs=0;
+				break;
+			case 'k':
+			case 'K':
+				rs=10; /* K -> 1024 */
+				break;
+			case 'm':
+			case 'M':
+				rs=20; /* M -> 1048576 */
+				break;
+			case 'g':
+			case 'G':
+				rs=30; /* G -> 1024M */
+				break;
+			default:
+				rpc->fault(c, 500, "bad param, (use b|k|m|g)");
+				return;
+		}
+		if (param[1] && ((param[1]!='b' && param[1]!='B') || param[2])){
+				rpc->fault(c, 500, "bad param, (use b|k|m|g)");
+				return;
+		}
+	}
 	shm_info(&mi);
 	rpc->add(c, "{", &handle);
 	rpc->struct_add(handle, "dddddd",
-		"total", (unsigned int)mi.total_size,
-		"free", (unsigned int)mi.free,
-		"used", (unsigned int)mi.used,
-		"real_used",(unsigned int)mi.real_used,
-		"max_used", (unsigned int)mi.max_used,
+		"total", (unsigned int)(mi.total_size>>rs),
+		"free", (unsigned int)(mi.free>>rs),
+		"used", (unsigned int)(mi.used>>rs),
+		"real_used",(unsigned int)(mi.real_used>>rs),
+		"max_used", (unsigned int)(mi.max_used>>rs),
 		"fragments", (unsigned int)mi.total_frags
 	);
 }
 
 static const char* core_shmmem_doc[] = {
-	"Returns shared memory info.",  /* Documentation string */
+	"Returns shared memory info. It has an optional parameter that specifies"
+	" the measuring unit: b - bytes (default), k or kb, m or mb, g or gb. "
+	"Note: when using something different from bytes, the value is truncated.",
 	0                               /* Method signature(s) */
 };
 
