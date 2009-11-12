@@ -48,6 +48,7 @@ struct cfg_group_sctp sctp_default_cfg;
 
 #ifdef USE_SCTP
 
+#include "sctp_sockopts.h"
 
 static int set_autoclose(void* cfg_h, str* gname, str* name, void** val);
 static int set_assoc_tracking(void* cfg_h, str* gname, str* name, void** val);
@@ -218,12 +219,16 @@ int sctp_register_cfg()
 	int err; \
 	struct socket_info* si
 
-#define SCTP_SET_SOCKOPT_BODY(lev, opt_name, val, err_prefix) \
+
+#define SCTP_SET_SOCKOPT_BODY_NRET(lev, opt_name, val, err_prefix) \
 	err=0; \
 	for (si=sctp_listen; si; si=si->next){ \
 		err+=(sctp_setsockopt(si->socket, (lev), (opt_name), (void*)(&(val)), \
 							sizeof((val)), (err_prefix))<0); \
-	} \
+	}
+
+#define SCTP_SET_SOCKOPT_BODY(lev, opt_name, val, err_prefix) \
+	SCTP_SET_SOCKOPT_BODY_NRET(lev, opt_name, val, err_prefix) ; \
 	return -(err!=0)
 
 
@@ -508,26 +513,43 @@ static int set_sack_delay(void* cfg_h, str* gname, str* name, void** val)
 {
 #if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
 #ifdef SCTP_DELAYED_SACK
-	struct sctp_sack_info sa;
-#else /* old lib */
-	struct sctp_assoc_value sa;
+	struct sctp_sack_info sack_info;
 #endif /* SCTP_DELAYED_SACK */
+#ifdef	SCTP_DELAYED_ACK_TIME
+	struct sctp_assoc_value sack_val; /* old version, sack delay only */
+#endif /* SCTP_DELAYED_ACK_TIME */
 	SCTP_SET_SOCKOPT_DECLS;
 	
 	if ((int)(long)(*val)==0){ /* do nothing for 0, keep the old value */
 		*val=(void*)(long)cfg_get(sctp, cfg_h, sack_delay);
 		return 0;
 	}
-	memset(&sa, 0, sizeof(sa)); /* zero everything we don't care about */
 #ifdef SCTP_DELAYED_SACK
-	sa.sack_delay=(int)(long)(*val);
-	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_DELAYED_SACK, sa,
-							"cfg: setting SCTP_DELAYED_SACK");
-#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
-	sa.assoc_value=(int)(long)(*val);
-	SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, sa,
-							"cfg: setting SCTP_DELAYED_ACK_TIME");
+	memset(&sack_info, 0, sizeof(sack_info)); /* zero everything we don't
+												 care about */
+	sack_info.sack_delay=(int)(long)(*val);
+	SCTP_SET_SOCKOPT_BODY_NRET(IPPROTO_SCTP, SCTP_DELAYED_SACK, sack_info, 0);
+	if (err==0){
+		return 0;
+	}else
 #endif /* SCTP_DELAYED_SACK */
+	{
+		/* setting SCTP_DELAYED_SACK failed or no lib support for 
+		   SCTP_DELAYED_SACK => try the old obsolete SCTP_DELAYED_ACK_TIME */
+#ifdef	SCTP_DELAYED_ACK_TIME
+		memset(&sack_val, 0, sizeof(sack_val)); /* zero everything we don't
+												   care about */
+		sack_val.assoc_value=(int)(long)(*val);
+		SCTP_SET_SOCKOPT_BODY(IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, sack_val,
+								"cfg: setting SCTP_DELAYED_ACK_TIME");
+#else	/* SCTP_DELAYED_ACK_TIME */
+		/* no SCTP_DELAYED_ACK_TIME support and SCTP_DELAYED_SACK failed
+		   => error */
+		ERR("cfg: setting SCTP_DELAYED_SACK: %s [%d]\n",
+					strerror(errno), errno);
+		return -1;
+#endif /* SCTP_DELAYED_ACK_TIME */
+	}
 #else
 	ERR("no SCTP_DELAYED_SACK support, please upgrade your sctp library\n");
 	return -1;
