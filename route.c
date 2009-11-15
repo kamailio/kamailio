@@ -1022,7 +1022,8 @@ int fix_actions(struct action* a)
 	return 0;
 
 error:
-	LM_ERR("fixing failed (code=%d) at cfg line %d\n", ret, t->cline);
+	LM_ERR("fixing failed (code=%d) at cfg:%s:%d\n", ret,
+			(t->cfile)?t->cfile:"", t->cline);
 	return ret;
 }
 
