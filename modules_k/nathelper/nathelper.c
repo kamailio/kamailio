@@ -210,10 +210,12 @@
 #include "../../lib/kcore/km_ut.h"
 #include "../../lib/kcore/parser_helpers.h"
 #include "../../pvar.h"
+#include "../../lvalue.h"
 #include "../../msg_translator.h"
 #include "../../usr_avp.h"
 #include "../../socket_info.h"
 #include "../../mod_fix.h"
+#include "../../dset.h"
 #include "../registrar/sip_msg.h"
 #include "../usrloc/usrloc.h"
 #include "nathelper.h"
@@ -277,6 +279,12 @@ MODULE_VERSION
 #define	CPORT		"22222"
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
+static int add_contact_alias_f(struct sip_msg *, char *, char *);
+static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
+static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int rr_count_f(struct sip_msg *, char *, char *);
+static int rr_top_count_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int extract_mediaip(str *, str *, int *, char *);
 static int extract_mediainfo(str *, str *, str *);
@@ -406,6 +414,12 @@ static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  (cmd_function)fix_nated_contact_f,    0,
 		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"add_contact_alias",  (cmd_function)add_contact_alias_f,    0,
+		0, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
+		0, 0,
+		REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"fix_nated_sdp",      (cmd_function)fix_nated_sdp_f,        1,
 		fixup_fix_sdp,  0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
@@ -475,6 +489,14 @@ static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0}
 };
 
+static pv_export_t mod_pvs[] = {
+    {{"rr_count", (sizeof("rr_count")-1)}, /* number of records routes */
+     PVT_CONTEXT, pv_get_rr_count_f, 0, 0, 0, 0, 0},
+    {{"rr_top_count", (sizeof("rr_top_count")-1)}, /* number of topmost rrs */
+     PVT_CONTEXT, pv_get_rr_top_count_f, 0, 0, 0, 0, 0},
+    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
 static param_export_t params[] = {
 	{"natping_interval",      INT_PARAM, &natping_interval      },
 	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
@@ -509,7 +531,7 @@ struct module_exports exports = {
 	params,
 	0,           /* exported statistics */
 	mi_cmds,     /* exported MI functions */
-	0,           /* exported pseudo-variables */
+	mod_pvs,     /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,
 	0,           /* reply processing */
@@ -1368,6 +1390,279 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	c->uri.len = len;
 
 	return 1;
+}
+
+
+#define SALIAS        ";alias="
+#define SALIAS_LEN (sizeof(SALIAS) - 1)
+
+/*
+ * Adds ;alias=ip:port param to cotact uri containing received ip:port
+ * if contact uri ip:port does not match received ip:port.
+ */
+static int
+add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
+{
+    int len, param_len, ip_len;
+    contact_t *c;
+    struct lump *anchor;
+    struct sip_uri uri;
+    struct ip_addr *ip;
+    char *param, *at, *port, *start;
+
+    /* Do nothing if Contact header does not exist */
+    if (!msg->contact) {
+	if (parse_headers(msg, HDR_CONTACT_F, 0) == -1)  {
+	    LM_ERR("while parsing headers\n");
+	    return -1;
+	}
+	if (!msg->contact) {
+	    LM_DBG("no contact header\n");
+	    return 2;
+	}
+    }
+    if (get_contact_uri(msg, &uri, &c) == -1) {
+	LM_ERR("failed to get contact uri\n");
+	return -1;
+    }
+
+    /* Compare source ip and port against contact uri */
+    if ((ip = str2ip(&(uri.host))) == NULL) {
+	LM_ERR("contact uri host is not an ip address\n");
+	return -1;
+    }
+    if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
+	((msg->rcv.src_port == uri.port_no) ||
+	 ((uri.port.len == 0) && (msg->rcv.src_port == 5060)))) {
+	LM_DBG("no need to add alias param\n");
+	return 2;
+    }
+	
+    /* Add alias param */
+    if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
+	LM_ERR("you can't call alias_contact twice, check your config!\n");
+	return -1;
+    }
+    param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* : */ + 5 /* port */ +
+	1 /* t */ + 1 /* proto */;
+    param = (char*)pkg_malloc(param_len);
+    if (!param) {
+	LM_ERR("no pkg memory left for alias param\n");
+	return -1;
+    }
+    at = param;
+    append_str(at, SALIAS, SALIAS_LEN);
+    ip_len = ip_addr2sbuf(&(msg->rcv.src_ip), at, param_len - SALIAS_LEN);
+    if (ip_len <= 0) {
+	pkg_free(param);
+	LM_ERR("failed to copy source ip\n");
+	return -1;
+    }
+    at = at + ip_len;
+    append_chr(at, ':');
+    port = int2str(msg->rcv.src_port, &len);
+    append_str(at, port, len);
+    append_chr(at, 't');
+    if ((msg->rcv.proto < PROTO_UDP) || (msg->rcv.proto > PROTO_SCTP)) {
+	pkg_free(param);
+	LM_ERR("invalid transport protocol\n");
+	return -1;
+    }
+    append_chr(at, msg->rcv.proto + '0');
+    param_len = at - param;
+    LM_DBG("adding param <%.*s>\n", param_len, param);
+    if (uri.port.len > 0) {
+	start = uri.port.s + uri.port.len;
+    } else {
+	start = uri.host.s + uri.host.len;
+    }
+    anchor = anchor_lump(msg, start - msg->buf, 0, 0);
+    if (anchor == NULL) {
+	pkg_free(param);
+	LM_ERR("anchor_lump failed\n");
+	return -1;
+    }
+    if (insert_new_lump_after(anchor, param, param_len, 0) == 0) {
+	LM_ERR("insert_new_lump_after failed\n");
+	pkg_free(param);
+	return -1;
+    }
+    return 1;
+}
+
+
+#define ALIAS        "alias="
+#define ALIAS_LEN (sizeof(ALIAS) - 1)
+
+/*
+ * Checks if r-uri has alias param and if so, removes it and sets $du
+ * based on its value.
+ */
+static int
+handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
+{
+    str params, uri, proto;
+    char buf[MAX_URI_SIZE], *val, *sep, *trans, *at, *next, *cur_uri;
+    unsigned int len, plen, alias_len, proto_type, cur_uri_len;
+
+    if ((msg->parsed_uri_ok == 0) && (parse_sip_msg_uri(msg) < 0)) {
+	LM_ERR("while parsing Request-URI\n");
+	return -1;
+    }
+    params = msg->parsed_uri.params;
+    if (params.len == 0) {
+	LM_DBG("no params\n");
+	return 2;
+    }
+    if ((params.len < ALIAS_LEN) ||
+	(strncmp(params.s, ALIAS, ALIAS_LEN) != 0)) {
+	LM_DBG("no alias param\n");
+	return 2;
+    }
+
+    /* set dst uri based on alias param value */
+    val = params.s + ALIAS_LEN;
+    plen = params.len - ALIAS_LEN;
+    sep = memchr(val, 116 /* t */, plen);
+    if (sep == NULL) {
+	LM_ERR("no 't' in alias param\n");
+	return -1;
+    }
+    at = &(buf[0]);
+    append_str(at, "sip:", 4);
+    len = sep - val;
+    alias_len = SALIAS_LEN + len + 2 /* tn */;
+    memcpy(at, val, len);
+    at = at + len;
+    trans = sep + 1;
+    if ((len + 2 > plen) || (*trans == ';') || (*trans == '?')) {
+	LM_ERR("no proto in alias param\n");
+	return -1;
+    }
+    proto_type = *trans - 48 /* char 0 */;
+    if (proto_type != PROTO_UDP) {
+	proto_type_to_str(proto_type, &proto);
+	if (proto.len == 0) {
+	    LM_ERR("unkown proto in alias param\n");
+	    return -1;
+	}
+	append_str(at, ";transport=", 11);
+	memcpy(at, proto.s, proto.len);
+	at = at + proto.len;
+    }
+    next = trans + 1;
+    if ((len + 2 < plen) && (*next != ';') && (*next != '?')) {
+	LM_ERR("invalid alias param value\n");
+	return -1;
+    }
+    uri.s = &(buf[0]);
+    uri.len = at - &(buf[0]);
+    LM_DBG("setting dst_uri to <%.*s>\n", uri.len, uri.s);
+    if (set_dst_uri(msg, &uri) == -1) {
+	LM_ERR("failed to set dst uri\n");
+	return -1;
+    }
+    
+    /* remove alias param */
+    if (msg->new_uri.s) {
+	cur_uri = msg->new_uri.s;
+	cur_uri_len = msg->new_uri.len;
+    } else {
+	cur_uri = msg->first_line.u.request.uri.s;
+	cur_uri_len = msg->first_line.u.request.uri.len;
+    }
+    at = &(buf[0]);
+    len = params.s - 1 /* ; */ - cur_uri;
+    memcpy(at, cur_uri, len);
+    at = at + len;
+    len = cur_uri_len - alias_len - len;
+    memcpy(at, params.s + alias_len - 1, len);
+    uri.s = &(buf[0]);
+    uri.len = cur_uri_len - alias_len;
+    LM_DBG("rewriting r-uri to <%.*s>\n", uri.len, uri.s);
+    return rewrite_uri(msg, &uri);
+}
+
+
+/*
+ * Counts and return the number of record routes in rr headers of the message.
+ */
+static int
+pv_get_rr_count_f(struct sip_msg *msg, pv_param_t *param,
+		  pv_value_t *res)
+{
+    unsigned int count;
+    struct hdr_field *header;
+    rr_t *body;
+
+    if (msg == NULL) return -1;
+
+    if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	LM_ERR("while parsing message\n");
+	return -1;
+    }
+
+    count = 0;
+    header = msg->record_route;
+
+    while (header) {
+	if (header->type == HDR_RECORDROUTE_T) {
+	    if (parse_rr(header) == -1) {
+		LM_ERR("while parsing rr header\n");
+		return -1;
+	    }
+	    body = (rr_t *)header->parsed;
+	    while (body) {
+		count++;
+		body = body->next;
+	    }
+	}
+	header = header->next;
+    }
+
+    return pv_get_uintval(msg, param, res, (unsigned int)count);
+}
+
+/*
+ * Return count of topmost record routes in rr headers of the message.
+ */
+static int
+pv_get_rr_top_count_f(struct sip_msg *msg, pv_param_t *param,
+		      pv_value_t *res)
+{
+    unsigned int count;
+    struct hdr_field *header;
+    str uri;
+    struct sip_uri puri;
+
+    if (msg == NULL) return -1;
+
+    if (!msg->record_route &&
+	(parse_headers(msg, HDR_RECORDROUTE_F, 0) == -1)) {
+	LM_ERR("while parsing Record-Route header\n");
+	return -1;
+    }
+
+    if (!msg->record_route) {
+	return pv_get_uintval(msg, param, res, 0);
+    }
+    
+    if (parse_rr(msg->record_route) == -1) {
+	LM_ERR("while parsing rr header\n");
+	return -1;
+    }
+
+    uri = ((rr_t *)msg->record_route->parsed)->nameaddr.uri;
+    if (parse_uri(uri.s, uri.len, &puri) < 0) {
+	LM_ERR("while parsing rr uri\n");
+	return -1;
+    }
+	
+    if (puri.r2.len > 0) {
+	return pv_get_uintval(msg, param, res, 2);
+    } else {
+	return pv_get_uintval(msg, param, res, 1);
+    }
 }
 
 
