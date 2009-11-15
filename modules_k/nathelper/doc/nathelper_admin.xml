@@ -17,12 +17,24 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This is a module to help with &nat; traversal. In particular, 
+		This is a module to help with &nat; traversal and reuse
+	of tcp connections.  In particular, 
 		it helps symmetric &ua;s that don't advertise they are symmetric 
-		and are not able to determine their public address. fix_nated_contact 
-		rewrites Contact header field with request's source address:port pair. 
-		fix_nated_sdp adds the active direction indication to &sdp; (flag
+		and are not able to determine their public
+	address. 
+	</para>
+	<para>
+	Function fix_nated_contact() 
+		rewrites Contact header field with request's source
+	address:port pair.  
+		Function fix_nated_sdp() adds the active direction
+	indication to &sdp; (flag 
 		0x01) and updates source &ip; address too (flag 0x02).
+	</para>
+	<para>
+	Alternative to fix_nated_contact() is add_contact_alias() that
+	together with handle_ruri_alias() also supports reuse of tcp
+	connections.
 	</para>
 	<para>
 		Known devices that get along over &nat;s with nathelper are ATAs 
@@ -983,8 +995,115 @@ start_recording();
 		</programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">add_contact_alias()</function>
+		</title>
+		<para>
+		Adds ;alias=ip:port parameter to contact URI containing
+		received ip:port if contact uri ip:port does not match
+		received ip:port.
+		</para>
+		<para>
+		This function can be used from
+		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function>add_contact_alias</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (!is_present_hf("Record-Route")) {
+        if (!add_contact_alias()) {
+            xlog("L_ERR", "Error in aliasing contact $ct\n");
+            send_reply("400", "Bad request");
+            exit;
+        };
+    };
+...
+		</programlisting>
+		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">handle_ruri_alias()</function>
+		</title>
+		<para>
+		Checks if Request URI has alias param and if so, removes
+		it and sets $du based on its value.
+		</para>
+		<para>
+		This function can be used from
+		REQUEST_ROUTE, BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function>handle_ruri_alias</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if ($du == "") {
+        handle_ruri_alias();
+        switch ($rc) {
+        case -1:
+            xlog("L_ERR", "Failed to handle alias of R-URI $ru\n");
+            send_reply("400", "Bad request");
+            exit;
+        case 1:
+            xlog("L_INFO", "Routing in-dialog $rm from $fu to $du\n");
+            break;
+        case 2:
+            xlog("L_INFO", "Routing in-dialog $rm from $fu to $ru\n");
+            break;
+         };
+    };
+...
+		</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+		<title>Exported Pseudo Variables</title>
+		<section>
+			<title><function moreinfo="none">$rr_count</function></title>
+			<para>
+			Number of Record Routes in received SIP request
+			or reply.
+			</para>
+		<example>
+		<title>$rr_count usage</title>
+		<programlisting format="linespecific">
+...
+    $avp(rr_count) = $rr_count;
+...
+		</programlisting>
+		</example>
+	        </section>
+
+		<section>
+			<title><function moreinfo="none">$rr_top_count</function></title>
+			<para>
+			If topmost Record Route in received SIP request
+			or reply is a double Record Route, value of
+			$rr_top_count is 2.  If it a single Record
+			Route, value of $rr_top_count 
+			is 1.  If there is no Record Route(s), value of
+			$rr_top_count is 0.
+			</para>
+		<example>
+		<title>$rr_top_count usage</title>
+		<programlisting format="linespecific">
+...
+    if ($rr_count == $avp(rr_count) + $rr_top_count) {
+        route(ADD_CONTACT_ALIAS);
+    };
+...
+		</programlisting>
+		</example>
+	        </section>
+
+	</section>
 
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
