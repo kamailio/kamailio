@@ -377,7 +377,9 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	ret=0;
 	rv=rval_expr_eval(h, msg, rve);
 	if (unlikely(rv==0)){
-		ERR("rval expression evaluation failed\n");
+		ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
+				rve->fpos.s_line, rve->fpos.s_col,
+				rve->fpos.e_line, rve->fpos.e_col);
 		goto error;
 	}
 	switch(lv->type){
