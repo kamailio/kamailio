@@ -153,6 +153,9 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE, 0);
 
+	if(dlg==get_current_dlg_pointer())
+		reset_current_dlg_pointer();
+
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
 
@@ -172,6 +175,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 		shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
 
 	shm_free(dlg);
+	dlg = 0;
 }
 
 
