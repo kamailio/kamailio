@@ -14,7 +14,8 @@ CREATE TABLE gw (
     weight INTEGER,
     flags INTEGER DEFAULT 0 NOT NULL,
     defunct INTEGER DEFAULT NULL,
-    CONSTRAINT gw_lcr_id_gw_name_idx UNIQUE (lcr_id, gw_name)
+    CONSTRAINT gw_lcr_id_grp_id_gw_name_idx UNIQUE (lcr_id, grp_id, gw_name),
+    CONSTRAINT gw_lcr_id_grp_id_ip_addr_idx UNIQUE (lcr_id, grp_id, ip_addr)
 );
 
 INSERT INTO version (table_name, table_version) values ('lcr','3');
