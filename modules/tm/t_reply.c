@@ -138,6 +138,7 @@
 #include "t_lookup.h"
 #include "t_fwd.h"
 #include "../../fix_lumps.h"
+#include "../../sr_compat.h"
 #include "t_stats.h"
 #include "uac.h"
 
@@ -1124,7 +1125,10 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->flags&=~T_6xx; /* clear the 6xx flag , we want to 
 								 allow new branches from the failure route */
 
-		drop_replies = 0;
+		if(sr_cfg_compat==SR_COMPAT_KAMAILIO)
+			drop_replies = 1;
+		else
+			drop_replies = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 						|| Trans->on_negative )) {
@@ -1137,7 +1141,15 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 									picked_code, extra_flags);
 			if (unlikely(drop_replies)) {
 				/* drop all the replies that we have already saved */
-				for (i=0; i<branch_cnt; i++) {
+				i = 0;
+				if(drop_replies==2)
+				{
+					for(i=branch_cnt-1; i>=0; i--)
+						if(Trans->uac[i].flags&TM_UAC_FLAG_FB)
+							break;
+					if(i<0) i=0;
+				}
+				for (; i<branch_cnt; i++) {
 					if (Trans->uac[i].reply &&
 					(Trans->uac[i].reply != FAKED_REPLY) &&
 					(Trans->uac[i].reply->msg_flags & FL_SHM_CLONE))
@@ -2237,14 +2249,14 @@ error:
 /* drops all the replies to make sure
  * that none of them is picked up again
  */
-void t_drop_replies(void)
+void t_drop_replies(int v)
 {
 	/* It is too risky to free the replies that are in shm mem
 	at the middle of failure_route block, because other functions might
 	need them as well. And it can also happen that the current reply is not yet
 	in shm mem, we are just going to clone it. So better to set a flag
 	and check it after failure_route has ended. (Miklos) */
-	drop_replies = 1;
+	drop_replies = v;
 }
 
 #if 0
