@@ -381,6 +381,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_drop_replies",    w_t_drop_replies,         0, 0,
 			FAILURE_ROUTE},
+	{"t_drop_replies",    w_t_drop_replies,         1, 0,
+			FAILURE_ROUTE},
 	{"t_save_lumps",      w_t_save_lumps,           0, 0,
 			REQUEST_ROUTE},
 	{"t_check_trans",	t_check_trans,				0, 0,
@@ -1726,7 +1728,14 @@ int t_grep_status(struct sip_msg* msg, char* status, char* bar)
  * that none of them is picked up again */
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar)
 {
-	t_drop_replies();
+	if(foo==NULL)
+		t_drop_replies(1);
+	else if(*foo=='n')
+		t_drop_replies(0);
+	else if(*foo=='l')
+		t_drop_replies(2);
+	else
+		t_drop_replies(1);
 	return 1;
 }
 
