@@ -713,19 +713,19 @@ void handle_sigs()
 		case SIGCHLD:
 			while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
 				if (WIFEXITED(chld_status))
-					LOG(L_ALERT, "child process %d exited normally,"
-							" status=%d\n", chld,
+					LOG(L_ALERT, "child process %ld exited normally,"
+							" status=%d\n", (long)chld,
 							WEXITSTATUS(chld_status));
 				else if (WIFSIGNALED(chld_status)) {
-					LOG(L_ALERT, "child process %d exited by a signal"
-							" %d\n", chld, WTERMSIG(chld_status));
+					LOG(L_ALERT, "child process %ld exited by a signal"
+							" %d\n", (long)chld, WTERMSIG(chld_status));
 #ifdef WCOREDUMP
 					LOG(L_ALERT, "core was %sgenerated\n",
 							 WCOREDUMP(chld_status) ?  "" : "not " );
 #endif
 				}else if (WIFSTOPPED(chld_status))
-					LOG(L_ALERT, "child process %d stopped by a"
-								" signal %d\n", chld,
+					LOG(L_ALERT, "child process %ld stopped by a"
+								" signal %d\n", (long)chld,
 								 WSTOPSIG(chld_status));
 			}
 #ifndef STOP_JIRIS_CHANGES
