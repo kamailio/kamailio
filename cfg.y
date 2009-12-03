@@ -540,7 +540,7 @@ extern char *finame;
 %left GT LT GTE LTE
 %left PLUS MINUS
 %left STAR SLASH MODULO
-%right NOT
+%right NOT UNARY
 %right DEFINED
 %right INTCAST STRCAST
 %left DOT
@@ -730,7 +730,7 @@ id_lst:
 	;
 
 intno: NUMBER
-	|  MINUS %prec NOT NUMBER { $$=-$2; }
+	|  MINUS NUMBER %prec UNARY { $$=-$2; }
 	;
 
 flags_decl:		FLAGS_DECL	flag_list
@@ -1840,41 +1840,41 @@ eip_op:		SRCIP		{ $$=SRCIP_O; }
 
 
 exp_elem:
-	METHOD strop %prec EQUAL_T rval_expr
+	METHOD strop rval_expr %prec EQUAL_T
 		{$$= mk_elem($2, METHOD_O, 0, RVE_ST, $3);}
-	| METHOD strop %prec EQUAL_T ID
+	| METHOD strop ID %prec EQUAL_T
 		{$$ = mk_elem($2, METHOD_O, 0, STRING_ST,$3); }
 	| METHOD strop error { $$=0; yyerror("string expected"); }
 	| METHOD error	
 		{ $$=0; yyerror("invalid operator,== , !=, or =~ expected"); }
-	| uri_type strop %prec EQUAL_T rval_expr
+	| uri_type strop rval_expr %prec EQUAL_T
 		{$$ = mk_elem($2, $1, 0, RVE_ST, $3); }
-	| uri_type strop %prec EQUAL_T MYSELF
+	| uri_type strop MYSELF %prec EQUAL_T
 		{$$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
-	| uri_type strop %prec EQUAL_T error
+	| uri_type strop error %prec EQUAL_T
 		{ $$=0; yyerror("string or MYSELF expected"); }
 	| uri_type error
 		{ $$=0; yyerror("invalid operator, == , != or =~ expected"); }
-	| eint_op cmpop %prec GT rval_expr { $$=mk_elem($2, $1, 0, RVE_ST, $3 ); }
-	| eint_op equalop %prec EQUAL_T rval_expr 
+	| eint_op cmpop rval_expr %prec GT { $$=mk_elem($2, $1, 0, RVE_ST, $3 ); }
+	| eint_op equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, $1, 0, RVE_ST, $3 ); }
 	| eint_op cmpop error   { $$=0; yyerror("number expected"); }
 	| eint_op equalop error { $$=0; yyerror("number expected"); }
 	| eint_op error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-	| PROTO equalop %prec EQUAL_T proto
+	| PROTO equalop proto %prec EQUAL_T
 		{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
-	| PROTO equalop %prec EQUAL_T rval_expr
+	| PROTO equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, PROTO_O, 0, RVE_ST, $3 ); }
 	| PROTO equalop error
 		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
-	| SNDPROTO equalop %prec EQUAL_T proto
+	| SNDPROTO equalop proto %prec EQUAL_T
 		{ $$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST, (void*)$3 ); }
-	| SNDPROTO equalop %prec EQUAL_T rval_expr
+	| SNDPROTO equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, SNDPROTO_O, 0, RVE_ST, $3 ); }
 	| SNDPROTO equalop error
 		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
-	| eip_op strop %prec EQUAL_T ipnet { $$=mk_elem($2, $1, 0, NET_ST, $3); }
-	| eip_op strop %prec EQUAL_T rval_expr {
+	| eip_op strop ipnet %prec EQUAL_T { $$=mk_elem($2, $1, 0, NET_ST, $3); }
+	| eip_op strop rval_expr %prec EQUAL_T {
 			s_tmp.s=0;
 			$$=0;
 			if (rve_is_constant($3)){
@@ -1912,29 +1912,29 @@ exp_elem:
 				$$=mk_elem($2, $1, 0, RVE_ST, $3);
 			}
 		}
-	| eip_op strop %prec EQUAL_T host
+	| eip_op strop host %prec EQUAL_T
 		{ $$=mk_elem($2, $1, 0, STRING_ST, $3); }
-	| eip_op strop %prec EQUAL_T MYSELF
+	| eip_op strop MYSELF %prec EQUAL_T
 		{ $$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
-	| eip_op strop %prec EQUAL_T error
+	| eip_op strop error %prec EQUAL_T
 		{ $$=0; yyerror( "ip address or hostname expected" ); }
 	| eip_op error
 		{ $$=0; yyerror("invalid operator, ==, != or =~ expected");}
 	
-	| MYSELF equalop %prec EQUAL_T uri_type
+	| MYSELF equalop uri_type %prec EQUAL_T
 		{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
-	| MYSELF equalop %prec EQUAL_T eip_op
+	| MYSELF equalop eip_op %prec EQUAL_T
 		{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
-	| MYSELF equalop %prec EQUAL_T error
+	| MYSELF equalop error %prec EQUAL_T
 		{ $$=0; yyerror(" URI, SRCIP or DSTIP expected"); }
 	| MYSELF error	{ $$=0; yyerror ("invalid operator, == or != expected"); }
 	;
 /*
 exp_elem2:
-	rval_expr cmpop %prec GT rval_expr
+	rval_expr cmpop rval_expr %prec GT
 		{ $$=mk_elem( $2, RVE_ST, $1, RVE_ST, $3);}
 	|
-	rval_expr equalop %prec EQUAL_T rval_expr
+	rval_expr equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem( $2, RVE_ST, $1, RVE_ST, $3);}
 	| rval_expr LOG_AND rval_expr
 		{ $$=mk_exp_rve(LOGAND_OP, $1, $3);}
@@ -2527,7 +2527,7 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 
 
 rve_un_op: NOT	{ $$=RVE_LNOT_OP; }
-		|  MINUS %prec NOT	{ $$=RVE_UMINUS_OP; } 
+		|  MINUS %prec UNARY	{ $$=RVE_UMINUS_OP; } 
 		/* TODO: RVE_BOOL_OP, RVE_NOT_OP? */
 	;
 
@@ -2546,7 +2546,7 @@ rval_expr: rval						{ $$=$1;
 											YYERROR;
 										}
 									}
-		| rve_un_op %prec NOT rval_expr	{$$=mk_rve1($1, $2); }
+		| rve_un_op rval_expr %prec UNARY	{$$=mk_rve1($1, $2); }
 		| INTCAST rval_expr				{$$=mk_rve1(RVE_INT_OP, $2); }
 		| STRCAST rval_expr				{$$=mk_rve1(RVE_STR_OP, $2); }
 		| rval_expr PLUS rval_expr		{$$=mk_rve2(RVE_PLUS_OP, $1, $3); }
@@ -2556,8 +2556,8 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr MODULO rval_expr	{$$=mk_rve2(RVE_MOD_OP, $1, $3); }
 		| rval_expr BIN_OR rval_expr	{$$=mk_rve2(RVE_BOR_OP, $1,  $3); }
 		| rval_expr BIN_AND rval_expr	{$$=mk_rve2(RVE_BAND_OP, $1,  $3);}
-		| rval_expr rve_cmpop %prec GT rval_expr { $$=mk_rve2( $2, $1, $3);}
-		| rval_expr rve_equalop %prec EQUAL_T rval_expr
+		| rval_expr rve_cmpop rval_expr %prec GT { $$=mk_rve2( $2, $1, $3);}
+		| rval_expr rve_equalop rval_expr %prec EQUAL_T
 			{ $$=mk_rve2( $2, $1, $3);}
 		| rval_expr LOG_AND rval_expr	{ $$=mk_rve2(RVE_LAND_OP, $1, $3);}
 		| rval_expr LOG_OR rval_expr	{ $$=mk_rve2(RVE_LOR_OP, $1, $3);}
@@ -2565,7 +2565,7 @@ rval_expr: rval						{ $$=$1;
 		| STRLEN LPAREN rval_expr RPAREN { $$=mk_rve1(RVE_STRLEN_OP, $3);}
 		| STREMPTY LPAREN rval_expr RPAREN {$$=mk_rve1(RVE_STREMPTY_OP, $3);}
 		| DEFINED rval_expr				{ $$=mk_rve1(RVE_DEFINED_OP, $2);}
-		| rve_un_op %prec NOT error		{ $$=0; yyerror("bad expression"); }
+		| rve_un_op error %prec UNARY 		{ $$=0; yyerror("bad expression"); }
 		| INTCAST error					{ $$=0; yyerror("bad expression"); }
 		| STRCAST error					{ $$=0; yyerror("bad expression"); }
 		| rval_expr PLUS error			{ $$=0; yyerror("bad expression"); }
@@ -2575,9 +2575,9 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr MODULO error			{ $$=0; yyerror("bad expression"); }
 		| rval_expr BIN_OR error		{ $$=0; yyerror("bad expression"); }
 		| rval_expr BIN_AND error		{ $$=0; yyerror("bad expression"); }
-		| rval_expr rve_cmpop %prec GT error
+		| rval_expr rve_cmpop error %prec GT
 			{ $$=0; yyerror("bad expression"); }
-		| rval_expr rve_equalop %prec EQUAL_T error
+		| rval_expr rve_equalop error %prec EQUAL_T
 			{ $$=0; yyerror("bad expression"); }
 		| rval_expr LOG_AND error		{ $$=0; yyerror("bad expression"); }
 		| rval_expr LOG_OR error		{ $$=0; yyerror("bad expression"); }
