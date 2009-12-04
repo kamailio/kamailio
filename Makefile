@@ -971,6 +971,28 @@ clean-libs:
 proper-libs realclean-libs distclean-libs maintainer-clean-libs:
 			$(MAKE) -C lib $(patsubst %-libs,%,$@)
 
+# utils cleaning targets
+
+.PHONY: clean-utils
+clean-utils:
+	@for r in $(C_COMPILE_UTILS) $(C_INSTALL_UTILS) "" ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" clean ; \
+		fi ; \
+	done
+
+.PHONY: proper-utils
+.PHONY: distclean-utils
+.PHONY: realclean-utils
+.PHONY: maintainer-clean-utils
+proper-utils realclean-utils distclean-utils maintainer-clean-utils: \
+ clean_target=$(patsubst %-utils,%,$@)
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
+	@for r in $(C_COMPILE_UTILS) $(C_INSTALL_UTILS) "" ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" $(clean_target); \
+		fi ; \
+	done
 
 # clean extra binary names (common "flavour" names)
 clean: clean-extra-names

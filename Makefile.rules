@@ -218,16 +218,6 @@ clean-modules:
 		fi ; \
 	done
 
-.PHONY: clean-utils
-clean-utils:
-	@if [ -n "$(cmodules)" ]; then \
-		for r in $(utils_compile) "" ; do \
-			if [ -d "$$r" ]; then \
-				 $(MAKE) -C "$$r" clean ; \
-			fi ; \
-		done \
-	fi
-
 # make proper for the local directory
 .PHONY: proper
 .PHONY: distclean
@@ -252,21 +242,6 @@ proper-modules realclean-modules distclean-modules maintainer-clean-modules:
 			[ -r "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc $(clean_target);\
 		fi ; \
 	done
-
-.PHONY: proper-utils
-.PHONY: distclean-utils
-.PHONY: realclean-utils
-.PHONY: maintainer-clean-utils
-proper-utils realclean-utils distclean-utils maintainer-clean-utils: \
- clean_target=$(patsubst %-utils,%,$@)
-proper-utils realclean-utils distclean-utils maintainer-clean-utils:
-	@if [ -n "$(cmodules)" ]; then \
-		for r in $(utils_compile) "" ; do \
-			if [ -d "$$r" ]; then \
-				 $(MAKE) -C "$$r" $(clean_target); \
-			fi ; \
-		done \
-	fi
 
 .PHONY: clean-tmp
 clean-tmp:
