@@ -198,31 +198,6 @@ modparam("registrar", "default_q", 1000)
 	</section>
 
 	<section>
-		<title><varname>tcp_persistent_flag</varname> (integer)</title>
-		<para>
-		The parameter specifies the message flag to be used to control the 
-		module behaviour regarding TCP connections. If the flag is set for a 
-		REGISTER via TCP containing a TCP contact, the module, via the 
-		<quote>save()</quote> functions will set the lifetime of the TCP
-		connection to the contact expire value. By doing this, the TCP 
-		connection will stay on as long as the contact is valid.
-		</para>
-		<para>
-		<emphasis>
-			Default value is -1 (disabled).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>tcp_persistent_flag</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "tcp_persistent_flag", 7)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>realm_prefix</varname> (string)</title>
 		<para>
 		 Prefix to be automatically strip from realm. As an alternative to 
