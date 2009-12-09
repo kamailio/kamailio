@@ -172,7 +172,14 @@ module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 module_group_radius=acc_radius auth_radius misc_radius peering
 
 # For presence
-module_group_presence=dialog pa presence_b2b rls xcap
+# kamailio modules
+module_group_presence=presence presence_dialoginfo presence_mwi presence_xml \
+						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
+						rls xcap_client
+#ser modules
+module_group_presence+=dialog presence_b2b xcap
+# obsolete/unmaintained ser modules
+#module_group_presence=pa rls
 
 # Modules in this group satisfy specific or niche applications, but are 
 # considered stable for production use. They may or may not have dependencies
