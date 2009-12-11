@@ -2009,6 +2009,10 @@ int reply_received( struct sip_msg  *p_msg )
 		replies_locked=1;
 		run_top_route(onreply_rt.rlist[t->on_reply], p_msg, &ctx);
 		if ((ctx.run_flags&DROP_R_F)  && (msg_status<200)) {
+			if (unlikely(replies_locked)) {
+				replies_locked = 0;
+				UNLOCK_REPLIES( t );
+			}
 			goto done;
 		}
 		/* transfer current message context back to t */
