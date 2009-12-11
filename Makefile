@@ -791,6 +791,10 @@ bin:
 deb:
 	-@if [ -d debian ]; then \
 		dpkg-buildpackage -rfakeroot -tc; \
+	elif [ -d pkg/$(MAIN_NAME)/debian ]; then \
+		ln -s pkg/$(MAIN_NAME)/debian debian; \
+		dpkg-buildpackage -rfakeroot -tc; \
+	rm debian; \
 	else \
 		ln -s pkg/debian debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
