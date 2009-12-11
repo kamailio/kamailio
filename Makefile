@@ -194,6 +194,71 @@ module_group_stable=cpl-c dbtext jabber osp sms pdb
 # not have dependencies
 module_group_experimental=tls oracle iptrtpproxy
 
+# Kamailio specific groups
+# Standard modules in K Debian distro
+module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
+				cfg_utils db_text dialog dispatcher diversion domain drouting \
+				exec group htable imc kex maxfwd mi_datagram mi_fifo msilo \
+				nat_traversal nathelper path pdt permissions pike pv qos \
+				ratelimit regex registrar rr rtimer siptrace siputils sl sms \
+				speeddial sqlops sst statistics textops tmx uac uac_redirect \
+				uri_db userblacklist usrloc xlog \
+				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
+				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh
+
+# K mysql module
+module_group_kmysql=db_mysql
+
+# K postgress module
+module_group_kpostgres=db_postgres
+
+# K cpl module
+module_group_kcpl=cpl-c
+
+# K radius modules
+module_group_kradius=auth_radius misc_radius peering
+
+# K unixodbc module
+module_group_kunixodbc=db_unixodbc
+
+# K xmlrpc modules
+module_group_kxmlrpc=xmlrpc mi_xmlrpc
+
+# K perl module
+module_group_kperl=perl perlvdb
+
+# K snmpstats module
+module_group_ksnmpstats=snmpstats
+
+# K xmpp module
+module_group_kxmpp=xmpp
+
+# K carrierroute module
+module_group_kcarrierroute=carrierroute
+
+# K berkeley module
+module_group_kberkeley=db_berkeley
+
+# K ldap modules
+module_group_kldap=ldap h350
+
+# K utils module
+module_group_kutils=utils
+
+# K purple module
+module_group_kpurple=purple
+
+# K memcached module
+module_group_kmemcached=memcached
+
+# K tls module
+module_group_ktls=tls
+
+# K presence modules
+module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml \
+						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
+						rls xcap_client
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
