@@ -181,7 +181,8 @@ install-modules: $(bin_prefix)/$(bin_dir)
 					$(data_prefix)/$(data_dir)/oracle/admin/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
-			$(INSTALL_BIN) utils/db_oracle/kamailio_orasel $(bin-prefix)/$(bin-dir) ; \
+			make -C ../db_oracle/ ; \
+			$(INSTALL_BIN) ../db_oracle/kamailio_orasel $(bin_prefix)/$(bin_dir) ; \
 		fi
 		# install Berkeley database stuff
 		if [ "$(BERKELEYDBON)" = "yes" ]; then \
@@ -205,7 +206,8 @@ install-modules: $(bin_prefix)/$(bin_dir)
 					$(data_prefix)/$(data_dir)/db_berkeley/kamailio/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
-			$(INSTALL_BIN) utils/db_berkeley/kambdb_recover $(bin-prefix)/$(bin-dir) ; \
+			make -C ../db_berkeley/ ; \
+			$(INSTALL_BIN) ../db_berkeley/kambdb_recover $(bin_prefix)/$(bin_dir) ; \
 		fi
 		# install dbtext stuff
 		if [ "$(DBTEXTON)" = "yes" ]; then \
