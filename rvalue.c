@@ -1035,7 +1035,8 @@ error:
 		if (unlikely((ret)<0)) \
 			RVE_LOG(L_WARN, rve, txt); \
 	}while(0)
-#elif define RVAL_GET_INT_ERR_IGN \
+#elif defined RVAL_GET_INT_ERR_IGN
+#define rval_get_int_handle_ret(ret, txt, rve) \
 	do { \
 		if (unlikely((ret)<0)) \
 				(ret)=0; \
