@@ -87,7 +87,7 @@ install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 		chmod 644  $(man_prefix)/$(man_dir)/man8/kamdbctl.8
 
 
-MYSQLON?=yes
+# MYSQLON?=yes
 
 install-modules: $(bin_prefix)/$(bin_dir)
 		# install MySQL stuff
