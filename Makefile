@@ -322,6 +322,7 @@ ifeq ($(makefile_defs),1)
 ifeq ($(quiet),verbose)
 $(info config.mak loaded)
 endif # verbose
+export makefile_defs
 # config_make valid & used
 config_mak=1
 ifeq ($(MAIN_NAME),)
@@ -343,6 +344,7 @@ else
 # config.mak not strictly needed, but try to load it if exists for $(Q)
 config_mak=skip
 -include config.mak
+export makefile_defs
 endif
 endif
 
@@ -490,6 +492,15 @@ include Makefile.shared
 ifeq ($(config_mak),1)
 
 include Makefile.cfg
+
+# fix basedir path (relative -> absolute)
+ifneq (,$(basedir))
+ifeq (,$(filter /%, $(basedir)))
+override basedir:=$(CURDIR)/$(basedir)
+# remove basedir from command line overrides
+MAKEOVERRIDES:=$(filter-out basedir=%,$ $(MAKEOVERRIDES))
+endif # (,$(filter /%, $(basedir)))
+endif # (,$(basedir))
 
 else ifneq ($(config_mak),skip)
 
@@ -783,7 +794,7 @@ tar: $(auto_gen_keep)
 .PHONY: bin
 bin:
 	mkdir -p tmp/$(MAIN_NAME)/usr/local
-	$(MAKE) install basedir=tmp/$(MAIN_NAME) $(mk_params)
+	$(MAKE) install basedir=$(CURDIR)/tmp/$(MAIN_NAME) $(mk_params)
 	$(TAR) -C tmp/$(MAIN_NAME)/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
 	rm -rf tmp/$(MAIN_NAME)
 
@@ -805,7 +816,8 @@ deb:
 sunpkg:
 	mkdir -p tmp/$(MAIN_NAME)
 	mkdir -p tmp/$(MAIN_NAME)_sun_pkg
-	$(MAKE) install basedir=tmp/$(MAIN_NAME) prefix=/usr/local $(mk_params)
+	$(MAKE) install basedir=$(CURDIR)/tmp/$(MAIN_NAME) \
+			prefix=/usr/local $(mk_params)
 	(cd pkg/solaris; \
 	pkgmk -r ../../tmp/$(MAIN_NAME)/usr/local -o -d ../../tmp/$(MAIN_NAME)_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ../..)
