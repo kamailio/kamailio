@@ -2435,6 +2435,10 @@ avp_pvar:	AVP_OR_PVAR {
 				s_tmp.s=$1; s_tmp.len=strlen(s_tmp.s);
 				if (pv_parse_spec2(&s_tmp, &lval_tmp->lv.pvs, 1)==0){
 					/* not a pvar, try avps */
+					/* lval_tmp might be partially filled by the failed
+					   pv_parse_spec2() (especially if the avp name is the
+					   same as a pv class) => clean it again */
+					memset(lval_tmp, 0, sizeof(*lval_tmp));
 					lval_tmp->lv.avps.type|= AVP_NAME_STR;
 					lval_tmp->lv.avps.name.s.s = s_tmp.s+1;
 					lval_tmp->lv.avps.name.s.len = s_tmp.len-1;
