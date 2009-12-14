@@ -52,8 +52,8 @@ perlpod: doc/perl_pod.sgml
 doc/perl_pod.sgml: openserxs.xs
 	cat $(PODFILES) | pod2docbook --doctype=chapter --title='OpenSER Perl API' --no-header - doc/perl_pod.sgml
 
-install_module_custom:
-	echo "installing Perl OpenSER packages ..."
+install-perl-scripts:
+	echo "installing Perl Kamailio (OpenSER) packages ..."
 	mkdir -p $(modules_prefix)/$(lib_dir)/perl
 	$(INSTALL_CFG) lib/perl/*.pm $(modules_prefix)/$(lib_dir)/perl
 	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER
@@ -71,4 +71,6 @@ install_module_custom:
 	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB/Adapter
 	$(INSTALL_CFG) lib/perl/OpenSER/VDB/Adapter/*.pm \
 		$(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB/Adapter
+
+install-scripts: install-perl-scripts
 
