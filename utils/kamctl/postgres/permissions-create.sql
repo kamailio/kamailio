@@ -1,10 +1,10 @@
-INSERT INTO version (table_name, table_version) values ('trusted','4');
+INSERT INTO version (table_name, table_version) values ('trusted','5');
 CREATE TABLE trusted (
     id SERIAL PRIMARY KEY NOT NULL,
     src_ip VARCHAR(50) NOT NULL,
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) DEFAULT NULL,
-    tag VARCHAR(32)
+    tag VARCHAR(64)
 );
 
 CREATE INDEX trusted_peer_idx ON trusted (src_ip);
