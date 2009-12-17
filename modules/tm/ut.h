@@ -356,16 +356,24 @@ inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
 										struct sip_msg *msg, str *uri, 
 											int proto )
 {
-	return uri2dst2(dns_h, dst, msg?msg->force_send_socket:0,
-						msg?msg->fwd_send_flags:0, uri, proto);
+	snd_flags_t sflags;
+	if (msg)
+		return uri2dst2(dns_h, dst, msg->force_send_socket,
+							msg->fwd_send_flags, uri, proto);
+	SND_FLAGS_INIT(&sflags);
+	return uri2dst2(dns_h, dst, 0, sflags, uri, proto);
 }
 #else
 inline static struct dest_info *uri2dst(struct dest_info* dst,
 										struct sip_msg *msg, str *uri, 
 											int proto )
 {
-	return uri2dst2(dst, msg?msg->force_send_socket:0,
-						msg?msg->fwd_send_flags:0, uri, proto);
+	snd_flags_t sflags;
+	if (msg)
+		return uri2dst2(dst, msg->force_send_socket, msg->fwd_send_flags,
+						uri, proto);
+	SND_FLAGS_INIT(&sflags);
+	return uri2dst2(dst, 0, sflags, uri, proto);
 }
 #endif /* USE_DNS_FAILOVER */
 

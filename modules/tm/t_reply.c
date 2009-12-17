@@ -1612,7 +1612,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				}
 				/* update send_flags with possible additions from the
 				   reply route */
-				uas_rb->dst.send_flags|=relayed_msg->rpl_send_flags;
+				uas_rb->dst.send_flags.f|=relayed_msg->rpl_send_flags.f;
 			}
 		}
 		update_reply_stats( relayed_code );

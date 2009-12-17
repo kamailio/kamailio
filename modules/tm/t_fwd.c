@@ -659,8 +659,10 @@ static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 		t->uac[branch].request.dst.send_sock =
 		get_send_socket( request, &t->uac[branch].request.dst.to,
 								t->uac[branch].request.dst.proto);
-		t->uac[branch].request.dst.send_flags=request?
-												request->fwd_send_flags:0;
+		if (request)
+			t->uac[branch].request.dst.send_flags=request->fwd_send_flags;
+		else
+			SND_FLAGS_INIT(&t->uac[branch].request.dst.send_flags);
 		next_hop=0;
 	}else {
 		next_hop= next_hop?next_hop:uri;
@@ -845,7 +847,7 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 				 * in the rest of the message, only in the VIA HF (Miklos) */
 				ret=add_uac_from_buf(t,  msg, &old_uac->uri,
 							&old_uac->path,
-							 (old_uac->request.dst.send_flags &
+							 (old_uac->request.dst.send_flags.f &
 								SND_F_FORCE_SOCKET)?
 									old_uac->request.dst.send_sock:0,
 							old_uac->request.dst.send_flags,
@@ -858,7 +860,7 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 				 *  must be changed and the send_socket might be different =>
 				 *  re-create the whole uac */
 				ret=add_uac(t,  msg, &old_uac->uri, 0, &old_uac->path, 0,
-							 (old_uac->request.dst.send_flags &
+							 (old_uac->request.dst.send_flags.f &
 								SND_F_FORCE_SOCKET)?
 									old_uac->request.dst.send_sock:0,
 							old_uac->request.dst.send_flags,
@@ -883,6 +885,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	int ret;
 	char *shbuf;
 	unsigned int len;
+	snd_flags_t snd_flags;
 
 	ret=-1;
 	if (t_cancel->uac[branch].request.buffer) {
@@ -928,12 +931,13 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 			cancel_msg->first_line.u.request.method.len+1;
 		t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
 	} else {
+		SND_FLAGS_INIT(&snd_flags);
 		/* buffer is constructed from the received CANCEL with lumps applied */
 		/*  t_cancel...request.dst is already filled (see above) */
 		if (unlikely((ret=prepare_new_uac( t_cancel, cancel_msg, branch,
 									&t_invite->uac[branch].uri,
 									&t_invite->uac[branch].path,
-									0, 0, 0, PROTO_NONE, 0)) <0)){
+									0, 0, snd_flags, PROTO_NONE, 0)) <0)){
 			ser_error=ret;
 			goto error;
 		}
