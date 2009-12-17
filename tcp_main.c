@@ -1780,7 +1780,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 				c=0;
 			}
 			/* check if connect() is disabled */
-			if (unlikely((dst->send_flags & SND_F_FORCE_CON_REUSE) ||
+			if (unlikely((dst->send_flags.f & SND_F_FORCE_CON_REUSE) ||
 							cfg_get(tcp, tcp_cfg, no_connect)))
 				return -1;
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
@@ -1927,7 +1927,7 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 				}
 				LOG(L_INFO, "tcp_send: quick connect for %p\n", c);
 				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
-				if (unlikely(dst->send_flags & SND_F_CON_CLOSE)){
+				if (unlikely(dst->send_flags.f & SND_F_CON_CLOSE)){
 					/* if close-after-send requested, don't bother
 					   sending the fd back to tcp_main, try closing it
 					   immediately (no other tcp_send should use it,
@@ -2224,7 +2224,7 @@ error:
 			TCP_STATS_ESTABLISHED(c->state);
 			c->state=S_CONN_OK;
 	}
-	if (unlikely(dst->send_flags & SND_F_CON_CLOSE)){
+	if (unlikely(dst->send_flags.f & SND_F_CON_CLOSE)){
 		/* close after write => send EOF request to tcp_main */
 		c->state=S_CONN_BAD;
 		c->timeout=get_ticks_raw();

@@ -1217,19 +1217,19 @@ match_cleanup:
 				ret=v;
 			break;
 		case SET_FWD_NO_CONNECT_T:
-			msg->fwd_send_flags|= SND_F_FORCE_CON_REUSE;
+			msg->fwd_send_flags.f|= SND_F_FORCE_CON_REUSE;
 			ret=1; /* continue processing */
 			break;
 		case SET_RPL_NO_CONNECT_T:
-			msg->rpl_send_flags|= SND_F_FORCE_CON_REUSE;
+			msg->rpl_send_flags.f|= SND_F_FORCE_CON_REUSE;
 			ret=1; /* continue processing */
 			break;
 		case SET_FWD_CLOSE_T:
-			msg->fwd_send_flags|= SND_F_CON_CLOSE;
+			msg->fwd_send_flags.f|= SND_F_CON_CLOSE;
 			ret=1; /* continue processing */
 			break;
 		case SET_RPL_CLOSE_T:
-			msg->rpl_send_flags|= SND_F_CON_CLOSE;
+			msg->rpl_send_flags.f|= SND_F_CON_CLOSE;
 			ret=1; /* continue processing */
 			break;
 /*

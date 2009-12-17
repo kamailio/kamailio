@@ -172,7 +172,7 @@ struct tcp_connection{
 	atomic_t refcnt;
 	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
 	unsigned short flags; /* connection related flags */
-	unsigned short send_flags; /* special send flags */
+	snd_flags_t send_flags; /* special send flags */
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
@@ -192,9 +192,13 @@ struct tcp_connection{
 
 /* helper macros */
 
-#define tcpconn_set_send_flags(c, snd_flags) ((c)->send_flags|=(snd_flags))
+#define tcpconn_set_send_flags(c, snd_flags) \
+	do{ \
+		(c)->send_flags.f|=(snd_flags).f; \
+		(c)->send_flags.blst_imask|=(snd_flags).blst_imask; \
+	}while(0)
 
-#define tcpconn_close_after_send(c)	((c)->send_flags & SND_F_CON_CLOSE)
+#define tcpconn_close_after_send(c)	((c)->send_flags.f & SND_F_CON_CLOSE)
 
 #define TCP_RCV_INFO(c) (&(c)->rcv)
 

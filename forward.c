@@ -698,7 +698,7 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	dst.proto=msg->via2->proto;
-	dst.send_flags=msg->fwd_send_flags | msg->rpl_send_flags;
+	dst.send_flags.f=msg->fwd_send_flags.f | msg->rpl_send_flags.f;
 	if (update_sock_struct_from_via( &dst.to, msg, msg->via2 )==-1) goto error;
 #ifdef USE_COMP
 	dst.comp=msg->via2->comp_no;
