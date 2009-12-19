@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('dialog','3');
+INSERT INTO version (table_name, table_version) values ('dialog','4');
 CREATE TABLE dialog (
     id NUMBER(10) PRIMARY KEY,
     hash_entry NUMBER(10),
@@ -20,7 +20,8 @@ CREATE TABLE dialog (
     start_time NUMBER(10),
     timeout NUMBER(10) DEFAULT 0 NOT NULL,
     sflags NUMBER(10) DEFAULT 0 NOT NULL,
-    toroute NUMBER(10) DEFAULT 0 NOT NULL
+    toroute NUMBER(10) DEFAULT 0 NOT NULL,
+    req_uri VARCHAR2(128)
 );
 
 CREATE OR REPLACE TRIGGER dialog_tr
