@@ -41,6 +41,7 @@ struct dlginfo_cell {
 	str callid;
 	str from_tag;
 /*	str *to_tag; */
+	str req_uri;
 	unsigned int lifetime;	
 };
 
