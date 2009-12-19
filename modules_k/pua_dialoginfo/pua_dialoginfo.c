@@ -57,6 +57,7 @@ MODULE_VERSION
 #define DEF_INCLUDE_TAGS 1
 #define DEF_OVERRIDE_LIFETIME 0
 #define DEF_CALLER_ALWAYS_CONFIRMED 0
+#define DEF_INCLUDE_REQ_URI 0
 
 /* define PUA_DIALOGINFO_DEBUG to activate more verbose 
  * logging and dialog info callback debugging
@@ -73,6 +74,7 @@ int include_localremote = DEF_INCLUDE_LOCALREMOTE;
 int include_tags        = DEF_INCLUDE_TAGS;
 int override_lifetime   = DEF_OVERRIDE_LIFETIME;
 int caller_confirmed    = DEF_CALLER_ALWAYS_CONFIRMED;
+int include_req_uri     = DEF_INCLUDE_REQ_URI;
 
 
 send_publish_t pua_send_publish;
@@ -92,6 +94,7 @@ static param_export_t params[]={
 	{"include_tags",        INT_PARAM, &include_tags },
 	{"override_lifetime",   INT_PARAM, &override_lifetime },
 	{"caller_confirmed",    INT_PARAM, &caller_confirmed },
+	{"include_req_uri",     INT_PARAM, &include_req_uri },
 	{0, 0, 0 }
 };
 
@@ -195,21 +198,28 @@ static void
 __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
 	str tag = {0,0};
+	str uri = {0,0};
 	struct dlginfo_cell *dlginfo = (struct dlginfo_cell*)*_params->param;
+
+	if (include_req_uri) {
+		uri = dlginfo->req_uri;
+	} else {
+		uri = dlginfo->to_uri;
+	}
 
 	switch (type) {
 	case DLGCB_FAILED:
 	case DLGCB_TERMINATED:
 	case DLGCB_EXPIRED:
 		LM_DBG("dialog over, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
-		dialog_publish("terminated", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
-		dialog_publish("terminated", &(dlginfo->to_uri), &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
+		dialog_publish("terminated", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
+		dialog_publish("terminated", &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
 		break;
 	case DLGCB_CONFIRMED:
 	case DLGCB_REQ_WITHIN:
 		LM_DBG("dialog confirmed, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
-		dialog_publish("confirmed", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
-		dialog_publish("confirmed", &(dlginfo->to_uri), &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
+		dialog_publish("confirmed", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
+		dialog_publish("confirmed", &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
 		break;
 	case DLGCB_EARLY:
 		LM_DBG("dialog is early, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
@@ -228,24 +238,28 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				}
 			}
 			if (caller_confirmed) {
-				dialog_publish("confirmed", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, &(dlginfo->from_tag), &tag);
+				dialog_publish("confirmed", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, &(dlginfo->from_tag), &tag);
 			} else {
-				dialog_publish("early", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, &(dlginfo->from_tag), &tag);
+				dialog_publish("early", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, &(dlginfo->from_tag), &tag);
 			}
-			dialog_publish("early", &(dlginfo->to_uri), &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, &tag, &(dlginfo->from_tag));
+			dialog_publish("early", &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, &tag, &(dlginfo->from_tag));
+
 		} else {
 			if (caller_confirmed) {
-				dialog_publish("confirmed", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
+				dialog_publish("confirmed", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
+
 			} else {
 				dialog_publish("early", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
 			}
-			dialog_publish("early", &(dlginfo->to_uri), &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
+			dialog_publish("early", &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
+
 		}
 		break;
 	default:
 		LM_ERR("unhandled dialog callback type %d received, from=%.*s\n", type, dlginfo->from_uri.len, dlginfo->from_uri.s);
-		dialog_publish("terminated", &(dlginfo->from_uri), &(dlginfo->to_uri), &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
-		dialog_publish("terminated", &(dlginfo->to_uri), &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
+		dialog_publish("terminated", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0);
+		dialog_publish("terminated", &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0);
+
 	}
 }
 
@@ -266,7 +280,8 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 			dlg->from_uri.len + 
 			dlg->to_uri.len + 
 			dlg->callid.len + 
-			dlg->tag[0].len;
+			dlg->tag[0].len +
+			dlg->req_uri.len;
 
     dlginfo = (struct dlginfo_cell*)shm_malloc( len );
     if (dlginfo==0) {
@@ -285,10 +300,13 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	dlginfo->callid.len   = dlg->callid.len;
 	dlginfo->from_tag.s   = dlginfo->callid.s + dlg->callid.len;
 	dlginfo->from_tag.len = dlg->tag[0].len;
+	dlginfo->req_uri.s    = dlginfo->from_tag.s + dlginfo->from_tag.len;
+	dlginfo->req_uri.len  = dlg->req_uri.len;
 	memcpy(dlginfo->from_uri.s, dlg->from_uri.s, dlg->from_uri.len);
 	memcpy(dlginfo->to_uri.s, dlg->to_uri.s, dlg->to_uri.len);
 	memcpy(dlginfo->callid.s, dlg->callid.s, dlg->callid.len);
 	memcpy(dlginfo->from_tag.s, dlg->tag[0].s, dlg->tag[0].len);
+	memcpy(dlginfo->req_uri.s, dlg->req_uri.s, dlg->req_uri.len);
 	
 	/* register dialog callbacks which triggers sending PUBLISH */
 	if (dlg_api.register_dlgcb(dlg, 
