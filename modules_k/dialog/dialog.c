@@ -89,6 +89,9 @@ static int db_fetch_rows = 200;
 
 str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
+str ruri_pvar_param = {"$ru", 3};
+pv_elem_t * ruri_param_model = NULL;
+
 /* statistic variables */
 int dlg_enable_stats = 1;
 int active_dlgs_cnt = 0;
@@ -204,6 +207,7 @@ static param_export_t mod_params[]={
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
 	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
 	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
+	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
 	{ 0,0,0 }
 };
 
@@ -435,6 +439,17 @@ static int mod_init(void)
 
 	if (default_timeout<=0) {
 		LM_ERR("0 default_timeout not accepted!!\n");
+		return -1;
+	}
+
+	if (ruri_pvar_param.s==NULL || *ruri_pvar_param.s=='\0') {
+		LM_ERR("invalid r-uri PV string\n");
+		return -1;
+	}
+	ruri_pvar_param.len = strlen(ruri_pvar_param.s);
+	if(pv_parse_format(&ruri_pvar_param, &ruri_param_model) < 0
+				|| ruri_param_model==NULL) {
+		LM_ERR("malformed r-uri PV string: %s\n", ruri_pvar_param.s);
 		return -1;
 	}
 

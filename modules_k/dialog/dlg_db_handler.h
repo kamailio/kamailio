@@ -51,9 +51,10 @@
 #define TO_SOCK_COL				"callee_sock"
 #define SFLAGS_COL				"sflags"
 #define TOROUTE_COL				"toroute"
+#define REQ_URI_COL				"req_uri"
 #define DIALOG_TABLE_NAME		"dialog"
 
-#define DLG_TABLE_VERSION		3
+#define DLG_TABLE_VERSION		4
 
 /*every minute the dialogs' information will be refreshed*/
 #define DB_DEFAULT_UPDATE_PERIOD	60
@@ -62,7 +63,7 @@
 #define DB_MODE_DELAYED				2
 #define DB_MODE_SHUTDOWN			3
 
-#define DIALOG_TABLE_COL_NO 		20
+#define DIALOG_TABLE_COL_NO 		21
 
 
 extern str call_id_column; 

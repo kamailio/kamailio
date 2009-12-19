@@ -60,6 +60,7 @@ str to_sock_column			=	str_init(TO_SOCK_COL);
 str from_sock_column		=	str_init(FROM_SOCK_COL);
 str sflags_column			=	str_init(SFLAGS_COL);
 str toroute_column			=	str_init(TOROUTE_COL);
+str req_uri_column			=	str_init(REQ_URI_COL);
 str dialog_table_name		=	str_init(DIALOG_TABLE_NAME);
 int dlg_db_mode				=	DB_MODE_NONE;
 
@@ -196,7 +197,7 @@ static int select_entire_dialog_table(db1_res_t ** res, int fetch_num_rows)
 			&from_cseq_column,	&to_cseq_column,	&from_route_column,
 			&to_route_column, 	&from_contact_column, &to_contact_column,
 			&from_sock_column,	&to_sock_column,    &sflags_column,
-			&toroute_column };
+			&toroute_column,	&req_uri_column };
 
 	if(use_dialog_table() != 0){
 		return -1;
@@ -262,7 +263,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 	db_row_t * rows;
 	int i, nr_rows;
 	struct dlg_cell *dlg;
-	str callid, from_uri, to_uri, from_tag, to_tag;
+	str callid, from_uri, to_uri, from_tag, to_tag, req_uri;
 	str cseq1, cseq2, contact1, contact2, rroute1, rroute2;
 	unsigned int next_id;
 	
@@ -302,8 +303,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			GET_STR_VALUE(from_uri, values, 3, 1, 0);
 			GET_STR_VALUE(from_tag, values, 4, 1, 0);
 			GET_STR_VALUE(to_uri, values, 5, 1, 0);
+			GET_STR_VALUE(req_uri, values, 20, 1, 0);
 
-			if((dlg=build_new_dlg(&callid, &from_uri, &to_uri, &from_tag))==0){
+			if((dlg=build_new_dlg(&callid, &from_uri, &to_uri, &from_tag,
+							&req_uri))==0){
 				LM_ERR("failed to build new dialog\n");
 				goto error;
 			}
@@ -453,7 +456,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 			&start_time_column,  &state_column,       &timeout_column,
 			&from_cseq_column,   &to_cseq_column,     &from_route_column,
 			&to_route_column,    &from_contact_column,&to_contact_column,
-			&sflags_column,      &toroute_column };
+			&sflags_column,      &toroute_column,     &req_uri_column };
 
 	if(use_dialog_table()!=0)
 		return -1;
@@ -467,7 +470,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		VAL_TYPE(values+5) = VAL_TYPE(values+6) = VAL_TYPE(values+7) = 
 		VAL_TYPE(values+8) = VAL_TYPE(values+12) = VAL_TYPE(values+13) = 
 		VAL_TYPE(values+14) = VAL_TYPE(values+15) = VAL_TYPE(values+16)=
-		VAL_TYPE(values+17) = DB1_STR;
+		VAL_TYPE(values+17) = VAL_TYPE(values+20) = DB1_STR;
 
 		SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
 		VAL_TYPE(values+18) = VAL_TYPE(values+19) = DB1_INT;
@@ -513,6 +516,8 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		VAL_INT(values+18)  = cell->sflags;
 		VAL_NULL(values+19) = 0;
 		VAL_INT(values+19)  = cell->toroute;
+		SET_STR_VALUE(values+20, cell->req_uri);
+		SET_PROPER_NULL_FLAG(cell->req_uri, 	values, 20);
 
 		if((dialog_dbf.insert(dialog_db_handle, insert_keys, values, 
 								DIALOG_TABLE_COL_NO)) !=0){
@@ -580,7 +585,7 @@ void dialog_update_db(unsigned int ticks, void * param)
 			&start_time_column,	&state_column,			&timeout_column,
 			&from_cseq_column,	&to_cseq_column,		&from_route_column,
 			&to_route_column, 	&from_contact_column, 	&to_contact_column,
-			&sflags_column,     &toroute_column };
+			&sflags_column,     &toroute_column, 		&req_uri_column };
 
 	if(use_dialog_table()!=0)
 		return;
@@ -593,7 +598,7 @@ void dialog_update_db(unsigned int ticks, void * param)
 	VAL_TYPE(values+5) = VAL_TYPE(values+6) = VAL_TYPE(values+7) = 
 	VAL_TYPE(values+8) = VAL_TYPE(values+12) = VAL_TYPE(values+13) = 
 	VAL_TYPE(values+14) = VAL_TYPE(values+15) = VAL_TYPE(values+16) = 
-	VAL_TYPE(values+17) = DB1_STR;
+	VAL_TYPE(values+17) = VAL_TYPE(values+20) = DB1_STR;
 
 	SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
 
@@ -650,6 +655,10 @@ void dialog_update_db(unsigned int ticks, void * param)
 				
 				VAL_INT(values+18)		= cell->sflags;
 				VAL_INT(values+19)		= cell->toroute;
+
+				SET_STR_VALUE(values+20, cell->req_uri);
+				SET_PROPER_NULL_FLAG(cell->req_uri,
+					values, 20);
 
 				if((dialog_dbf.insert(dialog_db_handle, insert_keys, 
 				values, DIALOG_TABLE_COL_NO)) !=0){
