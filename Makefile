@@ -197,7 +197,7 @@ module_group_experimental=tls oracle iptrtpproxy
 # Kamailio specific groups
 # Standard modules in K Debian distro
 module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
-				cfg_utils db_text dialog dispatcher diversion domain drouting \
+				cfgutils db_text dialog dispatcher diversion domain drouting \
 				exec group htable imc kex maxfwd mi_datagram mi_fifo msilo \
 				nat_traversal nathelper path pdt permissions pike pv qos \
 				ratelimit regex registrar rr rtimer siptrace siputils sl sms \
