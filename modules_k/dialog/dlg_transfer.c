@@ -241,7 +241,8 @@ void dlg_bridge_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 	dlg = build_new_dlg(&s /*callid*/, &(get_from(msg)->uri) /*from uri*/,
 		&(get_to(msg)->uri) /*to uri*/,
-		&(get_from(msg)->tag_value)/*from_tag*/ );
+		&(get_from(msg)->tag_value)/*from_tag*/,
+		&(get_to(msg)->uri) /*use to as r-uri*/ );
 	if (dlg==0) {
 		LM_ERR("failed to create new dialog\n");
 		goto error;
@@ -383,11 +384,11 @@ int dlg_transfer(struct dlg_cell *dlg, str *to, int side)
 	if(side==DLG_CALLER_LEG)
 		ndlg = build_new_dlg(&dlg->callid /*callid*/,
 				&dlg->to_uri /*from uri*/, &dlg->from_uri /*to uri*/,
-				&dlg->tag[side]/*from_tag*/ );
+				&dlg->tag[side]/*from_tag*/, &dlg->req_uri /*req uri */ );
 	else
 		ndlg = build_new_dlg(&dlg->callid /*callid*/,
 				&dlg->from_uri /*from uri*/, &dlg->to_uri /*to uri*/,
-				&dlg->tag[side]/*from_tag*/ );
+				&dlg->tag[side]/*from_tag*/, &dlg->req_uri /*req uri */ );
 	if (ndlg==0) {
 		LM_ERR("failed to create new dialog\n");
 		goto error;
