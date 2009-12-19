@@ -30,7 +30,8 @@
 extern send_publish_t pua_send_publish;
 
 void dialog_publish(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag);
+	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
+	str *localtarget, str *remotetarget);
 
 /* store the important data locally to avoid reading the data from the 
    dlg_cell during the callback (as this could create a race condition 
@@ -42,6 +43,7 @@ struct dlginfo_cell {
 	str from_tag;
 /*	str *to_tag; */
 	str req_uri;
+	str from_contact;
 	unsigned int lifetime;	
 };
 
