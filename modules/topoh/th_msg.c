@@ -31,6 +31,7 @@
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../forward.h"
+#include "../../trim.h"
 #include "../../msg_translator.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
@@ -727,6 +728,72 @@ int th_unmask_refer_to(sip_msg_t *msg)
 	}
 	if (insert_new_lump_after(l, out.s, out.len, 0)==0)
 	{
+		LM_ERR("could not insert new lump\n");
+		pkg_free(out.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+int th_update_hdr_replaces(sip_msg_t *msg)
+{
+	struct hdr_field *hf = NULL;
+	str replaces;
+	str rcallid;
+	struct lump* l;
+	str out;
+
+	LM_DBG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	if(th_param_mask_callid==0)
+		return 0;
+
+	if(!((get_cseq(msg)->method_id)&(METHOD_INVITE)))
+		return 0;
+
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		if (hf->name.len==8 && strncasecmp(hf->name.s, "Replaces", 8)==0)
+			break;
+	}
+
+	if(hf==NULL)
+		return 0;
+
+	replaces = hf->body;
+	trim(&replaces);
+	rcallid.s = replaces.s;
+	for(rcallid.len=0; rcallid.len<replaces.len; rcallid.len++)
+	{
+		if(rcallid.s[rcallid.len]==';')
+			break;
+	}
+
+	if(rcallid.len>th_callid_prefix.len
+			&& strncmp(rcallid.s, th_callid_prefix.s, th_callid_prefix.len)==0)
+	{
+		/* value encoded - decode it */
+		out.s = th_mask_decode(rcallid.s, rcallid.len,
+					&th_callid_prefix, 0, &out.len);
+	} else {
+		/* value decoded - encode it */
+		out.s = th_mask_encode(rcallid.s, rcallid.len,
+				&th_callid_prefix, &out.len);
+	}
+	if(out.s==NULL)
+	{
+		LM_ERR("cannot update Replaces callid\n");
+		return -1;
+	}
+
+	l=del_lump(msg, rcallid.s-msg->buf, rcallid.len, 0);
+	if (l==0)
+	{
+		LM_ERR("failed deleting Replaces callid\n");
+		pkg_free(out.s);
+		return -1;
+	}
+	if (insert_new_lump_after(l, out.s, out.len, 0)==0) {
 		LM_ERR("could not insert new lump\n");
 		pkg_free(out.s);
 		return -1;
