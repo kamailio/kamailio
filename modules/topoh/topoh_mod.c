@@ -300,6 +300,7 @@ int th_msg_sent(void *data)
 			}
 		} else {
 			/* initial request */
+			th_update_hdr_replaces(&msg);
 			th_mask_callid(&msg);
 		}
 	} else {
