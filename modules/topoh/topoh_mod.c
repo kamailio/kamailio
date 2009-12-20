@@ -81,6 +81,7 @@ static param_export_t params[]={
 	{"uparam_prefix",	STR_PARAM, &th_uparam_prefix.s},
 	{"vparam_name",		STR_PARAM, &th_vparam_name.s},
 	{"vparam_prefix",	STR_PARAM, &th_vparam_prefix.s},
+	{"callid_prefix",	STR_PARAM, &th_callid_prefix.s},
 	{0,0,0}
 };
 
@@ -112,6 +113,7 @@ static int mod_init(void)
 	th_uparam_prefix.len = strlen(th_uparam_prefix.s);
 	th_vparam_name.len = strlen(th_vparam_name.s);
 	th_vparam_prefix.len = strlen(th_vparam_prefix.s);
+	th_callid_prefix.len = strlen(th_callid_prefix.s);
 
 	/* 'SIP/2.0/UDP ' + ip + ';' + param + '=' + prefix (+ '\0') */
 	th_via_prefix.len = 12 + th_ip.len + 1 + th_vparam_name.len + 1
