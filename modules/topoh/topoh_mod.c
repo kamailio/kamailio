@@ -207,6 +207,7 @@ int th_msg_received(void *data)
 			/* dialog request */
 			th_unmask_ruri(&msg);
 			th_unmask_route(&msg);
+			th_unmask_refer_to(&msg);
 			if(direction==1)
 			{
 				th_unmask_callid(&msg);

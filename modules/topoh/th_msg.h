@@ -32,6 +32,7 @@ int th_unmask_callid(sip_msg_t *msg);
 int th_flip_record_route(sip_msg_t *msg, int mode);
 int th_unmask_ruri(sip_msg_t *msg);
 int th_unmask_route(sip_msg_t *msg);
+int th_unmask_refer_to(sip_msg_t *msg);
 char* th_msg_update(sip_msg_t *msg, unsigned int *olen);
 int th_add_via_cookie(sip_msg_t *msg, struct via_body *via);
 int th_add_hdr_cookie(sip_msg_t *msg);
