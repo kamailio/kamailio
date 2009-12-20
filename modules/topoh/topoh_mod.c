@@ -62,6 +62,7 @@ str th_uparam_prefix = {"sr-", 0};
 str th_vparam_name = {"branch", 0};
 str th_vparam_prefix = {"z9hG4bKsr-", 0};
 
+str th_callid_prefix = {"!!:", 3};
 str th_via_prefix = {0, 0};
 str th_uri_prefix = {0, 0};
 

@@ -46,6 +46,7 @@ extern str th_cookie_name;
 extern str th_cookie_value;
 extern str th_via_prefix;
 extern str th_uri_prefix;
+extern str th_callid_prefix;
 
 extern str th_ip;
 extern str th_uparam_name;
@@ -215,8 +216,8 @@ int th_mask_callid(sip_msg_t *msg)
 		return -1;
 	}
 				
-	out.s = th_mask_encode(msg->callid->body.s, msg->callid->body.len, 0,
-						&out.len);
+	out.s = th_mask_encode(msg->callid->body.s, msg->callid->body.len,
+				&th_callid_prefix, &out.len);
 	if(out.s==NULL)
 	{
 		LM_ERR("cannot encode callid\n");
@@ -451,8 +452,8 @@ int th_unmask_callid(sip_msg_t *msg)
 		return -1;
 	}
 				
-	out.s = th_mask_decode(msg->callid->body.s, msg->callid->body.len, 0, 0,
-						&out.len);
+	out.s = th_mask_decode(msg->callid->body.s, msg->callid->body.len,
+					&th_callid_prefix, 0, &out.len);
 	if(out.s==NULL)
 	{
 		LM_ERR("cannot decode callid\n");
