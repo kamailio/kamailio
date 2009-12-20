@@ -31,6 +31,7 @@ Daniel-Constantin Mierla
               3.4. uparam_prefix (str)
               3.5. vparam_name (str)
               3.6. vparam_prefix (str)
+              3.7. callid_prefix (str)
 
         4. Exported Functions
 
@@ -44,6 +45,7 @@ Daniel-Constantin Mierla
    1.4. Set uparam_prefix parameter
    1.5. Set vparam_name parameter
    1.6. Set vparam_prefix parameter
+   1.7. Set callid_prefix parameter
 
 Chapter 1. Admin Guide
 
@@ -63,6 +65,7 @@ Chapter 1. Admin Guide
         3.4. uparam_prefix (str)
         3.5. vparam_name (str)
         3.6. vparam_prefix (str)
+        3.7. callid_prefix (str)
 
    4. Exported Functions
 
@@ -109,6 +112,7 @@ Chapter 1. Admin Guide
    3.4. uparam_prefix (str)
    3.5. vparam_name (str)
    3.6. vparam_prefix (str)
+   3.7. callid_prefix (str)
 
 3.1. mask_key (str)
 
@@ -177,6 +181,17 @@ modparam("topoh", "vparam_name", "myv")
    Example 1.6. Set vparam_prefix parameter
 ...
 modparam("topoh", "vparam_prefix", "xyz")
+...
+
+3.7. callid_prefix (str)
+
+   Prefix to be added in encoded Call-ID: headers.
+
+   Default value is "!!:".
+
+   Example 1.7. Set callid_prefix parameter
+...
+modparam("topoh", "callid_prefix", "***")
 ...
 
 4. Exported Functions
