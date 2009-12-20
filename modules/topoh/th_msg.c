@@ -32,6 +32,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_via.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_refer_to.h"
 #include "th_mask.h"
 #include "th_msg.h"
 
@@ -652,6 +653,65 @@ int th_unmask_ruri(sip_msg_t *msg)
 					
 	LM_DBG("+decoded: %d: [%.*s]\n", out.len, out.len, out.s);
 	l=del_lump(msg, REQ_LINE(msg).uri.s-msg->buf, REQ_LINE(msg).uri.len, 0);
+	if (l==0)
+	{
+		LM_ERR("failed deleting r-uri\n");
+		pkg_free(out.s);
+		return -1;
+	}
+	if (insert_new_lump_after(l, out.s, out.len, 0)==0)
+	{
+		LM_ERR("could not insert new lump\n");
+		pkg_free(out.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+int th_unmask_refer_to(sip_msg_t *msg)
+{
+	str eval;
+	str *uri;
+	int ulen;
+	struct lump* l;
+	str out;
+
+	if(!((get_cseq(msg)->method_id)&(METHOD_REFER)))
+		return 0;
+
+	if(parse_refer_to_header(msg)==-1)
+	{
+		LM_DBG("no Refer-To header\n");
+		return 0;
+	}
+	if(msg->refer_to==NULL || get_refer_to(msg)==NULL)
+	{
+		LM_DBG("Refer-To header not found\n");
+		return 0;
+	}
+
+	uri = &(get_refer_to(msg)->uri);
+	if(th_get_uri_param_value(uri, &th_uparam_name, &eval)<0
+			|| eval.len<=0)
+		return -1;
+
+	out.s = th_mask_decode(eval.s, eval.len,
+				&th_uparam_prefix, 0, &out.len);
+	if(out.s==NULL)
+	{
+		LM_ERR("cannot decode r-uri\n");
+		return -1;
+	}
+
+	LM_DBG("+decoded: %d: [%.*s]\n", out.len, out.len, out.s);
+	for(ulen=0; ulen<uri->len; ulen++)
+	{
+		if(uri->s[ulen]=='?')
+			break;
+	}
+
+	l=del_lump(msg, uri->s-msg->buf, ulen, 0);
 	if (l==0)
 	{
 		LM_ERR("failed deleting r-uri\n");
