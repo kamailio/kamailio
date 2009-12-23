@@ -946,13 +946,20 @@ if (method == CANCEL) {
 
     <section id="t_drop_replies">
 	<title>
-	    <function>t_drop_replies()</function>
+	    <function>t_drop_replies([mode])</function>
 	</title>
 	<para>
 		Drops all the previously received replies in failure_route
 		block to make sure that none of them is picked up again.
-		Works only if a new branch is added to the transaction,
-		or it is explicitly replied in the script!
+	</para>
+	<para>
+		The parameter 'mode' controls which replies are dropped: 'a'
+		or missing - all replies are dropped; 'l' - replies received for
+		last set of branches are dropped; 'n' - no reply is dropped.
+	</para>
+	<para>
+		Dropping replies works only if a new branch is added to the
+		transaction, or it is explicitly replied in the script!
 	</para>
 	<example>
 	    <title><function>t_drop_replies()</function> usage</title>

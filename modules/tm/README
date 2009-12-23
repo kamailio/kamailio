@@ -96,7 +96,7 @@ Juha Heinanen
         1.5.26. t_is_expired()
         1.5.27. t_relay_cancel()
         1.5.28. t_lookup_cancel(), t_lookup_cancel(1)
-        1.5.29. t_drop_replies()
+        1.5.29. t_drop_replies([mode])
         1.5.30. t_save_lumps()
         1.5.31. t_load_contacts()
         1.5.32. t_next_contacts()
@@ -1718,12 +1718,17 @@ if (method == CANCEL) {
         # do the same as for INVITEs
 }
 
-1.5.29.  t_drop_replies()
+1.5.29.  t_drop_replies([mode])
 
    Drops all the previously received replies in failure_route block to
-   make sure that none of them is picked up again. Works only if a new
-   branch is added to the transaction, or it is explicitly replied in the
-   script!
+   make sure that none of them is picked up again.
+
+   The parameter 'mode' controls which replies are dropped: 'a' or missing
+   - all replies are dropped; 'l' - replies received for last set of
+   branches are dropped; 'n' - no reply is dropped.
+
+   Dropping replies works only if a new branch is added to the
+   transaction, or it is explicitly replied in the script!
 
    Example 66. t_drop_replies() usage
 ...
