@@ -45,6 +45,10 @@ static int blst_add_f(struct sip_msg*, char*, char*);
 static int blst_add_retry_after_f(struct sip_msg*, char*, char*);
 static int blst_del_f(struct sip_msg*, char*, char*);
 static int blst_is_blacklisted_f(struct sip_msg*, char*, char*);
+static int blst_set_ignore_f(struct sip_msg*, char*, char*);
+static int blst_clear_ignore_f(struct sip_msg*, char*, char*);
+static int blst_rpl_set_ignore_f(struct sip_msg*, char*, char*);
+static int blst_rpl_clear_ignore_f(struct sip_msg*, char*, char*);
 
 
 
@@ -59,6 +63,22 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
 	{"blst_is_blacklisted",   blst_is_blacklisted_f, 0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
+	{"blst_set_ignore",         blst_set_ignore_f,   0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_set_ignore",         blst_set_ignore_f,   1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_clear_ignore",         blst_clear_ignore_f,   0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_clear_ignore",         blst_clear_ignore_f,   1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_rpl_set_ignore",       blst_rpl_set_ignore_f, 0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_rpl_set_ignore",      blst_rpl_set_ignore_f,  1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_rpl_clear_ignore",   blst_rpl_clear_ignore_f, 0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_rpl_clear_ignore",   blst_rpl_clear_ignore_f, 1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -214,4 +234,84 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 				" blacklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLACKLIST */
 	return -1;
+}
+
+
+
+static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->fwd_send_flags.blst_imask|=blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
+}
+
+
+
+static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->fwd_send_flags.blst_imask&=~blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
+}
+
+
+
+static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->rpl_send_flags.blst_imask|=blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
+}
+
+
+
+static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->rpl_send_flags.blst_imask&=~blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
 }
