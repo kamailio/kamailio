@@ -90,16 +90,15 @@ static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
 		t=0;
 		if (unlikely( to && (get_int_fparam(&t, msg, (fparam_t*)to)<0)))
 			return -1;
-	
+		if (t==0)
+			t=cfg_get(core, core_cfg, blst_timeout);
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
 		src.proto=msg->rcv.proto;
-		if (t)
-			dst_blacklist_add_to(BLST_ADM_PROHIBITED, &src, msg,
+		dst_blacklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
 									S_TO_TICKS(t));
-		else
-			dst_blacklist_add(BLST_ADM_PROHIBITED, &src, msg);
 		return 1;
 	}else{
 		LOG(L_WARN, "WARNING: blst: blst_add: blacklist support disabled\n");
@@ -130,6 +129,7 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 			t_max=0;
 		}
 	
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
@@ -150,8 +150,8 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 		t=MAX_unsigned(t, t_min);
 		t=MIN_unsigned(t, t_max);
 		if (likely(t))
-			dst_blacklist_add_to(BLST_ADM_PROHIBITED, &src, msg,
-									S_TO_TICKS(t));
+			dst_blacklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
+										S_TO_TICKS(t));
 		return 1;
 	}else{
 		LOG(L_WARN, "WARNING: blst: blst_add_retry_after:"
@@ -173,6 +173,7 @@ static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 	
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 	
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
@@ -197,6 +198,7 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 	struct dest_info src;
 	
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
