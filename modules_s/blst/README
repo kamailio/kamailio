@@ -16,6 +16,11 @@ Andrei Pelinescu-Onciul
         1.2.2. blst_add_retry_after(min, max)
         1.2.3. blst_del()
         1.2.4. blst_is_blacklisted()
+        1.2.5. blst_set_ignore() blst_set_ignore(flags)
+                blst_rpl_set_ignore() blst_rpl_set_ignore(flags)
+
+        1.2.6. blst_clear_ignore() blst_clear_ignore(flags)
+                blst_rpl_clear_ignore() blst_rpl_clear_ignore(flags)
 
 1.1. Overview
 
@@ -80,3 +85,45 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
         drop;
    }
 ...
+
+1.2.5.  blst_set_ignore() blst_set_ignore(flags) blst_rpl_set_ignore()
+blst_rpl_set_ignore(flags)
+
+   Set errors that will not be taken into account when deciding whether or
+   not to blacklist a destination for the current message or a local reply
+   to the current message.
+
+   blst_set_ignore(..) works for forwarding the current message and
+   blst_rpl_set_ignore(...) works for local replies to the current
+   message.
+
+   The variants with no parameters will ignore everything (equivalent with
+   passing 0xff).
+
+   The following flags are defined:
+     * 0x02 - generic send error (send denied/ failed).
+     * 0x04 - connect failed (TCP, TLS or SCTP).
+     * 0x08 - ICMP error (not currently used).
+     * 0x10 - SIP transaction timeout.
+     * 0x20 - 503 reply (statefull mode only). For more details see
+       tmblst_503.
+
+Note
+
+   TCP and TLS send and connect errors are handled per connection and not
+   per message. The connection blacklist ignore flags are inherithed from
+   the message that caused the connection establishment.
+
+   Example 5. blst_set_ignore usage
+    blst_set_ignore(6); # ignore send and connect errors
+
+1.2.6.  blst_clear_ignore() blst_clear_ignore(flags) blst_rpl_clear_ignore()
+blst_rpl_clear_ignore(flags)
+
+   Clears blacklist ignore flags previously set by the corresponding
+   blst_set_ignore(...) or blst_rpl_set_ignore(...) functions.
+
+   See also blst_set_ignore.
+
+   Example 6. blst_clear_ignore usage
+    blst_clear_ignore(4); # ignore connect errors
