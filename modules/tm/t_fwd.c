@@ -1219,8 +1219,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 							uac->request.dst.proto);
 #ifdef USE_DST_BLACKLIST
-		if (cfg_get(core, core_cfg, use_dst_blacklist))
-			dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
+		dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 		/* if the destination resolves to more ips, add another

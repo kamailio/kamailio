@@ -454,13 +454,13 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 	){
 		/* no reply received */
 #ifdef USE_DST_BLACKLIST
-		if (cfg_get(core, core_cfg, use_dst_blacklist)
-        		&& r_buf->my_T
+		if (r_buf->my_T
 			&& r_buf->my_T->uas.request
-			&& (r_buf->my_T->uas.request->REQ_METHOD & cfg_get(tm, tm_cfg, tm_blst_methods_add))
+			&& (r_buf->my_T->uas.request->REQ_METHOD &
+					cfg_get(tm, tm_cfg, tm_blst_methods_add))
 		)
 			dst_blacklist_add( BLST_ERR_TIMEOUT, &r_buf->dst,
-						r_buf->my_T->uas.request);
+								r_buf->my_T->uas.request);
 #endif
 #ifdef USE_DNS_FAILOVER
 		/* if this is an invite, the destination resolves to more ips, and
