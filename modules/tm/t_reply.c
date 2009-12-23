@@ -612,7 +612,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			}
 #endif /* TMCB_ONSEND */
 		}
-		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n",
+		DBG("DEBUG: reply sent out. buf=%p: %.20s..., shmem=%p: %.20s\n",
 			buf, buf, rb->buffer, rb->buffer );
 	}
 	if (code>=200) {
@@ -1041,6 +1041,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int inv_through;
 	int extra_flags;
 	int i;
+	int replies_dropped;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -1131,6 +1132,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			drop_replies = 3;
 		else
 			drop_replies = 0;
+		replies_dropped = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 						|| Trans->on_negative )) {
@@ -1165,6 +1167,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 				/* make sure that the selected reply is not relayed even if
 				there is not any new branch added -- should not happen */
 				picked_branch = -1;
+				replies_dropped = 1;
 			}
 		}
 
@@ -1193,7 +1196,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		if (branch_cnt<Trans->nr_of_outgoings){
 			/* the new branches might be already "finished" => we
 			 * must use t_pick_branch again */
-			new_branch=t_pick_branch((drop_replies==0)?
+			new_branch=t_pick_branch((replies_dropped==0)?
 							branch :
 							-1, /* make sure we do not pick
 								the current branch */
@@ -1202,7 +1205,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 						&picked_code);
 
 			if (new_branch<0){
-				if (likely(drop_replies==0)) {
+				if (likely(replies_dropped==0)) {
 					if (new_branch==-2) { /* branches open yet */
 						*should_store=1;
 						*should_relay=-1;
@@ -1228,7 +1231,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 				/* found a new_branch */
 				picked_branch=new_branch;
 			}
-		} else if (unlikely(drop_replies)) {
+		} else if (unlikely(replies_dropped)) {
 			/* Either the script writer did not add new branches
 			after calling t_drop_replies(), or tm was unable
 			to add the new branches to the transaction. */
