@@ -1116,7 +1116,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 								 allow new branches from the failure route */
 
 		if(sr_cfg_compat==SR_COMPAT_KAMAILIO)
-			drop_replies = 1;
+			drop_replies = 3;
 		else
 			drop_replies = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
@@ -1129,7 +1129,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 						 	FL_REPLIED:0);
 			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
 									picked_code, extra_flags);
-			if (unlikely(drop_replies)) {
+			if (unlikely((drop_replies==3 && branch_cnt<Trans->nr_of_outgoings) ||
+						         (drop_replies!=0 && drop_replies!=3))
+					) {
 				/* drop all the replies that we have already saved */
 				i = 0;
 				if(drop_replies==2)
