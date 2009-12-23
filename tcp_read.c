@@ -153,20 +153,18 @@ again:
 					switch(errno){
 						case ECONNRESET:
 #ifdef USE_DST_BLACKLIST
-							if (cfg_get(core, core_cfg, use_dst_blacklist))
-								dst_blacklist_su(BLST_ERR_CONNECT,
-														c->rcv.proto,
-														&c->rcv.src_su, 0);
+							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+												&c->rcv.src_su,
+												&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 							break;
 						case ETIMEDOUT:
 #ifdef USE_DST_BLACKLIST
-							if (cfg_get(core, core_cfg, use_dst_blacklist))
-								dst_blacklist_su(BLST_ERR_CONNECT,
-														c->rcv.proto,
-														&c->rcv.src_su, 0);
+							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+												&c->rcv.src_su,
+												&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 							TCP_EV_CONNECT_TIMEOUT(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
@@ -182,10 +180,9 @@ again:
 								TCP_STATS_CON_RESET();
 							case ETIMEDOUT:
 #ifdef USE_DST_BLACKLIST
-								if (cfg_get(core, core_cfg, use_dst_blacklist))
-									dst_blacklist_su(BLST_ERR_SEND,
-														c->rcv.proto,
-														&c->rcv.src_su, 0);
+								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+													&c->rcv.src_su,
+													&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 								break;
 						}

@@ -794,8 +794,8 @@ inline static int dst_is_blacklisted_ip(unsigned char proto,
  * @param timeout - timeout in ticks
  * @return 0 on success, -1 on error
  */
-int dst_blacklist_add_to(unsigned char err_flags,  struct dest_info* si,
-						struct sip_msg* msg, ticks_t timeout)
+int dst_blacklist_force_add_to(unsigned char err_flags,  struct dest_info* si,
+								struct sip_msg* msg, ticks_t timeout)
 {
 	struct ip_addr ip;
 
@@ -812,12 +812,12 @@ int dst_blacklist_add_to(unsigned char err_flags,  struct dest_info* si,
 
 
 /** add dst to the blacklist, specifying the timeout.
- * (like @function dst_blacklist_add_to)= above, but uses 
+ * (like @function dst_blacklist_force_add_to)= above, but uses 
  * (proto, sockaddr_union) instead of struct dest_info)
  */
-int dst_blacklist_su_to(unsigned char err_flags, unsigned char proto,
-							union sockaddr_union* dst,
-							struct sip_msg* msg, ticks_t timeout)
+int dst_blacklist_force_su_to(unsigned char err_flags, unsigned char proto,
+								union sockaddr_union* dst,
+								struct sip_msg* msg, ticks_t timeout)
 {
 	struct ip_addr ip;
 #ifdef DST_BLACKLIST_HOOKS

@@ -30,6 +30,8 @@
  * --------
  *  2006-07-29  created by andrei
  *  2007-07-30  dst blacklist measurements added (Gergo)
+ *  2009-12-22  blacklist ignore mask support and dst_blacklist_{add,su}
+ *               switched to macros (andrei)
  */
 
 #ifndef dst_black_list_h
@@ -85,27 +87,110 @@ int init_dst_blacklist_stats(int iproc_num);
 void destroy_dst_blacklist();
 
 
-/* like dst_blacklist_add, but the timeout can be also set */
-int dst_blacklist_add_to(unsigned char err_flags, struct dest_info* si,
-						struct sip_msg* msg, ticks_t timeout);
-/* like above, but using a differnt way of passing the target */
-int dst_blacklist_su_to(unsigned char err_flags, unsigned char proto,
-							union sockaddr_union* dst,
-							struct sip_msg* msg, ticks_t timeout);
+/** force add to the blacklist.
+ * like @function dst_blacklist_add_to, but no ignore mask or
+ * blacklist enabled checks are made.
+ * @see dst_blacklist_add_to for the parameters and return value.
+ */
+int dst_blacklist_force_add_to(unsigned char err_flags, struct dest_info* si,
+								struct sip_msg* msg, ticks_t timeout);
+
+/** force add to the blacklist, long version.
+ * like @function dst_blacklist_su_to, but no ignore mask or
+ * blacklist enabled checks are made.
+ * @see dst_blacklist_su_to for the parameters and return value.
+ */
+int dst_blacklist_force_su_to(	unsigned char err_flags,
+								unsigned char proto,
+								union sockaddr_union* dst,
+								struct sip_msg* msg,
+								ticks_t timeout);
+
+
+/** checks if blacklist should be used.
+  * @param  err_flags - blacklist reason
+  * @param si - filled dst_info structure pointer.
+  * @return 1 if blacklist is enabled (core_cfg) and the event/error
+  *           is not in the ignore list.
+  *         0 otherwise
+  */
+#define should_blacklist(err_flags, si) \
+	(cfg_get(core, core_cfg, use_dst_blacklist) && \
+		((err_flags) & (si)->send_flags.blst_imask))
+
+
+/** checks if blacklist should be used, long version.
+  * @param  err_flags - blacklist reason
+  * @param snd_flags - snd_flags pointer, can be 0.
+  * @param proto - protocol, can be 0 (PROTO_NONE).
+  * @param si  - sockaddr_union pointer, can be 0.
+  * @return 1 if blacklist is enabled (core_cfg) and the event/error
+  *           is not in the ignore list.
+  *         0 otherwise
+  */
+#define should_blacklist_su(err_flags, snd_flags, proto, su) \
+	(cfg_get(core, core_cfg, use_dst_blacklist) && \
+		((err_flags) & \
+		 			~((snd_flags)?((snd_flags_t*)(snd_flags))->blst_imask:0)))
+
+
+/** adds a dst to the blacklist.
+ *
+ * @param  err_flags - blacklist reason
+ * @param si  - dest_info structure (dst).
+ * @param msg - sip msg struct. pointer if known, 0 otherwise.
+ * @param timeout - timeout in ticks.
+ * @return >=0 on success, -1 on error.
+ */
+#define dst_blacklist_add_to(err_flags, si, msg, timeout) \
+	(should_blacklist(err_flags, si)? \
+		dst_blacklist_force_add_to((err_flags), (si), (msg), (timeout))\
+		: 0)
+
+
+/** adds a dst to the blacklist, long version.
+ * Similar to dst_blacklist_add_to, but uses "unpacked" parameters.
+ * @param  err_flags - blacklist reason
+ * @param proto - protocol.
+ * @param dst  - sockaddr_union pointer.
+ * @param snd_flags - snd_flags pointer, can be 0.
+ * @param msg - sip msg struct. pointer if known, 0 otherwise.
+ * @param timeout - timeout in ticks.
+ * @return >=0 on success, -1 on error.
+ */
+#define dst_blacklist_su_to(err_flags, proto, dst, snd_flags, msg, timeout) \
+	(should_blacklist_su(err_flags, snd_flags, proto, dst) ? \
+		dst_blacklist_force_su_to((err_flags), (proto), (dst), (msg), \
+									(timeout))\
+		: 0)
+
 
 /** adds a dst to the blacklist with default timeout.
- * @see dst_blacklist_add_to for more details.
+ *
+ * @param  err_flags - blacklist reason
+ * @param si  - dest_info structure (dst).
+ * @param msg - sip msg struct. pointer if known, 0 otherwise.
+ * @return >=0 on success, -1 on error.
+ * @see dst_blacklist_add_to.
  */
 #define dst_blacklist_add(err_flags, si, msg) \
-	dst_blacklist_add_to((err_flags), (si), (msg), \
-		S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
+	dst_blacklist_add_to(err_flags, si, msg, \
+							S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
 
-/** adds a dst to the blacklist with default timeout.
- * @see dst_blacklist_su_to for more details.
+
+/** adds a dst to the blacklist with default timeout, long version.
+ * Similar to dst_blacklist_add_to, but uses "unpacked" parameters.
+ * @param  err_flags - blacklist reason
+ * @param proto - protocol.
+ * @param dst  - sockaddr_union pointer.
+ * @param snd_flags - snd_flags pointer, can be 0.
+ * @param msg - sip msg struct. pointer if known, 0 otherwise.
+ * @return >=0 on success, -1 on error.
+ * @see dst_blacklist_su_to.
  */
-#define dst_blacklist_su(err_flags, proto, dst, msg) \
-	dst_blacklist_su_to((err_flags), (proto), (dst), (msg), \
-		S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
+#define dst_blacklist_su(err_flags, proto, dst, snd_flags, msg) \
+	dst_blacklist_su_to(err_flags, proto, dst, snd_flags, msg, \
+							S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
 
 int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg);
 /* delete an entry from the blacklist */

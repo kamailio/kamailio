@@ -193,10 +193,7 @@ struct tcp_connection{
 /* helper macros */
 
 #define tcpconn_set_send_flags(c, snd_flags) \
-	do{ \
-		(c)->send_flags.f|=(snd_flags).f; \
-		(c)->send_flags.blst_imask|=(snd_flags).blst_imask; \
-	}while(0)
+	SND_FLAGS_OR(&(c)->send_flags, &(c)->send_flags, &(snd_flags))
 
 #define tcpconn_close_after_send(c)	((c)->send_flags.f & SND_F_CON_CLOSE)
 
