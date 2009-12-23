@@ -1248,16 +1248,19 @@ discard:
 
 branches_failed:
 	*should_store=0;
-	*should_relay=-1;
-	/* We have hopefully set tm_error in failure_route when
-	the branches failed. If not, reply with E_UNSPEC */
-	if ((kill_transaction_unsafe(Trans,
-				    tm_error ? tm_error : E_UNSPEC)
-				    ) <=0 ){
-		LOG(L_ERR, "ERROR: t_should_relay_response: "
-			"reply generation failed\n");
+	if (is_local(Trans)){
+		/* for local transactions use the current reply */
+		*should_relay=branch;
+	}else{
+		*should_relay=-1;
+		/* We have hopefully set tm_error in failure_route when
+			the branches failed. If not, reply with E_UNSPEC */
+		if ((kill_transaction_unsafe(Trans,
+				tm_error ? tm_error : E_UNSPEC)) <=0 ){
+			LOG(L_ERR, "ERROR: t_should_relay_response: "
+						"reply generation failed\n");
+		}
 	}
-	
 	return RPS_COMPLETED;
 }
 
@@ -1802,7 +1805,7 @@ error:
 	prepare_to_cancel(t, cancel_bitmap, 0);
 	UNLOCK_REPLIES(t);
 	cleanup_uac_timers(t);
-	if ( get_cseq(p_msg)->method.len==INVITE_LEN
+	if (p_msg && p_msg!=FAKED_REPLY && get_cseq(p_msg)->method.len==INVITE_LEN
 		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0)
 		cancel_uacs( t, *cancel_bitmap, F_CANCEL_B_KILL);
 	*cancel_bitmap=0; /* we've already took care of everything */
