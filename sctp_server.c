@@ -2220,6 +2220,7 @@ again:
 			/* no break */
 		case SCTP_SHUTDOWN_COMP:
 			atomic_dec(sctp_conn_no);
+			SCTP_STATS_ASSOC_SHUTDOWN();
 #ifdef SCTP_CONN_REUSE
 			/* connection down*/
 			if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking)))

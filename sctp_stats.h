@@ -37,6 +37,7 @@
 #define SCTP_STATS_CONNECT_FAILED()
 #define SCTP_STATS_LOCAL_REJECT()
 #define SCTP_STATS_REMOTE_SHUTDOWN()
+#define SCTP_STATS_ASSOC_SHUTDOWN()
 #define SCTP_STATS_COMM_LOST()
 #define SCTP_STATS_SENDQ_FULL()
 #define SCTP_STATS_SEND_FAILED()
@@ -67,6 +68,12 @@
   * sctp notification: SCTP_SHUTDOWN_EVENT
   */
 #define SCTP_STATS_REMOTE_SHUTDOWN()
+
+
+/** called each time a connection is shutdown.
+  * sctp notification: SCTP_SHUTDOWN_COMP
+  */
+#define SCTP_STATS_ASSOC_SHUTDOWN()
 
 
 /** called each time an established connection is closed due to some error.
