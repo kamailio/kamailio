@@ -40,6 +40,7 @@
 #include "action.h"
 #include "route.h"
 #include "script_cb.h"
+#include "sr_compat.h"
 
 struct onsend_info{
 	union sockaddr_union* to;
@@ -89,6 +90,10 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 			orig_msg->fwd_send_flags=fwd_snd_flags_bak;
 			orig_msg->rpl_send_flags=rpl_snd_flags_bak;
 			exec_post_script_cb(orig_msg, ONSEND_CB_TYPE);
+			if((sr_cfg_compat==SR_COMPAT_KAMAILIO)
+					&& (ret==0) && !(ra_ctx.run_flags&DROP_R_F)){
+				ret = 1;
+			}
 		} else {
 			ret=0; /* drop the message */
 		}
