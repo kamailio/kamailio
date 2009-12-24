@@ -146,6 +146,7 @@ int pv_get_snd(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct onsend_info* snd_inf;
+	str s;
 
 	snd_inf=get_onsend_info();
 	if (! likely(snd_inf && snd_inf->send_sock))
@@ -162,6 +163,13 @@ int pv_get_snd(struct sip_msg *msg, pv_param_t *param,
 		case 3: /* proto */
 			return pv_get_uintval(msg, param, res,
 					(int)snd_inf->send_sock->proto);
+		case 4: /* buf */
+			s.s   = snd_inf->buf;
+			s.len = snd_inf->len;
+			return pv_get_strval(msg, param, res, &s);
+		case 5: /* len */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->len);
 		default:
 			/* 0 - ip */
 			return pv_get_strval(msg, param, res,
@@ -183,6 +191,13 @@ int pv_parse_snd_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "af", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 3:
+			if(strncmp(in->s, "buf", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "len", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
 		break;
 		case 4:
