@@ -2218,7 +2218,11 @@ again:
 						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
 #endif /* USE_DST_BLACKLIST */
 			/* no break */
+			goto comm_lost_cont;	/* do not increment counters for
+									   SCTP_SHUTDOWN_COMP */
 		case SCTP_SHUTDOWN_COMP:
+			SCTP_STATS_ASSOC_SHUTDOWN();
+comm_lost_cont:
 			atomic_dec(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* connection down*/

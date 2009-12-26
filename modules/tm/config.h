@@ -134,6 +134,7 @@ struct cfg_group_tm {
 	unsigned int	cancel_b_flags;
 	int	reparse_on_dns_failover;
 	int disable_6xx;
+	int local_ack_mode;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;

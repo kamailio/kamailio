@@ -982,33 +982,49 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	*len = SIP_VERSION_LEN + ACK_LEN + 2 /* spaces */ + CRLF_LEN;
 	*len += ruri.len;
 	
+	/* dst */
+	switch(cfg_get(tm, tm_cfg, local_ack_mode)){
+		case 1:
+			/* send the local 200 ack to the same dst as the corresp. invite*/
+			*dst=Trans->uac[branch].request.dst;
+			break;
+		case 2: 
+			/* send the local 200 ack to the same dst as the 200 reply source*/
+			init_dst_from_rcv(dst, &rpl->rcv);
+			dst->send_flags=rpl->fwd_send_flags;
+			break;
+		case 0:
+		default:
+			/* rfc conformant behaviour: use the next_hop determined from the
+			   contact and the route set */
+#ifdef USE_DNS_FAILOVER
+		if (cfg_get(core, core_cfg, use_dns_failover)){
+			dns_srv_handle_init(&dns_h);
+			if ((uri2dst(&dns_h , dst, rpl, &next_hop, PROTO_NONE)==0) ||
+					(dst->send_sock==0)){
+				dns_srv_handle_put(&dns_h);
+				LOG(L_ERR, "build_dlg_ack: no socket found\n");
+				goto error;
+			}
+			dns_srv_handle_put(&dns_h); /* not needed any more */
+		}else{
+			if ((uri2dst(0 , dst, rpl, &next_hop, PROTO_NONE)==0) ||
+					(dst->send_sock==0)){
+				LOG(L_ERR, "build_dlg_ack: no socket found\n");
+				goto error;
+			}
+		}
+#else /* USE_DNS_FAILOVER */
+		if ( (uri2dst( dst, rpl, &next_hop, PROTO_NONE)==0) ||
+				(dst->send_sock==0)){
+				LOG(L_ERR, "build_dlg_ack: no socket found\n");
+			goto error;
+		}
+#endif /* USE_DNS_FAILOVER */
+		break;
+	}
 	
 	 /* via */
-#ifdef USE_DNS_FAILOVER
-	if (cfg_get(core, core_cfg, use_dns_failover)){
-		dns_srv_handle_init(&dns_h);
-		if ((uri2dst(&dns_h , dst, rpl, &next_hop, PROTO_NONE)==0) ||
-				(dst->send_sock==0)){
-			dns_srv_handle_put(&dns_h);
-			LOG(L_ERR, "build_dlg_ack: no socket found\n");
-			goto error;
-		}
-		dns_srv_handle_put(&dns_h); /* not needed any more */
-	}else{
-		if ((uri2dst(0 , dst, rpl, &next_hop, PROTO_NONE)==0) ||
-				(dst->send_sock==0)){
-			LOG(L_ERR, "build_dlg_ack: no socket found\n");
-			goto error;
-		}
-	}
-#else
-	if ( (uri2dst( dst, rpl, &next_hop, PROTO_NONE)==0) ||
-			(dst->send_sock==0)){
-			LOG(L_ERR, "build_dlg_ack: no socket found\n");
-		goto error;
-	}
-#endif
-	
 	if (!t_calc_branch(Trans,  branch, branch_buf, &branch_len)) goto error;
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
