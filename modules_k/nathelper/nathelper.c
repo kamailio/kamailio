@@ -1501,41 +1501,54 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 static int
 handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
 {
-    str params, uri, proto;
-    char buf[MAX_URI_SIZE], *val, *sep, *trans, *at, *next, *cur_uri;
-    unsigned int len, plen, alias_len, proto_type, cur_uri_len;
+    str uri, proto;
+    char buf[MAX_URI_SIZE], *val, *sep, *trans, *at, *next, *cur_uri, *rest;
+    unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
+	ip_port_len;
 
     if ((msg->parsed_uri_ok == 0) && (parse_sip_msg_uri(msg) < 0)) {
 	LM_ERR("while parsing Request-URI\n");
 	return -1;
     }
-    params = msg->parsed_uri.params;
-    if (params.len == 0) {
+    rest = msg->parsed_uri.params.s;
+    rest_len = msg->parsed_uri.params.len;
+    if (rest_len == 0) {
 	LM_DBG("no params\n");
 	return 2;
     }
-    if ((params.len < ALIAS_LEN) ||
-	(strncmp(params.s, ALIAS, ALIAS_LEN) != 0)) {
+    while (rest_len >= ALIAS_LEN) {
+	if (strncmp(rest, ALIAS, ALIAS_LEN) == 0) break;
+	sep = memchr(rest, 59 /* ; */, rest_len);
+	if (sep == NULL) {
+	    LM_DBG("no alias param\n");
+	    return 2;
+	} else {
+	    rest_len = rest_len - (sep - rest + 1);
+	    rest = sep + 1;
+	}
+    }
+
+    if (rest_len < ALIAS_LEN) {
 	LM_DBG("no alias param\n");
 	return 2;
     }
 
     /* set dst uri based on alias param value */
-    val = params.s + ALIAS_LEN;
-    plen = params.len - ALIAS_LEN;
-    sep = memchr(val, 116 /* t */, plen);
+    val = rest + ALIAS_LEN;
+    val_len = rest_len - ALIAS_LEN;
+    sep = memchr(val, 116 /* t */, val_len);
     if (sep == NULL) {
-	LM_ERR("no 't' in alias param\n");
+	LM_ERR("no 't' in alias param value\n");
 	return -1;
     }
     at = &(buf[0]);
     append_str(at, "sip:", 4);
-    len = sep - val;
-    alias_len = SALIAS_LEN + len + 2 /* tn */;
-    memcpy(at, val, len);
-    at = at + len;
+    ip_port_len = sep - val;
+    alias_len = SALIAS_LEN + ip_port_len + 2 /* tn */;
+    memcpy(at, val, ip_port_len);
+    at = at + ip_port_len;
     trans = sep + 1;
-    if ((len + 2 > plen) || (*trans == ';') || (*trans == '?')) {
+    if ((ip_port_len + 2 > val_len) || (*trans == ';') || (*trans == '?')) {
 	LM_ERR("no proto in alias param\n");
 	return -1;
     }
@@ -1543,7 +1556,7 @@ handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
     if (proto_type != PROTO_UDP) {
 	proto_type_to_str(proto_type, &proto);
 	if (proto.len == 0) {
-	    LM_ERR("unkown proto in alias param\n");
+	    LM_ERR("unknown proto in alias param\n");
 	    return -1;
 	}
 	append_str(at, ";transport=", 11);
@@ -1551,7 +1564,7 @@ handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	at = at + proto.len;
     }
     next = trans + 1;
-    if ((len + 2 < plen) && (*next != ';') && (*next != '?')) {
+    if ((ip_port_len + 2 < val_len) && (*next != ';') && (*next != '?')) {
 	LM_ERR("invalid alias param value\n");
 	return -1;
     }
@@ -1572,11 +1585,11 @@ handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	cur_uri_len = msg->first_line.u.request.uri.len;
     }
     at = &(buf[0]);
-    len = params.s - 1 /* ; */ - cur_uri;
+    len = rest - 1 /* ; */ - cur_uri;
     memcpy(at, cur_uri, len);
     at = at + len;
     len = cur_uri_len - alias_len - len;
-    memcpy(at, params.s + alias_len - 1, len);
+    memcpy(at, rest + alias_len - 1, len);
     uri.s = &(buf[0]);
     uri.len = cur_uri_len - alias_len;
     LM_DBG("rewriting r-uri to <%.*s>\n", uri.len, uri.s);
