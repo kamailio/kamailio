@@ -173,6 +173,10 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 		if (uri.s == NULL) 
 			return -1;
 	}
+	else
+	{
+		uri = msg->new_uri;
+	}
 	
 	res = decode_uri (uri, separator, &newUri);
 	
