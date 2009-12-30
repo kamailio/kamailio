@@ -2054,7 +2054,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	uri_str.len = r_uri_len;
 	LM_DBG("appending branch <%.*s>\n", uri_str.len, uri_str.s);
 	if (append_branch(_m, &uri_str, 0, 0, Q_UNSPECIFIED, 0, 0) == -1) {
-	    LM_ERR("when appending branch <%.*s>\n", rval);
+	    LM_ERR("when appending branch <%.*s>\n", uri_str.len, uri_str.s);
 	    return -1;
 	}
     }

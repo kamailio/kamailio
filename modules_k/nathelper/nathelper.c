@@ -283,8 +283,6 @@ static int add_contact_alias_f(struct sip_msg *, char *, char *);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
-static int rr_count_f(struct sip_msg *, char *, char *);
-static int rr_top_count_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int extract_mediaip(str *, str *, int *, char *);
 static int extract_mediainfo(str *, str *, str *);
@@ -1643,8 +1641,6 @@ static int
 pv_get_rr_top_count_f(struct sip_msg *msg, pv_param_t *param,
 		      pv_value_t *res)
 {
-    unsigned int count;
-    struct hdr_field *header;
     str uri;
     struct sip_uri puri;
 
