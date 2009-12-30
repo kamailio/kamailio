@@ -168,40 +168,36 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 			separator = contact_flds_separator[0];
 		
 	if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0))
-		{
+	{
 		uri = msg->first_line.u.request.uri;
-		if (uri.s == NULL) return -1;
-		}
+		if (uri.s == NULL) 
+			return -1;
+	}
 	
-		res = decode_uri (uri, separator, &newUri);
+	res = decode_uri (uri, separator, &newUri);
 	
 #ifdef DEBUG
-		if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
+	if (res == 0) 
+		fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
 #endif
-		if (res != 0)
-		{
-			LM_ERR("failed decoding contact.Code %d\n", res);
+	if (res != 0)
+	{
+		LM_ERR("failed decoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
-				return res;
+		return res;
 #endif
-		}
+	}
+	else
+	{
+		/* we do not modify the original first line */
+		if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) 
+			msg->new_uri = newUri;
 		else
-			/* we do not modify the original first line */
-			if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) msg->new_uri = newUri;
-				else
-					{
-						pkg_free(msg->new_uri.s);
-						msg->new_uri = newUri;
-					}
-			
-			
-		/*
-		if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 		{
-			LM_ERR("lumping failed in mangling port \n");
-			return -2;
-		}
-		*/
+			pkg_free(msg->new_uri.s);
+			msg->new_uri = newUri;
+		}		
+	}
 	return 1;
 }
 
