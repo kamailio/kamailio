@@ -1031,7 +1031,16 @@ start_recording();
 		</title>
 		<para>
 		Checks if Request URI has alias param and if so, removes
-		it and sets $du based on its value.
+		it and sets $du based on its value.  Note that this
+		means that routing of request is based on alias
+		parameter value of Request URI rather than Request URI
+		itself. If you call handle_ruri_alias() on a request,
+		make thus sure that you screen alias parameter value of
+		Request URI the same way as you would screen
+		Request URI itself.
+		</para>
+		<para>
+		Note that th		
 		</para>
 		<para>
 		This function can be used from
