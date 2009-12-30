@@ -490,14 +490,21 @@ if (is_uri_user_e164("$avp(i:705)") {
 
 	<section>
 		<title>
-		<function moreinfo="none">encode_contact(encoding_prefix)</function>
+		<function moreinfo="none">encode_contact(encoding_prefix,hostpart)</function>
 		</title>
 		<para>
 		This function will encode uri-s inside Contact header in the following 
 		manner
 		sip:username:password@ip:port;transport=protocol goes
-		sip:enc_pref*username*ip*port*protocol@public_ip * is the default 
-		separator.
+		sip:encoding_prefix*username*ip*port*protocol@hostpart.
+		</para>
+		<para>
+		* is the default separator and can be changed by setting the contact_flds_separator 
+		module parameter.
+		</para>
+		<para>
+		Note: This function discards all of the URI parameters. Thus, none of the paramters
+		(except the transport parameter which is encoded into the userpart) can be restored.
 		</para>
 		<para>
 		The function returns negative on error, 1 on success.
@@ -506,9 +513,11 @@ if (is_uri_user_e164("$avp(i:705)") {
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>encoding_prefix</emphasis> - Something to allow us 
-			to determine that a contact is encoded publicip--a routable &ip;, 
-			most probably you should
-			put your external &ip; of your &nat; box.
+			to determine that a contact is encoded.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>hostpart</emphasis> - An IP address or a hostname.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -519,7 +528,7 @@ if (is_uri_user_e164("$avp(i:705)") {
 		<title><function>encode_contact</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38"); 
+if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4"); 
 ...
 </programlisting>
 		</example>
@@ -530,9 +539,8 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 		<function moreinfo="none">decode_contact()</function>
 		</title>
 		<para>
-		This function will decode the &uri; in first line in packets which 
-		come with encoded &uri; in the following manner 
-		sip:enc_pref*username*ip*port*protocol@public_ip goes to
+		This function will decode the request URI. If the RURI is in the format
+		sip:encoding_prefix*username*ip*port*protocol@hostpart it will be decoded to
 		sip:username:password@ip:port;transport=protocol It uses the default 
 		set parameter for contact encoding separator.
 		</para>
@@ -547,7 +555,7 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 		<title><function>decode_contact</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (uri =~ "^enc*") { decode_contact(); }
+if (uri =~ "^sip:natted_client") { decode_contact(); }
 ...
 </programlisting>
 		</example>
@@ -558,9 +566,9 @@ if (uri =~ "^enc*") { decode_contact(); }
 		<function moreinfo="none">decode_contact_header()</function>
 		</title>
 		<para>
-		This function will decode &uri;s inside Contact header in the 
-		following manner sip:enc_pref*username*ip*port*protocol@public_ip goes 
-		to sip:username:password@ip:port;transport=protocol. It uses the 
+		This function will decode &uri;s inside Contact header. If the URI in the format 
+		sip:encoding_prefix*username*ip*port*protocol@hostpart it will be decoded to
+		sip:username:password@ip:port;transport=protocol. It uses the 
 		default set parameter for contact encoding separator.
 		</para>
 		<para>
@@ -574,7 +582,11 @@ if (uri =~ "^enc*") { decode_contact(); }
 		<title><function>decode_contact_header</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (uri =~ "^enc*") { decode_contact_header(); }
+reply_route[2] {
+	...
+	decode_contact_header();
+	...
+}
 ...
 </programlisting>
 		</example>

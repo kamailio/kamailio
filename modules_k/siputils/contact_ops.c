@@ -313,10 +313,10 @@ encode2format (str uri, struct uri_format *format)
 		return -1;
 	string = uri.s;
 
-
 	pos = memchr (string, '<', uri.len);
 	if (pos != NULL)	/* we are only interested of chars inside <> */
 	{
+		/* KD: I think this can be removed as the parsed contact removed <> already */
 		start = memchr (string, ':', uri.len);
 		if (start == NULL)	return -2;
 		if (start - pos < 4) return -3;
@@ -330,8 +330,9 @@ encode2format (str uri, struct uri_format *format)
 		start = memchr (string, ':', uri.len);
 		if (start == NULL)
 			return -5;
-		if (start - pos < 3)
+		if (start - string < 3)
 			return -6;
+		/* KD: FIXME: Looks like this code can not handle 'sips' URIs and discards all other URI parameters! */
 		start = start - 3;
 		end = string + uri.len;
 	}
