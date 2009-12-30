@@ -848,7 +848,13 @@ start_recording();
 6.15.  handle_ruri_alias()
 
    Checks if Request URI has alias param and if so, removes it and sets
-   $du based on its value.
+   $du based on its value. Note that this means that routing of request is
+   based on alias parameter value of Request URI rather than Request URI
+   itself. If you call handle_ruri_alias() on a request, make thus sure
+   that you screen alias parameter value of Request URI the same way as
+   you would screen Request URI itself.
+
+   Note that th
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
