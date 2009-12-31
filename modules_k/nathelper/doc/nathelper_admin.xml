@@ -1040,9 +1040,6 @@ start_recording();
 		Request URI itself.
 		</para>
 		<para>
-		Note that th		
-		</para>
-		<para>
 		This function can be used from
 		REQUEST_ROUTE, BRANCH_ROUTE, and LOCAL_ROUTE.
 		</para>

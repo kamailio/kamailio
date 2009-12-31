@@ -854,8 +854,6 @@ start_recording();
    that you screen alias parameter value of Request URI the same way as
    you would screen Request URI itself.
 
-   Note that th
-
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
 
