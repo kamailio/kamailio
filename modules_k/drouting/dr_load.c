@@ -522,7 +522,7 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db1_con_t* db_hdl,
 				continue;
 			}
 			/* lookup for the script route ID */
-			if (str_vals[3][0]) {
+			if (str_vals[3][0] && str_vals[3][0]!='0') {
 				int_vals[3] =  route_lookup(&main_rt, str_vals[3]);
 				if (int_vals[3]==-1) {
 					LM_WARN("route <%s> does not exist\n",str_vals[3]);
