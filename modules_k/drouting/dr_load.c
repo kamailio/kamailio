@@ -34,6 +34,7 @@
 
 
 #include "../../dprint.h"
+#include "../../route.h"
 //#include "../../db/db.h"
 #include "../../mem/shm_mem.h"
 
@@ -280,7 +281,7 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db1_con_t* db_hdl,
 							str *drd_table, str *drl_table, str* drr_table )
 {
 	int    int_vals[4];
-	char * str_vals[4];
+	char * str_vals[5];
 	str tmp;
 	db_key_t columns[7];
 	db1_res_t* res;
@@ -509,31 +510,41 @@ rt_data_t* dr_load_routing_info( db_func_t *dr_dbf, db1_con_t* db_hdl,
 			check_val( ROW_VALUES(row)+4, DB1_INT, 1, 0);
 			int_vals[2] = VAL_INT   (ROW_VALUES(row)+4);
 			/* ROUTE_ID column */
-			check_val( ROW_VALUES(row)+5, DB1_INT, 1, 0);
-			int_vals[3] = VAL_INT   (ROW_VALUES(row)+5);
+			check_val( ROW_VALUES(row)+5, DB1_STRING, 1, 0);
+			str_vals[3] = (char*)VAL_STRING(ROW_VALUES(row)+5);
 			/* DSTLIST column */
 			check_val( ROW_VALUES(row)+6, DB1_STRING, 1, 1);
-			str_vals[3] = (char*)VAL_STRING(ROW_VALUES(row)+6);
+			str_vals[4] = (char*)VAL_STRING(ROW_VALUES(row)+6);
 			/* parse the time definition */
 			if ((time_rec=parse_time_def(str_vals[2]))==0) {
 				LM_ERR("bad time definition <%s> for rule id %d -> skipping\n",
 					str_vals[2], int_vals[0]);
 				continue;
 			}
+			/* lookup for the script route ID */
+			if (str_vals[3][0]) {
+				int_vals[3] =  route_lookup(&main_rt, str_vals[3]);
+				if (int_vals[3]==-1) {
+					LM_WARN("route <%s> does not exist\n",str_vals[3]);
+					int_vals[3] = 0;
+				}
+			} else {
+				int_vals[3] = 0;
+			}
 			/* is gw_list a list or a list id? */
-			if (str_vals[3][0]=='#') {
-				s_id.s = str_vals[3]+1;
+			if (str_vals[4][0]=='#') {
+				s_id.s = str_vals[4]+1;
 				s_id.len = strlen(s_id.s);
 				if ( str2int( &s_id, &id)!=0 ||
-				(str_vals[3]=get_tmp_gw_list(id))==NULL ) {
+				(str_vals[4]=get_tmp_gw_list(id))==NULL ) {
 					LM_ERR("invalid reference to a GW list <%s> -> skipping\n",
-						str_vals[3]);
+						str_vals[4]);
 					continue;
 				}
 			}
 			/* build the routing rule */
 			if ((ri = build_rt_info( int_vals[2], time_rec, int_vals[3],
-					str_vals[3], rdata->pgw_l))== 0 ) {
+					str_vals[4], rdata->pgw_l))== 0 ) {
 				LM_ERR("failed to add routing info for rule id %d -> "
 					"skipping\n", int_vals[0]);
 				tmrec_free( time_rec );
@@ -573,5 +584,6 @@ error:
 		dr_dbf->free_result(db_hdl, res);
 	if (rdata)
 		free_rt_data( rdata, 1 );
+	rdata = NULL;
 	return 0;
 }
