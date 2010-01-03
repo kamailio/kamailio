@@ -9,7 +9,7 @@ Anca-Maria Vamanu
    Copyright © 2005-2008 voice-system.ro
    Revision History
    Revision $Revision: 4473 $ $Date: 2008-07-12 00:16:22 +0300 (Sat, 12
-                              Jul 2008) $
+   Jul 2008) $
      __________________________________________________________________
 
    Table of Contents
@@ -44,13 +44,12 @@ Anca-Maria Vamanu
               3.6. sort_order (int)
               3.7. ruri_avp (str)
               3.8. attrs_avp (str)
-              3.9. define_blacklist (str)
-              3.10. use_domain (int)
-              3.11. drg_user_col (str)
-              3.12. drg_domain_col (str)
-              3.13. drg_grpid_col (str)
-              3.14. fetch_rows (int)
-              3.15. force_dns (int)
+              3.9. use_domain (int)
+              3.10. drg_user_col (str)
+              3.11. drg_domain_col (str)
+              3.12. drg_grpid_col (str)
+              3.13. fetch_rows (int)
+              3.14. force_dns (int)
 
         4. Exported Functions
 
@@ -86,18 +85,17 @@ Anca-Maria Vamanu
    1.6. Set sort_order parameter
    1.7. Set ruri_avp parameter
    1.8. Set attrs_avp parameter
-   1.9. Set define_blacklist parameter
-   1.10. Set use_domain parameter
-   1.11. Set drg_user_col parameter
-   1.12. Set drg_domain_col parameter
-   1.13. Set drg_grpid_col parameter
-   1.14. Set fetch_rows parameter
-   1.15. Set force_dns parameter
-   1.16. do_routing usage
-   1.17. use_next_gw usage
-   1.18. goes_to_gw usage
+   1.9. Set use_domain parameter
+   1.10. Set drg_user_col parameter
+   1.11. Set drg_domain_col parameter
+   1.12. Set drg_grpid_col parameter
+   1.13. Set fetch_rows parameter
+   1.14. Set force_dns parameter
+   1.15. do_routing usage
+   1.16. use_next_gw usage
+   1.17. goes_to_gw usage
+   1.18. is_from_gw usage
    1.19. is_from_gw usage
-   1.20. is_from_gw usage
 
 Chapter 1. Admin Guide
 
@@ -131,13 +129,12 @@ Chapter 1. Admin Guide
         3.6. sort_order (int)
         3.7. ruri_avp (str)
         3.8. attrs_avp (str)
-        3.9. define_blacklist (str)
-        3.10. use_domain (int)
-        3.11. drg_user_col (str)
-        3.12. drg_domain_col (str)
-        3.13. drg_grpid_col (str)
-        3.14. fetch_rows (int)
-        3.15. force_dns (int)
+        3.9. use_domain (int)
+        3.10. drg_user_col (str)
+        3.11. drg_domain_col (str)
+        3.12. drg_grpid_col (str)
+        3.13. fetch_rows (int)
+        3.14. force_dns (int)
 
    4. Exported Functions
 
@@ -204,10 +201,6 @@ Chapter 1. Admin Guide
        scripting route triggering when rules are matched
      * bidirectional behavior - inbound and outbound processing (strip and
        prefixing when sending and receiving from a destination/GW)
-     * blacklisting - the module allows definition of backlists based on
-       the destination IPs. This blacklists are to be used to prevent
-       malicious forwarding to GWs (based on DNS lookups) when the script
-       logic does none-GE forwarding (like foreign domains).
 
 1.3. Performance
 
@@ -310,18 +303,18 @@ Chapter 1. Admin Guide
        draft 09):
        Table 1.4. Time recurrence attributes
 
-     Attribute                            Description
-     dastard    Start of interval (RFC 2445 DATE-TIME)
-     duration   Length of interval (RFC 2445 DURATION)
-     freq       Frequency of recurrence (secondly,minutely,hourly, daily,weekly,
-                monthly, or yearly).
-     until      bound of recurrence (RFC 2445 DATE-TIME)
-     interval   How often the recurrence repeats
-     byday      List of days of the week
-     bymonthday List of days of the month
-     byyearday  List of days of the year
-     byweekno   List of weeks of the year
-     bymonth    List of months of the year
+   Attribute Description
+   dastard Start of interval (RFC 2445 DATE-TIME)
+   duration Length of interval (RFC 2445 DURATION)
+   freq Frequency of recurrence (secondly,minutely,hourly, daily,weekly,
+   monthly, or yearly).
+   until bound of recurrence (RFC 2445 DATE-TIME)
+   interval How often the recurrence repeats
+   byday List of days of the week
+   bymonthday List of days of the month
+   byyearday List of days of the year
+   byweekno List of weeks of the year
+   bymonth List of months of the year
        The value stored in database has the format of:
        <dtstart>|<duration>|<freq>|<until>|<interval>|<byday>|<bymonthday>
        |<byyearday>|<byweekno>|<bymonth>
@@ -494,13 +487,12 @@ Chapter 1. Admin Guide
    3.6. sort_order (int)
    3.7. ruri_avp (str)
    3.8. attrs_avp (str)
-   3.9. define_blacklist (str)
-   3.10. use_domain (int)
-   3.11. drg_user_col (str)
-   3.12. drg_domain_col (str)
-   3.13. drg_grpid_col (str)
-   3.14. fetch_rows (int)
-   3.15. force_dns (int)
+   3.9. use_domain (int)
+   3.10. drg_user_col (str)
+   3.11. drg_domain_col (str)
+   3.12. drg_grpid_col (str)
+   3.13. fetch_rows (int)
+   3.14. force_dns (int)
 
 3.1. db_url(str)
 
@@ -511,7 +503,7 @@ Chapter 1. Admin Guide
    Example 1.1. Set db_url parameter
 ...
 modparam("drouting", "db_url",
-        "mysql://opensips:opensipsrw@localhost/opensips")
+        "mysql://openser:openserrw@localhost/openser")
 ...
 
 3.2. drd_table(str)
@@ -614,79 +606,64 @@ modparam("drouting", "attrs_avp", '$avp(dr_attrs)')
 modparam("drouting", "atrrs_avp", '$avp(i:67)')
 ...
 
-3.9. define_blacklist (str)
-
-   Defines a backlist based on a list of GW types - the list will contain
-   the IPs (no port, all protocols) of the GWs with the specified types.
-
-   Multiple instances of this param are allowed.
-
-   Default value is "NULL".
-
-   Example 1.9. Set define_blacklist parameter
-...
-modparam("drouting", "define_blacklist", 'bl_name= 3,5,25,23')
-modparam("drouting", "define_blacklist", 'list= 4,2')
-...
-
-3.10. use_domain (int)
+3.9. use_domain (int)
 
    Flag to configure whether to use domain match when querying database
    for user's routing group.
 
    Default value is "1".
 
-   Example 1.10. Set use_domain parameter
+   Example 1.9. Set use_domain parameter
 ...
 modparam("drouting", "use_domain", 0)
 ...
 
-3.11. drg_user_col (str)
+3.10. drg_user_col (str)
 
    The name of the column in group db table where the username is stored.
 
    Default value is "username".
 
-   Example 1.11. Set drg_user_col parameter
+   Example 1.10. Set drg_user_col parameter
 ...
 modparam("drouting", "drg_user_col", "user")
 ...
 
-3.12. drg_domain_col (str)
+3.11. drg_domain_col (str)
 
    The name of the column in group db table where the domain is stored.
 
    Default value is "domain".
 
-   Example 1.12. Set drg_domain_col parameter
+   Example 1.11. Set drg_domain_col parameter
 ...
 modparam("drouting", "drg_domain_col", "host")
 ...
 
-3.13. drg_grpid_col (str)
+3.12. drg_grpid_col (str)
 
    The name of the column in group db table where the group id is stored.
 
    Default value is "groupid".
 
-   Example 1.13. Set drg_grpid_col parameter
+   Example 1.12. Set drg_grpid_col parameter
 ...
 modparam("drouting", "drg_grpid_col", "grpid")
 ...
 
-3.14. fetch_rows (int)
+3.13. fetch_rows (int)
 
    The number of rows that should be fetched from the result of a query in
    rules db table.
 
    Default value is "2000".
 
-   Example 1.14. Set fetch_rows parameter
+   Example 1.13. Set fetch_rows parameter
 ...
 modparam("drouting", "fetch_rows", 1500)
 ...
 
-3.15. force_dns (int)
+3.14. force_dns (int)
 
    Force DNS resolving of GW/destination names (if not IPs) during
    startup. If not enabled, the GW name will be blindly used during
@@ -694,7 +671,7 @@ modparam("drouting", "fetch_rows", 1500)
 
    Default value is "1 (enabled)".
 
-   Example 1.15. Set force_dns parameter
+   Example 1.14. Set force_dns parameter
 ...
 modparam("drouting", "force_dns", 0)
 ...
@@ -707,7 +684,7 @@ modparam("drouting", "force_dns", 0)
    4.4. is_from_gw([type])
    4.5. is_from_gw( type, [flag])
 
-4.1.  do_routing("[groupID]")
+4.1. do_routing("[groupID]")
 
    Function to trigger routing of the message according to the rules in
    the database table and the configured parameters.
@@ -719,7 +696,7 @@ modparam("drouting", "force_dns", 0)
    specification. If none specified, the function will automatically try
    to query the dr_group table to get this information.
 
-   Example 1.16. do_routing usage
+   Example 1.15. do_routing usage
 ...
 do_routing();
 ...
@@ -727,7 +704,7 @@ do_routing("0");
 ...
 do_routing("$avp(i:10)");
 
-4.2.  use_next_gw()/next_routing()
+4.2. use_next_gw()/next_routing()
 
    The function takes the next available destination (set by do_routing,
    as alternative destinations) and push it into RURI. Note that the
@@ -742,7 +719,7 @@ do_routing("$avp(i:10)");
    is no other alternative destinations are found or in case of internal
    processing error.
 
-   Example 1.17. use_next_gw usage
+   Example 1.16. use_next_gw usage
 ...
 if (use_next_gw()) {
         t_relay();
@@ -750,7 +727,7 @@ if (use_next_gw()) {
 }
 ...
 
-4.3.  goes_to_gw([type])
+4.3. goes_to_gw([type])
 
    Function returns true if the destination of the current request
    (destination URI or Request URI) points (as IP) to one of the gateways.
@@ -763,7 +740,7 @@ if (use_next_gw()) {
    The function can take one optional parameter:
      * type (optional) - GW/destination type to be checked
 
-   Example 1.18. goes_to_gw usage
+   Example 1.17. goes_to_gw usage
 ...
 if (goes_to_gw("1")) {
         sl_send_reply("403","Forbidden");
@@ -771,7 +748,7 @@ if (goes_to_gw("1")) {
 }
 ...
 
-4.4.  is_from_gw([type])
+4.4. is_from_gw([type])
 
    The function checks if the sender of the message is a gateway from a
    certain group.
@@ -784,13 +761,13 @@ if (goes_to_gw("1")) {
      * flags - if message is a request and the GW has a STRIP defined,
        then apply it if GW is source.
 
-   Example 1.19. is_from_gw usage
+   Example 1.18. is_from_gw usage
 ...
 if (is_from_gw("1") {
 }
 ...
 
-4.5.  is_from_gw( type, [flag])
+4.5. is_from_gw( type, [flag])
 
    The function checks if the sender of the message is a gateway from a
    certain group.
@@ -802,7 +779,7 @@ if (is_from_gw("1") {
      * flags (optional) - if message is a request and the GW has a STRIP
        defined, then apply it if GW is source.
 
-   Example 1.20. is_from_gw usage
+   Example 1.19. is_from_gw usage
 ...
 if (is_from_gw("3","1") {
 }
@@ -812,7 +789,7 @@ if (is_from_gw("3","1") {
 
    5.1. dr_reload
 
-5.1.  dr_reload
+5.1. dr_reload
 
    Command to reload routing rules from database.
 
@@ -824,11 +801,10 @@ if (is_from_gw("3","1") {
 
 6. Installation
 
-   The module requires 3 table in OpenSIPS database: dr_groups,
+   The module requires 3 table in Kamailio database: dr_groups,
    dr_gateways, dr_rules. The SQL syntax to create them can be found in
-   drouting-create.sql script in the database directories in the
-   opensips/scripts folder. You can also find the complete database
-   documentation on the project webpage,
+   drouting-create.sql script in kamctl db directories. You can also find
+   the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
 Chapter 2. Developer Guide

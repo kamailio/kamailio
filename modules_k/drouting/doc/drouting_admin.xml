@@ -823,7 +823,7 @@
 		<programlisting format="linespecific">
 ...
 modparam("drouting", "db_url", 
-	"mysql://opensips:opensipsrw@localhost/opensips")
+	"mysql://openser:openserrw@localhost/openser")
 ...
 </programlisting>
 		</example>
@@ -1319,10 +1319,10 @@ if (is_from_gw("3","1") {
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires 3 table in OpenSIPS database: dr_groups,
+	The module requires 3 table in &kamailio; database: dr_groups,
 	dr_gateways, dr_rules. The SQL syntax to create them can be
-	found in drouting-create.sql script in the database directories
-	in the opensips/scripts folder. You can also find the complete
+	found in drouting-create.sql script in kamctl db directories.
+	You can also find the complete
 	database documentation on the project webpage, &kamailiodbdocslink;.
 	</para>
 </section>
