@@ -22,6 +22,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Usrloc module
+ * \ingroup core
+ * Module: \ref core
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,13 +124,13 @@ str* build_pidf(ucontact_t* c)
 	if(doc==0)
 		return NULL;
 
-    root_node = xmlNewNode(NULL, BAD_CAST "presence");
+    	root_node = xmlNewNode(NULL, BAD_CAST "presence");
 	if(root_node==0)
 		goto error;
     
 	xmlDocSetRootElement(doc, root_node);
 
-    xmlNewProp(root_node, BAD_CAST "xmlns",
+    	xmlNewProp(root_node, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:pidf");
 	xmlNewProp(root_node, BAD_CAST "xmlns:dm",
 			BAD_CAST "urn:ietf:params:xml:ns:pidf:data-model");
@@ -167,9 +175,9 @@ str* build_pidf(ucontact_t* c)
 
 	LM_DBG("new_body:\n%.*s\n",body->len, body->s);
 
-    /*free the document */
+    	/*free the document */
 	xmlFreeDoc(doc);
-    xmlCleanupParser();
+    	xmlCleanupParser();
 
 	return body;
 
@@ -204,17 +212,21 @@ void ul_publish(ucontact_t* c, int type, void* param)
 		return;
 	}	
 
-	if(type & UL_CONTACT_DELETE)
+	if(type & UL_CONTACT_DELETE) {
 		LM_DBG("\nDELETE type\n");
-	else
-		if(type & UL_CONTACT_INSERT)
+	} else {
+		if(type & UL_CONTACT_INSERT) {
 			LM_DBG("\nINSERT type\n");
-		else
-			if(type & UL_CONTACT_UPDATE)
+		} else {
+			if(type & UL_CONTACT_UPDATE) {
 				LM_DBG("\nUPDATE type\n");
-			else
-				if(type & UL_CONTACT_EXPIRE)
+			} else {
+				if(type & UL_CONTACT_EXPIRE) {
 					LM_DBG("\nEXPIRE type\n");
+				}
+			}
+		}
+	}
 
 	if(type & UL_CONTACT_INSERT)
 	{

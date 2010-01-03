@@ -17,7 +17,7 @@
 	<title>Overview</title>
 	<para>
 	This module implements generic string translations based on matching and
-	replacement rules. It can be used to manipulate R-URI or a PV and to 
+	replacement rules. It can be used to manipulate Request URI or a PV and to 
 	translated to a new format/value.
 	</para>
 	</section>
@@ -32,13 +32,13 @@
 	the matching transformation.
 	</para>
 	<para>
-	The module expects an input value which will be matched against a rules
-	via regexp (see 'man pcresyntax' for syntax) or string
-	matching. Overlapping matching expressions can be 
-	controlled via priorities. Once a rule is matched, the defined 
-	transformation (if any) is applied and the result is returned as output 
-	value. Also, if any string attribute is associated to the rule, this will 
-	be returned to the script along with the output value.
+	The module expects an input value which will be matched against a rule
+	by using regular expressions (see 'man pcresyntax' for syntax) or string
+	matching. Overlapping matching expressions can be controlled via priorities. 
+	Once a rule is matched, the defined transformation (if any) is applied and 
+	the result is returned as output value. Also, if any string attribute is 
+	associated to the rule, this will be returned to the script along with
+	the output value.
 	</para>
 	<para>
 	<emphasis> The first matching rule will be processed.</emphasis>
@@ -53,8 +53,8 @@
 	numbers to specific numbers (like for emergency numbers).
 	</para>
 	<para>
-	Also the module can be used for detecting range or sets of numbers mapped 
-	on a service/case - attributes string can be used here to store extra 
+	The module can also be used for detecting range or sets of numbers mapped 
+	on a service/case - attribute string can be used here to store extra 
 	information about the service/case.
 	</para>
 	<para>
@@ -107,7 +107,7 @@
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		The translation rules will be loaded using this database url.
+		The translation rules will be loaded using this database URL.
 		</para>
 		<para>
 		<emphasis>
@@ -148,7 +148,7 @@ modparam("dialplan", "table_name", "my_table")
 	<section>
 		<title><varname>dpid_col</varname> (string)</title>
 		<para>
-		The column name to store the dialplan ID group.
+		The column name used to store the dialplan ID group.
 		</para>
 		<para>
 		<emphasis>
@@ -168,7 +168,7 @@ modparam("dialplan", "dpid_col", "column_name")
 	<section>
 		<title><varname>pr_col</varname> (string)</title>
 		<para>
-		The column name to store the priority of the corresponding rule from the database
+		The column name used to store the priority of the corresponding rule from the database
 		row.
 		</para>
 		<para>
@@ -189,7 +189,7 @@ modparam("dialplan", "pr_col", "column_name")
 	<section>
 		<title><varname>match_op_col</varname> (string)</title>
 		<para>
-		The column name to store the type of matching of the rule.
+		The column name used to store the type of matching of the rule.
 		</para>
 		<para>
 		<emphasis>
@@ -331,7 +331,7 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 	<section>
 		<title><varname>fetch_rows</varname> (int)</title>
 		<para>
-		The number of rows to be fetched at once from database/
+		The number of rows to be fetched at once from database
 		</para>
 		<para>
 		<emphasis>
@@ -378,13 +378,13 @@ modparam("dialplan", "fetch_rows", 4000)
 			
 			<listitem>
 			<para><emphasis>avp var</emphasis> 
-			-the dialplan id is the value of an existing avp variable
+			- the dialplan id is the value of an existing avp variable
 			</para>
 			</listitem>
 
 			<listitem>
 			<para><emphasis>script var</emphasis> 
-			-the dialplan id is the value of an existing script variable.</para>
+			- the dialplan id is the value of an existing script variable.</para>
 			</listitem>
 		</itemizedlist>
   	</listitem>
@@ -410,7 +410,7 @@ modparam("dialplan", "fetch_rows", 4000)
 			<listitem>
 			<para><emphasis>avp var</emphasis> </para>
 			<para>
-			-At input the function will get the input string from an existing 
+			- At input the function will get the input string from an existing 
 			avp variable. At output the function will add an avp with the 
 			value of the output string.
 			</para>
@@ -419,7 +419,7 @@ modparam("dialplan", "fetch_rows", 4000)
 			<listitem>
 			<para><emphasis>script var</emphasis> </para>
 			<para>
-			-At input the function will get the input string from an existing 
+			- At input the function will get the input string from an existing 
 			script variable. At output the function will set an script variable
 			with the value of the output string.
 			</para>
@@ -461,7 +461,7 @@ xlog("translated to var $var(y) \n");
 		<section>
 			<title><varname>dp_reload</varname></title>
 			<para>
-			It will update the translation rules, loading the database info.
+			Forces an update of the translation rules from the database.
 			</para>
 		<para>
 		Name: <emphasis>dp_reload</emphasis>
@@ -479,7 +479,7 @@ xlog("translated to var $var(y) \n");
     <section>
 			<title><varname>dp_translate</varname></title>
 			<para>
-                It will apply a translation rule identified by a dialplan
+                Will apply a translation rule identified by a dialplan
                 id and an input string.
 			</para>
 		<para>
@@ -509,7 +509,7 @@ xlog("translated to var $var(y) \n");
     <section>
 	    <title>Installation</title>
 	    <para>
-        The modules requires one table in Kamailio database: dialplan.The SQL 
+        The modules requires one table in &kamailio; database: dialplan. The SQL 
         syntax to create them can be found in dialplan-create.sql     
         script in the database directories in the kamailio/scripts folder.
         You can also find the complete database documentation on the

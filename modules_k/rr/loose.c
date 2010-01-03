@@ -597,7 +597,7 @@ static inline int after_strict(struct sip_msg* _m)
 		 * send interface the one advertise in second Route */
 		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
 		if (si) {
-			_m->force_send_socket = si;
+			set_force_socket(_m, si);
 		} else {
 			LM_WARN("no socket found for match second RR\n");
 		}
@@ -813,7 +813,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 			si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
 			if (si) {
-				_m->force_send_socket = si;
+				set_force_socket(_m, si);
 			} else {
 				LM_WARN("no socket found for match second RR\n");
 			}

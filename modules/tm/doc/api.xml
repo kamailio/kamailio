@@ -17,18 +17,15 @@
 	There are applications which would like to generate SIP transactions
 	without too big involvement in SIP stack, transaction management,
 	etc. An example of such an application is sending instant messages from
-	a website. To address needs of such apps, SER accepts requests for
-	new transactions via fifo pipes too. If you want to enable this
-	feature, start <acronym>FIFO</acronym> server with configuration
-	option.
+	a website. To address needs of such apps, SIP-router accepts requests for
+	new transactions via the management interface. If you want to enable this
+	feature, start the management interface server by configuring the proper
+	modules.
     </para>
     <para>
-	fifo="/tmp/ser_fifo"
-    </para>
-    <para>
-	Then, an application can easily launch a new transaction by writing a
-	transaction request to this named pipe. The request must follow very
-	simple format, which is
+	An application can easily launch a new transaction by writing a
+	transaction request to this interface. The request must follow very
+	simple format, which for the basic FIFO interface is
     </para>
     <programlisting>
  :t_uac_from:[&lt;file_name&gt;]\n

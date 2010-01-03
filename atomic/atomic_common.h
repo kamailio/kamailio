@@ -15,10 +15,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+
+/** @file       @brief
  * common part for all the atomic operations (atomic_t and common operations)
- *  See atomic_ops.h for more info.
+ *  See @ref atomic_ops.h for more info.
  */
+
 /* 
  * History:
  * --------
@@ -28,15 +30,17 @@
 #ifndef __atomic_common
 #define __atomic_common
 
-/* atomic_t defined as a struct to easily catch non atomic ops. on it,
+/** @brief atomic_t defined as a struct to easily catch non atomic ops. on it,
  * e.g.  atomic_t  foo; foo++  will generate a compile error */
 typedef struct{ volatile int val; } atomic_t; 
 
 
-/* store and load operations are atomic on all cpus, note however that they
+/** @name AtomicOps store and load operations are atomic on all cpus, note however that they
  * don't include memory barriers so if you want to use atomic_{get,set} 
  * to implement mutexes you must use the mb_* versions or explicitely use
  * the barriers */
+
+/*@{ */
 
 #define atomic_set_int(pvar, i) (*(int*)(pvar)=i)
 #define atomic_set_long(pvar, i) (*(long*)(pvar)=i)
@@ -50,5 +54,6 @@ inline static int atomic_get(atomic_t *v)
 	return atomic_get_int(&(v->val));
 }
 
+/*@} */
 
 #endif

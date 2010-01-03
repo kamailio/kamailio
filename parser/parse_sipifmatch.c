@@ -1,3 +1,9 @@
+/*! \file
+ * \brief Parser :: Parse if-match header
+ *
+ * \ingroup parser
+ */
+
 #include <string.h>
 
 #include "parse_sipifmatch.h"
@@ -25,8 +31,7 @@ static inline char* skip_token(char* _b, int _l)
 }
 
 
-int
-etag_parser(char *_s, int _l, str *_e)
+int etag_parser(char *_s, int _l, str *_e)
 {
         char* end;
 
@@ -47,8 +52,7 @@ etag_parser(char *_s, int _l, str *_e)
 }
 
 
-int
-parse_sipifmatch(struct hdr_field* _h)
+int parse_sipifmatch(struct hdr_field* _h)
 {
 	str *e;
 

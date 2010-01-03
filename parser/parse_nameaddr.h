@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,31 +24,37 @@
  * 2003-03-24 Created by janakj
  */
 
+/*! \file
+ * \brief Parser :: Parse name-addr part
+ *
+ * \ingroup parser
+ */
+
 #ifndef PARSE_NAMEADDR_H
 #define PARSE_NAMEADDR_H
 
 #include <stdio.h>
 #include "../str.h"
 
-/*
+/*! \brief
  * Name-addr structure, see RFC3261 for more details
  */
 typedef struct name_addr {
-	str name;   /* Display name part */
-	str uri;    /* Uri part without surrounding <> */
-	int len;    /* Total length of the field (including all
+	str name;   /*!< Display name part */
+	str uri;    /*!< Uri part without surrounding <> */
+	int len;    /*!< Total length of the field (including all
 		    * whitechars present in the parsed message */
 } name_addr_t;
 
 
-/*
+/*! \brief
  * Parse name-addr part, the given string can be longer,
  * parsing will stop when closing > is found
  */
 int parse_nameaddr(str* _s, name_addr_t* _a);
 
 
-/*
+/*! \brief
  * Print a name-addr structure, just for debugging
  */
 void print_nameaddr(FILE* _o, name_addr_t* _a);

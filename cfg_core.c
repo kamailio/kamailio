@@ -3,19 +3,14 @@
  *
  * Copyright (C) 2007 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -31,11 +26,24 @@
  */
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core ::  Core configuration parser
  * \ingroup core
  * Module: \ref core
+ *
+ * See 
+ * - \ref ConfigCoreDoc
+ * - \ref ConfigEngine
+ * - \ref cfg_core.h
  */
-
+/*!
+ * \page ConfigCoreDoc Documentation of configuration parser
+ * \section ConfigParser Configuration parser
+ * Further information
+ * - \ref ConfigEngine
+ * - \ref cfg_core.h
+ * \verbinclude cfg.txt
+ *
+ */
 
 #include "dprint.h"
 #ifdef USE_DST_BLACKLIST
@@ -53,56 +61,56 @@
 #include "cfg_core.h"
 
 struct cfg_group_core default_core_cfg = {
-	L_WARN, 	/*  print only msg. < L_WARN */
-	LOG_DAEMON,	/* log_facility -- see syslog(3) */
-	L_DBG,  /* memdbg */
+	L_WARN, 	/*!<  print only msg. < L_WARN */
+	LOG_DAEMON,	/*!< log_facility -- see syslog(3) */
+	L_DBG,  /*!< memdbg */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
-	0, /* dst blacklist is disabled by default */
+	0, /*!< dst blacklist is disabled by default */
 	DEFAULT_BLST_TIMEOUT,
 	DEFAULT_BLST_MAX_MEM,
 #endif
 	/* resolver */
 #ifdef USE_IPV6
-	1,  /* dns_try_ipv6 -- on by default */
+	1,  /*!< dns_try_ipv6 -- on by default */
 #else
-	0,  /* dns_try_ipv6 -- off, if no ipv6 support */
+	0,  /*!< dns_try_ipv6 -- off, if no ipv6 support */
 #endif
-	0,  /* dns_try_naptr -- off by default */
-	30,  /* udp transport preference (for naptr) */
-	20,  /* tcp transport preference (for naptr) */
-	10,  /* tls transport preference (for naptr) */
-	20,  /* sctp transport preference (for naptr) */
-	-1, /* dns_retr_time */
-	-1, /* dns_retr_no */
-	-1, /* dns_servers_no */
-	1,  /* dns_search_list */
-	1,  /* dns_search_fmatch */
-	0,  /* dns_reinit */
+	0,  /*!< dns_try_naptr -- off by default */
+	30,  /*!< udp transport preference (for naptr) */
+	20,  /*!< tcp transport preference (for naptr) */
+	10,  /*!< tls transport preference (for naptr) */
+	20,  /*!< sctp transport preference (for naptr) */
+	-1, /*!< dns_retr_time */
+	-1, /*!< dns_retr_no */
+	-1, /*!< dns_servers_no */
+	1,  /*!< dns_search_list */
+	1,  /*!< dns_search_fmatch */
+	0,  /*!< dns_reinit */
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
-	1,  /* use_dns_cache -- on by default */
-	0,  /* dns_cache_flags */
-	0,  /* use_dns_failover -- off by default */
-	0,  /* dns_srv_lb -- off by default */
-	DEFAULT_DNS_NEG_CACHE_TTL, /* neg. cache ttl */
-	DEFAULT_DNS_CACHE_MIN_TTL, /* minimum ttl */
-	DEFAULT_DNS_CACHE_MAX_TTL, /* maximum ttl */
-	DEFAULT_DNS_MAX_MEM, /* dns_cache_max_mem */
-	0, /* dns_cache_del_nonexp -- delete only expired entries by default */
+	1,  /*!< use_dns_cache -- on by default */
+	0,  /*!< dns_cache_flags */
+	0,  /*!< use_dns_failover -- off by default */
+	0,  /*!< dns_srv_lb -- off by default */
+	DEFAULT_DNS_NEG_CACHE_TTL, /*!< neg. cache ttl */
+	DEFAULT_DNS_CACHE_MIN_TTL, /*!< minimum ttl */
+	DEFAULT_DNS_CACHE_MAX_TTL, /*!< maximum ttl */
+	DEFAULT_DNS_MAX_MEM, /*!< dns_cache_max_mem */
+	0, /*!< dns_cache_del_nonexp -- delete only expired entries by default */
 #endif
 #ifdef PKG_MALLOC
-	0, /* mem_dump_pkg */
+	0, /*!< mem_dump_pkg */
 #endif
 #ifdef SHM_MEM
-	0, /* mem_dump_shm */
+	0, /*!< mem_dump_shm */
 #endif
-	DEFAULT_MAX_WHILE_LOOPS, /* max_while_loops */
-	0, /* udp_mtu (disabled by default) */
-	0, /* udp_mtu_try_proto -> default disabled */
-	0,  /* force_rport */
-	L_DBG, /* memlog */
-	1 /* mem_summary -flags: 0 off, 1 shm/pkg_status, 2 shm/pkg_sums */
+	DEFAULT_MAX_WHILE_LOOPS, /*!< max_while_loops */
+	0, /*!< udp_mtu (disabled by default) */
+	0, /*!< udp_mtu_try_proto -> default disabled */
+	0,  /*!< force_rport */
+	L_DBG, /*!< memlog */
+	1 /*!< mem_summary -flags: 0 off, 1 shm/pkg_status, 2 shm/pkg_sums */
 };
 
 void	*core_cfg = &default_core_cfg;

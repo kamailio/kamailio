@@ -1,3 +1,9 @@
+/*! \file
+ * \brief Parser :: Parse if-match header
+ *
+ * \ingroup parser
+ */
+
 #ifndef PARSE_SIPIFMATCH_H
 #define PARSE_SIPIFMATCH_H
 
@@ -9,13 +15,13 @@ typedef struct etag {
 } etag_t;
 
 
-/*
+/*! \brief
  * Parse Sipifmatch HF body
  */
 int parse_sipifmatch(struct hdr_field* _h);
 
 
-/*
+/*! \brief
  * Release memory
  */
 void free_sipifmatch(str** _e);

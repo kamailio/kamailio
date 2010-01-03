@@ -15,12 +15,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+
+/** @file @brief
  *  memory barriers for sparc32 ( version < v 9))
  *  see atomic_ops.h for more details 
  *
  * Config defines: NOSMP
  */
+
 /* 
  * History:
  * --------

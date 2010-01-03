@@ -67,7 +67,7 @@
 		<title>Dialog support in RR module</title>
 		<programlisting format="linespecific">
   
-UAC                       Kamailio PROXY                          UAS
+UAC                       &kamailio; PROXY                          UAS
 
 ---- INVITE ------&gt;       record_route()          ----- INVITE ----&gt;
                      add_rr_param(";foo=true")

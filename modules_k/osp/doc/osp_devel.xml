@@ -12,6 +12,6 @@
 <chapter>
   
   <title>&develguide;</title>
-  <para>The functions of the OSP modules are not used by other Kamailio modules.</para>
+  <para>The functions of the OSP modules are not used by other &kamailio; modules.</para>
 </chapter>
 

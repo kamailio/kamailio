@@ -4,13 +4,13 @@
 # --------
 # 2007-12-06:	Created by Miklos
 
-SER Configuration Framework
+SIP-router Configuration Framework
 
 1. Overview
 ===============================================================================
 
-The configuration framework can be used by SER core and by the modules,
-to get and set internal variables on-the-fly, and eliminate SER restarts
+The configuration framework can be used by SIP-router core and by modules,
+to get and set internal variables on-the-fly, and eliminate server restarts
 whenever it is possible.
 
 The core and the modules can declare configuration variables, and can

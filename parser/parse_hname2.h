@@ -12,11 +12,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,6 +22,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Fast 32-bit Header Field Name Parser
+ *
+ * \ingroup parser
+ */
 
 #ifndef PARSE_HNAME2_H
 #define PARSE_HNAME2_H
@@ -34,7 +34,7 @@
 #include "hf.h"
 
 
-/*
+/*! \brief
  * Fast 32-bit header field name parser
  */
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr);

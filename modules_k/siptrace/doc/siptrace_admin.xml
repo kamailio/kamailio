@@ -23,7 +23,7 @@
 		<itemizedlist>
 		<listitem>
 		<para>
-		by calling explicitely the sip_trace() method in Kamailio configuration
+		by calling explicitely the sip_trace() method in &kamailio; configuration
 		file. In this case the original message is processed.
 		</para>
 		</listitem>

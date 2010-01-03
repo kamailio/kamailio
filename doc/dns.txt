@@ -6,8 +6,8 @@
 # 2007-06-18  added naptr & friends, dns_srv_lb, more compile options (andrei)
 #
 
-Overview
---------
+SIP-router and DNS Overview
+---------------------------
 
  The dns subsystem in sip-router can either directly use libresolv and a combination
   of the locally configured dns server, /etc/hosts and the local Network 

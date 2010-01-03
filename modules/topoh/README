@@ -31,6 +31,7 @@ Daniel-Constantin Mierla
               3.4. uparam_prefix (str)
               3.5. vparam_name (str)
               3.6. vparam_prefix (str)
+              3.7. callid_prefix (str)
 
         4. Exported Functions
 
@@ -44,6 +45,7 @@ Daniel-Constantin Mierla
    1.4. Set uparam_prefix parameter
    1.5. Set vparam_name parameter
    1.6. Set vparam_prefix parameter
+   1.7. Set callid_prefix parameter
 
 Chapter 1. Admin Guide
 
@@ -63,6 +65,7 @@ Chapter 1. Admin Guide
         3.4. uparam_prefix (str)
         3.5. vparam_name (str)
         3.6. vparam_prefix (str)
+        3.7. callid_prefix (str)
 
    4. Exported Functions
 
@@ -70,10 +73,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module hides the routing headers that show topology details. It it
-   is not affected by the server being transaction stateless or stateful.
-   The script interpretor gets the SIP messages decoded, so all
-   functionality existing so far is preserved.
+   This module hides the SIP routing headers that show topology details.
+   It it is not affected by the server being transaction stateless or
+   stateful. The script interpreter gets the SIP messages decoded, so all
+   existing functionality is preserved.
 
    The module is transparent for the configuration writer. It only needs
    to be loaded (tune the parameters if needed). The SIP server can be
@@ -98,7 +101,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * None. In the future the module can be enhnaced to use a stronger
+     * None. In the future the module can be enhanced to use a stronger
        encryption algorithm.
 
 3. Exported Parameters
@@ -109,6 +112,7 @@ Chapter 1. Admin Guide
    3.4. uparam_prefix (str)
    3.5. vparam_name (str)
    3.6. vparam_prefix (str)
+   3.7. callid_prefix (str)
 
 3.1. mask_key (str)
 
@@ -137,7 +141,7 @@ modparam("topoh", "mask_callid", 1)
 
 3.3. uparam_name (str)
 
-   Name of URI param where to store encoded value.
+   Name of URI parameter where to store encoded value.
 
    Default value is "line".
 
@@ -148,7 +152,7 @@ modparam("topoh", "uparam_name", "myparam")
 
 3.4. uparam_prefix (str)
 
-   Prefix to be added in encoded URI params.
+   Prefix to be added in encoded URI parameters.
 
    Default value is "sr-".
 
@@ -159,7 +163,7 @@ modparam("topoh", "uparam_prefix", "xyz")
 
 3.5. vparam_name (str)
 
-   Name of Via: parameter where to store encoded value.
+   Name of Via: parameter used to store encoded value.
 
    Default value is "branch".
 
@@ -177,6 +181,17 @@ modparam("topoh", "vparam_name", "myv")
    Example 1.6. Set vparam_prefix parameter
 ...
 modparam("topoh", "vparam_prefix", "xyz")
+...
+
+3.7. callid_prefix (str)
+
+   Prefix to be added in encoded Call-ID: headers.
+
+   Default value is "!!:".
+
+   Example 1.7. Set callid_prefix parameter
+...
+modparam("topoh", "callid_prefix", "***")
 ...
 
 4. Exported Functions

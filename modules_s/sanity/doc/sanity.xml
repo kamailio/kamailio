@@ -33,15 +33,15 @@
 	<para>
 		This module aims to implement several sanity checks on incoming
 		requests which are suggested or even required by a RFC, but are
-		not available yet in the core of SER.
+		not available yet in the core of SIP-router.
 	</para>
 	<para>
-		This checks are not required by SER itself for its functionality.
+		This checks are not required by SIP-router itself for its functionality.
 		But on the other side it makes not much sence if a broken
 		request traverses through a SIP network if it is rejected sooner
 		or later by a SIP device any way. As every sanity cost extra
 		performance because of additional parsing and evaluation it
-		is now with this module up to the SER adminstrator which checks
+		is now with this module up to the SIP-router adminstrator which checks
 		should be done on which request.
 	</para>
 	<para>
@@ -56,7 +56,7 @@
 		<listitem>
 			<para>
 			ruri scheme - (2) - checks if the URI scheme of the request URI is
-			supported (sip[s]|tel[s]) by SER.
+			supported (sip[s]|tel[s]) by SIP-router.
 			</para>
 		</listitem>
 		<listitem>
@@ -111,7 +111,7 @@
 		<listitem>
 			<para>
 			parse uri's - (1024) - checks if the specified URIs are present and
-			parseable by the SER parsers
+			parseable by the SIP-router parsers
 			</para>
 		</listitem>
 		<listitem>

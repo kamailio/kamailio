@@ -35,19 +35,19 @@ CFG=33.cfg
 
 cp $CFG $CFG.bak
 
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
 
 if [ $ret -eq 0 ] ; then
-	../scripts/$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
+	$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
 	ret=$?
 fi;
 
 echo " " >> $CFG
 if [ $ret -eq 0 ] ; then
-	../scripts/$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
+	$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
 	ret=$?
 fi;
 

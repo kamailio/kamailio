@@ -6,19 +6,14 @@
  *
  * Copyright (C) 2005 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -27,9 +22,17 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 /* History:
  * --------
  *  2005-07-27  complete re-design/re-implemnetation (andrei)
+ */
+
+/**
+ * @file
+ * @brief SIP-router core :: Timer related functions (internal)
+ * @ingroup core
+ * Module: @ref core
  */
 
 
@@ -46,23 +49,26 @@ struct timer_head{
 
 
 
-/* hierarchical timing wheel with 3 levels
+/** @name hierarchical timing wheel with 3 levels
+ *
  * Most timeouts should go in the first "wheel" (h0)
  * h0 will contain timers expiring from crt. time up to
  * crt. time + (1<<H0_BITS)/TICKS_HZ s and will use
  * (1<<H0_BITS)*sizeof(struct timer_head) bytes of memory, so arrange it
  * accordingly
- */
-
-#define H0_BITS 14
-#define H1_BITS  9 
-#define H2_BITS  (32-H1_BITS-H0_BITS)
-/* Uses ~280K on a 64 bits system and ~140K on a 32 bit system; for TICKS_HZ=10
+ *
+ * Uses ~280K on a 64 bits system and ~140K on a 32 bit system; for TICKS_HZ=10
  * holds ~ 30 min in the first hash/wheel and ~233h in the first two.
  * More perfomant arrangement: 16, 8, 8 (but eats 1 MB on a 64 bit system, and
  *  512K on a 32 bit one). For TICKS_HZ=10 it holds almost 2h in the
  *  first hash/wheel and ~460h in the first two.
  */
+/*@{ */
+
+#define H0_BITS 14
+#define H1_BITS  9 
+#define H2_BITS  (32-H1_BITS-H0_BITS)
+
 
 #define H0_ENTRIES (1<<H0_BITS)
 #define H1_ENTRIES (1<<H1_BITS)
@@ -72,6 +78,7 @@ struct timer_head{
 #define H1_MASK (H1_ENTRIES-1)
 #define H1_H0_MASK ((1<<(H0_BITS+H1_BITS))-1)
 
+/*@} */
 
 struct timer_lists{
 	struct timer_head  h0[H0_ENTRIES];
@@ -99,7 +106,8 @@ extern struct timer_lists* timer_lst;
 
 
 
-/* generic add timer entry to the timer lists function (see _timer_add)
+/** @brief generic add timer entry to the timer lists function (see _timer_add)
+ *
  * tl->expire must be set previously, delta is the difference in ticks
  * from current time to the timer desired expire (should be tl->expire-*tick)
  * If you don't know delta, you probably want to call _timer_add instead.
@@ -193,7 +201,7 @@ static inline void timer_lst_mv1(ticks_t t, struct timer_head* h)
 }
 
 
-/* possible faster version */
+/** @brief possible faster version */
 static inline void timer_run(ticks_t t)
 {
 	/* trust the compiler for optimizing */

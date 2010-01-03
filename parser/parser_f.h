@@ -30,6 +30,15 @@
  * 2003-03-24 find_not_quoted function added (janakj)
  */
 
+/*! \file
+ * \brief Parser :: Parser helper functions
+ *
+ * turn the most frequently called functions into inline functions
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef parser_f_h
 #define parser_f_h

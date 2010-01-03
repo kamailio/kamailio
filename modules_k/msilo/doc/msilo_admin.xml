@@ -265,8 +265,8 @@ modparam("msilo", "reminder", "sip:registrar@example.org")
 		<title><varname>outbound_proxy</varname> (string)</title>
 		<para>
 		The &sip; address used as next hop when sending the message. Very
-		useful when using Kamailio with a domain name not in DNS, or when
-		using a separate Kamailio instance for msilo processing. If not set,
+		useful when using &kamailio; with a domain name not in DNS, or when
+		using a separate &kamailio; instance for msilo processing. If not set,
 		the message will be sent to the address in destination URI.
 		</para>
 		<para>

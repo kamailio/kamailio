@@ -39,6 +39,22 @@
  *  2009-06-21  Added support for more than one lcr instance and
                 gw defunct capability (jh)
  */
+/*!
+ * \file
+ * \brief SIP-router LCR :: Module interface
+ * \ingroup lcr
+ * Module: \ref lcr
+ */
+
+/*! \defgroup lcr SIP-router Least Cost Routing Module
+ *
+ * The Least Cost Routing (LCR) module implements capability to serially
+ * forward a request to one or more gateways so that the order in which
+ * the gateways is tried is based on admin defined "least cost" rules.
+
+ * The LCR module supports many independent LCR instances (gateways and
+ * least cost rules). Each such instance has its own LCR identifier.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,7 +167,7 @@ struct matched_gw_info {
     unsigned short prefix_len;
     unsigned short priority;
     unsigned int weight;
-    unsigned int defunct_until;
+    unsigned short duplicate;
 };
 
 /*
@@ -1412,7 +1428,7 @@ int mi_print_gws(struct mi_node* rpl)
 	    attr = add_mi_attr(node, MI_DUP_VALUE, "TAG", 3,
 			       gws[i].tag, gws[i].tag_len);
 	    if (attr == NULL) goto err;
-	    
+
 	    p = int2str((unsigned long)gws[i].weight, &len);
 	    attr = add_mi_attr(node, MI_DUP_VALUE, "WEIGHT", 6, p, len);
 	    if (attr == NULL) goto err;
@@ -1658,6 +1674,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
     delete_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp);
 
     for (i = 0; i < gw_cnt; i++) {
+	if (matched_gws[i].duplicate == 1) continue;
 	index = matched_gws[i].gw_index;
       	hostname_len = gws[index].hostname_len;
 	strip = gws[index].strip;
@@ -1684,7 +1701,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 	add_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp, val);
 
 	LM_DBG("added gw_uri_avp <%.*s> with weight <%u>\n",
-		value.len, value.s, matched_gws[i].weight);
+	       value.len, value.s, matched_gws[i].weight);
     skip:
 	continue;
     }
@@ -1697,8 +1714,8 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 {
     str ruri_user, from_uri;
-    unsigned int j, k, gw_index, gw_count, now;
-    int lcr_id;
+    int i, j, lcr_id;
+    unsigned int gw_index, gw_count, now, ip_addr;
     int_str val;
     struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
     struct lcr_info **lcrs, *lcr_rec, *pl;
@@ -1770,18 +1787,12 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 		    while (j) {
                         /* If this gw is defunct, skip it */
 		        if (gws[j].defunct_until > now) goto gw_found;
-			for (k = 0; k < gw_index; k++) {
-			    if (gws[j].ip_addr ==
-				gws[matched_gws[k].gw_index].ip_addr)
-				/* Skip already existing gw */
-				goto gw_found;
-			}
-			/* This is a new gw */
 			matched_gws[gw_index].gw_index = j;
 			matched_gws[gw_index].prefix_len = pl->prefix_len;
 			matched_gws[gw_index].priority = lcr_rec->priority;
 			matched_gws[gw_index].weight = gws[j].weight *
 			    (rand() >> 8);
+			matched_gws[gw_index].duplicate = 0;
 			LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
 			       gw_index, j, pl->prefix_len, lcr_rec->priority,
 			       matched_gws[gw_index].weight);
@@ -1796,8 +1807,20 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 	pl = pl->next;
     }
 
-    /* Sort gateways based on prefix_len, priority, and randomized weight */
+    /* Sort gateways in reverse order based on prefix_len, priority,
+       and randomized weight */
     qsort(matched_gws, gw_index, sizeof(struct matched_gw_info), comp_matched);
+
+    /* Remove duplicate gws */
+    for (i = gw_index - 1; i >= 0; i--) {
+	if (matched_gws[i].duplicate == 1) continue;
+	ip_addr = gws[matched_gws[i].gw_index].ip_addr;
+	for (j = i - 1; j >= 0; j--) {
+	    if (gws[matched_gws[j].gw_index].ip_addr == ip_addr) {
+		matched_gws[j].duplicate = 1;
+	    }
+	}
+    }
 
     /* Add gateways into gw_uris_avp */
     add_gws_into_avps(gws, matched_gws, gw_index, &ruri_user);

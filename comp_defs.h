@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,12 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* compatibility defs for emergency roll-back if things do not work ;
+/*! \brief compatibility defs for emergency roll-back if things do not work ;
  * if that happens:
- * a) define PRESERVE_ZT (affects most of parser)
- * b) define DONT_REMOVE_ZT (affects first line)
- * c) define SCRATCH
- * d) undefine REMOVE_ALL_ZT (affects via)
+ * 	- a) define PRESERVE_ZT (affects most of parser)
+ * 	- b) define DONT_REMOVE_ZT (affects first line)
+ * 	- c) define SCRATCH
+ * 	- d) undefine REMOVE_ALL_ZT (affects via)
  */
 
 

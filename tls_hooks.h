@@ -23,6 +23,14 @@
  *  2007-02-09  created by andrei
  */
 
+/**
+ * @file
+ * @brief SIP-router TLS support :: TLS hooks for modules
+ * @ingroup tls
+ * Module: @ref tls
+ */
+
+
 #ifndef _tls_hooks_h
 #define _tls_hooks_h
 

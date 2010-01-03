@@ -16,12 +16,12 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		The time needed when writing a new Kamailio module unfortunately is quite high, while the
+		The time needed when writing a new &kamailio; module unfortunately is quite high, while the
 		options provided by the configuration file are limited to the features implemented in the
 		modules.
 		</para>
 		<para>
-		With this Perl module, you can easily implement your own Kamailio extensions in Perl. This allows
+		With this Perl module, you can easily implement your own &kamailio; extensions in Perl. This allows
 		for simple access to the full world of CPAN modules. SIP URI rewriting could be implemented
 		based on regular expressions; accessing arbitrary data backends, e.g. LDAP or Berkeley DB files,
 		is now extremely simple.
@@ -30,7 +30,7 @@
 	<section>
 		<title>Installing the module</title>
 		<para>
-		This Perl module is loaded in kamailio.cfg (just like all the other modules) with
+		This Perl module is loaded in &kamailioconfig; (just like all the other modules) with
 		loadmodule("/path/to/perl.so");.
 		</para>
 
@@ -58,9 +58,9 @@ TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/ExtUtils/ty
 	<section>
 		<title>Using the module</title>
 		<para>
-		The Perl module has two interfaces: The perl side, and the Kamailio side. Once a Perl
+		The Perl module has two interfaces: The perl side, and the &kamailio; side. Once a Perl
 		function is defined and loaded via the module parameters (see below), it may be
-		called in Kamailio's configuration at an arbitary point. E.g., you could write
+		called in &kamailio;'s configuration at an arbitary point. E.g., you could write
 		a function "ldap_alias" in Perl, and then execute <programlisting format="linespecific">
 ...
 if (perl_exec("ldap_alias")) {
@@ -110,7 +110,7 @@ if (perl_exec("ldap_alias")) {
 			</para>
 			</listitem>
 		</itemizedlist>
-		Additionally, a number of perl modules should be installed. The Kamailio::LDAPUtils package
+		Additionally, a number of perl modules should be installed. The &kamailio;::LDAPUtils package
 		relies on Net::LDAP to be installed. One of the sample scripts needs IPC::Shareable
 		</para>
 		<para>

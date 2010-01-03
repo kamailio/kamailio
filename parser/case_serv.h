@@ -27,6 +27,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file 
+ * \brief Parser ::  Subject Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef CASE_SERV_H
 #define CASE_SERV_H

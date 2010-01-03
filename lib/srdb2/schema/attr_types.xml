@@ -566,4 +566,15 @@
 	<value col="at.order">0</value>
   </row>
 
+  <row vendor-controlled="1">
+	<value col="at.name">gattr_timestamp</value>
+	<value col="at.type">0</value>
+	<value col="at.rich_t">int</value>
+	<value col="at.desc">Version of global attrs data</value>
+	<value col="at.d_flags">33</value>
+	<value col="at.flags">0</value>
+	<value col="at.prior">0</value>
+	<value col="at.order">0</value>
+  </row>
+
 </table>

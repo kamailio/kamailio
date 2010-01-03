@@ -15,26 +15,36 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * compiler specific optimizations:
- * --------------------------------
+
+/*!
+ * \file
+ * \brief SIP-router core :: Compiler specific optimizations
+ * \see \ref CompilerOptions
  *
- *   likely(expr)         - branch predicition optimization - is more likely
+ * \ingroup core
+ * Module: \ref core
+ *
+ * \page CompilerOptions compiler specific optimizations:
+ *
+\verbatim
+ *   - likely(expr)         - branch predicition optimization - is more likely
  *                          that expr value will be 1 so optimize for this 
  *                          case.
  *                          Example: if (likely(p!=NULL)) {... }
- *   unlikely(expr)       - branch prediction optimization - is unlikely that 
+ *   - unlikely(expr)       - branch prediction optimization - is unlikely that 
  *                          expr will be true, so optimize for this case
- *   prefetch(addr)        - will prefetch addr. for reading
- *   prefetch_w(addr)      - will prefetch addr. for writing
- *   prefetch_loc_r(addr, loc) - prefetch for reading, data at addr has
+ *   - prefetch(addr)        - will prefetch addr. for reading
+ *   - prefetch_w(addr)      - will prefetch addr. for writing
+ *   - prefetch_loc_r(addr, loc) - prefetch for reading, data at addr has
  *                                no temporal locality (loc==0), a short
  *                                degree of temporal locality (loc==1), 
  *                                moderate (loc==2) or high (loc==3).
  *                                prefetch(addr) is equiv. to 
  *                                prefetch_loc_r(addr, 3).
  *  prefetch_loc_w(addr, loc) - like above but for writing.
+\endverbatim
  */
+
 /* 
  * History:
  * --------

@@ -5,7 +5,7 @@
 ]>
 	
 <section><title>Introduction</title>
-<para>This document describes usage of SIP Express Router as a presence server.
+<para>This document describes usage of SIP Router as a presence server.
 <!-- TODO: What is presence, ... (use doc from PIC-SE wiki?) -->
 </para>
 
@@ -20,14 +20,14 @@
 </para>
 </section>
 		
-<section><title>SER presence basics</title>
+<section><title>SIP-router presence basics</title>
 
-<para>Presence is one of quite important components of SER. It allows users to
+<para>Presence is one of quite important components of SIP-router. It allows users to
 watch presence state of other users, process lists of them and manipulate one's 
 own presence state.</para>
 
 <para>Configuration data can be stored on a XCAP server <xref
-linkend="pres_draft_xcap"/> by user's client software and processed by SER. This
+linkend="pres_rfc_xcap"/> by user's client software and processed by SIP-router. This
 may be useful for lists of watched users (resource lists) and for authorization
 rules.</para>
 
@@ -58,13 +58,13 @@ rules.</para>
 </itemizedlist>
 </para>
 
-<para>All <quote>presence</quote> modules share common code stored in SER
+<para>All <quote>presence</quote> modules share common code stored in SIP-router
 libraries. Their interface is described in standalone documents.
 </para>
 
 <section><title>Persistence</title>
 <para>Modules can store their status (working data) into database. This data is
-automatically reloaded on startup, so it is possible to restart SER and
+automatically reloaded on startup, so it is possible to restart SIP-router and
 clients don't note it. Established SIP dialogs are stored in database too.</para>
 <para>Details about database storage are described for each module separately in
 module documentation.
@@ -85,10 +85,9 @@ rules may be found in <xref linkend="pres_draft_common_auth"/> and
 <para>Only XCAP storage of authorization rules is supported at this moment. It is 
 <emphasis>not fully implemented</emphasis> now - only basic rule conditions, no sphere 
 and time conditions. Transformations defined in <xref linkend="pres_draft_auth"/> are 
-ignored.
-May be, that in the
-future will be possible to use other variants like webdav or storing
-authorization rules in SER's own database.</para>
+ignored.  Maybe, that in the
+future it will be possible to use other variants like webdav or storing
+authorization rules in SIP-router's own database.</para>
 
 <!-- TODO: XCAP module and authorization ? at least link into XCAP doc? -->
 

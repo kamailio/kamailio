@@ -962,10 +962,16 @@ EAT_ABLE	[\ \t\b\r]
 <PVAR_P>{LPAREN}			{ p_nest++; yymore(); }
 <PVAR_P>.					{ yymore(); }
 
-<PVARID>{ID}|'.'			{yymore(); }
+<PVARID>{ID}|'\.'			{yymore(); }
 <PVARID>{LPAREN}			{	state = PVAR_P_S; BEGIN(PVAR_P);
 								p_nest=1; yymore(); }
-<PVARID>.					{ yyless(0); state=INITIAL_S; BEGIN(INITIAL);
+<PVARID>.					{	yyless(yyleng-1);
+								count();
+								addstr(&s_buf, yytext, yyleng);
+								yylval.strval=s_buf.s;
+								memset(&s_buf, 0, sizeof(s_buf));
+								state=INITIAL_S;
+								BEGIN(INITIAL);
 								return PVAR;
 							}
 

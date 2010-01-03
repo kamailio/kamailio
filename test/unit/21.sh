@@ -33,7 +33,7 @@ CFG=21.cfg
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
 
-../$BIN -w . -f $CFG &> /dev/null;
+$BIN -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 

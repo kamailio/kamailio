@@ -11,11 +11,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -33,6 +28,12 @@
  * 2008-05-23 reset the type/subtype to unknown, if the end of
  *		tree has reached, but the type/subtype has still
  *		some remaining characters (Miklos)
+ */
+
+/*! \file
+ * \brief Parser :: Content part
+ *
+ * \ingroup parser
  */
 
 
@@ -53,15 +54,15 @@
 	( (isalpha((int)_c_)?(((_c_)|0x20)==(_cs_)):((_c_)==(_cs_)))==1 )
 
 
-/*
+/*! \brief
  * Node of the type's tree; this tree contains all the known types;
  */
 typedef struct type_node_s {
-	char c;                      /* char contained by this node */
-	unsigned char final;         /* says what mime type/subtype was detected
-	                              * if string ends at this node */
-	unsigned char nr_sons;       /* the number of sub-nodes */
-	int next;                    /* the next sibling node */
+	char c;                      /*!< char contained by this node */
+	unsigned char final;         /*!< says what mime type/subtype was detected
+	                              *!< if string ends at this node */
+	unsigned char nr_sons;       /*!< the number of sub-nodes */
+	int next;                    /*!< the next sibling node */
 }type_node_t;
 
 
@@ -379,9 +380,11 @@ error:
 
 
 
-/* returns: > 0 mime found
- *          = 0 hdr not found
- *          =-1 error */
+/*! \brief
+ * \return
+ *  	-   > 0 mime found
+ *      -   = 0 hdr not found
+ *      -   =-1 error */
 int parse_content_type_hdr( struct sip_msg *msg )
 {
 	char *end;
@@ -485,7 +488,8 @@ error:
 	return -1;
 }
 
-/* returns: > 0 ok
+/*! \brief
+ * returns: > 0 ok
  *          = 0 hdr not found
  *          = -1 error */
 int parse_accept_hdr( struct sip_msg *msg )

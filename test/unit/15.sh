@@ -30,7 +30,7 @@ fi ;
 
 echo "loadmodule \"../../modules_k/db_text/db_text.so\"" >> $CFG
 cat 2.cfg >> $CFG
-echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"text://`pwd`/../../scripts/dbtext/kamailio\")" >> $CFG
+echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"text://`pwd`/../../utils/kamctl/dbtext/kamailio\")" >> $CFG
 
 $BIN -w . -f $CFG > /dev/null
 ret=$?

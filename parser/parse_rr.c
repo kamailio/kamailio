@@ -27,6 +27,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Route & Record-Route header field parser
+ *
+ * \ingroup parser
+ */
+
 /**
  * History:
  * --------
@@ -41,7 +47,7 @@
 #include "../trim.h"
 #include "../ut.h"
 
-/*
+/*! \brief
  * Parse Route or Record-Route body
  */
 static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
@@ -144,7 +150,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	return 0;
 }
 
-/*
+/*! \brief
  * Wrapper to do_parse_rr_body() for external calls
  */
 int parse_rr_body(char *buf, int len, rr_t **head)
@@ -152,7 +158,7 @@ int parse_rr_body(char *buf, int len, rr_t **head)
 	return do_parse_rr_body(buf, len, head);
 }
 
-/*
+/*! \brief
  * Parse Route and Record-Route header fields
  */
 int parse_rr(struct hdr_field* _h)
@@ -175,7 +181,7 @@ int parse_rr(struct hdr_field* _h)
 	return 0;
 }
 
-/*
+/*! \brief
  * Free list of rrs
  * _r is head of the list
  */
@@ -196,7 +202,7 @@ static inline void do_free_rr(rr_t** _r, int _shm)
 }
 
 
-/*
+/*! \brief
  * Free list of rrs
  * _r is head of the list
  */
@@ -207,7 +213,7 @@ void free_rr(rr_t** _r)
 }
 
 
-/*
+/*! \brief
  * Free list of rrs
  * _r is head of the list
  */
@@ -218,7 +224,7 @@ void shm_free_rr(rr_t** _r)
 }
 
 
-/*
+/*! \brief
  * Print list of RRs, just for debugging
  */
 void print_rr(FILE* _o, rr_t* _r)
@@ -241,7 +247,7 @@ void print_rr(FILE* _o, rr_t* _r)
 }
 
 
-/*
+/*! \brief
  * Translate all pointers in the structure and also
  * in all parameters in the list
  */
@@ -260,7 +266,7 @@ static inline void xlate_pointers(rr_t* _orig, rr_t* _r)
 }
 
 
-/*
+/*! \brief
  * Duplicate a single rr_t structure using pkg_malloc or shm_malloc
  */
 static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
@@ -321,7 +327,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 }
 
 
-/*
+/*! \brief
  * Duplicate a single rr_t structure using pkg_malloc
  */
 int duplicate_rr(rr_t** _new, rr_t* _r)
@@ -330,7 +336,7 @@ int duplicate_rr(rr_t** _new, rr_t* _r)
 }
 
 
-/*
+/*! \brief
  * Duplicate a single rr_t structure using pkg_malloc
  */
 int shm_duplicate_rr(rr_t** _new, rr_t* _r)

@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,6 +18,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/**
+ * @file
+ * @brief SIP-router core :: debug printing
+ * @ingroup core
+ * Module: @ref core
  */
 
 #ifndef dprint_h
@@ -82,7 +84,7 @@
 #define L_INFO   	2
 #define L_DBG    	3
 
-/* This is the facility value used to indicate that the caller of the macro
+/** @brief This is the facility value used to indicate that the caller of the macro
  * did not override the facility. Value 0 (the defaul) is LOG_KERN on Linux
  */
 #define DEFAULT_FACILITY 0
@@ -92,15 +94,15 @@
 	(log_level_info[(level) - (L_ALERT)].syslog_level)
 
 
-/* my_pid(), process_no are from pt.h but we cannot #include it here
+/** @brief my_pid(), process_no are from pt.h but we cannot #include it here
    because of circular dependencies */
 extern int process_no;
 extern int my_pid();
 
-/* non-zero if logging to stderr instead to the syslog */
+/** @brief non-zero if logging to stderr instead to the syslog */
 extern int log_stderr;
 
-/* maps log levels to their string name and corresponding syslog level */
+/** @brief maps log levels to their string name and corresponding syslog level */
 
 struct log_level_info {
  	char *name;
@@ -112,7 +114,7 @@ extern struct log_level_info log_level_info[];
 extern char *log_name;
 
 #ifndef NO_SIG_DEBUG
-/* protection against "simultaneous" printing from signal handlers */
+/** @brief protection against "simultaneous" printing from signal handlers */
 extern volatile int dprint_crit; 
 #endif
 
@@ -120,7 +122,7 @@ int str2facility(char *s);
 int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 
 
-/*
+/** @brief
  * General logging macros
  *
  * LOG_(level, prefix, fmt, ...) prints "printf"-formatted log message to
@@ -255,9 +257,10 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 #endif /* NO_LOG */
 
 
-/*
+/** @name SimpleLog
  * Simplier, prefered logging macros for constant log level
  */
+/*@ { */
 #ifdef __SUNPRO_C
 #	define ALERT(...)  LOG(L_ALERT,  __VA_ARGS__)
 #	define BUG(...)    LOG(L_BUG,   __VA_ARGS__)
@@ -272,6 +275,7 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 #	else
 #		define DBG(...)    LOG(L_DBG, __VA_ARGS__)
 #	endif		
+/*@ } */
 
 /* obsolete, do not use */
 #	define DEBUG(...) DBG(__VA_ARGS__)

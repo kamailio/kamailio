@@ -31,15 +31,15 @@ CFG="20.cfg"
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 # add an registrar entry to the db;
-$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-sipp -sn uas -bg -i localhost -m 1 -f 10 -p 5060 &> /dev/null
+sipp -sn uas -bg -i 127.0.0.1 -m 1 -f 10 -p 5060 &> /dev/null
 
-../$BIN -w . -f $CFG &> $TMPFILE
+$BIN -w . -f $CFG &> $TMPFILE
 
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 
-egrep '^ACC:[[:space:]]+transaction[[:space:]]+answered:[[:print:]]*code=200;reason=OK$' $TMPFILE > /dev/null
+egrep 'ACC:[[:space:]]+transaction[[:space:]]+answered:[[:print:]]*code=200;reason=OK$' $TMPFILE > /dev/null
 ret=$?
 
 # cleanup
@@ -47,6 +47,6 @@ killall -9 sipp &> /dev/null
 $KILL &> /dev/null
 rm $TMPFILE
 
-$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost\") and (user_agent = \"ser_test\"));"
+$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1\") and (user_agent = \"ser_test\"));"
 
 exit $ret;

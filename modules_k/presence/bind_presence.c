@@ -27,7 +27,10 @@
  */
 
 /*! \file
- * \brief Kamailio presence module
+ * \brief SIP-Router Presence :: Kamailio generic presence module
+ *
+ * This is the core presence module, used in combination with other modules.
+ *
  * \ingroup presence
  */
 

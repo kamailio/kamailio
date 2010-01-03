@@ -78,7 +78,12 @@
  *              t saved, thus, are not available. Set reparse_on_dns_failover
  *              to 0 to revert the change. (Miklos)
  * 2008-06-04  T_CANCELED is now set each time a CANCEL is received (andrei)
- * 2009-06-01  Pre- and post-script callbacks of branch route are executed (Miklos)
+ * 2009-06-01  Pre- and post-script callbacks of branch route are 
+ *             executed (Miklos)
+ * 2009-10-26  support for changing dst_uri in branch routes,
+ *             s/print_uac_request/prepare_new_uac/ (andrei)
+ * 2009-10-28  support for changing r-uris and path in branch routes; more of
+ *             add_uac() functionality moved into prepare_new_uac()  (andrei)
  */
 
 #include "defs.h"
@@ -144,8 +149,20 @@ unsigned int get_on_branch(void)
 }
 
 
-/** create a branch "buffer".
- * Creates the buffer used in the branch rb and runs the on_branch route.
+
+/* prepare_new_uac flags */
+#define UAC_DNS_FAILOVER_F 1 /**< new branch due to dns failover */
+
+
+/** prepares a new branch "buffer".
+ * Creates the buffer used in the branch rb, fills everything needed (
+   the sending information: t->uac[branch].request.dst, branch buffer, uri
+   path vector a.s.o.) and runs the on_branch route.
+ * t->uac[branch].request.dst will be filled if next_hop !=0 with the result
+ * of the DNS resolution (next_hop, fproto and fsocket).
+ * If next_hop is 0 all the dst members except the send_flags are read-only
+ * (send_flags it's updated) and are supposed to be pre-filled.
+ *
  * @param t  - transaction
  * @param i_req - corresponding sip_msg, must be non-null, flags might be
  *                be modified (on_branch route)
@@ -153,64 +170,66 @@ unsigned int get_on_branch(void)
  * @param uri
  * @param path  - path vector (list of route like destination in text form,
  *                 e.g.: "<sip:1.2.3.4;lr>, <sip:5.6.7.8;lr>")
- * @param len - resul parameter, it will be filled with the created buffer 
- *              lenght.
- * @param dst - value/result parameter. It will be used to generate the
- *              message. All the values except the send_flags are read-only.
- *              send_flags it's updated.
- * @return pointer to shm alloc'ed buffer on success (*len and dst->send_flags
- *  are filled/modified), 0 on failure
+ * @param next_hop - uri of the next hop. If non 0 it will be used
+ *              for DNS resolution and the branch request.dst structure will
+ *              be filled. If 0 the branch must already have
+ *              a pre-filled valid request.dst.
+ * @param fsocket - forced send socket for forwarding.
+ * @param send_flags - special flags for sending (see SND_F_* / snd_flags_t).
+ * @param fproto - forced proto for forwarding. Used only if next_hop!=0.
+ * @param flags - 0 or UAC_DNS_FAILOVER_F for now.
+ *
+ * @return  0 on success, < 0 (ser_errror E***) on failure.
  */
-static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-	int branch, str *uri, str* path, unsigned int *len, struct dest_info* dst)
+static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
+									int branch, str *uri, str* path,
+									str* next_hop,
+									struct socket_info* fsocket,
+									snd_flags_t snd_flags,
+									int fproto, int flags)
 {
-	char *buf, *shbuf;
-	str* msg_uri;
+	char *shbuf;
 	struct lump* add_rm_backup, *body_lumps_backup;
 	struct sip_uri parsed_uri_bak;
-	int parsed_uri_ok_bak, uri_backed_up;
+	int ret;
+	unsigned int len;
+	int parsed_uri_ok_bak, free_new_uri;
 	str msg_uri_bak;
+	str dst_uri_bak;
+	int dst_uri_backed_up;
 	str path_bak;
-	int path_backed_up;
+	int free_path;
 	int backup_route_type;
 	snd_flags_t fwd_snd_flags_bak;
 	snd_flags_t rpl_snd_flags_bak;
+	struct socket_info *force_send_socket_bak;
+	struct dest_info *dst;
 
 	shbuf=0;
+	ret=E_UNSPEC;
 	msg_uri_bak.s=0; /* kill warnings */
 	msg_uri_bak.len=0;
 	parsed_uri_ok_bak=0;
-	uri_backed_up=0;
+	free_new_uri=0;
+	dst_uri_bak.s=0;
+	dst_uri_bak.len=0;
+	dst_uri_backed_up=0;
 	path_bak.s=0;
 	path_bak.len=0;
-	path_backed_up=0;
+	free_path=0;
+	dst=&t->uac[branch].request.dst;
 
 	/* ... we calculate branch ... */	
 	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
 			&i_req->add_to_branch_len ))
 	{
 		LOG(L_ERR, "ERROR: print_uac_request: branch computation failed\n");
+		ret=E_UNSPEC;
 		goto error00;
 	}
 
-	/* ... update uri ... */
-	msg_uri=GET_RURI(i_req);
-	if ((msg_uri->s!=uri->s) || (msg_uri->len!=uri->len)){
-		msg_uri_bak=i_req->new_uri;
-		parsed_uri_ok_bak=i_req->parsed_uri_ok;
-		parsed_uri_bak=i_req->parsed_uri;
-		i_req->new_uri=*uri;
-		i_req->parsed_uri_ok=0;
-		uri_backed_up=1;
-	}
-	/* update path_vec */
-	if (unlikely((i_req->path_vec.s!=path->s) ||
-					(i_req->path_vec.len!=path->len))){
-		path_bak=i_req->path_vec;
-		i_req->path_vec=*path;
-		path_backed_up=1;
-	}
-
+	/* dup lumps
+	 * TODO: clone lumps only if needed */
 #ifdef POSTPONE_MSG_CLONING
 	/* lumps can be set outside of the lock, make sure that we read
 	 * the up-to-date values */
@@ -218,85 +237,247 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 #endif
 	add_rm_backup = i_req->add_rm;
 	body_lumps_backup = i_req->body_lumps;
-	i_req->add_rm = dup_lump_list(i_req->add_rm);
-	i_req->body_lumps = dup_lump_list(i_req->body_lumps);
-
-	if (unlikely(branch_route)) {
-		/* run branch_route actions if provided */
-		backup_route_type = get_route_type();
-		set_route_type(BRANCH_ROUTE);
-		tm_ctx_set_branch_index(branch+1);
-		if (exec_pre_script_cb(i_req, BRANCH_CB_TYPE)>0) {
-			/* backup ireq msg send flags */
-			fwd_snd_flags_bak=i_req->fwd_send_flags;;
-			rpl_snd_flags_bak=i_req->rpl_send_flags;
-			i_req->fwd_send_flags=dst->send_flags /* intial value  */;
-			if (run_top_route(branch_rt.rlist[branch_route], i_req, 0) < 0) {
-				LOG(L_ERR, "Error in run_top_route\n");
-			}
-			/* update dst send_flags */
-			dst->send_flags=i_req->fwd_send_flags;
-			/* restore ireq_msg flags */
-			i_req->fwd_send_flags=fwd_snd_flags_bak;
-			i_req->rpl_send_flags=rpl_snd_flags_bak;
-			exec_post_script_cb(i_req, BRANCH_CB_TYPE);
+	if (unlikely(i_req->add_rm)){
+		i_req->add_rm = dup_lump_list(i_req->add_rm);
+		if (unlikely(i_req->add_rm==0)){
+			ret=E_OUT_OF_MEM;
+			goto error04;
 		}
-		tm_ctx_set_branch_index(0);
-		set_route_type(backup_route_type);
 	}
+	if (unlikely(i_req->body_lumps)){
+		i_req->body_lumps = dup_lump_list(i_req->body_lumps);
+		if (unlikely(i_req->body_lumps==0)){
+			ret=E_OUT_OF_MEM;
+			goto error04;
+		}
+	}
+	/* backup uri & path: we need to change them so that build_req...()
+	   will use uri & path and not the ones in the original msg (i_req)
+	   => we must back them up so that we can restore them to the original
+	   value after building the send buffer */
+	msg_uri_bak=i_req->new_uri;
+	parsed_uri_bak=i_req->parsed_uri;
+	parsed_uri_ok_bak=i_req->parsed_uri_ok;
+	path_bak=i_req->path_vec;
+	
+	if (unlikely(branch_route || has_tran_tmcbs(t, TMCB_REQUEST_FWDED))){
+		/* dup uris, path a.s.o. if we have a branch route or callback */
+		/* ... set ruri ... */
+		/* if uri points to new_uri, it needs to be "fixed" so that we can
+		   change msg->new_uri */
+		if (uri==&i_req->new_uri)
+			uri=&msg_uri_bak;
+		i_req->parsed_uri_ok=0;
+		i_req->new_uri.s=pkg_malloc(uri->len);
+		if (unlikely(i_req->new_uri.s==0)){
+			ret=E_OUT_OF_MEM;
+			goto error03;
+		}
+		free_new_uri=1;
+		memcpy(i_req->new_uri.s, uri->s, uri->len);
+		i_req->new_uri.len=uri->len;
+	
+		/* update path_vec */
+		/* if path points to msg path_vec, it needs to be "fixed" so that we 
+		   can change/update msg->path_vec */
+		if (path==&i_req->path_vec)
+			path=&path_bak;
+		/* zero it first so that set_path_vector will work */
+		i_req->path_vec.s=0;
+		i_req->path_vec.len=0;
+		if (unlikely(path)){
+			if (unlikely(set_path_vector(i_req, path)<0)){
+				ret=E_OUT_OF_MEM;
+				goto error03;
+			}
+			free_path=1;
+		}
+	
+		/* backup dst uri  & zero it*/
+		dst_uri_bak=i_req->dst_uri;
+		dst_uri_backed_up=1;
+		/* if next_hop points to dst_uri, it needs to be "fixed" so that we
+		   can change msg->dst_uri */
+		if (next_hop==&i_req->dst_uri)
+			next_hop=&dst_uri_bak;
+		/* zero it first so that set_dst_uri will work */
+		i_req->dst_uri.s=0;
+		i_req->dst_uri.len=0;
+		if (likely(next_hop)){
+			/* set dst uri to next_hop for the on_branch route */
+			if (unlikely(set_dst_uri(i_req, next_hop)<0)){
+				ret=E_OUT_OF_MEM;
+				goto error03;
+			}
+		}
 
-	/* run the specific callbacks for this transaction */
-	if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
-		run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0,
-								-i_req->REQ_METHOD);
+		if (likely(branch_route)) {
+			/* run branch_route actions if provided */
+			backup_route_type = get_route_type();
+			set_route_type(BRANCH_ROUTE);
+			tm_ctx_set_branch_index(branch+1);
+			/* no need to backup/set avp lists: the on_branch route is run
+			   only in the main route context (e.g. t_relay() in the main
+			   route) or in the failure route context (e.g. append_branch &
+			   t_relay()) and in both cases the avp lists are properly set
+			   Note: the branch route is not run on delayed dns failover 
+			   (for that to work one would have to set branch_route prior to
+			   calling add_uac(...) and then reset it afterwards).
+			   (
+			 */
+			if (exec_pre_script_cb(i_req, BRANCH_CB_TYPE)>0) {
+				/* backup ireq msg send flags and force_send_socket*/
+				fwd_snd_flags_bak=i_req->fwd_send_flags;;
+				rpl_snd_flags_bak=i_req->rpl_send_flags;
+				force_send_socket_bak=i_req->force_send_socket;
+				/* set the new values */
+				i_req->fwd_send_flags=snd_flags /* intial value  */;
+				set_force_socket(i_req, fsocket);
+				if (run_top_route(branch_rt.rlist[branch_route], i_req, 0) < 0)
+				{
+					LOG(L_ERR, "Error in run_top_route\n");
+				}
+				/* update dst send_flags  and send socket*/
+				snd_flags=i_req->fwd_send_flags;
+				fsocket=i_req->force_send_socket;
+				/* restore ireq_msg force_send_socket & flags */
+				set_force_socket(i_req, force_send_socket_bak);
+				i_req->fwd_send_flags=fwd_snd_flags_bak;
+				i_req->rpl_send_flags=rpl_snd_flags_bak;
+				exec_post_script_cb(i_req, BRANCH_CB_TYPE);
+			}
+			tm_ctx_set_branch_index(0);
+			set_route_type(backup_route_type);
+		}
 
+		/* run the specific callbacks for this transaction */
+		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
+			run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0,
+									-i_req->REQ_METHOD);
+		
+		if (likely( !(flags & UAC_DNS_FAILOVER_F) && i_req->dst_uri.s &&
+					i_req->dst_uri.len)){
+			/* no dns failover and non-empty dst_uri => use it as dst
+			  (on dns failover dns_h will be non-empty => next_hop will be
+			   ignored) */
+			next_hop=&i_req->dst_uri;
+		}
+	}else{
+		/* no branch route and no TMCB_REQUEST_FWDED callback => set
+		   msg uri and path to the new values (if needed) */
+		if (unlikely((uri->s!=i_req->new_uri.s || uri->len!=i_req->new_uri.len)
+					&& (i_req->new_uri.s!=0 ||
+						uri->s!=i_req->first_line.u.request.uri.s ||
+						uri->len!=i_req->first_line.u.request.uri.len) )){
+			/* uri is different from i_req uri => replace i_req uri and force
+			   uri re-parsing */
+			i_req->new_uri=*uri;
+			i_req->parsed_uri_ok=0;
+		}
+		if (unlikely(path && (i_req->path_vec.s!=path->s ||
+							  i_req->path_vec.len!=path->len))){
+			i_req->path_vec=*path;
+		}else if (unlikely(path==0 && i_req->path_vec.len!=0)){
+			i_req->path_vec.s=0;
+			i_req->path_vec.len=0;
+		}
+	}
+	
+	if (likely(next_hop!=0 || (flags & UAC_DNS_FAILOVER_F))){
+		/* next_hop present => use it for dns resolution */
+#ifdef USE_DNS_FAILOVER
+		if (uri2dst2(&t->uac[branch].dns_h, dst, fsocket, snd_flags,
+							next_hop?next_hop:uri, fproto) == 0)
+#else
+		/* dst filled from the uri & request (send_socket) */
+		if (uri2dst2(dst, fsocket, snd_flags,
+							next_hop?next_hop:uri, fproto)==0)
+#endif
+		{
+			ret=E_BAD_ADDRESS;
+			goto error01;
+		}
+	} /* else next_hop==0 =>
+		no dst_uri / empty dst_uri and initial next_hop==0 =>
+		dst is pre-filled with a valid dst => use the pre-filled dst */
+	
+	/* check if send_sock is ok */
+	if (t->uac[branch].request.dst.send_sock==0) {
+		LOG(L_ERR, "ERROR: can't fwd to af %d, proto %d "
+			" (no corresponding listening socket)\n",
+			dst->to.s.sa_family, dst->proto );
+		ret=E_NO_SOCKET;
+		goto error01;
+	}
 	/* ... and build it now */
-	buf=build_req_buf_from_sip_req( i_req, len, dst, 0);
+	shbuf=build_req_buf_from_sip_req( i_req, &len, dst, BUILD_IN_SHM);
+	if (!shbuf) {
+		LOG(L_ERR, "ERROR: print_uac_request: no shm mem\n"); 
+		ret=E_OUT_OF_MEM;
+		goto error01;
+	}
 #ifdef DBG_MSG_QA
-	if (buf[*len-1]==0) {
+	if (shbuf[len-1]==0) {
 		LOG(L_ERR, "ERROR: print_uac_request: sanity check failed\n");
 		abort();
 	}
 #endif
-	if (!buf) {
-		LOG(L_ERR, "ERROR: print_uac_request: no pkg_mem\n"); 
-		ser_error=E_OUT_OF_MEM;
-		goto error01;
+	/* things went well, move ahead and install new buffer! */
+	t->uac[branch].request.buffer=shbuf;
+	t->uac[branch].request.buffer_len=len;
+	t->uac[branch].uri.s=t->uac[branch].request.buffer+
+							i_req->first_line.u.request.method.len+1;
+	t->uac[branch].uri.len=GET_RURI(i_req)->len;
+	if (unlikely(i_req->path_vec.s && i_req->path_vec.len)){
+		t->uac[branch].path.s=shm_malloc(i_req->path_vec.len+1);
+		if (unlikely(t->uac[branch].path.s==0)) {
+			shm_free(shbuf);
+			t->uac[branch].request.buffer=0;
+			t->uac[branch].request.buffer_len=0;
+			t->uac[branch].uri.s=0;
+			t->uac[branch].uri.len=0;
+			ret=E_OUT_OF_MEM;
+			goto error01;
+		}
+		t->uac[branch].path.len=i_req->path_vec.len;
+		t->uac[branch].path.s[i_req->path_vec.len]=0;
+		memcpy( t->uac[branch].path.s, i_req->path_vec.s, i_req->path_vec.len);
 	}
+	ret=0;
 
-	shbuf=(char *)shm_malloc(*len);
-	if (!shbuf) {
-		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: print_uac_request: no shmem\n");
-		goto error02;
-	}
-	memcpy( shbuf, buf, *len );
-
-error02:
-	pkg_free( buf );
 error01:
-	     /* Delete the duplicated lump lists, this will also delete
-	      * all lumps created here, such as lumps created in per-branch
-	      * routing sections, Via, and Content-Length headers created in
-	      * build_req_buf_from_sip_req
-	      */
+error03:
+	/* restore the new_uri & path from the backup */
+	if (unlikely(free_new_uri && i_req->new_uri.s)){
+			pkg_free(i_req->new_uri.s);
+	}
+	if (unlikely(free_path)){
+		reset_path_vector(i_req);
+	}
+	if (dst_uri_backed_up){
+		reset_dst_uri(i_req); /* free dst_uri */
+		i_req->dst_uri=dst_uri_bak;
+	}
+	/* restore original new_uri and path values */
+	i_req->new_uri=msg_uri_bak;
+	i_req->parsed_uri=parsed_uri_bak;
+	i_req->parsed_uri_ok=parsed_uri_ok_bak;
+	i_req->path_vec=path_bak;
+	
+	/* Delete the duplicated lump lists, this will also delete
+	 * all lumps created here, such as lumps created in per-branch
+	 * routing sections, Via, and Content-Length headers created in
+	 * build_req_buf_from_sip_req
+	 */
+error04:
 	free_duped_lump_list(i_req->add_rm);
 	free_duped_lump_list(i_req->body_lumps);
 	     /* Restore the lists from backups */
 	i_req->add_rm = add_rm_backup;
 	i_req->body_lumps = body_lumps_backup;
-	/* restore the new_uri from the backup */
-	if (uri_backed_up){
-		i_req->new_uri=msg_uri_bak;
-		i_req->parsed_uri=parsed_uri_bak;
-		i_req->parsed_uri_ok=parsed_uri_ok_bak;
-	}
-	if (unlikely(path_backed_up)){
-		i_req->path_vec=path_bak;
-	}
 
 error00:
-	return shbuf;
+	return ret;
 }
 
 #ifdef USE_DNS_FAILOVER
@@ -420,19 +601,39 @@ int add_blind_uac( /*struct cell *t*/ )
 	return 1; /* success */
 }
 
-/* introduce a new uac to transaction; returns its branch id (>=0)
-   or error (<0); it doesn't send a message yet -- a reply to it
-   might interfere with the processes of adding multiple branches;
-   On error returns <0 & sets ser_error to the same value
+/** introduce a new uac to transaction.
+ *  It doesn't send a message yet -- a reply to it might interfere with the
+ *  processes of adding multiple branches; On error returns <0 & sets ser_error
+ *  to the same value.
+ *  @param t - transaction
+ *  @param request - corresponding sip_mst, must be non-null, flags might be
+ *                   modified (on_branch route).
+ *  @param uri - uri used for the branch (must be non-null).
+ *  @param next_hop - next_hop in sip uri format. If null and proxy is null
+ *                    too, the uri will be used 
+ *  @param path     - path vector (list of route like destinations in sip
+ *                     uri format, e.g.: "<sip:1.2.3.4;lr>, <sip:5.6.7.8;lr>").
+ *  @param proxy    - proxy structure. If non-null it takes precedence over
+ *                    next_hop/uri and it will be used for forwarding.
+ *  @param fsocket  - forced forward send socket (can be 0).
+ *  @param snd_flags - special send flags (see SND_F_* / snd_flags_t)
+ *  @param proto    - forced protocol for forwarding (overrides the protocol
+ *                    in next_hop/uri or proxy if != PROTO_NONE).
+ *  @param flags    - special flags passed to prepare_new_uac().
+ *                    @see prepare_new_uac().
+ *  @returns branch id (>=0) or error (<0)
 */
-int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
-				str* path, struct proxy_l *proxy, int proto )
+static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
+					str* next_hop, str* path, struct proxy_l *proxy,
+					struct socket_info* fsocket, snd_flags_t snd_flags,
+					int proto, int flags)
 {
 
 	int ret;
 	unsigned short branch;
-	char *shbuf;
+#ifdef TM_UAC_FLAGS
 	unsigned int len;
+#endif /* TM_UAC_FLAGS */
 
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
@@ -460,59 +661,17 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 								t->uac[branch].request.dst.proto);
 		t->uac[branch].request.dst.send_flags=request?
 												request->fwd_send_flags:0;
+		next_hop=0;
 	}else {
-#ifdef USE_DNS_FAILOVER
-		if (uri2dst(&t->uac[branch].dns_h, &t->uac[branch].request.dst,
-					request, next_hop?next_hop:uri, proto) == 0)
-#else
-		/* dst filled from the uri & request (send_socket) */
-		if (uri2dst(&t->uac[branch].request.dst, request,
-						next_hop ? next_hop: uri, proto)==0)
-#endif
-		{
-			ret=ser_error=E_BAD_ADDRESS;
-			goto error;
-		}
-	}
-	
-	/* check if send_sock is ok */
-	if (t->uac[branch].request.dst.send_sock==0) {
-		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d, proto %d "
-			" (no corresponding listening socket)\n",
-			t->uac[branch].request.dst.to.s.sa_family, 
-			t->uac[branch].request.dst.proto );
-		ret=ser_error=E_NO_SOCKET;
-		goto error01;
+		next_hop= next_hop?next_hop:uri;
 	}
 
 	/* now message printing starts ... */
-	shbuf=print_uac_request(t, request, branch, uri, path,
-							&len, &t->uac[branch].request.dst);
-	if (!shbuf) {
-		ret=ser_error=E_OUT_OF_MEM;
+	if (unlikely( (ret=prepare_new_uac(t, request, branch, uri, path,
+										next_hop, fsocket, snd_flags,
+										proto, flags)) < 0)){
+		ser_error=ret;
 		goto error01;
-	}
-
-	/* things went well, move ahead and install new buffer! */
-	t->uac[branch].request.buffer=shbuf;
-	t->uac[branch].request.buffer_len=len;
-	t->uac[branch].uri.s=t->uac[branch].request.buffer+
-		request->first_line.u.request.method.len+1;
-	t->uac[branch].uri.len=uri->len;
-	if (unlikely(path && path->s)){
-		t->uac[branch].path.s=shm_malloc(path->len+1);
-		if (unlikely(t->uac[branch].path.s==0)) {
-			shm_free(shbuf);
-			t->uac[branch].request.buffer=0;
-			t->uac[branch].request.buffer_len=0;
-			t->uac[branch].uri.s=0;
-			t->uac[branch].uri.len=0;
-			ret=ser_error=E_OUT_OF_MEM;
-			goto error01;
-		}
-		t->uac[branch].path.len=path->len;
-		t->uac[branch].path.s[path->len]=0;
-		memcpy( t->uac[branch].path.s, path->s, path->len);
 	}
 #ifdef TM_UAC_FLAGS
 	len = count_applied_lumps(request->add_rm, HDR_RECORDROUTE_T);
@@ -546,7 +705,10 @@ error:
    the failed branch to construct the new message in case of DNS failover.
 */
 static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
-								str *uri, str* path, int proto,
+								str *uri, str* path,
+								struct socket_info* fsocket,
+								snd_flags_t send_flags,
+								int proto,
 								char *buf, short buf_len)
 {
 
@@ -570,8 +732,8 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 		goto error;
 	}
 
-	if (uri2dst(&t->uac[branch].dns_h, &t->uac[branch].request.dst,
-				request, uri, proto) == 0)
+	if (uri2dst2(&t->uac[branch].dns_h, &t->uac[branch].request.dst,
+					fsocket, send_flags, uri, proto) == 0)
 	{
 		ret=ser_error=E_BAD_ADDRESS;
 		goto error;
@@ -677,22 +839,30 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 			dns_srv_handle_cpy(&t->uac[t->nr_of_outgoings].dns_h,
 								&old_uac->dns_h);
 
-			if (cfg_get(tm, tm_cfg, reparse_on_dns_failover))
+			if (cfg_get(tm, tm_cfg, reparse_on_dns_failover)){
 				/* Reuse the old buffer and only replace the via header.
 				 * The drawback is that the send_socket is not corrected
 				 * in the rest of the message, only in the VIA HF (Miklos) */
 				ret=add_uac_from_buf(t,  msg, &old_uac->uri,
 							&old_uac->path,
+							 (old_uac->request.dst.send_flags &
+								SND_F_FORCE_SOCKET)?
+									old_uac->request.dst.send_sock:0,
+							old_uac->request.dst.send_flags,
 							old_uac->request.dst.proto,
 							old_uac->request.buffer,
 							old_uac->request.buffer_len);
-			else
+			}else
 				/* add_uac will use dns_h => next_hop will be ignored.
 				 * Unfortunately we can't reuse the old buffer, the branch id
 				 *  must be changed and the send_socket might be different =>
 				 *  re-create the whole uac */
 				ret=add_uac(t,  msg, &old_uac->uri, 0, &old_uac->path, 0,
-							old_uac->request.dst.proto);
+							 (old_uac->request.dst.send_flags &
+								SND_F_FORCE_SOCKET)?
+									old_uac->request.dst.send_sock:0,
+							old_uac->request.dst.send_flags,
+							old_uac->request.dst.proto, UAC_DNS_FAILOVER_F);
 
 			if (ret<0){
 				/* failed, delete the copied dns_h */
@@ -729,7 +899,9 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	/* note -- there is a gap in proxy stats -- we don't update 
 	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.)
 	*/
-
+	
+	/* set same dst as the invite */
+	t_cancel->uac[branch].request.dst=t_invite->uac[branch].request.dst;
 	/* print */
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* buffer is built localy from the INVITE which was sent out */
@@ -742,38 +914,38 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 			LOG(L_WARN, "WARNING: e2e_cancel_branch: CANCEL is built locally, "
 			"thus lumps are not applied to the message!\n");
 		}
-		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL, CANCEL_LEN, &t_invite->to);
-
+		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL,
+									CANCEL_LEN, &t_invite->to);
+		if (unlikely(!shbuf)) {
+			LOG(L_ERR, "e2e_cancel_branch: printing e2e cancel failed\n");
+			ret=ser_error=E_OUT_OF_MEM;
+			goto error;
+		}
+		/* install buffer */
+		t_cancel->uac[branch].request.buffer=shbuf;
+		t_cancel->uac[branch].request.buffer_len=len;
+		t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer+
+			cancel_msg->first_line.u.request.method.len+1;
+		t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
 	} else {
-		/* buffer is constructed from the received CANCEL with applying lumps */
-		shbuf=print_uac_request( t_cancel, cancel_msg, branch,
-							&t_invite->uac[branch].uri,
-							&t_invite->uac[branch].path,
-							&len, &t_invite->uac[branch].request.dst);
+		/* buffer is constructed from the received CANCEL with lumps applied */
+		/*  t_cancel...request.dst is already filled (see above) */
+		if (unlikely((ret=prepare_new_uac( t_cancel, cancel_msg, branch,
+									&t_invite->uac[branch].uri,
+									&t_invite->uac[branch].path,
+									0, 0, 0, PROTO_NONE, 0)) <0)){
+			ser_error=ret;
+			goto error;
+		}
 	}
-
-	if (!shbuf) {
-		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
-		ret=ser_error=E_OUT_OF_MEM;
-		goto error;
-	}
-	
-	/* install buffer */
-	t_cancel->uac[branch].request.dst=t_invite->uac[branch].request.dst;
-	t_cancel->uac[branch].request.buffer=shbuf;
-	t_cancel->uac[branch].request.buffer_len=len;
-	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer+
-		cancel_msg->first_line.u.request.method.len+1;
-	t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
-	
-
 	/* success */
 	ret=1;
-
 
 error:
 	return ret;
 }
+
+
 
 void e2e_cancel( struct sip_msg *cancel_msg, 
 	struct cell *t_cancel, struct cell *t_invite )
@@ -1097,7 +1269,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int try_new;
 	int lock_replies;
 	str dst_uri, path;
-	struct socket_info* si, *backup_si;
+	struct socket_info* si;
 	flag_t backup_bflags = 0;
 	flag_t bflags = 0;
 	
@@ -1122,7 +1294,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		}
 	}
 
-	backup_si = p_msg->force_send_socket;
 	getbflagsval(0, &backup_bflags);
 
 	/* if no more specific error code is known, use this */
@@ -1158,7 +1329,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 #endif
 		try_new=1;
 		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
-							&p_msg->path_vec, proxy, proto );
+							&p_msg->path_vec, proxy, p_msg->force_send_socket,
+							p_msg->fwd_send_flags, proto, 0);
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
@@ -1169,12 +1341,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
 										&bflags, &si))) {
 		try_new++;
-		p_msg->force_send_socket = si;
 		setbflagsval(0, bflags);
 
 		branch_ret=add_uac( t, p_msg, &current_uri,
 							(dst_uri.len) ? (&dst_uri) : &current_uri,
-							&path, proxy, proto);
+							&path, proxy, si, p_msg->fwd_send_flags,
+							proto, 0);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -1187,7 +1359,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* consume processed branches */
 	clear_branches();
 
-	p_msg->force_send_socket = backup_si;
 	setbflagsval(0, backup_bflags);
 
 	/* don't forget to clear all branches processed so far */

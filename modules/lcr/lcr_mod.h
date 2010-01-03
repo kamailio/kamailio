@@ -26,6 +26,13 @@
  * 2005-02-06: created by jh
  */
 
+/*!
+ * \file
+ * \brief SIP-router lcr :: Various LCR related functions
+ * \ingroup lcr
+ * Module: \ref lcr
+ */
+
 
 #ifndef LCR_MOD_H
 #define LCR_MOD_H

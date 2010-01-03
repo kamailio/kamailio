@@ -12,11 +12,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,12 +21,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 /* History:
  * --------
  *  2006-07-13  created by andrei
  *  2007-06-16  naptr support (andrei)
  *  2007-07-30  DNS cache measurements added (Gergo)
  */
+
+/**
+ * @file
+ * @brief SIP-router core :: resolver/dns related functions, dns cache and failover
+ * @ingroup core
+ * Module: @ref core
+ */
+
 
 
 #ifndef __dns_cache_h
@@ -58,69 +62,74 @@
 #define DEFAULT_DNS_CACHE_MAX_TTL ((unsigned int)(-1)) /* (maxint) */
 #define DEFAULT_DNS_MAX_MEM 500 /* 500 Kb */
 
-/* uncomment the define below for SRV weight based load balancing */
+/** @brief uncomment the define below for SRV weight based load balancing */
 #define DNS_SRV_LB
 
 #define DNS_LU_LST
 
-/* dns functions return them as negative values (e.g. return -E_DNS_NO_IP)
+/** @brief dns functions return them as negative values (e.g. return -E_DNS_NO_IP)
+ *
  * listed in the order of importance ( if more errors, only the most important
  * is returned)
  */
 enum dns_errors{
 					E_DNS_OK=0,
-					E_DNS_EOR, /* no more records (not an error)
+					E_DNS_EOR, /**< no more records (not an error)
 					              -- returned only by the dns_resolve*
 								  functions when called iteratively,; it
 								  signals the end of the ip/records list */
-					E_DNS_UNKNOWN /* unkown error */,
-					E_DNS_INTERNAL_ERR /* internal error */,
+					E_DNS_UNKNOWN /**< unkown error */,
+					E_DNS_INTERNAL_ERR /**< internal error */,
 					E_DNS_BAD_SRV_ENTRY,
-					E_DNS_NO_SRV /* unresolvable srv record */,
+					E_DNS_NO_SRV /**< unresolvable srv record */,
 					E_DNS_BAD_IP_ENTRY,
-					E_DNS_NO_IP /* unresolvable a or aaaa records*/,
-					E_DNS_BAD_IP /* the ip is invalid */,
-					E_DNS_BLACKLIST_IP /* the ip is blacklisted */,
-					E_DNS_NAME_TOO_LONG /* try again with a shorter name */,
-					E_DNS_AF_MISMATCH /* ipv4 or ipv6 only requested, but
+					E_DNS_NO_IP /**< unresolvable a or aaaa records*/,
+					E_DNS_BAD_IP /**< the ip is invalid */,
+					E_DNS_BLACKLIST_IP /**< the ip is blacklisted */,
+					E_DNS_NAME_TOO_LONG /**< try again with a shorter name */,
+					E_DNS_AF_MISMATCH /**< ipv4 or ipv6 only requested, but
 										 name contains an ip addr. of the
 										 opossite type */ ,
-					E_DNS_NO_NAPTR /* unresolvable naptr record */,
-					E_DNS_CRITICAL /* critical error, marks the end
+					E_DNS_NO_NAPTR /**< unresolvable naptr record */,
+					E_DNS_CRITICAL /**< critical error, marks the end
 									  of the error table (always last) */
 };
 
 
 
-/* return a short string, printable error description (err <=0) */
+/** @brief return a short string, printable error description (err <=0) */
 const char* dns_strerror(int err);
 
-/* dns entry error flags */
+/** @brief dns entry error flags */
 #define DNS_BAD_NAME     1 /* unresolvable */
 
-/* dns requests flags */
+/** @name dns requests flags */
+/*@{ */
 #define DNS_NO_FLAGS	0
 #define DNS_IPV4_ONLY	1
 #define DNS_IPV6_ONLY	2
 #define DNS_IPV6_FIRST	4
-#define DNS_SRV_RR_LB	8  /* SRV RR weight based load balancing */
-#define DNS_TRY_NAPTR	16 /* enable naptr lookup */
+#define DNS_SRV_RR_LB	8  /**< SRV RR weight based load balancing */
+#define DNS_TRY_NAPTR	16 /**< enable naptr lookup */
+/*@} */
 
 
-/* ip blacklist error flags */
+/** @name ip blacklist error flags */
+/*@{ */
 #define IP_ERR_BAD_DST      2 /* destination is marked as bad (e.g. bad ip) */
 #define IP_ERR_SND          3 /* send error while using this as destination */
 #define IP_ERR_TIMEOUT      4 /* timeout waiting for a response */
 #define IP_ERR_TCP_CON      5 /* could not establish tcp connection */
+/*@} */
 
 
-/* stripped down dns rr */
+/** @brief stripped down dns rr 
+	@note name, type and class are not needed, contained in struct dns_query */
 struct dns_rr{
 	struct dns_rr* next;
-	void* rdata; /* depends on the type */
-	/* name, type and class are not needed, contained in struct dns_query */
-	ticks_t expire; /* = ttl + crt_time */
-	unsigned char err_flags; /* if 0 everything is ok */
+	void* rdata; /**< depends on the type */
+	ticks_t expire; /**< = ttl + crt_time */
+	unsigned char err_flags; /**< if 0 everything is ok */
 
 };
 
@@ -163,15 +172,15 @@ typedef unsigned long long srv_flags_t;
 #endif
 
 struct dns_srv_handle{
-	struct dns_hash_entry* srv; /* srv entry */
-	struct dns_hash_entry* a;   /* a or aaaa current entry */
+	struct dns_hash_entry* srv; /**< srv entry */
+	struct dns_hash_entry* a;   /**< a or aaaa current entry */
 #ifdef DNS_SRV_LB
 	srv_flags_t srv_tried_rrs;
 #endif
-	unsigned short port; /* current port */
-	unsigned char srv_no; /* current record no. in the srv entry */
-	unsigned char ip_no;  /* current record no. in the a/aaaa entry */
-	unsigned char proto;  /* protocol number */
+	unsigned short port; /**< current port */
+	unsigned char srv_no; /**< current record no. in the srv entry */
+	unsigned char ip_no;  /**< current record no. in the a/aaaa entry */
+	unsigned char proto;  /**< protocol number */
 };
 
 
@@ -209,7 +218,7 @@ inline static void dns_srv_handle_put(struct dns_srv_handle* h)
 
 
 
-/* use it when copying, it manually increases the ref cound */
+/** @brief use it when copying, it manually increases the ref cound */
 inline static void dns_srv_handle_ref(struct dns_srv_handle *h)
 {
 	if (h){
@@ -222,7 +231,7 @@ inline static void dns_srv_handle_ref(struct dns_srv_handle *h)
 
 
 
-/* safe copy increases the refcnt, src must not change while in this function
+/** @brief safe copy increases the refcnt, src must not change while in this function
  * WARNING: the copy must be dns_srv_handle_put ! */
 inline static void dns_srv_handle_cpy(struct dns_srv_handle* dst,
 										struct dns_srv_handle* src)
@@ -233,7 +242,7 @@ inline static void dns_srv_handle_cpy(struct dns_srv_handle* dst,
 
 
 
-/* same as above but assume shm_lock held (for internal tm use only) */
+/** @brief same as above but assume shm_lock held (for internal tm use only) */
 inline static void dns_srv_handle_put_shm_unsafe(struct dns_srv_handle* h)
 {
 	if (h){
@@ -250,7 +259,7 @@ inline static void dns_srv_handle_put_shm_unsafe(struct dns_srv_handle* h)
 
 
 
-/* get "next" ip next time a dns_srv_handle function is called
+/** @brief get "next" ip next time a dns_srv_handle function is called
  * params: h   - struct dns_srv_handler
  *         err - return code of the last dns_*_resolve* call
  * returns: 0 if it doesn't make sense to try another record,
@@ -278,7 +287,7 @@ inline static void dns_srv_handle_init(struct dns_srv_handle* h)
 
 
 
-/* performes a srv query on name
+/** @brief performes a srv query on name
  * Params:  name  - srv query target (e.g. _sip._udp.foo.bar)
  *          ip    - result: first good ip found
  *          port  - result: corresponding port number
@@ -288,7 +297,7 @@ inline static void dns_srv_handle_init(struct dns_srv_handle* h)
 int dns_srv_get_ip(str* name, struct ip_addr* ip, unsigned short* port,
 					int flags);
 
-/* performs an A, AAAA (or both) query/queries
+/** @brief performs an A, AAAA (or both) query/queries
  * Params:  name  - query target (e.g. foo.bar)
  *          ip    - result: first good ip found
  *          flags - resolve options (like ipv4 only, ipv6 prefered a.s.o)
@@ -300,7 +309,7 @@ struct hostent* dns_srv_get_he(str* name, unsigned short* port, int flags);
 struct hostent* dns_get_he(str* name, int flags);
 
 
-/* resolve name to an ip, using srv record. Can be called multiple times
+/** @brief resolve name to an ip, using srv record. Can be called multiple times
  * to iterate on all the possible ips, e.g :
  * dns_srv_handle_init(h);
  * ret_code=dns_sip_resolve(h,...);
@@ -312,7 +321,7 @@ struct hostent* dns_get_he(str* name, int flags);
 int dns_sip_resolve(struct dns_srv_handle* h,  str* name, struct ip_addr* ip,
 					unsigned short* port, char* proto, int flags);
 
-/* same as above, but fills su intead of changing port and filling an ip */
+/** @brief same as above, but fills su intead of changing port and filling an ip */
 inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 									 union sockaddr_union* su,
 									 str* name, unsigned short port,
@@ -327,17 +336,17 @@ inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 	return ret;
 }
 
-/* deletes all the entries from the cache */
+/** @brief deletes all the entries from the cache */
 void dns_cache_flush(void);
 
 #ifdef DNS_WATCHDOG_SUPPORT
-/* sets the state of the DNS servers:
+/** @brief sets the state of the DNS servers:
  * 1: at least one server is up
  * 0: all the servers are down
  */
 void dns_set_server_state(int state);
 
-/* returns the state of the DNS servers */
+/** @brief returns the state of the DNS servers */
 int dns_get_server_state(void);
 #endif /* DNS_WATCHDOG_SUPPORT */
 

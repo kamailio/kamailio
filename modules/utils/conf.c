@@ -27,8 +27,6 @@
  * Module: \ref utils
  */
 
-
-
 #include "conf.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -41,11 +39,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
 #define BUFSIZE 1000
 
-
-/* special filter indices */
+/*! \brief special filter indices */
 enum {
 	sfidx_request = 0,
 	sfidx_reply,
@@ -83,12 +79,11 @@ static int fwd_max_id = 0;
 static void remove_spaces(char *s)
 {
 	char *p, *dst;
-
-	for (p = s, dst = s; *p != '\0'; ++p, ++dst) {
-		while (isspace(*p)) ++p;
-		*dst = *p;
+	for (p = s, dst = s; *p != '\0'; ++p) {
+		if (!isspace(*p)) *dst++ = *p;
 	}
 	*dst = '\0';
+
 }
 
 
@@ -300,7 +295,9 @@ static int update_proxy(int id, char *host_str, char *port_str)
  * Parses a configuration string for switch settings and updates
  * the configuration structure.
  * \param settings the configuration string in the following form:
+\verbatim
  *              <id>=<switch>[,<id>=<switch>]...
+\endverbatim
  * \return 1 on success, -1 otherwise
  */
 int conf_parse_switch(char *settings)
@@ -400,7 +397,9 @@ error:
  * Parses a configuration string for switch settings and
  * updates the configuration structure.
  * \param settings The configuration string in the following form:
+\verbatim
  *              <id>=<filter>[:<filter>]...[,<id>=<filter>[:<filter>]...]...
+\endverbatim
  * \return 1 on success, -1 otherwise
  */
 int conf_parse_filter(char *settings)
@@ -443,7 +442,9 @@ int conf_parse_filter(char *settings)
  * Parses a configuration string for proxy settings and
  * updates the configuration structure.
  * \param settings: The configuration string in the following form:
+\verbatim
  *              <id>=<host>:<port>[,<id>=<host>:<port>]...
+\endverbatim
  * \return: 1 on success, -1 otherwise
  */
 int conf_parse_proxy(char *settings)

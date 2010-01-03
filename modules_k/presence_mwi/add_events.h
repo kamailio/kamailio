@@ -24,6 +24,14 @@
  *  2007-05-1  initial version (jih)
  */
 
+/*!
+ * \file
+ * \brief SIP-router Presence :: Message Waiting indication
+ * \ingroup presence
+ * Module: \ref presence
+ */
+
+
 #ifndef _MWI_ADD_EV_H_
 #define _MWI_ADD_EV_H_
 

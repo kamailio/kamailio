@@ -15,7 +15,7 @@
 	<para>
 		The module exports a number of functions that allow selecting 
 		and retrieving an element from an xcap server and also registering
-		a callback to be called when a MI command refreshXcapDoc is received
+		a callback to be called when the management command refreshXcapDoc is received
 		and the document in question is retrieved.
    </para>
    <section>

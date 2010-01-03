@@ -42,9 +42,6 @@
 /* usr_avp flag for sequential forking */
 #define Q_FLAG      (1<<2)
 
-/* module parameter variable */
-int fr_inv_timer_next = INV_FR_TIME_OUT_NEXT;
-
 /* Struture where information regarding contacts is stored */
 struct contact {
     str uri;
@@ -118,72 +115,100 @@ static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
     int port, proto;
     char *pos, *at, *tmp;
 
-    pos = strchr(info, '\n');
-    uri->len = pos - info;
-    if (uri->len) {
-		uri->s = info;
-    } else {
-		uri->s = 0;
+	if (info == NULL) {
+		ERR("decode_branch_info: Invalid input string.\n");
+		return 0;
+	}
+	
+	/* Reset or return arguments to sane defaults */
+	uri->s = 0; uri->len = 0;
+	dst->s = 0; dst->len = 0;
+	path->s = 0; path->len = 0;
+	*sock = NULL;
+	*flags = 0;
+	
+	/* Make sure that we have at least a non-empty URI string, it is fine if
+	 * everything else is missing, but we need at least the URI. */
+	uri->s = info; 
+	if ((pos = strchr(info, '\n')) == NULL) { 
+		uri->len = strlen(info); 
+			/* We don't even have the URI string, this is bad, report an
+			 * error. */
+		if (uri->len == 0) goto uri_missing;
+		return 1;
     }
-    at = pos + 1;
+	uri->len = pos - info;
+	if (uri->len == 0) goto uri_missing;
 
-    pos = strchr(at, '\n');
-    dst->len = pos - at;
-    if (dst->len) {
-		dst->s = at;
-    } else {
-		dst->s = 0;
+	/* If we get here we have at least the branch URI, now try to parse as
+	 * much as you can. All output variable have been initialized above, so it
+	 * is OK if any of the fields are missing from now on. */
+    dst->s = at = pos + 1;
+    if ((pos = strchr(at, '\n')) == NULL) {
+		dst->len = strlen(dst->s);
+		return 1;
     }
-    at = pos + 1;
+	dst->len = pos - at;
 
-    pos = strchr(at, '\n');
+    path->s = at = pos + 1;
+    if ((pos = strchr(at, '\n')) == NULL) {
+		path->len = strlen(path->s);
+		return 1;
+    }
     path->len = pos - at;
-    if (path->len) {
-		path->s = at;
-    } else {
-		path->s = 0;
-    }
-    at = pos + 1;
 
-    pos = strchr(at, '\n');
-    s.len = pos - at;
-    if (s.len) {
-		s.s = at;
+    s.s = at = pos + 1;
+    if ((pos = strchr(at, '\n')) == NULL) {
+		/* No LF found, that means we take the string till the final zero
+		 * termination character and pass it directly to parse_phostport
+		 * without making a zero-terminated copy. */
+		tmp = s.s;
+		s.len = strlen(s.s);
+	} else {
+		/* Our string is terminated by LF, so we need to make a
+		 * zero-terminated copy of the string before we pass it to
+		 * parse_phostport. */
+		s.len = pos - at;
 		if ((tmp = as_asciiz(&s)) == NULL) {
 			ERR("No memory left\n");
 			return 0;
 		}
+	}	
+	if (s.len) {
 		if (parse_phostport(tmp, &host.s, &host.len,
 							&port, &proto) != 0) {
-			LM_ERR("parsing of socket info <%.*s> failed\n",  s.len, s.s);
-			pkg_free(tmp);
+			LM_ERR("parsing of socket info <%s> failed\n", tmp);
+			if (pos) pkg_free(tmp);
 			return 0;
 		}
-		pkg_free(tmp);
+
 		*sock = grep_sock_info(&host, (unsigned short)port,
 							   (unsigned short)proto);
 		if (*sock == 0) {
-			LM_ERR("invalid socket <%.*s>\n", s.len, s.s);
+			LM_ERR("invalid socket <%s>\n", tmp);
+			if (pos) pkg_free(tmp);
 			return 0;
 		}
-    } else {
-		*sock = 0;
-    }
-    at = pos + 1;
+	}
+	
+	if (pos) pkg_free(tmp);
+	else return 1;
+	
+    s.s = at = pos + 1;
+    if ((pos = strchr(at, '\n')) == NULL) s.len = strlen(s.s);
+    else s.len = pos - s.s;
 
-    pos = strchr(at, '\n');
-    s.len = pos - at;
     if (s.len) {
-		s.s = at;
 		if (str2int(&s, flags) != 0) {
-			LM_ERR("failed to decode flags <%.*s>\n", s.len, s.s);
+			LM_ERR("failed to decode flags <%.*s>\n", STR_FMT(&s));
 			return 0;
 		}
-    } else {
-		*flags = 0;
     }
-
     return 1;
+
+uri_missing:
+	ERR("decode_branch_info: Cannot decode branch URI.\n");
+	return 0;
 }
 
 
@@ -349,7 +374,7 @@ rest:
 				contacts_avp, val);
 		pkg_free(branch_info.s);
 		LM_DBG("loaded contact <%.*s> with q_flag <%d>\n",
-			   val.s.len, val.s.s, curr->q_flag);
+			   STR_FMT(&val.s), curr->q_flag);
 		curr = curr->next;
     }
 
@@ -379,6 +404,8 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
     unsigned int flags;
     struct cell *t;
 	struct search_state st;
+	ticks_t orig;
+	unsigned int avp_timeout;
 
     /* Check if contacts_avp has been defined */
     if (contacts_avp.n == 0) {
@@ -405,45 +432,44 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 			return 1;
 		}
 
-		LM_DBG("next contact is <%s>\n", val.s.s);
+		LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
 
 		if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
 			== 0) {
-			LM_ERR("decoding of branch info <%.*s> failed\n",
-				   val.s.len, val.s.s);
+			LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
 			destroy_avp(avp);
 			return -1;
 		}
 
 		/* Rewrite Request-URI */
 		rewrite_uri(msg, &uri);
-		set_dst_uri(msg, &dst);
-		set_path_vector(msg, &path);
-		msg->force_send_socket = sock;
+		if (dst.s && dst.len) set_dst_uri(msg, &dst);
+		else reset_dst_uri(msg);
+		if (path.s && path.len) set_path_vector(msg, &path);
+		else reset_path_vector(msg);
+		set_force_socket(msg, sock);
 		setbflagsval(0, flags);
 
 		if (avp->flags & Q_FLAG) {
 			destroy_avp(avp);
 			/* Set fr_inv_timer */
-			val.n = fr_inv_timer_next;
-			if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-				LM_ERR("setting of fr_inv_timer_avp failed\n");
+			if (t_set_fr(msg, cfg_get(tm, tm_cfg, fr_inv_timeout_next), 0) 
+				== -1) {
+				ERR("Cannot set fr_inv_timer value.\n");
 				return -1;
 			}
 			return 1;
 		}
-
+		
 		/* Append branches until out of branches or Q_FLAG is set */
 		prev = avp;
 		while ((avp = search_next_avp(&st, &val))) {
 			destroy_avp(prev);
-
-			LM_DBG("next contact is <%s>\n", val.s.s);
+			LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
 
 			if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
 				== 0) {
-				LM_ERR("decoding of branch info <%.*s> failed\n",
-					   val.s.len, val.s.s);
+				LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
 				destroy_avp(avp);
 				return -1;
 			}
@@ -456,35 +482,30 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 
 			if (avp->flags & Q_FLAG) {
 				destroy_avp(avp);
-				val.n = fr_inv_timer_next;
-				if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val)
-					!= 0) {
-					LM_ERR("setting of fr_inv_timer_avp failed\n");
+				/* Set fr_inv_timer */
+				if (t_set_fr(msg, cfg_get(tm, tm_cfg, fr_inv_timeout_next), 0) == -1) {
+					ERR("Cannot set fr_inv_timer value.\n");
 					return -1;
 				}
 				return 1;
 			}
 			prev = avp;
 		}
-	
+		destroy_avp(prev);
     } else {
-	
-		/* Transaction exists => only load branches */
+			/* Transaction exists => only load branches */
 
 		/* Find first contacts_avp value */
 		avp = search_first_avp(contacts_avp_type, contacts_avp, &val, &st);
 		if (!avp) return -1;
 
 		/* Append branches until out of branches or Q_FLAG is set */
-		prev = avp;
 		do {
-
-			LM_DBG("next contact is <%s>\n", val.s.s);
+			LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
 
 			if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
 				== 0) {
-				LM_ERR("decoding of branch info <%.*s> failed\n",
-					   val.s.len, val.s.s);
+				LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
 				destroy_avp(avp);
 				return -1;
 			}
@@ -503,16 +524,49 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 			prev = avp;
 			avp = search_next_avp(&st, &val);
 			destroy_avp(prev);
-
 		} while (avp);
 
-		/* Restore fr_inv_timer */
-		val.n = default_tm_cfg.fr_inv_timeout;
-		if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-			LM_ERR("setting of fr_inv_timer_avp failed\n");
-			return -1;
+		/* If we got there then we have no more branches for subsequent serial
+		 * forking and the current set is the last one. For the last set we do
+		 * not use the shorter timer fr_inv_timer_next anymore, instead we use
+		 * the usual fr_inv_timer.
+		 *
+		 * There are three places in sip-router which can contain the actual
+		 * value of the fr_inv_timer. The first place is the variable
+		 * use_fr_inv_timeout defined in timer.c That variable is set when the
+		 * script writer calls t_set_fr in the script. Its value can only be
+		 * used from within the process in which t_set_fr was called. It is
+		 * not guaranteed that when we get here we are still in the same
+		 * process and therefore we might not be able to restore the correct
+		 * value if the script writer used t_set_fr before calling
+		 * t_next_contacts. If that happens then the code below detects this
+		 * and looks into the AVP or cfg framework for other value. In other
+		 * words, t_next_contact does not guarantee that fr_inv_timer values
+		 * configured on per-transaction basis with t_set_fr will be correctly
+		 * restored.
+		 *
+		 * The second place is the fr_inv_timer_avp configured in modules
+		 * parameters. If that AVP exists and then its value will be correctly
+		 * restored by t_next_contacts. The AVP is an alternative way of
+		 * configuring fr_inv_timer on per-transaction basis, it can be used
+		 * interchangeably with t_set_fr. Function t_next_contacts always
+		 * correctly restores the timer value configured in the AVP.
+		 *
+		 * Finally, if we can get the value neither from user_fr_inv_timeout
+		 * nor from the AVP, we turn to the fr_inv_timeout variable in the cfg
+		 * framework. This variable contains module's default and it always
+		 * exists and is available. */
+		orig = (ticks_t)get_msgid_val(user_fr_inv_timeout, msg->id, int);
+		if (orig == 0) {
+			if (!fr_inv_avp2timer(&avp_timeout)) {
+				/* The value in the AVP is in seconds and needs to be
+				 * converted to ticks */
+				orig = S_TO_TICKS((ticks_t)avp_timeout);
+			} else {
+				orig = cfg_get(tm, tm_cfg, fr_inv_timeout);
+			}
 		}
-	
+		change_fr(t, orig, 0);
     }
 
     return 1;

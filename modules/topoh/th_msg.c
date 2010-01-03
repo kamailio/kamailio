@@ -18,12 +18,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*!
+ * \file
+ * \brief SIP-router topoh ::
+ * \ingroup topoh
+ * Module: \ref topoh
+ */
+
 #include <string.h>
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../forward.h"
+#include "../../trim.h"
 #include "../../msg_translator.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
@@ -32,6 +40,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_via.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_refer_to.h"
 #include "th_mask.h"
 #include "th_msg.h"
 
@@ -39,6 +48,7 @@ extern str th_cookie_name;
 extern str th_cookie_value;
 extern str th_via_prefix;
 extern str th_uri_prefix;
+extern str th_callid_prefix;
 
 extern str th_ip;
 extern str th_uparam_name;
@@ -208,8 +218,8 @@ int th_mask_callid(sip_msg_t *msg)
 		return -1;
 	}
 				
-	out.s = th_mask_encode(msg->callid->body.s, msg->callid->body.len, 0,
-						&out.len);
+	out.s = th_mask_encode(msg->callid->body.s, msg->callid->body.len,
+				&th_callid_prefix, &out.len);
 	if(out.s==NULL)
 	{
 		LM_ERR("cannot encode callid\n");
@@ -444,8 +454,8 @@ int th_unmask_callid(sip_msg_t *msg)
 		return -1;
 	}
 				
-	out.s = th_mask_decode(msg->callid->body.s, msg->callid->body.len, 0, 0,
-						&out.len);
+	out.s = th_mask_decode(msg->callid->body.s, msg->callid->body.len,
+					&th_callid_prefix, 0, &out.len);
 	if(out.s==NULL)
 	{
 		LM_ERR("cannot decode callid\n");
@@ -659,6 +669,131 @@ int th_unmask_ruri(sip_msg_t *msg)
 	}
 	if (insert_new_lump_after(l, out.s, out.len, 0)==0)
 	{
+		LM_ERR("could not insert new lump\n");
+		pkg_free(out.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+int th_unmask_refer_to(sip_msg_t *msg)
+{
+	str eval;
+	str *uri;
+	int ulen;
+	struct lump* l;
+	str out;
+
+	if(!((get_cseq(msg)->method_id)&(METHOD_REFER)))
+		return 0;
+
+	if(parse_refer_to_header(msg)==-1)
+	{
+		LM_DBG("no Refer-To header\n");
+		return 0;
+	}
+	if(msg->refer_to==NULL || get_refer_to(msg)==NULL)
+	{
+		LM_DBG("Refer-To header not found\n");
+		return 0;
+	}
+
+	uri = &(get_refer_to(msg)->uri);
+	if(th_get_uri_param_value(uri, &th_uparam_name, &eval)<0
+			|| eval.len<=0)
+		return -1;
+
+	out.s = th_mask_decode(eval.s, eval.len,
+				&th_uparam_prefix, 0, &out.len);
+	if(out.s==NULL)
+	{
+		LM_ERR("cannot decode r-uri\n");
+		return -1;
+	}
+
+	LM_DBG("+decoded: %d: [%.*s]\n", out.len, out.len, out.s);
+	for(ulen=0; ulen<uri->len; ulen++)
+	{
+		if(uri->s[ulen]=='?')
+			break;
+	}
+
+	l=del_lump(msg, uri->s-msg->buf, ulen, 0);
+	if (l==0)
+	{
+		LM_ERR("failed deleting r-uri\n");
+		pkg_free(out.s);
+		return -1;
+	}
+	if (insert_new_lump_after(l, out.s, out.len, 0)==0)
+	{
+		LM_ERR("could not insert new lump\n");
+		pkg_free(out.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+int th_update_hdr_replaces(sip_msg_t *msg)
+{
+	struct hdr_field *hf = NULL;
+	str replaces;
+	str rcallid;
+	struct lump* l;
+	str out;
+
+	LM_DBG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	if(th_param_mask_callid==0)
+		return 0;
+
+	if(!((get_cseq(msg)->method_id)&(METHOD_INVITE)))
+		return 0;
+
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		if (hf->name.len==8 && strncasecmp(hf->name.s, "Replaces", 8)==0)
+			break;
+	}
+
+	if(hf==NULL)
+		return 0;
+
+	replaces = hf->body;
+	trim(&replaces);
+	rcallid.s = replaces.s;
+	for(rcallid.len=0; rcallid.len<replaces.len; rcallid.len++)
+	{
+		if(rcallid.s[rcallid.len]==';')
+			break;
+	}
+
+	if(rcallid.len>th_callid_prefix.len
+			&& strncmp(rcallid.s, th_callid_prefix.s, th_callid_prefix.len)==0)
+	{
+		/* value encoded - decode it */
+		out.s = th_mask_decode(rcallid.s, rcallid.len,
+					&th_callid_prefix, 0, &out.len);
+	} else {
+		/* value decoded - encode it */
+		out.s = th_mask_encode(rcallid.s, rcallid.len,
+				&th_callid_prefix, &out.len);
+	}
+	if(out.s==NULL)
+	{
+		LM_ERR("cannot update Replaces callid\n");
+		return -1;
+	}
+
+	l=del_lump(msg, rcallid.s-msg->buf, rcallid.len, 0);
+	if (l==0)
+	{
+		LM_ERR("failed deleting Replaces callid\n");
+		pkg_free(out.s);
+		return -1;
+	}
+	if (insert_new_lump_after(l, out.s, out.len, 0)==0) {
 		LM_ERR("could not insert new lump\n");
 		pkg_free(out.s);
 		return -1;

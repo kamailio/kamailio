@@ -10,37 +10,37 @@ Anca-Maria Vamanu
 
    Copyright © 2007 voice-system.ro
    Revision History
-   Revision $Revision: 1499 $ $Date: 2007-01-12 14:05:57 +0200
-                              (Fri, 12 Jan 2007) $
-     __________________________________________________________
+   Revision $Revision: 1499 $ $Date: 2007-01-12 14:05:57 +0200 (Fri, 12
+   Jan 2007) $
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. db_url(str)
-              1.3.2. xcap_table(str)
-              1.3.3. periodical_query(int)
-              1.3.4. query_period(int)
+              3.1. db_url(str)
+              3.2. xcap_table(str)
+              3.3. periodical_query(int)
+              3.4. query_period(int)
 
-        1.4. Exported Functions
-        1.5. Exported MI Functions
+        4. Exported Functions
+        5. Exported Management Functions
 
-              1.5.1. refreshXcapDoc
+              5.1. refreshXcapDoc
 
    2. Developer Guide
 
-        2.1. bind_xcap_api(xcap_api_t* api)
-        2.2. get_elem
-        2.3. register_xcb
+        1. bind_xcap_api(xcap_api_t* api)
+        2. get_elem
+        3. register_xcb
 
    List of Examples
 
@@ -52,47 +52,73 @@ Anca-Maria Vamanu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The modules is an XCAP client for Kamailio that can be used by
-   other modules. It fetches XCAP elements, either documents or
-   part of them, by sending HTTP GET requests. It also offers
-   support for conditional queries. It uses libcurl library as a
-   client-side HTTP transfer library.
+   1. Overview
+   2. Dependencies
 
-   The module offers an xcap client interface with general
-   functions that allow requesting for an specific element from an
-   xcap server. In addition to that it also offers the service of
-   storing and update in database the documents it receives. In
-   this case only an initial request to the module is required -
-   xcapGetNewDoc-which is like a request to the module to handle
-   from that point on the referenced document so as to promise
-   that the newest version will always be present in database.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-   The update method is also configurable, either through
-   periodical queries, applicable to any kind of xcap server or
-   with an MI command that should be sent by the server upon an
-   update.
+   3. Exported Parameters
 
-   The module is currently used by the presence_xml module, if the
+        3.1. db_url(str)
+        3.2. xcap_table(str)
+        3.3. periodical_query(int)
+        3.4. query_period(int)
+
+   4. Exported Functions
+   5. Exported Management Functions
+
+        5.1. refreshXcapDoc
+
+1. Overview
+
+   The modules is a XCAP client for Kamailio that can be used by other
+   modules. It fetches XCAP elements, either documents or part of them, by
+   sending HTTP GET requests to an XCAP server. It also offers support for
+   conditional queries. It uses the libcurl library as a client-side HTTP
+   transfer library.
+
+   The module offers a XCAP client interface with general functions that
+   allow requesting for a specific element from a XCAP server. In addition
+   to that it also offers the service of storing and updating the
+   documents it receives. In this case only an initial request to the
+   module is required - xcapGetNewDoc - which is like a request to the
+   module to handle from that point on the referenced document so as to
+   promise that the newest version will always be present in database.
+
+   The update method is also configurable, either through periodical
+   queries, applicable to any kind of XCAP server or with an management
+   command that should be sent by the server upon an update.
+
+   The module is currently used by the "presence_xml" module, if the
    'integrated_xcap_server' parameter is not set.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The modules is not dependent of any Kamailio module.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * libxml.
      * libcurl.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. db_url(str)
+   3.1. db_url(str)
+   3.2. xcap_table(str)
+   3.3. periodical_query(int)
+   3.4. query_period(int)
+
+3.1. db_url(str)
 
    The database url.
 
@@ -100,11 +126,10 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
 ...
-modparam("xcap_client", "db_url", "dbdriver://username:password@dbhost/d
-bname")
+modparam("xcap_client", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-1.3.2. xcap_table(str)
+3.2. xcap_table(str)
 
    The name of the db table where XCAP documents are stored.
 
@@ -115,13 +140,12 @@ bname")
 modparam("xcap_client", "xcap_table", "xcaps")
 ...
 
-1.3.3. periodical_query(int)
+3.3. periodical_query(int)
 
    A flag to disable periodical query as an update method for the
-   documents the module is responsible for. It could be disabled
-   when the xcap server is capable to send the exported MI command
-   when a change occurs or when another module in Kamailio handles
-   updates.
+   documents the module is responsible for. It could be disabled when the
+   XCAP server is capable to send the exported management command when a
+   change occurs or when another module in Kamailio handles updates.
 
    To disable it set this parameter to 0.
 
@@ -132,11 +156,10 @@ modparam("xcap_client", "xcap_table", "xcaps")
 modparam("xcap_client", "periodical_query", 0)
 ...
 
-1.3.4. query_period(int)
+3.4. query_period(int)
 
-   Should be set if periodical query is not disabled. Represents
-   the time interval the xcap servers should be queried for an
-   update
+   Should be set if periodical query is not disabled. Represents the time
+   interval the XCAP servers should be queried for an update.
 
    To disable it set this parameter to 0.
 
@@ -147,15 +170,17 @@ modparam("xcap_client", "periodical_query", 0)
 modparam("xcap_client", "query_period", 50)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
    None to be used in configuration file.
 
-1.5. Exported MI Functions
+5. Exported Management Functions
 
-1.5.1.  refreshXcapDoc
+   5.1. refreshXcapDoc
 
-   MI command that should be sent by an xcap server when a stored
+5.1. refreshXcapDoc
+
+   Management command that should be sent by an XCAP server when a stored
    document changes.
 
    Name: refreshXcapDoc
@@ -164,7 +189,7 @@ modparam("xcap_client", "query_period", 50)
      * document uri: the uri of the document
      * xcap server port: the port of the xcap server
 
-   MI FIFO Command Format:
+   Management FIFO Command Format:
 ...
 :refreshXcapDoc:fifo_reply
 /xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml
@@ -174,13 +199,18 @@ _empty_line_
 
 Chapter 2. Developer Guide
 
-   The module exports a number of functions that allow selecting
-   and retrieving an element from an xcap server and also
-   registering a callback to be called when a MI command
-   refreshXcapDoc is received and the document in question is
-   retrieved.
+   Table of Contents
 
-2.1.  bind_xcap_api(xcap_api_t* api)
+   1. bind_xcap_api(xcap_api_t* api)
+   2. get_elem
+   3. register_xcb
+
+   The module exports a number of functions that allow selecting and
+   retrieving an element from an xcap server and also registering a
+   callback to be called when the management command refreshXcapDoc is
+   received and the document in question is retrieved.
+
+1. bind_xcap_api(xcap_api_t* api)
 
    This function allows binding the needed functions.
 
@@ -203,7 +233,7 @@ typedef struct xcap_api {
 }xcap_api_t;
 ...
 
-2.2.  get_elem
+2. get_elem
 
    Field type:
 ...
@@ -211,8 +241,8 @@ typedef char* (*xcap_get_elem_t)(char* xcap_root,
 xcap_doc_sel_t* doc_sel, xcap_node_sel_t* node_sel);
 ...
 
-   This function sends a HTTP request and gets the specified
-   information from the xcap server.
+   This function sends a HTTP request and gets the specified information
+   from the xcap server.
 
    The parameters signification:
      * xcap_root- the XCAP server address;
@@ -231,7 +261,6 @@ typedef struct xcap_doc_sel
         str filename;
 }xcap_doc_sel_t;
 ...
-
      * node_sel- structure with node selection info;
 Parameter type:
 ...
@@ -259,21 +288,18 @@ typedef struct ns_list
         struct ns_list* next;
 }ns_list_t;
 ...
+       The node selector is represented like a list of steps that will be
+       represented in the path string separated by '/' signs. The
+       namespaces for the nodes are stored also in a list, as an
+       association of name and value, where the value is to be included in
+       the respective string val field of the step.
+       To construct the node structure the following functions in the
+       xcap_api structure should be used: 'int_node_sel', 'add_step' and
+       if needed, 'add_terminal'.
+       If the intention is to retrieve the whole document this argument
+       must be NULL.
 
-
-       The node selector is represented like a list of steps that
-       will be represented in the path string separated by '/'
-       signs. The namespaces for the nodes are stored also in a
-       list, as an association of name and value, where the value
-       is to be included in the respective string val field of the
-       step.
-       To construct the node structure the following functions in
-       the xcap_api structure should be used: 'int_node_sel',
-       'add_step' and if needed, 'add_terminal'.
-       If the intention is to retrieve the whole document this
-       argument must be NULL.
-
-2.3.  register_xcb
+3. register_xcb
 
    Field type:
 ...

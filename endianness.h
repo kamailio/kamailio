@@ -15,27 +15,25 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+
+/** @file
  *  endianness compile and runtime  tests
  * 
  * History:
  * --------
  *  2008-06-13  created by andrei
- */
-
-/*
+ *
  * Defines:
- *    __IS_LITTLE_ENDIAN if the system is little endian and
- *    __IS_BIG_ENDIAN    if it's big endian
+ *  -  __IS_LITTLE_ENDIAN if the system is little endian and
+ *  -  __IS_BIG_ENDIAN    if it's big endian
  * Function/macros:
- *     is_big_endian()  - runtime test for big endian
- *     is_little_endian() - runtime test for little endian
- *     endianness_sanity_check() - returns 0 if the compile time
+ *  -   is_big_endian()  - runtime test for big endian
+ *  -   is_little_endian() - runtime test for little endian
+ *  -   endianness_sanity_check() - returns 0 if the compile time
  *                                  detected endianness corresponds to
  *                                  the runtime detected one and -1 on 
  *                                  error (recommended action: bail out)
- */
-/*
+ *
  * Implementation notes:
  * Endian macro names/tests for different OSes:
  * linux:  __BYTE_ORDER == __LITTLE_ENDIAN | __BIG_ENDIAN

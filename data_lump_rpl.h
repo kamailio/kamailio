@@ -11,11 +11,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -35,6 +30,14 @@
  *               returns a lump_rpl**, making a specific lump removal much
  *               more easy (andrei)
  */
+
+/*!
+ * \file
+ * \brief SIP-router core :: Data lumps
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 
 #ifndef data_lump_rpl_h
@@ -59,7 +62,7 @@ struct lump_rpl
 struct lump_rpl** add_lump_rpl2(struct sip_msg *, char *, int , int );
 
 
-/* compatibility wrapper for the old add_lump_rpl version */
+/*! \brief compatibility wrapper for the old add_lump_rpl version */
 inline static struct lump_rpl* add_lump_rpl(struct sip_msg* msg,
 												char* s, int len , int flags )
 {

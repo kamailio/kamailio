@@ -26,6 +26,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router core ::
+ * \ingroup core
+ * Module: \ref core
+ */
+
 
 #ifndef action_h
 #define action_h

@@ -15,7 +15,7 @@
 	<para>A module which provides routing, balancing and blacklisting capabilities.</para>
 	<para>
 		The module provides routing, balancing and blacklisting capabilities.
-		It reads routing entries from a database source or from a config file at Kamailio
+		It reads routing entries from a database source or from a config file at &kamailio;
 		startup. It can uses one routing tree (for one carrier), or if needed for every user
 		a different routing tree (unique for each carrier) for number prefix based routing.
 		It supports several route tree domains,	e.g. for failback routes or different routing

@@ -28,6 +28,13 @@
  * 2003-12-15: added suffix parameter to enum_query (jh)
  */
 
+/*!
+ * \file
+ * \brief SIP-router enum :: Enum and E164 related functions 
+ * \ingroup enum
+ * Module: \ref enum
+ */
+
 
 #include "enum_mod.h"
 #include <stdio.h>

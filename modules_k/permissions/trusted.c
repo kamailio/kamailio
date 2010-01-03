@@ -40,7 +40,7 @@
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
 
-#define TABLE_VERSION 4
+#define TABLE_VERSION 5
 
 struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
 struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */

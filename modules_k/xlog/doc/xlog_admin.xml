@@ -17,7 +17,7 @@
 	<title>Overview</title>
 	<para>
 		This module provides the possibility to print user formatted log or
-		debug messages from &kamailio; scripts, similar to printf function. 
+		debug messages from &kamailio; scripts, similar to the printf function. 
 		A C-style printf specifier is replaced with a part of the &sip; request or other
 		variables from system.
 		<xref linkend="sec-implemented-specifiers"/> shows what can be printed
@@ -32,7 +32,7 @@
 	in the function avp_printf())
 	</para>
 	<para>
-	The most important changes from earlier versions of Kamailio are:
+	The most important changes from earlier versions of &kamailio; are:
 	</para>
 	<itemizedlist>
 		<listitem>

@@ -5,20 +5,25 @@
 # 2005-11-30    created by andrei
 
 
-New timer interface
+SIP-router :: timer interface
+=============================
 
 
 1. Introduction
 ---------------
 
- ser's new timer interface is based on a 3 level hierarchical timing wheel
+SIP-router's timer interface is based on a 3 level hierarchical timing wheel
 (see [1]). Most timeouts will go in the first "wheel" (all timeouts < 1<<14 
- ticks, which by default mean 1024 s). Each wheel acts as a circular buffer.
- The big advantage of this scheme is that most of the time you just run all the timer handlers from the current entry in the first wheel (no comparisons necessary). Each 2^14 ticks, all the timers in the second wheel's current entry are redistributed and each 2^23 ticks all the timers in the third wheel's current entry are redistributed.
+ticks, which by default mean 1024 s). Each wheel acts as a circular buffer.
+The big advantage of this scheme is that most of the time you just run all the 
+timer handlers from the current entry in the first wheel (no comparisons necessary). 
+Each 2^14 ticks, all the timers in the second wheel's current entry are redistributed 
+and each 2^23 ticks all the timers in the third wheel's current entry are redistributed.
 
- The new timer interfaces allows adding timers dynamically, supports one shot
- and periodic timers, is precise and fast (very low overhead) and supports
-"fast" and "slow" timers. For now it uses setitimer to "generate" the ticks and form time to time it re-adjusts them based on the real system time.
+The timer interfaces allows adding timers dynamically, supports one shot
+and periodic timers, is precise and fast (very low overhead) and supports
+"fast" and "slow" timers. For now it uses setitimer to "generate" the ticks and from 
+time to time it re-adjusts them based on the real system time.
 
 
 [1] - G. Varghese, T. Lauck,  Hashed and Hierarchical Timing Wheels: Efficient
@@ -29,7 +34,7 @@ New timer interface
 -----------------
 
 All the public functions are defined in timer.h. timer_ticks.h contains
- ticks conversion related macros (ticks to seconds, ms or viceversa).
+ticks conversion related macros (ticks to seconds, ms or viceversa).
 
 
 3. Example usage

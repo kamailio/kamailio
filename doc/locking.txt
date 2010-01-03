@@ -6,23 +6,41 @@
 #  2006-04-04  minor archs updates, added lock_try(..)  (andrei)
 
 
-SER locking interface
-
+SIP-router locking interface
+============================
 
 1. Why use it?
-   ----------
+--------------
 
- The main reason in creating it was to have a single transparent interface to various locking methods. For example right now ser uses the following locking methods, depending on their availability on the target system:
- FAST_LOCK - fast inline assembly locks, defined in fast_lock.h. They are currently available for x86, x86_64, sparc, sparc64, arm , armv6 (no smp mode supported yet), ppc, ppc64, mips, mips64 and alpha . In general if the assembly code exists for a given arhitecture and the compiler knows inline assembly (for example sun cc does not) FAST_LOCK is prefered. The main advantage of using FAST_LOCK is very low memory overhead and extremely fast lock/unlock operations (like 20 times faster then SYSV semaphores on linux & 40 times on solaris). The only thing that comes close to them are pthread mutexes (which are about 3-4 times slower).
- PTHREAD_MUTEX - uses pthread_mutex_lock/unlock. They are quite fast but they work between processes only on some systems (they do not work on linux).
- POSIX_SEM  - uses posix semaphores (sem_wait/sem_post). They are slower then the previous methods but still way faster then SYSV sempahores. Unfortunately they also do not work on all the systems (e.g. linux).
- SYSV_SEM - this is the most portable but also the slowest locking method. Another problem is that the number of semaphores that can be alocated by a process is limited. One also has to free them before exiting.
+The main reason for creating it was to have a single transparent interface to various locking methods. 
+For example right now SIP-router uses the following locking methods, depending on their availability on the 
+target system:
+	FAST_LOCK - fast inline assembly locks, defined in fast_lock.h. They are currently available for 
+	x86, x86_64, sparc, sparc64, arm , armv6 (no smp mode supported yet), ppc, ppc64, mips, mips64 
+	and alpha . In general if the assembly code exists for a given arhitecture and the compiler 
+	knows inline assembly (for example sun cc does not) FAST_LOCK is prefered. The main 
+	advantage of using FAST_LOCK is very low memory overhead and extremely fast lock/unlock 
+	operations (like 20 times faster then SYSV semaphores on linux & 40 times on solaris). 
+	The only thing that comes close to them are pthread mutexes (which are about 3-4 times slower).
+
+	PTHREAD_MUTEX - uses pthread_mutex_lock/unlock. They are quite fast but they work between 
+	processes only on some systems (they do not work on linux).
+
+	POSIX_SEM  - uses posix semaphores (sem_wait/sem_post). They are slower then the previous 
+	methods but still way faster then SYSV sempahores. Unfortunately they also do not work on 
+	all the systems (e.g. linux).
+	
+	SYSV_SEM - this is the most portable but also the slowest locking method. Another problem is 
+	that the number of semaphores that can be alocated by a process is limited. One also has to 
+	free them before exiting.
 
 
 2. How to use it?
 -----------------
 
-First of all you have to include locking.h. Then when compiling the code one or all of FAST_LOCK, USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the ser Makefile.defs takes care of this, you should need to change it only for new arhitectures or compilers).
+First of all you have to include locking.h. Then when compiling the code one or all of FAST_LOCK, 
+USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the SIP-router Makefile.defs takes 
+care of this, you should need to change it only for new arhitectures or compilers).
 
 locking.h defines 2 new types: gen_lock_t and lock_set_t.
 
@@ -56,7 +74,8 @@ if (lock_init(lock)==0){
 }
 ...
 
-Lock allocation can be skipped in some cases: if the lock is already in shared memory you don't need to allocate it again, you can initialize it directly, but keep in mind that the lock MUST be in shared memory.
+Lock allocation can be skipped in some cases: if the lock is already in shared memory you don't need to
+allocate it again, you can initialize it directly, but keep in mind that the lock MUST be in shared memory.
 
 Example:
 
@@ -78,13 +97,15 @@ Destroying & deallocating the locks:
   void    lock_destroy(gen_lock_t* lock);
   void    lock_dealloc(gen_lock_t* lock);
  
- The lock_destroy function must be called first. It removes the resources associated with the lock, but it does not also free the lock shared memory part. Think of sysv rmid.
- Please don't forget to call this function, or you can leave allocated resources in some cases (e.g sysv semaphores). Be carefull to call it in your module destroy function if you use any global module locks.
+The lock_destroy function must be called first. It removes the resources associated with the 
+lock, but it does not also free the lock shared memory part. Think of sysv rmid.
+Please don't forget to call this function, or you can leave allocated resources in some cases 
+(e.g sysv semaphores). Be carefull to call it in your module destroy function if you use any 
+global module locks.
 
 Example:
-lock_destroy(lock);
-lock_dealloc(lock);
-
+	lock_destroy(lock);
+	lock_dealloc(lock);
 
 Of course you don't need to call lock_dealloc if your lock was not allocated with lock_alloc.
 
@@ -104,34 +125,36 @@ int     lock_try(gen_lock_t* lock);      - tries to lock and returns 0
 ------------
 
 The lock sets are kind of sysv semaphore sets equivalent. The type is lock_set_t.
-Use them when you need a lot of mutexes. In some cases they waste less system resources than arrays of gen_lock_t (e.g. sys v semaphores).
+Use them when you need a lot of mutexes. In some cases they waste less system 
+resources than arrays of gen_lock_t (e.g. sys v semaphores).
 
 Allocating & initializing:
 --------------------------
 
-lock_set_t* lock_set_alloc(int no);
-lock_set_t* lock_set_init(lock_set_t* set);
+	lock_set_t* lock_set_alloc(int no);
+	lock_set_t* lock_set_init(lock_set_t* set);
 
 Both functions return 0 on failure.
 
-WARNING: expect the allocation function to fail for large numbers. It depends on the locking method used & the system available resources (again the sysv semaphores example).
+WARNING: expect the allocation function to fail for large numbers. It depends on the locking 
+method used & the system available resources (again the sysv semaphores example).
 
 Example:
 
-lock_set_t *lock_set;
+	lock_set_t *lock_set;
 
-lock_set=lock_set_alloc(100);
-if (lock_set==0) goto error;
-if (lock_set_init(lock_set)==0){
-   lock_set_dealloc(lock_set);
-   goto error;
-}
+	lock_set=lock_set_alloc(100);
+	if (lock_set==0) goto error;
+	if (lock_set_init(lock_set)==0){
+   		lock_set_dealloc(lock_set);
+   		goto error;
+	}
 
 or
- if ((lock_set=lock_set_alloc(100))==0) || (lock_set_init(lock_set)==0)){
-   if (lock_set) lock_set_dealloc(lock_set);
-   goto error;
- }
+ 	if ((lock_set=lock_set_alloc(100))==0) || (lock_set_init(lock_set)==0)){
+   		if (lock_set) lock_set_dealloc(lock_set);
+   		goto error;
+ 	}
 
 
 Destroying & deallocating:
@@ -161,5 +184,5 @@ lock_set_release(lock_set, 2);
 When to use lock_set_t & when to use gen_lock_t
 -----------------------------------------------
 If you use lots of semaphores and GEN_LOCK_T_PREFERED is undefined then use
- lock_set_t. If GEN_LOCK_T_PREFERED is defined you can safely use gen_lock_t 
- arrays instead.
+lock_set_t. If GEN_LOCK_T_PREFERED is defined you can safely use gen_lock_t 
+arrays instead.

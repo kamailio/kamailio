@@ -80,28 +80,28 @@ ret=$?
 
 sleep 1
 
-#if [ "$ret" -eq 0 ] ; then
-#	sipp -sn uas -bg -i localhost -m 12 -p 7000 &> /dev/null
-#	sipp -sn uas -bg -i localhost -m 12 -p 8000 &> /dev/null
-#	sipp -sn uac -s 49721123456787 127.0.0.1:5060 -i 127.0.0.1 -m 20 -p 5061 &> /dev/null
-#	ret=$?
-#	killall sipp &> /dev/null
-#fi;
+if [ "$ret" -eq 0 ] ; then
+	sipp -sn uas -bg -i localhost -m 12 -p 7000 &> /dev/null
+	sipp -sn uas -bg -i localhost -m 12 -p 8000 &> /dev/null
+	sipp -sn uac -s 49721123456787 127.0.0.1:5060 -i 127.0.0.1 -m 20 -p 5061 &> /dev/null
+	ret=$?
+	killall sipp &> /dev/null
+fi;
 
 
-#if [ "$ret" -eq 0 ] ; then
-#	sipp -sn uas -bg -i localhost -m 10 -p 9000 &> /dev/null
-#	sipp -sn uac -s 49721123456786 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
-#	ret=$?
-#fi;
-#sleep 1
+if [ "$ret" -eq 0 ] ; then
+	sipp -sn uas -bg -i localhost -m 10 -p 9000 &> /dev/null
+	sipp -sn uac -s 49721123456786 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
+	ret=$?
+fi;
+sleep 1
 
-#if [ "$ret" -eq 0 ] ; then
-#	sipp -sn uas -bg -i localhost -m 10 -p 10000 &> /dev/null
-#	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
-#	ret=$?
-#fi;
-#sleep 2
+if [ "$ret" -eq 0 ] ; then
+	sipp -sn uas -bg -i localhost -m 10 -p 10000 &> /dev/null
+	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
+	ret=$?
+fi;
+sleep 2
 
 if [ "$ret" -eq 0 ] ; then
 	killall sipp &> /dev/null
@@ -115,13 +115,13 @@ flags, mask, next_domain) values ('4', '3', '1', '49', '127.0.0.1:10000', '4..',
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
 flags, mask, next_domain) values ('5', '3', '1', '49', '127.0.0.1:10000', '486', '0', '0', '2');"
 
-#if [ ! "$ret" -eq 0 ] ; then
-#	$CTL fifo cr_reload_routes
-#	killall sipp &> /dev/null
-#	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
-#	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
-#	ret=$?
-#fi;
+if [ ! "$ret" -eq 0 ] ; then
+	$CTL fifo cr_reload_routes
+	killall sipp &> /dev/null
+	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
+	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
+	ret=$?
+fi;
 
 
 $KILL

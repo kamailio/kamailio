@@ -2,10 +2,6 @@
  * $Id$
  *
  * Event header field body parser.
- * The parser was written for Presence Agent module only.
- * it recognize presence package only, no sub-packages, no parameters
- * It should be replaced by a more generic parser if sub-packages or
- * parameters should be parsed too.
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -15,11 +11,6 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
  *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,6 +24,17 @@
  * History:
  * --------
  * 2003-04-26 ZSW (jiri)
+ */
+
+/*! \file
+ * \brief Parser :: Event header field body parser.
+ *
+ * The parser was written for Presence Agent module only.
+ * it recognize presence package only, no sub-packages, no parameters
+ * It should be replaced by a more generic parser if sub-packages or
+ * parameters should be parsed too.
+ *
+ * \ingroup parser
  */
 
 
@@ -117,10 +119,16 @@ int event_parser(char* s, int len, event_t* e)
 	tmp.s = end;
 	trim_leading(&tmp);
 
-	if (tmp.s[0] == ';') {
+	e->params.list = NULL;
+	
+	if (tmp.len && (tmp.s[0] == ';')) {
+		/* Shift the semicolon and skip any leading whitespace, this is needed
+		 * for parse_params to work correctly. */
+		tmp.s++; tmp.len--;
+		trim_leading(&tmp);
+		if (!tmp.len) return 0;
+
 		/* We have parameters to parse */
-		tmp.s++;
-		tmp.len--;
 		if (e->type == EVENT_DIALOG) {
 			pclass = CLASS_EVENT_DIALOG;
 			phooks = (param_hooks_t*)&e->params.dialog;
@@ -130,15 +138,12 @@ int event_parser(char* s, int len, event_t* e)
 			ERR("event_parser: Error while parsing parameters parameters\n");
 			return -1;
 		}
-	} else {
-		e->params.list = NULL;
 	}
-
 	return 0;
 }
 
 
-/*
+/*! \brief
  * Parse Event header field body
  */
 int parse_event(struct hdr_field* _h)
@@ -168,7 +173,7 @@ int parse_event(struct hdr_field* _h)
 }
 
 
-/*
+/*! \brief
  * Free all memory
  */
 void free_event(event_t** _e)
@@ -181,7 +186,7 @@ void free_event(event_t** _e)
 }
 
 
-/*
+/*! \brief
  * Print structure, for debugging only
  */
 void print_event(event_t* e)

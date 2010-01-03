@@ -16,11 +16,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -46,8 +41,9 @@
 
 
 
-/* used to delete attached via lumps from msg; msg can
-   be either an original pkg msg, whose Via lump I want
+/** @brief used to delete attached via lumps from msg;
+
+   msg can be either an original pkg msg, whose Via lump I want
    to delete before generating next branch, or a shmem-stored
    message processed during on_reply -- then I want to
    delete the Via lump for the same reason

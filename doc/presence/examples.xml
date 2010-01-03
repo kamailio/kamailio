@@ -21,9 +21,8 @@ configurations. It has to be re-tested with Ottendorf and de-uglyfied. (TBD soon
 </section>
 
 <section><title>Presence server with no authorization and without RLS</title>
-<para>Following config file is based on demo config file installed with SER
-(Ottendorf). It
-is not finished yet. I recommend to use a variant of the config file above right
+<para>Following config file is based on demo config file installed with SIP-router
+It is not finished yet. I recommend to use a variant of the config file above right
 now.</para>
 <para><ulink url="cfg/ps.cfg">cfg/ps.cfg</ulink></para>
 </section>

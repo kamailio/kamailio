@@ -30,6 +30,12 @@
  * --------
  */
 
+/*! \file 
+ * \brief Parser :: Identity, Identity-info Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef CASE_IDEN_H
 #define CASE_IDEN_H

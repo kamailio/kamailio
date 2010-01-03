@@ -32,6 +32,13 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
+/*! \file 
+ * \brief Parser ::  Expires Header Field Name Parsing Macros 
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef CASE_EXPI_H
 #define CASE_EXPI_H

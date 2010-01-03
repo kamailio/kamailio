@@ -14,7 +14,7 @@
   <title>&adminguide;</title>
   <section>
     <title>Overview</title>
-    <para>The OSP module enables Kamailio to support secure, multi-lateral peering using the OSP standard defined by ETSI (TS 101 321 V4.1.1). This module will enable your Kamailio to:</para>
+    <para>The OSP module enables &kamailio; to support secure, multi-lateral peering using the OSP standard defined by ETSI (TS 101 321 V4.1.1). This module will enable your &kamailio; to:</para>
     <itemizedlist>
       <listitem>
         <para>Send a peering authorization request to a peering server.</para>
@@ -47,7 +47,7 @@
         <para><emphasis>auth</emphasis> -- Remote-Party-ID operattion</para>
       </listitem>
       <listitem>
-        <para><emphasis>OSP Toolkit</emphasis> -- The OSP Toolkit, available from http://sourceforge.net/projects/osp-toolkit, must be built before building Kamailio with the OSP Module.  For instructions on building Kamailio with the OSP Toolkit, see http://www.transnexus.com/White%20Papers/Multi-Lateral_Peering_with_Kamailio_V1.4.pdf</para>
+        <para><emphasis>OSP Toolkit</emphasis> -- The OSP Toolkit, available from http://sourceforge.net/projects/osp-toolkit, must be built before building &kamailio; with the OSP Module.  For instructions on building &kamailio; with the OSP Toolkit, see http://www.transnexus.com/White%20Papers/Multi-Lateral_Peering_with_Kamailio_V1.4.pdf</para>
       </listitem>
     </itemizedlist>
   </section>
@@ -58,13 +58,13 @@
       <para>These sp_uri (string) parameters define peering servers to be used for requesting peering authorization and routing information. At least one peering server must be configured. Others are required only if there are more than one peering servers. Each peering server address takes the form of a standard URL, and consists of up to four components:</para>
       <itemizedlist>
         <listitem>
-          <para>An optional indication of the protocol to be used for communicating with the peering server. Both HTTP and HTTP secured with SSL/TLS are supported and are indicated by "http://" and "https://" respectively. If the protocol is not explicitly indicated, the Kamailio defaults to HTTP secured with SSL.</para>
+          <para>An optional indication of the protocol to be used for communicating with the peering server. Both HTTP and HTTP secured with SSL/TLS are supported and are indicated by "http://" and "https://" respectively. If the protocol is not explicitly indicated, the &kamailio; defaults to HTTP secured with SSL.</para>
         </listitem>
         <listitem>
           <para>The Internet domain name for the peering server. An IP address may also be used, provided it is enclosed in square brackets such as [172.16.1.1].</para>
         </listitem>
         <listitem>
-          <para>An optional TCP port number for communicating with the peering server. If the port number is omitted, the Kamailio defaults to port 1080 (for HTTP) or port 1443 (for HTTP secured with SSL).</para>
+          <para>An optional TCP port number for communicating with the peering server. If the port number is omitted, the &kamailio; defaults to port 1080 (for HTTP) or port 1443 (for HTTP secured with SSL).</para>
           <para>The uniform resource identifier for requests to the peering server. This component is not optional and must be included.</para>
         </listitem>
       </itemizedlist>
@@ -88,7 +88,7 @@ modparam("osp","sp1_weight",1000)
     </section>
     <section>
       <title><varname>device_ip</varname></title>
-      <para>The device_ip (string) is a recommended parameter that explicitly defines the IP address of Kamailio in a peering request message (as SourceAlternate type=transport).  The IP address must be in brackets as shown in the example below.</para>
+      <para>The device_ip (string) is a recommended parameter that explicitly defines the IP address of &kamailio; in a peering request message (as SourceAlternate type=transport).  The IP address must be in brackets as shown in the example below.</para>
       <example>
         <title>Setting the device IP address</title>
         <programlisting format="linespecific">
@@ -98,7 +98,7 @@ modparam("osp","device_ip","[1.1.1.1]")
     </section>
     <section>
       <title><varname>device_port</varname></title>
-      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by Kamailio in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple Kamailios are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
+      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by &kamailio; in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple &kamailio; are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
       <example>
         <title>Setting the device port</title>
         <programlisting format="linespecific">
@@ -108,7 +108,7 @@ modparam("osp","device_port","5060")
     </section>
     <section>
       <title><varname>token_format</varname></title>
-      <para>When Kamailio receives a SIP INVITE with a peering token, the OSP Module will validate the token to determine whether or not the call has been authorized by a peering server. Peering tokens may, or may not, be digitally signed. The token_format (integer) parameter defines if Kamailio will validate signed or unsigned tokens or both. The values for token format are defined below. The default value is 2.</para>
+      <para>When &kamailio; receives a SIP INVITE with a peering token, the OSP Module will validate the token to determine whether or not the call has been authorized by a peering server. Peering tokens may, or may not, be digitally signed. The token_format (integer) parameter defines if &kamailio; will validate signed or unsigned tokens or both. The values for token format are defined below. The default value is 2.</para>
       <para>0 - Validate only signed tokens. Calls with valid signed tokens are allowed.</para>
       <para>1 - Validate only unsigned tokens. Calls with valid unsigned tokens are allowed.</para>
       <para>2 - Validate both signed and unsigned tokens are allowed. Calls with valid tokens are allowed.</para>
@@ -121,7 +121,7 @@ modparam("osp","token_format",2)
     </section>
     <section>
       <title><varname>private_key</varname>, <varname>local_certificate</varname>, <varname>ca_certificates</varname></title>
-      <para>These parameters identify files are used for validating peering authorization tokens and establishing a secure channel between Kamailio and a peering server using SSL.  The files are generated using the 'Enroll' utility from the OSP Toolkit. By default, the proxy will look for pkey.pem, localcert.pem, and cacart_0.pem in the default configuration directory. The default config directory is set at compile time using CFG_DIR and defaults to /usr/local/etc/kamailio/. The files may be copied to the expected file location or the parameters below may be changed.</para>
+      <para>These parameters identify files are used for validating peering authorization tokens and establishing a secure channel between &kamailio; and a peering server using SSL.  The files are generated using the 'Enroll' utility from the OSP Toolkit. By default, the proxy will look for pkey.pem, localcert.pem, and cacart_0.pem in the default configuration directory. The default config directory is set at compile time using CFG_DIR and defaults to /usr/local/etc/kamailio/. The files may be copied to the expected file location or the parameters below may be changed.</para>
       <example>
         <title>Set authorization files</title>
         <para>If the default CFG_DIR value was used at compile time, the files will be loaded from:</para>
@@ -194,7 +194,7 @@ modparam("osp","timeout",10)
     </section>
     <section>
       <title><varname>max_destinations</varname></title>
-      <para>The max_destinations (integer) parameter defines the maximum number of destinations that Kamailio requests the peering server to return in a peering response. The default value is 5.</para>
+      <para>The max_destinations (integer) parameter defines the maximum number of destinations that &kamailio; requests the peering server to return in a peering response. The default value is 5.</para>
       <example>
         <title>Setting the number of destination</title>
         <programlisting format="linespecific">

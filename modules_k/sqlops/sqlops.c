@@ -20,6 +20,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \ingroup sqlops
+ * \brief SIP-router SQL-operations :: Module interface
+ *
+ * - Module: \ref sqlops
+ */
+
+/*! \defgroup sqlops SIP-Router :: SQL Operations
+ *  \note Kamailio module - part of modules_k
+
+ * The module adds support for raw SQL queries in the configuration file.
+
+ */
+
+
+
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

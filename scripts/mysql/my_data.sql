@@ -76,6 +76,8 @@ DELETE FROM attr_types WHERE name='domain_data_version';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('domain_data_version', '0', 'int', 'Version of data in domain table', '33', '0', '0', '0');
 DELETE FROM attr_types WHERE name='sw_highest_alias_number';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_highest_alias_number', '0', 'int', 'highest assigned alias number', '32', '0', '0', '0');
+DELETE FROM attr_types WHERE name='gattr_timestamp';
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('gattr_timestamp', '0', 'int', 'Version of global attrs data', '33', '0', '0', '0');
 
 DELETE FROM global_attrs WHERE name='sw_domain_default_flags';
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_domain_default_flags', '0', '33', '32');
@@ -87,6 +89,8 @@ DELETE FROM global_attrs WHERE name='sw_uname_assign_mode';
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_uname_assign_mode', '2', 'fcfs', '32');
 DELETE FROM global_attrs WHERE name='domain_data_version';
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('domain_data_version', '0', '0', '33');
+DELETE FROM global_attrs WHERE name='gattr_timestamp';
+INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('gattr_timestamp', '0', '0', '33');
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_show_status', '0', '1', '32');
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('sw_require_conf', '0', '1', '32');
 INSERT IGNORE INTO global_attrs (name, type, value, flags) VALUES ('lang', '2', 'en', '33');

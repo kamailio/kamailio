@@ -204,31 +204,31 @@ CREATE TABLE phonebook (
 );
 
 CREATE TABLE gw (
-    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    lcr_id SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     gw_name VARCHAR(128) NOT NULL,
-    grp_id INT UNSIGNED NOT NULL,
-    ip_addr VARCHAR(15) NOT NULL,
-    hostname VARCHAR(64),
+    ip_addr INT UNSIGNED NOT NULL,
     port SMALLINT UNSIGNED,
     uri_scheme TINYINT UNSIGNED,
-    transport TINYINT UNSIGNED,
-    strip TINYINT UNSIGNED,
-    tag VARCHAR(16) DEFAULT NULL,
-    weight INT UNSIGNED,
-    flags INT UNSIGNED DEFAULT 0 NOT NULL,
-    defunct INT UNSIGNED DEFAULT NULL,
-    CONSTRAINT lcr_id_gw_name_idx UNIQUE (lcr_id, gw_name)
+    transport SMALLINT UNSIGNED,
+    prefix VARCHAR(16) NOT NULL,
+    grp_id INT NOT NULL,
+    UNIQUE KEY gw_idx1 (gw_name),
+    KEY gw_idx2 (grp_id)
+);
+
+CREATE TABLE gw_grp (
+    grp_id INT AUTO_INCREMENT NOT NULL,
+    grp_name VARCHAR(64) NOT NULL,
+    UNIQUE KEY gwgrp_idx (grp_id)
 );
 
 CREATE TABLE lcr (
-    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    lcr_id SMALLINT UNSIGNED NOT NULL DEFAULT 1,
-    prefix VARCHAR(16) DEFAULT NULL,
-    from_uri VARCHAR(64) DEFAULT NULL,
-    grp_id INT UNSIGNED NOT NULL,
-    priority TINYINT UNSIGNED NOT NULL,
-    INDEX lcr_id_idx (lcr_id)
+    prefix VARCHAR(16) NOT NULL,
+    from_uri VARCHAR(255) NOT NULL DEFAULT '%',
+    grp_id INT,
+    priority INT,
+    KEY lcr_idx1 (prefix),
+    KEY lcr_idx2 (from_uri),
+    KEY lcr_idx3 (grp_id)
 );
 
 CREATE TABLE grp (

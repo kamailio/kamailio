@@ -41,6 +41,18 @@
  *		header fields (gergo)
  */
 
+/*! \file 
+ * \brief Parser :: SIP Message header proxy parser
+ *
+ * \ingroup parser
+ */
+
+/*! \defgroup parser SIP-router SIP message parser
+ * 
+ * The SIP message parser
+ *
+ */
+
 
 #include <string.h>
 #include <stdlib.h>
@@ -243,6 +255,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_PROXY_AUTHENTICATE_T:
 	    case HDR_PATH_T:
 	    case HDR_PRIVACY_T:
+	    case HDR_PAI_T:
+	    case HDR_PPI_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -528,6 +542,14 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 				if (msg->privacy==0) msg->privacy=hf;
 				msg->parsed_flag|=HDR_PRIVACY_F;
 				break;
+		    case HDR_PAI_T:
+				if (msg->pai==0) msg->pai=hf;
+				msg->parsed_flag|=HDR_PAI_F;
+				break;
+		    case HDR_PPI_T:
+				if (msg->ppi==0) msg->ppi=hf;
+				msg->parsed_flag|=HDR_PPI_F;
+				break;
 			default:
 				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",
 							hf->type);
@@ -782,6 +804,17 @@ int set_path_vector(struct sip_msg* msg, str* path)
 	}
 	return 0;
 }
+
+
+void reset_path_vector(struct sip_msg* msg)
+{
+	if(msg->path_vec.s != 0) {
+		pkg_free(msg->path_vec.s);
+	}
+	msg->path_vec.s = 0;
+	msg->path_vec.len = 0;
+}
+
 
 struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
 {

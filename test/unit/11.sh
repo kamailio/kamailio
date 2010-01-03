@@ -31,7 +31,7 @@ fi ;
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"$SR_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
 
 $BIN -w . -f $CFG > /dev/null
 ret=$?

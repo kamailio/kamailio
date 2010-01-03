@@ -14,7 +14,7 @@
     <title>&develguide;</title>
     <para>
 		The module provides the following functions that can be used
-		in other &kamailio; modules.
+		by other &kamailio; modules.
    </para>
  		<section>
 				<title>
@@ -22,7 +22,7 @@
 				</title>
 			<para>
 				This function binds the pua modules and fills the structure 
-				with the two exported function.
+				with the two exported functions.
 			</para>
 		<example>
 		<title><function>pua_api</function> structure</title>

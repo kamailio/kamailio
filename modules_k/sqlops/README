@@ -12,30 +12,30 @@ Daniel-Constantin Mierla
    <miconda@gmail.com>
 
    Copyright © 2008 http://www.asipto.com
-     __________________________________________________________
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. sqlcon (str)
+              3.1. sqlcon (str)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. sql_query(connection, query, result)
-              1.4.2. sql_result_free(result)
+              4.1. sql_query(connection, query, result)
+              4.2. sql_result_free(result)
 
-        1.5. Exported pseudo-variables
+        5. Exported pseudo-variables
 
-              1.5.1. $dbr(result=>key)
+              5.1. $dbr(result=>key)
 
    List of Examples
 
@@ -46,90 +46,118 @@ Daniel-Constantin Mierla
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The module adds support for raw SQL queries in configuration
-   file.
+   1. Overview
+   2. Dependencies
 
-   Among features:
-     * many DB connections - the module can connect to many
-       databases on different servers using different DB driver
-       modules at the same time.
-     * many DB results - the module can store many results of
-       different SQL queries in separate structures at the same
-       time. Thus is possible to work in parallel with several DB
-       results.
-     * access via pseudo-variables - the content of SQL query
-       result is accessible via pseudo-variables. Please note that
-       only integer and string variables are supported at the
-       moment because of the internal usage of "AVPs" to hold the
-       values. So its not possible for example to return floating
-       point or big integer values this way.
-     * array indexes - fast access to result values via array
-       possition: [row,column].
-     * persistence in process space - a result can be used many
-       times in same worker process. Query once, use many times.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-1.2. Dependencies
+   3. Exported Parameters
 
-1.2.1. Kamailio Modules
+        3.1. sqlcon (str)
+
+   4. Exported Functions
+
+        4.1. sql_query(connection, query, result)
+        4.2. sql_result_free(result)
+
+   5. Exported pseudo-variables
+
+        5.1. $dbr(result=>key)
+
+1. Overview
+
+   The module adds support for raw SQL queries in the configuration file.
+
+   Among the features:
+     * Multiple DB connections - the module can connect to many databases
+       on different servers using different DB driver modules at the same
+       time.
+     * many DB results - the module can store many results of different
+       SQL queries in separate structures at the same time. Thus it is
+       possible to work in parallel with several DB results.
+     * access via pseudo-variables - the content of the SQL query result
+       is accessible via pseudo-variables. Please note that only integer
+       and string variables are supported at the moment because of the
+       internal usage of "AVPs" to hold the values. So its not possible
+       for example to return floating point or big integer values this
+       way.
+     * array indexes - fast access to result values via array position:
+       [row,column].
+     * persistence in process space - a result can be used many times in
+       the same worker process. Query once, use many times.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * a DB SQL module (mysql, postgres, ...).
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. sqlcon (str)
+   3.1. sqlcon (str)
 
-   The definition of DB connection. The value of the parameter
-   must have the following format:
+3.1. sqlcon (str)
+
+   The definition of a DB connection. The value of the parameter must have
+   the following format:
      * "connection_name=>database_url"
 
-   The parameter can be set multiple times to get many DB
-   connections in same configuration file.
-     * connection_name - string specifying the name of DB
-       connection. This string is used by sql_query() function to
-       refer to the DB connection.
-     * database_url - URL to connect to database.
+   This parameter may be set multiple times to get many DB connections in
+   the same configuration file.
+     * connection_name - string specifying the name of a DB connection.
+       This string is used by the "sql_query()" function to refer to the
+       DB connection.
+     * database_url - Standardized database URL used to connect to
+       database.
 
    Default value is NULL.
 
    Example 1.1. Set sqlcon parameter
 ...
 modparam("sqlops","sqlcon","cb=>mysql://openser:abc@10.10.1.1/testdb")
-modparam("sqlops","sqlcon","ca=>mysql://openser:abc@localhost/openser")
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  sql_query(connection, query, result)
+   4.1. sql_query(connection, query, result)
+   4.2. sql_result_free(result)
+
+4.1. sql_query(connection, query, result)
 
    Make a SQL query using 'connection' and store data in 'result'.
-     * connection - the name of the connection to be used for
-       query (defined via sqlcon parameter).
-     * query - SQL query string, can contain pseudo-variables.
-     * result - string name to identify the result. Will be used
-       by $dbr(...) pseudo-variable to access result attributes.
+     * connection - the name of the connection to be used for query
+       (defined via the "sqlcon" parameter).
+     * query - SQL query string or pseudo-variables containing SQL query.
+     * result - string name to identify the result. Will be used by
+       $dbr(...) pseudo-variable to access result attributes.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
    Example 1.2. sql_query() usage
 ...
-modparam("sqlops","sqlcon","ca=>mysql://openser:abc@localhost/openser")
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
 sql_query("ca", "select * from domain", "ra");
 xlog("number of rows in table domain: $dbr(ra=>rows)\n");
 sql_result_free("ra");
 ...
 
-1.4.2.  sql_result_free(result)
+4.2. sql_result_free(result)
 
    Free data in SQL 'result'.
 
@@ -138,7 +166,7 @@ sql_result_free("ra");
 
    Example 1.3. sql_result_free() usage
 ...
-modparam("sqlops","sqlcon","ca=>mysql://openser:abc@localhost/openser")
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
 sql_query("ca", "select * from domain", "ra");
 xlog("number of rows in table domain: $dbr(ra=>rows)\n");
@@ -146,26 +174,28 @@ xlog("number of rows in table domain: $dbr(ra=>rows)\n");
 sql_result_free("ra");
 ...
 
-1.5. Exported pseudo-variables
+5. Exported pseudo-variables
 
-1.5.1. $dbr(result=>key)
+   5.1. $dbr(result=>key)
+
+5.1. $dbr(result=>key)
 
    Access hash table entries.
 
-   The "result" must be the name identifying a SQL result (third
-   parameter of sql_query(...)).
+   The "result" must be the name identifying a SQL result (third parameter
+   of sql_query(...)).
 
    The "key" can be:
-     * rows - return number of rows in result
-     * cols - return the number of columns in result.
-     * [row,col] - return the value at position (row,col) in
-       result. 'row' and 'col' must be integer or pseudo-variable
-       holding an integer.
-     * colname[N] - return the name of the N-th column in result.
+     * rows - return the number of rows in query result
+     * cols - return the number of columns in the result.
+     * [row,col] - return the value at position (row,col) in the result
+       set. 'row' and 'col' must be integer or pseudo-variable holding an
+       integer.
+     * colname[N] - return the name of the N-th column in the result set.
 
    Example 1.4. $dbr(result=>key) usage
 ...
-modparam("sqlops","sqlcon","ca=>mysql://openser:abc@localhost/openser")
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
 sql_query("ca", "select * from domain", "ra");
 xlog("rows: $dbr(ra=>rows) cols: $dbr(ra=>cols)\n");
@@ -174,8 +204,7 @@ if($dbr(ra=>rows)>0)
     $var(i) = 0;
     while($var(i)<$dbr(ra=>cols))
     {
-        xlog("--- SCRIPT: column[$var(i)] = $dbr(ra=>colname[$var(i)])\n
-");
+        xlog("--- SCRIPT: column[$var(i)] = $dbr(ra=>colname[$var(i)])\n");
         $var(i) = $var(i) + 1;
     }
     $var(i) = 0;

@@ -1,5 +1,5 @@
 /*
- * Various lcr related functions
+ * Various lcr related functions :: RPC API
  *
  * Copyright (C) 2005 Juha Heinanen
  *
@@ -23,6 +23,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/*!
+ * \file
+ * \brief SIP-router lcr :: rpc API interface
+ * \ingroup lcr
+ * Module: \ref lcr
  */
 
 #include "lcr_rpc.h"
@@ -74,7 +81,7 @@ static void dump_gws(rpc_t* rpc, void* c)
 		if (rpc->add(c, "{", &st) < 0) return;
 		rpc->struct_add(st, "d", "lcr_id", j);
 		rpc->struct_add(st, "d", "grp_id", gws[i].grp_id);
-		rpc->struct_printf(st,   "ip_addr", "%d.%d.%d.%d",
+		rpc->struct_printf(st, "ip_addr", "%d.%d.%d.%d",
 				   (gws[i].ip_addr << 24) >> 24,
 				   ((gws[i].ip_addr >> 8) << 24) >> 24,
 				   ((gws[i].ip_addr >> 16) << 24) >> 24,
@@ -110,9 +117,9 @@ static void dump_gws(rpc_t* rpc, void* c)
 		tag.len=gws[i].tag_len;
 		rpc->struct_add(st, "dSddd",
 				"strip",  gws[i].strip,
-				"tag",    gws[i].tag, /* FIXME */
+				"tag",    &tag,
 				"weight", gws[i].weight,
-				"flags",  &tag,
+				"flags",  gws[i].flags,
 				"defunct_until",  &gws[i].defunct_until
 				);
 	    }

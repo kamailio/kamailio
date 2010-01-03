@@ -7,13 +7,13 @@
 <section><title>Introduction</title>
 
 <para>XCAP is a HTTP based protocol for access remote configuration data. Data
-is stored in XML format and XCAP protocol allows to query, modify or delete
+is stored in XML format and the XCAP protocol allows to query, modify or delete
 parts of such data. This is in detail described in <xref
-linkend="pres_draft_xcap"/>. XCAP server is server able to handle XCAP requests.
+linkend="pres_rfc_xcap"/>. The XCAP server is server able to handle XCAP requests.
 </para>
 
-<para>XCAP server may be used for storing <quote>presence interesting</quote>
-data. From the SER's point of view are interesting:
+<para>The XCAP server may be used for storing <quote>presence interesting</quote>
+data. From the SIP_ROUTER's point of view these items are interesting:
 <itemizedlist>
 	<listitem><para>authorization data</para></listitem>
 	<listitem><para><quote>buddy lists</quote></para></listitem>
@@ -23,7 +23,7 @@ data. From the SER's point of view are interesting:
 <section><title>XCAP authorization</title>
 <para>Definition of authorization documents and theirs usage is specified in <xref 
 linkend="pres_draft_common_auth"/> and especially for presence purposes in <xref 
-linkend="pres_draft_auth"/>. Both documents are quite common and in SER's
+linkend="pres_draft_auth"/>. Both documents are quite common and in SIP_ROUTER's
 presence modules implemented only partialy. For more information about XCAP
 authorization see details in <xref linkend="pa.xcap"/>.</para>
 </section> <!-- XCAP authorization -->
@@ -56,7 +56,7 @@ linkend="rls.xcap"/>.</para>
 <para>Manipulating with XCAP documents is quite simple because XCAP uses
 standard HTTP methods like GET, PUT or DELETE. Every web browser may be
 used to read XCAP data and it is quite simple to write utility to write data
-to XCAP server. These features allow to use XCAP with SER although there are is 
+to XCAP server. These features allow to use XCAP with SIP_ROUTER although there are is 
 not much client software supporting it.
 </para>
 </section> <!-- manipulating documents -->
@@ -277,7 +277,7 @@ demonstration or testing purposes.
 <para>Depending on your needs you can
 <itemizedlist>
 	<listitem><para>create hierarchical directory structure of XML documents according to
-	<xref linkend="pres_draft_xcap"/></para></listitem>
+	<xref linkend="pres_rfc_xcap"/></para></listitem>
 	<listitem><para>allow upload (handle HTTP PUT method) which stores documents into the 
 	directory structure</para></listitem>
 	<listitem><para>improve upload to validate documents according to schema
@@ -354,7 +354,7 @@ demonstration or testing purposes.
 </para>
 </section> <!-- directory structure -->
 
-<section><title>Usage with SER</title>
+<section><title>Usage with SIP_ROUTER</title>
 <para>You don't need a full XCAP server for presence authorization documents -
 these are read as standalone documents from directories of standalone users.
 </para>
@@ -386,7 +386,7 @@ Alias /xcap-root /var/simulated-xcap-root
 </Directory>
 ...
 ]]></programlisting>
-<para>If apache is running on machine with SER, you can use as xcap-root
+<para>If apache is running on machine with SIP_ROUTER, you can use as xcap-root
 <literal>http://localhost/xcap-root</literal>.
 </para>
 </example>

@@ -139,7 +139,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		}
 
 		if (ptr->sock) {
-			_m->force_send_socket = ptr->sock;
+			set_force_socket(_m, ptr->sock);
 		}
 
 skip_rewrite_uri:
@@ -302,7 +302,7 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 		}
 
 		if (ptr->sock) {
-			msg->force_send_socket = ptr->sock;
+			set_force_socket(msg, ptr->sock);
 		}
 
 skip_rewrite_uri:

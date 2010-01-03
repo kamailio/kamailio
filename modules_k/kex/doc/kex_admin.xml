@@ -16,10 +16,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	This module collects extensions from Kamailio core.
+	This module collects extensions from &kamailio; core.
 	</para>
 	<para>
-	Kamailio Core CookBook is available at:
+	&kamailio; Core CookBook is available at:
 	<ulink url="http://kamailio.org/dokuwiki/">
 	http://kamailio.org/dokuwiki/</ulink>
 	</para>

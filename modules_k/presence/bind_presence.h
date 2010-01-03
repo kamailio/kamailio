@@ -25,10 +25,10 @@
  * --------
  *  2007-04-17  initial version (anca)
  */
-
 /*! \file
- * \brief Kamailio presence module
- * \ingroup presence 
+ * \brief SIP-Router Presence :: Kamailio generic presence module
+ *
+ * \ingroup presence
  */
 
 

@@ -28,8 +28,19 @@
  * \file
  * \brief SIP-router core :: 
  * \ingroup core
+ *
  * Module: \ref core
+ *
+ * Reference:
+ * - \ref LockingDoc
  */
+
+/*!
+ * \page LockingDoc Documentation of locking
+ * \verbinclude locking.txt
+ *
+ */
+
 
 
 #include "ut.h"

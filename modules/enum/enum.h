@@ -21,6 +21,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*!
+ * \file
+ * \brief SIP-router enum :: Header file for Enum and E164 related functions (module interface)
+ * \ingroup enum
+ * Module: \ref enum
+ */
 
 
 #ifndef ENUM_H

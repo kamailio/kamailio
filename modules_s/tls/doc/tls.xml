@@ -31,6 +31,12 @@
 		<section id="tls.overview">
 		<title>Overview</title>
 		<para>
+		<emphasis>NOTE: This module is deprecated and replaced by the module in the <quote>modules/</quote>
+		directory. This is kept for backwards compatibility.
+		</emphasis>
+		</para>
+		<para>
+	
 			This module implements the TLS transport for ser using the <ulink url="http://www.openssl.org">openssl library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the ser config file 
 		</para>
 		</section>

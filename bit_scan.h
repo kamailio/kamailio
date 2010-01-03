@@ -15,19 +15,25 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+/*!
+ * \file
+ * \brief SIP-router core :: bit scan operations
+ * \ingroup core
+ * Module: \ref core
+ *
  *  bit scan operations
- *  int bit_scan_forward(unsigned long v)   - returns the index of the first
+ *
+ *  - int bit_scan_forward(unsigned long v)   - returns the index of the first
  *                                          set bit (undefined value if v==0)
- *  int bit_scan_forward32(unsigned int v)   - returns the index of the first
+ *  - int bit_scan_forward32(unsigned int v)   - returns the index of the first
  *                                          set bit (undefined value if v==0)
- *  int bit_scan_forward64(long long v)      - returns the index of the first
+ *  - int bit_scan_forward64(long long v)      - returns the index of the first
  *                                          set bit (undefined value if v==0)
- *  int bit_scan_reverse(unsigned long v)   - returns the index of the last
+ *  - int bit_scan_reverse(unsigned long v)   - returns the index of the last
  *                                          set bit (undefined value if v==0)
- *  int bit_scan_reverse32(unsigned int v)  - returns the index of the last
+ *  - int bit_scan_reverse32(unsigned int v)  - returns the index of the last
  *                                          set bit (undefined value if v==0)
- *  int bit_scan_reverse64(long long v)     - returns the index of the last
+ *  - int bit_scan_reverse64(long long v)     - returns the index of the last
  *                                          set bit (undefined value if v==0)
  *
  * Config defines:   CC_GCC_LIKE_ASM  - the compiler support gcc style
@@ -46,7 +52,7 @@
 
 #include <limits.h>
 
-/* fix __CPU_i386 -> __CPU_x86 */
+/*! \brief fix __CPU_i386 -> __CPU_x86 */
 #if defined __CPU_i386 && ! defined __CPU_x86
 #define __CPU_x86
 #endif
@@ -59,7 +65,7 @@
 #endif
 
 
-/* set default bitscan versions, depending on the architecture
+/*! \brief set default bitscan versions, depending on the architecture
  * In general the order is  asm, debruijn, br, slow for bit_scan_forward
  *  and asm, br, slow, debruijn for bit_scan_reverse. */
 #ifdef BIT_SCAN_ASM
@@ -127,15 +133,15 @@
 #endif /* __CPU_XXX */
 
 
-/* try to use the right version for bit_scan_forward(unisgned long l)
+/*! \brief try to use the right version for bit_scan_forward(unisgned long l)
  */
 #if (defined (ULONG_MAX) && ULONG_MAX > 4294967295) || defined LP64
-/* long is 64 bits */
+/*! \brief long is 64 bits */
 #define bit_scan_forward(l)	bit_scan_forward64((unsigned long long)(l))
 #define bit_scan_reverse(l)	bit_scan_reverse64((unsigned long long)(l))
 
 #else
-/* long is 32 bits */
+/*! \brief long is 32 bits */
 #define bit_scan_forward(l)	bit_scan_forward32((l))
 #define bit_scan_reverse(l)	bit_scan_reverse32((l))
 #endif
@@ -145,7 +151,7 @@
 
 #ifdef BIT_SCAN_DEBRUIJN
 
-/* use a de Bruijn sequence to get the index of the set bit for a number
+/*! \brief use a de Bruijn sequence to get the index of the set bit for a number
  *  of the form 2^k (DEBRUIJN_HASH32() and DEBRUIJN_HASH64()).
  *  bit_scan_forward & bit_scan_reverse would need first to convert
  *  the argument to 2^k (where k is the first set bit or last set bit index)-

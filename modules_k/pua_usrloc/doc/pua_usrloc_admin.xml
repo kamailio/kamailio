@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		 The pua_usrloc is the connector between usrloc and pua modules.
+		 The pua_usrloc module is the connector between the usrloc and pua modules.
 		 It creates the environment to send PUBLISH requests for user
 		 location records, on specific events (e.g., when new record is
 		 added in usrloc, a PUBLISH with status open (online) is issued;
@@ -68,7 +68,7 @@
 		<title><varname>default_domain</varname> (str)</title>
 		<para>
 		The default domain to use when constructing the presentity
-		uri if it is missing from recorded aor. 
+		URI if it is missing from recorded AOR. 
 		</para>
 		<para>
 		<emphasis>Default value is <quote>NULL</quote>.	
@@ -87,7 +87,7 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 		<title><varname>entity_prefix</varname> (str)</title>
 		<para>
 		The prefix when construstructing entity attribute to be added to
-		presence node in xml pidf.
+		presence node in XML PIDF.
 		(ex: pres:user@domain ).
 		</para>
 		<para>

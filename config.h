@@ -3,19 +3,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -32,6 +27,15 @@
  *
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: Configuration options
+ *
+ * These settings are settable by the user before compilation
+ *
+ * \ingroup core
+ * Module: \ref core
+ */
 
 
 
@@ -40,38 +44,34 @@
 
 #include "types.h"
 
-/* default sip port if none specified */
-#define SIP_PORT  5060
-#define SIPS_PORT 5061
+#define SIP_PORT  5060 /*!< default SIP port if none specified */
+#define SIPS_PORT 5061 /*!< default SIP port for TLS if none specified */
 
 #define CFG_FILE CFG_DIR NAME ".cfg"
 
-#define TLS_PKEY_FILE "cert.pem" 
-#define TLS_CERT_FILE "cert.pem"
-#define TLS_CA_FILE 0 /* no CA list file by default */
+#define TLS_PKEY_FILE "cert.pem" 	/*!< The certificate private key file */
+#define TLS_CERT_FILE "cert.pem"	/*!< The certificate file */
+#define TLS_CA_FILE 0			/*!< no CA list file by default */
 
 
-/* maximum number of addresses on which we will listen */
-#define MAX_LISTEN 16
+#define MAX_LISTEN 16			/*!< maximum number of addresses on which we will listen */
 
-/* default number of child processes started */
-#define CHILD_NO    8
+#define CHILD_NO    8			/*!< default number of child processes started */
 
-#define RT_NO 2 /* routing tables number */
-#define FAILURE_RT_NO RT_NO /* on_failure routing tables number */
-#define ONREPLY_RT_NO RT_NO /* on_reply routing tables number */
-#define BRANCH_RT_NO RT_NO /* branch_route routing tables number */
-#define ONSEND_RT_NO 1  /* onsend_route routing tables number */
-#define EVENT_RT_NO RT_NO /* event_route routing tables number */
-#define DEFAULT_RT 0 /* default routing table */
+#define RT_NO 2 			/*!< routing tables number */
+#define FAILURE_RT_NO RT_NO 		/*!< on_failure routing tables number */
+#define ONREPLY_RT_NO RT_NO 		/*!< on_reply routing tables number */
+#define BRANCH_RT_NO RT_NO 		/*!< branch_route routing tables number */
+#define ONSEND_RT_NO 1  		/*!< onsend_route routing tables number */
+#define EVENT_RT_NO RT_NO 		/*!< event_route routing tables number */
+#define DEFAULT_RT 0 			/*!< default routing table */
 
-#define MAX_REC_LEV 100 /* maximum number of recursive calls */
-#define ROUTE_MAX_REC_LEV 100 /* maximum number of recursive calls
-							   for route()*/
+#define MAX_REC_LEV 100 		/*!< maximum number of recursive calls */
+#define ROUTE_MAX_REC_LEV 100 		/*!< maximum number of recursive calls for route()*/
 
-#define MAX_URI_SIZE 1024	/* used when rewriting URIs */
+#define MAX_URI_SIZE 1024		/*!< Max URI size used when rewriting URIs */
 
-#define MAX_PATH_SIZE 256 /* Maximum length of path header buffer */
+#define MAX_PATH_SIZE 256 		/*!< Maximum length of path header buffer */
 
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN (sizeof(MY_VIA) - 1)
@@ -140,62 +140,52 @@
 
 #define SRV_MAX_PREFIX_LEN SRV_TLS_PREFIX_LEN
 
-/*used only if PKG_MALLOC is defined*/
-#define PKG_MEM_POOL_SIZE 4*1024*1024
+#define PKG_MEM_POOL_SIZE 4*1024*1024		/*!< used only if PKG_MALLOC is defined*/
 
-/*used if SH_MEM is defined*/
-#define SHM_MEM_SIZE 32
+#define SHM_MEM_SIZE 32				/*!< used if SH_MEM is defined*/
 
 
 /* dimensioning buckets in q_malloc */
-/* size of the size2bucket table; everything beyond that asks for
+/*! \brief size of the size2bucket table; everything beyond that asks for
    a variable-size kilo-bucket
  */
 #define MAX_FIXED_BLOCK         3072
-/* distance of kilo-buckets */
-#define BLOCK_STEP                      512
-/* maximum number of possible buckets */
-#define MAX_BUCKET		15
+#define BLOCK_STEP              512		/*!< distance of kilo-buckets */
+#define MAX_BUCKET		15		/*!< maximum number of possible buckets */
 
-/* receive buffer size -- preferably set low to
+/*! \brief receive buffer size -- preferably set low to
    avoid terror of excessively huge messages; they are
    useless anyway
 */
 #define BUF_SIZE 65535
 
-/* forwarding  -- Via buffer dimensioning */
-#define MAX_VIA_LINE_SIZE	240
-#define MAX_RECEIVED_SIZE	57
-#define MAX_RPORT_SIZE		13
+#define MAX_VIA_LINE_SIZE	240	/*!< forwarding  -- Via buffer dimensioning */
+#define MAX_RECEIVED_SIZE	57	/*!< forwarding  -- Via buffer dimensioning - Received header */
+#define MAX_RPORT_SIZE		13	/*!< forwarding  -- Via buffer dimensioning - Rport */
 
-/* maximum number of branches per transaction */
-#define MAX_BRANCHES    12
+#define MAX_BRANCHES    	12	/*!< maximum number of branches per transaction */
 
-/* max length of the text of fifo 'print' command */
-#define MAX_PRINT_TEXT 256
+#define MAX_PRINT_TEXT 		256	/*!< max length of the text of fifo 'print' command */
 
-/* maximum length of Contact header field in redirection replies */
-#define MAX_REDIRECTION_LEN 512
+#define MAX_REDIRECTION_LEN	512	/*!< maximum length of Contact header field in redirection replies */
 
-/* used by FIFO statistics in module to terminate line;
+/*! \brief used by FIFO statistics in module to terminate line;
    extra whitespaces are used to overwrite remainders of
    previous line if longer than current one
 */
 #define CLEANUP_EOL "      \n"
 
-/* magic cookie for transaction matching as defined in RFC3261 */
-#define MCOOKIE "z9hG4bK"
+#define MCOOKIE "z9hG4bK"		/*!< magic cookie for transaction matching as defined in RFC3261 */
 #define MCOOKIE_LEN (sizeof(MCOOKIE)-1)
-/* Maximum length of values appended to Via-branch parameter */
+/*! \brief Maximum length of values appended to Via-branch parameter */
 #define MAX_BRANCH_PARAM_LEN  (MCOOKIE_LEN+8 /*int2hex*/ + 1 /*sep*/ + \
 								MD5_LEN /* max(int2hex, MD5_LEN) */ \
 								+ 1 /*sep*/ + 8 /*int2hex*/ + \
 								1 /*extra space, needed by t_calc_branch*/)
 
-#define DEFAULT_SER_KILL_TIMEOUT 60 /* seconds */
+#define DEFAULT_SER_KILL_TIMEOUT 60 	/*!< Kill timeout : seconds */
 
-/* maximum path length */
-#define PATH_MAX_GUESS	1024
+#define PATH_MAX_GUESS	1024		/*!< maximum path length */
 
 #ifdef OPENSER_MOD_INTERFACE
 	#define DEFAULT_DB_URL "mysql://openser:openserrw@localhost/openser"
@@ -209,21 +199,18 @@
 	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
 #endif
 
-/* table holding versions of other ser tables */
-#define VERSION_TABLE "version"
-#define VERSION_COLUMN "table_version"
-#define TABLENAME_COLUMN "table_name"
+#define VERSION_TABLE "version"			/*!< table holding versions of other ser tables */
+#define VERSION_COLUMN "table_version"		/*!< Column holding version number in version table */
+#define TABLENAME_COLUMN "table_name"		/*!< Column holding module name in version table */
 
-/* minimum packet size; smaller packets will be dropped silently */
-#define MIN_UDP_PACKET        32
+#define MIN_UDP_PACKET        32		/*!< minimum UDP packet size; smaller packets will be dropped silently */
 
-#define MIN_SCTP_PACKET  MIN_UDP_PACKET 
+#define MIN_SCTP_PACKET  MIN_UDP_PACKET 	/*!< minimum size of SCTP packet */
 
-#define DEFAULT_RADIUS_CONFIG "/usr/local/etc/radiusclient/radiusclient.conf"
+#define DEFAULT_RADIUS_CONFIG "/usr/local/etc/radiusclient/radiusclient.conf"	/*!< Default FreeRadius configuration file */
 
 #define DEFAULT_DID "_default"
 
-/*  maximum allowed iterations for a while (to catch runaways) */
-#define DEFAULT_MAX_WHILE_LOOPS 100
+#define DEFAULT_MAX_WHILE_LOOPS 100		/*!< Maximum allowed iterations for a while (to catch runaways) */
 
 #endif

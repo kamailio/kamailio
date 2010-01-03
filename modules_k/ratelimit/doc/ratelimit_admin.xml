@@ -19,7 +19,7 @@
 		This module implements rate limiting for SIP requests. In contrast to
 		the PIKE module this limits the flow based on a per SIP request type
 		basis and not per source IP. The MI interface can be used to
-		change tunables while running Kamailio.
+		change tunables while running &kamailio;.
 	</para>
 	<para>
 		The module implements the pipe/queue policy from BSD's ipfw manual,
@@ -33,7 +33,7 @@
 	<para>
 		Limiting the rate messages are processed on a system directly
 		influences the load. The ratelimit module can be used to protect a
-		single host or to protect an Kamailio cluster when run on the dispatching
+		single host or to protect an &kamailio; cluster when run on the dispatching
 		box in front.
 	</para>
 	<para>
@@ -89,10 +89,10 @@
 		Random Early Detection tries to circumvent the synchronization problem
 		imposed by the tail drop algorithm by measuring the average load and
 		adapting the drop rate dynamically. When running with the RED
-		algorithm (enabled by default) Kamailio will return errors to the Kamailio
+		algorithm (enabled by default) &kamailio; will return errors to the &kamailio;
 		routing engine every n'th packet trying to evenly spread the measured
 		load of the last timer interval onto the current interval. As a
-		negative side effect Kamailio might drop messages although the limit might
+		negative side effect &kamailio; might drop messages although the limit might
 		not be reached within the interval. Decrease the timer interval if you
 		encounter this.
 		</para>
@@ -267,7 +267,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 	<section>
 		<title><varname>reply_code</varname> (integer)</title>
 		<para>
-		The code of the reply sent by Kamailio while limiting.
+		The code of the reply sent by &kamailio; while limiting.
 		</para>
 		<para>
 		<emphasis>
@@ -286,7 +286,7 @@ modparam("ratelimit", "reply_code", 505)
 	<section>
 		<title><varname>reply_reason</varname> (string)</title>
 		<para>
-		The reason of the reply sent by Kamailio while limiting.
+		The reason of the reply sent by &kamailio; while limiting.
 		</para>
 		<para>
 		<emphasis>

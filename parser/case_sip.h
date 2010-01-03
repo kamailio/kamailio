@@ -1,3 +1,10 @@
+/*! \file 
+ * \brief Parser :: Handle case for headers
+ *
+ * \ingroup parser
+ */
+
+
 #ifndef CASE_SIP_H
 #define CASE_SIP_H
 

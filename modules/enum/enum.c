@@ -23,6 +23,31 @@
  *
  */
 
+/*!
+ * \file
+ * \brief SIP-router enum :: Enum and E164 related functions (module interface)
+ * \ingroup enum
+ * Module: \ref enum
+ */
+
+/*! \defgroup enum Enum and E.164-related functions
+
+ *  Enum module implements [i_]enum_query functions that make an enum query
+ * based on the user part of the current Request-URI. These functions
+ * assume that the Request URI user part consists of an international
+ * phone number of the form +decimal-digits, where the number of digits is
+ * at least 2 and at most 15. Out of this number enum_query forms a domain
+ * name, where the digits are in reverse order and separated by dots
+ * followed by domain suffix that by default is "e164.arpa.". For example,
+ * if the user part is +35831234567, the domain name will be
+ * "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.". i_enum_query operates in a similar
+ * fashion. The only difference is that it adds a label (default "i") to
+ * branch off from the default, user-ENUM tree to an infrastructure ENUM
+ * tree.
+ */
+
+
+
 #include <stdlib.h>
 
 #include "enum.h"

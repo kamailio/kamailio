@@ -3,19 +3,14 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP-router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * SIP-router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -46,12 +41,12 @@
 
 #include <sys/types.h>
 
-#define _XOPEN_SOURCE   /* needed on linux for the  getpgid prototype,  but
+#define _XOPEN_SOURCE   /*!< needed on linux for the  getpgid prototype,  but
                            openbsd 3.2 won't include common types (uint a.s.o)
                            if defined before including sys/types.h */
-#define _XOPEN_SOURCE_EXTENDED /* same as above */
-#define __USE_XOPEN_EXTENDED /* same as above, overrides features.h */
-#define __EXTENSIONS__ /* needed on solaris: if XOPEN_SOURCE is defined
+#define _XOPEN_SOURCE_EXTENDED /*!< same as \ref _XOPEN_SOURCE */
+#define __USE_XOPEN_EXTENDED /*!< same as \ref _XOPEN_SOURCE, overrides features.h */
+#define __EXTENSIONS__ /*!< needed on solaris: if XOPEN_SOURCE is defined
                           struct timeval defintion from <sys/time.h> won't
                           be included => workarround define _EXTENSIONS_
                            -andrei */
@@ -86,7 +81,7 @@
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
 
-/* daemon init, return 0 on success, -1 on error */
+/*! \brief daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
 {
 	FILE *pid_stream;
@@ -267,7 +262,7 @@ error:
 
 
 
-/* try to increase the open file limit */
+/*! \brief try to increase the open file limit */
 int increase_open_fds(int target)
 {
 	struct rlimit lim;
@@ -321,7 +316,7 @@ error:
 
 
 
-/* enable core dumps */
+/*! \brief enable core dumps */
 int set_core_dump(int enable, int size)
 {
 	struct rlimit lim;
@@ -376,7 +371,7 @@ error:
 
 
 
-/* lock pages in memory (make the process not swapable) */
+/*! \brief lock pages in memory (make the process not swapable) */
 int mem_lock_pages()
 {
 #ifdef HAVE_MLOCKALL
@@ -395,7 +390,7 @@ error:
 }
 
 
-/* tries to set real time priority 
+/*! \brief tries to set real time priority 
  * policy: 0 - SCHED_OTHER, 1 - SCHED_RR, 2 - SCHED_FIFO */
 int set_rt_prio(int prio, int policy)
 {

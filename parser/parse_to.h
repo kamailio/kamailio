@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,6 +20,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse To: header
+ *
+ * \ingroup parser
+ */
 
 #ifndef PARSE_TO
 #define PARSE_TO
@@ -37,22 +37,22 @@ enum {
 };
 
 struct to_param{
-	int type;              /* Type of parameter */
-	str name;              /* Name of parameter */
-	str value;             /* Parameter value */
-	struct to_param* next; /* Next parameter in the list */
+	int type;              /*!< Type of parameter */
+	str name;              /*!< Name of parameter */
+	str value;             /*!< Parameter value */
+	struct to_param* next; /*!< Next parameter in the list */
 };
 
 
 struct to_body{
-	int error;                    /* Error code */
-	str body;                     /* The whole header field body */
-	str uri;                      /* URI */
-	str display;				  /* Display Name */
-	str tag_value;                /* Value of tag */
+	int error;                    /*!< Error code */
+	str body;                     /*!< The whole header field body */
+	str uri;                      /*!< URI */
+	str display;				  /*!< Display Name */
+	str tag_value;                /*!< Value of tag */
 	struct sip_uri parsed_uri;
-	struct to_param *param_lst;   /* Linked list of parameters */
-	struct to_param *last_param;  /* Last parameter in the list */
+	struct to_param *param_lst;   /*!< Linked list of parameters */
+	struct to_param *last_param;  /*!< Last parameter in the list */
 };
 
 
@@ -60,7 +60,7 @@ struct to_body{
 #define get_to( p_msg)      ((struct to_body*)(p_msg)->to->parsed)
 
 
-/*
+/*! \brief
  * To header field parser
  */
 char* parse_to(char* buffer, char *end, struct to_body *to_b);

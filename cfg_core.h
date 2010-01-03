@@ -36,6 +36,14 @@
  * -------
  *  2007-12-03	Initial version (Miklos)
  */
+/*!
+ * \file
+ * \brief SIP-router core :: Core configuration
+ * \ingroup core
+ *
+ * Module: \ref core
+ */
+
 
 #ifndef _CFG_CORE_H
 #define _CFG_CORE_H
@@ -44,15 +52,16 @@
 
 extern void	*core_cfg;
 
+/*! \brief configuration default values */
 struct cfg_group_core {
 	int	debug;
 	int	log_facility;
-	int memdbg; /** < log level for memory debugging messages */
+	int memdbg; /*!< log level for memory debugging messages */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
-	int	use_dst_blacklist; /* 1 if blacklist is enabled */
-	unsigned int	blst_timeout; /* blacklist entry ttl */
-	unsigned int	blst_max_mem; /* maximum memory used for the
+	int	use_dst_blacklist; /*!< 1 if blacklist is enabled */
+	unsigned int	blst_timeout; /*!< blacklist entry ttl */
+	unsigned int	blst_max_mem; /*!< maximum memory used for the
 					blacklist entries */
 #endif
 	/* resolver */
@@ -87,11 +96,11 @@ struct cfg_group_core {
 	int mem_dump_shm;
 #endif
 	int max_while_loops;
-	int udp_mtu; /**< maximum send size for udp, if > try another protocol*/
-	int udp_mtu_try_proto; /**< if packet> udp_mtu, try proto (e.g. TCP) */
-	int force_rport; /**< if set rport will always be forced*/
-	int memlog; /** < log level for memory status/summary info */
-	int mem_summary; /**< display memory status/summary info on exit */
+	int udp_mtu; /*!< maximum send size for udp, if > try another protocol*/
+	int udp_mtu_try_proto; /*!< if packet> udp_mtu, try proto (e.g. TCP) */
+	int force_rport; /*!< if set rport will always be forced*/
+	int memlog; /*!< log level for memory status/summary info */
+	int mem_summary; /*!< display memory status/summary info on exit */
 };
 
 extern struct cfg_group_core default_core_cfg;

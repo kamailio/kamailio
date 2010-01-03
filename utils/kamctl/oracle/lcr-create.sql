@@ -14,7 +14,8 @@ CREATE TABLE gw (
     weight NUMBER(10),
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     defunct NUMBER(10) DEFAULT NULL,
-    CONSTRAINT gw_lcr_id_gw_name_idx  UNIQUE (lcr_id, gw_name)
+    CONSTRAINT gw_lcr_id_grp_id_gw_name_idx  UNIQUE (lcr_id, grp_id, gw_name),
+    CONSTRAINT gw_lcr_id_grp_id_ip_addr_idx  UNIQUE (lcr_id, grp_id, ip_addr)
 );
 
 CREATE OR REPLACE TRIGGER gw_tr

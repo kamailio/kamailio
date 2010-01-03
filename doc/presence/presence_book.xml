@@ -9,7 +9,7 @@ http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
 
 
 <article>
-	<title>SER presence handbook (v. Ottendorf.pre1) </title>
+	<title>SIP-router presence handbook </title>
 	
 	<include xmlns="http://www.w3.org/2001/XInclude" href="intro.xml"/>
 	<include xmlns="http://www.w3.org/2001/XInclude" href="install.xml"/>

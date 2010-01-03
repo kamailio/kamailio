@@ -32,6 +32,12 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
+/*! \file 
+ * \brief Parser :: Unspoorted Header Field Name Parsing Macros
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef CASE_UNSU_H
 #define CASE_UNSU_H

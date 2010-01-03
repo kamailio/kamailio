@@ -281,8 +281,8 @@ Note
    3.2. LDAP Session Settings
    3.3. Configuration File Example
 
-   The module reads an external confiuration file at module initialization
-   time that includes LDAP session definitions.
+   The module reads an external configuration file at module
+   initialization time that includes LDAP session definitions.
 
 3.1. Configuration File Syntax
 
@@ -428,7 +428,7 @@ ldap_client_bind_timeout = 500
    Default value: /usr/local/etc/kamailio/ldap.cfg
 
    Example 1.8. config_file parameter usage
-modparam("ldap", "config_file", "/etc/kamailio/ldap.ini")
+modparam("ldap", "config_file", "/usr/local/etc/kamailio/ldap.ini")
 
 5. Exported Functions
 
@@ -444,10 +444,10 @@ modparam("ldap", "config_file", "/etc/kamailio/ldap.ini")
 
    Performs an LDAP search operation using given LDAP URL and stores
    result internally for later retrieval by ldap_result* functions. If one
-   ore more LDAP entries are found the function returns the number of
-   found entries which evaluates to TRUE in the Kamailio configuration
-   script. It returns -1 (FALSE) in case no LDAP entry was found, and -2
-   (FALSE) if an internal error like e.g. an LDAP error occurred.
+   or more LDAP entries are found the function returns the number of found
+   entries which evaluates to TRUE in the Kamailio configuration script.
+   It returns -1 (FALSE) in case no LDAP entry was found, and -2 (FALSE)
+   if an internal error like e.g. an LDAP error occurred.
 
    Function Parameters:
 
@@ -771,7 +771,8 @@ if (ldap_search(
    OpenLDAP library (libldap) and header files (libldap-dev) v2.1 or
    greater (this module was tested with v2.1.3 and v2.3.32) are required
    for compiling the LDAP module. The OpenLDAP source is available at
-   http://www.openldap.org/.
+   http://www.openldap.org/. Note that TLS support needs to be added a
+   compile time for the libraries.
 
    The OpenLDAP library is available pre-compiled for most UNIX/Linux
    flavors. On Debian/Ubuntu, the following packages must be installed:
@@ -808,7 +809,7 @@ Chapter 2. Developer Guide
    load_ldap_api function which returns a pointer to a ldap_api structure.
    This structure includes pointers to the API functions described below.
    The LDAP module source file api.h includes all declarations needed to
-   load the API, it has to be included in the file that loads the API.
+   load the API, it has to be included in the file that use the API.
    Loading the API is typically done inside a module's mod_init call as
    the following example shows:
 

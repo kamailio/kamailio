@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,6 +19,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/*! \file
+ * \brief Parser :: Allow header
+ *
+ * \ingroup parser
+ */
+
  
 #ifndef PARSE_ALLOW_H
 #define PARSE_ALLOW_H
@@ -32,7 +34,7 @@
 #include "msg_parser.h"
 
  
-/* 
+/*! \brief
  * casting macro for accessing Allow body 
  */
 #define get_allow_methods(p_msg)							\
@@ -40,26 +42,26 @@
 
 
 struct allow_body {
-	unsigned int allow;     /* allow mask for the current hdr */
-	unsigned int allow_all; /* allow mask for the all allow hdr - it's
+	unsigned int allow;     /*!< allow mask for the current hdr */
+	unsigned int allow_all; /*!< allow mask for the all allow hdr - it's
 							 * set only for the first hdr in sibling
 							 * list*/
 };
 
 
-/*
+/*! \brief
  * Parse all Allow HFs
  */
 int parse_allow(struct sip_msg *msg);
 
 
-/*
+/*! \brief
  * Parse Allow HF body
  */
 int parse_allow_header(struct hdr_field* _h);
 
 
-/*
+/*! \brief
  * Release memory
  */
 void free_allow_body(struct allow_body **ab);

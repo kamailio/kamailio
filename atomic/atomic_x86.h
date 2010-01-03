@@ -15,7 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
+
+/** @file @brief
  *  atomic operations and memory barriers (x86 and x86_64/amd64 specific)
  *  WARNING: atomic ops do not include memory barriers
  *  see atomic_ops.h for more details 

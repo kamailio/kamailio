@@ -3,7 +3,7 @@
 <!DOCTYPE bibliography PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<!--********************** BILBIOGRAPHY ***************************-->
+<!--********************** BIBLIOGRAPHY ***************************-->
 
 <bibliography id="pres_biblio">
 <note><para>There might be new versions of internet drafts and thus links to
@@ -12,21 +12,21 @@ draft on <ulink url="http://www.ietf.org">IETF</ulink> by name.</para></note>
 
 <bibliodiv><title>XCAP</title>
 
-<biblioentry id="pres_draft_xcap">
+<biblioentry id="pres_rfc_xcap">
 <abbrev>xcap</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-xcap-12.txt"
->draft-ietf-simple-xcap-12.txt</ulink> - XCAP specification</title></biblioentry>
+<title><ulink url="http://tools.ietf.org/html/rfc4825"
+>RFC 4825</ulink> - The XCAP specification - The XML Configuration Access Protocol</title></biblioentry>
 
 <biblioentry id="pres_draft_xcap_change">
 <abbrev>xcap_diff</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-xcap-diff-01.txt"
->draft-ietf-simple-xcap-diff-01.txt</ulink> - XCAP changes notifications format</title>
+<title><ulink url="http://tools.ietf.org/html/draft-ietf-simple-xcap-diff"
+>draft-ietf-simple-xcap-diff-13.txt</ulink> - XCAP changes notifications format</title>
 </biblioentry>
 
 <biblioentry id="pres_draft_xcap_profiles">
 <abbrev>xcap_profiles</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-sipping-config-framework-07.txt"
->draft-ietf-sipping-config-framework-07.txt</ulink> -XCAP user profiles</title>
+<title><ulink url="http://tools.ietf.org/html/draft-ietf-sipping-config-framework-16"
+>draft-ietf-sipping-config-framework-16.txt</ulink> -XCAP user profiles</title>
 </biblioentry>
 
 </bibliodiv>
@@ -85,14 +85,14 @@ info</ulink></title>
 <biblioentry id="pres_draft_common_auth">
 <abbrev>common auth</abbrev>
 <title><ulink
-url="http://www.ietf.org/internet-drafts/draft-ietf-geopriv-common-policy-05.txt"
->draft-ietf-geopriv-common-policy-05.txt</ulink></title>
+url="http://tools.ietf.org/html/rfc4745"
+>RFC 4745: Common Policy: A Document Format for Expressing Privacy Preferences</ulink></title>
 </biblioentry>
 
 <biblioentry id="pres_draft_auth">
 <abbrev>presence auth</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-presence-rules-03.txt"
->draft-ietf-simple-presence-rules-03.txt</ulink> - presence authorization XML based data format 
+<title><ulink url="http://tools.ietf.org/html/rfc5025"
+>RFC 5025</ulink> - Presence authorization rules
 and usage with XCAP</title>
 </biblioentry>
 </bibliodiv>
@@ -101,15 +101,14 @@ and usage with XCAP</title>
 
 <biblioentry id="pres_draft_rls">
 <abbrev>rls</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-xcap-list-usage-05.txt"
->draft-ietf-simple-xcap-list-usage-05.txt</ulink> - XML formats for representing resource 
-lists</title>
+<title><ulink url="http://tools.ietf.org/html/rfc4826"
+>RFC 4826</ulink> - XML formats for representing resource lists</title>
 </biblioentry>
 
 <biblioentry id="pres_draft_rls_sip">
 <abbrev>sip rls</abbrev>
-<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-event-list-07.txt"
->draft-ietf-simple-event-list-07.txt</ulink> - Event Notification Extension for Resource 
+<title><ulink url="http://tools.ietf.org/html/rfc4662"
+>RFC 4662</ulink> - SIP  Event Notification Extension for Resource 
 Lists</title>
 </biblioentry>
 

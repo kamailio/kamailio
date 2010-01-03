@@ -12,11 +12,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,6 +22,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Expires header field body parser
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef PARSE_EXPIRES_H
 #define PARSE_EXPIRES_H
@@ -36,25 +38,25 @@
 
 
 typedef struct exp_body {
-	str text;            /* Original text representation */
-	unsigned char valid; /* Was parsing successful ? */
-	unsigned int val;    /* Parsed value */
+	str text;            /*!< Original text representation */
+	unsigned char valid; /*!< Was parsing successful ? */
+	unsigned int val;    /*!< Parsed value */
 } exp_body_t;
 
 
-/*
+/*! \brief
  * Parse expires header field body
  */
 int parse_expires(struct hdr_field* _h);
 
 
-/*
+/*! \brief
  * Free all memory associated with exp_body_t
  */
 void free_expires(exp_body_t** _e);
 
 
-/*
+/*! \brief
  * Print exp_body_t content, for debugging only
  */
 void print_expires(exp_body_t* _e);

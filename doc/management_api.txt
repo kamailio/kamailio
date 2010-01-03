@@ -1,0 +1,45 @@
+Management API's in SIP-router
+------------------------------
+
+SIP-router has an API based on RPC. This allows modules and core to expose commands that can be 
+issued by external applications. Commands can change states, read status variables or expose
+internal structures.
+
+There are multiple ways to integrate your application to this interface. By adding modules,
+you can adapt the interface to one of several protocols supported:
+
+- XML-rpc
+- binrpc over various transports
+- Kamailio's MI - the management interface
+
+The MI interfaces can often run over Unix fifo sockets, UDP or TCP connections.
+
+The "sercmd" application is the command line tool used to connect to SIP-router
+over the command line. Use it to discover available commands.
+
+For backwards compatibilty, the kamctrl and kamdbctrl commands are still supported.
+
+Detailed information about these interfaces are to be found on the main sip-router.org
+web site in the wiki section.
+
+Modules
+-------
+
+mi_rpc		Exports Kamailio's MI interface over SIP-router's RPC interface
+xmlrpc		Exports the RPC interface using XML-rpc
+ctl		Implements the binrpc transport interface for SER rpcs
+		Also implements the old SER fifo-based management interface.
+
+Kamailio modules (modules_k)
+----------------------------
+mi_datagram	Kamailio MI interface- UDP version
+mi_fifo		Kamailio MI interface- FIFO version
+mi_xmlrpc	Kamailio MI interface- XML-rpc version
+
+
+The Kamailio MI interface is considered deprecated and will be supported
+only for backwards compatibility. New development is encouraged to use the
+RPC interface through one of the modules used to connect to it.
+
+The modules that currently only has MI interfaces will be changed to support
+the RPC interface in a coming release.

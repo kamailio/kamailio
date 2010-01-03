@@ -257,10 +257,11 @@ static int create_rcv_uri(str** uri, struct sip_msg* m)
 
 
 /*
- * Message contained some contacts, but record with same address
- * of record was not found so we have to create a new record
- * and insert all contacts from the message that have expires
- * > 0
+ * Message contained some contacts, but record with same address of record was
+ * not found so we have to create a new record and insert all contacts from
+ * the message that have expires > 0. The function returns a negative number
+ * on error, a positive number if the number of contacts would exceed
+ * max_contacts and 0 on success.
  */
 static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t* _d, str* _u, str *ua, str* aor_filter, int sid)
 {
@@ -289,7 +290,7 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 		if (max_contacts && (num >= max_contacts)) {
 			rerrno = R_TOO_MANY;
 			ul.delete_urecord(_d, _u);
-			return -1;
+			return 1;
 		}
 		num++;
 		
@@ -394,7 +395,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 		_c = get_next_contact(_c);
 	}
 	
-	DBG("test_max_contacts: %d contacts after commit\n", num);
+	DBG("test_max_contacts: %d contacts after commit, max_contacts=%d\n", num, max_contacts);
 	if (num > max_contacts) {
 		rerrno = R_TOO_MANY;
 		return 1;
@@ -414,6 +415,11 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
  *    > 0, update the contact
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
+ *
+ * The function returns a negative number on error, a positive number if
+ * max_contacts is set and the number of contacts after the change would
+ * exceed that maximum number of allowed contacts. On success the function
+ * returns 0.
  */
 static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t* _c, str* _ua, str* aor_filter, int sid)
 {
@@ -434,8 +440,12 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 	if (max_contacts) {
 		ret = test_max_contacts(_m, _r, _c);
 		if (ret != 0) {
+			/* test_max_contacts returns a negative number on error and a
+			 * positive number if the number of contacts after the update
+			 * exceeds the configured max_contacts. In both cases we return
+			 * here. */
 			build_contact(_r->contacts, aor_filter);
-			return -1;
+			return ret;
 		}
 	}
 
@@ -607,24 +617,18 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update(_m, r, aor, _c, _ua, aor_filter, sid) < 0) {
+		if ((res = update(_m, r, aor, _c, _ua, aor_filter, sid) < 0)) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
-			build_contact(r->contacts, aor_filter);
-			ul.release_urecord(r);
-			ul.unlock_udomain(_d);
-			return -3;
 		}
 		build_contact(r->contacts, aor_filter);
 		ul.release_urecord(r);
 	} else {
-		if (insert(_m, aor, _c, _d, _u, _ua, aor_filter, sid) < 0) {
+		if ((res = insert(_m, aor, _c, _d, _u, _ua, aor_filter, sid) < 0)) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
-			ul.unlock_udomain(_d);
-			return -4;
 		}
 	}
 	ul.unlock_udomain(_d);
-	return 0;
+	return res;
 }
 
 #define UA_DUMMY_STR "Unknown"
@@ -684,7 +688,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* aor_filt, i
 			if (no_contacts(_t, &uid, &aor_filter) < 0) goto error;
 		}
 	} else {
-		if (contacts(_m, c, _t, &uid, &ua, &aor_filter) < 0) goto error;
+		if (contacts(_m, c, _t, &uid, &ua, &aor_filter) != 0) goto error;
 	}
 
 	if (doreply) {

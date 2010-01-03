@@ -29,6 +29,13 @@
  *  2008-05-22  Initial version, get_body_part() is introduced (Miklos)
  */
 
+/*! \file
+ * \brief Parser :: Body handling
+ *
+ * \ingroup parser
+ */
+
+
 #include "../trim.h"
 #include "parser_f.h"
 #include "parse_content.h"
@@ -36,7 +43,7 @@
 #include "keys.h"
 #include "parse_body.h"
 
-/* returns the value of boundary parameter from the Contect-Type HF */
+/*! \brief returns the value of boundary parameter from the Contect-Type HF */
 static inline int get_boundary_param(struct sip_msg *msg, str *boundary)
 {
 	str	s;
@@ -91,7 +98,7 @@ static inline int get_boundary_param(struct sip_msg *msg, str *boundary)
 	return 0;
 }
 
-/* search the next boundary in the buffer */
+/*! \brief search the next boundary in the buffer */
 static inline char *search_boundary(char *buf, char *buf_end, str *boundary)
 {
 	char *c;
@@ -110,7 +117,7 @@ static inline char *search_boundary(char *buf, char *buf_end, str *boundary)
 	return NULL;
 }
 
-/* extract the body of a part from a multipart SIP msg body */
+/*! \brief extract the body of a part from a multipart SIP msg body */
 inline static char *get_multipart_body(char *buf,
 					char *buf_end,
 					str *boundary,
@@ -155,13 +162,13 @@ error:
 }
 
 
-/* macros from parse_hname2.c */
+/*! \brief macros from parse_hname2.c */
 #define READ(val) \
 (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 
 #define LOWER_DWORD(d) ((d) | 0x20202020)
 
-/* Returns the pointer within the msg body to the given type/subtype,
+/*! \brief Returns the pointer within the msg body to the given type/subtype,
  * and sets the length of the body part.
  * The result can be the whole msg body, or a part of a multipart body.
  */

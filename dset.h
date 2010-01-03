@@ -10,11 +10,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,31 +20,36 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: Destination set handling
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #ifndef _DSET_H
 #define _DSET_H
 
 #include "ip_addr.h"
 #include "qvalue.h"
 #include "flags.h"
+#include "parser/msg_parser.h"
 
-struct sip_msg;
 
 extern unsigned int nr_branches;
 
-
-
-/*
+/*! \brief
  * Add a new branch to current transaction 
  */
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 					 qvalue_t q, unsigned int flags,
 					 struct socket_info* force_socket);
 
-/* kamailio compatible version */
+/*! \brief kamailio compatible version */
 #define km_append_branch(msg, uri, dst_uri, path, q, flags, force_socket) \
 	append_branch(msg, uri, dst_uri, path, q, flags, force_socket)
 
-/** ser compatible append_branch version.
+/*! \brief ser compatible append_branch version.
  *  append_branch version compatible with ser: no path or branch flags support
  *  and no str parameters.
  */
@@ -69,18 +69,18 @@ static inline int ser_append_branch(struct sip_msg* msg,
 
 
 
-/*
+/*! \brief
  * Iterate through the list of transaction branches 
  */
 void init_branch_iterator(void);
 
-/* 
+/*! \brief
  * Return branch iterator position 
  */
 int get_branch_iterator(void);
 
 
-/** Get the next branch in the current transaction.
+/*! \brief Get the next branch in the current transaction.
  * @return pointer to the uri of the next branch (which the length written in
  *  *len) or 0 if there are no more branches.
  */
@@ -94,34 +94,46 @@ char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 
 
 
-/*
+/*! \brief
  * Empty the array of branches
  */
 void clear_branches(void);
 
 
-/*
+/*! \brief
  * Create a Contact header field from the
  * list of current branches
  */
 char* print_dset(struct sip_msg* msg, int* len);
 
 
-/* 
+/*! \brief
  * Set the q value of the Request-URI
  */
 void set_ruri_q(qvalue_t q);
 
 
-/* 
+/*! \brief
  * Get the q value of the Request-URI
  */
 qvalue_t get_ruri_q(void);
 
-int get_request_uri(struct sip_msg* _m, str* _u);
+
+
+/*
+ * Get actual Request-URI
+ */
+inline static int get_request_uri(struct sip_msg* _m, str* _u)
+{
+	*_u=*GET_RURI(_m);
+	return 0;
+}
+
+
+
 int rewrite_uri(struct sip_msg* _m, str* _s);
 
-/**
+/*! \brief
  * Set a per-branch flag to 1.
  *
  * This function sets the value of one particular branch flag to 1.
@@ -131,7 +143,7 @@ int rewrite_uri(struct sip_msg* _m, str* _s);
  */
 int setbflag(unsigned int branch, flag_t flag);
 
-/**
+/*! \brief
  * Reset a per-branch flag value to 0.
  *
  * This function resets the value of one particular branch flag to 0.
@@ -141,7 +153,7 @@ int setbflag(unsigned int branch, flag_t flag);
  */
 int resetbflag(unsigned int branch, flag_t flag);
 
-/**
+/*! \brief
  * Determine if a branch flag is set.
  *
  * This function tests the value of one particular per-branch flag.
@@ -151,7 +163,7 @@ int resetbflag(unsigned int branch, flag_t flag);
  */
 int isbflagset(unsigned int branch, flag_t flag);
 
-/**
+/*! \brief
  * Get the value of all branch flags for a branch
  *
  * This function returns the value of all branch flags
@@ -162,7 +174,7 @@ int isbflagset(unsigned int branch, flag_t flag);
  */
 int getbflagsval(unsigned int branch, flag_t* res);
 
-/**
+/*! \brief
  * Set the value of all branch flags at once for a given branch.
  *
  * This function sets the value of all branch flags for a given

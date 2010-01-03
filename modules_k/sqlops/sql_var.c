@@ -20,6 +20,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \ingroup sqlops
+ * \brief SIP-router SQL-operations :: Variables
+ *
+ * - Module: \ref sqlops
+ */
+
+
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../mod_fix.h"

@@ -25,6 +25,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief Parser :: Parse CSEQ header
+ *
+ * \ingroup parser
+ */
+
+
 
 #ifndef PARSE_CSEQ
 #define PARSE_CSEQ
@@ -33,24 +40,24 @@
 
 
 struct cseq_body{
-	int error;  /* Error code */
-	str number; /* CSeq number */
-	str method; /* Associated method */
-	unsigned int method_id; /* Associated method ID */
+	int error;  /*!< Error code */
+	str number; /*!< CSeq number */
+	str method; /*!< Associated method */
+	unsigned int method_id; /*!< Associated method ID */
 };
 
 
-/* casting macro for accessing CSEQ body */
+/*! \brief casting macro for accessing CSEQ body */
 #define get_cseq(p_msg) ((struct cseq_body*)(p_msg)->cseq->parsed)
 
 
-/*
+/*! \brief
  * Parse CSeq header field
  */
 char* parse_cseq(char *buf, char* end, struct cseq_body* cb);
 
 
-/*
+/*! \brief
  * Free all associated memory
  */
 void free_cseq(struct cseq_body* cb);

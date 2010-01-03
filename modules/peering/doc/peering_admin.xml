@@ -16,21 +16,19 @@
 
 	<section>
 	<title>Overview</title>
-	<para> Peering module allows SIP
-	providers (operators or organizations) to verify from a broker
-	if source or destination of a SIP request is a trusted peer.
+	<para>The peering module allows SIP providers (operators or organizations) 
+	to verify from a broker if source or destination of a SIP request is a trusted peer.
         </para>
         <para>
 	In order to participate in the trust community provided by a
-	broker, each SIP provider registers with the broker the domains
-	(host parts of SIP URIs) that they serve.  When a SIP proxy of a
+	broker, each SIP provider registers the domains (host parts of SIP URIs) 
+	that they serve with the broker.  When a SIP proxy of a
 	provider needs to send a SIP request to a non-local domain, it
 	can find out from the broker using verify_destination() function
 	if the non-local domain is served by a trusted peer.  If so, the
 	provider receives from the broker a hash of the SIP request and
 	a timestamp that it includes in the request to the non-local
-	domain.  When a SIP
-	proxy of the non-local domain receives the SIP request, it, in
+	domain.  When a SIP proxy of the non-local domain receives the SIP request, it, in
 	turn, can verify from the broker using verify_source() function
 	if the request came from a trusted peer.
         </para>
@@ -86,7 +84,7 @@
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
-		This is the location of the configuration file of radius client 
+		This is the location of the configuration file of Radius client 
 		libraries.
 		</para>
 		<para>
@@ -104,11 +102,11 @@ modparam("peering", "radius_config", "/etc/broker/radiusclient.conf")
 		<title><varname>verify_destination_service_type</varname> (integer)</title>
 		<para>
 		This is the value of the Service-Type Radius attribute to be
-		used, when sender of SIP Request verifies request's
-	destination using verify_destination() function.
+		used, when sender of SIP Request verifies the request's
+		destination using verify_destination() function.
 		</para>
 		<para>
-		Default value is dictionary value of <quote>Sip-Verify-Destination</quote>
+		Default value is the dictionary value of <quote>Sip-Verify-Destination</quote>
 		Service-Type.
 		</para>
 		<example>
@@ -122,11 +120,11 @@ modparam("peering", "verify_destination_service_type", 21)
 		<title><varname>verify_source_service_type</varname> (integer)</title>
 		<para>
 		This is the value of the Service-Type Radius attribute to be
-		used, when receiver of SIP Request verifies request's
-	source using verify_source() function.
+		used, when receiver of SIP Request verifies the request's
+		source using verify_source() function.
 		</para>
 		<para>
-		Default value is dictionary value of <quote>Sip-Verify-Source</quote>
+		Default value is the dictionary value of <quote>Sip-Verify-Source</quote>
 		Service-Type.
 		</para>
 		<example>
@@ -145,8 +143,8 @@ modparam("peering", "verify_source_service_type", 22)
 		<para>
 		Function verify_destination() queries from
 		broker's Radius server if domain (host part) of Request
-	URI is served by a trusted peer.  Radius request contains the
-	following attributes/values:
+		URI is served by a trusted peer.  Radius request contains the
+		following attributes/values:
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -167,22 +165,22 @@ modparam("peering", "verify_source_service_type", 22)
 		</itemizedlist>
 		<para>
 		Function returns value 1 if domain of Request URI is
-	served by a trusted peer and -1 otherwise.  In case of positive
-	result, Radius server returns a set of SIP-AVP reply attributes.
-	Value of each SIP-AVP is of form:
+		served by a trusted peer and -1 otherwise.  In case of positive
+		result, the Radius server returns a set of SIP-AVP reply attributes.
+		The value of each SIP-AVP is of form:
 		 </para>
 		 <para>
 		 [#]name(:|#)value
 		 </para>
 		 <para>
 		 Value of each SIP-AVP reply attribute is mapped to an
-		 Kamailio AVP.  Prefix # in front of name or value indicates a
-	string name or string value, respectively.
+		 &kamailio; AVP.  Prefix # in front of name or value indicates a
+		 string name or string value, respectively.
 		 </para>
 		 <para>
 		 One of the SIP-AVP reply attributes contains a string
 		 that the source peer must include "as is" in a 
-		 P-Request-Hash header when it sends the SIP request to
+		 <emphasis>P-Request-Hash:</emphasis> header when it sends the SIP request to
 		 the destination peer.  The string value may, for
 		 example, be of form hash@timestamp, where hash contains
 		 a hash calculated by the broker based on the attributes
@@ -212,10 +210,10 @@ if (verify_destination()) {
 	<section>
 		<title><function moreinfo="none">verify_source()</function></title>
 		<para>
-		Function verify_source() queries from
-		broker's Radius server if SIP request was received from
-	a trusted peer.  Radius request contains the
-	following attributes/values:
+		Function verify_source() queries the
+		broker's Radius server whether the SIP request was received from
+		a trusted peer.  The Radius request contains the
+		following attributes/values:
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -239,18 +237,18 @@ if (verify_destination()) {
 		</itemizedlist>
 		<para>
 		Function returns value 1 if SIP request was received
-	from a trusted peer and -1 otherwise.  In case of positive
-	result, Radius server may return a set of SIP-AVP reply
-	attributes.  Value of each SIP-AVP is of form:
+		from a trusted peer and -1 otherwise.  In case of positive
+		result, Radius server may return a set of SIP-AVP reply
+		attributes.  Value of each SIP-AVP is of form:
 		 </para>
 		 <para>
 		 [#]name(:|#)value
 		 </para>
 		 <para>
 		 Value of each SIP-AVP reply attribute is mapped to an
-		 Kamailio 
+		 &kamailio; 
 		 AVP.  Prefix # in front of name or value indicates a
-	string name or string value, respectively.
+		string name or string value, respectively.
 		 </para>
 		 <para>
 		 AVP names used in reply attributes are

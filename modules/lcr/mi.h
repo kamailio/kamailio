@@ -25,6 +25,12 @@
  * --------
  *  2006-10-05  created (bogdan)
  */
+/*!
+ * \file
+ * \brief SIP-router lcr :: Header file for Kamailio MI functions
+ * \ingroup lcr
+ * Module: \ref lcr
+ */
 
 
 #ifndef _LCR_MI_H_

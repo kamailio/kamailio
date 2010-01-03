@@ -104,6 +104,212 @@
 		it to see if what you are looking for is there.</para>
 	</note>
     </section>
+
+	<section id="tm.serial_forking">
+	  <title>Serial Forking Based on Q Value</title>
+	  <para>
+		A single SIP INVITE request may be forked to multiple destinations. We
+		call the set of all such destinations a destination set. Individual
+		elements within the destination sets are called branches. The script
+		writer can add URIs to the destination set from the configuration
+		file, or they can be loaded from the user location database, each
+		registered contact then becomes one branch in the destination set.
+	  </para>
+	  <para>
+		The default behavior of the tm module, if it encounters a SIP message
+		with multiple branches in the destination set, it to forward the SIP
+		message to all the branches in parallel. That means it sends the
+		message to all the branch destinations before it waits for replies
+		from any of them. This is the default behavior if you
+		call <function>t_relay()</function> and similar functions without
+		anything else.
+	  </para>
+	  <para>
+		Another approach of handling multiple branches in a destination set it
+		serial forking. When configured to do serial forking, the server takes
+		the first branch out of the destination set, forwards the message to
+		its destination and waits for a reply or timeout. Only after a reply
+		has been received or the timeout occurred, the server takes another
+		destination from the destination set and tries again, until it
+		receives a positive final reply or until all branches from the
+		destination set have been tried.
+	  </para>
+	  <para>
+		Yet another, more sophisticated, way of handling multiple branches is
+		combined serial/parallel forking, where individual branches within the
+		destination set are assigned priorities. The order in which individual
+		branches are tried is then determined by their relative priority
+		within the destination set. Branches can be tried sequentially in the
+		descending priority order and all branches that have the same priority
+		can be tried in parallel. Such combined serial/parallel forking can be
+		achieved in the tm module with the help of
+		functions <function>t_load_contacts()</function>
+		and <function>t_next_contacts()</function>.
+	  </para>
+	  <para>
+		Every branch in the destination set is assigned a priority number,
+		also known as the q value. The q value is a floating point number in a
+		range 0 to 1.0. The higher the q value number, the more priority is
+		the particular branch in the destination set is given. Branches with q
+		value 1.0 have maximum priority, such branches should be always tried
+		first in serial forking. Branches with q value 0 have the lowest
+		priority and they should by tried after all other branches with higher
+		priority in the destination set.
+	  </para>
+	  <para>
+		As an example, consider the following simple configuration file. When
+		the server receives an INVITE, it creates four branches for it with
+		usernames A through D and then forwards the request
+		using <function>t_relay()</function>:
+	  </para>
+	  <programlisting format="linespecific">
+route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com");
+  append_branch("sip:c@example.com");
+  append_branch("sip:d@example.com");
+
+  t_relay();
+  break;
+}
+</programlisting>
+	  <para>
+		With this configuratin the server forwards the request to all four
+		branches at once, performing parallel forking described above. We did
+		not set the q value for individual branches in this example but we can
+		do that by slightly modifying the arguments given
+		to <function>append_branch()</function>:
+	  </para>
+	  <programlisting format="linespecific">
+route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com", "0.5");
+  append_branch("sip:c@example.com", "0.5");
+  append_branch("sip:d@example.com", "1.0");
+
+  t_relay();
+  break;
+}	 
+</programlisting>
+	  <para>
+		Here we assigned q value 0.5 to branches B and C and q value 1.0 to
+		branch D. We did not specify any q value for branch A and in that case
+		it is assumed that its q value is the lowest from all branches within
+		the destination set. If you try to run this example again, you will
+		figure out that nothing changed, <function>t_relay()</function> still
+		forward the message to all branches in parallel.
+	  </para>
+	  <para>
+		We now want to implement the combined serial/parallel forking. Branch
+		D should be tried first, because its q value is 1.0. Branches B and C
+		should be tried in parallel, but only after D finishes. Branch A
+		should be tried after B and C finished, because its q value (the
+		default) is the lowest of all. To do that, we need to introduce two
+		new functions into our example and one tm module parameter:
+	  </para>
+	  <programlisting format="linespecific">
+modparam("tm", "contacts_avp", "tm_contacts");
+
+route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com", "0.5");
+  append_branch("sip:c@example.com", "0.5");
+  append_branch("sip:d@example.com", "1.0");
+
+  t_load_contacts();
+
+  t_next_contacts();
+  t_relay();
+  break;
+}	 
+</programlisting>
+	  <para>
+		First of all, the tm module parameter is mandatory if the two new
+		functions are used. Function <function>t_load_contacts()</function>
+		takes all branches from the destination set, sorts them according to
+		their q values and stores them in the AVP configured in the modparam.
+		The function also clears the destination set, which means that it
+		removes all branches configured before
+		with <function>seturi()</function>
+		and <function>append_branch()</function>.
+	  </para>
+	  <para>
+		Function <function>t_next_contacts()</function> takes the AVP created
+		by the previous function and extract the branches with highest q
+		values from it. In our example it is branch D. That branch is then put
+		back into the destination set and when the script finally
+		reaches <function>t_relay()</function>, the destination set only
+		contains branch D and the request will be forwarded there.
+	  </para>
+	  <para>
+		We achieved the first step of serial forking, but this is not
+		sufficient. Now we also need to forward to other branches with lower
+		priority values when branch D finishes. To do that, we need to extend
+		the configuration file again and introduce a failure_route section:
+		</para>
+	  <programlisting format="linespecific">
+modparam("tm", "contacts_avp", "tm_contacts");
+
+route {
+  seturi("sip:a@example.com");
+  append_branch("sip:b@example.com", "0.5");
+  append_branch("sip:c@example.com", "0.5");
+  append_branch("sip:d@example.com", "1.0");
+
+  t_load_contacts();
+
+  t_next_contacts();
+  t_on_failure("serial");
+  t_relay();
+  break;
+}
+
+failure_route["serial"]
+{
+  if (!t_next_contacts()) {
+    exit;
+  }
+
+  t_on_failure("serial");
+  t_relay();
+}
+</programlisting>
+	  <para>
+		The failure_route section will be executed when branch D finishes. It
+		executes <function>t_next_contacts()</function> again and this time
+		the function retrieves branches B and C from the AVP and adds them to
+		the destination set. Here we need to check the return value of the
+		function, because a negative value indicates that there were no more
+		branches, in that case the failure_route should just terminate and
+		forward the response from branch D upstream.
+	  </para>
+	  <para>
+		If <function>t_next_contact()</function> returns a positive value then
+		we have more new branches to try and we need to setup the
+		failure_route again and call <function>t_relay()</function>. In our
+		example the request will now be forwarded to branches B and C in
+		paralell, because they were both added to the destination set
+		by <function>t_next_contacts()</function> at the same time.
+	  </para>
+	  <para>
+		When branches B and C finish, the failure_route block is executed
+		again, this time <function>t_next_contacts()</function> puts the final
+		branch A into the destination set and <function>t_relay()</function>
+		forwards the request there.
+	  </para>
+	  <para>
+		And that's the whole example, we achieved combined serial/parallel
+		forking based on the q value of individual branches. In real-world
+		configuration files the script writer would need to check the return
+		value of all functions and also configure some additional parameters,
+		such as <varname>fr_inv_timer_next</varname>
+		and <varname>restart_fr_on_each_reply</varname>. Also the destination
+		set would not be configured directly in the configuration file, but
+		can be retrieved from the user location database, for example. In that
+		case registered contacts will be stored in the destination set as
+		branches and their q values (provided by UAs) will be used.
+	  </para>
+	</section>
     
     <section id="tm.known_issues">
 	<title>Known Issues</title>
@@ -135,6 +341,18 @@
 		    longer so much as there is a new replication module).
 		</para>
 	    </listitem>
+	    <listitem>
+		<para>
+		    Function <function>t_next_contacts</function> should restore the
+		    value of timer <varname>fr_inv_timer</varname> when there are no
+		    more branches to be processed serially. The function can restore
+		    the timer properly if it has been configured through an AVP or
+		    with the config framework, but may fail to restore timer values
+		    configured for individual transactions
+		    with <function>t_set_fr</function>.
+		</para>
+	    </listitem>
+
 	</itemizedlist>
     </section>
     

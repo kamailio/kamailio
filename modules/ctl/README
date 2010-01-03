@@ -20,7 +20,7 @@ Andrei Pelinescu-Onciul
         1.3.5. fifo (integer)
         1.3.6. autoconversion (integer)
 
-   1.4. RPC Functions
+   1.4. SIP-router RPC Functions
 
         1.4.1. ctl.listen
         1.4.2. ctl.connections
@@ -28,13 +28,13 @@ Andrei Pelinescu-Onciul
 
 1.1. Overview
 
-   This module implements the binrpc transport interface for ser rpcs. It
-   supports various transports over which it speaks binrpc: unix datagram
-   sockets, unix stream sockets, udp and tcp. It also supports a backward
-   compatible fifo interface (using the old ser fifo protocol).
+   This module implements the binrpc transport interface for SER rpcs. It
+   supports various transports over which it speaks binrpc: Unix datagram
+   sockets, Unix stream sockets, UDP and TCP. It also supports a backward
+   compatible FIFO interface (using the old ser FIFO protocol).
 
    By default (if no parameters are changed from the config file) it uses
-   a unix stream socket under /tmp: /tmp/ser_ctl. This socket is also the
+   a Unix stream socket under /tmp: /tmp/ser_ctl. This socket is also the
    default for sercmd.
 
    In general it's used in conjunction with sercmd. sercmd it's a unix
@@ -60,9 +60,9 @@ $ sercmd ps
 
 1.2. BINRPC
 
-   binrpc is a ser proprietary binary protocol for invoking ser-like rpcs.
-   It was designed such that it would minimize the packet sizes and it
-   would be very fast to parse (as opposed to xmlrpc).
+   binrpc is a ser proprietary binary protocol for invoking rpcs. It was
+   designed such that it would minimize the packet sizes and it would be
+   very fast to parse (as opposed to XML-rpc).
 
    The binrpc encoding format is fully documented inside
    modules_s/ctl/binrpc.h.
@@ -75,30 +75,30 @@ $ sercmd ps
 1.3.1. binrpc (string)
 
    Specifies the transport used for the binrpc protocol. The following
-   transport protocol are supported: unix datagram sockets, unix stream
-   sockets, udp and tcp.
+   transport protocol are supported: Unix datagram sockets, Unix stream
+   sockets, UDP and TCP.
 
    The format is: [ protocol:] address_port|path .
 
-     * For unix sockets: [unixd|unixs|unix]:path where "unixd" means unix
-       datagram sockets and "unix" "unixs" mean unix stream sockets.
+     * For Unix sockets: [unixd|unixs|unix]:path where "unixd" means Unix
+       datagram sockets and "unix" "unixs" mean Unix stream sockets.
        Examples: "unixd:/tmp/unix_dgram", "unixs:/tmp/unix_stream",
        "unix:/tmp/unix_stream".
-     * For udp or tcp sockets: [udp|tcp]:address:port. If the address is
+     * For UDP or TCP sockets: [udp|tcp]:address:port. If the address is
        "*" or missing, it will bind to all the local addresses (0.0.0.0).
        Examples: "udp:localhost:2046", "tcp:localhost:2046", "tcp:3012",
        "udp:*:3012".
 
    If the protocol part is missing and the address/path part looks like a
-   file system path it will default to a unix stream socket and if not to
-   an udp socket. Examples:
+   file system path it will default to a Unix stream socket and if not to
+   an Unix UDP socket. Examples:
      * "/tmp/unix_test" - equivalent to "unixs:/tmp/unix_test".
      * "localhost:3000" - equivalent to "udp:localhost:3000".
 
    Multiple transports / listen addresses can be specified, just by
    setting the parameter multiple times.
 
-   Default:"unix:/tmp/ser_ctl" (unix stream socket). The default value is
+   Default:"unix:/tmp/ser_ctl" (Unix stream socket). The default value is
    used only if no binrpc parameter is found in the config file.
 
    Example 2. Set binrpc parameter
@@ -119,7 +119,7 @@ modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
 
 1.3.2. mode (integer)
 
-   Permissions used for the created unix sockets or for the fifo.
+   Permissions used for the created Unix sockets or for the fifo.
 
    Default: 0600.
 
@@ -128,18 +128,18 @@ modparam("ctl", "mode", 0600) # permissions
 
 1.3.3. user (integer or string)
 
-   Username or uid used for the created unix sockets or for the fifo.
+   Username or uid used for the created Unix sockets or for the fifo.
 
-   Default: not set (the user under which ser runs).
+   Default: not set (the user under which SER runs).
 
    Example 4. Set user parameter
 modparam("ctl", "user", "andrei")
 
 1.3.4. group (integer or string)
 
-   Group name or gid used for the created unix sockets or for the fifo.
+   Group name or gid used for the created Unix sockets or for the fifo.
 
-   Default: not set (the group under which ser runs).
+   Default: not set (the group under which SER runs).
 
    Example 5. Set group parameter
 modparam("ctl", "group", 100)
@@ -147,10 +147,10 @@ modparam("ctl", "group", 100)
 1.3.5. fifo (integer)
 
    fifo used for the obsolete fifo protocol. The fifo protocol can be run
-   over a real fifo, over udp or over tcp. Format:
+   over a real fifo, over UDP or over TCP. Format:
    [protocol:]path|address. If no protocol is specified the default is
    "fifo". Examples: "fifo:/tmp/ser_fifo", "/tmp/ser_fifo2", "udp:*:2050",
-   "tcp:localhost:2050". For more details on the udp and tcp formats see
+   "tcp:localhost:2050". For more details on the UDP and TCP formats see
    binrpc. Multiple fifos or fifo transports can be used in the same time
    (just by setting the fifo parameter multiple times in the config).
 
@@ -180,7 +180,7 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
    Example 7. Set the autoconversion parameter
 modparam("ctl", "autoconversion", 1)
 
-1.4. RPC Functions
+1.4. SIP-router RPC Functions
 
    Revision History
    Revision $Revision$ $Date$

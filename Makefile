@@ -341,10 +341,10 @@ cmodules=$(foreach mods,$(modules_dirs), $($(mods)))
 
 
 # list of utils directories that should be compiled by make utils
-C_COMPILE_UTILS=	utils/gen_ha1 utils/sercmd
+C_COMPILE_UTILS=	utils/sercmd
 # list of binaries that should be installed alongside
 # (they should be created after make utils, see C_COMPILE_UTILS)
-C_INSTALL_BIN=	utils/gen_ha1/gen_ha1 # sercmd is now installed by ctl
+C_INSTALL_BIN=	# sercmd is now installed by ctl
 
 # which utils know to install themselves and should be installed
 # along the core (list of utils directories)
@@ -527,7 +527,7 @@ $(1)-doc: modules.lst
 	@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
 			$(call oecho, "" ;) \
-			$(call oecho, "" ;) \\
+			$(call oecho, "" ;) \
 			$(MAKE) -C $$$$r/doc $(doc_format) $$(mk_params); \
 		fi ; \
 	done

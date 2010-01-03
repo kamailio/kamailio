@@ -11,11 +11,6 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,6 +20,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+/*! \file
+ * \brief Parser :: Content
+ *
+ * \ingroup parser
+ */
+
 
 #ifndef _PARSE_CONTENT_H
 #define _PARSE_CONTENT_H
@@ -39,9 +41,11 @@ struct mime_type {
 
 
 
-/*
- * Mimes types/subtypes that are recognize
+/*! \name MimeTypes
+ * Mimes types/subtypes that are recognized
  */
+/*@{ */
+
 #define TYPE_TEXT            1
 #define TYPE_MESSAGE         2
 #define TYPE_APPLICATION     3
@@ -66,34 +70,35 @@ struct mime_type {
 #define SUBTYPE_ALL          0xfe
 #define SUBTYPE_UNKNOWN      0xff
 
+/*@} */
 
-/* taken from PA module - will be useful here */
+/*! \brief taken from PA module - will be useful here */
 #define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
 
-/*
+/*! \brief
  * Maximum number of mimes allowed in Accept header 
  */
 #define MAX_MIMES_NR         128
 
-/*
+/*! \brief
  * returns the content-length value of a sip_msg as an integer
  */
 #define get_content_length(_msg_)   ((long)((_msg_)->content_length->parsed))
 
 
-/*
+/*! \brief
  * returns the content-type value of a sip_msg as an integer
  */
 #define get_content_type(_msg_)   ((int)(long)((_msg_)->content_type->parsed))
 
 
-/*
+/*! \brief
  * returns the accept values of a sip_msg as an null-terminated array
  * of integer
  */
 #define get_accept(_msg_) ((int*)((_msg_)->accept->parsed))
 
-/*
+/*! \brief
  * parse the body of the Content-Type header. It's value is also converted
  * as int.
  * Returns:   n (n>0)  : the found type
@@ -104,7 +109,7 @@ int parse_content_type_hdr( struct sip_msg *msg);
 
 int parse_accept_body(struct hdr_field *hdr);
 
-/*
+/*! \brief
  * parse the body of the Accept header. It's values are also converted
  * as an null-terminated array of ints.
  * Returns:   1 : OK
@@ -114,14 +119,14 @@ int parse_accept_body(struct hdr_field *hdr);
 int parse_accept_hdr( struct sip_msg *msg );
 
 
-/*
+/*! \brief
  *  parse the body of a Content_-Length header. Also tries to recognize the
  *  type specified by this header (see th above defines).
  *  Returns the first chr after the end of the header.
  */
 char* parse_content_length( char* buffer, char* end, int* len);
 
-/*
+/*! \brief
  * Sets the mime type from the body of a Content-Type header
  */
 char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
