@@ -9,20 +9,12 @@
 
 <table id="dr_gateways" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dr_gateways</name>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 	<version>3</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>This table is used by the Dynamic Routing module to store
 		information about the destinations/gateways where to route calls.
-		More information can be found at: &OPENSIPS_MOD_DOC;drouting.html.
-=======
-	<version>1</version>
-	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
-	<description>
-		<db:para>This table is used by the douting module - keeps the
-			gateways data.
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml
+		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
 		</db:para>
 	</description>
 
@@ -33,12 +25,8 @@
 		<autoincrement/>
 		<primary/>
 		<type db="dbtext">int,auto</type>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 		<description>GW unique ID - used to link the GW from 
 			the routing rules
-=======
-		<description>Unique ID per gateway
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml
 		</description>
 	</column>
 
@@ -47,22 +35,14 @@
 		<type>unsigned int</type>
 		<size>11</size>
 		<default>0</default>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 		<description>Type/class of the GW (user defined)</description>
-=======
-		<description>Type of gateway</description>
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml
 	</column>
 
 	<column id="address">
 		<name>address</name>
 		<type>string</type>
 		<size>128</size>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 		<description>GW/destination address as name/IP[:port]</description>
-=======
-		<description>Address of gateway (hostname or ip and port)</description>
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml
 	</column>
 
 	<column id="strip">
@@ -70,18 +50,13 @@
 		<type>unsigned int</type>
 		<size>11</size>
 		<default>0</default>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 		<description>Number of digits to be striped out for the begining 
 			of the username when using this GW/destination</description>
-=======
-		<description>Number of digits to strip from dialed number</description>
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml
 	</column>
 
 	<column id="pri_prefix">
 		<name>pri_prefix</name>
 		<type>string</type>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 		<size>16</size>
 		<null/>
 		<default><null/></default>
@@ -97,12 +72,6 @@
 		<default><null/></default>
 		<description>Generic string describing GW attributes - this string is
 			to be interpreted from the script</description>
-=======
-		<size>64</size>
-		<null/>
-		<default><null/></default>
-		<description>What to prefix to dialed number</description>
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml
 	</column>
 
 	<column id="description">
@@ -110,13 +79,6 @@
 		<type>string</type>
 		<size>128</size>
 		<default></default>
-<<<<<<< HEAD:lib/srdb1/schema/dr_gateways.xml
 		<description>Text description of the GW/destination</description>
 	</column>
 </table>
-=======
-		<description>Short description of gateway</description>
-	</column>
-</table>
-
->>>>>>> 8e298ed9462ccd639d054cd7639278fdd3932ee9:lib/srdb1/schema/dr_gateways.xml

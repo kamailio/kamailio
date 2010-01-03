@@ -14,7 +14,7 @@
 	<description>
 		<db:para>This table is used by the Dynamic Routing module to define
 		lists of gateways to be used in rule definitions.
-		More information can be found at: &OPENSIPS_MOD_DOC;drouting.html.
+		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
 		</db:para>
 	</description>
 
