@@ -11,4 +11,6 @@
     <name>DRouting</name>
     <xi:include href="dr_gateways.xml"/>
     <xi:include href="dr_rules.xml"/>
+    <xi:include href="dr_gw_lists.xml"/>
+    <xi:include href="dr_groups.xml"/>
 </database>

@@ -9,7 +9,7 @@
 
 <table id="dr_gateways" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dr_gateways</name>
-	<version>1</version>
+	<version>3</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>This table is used by the douting module - keeps the
@@ -58,6 +58,15 @@
 		<null/>
 		<default><null/></default>
 		<description>What to prefix to dialed number</description>
+	</column>
+
+	<column id="attrs">
+		<name>attrs</name>
+		<type>string</type>
+		<size>255</size>
+		<null/>
+		<default><null/></default>
+		<description>Generic string to be returned in cfg script</description>
 	</column>
 
 	<column id="description">
