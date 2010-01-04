@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dr_groups" xmlns:db="http://docbook.org/ns/docbook">
+	<name>dr_groups</name>
+	<version>2</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>This table is used by the drouting module to store
+		information about the routing groups (users mapped over groups).
+		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
+		</db:para>
+	</description>
+
+	<column id="gwid">
+		<name>id</name>
+		<type>unsigned int</type>
+		<size>&table_id_len;</size>
+		<autoincrement/>
+		<primary/>
+		<type db="dbtext">int,auto</type>
+		<description>Unique ID</description>
+	</column>
+
+	<column id="username">
+		<name>username</name>
+		<type>string</type>
+		<size>64</size>
+		<description>Username part of user</description>
+	</column>
+
+	<column id="domain">
+		<name>domain</name>
+		<type>string</type>
+		<size>128</size>
+		<default></default>
+		<description>Domain part of user</description>
+	</column>
+
+	<column id="groupid">
+		<name>groupid</name>
+		<type>unsigned int</type>
+		<size>11</size>
+		<default>0</default>
+		<description>The ID of the routing group the user belongs to.
+		</description>
+	</column>
+
+
+	<column id="description">
+		<name>description</name>
+		<type>string</type>
+		<size>128</size>
+		<default></default>
+		<description>Text description of the group/user</description>
+	</column>
+
+</table>
