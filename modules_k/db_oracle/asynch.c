@@ -66,7 +66,7 @@ static int set_tv(unsigned type, const char* val, struct timeval* tv)
 	unsigned long s, ms;
 	double dv;
 
-	if (type != STR_PARAM) {
+	if (PARAM_TYPE_MASK(type) != STR_PARAM) {
 		LM_ERR("type of parameter is no STR\n");
 		return -1;
 	}
