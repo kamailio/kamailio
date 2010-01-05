@@ -78,7 +78,7 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 	char *theString = (char *)val;
 
 	/* Make sure the function was called correctly. */
-	if (type != STR_PARAM) {
+	if (PARAM_TYPE_MASK(type) != STR_PARAM) {
 		LM_ERR("the %s parameter was assigned a type %d instead of %d\n",
 				parameterName, type, STR_PARAM);
 		return 0;
