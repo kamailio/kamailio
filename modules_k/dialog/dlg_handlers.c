@@ -227,7 +227,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
 
 	/* extract the RR parts */
-	if(!msg->record_route && (parse_headers(msg,HDR_RECORDROUTE_F,0)<0)  ){
+	if(!msg->record_route && (parse_headers(msg,HDR_EOH_F,0)<0)  ){
 		LM_ERR("failed to parse record route header\n");
 		goto error0;
 	}
