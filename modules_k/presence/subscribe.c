@@ -802,7 +802,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	else
 	{
 		memset( &TO , 0, sizeof(TO) );
-		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO));
+		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO))
 		{
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
@@ -1030,16 +1030,19 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	{
 		lock_get(&subs_htable[i].lock);
 		s= search_shtable(subs_htable, subs->callid,subs->to_tag,subs->from_tag, i);
-		if (s && !EVENT_DIALOG_SLA(s->event->evp))
+		if (s)
 		{
-			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
-			if(pres_uri.s== NULL)
+			if(!EVENT_DIALOG_SLA(s->event->evp))
 			{
-				lock_release(&subs_htable[i].lock);
-				ERR_MEM(PKG_MEM_STR);
+				pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
+				if(pres_uri.s== NULL)
+				{
+					lock_release(&subs_htable[i].lock);
+					ERR_MEM(PKG_MEM_STR);
+				}
+				memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
+				pres_uri.len= s->pres_uri.len;
 			}
-			memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
-			pres_uri.len= s->pres_uri.len;
 			goto found_rec;
 		}
 		lock_release(&subs_htable[i].lock);
