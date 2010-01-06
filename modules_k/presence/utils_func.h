@@ -50,7 +50,8 @@
 
 
 #define EVENT_DIALOG_SLA(ev) \
-	((ev)->type == EVENT_DIALOG && (ev)->params.dialog.sla)
+	((ev)->type == EVENT_DIALOG \
+		&& ((ev)->params.dialog.sla || (ev)->params.dialog.ma))
 
 
 static inline int uandd_to_uri(str user,  str domain, str *out)
