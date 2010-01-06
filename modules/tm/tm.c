@@ -114,6 +114,7 @@
 #include "../../cfg/cfg.h"
 #include "../../globals.h"
 #include "../../timer_ticks.h"
+#include "../../mod_fix.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -180,6 +181,9 @@ inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg , char *proxy,
 inline static int w_t_relay_to_sctp_uri( struct sip_msg*, char*, char*);
 #endif
 inline static int w_t_relay_to_avp(struct sip_msg* msg, char* str,char*);
+inline static int w_t_replicate_uri( struct sip_msg  *p_msg ,
+				char *uri,       /* sip uri as string or variable */
+				char *_foo       /* nothing expected */ );
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
@@ -289,6 +293,8 @@ static cmd_export_t cmds[]={
 	{T_RELAY_TO_SCTP,       w_t_relay_to_sctp_uri,    0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
+	{"t_replicate",        w_t_replicate_uri,       1, fixup_spve_null,
+			REQUEST_ROUTE},
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy,
@@ -1365,6 +1371,39 @@ inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 	return r;
 }
 
+inline static int w_t_replicate_uri(struct sip_msg  *msg ,
+				char *uri,       /* sip uri as string or variable */
+				char *_foo       /* nothing expected */ )
+{
+	struct proxy_l *proxy;
+	struct sip_uri turi;
+	str suri;
+	int r = -1;
+
+	memset(&turi, 0, sizeof(struct sip_uri));
+	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
+	{
+		LM_ERR("invalid replicate uri parameter");
+		return -1;
+	}
+	if(parse_uri(suri.s, suri.len, &turi)!=0)
+	{
+		LM_ERR("bad replicate SIP address!\n");
+		return -1;
+	}
+
+	proxy=mk_proxy(&turi.host, turi.port_no, turi.proto);
+	if (proxy==0) {
+		LM_ERR("cannot create proxy from URI <%.*s>\n",
+			suri.len, suri.s );
+		return -1;
+	}
+
+	r = t_replicate(msg, proxy, proxy->proto);
+	free_proxy(proxy);
+	return r;
+
+}
 
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
