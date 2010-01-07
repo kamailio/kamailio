@@ -76,6 +76,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"pv_printf", (cmd_function)w_pv_printf,    2, pv_printf_fixup,
 			0, ANY_ROUTE },
+	{"avp_printf", (cmd_function)w_pv_printf,   2, pv_printf_fixup,
+			0, ANY_ROUTE },
 
 	{0,0,0,0,0,0}
 };
