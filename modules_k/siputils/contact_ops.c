@@ -160,40 +160,40 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 			separator = contact_flds_separator[0];
 		
 	if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0))
-		{
+	{
 		uri = msg->first_line.u.request.uri;
-		if (uri.s == NULL) return -1;
-		}
+		if (uri.s == NULL) 
+			return -1;
+	}
+	else
+	{
+		uri = msg->new_uri;
+	}
 	
-		res = decode_uri (uri, separator, &newUri);
+	res = decode_uri (uri, separator, &newUri);
 	
 #ifdef DEBUG
-		if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
+	if (res == 0) 
+		fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
 #endif
-		if (res != 0)
-		{
-			LM_ERR("failed decoding contact.Code %d\n", res);
+	if (res != 0)
+	{
+		LM_ERR("failed decoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
-				return res;
+		return res;
 #endif
-		}
+	}
+	else
+	{
+		/* we do not modify the original first line */
+		if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) 
+			msg->new_uri = newUri;
 		else
-			/* we do not modify the original first line */
-			if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) msg->new_uri = newUri;
-				else
-					{
-						pkg_free(msg->new_uri.s);
-						msg->new_uri = newUri;
-					}
-			
-			
-		/*
-		if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 		{
-			LM_ERR("lumping failed in mangling port \n");
-			return -2;
-		}
-		*/
+			pkg_free(msg->new_uri.s);
+			msg->new_uri = newUri;
+		}		
+	}
 	return 1;
 }
 
@@ -313,10 +313,10 @@ encode2format (str uri, struct uri_format *format)
 		return -1;
 	string = uri.s;
 
-
 	pos = memchr (string, '<', uri.len);
 	if (pos != NULL)	/* we are only interested of chars inside <> */
 	{
+		/* KD: I think this can be removed as the parsed contact removed <> already */
 		start = memchr (string, ':', uri.len);
 		if (start == NULL)	return -2;
 		if (start - pos < 4) return -3;
@@ -330,8 +330,9 @@ encode2format (str uri, struct uri_format *format)
 		start = memchr (string, ':', uri.len);
 		if (start == NULL)
 			return -5;
-		if (start - pos < 3)
+		if (start - string < 3)
 			return -6;
+		/* KD: FIXME: Looks like this code can not handle 'sips' URIs and discards all other URI parameters! */
 		start = start - 3;
 		end = string + uri.len;
 	}
