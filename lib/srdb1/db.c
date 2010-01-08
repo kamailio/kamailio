@@ -425,3 +425,55 @@ int db_use_table(db1_con_t* _h, const str* _t)
 	CON_TABLE(_h) = _t;
 	return 0;
 }
+
+
+/*! \brief Generic query helper for load bulk data
+ *
+ * Generic query helper method for load bulk data, e.g. lcr tables
+ * \param binding database module binding
+ * \param handle database connection
+ * \param name database table name
+ * \param cols queried columns
+ * \param count number of queried columns
+ * \param strict if set to 1 an error is returned when no data could be loaded,
+    otherwise just a warning is logged
+ * \param res database result, unchanged on failure and if no data could be found
+ * \return 0 if the query was run successful, -1 otherwise
+ */
+int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t* cols,
+		      unsigned int count, unsigned int strict, db1_res_t* res)
+{
+	if (binding == NULL) {
+		LM_ERR("invalid database module binding\n");
+		return -1;
+	}
+
+	if(handle == NULL) {
+		LM_ERR("invalid database handle\n");
+		return -1;
+	}
+
+	if (binding->use_table(handle, name) < 0) {
+		LM_ERR("error in use_table for database\n");
+		return -1;
+	}
+
+	/* select the whole table and all the columns */
+	if(binding->query(handle, 0, 0, 0, cols, 0, count, 0, &res) < 0) {
+		LM_ERR("error while querying database\n");
+		return -1;
+	}
+
+	if(RES_ROW_N(res) == 0) {
+		binding->free_result(handle, res);
+		if (strict == 1) {
+			LM_ERR("no data in the database table %.*s\n", name->len, name->s);
+			return -1;
+		} else {
+			LM_WARN("no data in the database table %.*s, use an empty set\n", name->len, name->s);
+			return 0;
+		}
+	}
+
+	return 0;
+}

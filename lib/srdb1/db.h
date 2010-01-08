@@ -398,5 +398,21 @@ int db_use_table(db1_con_t* _h, const str* _t);
 
 typedef int (*db_bind_api_f)(db_func_t *dbb);
 
+/**
+ * \brief Generic query helper for load bulk data
+ *
+ * Generic query helper method for load bulk data, e.g. lcr tables
+ * \param binding database module binding
+ * \param handle database connection
+ * \param name database table name
+ * \param cols queried columns
+ * \param count number of queried columns
+ * \param strict if set to 1 an error is returned when no data could be loaded,
+    otherwise just a warning is logged
+ * \param res database result, unchanged on failure and if no data could be found
+ * \return 0 if the query was run successful, -1 otherwise
+ */
+int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t* cols,
+		      unsigned int count, unsigned int strict, db1_res_t* res);
 
 #endif /* DB1_H */
