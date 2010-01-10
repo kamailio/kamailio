@@ -33,6 +33,8 @@
 #include "../../route.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/faked_msg.h"
 
@@ -45,6 +47,8 @@
 MODULE_VERSION
 
 int  ht_timer_interval = 20;
+
+static int htable_init_rpc(void);
 
 /** module functions */
 static int ht_print(struct sip_msg*, char*, char*);
@@ -132,6 +136,11 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(htable_init_rpc()!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -444,3 +453,95 @@ error:
 	return 0;
 }
 
+static const char* htable_dump_doc[2] = {
+	"Dump the contents of hash table.",
+	0
+};
+
+static void  htable_rpc_dump(rpc_t* rpc, void* c)
+{
+	str htname;
+	ht_t *ht;
+	ht_cell_t *it;
+	int i;
+	void* th;
+	void* ih;
+	void* vh;
+
+	if (rpc->scan(c, "S", &htname) < 1)
+	{
+		rpc->fault(c, 500, "No htable name given");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if(ht==NULL)
+	{
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+	for(i=0; i<ht->htsize; i++)
+	{
+		lock_get(&ht->entries[i].lock);
+		it = ht->entries[i].first;
+		if(it)
+		{
+			/* add entry node */
+			if (rpc->add(c, "{", &th) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc");
+				return;
+			}
+			if(rpc->struct_add(th, "dd{",
+							"entry", i,
+							"size",  (int)ht->entries[i].esize,
+							"slot",  &ih)<0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc");
+				return;
+			}
+			while(it)
+			{
+				if(rpc->struct_add(ih, "{",
+							"item", &vh)<0)
+				{
+					rpc->fault(c, 500, "Internal error creating rpc");
+					return;
+				}
+				if(it->flags&AVP_VAL_STR) {
+					if(rpc->struct_add(vh, "SS",
+							"name",  &it->name.s,
+							"value", &it->value.s)<0)
+					{
+						rpc->fault(c, 500, "Internal error adding item");
+						return;
+					}
+				} else {
+					if(rpc->struct_add(vh, "Sd",
+							"name",  &it->name.s,
+							"value", (int)it->value.n))
+					{
+						rpc->fault(c, 500, "Internal error adding item");
+						return;
+					}
+				}
+				it = it->next;
+			}
+		}
+		lock_release(&ht->entries[i].lock);
+	}
+}
+
+rpc_export_t htable_rpc[] = {
+	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int htable_init_rpc(void)
+{
+	if (rpc_register_array(htable_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
