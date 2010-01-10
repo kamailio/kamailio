@@ -64,6 +64,8 @@ config script changes:
   - while()
   - include file support: include_file "somefile"
   - event route support: event_route[module_name:eventid]
+  - user and shm_force_alloc must now appear prior to any modparam() or route
+     block.
 
 build system:
   - multiple modules directories are now supported (defined in Makefile.dirs)
@@ -79,6 +81,9 @@ new config variables:
            compiled with DBG_QM_MALLOC or DBG_F_MALLOC).
        Default: 1.
        Can be changed at runtime.
+  - shm = number  or shm_mem = number  - size of shared memory in MB. It's
+       overwritten if a value is specified on the command line (-m val).
+       Default: 32 Mb. Must appear prior to any modparam() or route block.
 
 new script commands:
   add_local_rport() - adds the rport parameter to the added via header
