@@ -41,7 +41,6 @@ typedef struct sh_var {
 	struct sh_var *next;
 } sh_var_t, *sh_var_p;
 
-int init_shvars(void);
 sh_var_t* set_shvar_value(sh_var_t *shv, int_str *value, int flags);
 sh_var_t* get_shvar_by_name(str *name);
 
