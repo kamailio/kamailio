@@ -433,11 +433,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(init_shvars()<0)
-	{
-		LM_ERR("init shvars failed\n");
-		return -1;
-	}
 	return 0;
 }
 

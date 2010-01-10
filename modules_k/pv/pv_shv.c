@@ -28,6 +28,8 @@
 
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "../../shm_init.h"
 #include "../../ut.h"
 #include "../../pvar.h"
 
@@ -38,9 +40,6 @@ gen_lock_set_t* shvar_locks=0;
 
 static sh_var_t *sh_vars = 0;
 static str shv_cpy = {0, 0};
-static script_var_t *sh_local_vars = 0;
-static pv_spec_list_t *sh_pv_list = 0;
-static int shvar_initialized = 0;
 
 /*
  * Initialize locks
@@ -48,6 +47,11 @@ static int shvar_initialized = 0;
 int shvar_init_locks(void)
 {
 	int i;
+
+	/* already initialized */
+	if(shvar_locks!=0)
+		return 0;
+
 	i = shvar_locks_no;
 	do {
 		if ((( shvar_locks=lock_set_alloc(i))!=0)&&
@@ -146,6 +150,18 @@ sh_var_t* add_shvar(str *name)
 	if(name==0 || name->s==0 || name->len<=0)
 		return 0;
 
+	if(!shm_initialized())
+	{
+		LM_ERR("shm not intialized - cannot define shm now\n");
+		return 0;
+	}
+
+	if(shvar_init_locks()!=0)
+	{
+		LM_ERR("cannot init shv locks\n");
+		return 0;
+	}
+
 	for(sit=sh_vars; sit; sit=sit->next)
 	{
 		if(sit->name.len==name->len
@@ -187,131 +203,6 @@ sh_var_t* add_shvar(str *name)
 	sh_vars = sit;
 
 	return sit;
-}
-
-script_var_t* add_local_shvar(str *name)
-{
-	script_var_t *it;
-
-	if(name==0 || name->s==0 || name->len<=0)
-		return 0;
-
-	for(it=sh_local_vars; it; it=it->next)
-	{
-		if(it->name.len==name->len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-			return it;
-	}
-	it = (script_var_t*)pkg_malloc(sizeof(script_var_t));
-	if(it==0)
-	{
-		LM_ERR("out of pkg mem\n");
-		return 0;
-	}
-	memset(it, 0, sizeof(script_var_t));
-	it->name.s = (char*)pkg_malloc((name->len+1)*sizeof(char));
-
-	if(it->name.s==0)
-	{
-		LM_ERR("out of pkg mem!\n");
-		return 0;
-	}
-	it->name.len = name->len;
-	strncpy(it->name.s, name->s, name->len);
-	it->name.s[it->name.len] = '\0';
-
-	it->next = sh_local_vars;
-
-	sh_local_vars = it;
-
-	return it;
-}
-
-
-int init_shvars(void)
-{
-	script_var_t *lit = 0;
-	sh_var_t *sit = 0;
-	pv_spec_list_t *pvi = 0;
-	pv_spec_list_t *pvi0 = 0;
-
-	if(shvar_init_locks()!=0)
-		return -1;
-
-	LM_DBG("moving shvars in share memory\n");
-	for(lit=sh_local_vars; lit; lit=lit->next)
-	{
-		sit = (sh_var_t*)shm_malloc(sizeof(sh_var_t));
-		if(sit==0)
-		{
-			LM_ERR("out of sh mem\n");
-			return -1;
-		}
-		memset(sit, 0, sizeof(sh_var_t));
-		sit->name.s = (char*)shm_malloc((lit->name.len+1)*sizeof(char));
-
-		if(sit->name.s==0)
-		{
-			LM_ERR("out of pkg mem!\n");
-			shm_free(sit);
-			return -1;
-		}
-		sit->name.len = lit->name.len;
-		strncpy(sit->name.s, lit->name.s, lit->name.len);
-		sit->name.s[sit->name.len] = '\0';
-
-		if(sh_vars!=0)
-			sit->n = sh_vars->n + 1;
-		else
-			sit->n = 1;
-
-#ifdef GEN_LOCK_T_PREFERED
-		sit->lock = &shvar_locks->locks[sit->n%shvar_locks_no];
-#else
-		sit->lockidx = sit->n%shvar_locks_no;
-#endif
-
-		if(set_shvar_value(sit, &lit->v.value, lit->v.flags)==NULL)
-		{
-			shm_free(sit->name.s);
-			shm_free(sit);
-			return -1;
-		}
-
-		pvi0 = 0;
-		pvi = sh_pv_list;
-		while(pvi!=NULL)
-		{
-			if(pvi->spec->pvp.pvn.u.dname == lit)
-			{
-				pvi->spec->pvp.pvn.u.dname = (void*)sit;
-				if(pvi0!=NULL)
-				{
-					pvi0->next = pvi->next;
-					pkg_free(pvi);
-					pvi = pvi0->next;
-				} else {
-					sh_pv_list = pvi->next;
-					pkg_free(pvi);
-					pvi = sh_pv_list;
-				}
-			} else {
-				pvi0 = pvi;
-				pvi = pvi->next;
-			}
-		}
-
-		sit->next = sh_vars;
-		sh_vars = sit;
-	}
-	destroy_vars_list(sh_local_vars);
-	if(sh_pv_list != NULL)
-	{
-		LM_ERR("sh_pv_list not null!\n");
-		return -1;
-	}
-	shvar_initialized = 1;
-	return 0;
 }
 
 /* call it with lock set */
@@ -432,34 +323,16 @@ void destroy_shvars(void)
 /********* PV functions *********/
 int pv_parse_shvar_name(pv_spec_p sp, str *in)
 {
-	pv_spec_list_t *pvi = 0;
-	
 	if(in==NULL || in->s==NULL || sp==NULL)
 		return -1;
 	
 	sp->pvp.pvn.type = PV_NAME_PVAR;
-	if(shvar_initialized)
-		sp->pvp.pvn.u.dname = (void*)add_shvar(in);
-	else
-		sp->pvp.pvn.u.dname = (void*)add_local_shvar(in);
+	sp->pvp.pvn.u.dname = (void*)add_shvar(in);
+
 	if(sp->pvp.pvn.u.dname==NULL)
 	{
-		LM_ERR("cannot register shvar [%.*s] (%d)\n", in->len, in->s,
-				shvar_initialized);
+		LM_ERR("cannot register shvar [%.*s]\n", in->len, in->s);
 		return -1;
-	}
-
-	if(shvar_initialized==0)
-	{
-		pvi = (pv_spec_list_t*)pkg_malloc(sizeof(pv_spec_list_t));
-		if(pvi == NULL)
-		{
-			LM_ERR("cannot index shvar [%.*s]\n", in->len, in->s);
-			return -1;
-		}
-		pvi->spec = sp;
-		pvi->next = sh_pv_list;
-		sh_pv_list = pvi;
 	}
 
 	return 0;
@@ -749,10 +622,14 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 	int_str isv;
 	int flags;
 	int ival;
-	script_var_t *sv;
+	script_var_t *pkv;
+	sh_var_t *shv;
 
-	if(shvar_initialized!=0)
+	if(!shm_initialized()!=0)
+	{
+		LM_ERR("shm not initialized - cannot set value for PVs\n");
 		goto error;
+	}
 
 	s.s = (char*)val;
 	if(s.s == NULL || s.s[0] == '\0')
@@ -785,14 +662,19 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 			goto error;
 		isv.n = ival;
 	}
-	if(mode==0)
-		sv = add_var(&s);
-	else
-		sv = add_local_shvar(&s);
-	if(sv==NULL)
-		goto error;
-	if(set_var_value(sv, &isv, flags)==NULL)
-		goto error;
+	if(mode==0) {
+		pkv = add_var(&s);
+		if(pkv==NULL)
+			goto error;
+		if(set_var_value(pkv, &isv, flags)==NULL)
+			goto error;
+	} else {
+		shv = add_shvar(&s);
+		if(shv==NULL)
+			goto error;
+		if(set_shvar_value(shv, &isv, flags)==NULL)
+			goto error;
+	}
 	
 	return 0;
 error:
@@ -810,3 +692,4 @@ int param_set_shvar( modparam_t type, void* val)
 	return param_set_xvar(type, val, 1);
 }
 
+/* vi: set ts=4 sw=4 tw=79:ai:cindent: */
