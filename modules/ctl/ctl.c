@@ -70,6 +70,8 @@ static int usock_gid=-1;
 /* if set try to automatically convert values to the requested type in
    rpc->scan (default: not set) */
 extern int autoconvert; 
+extern int binrpc_max_body_size;
+extern int binrpc_struct_max_body_size;
 
 static int add_binrpc_socket(modparam_t type, void * val);
 #ifdef USE_FIFO
@@ -104,6 +106,8 @@ static param_export_t params[]={
 	{"user",		PARAM_STRING|PARAM_USE_FUNC,	fix_user				 },
 	{"group",		PARAM_STRING|PARAM_USE_FUNC,	fix_group				 },
 	{"autoconversion",	PARAM_INT,					&autoconvert			 },
+	{"binrpc_max_body_size",        PARAM_INT, &binrpc_max_body_size         },
+	{"binrpc_struct_max_body_size", PARAM_INT, &binrpc_struct_max_body_size  },
 	{0,0,0} 
 }; /* no params */
 
@@ -224,7 +228,14 @@ error:
 static int mod_init(void)
 {
 	struct id_list* l;
-	
+
+	if(binrpc_max_body_size<=0)
+		binrpc_max_body_size = 4;
+	if(binrpc_struct_max_body_size<=0)
+		binrpc_struct_max_body_size = 1;
+	binrpc_max_body_size *= 1024;
+	binrpc_struct_max_body_size *= 1024;
+
 	if (listen_lst==0) {
 		add_binrpc_socket(PARAM_STRING, DEFAULT_CTL_SOCKET);
 	}

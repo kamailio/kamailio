@@ -46,9 +46,10 @@
    rpc->scan (default: not set) */
 int autoconvert=0;
 
-
-#define BINRPC_MAX_BODY	4096  /* maximum body for send */
-#define STRUCT_MAX_BODY	1024
+int binrpc_max_body_size = 4; /* multiplied by 1024 in mod init */
+int  binrpc_struct_max_body_size = 1; /* multiplied by 1024 in mod init */
+#define BINRPC_MAX_BODY	binrpc_max_body_size  /* maximum body for send */
+#define STRUCT_MAX_BODY	binrpc_struct_max_body_size
 #define MAX_MSG_CHUNKS	96
 
 #define BINRPC_GC_IBSIZE 4 /* initial gc block size (pointers no.) */
