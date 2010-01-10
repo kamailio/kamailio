@@ -121,7 +121,8 @@
 #include "mem/mem.h"
 #ifdef SHM_MEM
 #include "mem/shm_mem.h"
-#endif
+#include "shm_init.h"
+#endif /* SHM_MEM */
 #include "sr_module.h"
 #include "timer.h"
 #include "parser/msg_parser.h"
@@ -1720,6 +1721,10 @@ int main(int argc, char** argv)
 						goto error;
 					};
 					break;
+			case 'u':
+					/* user needed for possible shm. pre-init */
+					user=optarg;
+					break;
 			case 'b':
 			case 'l':
 			case 'n':
@@ -1732,7 +1737,6 @@ int main(int argc, char** argv)
 			case 'W':
 			case 'w':
 			case 't':
-			case 'u':
 			case 'g':
 			case 'P':
 			case 'G':
@@ -2069,9 +2073,13 @@ try_again:
 	 *     -it must be also before init_timer and init_tcp
 	 *     -it must be after we know uid (so that in the SYSV sems case,
 	 *        the sems will have the correct euid)
+	 *  Note: shm can now be initialized when parsing the config script, that's
+	 *  why checking for a prior initialization is needed.
 	 * --andrei */
-	if (init_shm_mallocs(shm_force_alloc)==-1)
+#ifdef SHM_MEM
+	if (!shm_initialized() && init_shm()<0)
 		goto error;
+#endif /* SHM_MEM */
 	if (init_atomic_ops()==-1)
 		goto error;
 	if (init_basex() != 0){
