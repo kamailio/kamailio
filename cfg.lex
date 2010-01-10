@@ -80,6 +80,7 @@
  *  2009-03-10  added SET_USERPHONE action (Miklos)
  *  2009-04-24  add strlen, strempty and defined operators (andrei)
  *  2009-03-07  RETCODE, it's now  a core pvar (andrei)
+ *  2010-01-10  added SHM_MEM_SZ (andrei)
 */
 
 
@@ -444,6 +445,7 @@ ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 DISABLE_CORE		"disable_core_dump"
 OPEN_FD_LIMIT		"open_files_limit"
+SHM_MEM_SZ		"shm"|"shm_mem"|"shm_mem_size"
 SHM_FORCE_ALLOC		"shm_force_alloc"
 MLOCK_PAGES			"mlock_pages"
 REAL_TIME			"real_time"
@@ -839,6 +841,8 @@ EAT_ABLE	[\ \t\b\r]
 									return DISABLE_CORE; }
 <INITIAL>{OPEN_FD_LIMIT}		{	count(); yylval.strval=yytext;
 									return OPEN_FD_LIMIT; }
+<INITIAL>{SHM_MEM_SZ}		{	count(); yylval.strval=yytext;
+									return SHM_MEM_SZ; }
 <INITIAL>{SHM_FORCE_ALLOC}		{	count(); yylval.strval=yytext;
 									return SHM_FORCE_ALLOC; }
 <INITIAL>{MLOCK_PAGES}		{	count(); yylval.strval=yytext;
