@@ -96,7 +96,8 @@
  * 2009-01-26  case/switch() support (andrei)
  * 2009-03-10  added SET_USERPHONE action (Miklos)
  * 2009-05-04  switched if to rval_expr (andrei)
- * 2010-01-10  init shm on first mod_param or route block (andrei)
+ * 2010-01-10  init shm on first mod_param or route block;
+ *             added SHM_MEM_SZ (andrei)
 */
 
 %{
@@ -494,6 +495,7 @@ extern char *finame;
 %token ADVERTISED_PORT
 %token DISABLE_CORE
 %token OPEN_FD_LIMIT
+%token SHM_MEM_SZ
 %token SHM_FORCE_ALLOC
 %token MLOCK_PAGES
 %token REAL_TIME
@@ -1463,6 +1465,14 @@ assign_stm:
 	| DISABLE_CORE EQUAL error { yyerror("boolean value expected"); }
 	| OPEN_FD_LIMIT EQUAL NUMBER { open_files_limit=$3; }
 	| OPEN_FD_LIMIT EQUAL error { yyerror("number expected"); }
+	| SHM_MEM_SZ EQUAL NUMBER {
+		if (shm_initialized())
+			yyerror("shm/shm_mem_size must be before any modparam or the"
+					" route blocks");
+		else if (shm_mem_size == 0)
+			shm_mem_size=$3 * 1024 * 1024;
+	}
+	| SHM_MEM_SZ EQUAL error { yyerror("number expected"); }
 	| SHM_FORCE_ALLOC EQUAL NUMBER {
 		if (shm_initialized())
 			yyerror("shm_force_alloc must be before any modparam or the"

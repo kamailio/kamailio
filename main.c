@@ -469,7 +469,7 @@ int cfg_warnings=0;
 
 
 /* shared memory (in MB) */
-unsigned long shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
+unsigned long shm_mem_size=0;
 
 /* export command-line to anywhere else */
 int my_argc;
