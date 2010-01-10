@@ -406,7 +406,8 @@ get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
                 return -1;
 
         if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-                LM_ERR("failed to parse Contact URI\n");
+                LM_ERR("failed to parse Contact URI [%.*s]\n",
+                        (*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
                 return -1;
         }
         return 0;
