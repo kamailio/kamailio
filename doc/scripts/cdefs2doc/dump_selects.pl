@@ -141,6 +141,84 @@ sub expr_op0{
 }
 
 
+# constants (from select.h)
+use constant {
+	MAX_SELECT_PARAMS =>	32,
+	MAX_NESTED_CALLS =>		4,
+};
+
+use constant DIVERSION_MASK => 0x00FF;
+use constant {
+	DIVERSION =>			1<<8,
+	SEL_PARAM_EXPECTED =>	1<<9,
+	CONSUME_NEXT_STR =>		1<<10,
+	CONSUME_NEXT_INT =>		1<<11,
+	CONSUME_ALL =>			1<<12,
+	OPTIONAL =>				1<<13,
+	NESTED =>				1<<14,
+	FIXUP_CALL =>			1<<15,
+};
+
+use constant {
+	SEL_PARAM_INT => 0,
+	SEL_PARAM_STR => 1,
+	SEL_PARAM_DIV => 2,
+	SEL_PARAM_PTR => 3,
+};
+
+
+
+# Select rules (pasted from one email from Jan):
+# Roughly the rules are as follows:
+# * The first component of the row tells the select compiler in what state the
+#   row can be considered.
+# * The second component tells the compiler what type of components is expected
+#   for the row to match. SEL_PARAM_STR means that .foo should follow,
+#   SEL_PARAM_INT means that [1234] should follow.
+# * The third component is the string to be matched for string components and
+#   STR_NULL if the next expected component is an integer.
+# * The fourth component is a function name. This is either the function to be
+#   called if this is the last rule all constrains are met, or it is the next
+#   state to transition into if we are not processing the last component of the
+#   select identifier.
+#
+# * The fifth rule are flags that can impose further constrains on how the
+#   given line is to be used. Some of them are:
+#
+# - CONSUME_NEXT_INT - This tells the compiler that there must be at least one 
+#   more component following the current one, but it won't transition into the
+#   next state, instead the current function will "consume" the integer as
+#   parameters.
+#
+# - CONSUME_NEXT_STR - Same as previous, but the next component must be a
+#   string.
+# - SEL_PARAM_EXPECTED - The current row must not be last and there must be
+#   another row to transition to.
+#
+# - OPTIONAL - There may or may not be another component, but in any case the
+#   compiler does not transition into another state (row). This can be used
+#   together with CONSUME_NEXT_{STR,INT} to implement optional parameters, for
+#   example .param could return a string of all parameters, while .param.abc
+#   will only return the value of parameter abc.
+# 
+# - NESTED - When this flag is present in a rule then it means that the
+#   previous function should be called before the current one. The original
+#   idea was that all select identifiers would only resolve to one function
+#   call, however, it turned out to be inconvenient in some cases so we added
+#   this. This is typically used in selects that have URIs as components. In
+#   that case it is desirable to support all subcomponents for uri selects, but
+#   it does not make sense to reimplement them for every single case. In that
+#   case the uri components sets NESTED flags which causes the "parent"
+#   function to be called first. The "parent" function extracts only the URI
+#   which is then passed to the corresponding URI parsing function. The word
+#   NESTED here means "nested function call".
+#
+# - CONSUME_ALL - Any number of select identifier components may follow and
+#   they may be of any types. This flag causes the function on the current row
+#   to be called and it is up to the function to handle the remainder of the
+#   select identifier.
+
+
 
 # generate all select strings starting with a specific "root" function
 sub gen_selects
@@ -154,32 +232,75 @@ sub gen_selects
 	
 	@matches = grep(${$_}[0] eq $root, @sel_exports);
 	for $m (@matches) {
+		my $s="";
 		($prev, $type, $name, $new_f, $flags)=@$m;
-		if (($flags & (1024|2048|4096)) && $name ne ""){
-			if ($flags & 1024){
-				$name.="[string]";
-			}elsif ($flags & 2048){
-				$name.="[integer]";
+		if (!($flags & NESTED) ||
+			(($flags & NESTED) && ($type !=SEL_PARAM_INT))){
+			# Note: unamed NESTED params are not allowed --andrei
+			if ($type==SEL_PARAM_INT){
+				$s.="[integer]";
 			}else{
-				$name.="[]"
+				if ($name ne "") {
+					$s.=(($prev eq "0" || $prev eq "")?"@":".") . $name;
+				}elsif (!($flags & NESTED)){
+					$s.=".<string>";
+				}
 			}
 		}
-		if ($new_f eq "" ||
-			$new_f eq "0"
-			){
-			push @ret, $name;
-		}else{
-			 if ($name eq ""){
-				@sel=gen_selects($new_f);
-			}else{
-				@sel=map("$name.$_", gen_selects($new_f));
+		if ( !($flags & NESTED) &&
+			 ($flags & (CONSUME_NEXT_STR|CONSUME_NEXT_INT|CONSUME_ALL)) ){
+			#process params
+			if ($flags & OPTIONAL){
+				$s.="{";
 			}
-			if (@sel > 0) {
-				push(@ret, $name) if (! (($flags & (512|16384)) ||
-										($name eq "")));
-				push @ret, @sel;
+			# add param name
+			if ($flags & CONSUME_NEXT_STR){
+				$s.="[\"string\"]";
+			}elsif ($flags & CONSUME_NEXT_INT){
+				$s.="[integer]";
 			}else{
-				push @ret, $name;
+				$s.=".*"; # CONSUME_ALL
+			}
+			if ($flags & OPTIONAL){
+				$s.="}";
+			}
+		}
+		
+		if (!($flags & SEL_PARAM_EXPECTED)){
+			# if optional terminal  add it to the list along with all the
+			# variants
+			if ($new_f eq "" || $new_f eq "0"){
+				push @ret, $s;
+			}else{
+				if ($s eq ""){
+					@sel=gen_selects($new_f);
+				}else{
+					@sel=map("$s$_", gen_selects($new_f));
+				}
+				if (@sel > 0) {
+					push(@ret, $s) if (!($s eq ""));
+					push @ret, @sel;
+				}else{
+					if ($flags & NESTED) {
+						$s.="*";
+					}
+					push @ret, $s;
+				}
+			}
+		}else{
+			# non-terminal
+			if (!($new_f eq "" || $new_f eq "0")){
+				if ($s eq ""){
+					@sel=gen_selects($new_f);
+				}else{
+					@sel=map("$s$_", gen_selects($new_f));
+				}
+				if (@sel > 0) {
+					push @ret, @sel;
+				}elsif ($flags & NESTED){
+					$s.="*";
+					push @ret, $s;
+				}
 			}
 		}
 	}
