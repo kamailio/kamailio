@@ -257,7 +257,8 @@ static int xlog_fixup(void** param, int param_no)
 			switch(((char*)(*param))[2])
 			{
 				case 'A': xlp->v.level = L_ALERT; break;
-				case 'C': xlp->v.level = L_CRIT; break;
+				case 'B': xlp->v.level = L_BUG; break;
+				case 'C': xlp->v.level = L_CRIT2; break;
 				case 'E': xlp->v.level = L_ERR; break;
 				case 'W': xlp->v.level = L_WARN; break;
 				case 'N': xlp->v.level = L_NOTICE; break;

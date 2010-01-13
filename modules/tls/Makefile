@@ -23,6 +23,6 @@ include ../../Makefile.modules
 
 
 install-tls-cert: $(cfg_prefix)/$(cfg_dir)
-	./$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
+	MAIN_NAME=$(MAIN_NAME) ./$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
 install-cfg:  install-tls-cert

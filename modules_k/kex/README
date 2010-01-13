@@ -33,6 +33,10 @@ Daniel-Constantin Mierla
               3.5. isbflagset(flag [, branch])
               3.6. resetsflag(flag [, branch])
               3.7. km_append_branch([uri])
+              3.8. setdsturi(uri)
+              3.9. resetdsturi()
+              3.10. isdsturiset()
+              3.11. pv_printf(var, str)
 
         4. Exported MI Functions
 
@@ -52,6 +56,10 @@ Daniel-Constantin Mierla
    1.5. setbflag usage
    1.6. resetsflag usage
    1.7. km_append_branch usage
+   1.8. >setdsturi usage
+   1.9. >resetdsturi usage
+   1.10. >isdsturiset usage
+   1.11. >pv_printf usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +80,10 @@ Chapter 1. Admin Guide
         3.5. isbflagset(flag [, branch])
         3.6. resetsflag(flag [, branch])
         3.7. km_append_branch([uri])
+        3.8. setdsturi(uri)
+        3.9. resetdsturi()
+        3.10. isdsturiset()
+        3.11. pv_printf(var, str)
 
    4. Exported MI Functions
 
@@ -113,6 +125,10 @@ Chapter 1. Admin Guide
    3.5. isbflagset(flag [, branch])
    3.6. resetsflag(flag [, branch])
    3.7. km_append_branch([uri])
+   3.8. setdsturi(uri)
+   3.9. resetdsturi()
+   3.10. isdsturiset()
+   3.11. pv_printf(var, str)
 
 3.1. setsflag(flag)
 
@@ -241,6 +257,67 @@ resetbflag("1");
 km_append_branch();
 ...
 km_append_branch("sip:alice@sip-router.org");
+...
+
+3.8. setdsturi(uri)
+
+   Set the destination address URI (outbound proxy address).
+
+   Meaning of the parameters is as follows:
+     * uri - Valid SIP URI representing the address where to send the
+       request. It must be a static string, no variables are evaluated at
+       runtime. If you need to set outbound proxy address via a variable,
+       use assginment to $du.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. >setdsturi usage
+...
+setdsturi("sip:10.0.0.10");
+...
+
+3.9. resetdsturi()
+
+   Reset the destination address URI (outbound proxy address).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. >resetdsturi usage
+...
+resetdsturi();
+...
+
+3.10. isdsturiset()
+
+   Check if the destination address URI (outbound proxy address) is set.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. >isdsturiset usage
+...
+if(isdsturiset())
+{
+   ...
+}
+...
+
+3.11. pv_printf(var, str)
+
+   Evalues the str and sets the resulted value to variable var. For
+   backward compatibility reasons, same function can be executed via
+   'avp_printf(var, str)'.
+
+   Meaning of the parameters is as follows:
+     * var - name of a writable variable
+     * str - string that may contain variables which will be evaluated at
+       runtime.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. >pv_printf usage
+...
+pv_printf("$ru", "sip:$rU@$fd");
+pv_printf("$avp(x)", "From: $fU - To: $tU");
 ...
 
 4. Exported MI Functions

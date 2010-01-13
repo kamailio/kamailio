@@ -3,18 +3,20 @@
 # $Id$
 #
 # This script generates a self-signed TLS/SSL certificate that can be
-# immediately used with the TLS module of SER. The file was inspired
+# immediately used with the TLS module of SIP Router. The file was inspired
 # by a script from Debian's uw-imapd package.
 #
 
 #############################################################################
 # Configuration variables
 #############################################################################
-DEFAULT_DIR="/usr/local/etc/ser"
+NAME=$MAIN_NAME
+if [ -z "$NAME" ] ; then NAME="sip-router"; fi;
+DEFAULT_DIR="/usr/local/etc/$NAME"
 DEFAULT_DAYS=365
-DEFAULT_INFO="Self-signed certificate for SER"
-DEFAULT_CERT_FILENAME="ser-selfsigned.pem"
-DEFAULT_KEY_FILENAME="ser-selfsigned.key"
+DEFAULT_INFO="Self-signed certificate for $NAME"
+DEFAULT_CERT_FILENAME="$NAME-selfsigned.pem"
+DEFAULT_KEY_FILENAME="$NAME-selfsigned.key"
 
 DEFAULT_OPENSSL='openssl'
 
@@ -50,19 +52,19 @@ longopts() {
 usage() {
 cat <<EOF
 NAME
-  $COMMAND - Generate a self-signed TLS/SSL certificate for use with SER.
+  $COMMAND - Generate a self-signed TLS/SSL certificate for use with $NAME.
 
 SYNOPSIS
   $COMMAND [options]
 
 DESCRIPTION
   This is a simple shell script that generates a self signed TLS/SSL
-  certificate (and private key) for use with the tls module of SER. The
+  certificate (and private key) for use with the tls module of $NAME. The
   self-signed certificate is suitable for testing and/or private setups.
   You are encouraged to create a proper authorized one if needed.
 
   Both certificate and key files are by default stored in the directory
-  containing the configuration file of SER (unless you change it using
+  containing the configuration file of $NAME (unless you change it using
   the options below).
 
 OPTIONS
@@ -100,7 +102,7 @@ AUTHOR
   Written by Jan Janak <jan@iptel.org>
 
 REPORTING BUGS
-  Report bugs to <ser-bugs@iptel.org>
+  Report bugs to <sr-dev@sip-router.org>
 EOF
 } #usage
 
@@ -175,7 +177,7 @@ if [ $? != 0 ] ; then
 	exit 1
 fi
 
-echo "Creating a new SER self-signed certificate for '$FQDN'" \
+echo "Creating a new $NAME self-signed certificate for '$FQDN'" \
      "valid for $DAYS days."
 openssl req -new -x509 -days "$DAYS" -nodes -out "$DIR/$CERT_FILENAME" \
         -keyout "$DIR/$KEY_FILENAME" > /dev/null 2>&1 <<+

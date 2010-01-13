@@ -89,7 +89,9 @@
  * 2008-03-12  use cancel_b_method on 6xx (andrei)
  * 2008-05-30  make sure the wait timer is started after we don't need t
  *             anymore to allow safe calls from fr_timer (andrei)
- * 2009-06-01  Pre- and post-script callbacks of branch route are executed (Miklos)
+ * 2009-06-01  Pre- and post-script callbacks of branch route are 
+ *             executed (Miklos)
+ * 2009-12-10  reply route is executed under lock to protect the avps (andrei)
  *
  */
 
@@ -1246,16 +1248,19 @@ discard:
 
 branches_failed:
 	*should_store=0;
-	*should_relay=-1;
-	/* We have hopefully set tm_error in failure_route when
-	the branches failed. If not, reply with E_UNSPEC */
-	if ((kill_transaction_unsafe(Trans,
-				    tm_error ? tm_error : E_UNSPEC)
-				    ) <=0 ){
-		LOG(L_ERR, "ERROR: t_should_relay_response: "
-			"reply generation failed\n");
+	if (is_local(Trans)){
+		/* for local transactions use the current reply */
+		*should_relay=branch;
+	}else{
+		*should_relay=-1;
+		/* We have hopefully set tm_error in failure_route when
+			the branches failed. If not, reply with E_UNSPEC */
+		if ((kill_transaction_unsafe(Trans,
+				tm_error ? tm_error : E_UNSPEC)) <=0 ){
+			LOG(L_ERR, "ERROR: t_should_relay_response: "
+						"reply generation failed\n");
+		}
 	}
-	
 	return RPS_COMPLETED;
 }
 
@@ -1800,7 +1805,7 @@ error:
 	prepare_to_cancel(t, cancel_bitmap, 0);
 	UNLOCK_REPLIES(t);
 	cleanup_uac_timers(t);
-	if ( get_cseq(p_msg)->method.len==INVITE_LEN
+	if (p_msg && p_msg!=FAKED_REPLY && get_cseq(p_msg)->method.len==INVITE_LEN
 		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0)
 		cancel_uacs( t, *cancel_bitmap, F_CANCEL_B_KILL);
 	*cancel_bitmap=0; /* we've already took care of everything */
@@ -1834,6 +1839,7 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
+	int replies_locked;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
 	int prev_branch;
@@ -1860,6 +1866,7 @@ int reply_received( struct sip_msg  *p_msg )
 	tm_ctx_set_branch_index(branch);
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;
+	replies_locked=0;
 
 	uac=&t->uac[branch];
 	DBG("DEBUG: reply_received: org. status uas=%d, "
@@ -1984,6 +1991,9 @@ int reply_received( struct sip_msg  *p_msg )
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
 		 */
+		/* lock onreply_route, for safe avp usage */
+		LOCK_REPLIES( t );
+		replies_locked=1;
 		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg, 0)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
@@ -2035,15 +2045,22 @@ int reply_received( struct sip_msg  *p_msg )
 		 *  reply lock is held (the lock won't be held while sending the
 		 *   message)*/
 		if (cfg_get(core, core_cfg, use_dns_failover) && (msg_status==503)) {
-			branch_ret=add_uac_dns_fallback(t, t->uas.request, uac, 1);
+			branch_ret=add_uac_dns_fallback(t, t->uas.request,
+												uac, !replies_locked);
 			prev_branch=-1;
+			/* unlock replies to avoid sending() while holding a lock */
+			if (unlikely(replies_locked)) {
+				UNLOCK_REPLIES( t );
+				replies_locked = 0;
+			}
 			while((branch_ret>=0) &&(branch_ret!=prev_branch)){
 				prev_branch=branch_ret;
 				branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 1);
 			}
 		}
 #endif
-	LOCK_REPLIES( t );
+	if (unlikely(!replies_locked))
+		LOCK_REPLIES( t );
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );
 		if (reply_status == RPS_COMPLETED) {

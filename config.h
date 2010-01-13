@@ -85,12 +85,12 @@
 #define CONTENT_LENGTH "Content-Length: "
 #define CONTENT_LENGTH_LEN (sizeof(CONTENT_LENGTH)-1)
 
-#define USER_AGENT "User-Agent: SIP Router "\
-		"(" VERSION " (" ARCH "/" OS_QUOTED "))"
+#define USER_AGENT "User-Agent: " NAME \
+		" (" VERSION " (" ARCH "/" OS_QUOTED "))"
 #define USER_AGENT_LEN (sizeof(USER_AGENT)-1)
 
-#define SERVER_HDR "Server: SIP Router "\
-		"(" VERSION " (" ARCH "/" OS_QUOTED "))"
+#define SERVER_HDR "Server: " NAME \
+		" (" VERSION " (" ARCH "/" OS_QUOTED "))"
 #define SERVER_HDR_LEN (sizeof(SERVER_HDR)-1)
 
 #define MAX_WARNING_LEN  256

@@ -664,7 +664,8 @@ int fix_actions(struct action* a)
 							if (tmp==0){
 								LOG(L_CRIT, "ERROR: fix_actions:"
 										"memory allocation failure\n");
-								return E_OUT_OF_MEM;
+								ret = E_OUT_OF_MEM;
+								goto error;
 							}
 							t->val[0].type=STRING_ST;
 							t->val[0].u.string=tmp;
@@ -673,7 +674,7 @@ int fix_actions(struct action* a)
 							s.s = t->val[0].u.string;
 							s.len = strlen(s.s);
 							p=add_proxy(&s, t->val[1].u.number, 0); /* FIXME proto*/
-							if (p==0) return E_BAD_ADDRESS;
+							if (p==0) { ret =E_BAD_ADDRESS; goto error; }
 							t->val[0].u.data=p;
 							t->val[0].type=PROXY_ST;
 							break;
@@ -683,7 +684,8 @@ int fix_actions(struct action* a)
 							LOG(L_CRIT, "BUG: fix_actions: invalid type"
 									"%d (should be string or number)\n",
 										t->type);
-							return E_BUG;
+							ret = E_BUG;
+							goto error;
 					}
 					break;
 			case IF_T:
@@ -691,19 +693,22 @@ int fix_actions(struct action* a)
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if (should be rval expr)\n",
 								t->val[0].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}else if( (t->val[1].type!=ACTIONS_ST) &&
 							(t->val[1].type!=NOSUBTYPE) ){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if() {...} (should be action)\n",
 								t->val[1].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}else if( (t->val[2].type!=ACTIONS_ST) &&
 							(t->val[2].type!=NOSUBTYPE) ){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if() {} else{...}(should be action)\n",
 								t->val[2].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				rve=(struct rval_expr*)t->val[0].u.data;
 				if (rve){
@@ -722,7 +727,8 @@ int fix_actions(struct action* a)
 							LOG(L_ERR, "fix_actions: invalid expression "
 									"(%d,%d): type mismatch?",
 									rve->fpos.s_line, rve->fpos.s_col);
-						return E_UNSPEC;
+						ret = E_UNSPEC;
+						goto error;
 					}
 					/* it's not an error anymore to have non-int in an if,
 					   only a script warning (to allow backward compat. stuff
@@ -735,16 +741,16 @@ int fix_actions(struct action* a)
 					}
 					*/
 					if ((ret=fix_rval_expr((void**)&rve))<0)
-						return ret;
+						goto error;
 				}
 				if ( (t->val[1].type==ACTIONS_ST)&&(t->val[1].u.data) ){
 					if ((ret=fix_actions((struct action*)t->val[1].u.data))<0)
-						return ret;
+						goto error;
 				}
 				if ( (t->val[2].type==ACTIONS_ST)&&(t->val[2].u.data) ){
 						if ((ret=fix_actions((struct action*)t->val[2].u.data))
 								<0)
-						return ret;
+						goto error;
 				}
 				break;
 			case SWITCH_T:
@@ -752,35 +758,40 @@ int fix_actions(struct action* a)
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for switch() (should be expr)\n",
 								t->val[0].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}else if (t->val[1].type!=CASE_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for switch(...){...}(should be case)\n",
 								t->val[1].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				if (t->val[0].u.data){
 					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
-						return ret;
+						goto error;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null switch()"
 							" expression\n");
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				if ((ret=fix_switch(t))<0)
-					return ret;
+					goto error;
 				break;
 			case WHILE_T:
 				if (t->val[0].type!=RVE_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for while() (should be expr)\n",
 								t->val[0].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}else if (t->val[1].type!=ACTIONS_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for while(...){...}(should be action)\n",
 								t->val[1].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				rve=(struct rval_expr*)t->val[0].u.data;
 				if (rve){
@@ -799,24 +810,27 @@ int fix_actions(struct action* a)
 							LOG(L_ERR, "fix_actions: invalid expression "
 									"(%d,%d): type mismatch?",
 									rve->fpos.s_line, rve->fpos.s_col);
-						return E_UNSPEC;
+						ret = E_UNSPEC;
+						goto error;
 					}
 					if (rve_type!=RV_INT && rve_type!=RV_NONE){
 						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
-						return E_UNSPEC;
+						ret = E_UNSPEC;
+						goto error;
 					}
 					if ((ret=fix_rval_expr((void**)&rve))<0)
-						return ret;
+						goto error;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null while()"
 							" expression\n");
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				if ( t->val[1].u.data && 
 					((ret= fix_actions((struct action*)t->val[1].u.data))<0)){
-					return ret;
+					goto error;
 				}
 				break;
 			case DROP_T:
@@ -840,20 +854,23 @@ int fix_actions(struct action* a)
 							LOG(L_ERR, "fix_actions: invalid expression "
 									"(%d,%d): type mismatch?",
 									rve->fpos.s_line, rve->fpos.s_col);
-						return E_UNSPEC;
+						ret = E_UNSPEC;
+						goto error;
 					}
 					if (rve_type!=RV_INT && rve_type!=RV_NONE){
 						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
-						return E_UNSPEC;
+						ret = E_UNSPEC;
+						goto error;
 					}
 					if ((ret=fix_rval_expr((void**)&rve))<0)
-						return ret;
+						goto error;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null drop/return"
 							" expression\n");
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				break;
 			case ASSIGN_T:
@@ -861,12 +878,14 @@ int fix_actions(struct action* a)
 				if (t->val[0].type !=LVAL_ST) {
 					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of"
 								" assignment\n");
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				if (t->val[1].type !=RVE_ST) {
 					LOG(L_CRIT, "BUG: fix_actions: Invalid right side of"
 								" assignment (%d)\n", t->val[1].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				lval=t->val[0].u.data;
 				if (lval->type==LV_AVP){
@@ -874,16 +893,18 @@ int fix_actions(struct action* a)
 						LOG(L_ERR, "ERROR: You cannot change domain"
 									" attributes from the script, they are"
 									" read-only\n");
-						return E_BUG;
+						ret = E_BUG;
+						goto error;
 					} else if (lval->lv.avps.type & AVP_CLASS_GLOBAL) {
 						LOG(L_ERR, "ERROR: You cannot change global"
 								   " attributes from the script, they are"
 								   "read-only\n");
-						return E_BUG;
+						ret = E_BUG;
+						goto error;
 					}
 				}
 				if ((ret=fix_rval_expr(&t->val[1].u.data))<0)
-					return ret;
+					goto error;
 				break;
 
 			case MODULE_T:
@@ -898,7 +919,7 @@ int fix_actions(struct action* a)
 					if (t->val[1].u.number==0) {
 						ret = cmd->c.fixup(0, 0);
 						if (ret < 0)
-							return ret;
+							goto error;
 					}
 					/* type cast NUMBER to STRING, old modules may expect
 					 * all STRING params during fixup */
@@ -911,7 +932,8 @@ int fix_actions(struct action* a)
 							if (!t->val[i+2].u.string) {
 								LOG(L_CRIT, "ERROR: cannot translate NUMBER"
 											" to STRING\n");
-								return E_OUT_OF_MEM;
+								ret = E_OUT_OF_MEM;
+								goto error;
 							}
 							strcpy(t->val[i+2].u.string, buf);
 							t->val[i+2].type = STRING_ST;
@@ -924,7 +946,7 @@ int fix_actions(struct action* a)
 						if (t->val[i+2].u.data != p)
 							t->val[i+2].type = MODFIXUP_ST;
 						if (ret < 0)
-							return ret;
+							goto error;
 					}
 				}
 				break;
@@ -933,7 +955,8 @@ int fix_actions(struct action* a)
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for force_send_socket\n",
 								t->val[0].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				he=resolvehost(
 						((struct socket_id*)t->val[0].u.data)->addr_lst->name
@@ -942,7 +965,8 @@ int fix_actions(struct action* a)
 					LOG(L_ERR, "ERROR: fix_actions: force_send_socket:"
 								" could not resolve %s\n",
 						((struct socket_id*)t->val[0].u.data)->addr_lst->name);
-					return E_BAD_ADDRESS;
+					ret = E_BAD_ADDRESS;
+					goto error;
 				}
 				hostent2ip_addr(&ip, he, 0);
 				si=find_si(&ip, ((struct socket_id*)t->val[0].u.data)->port,
@@ -952,7 +976,8 @@ int fix_actions(struct action* a)
 							" argument: %s:%d (ser doesn't listen on it)\n",
 						((struct socket_id*)t->val[0].u.data)->addr_lst->name,
 							((struct socket_id*)t->val[0].u.data)->port);
-					return E_BAD_ADDRESS;
+					ret = E_BAD_ADDRESS;
+					goto error;
 				}
 				t->val[0].u.data=si;
 				t->val[0].type=SOCKETINFO_ST;
@@ -962,7 +987,8 @@ int fix_actions(struct action* a)
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for udp_mtu_try_proto\n",
 								t->val[0].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				switch(t->val[0].u.number){
 					case PROTO_UDP:
@@ -987,7 +1013,8 @@ int fix_actions(struct action* a)
 				if (t->val[0].type!=STRING_ST){
 					BUG("invalid subtype%d for append_branch_t\n",
 								t->val[0].type);
-					return E_BUG;
+					ret = E_BUG;
+					goto error;
 				}
 				s.s=t->val[0].u.string;
 				s.len=(s.s)?strlen(s.s):0;
@@ -1000,6 +1027,11 @@ int fix_actions(struct action* a)
 		}
 	}
 	return 0;
+
+error:
+	LM_ERR("fixing failed (code=%d) at cfg:%s:%d\n", ret,
+			(t->cfile)?t->cfile:"", t->cline);
+	return ret;
 }
 
 

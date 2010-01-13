@@ -93,7 +93,8 @@ struct cfg_group_tm	default_tm_cfg = {
 			 * for every method except BYE by default */
 	1,	/* cancel_b_method used for e2e and 6xx cancels*/
 	1,	/* reparse_on_dns_failover */
-	0 /* disable_6xx, by default off */
+	0, /* disable_6xx, by default off */
+	0  /* local_ack_mode, default 0 (rfc3261 conformant) */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -188,5 +189,12 @@ cfg_def_t	tm_cfg_def[] = {
 		"branch instead of from the received request"},
 	{"disable_6xx_block",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, 6xx is treated like a normal reply (breaks rfc)"},
+	{"local_ack_mode",		CFG_VAR_INT | CFG_ATOMIC,	0, 2, 0, 0,
+		"if set to 1 or 2, local 200 ACKs are sent to the same address as the"
+		" corresponding INVITE (1) or the source of the 200 reply (2) instead"
+		" of using the contact and the route set (it breaks the rfc, if "
+		" it is not set to 0 but allows dealing with NATed contacts in some "
+		"simple cases)"
+		},
 	{0, 0, 0, 0, 0, 0}
 };

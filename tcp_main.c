@@ -2817,8 +2817,9 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	if (unlikely(tcp_c->unix_sock<=0)){
 		/* (we can't have a fd==0, 0 is never closed )*/
 		LOG(L_CRIT, "BUG: handle_tcp_child: fd %d for %d "
-				"(pid %d, ser no %d)\n", tcp_c->unix_sock,
-				(int)(tcp_c-&tcp_children[0]), tcp_c->pid, tcp_c->proc_no);
+				"(pid %ld, ser no %d)\n", tcp_c->unix_sock,
+				(int)(tcp_c-&tcp_children[0]), (long)tcp_c->pid,
+				 tcp_c->proc_no);
 		goto error;
 	}
 	/* read until sizeof(response)
@@ -2827,9 +2828,9 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	if (unlikely(bytes<(int)sizeof(response))){
 		if (bytes==0){
 			/* EOF -> bad, child has died */
-			DBG("DBG: handle_tcp_child: dead tcp child %d (pid %d, no %d)"
+			DBG("DBG: handle_tcp_child: dead tcp child %d (pid %ld, no %d)"
 					" (shutting down?)\n", (int)(tcp_c-&tcp_children[0]), 
-					tcp_c->pid, tcp_c->proc_no );
+					(long)tcp_c->pid, tcp_c->proc_no );
 			/* don't listen on it any more */
 			io_watch_del(&io_h, tcp_c->unix_sock, fd_i, 0); 
 			goto error; /* eof. so no more io here, it's ok to return error */
@@ -2838,8 +2839,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			 * e.g.: SIGIO_RT overflow mode or EPOLL ET */
 			if ((errno!=EAGAIN) && (errno!=EWOULDBLOCK)){
 				LOG(L_CRIT, "ERROR: handle_tcp_child: read from tcp child %ld "
-						" (pid %d, no %d) %s [%d]\n",
-						(long)(tcp_c-&tcp_children[0]), tcp_c->pid,
+						" (pid %ld, no %d) %s [%d]\n",
+						(long)(tcp_c-&tcp_children[0]), (long)tcp_c->pid,
 						tcp_c->proc_no, strerror(errno), errno );
 			}else{
 				bytes=0;
@@ -2864,8 +2865,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	if (unlikely(tcpconn==0)){
 		/* should never happen */
 		LOG(L_CRIT, "BUG: handle_tcp_child: null tcpconn pointer received"
-				 " from tcp child %d (pid %d): %lx, %lx\n",
-				 	(int)(tcp_c-&tcp_children[0]), tcp_c->pid,
+				 " from tcp child %d (pid %ld): %lx, %lx\n",
+				 	(int)(tcp_c-&tcp_children[0]), (long)tcp_c->pid,
 					response[0], response[1]) ;
 		goto end;
 	}
@@ -3337,9 +3338,9 @@ inline static int send2child(struct tcp_connection* tcpconn)
 				" connection passed to the least busy one (%d)\n",
 				min_busy);
 	}
-	DBG("send2child: to tcp child %d %d(%d), %p\n", idx, 
+	DBG("send2child: to tcp child %d %d(%ld), %p\n", idx, 
 					tcp_children[idx].proc_no,
-					tcp_children[idx].pid, tcpconn);
+					(long)tcp_children[idx].pid, tcpconn);
 	/* first make sure this child doesn't have pending request for
 	 * tcp_main (to avoid a possible deadlock: e.g. child wants to
 	 * send a release command, but the master fills its socket buffer

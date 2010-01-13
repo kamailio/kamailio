@@ -1569,8 +1569,8 @@ jump_over_body:
 		goto error;	
 	}	
 
-	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, 0, p_tm_callback,
-				(void*)cb_param);
+	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
+			p_tm_callback, (void*)cb_param);
 	result = tmb.t_request_within(&uac_r);
 	if(result< 0)
 	{
@@ -1793,8 +1793,7 @@ str* create_winfo_xml(watcher_t* watchers, char* version,
 		LM_ERR("while adding child\n");
 		goto error;
 	}
-	res= (char*)pkg_malloc((resource.len>event.len)?resource.len:event.len
-			+ 1);
+	res= (char*)pkg_malloc(MAX_unsigned(resource.len, event.len) + 1);
 	if(res== NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);

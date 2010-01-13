@@ -277,6 +277,106 @@ km_append_branch("sip:alice@sip-router.org");
 </programlisting>
 		</example>
 		</section>
+		<section>
+		<title><function moreinfo="none">setdsturi(uri)</function></title>
+		<para>
+			Set the destination address URI (outbound proxy address).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>uri</emphasis> - Valid SIP URI representing the
+				address where to send the request. It must be a static string,
+				no variables are evaluated at runtime. If you need to set
+				outbound proxy address via a variable, use assginment to $du.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>>setdsturi</function> usage</title>
+		<programlisting format="linespecific">
+...
+setdsturi("sip:10.0.0.10");
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">resetdsturi()</function></title>
+		<para>
+			Reset the destination address URI (outbound proxy address).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>>resetdsturi</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetdsturi();
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">isdsturiset()</function></title>
+		<para>
+			Check if the destination address URI (outbound proxy address)
+			is set.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>>isdsturiset</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(isdsturiset())
+{
+   ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">pv_printf(var, str)</function></title>
+		<para>
+			Evalues the str and sets the resulted value to variable var. For
+			backward compatibility reasons, same function can be executed via
+			'avp_printf(var, str)'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>var</emphasis> - name of a writable variable
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>str</emphasis> - string that may contain variables
+				which will be evaluated at runtime.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>>pv_printf</function> usage</title>
+		<programlisting format="linespecific">
+...
+pv_printf("$ru", "sip:$rU@$fd");
+pv_printf("$avp(x)", "From: $fU - To: $tU");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>

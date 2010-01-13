@@ -72,5 +72,6 @@ void sctp_options_check();
 int sctp_register_cfg();
 void sctp_options_get(struct cfg_group_sctp *s);
 int sctp_get_os_defaults(struct cfg_group_sctp *s);
+int sctp_get_cfg_from_sock(int s, struct cfg_group_sctp* cfg);
 
 #endif /* _sctp_options_h */

@@ -551,8 +551,8 @@ send_publish:
 	if(body && body->len && body->s )
 		LM_DBG("body:\n%.*s\n ", body->len, body->s);
 
-	set_uac_req(&uac_r, &met, str_hdr, body, 0, 0, publ_cback_func,
-				(void*)cb_param);
+	set_uac_req(&uac_r, &met, str_hdr, body, 0, TMCB_LOCAL_COMPLETED,
+			publ_cback_func, (void*)cb_param);
 	result= tmb.t_request(&uac_r,
 			publ->pres_uri,			/*! Request-URI */
 			publ->pres_uri,			/*! To */

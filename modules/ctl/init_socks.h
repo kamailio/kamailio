@@ -31,6 +31,7 @@
 
 #ifndef _init_socks_h
 #define _init_socks_h
+#include <sys/types.h>
 #include <sys/un.h>
 #include "../../ip_addr.h"
 

@@ -671,7 +671,8 @@ ifeq ($(CC_NAME), gcc)
 						fi)
 		ASPATH:=$(shell  if [ -z "$(ASGCC)" ] ; then echo "as" ;\
 						else \
-						if $(ASGCC) -V 2>/dev/null 1>/dev/null; then \
+						if $(ASGCC) -V 2>/dev/null 1>/dev/null </dev/null; \
+						then \
 							echo $(ASGCC); \
 						else echo "as" ; \
 						fi\

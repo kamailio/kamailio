@@ -49,6 +49,7 @@
 #include <fcntl.h>
 
 
+#include "sctp_sockopts.h"
 #include "sctp_server.h"
 #include "sctp_options.h"
 #include "globals.h"
@@ -231,15 +232,33 @@ int sctp_getsockopt(int s, int level, int optname,
 
 
 /** get the os defaults for cfg options with os correspondents.
- *  @param s - intialized sctp socket
  *  @param cfg - filled with the os defaults
  *  @return -1 on error, 0 on success
  */
 int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 {
+	int s;
+	int ret;
+	
+	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
+	if (s==-1)
+		return -1;
+	ret=sctp_get_cfg_from_sock(s, cfg);
+	close(s);
+	return ret;
+}
+
+
+
+/** get the os cfg options from a specific socket.
+ *  @param s - intialized sctp socket
+ *  @param cfg - filled with the os defaults
+ *  @return -1 on error, 0 on success
+ */
+int sctp_get_cfg_from_sock(int s, struct cfg_group_sctp* cfg)
+{
 	int optval;
 	socklen_t optlen;
-	int s;
 #ifdef SCTP_RTOINFO
 	struct sctp_rtoinfo rto;
 #endif /* SCTP_RTOINFO */
@@ -252,18 +271,15 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 #ifdef SCTP_PEER_ADDR_PARAMS
 	struct sctp_paddrparams pp;
 #endif /* SCTP_PEER_ADDR_PARAMS */
-#ifdef SCTP_DELAYED_SACK
-	struct sctp_sack_info sa;
-#elif defined SCTP_DELAYED_ACK_TIME /* old version */
-	struct sctp_assoc_value sa;
-#endif /* SCTP_DELAYED_SACK */
+#ifdef	SCTP_DELAYED_SACK
+	struct sctp_sack_info sack_info;
+#endif	/* SCTP_DELAYED_SACK */
+#ifdef	SCTP_DELAYED_ACK_TIME
+	struct sctp_assoc_value sack_val; /* old version */
+#endif /* SCTP_DELAYED_ACK_TIME */
 #ifdef SCTP_MAX_BURST
 	struct sctp_assoc_value av;
 #endif /* SCTP_MAX_BURST */
-	
-	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
-	if (s==-1)
-		return -1;
 	
 	/* SO_RCVBUF */
 	optlen=sizeof(int);
@@ -285,6 +301,14 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 		#endif
 		cfg->so_sndbuf=optval;
 	}
+	/* SCTP_AUTOCLOSE */
+#ifdef SCTP_AUTOCLOSE
+	optlen=sizeof(int);
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_AUTOCLOSE, (void*)&optval,
+							&optlen, "SCTP_AUTOCLOSE")==0){
+		cfg->autoclose=optval;
+	}
+#endif /* SCTP_AUTOCLOSE */
 	/* SCTP_RTOINFO -> srto_initial, srto_min, srto_max */
 #ifdef SCTP_RTOINFO
 	optlen=sizeof(rto);
@@ -328,23 +352,36 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 	}
 #endif /* SCTP_PEER_ADDR_PARAMS */
 #if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
-	optlen=sizeof(sa);
-	memset(&sa, 0, sizeof(sa));
 #ifdef SCTP_DELAYED_SACK
-	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sa,
-							&optlen, "SCTP_DELAYED_SACK")==0){
+	optlen=sizeof(sack_info);
+	memset(&sack_info, 0, sizeof(sack_info));
+	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sack_info,
+							&optlen, 0)==0){
 		/* success => hack to set the "default" values*/
-		cfg->sack_delay=sa.sack_delay;
-		cfg->sack_freq=sa.sack_freq;
-	}
-#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
-	if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, (void*)&sa,
-							&optlen, "SCTP_DELAYED_ACK_TIME")==0){
-		/* success => hack to set the "default" values*/
-		cfg->sack_delay=sa.assoc_value;
-		cfg->sack_freq=0; /* unknown */
-	}
+		cfg->sack_delay=sack_info.sack_delay;
+		cfg->sack_freq=sack_info.sack_freq;
+	}else
 #endif /* SCTP_DELAYED_SACK */
+	{
+#ifdef	SCTP_DELAYED_ACK_TIME
+		optlen=sizeof(sack_val);
+		memset(&sack_val, 0, sizeof(sack_val));
+		/* if no SCTP_DELAYED_SACK supported by the sctp lib, or setting it
+		   failed (not supported by the kernel) try using the obsolete
+		   SCTP_DELAYED_ACK_TIME method */
+		if (sctp_getsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME,
+								(void*)&sack_val, &optlen, 
+								"SCTP_DELAYED_ACK_TIME")==0){
+			/* success => hack to set the "default" values*/
+			cfg->sack_delay=sack_val.assoc_value;
+			cfg->sack_freq=0; /* unknown */
+		}
+#else	/* SCTP_DELAYED_ACK_TIME */
+		/* no SCTP_DELAYED_ACK_TIME support and SCTP_DELAYED_SACK failed
+		   => error */
+		ERR("cfg: SCTP_DELAYED_SACK: %s [%d]\n", strerror(errno), errno);
+#endif /* SCTP_DELAYED_ACK_TIME */
+	}
 #endif /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
 #ifdef SCTP_MAX_BURST
 	optlen=sizeof(av);
@@ -356,7 +393,6 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 	}
 #endif /* SCTP_MAX_BURST */
 	
-	close(s);
 	return 0;
 }
 
@@ -388,10 +424,11 @@ static int sctp_init_sock_opt_common(int s, int af)
 	struct sctp_paddrparams pp;
 #endif /* SCTP_PEER_ADDR_PARAMS */
 #ifdef SCTP_DELAYED_SACK
-	struct sctp_sack_info sa;
-#elif defined SCTP_DELAYED_ACK_TIME /* old version */
-	struct sctp_assoc_value sa;
-#endif /* SCTP_DELAYED_SACK */
+	struct sctp_sack_info sack_info;
+#endif	/* SCTP_DELAYED_SACK */
+#ifdef	SCTP_DELAYED_ACK_TIME
+	struct sctp_assoc_value sack_val;
+#endif /* defined SCTP_DELAYED_ACK_TIME */
 #ifdef SCTP_MAX_BURST
 	struct sctp_assoc_value av;
 #endif /* SCTP_MAX_BURST */
@@ -636,34 +673,51 @@ static int sctp_init_sock_opt_common(int s, int af)
 #endif /* SCTP_PEER_ADDR_PARAMS */
 	/* set delayed ack options: sack_delay & sack_freq */
 #if defined SCTP_DELAYED_SACK || defined SCTP_DELAYED_ACK_TIME
-	memset(&sa, 0, sizeof(sa));
 #ifdef SCTP_DELAYED_SACK
-	sa.sack_delay=cfg_get(sctp, sctp_cfg, sack_delay);
-	sa.sack_freq=cfg_get(sctp, sctp_cfg, sack_freq);
-	if (sa.sack_delay || sa.sack_freq){
-		/* if at least one is non-null => we have to set it */
-		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK, (void*)&sa,
-							sizeof(sa), "setsockopt: SCTP_DELAYED_SACK")!=0){
-			sctp_err++;
-			/* non critical, try to continue */
+	memset(&sack_info, 0, sizeof(sack_info));
+	sack_info.sack_delay=cfg_get(sctp, sctp_cfg, sack_delay);
+	sack_info.sack_freq=cfg_get(sctp, sctp_cfg, sack_freq);
+	if ((sack_info.sack_delay || sack_info.sack_freq) &&
+		(sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_SACK,
+							(void*)&sack_info, sizeof(sack_info), 0)!=0)) {
+		/* if setting SCTP_DELAYED_SACK failed, try the old obsolete
+		   SCTP_DELAYED_ACK_TIME */
+#endif /* SCTP_DELAYED_SACK */
+#ifdef SCTP_DELAYED_ACK_TIME
+		memset(&sack_val, 0, sizeof(sack_val));
+		sack_val.assoc_value=cfg_get(sctp, sctp_cfg, sack_delay);
+		if (sack_val.assoc_value){
+			if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME,
+									(void*)&sack_val, sizeof(sack_val),
+									"setsockopt: SCTP_DELAYED_ACK_TIME")!=0){
+				sctp_err++;
+				/* non critical, try to continue */
+			}
 		}
-	}
-#else /* old sctp lib version which uses SCTP_DELAYED_ACK_TIME */
-	sa.assoc_value=cfg_get(sctp, sctp_cfg, sack_delay);
-	if (sa.assoc_value){
-		if (sctp_setsockopt(s, IPPROTO_SCTP, SCTP_DELAYED_ACK_TIME, (void*)&sa,
-						sizeof(sa), "setsockopt: SCTP_DELAYED_ACK_TIME")!=0){
+#else /* SCTP_DELAYED_ACK_TIME */
+		/* no SCTP_DELAYED_ACK_TIME support and SCTP_DELAYED_SACK failed
+		   => error */
+		if (sack_info.sack_delay){
 			sctp_err++;
-			/* non critical, try to continue */
+			ERR("cfg: setting SCTP_DELAYED_SACK: %s [%d]\n",
+						strerror(errno), errno);
 		}
-	}
-	if (cfg_get(sctp, sctp_cfg, sack_freq)){
-		WARN("could not set sctp sack_freq, please upgrade your sctp"
-				" library\n");
-		((struct cfg_group_sctp*)sctp_cfg)->sack_freq=0;
+#endif /* SCTP_DELAYED_ACK_TIME */
+		if (cfg_get(sctp, sctp_cfg, sack_freq)){
+#ifdef SCTP_DELAYED_SACK
+			sctp_err++;
+			WARN("could not set sctp sack_freq, please upgrade your kernel\n");
+#else /* SCTP_DELAYED_SACK */
+			WARN("could not set sctp sack_freq, please upgrade your sctp"
+					" library\n");
+#endif /* SCTP_DELAYED_SACK */
+			((struct cfg_group_sctp*)sctp_cfg)->sack_freq=0;
+		}
+#ifdef SCTP_DELAYED_SACK
 	}
 #endif /* SCTP_DELAYED_SACK */
-#else /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK*/
+	
+#else /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
 #warning no sctp lib support for SCTP_DELAYED_SACK, consider upgrading
 #endif /* SCTP_DELAYED_SACK  | SCTP_DELAYED_ACK_TIME*/
 	/* set max burst option */
@@ -2171,7 +2225,11 @@ again:
 						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
 #endif /* USE_DST_BLACKLIST */
 			/* no break */
+			goto comm_lost_cont;	/* do not increment counters for
+									   SCTP_SHUTDOWN_COMP */
 		case SCTP_SHUTDOWN_COMP:
+			SCTP_STATS_ASSOC_SHUTDOWN();
+comm_lost_cont:
 			atomic_dec(sctp_conn_no);
 #ifdef SCTP_CONN_REUSE
 			/* connection down*/

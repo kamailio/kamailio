@@ -1060,6 +1060,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		uac_r.method = &msg_type;
 		uac_r.headers = &hdr_str;
 		uac_r.body = (n<0)?&str_vals[2]:&body_str;
+		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 		uac_r.cb  = m_tm_callback;
 		uac_r.cbp = (void*)(long)mid;
 
@@ -1333,6 +1334,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		uac_r.method  = &msg_type;
 		uac_r.headers = &hdr_str;
 		uac_r.body = (n<0)?&str_vals[2]:&body_str;
+		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 		uac_r.cb  = m_tm_callback;
 		uac_r.cbp = (void*)(long)mid;
 		tmb.t_request(&uac_r,  /* UAC Req */

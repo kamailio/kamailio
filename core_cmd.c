@@ -438,21 +438,54 @@ static void core_shmmem(rpc_t* rpc, void* c)
 {
 	struct mem_info mi;
 	void *handle;
+	char* param;
+	long rs;
 
+	rs=0;
+	/* look for optional size/divisor parameter */
+	if (rpc->scan(c, "*s", &param)>0){
+		switch(*param){
+			case 'b':
+			case 'B':
+				rs=0;
+				break;
+			case 'k':
+			case 'K':
+				rs=10; /* K -> 1024 */
+				break;
+			case 'm':
+			case 'M':
+				rs=20; /* M -> 1048576 */
+				break;
+			case 'g':
+			case 'G':
+				rs=30; /* G -> 1024M */
+				break;
+			default:
+				rpc->fault(c, 500, "bad param, (use b|k|m|g)");
+				return;
+		}
+		if (param[1] && ((param[1]!='b' && param[1]!='B') || param[2])){
+				rpc->fault(c, 500, "bad param, (use b|k|m|g)");
+				return;
+		}
+	}
 	shm_info(&mi);
 	rpc->add(c, "{", &handle);
 	rpc->struct_add(handle, "dddddd",
-		"total", (unsigned int)mi.total_size,
-		"free", (unsigned int)mi.free,
-		"used", (unsigned int)mi.used,
-		"real_used",(unsigned int)mi.real_used,
-		"max_used", (unsigned int)mi.max_used,
+		"total", (unsigned int)(mi.total_size>>rs),
+		"free", (unsigned int)(mi.free>>rs),
+		"used", (unsigned int)(mi.used>>rs),
+		"real_used",(unsigned int)(mi.real_used>>rs),
+		"max_used", (unsigned int)(mi.max_used>>rs),
 		"fragments", (unsigned int)mi.total_frags
 	);
 }
 
 static const char* core_shmmem_doc[] = {
-	"Returns shared memory info.",  /* Documentation string */
+	"Returns shared memory info. It has an optional parameter that specifies"
+	" the measuring unit: b - bytes (default), k or kb, m or mb, g or gb. "
+	"Note: when using something different from bytes, the value is truncated.",
 	0                               /* Method signature(s) */
 };
 
@@ -650,7 +683,13 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 
 
 static const char* core_sctp_options_doc[] = {
-	"Returns active sctp options.",    /* Documentation string */
+	"Returns active sctp options. With one parameter"
+	" it returns the sctp options set in the kernel for a specific socket"
+	"(debugging), with 0 filled in for non-kernel related options."
+	" The parameter can be: \"default\" | \"first\" | address[:port] ."
+	" With no parameters it returns ser's idea of the current sctp options"
+	 " (intended non-debugging use).",
+	/* Documentation string */
 	0                                 /* Method signature(s) */
 };
 
@@ -659,9 +698,54 @@ static void core_sctp_options(rpc_t* rpc, void* c)
 #ifdef USE_SCTP
 	void *handle;
 	struct cfg_group_sctp t;
+	char* param;
+	struct socket_info* si;
+	char* host;
+	str hs;
+	int hlen;
+	int port;
+	int proto;
 
+	param=0;
 	if (!sctp_disable){
-		sctp_options_get(&t);
+		/* look for optional socket parameter */
+		if (rpc->scan(c, "*s", &param)>0){
+			si=0;
+			if (strcasecmp(param, "default")==0){
+				si=sendipv4_sctp?sendipv4_sctp:sendipv6_sctp;
+			}else if (strcasecmp(param, "first")==0){
+				si=sctp_listen;
+			}else{
+				if (parse_phostport(param, &host, &hlen, &port, &proto)!=0){
+					rpc->fault(c, 500, "bad param (use address, address:port,"
+										" default or first)");
+					return;
+				}
+				if (proto && proto!=PROTO_SCTP){
+					rpc->fault(c, 500, "bad protocol in param (only SCTP"
+										" allowed)");
+					return;
+				}
+				hs.s=host;
+				hs.len=hlen;
+				si=grep_sock_info(&hs, port, PROTO_SCTP);
+				if (si==0){
+					rpc->fault(c, 500, "not listening on sctp %s", param);
+					return;
+				}
+			}
+			if (si==0 || si->socket==-1){
+				rpc->fault(c, 500, "could not find a sctp socket");
+				return;
+			}
+			memset(&t, 0, sizeof(t));
+			if (sctp_get_cfg_from_sock(si->socket, &t)!=0){
+				rpc->fault(c, 500, "failed to get socket options");
+				return;
+			}
+		}else{
+			sctp_options_get(&t);
+		}
 		rpc->add(c, "{", &handle);
 		rpc->struct_add(handle, "ddddddddddddddddddd",
 			"sctp_socket_rcvbuf",	t.so_rcvbuf,

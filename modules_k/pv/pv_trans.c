@@ -925,7 +925,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	{
 		if(_tr_tobody_str.len==0)
 			memset(&_tr_tobody, 0, sizeof(struct to_body));
-		if(val->rs.len>_tr_tobody_str.len)
+		if(_tr_tobody_str.s==NULL || val->rs.len>_tr_tobody_str.len)
 		{
 			if(_tr_tobody_str.s) pkg_free(_tr_tobody_str.s);
 				_tr_tobody_str.s =
@@ -954,7 +954,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		{
 			memset(&_tr_tobody, 0, sizeof(struct to_body));
 			pkg_free(_tr_tobody_str.s);
-			_tr_tobody_str.len = 0;
+			memset(&_tr_tobody_str, 0, sizeof(str));
 			return -1;
 		}
 		if (parse_uri(_tr_tobody.uri.s, _tr_tobody.uri.len,
@@ -963,7 +963,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			free_to_params(&_tr_tobody);
 			memset(&_tr_tobody, 0, sizeof(struct to_body));
 			pkg_free(_tr_tobody_str.s);
-			_tr_tobody_str.len = 0;
+			memset(&_tr_tobody_str, 0, sizeof(str));
 			return -1;
 		}
 

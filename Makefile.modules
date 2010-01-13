@@ -139,14 +139,45 @@ install-libs:
 
 endif # $(SER_LIBS)
 
+.PHONY: utils
+.PHONY: clean-utils
+.PHONY: proper-utils
+.PHONY: distclean-utils
+.PHONY: realclean-utils
+.PHONY: maintainer-clean-utils
 ifneq (,$(MOD_INSTALL_UTILS))
 install-utils:
 	@for ut in $(MOD_INSTALL_UTILS) ; do \
 		$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
 	done; true
 
+utils:
+	@for r in $(MOD_INSTALL_UTILS) ; do \
+		$(call try_err, $(MAKE) -C "$$r" ) ;\
+	done; true
+
+clean-utils:
+	@for r in $(MOD_INSTALL_UTILS) ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" clean ; \
+		fi ; \
+	done
+
+proper-utils realclean-utils distclean-utils maintainer-clean-utils: \
+ clean_target=$(patsubst %-utils,%,$@)
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
+	@for r in $(MOD_INSTALL_UTILS) ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" $(clean_target); \
+		fi ; \
+	done
+
 else
+# ! MOD_INSTALL_UTILS
 install-utils:
+utils:
+clean-utils:
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
 
 endif # $(MOD_INSTALL_UTILS)
 

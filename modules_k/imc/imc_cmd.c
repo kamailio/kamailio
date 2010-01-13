@@ -491,7 +491,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	cback_param->inv_uri = member->uri;
 	/*?!?! possible race with 'remove user' */
 
-	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, 0,
+	set_uac_req(&uac_r, &imc_msg_type, &all_hdrs, &body, 0, TMCB_LOCAL_COMPLETED,
 				imc_inv_callback, (void*)(cback_param));
 	result= tmb.t_request(&uac_r,
 				&member->uri,							/* Request-URI */

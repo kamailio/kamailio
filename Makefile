@@ -156,7 +156,7 @@ module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For db use (db modules, excluding drivers)
-module_group_db=acc_db auth_db avp_db db_ops db_flatstore db_text \
+module_group_db=acc_db auth_db avp_db db_ops db_text \
 				uri_db domain lcr msilo speeddial
 				#dbtext (s) not migrated yet to the new db interface
 
@@ -172,7 +172,14 @@ module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 module_group_radius=acc_radius auth_radius misc_radius peering
 
 # For presence
-module_group_presence=dialog pa presence_b2b rls xcap
+# kamailio modules
+module_group_presence=presence presence_dialoginfo presence_mwi presence_xml \
+						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
+						rls xcap_client
+#ser modules
+module_group_presence+=dialog presence_b2b xcap
+# obsolete/unmaintained ser modules
+#module_group_presence=pa rls
 
 # Modules in this group satisfy specific or niche applications, but are 
 # considered stable for production use. They may or may not have dependencies
@@ -198,13 +205,13 @@ else
 	# excluded because they depend on external libraries
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
 							auth_radius misc_radius \
-							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
+							acc_radius pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_unixodbc memcached mi_xmlrpc \
-							nat_traversal perl perlvdb purple seas siptrace \
-							snmpstats uac_redirect xmpp \
+							perl perlvdb purple seas \
+							snmpstats xmpp \
 							carrierroute misc_radius peering \
 							dialplan lcr utils presence \
 							presence_dialoginfo presence_xml pua pua_bla \
@@ -250,6 +257,7 @@ ifeq ($(makefile_defs),1)
 ifeq ($(quiet),verbose)
 $(info config.mak loaded)
 endif # verbose
+export makefile_defs
 # config_make valid & used
 config_mak=1
 ifeq ($(MAIN_NAME),)
@@ -271,6 +279,7 @@ else
 # config.mak not strictly needed, but try to load it if exists for $(Q)
 config_mak=skip
 -include config.mak
+export makefile_defs
 endif
 endif
 
@@ -418,6 +427,15 @@ include Makefile.shared
 ifeq ($(config_mak),1)
 
 include Makefile.cfg
+
+# fix basedir path (relative -> absolute)
+ifneq (,$(basedir))
+ifeq (,$(filter /%, $(basedir)))
+override basedir:=$(CURDIR)/$(basedir)
+# remove basedir from command line overrides
+MAKEOVERRIDES:=$(filter-out basedir=%,$ $(MAKEOVERRIDES))
+endif # (,$(filter /%, $(basedir)))
+endif # (,$(basedir))
 
 else ifneq ($(config_mak),skip)
 
@@ -711,7 +729,7 @@ tar: $(auto_gen_keep)
 .PHONY: bin
 bin:
 	mkdir -p tmp/$(MAIN_NAME)/usr/local
-	$(MAKE) install basedir=tmp/$(MAIN_NAME) $(mk_params)
+	$(MAKE) install basedir=$(CURDIR)/tmp/$(MAIN_NAME) $(mk_params)
 	$(TAR) -C tmp/$(MAIN_NAME)/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
 	rm -rf tmp/$(MAIN_NAME)
 
@@ -729,7 +747,8 @@ deb:
 sunpkg:
 	mkdir -p tmp/$(MAIN_NAME)
 	mkdir -p tmp/$(MAIN_NAME)_sun_pkg
-	$(MAKE) install basedir=tmp/$(MAIN_NAME) prefix=/usr/local $(mk_params)
+	$(MAKE) install basedir=$(CURDIR)/tmp/$(MAIN_NAME) \
+			prefix=/usr/local $(mk_params)
 	(cd pkg/solaris; \
 	pkgmk -r ../../tmp/$(MAIN_NAME)/usr/local -o -d ../../tmp/$(MAIN_NAME)_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ../..)
@@ -953,6 +972,28 @@ clean-libs:
 proper-libs realclean-libs distclean-libs maintainer-clean-libs:
 			$(MAKE) -C lib $(patsubst %-libs,%,$@)
 
+# utils cleaning targets
+
+.PHONY: clean-utils
+clean-utils:
+	@for r in $(C_COMPILE_UTILS) $(C_INSTALL_UTILS) "" ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" clean ; \
+		fi ; \
+	done
+
+.PHONY: proper-utils
+.PHONY: distclean-utils
+.PHONY: realclean-utils
+.PHONY: maintainer-clean-utils
+proper-utils realclean-utils distclean-utils maintainer-clean-utils: \
+ clean_target=$(patsubst %-utils,%,$@)
+proper-utils realclean-utils distclean-utils maintainer-clean-utils:
+	@for r in $(C_COMPILE_UTILS) $(C_INSTALL_UTILS) "" ; do \
+		if [ -d "$$r" ]; then \
+			 $(MAKE) -C "$$r" $(clean_target); \
+		fi ; \
+	done
 
 # clean extra binary names (common "flavour" names)
 clean: clean-extra-names

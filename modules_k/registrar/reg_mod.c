@@ -41,6 +41,8 @@
  *              contacts and default expiry time(Jeffrey Magder-SOMA Networks)
  *  2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
  *              nathelper module (bogdan)
+ *  2009-12-09  Commented out tcp_persistent_flag param, because sr_3.0 tm
+ *              does not support it (Juha)
  *
  */
 
@@ -191,7 +193,7 @@ static param_export_t params[] = {
 	{"default_q",          INT_PARAM, &default_q           },
 	{"append_branches",    INT_PARAM, &append_branches     },
 	{"case_sensitive",     INT_PARAM, &case_sensitive      },
-	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag },
+	/*	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag }, */
 	{"realm_prefix",       STR_PARAM, &realm_pref          },
 	{"min_expires",        INT_PARAM, &min_expires         },
 	{"max_expires",        INT_PARAM, &max_expires         },
