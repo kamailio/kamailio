@@ -69,51 +69,6 @@ int hash_func (struct sip_msg * msg,
 	return ret;
 }
 
-int prime_hash_func(struct sip_msg * msg,
-                              enum hash_source source, int denominator) {
-	str source_string;
-	if(source != shs_from_user && source != shs_to_user) {
-		LM_ERR("chosen hash source not usable (may contain letters)\n");
-		return -1;
-	}
-	if (determine_source (msg, source, &source_string) == -1) {
-		return -1;
-	}
-
-	static const int INT_DIGIT_LIMIT = 18;
-	static const int PRIME_NUMBER = 51797;
-	uint64_t number = 0;
-	uint64_t p10;
-	int i, j, limit = 0;
-	int ret;
-	char source_number_s[INT_DIGIT_LIMIT + 1];
-
-	i = INT_DIGIT_LIMIT - 1;
-	j = source_string.len - 1;
-	source_number_s[INT_DIGIT_LIMIT] ='\0';
-
-	while(i >= 0 && j >= 0) {
-		if(isdigit(source_string.s[j])) {
-			source_number_s[i] = source_string.s[j];
-			i--;
-		}
-		j--;
-	}
-	limit = i;
-
-	for(i=INT_DIGIT_LIMIT - 1, p10=1; i>limit; i--, p10=p10*10) {
-		number += (source_number_s[i] - '0') * p10;
-	}
-
-	LM_DBG("source_string is %.*s, source_number_s "
-	    "is: %s, number is %llu\n", source_string.len, source_string.s,
-	    source_number_s + (limit + 1), (long long unsigned int)number);
-	ret = number % PRIME_NUMBER;
-	ret = ret % denominator + 1;
-	LM_DBG("calculated hash is: %i\n", ret);
-	return ret;
-}
-
 static int determine_source (struct sip_msg *msg, enum hash_source source,
                              str *source_string) {
 	source_string->s = NULL;

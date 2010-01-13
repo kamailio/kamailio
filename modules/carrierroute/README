@@ -47,13 +47,10 @@ Henning Westerholt
               4.2. cr_route(carrier, domain, prefix_matching,
                       rewrite_user, hash_source, descavp)
 
-              4.3. cr_prime_route(carrier, domain, prefix_matching,
+              4.3. cr_nofallback_route(carrier, domain, prefix_matching,
                       rewrite_user, hash_source, descavp)
 
-              4.4. cr_nofallback_route(carrier, domain, prefix_matching,
-                      rewrite_user, hash_source, descavp)
-
-              4.5. cr_next_domain(carrier, domain, prefix_matching, host,
+              4.4. cr_next_domain(carrier, domain, prefix_matching, host,
                       reply_code, dstavp)
 
         5. MI Commands
@@ -196,13 +193,10 @@ Chapter 1. Admin Guide
         4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,
                 hash_source, descavp)
 
-        4.3. cr_prime_route(carrier, domain, prefix_matching,
+        4.3. cr_nofallback_route(carrier, domain, prefix_matching,
                 rewrite_user, hash_source, descavp)
 
-        4.4. cr_nofallback_route(carrier, domain, prefix_matching,
-                rewrite_user, hash_source, descavp)
-
-        4.5. cr_next_domain(carrier, domain, prefix_matching, host,
+        4.4. cr_next_domain(carrier, domain, prefix_matching, host,
                 reply_code, dstavp)
 
    5. MI Commands
@@ -463,13 +457,10 @@ modparam("carrierroute", "match_mode", 10)
    4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,
           hash_source, descavp)
 
-   4.3. cr_prime_route(carrier, domain, prefix_matching, rewrite_user,
-          hash_source, descavp)
-
-   4.4. cr_nofallback_route(carrier, domain, prefix_matching,
+   4.3. cr_nofallback_route(carrier, domain, prefix_matching,
           rewrite_user, hash_source, descavp)
 
-   4.5. cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
+   4.4. cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
           dstavp)
 
    Previous versions of carrierroute had some more function. All the old
@@ -477,20 +468,11 @@ modparam("carrierroute", "match_mode", 10)
 cr_rewrite_uri(domain, hash_source)
 -> cr_route("default", domain, "$rU", "$rU", hash_source)
 
-cr_prime_balance_uri(domain, hash_source)
--> cr_prime_route("default", domain, "$rU", "$rU", hash_source)
-
 cr_rewrite_by_to(domain, hash_source)
 -> cr_route("default", domain, "$tU", "$rU", hash_source)
 
-cr_prime_balance_by_to(domain, hash_source)
--> cr_prime_route("default", domain, "$tU", "$rU", hash_source)
-
 cr_rewrite_by_from(domain, hash_source)
 -> cr_route("default", domain, "$fU", "$rU", hash_source)
-
-cr_prime_balance_by_from(domain, hash_source)
--> cr_prime_route("default", domain, "$fU", "$rU", hash_source)
 
 cr_user_rewrite_uri(uri, domain)
 -> cr_user_carrier(user, domain, "$avp(tree_avp)")
@@ -499,7 +481,7 @@ cr_user_rewrite_uri(uri, domain)
 cr_tree_rewrite_uri(tree, domain)
 -> cr_route(tree, domain, "$rU", "$rU", "call_id")
 
-4.1. cr_user_carrier(user, domain, dstavp)
+4.1.  cr_user_carrier(user, domain, dstavp)
 
    This function loads the carrier and stores it in an AVP. It cannot be
    used in the config file mode, as it needs a mapping of the given user
@@ -516,7 +498,7 @@ cr_tree_rewrite_uri(tree, domain)
        string any pseudo-variable could be used as input.
      * dstavp - Name of the AVP where to store the carrier id.
 
-4.2. cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
+4.2.  cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
 descavp)
 
    This function searches for the longest match for the user given in
@@ -558,53 +540,7 @@ descavp)
      * decsavp - Name of the AVP where to store the description. This
        parameter is optional.
 
-4.3. cr_prime_route(carrier, domain, prefix_matching, rewrite_user,
-hash_source, descavp)
-
-   This function searches for the longest match for the user given in
-   prefix_matching at the given domain in the given carrier tree. The
-   Request URI is rewritten using rewrite_user and the given hash source
-   and algorithm. Returns -1 if there is no data found or an empty rewrite
-   host on the longest match is found. On success also the description is
-   stored in the given AVP (if obmitted, nothing is stored in an AVP).
-   This is useful if you need some additional informations that belongs to
-   each gw, like the destination or the number of channels. This function
-   is only usable with rewrite_user and prefix_matching containing a valid
-   string. This string needs to be numerical if the match_mode parameter
-   is set to 10.
-
-   It uses the prime hash algorithm to calculate the hash values. This
-   means that the fuction behaves different then the normal routing
-   function. If you don't know what this prime functionality is, you
-   should just use the cr_route function. The prime routing algorithm not
-   use the configured probabilities in order to route requests, it just
-   uses a fixed hash distribution. If one of the hash targets is not
-   available, and no backup rule is configured, the function will return
-   -1.
-
-   Please not that this function is deprecated and will be removed in the
-   next stable release. Please consider using the cr_nofallback_route
-   function instead.
-
-   Meaning of the parameters is as follows:
-     * carrier - The routing tree to be used. Additional to a string any
-       pseudo-variable could be used as input.
-     * domain - Name of the routing domain to be used. Additional to a
-       string any pseudo-variable could be used as input.
-     * prefix_matching - User name to be used for prefix matching in the
-       routing tree. Additional to a string any pseudo-variable could be
-       used as input.
-     * rewrite_user - The user name to be used for applying the rewriting
-       rule. Usually this is the user part of the request URI. Additional
-       to a string any pseudo-variable could be used as input.
-     * hash_source - The hash values of the destination set must be a
-       contiguous range starting at 1, limited by the configuration
-       parameter max_targets. Possible values for hash_source are:
-       call_id, from_uri, from_user, to_uri to_user and rand
-     * descavp - Name of the AVP where to store the description. This
-       parameter is optional.
-
-4.4. cr_nofallback_route(carrier, domain, prefix_matching, rewrite_user,
+4.3.  cr_nofallback_route(carrier, domain, prefix_matching, rewrite_user,
 hash_source, descavp)
 
    This function searches for the longest match for the user given in
@@ -620,12 +556,12 @@ hash_source, descavp)
    is set to 10.
 
    It uses the standard CRC32 algorithm to calculate the hash values. In
-   contrast to the normal cr_route function the backup rules of
-   cr_prime_route is used. This means not the configured probabilities
-   will be used, only a fixed hash distribution. This makes sense to
-   distribute incoming register requests e.g. to a bunch of registrar
-   servers. If one of the hash targets is not available and backup rule is
-   configured, the function will return -1.
+   contrast to the normal cr_route function the backup rules of (now
+   obselete) cr_prime_route is used. This means not the configured
+   probabilities will be used, only a fixed hash distribution. This makes
+   sense to distribute incoming register requests e.g. to a bunch of
+   registrar servers. If one of the hash targets is not available and
+   backup rule is configured, the function will return -1.
 
    Meaning of the parameters is as follows:
      * carrier - The routing tree to be used. Additional to a string any
@@ -645,7 +581,7 @@ hash_source, descavp)
      * descavp - Name of the AVP where to store the description. This
        parameter is optional.
 
-4.5. cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
+4.4.  cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
 dstavp)
 
    This function searches for the longest match for the user given in

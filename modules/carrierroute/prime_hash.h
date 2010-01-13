@@ -71,12 +71,4 @@ typedef int (*hash_func_t)(struct sip_msg * msg,
 int hash_func (struct sip_msg * msg,
                          enum hash_source source, int denominator);
 
-/*!
- * \brief prime hash function
- * Returns an integer number between 0 and denominator - 1 based on
- * the hash source from the msg. Use the prime number algorithm.
-*/
-int prime_hash_func (struct sip_msg * msg,
-                               enum hash_source source, int denominator);
-
 #endif

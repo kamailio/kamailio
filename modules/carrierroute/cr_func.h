@@ -75,33 +75,11 @@ int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
 
 
 /**
- * rewrites the request URI of msg after determining the
- * new destination URI
- *
- * @param _msg the current SIP message
- * @param _carrier the requested carrier
- * @param _domain the requested routing domain
- * @param _prefix_matching the user to be used for prefix matching
- * @param _rewrite_user the localpart of the URI to be rewritten
- * @param _hsrc the SIP header used for hashing
- * @param _descavp the name of the AVP where the description is stored
- *
- * @return 1 on success, -1 on failure
- */
-int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_descavp);
-int cr_prime_route5(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc);
-
-/**
  *
  * rewrites the request URI of msg after determining the
  * new destination URI with the crc32 hash algorithm. The difference
  * to cr_route is that no fallback rule is chosen if there is something
- * wrong (behaves like cr_prime_route)
+ * wrong (behaves like now obselete cr_prime_route)
  *
  * @param _msg the current SIP message
  * @param _carrier the requested carrier

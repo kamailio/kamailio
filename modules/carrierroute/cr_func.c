@@ -51,7 +51,6 @@
 
 enum hash_algorithm {
 	alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
-	alg_prime, /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
 	alg_crc32_nofallback, /*!< same algorithm as alg_crc32, with only a backup rule, but no fallback tree is chosen
                            if there is something wrong. */
 	alg_error
@@ -394,16 +393,6 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 	}
 
 	switch (alg) {
-		case alg_prime:
-			if ((prob = prime_hash_func(msg, hash_source, rf->max_targets)) < 0) {
-				LM_ERR("could not hash message with prime algorithm");
-				return -1;
-			}
-			if ((rr = get_rule_by_hash(rf, prob)) == NULL) {
-				LM_CRIT("no route found\n");
-				return -1;
-			}
-			break;
 		case alg_crc32:
 			if(rf->dice_max == 0) {
 				LM_ERR("invalid dice_max value\n");
@@ -684,39 +673,9 @@ int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
 
 /**
  * rewrites the request URI of msg after determining the
- * new destination URI with the prime hash algorithm.
- *
- * @param _msg the current SIP message
- * @param _carrier the requested carrier
- * @param _domain the requested routing domain
- * @param _prefix_matching the user to be used for prefix matching
- * @param _rewrite_user the localpart of the URI to be rewritten
- * @param _hsrc the SIP header used for hashing
- * @param _descavp the name of the AVP where the description is stored
- *
- * @return 1 on success, -1 on failure
- */
-int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_descavp)
-{
-	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
-		_rewrite_user, _hsrc, alg_prime, _descavp);
-}
-
-int cr_prime_route5(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc)
-{
-	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
-		_rewrite_user, _hsrc, alg_prime, NULL);
-}
-/**
- * rewrites the request URI of msg after determining the
  * new destination URI with the crc32 hash algorithm. The difference
  * to cr_route is that no fallback rule is chosen if there is something
- * wrong (like cr_prime_route)
+ * wrong (like now obselete cr_prime_route)
  *
  * @param _msg the current SIP message
  * @param _carrier the requested carrier
