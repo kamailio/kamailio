@@ -1,0 +1,77 @@
+
+MY_OS=$(shell uname -s)
+
+DEFS+=-Iinclude/
+DEFS+=-D_LIBBINRPC_BUILD
+
+###
+# Used flags
+#
+# NDEBUG				:	release build
+# INT_AS_ID				:	allow integer records as attribute identifes 
+# 							(besides str)
+# FIX_FALSE_GCC_WARNS	:	initialize some vars falsely signaled by GCC
+# 							(4.1.1) as potentially used without.
+# 							(some may be triggered by pointer usage without
+# 							'const' or 'restrict' keyword)
+# _BINRPC_REENTRANT		:	enable thread local storage variables (set them 
+# 							global)
+# LOCKS_INIT_NOP				:	hollow locking; if not set and reentrant,
+# 							realtime's locking system will be used
+# BINRPC_VER1_COMPAT	:	compatibility with version 1 (TODO: :) )
+# USE_DEFAULT_SYSLOG	:	use syslog as default logger, instead of black
+# 							hole
+#
+
+ifneq (,$(findstring release,$(mode)))
+	DEFS+=-O3 -DNDEBUG
+endif
+ifneq (,$(findstring strict,$(mode)))
+	DEFS+=-Werror
+endif
+
+DEFS+=-DBINRPC_LIB_VER=\"$(MAJOR_VER).$(MINOR_VER)-$(BUGFIX_VER)\"
+
+DEFS += \
+	-DINT_AS_ID \
+	#-D_BINRPC_REENTRANT \
+	#-DFIX_FALSE_GCC_WARNS \
+
+ifeq (,$(findstring _BINRPC_REENTRANT,$(DEFS)))
+	DEFS+=-DLOCKS_INIT_NOP
+else # _BINRPC_REENTRANT
+ifeq (,$(findstring LOCKS_INIT_NOP,$(DEFS)))
+	LIBS+=-lrt
+endif # LOCKS_INIT_NOP
+endif # _BINRPC_REENTRANT
+
+
+ifeq ($(MY_OS),Linux)
+DEFS+=-DHAVE_IPV4_MAPPED
+DEFS+=-DHAVE_GAI_ADDRCONFIG -DWITH_GAI_ADDRCONFIG
+DEFS+=-DHAVE_MSG_NOSIGNAL
+endif # MY_OS:linux
+
+ifeq ($(MY_OS),SunOS)
+DEFS+=-std=gnu99
+DEFS+=-DHAVE_IPV4_MAPPED
+DEFS+=-DHAVE_GAI_ADDRCONFIG -DWITH_GAI_ADDRCONFIG
+endif # MY_OS:SunOS
+
+ifeq ($(MY_OS),FreeBSD)
+DEFS+=-DHAVE_IN_SYSTM_H -DHAVE_IPV4_MAPPED
+DEFS+=-DHAVE_GAI_ADDRCONFIG -DWITH_GAI_ADDRCONFIG
+DEFS+=-DHAVE_MSG_NOSIGNAL
+endif # MY_OS:FreeBSD
+
+ifeq ($(MY_OS),NetBSD)
+DEFS+=-DHAVE_IN_SYSTM_H
+DEFS+=-DHAVE_MSG_NOSIGNAL
+endif # MY_OS:NetBSD
+
+ifeq ($(MY_OS),OpenBSD)
+DEFS+=-DHAVE_IN_SYSTM_H
+endif # MY_OS:OpenBSD
+
+.PHONY: distclean tags
+

@@ -1,0 +1,27 @@
+[ ] add v1 compatibility
+[*] optimize int repr (negatives).
+[ ] add speedup code (vs minimal size) (regarding packing to wire)
+[ ] add (TLS) object cache for call contexts, call values, cb's req/rpl_cb_t,
+	dissectors
+[ ] deal with (.,*) for req cb registrations in case of name colision
+[ ] increase req:rpl metching reliabilty (increase CL field (cookie len) by 1
+    bits from flags (FLAGS fld))
+[ ] parse only header|parse values
+[ ] fix hdr definition: lenght (&cookie?) always 4 bytes (save 1 syscall)
+[ ] floating point support
+[ ] reentrant call disassambling|scanning (scanning context, value scanning)
+[ ] lazier parsing (if needed) [flags for mname|body parse status]
+[ ] don't deallocate raw buffer
+[ ] check protocol version when receving
+[ ] if not reentrant, use static recv buffers
+[ ] seq val add with same sign. as bprc_asm
+
+Proto notes:
+- no struct terminator
+- AVPs can be identified by integers
+- flags used to discriminate among call type
+- request error response (code/reason)
+- only accept power of 2 as int size representation, with max exp 3 (but:)
+- integer means signed 32 bits
+- requests have a STR first record
+- replies can contain multiple (top level) values.
