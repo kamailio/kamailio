@@ -1,0 +1,5 @@
+asi.uac.request 0 6 INVITE sip:bpintea@iptel.org sip:bot@borg sip:bpintea@iptel.org #16 asta.la.vista.baby sip:iptel.org "P-X: miau\r\nPP-X: meuw\r\nContact: %1a\r\nFull-Contact: %02pickard%03\r\nHalf-Contact: %1a\r\n" "" opaque
+
+asi.uac.cancel "33369:745761372"
+
+asi.uas.reply "33:44" 111 "Don't like him" as.231 "" ""
