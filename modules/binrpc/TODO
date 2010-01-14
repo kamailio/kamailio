@@ -1,0 +1,14 @@
+MOD:
+[ ] floating points
+[ ] time_t -> ISO|UTC?
+[ ] support for FIFO
+[*] multiple workers
+[ ] reply (200/OK) on no reply
+[ ] fault sending if rpl too big
+[ ] lists and AVPs
+[*] use pkg
+[ ] use timers
+
+IF'ACE:
+[ ] extend descriptor support / handling of values (add maps, lists, AVPs[?])
+[ ] add NULL support
