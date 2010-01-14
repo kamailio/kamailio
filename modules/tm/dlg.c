@@ -320,41 +320,40 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 		return -1;
 	}
 
-	res = (dlg_t*)shm_malloc(sizeof(dlg_t));
-	if (res == 0) {
-		LOG(L_ERR, "new_dlg_uac(): No memory left\n");
-		return -2;
+	if (! (res = (dlg_t*)shm_malloc(sizeof(dlg_t)))) {
+		ERR("out of shm mem.\n");
+		return -1;
+	} else {
+		memset(res, 0, sizeof(dlg_t));
 	}
-
-	     /* Clear everything */	
-	memset(res, 0, sizeof(dlg_t));
 	
 	     /* Make a copy of Call-ID */
-	if (str_duplicate(&res->id.call_id, _cid) < 0) return -3;
+	if (str_duplicate(&res->id.call_id, _cid) < 0) goto failed;
 	     /* Make a copy of local tag (usually From tag) */
-	if (str_duplicate(&res->id.loc_tag, _ltag) < 0) return -4;
+	if (str_duplicate(&res->id.loc_tag, _ltag) < 0) goto failed;
 	     /* Make a copy of local URI (usually From) */
-	if (str_duplicate(&res->loc_uri, _luri) < 0) return -5;
+	if (str_duplicate(&res->loc_uri, _luri) < 0) goto failed;
 	     /* Make a copy of remote URI (usually To) */
-	if (str_duplicate(&res->rem_uri, _ruri) < 0) return -6;
+	if (str_duplicate(&res->rem_uri, _ruri) < 0) goto failed;
 	     /* Make a copy of local sequence (usually CSeq) */
 	res->loc_seq.value = _lseq;
 	     /* And mark it as set */
 	res->loc_seq.is_set = 1;
 
-	*_d = res;
-
-	if (calculate_hooks(*_d) < 0) {
-		LOG(L_ERR, "new_dlg_uac(): Error while calculating hooks\n");
-		/* FIXME: free everything here */
-		shm_free(res);
-		return -2;
+	if (calculate_hooks(res) < 0) {
+		ERR("failed calculating hooks\n");
+		goto failed;
 	}
 #ifdef DIALOG_CALLBACKS
 	run_new_dlg_callbacks(DLG_CB_UAC, res, 0);
 #endif
 	
+	*_d = res;
 	return 0;
+
+failed:
+	free_dlg(res);
+	return -1;
 }
 
 
