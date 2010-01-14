@@ -58,6 +58,7 @@ MOD_NAME=$(NAME:.so=)
 
 # allow placing modules in separate directory apart from ser core
 COREPATH ?=../..
+SERLIBPATH ?= $(COREPATH)/lib
 
 ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
  $(COREPATH)/Makefile.modules $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
