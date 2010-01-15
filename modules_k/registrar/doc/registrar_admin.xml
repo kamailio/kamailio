@@ -115,7 +115,9 @@
 		If the processed message contains neither Expires 
 		<acronym>HFs</acronym> nor expires contact parameters, this value 
 		will be used for newly created usrloc records. The parameter contains 
-		number of second to expire (for example use 3600 for one hour).
+		number of second to expire (for example use 3600 for one hour). If it
+		is set to a lower value than the <quote>min_expires</quote> parameter
+		then it will be ignored.		                                                
 		</para>
 		<para>
 		<emphasis>

@@ -248,7 +248,8 @@ Chapter 1. Admin Guide
    If the processed message contains neither Expires HFs nor expires
    contact parameters, this value will be used for newly created usrloc
    records. The parameter contains number of second to expire (for example
-   use 3600 for one hour).
+   use 3600 for one hour). If it is set to a lower value than the
+   "min_expires" parameter then it will be ignored.
 
    Default value is 3600.
 
@@ -537,7 +538,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
    4.7. reg_fetch_contacts(domain, uri, profile)
    4.8. reg_free_contacts(profile)
 
-4.1. save(domain)
+4.1.  save(domain)
 
    The function processes a REGISTER message. It can add, remove or modify
    usrloc records depending on Contact and Expires HFs in the REGISTER
@@ -564,7 +565,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 save("location");
 ...
 
-4.2. save(domain,flags)
+4.2.  save(domain,flags)
 
    Same as save() but it accepts a set of flags for controlling its
    behaviour.
@@ -591,7 +592,7 @@ save("location");
 save("location","0x01");
 ...
 
-4.3. lookup(domain)
+4.3.  lookup(domain)
 
    The functions extracts username from Request-URI and tries to find all
    contacts for the username in usrloc. If there are no such contacts, -1
@@ -629,7 +630,7 @@ switch ($retcode) {
 };
 ...
 
-4.4. registered(domain)
+4.4.  registered(domain)
 
    The function returns true if the AOR in the Request-URI is registered,
    false otherwise. The function does not modify the message being
@@ -649,7 +650,7 @@ if (registered("location")) {
 };
 ...
 
-4.5. add_sock_hdr(hdr_name)
+4.5.  add_sock_hdr(hdr_name)
 
    Adds to the current REGISTER request a new header with "hdr_name" which
    contains the description of the received socket (proto:ip:port)
@@ -666,7 +667,7 @@ if (registered("location")) {
 add_sock_hdr("Sock-Info");
 ...
 
-4.6. unregister(domain, uri)
+4.6.  unregister(domain, uri)
 
    The function remove all the contact associated to 'uri'.
 
@@ -685,7 +686,7 @@ unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
 ...
 
-4.7. reg_fetch_contacts(domain, uri, profile)
+4.7.  reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile).
@@ -707,7 +708,7 @@ reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.8. reg_free_contacts(profile)
+4.8.  reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -830,54 +831,60 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with the old "nat_flag" module parameter?
+       What happend with the old "nat_flag" module parameter?
 
-   In was removed, as the module internally loads this value from the
-   "USRLOC" module (see the "nat_bflag" USRLOC parameter).
+       In was removed, as the module internally loads this value from the
+       "USRLOC" module (see the "nat_bflag" USRLOC parameter).
+
    2.2.
 
-   What happend with the old "use_domain" module parameter?
+       What happend with the old "use_domain" module parameter?
 
-   In was removed, as the module internally loads this option from the
-   "USRLOC" module. This was done in order to simplify the configuration.
+       In was removed, as the module internally loads this option from the
+       "USRLOC" module. This was done in order to simplify the configuration.
+
    2.3.
 
-   What happend with the old "save_noreply" and "save_memory" functions?
+       What happend with the old "save_noreply" and "save_memory" functions?
 
-   There functions were merged into the new "save(domain,flags)"
-   functions. If a reply should be sent or if the DB should be updated
-   also is controlled via the flags.
+       There functions were merged into the new "save(domain,flags)"
+       functions. If a reply should be sent or if the DB should be updated
+       also is controlled via the flags.
+
    2.4.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
+
    2.5.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <users@lists.kamailio.org> and e-mails regarding development versions
-   should be sent to <devel@lists.kamailio.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <users@lists.kamailio.org> and e-mails regarding development versions
+       should be sent to <devel@lists.kamailio.org>.
 
-   If you want to keep the mail private, send it to
-   <team@lists.kamailio.org>.
+       If you want to keep the mail private, send it to
+       <team@lists.kamailio.org>.
+
    2.6.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
+
    2.7.
 
-   What happened to the desc_time_order parameter?
+       What happened to the desc_time_order parameter?
 
-   It was removed, as its functionality was mmigrate into usrloc module,
-   were there is a parameter with the same name.
+       It was removed, as its functionality was mmigrate into usrloc module,
+       were there is a parameter with the same name.
