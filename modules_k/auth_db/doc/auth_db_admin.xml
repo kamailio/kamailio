@@ -284,6 +284,10 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
 		<para>Negative codes may be interpreted as follows:</para>
 		<itemizedlist>
 			<listitem><para>
+			<emphasis>-6 (nonce reused)</emphasis> - the nonce was reused
+			in a previous request sent to the server.
+			</para></listitem>
+			<listitem><para>
 			<emphasis>-5 (generic error)</emphasis> - some generic error
 			occurred and no reply was sent out;
 			</para></listitem>
@@ -361,24 +365,28 @@ if (www_authorize("siphub.net", "subscriber")) {
 		<para>Negative codes may be interpreted as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-					<emphasis>-5 (generic error)</emphasis> - some generic error
-					occurred and no reply was sent out;
+				<emphasis>-6 (nonce reused)</emphasis> - the nonce was reused
+				in a previous request sent to the server.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>-5 (generic error)</emphasis> - some generic error
+				occurred and no reply was sent out;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>-4 (no credentials)</emphasis> - credentials were not
+				found in request;
 				</para></listitem>
 			<listitem><para>
-					<emphasis>-4 (no credentials)</emphasis> - credentials were not
-					found in request;
-				</para></listitem>
+				<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
+			</para></listitem>
 			<listitem><para>
-					<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
-				</para></listitem>
+				<emphasis>-2 (invalid password)</emphasis> - valid user, but 
+				wrong password;
+			</para></listitem>
 			<listitem><para>
-					<emphasis>-2 (invalid password)</emphasis> - valid user, but 
-					wrong password;
-				</para></listitem>
-			<listitem><para>
-					<emphasis>-1 (invalid user)</emphasis> - authentication user does
-					not exist.
-				</para></listitem>
+				<emphasis>-1 (invalid user)</emphasis> - authentication user does
+				not exist.
+			</para></listitem>
 		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
