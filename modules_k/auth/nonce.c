@@ -164,7 +164,7 @@ int check_nonce(str* _nonce, str* _secret)
 {
 	int expires;
 	char non[NONCE_LEN + 1];
-    int index = 0;
+	int index = 0;
 
 	if (_nonce->s == 0) {
 		return -1;  /* Invalid nonce */
@@ -178,13 +178,12 @@ int check_nonce(str* _nonce, str* _secret)
 	if(nonce_reuse==0)
 	    index = get_nonce_index(_nonce);
 
-    calc_nonce(non, expires, index, _secret);
+	calc_nonce(non, expires, index, _secret);
 
- 	
 	LM_DBG("comparing [%.*s] and [%.*s]\n",
 			_nonce->len, ZSW(_nonce->s),
 			((nonce_reuse==0)?NONCE_LEN:NONCE_LEN-8), non);
-    if (!memcmp(non, _nonce->s, _nonce->len)) {
+	if (!memcmp(non, _nonce->s, _nonce->len)) {
 		return 0;
 	}
 	return 2;

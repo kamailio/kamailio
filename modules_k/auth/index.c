@@ -140,60 +140,59 @@ int is_nonce_index_valid(int index)
 {
 	/* if greater than MAX_NONCE_INDEX ->error */
 	if(index>= MAX_NONCE_INDEX )    {
-        LM_ERR("index greater than buffer length\n");
-        return 0;
-    }
+		LM_ERR("index greater than buffer length\n");
+		return 0;
+	}
 
-    lock_get(nonce_lock);
+	lock_get(nonce_lock);
 
-    /* if in the first 30 seconds */
-    if(sec_monit[*second]== -1)
-    {
-        if(index>= *next_index)
-        {
-            LM_DBG("index out of range\n");
-            lock_release(nonce_lock);
-            return 0;
-        }
-        else
-        {
-            set_buf_bit(index);
-            lock_release(nonce_lock);
-            return 1;
-        }
-    }
+	/* if in the first 30 seconds */
+	if(sec_monit[*second]== -1)
+	{
+		if(index>= *next_index)
+		{
+			LM_DBG("index out of range\n");
+			lock_release(nonce_lock);
+			return 0;
+		}
+		else
+		{
+			set_buf_bit(index);
+			lock_release(nonce_lock);
+			return 1;
+		}
+	}
 
-    /* check if right interval */
-    if(*next_index < sec_monit[*second])
-    {
-        if(!(index>= sec_monit[*second] || index<= *next_index))
-        {
-            LM_DBG("index out of the permitted interval\n");
-            goto error;
-        }
-    }
-    else
-    {
-        if(!(index >= sec_monit[*second] && index<=*next_index))
-        {
-            LM_DBG("index out of the permitted interval\n");
-            goto error;
-        }
-    }
+	/* check if right interval */
+	if(*next_index < sec_monit[*second])
+	{
+		if(!(index>= sec_monit[*second] || index<= *next_index))
+		{
+			LM_DBG("index out of the permitted interval\n");
+			goto error;
+		}
+	}
+	else
+	{
+		if(!(index >= sec_monit[*second] && index<=*next_index))
+		{
+			LM_DBG("index out of the permitted interval\n");
+			goto error;
+		}
+	}
 
-    /* check if the first time used */
-    if(check_buf_bit(index))
-    {
-        LM_DBG("nonce already used\n");
-        goto error;
-    }
+	/* check if the first time used */
+	if(check_buf_bit(index))
+	{
+		LM_DBG("nonce already used\n");
+		goto error;
+	}
 
-    set_buf_bit(index);
-    lock_release(nonce_lock);
-    return 1;
+	set_buf_bit(index);
+	lock_release(nonce_lock);
+	return 1;
 
 error:
-    lock_release(nonce_lock);
-    return 0;
-
+	lock_release(nonce_lock);
+	return 0;
 }
