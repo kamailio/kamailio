@@ -100,7 +100,7 @@ modparam("sl", "enable_stats", 0)
 		</example>
 	</section>
 	<section>
-               <title><varname>bind_tm</varname> (integer)</title>
+               <title><varname>load_tm</varname> (integer)</title>
                <para>
                If the module should use transaction support for sending the
                replies. A zero value means disabled.
@@ -112,9 +112,9 @@ modparam("sl", "enable_stats", 0)
                Default value is 1 (enabled).
                </para>
                <example>
-               <title>bind_tm example</title>
+               <title>load_tm example</title>
                <programlisting format="linespecific">
-modparam("sl", "bind_tm", 0)
+modparam("sl", "load_tm", 0)
 </programlisting>
                </example>
        </section>
