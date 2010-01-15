@@ -110,10 +110,14 @@
 /* return a socket_info_pointer to the sending socket; as opposed to
  * get_send_socket, which returns process's default socket, get_out_socket
  * attempts to determine the outbound interface which will be used;
- * it creates a temporary connected socket to determine it; it will
+ * it uses a temporary connected socket to determine it; it will
  * be very likely noticeably slower, but it can deal better with
  * multihomed hosts
  */
+
+static int sock_inet = 0;
+static int sock_inet6 = 0;
+
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 {
 	int temp_sock;
@@ -126,33 +130,57 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
 		return 0;
 	}
-	
-	temp_sock=socket(to->s.sa_family, SOCK_DGRAM, 0 );
-	if (temp_sock==-1) {
-		LOG(L_ERR, "ERROR: get_out_socket: socket() failed: %s\n",
-				strerror(errno));
+
+	switch(to->s.sa_family){
+	case AF_INET : {
+		if(sock_inet <= 0){
+			sock_inet = socket(AF_INET, SOCK_DGRAM, 0);
+			if (sock_inet==-1) {
+				LM_ERR("socket() failed: %s\n", strerror(errno));
+				return 0;
+			}
+		}
+		temp_sock = sock_inet;
+		break;
+	}
+	case AF_INET6 : {
+		if(sock_inet6 <= 0){
+			sock_inet6 = socket(AF_INET6, SOCK_DGRAM, 0);
+			if (sock_inet6==-1) {
+				LM_ERR("socket() failed: %s\n", strerror(errno));
+				return 0;
+			}
+		}
+		temp_sock = sock_inet6;
+		break;
+ 	}
+	default: {
+		LM_ERR("Unknow protocol family \n");
 		return 0;
+	}
 	}
 	if (connect(temp_sock, &to->s, sockaddru_len(*to))==-1) {
 		LOG(L_ERR, "ERROR: get_out_socket: connect failed: %s\n",
 				strerror(errno));
+		sock_inet = 0;
+		sock_inet6 = 0;
 		goto error;
 	}
 	len=sizeof(from);
 	if (getsockname(temp_sock, &from.s, &len)==-1) {
 		LOG(L_ERR, "ERROR: get_out_socket: getsockname failed: %s\n",
 				strerror(errno));
+		sock_inet = 0;
+		sock_inet6 = 0;
 		goto error;
 	}
 	su2ip_addr(&ip, &from);
 	si=find_si(&ip, 0, proto);
 	if (si==0) goto error;
-	close(temp_sock);
 	DBG("DEBUG: get_out_socket: socket determined: %p\n", si );
 	return si;
 error:
 	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
-	close(temp_sock);
 	return 0;
 }
 
