@@ -133,6 +133,10 @@ else ifeq ($(FLAVOUR),kamailio)
 # main binary name
 MAIN_NAME=kamailio
 CFG_NAME=kamailio
+# kamailio statistics on
+KMSTATS ?= 1
+# fast malloc statistics on
+FMSTATS ?= 1
 else # default:
 # main binary name
 MAIN_NAME=sip-router
@@ -648,9 +652,11 @@ endif
 ifeq ($(TLS_HOOKS), 1)
 	C_DEFS+= -DUSE_TLS -DTLS_HOOKS
 endif
-KMSTATS ?= 1
 ifeq ($(KMSTATS), 1)
 	C_DEFS+= -DSTATISTICS
+endif
+ifeq ($(FMSTATS), 1)
+	C_DEFS+= -DMALLOC_STATS
 endif
 
 ifneq ($(STUN),)
