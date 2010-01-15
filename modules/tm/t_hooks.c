@@ -57,7 +57,36 @@
 struct tmcb_head_list* req_in_tmcb_hl = 0;
 struct tmcb_head_list* local_req_in_tmcb_hl = 0;
 
+struct tm_early_cb {
+	unsigned int msgid;
+	struct tmcb_head_list cb_list;
+} tmcb_early_hl = { 0, {0, 0} };
 
+struct tmcb_head_list* get_early_tmcb_list(struct sip_msg *msg)
+{
+	struct tm_callback *cbp, *cbp_tmp;
+	if (msg->id!=tmcb_early_hl.msgid) {
+		for( cbp=(struct tm_callback*)tmcb_early_hl.cb_list.first; cbp ; ) {
+			cbp_tmp = cbp;
+			cbp = cbp->next;
+			if (cbp_tmp->param && cbp_tmp->release)
+					cbp_tmp->release( cbp_tmp->param );
+			shm_free( cbp_tmp );
+		}
+		memset(&tmcb_early_hl.cb_list, 0, sizeof(struct tmcb_head_list));
+		tmcb_early_hl.msgid = msg->id;
+	}
+	return &tmcb_early_hl.cb_list;
+}
+
+void set_early_tmcb_list(struct sip_msg *msg, struct cell *t)
+{
+	if (msg->id!=tmcb_early_hl.msgid) {
+		t->tmcb_hl = tmcb_early_hl.cb_list;
+		memset(&tmcb_early_hl.cb_list, 0, sizeof(struct tmcb_head_list));
+		tmcb_early_hl.msgid = 0;
+	}
+}
 
 int init_tmcb_lists()
 {
@@ -95,7 +124,8 @@ void destroy_tmcb_lists()
 		for( cbp=(struct tm_callback*)req_in_tmcb_hl->first; cbp ; ) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
-			if (cbp_tmp->param) shm_free( cbp_tmp->param );
+			if (cbp_tmp->param && cbp_tmp->release)
+					cbp_tmp->release( cbp_tmp->param );
 			shm_free( cbp_tmp );
 		}
 		shm_free(req_in_tmcb_hl);
@@ -105,7 +135,8 @@ void destroy_tmcb_lists()
 		for( cbp=(struct tm_callback*)local_req_in_tmcb_hl->first; cbp ; ) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
-			if (cbp_tmp->param) shm_free( cbp_tmp->param );
+			if (cbp_tmp->param && cbp_tmp->release)
+					cbp_tmp->release( cbp_tmp->param );
 			shm_free( cbp_tmp );
 		}
 		shm_free(local_req_in_tmcb_hl);
@@ -207,17 +238,15 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 				return E_BUG;
 			}
 			/* look for the transaction */
-			if ( t_check(p_msg,0)!=1 ){
-				LOG(L_CRIT,"BUG:tm:register_tmcb: no transaction found\n");
-				return E_BUG;
+			t=get_t();
+			if ( t!=0 && t!=T_UNDEFINED) {
+				cb_list = &(t->tmcb_hl);
+			} else {
+				cb_list = get_early_tmcb_list(p_msg);
 			}
-			if ( (t=get_t())==0 ) {
-				LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found "
-					"is NULL\n");
-				return E_BUG;
-			}
+		} else {
+			cb_list = &(t->tmcb_hl);
 		}
-		cb_list = &(t->tmcb_hl);
 	}
 
 	return insert_tmcb( cb_list, types, f, param, rel_func );
