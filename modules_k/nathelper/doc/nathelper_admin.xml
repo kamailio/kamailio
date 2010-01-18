@@ -24,17 +24,18 @@
 	address. 
 	</para>
 	<para>
-	Function fix_nated_contact() 
-		rewrites Contact header field with request's source
-	address:port pair.  
-		Function fix_nated_sdp() adds the active direction
-	indication to &sdp; (flag 
-		0x01) and updates source &ip; address too (flag 0x02).
+		Function fix_nated_contact() rewrites Contact header field with request's source
+		address:port pair. Function fix_nated_sdp() adds the active direction ndication 
+		to &sdp; (flag 0x01) and updates source &ip; address too (flag 0x02). Function
+		fix_nated_register() exports exports the request's source address:port into an AVP
+		to be used during save() and should be used for REGISTER requests.
 	</para>
-	<para>
-	Alternative to fix_nated_contact() is add_contact_alias() that
-	together with handle_ruri_alias() also supports reuse of tcp
-	connections.
+        <para>
+		Note: fix_nated_contact changes the Contact header, thus it breaks the RFC.
+		Although usually this is not an issue, it may cause problems with strict
+		SIP clients. There is an alternative approach by using add_contact_alias() that
+		together with handle_ruri_alias() is standard conform and also supports reuse 
+		of TCP/TLS connections.
 	</para>
 	<para>
 		Known devices that get along over &nat;s with nathelper are ATAs 
@@ -596,6 +597,18 @@ force_rtp_proxy();
 		one in SDP.
 		</para>
 		<para>
+		Note: Behavior of rtpproxy depends on the mode in which rtpproxy is running: If
+		rtpproxy listens only to a single interface, then rtpproxy is default symmetric (port),
+		if rtpproxy listens to two interfaces (so called bridge-mode), then rtpproxy is
+		default asymmetric (port).
+		</para>
+		<para>
+		Note: Regardless of symmetric/asymmetric rtpproxy mode, per default rtpproxy accepts
+		incoming RTP packets only from the same IP address as the SIP signaling was received.
+		Thus, if a SIP client uses different IP for media and SIP (often seen with SBCs), the
+		'r' flag must be specified.
+		</para>
+		<para>
 		The function is considered depreciated and provided for the compatibility
 		purposes.  Use rtpproxy_offer() or rtpproxy_answer() instead.
 		</para>
@@ -608,7 +621,7 @@ force_rtp_proxy();
 			<itemizedlist>
 				<listitem><para>
 				<emphasis>a</emphasis> - flags that UA from which message is
-				received doesn't support symmetric RTP.
+				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
 				</para></listitem>
 				<listitem><para>
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
@@ -617,14 +630,19 @@ force_rtp_proxy();
 				completed (reply in non-swap or ACK in swap mode).
 				</para></listitem>
 				<listitem><para>
-				<emphasis>i</emphasis> - flags that message is received from 
-				UA in the LAN (internal network). Only makes sense when 
-				RTP proxy is running in the bridge mode.
-				</para></listitem>
-				<listitem><para>
-				<emphasis>e</emphasis> - flags that message is received from 
-				UA in the WAN (external network). Only makes sense when RTP 
-				proxy is running in the bridge mode.
+				<emphasis>i, e</emphasis> - these flags specify the direction of the SIP
+				message. These flags only make sense when rtpproxy is running in bridge mode.
+				'i' means internal network (LAN), 'e' means external network (WAN). 'i'
+				corresponds to rtpproxy's first interface, 'e' corresponds to rtpproxy's
+				second interface. You always have to specify two flags to define
+				the incoming network and the outgoing network. For example, 'ie' should be
+				used for SIP message received from the local interface and sent out on the
+				external interface, and 'ei' vice versa. Other options are 'ii' and 'ee'.
+				So, for example if a SIP requests is processed with 'ie' flags, the corresponding
+				response must be processed with 'ie' flags.
+				</para><para>
+				Note: As rtpproxy is in bridge mode per default asymmetric, you have to specify
+				the 'w' flag for clients behind NAT! See also above notes!
 				</para></listitem>
 				<listitem><para>
 				<emphasis>f</emphasis> - instructs nathelper to ignore marks 
