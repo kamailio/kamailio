@@ -1,0 +1,1 @@
+id(int,auto) username(string) domain(string) groupid(int) description(string) 

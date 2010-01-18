@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+ruleid(int) groupid(str) prefix(str) timerec(str) priority(int) routeid(str) gwlist(str) description(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|0|NIL|NIL|''

@@ -1,0 +1,1 @@
+gwid(int,auto) type(int) address(string) strip(int) pri_prefix(string,null) attrs(string,null) description(string) 

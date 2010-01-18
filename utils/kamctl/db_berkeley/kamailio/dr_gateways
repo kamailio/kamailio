@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+gwid(int) type(int) address(str) strip(int) pri_prefix(str) attrs(str) description(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|0|NIL|0|NULL|NULL|''
