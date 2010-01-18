@@ -32,11 +32,11 @@ CPL=cpl_ignore.xml
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 
-../$BIN -w . -f $CFG &> /dev/null;
+$BIN -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
-../scripts/$CTL fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
+$CTL fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml &> /dev/null;
@@ -44,14 +44,14 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/$CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
+  $CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
   diff $TMPFILE $CPL 
   ret=$?
 fi; 
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/$CTL fifo REMOVE_CPL sip:alice@127.0.0.1
-  ../scripts/$CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
+  $CTL fifo REMOVE_CPL sip:alice@127.0.0.1
+  $CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
 fi;
 
 diff $TMPFILE $CPL &> /dev/null;
