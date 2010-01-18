@@ -605,7 +605,8 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 									trans->uas.request, FAKED_REPLY, code);
 #ifdef TMCB_ONSEND
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
-				INIT_TMCB_ONSEND_PARAMS(onsend_params, 0, 0, rb, &rb->dst, 
+				INIT_TMCB_ONSEND_PARAMS(onsend_params, trans->uas.request,
+								FAKED_REPLY, rb, &rb->dst, 
 								buf, len, TMCB_LOCAL_F, rb->branch, code);
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, trans,
 										&onsend_params);
