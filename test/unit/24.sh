@@ -31,7 +31,7 @@ fi ;
 
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 
-cd ../scripts
+cd ../../utils/kamctl/
 
 # setup config file
 cp $CTLRC $CTLRC.bak
@@ -54,5 +54,5 @@ fi ;
 mv $CTLRC.bak $CTLRC
 mv $DBCTL.bak $DBCTL
 
-cd ../test
+cd -
 exit $ret
