@@ -2801,7 +2801,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp, payload_types;
 	str oldrtcp, newrtcp;
-	int create, port, len, asymmetric, flookup, argc, proxied, real;
+	int create, port, len, flookup, argc, proxied, real;
 	int orgip, commip;
 	int pf, pf1, force, swap;
 	struct options opts, rep_opts, pt_opts;
@@ -2845,7 +2845,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		LM_ERR("out of pkg memory\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	asymmetric = flookup = force = real = orgip = commip = swap = 0;
+	flookup = force = real = orgip = commip = swap = 0;
 	for (cp = str1; cp != NULL && *cp != '\0'; cp++) {
 		switch (*cp) {
 		case 'a':
@@ -2854,7 +2854,6 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 				LM_ERR("out of pkg memory\n");
 				FORCE_RTP_PROXY_RET (-1);
 			}
-			asymmetric = 1;
 			real = 1;
 			break;
 
@@ -3110,7 +3109,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			extract_rtcp(&tmpstr1, &oldrtcp);
 			
 			++medianum;
-			if (asymmetric != 0 || real != 0) {
+			if (real != 0) {
 				newip = oldip;
 			} else {
 				newip.s = ip_addr2a(&msg->rcv.src_ip);
