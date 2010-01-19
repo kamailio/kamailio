@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module loads data indexed by prefixes from database and returns
+		associated string or precompiled value.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>A &kamailio; database module (e.g., mysql)</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		URL of the database server to be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "db_url", "&exampledb;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mtree</varname> (string)</title>
+	    <para>
+		Definition of memory tree
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>none</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mtree</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>tprefix_column</varname> (string)</title>
+	    <para>
+		Name of 'tprefix' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>tprefix</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>prefix_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "tprefix_column", "prefix")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>tvalue_column</varname> (string)</title>
+	    <para>
+		Name of 'tvalue' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>tvalue</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>tvalue_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "tvalue_column", "ipaddr")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>fetch_rows</varname> (integer)</title>
+	    <para>
+		Number of rows to be loaded in one step from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1000.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "fetch_rows", 4000)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>char_list</varname> (string)</title>
+	    <para>
+		The list with characters allowed in prefix.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0123456789</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>char_list</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "char_list", "0123456789*+")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>pv_value</varname> (string)</title>
+	    <para>
+		The PV spec where to store the matched value. It can be any
+		writtable PV.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(s:tvalue)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_value", "$var(mtval)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+    <section>
+	<title>Exported Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">mt_match(mtree, pv, mode)</function>
+	    </title>
+	    <para>
+		Match 'pv' value against mtree. mode is reserved for further
+		use, now set any integer or PV.
+	    </para>
+		<example>
+		<title><function>mt_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+mt_match("mytree", "$rU", "0");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+	
+	<section>
+		<title>Exported MI Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">mt_list</function>
+		</title>
+		<para>
+		List content of a tree.
+		</para>
+		<para>
+		Name: <emphasis>mt_list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_ : name of tree to list. </para></listitem>	  
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:mt_list:_reply_fifo_file_
+		_mtname_
+		_empty_line_
+		</programlisting>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">mt_reload</function>
+		</title>
+		<para>
+		Reload mtree from database.
+		</para>
+		<para>
+		Name: <emphasis>mt_mtree</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtname_</para> - name of mem tree</listitem>	  
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:mt_reload:_reply_fifo_file_
+		_mtname_
+		_empty_line_
+		</programlisting>
+    </section>
+    </section>
+
+</chapter>
+
