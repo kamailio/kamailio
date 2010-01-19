@@ -39,3 +39,4 @@ fwd_always_target:sip_adr:2::@attr_fwd_always_target:33:0:256:0:60:other
 domain_data_version:int:0::Version of data in domain table:33:0:0:0:0:other
 sw_highest_alias_number:int:0::highest assigned alias number:32:0:0:0:0:other
 gattr_timestamp:int:0::Version of global attrs data:33:0:0:0:0:other
+sw_max_uri_user:int:0:a\:3\:{s\:3\:\"min\";s\:1\:\"0\";s\:3\:\"max\";s\:3\:\"999\";s\:3\:\"err\";N;}:@ff_max_uri_user:32:4096:1073807360:3:0:other

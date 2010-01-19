@@ -11,3 +11,4 @@ lang:2:en:33
 sw_timezone:2:Europe/Prague:32
 uid_format:2:0:32
 did_format:2:0:32
+sw_max_uri_user:0:5:32

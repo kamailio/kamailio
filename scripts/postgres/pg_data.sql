@@ -78,6 +78,8 @@ DELETE FROM attr_types WHERE name='sw_highest_alias_number';
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_highest_alias_number', '0', 'int', 'highest assigned alias number', '32', '0', '0', '0');
 DELETE FROM attr_types WHERE name='gattr_timestamp';
 INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('gattr_timestamp', '0', 'int', 'Version of global attrs data', '33', '0', '0', '0');
+DELETE FROM attr_types WHERE name='sw_max_uri_user';
+INSERT INTO attr_types (name, raw_type, rich_type, type_spec, description, default_flags, flags, priority, access, ordering, grp) VALUES ('sw_max_uri_user', '0', 'int', 'a:3:{s:3:\"min\";s:1:\"0\";s:3:\"max\";s:3:\"999\";s:3:\"err\";N;}', '@ff_max_uri_user', '32', '4096', '1073807360', '3', '0', 'other');
 
 DELETE FROM global_attrs WHERE name='sw_domain_default_flags';
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_domain_default_flags', '0', '33', '32');
@@ -97,6 +99,7 @@ INSERT INTO global_attrs (name, type, value, flags) VALUES ('lang', '2', 'en', '
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_timezone', '2', 'Europe/Prague', '32');
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('uid_format', '2', '0', '32');
 INSERT INTO global_attrs (name, type, value, flags) VALUES ('did_format', '2', '0', '32');
+INSERT INTO global_attrs (name, type, value, flags) VALUES ('sw_max_uri_user', '0', '5', '32');
 
 INSERT INTO i18n (code, lang, new_reason) VALUES ('100', 'en_US.ascii', 'Trying');
 INSERT INTO i18n (code, lang, new_reason) VALUES ('180', 'en_US.ascii', 'Ringing');

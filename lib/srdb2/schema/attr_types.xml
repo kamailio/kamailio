@@ -577,4 +577,18 @@
 	<value col="at.order">0</value>
   </row>
 
+  <row vendor-controlled="1">
+	<value col="at.name">sw_max_uri_user</value>
+	<value col="at.type">0</value>
+	<value col="at.rich_t">int</value>
+	<value col="at.type_spec">a:3:{s:3:\"min\";s:1:\"0\";s:3:\"max\";s:3:\"999\";s:3:\"err\";N;}</value>
+	<value col="at.desc">@ff_max_uri_user</value>
+	<value col="at.d_flags">32</value>
+	<value col="at.flags">4096</value>
+	<value col="at.prior">1073807360</value>
+	<value col="at.access">3</value>
+	<value col="at.order">0</value>
+	<value col="at.grp">other</value>
+  </row>
+
 </table>

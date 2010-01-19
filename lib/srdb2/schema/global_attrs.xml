@@ -274,4 +274,11 @@
 	<value col="global_attrs.flags">32</value>
   </row>
   
+  <row>
+	<value col="global_attrs.name">sw_max_uri_user</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">5</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
 </table>
