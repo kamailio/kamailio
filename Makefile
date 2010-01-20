@@ -224,6 +224,8 @@ else
 	exclude_modules+= bdb dbtext iptrtpproxy pa rls
 	# dcm: for now needs backports from sr
 	exclude_modules+= mtree
+	# depends on libgeoip
+	exclude_modules+= geoip
 endif
 
 # always exclude the CVS dir
