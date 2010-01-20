@@ -1,0 +1,135 @@
+geoip Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. path (string)
+
+        4. Exported Functions
+
+              4.1. geoip_match(ipaddr, pvc)
+
+        5. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Set path parameter
+   1.2. geoip_match usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. path (string)
+
+   4. Exported Functions
+
+        4.1. geoip_match(ipaddr, pvc)
+
+   5. Exported pseudo-variables
+
+1. Overview
+
+   The module loads exports a new class of pseudo-variables -
+   $gip(pvc=>key) - to access results upon a query against Max Mind GeoIP
+   database.
+
+   Many queries can be done and store results in different containers to
+   be able to use in parallel. Database is loaded at startup in chache.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libgeoip - the GeoIP library.
+
+3. Exported Parameters
+
+   3.1. path (string)
+
+3.1. path (string)
+
+   Path to GeoIP database file.
+
+   Default value is "null".
+
+   Example 1.1. Set path parameter
+...
+modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
+...
+
+4. Exported Functions
+
+   4.1. geoip_match(ipaddr, pvc)
+
+4.1.  geoip_match(ipaddr, pvc)
+
+   Match ipaddr against GeoIP database and set the pvc container. The
+   function has to be called before accessing any $gip(pvc=>key).
+
+   Example 1.2. geoip_match usage
+...
+if(geoip_match("$si", "src"))
+    xlog("SIP message from: $gip(src=>cc)\n");
+...
+
+5. Exported pseudo-variables
+
+     * $gip(pvc=>key) - pvc is second parameter of geoip_match() and key
+       can be:
+          + cc - country code
+          + tz - time zone
+          + zip - postal code
+          + lat - latitude
+          + lon - longitude
+          + dma - dma code
+          + ips - ip start
+          + ipe - ip end
+          + city - city
+          + area - area code
+          + regc - region
+          + regn - region name
+          + metro - metro code
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.
