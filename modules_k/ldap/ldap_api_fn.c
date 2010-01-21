@@ -158,6 +158,7 @@ int ldap_params_search(
 {
 	int rc;
 	static char filter_str[LDAP_MAX_FILTER_LEN];
+	char *filter_ptr = NULL;
 	va_list filter_vars;
 
 	/*
@@ -174,24 +175,29 @@ int ldap_params_search(
 		return -1;
 	}
 
-	/*
-	* vsnprintf
-	*/
-	va_start(filter_vars, _filter);
-	rc = vsnprintf(filter_str, (size_t)LDAP_MAX_FILTER_LEN, _filter,
-			filter_vars);
-	if (rc >= LDAP_MAX_FILTER_LEN)
-	{
-		LM_ERR(	"[%s]: filter string too long (len [%d], max len [%d])\n",
-			_lds_name,
-			rc, 
-			LDAP_MAX_FILTER_LEN);
-		return -1;
-	}
-	else if (rc < 0)
-	{
-		LM_ERR("vsnprintf failed\n");
-		return -1;
+	if (_filter) {
+		/*
+		* vsnprintf
+		*/
+		va_start(filter_vars, _filter);
+		rc = vsnprintf(filter_str, (size_t)LDAP_MAX_FILTER_LEN, _filter,
+				filter_vars);
+		va_end(filter_vars);
+
+		if (rc >= LDAP_MAX_FILTER_LEN)
+		{
+			LM_ERR(	"[%s]: filter string too long (len [%d], max len [%d])\n",
+				_lds_name,
+				rc,
+				LDAP_MAX_FILTER_LEN);
+			return -1;
+		}
+		else if (rc < 0)
+		{
+			LM_ERR("vsnprintf failed\n");
+			return -1;
+		}
+		filter_ptr = filter_str;
 	}
 
 	/*
@@ -200,7 +206,7 @@ int ldap_params_search(
 	if (lds_search(_lds_name,
 			_dn,
 			_scope,
-			filter_str,
+			filter_ptr,
 			_attrs,
 			NULL,
 			_ld_result_count,
