@@ -1885,7 +1885,7 @@ int main(int argc, char** argv)
 	port_no=0;
 	sock_type=UNIXS_SOCK;
 	opterr=0;
-	while((c=getopt(argc, argv, "Vhs:D:R:vf:"))!=-1){
+	while((c=getopt(argc, argv, "UVhs:D:R:vf:"))!=-1){
 		switch(c){
 			case 'V':
 				printf("version: %s\n", version);
