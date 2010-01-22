@@ -273,6 +273,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<emphasis>
 			Default value is 503.
 		</emphasis>
+
 		</para>
 		<example>
 		<title>Set <varname>reply_code</varname> parameter</title>
@@ -281,6 +282,17 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 modparam("ratelimit", "reply_code", 505)
 ...
 </programlisting>
+		</example>
+		<para>
+		This value cant be modified at runtime using sercmd
+		</para>
+		<example>
+		<title> Set <varname>reply_code</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+sercmd cfg.set_now_int ratelimit reply_code 505
+
+		</programlisting>
 		</example>
 	</section>
 	<section>
@@ -300,6 +312,17 @@ modparam("ratelimit", "reply_code", 505)
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
 </programlisting>
+		</example>
+		<para>
+		This value cant be modified at runtime using sercmd
+		</para>
+		<example>
+		<title> Set <varname>reply_reason</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
+
+		</programlisting>
 		</example>
 	</section>
 	</section>
@@ -700,4 +723,3 @@ modparam("ratelimit", "reply_reason", "Limiting")
 	</para>
 	</section>
 </chapter>
-

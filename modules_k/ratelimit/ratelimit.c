@@ -35,6 +35,7 @@
 #include <regex.h>
 #include <math.h>
 
+
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../sr_module.h"
@@ -50,6 +51,8 @@
 #include "../sl/sl_api.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../lib/kmi/mi.h"
+
+#include "config.h"
 
 MODULE_VERSION
 
@@ -101,6 +104,7 @@ str_map_t algo_names[] = {
 	{{0, 0},		0},
 };
 
+
 /* at jiri@iptel.org's suggestion:
  *
  * set this to 'cpu' to have openser look at /proc/stat every time_interval
@@ -118,8 +122,6 @@ str_map_t source_names[] = {
 	{{0, 0},		0},
 };
 
-static int rl_drop_code = 503;
-static str rl_drop_reason = str_init("Server Unavailable");
 
 typedef struct pipe {
 	/* stuff that gets read as a modparam or set via fifo */
@@ -231,8 +233,8 @@ static param_export_t params[]={
 	{"timer_interval", INT_PARAM,                &timer_interval},
 	{"queue",          STR_PARAM|USE_FUNC_PARAM, (void *)add_queue_params},
 	{"pipe",           STR_PARAM|USE_FUNC_PARAM, (void *)add_pipe_params},
-	{"reply_code",     INT_PARAM,                &rl_drop_code},
-	{"reply_reason",   STR_PARAM,                &rl_drop_reason.s},
+	{"reply_code",     INT_PARAM,                &default_ratelimit_cfg.reply_code},
+	{"reply_reason",   STR_PARAM,                &default_ratelimit_cfg.reply_reason},
 	/* RESERVED for future use
 	{"load_source",    STR_PARAM|USE_FUNC_PARAM, (void *)set_load_source},
 	*/
@@ -516,6 +518,13 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* load configurations*/
+	if( cfg_declare("ratelimit", ratelimit_cfg_def, &default_ratelimit_cfg, cfg_sizeof(ratelimit), 
+		&ratelimit_cfg )){
+		LM_ERR("failed to declare the configuration");
+		return -1;
+	}
+	
 	*network_load_value = 0;
 	*load_value = 0.0;
 	*load_source = load_source_mp;
@@ -586,8 +595,6 @@ static int mod_init(void)
 		queues[i].method_mp.s = NULL;
 		queues[i].method_mp.len = 0;
 	}
-
-	rl_drop_reason.len = strlen(rl_drop_reason.s);
 
 	return 0;
 }
@@ -703,10 +710,19 @@ static int rl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 {
 	str hdr;
 	int ret;
-
+	int drop_code;
+	str drop_reason;
+	
 	LM_DBG("(%d, %d)\n", low, high);
 
 	if (slb.send_reply != 0) {
+		if ( (drop_code = cfg_get(ratelimit, ratelimit_cfg, reply_code)) == 0 )
+			drop_code = DEFAULT_REPLY_CODE;
+		
+		if ( (drop_reason.s = cfg_get(ratelimit, ratelimit_cfg, reply_reason)) == 0 )
+			drop_reason.s = DEFAULT_REPLY_REASON;
+		drop_reason.len = strlen(drop_reason.s);
+
 		if (low != 0 && high != 0) {
 			hdr.s = (char *)pkg_malloc(64);
 			if (hdr.s == 0) {
@@ -731,12 +747,11 @@ static int rl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 				pkg_free(hdr.s);
 				return 0;
 			}
-
-			ret = slb.send_reply(msg, rl_drop_code, &rl_drop_reason);
+			ret = slb.send_reply(msg, drop_code, &drop_reason);
 
 			pkg_free(hdr.s);
 		} else {
-			ret = slb.send_reply(msg, rl_drop_code, &rl_drop_reason);
+			ret = slb.send_reply(msg, drop_code, &drop_reason);
 		}
 	} else {
 		LM_ERR("Can't send reply\n");

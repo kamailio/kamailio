@@ -80,10 +80,12 @@ Hendrik Scholz
    1.2. Set queue parameter
    1.3. Set pipe parameter
    1.4. Set reply_code parameter
-   1.5. Set reply_reason parameter
-   1.6. rl_check usage
-   1.7. rl_check_pipe usage
-   1.8. rl_drop usage
+   1.5. Set reply_code parameter at runtime
+   1.6. Set reply_reason parameter
+   1.7. Set reply_reason parameter at runtime
+   1.8. rl_check usage
+   1.9. rl_check_pipe usage
+   1.10. rl_drop usage
 
 Chapter 1. Admin Guide
 
@@ -345,16 +347,26 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 modparam("ratelimit", "reply_code", 505)
 ...
 
+   This value cant be modified at runtime using sercmd
+
+   Example 1.5.  Set reply_code parameter at runtime
+sercmd cfg.set_now_int ratelimit reply_code 505
+
 6.5. reply_reason (string)
 
    The reason of the reply sent by Kamailio while limiting.
 
    Default value is "Server Unavailable".
 
-   Example 1.5. Set reply_reason parameter
+   Example 1.6. Set reply_reason parameter
 ...
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
+
+   This value cant be modified at runtime using sercmd
+
+   Example 1.7.  Set reply_reason parameter at runtime
+sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
 7. Exported Functions
 
@@ -362,7 +374,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
    7.2. rl_check_pipe([pipe_no])
    7.3. rl_drop([[min ], max])
 
-7.1. rl_check([pvar])
+7.1.  rl_check([pvar])
 
    Check the current request against the matched ratelimit algorithm. If
    no parameter is provided, the queue will be matched based on method
@@ -381,7 +393,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.6. rl_check usage
+   Example 1.8. rl_check usage
 ...
         # perform queue/pipe match for current method
         if (!rl_check()) {
@@ -406,7 +418,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
         };
 ...
 
-7.2. rl_check_pipe([pipe_no])
+7.2.  rl_check_pipe([pipe_no])
 
    Check the current request against the matched ratelimit algorithm. If
    no parameter is provided, the queue will be matched based on method
@@ -422,7 +434,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.7. rl_check_pipe usage
+   Example 1.9. rl_check_pipe usage
 ...
         # perform queue/pipe match for current method
         if (!rl_check_pipe()) {
@@ -437,7 +449,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
         };
 ...
 
-7.3. rl_drop([[min ], max])
+7.3.  rl_drop([[min ], max])
 
    For the current request, a "503 - Server Unavailable" reply is sent
    back. The reply may or may not have a "Retry-After" header. If no
@@ -453,7 +465,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.8. rl_drop usage
+   Example 1.10. rl_drop usage
 ...
         if (!rl_check()) {
                 # send back a "503 - Server Unavailable"
@@ -475,7 +487,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
    8.8. rl_push_load
    8.9. rl_set_dbg
 
-8.1. rl_stats
+8.1.  rl_stats
 
    Lists the parameters and variabiles in the ratelimit module.
 
@@ -487,7 +499,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 :rl_stats:_reply_fifo_file_
                 _empty_line_
 
-8.2. rl_set_pipe
+8.2.  rl_set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -505,7 +517,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 10
                 _empty_line_
 
-8.3. rl_get_pipes
+8.3.  rl_get_pipes
 
    Gets the list of in use pipes.
 
@@ -517,7 +529,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 :rl_get_pipes:_reply_fifo_file_
                 _empty_line_
 
-8.4. rl_set_queue
+8.4.  rl_set_queue
 
    Sets the queue parameters for the given queue id.
 
@@ -535,7 +547,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 2
                 _empty_line_
 
-8.5. rl_get_queues
+8.5.  rl_get_queues
 
    Gets the list of in use queues.
 
@@ -547,7 +559,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 :rl_get_queues:_reply_fifo_file_
                 _empty_line_
 
-8.6. rl_set_pid
+8.6.  rl_set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -565,7 +577,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 0.5
                 _empty_line_
 
-8.7. rl_get_pid
+8.7.  rl_get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -577,7 +589,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 :rl_get_pid:_reply_fifo_file_
                 _empty_line_
 
-8.8. rl_push_load
+8.8.  rl_push_load
 
    Force the value of the load parameter. This methos is usefull for
    testing the Feedback algorithm.
@@ -593,7 +605,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 0.85
                 _empty_line_
 
-8.9. rl_set_dbg
+8.9.  rl_set_dbg
 
    This MI function will enable/disable a WARNING debug log exposing the
    internal counters for each pipe (useful in monitoring the ratelimit
