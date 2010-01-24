@@ -231,9 +231,9 @@ struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl, int rpl_code)
 	}
 	for( hdr=rpl->headers ; hdr ; hdr=hdr->next )
 	{
-		if ( hdr->type!=HDR_OTHER_T )
-			continue;
-		if (cmp_hdrname_str(&hdr->name, &hdr_name)==0)
+		if ( rpl_code==WWW_AUTH_CODE && hdr->type==HDR_WWW_AUTHENTICATE_T )
+			return hdr;
+		if ( rpl_code==PROXY_AUTH_CODE && hdr->type==HDR_PROXY_AUTHENTICATE_T )
 			return hdr;
 	}
 
