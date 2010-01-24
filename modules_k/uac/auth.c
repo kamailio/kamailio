@@ -201,8 +201,7 @@ void destroy_credentials(void)
 }
 
 
-static inline struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl,
-																int rpl_code)
+struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl, int rpl_code)
 {
 	struct hdr_field *hdr;
 	str hdr_name;
@@ -288,8 +287,9 @@ static inline struct uac_credential *get_avp_credential(struct sip_msg *msg,
 }
 
 
-static inline void do_uac_auth(struct sip_msg *req, str *uri,
-		struct uac_credential *crd, struct authenticate_body *auth,
+void do_uac_auth(str *method, str *uri,
+		struct uac_credential *crd,
+		struct authenticate_body *auth,
 		HASHHEX response)
 {
 	HASHHEX ha1;
@@ -303,7 +303,7 @@ static inline void do_uac_auth(struct sip_msg *req, str *uri,
 
 		/* do authentication */
 		uac_calc_HA1( crd, auth, &cnonce, ha1);
-		uac_calc_HA2( &req->first_line.u.request.method, uri,
+		uac_calc_HA2( method, uri,
 			auth, 0/*hentity*/, ha2 );
 
 		uac_calc_response( ha1, ha2, auth, &nc, &cnonce, response);
@@ -312,7 +312,7 @@ static inline void do_uac_auth(struct sip_msg *req, str *uri,
 	} else {
 		/* do authentication */
 		uac_calc_HA1( crd, auth, 0/*cnonce*/, ha1);
-		uac_calc_HA2( &req->first_line.u.request.method, uri,
+		uac_calc_HA2( method, uri,
 			auth, 0/*hentity*/, ha2 );
 
 		uac_calc_response( ha1, ha2, auth, 0/*nc*/, 0/*cnonce*/, response);
@@ -444,7 +444,8 @@ int uac_auth( struct sip_msg *msg)
 	}
 
 	/* do authentication */
-	do_uac_auth( msg, &t->uac[branch].uri, crd, &auth, response);
+	do_uac_auth( &msg->first_line.u.request.method,
+			&t->uac[branch].uri, crd, &auth, response);
 
 	/* build the authorization header */
 	new_hdr = build_authorization_hdr( code, &t->uac[branch].uri,

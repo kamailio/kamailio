@@ -33,23 +33,6 @@
 
 #include "auth.h"
 
-struct authenticate_body {
-	int flags;
-	str realm;
-	str domain;
-	str nonce;
-	str opaque;
-	str qop;
-	str *nc;
-	str *cnonce;
-};
-
-#define AUTHENTICATE_MD5         (1<<0)
-#define AUTHENTICATE_MD5SESS     (1<<1)
-#define AUTHENTICATE_STALE       (1<<2)
-#define QOP_AUTH                 (1<<3)
-#define QOP_AUTH_INT             (1<<4)
-
 int parse_authenticate_body( str *body, struct authenticate_body *auth);
 
 str* build_authorization_hdr(int code, str *uri,

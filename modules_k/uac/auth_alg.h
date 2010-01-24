@@ -31,16 +31,8 @@
 
 #include "../../str.h"
 
-#include "auth_hdr.h"
 #include "auth.h"
 
-
-#define HASHLEN 16
-typedef char HASH[HASHLEN];
-
-
-#define HASHHEXLEN 32
-typedef char HASHHEX[HASHHEXLEN+1];
 
 void uac_calc_HA1( struct uac_credential *crd,
 		struct authenticate_body *auth,
