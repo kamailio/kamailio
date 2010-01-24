@@ -398,7 +398,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 						(_uac_req.s_ouri.len<=0)?NULL:&_uac_req.s_ouri /* outbound uri */
 		);
 
-	if(ret!=0)
+	if(ret<0)
 		return -1;
 	return 1;
 }
