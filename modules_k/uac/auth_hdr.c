@@ -314,7 +314,7 @@ str* build_authorization_hdr(int code, str *uri,
 		struct uac_credential *crd, struct authenticate_body *auth,
 		char *response)
 {
-	static str hdr;
+	static str _uac_auth_hdr;
 	char *p;
 	int len;
 	int response_len;
@@ -337,14 +337,14 @@ str* build_authorization_hdr(int code, str *uri,
 				NC_FIELD_LEN + auth->nc->len + FIELD_SEPARATOR_UQ_LEN +
 				CNONCE_FIELD_LEN + auth->cnonce->len + FIELD_SEPARATOR_LEN;
 
-	hdr.s = (char*)pkg_malloc( len + 1);
-	if (hdr.s==0)
+	_uac_auth_hdr.s = (char*)pkg_malloc( len + 1);
+	if (_uac_auth_hdr.s==0)
 	{
 		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 
-	p = hdr.s;
+	p = _uac_auth_hdr.s;
 	/* header start */
 	if (code==401)
 	{
@@ -395,20 +395,20 @@ str* build_authorization_hdr(int code, str *uri,
 	add_string( p, FIELD_SEPARATOR_S ALGORITHM_FIELD_S CRLF,
 		FIELD_SEPARATOR_LEN+ALGORITHM_FIELD_LEN+CRLF_LEN);
 
-	hdr.len = p - hdr.s;
+	_uac_auth_hdr.len = p - _uac_auth_hdr.s;
 
-	if (hdr.len!=len)
+	if (_uac_auth_hdr.len!=len)
 	{
 		LM_CRIT("BUG: bad buffer computation "
-			"(%d<>%d)\n",len,hdr.len);
-		pkg_free( hdr.s );
+			"(%d<>%d)\n",len,_uac_auth_hdr.len);
+		pkg_free( _uac_auth_hdr.s );
 		goto error;
 	}
 
 	LM_DBG("hdr is <%.*s>\n",
-		hdr.len,hdr.s);
+		_uac_auth_hdr.len,_uac_auth_hdr.s);
 
-	return &hdr;
+	return &_uac_auth_hdr;
 error:
 	return 0;
 }
