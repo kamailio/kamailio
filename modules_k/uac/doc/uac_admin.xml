@@ -20,7 +20,8 @@
 		UAC (User Agent Client) module provides some basic UAC
 		functionalities like FROM header manipulation (anonymization)
 		or client authentication. From version 1.5.0 it has function to
-		send SIP message from configuration file.
+		send SIP message from configuration file. Version 3.1.0 adds user
+		registration functionality.
 		</para>
 		<para>
 		Known limitations in this version:
@@ -248,6 +249,36 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 				</programlisting>
 			</example>
 		</section>
+		<section id="reg-db-url-id">
+			<title><varname>reg_db_url</varname> (string)</title>
+			<para>
+			DB URL to fetch user profiles for registration.
+			</para>
+			<example>
+				<title>Set <varname>reg_db_url</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_db_url",
+    "mysql://openser:openserrw@localhost/openser")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="reg-contact-addr-id">
+			<title><varname>reg_contact_addr</varname> (string)</title>
+			<para>
+			Address to be used to build contact address. Must be at least
+			host part, can have port and parameters. Must not include 'sip:'.
+			</para>
+			<example>
+				<title>Set <varname>reg_contact_addr</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 
@@ -370,6 +401,30 @@ $uac_req(ruri)="sip:kamailio.org";
 $uac_req(furi)="sip:kamailio.org";
 $uac_req(turi)="sip:kamailio.org";
 uac_req_send();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_reg_lookup(uuid, dst)</function>
+			</title>
+			<para>
+			This function sets the PV dst to SIP URI that correspond to uuid
+			in uac registations table. uuid and dst must be pseudo-variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_lookup</function> usage</title>
+				<programlisting format="linespecific">
+...
+
+if(uac_reg_lookup("$rU", "$ru"))
+{
+    lookup("location");
+}
 ...
 				</programlisting>
 			</example>
