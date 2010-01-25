@@ -1,0 +1,186 @@
+app_lua Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. load (string)
+
+        4. Exported Functions
+
+              4.1. lua_dofile(path)
+              4.2. lua_dostring(script)
+              4.3. lua_run(function, params)
+
+        5. Example of usage
+
+   List of Examples
+
+   1.1. Set load parameter
+   1.2. lua_dofile usage
+   1.3. lua_doscript usage
+   1.4. lua_doscript usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. load (string)
+
+   4. Exported Functions
+
+        4.1. lua_dofile(path)
+        4.2. lua_dostring(script)
+        4.3. lua_run(function, params)
+
+   5. Example of usage
+
+1. Overview
+
+   This module allows executing Lua scripts from config file. It exports a
+   set of functions to Lua in order to access the current processed SIP
+   message. These functions are within Lua module 'sr'.
+
+   Lua (http://www.lua.org) is a fast and easy to embed scripting
+   language. Exported API from SIP router to Lua is documented in the
+   dokuwiki.
+
+   The module has two Lua contexts:
+     * first is used for functions lua_dofile() and lua_dostring().
+     * second is used for function lua_run() and parameter 'load'.
+       Therefore lua_run() cannot execute functions from scripts loaded
+       via lua_dofile() in config. This is kind of caching mode, avoiding
+       reading file every time, but you must be sure you do not have
+       someting that is executed by default and requires access to SIP
+       message.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * liblua5.1-dev - Lua devel library.
+
+3. Exported Parameters
+
+   3.1. load (string)
+
+3.1. load (string)
+
+   Set the path to the Lua script to be loaded at startup. Then you can
+   use lua_run(function, params) to execute a function from the script at
+   runtime.
+
+   Default value is "null".
+
+   Example 1.1. Set load parameter
+...
+modparam("lua", "lua", "/usr/local/etc/kamailio/lua/myscript.lua")
+...
+
+4. Exported Functions
+
+   4.1. lua_dofile(path)
+   4.2. lua_dostring(script)
+   4.3. lua_run(function, params)
+
+4.1.  lua_dofile(path)
+
+   Execute the Lua script stored in 'path'.
+
+   Example 1.2. lua_dofile usage
+...
+lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
+...
+
+4.2.  lua_dostring(script)
+
+   Execute the Lua script stored in parameter.
+
+   Example 1.3. lua_doscript usage
+...
+if(!lua_dostring("sr.log([[err]], [[----------- Hello World\n]])"))
+{
+    xdbg("SCRIPT: failed to execute lua script!\n");
+}
+...
+
+4.3.  lua_run(function, params)
+
+   Execute the Lua function 'func' giving params as parameters. There can
+   be up to 3 string parameters. The function must exist in the script
+   loaded at startup via parameter 'load'. So far the parameters are
+   considered static strings (allowing pv is in the roadmap).
+
+   Example 1.4. lua_doscript usage
+...
+if(!lua_run("sr_append_fu_to_reply"))
+{
+    xdbg("SCRIPT: failed to execute lua function!\n");
+}
+...
+lua_run("lua_funcx", "1", "2");
+...
+
+5. Example of usage
+
+   Create your Lua script and stored on file system, say:
+   '/usr/local/etc/kamailio/lua/myscript.lua'.
+...
+function sr_append_fu_to_reply()
+        sr.hdr.append_to_reply("P-From: " .. sr.pv.get("$fu") .. "\r\n");
+end
+...
+
+   Load the script via parameter 'load' and execute function via
+   lua_run(...).
+...
+modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+...
+route {
+    ...
+    if(!lua_run("sr_append_fu_to_reply"))
+    {
+        xdbg("SCRIPT: failed to execute lua function!\n");
+    }
+    ...
+}
+...
