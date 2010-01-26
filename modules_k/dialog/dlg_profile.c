@@ -69,6 +69,16 @@ static struct dlg_profile_table* new_dlg_profile( str *name,
 		unsigned int size, unsigned int has_value);
 
 
+struct dlg_cell *get_current_dlg_pointer(void)
+{
+	return current_dlg_pointer;
+}
+
+void reset_current_dlg_pointer(void)
+{
+	current_dlg_pointer = NULL;
+}
+
 /*!
  * \brief Add profile definitions to the global list
  * \see new_dlg_profile

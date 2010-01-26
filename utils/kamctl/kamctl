@@ -866,11 +866,8 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 cisco_restart() {
 	require_ctlengine
 	myhost=`get_my_host`
-	RET=`$CTLCMD t_uac_dlg NOTIFY "$1" "." \
-		"From: sip:daemon@$myhost" \
-		"To: <$1>" "Event: check-sync" \
-		"Contact: <sip:daemon@!!>" "." "." |
-		head -1 `
+	CMD="t_uac_dlg NOTIFY $1 . . \"From:sip:daemon@$myhost\r\nTo:<$1>\r\nEvent:check-sync\r\nContact:sip:daemon@$myhost\r\n\""
+	RET=`$CTLCMD $CMD | head -1`
 	print_status $RET
 }
 

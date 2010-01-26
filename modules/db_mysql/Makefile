@@ -42,4 +42,12 @@ install-mysql-script: $(bin_prefix)/$(bin_dir)
 
 install-scripts: install-mysql-script
 
+else ifeq ($(INSTALL_FLAVOUR),kamailio)
+# extra install for kamailio
+
+install-mysql-scripts: $(bin_prefix)/$(bin_dir)
+		MYSQLON=yes make -C ../../utils/kamctl/ install-modules
+
+install-scripts: install-mysql-scripts
+
 endif # INSTALL_FLAVOUR

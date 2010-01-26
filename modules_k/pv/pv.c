@@ -68,6 +68,8 @@ static pv_export_t mod_pvs[] = {
 	{ {"sel", sizeof("sel")-1}, /* select */
 		PVT_OTHER, pv_get_select, 0,
 		pv_parse_select_name, 0, 0, 0 },
+	{{"snd", (sizeof("snd")-1)}, PVT_OTHER, pv_get_snd, 0,
+		pv_parse_snd_name, 0, 0, 0},
 
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,
 		pv_parse_avp_name, pv_parse_index, 0, 0},
@@ -420,11 +422,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(init_shvars()<0)
-	{
-		LM_ERR("init shvars failed\n");
-		return -1;
-	}
 	return 0;
 }
 

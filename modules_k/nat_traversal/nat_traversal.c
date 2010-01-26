@@ -49,6 +49,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../lib/kcore/statistics.h"
 #include "../dialog/dlg_load.h"
 #include "../../modules/tm/tm_load.h"
 #include "../sl/sl_cb.h"

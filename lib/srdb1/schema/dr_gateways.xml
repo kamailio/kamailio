@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dr_gateways" xmlns:db="http://docbook.org/ns/docbook">
+	<name>dr_gateways</name>
+	<version>3</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>This table is used by the douting module - keeps the
+			gateways data.
+		</db:para>
+	</description>
+
+	<column id="gwid">
+		<name>gwid</name>
+		<type>unsigned int</type>
+		<size>&table_id_len;</size>
+		<autoincrement/>
+		<primary/>
+		<type db="dbtext">int,auto</type>
+		<description>Unique ID per gateway
+		</description>
+	</column>
+
+	<column id="type">
+		<name>type</name>
+		<type>unsigned int</type>
+		<size>11</size>
+		<default>0</default>
+		<description>Type of gateway</description>
+	</column>
+
+	<column id="address">
+		<name>address</name>
+		<type>string</type>
+		<size>128</size>
+		<description>Address of gateway (hostname or ip and port)</description>
+	</column>
+
+	<column id="strip">
+		<name>strip</name>
+		<type>unsigned int</type>
+		<size>11</size>
+		<default>0</default>
+		<description>Number of digits to strip from dialed number</description>
+	</column>
+
+	<column id="pri_prefix">
+		<name>pri_prefix</name>
+		<type>string</type>
+		<size>64</size>
+		<null/>
+		<default><null/></default>
+		<description>What to prefix to dialed number</description>
+	</column>
+
+	<column id="attrs">
+		<name>attrs</name>
+		<type>string</type>
+		<size>255</size>
+		<null/>
+		<default><null/></default>
+		<description>Generic string to be returned in cfg script</description>
+	</column>
+
+	<column id="description">
+		<name>description</name>
+		<type>string</type>
+		<size>128</size>
+		<default></default>
+		<description>Short description of gateway</description>
+	</column>
+</table>
+

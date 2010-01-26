@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dr_rules" xmlns:db="http://docbook.org/ns/docbook">
+	<name>dr_rules</name>
+	<version>3</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>This table is used by the drouting module - keeps the
+			routing rules data.
+		</db:para>
+	</description>
+
+	<column id="ruleid">
+		<name>ruleid</name>
+		<type>unsigned int</type>
+		<size>&table_id_len;</size>
+		<autoincrement/>
+		<primary/>
+		<type db="dbtext">int,auto</type>
+		<description>Rule unique ID
+		</description>
+	</column>
+
+	<column id="groupid">
+		<name>groupid</name>
+		<type>string</type>
+		<size>255</size>
+		<description>list of routing group IDs
+		</description>
+	</column>
+
+	<column id="prefix">
+		<name>prefix</name>
+		<type>string</type>
+		<size>64</size>
+		<description>Destination prefix for this rule</description>
+	</column>
+
+	<column id="timerec">
+		<name>timerec</name>
+		<type>string</type>
+		<size>255</size>
+		<description>Time recurrence for this rule.</description>
+	</column>
+
+	<column id="priority">
+		<name>priority</name>
+		<type>int</type>
+		<size>11</size>
+		<default>0</default>
+		<description>Priority of the rule.</description>
+	</column>
+
+	<column id="routeid">
+		<name>routeid</name>
+		<type>string</type>
+		<size>64</size>
+		<description>Name of route block (from cfg script) to be
+			executed when matching this rule.</description>
+	</column>
+
+	<column id="gwlist">
+		<name>gwlist</name>
+		<type>string</type>
+		<size>255</size>
+		<description>The list of destinations (gws) to be used when
+		matching this rule.</description>
+	</column>
+
+	<column id="description">
+		<name>description</name>
+		<type>string</type>
+		<size>128</size>
+		<default></default>
+		<description>Short description of the rule</description>
+	</column>
+
+</table>
+

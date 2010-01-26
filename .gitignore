@@ -11,6 +11,7 @@ modules.lst
 *.d
 # ignore binary files and objects
 ser
+kamailio
 *.so
 *.so.*
 *.o

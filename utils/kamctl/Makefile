@@ -1,6 +1,12 @@
 # $Id$
 COREPATH=../..
 include $(COREPATH)/Makefile.defs
+include $(COREPATH)/config.mak
+
+all:
+		@echo "No compilation needed for kamctl"
+
+install-if-newer: install
 
 install: install-cfg install-bin install-man install-modules
 
@@ -81,7 +87,7 @@ install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 		chmod 644  $(man_prefix)/$(man_dir)/man8/kamdbctl.8
 
 
-MYSQLON?=yes
+# MYSQLON?=yes
 
 install-modules: $(bin_prefix)/$(bin_dir)
 		# install MySQL stuff
@@ -175,7 +181,8 @@ install-modules: $(bin_prefix)/$(bin_dir)
 					$(data_prefix)/$(data_dir)/oracle/admin/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
-			$(INSTALL_BIN) utils/db_oracle/kamailio_orasel $(bin-prefix)/$(bin-dir) ; \
+			make -C ../db_oracle/ ; \
+			$(INSTALL_BIN) ../db_oracle/kamailio_orasel $(bin_prefix)/$(bin_dir) ; \
 		fi
 		# install Berkeley database stuff
 		if [ "$(BERKELEYDBON)" = "yes" ]; then \
@@ -199,7 +206,8 @@ install-modules: $(bin_prefix)/$(bin_dir)
 					$(data_prefix)/$(data_dir)/db_berkeley/kamailio/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
-			$(INSTALL_BIN) utils/db_berkeley/kambdb_recover $(bin-prefix)/$(bin-dir) ; \
+			make -C ../db_berkeley/ ; \
+			$(INSTALL_BIN) ../db_berkeley/kambdb_recover $(bin_prefix)/$(bin_dir) ; \
 		fi
 		# install dbtext stuff
 		if [ "$(DBTEXTON)" = "yes" ]; then \

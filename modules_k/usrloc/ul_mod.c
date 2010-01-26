@@ -55,6 +55,7 @@
 #include "ul_mod.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../rpc_lookup.h"
 #include "../../timer.h"     /* register_timer */
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
@@ -63,6 +64,7 @@
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_mi.h"
+#include "ul_rpc.h"
 #include "ul_callback.h"
 #include "usrloc.h"
 
@@ -225,6 +227,12 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	if (rpc_register_array(ul_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 

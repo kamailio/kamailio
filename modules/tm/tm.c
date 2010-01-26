@@ -114,6 +114,7 @@
 #include "../../cfg/cfg.h"
 #include "../../globals.h"
 #include "../../timer_ticks.h"
+#include "../../mod_fix.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -145,6 +146,7 @@ static int fixup_on_reply(void** param, int param_no);
 static int fixup_on_branch(void** param, int param_no);
 static int fixup_t_reply(void** param, int param_no);
 static int fixup_on_sl_reply(modparam_t type, void* val);
+static int fixup_t_relay_to(void** param, int param_no);
 
 /* init functions */
 static int mod_init(void);
@@ -180,6 +182,10 @@ inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg , char *proxy,
 inline static int w_t_relay_to_sctp_uri( struct sip_msg*, char*, char*);
 #endif
 inline static int w_t_relay_to_avp(struct sip_msg* msg, char* str,char*);
+inline static int w_t_relay_to(struct sip_msg* msg, char* str,char*);
+inline static int w_t_replicate_uri( struct sip_msg  *p_msg ,
+				char *uri,       /* sip uri as string or variable */
+				char *_foo       /* nothing expected */ );
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
@@ -289,6 +295,8 @@ static cmd_export_t cmds[]={
 	{T_RELAY_TO_SCTP,       w_t_relay_to_sctp_uri,    0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
+	{"t_replicate",        w_t_replicate_uri,       1, fixup_var_str_1,
+			REQUEST_ROUTE},
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy,
@@ -313,6 +321,12 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_relay_to_avp", w_t_relay_to_avp,  		2, fixup_proto_hostport2proxy,
 			REQUEST_ROUTE},
+	{"t_relay_to",			w_t_relay_to,           0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_relay_to",			w_t_relay_to,           1, fixup_t_relay_to,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_relay_to",			w_t_relay_to,           2, fixup_t_relay_to,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 	{T_FORWARD_NONACK_URI, w_t_forward_nonack_uri,  0, 0,
@@ -380,6 +394,8 @@ static cmd_export_t cmds[]={
 	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_drop_replies",    w_t_drop_replies,         0, 0,
+			FAILURE_ROUTE},
+	{"t_drop_replies",    w_t_drop_replies,         1, 0,
 			FAILURE_ROUTE},
 	{"t_save_lumps",      w_t_save_lumps,           0, 0,
 			REQUEST_ROUTE},
@@ -1363,6 +1379,39 @@ inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 	return r;
 }
 
+inline static int w_t_replicate_uri(struct sip_msg  *msg ,
+				char *uri,       /* sip uri as string or variable */
+				char *_foo       /* nothing expected */ )
+{
+	struct proxy_l *proxy;
+	struct sip_uri turi;
+	str suri;
+	int r = -1;
+
+	memset(&turi, 0, sizeof(struct sip_uri));
+	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
+	{
+		LM_ERR("invalid replicate uri parameter");
+		return -1;
+	}
+	if(parse_uri(suri.s, suri.len, &turi)!=0)
+	{
+		LM_ERR("bad replicate SIP address!\n");
+		return -1;
+	}
+
+	proxy=mk_proxy(&turi.host, turi.port_no, turi.proto);
+	if (proxy==0) {
+		LM_ERR("cannot create proxy from URI <%.*s>\n",
+			suri.len, suri.s );
+		return -1;
+	}
+
+	r = t_replicate(msg, proxy, proxy->proto);
+	free_proxy(proxy);
+	return r;
+
+}
 
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
@@ -1726,7 +1775,14 @@ int t_grep_status(struct sip_msg* msg, char* status, char* bar)
  * that none of them is picked up again */
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar)
 {
-	t_drop_replies();
+	if(foo==NULL)
+		t_drop_replies(1);
+	else if(*foo=='n')
+		t_drop_replies(0);
+	else if(*foo=='l')
+		t_drop_replies(2);
+	else
+		t_drop_replies(1);
 	return 1;
 }
 
@@ -1832,3 +1888,163 @@ static int t_check_trans(struct sip_msg* msg, char* foo, char* bar)
 	}
 	return -1;
 }
+
+static int hexatoi(str *s, unsigned int* result)
+{
+	int i, xv, fact;
+
+	/* more than 32bit hexa? */
+	if (s->len>8)
+		return -1;
+
+	*result = 0;
+	fact = 1;
+
+	for(i=s->len-1; i>=0 ;i--)
+	{
+		xv = hex2int(s->s[i]);
+		if(xv<0)
+			return -1;
+
+		*result += (xv * fact);
+		fact *= 16;
+	}
+	return 0;
+}
+
+static int fixup_t_relay_to(void** param, int param_no)
+{
+
+	int port;
+	int proto;
+	unsigned int flags;
+	struct proxy_l *proxy;
+	action_u_t *a;
+	str s;
+	str host;
+
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+	LM_DBG("fixing (%s, %d)\n", s.s, param_no);
+	if (param_no==1){
+		a = fixup_get_param(param, param_no, 2);
+		if(a==NULL)
+		{
+			LM_CRIT("server error for parameter <%s>\n",s.s);
+			return E_UNSPEC;
+		}
+		if(a->u.string!=NULL) {
+			/* second parameter set, first should be proxy addr */
+			if (parse_phostport(s.s, &host.s, &host.len, &port, &proto)!=0){
+				LM_CRIT("invalid proxy addr parameter <%s>\n",s.s);
+				return E_UNSPEC;
+			}
+
+			proxy = mk_proxy(&host, port, proto);
+			if (proxy==0) {
+				LM_ERR("failed to build proxy structure for <%.*s>\n", host.len, host.s );
+				return E_UNSPEC;
+			}
+			*(param)=proxy;
+			return 0;
+		} else {
+			/* no second parameter, then is proxy addr or flags */
+			flags = 0;
+			if (s.len>2 && s.s[0]=='0' && s.s[1]=='x') {
+				s.s += 2;
+				s.len -= 2;
+				if(hexatoi(&s, &flags)<0)
+				{
+					LM_CRIT("invalid hexa flags <%s>\n", s.s);
+					return E_UNSPEC;
+				}
+				a->u.data = (void*)(unsigned long int)flags;
+				*(param)= 0;
+				return 0;
+			} else {
+				if(str2int(&s, &flags)==0)
+				{
+					a->u.data = (void*)(unsigned long int)flags;
+					*(param)= 0;
+					return 0;
+				} else {
+					/* try proxy */
+					if (parse_phostport(s.s, &host.s, &host.len, &port, &proto)!=0){
+						LM_CRIT("invalid proxy addr parameter <%s>\n",s.s);
+						return E_UNSPEC;
+					}
+
+					proxy = mk_proxy(&host, port, proto);
+					if (proxy==0) {
+						LM_ERR("failed to build proxy structure for <%.*s>\n", host.len, host.s );
+						return E_UNSPEC;
+					}
+					*(param)=proxy;
+					return 0;
+				}
+			}
+		}
+	} else if (param_no==2) {
+		/* flags */
+		flags = 0;
+		if (s.len>2 && s.s[0]=='0' && s.s[1]=='x') {
+			s.s += 2;
+			s.len -= 2;
+			if(hexatoi(&s, &flags)<0)
+			{
+				LM_CRIT("invalid hexa flags <%s>\n", s.s);
+				return E_UNSPEC;
+			}
+			*(param) = (void*)(unsigned long int)flags;
+			return 0;
+		} else {
+			if(str2int(&s, &flags)==0)
+			{
+				*(param) = (void*)(unsigned long int)flags;
+				return 0;
+			} else {
+				LM_CRIT("invalid flags <%s>\n", s.s);
+				return E_UNSPEC;
+			}
+		}
+	} else {
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_BUG;
+	}
+}
+
+
+inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
+{
+	unsigned int fl;
+	struct proxy_l *px;
+	fparam_t param;
+
+	fl = (unsigned int)(long)(void*)flags;
+	px = (struct proxy_l*)proxy;
+
+	if(flags!=0)
+	{
+		memset(&param, 0, sizeof(fparam_t));
+		param.type = FPARAM_INT;
+		/* no auto 100 trying */
+		if(fl&1) {
+			param.v.i = 0;
+			t_set_auto_inv_100(msg, (char*)(&param), 0);
+		}
+		/* no auto negative reply - not implemented */
+		/*
+		if(fl&2) {
+			param.v.i = 1;
+			t_set_disable_internal_reply(msg, (char*)param, 0);
+		}
+		*/
+		/* no dns failover */
+		if(fl&4) {
+			param.v.i = 1;
+			t_set_disable_failover(msg, (char*)(&param), 0);
+		}
+	}
+	return _w_t_relay_to(msg, px, PROTO_NONE);
+}
+

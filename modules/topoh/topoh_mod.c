@@ -41,12 +41,13 @@ MODULE_VERSION
 str _th_key = { "aL9.n8~Hm]Z", 0 };
 str th_cookie_name = {"TH", 0};
 str th_cookie_value = {0, 0};
-str th_ip = {"10.1.1.2", 0};
+str th_ip = {"10.1.1.10", 0};
 str th_uparam_name = {"line", 0};
 str th_uparam_prefix = {"sr-", 0};
 str th_vparam_name = {"branch", 0};
 str th_vparam_prefix = {"z9hG4bKsr-", 0};
 
+str th_callid_prefix = {"!!:", 3};
 str th_via_prefix = {0, 0};
 str th_uri_prefix = {0, 0};
 
@@ -60,11 +61,13 @@ static int mod_init(void);
 
 static param_export_t params[]={
 	{"mask_key",		STR_PARAM, &_th_key.s},
+	{"mask_ip",			STR_PARAM, &th_ip.s},
 	{"mask_callid",		INT_PARAM, &th_param_mask_callid},
 	{"uparam_name",		STR_PARAM, &th_uparam_name.s},
 	{"uparam_prefix",	STR_PARAM, &th_uparam_prefix.s},
 	{"vparam_name",		STR_PARAM, &th_vparam_name.s},
 	{"vparam_prefix",	STR_PARAM, &th_vparam_prefix.s},
+	{"callid_prefix",	STR_PARAM, &th_callid_prefix.s},
 	{0,0,0}
 };
 
@@ -96,6 +99,7 @@ static int mod_init(void)
 	th_uparam_prefix.len = strlen(th_uparam_prefix.s);
 	th_vparam_name.len = strlen(th_vparam_name.s);
 	th_vparam_prefix.len = strlen(th_vparam_prefix.s);
+	th_callid_prefix.len = strlen(th_callid_prefix.s);
 
 	/* 'SIP/2.0/UDP ' + ip + ';' + param + '=' + prefix (+ '\0') */
 	th_via_prefix.len = 12 + th_ip.len + 1 + th_vparam_name.len + 1
@@ -204,6 +208,7 @@ int th_msg_received(void *data)
 			/* dialog request */
 			th_unmask_ruri(&msg);
 			th_unmask_route(&msg);
+			th_unmask_refer_to(&msg);
 			if(direction==1)
 			{
 				th_unmask_callid(&msg);
@@ -296,6 +301,7 @@ int th_msg_sent(void *data)
 			}
 		} else {
 			/* initial request */
+			th_update_hdr_replaces(&msg);
 			th_mask_callid(&msg);
 		}
 	} else {

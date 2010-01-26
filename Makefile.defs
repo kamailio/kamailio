@@ -134,6 +134,8 @@ endif
 CFG_NAME=sip-router
 #config name/name-prefix for distributed scripts
 SCR_NAME=sip-router
+#name in source tree
+SRC_NAME=sip-router
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
@@ -210,30 +212,36 @@ lib_dir = lib/$(MAIN_NAME)/
 ifeq ($(OS), linux)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = share/man/
+	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), freebsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
+	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), openbsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
+	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
 else
 ifeq ($(OS), netbsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
+	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/pkg
 else
 ifeq ($(OS), darwin)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
+	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
 else
 	doc_dir = doc/$(MAIN_NAME)/
 	man_dir = man/
+	data_dir = $(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
 endif
 endif
@@ -265,6 +273,7 @@ doc_prefix = $(basedir)$(prefix)
 man_prefix = $(basedir)$(prefix)
 ut_prefix = $(basedir)$(prefix)
 share_prefix = $(basedir)$(prefix)
+data_prefix = $(basedir)$(prefix)
 
 
 # target dirs for various stuff
@@ -273,6 +282,7 @@ bin_target = $(prefix)/$(bin_dir)
 #modules_target = $(prefix)/$(modules_dir)
 lib_target = $(prefix)/$(lib_dir)
 doc_target = $(prefix)/$(doc_dir)
+data_target = $(prefix)/$(data_dir)
 
 
 
@@ -1919,7 +1929,7 @@ export exported_vars
 #  cannot be overwritten from environment or command line, unless make cfg
 #  is run)
 saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
-		RELEASE OS ARCH \
+		SRC_NAME RELEASE OS ARCH \
 		C_DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS C_INCLUDES \
 		MOD_LDFLAGS LIB_LDFLAGS UTILS_LDFLAGS LIB_SONAME LD_RPATH \
 		LIB_SUFFIX LIB_PREFIX \
@@ -1939,8 +1949,8 @@ saved_chg_vars:=\
 		PREFIX prefix\
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
 		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
-		share_prefix share_dir lib_prefix lib_dir \
-		cfg_target lib_target
+		share_prefix share_dir lib_prefix lib_dir data_prefix data_dir \
+		cfg_target lib_target data_target
 
 
 #export relevant variables to the sub-makes

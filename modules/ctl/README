@@ -19,6 +19,8 @@ Andrei Pelinescu-Onciul
         1.3.4. group (integer or string)
         1.3.5. fifo (integer)
         1.3.6. autoconversion (integer)
+        1.3.7. binrpc_max_body_size (integer)
+        1.3.8. binrpc_struct_max_body_size (integer)
 
    1.4. RPC Functions
 
@@ -180,6 +182,26 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
    Example 7. Set the autoconversion parameter
 modparam("ctl", "autoconversion", 1)
 
+1.3.7. binrpc_max_body_size (integer)
+
+   Set the size of binrpc buffer for RPC reply. Value represents
+   kilobytes.
+
+   Default: 4 (meaning 4KB);
+
+   Example 8. Set the binrpc_max_body_size parameter
+modparam("ctl", "binrpc_max_body_size", 10)
+
+1.3.8. binrpc_struct_max_body_size (integer)
+
+   Set the size of binrpc structure buffer for RPC reply. Value represents
+   kilobytes.
+
+   Default: 1 (meaning 1KB);
+
+   Example 9. Set the binrpc_struct_max_body_size parameter
+modparam("ctl", "binrpc_struct_max_body_size", 3)
+
 1.4. RPC Functions
 
    Revision History
@@ -189,7 +211,7 @@ modparam("ctl", "autoconversion", 1)
 
    List all the sockets on which the ctl module listens.
 
-   Example 8. print usage
+   Example 10. print usage
  $ sercmd -f"[%v] %v:%v %v\n" ctl.listen
 [binrpc] unix_stream:/tmp/ser_ctl
 
@@ -199,7 +221,7 @@ modparam("ctl", "autoconversion", 1)
 
    Returns the number of open binrpc connections (to the ctl module).
 
-   Example 9. ctl.connections usage
+   Example 11. ctl.connections usage
  $ sercmd ctl.connections
 1
 
@@ -207,7 +229,7 @@ modparam("ctl", "autoconversion", 1)
 
    List open binrpc connections (to the ctl module).
 
-   Example 10. ctl.who usage
+   Example 12. ctl.who usage
  $ sercmd -f"[%v] %v: %v %v -> %v %v\n" ctl.who
 [binrpc] unix_stream: <anonymous unix socket>  -> /tmp/ser_ctl
 
