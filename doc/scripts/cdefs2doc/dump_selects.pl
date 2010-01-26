@@ -49,7 +49,7 @@ my $c_defs="-D__CPU_i386 -D__OS_linux -DSER_VER=2099099 -DPKG_MALLOC -DSHM_MEM  
 
 # file with gcc syntax tree
 my $file;
-my $tmp_file;
+my $core_file;
 my $src_fname;
 
 # type to look for
@@ -59,6 +59,7 @@ my $tu;
 my $node;
 my $i;
 my @sel_exports; # filled with select definitions (select_row_t)
+my @core_exports; # filled with select definitions from core (if -c is used)
 my ($sel_grp_name, $sel_var_name);
 
 my ($opt_help, $opt_txt, $opt_is_tu, $dbg, $opt_grp_name, $opt_patch);
@@ -97,6 +98,8 @@ Usage @*  -f filename | --file filename  [options...]
 Options:
          -f        filename    - use filename for input (see also -T/--tu).
          --file    filename    - same as -f.
+         -c | --core filename  - location of core selects (used to resolve
+                                 module selects that refer in-core functions).
          -h | -? | --help      - this help message.
          -D | --dbg | --debug  - enable debugging messages.
          -d | --defs           - defines to be passed on gcc's command line
@@ -221,28 +224,49 @@ use constant {
 
 
 # generate all select strings starting with a specific "root" function
+# params:
+#  $1 - root
+#  $2 - crt_label/skip (if !="" skip print and use it to search the next valid
+#       sel. param)
 sub gen_selects
 {
 	my $root=shift;
+	my $crt_label=shift;
+	my $skip_next;
 	my @matches;
 	my ($prev, $type, $name, $new_f, $flags);
 	my $m;
 	my @ret=();
 	my @sel;
 	
-	@matches = grep(${$_}[0] eq $root, @sel_exports);
+	@matches = grep((${$_}[0] eq $root) &&
+					(!defined $crt_label || $crt_label eq "" ||
+					 ${$_}[2] eq "" ||
+					 $crt_label eq ${$_}[2]) , @sel_exports);
+	if ((@matches == 0) && (@core_exports > 0)) {
+		@matches = grep((${$_}[0] eq $root) &&
+					(!defined $crt_label || $crt_label eq "" ||
+					 ${$_}[2] eq "" ||
+					 $crt_label eq ${$_}[2]), @core_exports);
+	}
 	for $m (@matches) {
 		my $s="";
 		($prev, $type, $name, $new_f, $flags)=@$m;
+		if (($flags & (NESTED|CONSUME_NEXT_STR|CONSUME_NEXT_INT)) == NESTED){
+			$skip_next=$name;
+		}
 		if (!($flags & NESTED) ||
 			(($flags & NESTED) && ($type !=SEL_PARAM_INT))){
-			# Note: unamed NESTED params are not allowed --andrei
+			# Note: unnamed NESTED params are not allowed --andrei
 			if ($type==SEL_PARAM_INT){
 				$s.="[integer]";
 			}else{
 				if ($name ne "") {
-					$s.=(($prev eq "0" || $prev eq "")?"@":".") . $name;
-				}elsif (!($flags & NESTED)){
+					if (!defined $crt_label || $crt_label eq "") {
+						$s.=(($prev eq "0" || $prev eq "")?"@":".") . $name;
+					}
+				}elsif (!($flags & NESTED) &&
+						(!defined $crt_label || $crt_label eq "")){
 					$s.=".<string>";
 				}
 			}
@@ -270,15 +294,12 @@ sub gen_selects
 			# if optional terminal  add it to the list along with all the
 			# variants
 			if ($new_f eq "" || $new_f eq "0"){
+				# terminal
 				push @ret, $s;
 			}else{
-				if ($s eq ""){
-					@sel=gen_selects($new_f);
-				}else{
-					@sel=map("$s$_", gen_selects($new_f));
-				}
+				@sel=map("$s$_", gen_selects($new_f, $skip_next));
 				if (@sel > 0) {
-					push(@ret, $s) if (!($s eq ""));
+					push(@ret, $s) if (!($s eq "") && !($flags & NESTED));
 					push @ret, @sel;
 				}else{
 					if ($flags & NESTED) {
@@ -290,26 +311,148 @@ sub gen_selects
 		}else{
 			# non-terminal
 			if (!($new_f eq "" || $new_f eq "0")){
-				if ($s eq ""){
-					@sel=gen_selects($new_f);
-				}else{
-					@sel=map("$s$_", gen_selects($new_f));
-				}
+				@sel=map("$s$_", gen_selects($new_f, $skip_next));
 				if (@sel > 0) {
 					push @ret, @sel;
 				}elsif ($flags & NESTED){
 					$s.="*";
 					push @ret, $s;
 				}
-			}
+			} # else nothing left, but param expected => error
 		}
 	}
 	return @ret;
 }
 
+
+
+# parse the select declaration from a  file into an array.
+# params:
+#  $1 - file name
+#  $2 - ref to result list (e.g. \@res)
+#  $3 - boolean - true if filename is a translation-unit dump.
+# cmd. line global options used:
+#  $src_fname - used only if $3 is true (see --src)
+#  $gcc
+#  $c_defs
+#  $dbg
+#  
+#
+sub process_file
+{
+	my $file=shift;
+	my $sel=shift; # ref to result array
+	my $file_is_tu=shift;
+	
+	my $tmp_file;
+	my $i;
+	my $node;
+	my $tu;
+	my @res; # temporary hold the result here
+	
+	if (! $file_is_tu){
+		# file is not a gcc translation-unit dump
+		# => we have to create one
+		$src_fname=basename($file);
+		$tmp_file = "/tmp/" . mktemp ("dump_translation_unit_XXXXXX");
+		system("$gcc -fdump-translation-unit $c_defs -c $file -o $tmp_file && \
+				mv \"$src_fname\".001t.tu  $tmp_file") == 0 or
+			die "$gcc failed to generate a translation unit dump from $file";
+		$tu=GCC::TranslationUnit::Parser->parsefile($tmp_file);
+		print(STDERR "src name $src_fname\n") if $dbg;
+		unlink($tmp_file, "$tmp_file.o");
+	}else{
+		$tu=GCC::TranslationUnit::Parser->parsefile($file);
+	}
+
+	print(STDERR "Parsing file $file...\n") if $dbg;
+	print(STDERR "Searching...\n") if $dbg;
+
+	$i=0;
+	# iterate on the entire nodes array (returned by gcc), but skipping node 0
+	SEARCH: for $node (@{$tu}[1..$#{$tu}]) {
+		$i++;
+		while($node) {
+			if (
+				@res == 0 &&  # parse it only once
+				$node->isa('GCC::Node::var_decl') &&
+				$node->type->isa('GCC::Node::array_type') # &&
+				#(! defined $src_fname || $src_fname eq "" ||
+				#	$node->source=~"$src_fname")
+				){
+				# found a var decl. that it's an array
+				# check if it's a valid array type
+				next if (!(	$node->type->can('elements') &&
+							defined $node->type->elements &&
+							$node->type->elements->can('name') &&
+							defined $node->type->elements->name &&
+							$node->type->elements->name->can('name') &&
+							defined $node->type->elements->name->name)
+						);
+				my $type_name= $node->type->elements->name->name->identifier;
+				if ($type_name eq $var_type) {
+					if ($node->can('initial') && defined $node->initial) {
+						my %c1=%{$node->initial};
+						$sel_var_name=$node->name->identifier;
+						if (defined $c1{val}){
+							my $c1_el;
+							die $patch_required if (ref($c1{val}) ne "ARRAY");
+							# iterate on array elem., level 1( top {} )
+							# each element is a constructor.
+							for $c1_el (@{$c1{val}}) {
+								# finally we are a the lower {} initializer:
+								#    { prev_f, type, name, new_f, flags }
+								my %c2=%{$c1_el};
+								my @el=@{$c2{val}};
+								my ($prev_f_n, $type_n, $name_n, $new_f_n,
+									$flags_n)=@el;
+								my ($prev_f, $type, $name, $new_f, $flags);
+								my $str;
+								if ($prev_f_n->isa('GCC::Node::integer_cst') &&
+									$new_f_n->isa('GCC::Node::integer_cst') &&
+									$prev_f_n->low==0 && $new_f_n->low==0) {
+									last SEARCH;
+								}
+								$prev_f=
+									($prev_f_n->isa('GCC::Node::integer_cst'))?
+										$prev_f_n->low:
+										expr_op0($prev_f_n)->name->identifier;
+								$type=$type_n->low;
+								$str=${${$name_n}{val}}[0];
+								$name=($str->isa('GCC::Node::integer_cst'))?"":
+										expr_op0($str)->string;
+								$new_f=
+									($new_f_n->isa('GCC::Node::integer_cst'))?
+										$new_f_n->low:
+										expr_op0($new_f_n)->name->identifier;
+								$flags=$flags_n->low;
+								
+								push @res, [$prev_f, $type, $name,
+													$new_f, $flags];
+							}
+						}
+					}
+				}
+			}
+		} continue {
+			if ($node->can('chain')){
+				$node = $node->chain;
+			}else{
+				last;
+			}
+		}
+	}
+	push @$sel, @res;
+}
+
+
+
+# main:
+
 # read command line args
 if ($#ARGV < 0 || ! GetOptions(	'help|h|?' => \$opt_help,
 								'file|f=s' => \$file,
+								'core|c=s' => \$core_file,
 								'txt|t' => \$opt_txt,
 								'tu|T' => \$opt_is_tu,
 								'source|src|s=s' => \$src_fname,
@@ -330,128 +473,8 @@ if ($#ARGV < 0 || ! GetOptions(	'help|h|?' => \$opt_help,
 do { show_patch(); exit 0; } if (defined $opt_patch);
 do { select(STDERR); help(); exit 1 } if (!defined $file);
 
-if (! defined $opt_is_tu){
-	# file is not a gcc translation-unit dump
-	# => we have to create one
-	$src_fname=basename($file);
-	$tmp_file = "/tmp/" . mktemp ("dump_translation_unit_XXXXXX");
-	system("$gcc -fdump-translation-unit $c_defs -c $file -o $tmp_file && \
-			mv \"$src_fname\".001t.tu  $tmp_file") == 0 or
-		die "$gcc failed to generate a translation unit dump from $file";
-	$tu=GCC::TranslationUnit::Parser->parsefile($tmp_file);
-	print(STDERR "src name $src_fname\n") if $dbg;
-	unlink($tmp_file, "$tmp_file.o");
-}else{
-	$tu=GCC::TranslationUnit::Parser->parsefile($file);
-}
-
-print(STDERR "Parsing file $file...\n") if $dbg;
-#
-# function_decl: name, type, srcp (source), chan?, body?, link (e.g. extern)
-# parm_decl: name, type, scpe, srcp, chan, argt, size, algn, used
-# field_decl: name, type, scpe (scope), srcp, size, algn, bpos (bit pos?)
-#
-# array_type: size, algn, elts (elements?), domn ?
-#
-#
-# name as string $node->name->identifier
-#
-# E.g.: static cfg_def_t tcp_cfg_def[]= {...}
-#                        ^^^^^^^^^^^
-#
-# @7695 var_decl:  name: @7705   type: @7706    srcp: tcp_options.c:51
-#                  chan: @7707    init: @7708    size: @7709
-#                  algn: 256      used: 1
-# 
-# @7705 (var name)  	identifier_node strg: tcp_cfg_def lngt 11
-# @7706 (var type)  	array_type: size:@7709 algn: 32 elts: @2265 domn: @7718
-# @7707 (? next ?  )	function_decl: ....
-# @7708 (intializer)	constructor: lngt: 25
-#                                    idx : @20      val : @7723    [...]
-# @7709             	interget_cst: type: @11 low: 5600
-#
-# @2265 (array type)	record_type: name: @2256    unql: @2255    size: @2002
-#                                    algn: 32       tag : struct   flds: @2263
-# @2256 (type)      	type_decl: name: @2264    type: @2265    srcp: cfg.h:73
-#                                  chan: @2266
-# @2264 (name)     		identifier_node:  strg: cfg_def_t
-
-print(STDERR "Searching...\n") if $dbg;
-$i=0;
-# iterate on the entire nodes array (returned by gcc), but skipping node 0
-SEARCH: for $node (@{$tu}[1..$#{$tu}]) {
-	$i++;
-	while($node) {
-		if (
-			@sel_exports == 0 &&  # parse it only once
-			$node->isa('GCC::Node::var_decl') &&
-			$node->type->isa('GCC::Node::array_type') # &&
-			#(! defined $src_fname || $src_fname eq "" ||
-			#	$node->source=~"$src_fname")
-			){
-			# found a var decl. that it's an array
-			# check if it's a valid array type
-			next if (!(	$node->type->can('elements') &&
-						defined $node->type->elements &&
-						$node->type->elements->can('name') &&
-						defined $node->type->elements->name &&
-						$node->type->elements->name->can('name') &&
-						defined $node->type->elements->name->name)
-					);
-			my $type_name= $node->type->elements->name->name->identifier;
-			if ($type_name eq $var_type) {
-				if ($node->can('initial') && defined $node->initial) {
-					my %c1=%{$node->initial};
-					$sel_var_name=$node->name->identifier;
-					if (defined $c1{val}){
-						my $c1_el;
-						die $patch_required if (ref($c1{val}) ne "ARRAY");
-						# iterate on array elem., level 1( top {} )
-						# each element is a constructor.
-						for $c1_el (@{$c1{val}}) {
-							# finally we are a the lower {} initializer:
-							#    { prev_f, type, name, new_f, flags }
-							my %c2=%{$c1_el};
-							my @el=@{$c2{val}};
-							my ($prev_f_n, $type_n, $name_n, $new_f_n,
-								$flags_n)=@el;
-							my ($prev_f, $type, $name, $new_f, $flags);
-							my $str;
-							if ($prev_f_n->isa('GCC::Node::integer_cst') &&
-								$new_f_n->isa('GCC::Node::integer_cst') &&
-								$prev_f_n->low==0 && $new_f_n->low==0) {
-								last SEARCH;
-							}
-							$prev_f=($prev_f_n->isa('GCC::Node::integer_cst'))?
-									$prev_f_n->low:
-									expr_op0($prev_f_n)->name->identifier;
-							$type=$type_n->low;
-							$str=${${$name_n}{val}}[0];
-							$name=($str->isa('GCC::Node::integer_cst'))?"":
-									expr_op0($str)->string;
-							$new_f=($new_f_n->isa('GCC::Node::integer_cst'))?
-									$new_f_n->low:
-									expr_op0($new_f_n)->name->identifier;
-							$flags=$flags_n->low;
-							
-							push @sel_exports, [$prev_f, $type, $name, $new_f,
-												$flags];
-						}
-					}
-				}
-			}
-		}
-	} continue {
-		if ($node->can('chain')){
-			$node = $node->chain;
-		}else{
-			last;
-		}
-	}
-}
-
-
-
+process_file($file, \@sel_exports, defined $opt_is_tu);
+process_file($core_file, \@core_exports, 0) if (defined $core_file);
 print(STDERR "Done.\n") if $dbg;
 
 my ($prev, $type, $name, $next, $flags, $desc);
