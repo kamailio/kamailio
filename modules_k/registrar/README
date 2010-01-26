@@ -110,7 +110,7 @@ Bogdan-Andre Iancu
    1.25. registered usage
    1.26. registered usage
    1.27. registered usage
-   1.28. $sht(name) usage
+   1.28. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -786,7 +786,7 @@ reg_free_contacts("callee");
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.28. $sht(name) usage
+   Example 1.28. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
