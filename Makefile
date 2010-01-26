@@ -226,6 +226,8 @@ else
 	exclude_modules+= mtree
 	# depends on libgeoip
 	exclude_modules+= geoip
+	# depends on liblua5.1-dev
+	exclude_modules+= app_lua
 endif
 
 # always exclude the CVS dir
