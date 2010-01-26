@@ -21,12 +21,37 @@
  *
  */
 
-#ifndef _APP_LUA_SR_H_
-#define _APP_LUA_SR_H_
+#ifndef _APP_LUA_API_H_
+#define _APP_LUA_API_H_
 
 #include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
-void lua_sr_core_openlibs(lua_State *L);
+#include "../../parser/msg_parser.h"
+
+typedef struct _sr_lua_env
+{
+	lua_State *L;
+	lua_State *LL;
+	struct sip_msg *msg;
+	unsigned int flags;
+} sr_lua_env_t;
+
+sr_lua_env_t *sr_lua_env_get(void);
+
+int lua_sr_initialized(void);
+int lua_sr_init_mod(void);
+int lua_sr_init_child(void);
+void lua_sr_destroy(void);
+
+int sr_lua_load_script(char *script);
+int sr_lua_register_module(char *mname);
+
+int app_lua_dostring(struct sip_msg *msg, char *script);
+int app_lua_dofile(struct sip_msg *msg, char *script);
+int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3);
 
 #endif
 

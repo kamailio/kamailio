@@ -21,12 +21,14 @@
  *
  */
 
-#ifndef _APP_LUA_SR_H_
-#define _APP_LUA_SR_H_
+#ifndef _APP_LUA_EXP_H_
+#define _APP_LUA_EXP_H_
 
 #include <lua.h>
 
-void lua_sr_core_openlibs(lua_State *L);
+int lua_sr_exp_register_mod(char *mname);
+int lua_sr_exp_init_mod(void);
+void lua_sr_exp_openlibs(lua_State *L);
 
 #endif
 

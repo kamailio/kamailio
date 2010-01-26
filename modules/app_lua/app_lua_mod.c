@@ -30,7 +30,7 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 
-#include "app_lua_sr.h"
+#include "app_lua_api.h"
 
 MODULE_VERSION
 
@@ -47,9 +47,11 @@ static int w_app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		char *p3);
 
 int app_lua_load_param(modparam_t type, void *val);
+int app_lua_register_param(modparam_t type, void *val);
 
 static param_export_t params[]={
-	{"load",          STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_load_param},
+	{"load",     STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_load_param},
+	{"register", STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_register_param},
 	{0, 0, 0}
 };
 
@@ -147,5 +149,12 @@ int app_lua_load_param(modparam_t type, void *val)
 	if(val==NULL)
 		return -1;
 	return sr_lua_load_script((char*)val);
+}
+
+int app_lua_register_param(modparam_t type, void *val)
+{
+	if(val==NULL)
+		return -1;
+	return sr_lua_register_module((char*)val);
 }
 

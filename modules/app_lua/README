@@ -26,6 +26,7 @@ Daniel-Constantin Mierla
         3. Exported Parameters
 
               3.1. load (string)
+              3.2. register (string)
 
         4. Exported Functions
 
@@ -38,9 +39,10 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set load parameter
-   1.2. lua_dofile usage
-   1.3. lua_doscript usage
+   1.2. Set register parameter
+   1.3. lua_dofile usage
    1.4. lua_doscript usage
+   1.5. lua_doscript usage
 
 Chapter 1. Admin Guide
 
@@ -55,6 +57,7 @@ Chapter 1. Admin Guide
    3. Exported Parameters
 
         3.1. load (string)
+        3.2. register (string)
 
    4. Exported Functions
 
@@ -102,6 +105,7 @@ Chapter 1. Admin Guide
 3. Exported Parameters
 
    3.1. load (string)
+   3.2. register (string)
 
 3.1. load (string)
 
@@ -113,7 +117,23 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set load parameter
 ...
-modparam("lua", "lua", "/usr/local/etc/kamailio/lua/myscript.lua")
+modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+...
+
+3.2. register (string)
+
+   Use this function to register optional SIP Router submodules to Lua.
+   Available submodules are:
+     * sl - register functions from sl module under 'sr.sl'.
+
+   Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
+   Lua.
+
+   Default value is "null".
+
+   Example 1.2. Set register parameter
+...
+modparam("lua", "register", "sr")
 ...
 
 4. Exported Functions
@@ -126,7 +146,7 @@ modparam("lua", "lua", "/usr/local/etc/kamailio/lua/myscript.lua")
 
    Execute the Lua script stored in 'path'.
 
-   Example 1.2. lua_dofile usage
+   Example 1.3. lua_dofile usage
 ...
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
@@ -135,7 +155,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 
    Execute the Lua script stored in parameter.
 
-   Example 1.3. lua_doscript usage
+   Example 1.4. lua_doscript usage
 ...
 if(!lua_dostring("sr.log([[err]], [[----------- Hello World\n]])"))
 {
@@ -150,7 +170,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World\n]])"))
    loaded at startup via parameter 'load'. So far the parameters are
    considered static strings (allowing pv is in the roadmap).
 
-   Example 1.4. lua_doscript usage
+   Example 1.5. lua_doscript usage
 ...
 if(!lua_run("sr_append_fu_to_reply"))
 {

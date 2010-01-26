@@ -96,7 +96,40 @@
 		<title>Set <varname>load</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lua", "lua", "/usr/local/etc/kamailio/lua/myscript.lua")
+modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>register</varname> (string)</title>
+	    <para>
+			Use this function to register optional SIP Router submodules
+			to Lua. Available submodules are:
+	    </para>
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+				<emphasis>sl</emphasis> - register functions from sl module
+				under 'sr.sl'.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    <para>
+			Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered
+			to Lua.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>null</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>register</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lua", "register", "sr")
 ...
 </programlisting>
 	    </example>
