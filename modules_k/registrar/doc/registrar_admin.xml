@@ -1076,7 +1076,7 @@ reg_free_contacts("callee");
 			</para>
 
 			<example>
-			<title><function moreinfo="none">$sht(name)</function> usage</title>
+			<title><function moreinfo="none">$ulc(name)</function> usage</title>
 <programlisting format="linespecific">
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
