@@ -12,9 +12,8 @@
 	<version>3</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
-		<db:para>This table is used by the Dynamic Routing module to store
-		information about the routing rules.
-		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
+		<db:para>This table is used by the drouting module - keeps the
+			routing rules data.
 		</db:para>
 	</description>
 
@@ -33,8 +32,7 @@
 		<name>groupid</name>
 		<type>string</type>
 		<size>255</size>
-		<description>The ID(s) of the routing group(s) this rule is to be 
-		used for - comma separeted list of numerical Ids
+		<description>list of routing group IDs
 		</description>
 	</column>
 
@@ -42,14 +40,14 @@
 		<name>prefix</name>
 		<type>string</type>
 		<size>64</size>
-		<description>Numerical prefix to match this rule</description>
+		<description>Destination prefix for this rule</description>
 	</column>
 
 	<column id="timerec">
 		<name>timerec</name>
 		<type>string</type>
 		<size>255</size>
-		<description>Time recurrence used for matching this rule.</description>
+		<description>Time recurrence for this rule.</description>
 	</column>
 
 	<column id="priority">
@@ -57,24 +55,23 @@
 		<type>int</type>
 		<size>11</size>
 		<default>0</default>
-		<description>Priority of this rule (among rules with same prefix 
-		and timerec).</description>
+		<description>Priority of the rule.</description>
 	</column>
 
 	<column id="routeid">
 		<name>routeid</name>
 		<type>string</type>
-		<size>255</size>
-		<description>Route block (from cfg script) to be called when rule 
-		matches.</description>
+		<size>64</size>
+		<description>Name of route block (from cfg script) to be
+			executed when matching this rule.</description>
 	</column>
 
 	<column id="gwlist">
 		<name>gwlist</name>
 		<type>string</type>
 		<size>255</size>
-		<description>Reference to the GWs/destinations to be used when
-		rule matches.</description>
+		<description>The list of destinations (gws) to be used when
+		matching this rule.</description>
 	</column>
 
 	<column id="description">
@@ -82,7 +79,8 @@
 		<type>string</type>
 		<size>128</size>
 		<default></default>
-		<description>Text description of the rule</description>
+		<description>Short description of the rule</description>
 	</column>
 
 </table>
+

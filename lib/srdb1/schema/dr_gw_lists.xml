@@ -12,7 +12,7 @@
 	<version>1</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
-		<db:para>This table is used by the Dynamic Routing module to define
+		<db:para>This table is used by the drouting module to define
 		lists of gateways to be used in rule definitions.
 		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
 		</db:para>
@@ -32,7 +32,7 @@
 		<name>gwlist</name>
 		<type>string</type>
 		<size>255</size>
-		<description>Reference to the GWs/destinations from the list.
+		<description>List of GW ids.
 		</description>
 	</column>
 

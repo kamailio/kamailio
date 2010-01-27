@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE database PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
-	"http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
 %entities;
@@ -8,9 +8,9 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-	<name>Dynamic Routing</name>
-	<xi:include href="dr_gateways.xml"/>
-	<xi:include href="dr_rules.xml"/>
-	<xi:include href="dr_gw_lists.xml"/>
-	<xi:include href="dr_groups.xml"/>
+    <name>DRouting</name>
+    <xi:include href="dr_gateways.xml"/>
+    <xi:include href="dr_rules.xml"/>
+    <xi:include href="dr_gw_lists.xml"/>
+    <xi:include href="dr_groups.xml"/>
 </database>

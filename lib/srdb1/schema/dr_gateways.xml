@@ -12,9 +12,8 @@
 	<version>3</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
-		<db:para>This table is used by the Dynamic Routing module to store
-		information about the destinations/gateways where to route calls.
-		More information can be found at: &KAMAILIO_MOD_DOC;drouting.html.
+		<db:para>This table is used by the douting module - keeps the
+			gateways data.
 		</db:para>
 	</description>
 
@@ -25,8 +24,7 @@
 		<autoincrement/>
 		<primary/>
 		<type db="dbtext">int,auto</type>
-		<description>GW unique ID - used to link the GW from 
-			the routing rules
+		<description>Unique ID per gateway
 		</description>
 	</column>
 
@@ -35,14 +33,14 @@
 		<type>unsigned int</type>
 		<size>11</size>
 		<default>0</default>
-		<description>Type/class of the GW (user defined)</description>
+		<description>Type of gateway</description>
 	</column>
 
 	<column id="address">
 		<name>address</name>
 		<type>string</type>
 		<size>128</size>
-		<description>GW/destination address as name/IP[:port]</description>
+		<description>Address of gateway (hostname or ip and port)</description>
 	</column>
 
 	<column id="strip">
@@ -50,18 +48,16 @@
 		<type>unsigned int</type>
 		<size>11</size>
 		<default>0</default>
-		<description>Number of digits to be striped out for the begining 
-			of the username when using this GW/destination</description>
+		<description>Number of digits to strip from dialed number</description>
 	</column>
 
 	<column id="pri_prefix">
 		<name>pri_prefix</name>
 		<type>string</type>
-		<size>16</size>
+		<size>64</size>
 		<null/>
 		<default><null/></default>
-		<description>String to prefix the username of RURI when using 
-			this GW/destination</description>
+		<description>What to prefix to dialed number</description>
 	</column>
 
 	<column id="attrs">
@@ -70,8 +66,7 @@
 		<size>255</size>
 		<null/>
 		<default><null/></default>
-		<description>Generic string describing GW attributes - this string is
-			to be interpreted from the script</description>
+		<description>Generic string to be returned in cfg script</description>
 	</column>
 
 	<column id="description">
@@ -79,6 +74,7 @@
 		<type>string</type>
 		<size>128</size>
 		<default></default>
-		<description>Text description of the GW/destination</description>
+		<description>Short description of gateway</description>
 	</column>
 </table>
+
