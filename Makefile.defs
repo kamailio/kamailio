@@ -113,7 +113,7 @@ $(info normal Makefile.defs exec)
 endif # verbose
 
 # flavour: sip-router, ser or kamailio
-FLAVOUR=sip-router
+FLAVOUR?=sip-router
 
 ifeq ($(FLAVOUR),sip-router)
 # main binary name
