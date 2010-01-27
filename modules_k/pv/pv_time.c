@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "../../dprint.h"
 #include "../../pvar.h"
@@ -196,4 +197,91 @@ int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
 	s.len = strlen(s.s)-1;
 	return pv_get_strintval(msg, param, res, &s, (int)t);
 }
+
+static struct timeval _timeval_ts;
+static unsigned int _timeval_msg_id = 0;
+
+int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct timeval tv;
+
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			if(_timeval_msg_id != msg->id)
+			{
+				if(gettimeofday(&_timeval_ts, NULL)!=0)
+				{
+					LM_ERR("unable to get time val attributes\n");
+					return -1;
+				}
+				_timeval_msg_id = msg->id;
+			}
+			return pv_get_uintval(msg, param, res, (unsigned int)_timeval_ts.tv_usec);
+		case 2:
+			if(gettimeofday(&tv, NULL)!=0)
+			{
+				LM_ERR("unable to get time val attributes\n");
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_uintval(msg, param, res, (unsigned int)tv.tv_sec);
+		case 3:
+			if(gettimeofday(&tv, NULL)!=0)
+			{
+				LM_ERR("unable to get time val attributes\n");
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_uintval(msg, param, res, (unsigned int)tv.tv_usec);
+		default:
+			if(_timeval_msg_id != msg->id)
+			{
+				if(gettimeofday(&_timeval_ts, NULL)!=0)
+				{
+					LM_ERR("unable to get time val attributes\n");
+					return -1;
+				}
+				_timeval_msg_id = msg->id;
+			}
+			return pv_get_uintval(msg, param, res, (unsigned int)_timeval_ts.tv_sec);
+	}
+}
+
+int pv_parse_timeval_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 1:
+			if(strncmp(in->s, "s", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "u", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 2:
+			if(strncmp(in->s, "sn", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "un", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV timeval name %.*s\n", in->len, in->s);
+	return -1;
+}
+
 
