@@ -45,7 +45,7 @@
 #include "../../resolve.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
-#include "../../mi/mi.h"
+#include "../../lib/kmi/mi.h"
 
 #include "dr_load.h"
 #include "prefix_tree.h"
@@ -268,7 +268,13 @@ static int dr_init(void)
 {
 	pv_spec_t avp_spec;
 
-	LM_INFO("Dynamic-Routing - initializing\n");
+	LM_INFO("DRouting - initializing\n");
+
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
 
 	/* check the module params */
 	if (db_url.s==NULL || db_url.s[0]==0) {
