@@ -4,7 +4,7 @@ CREATE TABLE dr_gateways (
     type INT(11) UNSIGNED DEFAULT 0 NOT NULL,
     address VARCHAR(128) NOT NULL,
     strip INT(11) UNSIGNED DEFAULT 0 NOT NULL,
-    pri_prefix VARCHAR(16) DEFAULT NULL,
+    pri_prefix VARCHAR(64) DEFAULT NULL,
     attrs VARCHAR(255) DEFAULT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
 ) ENGINE=MyISAM;
@@ -16,7 +16,7 @@ CREATE TABLE dr_rules (
     prefix VARCHAR(64) NOT NULL,
     timerec VARCHAR(255) NOT NULL,
     priority INT(11) DEFAULT 0 NOT NULL,
-    routeid VARCHAR(255) NOT NULL,
+    routeid VARCHAR(64) NOT NULL,
     gwlist VARCHAR(255) NOT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
 ) ENGINE=MyISAM;

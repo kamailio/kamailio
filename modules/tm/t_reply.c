@@ -137,6 +137,7 @@
 #include "t_lookup.h"
 #include "t_fwd.h"
 #include "../../fix_lumps.h"
+#include "../../sr_compat.h"
 #include "t_stats.h"
 #include "uac.h"
 
@@ -608,7 +609,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			}
 #endif /* TMCB_ONSEND */
 		}
-		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n",
+		DBG("DEBUG: reply sent out. buf=%p: %.20s..., shmem=%p: %.20s\n",
 			buf, buf, rb->buffer, rb->buffer );
 	}
 	if (code>=200) {
@@ -1028,6 +1029,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int inv_through;
 	int extra_flags;
 	int i;
+	int replies_dropped;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -1114,7 +1116,11 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->flags&=~T_6xx; /* clear the 6xx flag , we want to 
 								 allow new branches from the failure route */
 
-		drop_replies = 0;
+		if(sr_cfg_compat==SR_COMPAT_KAMAILIO)
+			drop_replies = 3;
+		else
+			drop_replies = 0;
+		replies_dropped = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 						|| Trans->on_negative )) {
@@ -1125,9 +1131,19 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 						 	FL_REPLIED:0);
 			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
 									picked_code, extra_flags);
-			if (unlikely(drop_replies)) {
+			if (unlikely((drop_replies==3 && branch_cnt<Trans->nr_of_outgoings) ||
+						         (drop_replies!=0 && drop_replies!=3))
+					) {
 				/* drop all the replies that we have already saved */
-				for (i=0; i<branch_cnt; i++) {
+				i = 0;
+				if(drop_replies==2)
+				{
+					for(i=branch_cnt-1; i>=0; i--)
+						if(Trans->uac[i].flags&TM_UAC_FLAG_FB)
+							break;
+					if(i<0) i=0;
+				}
+				for (; i<branch_cnt; i++) {
 					if (Trans->uac[i].reply &&
 					(Trans->uac[i].reply != FAKED_REPLY) &&
 					(Trans->uac[i].reply->msg_flags & FL_SHM_CLONE))
@@ -1139,6 +1155,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 				/* make sure that the selected reply is not relayed even if
 				there is not any new branch added -- should not happen */
 				picked_branch = -1;
+				replies_dropped = 1;
 			}
 		}
 
@@ -1167,7 +1184,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		if (branch_cnt<Trans->nr_of_outgoings){
 			/* the new branches might be already "finished" => we
 			 * must use t_pick_branch again */
-			new_branch=t_pick_branch((drop_replies==0)?
+			new_branch=t_pick_branch((replies_dropped==0)?
 							branch :
 							-1, /* make sure we do not pick
 								the current branch */
@@ -1176,7 +1193,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 						&picked_code);
 
 			if (new_branch<0){
-				if (likely(drop_replies==0)) {
+				if (likely(replies_dropped==0)) {
 					if (new_branch==-2) { /* branches open yet */
 						*should_store=1;
 						*should_relay=-1;
@@ -1202,7 +1219,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 				/* found a new_branch */
 				picked_branch=new_branch;
 			}
-		} else if (unlikely(drop_replies)) {
+		} else if (unlikely(replies_dropped)) {
 			/* Either the script writer did not add new branches
 			after calling t_drop_replies(), or tm was unable
 			to add the new branches to the transaction. */
@@ -1852,6 +1869,7 @@ int reply_received( struct sip_msg  *p_msg )
 #ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
 #endif
+	struct run_act_ctx ctx;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1994,8 +2012,14 @@ int reply_received( struct sip_msg  *p_msg )
 		/* lock onreply_route, for safe avp usage */
 		LOCK_REPLIES( t );
 		replies_locked=1;
-		if (run_top_route(onreply_rt.rlist[t->on_reply], p_msg, 0)<0)
-			LOG(L_ERR, "ERROR: on_reply processing failed\n");
+		run_top_route(onreply_rt.rlist[t->on_reply], p_msg, &ctx);
+		if ((ctx.run_flags&DROP_R_F)  && (msg_status<200)) {
+			if (unlikely(replies_locked)) {
+				replies_locked = 0;
+				UNLOCK_REPLIES( t );
+			}
+			goto done;
+		}
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		getbflagsval(0, &uac->branch_flags);
@@ -2230,14 +2254,14 @@ error:
 /* drops all the replies to make sure
  * that none of them is picked up again
  */
-void t_drop_replies(void)
+void t_drop_replies(int v)
 {
 	/* It is too risky to free the replies that are in shm mem
 	at the middle of failure_route block, because other functions might
 	need them as well. And it can also happen that the current reply is not yet
 	in shm mem, we are just going to clone it. So better to set a flag
 	and check it after failure_route has ended. (Miklos) */
-	drop_replies = 1;
+	drop_replies = v;
 }
 
 #if 0

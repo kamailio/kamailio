@@ -153,7 +153,7 @@ int t_pick_branch_blind(struct cell *t, int *res_code);
 /* drops all the replies to make sure
  * that none of them is picked up again
  */
-void t_drop_replies(void);
+void t_drop_replies(int v);
 
 extern const char* rpc_reply_doc[2];
 void rpc_reply(rpc_t* rpc, void* c);

@@ -103,6 +103,7 @@ struct dlg_cell
 	str                  callid;		/*!< callid from SIP message */
 	str                  from_uri;		/*!< from uri from SIP message */
 	str                  to_uri;		/*!< to uri from SIP message */
+	str                  req_uri;		/*!< r-uri from SIP message */
 	str                  tag[2];		/*!< from tags of caller and to tag of callee */
 	str                  cseq[2];		/*!< CSEQ of caller and callee */
 	str                  route_set[2];	/*!< route set of caller and callee */
@@ -207,10 +208,11 @@ void destroy_dlg_table(void);
  * \param from_uri dialog from uri
  * \param to_uri dialog to uri
  * \param from_tag dialog from tag
+ * \param req_uri dialog r-uri
  * \return created dialog structure on success, NULL otherwise
  */
 struct dlg_cell* build_new_dlg(str *callid, str *from_uri,
-		str *to_uri, str *from_tag);
+		str *to_uri, str *from_tag, str *req_uri);
 
 
 /*!

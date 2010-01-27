@@ -93,6 +93,7 @@ extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
 extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
 extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
 
+extern pv_elem_t *ruri_param_model;	/*!< pv-string to get r-uri */
 
 static unsigned int CURR_DLG_LIFETIME = 0;	/*!< current dialog lifetime */
 static unsigned int CURR_DLG_STATUS = 0;	/*!< current dialog state */
@@ -533,6 +534,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 {
 	struct dlg_cell *dlg;
 	str s;
+	str req_uri;
 
 	if((msg->to==NULL && parse_headers(msg, HDR_TO_F,0)<0) || msg->to==NULL)
 	{
@@ -559,6 +561,12 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	s = msg->callid->body;
 	trim(&s);
 
+	if (pv_printf_s(msg, ruri_param_model, &req_uri)<0) {
+		LM_ERR("error - cannot print the r-uri format\n");
+		return -1;
+	}
+	trim(&req_uri);
+
 	/* some sanity checks */
 	if (s.len==0 || get_from(msg)->tag_value.len==0) {
 		LM_ERR("invalid request -> callid (%d) or from TAG (%d) empty\n",
@@ -568,7 +576,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 
 	dlg = build_new_dlg(&s /*callid*/, &(get_from(msg)->uri) /*from uri*/,
 		&(get_to(msg)->uri) /*to uri*/,
-		&(get_from(msg)->tag_value)/*from_tag*/ );
+		&(get_from(msg)->tag_value)/*from_tag*/, &req_uri /*r-uri*/ );
 	if (dlg==0) {
 		LM_ERR("failed to create new dialog\n");
 		return -1;

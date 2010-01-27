@@ -4,7 +4,7 @@ CREATE TABLE dr_gateways (
     type NUMBER(10) DEFAULT 0 NOT NULL,
     address VARCHAR2(128),
     strip NUMBER(10) DEFAULT 0 NOT NULL,
-    pri_prefix VARCHAR2(16) DEFAULT NULL,
+    pri_prefix VARCHAR2(64) DEFAULT NULL,
     attrs VARCHAR2(255) DEFAULT NULL,
     description VARCHAR2(128) DEFAULT ''
 );
@@ -24,7 +24,7 @@ CREATE TABLE dr_rules (
     prefix VARCHAR2(64),
     timerec VARCHAR2(255),
     priority NUMBER(10) DEFAULT 0 NOT NULL,
-    routeid VARCHAR2(255),
+    routeid VARCHAR2(64),
     gwlist VARCHAR2(255),
     description VARCHAR2(128) DEFAULT ''
 );

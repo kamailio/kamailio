@@ -22,6 +22,7 @@
 
 
 #include "../../dset.h"
+#include "../../onsend.h"
 
 #include "pv_branch.h"
 
@@ -126,6 +127,87 @@ int pv_parse_branchx_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "flags", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+int pv_get_snd(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct onsend_info* snd_inf;
+	str s;
+
+	snd_inf=get_onsend_info();
+	if (! likely(snd_inf && snd_inf->send_sock))
+		return pv_get_null(msg, param, res);
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1: /* af */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->send_sock->address.af);
+		case 2: /* port */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->send_sock->port_no);
+		case 3: /* proto */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->send_sock->proto);
+		case 4: /* buf */
+			s.s   = snd_inf->buf;
+			s.len = snd_inf->len;
+			return pv_get_strval(msg, param, res, &s);
+		case 5: /* len */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->len);
+		default:
+			/* 0 - ip */
+			return pv_get_strval(msg, param, res,
+					&snd_inf->send_sock->address_str);
+	}
+
+	return 0;
+}
+
+int pv_parse_snd_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 2:
+			if(strncmp(in->s, "ip", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "af", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 3:
+			if(strncmp(in->s, "buf", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "len", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "port", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "proto", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
 		break;
 		default:

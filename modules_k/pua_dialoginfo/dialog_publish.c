@@ -55,7 +55,8 @@ void print_publ(publ_info_t* p)
 }	
 
 str* build_dialoginfo(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, str *localtag, str *remotetag)
+	unsigned int initiator, str *localtag, str *remotetag,
+	str *localtarget, str *remotetarget)
 {
 	xmlDocPtr  doc = NULL; 
 	xmlNodePtr root_node = NULL;
@@ -187,6 +188,10 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 			LM_ERR("while adding child\n");
 			goto error;
 		}
+		if (remotetarget && remotetarget->s) {
+			memcpy(buf, remotetarget->s, remotetarget->len);
+			buf[remotetarget->len]= '\0';
+		}
 		xmlNewProp(tag_node, BAD_CAST "uri", BAD_CAST buf);
 
 		/* local tag*/	
@@ -215,6 +220,10 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		{
 			LM_ERR("while adding child\n");
 			goto error;
+		}
+		if (localtarget && localtarget->s) {
+			memcpy(buf, localtarget->s, localtarget->len);
+			buf[localtarget->len]= '\0';
 		}
 		xmlNewProp(tag_node, BAD_CAST "uri", BAD_CAST buf);
 	}
@@ -251,7 +260,8 @@ error:
 }	
 
 void dialog_publish(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag)
+	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
+	str *localtarget, str *remotetarget)
 {
 	str* body= NULL;
 	str uri= {NULL, 0};
@@ -273,7 +283,7 @@ void dialog_publish(char *state, str *entity, str *peer, str *callid,
 	content_type.s= "application/dialog-info+xml";
 	content_type.len= 27;
 
-	body= build_dialoginfo(state, entity, peer, callid, initiator, localtag, remotetag);
+	body= build_dialoginfo(state, entity, peer, callid, initiator, localtag, remotetag, localtarget, remotetarget);
 	if(body == NULL || body->s == NULL)
 		goto error;
 	

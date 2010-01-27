@@ -2984,12 +2984,14 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			FORCE_RTP_PROXY_RET (-1);
 		}
 		create = 0;
-		if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)) {
+		if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)
+				|| (msg->first_line.type == SIP_REQUEST && offer == 0)) {
 			tmp = from_tag;
 			from_tag = to_tag;
 			to_tag = tmp;
 		}
-	} else if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)) {
+	} else if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)
+			|| (msg->first_line.type == SIP_REQUEST && offer == 0)) {
 		if (to_tag.len == 0) {
 			FORCE_RTP_PROXY_RET (-1);
 		}

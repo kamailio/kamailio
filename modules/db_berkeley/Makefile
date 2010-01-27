@@ -20,3 +20,13 @@ SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/kmi/kmi
 
 include ../../Makefile.modules
+
+ifeq ($(INSTALL_FLAVOUR),kamailio)
+# extra install for kamailio
+
+install-berkeley-scripts: $(bin_prefix)/$(bin_dir)
+		BERKELEYDBON=yes make -C ../../utils/kamctl/ install-modules
+
+install-scripts: install-berkeley-scripts
+
+endif # INSTALL_FLAVOUR

@@ -68,7 +68,8 @@ typedef enum ptype {
 	P_FROM_TAG,  /*!< Dialog event package: from-tag */
 	P_TO_TAG,    /*!< Dialog event package: to-tag */
 	P_ISD,       /*!< Dialog event package: include-session-description */
-	P_SLA        /*!< Dialog event package: sla */
+	P_SLA,       /*!< Dialog event package: sla */
+	P_MA         /*!< Dialog event package: ma */
 } ptype_t;
 
 
@@ -128,6 +129,7 @@ struct event_dialog_hooks {
 	struct param* to_tag;
 	struct param* include_session_description;
 	struct param* sla;
+	struct param* ma;
 };
 
 /*! \brief

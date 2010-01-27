@@ -35,3 +35,13 @@ SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
 
 include ../../Makefile.modules
+
+ifeq ($(INSTALL_FLAVOUR),kamailio)
+# extra install for kamailio
+
+install-pgsql-scripts: $(bin_prefix)/$(bin_dir)
+		PGSQLON=yes make -C ../../utils/kamctl/ install-modules
+
+install-scripts: install-pgsql-scripts
+
+endif # INSTALL_FLAVOUR

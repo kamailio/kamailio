@@ -56,7 +56,7 @@ MODULE_VERSION
 str _th_key = { "aL9.n8~Hm]Z", 0 };
 str th_cookie_name = {"TH", 0};
 str th_cookie_value = {0, 0};
-str th_ip = {"10.1.1.2", 0};
+str th_ip = {"10.1.1.10", 0};
 str th_uparam_name = {"line", 0};
 str th_uparam_prefix = {"sr-", 0};
 str th_vparam_name = {"branch", 0};
@@ -76,6 +76,7 @@ static int mod_init(void);
 
 static param_export_t params[]={
 	{"mask_key",		STR_PARAM, &_th_key.s},
+	{"mask_ip",			STR_PARAM, &th_ip.s},
 	{"mask_callid",		INT_PARAM, &th_param_mask_callid},
 	{"uparam_name",		STR_PARAM, &th_uparam_name.s},
 	{"uparam_prefix",	STR_PARAM, &th_uparam_prefix.s},

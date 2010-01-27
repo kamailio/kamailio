@@ -16,10 +16,10 @@ address|
 address|3
 aliases|
 aliases|1004
-carrierfailureroute|
-carrierfailureroute|2
 carrier_name|
 carrier_name|1
+carrierfailureroute|
+carrierfailureroute|2
 carrierroute|
 carrierroute|3
 cpl|
@@ -27,7 +27,7 @@ cpl|1
 dbaliases|
 dbaliases|1
 dialog|
-dialog|3
+dialog|4
 dialplan|
 dialplan|1
 dispatcher|

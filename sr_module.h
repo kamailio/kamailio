@@ -389,6 +389,10 @@ int init_child(int rank);
 int init_modules(void);
 struct sr_module* find_module_by_name(char* mod);
 
+/* true if the module with name 'mod_name' is loaded */
+#define module_loaded(mod_name) (find_module_by_name(mod_name)!=0)
+
+
 /*! \brief
  * Find a parameter with given type and return it's
  * address in memory
@@ -519,19 +523,5 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
  */
 int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param);
 
-
-/* functions needed for kamailio/openser compatibility */
-
-/*! \brief Check if module is loaded
- * \return Returns 1 if the module with name 'name' is loaded, and zero otherwise. */
-int module_loaded(char *name);
-
-/*! \brief Counts the additional the number of processes
- requested by modules */
-int count_module_procs(void);
-
-
-/*! \brief Forks and starts the additional processes required by modules */
-int start_module_procs(void);
 
 #endif /* sr_module_h */

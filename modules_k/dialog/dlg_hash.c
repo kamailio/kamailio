@@ -153,6 +153,9 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE, 0);
 
+	if(dlg==get_current_dlg_pointer())
+		reset_current_dlg_pointer();
+
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
 
@@ -172,6 +175,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 		shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
 
 	shm_free(dlg);
+	dlg = 0;
 }
 
 
@@ -214,17 +218,18 @@ void destroy_dlg_table(void)
  * \param from_uri dialog from uri
  * \param to_uri dialog to uri
  * \param from_tag dialog from tag
+ * \param req_uri dialog r-uri
  * \return created dialog structure on success, NULL otherwise
  */
 struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
-		str *from_tag)
+		str *from_tag, str *req_uri)
 {
 	struct dlg_cell *dlg;
 	int len;
 	char *p;
 
 	len = sizeof(struct dlg_cell) + callid->len + from_uri->len +
-		to_uri->len;
+		to_uri->len + req_uri->len;
 	dlg = (struct dlg_cell*)shm_malloc( len );
 	if (dlg==0) {
 		LM_ERR("no more shm mem (%d)\n",len);
@@ -252,7 +257,12 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	dlg->to_uri.s = p;
 	dlg->to_uri.len = to_uri->len;
 	memcpy( p, to_uri->s, to_uri->len);
-	p += to_uri->len;
+	p += to_uri->len; 
+
+	dlg->req_uri.s = p;
+	dlg->req_uri.len = req_uri->len;
+	memcpy( p, req_uri->s, req_uri->len);
+	p += req_uri->len;
 
 	if ( p!=(((char*)dlg)+len) ) {
 		LM_CRIT("buffer overflow\n");

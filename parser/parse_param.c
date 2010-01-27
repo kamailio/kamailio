@@ -100,6 +100,15 @@ static inline void parse_event_dialog_class(param_hooks_t* h, param_t* p)
 			h->event_dialog.sla = p;
 		}
 		break;
+
+	case 'm':
+	case 'M':
+		if ((p->name.len == 2) &&
+		    (!strncasecmp(p->name.s + 1, "a", 1))) {
+			p->type = P_MA;
+			h->event_dialog.ma = p;
+		}
+		break;
 	}
 }
 

@@ -1,3 +1,10 @@
+kamailio (3.0.0-rc2) unstable; urgency=low
+
+  * update to 3.0.0-rc2 from upstream
+  * updated debian/rules to work with the new style module packaging
+
+ -- Jonas Bergler <jonas.bergler@staff.snap.net.nz>  Wed, 18 Nov 2009 12:30:02 +1300
+
 kamailio (1.5.0-svn1) unstable; urgency=low
 
   * increment debian packaging for trunk

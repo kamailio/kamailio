@@ -905,6 +905,10 @@ int init_modules(void)
 	struct sr_module* t;
 	int i;
 	
+	i = init_mod(modules);
+	if(i!=0)
+		return i;
+
 	for(t = modules; t; t = t->next)
 		if (t->exports){
 			switch(t->mod_interface_ver){
@@ -944,7 +948,7 @@ int init_modules(void)
 		}
 	}
 	
-	return init_mod(modules);
+	return 0;
 }
 
 #endif

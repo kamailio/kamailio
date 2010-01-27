@@ -9,7 +9,7 @@
 
 <table id="dialog" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dialog</name>
-	<version>3</version>
+	<version>4</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>Persistent dialog information for the dialog module. More 
@@ -183,6 +183,13 @@
 		<default>0</default>
 		<description>The route to be executed at dialog timeout.
 		</description>
+	</column>
+
+	<column>
+		<name>req_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>The URI of initial request in dialog</description>
 	</column>
 
 	<index>

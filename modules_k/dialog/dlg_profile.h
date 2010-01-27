@@ -79,6 +79,10 @@ struct dlg_profile_table {
 };
 
 
+struct dlg_cell *get_current_dlg_pointer(void);
+
+void reset_current_dlg_pointer(void);
+
 /*!
  * \brief Add profile definitions to the global list
  * \see new_dlg_profile

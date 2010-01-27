@@ -370,6 +370,7 @@ static int fix_sock_str(struct socket_info* si)
 		return -1;
 	}
 	si->sock_str.s[len] = '\0';
+	si->sock_str.len = len;
 	return 0;
 }
 

@@ -198,4 +198,40 @@ modparam("ctl", "autoconversion", 1)
 	</example>
 	</section>
 
+	<section id="binrpc_max_body_size">
+	<title><varname>binrpc_max_body_size</varname> (integer)</title>
+	<para>
+		Set the size of binrpc buffer for RPC reply. Value represents
+		kilobytes.
+	</para>
+	<para>
+		Default: 4 (meaning 4KB);
+	</para>
+	<example>
+		<title>Set the <varname>binrpc_max_body_size</varname> parameter
+		</title>
+		<programlisting>
+modparam("ctl", "binrpc_max_body_size", 10)
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="binrpc_struct_max_body_size">
+	<title><varname>binrpc_struct_max_body_size</varname> (integer)</title>
+	<para>
+		Set the size of binrpc structure buffer for RPC reply. Value represents
+		kilobytes.
+	</para>
+	<para>
+		Default: 1 (meaning 1KB);
+	</para>
+	<example>
+		<title>Set the <varname>binrpc_struct_max_body_size</varname> parameter
+		</title>
+		<programlisting>
+modparam("ctl", "binrpc_struct_max_body_size", 3)
+		</programlisting>
+	</example>
+	</section>
+
 </section>

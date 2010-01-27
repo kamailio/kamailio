@@ -946,13 +946,20 @@ if (method == CANCEL) {
 
     <section id="t_drop_replies">
 	<title>
-	    <function>t_drop_replies()</function>
+	    <function>t_drop_replies([mode])</function>
 	</title>
 	<para>
 		Drops all the previously received replies in failure_route
 		block to make sure that none of them is picked up again.
-		Works only if a new branch is added to the transaction,
-		or it is explicitly replied in the script!
+	</para>
+	<para>
+		The parameter 'mode' controls which replies are dropped: 'a'
+		or missing - all replies are dropped; 'l' - replies received for
+		last set of branches are dropped; 'n' - no reply is dropped.
+	</para>
+	<para>
+		Dropping replies works only if a new branch is added to the
+		transaction, or it is explicitly replied in the script!
 	</para>
 	<example>
 	    <title><function>t_drop_replies()</function> usage</title>
@@ -1314,5 +1321,151 @@ route {
 		</programlisting>
 	</example>
 	</section>
+
+	<section id="t_replicate">
+	<title>
+	    <function>t_replicate(params)</function>
+	</title>
+	<para>
+		Replicate the SIP request to a specific address.
+	</para>
+	<para>
+		There are several function prototypes:
+		<itemizedlist>
+		<listitem>
+	    <function>t_replicate(uri)</function>,
+		</listitem>
+		<listitem>
+	    <function>t_replicate(host, port)</function>,
+		</listitem>
+		<listitem>
+	    <function>t_replicat_udp(host, port)</function>
+		</listitem>
+		<listitem>
+	    <function>t_replicate_tcp(host, port)</function>
+		</listitem>
+		<listitem>
+	    <function>t_replicate_tls(host, port)</function>
+		</listitem>
+		<listitem>
+	    <function>t_replicate_sctp(host, port)</function>
+		</listitem>
+		<listitem>
+	    <function>t_replicate_to(proto, hostport)</function>
+		</listitem>
+		</itemizedlist>
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>uri</emphasis> - SIP URI where the message should be sent.
+		It can be given via a script variable.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>host</emphasis> - host address where the message should be sent.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>port</emphasis> - port number.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>proto</emphasis> - transport protocol to be used.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hostport</emphasis> - address in "host:port" format. It can be
+		given via an AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_replicate</function> usage</title>
+	    <programlisting>
+...
+# sent to 1.2.3.4:5060 over tcp
+t_replicate("sip:1.2.3.4:5060;transport=tcp");
+
+# sent to 1.2.3.4:5061 over tls
+$var(h) = "1.2.3.4:5061";
+t_replicate("sip:$var(h);transport=tls");
+
+# sent to 1.2.3.4:5060 over udp
+t_replicate_to_udp("1.2.3.4", "5060");
+...
+	    </programlisting>
+	</example>
+    </section>
+	<section id="t_relay_to">
+	<title>
+	    <function>t_relay_to(proxy, flags)</function>
+	</title>
+	<para>
+		Forward the SIP request to a specific address, controlling internal
+		behavior via flags.
+	</para>
+	<para>
+		There are several function prototypes:
+		<itemizedlist>
+		<listitem>
+	    <function>t_relay_to()</function>,
+		</listitem>
+		<listitem>
+	    <function>t_relay_to(proxy)</function>,
+		</listitem>
+		<listitem>
+	    <function>t_relay_to(flags)</function>
+		</listitem>
+		<listitem>
+	    <function>t_relay_to(proxy, flags)</function>
+		</listitem>
+		</itemizedlist>
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>proxy</emphasis> - address where the request should
+		be sent. Format is: "proto:host:port" - any of proto or port can be
+		ommitted, along with the semicolon after or before.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>flags</emphasis> - bitmask integer value to control
+		the internal behavior. Bits can be:
+		</para>
+		<itemizedlist>
+	    <listitem>
+		<para><emphasis>0x01</emphasis> - do not generate 100 reply.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>0x02</emphasis> - do not generate reply on internal
+		error (NOTE: has no effect anymore).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>0x04</emphasis> - disable dns failover.
+		</para>
+	    </listitem>
+		</itemizedlist>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_replicate</function> usage</title>
+	    <programlisting>
+...
+# sent to 1.2.3.4:5060 over tcp
+t_relay_to("tcp:1.2.3.4:5060");
+
+# sent to 1.2.3.4 over tls
+t_relay_to("tls:1.2.3.4");
+
+# sent to dst URI or R-URI without a 100 reply
+t_relay_to("0x01");
+...
+	    </programlisting>
+	</example>
+    </section>
 
 </section>
