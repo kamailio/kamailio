@@ -115,6 +115,14 @@ endif # verbose
 # flavour: sip-router, ser or kamailio
 FLAVOUR?=sip-router
 
+#prefix for various configs and scripts
+#config name/name-prefix for distributed configs
+CFG_NAME=sip-router
+#config name/name-prefix for distributed scripts
+SCR_NAME=sip-router
+#name in source tree
+SRC_NAME=sip-router
+
 ifeq ($(FLAVOUR),sip-router)
 # main binary name
 MAIN_NAME=ser
@@ -124,18 +132,16 @@ MAIN_NAME=ser
 else ifeq ($(FLAVOUR),kamailio)
 # main binary name
 MAIN_NAME=kamailio
+# use kamailio config
+CFG_NAME=kamailio
+# kamailio statistics on
+KMSTATS ?= 1
+# fast malloc statistics on
+FMSTATS ?= 1
 else # default:
 # main binary name
 MAIN_NAME=sip-router
 endif
-
-#prefix for various configs and scripts
-#config name/name-prefix for distributed configs
-CFG_NAME=sip-router
-#config name/name-prefix for distributed scripts
-SCR_NAME=sip-router
-#name in source tree
-SRC_NAME=sip-router
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
@@ -649,6 +655,9 @@ ifeq ($(TLS_HOOKS), 1)
 endif
 ifeq ($(KMSTATS), 1)
 	C_DEFS+= -DSTATISTICS
+endif
+ifeq ($(FMSTATS), 1)
+	C_DEFS+= -DMALLOC_STATS
 endif
 
 ifneq ($(STUN),)
