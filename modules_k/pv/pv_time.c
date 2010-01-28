@@ -200,11 +200,13 @@ int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
 
 static struct timeval _timeval_ts;
 static unsigned int _timeval_msg_id = 0;
+static char _timeval_ts_buf[32];
 
 int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct timeval tv;
+	str s;
 
 	if(msg==NULL || param==NULL)
 		return -1;
@@ -236,6 +238,18 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_uintval(msg, param, res, (unsigned int)tv.tv_usec);
+		case 4:
+			if(gettimeofday(&tv, NULL)!=0)
+			{
+				LM_ERR("unable to get time val attributes\n");
+				return pv_get_null(msg, param, res);
+			}
+			s.len = snprintf(_timeval_ts_buf, 32, "%u.%u",
+					(unsigned int)tv.tv_sec, (unsigned int)tv.tv_usec);
+			if(s.len<0)
+				return pv_get_null(msg, param, res);
+			s.s = _timeval_ts_buf;
+			return pv_get_strval(msg, param, res, &s);
 		default:
 			if(_timeval_msg_id != msg->id)
 			{
@@ -269,6 +283,8 @@ int pv_parse_timeval_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "un", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "sn", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
 			else goto error;
 		break;
 		default:
