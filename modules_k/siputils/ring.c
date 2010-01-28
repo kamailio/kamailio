@@ -237,7 +237,7 @@ static int contains(str callid)
 
 
 /*!
- * \brief Convert a 180 to a 180 message.
+ * \brief Convert a 183  to a 180 message.
  * \param msg SIP message
  */
 static int conv183(struct sip_msg *msg)

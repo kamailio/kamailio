@@ -187,9 +187,10 @@ Chapter 1. Admin Guide
 3.1. ring_timeout (int)
 
    Timeout value in seconds, define how long the call-id is stored in the
-   internal list. A reasonable value is "30".
+   internal list kept for replacing 183 messages with 180. A reasonable
+   value is "30".
 
-   Default value is "0".
+   Default value is "0". This means functionality is disabled.
 
    Example 1.1. Set ring_timeout parameter
 ...

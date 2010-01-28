@@ -120,7 +120,7 @@ static param_export_t params[] = {
 	{"options_accept_encoding", STR_PARAM, &opt_accept_enc.s},
 	{"options_accept_language", STR_PARAM, &opt_accept_lang.s},
 	{"options_support",         STR_PARAM, &opt_supported.s},
-	{"contact_flds_separator",  STR_PARAM,&contact_flds_separator},
+	{"contact_flds_separator",  STR_PARAM, &contact_flds_separator},
 	{0, 0, 0}
 };
 
