@@ -426,7 +426,11 @@ C_INSTALL_BIN=	# sercmd is now installed by ctl
 
 # which utils know to install themselves and should be installed
 # along the core (list of utils directories)
+ifeq ($(FLAVOUR),kamailio)
+C_INSTALL_UTILS= utils/kamctl
+else
 C_INSTALL_UTILS=
+endif
 # list of scripts that should be installed along the core 
 # (here a script is something that doesn't have a Makefile)
 C_INSTALL_SCRIPTS=
