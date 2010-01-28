@@ -888,26 +888,42 @@ $(man_prefix)/$(man_dir)/man5:
 
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
-		@sed $(foreach m,$(modules_dirs),\
-				-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/$(CFG_NAME)-basic.cfg > \
-			$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
-		@chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample
-		@if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg; \
+		@if [ -f etc/$(CFG_NAME).cfg ]; then \
+			sed $(foreach m,$(modules_dirs),\
+					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+				< etc/$(CFG_NAME).cfg > \
+				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample; \
+			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample; \
+			if [ -z "${skip_cfg_install}" -a \
+					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg ]; then \
+				mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample \
+					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg; \
+			fi; \
 		fi
-		@sed $(foreach m,$(modules_dirs),\
-			-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-			< etc/$(CFG_NAME)-oob.cfg \
-			> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
-		@chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample
-		@if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg ]; \
-		then \
-			mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
+		@if [ -f etc/$(CFG_NAME)-basic.cfg ]; then \
+			sed $(foreach m,$(modules_dirs),\
+					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+				< etc/$(CFG_NAME)-basic.cfg > \
+				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg.sample; \
+			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg.sample; \
+			if [ -z "${skip_cfg_install}" -a \
+					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg ]; then \
+				mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg.sample \
+					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg; \
+			fi; \
+		fi
+		@if [ -f etc/$(CFG_NAME)-oob.cfg ]; then \
+			sed $(foreach m,$(modules_dirs),\
+				-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+				< etc/$(CFG_NAME)-oob.cfg \
+				> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample; \
+			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample; \
+			if [ -z "${skip_cfg_install}" -a \
+					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg ]; \
+			then \
+				mv -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample \
+					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
+			fi; \
 		fi
 		# other configs
 		@for r in $(C_INSTALL_CFGS) ; do \
