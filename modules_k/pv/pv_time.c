@@ -283,7 +283,7 @@ int pv_parse_timeval_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "un", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
-			else if(strncmp(in->s, "sn", 2)==0)
+			else if(strncmp(in->s, "Sn", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else goto error;
 		break;
