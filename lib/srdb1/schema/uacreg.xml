@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="uacreg" xmlns:db="http://docbook.org/ns/docbook">
+    <name>uacreg</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by theuac module to load user details for remote server registration: &KAMAILIO_MOD_DOC;uac.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="l_uuid">
+        <name>l_uuid</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Local unique id used to build and match contact addresses.</description>
+    </column>
+
+    <column id="l_username">
+        <name>l_username</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Local username</description>
+    </column>
+
+    <column id="l_domain">
+        <name>l_domain</name>
+        <type>string</type>
+        <size>128</size>
+        <default/>
+        <description>Local domain</description>
+    </column>
+
+    <column id="r_username">
+        <name>r_username</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Remote username</description>
+    </column>
+
+    <column id="r_domain">
+        <name>r_domain</name>
+        <type>string</type>
+        <size>128</size>
+        <default/>
+        <description>Remote domain</description>
+    </column>
+
+    <column id="realm">
+        <name>realm</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Remote username</description>
+    </column>
+
+    <column id="auth_username">
+        <name>auth_username</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Authentication username</description>
+    </column>
+
+    <column id="auth_password">
+        <name>auth_password</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Authentication password</description>
+    </column>
+
+    <column id="auth_proxy">
+        <name>auth_proxy</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Outbound proxy SIP address</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>int</type>
+        <default>0</default>
+        <description>Expiration time (in seconds, 0 means disabled)</description>
+    </column>
+
+	<index>
+        <name>l_uuid_idx</name>
+        <colref linkend="l_uuid"/>
+        <unique/>
+    </index>
+</table>
