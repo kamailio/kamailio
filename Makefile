@@ -287,8 +287,6 @@ else
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
 	exclude_modules+= bdb dbtext iptrtpproxy pa rls
-	# dcm: for now needs backports from sr
-	exclude_modules+= mtree
 	# depends on libgeoip
 	exclude_modules+= geoip
 	# depends on liblua5.1-dev
