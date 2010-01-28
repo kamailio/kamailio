@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="mtree" xmlns:db="http://docbook.org/ns/docbook">
+    <name>mtree</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the mtree module to load values in the shared memory tree at start up. More information about the mtree module can be found at: &KAMAILIO_MOD_DOC;mtree.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="tprefix">
+		<name>tprefix</name>
+        <type>string</type>
+        <size>32</size>
+        <default/>
+        <description>Key to be used to index the values in the tree, usually a DID or prefix.</description>
+    </column>
+
+    <column id="tvalue">
+        <name>tvalue</name>
+        <type>string</type>
+        <size>128</size>
+        <default/>
+        <description>The value of the key</description>
+    </column>
+
+	<index>
+        <name>tprefix_idx</name>
+        <colref linkend="tprefix"/>
+        <unique/>
+    </index>
+</table>
