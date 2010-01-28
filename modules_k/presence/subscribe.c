@@ -544,10 +544,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			reply_str= pu_400_rpl;
 			goto error;
 		}
-		if(((event_t*)msg->event->parsed)->type == EVENT_OTHER)
-		{	
-			goto bad_event;
-		}
 	}
 	else
 		goto bad_event;

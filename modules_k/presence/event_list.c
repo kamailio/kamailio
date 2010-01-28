@@ -350,7 +350,10 @@ pres_ev_t* search_event(event_t* event)
 
 	while(pres_ev)
 	{
-		if(pres_ev->evp->type== event->type)
+		if((pres_ev->evp->type== event->type && event->type!=EVENT_OTHER)
+			|| (pres_ev->evp->name.len== event->name.len &&
+				strncasecmp(pres_ev->evp->name.s,event->name.s,
+					pres_ev->evp->name.len)== 0))
 		{
 			if(event->params.list== NULL && pres_ev->evp->params.list== NULL)
 			{

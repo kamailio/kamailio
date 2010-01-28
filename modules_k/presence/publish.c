@@ -325,10 +325,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 			reply_str= pu_400a_rpl;
 			goto error;
 		}
-		if(((event_t*)msg->event->parsed)->type == EVENT_OTHER)
-		{	
-			goto unsupported_event;
-		}
 	}
 	else
 		goto unsupported_event;
