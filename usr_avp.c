@@ -303,6 +303,8 @@ int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t v
 /* get value functions */
 inline str* get_avp_name(avp_t *avp)
 {
+	struct str_int_data *sid;
+	struct str_str_data *ssd;
 	
 	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) )
 	{
@@ -313,10 +315,12 @@ inline str* get_avp_name(avp_t *avp)
 			return 0;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			return &((struct str_int_data*)&avp->d.data[0])->name;
+			sid = (struct str_int_data*)&avp->d.data[0];
+			return &sid->name;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
-			return &((struct str_str_data*)&avp->d.data[0])->name;
+			ssd = (struct str_str_data*)&avp->d.data[0];
+			return &ssd->name;
 	}
 
 	LOG(L_ERR,"BUG:avp:get_avp_name: unknown avp type (name&val) %d\n",
@@ -327,6 +331,9 @@ inline str* get_avp_name(avp_t *avp)
 
 inline void get_avp_val(avp_t *avp, avp_value_t *val)
 {
+	str *s;
+	struct str_int_data *sid;
+	struct str_str_data *ssd;
 	
 	if (avp==0 || val==0)
 		return;
@@ -338,15 +345,18 @@ inline void get_avp_val(avp_t *avp, avp_value_t *val)
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			val->n = ((struct str_int_data*)&avp->d.data[0])->val;
+			sid = (struct str_int_data*)&avp->d.data[0];
+			val->n = sid->val;
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
-			val->s = *(str*)&avp->d.data[0];
+			s = (str*)&avp->d.data[0];
+			val->s = *s;
 			break;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
-			val->s = ((struct str_str_data*)&avp->d.data[0])->val;
+			ssd = (struct str_str_data*)&avp->d.data[0];
+			val->s = ssd->val;
 			break;
 	}
 }

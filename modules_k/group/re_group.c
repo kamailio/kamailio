@@ -163,6 +163,7 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 	regmatch_t pmatch;
 	char *c;
 	int n;
+	int* pi;
 
 	if (get_username_domain( req, (group_check_p)user, &username, &domain)!=0){
 		LM_ERR("failed to get username@domain\n");
@@ -179,7 +180,8 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 		goto error;
 	}
 
-	*(int*)uri_buf = htonl(('s'<<24) + ('i'<<16) + ('p'<<8) + ':');
+	pi=(int*)uri_buf;
+	*pi = htonl(('s'<<24) + ('i'<<16) + ('p'<<8) + ':');
 	c = uri_buf + 4;
 	memcpy( c, username.s, username.len);
 	c += username.len;

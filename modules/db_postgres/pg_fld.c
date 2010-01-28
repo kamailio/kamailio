@@ -91,17 +91,23 @@ int pg_fld(db_fld_t* fld, char* table)
 }
 
 
+union ull {
+	uint64_t ui64;
+	uint32_t ui32[2];
+};
+
 static inline uint64_t htonll(uint64_t in)
 {
-	uint32_t* p = (uint32_t*)&in;
-	return ((uint64_t)htonl(p[0]) << 32) + (uint64_t)htonl(p[1]);
+	union ull* p = (union ull*)&in;
+	
+	return ((uint64_t)htonl(p->ui32[0]) << 32) + (uint64_t)htonl(p->ui32[1]);
 }
 
 
 static inline uint64_t ntohll(uint64_t in)
 {
-	uint32_t* p = (uint32_t*)&in;
-	return ((uint64_t)ntohl(p[0]) << 32) + (uint64_t)ntohl(p[1]);
+	union ull* p = (union ull*)&in;
+	return ((uint64_t)ntohl(p->ui32[0]) << 32) + (uint64_t)ntohl(p->ui32[1]);
 }
 
 
