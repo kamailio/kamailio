@@ -366,6 +366,8 @@ static pv_export_t mod_pvs[] = {
 		0, pv_parse_time_name, 0, 0, 0},
 	{ {"TV", (sizeof("TV")-1)}, PVT_OTHER, pv_get_timeval,
 		0, pv_parse_timeval_name, 0, 0, 0},
+	{ {"nh", (sizeof("nh")-1)}, PVT_OTHER, pv_get_nh,
+		0, pv_parse_nh_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

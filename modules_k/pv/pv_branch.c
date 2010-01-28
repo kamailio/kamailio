@@ -21,9 +21,11 @@
  */
 
 
+#include "../../parser/parse_uri.h"
 #include "../../dset.h"
 #include "../../onsend.h"
 
+#include "pv_core.h"
 #include "pv_branch.h"
 
 int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
@@ -220,6 +222,95 @@ int pv_parse_snd_name(pv_spec_p sp, str *in)
 
 error:
 	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct sip_uri parsed_uri;
+	str uri;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have r/d-uri */
+		return pv_get_null(msg, param, res);
+
+    if (msg->dst_uri.s != NULL && msg->dst_uri.len>0)
+	{
+		uri = msg->dst_uri;
+	} else {
+		if (msg->new_uri.s!=NULL && msg->new_uri.len>0)
+		{
+			uri = msg->new_uri;
+		} else {
+			uri = msg->first_line.u.request.uri;
+		}
+	}
+	if(param->pvn.u.isname.name.n==0) /* uri */
+	{
+		return pv_get_strval(msg, param, res, &uri);
+	}
+	if(parse_uri(uri.s, uri.len, &parsed_uri)!=0)
+	{
+		LM_ERR("failed to parse nh uri [%.*s]\n", uri.len, uri.s);
+		return pv_get_null(msg, param, res);
+	}
+	if(param->pvn.u.isname.name.n==1) /* username */
+	{
+		if(parsed_uri.user.s==NULL || parsed_uri.user.len<=0)
+			return pv_get_null(msg, param, res);
+		return pv_get_strval(msg, param, res, &parsed_uri.user);
+	} else if(param->pvn.u.isname.name.n==2) /* domain */ {
+		if(parsed_uri.host.s==NULL || parsed_uri.host.len<=0)
+			return pv_get_null(msg, param, res);
+		return pv_get_strval(msg, param, res, &parsed_uri.host);
+	} else if(param->pvn.u.isname.name.n==3) /* port */ {
+		if(parsed_uri.port.s==NULL)
+			return pv_get_5060(msg, param, res);
+		return pv_get_strintval(msg, param, res, &parsed_uri.port,
+				(int)parsed_uri.port_no);
+	} else if(param->pvn.u.isname.name.n==4) /* protocol */ {
+		if(parsed_uri.transport_val.s==NULL)
+			return pv_get_udp(msg, param, res);
+		return pv_get_strintval(msg, param, res, &parsed_uri.transport_val,
+				(int)parsed_uri.proto);
+	}
+	LM_ERR("unknown specifier\n");
+	return pv_get_null(msg, param, res);
+}
+
+int pv_parse_nh_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 1:
+			if(strncmp(in->s, "u", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "U", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "d", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "p", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "P", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV nh name %.*s\n", in->len, in->s);
 	return -1;
 }
 
