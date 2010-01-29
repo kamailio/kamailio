@@ -233,6 +233,18 @@ int lua_sr_initialized(void)
 /**
  *
  */
+int app_lua_return_boolean(lua_State *L, int b)
+{
+	if(b==0)
+		lua_pushboolean(L, 0);
+	else
+		lua_pushboolean(L, 1);
+	return 1;
+}
+
+/**
+ *
+ */
 int app_lua_dostring(struct sip_msg *msg, char *script)
 {
 	int ret;
