@@ -291,6 +291,8 @@ else
 	exclude_modules+= geoip
 	# depends on liblua5.1-dev
 	exclude_modules+= app_lua
+	# depends on libpython-dev
+	exclude_modules+= app_python
 endif
 
 # always exclude the CVS dir
