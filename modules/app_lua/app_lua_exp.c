@@ -86,8 +86,35 @@ static int lua_sr_sl_send_reply (lua_State *L)
 /**
  *
  */
+static int lua_sr_sl_get_reply_totag (lua_State *L)
+{
+	str txt;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL))
+	{
+		LM_WARN("weird: sl function executed but module not registered\n");
+		return 0;
+	}
+	ret = _lua_slb.get_reply_totag(env_L->msg, &txt);
+	if(ret<0)
+	{
+		LM_WARN("sl get_reply_totag returned false\n");
+		return 0;
+	}
+	lua_pushlstring(L, txt.s, txt.len);
+	return 1;
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_sl_Map [] = {
-	{"send_reply", lua_sr_sl_send_reply},
+	{"send_reply",      lua_sr_sl_send_reply},
+	{"get_reply_totag", lua_sr_sl_get_reply_totag},
 	{NULL, NULL}
 };
 
