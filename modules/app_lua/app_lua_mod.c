@@ -43,8 +43,19 @@ static int  child_init(int rank);
 
 static int w_app_lua_dostring(struct sip_msg *msg, char *script, char *extra);
 static int w_app_lua_dofile(struct sip_msg *msg, char *script, char *extra);
+static int w_app_lua_runstring(struct sip_msg *msg, char *script, char *extra);
 static int w_app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		char *p3);
+static int w_app_lua_run0(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3);
+static int w_app_lua_run1(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3);
+static int w_app_lua_run2(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3);
+static int w_app_lua_run3(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3);
+
+static int fixup_lua_run(void** param, int param_no);
 
 int app_lua_load_param(modparam_t type, void *val);
 int app_lua_register_param(modparam_t type, void *val);
@@ -56,17 +67,19 @@ static param_export_t params[]={
 };
 
 static cmd_export_t cmds[]={
-	{"lua_dostring", (cmd_function)w_app_lua_dostring, 1, 0,
+	{"lua_dostring", (cmd_function)w_app_lua_dostring, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"lua_dofile", (cmd_function)w_app_lua_dofile, 1, 0,
+	{"lua_dofile", (cmd_function)w_app_lua_dofile, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"lua_run", (cmd_function)w_app_lua_run, 1, 0,
+	{"lua_runstring", (cmd_function)w_app_lua_runstring, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"lua_run", (cmd_function)w_app_lua_run, 2, 0,
+	{"lua_run", (cmd_function)w_app_lua_run0, 1, fixup_lua_run,
 		0, ANY_ROUTE},
-	{"lua_run", (cmd_function)w_app_lua_run, 3, 0,
+	{"lua_run", (cmd_function)w_app_lua_run1, 2, fixup_lua_run,
 		0, ANY_ROUTE},
-	{"lua_run", (cmd_function)w_app_lua_run, 4, 0,
+	{"lua_run", (cmd_function)w_app_lua_run2, 3, fixup_lua_run,
+		0, ANY_ROUTE},
+	{"lua_run", (cmd_function)w_app_lua_run3, 4, fixup_lua_run,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -113,35 +126,180 @@ static void mod_destroy(void)
 	lua_sr_destroy();
 }
 
+static char _lua_buf_stack[4][512];
+
 static int w_app_lua_dostring(struct sip_msg *msg, char *script, char *extra)
 {
+	str s;
 	if(!lua_sr_initialized())
 	{
 		LM_ERR("Lua env not intitialized");
 		return -1;
 	}
-	return app_lua_dostring(msg, script);
+	if(fixup_get_svalue(msg, (gparam_p)script, &s)<0)
+	{
+		LM_ERR("cannot get the script\n");
+		return -1;
+	}
+	if(s.len>=511)
+	{
+		LM_ERR("script too long %d\n", s.len);
+		return -1;
+	}
+	memcpy(_lua_buf_stack[0], s.s, s.len);
+	_lua_buf_stack[0][s.len] = '\0';
+	return app_lua_dostring(msg, _lua_buf_stack[0]);
 }
 
 static int w_app_lua_dofile(struct sip_msg *msg, char *script, char *extra)
 {
+	str s;
 	if(!lua_sr_initialized())
 	{
 		LM_ERR("Lua env not intitialized");
 		return -1;
 	}
-	return app_lua_dofile(msg, script);
+	if(fixup_get_svalue(msg, (gparam_p)script, &s)<0)
+	{
+		LM_ERR("cannot get the script\n");
+		return -1;
+	}
+	if(s.len>=511)
+	{
+		LM_ERR("script too long %d\n", s.len);
+		return -1;
+	}
+	memcpy(_lua_buf_stack[0], s.s, s.len);
+	_lua_buf_stack[0][s.len] = '\0';
+	return app_lua_dofile(msg, _lua_buf_stack[0]);
+}
+
+static int w_app_lua_runstring(struct sip_msg *msg, char *script, char *extra)
+{
+	str s;
+	if(!lua_sr_initialized())
+	{
+		LM_ERR("Lua env not intitialized");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)script, &s)<0)
+	{
+		LM_ERR("cannot get the script\n");
+		return -1;
+	}
+	if(s.len>=511)
+	{
+		LM_ERR("script too long %d\n", s.len);
+		return -1;
+	}
+	memcpy(_lua_buf_stack[0], s.s, s.len);
+	_lua_buf_stack[0][s.len] = '\0';
+	return app_lua_runstring(msg, _lua_buf_stack[0]);
 }
 
 static int w_app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		char *p3)
 {
+	str s;
 	if(!lua_sr_initialized())
 	{
 		LM_ERR("Lua env not intitialized");
 		return -1;
 	}
-	return app_lua_run(msg, func, p1, p2, p3);
+	if(fixup_get_svalue(msg, (gparam_p)func, &s)<0)
+	{
+		LM_ERR("cannot get the function\n");
+		return -1;
+	}
+	if(s.len>=511)
+	{
+		LM_ERR("function too long %d\n", s.len);
+		return -1;
+	}
+	memcpy(_lua_buf_stack[0], s.s, s.len);
+	_lua_buf_stack[0][s.len] = '\0';
+
+	if(p1!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)p1, &s)<0)
+		{
+			LM_ERR("cannot get p1\n");
+			return -1;
+		}
+		if(s.len>=511)
+		{
+			LM_ERR("p1 too long %d\n", s.len);
+			return -1;
+		}
+		memcpy(_lua_buf_stack[1], s.s, s.len);
+		_lua_buf_stack[1][s.len] = '\0';
+
+		if(p2!=NULL)
+		{
+			if(fixup_get_svalue(msg, (gparam_p)p2, &s)<0)
+			{
+				LM_ERR("cannot get p2\n");
+				return -1;
+			}
+			if(s.len>=511)
+			{
+				LM_ERR("p2 too long %d\n", s.len);
+				return -1;
+			}
+			memcpy(_lua_buf_stack[2], s.s, s.len);
+			_lua_buf_stack[2][s.len] = '\0';
+
+			if(p3!=NULL)
+			{
+				if(fixup_get_svalue(msg, (gparam_p)p3, &s)<0)
+				{
+					LM_ERR("cannot get p3\n");
+					return -1;
+				}
+				if(s.len>=511)
+				{
+					LM_ERR("p3 too long %d\n", s.len);
+					return -1;
+				}
+				memcpy(_lua_buf_stack[3], s.s, s.len);
+				_lua_buf_stack[3][s.len] = '\0';
+			}
+		} else {
+			p3 = NULL;
+		}
+	} else {
+		p2 = NULL;
+		p3 = NULL;
+	}
+
+	return app_lua_run(msg, _lua_buf_stack[0],
+			(p1!=NULL)?_lua_buf_stack[1]:NULL,
+			(p2!=NULL)?_lua_buf_stack[2]:NULL,
+			(p3!=NULL)?_lua_buf_stack[3]:NULL);
+}
+
+static int w_app_lua_run0(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3)
+{
+	return w_app_lua_run(msg, func, NULL, NULL, NULL);
+}
+
+static int w_app_lua_run1(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3)
+{
+	return w_app_lua_run(msg, func, p1, NULL, NULL);
+}
+
+static int w_app_lua_run2(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3)
+{
+	return w_app_lua_run(msg, func, p1, p2, NULL);
+}
+
+static int w_app_lua_run3(struct sip_msg *msg, char *func, char *p1, char *p2,
+		char *p3)
+{
+	return w_app_lua_run(msg, func, p1, p2, p3);
 }
 
 int app_lua_load_param(modparam_t type, void *val)
@@ -156,5 +314,10 @@ int app_lua_register_param(modparam_t type, void *val)
 	if(val==NULL)
 		return -1;
 	return sr_lua_register_module((char*)val);
+}
+
+static int fixup_lua_run(void** param, int param_no)
+{
+	return fixup_spve_null(param, 1);
 }
 

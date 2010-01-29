@@ -144,7 +144,8 @@ modparam("lua", "register", "sr")
 		<function moreinfo="none">lua_dofile(path)</function>
 	    </title>
 	    <para>
-		Execute the Lua script stored in 'path'.
+		Execute the Lua script stored in 'path'. The parameter can be
+		a string with pseudo-variables evaluated at runtime.
 	    </para>
 		<example>
 		<title><function>lua_dofile</function> usage</title>
@@ -160,14 +161,15 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 	    <title>
 		<function moreinfo="none">lua_dostring(script)</function>
 	    </title>
-	    <para>
-		Execute the Lua script stored in parameter.
+	    <para>i
+		Execute the Lua script stored in parameter. The parameter can be
+		a string with pseudo-variables.
 	    </para>
 		<example>
-		<title><function>lua_doscript</function> usage</title>
+		<title><function>lua_dostring</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(!lua_dostring("sr.log([[err]], [[----------- Hello World\n]])"))
+if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
     xdbg("SCRIPT: failed to execute lua script!\n");
 }
@@ -175,7 +177,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World\n]])"))
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section>
 	    <title>
 		<function moreinfo="none">lua_run(function, params)</function>
@@ -183,11 +185,11 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World\n]])"))
 	    <para>
 		Execute the Lua function 'func' giving params as parameters. There
 		can be up to 3 string parameters. The function must exist in the
-		script loaded at startup via parameter 'load'. So far the parameters
-		are considered static strings (allowing pv is in the roadmap).
+		script loaded at startup via parameter 'load'. Parameters can be
+		strings with pseudo-variables that are evaluated at runtime.
 	    </para>
 		<example>
-		<title><function>lua_doscript</function> usage</title>
+		<title><function>lua_run</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(!lua_run("sr_append_fu_to_reply"))
@@ -195,7 +197,29 @@ if(!lua_run("sr_append_fu_to_reply"))
     xdbg("SCRIPT: failed to execute lua function!\n");
 }
 ...
-lua_run("lua_funcx", "1", "2");
+lua_run("lua_funcx", "$rU", "2");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">lua_runstring(script)</function>
+	    </title>
+	    <para>i
+		Execute the Lua script stored in parameter. The parameter can be
+		a string with pseudo-variables. The script is executed in Lua context
+		specific to loaded Lua files at startup.
+	    </para>
+		<example>
+		<title><function>lua_runstring</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
+{
+    xdbg("SCRIPT: failed to execute lua script!\n");
+}
 ...
 </programlisting>
 	    </example>

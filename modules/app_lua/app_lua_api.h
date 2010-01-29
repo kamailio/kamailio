@@ -50,10 +50,13 @@ int sr_lua_register_module(char *mname);
 
 int app_lua_dostring(struct sip_msg *msg, char *script);
 int app_lua_dofile(struct sip_msg *msg, char *script);
+int app_lua_runstring(struct sip_msg *msg, char *script);
 int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		char *p3);
 
 int app_lua_return_boolean(lua_State *L, int b);
+
+void app_lua_dump_stack(lua_State *L);
 
 #endif
 

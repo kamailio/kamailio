@@ -289,6 +289,34 @@ int app_lua_dofile(struct sip_msg *msg, char *script)
 /**
  *
  */
+int app_lua_runstring(struct sip_msg *msg, char *script)
+{
+	int ret;
+	char *txt;
+
+	if(_sr_L_env.LL==NULL)
+	{
+		LM_ERR("lua loading state not initialized (call: %s)\n", script);
+		return -1;
+	}
+
+	LM_DBG("running Lua string: [[%s]]\n", script);
+	LM_DBG("lua top index is: %d\n", lua_gettop(_sr_L_env.LL));
+	_sr_L_env.msg = msg;
+	ret = luaL_dostring(_sr_L_env.LL, script);
+	if(ret!=0)
+	{
+		txt = (char*)lua_tostring(_sr_L_env.LL, -1);
+		LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
+		lua_pop (_sr_L_env.LL, 1);
+	}
+	_sr_L_env.msg = 0;
+	return (ret==0)?1:-1;
+}
+
+/**
+ *
+ */
 int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		char *p3)
 {
@@ -346,3 +374,32 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	return 1;
 }
 
+void app_lua_dump_stack(lua_State *L)
+{
+	int i;
+	int t;
+	int top;
+
+	top = lua_gettop(L);
+
+	for (i = 1; i <= top; i++)
+	{
+		t = lua_type(L, i);
+		switch (t)
+		{
+			case LUA_TSTRING:  /* strings */
+				LM_DBG("[%i:s> %s\n", i, lua_tostring(L, i));
+			break;
+			case LUA_TBOOLEAN:  /* booleans */
+				LM_DBG("[%i:b> %s\n", i,
+					lua_toboolean(L, i) ? "true" : "false");
+			break;
+			case LUA_TNUMBER:  /* numbers */
+				LM_DBG("[%i:n> %g\n", i, lua_tonumber(L, i));
+			break;
+			default:  /* other values */
+				LM_DBG("[%i:t> %s\n", i, lua_typename(L, t));
+			break;
+		}
+	}
+}
