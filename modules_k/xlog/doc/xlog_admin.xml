@@ -229,7 +229,7 @@ modparam("xlog", "prefix", "-xlog: ")
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>xlog</function> usage</title>
@@ -261,7 +261,7 @@ xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 
 		<example>
@@ -272,6 +272,24 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
 </programlisting>
 		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">xlogl([level],format)</function>
+		</title>
+		<para>
+		Similar to xlog(), in addition is printing cfg line number
+		at the beginning of message.
+		</para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">xdbgl(format)</function>
+		</title>
+		<para>
+		Similar to xdbg(), in addition is printing cfg line number
+		at the beginning of message.
+		</para>
 	</section>
 	</section>
 </chapter>

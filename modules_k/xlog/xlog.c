@@ -46,8 +46,8 @@ char *_xlog_buf = NULL;
 char *_xlog_prefix = "<script>: ";
 
 /** parameters */
-int buf_size=4096;
-int force_color=0;
+static int buf_size=4096;
+static int force_color=0;
 
 /** module functions */
 static int mod_init(void);
@@ -56,8 +56,14 @@ static int xlog_1(struct sip_msg*, char*, char*);
 static int xlog_2(struct sip_msg*, char*, char*);
 static int xdbg(struct sip_msg*, char*, char*);
 
-static int xlog_fixup(void** param, int param_no); 
-static int xdbg_fixup(void** param, int param_no); 
+static int xlogl_1(struct sip_msg*, char*, char*);
+static int xlogl_2(struct sip_msg*, char*, char*);
+static int xdbgl(struct sip_msg*, char*, char*);
+
+static int xlog_fixup(void** param, int param_no);
+static int xdbg_fixup(void** param, int param_no);
+static int xlogl_fixup(void** param, int param_no);
+static int xdbgl_fixup(void** param, int param_no);
 
 static void destroy(void);
 
@@ -74,6 +80,12 @@ typedef struct _xl_level
 	} v;
 } xl_level_t, *xl_level_p;
 
+typedef struct _xl_msg
+{
+	pv_elem_t *m;
+	struct action *a;
+} xl_msg_t;
+
 static pv_export_t mod_items[] = {
 	{ {"C", sizeof("C")-1}, PVT_OTHER, pv_get_color, 0,
 		pv_parse_color_name, 0, 0, 0 },
@@ -82,15 +94,12 @@ static pv_export_t mod_items[] = {
 
 
 static cmd_export_t cmds[]={
-	{"xlog",  (cmd_function)xlog_1,  1, xdbg_fixup, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
-	{"xlog",  (cmd_function)xlog_2,  2, xlog_fixup, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
-	{"xdbg",  (cmd_function)xdbg,    1, xdbg_fixup, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE | 
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+	{"xlog",   (cmd_function)xlog_1,   1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xlog",   (cmd_function)xlog_2,   2, xlog_fixup,  0, ANY_ROUTE},
+	{"xdbg",   (cmd_function)xdbg,     1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xlogl",  (cmd_function)xlogl_1,  1, xdbgl_fixup, 0, ANY_ROUTE},
+	{"xlogl",  (cmd_function)xlogl_2,  2, xlogl_fixup, 0, ANY_ROUTE},
+	{"xdbgl",  (cmd_function)xdbgl,    1, xdbgl_fixup, 0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -133,32 +142,41 @@ static int mod_init(void)
 	return 0;
 }
 
-/**
- */
-static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
+static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
+		int level, int line)
 {
-	int log_len;
+	str txt;
 
-	if(!is_printable(L_ERR))
-		return 1;
+	txt.len = buf_size;
 
-	log_len = buf_size;
-
-	if(xl_print_log(msg, (pv_elem_t*)frm, _xlog_buf, &log_len)<0)
+	if(xl_print_log(msg, xm->m, _xlog_buf, &txt.len)<0)
 		return -1;
-
-	/* _xlog_buf[log_len] = '\0'; */
-	LOG_(DEFAULT_FACILITY, L_ERR, _xlog_prefix,
-			"%.*s", log_len, _xlog_buf);
-
+	txt.s = _xlog_buf;
+	if(line>0)
+		LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+			"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
+	else
+		LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+			"%.*s", txt.len, txt.s);
 	return 1;
 }
 
 /**
+ * print log message to L_ERR level
+ */
+static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_ERR))
+		return 1;
+
+	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 0);
+}
+
+/**
+ * print log message to level given in parameter
  */
 static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 {
-	int log_len;
 	long level;
 	xl_level_p xlp;
 	pv_value_t value;
@@ -180,41 +198,72 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 	if(!is_printable((int)level))
 		return 1;
 
-	log_len = buf_size;
-
-	if(xl_print_log(msg, (pv_elem_t*)frm, _xlog_buf, &log_len)<0)
-		return -1;
-
-	/* _xlog_buf[log_len] = '\0'; */
-	LOG_(DEFAULT_FACILITY, (int)level, _xlog_prefix,
-			"%.*s", log_len, _xlog_buf);
-
-	return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, (int)level, 0);
 }
 
 /**
+ * print log message to L_DBG level
  */
 static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 {
-	int log_len;
-
 	if(!is_printable(L_DBG))
 		return 1;
-
-	log_len = buf_size;
-
-	if(xl_print_log(msg, (pv_elem_t*)frm, _xlog_buf, &log_len)<0)
-		return -1;
-
-	/* _xlog_buf[log_len] = '\0'; */
-	LOG_(DEFAULT_FACILITY, L_DBG, _xlog_prefix,
-			"%.*s", log_len, _xlog_buf);
-
-	return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, 0);
 }
 
 /**
- * destroy function
+ * print log message to L_ERR level along with cfg line
+ */
+static int xlogl_1(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_ERR))
+		return 1;
+
+	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 1);
+}
+
+/**
+ * print log message to level given in parameter along with cfg line
+ */
+static int xlogl_2(struct sip_msg* msg, char* lev, char* frm)
+{
+	long level;
+	xl_level_p xlp;
+	pv_value_t value;
+
+	xlp = (xl_level_p)lev;
+	if(xlp->type==1)
+	{
+		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0
+			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
+		{
+			LM_ERR("invalid log level value [%d]\n", value.flags);
+			return -1;
+		}
+		level = (long)value.ri;
+	} else {
+		level = xlp->v.level;
+	}
+
+	if(!is_printable((int)level))
+		return 1;
+
+	return xlog_helper(msg, (xl_msg_t*)frm, (int)level, 1);
+}
+
+/**
+ * print log message to L_DBG level along with cfg line
+ */
+static int xdbgl(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_DBG))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, 1);
+}
+
+
+/**
+ * module destroy function
  */
 static void destroy(void)
 {
@@ -222,7 +271,48 @@ static void destroy(void)
 		pkg_free(_xlog_buf);
 }
 
-static int xlog_fixup(void** param, int param_no)
+/**
+ * get the pointer to action structure
+ * - take cfg line
+ * - cfg file name available, but could be long
+ */
+static struct action *xlog_fixup_get_action(void **param, int param_no)
+{
+	struct action *ac, ac2;
+	action_u_t *au, au2;
+	/* param points to au->u.string, get pointer to au */
+	au = (void*) ((char *)param - ((char *)&au2.u.string-(char *)&au2));
+	au = au - 1 - param_no;
+	ac = (void*) ((char *)au - ((char *)&ac2.val-(char *)&ac2));
+	return ac;
+}
+
+static int xdbg_fixup_helper(void** param, int param_no, int mode)
+{
+	xl_msg_t *xm;
+	str s;
+
+	xm = (xl_msg_t*)pkg_malloc(sizeof(xl_msg_t));
+	if(xm==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	memset(xm, 0, sizeof(xl_msg_t));
+	if(mode==1)
+		xm->a = xlog_fixup_get_action(param, param_no);
+	s.s = (char*)(*param); s.len = strlen(s.s);
+
+	if(pv_parse_format(&s, &xm->m)<0)
+	{
+		LM_ERR("wrong format[%s]\n", (char*)(*param));
+		return E_UNSPEC;
+	}
+	*param = (void*)xm;
+	return 0;
+}
+
+static int xlog_fixup_helper(void** param, int param_no, int mode)
 {
 	xl_level_p xlp;
 	str s;
@@ -275,51 +365,50 @@ static int xlog_fixup(void** param, int param_no)
 	}
 
 	if(param_no==2)
-		return xdbg_fixup(param, 1);
+		return xdbg_fixup_helper(param, 2, mode);
 
 	return 0;
+}
+
+static int xlog_fixup(void** param, int param_no)
+{
+	if(param==NULL || *param==NULL)
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	return xlog_fixup_helper(param, param_no, 0);
 }
 
 static int xdbg_fixup(void** param, int param_no)
 {
-	pv_elem_t *model;
-	str s;
-
-	if(param_no==1)
+	if(param_no!=1 || param==NULL || *param==NULL)
 	{
-		if(*param)
-		{
-			s.s = (char*)(*param); s.len = strlen(s.s);
-			if(log_stderr!=0 || (log_stderr==0 && force_color!=0))
-			{
-				if(pv_parse_format(&s, &model)<0)
-				{
-					LM_ERR("wrong format[%s]\n",
-						(char*)(*param));
-					return E_UNSPEC;
-				}
-			} else {
-				if(pv_parse_format(&s, &model)<0)
-				{
-					LM_ERR("wrong format[%s]!\n",
-						(char*)(*param));
-					return E_UNSPEC;
-				}
-			}
-			
-			*param = (void*)model;
-			return 0;
-		}
-		else
-		{
-			LM_ERR("null format\n");
-			return E_UNSPEC;
-		}
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
 	}
-
-	return 0;
+	return xdbg_fixup_helper(param, param_no, 0);
 }
 
+static int xlogl_fixup(void** param, int param_no)
+{
+	if(param==NULL || *param==NULL)
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	return xlog_fixup_helper(param, param_no, 1);
+}
+
+static int xdbgl_fixup(void** param, int param_no)
+{
+	if(param_no!=1 || param==NULL || *param==NULL)
+	{
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	return xdbg_fixup_helper(param, param_no, 1);
+}
 
 int pv_parse_color_name(pv_spec_p sp, str *in)
 {
