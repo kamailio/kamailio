@@ -10,7 +10,8 @@ auto_gen=
 NAME=app_lua.so
 LIBS= -llua5.1
 
-DEFS+=-DOPENSER_MOD_INTERFACE -I/usr/include/lua5.1/
+DEFS+=-I/usr/include/lua5.1
+DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore

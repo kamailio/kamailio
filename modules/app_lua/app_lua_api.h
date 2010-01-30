@@ -44,6 +44,7 @@ int lua_sr_initialized(void);
 int lua_sr_init_mod(void);
 int lua_sr_init_child(void);
 void lua_sr_destroy(void);
+int lua_sr_init_probe(void);
 
 int sr_lua_load_script(char *script);
 int sr_lua_register_module(char *mname);

@@ -40,6 +40,15 @@
 /**
  *
  */
+static int lua_sr_probe (lua_State *L)
+{
+	LM_DBG("someone probing from lua\n");
+	return 0;
+}
+
+/**
+ *
+ */
 static int lua_sr_dbg (lua_State *L)
 {
 	char *txt;
@@ -92,6 +101,7 @@ static int lua_sr_log (lua_State *L)
  *
  */
 static const luaL_reg _sr_core_Map [] = {
+	{"probe", lua_sr_probe},
 	{"dbg", lua_sr_dbg},
 	{"err", lua_sr_err},
 	{"log", lua_sr_log},

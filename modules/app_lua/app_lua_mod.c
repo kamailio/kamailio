@@ -86,7 +86,7 @@ static cmd_export_t cmds[]={
 
 struct module_exports exports = {
 	"app_lua",
-	DEFAULT_DLFLAGS, /* dlopen flags */
+	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
 	cmds,
 	params,
 	0,
@@ -114,9 +114,16 @@ static int mod_init(void)
 /* each child get a new connection to the database */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
+	if (rank==PROC_INIT)
+	{
+		/* do a probe before forking */
+		if(lua_sr_init_probe()!=0)
+			return -1;
+		return 0;
+	}
 	return lua_sr_init_child();
 }
 

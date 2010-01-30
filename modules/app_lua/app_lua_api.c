@@ -123,12 +123,62 @@ int lua_sr_init_mod(void)
 /**
  *
  */
+int lua_sr_init_probe(void)
+{
+	lua_State *L;
+	char *txt;
+	sr_lua_load_t *li;
+	struct stat sbuf;
+
+	L = lua_open();
+	if(L==NULL)
+	{
+		LM_ERR("cannot open lua\n");
+		return -1;
+	}
+	luaL_openlibs(L);
+	lua_sr_openlibs(L);
+
+	/* force loading lua lib now */
+	if(luaL_dostring(L, "sr.probe()")!=0)
+	{
+		txt = (char*)lua_tostring(L, -1);
+		LM_ERR("error initializing Lua: %s\n", (txt)?txt:"unknown");
+		lua_pop(L, 1);
+		lua_close(L);
+		return -1;
+	}
+
+	/* test if files to be loaded exist */
+	if(_sr_lua_load_list != NULL)
+	{
+		li = _sr_lua_load_list;
+		while(li)
+		{
+			if(stat(li->script, &sbuf)!=0)
+			{
+				/* file does not exist */
+				LM_ERR("cannot find script: %s (wrong path?)\n",
+						li->script);
+				lua_close(L);
+				return -1;
+			}
+			li = li->next;
+		}
+	}
+	lua_close(L);
+	LM_DBG("Lua probe was ok!\n");
+	return 0;
+}
+
+/**
+ *
+ */
 int lua_sr_init_child(void)
 {
 	sr_lua_load_t *li;
 	int ret;
 	char *txt;
-	struct stat sbuf;
 
 	memset(&_sr_L_env, 0, sizeof(sr_lua_env_t));
 	_sr_L_env.L = lua_open();
@@ -147,7 +197,7 @@ int lua_sr_init_child(void)
 
 	if(_sr_lua_load_list != NULL)
 	{
-		_sr_L_env.LL = lua_open();
+		_sr_L_env.LL = luaL_newstate();
 		if(_sr_L_env.LL==NULL)
 		{
 			LM_ERR("cannot open lua loading state\n");
@@ -161,32 +211,23 @@ int lua_sr_init_child(void)
 		lua_pushstring(_sr_L_env.LL, SRVERSION);
 		lua_settable(_sr_L_env.LL, LUA_GLOBALSINDEX);
 
+		/* force loading lua lib now */
+		if(luaL_dostring(_sr_L_env.LL, "sr.probe()")!=0)
+		{
+			txt = (char*)lua_tostring(_sr_L_env.LL, -1);
+			LM_ERR("error initializing Lua: %s\n", (txt)?txt:"unknown");
+			lua_pop(_sr_L_env.LL, 1);
+			lua_sr_destroy();
+			return -1;
+		}
+
 		li = _sr_lua_load_list;
 		while(li)
 		{
-			if(stat(li->script, &sbuf)!=0)
-			{
-				/* file does not exist */
-				LM_ERR("cannot find script: %s (wrong path?)\n",
-						li->script);
-				lua_sr_destroy();
-				return -1;
-			}
- 			ret = luaL_loadfile(_sr_L_env.LL, (const char*)li->script);
+			ret = luaL_dofile(_sr_L_env.LL, (const char*)li->script);
 			if(ret!=0)
 			{
 				LM_ERR("failed to load Lua script: %s (err: %d)\n",
-						li->script, ret);
-				txt = (char*)lua_tostring(_sr_L_env.LL, -1);
-				LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
-				lua_pop(_sr_L_env.LL, 1);
-				lua_sr_destroy();
-				return -1;
-			}
-			ret = lua_pcall(_sr_L_env.LL, 0, 0, 0);
-			if(ret!=0)
-			{
-				LM_ERR("failed to init Lua script: %s (err: %d)\n",
 						li->script, ret);
 				txt = (char*)lua_tostring(_sr_L_env.LL, -1);
 				LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
