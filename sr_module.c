@@ -390,7 +390,7 @@ int load_module(char* mod_path)
 	retries=2;
 	dlflags=RTLD_NOW;
 reload:
-	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
+	handle=dlopen(path, dlflags); /* resolve all symbols now */
 	if (handle==0){
 		LOG(L_ERR, "ERROR: load_module: could not open module <%s>: %s\n",
 			path, dlerror());
