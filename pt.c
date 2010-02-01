@@ -89,11 +89,20 @@ static int calc_common_open_fds_no()
 	/* 1 tcp send unix socket/all_proc, 
 	 *  + 1 udp sock/udp proc + 1 possible dns comm. socket + 
 	 *  + 1 temporary tcp send sock.
+	 * Per process:
+	 *  + 1 if mhomed (now mhomed keeps a "cached socket" per process)
+	 *  + 1 if mhomed & ipv6
 	 */
 	max_fds_no=estimated_proc_no*4 /* udp|sctp + tcp unix sock +
 									  tmp. tcp send +
 									  tmp dns.*/
-				-1 /* timer (no udp)*/ + 3 /* stdin/out/err */;
+				-1 /* timer (no udp)*/ + 3 /* stdin/out/err */ +
+#ifdef USE_IPV6
+				2*mhomed
+#else
+				mhomed
+#endif /* USE_IPV6*/
+				;
 	return max_fds_no;
 }
 
