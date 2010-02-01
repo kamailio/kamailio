@@ -50,6 +50,7 @@
 #include "../../locking.h"
 #include "../../md5.h"
 
+#include "config.h"
 #include "ring.h"
 
 
@@ -174,6 +175,10 @@ static unsigned int hash(char *buf, int len)
  */
 static void remove_timeout(unsigned int index)
 {
+	int ring_timeout = cfg_get(siputils, siputils_cfg, ring_timeout);
+	if(ring_timeout == 0){
+		LM_ERR("Could not get timeout from cfg. This will expire all entries");
+	}
 	while ((*hashtable)[index].head && ((*hashtable)[index].head)->time + ring_timeout < get_ticks()) {
 		struct ring_record_t* rr = (*hashtable)[index].head;
 		(*hashtable)[index].head = rr->next;

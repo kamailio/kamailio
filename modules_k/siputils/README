@@ -293,7 +293,7 @@ modparam("siputils", "options_support", "100rel")
 
    Inserting the call-id in the internal list, which is checked when
    further replies arrive. Any 183 reply that is received during the
-   timeout value will be converted to a 180 message. Please not that you
+   timeout value will be converted to a 180 message. Please note that you
    need to set a positive timeout value in order to use this function.
 
    The function returns TRUE on success, and FALSE during processing

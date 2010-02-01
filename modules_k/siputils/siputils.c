@@ -74,6 +74,7 @@
 #include "utils.h"
 #include "contact_ops.h"
 #include "sipops.h"
+#include "config.h"
 
 MODULE_VERSION
 
@@ -115,7 +116,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[] = {
-	{"ring_timeout",            INT_PARAM, &ring_timeout},
+	{"ring_timeout",            INT_PARAM, &default_siputils_cfg.ring_timeout},
 	{"options_accept",          STR_PARAM, &opt_accept.s},
 	{"options_accept_encoding", STR_PARAM, &opt_accept_enc.s},
 	{"options_accept_language", STR_PARAM, &opt_accept_lang.s},
@@ -143,7 +144,7 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	if(ring_timeout > 0) {
+	if(default_siputils_cfg.ring_timeout > 0) {
 		ring_init_hashtable();
 
 		ring_lock = lock_alloc();
@@ -163,7 +164,12 @@ static int mod_init(void)
 		LM_ERR("can't load SL API\n");
 		return -1;
 	}
-
+	
+	if(cfg_declare("siptutils", siputils_cfg_def, &default_siputils_cfg, cfg_sizeof(siputils), &siputils_cfg)){
+		LM_ERR("Fail to declare the configuration\n");
+		return -1;
+	}
+	
 	opt_accept.len = strlen(opt_accept.s);
 	opt_accept_enc.len = strlen(opt_accept_enc.s);
 	opt_accept_lang.len = strlen(opt_accept_lang.s);
