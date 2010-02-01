@@ -3239,7 +3239,8 @@ ret_cmd:
 						(void*)(DROP_R_F|EXIT_R_F)); set_cfg_pos($$);
 	}
 	| EXIT LPAREN RPAREN		{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F);
+		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
+						(void*)EXIT_R_F);
 		set_cfg_pos($$);
 	}
 	| EXIT rval_expr	{
@@ -3247,7 +3248,8 @@ ret_cmd:
 		set_cfg_pos($$);
 	}
 	| EXIT				{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, (void*)EXIT_R_F);
+		$$=mk_action(DROP_T, 2, NUMBER_ST, (void*)1, NUMBER_ST,
+						(void*)EXIT_R_F);
 		set_cfg_pos($$);
 	}
 	| RETURN			{

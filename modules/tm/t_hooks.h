@@ -418,6 +418,8 @@ struct tmcb_head_list {
 extern struct tmcb_head_list*  req_in_tmcb_hl;
 extern struct tmcb_head_list*  local_req_in_tmcb_hl;
 
+void set_early_tmcb_list(struct sip_msg *msg,
+		struct cell *t);
 
 #define has_tran_tmcbs(_T_, _types_) \
 	( ((_T_)->tmcb_hl.reg_types)&(_types_) )

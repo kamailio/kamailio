@@ -65,6 +65,8 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	int res;
 	int ret;
 	str path_dst;
+	flag_t old_bflags;
+
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
@@ -131,7 +133,9 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 		set_ruri_q(ptr->q);
 
-		setbflagsval( 0, ptr->cflags);
+		old_bflags = 0;
+		getbflagsval(0, &old_bflags);
+		setbflagsval(0, old_bflags|ptr->cflags);
 
 		if (ptr->sock)
 			set_force_socket(_m, ptr->sock);
