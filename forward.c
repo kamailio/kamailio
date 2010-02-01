@@ -115,12 +115,15 @@
  * multihomed hosts
  */
 
-static int sock_inet = 0;
-static int sock_inet6 = 0;
+static int mhomed_sock_cache_disabled = 0;
+static int sock_inet = -1;
+#ifdef USE_IPV6
+static int sock_inet6 = -1;
+#endif /* USE_IPV6 */
 
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 {
-	int temp_sock;
+	int* temp_sock;
 	socklen_t len;
 	union sockaddr_union from; 
 	struct socket_info* si;
@@ -130,57 +133,72 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
 		return 0;
 	}
-
+retry:
 	switch(to->s.sa_family){
 	case AF_INET : {
-		if(sock_inet <= 0){
+		if(sock_inet < 0){
 			sock_inet = socket(AF_INET, SOCK_DGRAM, 0);
 			if (sock_inet==-1) {
 				LM_ERR("socket() failed: %s\n", strerror(errno));
 				return 0;
 			}
 		}
-		temp_sock = sock_inet;
+		temp_sock = &sock_inet;
 		break;
 	}
+#ifdef USE_IPV6
 	case AF_INET6 : {
-		if(sock_inet6 <= 0){
+		if(sock_inet6 < 0){
 			sock_inet6 = socket(AF_INET6, SOCK_DGRAM, 0);
 			if (sock_inet6==-1) {
 				LM_ERR("socket() failed: %s\n", strerror(errno));
 				return 0;
 			}
 		}
-		temp_sock = sock_inet6;
+		temp_sock = &sock_inet6;
 		break;
- 	}
+	}
+#endif /* USE_IPV6 */
 	default: {
-		LM_ERR("Unknow protocol family \n");
+		LM_ERR("Unknown protocol family \n");
 		return 0;
 	}
 	}
-	if (connect(temp_sock, &to->s, sockaddru_len(*to))==-1) {
+	if (connect(*temp_sock, &to->s, sockaddru_len(*to))==-1) {
+		if (errno==EISCONN && !mhomed_sock_cache_disabled){
+			/*  no multiple connects support on the same socket */
+			mhomed_sock_cache_disabled=1;
+			sock_inet=-1;
+#ifdef USE_IPV6
+			sock_inet6=-1;
+#endif /* USE_IPV6 */
+			goto retry;
+		}
 		LOG(L_ERR, "ERROR: get_out_socket: connect failed: %s\n",
 				strerror(errno));
-		sock_inet = 0;
-		sock_inet6 = 0;
 		goto error;
 	}
 	len=sizeof(from);
-	if (getsockname(temp_sock, &from.s, &len)==-1) {
+	if (getsockname(*temp_sock, &from.s, &len)==-1) {
 		LOG(L_ERR, "ERROR: get_out_socket: getsockname failed: %s\n",
 				strerror(errno));
-		sock_inet = 0;
-		sock_inet6 = 0;
 		goto error;
 	}
 	su2ip_addr(&ip, &from);
 	si=find_si(&ip, 0, proto);
 	if (si==0) goto error;
 	DBG("DEBUG: get_out_socket: socket determined: %p\n", si );
+	if (unlikely(mhomed_sock_cache_disabled)){
+		close(*temp_sock);
+		*temp_sock=-1;
+	}
 	return si;
 error:
 	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
+	if (unlikely(*temp_sock >=0 && mhomed_sock_cache_disabled)){
+		close(*temp_sock);
+		*temp_sock=-1;
+	}
 	return 0;
 }
 
