@@ -589,6 +589,11 @@ static int fixup_t_reply(void** param, int param_no)
 static int fixup_on_failure(void** param, int param_no)
 {
 	if (param_no==1){
+		if(strlen((char*)*param)<=1
+				&& (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
+			*param = (void*)0;
+			return 0;
+		}
 		return fixup_routes("t_on_failure", &failure_rt, param);
 	}
 	return 0;
@@ -599,6 +604,11 @@ static int fixup_on_failure(void** param, int param_no)
 static int fixup_on_reply(void** param, int param_no)
 {
 	if (param_no==1){
+		if(strlen((char*)*param)<=1
+				&& (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
+			*param = (void*)0;
+			return 0;
+		}
 		return fixup_routes("t_on_reply", &onreply_rt, param);
 	}
 	return 0;
@@ -609,6 +619,11 @@ static int fixup_on_reply(void** param, int param_no)
 static int fixup_on_branch(void** param, int param_no)
 {
 	if (param_no==1){
+		if(strlen((char*)*param)<=1
+				&& (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
+			*param = (void*)0;
+			return 0;
+		}
 		return fixup_routes("t_on_branch", &branch_rt, param);
 	}
 	return 0;

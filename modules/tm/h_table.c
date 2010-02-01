@@ -325,8 +325,11 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 	/* enter callback, which may potentially want to parse some stuff,
 	 * before the request is shmem-ized */
-	if (p_msg && has_reqin_tmcbs())
+	if (p_msg) {
+		set_early_tmcb_list(p_msg, new_cell);
+		if(has_reqin_tmcbs())
 			run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
+	}
 
 	if (p_msg) {
 #ifndef POSTPONE_MSG_CLONING

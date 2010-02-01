@@ -32,7 +32,7 @@
 #define MOD_SANITY_CHK_H
 
 #include "../../str.h"
-#include "../sl/sl.h"
+#include "../../modules_s/sl/sl.h"
 #include "../../parser/msg_parser.h"
 
 #define SANITY_RURI_SIP_VERSION        (1<<0)

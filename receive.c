@@ -98,6 +98,7 @@ unsigned int inc_msg_no(void)
 int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info) 
 {
 	struct sip_msg* msg;
+	struct run_act_ctx ctx;
 	int ret;
 #ifdef STATS
 	int skipped = 1;
@@ -235,13 +236,17 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
 			set_route_type(ONREPLY_ROUTE);
-			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, 0);
-			if (ret<0){
+			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+#ifndef NO_ONREPLY_ROUTE_ERROR
+			if (unlikely(ret<0)){
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");
 				goto error_rpl;
-			}else if (ret==0) goto skip_send_reply; /* drop the message, 
-													   no error */
+			}else
+#endif /* NO_ONREPLY_ROUTE_ERROR */
+			if (unlikely(ret==0 || (ctx.run_flags&DROP_R_F))){
+				goto skip_send_reply; /* drop the message, no error */
+			}
 		}
 		/* send the msg */
 		forward_reply(msg);
@@ -271,11 +276,13 @@ end:
 	if (skipped) STATS_RX_DROPS;
 #endif
 	return 0;
+#ifndef NO_ONREPLY_ROUTE_ERROR
 error_rpl:
 	/* execute post reply-script callbacks */
 	exec_post_script_cb(msg, ONREPLY_CB_TYPE);
 	reset_avps();
 	goto error02;
+#endif /* NO_ONREPLY_ROUTE_ERROR */
 error_req:
 	DBG("receive_msg: error:...\n");
 	/* execute post request-script callbacks */
