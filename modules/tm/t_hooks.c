@@ -81,7 +81,7 @@ struct tmcb_head_list* get_early_tmcb_list(struct sip_msg *msg)
 
 void set_early_tmcb_list(struct sip_msg *msg, struct cell *t)
 {
-	if (msg->id!=tmcb_early_hl.msgid) {
+	if (msg->id==tmcb_early_hl.msgid) {
 		t->tmcb_hl = tmcb_early_hl.cb_list;
 		memset(&tmcb_early_hl.cb_list, 0, sizeof(struct tmcb_head_list));
 		tmcb_early_hl.msgid = 0;
