@@ -230,14 +230,14 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		if (onreply_rt.rlist[DEFAULT_RT]){
 			set_route_type(ONREPLY_ROUTE);
 			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
-#if 0
-			if (ret<0){
+#ifndef NO_ONREPLY_ROUTE_ERROR
+			if (unlikely(ret<0)){
 				LOG(L_WARN, "WARNING: receive_msg: "
 						"error while trying onreply script\n");
 				goto error_rpl;
 			}else
-#endif
-			if (ctx.run_flags&DROP_R_F){
+#endif /* NO_ONREPLY_ROUTE_ERROR */
+			if (unlikely(ret==0 || (ctx.run_flags&DROP_R_F))){
 				goto skip_send_reply; /* drop the message, no error */
 			}
 		}
@@ -269,13 +269,13 @@ end:
 	if (skipped) STATS_RX_DROPS;
 #endif
 	return 0;
-#if 0
+#ifndef NO_ONREPLY_ROUTE_ERROR
 error_rpl:
 	/* execute post reply-script callbacks */
 	exec_post_script_cb(msg, ONREPLY_CB_TYPE);
 	reset_avps();
 	goto error02;
-#endif
+#endif /* NO_ONREPLY_ROUTE_ERROR */
 error_req:
 	DBG("receive_msg: error:...\n");
 	/* execute post request-script callbacks */
