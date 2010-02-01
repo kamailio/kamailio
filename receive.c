@@ -64,6 +64,7 @@
 #include "tcp_server.h" /* for tcpconn_add_alias */
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
 #include "cfg/cfg.h"
+#include "core_stats.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -149,7 +150,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
-			sr_event_exec(SREV_CORE_STATS, (void*)5);
+			STATS_BAD_MSG();
 			goto error02;
 		}
 		/* check if necessary to add receive?->moved to forward_req */
@@ -184,7 +185,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		*/
 		if (exec_pre_script_cb(msg, REQUEST_CB_TYPE)==0 )
 		{
-			sr_event_exec(SREV_CORE_STATS, (void*)3);
+			STATS_REQ_FWD_DROP();
 			goto end; /* drop the request */
 		}
 
@@ -212,7 +213,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
-			sr_event_exec(SREV_CORE_STATS, (void*)6);
+			STATS_BAD_RPL();
 			goto error02;
 		}
 
@@ -230,8 +231,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		*/
 		if (exec_pre_script_cb(msg, ONREPLY_CB_TYPE)==0 )
 		{
-			sr_event_exec(SREV_CORE_STATS, (void*)4);
-			goto end; /* drop the request */
+			STATS_RPL_FWD_DROP();
+			goto end; /* drop the reply */
 		}
 
 		/* exec the onreply routing script */
@@ -246,7 +247,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			}else
 #endif /* NO_ONREPLY_ROUTE_ERROR */
 			if (unlikely(ret==0 || (ctx.run_flags&DROP_R_F))){
-				sr_event_exec(SREV_CORE_STATS, (void*)4);
+				STATS_RPL_FWD_DROP();
 				goto skip_send_reply; /* drop the message, no error */
 			}
 		}

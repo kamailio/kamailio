@@ -94,6 +94,7 @@
 #include "dst_blacklist.h"
 #endif
 #include "compiler_opt.h"
+#include "core_stats.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -582,10 +583,12 @@ end:
 #endif
 	if (buf) pkg_free(buf);
 	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
+#if defined STATS_REQ_FWD_OK || defined STATS_REQ_FWD_DROP
 	if(ret==0)
-		sr_event_exec(SREV_CORE_STATS, (void*)1);
+		STATS_REQ_FWD_OK();
 	else
-		sr_event_exec(SREV_CORE_STATS, (void*)3);
+		STATS_REQ_FWD_DROP();
+#endif /* STATS_REQ_FWD_* */
 	return ret;
 }
 
@@ -740,7 +743,7 @@ int forward_reply(struct sip_msg* msg)
 #endif
 	if (msg_send(&dst, new_buf, new_len)<0)
 	{
-		sr_event_exec(SREV_CORE_STATS, (void*)4);
+		STATS_RPL_FWD_DROP();
 		goto error;
 	}
 #ifdef STATS
@@ -751,7 +754,7 @@ int forward_reply(struct sip_msg* msg)
 			msg->via2->host.len, msg->via2->host.s,
 			(unsigned short) msg->via2->port);
 
-	sr_event_exec(SREV_CORE_STATS, (void*)2);
+	STATS_RPL_FWD_OK();
 	pkg_free(new_buf);
 skip:
 	return 0;
