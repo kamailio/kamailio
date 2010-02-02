@@ -50,7 +50,7 @@ MDIRS=modules modules_s modules_k
 
 # modules packaged in separate packages (complete with full modules_* path)
 # with the package name: ser-$(module_name)-module
-MODULES_SP=modules/db_mysql modules/db_postgres modules/tls modules_s/xmlrpc
+MODULES_SP=modules/db_mysql modules/db_postgres modules/tls modules/xmlrpc
 
 # module groups that are packaged in seperate packages
 # (with the name ser-$(group_name)-modules)
