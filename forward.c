@@ -129,14 +129,14 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 	struct socket_info* si;
 	struct ip_addr ip;
 
-	if (proto!=PROTO_UDP) {
+	if (unlikely(proto!=PROTO_UDP)) {
 		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
 		return 0;
 	}
 retry:
 	switch(to->s.sa_family){
 	case AF_INET : {
-		if(sock_inet < 0){
+		if(unlikely(sock_inet < 0)){
 			sock_inet = socket(AF_INET, SOCK_DGRAM, 0);
 			if (sock_inet==-1) {
 				LM_ERR("socket() failed: %s\n", strerror(errno));
@@ -148,7 +148,7 @@ retry:
 	}
 #ifdef USE_IPV6
 	case AF_INET6 : {
-		if(sock_inet6 < 0){
+		if(unlikely(sock_inet6 < 0)){
 			sock_inet6 = socket(AF_INET6, SOCK_DGRAM, 0);
 			if (sock_inet6==-1) {
 				LM_ERR("socket() failed: %s\n", strerror(errno));
@@ -164,13 +164,19 @@ retry:
 		return 0;
 	}
 	}
-	if (connect(*temp_sock, &to->s, sockaddru_len(*to))==-1) {
-		if (errno==EISCONN && !mhomed_sock_cache_disabled){
+	if (unlikely(connect(*temp_sock, &to->s, sockaddru_len(*to))==-1)) {
+		if (unlikely(errno==EISCONN && !mhomed_sock_cache_disabled)){
 			/*  no multiple connects support on the same socket */
 			mhomed_sock_cache_disabled=1;
-			sock_inet=-1;
+			if (sock_inet>=0){
+				close(sock_inet);
+				sock_inet=-1;
+			}
 #ifdef USE_IPV6
-			sock_inet6=-1;
+			if (sock_inet>=0){
+				close(sock_inet6);
+				sock_inet6=-1;
+			}
 #endif /* USE_IPV6 */
 			goto retry;
 		}
@@ -179,7 +185,7 @@ retry:
 		goto error;
 	}
 	len=sizeof(from);
-	if (getsockname(*temp_sock, &from.s, &len)==-1) {
+	if (unlikely(getsockname(*temp_sock, &from.s, &len)==-1)) {
 		LOG(L_ERR, "ERROR: get_out_socket: getsockname failed: %s\n",
 				strerror(errno));
 		goto error;
@@ -195,7 +201,7 @@ retry:
 	return si;
 error:
 	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
-	if (unlikely(*temp_sock >=0 && mhomed_sock_cache_disabled)){
+	if (unlikely(mhomed_sock_cache_disabled && *temp_sock >=0)){
 		close(*temp_sock);
 		*temp_sock=-1;
 	}
