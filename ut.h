@@ -292,10 +292,10 @@ static inline char* int2str_base(unsigned int l, int* len, int base)
 
 
 
-/* returns a pointer to a static buffer containing l in asciiz & sets len */
-static inline char* int2str(unsigned int l, int* len)
+/* print int to asciiz in a string buffer
+ * - be sure result buffer is at least INT2STR_MAX_LEN in size */
+static inline char* int2strbuf(unsigned int l, char *r, int* len)
 {
-	static char r[INT2STR_MAX_LEN];
 	int i;
 	
 	i=INT2STR_MAX_LEN-2;
@@ -310,6 +310,13 @@ static inline char* int2str(unsigned int l, int* len)
 	}
 	if (len) *len=(INT2STR_MAX_LEN-2)-i;
 	return &r[i+1];
+}
+
+extern char ut_buf_int2str[INT2STR_MAX_LEN];
+/* returns a pointer to a static buffer containing l in asciiz & sets len */
+static inline char* int2str(unsigned long l, int* len)
+{
+	return int2strbuf(l, ut_buf_int2str, len);
 }
 
 /* Signed INTeger-TO-STRing: convers a long to a string
