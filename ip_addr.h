@@ -696,7 +696,7 @@ static inline char* su2a(union sockaddr_union* su, int su_len)
 		if (unlikely(su_len<sizeof(su->sin6)))
 			return "<addr. error>";
 		buf[0]='[';
-		offs=1+ip6tosbuf((unsigned char*)&su->sin6.sin6_addr, &buf[1],
+		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
 							sizeof(buf)-4);
 		buf[offs]=']';
 		offs++;
