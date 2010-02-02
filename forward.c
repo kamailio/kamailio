@@ -173,7 +173,7 @@ retry:
 				sock_inet=-1;
 			}
 #ifdef USE_IPV6
-			if (sock_inet>=0){
+			if (sock_inet6>=0){
 				close(sock_inet6);
 				sock_inet6=-1;
 			}
