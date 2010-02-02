@@ -33,7 +33,8 @@ Elena-Ramona Modroiu
 
               4.1. buf_size (integer)
               4.2. force_color (integer)
-              4.3. prefix (str)
+              4.3. long_format (integer)
+              4.4. prefix (str)
 
         5. Exported Functions
 
@@ -46,9 +47,10 @@ Elena-Ramona Modroiu
 
    1.1. Set buf_size parameter
    1.2. Set force_color parameter
-   1.3. Set prefix parameter
-   1.4. xlog usage
-   1.5. xdbg usage
+   1.3. Set long_format parameter
+   1.4. Set prefix parameter
+   1.5. xlog usage
+   1.6. xdbg usage
 
 Chapter 1. Admin Guide
 
@@ -65,7 +67,8 @@ Chapter 1. Admin Guide
 
         4.1. buf_size (integer)
         4.2. force_color (integer)
-        4.3. prefix (str)
+        4.3. long_format (integer)
+        4.4. prefix (str)
 
    5. Exported Functions
 
@@ -119,7 +122,8 @@ Chapter 1. Admin Guide
 
    4.1. buf_size (integer)
    4.2. force_color (integer)
-   4.3. prefix (str)
+   4.3. long_format (integer)
+   4.4. prefix (str)
 
 4.1. buf_size (integer)
 
@@ -143,13 +147,25 @@ modparam("xlog", "buf_size", 8192)
 modparam("xlog", "force_color", 0)
 ...
 
-4.3. prefix (str)
+4.3. long_format (integer)
+
+   When set to 1, prints config file name in xlogl() and xdbgl() before
+   line number.
+
+   Default value is 0.
+
+   Example 1.3. Set long_format parameter
+...
+modparam("xlog", "long_format", 1)
+...
+
+4.4. prefix (str)
 
    Prefix to be printed before the log message.
 
    Default value is "<script>: ".
 
-   Example 1.3. Set prefix parameter
+   Example 1.4. Set prefix parameter
 ...
 modparam("xlog", "prefix", "-xlog: ")
 ...
@@ -185,7 +201,7 @@ modparam("xlog", "prefix", "-xlog: ")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. xlog usage
+   Example 1.5. xlog usage
 ...
 xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
 ...
@@ -204,7 +220,7 @@ xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. xdbg usage
+   Example 1.6. xdbg usage
 ...
 xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...

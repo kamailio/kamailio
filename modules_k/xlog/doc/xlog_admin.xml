@@ -132,6 +132,26 @@ modparam("xlog", "force_color", 0)
 		</example>
 	</section>
 	<section>
+		<title><varname>long_format</varname> (integer)</title>
+		<para>
+		When set to 1, prints config file name in xlogl() and xdbgl()
+		before line number.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>long_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "long_format", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>prefix</varname> (str)</title>
 		<para>
 		Prefix to be printed before the log message.

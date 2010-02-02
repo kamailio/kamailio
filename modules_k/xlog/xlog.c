@@ -48,6 +48,7 @@ char *_xlog_prefix = "<script>: ";
 /** parameters */
 static int buf_size=4096;
 static int force_color=0;
+static int long_format=0;
 
 /** module functions */
 static int mod_init(void);
@@ -107,6 +108,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"buf_size",     INT_PARAM, &buf_size},
 	{"force_color",  INT_PARAM, &force_color},
+	{"long_format",  INT_PARAM, &long_format},
 	{"prefix",       STR_PARAM, &_xlog_prefix},
 	{0,0,0}
 };
@@ -153,8 +155,14 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 		return -1;
 	txt.s = _xlog_buf;
 	if(line>0)
-		LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
-			"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
+		if(long_format==1)
+			LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+				"%s:%d:%.*s",
+				(xm->a)?(((xm->a->cfile)?xm->a->cfile:"")):"",
+				(xm->a)?xm->a->cline:0, txt.len, txt.s);
+		else
+			LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+				"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
 	else
 		LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
 			"%.*s", txt.len, txt.s);
