@@ -35,7 +35,7 @@ if ! test -e $DEFAULTFILE; then
 fi
 
 
-function fn_config_replace 
+fn_config_replace ()
 {
 	if test $# -ne 2; then
 	  echo "Error - bad number of input parameters"
