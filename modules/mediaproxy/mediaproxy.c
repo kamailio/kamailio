@@ -45,6 +45,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_param.h"
 #include "../../msg_translator.h"
 #include "../../modules_k/dialog/dlg_load.h"
 #include "../../modules_k/dialog/dlg_hash.h"
@@ -658,10 +659,12 @@ get_media_relay(struct sip_msg* msg)
 static int
 find_content_type_application_sdp(struct sip_msg *msg, str *sdp)
 {
-    str type;
+    str type, params, boundary;
     char *start, *s;
     unsigned int len;
     Bool done;
+    param_hooks_t hooks;
+    param_t *p, *list;
 
     if (!msg->content_type) {
         LM_WARN("the Content-Type header is missing! Assume the content type is text/plain\n");
@@ -688,6 +691,44 @@ find_content_type_application_sdp(struct sip_msg *msg, str *sdp)
     if (done) return 1;
 
     // Hack to find application/sdp bodypart
+    params.s = memchr(msg->content_type->body.s, ';', 
+		      msg->content_type->body.len);
+    if (params.s == NULL) {
+	LM_ERR("Content-Type hdr has no params\n");
+	return -1;
+    }
+    params.len = msg->content_type->body.len - 
+	(params.s - msg->content_type->body.s);
+    if (parse_params(&params, CLASS_ANY, &hooks, &list) < 0) {
+	LM_ERR("while parsing Content-Type params\n");
+	return -1;
+    }
+    boundary.s = NULL;
+    boundary.len = 0;
+    for (p = list; p; p = p->next) {
+	if ((p->name.len == 8)
+	    && (strncasecmp(p->name.s, "boundary", 8) == 0)) {
+	    boundary.s = pkg_malloc(p->body.len + 2 + 1);
+	    if (boundary.s == NULL) {
+		free_params(list);
+		LM_ERR("no memory for boundary string\n");
+		return -1;
+	    }
+	    *(boundary.s) = '-';
+	    *(boundary.s + 1) = '-';
+	    memcpy(boundary.s + 2, p->body.s, p->body.len);
+	    boundary.len = 2 + p->body.len;
+	    *(boundary.s + boundary.len) = 0;
+	    LM_DBG("boundary is <%.*s>\n", boundary.len, boundary.s);
+	    break;
+	}
+    }
+    free_params(list);
+    if (boundary.s == NULL) {
+	LM_ERR("no mandatory param \";boundary\"\n");
+	return -1;
+    }
+
     while ((s = find_line_starting_with(sdp, "Content-Type: ", True))) {
 	start = s + 14;
 	len = sdp->len - (s - sdp->s) - 14;
@@ -696,7 +737,7 @@ find_content_type_application_sdp(struct sip_msg *msg, str *sdp)
 		start = start + 15;
 		if ((*start != 13) || (*(start + 1) != 10)) {
 		    LM_ERR("no CRLF found after content type\n");
-		    return -1;
+		    goto err;
 		}
 		start = start + 2;
 		len = len - 15 - 2;
@@ -706,17 +747,21 @@ find_content_type_application_sdp(struct sip_msg *msg, str *sdp)
 		}
 		sdp->s = start;
 		sdp->len = len;
-		s = find_line_starting_with(sdp, "--Boundary", False);
+		s = find_line_starting_with(sdp, boundary.s, False);
 		if (s == NULL) {
 		    LM_ERR("boundary not found after bodypart\n");
-		    return -1;
+		    goto err;
 		}
 		sdp->len = s - start - 2;
+		pkg_free(boundary.s);
 		return 1;
 	    }
 	}
     }
     LM_ERR("no application/sdp bodypart found\n");
+
+ err:
+    pkg_free(boundary.s);
     return -1;
 }
 
