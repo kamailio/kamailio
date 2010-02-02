@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module offers generic message queue system in shared memory for
+		inter-process communication via config file. One example of usage is
+		to send time consuming operations to a timer process that consumes
+		items in the queue, without affecting SIP message handling.
+	</para>
+	<para>
+		There can be defined many queues, access to values being done via
+		pseudo variables.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+
+	<section>
+	    <title><varname>mqueue</varname> (string)</title>
+	    <para>
+		Definition of memory queue
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>none</quote>.
+		</emphasis>
+	    </para>
+		<para>
+		Value must be a list of parameters: attr=value;... The attribute 'name'
+		is mandatory, defining the name of the queue. Optional attribute 'size'
+		specifies the maximum number of items in queue, if it is execeeded the
+		oldest one is removed.
+	    </para>
+		<para>
+		The parameter can be set many time, each holding the definition of one
+		queue.
+	    </para>
+	    <example>
+		<title>Set <varname>mqueue</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqueue", "mqueue", "name=myq;size=20;")
+modparam("mqueue", "mqueue", "name=qaz")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+    <section>
+	<title>Exported Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">mq_add(queue, key, value)</function>
+	    </title>
+	    <para>
+		Add a new item (key, value) in the queue. If max size of queue is
+		exceeded, the oldest one is removed.
+	    </para>
+		<example>
+		<title><function>mq_add</function> usage</title>
+		<programlisting format="linespecific">
+...
+mq_add("myq", "$rU", "call from $fU");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+ 	<section>
+	    <title>
+		<function moreinfo="none">mq_fetch(queue)</function>
+	    </title>
+	    <para>
+		Take oldest item from que and fill $mqk(queue) and $mqv(queue) pseudo
+		variables. Return true on success.
+	    </para>
+		<example>
+		<title><function>mq_fetch</function> usage</title>
+		<programlisting format="linespecific">
+...
+while(mq_add("myq"))
+{
+   xlog("$mqk(myq) - $mqv(myq)\n");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	
+ 	<section>
+	    <title>
+		<function moreinfo="none">mq_pv(queue)</function>
+	    </title>
+	    <para>
+		Free the item fetched in pseudo-variables. It is optional, a new fetch
+		frees the old values.
+	    </para>
+		<example>
+		<title><function>mq_pv_free</function> usage</title>
+		<programlisting format="linespecific">
+...
+mq_pv_free("myq");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+	
+</chapter>
+
