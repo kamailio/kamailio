@@ -50,6 +50,7 @@
 #include "../ut.h"   /* q_memchr */
 /* #endif */
 #include "../error.h"
+#include "../core_stats.h"
 
 /* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
  * len= len of uri
@@ -1223,6 +1224,7 @@ error_bug:
 error_exit:
 	ser_error=E_BAD_URI;
 	uri->type=ERROR_URI_T;
+	STATS_BAD_URI();
 	return E_BAD_URI;
 }
 

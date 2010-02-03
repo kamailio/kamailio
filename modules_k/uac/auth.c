@@ -232,9 +232,9 @@ static inline struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl,
 	}
 	for( hdr=rpl->headers ; hdr ; hdr=hdr->next )
 	{
-		if((rpl_code==WWW_AUTH_CODE && hdr->type==HDR_WWW_AUTHENTICATE_T)
-				|| (rpl_code==PROXY_AUTH_CODE
-					&& hdr->type==HDR_PROXY_AUTHENTICATE_T))
+		if ( rpl_code==WWW_AUTH_CODE && hdr->type==HDR_WWW_AUTHENTICATE_T )
+			return hdr;
+		if ( rpl_code==PROXY_AUTH_CODE && hdr->type==HDR_PROXY_AUTHENTICATE_T )
 			return hdr;
 	}
 

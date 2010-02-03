@@ -72,6 +72,7 @@
 #include "config.h"
 #include "parser/msg_parser.h"
 #include "route.h"
+#include "events.h"
 #include "dprint.h"
 #include "globals.h"
 #include "cfg_core.h"
@@ -93,6 +94,7 @@
 #include "dst_blacklist.h"
 #endif
 #include "compiler_opt.h"
+#include "core_stats.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -581,6 +583,12 @@ end:
 #endif
 	if (buf) pkg_free(buf);
 	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
+#if defined STATS_REQ_FWD_OK || defined STATS_REQ_FWD_DROP
+	if(ret==0)
+		STATS_REQ_FWD_OK();
+	else
+		STATS_REQ_FWD_DROP();
+#endif /* STATS_REQ_FWD_* */
 	return ret;
 }
 
@@ -733,7 +741,11 @@ int forward_reply(struct sip_msg* msg)
 				
 	} 
 #endif
-	if (msg_send(&dst, new_buf, new_len)<0) goto error;
+	if (msg_send(&dst, new_buf, new_len)<0)
+	{
+		STATS_RPL_FWD_DROP();
+		goto error;
+	}
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
@@ -742,6 +754,7 @@ int forward_reply(struct sip_msg* msg)
 			msg->via2->host.len, msg->via2->host.s,
 			(unsigned short) msg->via2->port);
 
+	STATS_RPL_FWD_OK();
 	pkg_free(new_buf);
 skip:
 	return 0;
