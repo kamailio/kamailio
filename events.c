@@ -60,6 +60,11 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.core_stats = f;
 				else return -1;
 			break;
+		case SREV_CFG_RUN_ACTION:
+				if(_sr_events_list.run_action==0)
+					_sr_events_list.run_action = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -110,6 +115,12 @@ int sr_event_exec(int type, void *data)
 					return ret;
 				} else return 1;
 			break;
+		case SREV_CFG_RUN_ACTION:
+				if(unlikely(_sr_events_list.run_action!=0))
+				{
+					ret = _sr_events_list.run_action(data);
+					return ret;
+				} else return 1;
 		default:
 			return -1;
 	}
