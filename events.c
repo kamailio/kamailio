@@ -55,6 +55,11 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.net_data_out = f;
 				else return -1;
 			break;
+		case SREV_CORE_STATS:
+				if(_sr_events_list.core_stats==0)
+					_sr_events_list.core_stats = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -95,6 +100,13 @@ int sr_event_exec(int type, void *data)
 					LM_DBG("POST-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
+					return ret;
+				} else return 1;
+			break;
+		case SREV_CORE_STATS:
+				if(unlikely(_sr_events_list.core_stats!=0))
+				{
+					ret = _sr_events_list.core_stats(data);
 					return ret;
 				} else return 1;
 			break;

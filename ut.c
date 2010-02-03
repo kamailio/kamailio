@@ -49,6 +49,9 @@
 #include "mem/mem.h"
 #include "globals.h"
 
+/* global buffer for ut.h int2str() */
+char ut_buf_int2str[INT2STR_MAX_LEN];
+
 
 /* converts a username into uid:gid,
  * returns -1 on error & 0 on success */
