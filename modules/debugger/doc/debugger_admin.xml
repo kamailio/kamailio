@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module provides an interactive config file debugger. It can print
+		the trace of config execution for a SIP message to log and set
+		breakpoints on every config action, allowing to execute step by step the
+		config.
+	</para>
+	<para>
+		Debugging can be done from local or remote host via RPC interface (e.g.,
+		XMLRPC, sercmd).
+	</para>
+	<para>
+		The framework to set breakpoints on specific actions and config lines
+		is not exported to RPC yet, right now each action has an breakpoint. The
+		breakpoint can be enabled/disabled at runtime. Also the config running
+		trace can be enabled/disabled at runtime.
+	</para>
+	<para>
+		When the SIP router process is stopped at a breakpoint, you can
+		investigate the values of any pseudo-varaibles. Note that some of
+		pseudo-variables may produce memory leak, that is planned to fix in the
+		future (here falls pseudo-variables with dynamic name such as htable,
+		sqlops). References to SIP message, avps, headers, script and shared
+		variables are safe.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>cfgtrace</varname> (int)</title>
+	    <para>
+			Control whether config running trace is enabled or disabled
+			at startup.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgtrace</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "cfgtrace", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>breakpoint</varname> (int)</title>
+	    <para>
+			Control whether every line (for now) breakpoint is enabled
+			or disabled at startup.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>breakpoint</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "breakpoint", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+    <section>
+	<title>Exported Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">dbg_breakpoint(mode)</function>
+	    </title>
+	    <para>
+			Achor a breakpoint at that line in config. Mode specifies
+			whether the breakpoint is enabled (1) or disabled (0) at startup.
+	    </para>
+		<para>
+			Note that this version does not export this anchors to RPC for
+			interactive debugging (temporary disabled).
+	    </para>
+		<example>
+		<title><function>mt_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if($si=="10.0.0.10")
+	dbg_breakpoint("1");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+	
+	<section>
+		<title>Exported RPC Functions</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">dbg.ls</function>
+		</title>
+		<para>
+			List SIP router processes with info related to interactive
+			debugging.
+		</para>
+		<para>
+		Name: <emphasis>dbg.list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_pid_ : pid for which to list the details. If it
+			missing, then will print for all processes.</para></listitem>	  
+		</itemizedlist>
+		<para>
+		Examples for using with sercmd:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.ls
+		dbg.ls 1234
+		</programlisting>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dbg.trace</function>
+		</title>
+		<para>
+			Control config running trace.
+		</para>
+		<para>
+		Name: <emphasis>dbg.trace</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_cmd_ : inner command can be 'on' or 'off' to
+				enable or disable the tracing for one or all processe.</para>
+		</listitem>
+			<listitem><para>_pid_ : pid for which to list the details. If it
+					missing, then will print for all processes.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Examples for using with sercmd:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.trace on
+		dbg.trace off
+		dbg.trace on 1234
+		</programlisting>
+    </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dbg.bp</function>
+		</title>
+		<para>
+			Control breakpoints and config execution.
+		</para>
+		<para>
+		Name: <emphasis>dbg.bp</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_cmd_ : inner command can be 'on' or 'off' to
+				enable or disable the tracing for one or all processe.</para>
+		</listitem>
+		<listitem><para>_pid_ : pid for which to apply the inner command.
+				If it missing, then will be applied for all processes.</para>
+		</listitem>
+		<listitem><para>_params_ : extra params specific for each inner
+				command.</para>
+		</listitem>
+		</itemizedlist>
+		<para>Inner commands:</para>
+		<itemizedlist>
+		<listitem>
+			<para>on - turn on breakpoints. Pid parameter is optional.
+			</para>
+		</listitem>
+		<listitem>
+			<para>off - turn off breakpoints. Pid parameter is optional.
+			</para>
+		</listitem>
+		<listitem>
+			<para>keep - keep breakpoints only for pid given as parameter
+			</para>
+		</listitem>
+		<listitem>
+			<para>release - disable breakpoints for processes that are
+			not waiting at a breakpoint. Pid parameter is optional.</para>
+		</listitem>
+		<listitem>
+			<para>next - run the action under breakpoint and stop at next one
+			(step by step execution). Pid parameter is mandatory.
+			</para>
+		</listitem>
+		<listitem>
+			<para>move - run the action under breakpoint and remove the rest
+			of breakpoints (continue execution without stopping again at next
+			actions). Pid parameter is mandatory.</para>
+		</listitem>
+		<listitem>
+			<para>show - print details about the current breakpoint for pid.
+			Pid parameter is mandatory.</para>
+		</listitem>
+		<listitem>
+			<para>eval - eval a pseudo-variable and print the result in RPC
+			Pid parameter is mandatory.</para>
+		</listitem>
+		<listitem>
+			<para>log - eval a pseudo-variable and print the result in SIP
+			router logs. Pid parameter is mandatory.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Examples for using with sercmd:
+		</para>
+        <programlisting  format="linespecific">
+		dbg.bp off
+		dbg.bp on
+		dbg.bp release
+		dbg.bp on 1234
+		dbg.bp eval 1234 $fu
+		dbg.bp move 1234
+		</programlisting>
+    </section>
+
+    </section>
+	<section>
+		<title>Usage</title>
+		<para>
+		A common usage is to investigate the execution path for a specific
+		SIP message. Just enable cfg running trace, send the message and
+		watch the logs.
+		</para>
+		<para>
+		Another typical usage is to do interactive debugging and run
+		step-by-step each line in routing blocks of config file for a
+		particular SIP message.
+		</para>
+		<para>
+		You need to connect using sercmd (or other RPC client) to SIP Router.
+		Then you can enable cfg breakpoints and send the SIP message. One
+		process will be in waiting state ('state' field different than 0 when
+		you do dbg.ls). Calling dbg.release will set the other SIP router
+		processes in no-breakpoint mode so they can process other SIP messages
+		without need to interact with them.
+		</para>
+		<para>
+		The process blocked at breakpoint is waiting for a command. Use
+		'dbg.bp next pid' to execute the current action and stop at the next
+		one. 'dbg.bp eval pid PV' can be used to retrive the value of PV. Once
+		you are done and want to continue the execution of the config wihtout
+		interaction use 'dbg.bp move pid'.
+		</para>
+		<para>
+		Here is an example of session:
+		</para>
+<programlisting  format="linespecific">
+...
+sercmd> dbg.ls
+{
+	entry: 0
+	pid: 10480
+	set: 3
+	state: 0
+	in.pid: 0
+	in.cmd: 0
+}
+{
+	entry: 1
+	pid: 10481
+	set: 3
+	state: 1
+	in.pid: 0
+	in.cmd: 0
+}
+{
+	entry: 2
+	pid: 10482
+	set: 3
+	state: 0
+	in.pid: 0
+	in.cmd: 0
+}
+
+sercmd> dbg.bp show 10481
+at bkp [/etc/kamailio/debugger.cfg:36] a=25
+
+sercmd> dbg.bp next 10481
+exec [/etc/kamailio/debugger.cfg:37] a=54
+
+sercmd> dbg.bp eval 10481 $fu
+$fu : t=str v=sip:test@192.168.1.1
+
+sercmd> dbg.bp move 10481
+200 ok
+...
+</programlisting>
+		<para>
+		The cfg running trace looks like:
+		</para>
+<programlisting  format="linespecific">
+...
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=36 a=25
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=37 a=54
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=41 a=17
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=41 a=25
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=42 a=31
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=43 a=25
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=44 a=25
+ 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=45 a=3
+...
+</programlisting>
+    </section>
+
+	<section>
+		<title>To-do</title>
+		<para>
+			The 'MUSTS' and ideas of what can be done:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>many internal parameters not yet exported to cfg:
+			log level for printed messages, log facility, sleep time while
+			waiting at breakpoint, number of iterations to wait for response
+			from SIP router process ... they are now global variables inside
+			module.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			Complete breakpoint setting and usage on specific lines.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			Make the output more human friendly - text can be used instead of
+			integer values for some fields such as state. Also, for some
+			actions (e.g., module functions) string name can be printed instead
+			of action internal type code.
+		</para>
+		</listitem>
+		</itemizedlist>
+    </section>
+
+</chapter>
+
