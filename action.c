@@ -90,6 +90,7 @@
 #include "sctp_server.h"
 #endif
 #include "switch.h"
+#include "events.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -133,6 +134,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct rvalue* rv1;
 	struct rval_cache c1;
 	str s;
+	void *srevp[2];
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -140,6 +142,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	   for functions which want to process it */
 	prev_ser_error=ser_error;
 	ser_error=E_UNSPEC;
+
+	/* hook for every executed action (in use by cfg debugger) */
+	srevp[0] = (void*)a;
+	srevp[1] = (void*)msg;
+	sr_event_exec(SREV_CFG_RUN_ACTION, (void*)srevp);
 
 	ret=E_BUG;
 	switch ((unsigned char)a->type){
