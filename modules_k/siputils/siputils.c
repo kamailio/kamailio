@@ -165,7 +165,7 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if(cfg_declare("siptutils", siputils_cfg_def, &default_siputils_cfg, cfg_sizeof(siputils), &siputils_cfg)){
+	if(cfg_declare("siputils", siputils_cfg_def, &default_siputils_cfg, cfg_sizeof(siputils), &siputils_cfg)){
 		LM_ERR("Fail to declare the configuration\n");
 		return -1;
 	}
