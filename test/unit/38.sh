@@ -36,7 +36,7 @@ echo "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"unixodbc://openserro:openserro@localhost/openser\")" >> $CFG
 
 # start
-../$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
