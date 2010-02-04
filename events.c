@@ -126,3 +126,18 @@ int sr_event_exec(int type, void *data)
 	}
 }
 
+int sr_event_enabled(int type)
+{
+	switch(type) {
+		case SREV_NET_DATA_IN:
+				return (_sr_events_list.net_data_in!=0)?1:0;
+		case SREV_NET_DATA_OUT:
+				return (_sr_events_list.net_data_out!=0)?1:0;
+		case SREV_CORE_STATS:
+				return (_sr_events_list.core_stats!=0)?1:0;
+		case SREV_CFG_RUN_ACTION:
+				return (_sr_events_list.run_action!=0)?1:0;
+	}
+	return 0;
+}
+

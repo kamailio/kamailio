@@ -40,5 +40,6 @@ typedef struct sr_event_cb {
 void sr_event_cb_init(void);
 int sr_event_register_cb(int type, sr_event_cb_f f);
 int sr_event_exec(int type, void *data);
+int sr_event_enabled(int type);
 
 #endif
