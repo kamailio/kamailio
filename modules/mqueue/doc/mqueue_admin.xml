@@ -125,7 +125,7 @@ mq_add("myq", "$rU", "call from $fU");
 		<title><function>mq_fetch</function> usage</title>
 		<programlisting format="linespecific">
 ...
-while(mq_add("myq"))
+while(mq_fetch("myq"))
 {
    xlog("$mqk(myq) - $mqv(myq)\n");
 }
@@ -136,7 +136,7 @@ while(mq_add("myq"))
 	
  	<section>
 	    <title>
-		<function moreinfo="none">mq_pv(queue)</function>
+		<function moreinfo="none">mq_pv_free(queue)</function>
 	    </title>
 	    <para>
 		Free the item fetched in pseudo-variables. It is optional, a new fetch
