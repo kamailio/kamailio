@@ -144,9 +144,12 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	ser_error=E_UNSPEC;
 
 	/* hook for every executed action (in use by cfg debugger) */
-	srevp[0] = (void*)a;
-	srevp[1] = (void*)msg;
-	sr_event_exec(SREV_CFG_RUN_ACTION, (void*)srevp);
+	if(unlikely(sr_event_enabled(SREV_CFG_RUN_ACTION)))
+	{
+		srevp[0] = (void*)a;
+		srevp[1] = (void*)msg;
+		sr_event_exec(SREV_CFG_RUN_ACTION, (void*)srevp);
+	}
 
 	ret=E_BUG;
 	switch ((unsigned char)a->type){
