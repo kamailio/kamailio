@@ -282,8 +282,8 @@ if($si=="10.0.0.10")
    Name: dbg.bp
 
    Parameters:
-     * _cmd_ : inner command can be 'on' or 'off' to enable or disable the
-       tracing for one or all processe.
+     * _cmd_ : inner command, see next section for the list of available
+       values.
      * _pid_ : pid for which to apply the inner command. If it missing,
        then will be applied for all processes.
      * _params_ : extra params specific for each inner command.
@@ -393,10 +393,6 @@ sercmd> dbg.bp move 10481
 7. To-do
 
    The 'MUSTS' and ideas of what can be done:
-     * many internal parameters not yet exported to cfg: log level for
-       printed messages, log facility, sleep time while waiting at
-       breakpoint, number of iterations to wait for response from SIP
-       router process ... they are now global variables inside module.
      * Complete breakpoint setting and usage on specific lines.
      * Make the output more human friendly - text can be used instead of
        integer values for some fields such as state. Also, for some

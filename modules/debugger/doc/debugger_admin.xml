@@ -317,8 +317,8 @@ if($si=="10.0.0.10")
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_cmd_ : inner command can be 'on' or 'off' to
-				enable or disable the tracing for one or all processe.</para>
+			<listitem><para>_cmd_ : inner command, see next section for
+			the list of available values.</para>
 		</listitem>
 		<listitem><para>_pid_ : pid for which to apply the inner command.
 				If it missing, then will be applied for all processes.</para>
@@ -476,14 +476,6 @@ sercmd> dbg.bp move 10481
 			The 'MUSTS' and ideas of what can be done:
 		</para>
 		<itemizedlist>
-		<listitem>
-			<para>many internal parameters not yet exported to cfg:
-			log level for printed messages, log facility, sleep time while
-			waiting at breakpoint, number of iterations to wait for response
-			from SIP router process ... they are now global variables inside
-			module.
-		</para>
-		</listitem>
 		<listitem>
 		<para>
 			Complete breakpoint setting and usage on specific lines.
