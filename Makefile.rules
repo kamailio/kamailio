@@ -76,6 +76,16 @@ quiet=verbose
 oecho=echo $(1)
 endif
 
+module_make=	if [ -n "$(1)" -a -r "$(1)/Makefile" ]; then \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
+			if  $$(MAKE) -C $(1) $(2) || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
+				exit 1; \
+			fi ; \
+		fi ;
+
 quote:= "
 escall= $(subst $$,\$$,$(subst $(quote),\$(quote),$1))
 exec_cmd= $(if $($(quiet)_cmd_$(1)),\

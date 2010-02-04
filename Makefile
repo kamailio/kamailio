@@ -603,17 +603,7 @@ $(1)_target=$(prefix)/$(modules_dir)$(1)
 
 .PHONY: $(1)
 $(1): modules.lst
-	@for r in $($(1)) "" ; do \
-		if [ -n "$$$$r" -a -r "$$$$r/Makefile" ]; then \
-			$(call oecho, "" ;) \
-			$(call oecho, "" ;) \
-			if  $(MAKE) -C $$$$r $$(mk_params) || [ ${err_fail} != 1 ] ; then \
-				:; \
-			else \
-				exit 1; \
-			fi ; \
-		fi ; \
-	done; true
+	@$(foreach r,$($(1)),$(call module_make,$(r),$(mk_params)))
 
 .PHONY: $(1)-doc
 $(1)-doc: modules.lst
