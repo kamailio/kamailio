@@ -115,6 +115,110 @@ modparam("debugger", "breakpoint", 1)
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>log_level</varname> (int)</title>
+	    <para>
+			What log level to be used to print module specific messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>-1</quote> (L_ERR).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_level</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_level", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>log_facility</varname> (str)</title>
+	    <para>
+			What log facility to be used to print module specific messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote> (default from core).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_facility</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_facility", "LOG_DAEMON")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>log_prefix</varname> (str)</title>
+	    <para>
+			String to print before any module specific messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>*** cfgtrace:</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>log_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "log_prefix", "from-debugger-with-love:")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>step_usleep</varname> (int)</title>
+	    <para>
+			Microseconds to sleep before checking for new commands when
+			waiting at breakpoint
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>100000</quote> (that is 0.1sec).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>step_usleep</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "step_usleep", 500000)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>step_loops</varname> (int)</title>
+	    <para>
+			How many sleeps of 'step_usleep' the RPC process performs when
+			waiting for a reply from worker process before responding to RPC.
+			This avoids blocking RPC process for ever in case the worker
+			process 'forgets' to write back a reply.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>200</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>step_loops</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "step_loops", 100)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 	
     <section>
@@ -132,7 +236,7 @@ modparam("debugger", "breakpoint", 1)
 			interactive debugging (temporary disabled).
 	    </para>
 		<example>
-		<title><function>mt_match</function> usage</title>
+		<title><function>dbg_breakpoint</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if($si=="10.0.0.10")

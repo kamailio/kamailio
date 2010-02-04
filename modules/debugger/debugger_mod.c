@@ -45,8 +45,16 @@ static void mod_destroy(void);
 static int w_dbg_breakpoint(struct sip_msg* msg, char* point, char* str2);
 static int fixup_dbg_breakpoint(void** param, int param_no);
 
+/* parameters */
 extern int _dbg_cfgtrace;
 extern int _dbg_breakpoint;
+extern int _dbg_cfgtrace_level;
+extern int _dbg_cfgtrace_facility;
+extern char *_dbg_cfgtrace_prefix;
+extern int _dbg_step_usleep;
+extern int _dbg_step_loops;
+
+static char * _dbg_cfgtrace_facility_str = 0;
 
 static cmd_export_t cmds[]={
 	{"dbg_breakpoint", (cmd_function)w_dbg_breakpoint, 1,
@@ -57,6 +65,11 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"cfgtrace",          INT_PARAM, &_dbg_cfgtrace},
 	{"breakpoint",        INT_PARAM, &_dbg_breakpoint},
+	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
+	{"log_facility",      STR_PARAM, &_dbg_cfgtrace_facility_str},
+	{"log_prefix",        STR_PARAM, &_dbg_cfgtrace_prefix},
+	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
+	{"step_loops",        INT_PARAM, &_dbg_step_loops},
 	{0, 0, 0}
 };
 
@@ -81,6 +94,19 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	int fl;
+	if (_dbg_cfgtrace_facility_str!=NULL)
+	{
+		fl = str2facility(_dbg_cfgtrace_facility_str);
+		if (fl != -1)
+		{
+			_dbg_cfgtrace_facility = fl;
+		} else {
+			LM_ERR("invalid log facility configured");
+			return -1;
+		}
+	}
+
 	if(dbg_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
