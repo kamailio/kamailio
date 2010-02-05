@@ -224,7 +224,7 @@ clean-modules:
 		if [ -d "$$r" ]; then \
 			$(call oecho,"module $$r" ;) \
 			$(MAKE) -C "$$r" clean ; \
-			[ -d "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc clean ; \
+			[ -r "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc clean ; \
 		fi ; \
 	done
 
