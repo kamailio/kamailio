@@ -607,7 +607,7 @@ $(1): modules.lst
 
 .PHONY: $(1)-doc
 $(1)-doc: modules.lst
-	@for r in $($(1)) "" ; do \
+	+@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
@@ -618,7 +618,7 @@ $(1)-doc: modules.lst
 .PHONY: $(1)-readme
 
 $(1)-readme: modules.lst
-	-@for r in $($(1)) "" ; do \
+	-+@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
@@ -633,7 +633,7 @@ $(1)-readme: modules.lst
 
 .PHONY: $(1)-man
 $(1)-man: modules.lst
-	-@for r in $($(1)) "" ; do \
+	-+@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
@@ -649,7 +649,7 @@ $(1)-man: modules.lst
 .PHONY: install-$(1)
 
 install-$(1): modules.lst $$($(1)_dst)
-	@for r in $($(1)) "" ; do \
+	+@for r in $($(1)) "" ; do \
 		if [ -n "$$$$r" -a -r "$$$$r/Makefile" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
