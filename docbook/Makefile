@@ -167,7 +167,7 @@ check: $(docs) $(html_docs) $(txt_docs) $(readme_docs)
 
 .PHONY: clean
 clean:
-	-rm -f $(html_files) $(txt_files)
+	-@rm -f $(html_files) $(txt_files)
 
 
 .PHONY: proper realclean distclean maintainer-clean
