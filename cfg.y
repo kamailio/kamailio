@@ -3204,7 +3204,6 @@ func_params:
 	;
 func_param:
     intno {
-#if 0
 		if (mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
 			mod_func_action->val[mod_func_action->val[1].u.number+2].type =
 				NUMBER_ST;
@@ -3214,9 +3213,6 @@ func_param:
 		} else {
 			yyerror("Too many arguments\n");
 		}
-#else
-		yyerror("Function parameter with integer value not allowed\n");
-#endif
 	}
 	| STRING {
 		if (mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
