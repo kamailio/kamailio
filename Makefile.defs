@@ -151,6 +151,11 @@ PATCHLEVEL = 0
 SUBLEVEL = 0
 EXTRAVERSION =
 
+# memory debugger switcher
+# 0 - off (release mode)
+# 1 - on (devel mode)
+MEMDBG ?= 0
+
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
 RELEASE:=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
@@ -618,15 +623,12 @@ C_DEFS= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DUSE_NAPTR \
-	 -DF_MALLOC \
 	 #-DUSE_DNS_CACHE_STATS \
 	 #-DUSE_DST_BLACKLIST_STATS \
 	 #-DDNS_WATCHDOG_SUPPORT \
 	 #-DLL_MALLOC \
 	 #-DSF_MALLOC \
 	 #-DDL_MALLOC \
-	 #-DF_MALLOC \
-	 #-DDBG_QM_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DEXTRA_DEBUG \
@@ -646,6 +648,11 @@ C_DEFS= $(extra_defs) \
 # use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
 # debugging symbols in all cases (-g). --andrei
 
+ifeq ($(MEMDBG), 1)
+	C_DEFS+= -DDBG_QM_MALLOC
+else
+	C_DEFS+= -DF_MALLOC
+endif
 ifeq ($(CORE_TLS), 1)
 	C_DEFS+= -DUSE_TLS -DCORE_TLS
 endif
