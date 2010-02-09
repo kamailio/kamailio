@@ -108,7 +108,7 @@ A) Basic building:
 make
 
 - build all modules without external library depencies
-make modules 
+make modules-all 
 
 
 B) Advanced building:
@@ -127,22 +127,22 @@ make modules=modules_k/textops modules
 
 -compile all the "default" modules except textops and db_mysql
 
-make skip_modules="textops db_mysql" modules
+make skip_modules="textops db_mysql" modules-all
 
 -compile all default modules and include uri_radius (not compiled by default):
 
-make include_modules="uri_radius" modules
+make include_modules="uri_radius" modules-all
 
 -compile all the modules from the modules subdirectory (even the one excluded
 by default):
 
-make exclude_modules="" modules
+make exclude_modules="" modules-all
 
 -compile all the modules from the modules subdirectory excluding exec:
 
-make exclude_modules=exec modules
+make exclude_modules=exec modules-all
 or
-make exclude_modules="" skip_modules=exec modules
+make exclude_modules="" skip_modules=exec modules-all
 
 -generate README file for textops module
 
