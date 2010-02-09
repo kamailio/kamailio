@@ -2725,7 +2725,8 @@ avpflag_oper:
 	| ISAVPFLAGSET { $$ = -1; }
 	;
 cmd:
-	FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
+	| FORWARD LPAREN RPAREN { $$=mk_action(FORWARD_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$); }
+	| FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| FORWARD LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| FORWARD LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| FORWARD LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
