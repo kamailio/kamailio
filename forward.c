@@ -78,6 +78,7 @@
 #include "hash_func.h"
 #include "config.h"
 #include "parser/msg_parser.h"
+#include "char_msg_val.h"
 #include "route.h"
 #include "events.h"
 #include "dprint.h"

@@ -59,6 +59,7 @@
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../error.h"
+#include "../../char_msg_val.h"
 #include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"

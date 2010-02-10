@@ -49,6 +49,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../md5utils.h"
+#include "../../char_msg_val.h"
 #include "exec_hf.h"
 
 /* should be environment variables set by header fields ? */

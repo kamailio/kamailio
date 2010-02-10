@@ -398,40 +398,6 @@ inline static int check_transaction_quadruple( struct sip_msg* msg )
 
 
 
-/*! \brief calculate characteristic value of a message -- this value
-   is used to identify a transaction during the process of
-   reply matching
- */
-inline static int char_msg_val( struct sip_msg *msg, char *cv )
-{
-	str src[8];
-
-	if (!check_transaction_quadruple(msg)) {
-		LOG(L_ERR, "ERROR: can't calculate char_value due "
-			"to a parsing error\n");
-		memset( cv, '0', MD5_LEN );
-		return 0;
-	}
-
-	src[0]= msg->from->body;
-	src[1]= msg->to->body;
-	src[2]= msg->callid->body;
-	src[3]= msg->first_line.u.request.uri;
-	src[4]= get_cseq( msg )->number;
-
-	/* topmost Via is part of transaction key as well ! */
-	src[5]= msg->via1->host;
-	src[6]= msg->via1->port_str;
-	if (msg->via1->branch) {
-		src[7]= msg->via1->branch->value;
-		MD5StringArray ( cv, src, 8 );
-	} else {
-		MD5StringArray( cv, src, 7 );
-	}
-	return 1;
-}
-
-
 /*! \brief returns a pointer to the begining of the msg's body
  */
 inline static char* get_body(struct sip_msg *msg)
