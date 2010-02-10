@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module allows executing Python scripts from config file,
+		exporting functions to access the SIP message from Python.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>python-dev</emphasis> - Python devel library.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>script_name</varname> (string)</title>
+	    <para>
+			TBD.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/usr/local/etc/sip-router/handler.py</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>script_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python", "script_name", "/usr/local/etc/sip-router/myscript.py")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mod_init_function</varname> (string)</title>
+	    <para>
+			TBD.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>mod_init</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_init_function</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python", "mod_init_function", "my_mod_init")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>child_init_method</varname> (string)</title>
+	    <para>
+			TBD.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>child_init</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>child_init_method</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python", "child_init_method", "my_child_init")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+	
+    <section>
+	<title>Exported Functions</title>
+ 	<section>
+	    <title>
+		<function moreinfo="none">python_exec(method [, mystr])</function>
+	    </title>
+	    <para>
+		TBD.
+	    </para>
+		<example>
+		<title><function>python_exec</function> usage</title>
+		<programlisting format="linespecific">
+...
+python_exec("...");
+python_exec("...", "...");
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+	
+</chapter>
+
