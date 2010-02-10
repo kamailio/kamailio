@@ -251,7 +251,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running SIP Router with this module:
-     * none.
+     * libpcre
 
 3. Exported Parameters
 
@@ -507,7 +507,7 @@ modparam("lcr","priority_column","priority")
 
    Default value is 1.
 
-   Example 1.20. Setting lcr_count module parameter
+   Example 1.20.  Setting lcr_count module parameter
 ...
 modparam("lcr", "lcr_count", 10)
 ...
@@ -558,7 +558,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    Default value is 0.
 
-   Example 1.24. Setting defunct_capability module parameter
+   Example 1.24.  Setting defunct_capability module parameter
 ...
 modparam("lcr", "defunct_capability", 1)
 ...
@@ -598,7 +598,7 @@ modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 
    Default value is 128.
 
-   Example 1.27. Setting lcr_hash_size module parameter
+   Example 1.27.  Setting lcr_hash_size module parameter
 ...
 modparam("lcr", "lcr_hash_size", 1024)
 ...
@@ -628,7 +628,7 @@ modparam("lcr", "fetch_rows", 3000)
    4.6. to_gw(lcr_id [, ip_addr])
    4.7. to_any_gw([ip_addr])
 
-4.1. load_gws(lcr_id, caller_uri)
+4.1.  load_gws(lcr_id, caller_uri)
 
    Loads URI schemes, IP addresses, hostnames, ports, and transports of
    matching gateways to gw_uri_avp (see Overview section). Argument lcr_id
@@ -652,7 +652,7 @@ if (!load_gws("1", "$var(caller_uri)")) {
 };
 ...
 
-4.2. next_gw()
+4.2.  next_gw()
 
    Upon first call, replaces URI scheme, host, port, and transport of
    Request-URI by the values stored in first gw_uri_avp and destroys that
@@ -689,7 +689,7 @@ if (!next_gw()) {
 };
 ...
 
-4.3. defunct_gw(period)
+4.3.  defunct_gw(period)
 
    Defuncts gateway selected by preceding next_gw() call for a period of
    seconds given as argument. Argument must be a positive integer constant
@@ -707,7 +707,7 @@ if (!next_gw()) {
 defunct_gw("60");
 ...
 
-4.4. from_gw(lcr_id [, ip_addr])
+4.4.  from_gw(lcr_id [, ip_addr])
 
    Checks if request comes from IP address of a gateway in LCR instance
    specified by lcr_id argument, which can be an integer constant or a
@@ -733,7 +733,7 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 };
 ...
 
-4.5. from_any_gw([ip_addr])
+4.5.  from_any_gw([ip_addr])
 
    Checks if request comes from IP address of any gateway. IP address to
    be checked is either taken from source IP address of the request or (if
@@ -757,7 +757,7 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 $var(lcr_id) = from_any_gw();
 ...
 
-4.6. to_gw(lcr_id [, ip_addr])
+4.6.  to_gw(lcr_id [, ip_addr])
 
    Checks if in-dialog request goes to a gateway in LCR instance specified
    by lcr_id argument. IP address to be checked is either taken from
@@ -779,7 +779,7 @@ if (to_gw("1")) {
 };
 ...
 
-4.7. to_any_gw([ip_addr])
+4.7.  to_any_gw([ip_addr])
 
    Checks if in-dialog request goes to any gateway. IP address to be
    checked is either taken from Request-URI hostpart or (if present) from
