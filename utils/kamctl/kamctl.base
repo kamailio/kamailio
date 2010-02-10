@@ -362,23 +362,8 @@ usage_lcr() {
 	mecho " -- command 'lcr' - manage least cost routes (lcr)"
 	echo
 cat <<EOF
-   * IP addresses must be entered in dotted quad format e.g. 1.2.3.4   *
-   * <uri_scheme> and <transport> must be entered in integer or text,  *
-   * e.g. transport '2' is identical to transport 'tcp'.               *
-   *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls, 4=sctp *
-   * Examples:  lcr addgw level3 1.2.3.4 5080 sip tcp 1                *
-   *            lcr addroute +1 '' 1 1                                 *
- lcr show .......... show gateways and routes tables
  lcr dump .......... show in memory gateways and routes tables
  lcr reload ........ reload lcr gateways and routes
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname> <ping>
-           ......... add a gateway with flags, tag, strip, weight, hostname, and ping
-           ......... (flags, tag, strip, weight, hostname, and ping are optional)
- lcr rmgw <gw_name> delete a gateway
- lcr addroute <prefix> <from> <grp_id> <prio>
-           ......... add a route ( use '' to match anything in <from> )
- lcr rmroute <prefix> <from> <grp_id> <prio>
-           ......... delete a route
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_lcr"
