@@ -247,7 +247,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running SIP Router with this module:
-     * none.
+     * libpcre
 
 3. Exported Parameters
 
