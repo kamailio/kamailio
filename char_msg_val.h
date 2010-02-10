@@ -22,7 +22,7 @@
  * History:
  * --------
  *  2010-02-10  moved from parser/msg_parser.h and added tag only mode
- *              by default (andrei)
+ *               by default (andrei)
 */
 /** compute the characteristic value of a message.
  * @file
@@ -32,6 +32,9 @@
  *  BRANCH_INCLUDE_FROMTO_BODY - if defined the old (pre 3.1) mode of
  *   including the full from & to bodies will be used (instead of only the
  *   tags).
+ * BRANCH_IGNORE_3261_VIA - if defined, no check and special/simpler handling
+ *   of messages with 3261 cookies in the via branch will be made (same
+ *   behaviour as in pre 3.1 versions).
 */
 
 #ifndef __char_msg_val_h
@@ -59,7 +62,15 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 		memset( cv, '0', MD5_LEN );
 		return 0;
 	}
-
+#ifndef BRANCH_IGNORE_3261_VIA
+	if (likely(msg->via1->branch && msg->via1->branch->value.len>MCOOKIE_LEN &&
+				memcmp(msg->via1->branch->value.s, MCOOKIE, MCOOKIE_LEN)==0)){
+		/* 3261 branch cookie present => hash only the received branch ID */
+		src[0]=msg->via1->branch->value;
+		MD5StringArray ( cv, src, 1 );
+		return 1; /* success */
+	}
+#endif /* BRANCH_IGNORE_3261_VIA */
 #ifdef BRANCH_INCLUDE_FROMTO_BODY
 	/* use the from & to full bodies */
 	src[0]= msg->from->body;
@@ -77,7 +88,7 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	/* use only the from & to tags */
 	src[0]=get_from(msg)->tag_value;
 	src[1]=get_to(msg)->tag_value;
-#endif
+#endif /* BRANCH_INCLUDE_FROMTO_BODY */
 	src[2]= msg->callid->body;
 	src[3]= msg->first_line.u.request.uri;
 	src[4]= get_cseq( msg )->number;
@@ -85,7 +96,7 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	/* topmost Via is part of transaction key as well ! */
 	src[5]= msg->via1->host;
 	src[6]= msg->via1->port_str;
-	if (msg->via1->branch) {
+	if (likely(msg->via1->branch)) {
 		src[7]= msg->via1->branch->value;
 		MD5StringArray ( cv, src, 8 );
 	} else {
