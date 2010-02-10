@@ -276,8 +276,8 @@ Chapter 1. Admin Guide
    (allow_source_address) or given as pvar arguments (allow_address).
 
    Addresses stored in cached database table can be grouped together into
-   one or more groups specified by a group identifier (unsigned integer).
-   Group identifier is given as argument to allow_address and
+   one or more groups specified by a group identifier (positive integer
+   value). Group identifier is given as argument to allow_address and
    allow_source_address functions.
 
 1.5. Trusted Requests

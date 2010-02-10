@@ -114,6 +114,7 @@ int reload_address_table(void)
 	val = ROW_VALUES(row + i);
 	if ((ROW_N(row + i) == 4) &&
 	    (VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
+	    (VAL_INT(val) > 0) && 
 	    (VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
 	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
 	    (VAL_TYPE(val + 2) == DB1_INT) && !VAL_NULL(val + 2) && 
