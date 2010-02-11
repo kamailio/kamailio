@@ -59,6 +59,7 @@ extern str ds_set_id_col;
 extern str ds_dest_uri_col;
 extern str ds_dest_flags_col;
 extern str ds_dest_priority_col;
+extern str ds_dest_attrs_col;
 
 extern int ds_flags; 
 extern int ds_use_default;
@@ -97,6 +98,7 @@ int ds_set_state(int group, str *address, int state, int type);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
+int ds_print_sets(void);
 
 int ds_is_from_list(struct sip_msg *_m, int group);
 /*! \brief

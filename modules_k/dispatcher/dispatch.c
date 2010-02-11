@@ -48,6 +48,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "../../ut.h"
 #include "../../trim.h"
@@ -58,6 +59,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_param.h"
 #include "../../usr_avp.h"
 #include "../../lib/kmi/mi.h"
 #include "../../parser/digest/digest.h"
@@ -73,34 +75,49 @@
 #define DS_TABLE_VERSION	1
 #define DS_TABLE_VERSION2	2
 #define DS_TABLE_VERSION3	3
+#define DS_TABLE_VERSION4	4
 
 static int _ds_table_version = DS_TABLE_VERSION;
+
+#define DS_DUID_SIZE	16
+
+typedef struct _ds_attrs
+{
+	char duid[DS_DUID_SIZE];
+	int maxload;
+	int weight;
+} ds_attrs_t;
 
 typedef struct _ds_dest
 {
 	str uri;
 	int flags;
 	int priority;
+	ds_attrs_t attrs;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the request URI */
 	int failure_count;
 	struct _ds_dest *next;
-} ds_dest_t, *ds_dest_p;
+} ds_dest_t;
 
 typedef struct _ds_set
 {
 	int id;				/*!< id of dst set */
 	int nr;				/*!< number of items in dst set */
-	int last;			/*!< last used item in dst set */
-	ds_dest_p dlist;
+	int last;			/*!< last used item in dst set (round robin) */
+	int wlast;			/*!< last used item in dst set (by weight) */
+	ds_dest_t *dlist;
+	unsigned int wlist[100];
 	struct _ds_set *next;
-} ds_set_t, *ds_set_p;
+} ds_set_t;
 
 extern int ds_force_dst;
 
 static db_func_t ds_dbf;
 static db1_con_t* ds_db_handle=0;
-ds_set_p *ds_lists=NULL;
+
+ds_set_t **ds_lists=NULL;
+
 int *ds_list_nr = NULL;
 int *crt_idx    = NULL;
 int *next_idx   = NULL;
@@ -110,9 +127,9 @@ int *next_idx   = NULL;
 
 void destroy_list(int);
 
-static int ds_print_sets(void)
+int ds_print_sets(void)
 {
-	ds_set_p si = NULL;
+	ds_set_t *si = NULL;
 	int i;
 
 	if(_ds_list==NULL)
@@ -124,9 +141,11 @@ static int ds_print_sets(void)
 	{
 		for(i=0; i<si->nr; i++)
 		{
-			LM_DBG("dst>> %d %.*s %d %d\n", si->id,
+			LM_DBG("dst>> %d %.*s %d %d (%s,%d,%d)\n", si->id,
 					si->dlist[i].uri.len, si->dlist[i].uri.s,
-					si->dlist[i].flags, si->dlist[i].priority);
+					si->dlist[i].flags, si->dlist[i].priority,
+					si->dlist[i].attrs.duid, si->dlist[i].attrs.maxload,
+					si->dlist[i].attrs.weight);
 		}
 		si = si->next;
 	}
@@ -138,7 +157,7 @@ int init_data(void)
 {
 	int * p;
 
-	ds_lists = (ds_set_p*)shm_malloc(2*sizeof(ds_set_p));
+	ds_lists = (ds_set_t**)shm_malloc(2*sizeof(ds_set_t*));
 	if(!ds_lists)
 	{
 		LM_ERR("Out of memory\n");
@@ -162,13 +181,52 @@ int init_data(void)
 	return 0;
 }
 
-int add_dest2list(int id, str uri, int flags, int priority, int list_idx,
-		int * setn)
+int ds_set_attrs(ds_dest_t *dest, str *attrs)
 {
-	ds_dest_p dp = NULL;
-	ds_set_p  sp = NULL;
-	ds_dest_p dp0 = NULL;
-	ds_dest_p dp1 = NULL;
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+
+	if(attrs==NULL || attrs->len<=0)
+		return 0;
+	if(attrs->s[attrs->len-1]==';')
+		attrs->len--;
+	if (parse_params(attrs, CLASS_ANY, &phooks, &params_list)<0)
+		return -1;
+	for (pit = params_list; pit; pit=pit->next)
+	{
+		if (pit->name.len==4
+				&& strncasecmp(pit->name.s, "duid", 4)==0) {
+			if(pit->body.len>=DS_DUID_SIZE)
+			{
+				LM_ERR("dest unique id too long: %.*s\n",
+						pit->body.len, pit->body.s);
+				return -1;
+			}
+			memcpy(dest->attrs.duid, pit->body.s, pit->body.len);
+			dest->attrs.duid[pit->body.len] = '\0';
+		} else if(pit->name.len==6
+				&& strncasecmp(pit->name.s, "weight", 4)==0) {
+			str2sint(&pit->body, &dest->attrs.weight);
+		} else if(pit->name.len==7
+				&& strncasecmp(pit->name.s, "maxload", 7)==0) {
+			str2sint(&pit->body, &dest->attrs.maxload);
+		} else {
+			LM_ERR("unknown dest attribute: %.*s\n",
+						pit->name.len, pit->name.s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
+		int list_idx, int * setn)
+{
+	ds_dest_t *dp = NULL;
+	ds_set_t  *sp = NULL;
+	ds_dest_t *dp0 = NULL;
+	ds_dest_t *dp1 = NULL;
 	
 	/* For DNS-Lookups */
 	static char hn[256];
@@ -193,7 +251,7 @@ int add_dest2list(int id, str uri, int flags, int priority, int list_idx,
 
 	if(sp==NULL)
 	{
-		sp = (ds_set_p)shm_malloc(sizeof(ds_set_t));
+		sp = (ds_set_t*)shm_malloc(sizeof(ds_set_t));
 		if(sp==NULL)
 		{
 			LM_ERR("no more memory.\n");
@@ -209,7 +267,7 @@ int add_dest2list(int id, str uri, int flags, int priority, int list_idx,
 	sp->nr++;
 
 	/* store uri */
-	dp = (ds_dest_p)shm_malloc(sizeof(ds_dest_t));
+	dp = (ds_dest_t*)shm_malloc(sizeof(ds_dest_t));
 	if(dp==NULL)
 	{
 		LM_ERR("no more memory!\n");
@@ -228,6 +286,12 @@ int add_dest2list(int id, str uri, int flags, int priority, int list_idx,
 	dp->uri.len = uri.len;
 	dp->flags = flags;
 	dp->priority = priority;
+
+	if(ds_set_attrs(dp, attrs)<0)
+	{
+		LM_ERR("cannot set attributes!\n");
+		goto err;
+	}
 
 	/* The Hostname needs to be \0 terminated for resolvehost, so we
 	 * make a copy here. */
@@ -285,16 +349,56 @@ err:
 	return -1;
 }
 
+int dp_init_weights(ds_set_t *dset)
+{
+	int j;
+	int k;
+	int t;
+
+	if(dset==NULL || dset->dlist==NULL)
+		return -1;
+
+	/* is weight set for dst list? (first address must have weight!=0) */
+	if(dset->dlist[0].attrs.weight==0)
+		return 0;
+
+	t = 0;
+	for(j=0; j<dset->nr; j++)
+	{
+		for(k=0; k<dset->dlist[j].attrs.weight; k++)
+		{
+			if(t>=100)
+				goto randomize;
+			dset->wlist[t] = (unsigned int)j;
+			t++;
+		}
+	}
+	j = (t-1>=0)?t-1:0;
+	for(; t<100; t++)
+		dset->wlist[t] = (unsigned int)j;
+randomize:
+	srand(time(0));
+	for (j=0; j<100; j++)
+	{
+		k = j + (rand() % (100-j));
+		t = (int)dset->wlist[j];
+		dset->wlist[j] = dset->wlist[k];
+		dset->wlist[k] = (unsigned int)t;
+	}
+
+	return 0;
+}
+
 /*! \brief  compact destinations from sets for fast access */
 int reindex_dests(int list_idx, int setn)
 {
 	int j;
-	ds_set_p  sp = NULL;
-	ds_dest_p dp = NULL, dp0= NULL;
+	ds_set_t  *sp = NULL;
+	ds_dest_t *dp = NULL, *dp0= NULL;
 
-	for(sp = ds_lists[list_idx]; sp!= NULL;	sp->dlist = dp0, sp = sp->next)
+	for(sp = ds_lists[list_idx]; sp!= NULL;	sp = sp->next)
 	{
-		dp0 = (ds_dest_p)shm_malloc(sp->nr*sizeof(ds_dest_t));
+		dp0 = (ds_dest_t*)shm_malloc(sp->nr*sizeof(ds_dest_t));
 		if(dp0==NULL)
 		{
 			LM_ERR("no more memory!\n");
@@ -302,7 +406,7 @@ int reindex_dests(int list_idx, int setn)
 		}
 		memset(dp0, 0, sp->nr*sizeof(ds_dest_t));
 
-		/*copy from the old pointer to destination, and then free it*/
+		/* copy from the old pointer to destination, and then free it */
 		for(j=sp->nr-1; j>=0 && sp->dlist!= NULL; j--)
 		{
 			memcpy(&dp0[j], sp->dlist, sizeof(ds_dest_t));
@@ -310,13 +414,16 @@ int reindex_dests(int list_idx, int setn)
 				dp0[j].next = NULL;
 			else
 				dp0[j].next = &dp0[j+1];
-	
+
+
 			dp = sp->dlist;
 			sp->dlist = dp->next;
 			
 			shm_free(dp);
 			dp=NULL;
 		}
+		sp->dlist = dp0;
+		dp_init_weights(sp);
 	}
 
 	LM_DBG("found [%d] dest sets\n", setn);
@@ -333,7 +440,8 @@ int ds_load_list(char *lfile)
 	FILE *f = NULL;
 	int id, setn, flags, priority;
 	str uri;
-	
+	str attrs;
+
 	if( (*crt_idx) != (*next_idx)) {
 		LM_WARN("load command already generated, aborting reload...\n");
 		return 0;
@@ -357,7 +465,7 @@ int ds_load_list(char *lfile)
 
 	*next_idx = (*crt_idx + 1)%2;
 	destroy_list(*next_idx);
-	
+
 	p = fgets(line, 256, f);
 	while(p)
 	{
@@ -366,7 +474,7 @@ int ds_load_list(char *lfile)
 			p++;
 		if(*p=='\0' || *p=='#')
 			goto next_line;
-		
+
 		/* get set id */
 		id = 0;
 		while(*p>='0' && *p<='9')
@@ -374,7 +482,7 @@ int ds_load_list(char *lfile)
 			id = id*10+ (*p-'0');
 			p++;
 		}
-		
+
 		/* eat all white spaces */
 		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
 			p++;
@@ -393,7 +501,7 @@ int ds_load_list(char *lfile)
 		/* eat all white spaces */
 		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
 			p++;
-		
+
 		/* get flags */
 		flags = 0;
 		priority = 0;
@@ -405,11 +513,11 @@ int ds_load_list(char *lfile)
 			flags = flags*10+ (*p-'0');
 			p++;
 		}
-		
+
 		/* eat all white spaces */
 		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
 			p++;
-		
+
 		/* get priority */
 		priority = 0;
 		if(*p=='\0' || *p=='#')
@@ -420,9 +528,23 @@ int ds_load_list(char *lfile)
 			priority = priority*10+ (*p-'0');
 			p++;
 		}
-		
+
+		/* eat all white spaces */
+		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
+			p++;
+		attrs.s = 0; attrs.len = 0;
+		if(*p=='\0' || *p=='#')
+			goto add_destination; /* no priority given */
+
+		/* get attributes */
+		attrs.s = p;
+		while(*p && *p!=' ' && *p!='\t' && *p!='\r' && *p!='\n' && *p!='#')
+			p++;
+		attrs.len = p-attrs.s;
+
 add_destination:
-		if(add_dest2list(id, uri, flags, priority, *next_idx, &setn) != 0)
+		if(add_dest2list(id, uri, flags, priority, &attrs,
+					*next_idx, &setn) != 0)
 			goto error;
 					
 		
@@ -532,18 +654,22 @@ int ds_load_db(void)
 	int priority;
 	int nrcols;
 	str uri;
+	str attrs = {0, 0};
 	db1_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
 	
-	db_key_t query_cols[4] = {&ds_set_id_col, &ds_dest_uri_col,
-								&ds_dest_flags_col, &ds_dest_priority_col};
+	db_key_t query_cols[5] = {&ds_set_id_col, &ds_dest_uri_col,
+				&ds_dest_flags_col, &ds_dest_priority_col,
+				&ds_dest_attrs_col};
 	
 	nrcols = 2;
 	if(_ds_table_version == DS_TABLE_VERSION2)
 		nrcols = 3;
 	else if(_ds_table_version == DS_TABLE_VERSION3)
 		nrcols = 4;
+	else if(_ds_table_version == DS_TABLE_VERSION4)
+		nrcols = 5;
 
 	if( (*crt_idx) != (*next_idx))
 	{
@@ -596,7 +722,14 @@ int ds_load_db(void)
 		if(nrcols>=4)
 			priority = VAL_INT(values+3);
 
-		if(add_dest2list(id, uri, flags, priority, *next_idx, &setn) != 0)
+		attrs.s = 0; attrs.len = 0;
+		if(nrcols>=5)
+		{
+			attrs.s = VAL_STR(values+4).s;
+			attrs.len = strlen(attrs.s);
+		}
+		if(add_dest2list(id, uri, flags, priority, &attrs,
+					*next_idx, &setn) != 0)
 			goto err2;
 
 	}
@@ -641,8 +774,8 @@ int ds_destroy_list(void)
 
 void destroy_list(int list_id)
 {
-	ds_set_p  sp = NULL;
-	ds_dest_p dest = NULL;
+	ds_set_t  *sp = NULL;
+	ds_dest_t *dest = NULL;
 
 	sp = ds_lists[list_id];
 
@@ -1001,9 +1134,9 @@ int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
-static inline int ds_get_index(int group, ds_set_p *index)
+static inline int ds_get_index(int group, ds_set_t **index)
 {
-	ds_set_p si = NULL;
+	ds_set_t *si = NULL;
 	
 	if(index==NULL || group<0 || _ds_list==NULL)
 		return -1;
@@ -1078,7 +1211,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	int i, cnt;
 	unsigned int hash;
 	int_str avp_val;
-	ds_set_p idx = NULL;
+	ds_set_t *idx = NULL;
 
 	if(msg==NULL)
 	{
@@ -1113,39 +1246,39 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	hash = 0;
 	switch(alg)
 	{
-		case 0:
+		case 0: /* hash call-id */
 			if(ds_hash_callid(msg, &hash)!=0)
 			{
 				LM_ERR("can't get callid hash\n");
 				return -1;
 			}
 		break;
-		case 1:
+		case 1: /* hash from-uri */
 			if(ds_hash_fromuri(msg, &hash)!=0)
 			{
 				LM_ERR("can't get From uri hash\n");
 				return -1;
 			}
 		break;
-		case 2:
+		case 2: /* hash to-uri */
 			if(ds_hash_touri(msg, &hash)!=0)
 			{
 				LM_ERR("can't get To uri hash\n");
 				return -1;
 			}
 		break;
-		case 3:
+		case 3: /* hash r-uri */
 			if (ds_hash_ruri(msg, &hash)!=0)
 			{
 				LM_ERR("can't get ruri hash\n");
 				return -1;
 			}
 		break;
-		case 4:
+		case 4: /* round robin */
 			hash = idx->last;
 			idx->last = (idx->last+1) % idx->nr;
 		break;
-		case 5:
+		case 5: /* hash auth username */
 			i = ds_hash_authusername(msg, &hash);
 			switch (i)
 			{
@@ -1163,19 +1296,22 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 				break;
 			}
 		break;
-		case 6:
+		case 6: /* random selection */
 			hash = rand() % idx->nr;
 		break;
-		case 7:
+		case 7: /* hash on PV value */
 			if (ds_hash_pvar(msg, &hash)!=0)
 			{
 				LM_ERR("can't get PV hash\n");
 				return -1;
 			}
 		break;		
-		case 8:
-			/* use first entry */
+		case 8: /* use always first entry */
 			hash = 0;
+		break;
+		case 9: /* weight based load */
+			hash = idx->wlist[idx->wlast];
+			idx->wlast = (idx->wlast+1) % 100;
 		break;
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n", alg);
@@ -1365,7 +1501,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 int ds_set_state(int group, str *address, int state, int type)
 {
 	int i=0;
-	ds_set_p idx = NULL;
+	ds_set_t *idx = NULL;
 
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
@@ -1428,7 +1564,7 @@ int ds_set_state(int group, str *address, int state, int type)
 int ds_print_list(FILE *fout)
 {
 	int j;
-	ds_set_p list;
+	ds_set_t *list;
 		
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
@@ -1474,7 +1610,7 @@ int ds_print_list(FILE *fout)
 int ds_is_from_list(struct sip_msg *_m, int group)
 {
 	pv_value_t val;
-	ds_set_p list;
+	ds_set_t *list;
 	int j;
 
 	memset(&val, 0, sizeof(pv_value_t));
@@ -1516,7 +1652,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 	int len, j;
 	char* p;
 	char c;
-	ds_set_p list;
+	ds_set_t *list;
 	struct mi_node* node = NULL;
 	struct mi_node* set_node = NULL;
 	struct mi_attr* attr = NULL;
@@ -1627,7 +1763,7 @@ static void ds_options_callback( struct cell *t, int type,
 void ds_check_timer(unsigned int ticks, void* param)
 {
 	int j;
-	ds_set_p list;
+	ds_set_t *list;
 	uac_req_t uac_r;
 	
 	/* Check for the list. */

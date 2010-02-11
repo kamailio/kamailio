@@ -71,6 +71,7 @@ MODULE_VERSION
 #define DS_DEST_URI_COL			"destination"
 #define DS_DEST_FLAGS_COL		"flags"
 #define DS_DEST_PRIORITY_COL	"priority"
+#define DS_DEST_ATTRS_COL		"attrs"
 #define DS_TABLE_NAME			"dispatcher"
 
 /** parameters */
@@ -109,6 +110,7 @@ str ds_set_id_col        = str_init(DS_SET_ID_COL);
 str ds_dest_uri_col      = str_init(DS_DEST_URI_COL);
 str ds_dest_flags_col    = str_init(DS_DEST_FLAGS_COL);
 str ds_dest_priority_col = str_init(DS_DEST_PRIORITY_COL);
+str ds_dest_attrs_col    = str_init(DS_DEST_ATTRS_COL);
 str ds_table_name        = str_init(DS_TABLE_NAME);
 
 str ds_setid_pvname   = {NULL, 0};
@@ -158,6 +160,7 @@ static param_export_t params[]={
 	{"destination_col", STR_PARAM, &ds_dest_uri_col.s},
 	{"flags_col",       STR_PARAM, &ds_dest_flags_col.s},
 	{"priority_col",    STR_PARAM, &ds_dest_priority_col.s},
+	{"attrs_col",       STR_PARAM, &ds_dest_attrs_col.s},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
@@ -233,9 +236,11 @@ static int mod_init(void)
 	{
 		ds_db_url.len     = strlen(ds_db_url.s);
 		ds_table_name.len = strlen(ds_table_name.s);
-		ds_set_id_col.len     = strlen(ds_set_id_col.s);
-		ds_dest_uri_col.len   = strlen(ds_dest_uri_col.s);
-		ds_dest_flags_col.len = strlen(ds_dest_flags_col.s);
+		ds_set_id_col.len        = strlen(ds_set_id_col.s);
+		ds_dest_uri_col.len      = strlen(ds_dest_uri_col.s);
+		ds_dest_flags_col.len    = strlen(ds_dest_flags_col.s);
+		ds_dest_priority_col.len = strlen(ds_dest_priority_col.s);
+		ds_dest_attrs_col.len    = strlen(ds_dest_attrs_col.s);
 
 		if(init_ds_db()!= 0)
 		{
@@ -250,7 +255,7 @@ static int mod_init(void)
 			LM_DBG("loaded dispatching list\n");
 		}
 	}
-	
+
 	if (dst_avp_param.s && dst_avp_param.len > 0)
 	{
 		if (pv_parse_spec(&dst_avp_param, &avp_spec)==0
