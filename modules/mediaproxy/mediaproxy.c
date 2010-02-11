@@ -127,6 +127,7 @@ typedef struct {
     str type;      // stream type (`audio', `video', `image', ...)
     str ip;
     str port;
+    str rtcp_ip;   // pointer to the rtcp IP if explicitly specified by stream
     str rtcp_port; // pointer to the rtcp port if explicitly specified by stream
     str direction;
     Bool local_ip; // true if the IP is locally defined inside this media stream
@@ -827,6 +828,34 @@ get_rtcp_port_attribute(str *block)
 }
 
 
+// will return the rtcp IP of the stream in the given block
+// if defined by the stream, otherwise will return {NULL, 0}.
+static str
+get_rtcp_ip_attribute(str *block)
+{
+    str zone, tokens[4], undefined = {NULL, 0};
+    char *ptr;
+    int count;
+
+    ptr = find_line_starting_with(block, "a=rtcp:", False);
+
+    if (!ptr)
+        return undefined;
+
+    zone.s = ptr + 7;
+    zone.len = findendline(zone.s, block->s + block->len - zone.s) - zone.s;
+
+    count = get_str_tokens(&zone, tokens, 4);
+
+    if (count != 4) {
+        LM_ERR("invalid `a=rtcp' line in SDP body\n");
+        return undefined;
+    }
+
+    return tokens[3];
+}
+
+
 // will return the ip address present in a `c=' line in the given block
 // returns: -1 on error, 0 if not found, 1 if found
 static int
@@ -1073,6 +1102,7 @@ get_session_info(str *sdp, SessionInfo *session)
             session->streams[i].local_ip = 1;
         }
 
+        session->streams[i].rtcp_ip = get_rtcp_ip_attribute(&block);
         session->streams[i].rtcp_port = get_rtcp_port_attribute(&block);
         session->streams[i].direction = get_direction_attribute(&block, &session->direction);
     }
@@ -1487,6 +1517,13 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id)
             rtcp_port.s = int2str(port+1, &rtcp_port.len);
             if (!replace_element(msg, &stream.rtcp_port, &rtcp_port)) {
                 LM_ERR("failed to replace RTCP port in media stream number %d\n", i+1);
+                return -1;
+            }
+        }
+
+        if (stream.rtcp_ip.len > 0) {
+            if (!replace_element(msg, &stream.rtcp_ip, &tokens[0])) {
+                LM_ERR("failed to replace RTCP IP in media stream number %d\n", i+1);
                 return -1;
             }
         }
