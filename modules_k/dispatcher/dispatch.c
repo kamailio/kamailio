@@ -70,6 +70,7 @@
 #include "../../lib/srdb1/db_res.h"
 #include "../../str.h"
 
+#include "ds_ht.h"
 #include "dispatch.h"
 
 #define DS_TABLE_VERSION	1
@@ -79,7 +80,7 @@
 
 static int _ds_table_version = DS_TABLE_VERSION;
 
-#define DS_DUID_SIZE	16
+static ds_ht_t *_dsht_load = NULL;
 
 typedef struct _ds_attrs
 {
@@ -93,6 +94,7 @@ typedef struct _ds_dest
 	str uri;
 	int flags;
 	int priority;
+	int dload;
 	ds_attrs_t attrs;
 	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
 	unsigned short int port; 	/*!< Port of the request URI */
@@ -1134,6 +1136,49 @@ int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
+int ds_get_leastloaded(ds_set_t *dset)
+{
+	int j;
+	int k;
+	int t;
+
+	k = 0;
+	t = dset->dlist[k].dload;
+	for(j=1; j<dset->nr; j++)
+	{
+		if(!((dset->dlist[j].flags & DS_INACTIVE_DST)
+				|| (dset->dlist[j].flags & DS_PROBING_DST)))
+		{
+			if(dset->dlist[j].dload<t)
+			{
+				k = j;
+				t = dset->dlist[k].dload;
+			}
+		}
+	}
+	return k;
+}
+
+int ds_update_load(struct sip_msg *msg, ds_set_t *dset, int setid, int dst)
+{
+	if(dset->dlist[dst].attrs.duid[0]=='\0')
+	{
+		LM_ERR("dst unique id not set for %d (%.*s)\n", setid,
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if(ds_add_cell(_dsht_load, &msg->callid->body,
+			dset->dlist[dst].attrs.duid, setid)<0)
+	{
+		LM_ERR("cannot add load to %d (%.*s)\n", setid,
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+	dset->dlist[dst].dload++;
+	return 0;
+}
+
 static inline int ds_get_index(int group, ds_set_t **index)
 {
 	ds_set_t *si = NULL;
@@ -1309,9 +1354,13 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		case 8: /* use always first entry */
 			hash = 0;
 		break;
-		case 9: /* weight based load */
+		case 9: /* weight based distribution */
 			hash = idx->wlist[idx->wlast];
 			idx->wlast = (idx->wlast+1) % 100;
+		break;
+		case 10: /* load based distribution */
+			hash = ds_get_leastloaded(idx);
+			ds_update_load(msg, idx, set, hash);
 		break;
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n", alg);
@@ -1804,3 +1853,44 @@ void ds_check_timer(unsigned int ticks, void* param)
 		}
 	}
 }
+
+void ds_ht_timer(unsigned int ticks, void *param)
+{
+	ds_cell_t *it;
+	ds_cell_t *it0;
+	time_t now;
+	int i;
+
+	if(_dsht_load==NULL)
+		return;
+
+	now = time(NULL);
+	
+	for(i=0; i<_dsht_load->htsize; i++)
+	{
+		/* free entries */
+		lock_get(&_dsht_load->entries[i].lock);
+		it = _dsht_load->entries[i].first;
+		while(it)
+		{
+			it0 = it->next;
+			if(it->expire!=0 && it->expire<now)
+			{
+				/* expired */
+				if(it->prev==NULL)
+					_dsht_load->entries[i].first = it->next;
+				else
+					it->prev->next = it->next;
+				if(it->next)
+					it->next->prev = it->prev;
+				_dsht_load->entries[i].esize--;
+				/* execute ds unload callback */
+				ds_cell_free(it);
+			}
+			it = it0;
+		}
+		lock_release(&_dsht_load->entries[i].lock);
+	}
+	return;
+}
+

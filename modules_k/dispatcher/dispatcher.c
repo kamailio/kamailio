@@ -63,6 +63,7 @@
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
 
+#include "ds_ht.h"
 #include "dispatch.h"
 
 MODULE_VERSION
@@ -100,6 +101,8 @@ str ds_ping_from   = {"sip:dispatcher@localhost", 24};
 static int ds_ping_interval = 0;
 int ds_probing_mode  = 0;
 int ds_append_branch = 1;
+int ds_hash_size = 0;
+int ds_hash_expire = 7200;
 
 /* tm */
 struct tm_binds tmb;
@@ -175,6 +178,7 @@ static param_export_t params[]={
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
 	{"ds_append_branch",   INT_PARAM, &ds_append_branch},
+	{"ds_hash_sixe",       INT_PARAM, &ds_hash_size},
 	{0,0,0}
 };
 
@@ -232,6 +236,12 @@ static int mod_init(void)
 	if(init_data()!= 0)
 		return -1;
 
+	if(ds_hash_size>0)
+	{
+		if(ds_ht_init(1<<ds_hash_size, ds_hash_expire)<0)
+			return -1;
+		register_timer(ds_ht_timer, NULL, 10);
+	}
 	if(ds_db_url.s)
 	{
 		ds_db_url.len     = strlen(ds_db_url.s);
