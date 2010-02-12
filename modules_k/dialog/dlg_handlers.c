@@ -331,24 +331,29 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	old_state!=DLG_STATE_CONFIRMED_NA && old_state!=DLG_STATE_CONFIRMED ) {
 		LM_DBG("dialog %p confirmed\n",dlg);
 
-		/* get to tag*/
-		if ( !rpl->to && ((parse_headers(rpl, HDR_TO_F,0)<0) || !rpl->to) ) {
-			LM_ERR("bad reply or missing TO hdr :-/\n");
-			tag.s = 0;
-			tag.len = 0;
-		} else {
-			tag = get_to(rpl)->tag_value;
-			if (tag.s==0 || tag.len==0) {
-				LM_ERR("missing TAG param in TO hdr :-/\n");
+		 if (rpl != FAKED_REPLY) {
+			/* get to tag*/
+			if ( !rpl->to && ((parse_headers(rpl, HDR_TO_F,0)<0)
+						|| !rpl->to) ) {
+				LM_ERR("bad reply or missing TO hdr :-/\n");
 				tag.s = 0;
 				tag.len = 0;
+			} else {
+				tag = get_to(rpl)->tag_value;
+				if (tag.s==0 || tag.len==0) {
+					LM_ERR("missing TAG param in TO hdr :-/\n");
+					tag.s = 0;
+					tag.len = 0;
+				}
 			}
-		}
 
-		/* save callee's tag, cseq, contact and record route*/
-		if (populate_leg_info( dlg, rpl, t, DLG_CALLEE_LEG, &tag) !=0) {
-			LM_ERR("could not add further info to the dialog\n");
-		}
+			/* save callee's tag, cseq, contact and record route*/
+			if (populate_leg_info( dlg, rpl, t, DLG_CALLEE_LEG, &tag) !=0) {
+				LM_ERR("could not add further info to the dialog\n");
+			}
+		 } else {
+			 LM_ERR("Faked reply!\n");
+		 }
 
 		/* set start time */
 		dlg->start_ts = (unsigned int)(time(0));
@@ -500,6 +505,7 @@ static void unref_new_dialog(void *dialog)
 {
 	struct tmcb_params p;
 
+	memset(&p, 0, sizeof(struct tmcb_params));
 	p.param = (void*)&dialog;
 	dlg_onreply(0, TMCB_DESTROY, &p);
 }

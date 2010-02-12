@@ -426,6 +426,8 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
  */
 static inline int match_downstream_dialog(struct dlg_cell *dlg, str *callid, str *ftag)
 {
+	if(dlg==NULL || callid==NULL || ftag==NULL)
+		return 0;
 	if (dlg->callid.len!=callid->len ||
 		dlg->tag[DLG_CALLER_LEG].len!=ftag->len  ||
 		strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
