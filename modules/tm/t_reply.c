@@ -116,6 +116,9 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
+#ifdef WITH_XAVP
+#include "../../usr_avp.h"
+#endif
 #include "../../atomic_ops.h" /* membar_write() */
 #include "../../compiler_opt.h"
 #ifdef USE_DST_BLACKLIST
@@ -692,6 +695,9 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 	static avp_list_t* backup_user_from, *backup_user_to;
 	static avp_list_t* backup_domain_from, *backup_domain_to;
 	static avp_list_t* backup_uri_from, *backup_uri_to;
+#ifdef WITH_XAVP
+	static sr_xavp_t **backup_xavps;
+#endif
 	static struct socket_info* backup_si;
 
 	if (msg) {
@@ -722,6 +728,9 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+#ifdef WITH_XAVP
+		backup_xavps = xavp_set_list(&t->xavps_list);
+#endif
 		/* set default send address to the saved value */
 		backup_si=bind_address;
 		bind_address=t->uac[0].request.dst.send_sock;
@@ -737,6 +746,9 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, backup_uri_from );
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, backup_uri_to );
+#ifdef WITH_XAVP
+		xavp_set_list(backup_xavps);
+#endif
 		bind_address=backup_si;
 	}
 }
@@ -1857,6 +1869,9 @@ int reply_received( struct sip_msg  *p_msg )
 	avp_list_t* backup_user_from, *backup_user_to;
 	avp_list_t* backup_domain_from, *backup_domain_to;
 	avp_list_t* backup_uri_from, *backup_uri_to;
+#ifdef WITH_XAVP
+	sr_xavp_t **backup_xavps;
+#endif
 	int replies_locked;
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
@@ -2006,6 +2021,9 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
 		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
 		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+#ifdef WITH_XAVP
+		backup_xavps = xavp_set_list(&t->xavps_list);
+#endif
 		setbflagsval(0, uac->branch_flags);
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
@@ -2032,6 +2050,9 @@ int reply_received( struct sip_msg  *p_msg )
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
 		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
 		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
+#ifdef WITH_XAVP
+		xavp_set_list(backup_xavps);
+#endif
 	}
 #ifdef USE_DST_BLACKLIST
 		/* add temporary to the blacklist the source of a 503 reply */

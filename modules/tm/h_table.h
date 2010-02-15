@@ -71,6 +71,9 @@
 #include "../../types.h"
 #include "../../md5utils.h"
 #include "../../usr_avp.h"
+#ifdef WITH_XAVP
+#include "../../xavp.h"
+#endif
 #include "../../timer.h"
 #include "../../flags.h"
 #include "../../atomic_ops.h"
@@ -362,7 +365,10 @@ typedef struct cell
 	struct usr_avp *user_avps_to;
 	struct usr_avp *domain_avps_from;
 	struct usr_avp *domain_avps_to;
-	
+#ifdef WITH_XAVP
+	sr_xavp_t *xavps_list;
+#endif
+
 	/* protection against concurrent reply processing */
 	ser_lock_t   reply_mutex;
 	

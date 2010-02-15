@@ -259,6 +259,9 @@ void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
 {
 	struct tm_callback    *cbp;
 	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to, *backup_uri_from, *backup_uri_to;
+#ifdef WITH_XAVP
+	sr_xavp_t **backup_xavps;
+#endif
 
 	backup_uri_from = set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM,
 			&trans->uri_avps_from );
@@ -272,6 +275,10 @@ void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
 			&trans->domain_avps_from);
 	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, 
 			&trans->domain_avps_to);
+#ifdef WITH_XAVP
+	backup_xavps = xavp_set_list(&trans->xavps_list);
+#endif
+
 	cbp=(struct tm_callback*)cb_lst->first;
 	while(cbp){
 		membar_depends(); /* make sure the cache has the correct cbp 
@@ -290,6 +297,9 @@ void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
 	set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, backup_from );
 	set_avp_list(AVP_CLASS_URI | AVP_TRACK_TO, backup_uri_to );
 	set_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM, backup_uri_from );
+#ifdef WITH_XAVP
+	xavp_set_list(backup_xavps);
+#endif
 }
 
 

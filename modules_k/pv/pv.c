@@ -36,7 +36,9 @@
 #include "pv_time.h"
 #include "pv_trans.h"
 #include "pv_select.h"
-
+#ifdef WITH_XAVP
+#include "pv_xavp.h"
+#endif
 
 MODULE_VERSION
 
@@ -70,6 +72,11 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_select_name, 0, 0, 0 },
 	{{"snd", (sizeof("snd")-1)}, PVT_OTHER, pv_get_snd, 0,
 		pv_parse_snd_name, 0, 0, 0},
+#ifdef WITH_XAVP
+	{ {"xavp", sizeof("xavp")-1}, /* xavp */
+		PVT_OTHER, pv_get_xavp, pv_set_xavp,
+		pv_parse_xavp_name, 0, 0, 0 },
+#endif
 
 	{{"avp", (sizeof("avp")-1)}, PVT_AVP, pv_get_avp, pv_set_avp,
 		pv_parse_avp_name, pv_parse_index, 0, 0},
@@ -397,6 +404,10 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"pv_unset",  (cmd_function)pv_unset,  1, fixup_pvar_null, 0, 
 		ANY_ROUTE },
+#ifdef WITH_XAVP
+	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0, 
+		ANY_ROUTE },
+#endif
 	{0,0,0,0,0,0}
 };
 

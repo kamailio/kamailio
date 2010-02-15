@@ -212,6 +212,10 @@ void free_cell( struct cell* dead_cell )
 		destroy_avp_list_unsafe( &dead_cell->uri_avps_from );
 	if (dead_cell->uri_avps_to)
 		destroy_avp_list_unsafe( &dead_cell->uri_avps_to );
+#ifdef WITH_XAVP
+	if (dead_cell->xavps_list)
+		xavp_destroy_list_unsafe( &dead_cell->xavps_list );
+#endif
 
 	/* the cell's body */
 	shm_free_unsafe( dead_cell );
@@ -278,6 +282,9 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	int          sip_msg_len;
 	avp_list_t* old;
 	struct tm_callback *cbs, *cbs_tmp;
+#ifdef WITH_XAVP
+	sr_xavp_t** xold;
+#endif
 
 	/* allocs a new cell */
 	/* if syn_branch==0 add space for md5 (MD5_LEN -sizeof(struct cell.md5)) */
@@ -316,6 +323,12 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 			&new_cell->user_avps_to );
 	new_cell->user_avps_to = *old;
 	*old = 0;
+
+#ifdef WITH_XAVP
+	xold = xavp_set_list(&new_cell->xavps_list );
+	new_cell->xavps_list = *xold;
+	*xold = 0;
+#endif
 
 	     /* We can just store pointer to domain avps in the transaction context,
 	      * because they are read-only
@@ -380,9 +393,15 @@ error:
 	destroy_avp_list(&new_cell->user_avps_to);
 	destroy_avp_list(&new_cell->uri_avps_from);
 	destroy_avp_list(&new_cell->uri_avps_to);
+#ifdef WITH_XAVP
+	xavp_destroy_list(&new_cell->xavps_list);
+#endif
 	shm_free(new_cell);
 	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
 	reset_avps();
+#ifdef WITH_XAVP
+	xavp_reset_list();
+#endif
 	return NULL;
 }
 
