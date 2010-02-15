@@ -57,26 +57,11 @@ Grant user membership(s) (*)
 .TP 16
 .I  Least cost routes (lcr) managment command:
 .TP             
-.B lcr show 
-Show gateways and routes tables
-.TP
 .B lcr dump
 Show in memory gateways and routes tables
 .TP
 .B lcr reload 
 Reload lcr gateways and routes
-.TP
-.B lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname> <ping>
-Add a gateway with flags, tag, strip, weight, hostname, and ping (flags, tag, strip, weight, hostname, and ping are optional)
-.TP
-.B lcr rmgw <gw_name> 
-Delete a gateway
-.TP
-.B lcr addroute <prefix> <from> <grp_id> <prio>
-Add a route ( use '' to match anything in <from> )
-.TP
-.B lcr rmroute <prefix> <from> <grp_id> <prio>
-Delete a route
 
 .TP 16
 .I Carrierroute tables('cr') managment commands:
