@@ -65,6 +65,9 @@
 #define DST_BLACKLIST_ADD_CB 1
 #define DST_BLACKLIST_SEARCH_CB 2
 
+
+extern unsigned blst_proto_imask[PROTO_LAST+1];
+
 #ifdef DST_BLACKLIST_HOOKS
 struct blacklist_hook{
 	/* WARNING: msg might be NULL, and it might point to shared memory
@@ -109,14 +112,15 @@ int dst_blacklist_force_su_to(	unsigned char err_flags,
 
 /** checks if blacklist should be used.
   * @param  err_flags - blacklist reason
-  * @param si - filled dst_info structure pointer.
+  * @param si - filled dest_info structure pointer.
   * @return 1 if blacklist is enabled (core_cfg) and the event/error
   *           is not in the ignore list.
   *         0 otherwise
   */
 #define should_blacklist(err_flags, si) \
 	(cfg_get(core, core_cfg, use_dst_blacklist) && \
-		((err_flags) & (si)->send_flags.blst_imask))
+		((err_flags) & ~blst_proto_imask[(unsigned)((si)->proto)] & \
+		 			   ~(si)->send_flags.blst_imask ))
 
 
 /** checks if blacklist should be used, long version.
@@ -130,7 +134,7 @@ int dst_blacklist_force_su_to(	unsigned char err_flags,
   */
 #define should_blacklist_su(err_flags, snd_flags, proto, su) \
 	(cfg_get(core, core_cfg, use_dst_blacklist) && \
-		((err_flags) & \
+		((err_flags) & ~blst_proto_imask[(unsigned)(proto)] & \
 		 			~((snd_flags)?((snd_flags_t*)(snd_flags))->blst_imask:0)))
 
 
@@ -204,5 +208,7 @@ void dst_blst_flush(void);
 int use_dst_blacklist_fixup(void *handle, str *gname, str *name, void **val);
 /* KByte to Byte conversion */
 int blst_max_mem_fixup(void *handle, str *gname, str *name, void **val);
+
+void blst_reinit_ign_masks(str* gname, str* name);
 
 #endif

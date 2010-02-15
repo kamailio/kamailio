@@ -136,6 +136,9 @@ struct dst_blst_lst_head* dst_blst_hash=0;
 struct t_dst_blacklist_stats* dst_blacklist_stats=0;
 #endif
 
+/* blacklist per protocol event ignore mask array */
+unsigned blst_proto_imask[PROTO_LAST+1];
+
 #ifdef DST_BLACKLIST_HOOKS
 
 /* there 2 types of callbacks supported: on add new entry to the blacklist
@@ -294,6 +297,26 @@ inline static int blacklist_run_hooks(struct blst_callbacks_lst *cb_lst,
 
 
 #endif /* DST_BLACKLIST_HOOKS */
+
+
+/** init per protocol blacklist event ignore masks.
+ * @return 0 on success, < 0 on error.
+ */
+int blst_init_ign_masks()
+{
+	if ((PROTO_UDP > PROTO_LAST) || (PROTO_TCP > PROTO_LAST) ||
+		(PROTO_TLS > PROTO_LAST) || (PROTO_SCTP > PROTO_LAST)){
+		BUG("protocol array too small\n");
+		return -1;
+	}
+	blst_proto_imask[PROTO_UDP]=cfg_get(core, core_cfg, blst_udp_imask);
+	blst_proto_imask[PROTO_TCP]=cfg_get(core, core_cfg, blst_tcp_imask);
+	blst_proto_imask[PROTO_TLS]=cfg_get(core, core_cfg, blst_tls_imask);
+	blst_proto_imask[PROTO_SCTP]=cfg_get(core, core_cfg, blst_sctp_imask);
+	blst_proto_imask[PROTO_NONE]=blst_proto_imask[PROTO_UDP];
+	return 0;
+}
+
 
 
 inline static void blst_destroy_entry(struct dst_blst_entry* e)
@@ -477,6 +500,10 @@ int init_dst_blacklist()
 			blst_timer_h=0;
 			goto error;
 		}
+	}
+	if (blst_init_ign_masks() < 0){
+		ret=E_BUG;
+		goto error;
 	}
 	return 0;
 error:
@@ -1196,6 +1223,15 @@ int blst_max_mem_fixup(void *handle, str *gname, str *name, void **val)
 	(*val) = (void *)(long)u;
 	return 0;
 }
+
+
+
+/** re-inint per child blst_proto_ign_mask array. */
+void blst_reinit_ign_masks(str* gname, str* name)
+{
+	blst_init_ign_masks();
+}
+
 
 #endif /* USE_DST_BLACKLIST */
 
