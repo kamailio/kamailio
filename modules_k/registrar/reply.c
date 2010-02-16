@@ -45,7 +45,7 @@
 #include "reg_mod.h"
 #include "regtime.h"
 #include "reply.h"
-
+#include "config.h"
 
 #define MAX_CONTACT_BUFFER 1024
 
@@ -308,7 +308,7 @@ static int add_retry_after(struct sip_msg* _m)
 	char* buf, *ra_s;
  	int ra_len;
  	
- 	ra_s = int2str(retry_after, &ra_len);
+ 	ra_s = int2str(cfg_get(registrar, registrar_cfg, retry_after), &ra_len);
  	buf = (char*)pkg_malloc(RETRY_AFTER_LEN + ra_len + CRLF_LEN);
  	if (!buf) {
  		LM_ERR("no pkg memory left\n");
@@ -420,7 +420,7 @@ int reg_send_reply(struct sip_msg* _m)
 		add_lump_rpl( _m, buf, E_INFO_LEN + error_info[rerrno].len + CRLF_LEN,
 			LUMP_RPL_HDR|LUMP_RPL_NODUP);
 
-		if (code >= 500 && code < 600 && retry_after) {
+		if (code >= 500 && code < 600 && cfg_get(registrar, registrar_cfg, retry_after)) {
 			if (add_retry_after(_m) < 0) {
 				return -1;
 			}

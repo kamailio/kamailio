@@ -76,7 +76,7 @@
 #include "regpv.h"
 #include "reply.h"
 #include "reg_mod.h"
-
+#include "config.h"
 
 MODULE_VERSION
 
@@ -95,17 +95,10 @@ static int fetchc_fixup(void** param, int param_no);
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
 
-int default_expires = 3600; 			/*!< Default expires value in seconds */
 qvalue_t default_q  = Q_UNSPECIFIED;		/*!< Default q value multiplied by 1000 */
 int append_branches = 1;			/*!< If set to 1, lookup will put all contacts found in msg structure */
 int case_sensitive  = 0;			/*!< If set to 1, username in aor will be case sensitive */
 int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
-int min_expires     = 60;			/*!< Minimum expires the phones are allowed to use in seconds
- 						 * use 0 to switch expires checking off */
-int max_expires     = 0;			/*!< Maximum expires the phones are allowed to use in seconds,
- 						 * use 0 to switch expires checking off */
-int max_contacts = 0;				/*!< Maximum number of contacts per AOR (0=no checking) */
-int retry_after = 0;				/*!< The value of Retry-After HF in 5xx replies */
 int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
 int path_enabled = 0;				/*!< if the Path HF should be handled */
 int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the reply.
@@ -189,26 +182,26 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_expires",    INT_PARAM, &default_expires     },
-	{"default_q",          INT_PARAM, &default_q           },
-	{"append_branches",    INT_PARAM, &append_branches     },
-	{"case_sensitive",     INT_PARAM, &case_sensitive      },
+	{"default_expires",    INT_PARAM, &default_registrar_cfg.default_expires     	},
+	{"default_q",          INT_PARAM, &default_q           				},
+	{"append_branches",    INT_PARAM, &append_branches     				},
+	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive		},
 	/*	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag }, */
-	{"realm_prefix",       STR_PARAM, &realm_pref          },
-	{"min_expires",        INT_PARAM, &min_expires         },
-	{"max_expires",        INT_PARAM, &max_expires         },
-	{"received_param",     STR_PARAM, &rcv_param           },
-	{"received_avp",       STR_PARAM, &rcv_avp_param       },
-	{"aor_avp",            STR_PARAM, &aor_avp_param       },
-	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param},
-	{"max_contacts",       INT_PARAM, &max_contacts        },
-	{"retry_after",        INT_PARAM, &retry_after         },
-	{"sock_flag",          INT_PARAM, &sock_flag           },
-	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     },
-	{"method_filtering",   INT_PARAM, &method_filtering    },
-	{"use_path",           INT_PARAM, &path_enabled        },
-	{"path_mode",          INT_PARAM, &path_mode           },
-	{"path_use_received",  INT_PARAM, &path_use_params     },
+	{"realm_prefix",       STR_PARAM, &realm_pref          				},
+	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires		},
+	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires		},
+	{"received_param",     STR_PARAM, &rcv_param           				},
+	{"received_avp",       STR_PARAM, &rcv_avp_param       				},
+	{"aor_avp",            STR_PARAM, &aor_avp_param       				},
+	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param				},
+	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts		},
+	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after		},
+	{"sock_flag",          INT_PARAM, &sock_flag           				},
+	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     				},
+	{"method_filtering",   INT_PARAM, &method_filtering    				},
+	{"use_path",           INT_PARAM, &path_enabled        				},
+	{"path_mode",          INT_PARAM, &path_mode           				},
+	{"path_use_received",  INT_PARAM, &path_use_params     				},
 	{0, 0, 0}
 };
 
@@ -222,6 +215,7 @@ stat_export_t mod_stats[] = {
 	{"rejected_regs",                 0, &rejected_registrations  },
 	{0, 0, 0}
 };
+
 
 
 /*! \brief
@@ -271,6 +265,13 @@ static int mod_init(void)
 	realm_prefix.len = strlen(realm_pref);
 
 	rcv_param.len = strlen(rcv_param.s);
+	
+	if(cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg, cfg_sizeof(registrar), &registrar_cfg)){
+		LM_ERR("Fail to declare the configuration\n");
+	        return -1;
+	}
+	                                                
+	                                                
 
 	if (rcv_avp_param && *rcv_avp_param) {
 		s.s = rcv_avp_param; s.len = strlen(s.s);
@@ -378,9 +379,10 @@ static int child_init(int rank)
 {
 	if (rank==1) {
 		/* init stats */
-		update_stat( max_expires_stat, max_expires );
-		update_stat( max_contacts_stat, max_contacts );
-		update_stat( default_expire_stat, default_expires );
+		//TODO if parameters are modified via cfg framework do i change them?
+		update_stat( max_expires_stat, default_registrar_cfg.max_expires );
+		update_stat( max_contacts_stat, default_registrar_cfg.max_contacts );
+		update_stat( default_expire_stat, default_registrar_cfg.default_expires );
 	}
 
 	return 0;

@@ -71,6 +71,7 @@
 #include "regtime.h"
 #include "path.h"
 #include "save.h"
+#include "config.h"
 
 static int mem_only = 0;
 
@@ -396,7 +397,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		if (expires == 0)
 			continue;
 
-		if (max_contacts && (num >= max_contacts)) {
+		if (cfg_get(registrar, registrar_cfg, max_contacts) && (num >= cfg_get(registrar, registrar_cfg, max_contacts))) {
 			LM_INFO("too many contacts (%d) for AOR <%.*s>\n", 
 					num, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
@@ -511,7 +512,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 	}
 	
 	LM_DBG("%d contacts after commit\n", num);
-	if (num > max_contacts) {
+	if (num > cfg_get(registrar, registrar_cfg, max_contacts)) {
 		LM_INFO("too many contacts for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
 		rerrno = R_TOO_MANY;
 		return -1;
@@ -555,7 +556,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		goto error;
 	}
 
-	if (max_contacts && test_max_contacts(_m, _r, _c, ci) != 0 )
+	if (cfg_get(registrar, registrar_cfg, max_contacts) && test_max_contacts(_m, _r, _c, ci) != 0 )
 		goto error;
 
 #ifdef USE_TCP
@@ -779,16 +780,18 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 			goto error;
 		ret = (ret==0)?1:ret;
 	}
-
+#ifdef STATISTICS
 	update_stat(accepted_registrations, 1);
+#endif
 	/* Only send reply upon request, not upon reply */
 	if ((route_type == REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
 		return -1;
 
 	return ret;
 error:
+#ifdef STATISTICS
 	update_stat(rejected_registrations, 1);
-
+#endif
 	if ((route_type == REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) )
 		reg_send_reply(_m);
 

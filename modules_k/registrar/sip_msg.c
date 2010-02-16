@@ -39,7 +39,7 @@
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"
 #include "sip_msg.h"
-
+#include "config.h"
 
 static struct hdr_field* act_contact;
 
@@ -60,9 +60,9 @@ static inline int get_expires_hf(struct sip_msg* _m)
 			if (p->val != 0) {
 				return p->val + act_time;
 			} else return 0;
-		} else return act_time + default_expires;
+		} else return act_time + cfg_get(registrar, registrar_cfg, default_expires);
 	} else {
-		return act_time + default_expires;
+		return act_time + cfg_get(registrar, registrar_cfg, default_expires);
 	}
 }
 
@@ -237,18 +237,18 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 		*_e = get_expires_hf(_m);
 	} else {
 		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
-			*_e = default_expires;
+			*_e = cfg_get(registrar, registrar_cfg, default_expires);
 		}
 		/* Convert to absolute value */
 		if (*_e != 0) *_e += act_time;
 	}
 
-	if ((*_e != 0) && ((*_e - act_time) < min_expires)) {
-		*_e = min_expires + act_time;
+	if ((*_e != 0) && ((*_e - act_time) < cfg_get(registrar, registrar_cfg, min_expires))) {
+		*_e = cfg_get(registrar, registrar_cfg, min_expires) + act_time;
 	}
 
-	if ((*_e != 0) && max_expires && ((*_e - act_time) > max_expires)) {
-		*_e = max_expires + act_time;
+	if ((*_e != 0) && cfg_get(registrar, registrar_cfg, max_expires) && ((*_e - act_time) > cfg_get(registrar, registrar_cfg, max_expires))) {
+		*_e = cfg_get(registrar, registrar_cfg, max_expires) + act_time;
 	}
 }
 

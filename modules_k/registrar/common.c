@@ -40,7 +40,7 @@
 #include "rerrno.h"
 #include "reg_mod.h"
 #include "common.h"
-
+#include "config.h"
 
 #define MAX_AOR_LEN 256
 
@@ -109,7 +109,7 @@ int extract_aor(str* _uri, str* _a)
 		}
 	}
 
-	if (case_sensitive && user_len) {
+	if (cfg_get(registrar, registrar_cfg, case_sensitive) && user_len) {
 		tmp.s = _a->s + user_len + 1;
 		tmp.len = _a->s + _a->len - tmp.s;
 		strlower(&tmp);

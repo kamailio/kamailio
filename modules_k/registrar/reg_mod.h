@@ -73,8 +73,6 @@ extern int append_branches;
 extern int case_sensitive;
 extern int nat_flag;
 extern int tcp_persistent_flag;
-extern int min_expires;
-extern int max_expires;
 extern int received_avp;
 extern int reg_use_domain;
 extern str realm_prefix;
@@ -88,8 +86,6 @@ extern unsigned short reg_callid_avp_type;
 extern int_str reg_callid_avp_name;
 
 extern str rcv_param;
-extern int max_contacts;
-extern int retry_after;
 extern int method_filtering;
 extern int path_enabled;
 extern int path_mode;
