@@ -23,7 +23,7 @@ Configuration Variables for core
         enable/disable destination blacklisting.
         Default: 0.
         Range: 0 - 1.
-        Type: integer.
+        Type: integer. 
 
  5. core.dst_blacklist_expire
         how much time (in s) a blacklisted destination is kept in the
