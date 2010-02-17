@@ -784,6 +784,9 @@ int fake_req(struct sip_msg *faked_req,
 		memcpy( faked_req->dst_uri.s, shmem_msg->dst_uri.s,
 			faked_req->dst_uri.len);
 		faked_req->dst_uri.s[faked_req->dst_uri.len]=0;
+	}else{
+		/* in case len==0, but shmem_msg->dst_uri.s!=0 (extra safety) */
+		faked_req->dst_uri.s = 0;
 	}
 	/* new_uri can change -- make a private copy */
 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
@@ -796,6 +799,9 @@ int fake_req(struct sip_msg *faked_req,
 		memcpy( faked_req->new_uri.s, shmem_msg->new_uri.s,
 			faked_req->new_uri.len);
 		faked_req->new_uri.s[faked_req->new_uri.len]=0;
+	}else{
+		/* in case len==0, but shmem_msg->new_uri.s!=0  (extra safety)*/
+		faked_req->new_uri.s = 0;
 	}
 	if(uac) setbflagsval(0, uac->branch_flags);
 	else setbflagsval(0, 0);
