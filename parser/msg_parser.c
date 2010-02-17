@@ -736,12 +736,14 @@ int set_dst_uri(struct sip_msg* msg, str* uri)
 {
 	char* ptr;
 
-	if (!msg || !uri) {
+	if (unlikely(!msg || !uri)) {
 		LOG(L_ERR, "set_dst_uri: Invalid parameter value\n");
 		return -1;
 	}
 
-	if (msg->dst_uri.s && (msg->dst_uri.len >= uri->len)) {
+	if (unlikely(uri->len == 0)) {
+		reset_dst_uri(msg);
+	}else if (msg->dst_uri.s && (msg->dst_uri.len >= uri->len)) {
 		memcpy(msg->dst_uri.s, uri->s, uri->len);
 		msg->dst_uri.len = uri->len;
 	} else {
@@ -773,12 +775,14 @@ int set_path_vector(struct sip_msg* msg, str* path)
 {
 	char* ptr;
 
-	if (!msg || !path) {
+	if (unlikely(!msg || !path)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (msg->path_vec.s && (msg->path_vec.len >= path->len)) {
+	if (unlikely(path->len == 0)) {
+		reset_path_vector(msg);
+	} else if (msg->path_vec.s && (msg->path_vec.len >= path->len)) {
 		memcpy(msg->path_vec.s, path->s, path->len);
 		msg->path_vec.len = path->len;
 	} else {
