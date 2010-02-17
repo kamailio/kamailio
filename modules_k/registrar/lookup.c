@@ -45,7 +45,7 @@
 #include "regtime.h"
 #include "reg_mod.h"
 #include "lookup.h"
-
+#include "config.h"
 
 #define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
@@ -144,7 +144,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 
 	/* Append branches if enabled */
-	if (!append_branches) goto done;
+	if (!cfg_get(registrar, registrar_cfg, append_branches)) goto done;
 
 	for( ; ptr ; ptr = ptr->next ) {
 		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {

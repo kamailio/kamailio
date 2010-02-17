@@ -94,10 +94,6 @@ static int fetchc_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
-
-qvalue_t default_q  = Q_UNSPECIFIED;		/*!< Default q value multiplied by 1000 */
-int append_branches = 1;			/*!< If set to 1, lookup will put all contacts found in msg structure */
-int case_sensitive  = 0;			/*!< If set to 1, username in aor will be case sensitive */
 int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
 int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
 int path_enabled = 0;				/*!< if the Path HF should be handled */
@@ -124,8 +120,6 @@ unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
 int reg_use_domain = 0;
-char* realm_pref    = "";   			/*!< Realm prefix to be removed */
-str realm_prefix;
 
 int sock_flag = -1;
 str sock_hdr_name = {0,0};
@@ -183,11 +177,11 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"default_expires",    INT_PARAM, &default_registrar_cfg.default_expires     	},
-	{"default_q",          INT_PARAM, &default_q           				},
-	{"append_branches",    INT_PARAM, &append_branches     				},
+	{"default_q",          INT_PARAM, &default_registrar_cfg.default_q		},
+	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches	},
 	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive		},
 	/*	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag }, */
-	{"realm_prefix",       STR_PARAM, &realm_pref          				},
+	{"realm_prefix",       STR_PARAM, &default_registrar_cfg.realm_pref          	},
 	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires		},
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires		},
 	{"received_param",     STR_PARAM, &rcv_param           				},
@@ -261,9 +255,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	realm_prefix.s = realm_pref;
-	realm_prefix.len = strlen(realm_pref);
-
 	rcv_param.len = strlen(rcv_param.s);
 	
 	if(cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg, cfg_sizeof(registrar), &registrar_cfg)){
@@ -333,16 +324,17 @@ static int mod_init(void)
 	}
 
 	/* Normalize default_q parameter */
-	if (default_q != Q_UNSPECIFIED) {
-		if (default_q > MAX_Q) {
-			LM_DBG("default_q = %d, lowering to MAX_Q: %d\n", default_q, MAX_Q);
-			default_q = MAX_Q;
-		} else if (default_q < MIN_Q) {
-			LM_DBG("default_q = %d, raising to MIN_Q: %d\n", default_q, MIN_Q);
-			default_q = MIN_Q;
+	qvalue_t dq = cfg_get(registrar, registrar_cfg, default_q);
+	if ( dq!= Q_UNSPECIFIED) {
+		if (dq > MAX_Q) {
+			LM_DBG("default_q = %d, lowering to MAX_Q: %d\n", dq, MAX_Q);
+			dq = MAX_Q;
+		} else if (dq < MIN_Q) {
+			LM_DBG("default_q = %d, raising to MIN_Q: %d\n", dq, MIN_Q);
+			dq = MIN_Q;
 		}
 	}
-	
+	cfg_get(registrar, registrar_cfg, default_q) = dq;
 
 	if (bind_usrloc(&ul) < 0) {
 		return -1;
@@ -536,3 +528,14 @@ error:
 	return -1;
 }
 
+void default_expires_stats_update(str* gname, str* name){
+	update_stat(default_expires_stat, cfg_get(registrar, registrar_cfg, default_expires));
+}
+
+void min_expires_stats_update(str* gname, str* name){
+	update_stat(min_expires_stat, cfg_get(registrar, registrar_cfg, min_expires));
+}
+
+void max_expires_stats_update(str* gname, str* name){
+	update_stat(max_expires_stat, cfg_get(registrar, registrar_cfg, max_expires));
+}

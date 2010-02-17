@@ -21,6 +21,7 @@
 #ifndef _REGISTRAR_CONFIG_H
 #define _REGISTRAR_CONFIG_H
 
+#include "../../qvalue.h"
 
 #include "../../cfg/cfg.h"
 #include "../../str.h"
@@ -32,11 +33,18 @@ struct cfg_group_registrar {
 	unsigned int	max_contacts;
 	unsigned int	retry_after;
 	unsigned int	case_sensitive;
+	qvalue_t	default_q;
+	unsigned int	append_branches;
+	char* 		realm_pref;
+	char*		rcv_param;
 };
 
 extern struct cfg_group_registrar	default_registrar_cfg;
 extern void	*registrar_cfg;
 extern cfg_def_t	registrar_cfg_def[];
 
+extern void default_expires_stats_update(str*, str*);
+extern void min_expires_stats_update(str*, str*);
+extern void max_expires_stats_update(str*, str*);
 
 #endif

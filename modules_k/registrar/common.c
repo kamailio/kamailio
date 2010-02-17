@@ -56,7 +56,8 @@ int extract_aor(str* _uri, str* _a)
 	int_str avp_val;
 	struct usr_avp *avp;
 	str *uri;
-
+	str realm_prefix;
+	
 	memset(aor_buf, 0, MAX_AOR_LEN);
 	if (aor_avp_name.n!=0) {
 		avp = search_first_avp( aor_avp_type, aor_avp_name, &avp_val, 0);
@@ -98,6 +99,8 @@ int extract_aor(str* _uri, str* _a)
 		if (user_len)
 			aor_buf[_a->len++] = '@';
 		/* strip prefix (if defined) */
+		realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref);
+		realm_prefix.len = strlen(realm_prefix.s);
 		if (realm_prefix.len && realm_prefix.len<puri.host.len &&
 		(memcmp(realm_prefix.s, puri.host.s, realm_prefix.len)==0) ) {
 			memcpy(aor_buf + _a->len, puri.host.s + realm_prefix.len,

@@ -261,7 +261,7 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 int calc_contact_q(param_t* _q, qvalue_t* _r)
 {
 	if (!_q || (_q->body.len == 0)) {
-		*_r = default_q;
+		*_r = cfg_get(registrar, registrar_cfg, default_q);
 	} else {
 		if (str2q(_r, _q->body.s, _q->body.len) < 0) {
 			rerrno = R_INV_Q; /* Invalid q parameter */

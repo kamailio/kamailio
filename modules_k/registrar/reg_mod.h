@@ -67,15 +67,10 @@
 #define REG_SAVE_REPL_FL    (1<<2)
 #define REG_SAVE_ALL_FL     ((1<<3)-1)
 
-extern int default_expires;
-extern qvalue_t default_q;
-extern int append_branches;
-extern int case_sensitive;
 extern int nat_flag;
 extern int tcp_persistent_flag;
 extern int received_avp;
 extern int reg_use_domain;
-extern str realm_prefix;
 extern float def_q;
 
 extern unsigned short aor_avp_type;
@@ -100,5 +95,9 @@ extern struct sl_binds slb;
 
 extern stat_var *accepted_registrations;
 extern stat_var *rejected_registrations;
+
+extern void default_expires_stats_update(str*, str*);
+extern void min_expires_stats_update(str*, str*);
+extern void max_expires_stats_update(str*, str*);
 
 #endif /* REG_MOD_H */
