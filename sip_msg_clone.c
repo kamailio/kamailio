@@ -513,6 +513,9 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 	new_msg->add_rm = 0;
 	new_msg->body_lumps = 0;
 	new_msg->reply_lump = 0;
+	/* zero *uri.s, in case len is 0 but org_msg->*uris!=0 (just to be safe)*/
+	new_msg->new_uri.s = 0;
+	new_msg->dst_uri.s = 0;
 	/* new_uri */
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 	{
