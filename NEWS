@@ -3,7 +3,42 @@ Release notes for SIP Router (sr)
 
 $Id$
 
-sip-router changes
+sip-router 3.1 chages
+
+core:
+  - global, per protocol blacklist ignore masks (via extended send_flags).
+    See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
+  - per message blacklist ignore masks
+
+new config variables:
+  - dst_blacklist_udp_imask - global blacklist events ignore mask for udp
+    (a blacklist event/reason set in this variable will be ignored when 
+    deciding whether or not to blacklist an udp destination). Can be set
+    at runtime. Default: 0 (no blacklist reason is ignored).
+    Possible values:  0 -disabled, 2 - send error; 4 - connect error,
+                      8 - icmp (reserverd), 16 - transaction timeout,
+                     32 - administratively prohibited (manually set).
+   - dst_blacklist_tcp_imask - like dst_blacklist_udp_imask, but for tcp.
+   - dst_blacklist_tls_imask - like dst_blacklist_tls_imask, but for tcp.
+   - dst_blacklist_sctp_imask -like dst_blacklist_sctp_imask, but for tcp.
+
+modules:
+   - blst: functions for ignoring blacklist events per message:
+           blst_set_ignore(mask):  set the events in mask in the per
+            per message blacklist ignore mask for a request
+            (see dst_blacklist_udp_imask for possible values).
+            The basic operation is: msg_blst_ignore_mask|=mask.
+           blst_clear_ignore(mask): like blst_set_ignore(mask), but instead
+            of setting some events, it clears them
+            (msg_blst_ignore_mask&=~mask).
+           blst_rpl_set_ignore(mask): like blst_set_ignore(mask), but sets
+            the mask for possible local replies to the current message.
+           blst_rpl_clear_ignore(mask): like blst_rpl_ignore(mask), but
+            clears instead of setting.
+
+
+
+sip-router 3.0 changes
 
 core:
   - type casts operators: (int), (str).
@@ -64,6 +99,8 @@ config script changes:
   - while()
   - include file support: include_file "somefile"
   - event route support: event_route[module_name:eventid]
+  - per message send_flags support (see set_forward_no_connect(),
+     set_forward_reply_no_connect(), set_forward_close() & set_reply_close())
 
 build system:
   - multiple modules directories are now supported (defined in Makefile.dirs)
