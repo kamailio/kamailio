@@ -80,6 +80,7 @@
  *  2009-03-10  added SET_USERPHONE action (Miklos)
  *  2009-04-24  add strlen, strempty and defined operators (andrei)
  *  2009-03-07  RETCODE, it's now  a core pvar (andrei)
+ *  2010-02-17 added DST_BLST_{UDP,TCP,TLS,SCTP}_IMASK (andrei)
 */
 
 
@@ -343,6 +344,10 @@ USE_DST_BLST		use_dst_blacklist
 DST_BLST_MEM		dst_blacklist_mem
 DST_BLST_TTL		dst_blacklist_expire|dst_blacklist_ttl
 DST_BLST_GC_INT		dst_blacklist_gc_interval
+DST_BLST_UDP_IMASK	dst_blacklist_udp_imask
+DST_BLST_TCP_IMASK	dst_blacklist_tcp_imask
+DST_BLST_TLS_IMASK	dst_blacklist_tls_imask
+DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
 
 
 PORT	port
@@ -680,6 +685,14 @@ EAT_ABLE	[\ \t\b\r]
 								return DST_BLST_TTL; }
 <INITIAL>{DST_BLST_GC_INT}	{ count(); yylval.strval=yytext;
 								return DST_BLST_GC_INT; }
+<INITIAL>{DST_BLST_UDP_IMASK}	{ count(); yylval.strval=yytext;
+								return DST_BLST_UDP_IMASK; }
+<INITIAL>{DST_BLST_TCP_IMASK}	{ count(); yylval.strval=yytext;
+								return DST_BLST_TCP_IMASK; }
+<INITIAL>{DST_BLST_TLS_IMASK}	{ count(); yylval.strval=yytext;
+								return DST_BLST_TLS_IMASK; }
+<INITIAL>{DST_BLST_SCTP_IMASK}	{ count(); yylval.strval=yytext;
+								return DST_BLST_SCTP_IMASK; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
