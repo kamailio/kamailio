@@ -35,10 +35,9 @@
  * 2007-07-27 added support for Retry-After (andrei)
  */
 
-/*! \file
- * \brief Parser :: Fast 32-bit Header Field Name Parser
- *
- * \ingroup parser
+/** Parser :: Fast 32-bit Header Field Name Parser.
+ * @file
+ * @ingroup parser
  */
 
 #include "../comp_defs.h"
@@ -49,9 +48,7 @@
 #define LOWER_BYTE(b) ((b) | 0x20)
 #define LOWER_DWORD(d) ((d) | 0x20202020)
 
-/*! \brief
- * Skip all white-chars and return position of the first
- * non-white char
+/** Skip all white-chars and return position of the first non-white char.
  */
 static inline char* skip_ws(char* p, unsigned int size)
 {
@@ -106,6 +103,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_retr.h"     /* Retry-After */
 #include "case_path.h"     /* Path */
 #include "case_priv.h"
+#include "case_reas.h"
 
 /*@} */
 
@@ -152,8 +150,9 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _date_: date_CASE; \
 	case _iden_: iden_CASE; \
 	case _retr_: retr_CASE; \
-    case _path_: path_CASE; \
-	case _priv_: priv_CASE;
+	case _path_: path_CASE; \
+	case _priv_: priv_CASE; \
+	case _reas_: reas_CASE;
 
 
 #define PARSE_COMPACT(id)          \

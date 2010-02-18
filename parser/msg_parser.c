@@ -41,10 +41,9 @@
  *		header fields (gergo)
  */
 
-/*! \file 
- * \brief Parser :: SIP Message header proxy parser
- *
- * \ingroup parser
+/** Parser :: SIP Message header proxy parser.
+ * @file
+ * @ingroup parser
  */
 
 /*! \defgroup parser SIP-router SIP message parser
@@ -254,10 +253,11 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_REQUESTDISPOSITION_T:
 		case HDR_WWW_AUTHENTICATE_T:
 		case HDR_PROXY_AUTHENTICATE_T:
-	    case HDR_PATH_T:
-	    case HDR_PRIVACY_T:
-	    case HDR_PAI_T:
-	    case HDR_PPI_T:
+		case HDR_PATH_T:
+		case HDR_PRIVACY_T:
+		case HDR_PAI_T:
+		case HDR_PPI_T:
+		case HDR_REASON_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -552,6 +552,9 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 		    case HDR_PPI_T:
 				if (msg->ppi==0) msg->ppi=hf;
 				msg->parsed_flag|=HDR_PPI_F;
+				break;
+		    case HDR_REASON_T:
+				msg->parsed_flag|=HDR_REASON_F;
 				break;
 			default:
 				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",

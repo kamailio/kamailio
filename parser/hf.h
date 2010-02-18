@@ -35,10 +35,10 @@
  * 2007-07-27 HDR_RETRY_AFTER_[TF] added (andrei)
  */
 
-/*! \file 
- * \brief Parser :: ???
+/** Parser :: parse headers.
+ * @file 
  *
- * \ingroup parser
+ * @ingroup parser
  */
 
 
@@ -51,9 +51,9 @@
 
 
 
-/*! \brief header type enum
+/** header types enum.
  * 
- * \note
+ * @note
  * if you add a new type:
  *  - make sure it's not greater than 63
  *  - make sure you add the corresponding flag to the hdr_flags_t defs below
@@ -116,25 +116,26 @@ enum _hdr_types_t {
 	HDR_IDENTITY_T			       /*!< Identity header field */,
 	HDR_IDENTITY_INFO_T		       /*!< Identity-info header field */,
 	HDR_RETRY_AFTER_T		           /*!< Retry-After header field */,
-	HDR_PPI_T                          /*!< P-Preferred-Identity header field */,
-	HDR_PAI_T                          /*!< P-Asserted-Identity header field */,
+	HDR_PPI_T                          /*!< P-Preferred-Identity header field*/,
+	HDR_PAI_T                          /*!< P-Asserted-Identity header field*/,
 	HDR_PATH_T                         /*!< Path header field */,
 	HDR_PRIVACY_T				       /*!< Privacy header field */,
+	HDR_REASON_T				       /**< Reason header field */,
 	HDR_EOH_T					       /*!< End of message header */
 };
 
 
 typedef unsigned long long hdr_flags_t;
 
-/*! \brief type to flag conversion
+/** type to flag conversion.
  * WARNING: HDR_ERROR_T has no corresponding FLAG ! */
 #define HDR_T2F(type)	\
 		(((type)!=HDR_EOH_T)?((hdr_flags_t)1<<(type)):(~(hdr_flags_t)0))
 
-/*! \brief helper macro for easy defining and keeping in sync. the flags enum */
+/** helper macro for easy defining and keeping in sync the flags enum. */
 #define HDR_F_DEF(name)		HDR_T2F(HDR_##name##_T)
 
-/*! \name flags definitions
+/** @name flags definitions.
  * (enum won't work with all the compiler (e.g. icc) due to the 64bit size) */
 /*!{ */
 #define HDR_EOH_F					HDR_F_DEF(EOH)
@@ -192,6 +193,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_PAI_F                   HDR_F_DEF(PAI)
 #define HDR_PATH_F                  HDR_F_DEF(PATH)
 #define HDR_PRIVACY_F               HDR_F_DEF(PRIVACY)
+#define HDR_REASON_F				HDR_F_DEF(REASON)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
@@ -199,8 +201,7 @@ typedef unsigned long long hdr_flags_t;
 
 typedef enum _hdr_types_t hdr_types_t;
 
-/*! \brief
- * Format: name':' body
+/** Format: name':' body.
  */
 typedef struct hdr_field {
 	hdr_types_t type;       /*!< Header field type */
@@ -213,7 +214,7 @@ typedef struct hdr_field {
 
 
 
-/*! \brief returns true if the header links allocated memory on parse field */
+/** returns true if the header links allocated memory on parse field. */
 static inline int hdr_allocs_parse(struct hdr_field* hdr)
 {
 	switch(hdr->type){
@@ -239,13 +240,13 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 	}
 }
 
-/*! \brief frees a hdr_field structure,
+/** frees a hdr_field structure.
  * WARNING: it frees only parsed (and not name.s, body.s)
  */
 void clean_hdr_field(struct hdr_field* hf);
 
 
-/*! \brief frees a hdr_field list,
+/** frees a hdr_field list.
  * WARNING: frees only ->parsed and ->next
  */
 void free_hdr_field_lst(struct hdr_field* hf);

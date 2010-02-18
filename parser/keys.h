@@ -29,10 +29,9 @@
  * 2007-01-26 Macros for Identity, Identity-info, Date added (gergo)
  */
 
-/*! \file 
- * \brief Parser :: Fast 32-bit Header Field Name Parser -- keys
- *
- * \ingroup parser
+/** Parser :: Fast 32-bit Header Field Name Parser -- keys .
+ * @file
+ * @ingroup parser
  */
 
 #ifndef KEYS_H
@@ -189,6 +188,11 @@
 #define _priv_ 0x76697270   /* "priv" */
 #define _acy2_ 0x20796361   /* "acy " */
 #define _acy1_ 0x3a796361   /* "acy:" */
+
+#define _reas_ 0x73616572  /* "reas" */
+#define _on1_ 0x203a6e6f  /* "on: " */
+#define _on2_ 0x3a206e6f  /* "on :" */
+#define _on3_ 0x20206e6f  /* "on  " */
 
 /*!} */
 

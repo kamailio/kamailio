@@ -34,8 +34,8 @@
 #include "hf.h"
 
 
-/*! \brief
- * Fast 32-bit header field name parser
+/** Fast 32-bit header field name parser.
+ * @file
  */
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr);
 
