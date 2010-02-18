@@ -461,7 +461,7 @@ sub process_file
 									($new_f_n->isa('GCC::Node::integer_cst'))?
 										$new_f_n->low:
 										expr_op0($new_f_n)->name->identifier;
-								$flags=$flags_n->low;
+								$flags= (defined $flags_n)?$flags_n->low:0;
 								
 								push @res, [$prev_f, $type, $name,
 													$new_f, $flags];
@@ -594,7 +594,7 @@ format DOCBOOK_HEADER =
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 <chapter id="select_list@*">
 (valid_grp_name $sel_grp_name) ? "." . $sel_grp_name : ""
-	<title>Selects List@*</title>
+	<title>Selects@*</title>
 (valid_grp_name $sel_grp_name) ? " for " . $sel_grp_name : ""
 	<orderedlist>
 
