@@ -328,7 +328,7 @@ void io_listen_loop(struct ctrl_socket* cs_lst)
 	}
 /* should never reach this point under normal (non-error) circumstances */
 error:
-	CRIT("io_listen_loop exiting ...\n");
+	LOG(L_CRIT, "io_listen_loop exiting ...\n");
 }
 
 
