@@ -13,6 +13,8 @@ docbook_output_dir=docbook
 
 # list of files contanining cfg defs in the following format:
 # <filename>:<cfg_grp_name> 
+# can be easily filled/updated by pasting the output of:
+#  make print-lst |sed  -e 's!^ \?../..\(.*\)!$(COREPATH)\1 \\!'
 files_list=$(COREPATH)/cfg_core.c:core $(COREPATH)/tcp_options.c:tcp \
 			$(COREPATH)/sctp_options.c:sctp \
 			$(COREPATH)/modules_s/maxfwd/maxfwd.c:maxfwd \
@@ -45,8 +47,8 @@ endif
 gcc=gcc -I$(COREPATH)/lib -I/usr/include/libxml2
 
 #filtered files list
-flist=$(filter-out $(join $(file_exclude),%),\
-			$(filter-out $(join %:,$(grp_exclude)),$(files_list)) )
+flist=$(filter-out $(addsuffix %,$(file_exclude)),\
+			$(filter-out $(addprefix %:,$(grp_exclude)),$(files_list)) )
 
 # throws an error if input is not in the format filename:grp
 check_fname_grp=$(if $(filter-out 2,$(words $(subst :, ,$(1)))),\

@@ -13,9 +13,31 @@ docbook_output_dir=docbook
 
 # list of files contanining rpc defs in the following format:
 # <filename>:<cfg_grp_name> 
-# one way to quickly fill it up is pasting the output of
-# make print-lst|xargs echo
-files_list=$(COREPATH)/core_cmd.c:core
+# can be easily filled/updated by pasting the output of:
+#  make print-lst |sed  -e 's!^ \?../..\(.*\)!$(COREPATH)\1 \\!'
+files_list= $(COREPATH)/core_cmd.c:core \
+	$(COREPATH)/modules_s/pdt/pdt.c:pdt \
+	$(COREPATH)/modules_s/rls/rpc.c:rls \
+	$(COREPATH)/modules_s/pike/rpc.c:pike \
+	$(COREPATH)/modules_s/tls/tls_rpc.c:tls \
+	$(COREPATH)/modules_s/presence_b2b/rpc.c:presence_b2b \
+	$(COREPATH)/modules_s/gflags/gflags.c:gflags \
+	$(COREPATH)/modules_s/dispatcher/ds_rpc.c:dispatcher \
+	$(COREPATH)/modules_s/prefix_route/pr_rpc.c:prefix_route \
+	$(COREPATH)/modules_s/domain/domain_rpc.c:domain \
+	$(COREPATH)/modules_s/cpl-c/cpl_rpc.c:cpl-c \
+	$(COREPATH)/modules_s/sl/sl_stats.c:sl \
+	$(COREPATH)/modules_s/usrloc/ul_rpc.c:usrloc \
+	$(COREPATH)/modules_s/pa/rpc.c:pa \
+	$(COREPATH)/modules_s/ratelimit/ratelimit.c:ratelimit \
+	$(COREPATH)/modules/tm/tm.c:tm \
+	$(COREPATH)/modules/tls/tls_rpc.c:tls \
+	$(COREPATH)/modules/lcr/lcr_rpc.c:lcr \
+	$(COREPATH)/modules/ctl/ctl.c:ctl \
+	$(COREPATH)/modules/cfg_rpc/cfg_rpc.c:cfg_rpc \
+	$(COREPATH)/modules/db_flatstore/flat_rpc.c:db_flatstore \
+	$(COREPATH)/modules/mi_rpc/mi_rpc_mod.c:mi_rpc
+
 
 # list of excluded groups
 grp_exclude=pa
@@ -44,8 +66,8 @@ endif
 gcc=gcc -I$(COREPATH)/lib -I/usr/include/libxml2
 
 #filtered files list
-flist=$(filter-out $(join $(file_exclude),%),\
-			$(filter-out $(join %:,$(grp_exclude)),$(files_list)) )
+flist=$(filter-out $(addsuffix %,$(file_exclude)),\
+			$(filter-out $(addprefix %:,$(grp_exclude)),$(files_list)) )
 
 # throws an error if input is not in the format filename:grp
 check_fname_grp=$(if $(filter-out 2,$(words $(subst :, ,$(1)))),\
