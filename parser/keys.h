@@ -43,6 +43,13 @@
  * 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 3a 20  2d
 \endverbatim
  *
+ * A quick way to generate the hex string is:
+ *  perl -e '$_=lc shift; print "0x".unpack("H*",reverse)."\n";' 4_char_str
+ * or to generate the define list:
+    perl -e '$s=lc shift; $s.=" "x(4-(length $s)%4);
+             print map("#define _". reverse ."_ 0x". (unpack "H*")."\n",
+                       reverse unpack("(a[4])*", reverse $s));'  string
+ * Note that some editing is still needed (replace spaces and account for ':').
  * Test manually/visually if dword is intended string using:
  * awk '/^#define/ {printf("%s \"%c%c%c%c\" ... %s \n",  $3,strtonum("0x" substr($3,9,2)),strtonum("0x" substr($3,7,2)),strtonum("0x" substr($3,5,2)),strtonum("0x" substr($3,3,2)),$5)}' keys.h
  *
@@ -193,6 +200,19 @@
 #define _on1_ 0x203a6e6f  /* "on: " */
 #define _on2_ 0x3a206e6f  /* "on :" */
 #define _on3_ 0x20206e6f  /* "on  " */
+
+#define _p_as_ 0x73612d70 /* "p-as" */
+#define _sert_ 0x74726573 /* "sert" */
+#define _ed_i_ 0x692d6465 /* "ed-i" */
+#define _dent_ 0x746e6564 /* "dent" */
+#define _ity1_ 0x3a797469 /* "ity:" */
+#define _ity2_ 0x20797469 /* "ity " */
+
+#define _p_pr_ 0x72702d70 /* "p-pr" */
+#define _efer_ 0x72656665 /* "efer" */
+#define _red__ 0x2d646572 /* "red-" */
+/* _iden_ is already defined */
+/* _tity_ is already defined */
 
 /*!} */
 

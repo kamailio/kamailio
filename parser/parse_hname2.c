@@ -103,7 +103,9 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_retr.h"     /* Retry-After */
 #include "case_path.h"     /* Path */
 #include "case_priv.h"
-#include "case_reas.h"
+#include "case_reas.h"     /* Reason */
+#include "case_p_as.h"     /* P-Asserted-Identity */
+#include "case_p_pr.h"     /* P-Preferred-Identity */
 
 /*@} */
 
@@ -152,7 +154,9 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _retr_: retr_CASE; \
 	case _path_: path_CASE; \
 	case _priv_: priv_CASE; \
-	case _reas_: reas_CASE;
+	case _reas_: reas_CASE; \
+	case _p_as_: p_as_CASE; \
+	case _p_pr_: p_pr_CASE;
 
 
 #define PARSE_COMPACT(id)          \
@@ -168,7 +172,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	        return (p + 2);    \
         }
 
-
+#if 0
 int hdr_update_type(struct hdr_field* hdr)
 {
 	if(hdr==0 || hdr->name.s==0)
@@ -186,6 +190,7 @@ int hdr_update_type(struct hdr_field* hdr)
 
 	return 0;
 }
+#endif
 
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 {
@@ -266,7 +271,7 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	} else {
 		hdr->type = HDR_OTHER_T;
 		hdr->name.len = p - hdr->name.s;
-		hdr_update_type(hdr);
+		/*hdr_update_type(hdr);*/
 		return (p + 1);
 	}
 }
