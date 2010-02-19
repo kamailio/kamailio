@@ -448,9 +448,9 @@ void reset_path_vector(struct sip_msg* msg);
 	do { \
 		(msg)->force_send_socket=(fsocket); \
 		if ((msg)->force_send_socket) \
-			(msg)->fwd_send_flags |= SND_F_FORCE_SOCKET; \
+			(msg)->fwd_send_flags.f |= SND_F_FORCE_SOCKET; \
 		else \
-			(msg)->fwd_send_flags &= ~SND_F_FORCE_SOCKET; \
+			(msg)->fwd_send_flags.f &= ~SND_F_FORCE_SOCKET; \
 	} while (0)
 
 /** reset a previously forced send socket. */

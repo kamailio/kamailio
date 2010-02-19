@@ -158,7 +158,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			goto error;
 		}else{
 			from=0;
-			if (unlikely((dst->send_flags & SND_F_FORCE_SOCKET) &&
+			if (unlikely((dst->send_flags.f & SND_F_FORCE_SOCKET) &&
 						dst->send_sock)) {
 				local_addr=dst->send_sock->su;
 				su_setport(&local_addr, 0); /* any local port will do */
@@ -180,7 +180,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			goto error;
 		}else{
 			from=0;
-			if (unlikely((dst->send_flags & SND_F_FORCE_SOCKET) &&
+			if (unlikely((dst->send_flags.f & SND_F_FORCE_SOCKET) &&
 						dst->send_sock)) {
 				local_addr=dst->send_sock->su;
 				su_setport(&local_addr, 0); /* any local port will do */

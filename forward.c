@@ -603,8 +603,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (msg_send(send_info, buf, len)<0){
 			ret=ser_error=E_SEND;
 #ifdef USE_DST_BLACKLIST
-			if (cfg_get(core, core_cfg, use_dst_blacklist))
-				dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
+			dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 			continue; /* try another ip */
@@ -766,7 +765,7 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	dst.proto=msg->via2->proto;
-	dst.send_flags=msg->fwd_send_flags | msg->rpl_send_flags;
+	SND_FLAGS_OR(&dst.send_flags, &msg->fwd_send_flags, &msg->rpl_send_flags);
 	if (update_sock_struct_from_via( &dst.to, msg, msg->via2 )==-1) goto error;
 #ifdef USE_COMP
 	dst.comp=msg->via2->comp_no;

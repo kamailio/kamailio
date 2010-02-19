@@ -69,6 +69,10 @@ struct cfg_group_core default_core_cfg = {
 	0, /*!< dst blacklist is disabled by default */
 	DEFAULT_BLST_TIMEOUT,
 	DEFAULT_BLST_MAX_MEM,
+	0, /* blst_udp_imask */
+	0, /* blst_tcp_imask */
+	0, /* blst_tls_imask */
+	0, /* blst_sctp_imask */
 #endif
 	/* resolver */
 #ifdef USE_IPV6
@@ -129,7 +133,16 @@ cfg_def_t core_cfg_def[] = {
 	{"dst_blacklist_expire",	CFG_VAR_INT,	0, 0, 0, 0,
 		"how much time (in s) a blacklisted destination is kept in the list"},
 	{"dst_blacklist_mem",	CFG_VAR_INT,	0, 0, blst_max_mem_fixup, 0,
-		"maximum shared memory amount (in KB) used for keeping the blacklisted destinations"},
+		"maximum shared memory amount (in KB) used for keeping the blacklisted"
+			" destinations"},
+	{"dst_blacklist_udp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blacklist event ignore mask for UDP"},
+	{"dst_blacklist_tcp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blacklist event ignore mask for TCP"},
+	{"dst_blacklist_tls_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blacklist event ignore mask for TLS"},
+	{"dst_blacklist_sctp_imask", CFG_VAR_INT, 0, 0, 0, blst_reinit_ign_masks,
+		"blacklist event ignore mask for SCTP"},
 #endif
 	/* resolver */
 #ifdef USE_DNS_CACHE

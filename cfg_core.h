@@ -63,6 +63,10 @@ struct cfg_group_core {
 	unsigned int	blst_timeout; /*!< blacklist entry ttl */
 	unsigned int	blst_max_mem; /*!< maximum memory used for the
 					blacklist entries */
+	unsigned int	blst_udp_imask;  /* ignore mask for udp */
+	unsigned int	blst_tcp_imask;  /* ignore mask for tcp */
+	unsigned int	blst_tls_imask;  /* ignore mask for tls */
+	unsigned int	blst_sctp_imask; /* ignore mask for sctp */
 #endif
 	/* resolver */
 	int dns_try_ipv6;

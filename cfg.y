@@ -98,6 +98,7 @@
  * 2009-05-04  switched if to rval_expr (andrei)
  * 2010-01-10  init shm on first mod_param or route block;
  *             added SHM_MEM_SZ (andrei)
+ * 2010-02-17  added blacklist imask (DST_BLST_*_IMASK) support (andrei)
 */
 
 %{
@@ -403,6 +404,10 @@ extern char *finame;
 %token DST_BLST_MEM
 %token DST_BLST_TTL
 %token DST_BLST_GC_INT
+%token DST_BLST_UDP_IMASK
+%token DST_BLST_TCP_IMASK
+%token DST_BLST_TLS_IMASK
+%token DST_BLST_SCTP_IMASK
 
 %token PORT
 %token STAT
@@ -840,14 +845,36 @@ assign_stm:
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
-	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.use_dst_blacklist=$3); }
+	| USE_DST_BLST EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.use_dst_blacklist=$3);
+	}
 	| USE_DST_BLST error { yyerror("boolean value expected"); }
-	| DST_BLST_MEM EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3); }
+	| DST_BLST_MEM EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3); 
+	}
 	| DST_BLST_MEM error { yyerror("boolean value expected"); }
-	| DST_BLST_TTL EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.blst_timeout=$3); }
+	| DST_BLST_TTL EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.blst_timeout=$3);
+	}
 	| DST_BLST_TTL error { yyerror("boolean value expected"); }
 	| DST_BLST_GC_INT EQUAL NUMBER { IF_DST_BLACKLIST(blst_timer_interval=$3);}
 	| DST_BLST_GC_INT error { yyerror("boolean value expected"); }
+	| DST_BLST_UDP_IMASK EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.blst_udp_imask=$3);
+	}
+	| DST_BLST_UDP_IMASK error { yyerror("number(flags) expected"); }
+	| DST_BLST_TCP_IMASK EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.blst_tcp_imask=$3);
+	}
+	| DST_BLST_TCP_IMASK error { yyerror("number(flags) expected"); }
+	| DST_BLST_TLS_IMASK EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.blst_tls_imask=$3);
+	}
+	| DST_BLST_TLS_IMASK error { yyerror("number(flags) expected"); }
+	| DST_BLST_SCTP_IMASK EQUAL NUMBER {
+		IF_DST_BLACKLIST(default_core_cfg.blst_sctp_imask=$3);
+	}
+	| DST_BLST_SCTP_IMASK error { yyerror("number(flags) expected"); }
 	| PORT EQUAL NUMBER   { port_no=$3; }
 	| STAT EQUAL STRING {
 		#ifdef STATS

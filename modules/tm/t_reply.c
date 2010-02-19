@@ -1651,7 +1651,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				}
 				/* update send_flags with possible additions from the
 				   reply route */
-				uas_rb->dst.send_flags|=relayed_msg->rpl_send_flags;
+				SND_FLAGS_OR(&uas_rb->dst.send_flags, &uas_rb->dst.send_flags,
+								&relayed_msg->rpl_send_flags);
 			}
 		}
 		update_reply_stats( relayed_code );
@@ -1885,7 +1886,6 @@ int reply_received( struct sip_msg  *p_msg )
 #endif
 #ifdef USE_DST_BLACKLIST
 	int blst_503_timeout;
-	struct dest_info src;
 	struct hdr_field* hf;
 #endif
 #ifdef TMCB_ONSEND
@@ -2014,6 +2014,10 @@ int reply_received( struct sip_msg  *p_msg )
 			switch_rb_retr_to_t2(&uac->request);
 		}
 	}
+	/* pre-set the ignore BLST_503 flag in the message, if the
+	   corresponding branch had it set on send */
+	p_msg->fwd_send_flags.blst_imask|=
+		uac->request.dst.send_flags.blst_imask & BLST_503;
 	/* processing of on_reply block */
 	if (t->on_reply) {
 		set_route_type(ONREPLY_ROUTE);
@@ -2062,10 +2066,13 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 #ifdef USE_DST_BLACKLIST
 		/* add temporary to the blacklist the source of a 503 reply */
-		if (cfg_get(tm, tm_cfg, tm_blst_503)
-			&& cfg_get(core, core_cfg, use_dst_blacklist)
-			&& (msg_status==503)
-		){
+		if (	(msg_status==503) &&
+				cfg_get(tm, tm_cfg, tm_blst_503) &&
+				/* check if the request sent on the branch had the the
+				   blst 503 ignore flags set or it was set in the onreply_r*/
+				should_blacklist_su(BLST_503, &p_msg->fwd_send_flags,
+										p_msg->rcv.proto, &p_msg->rcv.src_su)
+			){
 			blst_503_timeout=cfg_get(tm, tm_cfg, tm_blst_503_default);
 			if ((parse_headers(p_msg, HDR_RETRY_AFTER_F, 0)==0) && 
 				(p_msg->parsed_flag & HDR_RETRY_AFTER_F)){
@@ -2081,12 +2088,9 @@ int reply_received( struct sip_msg  *p_msg )
 					}
 			}
 			if (blst_503_timeout){
-				src.send_sock=0;
-				src.to=p_msg->rcv.src_su;
-				src.id=p_msg->rcv.proto_reserved1;
-				src.proto=p_msg->rcv.proto;
-				dst_blacklist_add_to(BLST_503, &src,  p_msg, 
-									S_TO_TICKS(blst_503_timeout));
+				dst_blacklist_force_su_to(BLST_503, p_msg->rcv.proto,
+											&p_msg->rcv.src_su, p_msg,
+											S_TO_TICKS(blst_503_timeout));
 			}
 		}
 #endif /* USE_DST_BLACKLIST */

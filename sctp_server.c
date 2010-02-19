@@ -2133,13 +2133,12 @@ static int sctp_handle_send_failed(struct socket_info* si,
 		ret=sctp_msg_send_ext(&dst, data, data_len, &sinfo);
 	}
 #ifdef USE_DST_BLACKLIST
-	 else if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					cfg_get(sctp, sctp_cfg, send_retries)) {
+	 else if (cfg_get(sctp, sctp_cfg, send_retries)) {
 		/* blacklist only if send_retries is on, if off we blacklist
 		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
 		   which is better (because we can tell connect errors from send
 		   errors and we blacklist a failed dst only once) */
-		dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
+		dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0, 0);
 	}
 #endif /* USE_DST_BLACKLIST */
 	
@@ -2220,9 +2219,8 @@ again:
 #ifdef USE_DST_BLACKLIST
 			/* blacklist only if send_retries is turned off (if on we don't
 			   know here if we did retry or we are at the first error) */
-			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(cfg_get(sctp, sctp_cfg, send_retries)==0))
-						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0);
+			if (cfg_get(sctp, sctp_cfg, send_retries)==0)
+						dst_blacklist_su(BLST_ERR_SEND, PROTO_SCTP, su, 0, 0);
 #endif /* USE_DST_BLACKLIST */
 			/* no break */
 			goto comm_lost_cont;	/* do not increment counters for
@@ -2254,9 +2252,8 @@ comm_lost_cont:
 #ifdef USE_DST_BLACKLIST
 			/* blacklist only if send_retries is turned off (if on we don't 
 			   know here if we did retry or we are at the first error) */
-			if (cfg_get(core, core_cfg, use_dst_blacklist) &&
-					(cfg_get(sctp, sctp_cfg, send_retries)==0))
-						dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0);
+			if (cfg_get(sctp, sctp_cfg, send_retries)==0)
+					dst_blacklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0, 0);
 #endif /* USE_DST_BLACKLIST */
 			break;
 		default:

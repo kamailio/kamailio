@@ -45,6 +45,10 @@ static int blst_add_f(struct sip_msg*, char*, char*);
 static int blst_add_retry_after_f(struct sip_msg*, char*, char*);
 static int blst_del_f(struct sip_msg*, char*, char*);
 static int blst_is_blacklisted_f(struct sip_msg*, char*, char*);
+static int blst_set_ignore_f(struct sip_msg*, char*, char*);
+static int blst_clear_ignore_f(struct sip_msg*, char*, char*);
+static int blst_rpl_set_ignore_f(struct sip_msg*, char*, char*);
+static int blst_rpl_clear_ignore_f(struct sip_msg*, char*, char*);
 
 
 
@@ -59,6 +63,22 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
 	{"blst_is_blacklisted",   blst_is_blacklisted_f, 0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
+	{"blst_set_ignore",         blst_set_ignore_f,   0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_set_ignore",         blst_set_ignore_f,   1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_clear_ignore",         blst_clear_ignore_f,   0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_clear_ignore",         blst_clear_ignore_f,   1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"blst_rpl_set_ignore",       blst_rpl_set_ignore_f, 0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_rpl_set_ignore",      blst_rpl_set_ignore_f,  1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_rpl_clear_ignore",   blst_rpl_clear_ignore_f, 0,  0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"blst_rpl_clear_ignore",   blst_rpl_clear_ignore_f, 1,  fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -90,16 +110,15 @@ static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
 		t=0;
 		if (unlikely( to && (get_int_fparam(&t, msg, (fparam_t*)to)<0)))
 			return -1;
-	
+		if (t==0)
+			t=cfg_get(core, core_cfg, blst_timeout);
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
 		src.proto=msg->rcv.proto;
-		if (t)
-			dst_blacklist_add_to(BLST_ADM_PROHIBITED, &src, msg,
+		dst_blacklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
 									S_TO_TICKS(t));
-		else
-			dst_blacklist_add(BLST_ADM_PROHIBITED, &src, msg);
 		return 1;
 	}else{
 		LOG(L_WARN, "WARNING: blst: blst_add: blacklist support disabled\n");
@@ -130,6 +149,7 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 			t_max=0;
 		}
 	
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
@@ -150,8 +170,8 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 		t=MAX_unsigned(t, t_min);
 		t=MIN_unsigned(t, t_max);
 		if (likely(t))
-			dst_blacklist_add_to(BLST_ADM_PROHIBITED, &src, msg,
-									S_TO_TICKS(t));
+			dst_blacklist_force_add_to(BLST_ADM_PROHIBITED, &src, msg,
+										S_TO_TICKS(t));
 		return 1;
 	}else{
 		LOG(L_WARN, "WARNING: blst: blst_add_retry_after:"
@@ -173,6 +193,7 @@ static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 	
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 	
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
@@ -197,6 +218,7 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 	struct dest_info src;
 	
 	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
+		init_dest_info(&src);
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
@@ -212,4 +234,84 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 				" blacklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLACKLIST */
 	return -1;
+}
+
+
+
+static int blst_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->fwd_send_flags.blst_imask|=blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
+}
+
+
+
+static int blst_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->fwd_send_flags.blst_imask&=~blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
+}
+
+
+
+static int blst_rpl_set_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->rpl_send_flags.blst_imask|=blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
+}
+
+
+
+static int blst_rpl_clear_ignore_f(struct sip_msg* msg, char* flags, char* foo)
+{
+#ifdef USE_DST_BLACKLIST
+	unsigned char blst_imask;
+	int mask;
+	
+	if (unlikely(flags && (get_int_fparam(&mask, msg, (fparam_t*)flags)<0)))
+		return -1;
+	blst_imask=flags?mask:0xff;
+	msg->rpl_send_flags.blst_imask&=~blst_imask;
+	return 1;
+#else /* USE_DST_BLACKLIST */
+	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blacklist support"
+				" not compiled-in - no effect -\n");
+#endif /* USE_DST_BLACKLIST */
+	return 1;
 }

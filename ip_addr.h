@@ -142,7 +142,31 @@ struct receive_info{
 #define SND_F_CON_CLOSE			2 /* close the connection after sending */
 #define SND_F_FORCE_SOCKET		4 /* send socket in dst is forced */
 
-typedef unsigned char  snd_flags_t;
+struct snd_flags {
+	unsigned char f;          /* snd flags */
+	unsigned char blst_imask; /* blacklist ignore mask */
+};
+
+
+typedef struct snd_flags  snd_flags_t;
+
+#define SND_FLAGS_INIT(sflags) \
+	do{ \
+		(sflags)->f=0; \
+		(sflags)->blst_imask=0; \
+	}while(0)
+
+#define SND_FLAGS_OR(dst, src1, src2) \
+	do{ \
+		(dst)->f = (src1)->f | (src2)->f; \
+		(dst)->blst_imask = (src1)->blst_imask | (src2)->blst_imask; \
+	}while(0)
+
+#define SND_FLAGS_AND(dst, src1, src2) \
+	do{ \
+		(dst)->f = (src1)->f & (src2)->f; \
+		(dst)->blst_imask = (src1)->blst_imask & (src2)->blst_imask; \
+	}while(0)
 
 struct dest_info{
 	struct socket_info* send_sock;
@@ -757,7 +781,8 @@ inline static void init_dst_from_rcv(struct dest_info* dst,
 		dst->to=rcv->src_su;
 		dst->id=rcv->proto_reserved1;
 		dst->proto=rcv->proto;
-		dst->send_flags=0;
+		dst->send_flags.f=0;
+		dst->send_flags.blst_imask=0;
 #ifdef USE_COMP
 		dst->comp=rcv->comp;
 #endif

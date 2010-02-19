@@ -160,20 +160,18 @@ again:
 					switch(errno){
 						case ECONNRESET:
 #ifdef USE_DST_BLACKLIST
-							if (cfg_get(core, core_cfg, use_dst_blacklist))
-								dst_blacklist_su(BLST_ERR_CONNECT,
-														c->rcv.proto,
-														&c->rcv.src_su, 0);
+							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+												&c->rcv.src_su,
+												&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 							break;
 						case ETIMEDOUT:
 #ifdef USE_DST_BLACKLIST
-							if (cfg_get(core, core_cfg, use_dst_blacklist))
-								dst_blacklist_su(BLST_ERR_CONNECT,
-														c->rcv.proto,
-														&c->rcv.src_su, 0);
+							dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto,
+												&c->rcv.src_su,
+												&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 							TCP_EV_CONNECT_TIMEOUT(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
@@ -189,10 +187,9 @@ again:
 								TCP_STATS_CON_RESET();
 							case ETIMEDOUT:
 #ifdef USE_DST_BLACKLIST
-								if (cfg_get(core, core_cfg, use_dst_blacklist))
-									dst_blacklist_su(BLST_ERR_SEND,
-														c->rcv.proto,
-														&c->rcv.src_su, 0);
+								dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto,
+													&c->rcv.src_su,
+													&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 								break;
 						}
@@ -971,7 +968,7 @@ again:
 			con=(struct tcp_connection*)fm->data;
 			if (unlikely(con->state==S_CONN_BAD)){
 				resp=CONN_ERROR;
-				if (!(con->send_flags & SND_F_CON_CLOSE))
+				if (!(con->send_flags.f & SND_F_CON_CLOSE))
 					LOG(L_WARN, "WARNING: tcp_receive: handle_io: F_TCPCONN"
 							" connection marked as bad: %p id %d refcnt %d\n",
 							con, con->id, atomic_get(&con->refcnt));
