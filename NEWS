@@ -17,7 +17,8 @@ new config variables:
     at runtime. Default: 0 (no blacklist reason is ignored).
     Possible values:  0 -disabled, 2 - send error; 4 - connect error,
                       8 - icmp (reserverd), 16 - transaction timeout,
-                     32 - administratively prohibited (manually set).
+                     32 - 503 received, 64 - administratively prohibited
+                     (manually set).
    - dst_blacklist_tcp_imask - like dst_blacklist_udp_imask, but for tcp.
    - dst_blacklist_tls_imask - like dst_blacklist_tls_imask, but for tcp.
    - dst_blacklist_sctp_imask -like dst_blacklist_sctp_imask, but for tcp.
