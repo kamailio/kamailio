@@ -315,7 +315,7 @@ static cmd_export_t cmds[]={
 	{"t_lookup_cancel",    w_t_lookup_cancel,       1, fixup_int_1,
 			REQUEST_ROUTE},
 	{T_REPLY,              w_t_reply,               2, fixup_t_reply,
-			REQUEST_ROUTE | FAILURE_ROUTE },
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,
 			REQUEST_ROUTE},
 	{"t_release",          w_t_release,             0, 0,
@@ -1255,6 +1255,21 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		ret = t_reply_unsafe(t, msg, code, r);
 	} else if (is_route_type(REQUEST_ROUTE)) {
 		ret = t_reply( t, msg, code, r);
+	} else if (is_route_type(ONREPLY_ROUTE)) {
+		if (likely(t->uas.request)){
+			if (is_route_type(CORE_ONREPLY_ROUTE))
+				ret=t_reply(t, t->uas.request, code, r);
+			else
+				ret=t_reply_unsafe(t, t->uas.request, code, r);
+		}else
+			ret=-1;
+		/* t_check() above has the side effect of setting T and
+		   REFerencing T => we must unref and unset it.
+		   Note: this is needed only in the CORE_ONREPLY_ROUTE and not also in
+		   the TM_ONREPLY_ROUTE.
+		 */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
 	} else {
 		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
 		ret = -1;
