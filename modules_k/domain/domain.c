@@ -168,13 +168,13 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
 	qvalue_t q;
 	struct sip_uri puri;
 
-	if ( route_type&(REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE) ) {
+	if ( is_route_type(REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE) ) {
 		if (parse_sip_msg_uri(_msg) < 0) {
 			LM_ERR("Error while parsing R-URI\n");
 			return -1;
 		}
 		return is_domain_local(&(_msg->parsed_uri.host));
-	} else if (route_type == FAILURE_ROUTE) {
+	} else if (is_route_type(FAILURE_ROUTE)) {
 			branch.s = get_branch(0, &branch.len, &q, 0, 0, 0, 0);
 			if (branch.s) {
 				if (parse_uri(branch.s, branch.len, &puri) < 0) {

@@ -288,7 +288,7 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
 		return -1;
 	}
 
-	if(route_type==FAILURE_ROUTE
+	if(is_route_type(FAILURE_ROUTE)
 				&& (dest->type==PVT_RURI || dest->type==PVT_RURI_USERNAME)) {
 		if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 ){
 			LM_ERR("append_branch action failed\n");

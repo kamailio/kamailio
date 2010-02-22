@@ -1237,7 +1237,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			}	
 		break;
 	}
-	if(ds_append_branch!=0 && route_type==FAILURE_ROUTE)
+	if(ds_append_branch!=0 && is_route_type(FAILURE_ROUTE))
 	{
 		if (append_branch(msg, 0, duri, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 		{

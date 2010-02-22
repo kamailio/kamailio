@@ -2048,7 +2048,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	}
     }
 
-    if ((route_type == REQUEST_ROUTE) && (ru_avp == NULL)) {
+    if ((is_route_type(REQUEST_ROUTE)) && (ru_avp == NULL)) {
 
 	/* First invocation in route block => Rewrite Request URI. */
 	memset(&act, '\0', sizeof(act));

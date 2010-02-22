@@ -765,7 +765,7 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2) {
 	str domain;
 	int ret;
 
-	if (route_type != REQUEST_ROUTE) {
+	if (!is_route_type(REQUEST_ROUTE)) {
 		LM_ERR("unsupported route type\n");
 		return -1;
 	}
@@ -823,7 +823,7 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	int port, proto;
 	struct socket_info* si;
 
-	if (route_type != REQUEST_ROUTE) {
+	if (!is_route_type(REQUEST_ROUTE)) {
 		LM_ERR("unsupported route type\n");
 		return -1;
 	}

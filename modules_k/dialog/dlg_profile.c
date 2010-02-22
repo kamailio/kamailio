@@ -337,7 +337,7 @@ static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 	struct cell *trans;
 	struct tm_callback* x;
 
-	if (route_type==REQUEST_ROUTE) {
+	if (is_route_type(REQUEST_ROUTE)) {
 		/* use the per-process static holder */
 		if (msg->id==current_dlg_msg_id)
 			return current_dlg_pointer;
@@ -478,7 +478,7 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 	/* get current dialog */
 	dlg = get_current_dialog(msg);
 
-	if (dlg==NULL && route_type!=REQUEST_ROUTE) {
+	if (dlg==NULL && !is_route_type(REQUEST_ROUTE)) {
 		LM_CRIT("BUG - dialog not found in a non REQUEST route (%d)\n",
 			REQUEST_ROUTE);
 		return -1;
@@ -534,7 +534,7 @@ int unset_dlg_profile(struct sip_msg *msg, str *value,
 	/* get current dialog */
 	dlg = get_current_dialog(msg);
 
-	if (dlg==NULL || route_type==REQUEST_ROUTE) {
+	if (dlg==NULL || is_route_type(REQUEST_ROUTE)) {
 		LM_CRIT("BUG - dialog NULL or del_profile used in request route\n");
 		return -1;
 	}
