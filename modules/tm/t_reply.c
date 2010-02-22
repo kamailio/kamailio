@@ -2038,13 +2038,6 @@ int reply_received( struct sip_msg  *p_msg )
 		LOCK_REPLIES( t );
 		replies_locked=1;
 		run_top_route(onreply_rt.rlist[t->on_reply], p_msg, &ctx);
-		if ((ctx.run_flags&DROP_R_F)  && (msg_status<200)) {
-			if (unlikely(replies_locked)) {
-				replies_locked = 0;
-				UNLOCK_REPLIES( t );
-			}
-			goto done;
-		}
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		getbflagsval(0, &uac->branch_flags);
@@ -2059,6 +2052,16 @@ int reply_received( struct sip_msg  *p_msg )
 #ifdef WITH_XAVP
 		xavp_set_list(backup_xavps);
 #endif
+		/* handle a possible DROP in the script, but only if this
+		   is not a final reply (final replies already stop the timers
+		   and droping them might leave a transaction living forever) */
+		if ((ctx.run_flags&DROP_R_F)  && (msg_status<200)) {
+			if (unlikely(replies_locked)) {
+				replies_locked = 0;
+				UNLOCK_REPLIES( t );
+			}
+			goto done;
+		}
 	}
 #ifdef USE_DST_BLACKLIST
 		/* add temporary to the blacklist the source of a 503 reply */
