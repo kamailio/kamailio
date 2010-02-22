@@ -647,7 +647,7 @@ statement:
 	| module_stm
 	| {rt=REQUEST_ROUTE;} route_stm
 	| {rt=FAILURE_ROUTE;} failure_route_stm
-	| {rt=ONREPLY_ROUTE;} onreply_route_stm
+	| onreply_route_stm
 	| {rt=BRANCH_ROUTE;} branch_route_stm
 	| {rt=ONSEND_ROUTE;}   send_route_stm
 	| {rt=EVENT_ROUTE;}   event_route_stm
@@ -1775,35 +1775,46 @@ failure_route_stm:
 	}
 	| ROUTE_FAILURE error { yyerror("invalid failure_route statement"); }
 	;
+
 onreply_route_stm:
-	ROUTE_ONREPLY LBRACE actions RBRACE {
+	ROUTE_ONREPLY LBRACE {rt=CORE_ONREPLY_ROUTE;} actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
 			YYABORT;
 		}
 	#endif /* SHM_MEM */
-		push($3, &onreply_rt.rlist[DEFAULT_RT]);
-	}
-	| ROUTE_ONREPLY LBRACK route_name RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
-		if (!shm_initialized() && init_shm()<0) {
-			yyerror("Can't initialize shared memory");
-			YYABORT;
-		}
-	#endif /* SHM_MEM */
-		i_tmp=route_get(&onreply_rt, $3);
-		if (i_tmp==-1){
-			yyerror("internal error");
-			YYABORT;
-		}
-		if (onreply_rt.rlist[i_tmp]){
-			yyerror("duplicate route");
-			YYABORT;
-		}
-		push($6, &onreply_rt.rlist[i_tmp]);
+		push($4, &onreply_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
+	| ROUTE_ONREPLY LBRACK route_name RBRACK 
+		{rt=(*$3=='0' && $3[1]==0)?CORE_ONREPLY_ROUTE:TM_ONREPLY_ROUTE;}
+		LBRACE actions RBRACE {
+	#ifdef SHM_MEM
+		if (!shm_initialized() && init_shm()<0) {
+			yyerror("Can't initialize shared memory");
+			YYABORT;
+		}
+	#endif /* SHM_MEM */
+		if (*$3=='0' && $3[1]==0){
+			/* onreply_route[0] {} is equivalent with onreply_route {}*/
+			push($7, &onreply_rt.rlist[DEFAULT_RT]);
+		}else{
+			i_tmp=route_get(&onreply_rt, $3);
+			if (i_tmp==-1){
+				yyerror("internal error");
+				YYABORT;
+			}
+			if (onreply_rt.rlist[i_tmp]){
+				yyerror("duplicate route");
+				YYABORT;
+			}
+			push($7, &onreply_rt.rlist[i_tmp]);
+		}
+	}
+	| ROUTE_ONREPLY LBRACK route_name RBRACK error {
+		yyerror("invalid onreply_route statement");
+	}
 	;
 branch_route_stm:
 	ROUTE_BRANCH LBRACE actions RBRACE {

@@ -47,11 +47,13 @@
  */
 #define REQUEST_ROUTE (1 << 0)
 #define FAILURE_ROUTE (1 << 1)
-#define ONREPLY_ROUTE (1 << 2)
+#define TM_ONREPLY_ROUTE (1 << 2)
 #define BRANCH_ROUTE  (1 << 3)
 #define ONSEND_ROUTE  (1 << 4)
 #define ERROR_ROUTE   (1 << 5)
 #define LOCAL_ROUTE   (1 << 6)
+#define CORE_ONREPLY_ROUTE (1 << 7)
+#define ONREPLY_ROUTE (TM_ONREPLY_ROUTE|CORE_ONREPLY_ROUTE)
 #define EVENT_ROUTE   REQUEST_ROUTE
 #define ANY_ROUTE     (0xFFFFFFFF)
 
@@ -68,7 +70,7 @@ extern int route_type;
 
 #define get_route_type()	route_type
 
-#define is_route_type(type) (route_type == (type))
+#define is_route_type(type) (route_type & (type))
 
 struct route_list{
 	struct action** rlist;

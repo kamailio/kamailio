@@ -247,7 +247,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
-			set_route_type(ONREPLY_ROUTE);
+			set_route_type(CORE_ONREPLY_ROUTE);
 			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
 #ifndef NO_ONREPLY_ROUTE_ERROR
 			if (unlikely(ret<0)){
