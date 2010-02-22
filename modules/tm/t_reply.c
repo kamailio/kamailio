@@ -2020,7 +2020,7 @@ int reply_received( struct sip_msg  *p_msg )
 		uac->request.dst.send_flags.blst_imask & BLST_503;
 	/* processing of on_reply block */
 	if (t->on_reply) {
-		set_route_type(ONREPLY_ROUTE);
+		set_route_type(TM_ONREPLY_ROUTE);
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
