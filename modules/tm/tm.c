@@ -902,7 +902,7 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 	str tmp;
 	
 	fp = (fparam_t*)p1;
-	
+	t = 0;
 	/* first get the transaction */
 	if (t_check(msg, 0 ) == -1) return -1;
 	if ((t = get_t()) == 0) {
@@ -989,11 +989,23 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		regfree(re);
 		pkg_free(re);
 	}
-
+	
+	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
+		/* t_check() above has the side effect of setting T and
+		   REFerencing T => we must unref and unset it.  */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+	}
 	if (n!=0) return -1;
 	return 1;
 
  error:
+	if (unlikely(t && is_route_type(CORE_ONREPLY_ROUTE))){
+		/* t_check() above has the side effect of setting T and
+		   REFerencing T => we must unref and unset it.  */
+		UNREF( t );
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+	}
 	if (s) pkg_free(s);
 	if ((fp->type != FPARAM_REGEX) && re) {
 		regfree(re);
@@ -1268,8 +1280,10 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		   Note: this is needed only in the CORE_ONREPLY_ROUTE and not also in
 		   the TM_ONREPLY_ROUTE.
 		 */
-		UNREF( t );
-		set_t(T_UNDEFINED, T_BR_UNDEFINED);
+		if (is_route_type(CORE_ONREPLY_ROUTE)) {
+			UNREF( t );
+			set_t(T_UNDEFINED, T_BR_UNDEFINED);
+		}
 	} else {
 		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
 		ret = -1;
