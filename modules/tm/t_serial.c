@@ -420,7 +420,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 
 		/* no transaction yet => load Request-URI and branches */
 
-		if (route_type == FAILURE_ROUTE) {
+		if (is_route_type(FAILURE_ROUTE)) {
 			LM_CRIT("BUG - undefined transaction in failure route\n");
 			return -1;
 		}

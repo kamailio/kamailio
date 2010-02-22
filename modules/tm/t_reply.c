@@ -705,7 +705,7 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		 * a shmem-ed replica of the request; advertise it in route type;
 		 * for example t_reply needs to know that
 		 */
-		backup_route_type=route_type;
+		backup_route_type=get_route_type();
 		set_route_type(FAILURE_ROUTE);
 		/* also, tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing

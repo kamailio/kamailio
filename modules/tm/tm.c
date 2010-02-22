@@ -397,9 +397,9 @@ static cmd_export_t cmds[]={
 	{"t_relay_cancel",     w_t_relay_cancel,        0, 0,
 			REQUEST_ROUTE},
 	{"t_on_failure",       w_t_on_negative,         1, fixup_on_failure,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_on_reply,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE },
 	{"t_on_branch",       w_t_on_branch,         1, fixup_on_branch,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_t_check_status,
@@ -409,37 +409,37 @@ static cmd_export_t cmds[]={
 	{"t_write_unix",      t_write_unix,             2, fixup_t_write,
 	                REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_set_fr",          t_set_fr_inv,             1, fixup_var_int_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_fr",          t_set_fr_all,             2, fixup_var_int_12,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_reset_fr",        w_t_reset_fr,             0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_retr",        w_t_set_retr,               2, fixup_var_int_12,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_reset_retr",      w_t_reset_retr,           0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_max_lifetime", w_t_set_max_lifetime,      2, fixup_var_int_12,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_reset_max_lifetime", w_t_reset_max_lifetime, 0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_auto_inv_100", t_set_auto_inv_100,       1, fixup_var_int_1,
 													  REQUEST_ROUTE},
 	{"t_set_disable_6xx", t_set_disable_6xx,         1, fixup_var_int_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_disable_failover", t_set_disable_failover, 1, fixup_var_int_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
 	{"t_any_timeout",     t_any_timeout,            0, 0, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_any_replied",     t_any_replied,            0, 0, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_canceled",     t_is_canceled,            0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_expired",      t_is_expired,             0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_drop_replies",    w_t_drop_replies,         0, 0,
 			FAILURE_ROUTE},
 	{"t_drop_replies",    w_t_drop_replies,         1, 0,
@@ -447,7 +447,7 @@ static cmd_export_t cmds[]={
 	{"t_save_lumps",      w_t_save_lumps,           0, 0,
 			REQUEST_ROUTE},
 	{"t_check_trans",	t_check_trans,				0, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|BRANCH_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
@@ -940,13 +940,14 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		break;
 	}
 	
-	switch(route_type) {
+	switch(get_route_type()) {
 	case REQUEST_ROUTE:
 		/* use the status of the last sent reply */
 		status = int2str( t->uas.status, 0);
 		break;
 		
-	case ONREPLY_ROUTE:
+	case TM_ONREPLY_ROUTE:
+	case CORE_ONREPLY_ROUTE:
 		/* use the status of the current reply */
 		status = msg->first_line.u.reply.status.s;
 		backup = status[msg->first_line.u.reply.status.len];
@@ -973,7 +974,8 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		break;
 
 	default:
-		LOG(L_ERR,"ERROR:t_check_status: unsupported route type %d\n",route_type);
+		LOG(L_ERR,"ERROR:t_check_status: unsupported route type %d\n",
+				get_route_type());
 		goto error;
 	}
 
@@ -1355,8 +1357,9 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 	}
 	if (is_route_type(REQUEST_ROUTE))
 		return t_relay_to( p_msg, proxy, force_proto,
-			0 /* no replication */ );
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n", route_type);
+							0 /* no replication */ );
+	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n",
+			get_route_type());
 	return 0;
 }
 
