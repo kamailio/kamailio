@@ -6,6 +6,7 @@ $Id$
 sip-router 3.1 chages
 
 core:
+  - onreply_route {...} is now equivalent with onreply_route[0] {...}
   - global, per protocol blacklist ignore masks (via extended send_flags).
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
   - per message blacklist ignore masks
@@ -36,6 +37,9 @@ modules:
             the mask for possible local replies to the current message.
            blst_rpl_clear_ignore(mask): like blst_rpl_ignore(mask), but
             clears instead of setting.
+tm:
+   - t_reply() can be used both from the main/core onreply_route{} and tm
+     onreply_route[...]{}s.
 
 
 
