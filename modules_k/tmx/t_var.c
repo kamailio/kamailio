@@ -404,12 +404,18 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 		/* no T */
 		code = 0;
 	} else {
-		switch (route_type) {
+		switch (get_route_type()) {
 			case REQUEST_ROUTE:
 				/* use the status of the last sent reply */
 				code = t->uas.status;
 				break;
-			case ONREPLY_ROUTE:
+			case CORE_ONREPLY_ROUTE:
+				/*  t_check() above has the side effect of setting T and
+				    REFerencing T => we must unref and unset it for the 
+				    main/core onreply_route. */
+				_tmx_tmb.t_unref(msg);
+				/* no break */
+			case TM_ONREPLY_ROUTE:
 				/* use the status of the current reply */
 				code = msg->first_line.u.reply.statuscode;
 				break;
@@ -424,7 +430,7 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 				}
 				break;
 			default:
-				LM_ERR("unsupported route_type %d\n", route_type);
+				LM_ERR("unsupported route_type %d\n", get_route_type());
 				code = 0;
 		}
 	}
