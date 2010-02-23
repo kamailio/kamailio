@@ -269,6 +269,10 @@ static int load_ca_list(tls_domain_t* d)
 	return 0;
 }
 
+#define C_DEF_NO_KRB5 "DEFAULT:!KRB5"
+#define C_DEF_NO_KRB5_LEN (sizeof(C_DEF_NO_KRB5)-1)
+#define C_NO_KRB5_SUFFIX ":!KRB5"
+#define C_NO_KRB5_SUFFIX_LEN (sizeof(C_NO_KRB5_SUFFIX)-1)
 
 /* 
  * Configure cipher list 
@@ -277,12 +281,35 @@ static int set_cipher_list(tls_domain_t* d)
 {
 	int i;
 	int procs_no;
+	char* cipher_list;
 
-	if (!d->cipher_list.s) return 0;
+	cipher_list=d->cipher_list.s;
+#ifdef TLS_KSSL_WORKARROUND
+	if (openssl_kssl_malloc_bug) { /* is openssl bug #1467 present ? */
+		if (d->cipher_list.s==0) {
+			/* use "DEFAULT:!KRB5" */
+			cipher_list="DEFAULT:!KRB5";
+		} else {
+			/* append ":!KRB5" */
+			cipher_list=shm_malloc(d->cipher_list.len+C_NO_KRB5_SUFFIX_LEN+1);
+			if (cipher_list) {
+				memcpy(cipher_list, d->cipher_list.s, d->cipher_list.len);
+				memcpy(cipher_list+d->cipher_list.len, C_NO_KRB5_SUFFIX,
+						C_NO_KRB5_SUFFIX_LEN);
+				cipher_list[d->cipher_list.len+C_NO_KRB5_SUFFIX_LEN]=0;
+				shm_free(d->cipher_list.s);
+				d->cipher_list.s=cipher_list;
+				d->cipher_list.len+=C_NO_KRB5_SUFFIX_LEN;
+			}
+		}
+	}
+#endif /* TLS_KSSL_WORKARROUND */
+	if (!cipher_list) return 0;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if (SSL_CTX_set_cipher_list(d->ctx[i], d->cipher_list.s) == 0 ) {
-			ERR("%s: Failure to set SSL context cipher list\n", tls_domain_str(d));
+		if (SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0 ) {
+			ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
+					tls_domain_str(d), cipher_list);
 			return -1;
 		}
 	}
