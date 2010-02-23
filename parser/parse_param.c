@@ -455,11 +455,12 @@ inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t)
 		trim_leading(_s);
 
 		if (_s->len == 0) {
-			LOG(L_ERR, "parse_params(): Body missing\n");
-			goto error;
-		}
-
-		if (parse_param_body(_s, t) < 0) {
+		    /* Be forgiving and accept parameters with missing value,
+		     * we just set the body of such a parameter to an empty
+		     * string. */
+		    t->body.s = "";
+		    t->body.len = 0;
+		} else if (parse_param_body(_s, t) < 0) {
 			LOG(L_ERR, "parse_params(): Error while parsing param body\n");
 			goto error;
 		}
