@@ -187,7 +187,7 @@ modparam("userblacklist", "use_domain", 0)
 
    4.3. check_blacklist (string table)
 
-4.1. check_user_blacklist (string user, string domain, string number, string
+4.1.  check_user_blacklist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
@@ -208,7 +208,7 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)"))
 }
 ...
 
-4.2. check_user_whitelist (string user, string domain, string number, string
+4.2.  check_user_whitelist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
@@ -229,7 +229,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
 }
 ...
 
-4.3. check_blacklist (string table)
+4.3.  check_blacklist (string table)
 
    Finds the longest prefix that matches the request URI for the given
    table. If a match is found and it is not set to whitelist, false is
@@ -247,7 +247,7 @@ if (!check_blacklist("global_blacklist")))
 
    5.1. reload_blacklist
 
-5.1. reload_blacklist
+5.1.  reload_blacklist
 
    Reload the internal global blacklist cache. This is necessary after the
    database tables for the global blacklist have been changed.
@@ -399,7 +399,9 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
 
 8. globalblacklist_table (String)
 
-   Name of the globalblacklist table for the userblacklist module.
+   Name of the globalblacklist table for the userblacklist module. Please
+   not that this table is currently ignored, the table needs to be given
+   as a parameter for the check_blacklist function.
 
    Default value is "globalblacklist".
 
