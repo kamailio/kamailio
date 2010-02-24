@@ -399,7 +399,9 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
 
 8. globalblacklist_table (String)
 
-   Name of the globalblacklist table for the userblacklist module.
+   Name of the globalblacklist table for the userblacklist module. Please
+   not that this table is currently ignored, the table needs to be given
+   as a parameter for the check_blacklist function.
 
    Default value is "globalblacklist".
 
