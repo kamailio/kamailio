@@ -95,9 +95,8 @@ extern struct sl_binds slb;
 
 extern stat_var *accepted_registrations;
 extern stat_var *rejected_registrations;
-
-extern void default_expires_stats_update(str*, str*);
-extern void min_expires_stats_update(str*, str*);
-extern void max_expires_stats_update(str*, str*);
+extern stat_var *default_expires_stat;
+extern stat_var *min_expires_stat;
+extern stat_var *max_expires_stat;
 
 #endif /* REG_MOD_H */
