@@ -111,7 +111,9 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
   </section>
   <section>
     <title><varname>globalblacklist_table</varname> (String)</title>
-    <para>Name of the globalblacklist table for the userblacklist module.</para>
+    <para>Name of the globalblacklist table for the userblacklist module.
+    Please not that this table is currently ignored, the table needs to be
+    given as a parameter for the check_blacklist function.</para>
     <para>
       <emphasis>Default value is <quote>globalblacklist</quote>.</emphasis>
     </para>
