@@ -2277,12 +2277,14 @@ if_cmd:
 
 ct_rval: rval_expr {
 			$$=0;
-			if (!rve_is_constant($1)){
+			if ($1 && !rve_is_constant($1)){
 				yyerror("constant expected");
+				YYERROR;
 			/*
-			} else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
+			} else if ($1 &&
+						!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression (bad type)");
-			}else if (i_tmp!=RV_INT){
+			}else if ($1 && i_tmp!=RV_INT){
 				yyerror("invalid expression type, int expected\n");
 			*/
 			}else
@@ -2292,28 +2294,28 @@ ct_rval: rval_expr {
 single_case:
 	CASE ct_rval COLON actions {
 		$$=0;
-		if ($2==0) yyerror ("bad case label");
+		if ($2==0) { yyerror ("bad case label"); YYERROR; }
 		else if ((($$=mk_case_stm($2, 0, $4, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
 | CASE SLASH ct_rval COLON actions {
 		$$=0;
-		if ($3==0) yyerror ("bad case label");
+		if ($3==0) { yyerror ("bad case label"); YYERROR; }
 		else if ((($$=mk_case_stm($3, 1, $5, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
 	| CASE ct_rval COLON {
 		$$=0;
-		if ($2==0) yyerror ("bad case label");
+		if ($2==0) { yyerror ("bad case label"); YYERROR; }
 		else if ((($$=mk_case_stm($2, 0, 0, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
 	}
 	| CASE SLASH ct_rval COLON {
 		$$=0;
-		if ($3==0) yyerror ("bad case label");
+		if ($3==0) { yyerror ("bad regex case label"); YYERROR; }
 		else if ((($$=mk_case_stm($3, 1, 0, &i_tmp))==0) && (i_tmp==-10)){
 				YYABORT;
 		}
@@ -2328,7 +2330,10 @@ single_case:
 				YYABORT;
 		}
 	}
-	| CASE error { $$=0; yyerror("bad case label"); }
+	| CASE error COLON actions { $$=0; yyerror("bad case label"); }
+	| CASE SLASH error COLON actions { $$=0; yyerror("bad case regex label"); }
+	| CASE error COLON { $$=0; yyerror("bad case label"); }
+	| CASE SLASH error COLON { $$=0; yyerror("bad case regex label"); }
 	| CASE ct_rval COLON error { $$=0; yyerror ("bad case body"); }
 ;
 case_stms:
