@@ -336,7 +336,7 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 		switch (hf->type){
 			case HDR_ERROR_T:
 				LOG(L_INFO,"ERROR: bad header field [%.*s]\n",
-					(end-tmp>20)?20:(end-tmp), tmp);
+					(end-tmp>20)?20:(int)(end-tmp), tmp);
 				goto  error;
 			case HDR_EOH_T:
 				msg->eoh=tmp; /* or rest?*/
