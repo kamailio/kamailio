@@ -94,9 +94,17 @@
  * 2009-12-10  reply route is executed under lock to protect the avps (andrei)
  * 2010-02-22  _reply() will cleanup any reply lumps that it might have added
  *             (andrei)
+ * 2010-02-26  added experimental support for final reply dropping, not
+ *             enabled by default (performance hit) (andrei)
  *
  */
 
+ /* Defines:
+  *           TM_ONREPLY_FINAL_DROP_OK - allows dropping the final reply
+  *            from the tm onreply_routes, but comes with a small performance
+  *            hit (extra unlock()/lock() for each final reply when a onreply
+  *            route is set).
+  */
 
 #ifdef EXTRA_DEBUG
 #include <assert.h>
@@ -146,6 +154,10 @@
 #include "t_stats.h"
 #include "uac.h"
 
+
+#ifdef NO_TM_ONREPLY_FINAL_DROP_OK
+#undef TM_ONREPLY_FINAL_DROP_OK
+#endif
 
 /* private place where we create to-tags for replies */
 /* janakj: made public, I need to access this value to store it in dialogs */
@@ -1880,6 +1892,7 @@ int reply_received( struct sip_msg  *p_msg )
 	int branch;
 	/* has the transaction completed now and we need to clean-up? */
 	int reply_status;
+	int onreply_route;
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
 	struct cell *t;
@@ -1939,11 +1952,20 @@ int reply_received( struct sip_msg  *p_msg )
 			DBG("DEBUG: reply to local CANCEL processed\n");
 			goto done;
 	}
-
-
+	
+	onreply_route=t->on_reply;
 	if ( msg_status >= 200 ){
-		/* stop final response timer  & retr. only if I got a final response */
-		stop_rb_timers(&uac->request); 
+#ifdef TM_ONREPLY_FINAL_DROP_OK
+#warning Experimental tm onreply_route final reply DROP support active
+		if (onreply_route)
+			/* stop only retr., but leave the final reply timers on, in case
+			   the final reply is dropped in the on_reply route */
+			stop_rb_retr(&uac->request);
+		else
+#endif /* TM_ONREPLY_FINAL_DROP_OK */
+			/* stop final response timer  & retr. if I got a
+			   final response */
+			stop_rb_timers(&uac->request); 
 		/* acknowledge negative INVITE replies (do it before detailed
 		 * on_reply processing, which may take very long, like if it
 		 * is attempted to establish a TCP connection to a fail-over dst */
@@ -2030,7 +2052,7 @@ int reply_received( struct sip_msg  *p_msg )
 	p_msg->fwd_send_flags.blst_imask|=
 		uac->request.dst.send_flags.blst_imask & BLST_503;
 	/* processing of on_reply block */
-	if (t->on_reply) {
+	if (onreply_route) {
 		set_route_type(TM_ONREPLY_ROUTE);
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
@@ -2052,7 +2074,7 @@ int reply_received( struct sip_msg  *p_msg )
 		/* lock onreply_route, for safe avp usage */
 		LOCK_REPLIES( t );
 		replies_locked=1;
-		run_top_route(onreply_rt.rlist[t->on_reply], p_msg, &ctx);
+		run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		getbflagsval(0, &uac->branch_flags);
@@ -2070,13 +2092,36 @@ int reply_received( struct sip_msg  *p_msg )
 		/* handle a possible DROP in the script, but only if this
 		   is not a final reply (final replies already stop the timers
 		   and droping them might leave a transaction living forever) */
-		if ((ctx.run_flags&DROP_R_F)  && (msg_status<200)) {
-			if (unlikely(replies_locked)) {
+#ifdef TM_ONREPLY_FINAL_DROP_OK
+		if (unlikely(ctx.run_flags&DROP_R_F))
+#else
+		if (unlikely((ctx.run_flags&DROP_R_F) && (msg_status<200)))
+#endif /* TM_ONREPLY_FINAL_DROP_OK */
+		{
+			if (likely(replies_locked)) {
 				replies_locked = 0;
 				UNLOCK_REPLIES( t );
 			}
 			goto done;
 		}
+#ifdef TM_ONREPLY_FINAL_DROP_OK
+		if (msg_status >= 200) {
+			/* stop final reply timers, now that we executed the onreply route
+			   and the reply was not DROPed */
+			if (likely(replies_locked)){
+				/* if final reply => we have to execute stop_rb_timers, but
+				   with replies unlocked to avoid a possible deadlock
+				   (if the timer is currently running, stop_rb_timers()
+				   will wait until the timer handler ends, but the
+				   final_response_handler() will try to lock replies =>
+				   deadlock).
+				*/
+				UNLOCK_REPLIES( t );
+				replies_locked=0;
+			}
+			stop_rb_timers(&uac->request);
+	 	}
+#endif /* TM_ONREPLY_FINAL_DROP_OK */
 	}
 #ifdef USE_DST_BLACKLIST
 		/* add temporary to the blacklist the source of a 503 reply */
@@ -2129,8 +2174,10 @@ int reply_received( struct sip_msg  *p_msg )
 			}
 		}
 #endif
-	if (unlikely(!replies_locked))
+	if (unlikely(!replies_locked)){
 		LOCK_REPLIES( t );
+		replies_locked=1;
+	}
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );
 		if (reply_status == RPS_COMPLETED) {
