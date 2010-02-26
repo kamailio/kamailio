@@ -115,12 +115,16 @@ int tls_force_run = 0; /* ignore some start-up sanity checks, use it
 
 const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
 
+#ifdef NO_TLS_MALLOC_DBG
 #undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
+#endif /* NO_TLS_MALLOC_DBG */
+
 /*
  * Wrappers around SER shared memory functions
  * (which can be macros)
  */
 #ifdef TLS_MALLOC_DBG
+#warning "tls module compiled with malloc debugging info (extra overhead)"
 #include <execinfo.h>
 
 /*
