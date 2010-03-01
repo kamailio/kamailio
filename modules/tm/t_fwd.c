@@ -918,7 +918,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 			"thus lumps are not applied to the message!\n");
 		}
 		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL,
-									CANCEL_LEN, &t_invite->to);
+									CANCEL_LEN, &t_invite->to, 0);
 		if (unlikely(!shbuf)) {
 			LOG(L_ERR, "e2e_cancel_branch: printing e2e cancel failed\n");
 			ret=ser_error=E_OUT_OF_MEM;
@@ -1011,6 +1011,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			ret=cancel_branch(
 				t_invite,
 				i,
+				0,
 				cfg_get(tm,tm_cfg, cancel_b_flags)
 					| ((t_invite->uac[i].request.buffer==NULL)?
 						F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */

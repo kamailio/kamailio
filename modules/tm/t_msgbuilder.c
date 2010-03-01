@@ -46,6 +46,7 @@
  *               resolving nexthop twice (andrei)
  * 2007-05-28: build_local_reparse() is introdued: it uses the outgoing
  *             INVITE as a source to construct a CANCEL or ACK (Miklos)
+ * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
  */
 
 #include "defs.h"
@@ -72,6 +73,13 @@
 #include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
+
+/* reason building blocks (see rfc3326) */
+#define REASON_PREFIX "Reason: SIP;cause="
+#define REASON_PREFIX_LEN (sizeof(REASON_PREFIX)-1)
+#define REASON_TEXT ";text="
+#define REASON_TEXT_LEN (sizeof(REASON_TEXT)-1)
+
 /* convenience macros */
 #define memapp(_d,_s,_len) \
 	do{\
@@ -84,7 +92,8 @@
    customers of this function are local ACK and local CANCEL
  */
 char *build_local(struct cell *Trans,unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to)
+	unsigned int *len, char *method, int method_len, str *to,
+	struct cancel_reason* reason)
 {
 	char                *cancel_buf, *p, *via;
 	unsigned int         via_len;
@@ -94,6 +103,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	str branch_str;
 	str via_id;
 	struct hostport hp;
+	int reason_len, code_len;
 
 	/* init */
 	via_id.s=0;
@@ -157,7 +167,24 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		*len += user_agent_hdr.len + CRLF_LEN;
 	}
 	/* Content Length, EoM */
-	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN;
+	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
+	reason_len = 0;
+	/* compute reason size */
+	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
+		if (likely(reason->cause > 0)){
+			/* Reason: SIP;cause=<reason->cause>[;text=<reason->u.text.s>] */
+			reason_len = REASON_PREFIX_LEN + USHORT2SBUF_MAX_LEN +
+				(reason->u.text.s?
+					REASON_TEXT_LEN + 1 + reason->u.text.len + 1 : 0) +
+				CRLF_LEN;
+		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
+					reason->u.e2e_cancel) {
+			/* FIXME: TODO */
+		} else if (unlikely(reason->cause != -1))
+			BUG("unhandled reason cause %d\n", reason->cause);
+	}
+	*len+= reason_len;
+	*len+= CRLF_LEN; /* end of msg. */
 
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
@@ -197,9 +224,29 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		append_str(p, user_agent_hdr.s, user_agent_hdr.len );
 		append_str(p, CRLF, CRLF_LEN );
 	}
-	/* Content Length, EoM */
-	append_str(p, CONTENT_LENGTH "0" CRLF CRLF ,
-		CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
+	/* Content Length */
+	append_str(p, CONTENT_LENGTH "0" CRLF, CONTENT_LENGTH_LEN + 1 + CRLF_LEN);
+	/* add reason if needed */
+	if (reason_len) {
+		if (likely(reason->cause > 0)) {
+			append_str(p, REASON_PREFIX, REASON_PREFIX_LEN);
+			code_len=ushort2sbuf(reason->cause, p,
+									*len-(int)(p-cancel_buf));
+			if (unlikely(code_len==0))
+				BUG("not enough space to write reason code");
+			p+=code_len;
+			if (reason->u.text.s){
+				append_str(p, REASON_TEXT, REASON_TEXT_LEN);
+				*p='"'; p++;
+				append_str(p, reason->u.text.s, reason->u.text.len);
+				*p='"'; p++;
+			}
+			append_str(p, CRLF, CRLF_LEN);
+		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL) {
+			/* FIXME: handle cancel */
+		}
+	}
+	append_str(p, CRLF, CRLF_LEN); /* msg. end */
 	*p=0;
 
 	pkg_free(via);
@@ -217,7 +264,8 @@ error:
  * Can not be used to build other type of requests!
  */
 char *build_local_reparse(struct cell *Trans,unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to)
+	unsigned int *len, char *method, int method_len, str *to,
+	struct cancel_reason *reason)
 {
 	char	*invite_buf, *invite_buf_end;
 	char	*cancel_buf;
@@ -225,6 +273,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	short	invite_len;
 	enum _hdr_types_t	hf_type;
 	int	first_via, to_len;
+	int cancel_buf_len, reason_len, code_len;
 
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
@@ -234,9 +283,27 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 		goto error;
 	}
 	if ((*invite_buf != 'I') && (*invite_buf != 'i')) {
-		LOG(L_ERR, "ERROR: build_local_reparse: trying to call build_local_reparse() for a non-INVITE request?\n");
+		LOG(L_ERR, "ERROR: trying to call build_local_reparse()"
+					" for a non-INVITE request?\n");
 		goto error;
 	}
+	
+	reason_len = 0;
+	/* compute reason size */
+	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
+		if (likely(reason->cause > 0)){
+			/* Reason: SIP;cause=<reason->cause>[;text=<reason->u.text.s>] */
+			reason_len = REASON_PREFIX_LEN + USHORT2SBUF_MAX_LEN +
+				(reason->u.text.s?
+					REASON_TEXT_LEN + 1 + reason->u.text.len + 1 : 0) +
+				CRLF_LEN;
+		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
+					reason->u.e2e_cancel) {
+			/* FIXME: TODO */
+		} else if (unlikely(reason->cause != -1))
+			BUG("unhandled reason cause %d\n", reason->cause);
+	}
+
 	invite_buf_end = invite_buf + invite_len;
 	s = invite_buf;
 
@@ -245,10 +312,11 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	I just extend it with the length of new To HF to be sure.
 	Ugly, but we avoid lots of checks and memory allocations this way */
 	to_len = to ? to->len : 0;
-	cancel_buf = shm_malloc(sizeof(char)*(invite_len + to_len));
+	cancel_buf_len = invite_len + to_len + reason_len;
+	cancel_buf = shm_malloc(sizeof(char)*cancel_buf_len);
 	if (!cancel_buf)
 	{
-		LOG(L_ERR, "ERROR: build_local_reparse: cannot allocate shared memory\n");
+		LOG(L_ERR, "ERROR: cannot allocate shared memory\n");
 		goto error;
 	}
 	d = cancel_buf;
@@ -281,7 +349,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 			case HDR_CSEQ_T:
 				/* find the method name and replace it */
 				while ((s < invite_buf_end)
-					&& ((*s == ':') || (*s == ' ') || (*s == '\t') || ((*s >= '0') && (*s <= '9')))
+					&& ((*s == ':') || (*s == ' ') || (*s == '\t') ||
+						((*s >= '0') && (*s <= '9')))
 					) s++;
 				append_str(d, s1, s - s1);
 				append_str(d, method, method_len);
@@ -300,7 +369,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 
 			case HDR_TO_T:
 				if (to_len == 0) {
-					/* there is no To tag required, just copy paste the header */
+					/* there is no To tag required, just copy paste
+					   the header */
 					s = lw_next_line(s, invite_buf_end);
 					append_str(d, s1, s - s1);
 				} else {
@@ -336,6 +406,27 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 
 			case HDR_EOH_T:
 				/* end of SIP message found */
+				/* add reason if needed */
+				if (reason_len) {
+					if (likely(reason->cause > 0)) {
+						append_str(d, REASON_PREFIX, REASON_PREFIX_LEN);
+						code_len=ushort2sbuf(reason->cause, d,
+										cancel_buf_len-(int)(d-cancel_buf));
+						if (unlikely(code_len==0))
+							BUG("not enough space to write reason code");
+						d+=code_len;
+						if (reason->u.text.s){
+							append_str(d, REASON_TEXT, REASON_TEXT_LEN);
+							*d='"'; d++;
+							append_str(d, reason->u.text.s,
+											reason->u.text.len);
+							*d='"'; d++;
+						}
+						append_str(d, CRLF, CRLF_LEN);
+					} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL) {
+						/* FIXME: handle cancel */
+					}
+				}
 				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;
 				/* LOG(L_DBG, "DBG: build_local: %.*s\n", *len, cancel_buf); */

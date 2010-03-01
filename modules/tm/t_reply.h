@@ -64,6 +64,38 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack);
 /* branch bitmap type */
 typedef unsigned int branch_bm_t;
 
+
+#define CANCEL_REAS_UNKNOWN 0
+#define CANCEL_REAS_RCVD_CANCEL -1
+#define CANCEL_REAS_FINAL_REPLY(x) (x)
+
+/** cancel reason structure.*/
+struct cancel_reason {
+	short cause; /**< 0 = unknown, -1 =  cancel, > 0 final reply code. */
+	union{
+		str text; /**< reason text if reason is final reply .*/
+		struct sip_msg* e2e_cancel; /**< cancel msg if reason is cancel. */
+	}u;
+};
+
+struct cancel_info {
+	branch_bm_t cancel_bitmap; /**< cancel branch bitmap */
+	struct cancel_reason reason;
+};
+
+
+#define init_cancel_reason(cr) \
+	do {\
+		(cr)->cause=0; \
+		(cr)->u.e2e_cancel=0; \
+	} while(0)
+
+#define init_cancel_info(ci) \
+	do {\
+		(ci)->cancel_bitmap=0; \
+		init_cancel_reason(&(ci)->reason); \
+	}while (0);
+
 /* reply export types */
 typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
 typedef int (*treply_wb_f)( struct cell* trans,
@@ -121,10 +153,11 @@ int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
 
 
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
-	unsigned int msg_status, branch_bm_t *cancel_bitmap, int do_put_on_wait );
+	unsigned int msg_status, struct cancel_info *cancel_data,
+	int do_put_on_wait );
 
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-    unsigned int msg_status, branch_bm_t *cancel_bitmap );
+    unsigned int msg_status, struct cancel_info *cancel_data );
 
 void set_final_timer( /* struct s_table *h_table,*/ struct cell *t );
 

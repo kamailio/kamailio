@@ -96,6 +96,7 @@
  *             (andrei)
  * 2010-02-26  added experimental support for final reply dropping, not
  *             enabled by default (performance hit) (andrei)
+ * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
  *
  */
 
@@ -391,11 +392,11 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* build the ACK from the INVITE which was sent out */
 		return build_local_reparse( trans, branch, ret_len,
-					ACK, ACK_LEN, &to );
+					ACK, ACK_LEN, &to, 0 );
 	} else {
 		/* build the ACK from the reveived INVITE */
 		return build_local( trans, branch, ret_len,
-					ACK, ACK_LEN, &to );
+					ACK, ACK_LEN, &to, 0 );
 	}
 }
 
@@ -536,23 +537,23 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 {
 	struct retr_buf *rb;
 	unsigned int buf_len;
-	branch_bm_t cancel_bitmap;
+	struct cancel_info cancel_data;
 #ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
 #endif
 
+	init_cancel_info(&cancel_data);
 	if (!buf)
 	{
 		DBG("DEBUG: _reply_light: response building failed\n");
 		/* determine if there are some branches to be canceled */
 		if ( is_invite(trans) ) {
-			prepare_to_cancel(trans, &cancel_bitmap, 0);
+			prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 		}
 		/* and clean-up, including cancellations, if needed */
 		goto error;
 	}
 
-	cancel_bitmap=0;
 	if (lock) LOCK_REPLIES( trans );
 	if (trans->uas.status>=200) {
 		LOG( L_ERR, "ERROR: _reply_light: can't generate %d reply"
@@ -592,8 +593,9 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 									0, FAKED_REPLY, code);
 		cleanup_uac_timers( trans );
 		if (is_invite(trans)){
-			prepare_to_cancel(trans, &cancel_bitmap, 0);
-			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
+			prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
+			cancel_data.reason.cause=code;
+			cancel_uacs( trans, &cancel_data, F_CANCEL_B_KILL );
 		}
 		start_final_repl_retr(  trans );
 	}
@@ -642,15 +644,15 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	return 1;
 
 error3:
-	prepare_to_cancel(trans, &cancel_bitmap, 0);
+	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 error2:
 	if (lock) UNLOCK_REPLIES( trans );
 	pkg_free ( buf );
 error:
 	/* do UAC cleanup */
 	cleanup_uac_timers( trans );
-	if ( is_invite(trans) && cancel_bitmap )
-		cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL);
+	if ( is_invite(trans) && cancel_data.cancel_bitmap )
+		cancel_uacs( trans, &cancel_data, F_CANCEL_B_KILL);
 	/* we did not succeed -- put the transaction on wait */
 	put_on_wait(trans);
 	return -1;
@@ -1063,7 +1065,7 @@ static unsigned char drop_replies;
  */
 static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch , int *should_store, int *should_relay,
-	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
+	struct cancel_info *cancel_data, struct sip_msg *reply )
 {
 	int branch_cnt;
 	int picked_code;
@@ -1136,8 +1138,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 				if (!(Trans->flags & (T_6xx | T_DISABLE_6xx))){
 					/* cancel only the first time we get a 6xx and only
 					  if the 6xx handling is not disabled */
-					prepare_to_cancel(Trans, cancel_bitmap, 0);
+					prepare_to_cancel(Trans, &cancel_data->cancel_bitmap, 0);
 					Trans->flags|=T_6xx;
+					cancel_data->reason.cause=new_code;
 				}
 			}
 			return RPS_STORE;
@@ -1291,7 +1294,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->uac[branch].last_received=new_code;
 		*should_relay= new_code==100? -1 : branch;
 		if (new_code>=200 ) {
-			prepare_to_cancel( Trans, cancel_bitmap, 0);
+			prepare_to_cancel( Trans, &cancel_data->cancel_bitmap, 0);
+			cancel_data->reason.cause=new_code;
 			return RPS_COMPLETED;
 		} else return RPS_PROVISIONAL;
 	}
@@ -1534,7 +1538,8 @@ skip:
    wait timer will be started (put_on_wait(t)).
 */
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-	unsigned int msg_status, branch_bm_t *cancel_bitmap, int do_put_on_wait )
+	unsigned int msg_status, struct cancel_info *cancel_data,
+	int do_put_on_wait )
 {
 	int relay;
 	int save_clone;
@@ -1567,7 +1572,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	/* *** store and relay message as needed *** */
 	reply_status = t_should_relay_response(t, msg_status, branch,
-		&save_clone, &relay, cancel_bitmap, p_msg );
+		&save_clone, &relay, cancel_data, p_msg );
 	DBG("DEBUG: relay_reply: branch=%d, save=%d, relay=%d\n",
 		branch, save_clone, relay );
 
@@ -1778,7 +1783,8 @@ error02:
 	}
 error01:
 	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
-	*cancel_bitmap=0; /* t_reply_unsafe already canceled everything needed */
+	cancel_data->cancel_bitmap=0; /* t_reply_unsafe already canceled
+									 everything needed */
 	UNLOCK_REPLIES(t);
 	/* if (is_invite(t)) cancel_uacs( t, *cancel_bitmap, 0); 
 	 *  -- not needed, t_reply_unsafe took care of this */
@@ -1795,7 +1801,7 @@ error01:
    it is entered locked with REPLY_LOCK and it returns unlocked!
 */
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-	unsigned int msg_status, branch_bm_t *cancel_bitmap)
+	unsigned int msg_status, struct cancel_info *cancel_data)
 {
 	/* how to deal with replies for local transaction */
 	int local_store, local_winner;
@@ -1803,17 +1809,16 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	struct sip_msg *winning_msg;
 	int winning_code;
 	int totag_retr;
-	/* branch_bm_t cancel_bitmap; */
 
 	/* keep warning 'var might be used un-inited' silent */
 	winning_msg=0;
 	winning_code=0;
 	totag_retr=0;
 
-	*cancel_bitmap=0;
+	cancel_data->cancel_bitmap=0;
 
 	reply_status=t_should_relay_response( t, msg_status, branch,
-		&local_store, &local_winner, cancel_bitmap, p_msg );
+		&local_store, &local_winner, cancel_data, p_msg );
 	DBG("DEBUG: local_reply: branch=%d, save=%d, winner=%d\n",
 		branch, local_store, local_winner );
 	if (local_store) {
@@ -1862,13 +1867,14 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	return reply_status;
 
 error:
-	prepare_to_cancel(t, cancel_bitmap, 0);
+	prepare_to_cancel(t, &cancel_data->cancel_bitmap, 0);
 	UNLOCK_REPLIES(t);
 	cleanup_uac_timers(t);
 	if (p_msg && p_msg!=FAKED_REPLY && get_cseq(p_msg)->method.len==INVITE_LEN
-		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0)
-		cancel_uacs( t, *cancel_bitmap, F_CANCEL_B_KILL);
-	*cancel_bitmap=0; /* we've already took care of everything */
+		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0){
+		cancel_uacs( t, cancel_data, F_CANCEL_B_KILL);
+	}
+	cancel_data->cancel_bitmap=0; /* we've already took care of everything */
 	put_on_wait(t);
 	return RPS_ERROR;
 }
@@ -1893,7 +1899,7 @@ int reply_received( struct sip_msg  *p_msg )
 	/* has the transaction completed now and we need to clean-up? */
 	int reply_status;
 	int onreply_route;
-	branch_bm_t cancel_bitmap;
+	struct cancel_info cancel_data;
 	struct ua_client *uac;
 	struct cell *t;
 	struct dest_info  lack_dst;
@@ -1928,7 +1934,7 @@ int reply_received( struct sip_msg  *p_msg )
 	if (unlikely(branch==T_BR_UNDEFINED))
 		BUG("invalid branch, please report to sr-dev@sip-router.org\n");
 	tm_ctx_set_branch_index(branch);
-	cancel_bitmap=0;
+	init_cancel_info(&cancel_data);
 	msg_status=p_msg->REPLY_STATUS;
 	replies_locked=0;
 
@@ -2035,7 +2041,7 @@ int reply_received( struct sip_msg  *p_msg )
 				 * if BUSY or set just exit, a cancel will be (or was) sent 
 				 * shortly on this branch */
 				DBG("tm: reply_received: branch CANCEL created\n");
-				cancel_branch(t, branch, F_CANCEL_B_FORCE_C);
+				cancel_branch(t, branch, 0, F_CANCEL_B_FORCE_C);
 			}
 			goto done; /* nothing to do */
 		}
@@ -2179,24 +2185,24 @@ int reply_received( struct sip_msg  *p_msg )
 		replies_locked=1;
 	}
 	if ( is_local(t) ) {
-		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );
+		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_data );
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 			      * be still pending branches ...
 			      */
 			cleanup_uac_timers( t );
-			if (is_invite(t)) cancel_uacs(t, cancel_bitmap, F_CANCEL_B_KILL);
+			if (is_invite(t)) cancel_uacs(t, &cancel_data, F_CANCEL_B_KILL);
 			/* There is no need to call set_final_timer because we know
 			 * that the transaction is local */
 			put_on_wait(t);
-		}else if (cancel_bitmap){
+		}else if (unlikely(cancel_data.cancel_bitmap)){
 			/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
 			 * cancel_b_method for canceling unreplied branches */
-			cancel_uacs(t, cancel_bitmap, cfg_get(tm,tm_cfg, cancel_b_flags));
+			cancel_uacs(t, &cancel_data, cfg_get(tm,tm_cfg, cancel_b_flags));
 		}
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
-									&cancel_bitmap, 1 );
+									&cancel_data, 1 );
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
@@ -2204,16 +2210,16 @@ int reply_received( struct sip_msg  *p_msg )
 			cleanup_uac_timers( t );
 			/* 2xx is a special case: we can have a COMPLETED request
 			 * with branches still open => we have to cancel them */
-			if (is_invite(t) && cancel_bitmap) 
-				cancel_uacs( t, cancel_bitmap,  F_CANCEL_B_KILL);
+			if (is_invite(t) && cancel_data.cancel_bitmap) 
+				cancel_uacs( t, &cancel_data,  F_CANCEL_B_KILL);
 			/* FR for negative INVITES, WAIT anything else */
 			/* Call to set_final_timer is embedded in relay_reply to avoid
 			 * race conditions when reply is sent out and an ACK to stop
 			 * retransmissions comes before retransmission timer is set.*/
-		}else if (cancel_bitmap){
+		}else if (unlikely(cancel_data.cancel_bitmap)){
 			/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
 			 * cancel_b_method for canceling unreplied branches */
-			cancel_uacs(t, cancel_bitmap, cfg_get(tm,tm_cfg, cancel_b_flags));
+			cancel_uacs(t, &cancel_data, cfg_get(tm,tm_cfg, cancel_b_flags));
 		}
 	}
 	uac->request.flags|=F_RB_REPLIED;
