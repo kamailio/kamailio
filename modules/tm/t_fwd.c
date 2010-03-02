@@ -951,13 +951,15 @@ error:
 
 
 
-void e2e_cancel( struct sip_msg *cancel_msg, 
+void e2e_cancel( struct sip_msg *cancel_msg,
 	struct cell *t_cancel, struct cell *t_invite )
 {
 	branch_bm_t cancel_bm;
 #ifndef E2E_CANCEL_HOP_BY_HOP
 	branch_bm_t tmp_bm;
-#endif
+#else /* def E2E_CANCEL_HOP_BY_HOP */
+	struct cancel_reason reason;
+#endif /* E2E_CANCEL_HOP_BY_HOP */
 	int i;
 	int lowest_error;
 	int ret;
@@ -1002,6 +1004,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	 * have 0 branches and we check for the branch number in 
 	 * t_reply_matching() ).
 	 */
+	init_cancel_reason(&reason);
+	reason.cause=CANCEL_REAS_RCVD_CANCEL;
+	reason.u.e2e_cancel=cancel_msg;
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
 		if (cancel_bm & (1<<i)) {
 			/* it's safe to get the reply lock since e2e_cancel is
@@ -1011,7 +1016,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			ret=cancel_branch(
 				t_invite,
 				i,
-				0,
+				&reason,
 				cfg_get(tm,tm_cfg, cancel_b_flags)
 					| ((t_invite->uac[i].request.buffer==NULL)?
 						F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */

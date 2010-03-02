@@ -104,6 +104,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	str via_id;
 	struct hostport hp;
 	int reason_len, code_len;
+	struct hdr_field *reas1, *reas_last;
 
 	/* init */
 	via_id.s=0;
@@ -169,6 +170,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	/* Content Length, EoM */
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
 	reason_len = 0;
+	reas1 = 0;
 	/* compute reason size */
 	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
 		if (likely(reason->cause > 0)){
@@ -179,7 +181,14 @@ char *build_local(struct cell *Trans,unsigned int branch,
 				CRLF_LEN;
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
 					reason->u.e2e_cancel) {
-			/* FIXME: TODO */
+			/* parse the entire cancel, to get all the Reason headers */
+			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
+			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
+					hdr; hdr=next_sibling_hdr(hdr)) {
+				/* hdr->len includes CRLF */
+				reason_len += hdr->len;
+				reas_last=hdr;
+			}
 		} else if (unlikely(reason->cause != -1))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
@@ -243,7 +252,12 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			}
 			append_str(p, CRLF, CRLF_LEN);
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL) {
-			/* FIXME: handle cancel */
+			for(hdr=reas1; hdr; hdr=next_sibling_hdr(hdr)) {
+				/* hdr->len includes CRLF */
+				append_str(p, hdr->name.s, hdr->len);
+				if (likely(hdr==reas_last))
+					break;
+			}
 		}
 	}
 	append_str(p, CRLF, CRLF_LEN); /* msg. end */
@@ -274,6 +288,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	enum _hdr_types_t	hf_type;
 	int	first_via, to_len;
 	int cancel_buf_len, reason_len, code_len;
+	struct hdr_field *reas1, *reas_last, *hdr;
 
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
@@ -289,6 +304,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	}
 	
 	reason_len = 0;
+	reas1 = 0;
 	/* compute reason size */
 	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
 		if (likely(reason->cause > 0)){
@@ -299,7 +315,14 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				CRLF_LEN;
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
 					reason->u.e2e_cancel) {
-			/* FIXME: TODO */
+			/* parse the entire cancel, to get all the Reason headers */
+			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
+			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
+					hdr; hdr=next_sibling_hdr(hdr)) {
+				/* hdr->len includes CRLF */
+				reason_len += hdr->len;
+				reas_last=hdr;
+			}
 		} else if (unlikely(reason->cause != -1))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
@@ -424,9 +447,15 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 						}
 						append_str(d, CRLF, CRLF_LEN);
 					} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL) {
-						/* FIXME: handle cancel */
+						for(hdr=reas1; hdr; hdr=next_sibling_hdr(hdr)) {
+							/* hdr->len includes CRLF */
+							append_str(d, hdr->name.s, hdr->len);
+							if (likely(hdr==reas_last))
+								break;
+						}
 					}
 				}
+				/* final (end-of-headers) CRLF */
 				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;
 				/* LOG(L_DBG, "DBG: build_local: %.*s\n", *len, cancel_buf); */

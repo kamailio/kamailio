@@ -2035,12 +2035,15 @@ int reply_received( struct sip_msg  *p_msg )
 				SEND_BUFFER( &uac->local_cancel );
 #endif
 				/* retrs. should be already started so do nothing */
-			}else if (atomic_cmpxchg_long((void*)&uac->local_cancel.buffer, 0, 
+			}else if (atomic_cmpxchg_long((void*)&uac->local_cancel.buffer, 0,
 										(long)BUSY_BUFFER)==0){
 				/* try to rebuild it if empty (not set or marked as BUSY).
 				 * if BUSY or set just exit, a cancel will be (or was) sent 
 				 * shortly on this branch */
 				DBG("tm: reply_received: branch CANCEL created\n");
+				/* note that in this case we do not know the reason
+				   (it could be a final reply or a received cancel)
+				   and we don't want to wait for it => no reason */
 				cancel_branch(t, branch, 0, F_CANCEL_B_FORCE_C);
 			}
 			goto done; /* nothing to do */
