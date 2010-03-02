@@ -456,9 +456,8 @@ inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t)
 
 		if (_s->len == 0) {
 		    /* Be forgiving and accept parameters with missing value,
-		     * we just set the body of such a parameter to an empty
-		     * string. */
-		    t->body.s = "";
+		     * we just set the length of parameter body to 0. */
+		    t->body.s = _s->s;
 		    t->body.len = 0;
 		} else if (parse_param_body(_s, t) < 0) {
 			LOG(L_ERR, "parse_params(): Error while parsing param body\n");
