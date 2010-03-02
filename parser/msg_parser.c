@@ -364,7 +364,8 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_WWW_AUTHENTICATE_T:
 			case HDR_PROXY_AUTHENTICATE_T:
 			case HDR_RETRY_AFTER_T:
-			case HDR_OTHER_T: /*do nothing*/
+			case HDR_OTHER_T: /* mark the type as found/parsed*/
+				msg->parsed_flag|=HDR_T2F(hf->type);
 				break;
 			case HDR_CALLID_T:
 				if (msg->callid==0) msg->callid=hf;
@@ -830,9 +831,10 @@ struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
 {
 	struct hdr_field *hdr;
 
-	for(hdr = msg->headers; hdr; hdr = hdr->next) {
-		if(hdr->type == ht) return hdr;
-	}
+	if (msg->parsed_flag & HDR_T2F(ht))
+		for(hdr = msg->headers; hdr; hdr = hdr->next) {
+			if(hdr->type == ht) return hdr;
+		}
 	return NULL;
 }
 
