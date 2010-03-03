@@ -1,6 +1,6 @@
-/** uri parser test program. */
+/** to/from body parser test program. */
 /* compile with:
-    gcc -Wall p_uri.c   -o p_uri -DFAST_LOCK -D__CPU_i386 */
+    gcc -Wall parse_to_body.c -o parse_to_body -DFAST_LOCK -D__CPU_i386 */
 #include <stdio.h>
 #include <stdlib.h> /* exit() */
 #include <string.h>
@@ -9,7 +9,7 @@
 
 /* ser compat defs */
 #define EXTRA_DEBUG
-#include "../parser/parse_uri.c"
+#include "../parser/parse_to.c"
 #include "../dprint.c"
 
 
@@ -86,17 +86,31 @@ int main (int argc, char** argv)
 {
 
 	int r;
-	struct sip_uri uri;
+	struct to_body to_b;
+	struct to_param *p;
 
 	if (argc<2){
-		printf("usage:    %s  uri [, uri...]\n", argv[0]);
+		printf("usage:    %s  to_body [, to_body...]\n", argv[0]);
 		exit(1);
 	}
 	
 	for (r=1; r<argc; r++){
-		if (parse_uri(argv[r], strlen(argv[r]), &uri)<0){
+		/*memset(&to_b, 0, sizeof(to_b));*/
+		if (parse_to(argv[r], argv[r]+strlen(argv[r]), &to_b)==0 ||
+				to_b.error!=1){
 			printf("error: parsing %s\n", argv[r]);
+			continue;
 		}
+		printf("body:    [%.*s]\n", to_b.body.len, to_b.body.s);
+		printf("uri:     [%.*s]\n", to_b.uri.len, to_b.uri.s);
+		printf("display: [%.*s]\n", to_b.display.len, to_b.display.s);
+		printf("tag:     [%.*s]\n\n", to_b.tag_value.len, to_b.tag_value.s);
+		for (p=to_b.param_lst; p; p=p->next){
+			printf("	param type: %d\n", p->type);
+			printf("	param name: [%.*s]\n", p->name.len, p->name.s);
+			printf("	param value: [%.*s]\n\n", p->value.len, p->value.s);
+		}
+		printf("\n");
 	}
 	return 0;
 }
