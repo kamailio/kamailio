@@ -642,6 +642,9 @@ static inline int str2sint(str* _s, int* _r)
 	return 0;
 }
 
+
+
+#ifdef SHM_MEM
 /**
  * \brief Make a copy of a str structure using shm_malloc
  * \param dst destination
@@ -660,6 +663,9 @@ static inline int shm_str_dup(str* dst, const str* src)
 	dst->len = src->len;
 	return 0;
 }
+#endif /* SHM_MEM */
+
+
 
 /**
  * \brief Make a copy of a str structure using pkg_malloc
