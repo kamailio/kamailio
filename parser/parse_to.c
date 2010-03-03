@@ -22,12 +22,12 @@
  * History:
  * ---------
  * 2003-04-26 ZSW (jiri)
+ * 2010-03-03  fix multi-token no-quotes display name (andrei)
  */
 
-/*! \file
- * \brief Parser :: Parse To: header
- *
- * \ingroup parser
+/** Parser :: Parse To: header.
+ * @file
+ * @ingroup parser
  */
 
 #include "parse_to.h"
@@ -41,7 +41,7 @@
 
 enum {
 	START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN,
-	S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED,
+	DISPLAY_TOKEN_SP, S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED,
 	URI_OR_TOKEN, MAYBE_URI_END, END, F_CR, F_LF, F_CRLF
 };
 
@@ -532,6 +532,10 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	to_b->uri.s= 0;
 	to_b->display.len = 0;
 	to_b->display.s = 0;
+	to_b->tag_value.len = 0;
+	to_b->tag_value.s = 0;
+	to_b->param_lst = 0;
+	to_b->last_param = 0;
 	foo=0;
 
 	for( tmp=buffer; tmp<end; tmp++)
@@ -556,6 +560,10 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						foo = tmp;
 						status = MAYBE_URI_END;
 						break;
+					case DISPLAY_TOKEN:
+						foo = tmp;
+						status = DISPLAY_TOKEN_SP;
+						break;
 				}
 				break;
 			case '\n':
@@ -565,10 +573,15 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						foo = tmp;
 						status = MAYBE_URI_END;
 					case MAYBE_URI_END:
-					case DISPLAY_TOKEN:
+					case DISPLAY_TOKEN_SP:
 					case E_DISPLAY_QUOTED:
 					case END:
 						saved_status=status;
+						status=F_LF;
+						break;
+					case DISPLAY_TOKEN:
+						foo=tmp;
+						saved_status=DISPLAY_TOKEN_SP;
 						status=F_LF;
 						break;
 					case F_CR:
@@ -592,10 +605,15 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						foo = tmp;
 						status = MAYBE_URI_END;
 					case MAYBE_URI_END:
-					case DISPLAY_TOKEN:
+					case DISPLAY_TOKEN_SP:
 					case E_DISPLAY_QUOTED:
 					case END:
 						saved_status=status;
+						status=F_CR;
+						break;
+					case DISPLAY_TOKEN:
+						foo=tmp;
+						saved_status=DISPLAY_TOKEN_SP;
 						status=F_CR;
 						break;
 					case F_CRLF:
@@ -652,10 +670,13 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						status = S_URI_ENCLOSED;
 						break;
 					case URI_OR_TOKEN:
-					case DISPLAY_TOKEN: 
+					case DISPLAY_TOKEN:
+						to_b->display.len=tmp-to_b->display.s;
+						status = S_URI_ENCLOSED;
+						break;
+					case DISPLAY_TOKEN_SP:
 					case MAYBE_URI_END:
-						/* deal with the incorrect displayname<uri>.. */
-						to_b->display.len=(foo?foo:tmp)-to_b->display.s;
+						to_b->display.len=foo-to_b->display.s;
 						status = S_URI_ENCLOSED;
 						break;
 					case F_CRLF:
@@ -756,6 +777,7 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						status=URI_ENCLOSED;
 						break;
 					case MAYBE_URI_END:
+					case DISPLAY_TOKEN_SP:
 						status = DISPLAY_TOKEN;
 					case DISPLAY_QUOTED:
 					case DISPLAY_TOKEN:
