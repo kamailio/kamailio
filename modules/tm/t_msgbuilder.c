@@ -171,16 +171,18 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
 	reason_len = 0;
 	reas1 = 0;
-	/* compute reason size */
+	/* compute reason size (if no reason or disabled => reason_len == 0)*/
 	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
-		if (likely(reason->cause > 0)){
+		if (likely(reason->cause > 0 &&
+					cfg_get(tm, tm_cfg, local_cancel_reason))){
 			/* Reason: SIP;cause=<reason->cause>[;text=<reason->u.text.s>] */
 			reason_len = REASON_PREFIX_LEN + USHORT2SBUF_MAX_LEN +
 				(reason->u.text.s?
 					REASON_TEXT_LEN + 1 + reason->u.text.len + 1 : 0) +
 				CRLF_LEN;
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
-					reason->u.e2e_cancel) {
+					reason->u.e2e_cancel &&
+					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
 			/* parse the entire cancel, to get all the Reason headers */
 			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
 			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
@@ -189,7 +191,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 				reason_len += hdr->len;
 				reas_last=hdr;
 			}
-		} else if (unlikely(reason->cause != -1))
+		} else if (unlikely(reason->cause < -1))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
 	*len+= reason_len;
@@ -305,16 +307,18 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	
 	reason_len = 0;
 	reas1 = 0;
-	/* compute reason size */
+	/* compute reason size (if no reason or disabled => reason_len == 0)*/
 	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
-		if (likely(reason->cause > 0)){
+		if (likely(reason->cause > 0 &&
+					cfg_get(tm, tm_cfg, local_cancel_reason))){
 			/* Reason: SIP;cause=<reason->cause>[;text=<reason->u.text.s>] */
 			reason_len = REASON_PREFIX_LEN + USHORT2SBUF_MAX_LEN +
 				(reason->u.text.s?
 					REASON_TEXT_LEN + 1 + reason->u.text.len + 1 : 0) +
 				CRLF_LEN;
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
-					reason->u.e2e_cancel) {
+					reason->u.e2e_cancel &&
+					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
 			/* parse the entire cancel, to get all the Reason headers */
 			parse_headers(reason->u.e2e_cancel, HDR_EOH_F, 0);
 			for(hdr=get_hdr(reason->u.e2e_cancel, HDR_REASON_T), reas1=hdr;
@@ -323,7 +327,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				reason_len += hdr->len;
 				reas_last=hdr;
 			}
-		} else if (unlikely(reason->cause != -1))
+		} else if (unlikely(reason->cause < -1))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
 
@@ -431,6 +435,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				/* end of SIP message found */
 				/* add reason if needed */
 				if (reason_len) {
+					/* if reason_len !=0, no need for any reason enabled
+					   checks */
 					if (likely(reason->cause > 0)) {
 						append_str(d, REASON_PREFIX, REASON_PREFIX_LEN);
 						code_len=ushort2sbuf(reason->cause, d,

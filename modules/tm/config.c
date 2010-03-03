@@ -24,10 +24,9 @@
  *  2008-02-05	adapting tm module for the configuration framework (Miklos)
  */
 
-/*!
- * \file 
- * \brief TM :: Configuration
- * \ingroup tm
+/** TM :: Runtime configuration variables.
+ * @file
+ * @ingroup tm
  */
 
 
@@ -94,7 +93,11 @@ struct cfg_group_tm	default_tm_cfg = {
 	1,	/* cancel_b_method used for e2e and 6xx cancels*/
 	1,	/* reparse_on_dns_failover */
 	0, /* disable_6xx, by default off */
-	0  /* local_ack_mode, default 0 (rfc3261 conformant) */
+	0,  /* local_ack_mode, default 0 (rfc3261 conformant) */
+	1, /* local_cancel_reason -- add Reason header to locally generated
+		  CANCELs; on by default */
+	1  /* e2e_cancel_reason -- copy the Reason headers from incoming CANCELs
+		  into the corresp. hop-by-hop CANCELs, on by default */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -196,5 +199,11 @@ cfg_def_t	tm_cfg_def[] = {
 		" it is not set to 0 but allows dealing with NATed contacts in some "
 		"simple cases)"
 		},
+	{"local_cancel_reason",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"if set to 1, a Reason header is added to locally generated CANCELs"
+		" (see RFC3326)" },
+	{"e2e_cancel_reason",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"if set to 1, Reason headers from received CANCELs are copied into"
+		" the corresponding generated hop-by-hop CANCELs"},
 	{0, 0, 0, 0, 0, 0}
 };

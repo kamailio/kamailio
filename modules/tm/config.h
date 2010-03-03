@@ -21,10 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*!
- * \file 
- * \brief TM :: Configuration
- * \ingroup tm
+/** TM :: Runtime configuration variables.
+ * @file
+ * @ingroup tm
  */
 
 
@@ -136,6 +135,8 @@ struct cfg_group_tm {
 	int	reparse_on_dns_failover;
 	int disable_6xx;
 	int local_ack_mode;
+	int local_cancel_reason;
+	int e2e_cancel_reason;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;

@@ -40,10 +40,9 @@
  *              inlined often used functions (andrei)
  */
 
-/*!
- * \file 
- * \brief TM :: 
- * \ingroup tm
+/**  TM :: hash table, flags and other general defines.
+ * @file 
+ * @ingroup tm
  */
 
 
@@ -281,6 +280,7 @@ struct totag_elem {
 
 #define T_DISABLE_6xx (1<<8) /* treat 6xx as a normal reply */
 #define T_DISABLE_FAILOVER (1<<9) /* don't perform dns failover */
+#define T_NO_E2E_CANCEL_REASON (1<<10) /* don't propagate CANCEL Reason */
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
