@@ -84,8 +84,8 @@ $ &sercmd; ps
 	</para>
 	<para>
 		The binrpc encoding format is fully documented inside
-		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/ctl/binrpc.h' >
-		modules_s/ctl/binrpc.h</ulink>.
+		<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/ctl/binrpc.h' >
+		modules/ctl/binrpc.h</ulink>.
 	</para>
 	</section>
 

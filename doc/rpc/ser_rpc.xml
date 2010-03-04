@@ -31,11 +31,11 @@
 	<para>
 		The RPC transports are implemented by writting a RPC
 		transport module. The most used transport modules are
-		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules_s/ctl/ctl.html'>
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules/ctl/ctl.html'>
 		<emphasis>ctl</emphasis>
 		</ulink>
 		and
-		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules_s/xmlrpc/xmlrpc.html'>
+		<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules/xmlrpc/xmlrpc.html'>
 		<emphasis>xmlrpc</emphasis>
 		</ulink>.
 		The first one implements a ser-proprietary fast and space efficient
@@ -881,7 +881,7 @@ static void rpc_register(rpc_t* rpc)
 <section id="rpc.xmlrpc_examples">
 	<title>Examples using xmlrpc</title>
 	<para>See the <varname>xmlrpc</varname> module documentation:
-	<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules_s/xmlrpc/xmlrpc.html'>modules_s/xmlrpc/README</ulink>.
+	<ulink url='http://sip-router.org/docbook/sip-router/branch/master/modules/xmlrpc/xmlrpc.html'>modules/xmlrpc/README</ulink>.
 	</para>
 </section>
 

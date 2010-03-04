@@ -610,4 +610,4 @@ cessing */
 
 1.5. Examples using xmlrpc
 
-   See the xmlrpc module documentation: modules_s/xmlrpc/README.
+   See the xmlrpc module documentation: modules/xmlrpc/README.

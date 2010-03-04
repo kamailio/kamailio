@@ -67,7 +67,7 @@ $ sercmd ps
    very fast to parse (as opposed to XML-rpc).
 
    The binrpc encoding format is fully documented inside
-   modules_s/ctl/binrpc.h.
+   modules/ctl/binrpc.h.
 
 1.3. Parameters
 

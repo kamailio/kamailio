@@ -670,7 +670,7 @@ Content-Length: 276
 		make ser close the tcp connection after each request.
 		</para>
 		<para>
-		The <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/examples/xmlrpc_test.py'>
+		The <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/xmlrpc/examples/xmlrpc_test.py'>
 		examples/xmlrpc_test.py
 		</ulink> provides a very simple example of using xmlrpclib with a
 		Transport class that works.
@@ -728,14 +728,14 @@ route[XMLRPC]{
 	<para>
 	<itemizedlist>
 		<listitem><para>
-			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/examples/xmlrpc_test.pl'>
+			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/xmlrpc/examples/xmlrpc_test.pl'>
 			<emphasis>examples/xmlrpc_test.pl</emphasis>
 			</ulink> (basic perl application that builds and sends an
 			<emphasis>XMLRPC</emphasis> request from its commandline
 			parameters).
 		</para></listitem>
 		<listitem><para>
-			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/xmlrpc/examples/xmlrpc_test.py'>
+			<ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules/xmlrpc/examples/xmlrpc_test.py'>
 			<emphasis>examples/xmlrpc_test.py</emphasis>
 			</ulink> (basic python application that builds and sends an
 			<emphasis>XMLRPC</emphasis> request from its commandline
