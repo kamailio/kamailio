@@ -565,7 +565,7 @@ int find_group_in_subnet_table(struct subnet* table,
 
     i = 0;
     while (i < count) {
-	subnet = ip_addr << table[i].mask;
+	subnet = htonl(ntohl(ip_addr) >> table[i].mask);
 	if ((table[i].subnet == subnet) &&
 	    ((table[i].port == port) || (table[i].port == 0)))
 	    return table[i].grp;
