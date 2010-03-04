@@ -184,6 +184,7 @@ $(docbook_output_dir)/select_list.xml: \
 	@echo "			$(MAKE) -C doc/select_list $(MAKECMDGOALS)" >>$@
 	@echo '		</revremark>' >>$@
 	@echo '	</revision></revhistory></info>' >>$@
+	@echo '		<xi:include href="intro.xml"/>' >>$@
 	@$(foreach f,$(flist),\
 		echo '		<xi:include'\
 			'href="'$(call get_target,$f).xml'"/>' \
