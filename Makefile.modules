@@ -16,6 +16,8 @@
 #              inside modules or libs) (andrei)
 #  2009-10-01  added support for automatically installing extra utils,
 #               scripts and cfg files (andrei)
+#  2010-03-04  don't overwrite already installed .cfgs, save the .cfg as
+#              .sample in this case (andrei)
 #
 
 #
@@ -209,10 +211,17 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 	@for r in $(MOD_INSTALL_CFGS) ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
+				n=`basename "$$r"` ; \
 				$(call try_err, $(INSTALL_TOUCH) \
-					$(cfg_prefix)/$(cfg_dir)/`basename "$$r"` ); \
+					"$(cfg_prefix)/$(cfg_dir)/$$n.sample" ); \
 				$(call try_err,\
-					$(INSTALL_CFG)  "$$r"  $(cfg_prefix)/$(cfg_dir) ); \
+					$(INSTALL_CFG)  "$$r"  \
+						"$(cfg_prefix)/$(cfg_dir)/$$n.sample"); \
+				if [ -z "${skip_cfg_install}" -a \
+						! -f "$(cfg_prefix)/$(cfg_dir)$$n" ]; then \
+					mv -f $(cfg_prefix)/$(cfg_dir)$$n.sample \
+						$(cfg_prefix)/$(cfg_dir)$$n; \
+				fi ; \
 			else \
 				echo "ERROR: $$r not found" ; \
 				if [ ${err_fail} = 1 ] ; then \
