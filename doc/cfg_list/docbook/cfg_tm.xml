@@ -54,6 +54,18 @@
     </para>
 </section>
 
+<section id="tm.fr_inv_timer_next">
+    <title>tm.fr_inv_timer_next</title>
+    <para>
+        The value [ms] of fr_inv_timer for subsequent branches during
+        serial forking..
+    </para>
+    <para>Default value: 30000.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 <section id="tm.wt_timer">
     <title>tm.wt_timer</title>
     <para>
@@ -372,18 +384,6 @@
     </para>
 </section>
 
-<section id="tm.fr_inv_timer_next">
-    <title>tm.fr_inv_timer_next</title>
-    <para>
-        The value of fr_inv_timer for subsequent branches during serial
-        forking.
-    </para>
-    <para>Default value: 30000.</para>
-    <para>Type: integer.</para>
-    <para>
-    </para>
-</section>
-
 <section id="tm.disable_6xx_block">
     <title>tm.disable_6xx_block</title>
     <para>
@@ -391,6 +391,22 @@
     </para>
     <para>Default value: 0.</para>
     <para>Range: 0 - 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="tm.local_ack_mode">
+    <title>tm.local_ack_mode</title>
+    <para>
+        if set to 1 or 2, local 200 ACKs are sent to the same address
+        as the corresponding INVITE (1) or the source of the 200 reply
+        (2) instead of using the contact and the route set (it breaks
+        the rfc, if  it is not set to 0 but allows dealing with NATed
+        contacts in some simple cases).
+    </para>
+    <para>Default value: 0.</para>
+    <para>Range: 0 - 2.</para>
     <para>Type: integer.</para>
     <para>
     </para>

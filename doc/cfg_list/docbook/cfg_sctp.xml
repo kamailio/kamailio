@@ -158,7 +158,7 @@
     <para>
         max INIT retransmission timeout (RTO max for INIT), in msecs.
     </para>
-    <para>Range: 0 - 1024.</para>
+    <para>Range: 0 - 1073741824.</para>
     <para>Type: integer.</para>
     <para>
     </para>
@@ -169,6 +169,7 @@
     <para>
         heartbeat interval in msecs.
     </para>
+    <para>Range: 0 - 1073741824.</para>
     <para>Type: integer.</para>
     <para>
     </para>

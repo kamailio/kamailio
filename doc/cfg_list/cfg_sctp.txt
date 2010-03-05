@@ -73,11 +73,12 @@ Configuration Variables for sctp
 
 14. sctp.init_max_timeo
         max INIT retransmission timeout (RTO max for INIT), in msecs.
-        Range: 0 - 1024.
+        Range: 0 - 1073741824.
         Type: integer.
 
 15. sctp.hbinterval
         heartbeat interval in msecs.
+        Range: 0 - 1073741824.
         Type: integer.
 
 16. sctp.pathmaxrxt

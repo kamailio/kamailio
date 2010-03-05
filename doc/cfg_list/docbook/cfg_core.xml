@@ -75,6 +75,50 @@
     </para>
 </section>
 
+<section id="core.dst_blacklist_udp_imask">
+    <title>core.dst_blacklist_udp_imask</title>
+    <para>
+        blacklist event ignore mask for UDP.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.dst_blacklist_tcp_imask">
+    <title>core.dst_blacklist_tcp_imask</title>
+    <para>
+        blacklist event ignore mask for TCP.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.dst_blacklist_tls_imask">
+    <title>core.dst_blacklist_tls_imask</title>
+    <para>
+        blacklist event ignore mask for TLS.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.dst_blacklist_sctp_imask">
+    <title>core.dst_blacklist_sctp_imask</title>
+    <para>
+        blacklist event ignore mask for SCTP.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 <section id="core.dns_try_ipv6">
     <title>core.dns_try_ipv6</title>
     <para>
