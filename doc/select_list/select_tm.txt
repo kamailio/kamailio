@@ -8,15 +8,19 @@ Selects for tm
   2. @tm.method
   3. @tm.uas.status
   4. @tm.uas.request
-  5. @tm.uas.req
-  6. @tm.uas.local_to_tag
-  7. @tm.uas.response
-  8. @tm.uas.resp
-  9. @tm.uac.count
- 10. @tm.uac.relayed
- 11. @tm.uac[integer].status
- 12. @tm.uac[integer].uri
- 13. @tm.uac[integer].response
- 14. @tm.uac[integer].resp
- 15. @tm.uac[integer].request
- 16. @tm.uac[integer].req
+  5. @tm.uas.request.neg_ack_retransmission
+  6. @tm.uas.req
+  7. @tm.uas.req.neg_ack_retransmission
+  8. @tm.uas.local_to_tag
+  9. @tm.uas.response
+ 10. @tm.uas.resp
+ 11. @tm.uac.count
+ 12. @tm.uac.relayed
+ 13. @tm.uac.last_status
+ 14. @tm.uac.response_retransmission
+ 15. @tm.uac[integer].status
+ 16. @tm.uac[integer].uri
+ 17. @tm.uac[integer].response
+ 18. @tm.uac[integer].resp
+ 19. @tm.uac[integer].request
+ 20. @tm.uac[integer].req

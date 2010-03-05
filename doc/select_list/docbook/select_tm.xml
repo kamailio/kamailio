@@ -19,7 +19,13 @@
 	<listitem>@tm.uas.request
 	</listitem>
 
+	<listitem>@tm.uas.request.neg_ack_retransmission
+	</listitem>
+
 	<listitem>@tm.uas.req
+	</listitem>
+
+	<listitem>@tm.uas.req.neg_ack_retransmission
 	</listitem>
 
 	<listitem>@tm.uas.local_to_tag
@@ -35,6 +41,12 @@
 	</listitem>
 
 	<listitem>@tm.uac.relayed
+	</listitem>
+
+	<listitem>@tm.uac.last_status
+	</listitem>
+
+	<listitem>@tm.uac.response_retransmission
 	</listitem>
 
 	<listitem>@tm.uac[integer].status
