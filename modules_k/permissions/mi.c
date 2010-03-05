@@ -116,7 +116,7 @@ struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
     rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
     if (rpl_tree==NULL) return 0;
     
-    if(subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
+    if(subnet_table && subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
 	LM_ERR("failed to add a node\n");
 	free_mi_tree(rpl_tree);
 	return 0;
