@@ -18,7 +18,10 @@ docbook_output_dir=docbook
 files_list=$(COREPATH)/cfg_core.c:core $(COREPATH)/tcp_options.c:tcp \
 			$(COREPATH)/sctp_options.c:sctp \
 			$(COREPATH)/modules_s/maxfwd/maxfwd.c:maxfwd \
-			$(COREPATH)/modules/tm/config.c:tm
+			$(COREPATH)/modules/tm/config.c:tm \
+			$(COREPATH)/modules_k/siputils/config.c:siputils \
+			$(COREPATH)/modules_k/registrar/config.c:registrar \
+			$(COREPATH)/modules_k/ratelimit/config.c:ratelimit
 
 # list of excluded groups
 grp_exclude=pa
