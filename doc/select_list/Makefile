@@ -1,0 +1,230 @@
+
+COREPATH=../..
+
+#include $(COREPATH)/Makefile.defs
+
+CFG2TXT=../scripts/cdefs2doc/dump_selects.pl
+CFG2DOCBOOK=../scripts/cdefs2doc/dump_selects.pl
+
+# extra generators options
+# use select_core.c to resolve possible chained select
+CFG2TXT_EXTRA_OPTS=--core $(COREPATH)/select_core.c
+CFG2DOCBOOK_EXTRA_OPTS=--core $(COREPATH)/select_core.c
+
+# output directory for generated txt files
+txt_output_dir=.
+# output directory for generated docbook xml files
+docbook_output_dir=docbook
+
+# list of files contanining selects defs in the following format:
+# <filename>:<sel_grp_name> 
+# can be easily filled/updated by pasting the output of:
+#  make print-lst |sed  -e 's!^ \?../..\(.*\)!$(COREPATH)\1 \\!'
+files_list=$(COREPATH)/select_core.c:core \
+	$(COREPATH)/modules_s/timer/timer.c:timer \
+	$(COREPATH)/modules_s/nathelper/nathelper.c:nathelper \
+	$(COREPATH)/modules_s/eval/eval.c:eval \
+	$(COREPATH)/modules_s/rr/rr_mod.c:rr \
+	$(COREPATH)/modules_s/textops/textops.c:textops \
+	$(COREPATH)/modules_s/avp/avp.c:avp \
+	$(COREPATH)/modules_s/db_ops/db_ops.c:db_ops \
+	$(COREPATH)/modules/tm/select.c:tm \
+	$(COREPATH)/modules/tls/tls_select.c:tls \
+	$(COREPATH)/modules/xmlrpc/xmlrpc.c:xmlrpc \
+	$(COREPATH)/modules/iptrtpproxy/iptrtpproxy.c:iptrtpproxy
+
+# list of excluded groups
+grp_exclude=pa iptrtpproxy
+# list of file prefixes to exclude (full path needed)
+file_exclude= $(COREPATH)/modules_s/tls/ \
+              $(COREPATH)/modules/iptrtpproxy/
+
+# special per file group overrides
+# format= grp_filename=... ,where filename does not contain the extension
+# e.g.:
+#     grp_f_tcp_options=tcp
+#     grp_f_sctp_options=sctp
+
+# special per group group name overrides
+# e.g.:
+#      grp_g_maxfwd=mf
+
+# override auto-detected group if set to 1 (else the group is used inside the
+# file only if it cannot be aut-odetected)
+ifeq ($(group_override),1)
+override force_grp=force-
+else
+override force_grp=
+endif
+
+# command used for gcc (contains extra includes)
+gcc=gcc -I$(COREPATH)/lib -I/usr/include/libxml2
+
+#filtered files list
+flist=$(subst .h:,.c:, $(filter-out $(addsuffix %,$(file_exclude)),\
+			$(filter-out $(addprefix %:,$(grp_exclude)),$(files_list)) ) )
+
+# throws an error if input is not in the format filename:grp
+check_fname_grp=$(if $(filter-out 2,$(words $(subst :, ,$(1)))),\
+					$(error bad format "$(1)", it should be filename:grp))
+
+# get prereq from file:grp (get_prereq(file:grp) => file)
+get_prereq=$(firstword $(subst :, ,$(1)))
+
+# get grp from file:grp (get_grp(file:grp) => grp)
+get_listed_grp=$(word 2, $(subst :, ,$(1)))
+
+# get base file name from file:grp: get_bname(file:grp) 
+# => basename(file) without extension (e.g. get_bname(foo/bar.c:x) => bar)
+# 
+get_bname=$(basename $(notdir $(call get_prereq,$(1))))
+
+#get grp from file:grp, using the overrides
+get_grp=$(strip $(if $(grp_f_$(call get_bname,$(1))), \
+					$(grp_f_$(call get_bname,$(1))),\
+					$(if $(grp_g_$(call get_listed_grp,$(1))),\
+						$(grp_g_$(call get_listed_grp,$(1))),\
+						$(call get_listed_grp,$(1))) ) )
+
+# get target from file:grp (get_target(file:grp) => select_grp)
+get_target=select_$(call get_grp,$(1))
+
+define  mk_rules
+
+$(call check_fname_grp, $(1))
+
+#$$(info generating select_$$(call get_grp,$(1)).txt: $$(call get_prereq,$(1)))
+
+$(txt_output_dir)/$$(call get_target,$(1)).txt: \
+								$$(call get_prereq,$(1)) Makefile $(CFG2TXT)
+	$(CFG2TXT) --file $$< --$(force_grp)grp=$$(call get_grp,$(1)) \
+		--gcc="$(gcc)" --txt $(CFG2TXT_EXTRA_OPTS) > "$$@" || \
+		(rm -f "$$@"; exit 1)
+
+$(docbook_output_dir)/$$(call get_target,$(1)).xml: \
+								$$(call get_prereq,$(1)) Makefile $(CFG2TXT)
+	$(CFG2DOCBOOK) --file $$< --$(force_grp)grp=$$(call get_grp,$(1)) \
+		--gcc="$(gcc)" --docbook $(CFG2DOCBOOK_EXTRA_OPTS) > "$$@" || \
+		(rm -f "$$@"; exit 1)
+
+
+clean_$$(call get_target,$(1)).txt:
+	rm -f "$(txt_output_dir)/$$(call get_target,$(1)).txt"
+
+clean_$$(call get_target,$(1)).xml:
+	rm -f "$(docbook_output_dir)/$$(call get_target,$(1)).xml"
+
+txt: $(txt_output_dir)/$$(call get_target,$(1)).txt
+
+docbook: $(docbook_output_dir)/$$(call get_target,$(1)).xml
+
+clean_txt: clean_$$(call get_target,$(1)).txt
+
+clean_docbook: clean_$$(call get_target,$(1)).xml
+
+
+endef
+
+
+# help will be the default rule (on-purpose since without having a patched
+# GCC:TranslationUnit module, make all won't work)
+.PHONY: help
+help:
+	@echo "To regenerate $(foreach f,$(flist),$(call get_target,$f).{txt,xml})"
+	@echo "type: $(MAKE) all ."
+	@echo "or to regenerate all the select lists by searching all"
+	@echo " the source files for definitions, type: $(MAKE) autogen ."
+	@echo "NOTE: you need the GCC:TranslationUnit perl module with an "
+	@echo "extra patch applied (see $(CFG2TXT) --patch)."
+
+.PHONY: txt
+txt:
+
+.PHONY: docbook
+docbook:
+
+.PHONY: clean_txt
+clean_txt:
+
+.PHONY: clean_docbook
+clean_docbook:
+
+
+.PHONY: all
+all: txt $(docbook_output_dir)/select_list.xml
+
+.PHONY: clean
+clean: clean_txt clean_docbook
+	@rm -f $(docbook_output_dir)/select_list.xml
+
+.PHONY: proper
+proper:
+	@rm -f $(txt_output_dir)/select_*.txt
+	@rm -f $(docbook_output_dir)/select_*.xml
+
+repo_ver="sip-router"\
+	"git-$(shell  git rev-parse --verify --short=6 HEAD 2>/dev/null)"
+ifeq ($(repo_ver),git-)
+repo_ver="sip-router unknown"
+endif
+
+$(docbook_output_dir)/select_list.xml: \
+		$(foreach f,$(flist),$(docbook_output_dir)/$(call get_target,$f).xml)
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' >$@
+	@echo '<!-- this file is autogenerated, do not edit! -->' >>$@
+	@echo '<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"' >>$@
+	@echo '	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">' >>$@
+	@echo '<book id="select_list"'\
+		'xmlns:xi="http://www.w3.org/2001/XInclude">' >>$@
+	@echo '	<title>Select List</title>' >>$@
+	@echo '	<info><revhistory><revision>' >>$@
+	@echo '		<revnumber>'$(repo_ver)'</revnumber>' >>$@
+	@echo '		<revremark>' >>$@
+	@echo "			Automatically generated by:">>$@
+	@echo "			$(MAKE) -C doc/select_list $(MAKECMDGOALS)" >>$@
+	@echo '		</revremark>' >>$@
+	@echo '	</revision></revhistory></info>' >>$@
+	@echo '		<xi:include href="intro.xml"/>' >>$@
+	@$(foreach f,$(flist),\
+		echo '		<xi:include'\
+			'href="'$(call get_target,$f).xml'"/>' \
+			>>$@ ; )
+	@echo '</book>' >>$@
+
+find_sel_files_cmd= find $(COREPATH) -type f -name "*.[ch]" \
+		-exec grep "select_row_t[	 ][a-zA-Z0-9_][a-zA-Z0-9_]*\[\][	 ]*=" \
+		/dev/null {} \; \
+		| cut -d: -f1
+
+# shell command to generate a file:grp list from a list of files
+# grp will be the modulename if the file is in a module directory or
+# the file name with the extension and _sel, sel_, select_, _select,
+# _declaration or _table # stripped out of it.
+# output: list of  " "filename":"grpname
+gen_file_grp_cmd=\
+sed -e "s!\(.*/modules[^/]*/\([^/][^/]*\)/.*\)! \1:\2!" \
+    -e "s!^\([^ ].*/\([^/.]*\)[^/]*$$\)!\1:\2!" \
+    -e "s!^\([^ :]*\):\(.*\)_select[_]*!\1:\2!" \
+    -e "s!^\([^ :]*\):\(.*\)select[_]*!\1:\2!" \
+    -e "s!^\([^ :]*\):\(.*\)_declaration[_]*!\1:\2!" \
+    -e "s!^\([^ :]*\):\(.*\)_table[_]*!\1:\2!" \
+    -e "s!^\([^ :]*\):\(.*\)_sel[_]*!:\1:\2!" \
+    -e "s!^\([^ :]*\):\(.*\)sel[_]*!\1:\2!"
+
+# finds all the files containing select defs
+.PHONY: find
+find:
+	@$(find_sel_files_cmd)
+
+# print the list of the autogenerated files
+.PHONY: print-lst
+print-lst:
+	@$(find_sel_files_cmd) | $(gen_file_grp_cmd)
+
+# try to generate the docs from all the sources
+.PHONY: autogen
+autogen:
+	LST=`$(find_sel_files_cmd)| $(gen_file_grp_cmd) | xargs echo` && \
+	[ -n "$$LST" ] && $(MAKE) all files_list="$$LST"
+
+$(foreach f,$(flist),$(eval $(call mk_rules,$(f))))

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<chapter id="Select_Intro">
+	<title>Introduction and Notations</title>
+	<section id="Intro">
+	<title>Introduction</title>
+	<para>Selects are read-only functions that can be used in the script and
+	that always return a string value. In the script a select always starts
+	with a &apos;<emphasis>@</emphasis>&apos;. In an expression context a
+	select always evaluates to either a string or undef.
+	</para>
+	<para>For more informations see
+		<ulink url=' http://sip-router.org/wiki/cookbooks/selects/devel'>
+			http://sip-router.org/wiki/cookbooks/selects/devel</ulink>.
+	</para>
+	<para>This document lists all the selects implemented by each module.
+	</para>
+	</section>
+	<section id="Notations">
+	<title>Notations</title>
+	<para>The following notations are used:
+	<orderedlist>
+	<listitem>@  - all selects always start with '@'. </listitem>
+	<listitem>&quot;string&quot; - string type.</listitem>
+	<listitem>integer - integer type.</listitem>
+	<listitem>[] - Parameter markers. Can be either [integer] or
+		[&quot;string&quot;].
+		Note that instead of [&quot;string&quot;] one could write .string,
+		e.g.:
+		@foo.bar[&quot;string&quot;] is equivalent to @foo.bar.string.
+	</listitem>
+	<listitem>{} - denotes an optional parameter.
+		E.g.: @ruri.params{[&quot;string&quot;]} means you could use
+		@ruri.params by itself or you could specify an extra parameter:
+		@ruri.params[&quot;trasnport&quot;] or @ruri.params.transport.
+	</listitem>
+	<listitem>&lt;string&gt; - means the next member is not fixed and can
+		take any string value (it is a string parameter).
+		It is equivalent with [&quot;string&quot;], e.g.:
+		@msg.header.&lt;string&gt; is the same as
+		@msg.header[&quot;string&quot;].
+		It is used only to expose an internal implementation detail
+		(SEL_PARAM_* vs. CONSUME_NEXT_*), but from the script writer point
+		of view it is the same thing.
+	</listitem>
+	<listitem>.* - means the select can be followed by a variable number of
+		string parameters.
+		E.g.: @cfg_get.*  means that @cfg_get.core.version is a valid usage.
+	</listitem>
+	<listitem>* (without a &apos;.&apos; in front) - it means the last member
+		might be a class that might expand further (but the
+		&quot;expansion&quot; is not defined in the same module).
+		E.g. @foo.nameaddr* means that nameaddr is most likely
+		a class that expands further
+		(for example into @foo.nameaddr.uri a.s.o).
+	</listitem>
+	</orderedlist>
+	</para>
+	</section>
+</chapter>
