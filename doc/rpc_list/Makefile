@@ -17,9 +17,7 @@ docbook_output_dir=docbook
 #  make print-lst |sed  -e 's!^ \?../..\(.*\)!$(COREPATH)\1 \\!'
 files_list= $(COREPATH)/core_cmd.c:core \
 	$(COREPATH)/modules_s/pdt/pdt.c:pdt \
-	$(COREPATH)/modules_s/rls/rpc.c:rls \
 	$(COREPATH)/modules_s/pike/rpc.c:pike \
-	$(COREPATH)/modules_s/tls/tls_rpc.c:tls \
 	$(COREPATH)/modules_s/presence_b2b/rpc.c:presence_b2b \
 	$(COREPATH)/modules_s/gflags/gflags.c:gflags \
 	$(COREPATH)/modules_s/dispatcher/ds_rpc.c:dispatcher \
@@ -27,22 +25,27 @@ files_list= $(COREPATH)/core_cmd.c:core \
 	$(COREPATH)/modules_s/domain/domain_rpc.c:domain \
 	$(COREPATH)/modules_s/cpl-c/cpl_rpc.c:cpl-c \
 	$(COREPATH)/modules_s/sl/sl_stats.c:sl \
-	$(COREPATH)/modules_s/usrloc/ul_rpc.c:usrloc \
-	$(COREPATH)/modules_s/pa/rpc.c:pa \
+	$(COREPATH)/modules_s/usrloc/ul_rpc.c:usrloc_s \
 	$(COREPATH)/modules_s/ratelimit/ratelimit.c:ratelimit \
 	$(COREPATH)/modules/tm/tm.c:tm \
 	$(COREPATH)/modules/tls/tls_rpc.c:tls \
 	$(COREPATH)/modules/lcr/lcr_rpc.c:lcr \
+	$(COREPATH)/modules/debugger/debugger_api.c:debugger \
 	$(COREPATH)/modules/ctl/ctl.c:ctl \
 	$(COREPATH)/modules/cfg_rpc/cfg_rpc.c:cfg_rpc \
 	$(COREPATH)/modules/db_flatstore/flat_rpc.c:db_flatstore \
-	$(COREPATH)/modules/mi_rpc/mi_rpc_mod.c:mi_rpc
+	$(COREPATH)/modules/mi_rpc/mi_rpc_mod.c:mi_rpc \
+	$(COREPATH)/modules_k/htable/htable.c:htable \
+	$(COREPATH)/modules_k/usrloc/ul_rpc.c:usrloc_k \
+	$(COREPATH)/modules_k/uac/uac_reg.c:uac
 
 
 # list of excluded groups
 grp_exclude=pa
 # list of file prefixes to exclude (full path needed)
-file_exclude=$(COREPATH)/modules_s/tls/
+file_exclude=$(COREPATH)/modules_s/tls/ \
+				$(COREPATH)/obsolete/pa/ \
+				$(COREPATH)/obsolete/rls/
 
 # special per file group overrides
 # format= grp_filename=... ,where filename does not contain the extension
