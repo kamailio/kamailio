@@ -48,7 +48,10 @@ RPC Exports for core
         Sends the given signal to SER.
 
 13. core.shmmem
-        Returns shared memory info.
+        Returns shared memory info. It has an optional parameter that
+        specifies the measuring unit: b - bytes (default), k or kb, m
+        or mb, g or gb. Note: when using something different from
+        bytes, the value is truncated.
 
 14. core.tcp_info
         Returns tcp related info.
@@ -57,7 +60,12 @@ RPC Exports for core
         Returns active tcp options.
 
 16. core.sctp_options
-        Returns active sctp options.
+        Returns active sctp options. With one parameter it returns the
+        sctp options set in the kernel for a specific
+        socket(debugging), with 0 filled in for non-kernel related
+        options. The parameter can be: "default" | "first" |
+        address[:port] . With no parameters it returns ser's idea of
+        the current sctp options (intended non-debugging use).
 
 17. core.sctp_info
         Returns sctp related info.

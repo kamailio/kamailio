@@ -113,7 +113,10 @@ RPC Exports for core
 
 <section id="core.shmmem"><title>core.shmmem</title>
 <para>
-        Returns shared memory info.
+        Returns shared memory info. It has an optional parameter that
+        specifies the measuring unit: b - bytes (default), k or kb, m
+        or mb, g or gb. Note: when using something different from
+        bytes, the value is truncated.
 </para>
 <para>
 </para>
@@ -137,7 +140,13 @@ RPC Exports for core
 
 <section id="core.sctp_options"><title>core.sctp_options</title>
 <para>
-        Returns active sctp options.
+        Returns active sctp options. With one parameter it returns the
+        sctp options set in the kernel for a specific
+        socket(debugging), with 0 filled in for non-kernel related
+        options. The parameter can be: &quot;default&quot; |
+        &quot;first&quot; | address[:port] . With no parameters it
+        returns ser&apos;s idea of the current sctp options (intended
+        non-debugging use).
 </para>
 <para>
 </para>
