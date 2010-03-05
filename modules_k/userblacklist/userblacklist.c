@@ -74,10 +74,12 @@ struct check_blacklist_fs_t {
 
 str userblacklist_db_url = str_init(DEFAULT_RODB_URL);
 static int use_domain   = 0;
+static struct dtrie_node_t *gnode = NULL;
 
 /* ---- fixup functions: */
 static int check_blacklist_fixup(void** param, int param_no);
 static int check_user_blacklist_fixup(void** param, int param_no);
+static int check_globalblacklist_fixup(void** param, int param_no);
 
 /* ---- exported commands: */
 static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
@@ -87,6 +89,8 @@ static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2);
 static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
 static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
 static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
+static int check_globalblacklist(struct sip_msg *msg);
+
 
 /* ---- module init functions: */
 static int mod_init(void);
@@ -106,6 +110,7 @@ static cmd_export_t cmds[]={
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blacklist", (cmd_function)check_globalblacklist, 0, check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -401,6 +406,48 @@ static int add_source(const char *table)
 }
 
 
+static int check_globalblacklist_fixup(void** param, int param_no)
+{
+	char * table = globalblacklist_table.s;
+	if(param_no > 0){
+		LM_ERR("Wrong number of parameters\n");
+		return -1;
+	}
+
+	if (!table) {
+		LM_ERR("no table name\n");
+		return -1;
+	}
+	/* try to add the table */
+	if (add_source(table) != 0) {
+		LM_ERR("could not add table");
+		return -1;
+	}
+
+	gnode = table2dt(table);
+	if (!gnode) {
+		LM_ERR("invalid table '%s'\n", table);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int check_globalblacklist(struct sip_msg* msg)
+{
+	static struct check_blacklist_fs_t* arg = NULL;
+	if(!arg){
+		arg = pkg_malloc(sizeof(struct check_blacklist_fs_t));
+		if (!arg) {
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		memset(arg, 0, sizeof(struct check_blacklist_fs_t));
+		arg->dtrie_root = gnode;
+	}
+	return check_blacklist(msg, arg);
+}
+
 static int check_blacklist_fixup(void **arg, int arg_no)
 {
 	char *table = (char *)(*arg);
@@ -451,11 +498,6 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 
 	if (msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("SIP msg is not a request\n");
-		return -1;
-	}
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		LM_ERR("cannot parse msg URI\n");
 		return -1;
 	}
 

@@ -152,12 +152,13 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">check_blacklist (string table)</function>
+		<function moreinfo="none">check_blacklist ([string table])</function>
 	    </title>
 	    <para>
 		Finds the longest prefix that matches the request URI for the
 		given table. If a match is found and it is not set to whitelist,
-		false is returned. Otherwise, true is returned.
+		false is returned. Otherwise, true is returned. If no table is given, 
+		then globalblacklist_table is used.
 	    </para>
 	<example>
 		<title><function>check_blacklist</function> usage</title>
