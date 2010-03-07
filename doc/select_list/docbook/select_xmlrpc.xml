@@ -7,7 +7,7 @@
 	<orderedlist>
 
 
-	<listitem>@xmlrpc.method
+	<listitem><simpara>@xmlrpc.method</simpara>
 	</listitem>
 
 	</orderedlist>

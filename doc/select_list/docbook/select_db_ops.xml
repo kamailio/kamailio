@@ -7,352 +7,352 @@
 	<orderedlist>
 
 
-	<listitem>@db.query[&quot;string&quot;]
+	<listitem><simpara>@db.query[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].is_empty
+	<listitem><simpara>@db.query[&quot;string&quot;].is_empty</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].count
+	<listitem><simpara>@db.query[&quot;string&quot;].count</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.name
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.type
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.user
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.rn_user
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.pwd
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.host
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.port
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.hostport
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.uri.transport
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.type
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.user
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.rn_user
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.pwd
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.host
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.port
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.hostport
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].uri.transport
+	<listitem><simpara>@db.query[&quot;string&quot;].uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer]
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer]</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.name
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.type
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.user
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.rn_user
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.pwd
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.host
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.port
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.hostport
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.transport
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.type
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.user
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.rn_user
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.pwd
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.host
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.port
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.hostport
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].field[integer].uri.transport
+	<listitem><simpara>@db.query[&quot;string&quot;].field[integer].uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer]
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer]</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer]
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer]</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.name
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.type
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.user
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.rn_user
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.pwd
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.host
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.port
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.hostport
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.transport
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.type
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.user
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.rn_user
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.pwd
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.host
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.port
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.hostport
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.query[&quot;string&quot;].row[integer].field[integer].uri.transport
+	<listitem><simpara>@db.query[&quot;string&quot;].row[integer].field[integer].uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;]
+	<listitem><simpara>@db.fetch[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.name
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.type
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.rn_user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.pwd
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.host
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.port
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.hostport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.uri.transport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.fetch[&quot;string&quot;].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.type
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.rn_user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.pwd
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.host
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.port
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.hostport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].uri.transport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].row_no
+	<listitem><simpara>@db.fetch[&quot;string&quot;].row_no</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].count
+	<listitem><simpara>@db.fetch[&quot;string&quot;].count</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].is_empty
+	<listitem><simpara>@db.fetch[&quot;string&quot;].is_empty</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer]
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer]</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.name
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.type
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.rn_user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.pwd
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.host
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.port
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.hostport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.transport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.type
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.type</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.rn_user
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.pwd
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.host
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.host</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.port
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.port</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.hostport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@db.fetch[&quot;string&quot;].field[integer].uri.transport
+	<listitem><simpara>@db.fetch[&quot;string&quot;].field[integer].uri.transport</simpara>
 	</listitem>
 
 	</orderedlist>

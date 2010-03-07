@@ -7,64 +7,64 @@
 	<orderedlist>
 
 
-	<listitem>@tm
+	<listitem><simpara>@tm</simpara>
 	</listitem>
 
-	<listitem>@tm.method
+	<listitem><simpara>@tm.method</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.status
+	<listitem><simpara>@tm.uas.status</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.request
+	<listitem><simpara>@tm.uas.request</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.request.neg_ack_retransmission
+	<listitem><simpara>@tm.uas.request.neg_ack_retransmission</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.req
+	<listitem><simpara>@tm.uas.req</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.req.neg_ack_retransmission
+	<listitem><simpara>@tm.uas.req.neg_ack_retransmission</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.local_to_tag
+	<listitem><simpara>@tm.uas.local_to_tag</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.response
+	<listitem><simpara>@tm.uas.response</simpara>
 	</listitem>
 
-	<listitem>@tm.uas.resp
+	<listitem><simpara>@tm.uas.resp</simpara>
 	</listitem>
 
-	<listitem>@tm.uac.count
+	<listitem><simpara>@tm.uac.count</simpara>
 	</listitem>
 
-	<listitem>@tm.uac.relayed
+	<listitem><simpara>@tm.uac.relayed</simpara>
 	</listitem>
 
-	<listitem>@tm.uac.last_status
+	<listitem><simpara>@tm.uac.last_status</simpara>
 	</listitem>
 
-	<listitem>@tm.uac.response_retransmission
+	<listitem><simpara>@tm.uac.response_retransmission</simpara>
 	</listitem>
 
-	<listitem>@tm.uac[integer].status
+	<listitem><simpara>@tm.uac[integer].status</simpara>
 	</listitem>
 
-	<listitem>@tm.uac[integer].uri
+	<listitem><simpara>@tm.uac[integer].uri</simpara>
 	</listitem>
 
-	<listitem>@tm.uac[integer].response
+	<listitem><simpara>@tm.uac[integer].response</simpara>
 	</listitem>
 
-	<listitem>@tm.uac[integer].resp
+	<listitem><simpara>@tm.uac[integer].resp</simpara>
 	</listitem>
 
-	<listitem>@tm.uac[integer].request
+	<listitem><simpara>@tm.uac[integer].request</simpara>
 	</listitem>
 
-	<listitem>@tm.uac[integer].req
+	<listitem><simpara>@tm.uac[integer].req</simpara>
 	</listitem>
 
 	</orderedlist>

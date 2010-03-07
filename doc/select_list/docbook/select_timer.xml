@@ -7,10 +7,10 @@
 	<orderedlist>
 
 
-	<listitem>@timer.timer[&quot;string&quot;].enabled
+	<listitem><simpara>@timer.timer[&quot;string&quot;].enabled</simpara>
 	</listitem>
 
-	<listitem>@timer.executed
+	<listitem><simpara>@timer.executed</simpara>
 	</listitem>
 
 	</orderedlist>

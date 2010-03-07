@@ -7,1471 +7,1471 @@
 	<orderedlist>
 
 
-	<listitem>@ruri
+	<listitem><simpara>@ruri</simpara>
 	</listitem>
 
-	<listitem>@ruri.type
+	<listitem><simpara>@ruri.type</simpara>
 	</listitem>
 
-	<listitem>@ruri.user
+	<listitem><simpara>@ruri.user</simpara>
 	</listitem>
 
-	<listitem>@ruri.rn_user
+	<listitem><simpara>@ruri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@ruri.pwd
+	<listitem><simpara>@ruri.pwd</simpara>
 	</listitem>
 
-	<listitem>@ruri.host
+	<listitem><simpara>@ruri.host</simpara>
 	</listitem>
 
-	<listitem>@ruri.port
+	<listitem><simpara>@ruri.port</simpara>
 	</listitem>
 
-	<listitem>@ruri.params{[&quot;string&quot;]}
+	<listitem><simpara>@ruri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@ruri.hostport
+	<listitem><simpara>@ruri.hostport</simpara>
 	</listitem>
 
-	<listitem>@ruri.transport
+	<listitem><simpara>@ruri.transport</simpara>
 	</listitem>
 
-	<listitem>@request_uri
+	<listitem><simpara>@request_uri</simpara>
 	</listitem>
 
-	<listitem>@request_uri.type
+	<listitem><simpara>@request_uri.type</simpara>
 	</listitem>
 
-	<listitem>@request_uri.user
+	<listitem><simpara>@request_uri.user</simpara>
 	</listitem>
 
-	<listitem>@request_uri.rn_user
+	<listitem><simpara>@request_uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@request_uri.pwd
+	<listitem><simpara>@request_uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@request_uri.host
+	<listitem><simpara>@request_uri.host</simpara>
 	</listitem>
 
-	<listitem>@request_uri.port
+	<listitem><simpara>@request_uri.port</simpara>
 	</listitem>
 
-	<listitem>@request_uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@request_uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@request_uri.hostport
+	<listitem><simpara>@request_uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@request_uri.transport
+	<listitem><simpara>@request_uri.transport</simpara>
 	</listitem>
 
-	<listitem>@dst_uri
+	<listitem><simpara>@dst_uri</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.type
+	<listitem><simpara>@dst_uri.type</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.user
+	<listitem><simpara>@dst_uri.user</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.rn_user
+	<listitem><simpara>@dst_uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.pwd
+	<listitem><simpara>@dst_uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.host
+	<listitem><simpara>@dst_uri.host</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.port
+	<listitem><simpara>@dst_uri.port</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@dst_uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.hostport
+	<listitem><simpara>@dst_uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@dst_uri.transport
+	<listitem><simpara>@dst_uri.transport</simpara>
 	</listitem>
 
-	<listitem>@next_hop
+	<listitem><simpara>@next_hop</simpara>
 	</listitem>
 
-	<listitem>@next_hop.src_ip
+	<listitem><simpara>@next_hop.src_ip</simpara>
 	</listitem>
 
-	<listitem>@next_hop.type
+	<listitem><simpara>@next_hop.type</simpara>
 	</listitem>
 
-	<listitem>@next_hop.user
+	<listitem><simpara>@next_hop.user</simpara>
 	</listitem>
 
-	<listitem>@next_hop.rn_user
+	<listitem><simpara>@next_hop.rn_user</simpara>
 	</listitem>
 
-	<listitem>@next_hop.pwd
+	<listitem><simpara>@next_hop.pwd</simpara>
 	</listitem>
 
-	<listitem>@next_hop.host
+	<listitem><simpara>@next_hop.host</simpara>
 	</listitem>
 
-	<listitem>@next_hop.port
+	<listitem><simpara>@next_hop.port</simpara>
 	</listitem>
 
-	<listitem>@next_hop.params{[&quot;string&quot;]}
+	<listitem><simpara>@next_hop.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@next_hop.hostport
+	<listitem><simpara>@next_hop.hostport</simpara>
 	</listitem>
 
-	<listitem>@next_hop.transport
+	<listitem><simpara>@next_hop.transport</simpara>
 	</listitem>
 
-	<listitem>@from
+	<listitem><simpara>@from</simpara>
 	</listitem>
 
-	<listitem>@from.uri
+	<listitem><simpara>@from.uri</simpara>
 	</listitem>
 
-	<listitem>@from.uri.type
+	<listitem><simpara>@from.uri.type</simpara>
 	</listitem>
 
-	<listitem>@from.uri.user
+	<listitem><simpara>@from.uri.user</simpara>
 	</listitem>
 
-	<listitem>@from.uri.rn_user
+	<listitem><simpara>@from.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@from.uri.pwd
+	<listitem><simpara>@from.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@from.uri.host
+	<listitem><simpara>@from.uri.host</simpara>
 	</listitem>
 
-	<listitem>@from.uri.port
+	<listitem><simpara>@from.uri.port</simpara>
 	</listitem>
 
-	<listitem>@from.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@from.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@from.uri.hostport
+	<listitem><simpara>@from.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@from.uri.transport
+	<listitem><simpara>@from.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@from.tag
+	<listitem><simpara>@from.tag</simpara>
 	</listitem>
 
-	<listitem>@from.name
+	<listitem><simpara>@from.name</simpara>
 	</listitem>
 
-	<listitem>@from.params[&quot;string&quot;]
+	<listitem><simpara>@from.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@f
+	<listitem><simpara>@f</simpara>
 	</listitem>
 
-	<listitem>@f.uri
+	<listitem><simpara>@f.uri</simpara>
 	</listitem>
 
-	<listitem>@f.uri.type
+	<listitem><simpara>@f.uri.type</simpara>
 	</listitem>
 
-	<listitem>@f.uri.user
+	<listitem><simpara>@f.uri.user</simpara>
 	</listitem>
 
-	<listitem>@f.uri.rn_user
+	<listitem><simpara>@f.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@f.uri.pwd
+	<listitem><simpara>@f.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@f.uri.host
+	<listitem><simpara>@f.uri.host</simpara>
 	</listitem>
 
-	<listitem>@f.uri.port
+	<listitem><simpara>@f.uri.port</simpara>
 	</listitem>
 
-	<listitem>@f.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@f.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@f.uri.hostport
+	<listitem><simpara>@f.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@f.uri.transport
+	<listitem><simpara>@f.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@f.tag
+	<listitem><simpara>@f.tag</simpara>
 	</listitem>
 
-	<listitem>@f.name
+	<listitem><simpara>@f.name</simpara>
 	</listitem>
 
-	<listitem>@f.params[&quot;string&quot;]
+	<listitem><simpara>@f.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@to
+	<listitem><simpara>@to</simpara>
 	</listitem>
 
-	<listitem>@to.uri
+	<listitem><simpara>@to.uri</simpara>
 	</listitem>
 
-	<listitem>@to.uri.type
+	<listitem><simpara>@to.uri.type</simpara>
 	</listitem>
 
-	<listitem>@to.uri.user
+	<listitem><simpara>@to.uri.user</simpara>
 	</listitem>
 
-	<listitem>@to.uri.rn_user
+	<listitem><simpara>@to.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@to.uri.pwd
+	<listitem><simpara>@to.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@to.uri.host
+	<listitem><simpara>@to.uri.host</simpara>
 	</listitem>
 
-	<listitem>@to.uri.port
+	<listitem><simpara>@to.uri.port</simpara>
 	</listitem>
 
-	<listitem>@to.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@to.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@to.uri.hostport
+	<listitem><simpara>@to.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@to.uri.transport
+	<listitem><simpara>@to.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@to.tag
+	<listitem><simpara>@to.tag</simpara>
 	</listitem>
 
-	<listitem>@to.name
+	<listitem><simpara>@to.name</simpara>
 	</listitem>
 
-	<listitem>@to.params[&quot;string&quot;]
+	<listitem><simpara>@to.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@t
+	<listitem><simpara>@t</simpara>
 	</listitem>
 
-	<listitem>@t.uri
+	<listitem><simpara>@t.uri</simpara>
 	</listitem>
 
-	<listitem>@t.uri.type
+	<listitem><simpara>@t.uri.type</simpara>
 	</listitem>
 
-	<listitem>@t.uri.user
+	<listitem><simpara>@t.uri.user</simpara>
 	</listitem>
 
-	<listitem>@t.uri.rn_user
+	<listitem><simpara>@t.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@t.uri.pwd
+	<listitem><simpara>@t.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@t.uri.host
+	<listitem><simpara>@t.uri.host</simpara>
 	</listitem>
 
-	<listitem>@t.uri.port
+	<listitem><simpara>@t.uri.port</simpara>
 	</listitem>
 
-	<listitem>@t.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@t.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@t.uri.hostport
+	<listitem><simpara>@t.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@t.uri.transport
+	<listitem><simpara>@t.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@t.tag
+	<listitem><simpara>@t.tag</simpara>
 	</listitem>
 
-	<listitem>@t.name
+	<listitem><simpara>@t.name</simpara>
 	</listitem>
 
-	<listitem>@t.params[&quot;string&quot;]
+	<listitem><simpara>@t.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@refer_to
+	<listitem><simpara>@refer_to</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri
+	<listitem><simpara>@refer_to.uri</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.type
+	<listitem><simpara>@refer_to.uri.type</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.user
+	<listitem><simpara>@refer_to.uri.user</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.rn_user
+	<listitem><simpara>@refer_to.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.pwd
+	<listitem><simpara>@refer_to.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.host
+	<listitem><simpara>@refer_to.uri.host</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.port
+	<listitem><simpara>@refer_to.uri.port</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@refer_to.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.hostport
+	<listitem><simpara>@refer_to.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@refer_to.uri.transport
+	<listitem><simpara>@refer_to.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@refer_to.tag
+	<listitem><simpara>@refer_to.tag</simpara>
 	</listitem>
 
-	<listitem>@refer_to.name
+	<listitem><simpara>@refer_to.name</simpara>
 	</listitem>
 
-	<listitem>@refer_to.params[&quot;string&quot;]
+	<listitem><simpara>@refer_to.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id
+	<listitem><simpara>@remote_party_id</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri
+	<listitem><simpara>@remote_party_id.uri</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.type
+	<listitem><simpara>@remote_party_id.uri.type</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.user
+	<listitem><simpara>@remote_party_id.uri.user</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.rn_user
+	<listitem><simpara>@remote_party_id.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.pwd
+	<listitem><simpara>@remote_party_id.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.host
+	<listitem><simpara>@remote_party_id.uri.host</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.port
+	<listitem><simpara>@remote_party_id.uri.port</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@remote_party_id.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.hostport
+	<listitem><simpara>@remote_party_id.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.uri.transport
+	<listitem><simpara>@remote_party_id.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.tag
+	<listitem><simpara>@remote_party_id.tag</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.name
+	<listitem><simpara>@remote_party_id.name</simpara>
 	</listitem>
 
-	<listitem>@remote_party_id.params[&quot;string&quot;]
+	<listitem><simpara>@remote_party_id.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@rpid
+	<listitem><simpara>@rpid</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri
+	<listitem><simpara>@rpid.uri</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.type
+	<listitem><simpara>@rpid.uri.type</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.user
+	<listitem><simpara>@rpid.uri.user</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.rn_user
+	<listitem><simpara>@rpid.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.pwd
+	<listitem><simpara>@rpid.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.host
+	<listitem><simpara>@rpid.uri.host</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.port
+	<listitem><simpara>@rpid.uri.port</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@rpid.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.hostport
+	<listitem><simpara>@rpid.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@rpid.uri.transport
+	<listitem><simpara>@rpid.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@rpid.tag
+	<listitem><simpara>@rpid.tag</simpara>
 	</listitem>
 
-	<listitem>@rpid.name
+	<listitem><simpara>@rpid.name</simpara>
 	</listitem>
 
-	<listitem>@rpid.params[&quot;string&quot;]
+	<listitem><simpara>@rpid.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@contact
+	<listitem><simpara>@contact</simpara>
 	</listitem>
 
-	<listitem>@contact.uri
+	<listitem><simpara>@contact.uri</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.type
+	<listitem><simpara>@contact.uri.type</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.user
+	<listitem><simpara>@contact.uri.user</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.rn_user
+	<listitem><simpara>@contact.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.pwd
+	<listitem><simpara>@contact.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.host
+	<listitem><simpara>@contact.uri.host</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.port
+	<listitem><simpara>@contact.uri.port</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@contact.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.hostport
+	<listitem><simpara>@contact.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@contact.uri.transport
+	<listitem><simpara>@contact.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@contact.name
+	<listitem><simpara>@contact.name</simpara>
 	</listitem>
 
-	<listitem>@contact.q
+	<listitem><simpara>@contact.q</simpara>
 	</listitem>
 
-	<listitem>@contact.expires
+	<listitem><simpara>@contact.expires</simpara>
 	</listitem>
 
-	<listitem>@contact.methods
+	<listitem><simpara>@contact.methods</simpara>
 	</listitem>
 
-	<listitem>@contact.received
+	<listitem><simpara>@contact.received</simpara>
 	</listitem>
 
-	<listitem>@contact.instance
+	<listitem><simpara>@contact.instance</simpara>
 	</listitem>
 
-	<listitem>@contact.params[&quot;string&quot;]
+	<listitem><simpara>@contact.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@m
+	<listitem><simpara>@m</simpara>
 	</listitem>
 
-	<listitem>@m.uri
+	<listitem><simpara>@m.uri</simpara>
 	</listitem>
 
-	<listitem>@m.uri.type
+	<listitem><simpara>@m.uri.type</simpara>
 	</listitem>
 
-	<listitem>@m.uri.user
+	<listitem><simpara>@m.uri.user</simpara>
 	</listitem>
 
-	<listitem>@m.uri.rn_user
+	<listitem><simpara>@m.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@m.uri.pwd
+	<listitem><simpara>@m.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@m.uri.host
+	<listitem><simpara>@m.uri.host</simpara>
 	</listitem>
 
-	<listitem>@m.uri.port
+	<listitem><simpara>@m.uri.port</simpara>
 	</listitem>
 
-	<listitem>@m.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@m.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@m.uri.hostport
+	<listitem><simpara>@m.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@m.uri.transport
+	<listitem><simpara>@m.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@m.name
+	<listitem><simpara>@m.name</simpara>
 	</listitem>
 
-	<listitem>@m.q
+	<listitem><simpara>@m.q</simpara>
 	</listitem>
 
-	<listitem>@m.expires
+	<listitem><simpara>@m.expires</simpara>
 	</listitem>
 
-	<listitem>@m.methods
+	<listitem><simpara>@m.methods</simpara>
 	</listitem>
 
-	<listitem>@m.received
+	<listitem><simpara>@m.received</simpara>
 	</listitem>
 
-	<listitem>@m.instance
+	<listitem><simpara>@m.instance</simpara>
 	</listitem>
 
-	<listitem>@m.params[&quot;string&quot;]
+	<listitem><simpara>@m.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}
+	<listitem><simpara>@via{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.name
+	<listitem><simpara>@via{[integer]}.name</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.version
+	<listitem><simpara>@via{[integer]}.version</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.transport
+	<listitem><simpara>@via{[integer]}.transport</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.host
+	<listitem><simpara>@via{[integer]}.host</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.port
+	<listitem><simpara>@via{[integer]}.port</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.comment
+	<listitem><simpara>@via{[integer]}.comment</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.branch
+	<listitem><simpara>@via{[integer]}.branch</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.received
+	<listitem><simpara>@via{[integer]}.received</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.rport
+	<listitem><simpara>@via{[integer]}.rport</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.i
+	<listitem><simpara>@via{[integer]}.i</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.alias
+	<listitem><simpara>@via{[integer]}.alias</simpara>
 	</listitem>
 
-	<listitem>@via{[integer]}.params[&quot;string&quot;]
+	<listitem><simpara>@via{[integer]}.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}
+	<listitem><simpara>@v{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.name
+	<listitem><simpara>@v{[integer]}.name</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.version
+	<listitem><simpara>@v{[integer]}.version</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.transport
+	<listitem><simpara>@v{[integer]}.transport</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.host
+	<listitem><simpara>@v{[integer]}.host</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.port
+	<listitem><simpara>@v{[integer]}.port</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.comment
+	<listitem><simpara>@v{[integer]}.comment</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.branch
+	<listitem><simpara>@v{[integer]}.branch</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.received
+	<listitem><simpara>@v{[integer]}.received</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.rport
+	<listitem><simpara>@v{[integer]}.rport</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.i
+	<listitem><simpara>@v{[integer]}.i</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.alias
+	<listitem><simpara>@v{[integer]}.alias</simpara>
 	</listitem>
 
-	<listitem>@v{[integer]}.params[&quot;string&quot;]
+	<listitem><simpara>@v{[integer]}.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@event
+	<listitem><simpara>@event</simpara>
 	</listitem>
 
-	<listitem>@record_route
+	<listitem><simpara>@record_route</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri
+	<listitem><simpara>@record_route.uri</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.type
+	<listitem><simpara>@record_route.uri.type</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.user
+	<listitem><simpara>@record_route.uri.user</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.rn_user
+	<listitem><simpara>@record_route.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.pwd
+	<listitem><simpara>@record_route.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.host
+	<listitem><simpara>@record_route.uri.host</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.port
+	<listitem><simpara>@record_route.uri.port</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@record_route.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.hostport
+	<listitem><simpara>@record_route.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@record_route.uri.transport
+	<listitem><simpara>@record_route.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@record_route.name
+	<listitem><simpara>@record_route.name</simpara>
 	</listitem>
 
-	<listitem>@record_route.params[&quot;string&quot;]
+	<listitem><simpara>@record_route.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@rr
+	<listitem><simpara>@rr</simpara>
 	</listitem>
 
-	<listitem>@rr.uri
+	<listitem><simpara>@rr.uri</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.type
+	<listitem><simpara>@rr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.user
+	<listitem><simpara>@rr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.rn_user
+	<listitem><simpara>@rr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.pwd
+	<listitem><simpara>@rr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.host
+	<listitem><simpara>@rr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.port
+	<listitem><simpara>@rr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@rr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.hostport
+	<listitem><simpara>@rr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@rr.uri.transport
+	<listitem><simpara>@rr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@rr.name
+	<listitem><simpara>@rr.name</simpara>
 	</listitem>
 
-	<listitem>@rr.params[&quot;string&quot;]
+	<listitem><simpara>@rr.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@cseq
+	<listitem><simpara>@cseq</simpara>
 	</listitem>
 
-	<listitem>@cseq.num
+	<listitem><simpara>@cseq.num</simpara>
 	</listitem>
 
-	<listitem>@cseq.method
+	<listitem><simpara>@cseq.method</simpara>
 	</listitem>
 
-	<listitem>@msg
+	<listitem><simpara>@msg</simpara>
 	</listitem>
 
-	<listitem>@msg.first_line
+	<listitem><simpara>@msg.first_line</simpara>
 	</listitem>
 
-	<listitem>@msg.flags
+	<listitem><simpara>@msg.flags</simpara>
 	</listitem>
 
-	<listitem>@msg.len
+	<listitem><simpara>@msg.len</simpara>
 	</listitem>
 
-	<listitem>@msg.id
+	<listitem><simpara>@msg.id</simpara>
 	</listitem>
 
-	<listitem>@msg.id.hex
+	<listitem><simpara>@msg.id.hex</simpara>
 	</listitem>
 
-	<listitem>@msg.type
+	<listitem><simpara>@msg.type</simpara>
 	</listitem>
 
-	<listitem>@msg.header
+	<listitem><simpara>@msg.header</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.name
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.type
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.user
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.pwd
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.host
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.port
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.hostport
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.transport
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@msg.header.&lt;string&gt;{[integer]}.params[&quot;string&quot;]
+	<listitem><simpara>@msg.header.&lt;string&gt;{[integer]}.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@msg.h
+	<listitem><simpara>@msg.h</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.name
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.type
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.user
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.pwd
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.host
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.port
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.hostport
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.transport
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@msg.h.&lt;string&gt;{[integer]}.params[&quot;string&quot;]
+	<listitem><simpara>@msg.h.&lt;string&gt;{[integer]}.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@msg.body
+	<listitem><simpara>@msg.body</simpara>
 	</listitem>
 
-	<listitem>@msg.body.sdp
+	<listitem><simpara>@msg.body.sdp</simpara>
 	</listitem>
 
-	<listitem>@msg.body.sdp.line[&quot;string&quot;]
+	<listitem><simpara>@msg.body.sdp.line[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@msg.content
+	<listitem><simpara>@msg.content</simpara>
 	</listitem>
 
-	<listitem>@msg.content.sdp
+	<listitem><simpara>@msg.content.sdp</simpara>
 	</listitem>
 
-	<listitem>@msg.content.sdp.line[&quot;string&quot;]
+	<listitem><simpara>@msg.content.sdp.line[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@msg.request
+	<listitem><simpara>@msg.request</simpara>
 	</listitem>
 
-	<listitem>@msg.request.method
+	<listitem><simpara>@msg.request.method</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri
+	<listitem><simpara>@msg.request.uri</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.type
+	<listitem><simpara>@msg.request.uri.type</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.user
+	<listitem><simpara>@msg.request.uri.user</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.rn_user
+	<listitem><simpara>@msg.request.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.pwd
+	<listitem><simpara>@msg.request.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.host
+	<listitem><simpara>@msg.request.uri.host</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.port
+	<listitem><simpara>@msg.request.uri.port</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@msg.request.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.hostport
+	<listitem><simpara>@msg.request.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@msg.request.uri.transport
+	<listitem><simpara>@msg.request.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@msg.request.version
+	<listitem><simpara>@msg.request.version</simpara>
 	</listitem>
 
-	<listitem>@msg.req
+	<listitem><simpara>@msg.req</simpara>
 	</listitem>
 
-	<listitem>@msg.req.method
+	<listitem><simpara>@msg.req.method</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri
+	<listitem><simpara>@msg.req.uri</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.type
+	<listitem><simpara>@msg.req.uri.type</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.user
+	<listitem><simpara>@msg.req.uri.user</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.rn_user
+	<listitem><simpara>@msg.req.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.pwd
+	<listitem><simpara>@msg.req.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.host
+	<listitem><simpara>@msg.req.uri.host</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.port
+	<listitem><simpara>@msg.req.uri.port</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@msg.req.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.hostport
+	<listitem><simpara>@msg.req.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@msg.req.uri.transport
+	<listitem><simpara>@msg.req.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@msg.req.version
+	<listitem><simpara>@msg.req.version</simpara>
 	</listitem>
 
-	<listitem>@msg.response
+	<listitem><simpara>@msg.response</simpara>
 	</listitem>
 
-	<listitem>@msg.response.version
+	<listitem><simpara>@msg.response.version</simpara>
 	</listitem>
 
-	<listitem>@msg.response.status
+	<listitem><simpara>@msg.response.status</simpara>
 	</listitem>
 
-	<listitem>@msg.response.code
+	<listitem><simpara>@msg.response.code</simpara>
 	</listitem>
 
-	<listitem>@msg.response.reason
+	<listitem><simpara>@msg.response.reason</simpara>
 	</listitem>
 
-	<listitem>@msg.res
+	<listitem><simpara>@msg.res</simpara>
 	</listitem>
 
-	<listitem>@msg.res.version
+	<listitem><simpara>@msg.res.version</simpara>
 	</listitem>
 
-	<listitem>@msg.res.status
+	<listitem><simpara>@msg.res.status</simpara>
 	</listitem>
 
-	<listitem>@msg.res.code
+	<listitem><simpara>@msg.res.code</simpara>
 	</listitem>
 
-	<listitem>@msg.res.reason
+	<listitem><simpara>@msg.res.reason</simpara>
 	</listitem>
 
-	<listitem>@message
+	<listitem><simpara>@message</simpara>
 	</listitem>
 
-	<listitem>@message.first_line
+	<listitem><simpara>@message.first_line</simpara>
 	</listitem>
 
-	<listitem>@message.flags
+	<listitem><simpara>@message.flags</simpara>
 	</listitem>
 
-	<listitem>@message.len
+	<listitem><simpara>@message.len</simpara>
 	</listitem>
 
-	<listitem>@message.id
+	<listitem><simpara>@message.id</simpara>
 	</listitem>
 
-	<listitem>@message.id.hex
+	<listitem><simpara>@message.id.hex</simpara>
 	</listitem>
 
-	<listitem>@message.type
+	<listitem><simpara>@message.type</simpara>
 	</listitem>
 
-	<listitem>@message.header
+	<listitem><simpara>@message.header</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.name
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.type
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.user
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.pwd
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.host
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.port
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.hostport
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.transport
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@message.header.&lt;string&gt;{[integer]}.params[&quot;string&quot;]
+	<listitem><simpara>@message.header.&lt;string&gt;{[integer]}.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@message.h
+	<listitem><simpara>@message.h</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.name
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.type
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.user
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.pwd
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.host
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.port
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.hostport
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.transport
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@message.h.&lt;string&gt;{[integer]}.params[&quot;string&quot;]
+	<listitem><simpara>@message.h.&lt;string&gt;{[integer]}.params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@message.body
+	<listitem><simpara>@message.body</simpara>
 	</listitem>
 
-	<listitem>@message.body.sdp
+	<listitem><simpara>@message.body.sdp</simpara>
 	</listitem>
 
-	<listitem>@message.body.sdp.line[&quot;string&quot;]
+	<listitem><simpara>@message.body.sdp.line[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@message.content
+	<listitem><simpara>@message.content</simpara>
 	</listitem>
 
-	<listitem>@message.content.sdp
+	<listitem><simpara>@message.content.sdp</simpara>
 	</listitem>
 
-	<listitem>@message.content.sdp.line[&quot;string&quot;]
+	<listitem><simpara>@message.content.sdp.line[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@message.request
+	<listitem><simpara>@message.request</simpara>
 	</listitem>
 
-	<listitem>@message.request.method
+	<listitem><simpara>@message.request.method</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri
+	<listitem><simpara>@message.request.uri</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.type
+	<listitem><simpara>@message.request.uri.type</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.user
+	<listitem><simpara>@message.request.uri.user</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.rn_user
+	<listitem><simpara>@message.request.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.pwd
+	<listitem><simpara>@message.request.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.host
+	<listitem><simpara>@message.request.uri.host</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.port
+	<listitem><simpara>@message.request.uri.port</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@message.request.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.hostport
+	<listitem><simpara>@message.request.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@message.request.uri.transport
+	<listitem><simpara>@message.request.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@message.request.version
+	<listitem><simpara>@message.request.version</simpara>
 	</listitem>
 
-	<listitem>@message.req
+	<listitem><simpara>@message.req</simpara>
 	</listitem>
 
-	<listitem>@message.req.method
+	<listitem><simpara>@message.req.method</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri
+	<listitem><simpara>@message.req.uri</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.type
+	<listitem><simpara>@message.req.uri.type</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.user
+	<listitem><simpara>@message.req.uri.user</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.rn_user
+	<listitem><simpara>@message.req.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.pwd
+	<listitem><simpara>@message.req.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.host
+	<listitem><simpara>@message.req.uri.host</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.port
+	<listitem><simpara>@message.req.uri.port</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@message.req.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.hostport
+	<listitem><simpara>@message.req.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@message.req.uri.transport
+	<listitem><simpara>@message.req.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@message.req.version
+	<listitem><simpara>@message.req.version</simpara>
 	</listitem>
 
-	<listitem>@message.response
+	<listitem><simpara>@message.response</simpara>
 	</listitem>
 
-	<listitem>@message.response.version
+	<listitem><simpara>@message.response.version</simpara>
 	</listitem>
 
-	<listitem>@message.response.status
+	<listitem><simpara>@message.response.status</simpara>
 	</listitem>
 
-	<listitem>@message.response.code
+	<listitem><simpara>@message.response.code</simpara>
 	</listitem>
 
-	<listitem>@message.response.reason
+	<listitem><simpara>@message.response.reason</simpara>
 	</listitem>
 
-	<listitem>@message.res
+	<listitem><simpara>@message.res</simpara>
 	</listitem>
 
-	<listitem>@message.res.version
+	<listitem><simpara>@message.res.version</simpara>
 	</listitem>
 
-	<listitem>@message.res.status
+	<listitem><simpara>@message.res.status</simpara>
 	</listitem>
 
-	<listitem>@message.res.code
+	<listitem><simpara>@message.res.code</simpara>
 	</listitem>
 
-	<listitem>@message.res.reason
+	<listitem><simpara>@message.res.reason</simpara>
 	</listitem>
 
-	<listitem>@method
+	<listitem><simpara>@method</simpara>
 	</listitem>
 
-	<listitem>@version
+	<listitem><simpara>@version</simpara>
 	</listitem>
 
-	<listitem>@status
+	<listitem><simpara>@status</simpara>
 	</listitem>
 
-	<listitem>@code
+	<listitem><simpara>@code</simpara>
 	</listitem>
 
-	<listitem>@reason
+	<listitem><simpara>@reason</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;]
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].username
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].username</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].username.user
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].username.user</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].username.domain
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].username.domain</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].realm
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].realm</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].nonce
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].nonce</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].uri
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].uri</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].cnonce
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].cnonce</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].nc
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].nc</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].response
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].response</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].opaque
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].opaque</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].algorithm
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].algorithm</simpara>
 	</listitem>
 
-	<listitem>@proxy_authorization[&quot;string&quot;].qop
+	<listitem><simpara>@proxy_authorization[&quot;string&quot;].qop</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;]
+	<listitem><simpara>@authorization[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].username
+	<listitem><simpara>@authorization[&quot;string&quot;].username</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].username.user
+	<listitem><simpara>@authorization[&quot;string&quot;].username.user</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].username.domain
+	<listitem><simpara>@authorization[&quot;string&quot;].username.domain</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].realm
+	<listitem><simpara>@authorization[&quot;string&quot;].realm</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].nonce
+	<listitem><simpara>@authorization[&quot;string&quot;].nonce</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].uri
+	<listitem><simpara>@authorization[&quot;string&quot;].uri</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].cnonce
+	<listitem><simpara>@authorization[&quot;string&quot;].cnonce</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].nc
+	<listitem><simpara>@authorization[&quot;string&quot;].nc</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].response
+	<listitem><simpara>@authorization[&quot;string&quot;].response</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].opaque
+	<listitem><simpara>@authorization[&quot;string&quot;].opaque</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].algorithm
+	<listitem><simpara>@authorization[&quot;string&quot;].algorithm</simpara>
 	</listitem>
 
-	<listitem>@authorization[&quot;string&quot;].qop
+	<listitem><simpara>@authorization[&quot;string&quot;].qop</simpara>
 	</listitem>
 
-	<listitem>@src.ip
+	<listitem><simpara>@src.ip</simpara>
 	</listitem>
 
-	<listitem>@src.port
+	<listitem><simpara>@src.port</simpara>
 	</listitem>
 
-	<listitem>@src.ip_port
+	<listitem><simpara>@src.ip_port</simpara>
 	</listitem>
 
-	<listitem>@dst.ip
+	<listitem><simpara>@dst.ip</simpara>
 	</listitem>
 
-	<listitem>@dst.port
+	<listitem><simpara>@dst.port</simpara>
 	</listitem>
 
-	<listitem>@dst.ip_port
+	<listitem><simpara>@dst.ip_port</simpara>
 	</listitem>
 
-	<listitem>@received.proto
+	<listitem><simpara>@received.proto</simpara>
 	</listitem>
 
-	<listitem>@received.ip
+	<listitem><simpara>@received.ip</simpara>
 	</listitem>
 
-	<listitem>@received.port
+	<listitem><simpara>@received.port</simpara>
 	</listitem>
 
-	<listitem>@received.ip_port
+	<listitem><simpara>@received.ip_port</simpara>
 	</listitem>
 
-	<listitem>@received.proto_ip_port
+	<listitem><simpara>@received.proto_ip_port</simpara>
 	</listitem>
 
-	<listitem>@call_id
+	<listitem><simpara>@call_id</simpara>
 	</listitem>
 
-	<listitem>@expires
+	<listitem><simpara>@expires</simpara>
 	</listitem>
 
-	<listitem>@max_forwards
+	<listitem><simpara>@max_forwards</simpara>
 	</listitem>
 
-	<listitem>@content_type
+	<listitem><simpara>@content_type</simpara>
 	</listitem>
 
-	<listitem>@content_length
+	<listitem><simpara>@content_length</simpara>
 	</listitem>
 
-	<listitem>@subject
+	<listitem><simpara>@subject</simpara>
 	</listitem>
 
-	<listitem>@organization
+	<listitem><simpara>@organization</simpara>
 	</listitem>
 
-	<listitem>@priority
+	<listitem><simpara>@priority</simpara>
 	</listitem>
 
-	<listitem>@session_expires
+	<listitem><simpara>@session_expires</simpara>
 	</listitem>
 
-	<listitem>@min_se
+	<listitem><simpara>@min_se</simpara>
 	</listitem>
 
-	<listitem>@user_agent
+	<listitem><simpara>@user_agent</simpara>
 	</listitem>
 
-	<listitem>@sip_if_match
+	<listitem><simpara>@sip_if_match</simpara>
 	</listitem>
 
-	<listitem>@sys.pid
+	<listitem><simpara>@sys.pid</simpara>
 	</listitem>
 
-	<listitem>@sys.unique
+	<listitem><simpara>@sys.unique</simpara>
 	</listitem>
 
-	<listitem>@sys.now
+	<listitem><simpara>@sys.now</simpara>
 	</listitem>
 
-	<listitem>@sys.now.local{[&quot;string&quot;]}
+	<listitem><simpara>@sys.now.local{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@sys.now.gmt{[&quot;string&quot;]}
+	<listitem><simpara>@sys.now.gmt{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@sys.now.utc{[&quot;string&quot;]}
+	<listitem><simpara>@sys.now.utc{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@sys.server_id
+	<listitem><simpara>@sys.server_id</simpara>
 	</listitem>
 
-	<listitem>@branch.count
+	<listitem><simpara>@branch.count</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}
+	<listitem><simpara>@branch.uri{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.type
+	<listitem><simpara>@branch.uri{[integer]}.type</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.user
+	<listitem><simpara>@branch.uri{[integer]}.user</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.rn_user
+	<listitem><simpara>@branch.uri{[integer]}.rn_user</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.pwd
+	<listitem><simpara>@branch.uri{[integer]}.pwd</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.host
+	<listitem><simpara>@branch.uri{[integer]}.host</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.port
+	<listitem><simpara>@branch.uri{[integer]}.port</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.params{[&quot;string&quot;]}
+	<listitem><simpara>@branch.uri{[integer]}.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.hostport
+	<listitem><simpara>@branch.uri{[integer]}.hostport</simpara>
 	</listitem>
 
-	<listitem>@branch.uri{[integer]}.transport
+	<listitem><simpara>@branch.uri{[integer]}.transport</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}
+	<listitem><simpara>@branch.dst_uri{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.type
+	<listitem><simpara>@branch.dst_uri{[integer]}.type</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.user
+	<listitem><simpara>@branch.dst_uri{[integer]}.user</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.rn_user
+	<listitem><simpara>@branch.dst_uri{[integer]}.rn_user</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.pwd
+	<listitem><simpara>@branch.dst_uri{[integer]}.pwd</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.host
+	<listitem><simpara>@branch.dst_uri{[integer]}.host</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.port
+	<listitem><simpara>@branch.dst_uri{[integer]}.port</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.params{[&quot;string&quot;]}
+	<listitem><simpara>@branch.dst_uri{[integer]}.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.hostport
+	<listitem><simpara>@branch.dst_uri{[integer]}.hostport</simpara>
 	</listitem>
 
-	<listitem>@branch.dst_uri{[integer]}.transport
+	<listitem><simpara>@branch.dst_uri{[integer]}.transport</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}
+	<listitem><simpara>@branch.uriq{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.name
+	<listitem><simpara>@branch.uriq{[integer]}.name</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri
+	<listitem><simpara>@branch.uriq{[integer]}.uri</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.type
+	<listitem><simpara>@branch.uriq{[integer]}.uri.type</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.user
+	<listitem><simpara>@branch.uriq{[integer]}.uri.user</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.rn_user
+	<listitem><simpara>@branch.uriq{[integer]}.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.pwd
+	<listitem><simpara>@branch.uriq{[integer]}.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.host
+	<listitem><simpara>@branch.uriq{[integer]}.uri.host</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.port
+	<listitem><simpara>@branch.uriq{[integer]}.uri.port</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@branch.uriq{[integer]}.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.hostport
+	<listitem><simpara>@branch.uriq{[integer]}.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.uri.transport
+	<listitem><simpara>@branch.uriq{[integer]}.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@branch.uriq{[integer]}.params{[&quot;string&quot;]}
+	<listitem><simpara>@branch.uriq{[integer]}.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@branch.q{[integer]}
+	<listitem><simpara>@branch.q{[integer]}</simpara>
 	</listitem>
 
-	<listitem>@date
+	<listitem><simpara>@date</simpara>
 	</listitem>
 
-	<listitem>@identity
+	<listitem><simpara>@identity</simpara>
 	</listitem>
 
-	<listitem>@identity_info
+	<listitem><simpara>@identity_info</simpara>
 	</listitem>
 
-	<listitem>@cfg_get.*
+	<listitem><simpara>@cfg_get.*</simpara>
 	</listitem>
 
 	</orderedlist>

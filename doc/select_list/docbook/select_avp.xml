@@ -7,22 +7,22 @@
 	<orderedlist>
 
 
-	<listitem>@avp.&lt;string&gt;[&quot;string&quot;]
+	<listitem><simpara>@avp.&lt;string&gt;[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@avp.&lt;string&gt;[&quot;string&quot;].nameaddr*
+	<listitem><simpara>@avp.&lt;string&gt;[&quot;string&quot;].nameaddr*</simpara>
 	</listitem>
 
-	<listitem>@attr.&lt;string&gt;[&quot;string&quot;]
+	<listitem><simpara>@attr.&lt;string&gt;[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@attr.&lt;string&gt;[&quot;string&quot;].nameaddr*
+	<listitem><simpara>@attr.&lt;string&gt;[&quot;string&quot;].nameaddr*</simpara>
 	</listitem>
 
-	<listitem>@attribute.&lt;string&gt;[&quot;string&quot;]
+	<listitem><simpara>@attribute.&lt;string&gt;[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@attribute.&lt;string&gt;[&quot;string&quot;].nameaddr*
+	<listitem><simpara>@attribute.&lt;string&gt;[&quot;string&quot;].nameaddr*</simpara>
 	</listitem>
 
 	</orderedlist>

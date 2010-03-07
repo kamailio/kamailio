@@ -7,148 +7,148 @@
 	<orderedlist>
 
 
-	<listitem>@eval.pop[integer]
+	<listitem><simpara>@eval.pop[integer]</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer]
+	<listitem><simpara>@eval.get[integer]</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.name
+	<listitem><simpara>@eval.get[integer].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri
+	<listitem><simpara>@eval.get[integer].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.type
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.user
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.rn_user
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.pwd
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.host
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.port
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.hostport
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.uri.transport
+	<listitem><simpara>@eval.get[integer].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@eval.get[integer].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.type
+	<listitem><simpara>@eval.get[integer].uri.type</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.user
+	<listitem><simpara>@eval.get[integer].uri.user</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.rn_user
+	<listitem><simpara>@eval.get[integer].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.pwd
+	<listitem><simpara>@eval.get[integer].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.host
+	<listitem><simpara>@eval.get[integer].uri.host</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.port
+	<listitem><simpara>@eval.get[integer].uri.port</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@eval.get[integer].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.hostport
+	<listitem><simpara>@eval.get[integer].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].uri.transport
+	<listitem><simpara>@eval.get[integer].uri.transport</simpara>
 	</listitem>
 
-	<listitem>@eval.get[integer].params[&quot;string&quot;]
+	<listitem><simpara>@eval.get[integer].params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;]
+	<listitem><simpara>@eval.reg[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.name
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.type
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.user
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.rn_user
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.pwd
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.host
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.port
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.hostport
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.uri.transport
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@eval.reg[&quot;string&quot;].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.type
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.type</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.user
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.user</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.rn_user
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.pwd
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.host
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.host</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.port
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.port</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.hostport
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].uri.transport
+	<listitem><simpara>@eval.reg[&quot;string&quot;].uri.transport</simpara>
 	</listitem>
 
-	<listitem>@eval.reg[&quot;string&quot;].params[&quot;string&quot;]
+	<listitem><simpara>@eval.reg[&quot;string&quot;].params[&quot;string&quot;]</simpara>
 	</listitem>
 
-	<listitem>@eval.uuid
+	<listitem><simpara>@eval.uuid</simpara>
 	</listitem>
 
 	</orderedlist>

@@ -7,43 +7,43 @@
 	<orderedlist>
 
 
-	<listitem>@nathelper.rewrite_contact[integer]
+	<listitem><simpara>@nathelper.rewrite_contact[integer]</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.name
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.name</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.type
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.type</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.user
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.user</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.rn_user
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.rn_user</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.pwd
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.pwd</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.host
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.host</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.port
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.port</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.params{[&quot;string&quot;]}
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.hostport
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.hostport</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.uri.transport
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.uri.transport</simpara>
 	</listitem>
 
-	<listitem>@nathelper.rewrite_contact[integer].nameaddr.params{[&quot;string&quot;]}
+	<listitem><simpara>@nathelper.rewrite_contact[integer].nameaddr.params{[&quot;string&quot;]}</simpara>
 	</listitem>
 
 	</orderedlist>

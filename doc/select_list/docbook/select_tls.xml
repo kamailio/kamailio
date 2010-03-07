@@ -7,1228 +7,1228 @@
 	<orderedlist>
 
 
-	<listitem>@tls
+	<listitem><simpara>@tls</simpara>
 	</listitem>
 
-	<listitem>@tls.version
+	<listitem><simpara>@tls.version</simpara>
 	</listitem>
 
-	<listitem>@tls.desc
+	<listitem><simpara>@tls.desc</simpara>
 	</listitem>
 
-	<listitem>@tls.description
+	<listitem><simpara>@tls.description</simpara>
 	</listitem>
 
-	<listitem>@tls.cipher
+	<listitem><simpara>@tls.cipher</simpara>
 	</listitem>
 
-	<listitem>@tls.cipher.bits
+	<listitem><simpara>@tls.cipher.bits</simpara>
 	</listitem>
 
-	<listitem>@tls.serverName
+	<listitem><simpara>@tls.serverName</simpara>
 	</listitem>
 
-	<listitem>@tls.server_name
+	<listitem><simpara>@tls.server_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer
+	<listitem><simpara>@tls.peer</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject
+	<listitem><simpara>@tls.peer.subject</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.cn
+	<listitem><simpara>@tls.peer.subject.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.commonName
+	<listitem><simpara>@tls.peer.subject.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.common_name
+	<listitem><simpara>@tls.peer.subject.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.name
+	<listitem><simpara>@tls.peer.subject.name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.l
+	<listitem><simpara>@tls.peer.subject.l</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.localityName
+	<listitem><simpara>@tls.peer.subject.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.locality_name
+	<listitem><simpara>@tls.peer.subject.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.locality
+	<listitem><simpara>@tls.peer.subject.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.c
+	<listitem><simpara>@tls.peer.subject.c</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.countryName
+	<listitem><simpara>@tls.peer.subject.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.country_name
+	<listitem><simpara>@tls.peer.subject.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.country
+	<listitem><simpara>@tls.peer.subject.country</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.st
+	<listitem><simpara>@tls.peer.subject.st</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.stateOrProvinceName
+	<listitem><simpara>@tls.peer.subject.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.state_or_province_name
+	<listitem><simpara>@tls.peer.subject.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.state
+	<listitem><simpara>@tls.peer.subject.state</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.o
+	<listitem><simpara>@tls.peer.subject.o</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.organizationName
+	<listitem><simpara>@tls.peer.subject.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.organization_name
+	<listitem><simpara>@tls.peer.subject.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.organization
+	<listitem><simpara>@tls.peer.subject.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.ou
+	<listitem><simpara>@tls.peer.subject.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.organizationalUnitName
+	<listitem><simpara>@tls.peer.subject.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.organizational_unit_name
+	<listitem><simpara>@tls.peer.subject.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subject.unit
+	<listitem><simpara>@tls.peer.subject.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj
+	<listitem><simpara>@tls.peer.subj</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.cn
+	<listitem><simpara>@tls.peer.subj.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.commonName
+	<listitem><simpara>@tls.peer.subj.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.common_name
+	<listitem><simpara>@tls.peer.subj.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.name
+	<listitem><simpara>@tls.peer.subj.name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.l
+	<listitem><simpara>@tls.peer.subj.l</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.localityName
+	<listitem><simpara>@tls.peer.subj.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.locality_name
+	<listitem><simpara>@tls.peer.subj.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.locality
+	<listitem><simpara>@tls.peer.subj.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.c
+	<listitem><simpara>@tls.peer.subj.c</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.countryName
+	<listitem><simpara>@tls.peer.subj.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.country_name
+	<listitem><simpara>@tls.peer.subj.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.country
+	<listitem><simpara>@tls.peer.subj.country</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.st
+	<listitem><simpara>@tls.peer.subj.st</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.stateOrProvinceName
+	<listitem><simpara>@tls.peer.subj.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.state_or_province_name
+	<listitem><simpara>@tls.peer.subj.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.state
+	<listitem><simpara>@tls.peer.subj.state</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.o
+	<listitem><simpara>@tls.peer.subj.o</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.organizationName
+	<listitem><simpara>@tls.peer.subj.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.organization_name
+	<listitem><simpara>@tls.peer.subj.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.organization
+	<listitem><simpara>@tls.peer.subj.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.ou
+	<listitem><simpara>@tls.peer.subj.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.organizationalUnitName
+	<listitem><simpara>@tls.peer.subj.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.organizational_unit_name
+	<listitem><simpara>@tls.peer.subj.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.subj.unit
+	<listitem><simpara>@tls.peer.subj.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer
+	<listitem><simpara>@tls.peer.issuer</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.cn
+	<listitem><simpara>@tls.peer.issuer.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.commonName
+	<listitem><simpara>@tls.peer.issuer.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.common_name
+	<listitem><simpara>@tls.peer.issuer.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.name
+	<listitem><simpara>@tls.peer.issuer.name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.l
+	<listitem><simpara>@tls.peer.issuer.l</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.localityName
+	<listitem><simpara>@tls.peer.issuer.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.locality_name
+	<listitem><simpara>@tls.peer.issuer.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.locality
+	<listitem><simpara>@tls.peer.issuer.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.c
+	<listitem><simpara>@tls.peer.issuer.c</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.countryName
+	<listitem><simpara>@tls.peer.issuer.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.country_name
+	<listitem><simpara>@tls.peer.issuer.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.country
+	<listitem><simpara>@tls.peer.issuer.country</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.st
+	<listitem><simpara>@tls.peer.issuer.st</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.stateOrProvinceName
+	<listitem><simpara>@tls.peer.issuer.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.state_or_province_name
+	<listitem><simpara>@tls.peer.issuer.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.state
+	<listitem><simpara>@tls.peer.issuer.state</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.o
+	<listitem><simpara>@tls.peer.issuer.o</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.organizationName
+	<listitem><simpara>@tls.peer.issuer.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.organization_name
+	<listitem><simpara>@tls.peer.issuer.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.organization
+	<listitem><simpara>@tls.peer.issuer.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.ou
+	<listitem><simpara>@tls.peer.issuer.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.organizationalUnitName
+	<listitem><simpara>@tls.peer.issuer.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.organizational_unit_name
+	<listitem><simpara>@tls.peer.issuer.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.issuer.unit
+	<listitem><simpara>@tls.peer.issuer.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.verified
+	<listitem><simpara>@tls.peer.verified</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.revoked
+	<listitem><simpara>@tls.peer.revoked</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.expired
+	<listitem><simpara>@tls.peer.expired</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.self_signed
+	<listitem><simpara>@tls.peer.self_signed</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.version
+	<listitem><simpara>@tls.peer.version</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.sn
+	<listitem><simpara>@tls.peer.sn</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.serialNumber
+	<listitem><simpara>@tls.peer.serialNumber</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.serial_number
+	<listitem><simpara>@tls.peer.serial_number</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.notBefore
+	<listitem><simpara>@tls.peer.notBefore</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.not_before
+	<listitem><simpara>@tls.peer.not_before</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.notAfter
+	<listitem><simpara>@tls.peer.notAfter</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.not_after
+	<listitem><simpara>@tls.peer.not_after</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.email
+	<listitem><simpara>@tls.peer.email</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.emailAddress
+	<listitem><simpara>@tls.peer.emailAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.email_address
+	<listitem><simpara>@tls.peer.email_address</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.host
+	<listitem><simpara>@tls.peer.host</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.hostname
+	<listitem><simpara>@tls.peer.hostname</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.dns
+	<listitem><simpara>@tls.peer.dns</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.uri
+	<listitem><simpara>@tls.peer.uri</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.url
+	<listitem><simpara>@tls.peer.url</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.urn
+	<listitem><simpara>@tls.peer.urn</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.ip
+	<listitem><simpara>@tls.peer.ip</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.IPAddress
+	<listitem><simpara>@tls.peer.IPAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.peer.ip_address
+	<listitem><simpara>@tls.peer.ip_address</simpara>
 	</listitem>
 
-	<listitem>@tls.my
+	<listitem><simpara>@tls.my</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject
+	<listitem><simpara>@tls.my.subject</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.cn
+	<listitem><simpara>@tls.my.subject.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.commonName
+	<listitem><simpara>@tls.my.subject.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.common_name
+	<listitem><simpara>@tls.my.subject.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.name
+	<listitem><simpara>@tls.my.subject.name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.l
+	<listitem><simpara>@tls.my.subject.l</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.localityName
+	<listitem><simpara>@tls.my.subject.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.locality_name
+	<listitem><simpara>@tls.my.subject.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.locality
+	<listitem><simpara>@tls.my.subject.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.c
+	<listitem><simpara>@tls.my.subject.c</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.countryName
+	<listitem><simpara>@tls.my.subject.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.country_name
+	<listitem><simpara>@tls.my.subject.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.country
+	<listitem><simpara>@tls.my.subject.country</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.st
+	<listitem><simpara>@tls.my.subject.st</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.stateOrProvinceName
+	<listitem><simpara>@tls.my.subject.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.state_or_province_name
+	<listitem><simpara>@tls.my.subject.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.state
+	<listitem><simpara>@tls.my.subject.state</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.o
+	<listitem><simpara>@tls.my.subject.o</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.organizationName
+	<listitem><simpara>@tls.my.subject.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.organization_name
+	<listitem><simpara>@tls.my.subject.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.organization
+	<listitem><simpara>@tls.my.subject.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.ou
+	<listitem><simpara>@tls.my.subject.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.organizationalUnitName
+	<listitem><simpara>@tls.my.subject.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.organizational_unit_name
+	<listitem><simpara>@tls.my.subject.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subject.unit
+	<listitem><simpara>@tls.my.subject.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj
+	<listitem><simpara>@tls.my.subj</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.cn
+	<listitem><simpara>@tls.my.subj.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.commonName
+	<listitem><simpara>@tls.my.subj.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.common_name
+	<listitem><simpara>@tls.my.subj.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.name
+	<listitem><simpara>@tls.my.subj.name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.l
+	<listitem><simpara>@tls.my.subj.l</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.localityName
+	<listitem><simpara>@tls.my.subj.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.locality_name
+	<listitem><simpara>@tls.my.subj.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.locality
+	<listitem><simpara>@tls.my.subj.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.c
+	<listitem><simpara>@tls.my.subj.c</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.countryName
+	<listitem><simpara>@tls.my.subj.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.country_name
+	<listitem><simpara>@tls.my.subj.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.country
+	<listitem><simpara>@tls.my.subj.country</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.st
+	<listitem><simpara>@tls.my.subj.st</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.stateOrProvinceName
+	<listitem><simpara>@tls.my.subj.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.state_or_province_name
+	<listitem><simpara>@tls.my.subj.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.state
+	<listitem><simpara>@tls.my.subj.state</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.o
+	<listitem><simpara>@tls.my.subj.o</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.organizationName
+	<listitem><simpara>@tls.my.subj.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.organization_name
+	<listitem><simpara>@tls.my.subj.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.organization
+	<listitem><simpara>@tls.my.subj.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.ou
+	<listitem><simpara>@tls.my.subj.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.organizationalUnitName
+	<listitem><simpara>@tls.my.subj.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.organizational_unit_name
+	<listitem><simpara>@tls.my.subj.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.subj.unit
+	<listitem><simpara>@tls.my.subj.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer
+	<listitem><simpara>@tls.my.issuer</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.cn
+	<listitem><simpara>@tls.my.issuer.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.commonName
+	<listitem><simpara>@tls.my.issuer.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.common_name
+	<listitem><simpara>@tls.my.issuer.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.name
+	<listitem><simpara>@tls.my.issuer.name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.l
+	<listitem><simpara>@tls.my.issuer.l</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.localityName
+	<listitem><simpara>@tls.my.issuer.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.locality_name
+	<listitem><simpara>@tls.my.issuer.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.locality
+	<listitem><simpara>@tls.my.issuer.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.c
+	<listitem><simpara>@tls.my.issuer.c</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.countryName
+	<listitem><simpara>@tls.my.issuer.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.country_name
+	<listitem><simpara>@tls.my.issuer.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.country
+	<listitem><simpara>@tls.my.issuer.country</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.st
+	<listitem><simpara>@tls.my.issuer.st</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.stateOrProvinceName
+	<listitem><simpara>@tls.my.issuer.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.state_or_province_name
+	<listitem><simpara>@tls.my.issuer.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.state
+	<listitem><simpara>@tls.my.issuer.state</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.o
+	<listitem><simpara>@tls.my.issuer.o</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.organizationName
+	<listitem><simpara>@tls.my.issuer.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.organization_name
+	<listitem><simpara>@tls.my.issuer.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.organization
+	<listitem><simpara>@tls.my.issuer.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.ou
+	<listitem><simpara>@tls.my.issuer.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.organizationalUnitName
+	<listitem><simpara>@tls.my.issuer.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.organizational_unit_name
+	<listitem><simpara>@tls.my.issuer.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.my.issuer.unit
+	<listitem><simpara>@tls.my.issuer.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.my.verified
+	<listitem><simpara>@tls.my.verified</simpara>
 	</listitem>
 
-	<listitem>@tls.my.revoked
+	<listitem><simpara>@tls.my.revoked</simpara>
 	</listitem>
 
-	<listitem>@tls.my.expired
+	<listitem><simpara>@tls.my.expired</simpara>
 	</listitem>
 
-	<listitem>@tls.my.self_signed
+	<listitem><simpara>@tls.my.self_signed</simpara>
 	</listitem>
 
-	<listitem>@tls.my.version
+	<listitem><simpara>@tls.my.version</simpara>
 	</listitem>
 
-	<listitem>@tls.my.sn
+	<listitem><simpara>@tls.my.sn</simpara>
 	</listitem>
 
-	<listitem>@tls.my.serialNumber
+	<listitem><simpara>@tls.my.serialNumber</simpara>
 	</listitem>
 
-	<listitem>@tls.my.serial_number
+	<listitem><simpara>@tls.my.serial_number</simpara>
 	</listitem>
 
-	<listitem>@tls.my.notBefore
+	<listitem><simpara>@tls.my.notBefore</simpara>
 	</listitem>
 
-	<listitem>@tls.my.not_before
+	<listitem><simpara>@tls.my.not_before</simpara>
 	</listitem>
 
-	<listitem>@tls.my.notAfter
+	<listitem><simpara>@tls.my.notAfter</simpara>
 	</listitem>
 
-	<listitem>@tls.my.not_after
+	<listitem><simpara>@tls.my.not_after</simpara>
 	</listitem>
 
-	<listitem>@tls.my.email
+	<listitem><simpara>@tls.my.email</simpara>
 	</listitem>
 
-	<listitem>@tls.my.emailAddress
+	<listitem><simpara>@tls.my.emailAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.my.email_address
+	<listitem><simpara>@tls.my.email_address</simpara>
 	</listitem>
 
-	<listitem>@tls.my.host
+	<listitem><simpara>@tls.my.host</simpara>
 	</listitem>
 
-	<listitem>@tls.my.hostname
+	<listitem><simpara>@tls.my.hostname</simpara>
 	</listitem>
 
-	<listitem>@tls.my.dns
+	<listitem><simpara>@tls.my.dns</simpara>
 	</listitem>
 
-	<listitem>@tls.my.uri
+	<listitem><simpara>@tls.my.uri</simpara>
 	</listitem>
 
-	<listitem>@tls.my.url
+	<listitem><simpara>@tls.my.url</simpara>
 	</listitem>
 
-	<listitem>@tls.my.urn
+	<listitem><simpara>@tls.my.urn</simpara>
 	</listitem>
 
-	<listitem>@tls.my.ip
+	<listitem><simpara>@tls.my.ip</simpara>
 	</listitem>
 
-	<listitem>@tls.my.IPAddress
+	<listitem><simpara>@tls.my.IPAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.my.ip_address
+	<listitem><simpara>@tls.my.ip_address</simpara>
 	</listitem>
 
-	<listitem>@tls.me
+	<listitem><simpara>@tls.me</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject
+	<listitem><simpara>@tls.me.subject</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.cn
+	<listitem><simpara>@tls.me.subject.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.commonName
+	<listitem><simpara>@tls.me.subject.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.common_name
+	<listitem><simpara>@tls.me.subject.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.name
+	<listitem><simpara>@tls.me.subject.name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.l
+	<listitem><simpara>@tls.me.subject.l</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.localityName
+	<listitem><simpara>@tls.me.subject.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.locality_name
+	<listitem><simpara>@tls.me.subject.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.locality
+	<listitem><simpara>@tls.me.subject.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.c
+	<listitem><simpara>@tls.me.subject.c</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.countryName
+	<listitem><simpara>@tls.me.subject.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.country_name
+	<listitem><simpara>@tls.me.subject.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.country
+	<listitem><simpara>@tls.me.subject.country</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.st
+	<listitem><simpara>@tls.me.subject.st</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.stateOrProvinceName
+	<listitem><simpara>@tls.me.subject.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.state_or_province_name
+	<listitem><simpara>@tls.me.subject.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.state
+	<listitem><simpara>@tls.me.subject.state</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.o
+	<listitem><simpara>@tls.me.subject.o</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.organizationName
+	<listitem><simpara>@tls.me.subject.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.organization_name
+	<listitem><simpara>@tls.me.subject.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.organization
+	<listitem><simpara>@tls.me.subject.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.ou
+	<listitem><simpara>@tls.me.subject.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.organizationalUnitName
+	<listitem><simpara>@tls.me.subject.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.organizational_unit_name
+	<listitem><simpara>@tls.me.subject.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subject.unit
+	<listitem><simpara>@tls.me.subject.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj
+	<listitem><simpara>@tls.me.subj</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.cn
+	<listitem><simpara>@tls.me.subj.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.commonName
+	<listitem><simpara>@tls.me.subj.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.common_name
+	<listitem><simpara>@tls.me.subj.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.name
+	<listitem><simpara>@tls.me.subj.name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.l
+	<listitem><simpara>@tls.me.subj.l</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.localityName
+	<listitem><simpara>@tls.me.subj.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.locality_name
+	<listitem><simpara>@tls.me.subj.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.locality
+	<listitem><simpara>@tls.me.subj.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.c
+	<listitem><simpara>@tls.me.subj.c</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.countryName
+	<listitem><simpara>@tls.me.subj.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.country_name
+	<listitem><simpara>@tls.me.subj.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.country
+	<listitem><simpara>@tls.me.subj.country</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.st
+	<listitem><simpara>@tls.me.subj.st</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.stateOrProvinceName
+	<listitem><simpara>@tls.me.subj.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.state_or_province_name
+	<listitem><simpara>@tls.me.subj.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.state
+	<listitem><simpara>@tls.me.subj.state</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.o
+	<listitem><simpara>@tls.me.subj.o</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.organizationName
+	<listitem><simpara>@tls.me.subj.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.organization_name
+	<listitem><simpara>@tls.me.subj.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.organization
+	<listitem><simpara>@tls.me.subj.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.ou
+	<listitem><simpara>@tls.me.subj.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.organizationalUnitName
+	<listitem><simpara>@tls.me.subj.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.organizational_unit_name
+	<listitem><simpara>@tls.me.subj.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.subj.unit
+	<listitem><simpara>@tls.me.subj.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer
+	<listitem><simpara>@tls.me.issuer</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.cn
+	<listitem><simpara>@tls.me.issuer.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.commonName
+	<listitem><simpara>@tls.me.issuer.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.common_name
+	<listitem><simpara>@tls.me.issuer.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.name
+	<listitem><simpara>@tls.me.issuer.name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.l
+	<listitem><simpara>@tls.me.issuer.l</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.localityName
+	<listitem><simpara>@tls.me.issuer.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.locality_name
+	<listitem><simpara>@tls.me.issuer.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.locality
+	<listitem><simpara>@tls.me.issuer.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.c
+	<listitem><simpara>@tls.me.issuer.c</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.countryName
+	<listitem><simpara>@tls.me.issuer.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.country_name
+	<listitem><simpara>@tls.me.issuer.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.country
+	<listitem><simpara>@tls.me.issuer.country</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.st
+	<listitem><simpara>@tls.me.issuer.st</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.stateOrProvinceName
+	<listitem><simpara>@tls.me.issuer.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.state_or_province_name
+	<listitem><simpara>@tls.me.issuer.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.state
+	<listitem><simpara>@tls.me.issuer.state</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.o
+	<listitem><simpara>@tls.me.issuer.o</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.organizationName
+	<listitem><simpara>@tls.me.issuer.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.organization_name
+	<listitem><simpara>@tls.me.issuer.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.organization
+	<listitem><simpara>@tls.me.issuer.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.ou
+	<listitem><simpara>@tls.me.issuer.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.organizationalUnitName
+	<listitem><simpara>@tls.me.issuer.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.organizational_unit_name
+	<listitem><simpara>@tls.me.issuer.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.me.issuer.unit
+	<listitem><simpara>@tls.me.issuer.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.me.verified
+	<listitem><simpara>@tls.me.verified</simpara>
 	</listitem>
 
-	<listitem>@tls.me.revoked
+	<listitem><simpara>@tls.me.revoked</simpara>
 	</listitem>
 
-	<listitem>@tls.me.expired
+	<listitem><simpara>@tls.me.expired</simpara>
 	</listitem>
 
-	<listitem>@tls.me.self_signed
+	<listitem><simpara>@tls.me.self_signed</simpara>
 	</listitem>
 
-	<listitem>@tls.me.version
+	<listitem><simpara>@tls.me.version</simpara>
 	</listitem>
 
-	<listitem>@tls.me.sn
+	<listitem><simpara>@tls.me.sn</simpara>
 	</listitem>
 
-	<listitem>@tls.me.serialNumber
+	<listitem><simpara>@tls.me.serialNumber</simpara>
 	</listitem>
 
-	<listitem>@tls.me.serial_number
+	<listitem><simpara>@tls.me.serial_number</simpara>
 	</listitem>
 
-	<listitem>@tls.me.notBefore
+	<listitem><simpara>@tls.me.notBefore</simpara>
 	</listitem>
 
-	<listitem>@tls.me.not_before
+	<listitem><simpara>@tls.me.not_before</simpara>
 	</listitem>
 
-	<listitem>@tls.me.notAfter
+	<listitem><simpara>@tls.me.notAfter</simpara>
 	</listitem>
 
-	<listitem>@tls.me.not_after
+	<listitem><simpara>@tls.me.not_after</simpara>
 	</listitem>
 
-	<listitem>@tls.me.email
+	<listitem><simpara>@tls.me.email</simpara>
 	</listitem>
 
-	<listitem>@tls.me.emailAddress
+	<listitem><simpara>@tls.me.emailAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.me.email_address
+	<listitem><simpara>@tls.me.email_address</simpara>
 	</listitem>
 
-	<listitem>@tls.me.host
+	<listitem><simpara>@tls.me.host</simpara>
 	</listitem>
 
-	<listitem>@tls.me.hostname
+	<listitem><simpara>@tls.me.hostname</simpara>
 	</listitem>
 
-	<listitem>@tls.me.dns
+	<listitem><simpara>@tls.me.dns</simpara>
 	</listitem>
 
-	<listitem>@tls.me.uri
+	<listitem><simpara>@tls.me.uri</simpara>
 	</listitem>
 
-	<listitem>@tls.me.url
+	<listitem><simpara>@tls.me.url</simpara>
 	</listitem>
 
-	<listitem>@tls.me.urn
+	<listitem><simpara>@tls.me.urn</simpara>
 	</listitem>
 
-	<listitem>@tls.me.ip
+	<listitem><simpara>@tls.me.ip</simpara>
 	</listitem>
 
-	<listitem>@tls.me.IPAddress
+	<listitem><simpara>@tls.me.IPAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.me.ip_address
+	<listitem><simpara>@tls.me.ip_address</simpara>
 	</listitem>
 
-	<listitem>@tls.myself
+	<listitem><simpara>@tls.myself</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject
+	<listitem><simpara>@tls.myself.subject</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.cn
+	<listitem><simpara>@tls.myself.subject.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.commonName
+	<listitem><simpara>@tls.myself.subject.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.common_name
+	<listitem><simpara>@tls.myself.subject.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.name
+	<listitem><simpara>@tls.myself.subject.name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.l
+	<listitem><simpara>@tls.myself.subject.l</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.localityName
+	<listitem><simpara>@tls.myself.subject.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.locality_name
+	<listitem><simpara>@tls.myself.subject.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.locality
+	<listitem><simpara>@tls.myself.subject.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.c
+	<listitem><simpara>@tls.myself.subject.c</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.countryName
+	<listitem><simpara>@tls.myself.subject.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.country_name
+	<listitem><simpara>@tls.myself.subject.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.country
+	<listitem><simpara>@tls.myself.subject.country</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.st
+	<listitem><simpara>@tls.myself.subject.st</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.stateOrProvinceName
+	<listitem><simpara>@tls.myself.subject.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.state_or_province_name
+	<listitem><simpara>@tls.myself.subject.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.state
+	<listitem><simpara>@tls.myself.subject.state</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.o
+	<listitem><simpara>@tls.myself.subject.o</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.organizationName
+	<listitem><simpara>@tls.myself.subject.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.organization_name
+	<listitem><simpara>@tls.myself.subject.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.organization
+	<listitem><simpara>@tls.myself.subject.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.ou
+	<listitem><simpara>@tls.myself.subject.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.organizationalUnitName
+	<listitem><simpara>@tls.myself.subject.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.organizational_unit_name
+	<listitem><simpara>@tls.myself.subject.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subject.unit
+	<listitem><simpara>@tls.myself.subject.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj
+	<listitem><simpara>@tls.myself.subj</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.cn
+	<listitem><simpara>@tls.myself.subj.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.commonName
+	<listitem><simpara>@tls.myself.subj.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.common_name
+	<listitem><simpara>@tls.myself.subj.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.name
+	<listitem><simpara>@tls.myself.subj.name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.l
+	<listitem><simpara>@tls.myself.subj.l</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.localityName
+	<listitem><simpara>@tls.myself.subj.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.locality_name
+	<listitem><simpara>@tls.myself.subj.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.locality
+	<listitem><simpara>@tls.myself.subj.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.c
+	<listitem><simpara>@tls.myself.subj.c</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.countryName
+	<listitem><simpara>@tls.myself.subj.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.country_name
+	<listitem><simpara>@tls.myself.subj.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.country
+	<listitem><simpara>@tls.myself.subj.country</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.st
+	<listitem><simpara>@tls.myself.subj.st</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.stateOrProvinceName
+	<listitem><simpara>@tls.myself.subj.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.state_or_province_name
+	<listitem><simpara>@tls.myself.subj.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.state
+	<listitem><simpara>@tls.myself.subj.state</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.o
+	<listitem><simpara>@tls.myself.subj.o</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.organizationName
+	<listitem><simpara>@tls.myself.subj.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.organization_name
+	<listitem><simpara>@tls.myself.subj.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.organization
+	<listitem><simpara>@tls.myself.subj.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.ou
+	<listitem><simpara>@tls.myself.subj.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.organizationalUnitName
+	<listitem><simpara>@tls.myself.subj.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.organizational_unit_name
+	<listitem><simpara>@tls.myself.subj.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.subj.unit
+	<listitem><simpara>@tls.myself.subj.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer
+	<listitem><simpara>@tls.myself.issuer</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.cn
+	<listitem><simpara>@tls.myself.issuer.cn</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.commonName
+	<listitem><simpara>@tls.myself.issuer.commonName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.common_name
+	<listitem><simpara>@tls.myself.issuer.common_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.name
+	<listitem><simpara>@tls.myself.issuer.name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.l
+	<listitem><simpara>@tls.myself.issuer.l</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.localityName
+	<listitem><simpara>@tls.myself.issuer.localityName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.locality_name
+	<listitem><simpara>@tls.myself.issuer.locality_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.locality
+	<listitem><simpara>@tls.myself.issuer.locality</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.c
+	<listitem><simpara>@tls.myself.issuer.c</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.countryName
+	<listitem><simpara>@tls.myself.issuer.countryName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.country_name
+	<listitem><simpara>@tls.myself.issuer.country_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.country
+	<listitem><simpara>@tls.myself.issuer.country</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.st
+	<listitem><simpara>@tls.myself.issuer.st</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.stateOrProvinceName
+	<listitem><simpara>@tls.myself.issuer.stateOrProvinceName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.state_or_province_name
+	<listitem><simpara>@tls.myself.issuer.state_or_province_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.state
+	<listitem><simpara>@tls.myself.issuer.state</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.o
+	<listitem><simpara>@tls.myself.issuer.o</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.organizationName
+	<listitem><simpara>@tls.myself.issuer.organizationName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.organization_name
+	<listitem><simpara>@tls.myself.issuer.organization_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.organization
+	<listitem><simpara>@tls.myself.issuer.organization</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.ou
+	<listitem><simpara>@tls.myself.issuer.ou</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.organizationalUnitName
+	<listitem><simpara>@tls.myself.issuer.organizationalUnitName</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.organizational_unit_name
+	<listitem><simpara>@tls.myself.issuer.organizational_unit_name</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.issuer.unit
+	<listitem><simpara>@tls.myself.issuer.unit</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.verified
+	<listitem><simpara>@tls.myself.verified</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.revoked
+	<listitem><simpara>@tls.myself.revoked</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.expired
+	<listitem><simpara>@tls.myself.expired</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.self_signed
+	<listitem><simpara>@tls.myself.self_signed</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.version
+	<listitem><simpara>@tls.myself.version</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.sn
+	<listitem><simpara>@tls.myself.sn</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.serialNumber
+	<listitem><simpara>@tls.myself.serialNumber</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.serial_number
+	<listitem><simpara>@tls.myself.serial_number</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.notBefore
+	<listitem><simpara>@tls.myself.notBefore</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.not_before
+	<listitem><simpara>@tls.myself.not_before</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.notAfter
+	<listitem><simpara>@tls.myself.notAfter</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.not_after
+	<listitem><simpara>@tls.myself.not_after</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.email
+	<listitem><simpara>@tls.myself.email</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.emailAddress
+	<listitem><simpara>@tls.myself.emailAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.email_address
+	<listitem><simpara>@tls.myself.email_address</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.host
+	<listitem><simpara>@tls.myself.host</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.hostname
+	<listitem><simpara>@tls.myself.hostname</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.dns
+	<listitem><simpara>@tls.myself.dns</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.uri
+	<listitem><simpara>@tls.myself.uri</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.url
+	<listitem><simpara>@tls.myself.url</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.urn
+	<listitem><simpara>@tls.myself.urn</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.ip
+	<listitem><simpara>@tls.myself.ip</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.IPAddress
+	<listitem><simpara>@tls.myself.IPAddress</simpara>
 	</listitem>
 
-	<listitem>@tls.myself.ip_address
+	<listitem><simpara>@tls.myself.ip_address</simpara>
 	</listitem>
 
 	</orderedlist>
