@@ -607,7 +607,7 @@ format DOCBOOK_FOOTER =
 .
 
 format DOCBOOK_SELLINE =
-	<listitem>@*
+	<listitem><simpara>@*</simpara>
 					$name
 ~~<para>^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< </para>
         $desc
