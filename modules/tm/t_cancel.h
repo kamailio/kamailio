@@ -128,7 +128,6 @@ inline short static prepare_cancel_branch( struct cell *t, int b, int noreply )
 	return 0;
 }
 
-extern const char* rpc_cancel_doc[2];
 void rpc_cancel(rpc_t* rpc, void* c);
 int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val);
 int cancel_b_flags_get(unsigned int* f, int m);

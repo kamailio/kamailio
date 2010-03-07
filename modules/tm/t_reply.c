@@ -2431,11 +2431,6 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 #endif
 
 
-const char* rpc_reply_doc[2] = {
-	"Reply transaction",
-	0
-};
-
 /*
   Syntax:
 

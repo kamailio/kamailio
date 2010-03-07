@@ -29,8 +29,6 @@
 
 #include "../../rpc.h"
 
-extern const char* rpc_t_uac_start_doc[2];
-extern const char* rpc_t_uac_wait_doc[2];
 
 void rpc_t_uac_start(rpc_t* rpc, void* c);
 void rpc_t_uac_wait(rpc_t* rpc, void* c);

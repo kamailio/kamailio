@@ -322,12 +322,6 @@ int cancel_branch( struct cell *t, int branch, int flags )
 }
 
 
-const char* rpc_cancel_doc[2] = {
-	"Cancel a pending transaction",
-	0
-};
-
-
 /* fifo command to cancel a pending call (Uli)
  * Syntax:
  *

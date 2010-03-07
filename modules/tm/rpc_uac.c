@@ -57,21 +57,6 @@ struct str_list {
 
 
 
-const char* rpc_t_uac_start_doc[2] = {
-	"starts a tm uac using  a list of string parameters: method, ruri, dst_uri"
-		", send_sock, headers (CRLF separated) and body (optional)",
-	0
-};
-
-const char* rpc_t_uac_wait_doc[2] = {
-	"starts a tm uac and waits for the final reply, using a list of string "
-		"parameters: method, ruri, dst_uri send_sock, headers (CRLF separated)"
-		" and body (optional)",
-	0
-};
-
-
-
 /** make sure the rpc user created the msg properly.
  * Make sure that the FIFO user created the message
  * correctly and fill some extra parameters in function

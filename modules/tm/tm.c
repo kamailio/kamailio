@@ -1906,15 +1906,7 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 #endif
 }
 
-static rpc_export_t tm_rpc[] = {
-	{"tm.cancel", rpc_cancel,   rpc_cancel_doc,   0},
-	{"tm.reply",  rpc_reply,    rpc_reply_doc,    0},
-	{"tm.stats",  tm_rpc_stats, tm_rpc_stats_doc, 0},
-	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
-	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
-	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
-	{0, 0, 0, 0}
-};
+
 
 /* wrapper function needed after changes in w_t_reply */
 int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
@@ -2142,4 +2134,54 @@ inline static int w_t_relay_to(struct sip_msg *msg, char *proxy, char *flags)
 	}
 	return _w_t_relay_to(msg, px, PROTO_NONE);
 }
+
+
+
+/* rpc docs */
+
+static const char* rpc_cancel_doc[2] = {
+	"Cancel a pending transaction",
+	0
+};
+
+static const char* rpc_reply_doc[2] = {
+	"Reply transaction",
+	0
+};
+
+static const char* tm_rpc_stats_doc[2] = {
+	"Print transaction statistics.",
+	0
+};
+
+static const char* tm_rpc_hash_stats_doc[2] = {
+	"Prints hash table statistics (can be used only if tm is compiled"
+		" with -DTM_HASH_STATS).",
+	0
+};
+
+static const char* rpc_t_uac_start_doc[2] = {
+	"starts a tm uac using  a list of string parameters: method, ruri, dst_uri"
+		", send_sock, headers (CRLF separated) and body (optional)",
+	0
+};
+
+static const char* rpc_t_uac_wait_doc[2] = {
+	"starts a tm uac and waits for the final reply, using a list of string "
+		"parameters: method, ruri, dst_uri send_sock, headers (CRLF separated)"
+		" and body (optional)",
+	0
+};
+
+
+/* rpc exports */
+static rpc_export_t tm_rpc[] = {
+	{"tm.cancel", rpc_cancel,   rpc_cancel_doc,   0},
+	{"tm.reply",  rpc_reply,    rpc_reply_doc,    0},
+	{"tm.stats",  tm_rpc_stats, tm_rpc_stats_doc, 0},
+	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
+	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
+	{"tm.t_uac_wait",  rpc_t_uac_wait,  rpc_t_uac_wait_doc, RET_ARRAY},
+	{0, 0, 0, 0}
+};
 

@@ -141,10 +141,8 @@ int init_tm_stats(void);
 int init_tm_stats_child(void);
 void free_tm_stats();
 
-extern const char* tm_rpc_stats_doc[2];
 void tm_rpc_stats(rpc_t* rpc, void* c);
 
-extern const char* tm_rpc_hash_stats_doc[2];
 void tm_rpc_hash_stats(rpc_t* rpc, void* c);
 
 typedef int (*tm_get_stats_f)(struct t_proc_stats *all);

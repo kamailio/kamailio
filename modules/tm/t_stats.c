@@ -94,17 +94,6 @@ void free_tm_stats()
 
 
 
-const char* tm_rpc_stats_doc[2] = {
-	"Print transaction statistics.",
-	0
-};
-
-const char* tm_rpc_hash_stats_doc[2] = {
-	"Prints hash table statistics (can be used only if tm is compiled"
-		" with -DTM_HASH_STATS).",
-	0
-};
-
 /* res=s1+s2 */
 #define tm_proc_stats_add_base(res, s1, s2) \
 	do{\

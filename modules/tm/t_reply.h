@@ -155,7 +155,6 @@ int t_pick_branch_blind(struct cell *t, int *res_code);
  */
 void t_drop_replies(int v);
 
-extern const char* rpc_reply_doc[2];
 void rpc_reply(rpc_t* rpc, void* c);
 
 void faked_env( struct cell *t,struct sip_msg *msg);
