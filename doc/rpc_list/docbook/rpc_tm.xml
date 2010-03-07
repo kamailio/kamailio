@@ -10,7 +10,7 @@ RPC Exports for tm
 
 <section id="tm.cancel"><title>tm.cancel</title>
 <para>
-        Documentation missing (rpc_cancel_doc).
+        Cancel a pending transaction
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for tm
 
 <section id="tm.reply"><title>tm.reply</title>
 <para>
-        Documentation missing (rpc_reply_doc).
+        Reply transaction
 </para>
 <para>
 </para>
@@ -26,7 +26,7 @@ RPC Exports for tm
 
 <section id="tm.stats"><title>tm.stats</title>
 <para>
-        Documentation missing (tm_rpc_stats_doc).
+        Print transaction statistics.
 </para>
 <para>
 </para>
@@ -34,7 +34,8 @@ RPC Exports for tm
 
 <section id="tm.hash_stats"><title>tm.hash_stats</title>
 <para>
-        Documentation missing (tm_rpc_hash_stats_doc).
+        Prints hash table statistics (can be used only if tm is
+        compiled with -DTM_HASH_STATS).
 </para>
 <para>
 </para>
@@ -42,7 +43,9 @@ RPC Exports for tm
 
 <section id="tm.t_uac_start"><title>tm.t_uac_start</title>
 <para>
-        Documentation missing (rpc_t_uac_start_doc).
+        starts a tm uac using  a list of string parameters: method,
+        ruri, dst_uri, send_sock, headers (CRLF separated) and body
+        (optional)
 </para>
 <para>
 </para>
@@ -50,7 +53,9 @@ RPC Exports for tm
 
 <section id="tm.t_uac_wait"><title>tm.t_uac_wait</title>
 <para>
-        Documentation missing (rpc_t_uac_wait_doc).
+        starts a tm uac and waits for the final reply, using a list of
+        string parameters: method, ruri, dst_uri send_sock, headers
+        (CRLF separated) and body (optional)
 </para>
 <para>
         Returns an array.
