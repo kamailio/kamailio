@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">]
+>
 
 <section id="ser_rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
     <!--
@@ -155,9 +158,11 @@ typedef struct rpc_export {
 				(defined in rpc_lookup.h), from the module init function
 				(mod_init()). This is the <emphasis>recommended</emphasis>
 				method for all the new modules.
-				<example>
+				<example><title>usrloc RPC Exports Declaration</title>
+					<para>
 					The <varname>rpc_export_t</varname> array for the usrloc
 					module looks like:
+					</para>
 					<programlisting>
 <emphasis>
 rpc_export_t ul_rpc[] = {
@@ -172,8 +177,10 @@ rpc_export_t ul_rpc[] = {
 };
 </emphasis>
 					</programlisting>
+					<para>
 					To register it from the module init function one would use
 					something similar to:
+					</para>
 					<programlisting>
 	if (rpc_register_array(ul_rpc) != 0) {
 		ERR("failed to register RPC commands\n");
@@ -214,7 +221,7 @@ struct module_exports {
 				functions of the usrloc module, using the rpc_export_t array
 				<emphasis>ul_rpc</emphasis> defined above, in the 
 				rpc_register_array() example:
-				<example>
+				<example><title>usrloc Module Exports Declaration</title>
 					<programlisting>
 struct module_exports exports = {
     "usrloc",
@@ -229,13 +236,13 @@ struct module_exports exports = {
 
 					</programlisting>
 				</example>
-				<note>
+				<note><para>
 					This mode works only with modules using the SER module
 					interface. It does not work for kamailio modules and it
 					will probably not work for future sip-router modules. It is
 					safer and recommended to use instead the
 					<function>rpc_register_array()</function> function.
-				</note>
+				</para></note>
 			</para></listitem>
 		</itemizedlist>
 		</para>
@@ -470,10 +477,11 @@ rpc->scan("f", &amp;double_val);
 			Function <function>struct_scan</function> can be used to
 			retrieve named attributes from a parameter of type
 			structure.
-			<note>This function is obsolete and not implemented by all the
+			<note><para>
+			This function is obsolete and not implemented by all the
 			rpc transports (e.g.: ctl / binrpc). Consider using the normal
 			<function>scan</function> instead.
-			</note>
+			</para></note>
 			When retrieving a structure parameter from the
 			parameter set:
 		    <programlisting>
@@ -501,8 +509,9 @@ rpc->struct_scan(handle, "sd", "str_attr", &amp;str_val, "int_attr", &amp;int_va
 		    the structure.
 		</para>
 	    </section>
-
-	    <example>
+	
+		<section><title>Retrieving Parameters Example</title>
+		<example>
 		<title>Retrieving Parameters</title>
 		<programlisting>
 <![CDATA[
@@ -555,6 +564,7 @@ static void core_echo(rpc_t* rpc, void* c)
 ]]>
 		</programlisting>
 	    </example>
+		</section>
 	</section>
 
 	<section id="rpc.creating_result">
@@ -849,7 +859,9 @@ static void rpc_register(rpc_t* rpc)
 
     <section id="rpc.new_transport">
 	<title>Implementing New Transports</title>
+	<remark>
 	To be done.
+	</remark>
 	<!-- TODO:
 	- create a new module
 	- take a look at sip_router/rpc.h
