@@ -1,6 +1,460 @@
 # $Id$
 
-===================== 2010-01-11 Kamailio v3.0.0 released =====================
+===================== 2010-03-08 Kamailio v3.0.1 released =====================
+
+===================== Changes since release 3.0.0 =============================
+
+commit 454a99274635eaea7ec8c8b5c4b38a0d44f24198
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 8 22:01:33 2010 +0100
+
+    core: version set to 3.0.1
+
+commit 1d7f450f1c22cb217e25d6c1eca158dbc52a911b
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed Feb 24 17:04:54 2010 +0100
+
+    userblacklist(k): short term fix in the docs for redundant table definition
+    (cherry picked from commit 2372a7d5039a72f9cdb6b8bb7acb8a5ae2cb5c5f)
+
+commit 2fc570bbca38c634242c8fc40cfbcc06987c5b4a
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Mar 5 16:54:58 2010 +0200
+
+    modules_k/permisssions Fixed a bug that caused a segmentation fault if the mi_fifo subnet_dump was issued
+    but the permissions module was not fully configured (no db url given)
+    (cherry picked from commit d5da961b7ac62037fb1fb24c6ce3484584f5f972)
+
+commit 45af92ac46a1948b65133d78baaac046e2f7eb78
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Mar 8 15:31:15 2010 +0100
+
+    sl(k): docs extension, merge README
+
+commit 7b18e462c759d0d1f69d37fb01a2ce482afbf9da
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Tue Jan 26 17:50:02 2010 +0100
+
+    reg(k): fix a (probably) copy and paste error
+    (cherry picked from commit bf89ebf74025597c261b5b664e29fe0ab6bcfc25)
+
+commit de23564c9cea377e166d1fa462a5d33ab02cd7c8
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Thu Jan 21 19:26:08 2010 +0100
+
+    ldap(k): fix ldapsearch with empty filter
+    
+      * fix ldapsearch with empty filter
+      * When in routing script ldapsearch() is executed on LDAP query URL without
+        the âfilterâ section, request forming fails:
+        ERROR: ldap [ldap_api_fn.c:193]: vsnprintf failed
+      * Workaround for administrators can be filling filter section with
+        â(objectclass=*)â, what is anyway substituted by ldap library to request
+        in case filter parameter set to NULL.
+     * Please notice that va_end() call is missing in original code.
+     * Patch FS#23 from andrey dot utkin at wildix dot com
+    (cherry picked from commit 73655cc83851f1f406ce23b8d6130632d731ef2d)
+
+commit 6f62f7fad5a2c726d95ac6c47129494bbabc11b1
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Jan 21 17:32:42 2010 +0200
+
+    utils/sercmd: Fixed getopt() missing param
+    
+    Getopt was missing the -U param
+    (cherry picked from commit 7c701df1be3d71afe49e7d017a90fa10c081b790)
+
+commit 1cae9198b490c833a44091974811caec8d8feef5
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Mar 4 13:16:06 2010 +0100
+
+    makefile: fix modules config overwrite
+    
+    A config file provided by a module was installed even if a
+    previous version was already installed, overwriting the old
+    version. Now if a file with the same name already exists, the
+    module config file will be installed with a .sample extension
+    added (so only .sample will be overwritten, never an active .cfg).
+    
+    Reported-by: Klaus Darilion  klaus.mailinglists pernau at
+    Closes FlySpray#38 .
+    (cherry picked from commit 6c0de64647038072ba1959ead39dcc601fd6292c)
+
+commit b2ee4178b4fe2d4b7385346cbc2c38f309183931
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Mar 3 19:24:08 2010 +0100
+
+    core: parse_to display name multi-token no-quotes fix
+    
+    Fix for properly returning a non-quoted display name that is
+    composed of several tokens (contains spaces). The previous version
+    would set the display name to the first token, in this case
+    (e.g. Foo Bar <sip:foo@bar> resulted in display_name="Foo" instead
+     of "Foo Bar").
+    
+    Reported-by: Ronald Voermans  ronald voermans nu
+    Closes FlySpray#39 .
+    (cherry picked from commit 907686c0c4c1141af175d692251b8e1fab28b64e)
+
+commit f9b3beab6c5066ef18ad4d0a347b7410e2c8c240
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Feb 26 15:21:50 2010 +0100
+
+    core: msg_parse minor 64bit warning fix
+    (cherry picked from commit c0e9cb82abe293937e5b95fa1347afdc118d9ac2)
+
+commit 462dbe484d6f8d796092b1ab634caf954112d3d5
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Feb 26 13:39:55 2010 +0100
+
+    tls: TLS_MALLOC_DBG can now be set on make cfg
+    
+    Enabling tls extra malloc debugging info, does not require anymore
+    editing tls_init.c. It can be enabled at cfg time
+    (make cfg extra_defs=-DTLS_MALLOC_DBG) or at compile/re-compile
+    time ( make -C modules/tls clean;
+           make -C modules/tls extra_defs=-DTLS_MALLOC_DBG).
+    When TLS_MALLOC_DBG is enabled, an extra warning will be printed
+    at compile time. NO_TLS_MALLOC_DBG takes precedence over
+    TLS_MALLOC_DBG.
+    (cherry picked from commit 9bc19d4994f20aa354092aba9ae784de91547fc6)
+
+commit 95ed848096c03dee4f9d0cf458a1d8e15e836dee
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Mon Feb 22 18:01:26 2010 +0100
+
+    tm: onreply_route: fix cleanup after DROP
+    
+    After a DROP in the onreply_route the avp lists where not restored
+    to their original values and the possible msg flags changes in the
+    script were dropped.
+    (cherry picked from commit ba15378ef66a11d3cbd6862aa2bfb060d099ca03)
+
+commit cee359fdc0bd85b85dc170c61ca296a3f13b0639
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Feb 24 15:13:12 2010 +0100
+
+    cfg parser: segfault on case RE parse error fix
+    
+    Reported-by: Klaus Feichtinger  klaus.feichtinger gmx net
+    (cherry picked from commit d2871c1190291e4b801f42e0763e5ca7ea28ee36)
+
+commit aff7ce53ed0dc9a63143f45fa546b7e2640f82b1
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Feb 23 16:10:21 2010 +0100
+
+    tls: disable kerberos more thoroughly [fix]
+    
+    Older openssl versions (< 0.9.8e release) have a bug in the
+    kerberos code (it uses the wrong malloc, for more details see
+    openssl bug # 1467). While there is already a workaround for this
+    openssl bug in the sr code (see commits 36cb8f & 560a42), in some
+    situations this workaround causes another bug (crash on connection
+    opening when openssl is compiled with kerberos support and
+    kerberos is enabled for key exchange).
+    The current fix will disable automatically all the ciphers containing
+    KRB5 if the openssl version is < 0.9.8e beta1 or it is between
+    0.9.9-dev and 0.9.9-beta1.
+    It iss equivalent to setting cipher_list to "<prev. value>:!KRB5".
+    
+    Impact: this fix is needed only if openssl is compiled with
+    kerberos support and the version is < 0.9.8e. It also affects at
+    least CentOS users with openssl-0.9.8e-12.el5_4.1 (in the centos
+    openssl package they play some strange games with the version and
+    report 0.9.8b via SSLeay).
+    
+    Tested-by: Klaus Darilion  klaus.mailinglists at pernau.at
+    Reported-by: Klaus Darilion  klaus.mailinglists at pernau.at
+    Reported-by: Andreas Rehbein  rehbein at e-technik.org
+    Reported-by: Martin Koenig  koenig starface.de
+    (cherry picked from commit 51ee5da9ebf09447f71d4393f7c5b703305ff46d)
+
+commit b3e99c07b69f28d55de89b2adb96468ff71c9764
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 12 11:12:37 2010 +0100
+
+    dialog(k): init local parameter
+    
+    - memset tm callback param to 0
+    - safety checks for MI cmd dlg match
+    - credits to Inaki Baz Castillo and Torben Friese
+    (cherry picked from commit 787fabb1e0085355aa1eeb77d5f17e7940f4ed3c)
+
+commit 832a6bf53562ca492ecbbee86b5445ffee00c883
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Feb 17 20:46:47 2010 +0100
+
+    core: avoid non-null 0-length dst_uri,  ruris and path
+    
+    - a dst_uri or ruri that has 0 length should be equivalent to also
+    having a null corresponding char* pointer.  sip_msg_shm_clone()
+    will now clone this type of uris to (0,0).
+    - set_dst_uri() called with "" (a 0-length non-zero string) is now
+      equivalent to reset_dst_uri().
+    - set_path_vector() called with "" is now equivalent with
+      reset_path_vector().
+    (cherry picked from commit feb3478b19452fe096f33364e6a59ec57c93efbe)
+
+commit 4834519a39a406b73adf5e9c1bca3c6d2fd1e5f8
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Feb 17 20:40:46 2010 +0100
+
+    tm: fake_req dst_uri and ruri copy fix
+    
+    If the uris have 0 len but no 0 value (possible at least for a
+    manually set dst_uri), set the corresponding fake_req uri to 0,
+    thus avoiding a potentially disastrous free in free_faked_req().
+    
+    Should close FS#37.
+    (cherry picked from commit 583d213cb617e767f5895de18168d7516e51e5e6)
+
+commit ef10212404b9bc5489683fc7429fee40b3495994
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Feb 11 22:22:12 2010 +0200
+
+    modules/mediaproxy: properly fix the IP in the RTCP line
+    
+    - Properly fix the IP in the RTCP line (if present in the SDP). Patch
+      provided by Saul Ibarra Corretge.
+    (cherry picked from commit 2a95f9bf915cfc3cf11374f9b8f0f547d4eb4955)
+
+commit d8d9165324f32e82f6e8cbb5e07f33ddd697cd1d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Feb 10 22:37:44 2010 +0200
+
+    utils/kamctl: removed unsupported commands to manage lcr gateways and routes
+
+commit 79583dc666ae198bbe00954c1326789be8cadbc4
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Feb 10 07:34:33 2010 +0200
+
+    modules/lcr: added in docs missing install dependency on libpcre
+    
+    - Credits to Kris Amy.
+    (cherry picked from commit 0c7048297f590f140ae84efdcde8a392ef23527e)
+    (cherry picked from commit 9baa29e80e5aa9f5c656a32059d24901a23ef8e9)
+
+commit 59907c49af12496af3d85e74ef52e67055cf610f
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Feb 10 07:15:24 2010 +0200
+
+    modules_k/permissions: group identifier must be positive integer
+    
+    - Group Identifier in address permissions must have a positive integer
+      value.
+    (cherry picked from commit c67e72eb16f277eeae16182e15e0e8ebf319dce0)
+
+commit 318ff6e6884641f3c9788b01e9ac3d859269be30
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 11:32:02 2010 +0100
+
+    cfg.y: fix warnings introduced in previous commit
+
+commit dc20fc812f9b63166732f2fc0e124b793c307b38
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 11:26:36 2010 +0100
+
+    INSTALL: several make specific updates
+
+commit 50237e89964b4fc8a4c8775076c1b75a05ee5e73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 11:23:50 2010 +0100
+
+    core: added forward()
+    
+    - aliased forward() to forward(uri:host, uri:port)
+    - k 1.5.x compatibility
+
+commit a84cfc60a2b1cbbb9b0ba0a9ba80acd1e2030e25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 00:29:26 2010 +0100
+
+    core: allow int parameters to module functions
+    
+    - sync with master branch
+    - int param are converted automatically to str, therefore backward
+      compatibility is ensured and module functions still get only str
+      parameters
+
+commit af6cdd413eb170ebc29f030779e002324f34d9b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 9 00:08:47 2010 +0100
+
+    INSTALL imported from k 1.5.0
+    
+    - more appropriate in regard to additional tools
+    - needs some updates with the new stuff that can be done with make
+      (e.g., make cfg, module-list, ...)
+
+commit 4800f80d38d34c7dc3e0216e142c286897a454a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 8 23:16:47 2010 +0100
+
+    Makefile: MEMDBG var to control mem debugging mode
+    
+    - to compile with memory debugging
+    	make MEMDBG=1 cfg; make ...
+    - default in release mode: MEMDBG=0
+
+commit 65659440162e612917e8a7992b775f6e2b248734
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Feb 2 10:09:32 2010 +0200
+
+    modules/mediaproxy: take boundary string from Content-Type header.
+    (cherry picked from commit 2031721948bfa6b444d9b18f7e3f195cfd7e1427)
+
+commit a765213ffa3769577dd7438c95737cb6b98bff74
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 2 15:06:34 2010 +0100
+
+    core: new param to give outbut buffer size
+    
+    - int2strbuf requires now outbut buffer size as parameter
+    - safer against misuses, suggested by Andrei Pelinescu-Onciul
+    - if size is less than INT2STR_MAX_LEN, return null pointer
+
+commit 229496c7170bcc85f517a4985f7ab4bad553c8d3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 2 13:23:03 2010 +0100
+
+    core: use one buffer for int2str
+    
+    - static declaration inside ut.h function results in hard copy to many
+      places, affecting acc detection of int to str conversions in buffer
+    - reported by Alex Balashov
+
+commit 055915a558a485cda17c9bb1c8e43aca12d116b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 30 17:02:37 2010 +0100
+
+    core: use dlflags to load modules
+    
+    - dlflags var used for dlopen function
+
+commit 369d7598244c60c2c8e4d601e166a03cb211128c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 24 21:21:59 2010 +0100
+
+    uac(k): use header types for detection
+
+commit 9600b1be5136f72d567a6b579abeb96cb5928fc7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 24 21:20:02 2010 +0100
+
+    uac(k): proper test for send failure
+    (cherry picked from commit 1479cd808ea8e5025bfa8400a257e3f89db4ab68)
+
+commit f4f9207f77883efa4dab67b3afe7c693585dc32c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 24 19:43:09 2010 +0100
+
+    uac(k): set type for tm callback
+    
+    - requires to be TMCB_LOCAL_COMPLETED
+
+commit 32d3e9c98943ad298f09d26db83ecf4ce5c2cc0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 1 11:27:20 2010 +0100
+
+    tm: fix setting the pre-T callbacks
+    
+    - introduced in the fix for uac module (affecting only uac)
+    - credits to Andrei Pelinescu-Onciul
+
+commit c2f9d800c367d614411159c599f078fbcc0e311e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 27 12:33:26 2010 +0100
+
+    drouting: register MI commands
+    
+    - the module didn't register the MI commands in mod init
+    - reported by Denis Putyato
+    (cherry picked from commit f12562923e580644f20ae964264747be849d1ce9)
+
+commit f572564e862a56470ccb2bc2aa2b23fcbb5dd318
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 25 10:06:41 2010 +0100
+
+    drouting(k): Makefile updated to link libs
+    
+    - fixed missing core libs in Makefile
+    - reported by Denis Pulyato
+
+commit e6eceeb8ccce8b37d09f5f69cafb97e007467d78
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 18 15:43:32 2010 +0100
+
+    registrar(k): preserve old bflags upon lookup
+    
+    - lookup was resetting bflags value with what was retrieved from
+      location table
+    - preserve now bflags set in config before
+    - reported by Ricardo Martinez
+
+commit 45f76f44abca5d049c3d289a1f9d09c6821c92d9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 18 12:35:46 2010 +0100
+
+    pv: fixed author name
+    
+    - forgotten when creating readme files starting from another module
+      docbook files
+
+commit 03ab185bca42e5788eeef5f5c13e02e547c524a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 18 11:59:19 2010 +0100
+
+    tm: set request and reply for TMCB_RESPONSE_SENT
+    
+    - for some reason they were NULL
+    - affected was sip_trace
+    - credits to Nguyen Quang Tri fore report and troubleshooting
+
+commit 67f65488165f67ebacfb09f43e52cf09afdd79d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 15 22:23:52 2010 +0100
+
+    Makefile.defs: option to enable fast malloc statistics
+    
+    - FMSTATS=1 will enable MALLOC_STATS
+    - on by default with kamailio flavor (backward compatibility with 1.5)
+
+commit 68d63835c6ec1a3fa4984aa3eb3fcc081a4f1f86
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 15 22:09:01 2010 +0100
+
+    tm: run release function for tmcb parameters
+    
+    - allow early registration of tm cb (in use by k uac module for example,
+      reported by Vulpyne)
+    - release function calling was missing
+
+commit 53d7cb1dae02e4709a10f869e8ec748df73bec37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 15 20:29:46 2010 +0100
+
+    tm: t_on_xyz("0") fixup updates
+    
+    - if parameter of t_on_reply, t_on_failure, t_on_branch is 0 do not call
+      fix_routes and set the parameter value to 0
+    - resets previous calls of the function with non-zero value and does not
+      print warning message at startup because the route is not found
+
+commit 6d1e9f74d658942a0a5714ae452a6231e5f831e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 11 18:37:10 2010 +0100
+
+    pkg: set version to 3.0.0 in debian changelog
+
+commit 0a0bd9eb77ad08b36190ea70bc4c611d0039bfb5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 11 17:45:06 2010 +0100
+
+    ChangeLog: imported v1.5.x file
+    
+    - added quite some data taken with git log, worth of commits since April
+      2009
+
 
 ===================== Changes since release 1.5.0 =============================
 
