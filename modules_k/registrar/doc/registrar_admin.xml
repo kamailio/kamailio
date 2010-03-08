@@ -117,7 +117,7 @@
 		will be used for newly created usrloc records. The parameter contains 
 		number of second to expire (for example use 3600 for one hour). If it
 		is set to a lower value than the <quote>min_expires</quote> parameter
-		then it will be ignored.		                                                
+		then it will be ignored. This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -138,7 +138,7 @@ modparam("registrar", "default_expires", 1800)
 		<para>
 		The minimum expires value of a Contact, values lower than this 
 		minimum will be automatically set to the minimum. Value 0 disables 
-		the checking.
+		the checking. This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -159,7 +159,7 @@ modparam("registrar", "min_expires", 60)
 		<para>
 		The maximum expires value of a Contact, values higher than this 
 		maximum will be automatically set to the maximum. Value 0 disables 
-		the checking.
+		the checking. This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -182,7 +182,7 @@ modparam("registrar", "max_expires", 120)
 		The parameter represents default q value for new contacts. Because 
 		&kamailio; doesn't support float parameter types, the value in the parameter 
 		is divided by 1000 and stored as float. For example, if you want 
-		default_q to be 0.38, use value 380 here.
+		default_q to be 0.38, use value 380 here. This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -207,7 +207,8 @@ modparam("registrar", "default_q", 1000)
 		 the master domain can be defined for SIP purposes (like 
 		 sip.mydomain.net pointing to same IP address as the SRV record for 
 		 mydomain.net). By ignoring the realm_prefix "sip.", at registration,
-		 sip.mydomain.net will be equivalent to mydomain.net .
+		 sip.mydomain.net will be equivalent to mydomain.net.This parameter 
+		 can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -235,6 +236,7 @@ modparam("registrar", "realm_prefix", "sip.")
 		appended to sip_msg structure and can be later used by tm for forking.
 		If the parameter is set to 0, only Request-URI will be overwritten 
 		with the highest-q rated contact and the rest will be left unprocessed.
+		This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -281,7 +283,7 @@ modparam("registrar", "aor_avp", "$avp(i:3223)")
 		<para>
 		If set to 1 then <acronym>AOR</acronym> comparison will be case 
 		sensitive, if set to 0 then <acronym>AOR</acronym> comparison will 
-		be case insensitive--This is recommended.
+		be case insensitive--This is recommended.This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -354,7 +356,7 @@ modparam("registrar", "received_param", "rcv")
 		<para>
 		The parameter can be used to limit the number of contacts per 
 		AOR (Address of Record) in the user location database. Value 0 
-		disables the check.
+		disables the check. This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -380,6 +382,7 @@ modparam("registrar", "max_contacts", 10)
 		<varname>max_contacts</varname> parameter is set and the
 		processing of REGISTER request would exceed the limit. In this case 
 		the registrar would generate "503 Service Unavailable" response.
+		This parameter can be modified via ser config framework.
 		</para>
 		<para>
 		If you want to add the Retry-After header field in 5xx replies, set 
@@ -478,6 +481,7 @@ modparam("registrar", "method_filtering", 1)
 		<title><varname>use_path</varname> (integer)</title>
 		<para>
 		If set to 1, the Path header is handled according to the parameter 
+		This parameter can be modified via ser config framework.
 		<quote>path_mode</quote>.
 		</para>
 		<para>
