@@ -171,6 +171,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
 	reason_len = 0;
 	reas1 = 0;
+	reas_last = 0;
 	/* compute reason size (if no reason or disabled => reason_len == 0)*/
 	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
 		if (likely(reason->cause > 0 &&
@@ -307,6 +308,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	
 	reason_len = 0;
 	reas1 = 0;
+	reas_last = 0;
 	/* compute reason size (if no reason or disabled => reason_len == 0)*/
 	if (reason && reason->cause != CANCEL_REAS_UNKNOWN){
 		if (likely(reason->cause > 0 &&

@@ -2043,8 +2043,14 @@ int reply_received( struct sip_msg  *p_msg )
 				DBG("tm: reply_received: branch CANCEL created\n");
 				/* note that in this case we do not know the reason
 				   (it could be a final reply or a received cancel)
-				   and we don't want to wait for it => no reason */
-				cancel_branch(t, branch, 0, F_CANCEL_B_FORCE_C);
+				   and we don't want to wait for it. However if
+				   t->uas.status >= 200 it's probably due to a received
+				   2xx, 6xx, local timeout or a local final reply 
+				   (via t_reply()), so use t->uas.status as reason */
+				cancel_data.reason.cause = (t->uas.status>=200)?t->uas.status:
+											CANCEL_REAS_UNKNOWN;
+				cancel_branch(t, branch, &cancel_data.reason,
+														F_CANCEL_B_FORCE_C);
 			}
 			goto done; /* nothing to do */
 		}
