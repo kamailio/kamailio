@@ -27,6 +27,7 @@ Bogdan Iancu
         1.3. Exported Parameters
 
               1.3.1. enable_stats (integer)
+              1.3.2  bind_tm (integer)
 
         1.4. Exported Functions
 
@@ -112,6 +113,18 @@ Chapter 1. Admin Guide
 
    Example 1.1. enable_stats example
 modparam("sl", "enable_stats", 0)
+
+1.3.1. bind_tm (integer)
+
+   If the module should use transaction support for sending the 
+   replies. A zero value means disabled.
+   
+   Module tm should be loaded before of this one
+
+   Default value is 1 (enabled).
+
+   Example 1.1. bind_tm example
+modparam("sl", "bind_tm", 0)
 
 1.4. Exported Functions
 
