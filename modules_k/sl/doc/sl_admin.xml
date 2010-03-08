@@ -55,7 +55,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				<emphasis>TM - transaction module</emphasis>, if you want
+				to use the transactional send_reply functionality.
 			</para>
 			</listitem>
 			</itemizedlist>
