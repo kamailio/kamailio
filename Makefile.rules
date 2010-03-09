@@ -84,11 +84,9 @@ exec_cmd= $(if $($(quiet)_cmd_$(1)),\
 #implicit rules
 %.o:%.c  $(ALLDEP)
 	$(call exec_cmd,CC)
-
-%.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) $<\
-	    |  sed 's#\(\($(*D)/\)\{0,1\}$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
-	    test -s $@ || ( rm -f $@; false )
+	@$(MKDEP) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) $< \
+	|  sed	-e 's/#.*//' -e '/:[ 	]*$$/d' -e '/^[ 	]*$$/d' \
+				-e 's#.*:#$@: $$(wildcard #g' -e 's/\([^\\]\)$$/\1)/'> $*.d
 
 # use RPATH and SER_LIBS if needed (make install and the module depends
 # on some ser libs)
@@ -192,9 +190,6 @@ makecfg.lst:
 				$(C_INCLUDES) $(INCLUDES))))" >>$@
 .PHONY: all
 all: $(NAME) every-module
-
-.PHONY: dep
-dep: $(depends)
 
 .PHONY: static
 static: $(objs)
