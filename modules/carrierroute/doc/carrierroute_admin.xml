@@ -262,7 +262,8 @@ modparam("carrierroute", "default_tree", "default")
 	    <title><varname>use_domain</varname> (int)</title>
 	    <para>
 		    When using tree lookup per user, this parameter specifies whether
-		    to use the domain part for user matching or not.
+		    to use the domain part for user matching or not. This parameter
+		    is tunable via the ser cfg framework.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -285,7 +286,7 @@ modparam("carrierroute", "use_domain", 0)
 		    This parameter defines the behaviour when using user-based tree
 		    lookup. If the user has a non-existing tree set and fallback_default
 		    is set to 1, the default tree is used. Otherwise, cr_user_rewrite_uri
-		    returns an error.
+		    returns an error. This parameter is tunable via the ser cfg framework.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -308,7 +309,8 @@ modparam("carrierroute", "fallback_default", 1)
 		when loading the routing data. This value can be used to tune
 		the load time at startup. For 1MB of private memory (default)
 		it should be below 3750. The database driver must support the
-		fetch_result() capability.
+		fetch_result() capability. This parameter is tunable via the ser
+		cfg framework.
 		</para>
 		<para>
 		<emphasis>

@@ -47,6 +47,7 @@
 #include "cr_data.h"
 #include "cr_func.h"
 #include "db_carrierroute.h"
+#include "config.h"
 #include <sys/stat.h>
 
 MODULE_VERSION
@@ -71,9 +72,6 @@ str default_tree = str_init("default");
 const str CR_EMPTY_PREFIX = str_init("null");
 
 int mode = 0;
-int use_domain = 0;
-int fallback_default = 1;
-int cr_fetch_rows = 2000;
 int cr_match_mode = 10;
 
 
@@ -112,9 +110,9 @@ static param_export_t params[]= {
 	{"config_source",          STR_PARAM, &config_source },
 	{"default_tree",           STR_PARAM, &default_tree.s },
 	{"config_file",            STR_PARAM, &config_file },
-	{"use_domain",             INT_PARAM, &use_domain },
-	{"fallback_default",       INT_PARAM, &fallback_default },
-	{"fetch_rows",             INT_PARAM, &cr_fetch_rows },
+	{"use_domain",             INT_PARAM, &default_carrierroute_cfg.use_domain },
+	{"fallback_default",       INT_PARAM, &default_carrierroute_cfg.fallback_default },
+	{"fetch_rows",             INT_PARAM, &default_carrierroute_cfg.fetch_rows },
 	{"match_mode",             INT_PARAM, &cr_match_mode },
 	{0,0,0}
 };
@@ -208,6 +206,11 @@ static int mod_init(void) {
 	}
 	else {
 		LM_ERR("invalid config_source parameter: %s\n", config_source);
+		return -1;
+	}
+
+	if(cfg_declare("carrierroute", carrierroute_cfg_def, &default_carrierroute_cfg, cfg_sizeof(carrierroute), &carrierroute_cfg)){
+		LM_ERR("Fail to declare the configuration\n");
 		return -1;
 	}
 

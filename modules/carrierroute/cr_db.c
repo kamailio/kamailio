@@ -33,6 +33,7 @@
 #include "carrierroute.h"
 #include "cr_db.h"
 #include "cr_carrier.h"
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -196,7 +197,8 @@ int load_user_carrier(str * user, str * domain) {
 	db_val_t vals[2];
 	db_op_t op[2];
 	int id;
-	if (!user || (use_domain && !domain)) {
+	int use_domain = cfg_get(carrierroute, carrierroute_cfg, use_domain);
+	if (!user || (use_domain  && !domain)) {
 		LM_ERR("NULL pointer in parameter\n");
 		return -1;
 	}
@@ -327,7 +329,7 @@ int load_route_data_db(struct route_data_t * rd) {
 			LM_ERR("Failed to query database to prepare fetch row.\n");
 			return -1;
 		}
-		if(carrierroute_dbf.fetch_result(carrierroute_dbh, &res, cr_fetch_rows) < 0) {
+		if(carrierroute_dbf.fetch_result(carrierroute_dbh, &res, cfg_get(carrierroute, carrierroute_cfg, fetch_rows)) < 0) {
 			LM_ERR("Fetching rows failed\n");
 			return -1;
 		}
@@ -379,7 +381,7 @@ int load_route_data_db(struct route_data_t * rd) {
 			}
 		}
 		if (DB_CAPABILITY(carrierroute_dbf, DB_CAP_FETCH)) {
-			if(carrierroute_dbf.fetch_result(carrierroute_dbh, &res, cr_fetch_rows) < 0) {
+			if(carrierroute_dbf.fetch_result(carrierroute_dbh, &res,  cfg_get(carrierroute, carrierroute_cfg, fetch_rows)) < 0) {
 				LM_ERR("fetching rows failed\n");
 				carrierroute_dbf.free_result(carrierroute_dbh, res);
 				return -1;

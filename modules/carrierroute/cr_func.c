@@ -47,7 +47,7 @@
 #include "cr_domain.h"
 #include "cr_carrier.h"
 #include "carrierroute.h"
-
+#include "config.h"
 
 enum hash_algorithm {
 	alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
@@ -546,7 +546,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	
 	carrier_data=NULL;
 	if (carrier_id < 0) {
-		if (fallback_default) {
+		if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
 			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
 			carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 		}
@@ -555,7 +555,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	} else {
 		carrier_data = get_carrier_data(rd, carrier_id);
 		if (carrier_data == NULL) {
-			if (fallback_default) {
+			if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
 				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
 				carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 			}
@@ -622,7 +622,6 @@ int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user, gparam_t *_doma
 		LM_ERR("cannot print the domain\n");
 		return -1;
 	}
-	
 	/* get carrier id */
 	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
 		LM_ERR("error in load user carrier");
@@ -764,7 +763,7 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 
 	carrier_data=NULL;
 	if (carrier_id < 0) {
-		if (fallback_default) {
+		if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
 			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
 			carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 		}
@@ -773,7 +772,7 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 	} else {
 		carrier_data = get_carrier_data(rd, carrier_id);
 		if (carrier_data == NULL) {
-			if (fallback_default) {
+			if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
 				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
 				carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 			}
