@@ -83,6 +83,7 @@
  *  2010-01-10  added SHM_MEM_SZ (andrei)
 */
 
+%option noinput
 
 %{
 	#include "dprint.h"

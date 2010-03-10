@@ -100,6 +100,8 @@
  *             added SHM_MEM_SZ (andrei)
 */
 
+%expect 5
+
 %{
 
 #include <stdlib.h>
