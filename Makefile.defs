@@ -115,8 +115,11 @@ ifeq ($(quiet),verbose)
 $(info normal Makefile.defs exec)
 endif # verbose
 
+# usage: $(call set_if_empty,VAR,value)
+set_if_empty=$(if $($(1)),,$(eval override $(1)=$(2)))
+
 # flavour: sip-router, ser or kamailio
-FLAVOUR=kamailio
+$(call	set_if_empty,FLAVOUR,kamailio)
 
 #prefix for various configs and scripts
 #config name/name-prefix for distributed configs
@@ -815,7 +818,7 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
-					CPU ?= athlon64
+$(call				set_if_empty,CPU,athlon64)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
@@ -825,7 +828,7 @@ ifeq			($(CC_SHORTVER), 4.2+)
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CPU ?= athlon64
+$(call				set_if_empty,CPU,athlon64)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
@@ -834,7 +837,7 @@ ifeq			($(CC_SHORTVER), 4.x)
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
-					CPU ?= athlon
+$(call				set_if_empty,CPU,athlon)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-mtune=$(CPU) 
@@ -842,7 +845,7 @@ ifeq			($(CC_SHORTVER), 3.4)
 else
 			#if gcc 3.0+
 ifeq			($(CC_SHORTVER), 3.0)
-					CPU ?= athlon
+$(call				set_if_empty,CPU,athlon)
 					CFLAGS+=-minline-all-stringops \
 							-falign-loops \
 							-mcpu=$(CPU)
@@ -890,7 +893,7 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
-					CPU ?= opteron
+$(call				set_if_empty,CPU,opteron)
 					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
@@ -900,7 +903,7 @@ ifeq			($(CC_SHORTVER), 4.2+)
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CPU ?= opteron
+$(call				set_if_empty,CPU,opteron)
 					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
@@ -909,14 +912,14 @@ ifeq			($(CC_SHORTVER), 4.x)
 else
 			#if gcc 3.4
 ifeq			($(CC_SHORTVER), 3.4)
-					CPU ?= athlon64
+$(call				set_if_empty,CPU,athlon64)
 					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops 
 					LDFLAGS+=-m64
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CPU ?= athlon64
+$(call				set_if_empty,CPU,athlon64)
 					CFLAGS+=-minline-all-stringops \
 							-falign-loops 
 							#-mcpu=$(CPU) \ # not working on all x86_64 gccs
@@ -967,7 +970,7 @@ ifeq		($(CC_NAME), gcc)
 					#-Wmissing-prototypes 
 				#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
-					CPU ?= ultrasparc
+$(call				set_if_empty,CPU,ultrasparc)
 					#use 32bit for now
 					CFLAGS+=-m64 -mcpu=ultrasparc  \
 							-mtune=$(CPU) \
@@ -981,7 +984,7 @@ ifeq			($(CC_SHORTVER), 4.2+)
 else
 				#if gcc 4.x
 ifeq			($(CC_SHORTVER), 4.x)
-					CPU ?= ultrasparc
+$(call				set_if_empty,CPU,ultrasparc)
 					#use 32bit for now
 					CFLAGS+=-m64 -mcpu=ultrasparc  \
 							-mtune=$(CPU) \
@@ -990,14 +993,14 @@ ifeq			($(CC_SHORTVER), 4.x)
 else
 				#if gcc 3.4
 ifeq			($(CC_SHORTVER), 3.4)
-					CPU ?= ultrasparc
+$(call				set_if_empty,CPU,ultrasparc)
 					#use 32bit for now
 					CFLAGS+=-m64 -mcpu=ultrasparc -mtune=$(CPU)
 					LDFLAGS+=-m64
 else
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CPU ?= ultrasparc
+$(call				set_if_empty,CPU,ultrasparc)
 					#use 32bit for now
 					CFLAGS+=-m64 -mcpu=ultrasparc -mtune=$(CPU)   \
 					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
@@ -1058,7 +1061,7 @@ ifeq		($(CC_NAME), gcc)
 					#-Wmissing-prototypes 
 				#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
-					CPU ?= v8 
+$(call				set_if_empty,CPU,v8)
 					#use 32bit for now
 					CFLAGS+= -mtune=$(CPU) \
 							-fno-strict-overflow \
@@ -1066,20 +1069,20 @@ ifeq			($(CC_SHORTVER), 4.2+)
 else
 				#if gcc 4.x
 ifeq			($(CC_SHORTVER), 4.x)
-					CPU ?= v8 
+$(call				set_if_empty,CPU,v8)
 					#use 32bit for now
 					CFLAGS+= -mtune=$(CPU) \
 							-ftree-vectorize
 else
 				#if gcc 3.4
 ifeq			($(CC_SHORTVER), 3.4)
-					CPU ?= v8
+$(call				set_if_empty,CPU,v8)
 					#use 32bit for now
 					CFLAGS+= -mtune=$(CPU)
 else
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CPU ?= v8 
+$(call				set_if_empty,CPU,v8)
 					#use 32bit for now
 					CFLAGS+= -mtune=$(CPU)   \
 					#-mno-epilogue #try to inline function exit code
@@ -1399,14 +1402,14 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -O9 -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
-					CPU ?= powerpc
+$(call				set_if_empty,CPU,powerpc)
 					CFLAGS+=-ftree-vectorize \
 							-fno-strict-overflow \
 							-mtune=$(CPU) -maltivec
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CPU ?= powerpc
+$(call				set_if_empty,CPU,powerpc)
 					CFLAGS+=-ftree-vectorize \
 							-mtune=$(CPU) -maltivec
 else
@@ -1448,14 +1451,14 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -O9 -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.2+
 ifeq			($(CC_SHORTVER), 4.2+)
-					CPU ?= powerpc64
+$(call				set_if_empty,CPU,powerpc64)
 					CFLAGS+=-ftree-vectorize \
 							-fno-strict-overflow \
 							-mtune=$(CPU) -maltivec
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CPU ?= powerpc64
+$(call				set_if_empty,CPU,powerpc64)
 					CFLAGS+=-ftree-vectorize \
 							-mtune=$(CPU) -maltivec
 else
