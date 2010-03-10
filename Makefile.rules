@@ -25,6 +25,11 @@
 #              used only for "temporary" defines/includes inside modules or
 #              libs, C_DEFS and C_INCLUDES are used for the common stuff)
 #              (andrei)
+#  2010-03-09  generate dependencies when compiling .o instead of on
+#               include .d and fix build errors when a .h is moved
+#              support for using MKDEP="makedepend-f-"      (andrei)
+#  2010-03-10  support for on the-fly dependency generation (while compiling,
+#               see CC_MKDEP_OPTS)  (andrei)
 
 
 # check if the saved cfg corresponds with the current one
@@ -58,6 +63,19 @@ crt_type=$(if $(MOD_NAME),M,$(if $(LIB_NAME),L,$(if $(UTIL_NAME),U)))
 cmd_CC=$(CC) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) -c $< -o $@
 cmd_LD=$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(ALL_LIBS) $(SER_RPATH) \
 	-o $(NAME)
+
+ifeq (,$(CC_MKDEP_OPTS))
+# if CCC_MKDEP_OPTS is empty => CC cannot generate dependencies on the fly
+cmd_MKDEP=$(MKDEP) $(filter -D% -I%,$(CFLAGS)) $(C_INCLUDES) $(INCLUDES) \
+			$(C_DEFS) $(DEFS) $< \
+		|  sed	-e 's/\#.*//' -e '/:[ 	]*$$/d' -e '/^[ 	]*$$/d' \
+				-e 's|.*:|$@: $$(wildcard |' -e 's/\([^\\]\)$$/\1)/'> $*.d
+else
+# deps can be generated on the fly by cmd_CC
+cmd_CC+=$(CC_MKDEP_OPTS)
+# no MKDEP command any more
+cmd_MKDEP=
+endif # CC_MKDEP_OPTS
 
 # what will be displayed if quiet==silent
 silent_cmd_CC=CC ($(CC)) [$(strip $(crt_type) $(NAME))]		$@
@@ -94,9 +112,7 @@ exec_cmd= $(if $($(quiet)_cmd_$(1)),\
 #implicit rules
 %.o:%.c  $(ALLDEP)
 	$(call exec_cmd,CC)
-	@$(MKDEP) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) $< \
-	|  sed	-e 's/#.*//' -e '/:[ 	]*$$/d' -e '/^[ 	]*$$/d' \
-				-e 's#.*:#$@: $$(wildcard #g' -e 's/\([^\\]\)$$/\1)/'> $*.d
+	@$(call cmd_MKDEP)
 
 # use RPATH and SER_LIBS if needed (make install and the module depends
 # on some ser libs)
