@@ -8,8 +8,9 @@
 	<xsl:template match="/">
 		<xsl:document href="{$output}" method="text" indent="no" 
 					  omit-xml-declaration="yes">
-			<xsl:value-of select="concat($output, ': ')"/>
+			<xsl:value-of select="concat($output, ':$(wildcard  ')"/>
 			<xsl:apply-templates mode="subroot"/>
+			<xsl:text>)&#xA;</xsl:text>
 		</xsl:document>
 	</xsl:template>
 	
