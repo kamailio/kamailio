@@ -101,6 +101,8 @@
  * 2010-02-17  added blacklist imask (DST_BLST_*_IMASK) support (andrei)
 */
 
+%expect 5
+
 %{
 
 #include <stdlib.h>

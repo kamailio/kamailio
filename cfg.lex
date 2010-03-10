@@ -84,6 +84,7 @@
  *  2010-02-17 added DST_BLST_{UDP,TCP,TLS,SCTP}_IMASK (andrei)
 */
 
+%option noinput
 
 %{
 	#include "dprint.h"
