@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">]
+>
+
+<section id="malloc_test" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+		<authorgroup>
+			<author>
+				<firstname>Andrei</firstname>
+				<surname>Pelinescu-Onciul</surname>
+				<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+			<address>
+				<email>andrei@iptel.org</email>
+			</address>
+			</author>
+		</authorgroup>
+		<copyright>
+			<year>2010</year>
+			<holder>iptelorg GmbH</holder>
+		</copyright>
+		<revhistory>
+			<revision>
+			<revnumber>$Revision$</revnumber>
+			<date>$Date$</date>
+			</revision>
+		</revhistory>
+	</sectioninfo>
+
+	<title>malloc_test Module</title>
+
+	<section id="malloc_test.overview">
+		<title>Overview</title>
+		<para>
+			This is a debugging/test module. It implements functions (both
+			script and rpcs) that can be used to stress the memory allocator
+			or force memory leaks.
+		</para>
+		<warning><para>
+			This module should never be used in a production environment.
+		</para></warning>
+	</section>
+	<xi:include href="params.xml"/>
+	<xi:include href="functions.xml"/>
+</section>
