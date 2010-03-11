@@ -424,7 +424,7 @@ static ticks_t tst_timer(ticks_t ticks, struct timer_ln* tl, void* data)
  *    a random number of bytes, between min & max.
  *  - if total_size is reached, free everything.
  *
- * @returns 0 on success, -1 on error.
+ * @returns test id (>=0) on success, -1 on error.
  */
 static int mem_leak_time_test(unsigned long min, unsigned long max,
 								unsigned long total_size,
@@ -434,12 +434,13 @@ static int mem_leak_time_test(unsigned long min, unsigned long max,
 	struct rnd_time_test* tst;
 	struct rnd_time_test* l;
 	ticks_t first_int;
+	int id;
 	
 	tst = shm_malloc(sizeof(*tst));
 	if (tst == 0)
 		goto error;
 	memset(tst, 0, sizeof(*tst));
-	tst->id = atomic_add_int(&rndt_lst->last_id, 1);
+	id = tst->id = atomic_add_int(&rndt_lst->last_id, 1);
 	tst->min = min;
 	tst->max = max;
 	tst-> total = total_size;
@@ -455,7 +456,7 @@ static int mem_leak_time_test(unsigned long min, unsigned long max,
 	lock_release(&rndt_lst->lock);
 	if (timer_add(&tst->timer, MIN_unsigned(first_int, test_time)) < 0 )
 		goto error;
-	return 0;
+	return id;
 error:
 	if (tst) {
 		lock_get(&rndt_lst->lock);
@@ -735,6 +736,7 @@ static void rpc_mt_test_start(rpc_t* rpc, void* c)
 	int min, max, total_size;
 	int min_intvrl, max_intvrl, total_time;
 	int rs;
+	int id;
 	
 	if (rpc->scan(c, "dddddd", &min, &max, &total_size,
 								&min_intvrl, &max_intvrl, &total_time) < 6) {
@@ -752,14 +754,16 @@ static void rpc_mt_test_start(rpc_t* rpc, void* c)
 		rpc->fault(c, 400, "invalid time intervals values");
 		return;
 	}
-	if (mem_leak_time_test((unsigned long)min << rs,
+	if ((id=mem_leak_time_test((unsigned long)min << rs,
 					 (unsigned long)max << rs,
 					 (unsigned long)total_size <<rs,
 					 MS_TO_TICKS(min_intvrl),
 					 MS_TO_TICKS(max_intvrl),
 					 MS_TO_TICKS(total_time)
-					 ) < 0) {
+					 )) < 0) {
 		rpc->fault(c, 400, "memory allocation failed");
+	} else {
+		rpc->add(c, "d", id);
 	}
 	return;
 }
@@ -821,7 +825,8 @@ static void rpc_mt_test_destroy_all(rpc_t* rpc, void* c)
 
 static const char* rpc_mt_test_list_doc[2] = {
 	"If a test id parameter is provided it will list the corresponding test,"
-	" else it will list all of them",
+	" else it will list all of them. Use b |k | m | g as a second parameter"
+	" for the size units (default bytes)",
 	0
 };
 

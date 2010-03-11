@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!-- Include general documentation entities -->
+		<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+		%docentities;
+	]
+>
 
 <section id="malloc_test.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
@@ -40,7 +45,7 @@ modparam("malloc_test", "check_content", 1)
 				Set <varname>check_content</varname> at runtime via sercmd
 			</title>
 			<programlisting>
-$ sercmd cfg.set_now_int malloc_test check_content 1
+$ &sercmd; cfg.set_now_int malloc_test check_content 1
 			</programlisting>
 		</example>
 	</section>

@@ -2,7 +2,11 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
-	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">]
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
 >
 
 <section id="malloc_test" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -44,4 +48,5 @@
 	</section>
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
+	<xi:include href="rpc.xml"/>
 </section>
