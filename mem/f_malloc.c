@@ -337,7 +337,7 @@ void* fm_malloc(struct fm_block* qm, unsigned long size)
 	hash=fm_bmp_first_set(qm, GET_HASH(size));
 	if (likely(hash>=0)){
 		f=&(qm->free_hash[hash].first);
-	if (likely(hash<=F_MALLOC_OPTIMIZE)) /* return first match */
+	if (likely(hash<=F_MALLOC_OPTIMIZE/ROUNDTO)) /* return first match */
 			goto found; 
 		for(;(*f); f=&((*f)->u.nxt_free))
 			if ((*f)->size>=size) goto found;
@@ -346,7 +346,7 @@ void* fm_malloc(struct fm_block* qm, unsigned long size)
 	for(hash=GET_HASH(size);hash<F_HASH_SIZE;hash++){
 		f=&(qm->free_hash[hash].first);
 #if 0
-		if (likely(hash<=F_MALLOC_OPTIMIZE)) /* return first match */
+		if (likely(hash<=F_MALLOC_OPTIMIZE/ROUNDTO)) /* return first match */
 				goto found; 
 #endif
 		for(;(*f); f=&((*f)->u.nxt_free))
