@@ -95,7 +95,7 @@ extern struct sl_binds slb;
 
 extern stat_var *accepted_registrations;
 extern stat_var *rejected_registrations;
-extern stat_var *default_expires_stat;
+extern stat_var *default_expire_stat;
 extern stat_var *min_expires_stat;
 extern stat_var *max_expires_stat;
 

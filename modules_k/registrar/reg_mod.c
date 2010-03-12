@@ -529,7 +529,7 @@ error:
 }
 
 void default_expires_stats_update(str* gname, str* name){
-	update_stat(default_expires_stat, cfg_get(registrar, registrar_cfg, default_expires));
+	update_stat(default_expire_stat, cfg_get(registrar, registrar_cfg, default_expires));
 }
 
 void min_expires_stats_update(str* gname, str* name){
