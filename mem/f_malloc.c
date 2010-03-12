@@ -491,7 +491,9 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 		fm_split_frag(qm, f, size);
 #endif
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
-		qm->real_used-=(orig_size-f->size-FRAG_OVERHEAD);
+		/* fm_split frag already adds FRAG_OVERHEAD for the newly created
+		   free frag, so here we only need orig_size-f->size for real used */
+		qm->real_used-=(orig_size-f->size);
 		qm->used-=(orig_size-f->size);
 #endif
 	}else if (f->size<size){
