@@ -7,6 +7,15 @@ CTLRC="$CTL_DIR/kamctlrc"
 CTL="$CTL_DIR/kamctl"
 DBCTL="$CTL_DIR/kamdbctl"
 BIN="$SR_DIR/ser"
+if [ -f $SR_DIR/ser ] ; then
+    BIN="$SR_DIR/ser"
+else
+    if [ -f $SR_DIR/kamailio ] ; then
+	BIN="$SR_DIR/kamailio"
+    else
+	echo "WARNING Binary not found!"
+    fi
+fi
 KILL="killall -15 $BIN"
 # test directory relative to root
 TEST_DIR="test/unit"
