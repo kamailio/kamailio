@@ -50,7 +50,7 @@ void	*registrar_cfg = &default_registrar_cfg;
 cfg_def_t	registrar_cfg_def[] = {
 	{"default_expires",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, default_expires_stats_update,
 		"Contains number of second to expire if no expire hf or contact expire present" },
-	{"min_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, min_expires_stats_update,
+	{"min_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, 0,
 		"The minimum expires value of a Contact. Value 0 disables the checking. "},
 	{"max_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, max_expires_stats_update,
 		"The maximum expires value of a Contact. Value 0 disables the checking. "},

@@ -44,7 +44,6 @@ extern void	*registrar_cfg;
 extern cfg_def_t	registrar_cfg_def[];
 
 extern void default_expires_stats_update(str*, str*);
-extern void min_expires_stats_update(str*, str*);
 extern void max_expires_stats_update(str*, str*);
 
 #endif
