@@ -55,11 +55,13 @@ static cmd_export_t cmds[]={
 
 struct cfg_group_malloc_test {
 	int check_content;
+	int realloc_p; /* realloc probability */
 };
 
 
 static struct cfg_group_malloc_test default_mt_cfg = {
-	0 /* check_content, off by default */
+	0, /* check_content, off by default */
+	0  /* realloc probability, 0 by default */
 };
 
 static void * mt_cfg = &default_mt_cfg;
@@ -67,7 +69,12 @@ static void * mt_cfg = &default_mt_cfg;
 static cfg_def_t malloc_test_cfg_def[] = {
 	{"check_content", CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
 		"check if allocated memory was overwritten by filling it with "
-		"a special pattern and checking it on free"},
+		"a special pattern and checking it on free."},
+	{"realloc_p", CFG_VAR_INT | CFG_ATOMIC, 0, 90, 0, 0,
+		"realloc probability in percents. During tests and mem_rnd_alloc"
+		" realloc_p percents of the allocations will be made by realloc'ing"
+		" and existing chunk. The maximum value is limited to 90, to avoid"
+		" very long mem_rnd_alloc runs (a realloc might also free memory)." },
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -111,6 +118,7 @@ struct allocated_list {
 	struct mem_chunk* chunks;
 	gen_lock_t lock;
 	volatile long size;
+	volatile int no;
 };
 
 struct allocated_list* alloc_lst;
@@ -126,6 +134,7 @@ struct rnd_time_test {
 	ticks_t stop_time;
 	ticks_t start_time;
 	unsigned long calls;
+	unsigned long reallocs;
 	unsigned int errs;
 	unsigned int overfl;
 	struct rnd_time_test* next;
@@ -160,6 +169,7 @@ static int mod_init(void)
 		goto error;
 	alloc_lst->chunks = 0;
 	atomic_set_long(&alloc_lst->size, 0);
+	atomic_set_int(&alloc_lst->no, 0);
 	if (lock_init(&alloc_lst->lock) == 0)
 		goto error;
 	rndt_lst = shm_malloc(sizeof(*rndt_lst));
@@ -214,10 +224,10 @@ static int mem_track(void* addr, unsigned long size)
 		mc->flags |=  MC_F_CHECK_CONTENTS;
 		d = addr;
 		for (r = 0; r < size/sizeof(*d); r++){
-			d[r]=~(unsigned long)d;
+			d[r]=~(unsigned long)&d[r];
 		}
 		for (i=0; i< size % sizeof(*d); i++){
-			((char*)&d[r])[i]=~((unsigned long)d >> i*8);
+			((char*)&d[r])[i]=~((unsigned long)&d[r] >> i*8);
 		}
 	}
 	lock_get(&alloc_lst->lock);
@@ -225,6 +235,7 @@ static int mem_track(void* addr, unsigned long size)
 		alloc_lst->chunks = mc;
 	lock_release(&alloc_lst->lock);
 	atomic_add_long(&alloc_lst->size, size);
+	atomic_inc_int(&alloc_lst->no);
 	return 0;
 error:
 	return -1;
@@ -254,6 +265,36 @@ static int mem_leak(unsigned long size)
 
 
 
+/* realloc a chunk, unsafe (requires external locking) version.
+ * @return 0 on success, -1 on error
+ */
+static int _mem_chunk_realloc_unsafe(struct mem_chunk *c, unsigned long size)
+{
+	unsigned long* d;
+	int r, i;
+	
+	d = shm_realloc(c->addr, size);
+	if (d) {
+		if (cfg_get(malloc_test, mt_cfg, check_content) &&
+				c->flags & MC_F_CHECK_CONTENTS) {
+			/* re-fill the test patterns (the address might have changed
+			   and they depend on it) */
+			for (r = 0; r < size/sizeof(*d); r++){
+				d[r]=~(unsigned long)&d[r];
+			}
+			for (i=0; i< size % sizeof(*d); i++){
+				((char*)&d[r])[i]=~((unsigned long)&d[r] >> i*8);
+			}
+		}
+		c->addr = d;
+		c->size = size;
+		return 0;
+	}
+	return -1;
+}
+
+
+
 static void mem_chunk_free(struct mem_chunk* c)
 {
 	unsigned long* d;
@@ -265,15 +306,15 @@ static void mem_chunk_free(struct mem_chunk* c)
 		d = c->addr;
 		err = 0;
 		for (r = 0; r < c->size/sizeof(*d); r++){
-			if (d[r]!=~(unsigned long)d)
+			if (d[r]!=~(unsigned long)&d[r])
 				err++;
-			d[r] = r; /* fill it with something else */
+			d[r] = (unsigned long)&d[r]; /* fill it with something else */
 		}
 		for (i=0; i< c->size % sizeof(*d); i++){
 			if (((unsigned char*)&d[r])[i] !=
-					(unsigned char)~((unsigned long)d >> i*8))
+					(unsigned char)~((unsigned long)&d[r] >> i*8))
 				err++;
-			((char*)&d[r])[i] = (unsigned char)((unsigned long)d >> i*8);
+			((char*)&d[r])[i] = (unsigned char)((unsigned long)&d[r] >> i*8);
 		}
 		if (err)
 			ERR("%d errors while checking %ld bytes at %p\n", err, c->size, d);
@@ -297,8 +338,10 @@ static unsigned long mem_unleak(unsigned long size)
 	struct mem_chunk* t;
 	struct mem_chunk** min_chunk;
 	unsigned long freed;
+	unsigned int no;
 	
 	freed = 0;
+	no = 0;
 	min_chunk = 0;
 	lock_get(&alloc_lst->lock);
 	if (size>=atomic_get_long(&alloc_lst->size)){
@@ -307,6 +350,7 @@ static unsigned long mem_unleak(unsigned long size)
 			t = *mc;
 			mem_chunk_free(t);
 			freed += t->size;
+			no++;
 			*mc = t->next;
 			shm_free(t);
 		}
@@ -318,6 +362,7 @@ static unsigned long mem_unleak(unsigned long size)
 				t = *mc;
 				mem_chunk_free(t);
 				freed += t->size;
+				no++;
 				*mc = t->next;
 				shm_free(t);
 				continue;
@@ -332,14 +377,50 @@ static unsigned long mem_unleak(unsigned long size)
 			t = *mc;
 			mem_chunk_free(t);
 			freed += t->size;
+			no++;
 			*mc = (*mc)->next;
 			shm_free(t);
 		}
 	}
 	lock_release(&alloc_lst->lock);
 	atomic_add_long(&alloc_lst->size, -freed);
+	atomic_add_int(&alloc_lst->no, -no);
 	return freed;
 }
+
+
+
+/** realloc randomly size bytes.
+ * Chooses randomly a previously allocated chunk and realloc's it.
+ * @param size - size.
+ * @param diff - filled with difference, >= 0 means more bytes were alloc.,
+ *               < 0 means bytes were freed.
+ * @return  >= 0 on success, -1 on error/ not found
+ * (empty list is a valid error reason)
+ */
+static int mem_rnd_realloc(unsigned long size, long* diff)
+{
+	struct mem_chunk* t;
+	int ret;
+	int target, i;
+	
+	*diff = 0;
+	ret = -1;
+	lock_get(&alloc_lst->lock);
+		target = fastrand_max(atomic_get_int(&alloc_lst->no));
+		for (t = alloc_lst->chunks, i=0; t; t=t->next, i++ ){
+			if (target == i) {
+				*diff = (long)size - (long)t->size;
+				if ((ret=_mem_chunk_realloc_unsafe(t, size)) < 0)
+					*diff = 0;
+				break;
+			}
+		}
+	lock_release(&alloc_lst->lock);
+	atomic_add_long(&alloc_lst->size, *diff);
+	return ret;
+}
+
 
 
 #define MIN_ulong(a, b) \
@@ -355,13 +436,21 @@ static int mem_rnd_leak(unsigned long min, unsigned long max,
 {
 	unsigned long size;
 	unsigned long crt_size, crt_min;
-	int err;
+	long diff;
+	int err, p;
 	
 	size = total_size;
 	err = 0;
 	while(size){
 		crt_min = MIN_ulong(min, size);
 		crt_size = fastrand_max(MIN_ulong(max, size) - crt_min) + crt_min;
+		p = cfg_get(malloc_test, mt_cfg, realloc_p);
+		if (p && ((fastrand_max(99) +1) <= p)){
+			if (mem_rnd_realloc(crt_size, &diff) == 0){
+				size -= diff;
+				continue;
+			} /* else fallback to normal alloc. */
+		}
 		size -= crt_size;
 		err += mem_leak(crt_size) < 0;
 	}
@@ -377,6 +466,8 @@ static ticks_t tst_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 	ticks_t next_int;
 	ticks_t max_int;
 	unsigned long crt_size, crt_min, remaining;
+	long diff;
+	int p;
 	
 	tst = data;
 	
@@ -392,10 +483,19 @@ static ticks_t tst_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 	crt_min = MIN_ulong(tst->min, remaining);
 	crt_size = fastrand_max(MIN_ulong(tst->max, remaining) - crt_min) +
 				crt_min;
+	p = cfg_get(malloc_test, mt_cfg, realloc_p);
+	if (p && ((fastrand_max(99) +1) <= p)) {
+		if (mem_rnd_realloc(crt_size, &diff) == 0){
+			tst->crt -= diff;
+			tst->reallocs++;
+			goto skip_alloc;
+		}
+	}
 	if (mem_leak(crt_size) >= 0)
 		tst->crt += crt_size;
 	else
 		tst->errs ++;
+skip_alloc:
 	tst->calls++;
 	
 	if (TICKS_GT(tst->stop_time, ticks)) {
@@ -635,6 +735,39 @@ static void rpc_mt_alloc(rpc_t* rpc, void* c)
 }
 
 
+static const char* rpc_mt_realloc_doc[2] = {
+	"Reallocates the specified number of bytes from a pre-allocated"
+	" randomly selected memory chunk. If no pre-allocated memory"
+	" chunks exists, it will fail."
+	" Make sure mt.mem_used is non 0 or call mt.mem_alloc prior to calling"
+	" this function."
+	" Returns the difference in bytes (<0 if bytes were freed, >0 if more"
+	" bytes were allocated)."
+	"Use b|k|m|g to specify the desired size unit",
+	0
+};
+
+static void rpc_mt_realloc(rpc_t* rpc, void* c)
+{
+	int size;
+	int rs;
+	long diff;
+	
+	if (rpc->scan(c, "d", &size) < 1) {
+		return;
+	}
+	rs=rpc_get_size_mod(rpc, c);
+	if (rs<0)
+		/* fault already generated on rpc_get_size_mod() error */
+		return;
+	if (mem_rnd_realloc((unsigned long)size << rs, &diff) < 0) {
+		rpc->fault(c, 400, "memory allocation failed");
+	}
+	rpc->add(c, "d", diff >> rs);
+	return;
+}
+
+
 static const char* rpc_mt_free_doc[2] = {
 	"Frees the specified number of bytes, previously allocated by one of the"
 	" other malloc_test functions (e.g. mt.mem_alloc or the script "
@@ -666,8 +799,9 @@ static void rpc_mt_free(rpc_t* rpc, void* c)
 
 
 static const char* rpc_mt_used_doc[2] = {
-	"Returns how many bytes are currently allocated via the mem_alloc module"
-	" functions. Use b|k|m|g to specify the desired size unit.",
+	"Returns how many memory chunks and how many bytes are currently"
+	" allocated via the mem_alloc module functions."
+	" Use b|k|m|g to specify the desired size unit.",
 	0
 };
 
@@ -681,6 +815,7 @@ static void rpc_mt_used(rpc_t* rpc, void* c)
 	if (rs<0)
 		/* fault already generated on rpc_get_size_mod() error */
 		return;
+	rpc->add(c, "d", atomic_get_int(&alloc_lst->no));
 	rpc->add(c, "d", (int)(atomic_get_long(&alloc_lst->size) >> rs));
 	return;
 }
@@ -698,6 +833,7 @@ static void rpc_mt_rnd_alloc(rpc_t* rpc, void* c)
 {
 	int min, max, total_size;
 	int rs;
+	int err;
 	
 	if (rpc->scan(c, "ddd", &min, &max, &total_size) < 3) {
 		return;
@@ -710,10 +846,10 @@ static void rpc_mt_rnd_alloc(rpc_t* rpc, void* c)
 		rpc->fault(c, 400, "invalid parameter values");
 		return;
 	}
-	if (mem_rnd_leak((unsigned long)min << rs,
-					 (unsigned long)max << rs,
-					 (unsigned long)total_size <<rs ) < 0) {
-		rpc->fault(c, 400, "memory allocation failed");
+	if ((err=mem_rnd_leak((unsigned long)min << rs,
+						 (unsigned long)max << rs,
+						 (unsigned long)total_size <<rs )) < 0) {
+		rpc->fault(c, 400, "memory allocation failed (%d errors)", -err);
 	}
 	return;
 }
@@ -849,7 +985,7 @@ static void rpc_mt_test_list(rpc_t* rpc, void* c)
 		for (tst = rndt_lst->tests; tst; tst=tst->next)
 			if (tst->id == id || id == -1) {
 				rpc->add(c, "{", &h);
-				rpc->struct_add(h, "dddddddddd",
+				rpc->struct_add(h, "ddddddddddd",
 						"ID           ",  tst->id,
 						"run time (s) ", (int)TICKS_TO_S((
 											TICKS_LE(tst->stop_time,
@@ -860,7 +996,8 @@ static void rpc_mt_test_list(rpc_t* rpc, void* c)
 												get_ticks_raw()) ? 0 :
 										(int)TICKS_TO_S(tst->stop_time -
 														get_ticks_raw()),
-						"allocations  ", (int)tst->calls,
+						"total calls  ", (int)tst->calls,
+						"reallocs     ", (int)tst->reallocs,
 						"errors       ", (int)tst->errs,
 						"overflows    ", (int)tst->overfl,
 						"total alloc  ", (int)((tst->crt +
@@ -879,6 +1016,7 @@ static void rpc_mt_test_list(rpc_t* rpc, void* c)
 static rpc_export_t mt_rpc[] = {
 	{"mt.mem_alloc", rpc_mt_alloc, rpc_mt_alloc_doc, 0},
 	{"mt.mem_free", rpc_mt_free, rpc_mt_free_doc, 0},
+	{"mt.mem_realloc", rpc_mt_realloc, rpc_mt_realloc_doc, 0},
 	{"mt.mem_used", rpc_mt_used, rpc_mt_used_doc, 0},
 	{"mt.mem_rnd_alloc", rpc_mt_rnd_alloc, rpc_mt_rnd_alloc_doc, 0},
 	{"mt.mem_test_start", rpc_mt_test_start, rpc_mt_test_start_doc, 0},
