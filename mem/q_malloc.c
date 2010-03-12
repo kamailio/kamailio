@@ -562,8 +562,11 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 #else
 		if(split_frag(qm, f, size)!=0){
 #endif
-			/* update used sizes: freed the spitted frag */
-			qm->real_used-=(orig_size-f->size-FRAG_OVERHEAD);
+			/* update used sizes: freed the splited frag */
+			/* split frag already adds FRAG_OVERHEAD for the newly created
+			   free frag, so here we only need orig_size-f->size for real used
+			 */
+			qm->real_used-=(orig_size-f->size);
 			qm->used-=(orig_size-f->size);
 		}
 		
