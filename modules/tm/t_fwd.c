@@ -951,6 +951,104 @@ error:
 
 
 
+/** create a cancel reason structure packed into a single shm. block.
+  * From a cause and a pointer to a str or cancel_msg, build a
+  * packed cancel reason structure (CANCEL_REAS_PACKED_HDRS), using a
+  * single memory allocation (so that it can be freed by a simple shm_free().
+  * @param cause - cancel cause, @see cancel_reason for more details.
+  * @param data - depends on the cancel cause.
+  * @return pointer to shm. packed cancel reason struct. on success,
+  *        0 on error
+  */
+static struct cancel_reason* cancel_reason_pack(short cause, void* data,
+													struct cell* t)
+{
+	char* d;
+	struct cancel_reason* cr;
+	int reason_len;
+	int code_len;
+	struct hdr_field *reas1, *reas_last, *hdr;
+	str* txt;
+	struct sip_msg* e2e_cancel;
+	
+	if (likely(cause != CANCEL_REAS_UNKNOWN)){
+		reason_len = 0;
+		txt = 0;
+		e2e_cancel = 0;
+		if (likely(cause == CANCEL_REAS_RCVD_CANCEL &&
+					data && !(t->flags & T_NO_E2E_CANCEL_REASON))) {
+			/* parse the entire cancel, to get all the Reason headers */
+			e2e_cancel = data;
+			parse_headers(e2e_cancel, HDR_EOH_F, 0);
+			for(hdr=get_hdr(e2e_cancel, HDR_REASON_T), reas1=hdr;
+					hdr; hdr=next_sibling_hdr(hdr)) {
+				/* hdr->len includes CRLF */
+				reason_len += hdr->len;
+				reas_last=hdr;
+			}
+		} else if (likely(cause > 0 &&
+					cfg_get(tm, tm_cfg, local_cancel_reason))){
+			txt = (str*) data;
+			/* Reason: SIP;cause=<reason->cause>[;text=<reason->u.text.s>] */
+			reason_len = REASON_PREFIX_LEN + USHORT2SBUF_MAX_LEN +
+				((txt && txt->s)?
+					REASON_TEXT_LEN + 1 + txt->len + 1 : 0) +
+				CRLF_LEN;
+		} else if (cause == CANCEL_REAS_PACKED_HDRS &&
+					!(t->flags & T_NO_E2E_CANCEL_REASON) && data) {
+			txt = (str*) data;
+			reason_len = txt?txt->len:0;
+		} else if (unlikely(cause < CANCEL_REAS_MIN)) {
+			BUG("unhandled reason cause %d\n", cause);
+			goto error;
+		}
+		
+		if (unlikely(reason_len == 0))
+			return 0; /* nothing to do, no reason */
+		cr = shm_malloc(sizeof(struct cancel_reason) + reason_len);
+		if (unlikely(cr == 0))
+				goto error;
+		d = (char*)cr +sizeof(*cr);
+		cr->cause = CANCEL_REAS_PACKED_HDRS;
+		cr->u.packed_hdrs.s = d;
+		cr->u.packed_hdrs.len = reason_len;
+		
+		if (cause == CANCEL_REAS_RCVD_CANCEL) {
+			for(hdr=reas1; hdr; hdr=next_sibling_hdr(hdr)) {
+				/* hdr->len includes CRLF */
+				append_str(d, hdr->name.s, hdr->len);
+				if (likely(hdr==reas_last))
+					break;
+			}
+		} else if (likely(cause > 0)) {
+			append_str(d, REASON_PREFIX, REASON_PREFIX_LEN);
+			code_len=ushort2sbuf(cause, d, reason_len - 
+									(int)(d - (char*)cr - sizeof(*cr)));
+			if (unlikely(code_len==0)) {
+				shm_free(cr);
+				cr = 0;
+				BUG("not enough space to write reason code");
+				goto error;
+			}
+			d+=code_len;
+			if (txt && txt->s){
+				append_str(d, REASON_TEXT, REASON_TEXT_LEN);
+				*d='"'; d++;
+				append_str(d, txt->s, txt->len);
+				*d='"'; d++;
+			}
+			append_str(d, CRLF, CRLF_LEN);
+		} else if (cause == CANCEL_REAS_PACKED_HDRS) {
+			append_str(d, txt->s, txt->len);
+		}
+		return cr;
+	}
+error:
+	return 0;
+}
+
+
+
 void e2e_cancel( struct sip_msg *cancel_msg,
 	struct cell *t_cancel, struct cell *t_invite )
 {
@@ -958,7 +1056,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 #ifndef E2E_CANCEL_HOP_BY_HOP
 	branch_bm_t tmp_bm;
 #else /* def E2E_CANCEL_HOP_BY_HOP */
-	struct cancel_reason reason;
+	struct cancel_reason* reason;
+	int free_reason;
 #endif /* E2E_CANCEL_HOP_BY_HOP */
 	int i;
 	int lowest_error;
@@ -1004,9 +1103,19 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	 * have 0 branches and we check for the branch number in 
 	 * t_reply_matching() ).
 	 */
-	init_cancel_reason(&reason);
-	reason.cause=CANCEL_REAS_RCVD_CANCEL;
-	reason.u.e2e_cancel=cancel_msg;
+	free_reason = 0;
+	reason = 0;
+	if (likely(t_invite->uas.cancel_reas == 0)){
+		reason = cancel_reason_pack(CANCEL_REAS_RCVD_CANCEL, cancel_msg,
+									t_invite);
+		/* set if not already set */
+		if (unlikely(reason &&
+					atomic_cmpxchg_long((void*)&t_invite->uas.cancel_reas,
+										0, (long)reason) != 0)) {
+			/* already set, failed to re-set it */
+			free_reason = 1;
+		}
+	}
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
 		if (cancel_bm & (1<<i)) {
 			/* it's safe to get the reply lock since e2e_cancel is
@@ -1016,7 +1125,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			ret=cancel_branch(
 				t_invite,
 				i,
-				&reason,
+				reason,
 				cfg_get(tm,tm_cfg, cancel_b_flags)
 					| ((t_invite->uac[i].request.buffer==NULL)?
 						F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
@@ -1024,6 +1133,10 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
 		}
+	if (unlikely(free_reason)) {
+		/* reason was not set as the global reason => free it */
+		shm_free(reason);
+	}
 #else /* ! E2E_CANCEL_HOP_BY_HOP */
 	/* fix label -- it must be same for reply matching (the label is part of
 	 * the generated via branch for the cancels sent upstream and if it

@@ -138,6 +138,8 @@ void free_cell( struct cell* dead_cell )
 		sip_msg_free_unsafe( dead_cell->uas.request );
 	if ( dead_cell->uas.response.buffer )
 		shm_free_unsafe( dead_cell->uas.response.buffer );
+	if (unlikely(dead_cell->uas.cancel_reas))
+		shm_free_unsafe(dead_cell->uas.cancel_reas);
 
 	/* callbacks */
 	for( cbs=(struct tm_callback*)dead_cell->tmcb_hl.first ; cbs ; ) {

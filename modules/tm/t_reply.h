@@ -65,9 +65,18 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack);
 typedef unsigned int branch_bm_t;
 
 
+/* reason building blocks (see rfc3326) */
+#define REASON_PREFIX "Reason: SIP;cause="
+#define REASON_PREFIX_LEN (sizeof(REASON_PREFIX)-1)
+#define REASON_TEXT ";text="
+#define REASON_TEXT_LEN (sizeof(REASON_TEXT)-1)
+
 #define CANCEL_REAS_UNKNOWN 0
-#define CANCEL_REAS_RCVD_CANCEL -1
+#define CANCEL_REAS_PACKED_HDRS -1
+#define CANCEL_REAS_RCVD_CANCEL -2
 #define CANCEL_REAS_FINAL_REPLY(x) (x)
+#define CANCEL_REAS_MIN CANCEL_REAS_RCVD_CANCEL
+
 
 /** cancel reason structure.*/
 struct cancel_reason {
@@ -75,6 +84,7 @@ struct cancel_reason {
 	union{
 		str text; /**< reason text if reason is final reply .*/
 		struct sip_msg* e2e_cancel; /**< cancel msg if reason is cancel. */
+		str packed_hdrs; /**< complete reason headers. */
 	}u;
 };
 

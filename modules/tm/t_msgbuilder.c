@@ -74,12 +74,6 @@
 #endif
 
 
-/* reason building blocks (see rfc3326) */
-#define REASON_PREFIX "Reason: SIP;cause="
-#define REASON_PREFIX_LEN (sizeof(REASON_PREFIX)-1)
-#define REASON_TEXT ";text="
-#define REASON_TEXT_LEN (sizeof(REASON_TEXT)-1)
-
 /* convenience macros */
 #define memapp(_d,_s,_len) \
 	do{\
@@ -181,6 +175,9 @@ char *build_local(struct cell *Trans,unsigned int branch,
 				(reason->u.text.s?
 					REASON_TEXT_LEN + 1 + reason->u.text.len + 1 : 0) +
 				CRLF_LEN;
+		} else if (likely(reason->cause == CANCEL_REAS_PACKED_HDRS &&
+					!(Trans->flags & T_NO_E2E_CANCEL_REASON))) {
+			reason_len = reason->u.packed_hdrs.len;
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
 					reason->u.e2e_cancel &&
 					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
@@ -192,7 +189,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 				reason_len += hdr->len;
 				reas_last=hdr;
 			}
-		} else if (unlikely(reason->cause < -1))
+		} else if (unlikely(reason->cause < CANCEL_REAS_MIN))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
 	*len+= reason_len;
@@ -254,6 +251,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 				*p='"'; p++;
 			}
 			append_str(p, CRLF, CRLF_LEN);
+		} else if (likely(reason->cause == CANCEL_REAS_PACKED_HDRS)) {
+			append_str(p, reason->u.packed_hdrs.s, reason->u.packed_hdrs.len);
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL) {
 			for(hdr=reas1; hdr; hdr=next_sibling_hdr(hdr)) {
 				/* hdr->len includes CRLF */
@@ -318,6 +317,9 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				(reason->u.text.s?
 					REASON_TEXT_LEN + 1 + reason->u.text.len + 1 : 0) +
 				CRLF_LEN;
+		} else if (likely(reason->cause == CANCEL_REAS_PACKED_HDRS &&
+					!(Trans->flags & T_NO_E2E_CANCEL_REASON))) {
+			reason_len = reason->u.packed_hdrs.len;
 		} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL &&
 					reason->u.e2e_cancel &&
 					!(Trans->flags & T_NO_E2E_CANCEL_REASON)) {
@@ -329,7 +331,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				reason_len += hdr->len;
 				reas_last=hdr;
 			}
-		} else if (unlikely(reason->cause < -1))
+		} else if (unlikely(reason->cause < CANCEL_REAS_MIN))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
 
@@ -454,6 +456,10 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 							*d='"'; d++;
 						}
 						append_str(d, CRLF, CRLF_LEN);
+					} else if (likely(reason->cause ==
+										CANCEL_REAS_PACKED_HDRS)) {
+							append_str(d, reason->u.packed_hdrs.s,
+											reason->u.packed_hdrs.len);
 					} else if (reason->cause == CANCEL_REAS_RCVD_CANCEL) {
 						for(hdr=reas1; hdr; hdr=next_sibling_hdr(hdr)) {
 							/* hdr->len includes CRLF */

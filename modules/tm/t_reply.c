@@ -2041,16 +2041,20 @@ int reply_received( struct sip_msg  *p_msg )
 				 * if BUSY or set just exit, a cancel will be (or was) sent 
 				 * shortly on this branch */
 				DBG("tm: reply_received: branch CANCEL created\n");
-				/* note that in this case we do not know the reason
-				   (it could be a final reply or a received cancel)
-				   and we don't want to wait for it. However if
-				   t->uas.status >= 200 it's probably due to a received
-				   2xx, 6xx, local timeout or a local final reply 
-				   (via t_reply()), so use t->uas.status as reason */
-				cancel_data.reason.cause = (t->uas.status>=200)?t->uas.status:
-											CANCEL_REAS_UNKNOWN;
-				cancel_branch(t, branch, &cancel_data.reason,
+				if (t->uas.cancel_reas) {
+					/* cancel reason was saved, use it */
+					cancel_branch(t, branch, t->uas.cancel_reas,
 														F_CANCEL_B_FORCE_C);
+				} else {
+					/* note that in this case we do not know the reason,
+					   we only know it's a final reply (either locally
+					   generated via script t_reply(), timeout, a received
+					   2xx or 6xx) => try to use t->uas.status as the reason*/
+					cancel_data.reason.cause =
+						(t->uas.status>=200)?t->uas.status:CANCEL_REAS_UNKNOWN;
+					cancel_branch(t, branch, &cancel_data.reason,
+														F_CANCEL_B_FORCE_C);
+				}
 			}
 			goto done; /* nothing to do */
 		}
