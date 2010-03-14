@@ -220,7 +220,6 @@ int moduleFunc(struct sip_msg *m, char *func,
 	unsigned mod_ver;
 	char *argv[2];
 	int argc = 0;
-	action_u_t elems[MAX_ACTIONS];
 	struct run_act_ctx ra_ctx;
 
 	if (!func) {
@@ -260,16 +259,12 @@ int moduleFunc(struct sip_msg *m, char *func,
 		return -1;
 	}
 
-	elems[0].type = MODULE_T;
-	elems[0].u.data = exp_func_struct;
-	elems[1].type = STRING_ST;
-	elems[1].u.data = argv[0];
-	elems[2].type = STRING_ST;
-	elems[2].u.data = argv[1];
-	act = mk_action(	MODULE_T,
-				3,
-				elems,
-				0);
+	act = mk_action(MODULE_T, 4 /* number of (type, value) pairs */,
+					MODEXP_ST, exp_func_struct, /* function */
+					NUMBER_ST, 2,  /* parameter number */
+					STRING_ST, argv[0], /* param. 1 */
+					STRING_ST, argv[1]  /* param. 2 */
+			);
 
 
 	if (!act) {
