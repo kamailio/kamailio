@@ -192,7 +192,6 @@ msg_call_function(msgobject *self, PyObject *args)
     char *fname, *arg1, *arg2;
     union cmd_export_u* fexport;
     struct action *act;
-    action_u_t elems[MAX_ACTIONS];
     struct run_act_ctx ra_ctx;
     unsigned mod_ver;
 
@@ -220,13 +219,12 @@ msg_call_function(msgobject *self, PyObject *args)
         return Py_None;
     }
 
-    elems[0].type = MODEXP_ST;
-    elems[0].u.data = fexport;
-    elems[1].type = STRING_ST;
-    elems[1].u.data = arg1;
-    elems[2].type = STRING_ST;
-    elems[2].u.data = arg2;
-    act = mk_action(MODULE_T, 3, elems, 0);
+    act = mk_action(MODULE_T, 4 /* number of (type, value) pairs */,
+                    MODEXP_ST, fexport, /* function */
+                    NUMBER_ST, 2,       /* parameter number */
+                    STRING_ST, arg1,    /* param. 1 */
+                    STRING_ST, arg2     /* param. 2 */
+                   );
 
     if (act == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
