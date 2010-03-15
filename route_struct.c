@@ -443,12 +443,21 @@ void print_action(struct action* t)
 		case IF_T:
 			DBG("if (");
 			break;
-		case MODULE_T:
+		case MODULE0_T:
+		case MODULE1_T:
+		case MODULE2_T:
 		case MODULE3_T:
 		case MODULE4_T:
 		case MODULE5_T:
 		case MODULE6_T:
 		case MODULEX_T:
+		case MODULE1_RVE_T:
+		case MODULE2_RVE_T:
+		case MODULE3_RVE_T:
+		case MODULE4_RVE_T:
+		case MODULE5_RVE_T:
+		case MODULE6_RVE_T:
+		case MODULEX_RVE_T:
 			DBG(" external_module_call(");
 			break;
 		case FORCE_RPORT_T:

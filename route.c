@@ -629,6 +629,7 @@ int fix_actions(struct action* a)
 	struct action *t;
 	struct proxy_l* p;
 	char *tmp;
+	void *tmp_p;
 	int ret;
 	int i;
 	union cmd_export_u* cmd;
@@ -640,6 +641,8 @@ int fix_actions(struct action* a)
 	struct rval_expr* rve;
 	struct rval_expr* err_rve;
 	enum rval_type rve_type, err_type, expected_type;
+	struct rvalue* rv;
+	int rve_param_no;
 
 	
 	char buf[30]; /* tmp buffer needed for module param fixups */
@@ -907,13 +910,16 @@ int fix_actions(struct action* a)
 					goto error;
 				break;
 
-			case MODULE_T:
+			case MODULE0_T:
+			case MODULE1_T:
+			case MODULE2_T:
 			case MODULE3_T:
 			case MODULE4_T:
 			case MODULE5_T:
 			case MODULE6_T:
 			case MODULEX_T:
 				cmd = t->val[0].u.data;
+				rve_param_no = 0;
 				if (cmd && cmd->c.fixup) {
 					DBG("fixing %s()\n", cmd->c.name);
 					if (t->val[1].u.number==0) {
@@ -924,6 +930,7 @@ int fix_actions(struct action* a)
 					/* type cast NUMBER to STRING, old modules may expect
 					 * all STRING params during fixup */
 					for (i=0; i<t->val[1].u.number; i++) {
+						/* obsoleted by the new RVE changes ? */
 						if (t->val[i+2].type == NUMBER_ST) {
 							snprintf(buf, sizeof(buf)-1, "%ld", 
 										t->val[i+2].u.number);
@@ -937,17 +944,84 @@ int fix_actions(struct action* a)
 							}
 							strcpy(t->val[i+2].u.string, buf);
 							t->val[i+2].type = STRING_ST;
+						}else if (t->val[i+2].type != STRING_ST) {
+							BUG("unsupported function parameter type %d\n",
+									t->val[i+2].type);
 						}
 					}
-					for (i=0; i<t->val[1].u.number; i++) {
-						void *p;
-						p = t->val[i+2].u.data;
+					for (i=0; i < t->val[1].u.number; i++) {
+						tmp_p = t->val[i+2].u.data;
 						ret = cmd->c.fixup(&t->val[i+2].u.data, i+1);
-						if (t->val[i+2].u.data != p)
+						if (t->val[i+2].u.data != tmp_p)
 							t->val[i+2].type = MODFIXUP_ST;
 						if (ret < 0)
 							goto error;
 					}
+				} else if (cmd) { /* no fixup => RVE supported => optimize */
+					for (i=0; i < t->val[1].u.number; i++) {
+						if (t->val[i+2].type == RVE_ST) {
+							rve = t->val[i+2].u.data;
+							if (rve_is_constant(rve)) {
+								/* if expression is constant => evaluate it
+								   as string and replace it with the corresp.
+								   string */
+								rv = rval_expr_eval(0, 0, rve);
+								if (rv == 0 ||
+										rval_get_str( 0, 0, &s, rv, 0) < 0 ) {
+									ERR("failed to fix constant rve");
+									if (rv) rval_destroy(rv);
+									ret = E_BUG;
+									goto error;
+								}
+								rval_destroy(rv);
+								rve_destroy(rve);
+								t->val[i+2].type = STRING_ST;/*asciiz string*/
+								t->val[i+2].u.string = s.s;
+								/* len is not used for now */
+								t->val[i+2].u.str.len = s.len;
+							} else {
+								/* expression is not constant => fixup &
+								   optimize it */
+								rve_param_no++;
+								if ((ret=fix_rval_expr(&t->val[i+2].u.data))
+										< 0) {
+									ERR("rve fixup failed\n");
+									ret = E_BUG;
+									goto error;
+								}
+							}
+						} /* if RVE_ST */
+					}
+					if (rve_param_no) { /* we have to fix the type */
+						switch(t->type) {
+							case MODULE1_T:
+								t->type = MODULE1_RVE_T;
+								break;
+							case MODULE2_T:
+								t->type = MODULE2_RVE_T;
+								break;
+							case MODULE3_T:
+								t->type = MODULE3_RVE_T;
+								break;
+							case MODULE4_T:
+								t->type = MODULE4_RVE_T;
+								break;
+							case MODULE5_T:
+								t->type = MODULE5_RVE_T;
+								break;
+							case MODULE6_T:
+								t->type = MODULE6_RVE_T;
+								break;
+							case MODULEX_T:
+								t->type = MODULEX_RVE_T;
+								break;
+							default:
+								BUG("unsupported module function type %d\n",
+										t->type);
+								ret = E_BUG;
+								goto error;
+						}
+					} /* if rve_param_no */
 				}
 				break;
 			case FORCE_SEND_SOCKET_T:
