@@ -726,42 +726,52 @@ static struct mi_root* mt_mi_reload(struct mi_root *cmd_tree, void *param)
 	m_tree_t *pt;
 	struct mi_node* node = NULL;
 
-	if(!mt_defined_trees())
+	if(db_table.len>0)
 	{
-		LM_ERR("empty tree list\n");
-		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-	}
-
-	/* read tree name */
-	node = cmd_tree->node.kids;
-	if(node != NULL)
-	{
-		tname = node->value;
-		if(tname.s == NULL || tname.len== 0)
-			return init_mi_tree( 404, "domain not found", 16);
-
-		if(*tname.s=='.') {
-			tname.s = 0;
-			tname.len = 0;
-		}
-	}
-
-	pt = mt_get_first_tree();
-	
-	while(pt!=NULL)
-	{
-		if(tname.s==NULL || 
-			(tname.s!=NULL && pt->tname.len>=tname.len && 
-			 strncmp(pt->tname.s, tname.s, tname.len)==0))
+		/* re-loading all information from database */
+		if(mt_load_db_trees()!=0)
 		{
-			/* re-loading table from database */
-			if(mt_load_db(&pt->tname)!=0)
-			{
-				LM_ERR("cannot re-load info from database\n");	
-				goto error;
+			LM_ERR("cannot re-load info from database\n");
+			goto error;
+		}
+	} else {
+		if(!mt_defined_trees())
+		{
+			LM_ERR("empty tree list\n");
+			return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
+		}
+
+		/* read tree name */
+		node = cmd_tree->node.kids;
+		if(node != NULL)
+		{
+			tname = node->value;
+			if(tname.s == NULL || tname.len== 0)
+				return init_mi_tree( 404, "domain not found", 16);
+
+			if(*tname.s=='.') {
+				tname.s = 0;
+				tname.len = 0;
 			}
 		}
-		pt = pt->next;
+
+		pt = mt_get_first_tree();
+	
+		while(pt!=NULL)
+		{
+			if(tname.s==NULL
+				|| (tname.s!=NULL && pt->tname.len>=tname.len
+					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
+			{
+				/* re-loading table from database */
+				if(mt_load_db(&pt->tname)!=0)
+				{
+					LM_ERR("cannot re-load info from database\n");	
+					goto error;
+				}
+			}
+			pt = pt->next;
+		}
 	}
 	
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
