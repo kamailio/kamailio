@@ -61,10 +61,20 @@ CREATE TABLE mtree (
     tvalue VARCHAR(128) DEFAULT '' NOT NULL,
     CONSTRAINT tprefix_idx UNIQUE (tprefix)
 ) ENGINE=MyISAM;
+INSERT INTO version (table_name, table_version) values ('mtrees','1');
+CREATE TABLE mtrees (
+    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    tname VARCHAR(128) NOT NULL,
+    tprefix VARCHAR(32) NOT NULL,
+    tvalue VARCHAR(128) DEFAULT '' NOT NULL,
+    CONSTRAINT tname_tprefix_idx UNIQUE (tname, tprefix)
+) ENGINE=MyISAM;
 #endif
 
 /** parameters */
 static str db_url = str_init(DEFAULT_DB_URL);
+static str db_table = str_init("");
+static str tname_column   = str_init("tname");
 static str tprefix_column = str_init("tprefix");
 static str tvalue_column  = str_init("tvalue");
 
@@ -102,7 +112,8 @@ static int mt_match(struct sip_msg *msg, gparam_t *dm, gparam_t *var,
 static struct mi_root* mt_mi_reload(struct mi_root*, void* param);
 static struct mi_root* mt_mi_list(struct mi_root*, void* param);
 
-static int mt_load_db();
+static int mt_load_db(str *tname);
+static int mt_load_db_trees();
 
 static cmd_export_t cmds[]={
 	{"mt_match", (cmd_function)w_mt_match, 3, fixup_mt_match,
@@ -113,6 +124,8 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"mtree",          STR_PARAM|USE_FUNC_PARAM, (void*)mt_param},
 	{"db_url",         STR_PARAM, &db_url.s},
+	{"db_table",       STR_PARAM, &db_table.s},
+	{"tname_column",   STR_PARAM, &tname_column.s},
 	{"tprefix_column", STR_PARAM, &tprefix_column.s},
 	{"tvalue_column",  STR_PARAM, &tvalue_column.s},
 	{"char_list",      STR_PARAM, &mt_char_list.s},
@@ -121,6 +134,7 @@ static param_export_t params[]={
 	{"pv_dstid",       STR_PARAM, &dstid_param.s},
 	{"pv_weight",      STR_PARAM, &weight_param.s},
 	{"pv_count",       STR_PARAM, &count_param.s},
+	{"_mt_tree_type",  INT_PARAM, &_mt_tree_type},
 	{0, 0, 0}
 };
 
@@ -162,6 +176,8 @@ static int mod_init(void)
 	}
 
 	db_url.len = strlen(db_url.s);
+	db_table.len = strlen(db_table.s);
+	tname_column.len = strlen(tname_column.s);
 	tprefix_column.len = strlen(tprefix_column.s);
 	tvalue_column.len = strlen(tvalue_column.s);
 
@@ -243,25 +259,40 @@ static int mod_init(void)
 		goto error1;
 	}
 	
-	if(!mt_defined_trees())
+	if(mt_defined_trees())
 	{
-		LM_ERR("no trees defined\n");	
-		goto error1;
-	}
+		LM_DBG("static trees defined\n");
 
-	pt = mt_get_first_tree();
-	
-	while(pt!=NULL)
-	{
-		/* loading all information from database */
-		if(mt_load_db(&pt->tname)!=0)
+		pt = mt_get_first_tree();
+
+		while(pt!=NULL)
 		{
-			LM_ERR("cannot load info from database\n");	
+			/* loading all information from database */
+			if(mt_load_db(&pt->tname)!=0)
+			{
+				LM_ERR("cannot load info from database\n");
+				goto error1;
+			}
+			pt = pt->next;
+		}
+	} else {
+		if(db_table.len<=0)
+		{
+			LM_ERR("no trees table defined\n");
 			goto error1;
 		}
-		pt = pt->next;
+		if(mt_init_list_head()<0)
+		{
+			LM_ERR("unable to init trees list head\n");
+			goto error1;
+		}
+		/* loading all information from database */
+		if(mt_load_db_trees()!=0)
+		{
+			LM_ERR("cannot load trees from database\n");
+			goto error1;
+		}
 	}
-		
 	mt_dbf.close(db_con);
 	db_con = 0;
 
@@ -555,6 +586,131 @@ error:
 	mt_dbf.free_result(db_con, db_res);
 	if (new_tree.head!=NULL)
 		mt_free_node(new_tree.head, new_tree.type);
+	return -1;
+}
+
+static int mt_load_db_trees()
+{
+	db_key_t db_cols[3] = {&tname_column, &tprefix_column, &tvalue_column};
+	str tprefix, tvalue, tname;
+	db1_res_t* db_res = NULL;
+	int i, ret;
+	m_tree_t *new_head = NULL;
+	m_tree_t *new_tree = NULL;
+	m_tree_t *old_head = NULL;
+
+	if(db_con==NULL)
+	{
+		LM_ERR("no db connection\n");
+		return -1;
+	}
+
+	if (mt_dbf.use_table(db_con, &db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH))
+	{
+		if(mt_dbf.query(db_con,0,0,0,db_cols,0,3,&tname_column,0) < 0)
+		{
+			LM_ERR("Error while querying db\n");
+			return -1;
+		}
+		if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0)
+		{
+			LM_ERR("Error while fetching result\n");
+			if (db_res)
+				mt_dbf.free_result(db_con, db_res);
+			goto error;
+		} else {
+			if(RES_ROW_N(db_res)==0)
+			{
+				return 0;
+			}
+		}
+	} else {
+		if((ret=mt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
+				0, 3, &tname_column, &db_res))!=0
+			|| RES_ROW_N(db_res)<=0 )
+		{
+			mt_dbf.free_result(db_con, db_res);
+			if( ret==0)
+			{
+				return 0;
+			} else {
+				goto error;
+			}
+		}
+	}
+
+	do {
+		for(i=0; i<RES_ROW_N(db_res); i++)
+		{
+			/* check for NULL values ?!?! */
+			tname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
+			tname.len = strlen(tname.s);
+
+			tprefix.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
+			tprefix.len = strlen(tprefix.s);
+
+			tvalue.s = (char*)(RES_ROWS(db_res)[i].values[2].val.string_val);
+			tvalue.len = strlen(tvalue.s);
+
+			if(tprefix.s==NULL || tvalue.s==NULL || tname.s==NULL ||
+				tprefix.len<=0 || tvalue.len<=0 || tname.len<=0)
+			{
+				LM_ERR("Error - bad values in db\n");
+				continue;
+			}
+			new_tree = mt_add_tree(&new_head, &tname, &db_table, _mt_tree_type);
+			if(new_tree==NULL)
+			{
+				LM_ERR("New tree cannot be initialized\n");
+				goto error;
+			}
+			if(mt_add_to_tree(new_tree, &tprefix, &tvalue)<0)
+			{
+				LM_ERR("Error adding info to tree\n");
+				goto error;
+			}
+		}
+		if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
+			if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0) {
+				LM_ERR("Error while fetching!\n");
+				if (db_res)
+					mt_dbf.free_result(db_con, db_res);
+				goto error;
+			}
+		} else {
+			break;
+		}
+	} while(RES_ROW_N(db_res)>0);
+	mt_dbf.free_result(db_con, db_res);
+
+	/* block all readers */
+	lock_get( mt_lock );
+	mt_reload_flag = 1;
+	lock_release( mt_lock );
+
+	while (mt_tree_refcnt) {
+		sleep_us(10);
+	}
+
+	old_head = mt_swap_list_head(new_head);
+
+	mt_reload_flag = 0;
+	/* free old data */
+	if (old_head!=NULL)
+		mt_free_tree(old_head);
+
+	return 0;
+
+error:
+	mt_dbf.free_result(db_con, db_res);
+	if (new_head!=NULL)
+		mt_free_tree(new_head);
 	return -1;
 }
 

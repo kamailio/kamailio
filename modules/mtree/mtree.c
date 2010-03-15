@@ -50,6 +50,9 @@ static m_tree_t **_ptree = NULL;
 /* quick transaltion table */
 unsigned char _mt_char_table[256];
 
+/**
+ *
+ */
 void mt_char_table_init(void)
 {
 	unsigned int i;
@@ -59,6 +62,39 @@ void mt_char_table_init(void)
 		_mt_char_table[(unsigned int)mt_char_list.s[i]] = (unsigned char)i;
 }
 
+
+/**
+ *
+ */
+m_tree_t *mt_swap_list_head(m_tree_t *ntree)
+{
+	m_tree_t *otree;
+
+	otree = *_ptree;
+	*_ptree = ntree;
+
+	return otree;
+}
+
+/**
+ *
+ */
+int mt_init_list_head(void)
+{
+	if(_ptree!=NULL)
+		return 0;
+	_ptree = (m_tree_t**)shm_malloc( sizeof(m_tree_t*) );
+	if (_ptree==0) {
+		LM_ERR("out of shm mem for pdtree\n");
+		return -1;
+	}
+	*_ptree=0;
+	return 0;
+}
+
+/**
+ *
+ */
 m_tree_t* mt_init_tree(str* tname, str *dbtable, int type)
 {
 	m_tree_t *pt = NULL;
@@ -629,7 +665,8 @@ int mt_table_spec(char* val)
 		it = it->next;
 	}
 
-	if(it!=NULL || str_strcmp(&it->tname, &tmp.tname)==0)
+	/* found */
+	if(it!=NULL && str_strcmp(&it->tname, &tmp.tname)==0)
 	{
 		LM_ERR("duplicate tree with name [%s]\n", tmp.tname.s);
 		goto error; 
@@ -661,6 +698,51 @@ int mt_table_spec(char* val)
 error:
 	free_params(params_list);
 	return -1;
+}
+
+m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, int type)
+{
+	m_tree_t *it = NULL;
+	m_tree_t *prev = NULL;
+	m_tree_t *ndl = NULL;
+
+	if(dpt==NULL)
+		return NULL;
+
+	it = *dpt;
+	prev = NULL;
+	/* search the it position before which to insert new tvalue */
+	while(it!=NULL && str_strcmp(&it->tname, tname)<0)
+	{
+		prev = it;
+		it = it->next;
+	}
+
+	if(it!=NULL && str_strcmp(&it->tname, tname)==0)
+	{
+		return it;
+	}
+	/* add new tname*/
+	if(it==NULL || str_strcmp(&it->tname, tname)>0)
+	{
+		LM_DBG("adding new tname [%s]\n", tname->s);
+
+		ndl = mt_init_tree(tname, dbtable, type);
+		if(ndl==NULL)
+		{
+			LM_ERR("no more shm memory\n");
+			return NULL;
+		}
+
+		ndl->next = it;
+
+		/* new tvalue must be added as first element */
+		if(prev==NULL)
+			*dpt = ndl;
+		else
+			prev->next=ndl;
+	}
+	return ndl;
 }
 
 void mt_destroy_trees(void)
