@@ -134,7 +134,7 @@ static param_export_t params[]={
 	{"pv_dstid",       STR_PARAM, &dstid_param.s},
 	{"pv_weight",      STR_PARAM, &weight_param.s},
 	{"pv_count",       STR_PARAM, &count_param.s},
-	{"_mt_tree_type",  INT_PARAM, &_mt_tree_type},
+	{"mt_tree_type",   INT_PARAM, &_mt_tree_type},
 	{0, 0, 0}
 };
 
