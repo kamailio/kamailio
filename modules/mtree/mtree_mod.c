@@ -796,7 +796,7 @@ int mt_print_mi_node(m_tree_t *tree, mt_node_t *pt, struct mi_node* rpl,
 		code[len]=mt_char_list.s[i];
 		if(pt[i].tvalue.s!=NULL)
 		{
-			node = add_mi_node_child(rpl, 0, "MT", 3, 0, 0);
+			node = add_mi_node_child(rpl, 0, "MT", 2, 0, 0);
 			if(node == NULL)
 				goto error;
 			attr = add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
