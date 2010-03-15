@@ -74,6 +74,27 @@ modparam("mtree", "db_url", "&exampledb;")
 	</section>
 
 	<section>
+	    <title><varname>db_table</varname> (string)</title>
+	    <para>
+		Name of DB table where data for trees is store. It is ignored if a
+		'mtree' parameter is defined.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>mtrees</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "db_table", "mymtrees")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	    <title><varname>mtree</varname> (string)</title>
 	    <para>
 		Definition of memory tree
@@ -94,6 +115,26 @@ modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
 	</section>
 
 	<section>
+	    <title><varname>tname_column</varname> (string)</title>
+	    <para>
+		Name of 'tname' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>tname</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>tname_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "tname_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	    <title><varname>tprefix_column</varname> (string)</title>
 	    <para>
 		Name of 'tprefix' column.
@@ -104,7 +145,7 @@ modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
 		</emphasis>
 	    </para>
 	    <example>
-		<title>Set <varname>prefix_column</varname> parameter</title>
+		<title>Set <varname>tprefix_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("mtree", "tprefix_column", "prefix")
@@ -189,6 +230,26 @@ modparam("mtree", "char_list", "0123456789*+")
 		<programlisting format="linespecific">
 ...
 modparam("mtree", "pv_value", "$var(mtval)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>mt_tree_type</varname> (integer)</title>
+	    <para>
+		Default payload type for trees data stored in 'db_table'.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mt_tree_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mt_tree_type", 1)
 ...
 </programlisting>
 	    </example>

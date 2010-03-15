@@ -26,12 +26,15 @@ Daniel-Constantin Mierla
         3. Exported Parameters
 
               3.1. db_url (string)
-              3.2. mtree (string)
-              3.3. tprefix_column (string)
-              3.4. tvalue_column (string)
-              3.5. fetch_rows (integer)
-              3.6. char_list (string)
-              3.7. pv_value (string)
+              3.2. db_table (string)
+              3.3. mtree (string)
+              3.4. tname_column (string)
+              3.5. tprefix_column (string)
+              3.6. tvalue_column (string)
+              3.7. fetch_rows (integer)
+              3.8. char_list (string)
+              3.9. pv_value (string)
+              3.10. mt_tree_type (integer)
 
         4. Exported Functions
 
@@ -45,13 +48,16 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set db_url parameter
-   1.2. Set mtree parameter
-   1.3. Set prefix_column parameter
-   1.4. Set tvalue_column parameter
-   1.5. Set fetch_rows parameter
-   1.6. Set char_list parameter
-   1.7. Set pv_value parameter
-   1.8. mt_match usage
+   1.2. Set db_table parameter
+   1.3. Set mtree parameter
+   1.4. Set tname_column parameter
+   1.5. Set tprefix_column parameter
+   1.6. Set tvalue_column parameter
+   1.7. Set fetch_rows parameter
+   1.8. Set char_list parameter
+   1.9. Set pv_value parameter
+   1.10. Set mt_tree_type parameter
+   1.11. mt_match usage
 
 Chapter 1. Admin Guide
 
@@ -66,12 +72,15 @@ Chapter 1. Admin Guide
    3. Exported Parameters
 
         3.1. db_url (string)
-        3.2. mtree (string)
-        3.3. tprefix_column (string)
-        3.4. tvalue_column (string)
-        3.5. fetch_rows (integer)
-        3.6. char_list (string)
-        3.7. pv_value (string)
+        3.2. db_table (string)
+        3.3. mtree (string)
+        3.4. tname_column (string)
+        3.5. tprefix_column (string)
+        3.6. tvalue_column (string)
+        3.7. fetch_rows (integer)
+        3.8. char_list (string)
+        3.9. pv_value (string)
+        3.10. mt_tree_type (integer)
 
    4. Exported Functions
 
@@ -106,12 +115,15 @@ Chapter 1. Admin Guide
 3. Exported Parameters
 
    3.1. db_url (string)
-   3.2. mtree (string)
-   3.3. tprefix_column (string)
-   3.4. tvalue_column (string)
-   3.5. fetch_rows (integer)
-   3.6. char_list (string)
-   3.7. pv_value (string)
+   3.2. db_table (string)
+   3.3. mtree (string)
+   3.4. tname_column (string)
+   3.5. tprefix_column (string)
+   3.6. tvalue_column (string)
+   3.7. fetch_rows (integer)
+   3.8. char_list (string)
+   3.9. pv_value (string)
+   3.10. mt_tree_type (integer)
 
 3.1. db_url (string)
 
@@ -124,71 +136,105 @@ Chapter 1. Admin Guide
 modparam("mtree", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-3.2. mtree (string)
+3.2. db_table (string)
+
+   Name of DB table where data for trees is store. It is ignored if a
+   'mtree' parameter is defined.
+
+   Default value is "mtrees".
+
+   Example 1.2. Set db_table parameter
+...
+modparam("mtree", "db_table", "mymtrees")
+...
+
+3.3. mtree (string)
 
    Definition of memory tree
 
    Default value is "none".
 
-   Example 1.2. Set mtree parameter
+   Example 1.3. Set mtree parameter
 ...
 modparam("mtree", "mtree", "name=mytable;dbtable=routes;type=0;")
 ...
 
-3.3. tprefix_column (string)
+3.4. tname_column (string)
+
+   Name of 'tname' column.
+
+   Default value is "tname".
+
+   Example 1.4. Set tname_column parameter
+...
+modparam("mtree", "tname_column", "name")
+...
+
+3.5. tprefix_column (string)
 
    Name of 'tprefix' column.
 
    Default value is "tprefix".
 
-   Example 1.3. Set prefix_column parameter
+   Example 1.5. Set tprefix_column parameter
 ...
 modparam("mtree", "tprefix_column", "prefix")
 ...
 
-3.4. tvalue_column (string)
+3.6. tvalue_column (string)
 
    Name of 'tvalue' column.
 
    Default value is "tvalue".
 
-   Example 1.4. Set tvalue_column parameter
+   Example 1.6. Set tvalue_column parameter
 ...
 modparam("mtree", "tvalue_column", "ipaddr")
 ...
 
-3.5. fetch_rows (integer)
+3.7. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
    Default value is 1000.
 
-   Example 1.5. Set fetch_rows parameter
+   Example 1.7. Set fetch_rows parameter
 ...
 modparam("mtree", "fetch_rows", 4000)
 ...
 
-3.6. char_list (string)
+3.8. char_list (string)
 
    The list with characters allowed in prefix.
 
    Default value is "0123456789".
 
-   Example 1.6. Set char_list parameter
+   Example 1.8. Set char_list parameter
 ...
 modparam("mtree", "char_list", "0123456789*+")
 ...
 
-3.7. pv_value (string)
+3.9. pv_value (string)
 
    The PV spec where to store the matched value. It can be any writtable
    PV.
 
    Default value is "$avp(s:tvalue)".
 
-   Example 1.7. Set pv_value parameter
+   Example 1.9. Set pv_value parameter
 ...
 modparam("mtree", "pv_value", "$var(mtval)")
+...
+
+3.10. mt_tree_type (integer)
+
+   Default payload type for trees data stored in 'db_table'.
+
+   Default value is 0.
+
+   Example 1.10. Set mt_tree_type parameter
+...
+modparam("mtree", "mt_tree_type", 1)
 ...
 
 4. Exported Functions
@@ -200,7 +246,7 @@ modparam("mtree", "pv_value", "$var(mtval)")
    Match 'pv' value against mtree. mode is reserved for further use, now
    set any integer or PV.
 
-   Example 1.8. mt_match usage
+   Example 1.11. mt_match usage
 ...
 mt_match("mytree", "$rU", "0");
 ...
