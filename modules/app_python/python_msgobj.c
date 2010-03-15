@@ -219,7 +219,7 @@ msg_call_function(msgobject *self, PyObject *args)
         return Py_None;
     }
 
-    act = mk_action(MODULE_T, 4 /* number of (type, value) pairs */,
+    act = mk_action(MODULE2_T, 4 /* number of (type, value) pairs */,
                     MODEXP_ST, fexport, /* function */
                     NUMBER_ST, 2,       /* parameter number */
                     STRING_ST, arg1,    /* param. 1 */
