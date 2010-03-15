@@ -337,26 +337,15 @@ static int mod_init(void)
 		/*****************************************************
 		 * TM-Bindings
 	  	 *****************************************************/
-		load_tm_f load_tm;
-		load_tm=(load_tm_f)find_export("load_tm", 0, 0);
-	
-		/* import the TM auto-loading function */
-		if (load_tm)
+		if (load_tm_api( &tmb ) == -1)
 		{
-			/* let the auto-loading function load all TM stuff */
-			if (load_tm( &tmb ) == -1)
-			{
-				LM_ERR("could not load the TM-functions - disable DS ping\n");
-				return -1;
-			}
-			/*****************************************************
-			 * Register the PING-Timer
-	    	 *****************************************************/
-			register_timer(ds_check_timer, NULL, ds_ping_interval);
-		} else {
-			LM_WARN("could not bind to the TM-Module, automatic"
-					" re-activation disabled.\n");
+			LM_ERR("could not load the TM-functions - disable DS ping\n");
+			return -1;
 		}
+		/*****************************************************
+		 * Register the PING-Timer
+		 *****************************************************/
+		register_timer(ds_check_timer, NULL, ds_ping_interval);
 	}
 
 	return 0;
