@@ -473,9 +473,9 @@ modparam("tls", "tls_log", 10)
 
    See also low_mem_threshold2.
 
-   Example 15. Set low_memory_threshold1 parameter
+   Example 15. Set low_mem_threshold1 parameter
 ...
-modparam("tls", "low_memory_threshold1", -1)
+modparam("tls", "low_mem_threshold1", -1)
 ...
 
 1.8.15. low_mem_threshold2 (integer)
@@ -499,9 +499,9 @@ modparam("tls", "low_memory_threshold1", -1)
 
    See also low_mem_threshold1.
 
-   Example 16. Set low_memory_threshold2 parameter
+   Example 16. Set low_mem_threshold2 parameter
 ...
-modparam("tls", "low_memory_threshold2", -1)
+modparam("tls", "low_mem_threshold2", -1)
 ...
 
 1.8.16. tls_force_run (boolean)
