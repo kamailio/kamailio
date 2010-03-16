@@ -37,6 +37,9 @@ Andrei Pelinescu-Onciul
         1.8.17. config (string)
 
    1.9. Functions
+
+        1.9.1. is_peer_verified()
+
    1.10. History
 
 1.1. Overview
@@ -586,6 +589,18 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 
    Revision History
    Revision $Revision$ $Date$
+
+1.9.1. is_peer_verified()
+
+   Returns true if the connection on which the message was received is TLS
+   , the peer presented an X509 certificate and the certificate chain
+   verified ok. It can be used only in a request route.
+
+   Example 20. is_peer_verified usage
+        if (proto==TLS && !is_peer_verified()){
+                sl_send_reply("400", "No certificate or verification failed");
+                drop;
+        }
 
 1.10. History
 

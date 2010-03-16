@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="tls.certs_howto" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="tls.history">
     <sectioninfo>
 	<revhistory>
 	    <revision>
