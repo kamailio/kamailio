@@ -322,10 +322,10 @@ modparam("tls", "tls_log", 10)
 		See also <varname>low_mem_threshold2</varname>.
 	</para>
 	<example>
-		<title>Set <varname>low_memory_threshold1</varname> parameter</title>
+		<title>Set <varname>low_mem_threshold1</varname> parameter</title>
 		<programlisting>
 ...
-modparam("tls", "low_memory_threshold1", -1)
+modparam("tls", "low_mem_threshold1", -1)
 ...
 	</programlisting>
 	</example>
@@ -361,10 +361,10 @@ modparam("tls", "low_memory_threshold1", -1)
 		See also <varname>low_mem_threshold1</varname>.
 	</para>
 	<example>
-		<title>Set <varname>low_memory_threshold2</varname> parameter</title>
+		<title>Set <varname>low_mem_threshold2</varname> parameter</title>
 		<programlisting>
 ...
-modparam("tls", "low_memory_threshold2", -1)
+modparam("tls", "low_mem_threshold2", -1)
 ...
 	</programlisting>
 	</example>
