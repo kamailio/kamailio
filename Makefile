@@ -917,8 +917,8 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 					$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg; \
 			fi; \
 		fi
-		# other configs
-		@for r in $(C_INSTALL_CFGS) ; do \
+		@# other configs
+		@for r in $(C_INSTALL_CFGS) ""; do \
 			if [ -n "$$r" ]; then \
 				if [ -f "$$r" ]; then \
 					n=`basename "$$r"` ; \
@@ -1005,8 +1005,10 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 			fi ;\
 		fi ; \
 	done; true
-	@for ut in $(C_INSTALL_UTILS) ; do \
-		$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
+	@for ut in $(C_INSTALL_UTILS) "" ; do \
+		if [ -n "$$r" ]; then \
+			$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
+		fi ; \
 	done; true
 
 
