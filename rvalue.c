@@ -1062,12 +1062,14 @@ error:
   * if rv == undefined select, avp or pvar, return "".
   * if an error occurs while evaluating a select, avp or pvar, behave as
   * for the undefined case (and return success).
-  * The result points either to a temporary string or inside
-  * new_cache. new_cache must be non zero, initialized previously,
-  * and it _must_ be rval_cache_clean(...)'ed when done.
-  * WARNING: it's not intended for general use, it might return a pointer
-  * to a static buffer (int2str) so use the result a.s.a.p, make a copy.
-  * or use rval_get_str() instead.
+  * The result points either inside the passed rv, inside
+  * new_cache or inside an avp. new_cache must be non zero,
+  * initialized previously and it _must_ be rval_cache_clean(...)'ed when
+  * done.
+  * WARNING: it's not intended for general use. It might return a pointer
+  * inside rv so the result _must_ be treated as read-only. rv and new_cache
+  * must not be released/freed until the result is no longer needed.
+  * For general use see  rval_get_str().
   * @param h - script context handle
   * @param msg - sip msg
   * @param tmpv - str return value (pointer to a str struct that will be
@@ -1089,7 +1091,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 	
 	switch(rv->type){
 		case RV_INT:
-			tmpv->s=int2str(rv->v.l, &tmpv->len);
+			tmpv->s=sint2strbuf(rv->v.l, tmp_cache->i2s,
+								sizeof(tmp_cache->i2s), &tmpv->len);
+			tmp_cache->cache_type = RV_CACHE_INT2STR;
 			break;
 		case RV_STR:
 			*tmpv=rv->v.s;
@@ -1099,16 +1103,22 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 				i=(run_actions(h, rv->v.action, msg)>0);
 			else
 				i=0;
-			tmpv->s=int2str(i, &tmpv->len);
+			tmpv->s=sint2strbuf(i, tmp_cache->i2s,
+								sizeof(tmp_cache->i2s), &tmpv->len);
+			tmp_cache->cache_type = RV_CACHE_INT2STR;
 			break;
 		case RV_BEXPR:
 			i=eval_expr(h, rv->v.bexpr, msg);
 			if (i==EXPR_DROP){
 				i=0; /* false */
-				tmpv->s=int2str(i, &tmpv->len);
+				tmpv->s=sint2strbuf(i, tmp_cache->i2s,
+						sizeof(tmp_cache->i2s), &tmpv->len);
+				tmp_cache->cache_type = RV_CACHE_INT2STR;
 				return EXPR_DROP;
 			}
-			tmpv->s=int2str(i, &tmpv->len);
+			tmpv->s=sint2strbuf(i, tmp_cache->i2s, sizeof(tmp_cache->i2s),
+								&tmpv->len);
+			tmp_cache->cache_type = RV_CACHE_INT2STR;
 			break;
 		case RV_SEL:
 			i=run_select(tmpv, &rv->v.sel, msg);
@@ -1126,7 +1136,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 					*tmpv=cache->c.avp_val.s;
 				}else if (cache->val_type==RV_INT){
 					i=cache->c.avp_val.n;
-					tmpv->s=int2str(i, &tmpv->len);
+					tmpv->s=sint2strbuf(i, tmp_cache->i2s,
+										sizeof(tmp_cache->i2s), &tmpv->len);
+					tmp_cache->cache_type = RV_CACHE_INT2STR;
 				}else if (cache->val_type==RV_NONE){
 					goto undef;
 				}else goto error_cache;
@@ -1141,7 +1153,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 						*tmpv=tmp_cache->c.avp_val.s;
 					}else{
 						i=tmp_cache->c.avp_val.n;
-						tmpv->s=int2str(i, &tmpv->len);
+						tmpv->s=sint2strbuf(i, tmp_cache->i2s,
+										sizeof(tmp_cache->i2s), &tmpv->len);
+						tmp_cache->cache_type = RV_CACHE_INT2STR;
 					}
 				}else goto undef;
 			}
@@ -1152,7 +1166,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 					*tmpv=cache->c.pval.rs;
 				}else if (cache->val_type==RV_INT){
 					i=cache->c.pval.ri;
-					tmpv->s=int2str(i, &tmpv->len);
+					tmpv->s=sint2strbuf(i, tmp_cache->i2s,
+										sizeof(tmp_cache->i2s), &tmpv->len);
+					tmp_cache->cache_type = RV_CACHE_INT2STR;
 				}else if (cache->val_type==RV_NONE){
 					goto undef;
 				}else goto error_cache;
@@ -1170,7 +1186,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 					}else if (likely(tmp_cache->c.pval.flags & PV_VAL_INT)){
 						i=tmp_cache->c.pval.ri;
 						pv_value_destroy(&tmp_cache->c.pval);
-						tmpv->s=int2str(i, &tmpv->len);
+						tmpv->s=sint2strbuf(i, tmp_cache->i2s,
+										sizeof(tmp_cache->i2s), &tmpv->len);
+						tmp_cache->cache_type = RV_CACHE_INT2STR;
 					}else{
 						/* no PV_VAL_STR and no PV_VAL_INT => undef
 						   (PV_VAL_NULL) */
