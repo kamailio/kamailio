@@ -58,6 +58,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	publ_info_t publ;
 	str event;
 	str content_type;
+	str id;
 	str etag;
 	str extra_headers;
 	int result;
@@ -142,6 +143,19 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	if(node == NULL)
 		return 0;
 
+	/* Get id */
+	id= node->value;
+	if(id.s== NULL || id.len== 0)
+	{
+		LM_ERR("empty id parameter\n");
+		return init_mi_tree(400, "Empty id parameter", 20);
+	}
+	LM_DBG("id '%.*s'\n", id.len, id.s);
+
+	node = node->next;
+	if(node == NULL)
+		return 0;
+
 	/* Get etag */
 	etag= node->value;
 	if(etag.s== NULL || etag.len== 0)
@@ -213,7 +227,12 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	{
 		publ.content_type= content_type;
 	}	
-	
+
+	if(! (id.len== 1 && id.s[0]== '.'))
+	{
+		publ.id= id;
+	}
+
 	if(! (etag.len== 1 && etag.s[0]== '.'))
 	{
 		publ.etag= &etag;

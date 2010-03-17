@@ -120,6 +120,18 @@
 			</listitem>
 			<listitem>
 				<para>
+					<emphasis>id</emphasis>
+					- id for a series of related PUBLISHes to the same 
+		presentity-uri or . to always use the same series.
+		For example dialog-info must reuse the same id for the
+		same call otherwise status will be lost when multiple
+		parallel calls to/from the same user take place. The
+		dialog-id from the dialog-info body qualifies as a suitable
+		id here.
+		                </para> 
+			</listitem>
+			<listitem>
+				<para>
 					<emphasis>ETag</emphasis>
 					- ETag that publish should
 		match or . if no ETag is given.
@@ -152,6 +164,7 @@ sip:system@kamailio.org
 3600
 presence
 application/pidf+xml
+.
 .
 .
 <?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='system@kamailio.org'><tuple id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presence>
