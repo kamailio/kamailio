@@ -196,7 +196,13 @@ int extract_body(struct sip_msg *msg, str *body )
 		LM_ERR("message body has length zero\n");
 		goto error;
 	}
-	
+
+	if (body->len + body->s > msg->buf + msg->len) {
+		LM_ERR("content-length exceeds packet-length by %d\n",
+				(body->len + body->s) - (msg->buf + msg->len));
+		goto error;
+	}
+
 	/* no need for parse_headers(msg, EOH), get_body will 
 	 * parse everything */
 	/*is the content type correct?*/
