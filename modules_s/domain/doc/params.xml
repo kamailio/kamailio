@@ -33,17 +33,19 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 	<section id="db_mode">
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
-			Database mode. 0 means non-caching, 1 means caching is enabled. It
-			is highly recommended to enable caching if you want to use
+			Database mode. Value 0 means non-caching, 1
+		means caching is enabled. It 
+			is highly recommended to enable caching if you
+		want to use 
 			domain-level attributes.
 		</para>
 		<para>
-			Default value is 1 (non-caching).
+			Default value is 1 (caching).
 		</para>
 		<example>
-			<title>nonce_expire example</title>
+			<title>Setting db_mode parameter</title>
 			<programlisting>
-				modparam("domain", "db_mode", 1)   # Use caching
+modparam("domain", "db_mode", 0)   # Do	not use caching
 			</programlisting>
 		</example>
 	</section>

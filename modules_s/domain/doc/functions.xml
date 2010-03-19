@@ -97,7 +97,7 @@ if (is_local("@ruri.host")) {
 		</para>
 		<para>
 			The type of the situation can be then determined from the value of
-			corresponding attributes ($t.did and $f.did). A non-existing
+			corresponding attributes ($td.did and $fd.did). A non-existing
 			attribute value indicates that the domain name is not local (it
 			does not belong to any virtual domain configured in the domain
 			table).
@@ -108,23 +108,23 @@ if (is_local("@ruri.host")) {
 lookup_domain("$fd", "@from.uri.host");
 lookup_domain("$td", "@ruri.host");
 
-if (strempty($f.did) &amp;&amp; strempty($t.did)) {
+if (strempty($fd.did) &amp;&amp; strempty($td.did)) {
     # Neither the calling nor the called domain is local
     # This is a relaying attempt which should be forbidden
     sl_reply("403", "Relaying Forbidden");
     drop;
 }
-if (strempty($f.did) &amp;&amp; $t.did) {
+if (strempty($fd.did) &amp;&amp; $td.did) {
     # The calling domain is not local and the called domain
     # is local, this is an inbound call from a 3rd party
     # user to one of local users
 }
-if ($f.did &amp;&amp; strempty($t.did)) {
+if ($fd.did &amp;&amp; strempty($td.did)) {
     # The calling domain is local and the called domain
     # is not local, this is an outbound call from one of
     # our users to a 3rd party user
 }
-if ($f.did &amp;&amp; $t.did) {
+if ($fd.did &amp;&amp; $td.did) {
     # Both the calling and the called domains are local,
     # one of our local users calls another local user,
     # either in the same virtual domain or in another

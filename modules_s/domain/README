@@ -2,12 +2,48 @@
 
 Juha Heinanen
 
-   <jh@song.fi>
+   <jh@tutpro.com>
 
-   Copyright © 2002, 2003 Juha Heinanen
+   Copyright Â© 2002-2010 Juha Heinanen
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
+
+   1.1. Overview
+
+        1.1.1. Virtual Domains
+        1.1.2. Domain-level Configuration Attributes
+        1.1.3. Caching
+
+   1.2. Dependencies
+   1.3. Known Limitations
+   1.4. Parameters
+
+        1.4.1. db_url (string)
+        1.4.2. db_mode (integer)
+        1.4.3. domain_table (string)
+        1.4.4. did_col (string)
+        1.4.5. domain_col (string)
+        1.4.6. flags_col (string)
+        1.4.7. domattr_table (string)
+        1.4.8. domattr_did (string)
+        1.4.9. domattr_name (string)
+        1.4.10. domattr_type (string)
+        1.4.11. domattr_value (string)
+        1.4.12. domattr_flags (string)
+        1.4.13. load_domain_attrs (integer)
+
+   1.5. Functions
+
+        1.5.1. is_local(domain)
+        1.5.2. lookup_domain(attr_group, domain)
+
+   1.6. FIFO Interface
+
+        1.6.1. domain.reload
+        1.6.2. domain.dump
+
+   1.7. Internal API
 
 1.1. Overview
 
@@ -199,14 +235,14 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 
 1.4.2. db_mode (integer)
 
-   Database mode. 0 means non-caching, 1 means caching is enabled. It is
-   highly recommended to enable caching if you want to use domain-level
-   attributes.
+   Database mode. Value 0 means non-caching, 1 means caching is enabled.
+   It is highly recommended to enable caching if you want to use
+   domain-level attributes.
 
-   Default value is 1 (non-caching).
+   Default value is 1 (caching).
 
-   Example 5. nonce_expire example
-                                modparam("domain", "db_mode", 1)   # Use caching
+   Example 5. Setting db_mode parameter
+modparam("domain", "db_mode", 0)   # Do not use caching
 
 1.4.3. domain_table (string)
 
@@ -416,31 +452,31 @@ if (is_local("@ruri.host")) {
    Request-URI as parameter.
 
    The type of the situation can be then determined from the value of
-   corresponding attributes ($t.did and $f.did). A non-existing attribute
-   value indicates that the domain name is not local (it does not belong
-   to any virtual domain configured in the domain table).
+   corresponding attributes ($td.did and $fd.did). A non-existing
+   attribute value indicates that the domain name is not local (it does
+   not belong to any virtual domain configured in the domain table).
 
    Example 18. lookup_domain usage
 lookup_domain("$fd", "@from.uri.host");
 lookup_domain("$td", "@ruri.host");
 
-if (strempty($f.did) && strempty($t.did)) {
+if (strempty($fd.did) && strempty($td.did)) {
     # Neither the calling nor the called domain is local
     # This is a relaying attempt which should be forbidden
     sl_reply("403", "Relaying Forbidden");
     drop;
 }
-if (strempty($f.did) && $t.did) {
+if (strempty($fd.did) && $td.did) {
     # The calling domain is not local and the called domain
     # is local, this is an inbound call from a 3rd party
     # user to one of local users
 }
-if ($f.did && strempty($t.did)) {
+if ($fd.did && strempty($td.did)) {
     # The calling domain is local and the called domain
     # is not local, this is an outbound call from one of
     # our users to a 3rd party user
 }
-if ($f.did && $t.did) {
+if ($fd.did && $td.did) {
     # Both the calling and the called domains are local,
     # one of our local users calls another local user,
     # either in the same virtual domain or in another
@@ -462,3 +498,35 @@ if ($f.did && $t.did) {
 
    Causes domain module to dump hash indexes and domain names in its cache
    memory.
+
+1.7. Internal API
+
+   The domain module has an internal API which can be used to access
+   additional functions of the module (i.e. functions that are normally
+   not available from the routing script). Currently the API exports only
+   the function is_domain_local. That function can be used to determine
+   whether a given domain name is on the list of locally configured domain
+   names.
+
+   If you want to use the internal API of domain module from your module
+   then you need to include the header file domain_api.h and call
+   load_domain_api first.
+
+   Example 19. Calling load_domain_api
+#include "../domain/domain_api.h"
+
+domain_api_t dom_api;
+
+if (load_domain_api(&dom_api) != 0) {
+    /* error */
+}
+
+   After that you can call function is_domain_local whose pointer is
+   stored in the initialized data structure:
+str tmp = STR_STATIC_INIT("mydomain.com");
+
+if (dom_api.is_domain_local(&tmp) == 1) {
+    /* Domain is local */
+} else {
+    /* Domain is not local or an error was encountered */
+}
