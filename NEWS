@@ -37,6 +37,11 @@ modules:
             the mask for possible local replies to the current message.
            blst_rpl_clear_ignore(mask): like blst_rpl_ignore(mask), but
             clears instead of setting.
+   - tls:
+           new options for better tuning memory usage for modern openssl
+            versions: ssl_release_buffers, ssl_freelist_max_len,
+            ssl_max_send_fragment, ssl_read_ahead. For more info see
+            modules/doc/tls/README.
 tm:
    - t_reply() can be used both from the main/core onreply_route{} and tm
      onreply_route[...]{}s.

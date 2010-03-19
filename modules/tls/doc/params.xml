@@ -259,6 +259,8 @@ modparam("tls", "connection_timeout", 60)
 	<title><varname>tls_disable_compression</varname> (boolean)</title>
 	<para>
 		If set compression over SSL/TLS will be disabled.
+		Note that compression uses a lot of memory, so if you want to minimize
+		memory usage is a good ideea to disable it.
 	</para>
 	<para>
 		By default compression is enabled.
@@ -272,6 +274,154 @@ modparam("tls", "tls_disable_compression", 1)
 	    </programlisting>
 	</example>
 	</section>
+
+
+<section id="ssl_release_buffers">
+	<title><varname>ssl_release_buffers</varname> (integer)</title>
+	<para>
+		Release internal OpenSSL read or write buffers as soon as they are
+		no longer needed. Combined with
+		<varname>ssl_free_list_max_len</varname> has the potential of saving
+		a lot of memory ( ~ 32k per connection in the default configuration,
+		or 16k + <varname>ssl_max_send_fragment</varname>).
+	</para>
+	<para>
+		A value of -1 would not change this option from its openssl default.
+		Use 0 or 1 for enable/disable.
+	</para>
+	<para>
+		By default the value is -1 (the openssl default, which at least in
+		openssl 1.0.0 is 0/disabled).
+	</para>
+	<note>
+		<para>
+			This option is supported only for
+			OpenSSL versions >= <emphasis>1.0.0</emphasis>.
+			On all the other versions attempting
+			to change the default will trigger an error.
+		</para>
+	</note>
+	<example>
+	    <title>Set <varname>ssl_release_buffers</varname> parameter</title>
+	    <programlisting>
+modparam("tls", "ssl_release_buffers", 1)
+	    </programlisting>
+	</example>
+	</section>
+
+
+<section id="ssl_freelist_max_len">
+	<title><varname>ssl_free_list_max_len</varname> (integer)</title>
+	<para>
+		Sets the maximum number of free memory chunks, that OpenSSL will keep
+		per connection. Setting it to 0 would cause any unused memory chunk
+		to be immediately freed, reducing the memory footprint. A too large
+		value would result in extra memory consumption.
+	</para>
+	<para>
+		Should be combined with <varname>ssl_release_buffers</varname>.
+	</para>
+	<para>
+		A value of -1 has a special meaning: the OpenSSL default will be used
+		(no attempt on changing the value will be made).
+	</para>
+	<para>
+		By default the value is -1 (the OpenSSL default, which at least in
+		OpenSSL 1.0.0 is 32).
+	</para>
+	<note>
+		<para>
+			This option is supported only for
+			OpenSSL versions >= <emphasis>1.0.0</emphasis>.
+			On all the other versions attempting
+			to change the default will trigger an error.
+		</para>
+	</note>
+	<example>
+		<title>Set <varname>ssl_freelist_max_len</varname> parameter</title>
+		<programlisting>
+modparam("tls", "ssl_freelist_max_len", 0)
+		</programlisting>
+	</example>
+	</section>
+
+
+<section id="ssl_max_send_fragment">
+	<title><varname>ssl_max_send_fragment</varname> (integer)</title>
+	<para>
+		Sets the maximum number of bytes (from the clear text) sent into
+		one TLS or SSL record. Valid values are between 512 and 16384.
+		Note however that even valid low values might not be big enough to
+		allow a succesfull handshake (try minimum 1024).
+	</para>
+	<para>
+		Lower values would lead to less memory usage, but values lower then
+		the typical ser/sip-router write size would incur a slight performance
+		penalty. Good values are bigger then the  size of the biggest
+		SIP packet one normally expects to forward. For example in most
+		setups 2048 would be a good value.
+	</para>
+	<note>
+		<para>
+			Values on the lower side, even if valid (> 512), might not allow
+			for a succesfull initial handshake. This happens if the
+			certificate does not fit inside one send fragment.
+			Values lower then 1024 should not be used.
+			Even with higher values, if the handshake fails,
+			try increasing the value.
+		</para>
+	</note>
+	<para>
+		A value of -1 has a special meaning: the OpenSSL default will be used
+		(no attempt on changing the value will be made).
+	</para>
+	<para>
+		By default the value is -1 (the OpenSSL default, which at least in
+		OpenSSL 1.0.0 is ~ 16k).
+	</para>
+	<note>
+		<para>
+			This option is supported only for
+			OpenSSL versions >= <emphasis>0.9.9</emphasis>.
+			On all the other versions attempting
+			to change the default will trigger an error.
+		</para>
+	</note>
+	<example>
+		<title>Set <varname>ssl_max_send_fragment</varname> parameter</title>
+		<programlisting>
+modparam("tls", "ssl_max_send_fragment", 4096)
+		</programlisting>
+	</example>
+	</section>
+
+
+<section id="ssl_read_ahead">
+	<title><varname>ssl_read_ahead</varname> (boolean)</title>
+	<para>
+		Enables read ahead, reducing the number of read() system calls
+		done internally by the OpenSSL library.
+	</para>
+	<para>
+		When disabled OpenSSL will make at least 2 read() sytem calls per
+		received record: one to get the record header and one to get the
+		rest of the record.
+	</para>
+	<para>
+		A value of -1 has a special meaning: the OpenSSL default will be used
+		(no attempt on changing the value will be made).
+	</para>
+	<para>
+		By default the value is 1 (enabled).
+	</para>
+	<example>
+		<title>Set <varname>ssl_read_ahead</varname> parameter</title>
+		<programlisting>
+modparam("tls", "ssl_read_ahead", 1)
+		</programlisting>
+	</example>
+	</section>
+
 
 	<section id="tls_log">
 	<title><varname>tls_log</varname> (int)</title>
@@ -291,6 +441,7 @@ modparam("tls", "tls_log", 10)
 		</programlisting>
 	</example>
 	</section>
+
 
 <section id="low_mem_threshold1">
 	<title><varname>low_mem_threshold1</varname> (integer)</title>

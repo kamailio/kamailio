@@ -30,11 +30,15 @@ Andrei Pelinescu-Onciul
         1.8.10. handshake_timeout (int)
         1.8.11. connection_timeout (int)
         1.8.12. tls_disable_compression (boolean)
-        1.8.13. tls_log (int)
-        1.8.14. low_mem_threshold1 (integer)
-        1.8.15. low_mem_threshold2 (integer)
-        1.8.16. tls_force_run (boolean)
-        1.8.17. config (string)
+        1.8.13. ssl_release_buffers (integer)
+        1.8.14. ssl_free_list_max_len (integer)
+        1.8.15. ssl_max_send_fragment (integer)
+        1.8.16. ssl_read_ahead (boolean)
+        1.8.17. tls_log (int)
+        1.8.18. low_mem_threshold1 (integer)
+        1.8.19. low_mem_threshold2 (integer)
+        1.8.20. tls_force_run (boolean)
+        1.8.21. config (string)
 
    1.9. Functions
 
@@ -435,7 +439,9 @@ modparam("tls", "connection_timeout", 60)
 
 1.8.12. tls_disable_compression (boolean)
 
-   If set compression over SSL/TLS will be disabled.
+   If set compression over SSL/TLS will be disabled. Note that compression
+   uses a lot of memory, so if you want to minimize memory usage is a good
+   ideea to disable it.
 
    By default compression is enabled.
 
@@ -444,19 +450,115 @@ modparam("tls", "connection_timeout", 60)
 modparam("tls", "tls_disable_compression", 1)
 ...
 
-1.8.13. tls_log (int)
+1.8.13. ssl_release_buffers (integer)
+
+   Release internal OpenSSL read or write buffers as soon as they are no
+   longer needed. Combined with ssl_free_list_max_len has the potential of
+   saving a lot of memory ( ~ 32k per connection in the default
+   configuration, or 16k + ssl_max_send_fragment).
+
+   A value of -1 would not change this option from its openssl default.
+   Use 0 or 1 for enable/disable.
+
+   By default the value is -1 (the openssl default, which at least in
+   openssl 1.0.0 is 0/disabled).
+
+Note
+
+   This option is supported only for OpenSSL versions >= 1.0.0. On all the
+   other versions attempting to change the default will trigger an error.
+
+   Example 14. Set ssl_release_buffers parameter
+modparam("tls", "ssl_release_buffers", 1)
+
+1.8.14. ssl_free_list_max_len (integer)
+
+   Sets the maximum number of free memory chunks, that OpenSSL will keep
+   per connection. Setting it to 0 would cause any unused memory chunk to
+   be immediately freed, reducing the memory footprint. A too large value
+   would result in extra memory consumption.
+
+   Should be combined with ssl_release_buffers.
+
+   A value of -1 has a special meaning: the OpenSSL default will be used
+   (no attempt on changing the value will be made).
+
+   By default the value is -1 (the OpenSSL default, which at least in
+   OpenSSL 1.0.0 is 32).
+
+Note
+
+   This option is supported only for OpenSSL versions >= 1.0.0. On all the
+   other versions attempting to change the default will trigger an error.
+
+   Example 15. Set ssl_freelist_max_len parameter
+modparam("tls", "ssl_freelist_max_len", 0)
+
+1.8.15. ssl_max_send_fragment (integer)
+
+   Sets the maximum number of bytes (from the clear text) sent into one
+   TLS or SSL record. Valid values are between 512 and 16384. Note however
+   that even valid low values might not be big enough to allow a
+   succesfull handshake (try minimum 1024).
+
+   Lower values would lead to less memory usage, but values lower then the
+   typical ser/sip-router write size would incur a slight performance
+   penalty. Good values are bigger then the size of the biggest SIP packet
+   one normally expects to forward. For example in most setups 2048 would
+   be a good value.
+
+Note
+
+   Values on the lower side, even if valid (> 512), might not allow for a
+   succesfull initial handshake. This happens if the certificate does not
+   fit inside one send fragment. Values lower then 1024 should not be
+   used. Even with higher values, if the handshake fails, try increasing
+   the value.
+
+   A value of -1 has a special meaning: the OpenSSL default will be used
+   (no attempt on changing the value will be made).
+
+   By default the value is -1 (the OpenSSL default, which at least in
+   OpenSSL 1.0.0 is ~ 16k).
+
+Note
+
+   This option is supported only for OpenSSL versions >= 0.9.9. On all the
+   other versions attempting to change the default will trigger an error.
+
+   Example 16. Set ssl_max_send_fragment parameter
+modparam("tls", "ssl_max_send_fragment", 4096)
+
+1.8.16. ssl_read_ahead (boolean)
+
+   Enables read ahead, reducing the number of read() system calls done
+   internally by the OpenSSL library.
+
+   When disabled OpenSSL will make at least 2 read() sytem calls per
+   received record: one to get the record header and one to get the rest
+   of the record.
+
+   A value of -1 has a special meaning: the OpenSSL default will be used
+   (no attempt on changing the value will be made).
+
+   By default the value is 1 (enabled).
+
+   Example 17. Set ssl_read_ahead parameter
+modparam("tls", "ssl_read_ahead", 1)
+
+1.8.17. tls_log (int)
 
    Sets the log level at which TLS related messages will be logged.
 
    The default value is 3.
 
-   Example 14. Set tls_log parameter
+   Example 18. Set tls_log parameter
 ...
 # ignore TLS messages if SIP-router is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
-1.8.14. low_mem_threshold1 (integer)
+1.8.18. low_mem_threshold1 (integer)
 
    Sets the minimal free memory from which new TLS connection will start
    to fail. The value is expressed in KB.
@@ -476,12 +578,12 @@ modparam("tls", "tls_log", 10)
 
    See also low_mem_threshold2.
 
-   Example 15. Set low_mem_threshold1 parameter
+   Example 19. Set low_mem_threshold1 parameter
 ...
 modparam("tls", "low_mem_threshold1", -1)
 ...
 
-1.8.15. low_mem_threshold2 (integer)
+1.8.19. low_mem_threshold2 (integer)
 
    Sets the minimal free memory from which TLS operations on already
    established TLS connections will start to fail preemptively. The value
@@ -502,12 +604,12 @@ modparam("tls", "low_mem_threshold1", -1)
 
    See also low_mem_threshold1.
 
-   Example 16. Set low_mem_threshold2 parameter
+   Example 20. Set low_mem_threshold2 parameter
 ...
 modparam("tls", "low_mem_threshold2", -1)
 ...
 
-1.8.16. tls_force_run (boolean)
+1.8.20. tls_force_run (boolean)
 
    If enabled SIP-router will start even if some of the openssl sanity
    checks fail (turn it on at your own risk).
@@ -523,12 +625,12 @@ modparam("tls", "low_mem_threshold2", -1)
 
    By default tls_force_run is disabled.
 
-   Example 17. Set tls_force_run parameter
+   Example 21. Set tls_force_run parameter
 ...
 modparam("tls", "tls_force_run", 11)
 ...
 
-1.8.17. config (string)
+1.8.21. config (string)
 
    Sets the name of the TLS specific config file.
 
@@ -554,7 +656,7 @@ modparam("tls", "tls_force_run", 11)
    client when it initiates a new connection by itself (it connects to
    something).
 
-   Example 18. Short config file
+   Example 22. Short config file
 [server:default]
 method = TLSv1
 verify_certificate = no
@@ -580,7 +682,7 @@ ca_list = local_ca.pem
    For a more complete example check the tls.cfg distributed with the
    SIP-router source (sip_router/modules/tls/tls.cfg).
 
-   Example 19. Set config parameter
+   Example 23. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 ...
@@ -596,7 +698,7 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    , the peer presented an X509 certificate and the certificate chain
    verified ok. It can be used only in a request route.
 
-   Example 20. is_peer_verified usage
+   Example 24. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()){
                 sl_send_reply("400", "No certificate or verification failed");
                 drop;
