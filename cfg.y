@@ -1631,7 +1631,7 @@ module_stm:
 			 yyerror("Can't set module parameter");
 		}
 	}
-	| MODPARAM LPAREN STRING COMMA STRING COMMA NUMBER RPAREN {
+	| MODPARAM LPAREN STRING COMMA STRING COMMA intno RPAREN {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
