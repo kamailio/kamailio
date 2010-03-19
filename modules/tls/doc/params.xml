@@ -259,17 +259,18 @@ modparam("tls", "connection_timeout", 60)
 	<title><varname>tls_disable_compression</varname> (boolean)</title>
 	<para>
 		If set compression over SSL/TLS will be disabled.
-		Note that compression uses a lot of memory, so if you want to minimize
-		memory usage is a good ideea to disable it.
+		Note that compression uses a lot of memory (about 10x more then with
+		the compression disabled), so if you want to minimize
+		memory usage is a good idea to disable it.
 	</para>
 	<para>
-		By default compression is enabled.
+		By default compression is disabled.
 	</para>
 	<example>
 	    <title>Set <varname>tls_disable_compression</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tls", "tls_disable_compression", 1)
+modparam("tls", "tls_disable_compression", 0) # enable
 ...
 	    </programlisting>
 	</example>

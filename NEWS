@@ -42,6 +42,10 @@ modules:
             versions: ssl_release_buffers, ssl_freelist_max_len,
             ssl_max_send_fragment, ssl_read_ahead. For more info see
             modules/doc/tls/README.
+           compression is now disabled by default. To enable it set
+            tls_disable_compression to 0, but note that memory usage will
+            increase dramatically especially for large number of
+            connections (>1000).
 tm:
    - t_reply() can be used both from the main/core onreply_route{} and tm
      onreply_route[...]{}s.

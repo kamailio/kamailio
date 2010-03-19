@@ -440,14 +440,15 @@ modparam("tls", "connection_timeout", 60)
 1.8.12. tls_disable_compression (boolean)
 
    If set compression over SSL/TLS will be disabled. Note that compression
-   uses a lot of memory, so if you want to minimize memory usage is a good
-   ideea to disable it.
+   uses a lot of memory (about 10x more then with the compression
+   disabled), so if you want to minimize memory usage is a good idea to
+   disable it.
 
-   By default compression is enabled.
+   By default compression is disabled.
 
    Example 13. Set tls_disable_compression parameter
 ...
-modparam("tls", "tls_disable_compression", 1)
+modparam("tls", "tls_disable_compression", 0) # enable
 ...
 
 1.8.13. ssl_release_buffers (integer)
