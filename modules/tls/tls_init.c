@@ -126,7 +126,8 @@ int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
 int openssl_mem_threshold1=-1; /* low memory threshold for connect/accept */
 int openssl_mem_threshold2=-1; /* like above but for other tsl operations */
-int tls_disable_compression = 0; /* by default enabled */
+int tls_disable_compression = 1; /* by default disabled due to high memory
+									use (~10x then without compression) */
 int tls_force_run = 0; /* ignore some start-up sanity checks, use it
 						  at your own risk */
 
