@@ -28,11 +28,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: module interface
- * \ingroup tls
- * Module: \ref tls
+/** SIP-router TLS support :: module interface.
+ * @file
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -50,6 +49,10 @@ extern int tls_con_lifetime;
 extern int tls_log;
 extern int tls_session_cache;
 extern str tls_session_id;
+extern int ssl_mode_release_buffers;
+extern int ssl_freelist_max_len;
+extern int ssl_max_send_fragment;
+extern int ssl_read_ahead;
 
 /* Current TLS configuration */
 extern tls_cfg_t** tls_cfg;

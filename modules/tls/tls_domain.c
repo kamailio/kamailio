@@ -23,11 +23,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: Virtual domain configuration support
- * \ingroup tls
- * Module: \ref tls
+/** SIP-router TLS support :: Virtual domain configuration support.
+ * @file
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -212,6 +211,116 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 
 	return 0;
 }
+
+
+/* called for ctx, with 2 args.
+ * should return 0 on succes, <0 on critical error.
+ */
+typedef int (*per_ctx_cbk_f)(SSL_CTX* ctx, long larg, void* parg);
+
+
+/** execute callback on all the CTX'es on a domain.
+ * @param d - domain
+ * @param f - callback function
+ * @param l - parameter passed to the callback
+ * @param p - parameter passed to the callback
+ * @return 0 on success, <0 on error.
+ */
+static int tls_domain_foreach_CTX(tls_domain_t* d, per_ctx_cbk_f ctx_cbk,
+									long l1, void* p2)
+{
+	int i,ret;
+	int procs_no;
+	
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
+		if ((ret=ctx_cbk(d->ctx[i], l1, p2))<0)
+			return ret;
+	}
+	return 0;
+}
+
+
+/** execute callback on all the CTX'es on in a domain list.
+ * @param d - domain
+ * @param f - callback function
+ * @param l - parameter passed to the callback
+ * @param p - parameter passed to the callback
+ * @return 0 on success, <0 on error.
+ */
+static int tls_foreach_CTX_in_domain_lst(tls_domain_t* d,
+										per_ctx_cbk_f ctx_cbk,
+										long l1, void* p2)
+{
+	int ret;
+	for (; d; d=d->next)
+		if ((ret=tls_domain_foreach_CTX(d, ctx_cbk, l1, p2))<0)
+			return ret;
+	return 0;
+}
+
+
+/** execute callback on all the CTX'es in all the srv domains in a tls cfg.
+ * @param cfg - tls cfg.
+ * @param f - callback function
+ * @param l - parameter passed to the callback
+ * @param p - parameter passed to the callback
+ * @return 0 on success, <0 on error.
+ */
+static int tls_foreach_CTX_in_srv_domains(tls_cfg_t* cfg,
+											per_ctx_cbk_f ctx_cbk,
+											long l1, void* p2)
+{
+	int ret;
+	if ((ret = tls_domain_foreach_CTX(cfg->srv_default, ctx_cbk, l1, p2)) < 0)
+		return ret;
+	if ((ret = tls_foreach_CTX_in_domain_lst(cfg->srv_list, ctx_cbk, l1, p2))
+			< 0)
+		return ret;
+	return 0;
+}
+
+
+/** execute callback on all the CTX'es in all the client domains in a tls cfg.
+ * @param cfg - tls cfg.
+ * @param f - callback function
+ * @param l - parameter passed to the callback
+ * @param p - parameter passed to the callback
+ * @return 0 on success, <0 on error.
+ */
+static int tls_foreach_CTX_in_cli_domains(tls_cfg_t* cfg,
+											per_ctx_cbk_f ctx_cbk,
+											long l1, void* p2)
+{
+	int ret;
+	if ((ret = tls_domain_foreach_CTX(cfg->cli_default, ctx_cbk, l1, p2)) < 0)
+		return ret;
+	if ((ret = tls_foreach_CTX_in_domain_lst(cfg->cli_list, ctx_cbk, l1, p2))
+			< 0)
+		return ret;
+	return 0;
+}
+
+
+/** execute callback on all the CTX'es in all the domains in a tls cfg.
+ * @param cfg - tls cfg
+ * @param f - callback function
+ * @param l - parameter passed to the callback
+ * @param p - parameter passed to the callback
+ * @return 0 on success, <0 on error.
+ */
+static int tls_foreach_CTX_in_cfg(tls_cfg_t* cfg, per_ctx_cbk_f ctx_cbk,
+										long l1, void* p2)
+{
+	int ret;
+
+	if ((ret = tls_foreach_CTX_in_srv_domains(cfg, ctx_cbk, l1, p2)) < 0)
+		return ret;
+	if ((ret = tls_foreach_CTX_in_cli_domains(cfg, ctx_cbk, l1, p2)) < 0)
+		return ret;
+	return 0;
+}
+
 
 
 /* 
@@ -433,6 +542,74 @@ static int set_session_cache(tls_domain_t* d)
 }
 
 
+
+/** tls SSL_CTX_set_mode and SSL_CTX_clear_mode wrapper.
+ *  @param mode - SSL_MODE_*.
+ *  @param clear - if set to !=0 will do a clear, else (==0) a set.
+ *  @return - 0 (always succeeds).
+ */
+int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
+{
+	if (clear)
+#if OPENSSL_VERSION_NUMBER >= 0x01000000L || \
+	defined SSL_CTX_clear_mode
+		SSL_CTX_clear_mode(ctx, mode);
+#else
+	return -1;
+#endif
+	else
+		SSL_CTX_set_mode(ctx, mode);
+	return 0;
+}
+
+
+
+/** tls set ctx->free_list_max_len.
+ *  @param val - value (<0 ignored).
+ *  @return - 0 (always succeeds).
+ */
+int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
+{
+	if (val >= 0)
+#if OPENSSL_VERSION_NUMBER >= 0x01000000L
+#ifndef OPENSSL_NO_BUF_FREELISTS
+		ctx->freelist_max_len = val;
+#endif
+#endif
+#if defined (OPENSSL_NO_BUF_FREELISTS) || OPENSSL_VERSION_NUMBER < 0x01000000L
+		return -1;
+#endif
+	return 0;
+}
+
+/** tls SSL_CTX_set_max_send_fragment wrapper.
+ *  @param val - value (<0 ignored). Should be between 512 and 16k.
+ *  @return  0 on success, < 0 on failure (invalid value)
+ */
+int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
+{
+	if (val >= 0)
+#if OPENSSL_VERSION_NUMBER >= 0x00909000L
+		return SSL_CTX_set_max_send_fragment(ctx, val) -1;
+#else
+		return -1;
+#endif
+	return 0;
+}
+
+
+
+/** tls SSL_CTX_set_read_ahead wrapper.
+ *  @param val - value (<0 ignored, 0 or >0).
+ *  @return  0 (always success).
+ */
+int tls_ssl_ctx_set_read_ahead(SSL_CTX* ctx, long val, void* unused)
+{
+	if (val >= 0)
+		SSL_CTX_set_read_ahead(ctx, val);
+	return 0;
+}
+
 /*
  * Initialize all domain attributes from default domains
  * if necessary
@@ -465,7 +642,6 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 	if (set_verification(d) < 0) return -1;
 	if (set_ssl_options(d) < 0) return -1;
 	if (set_session_cache(d) < 0) return -1;
-
 	return 0;
 }
 
@@ -601,6 +777,62 @@ int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_de
 
 	if (load_private_key(cfg->srv_default) < 0) return -1;
 	if (load_private_key(cfg->cli_default) < 0) return -1;
+
+	/* set various global per CTX options
+	 * (done here to show possible missing features messages only once)
+	 */
+#if OPENSSL_VERSION_NUMBER >= 0x01000000L
+	/* set SSL_MODE_RELEASE_BUFFERS if ssl_mode_release_buffers !=0,
+	   reset if == 0 and ignore if < 0 */
+	/* only in >= 1.0.0 */
+	if (ssl_mode_release_buffers >= 0 &&
+		tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_mode, SSL_MODE_RELEASE_BUFFERS,
+								(void*)(long)(ssl_mode_release_buffers==0))
+		< 0) {
+		ERR("invalid ssl_release_buffers value (%d)\n",
+				ssl_mode_release_buffers);
+		return -1;
+	}
+#else
+	if (ssl_mode_release_buffers > 0)
+		ERR("cannot change openssl mode_release_buffers, the openssl version"
+				" is too old (need at least 1.0.0)\n");
+#endif
+	/* only in >= 1.0.0 */
+#if OPENSSL_VERSION_NUMBER >= 0x01000000L
+#ifndef OPENSSL_NO_BUF_FREELISTS
+	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_set_freelist,
+								ssl_freelist_max_len, 0) < 0) {
+		ERR("invalid ssl_freelist_max_len value (%d)\n",
+				ssl_freelist_max_len);
+		return -1;
+	}
+#endif
+#endif
+#if defined (OPENSSL_NO_BUF_FREELISTS) || OPENSSL_VERSION_NUMBER < 0x01000000L
+	if (ssl_freelist_max_len != 0)
+		ERR("cannot change openssl freelist_max_len, openssl too old"
+				"(needed at least 1.0.0) or compiled without freelist support"
+				" (OPENSSL_NO_BUF_FREELIST)\n");
+#endif
+#if OPENSSL_VERSION_NUMBER >= 0x00909000L
+	/* only in >= 0.9.9 */
+	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_set_max_send_fragment,
+								ssl_max_send_fragment, 0) < 0) {
+		ERR("invalid ssl_max_send_fragment value (%d)\n",
+				ssl_max_send_fragment);
+		return -1;
+	}
+#else
+	if (ssl_max_send_fragment > 0)
+		ERR("cannot change openssl max_send_fragment, the openssl version"
+				" is too old (need at least 0.9.9)\n");
+#endif
+	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_set_read_ahead,
+								ssl_read_ahead, 0) < 0) {
+		ERR("invalid ssl_read_ahead value (%d)\n", ssl_read_ahead);
+		return -1;
+	}
 
 	return 0;
 }

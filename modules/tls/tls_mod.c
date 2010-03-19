@@ -33,12 +33,14 @@
  *              calls to domain_db_{bind,init,close,ver} (andrei)
  * 2007-02-09  updated to the new tls_hooks api and renamed tls hooks hanlder
  *              functions to avoid conflicts: s/tls_/tls_h_/   (andrei)
+ * 2010-03-19  new parameters to control advanced openssl lib options
+ *              (mostly work on 1.0.0+): ssl_release_buffers, ssl_read_ahead,
+ *              ssl_freelist_max_len, ssl_max_send_fragment   (andrei)
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: Module interface
- * \ingroup tls
- * Module: \ref tls
+/** SIP-router TLS support :: Module interface.
+ * @file
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -175,6 +177,35 @@ int tls_con_lifetime = 600; /* this value will be adjusted to ticks later */
 int tls_log = 3;
 int tls_session_cache = 0;
 str tls_session_id = STR_STATIC_INIT("ser-tls-2.1.0");
+/* release internal openssl read or write buffer when they are no longer used
+ * (complete read or write that does not have to buffer anything).
+ * Should be used together with tls_free_list_max_len. Might have some
+ * performance impact (and extra *malloc pressure), but has also the potential
+ * of saving a lot of memory (at least 32k/idle connection in the default
+ * config, or ~ 16k+tls_max_send_fragment)) */
+int ssl_mode_release_buffers = -1; /* don't set, leave the default (off) */
+/* maximum length of free/unused memory buffers/chunks per connection.
+ * Setting it to 0 would cause any unused buffers to be immediately freed
+ * and hence a lower memory footprint (at the cost of a possible performance
+ * decrease and more *malloc pressure).
+ * Too large value would result in extra memory consumption.
+ * The default is 32 in openssl.
+ * For lowest memory usage set it to 0 and tls_mode_release_buffers to 1
+ */
+int ssl_freelist_max_len = -1;   /* don't set, leave the default value (32) */
+/* maximum number of bytes (clear text) sent into one record.
+ * The default and maximum value are ~16k. Lower values would lead to a lower
+ *  memory footprint. 
+ * Values lower then the typical  app. write size might decrease performance 
+ * (extra write() syscalls), so it should be kept ~2k for ser.
+ */
+int ssl_max_send_fragment = -1;  /* don't set, leave the default (16k) */
+/* enable read ahead. Should increase performance (1 less syscall when
+ * enabled, else openssl makes 1 read() for each record header and another
+ * for the content), but might interact with SSL_pending() (not used right now)
+ */
+int ssl_read_ahead = 1; /* set (use -1 for the default value) */
+
 str tls_cfg_file = STR_NULL;
 
 
@@ -215,9 +246,13 @@ static param_export_t params[] = {
 	{"session_id",          PARAM_STR,    &tls_session_id         },
 	{"config",              PARAM_STR,    &tls_cfg_file           },
 	{"tls_disable_compression", PARAM_INT,&tls_disable_compression},
+	{"ssl_release_buffers",   PARAM_INT, &ssl_mode_release_buffers},
+	{"ssl_freelist_max_len",  PARAM_INT,    &ssl_freelist_max_len},
+	{"ssl_max_send_fragment", PARAM_INT,    &ssl_max_send_fragment},
+	{"ssl_read_ahead",        PARAM_INT,    &ssl_read_ahead},
 	{"tls_force_run",       PARAM_INT,    &tls_force_run},
-	{"low_mem_threshold1",       PARAM_INT,    &openssl_mem_threshold1},
-	{"low_mem_threshold2",       PARAM_INT,    &openssl_mem_threshold2},
+	{"low_mem_threshold1",  PARAM_INT,    &openssl_mem_threshold1},
+	{"low_mem_threshold2",  PARAM_INT,    &openssl_mem_threshold2},
 	{0, 0, 0}
 };
 
