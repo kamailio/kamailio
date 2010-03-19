@@ -79,7 +79,11 @@
 #    warning ""
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x00908000L  /* 0.9.8*/
+/* replace openssl zlib compression with our version if necessary
+ * (the openssl zlib compression uses the wrong malloc, see
+ *  openssl #1468): 0.9.8-dev < version  <0.9.8e-beta1 */
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L  /* 0.9.8-dev */ && \
+		OPENSSL_VERSION_NUMBER <  0x00908051L  /* 0.9.8.e-beta1 */
 #    ifndef OPENSSL_NO_COMP
 #        warning "openssl zlib compression bug workaround enabled"
 #    endif
