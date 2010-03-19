@@ -24,11 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: Select interface
- * \ingroup tls
- * Module: \ref tls
+/** SIP-router TLS support :: Select interface.
+ * @file
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -962,9 +961,9 @@ static int get_tlsext_sn(str* res, sip_msg_t* msg)
 
 	server_name.s = (char*)SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if (server_name.s) {
+		server_name.len = strlen(server_name.s);
 		DBG("received server_name (TLS extension): '%.*s'\n", 
 			STR_FMT(&server_name));
-		server_name.len = strlen(server_name.s);
 	} else {
 		DBG("SSL_get_servername returned NULL\n");
 		goto error;
