@@ -1006,8 +1006,10 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 		fi ; \
 	done; true
 	@for ut in $(C_INSTALL_UTILS) "" ; do \
-		if [ -n "$$r" ]; then \
-			$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
+		if [ -n "$$ut" ]; then \
+			if [ -d "$$ut" ]; then \
+				$(call try_err, $(MAKE) -C "$${ut}" install-if-newer ) ;\
+			fi ;\
 		fi ; \
 	done; true
 
