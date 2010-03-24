@@ -278,7 +278,7 @@ else
 							perl perlvdb purple seas \
 							snmpstats xmpp \
 							carrierroute misc_radius peering \
-							dialplan lcr utils presence \
+							dialplan lcr utils presence presence_mwi \
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
 							regex xcap_client
