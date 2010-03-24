@@ -61,6 +61,7 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
  * Make enum query and if query succeeds, replace current uri with the
  * result of the query
  */
+int enum_query(struct sip_msg* _msg, str* suffix, str* service);
 int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2);
 int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2);
 int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service);

@@ -51,6 +51,7 @@
 #include <stdlib.h>
 
 #include "enum.h"
+#include "../../sr_module.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
@@ -704,7 +705,7 @@ done:
  */
 int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2)
 {
-	return enum_query_2(_msg, (char *)(&suffix), (char *)(&service));
+	return enum_query(_msg, &suffix, &service);
 }
 
 
@@ -713,24 +714,47 @@ int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2)
  */
 int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2)
 {
-	return enum_query_2(_msg, _suffix, (char *)(&service));
+    str suffix;
+  
+    if (get_str_fparam(&suffix, _msg, (fparam_t*)_suffix) != 0) {
+	LM_ERR("unable to get suffix\n");
+	return -1;
+    }
+
+    return enum_query(_msg, &suffix, &service);
+}
+
+
+/*
+ * Call enum_query_2 with given suffix and service.
+ */
+int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
+{
+    str suffix, service;
+  
+    if (get_str_fparam(&suffix, _msg, (fparam_t*)_suffix) != 0) {
+	LM_ERR("unable to get suffix\n");
+	return -1;
+    }
+  
+    if (get_str_fparam(&service, _msg, (fparam_t*)_service) != 0) {
+	LM_ERR("unable to get service\n");
+	return -1;
+    }
+
+    return enum_query(_msg, &suffix, &service);
 }
 
 
 /*
  * See documentation in README file.
  */
-int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
+int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 {
 	char *user_s;
 	int user_len, i, j;
 	char name[MAX_DOMAIN_SIZE];
 	char string[17];
-
-	str *suffix, *service;
-
-	suffix = (str*)_suffix;
-	service = (str*)_service;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("Parsing of R-URI failed\n");

@@ -80,10 +80,10 @@ str i_bl_alg;
  */
 static cmd_export_t cmds[] = {
 	{"enum_query", (cmd_function)enum_query_0, 0, 0, 0, REQUEST_ROUTE},
-	{"enum_query", (cmd_function)enum_query_1, 1, fixup_str_null,
-	 fixup_free_str_null, REQUEST_ROUTE},
-	{"enum_query", (cmd_function)enum_query_2, 2, fixup_str_str, 
-	 fixup_free_str_str, REQUEST_ROUTE},
+	{"enum_query", (cmd_function)enum_query_1, 1, fixup_spve_null, 0,
+	 REQUEST_ROUTE},
+	{"enum_query", (cmd_function)enum_query_2, 2, fixup_spve_str, 0,
+	 REQUEST_ROUTE},
 	{"enum_pv_query", (cmd_function)enum_pv_query_1, 1, fixup_pvar_null,
 	 fixup_free_pvar_null, REQUEST_ROUTE},
 	{"enum_pv_query", (cmd_function)enum_pv_query_2, 2, fixup_pvar_str,

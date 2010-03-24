@@ -247,13 +247,15 @@ modparam("enum", "bl_algorithm", "txt")
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>suffix</emphasis> - Suffix to be appended to the 
-			domain name.
+			<para><emphasis>suffix</emphasis> - Suffix
+	string to be appended to the domain name. String may contain
+	pseudo variables. 
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>service</emphasis> - Service string to be used in 
-			the service field.
+			<para><emphasis>service</emphasis> - Service
+	string to be used in the service field. String may contain
+	pseudo variables. 
 			</para>
 		</listitem>
 		</itemizedlist>
