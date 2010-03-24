@@ -316,7 +316,7 @@ rand_reset_prob();
 ...
 rand_get_prob();
 
-4.5. sleep(time)
+4.5.  sleep(time)
 
    Waits "time" seconds.
 
@@ -331,7 +331,7 @@ rand_get_prob();
 sleep("1");
 ...
 
-4.6. usleep(time)
+4.6.  usleep(time)
 
    Waits "time" milli-seconds.
 
@@ -346,7 +346,7 @@ sleep("1");
 usleep("500");
 ...
 
-4.7. abort()
+4.7.  abort()
 
    Debugging function that aborts the server. Depending on the
    configuration of the server a core dump will be created.
@@ -359,7 +359,7 @@ usleep("500");
 abort();
 ...
 
-4.8. pkg_status()
+4.8.  pkg_status()
 
    Debugging function that dumps the status for the private (PKG) memory.
    This information is logged to the default log facility, depending on
@@ -374,7 +374,7 @@ abort();
 pkg_status();
 ...
 
-4.9. shm_status()
+4.9.  shm_status()
 
    Debugging function that dumps the status for the shared (SHM) memory.
    This information is logged to the default log facility, depending on
@@ -503,7 +503,7 @@ $ kamctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1.20. rand_reset_prob usage
+   Example 1.20.  rand_reset_prob usage
 ...
 $ kamctl fifo rand_reset_prob
 ...
@@ -567,7 +567,7 @@ $ kamctl fifo set_gflag 0x3
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.25. reset_gflag usage
+   Example 1.25.  reset_gflag usage
 ...
 $ kamctl fifo reset_gflag 1
 $ kamctl fifo reset_gflag 0x3
@@ -606,7 +606,7 @@ TRUE
    Return the bitmap with all flags. The function gets no parameters and
    returns the bitmap in hexadecimal and decimal format.
 
-   Example 1.27. get_gflags usage
+   Example 1.27.  get_gflags usage
 ...
 $ kamctl fifo get_gflags
 0x3039
@@ -623,7 +623,7 @@ $ kamctl fifo get_gflags
 
    Example 1.28. RANDOM pseudo-variable usage
 ...
-if (get_random()) {
+if (rand_event()) {
   $avp(i:10) = ($RANDOM / 16777216); # 2^24
   if ($avp(i:10) < 10) {
      $avp(i:10) = 10;

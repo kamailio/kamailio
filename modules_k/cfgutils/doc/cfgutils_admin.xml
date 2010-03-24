@@ -685,7 +685,7 @@ $ kamctl fifo get_gflags
 				<title><function moreinfo="none">RANDOM pseudo-variable</function> usage</title>
 				<programlisting format="linespecific">
 ...
-if (get_random()) {
+if (rand_event()) {
   $avp(i:10) = ($RANDOM / 16777216); # 2^24
   if ($avp(i:10) &lt; 10) {
      $avp(i:10) = 10;
