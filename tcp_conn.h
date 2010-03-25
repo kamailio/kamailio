@@ -61,7 +61,6 @@
 
 
 /* tcp connection flags */
-#define F_CONN_NON_BLOCKING 1
 #define F_CONN_READ_W       2 /* watched for READ ev. in main */
 #define F_CONN_WRITE_W      4 /* watched for WRITE (main) */
 #define F_CONN_READER       8 /* handled by a tcp reader */

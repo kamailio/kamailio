@@ -3750,9 +3750,9 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 #ifdef TCP_ASYNC
 send_to_child:
 #endif
-		DBG("tcp: DBG: sendig to child, events %x\n", ev);
+		DBG("tcp: DBG: sending to child, events %x\n", ev);
 #ifdef POLLRDHUP
-		tcpconn->flags|=((int)!(ev & (POLLRDHUP|POLLHUP|POLLERR)) -1) & 
+		tcpconn->flags|=((int)!(ev & (POLLRDHUP|POLLHUP|POLLERR)) -1) &
 							F_CONN_EOF_SEEN;
 #else /* POLLRDHUP */
 		tcpconn->flags|=((int)!(ev & (POLLHUP|POLLERR)) -1) & F_CONN_EOF_SEEN;

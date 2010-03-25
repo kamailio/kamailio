@@ -928,7 +928,7 @@ again:
 			}
 			/* if we received the fd there is most likely data waiting to
 			 * be read => process it first to avoid extra sys calls */
-			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) && 
+			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) &&
 						!(con->flags & F_CONN_OOB_DATA))? RD_CONN_FORCE_EOF
 						:0;
 			resp=tcp_read_req(con, &n, &read_flags);
