@@ -3043,14 +3043,14 @@ cmd:
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error argument"); }
 	| ROUTE LPAREN route_name RPAREN	{
-						i_tmp=route_get(&main_rt, $3);
-						if (i_tmp==-1){
-							yyerror("internal error");
-							YYABORT;
-						}
-						$$=mk_action(ROUTE_T, 1, NUMBER_ST,(void*)(long)i_tmp);
-						set_cfg_pos($$);
-										}
+		if ($3) {
+			$$ = mk_action(ROUTE_T, 1, STRING_ST, (void*)$3);
+			set_cfg_pos($$);
+		} else {
+			$$ = 0;
+			YYERROR;
+		}
+	}
 	| ROUTE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ROUTE LPAREN error RPAREN { $$=0; yyerror("bad route argument"); }
 	| EXEC LPAREN STRING RPAREN	{ $$=mk_action(EXEC_T, 1, STRING_ST, $3); set_cfg_pos($$); }

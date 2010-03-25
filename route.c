@@ -727,7 +727,7 @@ int fix_actions(struct action* a)
 							LOG(L_ERR, "fix_actions: invalid expression "
 									"(%d,%d): type mismatch?",
 									rve->fpos.s_line, rve->fpos.s_col);
-						ret = E_UNSPEC;
+						ret = E_SCRIPT;
 						goto error;
 					}
 					/* it's not an error anymore to have non-int in an if,
@@ -810,14 +810,14 @@ int fix_actions(struct action* a)
 							LOG(L_ERR, "fix_actions: invalid expression "
 									"(%d,%d): type mismatch?",
 									rve->fpos.s_line, rve->fpos.s_col);
-						ret = E_UNSPEC;
+						ret = E_SCRIPT;
 						goto error;
 					}
 					if (rve_type!=RV_INT && rve_type!=RV_NONE){
 						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
-						ret = E_UNSPEC;
+						ret = E_SCRIPT;
 						goto error;
 					}
 					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
@@ -854,14 +854,14 @@ int fix_actions(struct action* a)
 							LOG(L_ERR, "fix_actions: invalid expression "
 									"(%d,%d): type mismatch?",
 									rve->fpos.s_line, rve->fpos.s_col);
-						ret = E_UNSPEC;
+						ret = E_SCRIPT;
 						goto error;
 					}
 					if (rve_type!=RV_INT && rve_type!=RV_NONE){
 						LOG(L_ERR, "fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
-						ret = E_UNSPEC;
+						ret = E_SCRIPT;
 						goto error;
 					}
 					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
@@ -1020,6 +1020,26 @@ int fix_actions(struct action* a)
 				s.len=(s.s)?strlen(s.s):0;
 				t->val[0].u.str=s;
 				t->val[0].type=STR_ST;
+				break;
+			case ROUTE_T:
+				if (t->val[0].type == STRING_ST) {
+					i=route_lookup(&main_rt, t->val[0].u.string);
+					if (i < 0) {
+						ERR("route \"%s\" not found at %s:%d\n", 
+								t->val[0].u.string,
+								(t->cfile)?t->cfile:"line", t->cline);
+						ret = E_SCRIPT;
+						goto error;
+					}
+					t->val[0].type = NUMBER_ST;
+					pkg_free(t->val[0].u.string);
+					t->val[0].u.number = i;
+				} else if (t->val[0].type != NUMBER_ST) {
+					BUG("invalid subtype %d for route()\n",
+								t->val[0].type);
+					ret = E_BUG;
+					goto error;
+				}
 				break;
 			default:
 				/* no fixup required for the rest */
