@@ -1116,7 +1116,7 @@ match_cleanup:
 			flags=0;
 			rve=(struct rval_expr*)a->val[0].u.data;
 			ret=1;
-			while(!(flags & BREAK_R_F) && 
+			while(!(flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F)) &&
 					(rval_expr_eval_int(h, msg, &v, rve) == 0) && v){
 				i++;
 				if (unlikely(i > cfg_get(core, core_cfg, max_while_loops))){
@@ -1131,7 +1131,7 @@ match_cleanup:
 					ret=run_actions(h, (struct action*)a->val[1].u.data, msg);
 					flags|=h->run_flags;
 					h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
-												   returns passthrough */
+												   returns pass-through */
 				}
 			}
 			break;
