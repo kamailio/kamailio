@@ -1282,18 +1282,18 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 
 	ret=E_UNSPEC;
 	h->rec_lev++;
-	if (h->rec_lev>ROUTE_MAX_REC_LEV){
+	if (unlikely(h->rec_lev>ROUTE_MAX_REC_LEV)){
 		LOG(L_ERR, "WARNING: too many recursive routing table lookups (%d)"
 					" giving up!\n", h->rec_lev);
 		ret=E_UNSPEC;
 		goto error;
 	}
-	if (h->rec_lev==1){
+	if (unlikely(h->rec_lev==1)){
 		h->run_flags=0;
 		h->last_retcode=0;
 		_last_returned_code = h->last_retcode;
 #ifdef USE_LONGJMP
-		if (setjmp(h->jmp_env)){
+		if (unlikely(setjmp(h->jmp_env))){
 			h->rec_lev=0;
 			ret=h->last_retcode;
 			goto end;
@@ -1301,7 +1301,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 #endif
 	}
 
-	if (a==0){
+	if (unlikely(a==0)){
 		DBG("DEBUG: run_actions: null action list (rec_level=%d)\n",
 				h->rec_lev);
 		ret=1;
@@ -1311,11 +1311,11 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		ret=do_action(h, t, msg);
 		/* break, return or drop/exit stop execution of the current
 		   block */
-		if (h->run_flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F)){
-			if (h->run_flags & EXIT_R_F){
-#ifdef USE_LONGJMP
+		if (unlikely(h->run_flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F))){
+			if (unlikely(h->run_flags & EXIT_R_F)) {
 				h->last_retcode=ret;
 				_last_returned_code = h->last_retcode;
+#ifdef USE_LONGJMP
 				longjmp(h->jmp_env, ret);
 #endif
 			}
@@ -1327,10 +1327,10 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	h->rec_lev--;
 end:
 	/* process module onbreak handlers if present */
-	if (h->rec_lev==0 && ret==0)
+	if (unlikely(h->rec_lev==0 && ret==0))
 		for (mod=modules;mod;mod=mod->next)
-			if ((mod->mod_interface_ver==0) && mod->exports && 
-					mod->exports->v0.onbreak_f) {
+			if (unlikely((mod->mod_interface_ver==0) && mod->exports && 
+					mod->exports->v0.onbreak_f)) {
 				mod->exports->v0.onbreak_f( msg );
 				DBG("DEBUG: %s onbreak handler called\n",
 						mod->exports->c.name);
