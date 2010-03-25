@@ -3042,7 +3042,16 @@ cmd:
 	}
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error argument"); }
-	| ROUTE LPAREN route_name RPAREN	{
+	| ROUTE LPAREN rval_expr RPAREN	{
+		if ($3) {
+			$$ = mk_action(ROUTE_T, 1, RVE_ST, (void*)$3);
+			set_cfg_pos($$);
+		} else {
+			$$ = 0;
+			YYERROR;
+		}
+	}
+	| ROUTE LPAREN ID RPAREN	{
 		if ($3) {
 			$$ = mk_action(ROUTE_T, 1, STRING_ST, (void*)$3);
 			set_cfg_pos($$);

@@ -639,6 +639,7 @@ int fix_actions(struct action* a)
 	struct lvalue* lval;
 	struct rval_expr* rve;
 	struct rval_expr* err_rve;
+	struct rvalue* rv;
 	enum rval_type rve_type, err_type, expected_type;
 
 	
@@ -1022,10 +1023,38 @@ int fix_actions(struct action* a)
 				t->val[0].type=STR_ST;
 				break;
 			case ROUTE_T:
+				if (t->val[0].type == RVE_ST) {
+					rve=(struct rval_expr*)t->val[0].u.data;
+					if (!rve_is_constant(rve)) {
+						if ((ret=fix_rval_expr(&t->val[0].u.data)) < 0){
+							ERR("route() failed to fix rve at %s:%d\n",
+								(t->cfile)?t->cfile:"line", t->cline);
+							ret = E_BUG;
+							goto error;
+						}
+					} else {
+						/* rve is constant => replace it with a string */
+						if ((rv = rval_expr_eval(0, 0, rve)) == 0 ||
+								rval_get_str(0, 0, &s, rv, 0) < 0) {
+							/* out of mem. or bug ? */
+							rval_destroy(rv);
+							ERR("route() failed to fix ct. rve at %s:%d\n",
+								(t->cfile)?t->cfile:"line", t->cline);
+							ret = E_BUG;
+							goto error;
+						}
+						rval_destroy(rv);
+						rve_destroy(rve);
+						t->val[0].type = STRING_ST;
+						t->val[0].u.string = s.s;
+						t->val[0].u.str.len = s.len; /* not used */
+						/* fall-through the STRING_ST if */
+					}
+				}
 				if (t->val[0].type == STRING_ST) {
 					i=route_lookup(&main_rt, t->val[0].u.string);
 					if (i < 0) {
-						ERR("route \"%s\" not found at %s:%d\n", 
+						ERR("route \"%s\" not found at %s:%d\n",
 								t->val[0].u.string,
 								(t->cfile)?t->cfile:"line", t->cline);
 						ret = E_SCRIPT;
@@ -1034,7 +1063,8 @@ int fix_actions(struct action* a)
 					t->val[0].type = NUMBER_ST;
 					pkg_free(t->val[0].u.string);
 					t->val[0].u.number = i;
-				} else if (t->val[0].type != NUMBER_ST) {
+				} else if (t->val[0].type != NUMBER_ST &&
+							t->val[0].type != RVE_ST) {
 					BUG("invalid subtype %d for route()\n",
 								t->val[0].type);
 					ret = E_BUG;

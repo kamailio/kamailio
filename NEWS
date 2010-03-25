@@ -10,6 +10,7 @@ core:
   - global, per protocol blacklist ignore masks (via extended send_flags).
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
   - per message blacklist ignore masks
+  - route() now supports rvalue expressions (e.g. route("test"+$i))
 
 new config variables:
   - dst_blacklist_udp_imask - global blacklist events ignore mask for udp

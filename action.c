@@ -481,20 +481,45 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			ret=1;
 			break;
 		case ROUTE_T:
-			if (a->val[0].type!=NUMBER_ST){
+			if (likely(a->val[0].type == NUMBER_ST))
+				i = a->val[0].u.number;
+			else if (a->val[0].type == RVE_ST) {
+				rv = rval_expr_eval(h, msg, a->val[0].u.data);
+				rval_cache_init(&c1);
+				if (unlikely(rv == 0 ||
+						rval_get_tmp_str(h, msg, &s, rv, 0, &c1) < 0)) {
+					rval_destroy(rv);
+					rval_cache_clean(&c1);
+					ERR("failed to convert RVE to string\n");
+					ret = E_UNSPEC;
+					goto error;
+				}
+				i = route_lookup(&main_rt, s.s);
+				if (unlikely(i < 0)) {
+					ERR("route \"%s\" not found at %s:%d\n",
+							s.s, (a->cfile)?a->cfile:"line", a->cline);
+					rval_cache_clean(&c1);
+					s.s = 0;
+					ret = E_SCRIPT;
+					goto error;
+				}
+				rval_cache_clean(&c1);
+				s.s = 0;
+			} else {
 				LOG(L_CRIT, "BUG: do_action: bad route() type %d\n",
 						a->val[0].type);
 				ret=E_BUG;
 				goto error;
 			}
-			if ((a->val[0].u.number>=main_rt.idx)||(a->val[0].u.number<0)){
+			if (unlikely((i>=main_rt.idx)||(i<0))){
 				LOG(L_ERR, "ERROR: invalid routing table number in"
-							"route(%lu)\n", a->val[0].u.number);
+							"route(%lu) at %s:%d\n", a->val[0].u.number,
+							(a->cfile)?a->cfile:"line", a->cline);
 				ret=E_CFG;
 				goto error;
 			}
-			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
-			ret=run_actions(h, main_rt.rlist[a->val[0].u.number], msg);
+			/*ret=((ret=run_actions(rlist[a->val[0].u.number],msg))<0)?ret:1;*/
+			ret=run_actions(h, main_rt.rlist[i], msg);
 			h->last_retcode=ret;
 			_last_returned_code = h->last_retcode;
 			h->run_flags&=~(RETURN_R_F|BREAK_R_F); /* absorb return & break */
