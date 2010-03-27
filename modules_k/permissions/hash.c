@@ -340,21 +340,32 @@ void free_addr_hash_table(struct addr_list** table)
  * Add <grp, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
-			   unsigned int ip_addr, unsigned int port)
+			   unsigned int ip_addr, unsigned int port, char *tagv)
 {
     struct addr_list *np;
     unsigned int hash_val;
     str addr_str;
+	int len;
+
+	len = sizeof(*np) + (tagv==NULL)?0:(strlen(tagv)+1);
 	
-    np = (struct addr_list *) shm_malloc(sizeof(*np));
+    np = (struct addr_list *) shm_malloc(len);
     if (np == NULL) {
 	LM_ERR("no shm memory for table entry\n");
 	return -1;
     }
 
+	memset(np, 0, len);
+
     np->grp = grp;
     np->ip_addr = ip_addr;
     np->port = port;
+	if(tagv!=NULL)
+	{
+		np->tag.s = (char*)np + sizeof(struct addr_list);
+		np->tag.len = strlen(tagv);
+		strcpy(np->tag.s, tagv);
+	}
     
     addr_str.s = (char *)(&ip_addr);
     addr_str.len = 4;
@@ -375,6 +386,7 @@ int match_addr_hash_table(struct addr_list** table, unsigned int group,
 {
 	struct addr_list *np;
 	str addr_str;
+	avp_value_t val;
 
 	addr_str.s = (char *)(&ip_addr);
 	addr_str.len = 4;
@@ -382,6 +394,15 @@ int match_addr_hash_table(struct addr_list** table, unsigned int group,
 	for (np = table[perm_hash(addr_str)]; np != NULL; np = np->next) {
 	    if ((np->ip_addr == ip_addr) && (np->grp == group) &&
 		((np->port == 0) || (np->port == port))) {
+
+			if (tag_avp.n && np->tag.s) {
+				val.s = np->tag;
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+					LM_ERR("setting of tag_avp failed\n");
+					return -1;
+				}
+			}
+
 		return 1;
 	    }
 	}
@@ -478,21 +499,22 @@ struct subnet* new_subnet_table(void)
 	LM_ERR("no shm memory for subnet table\n");
 	return 0;
     }
-    ptr[PERM_MAX_SUBNETS].grp = 0;
+	memset(ptr, 0, sizeof(struct subnet) * (PERM_MAX_SUBNETS + 1));
     return ptr;
 }
 
     
 /* 
- * Add <grp, subnet, mask, port> into subnet table so that table is
+ * Add <grp, subnet, mask, port, tag> into subnet table so that table is
  * kept in increasing ordered according to grp.
  */
 int subnet_table_insert(struct subnet* table, unsigned int grp,
 			unsigned int subnet, unsigned int mask,
-			unsigned int port)
+			unsigned int port, char *tagv)
 {
     int i;
     unsigned int count;
+	str tags;
 
     count = table[PERM_MAX_SUBNETS].grp;
 
@@ -501,7 +523,22 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
 	return 0;
     }
 
-    mask = 32 - mask;
+	if(tagv==NULL)
+	{
+		tags.s = NULL;
+		tags.len = 0;
+	} else {
+		tags.len = strlen(tagv);
+		tags.s = (char*)shm_malloc(tags.len+1);
+		if(tags.s==NULL)
+		{
+			LM_ERR("No more shared memory\n");
+			return 0;
+		}
+		strcpy(tags.s, tagv);
+	}
+
+	mask = 32 - mask;
     subnet = htonl(ntohl(subnet) >> mask); //subnet << mask;
 
     i = count - 1;
@@ -515,6 +552,7 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
     table[i + 1].subnet = subnet;
     table[i + 1].port = port;
     table[i + 1].mask = mask;
+	table[i + 1].tag = tags;
 
     table[PERM_MAX_SUBNETS].grp = count + 1;
 
@@ -530,6 +568,7 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
 		       unsigned int ip_addr, unsigned int port)
 {
     unsigned int count, i, subnet;
+	avp_value_t val;
 
     count = table[PERM_MAX_SUBNETS].grp;
 
@@ -543,7 +582,16 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
 	subnet = htonl(ntohl(ip_addr) >> table[i].mask); //ip_addr << table[i].mask;
 	if ((table[i].subnet == subnet) &&
 	    ((table[i].port == port) || (table[i].port == 0)))
+		{
+			if (tag_avp.n && table[i].tag.s) {
+				val.s = table[i].tag;
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+					LM_ERR("setting of tag_avp failed\n");
+					return -1;
+				}
+			}
 	    return 1;
+		}
 	i++;
     }
 
@@ -606,7 +654,17 @@ int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
  */
 void empty_subnet_table(struct subnet *table)
 {
+	int i;
     table[PERM_MAX_SUBNETS].grp = 0;
+	for(i=0; i<PERM_MAX_SUBNETS; i++)
+	{
+		if(table[i].tag.s!=NULL)
+		{
+			shm_free(table[i].tag.s);
+			table[i].tag.s = NULL;
+			table[i].tag.len =0;
+		}
+	}
 }
 
 
@@ -615,8 +673,18 @@ void empty_subnet_table(struct subnet *table)
  */
 void free_subnet_table(struct subnet* table)
 {
+	int i;
     if (!table)
 	return;
+	for(i=0; i<PERM_MAX_SUBNETS; i++)
+	{
+		if(table[i].tag.s!=NULL)
+		{
+			shm_free(table[i].tag.s);
+			table[i].tag.s = NULL;
+			table[i].tag.len =0;
+		}
+	}
 
     shm_free(table);
 }

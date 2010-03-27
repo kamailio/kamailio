@@ -183,6 +183,11 @@
 		identifier is given as argument to allow_address and
 		allow_source_address functions.
 		</para>
+		<para>
+		As a side effect of matching the address, non-NULL tag 
+		(see tag_col module parameter) is added as value to
+		peer_tag AVP if peer_tag_avp module parameter has been defined.
+		</para>
 	</section>
 	<section id="sec-trusted-requests">
 		<title>Trusted Requests</title>
@@ -628,9 +633,9 @@ modparam("permissions", "from_col", "regexp")
 	<section>
 		<title><varname>tag_col</varname> (string)</title>
 		<para>
-		Name of trusted table column containing a string
+		Name of address or trusted table column containing a string
 		that is added as value to peer_tag AVP if peer_tag AVP
-                has been defined and if the peer matches.
+        has been defined and if the address or peer matches.
 		</para>
 		<para>
 		<emphasis>

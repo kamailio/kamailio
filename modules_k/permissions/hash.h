@@ -110,6 +110,7 @@ struct addr_list {
     unsigned int grp;
     unsigned int ip_addr;
     unsigned int port;
+	str tag;
     struct addr_list *next;  /* Next element in the list */
 };
 
@@ -136,7 +137,7 @@ void destroy_addr_hash_table(struct addr_list** table);
  * Add <group, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list** hash_table, unsigned int grp,
-			   unsigned int ip_addr, unsigned int port);
+			   unsigned int ip_addr, unsigned int port, char *tagv);
 
 
 /* 
@@ -181,6 +182,7 @@ struct subnet {
     unsigned int subnet;     /* IP subnet in host byte order with host bits shifted out */
     unsigned int port;       /* port or 0 */
     unsigned int mask;       /* how many bits belong to network part */
+	str tag;
 };
 
 
@@ -224,7 +226,7 @@ void free_subnet_table(struct subnet* table);
  */
 int subnet_table_insert(struct subnet* table, unsigned int grp,
 			unsigned int subnet, unsigned int mask,
-			unsigned int port);
+			unsigned int port, char *tagv);
 
 
 /* 

@@ -43,7 +43,7 @@
 #include "../../ut.h"
 #include "../../resolve.h"
 
-#define TABLE_VERSION 3
+#define TABLE_VERSION 4
 
 struct addr_list ***addr_hash_table; /* Ptr to current hash table ptr */
 struct addr_list **addr_hash_table_1;     /* Pointer to hash table 1 */
@@ -63,7 +63,7 @@ static db_func_t perm_dbf;
  */
 int reload_address_table(void)
 {
-    db_key_t cols[4];
+    db_key_t cols[5];
     db1_res_t* res = NULL;
     db_row_t* row;
     db_val_t* val;
@@ -72,18 +72,20 @@ int reload_address_table(void)
     struct subnet *new_subnet_table;
     int i;
     struct in_addr ip_addr;
+	char *tagv;
 
     cols[0] = &grp_col;
     cols[1] = &ip_addr_col;
     cols[2] = &mask_col;
     cols[3] = &port_col;
+    cols[4] = &tag_col;
 
     if (perm_dbf.use_table(db_handle, &address_table) < 0) {
 	    LM_ERR("failed to use table\n");
 		return -1;
     }
 
-    if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
+    if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 5, 0, &res) < 0) {
 	    LM_ERR("failed to query database\n");
 		return -1;
     }
@@ -112,7 +114,7 @@ int reload_address_table(void)
 		
     for (i = 0; i < RES_ROW_N(res); i++) {
 	val = ROW_VALUES(row + i);
-	if ((ROW_N(row + i) == 4) &&
+	if ((ROW_N(row + i) == 5) &&
 	    (VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
 	    (VAL_INT(val) > 0) && 
 	    (VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
@@ -121,11 +123,13 @@ int reload_address_table(void)
 	    ((unsigned int)VAL_INT(val + 2) > 0) && 
 	    ((unsigned int)VAL_INT(val + 2) <= 32) &&
 	    (VAL_TYPE(val + 3) == DB1_INT) && !VAL_NULL(val + 3)) {
+		tagv = VAL_NULL(val + 4)?NULL:(char *)VAL_STRING(val + 4);
 	    if ((unsigned int)VAL_INT(val + 2) == 32) {
 		if (addr_hash_table_insert(new_hash_table,
 					   (unsigned int)VAL_INT(val),
 					   (unsigned int)ip_addr.s_addr,
-					   (unsigned int)VAL_INT(val + 3))
+					   (unsigned int)VAL_INT(val + 3),
+					   tagv)
 		    == -1) {
 		    LM_ERR("hash table problem\n");
 		    perm_dbf.free_result(db_handle, res);
@@ -140,7 +144,8 @@ int reload_address_table(void)
 					(unsigned int)VAL_INT(val),
 					(unsigned int)ip_addr.s_addr,
 					(unsigned int)VAL_INT(val + 2),
-					(unsigned int)VAL_INT(val + 3))
+					(unsigned int)VAL_INT(val + 3),
+					tagv)
 		    == -1) {
 		    LM_ERR("subnet table problem\n");
 		    perm_dbf.free_result(db_handle, res);
