@@ -1,10 +1,10 @@
 table_name(string) table_version(int) 
 acc:4
 active_watchers:9
-address:3
+address:4
 aliases:1004
-carrierfailureroute:2
 carrier_name:1
+carrierfailureroute:2
 carrierroute:3
 cpl:1
 dbaliases:1
@@ -39,7 +39,6 @@ sip_trace:2
 speed_dial:2
 subscriber:6
 trusted:5
-uacreg:1
 uri:1
 userblacklist:1
 usr_preferences:2

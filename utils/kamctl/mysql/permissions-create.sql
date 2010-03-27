@@ -9,12 +9,13 @@ CREATE TABLE trusted (
 
 CREATE INDEX peer_idx ON trusted (src_ip);
 
-INSERT INTO version (table_name, table_version) values ('address','3');
+INSERT INTO version (table_name, table_version) values ('address','4');
 CREATE TABLE address (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     grp SMALLINT(5) UNSIGNED DEFAULT 0 NOT NULL,
     ip_addr VARCHAR(15) NOT NULL,
     mask TINYINT DEFAULT 32 NOT NULL,
-    port SMALLINT(5) UNSIGNED DEFAULT 0 NOT NULL
+    port SMALLINT(5) UNSIGNED DEFAULT 0 NOT NULL,
+    tag VARCHAR(64)
 ) ENGINE=MyISAM;
 
