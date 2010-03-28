@@ -30,7 +30,7 @@
         <name>grp</name>
         <type>unsigned short</type>
         <size>5</size>
-        <default>0</default>
+        <default>1</default>
         <description>Group</description>
         <natural/>
     </column>
