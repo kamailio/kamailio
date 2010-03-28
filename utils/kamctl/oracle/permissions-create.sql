@@ -20,7 +20,7 @@ CREATE INDEX trusted_peer_idx  ON trusted (src_ip);
 INSERT INTO version (table_name, table_version) values ('address','4');
 CREATE TABLE address (
     id NUMBER(10) PRIMARY KEY,
-    grp NUMBER(5) DEFAULT 0 NOT NULL,
+    grp NUMBER(5) DEFAULT 1 NOT NULL,
     ip_addr VARCHAR2(15),
     mask NUMBER(5) DEFAULT 32 NOT NULL,
     port NUMBER(5) DEFAULT 0 NOT NULL,
