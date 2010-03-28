@@ -347,7 +347,9 @@ int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
     str addr_str;
 	int len;
 
-	len = sizeof(*np) + (tagv==NULL)?0:(strlen(tagv)+1);
+	len = sizeof(struct addr_list);
+	if(tagv!=NULL)
+		len += strlen(tagv) + 1;
 	
     np = (struct addr_list *) shm_malloc(len);
     if (np == NULL) {
@@ -452,9 +454,9 @@ int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 	    addr.len = 4;
 	    addr.u.addr32[0] = np->ip_addr;
 	    if (addf_mi_node_child(rpl, 0, 0, 0,
-				   "%4d <%u, %s, %u>",
+				   "%4d <%u, %s, %u> [%s]",
 				   i, np->grp, ip_addr2a(&addr),
-				   np->port) == 0)
+				   np->port, (np->tag.s==NULL)?"":np->tag.s) == 0)
 		return -1;
 	    np = np->next;
 	}
@@ -639,9 +641,10 @@ int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
 	addr.len = 4;
 	addr.u.addr32[0] = htonl(ntohl(table[i].subnet) << table[i].mask); //table[i].subnet >> table[i].mask;
 	if (addf_mi_node_child(rpl, 0, 0, 0,
-			       "%4d <%u, %s, %u, %u>",
+			       "%4d <%u, %s, %u, %u> [%s]",
 			       i, table[i].grp, ip_addr2a(&addr),
-			       32 - table[i].mask, table[i].port) == 0) {
+			       32 - table[i].mask, table[i].port,
+				   (table[i].tag.s==NULL)?"":table[i].tag.s) == 0) {
 	    return -1;
 	}
     }
