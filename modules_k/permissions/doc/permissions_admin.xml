@@ -179,8 +179,8 @@
 		<para>
 		Addresses stored in cached database table can be grouped
 		together into one or more groups specified by a group
-		identifier (positive integer value).  Group
-		identifier is given as argument to allow_address and
+		identifier (positive integer value, i.e., equal or greater than 1).
+		Group identifier is given as argument to allow_address and
 		allow_source_address functions.
 		</para>
 		<para>
@@ -969,7 +969,7 @@ if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
 ...
 
 // Check source address/port of request
-if (!allow_source_address("0")) {
+if (!allow_source_address("1")) {
 	sl_send_reply("403", "Forbidden");
 };
 ...
