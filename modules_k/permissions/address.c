@@ -378,9 +378,10 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
  */
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    int addr_group = 0;
+    int addr_group = 1;
 
-    if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
+    if(_addr_group!=NULL
+			&& fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
 	LM_ERR("cannot get group value\n");
 	return -1;
     }

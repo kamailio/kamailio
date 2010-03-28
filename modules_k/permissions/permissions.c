@@ -137,6 +137,8 @@ static cmd_export_t cmds[] = {
 	        fixup_free_igp_pvar_pvar, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"allow_source_address", (cmd_function)allow_source_address, 1, fixup_igp_null, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_source_address", (cmd_function)allow_source_address, 0, 0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_source_address_group", (cmd_function)allow_source_address_group, 0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
