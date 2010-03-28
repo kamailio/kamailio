@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module implements traffic limiting for SIP requests.
+	</para>
+	<para>
+		The module defines in an abstract mode the notion of 'pipe',
+		which can be a link to an IP address, to a network or a trunk.
+		The associtiation of traffic to a pipe is done in the config file,
+		therefore, a pipe could represent SIP traffic coming from a user or
+		the flow of specific SIP requests such as INVITE or REGISTER.
+	</para>
+	<para>
+		Pipelimit started from ratelimit module, adding support for definition
+		of pipes limits in database and dynamic names. Complexity of keeping
+		everything in a module and make it dual mode functional resulted in a
+		new module which is focused on just traffic shaping policies. For
+		description of the algorithms see the README of ratelimit.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>timer_interval</varname> (integer)</title>
+		<para>
+		The initial length of a timer interval in seconds. All amounts of
+		messages have to be divided by this timer to get a messages per second
+		value.
+		</para>
+		<para>
+		IMPORTANT: A too small value may lead to performance penalties due to
+		timer process overloading.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ratelimit", "timer_interval", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>reply_code</varname> (integer)</title>
+		<para>
+		The code of the reply sent by &kamailio; while limiting.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 503.
+		</emphasis>
+
+		</para>
+		<example>
+		<title>Set <varname>reply_code</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ratelimit", "reply_code", 505)
+...
+</programlisting>
+		</example>
+		<para>
+		This value cant be modified at runtime using sercmd
+		</para>
+		<example>
+		<title> Set <varname>reply_code</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+sercmd cfg.set_now_int ratelimit reply_code 505
+
+		</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>reply_reason</varname> (string)</title>
+		<para>
+		The reason of the reply sent by &kamailio; while limiting.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "Server Unavailable".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reply_reason</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ratelimit", "reply_reason", "Limiting")
+...
+</programlisting>
+		</example>
+		<para>
+		This value cant be modified at runtime using sercmd
+		</para>
+		<example>
+		<title> Set <varname>reply_reason</varname> parameter at runtime </title>
+		<programlisting format="linespecific">
+
+sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
+
+		</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">pl_check(name)</function>
+		</title>
+		<para>
+		Check the current request against the 'name' pipe.
+		The pipe name can be provided via a pseudo variabile.
+		</para>
+		<para>The method will return an error code if the limit for the matched
+		algorithm is reached.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>name</emphasis> - the pseudovariable holding the pipe name.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>rl_check</function> usage</title>
+		<programlisting format="linespecific">
+...
+	# perform pipe match for current method
+	if (!pl_check("one")) {
+		pl_drop();
+		exit;
+	}
+...
+	# use pipe 'one' for the current method via PV
+	$var(p) = "one";
+	if (!pl_check("$var(p)")) {
+		pl_drop();
+		exit;
+	}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pl_drop([[min ], max])</function>
+		</title>
+		<para>
+		For the current request, a "503 - Server Unavailable" reply is sent back.
+		The reply may or may not have a "Retry-After" header.  If no parameter is given,
+		there will be no "Retry-After" header.  If only the
+		<emphasis>max</emphasis> parameter is given, the
+		reply will contain a "Retry-After: <emphasis>max</emphasis>" header.  If both
+		<emphasis>min</emphasis> and <emphasis>max</emphasis> params are given, the
+		reply will contain a "Retry-After: <emphasis>random</emphasis>" header with
+		<emphasis>random</emphasis> being a random value between the given min and max.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>min</emphasis> - the minimum value of "Retry-After" header.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			<emphasis>max</emphasis> - the maximum value of "Retry-After" header.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>pl_drop</function> usage</title>
+		<programlisting format="linespecific">
+...
+	if (!pl_check("one")) {
+		# send back a "503 - Server Unavailable"
+		# with a "Retry-After: 5"
+		pl_drop("5");
+		exit;
+	}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">pl_stats</function>
+		</title>
+		<para>
+		Lists the parameters and variabiles in the pipelimit module.
+		</para>
+		<para>
+		Name: <emphasis>pl_stats</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:pl_stats:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pl_set_pipe</function>
+		</title>
+		<para>
+		Sets the pipe parameters for the given pipe id.
+		</para>
+		<para>
+		Name: <emphasis>pl_set_pipe</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>pipe_id</emphasis> - pipe id.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>pipe_algorithm</emphasis> - the
+			algorithm assigned to the given pipe id.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>pipe_limit</emphasis> - the limit
+			assigned to the given pipe id.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:pl_set_pipe:_reply_fifo_file_
+		2
+		RED
+		10
+		_empty_line_
+		</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pl_get_pipes</function>
+		</title>
+		<para>
+		Gets the list of in use pipes.
+		</para>
+		<para>
+		Name: <emphasis>pl_get_pipes</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:pl_get_pipes:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pl_set_pid</function>
+		</title>
+		<para>
+		Sets the PID Controller parameters for the Feedback Algorithm.
+		</para>
+		<para>
+		Name: <emphasis>pl_set_pid</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>ki</emphasis> - the integral parameter.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>kp</emphasis> - the proportional parameter.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>kd</emphasis> - the derivative parameter.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:pl_set_pid:_reply_fifo_file_
+		0.5
+		0.5
+		0.5
+		_empty_line_
+		</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pl_get_pid</function>
+		</title>
+		<para>
+		Gets the list of in use PID Controller parameters.
+		</para>
+		<para>
+		Name: <emphasis>pl_get_pid</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:pl_get_pid:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pl_push_load</function>
+		</title>
+		<para>
+		Force the value of the load parameter.  This methos is usefull
+		for testing the Feedback algorithm.
+		</para>
+		<para>
+		Name: <emphasis>pl_push_load</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>load</emphasis> - the forced value of load
+			(it must be greater then 0.0 and smaller then 1.0).
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:pl_push_load:_reply_fifo_file_
+		0.85
+		_empty_line_
+		</programlisting>
+	</section>
+	</section>
+	
+</chapter>

@@ -1,0 +1,327 @@
+pipelimit Module
+
+Daniel-Constantin Mierla
+
+Hendrik Scholz
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   Copyright © 2010 Asipto.com
+
+   Copyright © 2006 Freenet Cityline GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. timer_interval (integer)
+              3.2. reply_code (integer)
+              3.3. reply_reason (string)
+
+        4. Exported Functions
+
+              4.1. pl_check(name)
+              4.2. pl_drop([[min ], max])
+
+        5. Exported MI Functions
+
+              5.1. pl_stats
+              5.2. pl_set_pipe
+              5.3. pl_get_pipes
+              5.4. pl_set_pid
+              5.5. pl_get_pid
+              5.6. pl_push_load
+
+   List of Examples
+
+   1.1. Set timer_interval parameter
+   1.2. Set reply_code parameter
+   1.3. Set reply_code parameter at runtime
+   1.4. Set reply_reason parameter
+   1.5. Set reply_reason parameter at runtime
+   1.6. rl_check usage
+   1.7. pl_drop usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. timer_interval (integer)
+        3.2. reply_code (integer)
+        3.3. reply_reason (string)
+
+   4. Exported Functions
+
+        4.1. pl_check(name)
+        4.2. pl_drop([[min ], max])
+
+   5. Exported MI Functions
+
+        5.1. pl_stats
+        5.2. pl_set_pipe
+        5.3. pl_get_pipes
+        5.4. pl_set_pid
+        5.5. pl_get_pid
+        5.6. pl_push_load
+
+1. Overview
+
+   This module implements traffic limiting for SIP requests.
+
+   The module defines in an abstract mode the notion of 'pipe', which can
+   be a link to an IP address, to a network or a trunk. The associtiation
+   of traffic to a pipe is done in the config file, therefore, a pipe
+   could represent SIP traffic coming from a user or the flow of specific
+   SIP requests such as INVITE or REGISTER.
+
+   Pipelimit started from ratelimit module, adding support for definition
+   of pipes limits in database and dynamic names. Complexity of keeping
+   everything in a module and make it dual mode functional resulted in a
+   new module which is focused on just traffic shaping policies. For
+   description of the algorithms see the README of ratelimit.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Exported Parameters
+
+   3.1. timer_interval (integer)
+   3.2. reply_code (integer)
+   3.3. reply_reason (string)
+
+3.1. timer_interval (integer)
+
+   The initial length of a timer interval in seconds. All amounts of
+   messages have to be divided by this timer to get a messages per second
+   value.
+
+   IMPORTANT: A too small value may lead to performance penalties due to
+   timer process overloading.
+
+   Default value is 10.
+
+   Example 1.1. Set timer_interval parameter
+...
+modparam("ratelimit", "timer_interval", 5)
+...
+
+3.2. reply_code (integer)
+
+   The code of the reply sent by Kamailio while limiting.
+
+   Default value is 503.
+
+   Example 1.2. Set reply_code parameter
+...
+modparam("ratelimit", "reply_code", 505)
+...
+
+   This value cant be modified at runtime using sercmd
+
+   Example 1.3.  Set reply_code parameter at runtime
+sercmd cfg.set_now_int ratelimit reply_code 505
+
+3.3. reply_reason (string)
+
+   The reason of the reply sent by Kamailio while limiting.
+
+   Default value is "Server Unavailable".
+
+   Example 1.4. Set reply_reason parameter
+...
+modparam("ratelimit", "reply_reason", "Limiting")
+...
+
+   This value cant be modified at runtime using sercmd
+
+   Example 1.5.  Set reply_reason parameter at runtime
+sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
+
+4. Exported Functions
+
+   4.1. pl_check(name)
+   4.2. pl_drop([[min ], max])
+
+4.1.  pl_check(name)
+
+   Check the current request against the 'name' pipe. The pipe name can be
+   provided via a pseudo variabile.
+
+   The method will return an error code if the limit for the matched
+   algorithm is reached.
+
+   Meaning of the parameters is as follows:
+     * name - the pseudovariable holding the pipe name.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.6. rl_check usage
+...
+        # perform pipe match for current method
+        if (!pl_check("one")) {
+                pl_drop();
+                exit;
+        }
+...
+        # use pipe 'one' for the current method via PV
+        $var(p) = "one";
+        if (!pl_check("$var(p)")) {
+                pl_drop();
+                exit;
+        }
+...
+
+4.2.  pl_drop([[min ], max])
+
+   For the current request, a "503 - Server Unavailable" reply is sent
+   back. The reply may or may not have a "Retry-After" header. If no
+   parameter is given, there will be no "Retry-After" header. If only the
+   max parameter is given, the reply will contain a "Retry-After: max"
+   header. If both min and max params are given, the reply will contain a
+   "Retry-After: random" header with random being a random value between
+   the given min and max.
+
+   Meaning of the parameters is as follows:
+     * min - the minimum value of "Retry-After" header.
+     * max - the maximum value of "Retry-After" header.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.7. pl_drop usage
+...
+        if (!pl_check("one")) {
+                # send back a "503 - Server Unavailable"
+                # with a "Retry-After: 5"
+                pl_drop("5");
+                exit;
+        }
+...
+
+5. Exported MI Functions
+
+   5.1. pl_stats
+   5.2. pl_set_pipe
+   5.3. pl_get_pipes
+   5.4. pl_set_pid
+   5.5. pl_get_pid
+   5.6. pl_push_load
+
+5.1.  pl_stats
+
+   Lists the parameters and variabiles in the pipelimit module.
+
+   Name: pl_stats
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :pl_stats:_reply_fifo_file_
+                _empty_line_
+
+5.2.  pl_set_pipe
+
+   Sets the pipe parameters for the given pipe id.
+
+   Name: pl_set_pipe
+
+   Parameters:
+     * pipe_id - pipe id.
+     * pipe_algorithm - the algorithm assigned to the given pipe id.
+     * pipe_limit - the limit assigned to the given pipe id.
+
+   MI FIFO Command Format:
+                :pl_set_pipe:_reply_fifo_file_
+                2
+                RED
+                10
+                _empty_line_
+
+5.3.  pl_get_pipes
+
+   Gets the list of in use pipes.
+
+   Name: pl_get_pipes
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :pl_get_pipes:_reply_fifo_file_
+                _empty_line_
+
+5.4.  pl_set_pid
+
+   Sets the PID Controller parameters for the Feedback Algorithm.
+
+   Name: pl_set_pid
+
+   Parameters:
+     * ki - the integral parameter.
+     * kp - the proportional parameter.
+     * kd - the derivative parameter.
+
+   MI FIFO Command Format:
+                :pl_set_pid:_reply_fifo_file_
+                0.5
+                0.5
+                0.5
+                _empty_line_
+
+5.5.  pl_get_pid
+
+   Gets the list of in use PID Controller parameters.
+
+   Name: pl_get_pid
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :pl_get_pid:_reply_fifo_file_
+                _empty_line_
+
+5.6.  pl_push_load
+
+   Force the value of the load parameter. This methos is usefull for
+   testing the Feedback algorithm.
+
+   Name: pl_push_load
+
+   Parameters:
+     * load - the forced value of load (it must be greater then 0.0 and
+       smaller then 1.0).
+
+   MI FIFO Command Format:
+                :pl_push_load:_reply_fifo_file_
+                0.85
+                _empty_line_
