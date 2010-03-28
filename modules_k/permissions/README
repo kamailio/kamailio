@@ -68,7 +68,7 @@ Juha Heinanen
               4.5. allow_register(allow_file, deny_file)
               4.6. allow_uri(basename, pvar)
               4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
-              4.8. allow_source_address(group_id)
+              4.8. allow_source_address([group_id])
               4.9. allow_source_address_group()
               4.10. allow_trusted([src_ip_pvar, proto_pvar])
 
@@ -159,7 +159,7 @@ Chapter 1. Admin Guide
         4.5. allow_register(allow_file, deny_file)
         4.6. allow_uri(basename, pvar)
         4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
-        4.8. allow_source_address(group_id)
+        4.8. allow_source_address([group_id])
         4.9. allow_source_address_group()
         4.10. allow_trusted([src_ip_pvar, proto_pvar])
 
@@ -593,7 +593,7 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
    4.5. allow_register(allow_file, deny_file)
    4.6. allow_uri(basename, pvar)
    4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
-   4.8. allow_source_address(group_id)
+   4.8. allow_source_address([group_id])
    4.9. allow_source_address_group()
    4.10. allow_trusted([src_ip_pvar, proto_pvar])
 
@@ -769,9 +769,10 @@ if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
 };
 ...
 
-4.8.  allow_source_address(group_id)
+4.8.  allow_source_address([group_id])
 
-   Equal to allow_address(group_id, "$si", "$sp").
+   Equal to allow_address(group_id, "$si", "$sp"). If 'group_id' is
+   missing, the function is equal to allow_address("1", "$si", "$sp").
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 

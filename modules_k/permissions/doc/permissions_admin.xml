@@ -955,10 +955,11 @@ if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">allow_source_address(group_id)</function>
+		<function moreinfo="none">allow_source_address([group_id])</function>
 		</title>
 		<para>
-		Equal to allow_address(group_id, "$si", "$sp").
+		Equal to allow_address(group_id, "$si", "$sp"). If 'group_id' is
+		missing, the function is equal to allow_address("1", "$si", "$sp").
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
