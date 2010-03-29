@@ -1210,6 +1210,31 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 
 	<section>
 		<title>
+		<function moreinfo="none">starts_with(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if 
+		the first string starts with the second string.
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>starts_with</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_str("$rU", "+358"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">msg_apply_changes()</function>
 		</title>
 		<para>

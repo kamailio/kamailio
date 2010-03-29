@@ -120,6 +120,7 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
+static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
 static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
@@ -240,6 +241,9 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"cmp_istr",  (cmd_function)cmp_istr_f, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"starts_with",  (cmd_function)starts_with_f, 2,
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"msg_apply_changes",      (cmd_function)msg_apply_changes_f,     0,
@@ -1840,6 +1844,31 @@ static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2)
 		return -8;
 	}
 	ret = cmpi_str(&s1, &s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 )
+{
+	str s1;
+	str s2;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &s1)!=0)
+	{
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)str2, &s2)!=0)
+	{
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+	if (s1.len < s2.len) return -1;
+	ret = strncmp(s1.s, s2.s, s2.len);
 	if(ret==0)
 		return 1;
 	if(ret>0)
