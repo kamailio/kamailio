@@ -267,13 +267,12 @@ static int dp_get_svalue(struct sip_msg * msg, pv_spec_t spec, str* val)
 
 
 static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
-											str * repl, str * attrs)
+		     str * repl, str * attrs)
 {
 	int no_change;
 	pv_value_t val;
 
-	no_change = ((!repl->s) || (!repl->len)) && (src->type == dest->type) 
-		&& ((src->type == PVT_RURI) || (src->type == PVT_RURI_USERNAME));
+	no_change = (dest->type == PVT_NONE) || (!repl->s) || (!repl->len);
 
 	if (no_change)
 		goto set_attr_pvar;
@@ -380,7 +379,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 /* first param: DPID: type: INT, AVP, SVAR
  * second param: SRC type: any psedo variable type
- * second param: DST type: RURI, RURI_USERNAME, AVP, SVAR
+ * second param: DST type: RURI, RURI_USERNAME, AVP, SVAR, N/A
  * default value for the second param: $ru.user/$ru.user
  */
 static int dp_trans_fixup(void ** param, int param_no){
@@ -429,21 +428,29 @@ static int dp_trans_fixup(void ** param, int param_no){
 			dp_par->type = DP_VAL_SPEC;
 		}
 	} else {
-		if( ((s = strchr(p, '/')) == 0) ||( *(s+1)=='\0'))
-				goto error;
+
+	    if (((s = strchr(p, '/')) != 0) && (*(s+1)=='\0'))
+		goto error;
+
+	    if (s != 0) {
 		*s = '\0'; s++;
+	    }
 
-		lstr.s = p; lstr.len = strlen(p);
-		if(pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
-			goto error;
+	    lstr.s = p; lstr.len = strlen(p);
+	    if(pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
+		goto error;
 
+	    if (s != 0) {
 		lstr.s = s; lstr.len = strlen(s);
 		if (pv_parse_spec( &lstr, &dp_par->v.sp[1] )==NULL)
-			goto error;
-
+		    goto error;
 		verify_par_type(param_no, dp_par->v.sp[1]);
+	    } else {
+		dp_par->v.sp[1].type = PVT_NONE;
+	    }
 
-		dp_par->type = DP_VAL_SPEC;
+	    dp_par->type = DP_VAL_SPEC;
+
 	}
 	
 	*param = (void *)dp_par;
