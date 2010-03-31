@@ -1352,11 +1352,11 @@ cr() {
 						if [ $# -gt 7 ] ; then
 							REWRITE_SUFFIX=$8
 							if [ $# -gt 8 ] ; then
-								COMMENT=$9
+								MASK=$9
 								if [ $# -gt 9 ] ; then
 									FLAGS=${10}
 									if [ $# -gt 10 ] ; then
-										MASK=${11}
+										COMMENT=${11}
 									fi
 								fi
 							fi
