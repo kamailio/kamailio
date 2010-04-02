@@ -25,6 +25,6 @@ void crc32_uint (str *source_string, unsigned int *hash_ret)
 		hash = crc_32_tab[((unsigned char)hash) ^ *data] ^ (hash >> 8);
 	}
 	
-	*hash_ret = hash;
+	*hash_ret = ~hash;
 }
 
