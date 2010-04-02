@@ -20,11 +20,11 @@ Edited by
 
 Juha Heinanen
 
-   Copyright � 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright � 2005 voice-system.ro
+   Copyright © 2005 voice-system.ro
 
-   Copyright � 2009 TuTPro Inc.
+   Copyright © 2009 TuTPro Inc.
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -201,9 +201,9 @@ Chapter 1. Admin Guide
 
    Note: fix_nated_contact changes the Contact header, thus it breaks the
    RFC. Although usually this is not an issue, it may cause problems with
-   strict SIP clients. There is an alternative approach by using
-   add_contact_alias() that together with handle_ruri_alias() is standard
-   conform and also supports reuse of TCP/TLS connections.
+   strict SIP clients. An alternative is to use add_contact_alias() that
+   together with handle_ruri_alias() is standards conforming and also
+   supports reuse of TCP/TLS connections.
 
    Known devices that get along over NATs with nathelper are ATAs (as
    clients) and Cisco Gateways (since 12.2(T)) as servers. See
@@ -239,7 +239,7 @@ Chapter 1. Admin Guide
    load-balancing will be performed over a set and the user has the
    ability to choose what set should be used. The set is selected via its
    id - the id being defined along with the set. Refer to the
-   "rtpproxy_sock" module parameter definition for syntax description.
+   “rtpproxy_sock” module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
    the weight of each rtpproxy from the set.
@@ -309,7 +309,7 @@ modparam("nathelper", "natping_interval", 10)
 
 5.2. ping_nated_only (integer)
 
-   If this variable is set then only contacts that have "behind_NAT" flag
+   If this variable is set then only contacts that have “behind_NAT” flag
    in user location database set will get ping.
 
    Default value is 0.
@@ -369,7 +369,7 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
    Definition of socket(s) used to connect to (a set) RTPProxy. It may
    specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
-   Default value is "NONE" (disabled).
+   Default value is “NONE” (disabled).
 
    Example 1.6. Set rtpproxy_sock parameter
 ...
@@ -391,7 +391,7 @@ modparam("nathelper", "rtpproxy_sock",
    will not attempt to establish communication to RTPProxy for
    rtpproxy_disable_tout seconds.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.7. Set rtpproxy_disable_tout parameter
 ...
@@ -402,7 +402,7 @@ modparam("nathelper", "rtpproxy_disable_tout", 20)
 
    Timeout value in waiting for reply from RTPProxy.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.8. Set rtpproxy_tout parameter
 ...
@@ -414,7 +414,7 @@ modparam("nathelper", "rtpproxy_tout", 2)
    How many times nathelper should retry to send and receive after timeout
    was generated.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.9. Set rtpproxy_retr parameter
 ...
@@ -426,7 +426,7 @@ modparam("nathelper", "rtpproxy_retr", 2)
    Socket to be forced in communicating to RTPProxy. It makes sense only
    for UDP communication. If no one specified, the OS will choose.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.10. Set force_socket parameter
 ...
@@ -453,7 +453,7 @@ modparam("nathelper", "sipping_bflag", 7)
    feature, you have to set this parameter. The SIP request pinging will
    be used only for requests marked so.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.12. Set sipping_from parameter
 ...
@@ -465,7 +465,7 @@ modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
    The parameter sets the SIP method to be used in generating the SIP
    requests for NAT ping purposes.
 
-   Default value is "OPTIONS".
+   Default value is “OPTIONS”.
 
    Example 1.13. Set sipping_method parameter
 ...
@@ -483,7 +483,7 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is "a=nortpproxy:yes\r\n".
+   Default value is “a=nortpproxy:yes\r\n”.
 
    Example 1.14. Set nortpproxy_str parameter
 ...
@@ -525,15 +525,15 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 6.2.  fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
-   changes to be performed may be controled via the "flags" parameter.
+   changes to be performed may be controled via the “flags” parameter.
 
    Meaning of the parameters is as follows:
      * flags - the value may be a bitwise OR of the following flags:
-          + 0x01 - adds "a=direction:active" SDP line;
+          + 0x01 - adds “a=direction:active” SDP line;
           + 0x02 - rewrite media IP address (c=) with source address of
             the message or the provided IP address (the provide IP address
             take precedence over the source address).
-          + 0x04 - adds "a=nortpproxy:yes" SDP line;
+          + 0x04 - adds “a=nortpproxy:yes” SDP line;
           + 0x08 - rewrite IP from origin description (o=) with source
             address of the message or the provided IP address (the provide
             IP address take precedence over the source address).
@@ -589,7 +589,7 @@ force_rtp_proxy();
      * flags - flags to turn on some features.
           + a - flags that UA from which message is received doesn't
             support symmetric RTP. (automatically sets the 'r' flag)
-          + l - force "lookup", that is, only rewrite SDP when
+          + l - force “lookup”, that is, only rewrite SDP when
             corresponding session is already exists in the RTP proxy. By
             default is on when the session is to be completed (reply in
             non-swap or ACK in swap mode).
@@ -874,10 +874,14 @@ start_recording();
 
    Checks if Request URI has alias param and if so, removes it and sets
    $du based on its value. Note that this means that routing of request is
-   based on alias parameter value of Request URI rather than Request URI
+   based on ;alias parameter value of Request URI rather than Request URI
    itself. If you call handle_ruri_alias() on a request, make thus sure
    that you screen alias parameter value of Request URI the same way as
    you would screen Request URI itself.
+
+   Returns 1 if ;alias param was found and $du was set and $ru rewritten,
+   2 if alias param was not found and nothing was done, or -1 in case of
+   error.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
@@ -979,16 +983,16 @@ $ kamctl fifo nh_show_rtpp
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with "rtpproxy_disable" parameter?
+   2.1. What happend with “rtpproxy_disable” parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-       What happend with "rtpproxy_disable" parameter?
+       What happend with “rtpproxy_disable” parameter?
 
-       It was removed as it became obsolete - now "rtpproxy_sock" can take
+       It was removed as it became obsolete - now “rtpproxy_sock” can take
        empty value to disable the rtpproxy functionality.
 
    2.2.
