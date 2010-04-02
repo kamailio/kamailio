@@ -1504,12 +1504,12 @@ handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
     unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
 	ip_port_len;
 
-    if ((msg->parsed_uri_ok == 0) && (parse_sip_msg_uri(msg) < 0)) {
+    if (parse_sip_msg_uri(msg) < 0) {
 	LM_ERR("while parsing Request-URI\n");
 	return -1;
     }
-    rest = msg->parsed_uri.params.s;
-    rest_len = msg->parsed_uri.params.len;
+    rest = msg->parsed_uri.sip_params.s;
+    rest_len = msg->parsed_uri.sip_params.len;
     if (rest_len == 0) {
 	LM_DBG("no params\n");
 	return 2;
