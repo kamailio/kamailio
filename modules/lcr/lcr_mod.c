@@ -363,6 +363,10 @@ static int lcr_db_init(const str* db_url)
 		LM_CRIT("null lcr_dbf\n");
 		goto error;
 	}
+	if (dbh) {
+	    LM_ERR("database is already connected\n");
+	    goto error;
+	}
 	dbh=lcr_dbf.init(db_url);
 	if (dbh==0){
 		LM_ERR("unable to connect to the database\n");
@@ -402,7 +406,7 @@ static void lcr_db_close(void)
 
 static int mi_child_init(void)
 {
-	return lcr_db_init(&db_url);
+    return 0;
 }
 
 
@@ -415,12 +419,11 @@ static int mod_init(void)
     str s;
     unsigned short avp_flags;
     unsigned int i;
-    db1_con_t* dbh;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+    if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
+	    LM_ERR("failed to register MI commands\n");
+	    return -1;
 	}
 #ifdef RPC_SUPPORT
 	if (rpc_register_array(lcr_rpc)!=0)
@@ -573,12 +576,7 @@ static int mod_init(void)
     }
 
     /* Check table version */
-    if (lcr_dbf.init==0){
-	LM_CRIT("unbound database\n");
-	return -1;
-    }
-    dbh=lcr_dbf.init(&db_url);
-    if (dbh == NULL){
+    if (lcr_db_init(&db_url) < 0) {
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
@@ -587,10 +585,10 @@ static int mod_init(void)
 	(db_check_table_version(&lcr_dbf, dbh, &lcr_table, LCR_TABLE_VERSION)
 	 < 0)) { 
 	LM_ERR("error during table version check\n");
-	lcr_dbf.close(dbh);
+	lcr_db_close();
 	goto err;
     }
-    lcr_dbf.close(dbh);
+    lcr_db_close();
 
     /* Allocate gw related shared memory */
     /* gw table pointer table, index 0 points to temp gw table  */
@@ -667,20 +665,7 @@ err:
 /* Module initialization function called in each child separately */
 static int child_init(int rank)
 {
-#ifdef RPC_SUPPORT
-	/* do nothing for the main process, tcp main process or timer */
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN ||
-		rank==PROC_TIMER)
-		return 0;
-	/* init db for the rest of the processes:
-	   - we need it for PROC_RPC and PROC_FIFO if we want db access from
-	     RPC accessed via the ctl module
-	   - we need it from all the ser tcp or tls processes if we want
-	     db access from RPC via the xmlrpc module */
-	return lcr_db_init(&db_url);
-#else
-	return 0;
-#endif /* RPC_SUPPORT */
+    return 0;
 }
 
 
@@ -956,7 +941,6 @@ int reload_gws_and_lcrs(int lcr_id)
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
-    db1_con_t* dbh;
     char *ip_string, *hostname, *tag, *prefix, *from_uri;
     db1_res_t* res = NULL;
     db_row_t* row;
@@ -997,12 +981,7 @@ int reload_gws_and_lcrs(int lcr_id)
 
     gws = gwtp[0];
 
-    if (lcr_dbf.init == 0) {
-	LM_CRIT("unbound database\n");
-	return -1;
-    }
-    dbh = lcr_dbf.init(&db_url);
-    if (dbh == 0) {
+    if (lcr_db_init(&db_url) < 0) {
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
@@ -1014,7 +993,7 @@ int reload_gws_and_lcrs(int lcr_id)
 
     if (lcr_dbf.query(dbh, key_cols, op, vals, gw_cols, 1, 11, 0, &res) < 0) {
 	LM_ERR("failed to query gw data\n");
-	lcr_dbf.close(dbh);
+	lcr_db_close();
 	return -1;
     }
 
@@ -1217,19 +1196,19 @@ int reload_gws_and_lcrs(int lcr_id)
     if (DB_CAPABILITY(lcr_dbf, DB_CAP_FETCH)) {
 	if (lcr_dbf.query(dbh, key_cols, op, vals, lcr_cols, 1, 4, 0, 0) < 0) {
 	    LM_ERR("db query on lcr table failed\n");
-	    lcr_dbf.close(dbh);
+	    lcr_db_close();
 	    return -1;
 	}
 	if (lcr_dbf.fetch_result(dbh, &res, fetch_rows_param) < 0) {
 	    LM_ERR("failed to fetch rows from lcr table\n");
-	    lcr_dbf.close(dbh);
+	    lcr_db_close();
 	    return -1;
 	}
     } else {
 	if (lcr_dbf.query(dbh, key_cols, op, vals, lcr_cols, 1, 4, 0, &res)
 	    < 0) {
 	    LM_ERR("db query on lcr table failed\n");
-	    lcr_dbf.close(dbh);
+	    lcr_db_close();
 	    return -1;
 	}
     }
@@ -1322,7 +1301,7 @@ int reload_gws_and_lcrs(int lcr_id)
     } while (RES_ROW_N(res) > 0);
 
     lcr_dbf.free_result(dbh, res);
-    lcr_dbf.close(dbh);
+    lcr_db_close();
 
     /* Swap gw and lcr hash table with index id with temporary table */  
     gwtp_tmp = gwtp[lcr_id];
@@ -1339,7 +1318,7 @@ int reload_gws_and_lcrs(int lcr_id)
 
  gw_err:
     lcr_dbf.free_result(dbh, res);
-    lcr_dbf.close(dbh);
+    lcr_db_close();
     return -1;
 }
 
