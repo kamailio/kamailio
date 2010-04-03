@@ -197,8 +197,6 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if(rank>0)
-		return dp_connect_db();
 	return 0;
 }
 
@@ -215,15 +213,12 @@ static void mod_destroy(void)
 		attr_pvar = NULL;
 	}
 	destroy_data();
-
-	/*close database connection*/
-	dp_disconnect_db();
 }
 
 
 static int mi_child_init(void)
 {
-	return dp_connect_db();
+    return 0;
 }
 
 
@@ -328,7 +323,6 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 		LM_ERR("no dpid value\n");
 		return -1;
 	}
-	LM_DBG("dpid is %i\n", dpid);
 
 	if ((idp = select_dpid(dpid)) ==0 ){
 		LM_DBG("no information available for dpid %i\n", dpid);
@@ -467,10 +461,18 @@ static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree, void *param)
 {
 	struct mi_root* rpl_tree= NULL;
 
-	if(dp_load_db() != 0){
-		LM_ERR("failed to reload database data\n");
-		return 0;
+	if (dp_connect_db() < 0) {
+	    LM_ERR("failed to reload rules fron database (db connect)\n");
+	    return 0;
 	}
+	    
+	if(dp_load_db() != 0){
+	    LM_ERR("failed to reload rules fron database (db load)\n");
+	    dp_disconnect_db();
+	    return 0;
+	}
+
+	dp_disconnect_db();
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if (rpl_tree==0)
@@ -531,8 +533,6 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 		LM_ERR( "empty input parameter\n");
 		return init_mi_tree(404, "Empty input parameter", 21);
 	}
-
-	LM_DBG("input is %.*s\n", input.len, input.s);
 
 	if (translate(NULL, input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n", 

@@ -119,8 +119,13 @@ error:
 
 int dp_connect_db(void)
 {
+	if (dp_dbf.init==0){
+		LM_CRIT("null dp_dbf\n");
+		return -1;
+	}
+
 	if(dp_db_handle){
-		LM_CRIT("BUG: connection to DB already open\n");
+		LM_CRIT("BUG: connection to database already open\n");
 		return -1;
 	}
 
@@ -207,7 +212,7 @@ int dp_load_db(void)
 	}
 
 	if (dp_dbf.use_table(dp_db_handle, &dp_table_name) < 0){
-		LM_ERR("error in use_table\n");
+	    LM_ERR("error in use_table %.*s\n", dp_table_name.len, dp_table_name.s);
 		return -1;
 	}
 
