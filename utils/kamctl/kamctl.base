@@ -323,12 +323,13 @@ DIALPLAN_ATTRS_COLUMN=attrs
 
 usage_base() {
 	echo
-	mecho " -- command 'start|stop|restart'"
+	mecho " -- command 'start|stop|restart|ps'"
 	echo
 cat <<EOF
  restart ............................ restart Kamailio
  start .............................. start Kamailio
  stop ............................... stop Kamailio
+ ps ................................. print Kamailio processes
 EOF
 }
 
