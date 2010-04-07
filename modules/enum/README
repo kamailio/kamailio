@@ -116,8 +116,7 @@ Chapter 1. Admin Guide
    you may wish to route based on something else. The function
    enum_pv_query mimics the behavior of the enum_query function except the
    E.164 number in its pseudo variable argument is used for the enum
-   lookup instead of the user part of the RURI. Obviously the user part of
-   the RURI is still used in the NAPTR regexp.
+   lookup instead of the user part of the RURI.
 
    Enum query returns 1 if the current Request URI was replaced and -1 if
    not.

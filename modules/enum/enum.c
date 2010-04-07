@@ -3,7 +3,7 @@
  *
  * Enum and E164 related functions
  *
- * Copyright (C) 2002-2008 Juha Heinanen
+ * Copyright (C) 2002-2010 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -999,7 +999,6 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 	char new_uri[MAX_URI_SIZE];
 	unsigned int priority, curr_prio;
 	qvalue_t q;
-	char tostring[17];
 	struct rdata* head;
 	struct rdata* l;
 	struct naptr_rdata* naptr;
@@ -1012,25 +1011,6 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 	sp = (pv_spec_t *)_sp;
 	suffix = (str*)_suffix;
 	service = (str*)_service;
-
-	/*
-	 *  Get R-URI user to tostring
-	 */
-	if (parse_sip_msg_uri(_msg) < 0) {
-		LM_ERR("R-URI parsing failed\n");
-		return -1;
-	}
-
-	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
-		LM_ERR("R-URI user is not an E164 number\n");
-		return -1;
-	}
-
-	user_s = _msg->parsed_uri.user.s;
-	user_len = _msg->parsed_uri.user.len;
-
-	memcpy(&(tostring[0]), user_s, user_len);
-	tostring[user_len] = (char)0;
 
 	/*
 	 * Get E.164 number from pseudo variable
@@ -1112,7 +1092,7 @@ int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
 		/* Avoid making copies of pattern and replacement */
 		pattern.s[pattern.len] = (char)0;
 		replacement.s[replacement.len] = (char)0;
-		if (reg_replace(pattern.s, replacement.s, &(tostring[0]),
+		if (reg_replace(pattern.s, replacement.s, &(string[0]),
 				&result) < 0) {
 			pattern.s[pattern.len] = '!';
 			replacement.s[replacement.len] = '!';

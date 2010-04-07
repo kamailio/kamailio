@@ -77,8 +77,7 @@
 		<function moreinfo="none">enum_pv_query</function> mimics the behavior
 		of the <function moreinfo="none">enum_query</function> function except the
 		E.164 number in its pseudo variable argument is used for the enum lookup instead of the user
-		part of the RURI.  Obviously the user part of the RURI is still used in the
-		NAPTR regexp.
+		part of the RURI.
 	</para>
 	<para>
 		Enum query returns 1 if the current Request URI was replaced 
