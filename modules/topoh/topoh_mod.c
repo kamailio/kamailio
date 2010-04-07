@@ -184,7 +184,7 @@ int th_msg_received(void *data)
 {
 	sip_msg_t msg;
 	str *obuf;
-	char *nbuf;
+	char *nbuf = NULL;
 	int direction;
 	int dialog;
 
@@ -256,6 +256,8 @@ int th_msg_received(void *data)
 	obuf->s[obuf->len] = '\0';
 
 done:
+	if(nbuf!=NULL)
+		pkg_free(nbuf);
 	free_sip_msg(&msg);
 	return 0;
 }
