@@ -90,8 +90,12 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 			avp = search_first_avp(gp->v.pve->spec.pvp.pvn.u.isname.type,
 						gp->v.pve->spec.pvp.pvn.u.isname.name, &avp_val, 0);
 			if (!avp) {
-				LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
+				if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_STR)
+					LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
 						gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
+				else if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_RE)
+					LM_ERR("cannot find AVP regex\n");
+				else 	LM_ERR("cannot find AVP '%d'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.n);
 				return -1;
 			}
 			if ((avp->flags&AVP_VAL_STR)==0) {
@@ -99,9 +103,13 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 			} else {
 				id = map_name2id(map, size, &avp_val.s);
 				if (id < 0) {
-					LM_ERR("could not find id '%.*s' from AVP\n",
+					if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_STR)
+						LM_ERR("could not find id '%.*s' from AVP\n",
 							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
 							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
+					else if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_RE)
+						LM_ERR("could not find id regex\n");
+					else 	LM_ERR("could not find id '%d'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.n);
 					return -1;
 				}
 				return id;
