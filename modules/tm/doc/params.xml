@@ -823,11 +823,20 @@ modparam("tm", "fr_inv_timer_next", 10000)
 			are disabled).
 		</emphasis>
 		</para>
+		<para>
+			In Kamailio compatibility mode (defined by #!KAMAILIO), the value
+			of the parameter must be the name of an AVP in pseudo-variable
+			format: $avp(name). In SER compatibility mode it must by just
+			AVP name.
+		</para>
 		<example>
 		<title>Set <varname>contacts_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
+# K mode
 modparam("tm", "contacts_avp", "$avp(i:25)")
+# S mode
+modparam("tm", "contacts_avp", "i:25")
 ...
 </programlisting>
 		</example>
@@ -863,11 +872,19 @@ modparam("tm", "contacts_avp", "$avp(i:25)")
 			See also: <function>t_set_fr()</function>,
 			<varname>fr_timer</varname>.
 		</para>
+		<para>
+			In Kamailio compatibility mode (defined by #!KAMAILIO), the value
+			of the parameter must be the name of an AVP in pseudo-variable
+			format: $avp(name). In SER compatibility mode it must by just
+			AVP name.
+		</para>
 		<example>
 			<title>Set <varname>fr_timer_avp</varname> parameter</title>
 			<programlisting>
 ...
 modparam("tm", "fr_timer_avp", "i:708")
+# K mode
+modparam("tm", "fr_timer_avp", "$avp(i:708)")
 ...
 			</programlisting>
 		</example>
@@ -904,11 +921,19 @@ modparam("tm", "fr_timer_avp", "i:708")
 			See also: <function>t_set_fr()</function>,
 			<varname>fr_inv_timer</varname>.
 		</para>
+		<para>
+			In Kamailio compatibility mode (defined by #!KAMAILIO), the value
+			of the parameter must be the name of an AVP in pseudo-variable
+			format: $avp(name). In SER compatibility mode it must by just
+			AVP name.
+		</para>
 		<example>
 			<title>Set <varname>fr_inv_timer_avp</varname> parameter</title>
 			<programlisting>
 ...
 modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
+# K mode
+modparam("tm", "fr_inv_timer_avp", "$avp(my_fr_inv_timer)")
 ...
 			</programlisting>
 		</example>
