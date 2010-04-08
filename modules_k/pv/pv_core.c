@@ -49,6 +49,7 @@
 
 static str str_udp    = { "UDP", 3 };
 static str str_5060   = { "5060", 4 };
+static str pv_str_1   = { "1", 1 };
 
 int _pv_pid = 0;
 
@@ -76,6 +77,12 @@ int pv_get_udp(struct sip_msg *msg, pv_param_t *param,
 int pv_get_5060(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	return pv_get_strintval(msg, param, res, &str_5060, 5060);
+}
+
+int pv_get_true(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_intstrval(msg, param, res, 1, &pv_str_1);
 }
 
 /*extern int _last_returned_code;

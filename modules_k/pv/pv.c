@@ -351,6 +351,9 @@ static pv_export_t mod_pvs[] = {
 	{{"to.user", (sizeof("to.user")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, 0,
 		0, 0, pv_init_iname, 2},
+	{{"true", (sizeof("true")-1)}, /* */
+		PVT_OTHER, pv_get_true, 0,
+		0, 0, 0, 0},
 	{{"Tf", (sizeof("Tf")-1)}, /* */
 		PVT_CONTEXT, pv_get_timef, 0,
 		0, 0, 0, 0},

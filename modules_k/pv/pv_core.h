@@ -186,6 +186,10 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
+
+int pv_get_true(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 /********* end PV get functions *********/
 
 /********* start PV set functions *********/
