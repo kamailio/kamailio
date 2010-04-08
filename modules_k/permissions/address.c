@@ -219,7 +219,10 @@ int init_addresses(void)
 		
     addr_hash_table = (struct addr_list ***)shm_malloc
 	(sizeof(struct addr_list **));
-    if (!addr_hash_table) goto error;
+    if (!addr_hash_table) {
+	LM_ERR("no more shm memory for addr_hash_table\n");
+	goto error;
+    }
 
     *addr_hash_table = addr_hash_table_1;
 
@@ -230,7 +233,10 @@ int init_addresses(void)
     if (!subnet_table_2) goto error;
 
     subnet_table = (struct subnet **)shm_malloc(sizeof(struct subnet *));
-    if (!subnet_table) goto error;
+    if (!subnet_table) {
+	LM_ERR("no more shm memory for subnet_table\n");
+	goto error;
+    }
 
     *subnet_table = subnet_table_1;
 
@@ -245,7 +251,6 @@ int init_addresses(void)
     return 0;
 
 error:
-	LM_ERR("no more shm memory\n");
     if (addr_hash_table_1) {
 	free_addr_hash_table(addr_hash_table_1);
 	addr_hash_table_1 = 0;
