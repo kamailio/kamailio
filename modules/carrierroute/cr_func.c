@@ -103,12 +103,11 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 				id = map_name2id(map, size, &avp_val.s);
 				if (id < 0) {
 					if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_STR)
-						LM_ERR("could not find id '%.*s' from AVP\n",
-							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
+						LM_ERR("cannot map carrier with id %.*s from  AVP '%.*s'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
 							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
 					else if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_RE)
-						LM_ERR("could not find id regex\n");
-					else 	LM_ERR("could not find id '%d'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.n);
+						LM_ERR("cannot map carrier with id %.*s from  AVP regex\n", avp_val.s.len, avp_val.s.s);
+					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%d'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec.pvp.pvn.u.isname.name.n);
 					return -1;
 				}
 				return id;
