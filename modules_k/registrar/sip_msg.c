@@ -40,8 +40,22 @@
 #include "rerrno.h"
 #include "sip_msg.h"
 #include "config.h"
+#include <stdlib.h>
 
 static struct hdr_field* act_contact;
+
+/*! \brief
+ *  Return an expire value in the range [ default_expires - range%, default_expires + range% ]
+ */
+static inline int get_expire_val(void)
+{
+	int expires = cfg_get(registrar, registrar_cfg, default_expires);
+	int range = cfg_get(registrar, registrar_cfg, default_expires_range);
+	/* if no range is given just return default_expires */
+	if(range == 0) return expires;
+	/* select a random value in the range */
+	return expires - (float)range/100 * expires + (float)(rand()%100)/100 * 2 * (float)range/100 * expires;
+}
 
 
 /*! \brief
@@ -53,17 +67,17 @@ static struct hdr_field* act_contact;
 static inline int get_expires_hf(struct sip_msg* _m)
 {
 	exp_body_t* p;
-	
 	if (_m->expires) {
 		p = (exp_body_t*)_m->expires->parsed;
 		if (p->valid) {
 			if (p->val != 0) {
 				return p->val + act_time;
 			} else return 0;
-		} else return act_time + cfg_get(registrar, registrar_cfg, default_expires);
-	} else {
-		return act_time + cfg_get(registrar, registrar_cfg, default_expires);
-	}
+		} else {
+			return act_time + get_expire_val();
+		}
+	} else
+		return act_time + get_expire_val();
 }
 
 
@@ -237,7 +251,7 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 		*_e = get_expires_hf(_m);
 	} else {
 		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
-			*_e = cfg_get(registrar, registrar_cfg, default_expires);
+			*_e = get_expire_val();
 		}
 		/* Convert to absolute value */
 		if (*_e != 0) *_e += act_time;

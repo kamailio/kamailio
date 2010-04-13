@@ -118,6 +118,8 @@
 		number of second to expire (for example use 3600 for one hour). If it
 		is set to a lower value than the <quote>min_expires</quote> parameter
 		then it will be ignored. This parameter can be modified via ser config framework.
+		A random value in a specific interval can be selected by using the default_expires_range
+		parameter
 		</para>
 		<para>
 		<emphasis>
@@ -133,6 +135,32 @@ modparam("registrar", "default_expires", 1800)
 </programlisting>
 		</example>
 	</section>
+		<section>
+		<title><varname>default_expires_range</varname> (integer)</title>
+		<para>
+		This parameter specifies that the expiry used for newly created usrloc records
+		are not fixed(when <quote>default_expires</quote> applies), but a random value in the interval 
+		<quote>[default_expires-default_expires_range%, default_expires+default_expires_range%]</quote>.
+		The value is between 0 and 100 and represent the maximim percentage from default_expires that
+		will be substracted or added when computing the value. Default in 0, meaning default_expires
+		is left unmodified. This parameter can be modified via ser config framework.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_expires_range</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "default_expires", 30) # +- 30% from default_expires
+...
+</programlisting>
+		</example>
+	</section>
+	
+
 	<section>
 		<title><varname>min_expires</varname> (integer)</title>
 		<para>

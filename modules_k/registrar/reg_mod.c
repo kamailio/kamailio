@@ -132,7 +132,7 @@ stat_var *rejected_registrations;
 stat_var *max_expires_stat;
 stat_var *max_contacts_stat;
 stat_var *default_expire_stat;
-
+stat_var *default_expire_range_stat;
 /** SL binds */
 struct sl_binds slb;
 
@@ -176,26 +176,27 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_expires",    INT_PARAM, &default_registrar_cfg.default_expires     	},
-	{"default_q",          INT_PARAM, &default_registrar_cfg.default_q		},
-	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches	},
-	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive		},
+	{"default_expires",    INT_PARAM, &default_registrar_cfg.default_expires     		},
+	{"default_expires_range", INT_PARAM, &default_registrar_cfg.default_expires_range	},
+	{"default_q",          INT_PARAM, &default_registrar_cfg.default_q			},
+	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches		},
+	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive			},
 	/*	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag }, */
-	{"realm_prefix",       STR_PARAM, &default_registrar_cfg.realm_pref          	},
-	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires		},
-	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires		},
-	{"received_param",     STR_PARAM, &rcv_param           				},
-	{"received_avp",       STR_PARAM, &rcv_avp_param       				},
-	{"aor_avp",            STR_PARAM, &aor_avp_param       				},
-	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param				},
-	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts		},
-	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after		},
-	{"sock_flag",          INT_PARAM, &sock_flag           				},
-	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     				},
-	{"method_filtering",   INT_PARAM, &method_filtering    				},
-	{"use_path",           INT_PARAM, &path_enabled        				},
-	{"path_mode",          INT_PARAM, &path_mode           				},
-	{"path_use_received",  INT_PARAM, &path_use_params     				},
+	{"realm_prefix",       STR_PARAM, &default_registrar_cfg.realm_pref          		},
+	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires			},
+	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
+	{"received_param",     STR_PARAM, &rcv_param           					},
+	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
+	{"aor_avp",            STR_PARAM, &aor_avp_param       					},
+	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param					},
+	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
+	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
+	{"sock_flag",          INT_PARAM, &sock_flag           					},
+	{"sock_hdr_name",      STR_PARAM, &sock_hdr_name.s     					},
+	{"method_filtering",   INT_PARAM, &method_filtering    					},
+	{"use_path",           INT_PARAM, &path_enabled        					},
+	{"path_mode",          INT_PARAM, &path_mode           					},
+	{"path_use_received",  INT_PARAM, &path_use_params     					},
 	{0, 0, 0}
 };
 
@@ -205,6 +206,7 @@ stat_export_t mod_stats[] = {
 	{"max_expires",       STAT_NO_RESET, &max_expires_stat        },
 	{"max_contacts",      STAT_NO_RESET, &max_contacts_stat       },
 	{"default_expire",    STAT_NO_RESET, &default_expire_stat     },
+	{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat },
 	{"accepted_regs",                 0, &accepted_registrations  },
 	{"rejected_regs",                 0, &rejected_registrations  },
 	{0, 0, 0}
@@ -534,4 +536,8 @@ void default_expires_stats_update(str* gname, str* name){
 
 void max_expires_stats_update(str* gname, str* name){
 	update_stat(max_expires_stat, cfg_get(registrar, registrar_cfg, max_expires));
+}
+
+void default_expires_range_update(str* gname, str* name){
+	update_stat(default_expire_range_stat, cfg_get(registrar, registrar_cfg, default_expires_range));
 }

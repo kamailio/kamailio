@@ -16,9 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * History
- * -------
- *  2008-02-05	adapting tm module for the configuration framework (Miklos)
  */
 
 /*!
@@ -35,6 +32,7 @@
 
 struct cfg_group_registrar	default_registrar_cfg = {
 		3600, 	/* default_expires */
+		0,	/* default_expires_range */
 		60,	/* min_expires */
 		0,	/* max_expires */
 		0,	/* max_contacts */
@@ -42,7 +40,7 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		0,	/* case_sensitive */
 		Q_UNSPECIFIED,	/* default_q */
 		1,	/* append_branches */
-		"",	/* realm_pref */
+		""	/* realm_pref */
 	    };
 
 void	*registrar_cfg = &default_registrar_cfg;
@@ -50,6 +48,8 @@ void	*registrar_cfg = &default_registrar_cfg;
 cfg_def_t	registrar_cfg_def[] = {
 	{"default_expires",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, default_expires_stats_update,
 		"Contains number of second to expire if no expire hf or contact expire present" },
+	{"default_expires_range",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 100, 0, default_expires_range_update,
+		"Procent from default_expires that will be used in generating the range for the expire interval"},
 	{"min_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, 0,
 		"The minimum expires value of a Contact. Value 0 disables the checking. "},
 	{"max_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, max_expires_stats_update,
@@ -64,7 +64,7 @@ cfg_def_t	registrar_cfg_def[] = {
 		"The parameter represents default q value for new contacts."}, /* Q_UNSPECIFIED is -1 */
 	{"append_branches",	CFG_VAR_INT ,			0, 0, 0, 0,
 		"If set to 1(default), lookup will put all contacts found in msg structure"},
-	{"realm_pref",		CFG_VAR_STR ,			0, 0, 0, 0,
+	{"realm_pref",		CFG_VAR_STRING ,			0, 0, 0, 0,
 		"Realm prefix to be removed. Default is \"\""},
 	{0, 0, 0, 0, 0, 0}
 };
