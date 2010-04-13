@@ -49,7 +49,7 @@ cfg_def_t	registrar_cfg_def[] = {
 	{"default_expires",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, default_expires_stats_update,
 		"Contains number of second to expire if no expire hf or contact expire present" },
 	{"default_expires_range",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 100, 0, default_expires_range_update,
-		"Procent from default_expires that will be used in generating the range for the expire interval"},
+		"Percent from default_expires that will be used in generating the range for the expire interval"},
 	{"min_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, 0,
 		"The minimum expires value of a Contact. Value 0 disables the checking. "},
 	{"max_expires",		CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, max_expires_stats_update,
