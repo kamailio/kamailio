@@ -1741,11 +1741,10 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     gw_count = gws[0].ip_addr;
 
     if (defunct_capability > 0) {
-	now = time((time_t *)NULL);
 	delete_avp(defunct_gw_avp_type, defunct_gw_avp);
-    } else {
-	now = MAX_UVAR_VALUE(now);
     }
+
+    now = time((time_t *)NULL);
 
     while (pl) {
 	if (ruri_user.len < pl->prefix_len) {
