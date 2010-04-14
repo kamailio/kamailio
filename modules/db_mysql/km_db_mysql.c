@@ -42,6 +42,7 @@
  */
 
 #include "../../sr_module.h"
+#include "../../dprint.h"
 #include "km_dbase.h"
 #include "km_db_mysql.h"
 
