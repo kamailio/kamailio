@@ -44,6 +44,7 @@
 #include "../../str.h"
 #include "../../lib/srdb2/db_cmd.h"
 #include "../../ut.h"
+#include "../../dprint.h"
 
 #include <strings.h>
 #include <stdio.h>
