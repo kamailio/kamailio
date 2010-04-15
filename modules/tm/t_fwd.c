@@ -204,6 +204,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	snd_flags_t rpl_snd_flags_bak;
 	struct socket_info *force_send_socket_bak;
 	struct dest_info *dst;
+	struct run_act_ctx ctx;
 
 	shbuf=0;
 	ret=E_UNSPEC;
@@ -333,7 +334,8 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				/* set the new values */
 				i_req->fwd_send_flags=snd_flags /* intial value  */;
 				set_force_socket(i_req, fsocket);
-				if (run_top_route(branch_rt.rlist[branch_route], i_req, 0) < 0)
+				if (run_top_route(branch_rt.rlist[branch_route], i_req, &ctx)
+						< 0)
 				{
 					LOG(L_ERR, "Error in run_top_route\n");
 				}
@@ -345,6 +347,13 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				i_req->fwd_send_flags=fwd_snd_flags_bak;
 				i_req->rpl_send_flags=rpl_snd_flags_bak;
 				exec_post_script_cb(i_req, BRANCH_CB_TYPE);
+				/* if DROP was called in cfg, don't forward, jump to end */
+				if (unlikely(ctx.run_flags&DROP_R_F))
+				{
+					tm_ctx_set_branch_index(0);
+					set_route_type(backup_route_type);
+					goto error03;
+				}
 			}
 			tm_ctx_set_branch_index(0);
 			set_route_type(backup_route_type);
