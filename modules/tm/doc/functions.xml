@@ -208,7 +208,7 @@ onreply_route[1] {
 	    are intended only for last minute changes of the SIP messages
 	    (like adding new headers).
 	    Note that the set of commands which are usable within branch_routes is
-	    very limited. It is not possible to drop a message or generate a reply.
+	    very limited. It is not possible to generate a reply.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
