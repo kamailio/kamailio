@@ -1275,12 +1275,11 @@ int fix_param_types(int types, void** param)
 int fixup_var_str_12(void** param, int param_no)
 {
 	int ret;
-	if ((sr_cfg_compat!=SR_COMPAT_SER) &&
-		((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
+	if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
-	ERR("Error while fixing parameter, AVP, SELECT, and str conversions"
+	ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
 			" failed\n");
 	return -1;
 }
@@ -1312,12 +1311,11 @@ int fixup_var_str_2(void** param, int param_no)
 int fixup_var_int_12(void** param, int param_no)
 {
 	int ret;
-	if ((sr_cfg_compat!=SR_COMPAT_SER) &&
-		((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
+	if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
-	ERR("Error while fixing parameter, AVP, SELECT, and int conversions"
+	ERR("Error while fixing parameter, PV, AVP, SELECT, and int conversions"
 			" failed\n");
 	return -1;
 }
