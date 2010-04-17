@@ -352,6 +352,8 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				{
 					tm_ctx_set_branch_index(0);
 					set_route_type(backup_route_type);
+					/* triggered by drop in CFG */
+					ret=E_CFG;
 					goto error03;
 				}
 			}
@@ -1385,7 +1387,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			ser_error=MIN_int(lowest_ret, E_CFG);
 			return -1;
 		}
-		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
+		if(lowest_ret!=E_CFG)
+			LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
 		ser_error=lowest_ret;
 		return lowest_ret;
 	}
