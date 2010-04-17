@@ -1190,5 +1190,59 @@ modparam("tm", "local_ack_mode", 1)
 	    </programlisting>
 	</example>
 	</section>
+	
+	<section id="failure_reply_mode">
+	<title><varname>failure_reply_mode</varname> (integer)</title>
+	<para>
+		It controls how branches are managed and replies are selected for
+		failure_route handling: keep all, drop all, drop last branches in
+		SIP serial forking handling.
+	</para>
+	<para>
+		To control per transaction see <function>t_drop_replies()</function>.
+	</para>
+	<para> It has 4 possible values:</para>
+	<itemizedlist>
+		<listitem><para>
+		<emphasis>0</emphasis> - all branches are kept, no matter a new leg of
+		serial forking has been started. Beware that if the new leg fails, you
+		may get in failure_route a reply code from a branch of previous serial
+		forking legs (e.g., if in first leg you got a 3xx, then you handled
+		the redirection in failure route, sent to a new destination and this
+		one timeout, you will get again the 3xx). Use t_drop_replies() on per
+		transaction fashion to control the behavior you want. It is the
+		default behaviour comming from SER 2.1.x.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>1</emphasis> - all branches are discarded by default. You
+		can still overwrite the behaviour via t_drop_replies()
+		</para></listitem>
+		<listitem><para>
+		<emphasis>2</emphasis> - by default only the branches of previous leg
+		of serial forking are discarded
+		</para></listitem>
+		<listitem><para>
+		<emphasis>3</emphasis> - all previous branches are discarded if there
+		is a new serial forking leg. This is the default behaviour coming from
+		Kamailio 1.5.x. Use this mode if you don't want to handle in a per
+		transaction fashion with t_drop_replies(). It ensures that you will
+		get the winning reply from the branches of last serial forking step
+		(e.g., if in first step you get 3xx, then you forward to a new
+		destination, you will get in failure_route the reply coming from that
+		destination or a local timeout).
+		</para></listitem>
+	</itemizedlist>
+	<para>
+		The default value is 0.
+	</para>
+	<example>
+		<title>Set <varname>failure_reply_mode</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "failure_reply_mode", 3)
+...
+	    </programlisting>
+	</example>
+	</section>
 
 </section>
