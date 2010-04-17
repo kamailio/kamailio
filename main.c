@@ -336,10 +336,10 @@ int phone2tel = 1;
 int syn_branch = 1;
 /* debugging level for timer debugging */
 int timerlog = L_WARN;
-/* should replies include extensive warnings? by default yes,
+/* should replies include extensive warnings? by default no,
    good for trouble-shooting
 */
-int sip_warning = 1;
+int sip_warning = 0;
 /* should localy-generated messages include server's signature?
    be default yes, good for trouble-shooting
 */
