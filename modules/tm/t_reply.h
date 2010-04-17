@@ -58,6 +58,8 @@ extern char *tm_tag_suffix;
 
 extern int goto_on_sl_reply;
 
+extern int failure_reply_mode;
+
 /* has this to-tag been never seen in previous 200/INVs? */
 int unmatched_totag(struct cell *t, struct sip_msg *ack);
 

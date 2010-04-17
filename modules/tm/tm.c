@@ -535,6 +535,7 @@ static param_export_t params[]={
 	{"contacts_avp",        PARAM_STRING, &contacts_avp_param                },
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
 	{"local_ack_mode",      PARAM_INT, &default_tm_cfg.local_ack_mode        },
+	{"failure_reply_mode",  PARAM_INT, &failure_reply_mode                   },
 	{0,0,0}
 };
 

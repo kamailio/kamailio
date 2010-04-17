@@ -174,6 +174,16 @@ static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
 int goto_on_sl_reply=0;
 
+/* how to deal with winning branch reply selection in failure_route
+ * can be overwritten per transaction with t_drop_replies(...)
+ * Values:
+ * - 0 - all branches are kept (default, and default ser 2.1.x behaviour)
+ * - 1 - all branches are discarded
+ * - 2 - braches of last step of serial forking are discarded
+ * - 3 - all branches are discarded if a new leg of serial forking
+ *       is started (default kamailio 1.5.x behaviour)
+ */
+int failure_reply_mode = 0;
 
 /* responses priority (used by t_pick_branch)
  *  0xx is used only for the initial value (=> should have no chance to be
@@ -1158,10 +1168,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->flags&=~T_6xx; /* clear the 6xx flag , we want to 
 								 allow new branches from the failure route */
 
-		if(sr_cfg_compat==SR_COMPAT_KAMAILIO)
-			drop_replies = 3;
-		else
-			drop_replies = 0;
+		drop_replies = failure_reply_mode;
 		replies_dropped = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
