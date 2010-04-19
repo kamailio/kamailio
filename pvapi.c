@@ -316,6 +316,9 @@ int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return 0;
 }
 
+/**
+ *
+ */
 pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 {
 	pv_item_t *pvi;
@@ -353,6 +356,9 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 	return NULL;
 }
 
+/**
+ *
+ */
 int pv_parse_index(pv_spec_p sp, str *in)
 {
 	char *p;
@@ -409,6 +415,9 @@ int pv_parse_index(pv_spec_p sp, str *in)
 	return 0;
 }
 
+/**
+ *
+ */
 int pv_init_iname(pv_spec_p sp, int param)
 {
 	if(sp==NULL)
@@ -418,6 +427,9 @@ int pv_init_iname(pv_spec_p sp, int param)
 	return 0;
 }
 
+/**
+ *
+ */
 char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 {
 	char *p;
@@ -787,6 +799,9 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
 int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name)
 {
 	if(msg==NULL || ip==NULL || name==NULL)
@@ -822,6 +837,55 @@ int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name)
 	return -1;
 }
 
+/**
+ * parse AVP name
+ * @return 0 on success, -1 on error
+ */
+int pv_parse_avp_name(pv_spec_p sp, str *in)
+{
+	char *p;
+	char *s;
+	pv_spec_p nsp = 0;
+
+	if(in==NULL || in->s==NULL || sp==NULL)
+		return -1;
+	p = in->s;
+	if(*p==PV_MARKER)
+	{
+		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
+		if(nsp==NULL)
+		{
+			LM_ERR("no more memory\n");
+			return -1;
+		}
+		s = pv_parse_spec(in, nsp);
+		if(s==NULL)
+		{
+			LM_ERR("invalid name [%.*s]\n", in->len, in->s);
+			pv_spec_free(nsp);
+			return -1;
+		}
+		//LM_ERR("dynamic name [%.*s]\n", in->len, in->s);
+		//pv_print_spec(nsp);
+		sp->pvp.pvn.type = PV_NAME_PVAR;
+		sp->pvp.pvn.u.dname = (void*)nsp;
+		return 0;
+	}
+	/*LM_DBG("static name [%.*s]\n", in->len, in->s);*/
+	if(km_parse_avp_spec(in, &sp->pvp.pvn.u.isname.type,
+					  &sp->pvp.pvn.u.isname.name)!=0)
+	{
+		LM_ERR("bad avp name [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	return 0;
+}
+
+/**
+ * fill avp name details (id and type)
+ * @return 0 on success, -1 on error
+ */
 int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 		unsigned short *name_type)
 {
@@ -867,7 +931,9 @@ int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 	return 0;
 }
 
-
+/**
+ *
+ */
 int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 {
 	pv_value_t tv;
@@ -903,6 +969,9 @@ int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 	return 0;
 }
 
+/**
+ *
+ */
 int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 {
 	int ret = 0;
@@ -925,6 +994,9 @@ int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 	return ret;
 }
 
+/**
+ *
+ */
 int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
 		pv_value_t *value)
 {
@@ -1456,6 +1528,9 @@ int tr_table_free(void)
 	return 0;
 }
 
+/**
+ *
+ */
 tr_export_t* tr_lookup_class(str *tclass)
 {
 	tr_item_t *tri;
@@ -1483,6 +1558,18 @@ tr_export_t* tr_lookup_class(str *tclass)
 }
 
 
+/********************************************************
+ * core PVs, initialization and destroy APIs
+ ********************************************************/
+
+static pv_export_t _core_pvs[] = {
+	{{"null", (sizeof("null")-1)}, /* */
+		PVT_NULL, pv_get_null, 0,
+		0, 0, 0, 0},
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 /** init pv api (optional).
  * @return 0 on success, -1 on error
  */
@@ -1490,6 +1577,8 @@ int init_pv_api(void)
 {
 	pv_init_table();
 	tr_init_table();
+	if(register_pvars_mod("core", _core_pvs)<0)
+		return -1;
 	return 0;
 }
 

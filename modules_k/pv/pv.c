@@ -216,9 +216,6 @@ static pv_export_t mod_pvs[] = {
 	{{"ml", (sizeof("ml")-1)}, /* */
 		PVT_OTHER, pv_get_msg_len, 0,
 		0, 0, 0, 0},
-	{{"null", (sizeof("null")-1)}, /* */
-		PVT_NULL, pv_get_null, 0,
-		0, 0, 0, 0},
 	{{"od", (sizeof("od")-1)}, /* */
 		PVT_OTHER, pv_get_ouri_attr, 0,
 		0, 0, pv_init_iname, 2},

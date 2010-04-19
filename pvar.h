@@ -179,6 +179,7 @@ int pv_spec_dbg(pv_spec_p sp);
 int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags);
 int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 		unsigned short *name_type);
+int pv_parse_avp_name(pv_spec_p sp, str *in);
 int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name);
 int pv_parse_format(str *in, pv_elem_p *el);
 int pv_parse_index(pv_spec_p sp, str *in);

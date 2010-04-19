@@ -234,7 +234,5 @@ int pv_parse_scriptvar_name(pv_spec_p sp, str *in);
 
 int pv_parse_hdr_name(pv_spec_p sp, str *in);
 
-int pv_parse_avp_name(pv_spec_p sp, str *in);
-
 #endif
 
