@@ -406,6 +406,8 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 	if (fr_timer_param && *fr_timer_param) {
 		fr_timer_str.s = fr_timer_param;
 		fr_timer_str.len = strlen(fr_timer_str.s);
+		LM_WARN("using AVP for TM fr_timer is deprecated,"
+				" use t_set_fr(...) instead\n");
 
 		if(fr_timer_str.s[0]==PV_MARKER) {
 			if (pv_parse_spec(&fr_timer_str, &avp_spec)==0
@@ -434,6 +436,8 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 	if (fr_inv_timer_param && *fr_inv_timer_param) {
 		fr_inv_timer_str.s = fr_inv_timer_param;
 		fr_inv_timer_str.len = strlen(fr_inv_timer_str.s);
+		LM_WARN("using AVP for TM fr_inv_timer is deprecated,"
+				" use t_set_fr(...) instead\n");
 
 		if(fr_inv_timer_str.s[0]==PV_MARKER) {
 			if (pv_parse_spec(&fr_inv_timer_str, &avp_spec)==0
