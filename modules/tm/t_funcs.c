@@ -407,7 +407,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 		fr_timer_str.s = fr_timer_param;
 		fr_timer_str.len = strlen(fr_timer_str.s);
 
-		if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+		if(fr_timer_str.s[0]==PV_MARKER) {
 			if (pv_parse_spec(&fr_timer_str, &avp_spec)==0
 			        || avp_spec.type!=PVT_AVP) {
 			        LM_ERR("malformed or non AVP %s AVP definition\n",
@@ -435,7 +435,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 		fr_inv_timer_str.s = fr_inv_timer_param;
 		fr_inv_timer_str.len = strlen(fr_inv_timer_str.s);
 
-		if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+		if(fr_inv_timer_str.s[0]==PV_MARKER) {
 			if (pv_parse_spec(&fr_inv_timer_str, &avp_spec)==0
 					|| avp_spec.type!=PVT_AVP) {
 				LM_ERR("malformed or non AVP %s AVP definition\n",
@@ -463,7 +463,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 		contacts_avp_str.s = contacts_avp_param;
 		contacts_avp_str.len = strlen(contacts_avp_str.s);
 
-		if(sr_cfg_compat==SR_COMPAT_KAMAILIO) {
+		if(contacts_avp_str.s[0]==PV_MARKER) {
 			if ((pv_parse_spec(&contacts_avp_str, &avp_spec) == 0) 
 					|| (avp_spec.type != PVT_AVP)) {
 				LM_ERR("malformed or non AVP definition <%s>\n",
