@@ -1539,7 +1539,7 @@ int t_unref( struct sip_msg* p_msg  )
 			LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
 			t_release_transaction(T);
 		}else if (unlikely((kr & REQ_ERR_DELAYED) &&
-					 (kr & ~(REQ_RLSD|REQ_RPLD|REQ_ERR_DELAYED)))){
+					 (kr & ~(REQ_RLSD|REQ_RPLD|REQ_ERR_DELAYED|REQ_FWDED)))){
 			BUG("tm: t_unref: REQ_ERR DELAYED should have been caught much"
 					" earlier for %p: %d (hex %x)\n",T, kr, kr);
 			t_release_transaction(T);
