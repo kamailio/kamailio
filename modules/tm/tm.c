@@ -1369,6 +1369,7 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 									struct proxy_l *proxy, int force_proto)
 {
 	struct cell *t;
+	int res;
 
 	if (is_route_type(FAILURE_ROUTE)) {
 		t=get_t();
@@ -1376,10 +1377,13 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
 			return -1;
 		}
-		if (t_forward_nonack(t, p_msg, proxy, force_proto)<=0 ) {
-			LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
-			/* let us save the error code, we might need it later
-			when the failure_route has finished (Miklos) */
+		res = t_forward_nonack(t, p_msg, proxy, force_proto);
+		if (res <= 0) {
+		        if (res != E_CFG) {
+			    LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
+			    /* let us save the error code, we might need it later
+			       when the failure_route has finished (Miklos) */
+			}
 			tm_error=ser_error;
 			return -1;
 		}
