@@ -81,6 +81,33 @@ struct lump* append_new_lump(struct lump** list, char* new_hdr,
 	return tmp;
 }
 
+/* adds a header right after an anchor point if exists
+ * returns  pointer on success, 0 on error */
+struct lump* add_new_lump(struct lump** list, char* new_hdr,
+							 int len, enum _hdr_types_t type)
+{
+	struct lump** t;
+	struct lump* tmp;
+	
+
+	t = (*list) ? &((*list)->next) : list;
+
+	tmp=pkg_malloc(sizeof(struct lump));
+	if (tmp==0){
+		LOG(L_ERR, "ERROR: add_new_lump: out of memory\n");
+		return 0;
+	}
+		
+	memset(tmp,0,sizeof(struct lump));
+	tmp->type=type;
+	tmp->op=LUMP_ADD;
+	tmp->u.value=new_hdr;
+	tmp->len=len;
+	tmp->next=*t;
+	*t=tmp;
+	return tmp;
+}
+
 
 
 /* inserts a header to the beginning 
@@ -343,7 +370,7 @@ struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_typ
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: insert_new_lump_before: out of memory\n");
+		LOG(L_ERR, "ERROR: anchor_lump: out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
@@ -370,6 +397,74 @@ struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_typ
 	return tmp;
 }
 
+/* add an anchor
+ * Similar to anchor_lump() but this function checks whether or not a lump
+ * has already been added to the same position. If an existing lump is found
+ * then it is returned without adding a new one and is_ref is set to 1.
+ *
+ * WARNING: this function adds the lump either to the msg->add_rm or
+ * msg->body_lumps list, depending on the offset being greater than msg->eoh,
+ * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
+ *  might affect the body!! */
+struct lump* anchor_lump2(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type,
+		int *is_ref)
+{
+	struct lump* tmp;
+	struct lump* prev, *t;
+	struct lump** list;
+
+	
+	/* extra checks */
+	if (offset>msg->len){
+		LOG(L_CRIT, "BUG: anchor_lump2: offset exceeds message size (%d > %d)"
+					" aborting...\n", offset, msg->len);
+		abort();
+	}
+	if (len){
+		LOG(L_WARN, "WARNING: anchor_lump2: called with len !=0 (%d)\n", len);
+		if (offset+len>msg->len)
+			LOG(L_WARN, "WARNING: anchor_lump2: offset + len exceeds message"
+					" size (%d + %d > %d)\n", offset, len,  msg->len);
+	}
+	
+	prev=0;
+	/* check to see whether this might be a body lump */
+	if ((msg->eoh) && (offset> (int)(msg->eoh-msg->buf)))
+		list=&msg->body_lumps;
+	else
+		list=&msg->add_rm;
+		
+	for (t=*list;t; prev=t, t=t->next){
+		/* insert it sorted after offset */
+		if (((t->op==LUMP_DEL)||(t->op==LUMP_NOP))&&(t->u.offset>=offset))
+			break;
+	}
+	if (t && (t->u.offset==offset)) {
+		/* A lump with the same offset is found */
+		*is_ref=1;
+		return t;
+	}
+
+	tmp=pkg_malloc(sizeof(struct lump));
+	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: anchor_lump2: out of memory\n");
+		return 0;
+	}
+	memset(tmp,0,sizeof(struct lump));
+	tmp->op=LUMP_NOP;
+	tmp->type=type;
+	tmp->u.offset=offset;
+	tmp->len=len;
+
+	tmp->next=t;
+	
+	if (prev) prev->next=tmp;
+	else *list=tmp;
+
+	*is_ref=0;
+	return tmp;
+}
 
 
 void free_lump(struct lump* lmp)

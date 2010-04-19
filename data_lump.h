@@ -48,6 +48,11 @@
 #include "parser/msg_parser.h"
 #include "parser/hf.h"
 
+
+/* adds a header right after an anchor point if exists */
+struct lump* add_new_lump(struct lump** list, char* new_hdr,
+							 int len, enum _hdr_types_t type);
+
 /*! \brief adds a header to the end */
 struct lump* append_new_lump(struct lump** list, char* new_hdr,
 							 int len, enum _hdr_types_t type);
@@ -71,6 +76,10 @@ struct lump* insert_cond_lump_before(struct lump* after, enum lump_conditions c,
 									enum _hdr_types_t type);
 
 /*! \brief removes an already existing header */
+/* set an anchor if there is no existing one at the given offset,
+ * otherwise return the existing anchor */
+struct lump* anchor_lump2(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type,
+								int *is_ref);
 struct lump* del_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type);
 /*! \brief set an anchor */
 struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type);
