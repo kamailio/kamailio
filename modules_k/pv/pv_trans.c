@@ -442,7 +442,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				break;
 			if(i>=val->rs.len)
 			{
-				val->rs.s = "";
+				_tr_buffer[0] = '\0';
+				val->rs.s = _tr_buffer;
 				val->rs.len = 0;
 				break;
 			}
