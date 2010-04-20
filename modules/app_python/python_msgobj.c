@@ -241,7 +241,7 @@ msg_call_function(msgobject *self, PyObject *args)
                 Py_INCREF(Py_None);
                 return Py_None;
             }
-            act->val[2].type = MODFIXUP_ST;
+            act->val[3].type = MODFIXUP_ST;
         }
         if (i >= 2) {
             rval = fexport->v1.fixup(&(act->val[2].u.data), 1);
@@ -250,7 +250,7 @@ msg_call_function(msgobject *self, PyObject *args)
                 Py_INCREF(Py_None);
                 return Py_None;
             }
-            act->val[1].type = MODFIXUP_ST;
+            act->val[2].type = MODFIXUP_ST;
         }
         if (i == 1) {
             rval = fexport->v1.fixup(0, 0);
