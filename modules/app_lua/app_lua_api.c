@@ -423,6 +423,7 @@ void app_lua_dump_stack(lua_State *L)
 
 	top = lua_gettop(L);
 
+	LM_DBG("lua stack top index: %d\n", top);
 	for (i = 1; i <= top; i++)
 	{
 		t = lua_type(L, i);
