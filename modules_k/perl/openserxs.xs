@@ -285,20 +285,20 @@ int moduleFunc(struct sip_msg *m, char *func,
 		}
 
 		if (argc>=2) {
-			*retval = exp_func_struct->v1.fixup(&(act->val[2].u.data), 2);
+			*retval = exp_func_struct->v1.fixup(&(act->val[3].u.data), 2);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (2)\n");
 				return -1;
 			}
-			act->val[2].type = MODFIXUP_ST;
+			act->val[3].type = MODFIXUP_ST;
 		}
 		if (argc>=1) {
-			*retval = exp_func_struct->v1.fixup(&(act->val[1].u.data), 1);
+			*retval = exp_func_struct->v1.fixup(&(act->val[2].u.data), 1);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (1)\n");
 				return -1;
 			}
-			act->val[1].type = MODFIXUP_ST;
+			act->val[2].type = MODFIXUP_ST;
 		}
 		if (argc==0) {
 			*retval = exp_func_struct->v1.fixup(0, 0);
@@ -312,14 +312,14 @@ int moduleFunc(struct sip_msg *m, char *func,
 	init_run_actions_ctx(&ra_ctx);
 	*retval = do_action(&ra_ctx, act, m);
 
-	if ((act->val[2].type == MODFIXUP_ST) && (act->val[2].u.data)) {
-		/* pkg_free(act->elem[2].u.data); */
+	if ((act->val[3].type == MODFIXUP_ST) && (act->val[3].u.data)) {
+		/* pkg_free(act->elem[3].u.data); */
 		LM_WARN("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
 	}
 
-	if ((act->val[1].type == MODFIXUP_ST) && (act->val[1].u.data)) {
-		/* pkg_free(act->elem[1].u.data); */
+	if ((act->val[2].type == MODFIXUP_ST) && (act->val[2].u.data)) {
+		/* pkg_free(act->elem[2].u.data); */
 		LM_WARN("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
 	}
