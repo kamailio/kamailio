@@ -415,6 +415,42 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs = st;
 			break;
 
+		case TR_S_STRIP:
+		case TR_S_STRIPTAIL:
+			if(tp==NULL)
+			{
+				LM_ERR("strip invalid parameters\n");
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(tp->type==TR_PARAM_NUMBER)
+			{
+				i = tp->v.n;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_INT)))
+				{
+					LM_ERR("select cannot get p1\n");
+					return -1;
+				}
+				i = v.ri;
+			}
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			if(i<=0)
+				break;
+			if(i>=val->rs.len)
+			{
+				val->rs.s = "";
+				val->rs.len = 0;
+				break;
+			}
+			if(subtype==TR_S_STRIP)
+				val->rs.s += i;
+			val->rs.len -= i;
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d\n",
 					subtype);
@@ -1273,6 +1309,46 @@ char* tr_parse_string(str* in, trans_t *t)
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid select transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "strip", 5)==0) {
+		t->subtype = TR_S_STRIP;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid strip transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid strip transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==9 && strncasecmp(name.s, "striptail", 9)==0) {
+		t->subtype = TR_S_STRIPTAIL;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid striptail transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid striptail transformation: %.*s!!\n",
 				in->len, in->s);
 			goto error;
 		}
