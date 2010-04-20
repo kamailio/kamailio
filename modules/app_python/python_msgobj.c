@@ -212,7 +212,7 @@ msg_call_function(msgobject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "s|ss:call_function", &fname, &arg1, &arg2))
         return NULL;
 
-    fexport = find_export_record(fname, i - 2, 0, &mod_ver);
+    fexport = find_export_record(fname, i - 1, 0, &mod_ver);
     if (fexport == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "no such function");
         Py_INCREF(Py_None);
@@ -235,7 +235,7 @@ msg_call_function(msgobject *self, PyObject *args)
 
     if (fexport->v1.fixup != NULL) {
         if (i >= 3) {
-            rval = fexport->v1.fixup(&(act->val[2].u.data), 2);
+            rval = fexport->v1.fixup(&(act->val[3].u.data), 2);
             if (rval < 0) {
                 PyErr_SetString(PyExc_RuntimeError, "Error in fixup (2)");
                 Py_INCREF(Py_None);
@@ -244,7 +244,7 @@ msg_call_function(msgobject *self, PyObject *args)
             act->val[2].type = MODFIXUP_ST;
         }
         if (i >= 2) {
-            rval = fexport->v1.fixup(&(act->val[1].u.data), 1);
+            rval = fexport->v1.fixup(&(act->val[2].u.data), 1);
             if (rval < 0) {
                 PyErr_SetString(PyExc_RuntimeError, "Error in fixup (1)");
                 Py_INCREF(Py_None);
@@ -265,12 +265,12 @@ msg_call_function(msgobject *self, PyObject *args)
     init_run_actions_ctx(&ra_ctx);
     rval = do_action(&ra_ctx, act, self->msg);
 
-    if ((act->val[2].type == MODFIXUP_ST) && (act->val[2].u.data)) {
-       pkg_free(act->val[2].u.data);
+    if ((act->val[3].type == MODFIXUP_ST) && (act->val[3].u.data)) {
+       pkg_free(act->val[3].u.data);
     }
 
-    if ((act->val[1].type == MODFIXUP_ST) && (act->val[1].u.data)) {
-        pkg_free(act->val[1].u.data);
+    if ((act->val[2].type == MODFIXUP_ST) && (act->val[2].u.data)) {
+        pkg_free(act->val[2].u.data);
     }
 
     pkg_free(act);
