@@ -530,7 +530,7 @@ COM_LINE	#
 COM_START	"/\*"
 COM_END		"\*/"
 
-DEFINE       define
+DEFINE       "define"|"def"
 IFDEF        ifdef
 IFNDEF       ifndef
 ENDIF        endif
