@@ -39,6 +39,42 @@
 extern unsigned int nr_branches;
 
 /*! \brief
+ * Structure for storing branch attributes
+ */
+struct branch
+{
+    char uri[MAX_URI_SIZE];
+    unsigned int len;
+
+         /* Real destination of the request */
+    char dst_uri[MAX_URI_SIZE];
+    unsigned int dst_uri_len;
+
+    /* Path set */
+    char path[MAX_PATH_SIZE];
+    unsigned int path_len;
+
+    int q; /* Preference of the contact among
+        * contact within the array */
+    struct socket_info* force_send_socket;
+
+    /* Branch flags */
+    flag_t flags;
+};
+
+typedef struct branch branch_t;
+
+/*! \brief
+ * Return pointer to branch[idx] structure
+ */
+branch_t *get_sip_branch(int idx);
+
+/*! \brief
+ * Drop branch[idx]
+ */
+int drop_sip_branch(int idx);
+
+/*! \brief
  * Add a new branch to current transaction 
  */
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,

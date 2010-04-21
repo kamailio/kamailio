@@ -55,27 +55,6 @@
 #define Q_PARAM ">;q="
 #define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
 
-struct branch
-{
-	char uri[MAX_URI_SIZE];
-	unsigned int len;
-
-	     /* Real destination of the request */
-	char dst_uri[MAX_URI_SIZE];
-	unsigned int dst_uri_len;
-
-	/* Path set */
-	char path[MAX_PATH_SIZE];
-	unsigned int path_len;
-
-	int q; /* Preference of the contact among
-		* contact within the array */
-	struct socket_info* force_send_socket;
-
-	/* Branch flags */
-	flag_t flags;
-};
-
 
 /* 
  * Where we store URIs of additional transaction branches
@@ -95,6 +74,54 @@ static qvalue_t ruri_q = Q_UNSPECIFIED;
 /* Branch flags of the Request-URI */
 static flag_t ruri_bflags;
 
+
+/*! \brief
+ * Return pointer to branch[idx] structure
+ * @param idx - branch index
+ *
+ * @return  pointer to branch or NULL if invalid branch
+ */
+branch_t *get_sip_branch(int idx)
+{
+	if(nr_branches==0)
+		return NULL;
+	if(idx<0)
+	{
+		if(nr_branches + idx >= 0)
+			return &branches[nr_branches+idx];
+		return NULL;
+	}
+	if(idx < nr_branches)
+		return &branches[idx];
+	return 0;
+}
+
+/*! \brief
+ * Drop branch[idx]
+ * @param idx - branch index
+ *
+ * @return  0 on success, -1 on error
+ */
+int drop_sip_branch(int idx)
+{
+	if(nr_branches==0 || idx>=nr_branches)
+		return 0;
+	if(idx<0 && nr_branches+idx<0)
+		return 0;
+	/* last branch */
+	if(idx==nr_branches-1)
+	{
+		nr_branches--;
+		return 0;
+	}
+	if(idx<0)
+		idx = nr_branches+idx;
+	/* shift back one position */
+	for(; idx<nr_branches-1; idx++)
+		memcpy(&branches[idx], &branches[idx+1], sizeof(branch_t));
+	nr_branches--;
+	return 0;
+}
 
 static inline flag_t* get_bflags_ptr(unsigned int branch)
 {
