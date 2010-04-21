@@ -323,7 +323,7 @@ int pv_parse_branchx_name(pv_spec_p sp, str *in)
 	return 0;
 
 error:
-	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	LM_ERR("unknown PV branch name %.*s\n", in->len, in->s);
 	return -1;
 }
 
@@ -404,7 +404,7 @@ int pv_parse_snd_name(pv_spec_p sp, str *in)
 	return 0;
 
 error:
-	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	LM_ERR("unknown PV snd name %.*s\n", in->len, in->s);
 	return -1;
 }
 
