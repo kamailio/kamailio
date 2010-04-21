@@ -24,6 +24,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../dset.h"
 #include "../../onsend.h"
+#include "../../socket_info.h"
 
 #include "pv_core.h"
 #include "pv_branch.h"
@@ -88,7 +89,189 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 int pv_set_branchx(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
-	/* tbd */
+	int idx = 0;
+	int idxf = 0;
+	branch_t *br;
+	struct socket_info *si;
+	int port, proto;
+	str host;
+	char backup;
+
+	if(msg==NULL || param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
+	{
+		LM_ERR("invalid index\n");
+		return -1;
+	}
+
+	br = get_sip_branch(idx);
+
+	if(br==NULL)
+	{
+		LM_DBG("no branch to operate on\n");
+		return -1;
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1: /* dst uri */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				br->dst_uri[0] = '\0';
+				br->dst_uri_len = 0;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("str value required to set branch dst uri\n");
+				return -1;
+			}
+			if(val->rs.len<=0)
+			{
+				br->dst_uri[0] = '\0';
+				br->dst_uri_len = 0;
+				break;
+			}
+
+			if (unlikely(val->rs.len > MAX_URI_SIZE - 1))
+			{
+				LM_ERR("too long dst uri: %.*s\n",
+								val->rs.len, val->rs.s);
+				return -1;
+			}
+			memcpy(br->dst_uri, val->rs.s, val->rs.len);
+			br->dst_uri[val->rs.len] = 0;
+			br->dst_uri_len = val->rs.len;
+		break;
+		case 2: /* path */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				br->path[0] = '\0';
+				br->path_len = 0;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("str value required to set branch path\n");
+				return -1;
+			}
+			if(val->rs.len<=0)
+			{
+				br->path[0] = '\0';
+				br->path_len = 0;
+				break;
+			}
+
+			if (unlikely(val->rs.len > MAX_PATH_SIZE - 1))
+			{
+				LM_ERR("path too long: %.*s\n",
+							val->rs.len, val->rs.s);
+				return -1;
+			}
+			memcpy(br->path, val->rs.s, val->rs.len);
+			br->path[val->rs.len] = 0;
+			br->path_len = val->rs.len;
+		break;
+		case 3: /* Q */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				br->q = Q_UNSPECIFIED;
+				break;
+			}
+			if(!(val->flags&PV_VAL_INT))
+			{
+				LM_ERR("int value required to set branch q\n");
+				return -1;
+			}
+			br->q = val->ri;
+		break;
+		case 4: /* send socket */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				br->force_send_socket = NULL;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("str value required to set branch send sock\n");
+				return -1;
+			}
+			if(val->rs.len<=0)
+			{
+				br->force_send_socket = NULL;
+				break;
+			}
+			backup = val->rs.s[val->rs.len];
+			val->rs.s[val->rs.len] = '\0';
+			if (parse_phostport(val->rs.s, &host.s, &host.len, &port,
+						&proto) < 0)
+			{
+				LM_ERR("invalid socket specification\n");
+				val->rs.s[val->rs.len] = backup;
+				return -1;
+			}
+			val->rs.s[val->rs.len] = backup;
+			si = grep_sock_info(&host, (unsigned short)port,
+					(unsigned short)proto);
+			if (si!=NULL)
+			{
+				br->force_send_socket = si;
+			} else {
+				LM_WARN("no socket found to match [%.*s]\n",
+					val->rs.len, val->rs.s);
+				br->force_send_socket = NULL;
+			}
+		break;
+		case 5: /* count */
+			/* do nothing - cannot set the branch counter */
+		break;
+		case 6: /* flags */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				br->flags = 0;
+				break;
+			}
+			if(!(val->flags&PV_VAL_INT))
+			{
+				LM_ERR("int value required to set branch flags\n");
+				return -1;
+			}
+			br->flags = val->ri;
+		break;
+		default:
+			/* 0 - uri */
+			if(val==NULL || (val->flags&PV_VAL_NULL))
+			{
+				drop_sip_branch(idx);
+			} else {
+				if(!(val->flags&PV_VAL_STR))
+				{
+					LM_ERR("str value required to set branch uri\n");
+					return -1;
+				}
+				if(val->rs.len<=0)
+				{
+					drop_sip_branch(idx);
+				} else {
+					if (unlikely(val->rs.len > MAX_URI_SIZE - 1))
+					{
+						LM_ERR("too long r-uri: %.*s\n",
+								val->rs.len, val->rs.s);
+						return -1;
+					}
+					memcpy(br->uri, val->rs.s, val->rs.len);
+					br->uri[val->rs.len] = 0;
+					br->len = val->rs.len;
+				}
+			}
+	}
+
 	return 0;
 }
 
