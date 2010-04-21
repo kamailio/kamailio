@@ -170,13 +170,13 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(dp_fetch_rows<=0)
+		dp_fetch_rows = 1000;
+
 	if(init_data() != 0) {
 		LM_ERR("could not initialize data\n");
 		return -1;
 	}
-
-	if(dp_fetch_rows<=0)
-		dp_fetch_rows = 1000;
 
 	return 0;
 }
