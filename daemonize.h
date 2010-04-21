@@ -30,7 +30,7 @@
 #ifndef _daemonize_h
 #define _daemonize_h
 
-int daemonize(char* name);
+int daemonize(char* name, int daemon_status_fd_input);
 int do_suid();
 int increase_open_fds(int target);
 int set_core_dump(int enable, int size);

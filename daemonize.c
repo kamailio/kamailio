@@ -82,7 +82,7 @@
 		    (normally it shouldn't  be bigger  than 3) */
 
 /*! \brief daemon init, return 0 on success, -1 on error */
-int daemonize(char*  name)
+int daemonize(char*  name,  int daemon_status_fd_input)
 {
 	FILE *pid_stream;
 	pid_t pid;
@@ -113,8 +113,8 @@ int daemonize(char*  name)
 			LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
 			goto error;
 		}else if (pid!=0){	
-			/*parent process => exit */
-			exit(0);
+			/*parent process => return 0 */
+			return 0;
 		}
 		/* become session leader to drop the ctrl. terminal */
 		if (setsid()<0){
@@ -211,9 +211,11 @@ int daemonize(char*  name)
 		/* continue, leave it open */
 	};
 	
-	/* close any open file descriptors */
+	/* close all but the daemon_status_fd_input as the main process
+	  must still write into it to tell the parent to exit with 0 */
 	closelog();
 	for (r=3;r<MAX_FD; r++){
+		if(r !=  daemon_status_fd_input)
 			close(r);
 	}
 	

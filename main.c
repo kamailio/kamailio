@@ -73,6 +73,9 @@
  * 2008-08-08  sctp support (andrei)
  * 2008-08-19  -l support for mmultihomed addresses/addresses lists
  *                (e.g. -l (eth0, 1.2.3.4, foo.bar) ) (andrei)
+ *  2010-04-19 added daemon_status_fd pipe to communicate the parent process with
+               the main process in daemonize mode, so the parent process can return
+               the proper exit status code (ibc)
  */
 
 /*!
@@ -253,6 +256,10 @@ Options:\n\
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
 ;
+
+/*! pipe to communicate the parent and main processes when daemonizing in order
+    to get the proper exit status code */
+int daemon_status_fd[2];
 
 /* print compile-time constants */
 void print_ct_constants()
@@ -1565,7 +1572,14 @@ int main_loop()
 		}
 #endif
 		DBG("Expect maximum %d  open fds\n", get_max_open_fds());
-
+		/* in daemonize mode write into daemon_status_fd[1] so the parent process
+	 	will exit with 0 */
+		if (!dont_fork){
+			if (write(daemon_status_fd[1], "go", 2)<0){
+				LM_CRIT("error writing into daemon_status_fd[1]\n");
+				goto error;
+			}
+		}
 		for(;;){
 			handle_sigs();
 			pause();
@@ -1633,6 +1647,13 @@ int main(int argc, char** argv)
 	int debug_save, debug_flag;
 	int dont_fork_cnt;
 	struct name_lst* n_lst;
+
+	/* variables to control the master process exit status */
+	int fd_nbytes;
+	char fd_readbuffer[5];
+	struct timeval tval;
+	fd_set fds;
+	int res;
 
 	/*init*/
 	time(&up_since);
@@ -1827,6 +1848,7 @@ try_again:
 	debug_save = default_core_cfg.debug;
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+
 		goto error;
 	}
 	if (cfg_warnings){
@@ -2170,7 +2192,41 @@ try_again:
 #endif /* USE_SCTP */
 	/* init_daemon? */
 	if (!dont_fork){
-		if ( daemonize((log_name==0)?argv[0]:log_name) <0 ) goto error;
+		if (pipe(daemon_status_fd)<0){
+			LM_CRIT("could not create pipe(daemon_status_fd), exiting...\n");
+			goto error;
+		}
+		if (daemonize((log_name==0)?argv[0]:log_name, daemon_status_fd[1]) < 0)
+			goto error;
+		/* parent process? then wait the main process to write into the pipe */
+		if (getpid() == creator_pid) {
+			/* close the output side of the pipe */
+			close(daemon_status_fd[1]);
+#define MASTER_MAX_SLEEP 10
+try_select_again:	tval.tv_usec = 0;
+			tval.tv_sec = MASTER_MAX_SLEEP;/* 10 seconds */
+			FD_ZERO(&fds);
+			FD_SET(daemon_status_fd[0], &fds);
+			res = select(daemon_status_fd[0]+1, &fds, NULL, NULL, &tval);
+			if(res == -1 && errno == EINTR && time(NULL)-up_since < 2*MASTER_MAX_SLEEP) 
+				goto try_select_again;
+
+			switch(res){
+				case -1: /* error on select*/ LOG(L_ERR, "Error in select in master process\n");exit(-1);
+				case 0: /* timeout */ LOG(L_ERR, "timeout in select in master process\n");exit(-2);
+				default:{
+					fd_nbytes = read(daemon_status_fd[0], fd_readbuffer, 5);
+					/* something read, ok, exit with 0 */
+					if (fd_nbytes > 0)
+						exit(0);
+					/* nothing read, error */
+					else{
+						LOG(L_ERR, "Main process exited before writing to pipe\n");
+						exit(-1);
+					}
+				}
+			}
+		}
 	}
 	if (install_sigs() != 0){
 		fprintf(stderr, "ERROR: could not install the signal handlers\n");
