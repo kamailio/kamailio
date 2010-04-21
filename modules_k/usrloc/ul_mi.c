@@ -52,7 +52,8 @@
 static str mi_ul_cid = str_init("dfjrewr12386fd6-343@openser.mi");
 /*! user agent used for ul_add */
 static str mi_ul_ua  = str_init("SIP Router MI Server");
-
+/*! path used for ul_add and ul_rm_contact */
+static str mi_ul_path = str_init("dummypath");
 
 /************************ helper functions ****************************/
 
@@ -312,7 +313,7 @@ struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
 	}
 
 	contact = &node->next->next->value;
-	ret = get_ucontact( rec, contact, &mi_ul_cid, MI_UL_CSEQ+1, &con);
+	ret = get_ucontact( rec, contact, &mi_ul_cid, &mi_ul_path, MI_UL_CSEQ+1, &con);
 	if (ret < 0) {
 		unlock_udomain( dom, aor);
 		return 0;
@@ -518,7 +519,7 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 			goto lock_error;
 		c = 0;
 	} else {
-		if (get_ucontact( r, contact, &mi_ul_cid, MI_UL_CSEQ+1, &c) < 0)
+		if (get_ucontact( r, contact, &mi_ul_cid, &mi_ul_path, MI_UL_CSEQ+1, &c) < 0)
 			goto lock_error;
 	}
 

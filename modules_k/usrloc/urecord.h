@@ -177,15 +177,17 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c);
  * \param _r record where to search the contacts
  * \param _c contact string
  * \param _callid callid
+ * \param _path path 
  * \param _cseq CSEQ number
  * \param _co found contact
  * \return 0 - found, 1 - not found, -1 - invalid found, 
  * -2 - found, but to be skipped (same cseq)
  */
-typedef int (*get_ucontact_t)(urecord_t* _r, str* _c, str* _callid, int _cseq,
+typedef int (*get_ucontact_t)(urecord_t* _r, str* _c, str* _callid,
+		str* _path, int _cseq,
 		struct ucontact** _co);
-int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
+int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
+		int _cseq,
 		struct ucontact** _co);
-
 
 #endif

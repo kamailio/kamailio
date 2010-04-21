@@ -552,18 +552,44 @@ static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
 	return 0;
 }
 
+ /*!
++ * \brief Match a contact record to a contact string and path
++ * \param ptr contact record
++ * \param _c contact string
++ * \param _path path
++ * \return ptr on successfull match, 0 when they not match
++ */
+static inline struct ucontact* contact_path_match( ucontact_t* ptr, str* _c, str *_path)
+{
+	/* if no path is preset (in REGISTER request) or use_path is not configured
+	   in registrar module, default to contact_match() */
+	if( _path == NULL) return contact_match(ptr, _c);
+
+	while(ptr) {
+		if ( (_c->len==ptr->c.len) && (_path->len==ptr->path.len)
+		&& !memcmp(_c->s, ptr->c.s, _c->len)
+		&& !memcmp(_path->s, ptr->path.s, _path->len)
+		) {
+			return ptr;
+		}
+
+		ptr = ptr->next;
+	}
+	return 0;
+}
 
 /*!
  * \brief Get pointer to ucontact with given contact
  * \param _r record where to search the contacts
  * \param _c contact string
  * \param _callid callid
+ * \param _path path
  * \param _cseq CSEQ number
  * \param _co found contact
  * \return 0 - found, 1 - not found, -1 - invalid found, 
  * -2 - found, but to be skipped (same cseq)
  */
-int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
+int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 														struct ucontact** _co)
 {
 	ucontact_t* ptr;
@@ -580,6 +606,9 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 		case CONTACT_CALLID:
 			ptr = contact_callid_match( _r->contacts, _c, _callid);
 			no_callid = 1;
+			break;
+		case CONTACT_PATH:
+			ptr = contact_path_match( _r->contacts, _c, _path);
 			break;
 		default:
 			LM_CRIT("unknown matching_mode %d\n", matching_mode);

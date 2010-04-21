@@ -264,6 +264,7 @@ static int mod_init(void)
 	switch (matching_mode) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
+		case CONTACT_PATH:
 			break;
 		default:
 			LM_ERR("invalid matching mode %d\n", matching_mode);

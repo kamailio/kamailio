@@ -420,7 +420,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		}
 
 		if ( r->contacts==0 ||
-		ul.get_ucontact(r, &_c->uri, ci->callid, ci->cseq+1, &c)!=0 ) {
+		ul.get_ucontact(r, &_c->uri, ci->callid, ci->path, ci->cseq+1, &c) != 0) {
 			if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
 				LM_ERR("failed to insert contact\n");
@@ -494,8 +494,8 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e);
-		
-		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &cont);
+
+		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->path, ci->cseq, &cont);
 		if (ret==-1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
@@ -575,7 +575,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		calc_contact_expires(_m, _c->expires, &expires);
 
 		/* search for the contact*/
-		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &c);
+		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->path, ci->cseq, &c);
 		if (ret==-1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;

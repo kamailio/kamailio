@@ -48,8 +48,17 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>contact nad callid based</emphasis> - it an extension
+				<emphasis>contact and callid based</emphasis> - it an extension
 				of the first case - the contact and callid must matched as 
+				string; the cseg must be higher than the previous one - so be
+				careful how you deal with REGISTER retransmissions in this 
+				case.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>contact and patch based</emphasis> - it an extension
+				of the first case - the contact and patch must matched as 
 				string; the cseg must be higher than the previous one - so be
 				careful how you deal with REGISTER retransmissions in this 
 				case.
@@ -580,6 +589,13 @@ modparam("usrloc", "db_mode", 2)
 			<listitem>
 				<para><emphasis>1</emphasis> - CONTACT and CALLID based 
 				matching algorithm.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>2</emphasis> - CONTACT and PATH based
+				matching algorithm.  This mode is like mode <emphasis>0</emphasis>
+				but allows for duplicate contacts from differing paths.
+				If no path is available, it defaults to mode 0.
 				</para>
 			</listitem>
 		</itemizedlist>

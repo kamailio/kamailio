@@ -84,6 +84,7 @@ extern db_func_t ul_dbf;
  */
 #define CONTACT_ONLY            (0)
 #define CONTACT_CALLID          (1)
+#define CONTACT_PATH		(2)
 
 extern int matching_mode;
 
