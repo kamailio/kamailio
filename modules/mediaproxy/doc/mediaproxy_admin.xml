@@ -17,7 +17,7 @@
   <section>
   <title>Overview</title>
     <para>
-      Mediaproxy is an &kamailio; module that is designed to allow automatic 
+      Mediaproxy is an &siprouter; module that is designed to allow automatic 
       NAT traversal for the majority of existing SIP clients. This means 
       that there will be no need to configure anything in particular on 
       the NAT box to allow these clients to work behind NAT when using 
@@ -38,7 +38,7 @@
       Mediaproxy consists of 2 components:
       <itemizedlist>
         <listitem>
-          <para>The &kamailio; mediaproxy module</para>
+          <para>The &siprouter; mediaproxy module</para>
         </listitem>
         <listitem>
           <para>
@@ -52,7 +52,7 @@
     </para>
 
     <para>
-      The mediaproxy dispatcher runs on the same machine as &kamailio;
+      The mediaproxy dispatcher runs on the same machine as &siprouter;
       and its purpose is to select a media relay for a call. The media
       relay may run on the same machine as the dispatcher or on multiple
       remote hosts and its purpose is to forward the streams between the
@@ -66,9 +66,9 @@
     </para>
 
     <para>
-      &kamailio; will ask the media relay to allocate as many ports as there are
+      &siprouter; will ask the media relay to allocate as many ports as there are
       media streams in the SDP offer and answer. The media relay will send back
-      to &kamailio; the IP address and port(s) for them. Then &kamailio; will
+      to &siprouter; the IP address and port(s) for them. Then &siprouter; will
       replace the original contact IP and RTP ports from the SDP messages with
       the ones provided by the media relay. By doing this, both user agents will
       try to contact the media relay instead of communicating directly with each
@@ -115,7 +115,7 @@
   <section>
   <title>Dependencies</title>
     <section>
-    <title>&kamailio; Modules</title>
+    <title>&siprouter; Modules</title>
       <para>
         The following modules must be loaded before this module:
         <itemizedlist>
@@ -133,11 +133,12 @@
     <title>External Libraries or Applications</title>
       <para>
         The following libraries or applications must be installed before
-        running &kamailio; with this module loaded:
+        running &siprouter; with this module loaded:
         <itemizedlist>
           <listitem>
             <para>
-              <emphasis>None</emphasis>.
+              <emphasis>Mediaproxy version 2.4.2 or higher (but not
+    necessarily on the same host as &siprouter;)</emphasis>.
             </para>
           </listitem>
         </itemizedlist>
