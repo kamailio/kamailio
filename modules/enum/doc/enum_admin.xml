@@ -131,7 +131,7 @@ modparam("enum", "domain_suffix", "e1234.arpa.")
 		</para>
 		<note>
 		<para>
-			Currently &kamailio; does not support tel URIs. This means that at present
+			Currently &siprouter; does not support tel URIs. This means that at present
 			tel_uri_params is appended as URI parameters to every URI.
 		</para>
 		</note>
