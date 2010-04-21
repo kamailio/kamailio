@@ -57,8 +57,8 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>contact and patch based</emphasis> - it an extension
-				of the first case - the contact and patch must matched as 
+				<emphasis>contact and path based</emphasis> - it an extension
+				of the first case - the contact and path must matched as 
 				string; the cseg must be higher than the previous one - so be
 				careful how you deal with REGISTER retransmissions in this 
 				case.
