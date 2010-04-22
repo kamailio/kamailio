@@ -207,7 +207,7 @@
 		</para>
 
 		<programlisting format="linespecific">
-    LD_LIBRARY_PATH=/usr/local/lib kamctl start
+    LD_LIBRARY_PATH=/usr/local/lib &ctltool; start
 		</programlisting>
 
 	    </answer>

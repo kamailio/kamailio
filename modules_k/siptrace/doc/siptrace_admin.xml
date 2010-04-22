@@ -42,10 +42,10 @@
 	The tracing can be turned on/off using fifo commad.
 	</para>
 	<para>
-	kamctl fifo sip_trace on
+	&ctltool; fifo sip_trace on
 	</para>
 	<para>
-	kamctl fifo sip_trace off
+	&ctltool; fifo sip_trace off
 	</para>
 	</section>
 	<section>

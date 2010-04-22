@@ -98,7 +98,7 @@ mv acc_4.log acc_3.log.20050605
 			Send &kamailio; the MI command to close and reopen the
 			renamed files. For example, using FIFO:
 			<screen>
-kamctl fifo flat_rotate
+&ctltool; fifo flat_rotate
 			</screen>
 			This will force &kamailio; to close the renamed files and open
 			new ones with original names, such as

@@ -235,7 +235,7 @@ pv_unset("$avp("s:x")");
 			<title><function moreinfo="none">shv_set</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ kamctl fifo shv_set debug int 0
+$ &ctltool; fifo shv_set debug int 0
 ...
 </programlisting>
 			</example>
@@ -262,8 +262,8 @@ $ kamctl fifo shv_set debug int 0
 			<title><function moreinfo="none">shv_get</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ kamctl fifo shv_get debug
-$ kamctl fifo shv_get
+$ &ctltool; fifo shv_get debug
+$ &ctltool; fifo shv_get
 ...
 </programlisting>
 			</example>

@@ -153,7 +153,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		
 		<para>Parameters: <emphasis>tablename (or db_path); to reload a particular table 
 		provide the tablename as the arguement (eg subscriber); to reload all tables provide the db_path to
-		the db files. The path can be found in kamctlrc DB_PATH variable. 
+		the db files. The path can be found in &ctltool;rc DB_PATH variable. 
 		</emphasis></para>
 	</section>
 	</section>
@@ -206,14 +206,14 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		<para>
 		Decide where (on the filesystem) you want to install the Berkeley DB files.
 		For instance, '/usr/local/etc/kamailio/db_berkeley' directory.
-		Make note of this directory as we need to add this path to the kamctlrc file.
+		Make note of this directory as we need to add this path to the &ctltool;rc file.
 		Note: Kamailio will not startup without these DB files.
 		</para>
 		
 		<para>
-		Edit kamctlrc - There are two parameters in this file that should be 
+		Edit &ctltool;rc - There are two parameters in this file that should be 
 		configured before openserctrdb script can work properly: DBENGINE and DB_PATH.
-		Edit file: '/usr/local/etc/kamailio/kamctlrc'
+		Edit file: '/usr/local/etc/kamailio/&ctltool;rc'
 		</para>
 	        <programlisting  format="linespecific">
 		## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT, by default none is loaded
@@ -500,7 +500,7 @@ username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(str) last_
 	
 	<para>
 	Use the kamdbctl script for maintaining Kamailio Berkeley DB tables.
-	This script assumes you have DBENGINE and DB_PATH setup correctly in kamctlrc.
+	This script assumes you have DBENGINE and DB_PATH setup correctly in &ctltool;rc.
 	Note Unsupported commands are- backup, restore, migrate, copy, serweb.
 	<example>
 	<title>kamdbctl</title>

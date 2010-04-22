@@ -139,7 +139,7 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 				<title><function>pdb_status</function> usage</title>
 				<programlisting format="linespecific">
 ...
-kamctl fifo pdb_status
+&ctltool; fifo pdb_status
 ...
 				</programlisting>
 	    </example>
@@ -155,7 +155,7 @@ kamctl fifo pdb_status
 				<title><function>pdb_activate</function> usage</title>
 				<programlisting format="linespecific">
 ...
-kamctl fifo pdb_activate
+&ctltool; fifo pdb_activate
 ...
 				</programlisting>
 	    </example>
@@ -173,7 +173,7 @@ kamctl fifo pdb_activate
 				<title><function>pdb_deactivate</function> usage</title>
 				<programlisting format="linespecific">
 ...
-kamctl fifo pdb_deactivate
+&ctltool; fifo pdb_deactivate
 ...
 				</programlisting>
 	    </example>

@@ -33,6 +33,9 @@
 <!ENTITY kamailiousersmail "<email>users@lists.kamailio.org</email>">
 <!ENTITY kamailiodevmail "<email>devel@lists.kamailio.org</email>">
 
+<!ENTITY ctltool "kamctl">
+<!ENTITY ctltoolrc "kamctlrc">
+
 <!ENTITY adminguide "Admin Guide">
 <!ENTITY develguide "Developer Guide">
 <!ENTITY faqguide "Frequently Asked Questions">

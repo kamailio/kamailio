@@ -188,7 +188,7 @@ if (!check_blacklist("global_blacklist")))
 		<title><function>reload_blacklists</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo reload_blacklist
+&ctltool; fifo reload_blacklist
 ...
 		</programlisting>
 	    </example>

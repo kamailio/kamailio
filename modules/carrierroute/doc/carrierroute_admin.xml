@@ -663,7 +663,7 @@ cr_tree_rewrite_uri(tree, domain)
 		<title><function>cr_replace_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
+&ctltool; fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
 		</programlisting>
 	    </example>
@@ -696,7 +696,7 @@ kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 		<title><function>cr_deactivate_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+&ctltool; fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
 		</programlisting>
 	    </example>
@@ -723,7 +723,7 @@ kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 		<title><function>cr_activate_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
+&ctltool; fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
 		</programlisting>
 	    </example>
@@ -766,7 +766,7 @@ kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 		<title><function>cr_add_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
+&ctltool; fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 		</programlisting>
 	    </example>
@@ -810,7 +810,7 @@ kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 		<title><function>cr_delete_host</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
+&ctltool; fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 		</programlisting>
 	    </example>

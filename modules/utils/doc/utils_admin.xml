@@ -246,7 +246,7 @@ if (method=="MESSAGE") {
 		<title><function>forward_list</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo forward_list
+&ctltool; fifo forward_list
 id switch                         filter proxy
  0    off      REGISTER:INVITE:SUBSCRIBE host-a.domain-a:5060
 ...
@@ -263,7 +263,7 @@ id switch                         filter proxy
 		<title><function>forward_switch</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo sp_forward_switch 0=on
+&ctltool; fifo sp_forward_switch 0=on
 ...
 		</programlisting>
 	    </example>
@@ -293,7 +293,7 @@ kamctl fifo sp_forward_switch 0=on
 		<title><function>forward_filter</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo sp_forward_filter 0=REGISTER:INVITE
+&ctltool; fifo sp_forward_filter 0=REGISTER:INVITE
 ...
 		</programlisting>
 	    </example>
@@ -312,7 +312,7 @@ kamctl fifo sp_forward_filter 0=REGISTER:INVITE
 		<title><function>forward_proxy</function> usage</title>
 		<programlisting format="linespecific">
 ...
-kamctl fifo sp_forward_proxy 0=host-c.domain-c:5060
+&ctltool; fifo sp_forward_proxy 0=host-c.domain-c:5060
 ...
 		</programlisting>
 	    </example>

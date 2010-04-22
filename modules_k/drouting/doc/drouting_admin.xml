@@ -1321,7 +1321,7 @@ if (is_from_gw("3","1") {
 	<para>
 	The module requires 3 table in &kamailio; database: dr_groups,
 	dr_gateways, dr_rules. The SQL syntax to create them can be
-	found in drouting-create.sql script in kamctl db directories.
+	found in drouting-create.sql script in &ctltool; db directories.
 	You can also find the complete
 	database documentation on the project webpage, &kamailiodbdocslink;.
 	</para>
