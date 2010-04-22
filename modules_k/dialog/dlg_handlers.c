@@ -200,6 +200,8 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	str contact;
 	str rr_set;
 
+	dlg->bind_addr[leg] = msg->rcv.bind_address;
+
 	/* extract the cseq number as string */
 	if (leg==DLG_CALLER_LEG) {
 		if((!msg->cseq && (parse_headers(msg,HDR_CSEQ_F,0)<0 || !msg->cseq))
@@ -269,7 +271,6 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		goto error0;
 	}
 
-	dlg->bind_addr[leg] = msg->rcv.bind_address;
 	if (rr_set.s) pkg_free(rr_set.s);
 
 	return 0;
