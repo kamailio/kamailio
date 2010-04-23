@@ -190,18 +190,6 @@ Send raw FIFO command
 .PP
 Commands labeled with (*) will prompt for a MySQL password.
 If the environment variable PW is set, the password will not be prompted.
-.PP
-IP addresses must be entered in dotted quad format e.g. 1.2.3.4
-<uri_scheme> and <transport> must be entered in integer or text,
-e.g. transport '2' is identical to transport 'tcp'.
-.br
-scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls
-.br
-Examples:
-.br
-lcr addgw level3 1.2.3.4 5080 sip tcp 1
-.br
-lcr addroute +1 '' 1 1
 
 .SH AUTHORS
 
