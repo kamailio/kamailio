@@ -568,7 +568,7 @@ again:
 #endif
 	if (n==-1){
 		su2ip_addr(&ip, &dst->to);
-		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%d,0,%s:%d,%d): %s(%d)\n",
+		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%u,0,%s:%d,%d): %s(%d)\n",
 				buf,len, ip_addr2a(&ip), su_getport(&dst->to), tolen,
 				strerror(errno),errno);
 		if (errno==EINTR) goto again;

@@ -1368,7 +1368,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
-		LOG(L_ERR, "build_uac_req(): no shmem\n");
+		LOG(L_ERR, "build_uac_req(): no shmem (%d)\n", *len);
 		goto error;
 	}
 	
