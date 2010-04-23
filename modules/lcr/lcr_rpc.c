@@ -69,7 +69,7 @@ static void dump_gws(rpc_t* rpc, void* c)
 	void* st;
 	unsigned int i, j;
 	enum sip_protos transport;
-	str hostname;
+	str hostname, params;
 	str tag;
 	struct gw_info *gws;
 
@@ -91,6 +91,9 @@ static void dump_gws(rpc_t* rpc, void* c)
 		rpc->struct_add(st, "S", "hostname", &hostname);
 		if  (gws[i].port > 0)
 			rpc->struct_add(st, "d", "port", gws[i].port);
+		params.s=gws[i].params;
+		params.len=gws[i].params_len;
+		rpc->struct_add(st, "S", "params", &params);
 		if (gws[i].scheme == SIP_URI_T) {
 		    rpc->struct_add(st, "s", "scheme", "sip");
 		} else {

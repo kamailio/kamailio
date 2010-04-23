@@ -61,14 +61,22 @@
 	value being 0).  Weight is an integer value from 1 to 254.
 	</para>
 	<para>
-        The function <emphasis>next_gw()</emphasis> can then be used to select one gateway at a
-	time for forwarding.  Upon each call, the user part of the original request URI is first 
-	stripped by the number of characters as specified by the gateway's strip count and then prefixed by
-	the gateway's tag.  Upon first call, if a gateway's hostname is NULL, the request URI will be 
-	rewritten based on gateway's URI scheme, IP address, port, and transport protocol.  If hostname is not NULL,
-	the request-URI is rewritten based on the gateway's URI scheme and hostname, and destination URI is set 
-	based on gateway's URI scheme, IP address, port, and transport protocol.  Upon
-	subsequent calls, the same is done, but instead of rewriting the Request URI, a new branch is added.
+        The function <emphasis>next_gw()</emphasis> can then be used to
+	select one gateway at a 
+	time for forwarding.  Upon each call, the user part of the
+	original request URI is first  
+	stripped by the number of characters as specified by the
+	gateway's strip count and then prefixed by 
+	the gateway's tag.  Upon first call, if a gateway's hostname is
+	NULL, the request URI will be  
+	rewritten based on gateway's URI scheme, IP address, port,
+	parameters, and transport protocol.  If hostname is not NULL,
+	the request-URI is rewritten based on the gateway's URI scheme,
+	hostname, and parameters, and destination URI is set 
+	based on gateway's URI scheme, IP address, port, and transport
+	protocol.  Upon 
+	subsequent calls, the same is done, but instead of rewriting the
+	Request URI, a new branch is added. 
 	</para>
         <para>
         Valid URI scheme values are NULL = sip, 1 = sip and 2
@@ -282,6 +290,28 @@ modparam("lcr", "hostname_column","hostname")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","port_column","port")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>params_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway's parameters that is
+		used in Request-URI, when request is sent to the
+		gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>params</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>params_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "params_column","parameters")
 ...
 </programlisting>
 		</example>
@@ -734,7 +764,8 @@ modparam("lcr", "fetch_rows", 3000)
 		<function moreinfo="none">load_gws(lcr_id, caller_uri)</function>
 		</title>
 		<para>
-		Loads URI schemes, IP addresses, hostnames, ports, and
+		Loads URI schemes, IP addresses, hostnames, ports,
+		params, and
 		transports of matching gateways to gw_uri_avp
 		(see Overview section).  Argument lcr_id specifies the used
 	        LCR instance.  It can be an integer or a pseudo
@@ -773,18 +804,21 @@ if (!load_gws("1", "$var(caller_uri)")) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-		Upon first call, replaces URI scheme, host,
-		port, and transport of Request-URI by the values stored
-		in first gw_uri_avp and destroys that AVP (see
-		Overview section).  Saves user part of Request-URI into
+		Upon first call, fetches values stored in first
+		gw_uri_avp and then destroys that AVP.  If gateway's
+		hostname is NULL, rewrites Request URI based on
+		gateway's URI scheme, IP address, port, parameters, and
+		transport protocol. If hostname is not NULL, the
+		rewrites Request-URI based on the gateway's URI scheme,
+		hostname, and parameters, and sets destination URI based
+		on gateway's URI scheme, IP address, port, and transport
+		protocol. Saves user part of Request-URI into
 		ruri_user_avp for use in subsequent next_gw() calls.
 		</para>
 		<para>
-		Upon subsequent calls, appends a new branch URI to
-		the request, where URI scheme, host, port, and transport of
-		are taken from values stored in the first gw_uri_avp
-		and destroys that AVP.  URI user is taken from
-		ruri_user_avp.
+		Upon subsequent calls, does the same as in above, but
+		instead of rewriting Request URI, appends a new branch
+		to the request.  Takes URI user from ruri_user_avp.
 		</para>
 		<para>
 		As a side effect, stores gateway's flags to flags_avp.

@@ -49,6 +49,7 @@
 #define MAX_NO_OF_GWS 128
 #define MAX_TAG_LEN 16
 #define MAX_USER_LEN 64
+#define MAX_PARAMS_LEN 64
 
 struct lcr_info {
     char prefix[MAX_PREFIX_LEN + 1];
@@ -69,6 +70,8 @@ struct gw_info {
     char hostname[MAX_HOST_LEN];
     unsigned short hostname_len;
     unsigned int port;
+    char params[MAX_PARAMS_LEN];
+    unsigned short params_len;
     unsigned int grp_id;
     uri_type scheme;
     uri_transport transport;
