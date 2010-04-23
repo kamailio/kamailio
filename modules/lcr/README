@@ -10,7 +10,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright � 2005-2010 Juha Heinanen
+   Copyright © 2005-2010 Juha Heinanen
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -288,7 +288,7 @@ Chapter 1. Admin Guide
 
    URL of the database table to be used.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is “mysql://openserro:openserro@localhost/openser”.
 
    Example 1.1. Setting db_url module parameter
 ...
@@ -299,7 +299,7 @@ modparam("lcr","db_url","dbdriver://username:password@dbhost/dbname")
 
    Name of the table holding gateways definitions.
 
-   Default value is "gw".
+   Default value is “gw”.
 
    Example 1.2. Setting gw_table module parameter
 ...
@@ -311,7 +311,7 @@ modparam("lcr","gw_table","gw")
    Name of the column holding the identifier of an LCR instance. Common to
    both gw and lcr tables.
 
-   Default value is "lcr_id".
+   Default value is “lcr_id”.
 
    Example 1.3. Setting lcr_id_column module parameter
 ...
@@ -322,7 +322,7 @@ modparam("lcr", "lcr_id_column", "lcr_identifier")
 
    Name of the column holding the gateway name.
 
-   Default value is "gw_name".
+   Default value is “gw_name”.
 
    Example 1.4. Setting gw_name_column module parameter
 ...
@@ -334,7 +334,7 @@ modparam("lcr","gw_name_column","gw_name")
    Name of the column holding the group ID of gateway both in gw and lcr
    tables.
 
-   Default value is "grp_id".
+   Default value is “grp_id”.
 
    Example 1.5. Setting grp_id_column module parameter
 ...
@@ -345,7 +345,7 @@ modparam("lcr","grp_id_column","grp_id")
 
    Name of the column holding the IP address of the gateway.
 
-   Default value is "ip_addr".
+   Default value is “ip_addr”.
 
    Example 1.6. Setting ip_addr_column module parameter
 ...
@@ -359,7 +359,7 @@ modparam("lcr","ip_addr_column","ip_addr")
    not forwarded based on hostname, but based on gateway's IP address in
    destination URI.
 
-   Default value is "hostname".
+   Default value is “hostname”.
 
    Example 1.7. Setting hostname_column module parameter
 ...
@@ -370,7 +370,7 @@ modparam("lcr", "hostname_column","hostname")
 
    Name of the column holding the port number of the gateway.
 
-   Default value is "port".
+   Default value is “port”.
 
    Example 1.8. Setting port_column module parameter
 ...
@@ -381,7 +381,7 @@ modparam("lcr","port_column","port")
 
    Name of the column holding the uri scheme of the gateway.
 
-   Default value is "uri_scheme".
+   Default value is “uri_scheme”.
 
    Example 1.9. Setting uri_scheme_column module parameter
 ...
@@ -393,7 +393,7 @@ modparam("lcr","uri_scheme_column","uri_scheme")
    Name of the column holding the transport type to be used for the
    gateway.
 
-   Default value is "transport".
+   Default value is “transport”.
 
    Example 1.10. Setting transport_column module parameter
 ...
@@ -405,7 +405,7 @@ modparam("lcr","transport_column","transport")
    Name of the column holding the number of characters to be stripped from
    the front of Request URI user part before inserting tag.
 
-   Default value is "strip".
+   Default value is “strip”.
 
    Example 1.11. Setting strip_column module parameter
 ...
@@ -416,7 +416,7 @@ modparam("lcr","strip_column","strip_count")
 
    Name of the column holding gateway specific tag string.
 
-   Default value is "tag".
+   Default value is “tag”.
 
    Example 1.12. Setting tag_column module parameter
 ...
@@ -427,7 +427,7 @@ modparam("lcr","tag_column","gw_tag")
 
    Name of the column holding gateway's weight within its group.
 
-   Default value is "weight".
+   Default value is “weight”.
 
    Example 1.13. Setting weight_column module parameter
 ...
@@ -438,7 +438,7 @@ modparam("lcr","weight_column","gw_weight")
 
    Name of the column holding gateway specific flag values.
 
-   Default value is "flags".
+   Default value is “flags”.
 
    Example 1.14. Setting flags_column module parameter
 ...
@@ -450,7 +450,7 @@ modparam("lcr","flags_column","gw_flags")
    Name of the column holding UNIX timestamp telling the time until which
    the gw is considered as defunct.
 
-   Default value is "defunct".
+   Default value is “defunct”.
 
    Example 1.15. Setting defunct_column module parameter
 ...
@@ -461,7 +461,7 @@ modparam("lcr","defunct_column","defunct_until")
 
    Name of the table holding the LCR rules.
 
-   Default value is "lcr".
+   Default value is “lcr”.
 
    Example 1.16. Setting lcr_table module parameter
 ...
@@ -472,7 +472,7 @@ modparam("lcr","lcr_table","lcr")
 
    Name of the column holding prefix of Request URI user part.
 
-   Default value is "prefix".
+   Default value is “prefix”.
 
    Example 1.17. Setting prefix_column module parameter
 ...
@@ -483,7 +483,7 @@ modparam("lcr","prefix_column","prefix")
 
    Name of the column holding the FROM (source) URI.
 
-   Default value is "from_uri".
+   Default value is “from_uri”.
 
    Example 1.18. Setting from_uri_column module parameter
 ...
@@ -494,7 +494,7 @@ modparam("lcr","from_uri_column","from_uri")
 
    Name of the column holding the priority of the rule.
 
-   Default value is "priority".
+   Default value is “priority”.
 
    Example 1.19. Setting priority_column module parameter
 ...
@@ -611,7 +611,7 @@ modparam("lcr", "lcr_hash_size", 1024)
    3750. In order for this parameter to have effect, the database driver
    must support fetch_result() capability.
 
-   Default value is "2000".
+   Default value is “2000”.
 
    Example 1.28. Set fetch_rows parameter
 ...
@@ -636,7 +636,8 @@ modparam("lcr", "fetch_rows", 3000)
    variable containing an integer value. Caller's URI is given by
    caller_uri argument, which must be a pseudo variable.
 
-   Returns 1 on success and -1 on error.
+   Returns 1 if at least one matching gateway was found, 2 if no matching
+   gateways was found, and -1 on error.
 
    Execution time of load_gws() function is O(N) * O(M), where N is number
    of different prefix lengths and M is number of collisions for matching

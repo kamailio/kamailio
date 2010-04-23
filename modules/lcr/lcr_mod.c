@@ -1810,7 +1810,11 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 	add_avp(lcr_id_avp_type, lcr_id_avp, val);
     }
     
-    return 1;
+    if (gw_index > 0) {
+	return 1;
+    } else {
+	return 2;
+    }
 }
 
 

@@ -743,7 +743,8 @@ modparam("lcr", "fetch_rows", 3000)
 		must be a pseudo variable.
 		</para>
 		<para>
-		Returns 1 on success and -1 on error.
+		Returns 1 if at least one matching gateway was found, 2
+	if no matching gateways was found, and -1 on error.
 		</para>
 		<para>
 		Execution time of load_gws() function is O(N) * O(M),
