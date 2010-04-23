@@ -97,6 +97,7 @@
 	#include "select.h"
 	#include "cfg.tab.h"
 	#include "sr_compat.h"
+	#include "ppcfg.h"
 
 	/* states */
 	#define INITIAL_S		0
@@ -109,12 +110,13 @@
 	#define PVAR_P_S                7  /* pvar: $(...)  or $foo(...)*/
 	#define PVARID_S                8  /* $foo.bar...*/
 	#define STR_BETWEEN_S		9
-	#define LINECOMMENT_S            10
+	#define LINECOMMENT_S           10
 	#define DEFINE_S                11
 	#define DEFINE_EOL_S            12
-	#define IFDEF_S                    13
-	#define IFDEF_EOL_S                14
+	#define IFDEF_S                 13
+	#define IFDEF_EOL_S             14
 	#define IFDEF_SKIP_S            15
+	#define DEFINE_DATA_S           16
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -136,6 +138,8 @@
 	static int ign_lines=0;
 	static int ign_columns=0;
 	char* yy_number_str=0; /* str correspondent for the current NUMBER token */
+	int r = 0;
+	str *sdef = 0;
 
 	static char* addchar(struct str_buf *, char);
 	static char* addstr(struct str_buf *, char*, int);
@@ -163,6 +167,8 @@
 	} *sr_yy_fname_list = 0;
 
 	static int  pp_define(int len, const char * text);
+	static int  pp_define_set(int len, char * text);
+	static str  *pp_define_get(int len, const char * text);
 	static int  pp_ifdef_type(int pos);
 	static void pp_ifdef_var(int len, const char * text);
 	static void pp_ifdef();
@@ -174,7 +180,7 @@
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
 %x PVARID INCLF
-%x LINECOMMENT DEFINE_ID DEFINE_EOL IFDEF_ID IFDEF_EOL IFDEF_SKIP
+%x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -537,6 +543,9 @@ ENDIF        endif
 /* else is already defined */
 
 EAT_ABLE	[\ \t\b\r]
+
+/* pre-processing blocks */
+SUBST       subst
 
 %%
 
@@ -1118,6 +1127,7 @@ EAT_ABLE	[\ \t\b\r]
 <STRING2>{TICK}  { count_more(); state=old_state; BEGIN(old_initial);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
+						r = pp_subst_run(&s_buf.s);
 						yylval.strval=s_buf.s;
 						memset(&s_buf, 0, sizeof(s_buf));
 						return STRING;
@@ -1147,6 +1157,7 @@ EAT_ABLE	[\ \t\b\r]
 									/* ignore the whitespace now that is
 									  counted, return saved string value */
 									state=old_state; BEGIN(old_initial);
+									r = pp_subst_run(&s_buf.s);
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
 									return STRING;
@@ -1169,13 +1180,26 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
 												sr_cfg_compat=SR_COMPAT_MAX;}
 
-<INITIAL>{COM_LINE}!{DEFINE}{EAT_ABLE}+        { count();
-										state = DEFINE_S; BEGIN(DEFINE_ID); }
-<DEFINE_ID>{ID}                                { count();
-								if (pp_define(yyleng, yytext)) return 1;
-								state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
-<DEFINE_EOL>{EAT_ABLE}*{CR}                    { count();
+<INITIAL>{COM_LINE}!{DEFINE}{EAT_ABLE}+	{	count();
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<DEFINE_ID>{ID}                 {	count();
+									if (pp_define(yyleng, yytext)) return 1;
+									state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
+<DEFINE_EOL>{EAT_ABLE}			{	count(); }
+<DEFINE_EOL>{CR}				{	count();
 									state = INITIAL; BEGIN(INITIAL); }
+<DEFINE_EOL>.                   {	count();
+									addstr(&s_buf, yytext, yyleng);
+									state = DEFINE_DATA_S; BEGIN(DEFINE_DATA); }
+<DEFINE_DATA>\\{CR}		{	count(); } /* eat the escaped CR */
+<DEFINE_DATA>{CR}		{	count();
+							if (pp_define_set(strlen(s_buf.s), s_buf.s)) return 1;
+							memset(&s_buf, 0, sizeof(s_buf));
+							state = INITIAL; BEGIN(INITIAL); }
+<DEFINE_DATA>.          {	count();
+							addstr(&s_buf, yytext, yyleng); }
+
+<INITIAL>{COM_LINE}!{SUBST}	{ count();  return SUBST;}
 
 <INITIAL,IFDEF_SKIP>{COM_LINE}!{IFDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(1)) return 1;
@@ -1201,10 +1225,17 @@ EAT_ABLE	[\ \t\b\r]
 								BEGIN(LINECOMMENT); }
 <LINECOMMENT>.*{CR}        { count(); state = INITIAL_S; BEGIN(INITIAL); }
 
-<INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng);
-									yylval.strval=s_buf.s;
-									memset(&s_buf, 0, sizeof(s_buf));
-									return ID; }
+<INITIAL>{ID}		{	if ((sdef = pp_define_get(yyleng, yytext))!=NULL) {
+							for (r=sdef->len-1; r>=0; r--)
+								unput(sdef->s[r]); /* reverse order */
+						} else {
+							count();
+							addstr(&s_buf, yytext, yyleng);
+							yylval.strval=s_buf.s;
+							memset(&s_buf, 0, sizeof(s_buf));
+							return ID;
+						}
+					}
 <INITIAL>{NUM_ID}			{ count(); addstr(&s_buf, yytext, yyleng);
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
@@ -1225,6 +1256,7 @@ EAT_ABLE	[\ \t\b\r]
 										case STR_BETWEEN_S:
 											state=old_state;
 											BEGIN(old_initial);
+											r = pp_subst_run(&s_buf.s);
 											yylval.strval=s_buf.s;
 											memset(&s_buf, 0, sizeof(s_buf));
 											return STRING;
@@ -1552,15 +1584,15 @@ static int sr_pop_yy_state()
 
 /* define/ifdef support */
 
-#define MAX_DEFINES    1024
-static str pp_defines[MAX_DEFINES];
+#define MAX_DEFINES    256
+static str pp_defines[MAX_DEFINES][2];
 static int pp_num_defines = 0;
 
 /* pp_ifdef_stack[i] is 1 if the ifdef test at depth i is either
  * ifdef(defined), ifndef(undefined), or the opposite of these
  * two, but in an else branch
  */
-#define MAX_IFDEFS    128
+#define MAX_IFDEFS    256
 static int pp_ifdef_stack[MAX_IFDEFS];
 static int pp_sptr = 0; /* stack pointer */
 
@@ -1570,7 +1602,7 @@ static int pp_lookup(int len, const char * text)
 	int i;
 
 	for (i=0; i<pp_num_defines; i++)
-		if (STR_EQ(pp_defines[i], var))
+		if (STR_EQ(pp_defines[i][0], var))
 			return i;
 
 	return -1;
@@ -1588,12 +1620,75 @@ static int pp_define(int len, const char * text)
 		return -1;
 	}
 
-	pp_defines[pp_num_defines].len = len;
-	pp_defines[pp_num_defines].s = (char*)pkg_malloc(len+1);
-	memcpy(pp_defines[pp_num_defines].s, text, len);
+	pp_defines[pp_num_defines][0].len = len;
+	pp_defines[pp_num_defines][0].s = (char*)pkg_malloc(len+1);
+	memcpy(pp_defines[pp_num_defines][0].s, text, len);
+	pp_defines[pp_num_defines][1].len = 0;
+	pp_defines[pp_num_defines][1].s = NULL;
 	pp_num_defines++;
 
 	return 0;
+}
+
+static int  pp_define_set(int len, char *text)
+{
+	if(len<=0) {
+		LOG(L_DBG, "no define value - ignoring\n");
+		return 0;
+	}
+	if (pp_num_defines == MAX_DEFINES) {
+		LOG(L_BUG, "BUG: setting define value, but no define id yet\n");
+		return -1;
+	}
+	if (pp_num_defines == 0) {
+		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
+		return -1;
+	}
+
+	if (pp_defines[pp_num_defines-1][0].s == NULL) {
+		LOG(L_BUG, "BUG: last define ID is null\n");
+		return -1;
+	}
+
+	if (pp_defines[pp_num_defines-1][1].s != NULL) {
+		LOG(L_BUG, "BUG: ID %.*s redefined\n",
+			pp_defines[pp_num_defines-1][0].len,
+			pp_defines[pp_num_defines-1][0].s);
+		return -1;
+	}
+
+	pp_defines[pp_num_defines-1][1].len = len;
+	pp_defines[pp_num_defines-1][1].s = text;
+	LM_DBG("### setting define ID [%.*s] value [%.*s]\n",
+			pp_defines[pp_num_defines-1][0].len,
+			pp_defines[pp_num_defines-1][0].s,
+			pp_defines[pp_num_defines-1][1].len,
+			pp_defines[pp_num_defines-1][1].s);
+	return 0;
+}
+
+static str  *pp_define_get(int len, const char * text)
+{
+	str var = {(char *)text, len};
+	int i;
+
+	for (i=0; i<pp_num_defines; i++)
+	{
+		if (STR_EQ(pp_defines[i][0], var))
+		{
+			if(pp_defines[i][0].s!=NULL)
+			{
+				LM_DBG("### returning define ID [%.*s] value [%.*s]\n",
+					pp_defines[i][0].len,
+					pp_defines[i][0].s,
+					pp_defines[i][1].len,
+					pp_defines[i][1].s);
+				return &pp_defines[i][1];
+			}
+			return NULL;
+		}
+	}
+	return NULL;
 }
 
 static int pp_ifdef_type(int type)

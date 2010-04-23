@@ -141,6 +141,7 @@
 #include "sr_compat.h"
 #include "msg_translator.h"
 
+#include "ppcfg.h"
 #include "config.h"
 #include "cfg_core.h"
 #include "cfg/cfg.h"
@@ -542,6 +543,8 @@ extern char *finame;
 %token STUN_ALLOW_STUN
 %token STUN_ALLOW_FP
 
+/*pre-processor*/
+%token SUBST
 
 /* operators, C like precedence */
 %right EQUAL
@@ -644,6 +647,7 @@ statements:
 	;
 statement:
 	assign_stm
+	| preprocess_stm
 	| flags_decl
 	| avpflags_decl
 	| module_stm
@@ -1897,6 +1901,10 @@ event_route_stm: ROUTE_EVENT LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
 	}
 
 	| ROUTE_EVENT error { yyerror("invalid event_route statement"); }
+	;
+preprocess_stm:
+	SUBST STRING { if(pp_subst_add($2)<0) YYERROR; }
+	| SUBST error { yyerror("invalid subst preprocess statement"); }
 	;
 
 /*exp:	rval_expr
