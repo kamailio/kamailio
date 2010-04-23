@@ -189,27 +189,14 @@ fi
 if [ -z "$LCR_TABLE" ] ; then
 	LCR_TABLE=lcr
 fi
+LCR_ID_COLUMN=lcr_id
 LCR_PREFIX_COLUMN=prefix
-LCR_FROMURI_COLUMN=from_uri
 LCR_GRPID_COLUMN=grp_id
-LCR_PRIO_COLUMN=priority
 
 # gw table
 if [ -z "$GW_TABLE" ] ; then
 	GW_TABLE=gw
 fi
-LCR_GW_GWNAME_COLUMN=gw_name
-LCR_GW_GRPID_COLUMN=grp_id
-LCR_GW_IP_COLUMN=ip_addr
-LCR_GW_HOSTNAME_COLUMN=hostname
-LCR_GW_PORT_COLUMN=port
-LCR_GW_URIS_COLUMN=uri_scheme
-LCR_GW_PROTO_COLUMN=transport
-LCR_GW_STRIP_COLUMN=strip
-LCR_GW_TAG_COLUMN=tag
-LCR_GW_FLAGS_COLUMN=flags
-LCR_GW_WEIGHT_COLUMN=weight
-LCR_GW_PING_COLUMN=ping
 
 # carrier_name table
 if [ -z "$CARRIER_NAME_TABLE" ] ; then
@@ -362,7 +349,10 @@ usage_lcr() {
 	mecho " -- command 'lcr' - manage least cost routes (lcr)"
 	echo
 cat <<EOF
- lcr dump .......... show in memory gateways and routes tables
+ lcr show_gws....... show database gateways
+ lcr show_routes.... show database routes
+ lcr dump_gws....... show in memory gateways
+ lcr dump_routes.... show in memory routes
  lcr reload ........ reload lcr gateways and routes
 EOF
 }

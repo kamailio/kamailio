@@ -1077,155 +1077,24 @@ lcr() {
 	require_dbengine
 	require_ctlengine
 	case $1 in
-		show)
-			mecho "lcr routes"
-			QUERY="select * FROM $LCR_TABLE ORDER BY $LCR_PREFIX_COLUMN; "
-			$DBROCMD "$QUERY"
+		show_gws)
 			mecho "lcr gateways"
-			QUERY="select $LCR_GW_GWNAME_COLUMN, $LCR_GW_IP_COLUMN,\
- $LCR_GW_HOSTNAME_COLUMN, $LCR_GW_PORT_COLUMN, $LCR_GW_URIS_COLUMN, $LCR_GW_PROTO_COLUMN,\
-$LCR_GW_GRPID_COLUMN, $LCR_GW_STRIP_COLUMN, $LCR_GW_TAG_COLUMN, \
-$LCR_GW_FLAGS_COLUMN, $LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
+			QUERY="select * FROM $GW_TABLE ORDER BY $LCR_ID_COLUMN, $LCR_GW_GRPID_COLUMN; "
+			$DBROCMD "$QUERY"
+			;;
+		show_routes)
+			mecho "lcr routes"
+			QUERY="select * FROM $LCR_TABLE ORDER BY $LCR_ID_COLUMN, $LCR_PREFIX_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		reload)
-			$CTLCMD lcr_reload
+			$RPCCMD lcr.reload
 			;;
-		dump)
-			$CTLCMD lcr_gw_dump
-			$CTLCMD lcr_lcr_dump
+		dump_gws)
+			$RPCCMD lcr.dump_gws
 			;;
-		addroute)
-			shift
-			if [ $# -ne 4 ] ; then
-				merr "lcr - too few parameters"
-				usage_lcr
-				exit 1
-			fi
-			QUERY="insert into $LCR_TABLE \
-				($LCR_PREFIX_COLUMN, $LCR_FROMURI_COLUMN, \
-					$LCR_GRPID_COLUMN, $LCR_PRIO_COLUMN) \
-				VALUES ('$1', '$2', $3, $4);"
-			$DBCMD "$QUERY"
-			if [ $? -ne 0 ] ; then
-			merr "lcr - SQL Error"
-				exit 1
-			fi
-			$CTLCMD lcr_reload
-			;;
-		rmroute)
-			shift
-			if [ $# -ne 4 ] ; then
-				merr "too few parameters"
-				usage_lcr
-				exit 1
-			fi
-			QUERY="delete from $LCR_TABLE where $LCR_PREFIX_COLUMN='$1' AND \
-				$LCR_FROMURI_COLUMN='$2' AND $LCR_GRPID_COLUMN=$3 AND \
-				$LCR_PRIO_COLUMN=$4;"
-			$DBCMD "$QUERY"
-			if [ $? -ne 0 ] ; then
-				merr "lcr - SQL Error"
-				exit 1
-			fi
-			$CTLCMD lcr_reload
-			;;
-		addgw)
-			shift
-			if [ $# -lt 6 ] ; then
-				merr "lcr - too few parameters"
-				usage_lcr
-				exit 1
-			fi
-			if [ $# -gt 6 ] ; then
-				GW_FLAGS=$7
-				if [ $# -gt 7 ] ; then
-					GW_TAG=$8
-				else
-					GW_TAG=""
-					GW_STRIP=0
-				fi
-				if [ $# -gt 8 ] ; then
-					STRIP=$9
-				else
-					STRIP=0
-				fi
-				if [ $# -gt 9 ] ; then
-					GW_WEIGHT=${10}
-				else
-					GW_WEIGHT=1
-				fi
-				if [ $# -gt 10 ] ; then
-					GW_HOSTNAME=${10}
-				else
-					GW_HOSTNAME=""
-				fi
-				if [ $# -gt 11 ] ; then
-					GW_PING=${11}
-				else
-					GW_PING=0
-				fi
-				if [ $# -gt 12 ] ; then
-				    merr "lcr - too many parameters"
-				    usage_lcr
-				    exit 1
-				fi
-			else
-				GW_FLAGS=0
-				GW_TAG=""
-				STRIP=0
-				GW_WEIGHT=1
-				GW_HOSTNAME=""
-				GW_PING=0
-			fi
-			GW_NAME=$1
-			GW_IP=$2
-			GW_PORT=$3
-			GW_URI_SCHEME=$4
-			if   [ $GW_URI_SCHEME = 'sip' ]; then
-				GW_URI_SCHEME=1
-			elif [ $GW_URI_SCHEME = 'sips' ]; then
-				GW_URI_SCHEME=2
-			fi
-			GW_TRANSPORT=$5
-			if   [ $GW_TRANSPORT = 'udp' ]; then
-				GW_TRANSPORT=1
-			elif [ $GW_TRANSPORT = 'tcp' ]; then
-				GW_TRANSPORT=2
-			elif [ $GW_TRANSPORT = 'tls' ]; then
-				GW_TRANSPORT=3
-			elif [ $GW_TRANSPORT = 'sctp' ]; then
-				GW_TRANSPORT=4
-			fi
-			GW_GRP_ID=$6
-			QUERY="insert into $GW_TABLE \
-				($LCR_GW_GWNAME_COLUMN, $LCR_GW_GRPID_COLUMN,\
-					$LCR_GW_IP_COLUMN,$LCR_GW_PORT_COLUMN,$LCR_GW_URIS_COLUMN,\
-					$LCR_GW_PROTO_COLUMN,$LCR_GW_STRIP_COLUMN,\
-					$LCR_GW_TAG_COLUMN,$LCR_GW_FLAGS_COLUMN,$LCR_GW_WEIGHT_COLUMN, $LCR_GW_PING_COLUMN, $LCR_GW_HOSTNAME_COLUMN) \
-				VALUES ('$GW_NAME', $GW_GRP_ID,\
-					'$GW_IP', $GW_PORT, $GW_URI_SCHEME,\
-					$GW_TRANSPORT, $STRIP, '$GW_TAG', $GW_FLAGS, $GW_WEIGHT, $GW_PING, '$GW_HOSTNAME');"
-			$DBCMD "$QUERY"
-			if [ $? -ne 0 ] ; then
-				merr "lcr - SQL Error"
-				exit 1
-			fi
-			$CTLCMD lcr_reload
-			;;
-		rmgw)
-			shift
-			if [ $# -ne 1 ] ; then
-				merr "missing gateway to be removed"
-				exit 1
-			fi
-			QUERY="delete from $GW_TABLE where $LCR_GW_GWNAME_COLUMN='$1';"
-			$DBCMD "$QUERY"
-			if [ $? -ne 0 ] ; then
-				merr "lcr - SQL Error"
-				exit 1
-			fi
-			$CTLCMD lcr_reload
+		dump_routes)
+			$RPCCMD lcr.dump_lcrs
 			;;
 		*)
 			usage_lcr
