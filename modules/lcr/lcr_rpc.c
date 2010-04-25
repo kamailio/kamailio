@@ -1,7 +1,7 @@
 /*
  * Various lcr related functions :: RPC API
  *
- * Copyright (C) 2005 Juha Heinanen
+ * Copyright (C) 2009-2010 Juha Heinanen
  *
  * This file is part of ser, a free SIP server.
  *
@@ -33,8 +33,6 @@
  */
 
 #include "lcr_rpc.h"
-
-#ifdef RPC_SUPPORT
 
 #include "lcr_mod.h"
 #include "../../ip_addr.h"
@@ -89,8 +87,7 @@ static void dump_gws(rpc_t* rpc, void* c)
 		hostname.s=gws[i].hostname;
 		hostname.len=gws[i].hostname_len;
 		rpc->struct_add(st, "S", "hostname", &hostname);
-		if  (gws[i].port > 0)
-			rpc->struct_add(st, "d", "port", gws[i].port);
+		rpc->struct_add(st, "d", "port", gws[i].port);
 		params.s=gws[i].params;
 		params.len=gws[i].params_len;
 		rpc->struct_add(st, "S", "params", &params);
@@ -183,5 +180,3 @@ rpc_export_t lcr_rpc[] = {
 	{"lcr.dump_lcrs",   dump_lcrs,   dump_lcrs_doc,   0},
 	{0, 0, 0, 0}
 };
-
-#endif /* RPC_SUPPORT */

@@ -26,7 +26,6 @@ LIBS=$(PCRELIBS)
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 include ../../Makefile.modules

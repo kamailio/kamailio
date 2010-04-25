@@ -51,6 +51,7 @@
         <name>ip_addr</name>
         <type>string</type>
         <size>15</size>
+        <null/>
         <description>IP Address of the gateway</description>
     </column>
 
@@ -138,10 +139,11 @@
     </index>
 
     <index>
-        <name>lcr_id_grp_id_ip_addr_idx</name>
+        <name>lcr_id_grp_id_ip_addr_hostname_idx</name>
         <colref linkend="lcr_id"/>
         <colref linkend="grp_id"/>
         <colref linkend="ip_addr"/>
+        <colref linkend="hostname"/>
         <unique/>
     </index>
 

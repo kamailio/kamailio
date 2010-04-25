@@ -67,19 +67,13 @@ Juha Heinanen
               4.6. to_gw(lcr_id [, ip_addr])
               4.7. to_any_gw([ip_addr])
 
-        5. Exported MI Commands
+        5. Exported RPC Commands
 
-              5.1. lcr_reload
-              5.2. lcr_gw_dump
-              5.3. lcr_lcr_dump
+              5.1. lcr.reload
+              5.2. lcr.dump_gws
+              5.3. lcr.dump_lcrs
 
-        6. Exported RPC Commands
-
-              6.1. lcr.reload
-              6.2. lcr.dump_gws
-              6.3. lcr.dump_lcrs
-
-        7. Known Limitations
+        6. Known Limitations
 
    List of Examples
 
@@ -176,19 +170,13 @@ Chapter 1. Admin Guide
         4.6. to_gw(lcr_id [, ip_addr])
         4.7. to_any_gw([ip_addr])
 
-   5. Exported MI Commands
+   5. Exported RPC Commands
 
-        5.1. lcr_reload
-        5.2. lcr_gw_dump
-        5.3. lcr_lcr_dump
+        5.1. lcr.reload
+        5.2. lcr.dump_gws
+        5.3. lcr.dump_lcrs
 
-   6. Exported RPC Commands
-
-        6.1. lcr.reload
-        6.2. lcr.dump_gws
-        6.3. lcr.dump_lcrs
-
-   7. Known Limitations
+   6. Known Limitations
 
 1. Overview
 
@@ -202,7 +190,7 @@ Chapter 1. Admin Guide
    For the purpose of facilitating least cost routing of requests, each
    gateway of an LCR instance belongs to a gateway group and each gateway
    group is associated with one or more <prefix, from pattern, priority>
-   tuples. A gateway matches a request if the user part of the Request URI
+   tuples. A gateway matches a request if the user part of the Request-URI
    matches a "prefix" and the caller's URI matches a "from" pattern in a
    tuple that belongs to the group of the gateway.
 
@@ -220,16 +208,19 @@ Chapter 1. Admin Guide
    Weight is an integer value from 1 to 254.
 
    The function next_gw() can then be used to select one gateway at a time
-   for forwarding. Upon each call, the user part of the original request
-   URI is first stripped by the number of characters as specified by the
-   gateway's strip count and then prefixed by the gateway's tag. Upon
-   first call, if a gateway's hostname is NULL, the request URI will be
+   for forwarding. Upon each call, the user part of the original
+   Request-URI is first stripped by the number of characters as specified
+   by the gateway's strip count and then prefixed by the gateway's tag.
+   Upon first call, if a gateway's hostname is NULL, Request-URI will be
    rewritten based on gateway's URI scheme, IP address, port, parameters,
-   and transport protocol. If hostname is not NULL, the request-URI is
-   rewritten based on the gateway's URI scheme, hostname, and parameters,
-   and destination URI is set based on gateway's URI scheme, IP address,
-   port, and transport protocol. Upon subsequent calls, the same is done,
-   but instead of rewriting the Request URI, a new branch is added.
+   and transport protocol. If hostname is not NULL and IP address is NULL,
+   Request-URI will be rewritten based on the gateway's URI scheme,
+   hostname, port, parameters and transport protocol. If both hostname and
+   IP address are not NULL, Request-URI will be rewritten based on
+   gateway's URI scheme, hostname, and parameters, and destination URI is
+   set based on gateway's URI scheme, IP address, port, and transport
+   protocol. Upon subsequent calls, the same is done, but instead of
+   rewriting the Request-URI, a new branch is added.
 
    Valid URI scheme values are NULL = sip, 1 = sip and 2 = sips. Currently
    valid transport protocol values are NULL = none, 1 = udp, 2 = tcp, 3 =
@@ -359,9 +350,7 @@ modparam("lcr","ip_addr_column","ip_addr")
 3.7. hostname_column (string)
 
    Name of the column holding gateway's hostname that is used in
-   Request-URI, when request is sent to the gateway. Note that request is
-   not forwarded based on hostname, but based on gateway's IP address in
-   destination URI.
+   Request-URI, when request is sent to the gateway.
 
    Default value is “hostname”.
 
@@ -419,7 +408,7 @@ modparam("lcr","transport_column","transport")
 3.12. strip_column (string)
 
    Name of the column holding the number of characters to be stripped from
-   the front of Request URI user part before inserting tag.
+   the front of Request-URI user part before inserting tag.
 
    Default value is “strip”.
 
@@ -486,7 +475,7 @@ modparam("lcr","lcr_table","lcr")
 
 3.18. prefix_column (string)
 
-   Name of the column holding prefix of Request URI user part.
+   Name of the column holding prefix of Request-URI user part.
 
    Default value is “prefix”.
 
@@ -671,14 +660,10 @@ if (!load_gws("1", "$var(caller_uri)")) {
 
 4.2.  next_gw()
 
-   Upon first call, fetches values stored in first gw_uri_avp and then
-   destroys that AVP. If gateway's hostname is NULL, rewrites Request URI
-   based on gateway's URI scheme, IP address, port, parameters, and
-   transport protocol. If hostname is not NULL, the rewrites Request-URI
-   based on the gateway's URI scheme, hostname, and parameters, and sets
-   destination URI based on gateway's URI scheme, IP address, port, and
-   transport protocol. Saves user part of Request-URI into ruri_user_avp
-   for use in subsequent next_gw() calls.
+   Upon first call, fetches values stored in first gw_uri_avp, destroys
+   that AVP, and rewrites Request-URI and possibly also destination URI as
+   described in the Overview section. Saves user part of Request-URI into
+   ruri_user_avp for use in subsequent next_gw() calls.
 
    Upon subsequent calls, does the same as in above, but instead of
    rewriting Request URI, appends a new branch to the request. Takes URI
@@ -729,7 +714,8 @@ defunct_gw("60");
 
    Checks if request comes from IP address of a gateway in LCR instance
    specified by lcr_id argument, which can be an integer constant or a
-   pseudo variable with integer value. IP address to be checked is either
+   pseudo variable with integer value. Fails if LCR instance includes one
+   or more gateways without IP address. IP address to be checked is either
    taken from source IP address of the request or (if present) from
    ip_addr pseudo variable argument.
 
@@ -753,9 +739,10 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 
 4.5.  from_any_gw([ip_addr])
 
-   Checks if request comes from IP address of any gateway. IP address to
-   be checked is either taken from source IP address of the request or (if
-   present) from ip_addr pseudo variable argument.
+   Checks if request comes from IP address of any gateway. Only LCR
+   instances, where all gateways have IP address, are included in the
+   test. IP address to be checked is either taken from source IP address
+   of the request or (if present) from ip_addr pseudo variable argument.
 
    If any gateway has the IP address, function returns LCR identifier of
    the gateway. Returns -1 on error or if the request does not come from a
@@ -778,7 +765,8 @@ $var(lcr_id) = from_any_gw();
 4.6.  to_gw(lcr_id [, ip_addr])
 
    Checks if in-dialog request goes to a gateway in LCR instance specified
-   by lcr_id argument. IP address to be checked is either taken from
+   by lcr_id argument. Fails if LCR instance includes one or more gateways
+   without IP address. IP address to be checked is either taken from
    Request-URI hostpart or (if present) from ip_addr pseudo variable
    argument.
 
@@ -799,9 +787,10 @@ if (to_gw("1")) {
 
 4.7.  to_any_gw([ip_addr])
 
-   Checks if in-dialog request goes to any gateway. IP address to be
-   checked is either taken from Request-URI hostpart or (if present) from
-   ip_addr pseudo variable argument.
+   Checks if in-dialog request goes to any gateway. Only LCR instances,
+   where all gateways have IP address, are included in the test. IP
+   address to be checked is either taken from Request-URI hostpart or (if
+   present) from ip_addr pseudo variable argument.
 
    Execution time of to_any_gw() function is M * O(log N), where M is
    number of LCR instances and N is average number of gateways in LCR
@@ -820,61 +809,13 @@ if (to_any_gw()) {
 };
 ...
 
-5. Exported MI Commands
+5. Exported RPC Commands
 
-   5.1. lcr_reload
-   5.2. lcr_gw_dump
-   5.3. lcr_lcr_dump
+   5.1. lcr.reload
+   5.2. lcr.dump_gws
+   5.3. lcr.dump_lcrs
 
-5.1. lcr_reload
-
-   Causes lcr module to re-read the contents of gw and lcr tables into
-   memory.
-
-   Reload fails if number of gateways is larger than value of constant
-   MAX_NO_OF_GWS in file lcr_mod.h, which defaults to 128. If you have
-   more than 128 gateways, you need to increase the value of this constant
-   and recompile lcr module.
-
-   Name: lcr_reload
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :lcr_reload:_reply_fifo_file_
-                _empty_line_
-
-5.2. lcr_gw_dump
-
-   Causes lcr module to dump the contents of its in-memory gw table.
-
-   Name: lcr_gw_dump
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :lcr_gw_dump:_reply_fifo_file_
-                _empty_line_
-
-5.3. lcr_lcr_dump
-
-   Causes lcr module to dump the contents of its in-memory lcr table.
-
-   Name: lcr_lcr_dump
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :lcr_gw_dump:_reply_fifo_file_
-                _empty_line_
-
-6. Exported RPC Commands
-
-   6.1. lcr.reload
-   6.2. lcr.dump_gws
-   6.3. lcr.dump_lcrs
-
-6.1. lcr.reload
+5.1. lcr.reload
 
    Causes lcr module to re-read the contents of gw and lcr tables into
    memory.
@@ -886,7 +827,7 @@ if (to_any_gw()) {
    Example 1.38. lcr.reload RPC example
                 $ sercmd lcr.reload
 
-6.2. lcr.dump_gws
+5.2. lcr.dump_gws
 
    Causes lcr module to dump the contents of its in-memory gw table.
 
@@ -895,7 +836,7 @@ if (to_any_gw()) {
    Example 1.39. lcr.dump_gws RPC example
                 $ sercmd lcr.dump_gws
 
-6.3. lcr.dump_lcrs
+5.3. lcr.dump_lcrs
 
    Causes lcr module to dump the contents of its in-memory lcr table.
 
@@ -904,7 +845,7 @@ if (to_any_gw()) {
    Example 1.40. lcr.dump_lcr RPC example
                 $ sercmd lcr.dump_lcrs
 
-7. Known Limitations
+6. Known Limitations
 
    In-memory gateway and in-memory lcr table are switched by two
    consecutive machine instructions. If lcr reload process is interrupted
