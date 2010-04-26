@@ -28,7 +28,7 @@
 		<title>Accessing $sht(htname=&gt;key)</title>
 	<programlisting format="linespecific">
 ...
-modparam("htable", "htable", "a=&gt;size=4;")
+modparam("htable", "htable", "a=&gt;size=8;")
 ...
 $sht(a=&gt;test) = 1;
 $sht(a=&gt;$ci::srcip) = $si;
@@ -55,7 +55,7 @@ $sht(a=&gt;$ci::srcip) = $si;
 	<title>Dictionary attack limitation</title>
 	<programlisting format="linespecific">
 ...
-modparam("htable", "htable", "a=&gt;size=4;")
+modparam("htable", "htable", "a=&gt;size=8;")
 ...
 if(is_present_hf("Authorization"))
 {
@@ -220,7 +220,10 @@ if(is_present_hf("Authorization"))
 		<listitem>
 		<para>
 			<emphasis>size</emphasis> - number specifying the size of hash
-			table.  Larger value means less collisions. The number of entries in the table is 2^size.
+			table.  Larger value means less collisions. The number of entries
+			in the table is 2^size. The possible range for this value is from
+			8 to 14, smaller or larger values will be increased or decreased
+			respectivly.
 		</para>
 		</listitem>
 		<listitem>

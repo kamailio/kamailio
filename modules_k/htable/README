@@ -123,7 +123,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Accessing $sht(htname=>key)
 ...
-modparam("htable", "htable", "a=>size=4;")
+modparam("htable", "htable", "a=>size=8;")
 ...
 $sht(a=>test) = 1;
 $sht(a=>$ci::srcip) = $si;
@@ -145,7 +145,7 @@ $sht(a=>$ci::srcip) = $si;
 
    Example 1.2. Dictionary attack limitation
 ...
-modparam("htable", "htable", "a=>size=4;")
+modparam("htable", "htable", "a=>size=8;")
 ...
 if(is_present_hf("Authorization"))
 {
@@ -243,7 +243,9 @@ if(is_present_hf("Authorization"))
      * htname - string specifying the name of the hash table. This string
        is used by $sht(...) to refer to the hash table.
      * size - number specifying the size of hash table. Larger value means
-       less collisions. The number of entries in the table is 2^size.
+       less collisions. The number of entries in the table is 2^size. The
+       possible range for this value is from 8 to 14, smaller or larger
+       values will be increased or decreased respectivly.
      * autoexpire -time in seconds to delete an item from hash table if no
        update was done to it. If is missing or set to 0, the items won't
        expire.
