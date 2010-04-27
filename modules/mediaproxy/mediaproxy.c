@@ -1533,7 +1533,7 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id)
         }
     }
 
-    for (i=0, j=1; i<session.stream_count; i++) {
+    for (i=0, j=1; i<session.stream_count && j<len; i++) {
         stream = session.streams[i];
         if (stream.transport != TSupported) {
             if (!stream.local_ip && removed_session_ip) {
