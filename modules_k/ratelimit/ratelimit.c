@@ -4,7 +4,7 @@
  * ratelimit module
  *
  * Copyright (C) 2006 Hendrik Scholz <hscholz@raisdorf.net>
- * Copyright (C) 2008 Ovidiu Sas <osas@voipembedded.com>
+ * Copyright (C) 2008-2010 Ovidiu Sas <osas@voipembedded.com>
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -26,7 +26,8 @@
  * ---------
  *
  * 2008-01-10 ported from SER project (osas)
- * 2008-01-16 ported enhancements from openims project (osas) 
+ * 2008-01-16 ported enhancements from openims project (osas)
+ * 2020-04-28 add sip-router rpc interface (osas)
  */
 
 #include <stdio.h>
@@ -51,6 +52,7 @@
 #include "../sl/sl_api.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rpc_lookup.h"
 
 #include "config.h"
 
@@ -264,6 +266,8 @@ static mi_export_t mi_cmds [] = {
 	{0,0,0,0,0}
 };
 
+static rpc_export_t rpc_methods[];
+
 /** module exports */
 struct module_exports exports= {
 	"ratelimit",
@@ -438,6 +442,11 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	if (rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -1576,4 +1585,238 @@ struct mi_root* mi_set_dbg(struct mi_root* cmd_tree, void* param)
 bad_syntax:
 	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
+
+
+/* rpc function documentation */
+static const char *rpc_stats_doc[2] = {
+	"Print ratelimit statistics: PIPE[<pipe_id>]: \
+<last_counter>/<pipe_limit> (drop rate: <drop_rate>)", 0
+};
+
+static const char *rpc_get_pipes_doc[2] = {
+	"Print pipes info: PIPE[<pipe_id>]: \
+<pipe_algo_id>:<pipe_algo> <last_counter>/<pipe_limit> (drop rate: <drop_rate>) [<current_counter>]", 0
+};
+
+static const char *rpc_set_pipe_doc[2] = {
+	"Sets a pipe params: <pipe_id> <pipe_algorithm> <pipe_limit>", 0
+};
+
+static const char *rpc_get_queues_doc[2] = {
+	"Print queues info: QUEUE[queue_id]: <pipe_id>:<queue_method>", 0
+};
+
+static const char *rpc_set_queue_doc[2] = {
+	"Sets queue params: <quue_id> <queue_method> <pipe_id>", 0
+};
+
+static const char *rpc_get_pid_doc[2] = {
+	"Print PID Controller parameters for the FEEDBACK algorithm: \
+<ki> <kp> <kd>", 0
+};
+
+static const char *rpc_set_pid_doc[2] = {
+	"Sets the PID Controller parameters for the FEEDBACK algorithm: \
+<ki> <kp> <kd>", 0
+};
+
+static const char *rpc_push_load_doc[2] = {
+	"Force the value of the load parameter for FEEDBACK algorithm: \
+<load>", 0
+};
+
+static const char *rpc_set_dbg_doc[2] = {
+	"Sets the ratelimit debug/monitoing logs: 0-off 1-on", 0
+};
+
+
+/* rpc function implementations */
+static void rpc_stats(rpc_t *rpc, void *c) {
+	int i;
+
+	LOCK_GET(rl_lock);
+	for (i=0; i<MAX_PIPES; i++) {
+		if (rpc->printf(c, "PIPE[%d]: %d/%d (drop rate: %d)",
+			i, *pipes[i].last_counter, *pipes[i].limit,
+			*pipes[i].load) < 0) goto error;
+	}
+error:
+	LOCK_RELEASE(rl_lock);
+}
+
+static void rpc_get_pipes(rpc_t *rpc, void *c) {
+	str algo;
+	int i;
+
+	LOCK_GET(rl_lock);
+	for (i=0; i<MAX_PIPES; i++) {
+		if (*pipes[i].algo != PIPE_ALGO_NOP) {
+			if (str_map_int(algo_names, *pipes[i].algo, &algo))
+				goto error;
+			if (rpc->printf(c, "PIPE[%d]: %d:%.*s %d/%d (drop rate: %d) [%d]",
+				i, *pipes[i].algo, algo.len, algo.s,
+				*pipes[i].last_counter, *pipes[i].limit,
+				*pipes[i].load, *pipes[i].counter) < 0) goto error;
+		}
+	}
+error:
+	LOCK_RELEASE(rl_lock);
+}
+
+static void rpc_set_pipe(rpc_t *rpc, void *c) {
+	int pipe_no = MAX_PIPES, algo_id, limit = 0;
+	str algo_str;
+
+	if (rpc->scan(c, "dSd", &pipe_no, &algo_str, &limit) < 3) return;
+
+	if (str_map_str(algo_names, &algo_str, &algo_id)) {
+		LM_ERR("unknown algorithm: '%.*s'\n", algo_str.len, algo_str.s);
+		rpc->fault(c, 400, "Unknown algorithm");
+		return;
+	}
+
+	LM_DBG("set_pipe: %d:%d:%d\n", pipe_no, algo_id, limit);
+
+	if (pipe_no >= MAX_PIPES || pipe_no < 0) {
+		LM_ERR("wrong pipe_no: %d\n", pipe_no);
+		rpc->fault(c, 400, "Unknown pipe");
+		return;
+	}
+
+	LOCK_GET(rl_lock);
+	*pipes[pipe_no].algo = algo_id;
+	*pipes[pipe_no].limit = limit;
+
+	if (check_feedback_setpoints(0)) {
+		LM_ERR("feedback limits don't match\n");
+		rpc->fault(c, 400, "Feedback limits don't match");
+	} else {
+		*pid_setpoint = 0.01 * (double)cfg_setpoint;
+	}
+
+	LOCK_RELEASE(rl_lock);
+}
+
+static void rpc_get_queues(rpc_t *rpc, void *c) {
+	int i;
+
+	LOCK_GET(rl_lock);
+	for (i=0; i<MAX_QUEUES; i++) {
+		if (queues[i].pipe) {
+			if (rpc->printf(c, "QUEUE[%d]: %d:%.*s",
+				i, *queues[i].pipe,
+				(*queues[i].method).len,
+				(*queues[i].method).s) < 0) goto error;
+		}
+	}
+error:
+	LOCK_RELEASE(rl_lock);
+}
+
+static void rpc_set_queue(rpc_t *rpc, void *c) {
+	unsigned int queue_no = MAX_QUEUES, pipe_no = MAX_PIPES;
+	str method, method_buf;
+
+
+	if (rpc->scan(c, "dSd", &queue_no, &method, &pipe_no) < 3) return;
+
+	if (pipe_no >= MAX_PIPES || pipe_no < 0) {
+		LM_ERR("Invalid pipe number: %d\n", pipe_no);
+		rpc->fault(c, 400, "Invalid pipe number");
+		return;
+	}
+
+	if (str_cpy(&method_buf, &method)) {
+		LM_ERR("out of memory\n");
+		rpc->fault(c, 400, "OOM");
+		return;
+	}
+
+	LOCK_GET(rl_lock);
+	if (queue_no >= *nqueues) {
+		LM_ERR("MAX_QUEUES reached for queue: %d\n", queue_no);
+		rpc->fault(c, 400, "MAX_QUEUES reached");
+		LOCK_RELEASE(rl_lock);
+		return;
+	}
+
+	*queues[queue_no].pipe = pipe_no;
+	if (!queues[queue_no].method->s)
+		shm_free(queues[queue_no].method->s);
+	queues[queue_no].method->s = method_buf.s;
+	queues[queue_no].method->len = method_buf.len;
+	LOCK_RELEASE(rl_lock);
+}
+
+static void rpc_get_pid(rpc_t *rpc, void *c) {
+	rpc->printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
+}
+
+static void rpc_set_pid(rpc_t *rpc, void *c) {
+	double ki, kp, kd;
+
+	if (rpc->scan(c, "fff", &ki, &kp, &kd) < 3) return;
+
+	LOCK_GET(rl_lock);
+	*pid_ki = ki;
+	*pid_kp = kp;
+	*pid_kd = kd;
+	LOCK_RELEASE(rl_lock);
+}
+
+
+static void rpc_push_load(rpc_t *rpc, void *c) {
+	double value;
+
+	if (rpc->scan(c, "f", &value) < 1) return;
+
+	if (value < 0.0 || value > 1.0) {
+		LM_ERR("value out of range: %0.3f in not in [0.0,1.0]\n", value);
+		rpc->fault(c, 400, "Value out of range");
+		return;
+	}
+	LOCK_GET(rl_lock);
+	*load_value = value;
+	LOCK_RELEASE(rl_lock);
+
+	do_update_load();
+}
+
+static void rpc_set_dbg(rpc_t *rpc, void *c) {
+	int dbg_mode = 0;
+
+	if (rpc->scan(c, "d", &dbg_mode) < 1) return;
+
+	LOCK_GET(rl_lock);
+	if (dbg_mode) {
+		if (!rl_dbg_str->s) {
+			rl_dbg_str->len = (MAX_PIPES * 5 * sizeof(char));
+			rl_dbg_str->s = (char *)shm_malloc(rl_dbg_str->len);
+			if (!rl_dbg_str->s) {
+				rl_dbg_str->len = 0;
+				LM_ERR("oom: %d\n", rl_dbg_str->len);
+			}
+		}
+	} else {
+		if (rl_dbg_str->s) {
+			shm_free(rl_dbg_str->s);
+			rl_dbg_str->s = NULL;
+			rl_dbg_str->len = 0;
+		}
+	}
+	LOCK_RELEASE(rl_lock);
+}
+
+static rpc_export_t rpc_methods[] = {
+	{"rl.stats",		rpc_stats,	rpc_stats_doc,		0},
+	{"rl.get_pipes",	rpc_get_pipes,	rpc_get_pipes_doc,	0},
+	{"rl.set_pipe",		rpc_set_pipe,	rpc_set_pipe_doc,	0},
+	{"rl.get_queues",	rpc_get_queues,	rpc_get_queues_doc,	0},
+	{"rl.set_queue",	rpc_set_queue,	rpc_set_queue_doc,	0},
+	{"rl.get_pid",		rpc_get_pid,	rpc_get_pid_doc,	0},
+	{"rl.set_pid",		rpc_set_pid,	rpc_set_pid_doc,	0},
+	{"rl.push_load",	rpc_push_load,	rpc_push_load_doc,	0},
+	{"rl.set_dbg",		rpc_set_dbg,	rpc_set_dbg_doc,	0},
+	{0, 0, 0, 0}
+};
 
