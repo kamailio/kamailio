@@ -1415,7 +1415,7 @@ int fixup_str_2(void** param, int param_no)
 
 
 #define PV_PRINT_BUF_SIZE  1024
-#define PV_PRINT_BUF_NO    3
+#define PV_PRINT_BUF_NO    6
 /** Get the function parameter value as string.
  *  @return  0 - Success
  *          -1 - Cannot get value
