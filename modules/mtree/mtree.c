@@ -624,7 +624,7 @@ int mt_table_spec(char* val)
 		} else if(pit->name.len==4
 				&& strncasecmp(pit->name.s, "type", 4)==0) {
 			str2sint(&pit->body, &tmp.type);
-		}  else if(pit->name.len==8
+		}  else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "dbtable", 7)==0) {
 			tmp.dbtable = pit->body;
 		}
