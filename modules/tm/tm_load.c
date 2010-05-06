@@ -59,16 +59,16 @@ int load_tm( struct tm_binds *tmb)
 		return -1;
 	}
 #ifdef USE_TCP
-	if (!( tmb->t_relay_to_tcp=find_export(T_RELAY_TO_TCP, 2, 0)) ) {
+	if (!( tmb->t_relay_to_tcp=find_export("t_relay_to_tcp", 2, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'t_relay_to_tcp' not found\n");
 		return -1;
 	}
 #endif
-	if (!( tmb->t_relay_to_udp=find_export(T_RELAY_TO_UDP, 2, 0)) ) {
+	if (!( tmb->t_relay_to_udp=find_export("t_relay_to_udp", 2, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'t_relay_to_udp' not found\n");
 		return -1;
 	}
-	if (!( tmb->t_relay=find_export(T_RELAY, 0, 0)) ) {
+	if (!( tmb->t_relay=find_export("t_relay", 0, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'t_relay' not found\n");
 		return -1;
 	}
@@ -79,29 +79,29 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_reply = w_t_reply_wrp;
 	
 	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export
-	(T_REPLY_WB, NO_SCRIPT, 0)) ) {
+	("t_reply_with_body", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_reply_with_body' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL,NO_SCRIPT,0)) ) {
+	if (!(tmb->t_is_local=(tislocal_f)find_export("t_is_local",NO_SCRIPT,0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}
 	if (!(tmb->t_get_trans_ident=(tget_ti_f)find_export
-	(T_GET_TI, NO_SCRIPT, 0)) ) {
+	("t_get_trans_ident", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}
 	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export
-	(T_LOOKUP_IDENT, NO_SCRIPT, 0)) ) {
+	("t_lookup_ident", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_addblind=(taddblind_f)find_export(T_ADDBLIND,NO_SCRIPT,0))) {
+	if (!(tmb->t_addblind=(taddblind_f)find_export("t_add_blind",NO_SCRIPT,0))) {
 		LOG( L_ERR, LOAD_ERROR "'addblind' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK,2,0))) {
+	if (!(tmb->t_forward_nonack=(tfwd_f)find_export("t_forward_nonack",2,0))) {
 		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;
 	}
@@ -157,8 +157,8 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'print_dlg' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_gett=(tgett_f)find_export(T_GETT,NO_SCRIPT,0))) {
-		LOG( L_ERR, LOAD_ERROR "'" T_GETT "' not found\n");
+	if (!(tmb->t_gett=(tgett_f)find_export("t_gett",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_gett' not found\n");
 		return -1;
 	}
 	if (!(tmb->calculate_hooks=(calculate_hooks_f)find_export("calculate_hooks",NO_SCRIPT,0))) {

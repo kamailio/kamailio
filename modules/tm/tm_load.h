@@ -55,32 +55,6 @@
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
 
-#define T_RELAY_TO           "t_relay_to"
-#define T_RELAY_TO_UDP       "t_relay_to_udp"
-#define T_RELAY_TO_TCP       "t_relay_to_tcp"
-#define T_RELAY_TO_TLS       "t_relay_to_tls"
-#define T_RELAY_TO_SCTP      "t_relay_to_sctp"
-#define T_RELAY              "t_relay"
-#define T_REPLY              "t_reply"
-#define T_REPLY_WB           "t_reply_with_body"
-#define T_REPLY_UNSAFE       "t_reply_unsafe"
-#define T_ADDBLIND           "t_add_blind"
-#define T_REPLY_UNSAFE       "t_reply_unsafe"
-#define T_FORWARD_NONACK     "t_forward_nonack"
-#define T_FORWARD_NONACK_URI "t_forward_nonack_uri"
-#define T_FORWARD_NONACK_UDP "t_forward_nonack_udp"
-#define T_FORWARD_NONACK_TCP "t_forward_nonack_tcp"
-#define T_FORWARD_NONACK_TLS "t_forward_nonack_tls"
-#define T_FORWARD_NONACK_SCTP "t_forward_nonack_sctp"
-#define T_GET_TI             "t_get_trans_ident"
-#define T_LOOKUP_IDENT       "t_lookup_ident"
-#define T_IS_LOCAL           "t_is_local"
-#define T_REQUEST_WITHIN     "request_within"
-#define T_REQUEST_OUTSIDE    "request_outside"
-#define T_GETT               "t_gett"
-
-
-
 struct tm_binds {
 	register_tmcb_f  register_tmcb;
 	cmd_function     t_relay_to_udp; /* WARNING: failure_route unsafe */
