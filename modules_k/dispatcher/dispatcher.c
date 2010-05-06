@@ -145,10 +145,10 @@ static int mi_child_init(void);
 static cmd_export_t cmds[]={
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2, fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2, fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0, ds_warn_fixup, 0, FAILURE_ROUTE},
-	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0, ds_warn_fixup, 0, FAILURE_ROUTE},
-	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst0,     0, ds_warn_fixup, 0, FAILURE_ROUTE},
-	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst1,     1, ds_warn_fixup, 0, FAILURE_ROUTE},
+	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0, ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0, ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst0,     0, ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst1,     1, ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list0, 0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1, fixup_uint_null, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0,0}
