@@ -455,40 +455,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* not applicable from the script */
-	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
-	{"t_reply_with_body",  (cmd_function)t_reply_with_body, NO_SCRIPT,   0, 0},
-	{"t_is_local",         (cmd_function)t_is_local,        NO_SCRIPT,   0, 0},
-	{"t_get_trans_ident",  (cmd_function)t_get_trans_ident, NO_SCRIPT,   0, 0},
-	{"t_lookup_ident",     (cmd_function)t_lookup_ident,    NO_SCRIPT,   0, 0},
-	{"t_add_blind",        (cmd_function)add_blind_uac,     NO_SCRIPT,   0, 0},
-	{"t_request_within",   (cmd_function)req_within,        NO_SCRIPT,   0, 0},
-	{"t_request_outside",  (cmd_function)req_outside,       NO_SCRIPT,   0, 0},
-	{"t_request",          (cmd_function)request,           NO_SCRIPT,   0, 0},
-	{"new_dlg_uac",        (cmd_function)new_dlg_uac,       NO_SCRIPT,   0, 0},
-	{"dlg_response_uac",   (cmd_function)dlg_response_uac,  NO_SCRIPT,   0, 0},
-	{"new_dlg_uas",        (cmd_function)new_dlg_uas,       NO_SCRIPT,   0, 0},
-	{"update_dlg_uas",     (cmd_function)update_dlg_uas,    NO_SCRIPT,   0, 0},
-	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,   0, 0},
-	{"set_dlg_target",     (cmd_function)set_dlg_target,    NO_SCRIPT,   0, 0},
-	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,   0, 0},
-	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,   0, 0},
-	{"t_gett",             (cmd_function)get_t,             NO_SCRIPT,   0, 0},
-	{"calculate_hooks",    (cmd_function)w_calculate_hooks, NO_SCRIPT,   0, 0},
-	{"t_uac",              (cmd_function)t_uac,             NO_SCRIPT,   0, 0},
-	{"t_uac_with_ids",     (cmd_function)t_uac_with_ids,    NO_SCRIPT,   0, 0},
-	{"t_unref",            (cmd_function)t_unref,           NO_SCRIPT,   0, 0},
-	{"run_failure_handlers", (cmd_function)run_failure_handlers, NO_SCRIPT,   0, 0},
-	{"cancel_uacs",        (cmd_function)cancel_uacs,       NO_SCRIPT,   0, 0},
-	{"cancel_all_uacs",    (cmd_function)cancel_all_uacs,        NO_SCRIPT,   0, 0},
-#ifdef WITH_AS_SUPPORT
-	{"ack_local_uac",      (cmd_function)ack_local_uac,     NO_SCRIPT,   0, 0},
-	{"t_get_canceled_ident",   (cmd_function)t_get_canceled_ident,  NO_SCRIPT,
-			0, 0},
-#endif
-	{"t_suspend",          (cmd_function)t_suspend,         NO_SCRIPT,   0, 0},
-	{"t_continue",         (cmd_function)t_continue,        NO_SCRIPT,   0, 0},
-	{"t_cancel_suspend",   (cmd_function)t_cancel_suspend,  NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
 
