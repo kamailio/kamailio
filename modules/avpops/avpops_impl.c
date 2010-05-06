@@ -842,7 +842,7 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 		goto error;
 	}
 
-	avp = search_first_avp( name_type1, avp_name1, &avp_val, 0);
+	avp = search_first_avp( name_type1, avp_name1, &avp_val, &st);
 	while ( avp )
 	{
 		/* build a new avp with new name, but old value */
