@@ -79,6 +79,17 @@ int reload_address_table(void)
     cols[2] = &mask_col;
     cols[3] = &port_col;
     cols[4] = &tag_col;
+    
+    if (db_handle) {
+	LM_ERR("db_handle already exists\n");
+	return -1;
+    }
+	
+    db_handle = perm_dbf.init(&db_url);
+    if (!db_handle) {
+	LM_ERR("unable to connect database\n");
+	return -1;
+    }
 
     if (perm_dbf.use_table(db_handle, &address_table) < 0) {
 	    LM_ERR("failed to use table\n");
@@ -166,6 +177,9 @@ int reload_address_table(void)
 
     perm_dbf.free_result(db_handle, res);
 
+    perm_dbf.close(db_handle);
+    db_handle = 0;
+
     *addr_hash_table = new_hash_table;
     *subnet_table = new_subnet_table;
 
@@ -208,8 +222,12 @@ int init_addresses(void)
     if(db_check_table_version(&perm_dbf, db_handle, &address_table, TABLE_VERSION) < 0) {
 		LM_ERR("error during table version check.\n");
 		perm_dbf.close(db_handle);
+		db_handle = 0;
 		return -1;
     }
+
+    perm_dbf.close(db_handle);
+    db_handle = 0;
 
     addr_hash_table_1 = new_addr_hash_table();
     if (!addr_hash_table_1) return -1;
@@ -245,9 +263,6 @@ int init_addresses(void)
 	goto error;
     }
 
-    perm_dbf.close(db_handle);
-    db_handle = 0;
-
     return 0;
 
 error:
@@ -275,8 +290,6 @@ error:
 	shm_free(subnet_table);
 	subnet_table = 0;
     }
-    perm_dbf.close(db_handle);
-    db_handle = 0;
     return -1;
 }
 
