@@ -46,6 +46,11 @@ static void destroy(void);
 
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
 static int fixup_cancel_branches(void** param, int param_no);
+static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *flag);
+static int fixup_cancel_callid(void** param, int param_no);
+static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
+				char *rc, char *rs);
+static int fixup_reply_callid(void** param, int param_no);
 
 /* statistic variables */
 stat_var *tm_rcv_rpls;
@@ -125,6 +130,10 @@ static mi_export_t mi_cmds [] = {
 static cmd_export_t cmds[]={
 	{"t_cancel_branches", (cmd_function)t_cancel_branches,  1,
 		fixup_cancel_branches, 0, ONREPLY_ROUTE },
+	{"t_cancel_callid", (cmd_function)t_cancel_callid,  3,
+		fixup_cancel_callid, 0, ANY_ROUTE },
+	{"t_reply_callid", (cmd_function)t_reply_callid,  4,
+		fixup_reply_callid, 0, ANY_ROUTE },
 	{0,0,0,0,0,0}
 };
 
@@ -189,6 +198,9 @@ static void destroy(void)
 	return;
 }
 
+/**
+ *
+ */
 static int fixup_cancel_branches(void** param, int param_no)
 {
 	char *val;
@@ -215,6 +227,9 @@ static int fixup_cancel_branches(void** param, int param_no)
 	return 0;
 }
 
+/**
+ *
+ */
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 {
 	branch_bm_t cb = 0;
@@ -252,6 +267,130 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 	return 1;
 }
 
+/**
+ *
+ */
+static int fixup_cancel_callid(void** param, int param_no)
+{
+	if (param_no==1 || param_no==2) {
+		return fixup_spve_null(param, 1);
+	}
+	if (param_no==3) {
+		return fixup_igp_null(param, 1);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *flag)
+{
+	struct cell *trans;
+	branch_bm_t cancel_bm;
+	str cseq_s;
+	str callid_s;
+	int fl;
+
+	cancel_bm=0;
+	fl = -1;
+
+	if(fixup_get_svalue(msg, (gparam_p)cid, &callid_s)<0)
+	{
+		LM_ERR("cannot get callid\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)cseq, &cseq_s)<0)
+	{
+		LM_ERR("cannot get cseq\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fl)<0)
+	{
+		LM_ERR("cannot get flag\n");
+		return -1;
+	}
+
+	if( _tmx_tmb.t_lookup_callid(&trans, callid_s, cseq_s) < 0 ) {
+		DBG("Lookup failed - no transaction\n");
+		return -1;
+	}
+
+	DBG("Now calling cancel_uacs\n");
+	if(trans->uas.request && fl>0 && fl<32)
+		setflag(trans->uas.request, fl);
+	_tmx_tmb.prepare_to_cancel(trans, &cancel_bm, 0);
+	_tmx_tmb.cancel_uacs(trans, cancel_bm, 0);
+
+	//_tmx_tmb.unref_cell(trans);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int fixup_reply_callid(void** param, int param_no)
+{
+	if (param_no==1 || param_no==2 || param_no==4) {
+		return fixup_spve_null(param, 1);
+	}
+	if (param_no==3) {
+		return fixup_igp_null(param, 1);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
+		char *rc, char *rs)
+{
+	struct cell *trans;
+	str cseq_s;
+	str callid_s;
+	str status_s;
+	unsigned int code;
+
+	if(fixup_get_svalue(msg, (gparam_p)cid, &callid_s)<0)
+	{
+		LM_ERR("cannot get callid\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)cseq, &cseq_s)<0)
+	{
+		LM_ERR("cannot get cseq\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)rc, (int*)&code)<0)
+	{
+		LM_ERR("cannot get reply code\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)rs, &status_s)<0)
+	{
+		LM_ERR("cannot get reply status\n");
+		return -1;
+	}
+
+	if(_tmx_tmb.t_lookup_callid(&trans, callid_s, cseq_s) < 0 )
+	{
+		DBG("Lookup failed - no transaction\n");
+		return -1;
+	}
+
+	DBG("Now calling internal replay\n");
+	if(_tmx_tmb.t_reply_trans(trans, trans->uas.request, code, status_s.s)>0)
+		return 1;
+
+	return -1;
+}
 
 #ifdef STATISTICS
 
