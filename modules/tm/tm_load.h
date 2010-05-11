@@ -43,7 +43,6 @@
 #include "t_hooks.h"
 #include "uac.h"
 #include "t_fwd.h"
-#include "t_reply.h"
 #include "t_lookup.h"
 #include "t_reply.h"
 #include "dlg.h"
@@ -68,6 +67,7 @@ struct tm_binds {
 	tlookup_ident_f  t_lookup_ident;
 	taddblind_f      t_addblind;
 	treply_f         t_reply_unsafe;
+	treply_trans_f   t_reply_trans;
 	tfwd_f           t_forward_nonack;
 	reqwith_t        t_request_within;
 	reqout_t         t_request_outside;

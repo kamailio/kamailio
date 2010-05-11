@@ -87,6 +87,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->register_tmcb =register_tmcb;
 	tmb->t_reply = w_t_reply_wrp;
 	tmb->t_reply_with_body = t_reply_with_body;
+	tmb->t_reply_trans = t_reply;
 	tmb->t_is_local = t_is_local;
 	tmb->t_get_trans_ident = t_get_trans_ident;
 	tmb->t_lookup_ident = t_lookup_ident;

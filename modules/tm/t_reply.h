@@ -71,6 +71,8 @@ typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
 typedef int (*treply_wb_f)( struct cell* trans,
 	unsigned int code, char * text, char * body, 
 	char * new_header, char * to_tag);
+typedef int (*treply_trans_f)(struct cell *t, struct sip_msg* p_msg, unsigned int code,
+	char * text);
 
 /* wrapper function needed after changes in w_t_reply */
 int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt);
