@@ -907,7 +907,6 @@ get_rtcp_ip_attribute(str *block)
     count = get_str_tokens(&zone, tokens, 4);
 
     if (count != 4) {
-        LM_ERR("invalid `a=rtcp' line in SDP body\n");
         return undefined;
     }
 
