@@ -313,31 +313,9 @@ sdp_stream_cell_t* get_sdp_stream_sdp(struct sdp_info* sdp, int session_num, int
 
 sdp_stream_cell_t* get_sdp_stream(struct sip_msg* _m, int session_num, int stream_num)
 {
-	sdp_info_t* sdp;
-        sdp_session_cell_t *session;
-	sdp_stream_cell_t *stream;
-
+	if (_m->body == NULL) return NULL;
+	if (_m->body->type != MSG_BODY_SDP) return NULL;
 	return get_sdp_stream_sdp((sdp_info_t*)_m->body, session_num, stream_num);
-
-	sdp = (sdp_info_t*)_m->body;
-        if (sdp == NULL) return NULL;
-		if (sdp->type != MSG_BODY_SDP) return NULL;
-        if (session_num > sdp->sessions_num) return NULL;
-
-		session = sdp->sessions;
-	while (session) {
-		if (session->session_num == session_num) {
-			stream = session->streams;
-			while (stream) {
-				if (stream->stream_num == stream_num) return stream;
-				stream = stream->next;
-			}
-		} else {
-			session = session->next;
-		}
-	}
-
-	return NULL;
 }
 
 
