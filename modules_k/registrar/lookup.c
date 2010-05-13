@@ -105,6 +105,9 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			goto done;
 		}
 
+		/* reset next hop address */
+		reset_dst_uri(_m);
+
 		/* If a Path is present, use first path-uri in favour of
 		 * received-uri because in that case the last hop towards the uac
 		 * has to handle NAT. - agranig */
