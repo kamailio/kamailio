@@ -59,7 +59,7 @@ Juha Heinanen
 
         4. Exported Functions
 
-              4.1. load_gws(lcr_id, caller_uri)
+              4.1. load_gws(lcr_id[, caller_uri])
               4.2. next_gw()
               4.3. defunct_gw(period)
               4.4. from_gw(lcr_id [, ip_addr])
@@ -162,7 +162,7 @@ Chapter 1. Admin Guide
 
    4. Exported Functions
 
-        4.1. load_gws(lcr_id, caller_uri)
+        4.1. load_gws(lcr_id[, caller_uri])
         4.2. next_gw()
         4.3. defunct_gw(period)
         4.4. from_gw(lcr_id [, ip_addr])
@@ -625,7 +625,7 @@ modparam("lcr", "fetch_rows", 3000)
 
 4. Exported Functions
 
-   4.1. load_gws(lcr_id, caller_uri)
+   4.1. load_gws(lcr_id[, caller_uri])
    4.2. next_gw()
    4.3. defunct_gw(period)
    4.4. from_gw(lcr_id [, ip_addr])
@@ -633,13 +633,14 @@ modparam("lcr", "fetch_rows", 3000)
    4.6. to_gw(lcr_id [, ip_addr])
    4.7. to_any_gw([ip_addr])
 
-4.1.  load_gws(lcr_id, caller_uri)
+4.1.  load_gws(lcr_id[, caller_uri])
 
    Loads URI schemes, IP addresses, hostnames, ports, params, and
    transports of matching gateways to gw_uri_avp (see Overview section).
    Argument lcr_id specifies the used LCR instance. It can be an integer
    or a pseudo variable containing an integer value. Caller's URI is given
-   by caller_uri argument, which must be a pseudo variable.
+   by caller_uri argument, which must be a pseudo variable. If caller_uri
+   argument is omitted, it defaults to empty string.
 
    Returns 1 if at least one matching gateway was found, 2 if no matching
    gateways was found, and -1 on error.

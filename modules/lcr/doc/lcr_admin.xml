@@ -765,7 +765,7 @@ modparam("lcr", "fetch_rows", 3000)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws(lcr_id, caller_uri)</function>
+		<function moreinfo="none">load_gws(lcr_id[, caller_uri])</function>
 		</title>
 		<para>
 		Loads URI schemes, IP addresses, hostnames, ports,
@@ -775,7 +775,8 @@ modparam("lcr", "fetch_rows", 3000)
 	        LCR instance.  It can be an integer or a pseudo
 		variable containing an integer value. 
 		Caller's URI is given by caller_uri argument, which
-		must be a pseudo variable.
+		must be a pseudo variable.  If caller_uri argument is
+		omitted, it defaults to empty string.
 		</para>
 		<para>
 		Returns 1 if at least one matching gateway was found, 2

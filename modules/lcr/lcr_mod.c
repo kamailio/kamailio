@@ -246,7 +246,8 @@ struct lcr_info ***lcrtp = (struct lcr_info ***)NULL;
 /*
  * Functions that are defined later
  */
-static int load_gws(struct sip_msg* _m, char* _s1, char* _s2);
+static int load_gws_1(struct sip_msg* _m, char* _s1, char* _s2);
+static int load_gws_2(struct sip_msg* _m, char* _s1, char* _s2);
 static int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int defunct_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
@@ -262,7 +263,9 @@ static int to_any_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"load_gws", (cmd_function)load_gws, 2, fixup_igp_pvar,
+    {"load_gws", (cmd_function)load_gws_1, 1, fixup_igp_null, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE},
+    {"load_gws", (cmd_function)load_gws_2, 2, fixup_igp_pvar,
      fixup_free_igp_pvar, REQUEST_ROUTE | FAILURE_ROUTE},
     {"next_gw", (cmd_function)next_gw, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
@@ -1536,7 +1539,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 /*
  * Load info of matching GWs into gw_uri_avps
  */
-static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
+static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id, fparam_t *_from_uri)
 {
     str ruri_user, from_uri;
     int i, j, lcr_id;
@@ -1548,7 +1551,7 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     char *hostname;
 
     /* Get and check parameter values */
-    if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
+    if (get_int_fparam(&lcr_id, _m, _lcr_id) != 0) {
 	LM_ERR("no lcr_id param value\n");
 	return -1;
     }
@@ -1556,14 +1559,18 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
-
-    if (get_str_fparam(&from_uri, _m, (fparam_t *)_from_uri) != 0) {
-	LM_ERR("no from_uri parameter value\n");
-	return -1;
-    }
-    if (from_uri.len == 0) {
-	LM_ERR("empry from_uri param value\n");
-	return -1;
+    if (_from_uri) {
+	if (get_str_fparam(&from_uri, _m, _from_uri) != 0) {
+	    LM_ERR("no from_uri parameter value\n");
+	    return -1;
+	}
+	if (from_uri.len == 0) {
+	    LM_ERR("empty from_uri parameter value\n");
+	    return -1;
+	}
+    } else {
+	from_uri.len = 0;
+	from_uri.s = (char *)0;
     }
 
     /* Use gws and lcr rules with index lcr_id */
@@ -1674,6 +1681,18 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     } else {
 	return 2;
     }
+}
+
+
+static int load_gws_1(struct sip_msg* _m, char *_lcr_id, char *_s2)
+{
+    return load_gws(_m, (fparam_t *)_lcr_id, (fparam_t *)0);
+}
+
+
+static int load_gws_2(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
+{
+    return load_gws(_m, (fparam_t *)_lcr_id, (fparam_t *)_from_uri);
 }
 
 
@@ -1938,6 +1957,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     if (dst_uri_len > 0) {
 	uri_str.s = dst_uri;
 	uri_str.len = dst_uri_len;
+	LM_DBG("setting du to <%.*s>\n", uri_str.len, uri_str.s);
 	rval = set_dst_uri(_m, &uri_str);
 	if (rval != 0) {
 	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
