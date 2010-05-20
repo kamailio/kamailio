@@ -128,6 +128,7 @@ void tls_destroy_cfg(void)
 	if (tls_cfg_lock) {
 		lock_destroy(tls_cfg_lock);
 		lock_dealloc(tls_cfg_lock);
+		tls_cfg_lock = 0;
 	}
 
 	if (tls_cfg) {
@@ -138,6 +139,7 @@ void tls_destroy_cfg(void)
 		}
 		
 		shm_free(tls_cfg);
+		tls_cfg = 0;
 	}
 }
 
