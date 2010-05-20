@@ -103,13 +103,13 @@
  *  2009-04-09  tcp ev and tcp stats macros added (andrei)
  *  2009-09-15  support for force connection reuse and close after send
  *               send flags (andrei)
+ *  2010-03-23  tcp_send() split in 3 smaller functions (andrei)
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** tcp main/dispatcher and tcp send functions.
+ * @file tcp_main.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 
@@ -165,6 +165,7 @@
 #include "sr_module.h"
 #include "tcp_server.h"
 #include "tcp_init.h"
+#include "tcp_int_send.h"
 #include "tcp_stats.h"
 #include "tcp_ev.h"
 #include "tsend.h"
@@ -629,10 +630,6 @@ end:
 	return 0;
 }
 
-
-
-inline static int _tcpconn_write_nb(int fd, struct tcp_connection* c,
-									char* buf, int len);
 
 
 #ifdef TCP_ASYNC
@@ -1717,10 +1714,6 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 
 inline static int tcpconn_chld_put(struct tcp_connection* tcpconn);
 
-static int tcpconn_do_send(int fd, struct tcp_connection* c,
-							char* buf, unsigned len,
-							snd_flags_t send_flags, long* resp);
-
 static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
 							snd_flags_t send_flags);
 
@@ -1766,257 +1759,201 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 			}
 		}
 	}
-/* no_id: */
-		if (unlikely((c==0) || tcpconn_close_after_send(c))){
-			if (unlikely(c)){
-				/* can't use c if it's marked as close-after-send  =>
-				   release it and try opening new one */
-				tcpconn_chld_put(c); /* release c (dec refcnt & free on 0) */
-				c=0;
-			}
-			/* check if connect() is disabled */
-			if (unlikely((dst->send_flags.f & SND_F_FORCE_CON_REUSE) ||
-							cfg_get(tcp, tcp_cfg, no_connect)))
-				return -1;
-			DBG("tcp_send: no open tcp connection found, opening new one\n");
-			/* create tcp connection */
-			if (likely(from==0)){
-				/* check to see if we have to use a specific source addr. */
-				switch (dst->to.s.sa_family) {
-					case AF_INET:
-							from = tcp_source_ipv4;
-						break;
+	/* connection not found or unusable => open a new one and send on it */
+	if (unlikely((c==0) || tcpconn_close_after_send(c))){
+		if (unlikely(c)){
+			/* can't use c if it's marked as close-after-send  =>
+			   release it and try opening new one */
+			tcpconn_chld_put(c); /* release c (dec refcnt & free on 0) */
+			c=0;
+		}
+		/* check if connect() is disabled */
+		if (unlikely((dst->send_flags.f & SND_F_FORCE_CON_REUSE) ||
+						cfg_get(tcp, tcp_cfg, no_connect)))
+			return -1;
+		DBG("tcp_send: no open tcp connection found, opening new one\n");
+		/* create tcp connection */
+		if (likely(from==0)){
+			/* check to see if we have to use a specific source addr. */
+			switch (dst->to.s.sa_family) {
+				case AF_INET:
+						from = tcp_source_ipv4;
+					break;
 #ifdef USE_IPV6
-					case AF_INET6:
-							from = tcp_source_ipv6;
-						break;
+				case AF_INET6:
+						from = tcp_source_ipv6;
+					break;
 #endif
-					default:
-						/* error, bad af, ignore ... */
-						break;
-				}
+				default:
+					/* error, bad af, ignore ... */
+					break;
 			}
+		}
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
-			if (likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait) && 
-						cfg_get(tcp, tcp_cfg, async) )){
-				if (unlikely(*tcp_connections_no >=
-								cfg_get(tcp, tcp_cfg, max_connections))){
-					LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
-								" connections exceeded (%d/%d)\n",
-								su2a(&dst->to, sizeof(dst->to)),
-								*tcp_connections_no,
-								cfg_get(tcp, tcp_cfg, max_connections));
-					return -1;
-				}
-				c=tcpconn_new(-1, &dst->to, from, 0, dst->proto,
-								S_CONN_CONNECT);
-				if (unlikely(c==0)){
-					LOG(L_ERR, "ERROR: tcp_send %s: could not create new"
-							" connection\n",
-							su2a(&dst->to, sizeof(dst->to)));
-					return -1;
-				}
-				c->flags|=F_CONN_PENDING|F_CONN_FD_CLOSED;
-				tcpconn_set_send_flags(c, dst->send_flags);
-				atomic_set(&c->refcnt, 2); /* ref from here and from main hash
-											 table */
-				/* add it to id hash and aliases */
-				if (unlikely(tcpconn_add(c)==0)){
-					LOG(L_ERR, "ERROR: tcp_send %s: could not add "
-								"connection %p\n",
-								su2a(&dst->to, sizeof(dst->to)),
-									c);
-					_tcpconn_free(c);
-					n=-1;
-					goto end_no_conn;
-				}
-				/* do connect and if src ip or port changed, update the 
-				 * aliases */
-				if (unlikely((fd=tcpconn_finish_connect(c, from))<0)){
-					/* tcpconn_finish_connect will automatically blacklist
-					   on error => no need to do it here */
-					LOG(L_ERR, "ERROR: tcp_send %s: tcpconn_finish_connect(%p)"
-							" failed\n", su2a(&dst->to, sizeof(dst->to)),
-								c);
-					goto conn_wait_error;
-				}
-				/* ? TODO: it might be faster just to queue the write directly
-				 *  and send to main CONN_NEW_PENDING_WRITE */
-				/* delay sending the fd to main after the send */
-				
-				/* NOTE: no lock here, because the connection is marked as
-				 * pending and nobody else will try to write on it. However
-				 * this might produce out-of-order writes. If this is not
-				 * desired either lock before the write or use 
-				 * _wbufq_insert(...) */
-				n=_tcpconn_write_nb(fd, c, buf, len);
-				if (unlikely(n<(int)len)){
-					if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK){
-						DBG("tcp_send: pending write on new connection %p "
-								" (%d/%d bytes written)\n", c, n, len);
-						if (n<0) n=0;
-						else{
-							TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
-							c->state=S_CONN_OK; /* partial write => connect()
-													ended */
-						}
-						/* add to the write queue */
-						lock_get(&c->write_lock);
-							if (unlikely(_wbufq_insert(c, buf+n, len-n)<0)){
-								lock_release(&c->write_lock);
-								n=-1;
-								LOG(L_ERR, "ERROR: tcp_send %s: EAGAIN and"
-										" write queue full or failed for %p\n",
-										su2a(&dst->to, sizeof(dst->to)),
-										c);
-								goto conn_wait_error;
-							}
-						lock_release(&c->write_lock);
-						/* send to tcp_main */
-						response[0]=(long)c;
-						response[1]=CONN_NEW_PENDING_WRITE;
-						if (unlikely(send_fd(unix_tcp_sock, response, 
-												sizeof(response), fd) <= 0)){
-							LOG(L_ERR, "BUG: tcp_send %s: "
-										"CONN_NEW_PENDING_WRITE  for %p"
-										" failed:" " %s (%d)\n",
-										su2a(&dst->to, sizeof(dst->to)),
-										c, strerror(errno), errno);
-							goto conn_wait_error;
-						}
-						n=len;
-						goto conn_wait_success;
-					}
-					/* if first write failed it's most likely a
-					   connect error */
-					switch(errno){
-						case ENETUNREACH:
-						case EHOSTUNREACH:  /* not posix for send() */
-#ifdef USE_DST_BLACKLIST
-							dst_blacklist_add( BLST_ERR_CONNECT, dst, 0);
-#endif /* USE_DST_BLACKLIST */
-							TCP_EV_CONNECT_UNREACHABLE(errno, TCP_LADDR(c),
-									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
-							break;
-						case ECONNREFUSED:
-						case ECONNRESET:
-#ifdef USE_DST_BLACKLIST
-							dst_blacklist_add( BLST_ERR_CONNECT, dst, 0);
-#endif /* USE_DST_BLACKLIST */
-							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
-									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
-							break;
-						default:
-							TCP_EV_CONNECT_ERR(errno, TCP_LADDR(c),
-									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
-					}
-					/* error: destroy it directly */
-					TCP_STATS_CONNECT_FAILED();
-					LOG(L_ERR, "ERROR: tcp_send %s: connect & send "
-										" for %p failed:" " %s (%d)\n",
-										su2a(&dst->to, sizeof(dst->to)),
-										c, strerror(errno), errno);
-					goto conn_wait_error;
-				}
-				LOG(L_INFO, "tcp_send: quick connect for %p\n", c);
-				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
-				if (unlikely(dst->send_flags.f & SND_F_CON_CLOSE)){
-					/* if close-after-send requested, don't bother
-					   sending the fd back to tcp_main, try closing it
-					   immediately (no other tcp_send should use it,
-					   because it is marked as close-after-send before
-					   being added to the hash */
-					goto conn_wait_close;
-				}
-				c->state=S_CONN_OK;
-				/* send to tcp_main */
-				response[0]=(long)c;
-				response[1]=CONN_NEW_COMPLETE;
-				if (unlikely(send_fd(unix_tcp_sock, response, 
-										sizeof(response), fd) <= 0)){
-					LOG(L_ERR, "BUG: tcp_send %s: CONN_NEW_COMPLETE  for %p"
-								" failed:" " %s (%d)\n",
-								su2a(&dst->to, sizeof(dst->to)),
-								c, strerror(errno), errno);
-					goto conn_wait_error;
-				}
-				goto conn_wait_success;
-			}
-#endif /* TCP_CONNECT_WAIT  && TCP_ASYNC */
-			if (unlikely((c=tcpconn_connect(&dst->to, from, dst->proto,
-											&dst->send_flags))==0)){
-				LOG(L_ERR, "ERROR: tcp_send %s: connect failed\n",
-								su2a(&dst->to, sizeof(dst->to)));
+		if (likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait) && 
+					cfg_get(tcp, tcp_cfg, async) )){
+			if (unlikely(*tcp_connections_no >=
+							cfg_get(tcp, tcp_cfg, max_connections))){
+				LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
+							" connections exceeded (%d/%d)\n",
+							su2a(&dst->to, sizeof(dst->to)),
+							*tcp_connections_no,
+							cfg_get(tcp, tcp_cfg, max_connections));
 				return -1;
 			}
+			c=tcpconn_new(-1, &dst->to, from, 0, dst->proto,
+							S_CONN_CONNECT);
+			if (unlikely(c==0)){
+				LOG(L_ERR, "ERROR: tcp_send %s: could not create new"
+						" connection\n",
+						su2a(&dst->to, sizeof(dst->to)));
+				return -1;
+			}
+			c->flags|=F_CONN_PENDING|F_CONN_FD_CLOSED;
 			tcpconn_set_send_flags(c, dst->send_flags);
-			if (likely(c->state==S_CONN_OK))
-				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
-			atomic_set(&c->refcnt, 2); /* ref. from here and it will also
-			                              be added in the tcp_main hash */
-			fd=c->s;
-			c->flags|=F_CONN_FD_CLOSED; /* not yet opened in main */
-			/* ? TODO: it might be faster just to queue the write and
-			 * send to main a CONN_NEW_PENDING_WRITE */
-			
-			/* send the new tcpconn to "tcp main" */
-			response[0]=(long)c;
-			response[1]=CONN_NEW;
-			n=send_fd(unix_tcp_sock, response, sizeof(response), c->s);
-			if (unlikely(n<=0)){
-				LOG(L_ERR, "BUG: tcp_send %s: failed send_fd: %s (%d)\n",
-						su2a(&dst->to, sizeof(dst->to)),
-						strerror(errno), errno);
-				/* we can safely delete it, it's not referenced by anybody */
+			atomic_set(&c->refcnt, 2); /* ref from here and from main hash
+										 table */
+			/* add it to id hash and aliases */
+			if (unlikely(tcpconn_add(c)==0)){
+				LOG(L_ERR, "ERROR: tcp_send %s: could not add "
+							"connection %p\n",
+							su2a(&dst->to, sizeof(dst->to)),
+								c);
 				_tcpconn_free(c);
 				n=-1;
 				goto end_no_conn;
 			}
-			/* new connection => send on it directly */
-			n = tcpconn_do_send(fd, c, buf, len, dst->send_flags,
-									&response[1]);
-			if (unlikely(response[1] != CONN_NOP)) {
-				response[0]=(long)c;
-				if (send_all(unix_tcp_sock, response, sizeof(response)) <= 0) {
-					BUG("tcp_main command %ld sending failed (write):"
-							"%s (%d)\n", response[1], strerror(errno), errno);
-					/* all commands != CONN_NOP returned by tcpconn_do_send()
-					   (CONN_EOF, CONN_ERROR, CONN_QUEUED_WRITE) will auto-dec
-					   refcnt => if sending the command fails we have to
-					   dec. refcnt by hand */
-					tcpconn_chld_put(c); /* deref. it manually */
-					n=-1;
-				}
-				/* here refcnt for c is already decremented => c contents can
-				   no longer be used and refcnt _must_ _not_ be decremented
-				   again on exit */
-				if (unlikely(n < 0 || response[1] == CONN_EOF)) {
-					/* on error or eof, close fd */
-					close(fd);
-				} else if (response[1] == CONN_QUEUED_WRITE) {
-#ifdef TCP_FD_CACHE
-					if (cfg_get(tcp, tcp_cfg, fd_cache)) {
-						tcp_fd_cache_add(c, fd);
-					} else
-#endif /* TCP_FD_CACHE */
-						close(fd);
-				} else {
-					BUG("unexpected tcpconn_do_send() return & response:"
-							" %d, %ld\n", n, response[1]);
-				}
-				goto end_no_deref;
+			/* do connect and if src ip or port changed, update the 
+			 * aliases */
+			if (unlikely((fd=tcpconn_finish_connect(c, from))<0)){
+				/* tcpconn_finish_connect will automatically blacklist
+				   on error => no need to do it here */
+				LOG(L_ERR, "ERROR: tcp_send %s: tcpconn_finish_connect(%p)"
+						" failed\n", su2a(&dst->to, sizeof(dst->to)),
+							c);
+				goto conn_wait_error;
 			}
-#ifdef TCP_FD_CACHE
-			if (cfg_get(tcp, tcp_cfg, fd_cache)) {
-				tcp_fd_cache_add(c, fd);
-			}else
-#endif /* TCP_FD_CACHE */
-				close(fd);
-		/* here we can have only commands that _do_ _not_ dec refcnt.
-		   (CONN_EOF, CON_ERROR, CON_QUEUED_WRITE are all treated above) */
-			goto release_c;
+			/* ? TODO: it might be faster just to queue the write directly
+			 *  and send to main CONN_NEW_PENDING_WRITE */
+			/* delay sending the fd to main after the send */
+			
+			/* NOTE: no lock here, because the connection is marked as
+			 * pending and nobody else will try to write on it. However
+			 * this might produce out-of-order writes. If this is not
+			 * desired either lock before the write or use 
+			 * _wbufq_insert(...) */
+#ifdef USE_TLS
+			if (unlikely(c->type==PROTO_TLS))
+				n=tls_1st_send(fd, c, buf, len, dst->send_flags,
+									&response[1]);
+			else
+#endif /* USE_TLS */
+				n=tcpconn_1st_send(fd, c, buf, len, dst->send_flags,
+									&response[1], 0);
+			if (unlikely(n<0))
+				goto conn_wait_error;
+			if (unlikely(response[1]==CONN_EOF)){
+				/* if close-after-send requested, don't bother
+				   sending the fd back to tcp_main, try closing it
+				   immediately (no other tcp_send should use it,
+				   because it is marked as close-after-send before
+				   being added to the hash */
+				goto conn_wait_close;
+			}
+			/* send to tcp_main */
+			response[0]=(long)c;
+			if (unlikely(response[1]!=CONN_NOP &&
+						(send_fd(unix_tcp_sock, response,
+									sizeof(response), fd) <= 0))){
+				LOG(L_ERR, "BUG: tcp_send %s: %ld for %p"
+							" failed:" " %s (%d)\n",
+							su2a(&dst->to, sizeof(dst->to)),
+							response[1], c, strerror(errno), errno);
+				goto conn_wait_error;
+			}
+			goto conn_wait_success;
 		}
-/* get_fd: */
+#endif /* TCP_CONNECT_WAIT  && TCP_ASYNC */
+		if (unlikely((c=tcpconn_connect(&dst->to, from, dst->proto,
+										&dst->send_flags))==0)){
+			LOG(L_ERR, "ERROR: tcp_send %s: connect failed\n",
+							su2a(&dst->to, sizeof(dst->to)));
+			return -1;
+		}
+		tcpconn_set_send_flags(c, dst->send_flags);
+		if (likely(c->state==S_CONN_OK))
+			TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
+		atomic_set(&c->refcnt, 2); /* ref. from here and it will also
+									  be added in the tcp_main hash */
+		fd=c->s;
+		c->flags|=F_CONN_FD_CLOSED; /* not yet opened in main */
+		/* ? TODO: it might be faster just to queue the write and
+		 * send to main a CONN_NEW_PENDING_WRITE */
+		
+		/* send the new tcpconn to "tcp main" */
+		response[0]=(long)c;
+		response[1]=CONN_NEW;
+		n=send_fd(unix_tcp_sock, response, sizeof(response), c->s);
+		if (unlikely(n<=0)){
+			LOG(L_ERR, "BUG: tcp_send %s: failed send_fd: %s (%d)\n",
+					su2a(&dst->to, sizeof(dst->to)),
+					strerror(errno), errno);
+			/* we can safely delete it, it's not referenced by anybody */
+			_tcpconn_free(c);
+			n=-1;
+			goto end_no_conn;
+		}
+		/* new connection => send on it directly */
+#ifdef USE_TLS
+		if (unlikely(c->type==PROTO_TLS)) {
+			response[1] = CONN_ERROR; /* in case tls is not loaded */
+			n = tls_do_send(fd, c, buf, len, dst->send_flags,
+							&response[1]);
+		} else
+#endif /* USE_TLS */
+			n = tcpconn_do_send(fd, c, buf, len, dst->send_flags,
+									&response[1], 0);
+		if (unlikely(response[1] != CONN_NOP)) {
+			response[0]=(long)c;
+			if (send_all(unix_tcp_sock, response, sizeof(response)) <= 0) {
+				BUG("tcp_main command %ld sending failed (write):"
+						"%s (%d)\n", response[1], strerror(errno), errno);
+				/* all commands != CONN_NOP returned by tcpconn_do_send()
+				   (CONN_EOF, CONN_ERROR, CONN_QUEUED_WRITE) will auto-dec
+				   refcnt => if sending the command fails we have to
+				   dec. refcnt by hand */
+				tcpconn_chld_put(c); /* deref. it manually */
+				n=-1;
+			}
+			/* here refcnt for c is already decremented => c contents can
+			   no longer be used and refcnt _must_ _not_ be decremented
+			   again on exit */
+			if (unlikely(n < 0 || response[1] == CONN_EOF)) {
+				/* on error or eof, close fd */
+				close(fd);
+			} else if (response[1] == CONN_QUEUED_WRITE) {
+#ifdef TCP_FD_CACHE
+				if (cfg_get(tcp, tcp_cfg, fd_cache)) {
+					tcp_fd_cache_add(c, fd);
+				} else
+#endif /* TCP_FD_CACHE */
+					close(fd);
+			} else {
+				BUG("unexpected tcpconn_do_send() return & response:"
+						" %d, %ld\n", n, response[1]);
+			}
+			goto end_no_deref;
+		}
+#ifdef TCP_FD_CACHE
+		if (cfg_get(tcp, tcp_cfg, fd_cache)) {
+			tcp_fd_cache_add(c, fd);
+		}else
+#endif /* TCP_FD_CACHE */
+			close(fd);
+	/* here we can have only commands that _do_ _not_ dec refcnt.
+	   (CONN_EOF, CON_ERROR, CON_QUEUED_WRITE are all treated above) */
+		goto release_c;
+	} /* if (c==0 or unusable) new connection */
 	/* existing connection, send on it */
 	n = tcpconn_send_put(c, buf, len, dst->send_flags);
 	/* no deref needed (automatically done inside tcpconn_send_put() */
@@ -2067,7 +2004,7 @@ end_no_conn:
 
 
 
-/** sends on an existing tcpconn.
+/** sends on an existing tcpconn and auto-dec. con. ref counter.
  * As opposed to tcp_send(), this function requires an existing
  * tcp connection.
  * WARNING: the tcp_connection will be de-referenced.
@@ -2183,7 +2120,13 @@ static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
 		}
 	
-	n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1]);
+#ifdef USE_TLS
+		if (unlikely(c->type==PROTO_TLS)) {
+			response[1] = CONN_ERROR; /* in case tls is not loaded */
+			n = tls_do_send(fd, c, buf, len, send_flags, &response[1]);
+		} else
+#endif
+			n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 0);
 	if (unlikely(response[1] != CONN_NOP)) {
 error:
 		response[0]=(long)c;
@@ -2239,9 +2182,57 @@ release_c:
 
 
 
+/* unsafe send on a known tcp connection.
+ * Directly send on a known tcp connection with a given fd.
+ * It is assumed that the connection locks are already held.
+ * Side effects: if needed it will send state update commands to
+ *  tcp_main (e.g. CON_EOF, CON_ERROR, CON_QUEUED_WRITE).
+ * @param fd - fd used for sending.
+ * @param c - existing tcp connection pointer (state and flags might be
+ *            changed).
+ * @param buf - data to be sent.
+ * @param len - data length.
+ * @param send_flags
+ * @return <0 on error, number of bytes sent on success.
+ */
+int tcpconn_send_unsafe(int fd, struct tcp_connection *c,
+						char* buf, unsigned len, snd_flags_t send_flags)
+{
+	int n;
+	long response[2];
+	
+	n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 1);
+	if (unlikely(response[1] != CONN_NOP)) {
+		/* all commands != CONN_NOP returned by tcpconn_do_send()
+		   (CONN_EOF, CONN_ERROR, CONN_QUEUED_WRITE) will auto-dec refcnt
+		   => increment it (we don't want the connection to be destroyed
+		   from under us)
+		 */
+		atomic_inc(&c->refcnt);
+		response[0]=(long)c;
+		if (send_all(unix_tcp_sock, response, sizeof(response)) <= 0) {
+			BUG("connection %p command %ld sending failed (write):%s (%d)\n",
+					c, response[1], strerror(errno), errno);
+			/* send failed => deref. it back by hand */
+			tcpconn_chld_put(c); 
+			n=-1;
+		}
+		/* here refcnt for c is already decremented => c contents can no
+		   longer be used and refcnt _must_ _not_ be decremented again
+		   on exit */
+		return n;
+	}
+	return n;
+}
+
+
+
 /** lower level send (connection and fd should be known).
  * It takes care of possible write-queueing, blacklisting a.s.o.
  * It expects a valid tcp connection. It doesn't touch the ref. cnts.
+ * It will also set the connection flags from send_flags (it's better
+ * to do it here, because it's guaranteed to be under lock).
+ * @param fd - fd used for sending.
  * @param c - existing tcp connection pointer (state and flags might be
  *            changed).
  * @param buf - data to be sent.
@@ -2255,12 +2246,15 @@ release_c:
  *                      CONN_QUEUED_WRITE - new write queue (connection
  *                                 should be watched for write and the wr.
  *                                 queue flushed).
+ * @param locked - if set assume the connection is already locked (call from
+ *                  tls) and do not lock/unlock the connection.
  * @return >=0 on success, < 0 on error && *resp == CON_ERROR.
  *
  */
-static int tcpconn_do_send(int fd, struct tcp_connection* c,
+int tcpconn_do_send(int fd, struct tcp_connection* c,
 							char* buf, unsigned len,
-							snd_flags_t send_flags, long* resp)
+							snd_flags_t send_flags, long* resp,
+							int locked)
 {
 	int  n;
 #ifdef TCP_ASYNC
@@ -2269,7 +2263,7 @@ static int tcpconn_do_send(int fd, struct tcp_connection* c,
 
 	DBG("tcp_send: sending...\n");
 	*resp = CONN_NOP;
-	lock_get(&c->write_lock);
+	if (likely(!locked)) lock_get(&c->write_lock);
 	/* update connection send flags with the current ones */
 	tcpconn_set_send_flags(c, send_flags);
 #ifdef TCP_ASYNC
@@ -2280,37 +2274,32 @@ static int tcpconn_do_send(int fd, struct tcp_connection* c,
 #endif /* TCP_CONNECT_WAIT */
 			){
 			if (unlikely(_wbufq_add(c, buf, len)<0)){
-				lock_release(&c->write_lock);
+				if (likely(!locked)) lock_release(&c->write_lock);
 				n=-1;
 				goto error;
 			}
-			lock_release(&c->write_lock);
+			if (likely(!locked)) lock_release(&c->write_lock);
 			n=len;
 			goto end;
 		}
 		n=_tcpconn_write_nb(fd, c, buf, len);
 	}else{
 #endif /* TCP_ASYNC */
-#ifdef USE_TLS
-		if (c->type==PROTO_TLS)
-			n=tls_blocking_write(c, fd, buf, len);
-		else
-#endif
 		/* n=tcp_blocking_write(c, fd, buf, len); */
-			n=tsend_stream(fd, buf, len,
-							TICKS_TO_S(cfg_get(tcp, tcp_cfg, send_timeout)) *
-							1000);
+		n=tsend_stream(fd, buf, len,
+						TICKS_TO_S(cfg_get(tcp, tcp_cfg, send_timeout)) *
+						1000);
 #ifdef TCP_ASYNC
 	}
 #else /* ! TCP_ASYNC */
-	lock_release(&c->write_lock);
+	if (likely(!locked)) lock_release(&c->write_lock);
 #endif /* TCP_ASYNC */
 	
 	DBG("tcp_send: after real write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
 	if (unlikely(n<(int)len)){
 #ifdef TCP_ASYNC
-		if (cfg_get(tcp, tcp_cfg, async) && 
+		if (cfg_get(tcp, tcp_cfg, async) &&
 				((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK)){
 			enable_write_watch=_wbufq_empty(c);
 			if (n<0) n=0;
@@ -2320,17 +2309,17 @@ static int tcpconn_do_send(int fd, struct tcp_connection* c,
 				c->state=S_CONN_OK; /* something was written */
 			}
 			if (unlikely(_wbufq_add(c, buf+n, len-n)<0)){
-				lock_release(&c->write_lock);
+				if (likely(!locked)) lock_release(&c->write_lock);
 				n=-1;
 				goto error;
 			}
-			lock_release(&c->write_lock);
+			if (likely(!locked)) lock_release(&c->write_lock);
 			n=len;
 			if (likely(enable_write_watch))
 				*resp=CONN_QUEUED_WRITE;
 			goto end;
 		}else{
-			lock_release(&c->write_lock);
+			if (likely(!locked)) lock_release(&c->write_lock);
 		}
 #endif /* TCP_ASYNC */
 		if (unlikely(c->state==S_CONN_CONNECT)){
@@ -2390,7 +2379,7 @@ error:
 	}
 	
 #ifdef TCP_ASYNC
-	lock_release(&c->write_lock);
+	if (likely(!locked)) lock_release(&c->write_lock);
 #endif /* TCP_ASYNC */
 	/* in non-async mode here we're either in S_CONN_OK or S_CONN_ACCEPT*/
 	if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
@@ -2407,6 +2396,121 @@ error:
 	}
 end:
 	return n;
+}
+
+
+
+/** low level 1st send on a new connection.
+ * It takes care of possible write-queueing, blacklisting a.s.o.
+ * It expects a valid just-opened tcp connection. It doesn't touch the 
+ * ref. counters. It's used only in the async first send case.
+ * @param fd - fd used for sending.
+ * @param c - existing tcp connection pointer (state and flags might be
+ *            changed). The connection must be new (no previous send on it).
+ * @param buf - data to be sent.
+ * @param len - data length.
+ * @param send_flags
+ * @param resp - filled with a fd sending cmd. for tcp_main on success:
+ *                      CONN_NOP - nothing needs to be done (unused right now).
+ *                      CONN_NEW_PENDING_WRITE - new connection, first write
+ *                                 was partially successful (or EAGAIN) and
+ *                                 was queued (connection should be watched
+ *                                 for write and the write queue flushed).
+ *                                 The fd should be sent to tcp_main.
+ *                      CONN_NEW_COMPLETE - new connection, first write
+ *                                 completed successfuly and no data is queued.
+ *                                 The fd should be sent to tcp_main.
+ *                      CONN_EOF - no error, but the connection should be
+ *                                  closed (e.g. SND_F_CON_CLOSE send flag).
+ * @param locked - if set assume the connection is already locked (call from
+ *                  tls) and do not lock/unlock the connection.
+ * @return >=0 on success, < 0 on error (on error *resp is undefined).
+ *
+ */
+int tcpconn_1st_send(int fd, struct tcp_connection* c,
+							char* buf, unsigned len,
+							snd_flags_t send_flags, long* resp,
+							int locked)
+{
+	int n;
+	
+	n=_tcpconn_write_nb(fd, c, buf, len);
+	if (unlikely(n<(int)len)){
+		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK){
+			DBG("pending write on new connection %p "
+				" (%d/%d bytes written)\n", c, n, len);
+			if (unlikely(n<0)) n=0;
+			else{
+				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
+				c->state=S_CONN_OK; /* partial write => connect()
+												ended */
+			}
+			/* add to the write queue */
+			if (likely(!locked)) lock_get(&c->write_lock);
+				if (unlikely(_wbufq_insert(c, buf+n, len-n)<0)){
+					if (likely(!locked)) lock_release(&c->write_lock);
+					n=-1;
+					LOG(L_ERR, "%s: EAGAIN and"
+							" write queue full or failed for %p\n",
+							su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)), c);
+					goto error;
+				}
+			if (likely(!locked)) lock_release(&c->write_lock);
+			/* send to tcp_main */
+			*resp=CONN_NEW_PENDING_WRITE;
+			n=len;
+			goto end;
+		}
+		/* n < 0 and not EAGAIN => write error */
+		/* if first write failed it's most likely a
+		   connect error */
+		switch(errno){
+			case ENETUNREACH:
+			case EHOSTUNREACH:  /* not posix for send() */
+#ifdef USE_DST_BLACKLIST
+				dst_blacklist_su( BLST_ERR_CONNECT, c->rcv.proto,
+									&c->rcv.src_su, &c->send_flags, 0);
+#endif /* USE_DST_BLACKLIST */
+				TCP_EV_CONNECT_UNREACHABLE(errno, TCP_LADDR(c),
+								TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+				break;
+			case ECONNREFUSED:
+			case ECONNRESET:
+#ifdef USE_DST_BLACKLIST
+				dst_blacklist_su( BLST_ERR_CONNECT, c->rcv.proto,
+									&c->rcv.src_su, &c->send_flags, 0);
+#endif /* USE_DST_BLACKLIST */
+				TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
+								TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+				break;
+			default:
+				TCP_EV_CONNECT_ERR(errno, TCP_LADDR(c),
+								TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+		}
+		/* error: destroy it directly */
+		TCP_STATS_CONNECT_FAILED();
+		LOG(L_ERR, "%s: connect & send  for %p failed:" " %s (%d)\n",
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					c, strerror(errno), errno);
+		goto error;
+	}
+	LOG(L_INFO, "quick connect for %p\n", c);
+	TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
+	if (unlikely(send_flags.f & SND_F_CON_CLOSE)){
+		/* close after write =>  EOF => close immediately */
+		c->state=S_CONN_BAD;
+		/* tell our caller that it should drop this*/
+		*resp=CONN_EOF;
+	}else{
+		c->state=S_CONN_OK;
+		/* send to tcp_main */
+		*resp=CONN_NEW_COMPLETE;
+	}
+end:
+	return n; /* >= 0 */
+error:
+	*resp=CONN_ERROR;
+	return -1;
 }
 
 
@@ -2562,7 +2666,6 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 	
 	fd=tcpconn->s;
 #ifdef USE_TLS
-	/*FIXME: lock ->writelock ? */
 	if (tcpconn->type==PROTO_TLS)
 		tls_close(tcpconn, fd);
 #endif
@@ -2609,7 +2712,7 @@ inline static int tcpconn_chld_put(struct tcp_connection* tcpconn)
 
 
 /* simple destroy function (the connection should be already removed
- * from the hashes and the fds should not be watched anymore for IO)
+ * from the hashes. refcnt 0 and the fds should not be watched anymore for IO)
  */
 inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 {
@@ -2879,19 +2982,13 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
  * while holding  c->write_lock). The fd should be non-blocking.
  *  returns number of bytes written on success, -1 on error (and sets errno)
  */
-inline static int _tcpconn_write_nb(int fd, struct tcp_connection* c,
+int _tcpconn_write_nb(int fd, struct tcp_connection* c,
 									char* buf, int len)
 {
 	int n;
 	
 again:
-#ifdef USE_TLS
-	if (unlikely(c->type==PROTO_TLS))
-		/* FIXME: tls_nonblocking_write !! */
-		n=tls_blocking_write(c, fd, buf, len);
-	else
-#endif /* USE_TLS */
-		n=send(fd, buf, len,
+	n=send(fd, buf, len,
 #ifdef HAVE_MSG_NOSIGNAL
 					MSG_NOSIGNAL
 #else

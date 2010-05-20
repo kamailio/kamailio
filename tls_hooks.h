@@ -21,6 +21,7 @@
  * History:
  * --------
  *  2007-02-09  created by andrei
+ *  2010-05-14  new hook interface (better suited for async. tcp) (andrei)
  */
 
 /**
@@ -50,21 +51,18 @@
 
 
 struct tls_hooks{
-	int  (*read)(struct tcp_connection* c);
-	int (*blocking_write)(struct tcp_connection* c, int fd, const char* buf,
-							unsigned int len);
+	int  (*read)(struct tcp_connection* c, int* flags);
+	/* send using tls on a tcp connection */
+	int (*do_send)(int fd, struct tcp_connection* c, const char* buf,
+							unsigned int len, snd_flags_t send_flags,
+							long* resp);
+	/* 1st send using tls on a new async. tcp connection */
+	int (*fst_send)(int fd, struct tcp_connection* c, const char* buf,
+							unsigned int len, snd_flags_t send_flags,
+							long* resp);
 	int  (*on_tcpconn_init)(struct tcp_connection *c, int sock);
 	void (*tcpconn_clean)(struct tcp_connection* c);
 	void (*tcpconn_close)(struct tcp_connection*c , int fd);
-	/* checks if a tls connection is fully established before a read, and if 
-	 * not it runs tls_accept() or tls_connect() as needed
-	 * (tls_accept and tls_connect are deferred to the "reader" process for
-	 *  performance reasons)
-	 * returns 1 if the read can continue, 0 if the connection is not yet
-	 * ready for the read and fix_read_con() should be attempted at a latter
-	 * time and <0 on error.
-	 */
-	int (*fix_read_con)(struct tcp_connection* c);
 	
 	/* per listening socket init, called on ser startup (after modules,
 	 *  process table, init() and udp socket initialization)*/
@@ -100,11 +98,12 @@ extern struct tls_hooks tls_hook;
 
 #define tls_tcpconn_init(c, s)	tls_hook_call(on_tcpconn_init, 0, (c), (s))
 #define tls_tcpconn_clean(c)	tls_hook_call_v(tcpconn_clean, (c))
-#define tls_blocking_write(c, fd, buf, len) \
-	tls_hook_call(blocking_write, -1, (c), (fd), (buf), (len))
+#define tls_do_send(fd, c, buf, len, send_flags, resp) \
+	tls_hook_call(do_send, -1, (fd), (c), (buf), (len), (send_flags), (resp))
+#define tls_1st_send(fd, c, buf, len, send_flags, resp) \
+	tls_hook_call(fst_send, -1, (fd), (c), (buf), (len), (send_flags), (resp))
 #define tls_close(conn, fd)		tls_hook_call_v(tcpconn_close, (conn), (fd))
-#define tls_read(c)				tls_hook_call(read, -1, (c))
-#define tls_fix_read_conn(c)	tls_hook_call(fix_read_con, -1, (c))
+#define tls_read(c, flags)				tls_hook_call(read, -1, (c), (flags))
 
 int register_tls_hooks(struct tls_hooks* h);
 
