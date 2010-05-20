@@ -48,6 +48,16 @@ install-bin: $(bin_prefix)/$(bin_dir)
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.fifo
 		rm -fr /tmp/kamctl.fifo
 		sed -e "s#/usr/local#$(bin_target)#g" \
+			< kamctl.ser > /tmp/kamctl.ser
+		$(INSTALL_CFG) /tmp/kamctl.ser \
+			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ser
+		rm -fr /tmp/kamctl.ser
+		sed -e "s#/usr/local#$(bin_target)#g" \
+			< kamctl.ser_mi > /tmp/kamctl.ser_mi
+		$(INSTALL_CFG) /tmp/kamctl.ser_mi \
+			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.ser_mi
+		rm -fr /tmp/kamctl.ser_mi
+		sed -e "s#/usr/local#$(bin_target)#g" \
 			< kamctl.unixsock > /tmp/kamctl.unixsock
 		$(INSTALL_CFG) /tmp/kamctl.unixsock \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.unixsock

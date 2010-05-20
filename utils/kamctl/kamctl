@@ -127,7 +127,20 @@ case $CTLENGINE in
 			CTLENGINELOADED=1
 		fi
 		;;
+	SER_MI|ser_mi)
+		if [ -f "$MYLIBDIR/kamctl.ser_mi" ]; then
+			. "$MYLIBDIR/kamctl.ser_mi"
+			CTLENGINELOADED=1
+		fi
+		;;
 esac
+
+#### ------------------------------------------------- #####
+### Load sercm interface
+#
+if [ -f "$MYLIBDIR/kamctl.ser" ]; then
+	. "$MYLIBDIR/kamctl.ser"
+fi
 
 if [ $CTLENGINELOADED -eq 1 ] ; then
 	mdbg "Control engine '$CTLENGINE' loaded"
@@ -2313,10 +2326,15 @@ case $1 in
 		trusted "$@"
 		;;
 
-	fifo|unixsock)
+	fifo|unixsock|ser_mi)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
+		;;
+
+	ser)
+		shift
+		$SERCTLCMD "$@"
 		;;
 
 	lcr)
