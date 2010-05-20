@@ -278,12 +278,12 @@ struct module_exports exports = {
 
 
 static struct tls_hooks tls_h = {
-	tls_h_read,
-	tls_h_blocking_write,
+	tls_read_f,
+	tls_do_send_f,
+	tls_1st_send_f,
 	tls_h_tcpconn_init,
 	tls_h_tcpconn_clean,
 	tls_h_close,
-	tls_h_fix_read_conn,
 	tls_h_init_si,
 	init_tls_h,
 	destroy_tls_h
@@ -346,11 +346,13 @@ static int mod_init(void)
 		return 0;
 	}
 
+/*
 	if (cfg_get(tcp, tcp_cfg, async) && !tls_force_run){
 		ERR("tls does not support tcp in async mode, please use"
 				" tcp_async=no in the config file\n");
 		return -1;
 	}
+*/
 	     /* Convert tls_method parameter to integer */
 	method = tls_parse_method(&tls_method);
 	if (method < 0) {
@@ -368,7 +370,7 @@ static int mod_init(void)
 	tls_cfg = (tls_cfg_t**)shm_malloc(sizeof(tls_cfg_t*));
 	if (!tls_cfg) {
 		ERR("Not enough shared memory left\n");
-		return -1;
+		goto error;
 	}
 	*tls_cfg = NULL;
 
@@ -380,23 +382,27 @@ static int mod_init(void)
 	tls_cfg_lock = lock_alloc();
 	if (tls_cfg_lock == 0) {
 		ERR("Unable to create TLS configuration lock\n");
-		return -1;
+		goto error;
 	}
 	if (lock_init(tls_cfg_lock) == 0) {
 		lock_dealloc(tls_cfg_lock);
 		ERR("Unable to initialize TLS configuration lock\n");
-		return -1;
+		goto error;
 	}
-
+	if (tls_ct_wq_init() < 0) {
+		ERR("Unable to initialize TLS buffering\n");
+		goto error;
+	}
 	if (tls_cfg_file.s) {
 		*tls_cfg = tls_load_config(&tls_cfg_file);
-		if (!(*tls_cfg)) return -1;
+		if (!(*tls_cfg)) goto error;
 	} else {
 		*tls_cfg = tls_new_cfg();
-		if (!(*tls_cfg)) return -1;
+		if (!(*tls_cfg)) goto error;
 	}
 
-	if (tls_check_sockets(*tls_cfg) < 0) return -1;
+	if (tls_check_sockets(*tls_cfg) < 0)
+		goto error;
 
 	/* fix the timeouts from s to ticks */
 	if (tls_con_lifetime<0){
@@ -413,10 +419,10 @@ static int mod_init(void)
 			tls_con_lifetime=S_TO_TICKS(tls_con_lifetime);
 		}
 	}
-	
-
-
 	return 0;
+error:
+	destroy_tls_h();
+	return -1;
 }
 
 
@@ -441,6 +447,8 @@ static int mod_child(int rank)
 
 static void destroy(void)
 {
+	/* tls is destroyed via the registered destroy_tls_h callback
+	   => nothing to do here */
 }
 
 

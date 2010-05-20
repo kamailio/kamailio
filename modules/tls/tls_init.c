@@ -69,6 +69,7 @@
 #include "tls_mod.h"
 #include "tls_init.h"
 #include "tls_locking.h"
+#include "tls_ct_wrq.h"
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 #    warning ""
@@ -645,4 +646,5 @@ void destroy_tls_h(void)
 	/* TODO: free all the ctx'es */
 	tls_destroy_cfg();
 	tls_destroy_locks();
+	tls_ct_wq_destroy();
 }
