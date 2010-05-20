@@ -2448,7 +2448,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 	rve=pkg_malloc(sizeof(*rve));
 	if (rve==0) 
 		return 0;
-	memset(rve, sizeof(*rve), 0);
+	memset(rve, 0, sizeof(*rve));
 	flags=0;
 	switch(rv_type){
 		case RV_INT:
@@ -2522,7 +2522,7 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 	ret=pkg_malloc(sizeof(*ret));
 	if (ret==0) 
 		return 0;
-	memset(ret, sizeof(*ret), 0);
+	memset(ret, 0, sizeof(*ret));
 	ret->op=op;
 	ret->left.rve=rve1;
 	if (pos) ret->fpos=*pos;
@@ -2575,7 +2575,7 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 	ret=pkg_malloc(sizeof(*ret));
 	if (ret==0) 
 		return 0;
-	memset(ret, sizeof(*ret), 0);
+	memset(ret, 0, sizeof(*ret));
 	ret->op=op;
 	ret->left.rve=rve1;
 	ret->right.rve=rve2;
