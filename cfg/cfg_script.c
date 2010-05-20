@@ -112,7 +112,7 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 
 	var = (cfg_script_var_t *)pkg_malloc(sizeof(cfg_script_var_t));
 	if (!var) goto error;
-	memset(var, sizeof(cfg_script_var_t), 0);
+	memset(var, 0, sizeof(cfg_script_var_t));
 	var->type = type;
 
 	/* add the variable to the group */

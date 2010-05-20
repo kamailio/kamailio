@@ -531,7 +531,7 @@ char* send_http_get(char* path, unsigned int xcap_port, char* match_etag,
 	{
 		char* hdr_name= NULL;
 		
-		memset(buf, 128* sizeof(char), 0);
+		memset(buf, 0, 128* sizeof(char));
 		match_header= buf;
 		
 		hdr_name= (match_type==IF_MATCH)?"If-Match":"If-None-Match"; 
