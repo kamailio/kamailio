@@ -1,0 +1,114 @@
+xHTTP Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2010 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. url_match (str)
+
+        4. Exported Functions
+
+              4.1. xhttp_reply(code, reason, ctype, body)
+
+   List of Examples
+
+   1.1. Set url_match parameter
+   1.2. xhttp_reply usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. url_match (str)
+
+   4. Exported Functions
+
+        4.1. xhttp_reply(code, reason, ctype, body)
+
+1. Overview
+
+   This module provides a basic HTTP server functionaly inside SIP server.
+   SIP and HTTP are very similar protocols, practically the SIP parser can
+   handle easy HTTP requests just by adding a fake Via header.
+
+   The xmlrpc module uses the same concept. xHTTP module offers a generic
+   HTTP handling way, by calling event_route[xhttp:request] in your
+   config. You can check the HTTP URI via config variable $hu. Note that
+   $ru will rise errors since URO is not valid for SIP.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * sl - stateless reply.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Exported Parameters
+
+   3.1. url_match (str)
+
+3.1. url_match (str)
+
+   Regular expression to match the HTPP URL. If there is no match, then
+   event route is not executed
+
+   Default value is null (match everything).
+
+   Example 1.1. Set url_match parameter
+...
+modparam("xhttp", "url_match", "^/sip/")
+...
+
+4. Exported Functions
+
+   4.1. xhttp_reply(code, reason, ctype, body)
+
+4.1.  xhttp_reply(code, reason, ctype, body)
+
+   Send back a reply with content-type and body.
+
+   Example 1.2. xhttp_reply usage
+...
+event_route[xhttp:request] {
+    xhttp_reply("200", "OK", "text/html",
+        "<html><body>OK - [$si:$sp]</body></html>");
+}
+...
