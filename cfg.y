@@ -461,6 +461,7 @@ extern char *finame;
 %token TCP_OPT_KEEPINTVL
 %token TCP_OPT_KEEPCNT
 %token TCP_OPT_CRLF_PING
+%token TCP_OPT_ACCEPT_NO_CL
 %token DISABLE_TLS
 %token ENABLE_TLS
 %token TLSLOG
@@ -1172,6 +1173,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_OPT_CRLF_PING EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_ACCEPT_NO_CL EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_default_cfg.accept_no_cl=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_ACCEPT_NO_CL EQUAL error { yyerror("boolean value expected"); }
 	| DISABLE_TLS EQUAL NUMBER {
 		#ifdef USE_TLS
 			tls_disable=$3;

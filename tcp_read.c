@@ -370,9 +370,17 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							goto skip;
 						}
 					}else{
-						DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
+						if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0) {
+							r->body=p+1;
+							r->bytes_to_go=0;
+							r->flags|=F_TCP_REQ_COMPLETE;
+							p++;
+							goto skip;
+						} else {
+							DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
 									*p);
-						r->error=TCP_REQ_BAD_LEN;
+							r->error=TCP_REQ_BAD_LEN;
+						}
 					}
 				}else r->state=H_SKIP;
 				p++;
@@ -719,11 +727,13 @@ again:
 				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);
 #endif
 			}else{
-				req->error=TCP_REQ_BAD_LEN;
-				LOG(L_ERR, "ERROR: tcp_read_req: content length not present or"
+				if (cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
+					req->error=TCP_REQ_BAD_LEN;
+					LOG(L_ERR, "ERROR: tcp_read_req: content length not present or"
 						" unparsable\n");
-				resp=CONN_ERROR;
-				goto end_req;
+					resp=CONN_ERROR;
+					goto end_req;
+				}
 			}
 			/* if we are here everything is nice and ok*/
 			resp=CONN_RELEASE;
