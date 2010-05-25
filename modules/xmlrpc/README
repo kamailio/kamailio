@@ -2,7 +2,7 @@ Jan Janak
 
    iptelorg GmbH
 
-   Copyright � 2005 iptelorg GmbH
+   Copyright © 2005 iptelorg GmbH
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -24,6 +24,7 @@ Jan Janak
         1.5.2. autoconversion (string)
         1.5.3. escape_cr (integer)
         1.5.4. double_lf_to_crlf (integer)
+        1.5.5. mode (integer)
 
    1.6. Functions
 
@@ -407,7 +408,7 @@ Content-Length: 276
 1.3.3. Type Conversion
 
    The data types of the RPC API are converted to the data types of
-   XML-RPC and vice versa. Table 1, "Data Type Conversion" shows for each
+   XML-RPC and vice versa. Table 1, “Data Type Conversion” shows for each
    RPC API data type corresponding XML-RPC data type.
 
    Table 1. Data Type Conversion
@@ -565,6 +566,18 @@ modparam("xmlrpc", "escape_cr", 1)
    Example 5. Set the double_lf_to_crlf parameter
 modparam("xmlrpc", "double_lf_to_crlf", 1)
 
+1.5.5. mode (integer)
+
+   When set to 1, xmlrpc module does not register to core the callback
+   functions for non-SIP messages. Useful when other module register a
+   callback for HTTP request, being the decision of admin when to call the
+   XMLRPC route (or functions).
+
+   Default: 0.
+
+   Example 6. Set the mode parameter
+modparam("xmlrpc", "mode", 1)
+
 1.6. Functions
 
    Revision History
@@ -586,7 +599,7 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
    function with matching name. If such a function is found then
    dispatch_rpc() will pass control to the function to handle the request.
 
-   Example 6. dispatch_rpc usage
+   Example 7. dispatch_rpc usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
@@ -602,7 +615,7 @@ route[XMLRPC]{
    This function can be called from the config script to directly generate
    an XML-RPC reply.
 
-   Example 7. xmlrpc_reply usage
+   Example 8. xmlrpc_reply usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...

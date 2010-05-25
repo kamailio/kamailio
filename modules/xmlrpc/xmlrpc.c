@@ -397,7 +397,8 @@ static int escape_cr=1; /* default on */
 /* convert double LF to CR LF (when on, LFLF becomes an escape for CRLF, needed
  with some xmlrpc clients that are not escaping CR to &#xD; )*/
 static int lflf2crlf=0; /* default off */
-
+/* do not register for non-sip requests */
+static int xmlrpc_mode = 0;
 
 /*
  * Exported functions
@@ -417,6 +418,7 @@ static param_export_t params[] = {
 	{"autoconversion", PARAM_INT, &autoconvert},
 	{"escape_cr", PARAM_INT, &escape_cr},
 	{"double_lf_to_crlf", PARAM_INT, &lflf2crlf},
+	{"mode", PARAM_INT, &xmlrpc_mode},
 	{0, 0, 0}
 };
 
@@ -2388,13 +2390,16 @@ static int mod_init(void)
 	register_select_table(xmlrpc_sel);
 	
 	/* register non-sip hooks */
-	memset(&nsh, 0, sizeof(nsh));
-	nsh.name="xmlrpc";
-	nsh.destroy=0;
-	nsh.on_nonsip_req=process_xmlrpc;
-	if (register_nonsip_msg_hook(&nsh)<0){
-		ERR("Failed to register non sip msg hooks\n");
-		return -1;
+	if(xmlrpc_mode==0)
+	{
+		memset(&nsh, 0, sizeof(nsh));
+		nsh.name="xmlrpc";
+		nsh.destroy=0;
+		nsh.on_nonsip_req=process_xmlrpc;
+		if (register_nonsip_msg_hook(&nsh)<0){
+			ERR("Failed to register non sip msg hooks\n");
+			return -1;
+		}
 	}
 	return 0;
 }

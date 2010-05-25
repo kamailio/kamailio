@@ -116,6 +116,25 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
 	</example>
 	</section>
 
+	<section id="param_mode">
+	<title><varname>mode</varname> (integer)</title>
+	<para>
+		When set to 1, xmlrpc module does not register to core the callback
+		functions for non-SIP messages. Useful when other module register
+		a callback for HTTP request, being the decision of admin when to
+		call the XMLRPC route (or functions).
+	</para>
+	<para>
+		Default: 0.
+	</para>
+	<example>
+		<title>Set the <varname>mode</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "mode", 1)
+		</programlisting>
+	</example>
+	</section>
+
 	<!--
 	Obsolete (hardwired on in the rpc core functions, cannot  be turned off) 
 	-andrei
