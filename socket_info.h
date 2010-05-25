@@ -47,7 +47,7 @@
  * the text description of any socket, not counting the terminating zero added
  * by socket2str */
 #define MAX_SOCKET_STR (sizeof("unknown") - 1 + IP_ADDR_MAX_STR_SIZE + \
-	INT2STR_MAX_LEN + 2)
+	INT2STR_MAX_LEN + 2 + 2)
 
 int socket2str(char* s, int* len, struct socket_info* si);
 
