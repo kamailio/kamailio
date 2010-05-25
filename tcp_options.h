@@ -138,10 +138,11 @@ struct cfg_group_tcp{
 	int accept_aliases;
 	int alias_flags;
 	int new_conn_alias_flags;
+	int accept_no_cl;  /* on/off - accpet messages without content-lenght */
+
 	/* internal, "fixed" vars */
 	unsigned int rd_buf_size; /* read buffer size (should be > max. datagram)*/
 	unsigned int wq_blk_size; /* async write block size (debugging use) */
-	int accept_no_cl;  /* on/off - accpet messages without content-lenght */
 };
 
 extern struct cfg_group_tcp tcp_default_cfg;
