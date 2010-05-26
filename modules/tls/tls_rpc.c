@@ -23,11 +23,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: management interface
- * \ingroup tls
- * Module: \ref tls
+/** tls module management interface (rpc).
+ * @file tls_rpc.c
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -40,6 +39,7 @@
 #include "tls_config.h"
 #include "tls_util.h"
 #include "tls_server.h"
+#include "tls_ct_wrq.h"
 #include "tls_rpc.h"
 
 static const char* tls_reload_doc[2] = {
@@ -140,8 +140,24 @@ static void tls_list(rpc_t* rpc, void* c)
 
 
 
+static const char* tls_info_doc[2] = {
+	"Returns internal tls related info.",
+	0 };
+
+static void tls_info(rpc_t* rpc, void* c)
+{
+	void* handle;
+	rpc->add(c, "{", &handle);
+	rpc->struct_add(handle, "d",
+			"clear_text_write_queued_bytes", tls_ct_wq_total_bytes());
+}
+
+
+
+
 rpc_export_t tls_rpc[] = {
 	{"tls.reload", tls_reload, tls_reload_doc, 0},
 	{"tls.list",   tls_list,   tls_list_doc,   RET_ARRAY},
+	{"tls.info",   tls_info,   tls_info_doc, 0},
 	{0, 0, 0, 0}
 };
