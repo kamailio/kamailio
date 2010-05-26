@@ -2129,6 +2129,17 @@ int reply_received( struct sip_msg  *p_msg )
 			stop_rb_timers(&uac->request);
 	 	}
 #endif /* TM_ONREPLY_FINAL_DROP_OK */
+		/* Re-read the status code, it can be changed in the route block. */
+#ifdef EXTRA_DEBUG
+		/* The class of provisional and positive final replies cannot be changed. */
+		if (((msg_status < 300) || (p_msg->REPLY_STATUS < 300))
+			&& (msg_status/100 != p_msg->REPLY_STATUS/100)
+		) {
+			LOG(L_ERR, "ERROR: The class of provisional and "
+				"positive final replies should not be changed!\n");
+		}
+#endif /* EXTRA_DEBUG */
+		msg_status=p_msg->REPLY_STATUS;
 	}
 #ifdef USE_DST_BLACKLIST
 		/* add temporary to the blacklist the source of a 503 reply */
