@@ -127,6 +127,22 @@ int pv_get_method(struct sip_msg *msg, pv_param_t *param,
 			get_cseq(msg)->method_id);
 }
 
+int pv_get_version(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST)
+	{
+		return pv_get_strval(msg, param, res,
+				&msg->first_line.u.request.version);
+	}
+
+	return pv_get_strval(msg, param, res,
+				&msg->first_line.u.reply.version);
+}
+
 int pv_get_status(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

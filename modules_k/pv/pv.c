@@ -303,6 +303,9 @@ static pv_export_t mod_pvs[] = {
 	{{"ruri.user", (sizeof("ruri.user")-1)}, /* */
 		PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user,
 		0, 0, pv_init_iname, 1},
+	{{"rv", (sizeof("rv")-1)}, /* */
+		PVT_OTHER, pv_get_version, 0,
+		0, 0, 0, 0},
 	{{"Ri", (sizeof("Ri")-1)}, /* */
 		PVT_OTHER, pv_get_rcvip, 0,
 		0, 0, 0, 0},
