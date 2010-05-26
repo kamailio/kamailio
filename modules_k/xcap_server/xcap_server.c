@@ -220,6 +220,15 @@ static int xcaps_send_reply(sip_msg_t *msg, int code, str *reason,
 {
 	str tbuf;
 
+	if(hdrs->len>0)
+	{
+		if (add_lump_rpl(msg, hdrs->s, hdrs->len, LUMP_RPL_HDR) == 0)
+		{
+			LM_ERR("failed to insert extra-headers lump\n");
+			return -1;
+		}
+	}
+
 	if(ctype->len>0)
 	{
 		/* add content-type */
@@ -337,11 +346,11 @@ error:
 	return -1;
 }
 
-static str xcaps_str_empty    = {"", 0};
-static str xcaps_str_ok       = {"OK", 2};
-static str xcaps_str_srverr   = {"Server error", 12};
-static str xcaps_str_notfound = {"Not found", 9};
-static str xcaps_str_appxml   = {"application/xml", 15};
+static str xcaps_str_empty      = {"", 0};
+static str xcaps_str_ok         = {"OK", 2};
+static str xcaps_str_srverr     = {"Server error", 12};
+static str xcaps_str_nocontent  = {"No content", 10};
+static str xcaps_str_appxml     = {"application/xml", 15};
 
 /**
  *
@@ -641,7 +650,7 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 				&xcaps_str_appxml, &body);
 	} else {
 		/* doc not found */
-		xcaps_send_reply(msg, 404, &xcaps_str_notfound, &xcaps_str_empty,
+		xcaps_send_reply(msg, 204, &xcaps_str_nocontent, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
 	}
 	return 1;
