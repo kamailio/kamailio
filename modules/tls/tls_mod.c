@@ -56,6 +56,7 @@
 #include "../../timer.h" /* ticks_t */
 #include "../../tls_hooks.h"
 #include "../../ut.h"
+#include "../../rpc_lookup.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -376,6 +377,11 @@ static int mod_init(void)
 
 	register_tls_hooks(&tls_h);
 	register_select_table(tls_sel);
+	/* register the rpc interface */
+	if (rpc_register_array(tls_rpc)!=0) {
+		LOG(L_ERR, "failed to register RPC commands\n");
+		goto error;
+	}
 
 	 /* if (init_tls() < 0) return -1; */
 	
