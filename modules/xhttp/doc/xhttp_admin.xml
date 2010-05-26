@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides a basic HTTP server functionaly inside SIP
+		This module provides a basic HTTP/1.0 server functionaly inside SIP
 		server. SIP and HTTP are very similar protocols, practically the
 		SIP parser can handle easy HTTP requests just by adding a fake
 		Via header.
