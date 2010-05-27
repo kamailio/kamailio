@@ -93,7 +93,7 @@ typedef struct _str str;
  * \code str var = STR_NULL; \endcode
  * @sa STR_STATIC_INIT
  */
-#define STR_NULL {NULL, 0}
+#define STR_NULL {0, 0}
 
 /** Formats ::str string for use in printf-like functions.
  * This is a macro that prepares a ::str string for use in functions which 
