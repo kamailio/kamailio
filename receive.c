@@ -149,6 +149,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	clear_branches();
 
 	if (msg->first_line.type==SIP_REQUEST){
+		ruri_mark_new(); /* ruri is usable for forking (not consumed yet) */
 		if (!IS_SIP(msg)){
 			if ((ret=nonsip_msg_run_hooks(msg))!=NONSIP_MSG_ACCEPT){
 				if (unlikely(ret==NONSIP_MSG_ERROR))
