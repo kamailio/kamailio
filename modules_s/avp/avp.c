@@ -1156,6 +1156,9 @@ static int attr_destination(struct sip_msg* msg, char* p1, char* p2)
 		LOG(L_ERR, "ERROR: avp_destination: Can't set dst uri\n");
 		return -1;
 	    };
+		/* dst_uri changed, so it makes sense to re-use the current uri for
+			forking */
+		ruri_mark_new(); /* re-use uri for serial forking */
 	    return 1;
 	} else {
 	    ERR("avp_destination:AVP has numeric value\n");

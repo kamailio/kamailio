@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../parser/parse_param.h"
+#include "../../dset.h"
 
 #include "path.h"
 #include "path_mod.h"
@@ -219,6 +220,9 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 			free_params(params);
 			return;
 		}
+		/* dst_uri changed, so it makes sense to re-use the current uri for
+			forking */
+		ruri_mark_new(); /* re-use uri for serial forking */
 	}
 	free_params(params);
 }

@@ -184,6 +184,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 		msg->new_uri = newUri;
 		msg->parsed_uri_ok=0;
 		msg->dst_uri = dst_uri;
+		ruri_mark_new();
 	}
 	return 1;
 }

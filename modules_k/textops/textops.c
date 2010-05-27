@@ -67,6 +67,7 @@
 #include "../../lib/kcore/parse_privacy.h"
 #include "../../msg_translator.h"
 #include "../../ut.h"
+#include "../../dset.h"
 #include "../../lib/kcore/cmpapi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -694,6 +695,7 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 		if (msg->new_uri.s) pkg_free(msg->new_uri.s);
 		msg->new_uri=*result;
 		msg->parsed_uri_ok=0; /* reset "use cached parsed uri" flag */
+		ruri_mark_new();
 		pkg_free(result); /* free str* pointer */
 		return 1; /* success */
 	}

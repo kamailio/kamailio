@@ -72,6 +72,9 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 				LM_ERR("Error while setting the dst uri\n");
 				goto error;
 			}
+			/* dst_uri changes, so it makes sense to re-use the current uri for
+				forking */
+			ruri_mark_new(); /* re-use uri for serial forking */
 		}
 		/* is the location NATED? */
 		if ((*locs)->flags&CPL_LOC_NATED)

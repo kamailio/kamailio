@@ -1234,7 +1234,10 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			if (set_dst_uri(msg, uri) < 0) {
 				LM_ERR("error while setting dst uri\n");
 				return -1;
-			}	
+			}
+			/* dst_uri changes, so it makes sense to re-use the current uri for
+				forking */
+			ruri_mark_new(); /* re-use uri for serial forking */
 		break;
 	}
 	if(ds_append_branch!=0 && is_route_type(FAILURE_ROUTE))

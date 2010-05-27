@@ -146,6 +146,9 @@ msg_set_dst_uri(msgobject *self, PyObject *args)
         LM_ERR("Error in set_dst_uri\n");
         PyErr_SetString(PyExc_RuntimeError, "Error in set_dst_uri\n");
     }
+    /* dst_uri changes, so it makes sense to re-use the current uri for
+       forking */
+    ruri_mark_new(); /* re-use uri for serial forking */
 
     Py_INCREF(Py_None);
     return Py_None;
