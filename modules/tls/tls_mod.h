@@ -55,12 +55,12 @@ extern int ssl_max_send_fragment;
 extern int ssl_read_ahead;
 
 /* Current TLS configuration */
-extern tls_cfg_t** tls_cfg;
-extern gen_lock_t* tls_cfg_lock;
+extern tls_domains_cfg_t** tls_domains_cfg;
+extern gen_lock_t* tls_domains_cfg_lock;
 
 extern tls_domain_t cli_defaults;
 extern tls_domain_t srv_defaults;
 
-extern str tls_cfg_file;
+extern str tls_domains_cfg_file;
 
 #endif /* _TLS_MOD_H */

@@ -207,14 +207,14 @@ int ssl_max_send_fragment = -1;  /* don't set, leave the default (16k) */
  */
 int ssl_read_ahead = 1; /* set (use -1 for the default value) */
 
-str tls_cfg_file = STR_NULL;
+str tls_domains_cfg_file = STR_NULL;
 
 
 /* Current TLS configuration */
-tls_cfg_t** tls_cfg = NULL;
+tls_domains_cfg_t** tls_domains_cfg = NULL;
 
 /* List lock, used by garbage collector */
-gen_lock_t* tls_cfg_lock = NULL;
+gen_lock_t* tls_domains_cfg_lock = NULL;
 
 
 /*
@@ -245,7 +245,7 @@ static param_export_t params[] = {
 	{"tls_log",             PARAM_INT,    &tls_log                },
 	{"session_cache",       PARAM_INT,    &tls_session_cache      },
 	{"session_id",          PARAM_STR,    &tls_session_id         },
-	{"config",              PARAM_STR,    &tls_cfg_file           },
+	{"config",              PARAM_STR,    &tls_domains_cfg_file   },
 	{"tls_disable_compression", PARAM_INT,&tls_disable_compression},
 	{"ssl_release_buffers",   PARAM_INT, &ssl_mode_release_buffers},
 	{"ssl_freelist_max_len",  PARAM_INT,    &ssl_freelist_max_len},
@@ -296,9 +296,9 @@ static struct tls_hooks tls_h = {
 /*
  * Create TLS configuration from modparams
  */
-static tls_cfg_t* tls_use_modparams(void)
+static tls_domains_cfg_t* tls_use_modparams(void)
 {
-	tls_cfg_t* ret;
+	tls_domains_cfg_t* ret;
 	
 	ret = tls_new_cfg();
 	if (!ret) return;
@@ -310,10 +310,10 @@ static tls_cfg_t* tls_use_modparams(void)
 
 static int fix_rel_pathnames(void)
 {
-	if (tls_cfg_file.s) {
-		tls_cfg_file.s = get_abs_pathname(NULL, &tls_cfg_file);
-		if (tls_cfg_file.s == NULL) return -1;
-		tls_cfg_file.len = strlen(tls_cfg_file.s);
+	if (tls_domains_cfg_file.s) {
+		tls_domains_cfg_file.s = get_abs_pathname(NULL, &tls_domains_cfg_file);
+		if (tls_domains_cfg_file.s == NULL) return -1;
+		tls_domains_cfg_file.len = strlen(tls_domains_cfg_file.s);
 	}
 	
 	if (mod_params.pkey_file.s) {
@@ -368,12 +368,13 @@ static int mod_init(void)
 	 */
 	if (fix_rel_pathnames() < 0) return -1;
 
-	tls_cfg = (tls_cfg_t**)shm_malloc(sizeof(tls_cfg_t*));
-	if (!tls_cfg) {
+	tls_domains_cfg = 
+		(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));
+	if (!tls_domains_cfg) {
 		ERR("Not enough shared memory left\n");
 		goto error;
 	}
-	*tls_cfg = NULL;
+	*tls_domains_cfg = NULL;
 
 	register_tls_hooks(&tls_h);
 	register_select_table(tls_sel);
@@ -385,13 +386,13 @@ static int mod_init(void)
 
 	 /* if (init_tls() < 0) return -1; */
 	
-	tls_cfg_lock = lock_alloc();
-	if (tls_cfg_lock == 0) {
+	tls_domains_cfg_lock = lock_alloc();
+	if (tls_domains_cfg_lock == 0) {
 		ERR("Unable to create TLS configuration lock\n");
 		goto error;
 	}
-	if (lock_init(tls_cfg_lock) == 0) {
-		lock_dealloc(tls_cfg_lock);
+	if (lock_init(tls_domains_cfg_lock) == 0) {
+		lock_dealloc(tls_domains_cfg_lock);
 		ERR("Unable to initialize TLS configuration lock\n");
 		goto error;
 	}
@@ -399,15 +400,15 @@ static int mod_init(void)
 		ERR("Unable to initialize TLS buffering\n");
 		goto error;
 	}
-	if (tls_cfg_file.s) {
-		*tls_cfg = tls_load_config(&tls_cfg_file);
-		if (!(*tls_cfg)) goto error;
+	if (tls_domains_cfg_file.s) {
+		*tls_domains_cfg = tls_load_config(&tls_domains_cfg_file);
+		if (!(*tls_domains_cfg)) goto error;
 	} else {
-		*tls_cfg = tls_new_cfg();
-		if (!(*tls_cfg)) goto error;
+		*tls_domains_cfg = tls_new_cfg();
+		if (!(*tls_domains_cfg)) goto error;
 	}
 
-	if (tls_check_sockets(*tls_cfg) < 0)
+	if (tls_check_sockets(*tls_domains_cfg) < 0)
 		goto error;
 
 	/* fix the timeouts from s to ticks */
@@ -434,16 +435,17 @@ error:
 
 static int mod_child(int rank)
 {
-	if (tls_disable || (tls_cfg==0))
+	if (tls_disable || (tls_domains_cfg==0))
 		return 0;
 	/* fix tls config only from the main proc/PROC_INIT., when we know 
 	 * the exact process number and before any other process starts*/
 	if (rank == PROC_INIT){
-		if (tls_cfg_file.s){
-			if (tls_fix_cfg(*tls_cfg, &srv_defaults, &cli_defaults) < 0) 
+		if (tls_domains_cfg_file.s){
+			if (tls_fix_cfg(*tls_domains_cfg, &srv_defaults,
+							&cli_defaults) < 0)
 				return -1;
 		}else{
-			if (tls_fix_cfg(*tls_cfg, &mod_params, &mod_params) < 0) 
+			if (tls_fix_cfg(*tls_domains_cfg, &mod_params, &mod_params) < 0)
 				return -1;
 		}
 	}

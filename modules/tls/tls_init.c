@@ -618,7 +618,7 @@ int init_tls_h(void)
  * Make sure that all server domains in the configuration have corresponding
  * listening socket in SER
  */
-int tls_check_sockets(tls_cfg_t* cfg)
+int tls_check_sockets(tls_domains_cfg_t* cfg)
 {
 	tls_domain_t* d;
 

@@ -102,7 +102,7 @@ void tls_free_domain(tls_domain_t* d)
 /*
  * clean up 
  */
-void tls_free_cfg(tls_cfg_t* cfg)
+void tls_free_cfg(tls_domains_cfg_t* cfg)
 {
 	tls_domain_t* p;
 	while(cfg->srv_list) {
@@ -123,23 +123,23 @@ void tls_free_cfg(tls_cfg_t* cfg)
 
 void tls_destroy_cfg(void)
 {
-	tls_cfg_t* ptr;
+	tls_domains_cfg_t* ptr;
 
-	if (tls_cfg_lock) {
-		lock_destroy(tls_cfg_lock);
-		lock_dealloc(tls_cfg_lock);
-		tls_cfg_lock = 0;
+	if (tls_domains_cfg_lock) {
+		lock_destroy(tls_domains_cfg_lock);
+		lock_dealloc(tls_domains_cfg_lock);
+		tls_domains_cfg_lock = 0;
 	}
 
-	if (tls_cfg) {
-		while(*tls_cfg) {
-			ptr = *tls_cfg;
-			*tls_cfg = (*tls_cfg)->next;
+	if (tls_domains_cfg) {
+		while(*tls_domains_cfg) {
+			ptr = *tls_domains_cfg;
+			*tls_domains_cfg = (*tls_domains_cfg)->next;
 			tls_free_cfg(ptr);
 		}
 		
-		shm_free(tls_cfg);
-		tls_cfg = 0;
+		shm_free(tls_domains_cfg);
+		tls_domains_cfg = 0;
 	}
 }
 
@@ -269,7 +269,7 @@ static int tls_foreach_CTX_in_domain_lst(tls_domain_t* d,
  * @param p - parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
-static int tls_foreach_CTX_in_srv_domains(tls_cfg_t* cfg,
+static int tls_foreach_CTX_in_srv_domains(tls_domains_cfg_t* cfg,
 											per_ctx_cbk_f ctx_cbk,
 											long l1, void* p2)
 {
@@ -290,7 +290,7 @@ static int tls_foreach_CTX_in_srv_domains(tls_cfg_t* cfg,
  * @param p - parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
-static int tls_foreach_CTX_in_cli_domains(tls_cfg_t* cfg,
+static int tls_foreach_CTX_in_cli_domains(tls_domains_cfg_t* cfg,
 											per_ctx_cbk_f ctx_cbk,
 											long l1, void* p2)
 {
@@ -311,7 +311,8 @@ static int tls_foreach_CTX_in_cli_domains(tls_cfg_t* cfg,
  * @param p - parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
-static int tls_foreach_CTX_in_cfg(tls_cfg_t* cfg, per_ctx_cbk_f ctx_cbk,
+static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
+										per_ctx_cbk_f ctx_cbk,
 										long l1, void* p2)
 {
 	int ret;
@@ -737,7 +738,8 @@ static int load_private_key(tls_domain_t* d)
  * Initialize attributes of all domains from default domains
  * if necessary
  */
-int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_defaults)
+int tls_fix_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
+				tls_domain_t* cli_defaults)
 {
 	tls_domain_t* d;
 
@@ -843,16 +845,16 @@ int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_de
 /*
  * Create new configuration structure
  */
-tls_cfg_t* tls_new_cfg(void)
+tls_domains_cfg_t* tls_new_cfg(void)
 {
-	tls_cfg_t* r;
+	tls_domains_cfg_t* r;
 
-	r = (tls_cfg_t*)shm_malloc(sizeof(tls_cfg_t));
+	r = (tls_domains_cfg_t*)shm_malloc(sizeof(tls_domains_cfg_t));
 	if (!r) {
 		ERR("No memory left\n");
 		return 0;
 	}
-	memset(r, 0, sizeof(tls_cfg_t));
+	memset(r, 0, sizeof(tls_domains_cfg_t));
 	return r;
 }
 
@@ -860,7 +862,8 @@ tls_cfg_t* tls_new_cfg(void)
 /*
  * Lookup TLS configuration based on type, ip, and port
  */
-tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsigned short port)
+tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
+								struct ip_addr* ip, unsigned short port)
 {
 	tls_domain_t *p;
 
@@ -887,7 +890,7 @@ tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsig
 /*
  * Check whether configuration domain exists
  */
-static int domain_exists(tls_cfg_t* cfg, tls_domain_t* d)
+static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {
 	tls_domain_t *p;
 
@@ -912,7 +915,7 @@ static int domain_exists(tls_cfg_t* cfg, tls_domain_t* d)
 /*
  * Add a domain to the configuration set
  */
-int tls_add_domain(tls_cfg_t* cfg, tls_domain_t* d)
+int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {
 	if (!cfg) {
 		ERR("TLS configuration structure missing\n");

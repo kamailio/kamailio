@@ -73,18 +73,18 @@ int shm_asciiz_dup(char** dest, char* val)
  */
 void collect_garbage(void)
 {
-	tls_cfg_t* prev, *cur;
+	tls_domains_cfg_t* prev, *cur;
 
 	     /* Make sure we do not run two garbage collectors
 	      * at the same time
 	      */
-	lock_get(tls_cfg_lock);
+	lock_get(tls_domains_cfg_lock);
 
 	     /* Skip the current configuration, garbage starts
 	      * with the 2nd element on the list
 	      */
-	prev = *tls_cfg;
-	cur = (*tls_cfg)->next;
+	prev = *tls_domains_cfg;
+	cur = (*tls_domains_cfg)->next;
 
 	while(cur) {
 		if (cur->ref_count == 0) {
@@ -97,6 +97,6 @@ void collect_garbage(void)
 		cur = cur->next;
 	}
 
-	lock_release(tls_cfg_lock);
+	lock_release(tls_domains_cfg_lock);
 }
 

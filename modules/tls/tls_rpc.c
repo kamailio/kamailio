@@ -49,9 +49,9 @@ static const char* tls_reload_doc[2] = {
 
 static void tls_reload(rpc_t* rpc, void* ctx)
 {
-	tls_cfg_t* cfg;
+	tls_domains_cfg_t* cfg;
 
-	if (!tls_cfg_file.s) {
+	if (!tls_domains_cfg_file.s) {
 		rpc->fault(ctx, 500, "No TLS configuration file configured");
 		return;
 	}
@@ -59,24 +59,27 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 	     /* Try to delete old configurations first */
 	collect_garbage();
 
-	cfg = tls_load_config(&tls_cfg_file);
+	cfg = tls_load_config(&tls_domains_cfg_file);
 	if (!cfg) {
-		rpc->fault(ctx, 500, "Error while loading TLS configuration file (consult server log)");
+		rpc->fault(ctx, 500, "Error while loading TLS configuration file"
+							" (consult server log)");
 		return;
 	}
 
 	if (tls_fix_cfg(cfg, &srv_defaults, &cli_defaults) < 0) {
-		rpc->fault(ctx, 500, "Error while fixing TLS configuration (consult server log)");
+		rpc->fault(ctx, 500, "Error while fixing TLS configuration"
+								" (consult server log)");
 		goto error;
 	}
 	if (tls_check_sockets(cfg) < 0) {
-		rpc->fault(ctx, 500, "No server listening socket found for one of TLS domains (consult server log)");
+		rpc->fault(ctx, 500, "No server listening socket found for one of"
+							" TLS domains (consult server log)");
 		goto error;
 	}
 
 	DBG("TLS configuration successfuly loaded");
-	cfg->next = (*tls_cfg);
-	*tls_cfg = cfg;
+	cfg->next = (*tls_domains_cfg);
+	*tls_domains_cfg = cfg;
 	return;
 
  error:

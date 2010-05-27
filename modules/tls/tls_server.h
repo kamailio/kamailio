@@ -53,8 +53,8 @@ struct tls_rd_buf {
 #define F_TLS_CON_SSL_PENDING 2 /* bytes buffered inside the SSL context */
 
 struct tls_extra_data {
-	tls_cfg_t* cfg; /* Configuration used for this connection */
-	SSL* ssl;       /* SSL context used for the connection */
+	tls_domains_cfg_t* cfg; /* Configuration used for this connection */
+	SSL* ssl;               /* SSL context used for the connection */
 	tls_ct_q* ct_wq;
 	struct tls_rd_buf* enc_rd_buf;
 	unsigned int flags;

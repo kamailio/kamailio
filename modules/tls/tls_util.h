@@ -49,8 +49,8 @@
 do {                                                    \
 	long err;                                       \
         (r) = 0;                                        \
-	if ((*tls_cfg)->srv_default->ctx &&             \
-	    (*tls_cfg)->srv_default->ctx[0]) {          \
+	if ((*tls_domains_cfg)->srv_default->ctx &&         \
+	    (*tls_domains_cfg)->srv_default->ctx[0]) {      \
 		while((err = ERR_get_error())) {        \
 			(r) = 1;                        \
 			ERR("%s%s\n", ((s)) ? (s) : "", \

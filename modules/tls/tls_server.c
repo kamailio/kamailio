@@ -76,7 +76,7 @@ static int tls_complete_init(struct tcp_connection* c)
 {
 	tls_domain_t* dom;
 	struct tls_extra_data* data = 0;
-	tls_cfg_t* cfg;
+	tls_domains_cfg_t* cfg;
 	enum tls_conn_states state;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
@@ -84,15 +84,15 @@ static int tls_complete_init(struct tcp_connection* c)
 				" operation: %lu\n", shm_available());
 		goto error2;
 	}
-	     /* Get current TLS configuration and increate reference
+	     /* Get current TLS configuration and increase reference
 	      * count immediately. There is no need to lock the structure
 	      * here, because it does not get deleted immediately. When
 	      * SER reloads TLS configuration it will put the old configuration
 	      * on a garbage queue and delete it later, so we know here that
-	      * the pointer we get from *tls_cfg will be valid for a while, at
-	      * least by the time this function finishes
+	      * the pointer we get from *tls_domains_cfg will be valid for a while,
+		  * at least by the time this function finishes
 	      */
-	cfg = *tls_cfg;
+	cfg = *tls_domains_cfg;
 
 	     /* Increment the reference count in the configuration structure, this
 	      * is to ensure that, while on the garbage queue, the configuration does
