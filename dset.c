@@ -27,11 +27,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** destination set / branches support.
+ * @file dset.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 #include <string.h>
@@ -67,6 +66,9 @@ unsigned int nr_branches = 0;
 
 /* branch iterator */
 static int branch_iterator = 0;
+
+/* used to mark ruris "consumed" when branching (1 new, 0 consumed) */
+int ruri_is_new = 0;
 
 /* The q parameter of the Request-URI */
 static qvalue_t ruri_q = Q_UNSPECIFIED;
@@ -266,6 +268,7 @@ void clear_branches(void)
 	nr_branches = 0;
 	ruri_q = Q_UNSPECIFIED;
 	ruri_bflags = 0;
+	ruri_mark_consumed();
 }
 
 
@@ -493,6 +496,8 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
 
         _m->new_uri.s = buf;
         _m->new_uri.len = _s->len;
+        /* mark ruri as new and available for forking */
+        ruri_mark_new();
 
         return 1;
 }
