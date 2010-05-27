@@ -1,5 +1,578 @@
 # $Id$
 
+===================== 2010-05-27 Kamailio v3.0.2 released =====================
+
+===================== Changes since release 3.0.1 =============================
+
+
+commit dea34883a9429a847ecb4437cd5ce2c982a58126
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed May 26 15:48:59 2010 +0200
+
+    tls: fix unregistered rpc commands
+    
+    In the process of merging the tls modules with some k tls PVs the
+    module interface was changed, leaving the rpc functions
+    un-registered (and hence unaccessible).
+    (cherry picked from commit 577ccb71e7a1e113cacd74b19c8174ea2e9bacb6)
+
+commit 496566345b9faf263d2594445709dcd953036ac6
+Merge: e556002 1c588c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 27 11:34:27 2010 +0200
+
+    Merge remote branch 'origin/andrei/pointer_alias_warnings' into kamailio_3.0
+    
+    * origin/andrei/pointer_alias_warnings:
+      rr(s): fix recently introduced avp_cookie name bug
+      core: avp aliasing warning fixes
+      group: fix pointer aliasing warnings
+      rr: pointer aliasing warning fixes
+      db_postgres: pointer aliasing warnings fixes
+      core: pointer aliasing warnings fixed
+      cfg: fixed pointer aliasing warnings
+    
+    Conflicts:
+    	route.c
+
+commit e5560029f04058642bebb09a1a1b7df699c5f80b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 27 10:29:24 2010 +0200
+
+    centos spec: version set to 3.0.2
+
+commit a2dbcec4278631ec78944098e7b407cebd682e92
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 27 10:28:16 2010 +0200
+
+    debian: updated changelog for 3.0.2
+
+commit 88e2a6d4ed6fae4d5c0b9ab268e41307aea4e8a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 27 10:27:53 2010 +0200
+
+    - version set to 3.0.2
+
+commit 959eb339a44ada14b2b1a7aa551b0f36a2afd523
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 7 22:56:46 2010 +0200
+
+    topoh: free nbuf
+    
+    - fixed leak due to no free of new buffer
+    - reported by Libor Chocholaty
+    (cherry picked from commit 198e468b7d83bb62d0761dd45e5c6820bc75a61a)
+
+commit 08d6d008af2408892a101eb932a2b93f4c9dfc47
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 20 12:24:29 2010 +0200
+
+    perl: update the index of params in action struct
+    
+    - params start from 3rd position of val array
+    (cherry picked from commit f624074a1680befed9328548864407c396ec196f)
+
+commit c2256b44ba8ec4d8190aa9551bc737bd1ab62699
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 21 15:04:55 2010 +0200
+
+    dialplan: safety check for fetch rows before data init
+    (cherry picked from commit 5040ff5cc54f673af80190916de9c1ac5d4c1af9)
+
+commit 6dc77aa8801808211b42184c15712e6adf9b443d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 13 11:41:06 2010 +0200
+
+    registrar(k): reset dst uri in lookup
+    
+    - upon lookup, dst uri is reset if no new dst uri is set from received
+      or path, otherwise the coordinates of selected contact are not
+      effective
+    - reported by Andreas Granig
+    (cherry picked from commit 53bb79cef5eb70e98472903ef84b5585cc798e65)
+
+commit fc9770f9a5f6b874680465d417d0359a19ebbad6
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Thu May 20 15:46:58 2010 +0200
+
+    fix memset call, set the variable to zero, not to the size with length 0..
+    (cherry picked from commit 355636358c07b8da9b1fcd6d04cdaf337c9f730c)
+
+commit 16bdf9ea21b310d49d5d99dee43cfd57990eb1bb
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Tue May 4 13:10:03 2010 +0300
+
+    Modules:carrierroute: Fixed a bug in carrirroute module that might cause a crash if the routing prob was larger than the number of available routes.
+    
+    The problem was caused by a missing else
+
+commit a65b81983cf8ab90a4c40c8698ad1033bcdf205e
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Fri May 14 15:05:17 2010 -0400
+
+    sdp parser: fix sdp payload attributes cloning
+    
+     - ptime attribute was not computed while allocating space
+       for the cloned attributes
+    (cherry picked from commit f1944ead66d854c349fca67da2b13d2be3c7fc33)
+
+commit 9ba3305c3e813531200da6b03f72676c930e784d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue May 11 14:43:55 2010 +0300
+
+    modules/mediaproxy: removed error message
+    
+    - Removed error message since a=rtcp line could contain the port only.
+      Credits to Thomas Gelf and Saul Ibarra Corretge.
+
+commit b0091da84ee5bbbc18cb799eefc497be707ab0f9
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun May 9 15:55:22 2010 +0300
+
+    modules_k/permissions: backported address table reload fix from master
+
+commit 59894cc9d53b03494753a00c4057c595afc3e5c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 6 21:09:47 2010 +0200
+
+    avposp: use state in searching first avp in avp_copy
+    
+    - state parameter was missing when searching first avp, keeping it
+      uninitialized when searching the next, causing a crash when flag 'g'
+      was used in avp_copy
+    - reported by Jon Bonilla (Manwe)
+    (cherry picked from commit 027d68e9cc7afcdb3ba8922215a28e33a5225097)
+
+commit d457367259419b776f0cde56ef35e9de9b5fffb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 6 18:51:45 2010 +0200
+
+    dispatcher(k): allow functions from route block
+    
+    - they do not depend on sip message itself, but script variables
+    (cherry picked from commit 25680d4bc14a4502e118951873c6da8edfc7e9a7)
+
+commit befd91050bf16c725076f31f71d8c083aaf482e7
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Mar 19 14:47:46 2010 +0100
+
+    core: cfg parser: allow negative numbers in modparams
+    (cherry picked from commit d4b2eee2e4f0e5a1fe4b5ea17d78d51a6fab70c7)
+
+commit 4fd1e775f701d79d1d7f5e75bd7ff621739914b5
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Tue May 4 17:06:47 2010 +0300
+
+    core:sr_module.c increased number of pre-allocated static buffers in get_str_fparam()
+    
+    Increased the number from 3 to 6 as more are needed by modules like carrierroute when avp's are used as function parameters
+    (Bug reported by Ole Kaas)
+
+commit 79352b61841907f08bf7ca994acf814b2a5a6615
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Tue Apr 27 15:40:10 2010 +0300
+
+    lib/srdb1 The RES_ROW(res) was not checked to be NULL before being used
+    
+    This caused a crash in the case that RES_ROW_N(res) was > 0, and RES_ROW was NULL
+    (like a pkg_malloc going bad in a OOM scenario).
+
+commit 26d735b5c8b9f10d8a5d4f6a80ce12868868b187
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Apr 27 09:30:12 2010 +0300
+
+    modules/mediaproxy: crash fix
+    - Fixed crash when received reply contains more streams than the
+      INVITE.  Credits to Saúl Ibarra Corretgé.
+
+commit 51a49282b60ce7a65a86d839a3e004eab7f3540f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 23 16:44:49 2010 +0200
+
+    core - tm: improved log messages
+    
+    - udp_send() prints outgoing buffer len as unsigned
+    - build_uac_req() prints the size of attempted memory chunk allocation
+    (cherry picked from commit 839c9509013abf77a446e1c35620a9fcd4223740)
+
+commit 9223d7a189c64b6a3dbe8c66edf08ddc16f3fd4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 22 10:35:33 2010 +0200
+
+    dialog(k): populate bind addr before any error
+    
+    - setting bind addr attribute in populate_leg_info() takes place before
+      any parsing error may occur, to be sure it is set, avoiding extra
+      check for null value when updating db
+    - reported by Kelvin Chua
+    - credits to Timo Reimann for troubleshooting
+    (cherry picked from commit fd68980dc6f3de03a432f478c124852c23a1d1b2)
+
+commit 11837819caad6234f337ac3843d720a9b664a330
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 20 22:06:46 2010 +0200
+
+    tm: kamailio flavour enables local-request event
+    
+    - will execute event_route[tm:local-request]
+    - reported by Alex Balashov
+    (cherry picked from commit e4bd74c1718ea2218f2ad426537641cc9ef71d7d)
+
+commit c0f409a686b6b468b406185dd090813aef46f513
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Apr 17 11:46:44 2010 +0200
+
+    core: sip warning header disabled by default
+    
+    - do not append Warning header to local generated replies by default
+    - it can be enabled from config file via sip_warning parameter
+    (cherry picked from commit 258b58e29fe9e63a75d853d1826fe9c4b9a5f0ab)
+
+commit d6a1a1ba48732d7e45115b2ada0ccdd9218cb08f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 15 11:20:52 2010 +0200
+
+    pkg(k): extended rules for mysql depends
+    
+    - closes FS#65, reported by Jon Bonilla
+    (cherry picked from commit edfbfab6590381872dbd0f9ea89b496cb1c911d6)
+
+commit 45b224a69d350506cf7881a352a43eaebafb2825
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 15 11:02:06 2010 +0200
+
+    tm: added drop functionality for branch_route
+    
+    - missing part of K integration
+    - credits to Andreas Granig for reporting and testing
+    (cherry picked from commit d592824b6e1b0d31a0d4fff28d003cc4c3c878bc)
+
+commit 2da81aa4f591f0dfef49cd6acabd19baa7b2dd8d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Apr 14 17:17:59 2010 +0300
+
+    modules/lcr: always use current time when loading gateways
+    
+    - Always use current time when deciding if a gateway is defunct or not.
+      Otherwise a gateway may get used even if its defunct until time in
+      database is greater than current time.
+    (cherry picked from commit 0c819f3ff3d947897fa0bafbaaa0081b671bb4e4)
+
+commit 3a25f8327c39420d99d11ba4502d31617fa743cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 14 10:39:47 2010 +0200
+
+    mysql: include dprint.h
+    
+    - several files were missing include of dprint.h
+    - could be the cause for missing symbol reported by Pratab Ali for
+      opensuse
+    (cherry picked from commit 9c5da73226b3124c888e434e3df55cc1466b3b07)
+
+commit 342d6eb44fe6f795d7d31fc42ec6f7942859503b
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Apr 2 15:03:09 2010 +0300
+
+    lib/kcore/km_crc.c Fixed wrong computation of crc32
+    
+    The final result was not bitwise complemented, yeilding an incorrect result
+
+commit a0fe789aa729092a7bc6e31bfd1cb73decf941e2
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 3 13:20:38 2010 +0300
+
+    modules/dialplan: fixed reloading of db data
+    
+    - Open and close db connection each time rules are (re)loaded from
+      database.
+    (cherry picked from commit 14aaf32dd20252ee92c97dc3d3811c20b615222c)
+
+commit 6c51d903f5a314f4116df81121d1faa5ea8c95d3
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Apr 9 12:09:33 2010 +0300
+
+    modules/carrierroute Improved usefulness of error messages in case of a incorrect AVP value
+
+commit 2bbb798da2e332f5558646e6faa285e6377286bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 8 23:21:53 2010 +0200
+
+    tm: notes about avp parameters format
+    
+    - they can be either PV style $avp(name) for K compat mode or just the
+      name of avp for S compat mode
+
+commit 4e5748d50b6a586fb45f312ade6aa572b4044d82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 8 22:57:48 2010 +0200
+
+    tm: don't fix timeout AVP value for K compat mode
+    
+    - the avps for timeout still expect second values unlike module
+      parameters that expect miliseconds
+    - therefore do not adjust the value if it is too low
+    - reported by Andreas Granig
+    (cherry picked from commit 5aa3167b088bdf2e7a5d74fdbbd83c0e150f7741)
+
+commit 5604e51eb8fd6502495a37c26f9c549bcd63ca8a
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Apr 8 16:54:53 2010 +0300
+
+    modules/carrierroute In case of incorrect avp value (unknown carrier id), print the name of the avp accordinly to its type
+
+commit 5266c7f5ed1e2f6364f646ece3828e259491a6ae
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Tue Apr 6 16:21:35 2010 +0300
+
+    utils/kamctl/kamctl.base added documentation of  ps command
+
+commit f2969f4fbc8c74f46d1f43f1f8553efc2e910d1a
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Apr 2 10:19:55 2010 +0300
+
+    modules_k/nathelper: handle_ruri_alias() fix
+    
+    - Look for ;alias parameter in parsed_uri.sip_params field instead of
+      parsed_uri.params field.
+    (cherry picked from commit ba7e942b819cea6c6d71651a37cfd9f73a9ddd48)
+
+commit 48015a8e471ecadfb571fa94daa7300992fe6674
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 31 14:05:51 2010 -0400
+
+    pkg: updated kamailio spec file for CentOS
+    
+     - updated kamailio spec file for CentOS along with default and init scripts.
+    (cherry picked from commit 0acd8963f76a4854e101210db17854ca8062ff61)
+
+commit 3c4db3e110aae42f36e03e0d10792f4676063fa0
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Mar 31 10:31:05 2010 -0400
+
+    kamctl: fix 'kamctl cr addcarrier' command
+    
+     - 'COMMENT' field and 'MASK' field were mixed up causing
+       'kamctl cr addcarrier' to fail.
+    (cherry picked from commit 7b8b6f647365655afa210f5e95baef06398ef612)
+
+commit 6087434f2ddfbe07767d5a4eeb739b72b7c27a93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 26 10:48:41 2010 +0100
+
+    kamailo.cfg: fixed typo
+    
+    - typo in the hints of missed_calls table update for accouting
+
+commit 4a280caf2a8fd452f9df44ad8cf39dd40e06c1e7
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Mar 25 22:04:44 2010 +0100
+
+    core: fix return not working inside a while() loop
+    
+    Reported-by: Juha Heinanen  jh tutpro com
+    Closes: FlySpray#46.
+    (cherry picked from commit 0581efe06a8fb0ffe15542c343ae7ac0bc20cbbb)
+
+commit cb3eb04efd0183b96b377a2a08b8db948d11255d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 24 22:44:49 2010 +0100
+
+    makefile: presence_mwi added to excluded list
+    
+    - patch by Ovidiu Sas, tracker  FS#45
+    - makes no sense to build it out of presence group
+    - kpresence group includes it and makes easier packaging
+    (cherry picked from commit d91a9b021c494678cd20bc3fd444f9d4d565ec65)
+
+commit ae36bc7daa0da6d32b7818c2cc91dfe469233e0b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 22 16:33:04 2010 +0100
+
+    makefile: fix install utils
+    
+    - previous commit broke installation of utils by a c&p error to
+      non-empty test to utils variable (r => ut)
+    - extra check for directory existence
+    - credits to Federico M. and Nathaniel L Keeling III for reporting
+    (cherry picked from commit 641a41b6e9cf1387c24dd9f863db978c8018df80)
+
+commit cea15a4b04720154a7495a87e4d97ceaf1b8312f
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Mar 16 18:15:56 2010 +0100
+
+    makefile: fix install-cfg & install-utils on solaris
+    
+    Reported-by: Nathaniel L Keeling  keeling akan-tech com
+    (cherry picked from commit ad57482b7d05417f7f0058cef8c698f18d6d9a39)
+    (cherry picked from commit d4028e0df24a97ccaacf867ab6bfe92f270b92e0)
+
+commit 0d4b4f187d5be683fdf8a697fea4d3ca32e69070
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Mar 16 11:34:45 2010 +0100
+
+    tls: documented is_peer_verified()
+    
+    - documented is_peer_verified()
+    - fixed the xmls, so that xmllint / make check does not return any
+      errors
+    - regenerated the README
+    (cherry picked from commit f86da819836b7a8c832b4a80262d8f39a86563dd)
+
+commit 2f900c77ba09f57217cffda8ff4ea882fbaa21e2
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Mar 16 11:13:19 2010 +0100
+
+    tls: doc: fix low_mem_treshold* name in examples
+    
+    The tls examples used low_memory_threshold[12] instead of
+    low_mem_treshold[12].
+    
+    Reported-by: Jan Janak  <jan@iptel.org>
+    (cherry picked from commit 915a0052092be70630f76a91c19c9a540da038df)
+
+commit 8f218aa1bed97ecafb266373c4ae3a62254e815a
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sun Mar 14 17:13:40 2010 +0100
+
+    perl(k): fix mk_action call
+    
+    The mk_action() call used the old openser format, instead of the
+    sip_router one.
+    (cherry picked from commit a14aaf3f2fe11cdc0d56e1a12cb60ae0cd53b8f5)
+
+commit ff80e418e01e1c6a92b0a5a5c74defe2a52a2e42
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Mar 12 12:16:16 2010 +0100
+
+    mem: fix real_used stats for realloc
+    
+    A realloc that shrank an allocation accounted twice for the
+    fragment overhead. Basically each shrinking realloc would
+    introduce an error in the real_used mem stats, between 8 bytes
+    (f_malloc, no debugging, 32 bits) and up to 96 bytes (q_malloc
+    with debugging, 64 bits).
+    This bug concerns only the accounting part. It does not cause any
+    memory leak or any real runtime problem. It was introduced
+    in commit fb9d6e50 (2005).
+    (cherry picked from commit 75c1e9a735c693a6985a7a1786116b5fe4044fd9)
+
+commit 2bb3d716821cf1ccfba16792c1ae168031f73fbb
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Mar 10 17:30:39 2010 +0100
+
+    make: fix CPU reset in some conditions
+    
+    In some cases like trying to build a package with debug config
+    (e.g. make cfg mode=debug; .... ; make deb), the CPU make variable
+    was reset resulting in a build failure. This happens because in
+    the debug config CPU is not set and hence is  saved as empty.
+    Trying to build a package will start a sub-make which will try to
+    re-do the config without debugging (make cfg), but the CPU
+    variable with and empty value will be inherited from the
+    environment and thus the CPU?=something lines won't have any
+    effect.
+    The fix replaces CPU?=something with
+    $(call set_if_empty,CPU,something)
+    This works around having an empty CPU in the environment.
+    
+    Reported-by: Jan Janak  <jan@iptel.org>
+    (cherry picked from commit 0b2d2c6e99dac2bd171f1c24bfa6f285f6539273)
+
+commit 6f8a76343d7737ab7348c27503e0670977883d0d
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Mar 10 10:42:15 2010 +0100
+
+    docbook: fix rm'ed files mentioned in .d build error
+    
+    When some .xml include file is deleted or removed, but the .d
+    already exists, the build will fail trying to build the apparently
+    missing file, requiring a make proper.
+    This fix enclosed the prerequisites in $(wildcard ...), when
+    generating the .d file.
+    (cherry picked from commit 111a87fef0868021d6585d32b879bac6cb07b310)
+
+commit 8b18772c4c5df2e96d89e2c56071eb5770fd7290
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Mar 10 09:45:28 2010 +0100
+
+    cfg. parser: fix warnings
+    
+    - removed flex input warnings
+    - workaround for bison conflicts warnings (%expect ...)
+    (cherry picked from commit 0dabc34afe64672f07f572acfcd9478fc3575c9d)
+
+commit 07681e1b6e89a902d8f9bdeba9674de6a3d353f5
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Mar 10 09:25:13 2010 +0100
+
+    make: on-the-fly dependency generation
+    
+    - support on-the-fly dependency file generation with gcc >=3.0
+     (the dependency files are generated while compiling the object
+     file, eliminating another gcc+sed invocation)
+    
+    - support for using makedepend -f-  for generating dependencies
+     E.g.: make cfg MKDEP="makedepend -f-". In general gcc should be
+     preferred if available (use this if you don't have gcc and your
+     compiler doesn't generate good deps).
+    (cherry picked from commit 5a9014ee4977c6afbc4b0cf65a9fad6237c2e2a6)
+    (cherry picked from commit 929598a19dfb09efcfcbb1aee57a83f45b12592f)
+
+commit ae9b1ec34994686c4d2d902582835ab0b2ed2c59
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Mar 9 21:57:25 2010 +0100
+
+    make: depends move/rm file fix & optimization
+    
+    - fix for make failing if the depends were made and a *.h is moved
+      or deleted
+    - avoid restarting make when depends change (make the depends at
+      the same moment when the .o are generated)
+    (cherry picked from commit 965e651fbe84d370c05a647e022023cecf2d02bd)
+
+commit 682ef1b6104ec62e4ec60eefa404c9403f6645c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 17 20:00:59 2010 +0100
+
+    nathelper(k): safety check for content length
+    
+    - patch by Marcus Hunger, SF#2961414
+    (cherry picked from commit fb4f98a341322904a92c6f12396f5795a3275c08)
+
+commit ccef7b8729d0beb6ac2c55b7f68bab5a8650c546
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Mar 4 09:09:22 2010 +0200
+
+    * modules_k/permissions: subnet matching fix (credits to anonymous)
+    (cherry picked from commit f5a29762b6155209721ba0dfc3f30b4a9764c191)
+
+commit 967542011be0bf47b85abf8e627d6f43ad726e7b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 15 23:50:13 2010 +0100
+
+    dispatcher(k): use load_tm_api
+    
+    - import tm module api directly
+    - patch by Stephen Young (styoung)
+    (cherry picked from commit fd5ddfd12c25497aa859dafc2bf65e3c07fd4529)
+
+commit 0822a9caf751d2fb28ac398fd60cc2583308aa94
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Mar 11 21:08:20 2010 +0100
+
+    mem: fix f_malloc big fragments bug
+    
+    In some situation, when dealing with several big free fragments
+    (>16k) f_malloc would wrongly choose a fragment with a smaller
+    size then requested. This would create the impression that someone
+    arbitrarily overwrites the memory.
+    
+    First symptoms were some tls crashes reported by
+    Klaus Darilion  klaus.darilion@nic.at.
+    Reproduced using the malloc_test module.
+    (cherry picked from commit c7099d0a1204120277cf662cc05ab35180d89538)
+
+
 ===================== 2010-03-08 Kamailio v3.0.1 released =====================
 
 ===================== Changes since release 3.0.0 =============================
