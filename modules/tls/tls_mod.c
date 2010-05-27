@@ -341,7 +341,7 @@ static int mod_init(void)
 	/* register the rpc interface */
 	if (rpc_register_array(tls_rpc)!=0) {
 		LOG(L_ERR, "failed to register RPC commands\n");
-		goto error;
+		return -1;
 	}
 
 	 /* if (init_tls() < 0) return -1; */
