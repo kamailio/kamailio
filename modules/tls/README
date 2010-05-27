@@ -397,36 +397,32 @@ modparam("tls", "cipher_list", "HIGH")
 
 1.8.9. send_timeout (int)
 
-   Sets the maximum interval of time after which SIP-router will give up
-   trying to send a message over TLS (time after a TLS send will be
-   aborted and the corresponding TLS connection closed). The value is in
-   seconds.
-
-   The default value is 120 s.
+   This parameter is obsolete and cannot be used in newer TLS versions (>
+   sip-router 3.0). In these versions the send_timeout is replaced by
+   tcp_send_timeout (common with all the tcp connections).
 
    Example 10. Set send_timeout parameter
 ...
-modparam("tls", "send_timeout", 1)
+tls_send_timeout = 10
 ...
 
 1.8.10. handshake_timeout (int)
 
-   Sets the maximum interval of time after which SIP-router will give up
-   trying to accept a TLS connection or connect to a TLS peer. The value
-   is in seconds.
-
-   The default value is 120 s.
+   This parameter is obsolete and cannot be used in newer TLS versions (>
+   sip-router 3.0). In these versions the handshake_timeout is replaced by
+   tcp_connect_timeout (common with all the tcp connections).
 
    Example 11. Set handshake_timeout parameter
 ...
-modparam("tls", "handshake_timeout", 1)
+tcp_connect_timeout = 60
 ...
 
 1.8.11. connection_timeout (int)
 
    Sets the amount of time after which an idle TLS connection will be
-   closed. This is similar to tcp_connection_lifetime. The value is
-   expressed in seconds.
+   closed, if no I/O ever occured after the initial open. If an I/O event
+   occurs, the timeout will be extended with tcp_connection_lifetime. The
+   value is expressed in seconds.
 
    The default value is 10 min.
 
