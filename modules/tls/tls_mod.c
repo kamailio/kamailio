@@ -172,7 +172,6 @@ tls_domain_t cli_defaults = {
 static str tls_method = STR_STATIC_INIT("TLSv1");
 
 
-int tls_handshake_timeout = 30;
 int tls_send_timeout = 30;
 int tls_con_lifetime = 600; /* this value will be adjusted to ticks later */
 int tls_log = 3;
@@ -239,8 +238,6 @@ static param_export_t params[] = {
 	{"ca_list",             PARAM_STR,    &mod_params.ca_file     },
 	{"certificate",         PARAM_STR,    &mod_params.cert_file   },
 	{"cipher_list",         PARAM_STR,    &mod_params.cipher_list },
-	{"handshake_timeout",   PARAM_INT,    &tls_handshake_timeout  },
-	{"send_timeout",        PARAM_INT,    &tls_send_timeout       },
 	{"connection_timeout",  PARAM_INT,    &tls_con_lifetime       },
 	{"tls_log",             PARAM_INT,    &tls_log                },
 	{"session_cache",       PARAM_INT,    &tls_session_cache      },
