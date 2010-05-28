@@ -640,7 +640,7 @@ cfg_parser_t* cfg_parser_init(str* filename)
 		goto error;
 	}
 
-	free(pathname);
+	pkg_free(pathname);
 
 	st->file = base;
 	st->line = 1;
@@ -653,7 +653,7 @@ cfg_parser_t* cfg_parser_init(str* filename)
 		pkg_free(st);
 	}
 	if (base) pkg_free(base);
-	if (pathname) free(pathname);
+	if (pathname) pkg_free(pathname);
 	return NULL;
 }
 

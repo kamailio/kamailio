@@ -29,11 +29,10 @@
  */
 
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** various utility functions.
+ * @file ut.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 #include <sys/types.h>
@@ -215,6 +214,16 @@ unsigned int get_sys_version(int* major, int* minor, int* minor2)
 }
 
 
+
+/** transform a relative pathname into an absolute one.
+ * @param base  - base file, used to extract the absolute path prefix.
+ *                Might be NULL, in which case the path of the ser.cfg is
+ *                used.
+ * @param file  - file path to be transformed. If it's already absolute
+ *                (starts with '/') is left alone. If not the result will
+ *                be `dirname base`/file.
+ * @return  pkg allocated asciiz string or 0 on error.
+ */
 char* get_abs_pathname(str* base, str* file)
 {
 	str ser_cfg;
@@ -241,8 +250,8 @@ char* get_abs_pathname(str* base, str* file)
 	if (file->s[0] == '/') {
 		/* This is an absolute pathname, make a zero terminated
 		 * copy and use it as it is */
-		if ((res = malloc(file->len+1)) == NULL) {
-			ERR("get_abs_pathname: No memory left (malloc failed)\n");
+		if ((res = pkg_malloc(file->len+1)) == NULL) {
+			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
 		}
 		memcpy(res, file->s, file->len);
 		res[file->len]=0;
@@ -251,8 +260,8 @@ char* get_abs_pathname(str* base, str* file)
 		 * to the location of the base file
 		 */
 		/* Make a copy, function dirname may modify the string */
-		if ((buf = malloc(base->len+1)) == NULL) {
-			ERR("get_abs_pathname: No memory left (malloc failed)\n");
+		if ((buf = pkg_malloc(base->len+1)) == NULL) {
+			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
 			return NULL;
 		}
 		memcpy(buf, base->s, base->len);
@@ -260,16 +269,16 @@ char* get_abs_pathname(str* base, str* file)
 		dir = dirname(buf);
 		
 		len = strlen(dir);
-		if ((res = malloc(len + 1 + file->len + 1)) == NULL) {
-			ERR("get_abs_pathname: No memory left (malloc failed)\n");
-			free(buf);
+		if ((res = pkg_malloc(len + 1 + file->len + 1)) == NULL) {
+			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
+			pkg_free(buf);
 			return NULL;
 		}
 		memcpy(res, dir, len);
 		res[len] = '/';
 		memcpy(res + len + 1, file->s, file->len);
 		res[len + 1 + file->len] = '\0';
-		free(buf);
+		pkg_free(buf);
 	}
 	return res;
 }
