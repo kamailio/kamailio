@@ -147,10 +147,10 @@ endif
 INSTALL_FLAVOUR=$(FLAVOUR)
 
 #version number
-VERSION = 2
-PATCHLEVEL = 99
-SUBLEVEL =  99
-EXTRAVERSION = -pre3
+VERSION = 3
+PATCHLEVEL = 0
+SUBLEVEL =  2
+EXTRAVERSION =
 
 # memory debugger switcher
 # 0 - off (release mode)
