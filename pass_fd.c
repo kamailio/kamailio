@@ -160,6 +160,7 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	struct iovec iov[1];
 	int ret;
 #ifdef HAVE_MSGHDR_MSG_CONTROL
+	int* pi;
 	struct cmsghdr* cmsg;
 	/* make sure msg_control will point to properly aligned data */
 	union {
@@ -176,7 +177,8 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
-	*(int*)CMSG_DATA(cmsg)=fd;
+	pi=(int*)CMSG_DATA(cmsg);
+	*pi=fd;
 	msg.msg_flags=0;
 #else
 	msg.msg_accrights=(caddr_t) &fd;
@@ -225,6 +227,7 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd, int flags)
 	int f;
 #endif /*NO_MSG_WAITALL */
 #ifdef HAVE_MSGHDR_MSG_CONTROL
+	int* pi;
 	struct cmsghdr* cmsg;
 	union{
 		struct cmsghdr cm;
@@ -308,7 +311,8 @@ poll_again:
 			ret=-1;
 			goto error;
 		}
-		*fd=*((int*) CMSG_DATA(cmsg));
+		pi=(int*) CMSG_DATA(cmsg);
+		*fd=*pi;
 	}else{
 		/*
 		LOG(L_ERR, "ERROR: receive_fd: no descriptor passed, cmsg=%p,"
