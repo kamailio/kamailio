@@ -227,44 +227,30 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
     int first_idx, idx;
     struct socket_info* sock;
     unsigned int flags;
-    struct cell *t;
 
     /* Check if contacts_avp has been defined */
     if (contacts_avp.n == 0) {
 		LM_ERR("feature has been disabled - "
-			   "to enable define contacts_avp module parameter");
+		       "to enable define contacts_avp module parameter");
 		return -1;
     }
 
     /* Check if anything needs to be done */
     if (nr_branches == 0) {
-		LM_DBG("nothing to do - no branches!\n");
+		LM_DBG("t_load_contacts(): nothing to do - no branches!\n");
 		return 1;
     }
 
-    t = get_t();
     ruri = (str *)0;
 
-    if (!t || (t == T_UNDEFINED)) {
-
-		/* No transaction yet - take first q from Request-URI */
-		ruri = GET_RURI(msg);
-		if (!ruri) {
-			LM_ERR("no Request-URI found\n");
-			return -1;
-		}
-		first_q = get_ruri_q();
-		first_idx = 0;
-
-    } else {
-
-		/* Transaction exists - take first q from first branch */
-	
-		uri.s = get_branch(0, &uri.len, &first_q, &dst_uri, &path, &flags,
-						   &sock);
-		first_idx = 1;
-
+    /* Take first q from Request-URI */
+    ruri = GET_RURI(msg);
+    if (!ruri) {
+	LM_ERR("no Request-URI found\n");
+	return -1;
     }
+    first_q = get_ruri_q();
+    first_idx = 0;
 
     /* Check if all q values are equal */
     for(idx = first_idx; (tmp.s = get_branch(idx, &tmp.len, &q, 0, 0, 0, 0))
@@ -274,7 +260,7 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 		}
     }
 
-    LM_DBG("nothing to do - all contacts have same q!\n");
+    LM_DBG("t_load_contacts(): nothing to do - all contacts have same q!\n");
     return 1;
 
 rest:
@@ -286,27 +272,13 @@ rest:
 		return -1;
     }
 
-    if (!t || (t == T_UNDEFINED)) {
-
-		/* Insert Request-URI branch to first contact */
-		contacts->uri.s = ruri->s;
-		contacts->uri.len = ruri->len;
-		contacts->dst_uri = msg->dst_uri;
-		contacts->sock = msg->force_send_socket;
-		getbflagsval(0, &contacts->flags);
-		contacts->path = msg->path_vec;
-
-    } else {
-	
-		/* Insert first branch to first contact */
-		contacts->uri = uri;
-		contacts->q = first_q;
-		contacts->dst_uri = dst_uri;
-		contacts->sock = sock;
-		contacts->flags = flags;
-		contacts->path = path;
-    }
-
+    /* Insert Request-URI branch to first contact */
+    contacts->uri.s = ruri->s;
+    contacts->uri.len = ruri->len;
+    contacts->dst_uri = msg->dst_uri;
+    contacts->sock = msg->force_send_socket;
+    getbflagsval(0, &contacts->flags);
+    contacts->path = msg->path_vec;
     contacts->q = first_q;
     contacts->next = (struct contact *)0;
 
@@ -374,7 +346,7 @@ rest:
 				contacts_avp, val);
 		pkg_free(branch_info.s);
 		LM_DBG("loaded contact <%.*s> with q_flag <%d>\n",
-			   STR_FMT(&val.s), curr->q_flag);
+		       STR_FMT(&val.s), curr->q_flag);
 		curr = curr->next;
     }
 
@@ -389,12 +361,13 @@ rest:
 
 
 /*
- * Adds to request a destination set that includes all highest priority
- * class contacts in contacts_avp.   If called from a route block,
- * rewrites the request uri with first contact and adds the remaining
- * contacts as branches.  If called from failure route block, adds all
- * contacts as branches.  Removes added contacts from contacts_avp.
- */
+ * Adds to request a new destination set that includes all highest
+ * priority class contacts in contacts_avp.   Request URI is rewritten with
+ * first contact and the remaining contacts (if any) are added as branches.
+ * Removes used contacts from contacts_avp.  Returns 1, if contacts_avp
+ * was not empty and a destination set was successfully added.  Returns -2,
+ * if contacts_avp was empty and thus there was nothing to do.
+ * Returns -1 in case of an error. */
 int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 {
     struct usr_avp *avp, *prev;
@@ -402,10 +375,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
     str uri, dst, path;
     struct socket_info *sock;
     unsigned int flags;
-    struct cell *t;
-	struct search_state st;
-	ticks_t orig;
-	unsigned int avp_timeout;
+    struct search_state st;
 
     /* Check if contacts_avp has been defined */
     if (contacts_avp.n == 0) {
@@ -414,160 +384,65 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 		return -1;
     }
 
-    t = get_t();
+    /* Load Request-URI and branches */
 
-    if (!t || (t == T_UNDEFINED)) {
-
-		/* no transaction yet => load Request-URI and branches */
-
-		if (is_route_type(FAILURE_ROUTE)) {
-			LM_CRIT("BUG - undefined transaction in failure route\n");
-			return -1;
-		}
-
-		/* Find first contacts_avp value */
-		avp = search_first_avp(contacts_avp_type, contacts_avp, &val, &st);
-		if (!avp) {
-			LM_DBG("no AVPs - we are done!\n");
-			return 1;
-		}
-
-		LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
-
-		if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
-			== 0) {
-			LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
-			destroy_avp(avp);
-			return -1;
-		}
-
-		/* Rewrite Request-URI */
-		rewrite_uri(msg, &uri);
-		if (dst.s && dst.len) set_dst_uri(msg, &dst);
-		else reset_dst_uri(msg);
-		if (path.s && path.len) set_path_vector(msg, &path);
-		else reset_path_vector(msg);
-		set_force_socket(msg, sock);
-		setbflagsval(0, flags);
-
-		if (avp->flags & Q_FLAG) {
-			destroy_avp(avp);
-			/* Set fr_inv_timer */
-			if (t_set_fr(msg, cfg_get(tm, tm_cfg, fr_inv_timeout_next), 0) 
-				== -1) {
-				ERR("Cannot set fr_inv_timer value.\n");
-				return -1;
-			}
-			return 1;
-		}
-		
-		/* Append branches until out of branches or Q_FLAG is set */
-		prev = avp;
-		while ((avp = search_next_avp(&st, &val))) {
-			destroy_avp(prev);
-			LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
-
-			if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
-				== 0) {
-				LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
-				destroy_avp(avp);
-				return -1;
-			}
-
-			if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
-				LM_ERR("appending branch failed\n");
-				destroy_avp(avp);
-				return -1;
-			}
-
-			if (avp->flags & Q_FLAG) {
-				destroy_avp(avp);
-				/* Set fr_inv_timer */
-				if (t_set_fr(msg, cfg_get(tm, tm_cfg, fr_inv_timeout_next), 0) == -1) {
-					ERR("Cannot set fr_inv_timer value.\n");
-					return -1;
-				}
-				return 1;
-			}
-			prev = avp;
-		}
-		destroy_avp(prev);
-    } else {
-			/* Transaction exists => only load branches */
-
-		/* Find first contacts_avp value */
-		avp = search_first_avp(contacts_avp_type, contacts_avp, &val, &st);
-		if (!avp) return -1;
-
-		/* Append branches until out of branches or Q_FLAG is set */
-		do {
-			LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
-
-			if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
-				== 0) {
-				LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
-				destroy_avp(avp);
-				return -1;
-			}
-	
-			if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
-				LM_ERR("appending branch failed\n");
-				destroy_avp(avp);
-				return -1;
-			}
-
-			if (avp->flags & Q_FLAG) {
-				destroy_avp(avp);
-				return 1;
-			}
-
-			prev = avp;
-			avp = search_next_avp(&st, &val);
-			destroy_avp(prev);
-		} while (avp);
-
-		/* If we got there then we have no more branches for subsequent serial
-		 * forking and the current set is the last one. For the last set we do
-		 * not use the shorter timer fr_inv_timer_next anymore, instead we use
-		 * the usual fr_inv_timer.
-		 *
-		 * There are three places in sip-router which can contain the actual
-		 * value of the fr_inv_timer. The first place is the variable
-		 * use_fr_inv_timeout defined in timer.c That variable is set when the
-		 * script writer calls t_set_fr in the script. Its value can only be
-		 * used from within the process in which t_set_fr was called. It is
-		 * not guaranteed that when we get here we are still in the same
-		 * process and therefore we might not be able to restore the correct
-		 * value if the script writer used t_set_fr before calling
-		 * t_next_contacts. If that happens then the code below detects this
-		 * and looks into the AVP or cfg framework for other value. In other
-		 * words, t_next_contact does not guarantee that fr_inv_timer values
-		 * configured on per-transaction basis with t_set_fr will be correctly
-		 * restored.
-		 *
-		 * The second place is the fr_inv_timer_avp configured in modules
-		 * parameters. If that AVP exists and then its value will be correctly
-		 * restored by t_next_contacts. The AVP is an alternative way of
-		 * configuring fr_inv_timer on per-transaction basis, it can be used
-		 * interchangeably with t_set_fr. Function t_next_contacts always
-		 * correctly restores the timer value configured in the AVP.
-		 *
-		 * Finally, if we can get the value neither from user_fr_inv_timeout
-		 * nor from the AVP, we turn to the fr_inv_timeout variable in the cfg
-		 * framework. This variable contains module's default and it always
-		 * exists and is available. */
-		orig = (ticks_t)get_msgid_val(user_fr_inv_timeout, msg->id, int);
-		if (orig == 0) {
-			if (!fr_inv_avp2timer(&avp_timeout)) {
-				/* The value in the AVP is in seconds and needs to be
-				 * converted to ticks */
-				orig = S_TO_TICKS((ticks_t)avp_timeout);
-			} else {
-				orig = cfg_get(tm, tm_cfg, fr_inv_timeout);
-			}
-		}
-		change_fr(t, orig, 0);
+    /* Find first contacts_avp value */
+    avp = search_first_avp(contacts_avp_type, contacts_avp, &val, &st);
+    if (!avp) {
+	LM_DBG("no AVPs - we are done!\n");
+	return -2;
     }
+
+    LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
+
+    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
+	== 0) {
+	LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
+	destroy_avp(avp);
+	return -1;
+    }
+    
+    /* Rewrite Request-URI */
+    rewrite_uri(msg, &uri);
+    if (dst.s && dst.len) set_dst_uri(msg, &dst);
+    else reset_dst_uri(msg);
+    if (path.s && path.len) set_path_vector(msg, &path);
+    else reset_path_vector(msg);
+    set_force_socket(msg, sock);
+    setbflagsval(0, flags);
+
+    if (avp->flags & Q_FLAG) {
+	destroy_avp(avp);
+	return 1;
+    }
+		
+    /* Append branches until out of branches or Q_FLAG is set */
+    prev = avp;
+    while ((avp = search_next_avp(&st, &val))) {
+	destroy_avp(prev);
+	LM_DBG("next contact is <%.*s>\n", STR_FMT(&val.s));
+	
+	if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
+	    == 0) {
+	    LM_ERR("decoding of branch info <%.*s> failed\n", STR_FMT(&val.s));
+	    destroy_avp(avp);
+	    return -1;
+	}
+
+	if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
+	    LM_ERR("appending branch failed\n");
+	    destroy_avp(avp);
+	    return -1;
+	}
+
+	if (avp->flags & Q_FLAG) {
+	    destroy_avp(avp);
+	    return 1;
+	}
+	prev = avp;
+    }
+
+    destroy_avp(prev);
 
     return 1;
 }

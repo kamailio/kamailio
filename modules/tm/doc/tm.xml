@@ -301,9 +301,7 @@ failure_route["serial"]
 		And that's the whole example, we achieved combined serial/parallel
 		forking based on the q value of individual branches. In real-world
 		configuration files the script writer would need to check the return
-		value of all functions and also configure some additional parameters,
-		such as <varname>fr_inv_timer_next</varname>
-		and <varname>restart_fr_on_each_reply</varname>. Also the destination
+		value of all functions and <varname>restart_fr_on_each_reply</varname>. Also the destination
 		set would not be configured directly in the configuration file, but
 		can be retrieved from the user location database, for example. In that
 		case registered contacts will be stored in the destination set as
@@ -339,17 +337,6 @@ failure_route["serial"]
 		    cleanly--Vias, Routes, etc. should be removed from a
 		    message prior to replicating it (well, does not matter any
 		    longer so much as there is a new replication module).
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    Function <function>t_next_contacts</function> should restore the
-		    value of timer <varname>fr_inv_timer</varname> when there are no
-		    more branches to be processed serially. The function can restore
-		    the timer properly if it has been configured through an AVP or
-		    with the config framework, but may fail to restore timer values
-		    configured for individual transactions
-		    with <function>t_set_fr</function>.
 		</para>
 	    </listitem>
 

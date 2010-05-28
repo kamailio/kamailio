@@ -465,7 +465,6 @@ static param_export_t params[]={
 	{"via1_matching",       PARAM_INT, &default_tm_cfg.via1_matching         },
 	{"fr_timer",            PARAM_INT, &default_tm_cfg.fr_timeout            },
 	{"fr_inv_timer",        PARAM_INT, &default_tm_cfg.fr_inv_timeout        },
-	{"fr_inv_timer_next",   PARAM_INT, &default_tm_cfg.fr_inv_timeout_next   },
 	{"wt_timer",            PARAM_INT, &default_tm_cfg.wait_timeout          },
 	{"delete_timer",        PARAM_INT, &default_tm_cfg.delete_timeout        },
 	{"retr_timer1",         PARAM_INT, &default_tm_cfg.rt_t1_timeout         },

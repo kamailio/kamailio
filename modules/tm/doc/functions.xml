@@ -1118,41 +1118,29 @@ if (!t_load_contacts()) {
 		  set.
 		</para>
 		<para>
-		  This function takes the AVP created
-		  by <function>t_load_contacts</function> and extracts branches with
-		  highest q value from it into the destination set when called for the
+		  This function takes the contact_avp created
+		  by <function>t_load_contacts</function> and extracts
+		branches with 
+		  highest q value from it into the destination set when
+		called for the 
 		  first time. When you call the function second time it extracts
 		  branches with lower q value, and so on until all branches have been
-		  extracted.	  
-		</para>
-		<para>
-          If no transaction exist when <function>t_next_contacts()</function>
-          is called, this usually happens when you call the function from a
-          request route block before you call <function>t_relay</function>, it
-          replaces the Request-URI with the first contacts_avp value, adds the
-          remaining contacts_avp values with the same q value as branches, and
-          destroys those AVPs. 
-		</para>
-        <para>
-          If transaction does exist when t_next_contacts() is called, it adds
-          the first <varname>contacts_avp</varname> value and all following
-          <varname>contacts_avp</varname> values with the same q value as new
-          branches to request and destroys those AVPs. 
-        </para>
-		<para>
-		  When you call the function repeatedly from a failure_route branch,
-		  it looks for more AVP values each time and adds branches that have
-		  same q value from the AVP as additional destination set branches. It
-		  always stops when it reaches a branch that has a lower q value. Used
-		  AVP values are always destroyed.,
+		  extracted.  At each call, Request URI is rewritten with
+		first branch and the remaining branches (if any) are
+		added as branches. Then these "used" branches are remove
+		from the AVP.
 		</para>
 		<para>
 		  The function does nothing if there are
 		  no <varname>contact_avp</varname> values.
 		</para>
 		<para>
-          The function returns 1 if there were no errors and -1 if an error
-          occurred (see syslog). This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		The function returns 1 if the AVP was not empty and a
+		destination set was successfully added,
+		returns -2 if contact_avp was empty and thus there was
+		nothing to do, and returns -1 in case of an error (see
+		syslog).
+          	This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 		</para>
 		<para>
 		  Note that if use use <function>t_load_contacts</function>
@@ -1163,10 +1151,11 @@ if (!t_load_contacts()) {
 		  resetting the fr_inv_timer value and serial forking never happens.
 		</para>
 		<para>
-		  Also make sure that you
-		  configured <varname>fr_inv_timer_next</varname> with lower value,
-		  especially if you expect to have many serially forked branches. See
-		  the documentation of that parameter for more details.
+		Before calling t_relay(), you can check if the
+		previous call of next_contacts() consumed all branches
+		by checking if contact_avp is not anymore set.  Based on
+		that test, you can then use t_set_fr() function to set
+		timers according to your needs.
 		</para>
 		<example>
 		<title><function>t_next_contacts</function> usage</title>
