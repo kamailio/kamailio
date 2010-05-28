@@ -336,7 +336,7 @@ static int load_cert(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->cert_file.s) {
+	if (!d->cert_file.s || !d->cert_file.len) {
 		DBG("%s: No certificate configured\n", tls_domain_str(d));
 		return 0;
 	}
@@ -363,7 +363,7 @@ static int load_ca_list(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->ca_file.s) {
+	if (!d->ca_file.s || !d->ca_file.len) {
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
@@ -697,7 +697,7 @@ static int load_private_key(tls_domain_t* d)
 	int idx, ret_pwd, i;
 	int procs_no;
 	
-	if (!d->pkey_file.s) {
+	if (!d->pkey_file.s || !d->pkey_file.len) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
 	}
