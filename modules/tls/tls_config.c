@@ -44,6 +44,7 @@
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
+#include "../../cfg/cfg.h"
 
 static tls_domains_cfg_t* cfg = NULL;
 static tls_domain_t* domain = NULL;

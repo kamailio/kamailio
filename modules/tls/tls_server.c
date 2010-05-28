@@ -47,6 +47,7 @@
 #include "../../pt.h"
 #include "../../tcp_int_send.h"
 #include "../../tcp_read.h"
+#include "../../cfg/cfg.h"
 
 #include "tls_init.h"
 #include "tls_domain.h"
@@ -55,12 +56,15 @@
 #include "tls_server.h"
 #include "tls_bio.h"
 #include "tls_dump_vf.h"
+#include "tls_cfg.h"
 
 /* low memory treshold for openssl bug #1491 workaround */
 #define LOW_MEM_NEW_CONNECTION_TEST() \
-	((openssl_mem_threshold1) && (shm_available()<openssl_mem_threshold1))
+	(cfg_get(tls, tls_cfg, low_mem_threshold1) && \
+	  (shm_available() < cfg_get(tls, tls_cfg, low_mem_threshold1)))
 #define LOW_MEM_CONNECTED_TEST() \
-	((openssl_mem_threshold2) && (shm_available()<openssl_mem_threshold2))
+	(cfg_get(tls, tls_cfg, low_mem_threshold2) && \
+	  (shm_available() <  cfg_get(tls, tls_cfg, low_mem_threshold2)))
 
 #define TLS_RD_MBUF_SZ	65536
 #define TLS_WR_MBUF_SZ	65536
@@ -216,11 +220,11 @@ static void tls_dump_cert_info(char* s, X509* cert)
 	issuer = X509_NAME_oneline(X509_get_issuer_name(cert), 0 , 0);
 	
 	if (subj){
-		LOG(tls_log, "%s subject:%s\n", s ? s : "", subj);
+		LOG(cfg_get(tls, tls_cfg, log), "%s subject:%s\n", s ? s : "", subj);
 		OPENSSL_free(subj);
 	}
 	if (issuer){
-		LOG(tls_log, "%s issuer:%s\n", s ? s : "", issuer);
+		LOG(cfg_get(tls, tls_cfg, log), "%s issuer:%s\n", s ? s : "", issuer);
 		OPENSSL_free(issuer);
 	}
 }
@@ -243,6 +247,7 @@ static int tls_accept(struct tcp_connection *c, int* error)
 	SSL *ssl;
 	X509* cert;
 	struct tls_extra_data* tls_c;
+	int tls_log;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
@@ -262,6 +267,7 @@ static int tls_accept(struct tcp_connection *c, int* error)
 	if (unlikely(ret == 1)) {
 		DBG("TLS accept successful\n");
 		tls_c->state = S_TLS_ESTABLISHED;
+		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_accept: new connection from %s:%d using %s %s %d\n",
 		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl), 
@@ -349,6 +355,7 @@ static int tls_connect(struct tcp_connection *c, int* error)
 	int ret, ssl_err;
 	X509* cert;
 	struct tls_extra_data* tls_c;
+	int tls_log;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
@@ -369,6 +376,7 @@ static int tls_connect(struct tcp_connection *c, int* error)
 	if (unlikely(ret == 1)) {
 		DBG("TLS connect successful\n");
 		tls_c->state = S_TLS_ESTABLISHED;
+		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_connect: new connection to %s:%d using %s %s %d\n", 
 		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl),
@@ -529,7 +537,7 @@ int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 {
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
-	c->timeout = get_ticks_raw() + tls_con_lifetime;
+	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
 	return 0;
 }

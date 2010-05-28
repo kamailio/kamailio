@@ -143,7 +143,7 @@ int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d);
 /*
  * Fill in missing parameters
  */
-int tls_fix_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
+int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 				tls_domain_t* cli_defaults);
 
 

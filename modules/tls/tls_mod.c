@@ -36,6 +36,7 @@
  * 2010-03-19  new parameters to control advanced openssl lib options
  *              (mostly work on 1.0.0+): ssl_release_buffers, ssl_read_ahead,
  *              ssl_freelist_max_len, ssl_max_send_fragment   (andrei)
+ * 2010-05-27  migrated to the runtime cfg framework (andrei)
  */
 /** SIP-router TLS support :: Module interface.
  * @file
@@ -57,6 +58,7 @@
 #include "../../tls_hooks.h"
 #include "../../ut.h"
 #include "../../rpc_lookup.h"
+#include "../../cfg/cfg.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -65,6 +67,7 @@
 #include "tls_rpc.h"
 #include "tls_util.h"
 #include "tls_mod.h"
+#include "tls_cfg.h"
 
 #ifndef TLS_HOOKS
 	#error "TLS_HOOKS must be defined, or the tls module won't work"
@@ -72,12 +75,6 @@
 #ifdef CORE_TLS
 	#error "conflict: CORE_TLS must _not_ be defined"
 #endif
-
-
-/* maximum accepted lifetime (maximum possible is  ~ MAXINT/2)
- *  (it should be kept in sync w/ MAX_TCP_CON_LIFETIME from tcp_main.c:
- *   MAX_TLS_CON_LIFETIME <= MAX_TCP_CON_LIFETIME )*/
-#define MAX_TLS_CON_LIFETIME	(1U<<(sizeof(ticks_t)*8-1))
 
 
 
@@ -166,48 +163,6 @@ tls_domain_t cli_defaults = {
 };
 
 
-/*
- * Defaults for client and server domains when using modparams
- */
-static str tls_method = STR_STATIC_INIT("TLSv1");
-
-
-int tls_send_timeout = 30;
-int tls_con_lifetime = 600; /* this value will be adjusted to ticks later */
-int tls_log = 3;
-int tls_session_cache = 0;
-str tls_session_id = STR_STATIC_INIT("ser-tls-2.1.0");
-/* release internal openssl read or write buffer when they are no longer used
- * (complete read or write that does not have to buffer anything).
- * Should be used together with tls_free_list_max_len. Might have some
- * performance impact (and extra *malloc pressure), but has also the potential
- * of saving a lot of memory (at least 32k/idle connection in the default
- * config, or ~ 16k+tls_max_send_fragment)) */
-int ssl_mode_release_buffers = -1; /* don't set, leave the default (off) */
-/* maximum length of free/unused memory buffers/chunks per connection.
- * Setting it to 0 would cause any unused buffers to be immediately freed
- * and hence a lower memory footprint (at the cost of a possible performance
- * decrease and more *malloc pressure).
- * Too large value would result in extra memory consumption.
- * The default is 32 in openssl.
- * For lowest memory usage set it to 0 and tls_mode_release_buffers to 1
- */
-int ssl_freelist_max_len = -1;   /* don't set, leave the default value (32) */
-/* maximum number of bytes (clear text) sent into one record.
- * The default and maximum value are ~16k. Lower values would lead to a lower
- *  memory footprint. 
- * Values lower then the typical  app. write size might decrease performance 
- * (extra write() syscalls), so it should be kept ~2k for ser.
- */
-int ssl_max_send_fragment = -1;  /* don't set, leave the default (16k) */
-/* enable read ahead. Should increase performance (1 less syscall when
- * enabled, else openssl makes 1 read() for each record header and another
- * for the content), but might interact with SSL_pending() (not used right now)
- */
-int ssl_read_ahead = 1; /* set (use -1 for the default value) */
-
-str tls_domains_cfg_file = STR_NULL;
-
 
 /* Current TLS configuration */
 tls_domains_cfg_t** tls_domains_cfg = NULL;
@@ -230,27 +185,29 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"tls_method",          PARAM_STR,    &tls_method             },
-	{"verify_certificate",  PARAM_INT,    &mod_params.verify_cert },
-	{"verify_depth",        PARAM_INT,    &mod_params.verify_depth},
-	{"require_certificate", PARAM_INT,    &mod_params.require_cert},
-	{"private_key",         PARAM_STR,    &mod_params.pkey_file   },
-	{"ca_list",             PARAM_STR,    &mod_params.ca_file     },
-	{"certificate",         PARAM_STR,    &mod_params.cert_file   },
-	{"cipher_list",         PARAM_STR,    &mod_params.cipher_list },
-	{"connection_timeout",  PARAM_INT,    &tls_con_lifetime       },
-	{"tls_log",             PARAM_INT,    &tls_log                },
-	{"session_cache",       PARAM_INT,    &tls_session_cache      },
-	{"session_id",          PARAM_STR,    &tls_session_id         },
-	{"config",              PARAM_STR,    &tls_domains_cfg_file   },
-	{"tls_disable_compression", PARAM_INT,&tls_disable_compression},
-	{"ssl_release_buffers",   PARAM_INT, &ssl_mode_release_buffers},
-	{"ssl_freelist_max_len",  PARAM_INT,    &ssl_freelist_max_len},
-	{"ssl_max_send_fragment", PARAM_INT,    &ssl_max_send_fragment},
-	{"ssl_read_ahead",        PARAM_INT,    &ssl_read_ahead},
-	{"tls_force_run",       PARAM_INT,    &tls_force_run},
-	{"low_mem_threshold1",  PARAM_INT,    &openssl_mem_threshold1},
-	{"low_mem_threshold2",  PARAM_INT,    &openssl_mem_threshold2},
+	{"tls_method",          PARAM_STR,    &default_tls_cfg.method       },
+	{"verify_certificate",  PARAM_INT,    &default_tls_cfg.verify_cert  },
+	{"verify_depth",        PARAM_INT,    &default_tls_cfg.verify_depth },
+	{"require_certificate", PARAM_INT,    &default_tls_cfg.require_cert },
+	{"private_key",         PARAM_STR,    &default_tls_cfg.private_key  },
+	{"ca_list",             PARAM_STR,    &default_tls_cfg.ca_list      },
+	{"certificate",         PARAM_STR,    &default_tls_cfg.certificate  },
+	{"cipher_list",         PARAM_STR,    &default_tls_cfg.cipher_list  },
+	{"connection_timeout",  PARAM_INT,    &default_tls_cfg.con_lifetime },
+	{"tls_log",             PARAM_INT,    &default_tls_cfg.log      },
+	{"session_cache",       PARAM_INT,    &default_tls_cfg.session_cache},
+	{"session_id",          PARAM_STR,    &default_tls_cfg.session_id   },
+	{"config",              PARAM_STR,    &default_tls_cfg.config_file  },
+	{"tls_disable_compression", PARAM_INT,
+										 &default_tls_cfg.disable_compression},
+	{"ssl_release_buffers",   PARAM_INT, &default_tls_cfg.ssl_release_buffers},
+	{"ssl_freelist_max_len",  PARAM_INT,  &default_tls_cfg.ssl_freelist_max},
+	{"ssl_max_send_fragment", PARAM_INT,
+									   &default_tls_cfg.ssl_max_send_fragment},
+	{"ssl_read_ahead",        PARAM_INT,    &default_tls_cfg.ssl_read_ahead},
+	{"tls_force_run",       PARAM_INT,    &default_tls_cfg.force_run},
+	{"low_mem_threshold1",  PARAM_INT,    &default_tls_cfg.low_mem_threshold1},
+	{"low_mem_threshold2",  PARAM_INT,    &default_tls_cfg.low_mem_threshold2},
 	{0, 0, 0}
 };
 
@@ -259,7 +216,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"tls", 
+	"tls",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
@@ -305,34 +262,6 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 #endif
 
 
-static int fix_rel_pathnames(void)
-{
-	if (tls_domains_cfg_file.s) {
-		tls_domains_cfg_file.s = get_abs_pathname(NULL, &tls_domains_cfg_file);
-		if (tls_domains_cfg_file.s == NULL) return -1;
-		tls_domains_cfg_file.len = strlen(tls_domains_cfg_file.s);
-	}
-	
-	if (mod_params.pkey_file.s) {
-		mod_params.pkey_file.s = get_abs_pathname(NULL, &mod_params.pkey_file);
-		if (mod_params.pkey_file.s == NULL) return -1;
-		mod_params.pkey_file.len = strlen(mod_params.pkey_file.s);
-	}
-	
-	if (mod_params.ca_file.s) {
-		mod_params.ca_file.s = get_abs_pathname(NULL, &mod_params.ca_file);
-		if (mod_params.ca_file.s == NULL) return -1;
-		mod_params.ca_file.len = strlen(mod_params.ca_file.s);
-	}
-	
-	if (mod_params.cert_file.s) {
-		mod_params.cert_file.s = get_abs_pathname(NULL, &mod_params.cert_file);
-		if (mod_params.cert_file.s == NULL) return -1;
-		mod_params.cert_file.len = strlen(mod_params.cert_file.s);
-	}
-	
-	return 0;
-}
 
 static int mod_init(void)
 {
@@ -343,30 +272,34 @@ static int mod_init(void)
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
 	}
-
-/*
-	if (cfg_get(tcp, tcp_cfg, async) && !tls_force_run){
-		ERR("tls does not support tcp in async mode, please use"
-				" tcp_async=no in the config file\n");
+	if (fix_tls_cfg(&default_tls_cfg) < 0 ) {
+		ERR("initial tls configuration fixup failed\n");
 		return -1;
 	}
-*/
-	     /* Convert tls_method parameter to integer */
-	method = tls_parse_method(&tls_method);
+	/* declare configuration */
+	if (cfg_declare("tls", tls_cfg_def, &default_tls_cfg,
+							cfg_sizeof(tls), &tls_cfg)) {
+		ERR("failed to register the configuration\n");
+		return -1;
+	}
+	/* Convert tls_method parameter to integer */
+	method = tls_parse_method(&cfg_get(tls, tls_cfg, method));
 	if (method < 0) {
 		ERR("Invalid tls_method parameter value\n");
 		return -1;
 	}
+	/* fill mod_params */
 	mod_params.method = method;
+	mod_params.verify_cert = cfg_get(tls, tls_cfg, verify_cert);
+	mod_params.verify_depth = cfg_get(tls, tls_cfg, verify_depth);
+	mod_params.require_cert = cfg_get(tls, tls_cfg, require_cert);
+	mod_params.pkey_file = cfg_get(tls, tls_cfg, private_key);
+	mod_params.ca_file = cfg_get(tls, tls_cfg, ca_list);
+	mod_params.cert_file = cfg_get(tls, tls_cfg, certificate);
+	mod_params.cipher_list = cfg_get(tls, tls_cfg, cipher_list);
 
-	/* Update relative paths of files configured through modparams, relative
-	 * pathnames will be converted to absolute and the directory of the main
-	 * SER configuration file will be used as reference.
-	 */
-	if (fix_rel_pathnames() < 0) return -1;
-
-	tls_domains_cfg = 
-		(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));
+	tls_domains_cfg =
+			(tls_domains_cfg_t**)shm_malloc(sizeof(tls_domains_cfg_t*));
 	if (!tls_domains_cfg) {
 		ERR("Not enough shared memory left\n");
 		goto error;
@@ -397,8 +330,9 @@ static int mod_init(void)
 		ERR("Unable to initialize TLS buffering\n");
 		goto error;
 	}
-	if (tls_domains_cfg_file.s) {
-		*tls_domains_cfg = tls_load_config(&tls_domains_cfg_file);
+	if (cfg_get(tls, tls_cfg, config_file).s) {
+		*tls_domains_cfg = 
+			tls_load_config(&cfg_get(tls, tls_cfg, config_file));
 		if (!(*tls_domains_cfg)) goto error;
 	} else {
 		*tls_domains_cfg = tls_new_cfg();
@@ -408,21 +342,6 @@ static int mod_init(void)
 	if (tls_check_sockets(*tls_domains_cfg) < 0)
 		goto error;
 
-	/* fix the timeouts from s to ticks */
-	if (tls_con_lifetime<0){
-		/* set to max value (~ 1/2 MAX_INT) */
-		tls_con_lifetime=MAX_TLS_CON_LIFETIME;
-	}else{
-		if ((unsigned)tls_con_lifetime > 
-				(unsigned)TICKS_TO_S(MAX_TLS_CON_LIFETIME)){
-			LOG(L_WARN, "tls: mod_init: tls_con_lifetime too big (%u s), "
-					" the maximum value is %u\n", tls_con_lifetime,
-					TICKS_TO_S(MAX_TLS_CON_LIFETIME));
-			tls_con_lifetime=MAX_TLS_CON_LIFETIME;
-		}else{
-			tls_con_lifetime=S_TO_TICKS(tls_con_lifetime);
-		}
-	}
 	return 0;
 error:
 	destroy_tls_h();
@@ -437,12 +356,13 @@ static int mod_child(int rank)
 	/* fix tls config only from the main proc/PROC_INIT., when we know 
 	 * the exact process number and before any other process starts*/
 	if (rank == PROC_INIT){
-		if (tls_domains_cfg_file.s){
-			if (tls_fix_cfg(*tls_domains_cfg, &srv_defaults,
-							&cli_defaults) < 0)
+		if (cfg_get(tls, tls_cfg, config_file).s){
+			if (tls_fix_domains_cfg(*tls_domains_cfg,
+									&srv_defaults, &cli_defaults) < 0)
 				return -1;
 		}else{
-			if (tls_fix_cfg(*tls_domains_cfg, &mod_params, &mod_params) < 0)
+			if (tls_fix_domains_cfg(*tls_domains_cfg,
+									&mod_params, &mod_params) < 0)
 				return -1;
 		}
 	}
@@ -472,7 +392,8 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 
 	DBG("trying to find TCP connection of received message...\n");
 
-	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, tls_con_lifetime);
+	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0,
+					cfg_get(tls, tls_cfg, con_lifetime));
 	if (c && c->type != PROTO_TLS) {
 		ERR("Connection found but is not TLS\n");
 		tcpconn_put(c);

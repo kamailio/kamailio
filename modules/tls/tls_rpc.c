@@ -33,6 +33,7 @@
 #include "../../rpc.h"
 #include "../../tcp_conn.h"
 #include "../../timer.h"
+#include "../../cfg/cfg.h"
 #include "tls_init.h"
 #include "tls_mod.h"
 #include "tls_domain.h"
@@ -41,6 +42,7 @@
 #include "tls_server.h"
 #include "tls_ct_wrq.h"
 #include "tls_rpc.h"
+#include "tls_cfg.h"
 
 static const char* tls_reload_doc[2] = {
 	"Reload TLS configuration file",
@@ -50,7 +52,9 @@ static const char* tls_reload_doc[2] = {
 static void tls_reload(rpc_t* rpc, void* ctx)
 {
 	tls_domains_cfg_t* cfg;
+	str tls_domains_cfg_file;
 
+	tls_domains_cfg_file = cfg_get(tls, tls_cfg, config_file);
 	if (!tls_domains_cfg_file.s) {
 		rpc->fault(ctx, 500, "No TLS configuration file configured");
 		return;
@@ -66,7 +70,7 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	if (tls_fix_cfg(cfg, &srv_defaults, &cli_defaults) < 0) {
+	if (tls_fix_domains_cfg(cfg, &srv_defaults, &cli_defaults) < 0) {
 		rpc->fault(ctx, 500, "Error while fixing TLS configuration"
 								" (consult server log)");
 		goto error;

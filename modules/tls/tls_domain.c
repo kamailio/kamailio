@@ -39,11 +39,13 @@
 #include "../../ut.h"
 #include "../../mem/shm_mem.h"
 #include "../../pt.h"
+#include "../../cfg/cfg.h"
 #include "tls_server.h"
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_init.h"
 #include "tls_domain.h"
+#include "tls_cfg.h"
 
 
 /*
@@ -529,17 +531,21 @@ static int set_session_cache(tls_domain_t* d)
 {
 	int i;
 	int procs_no;
+	str tls_session_id;
 	
 	procs_no=get_max_procs();
+	tls_session_id=cfg_get(tls, tls_cfg, session_id);
 	for(i = 0; i < procs_no; i++) {
-		     /* janakj: I am not sure if session cache makes sense in ser, session 
-		      * cache is stored in SSL_CTX and we have one SSL_CTX per process, thus 
-		      * sessions among processes will not be reused
-		      */
-		SSL_CTX_set_session_cache_mode(d->ctx[i], 
-				   tls_session_cache ? SSL_SESS_CACHE_SERVER : SSL_SESS_CACHE_OFF);
-		SSL_CTX_set_session_id_context(d->ctx[i], 
-					       (unsigned char*)tls_session_id.s, tls_session_id.len);
+		/* janakj: I am not sure if session cache makes sense in ser, session
+		 * cache is stored in SSL_CTX and we have one SSL_CTX per process,
+		 * thus sessions among processes will not be reused
+		 */
+		SSL_CTX_set_session_cache_mode(d->ctx[i],
+				cfg_get(tls, tls_cfg, session_cache) ? SSL_SESS_CACHE_SERVER :
+				SSL_SESS_CACHE_OFF);
+		/* not really needed is SSL_SESS_CACHE_OFF */
+		SSL_CTX_set_session_id_context(d->ctx[i],
+					(unsigned char*)tls_session_id.s, tls_session_id.len);
 	}
 	return 0;
 }
@@ -738,10 +744,14 @@ static int load_private_key(tls_domain_t* d)
  * Initialize attributes of all domains from default domains
  * if necessary
  */
-int tls_fix_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
+int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 				tls_domain_t* cli_defaults)
 {
 	tls_domain_t* d;
+	int ssl_mode_release_buffers;
+	int ssl_freelist_max_len;
+	int ssl_max_send_fragment;
+	int ssl_read_ahead;
 
 	if (!cfg->cli_default) {
 		cfg->cli_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, 0, 0);
@@ -785,6 +795,10 @@ int tls_fix_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 	/* set various global per CTX options
 	 * (done here to show possible missing features messages only once)
 	 */
+	ssl_mode_release_buffers = cfg_get(tls, tls_cfg, ssl_release_buffers);
+	ssl_freelist_max_len = cfg_get(tls, tls_cfg, ssl_freelist_max);
+	ssl_max_send_fragment = cfg_get(tls, tls_cfg, ssl_max_send_fragment);
+	ssl_read_ahead = cfg_get(tls, tls_cfg, ssl_read_ahead);
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L
 	/* set SSL_MODE_RELEASE_BUFFERS if ssl_mode_release_buffers !=0,
 	   reset if == 0 and ignore if < 0 */

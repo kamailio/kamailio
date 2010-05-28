@@ -35,11 +35,15 @@
 #include <openssl/ssl.h>
 #include "../../dprint.h"
 #include "tls_mod.h"
+#include "tls_cfg.h"
 
 /** log the verification failure reason.
  */
 void tls_dump_verification_failure(long verification_result)
 {
+	int tls_log;
+	
+	tls_log = cfg_get(tls, tls_cfg, log);
 	switch(verification_result) {
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 		LOG(tls_log, "verification failure: unable to get issuer certificate\n");

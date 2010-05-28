@@ -55,12 +55,7 @@
 #define TLS_KSSL_WORKARROUND
 extern int openssl_kssl_malloc_bug; /* is openssl bug #1467 present ? */
 #endif
-extern int openssl_mem_threshold1; /* low memory threshold for connect */
-extern int openssl_mem_threshold2; /* like above but for other tsl operations */
 
-
-extern int tls_disable_compression; /* by default enabled */
-extern int tls_force_run; /* by default disabled */
 
 extern const SSL_METHOD* ssl_methods[];
 
