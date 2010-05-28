@@ -40,7 +40,11 @@ struct cfg_group_tls default_tls_cfg = {
 	9, /* verify_depth */
 	0, /* require_certificate */
 	STR_STATIC_INIT(TLS_PKEY_FILE), /* private_key */
+#if TLS_CA_FILE == 0
+	STR_NULL,
+#else
 	STR_STATIC_INIT(TLS_CA_FILE),   /* ca_list */
+#endif
 	STR_STATIC_INIT(TLS_CERT_FILE), /* certificate */
 	STR_NULL, /* cipher_list */
 	0, /* session_cache */
@@ -96,7 +100,7 @@ static int fix_rel_pathname(void* cfg_h, str* gname, str* name, void** val)
 	static char path_buf[MAX_PATH_SIZE];
 
 	f = *val;
-	if (f && f->s) {
+	if (f && f->s && f->len) {
 		new_f.s = get_abs_pathname(0, f);
 		if (new_f.s == 0)
 			return -1;
@@ -130,12 +134,12 @@ cfg_def_t	tls_cfg_def[] = {
 		" verification go in the search for a trusted CA" },
 	{"require_certificate", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 		"if enabled a certificate will be required from clients" },
-	{"private_key", CFG_VAR_STR | CFG_READONLY, 0, 0, fix_rel_pathname, 0,
+	{"private_key", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"name of the file containing the private key (pem format), if not"
 		" contained in the certificate file" },
-	{"ca_list", CFG_VAR_STR | CFG_READONLY, 0, 0, fix_rel_pathname, 0,
+	{"ca_list", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"name of the file containing the trusted CA list (pem format)" },
-	{"certificate", CFG_VAR_STR | CFG_READONLY, 0, 0, fix_rel_pathname, 0,
+	{"certificate", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"name of the file containing the certificate (pem format)" },
 	{"cipher_list", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"list of the accepted ciphers (strings separated by colons)" },
@@ -180,7 +184,7 @@ cfg_def_t	tls_cfg_def[] = {
 static int fix_initial_pathname(str* path)
 {
 	str new_path;
-	if (path->s) {
+	if (path->s && path->len) {
 		new_path.s = get_abs_pathname(0, path);
 		if (new_path.s == 0) return -1;
 		new_path.len = strlen(new_path.s);

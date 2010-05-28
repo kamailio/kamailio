@@ -161,10 +161,47 @@ static void tls_info(rpc_t* rpc, void* c)
 
 
 
+static const char* tls_options_doc[2] = {
+	"Dumps all the tls config options.",
+	0 };
+
+static void tls_options(rpc_t* rpc, void* c)
+{
+	void* handle;
+	rpc->add(c, "{", &handle);
+	rpc->struct_add(handle, "dSdddSSSSdSSddddddddd",
+		"force_run",	cfg_get(tls, tls_cfg, force_run),
+		"method",		&cfg_get(tls, tls_cfg, method),
+		"verify_certificate", cfg_get(tls, tls_cfg, verify_cert),
+
+		"verify_depth",		cfg_get(tls, tls_cfg, verify_depth),
+		"require_certificate",	cfg_get(tls, tls_cfg, require_cert),
+		"private_key",		&cfg_get(tls, tls_cfg, private_key),
+		"ca_list",			&cfg_get(tls, tls_cfg, ca_list),
+		"certificate",		&cfg_get(tls, tls_cfg, certificate),
+		"cipher_list",		&cfg_get(tls, tls_cfg, cipher_list),
+		"session_cache",	cfg_get(tls, tls_cfg, session_cache),
+		"session_id",		&cfg_get(tls, tls_cfg, session_id),
+		"config",			&cfg_get(tls, tls_cfg, config_file),
+		"log",				cfg_get(tls, tls_cfg, log),
+		"connection_timeout", TICKS_TO_S(cfg_get(tls, tls_cfg, con_lifetime)),
+		"disable_compression",	cfg_get(tls, tls_cfg, disable_compression),
+		"ssl_release_buffers",	cfg_get(tls, tls_cfg, ssl_release_buffers),
+		"ssl_freelist_max",		cfg_get(tls, tls_cfg, ssl_freelist_max),
+		"ssl_max_send_fragment", cfg_get(tls, tls_cfg, ssl_max_send_fragment),
+		"ssl_read_ahead",		cfg_get(tls, tls_cfg, ssl_read_ahead),
+		"low_mem_threshold1",	cfg_get(tls, tls_cfg, low_mem_threshold1),
+		"low_mem_threshold2",	cfg_get(tls, tls_cfg, low_mem_threshold2)
+		);
+}
+
+
+
 
 rpc_export_t tls_rpc[] = {
 	{"tls.reload", tls_reload, tls_reload_doc, 0},
 	{"tls.list",   tls_list,   tls_list_doc,   RET_ARRAY},
 	{"tls.info",   tls_info,   tls_info_doc, 0},
+	{"tls.options",tls_options, tls_options_doc, 0},
 	{0, 0, 0, 0}
 };
