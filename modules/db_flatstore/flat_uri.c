@@ -70,7 +70,7 @@ int flat_uri(db_uri_t* uri)
 
  error:
 	if (furi) {
-		if (furi->path.s) free(furi->path.s);
+		if (furi->path.s) pkg_free(furi->path.s);
 		db_drv_free(&furi->drv);
 		pkg_free(furi);
 	}
