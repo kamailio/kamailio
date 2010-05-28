@@ -125,6 +125,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			if (_m->new_uri.s)      pkg_free(_m->new_uri.s);
 			_m->new_uri=new_uri;
 			_m->parsed_uri_ok=0;
+			ruri_mark_new();
 			goto skip_rewrite_uri;
 			}else if (set_dst_uri(_m, &ptr->received) < 0) {
 				ul.unlock_udomain((udomain_t*)_t);
@@ -288,6 +289,7 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 			if (msg->new_uri.s) pkg_free(msg->new_uri.s);
 			msg->new_uri = new_uri;
 			msg->parsed_uri_ok = 0;
+			ruri_mark_new();
 			goto skip_rewrite_uri;
 			} else if (set_dst_uri(msg, &ptr->received) < 0) {
 			        ul.unlock_udomain((udomain_t*)table);

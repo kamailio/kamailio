@@ -77,6 +77,9 @@ int w_setdsturi(struct sip_msg *msg, char *uri, str *s2)
 	
 	if(set_dst_uri(msg, &s)!=0)
 		return -1;
+	/* dst_uri changes, so it makes sense to re-use the current uri for
+		forking */
+	ruri_mark_new(); /* re-use uri for serial forking */
 	return 1;
 
 }

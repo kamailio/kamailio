@@ -718,6 +718,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 /** create or restore a "fake environment" for running a failure_route.
  *if msg is set -> it will fake the env. vars conforming with the msg; if NULL
  * the env. will be restore to original.
+ * Side-effect: mark_ruri_consumed().
  */
 void faked_env( struct cell *t, struct sip_msg *msg)
 {
@@ -740,6 +741,11 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		 */
 		backup_route_type=get_route_type();
 		set_route_type(FAILURE_ROUTE);
+		/* don't bother backing up ruri state, since failure route
+		   is called either on reply or on timer and in both cases
+		   the ruri should not be used again for forking */
+		ruri_mark_consumed(); /* in failure route we assume ruri
+								 should not be used again for forking */
 		/* also, tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing
 		 * or a timer process, we need to set current transaction;

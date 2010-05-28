@@ -1670,6 +1670,9 @@ int pv_set_dsturi(struct sip_msg* msg, pv_param_t *param,
 	
 	if(set_dst_uri(msg, &val->rs)!=0)
 		goto error;
+	/* dst_uri changed, so it makes sense to re-use the current uri for
+		forking */
+	ruri_mark_new(); /* re-use uri for serial forking */
 
 	return 0;
 error:

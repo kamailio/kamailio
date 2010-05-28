@@ -37,6 +37,7 @@
 #include "../../dprint.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
+#include "../../dset.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "auth.h"
@@ -292,6 +293,7 @@ static inline int apply_urihdr_changes( struct sip_msg *req,
 	memcpy( req->new_uri.s, uri->s, uri->len);
 	req->new_uri.s[uri->len]=0;
 	req->new_uri.len=uri->len;
+	ruri_mark_new();
 
 	/* add the header */
 	if (parse_headers(req, HDR_EOH_F, 0) == -1)

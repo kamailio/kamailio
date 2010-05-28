@@ -38,6 +38,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../dset.h"
 
 #include "dispatcher.h"
 
@@ -348,6 +349,7 @@ static int set_new_uri_simple(struct sip_msg *msg, str *uri)
 	memcpy(msg->new_uri.s, uri->s, uri->len);
 	msg->new_uri.s[uri->len]=0;
 	msg->new_uri.len=uri->len;
+	ruri_mark_new();
 	return 0;
 }
 
@@ -394,6 +396,7 @@ static int set_new_uri_with_user(struct sip_msg *msg, str *uri, str *user)
 	
 	msg->new_uri.len=uri->len + user->len + 1;
 	msg->new_uri.s[msg->new_uri.len]=0;
+	ruri_mark_new();
 	
 	return 0;
 }
@@ -544,6 +547,9 @@ int ds_select_dst_impl(struct sip_msg *msg, char *set_, char *alg_, int set_new)
 				"DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
             return -1;
         }
+		/* dst_uri changed, so it makes sense to re-use the current uri for
+			forking */
+		ruri_mark_new(); /* re-use uri for serial forking */
     	DBG("DISPATCHER:ds_select_dst: selected [%d-%d-%d] <%.*s>\n",
         	alg, set, hash, msg->dst_uri.len, msg->dst_uri.s);
 	} else {

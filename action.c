@@ -545,6 +545,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				msg->new_uri.len=0;
 				msg->new_uri.s=0;
 				msg->parsed_uri_ok=0; /* invalidate current parsed uri*/
+				ruri_mark_new(); /* available for forking */
 			};
 			ret=1;
 			break;
@@ -593,6 +594,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					memcpy(msg->new_uri.s, a->val[0].u.string, len);
 					msg->new_uri.s[len]=0;
 					msg->new_uri.len=len;
+					ruri_mark_new(); /* available for forking */
 
 					ret=1;
 					break;
@@ -870,6 +872,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				msg->new_uri.s=new_uri;
 				msg->new_uri.len=crt-new_uri;
 				msg->parsed_uri_ok=0;
+				ruri_mark_new(); /* available for forking */
 				ret=1;
 				break;
 		case IF_T:

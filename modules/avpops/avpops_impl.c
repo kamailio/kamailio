@@ -1020,6 +1020,9 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				LM_ERR("changing dst uri failed\n");
 				goto error;
 			}
+			/* dst_uri changes, so it makes sense to re-use the current uri for
+				forking */
+			ruri_mark_new(); /* re-use uri for serial forking */
 		} else if (dst->opd&AVPOPS_USE_BRANCH) {
 			if (append_branch( msg, &val, 0, 0, Q_UNSPECIFIED, 0,
 								msg->force_send_socket)!=1 )

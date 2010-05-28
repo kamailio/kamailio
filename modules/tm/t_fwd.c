@@ -1328,11 +1328,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		branch_route = 0;
 	}
 	
-	/* on first-time forwarding, use current uri, later only what
-	   is in additional branches (which may be continuously refilled
-	*/
-	if (first_branch==0) {
 #ifdef POSTPONE_MSG_CLONING
+	/* on first-time forwarding, update the lumps */
+	if (first_branch==0) {
 		/* update the shmem-ized msg with the lumps */
 		if ((is_route_type(REQUEST_ROUTE)) &&
 			save_msg_lumps(t->uas.request, p_msg)) {
@@ -1340,7 +1338,13 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 					"failed to save the message lumps\n");
 				return -1;
 			}
+	}
 #endif
+	/* if ruri is not already consumed (by another invocation), use current
+	   uri too. Else add only additional branches (which may be continuously
+	   refilled).
+	*/
+	if (ruri_get_forking_state()) {
 		try_new=1;
 		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
 							&p_msg->path_vec, proxy, p_msg->force_send_socket,

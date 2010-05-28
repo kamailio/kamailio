@@ -45,6 +45,7 @@
 #include "../../resolve.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
+#include "../../dset.h"
 #include "../../lib/kmi/mi.h"
 
 #include "dr_load.h"
@@ -873,6 +874,7 @@ again:
 		pkg_free(msg->new_uri.s);
 	msg->new_uri = *ruri;
 	msg->parsed_uri_ok = 0;
+	ruri_mark_new();
 
 	return 1;
 error2:

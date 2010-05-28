@@ -872,6 +872,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			LM_ERR("failed to set dst_uri\n");
 			return RR_ERROR;
 		}
+		/* dst_uri changed, so it makes sense to re-use the current uri for
+			forking */
+		ruri_mark_new(); /* re-use uri for serial forking */
 
 		/* There is a previous route uri which was 2nd uri of mine
 		 * and must be removed here */
