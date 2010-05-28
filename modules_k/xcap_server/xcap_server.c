@@ -60,7 +60,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 
-int xcaps_get_auid_type(str *path);
+int xcaps_path_get_auid_type(str *path);
 int xcaps_generate_etag_hdr(str *etag);
 
 static str xcaps_db_table = str_init("xcap");
@@ -416,7 +416,7 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		goto error;
 	}
 
-	dtype = xcaps_get_auid_type(&path);
+	dtype = xcaps_path_get_auid_type(&path);
 
 	if(dtype==-1)
 	{
@@ -770,9 +770,13 @@ error:
 /**
  *
  */
-int xcaps_get_auid_type(str *path)
+int xcaps_path_get_auid_type(str *path)
 {
 	str s;
+	char c;
+	int ret;
+
+	ret = -1;
 	if(path==NULL)
 		return -1;
 	if(path->len<xcaps_root.len)
@@ -784,38 +788,47 @@ int xcaps_get_auid_type(str *path)
 		return -1;
 	}
 
-	s.s = path->s + xcaps_root.len;
-	s.len = path->len - xcaps_root.len;
+	s.s = path->s + xcaps_root.len - 1;
+	s.len = path->len - xcaps_root.len + 1;
 
-	if(s.len>10 && s.s[10]=='/'
-			&& strncmp(s.s, "pres-rules", 10)==0)
+	c = s.s[s.len];
+	s.s[s.len] = '\0';
+
+	if(s.len>12
+			&& strstr(s.s, "/pres-rules/")!=NULL)
 	{
 		LM_DBG("matched pres-rules\n");
-		return PRES_RULES;
+		ret = PRES_RULES;
+		goto done;
 	}
 
-	if(s.len>12 && s.s[12]=='/'
-			&& strncmp(s.s, "rls-services", 12)==0)
+	if(s.len>14
+			&& strstr(s.s, "/rls-services/")!=NULL)
 	{
 		LM_DBG("matched rls-services\n");
-		return RLS_SERVICE;
+		ret = RLS_SERVICE;
+		goto done;
 	}
 
-	if(s.len>17 && s.s[17]=='/'
-			&& strncmp(s.s, "pidf-manipulation", 17)==0)
+	if(s.len>19
+			&& strstr(s.s, "pidf-manipulation")!=NULL)
 	{
 		LM_DBG("matched pidf-manipulation\n");
-		return PIDF_MANIPULATION;
+		ret = PIDF_MANIPULATION;
+		goto done;
 	}
 
-	if(s.len>14 && s.s[14]=='/'
-			&& strncmp(s.s, "resource-lists", 14)==0)
+	if(s.len>16
+			&& strstr(s.s, "/resource-lists/")!=NULL)
 	{
 		LM_DBG("matched resource-lists\n");
-		return RESOURCE_LIST;
+		ret = RESOURCE_LIST;
+		goto done;
 	}
 
-	return -1;
+done:
+	s.s[s.len] = c;
+	return ret;
 }
 
 /**
