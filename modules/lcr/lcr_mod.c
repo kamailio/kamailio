@@ -79,7 +79,6 @@
 #include "../../resolve.h"
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
-#include "../../modules/tm/tm_load.h"
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "hash.h"
@@ -148,9 +147,6 @@ static void free_shared_memory(void);
 /*
  * Type definitions
  */
-
-/* TMB Structure */
-struct tm_binds tmb;
 
 struct gw_grp {
     unsigned int grp_id;
@@ -241,7 +237,6 @@ struct gw_info **gwtp = (struct gw_info **)NULL;
 
 /* Pointer to lcr hash table pointer table */
 struct lcr_info ***lcrtp = (struct lcr_info ***)NULL;
-
 
 /*
  * Functions that are defined later
@@ -403,6 +398,7 @@ static int mod_init(void)
     unsigned short avp_flags;
     unsigned int i;
 
+    /* Register RPC commands */
     if (rpc_register_array(lcr_rpc)!=0) {
 	LM_ERR("failed to register RPC commands\n");
 	return -1;
@@ -1869,22 +1865,20 @@ static int defunct_gw(struct sip_msg* _m, char *_defunct_period, char *_s2)
 
 
 /*
- * When called first time in route block, rewrites scheme, host, port, and
+ * When called first time, rewrites scheme, host, port, and
  * transport parts of R-URI based on first gw_uri_avp value, which is then
  * destroyed.  Saves R-URI user to ruri_user_avp for later use.
  *
- * On other calls appends a new branch to request, where scheme, host, port,
+ * On other calls, rewrites R-URI, where scheme, host, port,
  * and transport of URI are taken from the first gw_uri_avp value, 
- * which is then destroyed. URI user is taken either from R-URI (first
- * call in failure route block) or from ruri_user_avp value saved earlier.
+ * which is then destroyed. URI user is taken either from ruri_user_avp
+ * value saved earlier.
  *
  * Returns 1 upon success and -1 upon failure.
  */
 static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
     int_str ruri_user_val, val;
-    struct action act;
-    struct run_act_ctx ra_ctx;
     struct usr_avp *ru_avp;
     int rval;
     str uri_str;
@@ -1899,6 +1893,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	/* First invocation either in route or failure route block.
 	 * Take Request-URI user from Request-URI and generate Request
          * and Destination URIs. */
+
 	if (parse_sip_msg_uri(_m) < 0) {
 	    LM_ERR("parsing of R-URI failed\n");
 	    return -1;
@@ -1910,48 +1905,27 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 	/* Save Request-URI user into uri_user_avp for use in subsequent
          * invocations. */
+
 	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp, val);
 	LM_DBG("added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
 
     } else {
 
-	/* Subsequent invocation either in route or failure route block. */
-
-	/* Take Request-URI user from ruri_user_avp and generate Request
+	/* Subsequent invocation either in route or failure route block.
+	 * Take Request-URI user from ruri_user_avp and generate Request
          * and Destination URIs. */
+
 	if (generate_uris(r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
 			  &dst_uri_len, &addr, &flags) != 1) {
 	    return -1;
 	}
     }
 
-    if ((is_route_type(REQUEST_ROUTE)) && (ru_avp == NULL)) {
-
-	/* First invocation in route block => Rewrite Request URI. */
-	memset(&act, '\0', sizeof(act));
-	act.type = SET_URI_T;
-	act.val[0].type = STRING_ST;
-	act.val[0].u.string = r_uri;
-	init_run_actions_ctx(&ra_ctx);
-	rval = do_action(&ra_ctx, &act, _m);
-	if (rval != 1) {
-	    LM_ERR("do_action failed with return value <%d>\n", rval);
-	    return -1;
-	}
-
-    } else {
-	
-	/* Subsequent invocation in route block or any invocation in
-         * failure route block => append new branch. */
-	uri_str.s = r_uri;
-	uri_str.len = r_uri_len;
-	LM_DBG("appending branch <%.*s>\n", uri_str.len, uri_str.s);
-	if (append_branch(_m, &uri_str, 0, 0, Q_UNSPECIFIED, 0, 0) == -1) {
-	    LM_ERR("when appending branch <%.*s>\n", uri_str.len, uri_str.s);
-	    return -1;
-	}
-    }
+    /* Rewrite Request URI */
+    uri_str.s = r_uri;
+    uri_str.len = r_uri_len;
+    rewrite_uri(_m, &uri_str);
     
     /* Set Destination URI if not empty */
     if (dst_uri_len > 0) {
