@@ -166,7 +166,7 @@ docbook:
 		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
 	done ; \
 	#Include general documentation entities
-	echo "  <!ENTITY % docentities SYSTEM \"../entities.xml\"> %docentities;" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
+	echo "  <!ENTITY % docentities SYSTEM \"../../../docbook/entities.xml\"> %docentities;" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
 	echo "]>" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
 	# add bookinfo
 	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
