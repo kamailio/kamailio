@@ -163,25 +163,6 @@ modparam("xcap_server", "xcap_root", "/xcap-root/")
 		</example>
 	</section>
 	<section>
-		<title><varname>xcap_root</varname> (str)</title>
-		<para>
-			XCAP root URL.
-		</para>
-		<para>
-		<emphasis>
-			Default value is '/xcap-root/'.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>url_match</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("xcap_server", "xcap_root", "/xcap-root/")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>buf_size</varname> (int)</title>
 		<para>
 		Size of local buffer for handling XCAP documents.
