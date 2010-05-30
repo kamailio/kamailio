@@ -532,7 +532,7 @@ void km_bdblib_log(int op, table_p _tp, char* _msg, int len)
 			puts(buf);
 		
 		if ((_tp->logflags & JLOG_SYSLOG) == JLOG_SYSLOG)
-			syslog(LOG_LOCAL6, buf);
+			syslog(LOG_LOCAL6, "%s", buf);
 		
 		if(_tp->fp) 
 		{
