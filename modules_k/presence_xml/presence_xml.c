@@ -204,7 +204,7 @@ static int mod_init(void)
 	}
 	if (bind_presence(&pres) < 0)
 	{
-		LM_ERR("Can't bind module pua\n");
+		LM_ERR("Can't bind to presence module\n");
 		return -1;
 	}
 	
