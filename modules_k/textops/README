@@ -882,7 +882,7 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 
    Example 1.33. starts_with usage
 ...
-if(cmp_str("$rU", "+358"))
+if (starts_with("$rU", "+358"))
 {
     # do interesting stuff here
 }

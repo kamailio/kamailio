@@ -1224,7 +1224,7 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 		<title><function>starts_with</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(cmp_str("$rU", "+358"))
+if (starts_with("$rU", "+358"))
 {
     # do interesting stuff here
 }
