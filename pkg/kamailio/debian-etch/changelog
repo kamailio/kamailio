@@ -10,6 +10,32 @@ kamailio (3.0.2) unstable; urgency=low
 
  -- Daniel-Constantin Mierla <miconda@gmail.com>  Thu, 27 May 2010 10:27:36 +0100
 
+kamailio (3.0.1) unstable; urgency=low
+
+  * update to 3.0.1 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Mon, 08 Mar 2010 20:30:48 +0100
+
+kamailio (3.0.0) unstable; urgency=low
+
+  * update to 3.0.0 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Mon, 11 Jan 2010 18:30:42 +0100
+
+kamailio (3.0.0-rc3) unstable; urgency=low
+
+  * update to 3.0.0-rc3 from upstream
+  * updated debian/rules to work with the SIP Router style module packaging
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Fri, 10 Dec 2009 12:10:02 +0100
+
+kamailio (3.0.0-rc2) unstable; urgency=low
+
+  * update to 3.0.0-rc2 from upstream
+  * updated debian/rules to work with the new style module packaging
+
+ -- Jonas Bergler <jonas.bergler@staff.snap.net.nz>  Wed, 18 Nov 2009 12:30:02 +1300
+
 kamailio (1.5.0-svn1) unstable; urgency=low
 
   * increment debian packaging for trunk
