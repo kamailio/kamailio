@@ -1,110 +1,115 @@
 #!/usr/bin/make -f
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
+#
+# $Id$
+#
+# History:
+# --------
+#  2009-07-08  updated for sip-router (andrei)
+#  2009-12-10  updated for kamailio 3.0 (daniel)
 
-DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-
-ALL_PACKAGES = kamailio kamailio-mysql-module kamailio-postgres-module \
-	kamailio-jabber-module kamailio-cpl-module kamailio-radius-modules \
-	kamailio-unixodbc-module kamailio-presence-modules kamailio-xmlrpc-module \
-	kamailio-perl-modules kamailio-snmpstats-module kamailio-xmpp-module \
-	kamailio-carrierroute-module kamailio-berkeley-module kamailio-ldap-modules \
-	kamailio-utils-module kamailio-regex-modules kamailio-purple-module \
-	kamailio-memcached-module
-
-DEBVERSION:=$(shell head -n 1 debian/changelog \
-                    | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
-UPVERSION:=$(shell echo $(DEBVERSION) | sed -e 's/^.*://' -e 's/-[0-9.]*$$//' -e 's/.dfsg$$//')
-
-FILENAME := kamailio_$(UPVERSION).orig.tar.gz
-UPFILENAME := kamailio-$(UPVERSION)-tls_src.tar.gz
-URL := http://kamailio.org/pub/kamailio/$(UPVERSION)/src/kamailio-$(UPVERSION)-tls_src.tar.gz
 
 # Uncomment this to turn on verbose mode.
-# export DH_VERBOSE=1
+#export DH_VERBOSE=1
 
-# Include dpatch rules
-include /usr/share/dpatch/dpatch.make
+# This is the debhelper compatibility version to use.
+# export DH_COMPAT=4
+#  -- already set in compat
+#  force no striping (always include debug symbols for now)
+export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
+
+# modules not in the "main" kamailio package
+EXCLUDED_MODULES=
+
+# extra modules to skip, because they are not compilable now
+# - regardless if they go to the main kamailio package or to some module package,
+# they will be excluded from compile and install of all
+EXTRA_EXCLUDED_MODULES=seas bdb dbtext oracle pa rls iptrtpproxy purple berkeley xmlrpc
+#EXTRA_EXCLUDED_MODULES=
+
+# possible module directories that can appear in MODULES_SP
+# (only used for deducing a module name)
+MDIRS=modules modules_s modules_k
+
+# modules packaged in separate packages (complete with full modules_* path)
+# with the package name: kamailio-$(module_name)-module
+MODULES_SP=
+
+# module groups that are packaged in seperate packages
+# (with the name kamailio-$(group_name)-modules)
+# Note: the order is important (should be in dependency order, the one
+# on which other depend first)
+PACKAGE_GROUPS=mysql postgres unixodbc radius presence \
+			   ldap perl utils memcached tls \
+			   snmpstats carrierroute xmpp cpl
+
+# directories with possible duplicate libraries (that should be deleted
+# from current module* packages)
+DUP_LIBS_DIRS=$(CURDIR)/debian/kamailio/usr/lib/kamailio \
+			$(CURDIR)/debian/kamailio-db-modules/usr/lib/kamailio
+
+# modules names out of modules sp
+MODULES_SP_NAMES=$(filter-out $(MDIRS),$(subst /, ,$(MODULES_SP)))
+
+# "function" to get package short name out of a dir/module_name
+# it also transforms db_foo into foo
+mod_name=$(subst db_,,$(lastword $(subst /, ,$(1))))
+
+define PACKAGE_GRP_BUILD_template
+	# package all the modules in PACKAGE_GROUPS in separate packages
+	$(foreach grp,$(PACKAGE_GROUPS),\
+		$(MAKE) every-module group_include="k$(grp)"
+	)
+endef
 
 
-# Do we want the TLS version ?
-# Disabled by default due to license issues, set to non-void to enable
-TLS=
+define PACKAGE_MODULE_BUILD_template
+	# package all the modules MODULES_SP in separate packages
+	$(foreach mod,$(MODULES_SP),\
+		$(MAKE) modules modules="$(mod)"
+	)
+endef
 
-# modules depending on mysql
-MYSQL_MODULES = db_mysql
-# modules depending on postgres
-POSTGRES_MODULES = db_postgres
-# modules depending on unixODBC
-UNIXODBC_MODULES=db_unixodbc
-# jabber module
-JABBER_MODULES = jabber
-# cpl related modules
-CPL_MODULES = cpl-c
-# module depending on radiusclient
-RADIUS_MODULES = auth_radius misc_radius peering
-# presence related modules
-PRESENCE_MODULES = presence presence_xml presence_mwi presence_dialoginfo pua pua_bla pua_mi pua_usrloc pua_xmpp pua_dialoginfo xcap_client rls
-# XMLRPC module
-XMLRPC_MODULES = mi_xmlrpc
-# Perl module
-PERL_MODULES = perl perlvdb
-# SNMPstats module
-SNMPSTATS_MODULES = snmpstats
-# XMPP module
-XMPP_MODULES = xmpp
-# Carrierroute module
-CROUTE_MODULES = carrierroute
-# Berkeley DB module
-BERKELEY_MODULES = db_berkeley
-# LDAP modules
-LDAP_MODULES = ldap h350
-# utils module
-UTILS_MODULES = utils
-# modules depending on libpcre
-REGEX_MODULES = dialplan regex lcr
-# purple module
-PURPLE_MODULES = purple
-# memcached module
-MEMCACHED_MODULES = memcached
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES) $(UTILS_MODULES) $(REGEX_MODULES) $(PURPLE_MODULES) $(MEMCACHED_MODULES)
+define PACKAGE_GRP_INSTALL_template
+	$(foreach grp,$(PACKAGE_GROUPS),\
+		$(MAKE) install-modules-all group_include="k$(grp)" \
+		basedir=$(CURDIR)/debian/kamailio-$(grp)-modules \
+		cfg_prefix=$(CURDIR)/debian/kamailio-$(grp)-modules \
+		doc-dir=share/doc/kamailio-$(grp)-modules
+		# eliminate duplicate libs
+		-for d in $(DUP_LIBS_DIRS); do \
+			test "$$d" != "$(CURDIR)/debian/kamailio-$(grp)-modules/usr/lib/kamailio" &&\
+			for r in $$d/lib*; do \
+				echo "removing $(grp) lib `basename $$r` present also in $$d";\
+				rm -f $(CURDIR)/debian/kamailio-$(grp)-modules/usr/lib/kamailio/`basename "$$r"` ; \
+			done ; \
+		done
+	)
+endef
 
-# modules not in the "main" package or unstable modules
-EXCLUDED_MODULES = $(ALL_MODULES) pa osp
 
-# the same but with path prepended (needed for modules="...")
-MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
-POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
-UNIXODBC_MOD_PATH=$(addprefix modules/, $(UNIXODBC_MODULES))
-JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
-CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
-RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
-PRESENCE_MOD_PATH=$(addprefix modules/, $(PRESENCE_MODULES))
-XMLRPC_MOD_PATH=$(addprefix modules/, $(XMLRPC_MODULES))
-PERL_MOD_PATH=$(addprefix modules/, $(PERL_MODULES))
-SNMPSTATS_MOD_PATH=$(addprefix modules/, $(SNMPSTATS_MODULES))
-XMPP_MOD_PATH=$(addprefix modules/, $(XMPP_MODULES))
-CROUTE_MOD_PATH=$(addprefix modules/, $(CROUTE_MODULES))
-BERKELEY_MOD_PATH=$(addprefix modules/, $(BERKELEY_MODULES))
-LDAP_MOD_PATH=$(addprefix modules/, $(LDAP_MODULES))
-UTILS_MOD_PATH=$(addprefix modules/, $(UTILS_MODULES))
-REGEX_MOD_PATH=$(addprefix modules/, $(REGEX_MODULES))
-PURPLE_MOD_PATH=$(addprefix modules/, $(PURPLE_MODULES))
-MEMCACHED_MOD_PATH=$(addprefix modules/, $(MEMCACHED_MODULES))
+define PACKAGE_MODULE_INSTALL_template
+	$(foreach mod,$(MODULES_SP),
+		$(MAKE) install-modules-all modules="$(mod)" \
+				modules_s="" modules_k="" \
+				basedir=$(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module \
+				doc-dir=share/doc/kamailio-$(call mod_name,$(mod))-module
+		# eliminate duplicate libs
+		-for d in $(DUP_LIBS_DIRS); do \
+			test "$$d" != "$(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/lib/kamailio" &&\
+			for r in $$d/lib*; do \
+				echo "removing $(call mod_name, $(mod)) lib `basename $$r` present also in $$d";\
+				rm -f $(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/lib/kamailio/`basename "$$r"` ; \
+			done ; \
+		done
+	)
+endef
 
-ifeq (cc, $(CC))
-	CC = gcc
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
 endif
-
-CFLAGS = -Wall -g
-
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-        CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
-
 ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
@@ -113,55 +118,33 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
+	$(MAKE) cfg prefix=/usr cfg_prefix=$(CURDIR)/debian/kamailio \
+			cfg_target=/etc/kamailio/ \
+			basedir=$(CURDIR)/debian/kamailio \
+			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
+			group_include="kstandard"
 
 	touch configure-stamp
 
 
 build: build-stamp
-build-stamp: patch-stamp configure-stamp 
+
+build-stamp: configure-stamp 
 	dh_testdir
-
 	# Add here commands to compile the package.
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) all skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(UNIXODBC_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PRESENCE_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMLRPC_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PERL_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(SNMPSTATS_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMPP_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CROUTE_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(BERKELEY_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(LDAP_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(UTILS_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(REGEX_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(PURPLE_MOD_PATH)" cfg-target=/etc/kamailio/
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(MEMCACHED_MOD_PATH)" cfg-target=/etc/kamailio/
-
-	# generate the man pages for modules
-	$(MAKE) modules-docbook-man include_modules="$(ALL_MODULES)"
-
-	# generate the utils db_berkeley
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) utils include_modules="db_berkeley"
-
+	$(MAKE) all
+	# make groups
+	$(call PACKAGE_GRP_BUILD_template)
+	# make single-module packages
+	$(call PACKAGE_MODULE_BUILD_template)
 	touch build-stamp
 
-clean: real-clean unpatch
-real-clean:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
-
 	# Add here commands to clean up after the build process.
-	$(MAKE) TLS=$(TLS) include_modules="$(ALL_MODULES)" proper
-	rm -f cfg.tab.h
-	rm -f utils/kamunix/kamunix.o utils/kamunix/kamunix
-	rm -f utils/db_berkeley/kambdb_recover.o utils/db_berkeley/kambdb_recover
-
+	-$(MAKE) maintainer-clean
 	dh_clean
 
 install: build
@@ -169,187 +152,49 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-
 	# Add here commands to install the package into debian/kamailio
-	# kamailio base package
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install skip_modules="$(EXCLUDED_MODULES)" \
-		basedir=$(CURDIR)/debian/kamailio \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio
+	$(MAKE) install group_include="kstandard"
+	# fix etc/kamailio dir location -- not needed -- andrei
+	# mv -f $(CURDIR)/debian/kamailio/usr/etc $(CURDIR)/debian/kamailio
+	# make group packages
+	$(call PACKAGE_GRP_INSTALL_template)
+	# make single module packages
+	$(call PACKAGE_MODULE_INSTALL_template)
+	# install /etc/default/kamailio file
+	mkdir -p $(CURDIR)/debian/kamailio/etc/default
+	cp -f debian/kamailio.default $(CURDIR)/debian/kamailio/etc/default/kamailio
+	#dh_movefiles
 
-	find $(CURDIR)/debian/kamailio/etc/kamailio -type f -exec chmod -x {} \;
-	sed -i -e "s/^PATH.*//" $(CURDIR)/debian/kamailio/usr/sbin/kamctl
 
-	# install only the mysql module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-mysql-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-mysql-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-mysql-module
-
-	# install only the postgres module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-postgres-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-postgres-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-postgres-module
-
-	# install only the unixodbc module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(UNIXODBC_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-unixodbc-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-unixodbc-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-unixodbc-module
-
-	# install only the jabber module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-jabber-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-jabber-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-jabber-module
-
-	# install only the cpl module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-cpl-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-cpl-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-cpl-module
-
-	# install only the radius modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-radius-modules \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-radius-modules \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-radius-modules
-
-	# install only the presence modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PRESENCE_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-presence-modules \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-presence-modules \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-presence-modules
-
-	# install only the xmlrpc module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(XMLRPC_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-xmlrpc-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-xmlrpc-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-xmlrpc-module
-
-	# install only the perl modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PERL_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-perl-modules \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-perl-modules \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-perl-modules
-
-	# install only the snmpstats module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(SNMPSTATS_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-snmpstats-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-snmpstats-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-snmpstats-module
-
-	# install only the xmpp module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(XMPP_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-xmpp-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-xmpp-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-xmpp-module
-
-	# install only the carrierroute module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(CROUTE_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-carrierroute-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-carrierroute-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-carrierroute-module
-
-	# install only the db_berkeley module
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(BERKELEY_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-berkeley-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-berkeley-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-berkeley-module
-
-	# install only the ldap modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(LDAP_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-ldap-modules \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-ldap-modules \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-ldap-modules
-
-	# install only the utils modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(UTILS_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-utils-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-utils-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-utils-module
-
-	# install only the regex modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(REGEX_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-regex-modules \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-regex-modules \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-regex-modules
-
-	# install only the purple modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PURPLE_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-purple-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-purple-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-purple-module
-
-	# install only the memcached modules
-	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(MEMCACHED_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/kamailio-memcached-module \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio-memcached-module \
-		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio-memcached-module
-
-	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
-	for p in $(ALL_PACKAGES); \
-		do rmdir --ignore-fail-on-non-empty $(CURDIR)/debian/$$p/usr/sbin; done
 
 # This single target is used to build all the packages, all at once, or
 # one at a time. So keep in mind: any options passed to commands here will
 # affect _all_ packages. Anything you want to only affect one package
 # should be put in another target, such as the install target.
-binary-arch: build install
+binary-common: 
 	dh_testdir
 	dh_testroot
+	dh_installdebconf	
 	dh_installdocs
-	dh_installexamples --exclude=".svn"
+	dh_installexamples
+	dh_installmenu
 #	dh_installlogrotate
-	dh_installinit -pkamailio -- defaults 23
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+	dh_installinit  -- defaults 23
 	dh_installcron
 	dh_installman
 	dh_installinfo
-	dh_installchangelogs
+#	dh_undocumented
+	dh_installchangelogs 
 	dh_link
-	dh_strip --dbg-package=kamailio-dbg
+	dh_strip
 	dh_compress 
 	dh_fixperms
+	dh_makeshlibs
 	dh_installdeb
+#	dh_perl
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
@@ -357,18 +202,19 @@ binary-arch: build install
 
 # Build architecture-independent packages using the common target
 binary-indep: build install
+# (Uncomment this next line if you have such packages.)
+#        $(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
 # We have nothing to do by default.
 
+
+# Build architecture-dependent packages using the common target
+binary-arch: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+# Any other binary targets build just one binary package at a time.
+binary-%: build install
+	$(MAKE) -f debian/rules binary-common DH_OPTIONS=-p$*
+
 binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
 
-print-version:
-	@@echo "Debian version:          $(DEBVERSION)"
-	@@echo "Upstream version:        $(UPVERSION)"
-
-get-orig-source:
-	@@dh_testdir
-	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs
-	@@echo Downloading $(FILENAME) from $(URL) ...
-	@@wget -N -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
-
-.PHONY: build clean binary-indep binary-arch binary install configure patch unpatch real-clean
