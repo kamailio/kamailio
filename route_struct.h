@@ -126,7 +126,8 @@ enum _operand_subtype{
 		SELECT_ST, PVAR_ST,
 		LVAL_ST,  RVE_ST,
 		RETCODE_ST, CASE_ST,
-		BLOCK_ST, JUMPTABLE_ST, CONDTABLE_ST, MATCH_CONDTABLE_ST
+		BLOCK_ST, JUMPTABLE_ST, CONDTABLE_ST, MATCH_CONDTABLE_ST,
+		FPARAM_DYN_ST /* temporary only */
 };
 
 typedef enum _expr_l_type expr_l_type;

@@ -3747,31 +3747,38 @@ static int mod_f_params_pre_fixup(struct action* a)
 			return -1;
 	}
 	
-	if ( cmd_exp->c.fixup){
-		/* v0 or v1 functions that have fixups need constant,
-		  string params.*/
-		for (r=0; r < param_no; r++) {
-			rve=params[r].u.data;
-			if (!rve_is_constant(rve)) {
-				yyerror_at(&rve->fpos, "function %s: parameter %d is not"
-							" constant\n", cmd_exp->c.name, r+1);
-				return -1;
-			}
-			if ((rv = rval_expr_eval(0, 0, rve)) == 0 ||
-					rval_get_str(0, 0, &s, rv, 0) < 0 ) {
-				/* out of mem or bug ? */
+	if ( cmd_exp->c.fixup) {
+		if (is_fparam_rve_fixup(cmd_exp->c.fixup))
+			/* mark known fparam rve safe fixups */
+			cmd_exp->c.fixup  = (fixup_function)
+									((unsigned long) cmd_exp->c.fixup |
+										 FIXUP_F_FPARAM_RVE);
+		else if (!((unsigned long)cmd_exp->c.fixup & FIXUP_F_FPARAM_RVE)) {
+			/* v0 or v1 functions that have fixups need constant,
+			  string params.*/
+			for (r=0; r < param_no; r++) {
+				rve=params[r].u.data;
+				if (!rve_is_constant(rve)) {
+					yyerror_at(&rve->fpos, "function %s: parameter %d is not"
+								" constant\n", cmd_exp->c.name, r+1);
+					return -1;
+				}
+				if ((rv = rval_expr_eval(0, 0, rve)) == 0 ||
+						rval_get_str(0, 0, &s, rv, 0) < 0 ) {
+					/* out of mem or bug ? */
+					rval_destroy(rv);
+					yyerror_at(&rve->fpos, "function %s: bad parameter %d"
+									" expression\n", cmd_exp->c.name, r+1);
+					return -1;
+				}
 				rval_destroy(rv);
-				yyerror_at(&rve->fpos, "function %s: bad parameter %d"
-								" expression\n", cmd_exp->c.name, r+1);
-				return -1;
+				rve_destroy(rve);
+				params[r].type = STRING_ST; /* asciiz */
+				params[r].u.string = s.s;
+				params[r].u.str.len = s.len; /* not used right now */
 			}
-			rval_destroy(rv);
-			rve_destroy(rve);
-			params[r].type = STRING_ST; /* asciiz */
-			params[r].u.string = s.s;
-			params[r].u.str.len = s.len; /* not used right now */
 		}
-	} /* else
+	}/* else
 		if no fixups are present, the RVEs can be transformed
 		into strings at runtime, allowing seamless var. use
 		even with old functions.

@@ -50,6 +50,8 @@
  *  		unless the operator is DIFF_OP (Miklos)
  *  2008-12-03  fixups for rvalues in assignments (andrei)
  *  2009-05-04  switched IF_T to rval_expr (andrei)
+ *  2010-06-01  special hack/support for fparam fixups so that they can handle
+ *               variable RVEs (andrei)
  */
 
 
@@ -644,9 +646,6 @@ int fix_actions(struct action* a)
 	struct rvalue* rv;
 	int rve_param_no;
 
-	
-	char buf[30]; /* tmp buffer needed for module param fixups */
-
 	if (a==0){
 		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
 		return E_BUG;
@@ -920,44 +919,13 @@ int fix_actions(struct action* a)
 			case MODULEX_T:
 				cmd = t->val[0].u.data;
 				rve_param_no = 0;
-				if (cmd && cmd->c.fixup) {
+				if (cmd) {
 					DBG("fixing %s()\n", cmd->c.name);
 					if (t->val[1].u.number==0) {
-						ret = cmd->c.fixup(0, 0);
+						ret = call_fixup(cmd->c.fixup, 0, 0);
 						if (ret < 0)
 							goto error;
 					}
-					/* type cast NUMBER to STRING, old modules may expect
-					 * all STRING params during fixup */
-					for (i=0; i<t->val[1].u.number; i++) {
-						/* obsoleted by the new RVE changes ? */
-						if (t->val[i+2].type == NUMBER_ST) {
-							snprintf(buf, sizeof(buf)-1, "%ld", 
-										t->val[i+2].u.number);
-							/* fixup currently requires string pkg_malloced*/
-							t->val[i+2].u.string = pkg_malloc(strlen(buf)+1);
-							if (!t->val[i+2].u.string) {
-								LOG(L_CRIT, "ERROR: cannot translate NUMBER"
-											" to STRING\n");
-								ret = E_OUT_OF_MEM;
-								goto error;
-							}
-							strcpy(t->val[i+2].u.string, buf);
-							t->val[i+2].type = STRING_ST;
-						}else if (t->val[i+2].type != STRING_ST) {
-							BUG("unsupported function parameter type %d\n",
-									t->val[i+2].type);
-						}
-					}
-					for (i=0; i < t->val[1].u.number; i++) {
-						tmp_p = t->val[i+2].u.data;
-						ret = cmd->c.fixup(&t->val[i+2].u.data, i+1);
-						if (t->val[i+2].u.data != tmp_p)
-							t->val[i+2].type = MODFIXUP_ST;
-						if (ret < 0)
-							goto error;
-					}
-				} else if (cmd) { /* no fixup => RVE supported => optimize */
 					for (i=0; i < t->val[1].u.number; i++) {
 						if (t->val[i+2].type == RVE_ST) {
 							rve = t->val[i+2].u.data;
@@ -979,6 +947,13 @@ int fix_actions(struct action* a)
 								t->val[i+2].u.string = s.s;
 								/* len is not used for now */
 								t->val[i+2].u.str.len = s.len;
+								tmp_p = t->val[i+2].u.data;
+								ret = call_fixup(cmd->c.fixup,
+												&t->val[i+2].u.data, i+1);
+								if (t->val[i+2].u.data != tmp_p)
+									t->val[i+2].type = MODFIXUP_ST;
+								if (ret < 0)
+									goto error;
 							} else {
 								/* expression is not constant => fixup &
 								   optimize it */
@@ -990,9 +965,34 @@ int fix_actions(struct action* a)
 									goto error;
 								}
 							}
-						} /* if RVE_ST */
-					}
+						} else  if (t->val[i+2].type == STRING_ST) {
+							tmp_p = t->val[i+2].u.data;
+							ret = call_fixup(cmd->c.fixup,
+											&t->val[i+2].u.data, i+1);
+							if (t->val[i+2].u.data != tmp_p)
+								t->val[i+2].type = MODFIXUP_ST;
+							if (ret < 0)
+								goto error;
+						} else {
+							BUG("invalid module function param type %d\n",
+									t->val[i+2].type);
+							ret = E_BUG;
+							goto error;
+						}
+					} /* for */
+					/* here all the params are either STRING_ST
+					   (constant RVEs), MODFIXUP_ST (fixed up)
+					   or RVE_ST (non-ct RVEs) */
 					if (rve_param_no) { /* we have to fix the type */
+						if (cmd->c.fixup &&
+							!((unsigned long)cmd->c.fixup &
+								FIXUP_F_FPARAM_RVE)) {
+							BUG("non-ct RVEs (%d) in module function call"
+									"that does not support them (%s)\n",
+									rve_param_no, cmd->c.name);
+							ret = E_BUG;
+							goto error;
+						}
 						switch(t->type) {
 							case MODULE1_T:
 								t->type = MODULE1_RVE_T;

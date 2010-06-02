@@ -149,6 +149,17 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define VAR_PARAM_NO  -128  /* function has variable number of parameters
 							   (see cmd_function_var for the prototype) */
 
+/* special fixup function flags.
+ * They are kept in the first 2 bits inside the pointer
+ */
+#define FIXUP_F_FPARAM_RVE (unsigned long)1 /* fparam fixup, rve ready */
+#define FIXUP_F_RESERVED (unsigned long)2  /* not used for now */
+#define FIXUP_MASK (~((unsigned long)3)) /* mask for obtainin the pointer val*/
+
+#define call_fixup(fixup, param, param_no) \
+	(((long)(fixup) & FIXUP_MASK)? \
+		(((fixup_function)((long)(fixup) & FIXUP_MASK))(param, param_no)):0)
+
 /* Macros - used as rank in child_init function */
 #define PROC_MAIN      0  /* Main ser process */
 #define PROC_TIMER    -1  /* Timer attendant process */
@@ -523,5 +534,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param);
  */
 int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param);
 
+
+int is_fparam_rve_fixup(fixup_function f);
 
 #endif /* sr_module_h */

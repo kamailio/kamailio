@@ -1569,3 +1569,29 @@ int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
 	}
 	return -1;
 }
+
+
+
+/** returns true if a fixup is a fparam_t* one.
+ * Used to automatically detect fparam fixups that can be used with non
+ * contant RVEs.
+ * @param f - function pointer
+ * @return 1 for fparam fixups, 0 for others.
+ */
+int is_fparam_rve_fixup(fixup_function f)
+{
+	if (f == fixup_var_str_12 ||
+		f == fixup_var_str_1 ||
+		f == fixup_var_str_2 ||
+		f == fixup_var_int_12 ||
+		f == fixup_var_int_1 ||
+		f == fixup_var_int_2 ||
+		f == fixup_int_12 ||
+		f == fixup_int_1 ||
+		f == fixup_int_2 ||
+		f == fixup_str_12 ||
+		f == fixup_str_1 ||
+		f == fixup_str_2)
+		return 1;
+	return 0;
+}

@@ -51,6 +51,8 @@
  *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
  *  2009-05-04  switched IF_T to rval_expr (andrei)
  *  2009-09-15  added SET_{FWD,RPL}_NO_CONNECT, SET_{FWD,RPL}_CLOSE (andrei)
+ *  2010-06-01  special hack/support for fparam fixups so that they can handle
+ *               variable RVEs (andrei)
  */
 
 /*!
@@ -133,9 +135,14 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
  */
 #define MODF_RVE_PARAM_FREE(src, dst) \
 		for (i=0; i < (dst)[1].u.number; i++) { \
-			if ((src)[i+2].type == RVE_ST && (dst)[i+2].u.string) { \
-				pkg_free((dst)[i+2].u.string); \
-				(dst)[i+2].u.string = 0; \
+			if ((src)[i+2].type == RVE_ST && (dst)[i+2].u.data) { \
+				if ((dst)[i+2].type == FPARAM_DYN_ST) {\
+					/* frees also orig. dst.u.data */ \
+					fparam_free_contents((dst)[i+2].u.data); \
+					/* the fparam struct. (dst.u.data) is freed below */ \
+				} \
+				pkg_free((dst)[i+2].u.data); \
+				(dst)[i+2].u.data = 0; \
 			} \
 		}
 
@@ -147,7 +154,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
  * WARNING: dst must be cleaned when done, use MODULE_RVE_PARAM_FREE()
  * Side-effects: clobbers i (int), s (str), rv (rvalue*), might jump to error.
  */
-#define MODF_RVE_PARAM_CONVERT(h, msg, src, dst) \
+#define MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst) \
 	do { \
 		(dst)[1]=(src)[1]; \
 		for (i=0; i < (src)[1].u.number; i++) { \
@@ -165,6 +172,12 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 				(dst)[i+2].u.string = s.s; \
 				(dst)[i+2].u.str.len = s.len; \
 				rval_destroy(rv); \
+				if ((cmd)->c.fixup && \
+						(long)(cmd)->c.fixup & FIXUP_F_FPARAM_RVE) { \
+					call_fixup((cmd)->c.fixup, &(dst)[i+2].u.data, i+1); \
+					if ((dst)[i+2].u.data != s.s) \
+						(dst)[i+2].type = FPARAM_DYN_ST; \
+				} \
 			} else \
 				(dst)[i+2]=(src)[i+2]; \
 		} \
@@ -180,22 +193,22 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
  * @param src - source action_u_t array (e.g. action->val)
  * @param params... - variable list of parameters, passed to the module
  *               function
- * Side-effects: sets ret, clobbers i (int), s (str), rv (rvalue*), f,
+ * Side-effects: sets ret, clobbers i (int), s (str), rv (rvalue*), cmd,
  *               might jump to error.
  *
  */
 #ifdef __SUNPRO_C
 #define MODF_CALL(f_type, h, msg, src, ...) \
 	do { \
-		f=((union cmd_export_u*)(src)[0].u.data)->c.function; \
-		ret=((f_type)f)((msg), __VAR_ARGS__); \
+		cmd=(src)[0].u.data; \
+		ret=((f_type)cmd->c.function)((msg), __VAR_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
 	} while (0)
 #else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
 #define MODF_CALL(f_type, h, msg, src, params...) \
 	do { \
-		f=((union cmd_export_u*)(src)[0].u.data)->c.function; \
-		ret=((f_type)f)((msg), ## params ); \
+		cmd=(src)[0].u.data; \
+		ret=((f_type)cmd->c.function)((msg), ## params ); \
 		MODF_HANDLE_RETCODE(h, ret); \
 	} while (0)
 #endif /* __SUNPRO_C */
@@ -220,21 +233,21 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 #ifdef __SUNPRO_C
 #define MODF_RVE_CALL(f_type, h, msg, src, dst, ...) \
 	do { \
-		f=((union cmd_export_u*)(src)[0].u.data)->c.function; \
-		MODF_RVE_PARAM_CONVERT(h, msg, src, dst); \
-		ret=((f_type)f)((msg), __VAR_ARGS__); \
+		cmd=(src)[0].u.data; \
+		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
+		ret=((f_type)cmd->c.function)((msg), __VAR_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
-		/* free strings allocated by us */ \
+		/* free strings allocated by us or fixups */ \
 		MODF_RVE_PARAM_FREE(src, dst); \
 	} while (0)
 #else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
 #define MODF_RVE_CALL(f_type, h, msg, src, dst, params...) \
 	do { \
-		f=((union cmd_export_u*)(src)[0].u.data)->c.function; \
-		MODF_RVE_PARAM_CONVERT(h, msg, src, dst); \
-		ret=((f_type)f)((msg), ## params ); \
+		cmd=(src)[0].u.data; \
+		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
+		ret=((f_type)cmd->c.function)((msg), ## params ); \
 		MODF_HANDLE_RETCODE(h, ret); \
-		/* free strings allocated by us */ \
+		/* free strings allocated by us or fixups */ \
 		MODF_RVE_PARAM_FREE(src, dst); \
 	} while (0)
 #endif /* __SUNPRO_C */
@@ -250,7 +263,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct dest_info dst;
 	char* tmp;
 	char *new_uri, *end, *crt;
-	void* f;
+	union cmd_export_u* cmd;
 	int len;
 	int user;
 	struct sip_uri uri, next_hop;
