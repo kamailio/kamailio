@@ -126,11 +126,16 @@ static int tls_complete_init(struct tcp_connection* c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	data->ssl = SSL_new(dom->ctx[process_no]);
+	data->rwbio = tls_BIO_new_mbuf(0, 0);
 	data->cfg = cfg;
 	data->state = state;
 
-	if (data->ssl == 0) {
-		TLS_ERR("Failed to create SSL structure:");
+	if (unlikely(data->ssl == 0 || data->rwbio == 0)) {
+		TLS_ERR("Failed to create SSL or BIO structure:");
+		if (data->ssl)
+			SSL_free(data->ssl);
+		if (data->rwbio)
+			BIO_free(data->rwbio);
 		goto error;
 	}
 #ifdef TLS_KSSL_WORKARROUND
@@ -140,6 +145,7 @@ static int tls_complete_init(struct tcp_connection* c)
 		data->ssl->kssl_ctx=0;
 	}
 #endif
+	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
 	return 0;
 
@@ -182,25 +188,9 @@ static int tls_set_mbufs(struct tcp_connection *c,
 							struct tls_mbuf* rd,
 							struct tls_mbuf* wr)
 {
-	SSL *ssl;
 	BIO *rwbio;
 	
-	/* if (unlikely(tls_fix_connection(c) < 0))
-		return -1;
-	*/
-	
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
-	if (unlikely(((rwbio=SSL_get_rbio(ssl))==0) ||
-					((rwbio=SSL_get_wbio(ssl))==0))) {
-		rwbio = tls_BIO_new_mbuf(rd, wr);
-		if (unlikely(rwbio == 0)) {
-			ERR("new mbuf BIO creation failure\n");
-			return -1;
-		}
-		/* use the same bio for both read & write */
-		SSL_set_bio(ssl, rwbio, rwbio);
-		return 0;
-	}
+	rwbio = ((struct tls_extra_data*)c->extra_data)->rwbio;
 	if (unlikely(tls_BIO_mbuf_set(rwbio, rd, wr)<=0)) {
 		/* it should be always 1 */
 		ERR("failed to set mbufs");
@@ -875,7 +865,7 @@ redo_read:
 	*/
 	if (unlikely(tls_c->enc_rd_buf)) {
 		/* use queued data */
-		/* safe to use without locks, because only read changes it and 
+		/* safe to use without locks, because only read changes it and
 		   there can't be parallel reads on the same connection */
 		enc_rd_buf = tls_c->enc_rd_buf;
 		tls_c->enc_rd_buf = 0;
@@ -980,8 +970,8 @@ ssl_read_skipped:
 				goto error_send;
 			}
 		}
-		/* quickly catch bugs: segfault if accessed and not set */
-		tls_set_mbufs(c, 0, 0);
+	/* quickly catch bugs: segfault if accessed and not set */
+	tls_set_mbufs(c, 0, 0);
 	lock_release(&c->write_lock);
 	switch(ssl_error) {
 		case SSL_ERROR_NONE:
@@ -1027,11 +1017,12 @@ ssl_read_skipped:
 		if (unlikely(n < 0))
 			/* here n should always be >= 0 */
 			BUG("unexpected value (n = %d)\n", n);
-		else if (unlikely(n < bytes_free))
-			BUG("read buffer not exhausted (rbio still has %d bytes,"
-					"last SSL_read %d / %d)\n",
-					rd.used - rd.pos, n, bytes_free);
-		else if (n == bytes_free) {
+		else {
+			if (unlikely(n < bytes_free))
+				BUG("read buffer not exhausted (rbio still has %d bytes,"
+						"last SSL_read %d / %d)\n",
+						rd.used - rd.pos, n, bytes_free);
+			/* n <= bytes_free */
 			/*  queue read data if not fully consumed by SSL_read()
 			 * (very unlikely situation)
 			 */

@@ -55,6 +55,9 @@ struct tls_rd_buf {
 struct tls_extra_data {
 	tls_domains_cfg_t* cfg; /* Configuration used for this connection */
 	SSL* ssl;               /* SSL context used for the connection */
+	BIO* rwbio;             /* bio used for read/write
+							   (openssl code might add buffering BIOs so
+							    it's better to remember our original BIO) */
 	tls_ct_q* ct_wq;
 	struct tls_rd_buf* enc_rd_buf;
 	unsigned int flags;

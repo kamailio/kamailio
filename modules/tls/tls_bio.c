@@ -115,7 +115,7 @@ int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr)
 {
 	struct tls_bio_mbuf_data* d;
 	
-	TLS_BIO_DBG("tls_BIO_muf_set called (%p, %p)\n", rd, wr);
+	TLS_BIO_DBG("tls_BIO_mbuf_set called (%p => %p, %p)\n", b, rd, wr);
 	if (unlikely(b->ptr == 0)){
 		BUG("null BIO ptr\n");
 		return 0;
@@ -195,7 +195,8 @@ static int tls_bio_mbuf_read(BIO* b, char* dst, int dst_len)
 				   as a shortcut when no data is available =>
 				   simulate EAGIAN/WANT_READ */
 				TLS_BIO_DBG("read (%p, %p, %d) called with null read buffer"
-						" => simulating EAGAIN/WANT_READ\n", b, dst, dst_len);
+						"(%p->%p) => simulating EAGAIN/WANT_READ\n",
+						b, dst, dst_len, d, d->rd);
 				BIO_set_retry_read(b);
 			}
 			return -1;
