@@ -57,8 +57,11 @@ struct cfg_group_tls default_tls_cfg = {
 	-1, /* ssl_freelist_max  (use the default: 32) */
 	-1, /* ssl_max_send_fragment (use the default: 16k)*/
 	1, /* ssl_read_ahead (set, use -1 for the openssl default value)*/
-	-1, /* low_mem_treshold1 */
-	-1, /* low_mem_treshold2 */
+	-1, /* low_mem_threshold1 */
+	-1, /* low_mem_threshold2 */
+	10*1024*1024, /* ct_wq_max: 10 Mb by default */
+	64*1024, /* con_ct_wq_max: 64Kb by default */
+	4096 /* ct_wq_blk_size */
 };
 
 void* tls_cfg = &default_tls_cfg;
@@ -175,6 +178,19 @@ cfg_def_t	tls_cfg_def[] = {
 	{"low_mem_threshold2", CFG_VAR_INT | CFG_ATOMIC, -1, 1<<30, 0, 0,
 		"sets the minimum amount of free memory after which no more TLS"
 		" operations will be attempted (even on existing connections)" },
+	{"ct_wq_max", CFG_VAR_INT | CFG_ATOMIC, 0, 1<<30, 0, 0,
+		"maximum bytes queued globally for write when write has to wait due"
+		" to TLS-level renegotiation (SSL_ERROR_WANT_READ) or initial TLS"
+		" connection establishment (it is different from tcp.wq_max,"
+		" which works at the TCP connection level)"},
+	{"con_ct_wq_max", CFG_VAR_INT | CFG_ATOMIC, 0, 4*1024*1024, 0, 0,
+		"maximum bytes queued for write per connection when write has to wait"
+		" due to TLS-level renegotiation (SSL_ERROR_WANT_READ) or initial TLS"
+		" connection establishment (it is different from tcp.conn_wq_max,"
+		" which works at the TCP connection level)"},
+	{"ct_wq_blk_size", CFG_VAR_INT | CFG_ATOMIC, 1, 65536, 0, 0,
+		"internal TLS pre-write (clear-text) queue minimum block size"
+		" (advanced tunning or debugging for now)"},
 	{0, 0, 0, 0, 0, 0}
 };
 

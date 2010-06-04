@@ -29,13 +29,10 @@
 */
 
 #include "tls_ct_wrq.h"
+#include "tls_cfg.h"
 #include "../../atomic_ops.h"
 #include "../../mem/shm_mem.h"
 
-/* FIXME: change to runtime configurable variables */
-#define TLS_CT_WQ_MAX_CON_SZ  4*1024*1024 /* 4 MB  max. overall */
-#define TLS_CT_WQ_MAX			262144  /* 256 k max. per connection */
-#define TLS_CT_WQ_BLK_SZ		  4096  /* 4k max. block size */
 
 atomic_t* tls_total_ct_wq; /* total clear text bytes queued for a future
 							  SSL_write() (due to renegotiations/
@@ -135,10 +132,13 @@ int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
 {
 	int ret;
 	
-	if (unlikely( (*ct_q && (((*ct_q)->queued + size) > TLS_CT_WQ_MAX_CON_SZ))
-					|| (atomic_get(tls_total_ct_wq) + size) > TLS_CT_WQ_MAX))
+	if (unlikely( (*ct_q && (((*ct_q)->queued + size) >
+						cfg_get(tls, tls_cfg, con_ct_wq_max))) ||
+				(atomic_get(tls_total_ct_wq) + size) > 
+						cfg_get(tls, tls_cfg, ct_wq_max)))
 		return -2;
-	ret = tls_ct_q_add(ct_q, data, size, TLS_CT_WQ_BLK_SZ);
+	ret = tls_ct_q_add(ct_q, data, size,
+						cfg_get(tls, tls_cfg, ct_wq_blk_size));
 	if (likely(ret > 0))
 		atomic_add(tls_total_ct_wq, ret);
 	return ret;
