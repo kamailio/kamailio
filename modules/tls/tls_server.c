@@ -231,7 +231,7 @@ static void tls_dump_cert_info(char* s, X509* cert)
  *           WANT_READ or WANT_WRITE 
  *
  */
-static int tls_accept(struct tcp_connection *c, int* error)
+int tls_accept(struct tcp_connection *c, int* error)
 {
 	int ret, ssl_err;
 	SSL *ssl;
@@ -280,48 +280,6 @@ static int tls_accept(struct tcp_connection *c, int* error)
 		}
 	} else { /* ret == 0 or < 0 */
 		*error = SSL_get_error(ssl, ret);
-		switch (*error) {
-		case SSL_ERROR_ZERO_RETURN:
-			DBG("TLS handshake failed cleanly\n");
-			goto err;
-			
-		case SSL_ERROR_WANT_READ:
-			DBG("Need to get more data to finish TLS accept\n");
-			break;
-			
-		case SSL_ERROR_WANT_WRITE:
-			DBG("Need to send more data to finish TLS accept\n");
-			break;
-			
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-		case SSL_ERROR_WANT_CONNECT:
-			DBG("Need to retry connect\n");
-			break;
-			
-		case SSL_ERROR_WANT_ACCEPT:
-			DBG("Need to retry accept\n");
-			break;
-#endif
-		case SSL_ERROR_WANT_X509_LOOKUP:
-			DBG("Application callback asked to be called again\n");
-			break;
-			
-		case SSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "TLS accept:");
-			if (!ssl_err) {
-				if (ret == 0) {
-					WARN("Unexpected EOF occurred while performing"
-							" TLS accept\n");
-				} else {
-					ERR("IO error: (%d) %s\n", errno, strerror(errno));
-				}
-			}
-			goto err;
-			
-		default:
-			TLS_ERR("SSL error:");
-			goto err;
-		}
 	}
 	return ret;
 err:
@@ -339,7 +297,7 @@ err:
  *           WANT_READ or WANT_WRITE 
  *
  */
-static int tls_connect(struct tcp_connection *c, int* error)
+int tls_connect(struct tcp_connection *c, int* error)
 {
 	SSL *ssl;
 	int ret, ssl_err;
@@ -391,47 +349,6 @@ static int tls_connect(struct tcp_connection *c, int* error)
 		}
 	} else { /* 0 or < 0 */
 		*error = SSL_get_error(ssl, ret);
-		switch (*error) {
-		case SSL_ERROR_ZERO_RETURN:
-			DBG("TLS handshake failed cleanly\n");
-			goto err;
-			
-		case SSL_ERROR_WANT_READ:
-			DBG("Need to get more data to finish TLS connect\n");
-			break;
-			
-		case SSL_ERROR_WANT_WRITE:
-			DBG("Need to send more data to finish TLS connect\n");
-			break;
-			
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-		case SSL_ERROR_WANT_CONNECT:
-			DBG("Need to retry connect\n");
-			break;
-			
-		case SSL_ERROR_WANT_ACCEPT:
-			DBG("Need to retry accept\n");
-			break;
-#endif
-		case SSL_ERROR_WANT_X509_LOOKUP:
-			DBG("Application callback asked to be called again\n");
-			break;
-			
-		case SSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "TLS connect:");
-			if (!ssl_err) {
-				if (ret == 0) {
-					WARN("Unexpected EOF occurred while performing TLS connect\n");
-				} else {
-					ERR("IO error: (%d) %s\n", errno, strerror(errno));
-				}
-			}
-			goto err;
-			
-		default:
-			TLS_ERR("SSL error:");
-			goto err;
-		}
 	}
 	return ret;
 err:
@@ -638,41 +555,53 @@ static int tls_generic_send(int fd, struct tcp_connection *c,
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
 	struct tls_mbuf rd, wr;
 	int ssl_error;
+	char* err_src;
+	int x;
 	
 	*resp = CONN_NOP;
 	n = 0;
 	offs = 0;
 	ssl_error = SSL_ERROR_NONE;
+	err_src = "TLS write:";
 	lock_get(&c->write_lock);
-	if (unlikely(tls_fix_connection(c) < 0))
+	if (unlikely(tls_fix_connection(c) < 0)) {
+		ERR("tls_fix_connection failed\n");
 		goto error;
+	}
 	tls_c = (struct tls_extra_data*)c->extra_data;
 	ssl = tls_c->ssl;
 	/* clear text already queued (WANTS_READ) queue directly*/
 	if (unlikely(tls_write_wants_read(tls_c))) {
-		if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs) < 0))
+		if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs) < 0)) {
+				ERR("ct write buffer full (%d bytes)\n",
+						tls_c->ct_wq?tls_c->ct_wq->queued:0);
 				goto error_wq_full;
+		}
 		goto end;
 	}
 	tls_mbuf_init(&rd, 0, 0); /* no read */
 redo_wr:
 	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
-	if (tls_set_mbufs(c, &rd, &wr) < 0)
+	if (unlikely(tls_set_mbufs(c, &rd, &wr) < 0)) {
+		ERR("tls_set_mbufs failed\n");
 		goto error;
+	}
 	if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
 		n = tls_connect(c, &ssl_error);
 		if (unlikely(n>=1)) {
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if (unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
-		}
+		} else
+			err_src = "TLS connect:";
 	} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 		n = tls_accept(c, &ssl_error);
 		if (unlikely(n>=1)) {
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if (unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
-		}
+		} else
+			err_src = "TLS accept:";
 	} else {
 		n = SSL_write(ssl, buf + offs, len - offs);
 		if (unlikely(n <= 0))
@@ -698,12 +627,16 @@ redo_wr:
 				break;
 			case SSL_ERROR_ZERO_RETURN:
 				/* SSL EOF */
+				ERR("ssl level EOF\n");
 				goto ssl_eof;
 			case SSL_ERROR_WANT_READ:
 				/* queue write buffer */
 				if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs)
-								< 0))
+								< 0)) {
+					ERR("ct write buffer full (%d bytes)\n",
+							tls_c->ct_wq?tls_c->ct_wq->queued:0);
 					goto error_wq_full;
+				}
 				tls_c->flags |= F_TLS_CON_WR_WANTS_RD;
 				break; /* or goto end */
 			case SSL_ERROR_WANT_WRITE:
@@ -711,8 +644,39 @@ redo_wr:
 				BUG("write buffer too small (%d/%d bytes)\n",
 						wr.used, wr.size);
 				goto bug;
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
+			case SSL_ERROR_WANT_CONNECT:
+				/* only if the underlying BIO is not yet connected
+				   and the call would block in connect().
+				   (not possible in our case) */
+				BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+				break;
+			case SSL_ERROR_WANT_ACCEPT:
+				/* only if the underlying BIO is not yet connected
+				   and call would block in accept()
+				   (not possible in our case) */
+				BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+				break;
+#endif
+			case SSL_ERROR_WANT_X509_LOOKUP:
+				/* can only appear on client application and it indicates that
+				   an installed client cert. callback should be called again
+				   (it returned < 0 indicated that it wants to be called
+				   later). Not possible in our case */
+				BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+				goto bug;
 			case SSL_ERROR_SYSCALL:
+				TLS_ERR_RET(x, err_src);
+				if (!x) {
+					if (n == 0) {
+						WARN("Unexpected EOF\n");
+					} else
+						/* should never happen */
+						BUG("IO error (%d) %s\n", errno, strerror(errno));
+				}
+				goto error;
 			default:
+				TLS_ERR(err_src);
 				BUG("unexpected SSL error %d\n", ssl_error);
 				goto bug;
 		}
@@ -831,6 +795,8 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	struct tls_extra_data* tls_c;
 	struct tls_rd_buf* enc_rd_buf;
 	int n, flush_flags;
+	char* err_src;
+	int x;
 	
 	ssl_read = 0;
 	r = &c->req;
@@ -900,7 +866,7 @@ redo_read:
 	
 	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 	ssl_error = SSL_ERROR_NONE;
-	
+	err_src = "TLS read:";
 	/* we have to avoid to run in the same time 
 	 * with a tls_write because of the
 	 * update bio stuff  (we don't want a write
@@ -913,7 +879,7 @@ redo_read:
 		if (unlikely(tls_write_wants_read(tls_c) &&
 						!(*flags & RD_CONN_EOF))) {
 			DBG("tls write on read (WRITE_WANTS_READ)\n");
-			n = tls_ct_wq_flush(ssl, &tls_c->ct_wq, &flush_flags,
+			n = tls_ct_wq_flush(c, &tls_c->ct_wq, &flush_flags,
 								&ssl_error);
 			if (unlikely(n < 0 )) {
 				tls_set_mbufs(c, 0, 0);
@@ -923,6 +889,8 @@ redo_read:
 			}
 			if (likely(flush_flags & F_BUFQ_EMPTY))
 				tls_c->flags &= ~F_TLS_CON_WR_WANTS_RD;
+			if (unlikely(flush_flags & F_BUFQ_ERROR_FLUSH))
+				err_src = "TLS write:";
 		}
 		if (likely((rd.pos != rd.used ||
 						(tls_c->flags & F_TLS_CON_SSL_PENDING)) &&
@@ -933,14 +901,18 @@ redo_read:
 				n = tls_connect(c, &ssl_error);
 				if (unlikely(n>=1)) {
 					n = SSL_read(ssl, r->pos, bytes_free);
-				} else
+				} else {
+					err_src = "TLS connect:";
 					goto ssl_read_skipped;
+				}
 			} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 				n = tls_accept(c, &ssl_error);
 				if (unlikely(n>=1)) {
 					n = SSL_read(ssl, r->pos, bytes_free);
-				} else
+				} else {
+					err_src = "TLS accept:";
 					goto ssl_read_skipped;
+				}
 			} else {
 				/* if bytes in then decrypt read buffer into tcpconn req.
 				   buffer */
@@ -948,6 +920,7 @@ redo_read:
 			}
 			if (unlikely(n <= 0)) {
 				ssl_error = SSL_get_error(ssl, n);
+				err_src = "TLS read:";
 				/*  errors handled below, outside the lock */
 			} else {
 				ssl_error = SSL_ERROR_NONE;
@@ -1002,8 +975,39 @@ ssl_read_skipped:
 			BUG("write buffer too small (%d/%d bytes)\n",
 					wr.used, wr.size);
 			goto bug;
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
+		case SSL_ERROR_WANT_CONNECT:
+			/* only if the underlying BIO is not yet connected
+			   and the call would block in connect().
+			   (not possible in our case) */
+			BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+			break;
+		case SSL_ERROR_WANT_ACCEPT:
+			/* only if the underlying BIO is not yet connected
+			   and call would block in accept()
+			   (not possible in our case) */
+			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+			break;
+#endif
+		case SSL_ERROR_WANT_X509_LOOKUP:
+			/* can only appear on client application and it indicates that
+			   an installed client cert. callback should be called again
+			   (it returned < 0 indicated that it wants to be called
+			   later). Not possible in our case */
+			BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+			goto bug;
 		case SSL_ERROR_SYSCALL:
+			TLS_ERR_RET(x, err_src);
+			if (!x) {
+				if (n == 0) {
+					WARN("Unexpected EOF\n");
+				} else
+					/* should never happen */
+					BUG("IO error (%d) %s\n", errno, strerror(errno));
+			}
+			goto error;
 		default:
+			TLS_ERR(err_src);
 			BUG("unexpected SSL error %d\n", ssl_error);
 			goto bug;
 	}

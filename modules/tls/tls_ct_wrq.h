@@ -31,8 +31,7 @@
 
 #include "tls_ct_q.h"
 #include "tls_server.h"
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include "../../tcp_conn.h"
 
 
 
@@ -44,7 +43,8 @@ unsigned int tls_ct_wq_total_bytes();
 #define tls_ct_wq_non_empty(bq) (*(tc_q) && (*(tc_q))->first!=0)
 
 
-int tls_ct_wq_flush(SSL* ssl, tls_ct_q** tc_q,  int* flags, int* ssl_err);
+int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** tc_q,
+					int* flags, int* ssl_err);
 int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size);
 unsigned int tls_ct_wq_free(tls_ct_q** ct_q);
 

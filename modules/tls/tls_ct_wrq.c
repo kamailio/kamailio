@@ -30,8 +30,11 @@
 
 #include "tls_ct_wrq.h"
 #include "tls_cfg.h"
+#include "tls_server.h"
 #include "../../atomic_ops.h"
 #include "../../mem/shm_mem.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 
 atomic_t* tls_total_ct_wq; /* total clear text bytes queued for a future
@@ -77,21 +80,42 @@ unsigned int tls_ct_wq_total_bytes()
  *
  * @param *ssl - ssl context.
  * @param *err - error reason (set on exit).
- * @return >=0 on success (bytes written), <0 on error.
+ * @return >0 on success (bytes written), <=0 on ssl error (should be
+ *  handled outside).
  * WARNING: the ssl context must have the wbio and rbio previously set!
  */
-static int ssl_flush(void* ssl, void* error, const void* buf, unsigned size)
+static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
 {
-	int ret;
-	long err;
+	int n;
+	int ssl_error;
+	struct tls_extra_data* tls_c;
+	SSL* ssl;
 	
-	ret = SSL_write(ssl, buf, size);
-	if (unlikely(ret <= 0)) {
-		err = SSL_get_error(ssl, ret);
-		*(long*)error = err;
-	} else
-		*(long*)error = (long) SSL_ERROR_NONE;
-	return ret;
+	tls_c = ((struct tcp_connection*)tcp_c)->extra_data;
+	ssl = tls_c->ssl;
+	ssl_error = SSL_ERROR_NONE;
+	if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
+		n = tls_connect(tcp_c, &ssl_error);
+		if (unlikely(n>=1)) {
+			n = SSL_write(ssl, buf, size);
+			if (unlikely(n <= 0))
+				ssl_error = SSL_get_error(ssl, n);
+		}
+	} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
+		n = tls_accept(tcp_c, &ssl_error);
+		if (unlikely(n>=1)) {
+			n = SSL_write(ssl, buf, size);
+			if (unlikely(n <= 0))
+				ssl_error = SSL_get_error(ssl, n);
+		}
+	} else {
+		n = SSL_write(ssl, buf, size);
+		if (unlikely(n <= 0))
+			ssl_error = SSL_get_error(ssl, n);
+	}
+	
+	*(long*)error = ssl_error;
+	return n;
 }
 
 
@@ -107,13 +131,14 @@ static int ssl_flush(void* ssl, void* error, const void* buf, unsigned size)
  * @return -1 on internal error, or the number of bytes flushed on success
  *         (>=0).
  */
-int tls_ct_wq_flush(SSL* ssl, tls_ct_q** ct_q,  int* flags, int* ssl_err)
+int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
+					int* flags, int* ssl_err)
 {
 	int ret;
 	long error;
 	
 	error = SSL_ERROR_NONE;
-	ret = tls_ct_q_flush(ct_q,  flags, ssl_flush, ssl, &error);
+	ret = tls_ct_q_flush(ct_q,  flags, ssl_flush, c, &error);
 	*ssl_err = (int)error;
 	if (likely(ret > 0))
 		atomic_add(tls_total_ct_wq, -ret);
@@ -134,13 +159,14 @@ int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
 	
 	if (unlikely( (*ct_q && (((*ct_q)->queued + size) >
 						cfg_get(tls, tls_cfg, con_ct_wq_max))) ||
-				(atomic_get(tls_total_ct_wq) + size) > 
-						cfg_get(tls, tls_cfg, ct_wq_max)))
+				(atomic_get(tls_total_ct_wq) + size) >
+						cfg_get(tls, tls_cfg, ct_wq_max))) {
 		return -2;
+	}
 	ret = tls_ct_q_add(ct_q, data, size,
 						cfg_get(tls, tls_cfg, ct_wq_blk_size));
-	if (likely(ret > 0))
-		atomic_add(tls_total_ct_wq, ret);
+	if (likely(ret >= 0))
+		atomic_add(tls_total_ct_wq, size);
 	return ret;
 }
 
@@ -155,8 +181,8 @@ unsigned int tls_ct_wq_free(tls_ct_q** ct_q)
 {
 	unsigned int ret;
 	
-	ret = tls_ct_q_destroy(ct_q);
-	atomic_add(tls_total_ct_wq, -ret);
+	if (likely((ret = tls_ct_q_destroy(ct_q)) > 0))
+		atomic_add(tls_total_ct_wq, -ret);
 	return ret;
 }
 
