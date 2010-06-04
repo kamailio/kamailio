@@ -262,11 +262,9 @@ inline static int sbufq_flush(struct sbuffer_queue* q, int* flags,
 				shm_free(b);
 				q->offset=0;
 				q->queued-=block_size;
-				ret+=block_size;
 			}else{
 				q->offset+=n;
 				q->queued-=n;
-				ret+=n;
 				break;
 			}
 		}else{
