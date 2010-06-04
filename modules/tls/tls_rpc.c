@@ -116,15 +116,15 @@ static void tls_list(rpc_t* rpc, void* c)
 			tls_d = con->extra_data;
 			rpc->add(c, "{", &handle);
 			/* tcp data */
-			if (ip_addr2sbuf(&con->rcv.src_ip, src_ip, sizeof(src_ip)) == 0) {
+			if ((len = ip_addr2sbuf(&con->rcv.src_ip, src_ip, sizeof(src_ip)))
+					== 0)
 				BUG("failed to convert source ip");
-				src_ip[0]=0;
-			}
-			if (ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, sizeof(dst_ip)) == 0) {
+			src_ip[len] = 0;
+			if ((len = ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, sizeof(dst_ip)))
+					== 0)
 				BUG("failed to convert destination ip");
-				dst_ip[0]=0;
-			}
-			timeout = TICKS_TO_S(con->timeout - get_ticks());
+			dst_ip[len] = 0;
+			timeout = TICKS_TO_S(con->timeout - get_ticks_raw());
 			rpc->struct_add(handle, "ddsdsd",
 					"id", con->id,
 					"timeout", timeout,
