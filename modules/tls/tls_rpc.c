@@ -4,24 +4,21 @@
  * TLS module - management interface
  *
  * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of sip-router, a free SIP server.
  *
- * sip-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * sip-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /** tls module management interface (rpc).
  * @file tls_rpc.c
@@ -102,46 +99,83 @@ extern struct tcp_connection** tcpconn_id_hash;
 
 static void tls_list(rpc_t* rpc, void* c)
 {
-	static char buf[128];
+	char buf[128];
+	char src_ip[IP_ADDR_MAX_STR_SIZE];
+	char dst_ip[IP_ADDR_MAX_STR_SIZE];
 	void* handle;
 	char* tls_info;
-	SSL* ssl;
+	char* state;
+	struct tls_extra_data* tls_d;
 	struct tcp_connection* con;
 	int i, len, timeout;
 
-	ssl=0;
 	TCPCONN_LOCK;
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
-		if (tcpconn_id_hash[i] == NULL) continue;
-		con = tcpconn_id_hash[i];
-		while(con) {
-			if (con->rcv.proto != PROTO_TLS) goto skip;
-			if (con->extra_data) 
-				ssl = ((struct tls_extra_data*)con->extra_data)->ssl;
-			if (ssl) {
-				tls_info = SSL_CIPHER_description(SSL_get_current_cipher(ssl),
-													buf, 128);
-				len = strlen(buf);
-				if (len && buf[len - 1] == '\n') buf[len - 1] = '\0';
-			} else {
-				tls_info = "Unknown";
-			}
-			timeout = con->timeout - get_ticks();
-			if (timeout < 0) timeout = 0;
+		for (con = tcpconn_id_hash[i]; con; con = con->id_next) {
+			if (con->rcv.proto != PROTO_TLS) continue;
+			tls_d = con->extra_data;
 			rpc->add(c, "{", &handle);
-			rpc->struct_add(handle, "ddsdsds",
+			/* tcp data */
+			if (ip_addr2sbuf(&con->rcv.src_ip, src_ip, sizeof(src_ip)) == 0) {
+				BUG("failed to convert source ip");
+				src_ip[0]=0;
+			}
+			if (ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, sizeof(dst_ip)) == 0) {
+				BUG("failed to convert destination ip");
+				dst_ip[0]=0;
+			}
+			timeout = TICKS_TO_S(con->timeout - get_ticks());
+			rpc->struct_add(handle, "ddsdsd",
 					"id", con->id,
 					"timeout", timeout,
-					"src_ip", ip_addr2a(&con->rcv.src_ip),
+					"src_ip", src_ip,
 					"src_port", con->rcv.src_port,
-					"dst_ip", ip_addr2a(&con->rcv.dst_ip),
-					"dst_port", con->rcv.dst_port,
-					"tls", 	tls_info);
-		skip:
-			con = con->id_next;
+					"dst_ip", dst_ip,
+					"dst_port", con->rcv.dst_port);
+			if (tls_d) {
+				tls_info = SSL_CIPHER_description(
+									SSL_get_current_cipher(tls_d->ssl),
+									buf, sizeof(buf));
+				len = strlen(buf);
+				if (len && buf[len - 1] == '\n') buf[len - 1] = '\0';
+				/* tls data */
+				state = "unknown/error";
+				lock_get(&con->write_lock);
+					switch(tls_d->state) {
+						case S_TLS_NONE:
+							state = "none/init";
+							break;
+						case S_TLS_ACCEPTING:
+							state = "tls_accept";
+							break;
+						case S_TLS_CONNECTING:
+							state = "tls_connect";
+							break;
+						case S_TLS_ESTABLISHED:
+							state = "established";
+							break;
+					}
+					rpc->struct_add(handle, "sddds",
+							"cipher", tls_info,
+							"ct_wq_size", tls_d->ct_wq?
+											tls_d->ct_wq->queued:0,
+							"enc_rd_buf", tls_d->enc_rd_buf?
+											tls_d->enc_rd_buf->size:0,
+							"flags", tls_d->flags,
+							"state", state
+							);
+				lock_release(&con->write_lock);
+			} else {
+				rpc->struct_add(handle, "sddds",
+						"cipher", "unknown",
+						"ct_wq_size", 0,
+						"enc_rd_buf", 0,
+						"flags", 0,
+						"state", "pre-init"
+						);
+			}
 		}
 	}
-
 	TCPCONN_UNLOCK;
 }
 
@@ -169,7 +203,7 @@ static void tls_options(rpc_t* rpc, void* c)
 {
 	void* handle;
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dSdddSSSSdSSddddddddd",
+	rpc->struct_add(handle, "dSdddSSSSdSSdddddddddddd",
 		"force_run",	cfg_get(tls, tls_cfg, force_run),
 		"method",		&cfg_get(tls, tls_cfg, method),
 		"verify_certificate", cfg_get(tls, tls_cfg, verify_cert),
@@ -191,7 +225,10 @@ static void tls_options(rpc_t* rpc, void* c)
 		"ssl_max_send_fragment", cfg_get(tls, tls_cfg, ssl_max_send_fragment),
 		"ssl_read_ahead",		cfg_get(tls, tls_cfg, ssl_read_ahead),
 		"low_mem_threshold1",	cfg_get(tls, tls_cfg, low_mem_threshold1),
-		"low_mem_threshold2",	cfg_get(tls, tls_cfg, low_mem_threshold2)
+		"low_mem_threshold2",	cfg_get(tls, tls_cfg, low_mem_threshold2),
+		"ct_wq_max",			cfg_get(tls, tls_cfg, ct_wq_max),
+		"con_ct_wq_max",		cfg_get(tls, tls_cfg, con_ct_wq_max),
+		"ct_wq_blk_size",		cfg_get(tls, tls_cfg, ct_wq_blk_size)
 		);
 }
 
