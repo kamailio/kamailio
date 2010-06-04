@@ -65,7 +65,7 @@ static cmd_export_t cmds[]={
 	{"print", print_f_1, 1, print_fixup_f_1, REQUEST_ROUTE},
 	{"print", print_f_2, 2, print_fixup_f_2, REQUEST_ROUTE},
 	{"print1", print_f1, 1, 0, REQUEST_ROUTE},
-	{"print2", print_f2, 2, 0, REQUEST_ROUTE},
+	{"print2", print_f2, 2, fixup_var_str_12, REQUEST_ROUTE},
 	{"print3", (cmd_function)print_f3, 3, 0, REQUEST_ROUTE},
 	{"printv", (cmd_function)print_f_var, VAR_PARAM_NO, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
@@ -152,10 +152,16 @@ static int print_f1(struct sip_msg* msg, char* s1, char* not_used)
 }
 
 
-/* 2 parameters, no fixup version */
+/* 2 parameters, fparam fixup version */
 static int print_f2(struct sip_msg* msg, char* s1, char* s2)
 {
-	printf("%s%s\n", s1, s2);
+	str a, b;
+	if (get_str_fparam(&a, msg, (fparam_t*)s1) !=0 ||
+		 get_str_fparam(&b, msg, (fparam_t*)s2) !=0) {
+		BUG("get_str_fparam failed\n");
+		return -1;
+	}
+	printf("%.*s%.*s\n", a.len, a.s, b.len, b.s);
 	return 1;
 }
 
