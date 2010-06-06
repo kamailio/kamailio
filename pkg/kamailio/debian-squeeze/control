@@ -1,8 +1,7 @@
 Source: kamailio
 Section: net
 Priority: optional
-Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
-Uploaders: Kilian Krause <kilian@debian.org>
+Maintainer: Jon Bonilla <manwe@aholab.ehu.es>
 Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libmemcache-dev, libreadline5-dev
 Standards-Version: 3.8.0
 Homepage: http://www.kamailio.org/
