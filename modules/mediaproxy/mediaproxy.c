@@ -134,6 +134,7 @@ typedef struct {
     str direction;
     Bool local_ip; // true if the IP is locally defined inside this media stream
     Bool has_ice;
+    Bool has_rtcp_ice;
     TransportType transport;
     char *start_line;
     char *next_line;
@@ -914,21 +915,89 @@ get_rtcp_ip_attribute(str *block)
 }
 
 
-// will return true if the stream in the given block
-// has ice proposal/answer, false otherwise
+// will return true if the given block has both
+// a=ice-pwd and a=ice-ufrag attributes.
 static Bool
-has_ice_proposal(str *block)
+has_ice_attributes(str *block)
 {
     char *ptr;
     ptr = find_line_starting_with(block, "a=ice-pwd:", False);
     if (ptr) {
         ptr = find_line_starting_with(block, "a=ice-ufrag:", False);
         if (ptr) {
-            ptr = find_line_starting_with(block, "a=candidate:", False);
-            if (ptr) {
+            return True;
+        }
+    }
+    return False;
+}
+
+
+// will return true if the given SDP has both
+// a=ice-pwd and a=ice-ufrag attributes at the
+// session level.
+static Bool
+has_session_ice_attributes(str *sdp)
+{
+    str block;
+    char *ptr;
+
+    // session level ICE attributes can be found from the beginning up to the first media block
+    ptr = find_line_starting_with(sdp, "m=", False);
+    if (ptr) {
+        block.s   = sdp->s;
+        block.len = ptr - block.s;
+    } else {
+        block = *sdp;
+    }
+
+    return has_ice_attributes(&block);
+}
+
+
+// will return true if the given block contains
+// a a=candidate attribute. This should be called
+// for a stream, as a=candidate attribute is not
+// allowed at the session level
+static Bool
+has_ice_candidates(str *block)
+{
+    char *ptr;
+    ptr = find_line_starting_with(block, "a=candidate:", False);
+    if (ptr) {
+        return True;
+    }
+    return False;
+}
+
+
+// will return true if given block contains an ICE 
+// candidate with the given component ID
+static Bool
+has_ice_candidate_component(str *block, int id)
+{
+    char *ptr, *block_end;
+    int i, components, count;
+    str chunk, zone, tokens[2];
+
+    block_end = block->s + block->len;
+    components = count_lines_starting_with(block, "a=candidate:", False);
+    for (i=0, chunk=*block; i<components; i++) {
+        ptr = find_line_starting_with(&chunk, "a=candidate:", False);
+        if (!ptr)
+            break;
+
+        zone.s = ptr + 12;
+        zone.len = findendline(zone.s, block_end - zone.s) - zone.s;
+        count = get_str_tokens(&zone, tokens, 2);
+
+        if (count == 2) {
+            if (strtoint(&tokens[1]) == id) {
                 return True;
             }
         }
+        
+        chunk.s   = zone.s + zone.len;
+        chunk.len = block_end - chunk.s;
     }
     return False;
 }
@@ -1242,7 +1311,8 @@ get_session_info(str *sdp, SessionInfo *session)
         session->streams[i].rtcp_ip = get_rtcp_ip_attribute(&block);
         session->streams[i].rtcp_port = get_rtcp_port_attribute(&block);
         session->streams[i].direction = get_direction_attribute(&block, &session->direction);
-        session->streams[i].has_ice = has_ice_proposal(&block);
+        session->streams[i].has_ice = ((has_ice_attributes(&block) || has_session_ice_attributes(sdp)) && has_ice_candidates(&block));
+        session->streams[i].has_rtcp_ice = has_ice_candidate_component(&block, 2);
         session->streams[i].first_ice_candidate = find_line_starting_with(&block, "a=candidate:", False);
     }
 
@@ -1748,7 +1818,7 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id, ice_candidate_data *ice_da
                 return -1;
             }
 
-            if (stream.rtcp_port.len>0 && !isnullport(stream.rtcp_port)) {
+            if (stream.has_rtcp_ice) {
                 candidate.s = buf;
                 candidate.len = sprintf(candidate.s, "a=candidate:R%x 2 UDP %u %.*s %i typ relay%.*s",
                                         hexip.s_addr,
