@@ -284,9 +284,13 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	/* advance buf */
 	*buf=udp_payload;
 	n=(int)(end-*buf);
+	/* fill ip from the packet (needed if no PKT_INFO is used) */
+	dst_ip.af=AF_INET;
+	dst_ip.len=4;
+	dst_ip.u.addr32[0]=iph.daddr;
 	/* fill dst_port */
 	dst_port=ntohs(udph.dest);
-	su_setport(to, dst_port);
+	ip_addr2su(to, &dst_ip, port);
 	/* fill src_port */
 	src_port=ntohs(udph.source);
 	su_setport(from, src_port);
