@@ -1,21 +1,21 @@
 /*
  * Various lcr related functions
  *
- * Copyright (C) 2005 Juha Heinanen
+ * Copyright (C) 2009-2010 Juha Heinanen
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of SIP Router, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * SIP Router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
+ * For a license to use the SIP Router software under conditions
  * other than those described here, or to purchase support for this
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * SIP Router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -35,7 +35,7 @@
 #define _LCR_RPC_H
 
 #ifndef NO_RPC_SUPPORT
-#define RPC_SUPPORT /* support ser RPCs by default */
+#define RPC_SUPPORT /* support SIP Router RPCs by default */
 #endif
 
 #ifdef RPC_SUPPORT

@@ -28,17 +28,18 @@
 	</para>
 	<para>
 	For the purpose of facilitating least cost routing of requests,
-	each gateway of an LCR instance belongs to a gateway group and
-	each gateway group is associated with one or more 
-	&lt;prefix, from pattern, priority&gt;
-	tuples.  A gateway matches a request if	the user part of the Request-URI
+	each gateway of an LCR instance is associated with one or more 
+	&lt;prefix, from pattern, priority, weight&gt;
+	tuples.  A gateway matches a request if user part of the Request-URI
 	matches a "prefix" and the caller's URI matches a "from" pattern in a
-	tuple that belongs to the group of the gateway.
+	tuple that is associated with the gateway.
 	</para>
 	<para>
-	When the function <emphasis>load_gws()</emphasis> is called, matching gateways (that are
-	not currently designated as defunct) are ordered
-	for forwarding purposes in the following order:
+	When the function <emphasis>load_gws()</emphasis> is called,
+	matching gateways (that are not currently designated as defunct)
+	are ordered for forwarding purposes as follows:
+	</para>
+	<para>
 	<itemizedlist>
             <listitem>
                 <para>(1) according to longest user part match
@@ -49,25 +50,33 @@
                 </para>
             </listitem>
             <listitem>
-                <para>(3) gateway's randomized weight within its group
+                <para>(3) according to tuple's randomized weight
                 </para>
             </listitem>
         </itemizedlist>
+	</para>
+	<para>
+	A tuple can be marked as a "stopper" tuple.  If a "stopper"
+	tuple matches, then matching stops at it and all other tuples
+	with shorter prefixes are not considered.
+	</para>
+	<para>
 	Prefix is a string of characters or NULL.  From
 	pattern is a regular expression (see 'man 
 	pcresyntax' for syntax), an empty string, or NULL.  An empty or
-	NULL from pattern or prefix matches anything. 
+	NULL from pattern or prefix matches anything.
 	Smaller priority value means higher priority (highest priority
-	value being 0).  Weight is an integer value from 1 to 254.
+	value being 0 and lowest being 255).  Weight is an integer value
+	from 1 to 254.
 	</para>
 	<para>
         The function <emphasis>next_gw()</emphasis> can then be used to
 	select one gateway at a 
-	time for forwarding.  Upon each call, the user part of the
-	original Request-URI is first  
+	time for forwarding.  Upon each call, unless "dont_strip_of_tag"
+	flag is set, user part of the original Request-URI is first  
 	stripped by the number of characters as specified by the
 	gateway's strip count and then prefixed by 
-	the gateway's tag.  Upon first call, if a gateway's hostname is
+	the gateway's tag.  Upon each call, if a gateway's hostname is
 	NULL, Request-URI will be  
 	rewritten based on gateway's URI scheme, IP address, port,
 	parameters, and transport protocol.  If hostname is not NULL and
@@ -78,9 +87,7 @@
 	rewritten based on gateway's URI scheme, 
 	hostname, and parameters, and destination URI is set 
 	based on gateway's URI scheme, IP address, port, and transport
-	protocol.  Upon 
-	subsequent calls, the same is done, but instead of rewriting the
-	Request-URI, a new branch is added. 
+	protocol.
 	</para>
         <para>
         Valid URI scheme values are NULL = sip, 1 = sip and 2
@@ -88,8 +95,8 @@
 	none, 1 = udp, 2 = tcp, 3 = tls, and 4 = sctp.
 	</para>
 	<para>
-	As a side effect of the gateway selection, the gateway's flags (that may
-	contain information about capabilities of the gateway)
+	As a side effect of gateway selection, selected gateway's flags
+	(that may contain information about capabilities of the gateway)
 	are stored into an AVP.
 	</para>
 	</section>
@@ -101,11 +108,6 @@
 	<para>
 		The following modules must be loaded before this module:
 		<itemizedlist>
-		<listitem>
-		<para>
-			<emphasis>TM module</emphasis>
-		</para>
-		</listitem>
 		<listitem>
 		<para>
 			<emphasis>A database module like mysql, postgres or 
@@ -155,20 +157,42 @@ modparam("lcr","db_url","&exampledb;")
 	</section>
 
 	<section>
-		<title><varname>gw_table</varname> (string)</title>
+		<title><varname>lcr_gw_table</varname> (string)</title>
 		<para>
 		Name of the table holding gateways definitions.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>gw</quote>.
+			Default value is <quote>lcr_gw</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Setting <varname>gw_table</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","gw_table","gw")
+modparam("lcr", "lcr_gw_table","gw")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>id_column</varname> (string)</title>
+		<para>
+		Name of the auto-increment, primary key column.  Common
+		to all lcr module tables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>id_column</varname> module
+		parameter</title> 
+		<programlisting format="linespecific">
+...
+modparam("lcr", "id_column", "row_id")
 ...
 </programlisting>
 		</example>
@@ -177,7 +201,8 @@ modparam("lcr","gw_table","gw")
 	<section>
 		<title><varname>lcr_id_column</varname> (string)</title>
 		<para>
-		Name of the column holding the identifier of an LCR instance.  Common to both gw and lcr tables.
+		Name of the column holding the identifier of an LCR
+		instance.  Common to all lcr module tables.
 		</para>
 		<para>
 		<emphasis>
@@ -185,7 +210,8 @@ modparam("lcr","gw_table","gw")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>lcr_id_column</varname> module parameter</title>
+		<title>Setting <varname>lcr_id_column</varname> module
+		parameter</title> 
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "lcr_id_column", "lcr_identifier")
@@ -197,7 +223,8 @@ modparam("lcr", "lcr_id_column", "lcr_identifier")
 	<section>
 		<title><varname>gw_name_column</varname> (string)</title>
 		<para>
-		Name of the column holding the gateway name.
+		Name of the column holding gateway's name for
+		documentation purpose.
 		</para>
 		<para>
 		<emphasis>
@@ -208,28 +235,7 @@ modparam("lcr", "lcr_id_column", "lcr_identifier")
 		<title>Setting <varname>gw_name_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","gw_name_column","gw_name")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>grp_id_column</varname> (string)</title>
-		<para>
-		Name of the column holding the group ID of gateway both
-		in gw and lcr tables.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>grp_id</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>grp_id_column</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","grp_id_column","grp_id")
+modparam("lcr", "gw_name_column", "name")
 ...
 </programlisting>
 		</example>
@@ -246,10 +252,11 @@ modparam("lcr","grp_id_column","grp_id")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>ip_addr_column</varname> module parameter</title>
+		<title>Setting <varname>ip_addr_column</varname> module
+		parameter</title> 
 		<programlisting format="linespecific">
 ...
-modparam("lcr","ip_addr_column","ip_addr")
+modparam("lcr", "ip_addr_column", "ip")
 ...
 </programlisting>
 		</example>
@@ -259,7 +266,7 @@ modparam("lcr","ip_addr_column","ip_addr")
 		<title><varname>hostname_column</varname> (string)</title>
 		<para>
 		Name of the column holding gateway's hostname that is
-		used in Request-URI, when request is sent to the
+		used in Request-URI hostpart, when request is sent to the
 		gateway.
 		</para>
 		<para>
@@ -271,7 +278,7 @@ modparam("lcr","ip_addr_column","ip_addr")
 		<title>Setting <varname>hostname_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr", "hostname_column","hostname")
+modparam("lcr", "hostname_column", "host")
 ...
 </programlisting>
 		</example>
@@ -291,7 +298,7 @@ modparam("lcr", "hostname_column","hostname")
 		<title>Setting <varname>port_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","port_column","port")
+modparam("lcr", "port_column", "port")
 ...
 </programlisting>
 		</example>
@@ -313,7 +320,7 @@ modparam("lcr","port_column","port")
 		<title>Setting <varname>params_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr", "params_column","parameters")
+modparam("lcr", "params_column", "parameters")
 ...
 </programlisting>
 		</example>
@@ -334,7 +341,7 @@ modparam("lcr", "params_column","parameters")
 		parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","uri_scheme_column","uri_scheme")
+modparam("lcr", "uri_scheme_column", "uri_scheme")
 ...
 </programlisting>
 		</example>
@@ -343,8 +350,8 @@ modparam("lcr","uri_scheme_column","uri_scheme")
 	<section>
 		<title><varname>transport_column</varname> (string)</title>
 		<para>
-		Name of the column holding the transport type to be used for 
-		the gateway.
+		Name of the column holding the transport protocol to be
+		used for the gateway.
 		</para>
 		<para>
 		<emphasis>
@@ -356,7 +363,7 @@ modparam("lcr","uri_scheme_column","uri_scheme")
 		parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","transport_column","transport")
+modparam("lcr", "transport_column", "trans")
 ...
 </programlisting>
 		</example>
@@ -379,7 +386,7 @@ modparam("lcr","transport_column","transport")
 		parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","strip_column","strip_count")
+modparam("lcr", "strip_column", "strip_count")
 ...
 </programlisting>
 		</example>
@@ -388,7 +395,8 @@ modparam("lcr","strip_column","strip_count")
 	<section>
 		<title><varname>tag_column</varname> (string)</title>
 		<para>
-		Name of the column holding gateway specific tag string.
+		Name of the column holding gateway specific tag string
+		that is added to Request URI userpart after stripping.
 		</para>
 		<para>
 		<emphasis>
@@ -399,27 +407,7 @@ modparam("lcr","strip_column","strip_count")
 		<title>Setting <varname>tag_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","tag_column","gw_tag")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>weight_column</varname> (string)</title>
-		<para>
-		Name of the column holding gateway's weight within its group.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>weight</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>weight_column</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","weight_column","gw_weight")
+modparam("lcr", "tag_column", "gw_tag")
 ...
 </programlisting>
 		</example>
@@ -439,7 +427,7 @@ modparam("lcr","weight_column","gw_weight")
 		<title>Setting <varname>flags_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","flags_column","gw_flags")
+modparam("lcr", "flags_column", "gw_flags")
 ...
 </programlisting>
 		</example>
@@ -460,27 +448,27 @@ modparam("lcr","flags_column","gw_flags")
 		<title>Setting <varname>defunct_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","defunct_column","defunct_until")
+modparam("lcr", "defunct_column", "defunct_until")
 ...
 </programlisting>
 		</example>
 	</section>
 
 	<section>
-		<title><varname>lcr_table</varname> (string)</title>
+		<title><varname>lcr_rule_table</varname> (string)</title>
 		<para>
 		Name of the table holding the LCR rules.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>lcr</quote>.
+			Default value is <quote>lcr_rule</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>lcr_table</varname> module parameter</title>
+		<title>Setting <varname>lcr_rule_table</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","lcr_table","lcr")
+modparam("lcr", "lcr_rule_table", "rules")
 ...
 </programlisting>
 		</example>
@@ -498,10 +486,11 @@ modparam("lcr","lcr_table","lcr")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>prefix_column</varname> module parameter</title>
+		<title>Setting <varname>prefix_column</varname> module
+		parameter</title> 
 		<programlisting format="linespecific">
 ...
-modparam("lcr","prefix_column","prefix")
+modparam("lcr", "prefix_column", "number_prefix")
 ...
 </programlisting>
 		</example>
@@ -510,7 +499,7 @@ modparam("lcr","prefix_column","prefix")
 	<section>
 		<title><varname>from_uri_column</varname> (string)</title>
 		<para>
-		Name of the column holding the FROM (source) URI.
+		Name of the column holding the From (caller's) URI.
 		</para>
 		<para>
 		<emphasis>
@@ -521,7 +510,120 @@ modparam("lcr","prefix_column","prefix")
 		<title>Setting <varname>from_uri_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","from_uri_column","from_uri")
+modparam("lcr", "from_uri_column", "caller_uri")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>stopper_column</varname> (string)</title>
+		<para>
+		Name of the column holding rule's stopper attribute.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>stopper</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>stopper_column</varname> module
+		parameter 
+			</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "stopper_column", "stop")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>enabled_column</varname> (string)</title>
+		<para>
+		Name of the column telling is the rule is currently
+		enabled or disabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>enabled</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>enabled_column</varname> module
+		parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "enabled_column", "in_use")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>lcr_rule_target_table</varname> (string)</title>
+		<para>
+		Name of the table holding information about the LCR rule
+		targets (gateways).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>lcr_rule_target</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>lcr_rule_target_table</varname>
+		module parameter</title> 
+		<programlisting format="linespecific">
+...
+modparam("lcr", "lcr_rule_target_table", "rules")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>rule_id_column</varname> (string)</title>
+		<para>
+		Name of lcr_rule_target_table column containing an id of
+		lcr_rule table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>rule_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>rule_id_column</varname> module
+		parameter 
+			</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "rule_id_column", "rule")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>gw_id_column</varname> (string)</title>
+		<para>
+		Name of lcr_rule_target_table column containing an id of
+		lcr_gw table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>gw_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_id_column</varname> module
+		parameter 
+			</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "gw_id_column", "gw")
 ...
 </programlisting>
 		</example>
@@ -530,7 +632,8 @@ modparam("lcr","from_uri_column","from_uri")
 	<section>
 		<title><varname>priority_column</varname> (string)</title>
 		<para>
-		Name of the column holding the priority of the rule.
+		Name of the column holding the priority of the rule
+		target.
 		</para>
 		<para>
 		<emphasis>
@@ -538,11 +641,32 @@ modparam("lcr","from_uri_column","from_uri")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>priority_column</varname> module parameter
-			</title>
+		<title>Setting <varname>priority_column</varname> module
+		parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","priority_column","priority")
+modparam("lcr", "priority_column", "priority")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>weight_column</varname> (string)</title>
+		<para>
+		Name of the column holding weight of rule target.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>weight</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>weight_column</varname> module
+		parameter</title> 
+		<programlisting format="linespecific">
+...
+modparam("lcr","weight_column", "target_weight")
 ...
 </programlisting>
 		</example>
@@ -584,7 +708,8 @@ modparam("lcr", "lcr_count", 10)
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>gw_uri_avp</varname> module parameter</title>
+		<title>Setting <varname>gw_uri_avp</varname> module
+		parameter</title> 
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "gw_uri_avp", "$avp(i:709)")
@@ -674,7 +799,8 @@ modparam("lcr", "defunct_capability", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>lcr_id_avp</varname> module parameter</title>
+		<title>Setting <varname>lcr_id_avp</varname> module
+		parameter</title> 
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
@@ -686,8 +812,8 @@ modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
 	<section>
 		<title><varname>defunct_gw_avp</varname> (AVP string)</title>
 		<para>
-		Internal AVP that next_gw() function uses to store IP
-		address of the  
+		Internal AVP that next_gw() function uses to store
+		internal index of the  
 		selected gateway for later use by defunct_gw() function.
 		Only needed if 
 		gateway defunct capability has been activated.
@@ -698,7 +824,8 @@ modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>defunct_gw_avp</varname> module parameter</title>
+		<title>Setting <varname>defunct_gw_avp</varname> module
+		parameter</title> 
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
@@ -708,13 +835,12 @@ modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 	</section>
 
 	<section>
-		<title><varname>lcr_hash_size</varname> (integer)</title>
+		<title><varname>lcr_rule_hash_size</varname> (integer)</title>
 		<para>
-		Defines the size of hash table used to store &lt;prefix,
-		from_pattern, priority&gt; tuples.  Hashing is done based
-		on prefix.  Larger value means less collisions with
-		other prefixes.  Hash size value should be a power of
-		2.
+		Defines the size of hash table used to store LCR rules.
+		Hashing is done based on rule's prefix.  Larger value means
+		less collisions with other prefixes.  Hash size value
+		should be a power of 2.
 		</para>
 		<para>
 		<emphasis>
@@ -723,12 +849,59 @@ modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 		</para>
 		<example>
 		<title>
-		Setting <varname>lcr_hash_size</varname> module
+		Setting <varname>lcr_rule_hash_size</varname> module
 		parameter
 		</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr", "lcr_hash_size", 1024)
+modparam("lcr", "lcr_rule_hash_size", 1024)
+...
+</programlisting>
+                </example>
+	</section>
+
+	<section>
+		<title><varname>lcr_gw_count</varname> (integer)</title>
+		<para>
+		Defines the maximum number of gateways in lcr_gw table.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 128.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Setting <varname>lcr_gw_count</varname> module parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "lcr_gw_count", 1024)
+...
+</programlisting>
+                </example>
+	</section>
+
+	<section>
+		<title><varname>dont_strip_or_tag</varname> (integer)</title>
+		<para>
+		Defines the flag number used to tell if stripping and
+		tagging is done for the selected gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 meaning that the flag is not
+		defined.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Setting <varname>dont_strip_or_tag_flag</varname> module
+		parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "dont_strip_or_tag_flag", 10)
 ...
 </programlisting>
                 </example>
@@ -738,7 +911,8 @@ modparam("lcr", "lcr_hash_size", 1024)
 		<title><varname>fetch_rows</varname> (integer)</title>
 		<para>
 		The number of the rows to be fetched at once from database
-		when loading data from the lcr table. This value can be used to tune
+		when loading data from lcr_rule table. This value can be
+		used to tune 
 		the load time at startup.  For 1MB of private memory (default)
 		it should be below 3750. In order for this parameter to
 		have effect, the database driver must support fetch_result()
@@ -746,7 +920,7 @@ modparam("lcr", "lcr_hash_size", 1024)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>2000</quote>.
+			Default value is <quote>1024</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -765,12 +939,11 @@ modparam("lcr", "fetch_rows", 3000)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws(lcr_id[, caller_uri])</function>
+		<function moreinfo="none">load_gws(lcr_id[, caller_uri])
+		</function> 
 		</title>
 		<para>
-		Loads URI schemes, IP addresses, hostnames, ports,
-		params, and
-		transports of matching gateways to gw_uri_avp
+		Loads attributes of matching gateways to gw_uri_avp
 		(see Overview section).  Argument lcr_id specifies the used
 	        LCR instance.  It can be an integer or a pseudo
 		variable containing an integer value. 
@@ -780,13 +953,13 @@ modparam("lcr", "fetch_rows", 3000)
 		</para>
 		<para>
 		Returns 1 if at least one matching gateway was found, 2
-	if no matching gateways was found, and -1 on error.
+		if no matching gateways was found, and -1 on error.
 		</para>
 		<para>
 		Execution time of load_gws() function is O(N) * O(M),
 		where N is number of different prefix lengths and M
 		is number of collisions for matching prefix(es) in lcr
-		hash table of the LCR instance.
+		rules hash table of the LCR instance.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -809,7 +982,7 @@ if (!load_gws("1", "$var(caller_uri)")) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-		Upon first call, fetches values stored in first
+		Upon first call, fetches attribute values stored in first
 		gw_uri_avp, destroys that AVP, and rewrites
 		Request-URI and possibly also destination URI as
 		described in the Overview section. Saves user part of
@@ -818,8 +991,7 @@ if (!load_gws("1", "$var(caller_uri)")) {
 		</para>
 		<para>
 		Upon subsequent calls, does the same as in above, but
-		instead of rewriting Request URI, appends a new branch
-		to the request.  Takes URI user from ruri_user_avp.
+		takes user part of Request-URI from ruri_user_avp.
 		</para>
 		<para>
 		As a side effect, stores gateway's flags to flags_avp.
@@ -942,13 +1114,12 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 		</para>
 		<para>
 		If any gateway has the IP address, function returns LCR
-		identifier 
-		of the gateway.  Returns -1 on error or if the request does
-		not come from a gateway. 
+		identifier of the gateway.  Returns -1 on error or if
+		the request does not come from a gateway. 
 		</para>
 		<para>
-		If request comes from a gateway, the gateway's flags are stored into flags_avp
-		as side effect.
+		If request comes from a gateway, the gateway's flags are
+		stored into flags_avp as side effect.
 		</para>
 		<para>
 		Execution time of from_gw() function is M * O(log N),
@@ -1050,7 +1221,7 @@ if (to_any_gw()) {
 		<title><function>lcr.reload</function></title>
 		<para>
 			Causes lcr module to re-read the contents of
-			gw and lcr tables into memory.
+			LCR tables into memory.
 		</para>
 		<para>
 		Name: <emphasis>lcr.reload</emphasis>
@@ -1080,16 +1251,16 @@ if (to_any_gw()) {
 		</section>
 		
 		<section>
-		<title><function>lcr.dump_lcrs</function></title>
+		<title><function>lcr.dump_rules</function></title>
 		<para>
 			Causes lcr module to dump the contents of its
-			in-memory lcr table.
+			in-memory lcr_rule and lcr_rule_target tables.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
  		<example>
-		<title><function>lcr.dump_lcr</function> RPC example</title>
+		<title><function>lcr.dump_rules</function> RPC example</title>
         <programlisting  format="linespecific">
-		$ sercmd lcr.dump_lcrs
+		$ sercmd lcr.dump_rules
 		</programlisting>
 		</example>
 		</section>
@@ -1097,10 +1268,10 @@ if (to_any_gw()) {
 	<section>
 	<title>Known Limitations</title>
 	<para>
-		In-memory gateway and in-memory lcr table are switched
+		In-memory LCR rules and gw tables are switched
 		by two consecutive machine instructions. If lcr reload
 		process is interrupted after the first one, in-memory
-		gateway table does not match in-memory lcr table until
+		gateway table does not match in-memory rule table until
 		execution of lcr reload process is resumed.
 	</para>
 	</section>
