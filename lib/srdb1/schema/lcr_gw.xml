@@ -8,12 +8,13 @@
 ]>
 
 
-<table id="gw" xmlns:db="http://docbook.org/ns/docbook">
-    <name>gw</name>
-    <version>11</version>
+<table id="lcr_gw" xmlns:db="http://docbook.org/ns/docbook">
+    <name>lcr_gw</name>
+    <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
+        <db:para>This table is used by lcr (Least Cost Routing) module
+	         to store gateway attributes.
                  More information can be found at: &KAMAILIO_MOD_DOC;lcr.html.
         </db:para>
     </description>
@@ -37,14 +38,9 @@
         <name>gw_name</name>
         <type>string</type>
         <size>128</size>
-        <description>Name of the gateway</description>
+        <null/>
+        <description>Name of the gateway (for documentation only)</description>
         <natural/>
-    </column>
-
-    <column id="grp_id">
-        <name>grp_id</name>
-        <type>unsigned int</type>
-        <description>ID of gateway's group</description>
     </column>
 
     <column id="ip_addr">
@@ -89,7 +85,7 @@
         <name>transport</name>
         <type>unsigned char</type>
         <null/>
-        <description>Transport type to be used for the gateway</description>
+        <description>Transport protocol to be used for the gateway</description>
     </column>
 
     <column id="strip">
@@ -108,13 +104,6 @@
         <description>Request URI user part tag</description>
     </column>
 
-    <column id="weight">
-        <name>weight</name>
-        <type>unsigned int</type>
-        <null/>
-        <description>Weight of gateway within gw_grp.  Valid values are 1-254.</description>
-    </column>
-
     <column id="flags">
         <name>flags</name>
         <type>unsigned int</type>
@@ -127,22 +116,14 @@
         <type>unsigned int</type>
         <null/>
         <default><null/></default>
-        <description>If not null, contains unix timestamp telling when gw becomes operational.</description>
+        <description>If not null, contains unix timestamp telling when gw becomes operational</description>
     </column>
 
     <index>
-        <name>lcr_id_grp_id_gw_name_idx</name>
+        <name>lcr_id_ip_addr_port_hostname_idx</name>
         <colref linkend="lcr_id"/>
-        <colref linkend="grp_id"/>
-        <colref linkend="gw_name"/>
-        <unique/>
-    </index>
-
-    <index>
-        <name>lcr_id_grp_id_ip_addr_hostname_idx</name>
-        <colref linkend="lcr_id"/>
-        <colref linkend="grp_id"/>
         <colref linkend="ip_addr"/>
+        <colref linkend="port"/>
         <colref linkend="hostname"/>
         <unique/>
     </index>
