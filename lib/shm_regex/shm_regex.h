@@ -27,6 +27,8 @@
  * History
  * -------
  *  2009-04-03	Initial version (Miklos)
+ *  2010-04-25  Use own struct with locking to work-around libc locking failure
+ *              on multi-core hw (skeller)
  */
 
 #ifndef _SHM_REGEX_H
@@ -34,12 +36,18 @@
 
 #include <sys/types.h>
 #include <regex.h>
+#include "locking.h"
 
-int shm_regcomp(regex_t *preg, const char *regex, int cflags);
-void shm_regfree(regex_t *preg);
-int shm_regexec(const regex_t *preg, const char *string, size_t nmatch,
+typedef struct shm_regex {
+	regex_t regexp;
+	gen_lock_t lock;
+} shm_regex_t;
+
+int shm_regcomp(shm_regex_t *preg, const char *regex, int cflags);
+void shm_regfree(shm_regex_t *preg);
+int shm_regexec(shm_regex_t *preg, const char *string, size_t nmatch,
                    regmatch_t pmatch[], int eflags);
-
-#define shm_regerror	regerror
+size_t shm_regerror(int errcode, const shm_regex_t *preg, char *errbuf,
+                      size_t errbuf_size);
 
 #endif /* _SHM_REGEX_H */

@@ -27,6 +27,8 @@
  * History
  * -------
  *  2009-04-03	Initial version (Miklos)
+ *  2010-04-25  Use own struct with locking to work-around libc locking failure
+ *              on multi-core hw (skeller)
  */
 
 #include <malloc.h>	/* hook prototypes */
@@ -75,32 +77,37 @@ static void shm_free_hook(void *ptr, const void *caller)
 		__free_hook = orig_free_hook; \
 	} while (0)
 
-int shm_regcomp(regex_t *preg, const char *regex, int cflags)
+int shm_regcomp(shm_regex_t *preg, const char *regex, int cflags)
 {
 	malloc_hook_t	*orig_malloc_hook;
 	realloc_hook_t	*orig_realloc_hook;
 	free_hook_t	*orig_free_hook;
 	int		ret;
 
+	if(!lock_init(&preg->lock)) {
+		return REG_EEND;
+	}
 	replace_malloc_hooks();
-	ret = regcomp(preg, regex, cflags);
+	ret = regcomp(&preg->regexp, regex, cflags);
 	restore_malloc_hooks();
+
+	if(ret) lock_destroy(&preg->lock);
 
 	return ret;
 }
 
-void shm_regfree(regex_t *preg)
+void shm_regfree(shm_regex_t *preg)
 {
 	malloc_hook_t	*orig_malloc_hook;
 	realloc_hook_t	*orig_realloc_hook;
 	free_hook_t	*orig_free_hook;
-
+	lock_destroy(&preg->lock);
 	replace_malloc_hooks();
-	regfree(preg);
+	regfree(&preg->regexp);
 	restore_malloc_hooks();
 }
 
-int shm_regexec(const regex_t *preg, const char *string, size_t nmatch,
+int shm_regexec(shm_regex_t *preg, const char *string, size_t nmatch,
                    regmatch_t pmatch[], int eflags)
 {
 	malloc_hook_t	*orig_malloc_hook;
@@ -118,12 +125,24 @@ int shm_regexec(const regex_t *preg, const char *string, size_t nmatch,
 	 * It is safe to call regexec() concurrently without locking,
 	 * because regexec() has its own locks.
 	 * (Miklos)
+	 *
+	 * Those locks, however, don't work with shm and multi-core hardware
+	 * causing a dead-lock. Tested with glibc 2.3.6. (skeller)
 	 */
+
+	lock_get(&preg->lock);
 	replace_malloc_hooks();
-	ret = regexec(preg, string, nmatch,
+	ret = regexec(&preg->regexp, string, nmatch,
 			pmatch, eflags);
 	restore_malloc_hooks();
-	
+	lock_release(&preg->lock);
+
 	return ret;
+}
+
+size_t shm_regerror(int errcode, const shm_regex_t *preg, char *errbuf,
+                      size_t errbuf_size)
+{
+	return regerror(errcode, &preg->regexp, errbuf, errbuf_size);
 }
 
