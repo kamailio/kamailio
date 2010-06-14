@@ -35,7 +35,7 @@
 #include "../../parser/hf.h"
 #include "../../pvar.h"
 #include "../../str.h"
-#include "../auth/api.h"
+#include "../../modules_k/auth/api.h"
 #include "defs.h"
 
 int get_uri(struct sip_msg* m, str** uri);

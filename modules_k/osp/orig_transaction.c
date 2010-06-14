@@ -33,7 +33,7 @@
 #include "../../dset.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../auth/api.h"
+#include "../../modules_k/auth/api.h"
 #include "orig_transaction.h"
 #include "destination.h"
 #include "osptoolkit.h"

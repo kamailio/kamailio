@@ -58,7 +58,7 @@
 #include "diameter_msg.h"
 #include "auth_diameter.h"
 #include "defs.h"
-#include "../auth/api.h"
+#include "../../modules_k/auth/api.h"
 #include "authorize.h"
 #include "tcp_comm.h"
 

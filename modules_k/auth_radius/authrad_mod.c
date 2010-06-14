@@ -52,7 +52,7 @@ struct attr attrs[A_MAX+MAX_EXTRA];
 struct val vals[V_MAX+MAX_EXTRA];
 void *rh;
 
-auth_api_t auth_api;
+auth_api_k_t auth_api;
 
 static int mod_init(void);         /* Module initialization function */
 static int auth_fixup(void** param, int param_no); /* char* -> str* */
@@ -120,7 +120,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DICT_VENDOR *vend;
-	bind_auth_t bind_auth;
+	bind_auth_k_t bind_auth;
 	int n;
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
@@ -133,7 +133,7 @@ static int mod_init(void)
 		return -2;
 	}
 
-	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+	bind_auth = (bind_auth_k_t)find_export("bind_auth_k", 0, 0);
 	if (!bind_auth) {
 		LM_ERR("unable to find bind_auth function. Check if you load the auth module.\n");
 		return -1;

@@ -41,6 +41,6 @@ extern struct extra_attr *auth_extra;
 
 extern int use_ruri_flag;
 
-extern auth_api_t auth_api;
+extern auth_api_k_t auth_api;
 
 #endif /* AUTHRAD_MOD_H */

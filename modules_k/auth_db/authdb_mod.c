@@ -42,7 +42,7 @@
 #include "../../error.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
-#include "../auth/api.h"
+#include "../../modules_k/auth/api.h"
 #include "../sl/sl_api.h"
 #include "aaa_avps.h"
 #include "authorize.h"
@@ -103,7 +103,7 @@ int use_domain              = 0; /* Use also domain when looking up in table */
 
 db1_con_t* auth_db_handle    = 0; /* database connection handle */
 db_func_t auth_dbf;
-auth_api_t auth_api;
+auth_api_k_t auth_api;
 
 char *credentials_list      = DEFAULT_CRED_LIST;
 struct aaa_avp *credentials = 0; /* Parsed list of credentials to load */
@@ -171,7 +171,7 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	bind_auth_t bind_auth;
+	bind_auth_k_t bind_auth;
 
 	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
@@ -186,7 +186,7 @@ static int mod_init(void)
 	}
 
 	/* bind to auth module and import the API */
-	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+	bind_auth = (bind_auth_k_t)find_export("bind_auth_k", 0, 0);
 	if (!bind_auth) {
 		LM_ERR("unable to find bind_auth function. Check if you load the auth module.\n");
 		return -2;
