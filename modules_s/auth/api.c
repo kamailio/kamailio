@@ -178,7 +178,7 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 }
 
 
-int bind_auth(auth_api_t* api)
+int bind_auth_s(auth_api_s_t* api)
 {
 	if (!api) {
 		LOG(L_ERR, "bind_auth: Invalid parameter value\n");

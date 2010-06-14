@@ -79,17 +79,17 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
 /*
  * Auth module API
  */
-typedef struct auth_api {
+typedef struct auth_api_s {
     pre_auth_t pre_auth;                  /* The function to be called before authentication */
     post_auth_t post_auth;                /* The function to be called after authentication */
     build_challenge_hf_t build_challenge; /* Function to build digest challenge header */
     struct qp* qop;                       /* qop module parameter */
 	calc_HA1_t      calc_HA1;
 	calc_response_t calc_response;
-} auth_api_t;
+} auth_api_s_t;
 
-typedef int (*bind_auth_t)(auth_api_t* api);
-int bind_auth(auth_api_t* api);
+typedef int (*bind_auth_s_t)(auth_api_s_t* api);
+int bind_auth_s(auth_api_s_t* api);
 
 
 #endif /* API_H */

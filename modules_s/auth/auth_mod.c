@@ -108,7 +108,7 @@ struct qp qop = {
  */
 static cmd_export_t cmds[] = {
     {"consume_credentials", consume_credentials,     0, 0, REQUEST_ROUTE},
-    {"bind_auth",           (cmd_function)bind_auth, 0, 0, 0            },
+    {"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
     {0, 0, 0, 0, 0}
 };
 
