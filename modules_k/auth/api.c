@@ -257,7 +257,7 @@ int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
  * \param api binded API
  * \return 0 on success, -1 on failure
  */
-int bind_auth(auth_api_t* api)
+int bind_auth_k(auth_api_k_t* api)
 {
 	if (!api) {
 		LM_ERR("invalid parameter value\n");

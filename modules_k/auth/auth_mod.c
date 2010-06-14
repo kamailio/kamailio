@@ -149,7 +149,7 @@ static cmd_export_t cmds[] = {
 	{"append_rpid_hf",      (cmd_function)append_rpid_hf_p,        2,
 			fixup_str_str,
 			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"bind_auth",           (cmd_function)bind_auth, 0, 0,
+	{"bind_auth_k",           (cmd_function)bind_auth_k, 0, 0,
 			0, 0},
 	{0, 0, 0, 0, 0, 0}
 };

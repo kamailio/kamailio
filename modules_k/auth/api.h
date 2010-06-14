@@ -164,17 +164,17 @@ void strip_realm(str *_realm);
 
 
 /*! Auth module API */
-typedef struct auth_api {
+typedef struct auth_api_k {
 	int_str rpid_avp;      /*!< Name of AVP containing Remote-Party-ID */
 	int     rpid_avp_type; /*!< type of the RPID AVP */
 	pre_auth_t  pre_auth;  /*!< The function to be called before auth */
 	post_auth_t post_auth; /*!< The function to be called after auth */
 	calc_HA1_t  calc_HA1;  /*!< calculate H(A1) as per spec */
 	check_response_t check_response; /*!< check auth response */
-} auth_api_t;
+} auth_api_k_t;
 
 
-typedef int (*bind_auth_t)(auth_api_t* api);
+typedef int (*bind_auth_k_t)(auth_api_k_t* api);
 
 
 /*!
@@ -182,7 +182,7 @@ typedef int (*bind_auth_t)(auth_api_t* api);
  * \param api binded API
  * \return 0 on success, -1 on failure
  */
-int bind_auth(auth_api_t* api);
+int bind_auth_k(auth_api_k_t* api);
 
 
 #endif
