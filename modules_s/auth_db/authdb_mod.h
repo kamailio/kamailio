@@ -33,7 +33,7 @@
 
 #include "../../str.h"
 #include "../../lib/srdb2/db.h"
-#include "../auth/api.h"
+#include "../../modules_s/auth/api.h"
 #include "../sl/sl.h"
 #include "../../parser/msg_parser.h"
 
@@ -56,7 +56,7 @@ extern int check_all;         /* if set to 1, multiple db entries are checked */
 
 extern db_ctx_t* auth_db_handle; /* database connection handle */
 
-extern auth_api_t auth_api;
+extern auth_api_s_t auth_api;
 
 extern str* credentials;
 extern int credentials_n;

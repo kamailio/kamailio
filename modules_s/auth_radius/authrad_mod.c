@@ -58,7 +58,7 @@ struct attr attrs[A_MAX];
 struct val vals[V_MAX];
 void *rh;
 
-auth_api_t auth_api;
+auth_api_s_t auth_api;
 
 static int mod_init(void);                        /* Module initialization function */
 
@@ -119,7 +119,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DICT_VENDOR *vend;
-	bind_auth_t bind_auth;
+	bind_auth_s_t bind_auth;
 
 	DBG("auth_radius - Initializing\n");
 
@@ -182,7 +182,7 @@ static int mod_init(void)
 	}
 
 
-        bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+        bind_auth = (bind_auth_s_t)find_export("bind_auth_s", 0, 0);
         if (!bind_auth) {
 		LOG(L_ERR, "auth_radius: Unable to find bind_auth function\n");
 	        return -1;

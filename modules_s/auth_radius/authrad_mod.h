@@ -35,7 +35,7 @@
 #ifndef AUTHRAD_MOD_H
 #define AUTHRAD_MOD_H
 
-#include "../auth/api.h"
+#include "../../modules_s/auth/api.h"
 #include "../../rad_dict.h"
 
 extern struct attr attrs[];
@@ -45,6 +45,6 @@ extern void *rh;
 extern int use_did;
 extern int use_ruri_flag;
 
-extern auth_api_t auth_api;
+extern auth_api_s_t auth_api;
 
 #endif /* AUTHRAD_MOD_H */

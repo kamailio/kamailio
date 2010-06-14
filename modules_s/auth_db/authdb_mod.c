@@ -45,7 +45,7 @@
 #include "../../mem/mem.h"
 #include "authorize.h"
 #include "../auth/aaa_avps.h"
-#include "../auth/api.h"
+#include "../../modules_s/auth/api.h"
 #include "authdb_mod.h"
 
 MODULE_VERSION
@@ -106,7 +106,7 @@ int use_did                 = 0;
 int check_all               = 0;
 
 db_ctx_t* auth_db_handle = 0;      /* database connection handle */
-auth_api_t auth_api;
+auth_api_s_t auth_api;
 
 str credentials_list        = STR_STATIC_INIT(DEFAULT_CRED_LIST);
 
@@ -262,11 +262,11 @@ err:
 
 static int mod_init(void)
 {
-    bind_auth_t bind_auth;
+    bind_auth_s_t bind_auth;
     
     DBG("auth_db module - initializing\n");
     
-    bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+    bind_auth = (bind_auth_s_t)find_export("bind_auth_s", 0, 0);
     if (!bind_auth) {
 	LOG(L_ERR, "auth_db:mod_init: Unable to find bind_auth function\n");
 	return -1;
