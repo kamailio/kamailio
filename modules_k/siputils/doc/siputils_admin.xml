@@ -461,6 +461,35 @@ tel2sip();
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_e164(pseudo-variable)</function>
+		</title>
+		<para>
+		Checks if string value of pseudo variable argument is an
+		E164 number.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE,
+		FAILURE_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function>is_e164</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_164("$fU")) {  # Check From header URI user part
+   ...
+}
+if (is_e164("$avp(i:705)") {
+   # Check stgring value stored in avp i:705
+   ...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title>
 		<function moreinfo="none">is_uri_user_e164(pseudo-variable)</function>

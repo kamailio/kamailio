@@ -398,6 +398,34 @@ static inline int e164_check(str* _user)
 /*
  * Check if user part of URI in pseudo variable is an e164 number
  */
+int is_e164(struct sip_msg* _m, char* _sp, char* _s2)
+{
+    pv_spec_t *sp;
+    pv_value_t pv_val;
+
+    sp = (pv_spec_t *)_sp;
+
+    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		LM_DBG("missing argument\n");
+		return -1;
+	    }
+	    return e164_check(&(pv_val.rs));
+	} else {
+	    LM_ERR("pseudo variable value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("failed to get pseudo variable value\n");
+	return -1;
+    }
+}
+
+
+/*
+ * Check if user part of URI in pseudo variable is an e164 number
+ */
 int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 {
     pv_spec_t *sp;

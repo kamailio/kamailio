@@ -102,6 +102,7 @@ static cmd_export_t cmds[]={
 	{"uri_param",          (cmd_function)uri_param_2,    2, fixup_str_str, 0, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"add_uri_param",      (cmd_function)add_uri_param,  1, fixup_str_null, 0, REQUEST_ROUTE},
 	{"tel2sip",            (cmd_function)tel2sip,        0, 0,         0, REQUEST_ROUTE},
+	{"is_e164",            (cmd_function)is_e164, 1, fixup_pvar_null, fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)is_uri_user_e164, 1, fixup_pvar_null, fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"encode_contact",     (cmd_function)encode_contact,2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"decode_contact",     (cmd_function)decode_contact,0,0, 0, REQUEST_ROUTE},

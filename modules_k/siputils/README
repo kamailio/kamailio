@@ -36,7 +36,7 @@ Edited by
 
 Gabriel Vasile
 
-   Copyright � 2008, 2005, 2003 1&1 Internet AG, FhG Fokus,
+   Copyright © 2008, 2005, 2003 1&1 Internet AG, FhG Fokus,
    voice-system.ro
    Revision History
    Revision $Revision: 4872 $ $Date: 2008-09-09 17:39:38 +0200 (Di, 09 Sep
@@ -72,12 +72,13 @@ Gabriel Vasile
               4.6. uri_param(param,value)
               4.7. add_uri_param(param)
               4.8. tel2sip()
-              4.9. is_uri_user_e164(pseudo-variable)
-              4.10. encode_contact(encoding_prefix,hostpart)
-              4.11. decode_contact()
-              4.12. decode_contact_header()
-              4.13. cmp_uri(str1, str2)
-              4.14. cmp_aor(str1, str2)
+              4.9. is_e164(pseudo-variable)
+              4.10. is_uri_user_e164(pseudo-variable)
+              4.11. encode_contact(encoding_prefix,hostpart)
+              4.12. decode_contact()
+              4.13. decode_contact_header()
+              4.14. cmp_uri(str1, str2)
+              4.15. cmp_aor(str1, str2)
 
    List of Examples
 
@@ -95,12 +96,13 @@ Gabriel Vasile
    1.12. uri_param usage
    1.13. add_uri_param usage
    1.14. tel2sip usage
-   1.15. is_uri_user_e164 usage
-   1.16. encode_contact usage
-   1.17. decode_contact usage
-   1.18. decode_contact_header usage
-   1.19. cmp_uri usage
-   1.20. cmp_aor usage
+   1.15. is_e164 usage
+   1.16. is_uri_user_e164 usage
+   1.17. encode_contact usage
+   1.18. decode_contact usage
+   1.19. decode_contact_header usage
+   1.20. cmp_uri usage
+   1.21. cmp_aor usage
 
 Chapter 1. Admin Guide
 
@@ -131,12 +133,13 @@ Chapter 1. Admin Guide
         4.6. uri_param(param,value)
         4.7. add_uri_param(param)
         4.8. tel2sip()
-        4.9. is_uri_user_e164(pseudo-variable)
-        4.10. encode_contact(encoding_prefix,hostpart)
-        4.11. decode_contact()
-        4.12. decode_contact_header()
-        4.13. cmp_uri(str1, str2)
-        4.14. cmp_aor(str1, str2)
+        4.9. is_e164(pseudo-variable)
+        4.10. is_uri_user_e164(pseudo-variable)
+        4.11. encode_contact(encoding_prefix,hostpart)
+        4.12. decode_contact()
+        4.13. decode_contact_header()
+        4.14. cmp_uri(str1, str2)
+        4.15. cmp_aor(str1, str2)
 
 1. Overview
 
@@ -157,7 +160,7 @@ Chapter 1. Admin Guide
 
    To answer OPTIONS request directed to your server is the easiest way
    for is-alive-tests on the SIP (application) layer from remote (similar
-   to ICMP echo requests, also known as "ping", on the network layer).
+   to ICMP echo requests, also known as “ping”, on the network layer).
 
 2. Dependencies
 
@@ -188,9 +191,9 @@ Chapter 1. Admin Guide
 
    Timeout value in seconds, define how long the call-id is stored in the
    internal list kept for replacing 183 messages with 180. A reasonable
-   value is "30".
+   value is “30”.
 
-   Default value is "0". This means functionality is disabled.
+   Default value is “0”. This means functionality is disabled.
 
    Example 1.1. Set ring_timeout parameter
 ...
@@ -201,10 +204,10 @@ modparam("siputils", "ring_timeout", 30)
 
    This parameter is the content of the Accept header field. Note: it is
    not clearly written in RFC3261 if a proxy should accept any content
-   (the default "*/*") because it does not care about content. Or if it
-   does not accept any content, which is "".
+   (the default “*/*”) because it does not care about content. Or if it
+   does not accept any content, which is “”.
 
-   Default value is "*/*".
+   Default value is “*/*”.
 
    Example 1.2. Set options_accept parameter
 ...
@@ -217,7 +220,7 @@ modparam("siputils", "options_accept", "application/*")
    Please do not change the default value because Kamailio does not
    support any encodings yet.
 
-   Default value is "".
+   Default value is “”.
 
    Example 1.3. Set options_accept_encoding parameter
 ...
@@ -235,7 +238,7 @@ Warning
    inside username,password or other fields of contact. Otherwise it is
    possible for the decoding step to fail/produce wrong results.
 
-   Default value is "*".
+   Default value is “*”.
 
    Example 1.4. Set db_url parameter
 ...
@@ -252,7 +255,7 @@ modparam("siputils", "contact_flds_separator", "-")
    other devices, but presumably there are not much devices around which
    support other languages then the default English.
 
-   Default value is "en".
+   Default value is “en”.
 
    Example 1.5. Set options_accept_language parameter
 ...
@@ -265,7 +268,7 @@ modparam("siputils", "options_accept_language", "de")
    not change the default value, because Kamailio currently does not
    support any of the SIP extensions registered at the IANA.
 
-   Default value is "".
+   Default value is “”.
 
    Example 1.6. Set options_support parameter
 ...
@@ -282,12 +285,13 @@ modparam("siputils", "options_support", "100rel")
    4.6. uri_param(param,value)
    4.7. add_uri_param(param)
    4.8. tel2sip()
-   4.9. is_uri_user_e164(pseudo-variable)
-   4.10. encode_contact(encoding_prefix,hostpart)
-   4.11. decode_contact()
-   4.12. decode_contact_header()
-   4.13. cmp_uri(str1, str2)
-   4.14. cmp_aor(str1, str2)
+   4.9. is_e164(pseudo-variable)
+   4.10. is_uri_user_e164(pseudo-variable)
+   4.11. encode_contact(encoding_prefix,hostpart)
+   4.12. decode_contact()
+   4.13. decode_contact_header()
+   4.14. cmp_uri(str1, str2)
+   4.15. cmp_aor(str1, str2)
 
 4.1.  ring_insert_callid()
 
@@ -310,10 +314,10 @@ ring_insert_callid();
 
    This function checks if the request method is OPTIONS and if the
    request URI does not contain an username. If both is true the request
-   will be answered stateless with "200 OK" and the capabilities from the
+   will be answered stateless with “200 OK” and the capabilities from the
    modules parameters.
 
-   It sends "500 Server Internal Error" for some errors and returns false
+   It sends “500 Server Internal Error” for some errors and returns false
    if it is called for a wrong request.
 
    The check for the request method and the missing username is optional
@@ -401,7 +405,7 @@ if (uri_param("param1","value1")) {
    Add to RURI a parameter (name=value);
 
    Meaning of the parameters is as follows:
-     * param - parameter to be appended in "name=value" format.
+     * param - parameter to be appended in “name=value” format.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -437,13 +441,31 @@ tel2sip();
 # RURI:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
 ...
 
-4.9.  is_uri_user_e164(pseudo-variable)
+4.9.  is_e164(pseudo-variable)
+
+   Checks if string value of pseudo variable argument is an E164 number.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, and
+   LOCAL_ROUTE.
+
+   Example 1.15. is_e164 usage
+...
+if (is_164("$fU")) {  # Check From header URI user part
+   ...
+}
+if (is_e164("$avp(i:705)") {
+   # Check stgring value stored in avp i:705
+   ...
+};
+...
+
+4.10.  is_uri_user_e164(pseudo-variable)
 
    Checks if userpart of URI stored in pseudo variable is E164 number.
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.15. is_uri_user_e164 usage
+   Example 1.16. is_uri_user_e164 usage
 ...
 if (is_uri_user_e164("$fu")) {  # Check From header URI user part
    ...
@@ -454,7 +476,7 @@ if (is_uri_user_e164("$avp(i:705)") {
 };
 ...
 
-4.10.  encode_contact(encoding_prefix,hostpart)
+4.11.  encode_contact(encoding_prefix,hostpart)
 
    This function will encode uri-s inside Contact header in the following
    manner sip:username:password@ip:port;transport=protocol goes
@@ -476,12 +498,12 @@ if (is_uri_user_e164("$avp(i:705)") {
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.16. encode_contact usage
+   Example 1.17. encode_contact usage
 ...
 if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
 ...
 
-4.11.  decode_contact()
+4.12.  decode_contact()
 
    This function will decode the request URI. If the RURI is in the format
    sip:encoding_prefix*username*ip*port*protocol@hostpart it will be
@@ -494,12 +516,12 @@ if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.17. decode_contact usage
+   Example 1.18. decode_contact usage
 ...
 if (uri =~ "^sip:natted_client") { decode_contact(); }
 ...
 
-4.12.  decode_contact_header()
+4.13.  decode_contact_header()
 
    This function will decode URIs inside Contact header. If the URI in the
    format sip:encoding_prefix*username*ip*port*protocol@hostpart it will
@@ -512,7 +534,7 @@ if (uri =~ "^sip:natted_client") { decode_contact(); }
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.18. decode_contact_header usage
+   Example 1.19. decode_contact_header usage
 ...
 reply_route[2] {
         ...
@@ -521,14 +543,14 @@ reply_route[2] {
 }
 ...
 
-4.13.  cmp_uri(str1, str2)
+4.14.  cmp_uri(str1, str2)
 
    The function returns true if the two parameters matches as SIP URI.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.19. cmp_uri usage
+   Example 1.20. cmp_uri usage
 ...
 if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 {
@@ -536,7 +558,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 }
 ...
 
-4.14.  cmp_aor(str1, str2)
+4.15.  cmp_aor(str1, str2)
 
    The function returns true if the two parameters matches as AoR. The
    parameters have to be SIP URIs.
@@ -544,7 +566,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.20. cmp_aor usage
+   Example 1.21. cmp_aor usage
 ...
 if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
 {
