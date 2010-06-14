@@ -55,6 +55,16 @@
 typedef __u32 u32;
 struct task_struct;
 /* end of the hack */
+/* another hack this time for OpenSuse 10.2:
+   futex.h uses a __user attribute, which is defined in linux/compiler.h
+   However linux/compiler.h is not part of the kernel headers package in
+   most distributions. Instead they ship a modified linux/futex.h that does
+   not include <linux/compile.h> and does not user __user.
+*/
+#ifndef __user
+#define __user
+#endif /* __user__*/
+/* end of hack */
 #include <linux/futex.h>
 #include <sys/syscall.h>
 #include <unistd.h>
