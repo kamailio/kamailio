@@ -2062,7 +2062,7 @@ exp_elem:
 					yyerror("BUG: unexpected dynamic type");
 				}
 			}else{
-					warn("non constant rvalue in ip comparison");
+					/* warn("non constant rvalue in ip comparison") */;
 			}
 			if (s_tmp.s){
 				ip_tmp=str2ip(&s_tmp);
