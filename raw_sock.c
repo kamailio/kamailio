@@ -24,11 +24,12 @@
  * History:
  * --------
  *  2010-06-07  initial version (from older code) andrei
+ *  2010-06-15  IP_HDRINCL raw socket support, including on-send
+ *               fragmentation (andrei)
  */
 /*
  * FIXME: IP_PKTINFO & IP_HDRINCL - linux specific
  * FIXME: linux specific iphdr and udphdr
- * FIXME: send support for IP_HDRINCL
  */
 
 #ifdef USE_RAW_SOCKS
@@ -37,7 +38,8 @@
 #include "ip_addr.h"
 #include "dprint.h"
 #include "str.h"
-#include "ut.h"
+#include "rand/fastrand.h"
+#include "globals.h"
 
 #include <errno.h>
 #include <string.h>
@@ -99,7 +101,7 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 	}
 	t=IP_PMTUDISC_DONT;
 	if(setsockopt(sock, IPPROTO_IP, IP_MTU_DISCOVER, &t, sizeof(t)) ==-1){
-		LOG(L_ERR, "raw_socket: setsockopt(IP_MTU_DISCOVER): %s\n",
+		ERR("raw_socket: setsockopt(IP_MTU_DISCOVER): %s\n",
 				strerror(errno));
 		goto error;
 	}
@@ -275,7 +277,7 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 			n=-3;
 			goto error;
 		}else{
-			LOG(L_ERR, "udp length too small: %d/%d\n",
+			ERR("udp length too small: %d/%d\n",
 					(int)udp_len, (int)(end-udph_start));
 			n=-3;
 			goto error;
@@ -290,7 +292,7 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	dst_ip.u.addr32[0]=iph.daddr;
 	/* fill dst_port */
 	dst_port=ntohs(udph.dest);
-	ip_addr2su(to, &dst_ip, port);
+	ip_addr2su(to, &dst_ip, dst_port);
 	/* fill src_port */
 	src_port=ntohs(udph.source);
 	su_setport(from, src_port);
@@ -403,6 +405,34 @@ inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
 
 
 
+/** fill in an ip header.
+ * Note: the checksum is _not_ computed
+ * @param iph - ip header that will be filled.
+ * @param from - source ip v4 address (network byte order).
+ * @param to -   destination ip v4 address (network byte order).
+ * @param payload len - payload length (not including the ip header).
+ * @param proto - protocol.
+ * @return 0 on success, < 0 on error.
+ */
+inline static int mk_ip_hdr(struct iphdr* iph, struct in_addr* from, 
+				struct in_addr* to, int payload_len, unsigned char proto)
+{
+	iph->ihl = sizeof(struct iphdr)/4;
+	iph->version = 4;
+	iph->tos = tos;
+	iph->tot_len = htons(payload_len);
+	iph->id = 0;
+	iph->frag_off = 0; /* first 3 bits = flags = 0, last 13 bits = offset */
+	iph->ttl = 63; /* FIXME: use some configured value */
+	iph->protocol = proto;
+	iph->check = 0;
+	iph->saddr = from->s_addr;
+	iph->daddr = to->s_addr;
+	return 0;
+}
+
+
+
 /** send an udp packet over a raw socket.
  * @param rsock - raw socket
  * @param buf - data
@@ -413,7 +443,8 @@ inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
  * @return  <0 on error (errno set too), number of bytes sent on success
  *          (including the udp header => on success len + udpheader size).
  */
-int raw_udp4_send(int rsock, char* buf, int len, union sockaddr_union* from,
+int raw_udp4_send(int rsock, char* buf, unsigned int len,
+					union sockaddr_union* from,
 					union sockaddr_union* to)
 {
 	struct msghdr snd_msg;
@@ -448,6 +479,128 @@ int raw_udp4_send(int rsock, char* buf, int len, union sockaddr_union* from,
 	snd_msg.msg_controllen=cmsg->cmsg_len;
 	snd_msg.msg_flags=0;
 	ret=sendmsg(rsock, &snd_msg, 0);
+	return ret;
+}
+
+
+
+/** send an udp packet over an IP_HDRINCL raw socket.
+ * If needed, send several fragments.
+ * @param rsock - raw socket
+ * @param buf - data
+ * @param len - data len
+ * @param from - source address:port (_must_ be non-null, but the ip address
+ *                can be 0, in which case it will be filled by the kernel).
+ * @param to - destination address:port
+ * @param mtu - maximum datagram size (including the ip header, excluding
+ *              link layer headers). Minimum allowed size is 28
+ *               (sizeof(ip_header + udp_header)). If mtu is lower, it will
+ *               be ignored (the packet will be sent un-fragmented).
+ *              0 can be used to disable fragmentation.
+ * @return  <0 on error (-2: datagram too big, -1: check errno),
+ *          number of bytes sent on success
+ *          (including the ip & udp headers =>
+ *               on success len + udpheader + ipheader size).
+ */
+int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
+						union sockaddr_union* from,
+						union sockaddr_union* to, unsigned short mtu)
+{
+	struct msghdr snd_msg;
+	struct iovec iov[2];
+	struct ip_udp_hdr {
+		struct iphdr ip;
+		struct udphdr udp;
+	} hdr;
+	unsigned int totlen;
+	unsigned int ip_frag_size; /* fragment size */
+	unsigned int last_frag_extra; /* extra bytes possible in the last frag */
+	unsigned int ip_payload;
+	unsigned int last_frag_offs;
+	void* last_frag_start;
+	int frg_no;
+	int ret;
+
+	totlen = len + sizeof(hdr);
+	if (unlikely(totlen) > 65535)
+		return -2;
+	memset(&snd_msg, 0, sizeof(snd_msg));
+	snd_msg.msg_name=&to->sin;
+	snd_msg.msg_namelen=sockaddru_len(*to);
+	snd_msg.msg_iov=&iov[0];
+	/* prepare the udp & ip headers */
+	mk_udp_hdr(&hdr.udp, &from->sin, &to->sin, (unsigned char*)buf, len, 1);
+	mk_ip_hdr(&hdr.ip, &from->sin.sin_addr, &to->sin.sin_addr,
+				len + sizeof(hdr.udp), IPPROTO_UDP);
+	iov[0].iov_base=(char*)&hdr;
+	iov[0].iov_len=sizeof(hdr);
+	snd_msg.msg_iovlen=2;
+	snd_msg.msg_control=0;
+	snd_msg.msg_controllen=0;
+	snd_msg.msg_flags=0;
+	/* this part changes for different fragments */
+	/* packets are fragmented if mtu has a valid value (at least an
+	   IP header + UDP header fit in it) and if the total length is greater
+	   then the mtu */
+	if (likely(totlen <= mtu || mtu <= sizeof(hdr))) {
+		iov[1].iov_base=buf;
+		iov[1].iov_len=len;
+		ret=sendmsg(rsock, &snd_msg, 0);
+	} else {
+		ip_payload = len + sizeof(hdr.udp);
+		/* a fragment offset must be a multiple of 8 => its size must
+		   also be a multiple of 8, except for the last fragment */
+		ip_frag_size = (mtu -sizeof(hdr.ip)) & (~7);
+		last_frag_extra = (mtu - sizeof(hdr.ip)) & 7; /* rest */
+		frg_no = ip_payload / ip_frag_size +
+				 ((ip_payload % ip_frag_size) > last_frag_extra);
+		/*ip_last_frag_size = ip_payload % frag_size +
+							((ip_payload % frag_size) <= last_frag_extra) *
+							ip_frag_size; */
+		last_frag_offs = (frg_no - 1) * ip_frag_size;
+		/* if we are here mtu => sizeof(ip_h+udp_h) && payload > mtu
+		   => last_frag_offs >= sizeof(hdr.udp) */
+		last_frag_start = buf + last_frag_offs - sizeof(hdr.udp);
+		hdr.ip.id = fastrand_max(65534) + 1; /* random id, should be != 0
+											  (if 0 the kernel will fill it) */
+		/* send the first fragment */
+		iov[1].iov_base=buf;
+		/* ip_frag_size >= sizeof(hdr.udp) because we are here only
+		   if mtu >= sizeof(hdr.ip) + sizeof(hdr.udp) */
+		iov[1].iov_len=ip_frag_size - sizeof(hdr.udp);
+		hdr.ip.tot_len = htons(ip_frag_size);
+		hdr.ip.frag_off = htons(0x2000); /* set MF */
+		ret=sendmsg(rsock, &snd_msg, 0);
+		if (unlikely(ret < 0))
+			goto end;
+		/* all the other fragments, include only the ip header */
+		iov[0].iov_len = sizeof(hdr.ip);
+		iov[1].iov_base =  (char*)iov[1].iov_base + iov[1].iov_len;
+		/* fragments between the first and the last */
+		while(unlikely(iov[1].iov_base < last_frag_start)) {
+			iov[1].iov_len = ip_frag_size;
+			hdr.ip.tot_len = htons(iov[1].iov_len);
+			/* set MF  */
+			hdr.ip.frag_off = htons( (unsigned short)
+									(((char*)iov[1].iov_base - (char*)buf +
+										sizeof(hdr.udp)) / 8) | 0x2000);
+			ret=sendmsg(rsock, &snd_msg, 0);
+			if (unlikely(ret < 0))
+				goto end;
+			iov[1].iov_base =  (char*)iov[1].iov_base + iov[1].iov_len;
+		}
+		/* last fragment */
+		iov[1].iov_len = buf + len - (char*)iov[1].iov_base;
+		hdr.ip.tot_len = htons(iov[1].iov_len);
+		/* don't set MF (last fragment) */
+		hdr.ip.frag_off = htons( (unsigned short)
+								(((char*)iov[1].iov_base - (char*)buf +
+									sizeof(hdr.udp)) / 8) );
+		ret=sendmsg(rsock, &snd_msg, 0);
+		if (unlikely(ret < 0))
+			goto end;
+	}
+end:
 	return ret;
 }
 

@@ -46,7 +46,11 @@ int recvpkt4(int sock, char* buf, int len, union sockaddr_union* from,
 					union sockaddr_union* to);
 int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 					union sockaddr_union* to, struct raw_filter* rf);
-int raw_udp4_send(int rsock, char* buf, int len, union sockaddr_union* from,
+int raw_udp4_send(int rsock, char* buf, unsigned int len,
+					union sockaddr_union* from,
 					union sockaddr_union* to);
+int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
+						union sockaddr_union* from,
+						union sockaddr_union* to, unsigned short mtu);
 
 #endif /* _raw_sock_h */
