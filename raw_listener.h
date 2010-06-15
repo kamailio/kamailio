@@ -27,11 +27,11 @@
 #ifndef _raw_listener_h
 #define _raw_listener_h
 
-#include "../../ip_addr.h"
+#include "ip_addr.h"
 
 
 /** default raw socket used for sending on udp ipv4 */
-struct struct_info* raw_udp_sendipv4;
+struct socket_info* raw_udp_sendipv4;
 
 int raw_listener_init(struct socket_info* si, str* iface, int iphdr_incl);
 int raw_udp4_rcv_loop(int rsock, int port1, int port2);

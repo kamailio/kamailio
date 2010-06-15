@@ -26,18 +26,15 @@
 
 #ifdef USE_RAW_SOCKS
 
-#include "../../config.h"
-#include "../../receive.h"
 
 #include "raw_listener.h"
 #include "raw_sock.h"
-#include "tlb_send.h"
-#include "tlb_cfg.h"
+#include "receive.h"
 
 #include <errno.h>
 #include <string.h>
 
-struct raw_listen_info* raw_sendipv4=0;
+struct socket_info* raw_udp_sendipv4=0;
 
 /** creates a raw socket based on a socket_info structure.
  * Side-effects: sets raw_udp_sendipv4 if not already set.
@@ -55,7 +52,7 @@ int raw_listener_init(struct socket_info* si, str* iface, int iphdr_incl)
 	su2ip_addr(&ip, &si->su);
 	sock=raw_udp4_socket(&ip, iface, iphdr_incl);
 	if (sock>=0){
-		if (raw_sendipv4==0 || iface==0 || iface->s==0)
+		if (raw_udp_sendipv4==0 || iface==0 || iface->s==0)
 			raw_udp_sendipv4=si;
 	}
 	return sock;
