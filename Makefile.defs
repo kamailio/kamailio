@@ -78,7 +78,9 @@
 #               needed to generate dependencies on-the-fly while compiling
 #               or is empty if the compiler doesn't support it (andrei)
 
-quiet?=$(if $(filter 1 yes on,$(Q)),silent,verbose)
+
+# default silent, unless Q= 0|no|off|verbose|noisy
+quiet?=$(if $(filter 0 no off verbose noisy,$(Q)),verbose,silent)
 
 # check if already included/exported
 

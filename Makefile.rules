@@ -81,17 +81,17 @@ endif # CC_MKDEP_OPTS
 silent_cmd_CC=CC ($(CC)) [$(strip $(crt_type) $(NAME))]		$@
 silent_cmd_LD=LD ($(LD)) [$(strip $(crt_type) $(NAME))]		$@
 
-ifneq (,$(filter 1 yes on, $(Q) $(QUIET)))
+ifneq (,$(filter 0 no off verbose noisy, $(Q) $(QUIET)))
+override Q:=
+quiet=verbose
+#shell optional print
+oecho=echo $(1)
+else
 quiet=silent
 Q=1
 MAKE+= --no-print-directory
 #shell optional print
 oecho=
-else
-override Q:=
-quiet=verbose
-#shell optional print
-oecho=echo $(1)
 endif
 
 module_make=	if [ -n "$(1)" -a -r "$(1)/Makefile" ]; then \
