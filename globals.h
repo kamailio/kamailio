@@ -64,6 +64,10 @@ extern struct socket_info* bind_address; /* pointer to the crt. proc.
 extern struct socket_info* sendipv4; /* ipv4 socket to use when msg.
 										comes from ipv6*/
 extern struct socket_info* sendipv6; /* same as above for ipv6 */
+#ifdef USE_RAW_SOCKS
+extern int raw_udp4_send_sock;
+#endif /* USE_RAW_SOCKS */
+
 #ifdef USE_TCP
 extern struct socket_info* sendipv4_tcp; /* ipv4 socket to use when msg.
 										comes from ipv6*/

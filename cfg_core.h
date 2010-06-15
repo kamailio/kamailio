@@ -36,12 +36,11 @@
  * -------
  *  2007-12-03	Initial version (Miklos)
  */
-/*!
- * \file
- * \brief SIP-router core :: Core configuration
- * \ingroup core
+/** core runtime config.
+ * @file cfg_core.h
+ * @ingroup core
  *
- * Module: \ref core
+ * Module: @ref core
  */
 
 
@@ -102,6 +101,8 @@ struct cfg_group_core {
 	int max_while_loops;
 	int udp_mtu; /*!< maximum send size for udp, if > try another protocol*/
 	int udp_mtu_try_proto; /*!< if packet> udp_mtu, try proto (e.g. TCP) */
+	int udp4_raw; /* use raw sockets for sending on udp ipv 4 */
+	int udp4_raw_mtu; /* mtu used when using udp raw socket */
 	int force_rport; /*!< if set rport will always be forced*/
 	int memlog; /*!< log level for memory status/summary info */
 	int mem_summary; /*!< display memory status/summary info on exit */
