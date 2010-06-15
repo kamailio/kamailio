@@ -4313,6 +4313,157 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 		rpc->fault(ctx, 400, "Not found");
 }
 
+/* Delete a single record from the cache,
+ * i.e. the record with the same name and value
+ * (ip address in case of A/AAAA record, name in case of SRV record).
+ *
+ * Currently only A, AAAA, and SRV records are supported.
+ */
+int dns_cache_delete_single_record(unsigned short type,
+			str *name,
+			str *value,
+			int flags)
+{
+	struct dns_hash_entry *old=NULL, *new=NULL;
+	struct dns_rr *rr, **next_p;
+	str rr_name;
+	struct ip_addr *ip_addr;
+	int err, h;
+
+	/* eliminate gcc warnings */
+	rr_name.s = NULL;
+	rr_name.len = 0;
+	ip_addr = 0;
+
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
+		LOG(L_ERR, "ERROR: dns cache support disabled (see use_dns_cache)\n");
+		return -1;
+	}
+	
+	if ((type != T_A) && (type != T_AAAA) && (type != T_SRV)) {
+		LOG(L_ERR, "ERROR: rr type %d is not implemented\n",
+			type);
+		return -1;
+	}
+
+	if (!flags) {
+		/* fix-up the values */
+		switch(type) {
+		case T_A:
+			ip_addr = str2ip(value);
+			if (!ip_addr) {
+				LOG(L_ERR, "ERROR: Malformed ip address: %.*s\n",
+					value->len, value->s);
+				return -1;
+			}
+			break;
+		case T_AAAA:
+#ifdef USE_IPV6
+			ip_addr = str2ip6(value);
+			if (!ip_addr) {
+				LOG(L_ERR, "ERROR: Malformed ip address: %.*s\n",
+					value->len, value->s);
+				return -1;
+			}
+			break;
+#else /* USE_IPV6 */
+			LOG(L_ERR, "ERROR: IPv6 support is disabled\n");
+			return -1;
+#endif /* USE_IPV6 */
+		case T_SRV:
+			rr_name = *value;
+			break;
+		}
+	}
+
+	/* check whether there is a matching entry in the cache */
+	if ((old = dns_hash_get(name, type, &h, &err)) == NULL)
+		goto not_found;
+
+	if ((old->type != type) /* may be CNAME */
+		|| (old->err_flags != flags)
+	)
+		goto not_found;
+
+	if (flags) /* negative record, there is no value */
+		goto delete;
+
+	/* check whether there is an rr with the same value */
+	for (rr=old->rr_lst, next_p=&old->rr_lst;
+		rr;
+		next_p=&rr->next, rr=rr->next
+	)
+		if ((((type == T_A) || (type == T_AAAA)) &&
+			(memcmp(ip_addr->u.addr, ((struct a_rdata*)rr->rdata)->ip,
+								ip_addr->len)==0))
+		|| ((type == T_SRV) &&
+			(((struct srv_rdata*)rr->rdata)->name_len == rr_name.len) &&
+			(memcmp(rr_name.s, ((struct srv_rdata*)rr->rdata)->name,
+								rr_name.len)==0)))
+		break;
+
+	if (!rr)
+		goto not_found;
+
+	if ((rr == old->rr_lst) && (rr->next == NULL)) {
+		/* There is a single rr value, hence the whole
+		 * hash entry can be deleted */
+		goto delete;
+	} else {
+		/* we must modify the entry, so better to clone it, modify the new 
+		* one, and replace the old with the new entry in the hash table,
+		* because the entry might be in use (even if the dns hash is 
+		* locked). The old entry will be removed from the hash and 
+		* automatically destroyed when its refcnt will be 0*/
+		new = dns_cache_clone_entry(old, 0, 0, 0);
+		if (!new) {
+			LOG(L_ERR, "ERROR: Failed to clone an existing "
+				"DNS cache entry\n");
+			dns_hash_put(old);
+			return -1;
+		}
+		/* let rr and next_p point to the new structure */
+		rr = (struct dns_rr*)translate_pointer((char*)new,
+						(char*)old,
+						(char*)rr);
+		next_p = (struct dns_rr**)translate_pointer((char*)new,
+						(char*)old,
+						(char*)next_p);
+		/* unlink rr from the list. The memory will be freed
+		 * when the whole record is freed */
+		*next_p = rr->next;
+	}
+
+delete:
+	LOCK_DNS_HASH();
+	if (new) {
+		/* delete the old entry only if the new one can be added */
+		if (dns_cache_add_unsafe(new)) {
+			LOG(L_ERR, "ERROR: Failed to add the entry to the cache\n");
+			UNLOCK_DNS_HASH();
+			if (old)
+				dns_hash_put(old);
+			return -1;
+		} else {
+			/* remove the old entry from the list */
+			if (old)
+				_dns_hash_remove(old);
+		}
+	} else if (old) {
+		_dns_hash_remove(old);
+	}
+	UNLOCK_DNS_HASH();
+
+	if (old)
+		dns_hash_put(old);
+	return 0;
+
+not_found:
+	LOG(L_ERR, "ERROR: No matching record found\n");
+	if (old)
+		dns_hash_put(old);
+	return -1;
+}
 
 /* performs  a dns lookup over rpc */
 void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx)
