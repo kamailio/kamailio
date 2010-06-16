@@ -4367,7 +4367,7 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 
 	if (permanent)
 		rpc->fault(ctx, 400, "Permanent entries cannot be deleted");
-	if (!found)
+	else if (!found)
 		rpc->fault(ctx, 400, "Not found");
 }
 
