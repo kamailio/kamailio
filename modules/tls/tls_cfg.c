@@ -61,7 +61,8 @@ struct cfg_group_tls default_tls_cfg = {
 	-1, /* low_mem_threshold2 */
 	10*1024*1024, /* ct_wq_max: 10 Mb by default */
 	64*1024, /* con_ct_wq_max: 64Kb by default */
-	4096 /* ct_wq_blk_size */
+	4096, /* ct_wq_blk_size */
+	0 /* send_close_notify (off by default)*/
 };
 
 void* tls_cfg = &default_tls_cfg;
@@ -191,6 +192,10 @@ cfg_def_t	tls_cfg_def[] = {
 	{"ct_wq_blk_size", CFG_VAR_INT | CFG_ATOMIC, 1, 65536, 0, 0,
 		"internal TLS pre-write (clear-text) queue minimum block size"
 		" (advanced tunning or debugging for now)"},
+	{"send_close_notify", CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
+		"enable/disable sending a close notify TLS shutdown alert"
+			" before closing the corresponding TCP connection."
+			"Note that having it enabled has a performance impact."},
 	{0, 0, 0, 0, 0, 0}
 };
 

@@ -205,6 +205,7 @@ static param_export_t params[] = {
 	{"ssl_max_send_fragment", PARAM_INT,
 									   &default_tls_cfg.ssl_max_send_fragment},
 	{"ssl_read_ahead",        PARAM_INT,    &default_tls_cfg.ssl_read_ahead},
+	{"send_close_notify",   PARAM_INT,    &default_tls_cfg.send_close_notify},
 	{"tls_force_run",       PARAM_INT,    &default_tls_cfg.force_run},
 	{"low_mem_threshold1",  PARAM_INT,    &default_tls_cfg.low_mem_threshold1},
 	{"low_mem_threshold2",  PARAM_INT,    &default_tls_cfg.low_mem_threshold2},

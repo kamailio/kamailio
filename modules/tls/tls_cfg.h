@@ -90,6 +90,8 @@ struct cfg_group_tls {
 	int ct_wq_max; /* maximum overall tls write clear text queued bytes */
 	int con_ct_wq_max; /* maximum clear text write queued bytes per con */
 	int ct_wq_blk_size; /* minimum block size for the clear text write queue */
+	int send_close_notify; /* if set try to be nice and send a shutdown alert
+						    before closing the tcp connection */
 };
 
 

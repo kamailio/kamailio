@@ -502,7 +502,7 @@ void tls_h_close(struct tcp_connection *c, int fd)
 	 * still be in a writer, so in this case locking is needed.
 	 */
 	DBG("Closing SSL connection %p\n", c->extra_data);
-	if (likely(c->extra_data)) {
+	if (unlikely(cfg_get(tls, tls_cfg, send_close_notify) && c->extra_data)) {
 		lock_get(&c->write_lock);
 			if (unlikely(c->extra_data == 0)) {
 				/* changed in the meanwhile */
