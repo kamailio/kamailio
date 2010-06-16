@@ -87,9 +87,9 @@ void dtrie_delete(struct dtrie_node_t *root, struct dtrie_node_t *node,
 
 	if (delete_payload) {
 		delete_payload(node->data);
-		node->data = NULL;
 	}
-
+	node->data = NULL;
+	
 	if (node != root) {
 		LM_DBG("free node at %p\n", node);
 		shm_free(node);
