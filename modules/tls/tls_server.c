@@ -233,7 +233,7 @@ static void tls_dump_cert_info(char* s, X509* cert)
  */
 int tls_accept(struct tcp_connection *c, int* error)
 {
-	int ret, ssl_err;
+	int ret;
 	SSL *ssl;
 	X509* cert;
 	struct tls_extra_data* tls_c;
@@ -300,7 +300,7 @@ err:
 int tls_connect(struct tcp_connection *c, int* error)
 {
 	SSL *ssl;
-	int ret, ssl_err;
+	int ret;
 	X509* cert;
 	struct tls_extra_data* tls_c;
 	int tls_log;
@@ -362,14 +362,20 @@ err:
 static int tls_shutdown(struct tcp_connection *c)
 {
 	int ret, err, ssl_err;
+	struct tls_extra_data* tls_c;
 	SSL *ssl;
 
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
-	if (ssl == 0) {
+	tls_c=(struct tls_extra_data*)c->extra_data;
+	if (unlikely(tls_c == 0 || tls_c->ssl == 0)) {
 		ERR("No SSL data to perform tls_shutdown\n");
 		return -1;
 	}
-	if (LOW_MEM_CONNECTED_TEST()){
+	ssl = tls_c->ssl;
+	/* it doesn't make sense to try a TLS level shutdown
+	   if the connection is not fully initialized */
+	if (unlikely(tls_c->state != S_TLS_ESTABLISHED))
+		return 0;
+	if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		goto err;
@@ -1036,8 +1042,8 @@ ssl_read_skipped:
 										rd.used - rd.pos);
 				if (unlikely(enc_rd_buf == 0)) {
 					ERR("memory allocation error (%d bytes requested)\n",
-						sizeof(*enc_rd_buf) + sizeof(enc_rd_buf->buf) +
-										rd.used - rd.pos);
+						(int)(sizeof(*enc_rd_buf) + sizeof(enc_rd_buf->buf) +
+										rd.used - rd.pos));
 					goto error;
 				}
 				enc_rd_buf->pos = 0;
