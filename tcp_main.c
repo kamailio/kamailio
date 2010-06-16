@@ -2050,14 +2050,25 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 				do_close_fd=0;
 				goto release_c;
 			}
-			if (unlikely(c!=tmp)){
-				LOG(L_CRIT, "BUG: tcp_send: get_fd: got different connection:"
+			/* handle fd closed or bad connection/error
+				(it's possible that this happened in the time between
+				we found the intial connection and the time when we get
+				the fd)
+			 */
+			if (unlikely(c!=tmp || fd==-1 || c->state==S_CONN_BAD)){
+				if (unlikely(c!=tmp && tmp!=0))
+					BUG("tcp_send: get_fd: got different connection:"
 						"  %p (id= %d, refcnt=%d state=%d) != "
 						"  %p (n=%d)\n",
 						  c,   c->id,   atomic_get(&c->refcnt),   c->state,
 						  tmp, n
-				   );
+						);
 				n=-1; /* fail */
+				/* don't cache fd & close it */
+				do_close_fd = (fd==-1)?0:1;
+#ifdef TCP_FD_CACHE
+				use_fd_cache = 0;
+#endif /* TCP_FD_CACHE */
 				goto end;
 			}
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
@@ -2721,6 +2732,12 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 	struct send_fd_info* t;
 	
 	for (p=t=&q->data[0]; p<q->crt; p++){
+		if (unlikely(p->tcp_conn->state == S_CONN_BAD ||
+					 p->tcp_conn->flags & F_CONN_FD_CLOSED ||
+					 p->tcp_conn->s ==-1)) {
+			/* bad and/or already closed connection => remove */
+			goto rm_con;
+		}
 		if (unlikely(send_fd(p->unix_sock, &(p->tcp_conn),
 					sizeof(struct tcp_connection*), p->tcp_conn->s)<=0)){
 			if ( ((errno==EAGAIN)||(errno==EWOULDBLOCK)) && 
@@ -2736,7 +2753,11 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 						   p->unix_sock, (long)(p-&q->data[0]), p->retries,
 						   p->tcp_conn, p->tcp_conn->s, errno,
 						   strerror(errno));
+rm_con:
 #ifdef TCP_ASYNC
+				/* if a connection is on the send_fd queue it means it's
+				   not watched for read anymore => could be watched only for
+				   write */
 				if (p->tcp_conn->flags & F_CONN_WRITE_W){
 					io_watch_del(&io_h, p->tcp_conn->s, -1, IO_FD_CLOSING);
 					p->tcp_conn->flags &=~F_CONN_WRITE_W;
@@ -3006,6 +3027,7 @@ error:
 inline static int handle_ser_child(struct process_table* p, int fd_i)
 {
 	struct tcp_connection* tcpconn;
+	struct tcp_connection* tmp;
 	long response[2];
 	int cmd;
 	int bytes;
@@ -3101,9 +3123,26 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* send the requested FD  */
 			/* WARNING: take care of setting refcnt properly to
 			 * avoid race conditions */
-			if (unlikely(send_fd(p->unix_sock, &tcpconn, sizeof(tcpconn),
-								tcpconn->s)<=0)){
-				LOG(L_ERR, "ERROR: handle_ser_child: send_fd failed\n");
+			if (unlikely(tcpconn->state == S_CONN_BAD ||
+						(tcpconn->flags & F_CONN_FD_CLOSED) ||
+						tcpconn->s ==-1)) {
+				/* connection is already marked as bad and/or has no
+				   fd => don't try to send the fd (trying to send a
+				   closed fd _will_ fail) */
+				tmp = 0;
+				if (unlikely(send_all(p->unix_sock, &tmp, sizeof(tmp)) <= 0))
+					BUG("handle_ser_child: CONN_GET_FD: send_all failed\n");
+				/* no need to attempt to destroy the connection, it should
+				   be already in the process of being destroyed */
+			} else if (unlikely(send_fd(p->unix_sock, &tcpconn,
+										sizeof(tcpconn), tcpconn->s)<=0)){
+				LOG(L_ERR, "handle_ser_child: CONN_GET_FD:"
+							" send_fd failed\n");
+				/* try sending error (better then not sending anything) */
+				tmp = 0;
+				if (unlikely(send_all(p->unix_sock, &tmp, sizeof(tmp)) <= 0))
+					BUG("handle_ser_child: CONN_GET_FD:"
+							" send_fd send_all fallback failed\n");
 			}
 			break;
 		case CONN_NEW:
