@@ -680,7 +680,7 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 				deleted++;
 			}
 			n++;
-			if (n>=no) break;
+			if (n>=no) goto skip;
 		}
 	}
 	/* not fair, but faster then random() */
