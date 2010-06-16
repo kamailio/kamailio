@@ -100,8 +100,14 @@ enum dns_errors{
 /** @brief return a short string, printable error description (err <=0) */
 const char* dns_strerror(int err);
 
-/** @brief dns entry error flags */
-#define DNS_BAD_NAME     1 /* unresolvable */
+/** @brief dns entry flags,
+ * shall be on the power of 2 */
+/*@{ */
+#define DNS_FLAG_BAD_NAME	1 /**< error flag: unresolvable */
+#define DNS_FLAG_PERMANENT	2 /**< permanent record, never times out,
+					never deleted, never overwritten
+					unless explicitely requested */
+/*@} */
 
 /** @name dns requests flags */
 /*@{ */
@@ -155,7 +161,7 @@ struct dns_hash_entry{
 	ticks_t expire; /* when the whole entry will expire */
 	int total_size;
 	unsigned short type;
-	unsigned char err_flags;
+	unsigned char ent_flags; /* entry flags: unresolvable/permanent */
 	unsigned char name_len; /* can be maximum 255 bytes */
 	char name[1]; /* variable length, name, null terminated
 	                 (actual lenght = name_len +1)*/
@@ -336,8 +342,11 @@ inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 	return ret;
 }
 
-/** @brief deletes all the entries from the cache */
-void dns_cache_flush(void);
+/** @brief Delete all the entries from the cache.
+ * If del_permanent is 0, then only the
+ * non-permanent entries are deleted.
+ */
+void dns_cache_flush(int del_permanent);
 
 #ifdef DNS_WATCHDOG_SUPPORT
 /** @brief sets the state of the DNS servers:
@@ -354,6 +363,10 @@ int dns_get_server_state(void);
  * If there is an existing record with the same name and value
  * (ip address in case of A/AAAA record, name in case of SRV record)
  * only the remaining fields are updated.
+ *
+ * Note that permanent records cannot be overwritten unless
+ * the new record is also permanent. A permanent record
+ * completely replaces a non-permanent one.
  *
  * Currently only A, AAAA, and SRV records are supported.
  */

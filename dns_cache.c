@@ -573,6 +573,7 @@ again:
 			servers_up &&
 #endif
 			/* automatically remove expired elements */
+			((e->ent_flags & DNS_FLAG_PERMANENT) == 0) &&
 			((s_ticks_t)(now-e->expire)>=0)
 		) {
 				_dns_hash_remove(e);
@@ -591,7 +592,8 @@ again:
 #endif
 #endif
 			return e;
-		}else if ((e->type==T_CNAME) && !((e->rr_lst==0) || e->err_flags) &&
+		}else if ((e->type==T_CNAME) &&
+					!((e->rr_lst==0) || (e->ent_flags & DNS_FLAG_BAD_NAME)) &&
 					(e->name_len==name->len) &&
 					(strncasecmp(e->name, name->s, e->name_len)==0)){
 			/*if CNAME matches and CNAME is entry is not a neg. cache entry
@@ -659,7 +661,9 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 	clist_foreach_safe(dns_last_used_lst, l, tmp, next){
 		e=(struct dns_hash_entry*)(((char*)l)-
 				(char*)&((struct dns_hash_entry*)(0))->last_used_lst);
-		if (!expired_only || ((s_ticks_t)(now-e->expire)>=0)){
+		if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+			&& (!expired_only || ((s_ticks_t)(now-e->expire)>=0))
+		) {
 				_dns_hash_remove(e);
 				deleted++;
 		}
@@ -669,7 +673,9 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 #else
 	for(h=start; h!=(start+DNS_HASH_SIZE); h++){
 		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-			if  ((s_ticks_t)(now-e->expire)>=0){
+			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+				&& ((s_ticks_t)(now-e->expire)>=0)
+			) {
 				_dns_hash_remove(e);
 				deleted++;
 			}
@@ -681,8 +687,10 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 	if (!expired_only){
 		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
 			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				_dns_hash_remove(e);
-				deleted++;
+				if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0) {
+					_dns_hash_remove(e);
+					deleted++;
+				}
 				n++;
 				if (n>=no) goto skip;
 			}
@@ -724,7 +732,9 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 		if (*dns_cache_mem_used<=target) break;
 		e=(struct dns_hash_entry*)(((char*)l)-
 				(char*)&((struct dns_hash_entry*)(0))->last_used_lst);
-		if (!expired_only || ((s_ticks_t)(now-e->expire)>=0)){
+		if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+			&& (!expired_only || ((s_ticks_t)(now-e->expire)>=0))
+		) {
 				_dns_hash_remove(e);
 				deleted++;
 		}
@@ -734,7 +744,9 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 		clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
 			if (*dns_cache_mem_used<=target)
 				goto skip;
-			if  ((s_ticks_t)(now-e->expire)>=0){
+			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+				&& ((s_ticks_t)(now-e->expire)>=0)
+			) {
 				_dns_hash_remove(e);
 				deleted++;
 			}
@@ -746,7 +758,9 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
 				if (*dns_cache_mem_used<=target)
 					goto skip;
-				if  ((s_ticks_t)(now-e->expire)>=0){
+				if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+					&& ((s_ticks_t)(now-e->expire)>=0)
+				) {
 					_dns_hash_remove(e);
 					deleted++;
 				}
@@ -811,7 +825,7 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 	h=dns_hash_no(e->name, e->name_len, e->type);
 #ifdef DNS_CACHE_DEBUG
 	DBG("dns_cache_add: adding %.*s(%d) %d (flags=%0x) at %d\n",
-			e->name_len, e->name, e->name_len, e->type, e->err_flags, h);
+			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
 #endif
 	LOCK_DNS_HASH();
 		*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
@@ -853,7 +867,7 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 	h=dns_hash_no(e->name, e->name_len, e->type);
 #ifdef DNS_CACHE_DEBUG
 	DBG("dns_cache_add: adding %.*s(%d) %d (flags=%0x) at %d\n",
-			e->name_len, e->name, e->name_len, e->type, e->err_flags, h);
+			e->name_len, e->name, e->name_len, e->type, e->ent_flags, h);
 #endif
 	*dns_cache_mem_used+=e->total_size; /* no need for atomic ops, written
 										 only from within a lock */
@@ -883,7 +897,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	size=sizeof(struct dns_hash_entry)+name->len-1+1;
 	e=shm_malloc(size);
 	if (e==0){
-		LOG(L_ERR, "ERROR: dns_cache_mk_ip_entry: out of memory\n");
+		LOG(L_ERR, "ERROR: dns_cache_mk_bad_entry: out of memory\n");
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0*/
@@ -894,7 +908,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 	e->last_used=now;
 	e->expire=now+S_TO_TICKS(ttl);
 	memcpy(e->name, name->s, name->len);
-	e->err_flags=flags;
+	e->ent_flags=flags;
 	return e;
 }
 
@@ -1234,7 +1248,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	size+=ROUND_POINTER(sizeof(struct dns_hash_entry)+name->len-1+1);
 	e=shm_malloc(size);
 	if (e==0){
-		LOG(L_ERR, "ERROR: dns_cache_mk_ip_entry: out of memory\n");
+		LOG(L_ERR, "ERROR: dns_cache_mk_rd_entry: out of memory\n");
 		return 0;
 	}
 	memset(e, 0, size); /* init with 0 */
@@ -1544,7 +1558,7 @@ found:
 	for (r=0; r<no_records; r++){
 		rec[r].e=shm_malloc(rec[r].size);
 		if (rec[r].e==0){
-			LOG(L_ERR, "ERROR: dns_cache_mk_ip_entry: out of memory\n");
+			LOG(L_ERR, "ERROR: dns_cache_mk_rd_entry: out of memory\n");
 			goto error;
 		}
 		memset(rec[r].e, 0, rec[r].size); /* init with 0*/
@@ -1951,7 +1965,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 		free_rdata_list(records);
 	}else if (cfg_get(core, core_cfg, dns_neg_cache_ttl)){
 		e=dns_cache_mk_bad_entry(name, type, 
-				cfg_get(core, core_cfg, dns_neg_cache_ttl), DNS_BAD_NAME);
+				cfg_get(core, core_cfg, dns_neg_cache_ttl), DNS_FLAG_BAD_NAME);
 		if (likely(e)) {
 			atomic_set(&e->refcnt, 1); /* 1 because we return a ref. to it */
 			dns_cache_add(e); /* refcnt++ inside*/
@@ -2028,10 +2042,12 @@ inline static struct dns_hash_entry* dns_get_entry(str* name, int type)
 	e=dns_hash_get(name, type, &h, &err);
 #ifdef USE_DNS_CACHE_STATS
 	if (e) {
-		if (e->err_flags==DNS_BAD_NAME && dns_cache_stats)
+		if ((e->ent_flags & DNS_FLAG_BAD_NAME) && dns_cache_stats)
 			/* negative DNS cache hit */
 			dns_cache_stats[process_no].dc_neg_hits_cnt++;
-		else if (!e->err_flags && dns_cache_stats) /* DNS cache hit */
+		else if (((e->ent_flags & DNS_FLAG_BAD_NAME) == 0)
+				&& dns_cache_stats
+		) /* DNS cache hit */
 			dns_cache_stats[process_no].dc_hits_cnt++;
 
 		if (dns_cache_stats)
@@ -2053,7 +2069,7 @@ inline static struct dns_hash_entry* dns_get_entry(str* name, int type)
 			goto error; /* could not resolve cname */
 	}
 	/* found */
-	if ((e->rr_lst==0) || e->err_flags){
+	if ((e->rr_lst==0) || (e->ent_flags & DNS_FLAG_BAD_NAME)){
 		/* negative cache => not resolvable */
 		dns_hash_put(e);
 		e=0;
@@ -2106,6 +2122,7 @@ inline static struct dns_rr* dns_entry_get_rr(	struct dns_hash_entry* e,
 			/* check the expiration time only when the servers are up */
 			servers_up &&
 #endif
+			((e->ent_flags & DNS_FLAG_PERMANENT) == 0) &&
 			((s_ticks_t)(now-rr->expire)>=0) /* expired rr */
 		)
 			continue;
@@ -2208,6 +2225,7 @@ retry:
 			/* check the expiration time only when the servers are up */
 			servers_up &&
 #endif
+			((e->ent_flags & DNS_FLAG_PERMANENT) == 0) &&
 			((s_ticks_t)(now-rr->expire)>=0) /* expired entry */) ||
 				(rr->err_flags) /* bad rr */ ||
 				(srv_marked(tried, idx)) ) /* already tried */{
@@ -3516,7 +3534,7 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 								(s_ticks_t)(e->expire-now)<0?-1:
 									TICKS_TO_S(e->expire-now),
 								TICKS_TO_S(now-e->last_used),
-								e->err_flags);
+								e->ent_flags);
 			}
 		}
 	UNLOCK_DNS_HASH();
@@ -3632,7 +3650,7 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 								(int)(s_ticks_t)(e->expire-now)<0?-1:
 									TICKS_TO_S(e->expire-now),
 								(int)TICKS_TO_S(now-e->last_used),
-								(int)e->err_flags);
+								(int)e->ent_flags);
 					switch(e->type){
 						case T_A:
 						case T_AAAA:
@@ -3773,10 +3791,16 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 						e->total_size);
 	rpc->printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
 						e->refcnt.val);
-	rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
+	if (e->ent_flags & DNS_FLAG_PERMANENT) {
+		rpc->printf(ctx, "%spermanent: yes", SPACE_FORMAT);
+	} else {
+		rpc->printf(ctx, "%spermanent: no", SPACE_FORMAT);
+		rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
+	}
 	rpc->printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
 						TICKS_TO_S(now-e->last_used));
-	rpc->printf(ctx, "%serror flags: %d", SPACE_FORMAT, e->err_flags);
+	rpc->printf(ctx, "%snegative entry: %s", SPACE_FORMAT,
+						(e->ent_flags & DNS_FLAG_BAD_NAME) ? "yes" : "no");
 	
 	for (rr=e->rr_lst; rr; rr=rr->next) {
 		switch(e->type) {
@@ -3874,7 +3898,9 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 	LOCK_DNS_HASH();
 	for (h=0; h<DNS_HASH_SIZE; h++){
 		clist_foreach(&dns_hash[h], e, next){
-			if (TICKS_LT(e->expire, now)) {
+			if (((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+				&& TICKS_LT(e->expire, now)
+			) {
 				continue;
 			}
 			rpc->printf(ctx, "{\n");
@@ -3886,8 +3912,11 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 }
 
 
-/* deletes all the entries from the cache */
-void dns_cache_flush(void)
+/* Delete all the entries from the cache.
+ * If del_permanent is 0, then only the
+ * non-permanent entries are deleted.
+ */
+void dns_cache_flush(int del_permanent)
 {
 	int h;
 	struct dns_hash_entry* e;
@@ -3897,20 +3926,32 @@ void dns_cache_flush(void)
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
 			clist_foreach_safe(&dns_hash[h], e, tmp, next){
-				_dns_hash_remove(e);
+				if (del_permanent || ((e->ent_flags & DNS_FLAG_PERMANENT) == 0))
+					_dns_hash_remove(e);
 			}
 		}
 	UNLOCK_DNS_HASH();
 }
 
-/* deletes all the entries from the cache */
+/* deletes all the non-permanent entries from the cache */
 void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 {
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
-	dns_cache_flush();
+	dns_cache_flush(0);
+}
+
+/* deletes all the entries from the cache,
+ * even the permanent ones */
+void dns_cache_delete_all_force(rpc_t* rpc, void* ctx)
+{
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
+	dns_cache_flush(1);
 }
 
 /* clones an entry and extends its memory area to hold a new rr.
@@ -4063,6 +4104,10 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
  * If there is an existing record with the same name and value
  * (ip address in case of A/AAAA record, name in case of SRV record)
  * only the remaining fields are updated.
+ * 
+ * Note that permanent records cannot be overwritten unless
+ * the new record is also permanent. A permanent record
+ * completely replaces a non-permanent one.
  *
  * Currently only A, AAAA, and SRV records are supported.
  */
@@ -4100,7 +4145,7 @@ int dns_cache_add_record(unsigned short type,
 		return -1;
 	}
 
-	if (!flags) {
+	if ((flags & DNS_FLAG_BAD_NAME) == 0) {
 		/* fix-up the values */
 		switch(type) {
 		case T_A:
@@ -4139,8 +4184,16 @@ int dns_cache_add_record(unsigned short type,
 		old=NULL;
 	}
 
+	if (old
+		&& (old->ent_flags & DNS_FLAG_PERMANENT)
+		&& ((flags & DNS_FLAG_PERMANENT) == 0)
+	) {
+		LOG(L_ERR, "ERROR: A non-permanent record cannot overwrite "
+				"a permanent entry\n");
+		goto error;
+	}
 	/* prepare the entry */
-	if (flags) {
+	if (flags & DNS_FLAG_BAD_NAME) {
 		/* negative entry */
 		new = dns_cache_mk_bad_entry(name, type, ttl, flags);
 		if (!new) {
@@ -4149,10 +4202,16 @@ int dns_cache_add_record(unsigned short type,
 			goto error;
 		}
 	} else {
-		if (!old || old->err_flags) {
-			/* there was no matching entry in the hash table,
-			or the entry is a negative record with inefficient space,
-			let us create a new one */
+		if (!old
+			|| (old->ent_flags & DNS_FLAG_BAD_NAME)
+			|| (((old->ent_flags & DNS_FLAG_PERMANENT) == 0)
+				&& (flags & DNS_FLAG_PERMANENT))
+		) {
+			/* There was no matching entry in the hash table,
+			 * the entry is a negative record with inefficient space,
+			 * or a permanent entry overwrites a non-permanent one.
+			 * Let us create a new one.
+			 */
 			switch(type) {
 			case T_A:
 			case T_AAAA:
@@ -4175,6 +4234,7 @@ int dns_cache_add_record(unsigned short type,
 					goto error;
 				}
 			}
+			new->ent_flags = flags;
 		} else {
 			/* we must modify the entry, so better to clone it, modify the new 
 			 * one, and replace the old with the new entry in the hash table,
@@ -4289,7 +4349,7 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 {
 	struct dns_hash_entry *e;
 	str name;
-	int err, h, found=0;
+	int err, h, found=0, permanent=0;
 
 	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
@@ -4303,12 +4363,17 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 
 	e=_dns_hash_find(&name, type, &h, &err);
 	if (e && (e->type==type)) {
-		_dns_hash_remove(e);
+		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+			_dns_hash_remove(e);
+		else
+			permanent = 1;
 		found = 1;
 	}
 
 	UNLOCK_DNS_HASH();
 
+	if (permanent)
+		rpc->fault(ctx, 400, "Permanent entries cannot be deleted");
 	if (!found)
 		rpc->fault(ctx, 400, "Not found");
 }
@@ -4346,7 +4411,7 @@ int dns_cache_delete_single_record(unsigned short type,
 		return -1;
 	}
 
-	if (!flags) {
+	if ((flags & DNS_FLAG_BAD_NAME) == 0) {
 		/* fix-up the values */
 		switch(type) {
 		case T_A:
@@ -4381,11 +4446,11 @@ int dns_cache_delete_single_record(unsigned short type,
 		goto not_found;
 
 	if ((old->type != type) /* may be CNAME */
-		|| (old->err_flags != flags)
+		|| (old->ent_flags != flags)
 	)
 		goto not_found;
 
-	if (flags) /* negative record, there is no value */
+	if (flags && DNS_FLAG_BAD_NAME) /* negative record, there is no value */
 		goto delete;
 
 	/* check whether there is an rr with the same value */

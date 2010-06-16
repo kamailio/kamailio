@@ -56,6 +56,7 @@ void dns_cache_mem_info(rpc_t* rpc, void* ctx);
 void dns_cache_view(rpc_t* rpc, void* ctx);
 void dns_cache_rpc_lookup(rpc_t* rpc, void* ctx);
 void dns_cache_delete_all(rpc_t* rpc, void* ctx);
+void dns_cache_delete_all_force(rpc_t* rpc, void* ctx);
 void dns_cache_add_a(rpc_t* rpc, void* ctx);
 void dns_cache_add_aaaa(rpc_t* rpc, void* ctx);
 void dns_cache_add_srv(rpc_t* rpc, void* ctx);
@@ -94,7 +95,12 @@ static const char* dns_cache_rpc_lookup_doc[] = {
 };
 
 static const char* dns_cache_delete_all_doc[] = {
-	"deletes all the entries from the DNS cache",
+	"deletes all the non-permanent entries from the DNS cache",
+	0
+};
+
+static const char* dns_cache_delete_all_force_doc[] = {
+	"deletes all the entries from the DNS cache including the permanent ones",
 	0
 };
 
@@ -847,6 +853,8 @@ static rpc_export_t core_rpc_methods[] = {
 	{"dns.lookup",             dns_cache_rpc_lookup,  dns_cache_rpc_lookup_doc,
 		0	},
 	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,
+		0	},
+	{"dns.delete_all_force",   dns_cache_delete_all_force, dns_cache_delete_all_force_doc,
 		0	},
 	{"dns.add_a",              dns_cache_add_a,       dns_cache_add_a_doc,
 		0	},
