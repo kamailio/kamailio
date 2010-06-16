@@ -135,8 +135,6 @@ struct dns_rr{
 	struct dns_rr* next;
 	void* rdata; /**< depends on the type */
 	ticks_t expire; /**< = ttl + crt_time */
-	unsigned char err_flags; /**< if 0 everything is ok */
-
 };
 
 

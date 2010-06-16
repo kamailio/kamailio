@@ -2081,7 +2081,7 @@ error:
 
 
 
-/* gets the first non-expired, good record starting with record no
+/* gets the first non-expired record starting with record no
  * from the dns_hash_entry struct e
  * params:       e   - dns_hash_entry struct
  *               *no - it must contain the start record number (0 initially);
@@ -2126,9 +2126,6 @@ inline static struct dns_rr* dns_entry_get_rr(	struct dns_hash_entry* e,
 			((s_ticks_t)(now-rr->expire)>=0) /* expired rr */
 		)
 			continue;
-		if (rr->err_flags){ /* bad rr */
-			continue;
-		}
 		/* everything is ok now */
 		*no=n;
 		return rr;
@@ -2227,7 +2224,6 @@ retry:
 #endif
 			((e->ent_flags & DNS_FLAG_PERMANENT) == 0) &&
 			((s_ticks_t)(now-rr->expire)>=0) /* expired entry */) ||
-				(rr->err_flags) /* bad rr */ ||
 				(srv_marked(tried, idx)) ) /* already tried */{
 			r_sums[idx].r_sum=0; /* 0 sum, to skip over it */
 			r_sums[idx].rr=0;    /* debug: mark it as unused */
@@ -3689,10 +3685,9 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 						default:
 							rpc->add(ctx, "ss", "unknown", "?");
 					}
-					rpc->add(ctx, "dd",
+					rpc->add(ctx, "d",
 								(int)(s_ticks_t)(rr->expire-now)<0?-1:
-									TICKS_TO_S(rr->expire-now),
-								(int)rr->err_flags);
+									TICKS_TO_S(rr->expire-now));
 				}
 			}
 		}
@@ -3876,8 +3871,6 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 		rpc->printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
 						(s_ticks_t)(rr->expire-now)<0?-1 : 
 						TICKS_TO_S(rr->expire-now));
-		rpc->printf(ctx, "%srr error flags: %d", SPACE_FORMAT, 
-						rr->err_flags);
 	}
 }
 
