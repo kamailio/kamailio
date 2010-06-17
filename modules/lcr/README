@@ -850,8 +850,8 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 
 4.5.  from_any_gw([ip_addr])
 
-   Checks if request comes from IP address of any gateway. Only LCR
-   instances, where all gateways have IP address, are included in the
+   Checks if request comes from IP address and port of any gateway. Only
+   LCR instances, where all gateways have IP address, are included in the
    test. IP address to be checked is either taken from source IP address
    of the request or (if present) from ip_addr pseudo variable argument.
 
@@ -875,11 +875,11 @@ $var(lcr_id) = from_any_gw();
 
 4.6.  to_gw(lcr_id [, ip_addr])
 
-   Checks if in-dialog request goes to a gateway in LCR instance specified
-   by lcr_id argument. Fails if LCR instance includes one or more gateways
-   without IP address. IP address to be checked is either taken from
-   Request-URI hostpart or (if present) from ip_addr pseudo variable
-   argument.
+   Checks if in-dialog request goes to IP address and port of a gateway in
+   LCR instance specified by lcr_id argument. Fails if LCR instance
+   includes one or more gateways without IP address. IP address to be
+   checked is either taken from Request-URI hostpart or (if present) from
+   ip_addr pseudo variable argument.
 
    Returns 1 on success and -1 on failure and error.
 

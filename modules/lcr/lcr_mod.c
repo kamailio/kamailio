@@ -769,7 +769,7 @@ static pcre *reg_ex_comp(const char *pattern)
 
 
 /*
- * Compare gateways based on their IP address and port
+ * Compare gateways based on their IP address
  */
 static int comp_gws(const void *_g1, const void *_g2)
 {
@@ -778,9 +778,6 @@ static int comp_gws(const void *_g1, const void *_g2)
 
     if (g1->ip_addr < g2->ip_addr) return -1;
     if (g1->ip_addr > g2->ip_addr) return 1;
-
-    if (g1->port < g2->port) return -1;
-    if (g1->port > g2->port) return 1;
 
     return 0;
 }
@@ -2057,12 +2054,12 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * Checks if request comes from a gateway
+ * Checks if request comes from ip address of a gateway
  */
 static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
 		      unsigned int src_addr)
 {
-    struct gw_info *res, *gws;
+    struct gw_info *res, gw, *gws;
     int_str val;
 	
     gws = gw_pt[lcr_id];
@@ -2073,8 +2070,9 @@ static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
 	return -1;
     }
 
-    /* Search for gw address */
-    res = (struct gw_info *)bsearch(&src_addr, &(gws[1]), gws[0].ip_addr,
+    /* Search for gw ip address */
+    gw.ip_addr = src_addr;
+    res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr,
 				    sizeof(struct gw_info), comp_gws);
 
     /* Store flags and return result */
@@ -2092,7 +2090,8 @@ static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
 
 
 /*
- * Checks if request comes from a gateway taking src_address from reques.
+ * Checks if request comes from ip address of a gateway taking source
+ * address from request.
  */
 static int from_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 {
@@ -2118,7 +2117,8 @@ static int from_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 
 
 /*
- * Checks if request comes from a gateway taking source address from param.
+ * Checks if request comes from ip address of a gateway taking source
+ * address from param.
  */
 static int from_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
 {
@@ -2163,7 +2163,8 @@ static int from_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
 
 
 /*
- * Checks if request comes from any gateway taking source address from request.
+ * Checks if request comes from ip address of any gateway taking source
+ * address from request.
  */
 static int from_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
@@ -2181,7 +2182,8 @@ static int from_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * Checks if request comes from a gateway taking source address from param.
+ * Checks if request comes from ip address of a a gateway taking source
+ * address from param.
  */
 static int from_any_gw_1(struct sip_msg* _m, char* _addr, char* _s2)
 {
@@ -2221,12 +2223,12 @@ static int from_any_gw_1(struct sip_msg* _m, char* _addr, char* _s2)
 
 
 /*
- * Checks if in-dialog request goes to gateway
+ * Checks if in-dialog request goes to ip address of a gateway.
  */
 static int do_to_gw(struct sip_msg* _m, unsigned int lcr_id,
 		    unsigned int dst_addr)
 {
-    struct gw_info *res, *gws;
+    struct gw_info *res, gw, *gws;
 
     gws = gw_pt[lcr_id];
 
@@ -2236,8 +2238,9 @@ static int do_to_gw(struct sip_msg* _m, unsigned int lcr_id,
 	return -1;
     }
 
-    /* Search for gw address */
-    res = (struct gw_info *)bsearch(&dst_addr, &(gws[1]), gws[0].ip_addr,
+    /* Search for gw ip address */
+    gw.ip_addr = dst_addr;
+    res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr,
 				    sizeof(struct gw_info), comp_gws);
 
     /* Return result */
@@ -2252,7 +2255,8 @@ static int do_to_gw(struct sip_msg* _m, unsigned int lcr_id,
 
 
 /*
- * Checks if request goes to a gateway taking destination address from request.
+ * Checks if request goes to ip address of a gateway taking destination
+ * address from Request URI.
  */
 static int to_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 {
@@ -2294,7 +2298,8 @@ static int to_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 
 
 /*
- * Checks if request goes to a gateway, taking destination address from param.
+ * Checks if request goes to ip address of a gateway taking destination
+ * address from param.
  */
 static int to_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
 {
@@ -2339,7 +2344,8 @@ static int to_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
 
 
 /*
- * Checks if request goes to any gateway taking dst_addr from request.
+ * Checks if request goes to ip address of any gateway taking destination
+ * address from Request-URI.
  */
 static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
@@ -2364,6 +2370,7 @@ static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 	dst_addr = ip->u.addr32[0];
     }
 
+    /* Do test */
     for (i = 1; i <= lcr_count_param; i++) {
 	if (do_to_gw(_m, i, dst_addr) == 1) {
 	    return i;
@@ -2374,7 +2381,8 @@ static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * Checks if request goes to any gateway taking dst_addr from param.
+ * Checks if request goes to ip address of any gateway taking destination
+ * address from param.
  */
 static int to_any_gw_1(struct sip_msg* _m, char* _addr, char* _s2)
 {

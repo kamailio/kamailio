@@ -1105,7 +1105,7 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 		<function moreinfo="none">from_any_gw([ip_addr])</function>
 		</title>
 		<para>
-		Checks if request comes from IP address of
+		Checks if request comes from IP address and port of
 		any gateway.  Only LCR instances, where all gateways
 		have IP address, are included in the test.
 		IP address to be checked is either
@@ -1145,7 +1145,8 @@ $var(lcr_id) = from_any_gw();
 		<function moreinfo="none">to_gw(lcr_id [, ip_addr])</function>
 		</title>
 		<para>
-		Checks if in-dialog request goes to a gateway in LCR
+		Checks if in-dialog request goes to IP address and port
+		of a gateway in LCR
 		instance specified by lcr_id argument.  Fails if LCR
 		instance includes one or more gateways without IP
 		address.  IP address to be
