@@ -3868,7 +3868,8 @@ void dns_cache_print_entry(rpc_t* rpc, void* ctx, struct dns_hash_entry* e)
 				rpc->printf(ctx, "%sresource record: unknown",
 									SPACE_FORMAT);
 		}
-		rpc->printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
+		if ((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
+			rpc->printf(ctx, "%srr expires in (s): %d", SPACE_FORMAT,
 						(s_ticks_t)(rr->expire-now)<0?-1 : 
 						TICKS_TO_S(rr->expire-now));
 	}
