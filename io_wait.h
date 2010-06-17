@@ -45,6 +45,7 @@
  *  2007-11-29  support for write (POLLOUT); added io_watch_chg() (andrei)
  *  2008-02-04  POLLRDHUP & EPOLLRDHUP support (automatically enabled if POLLIN
  *               is set) (andrei)
+ *  2010-06-17  re-enabled & enhanced the EV_ERROR for kqueue (andrei)
  */
 
 
@@ -1097,31 +1098,55 @@ again:
 					r, n, h->kq_array[r].ident, (long)h->kq_array[r].udata,
 					h->kq_array[r].flags);
 #endif
-#if 0
-			if (unlikely(h->kq_array[r].flags & EV_ERROR)){
-				/* error in changes: we ignore it, it can be caused by
-				   trying to remove an already closed fd: race between
-				   adding something to the changes array, close() and
-				   applying the changes */
-				LOG(L_INFO, "INFO: io_wait_loop_kqueue: kevent error on "
-							"fd %ld: %s [%ld]\n", h->kq_array[r].ident,
+			if (unlikely((h->kq_array[r].flags & EV_ERROR) &&
+							(h->kq_array[r].data == EBADF ||
+							 h->kq_array[r].udata == 0))){
+				/* error in changes: we ignore it if it has to do with a
+				   bad fd or update==0. It can be caused by trying to remove an
+				   already closed fd: race between adding something to the
+				   changes array, close() and applying the changes.
+				   E.g. for ser tcp: tcp_main sends a fd to child fore reading
+				    => deletes it from the watched fds => the changes array
+					will contain an EV_DELETE for it. Before the changes
+					are applied (they are at the end of the main io_wait loop,
+					after all the fd events were processed), a CON_ERR sent
+					to tcp_main by a sender (send fail) is processed and causes
+					the fd to be closed. When the changes are applied =>
+					error for the EV_DELETE attempt of a closed fd.
+				*/
+				/*
+					example EV_ERROR for trying to delete a read watched fd,
+					that was already closed:
+					{
+						ident = 63,  [fd]
+						filter = -1, [EVFILT_READ]
+						flags = 16384, [EV_ERROR]
+						fflags = 0,
+						data = 9, [errno = EBADF]
+						udata = 0x0
+					}
+				*/
+				if (h->kq_array[r].data != EBADF)
+					LOG(L_INFO, "INFO: io_wait_loop_kqueue: kevent error on "
+							"fd %ld: %s [%ld]\n", (long)h->kq_array[r].ident,
 							strerror(h->kq_array[r].data),
 							(long)h->kq_array[r].data);
-			}else{ 
-#endif
+			}else{
 				fm=(struct fd_map*)h->kq_array[r].udata;
 				if (likely(h->kq_array[r].filter==EVFILT_READ)){
-					revents=POLLIN | 
-						(((int)!(h->kq_array[r].flags & EV_EOF)-1)&POLLHUP);
+					revents=POLLIN |
+						(((int)!(h->kq_array[r].flags & EV_EOF)-1)&POLLHUP) |
+						(((int)!(h->kq_array[r].flags & EV_ERROR)-1)&POLLERR);
 					while(fm->type && (fm->events & revents) && 
 							(handle_io(fm, revents, -1)>0) && repeat);
 				}else if (h->kq_array[r].filter==EVFILT_WRITE){
-					revents=POLLOUT | 
-						(((int)!(h->kq_array[r].flags & EV_EOF)-1)&POLLHUP);
+					revents=POLLOUT |
+						(((int)!(h->kq_array[r].flags & EV_EOF)-1)&POLLHUP) |
+						(((int)!(h->kq_array[r].flags & EV_ERROR)-1)&POLLERR);
 					while(fm->type && (fm->events & revents) && 
 							(handle_io(fm, revents, -1)>0) && repeat);
 				}
-			/*} */
+			}
 		}
 error:
 	return n;
