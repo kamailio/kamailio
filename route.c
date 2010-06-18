@@ -1272,6 +1272,8 @@ inline static int comp_str(int op, str* left, int rtype,
 				case SELECT_ST:
 				case RVE_ST:
 				case PVAR_ST:
+				case STRING_ST:
+				case STR_ST:
 					/* we need to compile the RE on the fly */
 					re=(regex_t*)pkg_malloc(sizeof(regex_t));
 					if (re==0){
@@ -1293,7 +1295,6 @@ inline static int comp_str(int op, str* left, int rtype,
 				case RE_ST:
 					ret=(regexec(r->re, left->s, 0, 0, 0)==0);
 					break;
-				case STRING_ST:
 				default:
 					LOG(L_CRIT, "BUG: comp_str: Bad operator type %d, "
 								"for ~= \n", rtype);
@@ -1630,17 +1631,46 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 	r_expop.str=*right;
 	switch(op){
 		case EQUAL_OP:
-		case MATCH_OP:
 			/* 0: try if ip or network (ip/mask) */
 			if (mk_net_str(&net, right) == 0) {
 				ret=(matchnet(ip, &net)==1);
 				break;
 			}
-			/* 1: compare with ip2str*/
-			/*
-			 ret=comp_string(op, ip_addr2a(ip), STR_ST, &r_expop, msg, ctx);
-			 if (likely(ret==1)) break;
-			*/
+			/* 2: resolve (name) & compare w/ all the ips */
+			he=resolvehost(right->s);
+			if (he==0){
+				DBG("comp_ip: could not resolve %s\n", r->str.s);
+			}else if (he->h_addrtype==ip->af){
+				for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
+					ret=(memcmp(ip->u.addr, *h, ip->len)==0);
+				}
+				if (ret==1) break;
+			}
+			/* 3: (slow) rev dns the address
+			 * and compare with all the aliases
+			 * !!??!! review: remove this? */
+			if (unlikely((received_dns & DO_REV_DNS) &&
+							((he=rev_resolvehost(ip))!=0) )){
+				/*  compare with primary host name */
+				ret=comp_string(op, he->h_name, STR_ST, &r_expop, msg, ctx);
+				/* compare with all the aliases */
+				for(h=he->h_aliases; (ret!=1) && (*h); h++){
+					ret=comp_string(op, *h, STR_ST, &r_expop, msg, ctx);
+				}
+			}else{
+				ret=0;
+			}
+			break;
+		case MATCH_OP:
+			/* 0: try if ip or network (ip/mask)
+			  (one should not use MATCH for that, but try to be nice)*/
+			if (mk_net_str(&net, right) == 0) {
+				ret=(matchnet(ip, &net)==1);
+				break;
+			}
+			/* 1: compare with ip2str (but only for =~)*/
+			ret=comp_string(op, ip_addr2a(ip), STR_ST, &r_expop, msg, ctx);
+			if (likely(ret==1)) break;
 			/* 2: resolve (name) & compare w/ all the ips */
 			he=resolvehost(right->s);
 			if (he==0){
