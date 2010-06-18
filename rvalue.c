@@ -2761,7 +2761,7 @@ static int fix_rval(struct rvalue* rv)
 			return fix_actions(rv->v.action);
 		case RV_SEL:
 			if (resolve_select(&rv->v.sel)<0){
-				BUG("Unable to resolve select\n");
+				ERR("Unable to resolve select\n");
 				print_select(&rv->v.sel);
 			}
 			return 0;
