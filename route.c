@@ -580,7 +580,9 @@ int fix_expr(struct expr* exp)
 					exp->r.re=re;
 					exp->r_type=RE_ST;
 				}else if (exp->r_type!=RE_ST && exp->r_type != AVP_ST
-						&& exp->r_type != SELECT_ST && exp->r_type!= RVE_ST
+						&& exp->r_type != SELECT_ST &&
+						exp->r_type != SELECT_UNFIXED_ST &&
+						exp->r_type!= RVE_ST
 						&& exp->r_type != PVAR_ST){
 					LOG(L_CRIT, "BUG: fix_expr : invalid type for match\n");
 					return E_BUG;
@@ -593,19 +595,21 @@ int fix_expr(struct expr* exp)
 					return ret;
 				}
 			}
-			if (exp->l_type==SELECT_O) {
+			if (exp->l_type==SELECT_UNFIXED_O) {
 				if ((ret=resolve_select(exp->l.select)) < 0) {
-					BUG("Unable to resolve select\n");
+					ERR("Unable to resolve select\n");
 					print_select(exp->l.select);
 					return ret;
 				}
+				exp->l_type=SELECT_O;
 			}
-			if ((exp->r_type==SELECT_O)||(exp->r_type==SELECT_ST)) {
+			if (exp->r_type==SELECT_UNFIXED_ST) {
 				if ((ret=resolve_select(exp->r.select)) < 0) {
-					BUG("Unable to resolve select\n");
-					print_select(exp->l.select);
+					ERR("Unable to resolve select\n");
+					print_select(exp->r.select);
 					return ret;
 				}
+				exp->r_type=SELECT_ST;
 			}
 			/* PVAR don't need fixing */
 			ret=0;
@@ -1744,6 +1748,10 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 
 	case PVAR_O:
 		ret=comp_pvar(e->op, e->l.param, e->r_type, &e->r, msg, h);
+		break;
+
+	case SELECT_UNFIXED_O:
+		BUG("unexpected unfixed select operand %d\n", e->l_type);
 		break;
 /*
 	default:
