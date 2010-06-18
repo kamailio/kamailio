@@ -148,7 +148,9 @@ struct io_wait_handler{
 	int flags;
 	struct fd_map* fd_hash;
 	int fd_no; /*  current index used in fd_array and the passed size for 
-				   ep_array & kq_array*/
+				   ep_array (for kq_array at least
+				    max(twice the size, kq_changes_size) should be
+				   be passed). */
 	int max_fd_no; /* maximum fd no, is also the size of fd_array,
 						       fd_hash  and ep_array*/
 	/* common stuff for POLL, SIGIO_RT and SELECT
@@ -170,6 +172,7 @@ struct io_wait_handler{
 	struct kevent* kq_array;   /* used for the eventlist*/
 	struct kevent* kq_changes; /* used for the changelist */
 	size_t kq_nchanges;
+	size_t kq_array_size;   /* array size */
 	size_t kq_changes_size; /* size of the changes array */
 #endif
 #ifdef HAVE_DEVPOLL
@@ -1115,7 +1118,7 @@ inline static int io_wait_loop_kqueue(io_wait_h* h, int t, int repeat)
 	do {
 again:
 		n=kevent(h->kq_fd, h->kq_changes, apply_changes,  h->kq_array,
-					h->fd_no, &tspec);
+					h->kq_array_size, &tspec);
 		if (unlikely(n==-1)){
 			if (unlikely(errno==EINTR)) goto again; /* signal, ignore it */
 			else {
@@ -1127,7 +1130,7 @@ again:
 				/* some of the FDs in kq_changes are bad (already closed)
 				   and there is not enough space in kq_array to return all
 				   of them back */
-				apply_changes = h->fd_no;
+				apply_changes = h->kq_array_size;
 				goto again;
 			}
 		}
