@@ -34,11 +34,10 @@
  *  2004-10-01  mk_net fixes bad network addresses now (andrei)
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** inernal ip addresses representation functions.
+ * @file ip_addr.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 
@@ -48,9 +47,11 @@
 #include "ip_addr.h"
 #include "dprint.h"
 #include "mem/mem.h"
+#include "resolve.h"
+#include "trim.h"
 
 
-struct net* mk_net(struct ip_addr* ip, struct ip_addr* mask)
+struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask)
 {
 	struct net* n;
 	int warning;
@@ -88,7 +89,7 @@ error:
 
 
 
-struct net* mk_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
+struct net* mk_new_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 {
 	struct ip_addr mask;
 	int r;
@@ -103,9 +104,132 @@ struct net* mk_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 	mask.af=ip->af;
 	mask.len=ip->len;
 	
-	return mk_net(ip, &mask);
+	return mk_new_net(ip, &mask);
 error:
 	return 0;
+}
+
+
+
+/** fills a net structure from an ip and a mask.
+ *
+ * This function will not print any error messages or allocate
+ * memory (as opposed to mk_new_net() above).
+ *
+ * @param n - destination net structure
+ * @param ip
+ * @param mask
+ * @return -1 on error (af mismatch), 0 on success
+ */
+int mk_net(struct net* n, struct ip_addr* ip, struct ip_addr* mask)
+{
+	int r;
+	
+	if (unlikely((ip->af != mask->af) || (ip->len != mask->len))) {
+		return -1;
+	}
+	n->ip=*ip;
+	n->mask=*mask;
+	/* fix the network part of the mask */
+	for (r=0; r<n->ip.len/4; r++) { /*ipv4 & ipv6 addresses are multiple of 4*/
+		n->ip.u.addr32[r] &= n->mask.u.addr32[r];
+	};
+	return 0;
+}
+
+
+
+/** fills a net structure from an ip and a bitlen.
+ *
+ * This function will not print any error messages or allocate
+ * memory (as opposed to mk_new_net_bitlen() above).
+ *
+ * @param n - destination net structure
+ * @param ip
+ * @param bitlen
+ * @return -1 on error (af mismatch), 0 on success
+ */
+int mk_net_bitlen(struct net* n, struct ip_addr* ip, unsigned int bitlen)
+{
+	struct ip_addr mask;
+	int r;
+	
+	if (unlikely(bitlen>ip->len*8))
+		/* bitlen too big */
+		return -1;
+	memset(&mask,0, sizeof(mask));
+	for (r=0;r<bitlen/8;r++) mask.u.addr[r]=0xff;
+	if (bitlen%8) mask.u.addr[r]=  ~((1<<(8-(bitlen%8)))-1);
+	mask.af=ip->af;
+	mask.len=ip->len;
+	
+	return mk_net(n, ip, &mask);
+}
+
+
+
+/** initializes a net structure from a string.
+ * @param dst - net structure that will be filled
+ * @param s - string of the form "ip", "ip/mask_len" or "ip/ip_mak".
+ * @return -1 on error, 0 on succes
+ */
+int mk_net_str(struct net* dst, str* s)
+{
+	struct ip_addr* t;
+	char* p;
+	struct ip_addr ip;
+	str addr;
+	str mask;
+	unsigned int bitlen;
+	
+	/* test for ip only */
+	t = str2ip(s);
+#ifdef USE_IPV6
+	if (unlikely(t == 0))
+		t = str2ip6(s);
+#endif /* USE_IPV6 */
+	if (likely(t))
+		return mk_net_bitlen(dst, t, t->len*8);
+	/* not a simple ip, maybe an ip/netmask pair */
+	p = q_memchr(s->s, '/', s->len);
+	if (likely(p)) {
+		addr.s = s->s;
+		addr.len = (int)(long)(p - s->s);
+		mask.s = p + 1;
+		mask.len = s->len - (addr.len + 1);
+		/* allow '/' enclosed by whitespace */
+		trim_trailing(&addr);
+		trim_leading(&mask);
+		t = str2ip(&addr);
+		if (likely(t)) {
+			/* it can be a number */
+			if (str2int(&mask, &bitlen) == 0)
+				return mk_net_bitlen(dst, t, bitlen);
+			ip = *t;
+			t = str2ip(&mask);
+			if (likely(t))
+				return mk_net(dst, &ip, t);
+			/* error */
+			return -1;
+		}
+#ifdef USE_IPV6
+		else {
+			t = str2ip6(&addr);
+			if (likely(t)) {
+				/* it can be a number */
+				if (str2int(&mask, &bitlen) == 0)
+					return mk_net_bitlen(dst, t, bitlen);
+				ip = *t;
+				t = str2ip6(&mask);
+				if (likely(t))
+					return mk_net(dst, &ip, t);
+				/* error */
+				return -1;
+			}
+		}
+#endif /* USE_IPV6 */
+	}
+	return -1;
 }
 
 

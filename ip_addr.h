@@ -240,8 +240,11 @@ struct socket_id{
 
 
 
-struct net* mk_net(struct ip_addr* ip, struct ip_addr* mask);
-struct net* mk_net_bitlen(struct ip_addr* ip, unsigned int bitlen);
+struct net* mk_new_net(struct ip_addr* ip, struct ip_addr* mask);
+struct net* mk_new_net_bitlen(struct ip_addr* ip, unsigned int bitlen);
+int mk_net(struct net* n, struct ip_addr* ip, struct ip_addr* mask);
+int mk_net_bitlen(struct net* n, struct ip_addr* ip, unsigned int bitlen);
+int mk_net_str(struct net* dst, str* s);
 
 void print_ip(char* prefix, struct ip_addr* ip, char* suffix);
 void stdout_print_ip(struct ip_addr* ip);

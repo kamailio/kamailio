@@ -2073,7 +2073,7 @@ exp_elem:
 				pkg_free(s_tmp.s);
 				if (ip_tmp) {
 					$$=mk_elem($2, $1, 0, NET_ST, 
-								mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
+								mk_new_net_bitlen(ip_tmp, ip_tmp->len*8) );
 				} else {
 					$$=mk_elem($2, $1, 0, RVE_ST, $3);
 				}
@@ -2113,19 +2113,19 @@ exp_elem2:
 */
 
 ipnet:
-	ip SLASH ip	{ $$=mk_net($1, $3); }
+	ip SLASH ip	{ $$=mk_new_net($1, $3); }
 	| ip SLASH NUMBER {
 		if (($3<0) || ($3>$1->len*8)) {
 			yyerror("invalid bit number in netmask");
 			$$=0;
 		} else {
-			$$=mk_net_bitlen($1, $3);
+			$$=mk_new_net_bitlen($1, $3);
 		/*
-			$$=mk_net($1, htonl( ($3)?~( (1<<(32-$3))-1 ):0 ) );
+			$$=mk_new_net($1, htonl( ($3)?~( (1<<(32-$3))-1 ):0 ) );
 		*/
 		}
 	}
-	| ip	{ $$=mk_net_bitlen($1, $1->len*8); }
+	| ip	{ $$=mk_new_net_bitlen($1, $1->len*8); }
 	| ip SLASH error { $$=0; yyerror("netmask (eg:255.0.0.0 or 8) expected"); }
 	;
 
