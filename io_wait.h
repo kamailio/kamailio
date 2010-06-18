@@ -627,7 +627,6 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 		goto error;
 	}
 	events=e->events;
-	unhash_fd_map(e);
 	
 	switch(h->poll_method){
 		case POLL_POLL:
@@ -647,7 +646,6 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 #endif
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
-			fix_fd_array;
 			/* the O_ASYNC flag must be reset all the time, the fd
 			 *  can be changed only if  O_ASYNC is reset (if not and
 			 *  the fd is a duplicate, you will get signals from the dup. fd
@@ -667,6 +665,7 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 								" failed: %s [%d]\n", strerror(errno), errno); 
 					goto error; 
 				} 
+			fix_fd_array; /* only on success */
 			break;
 #endif
 #ifdef HAVE_EPOLL
@@ -737,6 +736,7 @@ again_devpoll:
 					h->poll_method);
 			goto error;
 	}
+	unhash_fd_map(e); /* only on success */
 	h->fd_no--;
 	return 0;
 error:
@@ -808,14 +808,14 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 	
 	add_events=events & ~e->events;
 	del_events=e->events & ~events;
-	e->events=events;
 	switch(h->poll_method){
 		case POLL_POLL:
+			fd_array_chg(events
 #ifdef POLLRDHUP
-			/* listen to POLLRDHUP by default (if POLLIN) */
-			events|=((int)!(events & POLLIN) - 1) & POLLRDHUP;
+							/* listen to POLLRDHUP by default (if POLLIN) */
+							| (((int)!(events & POLLIN) - 1) & POLLRDHUP)
 #endif /* POLLRDHUP */
-			fd_array_chg(events);
+						);
 			break;
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
@@ -921,6 +921,8 @@ again_devpoll2:
 					LOG(L_ERR, "ERROR: io_watch_chg: re-adding fd to "
 								"/dev/poll failed: %s [%d]\n", 
 								strerror(errno), errno);
+					/* error re-adding the fd => mark it as removed/unhash */
+					unhash_fd_map(e);
 					goto error;
 				}
 				break;
@@ -931,6 +933,7 @@ again_devpoll2:
 					h->poll_method);
 			goto error;
 	}
+	e->events=events; /* only on success */
 	return 0;
 error:
 	return -1;
