@@ -6,6 +6,9 @@ $Id$
 sip-router 3.1 chages
 
 core:
+  - networks addresses support in ip comparisons (src_ip, dst_ip, to_ip)
+    with strings or rvalue expressions.
+    E.g.: $ip=10.0.0.0;  if (src_ip == $ip +"/8") ....
   - onreply_route {...} is now equivalent with onreply_route[0] {...}
   - global, per protocol blacklist ignore masks (via extended send_flags).
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).

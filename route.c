@@ -50,14 +50,15 @@
  *  		unless the operator is DIFF_OP (Miklos)
  *  2008-12-03  fixups for rvalues in assignments (andrei)
  *  2009-05-04  switched IF_T to rval_expr (andrei)
+ *  2010-06-18  ip comparison (comp_ip()) normalizes strings to
+ *              ip/netmask  (andrei)
  */
 
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** expression evaluation, route fixups and routing lists.
+ * @file route.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 #include <stdlib.h>
@@ -1213,7 +1214,8 @@ inline static int comp_str(int op, str* left, int rtype,
 				goto error;
 			}
 			break;
-		case STRING_ST:
+		case STRING_ST: /* strings are stored as {asciiz, len } */
+		case STR_ST:
 			right=&r->str;
 			break;
 		case NUMBER_ST:
@@ -1517,7 +1519,19 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 	char ** h;
 	int ret;
 	str tmp;
+	str* right;
+	struct net net;
+	union exp_op r_expop;
+	struct rvalue* rv;
+	struct rval_cache rv_cache;
+	avp_t* avp;
+	int_str val;
+	pv_value_t pval;
+	int destroy_pval;
 
+	right=0; /* warning fix */
+	rv=0;
+	destroy_pval=0;
 	ret=-1;
 	switch(rtype){
 		case NET_ST:
@@ -1531,66 +1545,145 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 				default:
 					goto error_op;
 			}
-			break;
-		case AVP_ST:
-		case STRING_ST:
-		case RE_ST:
-		case RVE_ST:
-		case SELECT_ST:
-			switch(op){
-				case EQUAL_OP:
-				case MATCH_OP:
-					/* 1: compare with ip2str*/
-					ret=comp_string(op, ip_addr2a(ip), rtype, r, msg, ctx);
-					if (likely(ret==1)) break;
-					/* 2: resolve (name) & compare w/ all the ips */
-					if (rtype==STRING_ST){
-						he=resolvehost(r->str.s);
-						if (he==0){
-							DBG("comp_ip: could not resolve %s\n",
-							    r->str.s);
-						}else if (he->h_addrtype==ip->af){
-							for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
-								ret=(memcmp(ip->u.addr, *h, ip->len)==0);
-							}
-							if (ret==1) break;
-						}
-					}
-					/* 3: (slow) rev dns the address
-					* and compare with all the aliases
-					* !!??!! review: remove this? */
-					if (unlikely((received_dns & DO_REV_DNS) && 
-							((he=rev_resolvehost(ip))!=0) )){
-						/*  compare with primary host name */
-						ret=comp_string(op, he->h_name, rtype, r, msg, ctx);
-						/* compare with all the aliases */
-						for(h=he->h_aliases; (ret!=1) && (*h); h++){
-							ret=comp_string(op, *h, rtype, r, msg, ctx);
-						}
-					}else{
-						ret=0;
-					}
-					break;
-				case DIFF_OP:
-					ret=(comp_ip(EQUAL_OP, ip, rtype, r, msg, ctx) > 0) ?0:1;
-					break;
-				default:
-					goto error_op;
-			}
-			break;
+			return ret; /* exit directly */
 		case MYSELF_ST: /* check if it's one of our addresses*/
 			tmp.s=ip_addr2a(ip);
 			tmp.len=strlen(tmp.s);
 			ret=check_self_op(op, &tmp, 0);
+			return ret;
+		case STRING_ST:
+		case STR_ST:
+			right=&r->str;
 			break;
+		case RVE_ST:
+			rval_cache_init(&rv_cache);
+			rv=rval_expr_eval(ctx, msg, r->param);
+			if (unlikely (rv==0))
+				return (op==DIFF_OP); /* not found or error*/
+			if (unlikely(rval_get_tmp_str(ctx, msg, &tmp, rv, 0, &rv_cache)
+							< 0)){
+				goto error;
+			}
+			right = &tmp;
+			break;
+		case AVP_ST:
+			/* we can still have AVP_ST due to the RVE optimisations
+			   (if a RVE == $avp => rve wrapper removed => pure avp) */
+			avp = search_avp_by_index(r->attr->type, r->attr->name,
+										&val, r->attr->index);
+			if (likely(avp && (avp->flags & AVP_VAL_STR))) right = &val.s;
+			else return (op == DIFF_OP);
+			break;
+		case SELECT_ST:
+			/* see AVP_ST comment and s/AVP_ST/SELECT_ST/ */
+			ret = run_select(&tmp, r->select, msg);
+			if (unlikely(ret != 0))
+				return (op == DIFF_OP); /* Not found or error */
+			right = &tmp;
+			break;
+		case PVAR_ST:
+			/* see AVP_ST comment and s/AVP_ST/PVAR_ST/ */
+			memset(&pval, 0, sizeof(pv_value_t));
+			if (unlikely(pv_get_spec_value(msg, r->param, &pval)!=0)){
+				return (op == DIFF_OP); /* error, not found => false */
+			}
+			destroy_pval=1;
+			if (likely(pval.flags & PV_VAL_STR)){
+				right=&pval.rs;
+			}else{
+				pv_value_destroy(&pval);
+				return (op == DIFF_OP); /* not found or invalid type */
+			}
+			break;
+		case RE_ST:
+			if (unlikely(op != MATCH_OP))
+				goto error_op;
+			/* 1: compare with ip2str*/
+			ret=comp_string(op, ip_addr2a(ip), rtype, r, msg, ctx);
+			if (likely(ret==1))
+				return ret;
+			/* 3: (slow) rev dns the address
+			* and compare with all the aliases
+			* !!??!! review: remove this? */
+			if (unlikely((received_dns & DO_REV_DNS) &&
+				((he=rev_resolvehost(ip))!=0) )){
+				/*  compare with primary host name */
+				ret=comp_string(op, he->h_name, rtype, r, msg, ctx);
+				/* compare with all the aliases */
+				for(h=he->h_aliases; (ret!=1) && (*h); h++){
+					ret=comp_string(op, *h, rtype, r, msg, ctx);
+				}
+			}else{
+				ret=0;
+			}
+			return ret;
 		default:
 			LOG(L_CRIT, "BUG: comp_ip: invalid type for "
 						" src_ip or dst_ip (%d)\n", rtype);
 			ret=-1;
 	}
+	/* here "right" is set to the str we compare with */
+	r_expop.str=*right;
+	switch(op){
+		case EQUAL_OP:
+		case MATCH_OP:
+			/* 0: try if ip or network (ip/mask) */
+			if (mk_net_str(&net, right) == 0) {
+				ret=(matchnet(ip, &net)==1);
+				break;
+			}
+			/* 1: compare with ip2str*/
+			/*
+			 ret=comp_string(op, ip_addr2a(ip), STR_ST, &r_expop, msg, ctx);
+			 if (likely(ret==1)) break;
+			*/
+			/* 2: resolve (name) & compare w/ all the ips */
+			he=resolvehost(right->s);
+			if (he==0){
+				DBG("comp_ip: could not resolve %s\n", r->str.s);
+			}else if (he->h_addrtype==ip->af){
+				for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
+					ret=(memcmp(ip->u.addr, *h, ip->len)==0);
+				}
+				if (ret==1) break;
+			}
+			/* 3: (slow) rev dns the address
+			 * and compare with all the aliases
+			 * !!??!! review: remove this? */
+			if (unlikely((received_dns & DO_REV_DNS) &&
+							((he=rev_resolvehost(ip))!=0) )){
+				/*  compare with primary host name */
+				ret=comp_string(op, he->h_name, STR_ST, &r_expop, msg, ctx);
+				/* compare with all the aliases */
+				for(h=he->h_aliases; (ret!=1) && (*h); h++){
+					ret=comp_string(op, *h, STR_ST, &r_expop, msg, ctx);
+				}
+			}else{
+				ret=0;
+			}
+			break;
+		case DIFF_OP:
+			ret=(comp_ip(EQUAL_OP, ip, STR_ST, &r_expop, msg, ctx) > 0)?0:1;
+		break;
+		default:
+			goto error_op;
+	}
+	if (rv){
+		rval_cache_clean(&rv_cache);
+		rval_destroy(rv);
+	}
+	if (destroy_pval)
+		pv_value_destroy(&pval);
 	return ret;
 error_op:
-	LOG(L_CRIT, "BUG: comp_ip: invalid operator %d\n", op);
+	LOG(L_CRIT, "BUG: comp_ip: invalid operator %d for type %d\n", op, rtype);
+error:
+	if (unlikely(rv)){
+		rval_cache_clean(&rv_cache);
+		rval_destroy(rv);
+	}
+	if (destroy_pval)
+		pv_value_destroy(&pval);
 	return -1;
 }
 
