@@ -499,7 +499,7 @@ again2:
 		case POLL_KQUEUE:
 			if (likely( events & POLLIN)){
 				if (unlikely(kq_ev_change(h, fd, EVFILT_READ, EV_ADD, e)==-1))
-				goto error;
+					goto error;
 			}
 			if (unlikely( events & POLLOUT)){
 				if (unlikely(kq_ev_change(h, fd, EVFILT_WRITE, EV_ADD, e)==-1))
@@ -507,8 +507,8 @@ again2:
 					if (likely(events & POLLIN)){
 						kq_ev_change(h, fd, EVFILT_READ, EV_DELETE, 0);
 					}
+					goto error;
 				}
-				goto error;
 			}
 			break;
 #endif
