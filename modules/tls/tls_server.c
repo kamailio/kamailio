@@ -226,9 +226,13 @@ static void tls_dump_cert_info(char* s, X509* cert)
  * @param c - tcp connection with tls (extra_data must be a filled
  *            tcp_extra_data structure). The state must be S_TLS_ACCEPTING.
  * @param error  set to the error reason (SSL_ERROR_*).
+ *            Note that it can be SSL_ERROR_NONE while the return is < 0
+ *            ("internal" error, not at the SSL level, see below).
  * @return >=1 on success, 0 and <0 on error. 0 means the underlying SSL
- *           connection was closed/shutdown. < 0 is also returned for
- *           WANT_READ or WANT_WRITE 
+ *           connection was closed/shutdown.  < 0 is returned for any
+ *           SSL_ERROR (including  WANT_READ or WANT_WRITE), but also
+ *           for internal non SSL related errors (in this case -2 is
+ *           returned and error==SSL_ERROR_NONE).
  *
  */
 int tls_accept(struct tcp_connection *c, int* error)
@@ -239,7 +243,8 @@ int tls_accept(struct tcp_connection *c, int* error)
 	struct tls_extra_data* tls_c;
 	int tls_log;
 
-	if (LOW_MEM_NEW_CONNECTION_TEST()){
+	*error = SSL_ERROR_NONE;
+	if (unlikely(LOW_MEM_NEW_CONNECTION_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		goto err;
@@ -250,7 +255,6 @@ int tls_accept(struct tcp_connection *c, int* error)
 	
 	if (unlikely(tls_c->state != S_TLS_ACCEPTING)) {
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
-		/* Not critical */
 		goto err;
 	}
 	ret = SSL_accept(ssl);
@@ -283,18 +287,23 @@ int tls_accept(struct tcp_connection *c, int* error)
 	}
 	return ret;
 err:
-	return -1;
+	/* internal non openssl related errors */
+	return -2;
 }
 
 
-/** wrapper around SSL_connect, usin SSL return convention.
+/** wrapper around SSL_connect, using SSL return convention.
  * It will also log critical errors and certificate debugging info.
  * @param c - tcp connection with tls (extra_data must be a filled
  *            tcp_extra_data structure). The state must be S_TLS_CONNECTING.
  * @param error  set to the error reason (SSL_ERROR_*).
+ *            Note that it can be SSL_ERROR_NONE while the return is < 0
+ *            ("internal" error, not at the SSL level, see below).
  * @return >=1 on success, 0 and <0 on error. 0 means the underlying SSL
- *           connection was closed/shutdown. < 0 is also returned for
- *           WANT_READ or WANT_WRITE 
+ *           connection was closed/shutdown. < 0 is returned for any
+ *           SSL_ERROR (including  WANT_READ or WANT_WRITE), but also
+ *           for internal non SSL related errors (in this case -2 is
+ *           returned and error==SSL_ERROR_NONE).
  *
  */
 int tls_connect(struct tcp_connection *c, int* error)
@@ -305,7 +314,8 @@ int tls_connect(struct tcp_connection *c, int* error)
 	struct tls_extra_data* tls_c;
 	int tls_log;
 
-	if (LOW_MEM_NEW_CONNECTION_TEST()){
+	*error = SSL_ERROR_NONE;
+	if (unlikely(LOW_MEM_NEW_CONNECTION_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		goto err;
@@ -314,10 +324,8 @@ int tls_connect(struct tcp_connection *c, int* error)
 	tls_c=(struct tls_extra_data*)c->extra_data;
 	ssl=tls_c->ssl;
 	
-	*error = SSL_ERROR_NONE;
 	if (unlikely(tls_c->state != S_TLS_CONNECTING)) {
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
-		/* Not critical */
 		goto err;
 	}
 	ret = SSL_connect(ssl);
@@ -352,7 +360,8 @@ int tls_connect(struct tcp_connection *c, int* error)
 	}
 	return ret;
 err:
-	return -1;
+	/* internal non openssl related errors */
+	return -2;
 }
 
 
@@ -598,16 +607,24 @@ redo_wr:
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if (unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
-		} else
+		} else {
+			/* tls_connect failed/needs more IO */
+			if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE))
+				goto error;
 			err_src = "TLS connect:";
+		}
 	} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 		n = tls_accept(c, &ssl_error);
 		if (unlikely(n>=1)) {
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if (unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
-		} else
+		} else {
+			/* tls_accept failed/needs more IO */
+			if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE))
+				goto error;
 			err_src = "TLS accept:";
+		}
 	} else {
 		n = SSL_write(ssl, buf + offs, len - offs);
 		if (unlikely(n <= 0))
@@ -630,6 +647,8 @@ redo_wr:
 	if (unlikely(n <= 0)){
 		switch(ssl_error) {
 			case SSL_ERROR_NONE:
+				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				goto error;
 				break;
 			case SSL_ERROR_ZERO_RETURN:
 				/* SSL EOF */
@@ -908,6 +927,11 @@ redo_read:
 				if (unlikely(n>=1)) {
 					n = SSL_read(ssl, r->pos, bytes_free);
 				} else {
+					/* tls_connect failed/needs more IO */
+					if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE)) {
+						lock_release(&c->write_lock);
+						goto error;
+					}
 					err_src = "TLS connect:";
 					goto ssl_read_skipped;
 				}
@@ -916,6 +940,11 @@ redo_read:
 				if (unlikely(n>=1)) {
 					n = SSL_read(ssl, r->pos, bytes_free);
 				} else {
+					/* tls_accept failed/needs more IO */
+					if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE)) {
+						lock_release(&c->write_lock);
+						goto error;
+					}
 					err_src = "TLS accept:";
 					goto ssl_read_skipped;
 				}
@@ -954,6 +983,10 @@ ssl_read_skipped:
 	lock_release(&c->write_lock);
 	switch(ssl_error) {
 		case SSL_ERROR_NONE:
+			if (unlikely(n < 0)) {
+				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				goto error;
+			}
 			break;
 		case SSL_ERROR_ZERO_RETURN:
 			/* SSL EOF */
@@ -967,7 +1000,8 @@ ssl_read_skipped:
 			if (unlikely(rd.pos != rd.used)) {
 				/* data still in the read buffer */
 				BUG("SSL_ERROR_WANT_READ but data still in"
-						" the rbio (%d bytes)\n", rd.used - rd.pos);
+						" the rbio (%p, %d bytes at %d)\n", rd.buf,
+						rd.used - rd.pos, rd.pos);
 				goto bug;
 			}
 			if (unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0))
@@ -1029,9 +1063,9 @@ ssl_read_skipped:
 			BUG("unexpected value (n = %d)\n", n);
 		else {
 			if (unlikely(n < bytes_free))
-				BUG("read buffer not exhausted (rbio still has %d bytes,"
+				BUG("read buffer not exhausted (rbio %p still has %d bytes,"
 						"last SSL_read %d / %d)\n",
-						rd.used - rd.pos, n, bytes_free);
+						rd.buf, rd.used - rd.pos, n, bytes_free);
 			/* n <= bytes_free */
 			/*  queue read data if not fully consumed by SSL_read()
 			 * (very unlikely situation)
