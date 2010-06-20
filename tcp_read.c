@@ -137,8 +137,8 @@ static ticks_t tcp_reader_prev_ticks;
  *                           RD_CONN_FORCE_EOF.
  *             RD_CONN_REPEAT_READ - the read should be repeated immediately
  *                                   (used only by the tls code for now).
- *     Note: RD_CONN_SHORT_READ & RD_CONN_EOF must be cleared
- *           before calling this function.
+ *     Note: RD_CONN_SHORT_READ & RD_CONN_EOF _are_ not cleared internally,
+ *           so one should clear them before calling this function.
  * @return number of bytes read, 0 on EOF or -1 on error,
  * on EOF it also sets c->state to S_CONN_EOF.
  * (to distinguish from reads that would block which could return 0)
@@ -955,14 +955,14 @@ again:
 							con, con->id, atomic_get(&con->refcnt));
 				goto con_error;
 			}
-#ifdef USE_TLS
-repeat_1st_read:
-#endif /* USE_TLS */
 			/* if we received the fd there is most likely data waiting to
 			 * be read => process it first to avoid extra sys calls */
 			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) &&
 						!(con->flags & F_CONN_OOB_DATA))? RD_CONN_FORCE_EOF
 						:0;
+#ifdef USE_TLS
+repeat_1st_read:
+#endif /* USE_TLS */
 			resp=tcp_read_req(con, &n, &read_flags);
 			if (unlikely(resp<0)){
 				/* some error occured, but on the new fd, not on the tcp
@@ -1011,9 +1011,6 @@ repeat_1st_read:
 							con, con->id, atomic_get(&con->refcnt));
 				goto read_error;
 			}
-#ifdef USE_TLS
-repeat_read:
-#endif /* USE_TLS */
 #ifdef POLLRDHUP
 			read_flags=(((events & POLLRDHUP) |
 							(con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)))
@@ -1021,6 +1018,9 @@ repeat_read:
 #else /* POLLRDHUP */
 			read_flags=0;
 #endif /* POLLRDHUP */
+#ifdef USE_TLS
+repeat_read:
+#endif /* USE_TLS */
 			resp=tcp_read_req(con, &ret, &read_flags);
 			if (unlikely(resp<0)){
 read_error:
