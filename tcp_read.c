@@ -1011,13 +1011,13 @@ repeat_1st_read:
 							con, con->id, atomic_get(&con->refcnt));
 				goto read_error;
 			}
+			read_flags=((
 #ifdef POLLRDHUP
-			read_flags=(((events & POLLRDHUP) |
+						(events & POLLRDHUP) |
+#endif /* POLLRDHUP */
+						(events & (POLLHUP|POLLERR)) |
 							(con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)))
 						&& !(events & POLLPRI))? RD_CONN_FORCE_EOF: 0;
-#else /* POLLRDHUP */
-			read_flags=0;
-#endif /* POLLRDHUP */
 #ifdef USE_TLS
 repeat_read:
 #endif /* USE_TLS */
