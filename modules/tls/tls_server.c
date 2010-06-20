@@ -792,22 +792,19 @@ int tls_1st_send_f(int fd, struct tcp_connection *c,
  *                              all the bytes in the socket read buffer.
  *                             RD_CONN_EOF if EOF detected (0 bytes read)
  *                              or forced via RD_CONN_FORCE_EOF.
- *                             RD_CONN_RETRY_READ  if this function should
+ *                             RD_CONN_REPEAT_READ  if this function should
  *                              be called again (e.g. has some data
  *                              buffered internally that didn't fit in
  *                              tcp_req).
- *                     Note: RD_CONN_SHORT_READ & RD_CONN_EOF must be cleared
- *                           before calling this function.
- * used to signal a seen or "forced" EOF on the
- *     connection (when it is known that no more data will come after the
- *     current socket buffer is emptied )=> return/signal EOF on the first
- *     short read (=> don't use it on POLLPRI, as OOB data will cause short
- *      reads even if there are still remaining bytes in the socket buffer)
- * return number of bytes read, 0 on EOF or -1 on error,
- * on EOF it also sets c->state to S_CONN_EOF.
- * sets also r->error.
+ *                     Note: RD_CONN_SHORT_READ & RD_CONN_EOF should be cleared
+ *                           before calling this function when there is new
+ *                           data (e.g. POLLIN), but not if the called is
+ *                           retried because of RD_CONN_REPEAT_READ and there
+ *                           is no information about the socket having more
+ *                           read data available.
  * @return bytes decrypted on success, -1 on error (it also sets some
- *         tcp connection flags)
+ *         tcp connection flags and might set c->state and r->error on
+ *         EOF or error).
  */
 int tls_read_f(struct tcp_connection* c, int* flags)
 {
@@ -844,13 +841,13 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	   If it's != 0 is changed only on destroy. It's not possible to have
 	   parallel reads.*/
 	tls_c = c->extra_data;
-redo_read:
 	bytes_free = c->req.b_size - (int)(r->pos - r->buf);
 	if (unlikely(bytes_free == 0)) {
 		ERR("Buffer overrun, dropping\n");
 		r->error = TCP_REQ_OVERRUN;
 		return -1;
 	}
+redo_read:
 	/* if data queued from a previous read(), use it (don't perform
 	 * a real read()).
 	*/
@@ -872,23 +869,23 @@ redo_read:
 		}
 		/* real read() */
 		tls_mbuf_init(&rd, rd_buf, sizeof(rd_buf));
-		/* read() only if no SSL_PENDING (bytes available for immediate
-		   read inside the SSL context */
-		if (likely(!(tls_c->flags & F_TLS_CON_SSL_PENDING))) {
+		/* read() only if no previously detected EOF, or previous
+		   short read (which means the socket buffer was emptied) */
+		if (likely(!(*flags & (RD_CONN_EOF|RD_CONN_SHORT_READ)))) {
 			/* don't read more then the free bytes in the tcp req buffer */
 			read_size = MIN_unsigned(rd.size, bytes_free);
 			bytes_read = tcp_read_data(c->fd, c, (char*)rd.buf, read_size,
 										flags);
-			if (unlikely(bytes_read <= 0)) {
-				if (likely(bytes_read == 0))
-					goto end;
-				else
+			/* try SSL_read even on 0 bytes read, it might have
+			   internally buffered data */
+			if (unlikely(bytes_read < 0)) {
 					goto error;
 			}
 			rd.used = bytes_read;
 		}
 	}
 	
+continue_ssl_read:
 	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 	ssl_error = SSL_ERROR_NONE;
 	err_src = "TLS read:";
@@ -917,11 +914,7 @@ redo_read:
 			if (unlikely(flush_flags & F_BUFQ_ERROR_FLUSH))
 				err_src = "TLS write:";
 		}
-		if (likely((rd.pos != rd.used ||
-						(tls_c->flags & F_TLS_CON_SSL_PENDING)) &&
-					ssl_error == SSL_ERROR_NONE)) {
-			/* reset the SSL_PENDING flag */
-			tls_c->flags &= ~F_TLS_CON_SSL_PENDING;
+		if (likely(ssl_error == SSL_ERROR_NONE)) {
 			if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
 				n = tls_connect(c, &ssl_error);
 				if (unlikely(n>=1)) {
@@ -953,6 +946,54 @@ redo_read:
 				   buffer */
 				n = SSL_read(ssl, r->pos, bytes_free);
 			}
+			/** handle SSL_read() return.
+			 *  There are 3 main cases, each with several sub-cases, depending
+			 *  on whether or not the output buffer was filled, if there
+			 *  is still unconsumed input data in the input buffer (rd)
+			 *  and if there is "cached" data in the internal openssl
+			 *  buffers.
+			 *  0. error (n<=0):
+			 *     SSL_ERROR_WANT_READ - input data fully
+			 *       consumed, no more returnable cached data inside openssl
+			 *       => exit.
+			 *     SSL_ERROR_WANT_WRITE - should never happen (the write
+			 *       buffer is big enough to handle any re-negociation).
+			 *     SSL_ERROR_ZERO_RETURN - ssl level shutdown => exit.
+			 *    other errors are unexpected.
+			 * 1. output buffer filled (n == bytes_free):
+			 *    1i.  - still unconsumed input, nothing buffered by openssl
+			 *    1ip. - unconsumed input + buffered data by openssl (pending
+			             on the next SSL_read).
+			 *    1p.  - completely consumed input, buffered data internally
+			 *            by openssl (pending).
+			 *           Likely to happen, about the only case when
+			 *           SSL_pending() could be used (but only if readahead=0).
+			 *    1f.  - consumed input, no buffered data.
+			 * 2. output buffer not fully filled (n < bytes_free):
+			 *     2i. - still unconsumed input, nothing buffered by openssl.
+			 *           This can appear if SSL readahead is 0 (SSL_read()
+			 *           tries to get only 1 record from the input).
+			 *     2ip. - unconsumed input and buffered data by openssl.
+			 *            Unlikely to happen (e.g. readahead is 1, more
+			 *            records are buffered internally by openssl, but
+			 *            there was not enough space for buffering the whole
+			 *            input).
+			 *     2p  - consumed input, but buffered data by openssl.
+			 *            It happens especially when readahead is 1.
+			 *     2f.  - consumed input, no buffered data.
+			 *
+			 * One should repeat SSL_read() until and error is detected
+			 *  (0*) or the input and internal ssl buffers are fully consumed
+			 *  (1f or 2f). However in general is not possible to see if
+			 *  SSL_read() could return more data. SSL_pending() has very
+			 *  limited usability (basically it would return !=0 only if there
+			 *  was no enough space in the output buffer and only if this did
+			 *  not happen at a record boundary).
+			 * The solution is to repeat SSL_read() until error or until
+			 *  the output buffer is filled (0* or 1*).
+			 *  In the later case, this whole function should be called again
+			 *  once there is more output space (set RD_CONN_REPEAT_READ).
+			 */
 			if (unlikely(n <= 0)) {
 				ssl_error = SSL_get_error(ssl, n);
 				err_src = "TLS read:";
@@ -961,10 +1002,23 @@ redo_read:
 				ssl_error = SSL_ERROR_NONE;
 				r->pos += n;
 				ssl_read += n;
+				bytes_free -=n;
+#if 0
+				/* SSL_pending() can be used only if readahead==0 and only
+				   if the whole output buffer was filled => useless, rely
+				   on repeating SSL_read() until WANT_READ */
 				if (unlikely(SSL_pending(ssl)>0)) {
+					/* SSL_pending() will return how much bytes
+					   in the _current_ record did not fit in the buffer
+					   provided to the latest SSL_read(). It will return
+					   _0_ if the whole record was read, even if
+					   openssl has more records buffered (readahead=1). */
 					tls_c->flags |= F_TLS_CON_SSL_PENDING;
+					/* there is more data which didn't fit in the provided
+					   buffer => ask for a repeat */
 					*flags |= RD_CONN_REPEAT_READ;
 				}
+#endif
 			}
 ssl_read_skipped:
 			;
@@ -995,7 +1049,6 @@ ssl_read_skipped:
 		case SSL_ERROR_WANT_READ:
 			/* reset the SSL_PENDING flag (in case we end here due to
 			   a failed write buffer flush) */
-			tls_c->flags &= ~F_TLS_CON_SSL_PENDING;
 			/* needs to read more data */
 			if (unlikely(rd.pos != rd.used)) {
 				/* data still in the read buffer */
@@ -1004,11 +1057,13 @@ ssl_read_skipped:
 						rd.used - rd.pos, rd.pos);
 				goto bug;
 			}
-			if (unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0))
+			if (unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0) &&
+							bytes_free){
 				/* there might still be data to read and there is space
 				   to decrypt it in tcp_req (no byte has been written into
 				    tcp_req in this case) */
 				goto redo_read;
+			}
 			goto end; /* no more data to read */
 		case SSL_ERROR_WANT_WRITE:
 			/* write buffer too small, nothing written */
@@ -1021,13 +1076,13 @@ ssl_read_skipped:
 			   and the call would block in connect().
 			   (not possible in our case) */
 			BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
-			break;
+			goto bug;
 		case SSL_ERROR_WANT_ACCEPT:
 			/* only if the underlying BIO is not yet connected
 			   and call would block in accept()
 			   (not possible in our case) */
 			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
-			break;
+			goto bug;
 #endif
 		case SSL_ERROR_WANT_X509_LOOKUP:
 			/* can only appear on client application and it indicates that
@@ -1051,24 +1106,31 @@ ssl_read_skipped:
 			BUG("unexpected SSL error %d\n", ssl_error);
 			goto bug;
 	}
+	if (unlikely(n < 0)) {
+		/* here n should always be >= 0 */
+		BUG("unexpected value (n = %d)\n", n);
+		goto bug;
+	}
 	if (unlikely(rd.pos != rd.used)) {
 		/* encrypted data still in the read buffer (SSL_read() did not
 		   consume all of it) */
-		/* if (n< bytes_free) then not a full record read yet to get all
-		        the requested bytes (unlikely, since openssl should buffer
-		        it internally in this case).
-		   else more data, but no space to store it => queue read data? */
 		if (unlikely(n < 0))
 			/* here n should always be >= 0 */
 			BUG("unexpected value (n = %d)\n", n);
 		else {
-			if (unlikely(n < bytes_free))
-				BUG("read buffer not exhausted (rbio %p still has %d bytes,"
-						"last SSL_read %d / %d)\n",
-						rd.buf, rd.used - rd.pos, n, bytes_free);
-			/* n <= bytes_free */
-			/*  queue read data if not fully consumed by SSL_read()
-			 * (very unlikely situation)
+			if (unlikely(bytes_free != 0)) {
+				/* 2i or 2ip: unconsumed input and output buffer not filled =>
+				  retry ssl read (SSL_read() will read will stop at 
+				  record boundaries, unless readahead==1).
+				  No tcp_read() is attempted, since that would reset the
+				  current no-yet-consumed input data.
+				 */
+				goto continue_ssl_read;
+			}
+			/* 1i or 1ip: bytes_free == 0
+			   (unconsumed input, but filled output  buffer) =>
+			    queue read data, and exit asking for repeating the call
+			    once there is some space in the output buffer.
 			 */
 			if (likely(!enc_rd_buf)) {
 				enc_rd_buf = shm_malloc(sizeof(*enc_rd_buf) -
@@ -1084,9 +1146,9 @@ ssl_read_skipped:
 				enc_rd_buf->size = rd.used - rd.pos;
 				memcpy(enc_rd_buf->buf, rd.buf + rd.pos,
 										enc_rd_buf->size);
-			} else if ((enc_rd_buf->buf + enc_rd_buf->pos) == rd.buf)
+			} else if ((enc_rd_buf->buf + enc_rd_buf->pos) == rd.buf) {
 				enc_rd_buf->pos += rd.pos;
-			else {
+			} else {
 				BUG("enc_rd_buf->buf = %p, pos = %d, rd_buf.buf = %p\n",
 						enc_rd_buf->buf, enc_rd_buf->pos, rd.buf);
 				goto bug;
@@ -1099,12 +1161,31 @@ ssl_read_skipped:
 			enc_rd_buf = 0;
 			*flags |= RD_CONN_REPEAT_READ;
 		}
-	} else if (n < bytes_free && n > 0 &&
-				((*flags & (RD_CONN_EOF|RD_CONN_SHORT_READ)) == 0)) {
-		/* still space in the tcp unenc. req. buffer, no SSL_read error,
-		   not a short read and not an EOF (possible more data in
-		   the socket buffer) => redo read*/
-		goto redo_read;
+	} else if (bytes_free != 0) {
+		/*  2f or 2p: input fully consumed (rd.pos == rd.used),
+		    output buffer not filled, still possible to have pending
+		    data buffered by openssl */
+		if (unlikely((*flags & (RD_CONN_EOF|RD_CONN_SHORT_READ)) == 0)) {
+			/* still space in the tcp unenc. req. buffer, no SSL_read error,
+			   not a short read and not an EOF (possible more data in
+			   the socket buffer) => try a new tcp read too */
+			goto redo_read;
+		} else {
+			/* don't tcp_read() anymore, but there might still be data
+			   buffered internally by openssl (e.g. if readahead==1) =>
+			   retry SSL_read() with the current full input buffer
+			   (if no more internally SSL buffered data => WANT_READ => exit).
+			 */
+			goto continue_ssl_read;
+		}
+	} else {
+		/*   1p or 1f: rd.pos == rd.used && bytes_free == 0
+			 (input fully consumed && output buffer filled) */
+		/* ask for a repeat when there is more buffer space
+		   (there is no definitive way to know if ssl doesn't still have
+		    some internal buffered data until we get WANT_READ, see
+			SSL_read() comment above) */
+		*flags |= RD_CONN_REPEAT_READ;
 	}
 	
 end:
@@ -1112,6 +1193,7 @@ end:
 		shm_free(enc_rd_buf);
 	return ssl_read;
 ssl_eof:
+	/* behave as an EOF would have been received at the tcp level */
 	if (enc_rd_buf)
 		shm_free(enc_rd_buf);
 	c->state = S_CONN_EOF;

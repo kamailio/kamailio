@@ -50,7 +50,6 @@ struct tls_rd_buf {
 
 /* tls conn flags */
 #define F_TLS_CON_WR_WANTS_RD 1 /* write wants read */
-#define F_TLS_CON_SSL_PENDING 2 /* bytes buffered inside the SSL context */
 
 struct tls_extra_data {
 	tls_domains_cfg_t* cfg; /* Configuration used for this connection */
