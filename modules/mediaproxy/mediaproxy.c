@@ -1733,7 +1733,7 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id, ice_candidate_data *ice_da
         }
     }
 
-    for (i=0, j=1; i<session.stream_count && j<len; i++) {
+    for (i=0, j=1; i<session.stream_count; i++) {
         stream = session.streams[i];
         if (stream.transport != TSupported) {
             if (!stream.local_ip && removed_session_ip) {
@@ -1748,6 +1748,10 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id, ice_candidate_data *ice_da
             continue;
         }
 
+        if (j >= len) {
+            break;
+        }
+        
         if (!isnullport(stream.port)) {
             if (!replace_element(msg, &stream.port, &tokens[j])) {
                 LM_ERR("failed to replace port in media stream number %d\n", i+1);
