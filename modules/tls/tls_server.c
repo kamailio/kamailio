@@ -580,16 +580,19 @@ static int tls_generic_send(int fd, struct tcp_connection *c,
 	err_src = "TLS write:";
 	lock_get(&c->write_lock);
 	if (unlikely(tls_fix_connection(c) < 0)) {
+		/* c->extra_data might be null => exit immediately */
 		ERR("tls_fix_connection failed\n");
-		goto error;
+		lock_release(&c->write_lock);
+		*resp = CONN_ERROR;
+		return -1;
 	}
 	tls_c = (struct tls_extra_data*)c->extra_data;
 	ssl = tls_c->ssl;
 	/* clear text already queued (WANTS_READ) queue directly*/
 	if (unlikely(tls_write_wants_read(tls_c))) {
 		if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs) < 0)) {
-				ERR("ct write buffer full (%d bytes)\n",
-						tls_c->ct_wq?tls_c->ct_wq->queued:0);
+				ERR("ct write buffer full for %p (%d bytes)\n",
+						c, tls_c->ct_wq?tls_c->ct_wq->queued:0);
 				goto error_wq_full;
 		}
 		goto end;
