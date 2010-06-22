@@ -69,6 +69,65 @@
 #define TLS_RD_MBUF_SZ	65536
 #define TLS_WR_MBUF_SZ	65536
 
+
+/* debugging */
+#ifdef NO_TLS_RD_DEBUG
+#undef TLS_RD_DEBUG
+#endif
+
+#ifdef NO_TLS_WR_DEBUG
+#undef TLS_WR_DEBUG
+#endif
+#if defined TLS_RD_DEBUG || defined TLS_WR_DEBUG
+#define TLS_F_DEBUG
+#endif
+
+/* if NO_TLS_F_DEBUG or NO_TLS_DEBUG => no debug code */
+#if defined NO_TLS_F_DEBUG || defined NO_TLS_DEBUG
+#undef TLS_F_DEBUG
+#endif
+
+#ifdef TLS_F_DEBUG
+	#ifdef __SUNPRO_C
+		#define TLS_F_TRACE(fmt, ...) \
+			LOG_(DEFAULT_FACILITY, L_INFO, "TLS_TRACE: " LOC_INFO, " %s" fmt,\
+					_FUNC_NAME_,  __VA_ARGS__)
+	#else
+		#define TLS_F_TRACE(fmt, args...) \
+			LOG_(DEFAULT_FACILITY, L_INFO, "TLS_TRACE: " LOC_INFO, " %s" fmt,\
+					_FUNC_NAME_, ## args)
+	#endif /* __SUNPRO_c */
+#else /* TLS_F_DEBUG */
+	#ifdef __SUNPRO_C
+		#define TLS_F_TRACE(...)
+	#else
+		#define TLS_F_TRACE(fmt, args...)
+	#endif /* __SUNPRO_c */
+#endif /* TLS_F_DEBUG */
+
+/* tls_read debugging */
+#ifdef TLS_RD_DEBUG
+	#define TLS_RD_TRACE TLS_F_TRACE
+#else /* TLS_RD_DEBUG */
+	#ifdef __SUNPRO_C
+		#define TLS_RD_TRACE(...)
+	#else
+		#define TLS_RD_TRACE(fmt, args...)
+	#endif /* __SUNPRO_c */
+#endif /* TLS_RD_DEBUG */
+
+/* tls_write debugging */
+#ifdef TLS_WR_DEBUG
+	#define TLS_WR_TRACE TLS_F_TRACE
+#else /* TLS_RD_DEBUG */
+	#ifdef __SUNPRO_C
+		#define TLS_WR_TRACE(...)
+	#else
+		#define TLS_WR_TRACE(fmt, args...)
+	#endif /* __SUNPRO_c */
+#endif /* TLS_RD_DEBUG */
+
+
 /** finish the ssl init.
  * Creates the SSL and set extra_data to it.
  * Separated from tls_tcpconn_init to allow delayed ssl context
@@ -548,7 +607,7 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
 /** tls generic send function.
  * It is used by tls_do_send_f and tls_1st_send_f (which are wrappers
  * arround it).
- * WARNING: it must be called with c->write_lock held!
+ * WARNING: it must _not_ be called with c->write_lock held!
  * @param c - tcp connection
  * @param fd - valid file descriptor for the tcp connection
  * @param buf - data
@@ -556,6 +615,8 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
  * @param send_flags
  * @param resp - filled with a cmd. for tcp_main (@see tcpconn_do_send() for
  *               more details)
+ * @param tcp_do_send_f - callback for doing the tcp send (resp must
+ *                passed to it)
  * 
  * @return >=0 on success, < 0 on error && * resp == CON_ERROR.
  */
@@ -573,6 +634,10 @@ static int tls_generic_send(int fd, struct tcp_connection *c,
 	char* err_src;
 	int x;
 	
+	TLS_WR_TRACE("(%d, %p, %p, %d, send_flags, %p, %p) start (%s:%d* -> %s)\n",
+					fd, c, buf, len, resp, tcp_do_send_f,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)));
 	*resp = CONN_NOP;
 	n = 0;
 	offs = 0;
@@ -590,6 +655,8 @@ static int tls_generic_send(int fd, struct tcp_connection *c,
 	ssl = tls_c->ssl;
 	/* clear text already queued (WANTS_READ) queue directly*/
 	if (unlikely(tls_write_wants_read(tls_c))) {
+		TLS_WR_TRACE("(%p) WANTS_READ queue present => queueing"
+						" (%d bytes,  %p + %d)\n", c, len - offs, buf, offs);
 		if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs) < 0)) {
 				ERR("ct write buffer full for %p (%d bytes)\n",
 						c, tls_c->ct_wq?tls_c->ct_wq->queued:0);
@@ -606,6 +673,7 @@ redo_wr:
 	}
 	if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
 		n = tls_connect(c, &ssl_error);
+		TLS_WR_TRACE("(%p) tls_connect() => %d (err=%d)\n", c, n, ssl_error);
 		if (unlikely(n>=1)) {
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if (unlikely(n <= 0))
@@ -618,6 +686,7 @@ redo_wr:
 		}
 	} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 		n = tls_accept(c, &ssl_error);
+		TLS_WR_TRACE("(%p) tls_accept() => %d (err=%d)\n", c, n, ssl_error);
 		if (unlikely(n>=1)) {
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if (unlikely(n <= 0))
@@ -633,7 +702,10 @@ redo_wr:
 		if (unlikely(n <= 0))
 			ssl_error = SSL_get_error(ssl, n);
 	}
+	TLS_WR_TRACE("(%p) SSL_write(%p + %d, %d) => %d (err=%d)\n",
+					c, buf, offs, len - offs, n, ssl_error);
 	if (wr.used ) {
+		TLS_WR_TRACE("(%p) sending (tcp) %d bytes\n", c, wr.used);
 		/* something was written */
 		if (unlikely( n < (len -offs)  && n >= 0)) {
 			/* if partial tls write, don't force close the tcp connection */
@@ -643,6 +715,8 @@ redo_wr:
 		if (unlikely(tcp_do_send_f(fd, c, (char*)wr.buf, wr.used,
 											send_flags, resp, 1) < 0)){
 			tls_set_mbufs(c, 0, 0);
+			TLS_WR_TRACE("(%p) tcp_do_send_f[%p] error sending %d bytes\n", c,
+							tcp_do_send_f, wr.used );
 			goto error_send;
 		}
 	}
@@ -659,6 +733,8 @@ redo_wr:
 				goto ssl_eof;
 			case SSL_ERROR_WANT_READ:
 				/* queue write buffer */
+				TLS_WR_TRACE("(%p) SSL_ERROR_WANT_READ => queueing for read"
+								" (%p + %d, %d)\n", c, buf, offs, len -offs);
 				if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs)
 								< 0)) {
 					ERR("ct write buffer full (%d bytes)\n",
@@ -709,13 +785,18 @@ redo_wr:
 				goto bug;
 		}
 	} else if (unlikely(n < (len - offs))) {
-		/* partial ssl write => retry with the rest */
+		/* partial ssl write (possible if SSL_MODE_ENABLE_PARTIAL_WRITE) =>
+		   retry with the rest */
+		TLS_WR_TRACE("(%p) partial write (%d < %d, offset %d), retry\n",
+						c, n, len - offs, offs);
 		offs += n;
 		goto redo_wr;
 	}
 	tls_set_mbufs(c, 0, 0);
 end:
 	lock_release(&c->write_lock);
+	TLS_WR_TRACE("(%p) end (offs %d) => %d (*resp = %ld)\n",
+					c, len, len, *resp);
 	return len;
 error:
 error_send:
@@ -723,12 +804,16 @@ error_wq_full:
 bug:
 	tls_set_mbufs(c, 0, 0);
 	lock_release(&c->write_lock);
+	TLS_WR_TRACE("(%p) end error (offs %d) => (prev *resp = %ld)\n",
+					c, offs, *resp);
 	*resp = CONN_ERROR;
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
 	lock_release(&c->write_lock);
 	DBG("TLS connection has been closed\n");
+	TLS_WR_TRACE("(%p) end EOF (offs %d) => (prev *resp = %ld)\n",
+					c, offs, *resp);
 	*resp = CONN_EOF;
 	return -1;
 }
@@ -738,7 +823,7 @@ ssl_eof:
 /** tls do_send callback.
  * It is called for all sends (by the tcp send code), except the first send
  * on an async connection (@see tls_1st_send).
- * WARNING: it must be called with c->write_lock held!
+ * WARNING: it must _not_ be called with c->write_lock held!
  * @param c - tcp connection
  * @param fd - valid file descriptor for the tcp connection
  * @param buf - data
@@ -762,7 +847,7 @@ int tls_do_send_f(int fd, struct tcp_connection *c,
 /** tls 1st_send callback.
  * It is called for the first send on an async tcp connection
  * (should be non-blocking).
- * WARNING: it must be called with c->write_lock held!
+ * WARNING: it must _not_ be called with c->write_lock held!
  * @param c - tcp connection
  * @param fd - valid file descriptor for the tcp connection
  * @param buf - data
@@ -823,15 +908,22 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	char* err_src;
 	int x;
 	
+	TLS_RD_TRACE("(%p, %p (%d)) start (%s -> %s:%d*)\n",
+					c, flags, *flags,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 	ssl_read = 0;
 	r = &c->req;
 	enc_rd_buf = 0;
 	*flags &= ~RD_CONN_REPEAT_READ;
 	if (unlikely(c->extra_data == 0)) {
+		TLS_RD_TRACE("(%p, %p) 0 extra_data => intialize\n", c, flags);
 		/* not yet fully init => lock & intialize */
 		lock_get(&c->write_lock);
 			if (tls_fix_connection(c) < 0) {
 				lock_release(&c->write_lock);
+				TLS_RD_TRACE("(%p, %p) end: tls_fix_connection failed =>"
+								" immediate error exit\n", c, flags);
 				return -1;
 			}
 		lock_release(&c->write_lock);
@@ -860,6 +952,9 @@ redo_read:
 		   there can't be parallel reads on the same connection */
 		enc_rd_buf = tls_c->enc_rd_buf;
 		tls_c->enc_rd_buf = 0;
+		TLS_RD_TRACE("(%p, %p) using queued data (%p: %p %d bytes)\n", c,
+					flags, enc_rd_buf, enc_rd_buf->buf + enc_rd_buf->pos,
+					enc_rd_buf->size - enc_rd_buf->pos);
 		tls_mbuf_init(&rd, enc_rd_buf->buf + enc_rd_buf->pos,
 						enc_rd_buf->size - enc_rd_buf->pos);
 		rd.used = enc_rd_buf->size - enc_rd_buf->pos;
@@ -867,6 +962,8 @@ redo_read:
 		/* if we were using using queued data before, free & reset the
 			the queued read data before performing the real read() */
 		if (unlikely(enc_rd_buf)) {
+			TLS_RD_TRACE("(%p, %p) reset prev. used enc_rd_buf (%p)\n", c,
+							flags, enc_rd_buf);
 			shm_free(enc_rd_buf);
 			enc_rd_buf = 0;
 		}
@@ -879,6 +976,8 @@ redo_read:
 			read_size = MIN_unsigned(rd.size, bytes_free);
 			bytes_read = tcp_read_data(c->fd, c, (char*)rd.buf, read_size,
 										flags);
+			TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n",
+						c, flags, read_size, *flags, bytes_read);
 			/* try SSL_read even on 0 bytes read, it might have
 			   internally buffered data */
 			if (unlikely(bytes_read < 0)) {
@@ -903,9 +1002,11 @@ continue_ssl_read:
 		n = 0;
 		if (unlikely(tls_write_wants_read(tls_c) &&
 						!(*flags & RD_CONN_EOF))) {
-			DBG("tls write on read (WRITE_WANTS_READ)\n");
 			n = tls_ct_wq_flush(c, &tls_c->ct_wq, &flush_flags,
 								&ssl_error);
+			TLS_RD_TRACE("(%p, %p) tls write on read (WRITE_WANTS_READ):"
+							" ct_wq_flush()=> %d (ff=%d ssl_error=%d))\n",
+							c, flags, n, flush_flags, ssl_error);
 			if (unlikely(n < 0 )) {
 				tls_set_mbufs(c, 0, 0);
 				lock_release(&c->write_lock);
@@ -920,6 +1021,8 @@ continue_ssl_read:
 		if (likely(ssl_error == SSL_ERROR_NONE)) {
 			if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
 				n = tls_connect(c, &ssl_error);
+				TLS_RD_TRACE("(%p, %p) tls_connect() => %d (err=%d)\n",
+								c, flags, n, ssl_error);
 				if (unlikely(n>=1)) {
 					n = SSL_read(ssl, r->pos, bytes_free);
 				} else {
@@ -933,6 +1036,8 @@ continue_ssl_read:
 				}
 			} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 				n = tls_accept(c, &ssl_error);
+				TLS_RD_TRACE("(%p, %p) tls_accept() => %d (err=%d)\n",
+								c, flags, n, ssl_error);
 				if (unlikely(n>=1)) {
 					n = SSL_read(ssl, r->pos, bytes_free);
 				} else {
@@ -1000,38 +1105,31 @@ continue_ssl_read:
 			if (unlikely(n <= 0)) {
 				ssl_error = SSL_get_error(ssl, n);
 				err_src = "TLS read:";
+				TLS_RD_TRACE("(%p, %p) SSL_read() err=%d\n",
+								c, flags, ssl_error);
 				/*  errors handled below, outside the lock */
 			} else {
 				ssl_error = SSL_ERROR_NONE;
 				r->pos += n;
 				ssl_read += n;
 				bytes_free -=n;
-#if 0
-				/* SSL_pending() can be used only if readahead==0 and only
-				   if the whole output buffer was filled => useless, rely
-				   on repeating SSL_read() until WANT_READ */
-				if (unlikely(SSL_pending(ssl)>0)) {
-					/* SSL_pending() will return how much bytes
-					   in the _current_ record did not fit in the buffer
-					   provided to the latest SSL_read(). It will return
-					   _0_ if the whole record was read, even if
-					   openssl has more records buffered (readahead=1). */
-					tls_c->flags |= F_TLS_CON_SSL_PENDING;
-					/* there is more data which didn't fit in the provided
-					   buffer => ask for a repeat */
-					*flags |= RD_CONN_REPEAT_READ;
-				}
-#endif
 			}
+			TLS_RD_TRACE("(%p, %p) SSL_read() => %d (err=%d) ssl_read=%d"
+							"*flags=%d tls_c->flags=%d\n",
+							c, flags, n, ssl_error, ssl_read, *flags,
+							tls_c->flags);
 ssl_read_skipped:
 			;
 		}
 		if (unlikely(wr.used != 0 && ssl_error != SSL_ERROR_ZERO_RETURN)) {
+			TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe %d bytes\n",
+							c, flags, wr.used);
 			/* something was written and it's not ssl EOF*/
 			if (unlikely(tcpconn_send_unsafe(c->fd, c, (char*)wr.buf,
 											wr.used, c->send_flags) < 0)) {
 				tls_set_mbufs(c, 0, 0);
 				lock_release(&c->write_lock);
+				TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe error\n", c, flags);
 				goto error_send;
 			}
 		}
@@ -1047,11 +1145,11 @@ ssl_read_skipped:
 			break;
 		case SSL_ERROR_ZERO_RETURN:
 			/* SSL EOF */
-			DBG("tls_read: SSL EOF on %p, FD %d\n", c, c->fd);
+			TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, c->fd);
 			goto ssl_eof;
 		case SSL_ERROR_WANT_READ:
-			/* reset the SSL_PENDING flag (in case we end here due to
-			   a failed write buffer flush) */
+			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n",
+							c, flags, *flags);
 			/* needs to read more data */
 			if (unlikely(rd.pos != rd.used)) {
 				/* data still in the read buffer */
@@ -1065,6 +1163,8 @@ ssl_read_skipped:
 				/* there might still be data to read and there is space
 				   to decrypt it in tcp_req (no byte has been written into
 				    tcp_req in this case) */
+				TLS_RD_TRACE("(%p, %p) redo read *flags=%d bytes_free=%d\n",
+								c, flags, *flags, bytes_free);
 				goto redo_read;
 			}
 			goto end; /* no more data to read */
@@ -1128,6 +1228,10 @@ ssl_read_skipped:
 				  No tcp_read() is attempted, since that would reset the
 				  current no-yet-consumed input data.
 				 */
+				TLS_RD_TRACE("(%p, %p) input not fully consumed =>"
+								" retry SSL_read"
+								" (pos: %d, remaining %d, output free %d)\n",
+								c, flags, rd.pos, rd.used-rd.pos, bytes_free);
 				goto continue_ssl_read;
 			}
 			/* 1i or 1ip: bytes_free == 0
@@ -1136,6 +1240,8 @@ ssl_read_skipped:
 			    once there is some space in the output buffer.
 			 */
 			if (likely(!enc_rd_buf)) {
+				TLS_RD_TRACE("(%p, %p) creating enc_rd_buf (for %d bytes)\n",
+								c, flags, rd.used - rd.pos);
 				enc_rd_buf = shm_malloc(sizeof(*enc_rd_buf) -
 										sizeof(enc_rd_buf->buf) +
 										rd.used - rd.pos);
@@ -1150,6 +1256,9 @@ ssl_read_skipped:
 				memcpy(enc_rd_buf->buf, rd.buf + rd.pos,
 										enc_rd_buf->size);
 			} else if ((enc_rd_buf->buf + enc_rd_buf->pos) == rd.buf) {
+				TLS_RD_TRACE("(%p, %p) enc_rd_buf already in use,"
+								" updating pos %d\n",
+								c, flags, enc_rd_buf->pos);
 				enc_rd_buf->pos += rd.pos;
 			} else {
 				BUG("enc_rd_buf->buf = %p, pos = %d, rd_buf.buf = %p\n",
@@ -1172,6 +1281,8 @@ ssl_read_skipped:
 			/* still space in the tcp unenc. req. buffer, no SSL_read error,
 			   not a short read and not an EOF (possible more data in
 			   the socket buffer) => try a new tcp read too */
+			TLS_RD_TRACE("(%p, %p) retry read (still space and no short"
+							" tcp read: %d)\n", c, flags, *flags);
 			goto redo_read;
 		} else {
 			/* don't tcp_read() anymore, but there might still be data
@@ -1179,6 +1290,8 @@ ssl_read_skipped:
 			   retry SSL_read() with the current full input buffer
 			   (if no more internally SSL buffered data => WANT_READ => exit).
 			 */
+			TLS_RD_TRACE("(%p, %p) retry SSL_read only (*flags =%d)\n",
+							c, flags, *flags);
 			goto continue_ssl_read;
 		}
 	} else {
@@ -1189,11 +1302,15 @@ ssl_read_skipped:
 		    some internal buffered data until we get WANT_READ, see
 			SSL_read() comment above) */
 		*flags |= RD_CONN_REPEAT_READ;
+		TLS_RD_TRACE("(%p, %p) output filled, exit asking to be called again"
+						" (*flags =%d)\n", c, flags, *flags);
 	}
 	
 end:
 	if (enc_rd_buf)
 		shm_free(enc_rd_buf);
+	TLS_RD_TRACE("(%p, %p) end => %d (*flags=%d)\n",
+					c, flags, ssl_read, *flags);
 	return ssl_read;
 ssl_eof:
 	/* behave as an EOF would have been received at the tcp level */
@@ -1201,6 +1318,8 @@ ssl_eof:
 		shm_free(enc_rd_buf);
 	c->state = S_CONN_EOF;
 	*flags |= RD_CONN_EOF;
+	TLS_RD_TRACE("(%p, %p) end EOF => %d (*flags=%d)\n",
+					c, flags, ssl_read, *flags);
 	return ssl_read;
 error_send:
 error:
@@ -1208,5 +1327,7 @@ bug:
 	if (enc_rd_buf)
 		shm_free(enc_rd_buf);
 	r->error=TCP_READ_ERROR;
+	TLS_RD_TRACE("(%p, %p) end error => %d (*flags=%d)\n",
+					c, flags, ssl_read, *flags);
 	return -1;
 }

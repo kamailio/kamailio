@@ -44,10 +44,10 @@
 #ifdef TLS_BIO_DEBUG
 	#ifdef __SUNPRO_C
 		#define TLS_BIO_DBG(...) \
-			LOG_(DEFAULT_FACILITY, L_INFO, "tls_BIO: " LOC_INFO, __VA_ARGS__)
+			LOG_(DEFAULT_FACILITY, L_INFO, "tls_BIO: " LOC_INFO,  __VA_ARGS__)
 	#else
-		#define TLS_BIO_DBG(fmt, args...) \
-			LOG_(DEFAULT_FACILITY, L_INFO, "tls_BIO: " LOC_INFO, fmt, ## args)
+		#define TLS_BIO_DBG(args...) \
+			LOG_(DEFAULT_FACILITY, L_INFO, "tls_BIO: " LOC_INFO, ## args)
 	#endif /* __SUNPRO_c */
 #else /* TLS_BIO_DEBUG */
 	#ifdef __SUNPRO_C
