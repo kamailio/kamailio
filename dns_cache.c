@@ -1874,10 +1874,14 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 	struct ip_addr* ip;
 	str cname_val;
 	char name_buf[MAX_DNS_NAME];
+	struct dns_hash_entry* old;
+	str rec_name;
+	int add_record, h, err;
 
 	e=0;
 	l=0;
 	cname_val.s=0;
+	old = NULL;
 
 #ifdef USE_DNS_CACHE_STATS
 	if (dns_cache_stats)
@@ -1944,10 +1948,55 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 			LOCK_DNS_HASH(); /* optimization */
 			for (r=l; r; r=t){
 				t=r->next;
-				dns_cache_add_unsafe(r); /* refcnt++ inside */
-				if (atomic_get(&r->refcnt)==0){
-					/* if cache adding failed and nobody else is interested
-					 * destroy this entry */
+				/* add the new record to the cache by default */
+				add_record = 1;
+				if (cfg_get(core, core_cfg, dns_cache_rec_pref) > 0) {
+					/* check whether there is an old record with the
+					 * same type in the cache */
+					rec_name.s = r->name;
+					rec_name.len = r->name_len;
+					old = _dns_hash_find(&rec_name, r->type, &h, &err);
+					if (old) {
+						if (old->type != r->type) {
+							/* probably CNAME found */
+							old = NULL;
+
+						} else if (old->ent_flags & DNS_FLAG_PERMANENT) {
+							/* never overwrite permanent entries */
+							add_record = 0;
+
+						} else if ((old->ent_flags & DNS_FLAG_BAD_NAME) == 0) {
+							/* Non-negative, non-permanent entry found with
+							 * the same type. */
+							add_record =
+								/* prefer new records */
+								((cfg_get(core, core_cfg, dns_cache_rec_pref) == 2)
+								/* prefer the record with the longer lifetime */
+								|| ((cfg_get(core, core_cfg, dns_cache_rec_pref) == 3)
+									&& TICKS_LT(old->expire, r->expire)));
+						}
+					}
+				}
+				if (add_record) {
+					dns_cache_add_unsafe(r); /* refcnt++ inside */
+					if (atomic_get(&r->refcnt)==0){
+						/* if cache adding failed and nobody else is interested
+						 * destroy this entry */
+						dns_destroy_entry(r);
+					}
+					if (old) {
+						_dns_hash_remove(old);
+						old = NULL;
+					}
+				} else {
+					if (old) {
+						if (r == e) {
+							/* this entry has to be returned */
+							e = old;
+							atomic_inc(&e->refcnt);
+						}
+						old = NULL;
+					}
 					dns_destroy_entry(r);
 				}
 			}

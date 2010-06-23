@@ -102,6 +102,7 @@ struct cfg_group_core default_core_cfg = {
 	DEFAULT_DNS_CACHE_MAX_TTL, /*!< maximum ttl */
 	DEFAULT_DNS_MAX_MEM, /*!< dns_cache_max_mem */
 	0, /*!< dns_cache_del_nonexp -- delete only expired entries by default */
+	0, /*!< dns_cache_rec_pref -- 0 by default, do not check the existing entries. */
 #endif
 #ifdef PKG_MALLOC
 	0, /*!< mem_dump_pkg */
@@ -206,6 +207,12 @@ cfg_def_t core_cfg_def[] = {
 	{"dns_cache_del_nonexp",	CFG_VAR_INT,	0, 1, 0, 0,
 		"allow deletion of non-expired records from the cache when "
 		"there is no more space left for new ones"},
+	{"dns_cache_rec_pref",	CFG_VAR_INT,	0, 3, 0, 0,
+		"DNS cache record preference: "
+		" 0 - do not check duplicates"
+		" 1 - prefer old records"
+		" 2 - prefer new records"
+		" 3 - prefer records with longer lifetime"},
 #endif
 #ifdef PKG_MALLOC
 	{"mem_dump_pkg",	CFG_VAR_INT,	0, 0, 0, mem_dump_pkg_cb,

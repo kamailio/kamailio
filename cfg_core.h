@@ -92,6 +92,7 @@ struct cfg_group_core {
 	unsigned int dns_cache_max_ttl;
 	unsigned int dns_cache_max_mem;
 	int dns_cache_del_nonexp;
+	int dns_cache_rec_pref;
 #endif
 #ifdef PKG_MALLOC
 	int mem_dump_pkg;

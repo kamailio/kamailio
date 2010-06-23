@@ -14,6 +14,7 @@ core:
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
   - per message blacklist ignore masks
   - route() now supports rvalue expressions (e.g. route("test"+$i))
+  - support for permanent entries in the DNS cache.
 
 new config variables:
   - dst_blacklist_udp_imask - global blacklist events ignore mask for udp
@@ -27,6 +28,11 @@ new config variables:
    - dst_blacklist_tcp_imask - like dst_blacklist_udp_imask, but for tcp.
    - dst_blacklist_tls_imask - like dst_blacklist_tls_imask, but for tcp.
    - dst_blacklist_sctp_imask -like dst_blacklist_sctp_imask, but for tcp.
+   - dns_cache_rec_pref - DNS cache record preference:
+		0 - do not check duplicates (default)
+		1 - prefer old records
+		2 - prefer new records
+		3 - prefer records with longer lifetime
 
 modules:
    - blst: functions for ignoring blacklist events per message:
