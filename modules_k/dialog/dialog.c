@@ -34,6 +34,7 @@
  *              and bind_addresses(sock_info) for caller and callee (ancuta)
  *  2008-04-14 added new type of callback to be triggered when dialogs are 
  *              loaded from DB (bogdan)
+ *  2010-06-16 added sip-router rpc interface (osas)
  */
 
 
@@ -51,11 +52,13 @@
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
 #include "../../lib/kcore/faked_msg.h"
+#include "../../lib/kcore/hash_func.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lvalue.h"
 #include "../../parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../rpc_lookup.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
@@ -233,6 +236,7 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
+static rpc_export_t rpc_methods[];
 
 static pv_export_t mod_items[] = {
 	{ {"DLG_count",  sizeof("DLG_count")-1}, PVT_OTHER,  pv_get_dlg_count,    0,
@@ -378,6 +382,11 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	if (rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -1099,4 +1108,282 @@ struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
+/**************************** RPC functions ******************************/
+/*!
+ * \brief Helper method that outputs a dialog via the RPC interface
+ * \see rpc_print_dlg
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param dlg printed dialog
+ * \param with_context if 1 then the dialog context will be also printed
+ * \return 0 on success, -1 on failure
+ */
+static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *dlg, int with_context)
+{
+	rpc->printf(c, "hash:%u:%u state:%u timestart:%u timeout:%u",
+		dlg->h_entry, dlg->h_id, dlg->state, dlg->start_ts, dlg->tl.timeout);
+	rpc->printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
+		dlg->callid.len, dlg->callid.s,
+		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+		dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+	rpc->printf(c, "\tfrom_uri:%.*s to_uri:%.*s",
+		dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len, dlg->to_uri.s);
+	rpc->printf(c, "\tcaller_contact:%.*s caller_cseq:%.*s",
+		dlg->contact[DLG_CALLER_LEG].len, dlg->contact[DLG_CALLER_LEG].s,
+		dlg->cseq[DLG_CALLER_LEG].len, dlg->cseq[DLG_CALLER_LEG].s);
+	rpc->printf(c, "\tcaller_route_set: %.*s",
+		dlg->route_set[DLG_CALLER_LEG].len, dlg->route_set[DLG_CALLER_LEG].s);
+	rpc->printf(c, "\tcallee_contact:%.*s callee_cseq:%.*s",
+		dlg->contact[DLG_CALLEE_LEG].len, dlg->contact[DLG_CALLEE_LEG].s,
+		dlg->cseq[DLG_CALLEE_LEG].len, dlg->cseq[DLG_CALLEE_LEG].s);
+	rpc->printf(c, "\tcallee_route_set: %.*s",
+		dlg->route_set[DLG_CALLEE_LEG].len, dlg->route_set[DLG_CALLEE_LEG].s);
+	if (dlg->bind_addr[DLG_CALLEE_LEG]) {
+		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:%.*s",
+			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s,
+			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
+	} else {
+		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:",
+			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s);
+	}
+}
 
+/*!
+ * \brief Helper function that outputs all dialogs via the RPC interface
+ * \see rpc_print_dlgs
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param with_context if 1 then the dialog context will be also printed
+ */
+static void internal_rpc_print_dlgs(rpc_t *rpc, void *c, int with_context)
+{
+	struct dlg_cell *dlg;
+	unsigned int i;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		dlg_lock( d_table, &(d_table->entries[i]) );
+
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			internal_rpc_print_dlg(rpc, c, dlg, with_context);
+		}
+		dlg_unlock( d_table, &(d_table->entries[i]) );
+	}
+}
+
+/*!
+ * \brief Helper function that outputs a dialog via the RPC interface
+ * \see rpc_print_dlgs
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param with_context if 1 then the dialog context will be also printed
+ */
+static void internal_rpc_print_single_dlg(rpc_t *rpc, void *c, int with_context) {
+	str callid, from_tag;
+	struct dlg_entry *d_entry;
+	struct dlg_cell *dlg;
+	unsigned int h_entry;
+
+	if (rpc->scan(c, "SS", &callid, &from_tag) < 2) return;
+
+	h_entry = core_hash( &callid, &from_tag, d_table->size);
+	d_entry = &(d_table->entries[h_entry]);
+	dlg_lock( d_table, d_entry);
+	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
+		if (match_downstream_dialog( dlg, &callid, &from_tag)==1) {
+			internal_rpc_print_dlg(rpc, c, dlg, with_context);
+		}
+	}
+	dlg_unlock( d_table, d_entry);
+}
+
+/*!
+ * \brief Helper function that outputs the size of a given profile via the RPC interface
+ * \see rpc_profile_get_size
+ * \see rpc_profile_w_value_get_size
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param profile_name the given profile
+ * \param value the given profile value
+ */
+static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name, str *value) {
+	unsigned int size;
+	struct dlg_profile_table *profile;
+
+	profile = search_dlg_profile( profile_name );
+	if (!profile) {
+		rpc->printf(c, "Non existing profile:%.*s",
+			profile_name->len, profile_name->s);
+		return;
+	}
+	size = get_profile_size(profile, value);
+	if (value) {
+		rpc->printf(c, "Profile:%.*s => profile:%.*s value:%.*s count:%u",
+			profile_name->len, profile_name->s,
+			profile->name.len, profile->name.s,
+			value->len, value->s, size);
+		return;
+	} else {
+		rpc->printf(c, "Profile:%.*s => profile:%.*s value: count:%u",
+			profile_name->len, profile_name->s,
+			profile->name.len, profile->name.s, size);
+		return;
+	}
+	return;
+}
+
+/*!
+ * \brief Helper function that outputs the dialogs belonging to a given profile via the RPC interface
+ * \see rpc_profile_print_dlgs
+ * \see rpc_profile_w_value_print_dlgs
+ * \param rpc RPC node that should be filled
+ * \param c RPC void pointer
+ * \param profile_name the given profile
+ * \param value the given profile value
+ * \param with_context if 1 then the dialog context will be also printed
+ */
+static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_name, str *value) {
+	struct dlg_profile_table *profile;
+	struct dlg_profile_hash *ph;
+	unsigned int i;
+
+	profile = search_dlg_profile( profile_name );
+	if (!profile) {
+		rpc->printf(c, "Non existing profile:%.*s",
+			profile_name->len, profile_name->s);
+		return;
+	}
+
+	/* go through the hash and print the dialogs */
+	if (profile->has_value==0 || value==NULL) {
+		/* no value */
+		lock_get( &profile->lock );
+		for ( i=0 ; i< profile->size ; i++ ) {
+			ph = profile->entries[i].first;
+			if(ph) {
+				do {
+					/* print dialog */
+					internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
+					/* next */
+					ph=ph->next;
+				}while(ph!=profile->entries[i].first);
+			}
+			lock_release(&profile->lock);
+		}
+	} else {
+		/* check for value also */
+		lock_get( &profile->lock );
+		for ( i=0 ; i< profile->size ; i++ ) {
+			ph = profile->entries[i].first;
+			if(ph) {
+				do {
+					if ( value->len==ph->value.len &&
+						memcmp(value->s,ph->value.s,value->len)==0 ) {
+						/* print dialog */
+						internal_rpc_print_dlg(rpc, c, ph->dlg, 0);
+					}
+					/* next */
+					ph=ph->next;
+				}while(ph!=profile->entries[i].first);
+			}
+			lock_release(&profile->lock);
+		}
+	}
+}
+
+
+static const char *rpc_print_dlgs_doc[2] = {
+	"Print all dialogs", 0
+};
+static const char *rpc_print_dlg_doc[2] = {
+	"Print dialog based on callid and fromtag", 0
+};
+static const char *rpc_end_dlg_entry_id_doc[2] = {
+	"End a given dialog based on [h_entry] [h_id]", 0
+};
+static const char *rpc_profile_get_size_doc[2] = {
+	"Returns the number of dialogs belonging to a profile", 0
+};
+static const char *rpc_profile_w_val_get_size_doc[2] = {
+	"Returns the number of dialogs belonging to a profile with value", 0
+};
+static const char *rpc_profile_print_dlgs_doc[2] = {
+	"Lists all the dialogs belonging to a profile", 0
+};
+static const char *rpc_profile_w_val_print_dlgs_doc[2] = {
+	"Lists all the dialogs belonging to a profile with value", 0
+};
+static const char *rpc_dlg_bridge_doc[2] = {
+	"Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE mechanism:\
+ to, from, [outbound SIP proxy]", 0
+};
+
+
+static void rpc_print_dlgs(rpc_t *rpc, void *c) {
+	internal_rpc_print_dlgs(rpc, c, 0);
+}
+static void rpc_print_dlg(rpc_t *rpc, void *c) {
+	internal_rpc_print_single_dlg(rpc, c, 0);
+}
+static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
+	unsigned int h_entry, h_id;
+	struct dlg_cell * dlg = NULL;
+	str rpc_extra_hdrs = {NULL,0};
+
+	if (rpc->scan(c, "ddS", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
+
+	dlg = lookup_dlg(h_entry, h_id);
+	if(dlg){
+		dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
+		unref_dlg(dlg, 1);
+	}
+}
+static void rpc_profile_get_size(rpc_t *rpc, void *c) {
+	str profile_name = {NULL,0};
+
+	if (rpc->scan(c, "S", &profile_name) < 1) return;
+	internal_rpc_profile_get_size(rpc, c, &profile_name, NULL);
+	return;
+}
+static void rpc_profile_w_val_get_size(rpc_t *rpc, void *c) {
+	str profile_name = {NULL,0};
+	str value = {NULL,0};
+
+	if (rpc->scan(c, "SS", &profile_name, &value) < 2) return;
+	internal_rpc_profile_get_size(rpc, c, &profile_name, &value);
+	return;
+}
+static void rpc_profile_print_dlgs(rpc_t *rpc, void *c) {
+	str profile_name = {NULL,0};
+
+	if (rpc->scan(c, "S", &profile_name) < 1) return;
+	internal_rpc_profile_print_dlgs(rpc, c, &profile_name, NULL);
+}
+static void rpc_profile_w_val_print_dlgs(rpc_t *rpc, void *c) {
+	str profile_name = {NULL,0};
+	str value = {NULL,0};
+
+	if (rpc->scan(c, "SS", &profile_name, &value) < 2) return;
+	internal_rpc_profile_print_dlgs(rpc, c, &profile_name, &value);
+	return;
+}
+static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
+	str from = {NULL,0};
+	str to = {NULL,0};
+	str op = {NULL,0};
+
+	if (rpc->scan(c, "SSS", &from, &to, &op) < 2) return;
+
+	dlg_bridge(&from, &to, &op);
+}
+
+static rpc_export_t rpc_methods[] = {
+	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
+	{"dlg.dlg_list", rpc_print_dlg, rpc_print_dlg_doc, 0},
+	{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
+	{"dlg.profile_get_size", rpc_profile_get_size, rpc_profile_get_size_doc, 0},
+	{"dlg.profile_w_value_get_size", rpc_profile_w_val_get_size, rpc_profile_w_val_get_size_doc, 0},
+	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, 0},
+	{"dlg.profile_w_value_list", rpc_profile_w_val_print_dlgs, rpc_profile_w_val_print_dlgs_doc, 0},
+	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
+	{0, 0, 0, 0}
+};
