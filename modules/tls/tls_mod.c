@@ -235,8 +235,7 @@ struct module_exports exports = {
 
 static struct tls_hooks tls_h = {
 	tls_read_f,
-	tls_do_send_f,
-	tls_1st_send_f,
+	tls_encode_f,
 	tls_h_tcpconn_init,
 	tls_h_tcpconn_clean,
 	tls_h_close,

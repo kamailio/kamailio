@@ -83,13 +83,8 @@ void tls_h_tcpconn_clean(struct tcp_connection *c);
  */
 void tls_h_close(struct tcp_connection *c, int fd);
 
-int tls_do_send_f(int fd, struct tcp_connection *c,
-						const char *buf, unsigned int len,
-						snd_flags_t send_flags, long* resp);
-
-int tls_1st_send_f(int fd, struct tcp_connection *c,
-						const char *buf, unsigned int len,
-						snd_flags_t send_flags, long* resp);
+int tls_encode_f(struct tcp_connection *c,
+					const char ** pbuf, unsigned int* plen);
 
 int tls_read_f(struct tcp_connection *c, int* flags);
 

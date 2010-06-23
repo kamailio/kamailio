@@ -558,7 +558,6 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
  */
 void tls_h_close(struct tcp_connection *c, int fd)
 {
-	unsigned char rd_buf[TLS_RD_MBUF_SZ];
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
 	struct tls_mbuf rd, wr;
 	
@@ -577,7 +576,7 @@ void tls_h_close(struct tcp_connection *c, int fd)
 				lock_release(&c->write_lock);
 				return;
 			}
-			tls_mbuf_init(&rd, rd_buf, sizeof(rd_buf));
+			tls_mbuf_init(&rd, 0, 0); /* no read */
 			tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 			if (tls_set_mbufs(c, &rd, &wr)==0) {
 				tls_shutdown(c); /* shudown only on succesfull set fd */
@@ -604,55 +603,50 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
 
 
 
-/** tls generic send function.
- * It is used by tls_do_send_f and tls_1st_send_f (which are wrappers
- * arround it).
- * WARNING: it must _not_ be called with c->write_lock held!
+/** tls encrypt before sending function.
+ * It is a callback that will be called by the tcp code, before a send
+ * on TLS would be attempted. It should replace the input buffer with a
+ * new static buffer containing the TLS processed data.
+ * WARNING: it must always be called with c->write_lock held!
  * @param c - tcp connection
- * @param fd - valid file descriptor for the tcp connection
- * @param buf - data
- * @param len - data size
- * @param send_flags
- * @param resp - filled with a cmd. for tcp_main (@see tcpconn_do_send() for
- *               more details)
- * @param tcp_do_send_f - callback for doing the tcp send (resp must
- *                passed to it)
- * 
- * @return >=0 on success, < 0 on error && * resp == CON_ERROR.
+ * @param pbuf - pointer to buffer (value/result, on success it will be
+ *               replaced with a static buffer).
+ * @param plen - pointer to buffer size (value/result, on success it will be
+ *               replaced with the size of the replacement buffer.
+ * @return *plen on success (>=0), < 0 on error.
  */
-static int tls_generic_send(int fd, struct tcp_connection *c,
-						const char *buf, unsigned int len,
-						snd_flags_t send_flags, long* resp,
-						tcp_low_level_send_t tcp_do_send_f)
+int tls_encode_f(struct tcp_connection *c,
+						const char* *pbuf, unsigned int* plen)
 {
 	int n, offs;
 	SSL* ssl;
 	struct tls_extra_data* tls_c;
-	unsigned char wr_buf[TLS_WR_MBUF_SZ];
+	static unsigned char wr_buf[TLS_WR_MBUF_SZ];
 	struct tls_mbuf rd, wr;
 	int ssl_error;
 	char* err_src;
+	const char* buf;
+	unsigned int len;
 	int x;
 	
-	TLS_WR_TRACE("(%d, %p, %p, %d, send_flags, %p, %p) start (%s:%d* -> %s)\n",
-					fd, c, buf, len, resp, tcp_do_send_f,
-					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+	buf = *pbuf;
+	len = *plen;
+	TLS_WR_TRACE("(%p, %p, %d) start (%s:%d* -> %s)\n",
+					c, buf, len, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
 					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)));
-	*resp = CONN_NOP;
 	n = 0;
 	offs = 0;
 	ssl_error = SSL_ERROR_NONE;
 	err_src = "TLS write:";
-	lock_get(&c->write_lock);
 	if (unlikely(tls_fix_connection(c) < 0)) {
 		/* c->extra_data might be null => exit immediately */
 		ERR("tls_fix_connection failed\n");
-		lock_release(&c->write_lock);
-		*resp = CONN_ERROR;
 		return -1;
 	}
 	tls_c = (struct tls_extra_data*)c->extra_data;
 	ssl = tls_c->ssl;
+	tls_mbuf_init(&rd, 0, 0); /* no read */
+	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 	/* clear text already queued (WANTS_READ) queue directly*/
 	if (unlikely(tls_write_wants_read(tls_c))) {
 		TLS_WR_TRACE("(%p) WANTS_READ queue present => queueing"
@@ -664,13 +658,11 @@ static int tls_generic_send(int fd, struct tcp_connection *c,
 		}
 		goto end;
 	}
-	tls_mbuf_init(&rd, 0, 0); /* no read */
-redo_wr:
-	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 	if (unlikely(tls_set_mbufs(c, &rd, &wr) < 0)) {
 		ERR("tls_set_mbufs failed\n");
 		goto error;
 	}
+redo_wr:
 	if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
 		n = tls_connect(c, &ssl_error);
 		TLS_WR_TRACE("(%p) tls_connect() => %d (err=%d)\n", c, n, ssl_error);
@@ -704,22 +696,6 @@ redo_wr:
 	}
 	TLS_WR_TRACE("(%p) SSL_write(%p + %d, %d) => %d (err=%d)\n",
 					c, buf, offs, len - offs, n, ssl_error);
-	if (wr.used ) {
-		TLS_WR_TRACE("(%p) sending (tcp) %d bytes\n", c, wr.used);
-		/* something was written */
-		if (unlikely( n < (len -offs)  && n >= 0)) {
-			/* if partial tls write, don't force close the tcp connection */
-			tcpconn_set_send_flags(c, send_flags); /* set the original flags */
-			send_flags.f &= ~SND_F_CON_CLOSE;
-		}
-		if (unlikely(tcp_do_send_f(fd, c, (char*)wr.buf, wr.used,
-											send_flags, resp, 1) < 0)){
-			tls_set_mbufs(c, 0, 0);
-			TLS_WR_TRACE("(%p) tcp_do_send_f[%p] error sending %d bytes\n", c,
-							tcp_do_send_f, wr.used );
-			goto error_send;
-		}
-	}
 	/* check for possible ssl errors */
 	if (unlikely(n <= 0)){
 		switch(ssl_error) {
@@ -794,76 +770,28 @@ redo_wr:
 	}
 	tls_set_mbufs(c, 0, 0);
 end:
-	lock_release(&c->write_lock);
-	TLS_WR_TRACE("(%p) end (offs %d) => %d (*resp = %ld)\n",
-					c, len, len, *resp);
-	return len;
+	*pbuf = (const char*)wr.buf;
+	*plen = wr.used;
+	TLS_WR_TRACE("(%p) end (offs %d) => %d \n",
+					c, offs, *plen);
+	return *plen;
 error:
-error_send:
+/*error_send:*/
 error_wq_full:
 bug:
 	tls_set_mbufs(c, 0, 0);
-	lock_release(&c->write_lock);
-	TLS_WR_TRACE("(%p) end error (offs %d) => (prev *resp = %ld)\n",
-					c, offs, *resp);
-	*resp = CONN_ERROR;
+	TLS_WR_TRACE("(%p) end error (offs %d, %d encoded) => -1\n",
+					c, offs, wr.used);
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
-	lock_release(&c->write_lock);
+	c->flags |= F_CONN_FORCE_EOF;
+	*pbuf = (const char*)wr.buf;
+	*plen = wr.used;
 	DBG("TLS connection has been closed\n");
-	TLS_WR_TRACE("(%p) end EOF (offs %d) => (prev *resp = %ld)\n",
-					c, offs, *resp);
-	*resp = CONN_EOF;
-	return -1;
-}
-
-
-
-/** tls do_send callback.
- * It is called for all sends (by the tcp send code), except the first send
- * on an async connection (@see tls_1st_send).
- * WARNING: it must _not_ be called with c->write_lock held!
- * @param c - tcp connection
- * @param fd - valid file descriptor for the tcp connection
- * @param buf - data
- * @param len - data size
- * @param send_flags
- * @param resp - filled with a cmd. for tcp_main (@see tcpconn_do_send() for
- *               more details)
- * 
- * @return >=0 on success, < 0 on error && * resp == CON_ERROR.
- */
-int tls_do_send_f(int fd, struct tcp_connection *c,
-						const char *buf, unsigned int len,
-						snd_flags_t send_flags, long* resp)
-{
-	return tls_generic_send(fd, c, buf, len, send_flags, resp,
-							tcpconn_do_send);
-}
-
-
-
-/** tls 1st_send callback.
- * It is called for the first send on an async tcp connection
- * (should be non-blocking).
- * WARNING: it must _not_ be called with c->write_lock held!
- * @param c - tcp connection
- * @param fd - valid file descriptor for the tcp connection
- * @param buf - data
- * @param len - data size
- * @param send_flags
- * @param resp - filled with a cmd. for tcp_main (@see tcpconn_1st_send() for
- *               more details)
- * 
- * @return >=0 on success, < 0 on error && * resp == CON_ERROR.
- */
-int tls_1st_send_f(int fd, struct tcp_connection *c,
-						const char *buf, unsigned int len,
-						snd_flags_t send_flags, long* resp)
-{
-	return tls_generic_send(fd, c, buf, len, send_flags, resp,
-							tcpconn_1st_send);
+	TLS_WR_TRACE("(%p) end EOF (offs %d) => (%d\n",
+					c, offs, *plen);
+	return *plen;
 }
 
 
@@ -1105,8 +1033,6 @@ continue_ssl_read:
 			if (unlikely(n <= 0)) {
 				ssl_error = SSL_get_error(ssl, n);
 				err_src = "TLS read:";
-				TLS_RD_TRACE("(%p, %p) SSL_read() err=%d\n",
-								c, flags, ssl_error);
 				/*  errors handled below, outside the lock */
 			} else {
 				ssl_error = SSL_ERROR_NONE;
@@ -1115,7 +1041,7 @@ continue_ssl_read:
 				bytes_free -=n;
 			}
 			TLS_RD_TRACE("(%p, %p) SSL_read() => %d (err=%d) ssl_read=%d"
-							"*flags=%d tls_c->flags=%d\n",
+							" *flags=%d tls_c->flags=%d\n",
 							c, flags, n, ssl_error, ssl_read, *flags,
 							tls_c->flags);
 ssl_read_skipped:
