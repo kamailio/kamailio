@@ -120,7 +120,7 @@ poll_loop: \
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer
  */
-int tsend_stream(int fd, char* buf, unsigned int len, int timeout)
+int tsend_stream(int fd, const char* buf, unsigned int len, int timeout)
 {
 	int written;
 	TSEND_INIT;
@@ -157,7 +157,7 @@ error:
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer
  */
-int tsend_dgram(int fd, char* buf, unsigned int len, 
+int tsend_dgram(int fd, const char* buf, unsigned int len, 
 				const struct sockaddr* to, socklen_t tolen, int timeout)
 {
 	TSEND_INIT;
