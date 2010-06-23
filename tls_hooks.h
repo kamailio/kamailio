@@ -51,15 +51,16 @@
 
 
 struct tls_hooks{
+	/* read using tls (should use tcp internal read functions to
+	   get the data from the connection) */
 	int  (*read)(struct tcp_connection* c, int* flags);
-	/* send using tls on a tcp connection */
-	int (*do_send)(int fd, struct tcp_connection* c, const char* buf,
-							unsigned int len, snd_flags_t send_flags,
-							long* resp);
-	/* 1st send using tls on a new async. tcp connection */
-	int (*fst_send)(int fd, struct tcp_connection* c, const char* buf,
-							unsigned int len, snd_flags_t send_flags,
-							long* resp);
+	/* process data for sending. Should replace pbuf & plen with
+	   an internal buffer containing the tls records.
+	   Should return *plen (if >=0).
+	   If it returns < 0 => error (tcp connection will be closed).
+	*/
+	int (*encode)(struct tcp_connection* c, const char** pbuf,
+						unsigned int* plen);
 	int  (*on_tcpconn_init)(struct tcp_connection *c, int sock);
 	void (*tcpconn_clean)(struct tcp_connection* c);
 	void (*tcpconn_close)(struct tcp_connection*c , int fd);
@@ -98,10 +99,8 @@ extern struct tls_hooks tls_hook;
 
 #define tls_tcpconn_init(c, s)	tls_hook_call(on_tcpconn_init, 0, (c), (s))
 #define tls_tcpconn_clean(c)	tls_hook_call_v(tcpconn_clean, (c))
-#define tls_do_send(fd, c, buf, len, send_flags, resp) \
-	tls_hook_call(do_send, -1, (fd), (c), (buf), (len), (send_flags), (resp))
-#define tls_1st_send(fd, c, buf, len, send_flags, resp) \
-	tls_hook_call(fst_send, -1, (fd), (c), (buf), (len), (send_flags), (resp))
+#define tls_encode(c, pbuf, plen) \
+	tls_hook_call(encode, -1, (c), (pbuf), (plen))
 #define tls_close(conn, fd)		tls_hook_call_v(tcpconn_close, (conn), (fd))
 #define tls_read(c, flags)				tls_hook_call(read, -1, (c), (flags))
 

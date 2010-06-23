@@ -29,20 +29,12 @@
 
 #include "tcp_conn.h"
 
-int tcpconn_do_send(int fd, struct tcp_connection* c,
-							char* buf, unsigned len,
-							snd_flags_t send_flags, long* resp, int locked);
-
-int tcpconn_1st_send(int fd, struct tcp_connection* c,
-							char* buf, unsigned len,
-							snd_flags_t send_flags, long* resp, int locked);
-
 int tcpconn_send_unsafe(int fd, struct tcp_connection *c,
-						char* buf, unsigned len, snd_flags_t send_flags);
+						const char* buf, unsigned len, snd_flags_t send_flags);
 
 /* direct non-blocking, unsafe (assumes locked) send on a tcp connection */
 int _tcpconn_write_nb(int fd, struct tcp_connection* c,
-									char* buf, int len);
+									const char* buf, int len);
 
 
 #endif /*__tcp_int_send_h*/

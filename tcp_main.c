@@ -642,7 +642,7 @@ end:
 
 
 /* unsafe version, call while holding the connection write lock */
-inline static int _wbufq_add(struct  tcp_connection* c, char* data, 
+inline static int _wbufq_add(struct  tcp_connection* c, const char* data, 
 							unsigned int size)
 {
 	struct tcp_wbuffer_queue* q;
@@ -661,8 +661,8 @@ inline static int _wbufq_add(struct  tcp_connection* c, char* data,
 		LOG(L_ERR, "ERROR: wbufq_add(%d bytes): write queue full or timeout "
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
-					TICKS_TO_S(t-q->wr_timeout-
-						cfg_get(tcp, tcp_cfg, send_timeout)));
+					TICKS_TO_S(t-(q->wr_timeout-
+								cfg_get(tcp, tcp_cfg, send_timeout))));
 		if (q->first && TICKS_LT(q->wr_timeout, t)){
 			if (unlikely(c->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
@@ -740,7 +740,7 @@ error:
  * inserts data at the beginning, it ignores the max queue size checks and
  * the timeout (use sparingly)
  * Note: it should never be called on a write buffer after wbufq_run() */
-inline static int _wbufq_insert(struct  tcp_connection* c, char* data, 
+inline static int _wbufq_insert(struct  tcp_connection* c, const char* data, 
 							unsigned int size)
 {
 	struct tcp_wbuffer_queue* q;
@@ -1714,8 +1714,15 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 
 inline static int tcpconn_chld_put(struct tcp_connection* tcpconn);
 
-static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
-							snd_flags_t send_flags);
+static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
+							unsigned len, snd_flags_t send_flags);
+static int tcpconn_do_send(int fd, struct tcp_connection* c,
+							const char* buf, unsigned len,
+							snd_flags_t send_flags, long* resp, int locked);
+
+static int tcpconn_1st_send(int fd, struct tcp_connection* c,
+							const char* buf, unsigned len,
+							snd_flags_t send_flags, long* resp, int locked);
 
 /* finds a tcpconn & sends on it
  * uses the dst members to, proto (TCP|TLS) and id and tries to send
@@ -1723,7 +1730,7 @@ static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
  * returns: number of bytes written (>=0) on success
  *          <0 on error */
 int tcp_send(struct dest_info* dst, union sockaddr_union* from,
-					char* buf, unsigned len)
+					const char* buf, unsigned len)
 {
 	struct tcp_connection *c;
 	struct ip_addr ip;
@@ -1841,30 +1848,47 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 			 * pending and nobody else will try to write on it. However
 			 * this might produce out-of-order writes. If this is not
 			 * desired either lock before the write or use 
-			 * _wbufq_insert(...) */
+			 * _wbufq_insert(...)
+			 * NOTE2: _wbufq_insert() is used now (no out-of-order).
+			 */
 #ifdef USE_TLS
-			if (unlikely(c->type==PROTO_TLS))
-				n=tls_1st_send(fd, c, buf, len, dst->send_flags,
-									&response[1]);
-			else
+			if (unlikely(c->type==PROTO_TLS)) {
+			/* for TLS the TLS processing and the send must happen
+			   atomically w/ respect to other sends on the same connection
+			   (otherwise reordering might occur which would break TLS) =>
+			   lock. However in this case this send will always be the first
+			   => we can have the send() out of the lock.
+			*/
+				lock_get(&c->write_lock);
+					n = tls_encode(c, &buf, &len);
+				lock_release(&c->write_lock);
+				if (likely(n >= 0 && len))
+					n=tcpconn_1st_send(fd, c, buf, len, dst->send_flags,
+										&response[1], 0);
+				else if (n < 0)
+					response[1] = CONN_ERROR;
+				else
+					/* len == 0 => nothing to send  (but still have to
+					   inform tcp_main about the new connection) */
+					response[1] = CONN_NEW_COMPLETE;
+			} else
 #endif /* USE_TLS */
 				n=tcpconn_1st_send(fd, c, buf, len, dst->send_flags,
 									&response[1], 0);
-			if (unlikely(n<0))
+			if (unlikely(n<0)) /* this will catch CONN_ERROR too */
 				goto conn_wait_error;
 			if (unlikely(response[1]==CONN_EOF)){
 				/* if close-after-send requested, don't bother
 				   sending the fd back to tcp_main, try closing it
 				   immediately (no other tcp_send should use it,
 				   because it is marked as close-after-send before
-				   being added to the hash */
+				   being added to the hash) */
 				goto conn_wait_close;
 			}
 			/* send to tcp_main */
 			response[0]=(long)c;
-			if (unlikely(response[1]!=CONN_NOP &&
-						(send_fd(unix_tcp_sock, response,
-									sizeof(response), fd) <= 0))){
+			if (unlikely(send_fd(unix_tcp_sock, response,
+									sizeof(response), fd) <= 0)){
 				LOG(L_ERR, "BUG: tcp_send %s: %ld for %p"
 							" failed:" " %s (%d)\n",
 							su2a(&dst->to, sizeof(dst->to)),
@@ -1906,9 +1930,22 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		/* new connection => send on it directly */
 #ifdef USE_TLS
 		if (unlikely(c->type==PROTO_TLS)) {
-			response[1] = CONN_ERROR; /* in case tls is not loaded */
-			n = tls_do_send(fd, c, buf, len, dst->send_flags,
-							&response[1]);
+			/* for TLS the TLS processing and the send must happen
+			   atomically w/ respect to other sends on the same connection
+			   (otherwise reordering might occur which would break TLS) =>
+			   lock.
+			*/
+			lock_get(&c->write_lock);
+				n = tls_encode(c, &buf, &len);
+				if (likely(n > 0))
+					n = tcpconn_do_send(fd, c, buf, len, dst->send_flags,
+											&response[1], 1);
+				else if (n == 0)
+					/* len == 0 => nothing to send */
+					response[1] = CONN_NOP;
+				else  /* n < 0 */
+					response[1] = CONN_ERROR;
+			lock_release(&c->write_lock);
 		} else
 #endif /* USE_TLS */
 			n = tcpconn_do_send(fd, c, buf, len, dst->send_flags,
@@ -2013,8 +2050,8 @@ end_no_conn:
  * @param len - data length,
  * @return >=0 on success, -1 on error.
  */
-static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
-							snd_flags_t send_flags)
+static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
+								unsigned len, snd_flags_t send_flags)
 {
 	struct tcp_connection *tmp;
 	int fd;
@@ -2047,7 +2084,19 @@ static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
 #endif /* TCP_CONNECT_WAIT */
 				{
 					do_close_fd=0;
-					if (unlikely(_wbufq_add(c, buf, len)<0)){
+#ifdef USE_TLS
+					if (unlikely(c->type==PROTO_TLS)) {
+						n = tls_encode(c, &buf, &len);
+						if (unlikely(n < 0)) {
+							lock_release(&c->write_lock);
+							response[1] = CONN_ERROR;
+							c->state=S_CONN_BAD;
+							c->timeout=get_ticks_raw(); /* force timeout */
+							goto error;
+						}
+					}
+#endif /* USE_TLS */
+					if (unlikely(len && (_wbufq_add(c, buf, len)<0))){
 						lock_release(&c->write_lock);
 						n=-1;
 						response[1] = CONN_ERROR;
@@ -2128,8 +2177,22 @@ static int tcpconn_send_put(struct tcp_connection* c, char* buf, unsigned len,
 	
 #ifdef USE_TLS
 		if (unlikely(c->type==PROTO_TLS)) {
-			response[1] = CONN_ERROR; /* in case tls is not loaded */
-			n = tls_do_send(fd, c, buf, len, send_flags, &response[1]);
+			/* for TLS the TLS processing and the send must happen
+			   atomically w/ respect to other sends on the same connection
+			   (otherwise reordering might occur which would break TLS) =>
+			   lock.
+			*/
+			lock_get(&c->write_lock);
+				n = tls_encode(c, &buf, &len);
+				if (likely(n > 0))
+					n = tcpconn_do_send(fd, c, buf, len, send_flags,
+											&response[1], 1);
+				else if (n == 0)
+					/* len == 0 => nothing to send */
+					response[1] = CONN_NOP;
+				else /* n < 0 */
+					response[1] = CONN_ERROR;
+			lock_release(&c->write_lock);
 		} else
 #endif
 			n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 0);
@@ -2202,7 +2265,7 @@ release_c:
  * @return <0 on error, number of bytes sent on success.
  */
 int tcpconn_send_unsafe(int fd, struct tcp_connection *c,
-						char* buf, unsigned len, snd_flags_t send_flags)
+						const char* buf, unsigned len, snd_flags_t send_flags)
 {
 	int n;
 	long response[2];
@@ -2257,8 +2320,8 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c,
  * @return >=0 on success, < 0 on error && *resp == CON_ERROR.
  *
  */
-int tcpconn_do_send(int fd, struct tcp_connection* c,
-							char* buf, unsigned len,
+static int tcpconn_do_send(int fd, struct tcp_connection* c,
+							const char* buf, unsigned len,
 							snd_flags_t send_flags, long* resp,
 							int locked)
 {
@@ -2416,25 +2479,26 @@ end:
  * @param buf - data to be sent.
  * @param len - data length.
  * @param send_flags
- * @param resp - filled with a fd sending cmd. for tcp_main on success:
- *                      CONN_NOP - nothing needs to be done (unused right now).
+ * @param resp - filled with a fd sending cmd. for tcp_main on success. It
+ *                      _must_ be one of the commands listed below:
  *                      CONN_NEW_PENDING_WRITE - new connection, first write
  *                                 was partially successful (or EAGAIN) and
  *                                 was queued (connection should be watched
  *                                 for write and the write queue flushed).
  *                                 The fd should be sent to tcp_main.
  *                      CONN_NEW_COMPLETE - new connection, first write
- *                                 completed successfuly and no data is queued.
- *                                 The fd should be sent to tcp_main.
+ *                                 completed successfully and no data is
+ *                                 queued. The fd should be sent to tcp_main.
  *                      CONN_EOF - no error, but the connection should be
  *                                  closed (e.g. SND_F_CON_CLOSE send flag).
+ *                      CONN_ERROR - error, _must_ return < 0.
  * @param locked - if set assume the connection is already locked (call from
  *                  tls) and do not lock/unlock the connection.
  * @return >=0 on success, < 0 on error (on error *resp is undefined).
  *
  */
-int tcpconn_1st_send(int fd, struct tcp_connection* c,
-							char* buf, unsigned len,
+static int tcpconn_1st_send(int fd, struct tcp_connection* c,
+							const char* buf, unsigned len,
 							snd_flags_t send_flags, long* resp,
 							int locked)
 {
@@ -2682,8 +2746,10 @@ close_again:
 	if (unlikely(close(fd)<0)){
 		if (errno==EINTR)
 			goto close_again;
-		LOG(L_ERR, "ERROR: tcpconn_put_destroy; close() failed: %s (%d)\n",
-				strerror(errno), errno);
+		LOG(L_ERR, "ERROR: tcpconn_close_main_fd(%p): %s "
+					"close(%d) failed (flags 0x%x): %s (%d)\n", tcpconn,
+					su2a(&tcpconn->rcv.src_su, sizeof(tcpconn->rcv.src_su)),
+					fd, tcpconn->flags, strerror(errno), errno);
 	}
 }
 
@@ -2737,6 +2803,7 @@ inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 		}
 		if (likely(!(tcpconn->flags & F_CONN_FD_CLOSED))){
 			tcpconn_close_main_fd(tcpconn);
+			tcpconn->flags|=F_CONN_FD_CLOSED;
 			(*tcp_connections_no)--;
 		}
 		_tcpconn_free(tcpconn); /* destroys also the wbuf_q if still present*/
@@ -2999,7 +3066,7 @@ rm_con:
  *  returns number of bytes written on success, -1 on error (and sets errno)
  */
 int _tcpconn_write_nb(int fd, struct tcp_connection* c,
-									char* buf, int len)
+									const char* buf, int len)
 {
 	int n;
 	
