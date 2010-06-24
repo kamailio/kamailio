@@ -61,7 +61,7 @@ typedef void (timer_function)(unsigned int ticks, void* param);
 /* deprecated, old, kept for compatibility 
 	get_ticks()*TIMER_TICK used to be the time in s
 	for new code, use get_ticks_raw() and one of the macros defined in
-	time_ticks.h (.e.g TICKS_TO_S(tick) to convert to s or ms )*/
+	timer_ticks.h (.e.g TICKS_TO_S(tick) to convert to s or ms )*/
 #define TIMER_TICK 1 /* 1 s, kept for compatibility */
 
 
