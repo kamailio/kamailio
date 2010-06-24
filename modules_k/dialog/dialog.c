@@ -1183,7 +1183,7 @@ static void internal_rpc_print_single_dlg(rpc_t *rpc, void *c, int with_context)
 	struct dlg_cell *dlg;
 	unsigned int h_entry;
 
-	if (rpc->scan(c, "SS", &callid, &from_tag) < 2) return;
+	if (rpc->scan(c, ".S.S", &callid, &from_tag) < 2) return;
 
 	h_entry = core_hash( &callid, &from_tag, d_table->size);
 	d_entry = &(d_table->entries[h_entry]);
@@ -1303,14 +1303,8 @@ static const char *rpc_end_dlg_entry_id_doc[2] = {
 static const char *rpc_profile_get_size_doc[2] = {
 	"Returns the number of dialogs belonging to a profile", 0
 };
-static const char *rpc_profile_w_val_get_size_doc[2] = {
-	"Returns the number of dialogs belonging to a profile with value", 0
-};
 static const char *rpc_profile_print_dlgs_doc[2] = {
 	"Lists all the dialogs belonging to a profile", 0
-};
-static const char *rpc_profile_w_val_print_dlgs_doc[2] = {
-	"Lists all the dialogs belonging to a profile with value", 0
 };
 static const char *rpc_dlg_bridge_doc[2] = {
 	"Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE mechanism:\
@@ -1339,31 +1333,26 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 }
 static void rpc_profile_get_size(rpc_t *rpc, void *c) {
 	str profile_name = {NULL,0};
-
-	if (rpc->scan(c, "S", &profile_name) < 1) return;
-	internal_rpc_profile_get_size(rpc, c, &profile_name, NULL);
-	return;
-}
-static void rpc_profile_w_val_get_size(rpc_t *rpc, void *c) {
-	str profile_name = {NULL,0};
 	str value = {NULL,0};
 
-	if (rpc->scan(c, "SS", &profile_name, &value) < 2) return;
-	internal_rpc_profile_get_size(rpc, c, &profile_name, &value);
+	if (rpc->scan(c, ".S", &profile_name) < 1) return;
+	if (rpc->scan(c, "*.S", &value) > 0) {
+		internal_rpc_profile_get_size(rpc, c, &profile_name, &value);
+	} else {
+		internal_rpc_profile_get_size(rpc, c, &profile_name, NULL);
+	}
 	return;
 }
 static void rpc_profile_print_dlgs(rpc_t *rpc, void *c) {
 	str profile_name = {NULL,0};
-
-	if (rpc->scan(c, "S", &profile_name) < 1) return;
-	internal_rpc_profile_print_dlgs(rpc, c, &profile_name, NULL);
-}
-static void rpc_profile_w_val_print_dlgs(rpc_t *rpc, void *c) {
-	str profile_name = {NULL,0};
 	str value = {NULL,0};
 
-	if (rpc->scan(c, "SS", &profile_name, &value) < 2) return;
-	internal_rpc_profile_print_dlgs(rpc, c, &profile_name, &value);
+	if (rpc->scan(c, ".S", &profile_name) < 1) return;
+	if (rpc->scan(c, "*.S", &value) > 0) {
+		internal_rpc_profile_print_dlgs(rpc, c, &profile_name, &value);
+	} else {
+		internal_rpc_profile_print_dlgs(rpc, c, &profile_name, NULL);
+	}
 	return;
 }
 static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
@@ -1381,9 +1370,7 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.dlg_list", rpc_print_dlg, rpc_print_dlg_doc, 0},
 	{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
 	{"dlg.profile_get_size", rpc_profile_get_size, rpc_profile_get_size_doc, 0},
-	{"dlg.profile_w_value_get_size", rpc_profile_w_val_get_size, rpc_profile_w_val_get_size_doc, 0},
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, 0},
-	{"dlg.profile_w_value_list", rpc_profile_w_val_print_dlgs, rpc_profile_w_val_print_dlgs_doc, 0},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
 	{0, 0, 0, 0}
 };
