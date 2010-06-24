@@ -469,11 +469,13 @@ inline static int get_dlg_timeout(struct sip_msg *req)
 {
 	pv_value_t pv_val;
 
-	if( timeout_avp && pv_get_spec_value( req, timeout_avp, &pv_val)==0
-	&& pv_val.flags&PV_VAL_INT && pv_val.ri>0 ) {
-		return pv_val.ri;
+	if( timeout_avp ) {
+		if ( pv_get_spec_value( req, timeout_avp, &pv_val)==0 &&
+				pv_val.flags&PV_VAL_INT && pv_val.ri>0 ) {
+			return pv_val.ri;
+		}
+		LM_DBG("invalid AVP value, using default timeout\n");
 	}
-	LM_DBG("invalid AVP value, use default timeout");
 	return default_timeout;
 }
 
@@ -923,11 +925,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	&& new_state==DLG_STATE_CONFIRMED) {
 		LM_DBG("sequential request successfully processed\n");
 		timeout = get_dlg_timeout(req);
-		/* update timer during sequential request? */
 		if (timeout!=default_timeout) {
 			dlg->lifetime = timeout;
-			if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1)
-				LM_ERR("failed to update dialog lifetime\n");
+		}
+		if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1) {
+			LM_ERR("failed to update dialog lifetime\n");
 		}
 		if (update_cseqs(dlg, req, dir)!=0) {
 			LM_ERR("cseqs update failed\n");
