@@ -267,6 +267,11 @@ int extract_path(str *body, str *path)
 	return extract_field(body, path, field);
 }
 
+int extract_rtcp(str *body, str *rtcp)
+{
+	static const str field = str_init("a=rtcp:");
+	return extract_field(body, rtcp, field);
+}
 
 int extract_sendrecv_mode(str *body, str *sendrecv_mode)
 {

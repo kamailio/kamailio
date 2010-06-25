@@ -524,6 +524,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				}
 				payload_attr = (sdp_payload_attr_t*)get_sdp_payload4payload(stream, &rtp_payload);
 				set_sdp_payload_attr(payload_attr, &rtp_enc, &rtp_clock, &rtp_params);
+			} else if (extract_rtcp(&tmpstr1, &stream->rtcp_port) == 0) {
+				a1p = stream->rtcp_port.s + stream->rtcp_port.len;
 			} else if (extract_accept_types(&tmpstr1, &stream->accept_types) == 0) {
 				a1p = stream->accept_types.s + stream->accept_types.len;
 			} else if (extract_accept_wrapped_types(&tmpstr1, &stream->accept_wrapped_types) == 0) {
@@ -766,11 +768,12 @@ void print_sdp_stream(sdp_stream_cell_t *stream)
 {
 	sdp_payload_attr_t *payload;
 
-	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s' '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s'\n",
+	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s' [%.*s] '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
 		stream->p_payload_attr,
 		stream->media.len, stream->media.s,
 		stream->ip_addr.len, stream->ip_addr.s, stream->port.len, stream->port.s,
+		stream->rtcp_port.len, stream->rtcp_port.s,
 		stream->transport.len, stream->transport.s,
 		stream->payloads.len, stream->payloads.s,
 		stream->bw_type.len, stream->bw_type.s, stream->bw_width.len, stream->bw_width.s,
@@ -961,13 +964,14 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 
 	/* NOTE: we are not cloning RFC4975 attributes */
 	len = sizeof(sdp_stream_cell_t) +
+			stream->ip_addr.len +
 			stream->media.len +
 			stream->port.len +
 			stream->transport.len +
 			stream->payloads.len +
 			stream->bw_type.len +
 			stream->bw_width.len +
-			stream->ip_addr.len;
+			stream->rtcp_port.len;
 	clone_stream = (sdp_stream_cell_t*)shm_malloc(len);
 	if (clone_stream == NULL) {
 		LM_ERR("no more shm mem (%d)\n",len);
@@ -997,6 +1001,13 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 
 	clone_stream->stream_num = stream->stream_num;
 	clone_stream->pf = stream->pf;
+
+	if (stream->ip_addr.len) {
+		clone_stream->ip_addr.s = p;
+		clone_stream->ip_addr.len = stream->ip_addr.len;
+		memcpy( p, stream->ip_addr.s, stream->ip_addr.len);
+		p += stream->ip_addr.len;
+	}
 
 	if (stream->media.len) {
 		clone_stream->media.s = p;
@@ -1038,11 +1049,11 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 		p += stream->bw_width.len;
 	}
 
-	if (stream->ip_addr.len) {
-		clone_stream->ip_addr.s = p;
-		clone_stream->ip_addr.len = stream->ip_addr.len;
-		memcpy( p, stream->ip_addr.s, stream->ip_addr.len);
-		//p += stream->payloads.len;
+	if (stream->rtcp_port.len) {
+		clone_stream->rtcp_port.s = p;
+		clone_stream->rtcp_port.len = stream->rtcp_port.len;
+		memcpy( p, stream->rtcp_port.s, stream->rtcp_port.len);
+		p += stream->rtcp_port.len;
 	}
 
 	/* NOTE: we are not cloning RFC4975 attributes:
@@ -1120,7 +1131,7 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 		clone_session->bw_width.s = p;
 		clone_session->bw_width.len = session->bw_width.len;
 		memcpy( p, session->bw_width.s, session->bw_width.len);
-		//p += session->bw_type.len;
+		p += session->bw_width.len;
 	}
 
 	return clone_session;

@@ -61,6 +61,9 @@ typedef struct sdp_stream_cell {
 							CT - conference total;
 							AS - application specific */
 	str bw_width;                            /**< The <bandwidth> is interpreted as kilobits per second by default */
+	/* RFC3605: Real Time Control Protocol (RTCP) attribute in Session Description Protocol (SDP) */
+	/* a=rtcp: port  [nettype space addrtype space connection-address] CRLF */
+	str rtcp_port;				  /**< RFC3605: rtcp attribute */
 	str path;                                 /**< RFC4975: path attribute */
 	str max_size;                             /**< RFC4975: max-size attribute */
 	str accept_types;                         /**< RFC4975: accept-types attribute */
