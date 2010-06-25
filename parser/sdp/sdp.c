@@ -396,7 +396,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	}
 	/* get session origin */
 	o1p = find_sdp_line(v1p, bodylimit, 'o');
-	if (o1p==0) {
+	if (o1p == NULL) {
 		LM_ERR("no o= in session\n");
 		return -1;
 	}
@@ -408,11 +408,28 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	}
 	/* Allocate a session cell */
 	session = add_sdp_session(_sdp, session_num, cnt_disp);
-	if (session == 0) return -1;
+	if (session == NULL) return -1;
+
+	/* Get origin IP */
+	tmpstr1.s = o1p;
+	tmpstr1.len = bodylimit - tmpstr1.s; /* limit is session limit text */
+	if (extract_mediaip(&tmpstr1, &session->o_ip_addr, &session->o_pf,"o=") == -1) {
+		LM_ERR("can't extract origin media IP from the message\n");
+		return -1;
+	}
 
 	/* Find c1p only between session begin and first media.
 	 * c1p will give common c= for all medias. */
 	c1p = find_sdp_line(o1p, m1p, 'c');
+
+	if (c1p) {
+		tmpstr1.s = c1p;
+		tmpstr1.len = bodylimit - tmpstr1.s; /* limit is session limit text */
+		if (extract_mediaip(&tmpstr1, &session->ip_addr, &session->pf,"c=") == -1) {
+			LM_ERR("can't extract common media IP from the message\n");
+			return -1;
+		}
+	}
 
 	/* Find b1p only between session begin and first media.
 	 * b1p will give common b= for all medias. */
@@ -1080,8 +1097,12 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 		LM_ERR("arg:NULL\n");
 		return NULL;
 	}
-	len = sizeof(sdp_session_cell_t) + session->cnt_disp.len +
-		session->bw_type.len + session->bw_width.len;
+	len = sizeof(sdp_session_cell_t) +
+		session->cnt_disp.len +
+		session->ip_addr.len +
+		session->o_ip_addr.len +
+		session->bw_type.len +
+		session->bw_width.len;
 	clone_session = (sdp_session_cell_t*)shm_malloc(len);
 	if (clone_session == NULL) {
 		LM_ERR("no more shm mem (%d)\n",len);
@@ -1111,6 +1132,8 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 	}
 
 	clone_session->session_num = session->session_num;
+	clone_session->pf = session->pf;
+	clone_session->o_pf = session->o_pf;
 	clone_session->streams_num = session->streams_num;
 
 	if (session->cnt_disp.len) {
@@ -1118,6 +1141,20 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 		clone_session->cnt_disp.len = session->cnt_disp.len;
 		memcpy( p, session->cnt_disp.s, session->cnt_disp.len);
 		p += session->cnt_disp.len;
+	}
+
+	if (session->ip_addr.len) {
+		clone_session->ip_addr.s = p;
+		clone_session->ip_addr.len = session->ip_addr.len;
+		memcpy( p, session->ip_addr.s, session->ip_addr.len);
+		p += session->ip_addr.len;
+	}
+
+	if (session->o_ip_addr.len) {
+		clone_session->o_ip_addr.s = p;
+		clone_session->o_ip_addr.len = session->o_ip_addr.len;
+		memcpy( p, session->o_ip_addr.s, session->o_ip_addr.len);
+		p += session->o_ip_addr.len;
 	}
 
 	if (session->bw_type.len) {

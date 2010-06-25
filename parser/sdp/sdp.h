@@ -76,6 +76,12 @@ typedef struct sdp_session_cell {
 	struct sdp_session_cell *next;
 	int session_num;  /**< session index inside sdp */
 	str cnt_disp;     /**< the Content-Disposition header (for Content-Type:multipart/mixed) */
+	/* c=<network type> <address type> <connection address> */
+	int pf;		/**< connection address family: AF_INET/AF_INET6 */
+	str ip_addr;	/**< connection address */
+	/* o=<username> <session id> <version> <network type> <address type> <address> */
+	int o_pf;	/**< origin address family: AF_INET/AF_INET6 */
+	str o_ip_addr;	/**< origin address */
 	/* b=<bwtype>:<bandwidth> */
 	str bw_type;      /**< alphanumeric modifier giving the meaning of the <bandwidth> figure:
 				CT - conference total;
