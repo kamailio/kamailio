@@ -266,14 +266,10 @@ sdp_session_cell_t* get_sdp_session_sdp(struct sdp_info* sdp, int session_num)
 	sdp_session_cell_t *session;
 
 	session = sdp->sessions;
-	if (session_num > sdp->sessions_num)
-		return NULL;
+	if (session_num >= sdp->sessions_num) return NULL;
 	while (session) {
-		if (session->session_num == session_num) {
-			return session;
-		} else {
-			session = session->next;
-		}
+		if (session->session_num == session_num) return session;
+		session = session->next;
 	}
 	return NULL;
 }
@@ -291,18 +287,18 @@ sdp_stream_cell_t* get_sdp_stream_sdp(struct sdp_info* sdp, int session_num, int
 	sdp_session_cell_t *session;
 	sdp_stream_cell_t *stream;
 
-	if (sdp==NULL) 
-		return NULL;
-	if (session_num > sdp->sessions_num)
-		return NULL;
+	if (sdp==NULL) return NULL;
+	if (session_num >= sdp->sessions_num) return NULL;
 	session = sdp->sessions;
 	while (session) {
 		if (session->session_num == session_num) {
+			if (stream_num >= session->streams_num) return NULL;
 			stream = session->streams;
 			while (stream) {
 				if (stream->stream_num == stream_num) return stream;
 				stream = stream->next;
 			}
+			break;
 		} else {
 			session = session->next;
 		}
