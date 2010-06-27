@@ -260,6 +260,19 @@ void set_sdp_sendrecv_mode_attr(sdp_stream_cell_t *stream, sdp_payload_attr_t *p
 /*
  * Getters ....
  */
+int get_sdp_session_num(struct sip_msg* _m)
+{
+	if (_m->body == NULL) return 0;
+	if (_m->body->type != MSG_BODY_SDP) return 0;
+	return ((sdp_info_t*)_m->body)->sessions_num;
+}
+
+int get_sdp_stream_num(struct sip_msg* _m)
+{
+	if (_m->body == NULL) return 0;
+	if (_m->body->type != MSG_BODY_SDP) return 0;
+	return ((sdp_info_t*)_m->body)->streams_num;
+}
 
 sdp_session_cell_t* get_sdp_session_sdp(struct sdp_info* sdp, int session_num)
 {
@@ -477,6 +490,9 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		/* Allocate a stream cell */
 		stream = add_sdp_stream(session, stream_num, &sdp_media, &sdp_port, &sdp_transport, &sdp_payload, pf, &sdp_ip);
 		if (stream == 0) return -1;
+
+		/* increment total number of streams */
+		_sdp->streams_num++;
 
 		/* b1p will point to per-media "b=" */
 		b1p = find_sdp_line(m1p, m2p, 'b');
@@ -839,7 +855,7 @@ void print_sdp(sdp_info_t* sdp)
 {
 	sdp_session_cell_t *session;
 
-	LM_DBG("sdp:%p=>%p (%d)\n", sdp, sdp->sessions, sdp->sessions_num);
+	LM_DBG("sdp:%p=>%p (%d:%d)\n", sdp, sdp->sessions, sdp->sessions_num, sdp->streams_num);
 	session = sdp->sessions;
 	while (session) {
 		print_sdp_session(session);
@@ -1207,6 +1223,7 @@ sdp_info_t * clone_sdp_info(struct sip_msg* _m)
 	memset( clone_sdp_info, 0, len);
 	LM_DBG("we have %d sessions\n", sdp_info->sessions_num);
 	clone_sdp_info->sessions_num = sdp_info->sessions_num;
+	clone_sdp_info->streams_num = sdp_info->streams_num;
 
 	session=sdp_info->sessions;
 	clone_session=clone_sdp_session_cell(session);

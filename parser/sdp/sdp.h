@@ -98,6 +98,7 @@ typedef struct sdp_info {
 	msg_body_type_t type;
 	free_msg_body_f free;
 	int sessions_num;	/**< number of SDP sessions */
+	int streams_num;  /**< total number of streams for all SDP sessions */
 	struct sdp_session_cell *sessions;
 } sdp_info_t;
 
@@ -107,6 +108,14 @@ typedef struct sdp_info {
  */
 int parse_sdp(struct sip_msg* _m);
 
+/**
+ * Get number of sessions in existing SDP.
+ */
+int get_sdp_session_num(struct sip_msg* _m);
+/**
+ * Get number of streams in existing SDP.
+ */
+int get_sdp_stream_num(struct sip_msg* _m);
 /**
  * Get a session for the current sip msg based on position inside SDP.
  */
