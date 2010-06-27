@@ -1146,6 +1146,9 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *
 		rpc->printf(c, "\tcaller_bind_addr:%.*s callee_bind_addr:",
 			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s);
 	}
+	if (with_context) {
+		run_dlg_callbacks( DLGCB_RPC_CONTEXT, dlg, NULL, DLG_DIR_NONE, NULL);
+	}
 }
 
 /*!
@@ -1294,8 +1297,14 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 static const char *rpc_print_dlgs_doc[2] = {
 	"Print all dialogs", 0
 };
+static const char *rpc_print_dlgs_ctx_doc[2] = {
+	"Print all dialogs with associated context", 0
+};
 static const char *rpc_print_dlg_doc[2] = {
 	"Print dialog based on callid and fromtag", 0
+};
+static const char *rpc_print_dlg_ctx_doc[2] = {
+	"Print dialog with associated context based on callid and fromtag", 0
 };
 static const char *rpc_end_dlg_entry_id_doc[2] = {
 	"End a given dialog based on [h_entry] [h_id]", 0
@@ -1315,8 +1324,14 @@ static const char *rpc_dlg_bridge_doc[2] = {
 static void rpc_print_dlgs(rpc_t *rpc, void *c) {
 	internal_rpc_print_dlgs(rpc, c, 0);
 }
+static void rpc_print_dlgs_ctx(rpc_t *rpc, void *c) {
+	internal_rpc_print_dlgs(rpc, c, 1);
+}
 static void rpc_print_dlg(rpc_t *rpc, void *c) {
 	internal_rpc_print_single_dlg(rpc, c, 0);
+}
+static void rpc_print_dlg_ctx(rpc_t *rpc, void *c) {
+	internal_rpc_print_single_dlg(rpc, c, 1);
 }
 static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
@@ -1367,7 +1382,9 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 
 static rpc_export_t rpc_methods[] = {
 	{"dlg.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
+	{"dlg.list_ctx", rpc_print_dlgs_ctx, rpc_print_dlgs_ctx_doc, 0},
 	{"dlg.dlg_list", rpc_print_dlg, rpc_print_dlg_doc, 0},
+	{"dlg.dlg_list_ctx", rpc_print_dlg_ctx, rpc_print_dlg_ctx_doc, 0},
 	{"dlg.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
 	{"dlg.profile_get_size", rpc_profile_get_size, rpc_profile_get_size_doc, 0},
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, 0},

@@ -58,6 +58,7 @@ static void qos_dialog_destroy_CB(struct dlg_cell* did, int type, struct dlg_cb_
 static void qos_dialog_request_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params);
 static void qos_dialog_response_CB(struct dlg_cell* did, int type,struct dlg_cb_params * params);
 
+static void qos_dialog_rpc_context_CB(struct dlg_cell* did, int type,struct dlg_cb_params * params);
 
 /**
  * The value of the message flag to flag an INVITE we want to process
@@ -90,6 +91,8 @@ static void setup_dialog_callbacks(struct dlg_cell *did, qos_ctx_t *ctx)
 	dlg_binds->register_dlgcb(did, DLGCB_MI_CONTEXT,
 			qos_dialog_mi_context_CB, (void *)ctx, NULL);
 
+	dlg_binds->register_dlgcb(did, DLGCB_RPC_CONTEXT,
+			qos_dialog_rpc_context_CB, (void *)ctx, NULL);
 	return;
 }
 
@@ -274,6 +277,25 @@ static void qos_dialog_response_CB(struct dlg_cell* did, int type, struct dlg_cb
 	} else {
 		LM_ERR("not a SIP_REPLY\n");
 		return;
+	}
+
+	return;
+}
+
+/********************************* RPC *********************************/
+void qos_dialog_rpc_context_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)
+{
+	qos_ctx_t* qos_ctx = (qos_ctx_t*)*(params->param);
+	qos_sdp_t* qos_sdp;
+
+	qos_sdp = qos_ctx->pending_sdp;
+	if (qos_sdp) {
+		/* print pendign sdp context */
+	}
+
+	qos_sdp = qos_ctx->negotiated_sdp;
+	if (qos_sdp) {
+		/* print negotiated sdp context */
 	}
 
 	return;
