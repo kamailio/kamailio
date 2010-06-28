@@ -159,19 +159,19 @@ void free_sdp(sdp_info_t** _sdp);
  *
  * Note: only for debug purposes.
  */
-void print_sdp(sdp_info_t* sdp);
+void print_sdp(sdp_info_t* sdp, int log_level);
 /**
  * Print the content of the given sdp_session structure.
  *
  * Note: only for debug purposes.
  */
-void print_sdp_session(sdp_session_cell_t* sdp_session);
+void print_sdp_session(sdp_session_cell_t* sdp_session, int log_level);
 /**
  * Print the content of the given sdp_stream structure.
  *
  * Note: only for debug purposes.
  */
-void print_sdp_stream(sdp_stream_cell_t *stream);
+void print_sdp_stream(sdp_stream_cell_t *stream, int log_level);
 
 
 #endif /* SDP_H */
