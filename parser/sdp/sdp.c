@@ -4,6 +4,7 @@
  * SDP parser interface
  *
  * Copyright (C) 2008-2009 SOMA Networks, INC.
+ * Copyright (C) 2010 VoIP Embedded, Inc
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -92,7 +93,7 @@ static inline sdp_session_cell_t *add_sdp_session(sdp_info_t* _sdp, int session_
  * Allocate a new stream cell.
  */
 static inline sdp_stream_cell_t *add_sdp_stream(sdp_session_cell_t* _session, int stream_num,
-		str* media, str* port, str* transport, str* payloads, int pf, str* sdp_ip)
+		str* media, str* port, str* transport, str* payloads, int is_rtp, int pf, str* sdp_ip)
 {
 	sdp_stream_cell_t *stream;
 	int len;
@@ -115,6 +116,8 @@ static inline sdp_stream_cell_t *add_sdp_stream(sdp_session_cell_t* _session, in
 	stream->transport.len = transport->len;
 	stream->payloads.s = payloads->s;
 	stream->payloads.len = payloads->len;
+
+	stream->is_rtp = is_rtp;
 
 	stream->pf = pf;
 	stream->ip_addr.s = sdp_ip->s;
@@ -340,6 +343,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	str sdp_ip, sdp_media, sdp_port, sdp_transport, sdp_payload;
 	str payload;
 	str rtp_payload, rtp_enc, rtp_clock, rtp_params;
+	int is_rtp;
 	char *bodylimit;
 	char *v1p, *o1p, *m1p, *m2p, *c1p, *c2p, *a1p, *a2p, *b1p;
 	str tmpstr1;
@@ -441,13 +445,13 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		/* Extract the port on sdp_port */
 		tmpstr1.s = m1p;
 		tmpstr1.len = m2p - m1p;
-		if (extract_media_attr(&tmpstr1, &sdp_media, &sdp_port, &sdp_transport, &sdp_payload) == -1) {
+		if (extract_media_attr(&tmpstr1, &sdp_media, &sdp_port, &sdp_transport, &sdp_payload, &is_rtp) == -1) {
 			LM_ERR("can't extract media attr from the message\n");
 			return -1;
 		}
 
 		/* Allocate a stream cell */
-		stream = add_sdp_stream(session, stream_num, &sdp_media, &sdp_port, &sdp_transport, &sdp_payload, pf, &sdp_ip);
+		stream = add_sdp_stream(session, stream_num, &sdp_media, &sdp_port, &sdp_transport, &sdp_payload, is_rtp, pf, &sdp_ip);
 		if (stream == 0) return -1;
 
 		/* increment total number of streams */
@@ -758,13 +762,13 @@ void print_sdp_stream(sdp_stream_cell_t *stream)
 {
 	sdp_payload_attr_t *payload;
 
-	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
+	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
 		stream->p_payload_attr,
 		stream->media.len, stream->media.s,
 		stream->ip_addr.len, stream->ip_addr.s, stream->port.len, stream->port.s,
 		stream->rtcp_port.len, stream->rtcp_port.s,
-		stream->transport.len, stream->transport.s,
+		stream->transport.len, stream->transport.s, stream->is_rtp,
 		stream->payloads.len, stream->payloads.s,
 		stream->bw_type.len, stream->bw_type.s, stream->bw_width.len, stream->bw_width.s,
 		stream->payloads_num, stream->payload_attr,
@@ -984,6 +988,8 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 		memcpy( p, stream->ip_addr.s, stream->ip_addr.len);
 		p += stream->ip_addr.len;
 	}
+
+	clone_stream->is_rtp = stream->is_rtp;
 
 	if (stream->media.len) {
 		clone_stream->media.s = p;

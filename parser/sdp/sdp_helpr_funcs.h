@@ -4,6 +4,7 @@
  * SDP parser helpers
  *
  * Copyright (C) 2008-2009 SOMA Networks, INC.
+ * Copyright (C) 2010 VoIP Embedded, Inc
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -47,7 +48,7 @@ int extract_rtpmap(str *body, str *rtpmap_payload, str *rtpmap_encoding, str *rt
 int extract_ptime(str *body, str *ptime);
 int extract_sendrecv_mode(str *body, str *sendrecv_mode);
 int extract_mediaip(str *body, str *mediaip, int *pf, char *line);
-int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload);
+int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload, int *is_rtp);
 int extract_bwidth(str *body, str *bwtype, str *bwwitdth);
 
 /* RFC3605 attributes */

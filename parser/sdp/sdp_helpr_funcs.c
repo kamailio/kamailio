@@ -4,6 +4,7 @@
  * SDP parser helpers
  *
  * Copyright (C) 2008-2009 SOMA Networks, INC.
+ * Copyright (C) 2010 VoIP Embedded, Inc
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,14 +35,19 @@
 #include "../parse_hname2.h"
 
 
-static str sup_ptypes[] = {
-	str_init("udp"),
-	str_init("udptl"),
-	str_init("rtp/avp"),
-	str_init("rtp/savpf"),
-	str_init("TCP/MSRP"),
-	str_init("TCP/TLS/MSRP"),
-	{ NULL, 0}
+static struct {
+	const char *s;
+	int len;
+	int is_rtp;
+} sup_ptypes[] = {
+	{.s = "rtp/avp",   .len = 7, .is_rtp = 1},
+	{.s = "udptl",     .len = 5, .is_rtp = 0},
+	{.s = "rtp/avpf",  .len = 8, .is_rtp = 1},
+	{.s = "rtp/savp",  .len = 8, .is_rtp = 1},
+	{.s = "rtp/savpf", .len = 9, .is_rtp = 1},
+	{.s = "udp",       .len = 3, .is_rtp = 0},
+	{.s = "udp/bfcp",  .len = 8, .is_rtp = 0},
+	{.s = NULL,        .len = 0, .is_rtp = 0}
 };
 
 
@@ -385,7 +391,7 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 	return 1;
 }
 
-int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload)
+int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload, int *is_rtp)
 {
 	char *cp, *cp1;
 	int len, i;
@@ -462,10 +468,12 @@ int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatra
 
 	for (i = 0; sup_ptypes[i].s != NULL; i++)
 		if (mediatransport->len == sup_ptypes[i].len &&
-		    strncasecmp(mediatransport->s, sup_ptypes[i].s, mediatransport->len) == 0)
+		    strncasecmp(mediatransport->s, sup_ptypes[i].s, mediatransport->len) == 0) {
+			*is_rtp = sup_ptypes[i].is_rtp;
 			return 0;
+		}
 	/* Unproxyable protocol type. Generally it isn't error. */
-	return -1;
+	return 0;
 }
 
 
