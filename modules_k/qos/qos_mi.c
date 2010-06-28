@@ -56,18 +56,6 @@ int add_mi_sdp_payload_nodes(struct mi_node* node, int index, sdp_payload_attr_t
 			return 1;
 	}
 
-	if (sdp_payload->sendrecv_mode.s!=NULL && sdp_payload->sendrecv_mode.len!=0) {
-		attr = add_mi_attr(node1, MI_DUP_VALUE, "sendrecv", 8, sdp_payload->sendrecv_mode.s, sdp_payload->sendrecv_mode.len);
-		if(attr == NULL)
-			return 1;
-	}
-
-	if (sdp_payload->ptime.s!=NULL && sdp_payload->ptime.len!=0) {
-		attr = add_mi_attr(node1, MI_DUP_VALUE, "ptime", 5, sdp_payload->ptime.s, sdp_payload->ptime.len);
-		if(attr == NULL)
-			return 1;
-	}
-
 	return 0;
 }
 
@@ -99,6 +87,18 @@ int add_mi_stream_nodes(struct mi_node* node, int index, sdp_stream_cell_t* stre
 	attr = add_mi_attr(node1, MI_DUP_VALUE, "transport", 9, stream->transport.s, stream->transport.len);
 	if(attr == NULL)
 		return 1;
+
+	if (stream->sendrecv_mode.s!=NULL && stream->sendrecv_mode.len!=0) {
+		attr = add_mi_attr(node1, MI_DUP_VALUE, "sendrecv", 8, stream->sendrecv_mode.s, stream->sendrecv_mode.len);
+		if(attr == NULL)
+			return 1;
+	}
+
+	if (stream->ptime.s!=NULL && stream->ptime.len!=0) {
+		attr = add_mi_attr(node1, MI_DUP_VALUE, "ptime", 5, stream->ptime.s, stream->ptime.len);
+		if(attr == NULL)
+			return 1;
+	}
 
 	p = int2str((unsigned long)(stream->payloads_num), &len);
 	attr = add_mi_attr(node1, MI_DUP_VALUE, "payloads_num", 12, p, len);
