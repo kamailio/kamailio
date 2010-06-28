@@ -340,7 +340,8 @@ sdp_payload_attr_t* get_sdp_payload4index(sdp_stream_cell_t *stream, int index)
 static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_info_t* _sdp)
 {
 	str body = *sdp_body;
-	str sdp_ip, sdp_media, sdp_port, sdp_transport, sdp_payload;
+	str sdp_ip = {NULL,0};
+	str sdp_media, sdp_port, sdp_transport, sdp_payload;
 	str payload;
 	str rtp_payload, rtp_enc, rtp_clock, rtp_params;
 	int is_rtp;
@@ -399,6 +400,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	c1p = find_sdp_line(o1p, m1p, 'c');
 
 	if (c1p) {
+		/* Extract session address */
 		tmpstr1.s = c1p;
 		tmpstr1.len = bodylimit - tmpstr1.s; /* limit is session limit text */
 		if (extract_mediaip(&tmpstr1, &session->ip_addr, &session->pf,"c=") == -1) {
@@ -427,19 +429,20 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		/* c2p will point to per-media "c=" */
 		c2p = find_sdp_line(m1p, m2p, 'c');
 
-		/* Extract address and port */
-		tmpstr1.s = c2p ? c2p : c1p;
-		if (tmpstr1.s == NULL) {
-			/* No "c=" */
-			LM_ERR("can't find media IP in the message\n");
-			return -1;
-		}
-
-		/* Extract the IP on sdp_ip */
-		tmpstr1.len = bodylimit - tmpstr1.s; /* limit is session limit text */
-		if (extract_mediaip(&tmpstr1, &sdp_ip, &pf,"c=") == -1) {
-			LM_ERR("can't extract media IP from the message\n");
-			return -1;
+		if (c2p) {
+			/* Extract stream address */
+			tmpstr1.s = c2p;
+			tmpstr1.len = bodylimit - tmpstr1.s; /* limit is session limit text */
+			if (extract_mediaip(&tmpstr1, &sdp_ip, &pf,"c=") == -1) {
+				LM_ERR("can't extract media IP from the message\n");
+				return -1;
+			}
+		} else {
+			if (!c1p) {
+				/* No "c=" */
+				LM_ERR("can't find media IP in the message\n");
+				return -1;
+			}
 		}
 
 		/* Extract the port on sdp_port */
@@ -800,9 +803,11 @@ void print_sdp_session(sdp_session_cell_t *session, int log_level)
 		return;
 	}
 
-	LOG(log_level, "..session[%d]:%p=>%p '%.*s' '%.*s:%.*s' (%d)=>%p\n",
+	LOG(log_level, "..session[%d]:%p=>%p '%.*s' '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p\n",
 		session->session_num, session, session->next,
 		session->cnt_disp.len, session->cnt_disp.s,
+		session->ip_addr.len, session->ip_addr.s,
+		session->o_ip_addr.len, session->o_ip_addr.s,
 		session->bw_type.len, session->bw_type.s, session->bw_width.len, session->bw_width.s,
 		session->streams_num, session->streams);
 	while (stream) {
