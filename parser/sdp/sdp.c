@@ -758,7 +758,7 @@ void print_sdp_stream(sdp_stream_cell_t *stream)
 {
 	sdp_payload_attr_t *payload;
 
-	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s' [%.*s] '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
+	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
 		stream->p_payload_attr,
 		stream->media.len, stream->media.s,
