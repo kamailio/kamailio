@@ -764,6 +764,20 @@ static void unreference_dialog(void *dialog)
 
 
 /*!
+ * \brief Unreference a dialog from tm callback (another wrapper)
+ * \param t transaction, unused
+ * \param type type of the entered callback
+ * \param param saved dialog structure in the callback
+ */
+static void unref_dlg_from_cb(struct cell* t, int type, struct tmcb_params *param)
+{
+    struct dlg_cell *dlg = (struct dlg_cell *)(*param->param);
+
+    unref_dlg(dlg, 1);
+}
+
+
+/*!
  * \brief Function that is registered as RR callback for dialog tracking
  * 
  * Function that is registered as RR callback for dialog tracking. It
@@ -885,6 +899,17 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	/* set current dialog - it will keep a ref! */
 	set_current_dialog( req, dlg);
 	_dlg_ctx.dlg = dlg;
+
+	/* delay deletion of dialog until transaction has died off in order
+	 * to absorb in-air messages */
+	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
+		if ( d_tmb.register_tmcb(req, NULL, TMCB_DESTROY,
+					unref_dlg_from_cb, (void*)dlg, NULL)<0 ) {
+			LM_ERR("failed to register deletion delay function\n");
+		} else {
+			ref_dlg(dlg, 1);
+		}
+	}
 
 	/* run actions for the transition */
 	if (event==DLG_EVENT_REQBYE && new_state==DLG_STATE_DELETED &&
