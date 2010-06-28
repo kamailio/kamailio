@@ -40,8 +40,6 @@ typedef struct sdp_payload_attr {
 	str rtp_enc;
 	str rtp_clock;
 	str rtp_params;
-	str sendrecv_mode;
-	str ptime;
 } sdp_payload_attr_t;
 
 typedef struct sdp_stream_cell {
@@ -54,6 +52,8 @@ typedef struct sdp_stream_cell {
 	str media;
 	str port;
 	str transport;
+	str sendrecv_mode;
+	str ptime;
 	str payloads;
 	int payloads_num;                         /**< number of payloads inside a stream */
 	/* b=<bwtype>:<bandwidth> */

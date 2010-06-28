@@ -216,47 +216,6 @@ void set_sdp_payload_attr(sdp_payload_attr_t *payload_attr, str *rtp_enc, str *r
 	return;
 }
 
-void set_sdp_ptime_attr(sdp_stream_cell_t *stream, sdp_payload_attr_t *payload_attr, str *ptime)
-{
-	sdp_payload_attr_t *payload;
-	int i;
-
-	if (payload_attr == 0) {
-		/* This is a generic attribute
-		 * Let's update all payloads */
-		for (i=0;i<stream->payloads_num;i++) {
-			payload = stream->p_payload_attr[i];
-			payload->ptime.s = ptime->s;
-			payload->ptime.len = ptime->len;
-		}
-	} else {
-		payload_attr->ptime.s = ptime->s;
-		payload_attr->ptime.len = ptime->len;
-	}
-	return;
-}
-
-void set_sdp_sendrecv_mode_attr(sdp_stream_cell_t *stream, sdp_payload_attr_t *payload_attr, str *sendrecv_mode)
-{
-	sdp_payload_attr_t *payload;
-	int i;
-
-	if (payload_attr == 0) {
-		/* This is a generic attribute
-		 * Let's update all payloads */
-		for (i=0;i<stream->payloads_num;i++) {
-			payload = stream->p_payload_attr[i];
-			payload->sendrecv_mode.s = sendrecv_mode->s;
-			payload->sendrecv_mode.len = sendrecv_mode->len;
-		}
-	} else {
-		payload_attr->sendrecv_mode.s = sendrecv_mode->s;
-		payload_attr->sendrecv_mode.len = sendrecv_mode->len;
-	}
-
-	return;
-}
-
 /*
  * Getters ....
  */
@@ -380,7 +339,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	str body = *sdp_body;
 	str sdp_ip, sdp_media, sdp_port, sdp_transport, sdp_payload;
 	str payload;
-	str rtp_payload, rtp_enc, rtp_clock, rtp_params, ptime, sendrecv_mode;
+	str rtp_payload, rtp_enc, rtp_clock, rtp_params;
 	char *bodylimit;
 	char *v1p, *o1p, *m1p, *m2p, *c1p, *c2p, *a1p, *a2p, *b1p;
 	str tmpstr1;
@@ -543,12 +502,10 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 			tmpstr1.s = a2p;
 			tmpstr1.len = m2p - a2p;
 
-			if (parse_payload_attr && extract_ptime(&tmpstr1, &ptime) == 0) {
-				a1p = ptime.s + ptime.len;
-				set_sdp_ptime_attr(stream, payload_attr, &ptime);
-			} else if (parse_payload_attr && extract_sendrecv_mode(&tmpstr1, &sendrecv_mode) == 0) {
-				a1p = sendrecv_mode.s + sendrecv_mode.len;
-				set_sdp_sendrecv_mode_attr(stream, payload_attr, &sendrecv_mode);
+			if (parse_payload_attr && extract_ptime(&tmpstr1, &stream->ptime) == 0) {
+				a1p = stream->ptime.s + stream->ptime.len;
+			} else if (parse_payload_attr && extract_sendrecv_mode(&tmpstr1, &stream->sendrecv_mode) == 0) {
+				a1p = stream->sendrecv_mode.s + stream->sendrecv_mode.len;
 			} else if (parse_payload_attr && extract_rtpmap(&tmpstr1, &rtp_payload, &rtp_enc, &rtp_clock, &rtp_params) == 0) {
 				if (rtp_params.len != 0 && rtp_params.s != NULL) {
 					a1p = rtp_params.s + rtp_params.len;
@@ -801,7 +758,7 @@ void print_sdp_stream(sdp_stream_cell_t *stream)
 {
 	sdp_payload_attr_t *payload;
 
-	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s' [%.*s] '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s'\n",
+	LM_DBG("....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s' [%.*s] '%.*s' '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
 		stream->p_payload_attr,
 		stream->media.len, stream->media.s,
@@ -811,21 +768,21 @@ void print_sdp_stream(sdp_stream_cell_t *stream)
 		stream->payloads.len, stream->payloads.s,
 		stream->bw_type.len, stream->bw_type.s, stream->bw_width.len, stream->bw_width.s,
 		stream->payloads_num, stream->payload_attr,
+		stream->sendrecv_mode.len, stream->sendrecv_mode.s,
+		stream->ptime.len, stream->ptime.s,
 		stream->path.len, stream->path.s,
 		stream->max_size.len, stream->max_size.s,
 		stream->accept_types.len, stream->accept_types.s,
 		stream->accept_wrapped_types.len, stream->accept_wrapped_types.s);
 	payload = stream->payload_attr;
 	while (payload) {
-		LM_DBG("......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
+		LM_DBG("......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s'\n",
 			payload->payload_num, payload, payload->next,
 			payload->payload_num, stream->p_payload_attr[payload->payload_num],
 			payload->rtp_payload.len, payload->rtp_payload.s,
 			payload->rtp_enc.len, payload->rtp_enc.s,
 			payload->rtp_clock.len, payload->rtp_clock.s,
-			payload->rtp_params.len, payload->rtp_params.s,
-			payload->sendrecv_mode.len, payload->sendrecv_mode.s,
-			payload->ptime.len, payload->ptime.s);
+			payload->rtp_params.len, payload->rtp_params.s);
 		payload=payload->next;
 	}
 }
@@ -925,9 +882,7 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 			attr->rtp_payload.len +
 			attr->rtp_enc.len +
 			attr->rtp_clock.len +
-			attr->rtp_params.len +
-			attr->sendrecv_mode.len +
-			attr->ptime.len;
+			attr->rtp_params.len;
 	clone_attr = (sdp_payload_attr_t*)shm_malloc(len);
 	if (clone_attr == NULL) {
 		LM_ERR("no more shm mem (%d)\n",len);
@@ -966,20 +921,6 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 		p += attr->rtp_params.len;
 	}
 
-	if (attr->sendrecv_mode.len) {
-		clone_attr->sendrecv_mode.s = p;
-		clone_attr->sendrecv_mode.len = attr->sendrecv_mode.len;
-		memcpy( p, attr->sendrecv_mode.s, attr->sendrecv_mode.len);
-		p += attr->sendrecv_mode.len;
-	}
-
-	if (attr->ptime.len) {
-		clone_attr->ptime.s = p;
-		clone_attr->ptime.len = attr->ptime.len;
-		memcpy( p, attr->ptime.s, attr->ptime.len);
-		p += attr->ptime.len;
-	}
-
 	return clone_attr;
 }
 
@@ -1001,6 +942,8 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 			stream->media.len +
 			stream->port.len +
 			stream->transport.len +
+			stream->sendrecv_mode.len +
+			stream->ptime.len +
 			stream->payloads.len +
 			stream->bw_type.len +
 			stream->bw_width.len +
@@ -1061,6 +1004,20 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 		clone_stream->transport.len = stream->transport.len;
 		memcpy( p, stream->transport.s, stream->transport.len);
 		p += stream->transport.len;
+	}
+
+	if (stream->sendrecv_mode.len) {
+		clone_stream->sendrecv_mode.s = p;
+		clone_stream->sendrecv_mode.len = stream->sendrecv_mode.len;
+		memcpy( p, stream->sendrecv_mode.s, stream->sendrecv_mode.len);
+		p += stream->sendrecv_mode.len;
+	}
+
+	if (stream->ptime.len) {
+		clone_stream->ptime.s = p;
+		clone_stream->ptime.len = stream->ptime.len;
+		memcpy( p, stream->ptime.s, stream->ptime.len);
+		p += stream->ptime.len;
 	}
 
 	if (stream->payloads.len) {
