@@ -102,6 +102,8 @@ int parse_contact(struct hdr_field* _h)
  */
 void free_contact(contact_body_t** _c)
 {
+	if(*_c==NULL)
+		return;
 	if ((*_c)->contacts) {
 		free_contacts(&((*_c)->contacts));
 	}
