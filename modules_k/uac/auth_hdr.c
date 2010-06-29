@@ -112,7 +112,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 	while (p<end && isspace((int)*p)) p++;
 	if (p+AUTHENTICATE_DIGEST_LEN>=end )
 		goto parse_error;
-	if (strncmp(p,AUTHENTICATE_DIGEST_S,AUTHENTICATE_DIGEST_LEN)!=0)
+	if (strncasecmp(p,AUTHENTICATE_DIGEST_S,AUTHENTICATE_DIGEST_LEN)!=0)
 		goto parse_error;
 	p += AUTHENTICATE_DIGEST_LEN;
 	if (!isspace((int)*p))
