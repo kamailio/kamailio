@@ -169,7 +169,8 @@ module_group_postgres_driver=db_postgres
 module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 
 # For radius
-module_group_radius=acc_radius auth_radius misc_radius peering
+module_group_radius=acc_radius auth_radius misc_radius avp_radius uri_radius \
+					peering
 
 # For presence
 # kamailio modules
@@ -269,7 +270,7 @@ else
 	# Old defaults for backwards compatibility
 	# excluded because they depend on external libraries
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
-							auth_radius misc_radius \
+							auth_radius misc_radius avp_radius uri_radius \
 							acc_radius pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap \
@@ -277,7 +278,7 @@ else
 							db_unixodbc memcached mi_xmlrpc \
 							perl perlvdb purple seas \
 							snmpstats xmpp \
-							carrierroute misc_radius peering \
+							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
