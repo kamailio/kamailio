@@ -283,19 +283,86 @@ static void qos_dialog_response_CB(struct dlg_cell* did, int type, struct dlg_cb
 }
 
 /********************************* RPC *********************************/
+static inline void internal_rpc_print_qos_stream_payloads(rpc_t *rpc, void *c, sdp_stream_cell_t* stream)
+{
+	int i;
+	sdp_payload_attr_t *sdp_payload = stream->payload_attr;
+
+	for(i=stream->payloads_num-1;i>=0;i--){
+		if (!sdp_payload) {
+			LM_ERR("got NULL sdp_payload\n");
+			return;
+		}
+		rpc->printf(c, "\t\t\t\tpayload[%d]=%.*s codec=%.*s",
+			i, sdp_payload->rtp_payload.len, sdp_payload->rtp_payload.s,
+			sdp_payload->rtp_enc.len, sdp_payload->rtp_enc.s);
+		sdp_payload = sdp_payload->next;
+	}
+}
+static inline void internal_rpc_print_qos_stream(rpc_t *rpc, void *c, sdp_session_cell_t* session)
+{
+	int i;
+	sdp_stream_cell_t *stream = session->streams;
+
+	for(i=session->streams_num-1;i>=0;i--){
+		if (!stream) {
+			LM_ERR("got NULL stream\n");
+			return;
+		}
+		rpc->printf(c, "\t\t\tmedia=%.*s IP:port=%.*s:%.*s trans=%.*s sendrecv=%.*s ptime=%.*s payload:%d",
+			stream->media.len, stream->media.s,
+			stream->ip_addr.len, stream->ip_addr.s,
+			stream->port.len, stream->port.s,
+			stream->transport.len, stream->transport.s,
+			stream->sendrecv_mode.len, stream->sendrecv_mode.s,
+			stream->ptime.len, stream->ptime.s,
+			stream->payloads_num);
+		internal_rpc_print_qos_stream_payloads(rpc, c, stream);
+		stream = stream->next;
+	}
+}
+static inline void internal_rpc_print_qos(rpc_t *rpc, void *c, qos_sdp_t *qos_sdp)
+{
+	int i;
+	sdp_session_cell_t *session;
+
+	rpc->printf(c, "\t\tm_dir=%u m_id=%u method=%.*s cseq=%.*s negotiation=%u",
+		qos_sdp->method_dir, qos_sdp->method_id,
+		qos_sdp->method.len, qos_sdp->method.s,
+		qos_sdp->cseq.len, qos_sdp->cseq.s, qos_sdp->negotiation);
+
+	for (i=1;i>=0;i--){
+		session = qos_sdp->sdp_session[i];
+		if (session) {
+			rpc->printf(c, "\t\tcalle%s: cnt_disp=%.*s bw_type=%.*s bw_width=%.*s",
+				i?"e":"r",
+				session->cnt_disp.len, session->cnt_disp.s,
+				session->bw_type.len, session->bw_type.s,
+				session->bw_width.len, session->bw_width.s);
+			internal_rpc_print_qos_stream(rpc, c, session);
+		}
+	}
+}
+
 void qos_dialog_rpc_context_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)
 {
+	rpc_cb_ctx_t *rpc_cb = (rpc_cb_ctx_t*)(params->dlg_data);
+	rpc_t *rpc = rpc_cb->rpc;
+	void *c = rpc_cb->c;
+
 	qos_ctx_t* qos_ctx = (qos_ctx_t*)*(params->param);
 	qos_sdp_t* qos_sdp;
 
 	qos_sdp = qos_ctx->pending_sdp;
 	if (qos_sdp) {
-		/* print pendign sdp context */
+		rpc->printf(c, "\tqos:pending_sdp");
+		internal_rpc_print_qos(rpc, c, qos_sdp);
 	}
 
 	qos_sdp = qos_ctx->negotiated_sdp;
 	if (qos_sdp) {
-		/* print negotiated sdp context */
+		rpc->printf(c, "\tqos:negotiated_sdp");
+		internal_rpc_print_qos(rpc, c, qos_sdp);
 	}
 
 	return;

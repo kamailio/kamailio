@@ -1120,6 +1120,8 @@ struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
  */
 static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *dlg, int with_context)
 {
+	rpc_cb_ctx_t rpc_cb;
+
 	rpc->printf(c, "hash:%u:%u state:%u timestart:%u timeout:%u",
 		dlg->h_entry, dlg->h_id, dlg->state, dlg->start_ts, dlg->tl.timeout);
 	rpc->printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
@@ -1147,7 +1149,9 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *
 			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s);
 	}
 	if (with_context) {
-		run_dlg_callbacks( DLGCB_RPC_CONTEXT, dlg, NULL, DLG_DIR_NONE, NULL);
+		rpc_cb.rpc = rpc;
+		rpc_cb.c = c;
+		run_dlg_callbacks( DLGCB_RPC_CONTEXT, dlg, NULL, DLG_DIR_NONE, (void *)&rpc_cb);
 	}
 }
 
