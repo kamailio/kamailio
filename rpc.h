@@ -95,6 +95,18 @@ typedef struct rpc_delayed_ctx{
 
 typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
 
+/*
+ * RPC callback context.
+ *
+ * Defines a convenient way of packing an rpc callback
+ * (rpc_function_t) parameters and it's not used/needed
+ * by the rpc api/interface.
+ */
+typedef struct rpc_cb_ctx {
+	rpc_t *rpc;
+	void *c;
+} rpc_cb_ctx_t;
+
 
 /*
  * Remote Procedure Call Export
