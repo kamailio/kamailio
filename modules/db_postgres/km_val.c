@@ -72,16 +72,18 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			LM_ERR("PQunescapeBytea failed\n");
 			return -7;
 		}
-		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len);
+		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len + 1);
 		if (VAL_BLOB(_v).s == NULL) {
 			LM_ERR("no private memory left\n");
 			PQfreemem(tmp_s);
 			return -8;
 		}
-		LM_DBG("allocate %d bytes memory for BLOB at %p", VAL_BLOB(_v).len, VAL_BLOB(_v).s);
+		LM_DBG("allocate %d bytes memory for BLOB at %p", VAL_BLOB(_v).len + 1, VAL_BLOB(_v).s);
 		memcpy(VAL_BLOB(_v).s, tmp_s, VAL_BLOB(_v).len);
 		PQfreemem(tmp_s);
 
+		VAL_BLOB(_v).s[VAL_BLOB(_v).len] = '\0';
+		VAL_BLOB(_v).len++;
 		VAL_TYPE(_v) = DB1_BLOB;
 		VAL_FREE(_v) = 1;
 
