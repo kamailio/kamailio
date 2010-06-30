@@ -995,6 +995,21 @@ static int xl_get_special(struct sip_msg *msg, str *res, str *hp, int hi, int hf
 	return 0;
 }
 
+/* copy the string withing this range */
+static int	range_from = -1;
+static int	range_to = -1;
+
+/* get the range of the string that follows */
+static int xl_get_range(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+{
+	range_from = hi;
+	range_to = hf;
+
+	res->s = NULL;
+	res->len = 0;
+	return 0;
+}
+
 static int _xl_elog_free_all(xl_elog_p log, int shm)
 {
 	xl_elog_p t;
@@ -1033,6 +1048,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 	int avp_flags, avp_index;
 	int_str avp_name;
 	select_t *sel;
+	int *range;
 	
 	if(s==NULL || el==NULL)
 		return -1;
@@ -1042,6 +1058,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 	p = s;
 	*el = NULL;
 	e = e0 = NULL;
+	range = NULL;
 
 	while(*p)
 	{
@@ -1060,13 +1077,14 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 			e0->next = e;
 
 		e->text.s = p;
-		while(*p && *p!='%' && *p!='\\')
+		while(*p && *p!='%' && *p!='\\' && !range)
 			p++;
+
 		e->text.len = p - e->text.s;
 		if(*p == '\0')
 			break;
 
-		if (*p == '\\') {
+		if ((*p == '\\') && !range) {
 			p++;
 			switch(*p)
 			{
@@ -1124,7 +1142,10 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 			goto cont;
 		}
 
-		p++;
+		if (range)
+			range = NULL;
+		else
+			p++;
 		switch(*p)
 		{
 			case 'b':
@@ -1594,6 +1615,42 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 			case '|':
 				e->itf = xl_get_empty;
 				break;
+			case '[':
+				range = &e->hindex;
+				e->itf = xl_get_range;
+				while (1) {
+					p++;
+					if (((*p) >= '0') && ((*p) <= '9')) {
+						(*range) *= 10;
+						(*range) += (*p) - '0';
+
+					} else if ((*p) == '-') {
+						if (range == &e->hindex) {
+							range = &e->hflags;
+						} else {
+							ERR("xlog: xl_parse_format: syntax error in the range specification\n");
+							goto error;
+						}
+
+					} else if ((*p) == ']') {
+						if (range == &e->hindex) {
+							/* no range, only a single number */
+							e->hflags = e->hindex;
+						} else if (e->hflags == 0) {
+							/* only the left side is defined */
+							e->hflags = -1;
+						} else if (e->hindex > e->hflags) {
+							ERR("xlog: xl_parse_format: syntax error in the range specification\n");
+							goto error;
+						}
+						break;
+
+					} else {
+						ERR("xlog: xl_parse_format: syntax error in the range specification\n");
+						goto error;
+					}
+				}
+				break;
 			default:
 				e->itf = xl_get_null;
 		}
@@ -1682,6 +1739,29 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 				/* && ((*it->itf != xl_get_color) || (log_stderr!=0)) */
 				&& !((*it->itf)(msg, &tok, &(it->hparam), it->hindex, it->hflags)))
 		{
+			if (*it->itf == xl_get_range)
+				continue;
+
+			/* cut the string to the required size */
+			if (range_to >= 0) {
+				if (range_to + 1 < tok.len)
+					tok.len = range_to + 1;
+				range_to = -1;
+			}
+			if (range_from > 0) {
+				if (range_from + 1 > tok.len) {
+					range_from = -1;
+					/* nothing to copy */
+					continue;
+				}
+				tok.s += range_from;
+				tok.len -= range_from;
+				range_from = -1;
+			}
+
+			if (tok.len == 0)
+				continue;
+
 			if(n+tok.len < *len)
 			{
 				memcpy(cur, tok.s, tok.len);
