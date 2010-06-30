@@ -1030,7 +1030,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				   str_vals[0]/*from*/, rtime /*Date*/,
+				   rtime /*Date*/,
 				   extra_hdrs_str /*extra_hdrs*/) < 0)
 		{
 			LM_ERR("headers building failed [%d]\n", mid);
@@ -1297,7 +1297,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		extra_hdrs_str.len = 0;
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				   ms_reminder/*from*/,0/*Date*/,
+				   0/*Date*/,
 				   extra_hdrs_str/*extra*/)
 		   < 0)
 		{
