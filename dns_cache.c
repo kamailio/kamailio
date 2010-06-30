@@ -4539,7 +4539,7 @@ int dns_cache_delete_single_record(unsigned short type,
 	)
 		goto not_found;
 
-	if (flags && DNS_FLAG_BAD_NAME) /* negative record, there is no value */
+	if (flags & DNS_FLAG_BAD_NAME) /* negative record, there is no value */
 		goto delete;
 
 	/* check whether there is an rr with the same value */
