@@ -704,6 +704,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					dlg->state = DLG_STATE_DELETED;
 					*unref = 1;
 					break;
+				case DLG_STATE_EARLY:
 				case DLG_STATE_DELETED:
 					break;
 				default:
