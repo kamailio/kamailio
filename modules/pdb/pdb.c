@@ -667,17 +667,20 @@ static int mod_init(void)
 	return 0;
 }
 
-
 static int child_init (int rank)
 {
-	if (init_server_socket() != 0) return -1;
-	return 0;
+	return mi_child_init();
 }
 
 
+static int pdb_child_initialized = 0;
+
 static int mi_child_init(void)
 {
+	if(pdb_child_initialized)
+		return 0;
 	if (init_server_socket() != 0) return -1;
+	pdb_child_initialized = 1;
 	return 0;
 }
 
