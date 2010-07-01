@@ -363,6 +363,8 @@ static int child_init(int rank)
 		LM_CRIT("child_init: database not bound\n");
 		return -1;
 	}
+	if (pa_db)
+		return 0;
 	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
@@ -404,6 +406,8 @@ static int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
+	if (pa_db)
+		return 0;
 	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
