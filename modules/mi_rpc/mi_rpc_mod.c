@@ -30,6 +30,8 @@
 
 MODULE_VERSION
 
+static int child_init(int rank);
+
 static str mi_rpc_indent = { "\t", 1 };
 
 static const char* rpc_mi_exec_doc[2] = {
@@ -63,17 +65,28 @@ rpc_export_t mr_rpc[] = {
 
 struct module_exports exports = {
 	"mi_rpc",
-	0,        /* Exported functions */
-	mr_rpc,   /* RPC methods */
-	0,        /* Export parameters */
-	0,        /* Module initialization function */
-	0,        /* Response function */
-	0,        /* Destroy function */
-	0,        /* OnCancel function */
-	0         /* Child initialization function */
+	0,           /* Exported functions */
+	mr_rpc,      /* RPC methods */
+	0,           /* Export parameters */
+	0,           /* Module initialization function */
+	0,           /* Response function */
+	0,           /* Destroy function */
+	0,           /* OnCancel function */
+	child_init   /* Child initialization function */
 };
 
 
+static int child_init(int rank)
+{
+	if(rank==PROC_RPC) {
+		if( init_mi_child()!=0) {
+			LM_CRIT("Failed to init the mi commands\n");
+			return -1;
+		}
+	}
+
+	return 0;
+}
 
 struct mi_root *mi_rpc_read_params(rpc_t *rpc, void *ctx)
 {
