@@ -63,6 +63,9 @@ int domain_db_init(const str* db_url)
 		LM_ERR("Unbound database module\n");
 		goto error;
 	}
+	if (db_handle!=0)
+		return 0;
+
 	db_handle=domain_dbf.init(db_url);
 	if (db_handle==0){
 		LM_ERR("Cannot initialize database connection\n");
