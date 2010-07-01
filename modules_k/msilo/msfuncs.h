@@ -49,7 +49,7 @@ int m_apo_escape(char*, int, char*, int);
 int m_extract_content_type(char*, int, content_type_t*, int);
 
 /** build MESSAGE headers */
-int m_build_headers(str *buf, str ctype, time_t date, str extra);
+int m_build_headers(str *buf, str ctype, str contact, time_t date, str extra);
 
 /** build MESSAGE body */
 int m_build_body(str *body, time_t date, str msg, time_t sdate);
