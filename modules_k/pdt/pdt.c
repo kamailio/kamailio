@@ -269,6 +269,10 @@ error1:
 
 static int child_init(void)
 {
+	/* check if db handler is initialized */
+	if(db_con!=NULL)
+		return 0;
+
 	db_con = pdt_dbf.init(&db_url);
 	if(db_con==NULL)
 	{
