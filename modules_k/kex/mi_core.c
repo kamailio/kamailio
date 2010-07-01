@@ -66,6 +66,8 @@ static int init_mi_uptime(void)
 {
 	char *p;
 
+	if (kmi_up_since_ctime.s!=0)
+		return 0;
 	time(&kmi_up_since);
 	p = ctime(&kmi_up_since);
 	kmi_up_since_ctime.len = strlen(p)-1;
