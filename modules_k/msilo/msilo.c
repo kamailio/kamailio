@@ -144,6 +144,7 @@ int  ms_send_time = 0;
 int  ms_clean_period = 10;
 int  ms_use_contact = 1;
 int  ms_add_date = 1;
+int  ms_add_contact = 0;
 int  ms_max_messages = 0;
 
 static str ms_snd_time_avp_param = {NULL, 0};
@@ -210,6 +211,7 @@ static param_export_t params[]={
 	{ "snd_time_avp",     STR_PARAM, &ms_snd_time_avp_param.s },
 	{ "add_date",         INT_PARAM, &ms_add_date             },
 	{ "max_messages",     INT_PARAM, &ms_max_messages         },
+	{ "add_contact",      INT_PARAM, &ms_add_contact          },
 	{ 0,0,0 }
 };
 
@@ -1030,7 +1032,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				   rtime /*Date*/,
+				   str_vals[0]/*from*/, rtime /*Date*/,
 				   extra_hdrs_str /*extra_hdrs*/) < 0)
 		{
 			LM_ERR("headers building failed [%d]\n", mid);
@@ -1297,7 +1299,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		extra_hdrs_str.len = 0;
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				   0/*Date*/,
+				   ms_reminder/*from*/,0/*Date*/,
 				   extra_hdrs_str/*extra*/)
 		   < 0)
 		{
