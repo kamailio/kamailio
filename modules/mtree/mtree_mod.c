@@ -313,16 +313,16 @@ error1:
 	mt_destroy_trees();
 
 	if(db_con!=NULL)
-	{
 		mt_dbf.close(db_con);
-		db_con = 0;
-	}
+	db_con = 0;
 	return -1;
 }
 
 
 static int child_init(void)
 {
+	if(db_con!=NULL)
+		return 0;
 	db_con = mt_dbf.init(&db_url);
 	if(db_con==NULL)
 	{
