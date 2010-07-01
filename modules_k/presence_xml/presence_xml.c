@@ -277,6 +277,8 @@ static int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
+	if(pxml_db)
+		return 0;
 	pxml_db = pxml_dbf.init(&db_url);
 	if (pxml_db== NULL)
 	{
@@ -310,6 +312,8 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
+	if(pxml_db)
+		return 0;
 	pxml_db = pxml_dbf.init(&db_url);
 	if (pxml_db== NULL)
 	{
