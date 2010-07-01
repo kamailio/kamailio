@@ -337,27 +337,38 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 
 	node = cmd_tree->node.kids;
 	if(node == NULL)
+	{
+		ht_db_close_con();
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
 	htname = node->value;
 	if(htname.len<=0 || htname.s==NULL)
 	{
 		LM_ERR("bad hash table name\n");
+		ht_db_close_con();
 		return init_mi_tree( 500, "bad hash table name", 19);
 	}
 	ht = ht_get_table(&htname);
 	if(ht==NULL || ht->dbtable.len<=0)
 	{
 		LM_ERR("bad hash table name\n");
+		ht_db_close_con();
 		return init_mi_tree( 500, "no such hash table", 18);
 	}
 	memcpy(&nht, ht, sizeof(ht_t));
 	nht.entries = (ht_entry_t*)shm_malloc(nht.htsize*sizeof(ht_entry_t));
 	if(nht.entries == NULL)
+	{
+		ht_db_close_con();
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	}
 	memset(nht.entries, 0, nht.htsize*sizeof(ht_entry_t));
 
 	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
+	{
+		ht_db_close_con();
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	}
 
 	/* replace old entries */
 	for(i=0; i<nht.htsize; i++)
