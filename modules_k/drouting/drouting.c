@@ -474,6 +474,15 @@ static struct mi_root* dr_reload_cmd(struct mi_root *cmd_tree, void *param)
 
 	LM_INFO("\"%s\" MI command received!\n",RELOAD_MI_CMD);
 
+	/* init DB connection if needed */
+	if (db_hdl==NULL) {
+		db_hdl=dr_dbf.init(&db_url);
+		if(db_hdl==0 ) {
+			LM_CRIT("cannot initialize database connection\n");
+			goto error;
+		}
+	}
+
 	if ( (n=dr_reload_data())!=0 ) {
 		LM_CRIT("failed to load routing data\n");
 		goto error;
