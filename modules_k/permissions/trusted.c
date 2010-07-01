@@ -231,10 +231,10 @@ error:
  */
 int init_child_trusted(int rank)
 {
-    	if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
+    if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
 		return 0;
 
-	if (!db_url.s) {
+	if (!db_url.s || db_handle) {
 		return 0;
 	}
 	
