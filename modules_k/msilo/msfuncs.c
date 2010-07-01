@@ -36,7 +36,13 @@
 #include "../../udp_server.h"
 #include "../../pt.h"
 
+#define CONTACT_PREFIX "Contact: <"
+#define CONTACT_SUFFIX  ">;msilo=yes"CRLF
+#define CONTACT_PREFIX_LEN (sizeof(CONTACT_PREFIX)-1)
+#define CONTACT_SUFFIX_LEN  (sizeof(CONTACT_SUFFIX)-1)
+
 extern int ms_add_date;
+extern int ms_add_contact;
 
 /**
  * apostrophes escaping
@@ -181,21 +187,26 @@ error:
 
 /** build MESSAGE headers 
  *
- * Add Content-Type, Date, and extra headers if they exist
+ * Add Content-Type, Contact, Date, and extra headers if they exist
  * expects - max buf len of the resulted body in body->len
  *         - body->s MUST be allocated
  * return: 0 OK ; -1 error
  * */
-int m_build_headers(str *buf, str ctype, time_t date, str extra)
+int m_build_headers(str *buf, str ctype, str contact, time_t date, str extra)
 {
 	char *p;
 	char strDate[48];
 	int lenDate = 0;
+	int newLen = 0;
 
-	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0 
-			|| buf->len <= ctype.len+extra.len+14
-	   /*Content-Type: */
-				+CRLF_LEN)
+	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0)
+		goto error;
+
+	newLen = 14 + ctype.len + CRLF_LEN + extra.len;
+	if(contact.len > 0 && ms_add_contact)
+		newLen += CONTACT_PREFIX_LEN + contact.len + CONTACT_SUFFIX_LEN;
+
+	if(buf->len <= newLen)
 		goto error;
 
 	p = buf->s;
@@ -214,6 +225,15 @@ int m_build_headers(str *buf, str ctype, time_t date, str extra)
 		strncpy(p, CRLF, CRLF_LEN);
 		p += CRLF_LEN;
 	
+	}
+	if(contact.len > 0 && ms_add_contact)
+	{
+		strncpy(p, CONTACT_PREFIX, CONTACT_PREFIX_LEN);
+		p += CONTACT_PREFIX_LEN;
+		strncpy(p, contact.s, contact.len);
+		p += contact.len;
+		strncpy(p, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
+		p += CONTACT_SUFFIX_LEN;
 	}
 	if (extra.len > 0) {
 	    strncpy(p, extra.s, extra.len);
