@@ -97,10 +97,14 @@ int register_mi_mod( char *mod_name, mi_export_t *mis)
 }
 
 
+static int mi_commands_initialized = 0;
+
 int init_mi_child(void)
 {
 	int i;
 
+	if(mi_commands_initialized)
+		return 0;
 	for ( i=0 ; i<mi_cmds_no ; i++ ) {
 		if ( mi_cmds[i].init_f && mi_cmds[i].init_f()!=0 ) {
 			LM_ERR("failed to init <%.*s>\n",
@@ -108,6 +112,7 @@ int init_mi_child(void)
 			return -1;
 		}
 	}
+	mi_commands_initialized = 1;
 	return 0;
 }
 
