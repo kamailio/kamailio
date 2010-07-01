@@ -620,21 +620,16 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if (userblacklist_db_open() != 0) return -1;
-	dtrie_root=dtrie_init(10);
-	if (dtrie_root == NULL) {
-		LM_ERR("could not initialize data");
-		return -1;
-	}
-	/* because we've added new sources during the fixup */
-	if (reload_sources() != 0) return -1;
-
-	return 0;
+	return mi_child_init();
 }
 
 
+static int userblacklist_child_initialized = 0;
+
 static int mi_child_init(void)
 {
+	if(userblacklist_child_initialized)
+		return 0;
 	if (userblacklist_db_open() != 0) return -1;
 	dtrie_root=dtrie_init(10);
 	if (dtrie_root == NULL) {
@@ -643,6 +638,8 @@ static int mi_child_init(void)
 	}
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
+
+	userblacklist_child_initialized = 1;
 
 	return 0;
 }
