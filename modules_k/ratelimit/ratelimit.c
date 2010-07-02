@@ -49,11 +49,9 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../lib/kcore/statistics.h"
-#include "../sl/sl_api.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../rpc_lookup.h"
 
-#include "config.h"
 
 MODULE_VERSION
 
@@ -68,9 +66,6 @@ MODULE_VERSION
 #define RXLS(m, str, i) (m)[i].rm_eo - (m)[i].rm_so, (str) + (m)[i].rm_so
 #define RXL(m, str, i) (m)[i].rm_eo - (m)[i].rm_so
 #define RXS(m, str, i) (str) + (m)[i].rm_so
-
-/** SL binds */
-struct sl_binds slb;
 
 static inline int str_cmp(const str * a, const str * b);
 static inline int str_i_cmp(const str * a, const str * b);
@@ -210,9 +205,6 @@ static ticks_t rl_timer_handle(ticks_t, struct timer_ln*, void*);
 static int w_rl_check_default(struct sip_msg*, char *, char *);
 static int w_rl_check_forced(struct sip_msg*, char *, char *);
 static int w_rl_check_forced_pipe(struct sip_msg*, char *, char *);
-static int w_rl_drop_default(struct sip_msg*, char *, char *);
-static int w_rl_drop_forced(struct sip_msg*, char *, char *);
-static int w_rl_drop(struct sip_msg*, char *, char *);
 static int add_queue_params(modparam_t, void *);
 static int add_pipe_params(modparam_t, void *);
 /* RESERVED for future use
@@ -225,17 +217,12 @@ static cmd_export_t cmds[]={
 	{"rl_check",      (cmd_function)w_rl_check_forced,      1, fixup_pvar_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_uint_null, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
-	{"rl_drop",       (cmd_function)w_rl_drop_default,      0, 0,               0,               REQUEST_ROUTE|LOCAL_ROUTE},
-	{"rl_drop",       (cmd_function)w_rl_drop_forced,       1, fixup_uint_null, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
-	{"rl_drop",       (cmd_function)w_rl_drop,              2, fixup_uint_uint, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
 	{"timer_interval", INT_PARAM,                &timer_interval},
 	{"queue",          STR_PARAM|USE_FUNC_PARAM, (void *)add_queue_params},
 	{"pipe",           STR_PARAM|USE_FUNC_PARAM, (void *)add_pipe_params},
-	{"reply_code",     INT_PARAM,                &default_ratelimit_cfg.reply_code},
-	{"reply_reason",   STR_PARAM,                &default_ratelimit_cfg.reply_reason},
 	/* RESERVED for future use
 	{"load_source",    STR_PARAM|USE_FUNC_PARAM, (void *)set_load_source},
 	*/
@@ -439,12 +426,6 @@ static int mod_init(void)
 	timer_init(rl_timer, rl_timer_handle, 0, F_TIMER_FAST);
 	timer_add(rl_timer, MS_TO_TICKS(1500)); /* Start it after 1500ms */
 
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("failed to load SL API\n");
-		return -1;
-	}
-
 	network_load_value = shm_malloc(sizeof(int));
 	if (network_load_value==NULL) {
 		LM_ERR("oom for network_load_value\n");
@@ -497,13 +478,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* load configurations*/
-	if( cfg_declare("ratelimit", ratelimit_cfg_def, &default_ratelimit_cfg, cfg_sizeof(ratelimit), 
-		&ratelimit_cfg )){
-		LM_ERR("failed to declare the configuration");
-		return -1;
-	}
-	
 	*network_load_value = 0;
 	*load_value = 0.0;
 	*load_source = load_source_mp;
@@ -684,93 +658,6 @@ static void destroy(void)
 	}
 }
 
-
-static int rl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
-{
-	str hdr;
-	int ret;
-	int drop_code;
-	str drop_reason;
-	
-	LM_DBG("(%d, %d)\n", low, high);
-
-	if (slb.send_reply != 0) {
-		if ( (drop_code = cfg_get(ratelimit, ratelimit_cfg, reply_code)) == 0 )
-			drop_code = DEFAULT_REPLY_CODE;
-		
-		if ( (drop_reason.s = cfg_get(ratelimit, ratelimit_cfg, reply_reason)) == 0 )
-			drop_reason.s = DEFAULT_REPLY_REASON;
-		drop_reason.len = strlen(drop_reason.s);
-
-		if (low != 0 && high != 0) {
-			hdr.s = (char *)pkg_malloc(64);
-			if (hdr.s == 0) {
-				LM_ERR("Can't allocate memory for Retry-After header\n");
-				return 0;
-			}
-			hdr.len = 0;
-			if (! hdr.s) {
-				LM_ERR("no memory for hdr\n");
-				return 0;
-			}
-
-			if (high == low) {
-				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n", low);
-			} else {
-				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n", 
-					low + rand() % (high - low + 1));
-			}
-
-			if (add_lump_rpl(msg, hdr.s, hdr.len, LUMP_RPL_HDR)==0) {
-				LM_ERR("Can't add header\n");
-				pkg_free(hdr.s);
-				return 0;
-			}
-			ret = slb.send_reply(msg, drop_code, &drop_reason);
-
-			pkg_free(hdr.s);
-		} else {
-			ret = slb.send_reply(msg, drop_code, &drop_reason);
-		}
-	} else {
-		LM_ERR("Can't send reply\n");
-		return 0;
-	}
-	return ret;
-}
-
-static int w_rl_drop(struct sip_msg* msg, char *p1, char *p2) 
-{
-	unsigned int low, high;
-
-	low = (unsigned int)(unsigned long)p1;
-	high = (unsigned int)(unsigned long)p2;
-
-	if (high < low) {
-		return rl_drop(msg, low, low);
-	} else {
-		return rl_drop(msg, low, high);
-	}
-}
-
-static int w_rl_drop_forced(struct sip_msg* msg, char *p1, char *p2)
-{
-	unsigned int i;
-
-	if (p1) {
-		i = (unsigned int)(unsigned long)p1;
-		LM_DBG("send retry in %d s\n", i);
-	} else {
-		i = 5;
-		LM_DBG("send default retry in %d s\n", i);
-	}
-	return rl_drop(msg, i, i);
-}
-
-static int w_rl_drop_default(struct sip_msg* msg, char *p1, char *p2)
-{
-	return rl_drop(msg, 0, 0);
-}
 
 static inline int str_cmp(const str * a , const str * b)
 {
