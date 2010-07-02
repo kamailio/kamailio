@@ -569,10 +569,16 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* do UAC cleanup procedures in case we generated
 	   a final answer whereas there are pending UACs */
 	if (code>=200) {
-		if (unlikely(is_local(trans) && 
-					has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) ))
-			run_trans_callbacks(TMCB_LOCAL_COMPLETED, trans,
+		if (unlikely(is_local(trans))) {
+			if(unlikely(has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED)))
+				run_trans_callbacks(TMCB_LOCAL_COMPLETED, trans,
 									0, FAKED_REPLY, code);
+		} else {
+			if(unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_READY))) {
+				run_trans_callbacks(TMCB_RESPONSE_READY, trans,
+					trans->uas.request, FAKED_REPLY, code);
+			}
+		}
 		cleanup_uac_timers( trans );
 		if (is_invite(trans)){
 			prepare_to_cancel(trans, &cancel_bitmap, 0);
@@ -1675,7 +1681,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if ( unlikely(is_invite(t) && relayed_msg!=FAKED_REPLY
 		&& relayed_code>=200 && relayed_code < 300
 		&& has_tran_tmcbs( t,
-				TMCB_RESPONSE_OUT|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
+				TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
+				|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
 			totag_retr=update_totag_set(t, relayed_msg);
 		}
 	}; /* if relay ... */
@@ -1684,6 +1691,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
+		if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_READY))){
+			run_trans_callbacks(TMCB_RESPONSE_READY, t,
+					t->uas.request, relayed_msg, relayed_code);
+		}
 		/* Set retransmission timer before the reply is sent out to avoid
 		* race conditions
 		*
