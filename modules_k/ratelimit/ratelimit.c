@@ -758,11 +758,16 @@ static int rl_check(struct sip_msg * msg, int forced_pipe)
 	int que_id, pipe_id, ret;
 	str method = msg->first_line.u.request.method;
 
+	if (forced_pipe >=0 && (forced_pipe>=MAX_PIPES || *pipes[forced_pipe].algo==PIPE_ALGO_NOP)) {
+		LM_ERR("forced pipe %d out of range or not defined", forced_pipe);
+		return -1;
+	}
+
 	LOCK_GET(rl_lock);
 	if (forced_pipe < 0) { 
 		if (find_queue(msg, &que_id)) {
 			pipe_id = que_id = 0;
-			ret = 1;
+			ret = -1;
 			goto out_release;
 		}
 		pipe_id = *queues[que_id].pipe;
@@ -817,13 +822,8 @@ static int w_rl_check_forced_pipe(struct sip_msg* msg, char *p1, char *p2)
 {
 	int pipe;
 
-	if (p1) {
-		pipe = (int)(unsigned int)(unsigned long)p1;
-		LM_DBG("trying pipe %d\n", pipe);
-	} else {
-		pipe = -1;
-	}
-
+	pipe = (int)(unsigned int)(unsigned long)p1;
+	LM_DBG("trying pipe %d\n", pipe);
 	return rl_check(msg, pipe);
 }
 
