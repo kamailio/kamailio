@@ -26,7 +26,7 @@ Jan Janak
 
    Copyright © 2005 voice-system.ro
 
-   Copyright © 2008 Juha Heinanen
+   Copyright © 2008-2010 Juha Heinanen
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -272,10 +272,10 @@ modparam("auth_radius", "use_ruri_flag", 22)
    used by some other functions).
 
    If the function was unable to verify the credentials for some reason,
-   it fails and assigns a WWW-Authorize header containing a new challenge
-   to digest_challenge AVP. The script should then respond with 407 that
-   includes this header, which will challenge the user again. For more
-   about the negative return codes, see the above function.
+   it fails and assigns a Proxy-Authorize header containing a new
+   challenge to digest_challenge AVP. The script should then respond with
+   407 that includes this header, which will challenge the user again. For
+   more about the negative return codes, see the above function.
 
    This function will, in fact, perform sanity checks over the received
    credentials and then pass them along to the radius server which will
