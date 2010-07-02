@@ -14,7 +14,7 @@
 	    <author>
 		<firstname>Juha</firstname>
 		<surname>Heinanen</surname>
-		<affiliation><orgname>Song Networks</orgname></affiliation>
+		<affiliation><orgname>TutPro Inc</orgname></affiliation>
 		<email>jh@song.fi</email>
 	    </author>
 	</authorgroup>
@@ -56,16 +56,7 @@
     <section id="auth.dep">
 	<title>Dependencies</title>
 	<para>
-	    The module depends on the following modules (in the other words the listed modules
-	    must be loaded before this module):
-	    <itemizedlist>
-		<listitem>
-		    <formalpara>
-			<title>sl</title>
-			<para>The modules needs sl module to send stateless replies.</para>
-		    </formalpara>
-		</listitem>
-	    </itemizedlist>
+	    The module does not depend on any other module.
 	</para>
     </section>
     

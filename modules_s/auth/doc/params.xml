@@ -554,42 +554,4 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 	    </programlisting>
 	</example>
     </section>
-
-    <section id="rpid_prefix">
-	<title><varname>rpid_prefix</varname> (string)</title>
-	<para>
-	    Prefix to be added to Remote-Party-ID header field just before the
-	    URI returned from either radius or database.
-	</para>
-	<para>
-	    Default value is "" (empty string).
-	</para>
-	<example>
-	    <title>rpid_prefix</title>
-	    <programlisting>
-<![CDATA[
-modparam("auth", "rpid_prefix", "Whatever <")
-]]>
-	    </programlisting>
-	</example>
-    </section>
-    
-    <section id="rpid_suffix">
-	<title><varname>rpid_suffix</varname> (string)</title>
-	<para>
-	    Suffix to be added to Remote-Party-ID header field after the URI
-	    returned from either radius or database.
-	</para>
-	<para>
-	    Default value is ";party=calling;id-type=subscriber;screen=yes".
-	</para>
-	<example>
-	    <title>rpid_suffix</title>
-	    <programlisting>
-<![CDATA[
-modparam("auth", "rpid_suffix", "@1.2.3.4>")
-]]>
-	    </programlisting>
-	</example>
-    </section>
 </section>
