@@ -74,15 +74,16 @@ struct cell;
 #define TMCB_DESTROY_N          15  /* called on transaction destroy */
 #define TMCB_E2ECANCEL_IN_N     16
 #define TMCB_E2EACK_RETR_IN_N   17
+#define TMCB_RESPONSE_READY_N	18
 #ifdef WITH_AS_SUPPORT
-#define TMCB_DONT_ACK_N         18 /* TM shoudn't ACK a local UAC  */
+#define TMCB_DONT_ACK_N         19 /* TM shoudn't ACK a local UAC  */
 #endif
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     19
-#define TMCB_RESPONSE_SENT_N    20
-#define TMCB_MAX_N              20
+#define TMCB_REQUEST_SENT_N     20
+#define TMCB_RESPONSE_SENT_N    21
+#define TMCB_MAX_N              21
 #else
-#define TMCB_MAX_N              18
+#define TMCB_MAX_N              19
 #endif
 
 
@@ -104,6 +105,7 @@ struct cell;
 #define TMCB_DESTROY          (1<<TMCB_DESTROY_N)
 #define TMCB_E2ECANCEL_IN     (1<<TMCB_E2ECANCEL_IN_N)
 #define TMCB_E2EACK_RETR_IN   (1<<TMCB_E2EACK_RETR_IN_N)
+#define TMCB_RESPONSE_READY   (1<<TMCB_RESPONSE_READY_N)
 #ifdef WITH_AS_SUPPORT
 #define TMCB_DONT_ACK         (1<<TMCB_DONT_ACK_N)
 #endif
@@ -113,8 +115,6 @@ struct cell;
 #endif
 #define TMCB_MAX              ((1<<(TMCB_MAX_N+1))-1)
 
-/* response ready - might need to be executed before sending reply out */
-#define TMCB_RESPONSE_READY		TMCB_RESPONSE_OUT
 
 /*
  *  Caution: most of the callbacks work with shmem-ized messages
@@ -325,6 +325,8 @@ struct cell;
  *  the cell* parameter (t) and the tmcb are set to 0. Only the param is
  *  is filled inside TMCB. For dialogs callbacks t is also 0.
  *
+ * TMCB_RESPONSE_READY -- a reply is ready to be sent out. Callback is
+ *  is executed just before writing the reply content to network.
  *
  * TMCB_DONT_ACK (requires AS support) -- for localy generated INVITEs, TM 
  * automatically generates an ACK for the received 2xx replies. But, if this 

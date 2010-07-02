@@ -1026,7 +1026,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			&& p_msg->REPLY_STATUS<300 
 			&& ((!is_local(p_cell) &&
 				has_tran_tmcbs(p_cell, 
-					TMCB_RESPONSE_OUT|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) )
+					TMCB_RESPONSE_OUT|TMCB_RESPONSE_READY
+					|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) )
 			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell, TMCB_LOCAL_COMPLETED))
 		)) ) {
 			if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {
