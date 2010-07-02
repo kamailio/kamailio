@@ -78,14 +78,15 @@
 	<section>
 	<title>Dependencies</title>
 		<section>
-			<title>&kamailio; Modules</title>
+			<title>Modules</title>
 			<para>
 			The module depends on the following modules (in the other words 
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>auth</emphasis> -- Generic authentication 
-				functions</para>
+				<para><emphasis>modules_s/auth</emphasis>
+				-- Generic authentication functions
+				</para>
 				</listitem>
 			</itemizedlist>
 			</para>
@@ -198,45 +199,55 @@ modparam("auth_radius", "use_ruri_flag", 22)
 		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
 		the credentials are verified successfully then the function will 
 		succeed and mark the credentials as authorized (marked credentials can 
-		be later used by some other functions). If the function was unable to 
-		verify the credentials for some reason then it will fail and
-		the script should call
-		<function moreinfo="none">www_challenge</function>
-		which will challenge the user again.
+		be later used by some other functions).
+		</para>
+		<para>
+		If the function	was unable to  
+		verify the credentials for some reason, it fails and
+		assigns a WWW-Authorize header containing a new
+	challenge to digest_challenge AVP (see modules_s/auth).
+	The script should
+	then respond with 401 that includes this header, which will
+	challenge the user again.
 		</para>
 		<para>Negative codes may be interpreted as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>-5 (generic error)</emphasis> - some generic error
-			occurred and no reply was sent out;
+			<emphasis>-5 (internal error)</emphasis> - some
+			internal error occurred;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-4 (no credentials)</emphasis> - credentials were not
-			found in request;
+			<emphasis>-4 (no credentials)</emphasis> -
+			credentials were not found in request;
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
 			</para></listitem>
+			<listitem><para>
+			<emphasis>-2 (bad request)</emphasis> -
+			something wrong in request, for example, credentials were not filled properly;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-1 (authorization failed)</emphasis> -
+			RADIUS responded with Access Reject
+			</para></listitem>
 		</itemizedlist>
 		<para>
-		This function will, in fact, perform sanity checks over the received 
-		credentials and then pass them along to the radius server which will 
+		This function will, in fact, perform sanity checks over
+	the received  
+		credentials and then pass them along to the radius
+	server which will  
 		verify the credentials and return whether they are valid or not.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
-			the user agent should present to the user so he can decide what 
-			username and password to use. Usually this is domain of the host 
-			the server is running on.
-			</para>
-			<para>
-			If an empty string <quote></quote> is used then the server will 
-			generate it from the request. In case of REGISTER requests To 
-			header field domain will be used (because this header field 
-			represents a user being registered), for all other messages From 
-			header field domain will be used.
+			<para><emphasis>realm</emphasis> - Realm is a
+	opaque string that  
+			the user agent should present to the user so he
+	can decide what  
+			username and password to use.  In case of
+	REGISTER requests it is usually hostpart of To URI.
 			</para>
 			<para>
 			The string may contain pseudo variables.
@@ -250,9 +261,22 @@ modparam("auth_radius", "use_ruri_flag", 22)
 		<title><function moreinfo="none">radius_www_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!radius_www_authorize("siphub.net")) {
-	www_challenge("siphub.net", "1");
-};
+    if (!radius_www_authorize("$td")) {
+    switch ($rc) {
+    case -5:
+	send_reply("500", "Server Internal Error");
+	exit;
+    case -2:
+        send_reply("400", "Bad Request");
+        exit;
+    default:
+    };
+    if (defined($avp(digest_challenge)) &amp;&amp;
+            ($avp(digest_challenge) != "")) {
+        append_to_reply("$avp(digest_challenge)");
+    };
+    send_reply("401", "Unauthorized");
+    exit;
 ...
 </programlisting>
 		</example>
@@ -266,10 +290,15 @@ if (!radius_www_authorize("siphub.net")) {
 		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
 		the credentials are verified successfully then the function will 
 		succeed and mark the credentials as authorized (marked credentials can 
-		be later used by some other functions). If the function was unable to 
-		verify the credentials for some reason then it will fail and the script 
-		should call <function moreinfo="none">proxy_challenge</function> which 
-		will challenge the user again. For more about the negative return 
+		be later used by some other functions).  
+		</para>
+		<para>If the function was unable to  
+		verify the credentials for some reason, it fails and
+		assigns a WWW-Authorize header containing a new
+	challenge to digest_challenge AVP.  The script should
+	then respond with 407 that includes this header, which will
+	challenge the user again.
+		For more about the negative return 
 		codes, see the above function.
 		</para>
 		<para>
@@ -282,10 +311,9 @@ if (!radius_www_authorize("siphub.net")) {
 		<listitem>
 			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
 			the user agent should present to the user so he can decide what 
-			username and password to use.  This is usually
-			one of the domains the proxy is responsible for.
-			If an empty string <quote></quote> is used then the server will 
-			generate realm from host part of From header field URI.
+			username and password to use.  In case of
+	non-REGISTER requests it is usually hostpart of From or
+		P-Preferred-Identity URI.
 			</para>
 			<para>
 			The string may contain pseudo variables.
@@ -310,13 +338,22 @@ if (!radius_www_authorize("siphub.net")) {
 		<title><function moreinfo="none">proxy_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!radius_proxy_authorize("")) {   # Realm and URI user will be autogenerated
-	proxy_challenge("", "1");
-};
-...
-if (!radius_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
-	proxy_challenge("$pd", "1");         # from P-Preferred-Identity
-};                                           # header field
+    if (!radius_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
+    switch ($rc) {                               # from P-Preferred-Identity
+    case -5:                                     # header field
+	send_reply("500", "Server Internal Error");
+	exit;
+    case -2:
+        send_reply("400", "Bad Request");
+        exit;
+    default:
+    };
+    if (defined($avp(digest_challenge)) &amp;&amp;
+            ($avp(digest_challenge) != "")) {
+        append_to_reply("$avp(digest_challenge)");
+    };
+    send_reply("407", "Proxy Authentication Required");
+    exit;
 ...
 </programlisting>
 		</example>

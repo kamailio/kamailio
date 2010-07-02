@@ -4,6 +4,7 @@
  * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2010 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -41,7 +42,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../pvar.h"
-#include "../../modules_k/auth/api.h"
+#include "../../modules_s/auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
 #include "authrad_mod.h"
@@ -77,7 +78,7 @@ static inline int get_uri_user(struct sip_msg* _m, str** _uri_user)
  * Authorize digest credentials
  */
 static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
-			    pv_spec_t * _uri_user, int _hftype)
+			    pv_spec_t * _uri_user, hdr_types_t _hftype)
 {
     int res;
     auth_result_t ret;
@@ -87,22 +88,47 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
     str user, domain;
     pv_value_t pv_val;
 
+    cred = 0;
+    ret = -1;
+    user.s = 0;
+
     /* get pre_auth domain from _realm pvar (if exists) */
     if (_realm) {
-	if (pv_printf_s(_msg, _realm, &domain)!=0) {
+	if (pv_printf_s(_msg, _realm, &domain) != 0) {
 	    LM_ERR("pv_printf_s failed\n");
-	    return AUTH_ERROR;
+	    return -5;
 	}
     } else {
-	/* get pre_auth domain from To/From header */
 	domain.len = 0;
 	domain.s = 0;
     }
 
-    ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
+    switch(auth_api.pre_auth(_msg, &domain, _hftype, &h, NULL)) {
+    default:
+	BUG("unexpected reply '%d'.\n",
+	    auth_api.pre_auth(_msg, &domain, _hftype, &h, NULL));
+#ifdef EXTRA_DEBUG
+	abort();
+#endif
+	ret = -5;
+	goto end;
 
-    if (ret != DO_AUTHORIZATION)
-	return ret;
+    case ERROR:
+    case BAD_CREDENTIALS:
+	ret = -2;
+	goto end;
+	
+    case NOT_AUTHENTICATED:
+	ret = -4;
+	goto end;
+	
+    case DO_AUTHENTICATION:
+	break;
+	
+    case AUTHENTICATED:
+	ret = 1;
+	goto end;
+    }
 
     cred = (auth_body_t*)h->parsed;
 
@@ -112,39 +138,71 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
 	if (pv_get_spec_value(_msg, _uri_user, &pv_val) == 0) {
 	    if (pv_val.flags & PV_VAL_STR) {
 		res = radius_authorize_sterman(_msg, &cred->digest, 
-					       &_msg->first_line.u.request.method,
+					       &_msg->
+					       first_line.u.request.method,
 					       &pv_val.rs);
 	    } else {
 		LM_ERR("uri_user pvar value is not string\n");
-		return AUTH_ERROR;
+		ret = -5;
+		goto end;
 	    }
 	} else {
 	    LM_ERR("cannot get uri_user pvar value\n");
-	    return AUTH_ERROR;
+	    ret = -5;
+	    goto end;
 	}
     } else {
 	if (get_uri_user(_msg, &uri_user) < 0) {
 	    LM_ERR("To/From URI not found\n");
-	    return AUTH_ERROR;
+	    ret = -2;
+	    goto end;
 	}
 	user.s = (char *)pkg_malloc(uri_user->len);
 	if (user.s == NULL) {
 	    LM_ERR("no pkg memory left for user\n");
-	    return AUTH_ERROR;
+	    ret = -5;
+	    goto end;
 	}
 	un_escape(uri_user, &user);
 	res = radius_authorize_sterman(_msg, &cred->digest, 
 				       &_msg->first_line.u.request.method,
 				       &user);
-	pkg_free(user.s);
     }
 
     if (res == 1) {
-	ret = auth_api.post_auth(_msg, h);
-	return ret;
+	switch(auth_api.post_auth(_msg, h)) {
+	default:
+	    BUG("unexpected reply '%d'.\n",
+		auth_api.pre_auth(_msg, &domain, _hftype, &h, NULL));
+#ifdef EXTRA_DEBUG
+	    abort();
+#endif
+	    ret = -5;
+	    break;
+	case ERROR:             
+	    ret = -2;
+	    break;
+	case NOT_AUTHENTICATED:
+	    ret = -3;
+	    break;
+	case AUTHENTICATED:
+	    ret = 1;
+	    break;
+	}
+    } else {
+	ret = -1;
     }
 
-    return AUTH_ERROR;
+ end:
+    if (user.s) pkg_free(user.s);
+    if (ret < 0) {
+	if (auth_api.build_challenge(_msg, (cred ? cred->stale : 0), &domain,
+				     NULL, NULL, _hftype) < 0) {
+	    LM_ERR("while creating challenge\n");
+	    ret = -5;
+	}
+    }
+    return ret;
 }
 
 
