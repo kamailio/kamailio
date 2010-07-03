@@ -43,7 +43,8 @@
 ...
 	if (is_method("INVITE|REGISTER|SUBSCRIBE") {
 		if (!rl_check()) {
-			rl_drop();
+			append_to_reply("Retry-After: 5\r\n");
+			sl_send_reply("503","Limiting");
 			exit;
 		};
 	};
@@ -264,67 +265,6 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title><varname>reply_code</varname> (integer)</title>
-		<para>
-		The code of the reply sent by &kamailio; while limiting.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 503.
-		</emphasis>
-
-		</para>
-		<example>
-		<title>Set <varname>reply_code</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("ratelimit", "reply_code", 505)
-...
-</programlisting>
-		</example>
-		<para>
-		This value cant be modified at runtime using sercmd
-		</para>
-		<example>
-		<title> Set <varname>reply_code</varname> parameter at runtime </title>
-		<programlisting format="linespecific">
-
-sercmd cfg.set_now_int ratelimit reply_code 505
-
-		</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>reply_reason</varname> (string)</title>
-		<para>
-		The reason of the reply sent by &kamailio; while limiting.
-		</para>
-		<para>
-		<emphasis>
-			Default value is "Server Unavailable".
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>reply_reason</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("ratelimit", "reply_reason", "Limiting")
-...
-</programlisting>
-		</example>
-		<para>
-		This value cant be modified at runtime using sercmd
-		</para>
-		<example>
-		<title> Set <varname>reply_reason</varname> parameter at runtime </title>
-		<programlisting format="linespecific">
-
-sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
-
-		</programlisting>
-		</example>
-	</section>
 	</section>
 	<section>
 	<title>Exported Functions</title>
@@ -360,7 +300,8 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 ...
 	# perform queue/pipe match for current method
 	if (!rl_check()) {
-		rl_drop();
+		append_to_reply("Retry-After: 5\r\n");
+		sl_send_reply("503","Limiting");
 		exit;
 	};
 ...
@@ -368,7 +309,8 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 	# set int pvar to 1
 	$var(p) = 1;
 	if (!rl_check("$var(p)")) {
-		rl_drop();
+		append_to_reply("Retry-After: 5\r\n");
+		sl_send_reply("503","Limiting");
 		exit;
 	};
 ...
@@ -376,7 +318,8 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 	# set str pvar to 1
 	$var(p) = "1";
 	if (!rl_check("$var(p)") {
-		rl_drop(); 
+		append_to_reply("Retry-After: 5\r\n");
+		sl_send_reply("503","Limiting");
 		exit; 
 	};
 ...
@@ -412,57 +355,16 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 ...
 	# perform queue/pipe match for current method
 	if (!rl_check_pipe()) {
-		rl_drop();
+		append_to_reply("Retry-After: 5\r\n");
+		sl_send_reply("503","Limiting");
 		exit;
 	};
 ...
 	# use pipe no 1 for the current method
 	if (!rl_check_pipe("1") {
-		rl_drop(); 
+		append_to_reply("Retry-After: 5\r\n");
+		sl_send_reply("503","Limiting");
 		exit; 
-	};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">rl_drop([[min ], max])</function>
-		</title>
-		<para>
-		For the current request, a "503 - Server Unavailable" reply is sent back.
-		The reply may or may not have a "Retry-After" header.  If no parameter is given,
-		there will be no "Retry-After" header.  If only the
-		<emphasis>max</emphasis> parameter is given, the
-		reply will contain a "Retry-After: <emphasis>max</emphasis>" header.  If both
-		<emphasis>min</emphasis> and <emphasis>max</emphasis> params are given, the
-		reply will contain a "Retry-After: <emphasis>random</emphasis>" header with
-		<emphasis>random</emphasis> being a random value between the given min and max.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>min</emphasis> - the minimum value of "Retry-After" header.
-			</para>
-			</listitem>
-			<listitem>
-			<para>
-			<emphasis>max</emphasis> - the maximum value of "Retry-After" header.
-			</para>
-			</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>rl_drop</function> usage</title>
-		<programlisting format="linespecific">
-...
-	if (!rl_check()) {
-		# send back a "503 - Server Unavailable"
-		# with a "Retry-After: 5"
-		rl_drop("5");
-		exit;
 	};
 ...
 </programlisting>
