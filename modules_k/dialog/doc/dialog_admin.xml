@@ -16,14 +16,14 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	The dialog module provides dialog awareness to the &kamailio; proxy. Its 
+	The dialog module provides dialog awareness to the &kamailio; proxy. Its
 	functionality is to keep track of the current dialogs, to offer information
 	about them (like how many dialogs are active) or to manage them. The module
 	exports several functions that could be used directly from scripts.
 	</para>
 	<para>
-	The module, via an internal API, also provide the foundation to build on 
-	top of it more complex dialog-based functionalities via other &kamailio; 
+	The module, via an internal API, also provide the foundation to build on
+	top of it more complex dialog-based functionalities via other &kamailio;
 	modules.
 	</para>
 	</section>
@@ -31,16 +31,16 @@
 	<section>
 	<title>How it works</title>
 	<para>
-	To create the dialog associated to an initial request, the flag 
+	To create the dialog associated to an initial request, the flag
 	<quote>dlg_flag</quote> (<xref linkend="dlg-flag-id"/>) must be set before
 	creating the corresponding transaction.
 	</para>
 	<para>
-	The dialog is automatically destroyed when a <quote>BYE</quote> is 
-	received. In case of no <quote>BYE</quote>, the dialog lifetime is 
+	The dialog is automatically destroyed when a <quote>BYE</quote> is
+	received. In case of no <quote>BYE</quote>, the dialog lifetime is
 	controlled via the default timeout (see <quote>default_timeout</quote>
-	- <xref linkend="default-timeout-id"/>) and custom timeout (see 
-	<quote>timeout_avp</quote> - <xref linkend="timeout-avp-id"/>). The 
+	- <xref linkend="default-timeout-id"/>) and custom timeout (see
+	<quote>timeout_avp</quote> - <xref linkend="timeout-avp-id"/>). The
 	dialog timeout is reset each time a sequential request passes.
 	</para>
 	</section>
@@ -51,8 +51,8 @@
 	Dialog profiling is a mechanism that helps in classifying, sorting and
 	keeping trace of certain types of dialogs, using whatever properties of
 	the dialog (like caller, destination, type of calls, etc).
-	Dialogs can be dynamically added in different (and several) profile 
-	tables - logically, each profile table can have a special meaning (like 
+	Dialogs can be dynamically added in different (and several) profile
+	tables - logically, each profile table can have a special meaning (like
 	dialogs outside the domain, dialogs terminated to PSTN, etc).
 	</para>
 	<para>
@@ -60,16 +60,16 @@
 	<itemizedlist>
 		<listitem>
 		<para>
-			<emphasis>with no value</emphasis> - a dialog simply belongs 
-			to a profile. (like outbound calls profile). There is no other 
+			<emphasis>with no value</emphasis> - a dialog simply belongs
+			to a profile. (like outbound calls profile). There is no other
 			additional information to describe the dialog's belonging to the
 			profile;
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>with value</emphasis> - a dialog belongs to a profile 
-			having a certain value (like in caller profile, where the value 
+			<emphasis>with value</emphasis> - a dialog belongs to a profile
+			having a certain value (like in caller profile, where the value
 			is the caller ID). The belonging of the dialog to the profile is
 			strictly related to the value.
 		</para>
@@ -80,8 +80,8 @@
 	A dialog can be added to multiple profiles in the same time.
 	</para>
 	<para>
-	Profiles are visible (at the moment) in the request route (for initial 
-	and sequential requests) and in the branch, failure and reply routes of 
+	Profiles are visible (at the moment) in the request route (for initial
+	and sequential requests) and in the branch, failure and reply routes of
 	the original request.
 	</para>
 	</section>
@@ -111,7 +111,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -130,7 +130,7 @@
 	<section>
 		<title><varname>enable_stats</varname> (integer)</title>
 		<para>
-		If the statistics support should be enabled or not. Via statistic 
+		If the statistics support should be enabled or not. Via statistic
 		variables, the module provide information about the dialog processing.
 		Set it to zero to disable or to non-zero to enable it.
 		</para>
@@ -152,14 +152,14 @@ modparam("dialog", "enable_stats", 0)
 	<section>
 		<title><varname>hash_size</varname> (integer)</title>
 		<para>
-		The size of the hash table internally used to keep the dialogs. A 
+		The size of the hash table internally used to keep the dialogs. A
 		larger table is much faster but consumes more memory. The hash size
 		must be a power of two number.
 		</para>
 		<para>
-		IMPORTANT: If dialogs' information should be stored in a database, 
-		a constant hash_size should be used, otherwise the restoring process 
-		will not take place. If you really want to modify the hash_size you 
+		IMPORTANT: If dialogs' information should be stored in a database,
+		a constant hash_size should be used, otherwise the restoring process
+		will not take place. If you really want to modify the hash_size you
 		must delete all table's rows before restarting the server.
 		</para>
 		<para>
@@ -224,7 +224,7 @@ modparam("dialog", "dlg_flag", 4)
 		<para>
 		The specification of an AVP that contain a custom timeout (in seconds)
 		for the dialog. It may be used only in a request (initial or sequential)
-		context 
+		context
 		</para>
 		<para>
 		<emphasis>
@@ -287,7 +287,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		<para>
 		How the sequential requests should be matched against the known dialogs.
 		The modes are a combination between matching based on a cookie (DID)
-		stored as cookie in Record-Route header and the matching based on SIP 
+		stored as cookie in Record-Route header and the matching based on SIP
 		elements (as in RFC3261).
 		</para>
 		<para>
@@ -295,17 +295,17 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		</para>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>0 - DID_ONLY</emphasis> - the match is done 
+				<emphasis>0 - DID_ONLY</emphasis> - the match is done
 				exclusively based on DID;
 			</para></listitem>
 			<listitem><para>
-				<emphasis>1 - DID_FALLBACK</emphasis> - the match is first 
+				<emphasis>1 - DID_FALLBACK</emphasis> - the match is first
 				tried based on DID and if not present, it will fallback to
 				SIP matching;
 			</para></listitem>
 			<listitem><para>
-				<emphasis>2 - DID_NONE</emphasis> - the match is done 
-				exclusively based on SIP elements; no DID information is added 
+				<emphasis>2 - DID_NONE</emphasis> - the match is done
+				exclusively based on SIP elements; no DID information is added
 				in RR.
 			</para></listitem>
 		</itemizedlist>
@@ -327,7 +327,7 @@ modparam("dialog", "dlg_match_mode", 1)
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		If you want to store the information about the dialogs in a database 
+		If you want to store the information about the dialogs in a database
 		a database url must be specified.
 		</para>
 		<para>
@@ -359,16 +359,16 @@ modparam("dialog", "db_url", "&exampledb;")
 				flushed into DB;
 			</para></listitem>
 			<listitem><para>
-				<emphasis>1 - REALTIME</emphasis> - any dialog information 
+				<emphasis>1 - REALTIME</emphasis> - any dialog information
 				changes will be reflected into the database immediatly.
 			</para></listitem>
 			<listitem><para>
-				<emphasis>2 - DELAYED</emphasis> - the dialog information 
+				<emphasis>2 - DELAYED</emphasis> - the dialog information
 				changes will be flushed into DB periodically, based on a
 				timer routine.
 			</para></listitem>
 			<listitem><para>
-				<emphasis>3 - SHUTDOWN</emphasis> - the dialog information 
+				<emphasis>3 - SHUTDOWN</emphasis> - the dialog information
 				will be flushed into DB only at shutdown - no runtime updates.
 			</para></listitem>
 		</itemizedlist>
@@ -433,7 +433,7 @@ modparam("dialog", "db_fetch_rows", 500)
 	<section>
 		<title><varname>table_name</varname> (string)</title>
 		<para>
-		If you want to store the information about the dialogs in a 
+		If you want to store the information about the dialogs in a
 		database a table name must be specified.
 		</para>
 		<para>
@@ -474,7 +474,7 @@ modparam("dialog", "callid_column", "callid_c_name")
 	<section>
 		<title><varname>from_uri_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the caller's 
+			The column name in the database to store the caller's
 			sip address.
 		</para>
 		<para>
@@ -495,7 +495,7 @@ modparam("dialog", "from_uri_column", "from_uri_c_name")
 	<section>
 		<title><varname>from_tag_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the From tag from 
+			The column name in the database to store the From tag from
 			the INVITE request.
 		</para>
 		<para>
@@ -537,7 +537,7 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
 	<section>
 		<title><varname>to_tag_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the To tag from 
+			The column name in the database to store the To tag from
 			the 200 OK response to the INVITE request, if present.
 		</para>
 		<para>
@@ -642,7 +642,7 @@ modparam("dialog", "to_route_column", "column_name")
 	<section>
 		<title><varname>caller_contact_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the caller's contact 
+			The column name in the database to store the caller's contact
 			uri.
 		</para>
 		<para>
@@ -663,7 +663,7 @@ modparam("dialog", "caller_contact_column", "column_name")
 	<section>
 		<title><varname>callee_contact_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the callee's contact 
+			The column name in the database to store the callee's contact
 			uri.
 		</para>
 		<para>
@@ -684,7 +684,7 @@ modparam("dialog", "callee_contact_column", "column_name")
 <section>
 		<title><varname>caller_sock_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the information about 
+			The column name in the database to store the information about
 			the local interface receiving the traffic from caller.
 		</para>
 		<para>
@@ -705,7 +705,7 @@ modparam("dialog", "caller_sock_column", "column_name")
 <section>
 		<title><varname>callee_sock_column</varname> (string)</title>
 		<para>
-			The column name in the database to store information about the 
+			The column name in the database to store information about the
 			local interface receiving the traffic from callee.
 		</para>
 		<para>
@@ -726,7 +726,7 @@ modparam("dialog", "callee_sock_column", "column_name")
 	<section>
 		<title><varname>h_id_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs' 
+			The column name in the database to store the dialogs'
 			hash id information.
 		</para>
 		<para>
@@ -747,7 +747,7 @@ modparam("dialog", "h_id_column", "hash_id_c_name")
 	<section>
 		<title><varname>h_entry_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs' hash 
+			The column name in the database to store the dialogs' hash
 			entry information.
 		</para>
 		<para>
@@ -768,7 +768,7 @@ modparam("dialog", "h_entry_column", "h_entry_c_name")
 	<section>
 		<title><varname>state_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the 
+			The column name in the database to store the
 			dialogs' state information.
 		</para>
 		<para>
@@ -789,7 +789,7 @@ modparam("dialog", "state_column", "state_c_name")
 	<section>
 		<title><varname>start_time_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the 
+			The column name in the database to store the
 			dialogs' start time information.
 		</para>
 		<para>
@@ -945,12 +945,12 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>profile</emphasis> - name of the profile to be 
+			<para><emphasis>profile</emphasis> - name of the profile to be
 			added to;
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>value</emphasis> (optional) - string value to 
+			<para><emphasis>value</emphasis> (optional) - string value to
 			define the belonging of the dialog to the profile - note that the
 			profile must support values.
 			Pseudo-variables are supported.
@@ -982,12 +982,12 @@ set_dlg_profile("caller","$fu");
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>profile</emphasis> - name of the profile to be 
+			<para><emphasis>profile</emphasis> - name of the profile to be
 			removed from;
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>value</emphasis> (optional) - string value to 
+			<para><emphasis>value</emphasis> (optional) - string value to
 			define the belonging of the dialog to the profile - note that the
 			profile must support values.
 			Pseudo-variables are supported.
@@ -1015,9 +1015,9 @@ unset_dlg_profile("caller","$fu");
 		<function moreinfo="none">is_in_profile(profile,[value])</function>
 		</title>
 		<para>
-		Checks if the current dialog belongs to a profile. If the profile 
-		supports values, the check can be reinforced to take into account a 
-		specific value - if the dialog was inserted into the profile for a 
+		Checks if the current dialog belongs to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - if the dialog was inserted into the profile for a
 		specific value. If no value is passed, only the simply belonging of
 		the  dialog to the profile is checked. Note that if the profile does
 		not supports values, this will be silently discarded.
@@ -1025,12 +1025,12 @@ unset_dlg_profile("caller","$fu");
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>profile</emphasis> - name of the profile to be 
+			<para><emphasis>profile</emphasis> - name of the profile to be
 			checked against;
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>value</emphasis> (optional) - string value to 
+			<para><emphasis>value</emphasis> (optional) - string value to
 			further restrict the check. Pseudo-variables are supported.
 			</para>
 		</listitem>
@@ -1060,22 +1060,22 @@ if (is_in_profile("caller","XX")) {
 		<function moreinfo="none">get_profile_size(profile,[value],size)</function>
 		</title>
 		<para>
-		Returns the number of dialogs belonging to a profile. If the profile 
-		supports values, the check can be reinforced to take into account a 
-		specific value - how many dialogs were inserted into the profile with 
-		a specific value. If no value is passed, only simply belonging of the 
-		dialog to the profile is checked. Note that if the profile does not 
+		Returns the number of dialogs belonging to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - how many dialogs were inserted into the profile with
+		a specific value. If no value is passed, only simply belonging of the
+		dialog to the profile is checked. Note that if the profile does not
 		supports values, this will be silently discarded.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>profile</emphasis> - name of the profile to get 
+			<para><emphasis>profile</emphasis> - name of the profile to get
 			the size for;
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>value</emphasis> (optional) - string value to 
+			<para><emphasis>value</emphasis> (optional) - string value to
 			further restrict the check. Pseudo-variables are supported;
 			</para>
 		</listitem>
@@ -1385,7 +1385,7 @@ if(dlg_get("abcdef", "123", "456"))
 		</section>		<section>
 			<title><varname>processed_dialogs</varname></title>
 			<para>
-			Returns the total number of processed dialogs (terminated, 
+			Returns the total number of processed dialogs (terminated,
 			expired or active) from the startup.
 			</para>
 		</section>
@@ -1486,7 +1486,7 @@ if(dlg_get("abcdef", "123", "456"))
 				entry
 			</para></listitem>
 			<listitem><para>
-				<emphasis>extra_hdrs</emphasis> - (optional) string containg 
+				<emphasis>extra_hdrs</emphasis> - (optional) string containg
 				extra headers (full format) to be added to the BYE requests.
 			</para></listitem>
 		</itemizedlist>
@@ -1508,11 +1508,11 @@ if(dlg_get("abcdef", "123", "456"))
 		<section>
 		<title><varname>profile_get_size</varname></title>
 		<para>
-		Returns the number of dialogs belonging to a profile. If the profile 
-		supports values, the check can be reinforced to take into account a 
-		specific value - how many dialogs were inserted into the profile with 
+		Returns the number of dialogs belonging to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - how many dialogs were inserted into the profile with
 		a specific value. If no value is passed, only the simply belonging of
-		the dialog to the profile is checked. Note that if the profile does not 
+		the dialog to the profile is checked. Note that if the profile does not
 		supports values, this will be silently discarded.
 		</para>
 		<para>
@@ -1525,7 +1525,7 @@ if(dlg_get("abcdef", "123", "456"))
 				value for.
 			</para></listitem>
 			<listitem><para>
-				<emphasis>value</emphasis> (optional)- string value to 
+				<emphasis>value</emphasis> (optional)- string value to
 				further restrict the check;
 			</para></listitem>
 		</itemizedlist>
@@ -1542,11 +1542,11 @@ if(dlg_get("abcdef", "123", "456"))
 		<section>
 		<title><varname>profile_list_dlgs</varname></title>
 		<para>
-		Lists all the dialogs belonging to a profile. If the profile 
-		supports values, the check can be reinforced to take into account a 
-		specific value - list only the dialogs that were inserted into the 
-		profile with that specific value. If no value is passed, all dialogs 
-		belonging to the profile will be listed. Note that if the profile does 
+		Lists all the dialogs belonging to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - list only the dialogs that were inserted into the
+		profile with that specific value. If no value is passed, all dialogs
+		belonging to the profile will be listed. Note that if the profile does
 		not supports values, this will be silently discarded.
 		</para>
 		<para>
@@ -1559,7 +1559,7 @@ if(dlg_get("abcdef", "123", "456"))
 				dialog for.
 			</para></listitem>
 			<listitem><para>
-				<emphasis>value</emphasis> (optional)- string value to 
+				<emphasis>value</emphasis> (optional)- string value to
 				further restrict the check;
 			</para></listitem>
 		</itemizedlist>
@@ -1610,6 +1610,186 @@ if(dlg_get("abcdef", "123", "456"))
 
 
 	<section>
+	<title>Exported RPC Functions</title>
+		<section>
+		<title><varname>dlg.list</varname></title>
+		<para>Lists the description of all dialogs (calls). </para>
+		<para>Name: <emphasis>dlg.list</emphasis></para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg_list
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg.list_ctx</varname></title>
+		<para>
+		The same as the <quote>dlg_list</quote> but including in the dialog
+		description the associated context from modules sitting on top of
+		the dialog module.
+		</para>
+		<para>Name: <emphasis>dlg.list_ctx</emphasis></para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.list_ctx
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg.dlg_list</varname></title>
+		<para>
+		Lists the description of one dialog.  The dialog identifiers are to be passed
+		as parameter (callid and fromtag).
+		</para>
+		<para>Name: <emphasis>dlg.dlg_list</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> callid of the dialog to be listed.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>from_tag</emphasis> from tag (as per initial request)
+				of the dialog to be listed.
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg.dlg_list_ctx</varname></title>
+		<para>
+		The same as the <quote>dlg.list_ctx</quote> but including in the dialog
+		description the associated context from modules sitting on top of
+		the dialog module.
+		</para>
+		<para>Name: <emphasis>dlg.dlg_list_ctx</emphasis></para>
+		<para>Parameters: <emphasis>see <quote>dlg_list</quote></emphasis>
+		</para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+		</programlisting>
+		</section>
+
+		<section>
+			<title><varname>dlg.end_dlg</varname></title>
+			<para>
+			Terminates an ongoing dialog by sending BYE in both directions.
+			</para>
+		<para>Name: <emphasis>dlg.end_dlg</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>h_entry</emphasis> - hash entry of the dialog in the
+				internal dialog table
+			</para></listitem>
+			<listitem><para>
+				<emphasis>h_id</emphasis> - hash id of the dialog on the hash
+				entry
+			</para></listitem>
+			<listitem><para>
+				<emphasis>extra_hdrs</emphasis> - (optional) string containg
+				extra headers (full format) to be added to the BYE requests.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		The values for the h_entry and h_id can be get via the dlg_list
+		RPC command.
+		</para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.end_dlg 342 56
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg.profile_get_size</varname></title>
+		<para>
+		Returns the number of dialogs belonging to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - how many dialogs were inserted into the profile with
+		a specific value. If no value is passed, only the simply belonging of
+		the dialog to the profile is checked. Note that if the profile does not
+		supports values, this will be silently discarded.
+		</para>
+		<para>Name: <emphasis>dlg.profile_get_size</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>profile</emphasis> - name of the profile to get the
+				value for.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>value</emphasis> (optional)- string value to
+				further restrict the check;
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.dlg.profile_get_size inbound_calls
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg.profile_list</varname></title>
+		<para>
+		Lists all the dialogs belonging to a profile. If the profile
+		supports values, the check can be reinforced to take into account a
+		specific value - list only the dialogs that were inserted into the
+		profile with that specific value. If no value is passed, all dialogs
+		belonging to the profile will be listed. Note that if the profile does
+		not supports values, this will be silently discarded.
+		</para>
+		<para>Name: <emphasis>dlg.profile_list</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>profile</emphasis> - name of the profile to list the
+				dialog for.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>value</emphasis> (optional)- string value to
+				further restrict the check;
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.profile_list inbound_calls
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg.bridge_dlg</varname></title>
+		<para>
+			Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
+			mechanism.
+		</para>
+		<para>Name: <emphasis>dlg.bridge_dlg</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>from</emphasis> - SIP address to initiate the call
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to</emphasis> - SIP address to refer 'from' to
+			</para></listitem>
+			<listitem><para>
+				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
+			</para></listitem>
+		</itemizedlist>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		serctl dlg.list from to op
+		</programlisting>
+		</section>
+	</section>
+
+
+
+	<section>
 	<title>Exported pseudo-variables</title>
 
 		<section>
@@ -1623,7 +1803,7 @@ if(dlg_get("abcdef", "123", "456"))
 		<section>
 			<title><varname>$DLG_status</varname></title>
 			<para>
-			Returns the status of the dialog corresponding to the processed 
+			Returns the status of the dialog corresponding to the processed
 			sequential request. This PV will be available only for sequential
 			requests, after doing loose_route().
 			</para>
@@ -1635,7 +1815,7 @@ if(dlg_get("abcdef", "123", "456"))
 					<emphasis>NULL</emphasis> - Dialog not found.
 				</para></listitem>
 				<listitem><para>
-					<emphasis>3</emphasis> - Confirmed by a final reply but 
+					<emphasis>3</emphasis> - Confirmed by a final reply but
 					no ACK received yet.
 				</para></listitem>
 				<listitem><para>
@@ -1651,9 +1831,9 @@ if(dlg_get("abcdef", "123", "456"))
 		<section>
 			<title><varname>$DLG_lifetime</varname></title>
 			<para>
-			Returns the duration (in seconds) of the dialog corresponding to 
-			the processed sequential request. The duration is calculated from 
-			the dialog confirmation and the current moment. This PV will be 
+			Returns the duration (in seconds) of the dialog corresponding to
+			the processed sequential request. The duration is calculated from
+			the dialog confirmation and the current moment. This PV will be
 			available only for sequential requests, after doing loose_route().
 			</para>
 			<para>
