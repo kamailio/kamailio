@@ -266,8 +266,8 @@ typedef struct fparam {
 		avp_ident_t avp;          /* AVP identifier */
 		select_t* select;         /* select structure */ 
 		struct subst_expr* subst; /* Regex substitution */
-		pv_spec_t* pvs;    /* kamailo pseudo-vars */
-		pv_elem_t* pve;    /* kamailo pseudo-vars in a string */
+		pv_spec_t* pvs;    /* kamailio pseudo-vars */
+		pv_elem_t* pve;    /* kamailio pseudo-vars in a string */
 	} v;
 	void *fixed;
 } fparam_t;
