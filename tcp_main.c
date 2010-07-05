@@ -1740,6 +1740,13 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	int n;
 	int do_close_fd;
 	ticks_t con_lifetime;
+#ifdef USE_TLS
+	const char* rest_buf;
+	const char* t_buf;
+	unsigned rest_len, t_len;
+	long resp;
+	snd_flags_t t_send_flags;
+#endif /* USE_TLS */
 	
 	do_close_fd=1; /* close the fd on exit */
 	port=su_getport(&dst->to);
@@ -1856,21 +1863,104 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 			/* for TLS the TLS processing and the send must happen
 			   atomically w/ respect to other sends on the same connection
 			   (otherwise reordering might occur which would break TLS) =>
-			   lock. However in this case this send will always be the first
-			   => we can have the send() out of the lock.
+			   lock. However in this case this send will always be the first.
+			   We can have the send() outside the lock only if this is the
+			   first and only send (tls_encode is not called again), or
+			   this is the last send for a tls_encode() loop and all the
+			   previous ones did return CONN_NEW_COMPLETE or CONN_EOF.
 			*/
+				response[1] = CONN_NOP;
+				t_buf = buf;
+				t_len = len;
 				lock_get(&c->write_lock);
-					n = tls_encode(c, &buf, &len);
-				lock_release(&c->write_lock);
-				if (likely(n >= 0 && len))
-					n=tcpconn_1st_send(fd, c, buf, len, dst->send_flags,
-										&response[1], 0);
-				else if (n < 0)
-					response[1] = CONN_ERROR;
-				else
-					/* len == 0 => nothing to send  (but still have to
-					   inform tcp_main about the new connection) */
-					response[1] = CONN_NEW_COMPLETE;
+redo_tls_encode:
+					t_send_flags = dst->send_flags;
+					n = tls_encode(c, &t_buf, &t_len, &rest_buf, &rest_len,
+									&t_send_flags);
+					/* There are 4 cases:
+					   1. entire buffer consumed from the first try
+					     (rest_len == rest_buf == 0)
+					   2. rest_buf & first call
+					   3. rest_buf & not first call
+						  3a. CONN_NEW_COMPLETE or CONN_EOF
+						  3b. CONN_NEW_PENDING_WRITE
+					   4. entire buffer consumed, but not first call
+					       4a. CONN_NEW_COMPLETE or CONN_EOF
+						   4b. CONN_NEW_PENDING_WRITE
+						We misuse response[1] == CONN_NOP to test for the
+						first call.
+					*/
+					if (unlikely(n < 0)) {
+						lock_release(&c->write_lock);
+						goto conn_wait_error;
+					}
+					if (likely(rest_len == 0)) {
+						/* 1 or 4*: CONN_NEW_COMPLETE, CONN_EOF,  CONN_NOP
+						    or CONN_NEW_PENDING_WRITE (*rest_len == 0) */
+						if (likely(response[1] != CONN_NEW_PENDING_WRITE)) {
+							/* 1 or 4a => it's safe to do the send outside the
+							   lock (it will either send directly or
+							   wbufq_insert())
+							*/
+							lock_release(&c->write_lock);
+							if (likely(t_len != 0)) {
+								n=tcpconn_1st_send(fd, c, t_buf, t_len,
+													t_send_flags,
+													&response[1], 0);
+							} else { /* t_len == 0 */
+								if (response[1] == CONN_NOP) {
+									/* nothing to send (e.g  parallel send
+									   tls_encode queues some data and then
+									   WANT_READ => this tls_encode will queue
+									   the cleartext too and will have nothing
+									   to send right now) and initial send =>
+									   behave as if the send was successful
+									   (but never return EOF here) */
+									response[1] = CONN_NEW_COMPLETE;
+								}
+							}
+							/* exit */
+						} else {
+							/* CONN_NEW_PENDING_WRITE:  4b: it was a
+							   repeated tls_encode() (or otherwise we would
+							   have here CONN_NOP) => add to the queue */
+							if (unlikely(t_len &&
+											_wbufq_add(c, t_buf, t_len) < 0)) {
+								response[1] = CONN_ERROR;
+								n = -1;
+							}
+							lock_release(&c->write_lock);
+							/* exit (no send) */
+						}
+					} else {  /* rest_len != 0 */
+						/* 2 or 3*: if tls_encode hasn't finished, we have to
+						   call tcpconn_1st_send() under lock (otherwise if it
+						   returns CONN_NEW_PENDING_WRITE, there is no way
+						   to find the right place to add the new queued
+						   data from the 2nd tls_encode()) */
+						if (likely((response[1] == CONN_NOP /*2*/ ||
+									response[1] == CONN_NEW_COMPLETE /*3a*/ ||
+									response[1] == CONN_EOF /*3a*/) && t_len))
+							n = tcpconn_1st_send(fd, c, t_buf, t_len,
+													t_send_flags,
+													&response[1], 1);
+						else if (unlikely(t_len &&
+											_wbufq_add(c, t_buf, t_len) < 0)) {
+							/*3b: CONN_NEW_PENDING_WRITE*/
+							response[1] = CONN_ERROR;
+							n = -1;
+						}
+						if (likely(n >= 0)) {
+							/* if t_len == 0 => nothing was sent => previous
+							   response will be kept */
+							t_buf = rest_buf;
+							t_len = rest_len;
+							goto redo_tls_encode;
+						} else {
+							lock_release(&c->write_lock);
+							/* error exit */
+						}
+					}
 			} else
 #endif /* USE_TLS */
 				n=tcpconn_1st_send(fd, c, buf, len, dst->send_flags,
@@ -1935,16 +2025,31 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 			   (otherwise reordering might occur which would break TLS) =>
 			   lock.
 			*/
+			response[1] = CONN_NOP;
+			t_buf = buf;
+			t_len = len;
 			lock_get(&c->write_lock);
-				n = tls_encode(c, &buf, &len);
-				if (likely(n > 0))
-					n = tcpconn_do_send(fd, c, buf, len, dst->send_flags,
-											&response[1], 1);
-				else if (n == 0)
-					/* len == 0 => nothing to send */
-					response[1] = CONN_NOP;
-				else  /* n < 0 */
-					response[1] = CONN_ERROR;
+				do {
+					t_send_flags = dst->send_flags;
+					n = tls_encode(c, &t_buf, &t_len, &rest_buf, &rest_len,
+									&t_send_flags);
+					if (likely(n > 0)) {
+						n = tcpconn_do_send(fd, c, t_buf, t_len, t_send_flags,
+												&resp, 1);
+						if (likely(response[1] != CONN_QUEUED_WRITE ||
+									resp == CONN_ERROR))
+							/* don't overwrite a previous CONN_QUEUED_WRITE
+							   unless error */
+							response[1] = resp;
+					} else  if (unlikely(n < 0)) {
+						response[1] = CONN_ERROR;
+						break;
+					}
+					/* else do nothing for n (t_len) == 0, keep
+					   the last reponse */
+					t_buf = rest_buf;
+					t_len = rest_len;
+				} while(unlikely(rest_len && n > 0));
 			lock_release(&c->write_lock);
 		} else
 #endif /* USE_TLS */
@@ -2058,6 +2163,13 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 	long response[2];
 	int n;
 	int do_close_fd;
+#ifdef USE_TLS
+	const char* rest_buf;
+	const char* t_buf;
+	unsigned rest_len, t_len;
+	long resp;
+	snd_flags_t t_send_flags;
+#endif /* USE_TLS */
 #ifdef TCP_FD_CACHE
 	struct fd_cache_entry* fd_cache_e;
 	int use_fd_cache;
@@ -2086,24 +2198,35 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 					do_close_fd=0;
 #ifdef USE_TLS
 					if (unlikely(c->type==PROTO_TLS)) {
-						n = tls_encode(c, &buf, &len);
-						if (unlikely(n < 0)) {
+						t_buf = buf;
+						t_len = len;
+						do {
+							t_send_flags = send_flags;
+							n = tls_encode(c, &t_buf, &t_len,
+											&rest_buf, &rest_len,
+											&t_send_flags);
+							if (unlikely((n < 0) || (t_len &&
+									 (_wbufq_add(c, t_buf, t_len) < 0)))) {
+								lock_release(&c->write_lock);
+								n=-1;
+								response[1] = CONN_ERROR;
+								c->state=S_CONN_BAD;
+								c->timeout=get_ticks_raw(); /* force timeout */
+								goto error;
+							}
+							t_buf = rest_buf;
+							t_len = rest_len;
+						} while(unlikely(rest_len && n > 0));
+					} else
+#endif /* USE_TLS */
+						if (unlikely(len && (_wbufq_add(c, buf, len)<0))){
 							lock_release(&c->write_lock);
+							n=-1;
 							response[1] = CONN_ERROR;
 							c->state=S_CONN_BAD;
 							c->timeout=get_ticks_raw(); /* force timeout */
 							goto error;
 						}
-					}
-#endif /* USE_TLS */
-					if (unlikely(len && (_wbufq_add(c, buf, len)<0))){
-						lock_release(&c->write_lock);
-						n=-1;
-						response[1] = CONN_ERROR;
-						c->state=S_CONN_BAD;
-						c->timeout=get_ticks_raw(); /* force timeout */
-						goto error;
-					}
 					n=len;
 					lock_release(&c->write_lock);
 					goto release_c;
@@ -2182,16 +2305,31 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 			   (otherwise reordering might occur which would break TLS) =>
 			   lock.
 			*/
+			response[1] = CONN_NOP;
+			t_buf = buf;
+			t_len = len;
 			lock_get(&c->write_lock);
-				n = tls_encode(c, &buf, &len);
-				if (likely(n > 0))
-					n = tcpconn_do_send(fd, c, buf, len, send_flags,
-											&response[1], 1);
-				else if (n == 0)
-					/* len == 0 => nothing to send */
-					response[1] = CONN_NOP;
-				else /* n < 0 */
-					response[1] = CONN_ERROR;
+				do {
+					t_send_flags = send_flags;
+					n = tls_encode(c, &t_buf, &t_len, &rest_buf, &rest_len,
+									&t_send_flags);
+					if (likely(n > 0)) {
+						n = tcpconn_do_send(fd, c, t_buf, t_len, t_send_flags,
+												&resp, 1);
+						if (likely(response[1] != CONN_QUEUED_WRITE ||
+									resp == CONN_ERROR))
+							/* don't overwrite a previous CONN_QUEUED_WRITE
+							   unless error */
+							response[1] = resp;
+					} else if (unlikely(n < 0)) {
+						response[1] = CONN_ERROR;
+						break;
+					}
+					/* else do nothing for n (t_len) == 0, keep
+					   the last reponse */
+					t_buf = rest_buf;
+					t_len = rest_len;
+				} while(unlikely(rest_len && n > 0));
 			lock_release(&c->write_lock);
 		} else
 #endif
@@ -2511,7 +2649,8 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 				" (%d/%d bytes written)\n", c, n, len);
 			if (unlikely(n<0)) n=0;
 			else{
-				TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
+				if (likely(c->state == S_CONN_CONNECT))
+					TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
 				c->state=S_CONN_OK; /* partial write => connect()
 												ended */
 			}
@@ -2565,7 +2704,8 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 		goto error;
 	}
 	LOG(L_INFO, "quick connect for %p\n", c);
-	TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
+	if (likely(c->state == S_CONN_CONNECT))
+		TCP_STATS_ESTABLISHED(S_CONN_CONNECT);
 	if (unlikely(send_flags.f & SND_F_CON_CLOSE)){
 		/* close after write =>  EOF => close immediately */
 		c->state=S_CONN_BAD;
