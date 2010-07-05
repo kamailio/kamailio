@@ -84,7 +84,9 @@ void tls_h_tcpconn_clean(struct tcp_connection *c);
 void tls_h_close(struct tcp_connection *c, int fd);
 
 int tls_encode_f(struct tcp_connection *c,
-					const char ** pbuf, unsigned int* plen);
+					const char ** pbuf, unsigned int* plen,
+						const char** rest_buf, unsigned int* rest_len,
+						snd_flags_t* send_flags) ;
 
 int tls_read_f(struct tcp_connection *c, int* flags);
 

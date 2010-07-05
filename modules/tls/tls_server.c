@@ -607,16 +607,31 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
  * It is a callback that will be called by the tcp code, before a send
  * on TLS would be attempted. It should replace the input buffer with a
  * new static buffer containing the TLS processed data.
+ * If the input buffer could not be fully encoded (e.g. run out of space
+ * in the internal static buffer), it should set rest_buf and rest_len to
+ * the remaining part, so that it could be called again once the output has
+ * been used (sent). The send_flags used are also passed and they can be
+ * changed (e.g. to disallow a close() after a partial encode).
  * WARNING: it must always be called with c->write_lock held!
  * @param c - tcp connection
  * @param pbuf - pointer to buffer (value/result, on success it will be
  *               replaced with a static buffer).
  * @param plen - pointer to buffer size (value/result, on success it will be
  *               replaced with the size of the replacement buffer.
+ * @param rest_buf - (result) should be filled with a pointer to the 
+ *                remaining unencoded part of the original buffer if any,
+ *                0 otherwise.
+ * @param rest_len - (result) should be filled with the length of the
+ *                 remaining unencoded part of the original buffer (0 if
+ *                 the original buffer was fully encoded).
+ * @param send_flags - pointer to the send_flags that will be used for sending
+ *                     the message.
  * @return *plen on success (>=0), < 0 on error.
  */
 int tls_encode_f(struct tcp_connection *c,
-						const char* *pbuf, unsigned int* plen)
+						const char** pbuf, unsigned int* plen,
+						const char** rest_buf, unsigned int* rest_len,
+						snd_flags_t* send_flags)
 {
 	int n, offs;
 	SSL* ssl;
@@ -631,8 +646,11 @@ int tls_encode_f(struct tcp_connection *c,
 	
 	buf = *pbuf;
 	len = *plen;
-	TLS_WR_TRACE("(%p, %p, %d) start (%s:%d* -> %s)\n",
-					c, buf, len, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+	*rest_buf = 0;
+	*rest_len = 0;
+	TLS_WR_TRACE("(%p, %p, %d, ... 0x%0x) start (%s:%d* -> %s)\n",
+					c, buf, len, send_flags->f,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
 					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)));
 	n = 0;
 	offs = 0;
@@ -656,6 +674,10 @@ int tls_encode_f(struct tcp_connection *c,
 						c, tls_c->ct_wq?tls_c->ct_wq->queued:0);
 				goto error_wq_full;
 		}
+		/* buffer queued for a future send attempt, after first reading
+		   some data (key exchange) => don't allow immediate closing of
+		   the connection */
+		send_flags->f &= ~SND_F_CON_CLOSE;
 		goto end;
 	}
 	if (unlikely(tls_set_mbufs(c, &rd, &wr) < 0)) {
@@ -718,12 +740,28 @@ redo_wr:
 					goto error_wq_full;
 				}
 				tls_c->flags |= F_TLS_CON_WR_WANTS_RD;
+				/* buffer queued for a future send attempt, after first
+				   reading some data (key exchange) => don't allow immediate
+				   closing of the connection */
+				send_flags->f &= ~SND_F_CON_CLOSE;
 				break; /* or goto end */
 			case SSL_ERROR_WANT_WRITE:
-				/*  error, no record fits in the buffer */
-				BUG("write buffer too small (%d/%d bytes)\n",
-						wr.used, wr.size);
-				goto bug;
+				if (unlikely(offs == 0)) {
+					/*  error, no record fits in the buffer or
+					  no partial write enabled and buffer to small to fit
+					  all the records */
+					BUG("write buffer too small (%d/%d bytes)\n",
+							wr.used, wr.size);
+					goto bug;
+				} else {
+					/* offs != 0 => something was "written"  */
+					*rest_buf = buf + offs;
+					*rest_len = len - offs;
+					/* this function should be called again => disallow
+					   immediate closing of the connection */
+					send_flags->f &= ~SND_F_CON_CLOSE;
+				}
+				break; /* or goto end */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
 				/* only if the underlying BIO is not yet connected
@@ -772,8 +810,8 @@ redo_wr:
 end:
 	*pbuf = (const char*)wr.buf;
 	*plen = wr.used;
-	TLS_WR_TRACE("(%p) end (offs %d) => %d \n",
-					c, offs, *plen);
+	TLS_WR_TRACE("(%p) end (offs %d, rest_buf=%p rest_len=%d 0x%0x) => %d \n",
+					c, offs, *rest_buf, *rest_len, send_flags->f, *plen);
 	return *plen;
 error:
 /*error_send:*/
