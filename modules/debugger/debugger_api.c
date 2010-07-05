@@ -36,6 +36,7 @@
 #include "../../route_struct.h"
 #include "../../mem/shm_mem.h"
 		       
+#include "debugger_act.h"
 #include "debugger_api.h"
 
 #define DBG_CMD_SIZE 256
@@ -44,9 +45,52 @@
 #define DBG_STATE_WAIT	1
 #define DBG_STATE_NEXT	2
 
+static str _dbg_state_list[] = {
+	str_init("unknown"),
+	str_init("init"),
+	str_init("wait"),
+	str_init("next"),
+	{0, 0}
+};
+
+str *dbg_get_state_name(int t)
+{
+	switch(t) {
+		case DBG_STATE_INIT:
+			return &_dbg_state_list[1];
+		case DBG_STATE_WAIT:
+			return &_dbg_state_list[2];
+		case DBG_STATE_NEXT:
+			return &_dbg_state_list[3];
+	}
+	return &_dbg_state_list[0];
+}
+
 #define DBG_CFGTRACE_ON	(1<<0)
 #define DBG_ABKPOINT_ON	(1<<1)
 #define DBG_LBKPOINT_ON	(1<<2)
+
+static str _dbg_status_list[] = {
+	str_init("cfgtrace-on"),
+	str_init("cfgtrace-off"),
+	str_init("abkpoint-on"),
+	str_init("abkpoint-off"),
+	str_init("lbkpoint-on"),
+	str_init("lbkpoint-off"),
+	{0, 0}
+};
+
+str *dbg_get_status_name(int t)
+{
+	if(t&DBG_CFGTRACE_ON)
+		return &_dbg_status_list[0];
+	if(t&DBG_ABKPOINT_ON)
+		return &_dbg_status_list[2];
+	if(t&DBG_LBKPOINT_ON)
+		return &_dbg_status_list[4];
+
+	return &_dbg_state_list[0];
+}
 
 #define DBG_CMD_NOP		0
 #define DBG_CMD_ERR		1
@@ -56,6 +100,42 @@
 #define DBG_CMD_SHOW	5
 #define DBG_CMD_PVEVAL	6
 #define DBG_CMD_PVLOG	7
+
+
+static str _dbg_cmd_list[] = {
+	str_init("nop"),
+	str_init("err"),
+	str_init("read"),
+	str_init("next"),
+	str_init("move"),
+	str_init("show"),
+	str_init("pveval"),
+	str_init("pvlog"),
+	{0, 0}
+};
+
+str *dbg_get_cmd_name(int t)
+{
+	switch(t) {
+		case DBG_CMD_NOP:
+			return &_dbg_cmd_list[0];
+		case DBG_CMD_ERR:
+			return &_dbg_cmd_list[1];
+		case DBG_CMD_READ:
+			return &_dbg_cmd_list[2];
+		case DBG_CMD_NEXT:
+			return &_dbg_cmd_list[3];
+		case DBG_CMD_MOVE:
+			return &_dbg_cmd_list[4];
+		case DBG_CMD_SHOW:
+			return &_dbg_cmd_list[5];
+		case DBG_CMD_PVEVAL:
+			return &_dbg_cmd_list[6];
+		case DBG_CMD_PVLOG:
+			return &_dbg_cmd_list[7];
+	}
+	return &_dbg_state_list[0];
+}
 
 /**
  *
@@ -153,6 +233,7 @@ int dbg_cfg_trace(void *data)
 	pv_spec_t pvs;
     pv_value_t val;
 	void **srevp;
+	str *an;
 
 	srevp = (void**)data;
 
@@ -162,14 +243,16 @@ int dbg_cfg_trace(void *data)
 	if(a==NULL || msg==NULL)
 		return 0;
 
+	an = dbg_get_action_name(a);
+
 	if(_dbg_pid_list[process_no].set&DBG_CFGTRACE_ON)
 	{
 		if(is_printable(_dbg_cfgtrace_level))
 		{
 			LOG_(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
 					_dbg_cfgtrace_prefix,
-					" c=[%s] l=%d a=%d\n",
-					a->cfile, a->cline, a->type
+					" c=[%s] l=%d a=%d n=%.*s\n",
+					a->cfile, a->cline, a->type, an->len, an->s
 				);
 		}
 	}
@@ -182,9 +265,9 @@ int dbg_cfg_trace(void *data)
 	if(_dbg_pid_list[process_no].state==DBG_STATE_INIT)
 	{
 		LOG(_dbg_cfgtrace_level,
-					"breakpoint hit: p=[%u] c=[%s] l=%d a=%d\n",
+					"breakpoint hit: p=[%u] c=[%s] l=%d a=%d n=%.*s\n",
 					_dbg_pid_list[process_no].pid,
-					a->cfile, a->cline, a->type
+					a->cfile, a->cline, a->type, an->len, an->s
 				);
 		_dbg_pid_list[process_no].in.cmd = DBG_CMD_NOP;
 		_dbg_pid_list[process_no].state = DBG_STATE_WAIT;
@@ -211,8 +294,8 @@ int dbg_cfg_trace(void *data)
 				_dbg_pid_list[process_no].in.cmd = DBG_CMD_NOP;
 				olen = snprintf(_dbg_pid_list[process_no].out.buf,
 						DBG_CMD_SIZE,
-						"exec [%s:%d] a=%d",
-						a->cfile, a->cline, a->type);
+						"exec [%s:%d] a=%d n=%.*s",
+						a->cfile, a->cline, a->type, an->len, an->s);
 				if(olen<0)
 				{
 					_dbg_pid_list[process_no].out.cmd = DBG_CMD_ERR;
@@ -312,8 +395,8 @@ int dbg_cfg_trace(void *data)
 				_dbg_pid_list[process_no].out.cmd = DBG_CMD_NOP;
 				olen = snprintf(_dbg_pid_list[process_no].out.buf,
 						DBG_CMD_SIZE,
-						"at bkp [%s:%d] a=%d",
-						a->cfile, a->cline, a->type);
+						"at bkp [%s:%d] a=%d n=%.*s",
+						a->cfile, a->cline, a->type, an->len, an->s);
 				if(olen<0)
 				{
 					_dbg_pid_list[process_no].out.cmd = DBG_CMD_ERR;
