@@ -397,6 +397,9 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 			unref_dlg(dlg,unref);
 		if (old_state==DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
+
+		if_update_stat(dlg_enable_stats, failed_dlgs, 1);
+
 		return;
 	}
 
@@ -645,7 +648,6 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 error:
 	unref_dlg(dlg,1);
 	profile_cleanup(msg, 0, NULL);
-	update_stat(failed_dlgs, 1);
 	return -1;
 }
 
