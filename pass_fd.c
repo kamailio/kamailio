@@ -205,8 +205,8 @@ again:
 	if (ret<0){
 		if (errno==EINTR) goto again;
 		if ((errno!=EAGAIN) && (errno!=EWOULDBLOCK))
-			LOG(L_CRIT, "ERROR: send_fd: sendmsg failed on %d: %s\n",
-					unix_socket, strerror(errno));
+			LOG(L_CRIT, "ERROR: send_fd: sendmsg failed sending %d on %d:"
+						" %s (%d)\n", fd, unix_socket, strerror(errno), errno);
 	}
 	
 	return ret;

@@ -3542,12 +3542,13 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	switch(cmd){
 		case CONN_ERROR:
 			LOG(L_ERR, "handle_ser_child: ERROR: received CON_ERROR for %p"
-					" (id %d), refcnt %d\n", 
-					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt));
+					" (id %d), refcnt %d, flags 0x%0x\n",
+					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt),
+					tcpconn->flags);
 		case CONN_EOF: /* forced EOF after full send, due to send flags */
 #ifdef TCP_CONNECT_WAIT
 			/* if the connection is pending => it might be on the way of
-			 * reaching tcp_main (e.g. CONN_NEW_COMPLETE or 
+			 * reaching tcp_main (e.g. CONN_NEW_COMPLETE or
 			 *  CONN_NEW_PENDING_WRITE) =>  it cannot be destroyed here */
 			if ( !(tcpconn->flags & F_CONN_PENDING) &&
 					tcpconn_try_unhash(tcpconn) )
@@ -3855,14 +3856,16 @@ inline static int send2child(struct tcp_connection* tcpconn)
 				return -1;
 			}
 		}else{
-			LOG(L_ERR, "ERROR: send2child: send_fd failed\n");
+			LOG(L_ERR, "ERROR: send2child: send_fd failed for %p (flags 0x%0x)"
+						", fd %d\n", tcpconn, tcpconn->flags, tcpconn->s);
 			return -1;
 		}
 	}
 #else
 	if (unlikely(send_fd(tcp_children[idx].unix_sock, &tcpconn,
 						sizeof(tcpconn), tcpconn->s)<=0)){
-		LOG(L_ERR, "ERROR: send2child: send_fd failed\n");
+		LOG(L_ERR, "ERROR: send2child: send_fd failed for %p (flags 0x%0x)"
+					", fd %d\n", tcpconn, tcpconn->flags, tcpconn->s);
 		return -1;
 	}
 #endif
@@ -3987,7 +3990,7 @@ static inline int handle_new_connect(struct socket_info* si)
  *            tcp_main is not interested in further io events that might be
  *            queued for this fd)
  */
-inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev, 
+inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 										int fd_i)
 {
 #ifdef TCP_ASYNC
@@ -4204,7 +4207,7 @@ inline static int handle_io(struct fd_map* fm, short ev, int idx)
 						" idx %d\n", fm, fm->fd, fm->type, fm->data, idx);
 			goto error;
 		default:
-			LOG(L_CRIT, "BUG: handle_io: uknown fd type %d\n", fm->type); 
+			LOG(L_CRIT, "BUG: handle_io: unknown fd type %d\n", fm->type); 
 			goto error;
 	}
 	return ret;
