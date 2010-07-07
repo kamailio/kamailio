@@ -2468,6 +2468,7 @@ close_again:
 		LOG(L_ERR, "ERROR: tcpconn_put_destroy; close() failed: %s (%d)\n",
 				strerror(errno), errno);
 	}
+	tcpconn->s=-1;
 }
 
 
@@ -3378,10 +3379,20 @@ inline static int send2child(struct tcp_connection* tcpconn)
 	 * send a release command, but the master fills its socket buffer
 	 * with new connection commands => deadlock) */
 	/* answer tcp_send requests first */
-	while(handle_ser_child(&pt[tcp_children[idx].proc_no], -1)>0);
+	while(unlikely((tcpconn->state != S_CONN_BAD) &&
+					(handle_ser_child(&pt[tcp_children[idx].proc_no], -1)>0)));
 	/* process tcp readers requests */
-	while(handle_tcp_child(&tcp_children[idx], -1)>0);
-		
+	while(unlikely((tcpconn->state != S_CONN_BAD &&
+					(handle_tcp_child(&tcp_children[idx], -1)>0))));
+	
+	/* the above possible pending requests might have included a
+	   command to close this tcpconn (e.g. CONN_ERROR, CONN_EOF).
+	   In this case the fd is already closed here (and possible
+	   even replaced by another one with the same number) so it
+	   must not be sent to a reader anymore */
+	if (unlikely(tcpconn->state == S_CONN_BAD ||
+					(tcpconn->flags & F_CONN_FD_CLOSED)))
+		return -1;
 #ifdef SEND_FD_QUEUE
 	/* if queue full, try to queue the io */
 	if (unlikely(send_fd(tcp_children[idx].unix_sock, &tcpconn,
@@ -3501,8 +3512,6 @@ static inline int handle_new_connect(struct socket_info* si)
 		DBG("handle_new_connect: new connection from %s: %p %d flags: %04x\n",
 			su2a(&su, sizeof(su)), tcpconn, tcpconn->s, tcpconn->flags);
 		if(unlikely(send2child(tcpconn)<0)){
-			LOG(L_ERR,"ERROR: handle_new_connect: no children "
-					"available\n");
 			tcpconn->flags&=~F_CONN_READER;
 			tcpconn_put(tcpconn);
 			tcpconn_try_unhash(tcpconn);
@@ -3676,7 +3685,6 @@ send_to_child:
 		tcpconn->flags&=~(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD);
 		tcpconn_ref(tcpconn); /* refcnt ++ */
 		if (unlikely(send2child(tcpconn)<0)){
-			LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
 			tcpconn->flags&=~F_CONN_READER;
 #ifdef TCP_ASYNC
 			if (tcpconn->flags & F_CONN_WRITE_W){
