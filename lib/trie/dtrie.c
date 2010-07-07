@@ -88,10 +88,13 @@ void dtrie_delete(struct dtrie_node_t *root, struct dtrie_node_t *node,
 	if (delete_payload) {
 		delete_payload(node->data);
 	}
+
 	node->data = NULL;
-	
+
 	if (node != root) {
 		LM_DBG("free node at %p\n", node);
+		shm_free(node->child);
+		node->child = NULL;
 		shm_free(node);
 	}
 }
@@ -102,6 +105,7 @@ void dtrie_destroy(struct dtrie_node_t **root, dt_delete_func_t delete_payload, 
 	if ((root!=NULL) && (*root!=NULL)) {
 		dtrie_delete(*root, *root, delete_payload, branches);
 		LM_DBG("free root at %p\n", root);
+		shm_free((*root)->child);
 		shm_free(*root);
 		*root = NULL;
 	}
