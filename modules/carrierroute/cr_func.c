@@ -60,7 +60,7 @@ enum hash_algorithm {
 static const str SIP_URI  = { .s="sip:",  .len=4 };
 static const str SIPS_URI = { .s="sips:", .len=5 };
 static const str AT_SIGN  = { .s="@",     .len=1 };
-
+static char g_rewrite_uri[MAX_URI_SIZE+1];
 
 /**
  * Get the id that belongs to a string name from gparam_t structure.
@@ -289,8 +289,15 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	int_str avp_val;
 	int strip = 0;
 
-	str l_user = *user;
+	str l_user;
 	
+	if( !rs || !dest || !msg || !user) {
+		LM_ERR("NULL parameter\n");
+		return -1;
+	}
+	
+	l_user = *user;
+
 	strip = (rs->strip > user->len ? user->len : rs->strip);
 	strip = (strip < 0 ? 0 : strip);
 
@@ -311,12 +318,12 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	} else {
 		len += SIP_URI.len;
 	}
-	dest->len = 0;
-	dest->s = (char *)pkg_malloc(len + 1);
-	if (dest->s == NULL) {
-		PKG_MEM_ERROR;
+	if ( len > MAX_URI_SIZE ) {
+		LM_ERR("Calculated uri size too large: %d\n", len);
 		return -1;
 	}
+
+	dest->s = g_rewrite_uri;
 	dest->len = len;
 	p = dest->s;
 	if (msg->parsed_uri.type == SIPS_URI_T) {
@@ -339,7 +346,6 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	/* this could be an error, or a blacklisted destination */
 	if (rs->host.len == 0) {
 		*p = '\0';
-		pkg_free(dest->s);
 		return -1;
 	}
 	memcpy(p, rs->host.s, rs->host.len);
@@ -351,7 +357,6 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		if (add_avp(AVP_VAL_STR | descavp->v.pve->spec.pvp.pvn.u.isname.type,
 					descavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
 			LM_ERR("set AVP failed\n");
-			pkg_free(dest->s);
 			return -1;
 		}
 	}
@@ -598,7 +603,6 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	if (ret < 0) {
 		LM_ERR("Error in do_action()\n");
 	}
-	pkg_free(dest.s);
 
 unlock_and_out:
 	release_data(rd);
