@@ -129,9 +129,10 @@
 
 
 /** finish the ssl init.
- * Creates the SSL and set extra_data to it.
+ * Creates the SSL context + internal tls_extra_data and sets
+ * extra_data to it.
  * Separated from tls_tcpconn_init to allow delayed ssl context
- * init. (from the "child" process and not from the main one 
+ * init (from the "child" process and not from the main one).
  * WARNING: the connection should be already locked.
  * @return 0 on success, -1 on errror.
  */
@@ -217,19 +218,49 @@ static int tls_complete_init(struct tcp_connection* c)
 
 
 
-/** completes tls init if needed and checks if tls can be used.
+/** completes tls init if needed and checks if tls can be used (unsafe).
  *  It will check for low memory.
+ *  If it returns success, c->extra_data is guaranteed to be !=0.
  *  WARNING: must be called with c->write_lock held.
+ *  @return 0 on success, < 0 on error (complete init failed or out of memory).
+ */
+static int tls_fix_connection_unsafe(struct tcp_connection* c)
+{
+	if (unlikely(!c->extra_data)) {
+		if (unlikely(tls_complete_init(c) < 0)) {
+			return -1;
+		}
+	}else if (unlikely(LOW_MEM_CONNECTED_TEST())){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		return -1;
+	}
+	return 0;
+}
+
+
+
+/** completes tls init if needed and checks if tls can be used, (safe).
+ *  It will check for low memory.
+ *  If it returns success, c->extra_data is guaranteed to be !=0.
+ *  WARNING: must _not_ be called with c->write_lock held (it will
+ *   lock/unlock internally), see also tls_fix_connection_unsafe().
  *  @return 0 on success, < 0 on error (complete init failed or out of memory).
  */
 static int tls_fix_connection(struct tcp_connection* c)
 {
-	if (unlikely(!c->extra_data)) {
-		if (unlikely(tls_complete_init(c) < 0)) {
-			ERR("Delayed init failed\n");
-			return -1;
-		}
-	}else if (unlikely(LOW_MEM_CONNECTED_TEST())){
+	int ret;
+	
+	if (unlikely(c->extra_data == 0)) {
+		lock_get(&c->write_lock);
+			if (unlikely(c->extra_data == 0)) {
+				ret = tls_complete_init(c);
+				lock_release(&c->write_lock);
+				return ret;
+			}
+		lock_release(&c->write_lock);
+	}
+	if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		return -1;
@@ -303,12 +334,6 @@ int tls_accept(struct tcp_connection *c, int* error)
 	int tls_log;
 
 	*error = SSL_ERROR_NONE;
-	if (unlikely(LOW_MEM_NEW_CONNECTION_TEST())){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
-		goto err;
-	}
-	
 	tls_c=(struct tls_extra_data*)c->extra_data;
 	ssl=tls_c->ssl;
 	
@@ -374,12 +399,6 @@ int tls_connect(struct tcp_connection *c, int* error)
 	int tls_log;
 
 	*error = SSL_ERROR_NONE;
-	if (unlikely(LOW_MEM_NEW_CONNECTION_TEST())){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
-		goto err;
-	}
-
 	tls_c=(struct tls_extra_data*)c->extra_data;
 	ssl=tls_c->ssl;
 	
@@ -425,7 +444,7 @@ err:
 
 
 /*
- * wrapper around SSL_shutdown, returns -1 on error, 0 on success 
+ * wrapper around SSL_shutdown, returns -1 on error, 0 on success.
  */
 static int tls_shutdown(struct tcp_connection *c)
 {
@@ -508,11 +527,17 @@ static int tls_shutdown(struct tcp_connection *c)
 
 
 
-/*
- * Called when new tcp connection is accepted or connected. It creates the ssl
- * data structures. There is no need to acquire any lock, because when the
- * connection is being created no other process has access to it yet
- * (this is called before adding the tcp_connection structure into the hash) 
+/** init tls specific data in a tcp connection.
+ * Called when a new tcp connection is accepted or connected.
+ * It completes the tcp connection initialisation by setting the tls
+ * specific parts.
+ * Note that ssl context creation and other expensive operation are left
+ * out (they are delayed until the first read/write).
+ * No locking is needed (when the connection is created no other process
+ * can access it).
+ * @param c - tcp connection.
+ * @param sock - socket (unused for now).
+ * @return  0 on success, < 0 on error.
  */
 int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 {
@@ -524,14 +549,13 @@ int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 }
 
 
-/*
- * clean the extra data upon connection shut down 
+/** clean the extra data upon connection shut down.
  */
 void tls_h_tcpconn_clean(struct tcp_connection *c)
 {
 	struct tls_extra_data* extra;
 	/*
-	* runs within global tcp lock 
+	* runs within global tcp lock
 	*/
 	if (c->type != PROTO_TLS) {
 		BUG("Bad connection structure\n");
@@ -553,8 +577,7 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 }
 
 
-/*
- * perform one-way shutdown, do not wait for notify from the remote peer 
+/** perform one-way shutdown, do not wait for notify from the remote peer.
  */
 void tls_h_close(struct tcp_connection *c, int fd)
 {
@@ -562,7 +585,7 @@ void tls_h_close(struct tcp_connection *c, int fd)
 	struct tls_mbuf rd, wr;
 	
 	/*
-	 * runs either within global tcp lock or after the connection has 
+	 * runs either within global tcp lock or after the connection has
 	 * been "detached" and is unreachable from any other process.
 	 * Unfortunately when called via
 	 * tcpconn_put_destroy()+tcpconn_close_main_fd() the connection might
@@ -618,7 +641,7 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
  *               replaced with a static buffer).
  * @param plen - pointer to buffer size (value/result, on success it will be
  *               replaced with the size of the replacement buffer.
- * @param rest_buf - (result) should be filled with a pointer to the 
+ * @param rest_buf - (result) should be filled with a pointer to the
  *                remaining unencoded part of the original buffer if any,
  *                0 otherwise.
  * @param rest_len - (result) should be filled with the length of the
@@ -656,9 +679,10 @@ int tls_encode_f(struct tcp_connection *c,
 	offs = 0;
 	ssl_error = SSL_ERROR_NONE;
 	err_src = "TLS write:";
-	if (unlikely(tls_fix_connection(c) < 0)) {
+	if (unlikely(tls_fix_connection_unsafe(c) < 0)) {
 		/* c->extra_data might be null => exit immediately */
-		ERR("tls_fix_connection failed\n");
+		TLS_WR_TRACE("(%p) end: tls_fix_connection_unsafe failed =>"
+						" immediate error exit\n", c);
 		return -1;
 	}
 	tls_c = (struct tls_extra_data*)c->extra_data;
@@ -836,7 +860,7 @@ ssl_eof:
 
 /** tls read.
  * Each modification of ssl data structures has to be protected, another process * might ask for the same connection and attempt write to it which would
- * result in updating the ssl structures 
+ * result in updating the ssl structures.
  * WARNING: must be called whic c->write_lock _unlocked_.
  * @param c - tcp connection pointer. The following flags might be set:
  * @param flags - value/result:
@@ -882,20 +906,9 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	r = &c->req;
 	enc_rd_buf = 0;
 	*flags &= ~RD_CONN_REPEAT_READ;
-	if (unlikely(c->extra_data == 0)) {
-		TLS_RD_TRACE("(%p, %p) 0 extra_data => intialize\n", c, flags);
-		/* not yet fully init => lock & intialize */
-		lock_get(&c->write_lock);
-			if (tls_fix_connection(c) < 0) {
-				lock_release(&c->write_lock);
-				TLS_RD_TRACE("(%p, %p) end: tls_fix_connection failed =>"
-								" immediate error exit\n", c, flags);
-				return -1;
-			}
-		lock_release(&c->write_lock);
-	} else if (unlikely(LOW_MEM_CONNECTED_TEST())){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: %lu\n", shm_available());
+	if (unlikely(tls_fix_connection(c) < 0)) {
+		TLS_RD_TRACE("(%p, %p) end: tls_fix_connection failed =>"
+						" immediate error exit\n", c, flags);
 		return -1;
 	}
 	/* here it's safe to use c->extra_data in read-only mode.
@@ -1187,7 +1200,7 @@ ssl_read_skipped:
 		else {
 			if (unlikely(bytes_free != 0)) {
 				/* 2i or 2ip: unconsumed input and output buffer not filled =>
-				  retry ssl read (SSL_read() will read will stop at 
+				  retry ssl read (SSL_read() will read will stop at
 				  record boundaries, unless readahead==1).
 				  No tcp_read() is attempted, since that would reset the
 				  current no-yet-consumed input data.
