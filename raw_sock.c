@@ -29,7 +29,6 @@
  */
 /*
  * FIXME: IP_PKTINFO & IP_HDRINCL - linux specific
- * FIXME: linux specific iphdr and udphdr
  */
 
 #ifdef USE_RAW_SOCKS
@@ -48,9 +47,13 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
 #include <arpa/inet.h>
+#ifndef __USE_BSD
+#define __USE_BSD  /* on linux use bsd version of iphdr (more portable) */
+#endif /* __USE_BSD */
+#include <netinet/ip.h>
+#define __FAVOR_BSD /* on linux use bsd version of udphdr (more portable) */
+#include <netinet/udp.h>
 
 #include "raw_sock.h"
 
@@ -249,7 +252,7 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	char* end;
 	char* udph_start;
 	char* udp_payload;
-	struct iphdr iph;
+	struct ip iph;
 	struct udphdr udph;
 	unsigned short udp_len;
 
@@ -257,21 +260,21 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	if (unlikely(n<0)) goto error;
 	
 	end=*buf+n;
-	if (unlikely(n<(sizeof(struct iphdr)+sizeof(struct udphdr)))) {
+	if (unlikely(n<(sizeof(struct ip)+sizeof(struct udphdr)))) {
 		n=-3;
 		goto error;
 	}
 	/* FIXME: if initial buffer is aligned, one could skip the memcpy
-	   and directly cast iphdr and udphdr pointer to the memory */
-	memcpy(&iph, *buf, sizeof(struct iphdr));
-	udph_start=*buf+iph.ihl*4;
+	   and directly cast ip and udphdr pointer to the memory */
+	memcpy(&iph, *buf, sizeof(struct ip));
+	udph_start=*buf+iph.ip_hl*4;
 	udp_payload=udph_start+sizeof(struct udphdr);
 	if (unlikely(udp_payload>end)){
 		n=-3;
 		goto error;
 	}
 	memcpy(&udph, udph_start, sizeof(struct udphdr));
-	udp_len=ntohs(udph.len);
+	udp_len=ntohs(udph.uh_ulen);
 	if (unlikely((udph_start+udp_len)!=end)){
 		if ((udph_start+udp_len)>end){
 			n=-3;
@@ -289,12 +292,12 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	/* fill ip from the packet (needed if no PKT_INFO is used) */
 	dst_ip.af=AF_INET;
 	dst_ip.len=4;
-	dst_ip.u.addr32[0]=iph.daddr;
+	dst_ip.u.addr32[0]=iph.ip_dst.s_addr;
 	/* fill dst_port */
-	dst_port=ntohs(udph.dest);
+	dst_port=ntohs(udph.uh_dport);
 	ip_addr2su(to, &dst_ip, dst_port);
 	/* fill src_port */
-	src_port=ntohs(udph.source);
+	src_port=ntohs(udph.uh_sport);
 	su_setport(from, src_port);
 	if (likely(rf)) {
 		su2ip_addr(&dst_ip, to);
@@ -333,9 +336,9 @@ inline unsigned short udpv4_vhdr_sum(	struct udphdr* uh,
 	/* pseudo header */
 	sum=(src->s_addr>>16)+(src->s_addr&0xffff)+
 		(dst->s_addr>>16)+(dst->s_addr&0xffff)+
-		htons(IPPROTO_UDP)+(uh->len);
+		htons(IPPROTO_UDP)+(uh->uh_ulen);
 	/* udp header */
-	sum+=(uh->dest)+(uh->source)+(uh->len) + 0 /*chksum*/; 
+	sum+=(uh->uh_dport)+(uh->uh_sport)+(uh->uh_ulen) + 0 /*chksum*/; 
 	/* fold it */
 	sum=(sum>>16)+(sum&0xffff);
 	sum+=(sum>>16);
@@ -392,14 +395,14 @@ inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
 				struct sockaddr_in* to, unsigned char* buf, int len,
 					int do_chk)
 {
-	u->len=htons((unsigned short)len+sizeof(struct udphdr));
-	u->source=from->sin_port;
-	u->dest=to->sin_port;
+	u->uh_ulen=htons((unsigned short)len+sizeof(struct udphdr));
+	u->uh_sport=from->sin_port;
+	u->uh_dport=to->sin_port;
 	if (do_chk)
-		u->check=htons(
+		u->uh_sum=htons(
 				udpv4_chksum(u, &from->sin_addr, &to->sin_addr,  buf, len));
 	else
-		u->check=0; /* no checksum */
+		u->uh_sum=0; /* no checksum */
 	return 0;
 }
 
@@ -414,20 +417,20 @@ inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
  * @param proto - protocol.
  * @return 0 on success, < 0 on error.
  */
-inline static int mk_ip_hdr(struct iphdr* iph, struct in_addr* from, 
+inline static int mk_ip_hdr(struct ip* iph, struct in_addr* from, 
 				struct in_addr* to, int payload_len, unsigned char proto)
 {
-	iph->ihl = sizeof(struct iphdr)/4;
-	iph->version = 4;
-	iph->tos = tos;
-	iph->tot_len = htons(payload_len);
-	iph->id = 0;
-	iph->frag_off = 0; /* first 3 bits = flags = 0, last 13 bits = offset */
-	iph->ttl = 63; /* FIXME: use some configured value */
-	iph->protocol = proto;
-	iph->check = 0;
-	iph->saddr = from->s_addr;
-	iph->daddr = to->s_addr;
+	iph->ip_hl = sizeof(struct ip)/4;
+	iph->ip_v = 4;
+	iph->ip_tos = tos;
+	iph->ip_len = htons(payload_len);
+	iph->ip_id = 0;
+	iph->ip_off = 0; /* frag.: first 3 bits=flags=0, last 13 bits=offset */
+	iph->ip_ttl = 63; /* FIXME: use some configured value */
+	iph->ip_p = proto;
+	iph->ip_sum = 0;
+	iph->ip_src = *from;
+	iph->ip_dst = *to;
 	return 0;
 }
 
@@ -509,7 +512,7 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 	struct msghdr snd_msg;
 	struct iovec iov[2];
 	struct ip_udp_hdr {
-		struct iphdr ip;
+		struct ip ip;
 		struct udphdr udp;
 	} hdr;
 	unsigned int totlen;
@@ -561,15 +564,15 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		/* if we are here mtu => sizeof(ip_h+udp_h) && payload > mtu
 		   => last_frag_offs >= sizeof(hdr.udp) */
 		last_frag_start = buf + last_frag_offs - sizeof(hdr.udp);
-		hdr.ip.id = fastrand_max(65534) + 1; /* random id, should be != 0
+		hdr.ip.ip_id = fastrand_max(65534) + 1; /* random id, should be != 0
 											  (if 0 the kernel will fill it) */
 		/* send the first fragment */
 		iov[1].iov_base=buf;
 		/* ip_frag_size >= sizeof(hdr.udp) because we are here only
 		   if mtu >= sizeof(hdr.ip) + sizeof(hdr.udp) */
 		iov[1].iov_len=ip_frag_size - sizeof(hdr.udp);
-		hdr.ip.tot_len = htons(ip_frag_size);
-		hdr.ip.frag_off = htons(0x2000); /* set MF */
+		hdr.ip.ip_len = htons(ip_frag_size);
+		hdr.ip.ip_off = htons(0x2000); /* set MF */
 		ret=sendmsg(rsock, &snd_msg, 0);
 		if (unlikely(ret < 0))
 			goto end;
@@ -579,9 +582,9 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		/* fragments between the first and the last */
 		while(unlikely(iov[1].iov_base < last_frag_start)) {
 			iov[1].iov_len = ip_frag_size;
-			hdr.ip.tot_len = htons(iov[1].iov_len);
+			hdr.ip.ip_len = htons(iov[1].iov_len);
 			/* set MF  */
-			hdr.ip.frag_off = htons( (unsigned short)
+			hdr.ip.ip_off = htons( (unsigned short)
 									(((char*)iov[1].iov_base - (char*)buf +
 										sizeof(hdr.udp)) / 8) | 0x2000);
 			ret=sendmsg(rsock, &snd_msg, 0);
@@ -591,9 +594,9 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		}
 		/* last fragment */
 		iov[1].iov_len = buf + len - (char*)iov[1].iov_base;
-		hdr.ip.tot_len = htons(iov[1].iov_len);
+		hdr.ip.ip_len = htons(iov[1].iov_len);
 		/* don't set MF (last fragment) */
-		hdr.ip.frag_off = htons( (unsigned short)
+		hdr.ip.ip_off = htons( (unsigned short)
 								(((char*)iov[1].iov_base - (char*)buf +
 									sizeof(hdr.udp)) / 8) );
 		ret=sendmsg(rsock, &snd_msg, 0);
