@@ -237,6 +237,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->unref_cell = unref_cell;
 	tmb->prepare_to_cancel = prepare_to_cancel;
 	tmb->get_stats = tm_get_stats;
+	tmb->get_table = tm_get_table;
 
 #ifdef WITH_TM_CTX
 	tmb->tm_ctx_get = tm_ctx_get;

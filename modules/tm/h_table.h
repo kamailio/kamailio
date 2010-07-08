@@ -467,6 +467,9 @@ enum kill_reason get_kr();
 
 #define get_tm_table() (_tm_table)
 
+typedef struct s_table* (*tm_get_table_f)(void);
+struct s_table* tm_get_table(void);
+
 struct s_table* init_hash_table();
 void   free_hash_table( );
 void   free_cell( struct cell* dead_cell );
