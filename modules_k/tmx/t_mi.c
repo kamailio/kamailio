@@ -706,7 +706,7 @@ struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param)
 	if (rpl_tree==0)
 		return 0;
 	rpl = &rpl_tree->node;
-	tm_t = get_tm_table();
+	tm_t = _tmx_tmb.get_table();
 
 	for (i=0; i<TABLE_ENTRIES; i++) {
 		if(tm_t->entries[i].cur_entries==0
