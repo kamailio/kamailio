@@ -61,6 +61,11 @@ static db_func_t dp_dbf;
 
 #define GET_STR_VALUE(_res, _values, _index)\
 	do{\
+		if ( VAL_NULL((_values)+ (_index)) ) { \
+			LM_ERR(" values %d is NULL - not allowed\n",_index);\
+			(_res).s = 0; (_res).len = 0;\
+			goto err;\
+		} \
 		(_res).s = VAL_STR((_values)+ (_index)).s;\
 		(_res).len = strlen(VAL_STR((_values)+ (_index)).s);\
 	}while(0);
