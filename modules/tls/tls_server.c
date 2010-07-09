@@ -514,6 +514,7 @@ static int tls_shutdown(struct tcp_connection *c)
 			}
 			goto err;
 			
+		case SSL_ERROR_SSL:
 		default:
 			TLS_ERR("SSL error:");
 			goto err;
@@ -786,6 +787,10 @@ redo_wr:
 					send_flags->f &= ~SND_F_CON_CLOSE;
 				}
 				break; /* or goto end */
+			case SSL_ERROR_SSL:
+				/* protocol level error */
+				TLS_ERR(err_src);
+				goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
 				/* only if the underlying BIO is not yet connected
@@ -1150,6 +1155,10 @@ ssl_read_skipped:
 			BUG("write buffer too small (%d/%d bytes)\n",
 					wr.used, wr.size);
 			goto bug;
+		case SSL_ERROR_SSL:
+			/* protocol level error */
+			TLS_ERR(err_src);
+			goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 		case SSL_ERROR_WANT_CONNECT:
 			/* only if the underlying BIO is not yet connected
