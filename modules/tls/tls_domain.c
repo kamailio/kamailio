@@ -851,6 +851,22 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 		ERR("invalid ssl_read_ahead value (%d)\n", ssl_read_ahead);
 		return -1;
 	}
+	/* set options for SSL_write:
+		SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER - needed when queueing
+		  clear text for a future write (WANTS_READ). In this case the
+		  buffer address will change for the repeated SSL_write() and
+		  without this option it will trigger the openssl sanity checks.
+		SSL_MODE_ENABLE_PARTIAL_WRITE - needed to deal with potentially
+		  huge multi-record writes that don't fit in the default buffer
+		  (the default buffer must have space for at least 1 record) */
+	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_mode,
+								SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER |
+								SSL_MODE_ENABLE_PARTIAL_WRITE,
+								0) < 0) {
+		ERR("could not set SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER and"
+				" SSL_MODE_ENABLE_PARTIAL_WRITE\n");
+		return -1;
+	}
 
 	return 0;
 }
