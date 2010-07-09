@@ -1151,9 +1151,15 @@ ssl_read_skipped:
 			}
 			goto end; /* no more data to read */
 		case SSL_ERROR_WANT_WRITE:
-			/* write buffer too small, nothing written */
+			if (wr.used) {
+				/* something was written => buffer not big enough to hold
+				   everything => reset buffer & retry (the tcp_write already
+				   happened if we are here) */
+				goto continue_ssl_read;
+			}
+			/* else write buffer too small, nothing written */
 			BUG("write buffer too small (%d/%d bytes)\n",
-					wr.used, wr.size);
+						wr.used, wr.size);
 			goto bug;
 		case SSL_ERROR_SSL:
 			/* protocol level error */
