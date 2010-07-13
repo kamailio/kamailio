@@ -73,23 +73,20 @@
  * 2008-08-08  sctp support (andrei)
  * 2008-08-19  -l support for mmultihomed addresses/addresses lists
  *                (e.g. -l (eth0, 1.2.3.4, foo.bar) ) (andrei)
- *  2010-04-19 added daemon_status_fd pipe to communicate the parent process with
-               the main process in daemonize mode, so the parent process can return
-               the proper exit status code (ibc)
+ *  2010-04-19 added daemon_status_fd pipe to communicate the parent process
+ *             with the main process in daemonize mode, so the parent process
+ *             can return the proper exit status code (ibc)
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** main file (init, daemonize, startup) 
+ * @file main.c
+ * @ingroup core
+ * Module: core
  */
 
-/*! \defgroup core SIP-router core
+/*! @defgroup core SIP-router core
  *
- * This modules implements a SIP server with a module interface
- * for extendability.
- *
+ * sip router core part.
  */
 
 #include <stdio.h>
@@ -190,8 +187,7 @@
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
-#include "autover.h"
-#include "version.h"
+#include "ver.h"
 
 /* define SIG_DEBUG by default */
 #ifdef NO_SIG_DEBUG
@@ -200,10 +196,6 @@
 #define SIG_DEBUG
 #endif
 
-static char id[]="@(#) $Id$";
-static char* version=SER_FULL_VERSION " " REPO_VER;
-static char* flags=SER_COMPILE_FLAGS;
-char compiled[]= __TIME__ " " __DATE__ ;
 
 
 static char help_msg[]= "\
@@ -1688,7 +1680,7 @@ int main(int argc, char** argv)
 	opterr = 0;
 	while((c=getopt(argc,argv,options))!=-1) {
 		if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
-			printf("version: %s\n", version);
+			printf("version: %s\n", full_version);
 			printf("%s",help_msg);
 			exit(0);
 			break;
@@ -1724,8 +1716,8 @@ int main(int argc, char** argv)
 					default_core_cfg.debug++;
 					break;
 			case 'V':
-					printf("version: %s\n", version);
-					printf("flags: %s\n", flags );
+					printf("version: %s\n", full_version);
+					printf("flags: %s\n", ver_flags );
 					print_ct_constants();
 #ifdef USE_SCTP
 					tmp=malloc(256);
@@ -1733,9 +1725,9 @@ int main(int argc, char** argv)
 						printf("sctp unsupported socket options: %s\n", tmp);
 					if (tmp) free(tmp);
 #endif
-					printf("%s\n",id);
-					printf("%s compiled on %s with %s\n", __FILE__,
-							compiled, COMPILER );
+					printf("id: %s\n", ver_id);
+					printf("compiled on %s with %s\n",
+							ver_compiled_time, ver_compiler );
 
 					exit(0);
 					break;

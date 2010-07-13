@@ -61,7 +61,7 @@
 #include <dlfcn.h>
 
 #include "parser/msg_parser.h" /* for sip_msg */
-#include "version.h"
+#include "ver_defs.h"
 #include "rpc.h"
 #include "route_struct.h"
 #include "route.h"

@@ -491,12 +491,11 @@ modules_search_path=$(subst $(space),:,$(strip\
 		#				$(addprefix $(modules_target),$(modules_dirs))))
 
 # special depends for main.o
-main.d main.o: autover.h
 main.o: DEFS+=-DMODS_DIR='"$(modules_search_path)"'
 
 
-#special depends for core_cmd.o
-core_cmd.d core_cmd.o: autover.h
+#special depends for ver.c
+ver.d ver.o: autover.h
 
 include Makefile.shared
 
@@ -564,10 +563,14 @@ repo_ver=$(shell  RV=`git rev-parse --verify --short=6 HEAD 2>/dev/null`;\
 							; git diff-index --name-only HEAD 2>/dev/null | \
 								grep -v Makefile`" &&\
 						RV="$$RV"-dirty; echo "$$RV")
+repo_hash=$(subst -dirty,,$(repo_ver))
+repo_state=$(patsubst %-dirty,dirty,$(repo_ver))
 autover_h_dep=.git $(filter-out $(auto_gen), $(sources)) cfg.y cfg.lex
 else
 # else if .git/ does not exist
 repo_ver=
+repo_hash="unknown"
+repo_state=
 autover_h_dep=
 endif
 
@@ -579,6 +582,8 @@ autover.h: $(autover_h_dep)
 	@echo " */" >>$@
 	@echo "" >>$@
 	@echo "#define REPO_VER \"$(repo_ver)\"" >>$@
+	@echo "#define REPO_HASH \"$(repo_hash)\"" >>$@
+	@echo "#define REPO_STATE \"$(repo_state)\"" >>$@
 
 .PHONY: all
 all: $(NAME) every-module

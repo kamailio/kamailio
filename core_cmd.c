@@ -20,18 +20,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** core rpcs.
+ * @file core_cmd.c
+ * @ingroup core
  */
 
 
 #include <time.h>
 #include <sys/types.h>
 #include <signal.h>
-#include "autover.h"
+#include "ver.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "sr_module.h"
@@ -336,7 +334,7 @@ static const char* core_version_doc[] = {
 
 static void core_version(rpc_t* rpc, void* c)
 {
-	rpc->add(c, "s", SERVER_HDR " " REPO_VER );
+	rpc->add(c, "s", full_version);
 }
 
 
