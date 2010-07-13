@@ -144,8 +144,8 @@ static struct mi_root *mi_version(struct mi_root *cmd, void *param)
 	if (node==0) 
 		goto error;	
 	
-	node = add_mi_node_child( rpl, 0, MI_SSTR("SVN"), SVNREVISION,
-			sizeof(SVNREVISION)-1);
+	node = add_mi_node_child( rpl, 0, MI_SSTR("GIT"), (char*)repo_hash,
+			strlen(repo_hash));
 	if (node==0) 
 		goto error;
 
