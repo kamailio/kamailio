@@ -564,8 +564,8 @@ repo_ver=$(shell  RV=`git rev-parse --verify --short=6 HEAD 2>/dev/null`;\
 								grep -v Makefile`" &&\
 						RV="$$RV"-dirty; echo "$$RV")
 repo_hash=$(subst -dirty,,$(repo_ver))
-repo_state=$(patsubst %-dirty,dirty,$(repo_ver))
-autover_h_dep=.git $(filter-out $(auto_gen), $(sources)) cfg.y cfg.lex
+repo_state=$(subst %-dirty,dirty,$(findstring -dirty,$(repo_ver)))
+autover_h_dep=.git $(filter-out $(auto_gen), $(sources)) cfg.y cfg.lex Makefile
 else
 # else if .git/ does not exist
 repo_ver=
