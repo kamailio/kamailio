@@ -236,6 +236,12 @@ error:
  */
 static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 {
+	/* do not send BYE request for non-confirmed dialogs (not supported) */
+	if (cell->state != DLG_STATE_CONFIRMED_NA && cell->state != DLG_STATE_CONFIRMED) {
+		LM_ERR("terminating non-confirmed dialogs not supported\n");
+		return -1;
+	}
+
 	/*verify direction*/
 	uac_req_t uac_r;
 	dlg_t* dialog_info;
