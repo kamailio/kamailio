@@ -339,6 +339,38 @@ static void core_version(rpc_t* rpc, void* c)
 
 
 
+static const char* core_flags_doc[] = {
+	"Returns the compile flags.", /* Documentation string */
+	0                             /* Method signature(s) */
+};
+
+static void core_flags(rpc_t* rpc, void* c)
+{
+	rpc->add(c, "s", ver_flags);
+}
+
+
+
+static const char* core_info_doc[] = {
+	"Verbose info, including version number, compile flags, compiler,"
+	"repository hash a.s.o.",     /* Documentation string */
+	0                             /* Method signature(s) */
+};
+
+static void core_info(rpc_t* rpc, void* c)
+{
+	void* s;
+	
+	if (rpc->add(c, "{", &s) < 0) return;
+	rpc->struct_printf(s, "version", "%s %s", ver_name, ver_version);
+	rpc->struct_add(s, "s", "id", ver_id);
+	rpc->struct_add(s, "s", "compiler", ver_compiler);
+	rpc->struct_add(s, "s", "compiled", ver_compiled_time);
+	rpc->struct_add(s, "s", "flags", ver_flags);
+}
+
+
+
 static const char* core_uptime_doc[] = {
 	"Returns uptime of SER server.",  /* Documentation string */
 	0                                 /* Method signature(s) */
@@ -824,7 +856,12 @@ static rpc_export_t core_rpc_methods[] = {
 	RET_ARRAY},
 	{"core.echo",              core_echo,              core_echo_doc,
 	RET_ARRAY},
-	{"core.version",           core_version,           core_version_doc,           0        },
+	{"core.version",           core_version,           core_version_doc,
+		0        },
+	{"core.flags",             core_flags,             core_flags_doc,
+		0        },
+	{"core.info",              core_info,              core_info_doc,
+		0        },
 	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
 	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_ARRAY},

@@ -29,6 +29,10 @@
 #define __ver_h
 
 extern const char full_version[];
+extern const char ver_name[];
+extern const char ver_version[];
+extern const char ver_arch[];
+extern const char ver_os[];
 extern const char ver_id[];
 extern const char ver_compiled_time[];
 extern const char ver_compiler[];

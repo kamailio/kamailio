@@ -30,6 +30,10 @@
 
 
 const char full_version[] = SER_FULL_VERSION " " REPO_VER;
+const char ver_name[] = NAME;
+const char ver_version[] = VERSION;
+const char ver_arch[] = ARCH;
+const char ver_os[] = OS_QUOTED;
 const char ver_id[] = REPO_HASH " " REPO_STATE;
 const char ver_compiled_time[] =  __TIME__ " " __DATE__ ;
 const char ver_compiler[] = COMPILER;
