@@ -132,7 +132,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	int ret = 0;
 
-	LM_DBG("destroing dialog %p\n",dlg);
+	LM_DBG("destroying dialog %p\n",dlg);
 
 	ret = remove_dialog_timer(&dlg->tl);
 	if (ret < 0) {
