@@ -1148,14 +1148,25 @@ error:
 }
 
 /**
- *
+ * destroy the content of pv_spec_t structure
+ */
+void pv_spec_destroy(pv_spec_t *spec)
+{
+	if(spec==0) return;
+	/* free name if it is PV */
+	if(spec->pvp.pvn.nfree)
+		spec->pvp.pvn.nfree((void*)(&spec->pvp.pvn));
+	if(spec->trans)
+		tr_free((trans_t*)spec->trans);
+}
+
+/**
+ * free the pv_spec_t structure
  */
 void pv_spec_free(pv_spec_t *spec)
 {
 	if(spec==0) return;
-	/* TODO: free name if it is PV */
-	if(spec->trans)
-		tr_free((trans_t*)spec->trans);
+	pv_spec_destroy(spec);
 	pkg_free(spec);
 }
 

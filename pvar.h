@@ -84,6 +84,7 @@ enum _pv_type {
 typedef enum _pv_type pv_type_t;
 typedef int pv_flags_t;
 
+typedef void (*pv_name_free_f)(void*);
 
 typedef struct _pv_value
 {
@@ -95,6 +96,7 @@ typedef struct _pv_value
 typedef struct _pv_name
 {
 	int type;             /*!< type of name */
+	pv_name_free_f nfree; /*!< function to free name structure */
 	union {
 		struct {
 			int type;     /*!< type of int_str name - compatibility with AVPs */
@@ -174,6 +176,7 @@ int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
 int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len);
 int pv_elem_free_all(pv_elem_p log);
 void pv_value_destroy(pv_value_t *val);
+void pv_spec_destroy(pv_spec_t *spec);
 void pv_spec_free(pv_spec_t *spec);
 int pv_spec_dbg(pv_spec_p sp);
 int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags);
