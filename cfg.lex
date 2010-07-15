@@ -1202,7 +1202,10 @@ EAT_ABLE	[\ \t\b\r]
 <INCLF>[ \t]*      /* eat the whitespace */
 <INCLF>[^ \t\n]+   { /* get the include file name */
 				if(sr_push_yy_state(yytext)<0)
+				{
+					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
 					exit(-1);
+				}
 				BEGIN(INITIAL);
 }
 
