@@ -214,7 +214,6 @@
 #endif
 #define MAX_SEND_FD_QUEUE_SIZE	tcp_main_max_fd_no
 #define SEND_FD_QUEUE_SIZE		128  /* initial size */
-#define MAX_SEND_FD_RETRIES		96	 /* FIXME: not used for now */
 #define SEND_FD_QUEUE_TIMEOUT	MS_TO_TICKS(2000)  /* 2 s */
 #endif
 
@@ -476,6 +475,42 @@ static int init_sock_opt_accept(int s)
 	return 0;
 error:
 	return -1;
+}
+
+
+
+/** close a socket, handling errno.
+ * On EINTR, repeat the close().
+ * Filter expected errors (return success if close() failed because
+ * EPIPE, ECONNRST a.s.o). Note that this happens on *BSDs (on linux close()
+ * does not fail for socket level errors).
+ * @param s - open valid socket.
+ * @return - 0 on success, < 0 on error (whatever close() returns). On error
+ *           errno is set.
+ */
+static int tcp_safe_close(int s)
+{
+	int ret;
+retry:
+	if (unlikely((ret = close(s)) < 0 )) {
+		switch(errno) {
+			case EINTR:
+				goto retry;
+			case EPIPE:
+			case ENOTCONN:
+			case ECONNRESET:
+			case ECONNREFUSED:
+			case ENETUNREACH:
+			case EHOSTUNREACH:
+				/* on *BSD we really get these errors at close() time 
+				   => ignore them */
+				ret = 0;
+				break;
+			default:
+				break;
+		}
+	}
+	return ret;
 }
 
 
@@ -1201,7 +1236,7 @@ find_socket:
 	*res_local_addr=*from;
 	return s;
 error:
-	if (s!=-1) close(s);
+	if (s!=-1) tcp_safe_close(s);
 	return -1;
 }
 
@@ -1240,9 +1275,8 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 	}
 	tcpconn_set_send_flags(con, *send_flags);
 	return con;
-	/*FIXME: set sock idx! */
 error:
-	if (s!=-1) close(s); /* close the opened socket */
+	if (s!=-1) tcp_safe_close(s); /* close the opened socket */
 	return 0;
 }
 
@@ -1702,7 +1736,7 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 	
 	h=c->id%TCP_FD_CACHE_SIZE;
 	if (likely(fd_cache[h].fd>0))
-		close(fd_cache[h].fd);
+		tcp_safe_close(fd_cache[h].fd);
 	fd_cache[h].fd=fd;
 	fd_cache[h].id=c->id;
 	fd_cache[h].con=c;
@@ -2072,14 +2106,14 @@ redo_tls_encode:
 			   again on exit */
 			if (unlikely(n < 0 || response[1] == CONN_EOF)) {
 				/* on error or eof, close fd */
-				close(fd);
+				tcp_safe_close(fd);
 			} else if (response[1] == CONN_QUEUED_WRITE) {
 #ifdef TCP_FD_CACHE
 				if (cfg_get(tcp, tcp_cfg, fd_cache)) {
 					tcp_fd_cache_add(c, fd);
 				} else
 #endif /* TCP_FD_CACHE */
-					close(fd);
+					tcp_safe_close(fd);
 			} else {
 				BUG("unexpected tcpconn_do_send() return & response:"
 						" %d, %ld\n", n, response[1]);
@@ -2091,7 +2125,7 @@ redo_tls_encode:
 			tcp_fd_cache_add(c, fd);
 		}else
 #endif /* TCP_FD_CACHE */
-			close(fd);
+			tcp_safe_close(fd);
 	/* here we can have only commands that _do_ _not_ dec refcnt.
 	   (CONN_EOF, CON_ERROR, CON_QUEUED_WRITE are all treated above) */
 		goto release_c;
@@ -2107,7 +2141,11 @@ conn_wait_success:
 		tcp_fd_cache_add(c, fd);
 	} else
 #endif /* TCP_FD_CACHE */
-		close(fd);
+		if (unlikely (tcp_safe_close(fd) < 0))
+			LOG(L_ERR, "closing temporary send fd for %p: %s: "
+					"close(%d) failed (flags 0x%x): %s (%d)\n", c,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					fd, c->flags, strerror(errno), errno);
 	tcpconn_chld_put(c); /* release c (dec refcnt & free on 0) */
 	return n;
 conn_wait_error:
@@ -2122,7 +2160,13 @@ conn_wait_close:
 	c->state=S_CONN_BAD;
 	/* we are here only if we opened a new fd (and not reused a cached or
 	   a reader one) => if the connect was successful close the fd */
-	if (fd>=0) close(fd);
+	if (fd>=0) {
+		if (unlikely(tcp_safe_close(fd) < 0 ))
+			LOG(L_ERR, "closing temporary send fd for %p: %s: "
+					"close(%d) failed (flags 0x%x): %s (%d)\n", c,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					fd, c->flags, strerror(errno), errno);
+	}
 	TCPCONN_LOCK;
 		if (c->flags & F_CONN_HASHED){
 			/* if some other parallel tcp_send did send CONN_ERROR to
@@ -2356,17 +2400,17 @@ error:
 			if (unlikely(fd_cache_e)){
 				tcp_fd_cache_rm(fd_cache_e);
 				fd_cache_e = 0;
-				close(fd);
+				tcp_safe_close(fd);
 			}else
 #endif /* TCP_FD_CACHE */
-				if (do_close_fd) close(fd);
+				if (do_close_fd) tcp_safe_close(fd);
 		} else if (response[1] == CONN_QUEUED_WRITE) {
 #ifdef TCP_FD_CACHE
 			if (unlikely((fd_cache_e==0) && use_fd_cache)){
 				tcp_fd_cache_add(c, fd);
 			}else
 #endif /* TCP_FD_CACHE */
-				if (do_close_fd) close(fd);
+				if (do_close_fd) tcp_safe_close(fd);
 		} else {
 			BUG("unexpected tcpconn_do_send() return & response: %d, %ld\n",
 					n, response[1]);
@@ -2379,7 +2423,13 @@ end:
 		tcp_fd_cache_add(c, fd);
 	}else
 #endif /* TCP_FD_CACHE */
-	if (do_close_fd) close(fd);
+	if (do_close_fd) {
+		if (unlikely(tcp_safe_close(fd) < 0))
+			LOG(L_ERR, "closing temporary send fd for %p: %s: "
+					"close(%d) failed (flags 0x%x): %s (%d)\n", c,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					fd, c->flags, strerror(errno), errno);
+	}
 	/* here we can have only commands that _do_ _not_ dec refcnt.
 	   (CONN_EOF, CON_ERROR, CON_QUEUED_WRITE are all treated above) */
 release_c:
@@ -2859,7 +2909,7 @@ int tcp_init(struct socket_info* sock_info)
 	return 0;
 error:
 	if (sock_info->socket!=-1){
-		close(sock_info->socket);
+		tcp_safe_close(sock_info->socket);
 		sock_info->socket=-1;
 	}
 	return -1;
@@ -2882,15 +2932,11 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 #ifdef TCP_FD_CACHE
 	if (likely(cfg_get(tcp, tcp_cfg, fd_cache))) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
-close_again:
-	if (unlikely(close(fd)<0)){
-		if (errno==EINTR)
-			goto close_again;
+	if (unlikely(tcp_safe_close(fd)<0))
 		LOG(L_ERR, "ERROR: tcpconn_close_main_fd(%p): %s "
 					"close(%d) failed (flags 0x%x): %s (%d)\n", tcpconn,
 					su2a(&tcpconn->rcv.src_su, sizeof(tcpconn->rcv.src_su)),
 					fd, tcpconn->flags, strerror(errno), errno);
-	}
 	tcpconn->s=-1;
 }
 
@@ -3917,13 +3963,13 @@ static inline int handle_new_connect(struct socket_info* si)
 		LOG(L_ERR, "ERROR: maximum number of connections exceeded: %d/%d\n",
 					*tcp_connections_no,
 					cfg_get(tcp, tcp_cfg, max_connections));
-		close(new_sock);
+		tcp_safe_close(new_sock);
 		TCP_STATS_LOCAL_REJECT();
 		return 1; /* success, because the accept was succesfull */
 	}
 	if (unlikely(init_sock_opt_accept(new_sock)<0)){
 		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
-		close(new_sock);
+		tcp_safe_close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
 	(*tcp_connections_no)++;
@@ -3981,7 +4027,7 @@ static inline int handle_new_connect(struct socket_info* si)
 	}else{ /*tcpconn==0 */
 		LOG(L_ERR, "ERROR: handle_new_connect: tcpconn_new failed, "
 				"closing socket\n");
-		close(new_sock);
+		tcp_safe_close(new_sock);
 		(*tcp_connections_no)--;
 	}
 	return 1; /* accept() was succesfull */
@@ -4363,7 +4409,7 @@ static inline void tcpconn_destroy_all()
 					if (likely(cfg_get(tcp, tcp_cfg, fd_cache)))
 						shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
-					close(fd);
+					tcp_safe_close(fd);
 				}
 				(*tcp_connections_no)--;
 			c=next;
