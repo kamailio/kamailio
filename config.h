@@ -140,7 +140,10 @@
 
 #define SRV_MAX_PREFIX_LEN SRV_TLS_PREFIX_LEN
 
-#define PKG_MEM_POOL_SIZE 4*1024*1024		/*!< used only if PKG_MALLOC is defined*/
+#ifndef PKG_MEM_SIZE
+#define PKG_MEM_SIZE 4
+#endif
+#define PKG_MEM_POOL_SIZE PKG_MEM_SIZE*1024*1024	/*!< used only if PKG_MALLOC is defined*/
 
 #define SHM_MEM_SIZE 32				/*!< used if SH_MEM is defined*/
 

@@ -666,6 +666,9 @@ ifeq ($(MEMDBG), 1)
 else
 	C_DEFS+= -DF_MALLOC
 endif
+ifneq ($(PKG_MEM_SIZE),)
+	C_DEFS+= -DPKG_MEM_SIZE=$(PKG_MEM_SIZE)
+endif
 ifeq ($(CORE_TLS), 1)
 	C_DEFS+= -DUSE_TLS -DCORE_TLS
 endif
