@@ -558,13 +558,15 @@ modparam("dispatcher", "force_dst", 1)
 			<para>
 			<emphasis>set</emphasis> - the id of the set from where to pick
 			up destination address. It is the first column in destination
-			list file.
+			list file. The parameter can be an integer or a variable holding
+			an interger.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 			<emphasis>alg</emphasis> - the algorithm used to select the
-			destination address.
+			destination address. The parameter can be an integer or a
+			variable holding an interger.
 			</para>
 			<itemizedlist>
 			<listitem>
@@ -594,7 +596,9 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>5</quote> - hash over authorization-username (Proxy-Authorization or "normal" authorization). If no username is found, round robin is used.
+				<quote>5</quote> - hash over authorization-username
+				(Proxy-Authorization or "normal" authorization). If no
+				username is found, round robin is used.
 				</para>
 			</listitem>
 			<listitem>
@@ -636,6 +640,9 @@ modparam("dispatcher", "force_dst", 1)
 		<programlisting format="linespecific">
 ...
 ds_select_dst("1", "0");
+...
+$var(a) = 4;
+ds_select_dst("1", "$var(a)");
 ...
 </programlisting>
 		</example>
