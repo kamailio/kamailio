@@ -38,8 +38,8 @@
 #define BIO_TYPE_TLS_MBUF	(BIO_TYPE_SOURCE_SINK | 0xf2)
 
 /* debugging */
-#ifndef NO_TLS_BIO_DEBUG
-#define TLS_BIO_DEBUG
+#ifdef NO_TLS_BIO_DEBUG
+#undef TLS_BIO_DEBUG
 #endif
 #ifdef TLS_BIO_DEBUG
 	#ifdef __SUNPRO_C
