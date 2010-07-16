@@ -53,10 +53,19 @@ struct cfg_group_tls default_tls_cfg = {
 	3, /* log */
 	600, /* con_lifetime (s)*/
 	1, /* disable_compression */
-	-1, /* ssl_release_buffers (use the default: off) */
-	-1, /* ssl_freelist_max  (use the default: 32) */
-	-1, /* ssl_max_send_fragment (use the default: 16k)*/
-	1, /* ssl_read_ahead (set, use -1 for the openssl default value)*/
+#if OPENSSL_VERSION_NUMBER >= 0x01000000L
+	1, /* ssl_release_buffers (on, avoid extra buffering) */
+#else
+	-1, /* ssl_release_buffers: old openssl, leave it untouched */
+#endif /* openssl >= 1.0.0 */
+#if OPENSSL_VERSION_NUMBER >= 0x01000000L && ! defined OPENSSL_NO_BUF_FREELISTS
+	0, /* ssl_freelist_max  (immediately free) */
+#else
+	-1, /* ssl_freelist_max: old openssl, leave it untouched */
+#endif /* openssl >= 1.0.0 */
+	-1, /* ssl_max_send_fragment (use the default: 16k), requires openssl
+		   > 0.9.9 */
+	0, /* ssl_read_ahead (off, not needed, we have our own buffering BIO)*/
 	-1, /* low_mem_threshold1 */
 	-1, /* low_mem_threshold2 */
 	10*1024*1024, /* ct_wq_max: 10 Mb by default */
@@ -172,7 +181,9 @@ cfg_def_t	tls_cfg_def[] = {
 		" Works only for OpenSSL >= 0.9.9"},
 	{"ssl_read_ahead", CFG_VAR_INT | CFG_READONLY, -1, 1, 0, 0,
 		"Enables read ahead, reducing the number of BIO read calls done"
-		" internally by the OpenSSL library" },
+		" internally by the OpenSSL library. Note that in newer tls"
+	    " module versions it is better to have read ahead disabled, since"
+		" everything it is buffered in memory anyway"},
 	{"low_mem_threshold1", CFG_VAR_INT | CFG_ATOMIC, -1, 1<<30, 0, 0,
 		"sets the minimum amount of free memory for accepting new TLS"
 		" connections (KB)"},

@@ -828,7 +828,7 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 #endif
 #endif
 #if defined (OPENSSL_NO_BUF_FREELISTS) || OPENSSL_VERSION_NUMBER < 0x01000000L
-	if (ssl_freelist_max_len != 0)
+	if (ssl_freelist_max_len >= 0)
 		ERR("cannot change openssl freelist_max_len, openssl too old"
 				"(needed at least 1.0.0) or compiled without freelist support"
 				" (OPENSSL_NO_BUF_FREELIST)\n");
