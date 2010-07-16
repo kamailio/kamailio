@@ -16,9 +16,9 @@ Carsten Bock
 
    BASIS AudioNet GmbH
 
-   Copyright � 2004 FhG FOKUS
+   Copyright © 2004 FhG FOKUS
 
-   Copyright � 2005 Voice-System.RO
+   Copyright © 2005 Voice-System.RO
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -27,91 +27,145 @@ Carsten Bock
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio modules
-              1.2.2. External libraries or applications
+              2.1. Kamailio modules
+              2.2. External libraries or applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. list_file (string)
-              1.3.2. db_url (string)
-              1.3.3. table_name (string)
-              1.3.4. setid_col (string)
-              1.3.5. destination_col (string)
-              1.3.6. flags_col (string)
-              1.3.7. priority_col (string)
-              1.3.8. force_dst (int)
-              1.3.9. flags (int)
-              1.3.10. use_default (int)
-              1.3.11. dst_avp (str)
-              1.3.12. grp_avp (str)
-              1.3.13. cnt_avp (str)
-              1.3.14. hash_pvar (str)
-              1.3.15. setid_pvar (str)
-              1.3.16. ds_ping_method (string)
-              1.3.17. ds_ping_from (string)
-              1.3.18. ds_ping_interval (int)
-              1.3.19. ds_probing_threshhold (int)
-              1.3.20. ds_probing_mode (int)
-              1.3.21. ds_append_branch (int)
+              3.1. list_file (string)
+              3.2. db_url (string)
+              3.3. table_name (string)
+              3.4. setid_col (string)
+              3.5. destination_col (string)
+              3.6. flags_col (string)
+              3.7. priority_col (string)
+              3.8. force_dst (int)
+              3.9. flags (int)
+              3.10. use_default (int)
+              3.11. dst_avp (str)
+              3.12. grp_avp (str)
+              3.13. cnt_avp (str)
+              3.14. hash_pvar (str)
+              3.15. setid_pvar (str)
+              3.16. ds_ping_method (string)
+              3.17. ds_ping_from (string)
+              3.18. ds_ping_interval (int)
+              3.19. ds_probing_threshhold (int)
+              3.20. ds_probing_mode (int)
+              3.21. ds_append_branch (int)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. ds_select_dst(set, alg)
-              1.4.2. ds_select_domain(set, alg)
-              1.4.3. ds_next_dst()
-              1.4.4. ds_next_domain()
-              1.4.5. ds_mark_dst()
-              1.4.6. ds_mark_dst("s")
-              1.4.7. ds_is_from_list()
-              1.4.8. ds_is_from_list("group")
+              4.1. ds_select_dst(set, alg)
+              4.2. ds_select_domain(set, alg)
+              4.3. ds_next_dst()
+              4.4. ds_next_domain()
+              4.5. ds_mark_dst()
+              4.6. ds_mark_dst("s")
+              4.7. ds_is_from_list()
+              4.8. ds_is_from_list("group")
 
-        1.5. Exported MI Functions
+        5. Exported MI Functions
 
-              1.5.1. ds_set_state
-              1.5.2. ds_list
-              1.5.3. ds_reload
+              5.1. ds_set_state
+              5.2. ds_list
+              5.3. ds_reload
 
-        1.6. Installation and Running
+        6. Installation and Running
 
-              1.6.1. Destination List File
-              1.6.2. Kamailio config file
+              6.1. Destination List File
+              6.2. Kamailio config file
 
    2. Frequently Asked Questions
 
    List of Examples
 
-   1.1. Set the "list_file" parameter
-   1.2. Set "db_url" parameter
-   1.3. Set "table_name" parameter
-   1.4. Set "setid_col" parameter
-   1.5. Set "destination_col" parameter
-   1.6. Set "flags_col" parameter
-   1.7. Set "priority_col" parameter
-   1.8. Set the "force_dst" parameter
-   1.9. Set the "flags" parameter
-   1.10. Set the "use_default" parameter
-   1.11. Set the "dst_avp" parameter
-   1.12. Set the "grp_avp" parameter
-   1.13. Set the "cnt_avp" parameter
+   1.1. Set the “list_file” parameter
+   1.2. Set “db_url” parameter
+   1.3. Set “table_name” parameter
+   1.4. Set “setid_col” parameter
+   1.5. Set “destination_col” parameter
+   1.6. Set “flags_col” parameter
+   1.7. Set “priority_col” parameter
+   1.8. Set the “force_dst” parameter
+   1.9. Set the “flags” parameter
+   1.10. Set the “use_default” parameter
+   1.11. Set the “dst_avp” parameter
+   1.12. Set the “grp_avp” parameter
+   1.13. Set the “cnt_avp” parameter
    1.14. Use $avp(i:273) for hashing:
    1.15. Use combination of PVs for hashing:
-   1.16. Set the "setid_pvar" parameter
-   1.17. Set the "ds_ping_method" parameter
-   1.18. Set the "ds_ping_from" parameter
-   1.19. Set the "ds_ping_interval" parameter
-   1.20. Set the "ds_probing_threshhold" parameter
-   1.21. Set the "ds_probing_mode" parameter
-   1.22. Set the "ds_append_branch" parameter
+   1.16. Set the “setid_pvar” parameter
+   1.17. Set the “ds_ping_method” parameter
+   1.18. Set the “ds_ping_from” parameter
+   1.19. Set the “ds_ping_interval” parameter
+   1.20. Set the “ds_probing_threshhold” parameter
+   1.21. Set the “ds_probing_mode” parameter
+   1.22. Set the “ds_append_branch” parameter
    1.23. ds_select_dst usage
    1.24. dispatcher list file
    1.25. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio modules
+        2.2. External libraries or applications
+
+   3. Exported Parameters
+
+        3.1. list_file (string)
+        3.2. db_url (string)
+        3.3. table_name (string)
+        3.4. setid_col (string)
+        3.5. destination_col (string)
+        3.6. flags_col (string)
+        3.7. priority_col (string)
+        3.8. force_dst (int)
+        3.9. flags (int)
+        3.10. use_default (int)
+        3.11. dst_avp (str)
+        3.12. grp_avp (str)
+        3.13. cnt_avp (str)
+        3.14. hash_pvar (str)
+        3.15. setid_pvar (str)
+        3.16. ds_ping_method (string)
+        3.17. ds_ping_from (string)
+        3.18. ds_ping_interval (int)
+        3.19. ds_probing_threshhold (int)
+        3.20. ds_probing_mode (int)
+        3.21. ds_append_branch (int)
+
+   4. Exported Functions
+
+        4.1. ds_select_dst(set, alg)
+        4.2. ds_select_domain(set, alg)
+        4.3. ds_next_dst()
+        4.4. ds_next_domain()
+        4.5. ds_mark_dst()
+        4.6. ds_mark_dst("s")
+        4.7. ds_is_from_list()
+        4.8. ds_is_from_list("group")
+
+   5. Exported MI Functions
+
+        5.1. ds_set_state
+        5.2. ds_list
+        5.3. ds_reload
+
+   6. Installation and Running
+
+        6.1. Destination List File
+        6.2. Kamailio config file
+
+1. Overview
 
    This modules implements a dispatcher for destination addresses. It
    computes hashes over parts of the request and selects an address from a
@@ -120,116 +174,141 @@ Chapter 1. Admin Guide
    The module can be used as a stateless load balancer, having no
    guarantee of fair distribution.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio modules
+   2.1. Kamailio modules
+   2.2. External libraries or applications
+
+2.1. Kamailio modules
 
    The following modules must be loaded before this module:
      * TM - only if active recovery of failed hosts is required.
 
-1.2.2. External libraries or applications
+2.2. External libraries or applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module:
      * none.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. list_file (string)
+   3.1. list_file (string)
+   3.2. db_url (string)
+   3.3. table_name (string)
+   3.4. setid_col (string)
+   3.5. destination_col (string)
+   3.6. flags_col (string)
+   3.7. priority_col (string)
+   3.8. force_dst (int)
+   3.9. flags (int)
+   3.10. use_default (int)
+   3.11. dst_avp (str)
+   3.12. grp_avp (str)
+   3.13. cnt_avp (str)
+   3.14. hash_pvar (str)
+   3.15. setid_pvar (str)
+   3.16. ds_ping_method (string)
+   3.17. ds_ping_from (string)
+   3.18. ds_ping_interval (int)
+   3.19. ds_probing_threshhold (int)
+   3.20. ds_probing_mode (int)
+   3.21. ds_append_branch (int)
+
+3.1. list_file (string)
 
    Path to the file with destination sets.
 
-   Default value is "/etc/kamailio/dispatcher.list" or
-   "/usr/local/etc/kamailio/dispatcher.list".
+   Default value is “/etc/kamailio/dispatcher.list” or
+   “/usr/local/etc/kamailio/dispatcher.list”.
 
-   Example 1.1. Set the "list_file" parameter
+   Example 1.1. Set the “list_file” parameter
 ...
 modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 ...
 
-1.3.2. db_url (string)
+3.2. db_url (string)
 
    If you want to load the sets of gateways from the database you must set
    this parameter.
 
-   Default value is "NULL" (disable DB support).
+   Default value is “NULL” (disable DB support).
 
-   Example 1.2. Set "db_url" parameter
+   Example 1.2. Set “db_url” parameter
 ...
 modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
 ...
 
-1.3.3. table_name (string)
+3.3. table_name (string)
 
    If you want to load the sets of gateways from the database you must set
    this parameter as the database name.
 
-   Default value is "dispatcher".
+   Default value is “dispatcher”.
 
-   Example 1.3. Set "table_name" parameter
+   Example 1.3. Set “table_name” parameter
 ...
 modparam("dispatcher", "table_name", "my_dispatcher")
 ...
 
-1.3.4. setid_col (string)
+3.4. setid_col (string)
 
    The column's name in the database storing the gateway's group id.
 
-   Default value is "setid".
+   Default value is “setid”.
 
-   Example 1.4. Set "setid_col" parameter
+   Example 1.4. Set “setid_col” parameter
 ...
 modparam("dispatcher", "setid_col", "groupid")
 ...
 
-1.3.5. destination_col (string)
+3.5. destination_col (string)
 
    The column's name in the database storing the destination's sip uri.
 
-   Default value is "destination".
+   Default value is “destination”.
 
-   Example 1.5. Set "destination_col" parameter
+   Example 1.5. Set “destination_col” parameter
 ...
 modparam("dispatcher", "destination_col", "uri")
 ...
 
-1.3.6. flags_col (string)
+3.6. flags_col (string)
 
    The column's name in the database storing the flags for destination
    uri.
 
-   Default value is "flags".
+   Default value is “flags”.
 
-   Example 1.6. Set "flags_col" parameter
+   Example 1.6. Set “flags_col” parameter
 ...
 modparam("dispatcher", "flags_col", "dstflags")
 ...
 
-1.3.7. priority_col (string)
+3.7. priority_col (string)
 
    The column's name in the database storing the priority for destination
    uri.
 
-   Default value is "priority".
+   Default value is “priority”.
 
-   Example 1.7. Set "priority_col" parameter
+   Example 1.7. Set “priority_col” parameter
 ...
 modparam("dispatcher", "priority_col", "dstpriority")
 ...
 
-1.3.8. force_dst (int)
+3.8. force_dst (int)
 
    If set to 1, force overwriting of destination address when that is
    already set.
 
-   Default value is "0".
+   Default value is “0”.
 
-   Example 1.8. Set the "force_dst" parameter
+   Example 1.8. Set the “force_dst” parameter
 ...
 modparam("dispatcher", "force_dst", 1)
 ...
 
-1.3.9. flags (int)
+3.9. flags (int)
 
    Various flags that affect dispatcher's behaviour. The flags are defined
    as a bitmask on an integer value. If flag 1 is set only the username
@@ -243,28 +322,28 @@ modparam("dispatcher", "force_dst", 1)
    destination set in AVP, and use these AVPs to contact next address when
    the current-tried fails.
 
-   Default value is "0".
+   Default value is “0”.
 
-   Example 1.9. Set the "flags" parameter
+   Example 1.9. Set the “flags” parameter
  ...
  modparam("dispatcher", "flags", 3)
  ...
 
-1.3.10. use_default (int)
+3.10. use_default (int)
 
    If the parameter is set to 1, the last address in destination set is
    used as last option to send the message. For example, it is good when
    wanting to send the call to an anouncement server saying: "the gateways
    are full, try later".
 
-   Default value is "0".
+   Default value is “0”.
 
-   Example 1.10. Set the "use_default" parameter
+   Example 1.10. Set the “use_default” parameter
  ...
  modparam("dispatcher", "use_default", 1)
  ...
 
-1.3.11. dst_avp (str)
+3.11. dst_avp (str)
 
    The name of the avp which will hold the list with addresses, in the
    order they have been selected by the chosen algorithm. If use_default
@@ -277,14 +356,14 @@ Note
 
    You must set this parameter if you want do do load balancing fail over.
 
-   Default value is "null" - don't add AVPs.
+   Default value is “null” - don't add AVPs.
 
-   Example 1.11. Set the "dst_avp" parameter
+   Example 1.11. Set the “dst_avp” parameter
  ...
  modparam("dispatcher", "dst_avp", "$avp(i:271)")
  ...
 
-1.3.12. grp_avp (str)
+3.12. grp_avp (str)
 
    The name of the avp storing the group id of the destination set. Good
    to have it for later usage or checks.
@@ -293,14 +372,14 @@ Note
 
    You must set this parameter if you want do do load balancing fail over.
 
-   Default value is "null" - don't add AVP.
+   Default value is “null” - don't add AVP.
 
-   Example 1.12. Set the "grp_avp" parameter
+   Example 1.12. Set the “grp_avp” parameter
  ...
  modparam("dispatcher", "grp_avp", "$avp(i:272)")
  ...
 
-1.3.13. cnt_avp (str)
+3.13. cnt_avp (str)
 
    The name of the avp storing the number of destination addresses kept in
    dst_avp avps.
@@ -309,14 +388,14 @@ Note
 
    You must set this parameter if you want do do load balancing fail over.
 
-   Default value is "null" - don't add AVP.
+   Default value is “null” - don't add AVP.
 
-   Example 1.13. Set the "cnt_avp" parameter
+   Example 1.13. Set the “cnt_avp” parameter
  ...
  modparam("dispatcher", "cnt_avp", "$avp(i:273)")
  ...
 
-1.3.14. hash_pvar (str)
+3.14. hash_pvar (str)
 
    String with PVs used for the hashing algorithm 7.
 
@@ -325,7 +404,7 @@ Note
    You must set this parameter if you want do hashing over custom message
    parts.
 
-   Default value is "null" - disabled.
+   Default value is “null” - disabled.
 
    Example 1.14. Use $avp(i:273) for hashing:
  ...
@@ -337,120 +416,131 @@ Note
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
 
-1.3.15. setid_pvar (str)
+3.15. setid_pvar (str)
 
    The name of the PV where to store the set ID (group ID) when calling
    ds_is_from_list() with no parameter.
 
-   Default value is "null" - don't set PV.
+   Default value is “null” - don't set PV.
 
-   Example 1.16. Set the "setid_pvar" parameter
+   Example 1.16. Set the “setid_pvar” parameter
  ...
  modparam("dispatcher", "setid_pvar", "$var(setid)")
  ...
 
-1.3.16. ds_ping_method (string)
+3.16. ds_ping_method (string)
 
    With this Method you can define, with which method you want to probe
    the failed gateways. This method is only available, if compiled with
    the probing of failed gateways enabled.
 
-   Default value is "OPTIONS".
+   Default value is “OPTIONS”.
 
-   Example 1.17. Set the "ds_ping_method" parameter
+   Example 1.17. Set the “ds_ping_method” parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
 
-1.3.17. ds_ping_from (string)
+3.17. ds_ping_from (string)
 
    With this Method you can define the "From:"-Line for the request, sent
    to the failed gateways. This method is only available, if compiled with
    the probing of failed gateways enabled.
 
-   Default value is "sip:dispatcher@localhost".
+   Default value is “sip:dispatcher@localhost”.
 
-   Example 1.18. Set the "ds_ping_from" parameter
+   Example 1.18. Set the “ds_ping_from” parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
 
-1.3.18. ds_ping_interval (int)
+3.18. ds_ping_interval (int)
 
    With this Method you can define the interval for sending a request to a
    failed gateway. This parameter is only used, when the TM-Module is
-   loaded. If set to "0", the pinging of failed requests is disabled.
+   loaded. If set to “0”, the pinging of failed requests is disabled.
 
-   Default value is "10".
+   Default value is “10”.
 
-   Example 1.19. Set the "ds_ping_interval" parameter
+   Example 1.19. Set the “ds_ping_interval” parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-1.3.19. ds_probing_threshhold (int)
+3.19. ds_probing_threshhold (int)
 
    If you want to set a gateway into probing mode, you will need a
    specific number of requests until it will change from "active" to
    probing. The number of attempts can be set with this parameter.
 
-   Default value is "3".
+   Default value is “3”.
 
-   Example 1.20. Set the "ds_probing_threshhold" parameter
+   Example 1.20. Set the “ds_probing_threshhold” parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
 
-1.3.20. ds_probing_mode (int)
+3.20. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable. If set
    to 0, only the gateways with state PROBING are tested, if set to 1, all
    gateways are tested. If set to 1 and the response is 408 (timeout), an
    active gateway is set to PROBING state.
 
-   Default value is "0".
+   Default value is “0”.
 
-   Example 1.21. Set the "ds_probing_mode" parameter
+   Example 1.21. Set the “ds_probing_mode” parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-1.3.21. ds_append_branch (int)
+3.21. ds_append_branch (int)
 
    If set to 1, functions will automaticall append a new branch if called
    in FAILURE_ROUTE. If set to 0, script writer has to call
    append_branch() in config after calling dispatcher functions.
 
-   Default value is "1".
+   Default value is “1”.
 
-   Example 1.22. Set the "ds_append_branch" parameter
+   Example 1.22. Set the “ds_append_branch” parameter
  ...
  modparam("dispatcher", "ds_append_branch", 0)
  ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  ds_select_dst(set, alg)
+   4.1. ds_select_dst(set, alg)
+   4.2. ds_select_domain(set, alg)
+   4.3. ds_next_dst()
+   4.4. ds_next_domain()
+   4.5. ds_mark_dst()
+   4.6. ds_mark_dst("s")
+   4.7. ds_is_from_list()
+   4.8. ds_is_from_list("group")
+
+4.1.  ds_select_dst(set, alg)
 
    The method selects a destination from addresses set.
 
    Meaning of the parameters is as follows:
      * set - the id of the set from where to pick up destination address.
-       It is the first column in destination list file.
-     * alg - the algorithm used to select the destination address.
-          + "0" - hash over callid
-          + "1" - hash over from uri.
-          + "2" - hash over to uri.
-          + "3" - hash over request-uri.
-          + "4" - round-robin (next destination).
-          + "5" - hash over authorization-username (Proxy-Authorization or
+       It is the first column in destination list file. The parameter can
+       be an integer or a variable holding an interger.
+     * alg - the algorithm used to select the destination address. The
+       parameter can be an integer or a variable holding an interger.
+          + “0” - hash over callid
+          + “1” - hash over from uri.
+          + “2” - hash over to uri.
+          + “3” - hash over request-uri.
+          + “4” - round-robin (next destination).
+          + “5” - hash over authorization-username (Proxy-Authorization or
             "normal" authorization). If no username is found, round robin
             is used.
-          + "6" - random (using rand()).
-          + "7" - hash over the content of PVs string. Note: This works
+          + “6” - random (using rand()).
+          + “7” - hash over the content of PVs string. Note: This works
             only when the parameter hash_pvar is set.
-          + "8" - use first destination (good for failover).
-          + "X" - if the algorithm is not implemented, the first entry in
+          + “8” - use first destination (good for failover).
+          + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
@@ -464,8 +554,11 @@ Note
 ...
 ds_select_dst("1", "0");
 ...
+$var(a) = 4;
+ds_select_dst("1", "$var(a)");
+...
 
-1.4.2.  ds_select_domain(set, alg)
+4.2.  ds_select_domain(set, alg)
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -478,21 +571,21 @@ ds_select_dst("1", "0");
 
    This function can be used from REQUEST_ROUTE.
 
-1.4.3.  ds_next_dst()
+4.3.  ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
    This function can be used from FAILURE_ROUTE.
 
-1.4.4.  ds_next_domain()
+4.4.  ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request uri.
 
    This function can be used from FAILURE_ROUTE.
 
-1.4.5.  ds_mark_dst()
+4.5.  ds_mark_dst()
 
    Mark the last used address from destination set as inactive, in order
    to be ingnored in the future. In this way it can be implemented an
@@ -501,7 +594,7 @@ ds_select_dst("1", "0");
 
    This function can be used from FAILURE_ROUTE.
 
-1.4.6.  ds_mark_dst("s")
+4.6.  ds_mark_dst("s")
 
    Mark the last used address from destination set as inactive
    ("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2"). With this
@@ -519,7 +612,7 @@ ds_select_dst("1", "0");
 
    This function can be used from FAILURE_ROUTE.
 
-1.4.7.  ds_is_from_list()
+4.7.  ds_is_from_list()
 
    This function returns true, if the current request comes from a host
    from the dispatcher-list; otherwise false.
@@ -527,7 +620,7 @@ ds_select_dst("1", "0");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-1.4.8.  ds_is_from_list("group")
+4.8.  ds_is_from_list("group")
 
    This function returns true, if the current request comes from a host in
    the given group of the dispatcher-list; otherwise false.
@@ -535,9 +628,13 @@ ds_select_dst("1", "0");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-1.5. Exported MI Functions
+5. Exported MI Functions
 
-1.5.1.  ds_set_state
+   5.1. ds_set_state
+   5.2. ds_list
+   5.3. ds_reload
+
+5.1.  ds_set_state
 
    Sets the status for a destination address (can be use to mark the
    destination as active or inactive).
@@ -546,9 +643,9 @@ ds_select_dst("1", "0");
 
    Parameters:
      * _state_ : state of the destination address
-          + "a": active
-          + "i": inactive
-          + "p": probing
+          + “a”: active
+          + “i”: inactive
+          + “p”: probing
      * _group_: destination group id
      * _address_: address of the destination in the _group_
 
@@ -559,7 +656,7 @@ ds_select_dst("1", "0");
                 _address_
                 _empty_line_
 
-1.5.2.  ds_list
+5.2.  ds_list
 
    It lists the groups and included destinations.
 
@@ -571,7 +668,7 @@ ds_select_dst("1", "0");
                 :ds_list:_reply_fifo_file_
                 _empty_line_
 
-1.5.3.  ds_reload
+5.3.  ds_reload
 
    It reloads the groups and included destinations.
 
@@ -582,16 +679,19 @@ ds_select_dst("1", "0");
    MI DATAGRAM Command Format:
                 ":ds_reload:\n."
 
-1.6. Installation and Running
+6. Installation and Running
 
-1.6.1. Destination List File
+   6.1. Destination List File
+   6.2. Kamailio config file
+
+6.1. Destination List File
 
    Each destination point must be on one line. First token is the set id,
    followed by destination address. Optionally, the third field can be
    flags value (1 - destination inactive, 2 - destination in probing mod
    -- you can do bitwise OR to set both flags). The set id must be an
    integer value. Destination address must be a valid SIP URI. Empty lines
-   or lines starting with "#" are ignored.
+   or lines starting with “#” are ignored.
 
    Example 1.24. dispatcher list file
 ...
@@ -613,7 +713,7 @@ ds_select_dst("1", "0");
 
 ...
 
-1.6.2. Kamailio config file
+6.2. Kamailio config file
 
    Next picture displays a sample usage of dispatcher.
 
@@ -665,6 +765,12 @@ route{
 ...
 
 Chapter 2. Frequently Asked Questions
+
+   2.1. Does dispatcher provide a fair distribution?
+   2.2. Is dispatcher dialog stateful?
+   2.3. Where can I find more about Kamailio?
+   2.4. Where can I post a question about this module?
+   2.5. How can I report a bug?
 
    2.1.
 
