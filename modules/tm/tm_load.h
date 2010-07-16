@@ -168,7 +168,7 @@ static inline int load_tm_api(struct tm_binds* tmb)
 	load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0);
 	
 	if (load_tm == NULL) {
-		LOG(L_ERR, "Cannot import load_tm function from tm module\n");
+		LOG(L_WARN, "Cannot import load_tm function from tm module\n");
 		return -1;
 	}
 	
