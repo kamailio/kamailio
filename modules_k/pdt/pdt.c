@@ -256,7 +256,10 @@ error1:
 		pdt_lock = 0;
 	}
 	if(_ptree!=0)
+	{
 		shm_free(_ptree);
+		_ptree = 0;
+	}
 
 	if(db_con!=NULL)
 	{
