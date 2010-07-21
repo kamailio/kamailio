@@ -226,7 +226,8 @@ Options:\n\
 #ifdef USE_TCP
 "    -T           Disable tcp\n\
     -N           Number of tcp child processes (default: equal to `-n')\n\
-    -W           poll method\n"
+    -W type      poll method (depending on support in OS, it can be: poll,\n\
+                  epoll_lt, epoll_et, sigio_rt, select, kqueue, /dev/poll)\n"
 #endif
 #ifdef USE_SCTP
 "    -S           disable sctp\n\
