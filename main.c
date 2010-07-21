@@ -554,7 +554,7 @@ void cleanup(show_status)
 			LOG(memlog, "Memory status (pkg):\n");
 			pkg_status();
 		}
-		if (cfg_get(core, core_cfg, mem_summary) & 2) {
+		if (cfg_get(core, core_cfg, mem_summary) & 4) {
 			LOG(memlog, "Memory still-in-use summary (pkg):\n");
 			pkg_sums();
 		}
@@ -564,11 +564,11 @@ void cleanup(show_status)
 	if (pt) shm_free(pt);
 	pt=0;
 	if (show_status && memlog <= cfg_get(core, core_cfg, debug)){
-		if (cfg_get(core, core_cfg, mem_summary) & 1) {
+		if (cfg_get(core, core_cfg, mem_summary) & 2) {
 			LOG(memlog, "Memory status (shm):\n");
 			shm_status();
 		}
-		if (cfg_get(core, core_cfg, mem_summary) & 2) {
+		if (cfg_get(core, core_cfg, mem_summary) & 8) {
 			LOG(memlog, "Memory still-in-use summary (shm):\n");
 			shm_sums();
 		}

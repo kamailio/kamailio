@@ -115,7 +115,8 @@ struct cfg_group_core default_core_cfg = {
 	0, /*!< udp_mtu_try_proto -> default disabled */
 	0,  /*!< force_rport */
 	L_DBG, /*!< memlog */
-	1 /*!< mem_summary -flags: 0 off, 1 shm/pkg_status, 2 shm/pkg_sums */
+	3 /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
+		4 pkg_sums, 8 shm_sums */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -233,7 +234,7 @@ cfg_def_t core_cfg_def[] = {
 		"force rport for all the received messages" },
 	{"memlog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for memory status/summary information"},
-	{"mem_summary",	CFG_VAR_INT|CFG_ATOMIC,	0, 3, 0, 0,
+	{"mem_summary",	CFG_VAR_INT|CFG_ATOMIC,	0, 15, 0, 0,
 		"memory debugging information displayed on exit (flags): "
 		" 0 - off, 1 - dump all the used blocks (status),"
 		" 2 - summary of used blocks" },
