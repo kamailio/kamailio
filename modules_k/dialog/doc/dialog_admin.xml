@@ -1470,7 +1470,7 @@ if(dlg_get("abcdef", "123", "456"))
 		<section>
 			<title><varname>dlg_end_dlg</varname></title>
 			<para>
-			Terminates an ongoing dialog by sending BYE in both directions.
+			Terminates a confirmed dialog by sending BYE requests in both directions.
 			</para>
 		<para>
 		Name: <emphasis>dlg_end_dlg</emphasis>
