@@ -236,7 +236,10 @@ cfg_def_t core_cfg_def[] = {
 		"log level for memory status/summary information"},
 	{"mem_summary",	CFG_VAR_INT|CFG_ATOMIC,	0, 15, 0, 0,
 		"memory debugging information displayed on exit (flags): "
-		" 0 - off, 1 - dump all the used blocks (status),"
-		" 2 - summary of used blocks" },
+		" 0 - off,"
+		" 1 - dump all the pkg used blocks (status),"
+		" 2 - dump all the shm used blocks (status),"
+		" 4 - summary of pkg used blocks,"
+		" 8 - summary of shm used blocks" },
 	{0, 0, 0, 0, 0, 0}
 };
