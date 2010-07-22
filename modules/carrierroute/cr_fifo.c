@@ -136,7 +136,7 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 	struct mi_node* node = NULL;
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if(rpl_tree == NULL)
-		return 0;
+		goto error2;
 	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing routing information:");
 	if(node == NULL)
 		goto error;
@@ -165,8 +165,9 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 	return rpl_tree;
 
 error:
-	release_data (rd);
 	free_mi_tree(rpl_tree);
+error2:
+	release_data (rd);
 	return 0;
 }
 
