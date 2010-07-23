@@ -163,7 +163,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			*(ps->param) = 0;
 		}
 		return;
-	} else if (!type&TMCB_ON_FAILURE) {
+	} else if (! (type&TMCB_ON_FAILURE)) {
 		LM_ERR("unknown type %d\n",type);
 		goto exit;
 	}
