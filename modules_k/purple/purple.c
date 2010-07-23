@@ -399,7 +399,7 @@ static int func_handle_publish(struct sip_msg* msg) {
 				note.len = sprintf(note.s, "Idle");
 			}
 			else
-				note.len = sprintf(note.s, notestr);
+				note.len = sprintf(note.s, "%s", notestr);
 		}
 	}
 
