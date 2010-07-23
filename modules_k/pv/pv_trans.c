@@ -950,7 +950,8 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		
 		/* parse params */
 		sv = _tr_tobody_str;
-		if (parse_to(sv.s, sv.s + sv.len + 2, &_tr_tobody)<0)
+		parse_to(sv.s, sv.s + sv.len + 2, &_tr_tobody);
+		if (_tr_tobody.error == PARSE_ERROR)
 		{
 			memset(&_tr_tobody, 0, sizeof(struct to_body));
 			pkg_free(_tr_tobody_str.s);
