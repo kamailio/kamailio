@@ -1011,7 +1011,8 @@ if(dlg_get("abcdef", "123", "456"))
 
 1.8.3. dlg_end_dlg
 
-   Terminates an ongoing dialog by sending BYE in both directions.
+   Terminates an ongoing dialog by sending BYE requests in both
+   directions.
 
    Name: dlg_end_dlg
 
