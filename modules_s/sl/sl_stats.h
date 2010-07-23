@@ -34,7 +34,7 @@
 
 #include "../../rpc.h"
 
-enum reply_type { RT_200 = 0, RT_202, RT_2xx,
+enum reply_type { RT_1xx = 0,  RT_200, RT_202, RT_2xx,
 		  RT_300, RT_301, RT_302, RT_3xx,
 		  RT_400, RT_401, RT_403, RT_404, RT_407, 
 		  RT_408, RT_483, RT_4xx,
@@ -45,15 +45,20 @@ enum reply_type { RT_200 = 0, RT_202, RT_2xx,
 
 struct sl_stats {
 	unsigned long err[RT_END];
+	unsigned long all_replies;
 	unsigned long failures;
+	unsigned long filtered_acks;
 };
 
 int init_sl_stats(void);
 int init_sl_stats_child(void);
 void update_sl_stats( int code );
 void update_sl_failures( void );
+void update_sl_filtered_acks( void );
 void sl_stats_destroy();
 
 extern rpc_export_t sl_rpc[];
+
+int sl_register_kstats(void);
 
 #endif /* _SL_STATS_H */

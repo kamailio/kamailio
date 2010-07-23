@@ -27,6 +27,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "../../globals.h"
 #include "../../config.h"
@@ -43,9 +44,12 @@ static void add_sl_stats( struct sl_stats *t, struct sl_stats *i)
 {
 	enum reply_type rt;
 
-	for (rt=0; rt<RT_END; rt++) 
+	for (rt=0; rt<RT_END; rt++) { 
 		t->err[rt]+=i->err[rt];
+		t->all_replies+=i->err[rt];
+	}
 	t->failures+=i->failures;
+	t->filtered_acks+=i->filtered_acks;
 }
 
 
@@ -142,6 +146,11 @@ void update_sl_failures( void )
 	(*sl_stats)[process_no].failures++;
 }
 
+void update_sl_filtered_acks( void )
+{
+	(*sl_stats)[process_no].filtered_acks++;
+}
+
 void update_sl_stats( int code ) 
 {
 
@@ -207,3 +216,268 @@ rpc_export_t sl_rpc[] = {
 	{"sl.stats", rpc_stats, rpc_stats_doc, 0},
 	{0, 0, 0, 0}
 };
+
+#ifdef STATISTICS
+
+/* k statistics */
+
+unsigned long sl_stats_RT_1xx(void);
+unsigned long sl_stats_RT_200(void);
+unsigned long sl_stats_RT_202(void);
+unsigned long sl_stats_RT_2xx(void);
+unsigned long sl_stats_RT_300(void);
+unsigned long sl_stats_RT_301(void);
+unsigned long sl_stats_RT_302(void);
+unsigned long sl_stats_RT_3xx(void);
+unsigned long sl_stats_RT_400(void);
+unsigned long sl_stats_RT_401(void);
+unsigned long sl_stats_RT_403(void);
+unsigned long sl_stats_RT_404(void);
+unsigned long sl_stats_RT_407(void);
+unsigned long sl_stats_RT_408(void);
+unsigned long sl_stats_RT_483(void);
+unsigned long sl_stats_RT_4xx(void);
+unsigned long sl_stats_RT_500(void);
+unsigned long sl_stats_RT_5xx(void);
+unsigned long sl_stats_RT_6xx(void);
+unsigned long sl_stats_RT_xxx(void);
+
+unsigned long sl_stats_sent_rpls(void);
+unsigned long sl_stats_sent_err_rpls(void);
+unsigned long sl_stats_rcv_acks(void);
+
+static stat_export_t mod_stats[] = {
+	{"1xx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_1xx    },
+	{"200_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_200    },
+	{"202_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_202    },
+	{"2xx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_2xx    },
+	{"300_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_300    },
+	{"301_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_301    },
+	{"302_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_302    },
+	{"3xx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_3xx    },
+	{"400_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_400    },
+	{"401_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_401    },
+	{"403_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_403    },
+	{"404_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_404    },
+	{"407_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_407    },
+	{"408_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_408    },
+	{"483_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_483    },
+	{"4xx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_4xx    },
+	{"500_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_500    },
+	{"5xx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_5xx    },
+	{"6xx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_6xx    },
+	{"xxx_replies" ,       STAT_IS_FUNC,
+		(stat_var**)sl_stats_RT_xxx    },
+
+	{"sent_replies" ,      STAT_IS_FUNC,
+		(stat_var**)sl_stats_sent_rpls      },
+	{"sent_err_replies" ,  STAT_IS_FUNC,
+		(stat_var**)sl_stats_sent_err_rpls  },
+	{"received_ACKs" ,     STAT_IS_FUNC,
+		(stat_var**)sl_stats_rcv_acks       },
+	{0,0,0}
+};
+
+
+static struct sl_stats _sl_stats_total;
+static ticks_t _sl_stats_tm = 0;
+
+static void sl_stats_update(void)
+{
+	int p;
+	int procs_no;
+	ticks_t t;
+
+	t = get_ticks();
+	if(t==_sl_stats_tm)
+		return;
+	_sl_stats_tm = t;
+
+	memset(&_sl_stats_total, 0, sizeof(struct sl_stats));
+	if (dont_fork) {
+		add_sl_stats(&_sl_stats_total, &(*sl_stats)[0]);
+	} else{
+		procs_no=get_max_procs();
+		for (p=0; p < procs_no; p++)
+			add_sl_stats(&_sl_stats_total, &(*sl_stats)[p]);
+	}
+}
+
+unsigned long sl_stats_tx_1xx_rpls(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_1xx];
+}
+
+unsigned long sl_stats_RT_1xx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_1xx];
+}
+
+unsigned long sl_stats_RT_200(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_200];
+}
+
+unsigned long sl_stats_RT_202(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_202];
+}
+
+unsigned long sl_stats_RT_2xx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_2xx];
+}
+
+unsigned long sl_stats_RT_300(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_300];
+}
+
+unsigned long sl_stats_RT_301(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_301];
+}
+
+unsigned long sl_stats_RT_302(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_302];
+}
+
+unsigned long sl_stats_RT_3xx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_3xx];
+}
+
+unsigned long sl_stats_RT_400(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_400];
+}
+
+unsigned long sl_stats_RT_401(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_401];
+}
+
+unsigned long sl_stats_RT_403(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_403];
+}
+
+unsigned long sl_stats_RT_404(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_404];
+}
+
+unsigned long sl_stats_RT_407(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_407];
+}
+
+unsigned long sl_stats_RT_408(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_408];
+}
+
+unsigned long sl_stats_RT_483(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_483];
+}
+
+unsigned long sl_stats_RT_4xx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_4xx];
+}
+
+unsigned long sl_stats_RT_500(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_500];
+}
+
+unsigned long sl_stats_RT_5xx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_5xx];
+}
+
+unsigned long sl_stats_RT_6xx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_6xx];
+}
+
+unsigned long sl_stats_RT_xxx(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err[RT_xxx];
+}
+
+
+unsigned long sl_stats_sent_rpls(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.all_replies;
+}
+
+unsigned long sl_stats_sent_err_rpls(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.failures;
+}
+
+unsigned long sl_stats_rcv_acks(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.filtered_acks;
+}
+
+#endif
+
+int sl_register_kstats(void)
+{
+#ifdef STATISTICS
+	/* register statistics */
+	if (register_module_stats("sl", mod_stats)!=0 ) {
+		LM_ERR("failed to register statistics\n");
+		return -1;
+	}
+#endif
+	return 0;
+}
+

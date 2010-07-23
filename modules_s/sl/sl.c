@@ -128,6 +128,10 @@ static int mod_init(void)
 		ERR("init_sl_stats failed\n");
 		return -1;
 	}
+	if (sl_register_kstats()<0) {
+		ERR("init k stats failed\n");
+		return -1;
+	}
 
 	     /* if SL loaded, filter ACKs on beginning */
 	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQUEST_CB, 0 )<0) {

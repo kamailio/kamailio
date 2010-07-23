@@ -243,7 +243,8 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
 			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
-				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
+				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it!\n" );
+				update_sl_filtered_acks();
 				return 0;
 			}
 		}
