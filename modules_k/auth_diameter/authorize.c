@@ -663,7 +663,7 @@ int send_resp(struct sip_msg* m, int code, str* reason,
 		}
 	}
 
-	return slb.send_reply(m, code, reason);
+	return slb.freply(m, code, reason);
 }
 
 

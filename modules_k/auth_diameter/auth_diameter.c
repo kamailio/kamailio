@@ -41,7 +41,6 @@
 #include "../../dprint.h"
 #include "../../pvar.h"
 #include "../../mem/mem.h"
-#include "../sl/sl_api.h"
 
 #include "diameter_msg.h"
 #include "auth_diameter.h"
@@ -51,8 +50,8 @@
 MODULE_VERSION
 
 
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 static int mod_init(void);                        /* Module initialization function*/
 static int mod_child_init(int r);                 /* Child initialization function*/
@@ -123,9 +122,9 @@ static int mod_init(void)
 {
 	LM_DBG("auth_diameter - Initializing\n");
 
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 	
