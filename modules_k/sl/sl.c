@@ -71,7 +71,6 @@ MODULE_VERSION
 static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
-static int bind_sl(sl_api_t* api);
 static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy(void);
@@ -107,7 +106,6 @@ static cmd_export_t cmds[]={
 	{"load_sl",        (cmd_function)load_sl,
 		0,  0, 0,
 		0},
-	{"bind_sl",        (cmd_function)bind_sl,          0, 0, 0, 0},
 	{"api_sl_reply",   (cmd_function)sl_send_reply_sz, 2, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -389,18 +387,3 @@ int load_sl( struct sl_binds *slb)
 	return 1;
 }
 
-static int bind_sl(sl_api_t* api)
-{
-	if (!api) {
-		ERR("Invalid parameter value\n");
-		return -1;
-	}
-
-	api->reply = (sl_send_reply_f)find_export("api_sl_reply", 2, 0);
-	if (api->reply == 0) {
-		ERR("Can't bind sl_reply functionn");
-		return -1;
-	}
-
-	return 0;
-}

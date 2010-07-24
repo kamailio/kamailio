@@ -34,6 +34,4 @@
 #ifndef _SL_K_H_
 #define _SL_K_H_
 
-#include "../../modules_s/sl/sl.h"
-
 #endif
