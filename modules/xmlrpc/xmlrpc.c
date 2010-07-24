@@ -55,7 +55,7 @@
 #include "../../msg_translator.h"
 #include "../../select.h"
 #include "../../receive.h" /* needed by process_rpc / receive_msg() */
-#include "../../modules_s/sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "../../nonsip_hooks.h"
 #include "../../action.h" /* run_actions */
 #include "../../script_cb.h" /* exec_*_script_cb */
@@ -386,7 +386,7 @@ static char* xmlrpc_route=0; /* default is the main route */
 /** Reference to the sl (stateless replies) module of SER The sl module of SER
  * is needed so that the xmlrpc SER module can send replies back to clients
  */
-sl_api_t sl;
+sl_api_t slb;
 
 static int xmlrpc_route_no=DEFAULT_RT;
 /* if set, try autoconverting to the requested type if possible
@@ -779,7 +779,7 @@ static int send_reply(sip_msg_t* msg, str* body)
 		return -1;
 	}
 
-	if (sl.reply(msg, 200, "OK") == -1) {
+	if (slb.zreply(msg, 200, "OK") == -1) {
 		ERR("Error while sending reply\n");
 		return -1;
 	}
@@ -2363,17 +2363,11 @@ static int mod_init(void)
 		xmlrpc_route_no=route_no;
 	}
 
-             /*
-              * We will need sl_send_reply from stateless
-	      * module for sending replies
-	      */
-    bind_sl_t bind_sl;
-	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
-	if (!bind_sl) {
-		ERR("This module requires sl module\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	if (bind_sl(&sl) < 0) return -1;
 
 	func_param.send = (rpc_send_f)rpc_send;
 	func_param.fault = (rpc_fault_f)rpc_fault;
