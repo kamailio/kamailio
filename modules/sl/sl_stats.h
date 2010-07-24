@@ -46,6 +46,7 @@ enum reply_type { RT_1xx = 0,  RT_200, RT_202, RT_2xx,
 struct sl_stats {
 	unsigned long err[RT_END];
 	unsigned long all_replies;
+	unsigned long err_replies;
 	unsigned long failures;
 	unsigned long filtered_acks;
 };
@@ -54,6 +55,7 @@ int init_sl_stats(void);
 int init_sl_stats_child(void);
 void update_sl_stats( int code );
 void update_sl_failures( void );
+void update_sl_err_replies( void );
 void update_sl_filtered_acks( void );
 void sl_stats_destroy();
 

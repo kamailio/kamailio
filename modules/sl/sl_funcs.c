@@ -72,6 +72,7 @@ static char           *tag_suffix;
    we do not filter */
 static unsigned int  *sl_timeout;
 
+extern int _sl_filtered_ack_route;
 
 /*!
  * init sl internal structures
@@ -321,6 +322,10 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 				LM_DBG("SL local ACK found -> dropping it!\n" );
 				update_sl_filtered_acks();
 				sl_run_callbacks(SLCB_ACK_FILTERED, msg, 0, 0, 0, 0);
+				if(unlikely(_sl_filtered_ack_route>=0)) {
+					run_top_route(event_rt.rlist[_sl_filtered_ack_route],
+							msg, 0);
+				}
 				return 0;
 			}
 		}

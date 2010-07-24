@@ -76,6 +76,8 @@ MODULE_VERSION
 static int default_code = 500;
 static str default_reason = STR_STATIC_INIT("Internal Server Error");
 
+int _sl_filtered_ack_route = -1; /* default disabled */
+
 static int sl_bind_tm = 1;
 static struct tm_binds tmb;
 
@@ -162,6 +164,10 @@ static int mod_init(void)
 			sl_bind_tm=0;
 		}
 	}
+
+	_sl_filtered_ack_route=route_lookup(&event_rt, "sl:filtered-ack");
+	if (_sl_filtered_ack_route>=0 && event_rt.rlist[_sl_filtered_ack_route]==0)
+		_sl_filtered_ack_route=-1; /* disable */
 
 	return 0;
 }

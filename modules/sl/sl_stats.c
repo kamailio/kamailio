@@ -146,6 +146,11 @@ void update_sl_failures( void )
 	(*sl_stats)[process_no].failures++;
 }
 
+void update_sl_err_replies( void )
+{
+	(*sl_stats)[process_no].err_replies++;
+}
+
 void update_sl_filtered_acks( void )
 {
 	(*sl_stats)[process_no].filtered_acks++;
@@ -244,6 +249,7 @@ unsigned long sl_stats_RT_xxx(void);
 
 unsigned long sl_stats_sent_rpls(void);
 unsigned long sl_stats_sent_err_rpls(void);
+unsigned long sl_stats_failures(void);
 unsigned long sl_stats_rcv_acks(void);
 
 static stat_export_t mod_stats[] = {
@@ -292,6 +298,8 @@ static stat_export_t mod_stats[] = {
 		(stat_var**)sl_stats_sent_rpls      },
 	{"sent_err_replies" ,  STAT_IS_FUNC,
 		(stat_var**)sl_stats_sent_err_rpls  },
+	{"failures" ,          STAT_IS_FUNC,
+		(stat_var**)sl_stats_failures       },
 	{"received_ACKs" ,     STAT_IS_FUNC,
 		(stat_var**)sl_stats_rcv_acks       },
 	{0,0,0}
@@ -456,6 +464,12 @@ unsigned long sl_stats_sent_rpls(void)
 }
 
 unsigned long sl_stats_sent_err_rpls(void)
+{
+	sl_stats_update();
+	return _sl_stats_total.err_replies;
+}
+
+unsigned long sl_stats_failures(void)
 {
 	sl_stats_update();
 	return _sl_stats_total.failures;
