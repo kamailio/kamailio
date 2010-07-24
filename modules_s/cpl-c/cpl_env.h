@@ -33,7 +33,7 @@
 
 #include "../../str.h"
 #include "../../usr_avp.h"
-#include "../sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "../usrloc/usrloc.h"
 #include "../../modules/tm/tm_load.h"
 
@@ -58,7 +58,7 @@ struct cpl_enviroment {
 struct cpl_functions {
 	struct tm_binds tmb;     /* Structure with pointers to tm funcs */
 	usrloc_api_t ulb;        /* Structure with pointers to usrloc funcs */
-	sl_api_t sl;             /* sl module functions */
+	sl_api_t slb;            /* sl module functions */
 };
 
 extern struct cpl_enviroment cpl_env;

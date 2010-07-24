@@ -200,7 +200,6 @@ static int fixup_cpl_run_script(void** param, int param_no)
 static int cpl_init(void)
 {
 	bind_usrloc_t bind_usrloc;
-	bind_sl_t     bind_sl;
 	load_tm_f     load_tm;
 	struct stat   stat_t;
 	char *ptr;
@@ -303,12 +302,11 @@ static int cpl_init(void)
 	if (load_tm( &(cpl_fct.tmb) )==-1)
 		goto error;
 
-        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
-	if (!bind_sl) {
-		ERR("This module requires sl module\n");
+	/* bind the SL API */
+	if (sl_load_api(&cpl_fct.slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	if (bind_sl(&cpl_fct.sl) < 0) return -1;
 
 	/* bind to usrloc module if requested */
 	if (lookup_domain) {
@@ -898,7 +896,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			goto resume_script;
 
 		/* send a 200 OK reply back */
-		cpl_fct.sl.reply( msg, 200, "OK");
+		cpl_fct.slb.zreply( msg, 200, "OK");
 		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -934,7 +932,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto resume_script;
 
 	/* send a 200 OK reply back */
-	cpl_fct.sl.reply( msg, 200, "OK");
+	cpl_fct.slb.zreply( msg, 200, "OK");
 
 stop_script:
 	return 0;
@@ -942,7 +940,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.sl.reply( msg, cpl_err->err_code, cpl_err->err_msg);
+	cpl_fct.slb.zreply( msg, cpl_err->err_code, cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }

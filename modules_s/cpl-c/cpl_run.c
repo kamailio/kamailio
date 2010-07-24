@@ -613,7 +613,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 		i = cpl_fct.tmb.t_reply(intr->msg, (int)status, reason_s );
 	} else {
 		/* reply statelessly */
-		i = cpl_fct.sl.reply(intr->msg, status, reason_s );
+		i = cpl_fct.slb.zreply(intr->msg, status, reason_s );
 	}
 
 	if ( i!=1 ) {
@@ -740,9 +740,9 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	} else {
 		/* reply statelessly */
 		if (permanent)
-			i = cpl_fct.sl.reply( intr->msg, 301, "Moved permanently");
+			i = cpl_fct.slb.zreply( intr->msg, 301, "Moved permanently");
 		else
-			i = cpl_fct.sl.reply( intr->msg, 302, "Moved temporarily");
+			i = cpl_fct.slb.zreply( intr->msg, 302, "Moved temporarily");
 	}
 
 	/* msg which I'm working on can be in private memory or is a clone into
