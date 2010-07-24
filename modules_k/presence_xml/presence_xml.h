@@ -37,7 +37,7 @@
 #define _PRES_XML_H_
 
 #include "../../lib/srdb1/db.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../presence/event_list.h"
 #include "../presence/presence.h"
 #include "../presence/presentity.h"
@@ -48,7 +48,9 @@ typedef struct xcap_serv
 	char* addr;
 	unsigned int port;
 	struct xcap_serv* next;
-}xcap_serv_t;
+} xcap_serv_t;
+
+extern sl_api_t slb;
 
 extern str xcap_table;
 extern add_event_t pres_add_event;

@@ -149,7 +149,7 @@ int	xml_publ_handl(struct sip_msg* msg)
 	if(doc== NULL)
 	{
 		LM_ERR("bad body format\n");
-		if(slb.send_reply(msg, 415, &pu_415_rpl)== -1)
+		if(slb.freply(msg, 415, &pu_415_rpl) < 0)
 		{
 			LM_ERR("while sending '415 Unsupported media type' reply\n");
 		}

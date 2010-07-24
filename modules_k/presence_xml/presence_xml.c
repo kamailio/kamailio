@@ -52,7 +52,7 @@
 #include "../presence/hash.h"
 #include "../presence/notify.h"
 #include "../xcap_client/xcap_functions.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
@@ -91,8 +91,8 @@ int disable_winfo    = 0;
 int disable_bla      = 1;
 int passive_mode     = 0;
 
-/* SL bind */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 /* database connection */
 db1_con_t *pxml_db = NULL;
@@ -189,10 +189,9 @@ static int mod_init(void)
 		LM_ERR("error during table version check.\n");
 		return -1;
 	}
-	/* load SL API */
-	if(load_sl_api(&slb)==-1)
-	{
-		LM_ERR("can't load sl functions\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
