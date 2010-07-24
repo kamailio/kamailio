@@ -223,7 +223,7 @@ int reply_421(struct sip_msg* msg)
 		return -1;
 	}
 
-	if (slb.send_reply(msg, 421, &pu_421_rpl) == -1)
+	if (slb.freply(msg, 421, &pu_421_rpl) < 0)
 	{
 		LM_ERR("while sending reply\n");
 		return -1;
@@ -273,7 +273,7 @@ int reply_200(struct sip_msg* msg, str* contact, int expires)
 		goto error;
 	}
 
-	if(slb.send_reply(msg, 200, &su_200_rpl)== -1)
+	if(slb.freply(msg, 200, &su_200_rpl) < 0)
 	{
 		LM_ERR("while sending reply\n");
 		goto error;
@@ -319,7 +319,7 @@ int reply_489(struct sip_msg * msg)
 		LM_ERR("unable to add lump_rl\n");
 		return -1;
 	}
-	if (slb.send_reply(msg, 489, &pu_489_rpl) == -1)
+	if (slb.freply(msg, 489, &pu_489_rpl) < 0)
 	{
 		LM_ERR("while sending reply\n");
 		return -1;
@@ -353,7 +353,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
-		if (slb.send_reply(msg, 400, &pu_400_rpl) == -1)
+		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
 		{
 			LM_ERR("while sending 400 reply\n");
 			return -1;
@@ -559,7 +559,7 @@ found_support:
 		{
 			reason= (rt==400)?pu_400_rpl:stale_cseq_rpl;
 		
-			if (slb.send_reply(msg, 400, &reason) == -1)
+			if (slb.freply(msg, 400, &reason) < 0)
 			{
 				LM_ERR("while sending reply\n");
 				goto error;

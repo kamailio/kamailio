@@ -45,7 +45,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../modules/tm/tm_load.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../presence/bind_presence.h"
 #include "../presence/hash.h"
 #include "../pua/pua_bind.h"
@@ -113,8 +113,8 @@ get_record_id_t pua_get_record_id;
 
 /* TM bind */
 struct tm_binds tmb;
-/* SL bind */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 str str_rlsubs_did_col = str_init("rlsubs_did");
 str str_resource_uri_col = str_init("resource_uri");
@@ -262,10 +262,9 @@ static int mod_init(void)
         }
     }
 
-	/* load SL API */
-	if(load_sl_api(&slb)==-1)
-	{
-		LM_ERR("can't load sl functions\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 

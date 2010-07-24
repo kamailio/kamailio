@@ -400,7 +400,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	LM_DBG("Updated rlpres_table\n");	
 	/* reply 200OK */
 done:
-	if( slb.send_reply(msg, 200, &su_200_rpl)== -1)
+	if(slb.freply(msg, 200, &su_200_rpl) < 0)
 	{
 		LM_ERR("while sending reply\n");
 		goto error;

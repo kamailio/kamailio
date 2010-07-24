@@ -36,7 +36,7 @@
 #include "../pua/pidf.h"
 #include "../presence/hash.h"
 #include "../presence/event_list.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../lib/srdb1/db_con.h"
 #include "../../lib/srdb1/db.h"
 
@@ -101,7 +101,7 @@ extern db1_con_t *rls_db;
 extern db_func_t rls_dbf;
 
 extern struct tm_binds tmb;
-extern struct sl_binds slb;
+extern sl_api_t slb;
 
 /** libxml api */
 extern xmlDocGetNodeByName_t XMLDocGetNodeByName;
