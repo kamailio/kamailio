@@ -114,6 +114,7 @@ static str direction_column   = str_init("direction");   /* 09 */
 
 int trace_flag = -1;
 int trace_on   = 0;
+int trace_sl_acks = 1;
 
 str    dup_uri_str      = {0, 0};
 struct sip_uri *dup_uri = 0;
@@ -165,6 +166,7 @@ static param_export_t params[] = {
 	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str.s},
 	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s        },
 	{"trace_local_ip",     STR_PARAM, &trace_local_ip.s     },
+	{"trace_sl_acks",      INT_PARAM, &trace_sl_acks        },
 	{0, 0, 0}
 };
 
@@ -305,12 +307,15 @@ static int mod_init(void)
         return -1;
     }
 
-	slcb.type = SLCB_ACK_FILTERED;
-	slcb.cbf  = trace_sl_ack_in;
-    if (slb.register_cb(&slcb) != 0) {
-		LM_ERR("can't register for SLCB_ACK_FILTERED\n");
-        return -1;
-    }
+	if(trace_sl_acks)
+	{
+		slcb.type = SLCB_ACK_FILTERED;
+		slcb.cbf  = trace_sl_ack_in;
+		if (slb.register_cb(&slcb) != 0) {
+			LM_ERR("can't register for SLCB_ACK_FILTERED\n");
+			return -1;
+		}
+	}
 
 	if(dup_uri_str.s!=0)
 	{
