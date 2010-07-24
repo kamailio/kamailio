@@ -191,7 +191,7 @@ static void unix_server_loop(void)
 	int ret;
 	str cmd, buffer;
 	static char buf[UNIXSOCK_BUF_SIZE];
-	struct unixsock_cmd* c;
+	struct unixsock_cmd* c = NULL;
 	
 	while(1) {
 		reply_addr_len = sizeof(reply_addr);
