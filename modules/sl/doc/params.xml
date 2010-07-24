@@ -17,7 +17,9 @@
 		<example>
 		<title>default_code example</title>
 		<programlisting format="linespecific">
+...
 modparam("sl", "default_code", 505)
+...
 </programlisting>
 		</example>
 	</section>
@@ -33,7 +35,9 @@ modparam("sl", "default_code", 505)
 		<example>
 		<title>default_reason example</title>
 		<programlisting format="linespecific">
+...
 modparam("sl", "default_reason", "Server Error")
+...
 </programlisting>
 		</example>
 	</section>
@@ -50,7 +54,9 @@ modparam("sl", "default_reason", "Server Error")
 		<example>
 		<title>bind_tm example</title>
 		<programlisting format="linespecific">
+...
 modparam("sl", "bind_tm", 0)  # feature disabled
+...
 </programlisting>
 		</example>
 	</section>
