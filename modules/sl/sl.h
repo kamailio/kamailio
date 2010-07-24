@@ -75,7 +75,7 @@ typedef int (*sl_register_cb_f)(sl_cbelem_t *cbe);
 int sl_register_callback(sl_cbelem_t *cbe);
 
 void sl_run_callbacks(unsigned int type, struct sip_msg *req,
-		int code, str *reason, str *reply, struct dest_info *dst);
+		int code, char *reason, str *reply, struct dest_info *dst);
 
 /* prototypes for SL API funtions */
 typedef int (*get_reply_totag_f)(struct sip_msg *msg, str *tag);

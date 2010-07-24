@@ -176,6 +176,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 		goto error;
 	}
 	
+	sl_run_callbacks(SLCB_REPLY_READY, msg, code, reason, &buf, &dst);
 
 	/* supress multhoming support when sending a reply back -- that makes sure
 	   that replies will come from where requests came in; good for NATs
@@ -317,8 +318,9 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
 			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
-				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it!\n" );
+				LM_DBG("SL local ACK found -> dropping it!\n" );
 				update_sl_filtered_acks();
+				sl_run_callbacks(SLCB_ACK_FILTERED, msg, 0, 0, 0, 0);
 				return 0;
 			}
 		}
@@ -333,6 +335,7 @@ pass_it:
  */
 
 static sl_cbelem_t *_sl_cbelem_list = NULL;
+static int _sl_cbelem_mask = 0;
 
 void sl_destroy_callbacks_list(void)
 {
@@ -365,21 +368,28 @@ int sl_register_callback(sl_cbelem_t *cbe)
 	memcpy(p1, cbe, sizeof(sl_cbelem_t));
 	p1->next = _sl_cbelem_list;
 	_sl_cbelem_list = p1;
+	_sl_cbelem_mask |= cbe->type;
 
 	return 0;
 }
 
 void sl_run_callbacks(unsigned int type, struct sip_msg *req,
-		int code, str *reason, str *reply, struct dest_info *dst)
+		int code, char *reason, str *reply, struct dest_info *dst)
 {
 	sl_cbp_t param;
 	sl_cbelem_t *p1;
+	static str sreason;
+
+	if(likely((_sl_cbelem_mask&type)==0))
+		return;
 
 	/* memset(&cbp, 0, sizeof(sl_cbp_t)); */
 	param.type   = type;
 	param.req    = req;
 	param.code   = code;
-	param.reason = reason;
+	sreason.s    = reason;
+	sreason.len  = strlen(reason);
+	param.reason = &sreason;
 	param.reply  = reply;
 	param.dst    = dst;
 
