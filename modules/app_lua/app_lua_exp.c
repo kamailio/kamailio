@@ -30,7 +30,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 
-#include "../../modules_k/sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 
 #include "app_lua_api.h"
 
@@ -44,7 +44,7 @@ static unsigned int _sr_lua_exp_reg_mods = 0;
 /**
  *
  */
-static struct sl_binds _lua_slb;
+static sl_api_t _lua_slb;
 
 /**
  *
@@ -73,7 +73,7 @@ static int lua_sr_sl_send_reply (lua_State *L)
 	if(txt.s!=NULL || env_L->msg==NULL)
 	{
 		txt.len = strlen(txt.s);
-		ret = _lua_slb.send_reply(env_L->msg, code, &txt);
+		ret = _lua_slb.freply(env_L->msg, code, &txt);
 		if(ret<0)
 		{
 			LM_WARN("sl send_reply returned false\n");
@@ -125,10 +125,9 @@ int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
 	{
-		/* load SL API */
-		if(load_sl_api(&_lua_slb)==-1)
-		{
-			LM_ERR("cannot load sl api\n");
+		/* bind the SL API */
+		if (sl_load_api(&_lua_slb)!=0) {
+			LM_ERR("cannot bind to SL API\n");
 			return -1;
 		}
 		LM_DBG("loaded sl api\n");
