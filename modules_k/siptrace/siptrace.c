@@ -46,7 +46,7 @@
 #include "../../parser/parse_from.h"
 #include "../../pvar.h"
 #include "../../modules/tm/tm_load.h"
-#include "../sl/sl_cb.h"
+#include "../../modules/sl/sl.h"
 #include "../../str.h"
 #include "../../onsend.h"
 
@@ -77,6 +77,9 @@ struct _siptrace_data {
 
 struct tm_binds tmb;
 
+/** SL API structure */
+sl_api_t slb;
+
 /* module function prototypes */
 static int mod_init(void);
 static int child_init(int rank);
@@ -89,10 +92,8 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps);
-static void trace_sl_onreply_out(unsigned int types, struct sip_msg* req,
-		struct sl_cb_param *sl_param);
-static void trace_sl_ack_in(unsigned int types, struct sip_msg* req,
-		struct sl_cb_param *sl_param);
+static void trace_sl_onreply_out(sl_cbp_t *slcb);
+static void trace_sl_ack_in(sl_cbp_t *slcb);
 
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
@@ -131,8 +132,6 @@ static str trace_local_ip = {NULL, 0};
 
 db1_con_t *db_con = NULL; 		/*!< database connection */
 db_func_t db_funcs;      		/*!< Database functions */
-
-register_slcb_t register_slcb_f=NULL;	/*!< stateless callback registration */
 
 /*! \brief
  * Exported functions
@@ -214,6 +213,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
+	sl_cbelem_t slcb;
 
 #ifdef STATISTICS
 	/* register statistics */
@@ -289,23 +289,28 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* register sl callback */
-	register_slcb_f = (register_slcb_t)find_export("register_slcb", 0, 0);
-	if(register_slcb_f==NULL)
-	{
-		LM_ERR("can't load sl api. Is module sl loaded?\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	if(register_slcb_f(SLCB_REPLY_OUT,trace_sl_onreply_out, NULL)!=0)
-	{
-		LM_ERR("can't register trace_sl_onreply_out\n");
-		return -1;
-	}
-	if(register_slcb_f(SLCB_ACK_IN,trace_sl_ack_in, NULL)!=0)
-	{
-		LM_ERR("can't register trace_sl_ack_in\n");
-		return -1;
-	}
+
+	/* register sl callbacks */
+	memset(&slcb, 0, sizeof(sl_cbelem_t));
+
+	slcb.type = SLCB_REPLY_READY;
+	slcb.cbf  = trace_sl_onreply_out;
+    if (slb.register_cb(&slcb) != 0) {
+        LM_ERR("can't register for SLCB_REPLY_READY\n");
+        return -1;
+    }
+
+	slcb.type = SLCB_ACK_FILTERED;
+	slcb.cbf  = trace_sl_ack_in;
+    if (slb.register_cb(&slcb) != 0) {
+		LM_ERR("can't register for SLCB_ACK_FILTERED\n");
+        return -1;
+    }
 
 	if(dup_uri_str.s!=0)
 	{
@@ -973,16 +978,17 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	return;
 }
 
-static void trace_sl_ack_in(unsigned int types, struct sip_msg* req,
-		struct sl_cb_param *sl_param)
+static void trace_sl_ack_in(sl_cbp_t *slcbp)
 {
+	sip_msg_t *req;
 	LM_DBG("storing ack...\n");
+	req = slcbp->req;
 	sip_trace(req, 0, 0);
 }
 
-static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
-		struct sl_cb_param *sl_param)
+static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 {
+	sip_msg_t *req;
 	struct _siptrace_data sto;
 	int faked = 0;
 	struct sip_msg* msg;
@@ -990,11 +996,12 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	int len;
 	char statusbuf[5];
 
-	if(req==NULL || sl_param==NULL)
+	if(slcbp==NULL || slcbp->req==NULL)
 	{
 		LM_ERR("bad parameters\n");
 		return;
 	}
+	req = slcbp->req;
 	
 	memset(&sto, 0, sizeof(struct _siptrace_data));
 	if(traced_user_avp.n!=0)
@@ -1012,8 +1019,8 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	if(sip_trace_prepare(msg)<0)
 		return;
 	
-	sto.body.s = (sl_param->buffer)?sl_param->buffer->s:"";
-	sto.body.len = (sl_param->buffer)?sl_param->buffer->len:0;
+	sto.body.s = (slcbp->reply)?slcbp->reply->s:"";
+	sto.body.len = (slcbp->reply)?slcbp->reply->len:0;
 	
 	sto.callid = msg->callid->body;
 	sto.method = msg->first_line.u.request.method;
@@ -1029,21 +1036,21 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		sto.fromip.len = strlen(sto.fromip_buff);
 	}
 
-	strcpy(statusbuf, int2str(sl_param->code, &sto.status.len));
+	strcpy(statusbuf, int2str(slcbp->code, &sto.status.len));
 	sto.status.s = statusbuf;
 		
 	memset(&to_ip, 0, sizeof(struct ip_addr));
-	if(sl_param->dst==0)
+	if(slcbp->dst==0)
 	{
 		sto.toip.s = "any:255.255.255.255";
 		sto.toip.len = 19;
 	} else {
-		su2ip_addr(&to_ip, sl_param->dst);
+		su2ip_addr(&to_ip, &slcbp->dst->to);
 		siptrace_copy_proto(req->rcv.proto, sto.toip_buff);
 		strcat(sto.toip_buff, ip_addr2a(&to_ip));
 		strcat(sto.toip_buff, ":");
 		strcat(sto.toip_buff,
-				int2str((unsigned long)su_getport(sl_param->dst), &len));
+				int2str((unsigned long)su_getport(&slcbp->dst->to), &len));
 		sto.toip.s = sto.toip_buff;
 		sto.toip.len = strlen(sto.toip_buff);
 	}
