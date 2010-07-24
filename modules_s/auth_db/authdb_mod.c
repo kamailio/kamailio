@@ -73,11 +73,6 @@ static int mod_init(void);
 static int authdb_fixup(void** param, int param_no);
 
 
-/*
- * Pointer to reply function in stateless module
- */
-sl_api_t sl;
-
 
 #define USERNAME_COL "auth_username"
 #define DID_COL "did"

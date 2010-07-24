@@ -34,7 +34,6 @@
 #include "../../str.h"
 #include "../../lib/srdb2/db.h"
 #include "../../modules_s/auth/api.h"
-#include "../sl/sl.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -61,11 +60,6 @@ extern auth_api_s_t auth_api;
 extern str* credentials;
 extern int credentials_n;
 
-
-/*
- * Pointer to reply function in stateless module
- */
-extern sl_api_t sl;
 
 /* structure holding information for a table (holds
  * only pregenerated DB queries now) */
