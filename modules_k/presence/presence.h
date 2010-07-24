@@ -38,7 +38,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../modules/tm/tm_load.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../lib/srdb1/db.h"
 #include "../../parser/parse_from.h"
 #include "event_list.h"
@@ -46,6 +46,9 @@
 
 /* TM bind */
 extern struct tm_binds tmb;
+
+extern sl_api_t slb;
+
 /* DB module bind */
 extern db_func_t pa_dbf;
 extern db1_con_t* pa_db;
@@ -61,7 +64,6 @@ extern int pid;
 extern int startup_time;
 extern char *to_tag_pref;
 extern int expires_offset;
-extern struct sl_binds slb;
 extern str server_address;
 extern int max_expires;
 extern int fallback2db;

@@ -123,7 +123,7 @@ int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 		goto error;
 	}
 
-	if( slb.send_reply(msg, reply_code, &su_200_rpl)== -1)
+	if(slb.freply(msg, reply_code, &su_200_rpl) < 0)
 	{
 		LM_ERR("sending reply\n");
 		goto error;

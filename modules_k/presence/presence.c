@@ -64,7 +64,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
 #include "../../modules/tm/tm_load.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/hash_func.h"
@@ -102,8 +102,8 @@ char* to_tag_pref = "10";
 
 /* TM bind */
 struct tm_binds tmb;
-/* SL bind */
-struct sl_binds slb;
+/* SL API structure */
+sl_api_t slb;
 
 /** module functions */
 
@@ -234,10 +234,9 @@ static int mod_init(void)
 	else
 		server_address.len= 0;
 
-	/* load SL API */
-	if(load_sl_api(&slb)==-1)
-	{
-		LM_ERR("Can't load sl functions. Module SL not loaded?\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
