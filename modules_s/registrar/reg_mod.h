@@ -35,7 +35,7 @@
 #include "../../qvalue.h"
 #include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
-#include "../sl/sl.h"
+#include "../../modules/sl/sl.h"
 
 extern int default_expires;
 extern qvalue_t default_q;
@@ -54,7 +54,7 @@ extern int max_contacts;
 
 extern usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
-extern sl_api_t sl;
+extern sl_api_t slb;
 
 extern avp_ident_t avpid_code, avpid_reason, avpid_contact;
 

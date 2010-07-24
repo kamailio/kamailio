@@ -88,7 +88,7 @@ avp_ident_t avpid_code, avpid_reason, avpid_contact;
 /*
  * sl module api
  */
-sl_api_t sl;
+sl_api_t slb;
 
 
 /*
@@ -209,21 +209,15 @@ static int parse_attr_params(void)
  */
 static int mod_init(void)
 {
-	bind_sl_t bind_sl;
 	bind_usrloc_t bind_usrloc;
 
 	DBG("registrar - initializing\n");
 
-             /*
-              * We will need sl_send_reply from stateless
-	      * module for sending replies
-	      */
-        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
-	if (!bind_sl) {
-		ERR("This module requires sl module\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	if (bind_sl(&sl) < 0) return -1;
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {

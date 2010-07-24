@@ -294,7 +294,8 @@ int send_reply(struct sip_msg* _m)
 	char* buf;
 
 	if (contact.data_len > 0) {
-		add_lump_rpl( _m, contact.buf, contact.data_len, LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
+		add_lump_rpl( _m, contact.buf, contact.data_len,
+				LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
 		contact.data_len = 0;
 	}
 
@@ -307,7 +308,8 @@ int send_reply(struct sip_msg* _m)
 	}
 	
 	if (code != 200) {
-		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
+		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len
+				+ CRLF_LEN + 1);
 		if (!buf) {
 			LOG(L_ERR, "send_reply(): No memory left\n");
 			return -1;
@@ -320,7 +322,7 @@ int send_reply(struct sip_msg* _m)
 
 	}
 
-	if (sl.reply(_m, code, msg) == -1) {
+	if (slb.zreply(_m, code, msg) == -1) {
 		ERR("Error while sending %ld %s\n", code, msg);
 		return -1;
 	} else return 0;	
