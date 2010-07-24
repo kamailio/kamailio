@@ -47,7 +47,7 @@ extern int _osp_redir_uri;
 extern int_str _osp_snid_avpname;
 extern unsigned short _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
-extern auth_api_t osp_auth;
+extern auth_api_k_t osp_auth;
 
 const int OSP_FIRST_ROUTE = 1;
 const int OSP_NEXT_ROUTE = 0;
