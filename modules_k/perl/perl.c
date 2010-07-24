@@ -36,7 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../rr/api.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM
@@ -64,8 +64,8 @@ int unsafemodfnc = 0;
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
 
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 /*
  * Module destroy function prototype
@@ -331,15 +331,9 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	/**
-	 * We will need sl_send_reply from stateless
-	 * module for sending replies
-	 */
-
-
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
