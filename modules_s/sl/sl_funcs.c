@@ -60,6 +60,7 @@
 #include "../../parser/parse_to.h"
 #include "sl_stats.h"
 #include "sl_funcs.h"
+#include "sl.h"
 
 
 /* to-tag including pre-calculated and fixed part */
@@ -72,9 +73,11 @@ static char           *tag_suffix;
 static unsigned int  *sl_timeout;
 
 
+/*!
+ * init sl internal structures
+ */
 int sl_startup()
 {
-
 	init_tags( sl_tag.s, &tag_suffix,
 			"SER-stateless",
 			SL_TOTAG_SEPARATOR );
@@ -91,9 +94,9 @@ int sl_startup()
 	return 1;
 }
 
-
-
-
+/*!
+ * free sl internal structures
+ */
 int sl_shutdown()
 {
 	if (sl_timeout)
@@ -101,36 +104,49 @@ int sl_shutdown()
 	return 1;
 }
 
-int sl_send_reply(struct sip_msg *msg , int code, char* reason)
+/*!
+ * get the To-tag for stateless reply
+ */
+int sl_get_reply_totag(struct sip_msg *msg, str *totag)
 {
-	char *buf, *dset;
-	unsigned int len;
+	if(msg==NULL || totag==NULL)
+		return -1;
+	calc_crc_suffix(msg, tag_suffix);
+	*totag = sl_tag;
+	return 1;
+}
+
+
+/*!
+ * helper function for stateless reply
+ */
+int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
+{
+	str buf = {0, 0};
+	str dset = {0, 0};
 	struct dest_info dst;
 	struct bookmark dummy_bm;
-	int backup_mhomed, ret, dset_len;
+	int backup_mhomed, ret;
 
 
-	if ( msg->first_line.u.request.method_value==METHOD_ACK)
-	{
-		LOG(L_WARN, "Warning: sl_send_reply: I won't send a reply for ACK!!\n");
+	if (msg->first_line.u.request.method_value==METHOD_ACK)
 		goto error;
-	}
+
 	init_dest_info(&dst);
 	if (reply_to_via) {
-		if (update_sock_struct_from_via(  &dst.to, msg, msg->via1 )==-1)
+		if (update_sock_struct_from_via(&dst.to, msg, msg->via1 )==-1)
 		{
-			LOG(L_ERR, "ERROR: sl_send_reply: "
-				"cannot lookup reply dst: %s\n",
-				msg->via1->host.s );
+			LOG(L_ERR, "ERROR: sl_reply_helper: cannot lookup reply dst: %s\n",
+				msg->via1->host.s);
 			goto error;
 		}
-	} else update_sock_struct_from_ip( &dst.to, msg );
+	} else update_sock_struct_from_ip(&dst.to, msg);
 
 	/* if that is a redirection message, dump current message set to it */
 	if (code>=300 && code<400) {
-		dset=print_dset(msg, &dset_len);
-		if (dset) {
-			add_lump_rpl(msg, dset, dset_len, LUMP_RPL_HDR);
+		dset.s=print_dset(msg, &dset.len);
+		if (dset.s) {
+			add_lump_rpl(msg, dset.s, dset.len, LUMP_RPL_HDR);
 		}
 	}
 
@@ -142,12 +158,19 @@ int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 		(msg->to || (parse_headers(msg,HDR_TO_F, 0)!=-1 && msg->to))
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
-		calc_crc_suffix( msg, tag_suffix );
-		buf = build_res_buf_from_sip_req(code,reason,&sl_tag,msg,&len,&dummy_bm);
+		if(tag!=NULL && tag->s!=NULL) {
+			buf.s = build_res_buf_from_sip_req(code, reason, tag,
+						msg, (unsigned int*)&buf.len, &dummy_bm);
+		} else {
+			calc_crc_suffix( msg, tag_suffix );
+			buf.s = build_res_buf_from_sip_req(code,reason, &sl_tag, msg,
+					(unsigned int*)&buf.len, &dummy_bm);
+		}
 	} else {
-		buf = build_res_buf_from_sip_req(code,reason,0,msg,&len,&dummy_bm);
+		buf.s = build_res_buf_from_sip_req(code, reason, 0, msg,
+				(unsigned int*)&buf.len, &dummy_bm);
 	}
-	if (!buf)
+	if (!buf.s)
 	{
 		DBG("DEBUG: sl_send_reply: response building failed\n");
 		goto error;
@@ -169,9 +192,9 @@ int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 	dst.comp=msg->via1->comp_no;
 #endif
 	dst.send_flags=msg->rpl_send_flags;
-	ret = msg_send(&dst, buf, len);
+	ret = msg_send(&dst, buf.s, buf.len);
 	mhomed=backup_mhomed;
-	pkg_free(buf);
+	pkg_free(buf.s);
 
 	if (ret<0) {
 		goto error;
@@ -187,6 +210,57 @@ error:
 	return -1;
 }
 
+/*! wrapper of sl_reply_helper - reason is charz, tag is null */
+int sl_send_reply(struct sip_msg *msg, int code, char *reason)
+{
+	return sl_reply_helper(msg, code, reason, 0);
+}
+
+/*! wrapper of sl_reply_helper - reason is str, tag is null */
+int sl_send_reply_str(struct sip_msg *msg, int code, str *reason)
+{
+	char *r;
+	int ret;
+
+	if(reason->s[reason->len-1]=='\0') {
+		r = reason->s;
+	} else {
+		r = as_asciiz(reason);
+		if (r == NULL)
+		{
+			LM_ERR("no pkg for reason phrase\n");
+			return -1;
+		}
+	}
+
+	ret = sl_reply_helper(msg, code, r, 0);
+
+    if (r!=reason->s) pkg_free(r);
+	return ret;
+}
+
+/*! wrapper of sl_reply_helper - reason is str, tag is str */
+int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag)
+{
+	char *r;
+	int ret;
+
+	if(reason->s[reason->len-1]=='\0') {
+		r = reason->s;
+	} else {
+		r = as_asciiz(reason);
+		if (r == NULL)
+		{
+			LM_ERR("no pkg for reason phrase\n");
+			return -1;
+		}
+	}
+
+	ret = sl_reply_helper(msg, code, r, tag);
+
+    if (r!=reason->s) pkg_free(r);
+	return ret;
+}
 
 int sl_reply_error(struct sip_msg *msg )
 {
@@ -253,4 +327,69 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 pass_it:
 	return 1;
 }
+
+/**
+ * SL callbacks handling
+ */
+
+static sl_cbelem_t *_sl_cbelem_list = NULL;
+
+void sl_destroy_callbacks_list(void)
+{
+	sl_cbelem_t *p1;
+	sl_cbelem_t *p2;
+
+	p1 = _sl_cbelem_list;
+	while(p1) {
+		p2 = p1;
+		p1 = p1->next;
+		pkg_free(p2);
+	}
+}
+
+int sl_register_callback(sl_cbelem_t *cbe)
+{
+	sl_cbelem_t *p1;
+
+	if(cbe==NULL) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	p1 = (sl_cbelem_t*)pkg_malloc(sizeof(sl_cbelem_t));
+
+	if(p1==NULL) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+
+	memcpy(p1, cbe, sizeof(sl_cbelem_t));
+	p1->next = _sl_cbelem_list;
+	_sl_cbelem_list = p1;
+
+	return 0;
+}
+
+void sl_run_callbacks(unsigned int type, struct sip_msg *req,
+		int code, str *reason, str *reply, struct dest_info *dst)
+{
+	sl_cbp_t param;
+	sl_cbelem_t *p1;
+
+	/* memset(&cbp, 0, sizeof(sl_cbp_t)); */
+	param.type   = type;
+	param.req    = req;
+	param.code   = code;
+	param.reason = reason;
+	param.reply  = reply;
+	param.dst    = dst;
+
+	for(p1=_sl_cbelem_list; p1; p1=p1->next) {
+		if (p1->type&type) {
+			LM_DBG("execute callback for event type %d\n", type);
+			param.cbp = p1->cbp;
+			p1->cbf(&param);
+		}
+	}
+}
+
 

@@ -1,28 +1,7 @@
 /*
  * $Id$
  *
- * sl module
- *
- *
- * ************************************************ *
- * * Bogdan's Source Memorial                       *
- * *                                                *
- * * Welcome, pilgrim! This is one of rare places  *
- * * kept untouched in memory of brave heart,       *
- * * Bogdan, one of most active ser contributors,   *
- * * and winner of the longest line of code content.*
- * *                                                *
- * * Please, preserve this codework heritage, as    *
- * * most of other work has been smashed away during*
- * * extensive clean-up floods.                     *
- * *                                                *
- * * Hereby, we solicit you to adopt this historical*
- * * piece of code. For $100, your name will be     *
- * * be printed in this banner and we will use      *
- * * collected funds to create and display an ASCII *
- * * statue of Bogdan.                              *
- * **************************************************
- *
+ * sl module - stateless reply
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -57,6 +36,23 @@
  *              the request (bogdan)
  */
 
+/**
+ * @file
+ * @brief SL :: module definitions
+ *
+ * @ingroup sl
+ * Module: @ref sl
+ */
+
+/*!
+ * @defgroup sl SL :: The SER SL Module
+ *
+ * The SL module allows SER to act as a stateless UA server and
+ * generate replies to SIP requests without keeping state. That is beneficial
+ * in many scenarios, in which you wish not to burden server's memory and scale
+ * well.
+ */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -68,6 +64,9 @@
 #include "../../ut.h"
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
+
+#include "../../modules/tm/tm_load.h"
+
 #include "sl_stats.h"
 #include "sl_funcs.h"
 #include "sl.h"
@@ -77,7 +76,11 @@ MODULE_VERSION
 static int default_code = 500;
 static str default_reason = STR_STATIC_INIT("Internal Server Error");
 
+static int sl_bind_tm = 1;
+static struct tm_binds tmb;
+
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
+static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
 static int bind_sl(sl_api_t* api);
 static int mod_init(void);
@@ -86,11 +89,15 @@ static void mod_destroy();
 static int fixup_sl_reply(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,             2, fixup_sl_reply, REQUEST_ROUTE},
-	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply, REQUEST_ROUTE},
-	{"sl_reply_error", w_sl_reply_error,            0, 0,              REQUEST_ROUTE},
+	{"sl_send_reply",  w_sl_send_reply,             2, fixup_sl_reply,
+		REQUEST_ROUTE},
+	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply,
+		REQUEST_ROUTE},
+	{"send_reply",     w_send_reply,                2, fixup_sl_reply,
+		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"sl_reply_error", w_sl_reply_error,            0, 0,
+		REQUEST_ROUTE},
 	{"bind_sl",        (cmd_function)bind_sl,       0, 0,              0},
-	{"api_sl_reply",   (cmd_function)sl_send_reply, 2, 0,              0},
 	{0,0,0,0,0}
 };
 
@@ -99,8 +106,10 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"default_code",   PARAM_INT, &default_code},
-    {"default_reason", PARAM_STR, &default_reason},
+	{"default_code",   PARAM_INT, &default_code},
+	{"default_reason", PARAM_STR, &default_reason},
+	{ "bind_tm",       PARAM_INT, &sl_bind_tm },
+
     {0, 0, 0}
 };
     
@@ -133,12 +142,26 @@ static int mod_init(void)
 		return -1;
 	}
 
-	     /* if SL loaded, filter ACKs on beginning */
+	/* if SL loaded, filter ACKs on beginning */
 	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQUEST_CB, 0 )<0) {
 		ERR("Failed to install SCRIPT callback\n");
 		return -1;
 	}
-	sl_startup();
+	if(sl_startup()<0)
+	{
+		ERR("Failed to do startup tasks\n");
+		return -1;
+	}
+
+	if(sl_bind_tm!=0)
+	{
+		if(load_tm_api(&tmb)==-1)
+		{
+			LM_INFO("could not bind tm module - only stateless mode"
+					" available\n");
+			sl_bind_tm=0;
+		}
+	}
 
 	return 0;
 }
@@ -162,6 +185,13 @@ static void mod_destroy()
 }
 
 
+/**
+ * @brief Small wrapper around sl_send_reply
+ *
+ * Warapper around sl_send_rply() which accepts parameters that include
+ * config variables
+ *
+ */
 static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
 {
     int code, ret;
@@ -169,50 +199,163 @@ static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
     char* r;
 
     if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
-	code = default_code;
+		code = default_code;
     }
     
     if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
-	reason = default_reason;;
+		reason = default_reason;;
     }
 
-    r = as_asciiz(&reason);
-    if (r == NULL) r = default_reason.s;
-    ret = sl_send_reply(msg, code, r);
-    if (r) pkg_free(r);
+	if(reason.s[reason.len-1]=='\0') {
+		r = reason.s;
+	} else {
+		r = as_asciiz(&reason);
+		if (r == NULL) r = default_reason.s;
+	}
+	ret = sl_send_reply(msg, code, r);
+    if (r!=reason.s) pkg_free(r);
     return ret;
 }
 
 
+/**
+ * @brief Small wrapper around sl_reply_error
+ */
 static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
 {
 	return sl_reply_error( msg );
 }
 
+/**
+ * @brief send stateful reply if transaction was created
+ *
+ * Check if transation was created for respective SIP request and reply
+ * in stateful mode, otherwise send stateless reply
+ *
+ * @param msg - SIP message structure
+ * @param code - reply status code
+ * @param reason - reply reason phrase
+ * @return 1 for success and -1 for failure
+ */
+int send_reply(struct sip_msg *msg, int code, str *reason)
+{
+    char *r = NULL;
+	struct cell *t;
+	int ret = 1;
 
+	if(reason->s[reason->len-1]=='\0') {
+		r = reason->s;
+	} else {
+		r = as_asciiz(reason);
+		if (r == NULL)
+		{
+			LM_ERR("no pkg for reason phrase\n");
+			return -1;
+		}
+	}
+
+	if(sl_bind_tm!=0)
+	{
+		t = tmb.t_gett();
+		if(t!= NULL && t!=T_UNDEFINED)
+		{
+			if(tmb.t_reply(msg, code, r)< 0)
+			{
+				LM_ERR("failed to reply stateful (tm)\n");
+				goto error;
+			}
+			LM_DBG("reply in stateful mode (tm)\n");
+			goto done;
+		}
+	}
+
+	LM_DBG("reply in stateless mode (sl)\n");
+	ret = sl_send_reply(msg, code, r);
+
+done:
+	if(r!=reason->s) pkg_free(r);
+	return ret;
+
+error:
+	if(r!=reason->s) pkg_free(r);
+	return -1;
+}
+
+/**
+ * @brief Small wrapper around send_reply
+ */
+static int w_send_reply(struct sip_msg* msg, char* p1, char* p2)
+{
+    int code;
+    str reason;
+
+    if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+		code = default_code;
+    }
+
+    if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+		reason = default_reason;
+    }
+
+	return send_reply(msg, code, &reason);
+}
+
+/**
+ * @brief store To-tag value in totag parameter
+ */
+int get_reply_totag(struct sip_msg *msg, str *totag)
+{
+	struct cell * t;
+	if(msg==NULL || totag==NULL)
+		return -1;
+	if(sl_bind_tm!=0)
+	{
+		t = tmb.t_gett();
+		if(t!= NULL && t!=T_UNDEFINED)
+		{
+			if(tmb.t_get_reply_totag(msg, totag)< 0)
+			{
+				LM_ERR("failed to get totag (tm)\n");
+				return -1;
+			}
+			LM_DBG("totag stateful mode (tm)\n");
+			return 1;
+		}
+	}
+
+	LM_DBG("totag stateless mode (sl)\n");
+	return sl_get_reply_totag(msg, totag);
+}
+
+
+/**
+ * @brief fixup for SL reply config file functions
+ */
 static int fixup_sl_reply(void** param, int param_no)
 {
 	if (param_no == 1) {
 		return fixup_var_int_12(param, 1);
 	} else if (param_no == 2) {
-	        return fixup_var_str_12(param, 2);
+		return fixup_var_str_12(param, 2);
 	}
 	return 0;
 }
 
 
+/**
+ * @brief bind functions to SL API structure
+ */
 static int bind_sl(sl_api_t* api)
 {
 	if (!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
-
-	api->reply = (sl_send_reply_f)find_export("api_sl_reply", 2, 0);
-	if (api->reply == 0) {
-		ERR("Can't bind sl_reply functionn");
-		return -1;
-	}
+	api->zreply = sl_send_reply;
+	api->sreply = sl_send_reply_str;
+	api->dreply = sl_send_reply_dlg;
+	api->freply = send_reply;
+	api->get_reply_totag = get_reply_totag;
 
 	return 0;
 }

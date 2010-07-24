@@ -39,10 +39,13 @@
 int sl_startup();
 int sl_shutdown();
 
-int sl_send_reply(struct sip_msg* msg, int code, char* reason);
+int sl_send_reply(struct sip_msg *msg, int code, char *reason);
+int sl_send_reply_str(struct sip_msg *msg, int code, str *reason);
+int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag);
 
-int sl_filter_ACK(struct sip_msg*, unsigned int flags, void *bar );
-int sl_reply_error(struct sip_msg *msg );
+int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar);
+int sl_reply_error(struct sip_msg *msg);
 
+int sl_get_reply_totag(struct sip_msg *msg, str *totag);
 
 #endif
