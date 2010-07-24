@@ -3,14 +3,6 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="sl.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </sectioninfo>
 
     <title>Functions</title>
 
@@ -45,6 +37,43 @@ sl_send_reply("404", "Not found");
 	</example>
     </section>
     
+	<section id="send_reply">
+		<title>
+		<function moreinfo="none">send_reply(code, reason)</function>
+		</title>
+		<para>
+		For the current request, a reply is sent back having the given code 
+		and text reason. The reply is sent stateful or stateless, depending of 
+		the TM module: if the transaction for current request is
+		created, then the reply is sent stateful, otherwise stateless.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>code</emphasis> - Return code.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>reason</emphasis> - Reason phrase.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>send_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+send_reply("404", "Not found");
+...
+send_reply("403", "Invalid user - $fU");
+...
+</programlisting>
+		</example>
+	</section>
+
     <section id="sl_reply_error">
 	<title>
 	    <function>sl_reply_error()</function>

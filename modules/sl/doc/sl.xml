@@ -13,18 +13,19 @@
 		    <email>iancu@fokus.fraunhofer.de</email>
 		</address>
 	    </author>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<address>
+		    <email>miconda@gmail.com</email>
+		</address>
+	    </author>
 	</authorgroup>
 	<copyright>
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-
     </sectioninfo>
 
     <title>SL Module</title>

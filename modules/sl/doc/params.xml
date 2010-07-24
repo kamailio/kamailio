@@ -3,15 +3,56 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="sl.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </sectioninfo>
 
     <title>Parameters</title>
+
+	<section id="default_code">
+		<title><varname>default_code</varname> (int)</title>
+		<para>
+		Default reply status code.
+		</para>
+		<para>
+		Default value is 500.
+		</para>
+		<example>
+		<title>default_code example</title>
+		<programlisting format="linespecific">
+modparam("sl", "default_code", 505)
+</programlisting>
+		</example>
+	</section>
+
+	<section id="default_reason">
+		<title><varname>default_reason</varname> (str)</title>
+		<para>
+		Default reply reason phrase.
+		</para>
+		<para>
+		Default value is 'Internal Server Error'.
+		</para>
+		<example>
+		<title>default_reason example</title>
+		<programlisting format="linespecific">
+modparam("sl", "default_reason", "Server Error")
+</programlisting>
+		</example>
+	</section>
+
+	<section id="bind_tm">
+		<title><varname>bind_tm</varname> (int)</title>
+		<para>
+		Controls if SL module should attempt to bind to TM module in order
+		to send stateful reply when the transaction is created.
+		</para>
+		<para>
+		Default value is 1 (enabled).
+		</para>
+		<example>
+		<title>bind_tm example</title>
+		<programlisting format="linespecific">
+modparam("sl", "bind_tm", 0)  # feature disabled
+</programlisting>
+		</example>
+	</section>
 
 </section>
