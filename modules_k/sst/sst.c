@@ -47,7 +47,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "sst_handlers.h" /* also includes sr_module.h needed by
                              handlers */
 
@@ -56,8 +56,8 @@ MODULE_VERSION
 static int mod_init(void);
 
 
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 /*
  * statistic variables 
@@ -191,9 +191,9 @@ static int mod_init(void)
 		}
 	}
 
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("failed to load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
