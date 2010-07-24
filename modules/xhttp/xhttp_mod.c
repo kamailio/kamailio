@@ -35,7 +35,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../receive.h"
 #include "../../msg_translator.h"
-#include "../../modules_k/sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../nonsip_hooks.h"
 #include "../../action.h"
 #include "../../script_cb.h"
@@ -60,8 +60,8 @@ static int xhttp_route_no=DEFAULT_RT;
 static char* xhttp_url_match = NULL;
 static regex_t xhttp_url_regexp;
 
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 
 static cmd_export_t cmds[] = {
@@ -119,9 +119,9 @@ static int mod_init(void)
 	}
 	xhttp_route_no=route_no;
 	
-	if (load_sl_api(&slb)!=0)
-	{
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
@@ -375,7 +375,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 			return -1;
 		}
 	}
-	if (slb.send_reply(msg, code, reason) < 0)
+	if (slb.freply(msg, code, reason) < 0)
 	{
 		LM_ERR("Error while sending reply\n");
 		return -1;
