@@ -106,5 +106,5 @@ int send_resp(struct sip_msg* _m, int _code, str* _reason,
 		}
 	}
 
-	return slb.send_reply(_m, _code, _reason);
+	return slb.freply(_m, _code, _reason);
 }

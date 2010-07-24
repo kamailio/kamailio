@@ -36,7 +36,7 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../lock_ops.h"
 
 #define MAX_NONCE_INDEX     100000
@@ -51,8 +51,8 @@ extern str rpid_prefix;       /*!< Remote-Party-ID prefix */
 extern str rpid_suffix;       /*!< Remote-Party-ID suffix */
 extern str realm_prefix;      /*!< strip off auto-generated realm */
 
-/*! SL binds */
-extern struct sl_binds slb;
+/*! SL API structure */
+extern sl_api_t slb;
 
 /* nonce index */
 extern gen_lock_t* nonce_lock;

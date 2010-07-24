@@ -54,7 +54,6 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 #include "../../lock_alloc.h"
-#include "../sl/sl_api.h"
 #include "auth_mod.h"
 #include "challenge.h"
 #include "rpid.h"
@@ -84,8 +83,8 @@ static int mod_init(void);
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2);
 int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2);
 
-/*! SL binds */
-struct sl_binds slb;
+/*! SL API structure */
+sl_api_t slb;
 
 
 /*
@@ -228,9 +227,9 @@ static int mod_init(void)
 {
 	str stmp;
 	
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
