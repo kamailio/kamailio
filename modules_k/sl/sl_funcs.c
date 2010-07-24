@@ -171,7 +171,6 @@ int sl_get_reply_totag(struct sip_msg *msg, str *totag)
 int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 {
 	str buf;
-	union sockaddr_union to;
 	char *dset;
 	int dset_len;
 	struct bookmark dummy_bm;
@@ -233,7 +232,7 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 		goto error;
 	}
 
-	run_sl_callbacks( SLCB_REPLY_OUT, msg, &buf, code, text, &to );
+	run_sl_callbacks( SLCB_REPLY_OUT, msg, &buf, code, text, &dst.to );
 
 	/* supress multhoming support when sending a reply back -- that makes sure
 	   that replies will come from where requests came in; good for NATs
