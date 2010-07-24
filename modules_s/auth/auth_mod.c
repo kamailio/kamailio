@@ -49,7 +49,7 @@
 #include "../../data_lump.h"
 #include "../../error.h"
 #include "../../ut.h"
-#include "../sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "auth_mod.h"
 #include "challenge.h"
 #include "api.h"

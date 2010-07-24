@@ -38,7 +38,7 @@
 #define AUTH_MOD_H
 
 #include "../../str.h"
-#include "../sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
 #include "../../parser/digest/digest.h"
 #include "nonce.h" /* auth_extra_checks & AUTH_CHECK flags */
