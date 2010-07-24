@@ -86,7 +86,8 @@ int sd_lookup(struct sip_msg* _msg, char* _index, char* _str2)
 	
 	tables[i].lookup_num->match[2].v.lstr = _msg->parsed_uri.user;
 
-	DBG("speeddial: Looking up (uid:%.*s,username:%.*s,did:%.*s)\n", uid.len, uid.s,
+	DBG("speeddial: Looking up (uid:%.*s,username:%.*s,did:%.*s)\n",
+			uid.len, uid.s,
 	    _msg->parsed_uri.user.len, _msg->parsed_uri.user.s,
 	    did.len, did.s);
 	
@@ -96,7 +97,8 @@ int sd_lookup(struct sip_msg* _msg, char* _index, char* _str2)
 	}
 
 	if (res == NULL) {
-		DBG("speeddial: No SIP URI found for speeddial (num:%.*s, uid:%.*s, did:%.*s)\n",
+		DBG("speeddial: No SIP URI found for speeddial (num:%.*s, uid:%.*s,"
+			" did:%.*s)\n",
 			_msg->parsed_uri.user.len,
 			_msg->parsed_uri.user.s,
 			uid.len, uid.s,
@@ -120,7 +122,8 @@ int sd_lookup(struct sip_msg* _msg, char* _index, char* _str2)
 	}
 
 	if (rec == NULL) {
-		DBG("speeddial: No usable SIP URI found for (num:%.*s, uid:%.*s, did:%.*s)\n",
+		DBG("speeddial: No usable SIP URI found for (num:%.*s, uid:%.*s,"
+			" did:%.*s)\n",
 			_msg->parsed_uri.user.len,
 			_msg->parsed_uri.user.s,
 			uid.len, uid.s,
@@ -150,13 +153,13 @@ int sd_lookup(struct sip_msg* _msg, char* _index, char* _str2)
 	return 1;
 
 err_server:
-	if (sl.reply(_msg, 500, "Server Internal Error") == -1)
+	if (slb.zreply(_msg, 500, "Server Internal Error") == -1)
 	{
 		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
 	}
 	return 0;
 err_badreq:
-	if (sl.reply(_msg, 400, "Bad Request") == -1)
+	if (slb.zreply(_msg, 400, "Bad Request") == -1)
 	{
 		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
 	}

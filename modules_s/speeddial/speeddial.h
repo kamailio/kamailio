@@ -34,7 +34,7 @@
 #define _SPEEDDIAL_H_
 
 #include "../../lib/srdb2/db.h"
-#include "../sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -55,6 +55,6 @@ struct db_table_name {
 extern struct db_table_name* tables;
 extern unsigned int tables_no;
 
-extern sl_api_t sl;
+extern sl_api_t slb;
 
 #endif /* _SPEEDDIAL_H_ */
