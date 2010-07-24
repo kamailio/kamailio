@@ -35,7 +35,7 @@
 #include "mod_options.h"
 #include "../../sr_module.h"
 #include "../../config.h"
-#include "../sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "../../mem/mem.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
@@ -57,9 +57,9 @@ static str cont_param = STR_STATIC_INIT("");
 static int add_cont = ADD_CONT_OFF;
 
 /*
- * sl_send_reply function pointer
+ * sl API structure for stateless reply
  */
-sl_api_t sl;
+sl_api_t slb;
 
 static int mod_init(void);
 static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
@@ -68,7 +68,8 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"options_reply", (cmd_function)opt_reply, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"options_reply", (cmd_function)opt_reply, 0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0}
 };
 
@@ -105,16 +106,11 @@ struct module_exports exports = {
  */
 static int mod_init(void) 
 {
-	bind_sl_t bind_sl;
-
 	DBG("options - initializing\n");
 
-	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
-	if (!bind_sl) {
-		ERR("options: init: module requires sl module\n");
-		return -1;
-	}
-	if (bind_sl(&sl) < 0) {
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
@@ -396,8 +392,8 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar)
 	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
 			LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
 		/* the memory is freed when _msg is destroyed */
-		if (sl.reply(_msg, 200, "OK") == -1) {
-			LOG(L_ERR, "options_reply(): failed to send 200 via send_reply\n");
+		if (slb.zreply(_msg, 200, "OK") < 0) {
+			LOG(L_ERR, "options_reply(): failed to send 200 via sl reply\n");
 			return 0;
 		} else {
 			return 1;
@@ -410,7 +406,7 @@ error:
 	if (rpl_hf.s) {
 		pkg_free(rpl_hf.s);
 	}
-	if (sl.reply(_msg, 500, "Server internal error") == -1) {
+	if (slb.zreply(_msg, 500, "Server internal error") < 0) {
 		LOG(L_ERR, "options_reply(): failed to send 500 via send_reply\n");
 	}
 	return 0;
