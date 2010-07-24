@@ -1278,6 +1278,7 @@ int fixup_var_str_12(void** param, int param_no)
 	if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+	if ((ret = fix_param(FPARAM_PVE, param)) <= 0) return ret;
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
 	ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
 			" failed\n");
