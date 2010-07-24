@@ -48,7 +48,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../lib/kcore/statistics.h"
-#include "../../modules_k/sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../../lib/kmi/mi.h"
 
@@ -62,8 +62,8 @@ MODULE_VERSION
  */
 #define RL_TIMER_INTERVAL 10
 
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 enum {
 	LOAD_SOURCE_CPU,
@@ -303,9 +303,9 @@ static int mod_init(void)
 	timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
 	timer_add(pl_timer, MS_TO_TICKS(1500)); /* Start it after 1500ms */
 
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("failed to load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
@@ -418,7 +418,7 @@ static int pl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 
 	LM_DBG("(%d, %d)\n", low, high);
 
-	if (slb.send_reply != 0) {
+	if (slb.freply != 0) {
 		if (low != 0 && high != 0) {
 			hdr.s = (char *)pkg_malloc(64);
 			if (hdr.s == 0) {
@@ -444,11 +444,11 @@ static int pl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 				return 0;
 			}
 
-			ret = slb.send_reply(msg, pl_drop_code, &pl_drop_reason);
+			ret = slb.freply(msg, pl_drop_code, &pl_drop_reason);
 
 			pkg_free(hdr.s);
 		} else {
-			ret = slb.send_reply(msg, pl_drop_code, &pl_drop_reason);
+			ret = slb.freply(msg, pl_drop_code, &pl_drop_reason);
 		}
 	} else {
 		LM_ERR("Can't send reply\n");
