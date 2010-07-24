@@ -48,9 +48,6 @@
 #include "authdb_mod.h"
 
 
-static str auth_500_err = str_init("Server Internal Error");
-
-
 static inline int get_ha1(struct username* _username, str* _domain,
 			  const str* _table, char* _ha1, db1_res_t** res)
 {
@@ -244,9 +241,6 @@ static inline int authorize(struct sip_msg* _m, gparam_p _realm,
 	res = get_ha1(&cred->digest.username, &domain, &table, ha1, &result);
 	if (res < 0) {
 		/* Error while accessing the database */
-		if (slb.send_reply(_m, 500, &auth_500_err) == -1) {
-			LM_ERR("failed to send 500 reply\n");
-		}
 		return ERROR;
 	}
 	if (res > 0) {

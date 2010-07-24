@@ -29,7 +29,6 @@
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
 #include "../../modules_k/auth/api.h"
-#include "../sl/sl_api.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -54,10 +53,5 @@ extern auth_api_k_t auth_api;
 
 extern struct aaa_avp* credentials;
 extern int credentials_n;
-
-/*
- * Pointer to reply function in stateless module
- */
-extern struct sl_binds slb;
 
 #endif /* AUTHDB_MOD_H */

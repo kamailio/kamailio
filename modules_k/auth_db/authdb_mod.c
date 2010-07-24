@@ -43,7 +43,6 @@
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
 #include "../../modules_k/auth/api.h"
-#include "../sl/sl_api.h"
 #include "aaa_avps.h"
 #include "authorize.h"
 
@@ -70,9 +69,6 @@ static int mod_init(void);
 
 
 static int auth_fixup(void** param, int param_no);
-
-/** SL binds */
-struct sl_binds slb;
 
 #define USER_COL "username"
 #define USER_COL_LEN (sizeof(USER_COL) - 1)
@@ -195,12 +191,6 @@ static int mod_init(void)
 	if (bind_auth(&auth_api) < 0) {
 		LM_ERR("unable to bind auth module\n");
 		return -3;
-	}
-
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("can't load SL API\n");
-		return -1;
 	}
 
 	/* process additional list of credentials */
