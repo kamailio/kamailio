@@ -104,13 +104,14 @@ typedef int (*bind_sl_f)(sl_api_t* api);
  */
 static inline int sl_load_api(sl_api_t *slb)
 {
-	bind_sl_f bind_sl;
+	bind_sl_f bindsl;
 
-	if ( !(bind_sl=(bind_sl_f)find_export("bind_sl", 0, 0))) {
+	bindsl = (bind_sl_f)find_export("bind_sl", 0, 0);
+	if ( bindsl == 0) {
 		LM_ERR("cannot find bind_sl\n");
 		return -1;
 	}
-	if (bind_sl(slb)==-1)
+	if (bindsl(slb)==-1)
 	{
 		LM_ERR("cannot bind sl api\n");
 		return -1;
