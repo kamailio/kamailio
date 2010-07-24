@@ -41,6 +41,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../ut.h"
+#include "../../dset.h"
 
 #include <stdio.h>
 #include <string.h>
