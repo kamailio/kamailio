@@ -43,7 +43,7 @@
 #include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
 #include "../../modules_k/xcap_client/xcap_callbacks.h"
-#include "../../modules_k/sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 
 MODULE_VERSION
 
@@ -87,8 +87,8 @@ static str str_port_col = str_init("port");
 db1_con_t *xcaps_db = NULL;
 db_func_t xcaps_dbf;
 
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 static param_export_t params[] = {
 	{ "db_url",		STR_PARAM, &xcaps_db_url.s    },
@@ -176,9 +176,9 @@ static int mod_init(void)
 	xcaps_dbf.close(xcaps_db);
 	xcaps_db = NULL;
 
-	if (load_sl_api(&slb)!=0)
-	{
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
@@ -260,7 +260,7 @@ static int xcaps_send_reply(sip_msg_t *msg, int code, str *reason,
 			return -1;
 		}
 	}
-	if (slb.send_reply(msg, code, reason) < 0)
+	if (slb.freply(msg, code, reason) < 0)
 	{
 		LM_ERR("Error while sending reply\n");
 		return -1;
