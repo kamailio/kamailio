@@ -25,15 +25,13 @@
 	    </editor>
 	</authorgroup>
 	<copyright>
+	    <year>2010</year>
+	    <holder>asipto.com</holder>
+	</copyright>
+	<copyright>
 	    <year>2006</year>
 	    <holder>voice-system.ro</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </bookinfo>
     <toc></toc>
     
