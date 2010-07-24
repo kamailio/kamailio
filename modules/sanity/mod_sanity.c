@@ -44,7 +44,7 @@ int default_checks = SANITY_DEFAULT_CHECKS;
 int uri_checks = SANITY_DEFAULT_URI_CHECKS;
 strl* proxyrequire_list = NULL;
 
-sl_api_t sl;
+sl_api_t slb;
 
 static int mod_init(void);
 static int sanity_fixup(void** param, int param_no);
@@ -54,9 +54,12 @@ static int sanity_check(struct sip_msg* _msg, char* _foo, char* _bar);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sanity_check", (cmd_function)sanity_check, 0, 0, REQUEST_ROUTE},
-	{"sanity_check", (cmd_function)sanity_check, 1, sanity_fixup, REQUEST_ROUTE},
-	{"sanity_check", (cmd_function)sanity_check, 2, sanity_fixup, REQUEST_ROUTE},
+	{"sanity_check", (cmd_function)sanity_check, 0, 0,
+		REQUEST_ROUTE},
+	{"sanity_check", (cmd_function)sanity_check, 1, sanity_fixup,
+		REQUEST_ROUTE},
+	{"sanity_check", (cmd_function)sanity_check, 2, sanity_fixup,
+		REQUEST_ROUTE},
 	{0, 0, 0, 0}
 };
 
@@ -89,21 +92,15 @@ struct module_exports exports = {
  * initialize module
  */
 static int mod_init(void) {
-	bind_sl_t bind_sl;
 	strl* ptr;
 
 	DBG("sanity initializing\n");
 
-	/*
-	 * We will need sl_send_reply from stateless
-	 * module for sending replies
-	 */
-	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
-	if (!bind_sl) {
-		ERR("This module requires sl module\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-	if (bind_sl(&sl) < 0) return -1;
 
 	DBG("parsing proxy requires string:\n");
 	ptr = parse_str_list(&pr_str);

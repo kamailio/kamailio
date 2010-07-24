@@ -32,7 +32,7 @@
 #define MOD_SANITY_CHK_H
 
 #include "../../str.h"
-#include "../../modules_s/sl/sl.h"
+#include "../../modules/sl/sl.h"
 #include "../../parser/msg_parser.h"
 
 #define SANITY_RURI_SIP_VERSION        (1<<0)
@@ -85,6 +85,6 @@ typedef struct _strlist strl;
 extern int default_checks;
 extern strl* proxyrequire_list;
 
-extern sl_api_t sl;
+extern sl_api_t slb;
 
 #endif /* MOD_SANITY_CHK_H */
