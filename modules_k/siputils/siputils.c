@@ -85,8 +85,8 @@ str opt_accept = str_init(ACPT_DEF);
 str opt_accept_enc = str_init(ACPT_ENC_DEF);
 str opt_accept_lang = str_init(ACPT_LAN_DEF);
 str opt_supported = str_init(SUPT_DEF);
-/** SL binds */
-struct sl_binds opt_slb;
+/** SL API structure */
+sl_api_t opt_slb;
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -160,9 +160,9 @@ static int mod_init(void)
 		}
 	}
 
-		/* load the SL API */
-	if (load_sl_api(&opt_slb)!=0) {
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&opt_slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 	

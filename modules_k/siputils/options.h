@@ -34,7 +34,7 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 
 #define ACPT_STR "Accept: "
 #define ACPT_STR_LEN 8
@@ -56,7 +56,7 @@
 #define ACPT_LAN_DEF "en"
 #define SUPT_DEF ""
 
-extern struct sl_binds opt_slb;
+extern sl_api_t opt_slb;
 
 extern str opt_accept;
 extern str opt_accept_enc;
