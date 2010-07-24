@@ -68,7 +68,7 @@
 #include "../../pvar.h"
 #include "../../lib/kcore/km_ut.h"
 #include "../usrloc/ul_mod.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
 
 #include "save.h"
@@ -133,8 +133,8 @@ stat_var *max_expires_stat;
 stat_var *max_contacts_stat;
 stat_var *default_expire_stat;
 stat_var *default_expire_range_stat;
-/** SL binds */
-struct sl_binds slb;
+/** SL API structure */
+sl_api_t slb;
 
 /*! \brief
  * Exported PV
@@ -251,9 +251,9 @@ static int mod_init(void)
 	}
 #endif
 
-	/* load the SL API */
-	if (load_sl_api(&slb)!=0) {
-		LM_ERR("can't load SL API\n");
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
