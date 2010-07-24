@@ -31,7 +31,7 @@
 #include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
 #include "../../modules/tm/tm_load.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 
 struct cpl_enviroment {
 	char  *log_dir;         /* dir where the user log should be dumped */
@@ -54,7 +54,7 @@ struct cpl_enviroment {
 struct cpl_functions {
 	struct tm_binds tmb;     /* Structure with pointers to tm funcs */
 	usrloc_api_t ulb;        /* Structure with pointers to usrloc funcs */
-	struct sl_binds slb;     /* Structure with pointers to sl funcs */
+	sl_api_t slb;            /* Structure with pointers to sl funcs */
 };
 
 extern struct cpl_enviroment cpl_env;

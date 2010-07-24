@@ -56,7 +56,7 @@
 #include "../../parser/parse_disposition.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/kmi/mi.h"
-#include "../sl/sl_api.h"
+#include "../../modules/sl/sl.h"
 #include "cpl_run.h"
 #include "cpl_env.h"
 #include "cpl_db.h"
@@ -320,10 +320,10 @@ static int cpl_init(void)
 		LM_ERR("can't load TM API\n");
 		goto error;
 	}
-	/* load SL API */
-	if (load_sl_api(&cpl_fct.slb)!=0) {
-		LM_ERR("can't load SL API\n");
-		goto error;
+	/* bind the SL API */
+	if (sl_load_api(&cpl_fct.slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
+		return -1;
 	}
 
 	/* bind to usrloc module if requested */
@@ -851,7 +851,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			goto resume_script;
 
 		/* send a 200 OK reply back */
-		cpl_fct.slb.send_reply( msg, 200, &cpl_ok_rpl);
+		cpl_fct.slb.freply( msg, 200, &cpl_ok_rpl);
 		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -887,7 +887,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto resume_script;
 
 	/* send a 200 OK reply back */
-	cpl_fct.slb.send_reply( msg, 200, &cpl_ok_rpl);
+	cpl_fct.slb.freply( msg, 200, &cpl_ok_rpl);
 
 stop_script:
 	return 0;
@@ -895,7 +895,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.slb.send_reply( msg, cpl_err->err_code, &cpl_err->err_msg);
+	cpl_fct.slb.freply( msg, cpl_err->err_code, &cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }

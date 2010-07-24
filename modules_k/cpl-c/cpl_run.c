@@ -604,7 +604,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 	}
 
 	/* send the reply */
-	i = cpl_fct.slb.send_reply(intr->msg, (int)status, &reason );
+	i = cpl_fct.slb.freply(intr->msg, (int)status, &reason );
 
 	if ( i!=1 ) {
 		LM_ERR("unable to send reject reply!\n");
@@ -720,9 +720,9 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 
 	/* send the reply */
 	if (permanent)
-		i = cpl_fct.slb.send_reply( intr->msg,301,&cpl_301_reason);
+		i = cpl_fct.slb.freply( intr->msg,301,&cpl_301_reason);
 	else
-		i = cpl_fct.slb.send_reply( intr->msg,302,&cpl_302_reason);
+		i = cpl_fct.slb.freply( intr->msg,302,&cpl_302_reason);
 
 	/* msg which I'm working on can be in private memory or is a clone into
 	 * shared memory (if I'm after a failed proxy); So, it's better to removed
