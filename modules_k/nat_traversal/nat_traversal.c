@@ -52,7 +52,7 @@
 #include "../../lib/kcore/statistics.h"
 #include "../dialog/dlg_load.h"
 #include "../../modules/tm/tm_load.h"
-#include "../sl/sl_cb.h"
+#include "../../modules/sl/sl.h"
 
 
 MODULE_VERSION
@@ -235,6 +235,8 @@ static NatTest NAT_Tests[] = {
     {NTNone,           NULL}
 };
 
+/** SL API structure */
+sl_api_t slb;
 
 static cmd_export_t commands[] = {
     {"nat_keepalive",   (cmd_function)NAT_Keepalive, 0, NULL, 0, REQUEST_ROUTE},
@@ -1292,24 +1294,27 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 // callback to handle all SL generated replies
 //
 static void
-__sl_reply_out(unsigned int types, struct sip_msg *request, struct sl_cb_param *param)
+__sl_reply_out(sl_cbp_t *slcbp)
 {
     struct sip_msg reply;
+    struct sip_msg *request;
     time_t expire;
 
+	request = slcbp->req;
     if (request->REQ_METHOD == METHOD_INVITE)
         return;
 
     if ((request->msg_flags & FL_DO_KEEPALIVE) == 0)
         return;
 
-    if (param->code >= 200 && param->code < 300) {
+    if (slcbp->code >= 200 && slcbp->code < 300) {
         memset(&reply, 0, sizeof(struct sip_msg));
-        reply.buf = param->buffer->s;
-        reply.len = param->buffer->len;
+        reply.buf = slcbp->reply->s;
+        reply.len = slcbp->reply->len;
 
-        if (parse_msg(param->buffer->s, param->buffer->len, &reply) != 0) {
-            LM_ERR("cannot parse outgoing SL reply for keepalive information\n");
+        if (parse_msg(reply.buf, reply.len, &reply) != 0) {
+            LM_ERR("cannot parse outgoing SL reply for keepalive"
+					" information\n");
             return;
         }
 
@@ -1702,7 +1707,7 @@ restore_keepalive_state(void)
 static int
 mod_init(void)
 {
-    register_slcb_t register_sl_callback;
+	sl_cbelem_t slcb;
     int *param;
 	modparam_t type;
 
@@ -1712,13 +1717,16 @@ mod_init(void)
         return 0;
     }
 
-    // get SL module callback registration function
-    register_sl_callback = (register_slcb_t)find_export("register_slcb", 0, 0);
-    if (!register_sl_callback) {
-        LM_ERR("cannot load register_slcb from the sl module\n");
-        return -1;
-    }
-    if (register_sl_callback(SLCB_REPLY_OUT, __sl_reply_out, NULL) != 0) {
+	/* bind the SL API */
+	if (sl_load_api(&slb)!=0) {
+		LM_ERR("cannot bind to SL API\n");
+		return -1;
+	}
+    // set SL module callback function
+	memset(&slcb, 0, sizeof(sl_cbelem_t));
+	slcb.type = SLCB_REPLY_READY;
+	slcb.cbf = __sl_reply_out;
+    if (slb.register_cb(&slcb) != 0) {
         LM_ERR("cannot register callback for stateless outgoing replies\n");
         return -1;
     }
