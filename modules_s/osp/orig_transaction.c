@@ -38,7 +38,6 @@
 #include "../../dset.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../../modules_s/auth/api.h"
 #include "orig_transaction.h"
 #include "destination.h"
 #include "osptoolkit.h"
@@ -49,7 +48,6 @@ extern char* _osp_device_ip;
 extern char* _osp_device_port;
 extern int _osp_max_dests;
 extern OSPTPROVHANDLE _osp_provider;
-extern auth_api_s_t osp_auth;
 extern int _osp_redir_uri;
 
 const int OSP_FIRST_ROUTE = 1;
