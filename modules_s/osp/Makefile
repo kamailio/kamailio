@@ -38,12 +38,9 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=osp.so
-DEFS+=-D_POSIX_THREADS
 
-LIBS=$(shell if [ -f /usr/local/lib/libosptk.a ]; then echo "-losptk" ; else echo "-losp" ; fi)
-LIBS+=-lssl -lcrypto -lpthread -lm
-
-
+DEFS+=-D_POSIX_THREADS -I$(LOCALBASE)/include
+LIBS=-L$(LOCALBASE)/lib -losptk -lssl -lcrypto -lpthread -lm
 
 DEFS+=-DSER_MOD_INTERFACE
 
