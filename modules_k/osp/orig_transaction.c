@@ -33,7 +33,7 @@
 #include "../../dset.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../../modules_k/auth/api.h"
+#include "../../modules_k/siputils/siputils.h"
 #include "orig_transaction.h"
 #include "destination.h"
 #include "osptoolkit.h"
@@ -47,7 +47,7 @@ extern int _osp_redir_uri;
 extern int_str _osp_snid_avpname;
 extern unsigned short _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
-extern auth_api_k_t osp_auth;
+extern siputils_api_t osp_siputils;
 
 const int OSP_FIRST_ROUTE = 1;
 const int OSP_NEXT_ROUTE = 0;
@@ -420,7 +420,8 @@ static int ospSetRpid(
     if (strcmp(calling, dest->calling) == 0) {
         /* Do nothing for this case */ 
         result = 1;
-    } else if ((osp_auth.rpid_avp.s.s == NULL) || (osp_auth.rpid_avp.s.len == 0)) {
+    } else if ((osp_siputils.rpid_avp.s.s == NULL)
+				|| (osp_siputils.rpid_avp.s.len == 0)) {
         LM_WARN("rpid_avp is not foune, cannot set rpid avp\n");
         result = -1;
     } else {
@@ -441,7 +442,8 @@ static int ospSetRpid(
 
         rpid.s = buffer;
         rpid.len = strlen(buffer);
-        add_avp(osp_auth.rpid_avp_type | AVP_VAL_STR, (int_str)osp_auth.rpid_avp, (int_str)rpid);
+        add_avp(osp_siputils.rpid_avp_type | AVP_VAL_STR,
+				(int_str)osp_siputils.rpid_avp, (int_str)rpid);
 
         result = 0;
     }

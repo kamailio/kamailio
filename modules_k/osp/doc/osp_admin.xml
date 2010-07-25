@@ -44,7 +44,7 @@
         <para><emphasis>textops</emphasis> -- text based operation</para>
       </listitem>
       <listitem>
-        <para><emphasis>auth</emphasis> -- Remote-Party-ID operattion</para>
+        <para><emphasis>siputils</emphasis> -- Remote-Party-ID operattion</para>
       </listitem>
       <listitem>
         <para><emphasis>OSP Toolkit</emphasis> -- The OSP Toolkit, available from http://sourceforge.net/projects/osp-toolkit, must be built before building &kamailio; with the OSP Module.  For instructions on building &kamailio; with the OSP Toolkit, see http://www.transnexus.com/White%20Papers/Multi-Lateral_Peering_with_Kamailio_V1.4.pdf</para>

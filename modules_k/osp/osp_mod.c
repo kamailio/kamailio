@@ -34,7 +34,7 @@
 
 #include <osp/osp.h>
 #include "../rr/api.h"
-#include "../../modules_k/auth/api.h"
+#include "../../modules_k/siputils/siputils.h"
 #include "osp_mod.h"
 #include "orig_transaction.h"
 #include "term_transaction.h"
@@ -72,7 +72,7 @@ extern unsigned short _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
 
 struct rr_binds osp_rr;
-auth_api_k_t osp_auth;
+siputils_api_t osp_siputils;
 int osp_index[OSP_DEF_SPS];
 
 static int ospInitMod(void);
@@ -167,7 +167,7 @@ struct module_exports exports = {
  */
 static int ospInitMod(void)
 {
-    bind_auth_k_t bind_auth;
+    bind_siputils_t bind_su;
 
     if (ospVerifyParameters() != 0) {
         /* At least one parameter incorrect -> error */
@@ -182,11 +182,11 @@ static int ospInitMod(void)
     }
 
     /* Load the AUTH API */
-    bind_auth = (bind_auth_k_t)find_export("bind_auth_k", 0, 0);
-    if ((bind_auth == NULL) || (bind_auth(&osp_auth) != 0)) {
-        LM_WARN("failed to load the AUTH API. Check if you load the auth module.\n");
+    bind_su = (bind_siputils_t)find_export("bind_siputils", 0, 0);
+    if ((bind_su == NULL) || (bind_su(&osp_siputils) != 0)) {
+        LM_WARN("failed to load the SIPUTILS API. Check if you load the auth module.\n");
         LM_WARN("rpid_avp & rpid_avp_type is required for calling number translation\n");
-        memset(&osp_auth, 0, sizeof(osp_auth));
+        memset(&osp_siputils, 0, sizeof(osp_siputils));
     }
 
     if (ospInitTm() < 0) {
