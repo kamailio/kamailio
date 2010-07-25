@@ -42,7 +42,7 @@
 #include "../../error.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/api.h"
 #include "aaa_avps.h"
 #include "authorize.h"
 
