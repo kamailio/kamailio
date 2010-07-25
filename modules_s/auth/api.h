@@ -39,7 +39,21 @@
 #include "challenge.h"
 #include "rfc2617.h"
 
+/**
+ * return codes to config by auth functions
+ */
+typedef enum auth_cfg_result {
+	AUTH_USER_UNKNOWN = -3,     /*!< User not found */
+	AUTH_INVALID_PASSWORD = -2, /*!< Invalid password */
+	AUTH_ERROR = -1,            /*!< Error occurred */
+	AUTH_DROP = 0,              /*!< Error, stop config execution */
+	AUTH_OK = 1                 /*!< Success */
+} auth_cfg_result_t;
 
+
+/**
+ * return codes to auth API functions
+ */
 typedef enum auth_result {
 	ERROR = -2 ,        /* Error occurred, a reply has been sent out -> return 0 to the ser core */
 	NOT_AUTHENTICATED,  /* Don't perform authentication, credentials missing */

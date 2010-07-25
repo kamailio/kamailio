@@ -190,7 +190,7 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 */
 	if (cred->response.len != 32) {
 		DBG("check_response: Receive response len != 32\n");
-		return 1;
+		return BAD_CREDENTIALS;
 	}
 
 	/*
@@ -210,10 +210,10 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 */
 	if (!memcmp(resp, cred->response.s, 32)) {
 		DBG("check_response: Authorization is OK\n");
-		return 0;
+		return AUTHENTICATED;
 	} else {
 		DBG("check_response: Authorization failed\n");
-		return 2;
+		return NOT_AUTHENTICATED;
 	}
 }
 

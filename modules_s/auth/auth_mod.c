@@ -399,7 +399,7 @@ static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
 	struct qp *qop = NULL;
 
 	cred = 0;
-	ret = -1;
+	ret = AUTH_ERROR;
 
 	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
 		LM_ERR("failed to get realm value\n");
@@ -430,24 +430,24 @@ static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
 		case ERROR:
 		case BAD_CREDENTIALS:
 			LM_DBG("error or bad credentials\n");
-			ret = -3;
+			ret = AUTH_ERROR;
 			goto end;
 		case CREATE_CHALLENGE:
 			LM_ERR("CREATE_CHALLENGE is not a valid state\n");
-			ret = -2;
+			ret = AUTH_ERROR;
 			goto end;
 		case DO_RESYNCHRONIZATION:
 			LM_ERR("DO_RESYNCHRONIZATION is not a valid state\n");
-			ret = -2;
+			ret = AUTH_ERROR;
 			goto end;
 		case NOT_AUTHENTICATED:
 			LM_DBG("not authenticated\n");
-			ret = -1;
+			ret = AUTH_ERROR;
 			goto end;
 		case DO_AUTHENTICATION:
 			break;
 		case AUTHENTICATED:
-			ret = 1;
+			ret = AUTH_OK;
 			goto end;
 	}
 
@@ -465,28 +465,25 @@ static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	if (!auth_check_response(&(cred->digest),
-				&msg->first_line.u.request.method, ha1)) {
+	ret = auth_check_response(&(cred->digest),
+				&msg->first_line.u.request.method, ha1);
+	if(ret==AUTHENTICATED) {
+		ret = AUTH_OK;
 		switch(post_auth(msg, h)) {
-			case ERROR:
-			case BAD_CREDENTIALS:
-				ret = -2;
-				break;
-			case NOT_AUTHENTICATED:
-				ret = -1;
-				break;
 			case AUTHENTICATED:
-				ret = 1;
 				break;
 			default:
-				ret = -1;
+				ret = AUTH_ERROR;
 				break;
 		}
 	} else {
-		ret = -1;
+		if(ret==NOT_AUTHENTICATED)
+			ret = AUTH_INVALID_PASSWORD;
+		else
+			ret = AUTH_ERROR;
 	}
 
- end:
+end:
 	if (ret < 0) {
 		/* check if required to add challenge header as avp */
 		if(!(flags&14))
@@ -499,21 +496,21 @@ static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
 		if (get_challenge_hf(msg, (cred ? cred->stale : 0),
 				&realm, NULL, NULL, qop, hftype, &hf) < 0) {
 			ERR("Error while creating challenge\n");
-			ret = -2;
+			ret = AUTH_ERROR;
 		} else {
 			val.s = hf;
 			if(add_avp(challenge_avpid.flags | AVP_VAL_STR,
 							challenge_avpid.name, val) < 0) {
 				LM_ERR("Error while creating attribute with challenge\n");
-				ret = -2;
+				ret = AUTH_ERROR;
 			}
 			pkg_free(hf.s);
 		}
 	}
-	return ret;
 
 error:
-	return -1;
+	return ret;
+
 }
 
 /**
@@ -539,6 +536,11 @@ static int pv_www_authenticate(struct sip_msg *msg, char* realm,
  */
 static int fixup_pv_auth(void **param, int param_no)
 {
+	if(strlen((char*)*param)<=0) {
+		LM_ERR("empty parameter %d not allowed\n", param_no);
+		return -1;
+	}
+
 	switch(param_no) {
 		case 1:
 		case 2:
@@ -652,6 +654,11 @@ static int www_challenge(struct sip_msg *msg, char* realm, char *flags)
  */
 static int fixup_auth_challenge(void **param, int param_no)
 {
+	if(strlen((char*)*param)<=0) {
+		LM_ERR("empty parameter %d not allowed\n", param_no);
+		return -1;
+	}
+
 	switch(param_no) {
 		case 1:
 			return fixup_var_str_12(param, 1);
