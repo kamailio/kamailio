@@ -38,7 +38,7 @@
 #include <string.h>
 
 /*
- * Parse list of tokens separated by some char and put each tocken
+ * Parse list of tokens separated by some char and put each token
  * into result array. Caller frees result array!
  */
 static inline int
@@ -60,61 +60,50 @@ parse_token_list(char *p, char *pend, char separator, str **result)
 	return i;
 }
 
-static inline int
-aaa_avps_init(str *avps_column_int, str *avps_column_str,
-    str **avps_int, str **avps_str, int *avps_int_n, int *avps_str_n)
+
+/*
+ * Parse the list of AVP names separated by '|' into an array
+ * of names, each element of the array is str string
+ */
+static int
+aaa_avps_init(str *avp_list, str **parsed_avps, int *avps_n)
 {
 	int errcode, i;
 	char *cp;
 
-	avps_column_int->len = strlen(avps_column_int->s);
-	avps_column_str->len = strlen(avps_column_str->s);
+	if (!avp_list->s || !avp_list->len) {
+		     /* AVPs disabled, nothing to do */
+		*avps_n = 0;
+		return 1;
+	}
 
-	cp = pkg_malloc(avps_column_int->len + 1);
+	cp = pkg_malloc(avp_list->len + 1);
 	if (cp == NULL) {
 		LOG(L_ERR, "aaa_avps::aaa_avps_init(): can't allocate memory\n");
 		errcode = -1;
 		goto bad;
 	}
-	memcpy(cp, avps_column_int->s, avps_column_int->len);
-	*avps_int_n = parse_token_list(cp, cp + avps_column_int->len, '|', avps_int);
-	if (*avps_int_n == -1) {
+	memcpy(cp, avp_list->s, avp_list->len);
+	*avps_n = parse_token_list(cp, cp + avp_list->len, '|', parsed_avps);
+	if (*avps_n == -1) {
 		LOG(L_ERR, "aaa_avps::aaa_avps_init(): can't parse avps_column_int "
 		    "parameter\n");
 		errcode = -2;
 		pkg_free(cp);
 		goto bad;
 	}
-	cp = pkg_malloc(avps_column_str->len + 1);
-	if (cp == NULL) {
-		LOG(L_ERR, "aaa_avps::aaa_avps_init(): can't allocate memory\n");
-		errcode = -3;
-		goto bad;
+
+	for (i = 0; i < *avps_n; i++) {
+		(*parsed_avps)[i].s[(*parsed_avps)[i].len] = '\0';
 	}
-	memcpy(cp, avps_column_str->s, avps_column_str->len);
-	*avps_str_n = parse_token_list(cp, cp + avps_column_str->len, '|', avps_str);
-	if (*avps_str_n == -1) {
-		LOG(L_ERR, "aaa_avps::aaa_avps_init(): can't parse avps_column_str "
-		    "parameter\n");
-		errcode = -4;
-		pkg_free(cp);
-		goto bad;
-	}
-	for (i = 0; i < *avps_int_n; i++)
-		(*avps_int)[i].s[(*avps_int)[i].len] = '\0';
-	for (i = 0; i < *avps_str_n; i++)
-		(*avps_str)[i].s[(*avps_str)[i].len] = '\0';
 
 	return 0;
 bad:
-	if (*avps_int != NULL) {
-		pkg_free((*avps_int)[0].s);
-		pkg_free(*avps_int);
+	if (*parsed_avps != NULL) {
+		pkg_free((*parsed_avps)[0].s);
+		pkg_free(*parsed_avps);
 	}
-	if (*avps_str != NULL) {
-		pkg_free((*avps_str)[0].s);
-		pkg_free(*avps_str);
-	}
+
 	return errcode;
 }
 

@@ -43,9 +43,9 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
-#include "authorize.h"
-#include "../../modules/auth/aaa_avps.h"
 #include "../../modules/auth/api.h"
+#include "authorize.h"
+#include "aaa_avps.h"
 #include "authdb_mod.h"
 
 MODULE_VERSION
