@@ -35,7 +35,7 @@
 #include "../../usr_avp.h"
 #include "../../lib/kcore/radius.h"
 #include "../../ut.h"
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/api.h"
 #include "sterman.h"
 #include "authrad_mod.h"
 #include "extra.h"

@@ -140,7 +140,7 @@ Chapter 1. Admin Guide
 
    The module depends on the following modules (in the other words the
    listed modules must be loaded before this module):
-     * modules_s/auth -- Generic authentication functions
+     * modules/auth -- Generic authentication functions
 
 3.2. External Libraries or Applications
 
@@ -220,7 +220,7 @@ modparam("auth_radius", "use_ruri_flag", 22)
 
    If the function was unable to verify the credentials for some reason,
    it fails and assigns a WWW-Authorize header containing a new challenge
-   to digest_challenge AVP (see modules_s/auth). The script should then
+   to digest_challenge AVP (see modules/auth). The script should then
    respond with 401 that includes this header, which will challenge the
    user again.
 

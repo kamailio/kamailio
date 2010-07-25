@@ -84,7 +84,7 @@
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>modules_s/auth</emphasis>
+				<para><emphasis>modules/auth</emphasis>
 				-- Generic authentication functions
 				</para>
 				</listitem>
@@ -205,7 +205,7 @@ modparam("auth_radius", "use_ruri_flag", 22)
 		If the function	was unable to  
 		verify the credentials for some reason, it fails and
 		assigns a WWW-Authorize header containing a new
-	challenge to digest_challenge AVP (see modules_s/auth).
+	challenge to digest_challenge AVP (see modules/auth).
 	The script should
 	then respond with 401 that includes this header, which will
 	challenge the user again.

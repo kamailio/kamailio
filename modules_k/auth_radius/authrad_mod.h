@@ -30,7 +30,7 @@
 #ifndef AUTHRAD_MOD_H
 #define AUTHRAD_MOD_H
 
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/api.h"
 #include "../../lib/kcore/radius.h"
 
 extern struct attr attrs[];
