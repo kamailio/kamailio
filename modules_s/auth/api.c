@@ -42,7 +42,8 @@
 #include "auth_mod.h"
 #include "nonce.h"
 
-static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
+static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body,
+		auth_result_t* auth_res);
 
 /*
  * Purpose of this function is to find credentials with given realm,
@@ -53,28 +54,23 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body, auth_
  * @param check_hdr  pointer to the function checking Authorization header field
  */
 auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
-						struct hdr_field**  hdr, check_auth_hdr_t check_auth_hdr)
+						struct hdr_field**  hdr,
+						check_auth_hdr_t check_auth_hdr)
 {
 	int ret;
 	auth_body_t* c;
 	check_auth_hdr_t check_hf;
 	auth_result_t    auth_rv;
 
-	static str prack = STR_STATIC_INIT("PRACK");
-
 	     /* ACK and CANCEL must be always authenticated, there is
 	      * no way how to challenge ACK and CANCEL cannot be
 	      * challenged because it must have the same CSeq as
-	      * the request to be canceled
+	      * the request to be canceled.
+	      * PRACK is also not authenticated
 	      */
 
-	if ((msg->REQ_METHOD == METHOD_ACK) ||  (msg->REQ_METHOD == METHOD_CANCEL)) return AUTHENTICATED;
-	     /* PRACK is also not authenticated */
-	if ((msg->REQ_METHOD == METHOD_OTHER)) {
-		if (msg->first_line.u.request.method.len == prack.len &&
-		    !memcmp(msg->first_line.u.request.method.s, prack.s, prack.len))
-			return AUTHENTICATED;
-	}
+	if (msg->REQ_METHOD & (METHOD_ACK|METHOD_CANCEL|METHOD_PRACK))
+		return AUTHENTICATED;
 
 	     /* Try to find credentials with corresponding realm
 	      * in the message, parse them and return pointer to
@@ -85,7 +81,8 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
 		return ERROR;
 	} else if (ret > 0) {
-		DBG("auth:pre_auth: Credentials with realm '%.*s' not found\n", realm->len, ZSW(realm->s));
+		DBG("auth:pre_auth: Credentials with realm '%.*s' not found\n",
+				realm->len, ZSW(realm->s));
 		return NOT_AUTHENTICATED;
 	}
 
@@ -93,13 +90,14 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	c = (auth_body_t*)((*hdr)->parsed);
 
 	    /* digest headers are in c->digest */
-	DBG("auth: digest-algo: %.*s parsed value: %d\n", c->digest.alg.alg_str.len, c->digest.alg.alg_str.s, c->digest.alg.alg_parsed);
+	DBG("auth: digest-algo: %.*s parsed value: %d\n",
+			c->digest.alg.alg_str.len, c->digest.alg.alg_str.s,
+			c->digest.alg.alg_parsed);
 
 	    /* check authorization header field's validity */
 	if (check_auth_hdr == NULL) {
 		check_hf = auth_check_hdr_md5;
-	}
-	else {	/* use check function of external authentication module */
+	} else {	/* use check function of external authentication module */
 		check_hf = check_auth_hdr;
 	}
 	/* use the right function */
@@ -117,7 +115,8 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
  * @result if authentication should continue (1) or not (0)
  * 
  */
-static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth, auth_result_t* auth_res)
+static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
+		auth_result_t* auth_res)
 {
 	int ret;
 	
@@ -177,6 +176,47 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 	return res;
 }
 
+/*
+ * Calculate the response and compare with the given response string
+ * Authorization is successful if this two strings are same
+ */
+int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
+{
+	HASHHEX resp, hent;
+
+	/*
+	 * First, we have to verify that the response received has
+	 * the same length as responses created by us
+	 */
+	if (cred->response.len != 32) {
+		DBG("check_response: Receive response len != 32\n");
+		return 1;
+	}
+
+	/*
+	 * Now, calculate our response from parameters received
+	 * from the user agent
+	 */
+	calc_response(ha1, &(cred->nonce),
+				  &(cred->nc), &(cred->cnonce),
+				  &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
+				  method, &(cred->uri), hent, resp);
+
+	DBG("check_response: Our result = \'%s\'\n", resp);
+
+	/*
+	 * And simply compare the strings, the user is
+	 * authorized if they match
+	 */
+	if (!memcmp(resp, cred->response.s, 32)) {
+		DBG("check_response: Authorization is OK\n");
+		return 0;
+	} else {
+		DBG("check_response: Authorization failed\n");
+		return 2;
+	}
+}
+
 
 int bind_auth_s(auth_api_s_t* api)
 {
@@ -188,8 +228,9 @@ int bind_auth_s(auth_api_s_t* api)
 	api->pre_auth = pre_auth;
 	api->post_auth = post_auth;
 	api->build_challenge = build_challenge_hf;
-	api->qop = &qop;
+	api->qop = &auth_qop;
 	api->calc_HA1 = calc_HA1;
 	api->calc_response = calc_response;
+	api->check_response = auth_check_response;
 	return 0;
 }

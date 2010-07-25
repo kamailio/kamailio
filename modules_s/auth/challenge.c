@@ -67,29 +67,36 @@
 
 
 /**
- * Create {WWW,Proxy}-Authenticate header field
+ * Create and return {WWW,Proxy}-Authenticate header field
  * @param nonce nonce value
  * @param algorithm algorithm value
+ * @param qop qop value
  * @return -1 on error, 0 on success
  * 
- * The result is stored in an attribute.
+ * The result is stored in param ahf.
  * If nonce is not null that it is used, instead of call calc_nonce.
  * If algorithm is not null that it is used irrespective of _PRINT_MD5
  * 
  * Major usage of nonce and algorithm params is AKA authentication. 
  */
-int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, str* algorithm, int hftype)
+int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
+		str* nonce, str* algorithm, struct qp* qop, int hftype, str *ahf)
 {
     char *p;
     str* hfn, hf;
-    avp_value_t val;
     int nonce_len, l, cfg;
 	int t;
 #if defined USE_NC || defined USE_OT_NONCE
 	unsigned int n_id;
 	unsigned char pool;
 #endif
-    
+
+	if(!ahf)
+	{
+		LM_ERR("invalid output parameter\n");
+		return -1;
+	}
+
     if (realm) {
         DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
     }
@@ -97,9 +104,14 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
         DEBUG("build_challenge_hf: nonce='%.*s'\n", nonce->len, nonce->s);
     }
     if (algorithm) {
-        DEBUG("build_challenge_hf: algorithm='%.*s'\n", algorithm->len, algorithm->s);
+        DEBUG("build_challenge_hf: algorithm='%.*s'\n", algorithm->len,
+				algorithm->s);
     }
-    
+    if (qop && qop->qop_parsed != QOP_UNSPEC) {
+        DEBUG("build_challenge_hf: qop='%.*s'\n", qop->qop_str.len,
+				qop->qop_str.s);
+    }
+
     if (hftype == HDR_PROXYAUTH_T) {
 		hfn = &proxy_challenge_header;
     } else {
@@ -134,8 +146,8 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
 		;
     }
     
-    if (qop.qop_parsed != QOP_UNSPEC) {
-		hf.len += QOP_PARAM_START_LEN + qop.qop_str.len + QOP_PARAM_END_LEN;
+    if (qop && qop->qop_parsed != QOP_UNSPEC) {
+		hf.len += QOP_PARAM_START_LEN + qop->qop_str.len + QOP_PARAM_END_LEN;
     }
 	hf.len += CRLF_LEN;
     p = hf.s = pkg_malloc(hf.len);
@@ -190,11 +202,11 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     }
     *p = '"'; p++;
 
-    if (qop.qop_parsed != QOP_UNSPEC) {
+    if (qop && qop->qop_parsed != QOP_UNSPEC) {
 		memcpy(p, QOP_PARAM_START, QOP_PARAM_START_LEN);
 		p += QOP_PARAM_START_LEN;
-		memcpy(p, qop.qop_str.s, qop.qop_str.len);
-		p += qop.qop_str.len;
+		memcpy(p, qop->qop_str.s, qop->qop_str.len);
+		p += qop->qop_str.len;
 		memcpy(p, QOP_PARAM_END, QOP_PARAM_END_LEN);
 		p += QOP_PARAM_END_LEN;
     }
@@ -203,8 +215,10 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
 		p += STALE_PARAM_LEN;
     }
 	if (algorithm) {
-		memcpy(p, DIGEST_ALGORITHM, DIGEST_ALGORITHM_LEN); p += DIGEST_ALGORITHM_LEN;
-		memcpy(p, algorithm->s, algorithm->len); p += algorithm->len;
+		memcpy(p, DIGEST_ALGORITHM, DIGEST_ALGORITHM_LEN);
+		p += DIGEST_ALGORITHM_LEN;
+		memcpy(p, algorithm->s, algorithm->len);
+		p += algorithm->len;
 	}
 	else {
 #ifdef _PRINT_MD5
@@ -216,14 +230,42 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
 							 nonce */
     
     DBG("auth: '%.*s'\n", hf.len, ZSW(hf.s));
-	
-    val.s = hf;
-    if (add_avp(challenge_avpid.flags | AVP_VAL_STR, challenge_avpid.name, val) < 0) {
-		ERR("auth: Error while creating attribute\n");
+	*ahf = hf;
+    return 0;
+}
+
+/**
+ * Create {WWW,Proxy}-Authenticate header field
+ * @param nonce nonce value
+ * @param algorithm algorithm value
+ * @return -1 on error, 0 on success
+ *
+ * The result is stored in an attribute.
+ * If nonce is not null that it is used, instead of call calc_nonce.
+ * If algorithm is not null that it is used irrespective of _PRINT_MD5
+ * The value of 'qop' module parameter is used.
+ *
+ * Major usage of nonce and algorithm params is AKA authentication.
+ */
+int build_challenge_hf(struct sip_msg* msg, int stale, str* realm,
+		str* nonce, str* algorithm, int hftype)
+{
+    str hf = {0, 0};
+    avp_value_t val;
+	int ret;
+
+	ret = get_challenge_hf(msg, stale, realm, nonce, algorithm, &auth_qop,
+				hftype, &hf);
+	if(ret < 0)
+		return ret;
+
+	val.s = hf;
+    if(add_avp(challenge_avpid.flags | AVP_VAL_STR, challenge_avpid.name, val)
+			< 0) {
+		ERR("auth: Error while creating attribute with challenge\n");
 		pkg_free(hf.s);
 		return -1;
     }
 	pkg_free(hf.s);
-
-    return 0;
+	return 0;
 }

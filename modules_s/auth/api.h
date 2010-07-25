@@ -53,8 +53,10 @@ typedef enum auth_result {
 	                        * of sequnce numbers with mobile station. */
 } auth_result_t;
 
-typedef int (*check_auth_hdr_t)(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
-int check_auth_hdr(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
+typedef int (*check_auth_hdr_t)(struct sip_msg* msg, auth_body_t* auth_body,
+		auth_result_t* auth_res);
+int check_auth_hdr(struct sip_msg* msg, auth_body_t* auth_body,
+		auth_result_t* auth_res);
 
 /*
  * Purpose of this function is to find credentials with given realm,
@@ -63,7 +65,8 @@ int check_auth_hdr(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* a
  * ACK and CANCEL
  */
 typedef auth_result_t (*pre_auth_t)(struct sip_msg* msg, str* realm,
-				    hdr_types_t hftype, struct hdr_field** hdr, check_auth_hdr_t check_auth_hdr);
+				    hdr_types_t hftype, struct hdr_field** hdr,
+					check_auth_hdr_t check_auth_hdr);
 auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 		       struct hdr_field** hdr, check_auth_hdr_t check_auth_hdr);
 
@@ -72,9 +75,12 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-typedef auth_result_t (*post_auth_t)(struct sip_msg* msg, struct hdr_field* hdr);
+typedef auth_result_t (*post_auth_t)(struct sip_msg* msg,
+		struct hdr_field* hdr);
 auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
 
+typedef int (*check_response_t)(dig_cred_t* cred, str* method, char* ha1);
+int auth_check_response(dig_cred_t* cred, str* method, char* ha1);
 
 /*
  * Auth module API
@@ -86,6 +92,7 @@ typedef struct auth_api_s {
     struct qp* qop;                       /* qop module parameter */
 	calc_HA1_t      calc_HA1;
 	calc_response_t calc_response;
+	check_response_t check_response;
 } auth_api_s_t;
 
 typedef int (*bind_auth_s_t)(auth_api_s_t* api);

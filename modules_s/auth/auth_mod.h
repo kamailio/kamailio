@@ -54,6 +54,6 @@ extern sl_api_t sl;
 extern avp_ident_t challenge_avpid;
 extern str proxy_challenge_header;
 extern str www_challenge_header;
-extern struct qp qop;
+extern struct qp auth_qop;
 
 #endif /* AUTH_MOD_H */

@@ -45,7 +45,12 @@
  * 
  * Major usage of nonce and algorithm params is AKA authentication. 
  */
-typedef int (*build_challenge_hf_t)(struct sip_msg* msg, int stale, str* realm, str* nonce, str* algorithm, int hftype);
-int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, str* algorithm, int hftype);
+typedef int (*build_challenge_hf_t)(struct sip_msg* msg, int stale,
+		str* realm, str* nonce, str* algorithm, int hftype);
+int build_challenge_hf(struct sip_msg* msg, int stale, str* realm,
+		str* nonce, str* algorithm, int hftype);
+
+int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
+		str* nonce, str* algorithm, struct qp* qop, int hftype, str *ahf);
 
 #endif /* CHALLENGE_H */
