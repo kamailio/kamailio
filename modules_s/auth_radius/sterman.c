@@ -34,7 +34,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/api.h"
 #include "../../rad_dict.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"

@@ -45,7 +45,7 @@
 #include "../../dprint.h"
 #include "../../id.h"
 #include "../../ut.h"
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
 #include "authrad_mod.h"
