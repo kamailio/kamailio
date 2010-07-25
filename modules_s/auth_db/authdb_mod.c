@@ -44,8 +44,8 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "authorize.h"
-#include "../auth/aaa_avps.h"
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/aaa_avps.h"
+#include "../../modules/auth/api.h"
 #include "authdb_mod.h"
 
 MODULE_VERSION

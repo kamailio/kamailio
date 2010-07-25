@@ -50,7 +50,7 @@
 #include "../../config.h"
 #include "../../id.h"
 #include "../../sr_module.h"
-#include "../auth/api.h"
+#include "../../modules/auth/api.h"
 #include "authdb_mod.h"
 
 

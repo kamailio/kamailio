@@ -33,7 +33,7 @@
 
 #include "../../str.h"
 #include "../../lib/srdb2/db.h"
-#include "../../modules_s/auth/api.h"
+#include "../../modules/auth/api.h"
 #include "../../parser/msg_parser.h"
 
 
