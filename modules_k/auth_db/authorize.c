@@ -191,7 +191,8 @@ static int generate_avps(db1_res_t* result)
 		default:
 			LM_ERR("subscriber table column `%.*s' has unsuported type. "
 				"Only string/str or int columns are supported by"
-				"load_credentials.\n", result->col.names[i]->len, result->col.names[i]->s);
+				"load_credentials.\n", result->col.names[i]->len,
+				result->col.names[i]->s);
 			break;
 		}
 	}
@@ -203,80 +204,122 @@ static int generate_avps(db1_res_t* result)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _m, gparam_p _realm,
-									char* _table, hdr_types_t _hftype)
+static inline int digest_authenticate(struct sip_msg* msg, gparam_p realm,
+									char* tname, hdr_types_t hftype)
 {
 	char ha1[256];
 	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
-	auth_result_t ret;
 	str domain, table;
 	db1_res_t* result = NULL;
+	int ret;
 
-	if(!_table) {
+	cred = 0;
+	ret = AUTH_ERROR;
+
+	if(!tname) {
 		LM_ERR("invalid table parameter\n");
-		return -1;
-	}
-
-	table.s = _table;
-	table.len = strlen(_table);
-
-	if(fixup_get_svalue(_m, _realm, &domain)!=0)
-	{
-		LM_ERR("invalid realm parameter\n");
 		return AUTH_ERROR;
 	}
 
+	table.s = tname;
+	table.len = strlen(tname);
+
+	if(fixup_get_svalue(msg, realm, &domain)!=0)
+	{
+		LM_ERR("invalid realm parameter\n");
+		goto end;
+	}
+
 	if (domain.len==0)
-		domain.s = 0;
+	{
+		LM_ERR("invalid realm parameter - empty value\n");
+		goto end;
+	}
 
-	ret = auth_api.pre_auth(_m, &domain, _hftype, &h);
-
-	if (ret != DO_AUTHORIZATION)
-		return ret;
+	ret = auth_api.pre_auth(msg, &domain, hftype, &h, NULL);
+	switch(ret) {
+		case ERROR:
+		case BAD_CREDENTIALS:
+			LM_DBG("error or bad credentials\n");
+			ret = AUTH_ERROR;
+			goto end;
+		case CREATE_CHALLENGE:
+			LM_ERR("CREATE_CHALLENGE is not a valid state\n");
+			ret = AUTH_ERROR;
+			goto end;
+		case DO_RESYNCHRONIZATION:
+			LM_ERR("DO_RESYNCHRONIZATION is not a valid state\n");
+			ret = AUTH_ERROR;
+			goto end;
+		case NOT_AUTHENTICATED:
+			LM_DBG("not authenticated\n");
+			ret = AUTH_ERROR;
+			goto end;
+		case DO_AUTHENTICATION:
+			break;
+		case AUTHENTICATED:
+			ret = AUTH_OK;
+			goto end;
+	}
 
 	cred = (auth_body_t*)h->parsed;
 
 	res = get_ha1(&cred->digest.username, &domain, &table, ha1, &result);
 	if (res < 0) {
 		/* Error while accessing the database */
-		return ERROR;
+		ret = AUTH_ERROR;
+		goto end;
 	}
 	if (res > 0) {
 		/* Username not found in the database */
-		auth_dbf.free_result(auth_db_handle, result);
-		return USER_UNKNOWN;
+		ret = AUTH_USER_UNKNOWN;
+		goto end;
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	if (!auth_api.check_response(&(cred->digest),
-				&_m->first_line.u.request.method, ha1)) {
-		ret = auth_api.post_auth(_m, h);
-		if (ret == AUTHORIZED)
-			generate_avps(result);
-		auth_dbf.free_result(auth_db_handle, result);
-		return ret;
+	ret = auth_api.check_response(&(cred->digest),
+				&msg->first_line.u.request.method, ha1);
+	if(ret==AUTHENTICATED) {
+		ret = AUTH_OK;
+		switch(post_auth(msg, h)) {
+			case AUTHENTICATED:
+				generate_avps(result);
+				break;
+			default:
+				ret = AUTH_ERROR;
+				break;
+		}
+	} else {
+		if(ret==NOT_AUTHENTICATED)
+			ret = AUTH_INVALID_PASSWORD;
+		else
+			ret = AUTH_ERROR;
 	}
 
-	auth_dbf.free_result(auth_db_handle, result);
-	return INVALID_PASSWORD;
+end:
+	if(result)
+		auth_dbf.free_result(auth_db_handle, result);
+	return ret;
 }
 
 
 /*
- * Authorize using Proxy-Authorize header field
+ * Authenticate using Proxy-Authorize header field
  */
-int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
+int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return authorize(_m, (gparam_p)_realm, _table, HDR_PROXYAUTH_T);
+	return digest_authenticate(_m, (gparam_p)_realm, _table,
+			HDR_PROXYAUTH_T);
 }
 
 
 /*
- * Authorize using WWW-Authorize header field
+ * Authenticate using WWW-Authorize header field
  */
-int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
+int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return authorize(_m, (gparam_p)_realm, _table, HDR_AUTHORIZATION_T);
+	return digest_authenticate(_m, (gparam_p)_realm, _table,
+			HDR_AUTHORIZATION_T);
 }

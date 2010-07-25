@@ -28,7 +28,7 @@
 
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
-#include "../../modules_k/auth/api.h"
+#include "../../modules_s/auth/api.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -49,7 +49,7 @@ extern int use_domain;        /* If set to 1 then the domain will be used when s
 extern db1_con_t* auth_db_handle; /* database connection handle */
 extern db_func_t auth_dbf;
 
-extern auth_api_k_t auth_api;
+extern auth_api_s_t auth_api;
 
 extern struct aaa_avp* credentials;
 extern int credentials_n;

@@ -36,13 +36,13 @@ void auth_db_close(void);
 /*
  * Authorize using Proxy-Authorization header field
  */
-int proxy_authorize(struct sip_msg* _msg, char* _realm, char* _table);
+int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 
 
 /*
  * Authorize using WWW-Authorization header field
  */
-int www_authorize(struct sip_msg* _msg, char* _realm, char* _table);
+int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 
 
 #endif /* AUTHORIZE_H */
