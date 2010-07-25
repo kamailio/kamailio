@@ -165,8 +165,6 @@ void strip_realm(str *_realm);
 
 /*! Auth module API */
 typedef struct auth_api_k {
-	int_str rpid_avp;      /*!< Name of AVP containing Remote-Party-ID */
-	int     rpid_avp_type; /*!< type of the RPID AVP */
 	pre_auth_t  pre_auth;  /*!< The function to be called before auth */
 	post_auth_t post_auth; /*!< The function to be called after auth */
 	calc_HA1_t  calc_HA1;  /*!< calculate H(A1) as per spec */

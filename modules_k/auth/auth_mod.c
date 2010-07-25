@@ -56,7 +56,6 @@
 #include "../../lock_alloc.h"
 #include "auth_mod.h"
 #include "challenge.h"
-#include "rpid.h"
 #include "api.h"
 
 MODULE_VERSION
@@ -64,11 +63,7 @@ MODULE_VERSION
 /*! length of the random secret */
 #define RAND_SECRET_LEN 32
 
-#define DEF_RPID_PREFIX ""
-#define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
 #define DEF_STRIP_REALM ""
-#define DEF_RPID_AVP "$avp(s:rpid)"
-
 
 /*!
  * Module destroy function prototype
@@ -98,15 +93,8 @@ char* sec_rand = 0;
 
 int auth_calc_ha1 = 0;
 
-/*! Default Remote-Party-ID prefix */
-str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1};
-/*! Default Remote-Party-IDD suffix */
-str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /*! Prefix to strip from realm */
 str realm_prefix = {DEF_STRIP_REALM, sizeof(DEF_STRIP_REALM) - 1};
-
-/*! definition of AVP containing rpid value */
-char* rpid_avp_param = DEF_RPID_AVP;
 
 /*! definition of AVP containing username value */
 char* user_spec_param = 0;
@@ -141,13 +129,6 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"consume_credentials", (cmd_function)consume_credentials,     0, 0,
 			0, REQUEST_ROUTE},
-	{"is_rpid_user_e164",   (cmd_function)is_rpid_user_e164,       0, 0,
-			0, REQUEST_ROUTE},
-	{"append_rpid_hf",      (cmd_function)append_rpid_hf,          0, 0,
-			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"append_rpid_hf",      (cmd_function)append_rpid_hf_p,        2,
-			fixup_str_str,
-			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"bind_auth_k",           (cmd_function)bind_auth_k, 0, 0,
 			0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -160,10 +141,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"secret",          STR_PARAM, &sec_param      },
 	{"nonce_expire",    INT_PARAM, &nonce_expire   },
-	{"rpid_prefix",     STR_PARAM, &rpid_prefix.s  },
-	{"rpid_suffix",     STR_PARAM, &rpid_suffix.s  },
 	{"realm_prefix",    STR_PARAM, &realm_prefix.s },
-	{"rpid_avp",        STR_PARAM, &rpid_avp_param },
 	{"username_spec",   STR_PARAM, &user_spec_param   },
 	{"password_spec",   STR_PARAM, &passwd_spec_param },
 	{"calculate_ha1",   INT_PARAM, &auth_calc_ha1     },
@@ -246,13 +224,6 @@ static int mod_init(void)
 		secret.len = strlen(secret.s);
 	}
 
-	if ( init_rpid_avp(rpid_avp_param)<0 ) {
-		LM_ERR("failed to process rpid AVPs\n");
-		return -4;
-	}
-
-	rpid_prefix.len = strlen(rpid_prefix.s);
-	rpid_suffix.len = strlen(rpid_suffix.s);
 	realm_prefix.len = strlen(realm_prefix.s);
 
 	if(user_spec_param!=0)

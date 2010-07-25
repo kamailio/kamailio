@@ -18,7 +18,7 @@ Jan Janak
 
 Daniel-Constantin Mierla
 
-   Asipto SRL
+   asipto.com
 
 Gabriel Vasile
 
@@ -61,6 +61,9 @@ Gabriel Vasile
               3.4. contact_flds_separator (string)
               3.5. options_accept_language (string)
               3.6. options_support (string)
+              3.7. rpid_prefix (string)
+              3.8. rpid_suffix (string)
+              3.9. rpid_avp (string)
 
         4. Exported Functions
 
@@ -79,30 +82,39 @@ Gabriel Vasile
               4.13. decode_contact_header()
               4.14. cmp_uri(str1, str2)
               4.15. cmp_aor(str1, str2)
+              4.16. is_rpid_user_e164()
+              4.17. append_rpid_hf()
+              4.18. append_rpid_hf(prefix, suffix)
 
    List of Examples
 
    1.1. Set ring_timeout parameter
    1.2. Set options_accept parameter
    1.3. Set options_accept_encoding parameter
-   1.4. Set db_url parameter
+   1.4. Set contact_flds_separator parameter
    1.5. Set options_accept_language parameter
    1.6. Set options_support parameter
-   1.7. ring_insert_callid() usage
-   1.8. options_reply usage
-   1.9. is_user usage
-   1.10. has_totag usage
-   1.11. uri_param usage
-   1.12. uri_param usage
-   1.13. add_uri_param usage
-   1.14. tel2sip usage
-   1.15. is_e164 usage
-   1.16. is_uri_user_e164 usage
-   1.17. encode_contact usage
-   1.18. decode_contact usage
-   1.19. decode_contact_header usage
-   1.20. cmp_uri usage
-   1.21. cmp_aor usage
+   1.7. rpid_prefix parameter example
+   1.8. rpid_suffix parameter example
+   1.9. rpid_avp parameter example
+   1.10. ring_insert_callid() usage
+   1.11. options_reply usage
+   1.12. is_user usage
+   1.13. has_totag usage
+   1.14. uri_param usage
+   1.15. uri_param usage
+   1.16. add_uri_param usage
+   1.17. tel2sip usage
+   1.18. is_e164 usage
+   1.19. is_uri_user_e164 usage
+   1.20. encode_contact usage
+   1.21. decode_contact usage
+   1.22. decode_contact_header usage
+   1.23. cmp_uri usage
+   1.24. cmp_aor usage
+   1.25. is_rpid_user_e164 usage
+   1.26. append_rpid_hf usage
+   1.27. append_rpid_hf(prefix, suffix) usage
 
 Chapter 1. Admin Guide
 
@@ -122,6 +134,9 @@ Chapter 1. Admin Guide
         3.4. contact_flds_separator (string)
         3.5. options_accept_language (string)
         3.6. options_support (string)
+        3.7. rpid_prefix (string)
+        3.8. rpid_suffix (string)
+        3.9. rpid_avp (string)
 
    4. Exported Functions
 
@@ -140,6 +155,9 @@ Chapter 1. Admin Guide
         4.13. decode_contact_header()
         4.14. cmp_uri(str1, str2)
         4.15. cmp_aor(str1, str2)
+        4.16. is_rpid_user_e164()
+        4.17. append_rpid_hf()
+        4.18. append_rpid_hf(prefix, suffix)
 
 1. Overview
 
@@ -186,6 +204,9 @@ Chapter 1. Admin Guide
    3.4. contact_flds_separator (string)
    3.5. options_accept_language (string)
    3.6. options_support (string)
+   3.7. rpid_prefix (string)
+   3.8. rpid_suffix (string)
+   3.9. rpid_avp (string)
 
 3.1. ring_timeout (int)
 
@@ -240,7 +261,7 @@ Warning
 
    Default value is “*”.
 
-   Example 1.4. Set db_url parameter
+   Example 1.4. Set contact_flds_separator parameter
 ...
 modparam("siputils", "contact_flds_separator", "-")
 ...
@@ -275,6 +296,40 @@ modparam("siputils", "options_accept_language", "de")
 modparam("siputils", "options_support", "100rel")
 ...
 
+3.7. rpid_prefix (string)
+
+   Prefix to be added to Remote-Party-ID header field just before the URI
+   returned from either radius or database.
+
+   Default value is “”.
+
+   Example 1.7. rpid_prefix parameter example
+modparam("auth", "rpid_prefix", "Whatever <")
+
+3.8. rpid_suffix (string)
+
+   Suffix to be added to Remote-Party-ID header field after the URI
+   returned from either radius or database.
+
+   Default value is “;party=calling;id-type=subscriber;screen=yes”.
+
+   Example 1.8. rpid_suffix parameter example
+modparam("auth", "rpid_suffix", "@1.2.3.4>")
+
+3.9. rpid_avp (string)
+
+   Full AVP specification for the AVP which stores the RPID value. It used
+   to transport the RPID value from authentication backend modules
+   (auth_db or auth_radius) or from script to the auth function
+   append_rpid_hf and is_rpid_user_e164.
+
+   If defined to NULL string, all RPID functions will fail at runtime.
+
+   Default value is “$avp(s:rpid)”.
+
+   Example 1.9. rpid_avp parameter example
+modparam("auth", "rpid_avp", "$avp(myrpid)")
+
 4. Exported Functions
 
    4.1. ring_insert_callid()
@@ -292,6 +347,9 @@ modparam("siputils", "options_support", "100rel")
    4.13. decode_contact_header()
    4.14. cmp_uri(str1, str2)
    4.15. cmp_aor(str1, str2)
+   4.16. is_rpid_user_e164()
+   4.17. append_rpid_hf()
+   4.18. append_rpid_hf(prefix, suffix)
 
 4.1.  ring_insert_callid()
 
@@ -305,7 +363,7 @@ modparam("siputils", "options_support", "100rel")
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.7. ring_insert_callid() usage
+   Example 1.10. ring_insert_callid() usage
 ...
 ring_insert_callid();
 ...
@@ -329,7 +387,7 @@ ring_insert_callid();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.8. options_reply usage
+   Example 1.11. options_reply usage
 ...
 if (uri==myself) {
         if ((method==OPTIONS) && (! uri=~"sip:.*[@]+.*")) {
@@ -347,7 +405,7 @@ if (uri==myself) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.9. is_user usage
+   Example 1.12. is_user usage
 ...
 if (is_user("john")) {
         ...
@@ -360,7 +418,7 @@ if (is_user("john")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.10. has_totag usage
+   Example 1.13. has_totag usage
 ...
 if (has_totag()) {
         ...
@@ -376,7 +434,7 @@ if (has_totag()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.11. uri_param usage
+   Example 1.14. uri_param usage
 ...
 if (uri_param("param1")) {
         ...
@@ -393,7 +451,7 @@ if (uri_param("param1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.12. uri_param usage
+   Example 1.15. uri_param usage
 ...
 if (uri_param("param1","value1")) {
         ...
@@ -409,7 +467,7 @@ if (uri_param("param1","value1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.13. add_uri_param usage
+   Example 1.16. add_uri_param usage
 ...
 add_uri_param("nat=yes");
 ...
@@ -430,7 +488,7 @@ add_uri_param("nat=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.14. tel2sip usage
+   Example 1.17. tel2sip usage
 ...
 # RURI:  tel:+(34)-999-888-777
 tel2sip();
@@ -448,7 +506,7 @@ tel2sip();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, and
    LOCAL_ROUTE.
 
-   Example 1.15. is_e164 usage
+   Example 1.18. is_e164 usage
 ...
 if (is_164("$fU")) {  # Check From header URI user part
    ...
@@ -465,7 +523,7 @@ if (is_e164("$avp(i:705)") {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.16. is_uri_user_e164 usage
+   Example 1.19. is_uri_user_e164 usage
 ...
 if (is_uri_user_e164("$fu")) {  # Check From header URI user part
    ...
@@ -498,7 +556,7 @@ if (is_uri_user_e164("$avp(i:705)") {
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.17. encode_contact usage
+   Example 1.20. encode_contact usage
 ...
 if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
 ...
@@ -516,7 +574,7 @@ if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.18. decode_contact usage
+   Example 1.21. decode_contact usage
 ...
 if (uri =~ "^sip:natted_client") { decode_contact(); }
 ...
@@ -534,7 +592,7 @@ if (uri =~ "^sip:natted_client") { decode_contact(); }
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.19. decode_contact_header usage
+   Example 1.22. decode_contact_header usage
 ...
 reply_route[2] {
         ...
@@ -550,7 +608,7 @@ reply_route[2] {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.20. cmp_uri usage
+   Example 1.23. cmp_uri usage
 ...
 if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 {
@@ -566,10 +624,68 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.21. cmp_aor usage
+   Example 1.24. cmp_aor usage
 ...
 if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
 {
     # do interesting stuff here
 }
+...
+
+4.16.  is_rpid_user_e164()
+
+   The function checks if the SIP URI received from the database or radius
+   server and will potentially be used in Remote-Party-ID header field
+   contains an E164 number (+followed by up to 15 decimal digits) in its
+   user part. Check fails, if no such SIP URI exists (i.e. radius server
+   or database didn't provide this information).
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.25. is_rpid_user_e164 usage
+...
+if (is_rpid_user_e164()) {
+    # do something here
+};
+...
+
+4.17.  append_rpid_hf()
+
+   Appends to the message a Remote-Party-ID header that contains header
+   'Remote-Party-ID: ' followed by the saved value of the SIP URI received
+   from the database or radius server followed by the value of module
+   parameter radius_rpid_suffix. The function does nothing if no saved SIP
+   URI exists.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.26. append_rpid_hf usage
+...
+append_rpid_hf();  # Append Remote-Party-ID header field
+...
+
+4.18.  append_rpid_hf(prefix, suffix)
+
+   This function is the same as Section 4.17, “ append_rpid_hf()”. The
+   only difference is that it accepts two parameters--prefix and suffix to
+   be added to Remote-Party-ID header field. This function ignores
+   rpid_prefix and rpid_suffix parameters, instead of that allows to set
+   them in every call.
+
+   Meaning of the parameters is as follows:
+     * prefix - Prefix of the Remote-Party-ID URI. The string will be
+       added at the begining of body of the header field, just before the
+       URI.
+     * suffix - Suffix of the Remote-Party-ID header field. The string
+       will be appended at the end of the header field. It can be used to
+       set various URI parameters, for example.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.27. append_rpid_hf(prefix, suffix) usage
+...
+# Append Remote-Party-ID header field
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...

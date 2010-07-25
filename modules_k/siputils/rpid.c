@@ -43,13 +43,14 @@
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../pvar.h"
-#include "auth_mod.h"
-#include "api.h"
 #include "rpid.h"
 
 
 #define RPID_HF_NAME "Remote-Party-ID: "
 #define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME) - 1)
+
+extern str rpid_prefix;       /*!< Remote-Party-ID prefix */
+extern str rpid_suffix;       /*!< Remote-Party-ID suffix */
 
 /* rpid AVP specs */
 static unsigned short rpid_avp_type;

@@ -37,7 +37,6 @@
 #include "nonce.h"
 #include "common.h"
 #include "api.h"
-#include "rpid.h"
 #include "index.h"
 
 static str auth_400_err = str_init(MESSAGE_400);
@@ -268,8 +267,6 @@ int bind_auth_k(auth_api_k_t* api)
 	api->post_auth = post_auth;
 	api->calc_HA1 = calc_HA1;
 	api->check_response = check_response;
-
-	get_rpid_avp( &api->rpid_avp, &api->rpid_avp_type );
 
 	return 0;
 }

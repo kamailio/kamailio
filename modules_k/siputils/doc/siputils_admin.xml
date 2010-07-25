@@ -156,7 +156,7 @@ modparam("siputils", "options_accept_encoding", "gzip")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>db_url</varname> parameter</title>
+		<title>Set <varname>contact_flds_separator</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("siputils", "contact_flds_separator", "-")
@@ -212,6 +212,61 @@ modparam("siputils", "options_accept_language", "de")
 modparam("siputils", "options_support", "100rel")
 ...
 </programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>rpid_prefix</varname> (string)</title>
+		<para>
+		Prefix to be added to Remote-Party-ID header field just before 
+		the URI returned from either radius or database.
+		</para>
+		<para>
+		Default value is <quote></quote>.
+		</para>
+		<example>
+		<title>rpid_prefix parameter example</title>
+		<programlisting format="linespecific">
+modparam("auth", "rpid_prefix", "Whatever &lt;")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>rpid_suffix</varname> (string)</title>
+		<para>
+		Suffix to be added to Remote-Party-ID header field after the URI 
+		returned from either radius or database.
+		</para>
+		<para>
+		Default value is 
+			<quote>;party=calling;id-type=subscriber;screen=yes</quote>.
+		</para>
+		<example>
+		<title>rpid_suffix parameter example</title>
+		<programlisting format="linespecific">
+modparam("auth", "rpid_suffix", "@1.2.3.4>")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>rpid_avp</varname> (string)</title>
+		<para>
+			Full AVP specification for the AVP which 
+			stores the RPID value. It used to transport the RPID value from
+			authentication backend modules (auth_db or auth_radius) or from
+			script to the auth function append_rpid_hf and is_rpid_user_e164.
+		</para>
+		<para>
+			If defined to NULL string, all RPID functions will fail at 
+			runtime.
+		</para>
+		<para>
+		Default value is <quote>$avp(s:rpid)</quote>.
+		</para>
+		<example>
+		<title>rpid_avp parameter example</title>
+		<programlisting format="linespecific">
+modparam("auth", "rpid_avp", "$avp(myrpid)")
+		</programlisting>
 		</example>
 	</section>
 	</section>
@@ -666,6 +721,96 @@ if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
 {
     # do interesting stuff here
 }
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">is_rpid_user_e164()</function>
+		</title>
+		<para>
+		The function checks if the SIP URI received from the database or 
+		radius server and will potentially be used in Remote-Party-ID header 
+		field contains an E164 number (+followed by up to 15 decimal digits) 
+		in its user part.  Check fails, if no such SIP URI exists 
+		(i.e. radius server or database didn't provide this information).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>is_rpid_user_e164 usage</title>
+		<programlisting format="linespecific">
+...
+if (is_rpid_user_e164()) {
+    # do something here
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="append-rpid-hf-no-params">
+		<title>
+			<function moreinfo="none">append_rpid_hf()</function></title>
+		<para>
+		Appends to the message a Remote-Party-ID header that contains header
+		'Remote-Party-ID: ' followed by the saved value of the SIP URI 
+		received from the database or radius server followed by the value of 
+		module parameter radius_rpid_suffix.  The function does nothing if 
+		no saved SIP URI exists.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title>append_rpid_hf usage</title>
+		<programlisting format="linespecific">
+...
+append_rpid_hf();  # Append Remote-Party-ID header field
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="append-rpid-hf-params">
+		<title>
+			<function moreinfo="none">append_rpid_hf(prefix, suffix)</function>
+		</title>
+		<para>
+		This function is the same as 
+		<xref linkend="append-rpid-hf-no-params"/>. The only difference is
+		that it accepts two parameters--prefix and suffix to be added to 
+		Remote-Party-ID header field. This function ignores rpid_prefix and 
+		rpid_suffix parameters, instead of that allows to set them in every 
+		call.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>prefix</emphasis> - Prefix of the 
+			Remote-Party-ID URI. The string will be added at the begining of 
+			body of the header field, just before the URI.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>suffix</emphasis> - Suffix of the Remote-Party-ID 
+			header field. The string will be appended at the end of the 
+			header field. It can be used to set various URI parameters, 
+			for example.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title>append_rpid_hf(prefix, suffix) usage</title>
+		<programlisting format="linespecific">
+...
+# Append Remote-Party-ID header field
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...
 </programlisting>
 		</example>

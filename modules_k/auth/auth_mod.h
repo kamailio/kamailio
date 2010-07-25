@@ -47,8 +47,6 @@
  */
 extern str secret;            /*!< secret phrase used to generate nonce */
 extern unsigned int nonce_expire; /*!< nonce expire interval */
-extern str rpid_prefix;       /*!< Remote-Party-ID prefix */
-extern str rpid_suffix;       /*!< Remote-Party-ID suffix */
 extern str realm_prefix;      /*!< strip off auto-generated realm */
 
 /*! SL API structure */

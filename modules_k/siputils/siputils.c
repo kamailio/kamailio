@@ -71,12 +71,27 @@
 
 #include "checks.h"
 
+#include "rpid.h"
+#include "siputils.h"
+
 #include "utils.h"
 #include "contact_ops.h"
 #include "sipops.h"
 #include "config.h"
 
 MODULE_VERSION
+
+/* rpid handling defs */
+#define DEF_RPID_PREFIX ""
+#define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
+#define DEF_RPID_AVP "$avp(s:rpid)"
+
+/*! Default Remote-Party-ID prefix */
+str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1};
+/*! Default Remote-Party-IDD suffix */
+str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
+/*! Definition of AVP containing rpid value */
+char* rpid_avp_param = DEF_RPID_AVP;
 
 gen_lock_t *ring_lock = NULL;
 unsigned int ring_timeout = 0;
@@ -113,6 +128,14 @@ static cmd_export_t cmds[]={
 	{"cmp_aor",  (cmd_function)w_cmp_aor, 2,
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"is_rpid_user_e164",   (cmd_function)is_rpid_user_e164,       0, 0,
+			0, REQUEST_ROUTE},
+	{"append_rpid_hf",      (cmd_function)append_rpid_hf,          0, 0,
+			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"append_rpid_hf",      (cmd_function)append_rpid_hf_p,        2, fixup_str_str,
+			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"bind_siputils",       (cmd_function)bind_siputils,           0, 0,
+			0, 0},
 	{0,0,0,0,0,0}
 };
 
@@ -123,6 +146,9 @@ static param_export_t params[] = {
 	{"options_accept_language", STR_PARAM, &opt_accept_lang.s},
 	{"options_support",         STR_PARAM, &opt_supported.s},
 	{"contact_flds_separator",  STR_PARAM, &contact_flds_separator},
+	{"rpid_prefix",             STR_PARAM, &rpid_prefix.s  },
+	{"rpid_suffix",             STR_PARAM, &rpid_suffix.s  },
+	{"rpid_avp",                STR_PARAM, &rpid_avp_param },
 	{0, 0, 0}
 };
 
@@ -166,6 +192,14 @@ static int mod_init(void)
 		return -1;
 	}
 	
+	if ( init_rpid_avp(rpid_avp_param)<0 ) {
+		LM_ERR("failed to init rpid AVP name\n");
+		return -1;
+	}
+
+	rpid_prefix.len = strlen(rpid_prefix.s);
+	rpid_suffix.len = strlen(rpid_suffix.s);
+
 	if(cfg_declare("siputils", siputils_cfg_def, &default_siputils_cfg, cfg_sizeof(siputils), &siputils_cfg)){
 		LM_ERR("Fail to declare the configuration\n");
 		return -1;
@@ -189,4 +223,22 @@ static void mod_destroy(void)
 	}
 
 	ring_destroy_hashtable();
+}
+
+
+/*!
+ * \brief Bind function for the SIPUTILS API
+ * \param api binded API
+ * \return 0 on success, -1 on failure
+ */
+int bind_siputils(siputils_api_t* api)
+{
+	if (!api) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	get_rpid_avp( &api->rpid_avp, &api->rpid_avp_type );
+
+	return 0;
 }
