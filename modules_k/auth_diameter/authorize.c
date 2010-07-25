@@ -58,7 +58,6 @@
 #include "diameter_msg.h"
 #include "auth_diameter.h"
 #include "defs.h"
-#include "../../modules_k/auth/api.h"
 #include "authorize.h"
 #include "tcp_comm.h"
 
@@ -67,7 +66,6 @@ static str dia_403_err = str_init("Forbidden");
 static str dia_407_err = str_init(MESSAGE_407);
 static str dia_400_err = str_init(MESSAGE_400);
 static str dia_500_err = str_init(MESSAGE_500);
-
 
 
 /* Extract URI depending on the request from To or From header */
@@ -148,7 +146,7 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u)
 }
 
 
-auth_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype, 
+auth_diam_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype, 
 													struct hdr_field** _h)
 {
 	int ret;
@@ -199,7 +197,7 @@ auth_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 /* Authorize digest credentials */
 int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 {
-	auth_result_t ret;
+	auth_diam_result_t ret;
 	struct hdr_field* h;
 	auth_body_t* cred = NULL;
 	str* uri;

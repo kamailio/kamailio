@@ -35,14 +35,30 @@
 #include "../../parser/hf.h"
 #include "../../pvar.h"
 #include "../../str.h"
-#include "../../modules_k/auth/api.h"
 #include "defs.h"
+
+typedef enum auth_diam_result {
+	NONCE_REUSED = -6,  /*!< Returned if nonce is used more than once */
+	AUTH_ERROR,         /*!< Error occurred, a reply has not been sent out */
+	NO_CREDENTIALS,     /*!< Credentials missing */
+	STALE_NONCE,        /*!< Stale nonce */
+	INVALID_PASSWORD,   /*!< Invalid password */
+	USER_UNKNOWN,       /*!< User non existant */
+	ERROR,              /*!< Error occurred, a reply has been sent out,
+	                        return 0 to the openser core */
+	AUTHORIZED,         /*!< Authorized. If returned by pre_auth,
+	                         no digest authorization necessary */
+	DO_AUTHORIZATION,   /*!< Can only be returned by pre_auth. */
+	                    /*!< Means to continue doing authorization */
+} auth_diam_result_t;
+
+
 
 int get_uri(struct sip_msg* m, str** uri);
 
 int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u);
 
-auth_result_t diam_pre_auth(struct sip_msg* m, str* realm, int hftype, 
+auth_diam_result_t diam_pre_auth(struct sip_msg* m, str* realm, int hftype, 
 						struct hdr_field** h);
 
 int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype);
