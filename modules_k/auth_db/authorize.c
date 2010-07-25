@@ -283,7 +283,7 @@ static inline int digest_authenticate(struct sip_msg* msg, gparam_p realm,
 				&msg->first_line.u.request.method, ha1);
 	if(ret==AUTHENTICATED) {
 		ret = AUTH_OK;
-		switch(post_auth(msg, h)) {
+		switch(auth_api.post_auth(msg, h)) {
 			case AUTHENTICATED:
 				generate_avps(result);
 				break;
