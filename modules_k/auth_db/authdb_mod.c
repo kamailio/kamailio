@@ -238,7 +238,7 @@ static int auth_fixup(void** param, int param_no)
 	}
 
 	if (param_no == 1) {
-		return fixup_spve_null(param, 1);
+		return fixup_var_str_12(param, 1);
 	} else if (param_no == 2) {
 		name.s = (char*)*param;
 		name.len = strlen(name.s);

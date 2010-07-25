@@ -204,7 +204,7 @@ static int generate_avps(db1_res_t* result)
 /*
  * Authorize digest credentials
  */
-static inline int digest_authenticate(struct sip_msg* msg, gparam_p realm,
+static inline int digest_authenticate(struct sip_msg* msg, fparam_t* realm,
 									char* tname, hdr_types_t hftype)
 {
 	char ha1[256];
@@ -226,9 +226,8 @@ static inline int digest_authenticate(struct sip_msg* msg, gparam_p realm,
 	table.s = tname;
 	table.len = strlen(tname);
 
-	if(fixup_get_svalue(msg, realm, &domain)!=0)
-	{
-		LM_ERR("invalid realm parameter\n");
+	if (get_str_fparam(&domain, msg, realm) < 0) {
+		LM_ERR("failed to get realm value\n");
 		goto end;
 	}
 
@@ -237,6 +236,7 @@ static inline int digest_authenticate(struct sip_msg* msg, gparam_p realm,
 		LM_ERR("invalid realm parameter - empty value\n");
 		goto end;
 	}
+	LM_DBG("realm value [%.*s]\n", domain.len, domain.s);
 
 	ret = auth_api.pre_auth(msg, &domain, hftype, &h, NULL);
 	switch(ret) {
@@ -310,7 +310,7 @@ end:
  */
 int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return digest_authenticate(_m, (gparam_p)_realm, _table,
+	return digest_authenticate(_m, (fparam_t*)_realm, _table,
 			HDR_PROXYAUTH_T);
 }
 
@@ -320,6 +320,6 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
  */
 int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return digest_authenticate(_m, (gparam_p)_realm, _table,
+	return digest_authenticate(_m, (fparam_t*)_realm, _table,
 			HDR_AUTHORIZATION_T);
 }
