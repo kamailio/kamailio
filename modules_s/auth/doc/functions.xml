@@ -3,14 +3,6 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="auth.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </sectioninfo>
 
     <title>Functions</title>
     
@@ -23,18 +15,248 @@
 	    this server. This ensures that the proxy will not reveal
 	    information about credentials used to downstream elements and also
 	    the message will be a little bit shorter. The function must be
-	    called after <function>www_authorize</function> or
-	    <function>proxy_authorize</function>.
+	    called after <function>www_authorize</function>,
+		<function>proxy_authorize</function>,
+		<function>www_authenticate</function> or
+	    <function>proxy_authenticate</function>.
 	</para>
 	<example>
 	    <title>consume_credentials example</title>
 	    <programlisting>
 ...
-if (www_authorize("", "subscriber)) {
+if (www_authenticate("realm", "subscriber)) {
     consume_credentials();
 };
 ...
 	    </programlisting>
 	</example>
     </section>
+	<section id="www_challenge">
+		<title>
+			<function moreinfo="none">www_challenge(realm, flags)</function>
+		</title>
+		<para>
+		The function challenges a user agent. It will generate a
+		WWW-Authorize header field containing a digest challenge, it will
+		put the header field into a response generated from the request the
+		server is processing and send the reply. Upon reception of such a
+		reply the user agent should compute credentials and retry the
+		request. For more information regarding digest authentication
+		see RFC2617.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
+			username and password to use. Usually this is domain of the host
+			the server is running on.
+			</para>
+			<para>
+			It must not be empty string <quote></quote>. In case of REGISTER
+			requests To header field domain (e.g., varibale $td) can be used
+			(because this header field represents a user being registered),
+			for all other messages From header field domain can be used
+			(e.g., varibale $fd).
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> - Value of this parameter can be
+			a bitmask of following:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>1</emphasis> - build challenge header with
+					qop=auth</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>2</emphasis> - build challenge header with
+					qop=auth-int</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>4</emphasis> - do not send '500 Internal
+					Server Error' reply automatically in failure cases
+					(error code is returned to config)</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+
+		<example>
+		<title>www_challenge usage</title>
+		<programlisting format="linespecific">
+...
+if (!www_authenticate("$td", "subscriber")) {
+	www_challenge("$td", "1");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="proxy_challenge">
+		<title>
+			<function moreinfo="none">proxy_challenge(realm, flags)</function>
+		</title>
+		<para>
+		The function challenges a user agent. It will generate a
+		Proxy-Authorize header field containing a digest challenge, it will
+		put the header field into a response generated from the request the
+		server is processing and send the reply. Upon reception of such a
+		reply the user agent should compute credentials and retry the request.
+		For more information regarding digest authentication see RFC2617.
+		</para>
+		<para>Meaning of the parameters the same as for function
+		www_challenge(realm, flags)</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>proxy_challenge usage</title>
+		<programlisting format="linespecific">
+...
+if (!proxy_authenticate("$fd", "subscriber)) {
+	proxy_challenge("$fd", "1");
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="pv_www_authenticate">
+		<title>
+		<function moreinfo="none">pv_www_authenticate(realm, passwd, flags)</function>
+		</title>
+		<para>
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>.
+		If the credentials are verified successfully then the function
+		will succeed and mark the credentials as authorized (marked
+		credentials can be later used by some other functions). If the
+		function was unable to verify the credentials for some reason
+		then it will fail and the script should
+		call <function moreinfo="none">www_challenge</function> which will
+		challenge the user again.
+		</para>
+		<para>Negative codes may be interpreted as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>-1 (generic error)</emphasis> - some generic error
+			occurred and no reply was sent out;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-2 (invalid password)</emphasis> - wrong password;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-3 (invalid user)</emphasis> - authentication user does
+			not exist.
+			</para></listitem>
+		</itemizedlist>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
+			username and password to use. Usually this is domain of the host
+			the server is running on.
+			</para>
+			<para>
+			It must not be empty string <quote></quote>. In case of REGISTER
+			requests To header field domain (e.g., varibale $td) can be used
+			(because this header field represents a user being registered),
+			for all other messages From header field domain can be used
+			(e.g., varibale $fd).
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>passwd</emphasis> - the password to be used
+			for authentication. Can contain config variables. Username is
+			taken from Auth header.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> - the value of this parameter
+				can be a bitmask of following:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>1</emphasis> - the value of password
+					parameter is HA1 format</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>2</emphasis> - build challenge header with
+					no qop and add it to avp</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>4</emphasis> - build challenge header with
+					qop=auth and add it to avp</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>8</emphasis> - build challenge header with
+					qop=auth-int and add it to avp</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<para>
+			When challenge header is built and stored in avp,
+			append_to_reply() and sl reply functions can be used to send
+			appropriate SIP reply to challenge for authentication.
+		</para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">pv_www_authenticate</function>
+		usage</title>
+		<programlisting format="linespecific">
+...
+if (!pv_www_authenticate("$td", "123abc", "0")) {
+	www_challenge("$td", "1");
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="pv_proxy_authenticate">
+		<title>
+			<function moreinfo="none">pv_proxy_authenticate(realm, passwd, flags)</function>
+		</title>
+		<para>
+		The function verifies credentials according to
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If
+		the credentials are verified successfully then the function will
+		succeed and mark the credentials as authorized (marked credentials can
+		be later used by some other functions). If the function was unable to
+		verify the credentials for some reason then it will fail and
+		the script should call
+		<function moreinfo="none">proxy_challenge</function> which will
+		challenge the user again. For more about the negative return codes,
+		see the above function.
+		</para>
+		<para>Meaning of the parameters is the same as for
+		pv_www_authenticate(realm, passwd, flags)</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>pv_proxy_authenticate usage</title>
+		<programlisting format="linespecific">
+...
+$avp(password)="xyz";
+if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
+	proxy_challenge("$fd", "1");
+};
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>

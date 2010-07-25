@@ -3,14 +3,6 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="auth.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </sectioninfo>
 
     <title>Parameters</title>
     
@@ -81,7 +73,9 @@
 	    <title>Setting the <varname>auth_checks_register</varname> module 
 				parameter</title>
 	    <programlisting>
+...
 modparam("auth", "auth_checks_register", 2) # callid
+...
 	    </programlisting>
 	</example>
     </section>
@@ -115,7 +109,9 @@ modparam("auth", "auth_checks_register", 2) # callid
 	<example>
 	    <title>qop example</title>
 	    <programlisting>
+...
 modparam("auth", "qop", "auth")   # set qop=auth
+...
 	    </programlisting>
 	</example>
     </section>
@@ -190,6 +186,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 	<example>
 	    <title>nonce_count example</title>
 	    <programlisting>
+...
 modparam("auth", "nonce_count", 1) # enable nonce_count support
 modparam("auth", "qop", "auth")    # enable qop=auth
 
@@ -300,8 +297,10 @@ route{
 	<example>
 	    <title>one_time_nonce example</title>
 	    <programlisting>
+...
 modparam("auth", "one_time_nonce", 1)
 # Note: stateful mode should be used, see the nonce_count example
+...
 	    </programlisting>
 	</example>
 	</section>
@@ -351,7 +350,9 @@ modparam("auth", "one_time_nonce", 1)
 	<example>
 	    <title>nid_pool_no example</title>
 	    <programlisting>
+...
 modparam("auth", "nid_pool_no", 4)
+...
 	    </programlisting>
 	</example>
     </section>
@@ -388,7 +389,9 @@ modparam("auth", "nid_pool_no", 4)
 	<example>
 	    <title>nc_array_size example</title>
 	    <programlisting>
+...
 modparam("auth", "nc_array_size", 4194304)   # 4Mb
+...
 	    </programlisting>
 	</example>
     </section>
@@ -401,7 +404,8 @@ modparam("auth", "nc_array_size", 4194304)   # 4Mb
 		be raised (log2(<varname>nc_array_size</varname>)).
 	</para>
 	<para>
-		<varname>nc_array_size</varname> = 2^<varname>nc_array_order</varname>.			For more details see <varname>nc_array_size</varname>.
+		<varname>nc_array_size</varname> = 2^<varname>nc_array_order</varname>.
+		For more details see <varname>nc_array_size</varname>.
 	</para>
 	<para>
 	    The default value is 20 (1M in-flight nonces, using 1Mb memory).
@@ -415,7 +419,9 @@ modparam("auth", "nc_array_size", 4194304)   # 4Mb
 	<example>
 	    <title>nc_array_order example</title>
 	    <programlisting>
+...
 modparam("auth", "nc_array_order", 22)   # 4Mb
+...
 	    </programlisting>
 	</example>
     </section>
@@ -455,7 +461,9 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
 	<example>
 	    <title>otn_in_flight_no example</title>
 	    <programlisting>
+...
 modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
+...
 	    </programlisting>
 	</example>
     </section>
@@ -484,7 +492,9 @@ modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 	<example>
 	    <title>otn_in_flight_order example</title>
 	    <programlisting>
+...
 modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
+...
 	    </programlisting>
 	</example>
     </section>
@@ -497,7 +507,9 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 	<example>
 	    <title>Setting secret module parameter</title>
 	    <programlisting>
+...
 modparam("auth", "secret", "johndoessecretphrase")
+...
 	    </programlisting>
 	</example>
     </section>
@@ -520,7 +532,9 @@ modparam("auth", "secret", "johndoessecretphrase")
 	<example>
 	    <title>nonce_expire example</title>
 	    <programlisting>
+...
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
+...
 	    </programlisting>
 	</example>
     </section>
@@ -550,7 +564,9 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 	<example>
 	    <title>nonce_auth_max_drift example</title>
 	    <programlisting>
+...
 modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
+...
 	    </programlisting>
 	</example>
     </section>

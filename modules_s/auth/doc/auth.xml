@@ -17,6 +17,12 @@
 		<affiliation><orgname>TutPro Inc</orgname></affiliation>
 		<email>jh@song.fi</email>
 	    </author>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<email>miconda@gmail.com</email>
+	    </author>
 	</authorgroup>
 
 	<copyright>
@@ -25,12 +31,6 @@
 	    <holder>FhG FOKUS</holder>
 	</copyright>
 
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
     <title>Auth Module</title>
