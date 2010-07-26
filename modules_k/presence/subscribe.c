@@ -798,7 +798,8 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	else
 	{
 		memset( &TO , 0, sizeof(TO) );
-		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO))
+		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
+		if( TO.uri.len <= 0 )
 		{
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
