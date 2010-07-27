@@ -25,6 +25,9 @@
 int pp_subst_add(char *data);
 int pp_subst_run(char **data);
 
+int  pp_define(int len, const char * text);
+int  pp_define_set(int len, char * text);
+
 #endif /*_PPCFG_H_*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

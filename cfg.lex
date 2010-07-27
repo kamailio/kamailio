@@ -166,8 +166,6 @@
 		struct sr_yy_fname *next;
 	} *sr_yy_fname_list = 0;
 
-	static int  pp_define(int len, const char * text);
-	static int  pp_define_set(int len, char * text);
 	static str  *pp_define_get(int len, const char * text);
 	static int  pp_ifdef_type(int pos);
 	static void pp_ifdef_var(int len, const char * text);
@@ -1614,7 +1612,7 @@ static int pp_lookup(int len, const char * text)
 	return -1;
 }
 
-static int pp_define(int len, const char * text)
+int pp_define(int len, const char * text)
 {
 	if (pp_num_defines == MAX_DEFINES) {
 		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
@@ -1636,7 +1634,7 @@ static int pp_define(int len, const char * text)
 	return 0;
 }
 
-static int  pp_define_set(int len, char *text)
+int  pp_define_set(int len, char *text)
 {
 	if(len<=0) {
 		LOG(L_DBG, "no define value - ignoring\n");

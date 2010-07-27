@@ -183,6 +183,7 @@
 #include "basex.h" /* init */
 #include "pvapi_init.h" /* init */
 #include "pv_core.h" /* register core pvars */
+#include "ppcfg.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -246,7 +247,8 @@ Options:\n\
     -G file      Create a pgid file\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
-                  disable with no or off\n"
+                  disable with no or off\n\
+    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -1649,6 +1651,7 @@ int main(int argc, char** argv)
 	struct timeval tval;
 	fd_set fds;
 	int res;
+	char *p;
 
 	/*init*/
 	time(&up_since);
@@ -1667,7 +1670,7 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:"
+	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1748,6 +1751,26 @@ int main(int argc, char** argv)
 			case 'u':
 					/* user needed for possible shm. pre-init */
 					user=optarg;
+					break;
+			case 'A':
+					p = strchr(optarg, '=');
+					if(p) {
+						*p = '\0';
+					}
+					if(pp_define(strlen(optarg), optarg)<0) {
+						fprintf(stderr, "error at define param: -A %s\n",
+								optarg);
+						goto error;
+					}
+					if(p) {
+						*p = '=';
+						p++;
+						if(pp_define_set(strlen(p), p)<0) {
+							fprintf(stderr, "error at define value: -A %s\n",
+								optarg);
+							goto error;
+						}
+					}
 					break;
 			case 'b':
 			case 'l':
@@ -1864,6 +1887,7 @@ try_again:
 			case 'V':
 			case 'h':
 			case 'O':
+			case 'A':
 					break;
 			case 'E':
 					log_stderr=1;	// use in both getopt switches
