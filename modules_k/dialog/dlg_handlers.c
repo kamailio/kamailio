@@ -773,6 +773,7 @@ static void unref_dlg_from_cb(struct cell* t, int type, struct tmcb_params *para
 {
     struct dlg_cell *dlg = (struct dlg_cell *)(*param->param);
 
+	/* destroy dialog */
     unref_dlg(dlg, 1);
 }
 
@@ -941,7 +942,6 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		if (dlg_db_mode)
 			remove_dialog_from_db(dlg);
 
-		/* destroy dialog */
 		unref_dlg(dlg, unref);
 
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
