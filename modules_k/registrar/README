@@ -375,9 +375,10 @@ modparam("registrar", "aor_avp", "$avp(i:3223)")
 
 3.9. case_sensitive (integer)
 
-   If set to 1 then AOR comparison will be case sensitive, if set to 0
-   then AOR comparison will be case insensitive--This is recommended.This
-   parameter can be modified via ser config framework.
+   If set to 1 then AOR comparison and also storing will be case
+   sensitive, if set to 0 then AOR comparison and storing will be case
+   insensitive--This is recommended. This parameter can be modified via
+   ser config framework.
 
    Default value is 0.
 
