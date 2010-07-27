@@ -824,7 +824,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				return;
 
 			dlg = lookup_dlg( h_entry, h_id);
-			if (dlg==0) {
+			if (dlg == POINTER_CLOSED_MARKER) {
+				LM_DBG("dialog marked for destruction, ignoring\n");
+				return;
+			}
+			else if (dlg==0) {
 				LM_WARN("unable to find dialog for %.*s "
 					"with route param '%.*s' [%u:%u]\n",
 					req->first_line.u.request.method.len,

@@ -83,6 +83,8 @@
 #define DLG_DIR_DOWNSTREAM     1 /*!< dialog has downstream direction */
 #define DLG_DIR_UPSTREAM       2 /*!< dialog has upstream direction */
 
+#define POINTER_CLOSED_MARKER  ((void *)(-1))
+
 
 /*! entries in the dialog list */
 struct dlg_cell
