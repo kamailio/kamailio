@@ -244,7 +244,9 @@ Options:\n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
     -G file      Create a pgid file\n\
-    -O nr        Script optimization level (debugging option)\n"
+    -O nr        Script optimization level (debugging option)\n\
+    -a mode      Auto aliases mode: enable with yes or on,\n\
+                  disable with no or off\n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -1665,7 +1667,7 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:"
+	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1764,6 +1766,7 @@ int main(int argc, char** argv)
 			case 'G':
 			case 'S':
 			case 'Q':
+			case 'a':
 			case 's':
 					break;
 			case '?':
@@ -1976,6 +1979,18 @@ try_again:
 					break;
 			case 'G':
 					pgid_file=optarg;
+					break;
+			case 'a':
+					if(strcmp(optarg, "on")==0 || strcmp(optarg, "yes")==0)
+						sr_auto_aliases = 1;
+					else if(strcmp(optarg, "off")==0 || strcmp(optarg, "no")==0)
+						sr_auto_aliases = 0;
+					else {
+						fprintf(stderr,
+							"bad auto aliases parameter: %s (valid on, off, yes, no)\n",
+							optarg);
+						goto error;
+					}
 					break;
 			case 's':
 				#ifdef STATS
