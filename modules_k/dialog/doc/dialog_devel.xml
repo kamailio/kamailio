@@ -95,6 +95,11 @@
 				</para>
 			</listitem>
 			<listitem>
+				<para><emphasis>DLGCB_SPIRALED</emphasis> - called when the
+				dialog matches a spiraling request - it's a per dialog type.
+				</para>
+			</listitem>
+			<listitem>
 				<para><emphasis>DLGCB_DESTROY</emphasis>
 				</para>
 			</listitem>

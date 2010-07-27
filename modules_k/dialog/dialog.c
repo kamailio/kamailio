@@ -99,6 +99,7 @@ pv_elem_t * ruri_param_model = NULL;
 int dlg_enable_stats = 1;
 int active_dlgs_cnt = 0;
 int early_dlgs_cnt = 0;
+int detect_spirals = 1;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
@@ -182,6 +183,7 @@ static param_export_t mod_params[]={
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
 	{ "dlg_extra_hdrs",        STR_PARAM, &dlg_extra_hdrs.s         },
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
+	{ "detect_spirals",        INT_PARAM, &detect_spirals,          },
 	{ "db_url",                STR_PARAM, &db_url.s                 },
 	{ "db_mode",               INT_PARAM, &dlg_db_mode              },
 	{ "table_name",            STR_PARAM, &dialog_table_name        },
@@ -470,6 +472,11 @@ static int mod_init(void)
 	seq_match_mode!=SEQ_MATCH_FALLBACK &&
 	seq_match_mode!=SEQ_MATCH_STRICT_ID ) {
 		LM_ERR("invalid value %d for seq_match_mode param!!\n",seq_match_mode);
+		return -1;
+	}
+
+	if (detect_spirals != 0 && detect_spirals != 1) {
+		LM_ERR("invalid value %d for detect_spirals param!!\n",detect_spirals);
 		return -1;
 	}
 

@@ -325,6 +325,30 @@ modparam("dialog", "dlg_match_mode", 1)
 	</section>
 
 	<section>
+		<title><varname>detect_spirals</varname> (integer)</title>
+		<para>
+			Whether spirals (i.e., messages routed through the proxy multiple times)
+			should be detected or not.
+		</para>
+		<para>
+			If set to 0, spirals will not be detected and result in the generation of a
+			new, possibly dangling dialog structure per occurring spiral. If set to 1,
+			spirals are detected and internally mapped to existing dialog structures.
+		</para>
+		<para>
+			Default value is 1.
+		</para>
+		<example>
+			<title>Set <varname>detect_spirals</varname> parameter</title>
+			<programlisting format="linespecific">
+				...
+				modparam("dialog", "detect_spirals", 1)
+				...
+			</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		If you want to store the information about the dialogs in a database

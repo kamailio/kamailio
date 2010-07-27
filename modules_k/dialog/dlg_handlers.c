@@ -84,6 +84,7 @@ static pv_spec_t *timeout_avp;		/*!< AVP for timeout setting */
 static int       default_timeout;	/*!< default dialog timeout */
 static int       seq_match_mode;	/*!< dlg_match mode */ 
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
+extern int       detect_spirals;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
 
@@ -484,6 +485,50 @@ inline static int get_dlg_timeout(struct sip_msg *req)
 
 
 /*!
+ * \brief Helper function to get the necessary content from SIP message
+ * \param req SIP request
+ * \param callid found callid
+ * \param ftag found from tag
+ * \param ttag found to tag
+ * \param with_ttag flag set if to tag must be found for success
+ * \return 0 on success, -1 on failure
+ */
+static inline int pre_match_parse( struct sip_msg *req, str *callid,
+		str *ftag, str *ttag, int with_ttag)
+{
+	if (parse_headers(req,HDR_CALLID_F|HDR_TO_F,0)<0 || !req->callid ||
+			!req->to ) {
+		LM_ERR("bad request or missing CALLID/TO hdr :-/\n");
+		return -1;
+	}
+
+	if (get_to(req)->tag_value.len==0) {
+		if (with_ttag == 1) {
+			/* out of dialog request with preloaded Route headers; ignore. */
+			return -1;
+		} else {
+			ttag->s = NULL;
+			ttag->len = 0;
+		}
+	} else {
+		*ttag = get_to(req)->tag_value;
+	}
+
+	if (parse_from_header(req)<0 || get_from(req)->tag_value.len==0) {
+		LM_ERR("failed to get From header\n");
+		return -1;
+	}
+
+	/* callid */
+	*callid = req->callid->body;
+	trim(callid);
+	/* from tag */
+	*ftag = get_from(req)->tag_value;
+	return 0;
+}
+
+
+/*!
  * \brief Function that is registered as TM callback and called on requests
  * \see dlg_new_dialog
  * \param t transaction, used to created the dialog
@@ -492,13 +537,48 @@ inline static int get_dlg_timeout(struct sip_msg *req)
  */
 void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 {
-	struct sip_msg *msg;
-	msg = param->req;
-	if((msg->flags&dlg_flag)!=dlg_flag)
+	struct dlg_cell *dlg;
+	str callid;
+	str ftag;
+	str ttag;
+	unsigned int dir;
+	struct sip_msg *req = param->req;
+
+	if((req->flags&dlg_flag)!=dlg_flag)
 		return;
 	if (current_dlg_pointer!=NULL)
 		return;
-	dlg_new_dialog(msg, t);
+	if (!detect_spirals)
+		goto create;
+
+	/* skip initial requests - they may end up here because of the
+	 * preloaded route */
+	if ( (!req->to && parse_headers(req, HDR_TO_F,0)<0) || !req->to ) {
+		LM_ERR("bad request or missing TO hdr :-/\n");
+		return;
+	}
+
+	dlg = 0;
+	dir = DLG_DIR_NONE;
+
+	if (pre_match_parse( req, &callid, &ftag, &ttag, 0)<0) {
+		LM_WARN("pre-matching failed\n");
+		return;
+	}
+	dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+	if (!dlg){
+		LM_DBG("Callid '%.*s' not found, must be a new dialog\n",
+				req->callid->body.len, req->callid->body.s);
+		goto create;
+	}
+
+	run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, DLG_DIR_DOWNSTREAM, 0);
+
+	unref_dlg(dlg, 1);
+	return;
+
+create:
+	dlg_new_dialog(req, t);
 }
 
 
@@ -685,44 +765,6 @@ static inline int parse_dlg_rr_param(char *p, char *end, int *h_entry, int *h_id
 
 
 /*!
- * \brief Helper function to get the necessary content from SIP message
- * \param req SIP request
- * \param callid found callid
- * \param ftag found from tag
- * \param ttag found to tag
- * \return 0 on succes, -1 on failure
- */
-static inline int pre_match_parse( struct sip_msg *req, str *callid,
-		str *ftag, str *ttag)
-{
-	if (parse_headers(req,HDR_CALLID_F|HDR_TO_F,0)<0 || !req->callid ||
-	!req->to ) {
-		LM_ERR("bad request or missing CALLID/TO hdr :-/\n");
-		return -1;
-	}
-
-	if (get_to(req)->tag_value.len==0) {
-		/* out of dialog request with preloaded Route headers; ignore. */
-		return -1;
-	}
-
-	if (parse_from_header(req)<0 || get_from(req)->tag_value.len==0) {
-		LM_ERR("failed to get From header\n");
-		return -1;
-	}
-
-	/* callid */
-	*callid = req->callid->body;
-	trim(callid);
-	/* to tag */
-	*ttag = get_to(req)->tag_value;
-	/* from tag */
-	*ftag = get_from(req)->tag_value;
-	return 0;
-}
-
-
-/*!
  * \brief Update the saved CSEQ information in dialog from SIP message
  * \param dlg updated dialog
  * \param req SIP request
@@ -838,7 +880,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 					return;
 			} else {
 				// lookup_dlg has incremented the ref count by 1
-				if (pre_match_parse( req, &callid, &ftag, &ttag)<0) {
+				if (pre_match_parse( req, &callid, &ftag, &ttag, 1)<0) {
 					unref_dlg(dlg, 1);
 					return;
 				}
@@ -871,7 +913,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	}
 
 	if (dlg==0) {
-		if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
+		if (pre_match_parse( req, &callid, &ftag, &ttag, 1)<0)
 			return;
 		/* TODO - try to use the RR dir detection to speed up here the
 		 * search -bogdan */
