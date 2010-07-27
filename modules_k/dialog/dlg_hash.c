@@ -378,7 +378,8 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 		if (dlg->h_id == h_id) {
 			if (dlg->state==DLG_STATE_DELETED) {
 				dlg_unlock( d_table, d_entry);
-				goto not_found;
+				LM_DBG("dialog id=%u on entry %u marked for deletion\n", h_id, h_entry);
+				return POINTER_CLOSED_MARKER;
 			}
 			dlg->ref++;
 			LM_DBG("ref dlg %p with 1 -> %d\n", dlg, dlg->ref);
@@ -418,8 +419,9 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 		/* Check callid / fromtag / totag */
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
 			if (dlg->state==DLG_STATE_DELETED) {
+				LM_DBG("dialog callid='%.*s' marked for deletion\n", callid->len, callid->s);
 				dlg_unlock( d_table, d_entry);
-				goto not_found;
+				return POINTER_CLOSED_MARKER;
 			}
 			dlg->ref++;
 			LM_DBG("ref dlg %p with 1 -> %d\n", dlg, dlg->ref);
@@ -432,7 +434,6 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 
 	dlg_unlock( d_table, d_entry);
 
-not_found:
 	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
 }

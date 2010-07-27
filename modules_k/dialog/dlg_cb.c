@@ -43,8 +43,6 @@ static struct dlg_head_cbl* load_cbs = 0;
 static struct dlg_cb_params params = {NULL, DLG_DIR_NONE, NULL, NULL};
 
 
-#define POINTER_CLOSED_MARKER  ((void *)(-1))
-
 
 static void run_load_callback(struct dlg_callback *cb);
 
