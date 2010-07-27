@@ -177,7 +177,7 @@ static int mod_init(void)
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
 	pass_column.len = strlen(pass_column.s);
-	pass_column_2.len = strlen(pass_column.s);
+	pass_column_2.len = strlen(pass_column_2.s);
 
 	/* Find a database module */
 	if (db_bind_mod(&db_url, &auth_dbf) < 0){
