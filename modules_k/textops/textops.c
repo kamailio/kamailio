@@ -124,7 +124,6 @@ static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
 static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
-static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
 
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
@@ -247,9 +246,6 @@ static cmd_export_t cmds[]={
 	{"starts_with",  (cmd_function)starts_with_f, 2,
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"msg_apply_changes",      (cmd_function)msg_apply_changes_f,     0,
-		0, 0,
-		REQUEST_ROUTE },
 
 	{0,0,0,0,0,0}
 };
@@ -1876,84 +1872,6 @@ static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 )
 	if(ret>0)
 		return -1;
 	return -2;
-}
-
-static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
-{
-	struct dest_info dst;
-	str obuf;
-	sip_msg_t tmp;
-
-	if(get_route_type()!=REQUEST_ROUTE)
-	{
-		LM_ERR("invalid usage - not in request route\n");
-		return -1;
-	}
-
-	init_dest_info(&dst);
-	dst.proto = PROTO_UDP;
-	obuf.s = build_req_buf_from_sip_req(msg,
-			(unsigned int*)&obuf.len, &dst,
-			BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
-	if(obuf.s == NULL)
-	{
-		LM_ERR("couldn't update msg buffer content\n");
-		return -1;
-	}
-	if(obuf.len>=BUF_SIZE)
-	{
-		LM_ERR("new buffer overflow (%d)\n", obuf.len);
-		pkg_free(obuf.s);
-		return -1;
-	}
-	/* temporary copy */
-	memcpy(&tmp, msg, sizeof(sip_msg_t));
-
-	/* reset dst uri and path vector to avoid freeing - restored later */
-	if(msg->dst_uri.s!=NULL)
-	{
-		msg->dst_uri.s = NULL;
-		msg->dst_uri.len = 0;
-	}
-	if(msg->path_vec.s!=NULL)
-	{
-		msg->path_vec.s = NULL;
-		msg->path_vec.len = 0;
-	}
-
-	/* free old msg structure */
-	free_sip_msg(msg);
-	memset(msg, 0, sizeof(sip_msg_t));
-
-	/* restore msg fields */
-	msg->buf                = tmp.buf;
-	msg->id                 = tmp.id;
-	msg->rcv                = tmp.rcv;
-	msg->set_global_address = tmp.set_global_address;
-	msg->set_global_port    = tmp.set_global_port;
-	msg->flags              = tmp.flags;
-	msg->msg_flags          = tmp.msg_flags;
-	msg->force_send_socket  = tmp.force_send_socket;
-	msg->fwd_send_flags     = tmp.fwd_send_flags;
-	msg->rpl_send_flags     = tmp.rpl_send_flags;
-	msg->dst_uri            = tmp.dst_uri;
-	msg->path_vec           = tmp.path_vec;
-
-	memcpy(msg->buf, obuf.s, obuf.len);
-	msg->len = obuf.len;
-	msg->buf[msg->len] = '\0';
-
-	/* free new buffer - copied in the static buffer from old sip_msg_t */
-	pkg_free(obuf.s);
-
-	/* reparse the message */
-	LM_DBG("SIP Request content updated - reparsing\n");
-	if (parse_msg(msg->buf, msg->len, msg)!=0){
-		LM_ERR("parse_msg failed\n");
-		return -1;
-	}
-
-	return 1;
 }
 
 int fixup_regexpNL_none(void** param, int param_no)

@@ -76,7 +76,6 @@ Juha Heinanen
               3.31. cmp_str(str1, str2)
               3.32. cmp_istr(str1, str2)
               3.33. starts_with(str1, str2)
-              3.34. msg_apply_changes()
 
         4. Known Limitations
 
@@ -121,7 +120,6 @@ Juha Heinanen
    1.31. cmp_str usage
    1.32. cmp_str usage
    1.33. starts_with usage
-   1.34. msg_apply_changes() usage
 
 Chapter 1. Admin Guide
 
@@ -171,7 +169,6 @@ Chapter 1. Admin Guide
         3.31. cmp_str(str1, str2)
         3.32. cmp_istr(str1, str2)
         3.33. starts_with(str1, str2)
-        3.34. msg_apply_changes()
 
    4. Known Limitations
 
@@ -244,7 +241,6 @@ From: medabeda
    3.31. cmp_str(str1, str2)
    3.32. cmp_istr(str1, str2)
    3.33. starts_with(str1, str2)
-   3.34. msg_apply_changes()
 
 3.1.  search(re)
 
@@ -885,29 +881,6 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 if (starts_with("$rU", "+358"))
 {
     # do interesting stuff here
-}
-...
-
-3.34.  msg_apply_changes()
-
-   Use this function to apply changes done on SIP request content. Be
-   careful when using this function -- due to special handling of changes
-   done to SIM message buffer so far, using this function might change the
-   behaviour of your config as it was so far -- do test properly your
-   config!
-
-   This function can be used from REQUEST_ROUTE.
-
-   Example 1.34. msg_apply_changes() usage
-...
-append_hf("My-Header: yes\r\n");
-if(msg_apply_changes())
-{
-    # msg buffer has a new content
-        if(is_present_hf("My-Header"))
-        {
-        # will get here always
-    }
 }
 ...
 

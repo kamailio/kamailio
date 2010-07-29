@@ -1233,38 +1233,6 @@ if (starts_with("$rU", "+358"))
 		</example>
 	</section>
 
-	<section>
-		<title>
-		<function moreinfo="none">msg_apply_changes()</function>
-		</title>
-		<para>
-		Use this function to apply changes done on SIP request content. Be
-		careful when using this function -- due to special handling of changes
-		done to SIM message buffer so far, using this function might change
-		the behaviour of your config as it was so far -- do test properly
-		your config!
-		</para>
-   		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>msg_apply_changes()</function> usage</title>
-		<programlisting format="linespecific">
-...
-append_hf("My-Header: yes\r\n");
-if(msg_apply_changes())
-{
-    # msg buffer has a new content
-	if(is_present_hf("My-Header"))
-	{
-        # will get here always
-    }
-}
-...
-</programlisting>
-		</example>
-	</section>
-
 	</section>
 	<section>
 		<title>Known Limitations</title>
