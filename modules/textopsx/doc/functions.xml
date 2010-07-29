@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="textopsx.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Functions</title>
+
+	<section id="msg_apply_changes">
+		<title>
+		<function moreinfo="none">msg_apply_changes()</function>
+		</title>
+		<para>
+		Use this function to apply changes done on SIP request content. Be
+		careful when using this function -- due to special handling of changes
+		done to SIM message buffer so far, using this function might change
+		the behaviour of your config as it was so far -- do test properly
+		your config!
+		</para>
+   		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_apply_changes()</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("My-Header: yes\r\n");
+if(msg_apply_changes())
+{
+    # msg buffer has a new content
+    if(is_present_hf("My-Header"))
+    {
+        # will get here always
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+    <section id="change_reply_status">
+	<title>
+	    <function>change_reply_status(code, reason)</function>
+	</title>
+	<para>
+		Change the status code and reason phrase of a SIP reply in onreply_route.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>code</emphasis> - Status code.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>reason</emphasis> - Reason phrase.
+		</para>
+	    </listitem>
+	</itemizedlist>
+   		<para>
+		This function can be used from ONREPLY_ROUTE.
+		</para>
+	<example>
+	    <title><function>change_reply_status</function> usage</title>
+	    <programlisting>
+...
+onreply_route {
+    if (@status == "603") {
+        change_reply_status(404, "Not Found");
+        exit;
+    }
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

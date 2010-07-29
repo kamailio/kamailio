@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="textopsx" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>pelinescu-onciul@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<email>miconda@gmail.com</email>
+		</author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+    </sectioninfo>
+
+    <title>Textopsx Module</title>
+
+    <section id="textops.overview">
+	<title>Overview</title>
+	<para>
+		This is a module implementing funtions for text operations over
+		SIP messages in configuration files. It comes to add new features
+		similar to textops module (textops eXtentions).
+	</para>
+    </section>
+
+    <xi:include href="functions.xml"/>
+
+</section>
+

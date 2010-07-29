@@ -1,0 +1,71 @@
+1. Textopsx Module
+
+Andrei Pelinescu-Onciul
+
+   FhG FOKUS
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
+
+   1.1. Overview
+   1.2. Functions
+
+        1.2.1. msg_apply_changes()
+        1.2.2. change_reply_status(code, reason)
+
+1.1. Overview
+
+   This is a module implementing funtions for text operations over SIP
+   messages in configuration files. It comes to add new features similar
+   to textops module (textops eXtentions).
+
+1.2. Functions
+
+1.2.1.  msg_apply_changes()
+
+   Use this function to apply changes done on SIP request content. Be
+   careful when using this function -- due to special handling of changes
+   done to SIM message buffer so far, using this function might change the
+   behaviour of your config as it was so far -- do test properly your
+   config!
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1. msg_apply_changes() usage
+...
+append_hf("My-Header: yes\r\n");
+if(msg_apply_changes())
+{
+    # msg buffer has a new content
+    if(is_present_hf("My-Header"))
+    {
+        # will get here always
+    }
+}
+...
+
+1.2.2.  change_reply_status(code, reason)
+
+   Change the status code and reason phrase of a SIP reply in
+   onreply_route.
+
+   Meaning of the parameters is as follows:
+     * code - Status code.
+     * reason - Reason phrase.
+
+   This function can be used from ONREPLY_ROUTE.
+
+   Example 2. change_reply_status usage
+...
+onreply_route {
+    if (@status == "603") {
+        change_reply_status(404, "Not Found");
+        exit;
+    }
+}
+...
