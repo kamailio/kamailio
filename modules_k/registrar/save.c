@@ -269,10 +269,12 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			}
 			if (path.len && path.s) {
 				ci.path = &path;
-				/* save in msg too for reply */
-				if (set_path_vector(_m, &path) < 0) {
-					rerrno = R_PARSE_PATH;
-					goto error;
+				if (path_mode != PATH_MODE_OFF) {
+					/* save in msg too for reply */
+					if (set_path_vector(_m, &path) < 0) {
+						rerrno = R_PARSE_PATH;
+						goto error;
+					}
 				}
 			}
 		}
