@@ -834,7 +834,7 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 				rtn = 0;
 			} else {
 				/* AVP not found or non-INT value -> add a new one*/
-				pv_val.flags = PV_VAL_INT;
+				pv_val.flags = PV_VAL_INT|PV_TYPE_INT;
 				pv_val.ri = value;
 				if (timeout_avp->setf(msg,&timeout_avp->pvp,EQ_T,&pv_val)!=0) {
 					LM_ERR("failed to set new dialog timeout value\n");
