@@ -115,7 +115,6 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
-static int change_reply_status_f(struct sip_msg* msg, char* , char *);
 
 static int incexc_hf_value_f(struct sip_msg* msg, char* , char *);
 static int include_hf_value_fixup(void**, int);
@@ -131,7 +130,6 @@ static int remove_hf_value2_fixup(void** param, int param_no);
 static int assign_hf_value2_fixup(void** param, int param_no);
 static int fixup_xlstr(void** param, int param_no);
 static int fixup_regex_xlstr(void** param, int param_no);
-static int change_reply_status_fixup(void** param, int param_no);
 
 static int fixup_substre(void**, int);
 
@@ -191,8 +189,6 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"hf_value_exists",  incexc_hf_value_f,      2, hf_value_exists_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"change_reply_status",	change_reply_status_f,	2, change_reply_status_fixup,
-			ONREPLY_ROUTE},
 
 	{0,0,0,0,0}
 };
@@ -1739,76 +1735,6 @@ static int assign_hf_value2_fixup(void** param, int param_no) {
 		((struct hname_data*)*param)->oper = hnoAssign2;
 	}
 	return 0;
-}
-
-static int change_reply_status_fixup(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_var_int_12(param, param_no);
-	} else if (param_no == 2)
-		return fixup_var_str_12(param, param_no);
-	else
-		return 0;
-}
-
-static int change_reply_status_f(struct sip_msg* msg, char* _code, char* _reason)
-{
-	int	code;
-	str	reason;
-	struct lump	*l;
-	char	*ch;
-
-	if (get_int_fparam(&code, msg, (fparam_t*)_code)
-		|| get_str_fparam(&reason, msg, (fparam_t*)_reason)
-		|| (reason.len == 0)
-	) {
-		LOG(L_ERR, "ERROR: textops: cannot get parameter\n");
-		return -1;
-	}
-
-	if ((code < 100) || (code > 699)) {
-		LOG(L_ERR, "ERROR: textops: wrong status code: %d\n",
-				code);
-		return -1;
-	}
-
-	if (((code < 300) || (msg->REPLY_STATUS < 300))
-		&& (code/100 != msg->REPLY_STATUS/100)
-	) {
-		LOG(L_ERR, "ERROR: textops: the class of provisional or "
-			"positive final replies cannot be changed\n");
-		return -1;
-	}
-
-	/* rewrite the status code directly in the message buffer */
-	msg->first_line.u.reply.statuscode = code;
-	msg->first_line.u.reply.status.s[2] = code % 10 + '0'; code /= 10;
-	msg->first_line.u.reply.status.s[1] = code % 10 + '0'; code /= 10;
-	msg->first_line.u.reply.status.s[0] = code + '0';
-
-	l = del_lump(msg,
-		msg->first_line.u.reply.reason.s - msg->buf,
-		msg->first_line.u.reply.reason.len,
-		0);
-	if (!l) {
-		LOG(L_ERR, "ERROR: textops(): Failed to add del lump\n");
-		return -1;
-	}
-	/* clone the reason phrase, the lumps need to be pkg allocated */
-	ch = (char *)pkg_malloc(reason.len);
-	if (!ch) {
-		LOG(L_ERR, "ERROR: textops: Not enough memory\n");
-		return -1;
-	}
-	memcpy(ch, reason.s, reason.len);
-	if (insert_new_lump_after(l, ch, reason.len, 0)==0){
-		LOG(L_ERR, "ERROR: textops: failed to add new lump: %.*s\n",
-			reason.len, ch);
-		pkg_free(ch);
-		return -1;
-	}
-
-	return 1;
 }
 
 static int sel_hf_value(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */

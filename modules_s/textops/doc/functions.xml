@@ -642,36 +642,6 @@ if (@hf_value_exists.supported.path == "1") {
 	</example>
     </section>
 
-    <section id="change_reply_status">
-	<title>
-	    <function>change_reply_status(code, reason)</function>
-	</title>
-	<para>
-		Change the status code and reason phrase of a SIP reply in onreply_route.
-	</para>
-	<para>Meaning of the parameters is as follows:</para>
-	<itemizedlist>
-	    <listitem>
-		<para><emphasis>code</emphasis> - Status code.
-		</para>
-	    </listitem>
-	    <listitem>
-		<para><emphasis>reason</emphasis> - Reason phrase.
-		</para>
-	    </listitem>
-	</itemizedlist>
-	<example>
-	    <title><function>change_reply_status</function> usage</title>
-	    <programlisting>
-...
-if (@status == "603") {
-	change_reply_status(404, "Not Found")
-}
-...
-	    </programlisting>
-	</example>
-    </section>
-
     <section id="@hf_value">
 	<title>
 	    <function>@hf_value selects</function>
