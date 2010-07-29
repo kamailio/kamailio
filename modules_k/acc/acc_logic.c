@@ -46,6 +46,7 @@
 #include "../../lib/kcore/km_ut.h"
 #include "../../flags.h"
 #include "acc.h"
+#include "acc_api.h"
 #include "acc_mod.h"
 #include "acc_logic.h"
 
@@ -219,6 +220,7 @@ int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo)
 #endif
 
 
+
 /* prepare message and transaction context for later accounting */
 void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 {
@@ -335,6 +337,9 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	}
 #endif
 
+	/* run extra acc engines */
+	acc_run_engines(req, 1, &flags_to_reset);
+
 	/* Reset the accounting missed_flags
 	 * These can't be reset in the blocks above, because
 	 * it would skip accounting if the flags are identical
@@ -395,6 +400,9 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 		acc_diam_request(req);
 #endif
 
+	/* run extra acc engines */
+	acc_run_engines(req, 0, NULL);
+
 	if (new_uri_bk.len>=0) {
 		req->new_uri = new_uri_bk;
 		req->parsed_uri_ok = 0;
@@ -434,9 +442,29 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 		acc_diam_request(ack);
 	}
 #endif
+
+	/* run extra acc engines */
+	acc_run_engines(req, 0, NULL);
 	
 }
 
+
+/**
+ * @brief execute an acc event via a specific engine
+ */
+int acc_api_exec(struct sip_msg *rq, acc_engine_t *eng,
+		acc_param_t* comment)
+{
+	acc_info_t inf;
+	if (acc_preparse_req(rq)<0)
+		return -1;
+	env_set_to(rq->to);
+	env_set_comment(comment);
+	memset(&inf, 0, sizeof(acc_info_t));
+	inf.env  = &acc_env;
+	acc_api_set_arrays(&inf);
+	return eng->acc_req(rq, &inf);
+}
 
 
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )

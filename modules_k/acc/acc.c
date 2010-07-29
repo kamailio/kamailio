@@ -61,6 +61,7 @@
 #include "acc.h"
 #include "acc_extra.h"
 #include "acc_logic.h"
+#include "acc_api.h"
 
 #ifdef RAD_ACC
 #include "../../lib/kcore/radius.h"
@@ -118,8 +119,7 @@ static char type_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
  * 		sip_code
  * 		sip_status
  * 		*/
-static inline int core2strar( struct sip_msg *req, str *c_vals,
-			      int *i_vals, char *t_vals)
+int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 {
 	struct to_body *ft_body;
 	struct hdr_field *from;
@@ -827,4 +827,52 @@ error:
 }
 
 #endif
+
+/**
+ * @brief execute all acc engines for a SIP request event
+ */
+int acc_run_engines(struct sip_msg *msg, int type, int *reset)
+{
+	acc_info_t inf;
+	acc_engine_t *e;
+
+	e = acc_api_get_engines();
+
+	if(e==NULL)
+		return 0;
+
+	memset(&inf, 0, sizeof(acc_info_t));
+	inf.env  = &acc_env;
+	inf.varr = val_arr;
+	inf.iarr = int_arr;
+	inf.tarr = type_arr;
+	inf.leg_info = leg_info;
+	while(e) {
+		if(e->flags & 1) {
+			if((type==0) && (msg->flags&(e->acc_flag))) {
+				LM_DBG("acc event for engine: %s\n", e->name);
+				e->acc_req(msg, &inf);
+				if(reset) *reset |= e->acc_flag;
+			}
+			if((type==1) && (msg->flags&(e->missed_flag))) {
+				LM_DBG("missed event for engine: %s\n", e->name);
+				e->acc_req(msg, &inf);
+				if(reset) *reset |= e->missed_flag;
+			}
+		}
+		e = e->next;
+	}
+	return 0;
+}
+
+/**
+ * @brief set hooks to acc_info_t attributes
+ */
+void acc_api_set_arrays(acc_info_t *inf)
+{
+	inf->varr = val_arr;
+	inf->iarr = int_arr;
+	inf->tarr = type_arr;
+	inf->leg_info = leg_info;
+}
 

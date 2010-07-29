@@ -49,6 +49,7 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../lib/kcore/km_ut.h"
+#include "acc_api.h"
 #include "acc_extra.h"
 
 #define EQUAL '='

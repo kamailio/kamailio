@@ -47,19 +47,6 @@
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 
-struct acc_extra
-{
-	str        name;       /*!< name (log comment/ column name) */
-	pv_spec_t  spec;       /*!< value's spec */
-	struct acc_extra *next;
-};
-
-
-#define MAX_ACC_EXTRA 64
-#define MAX_ACC_LEG   16
-
-enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR};
-
 void init_acc_extra(void);
 
 struct acc_extra *parse_acc_extra(char *extra);

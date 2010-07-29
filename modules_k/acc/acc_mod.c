@@ -69,6 +69,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "acc.h"
+#include "acc_api.h"
 #include "acc_mod.h"
 #include "acc_extra.h"
 #include "acc_logic.h"
@@ -176,6 +177,12 @@ str acc_time_col       = str_init("time");
 
 /*@}*/
 
+static int bind_acc(acc_api_t* api);
+static int acc_register_engine(acc_engine_t *eng);
+static int acc_init_engines(void);
+static acc_engine_t *_acc_engines=NULL;
+static int _acc_module_initialized = 0;
+
 /* ------------- fixup function --------------- */
 static int acc_fixup(void** param, int param_no);
 static int free_acc_fixup(void** param, int param_no);
@@ -200,6 +207,7 @@ static cmd_export_t cmds[] = {
 		acc_fixup, free_acc_fixup,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 #endif
+	{"bind_acc",    (cmd_function)bind_acc, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -521,6 +529,13 @@ static int mod_init( void )
 	}
 
 #endif
+
+	_acc_module_initialized = 1;
+	if(acc_init_engines()<0) {
+		LM_ERR("failed to init extra engines\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -584,5 +599,108 @@ static void destroy(void)
 	if (dia_extra)
 		destroy_extras( dia_extra);
 #endif
+}
+
+
+/**
+ * @brief return leg_info structure
+ */
+acc_extra_t* get_leg_info(void)
+{
+	return leg_info;
+}
+
+/**
+ * @brief bind functions to ACC API structure
+ */
+static int bind_acc(acc_api_t* api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	api->register_engine = acc_register_engine;
+	api->get_leg_info    = get_leg_info;
+	api->get_core_attrs  = core2strar;
+	api->get_extra_attrs = extra2strar;
+	api->get_leg_attrs   = legs2strar;
+	api->parse_extra     = parse_acc_extra;
+	api->exec            = acc_api_exec;
+	return 0;
+}
+
+/**
+ * @brief init an acc engine
+ */
+static int acc_init_engine(acc_engine_t *e)
+{
+	acc_init_info_t ai;
+
+	if(_acc_module_initialized==0)
+		return 0;
+
+	if(e->flags & 1)
+		return 0;
+
+	memset(&ai, 0, sizeof(acc_init_info_t));
+	ai.leg_info = leg_info;
+	if(e->acc_init(&ai)<0)
+	{
+		LM_ERR("failed to initialize extra acc engine\n");
+		return -1;
+	}
+	e->flags |= 1;
+	return 0;
+}
+
+/**
+ * @brief init registered acc engines
+ */
+static int acc_init_engines(void)
+{
+	acc_engine_t *e;
+	e = _acc_engines;
+	while(e) {
+		if(acc_init_engine(e)<0)
+			return -1;
+		e = e->next;
+	}
+	return 0;
+}
+
+/**
+ * @brief register an accounting engine
+ * @return 0 on success, <0 on failure
+ */
+static int acc_register_engine(acc_engine_t *eng)
+{
+	acc_engine_t *e;
+
+	if(eng==NULL)
+		return -1;
+	e = (acc_engine_t*)pkg_malloc(sizeof(acc_engine_t));
+	if(e ==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	memcpy(e, eng, sizeof(acc_engine_t));
+
+	if(acc_init_engine(e)<0)
+		return -1;
+
+	e->next = _acc_engines;
+	_acc_engines = e;
+	LM_DBG("new acc engine registered: %s\n", e->name);
+	return 0;
+}
+
+/**
+ *
+ */
+acc_engine_t *acc_api_get_engines(void)
+{
+	return _acc_engines;
 }
 
