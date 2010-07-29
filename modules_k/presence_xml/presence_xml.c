@@ -56,7 +56,6 @@
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
-#include "pv_xml.h"
 
 MODULE_VERSION
 #define S_TABLE_VERSION 3
@@ -113,7 +112,6 @@ static param_export_t params[]={
 	{ "disable_winfo",		INT_PARAM, &disable_winfo },
 	{ "disable_bla",		INT_PARAM, &disable_bla },
 	{ "passive_mode",		INT_PARAM, &passive_mode },
-	{ "xml_ns",             STR_PARAM|USE_FUNC_PARAM, (void*)pv_xml_ns_param },
 	{ 0, 0, 0}
 };
 
@@ -122,11 +120,6 @@ static mi_export_t mi_cmds[] = {
 	{  0,                0,            0,  0,        0      }
 };
 
-static pv_export_t mod_pvs[] = {
-	{ {"xml", sizeof("xml")-1}, PVT_OTHER, pv_get_xml, pv_set_xml,
-		pv_parse_xml_name, 0, 0, 0 },
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
 
 /** module exports */
 struct module_exports exports= {
@@ -136,7 +129,7 @@ struct module_exports exports= {
 	 params,		/* exported parameters */
 	 0,				/* exported statistics */
 	 mi_cmds,		/* exported MI functions */
-	 mod_pvs,		/* exported pseudo-variables */
+	 0,				/* exported pseudo-variables */
 	 0,				/* extra processes */
 	 mod_init,		/* module initialization function */
 	 0,				/* response handling function */
