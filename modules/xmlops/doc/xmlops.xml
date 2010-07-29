@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="xmlops" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<email>miconda@gmail.com</email>
+		</author>
+	</authorgroup>
+	<copyright>
+	    <year>2009</year>
+	    <holder>asipto.com</holder>
+	</copyright>
+    </sectioninfo>
+
+    <title>XMLOPS Module</title>
+
+    <section id="xmlops.overview">
+	<title>Overview</title>
+	<para>
+		This is a module implementing funtions and pseudo-variables for
+		XML operations.
+	</para>
+    </section>
+	<section>
+	<title>Dependencies</title>
+		<section>
+		<title>Kamailio Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+		<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed before running
+			kamailio with this module loaded:
+			</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis> - for compilaiton is needed the devel
+				vesion as well.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+

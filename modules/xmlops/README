@@ -1,0 +1,80 @@
+1. XMLOPS Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+   Copyright © 2009 asipto.com
+     __________________________________________________________________
+
+   1.1. Overview
+   1.2. Dependencies
+
+        1.2.1. Kamailio Modules
+        1.2.2. External Libraries or Applications
+
+   1.3. Parameters
+
+        1.3.1. buf_size (integer)
+        1.3.2. xml_ns (str)
+
+   1.4. Pseudo-Variables
+
+        1.4.1. $xml(name=>spec)
+
+1.1. Overview
+
+   This is a module implementing funtions and pseudo-variables for XML
+   operations.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running kamailio with this module loaded:
+     * libxml - for compilaiton is needed the devel vesion as well.
+
+1.3. Parameters
+
+1.3.1. buf_size (integer)
+
+   Maximum size of the XML buffer.
+
+   Default value is 4096.
+
+   Example 1. Set buf_size parameter
+...
+modparam("xmlops", "buf_size", 8192)
+...
+
+1.3.2. xml_ns (str)
+
+   Register xml namespace prefix. Parameter value must have the format:
+   'prefix=uri'.
+
+   Example 2. Set xml_ns parameter
+...
+modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
+...
+
+1.4. Pseudo-Variables
+
+1.4.1.  $xml(name=>spec)
+
+   Pseudo-variable for XML document operations using xpath syntax. For
+   more see the Peudo-Variables Cookbook.
+
+   Example 3. xml usage
+...
+$xml(x=>doc)
+    = '<?xml version="1.0" encoding="UTF-8"?><a><b>test</b></a>';
+xlog("content of node b: $xml(x=>xpath:/a/b/text())\n");
+$xml(x=>xpath:/a/b) = "1234";
+...
