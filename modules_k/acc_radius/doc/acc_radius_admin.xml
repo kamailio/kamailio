@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Acc Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		ACC_RADIUS module is used to account transaction information to 
+		<acronym>RADIUS</acronym> server. It binds to ACC module API and uses the
+		same accounting mechanisms as for other backends.
+	</para>
+	<para>
+		Therefore you need this module just to send accounting data to a
+		RADIUS server - for more documentation regarding accounting, see the ACC
+		readme. 
+	</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>acc</emphasis> - accounting module</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before running &kamailio; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher.
+				See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section id="ACC-param-id">
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		<emphasis>This parameter is radius specific.</emphasis> Path to 
+		radius client configuration file, set the referred config file 
+		correctly and specify there address of server, shared secret 
+		(should equal that in /usr/local/etc/raddb/clients for
+		freeRadius servers) and dictionary, see etc for an example of 
+		config file and dictionary.
+		</para>
+		<para>
+		If the parameter is set to empty string, the RADIUS accounting support
+		will be disabled (even if compiled).
+		</para>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title>radius_config example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_radius", "radius_config", "/etc/radiusclient/radiusclient.conf")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- RADIUS specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>radius_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_radius", "radius_flag", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- RADIUS specific.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>radius_missed_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_radius", "radius_missed_flag", 3)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>service_type</varname> (integer)</title>
+		<para>
+		Radius service type used for accounting.
+		</para>
+		<para>
+		Default value is 15 (SIP).
+		</para>
+		<example>
+		<title>service_type example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_radius", "service_type", 16)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged via RADIUS - RADIUS specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>radius_extra example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+			<function moreinfo="none">acc_rad_request(comment)</function>
+		</title>
+		<para>
+		Like <function moreinfo="none">acc_log_request</function> of acc module, 
+		<function moreinfo="none">acc_rad_request</function> reports on 
+		a SIP request event. It reports to radius server as configured in 
+		<quote>radius_config</quote>.
+		</para>
+		<para>
+		Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>comment</emphasis> - Comment to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title>acc_rad_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_rad_request("Some comment");
+...
+acc_rad_request("200 From Config");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+
