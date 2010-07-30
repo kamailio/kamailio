@@ -264,7 +264,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 error:
 	if(xml_array!=NULL)
 	{
-		for(i=0; i<=j; i++)
+		for(i=0; i<j; i++)
 		{
 			if(xml_array[i]!=NULL)
 				xmlFreeDoc( xml_array[i]);
