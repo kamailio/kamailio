@@ -261,7 +261,7 @@ int insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 	}
 
 	new_rec->expires+= (int)time(NULL);
-	if(fallback2db==0)
+	if(fallback2db!=0)
 		new_rec->db_flag= INSERTDB_FLAG;
 	else
 		new_rec->db_flag= NO_UPDATEDB_FLAG;
