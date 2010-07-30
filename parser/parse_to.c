@@ -241,7 +241,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						status = PARA_VALUE_QUOTED;
 						break;
 					case PARA_VALUE_QUOTED:
-						param->value.len=tmp-param->value.s-1 ;
+						param->value.len=tmp-param->value.s;
 						add_param( param , to_b );
 						status = E_PARA_VALUE;
 						break;
