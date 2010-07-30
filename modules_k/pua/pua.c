@@ -667,7 +667,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 				p->pres_uri,					/* Request-URI */
 				p->pres_uri,					/* To */
 				p->pres_uri,					/* From */
-				0								/* Outbound proxy*/
+				&outbound_proxy					/* Outbound proxy*/
 				);
 		if(result< 0)
 		{
