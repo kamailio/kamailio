@@ -457,6 +457,8 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		if (r->contacts)
 			build_contact(r->contacts);
 		ul.release_urecord(r);
+	} else { /* No contacts found */
+		build_contact(NULL);
 	}
 
 #ifdef USE_TCP
