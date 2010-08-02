@@ -1189,6 +1189,7 @@ inline static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 	if (proxy) {
 		r = _w_t_forward_nonack(p_msg, proxy, proxy->proto);		
 		free_proxy(proxy);
+		pkg_free(proxy);
 	}
 	return r;
 }
@@ -1441,6 +1442,7 @@ inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 	if (proxy) {
 		r = _w_t_relay_to(p_msg, proxy, PROTO_NONE);
 		free_proxy(proxy);
+		pkg_free(proxy);
 	}
 	return r;
 }
@@ -1475,6 +1477,7 @@ inline static int w_t_replicate_uri(struct sip_msg  *msg ,
 
 	r = t_replicate(msg, proxy, proxy->proto);
 	free_proxy(proxy);
+	pkg_free(proxy);
 	return r;
 
 }
@@ -1532,8 +1535,9 @@ inline static int w_t_replicate_to( struct sip_msg  *p_msg ,
 	int r = -1;
 	proxy = t_protoaddr2proxy(proto_par, addr_par);
 	if (proxy) {
-		r = t_replicate(p_msg, proxy, proxy->proto);		
+		r = t_replicate(p_msg, proxy, proxy->proto);
 		free_proxy(proxy);
+		pkg_free(proxy);
 	}
 	return r;
 }
