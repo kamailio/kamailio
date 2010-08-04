@@ -634,7 +634,7 @@ int fix_actions(struct action* a)
 	void *tmp_p;
 	int ret;
 	int i;
-	union cmd_export_u* cmd;
+	sr31_cmd_export_t* cmd;
 	str s;
 	struct hostent* he;
 	struct ip_addr ip;
@@ -920,9 +920,9 @@ int fix_actions(struct action* a)
 				cmd = t->val[0].u.data;
 				rve_param_no = 0;
 				if (cmd) {
-					DBG("fixing %s()\n", cmd->c.name);
+					DBG("fixing %s()\n", cmd->name);
 					if (t->val[1].u.number==0) {
-						ret = call_fixup(cmd->c.fixup, 0, 0);
+						ret = call_fixup(cmd->fixup, 0, 0);
 						if (ret < 0)
 							goto error;
 					}
@@ -948,7 +948,7 @@ int fix_actions(struct action* a)
 								/* len is not used for now */
 								t->val[i+2].u.str.len = s.len;
 								tmp_p = t->val[i+2].u.data;
-								ret = call_fixup(cmd->c.fixup,
+								ret = call_fixup(cmd->fixup,
 												&t->val[i+2].u.data, i+1);
 								if (t->val[i+2].u.data != tmp_p)
 									t->val[i+2].type = MODFIXUP_ST;
@@ -967,7 +967,7 @@ int fix_actions(struct action* a)
 							}
 						} else  if (t->val[i+2].type == STRING_ST) {
 							tmp_p = t->val[i+2].u.data;
-							ret = call_fixup(cmd->c.fixup,
+							ret = call_fixup(cmd->fixup,
 											&t->val[i+2].u.data, i+1);
 							if (t->val[i+2].u.data != tmp_p)
 								t->val[i+2].type = MODFIXUP_ST;
@@ -984,12 +984,11 @@ int fix_actions(struct action* a)
 					   (constant RVEs), MODFIXUP_ST (fixed up)
 					   or RVE_ST (non-ct RVEs) */
 					if (rve_param_no) { /* we have to fix the type */
-						if (cmd->c.fixup &&
-							!((unsigned long)cmd->c.fixup &
-								FIXUP_F_FPARAM_RVE)) {
+						if (cmd->fixup &&
+							!(cmd->fixup_flags & FIXUP_F_FPARAM_RVE)) {
 							BUG("non-ct RVEs (%d) in module function call"
 									"that does not support them (%s)\n",
-									rve_param_no, cmd->c.name);
+									rve_param_no, cmd->name);
 							ret = E_BUG;
 							goto error;
 						}

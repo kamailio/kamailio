@@ -153,12 +153,9 @@ typedef int (*param_func_t)( modparam_t type, void* val);
  * They are kept in the first 2 bits inside the pointer
  */
 #define FIXUP_F_FPARAM_RVE (unsigned long)1 /* fparam fixup, rve ready */
-#define FIXUP_F_RESERVED (unsigned long)2  /* not used for now */
-#define FIXUP_MASK (~((unsigned long)3)) /* mask for obtainin the pointer val*/
 
 #define call_fixup(fixup, param, param_no) \
-	(((long)(fixup) & FIXUP_MASK)? \
-		(((fixup_function)((long)(fixup) & FIXUP_MASK))(param, param_no)):0)
+	((fixup) ? (fixup)(param, param_no) : 0)
 
 /* Macros - used as rank in child_init function */
 #define PROC_MAIN      0  /* Main ser process */
@@ -220,6 +217,20 @@ struct kam_cmd_export_ {
 	free_fixup_function free_fixup; /* function called to free the "fixed"
 									   parameters */
 	int flags;              /* Function flags */
+};
+
+
+struct sr31_cmd_export_ {
+	char* name;             /* null terminated command name */
+	cmd_function function;  /* pointer to the corresponding function */
+	int param_no;           /* number of parameters used by the function */
+	fixup_function fixup;   /* pointer to the function called to "fix" the
+							   parameters */
+	free_fixup_function free_fixup; /* function called to free the "fixed"
+									   parameters */
+	int flags;              /* Function flags */
+	int fixup_flags;
+	void* module_exports; /* pointer to module structure */
 };
 
 
@@ -288,12 +299,15 @@ typedef struct param_export_ param_export_t;
 typedef struct ser_cmd_export_ ser_cmd_export_t;
 typedef struct kam_cmd_export_ kam_cmd_export_t;
 typedef struct cmd_export_common_ cmd_export_common_t;
+typedef struct sr31_cmd_export_ sr31_cmd_export_t;
 
+#if 0
 union cmd_export_u{
 	cmd_export_common_t c; /* common members for everybody */
 	ser_cmd_export_t v0;
 	kam_cmd_export_t v1;
 };
+#endif
 
 
 /* ser module exports version */
@@ -361,6 +375,47 @@ struct kam_module_exports {
 
 
 
+/** sr/ser 3.1+ module exports version.
+ * Includes ser and kamailio versions, re-arraranged + some extras.
+ * Note: some of the members will be obsoleted and are kept only for
+ * backward compatibility (avoid re-writing all the modules exports
+ * declarations).
+ */
+struct sr31_module_exports {
+	char* name;                     /* null terminated module name */
+	sr31_cmd_export_t* cmds;      /* null terminated array of the exported
+									   commands */
+	param_export_t* params;         /* null terminated array of the exported
+									   module parameters */
+	init_function init_f;           /* Initialization function */
+	response_function response_f;   /* function used for responses,
+									   returns yes or no; can be null */
+	destroy_function destroy_f;     /* function called when the module should
+									   be "destroyed", e.g: on ser exit;
+									   can be null */
+	onbreak_function onbreak_f;
+	child_init_function init_child_f;  /* function called by all processes
+										  after the fork */
+	unsigned int dlflags;           /**< flags for dlopen */
+	/* ser specific exports
+	   (to be obsoleted and replaced by register_...) */
+	rpc_export_t* rpc_methods;      /* null terminated array of exported
+									   rpc methods */
+	/* kamailio specific exports
+	   (to be obsoleted and replaced by register_...) */
+	stat_export_t* stats;			/*!< null terminated array of the exported
+									  module statistics */
+	mi_export_t* mi_cmds;			/*!< null terminated array of the exported
+									  MI functions */
+	pv_export_t* items;				/*!< null terminated array of the exported
+									   module items (pseudo-variables) */
+	proc_export_t* procs;			/*!< null terminated array of the
+									  additional processes required by the
+									  module */
+};
+
+
+
 /* module exports in the same place in memory in both ser & kamailio */
 struct module_exports_common{
 	char* name;
@@ -377,8 +432,8 @@ union module_exports_u {
 struct sr_module{
 	char* path;
 	void* handle;
-	unsigned int mod_interface_ver;
-	union module_exports_u* exports;
+	unsigned int orig_mod_interface_ver;
+	struct sr31_module_exports exports;
 	struct sr_module* next;
 };
 
@@ -388,9 +443,8 @@ extern response_function* mod_response_cbks;/* response callback array */
 extern int mod_response_cbk_no;    /* size of reponse callbacks array */
 
 int register_builtin_modules(void);
-/*int register_module(unsigned , struct module_exports*, char*,  void*);*/
 int load_module(char* path);
-union cmd_export_u* find_export_record(char* name, int param_no, int flags,
+sr31_cmd_export_t* find_export_record(char* name, int param_no, int flags,
 										unsigned *ver);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);

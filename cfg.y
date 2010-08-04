@@ -2697,7 +2697,7 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 
 
 rve_un_op: NOT	{ $$=RVE_LNOT_OP; }
-		|  MINUS %prec UNARY	{ $$=RVE_UMINUS_OP; } 
+		|  MINUS %prec UNARY	{ $$=RVE_UMINUS_OP; }
 		/* TODO: RVE_BOOL_OP, RVE_NOT_OP? */
 	;
 
@@ -3704,7 +3704,7 @@ static int case_check_default(struct case_stms* stms)
  */
 static int mod_f_params_pre_fixup(struct action* a)
 {
-	union cmd_export_u* cmd_exp;
+	sr31_cmd_export_t* cmd_exp;
 	action_u_t* params;
 	int param_no;
 	struct rval_expr* rve;
@@ -3716,7 +3716,7 @@ static int mod_f_params_pre_fixup(struct action* a)
 	param_no = a->val[1].u.number;
 	params = &a->val[2];
 	
-	switch(cmd_exp->c.param_no) {
+	switch(cmd_exp->param_no) {
 		case 0:
 			a->type = MODULE0_T;
 			break;
@@ -3743,24 +3743,22 @@ static int mod_f_params_pre_fixup(struct action* a)
 			break;
 		default:
 			yyerror("function %s: bad definition"
-					" (invalid number of parameters)", cmd_exp->c.name);
+					" (invalid number of parameters)", cmd_exp->name);
 			return -1;
 	}
 	
-	if ( cmd_exp->c.fixup) {
-		if (is_fparam_rve_fixup(cmd_exp->c.fixup))
+	if ( cmd_exp->fixup) {
+		if (is_fparam_rve_fixup(cmd_exp->fixup))
 			/* mark known fparam rve safe fixups */
-			cmd_exp->c.fixup  = (fixup_function)
-									((unsigned long) cmd_exp->c.fixup |
-										 FIXUP_F_FPARAM_RVE);
-		else if (!((unsigned long)cmd_exp->c.fixup & FIXUP_F_FPARAM_RVE)) {
+			cmd_exp->fixup_flags  |= FIXUP_F_FPARAM_RVE;
+		else if (!(cmd_exp->fixup_flags & FIXUP_F_FPARAM_RVE)) {
 			/* v0 or v1 functions that have fixups need constant,
 			  string params.*/
 			for (r=0; r < param_no; r++) {
 				rve=params[r].u.data;
 				if (!rve_is_constant(rve)) {
 					yyerror_at(&rve->fpos, "function %s: parameter %d is not"
-								" constant\n", cmd_exp->c.name, r+1);
+								" constant\n", cmd_exp->name, r+1);
 					return -1;
 				}
 				if ((rv = rval_expr_eval(0, 0, rve)) == 0 ||
@@ -3768,7 +3766,7 @@ static int mod_f_params_pre_fixup(struct action* a)
 					/* out of mem or bug ? */
 					rval_destroy(rv);
 					yyerror_at(&rve->fpos, "function %s: bad parameter %d"
-									" expression\n", cmd_exp->c.name, r+1);
+									" expression\n", cmd_exp->name, r+1);
 					return -1;
 				}
 				rval_destroy(rv);
@@ -3796,12 +3794,10 @@ static int mod_f_params_pre_fixup(struct action* a)
  */
 static void free_mod_func_action(struct action* a)
 {
-	union cmd_export_u* cmd_exp;
 	action_u_t* params;
 	int param_no;
 	int r;
 	
-	cmd_exp = a->val[0].u.data;
 	param_no = a->val[1].u.number;
 	params = &a->val[2];
 	

@@ -172,9 +172,9 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 				(dst)[i+2].u.string = s.s; \
 				(dst)[i+2].u.str.len = s.len; \
 				rval_destroy(rv); \
-				if ((cmd)->c.fixup && \
-						(long)(cmd)->c.fixup & FIXUP_F_FPARAM_RVE) { \
-					call_fixup((cmd)->c.fixup, &(dst)[i+2].u.data, i+1); \
+				if ((cmd)->fixup && \
+						(cmd)->fixup_flags & FIXUP_F_FPARAM_RVE) { \
+					call_fixup((cmd)->fixup, &(dst)[i+2].u.data, i+1); \
 					if ((dst)[i+2].u.data != s.s) \
 						(dst)[i+2].type = FPARAM_DYN_ST; \
 				} \
@@ -201,14 +201,14 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 #define MODF_CALL(f_type, h, msg, src, ...) \
 	do { \
 		cmd=(src)[0].u.data; \
-		ret=((f_type)cmd->c.function)((msg), __VAR_ARGS__); \
+		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
 	} while (0)
 #else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
 #define MODF_CALL(f_type, h, msg, src, params...) \
 	do { \
 		cmd=(src)[0].u.data; \
-		ret=((f_type)cmd->c.function)((msg), ## params ); \
+		ret=((f_type)cmd->function)((msg), ## params ); \
 		MODF_HANDLE_RETCODE(h, ret); \
 	} while (0)
 #endif /* __SUNPRO_C */
@@ -235,7 +235,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 	do { \
 		cmd=(src)[0].u.data; \
 		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
-		ret=((f_type)cmd->c.function)((msg), __VAR_ARGS__); \
+		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
 		/* free strings allocated by us or fixups */ \
 		MODF_RVE_PARAM_FREE(src, dst); \
@@ -245,7 +245,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 	do { \
 		cmd=(src)[0].u.data; \
 		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
-		ret=((f_type)cmd->c.function)((msg), ## params ); \
+		ret=((f_type)cmd->function)((msg), ## params ); \
 		MODF_HANDLE_RETCODE(h, ret); \
 		/* free strings allocated by us or fixups */ \
 		MODF_RVE_PARAM_FREE(src, dst); \
@@ -263,7 +263,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct dest_info dst;
 	char* tmp;
 	char *new_uri, *end, *crt;
-	union cmd_export_u* cmd;
+	sr31_cmd_export_t* cmd;
 	int len;
 	int user;
 	struct sip_uri uri, next_hop;
@@ -1484,11 +1484,9 @@ end:
 	/* process module onbreak handlers if present */
 	if (h->rec_lev==0 && ret==0)
 		for (mod=modules;mod;mod=mod->next)
-			if ((mod->mod_interface_ver==0) && mod->exports && 
-					mod->exports->v0.onbreak_f) {
-				mod->exports->v0.onbreak_f( msg );
-				DBG("DEBUG: %s onbreak handler called\n",
-						mod->exports->c.name);
+			if (mod->exports.onbreak_f) {
+				mod->exports.onbreak_f( msg );
+				DBG("DEBUG: %s onbreak handler called\n", mod->exports.name);
 			}
 	return ret;
 
