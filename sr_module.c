@@ -935,6 +935,30 @@ int fixup_get_param_count(void **cur_param, int cur_param_no)
 }
 
 
+
+/** get a pointer to a parameter internal type.
+ * @param param
+ * @return pointer to the parameter internal type.
+ */
+action_param_type* fixup_get_param_ptype(void** param)
+{
+	action_u_t* a;
+	a = (void*)((char*)param - (char*)&(((action_u_t*)(0))->u.string));
+	return &a->type;
+}
+
+
+/** get a parameter internal type.
+ * @see fixup_get_param_ptype().
+ * @return paramter internal type.
+ */
+action_param_type fixup_get_param_type(void** param)
+{
+	return *fixup_get_param_ptype(param);
+}
+
+
+
 /* fixes flag params (resolves possible named flags)
  * use PARAM_USE_FUNC|PARAM_STRING as a param. type and create
  * a wrapper function that does just:
@@ -1216,6 +1240,13 @@ int fix_param_types(int types, void** param)
 	int ret;
 	int t;
 	
+	if (fixup_get_param_type(param) == STRING_RVE_ST &&
+			(types & (FPARAM_INT|FPARAM_STR|FPARAM_STRING))) {
+		/* if called with a RVE already converted to string =>
+		   don't try AVP, PVAR or SELECT (to avoid double
+		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		types &= ~ (FPARAM_AVP|FPARAM_PVS|FPARAM_SELECT|FPARAM_PVE);
+	}
 	for (t=types & ~(types-1); types; types&=(types-1), t=types & ~(types-1)){
 		if ((ret=fix_param(t, param))<=0) return ret;
 	}
@@ -1236,10 +1267,15 @@ int fix_param_types(int types, void** param)
 int fixup_var_str_12(void** param, int param_no)
 {
 	int ret;
-	if ((sr_cfg_compat!=SR_COMPAT_SER) &&
-		((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
-	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
-	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+		/* if called with a RVE already converted to string =>
+		   don't try AVP, PVAR or SELECT (to avoid double
+		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		if ((sr_cfg_compat!=SR_COMPAT_SER) &&
+			((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
+		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
+		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
 	ERR("Error while fixing parameter, AVP, SELECT, and str conversions"
 			" failed\n");
@@ -1273,10 +1309,15 @@ int fixup_var_str_2(void** param, int param_no)
 int fixup_var_int_12(void** param, int param_no)
 {
 	int ret;
-	if ((sr_cfg_compat!=SR_COMPAT_SER) &&
-		((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
-	if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
-	if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+		/* if called with a RVE already converted to string =>
+		   don't try AVP, PVAR or SELECT (to avoid double
+		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		if ((sr_cfg_compat!=SR_COMPAT_SER) &&
+			((ret = fix_param(FPARAM_PVS, param)) <= 0)) return ret;
+		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
+		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+	}
 	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
 	ERR("Error while fixing parameter, AVP, SELECT, and int conversions"
 			" failed\n");

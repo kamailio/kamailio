@@ -127,7 +127,8 @@ enum _operand_subtype{
 		LVAL_ST,  RVE_ST,
 		RETCODE_ST, CASE_ST,
 		BLOCK_ST, JUMPTABLE_ST, CONDTABLE_ST, MATCH_CONDTABLE_ST,
-		FPARAM_DYN_ST /* temporary only */
+		STRING_RVE_ST /* RVE converted to a string (fparam hack) */,
+		FPARAM_DYN_ST /* temporary only (fparam hack) */
 };
 
 typedef enum _expr_l_type expr_l_type;

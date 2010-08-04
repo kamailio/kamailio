@@ -168,7 +168,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 					MODF_RVE_PARAM_FREE(src, dst); \
 					goto error; \
 				} \
-				(dst)[i+2].type = STRING_ST; \
+				(dst)[i+2].type = STRING_RVE_ST; \
 				(dst)[i+2].u.string = s.s; \
 				(dst)[i+2].u.str.len = s.len; \
 				rval_destroy(rv); \
