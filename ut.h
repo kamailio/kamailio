@@ -365,7 +365,7 @@ static inline char* sint2strbuf(long l, char* r, int r_size, int* len)
 		l = -l;
 	}
 	p = int2strbuf((unsigned long)l, r, r_size, &p_len);
-	if(sign && *len<(r_size-1)) {
+	if(sign && p_len<(r_size-1)) {
 		*(--p) = '-';
 		p_len++;;
 	}
