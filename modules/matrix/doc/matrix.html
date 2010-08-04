@@ -1,0 +1,874 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>matrix Module</title>
+    <link rel="stylesheet" href="/css/sr-doc.css" type="text/css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.1" />
+    <link rel="home" href="#id2523209" title="matrix Module" />
+    <link rel="next" href="#id2815512" title="Chapter 1. Admin Guide" />
+  </head>
+  <body>
+    <div class="book" title="matrix Module">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h1 class="title"><a id="id2523209"></a>matrix Module</h1>
+          </div>
+          <div>
+            <div class="authorgroup">
+              <div class="author">
+                <h3 class="author"><span class="firstname">Hardy</span> <span class="surname">Kahl</span></h3>
+                <div class="affiliation">
+                  <span class="orgname">1&amp;1 Internet AG<br /></span>
+                </div>
+              </div>
+              <div class="editor">
+                <h4 class="editedby">Edited by</h4>
+                <h3 class="editor"><span class="firstname">Henning</span> <span class="surname">Westerholt</span></h3>
+                <div class="affiliation">
+                  <span class="orgname">1&amp;1 Internet AG<br /></span>
+                </div>
+                <code class="email">&lt;<a class="email" href="mailto:henning.westerholt@1und1.de">henning.westerholt@1und1.de</a>&gt;</code>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="copyright">Copyright © 2008 1&amp;1 Internet AG</p>
+          </div>
+          <div>
+            <div class="revhistory">
+              <table border="1" width="100%" summary="Revision history">
+                <tr>
+                  <th align="left" valign="top" colspan="2">
+                    <b>Revision History</b>
+                  </th>
+                </tr>
+                <tr>
+                  <td align="left">Revision $Revision: 4863 $</td>
+                  <td align="left">$Date: 2008-09-05 13:11:33 +0200 (Fri, 05 Sep 2008) $</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <hr />
+      </div>
+      <div class="toc">
+        <p>
+          <b>Table of Contents</b>
+        </p>
+        <dl>
+          <dt>
+            <span class="chapter">
+              <a href="#id2815512">1. Admin Guide</a>
+            </span>
+          </dt>
+          <dd>
+            <dl>
+              <dt>
+                <span class="section">
+                  <a href="#id2816214">1. Overview</a>
+                </span>
+              </dt>
+              <dt>
+                <span class="section">
+                  <a href="#id2808060">2. Dependencies</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2811981">2.1. Kamailio Modules</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2818364">2.2. External Libraries or Applications</a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+              <dt>
+                <span class="section">
+                  <a href="#id2822133">3. Exported Parameters</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2815765">3.1. <code class="varname">db_url</code> (string)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2828576">3.2. <code class="varname">matrix_table</code> (string)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2830755">3.3. <code class="varname">matrix_first_col</code> (string)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2831495">3.4. <code class="varname">matrix_second_col</code> (string)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2811302">3.5. <code class="varname">matrix_res_col</code> (string)</a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+              <dt>
+                <span class="section">
+                  <a href="#id2793468">4. Exported Functions</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2831283">4.1. 
+			<code class="function">matrix (string first, string second, string dstavp)</code>
+		</a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+              <dt>
+                <span class="section">
+                  <a href="#id2824842">5. <acronym class="acronym">MI</acronym> Commands</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2833119">5.1. 
+				<code class="function">reload_matrix</code>
+	    </a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+              <dt>
+                <span class="section">
+                  <a href="#id2807231">6. Installation and Running</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#id2832406">6.1. Database setup</a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+            </dl>
+          </dd>
+          <dt>
+            <span class="chapter">
+              <a href="#id2786765">2. Module parameter for database access.</a>
+            </span>
+          </dt>
+          <dd>
+            <dl>
+              <dt>
+                <span class="section">
+                  <a href="#id2786706">1. <code class="varname">db_url</code> (String)</a>
+                </span>
+              </dt>
+              <dt>
+                <span class="section">
+                  <a href="#id2828349">2. <code class="varname">matrix_table</code> (String)</a>
+                </span>
+              </dt>
+              <dt>
+                <span class="section">
+                  <a href="#id2802229">3. <code class="varname">matrix_first_col</code> (string)</a>
+                </span>
+              </dt>
+              <dt>
+                <span class="section">
+                  <a href="#id2779839">4. <code class="varname">matrix_second_col</code> (string)</a>
+                </span>
+              </dt>
+              <dt>
+                <span class="section">
+                  <a href="#id2831629">5. <code class="varname">matrix_res_col</code> (string)</a>
+                </span>
+              </dt>
+            </dl>
+          </dd>
+        </dl>
+      </div>
+      <div class="list-of-examples">
+        <p>
+          <b>List of Examples</b>
+        </p>
+        <dl>
+          <dt>1.1. <a href="#id2815079">Set <code class="varname">db_url</code> parameter</a></dt>
+          <dt>1.2. <a href="#id2811495">Set <code class="varname">matrix_table</code> parameter</a></dt>
+          <dt>1.3. <a href="#id2795600">Set <code class="varname">matrix_first_col</code> parameter</a></dt>
+          <dt>1.4. <a href="#id2794507">Set <code class="varname">matrix_second_col</code> parameter</a></dt>
+          <dt>1.5. <a href="#id2814720">Set <code class="varname">matrix_res_col</code> parameter</a></dt>
+          <dt>1.6. <a href="#id2815666"><code class="function">matrix</code> usage</a></dt>
+          <dt>1.7. <a href="#id2818370"><code class="function">reload_matrix</code> usage</a></dt>
+          <dt>1.8. <a href="#id2805497">Example database content - matrix table</a></dt>
+          <dt>2.1. <a href="#id2786762">Set <code class="varname">db_url</code> parameter</a></dt>
+          <dt>2.2. <a href="#id2784686">Set <code class="varname">matrix_table</code> parameter</a></dt>
+          <dt>2.3. <a href="#id2823757">Set <code class="varname">matrix_first_col</code> parameter</a></dt>
+          <dt>2.4. <a href="#id2824081">Set <code class="varname">matrix_second_col</code> parameter</a></dt>
+          <dt>2.5. <a href="#id2784890">Set <code class="varname">matrix_res_col</code> parameter</a></dt>
+        </dl>
+      </div>
+      <div class="chapter" title="Chapter 1. Admin Guide">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h2 class="title"><a id="id2815512"></a>Chapter 1. Admin Guide</h2>
+            </div>
+          </div>
+        </div>
+        <div class="toc">
+          <p>
+            <b>Table of Contents</b>
+          </p>
+          <dl>
+            <dt>
+              <span class="section">
+                <a href="#id2816214">1. Overview</a>
+              </span>
+            </dt>
+            <dt>
+              <span class="section">
+                <a href="#id2808060">2. Dependencies</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#id2811981">2.1. Kamailio Modules</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#id2818364">2.2. External Libraries or Applications</a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+            <dt>
+              <span class="section">
+                <a href="#id2822133">3. Exported Parameters</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#id2815765">3.1. <code class="varname">db_url</code> (string)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#id2828576">3.2. <code class="varname">matrix_table</code> (string)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#id2830755">3.3. <code class="varname">matrix_first_col</code> (string)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#id2831495">3.4. <code class="varname">matrix_second_col</code> (string)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#id2811302">3.5. <code class="varname">matrix_res_col</code> (string)</a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+            <dt>
+              <span class="section">
+                <a href="#id2793468">4. Exported Functions</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#id2831283">4.1. 
+			<code class="function">matrix (string first, string second, string dstavp)</code>
+		</a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+            <dt>
+              <span class="section">
+                <a href="#id2824842">5. <acronym class="acronym">MI</acronym> Commands</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#id2833119">5.1. 
+				<code class="function">reload_matrix</code>
+	    </a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+            <dt>
+              <span class="section">
+                <a href="#id2807231">6. Installation and Running</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#id2832406">6.1. Database setup</a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+          </dl>
+        </div>
+        <div class="section" title="1. Overview">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2816214"></a>1. Overview</h2>
+              </div>
+            </div>
+          </div>
+          <p>
+	The matrix module can be used to arbitrary lookup operations over an array.
+	One possible usecase is to define which routing tree should
+  	be used depending on the preferred carrier of the source number and
+  	the carrier id of the destination number.
+
+  	The matrix cells are read from a database and can be reloaded using
+  	a FIFO command.
+
+  	You do not have to define all matrix cells. The matrix can be sparse.
+
+  	Currently, the implementation is designed for a small number of
+  	columns (they are stored in a linked list). This does
+  	not scale well and has to be replaced by more an efficient data
+  	data structure when needed.
+
+	</p>
+        </div>
+        <div class="section" title="2. Dependencies">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2808060"></a>2. Dependencies</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section" title="2.1. Kamailio Modules">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2811981"></a>2.1. Kamailio Modules</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			</p>
+            <div class="itemizedlist">
+              <ul class="itemizedlist">
+                <li class="listitem">
+                  <p>
+                    <span class="emphasis">
+                      <em>none</em>
+                    </span>
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="section" title="2.2. External Libraries or Applications">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2818364"></a>2.2. External Libraries or Applications</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The following libraries or applications must be installed 
+			before running Kamailio with this module loaded:
+			</p>
+            <div class="itemizedlist">
+              <ul class="itemizedlist">
+                <li class="listitem">
+                  <p>
+                    <span class="emphasis">
+                      <em>none</em>
+                    </span>
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="section" title="3. Exported Parameters">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2822133"></a>3. Exported Parameters</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section" title="3.1. db_url (string)">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2815765"></a>3.1. <code class="varname">db_url</code> (string)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The URL for the database connection.
+	  </p>
+            <p>
+			<span class="emphasis"><em>
+				Default value is <span class="quote">“<span class="quote">mysql://openserro:openserro@localhost/openser</span>”</span>.
+		  </em></span>
+	  </p>
+            <div class="example">
+              <a id="id2815079"></a>
+              <p class="title">
+                <b>Example 1.1. Set <code class="varname">db_url</code> parameter</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("matrix", "db_url", "mysql://openserro:openserro@localhost/openser")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section" title="3.2. matrix_table (string)">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2828576"></a>3.2. <code class="varname">matrix_table</code> (string)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The name of the table containing the matrix data.
+	  </p>
+            <p>
+			<span class="emphasis"><em>
+				Default value is <span class="quote">“<span class="quote">matrix</span>”</span>.
+		  </em></span>
+	  </p>
+            <div class="example">
+              <a id="id2811495"></a>
+              <p class="title">
+                <b>Example 1.2. Set <code class="varname">matrix_table</code> parameter</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("matrix", "matrix_table", "matrix")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section" title="3.3. matrix_first_col (string)">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2830755"></a>3.3. <code class="varname">matrix_first_col</code> (string)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The name of the column containing the first row in the matrix.
+	  </p>
+            <p>
+			<span class="emphasis"><em>
+				Default value is <span class="quote">“<span class="quote">first</span>”</span>.
+		  </em></span>
+	  </p>
+            <div class="example">
+              <a id="id2795600"></a>
+              <p class="title">
+                <b>Example 1.3. Set <code class="varname">matrix_first_col</code> parameter</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("matrix", "matrix_first_col", "first")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section" title="3.4. matrix_second_col (string)">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2831495"></a>3.4. <code class="varname">matrix_second_col</code> (string)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The name of the column containing the second row in the matrix.
+	  </p>
+            <p>
+			<span class="emphasis"><em>
+				Default value is <span class="quote">“<span class="quote">second</span>”</span>.
+		  </em></span>
+	  </p>
+            <div class="example">
+              <a id="id2794507"></a>
+              <p class="title">
+                <b>Example 1.4. Set <code class="varname">matrix_second_col</code> parameter</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("matrix", "matrix_second_col", "second")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section" title="3.5. matrix_res_col (string)">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2811302"></a>3.5. <code class="varname">matrix_res_col</code> (string)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			The name of the column containing the result ID to be used.
+	  </p>
+            <p>
+			<span class="emphasis"><em>
+				Default value is <span class="quote">“<span class="quote">res</span>”</span>.
+		  </em></span>
+	  </p>
+            <div class="example">
+              <a id="id2814720"></a>
+              <p class="title">
+                <b>Example 1.5. Set <code class="varname">matrix_res_col</code> parameter</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("matrix", "matrix_res_col", "res")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+        </div>
+        <div class="section" title="4. Exported Functions">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2793468"></a>4. Exported Functions</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section" title="4.1.  matrix (string first, string second, string dstavp)">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2831283"></a>4.1. 
+			<code class="function">matrix (string first, string second, string dstavp)</code>
+		</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			Looks up the desired result ID in the matrix for the given column
+			and value and saves the result in dstavp. Returns false if the cell
+      			is not defined or when an error occured.
+			
+			Pseudo-variables or AVPs can be used for first and second.
+	  </p>
+            <div class="example">
+              <a id="id2815666"></a>
+              <p class="title">
+                <b>Example 1.6. <code class="function">matrix</code> usage</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+if (!matrix("$avp(first)", "$(second)", "$avp(route_tree)"))
+  $avp(route_tree) = $avp(frst); # default routing as defined for source number
+}
+cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+        </div>
+        <div class="section" title="5. MI Commands">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2824842"></a>5. <acronym class="acronym">MI</acronym> Commands</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section" title="5.1.  reload_matrix">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2833119"></a>5.1. 
+				<code class="function">reload_matrix</code>
+	    </h3>
+                </div>
+              </div>
+            </div>
+            <p>
+				Reloads the internal matrix representation from the database.
+				This is necessary after entries in the database have been changed.
+	    </p>
+            <div class="example">
+              <a id="id2818370"></a>
+              <p class="title">
+                <b>Example 1.7. <code class="function">reload_matrix</code> usage</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+kamctl fifo reload_matrix
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+        </div>
+        <div class="section" title="6. Installation and Running">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2807231"></a>6. Installation and Running</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section" title="6.1. Database setup">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="id2832406"></a>6.1. Database setup</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+				Before running Kamailio with matrix, you have to setup the database 
+				table where the module will read the matrix data. For that, if 
+				the table was not created by the installation script or you choose
+				to install everything by yourself you can use the matrix-create.sql
+				<acronym class="acronym">SQL</acronym> script in the database directories in the 
+				kamailio/scripts folder as template. 
+				Database, table, and column names can be set with module parameters so they
+				can be changed.
+				You can also find the complete database documentation on the
+				project webpage, http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+			</p>
+            <div class="example">
+              <a id="id2805497"></a>
+              <p class="title">
+                <b>Example 1.8. Example database content - matrix table</b>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
++---------+--------------+---------+
+|  first  |    second    |   res   |
++---------+--------------+---------+
+|       1 |            9 |       2 |
+|       2 |           69 |       1 |
+|       2 |           13 |       3 |
++---------+--------------+---------+
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+        </div>
+      </div>
+      <div class="chapter" title="Chapter 2. Module parameter for database access.">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h2 class="title"><a id="id2786765"></a>Chapter 2. Module parameter for database access.</h2>
+            </div>
+          </div>
+        </div>
+        <div class="toc">
+          <p>
+            <b>Table of Contents</b>
+          </p>
+          <dl>
+            <dt>
+              <span class="section">
+                <a href="#id2786706">1. <code class="varname">db_url</code> (String)</a>
+              </span>
+            </dt>
+            <dt>
+              <span class="section">
+                <a href="#id2828349">2. <code class="varname">matrix_table</code> (String)</a>
+              </span>
+            </dt>
+            <dt>
+              <span class="section">
+                <a href="#id2802229">3. <code class="varname">matrix_first_col</code> (string)</a>
+              </span>
+            </dt>
+            <dt>
+              <span class="section">
+                <a href="#id2779839">4. <code class="varname">matrix_second_col</code> (string)</a>
+              </span>
+            </dt>
+            <dt>
+              <span class="section">
+                <a href="#id2831629">5. <code class="varname">matrix_res_col</code> (string)</a>
+              </span>
+            </dt>
+          </dl>
+        </div>
+        <div class="section" title="1. db_url (String)">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2786706"></a>1. <code class="varname">db_url</code> (String)</h2>
+              </div>
+            </div>
+          </div>
+          <p>URL to the database containing the data.</p>
+          <p>
+      <span class="emphasis"><em>Default value is <span class="quote">“<span class="quote">mysql://openserro:openserro@localhost/openser</span>”</span>.</em></span>
+    </p>
+          <div class="example">
+            <a id="id2786762"></a>
+            <p class="title">
+              <b>Example 2.1. Set <code class="varname">db_url</code> parameter</b>
+            </p>
+            <div class="example-contents">
+              <pre class="programlisting">...
+modparam("matrix", "db_url", "dbdriver://username:password@dbhost/dbname")
+...</pre>
+            </div>
+          </div>
+          <br class="example-break" />
+        </div>
+        <div class="section" title="2. matrix_table (String)">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2828349"></a>2. <code class="varname">matrix_table</code> (String)</h2>
+              </div>
+            </div>
+          </div>
+          <p>Name of the matrix table for the matrix module.</p>
+          <p>
+      <span class="emphasis"><em>Default value is <span class="quote">“<span class="quote">matrix</span>”</span>.</em></span>
+    </p>
+          <div class="example">
+            <a id="id2784686"></a>
+            <p class="title">
+              <b>Example 2.2. Set <code class="varname">matrix_table</code> parameter</b>
+            </p>
+            <div class="example-contents">
+              <pre class="programlisting">...
+modparam("matrix", "matrix_table", "matrix")
+...</pre>
+            </div>
+          </div>
+          <br class="example-break" />
+        </div>
+        <div class="section" title="3. matrix_first_col (string)">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2802229"></a>3. <code class="varname">matrix_first_col</code> (string)</h2>
+              </div>
+            </div>
+          </div>
+          <p>The row index in the matrix</p>
+          <div class="example">
+            <a id="id2823757"></a>
+            <p class="title">
+              <b>Example 2.3. Set <code class="varname">matrix_first_col</code> parameter</b>
+            </p>
+            <div class="example-contents">
+              <pre class="programlisting">...
+modparam("matrix", "matrix_first_col", "first")
+...</pre>
+            </div>
+          </div>
+          <br class="example-break" />
+        </div>
+        <div class="section" title="4. matrix_second_col (string)">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2779839"></a>4. <code class="varname">matrix_second_col</code> (string)</h2>
+              </div>
+            </div>
+          </div>
+          <p>The column index in the matrix</p>
+          <div class="example">
+            <a id="id2824081"></a>
+            <p class="title">
+              <b>Example 2.4. Set <code class="varname">matrix_second_col</code> parameter</b>
+            </p>
+            <div class="example-contents">
+              <pre class="programlisting">...
+modparam("matrix", "matrix_second_col", "second")
+...</pre>
+            </div>
+          </div>
+          <br class="example-break" />
+        </div>
+        <div class="section" title="5. matrix_res_col (string)">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="id2831629"></a>5. <code class="varname">matrix_res_col</code> (string)</h2>
+              </div>
+            </div>
+          </div>
+          <p>The resource contained in the matrix</p>
+          <div class="example">
+            <a id="id2784890"></a>
+            <p class="title">
+              <b>Example 2.5. Set <code class="varname">matrix_res_col</code> parameter</b>
+            </p>
+            <div class="example-contents">
+              <pre class="programlisting">...
+modparam("matrix", "matrix_res_col", "res")
+...</pre>
+            </div>
+          </div>
+          <br class="example-break" />
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

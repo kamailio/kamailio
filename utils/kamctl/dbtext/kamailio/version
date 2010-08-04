@@ -20,13 +20,18 @@ dr_gw_lists:1
 dr_rules:3
 globalblacklist:1
 grp:2
-gw:10
+id(int,auto) lcr_id(int) gw_name(string) grp_id(int) ip_addr(string) hostname(string,null) port(int,null) uri_scheme(int,null) transport(int,null) strip(int,null) tag(string,null) weight(int,null) flags(int) defunct(int,null) 
 htable:1
 imc_members:1
 imc_rooms:1
-lcr:3
+id(int,auto) lcr_id(int) prefix(string,null) from_uri(string,null) grp_id(int) priority(int) 
+lcr_gw:1
+lcr_rule:1
+lcr_rule_target:1
 location:1004
+matrix:1
 missed_calls:3
+mtree:1
 pdt:1
 presentity:3
 pua:6
@@ -39,6 +44,7 @@ sip_trace:2
 speed_dial:2
 subscriber:6
 trusted:5
+uacreg:1
 uri:1
 userblacklist:1
 usr_preferences:2

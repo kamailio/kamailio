@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="matrix" xmlns:db="http://docbook.org/ns/docbook">
+    <name>matrix</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the matrix module.
+        </db:para>
+    </description>
+
+    <column id="first">
+        <name>first</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <description>The row id in the matrix</description>
+    </column>
+
+    <column id="second">
+        <name>second</name>
+        <type>short</type>
+        <size>&table_id_len;</size>
+        <description>The column id in the matrix</description>
+    </column>
+
+    <column id="res">
+        <name>res</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <description>The resource element in the matrix</description>
+    </column>
+
+    <index>
+        <name>matrix_idx</name>
+        <colref linkend="first"/>
+        <colref linkend="second"/>
+    </index>
+</table>
