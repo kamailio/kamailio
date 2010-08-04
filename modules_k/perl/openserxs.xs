@@ -215,7 +215,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 	       char *param1, char *param2,
 	       int *retval) {
 
-    union cmd_export_u* exp_func_struct;
+	sr31_cmd_export_t* exp_func_struct;
 	struct action *act;
 	unsigned mod_ver;
 	char *argv[2];
@@ -275,7 +275,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 	}
 
 
-	if (exp_func_struct->v1.fixup) {
+	if (exp_func_struct->fixup) {
 		if (!unsafemodfnc) {
 			LM_ERR("Module function '%s' is unsafe. Call is refused.\n", func);
 			if (argv[0]) pkg_free(argv[0]);
@@ -285,7 +285,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 		}
 
 		if (argc>=2) {
-			*retval = exp_func_struct->v1.fixup(&(act->val[2].u.data), 2);
+			*retval = exp_func_struct->fixup(&(act->val[2].u.data), 2);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (2)\n");
 				return -1;
@@ -293,7 +293,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 			act->val[2].type = MODFIXUP_ST;
 		}
 		if (argc>=1) {
-			*retval = exp_func_struct->v1.fixup(&(act->val[1].u.data), 1);
+			*retval = exp_func_struct->fixup(&(act->val[1].u.data), 1);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (1)\n");
 				return -1;
@@ -301,7 +301,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 			act->val[1].type = MODFIXUP_ST;
 		}
 		if (argc==0) {
-			*retval = exp_func_struct->v1.fixup(0, 0);
+			*retval = exp_func_struct->fixup(0, 0);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (0)\n");
 				return -1;
