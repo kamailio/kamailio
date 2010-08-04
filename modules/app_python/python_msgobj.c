@@ -190,7 +190,7 @@ msg_call_function(msgobject *self, PyObject *args)
 {
     int i, rval;
     char *fname, *arg1, *arg2;
-    union cmd_export_u* fexport;
+    sr31_cmd_export_t* fexport;
     struct action *act;
     struct run_act_ctx ra_ctx;
     unsigned mod_ver;
@@ -233,9 +233,9 @@ msg_call_function(msgobject *self, PyObject *args)
         return Py_None;
     }
 
-    if (fexport->v1.fixup != NULL) {
+    if (fexport->fixup != NULL) {
         if (i >= 3) {
-            rval = fexport->v1.fixup(&(act->val[2].u.data), 2);
+            rval = fexport->fixup(&(act->val[2].u.data), 2);
             if (rval < 0) {
                 PyErr_SetString(PyExc_RuntimeError, "Error in fixup (2)");
                 Py_INCREF(Py_None);
@@ -244,7 +244,7 @@ msg_call_function(msgobject *self, PyObject *args)
             act->val[2].type = MODFIXUP_ST;
         }
         if (i >= 2) {
-            rval = fexport->v1.fixup(&(act->val[1].u.data), 1);
+            rval = fexport->fixup(&(act->val[1].u.data), 1);
             if (rval < 0) {
                 PyErr_SetString(PyExc_RuntimeError, "Error in fixup (1)");
                 Py_INCREF(Py_None);
@@ -253,7 +253,7 @@ msg_call_function(msgobject *self, PyObject *args)
             act->val[1].type = MODFIXUP_ST;
         }
         if (i == 1) {
-            rval = fexport->v1.fixup(0, 0);
+            rval = fexport->fixup(0, 0);
             if (rval < 0) {
                 PyErr_SetString(PyExc_RuntimeError, "Error in fixup (0)");
                 Py_INCREF(Py_None);
