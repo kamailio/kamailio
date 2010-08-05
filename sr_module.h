@@ -591,4 +591,13 @@ int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param);
 
 int is_fparam_rve_fixup(fixup_function f);
 
+
+/** generic free fixup type function for a fixed fparam.
+ * It will free whatever was allocated during the initial fparam fixup
+ * and restore the original param value.
+ */
+void fparam_free_restore(void** param);
+int fixup_free_fparam_all(void** param, int param_no);
+int fixup_free_fparam_1(void** param, int param_no);
+int fixup_free_fparam_2(void** param, int param_no);
 #endif /* sr_module_h */

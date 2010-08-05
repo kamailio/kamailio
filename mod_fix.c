@@ -34,6 +34,7 @@
 
 #include "mod_fix.h"
 #include "mem/mem.h"
+#include "trim.h"
 
 
 

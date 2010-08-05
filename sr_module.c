@@ -1169,6 +1169,7 @@ error:
 
 /** fparam_t free function.
  *  Frees the "content" of a fparam, but not the fparam itself.
+ *  Note: it doesn't free fp->orig!
  *  Assumes pkg_malloc'ed content.
  *  @param fp -  fparam to be freed
  *
@@ -1220,10 +1221,25 @@ void fparam_free_contents(fparam_t* fp)
 			}
 			break;
 	}
-	if (fp->orig){
-		pkg_free(fp->orig);
-		fp->orig=0;
-	}
+}
+
+
+
+/** generic free fixup type function for a fixed fparam.
+ * It will free whatever was allocated during the initial fparam fixup
+ * and restore the original param value.
+ */
+void fparam_free_restore(void** param)
+{
+	fparam_t *fp;
+	void *orig;
+	
+	fp = *param;
+	orig = fp->orig;
+	fp->orig = 0;
+	fparam_free_contents(fp);
+	pkg_free(fp);
+	*param = orig;
 }
 
 
@@ -1570,6 +1586,49 @@ int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
 					param->type);
 	}
 	return -1;
+}
+
+
+
+/** generic free fixup function for "pure" fparam type fixups.
+ * @param  param - double pointer to param, as for normal fixup functions.
+ * @param  param_no - parameter number, ignored.
+ * @return 0 on success (always).
+ */
+int fixup_free_fparam_all(void** param, int param_no)
+{
+	fparam_free_restore(param);
+	return 0;
+}
+
+
+
+/** generic free fixup function for "pure"  first parameter fparam type fixups.
+ * @param  param - double pointer to param, as for normal fixup functions.
+ * @param  param_no - parameter number: the function will work only for
+ *                     param_no == 1 (first parameter).
+ * @return 0 on success (always).
+ */
+int fixup_free_fparam_1(void** param, int param_no)
+{
+	if (param_no == 1)
+		fparam_free_restore(param);
+	return 0;
+}
+
+
+
+/** generic free fixup function for "pure"  2nd parameter fparam type fixups.
+ * @param  param - double pointer to param, as for normal fixup functions.
+ * @param  param_no - parameter number: the function will work only for
+ *                     param_no == 2 (2nd parameter).
+ * @return 0 on success (always).
+ */
+int fixup_free_fparam_2(void** param, int param_no)
+{
+	if (param_no == 2)
+		fparam_free_restore(param);
+	return 0;
 }
 
 
