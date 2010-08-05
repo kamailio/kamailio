@@ -133,14 +133,18 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
  * Assumes src is unchanged.
  * Side-effects: clobbers i (int).
  */
-#define MODF_RVE_PARAM_FREE(src, dst) \
+#define MODF_RVE_PARAM_FREE(cmd, src, dst) \
 		for (i=0; i < (dst)[1].u.number; i++) { \
 			if ((src)[i+2].type == RVE_ST && (dst)[i+2].u.data) { \
-				if ((dst)[i+2].type == FPARAM_DYN_ST) {\
-					/* frees also orig. dst.u.data */ \
-					fparam_free_contents((dst)[i+2].u.data); \
-					/* the fparam struct. (dst.u.data) is freed below */ \
+				if ((dst)[i+2].type == RVE_FREE_FIXUP_ST) {\
+					/* call free_fixup (which should restore the original
+					   string) */ \
+					call_fixup((cmd)->free_fixup, &(dst)[i+2].u.data, i+1); \
+				} else if ((dst)[i+2].type == FPARAM_DYN_ST) {\
+					/* completely frees fparam and restore original string */\
+					fparam_free_restore(&(dst)[i+2].u.data); \
 				} \
+				/* free allocated string */ \
 				pkg_free((dst)[i+2].u.data); \
 				(dst)[i+2].u.data = 0; \
 			} \
@@ -165,18 +169,44 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 					rval_destroy(rv); \
 					ERR("failed to convert RVE to string\n"); \
 					(dst)[1].u.number = i; \
-					MODF_RVE_PARAM_FREE(src, dst); \
+					MODF_RVE_PARAM_FREE(cmd, src, dst); \
 					goto error; \
 				} \
 				(dst)[i+2].type = STRING_RVE_ST; \
 				(dst)[i+2].u.string = s.s; \
 				(dst)[i+2].u.str.len = s.len; \
 				rval_destroy(rv); \
-				if ((cmd)->fixup && \
-						(cmd)->fixup_flags & FIXUP_F_FPARAM_RVE) { \
-					call_fixup((cmd)->fixup, &(dst)[i+2].u.data, i+1); \
-					if ((dst)[i+2].u.data != s.s) \
-						(dst)[i+2].type = FPARAM_DYN_ST; \
+				if ((cmd)->fixup) {\
+					if ((cmd)->free_fixup) {\
+						if (likely( call_fixup((cmd)->fixup, \
+										&(dst)[i+2].u.data, i+1) >= 0) ) { \
+							/* success => mark it for calling free fixup */ \
+							if (likely((dst)[i+2].u.data != s.s)) \
+								(dst)[i+2].type = RVE_FREE_FIXUP_ST; \
+						} else { \
+							/* error calling fixup => mark conv. parameter \
+							   and return error */ \
+							(dst)[1].u.number = i; \
+							ERR("runtime fixup failed for %s param %d\n", \
+									(cmd)->name, i+1); \
+							MODF_RVE_PARAM_FREE(cmd, src, dst); \
+							goto error; \
+						} \
+					} else if ((cmd)->fixup_flags & FIXUP_F_FPARAM_RVE) { \
+						if (likely( call_fixup((cmd)->fixup, \
+										&(dst)[i+2].u.data, i+1) >= 0)) { \
+							if ((dst)[i+2].u.data != s.s) \
+								(dst)[i+2].type = FPARAM_DYN_ST; \
+						} else { \
+							/* error calling fixup => mark conv. parameter \
+							   and return error */ \
+							(dst)[1].u.number = i; \
+							ERR("runtime fixup failed for %s param %d\n", \
+									(cmd)->name, i+1); \
+							MODF_RVE_PARAM_FREE(cmd, src, dst); \
+							goto error; \
+						}\
+					} \
 				} \
 			} else \
 				(dst)[i+2]=(src)[i+2]; \
@@ -238,7 +268,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
 		/* free strings allocated by us or fixups */ \
-		MODF_RVE_PARAM_FREE(src, dst); \
+		MODF_RVE_PARAM_FREE(cmd, src, dst); \
 	} while (0)
 #else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
 #define MODF_RVE_CALL(f_type, h, msg, src, dst, params...) \
@@ -248,7 +278,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 		ret=((f_type)cmd->function)((msg), ## params ); \
 		MODF_HANDLE_RETCODE(h, ret); \
 		/* free strings allocated by us or fixups */ \
-		MODF_RVE_PARAM_FREE(src, dst); \
+		MODF_RVE_PARAM_FREE(cmd, src, dst); \
 	} while (0)
 #endif /* __SUNPRO_C */
 

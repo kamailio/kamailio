@@ -3751,9 +3751,10 @@ static int mod_f_params_pre_fixup(struct action* a)
 		if (is_fparam_rve_fixup(cmd_exp->fixup))
 			/* mark known fparam rve safe fixups */
 			cmd_exp->fixup_flags  |= FIXUP_F_FPARAM_RVE;
-		else if (!(cmd_exp->fixup_flags & FIXUP_F_FPARAM_RVE)) {
-			/* v0 or v1 functions that have fixups need constant,
-			  string params.*/
+		else if (!(cmd_exp->fixup_flags & FIXUP_F_FPARAM_RVE) &&
+				 cmd_exp->free_fixup == 0) {
+			/* v0 or v1 functions that have fixups and no coresp. fixup_free
+			   functions, need constant, string params.*/
 			for (r=0; r < param_no; r++) {
 				rve=params[r].u.data;
 				if (!rve_is_constant(rve)) {

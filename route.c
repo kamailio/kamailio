@@ -985,7 +985,8 @@ int fix_actions(struct action* a)
 					   or RVE_ST (non-ct RVEs) */
 					if (rve_param_no) { /* we have to fix the type */
 						if (cmd->fixup &&
-							!(cmd->fixup_flags & FIXUP_F_FPARAM_RVE)) {
+							!(cmd->fixup_flags & FIXUP_F_FPARAM_RVE) &&
+							cmd->free_fixup == 0) {
 							BUG("non-ct RVEs (%d) in module function call"
 									"that does not support them (%s)\n",
 									rve_param_no, cmd->name);

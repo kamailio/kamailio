@@ -128,6 +128,7 @@ enum _operand_subtype{
 		RETCODE_ST, CASE_ST,
 		BLOCK_ST, JUMPTABLE_ST, CONDTABLE_ST, MATCH_CONDTABLE_ST,
 		STRING_RVE_ST /* RVE converted to a string (fparam hack) */,
+		RVE_FREE_FIXUP_ST /* (str)RVE fixed up by a reversable fixup */,
 		FPARAM_DYN_ST /* temporary only (fparam hack) */
 };
 
