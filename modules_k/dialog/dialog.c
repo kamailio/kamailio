@@ -1048,7 +1048,7 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 		return -1;
 	}
 
-	dlg = get_dlg(&sc, &sf, &st, &dir);
+	dlg = get_dlg(&sc, &sf, &st, &dir, NULL);
 	if(dlg==NULL)
 		return -1;
 	current_dlg_pointer = dlg;

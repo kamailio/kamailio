@@ -362,11 +362,14 @@ error:
  * \param h_id id of the hash table entry
  * \return dialog on success, NULL on failure
  */
-struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
+struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned int *del)
 {
 	struct dlg_cell *dlg;
 	struct dlg_entry *d_entry;
 
+	if (del != NULL)
+		*del = 0;
+ 
 	if (h_entry>=d_table->size)
 		goto not_found;
 
@@ -377,6 +380,8 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 	for( dlg=d_entry->first ; dlg ; dlg=dlg->next ) {
 		if (dlg->h_id == h_id) {
 			if (dlg->state==DLG_STATE_DELETED) {
+				if (del != NULL)
+					*del = 1;
 				dlg_unlock( d_table, d_entry);
 				goto not_found;
 			}
@@ -405,10 +410,14 @@ not_found:
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
-						str *callid, str *ftag, str *ttag, unsigned int *dir)
+						str *callid, str *ftag, str *ttag, unsigned int *dir,
+						unsigned int *del)
 {
 	struct dlg_cell *dlg;
 	struct dlg_entry *d_entry;
+
+	if (del != NULL)
+		*del = 0;
 
 	d_entry = &(d_table->entries[h_entry]);
 
@@ -418,6 +427,8 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 		/* Check callid / fromtag / totag */
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
 			if (dlg->state==DLG_STATE_DELETED) {
+				if (del != NULL)
+					*del = 1;
 				dlg_unlock( d_table, d_entry);
 				goto not_found;
 			}
@@ -453,14 +464,15 @@ not_found:
  * \param dir direction
  * \return dialog structure on success, NULL on failure
  */
-struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
+struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir,
+		unsigned int *del)
 {
 	struct dlg_cell *dlg;
 
 	if ((dlg = internal_get_dlg(core_hash(callid, ftag->len?ftag:0,
-			d_table->size), callid, ftag, ttag, dir)) == 0 &&
+			d_table->size), callid, ftag, ttag, dir, del)) == 0 &&
 			(dlg = internal_get_dlg(core_hash(callid, ttag->len
-			?ttag:0, d_table->size), callid, ftag, ttag, dir)) == 0) {
+			?ttag:0, d_table->size), callid, ftag, ttag, dir, del)) == 0) {
 		LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 		return 0;
 	}
