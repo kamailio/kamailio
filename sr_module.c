@@ -203,6 +203,9 @@ static sr31_cmd_export_t* sr_cmd_exports_convert(unsigned ver,
 		/* 3.1+ specific stuff */
 		ret[i].fixup_flags = 0;
 		ret[i].module_exports = mod;
+		/* fill known free fixups */
+		if (ret[i].fixup && ret[i].free_fixup == 0)
+			ret[i].free_fixup = get_fixup_free(ret[i].fixup);
 	}
 	return ret;
 error:
