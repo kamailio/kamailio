@@ -369,7 +369,7 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned i
 
 	if (del != NULL)
 		*del = 0;
- 
+
 	if (h_entry>=d_table->size)
 		goto not_found;
 
