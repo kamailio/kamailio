@@ -161,6 +161,8 @@
  *             (bogdan)
  * 2008-12-12 Support for RTCP attribute in the SDP
  *              (Min Wang/BASIS AudioNet - ported from SER)
+ * 2010-08-05 Core SDP parser integrated into nathelper
+ *             (osas)
  */
 
 #include <sys/types.h>
@@ -200,6 +202,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
+#include "../../parser/sdp/sdp.h"
 #include "../../resolve.h"
 #include "../../timer.h"
 #include "../../trim.h"
@@ -285,8 +288,6 @@ static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int extract_mediaip(str *, str *, int *, char *);
-static int extract_mediainfo(str *, str *, str *);
-static int extract_rtcp(str *body, str *rtcpport);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
@@ -306,9 +307,6 @@ static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer2_f(struct sip_msg *, char *, char *);
 static int rtpproxy_offer1_f(struct sip_msg *, char *, char *);
 static int rtpproxy_offer2_f(struct sip_msg *, char *, char *);
-
-static char *find_sdp_line(char *, char *, char);
-static char *find_next_sdp_line(char *, char *, char, char *);
 
 static int add_rtpproxy_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
 static int fixup_set_id(void ** param, int param_no);
@@ -348,21 +346,6 @@ static struct {
 	{"172.16.0.0",  0, 0xffffffffu << 20},
 	{"192.168.0.0", 0, 0xffffffffu << 16},
 	{NULL, 0, 0}
-};
-
-static struct {
-	const char *s;
-	int len;
-	int is_rtp;
-} sup_ptypes[] = {
-	{.s = "udp",       .len = 3, .is_rtp = 0},
-	{.s = "udptl",     .len = 5, .is_rtp = 0},
-	{.s = "rtp/avp",   .len = 7, .is_rtp = 1},
-	{.s = "rtp/avpf",  .len = 8, .is_rtp = 1},
-	{.s = "rtp/savp",  .len = 8, .is_rtp = 1},
-	{.s = "rtp/savpf", .len = 9, .is_rtp = 1},
-	{.s = "udp/bfcp",  .len = 8, .is_rtp = 0},
-	{.s = NULL,        .len = 0, .is_rtp = 0}
 };
 
 /*
@@ -1986,121 +1969,6 @@ extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 }
 
 static int
-extract_mediainfo(str *body, str *mediaport, str *payload_types)
-{
-	char *cp, *cp1;
-	int len, i;
-	str ptype;
-
-	cp1 = NULL;
-	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
-		cp1 = ser_memmem(cp, "m=", len, 2);
-		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
-			break;
-		cp = cp1 + 2;
-	}
-	if (cp1 == NULL) {
-		LM_ERR("no `m=' in SDP\n");
-		return -1;
-	}
-	mediaport->s = cp1 + 2; /* skip `m=' */
-	mediaport->len = eat_line(mediaport->s, body->s + body->len -
-	  mediaport->s) - mediaport->s;
-	trim_len(mediaport->len, mediaport->s, *mediaport);
-
-	/* Skip media supertype and spaces after it */
-	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
-	mediaport->len -= cp - mediaport->s;
-	if (mediaport->len <= 0 || cp == mediaport->s) {
-		LM_ERR("no port in `m='\n");
-		return -1;
-	}
-	mediaport->s = cp;
-	cp = eat_space_end(mediaport->s, mediaport->s + mediaport->len);
-	mediaport->len -= cp - mediaport->s;
-	if (mediaport->len <= 0 || cp == mediaport->s) {
-		LM_ERR("no port in `m='\n");
-		return -1;
-	}
-	/* Extract port */
-	mediaport->s = cp;
-	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
-	ptype.len = mediaport->len - (cp - mediaport->s);
-	if (ptype.len <= 0 || cp == mediaport->s) {
-		LM_ERR("no port in `m='\n");
-		return -1;
-	}
-	ptype.s = cp;
-	mediaport->len = cp - mediaport->s;
-	/* Skip spaces after port */
-	cp = eat_space_end(ptype.s, ptype.s + ptype.len);
-	ptype.len -= cp - ptype.s;
-	if (ptype.len <= 0 || cp == ptype.s) {
-		LM_ERR("no protocol type in `m='\n");
-		return -1;
-	}
-	/* Extract protocol type */
-	ptype.s = cp;
-	cp = eat_token_end(ptype.s, ptype.s + ptype.len);
-	if (cp == ptype.s) {
-		LM_ERR("no protocol type in `m='\n");
-		return -1;
-	}
-	payload_types->len = ptype.len - (cp - ptype.s);
-	ptype.len = cp - ptype.s;
-	payload_types->s = cp;
-
-	for (i = 0; sup_ptypes[i].s != NULL; i++) {
-		if (ptype.len != sup_ptypes[i].len ||
-		    strncasecmp(ptype.s, sup_ptypes[i].s, ptype.len) != 0)
-			continue;
-		if (sup_ptypes[i].is_rtp == 0) {
-			payload_types->len = 0;
-			return 0;
-		}
-		cp = eat_space_end(payload_types->s, payload_types->s +
-		    payload_types->len);
-		if (cp == payload_types->s) {
-			LM_ERR("no payload types in `m='\n");
-			return -1;
-		}
-		payload_types->len -= cp - payload_types->s;
-		payload_types->s = cp;
-		return 0;
-	}
-	/* Unproxyable protocol type. Generally it isn't error. */
-	return -1;
-}
-
-/*
- * this function is ported from SER 
- */
-static int
-extract_rtcp(str *body, str *rtcpport)
-{
-	char *cp, *cp1;
-	int len;
-
-	cp1 = NULL;
-	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
-		cp1 = ser_memmem(cp, "a=rtcp:", len, 7);
-		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
-			break;
-		cp = cp1 + 7;
-	}
-
-	if (cp1 == NULL)
-		return -1;
-
-	rtcpport->s = cp1 + 7; /* skip `a=rtcp:' */
-	rtcpport->len = eat_line(rtcpport->s, body->s + body->len -
-				 rtcpport->s) - rtcpport->s;
-	trim_len(rtcpport->len, rtcpport->s, *rtcpport);
-
-	return 0;
-}
-
-static int
 alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
   str *newip, int newpf, int preserve)
 {
@@ -2632,53 +2500,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	return 1;
 }
 
-/*
- * Auxiliary for some functions.
- * Returns pointer to first character of found line, or NULL if no such line.
- */
-
-static char *
-find_sdp_line(char* p, char* plimit, char linechar)
-{
-	static char linehead[3] = "x=";
-	char *cp, *cp1;
-	linehead[0] = linechar;
-	/* Iterate thru body */
-	cp = p;
-	for (;;) {
-		if (cp >= plimit)
-			return NULL;
-		cp1 = ser_memmem(cp, linehead, plimit-cp, 2);
-		if (cp1 == NULL)
-			return NULL;
-		/*
-		 * As it is body, we assume it has previous line and we can
-		 * lookup previous character.
-		 */
-		if (cp1[-1] == '\n' || cp1[-1] == '\r')
-			return cp1;
-		/*
-		 * Having such data, but not at line beginning.
-		 * Skip them and reiterate. ser_memmem() will find next
-		 * occurence.
-		 */
-		if (plimit - cp1 < 2)
-			return NULL;
-		cp = cp1 + 2;
-	}
-}
-
 /* This function assumes p points to a line of requested type. */
-
-static char *
-find_next_sdp_line(char* p, char* plimit, char linechar, char* defptr)
-{
-	char *t;
-	if (p >= plimit || plimit - p < 3)
-		return defptr;
-	t = find_sdp_line(p + 2, plimit, linechar);
-	return t ? t : defptr;
-}
 
 static int
 set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
@@ -2800,7 +2622,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 {
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp, payload_types;
-	str oldrtcp, newrtcp;
+	str newrtcp;
 	int create, port, len, flookup, argc, proxied, real;
 	int orgip, commip;
 	int pf, pf1, force, swap;
@@ -2830,12 +2652,16 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		{";", 1},	/* separator */
 		{NULL, 0}	/* medianum */
 	};
-	char *v1p, *v2p, *c1p, *c2p, *m1p, *m2p, *bodylimit, *o1p;
+	char *c1p, *c2p, *bodylimit, *o1p;
 	char medianum_buf[20];
 	int medianum, media_multi;
-	str medianum_str, tmpstr1;
+	str medianum_str;
 	int c1p_altered;
 	static int swap_warned = 0;
+
+	int sdp_session_num, sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
 
 	memset(&opts, '\0', sizeof(opts));
 	memset(&rep_opts, '\0', sizeof(rep_opts));
@@ -3027,16 +2853,13 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	 * to the same value (RTP proxy IP), so we can change all c-lines
 	 * unconditionally.
 	 */
-	bodylimit = body.s + body.len;
-	v1p = find_sdp_line(body.s, bodylimit, 'v');
-	if (v1p == NULL) {
-		LM_ERR("no sessions in SDP\n");
+	if(0 != parse_sdp(msg)) {
+		LM_ERR("Unable to parse sdp\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
-	media_multi = (v2p != bodylimit);
-	v2p = v1p;
-	medianum = 0;
+	print_sdp((sdp_info_t*)msg->body, L_INFO);
+
+	bodylimit = body.s + body.len;
 
 	if(msg->id != current_msg_id){
 		selected_rtpp_set = default_rtpp_set;
@@ -3049,68 +2872,45 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	STR2IOVEC(from_tag, v[11]);
 	STR2IOVEC(to_tag, v[15]);
 
+	/* check if this is a single or a multi stream SDP offer/answer */
+	sdp_stream_num = get_sdp_stream_num(msg);
+	switch (sdp_stream_num) {
+	case 0:
+		LM_ERR("sdp w/o streams\n");
+		FORCE_RTP_PROXY_RET (-1);
+		break;
+	case 1:
+		media_multi = 0;
+		break;
+	default:
+		media_multi = 1;
+	}
+#ifdef EXTRA_DEBUG
+	LM_DBG("my new media_multi=%d\n", media_multi);
+#endif
+	medianum = 0; 
+	sdp_session_num = 0;
 	for(;;) {
-		/* Per-session iteration. */
-		v1p = v2p;
-		if (v1p == NULL || v1p >= bodylimit)
-			break; /* No sessions left */
-		v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
-		/* v2p is text limit for session parsing. */
-		/* get session origin */
-		o1p = find_sdp_line(v1p, v2p, 'o');
-		if (o1p==0) {
-			LM_ERR("no o= in session\n");
-			FORCE_RTP_PROXY_RET (-1);
-		}
-		/* Have this session media description? */
-		m1p = find_sdp_line(o1p, v2p, 'm');
-		if (m1p == NULL) {
-			LM_ERR("no m= in session\n");
-			FORCE_RTP_PROXY_RET (-1);
-		}
-		/*
-		 * Find c1p only between session begin and first media.
-		 * c1p will give common c= for all medias.
-		 */
-		c1p = find_sdp_line(o1p, m1p, 'c');
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
 		c1p_altered = 0;
-		if (orgip==0)
-			o1p = 0;
-		/* Have session. Iterate media descriptions in session */
-		m2p = m1p;
-		for (;;) {
-			m1p = m2p;
-			if (m1p == NULL || m1p >= v2p)
-				break;
-			m2p = find_next_sdp_line(m1p, v2p, 'm', v2p);
-			/* c2p will point to per-media "c=" */
-			c2p = find_sdp_line(m1p, m2p, 'c');
-			/* Extract address and port */
-			tmpstr1.s = c2p ? c2p : c1p;
-			if (tmpstr1.s == NULL) {
-				/* No "c=" */
-				LM_ERR("can't find media IP in the message\n");
-				FORCE_RTP_PROXY_RET (-1);
+		o1p = sdp_session->o_ip_addr.s;
+		for(;;) {
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			if (sdp_stream->ip_addr.s && !sdp_stream->ip_addr.len) {
+				oldip = sdp_stream->ip_addr;
+				pf = sdp_stream->pf;
+			} else {
+				oldip = sdp_session->ip_addr;
+				pf = sdp_session->pf;
 			}
-			tmpstr1.len = v2p - tmpstr1.s; /* limit is session limit text */
-			if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
-				LM_ERR("can't extract media IP from the message\n");
-				FORCE_RTP_PROXY_RET (-1);
-			}
-			tmpstr1.s = m1p;
-			tmpstr1.len = m2p - m1p;
-			if (extract_mediainfo(&tmpstr1, &oldport, &payload_types) == -1) {
-				LM_ERR("can't extract media port from the message\n");
-				FORCE_RTP_PROXY_RET (-1);
-			}
-			/* Extract rtcp attribute,ported from SER */
-			tmpstr1.s = m1p;
-			tmpstr1.len = m2p - m1p;
-			oldrtcp.s = NULL;
-			oldrtcp.len = 0;
-			extract_rtcp(&tmpstr1, &oldrtcp);
-			
-			++medianum;
+			oldport = sdp_stream->port;
+			payload_types = sdp_stream->payloads;
+			medianum++;
+
 			if (real != 0) {
 				newip = oldip;
 			} else {
@@ -3126,6 +2926,10 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			}
 			STR2IOVEC(newip, v[7]);
 			STR2IOVEC(oldport, v[9]);
+#ifdef EXTRA_DEBUG
+			LM_DBG("STR2IOVEC(newip[%.*s], v[7])", newip.len, newip.s);
+			LM_DBG("STR2IOVEC(oldport[%.*s], v[9])", oldport.len, oldport.s);
+#endif
 			if (1 || media_multi) /* XXX netch: can't choose now*/
 			{
 				snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
@@ -3133,6 +2937,10 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 				medianum_str.len = strlen(medianum_buf);
 				STR2IOVEC(medianum_str, v[13]);
 				STR2IOVEC(medianum_str, v[17]);
+#ifdef EXTRA_DEBUG
+				LM_DBG("STR2IOVEC(medianum_str, v[13])\n");
+				LM_DBG("STR2IOVEC(medianum_str, v[17])\n");
+#endif
 			} else {
 				v[12].iov_len = v[13].iov_len = 0;
 				v[16].iov_len = v[17].iov_len = 0;
@@ -3153,7 +2961,10 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 						v[2].iov_len += rep_opts.oidx;
 					}
 				}
-				if (payload_types.len > 0 && node->rn_ptl_supported != 0) {
+#ifdef EXTRA_DEBUG
+				LM_DBG("payload_types='%.*s'\n", payload_types.len, payload_types.s);
+#endif
+				if (sdp_stream->is_rtp && payload_types.len > 0 && node->rn_ptl_supported != 0) {
 					pt_opts.oidx = 0;
 					if (append_opts(&pt_opts, 'c') == -1) {
 						LM_ERR("out of pkg memory\n");
@@ -3236,8 +3047,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			/* marker to double check : newport goes: str -> int -> str ?!?! */
 			newport.s = int2str(port, &newport.len); /* beware static buffer */
 			/* Alter port. */
-			body1.s = m1p;
+			body1.s = sdp_stream->media.s;
 			body1.len = bodylimit - body1.s;
+#ifdef EXTRA_DEBUG
+			LM_DBG("alter port body1='%.*s'\n", body1.len, body1.s);
+#endif
 			/* do not do it if old port was 0 (means media disable)
 			 * - check if actually should be better done in rtpptoxy,
 			 *   by returning also 0
@@ -3255,19 +3069,23 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			 * by RTP proxy). No IP-address is needed in the new RTCP attribute as the
 			 * 'c' attribute (altered below) will contain the RTP proxy IP address.
 			 * See RFC 3605 for definition of RTCP attribute.
-             * ported from ser
+			 * ported from ser
 			 */
-			if (oldrtcp.s && oldrtcp.len) {
+			if (sdp_stream->rtcp_port.s && sdp_stream->rtcp_port.len) {
 				newrtcp.s = int2str(port+1, &newrtcp.len); /* beware static buffer */
 				/* Alter port. */
-				body1.s = m1p;
+				body1.s = sdp_stream->rtcp_port.s;
 				body1.len = bodylimit - body1.s;
-				if (alter_rtcp(msg, &body1, &oldrtcp, &newrtcp) == -1) {
+#ifdef EXTRA_DEBUG
+				LM_DBG("alter rtcp body1='%.*s'\n", body1.len, body1.s);
+#endif
+				if (alter_rtcp(msg, &body1, &sdp_stream->rtcp_port, &newrtcp) == -1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
-			}			
-			
-			
+			}
+
+			c1p = sdp_session->ip_addr.s;
+			c2p = sdp_stream->ip_addr.s;
 			/*
 			 * Alter IP. Don't alter IP common for the session
 			 * more than once.
@@ -3275,6 +3093,9 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			if (c2p != NULL || !c1p_altered) {
 				body1.s = c2p ? c2p : c1p;
 				body1.len = bodylimit - body1.s;
+#ifdef EXTRA_DEBUG
+				LM_DBG("alter ip body1='%.*s'\n", body1.len, body1.s);
+#endif
 				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
@@ -3285,15 +3106,12 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			 * Alter common IP if required, but don't do it more than once.
 			 */
 			if (commip && c1p && !c1p_altered) {
-				tmpstr1.s = c1p;
-				tmpstr1.len = v2p - tmpstr1.s;
-				if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
-					LM_ERR("can't extract media IP from the message\n");
-					FORCE_RTP_PROXY_RET (-1);
-				}
 				body1.s = c1p;
 				body1.len = bodylimit - body1.s;
-				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1) {
+#ifdef EXTRA_DEBUG
+				LM_DBG("alter common ip body1='%.*s'\n", body1.len, body1.s);
+#endif
+				if (alter_mediaip(msg, &body1, &sdp_session->ip_addr, sdp_session->pf, &newip, pf1, 0)==-1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
 				c1p_altered = 1;
@@ -3302,21 +3120,23 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			 * Alter the IP in "o=", but only once per session
 			 */
 			if (o1p) {
-				tmpstr1.s = o1p;
-				tmpstr1.len = v2p - tmpstr1.s;
-				if (extract_mediaip(&tmpstr1, &oldip, &pf,"o=") == -1) {
-					LM_ERR("can't extract media IP from the message\n");
-					FORCE_RTP_PROXY_RET (-1);
-				}
 				body1.s = o1p;
 				body1.len = bodylimit - body1.s;
-				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1) {
+#ifdef EXTRA_DEBUG
+				LM_DBG("alter media ip body1='%.*s'\n", body1.len, body1.s);
+#endif
+				if (alter_mediaip(msg, &body1, &sdp_session->o_ip_addr, sdp_session->o_pf, &newip, pf1, 0)==-1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
 				o1p = 0;
 			}
-		} /* Iterate medias in session */
-	} /* Iterate sessions */
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+
+
 	free_opts(&opts, &rep_opts, &pt_opts);
 
 	if (proxied == 0 && nortpproxy_str.len) {
