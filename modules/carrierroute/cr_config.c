@@ -168,7 +168,8 @@ static int backup_config(void) {
 
 	if (fclose(from)==EOF) {
 		LM_ERR("Error closing source file.\n");
-		goto errclose;
+		fclose(to);
+		goto errout;
 	}
 
 	if (fclose(to)==EOF) {
