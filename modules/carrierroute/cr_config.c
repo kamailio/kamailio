@@ -157,18 +157,18 @@ static int backup_config(void) {
 		ch = fgetc(from);
 		if (ferror(from)) {
 			LM_ERR("Error reading source file.\n");
-			goto errout;
+			goto errclose;
 		}
 		if (!feof(from)) fputc(ch, to);
 		if (ferror(to)) {
 			LM_ERR("Error writing destination file.\n");
-			goto errout;
+			goto errclose;
 		}
 	}
 
 	if (fclose(from)==EOF) {
 		LM_ERR("Error closing source file.\n");
-		goto errout;
+		goto errclose;
 	}
 
 	if (fclose(to)==EOF) {
@@ -178,6 +178,10 @@ static int backup_config(void) {
 	LM_NOTICE("backup written to %s\n", backup_file);
 	pkg_free(backup_file);
 	return 0;
+errclose:
+	/* close the files so that resource leak is prevented ; ignore errors*/
+	fclose(from);
+	fclose(to);
 errout:
 	pkg_free(backup_file);
 	return -1;
