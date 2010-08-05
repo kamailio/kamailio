@@ -542,6 +542,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	str ftag;
 	str ttag;
 	unsigned int dir;
+	unsigned int del;
 	struct sip_msg *req = param->req;
 
 	if((req->flags&dlg_flag)!=dlg_flag)
@@ -565,7 +566,11 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		LM_WARN("pre-matching failed\n");
 		return;
 	}
-	dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+	dlg = get_dlg(&callid, &ftag, &ttag, &dir, &del);
+	if (del == 1) {
+		LM_DBG("dialog marked for deletion, ignoring\n");
+		return;
+	}
 	if (!dlg){
 		LM_DBG("Callid '%.*s' not found, must be a new dialog\n",
 				req->callid->body.len, req->callid->body.s);
@@ -837,6 +842,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	str val, callid, ftag, ttag;
 	int h_entry, h_id, new_state, old_state, unref, event, timeout;
 	unsigned int dir;
+	unsigned int del;
 	int ret = 0;
 
 	if (current_dlg_pointer!=NULL)
@@ -865,7 +871,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
 				return;
 
-			dlg = lookup_dlg( h_entry, h_id);
+			dlg = lookup_dlg( h_entry, h_id, &del);
+			if (del == 1) {
+				LM_DBG("dialog marked for deletion, ignoring\n");
+				return;
+			}
 			if (dlg==0) {
 				LM_WARN("unable to find dialog for %.*s "
 					"with route param '%.*s' [%u:%u]\n",
@@ -913,7 +923,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			return;
 		/* TODO - try to use the RR dir detection to speed up here the
 		 * search -bogdan */
-		dlg = get_dlg(&callid, &ftag, &ttag, &dir);
+		dlg = get_dlg(&callid, &ftag, &ttag, &dir, &del);
+		if (del == 1) {
+			LM_DBG("dialog marked for deletion, ignoring\n");
+			return;
+		}
 		if (!dlg){
 			LM_DBG("Callid '%.*s' not found\n",
 				req->callid->body.len, req->callid->body.s);

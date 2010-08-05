@@ -243,9 +243,10 @@ int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq);
  * \brief Lookup a dialog in the global list
  * \param h_entry number of the hash table entry
  * \param h_id id of the hash table entry
+ * \param del unless null, flag that is set if dialog is in "deleted" state
  * \return dialog on success, NULL on failure
  */
-struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
+struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned int *del);
 
 
 /*!
@@ -260,9 +261,10 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
+ * \param del unless null, flag that is set if dialog is in "deleted" state
  * \return dialog structure on success, NULL on failure
  */
-struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
+struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir, unsigned int *del);
 
 
 /*!
