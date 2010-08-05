@@ -600,4 +600,7 @@ void fparam_free_restore(void** param);
 int fixup_free_fparam_all(void** param, int param_no);
 int fixup_free_fparam_1(void** param, int param_no);
 int fixup_free_fparam_2(void** param, int param_no);
+
+free_fixup_function get_fixup_free(fixup_function f);
+
 #endif /* sr_module_h */

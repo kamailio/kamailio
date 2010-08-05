@@ -49,6 +49,7 @@
  */
 
 #include "sr_module.h"
+#include "mod_fix.h"
 #include "dprint.h"
 #include "error.h"
 #include "mem/mem.h"
@@ -1634,7 +1635,7 @@ int fixup_free_fparam_2(void** param, int param_no)
 
 
 /** returns true if a fixup is a fparam_t* one.
- * Used to automatically detect fparam fixups that can be used with non
+ * Used to automatically detect "pure" fparam fixups that can be used with non
  * contant RVEs.
  * @param f - function pointer
  * @return 1 for fparam fixups, 0 for others.
@@ -1652,7 +1653,54 @@ int is_fparam_rve_fixup(fixup_function f)
 		f == fixup_int_2 ||
 		f == fixup_str_12 ||
 		f == fixup_str_1 ||
-		f == fixup_str_2)
+		f == fixup_str_2 ||
+		f == fixup_regex_12 ||
+		f == fixup_regex_1 ||
+		f == fixup_regex_2
+		)
 		return 1;
+	return 0;
+}
+
+
+
+/** returns the corresponding fixup_free* for various known fixup types.
+ * Used to automatically fill in free_fixup* functions.
+ * @param f - fixup function pointer
+ * @return - free fixup function pointer on success, 0 on failure (unknown
+ *           fixup or no free fixup function).
+ */
+free_fixup_function get_fixup_free(fixup_function f)
+{
+	free_fixup_function ret;
+	/* "pure" fparam, all parameters */
+	if (f == fixup_var_str_12 ||
+		f == fixup_var_int_12 ||
+		f == fixup_int_12 ||
+		f == fixup_str_12 ||
+		f == fixup_regex_12)
+		return fixup_free_fparam_all;
+	
+	/* "pure" fparam, 1st parameter */
+	if (f == fixup_var_str_1 ||
+		f == fixup_var_int_1 ||
+		f == fixup_int_1 ||
+		f == fixup_str_1 ||
+		f == fixup_regex_1)
+		return fixup_free_fparam_1;
+	
+	/* "pure" fparam, 2nd parameters */
+	if (f == fixup_var_str_2 ||
+		f == fixup_var_int_2 ||
+		f == fixup_int_2 ||
+		f == fixup_str_2 ||
+		f == fixup_regex_2)
+		return fixup_free_fparam_2;
+	
+	/* mod_fix.h kamailio style fixups */
+	if ((ret = mod_fix_get_fixup_free(f)) != 0)
+		return ret;
+	
+	/* unknown */
 	return 0;
 }

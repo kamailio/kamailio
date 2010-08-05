@@ -125,4 +125,8 @@ int fixup_spve_uint(void** param, int param_no);
 int fixup_spve_str(void** param, int param_no);
 int fixup_free_spve_str(void** param, int param_no);
 
+
+/** get the corresp. free fixup function.*/
+free_fixup_function mod_fix_get_fixup_free(fixup_function f);
+
 #endif
