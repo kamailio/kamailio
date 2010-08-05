@@ -1075,15 +1075,25 @@ error:
 	return NULL;
 }
 
+
+
+/** frees only the contests of a pv_spec_t. */
+void pv_spec_free_contents(pv_spec_t *spec)
+{
+	/* TODO: free name if it is PV */
+	if(spec->trans)
+		tr_free((trans_t*)spec->trans);
+}
+
+
+
 /**
  *
  */
 void pv_spec_free(pv_spec_t *spec)
 {
 	if(spec==0) return;
-	/* TODO: free name if it is PV */
-	if(spec->trans)
-		tr_free((trans_t*)spec->trans);
+	pv_spec_free_contents(spec);
 	pkg_free(spec);
 }
 
