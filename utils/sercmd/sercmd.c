@@ -1802,36 +1802,31 @@ char** sercmd_completion(const char* text, int start, int end)
 				}
 			}
 #endif /* USE_MI */
-#ifdef USE_CFG_VARS
 		}else if (crt_param_no==2){
-			if (attempted_completion_state!=COMPLETE_CFG_GRP){
-				for(i=0; complete_params_cfg_var[i]; i++){
-					if ((cmd_len==strlen(complete_params_cfg_var[i])) &&
-						(strncmp(&rl_line_buffer[cmd_start],
+#ifdef USE_CFG_VARS
+			/* see if we complete cfg. var names for this command */
+			for(i=0; complete_params_cfg_var[i]; i++){
+				if ((cmd_len==strlen(complete_params_cfg_var[i])) &&
+					(strncmp(&rl_line_buffer[cmd_start],
 								 complete_params_cfg_var[i],
 								 cmd_len)==0)){
-						attempted_completion_state=COMPLETE_CFG_GRP;
-						/* find grp_start */
-						for(j=cmd_end; (j<start) && ((rl_line_buffer[j]==' ') 
-									|| (rl_line_buffer[j]=='\t')); j++);
-						grp_start=j;
-						break;
-					}
-				}
-			}
-			if (attempted_completion_state==COMPLETE_CFG_GRP){
-				/* get the group name from the grp_param */
-				/* find first whitespace for the group name*/
-				for(j=grp_start; (j<start) && (rl_line_buffer[j]!=' ') &&
-						(rl_line_buffer[j]!='\t'); j++);
-				grp_len=j-grp_start;
-				for(grp=cfg_grp_lst; grp; grp=grp->next){
-					if (grp_len==grp->grp_name.len &&
-							memcmp(&rl_line_buffer[grp_start], grp->grp_name.s,
-										grp_len)==0) {
-						attempted_completion_state=COMPLETE_CFG_VAR;
-						crt_cfg_grp=grp;
-						goto end;
+					/* get the group name: */
+					/* find grp_start */
+					for(j=cmd_end; (j<start) && ((rl_line_buffer[j]==' ') ||
+							(rl_line_buffer[j]=='\t')); j++);
+					grp_start=j;
+					/* find group end / grp_len*/
+					for(j=grp_start; (j<start) && (rl_line_buffer[j]!=' ') &&
+								(rl_line_buffer[j]!='\t'); j++);
+					grp_len=j-grp_start;
+					for(grp=cfg_grp_lst; grp; grp=grp->next){
+						if (grp_len==grp->grp_name.len &&
+								memcmp(&rl_line_buffer[grp_start],
+										grp->grp_name.s, grp_len)==0) {
+							attempted_completion_state=COMPLETE_CFG_VAR;
+							crt_cfg_grp=grp;
+							goto end;
+						}
 					}
 				}
 			}
