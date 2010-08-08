@@ -201,14 +201,12 @@ int register_core_stats(void)
 inline static int mi_add_stat(struct mi_node *rpl, stat_var *stat)
 {
 	struct mi_node *node;
-	stats_collector *sc;
 
-	if((sc = get_stats_collector())==NULL) return -1;
+	if (stats_support()==0) return -1;
 
-	node = addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
-		sc->amodules[stat->mod_idx].name.len,
-		sc->amodules[stat->mod_idx].name.s,
-		stat->name.len, stat->name.s,
+	node = addf_mi_node_child(rpl, 0, 0, 0, "%s:%s = %lu",
+		ZSW(get_stat_module(stat)),
+		ZSW(get_stat_name(stat)),
 		get_stat_val(stat) );
 
 	if (node==0)
@@ -216,37 +214,36 @@ inline static int mi_add_stat(struct mi_node *rpl, stat_var *stat)
 	return 0;
 }
 
-inline static int mi_add_module_stats(struct mi_node *rpl,
-													module_stats *mods)
-{
-	struct mi_node *node;
-	stat_var *stat;
 
-	for( stat=mods->head ; stat ; stat=stat->lnext) {
-		node = addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
-			mods->name.len, mods->name.s,
-			stat->name.len, stat->name.s,
-			get_stat_val(stat) );
-		if (node==0)
-			return -1;
-	}
-	return 0;
+
+/* callback for counter_iterate_grp_vars. */
+static void mi_add_grp_vars_cbk(void* r, str* g, str* n, counter_handle_t h)
+{
+	struct mi_node *rpl;
+	struct mi_node *node;
+	
+	rpl = r;
+	node = addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
+							g->len, g->s, n->len, n->s, counter_get_val(h));
 }
 
+
+/* callback for counter_iterate_grp_names */
+static void mi_add_all_grps_cbk(void* p, str* g)
+{
+	counter_iterate_grp_vars(g->s, mi_add_grp_vars_cbk, p);
+}
 
 static struct mi_root *mi_get_stats(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
 	struct mi_node *rpl;
 	struct mi_node *arg;
-	module_stats   *mods;
 	stat_var       *stat;
 	str val;
-	int i;
 
-	stats_collector *sc;
 
-	if((sc = get_stats_collector())==NULL)
+	if(stats_support()==0)
 		return init_mi_tree( 404, "Statistics Not Found", 20);
 
 	if (cmd->node.kids==NULL)
@@ -265,18 +262,15 @@ static struct mi_root *mi_get_stats(struct mi_root *cmd, void *param)
 
 		if ( val.len==3 && memcmp(val.s,"all",3)==0) {
 			/* add all statistic variables */
-			for( i=0 ; i<sc->mod_no ;i++ ) {
-				if (mi_add_module_stats( rpl, &sc->amodules[i] )!=0)
-					goto error;
-			}
+			/* use direct counters access for that */
+			counter_iterate_grp_names(mi_add_all_grps_cbk, rpl);
 		} else if ( val.len>1 && val.s[val.len-1]==':') {
 			/* add module statistics */
 			val.len--;
-			mods = get_stat_module( &val );
-			if (mods==0)
-				continue;
-			if (mi_add_module_stats( rpl, mods )!=0)
-				goto error;
+			val.s[val.len]=0; /* zero term. */
+			/* use direct counters access for that */
+			counter_iterate_grp_vars(val.s, mi_add_grp_vars_cbk, rpl);
+			val.s[val.len]=':' /* restore */;
 		} else {
 			/* add only one statistic */
 			stat = get_stat( &val );
