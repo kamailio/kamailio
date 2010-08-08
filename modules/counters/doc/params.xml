@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!-- Include general documentation entities -->
+		<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+		%docentities;
+	]
+>
+
+<section id="cnts.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+		<revhistory>
+			<revision>
+				<revnumber>$Revision$</revnumber>
+				<date>$Date$</date>
+			</revision>
+		</revhistory>
+	</sectioninfo>
+	<title>Parameters</title>
+
+	<section id="scrip_counter">
+		<title><varname>script_counter</varname></title>
+		<para>
+			Define a new counter that can be used from the script.
+			The default group name for the counter is "script"
+			(it can be changed using the
+			<varname>script_cnt_grp_name</varname> module parameter).
+		</para>
+		<example>
+			<title>
+				Create a new <varname>script_counter</varname>
+			</title>
+			<programlisting>
+modparam("counters", "script_counter", "foo")
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="scrip_cnt_grp_name">
+		<title><varname>script_cnt_grp_name</varname></title>
+		<para>
+			Group name that will be used for all the counters defined
+			via the <varname>script_counter</varname> module parameter.
+		</para>
+		<para>
+			Default: "script".
+		</para>
+		<example>
+			<title>
+				Set <varname>script_cnt_grp_name</varname> in the config file
+			</title>
+			<programlisting>
+modparam("counters", "script_cnt_grp_name", "my_counters")
+			</programlisting>
+		</example>
+	</section>
+
+</section>
