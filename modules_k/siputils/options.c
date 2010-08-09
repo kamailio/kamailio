@@ -112,7 +112,7 @@ int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 
 	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
 	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
-		if (opt_slb.send_reply(_msg, 200, &opt_200_rpl) == -1) {
+		if (opt_slb.freply(_msg, 200, &opt_200_rpl) == -1) {
 			LM_ERR("failed to send 200 via send_reply\n");
 			return -1;
 		}
@@ -124,7 +124,7 @@ int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	}
 
 error:
-	if (opt_slb.send_reply(_msg, 500, &opt_500_rpl) == -1) {
+	if (opt_slb.freply(_msg, 500, &opt_500_rpl) == -1) {
 		LM_ERR("failed to send 500 via send_reply\n");
 		return -1;
 	}
