@@ -56,6 +56,7 @@ struct counter_record {
 	void* cbk_param;
 	counter_cbk_f cbk;
 	struct counter_record* grp_next; /* next in group */
+	str doc;
 };
 
 
@@ -279,12 +280,13 @@ static struct grp_record* grp_hash_get_create(str* group)
 static struct counter_record* cnt_hash_add(
 							str* group, str* name,
 							int flags, counter_cbk_f cbk,
-							void* param)
+							void* param, const char* doc)
 {
 	struct str_hash_entry* e;
 	struct counter_record* cnt_rec;
 	struct grp_record* grp_rec;
 	struct counter_record** p;
+	int doc_len;
 	
 	e = 0;
 	if (cnts_no >= MAX_COUNTER_ID)
@@ -294,9 +296,11 @@ static struct counter_record* cnt_hash_add(
 	if (grp_rec == 0)
 		/* non existing group an no new one could be created */
 		goto error;
+	doc_len = doc?strlen(doc):0;
 	/* cnt_rec copied at &e->u.data[0] */
 	e = pkg_malloc(sizeof(struct str_hash_entry) - sizeof(e->u.data) +
-					sizeof(*cnt_rec) + name->len + 1 + group->len + 1);
+					sizeof(*cnt_rec) + name->len + 1 + group->len + 1 +
+					doc_len + 1);
 	if (e == 0)
 		goto error;
 	cnt_rec = (struct counter_record*)&e->u.data[0];
@@ -304,6 +308,8 @@ static struct counter_record* cnt_hash_add(
 	cnt_rec->group.len = group->len;
 	cnt_rec->name.s = cnt_rec->group.s + group->len + 1;
 	cnt_rec->name.len = name->len;
+	cnt_rec->doc.s = cnt_rec->name.s + name->len +1;
+	cnt_rec->doc.len = doc_len;
 	cnt_rec->h.id = cnts_no++;
 	cnt_rec->flags = flags;
 	cnt_rec->cbk_param = param;
@@ -311,6 +317,10 @@ static struct counter_record* cnt_hash_add(
 	cnt_rec->grp_next = 0;
 	memcpy(cnt_rec->group.s, group->s, group->len + 1);
 	memcpy(cnt_rec->name.s, name->s, name->len + 1);
+	if (doc)
+		memcpy(cnt_rec->doc.s, doc, doc_len + 1);
+	else
+		cnt_rec->doc.s[0] = 0;
 	e->key = cnt_rec->name;
 	e->flags = 0;
 	/* add it a pointer to it in the records array */
@@ -389,14 +399,14 @@ static struct counter_record* cnt_hash_get_create(
 								str* group, str* name,
 								int flags,
 								counter_cbk_f cbk,
-								void* param)
+								void* param, const char* doc)
 {
 	struct counter_record* ret;
 
 	ret = cnt_hash_lookup(group, name);
 	if (ret)
 		return ret;
-	return cnt_hash_add(group, name, flags, cbk, param);
+	return cnt_hash_add(group, name, flags, cbk, param, doc);
 }
 
 
@@ -405,21 +415,23 @@ static struct counter_record* cnt_hash_get_create(
  * Can be called only before forking (e.g. from mod_init() or
  * init_child(PROC_INIT)).
  * @param handle - result parameter, it will be filled with the counter
- *                  handle on success.
+ *                  handle on success (can be null if not needed).
  * @param group - group name
  * @param name  - counter name (group.name must be unique).
  * @param flags  - counter flags: one of CNT_F_*.
  * @param cbk   - read callback function (if set it will be called each time
  *                  someone will call counter_get()).
  * @param cbk_param - callback param.
+ * @param doc       - description/documentation string.
  * @param reg_flags - register flags: 1 - don't fail if counter already
  *                    registered (act like counter_lookup(handle, group, name).
  * @return 0 on succes, < 0 on error (-1 not init or malloc error, -2 already
  *         registered (and register_flags & 1 == 0).
  */
-int counter_register(	counter_handle_t* handle, char* group, char* name,
-						int flags,
+int counter_register(	counter_handle_t* handle, const char* group,
+						const char* name, int flags,
 						counter_cbk_f cbk, void* cbk_param,
+						const char* doc,
 						int reg_flags)
 {
 	str grp;
@@ -431,31 +443,31 @@ int counter_register(	counter_handle_t* handle, char* group, char* name,
 		BUG("late attempt to register counter: %s.%s\n", group, name);
 		goto error;
 	}
-	n.s = name;
+	n.s = (char*)name;
 	n.len = strlen(name);
 	if (unlikely(group == 0 || *group == 0)) {
 		BUG("attempt to register counter %s without a group\n", name);
 		goto error;
 	}
-	grp.s = group;
+	grp.s = (char*)group;
 	grp.len = strlen(group);
 	cnt_rec = cnt_hash_lookup(&grp, &n);
 	if (cnt_rec) {
 		if (reg_flags & 1)
 			goto found;
 		else {
-			handle->id = 0;
+			if (handle) handle->id = 0;
 			return -2;
 		}
 	} else
-		cnt_rec = cnt_hash_get_create(&grp, &n, flags, cbk, cbk_param);
+		cnt_rec = cnt_hash_get_create(&grp, &n, flags, cbk, cbk_param, doc);
 	if (unlikely(cnt_rec == 0))
 		goto error;
 found:
-	*handle = cnt_rec->h;
+	if (handle) *handle = cnt_rec->h;
 	return 0;
 error:
-	handle->id = 0;
+	if (handle) handle->id = 0;
 	return -1;
 }
 
@@ -492,16 +504,37 @@ int counter_lookup_str(counter_handle_t* handle, str* group, str* name)
   * @param name - counter name.
  * @return 0 on success, < 0 on error
  */
-int counter_lookup(counter_handle_t* handle, char* group, char* name)
+int counter_lookup(counter_handle_t* handle,
+					const char* group, const char* name)
 {
 	str grp;
 	str n;
 
-	n.s = name;
+	n.s = (char*)name;
 	n.len = strlen(name);
-	grp.s = group;
+	grp.s = (char*)group;
 	grp.len = group?strlen(group):0;
 	return counter_lookup_str(handle, &grp, &n);
+}
+
+
+
+/** register all the counters declared in a null-terminated array.
+  * @param group - counters group.
+  * @param defs  - null terminated array containing counters definitions.
+  * @return 0 on success, < 0 on error ( - (counter_number+1))
+  */
+int counter_register_array(const char* group, counter_def_t* defs)
+{
+	int r;
+	
+	for (r=0; defs[r].name; r++)
+		if (counter_register(	defs[r].handle,
+								group, defs[r].name, defs[r].flags,
+								defs[r].get_cbk, defs[r].get_cbk_param,
+								defs[r].descr, 0) <0)
+			return -(r+1); /* return - (idx of bad counter + 1) */
+	return 0;
 }
 
 
@@ -628,6 +661,29 @@ error:
 
 
 
+/** return the description (doc) string for a given counter.
+ * @param handle - counter handle obtained using counter_lookup() or
+ *                 counter_register().
+ * @return asciiz pointer on success, 0 on error.
+ */
+char* counter_get_doc(counter_handle_t handle)
+{
+	if (unlikely(_cnts_vals == 0)) {
+		/* not init yet */
+		BUG("counters not fully initialized yet\n");
+		goto error;
+	}
+	if (unlikely(handle.id >= cnts_no)) {
+		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
+		goto error;
+	}
+	return cnt_id2record[handle.id]->doc.s;
+error:
+	return 0;
+}
+
+
+
 /** iterate on all the counter group names.
  * @param cbk - pointer to a callback function that will be called for each
  *              group name.
@@ -651,7 +707,7 @@ void counter_iterate_grp_names(void (*cbk)(void* p, str* grp_name), void* p)
  * @param p   - parameter that will be passed to the callback function
  *              (along the variable name).
  */
-void counter_iterate_grp_var_names(	char* group,
+void counter_iterate_grp_var_names(	const char* group,
 									void (*cbk)(void* p, str* var_name),
 									void* p)
 {
@@ -659,7 +715,7 @@ void counter_iterate_grp_var_names(	char* group,
 	struct grp_record* g;
 	str grp;
 	
-	grp.s = group;
+	grp.s = (char*)group;
 	grp.len = strlen(group);
 	g = grp_hash_lookup(&grp);
 	if (g)
@@ -676,7 +732,7 @@ void counter_iterate_grp_var_names(	char* group,
  * @param p   - parameter that will be passed to the callback function
  *              (along the group name, variable name and variable handle).
  */
-void counter_iterate_grp_vars(char* group,
+void counter_iterate_grp_vars(const char* group,
 							  void (*cbk)(void* p, str* g, str* n,
 								  			counter_handle_t h),
 							  void *p)
@@ -685,7 +741,7 @@ void counter_iterate_grp_vars(char* group,
 	struct grp_record* g;
 	str grp;
 	
-	grp.s = group;
+	grp.s = (char*)group;
 	grp.len = strlen(group);
 	g = grp_hash_lookup(&grp);
 	if (g)
