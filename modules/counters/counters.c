@@ -125,24 +125,52 @@ struct module_exports exports= {
 };
 
 
+
+/** parse the the script_counter modparam.
+ *  Format:   [grp.]name[( |:)desc]
+ *  E.g.:
+ *           "name" => new counter: *cnt_script_grp."name"
+ *           "grp.name" => new counter: "grp"."name"
+ *           "name desc" => new counter "name", desc = "desc"
+ *           "grp.name desc" => "grp"."name", desc = "desc".
+ */
 static int add_script_counter(modparam_t type, void* val)
 {
 	char* name;
 	counter_handle_t h;
 	int ret;
+	char* grp;
+	char* desc;
+	char* p;
 
 	if ((type & PARAM_STRING) == 0) {
 		BUG("bad parameter type %d\n", type);
 		goto error;
 	}
 	name = (char*) val;
-	ret = counter_register(&h, cnt_script_grp, name, 0, 0, 0, "script counter", 0);
+	grp = cnt_script_grp; /* default group */
+	desc = "custom script counter."; /* default desc. */
+	if ((p = strchr(name, ':')) != 0 ||
+			(p = strchr(name, ' ')) != 0) {
+		/* found desc. */
+		*p = 0;
+		for(p = p+1; *p && (*p == ' ' || *p == '\t'); p++);
+		if (*p)
+			desc = p;
+	}
+	if ((p = strchr(name, '.')) != 0) {
+		/* found group */
+		grp = name;
+		*p = 0;
+		name = p+1;
+	}
+	ret = counter_register(&h, grp, name, 0, 0, 0, desc, 0);
 	if (ret < 0) {
 		if (ret == -2) {
-			ERR("counter %s.%s already registered\n", cnt_script_grp, name);
+			ERR("counter %s.%s already registered\n", grp, name);
 			return 0;
 		}
-		ERR("failed to register counter %s.%s\n", cnt_script_grp, name);
+		ERR("failed to register counter %s.%s\n", grp, name);
 		goto error;
 	}
 	return 0;
@@ -155,12 +183,21 @@ error:
 static int cnt_fixup1(void** param, int param_no)
 {
 	char* name;
+	char* grp;
+	char* p;
 	counter_handle_t h;
 
 	name = (char*)*param;
-	if (counter_lookup(&h, cnt_script_grp, name) < 0) {
+	grp = cnt_script_grp; /* default group */
+	if ((p = strchr(name, '.')) != 0) {
+		/* found group */
+		grp = name;
+		name = p+1;
+		*p = 0;
+	}
+	if (counter_lookup(&h, grp, name) < 0) {
 		ERR("counter %s.%s does not exist (forgot to define it?)\n",
-				cnt_script_grp, name);
+				grp, name);
 		return -1;
 	}
 	*param = (void*)(long)h.id;
@@ -172,13 +209,22 @@ static int cnt_fixup1(void** param, int param_no)
 static int cnt_int_fixup(void** param, int param_no)
 {
 	char* name;
+	char* grp;
+	char* p;
 	counter_handle_t h;
 
 	if (param_no == 1) {
 		name = (char*)*param;
-		if (counter_lookup(&h, cnt_script_grp, name) < 0) {
+		grp = cnt_script_grp; /* default group */
+		if ((p = strchr(name, '.')) != 0) {
+			/* found group */
+			grp = name;
+			name = p+1;
+			*p = 0;
+		}
+		if (counter_lookup(&h, grp, name) < 0) {
 			ERR("counter %s.%s does not exist (forgot to define it?)\n",
-					cnt_script_grp, name);
+					grp, name);
 			return -1;
 		}
 		*param = (void*)(long)h.id;
