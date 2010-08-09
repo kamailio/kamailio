@@ -85,5 +85,18 @@
 		</example>
 	</section>
 
+	<section id="cnt.help">
+		<title> <function>cnt.help group counter_name</function></title>
+		<para>
+			Displays the counter description.
+		</para>
+		<example>
+			<title><function>cnt.help grp name</function> usage</title>
+			<programlisting>
+ $ &sercmd; cnt.help script foo
+			</programlisting>
+		</example>
+	</section>
+
 
 </section>
