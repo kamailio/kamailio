@@ -69,9 +69,9 @@ static inline sdp_session_cell_t *add_sdp_session(sdp_info_t* _sdp, int session_
 
 	len = sizeof(sdp_session_cell_t);
 	session = (sdp_session_cell_t*)pkg_malloc(len);
-	if (session == 0) {
+	if (session == NULL) {
 		LM_ERR("No memory left\n");
-		return 0;
+		return NULL;
 	}
 	memset( session, 0, len);
 
@@ -100,9 +100,9 @@ static inline sdp_stream_cell_t *add_sdp_stream(sdp_session_cell_t* _session, in
 
 	len = sizeof(sdp_stream_cell_t);
 	stream = (sdp_stream_cell_t*)pkg_malloc(len);
-	if (stream == 0) {
+	if (stream == NULL) {
 		LM_ERR("No memory left\n");
-		return 0;
+		return NULL;
 	}
 	memset( stream, 0, len);
 
@@ -141,9 +141,9 @@ static inline sdp_payload_attr_t *add_sdp_payload(sdp_stream_cell_t* _stream, in
 
 	len = sizeof(sdp_payload_attr_t);
 	payload_attr = (sdp_payload_attr_t*)pkg_malloc(len);
-	if (payload_attr == 0) {
+	if (payload_attr == NULL) {
 		LM_ERR("No memory left\n");
-		return 0;
+		return NULL;
 	}
 	memset( payload_attr, 0, len);
 
@@ -167,14 +167,14 @@ static inline sdp_payload_attr_t** init_p_payload_attr(sdp_stream_cell_t* _strea
 	int payloads_num, i;
 	sdp_payload_attr_t *payload;
 
-	if (_stream == 0) {
+	if (_stream == NULL) {
 		LM_ERR("Invalid stream\n");
-		return 0;
+		return NULL;
 	}
 	payloads_num = _stream->payloads_num;
 	if (payloads_num == 0) {
 		LM_ERR("Invalid number of payloads\n");
-		return 0;
+		return NULL;
 	}
 	if (pkg == USE_PKG_MEM) {
 		_stream->p_payload_attr = (sdp_payload_attr_t**)pkg_malloc(payloads_num * sizeof(sdp_payload_attr_t*));
@@ -182,11 +182,11 @@ static inline sdp_payload_attr_t** init_p_payload_attr(sdp_stream_cell_t* _strea
 		_stream->p_payload_attr = (sdp_payload_attr_t**)shm_malloc(payloads_num * sizeof(sdp_payload_attr_t*));
 	} else {
 		LM_ERR("undefined memory type\n");
-		return 0;
+		return NULL;
 	}
-	if (_stream->p_payload_attr == 0) {
+	if (_stream->p_payload_attr == NULL) {
 		LM_ERR("No memory left\n");
-		return 0;
+		return NULL;
 	}
 
 	--payloads_num;
@@ -205,7 +205,7 @@ static inline sdp_payload_attr_t** init_p_payload_attr(sdp_stream_cell_t* _strea
 
 void set_sdp_payload_attr(sdp_payload_attr_t *payload_attr, str *rtp_enc, str *rtp_clock, str *rtp_params)
 {
-	if (payload_attr == 0) {
+	if (payload_attr == NULL) {
 		LM_ERR("Invalid payload location\n");
 		return;
 	}
@@ -215,6 +215,18 @@ void set_sdp_payload_attr(sdp_payload_attr_t *payload_attr, str *rtp_enc, str *r
 	payload_attr->rtp_clock.len = rtp_clock->len;
 	payload_attr->rtp_params.s = rtp_params->s;
 	payload_attr->rtp_params.len = rtp_params->len;
+
+	return;
+}
+
+void set_sdp_payload_fmtp(sdp_payload_attr_t *payload_attr, str *fmtp_string )
+{
+	if (payload_attr == NULL) {
+		LM_ERR("Invalid payload location\n");
+		return;
+	}
+	payload_attr->fmtp_string.s = fmtp_string->s;
+	payload_attr->fmtp_string.len = fmtp_string->len;
 
 	return;
 }
@@ -353,6 +365,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	sdp_stream_cell_t *stream;
 	sdp_payload_attr_t *payload_attr;
 	int parse_payload_attr;
+	str fmtp_string;
 
 	/*
 	 * Parsing of SDP body.
@@ -478,7 +491,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				payload.s = tmpstr1.s;
 				payload.len = a1p - tmpstr1.s;
 				payload_attr = add_sdp_payload(stream, payloadnum, &payload);
-				if (payload_attr == 0) return -1;
+				if (payload_attr == NULL) return -1;
 				tmpstr1.len -= payload.len;
 				tmpstr1.s = a1p;
 				a2p = eat_space_end(tmpstr1.s, tmpstr1.s + tmpstr1.len);
@@ -490,7 +503,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 			}
 
 			/* Initialize fast access pointers */
-			if (0 == init_p_payload_attr(stream, USE_PKG_MEM)) {
+			if (NULL == init_p_payload_attr(stream, USE_PKG_MEM)) {
 				return -1;
 			}
 			parse_payload_attr = 1;
@@ -523,6 +536,10 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				set_sdp_payload_attr(payload_attr, &rtp_enc, &rtp_clock, &rtp_params);
 			} else if (extract_rtcp(&tmpstr1, &stream->rtcp_port) == 0) {
 				a1p = stream->rtcp_port.s + stream->rtcp_port.len;
+			} else if (parse_payload_attr && extract_fmtp(&tmpstr1,&rtp_payload,&fmtp_string) == 0){
+				a1p = fmtp_string.s + fmtp_string.len;
+				payload_attr = (sdp_payload_attr_t*)get_sdp_payload4payload(stream, &rtp_payload);
+				set_sdp_payload_fmtp(payload_attr, &fmtp_string);
 			} else if (extract_accept_types(&tmpstr1, &stream->accept_types) == 0) {
 				a1p = stream->accept_types.s + stream->accept_types.len;
 			} else if (extract_accept_wrapped_types(&tmpstr1, &stream->accept_wrapped_types) == 0) {
@@ -649,7 +666,7 @@ int parse_sdp(struct sip_msg* _m)
 	}
 
 	body.s = get_body(_m);
-	if (body.s==0) {
+	if (body.s==NULL) {
 		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
@@ -732,7 +749,7 @@ void free_sdp(sdp_info_t** _sdp)
 	sdp_payload_attr_t *payload, *l_payload;
 
 	LM_DBG("_sdp = %p\n", _sdp);
-	if (sdp == 0) return;
+	if (sdp == NULL) return;
 	LM_DBG("sdp = %p\n", sdp);
 	session = sdp->sessions;
 	LM_DBG("session = %p\n", session);
@@ -783,13 +800,14 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 		stream->accept_wrapped_types.len, stream->accept_wrapped_types.s);
 	payload = stream->payload_attr;
 	while (payload) {
-		LOG(log_level, "......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s'\n",
+		LOG(log_level, "......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 			payload->payload_num, payload, payload->next,
 			payload->payload_num, stream->p_payload_attr[payload->payload_num],
 			payload->rtp_payload.len, payload->rtp_payload.s,
 			payload->rtp_enc.len, payload->rtp_enc.s,
 			payload->rtp_clock.len, payload->rtp_clock.s,
-			payload->rtp_params.len, payload->rtp_params.s);
+			payload->rtp_params.len, payload->rtp_params.s,
+			payload->fmtp_string.len, payload->fmtp_string.s);
 		payload=payload->next;
 	}
 }
@@ -891,7 +909,8 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 			attr->rtp_payload.len +
 			attr->rtp_enc.len +
 			attr->rtp_clock.len +
-			attr->rtp_params.len;
+			attr->rtp_params.len +
+			attr->fmtp_string.len;
 	clone_attr = (sdp_payload_attr_t*)shm_malloc(len);
 	if (clone_attr == NULL) {
 		LM_ERR("no more shm mem (%d)\n",len);
@@ -928,6 +947,13 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 		clone_attr->rtp_params.len = attr->rtp_params.len;
 		memcpy( p, attr->rtp_params.s, attr->rtp_params.len);
 		p += attr->rtp_params.len;
+	}
+
+	if (attr->fmtp_string.len) {
+		clone_attr->fmtp_string.s = p;
+		clone_attr->fmtp_string.len = attr->fmtp_string.len;
+		memcpy( p, attr->fmtp_string.s, attr->fmtp_string.len);
+		p += attr->fmtp_string.len;
 	}
 
 	return clone_attr;
@@ -1163,8 +1189,7 @@ error:
 
 sdp_info_t * clone_sdp_info(struct sip_msg* _m)
 {
-	sdp_info_t *clone_sdp_info, *sdp_info=(sdp_info_t*)_m->body
-;
+	sdp_info_t *clone_sdp_info, *sdp_info=(sdp_info_t*)_m->body;
 	sdp_session_cell_t *clone_session, *prev_clone_session, *session;
 	int i, len;
 

@@ -224,6 +224,48 @@ int extract_rtpmap(str *body,
 	return 0;
 }
 
+int extract_fmtp( str *body, str *fmtp_payload, str *fmtp_string )
+{
+	char *cp, *cp1;
+	int len;
+
+	if (strncasecmp(body->s, "a=fmtp:", 7) !=0) {
+		/*LM_DBG("We are not pointing to an a=fmtp: attribute =>`%.*s'\n", body->len, body->s); */
+		return -1;
+	}
+
+	cp1 = body->s;
+
+	fmtp_payload->s = cp1 + 7; /* skip `a=fmtp:' */
+	fmtp_payload->len = eat_line(fmtp_payload->s, body->s + body->len -
+		fmtp_payload->s) - fmtp_payload->s;
+	trim_len(fmtp_payload->len, fmtp_payload->s, *fmtp_payload);
+	len = fmtp_payload->len;
+
+	/* */
+	cp = eat_token_end(fmtp_payload->s, fmtp_payload->s + fmtp_payload->len);
+	fmtp_payload->len = cp - fmtp_payload->s;
+	if (fmtp_payload->len <= 0 || cp == fmtp_payload->s) {
+		LM_ERR("no encoding in `a=fmtp:'\n");
+		return -1;
+	}
+	len -= fmtp_payload->len;
+	fmtp_string->s = cp;
+	cp = eat_space_end(fmtp_string->s, fmtp_string->s + len);
+	len -= cp - fmtp_string->s;
+	if (len <= 0 || cp == fmtp_string->s) {
+		LM_ERR("no encoding in `a=fmtp:'\n");
+		return -1;
+	}
+
+	fmtp_string->s = cp;
+
+	fmtp_string->len = eat_line(fmtp_string->s, body->s + body->len -
+		fmtp_string->s) - fmtp_string->s;
+	trim_len(fmtp_string->len, fmtp_string->s, *fmtp_string);
+
+	return 0;
+}
 
 /* generic method for attribute extraction
  * field must has format "a=attrname:" */
