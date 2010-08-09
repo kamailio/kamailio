@@ -47,7 +47,7 @@ static inline int new_sdp(struct sip_msg* _m)
 	sdp_info_t* sdp;
 
 	sdp = (sdp_info_t*)pkg_malloc(sizeof(sdp_info_t));
-	if (sdp == 0) {
+	if (sdp == NULL) {
 		LM_ERR("No memory left\n");
 		return -1;
 	}
@@ -1005,7 +1005,7 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 
 	clone_stream->payloads_num = stream->payloads_num;
 	if (clone_stream->payloads_num) {
-		if (0 == init_p_payload_attr(clone_stream, USE_SHM_MEM)) {
+		if (NULL == init_p_payload_attr(clone_stream, USE_SHM_MEM)) {
 			goto error;
 		}
 	}
