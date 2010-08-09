@@ -62,9 +62,12 @@ int register_stat( char *module, char *name, stat_var **pvar, int flags)
 	cnt_flags = (flags & STAT_NO_RESET) ? CNT_F_NO_RESET : 0;
 	if (flags & STAT_IS_FUNC)
 		ret = counter_register(&h, module, name, cnt_flags,
-					cnt_cbk_wrapper,(stat_function)pvar , 0);
+					cnt_cbk_wrapper,(stat_function)pvar,
+					"kamailio statistic (no description)",
+					0);
 	else
-		ret = counter_register(&h, module, name, cnt_flags, 0, 0, 0);
+		ret = counter_register(&h, module, name, cnt_flags, 0, 0,
+					"kamailio statistic (no description)", 0);
 	if (ret < 0) {
 		if (ret == -2)
 			ERR("counter %s.%s already registered\n", module, name);
