@@ -92,6 +92,10 @@ static const char* cnt_grp_get_all_doc[] = {
 	"list all counter names and values in a specified group", 0
 };
 
+static void cnt_help_rpc(rpc_t* rpc, void* ctx);
+static const char* cnt_help_doc[] = {
+	"print the description of a counter (group and counter name required).", 0
+};
 
 
 
@@ -102,6 +106,7 @@ static rpc_export_t counters_rpc[] = {
 	{"cnt.grps_list", cnt_grps_list_rpc, cnt_grps_list_doc, RET_ARRAY },
 	{"cnt.var_list", cnt_var_list_rpc, cnt_var_list_doc, RET_ARRAY },
 	{"cnt.grp_get_all", cnt_grp_get_all_rpc, cnt_grp_get_all_doc, 0 },
+	{"cnt.help", cnt_help_rpc, cnt_help_doc, 0},
 	{ 0, 0, 0, 0}
 };
 
@@ -131,7 +136,7 @@ static int add_script_counter(modparam_t type, void* val)
 		goto error;
 	}
 	name = (char*) val;
-	ret = counter_register(&h, cnt_script_grp, name, 0, 0, 0, 0);
+	ret = counter_register(&h, cnt_script_grp, name, 0, 0, 0, "script counter", 0);
 	if (ret < 0) {
 		if (ret == -2) {
 			ERR("counter %s.%s already registered\n", cnt_script_grp, name);
@@ -363,6 +368,32 @@ static void cnt_grp_get_all_rpc(rpc_t* rpc, void* c)
 	packed_params.rpc = rpc;
 	packed_params.ctx = s;
 	counter_iterate_grp_vars(group, rpc_print_name_val, &packed_params);
+}
+
+
+
+static void cnt_help_rpc(rpc_t* rpc, void* ctx)
+{
+	char* group;
+	char* name;
+	char* desc;
+	counter_handle_t h;
+	
+	if (rpc->scan(ctx, "ss", &group, &name) < 2) {
+		/* rpc->fault(c, 400, "group and counter name required"); */
+		return;
+	}
+	if (counter_lookup(&h, group, name) < 0) {
+		rpc->fault(ctx, 400, "non-existent counter %s.%s\n", group, name);
+		return;
+	}
+	desc = counter_get_doc(h);
+	if (desc)
+		rpc->add(ctx, "s", desc);
+	else
+		rpc->fault(ctx, 400, "no description for counter %s.%s\n",
+					group, name);
+	return;
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
