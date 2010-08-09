@@ -352,6 +352,7 @@ char* complete_param1_counter_grp[] = {
 	"cnt.grp_get_all",
 	"cnt.reset",
 	"cnt.var_list",
+	"cnt.help",
 	0
 };
 
@@ -360,6 +361,7 @@ char* complete_param2_counter_name[] = {
 	"cnt.get",
 	"cnt.get_raw",
 	"cnt.reset",
+	"cnt.help",
 	0
 };
 #endif /* USE_COUNTERS */
