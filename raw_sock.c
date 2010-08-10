@@ -27,9 +27,6 @@
  *  2010-06-15  IP_HDRINCL raw socket support, including on-send
  *               fragmentation (andrei)
  */
-/*
- * FIXME: IP_PKTINFO & IP_HDRINCL - linux specific
- */
 
 #ifdef USE_RAW_SOCKS
 
@@ -47,6 +44,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <arpa/inet.h>
 #ifndef __USE_BSD
 #define __USE_BSD  /* on linux use bsd version of iphdr (more portable) */
@@ -60,11 +58,38 @@
 #include "cfg_core.h"
 
 
+#if defined (__OS_freebsd) || defined (__OS_netbsd) || defined(__OS_openbsd) \
+	|| defined (__OS_darwin)
+/** fragmentation is done by the kernel (no need to do it in userspace) */
+#define RAW_IPHDR_INC_AUTO_FRAG
+#endif /* __OS_* */
+
+/* macros for converting values in the expected format */
+#if defined (__OS_freebsd) || defined (__OS_netbsd) || defined (__OS_darwin)
+/* on freebsd and netbsd the ip offset (along with flags) and the
+   ip header length must be filled in _host_ bytes order format.
+   The same is true for openbsd < 2.1.
+*/
+/** convert the ip offset in the format expected by the kernel. */
+#define RAW_IPHDR_IP_OFF(off) (unsigned short)(off)
+/** convert the ip total length in the format expected by the kernel. */
+#define RAW_IPHDR_IP_LEN(tlen) (unsigned short)(tlen)
+
+#else /* __OS_* */
+/* linux, openbsd >= 2.1 a.s.o. */
+/** convert the ip offset in the format expected by the kernel. */
+#define RAW_IPHDR_IP_OFF(off)  htons((unsigned short)(off))
+/** convert the ip total length in the format expected by the kernel. */
+#define RAW_IPHDR_IP_LEN(tlen) htons((unsigned short)(tlen))
+
+#endif /* __OS_* */
+
+
 /** create and return a raw socket.
  * @param proto - protocol used (e.g. IPPROTO_UDP, IPPROTO_RAW)
  * @param ip - if not null the socket will be bound on this ip.
  * @param iface - if not null the socket will be bound to this interface
- *                (SO_BINDTODEVICE).
+ *                (SO_BINDTODEVICE). This is supported only on linux.
  * @param iphdr_incl - set to 1 if packets send on this socket include
  *                     a pre-built ip header (some fields, like the checksum
  *                     will still be filled by the kernel, OTOH packet
@@ -76,9 +101,11 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 	int sock;
 	int t;
 	union sockaddr_union su;
+#if defined (SO_BINDTODEVICE)
 	char short_ifname[sizeof(int)];
 	int ifname_len;
 	char* ifname;
+#endif /* SO_BINDTODEVICE */
 
 	sock = socket(PF_INET, SOCK_RAW, proto);
 	if (sock==-1)
@@ -95,19 +122,32 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 		/* IP_PKTINFO makes no sense if the ip header is included */
 		/* using IP_PKTINFO */
 		t=1;
+#ifdef IP_PKTINFO
 		if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &t, sizeof(t))<0){
 			ERR("raw_socket: setsockopt(IP_PKTINFO) failed: %s [%d]\n",
 					strerror(errno), errno);
 			goto error;
 		}
+#elif defined(IP_RECVDSTADDR)
+		if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &t, sizeof(t))<0){
+			ERR("raw_socket: setsockop(IP_RECVDSTADDR) failed: %s [%d]\n",
+					strerror(errno), errno);
+			goto error;
+		}
+#else
+#error "no method of getting the destination ip address supported"
+#endif /* IP_RECVDSTADDR / IP_PKTINFO */
 	}
+#if defined (IP_MTU_DISCOVER) && defined (IP_PMTUDISC_DONT)
 	t=IP_PMTUDISC_DONT;
 	if(setsockopt(sock, IPPROTO_IP, IP_MTU_DISCOVER, &t, sizeof(t)) ==-1){
 		ERR("raw_socket: setsockopt(IP_MTU_DISCOVER): %s\n",
 				strerror(errno));
 		goto error;
 	}
+#endif /* IP_MTU_DISCOVER && IP_PMTUDISC_DONT */
 	if (iface && iface->s){
+#if defined (SO_BINDTODEVICE)
 		/* workaround for linux bug: arg to setsockopt must have at least
 		 * sizeof(int) size or EINVAL would be returned */
 		if (iface->len<sizeof(int)){
@@ -125,6 +165,11 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 							iface->len, ZSW(iface->s), strerror(errno), errno);
 				goto error;
 		}
+#else /* !SO_BINDTODEVICE */
+		/* SO_BINDTODEVICE is linux specific => cannot bind to a device */
+		ERR("raw_socket: bind to device supported only on linux\n");
+		goto error;
+#endif /* SO_BINDTODEVICE */
 	}
 	/* FIXME: probe_max_receive_buffer(sock) missing */
 	if (ip){
@@ -160,8 +205,8 @@ int raw_udp4_socket(struct ip_addr* ip, str* iface, int iphdr_incl)
 
 
 
-/** receives an ipv4 packet suing a raw socket.
- * An ipv4 packet is received in buf, using IP_PKTINFO.
+/** receives an ipv4 packet using a raw socket.
+ * An ipv4 packet is received in buf, using IP_PKTINFO or IP_RECVDSTADDR.
  * from and to are filled (only the ip part the ports are 0 since this
  * function doesn't try to look beyond the IP level).
  * @param sock - raw socket
@@ -173,7 +218,7 @@ int raw_udp4_socket(struct ip_addr* ip, str* iface, int iphdr_incl)
  * @param to - result parameter, the IP address part of it will be filled
  *                with the destination (local) address and the port with 0.
  * @return packet len or <0 on error: -1 (check errno),
- *        -2 no IP_PKTINFO found or AF mismatch
+ *        -2 no IP_PKTINFO/IP_RECVDSTADDR found or AF mismatch
  */
 int recvpkt4(int sock, char* buf, int len, union sockaddr_union* from,
 					union sockaddr_union* to)
@@ -181,7 +226,9 @@ int recvpkt4(int sock, char* buf, int len, union sockaddr_union* from,
 	struct iovec iov[1];
 	struct msghdr rcv_msg;
 	struct cmsghdr* cmsg;
+#ifdef IP_PKTINFO
 	struct in_pktinfo* rcv_pktinfo;
+#endif /* IP_PKTINFO */
 	int n, ret;
 	char msg_ctrl_buf[1024];
 
@@ -203,8 +250,8 @@ retry:
 		goto end;
 	}
 	/* find the pkt info */
-	rcv_pktinfo=0;
 	for (cmsg=CMSG_FIRSTHDR(&rcv_msg); cmsg; cmsg=CMSG_NXTHDR(&rcv_msg, cmsg)){
+#ifdef IP_PKTINFO
 		if (likely((cmsg->cmsg_level==IPPROTO_IP) &&
 					(cmsg->cmsg_type==IP_PKTINFO))) {
 			rcv_pktinfo=(struct in_pktinfo*)CMSG_DATA(cmsg);
@@ -216,6 +263,19 @@ retry:
 			ret=n; /* success */
 			break;
 		}
+#elif defined (IP_RECVDSTADDR)
+		if (likely((cmsg->cmsg_level==IPPROTO_IP) &&
+					(cmsg->cmsg_type==IP_RECVDSTADDR))) {
+			to->sin.sin_family=AF_INET;
+			memcpy(&to->sin.sin_addr, CMSG_DATA(cmsg),
+									sizeof(to->sin.sin_addr));
+			to->sin.sin_port=0; /* not known */
+			ret=n; /* success */
+			break;
+		}
+#else
+#error "no method of getting the destination ip address supported"
+#endif /* IP_PKTINFO / IP_RECVDSTADDR */
 	}
 end:
 	return ret;
@@ -321,7 +381,7 @@ error:
  * @param uh - filled udp header
  * @param src - source ip address in network byte order.
  * @param dst - destination ip address in network byte order.
- * @param length - payload lenght (not including the udp header),
+ * @param length - payload length (not including the udp header),
  *                 in _host_ order.
  * @return the partial checksum in host order
  */
@@ -408,7 +468,11 @@ inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
 
 
 /** fill in an ip header.
- * Note: the checksum is _not_ computed
+ * Note: the checksum is _not_ computed.
+ * WARNING: The ip header length and offset might be filled in
+ * _host_ byte order or network byte order (depending on the OS, for example
+ *  freebsd needs host byte order for raw sockets with IPHDR_INC, while
+ *  linux needs network byte order).
  * @param iph - ip header that will be filled.
  * @param from - source ip v4 address (network byte order).
  * @param to -   destination ip v4 address (network byte order).
@@ -416,26 +480,30 @@ inline static int mk_udp_hdr(struct udphdr* u, struct sockaddr_in* from,
  * @param proto - protocol.
  * @return 0 on success, < 0 on error.
  */
-inline static int mk_ip_hdr(struct ip* iph, struct in_addr* from, 
+inline static int mk_ip_hdr(struct ip* iph, struct in_addr* from,
 				struct in_addr* to, int payload_len, unsigned char proto)
 {
 	iph->ip_hl = sizeof(struct ip)/4;
 	iph->ip_v = 4;
 	iph->ip_tos = tos;
-	iph->ip_len = htons(payload_len);
-	iph->ip_id = 0;
+	/* on freebsd ip_len _must_ be in _host_ byte order instead
+	   of network byte order. On linux the length is ignored (it's filled
+	   automatically every time). */
+	iph->ip_len = RAW_IPHDR_IP_LEN(payload_len + sizeof(struct ip));
+	iph->ip_id = 0; /* 0 => will be filled automatically by the kernel */
 	iph->ip_off = 0; /* frag.: first 3 bits=flags=0, last 13 bits=offset */
 	iph->ip_ttl = cfg_get(core, core_cfg, udp4_raw_ttl);
 	iph->ip_p = proto;
-	iph->ip_sum = 0;
 	iph->ip_src = *from;
 	iph->ip_dst = *to;
+	iph->ip_sum = 0;
+
 	return 0;
 }
 
 
 
-/** send an udp packet over a raw socket.
+/** send an udp packet over a non-ip_hdrincl raw socket.
  * @param rsock - raw socket
  * @param buf - data
  * @param len - data len
@@ -451,7 +519,9 @@ int raw_udp4_send(int rsock, char* buf, unsigned int len,
 {
 	struct msghdr snd_msg;
 	struct cmsghdr* cmsg;
+#ifdef IP_PKTINFO
 	struct in_pktinfo* snd_pktinfo;
+#endif /* IP_PKTINFO */
 	struct iovec iov[2];
 	struct udphdr udp_hdr;
 	char msg_ctrl_snd_buf[1024];
@@ -473,11 +543,20 @@ int raw_udp4_send(int rsock, char* buf, unsigned int len,
 	/* init pktinfo cmsg */
 	cmsg=CMSG_FIRSTHDR(&snd_msg);
 	cmsg->cmsg_level=IPPROTO_IP;
+#ifdef IP_PKTINFO
 	cmsg->cmsg_type=IP_PKTINFO;
 	cmsg->cmsg_len=CMSG_LEN(sizeof(struct in_pktinfo));
 	snd_pktinfo=(struct in_pktinfo*)CMSG_DATA(cmsg);
 	snd_pktinfo->ipi_ifindex=0;
 	snd_pktinfo->ipi_spec_dst.s_addr=from->sin.sin_addr.s_addr;
+#elif defined (IP_SENDSRCADDR)
+	cmsg->cmsg_type=IP_SENDSRCADDR;
+	cmsg->cmsg_len=CMSG_LEN(sizeof(struct in_addr));
+	memcpy(CMSG_DATA(cmsg), &from->sin.sin_addr.s_addr,
+							sizeof(struct in_addr));
+#else
+#error "no method of setting the source ip supported"
+#endif /* IP_PKTINFO / IP_SENDSRCADDR */
 	snd_msg.msg_controllen=cmsg->cmsg_len;
 	snd_msg.msg_flags=0;
 	ret=sendmsg(rsock, &snd_msg, 0);
@@ -515,12 +594,14 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		struct udphdr udp;
 	} hdr;
 	unsigned int totlen;
+#ifndef RAW_IPHDR_INC_AUTO_FRAG
 	unsigned int ip_frag_size; /* fragment size */
 	unsigned int last_frag_extra; /* extra bytes possible in the last frag */
 	unsigned int ip_payload;
 	unsigned int last_frag_offs;
 	void* last_frag_start;
 	int frg_no;
+#endif /* RAW_IPHDR_INC_AUTO_FRAG */
 	int ret;
 
 	totlen = len + sizeof(hdr);
@@ -544,10 +625,13 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 	/* packets are fragmented if mtu has a valid value (at least an
 	   IP header + UDP header fit in it) and if the total length is greater
 	   then the mtu */
+#ifndef RAW_IPHDR_INC_AUTO_FRAG
 	if (likely(totlen <= mtu || mtu <= sizeof(hdr))) {
+#endif /* RAW_IPHDR_INC_AUTO_FRAG */
 		iov[1].iov_base=buf;
 		iov[1].iov_len=len;
 		ret=sendmsg(rsock, &snd_msg, 0);
+#ifndef RAW_IPHDR_INC_AUTO_FRAG
 	} else {
 		ip_payload = len + sizeof(hdr.udp);
 		/* a fragment offset must be a multiple of 8 => its size must
@@ -570,8 +654,8 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		/* ip_frag_size >= sizeof(hdr.udp) because we are here only
 		   if mtu >= sizeof(hdr.ip) + sizeof(hdr.udp) */
 		iov[1].iov_len=ip_frag_size - sizeof(hdr.udp);
-		hdr.ip.ip_len = htons(ip_frag_size);
-		hdr.ip.ip_off = htons(0x2000); /* set MF */
+		hdr.ip.ip_len = RAW_IPHDR_IP_LEN(ip_frag_size + sizeof(hdr.ip));
+		hdr.ip.ip_off = RAW_IPHDR_IP_OFF(0x2000); /* set MF */
 		ret=sendmsg(rsock, &snd_msg, 0);
 		if (unlikely(ret < 0))
 			goto end;
@@ -581,11 +665,11 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		/* fragments between the first and the last */
 		while(unlikely(iov[1].iov_base < last_frag_start)) {
 			iov[1].iov_len = ip_frag_size;
-			hdr.ip.ip_len = htons(iov[1].iov_len);
+			hdr.ip.ip_len = RAW_IPHDR_IP_LEN(iov[1].iov_len + sizeof(hdr.ip));
 			/* set MF  */
-			hdr.ip.ip_off = htons( (unsigned short)
+			hdr.ip.ip_off = RAW_IPHDR_IP_OFF( (unsigned short)
 									(((char*)iov[1].iov_base - (char*)buf +
-										sizeof(hdr.udp)) / 8) | 0x2000);
+										sizeof(hdr.udp)) / 8) | 0x2000 );
 			ret=sendmsg(rsock, &snd_msg, 0);
 			if (unlikely(ret < 0))
 				goto end;
@@ -593,16 +677,17 @@ int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
 		}
 		/* last fragment */
 		iov[1].iov_len = buf + len - (char*)iov[1].iov_base;
-		hdr.ip.ip_len = htons(iov[1].iov_len);
+		hdr.ip.ip_len = RAW_IPHDR_IP_LEN(iov[1].iov_len + sizeof(hdr.ip));
 		/* don't set MF (last fragment) */
-		hdr.ip.ip_off = htons( (unsigned short)
-								(((char*)iov[1].iov_base - (char*)buf +
-									sizeof(hdr.udp)) / 8) );
+		hdr.ip.ip_off = RAW_IPHDR_IP_OFF((unsigned short)
+									(((char*)iov[1].iov_base - (char*)buf +
+										sizeof(hdr.udp)) / 8) );
 		ret=sendmsg(rsock, &snd_msg, 0);
 		if (unlikely(ret < 0))
 			goto end;
 	}
 end:
+#endif /* RAW_IPHDR_INC_AUTO_FRAG */
 	return ret;
 }
 

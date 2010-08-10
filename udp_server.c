@@ -602,8 +602,8 @@ raw_again:
 								mtu);
 		if (unlikely(n==-1)){
 			su2ip_addr(&ip, &dst->to);
-			LOG(L_ERR, "ERROR: raw_udp4_send(sock,%p,%u,...,%s:%d,%d):"
-					" %s(%d)\n", buf,len, ip_addr2a(&ip),
+			LOG(L_ERR, "ERROR: raw_iphdr_udp4_send(%d,%p,%u,...,%s:%d,%d):"
+					" %s(%d)\n", raw_udp4_send_sock, buf,len, ip_addr2a(&ip),
 					su_getport(&dst->to), mtu, strerror(errno), errno);
 			if (errno==EINTR) goto raw_again;
 		}
