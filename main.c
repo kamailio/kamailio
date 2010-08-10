@@ -1285,6 +1285,15 @@ int main_loop()
 						" (no fork)\n");
 		}
 
+		/* delay cfg_shmize to the last moment (it must be called _before_
+		   forking). Changes to default cfgs after this point will be
+		   ignored.
+		*/
+		if (cfg_shmize() < 0) {
+			LOG(L_CRIT, "could not initialize shared configuration\n");
+			goto error;
+		}
+	
 		/* Register the children that will keep updating their
 		 * local configuration */
 		cfg_register_child(
@@ -1503,6 +1512,14 @@ int main_loop()
 			 * sending) so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 
+		/* delay cfg_shmize to the last moment (it must be called _before_
+		   forking). Changes to default cfgs after this point will be
+		   ignored (cfg_shmize() will copy the default cfgs into shmem).
+		*/
+		if (cfg_shmize() < 0) {
+			LOG(L_CRIT, "could not initialize shared configuration\n");
+			goto error;
+		}
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
@@ -2325,11 +2342,6 @@ try_select_again:	tval.tv_usec = 0;
 	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
-		goto error;
-	}
-	
-	if (cfg_shmize() < 0) {
-		LOG(L_CRIT, "could not initialize shared configuration\n");
 		goto error;
 	}
 	
