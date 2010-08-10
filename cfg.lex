@@ -215,6 +215,7 @@ UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
 UDP4_RAW		"udp4_raw"
 UDP4_RAW_MTU	"udp4_raw_mtu"
+UDP4_RAW_TTL	"udp4_raw_ttl"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
@@ -611,6 +612,7 @@ SUBST       subst
 									return UDP_MTU_TRY_PROTO; }
 <INITIAL>{UDP4_RAW}	{ count(); yylval.strval=yytext; return UDP4_RAW; }
 <INITIAL>{UDP4_RAW_MTU}	{ count(); yylval.strval=yytext; return UDP4_RAW_MTU; }
+<INITIAL>{UDP4_RAW_TTL}	{ count(); yylval.strval=yytext; return UDP4_RAW_TTL; }
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 

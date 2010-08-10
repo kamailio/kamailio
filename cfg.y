@@ -331,6 +331,7 @@ extern char *finame;
 %token UDP_MTU_TRY_PROTO
 %token UDP4_RAW
 %token UDP4_RAW_MTU
+%token UDP4_RAW_TTL
 %token IF
 %token ELSE
 %token SET_ADV_ADDRESS
@@ -1593,6 +1594,10 @@ assign_stm:
 		IF_RAW_SOCKS(default_core_cfg.udp4_raw_mtu=$3);
 	}
 	| UDP4_RAW_MTU EQUAL error { yyerror("number expected"); }
+	| UDP4_RAW_TTL EQUAL NUMBER {
+		IF_RAW_SOCKS(default_core_cfg.udp4_raw_ttl=$3);
+	}
+	| UDP4_RAW_TTL EQUAL error { yyerror("number expected"); }
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
