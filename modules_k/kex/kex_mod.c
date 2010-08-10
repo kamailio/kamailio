@@ -124,9 +124,6 @@ static int mod_init(void)
  */
 static void destroy(void)
 {
-#ifdef STATISTICS
-	destroy_stats_collector();
-#endif
 	return;
 }
 

@@ -348,12 +348,12 @@ openserSIPStatusCodesTable_create_row( netsnmp_index* hdr)
 
 	if (in_status_code != NULL) 
 	{
-		ctx->startingInStatusCodeValue  = *(long *)in_status_code->u.val;
+		ctx->startingInStatusCodeValue  = get_stat_val(in_status_code);
 	}
 
 	if (out_status_code != NULL) 
 	{
-		ctx->startingOutStatusCodeValue = *(long *)out_status_code->u.val;
+		ctx->startingOutStatusCodeValue = get_stat_val(out_status_code);
 	}
 
 	return ctx;
@@ -796,9 +796,8 @@ int openserSIPStatusCodesTable_get_value(
 			if (the_stat != NULL)  
 			{
 				/* Calculate the Delta */
-				context->openserSIPStatusCodeIns =
-				*(long *)the_stat->u.val - 
-				context->startingInStatusCodeValue;
+				context->openserSIPStatusCodeIns = get_stat_val(the_stat) -
+					context->startingInStatusCodeValue;
 			}
 
 			snmp_set_var_typed_value(var, ASN_COUNTER,
@@ -817,7 +816,7 @@ int openserSIPStatusCodesTable_get_value(
 			{
 				/* Calculate the Delta */
 				context->openserSIPStatusCodeOuts =
-					*(long *)the_stat->u.val - 
+					get_stat_val(the_stat) -
 					context->startingOutStatusCodeValue;
 			}
 			snmp_set_var_typed_value(var, ASN_COUNTER,

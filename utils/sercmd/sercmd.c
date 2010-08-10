@@ -32,6 +32,7 @@
  *  2006-02-14  created by andrei
  *  2009-06-29  command line completion for cfg groups and vars (andrei)
  *  2009-06-30  command line completion for mi cmds (andrei)
+ *  2010-08-08  command line completion for counters/statistic (andrei)
  */
 
 
@@ -54,6 +55,7 @@
 
 #define USE_CFG_VARS /* cfg group and vars completion */
 #define USE_MI  /* mi completion */
+#define USE_COUNTERS /* counters/statistics completion */
 #endif
 
 #include "parse_listen_id.h"
@@ -150,6 +152,23 @@ int mi_which_no;
 str* mi_cmds;
 int mi_cmds_no;
 #endif /* USE_MI */
+
+#ifdef USE_COUNTERS
+struct binrpc_val* cnt_grps_array; /* response array */
+int cnt_grps_no; /* number of response records */
+
+struct cnt_var_grp {
+	struct cnt_var_grp * next;
+	str grp_name;
+	str* var_names; /**< str array (null terminated strings)*/
+	int var_no;
+	struct binrpc_val* cnt_vars_array; /* var_name will point here */
+	int cnt_vars_no; /* cnt_vars_array size (no. of response records) */
+};
+
+struct cnt_var_grp* cnt_grp_lst; /* counters groups list, allong with vars */
+struct cnt_var_grp* crt_cnt_grp;
+#endif /* USE_COUNTERS */
 
 
 
@@ -279,6 +298,10 @@ enum complete_states {
 #ifdef USE_MI
 	COMPLETE_MI,
 #endif /* USE_Mi */
+#ifdef USE_COUNTERS
+	COMPLETE_CNT_GRP,
+	COMPLETE_CNT_VAR,
+#endif /* USE_COUNTERS */
 	COMPLETE_NOTHING
 };
 
@@ -320,6 +343,28 @@ char* complete_params_mi[]={
 	0
 };
 #endif /* USE_MI */
+
+#ifdef USE_COUNTERS
+/* commands for which we complete the first param with a counter group */
+char* complete_param1_counter_grp[] = {
+	"cnt.get",
+	"cnt.get_raw",
+	"cnt.grp_get_all",
+	"cnt.reset",
+	"cnt.var_list",
+	"cnt.help",
+	0
+};
+
+/* commands for which we completed the 2nd param with a counter name */
+char* complete_param2_counter_name[] = {
+	"cnt.get",
+	"cnt.get_raw",
+	"cnt.reset",
+	"cnt.help",
+	0
+};
+#endif /* USE_COUNTERS */
 
 #endif /* USE_READLINE */
 
@@ -1196,7 +1241,7 @@ error:
 
 
 
-#if defined(USE_CFG_VARS) || defined (USE_MI)
+#if defined(USE_CFG_VARS) || defined (USE_MI) || defined (USE_COUNTERS)
 /** check if cmd is a rpc command.
  * Quick check (using the internal rpc_array) if cmd is a valid rpc command.
  * @param cmd - null terminated ascii string
@@ -1491,6 +1536,158 @@ void free_mi_cmds()
 
 
 
+#ifdef USE_COUNTERS
+/* retrieve the counters names and group list */
+static int get_counters_list(int s)
+{
+	struct binrpc_cmd cmd;
+	int cookie;
+	unsigned char reply_buf[MAX_REPLY_SIZE];
+	unsigned char* msg_body;
+	struct binrpc_parse_ctx in_pkt;
+	struct cnt_var_grp* grp;
+	struct cnt_var_grp* last_grp;
+	str grp_name;
+	str var_name;
+	int r;
+	int ret;
+	
+	cmd.method="cnt.grps_list";
+	cmd.argc=0;
+	if (!is_rpc_cmd(cmd.method)) goto error;
+	
+	cookie=gen_cookie();
+	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
+		if (ret==-1) goto error_send;
+		else goto binrpc_err;
+	}
+	/* read reply */
+	memset(&in_pkt, 0, sizeof(in_pkt));
+	if ((ret=get_reply(s, reply_buf, MAX_REPLY_SIZE, cookie, &in_pkt,
+					&msg_body))<0){
+		goto error;
+	}
+	switch(in_pkt.type){
+		case BINRPC_FAULT:
+			if (print_fault(&in_pkt, msg_body, in_pkt.tlen)<0){
+				goto error;
+			}
+			break;
+		case BINRPC_REPL:
+			cnt_grps_no=20; /* default counter list */
+			if ((cnt_grps_array=parse_reply_body(&cnt_grps_no, &in_pkt,
+												msg_body, in_pkt.tlen))==0)
+				goto error;
+			break;
+		default:
+			fprintf(stderr, "ERROR: not a reply\n");
+			goto error;
+	}
+	/* get the config groups */
+	last_grp=0;
+	for (r=0; r<cnt_grps_no; r++){
+		grp_name.s=0; grp_name.len=0;
+		if (cnt_grps_array[r].type!=BINRPC_T_STR)
+			continue;
+		grp_name=cnt_grps_array[r].u.strval;
+		/* check for duplicates */
+		for (grp=cnt_grp_lst; grp; grp=grp->next){
+			if (grp->grp_name.len==grp_name.len &&
+					memcmp(grp->grp_name.s, grp_name.s, grp_name.len)==0){
+				break; /* found */
+			}
+		}
+		if (grp==0){
+			/* not found => create a new one  */
+			grp=malloc(sizeof(*grp));
+			if (grp==0) goto error_mem;
+			memset(grp, 0, sizeof(*grp));
+			grp->grp_name=grp_name;
+			if (last_grp){
+				last_grp->next=grp;
+				last_grp=grp;
+			}else{
+				cnt_grp_lst=grp;
+				last_grp=cnt_grp_lst;
+			}
+		}
+	}
+	/* gets vars per group */
+	for (grp=cnt_grp_lst; grp; grp=grp->next){
+		cmd.method="cnt.var_list";
+		cmd.argv[0].type=BINRPC_T_STR;
+		cmd.argv[0].u.strval=grp->grp_name;
+		cmd.argc=1;
+		if (!is_rpc_cmd(cmd.method)) goto error;
+		cookie=gen_cookie();
+		if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
+			if (ret==-1) goto error_send;
+			else goto binrpc_err;
+		}
+		/* read reply */
+		memset(&in_pkt, 0, sizeof(in_pkt));
+		if ((ret=get_reply(s, reply_buf, MAX_REPLY_SIZE, cookie, &in_pkt,
+						&msg_body))<0){
+			goto error;
+		}
+		switch(in_pkt.type){
+			case BINRPC_FAULT:
+				if (print_fault(&in_pkt, msg_body, in_pkt.tlen)<0){
+					goto error;
+				}
+				break;
+			case BINRPC_REPL:
+				grp->cnt_vars_no=100; /* default counter list */
+				if ((grp->cnt_vars_array=parse_reply_body(&grp->cnt_vars_no,
+												&in_pkt, msg_body,
+												in_pkt.tlen))==0)
+				goto error;
+				break;
+			default:
+				fprintf(stderr, "ERROR: not a reply\n");
+				goto error;
+		}
+		grp->var_no = 0;
+		grp->var_names=malloc(sizeof(str)*grp->cnt_vars_no);
+		if (grp->var_names==0) goto error_mem;
+		memset(grp->var_names, 0, sizeof(str)*grp->var_no);
+		for (r=0; r<grp->cnt_vars_no; r++) {
+			if (grp->cnt_vars_array[r].type!=BINRPC_T_STR)
+				continue;
+			var_name=grp->cnt_vars_array[r].u.strval;
+			grp->var_names[grp->var_no] = var_name;
+			grp->var_no++;
+		}
+	}
+	return 0;
+binrpc_err:
+error_send:
+error:
+error_mem:
+	return -1;
+}
+
+
+
+void free_cnt_grp_lst()
+{
+	struct cnt_var_grp* grp;
+	struct cnt_var_grp* last;
+	
+	grp=cnt_grp_lst;
+	while(grp){
+		last=grp;
+		grp=grp->next;
+		if (last->cnt_vars_array)
+			free_rpc_array(last->cnt_vars_array, last->cnt_vars_no);
+		free(last);
+	}
+	cnt_grp_lst=0;
+}
+#endif /* USE_COUNTERS */
+
+
+
 
 static void print_formatting(char* prefix, char* format, char* suffix)
 {
@@ -1611,6 +1808,9 @@ static char* sercmd_generator(const char* text, int state)
 #ifdef USE_CFG_VARS
 	static struct cfg_var_grp* grp;
 #endif
+#ifdef USE_COUNTERS
+	static struct cnt_var_grp* cnt_grp;
+#endif
 	switch(attempted_completion_state){
 		case COMPLETE_INIT:
 		case COMPLETE_NOTHING:
@@ -1722,6 +1922,52 @@ static char* sercmd_generator(const char* text, int state)
 			}
 			break;
 #endif /* USE_MI */
+#ifdef USE_COUNTERS
+		case COMPLETE_CNT_GRP:
+			if (state==0){
+				/* init */
+				len=strlen(text);
+				cnt_grp=cnt_grp_lst;
+			}else{
+				cnt_grp=cnt_grp->next;
+			}
+			for(;cnt_grp; cnt_grp=cnt_grp->next){
+				if (len<=cnt_grp->grp_name.len &&
+						memcmp(text, cnt_grp->grp_name.s, len)==0) {
+					/* zero-term copy of the cnt_grp name */
+					name=malloc(cnt_grp->grp_name.len+1);
+					if (name){
+						memcpy(name, cnt_grp->grp_name.s,
+									cnt_grp->grp_name.len);
+						name[cnt_grp->grp_name.len]=0;
+					}
+					return name;
+				}
+			}
+			break;
+		case COMPLETE_CNT_VAR:
+			if (state==0){
+				/* init */
+				len=strlen(text);
+				idx=0;
+			}
+			while(idx < crt_cnt_grp->var_no){
+				if (len<=crt_cnt_grp->var_names[idx].len &&
+						memcmp(text, crt_cnt_grp->var_names[idx].s, len)==0) {
+					/* zero-term copy of the var name */
+					name=malloc(crt_cnt_grp->var_names[idx].len+1);
+					if (name){
+						memcpy(name, crt_cnt_grp->var_names[idx].s,
+									 crt_cnt_grp->var_names[idx].len);
+						name[crt_cnt_grp->var_names[idx].len]=0;
+					}
+					idx++;
+					return name;
+				}
+				idx++;
+			}
+			break;
+#endif /* USE_COUNTERS */
 	}
 	/* no matches */
 	return 0;
@@ -1739,6 +1985,11 @@ char** sercmd_completion(const char* text, int start, int end)
 	static int grp_start;
 	int grp_len;
 #endif /* USE_CFG_VARS */
+#ifdef USE_COUNTERS
+	struct cnt_var_grp* cnt_grp;
+	static int cnt_grp_start;
+	int cnt_grp_len;
+#endif /* USE_COUNTERS */
 	
 	crt_param_no=0;
 	/* skip over whitespace at the beginning */
@@ -1751,6 +2002,9 @@ char** sercmd_completion(const char* text, int start, int end)
 #ifdef USE_CFG_VARS
 		grp_start=0;
 #endif /* USE_CFG_VARS */
+#ifdef USE_COUNTERS
+		cnt_grp_start=0;
+#endif /* USE_COUNTERS */
 	}else{ /* or if this is a command for which we complete the parameters */
 		/* find first whitespace after command name*/
 		for(; (j<start) && (rl_line_buffer[j]!=' ') &&
@@ -1802,40 +2056,77 @@ char** sercmd_completion(const char* text, int start, int end)
 				}
 			}
 #endif /* USE_MI */
-#ifdef USE_CFG_VARS
-		}else if (crt_param_no==2){
-			if (attempted_completion_state!=COMPLETE_CFG_GRP){
-				for(i=0; complete_params_cfg_var[i]; i++){
-					if ((cmd_len==strlen(complete_params_cfg_var[i])) &&
+#ifdef USE_COUNTERS
+			/* try  complete_param*_cfg_grp */
+			for(i=0; complete_param1_counter_grp[i]; i++){
+				if ((cmd_len==strlen(complete_param1_counter_grp[i])) &&
 						(strncmp(&rl_line_buffer[cmd_start],
-								 complete_params_cfg_var[i],
+								 complete_param1_counter_grp[i],
 								 cmd_len)==0)){
-						attempted_completion_state=COMPLETE_CFG_GRP;
-						/* find grp_start */
-						for(j=cmd_end; (j<start) && ((rl_line_buffer[j]==' ') 
-									|| (rl_line_buffer[j]=='\t')); j++);
-						grp_start=j;
-						break;
-					}
+						attempted_completion_state=COMPLETE_CNT_GRP;
+						cnt_grp_start=start;
+						goto end;
 				}
 			}
-			if (attempted_completion_state==COMPLETE_CFG_GRP){
-				/* get the group name from the grp_param */
-				/* find first whitespace for the group name*/
-				for(j=grp_start; (j<start) && (rl_line_buffer[j]!=' ') &&
-						(rl_line_buffer[j]!='\t'); j++);
-				grp_len=j-grp_start;
-				for(grp=cfg_grp_lst; grp; grp=grp->next){
-					if (grp_len==grp->grp_name.len &&
-							memcmp(&rl_line_buffer[grp_start], grp->grp_name.s,
-										grp_len)==0) {
-						attempted_completion_state=COMPLETE_CFG_VAR;
-						crt_cfg_grp=grp;
-						goto end;
+#endif /* USE_COUNTERS */
+		}else if (crt_param_no==2){
+#ifdef USE_CFG_VARS
+			/* see if we complete cfg. var names for this command */
+			for(i=0; complete_params_cfg_var[i]; i++){
+				if ((cmd_len==strlen(complete_params_cfg_var[i])) &&
+					(strncmp(&rl_line_buffer[cmd_start],
+								 complete_params_cfg_var[i],
+								 cmd_len)==0)){
+					/* get the group name: */
+					/* find grp_start */
+					for(j=cmd_end; (j<start) && ((rl_line_buffer[j]==' ') ||
+							(rl_line_buffer[j]=='\t')); j++);
+					grp_start=j;
+					/* find group end / grp_len*/
+					for(j=grp_start; (j<start) && (rl_line_buffer[j]!=' ') &&
+								(rl_line_buffer[j]!='\t'); j++);
+					grp_len=j-grp_start;
+					for(grp=cfg_grp_lst; grp; grp=grp->next){
+						if (grp_len==grp->grp_name.len &&
+								memcmp(&rl_line_buffer[grp_start],
+										grp->grp_name.s, grp_len)==0) {
+							attempted_completion_state=COMPLETE_CFG_VAR;
+							crt_cfg_grp=grp;
+							goto end;
+						}
 					}
 				}
 			}
 #endif /* USE_CFG_VARS */
+#ifdef USE_COUNTERS
+			/* see if we complete counter names for this command */
+			for(i=0; complete_param2_counter_name[i]; i++){
+				if ((cmd_len==strlen(complete_param2_counter_name[i])) &&
+						(strncmp(&rl_line_buffer[cmd_start],
+								complete_param2_counter_name[i],
+								cmd_len)==0)){
+					/* get the group name: */
+					/* find grp_start */
+					for(j=cmd_end; (j<start) && ((rl_line_buffer[j]==' ') ||
+									(rl_line_buffer[j]=='\t')); j++);
+					cnt_grp_start=j;
+					/* find group end / cnt_grp_len*/
+					for(j=cnt_grp_start; (j<start) &&
+							(rl_line_buffer[j]!=' ') &&
+							(rl_line_buffer[j]!='\t'); j++);
+					cnt_grp_len=j-cnt_grp_start;
+					for(cnt_grp=cnt_grp_lst; cnt_grp; cnt_grp=cnt_grp->next){
+						if (cnt_grp_len==cnt_grp->grp_name.len &&
+								memcmp(&rl_line_buffer[cnt_grp_start],
+										cnt_grp->grp_name.s, cnt_grp_len)==0) {
+							attempted_completion_state=COMPLETE_CNT_VAR;
+							crt_cnt_grp=cnt_grp;
+							goto end;
+						}
+					}
+				}
+			}
+#endif /* COUNTERS */
 		}
 		attempted_completion_state=COMPLETE_NOTHING;
 	}
@@ -2005,6 +2296,9 @@ int main(int argc, char** argv)
 	#ifdef USE_MI
 		get_mi_list(s);
 	#endif /* USE_MI */
+	#ifdef USE_COUNTERS
+		get_counters_list(s);
+	#endif /* USE_COUNTERS */
 	}
 	/* banners */
 	printf("%s %s\n", NAME, VERSION);
@@ -2073,6 +2367,15 @@ end:
 		mi_which_no=0;
 	}
 #endif /* USE_MI */
+#ifdef USE_COUNTERS
+	if (cnt_grp_lst)
+		free_cnt_grp_lst();
+	if (cnt_grps_array){
+		free_rpc_array(cnt_grps_array, cnt_grps_no);
+		cnt_grps_array=0;
+		cnt_grps_no=0;
+	}
+#endif /* USE_COUNTERS */
 	cleanup();
 	exit(0);
 error:
@@ -2100,6 +2403,15 @@ error:
 		mi_which_no=0;
 	}
 #endif /* USE_MI */
+#ifdef USE_COUNTERS
+	if (cnt_grp_lst)
+		free_cnt_grp_lst();
+	if (cnt_grps_array){
+		free_rpc_array(cnt_grps_array, cnt_grps_no);
+		cnt_grps_array=0;
+		cnt_grps_no=0;
+	}
+#endif /* USE_COUNTERS */
 	cleanup();
 	exit(-1);
 }

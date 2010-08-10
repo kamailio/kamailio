@@ -6,6 +6,8 @@ $Id$
 sip-router 3.1 chages
 
 core:
+  - statistics / counters support for tcp and sctp (enable by default)
+  - statistics / counters api
   - networks addresses support in ip comparisons (src_ip, dst_ip, to_ip)
     with strings or rvalue expressions.
     E.g.: $ip=10.0.0.0;  if (src_ip == $ip +"/8") ....
@@ -35,6 +37,11 @@ new config variables:
 		3 - prefer records with longer lifetime
 
 modules:
+   - counters: functions and RPCs for manipulating counters (statistics):
+           modparam("counters", "script_counter", name)
+           cnt_inc(name)
+           cnt_add(name, val)
+           cnt_reset(name)
    - blst: functions for ignoring blacklist events per message:
            blst_set_ignore(mask):  set the events in mask in the per
             per message blacklist ignore mask for a request

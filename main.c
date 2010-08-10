@@ -176,6 +176,7 @@
 #include "rand/fastrand.h" /* seed */
 
 #include "stats.h"
+#include "counters.h"
 #include "cfg/cfg.h"
 #include "cfg/cfg_struct.h"
 #include "cfg_core.h"
@@ -551,6 +552,7 @@ void cleanup(show_status)
 	destroy_nonsip_hooks();
 	destroy_routes();
 	destroy_atomic_ops();
+	destroy_counters();
 	memlog=cfg_get(core, core_cfg, memlog);
 #ifdef PKG_MALLOC
 	if (show_status && memlog <= cfg_get(core, core_cfg, debug)){
@@ -1269,6 +1271,7 @@ int main_loop()
 						" exiting\n");
 			goto error;
 		}
+		if (counters_prefork_init(get_max_procs()) == -1) goto error;
 
 #ifdef USE_SLOW_TIMER
 		/* we need another process to act as the "slow" timer*/
@@ -1437,6 +1440,7 @@ int main_loop()
 					" exiting\n");
 			goto error;
 		}
+		if (counters_prefork_init(get_max_procs()) == -1) goto error;
 
 
 		/* udp processes */
@@ -1675,7 +1679,9 @@ int main(int argc, char** argv)
 		"s:"
 #endif
 	;
-	
+	/* init counters / stats */
+	if (init_counters() == -1)
+		goto error;
 #ifdef USE_TCP
 	init_tcp_options(); /* set the defaults before the config */
 #endif
@@ -2195,7 +2201,7 @@ try_again:
 		goto error;
 	}
 #ifdef USE_DST_BLACKLIST_STATS
-	/* preinitializing before the nubmer of processes is determined */
+	/* preinitializing before the number of processes is determined */
 	if (init_dst_blacklist_stats(1)<0){
 		LOG(L_CRIT, "could not initialize the dst blacklist measurement\n");
 		goto error;
