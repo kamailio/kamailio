@@ -273,6 +273,10 @@ static int cnt_reset_f(struct sip_msg* msg, char* handle, char* bar)
 
 
 
+static void cnt_grp_get_all(rpc_t* rpc, void* c, char* group);
+
+
+
 static void cnt_get_rpc(rpc_t* rpc, void* c)
 {
 	char* group;
@@ -280,10 +284,11 @@ static void cnt_get_rpc(rpc_t* rpc, void* c)
 	counter_val_t v;
 	counter_handle_t h;
 	
-	if (rpc->scan(c, "ss", &group, &name) < 2) {
-		/* rpc->fault(c, 400, "group and counter name required"); */
+	if (rpc->scan(c, "s", &group) < 1)
 		return;
-	}
+	if (rpc->scan(c, "*s", &name) < 1)
+		return cnt_grp_get_all(rpc, c, group);
+	/* group & name read */
 	if (counter_lookup(&h, group, name) < 0) {
 		rpc->fault(c, 400, "non-existent counter %s.%s\n", group, name);
 		return;
@@ -400,20 +405,28 @@ static void cnt_var_list_rpc(rpc_t* rpc, void* c)
 
 
 
-static void cnt_grp_get_all_rpc(rpc_t* rpc, void* c)
+static void cnt_grp_get_all(rpc_t* rpc, void* c, char* group)
 {
 	void* s;
-	char* group;
 	struct rpc_list_params packed_params;
+	
+	if (rpc->add(c, "{", &s) < 0) return;
+	packed_params.rpc = rpc;
+	packed_params.ctx = s;
+	counter_iterate_grp_vars(group, rpc_print_name_val, &packed_params);
+}
+
+
+
+static void cnt_grp_get_all_rpc(rpc_t* rpc, void* c)
+{
+	char* group;
 	
 	if (rpc->scan(c, "s", &group) < 1) {
 		/* rpc->fault(c, 400, "group name required"); */
 		return;
 	}
-	if (rpc->add(c, "{", &s) < 0) return;
-	packed_params.rpc = rpc;
-	packed_params.ctx = s;
-	counter_iterate_grp_vars(group, rpc_print_name_val, &packed_params);
+	return cnt_grp_get_all(rpc, c, group);
 }
 
 
