@@ -103,6 +103,7 @@ struct cfg_group_core {
 	int udp_mtu_try_proto; /*!< if packet> udp_mtu, try proto (e.g. TCP) */
 	int udp4_raw; /* use raw sockets for sending on udp ipv 4 */
 	int udp4_raw_mtu; /* mtu used when using udp raw socket */
+	int udp4_raw_ttl; /* ttl used when using udp raw sockets */
 	int force_rport; /*!< if set rport will always be forced*/
 	int memlog; /*!< log level for memory status/summary info */
 	int mem_summary; /*!< display memory status/summary info on exit */

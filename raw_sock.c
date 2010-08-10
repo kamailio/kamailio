@@ -56,6 +56,8 @@
 #include <netinet/udp.h>
 
 #include "raw_sock.h"
+#include "cfg/cfg.h"
+#include "cfg_core.h"
 
 
 /** create and return a raw socket.
@@ -79,11 +81,8 @@ int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl)
 	char* ifname;
 
 	sock = socket(PF_INET, SOCK_RAW, proto);
-	if (sock==-1){
-		ERR("raw_socket: socket() failed: %s [%d]\n",
-				strerror(errno), errno);
+	if (sock==-1)
 		goto error;
-	}
 	/* set socket options */
 	if (iphdr_incl) {
 		t=1;
@@ -426,7 +425,7 @@ inline static int mk_ip_hdr(struct ip* iph, struct in_addr* from,
 	iph->ip_len = htons(payload_len);
 	iph->ip_id = 0;
 	iph->ip_off = 0; /* frag.: first 3 bits=flags=0, last 13 bits=offset */
-	iph->ip_ttl = 63; /* FIXME: use some configured value */
+	iph->ip_ttl = cfg_get(core, core_cfg, udp4_raw_ttl);
 	iph->ip_p = proto;
 	iph->ip_sum = 0;
 	iph->ip_src = *from;

@@ -188,6 +188,7 @@
 #include "basex.h" /* init */
 #include "pvapi_init.h" /* init */
 #include "pv_core.h" /* register core pvars */
+#include "sock_ut.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -1266,6 +1267,13 @@ int main_loop()
 				default_core_cfg.udp4_raw = 1; /* enabled */
 				DBG("raw socket possible => turning it on\n");
 			}
+			if (default_core_cfg.udp4_raw_ttl < 0) {
+				/* auto-detect */
+				default_core_cfg.udp4_raw_ttl = sock_get_ttl(sendipv4->socket);
+				if (default_core_cfg.udp4_raw_ttl < 0)
+					/* error, use some default value */
+					default_core_cfg.udp4_raw_ttl = 63;
+			}
 		}
 #else
 		default_core.cfg.udp4_raw = 0;
@@ -1416,6 +1424,14 @@ int main_loop()
 					/* auto-detect => use it */
 					default_core_cfg.udp4_raw = 1; /* enabled */
 					DBG("raw socket possible => turning it on\n");
+				}
+				if (default_core_cfg.udp4_raw_ttl < 0) {
+					/* auto-detect */
+					default_core_cfg.udp4_raw_ttl =
+						sock_get_ttl(sendipv4->socket);
+					if (default_core_cfg.udp4_raw_ttl < 0)
+						/* error, use some default value */
+						default_core_cfg.udp4_raw_ttl = 63;
 				}
 			}
 		}

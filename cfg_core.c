@@ -56,6 +56,8 @@
 #include "pt.h"
 #endif
 #include "msg_translator.h" /* fix_global_req_flags() */
+#include "globals.h"
+#include "sock_ut.h"
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
@@ -113,6 +115,7 @@ struct cfg_group_core default_core_cfg = {
 	0, /*!< udp_mtu_try_proto -> default disabled */
 	0, /**< udp4_raw (disabled by default) */
 	1500, /**< udp4_raw_mtu (1500 by default) */
+	-1,  /**< udp4_raw_ttl (auto detect by default) */
 	0,  /*!< force_rport */
 	L_DBG, /*!< memlog */
 	1 /*!< mem_summary -flags: 0 off, 1 shm/pkg_status, 2 shm/pkg_sums */
@@ -149,6 +152,24 @@ static int check_raw_sock_support(void* cfg_h, str* gname, str* name,
 	}
 	return 0;
 #endif /* USE_RAW_SOCKS */
+}
+
+
+
+static int  udp4_raw_ttl_fixup(void* cfg_h, str* gname, str* name, void** val)
+{
+	int v;
+	v = (int)(long)(*val);
+	if (v < 0) {
+		if (sendipv4)
+			v = sock_get_ttl(sendipv4->socket);
+	}
+	if (v < 0) {
+		/* some error => use a reasonable default */
+		v = 63;
+	}
+	*val = (void*)(long)v;
+	return 0;
 }
 
 
@@ -264,6 +285,9 @@ cfg_def_t core_cfg_def[] = {
 		"set the MTU used when using raw sockets for udp sending."
 		" This  value will be used when deciding whether or not to fragment"
 		" the packets."},
+	{"udp4_raw_ttl", CFG_VAR_INT | CFG_ATOMIC, -1, 255, udp4_raw_ttl_fixup, 0,
+		"set the IP TTL used when using raw sockets for udp sending."
+		" -1 will use the same value as for normal udp sockets."},
 	{"force_rport",     CFG_VAR_INT, 0, 1,  0, fix_global_req_flags,
 		"force rport for all the received messages" },
 	{"memlog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
