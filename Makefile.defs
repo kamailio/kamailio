@@ -228,45 +228,54 @@ share_dir = share/$(MAIN_NAME)/
 # lib/$(MAIN_NAME)/modules , lib/$(MAIN_NAME)/modules-s, lib/$(MAIN_NAME)/modules-k
 modules_dir = lib/$(MAIN_NAME)/
 lib_dir = lib/$(MAIN_NAME)/
+
+doc_dir = doc/$(MAIN_NAME)/
+man_dir = man/
+data_dir = $(MAIN_NAME)/
+
 ifeq ($(OS), linux)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = share/man/
 	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
-else
+endif
+
 ifeq ($(OS), freebsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
-else
+endif
+
 ifeq ($(OS), openbsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
-else
+endif
+
 ifeq ($(OS), netbsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/pkg
-else
+endif
+
+ifeq ($(OS), dragonfly)
+	doc_dir = share/doc/$(MAIN_NAME)/
+	man_dir = man/
+	data_dir = share/$(MAIN_NAME)/
+	LOCALBASE ?= /usr/pkg
+endif
+
 ifeq ($(OS), darwin)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
-else
-	doc_dir = doc/$(MAIN_NAME)/
-	man_dir = man/
-	data_dir = $(MAIN_NAME)/
-	LOCALBASE ?= /usr/local
 endif
-endif
-endif
-endif
-endif
+
+LOCALBASE ?= /usr/local
 
 # Doxygen directory
 doxygen_dir=doc/doxygen
@@ -617,10 +626,18 @@ $(info target architecture <$(ARCH)>, host architecture <$(HOST_ARCH)>)
 #		adds support for Application Server interface
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
+# Tell it that dragonflybsd is equivalent to compiling for freebsd.
+# This will cause __OS_freebsd to be defined below.
+ifeq ($(OS), dragonfly)
+	EQUIV_OS := freebsd
+else
+	EQUIV_OS := $(OS)
+endif
+
 C_DEFS= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
-	 -D__CPU_$(ARCH) -D__OS_$(OS) \
+	 -D__CPU_$(ARCH) -D__OS_$(EQUIV_OS) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg_target)"'\
 	 -DPKG_MALLOC \
@@ -1782,6 +1799,50 @@ $(info "sctp development files not installed -- sctp disabled")
 		ifeq ($(shell [ $(OSREL_N) -lt 7000 ] && echo sctp), sctp)
 $(info "old freebsd version (>= 7.0 needed) -- sctp disabled")
 			override SCTP := 
+		endif
+		
+		ifeq ($(SCTP),1)
+			C_DEFS+=-DUSE_SCTP
+			LIBS+=  # no extra libs needed on freebsd
+		endif
+	endif # SCTP
+endif
+
+ifeq ($(OS), dragonfly)
+	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
+		-DHAVE_SCHED_YIELD -DHAVE_MSGHDR_MSG_CONTROL \
+		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
+		-DHAVE_NETINET_IN_SYSTM
+	ifneq ($(found_lock_method), yes)
+		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		found_lock_method=yes
+		LIBS+= -pthread   #dlopen is in libc
+	else
+		LIBS=   #dlopen is in libc
+	endif
+	# check for ver >= 4.1
+	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
+		ifeq ($(NO_KQUEUE),)
+			C_DEFS+=-DHAVE_KQUEUE
+		endif
+	endif
+	ifeq ($(NO_SELECT),)
+		C_DEFS+=-DHAVE_SELECT
+	endif
+	YACC=yacc
+	# sctp support
+	ifeq ($(SCTP),1)
+		# test to see if the devfiles and lib are installed
+		sctp_dev_locations := /usr/include/netinet/sctp.h \
+								$(LOCALBASE)/include/netinet/sctp.h
+		sctp_dev_path := $(wildcard $(sctp_dev_locations))
+		ifeq ($(sctp_dev_path),)
+$(info "sctp development files not installed -- sctp disabled")
+			override SCTP :=
+		endif
+		ifeq ($(shell [ $(OSREL_N) -lt 7000 ] && echo sctp), sctp)
+$(info "old freebsd version (>= 7.0 needed) -- sctp disabled")
+			override SCTP :=
 		endif
 		
 		ifeq ($(SCTP),1)
