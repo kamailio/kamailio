@@ -26,12 +26,14 @@
  *  2009-04-28  added string and interger versions for the EQ and DIFF
  *              operators (andrei)
  *  2009-05-05  casts operator for int & string (andrei)
+ *  2010-03-16  space for an int2str result inside rval_cache (andrei)
  */
 
 #ifndef _rvalue_h_
 #define _rvalue_h_
 
 #include "str.h"
+#include "ut.h"
 #include "usr_avp.h"
 #include "select.h"
 #include "pvar.h"
@@ -138,7 +140,8 @@ enum rval_cache_type{
 	RV_CACHE_EMPTY,
 	RV_CACHE_PVAR,
 	RV_CACHE_AVP,
-	RV_CACHE_SELECT
+	RV_CACHE_SELECT,
+	RV_CACHE_INT2STR
 };
 
 /** value cache for a rvalue struct.
@@ -152,6 +155,7 @@ struct rval_cache{
 		int_str avp_val; /**< avp value */
 		pv_value_t pval; /**< pvar value */
 	}c;
+	char i2s[INT2STR_MAX_LEN]; /**< space for converting an int to string*/
 };
 
 

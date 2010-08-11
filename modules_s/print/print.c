@@ -46,9 +46,13 @@ MODULE_VERSION
 
 static int print_fixup_f_1(void **param, int param_no);
 static int print_fixup_f_2(void **param, int param_no);
-static int print_f_0(struct sip_msg*, char*,char*);
-static int print_f_1(struct sip_msg*, char*,char*);
-static int print_f_2(struct sip_msg*, char*,char*);
+static int print_f_0(struct sip_msg*, char*, char*);
+static int print_f_1(struct sip_msg*, char*, char*);
+static int print_f_2(struct sip_msg*, char*, char*);
+static int print_f1(struct sip_msg*, char*, char*);
+static int print_f2(struct sip_msg*, char*, char*);
+static int print_f3(struct sip_msg*, char*, char*, char*);
+static int print_f_var(struct sip_msg*, int argc, action_u_t argv[]);
 static int mod_init(void);
 
 /* the parameters are not used, they are only meant as an example*/
@@ -60,6 +64,10 @@ static cmd_export_t cmds[]={
 	{"print", print_f_0, 0, 0, REQUEST_ROUTE},   // overload test
 	{"print", print_f_1, 1, print_fixup_f_1, REQUEST_ROUTE},
 	{"print", print_f_2, 2, print_fixup_f_2, REQUEST_ROUTE},
+	{"print1", print_f1, 1, 0, REQUEST_ROUTE},
+	{"print2", print_f2, 2, fixup_var_str_12, REQUEST_ROUTE},
+	{"print3", (cmd_function)print_f3, 3, 0, REQUEST_ROUTE},
+	{"printv", (cmd_function)print_f_var, VAR_PARAM_NO, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -90,6 +98,7 @@ static int mod_init(void)
 	DBG("print: string_param = '%s'\n", string_param);
 	DBG("print: str_param = '%.*s'\n", str_param.len, str_param.s);
 	DBG("print: int_param = %d\n", int_param);
+	WARN("this is an example module, it has no practical use\n");
 	return 0;
 }
 
@@ -131,4 +140,46 @@ static int print_fixup_f_1(void **param, int param_no) {
 static int print_fixup_f_2(void **param, int param_no) {
 	DBG("print: print_fixup_f_2('%s')\n", (char*)*param);
 	return print_fixup_f(param, param_no);
+}
+
+
+
+/* 1 parameter, no fixup version */
+static int print_f1(struct sip_msg* msg, char* s1, char* not_used)
+{
+	printf("%s\n", s1);
+	return 1;
+}
+
+
+/* 2 parameters, fparam fixup version */
+static int print_f2(struct sip_msg* msg, char* s1, char* s2)
+{
+	str a, b;
+	if (get_str_fparam(&a, msg, (fparam_t*)s1) !=0 ||
+		 get_str_fparam(&b, msg, (fparam_t*)s2) !=0) {
+		BUG("get_str_fparam failed\n");
+		return -1;
+	}
+	printf("%.*s%.*s\n", a.len, a.s, b.len, b.s);
+	return 1;
+}
+
+
+/* 3 parameters, no fixup version */
+static int print_f3(struct sip_msg* msg, char* s1, char* s2, char* s3)
+{
+	printf("%s%s%s\n", s1, s2, s3);
+	return 1;
+}
+
+
+/* variable number of parameters, no fixup version */
+static int print_f_var(struct sip_msg* msg, int argc, action_u_t argv[])
+{
+	int i;
+	for (i = 0; i < argc; i++)
+		printf("%s", argv[i].u.string);
+	printf("\n");
+	return 1;
 }

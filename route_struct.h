@@ -85,7 +85,12 @@ enum action_type{
 		SET_USERPHONE_T,
 		IF_T, SWITCH_T /* only until fixup*/,
 		BLOCK_T, EVAL_T, SWITCH_JT_T, SWITCH_COND_T, MATCH_COND_T, WHILE_T,
-		MODULE_T, MODULE3_T, MODULE4_T, MODULE5_T, MODULE6_T, MODULEX_T,
+		/* module function calls with string only parameters */
+		MODULE0_T, MODULE1_T, MODULE2_T, MODULE3_T, MODULE4_T, MODULE5_T,
+		MODULE6_T, MODULEX_T,
+		/* module function calls, that have some RVE parameters */
+		MODULE1_RVE_T, MODULE2_RVE_T, MODULE3_RVE_T,
+		MODULE4_RVE_T, MODULE5_RVE_T, MODULE6_RVE_T, MODULEX_RVE_T,
 		SETFLAG_T, RESETFLAG_T, ISFLAGSET_T ,
 		AVPFLAG_OPER_T,
 		LEN_GT_T, PREFIX_T, STRIP_T,STRIP_TAIL_T,
@@ -122,7 +127,10 @@ enum _operand_subtype{
 		LVAL_ST,  RVE_ST,
 		RETCODE_ST, CASE_ST,
 		BLOCK_ST, JUMPTABLE_ST, CONDTABLE_ST, MATCH_CONDTABLE_ST,
-		SELECT_UNFIXED_ST
+		SELECT_UNFIXED_ST,
+		STRING_RVE_ST /* RVE converted to a string (fparam hack) */,
+		RVE_FREE_FIXUP_ST /* (str)RVE fixed up by a reversable fixup */,
+		FPARAM_DYN_ST /* temporary only (fparam hack) */
 };
 
 typedef enum _expr_l_type expr_l_type;

@@ -243,6 +243,8 @@ static struct case_stms* mk_case_stm(struct rval_expr* ct, int is_re,
 									struct action* a, int* err);
 static int case_check_type(struct case_stms* stms);
 static int case_check_default(struct case_stms* stms);
+static int mod_f_params_pre_fixup(struct action* a);
+static void free_mod_func_action(struct action* a);
 
 
 extern int line;
@@ -2232,7 +2234,14 @@ fcmd:
 				case RESETFLAG_T:
 				case ISFLAGSET_T:
 				case IF_T:
-				case MODULE_T:
+				case MODULE0_T:
+				case MODULE1_T:
+				case MODULE2_T:
+				case MODULE3_T:
+				case MODULE4_T:
+				case MODULE5_T:
+				case MODULE6_T:
+				case MODULEX_T:
 				case SET_FWD_NO_CONNECT_T:
 				case SET_RPL_NO_CONNECT_T:
 				case SET_FWD_CLOSE_T:
@@ -2705,7 +2714,7 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 
 
 rve_un_op: NOT	{ $$=RVE_LNOT_OP; }
-		|  MINUS %prec UNARY	{ $$=RVE_UMINUS_OP; } 
+		|  MINUS %prec UNARY	{ $$=RVE_UMINUS_OP; }
 		/* TODO: RVE_BOOL_OP, RVE_NOT_OP? */
 	;
 
@@ -3221,9 +3230,9 @@ cmd:
 	| SET_RPL_CLOSE	{
 		$$=mk_action(SET_RPL_CLOSE_T, 0); set_cfg_pos($$);
 	}
-	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST,
+	| ID {mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST,
 			0); } LPAREN func_params RPAREN	{
-		mod_func_action->val[0].u.data = 
+		mod_func_action->val[0].u.data =
 			find_export_record($1, mod_func_action->val[1].u.number, rt,
 								&u_tmp);
 		if (mod_func_action->val[0].u.data == 0) {
@@ -3233,34 +3242,14 @@ cmd:
 			} else {
 				yyerror("unknown command, missing loadmodule?\n");
 			}
-			pkg_free(mod_func_action);
+			free_mod_func_action(mod_func_action);
 			mod_func_action=0;
 		}else{
-			switch( ((union cmd_export_u*)
-						mod_func_action->val[0].u.data)->c.param_no){
-				case 0:
-				case 1:
-				case 2:
-					/* MODULE_T used for 0-2 params */
-					break;
-				case 3:
-					mod_func_action->type=MODULE3_T;
-					break;
-				case 4:
-					mod_func_action->type=MODULE4_T;
-					break;
-				case 5:
-					mod_func_action->type=MODULE5_T;
-					break;
-				case 6:
-					mod_func_action->type=MODULE6_T;
-					break;
-				case VAR_PARAM_NO:
-					mod_func_action->type=MODULEX_T;
-					break;
-				default:
-					yyerror("too many parameters for function\n");
-					break;
+			if (mod_func_action && mod_f_params_pre_fixup(mod_func_action)<0) {
+				/* error messages are printed inside the function */
+				free_mod_func_action(mod_func_action);
+				mod_func_action = 0;
+				YYERROR;
 			}
 		}
 		$$ = mod_func_action;
@@ -3272,27 +3261,20 @@ func_params:
 	/* empty */
 	| func_params COMMA func_param { }
 	| func_param {}
-	| func_params error { yyerror("call params error\n"); }
 	;
 func_param:
-        intno {
-		if (mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
+	rval_expr {
+		if ($1 && mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
 			mod_func_action->val[mod_func_action->val[1].u.number+2].type =
-				NUMBER_ST;
-			mod_func_action->val[mod_func_action->val[1].u.number+2].u.number =
+				RVE_ST;
+			mod_func_action->val[mod_func_action->val[1].u.number+2].u.data =
 				$1;
 			mod_func_action->val[1].u.number++;
-		} else {
+		} else if ($1) {
 			yyerror("Too many arguments\n");
-		}
-	}
-	| STRING {
-		if (mod_func_action->val[1].u.number < MAX_ACTIONS-2) {
-			mod_func_action->val[mod_func_action->val[1].u.number+2].type = STRING_ST;
-			mod_func_action->val[mod_func_action->val[1].u.number+2].u.string = $1;
-			mod_func_action->val[1].u.number++;
+			YYERROR;
 		} else {
-			yyerror("Too many arguments\n");
+			YYERROR;
 		}
 	}
 	;
@@ -3731,6 +3713,125 @@ static int case_check_default(struct case_stms* stms)
 	for(c=stms; c ; c=c->next)
 		if (c->ct_rve==0) default_no++;
 	return (default_no<=1)?0:-1;
+}
+
+
+
+/** fixes the parameters and the type of a module function call.
+ * It is done here instead of fix action, to have quicker feedback
+ * on error cases (e.g. passing a non constant to a function with a 
+ * declared fixup) 
+ * The rest of the fixup is done inside do_action().
+ * @param a - filled module function call (MODULE*_T) action structure
+ *            complete with parameters, starting at val[2] and parameter
+ *            number at val[1].
+ * @return 0 on success, -1 on error (it will also print the error msg.).
+ *
+ */
+static int mod_f_params_pre_fixup(struct action* a)
+{
+	sr31_cmd_export_t* cmd_exp;
+	action_u_t* params;
+	int param_no;
+	struct rval_expr* rve;
+	struct rvalue* rv;
+	int r;
+	str s;
+	
+	cmd_exp = a->val[0].u.data;
+	param_no = a->val[1].u.number;
+	params = &a->val[2];
+	
+	switch(cmd_exp->param_no) {
+		case 0:
+			a->type = MODULE0_T;
+			break;
+		case 1:
+			a->type = MODULE1_T;
+			break;
+		case 2:
+			a->type = MODULE2_T;
+			break;
+		case 3:
+			a->type = MODULE3_T;
+			break;
+		case 4:
+			a->type = MODULE4_T;
+			break;
+		case 5:
+			a->type = MODULE5_T;
+			break;
+		case 6:
+			a->type = MODULE6_T;
+			break;
+		case VAR_PARAM_NO:
+			a->type = MODULEX_T;
+			break;
+		default:
+			yyerror("function %s: bad definition"
+					" (invalid number of parameters)", cmd_exp->name);
+			return -1;
+	}
+	
+	if ( cmd_exp->fixup) {
+		if (is_fparam_rve_fixup(cmd_exp->fixup))
+			/* mark known fparam rve safe fixups */
+			cmd_exp->fixup_flags  |= FIXUP_F_FPARAM_RVE;
+		else if (!(cmd_exp->fixup_flags & FIXUP_F_FPARAM_RVE) &&
+				 cmd_exp->free_fixup == 0) {
+			/* v0 or v1 functions that have fixups and no coresp. fixup_free
+			   functions, need constant, string params.*/
+			for (r=0; r < param_no; r++) {
+				rve=params[r].u.data;
+				if (!rve_is_constant(rve)) {
+					yyerror_at(&rve->fpos, "function %s: parameter %d is not"
+								" constant\n", cmd_exp->name, r+1);
+					return -1;
+				}
+				if ((rv = rval_expr_eval(0, 0, rve)) == 0 ||
+						rval_get_str(0, 0, &s, rv, 0) < 0 ) {
+					/* out of mem or bug ? */
+					rval_destroy(rv);
+					yyerror_at(&rve->fpos, "function %s: bad parameter %d"
+									" expression\n", cmd_exp->name, r+1);
+					return -1;
+				}
+				rval_destroy(rv);
+				rve_destroy(rve);
+				params[r].type = STRING_ST; /* asciiz */
+				params[r].u.string = s.s;
+				params[r].u.str.len = s.len; /* not used right now */
+			}
+		}
+	}/* else
+		if no fixups are present, the RVEs can be transformed
+		into strings at runtime, allowing seamless var. use
+		even with old functions.
+		Further optimizations -> in fix_actions()
+		*/
+	return 0;
+}
+
+
+
+/** frees a filled module function call action structure.
+ * @param a - filled module function call action structure
+ *            complete with parameters, starting at val[2] and parameter
+ *            number at val[1].
+ */
+static void free_mod_func_action(struct action* a)
+{
+	action_u_t* params;
+	int param_no;
+	int r;
+	
+	param_no = a->val[1].u.number;
+	params = &a->val[2];
+	
+	for (r=0; r < param_no; r++)
+		if (params[r].u.data)
+			rve_destroy(params[r].u.data);
+	pkg_free(a);
 }
 
 

@@ -51,6 +51,8 @@
  *  2008-12-17  added UDP_MTU_TRY_PROTO_T (andrei)
  *  2009-05-04  switched IF_T to rval_expr (andrei)
  *  2009-09-15  added SET_{FWD,RPL}_NO_CONNECT, SET_{FWD,RPL}_CLOSE (andrei)
+ *  2010-06-01  special hack/support for fparam fixups so that they can handle
+ *               variable RVEs (andrei)
  */
 
 /*!
@@ -108,6 +110,179 @@
 int _last_returned_code  = 0;
 struct onsend_info* p_onsend=0; /* onsend route send info */
 
+
+
+/* handle the exit code of a module function call.
+ * (used internally in do_action())
+ * @param h - script handle (h->last_retcode and h->run_flags will be set).
+ * @param ret - module function (v0 or v2) retcode
+ * Side-effects: sets _last_returned_code
+ */
+#define MODF_HANDLE_RETCODE(h, ret) \
+	do { \
+		/* if (unlikely((ret)==0)) (h)->run_flags|=EXIT_R_F; */ \
+		(h)->run_flags |= EXIT_R_F & (((ret) != 0) -1); \
+		(h)->last_retcode=(ret); \
+		_last_returned_code = (h)->last_retcode; \
+	} while(0)
+
+
+
+/* frees parameters converted using MODF_RVE_PARAM_CONVERT() from dst.
+ * (used internally in do_action())
+ * Assumes src is unchanged.
+ * Side-effects: clobbers i (int).
+ */
+#define MODF_RVE_PARAM_FREE(cmd, src, dst) \
+		for (i=0; i < (dst)[1].u.number; i++) { \
+			if ((src)[i+2].type == RVE_ST && (dst)[i+2].u.data) { \
+				if ((dst)[i+2].type == RVE_FREE_FIXUP_ST) {\
+					/* call free_fixup (which should restore the original
+					   string) */ \
+					call_fixup((cmd)->free_fixup, &(dst)[i+2].u.data, i+1); \
+				} else if ((dst)[i+2].type == FPARAM_DYN_ST) {\
+					/* completely frees fparam and restore original string */\
+					fparam_free_restore(&(dst)[i+2].u.data); \
+				} \
+				/* free allocated string */ \
+				pkg_free((dst)[i+2].u.data); \
+				(dst)[i+2].u.data = 0; \
+			} \
+		}
+
+
+/* fills dst from src, converting RVE_ST params to STRING_ST.
+ * (used internally in do_action())
+ * @param src - source action_u_t array, as in the action structure
+ * @param dst - destination action_u_t array, will be filled from src.
+ * WARNING: dst must be cleaned when done, use MODULE_RVE_PARAM_FREE()
+ * Side-effects: clobbers i (int), s (str), rv (rvalue*), might jump to error.
+ */
+#define MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst) \
+	do { \
+		(dst)[1]=(src)[1]; \
+		for (i=0; i < (src)[1].u.number; i++) { \
+			if ((src)[2+i].type == RVE_ST) { \
+				rv=rval_expr_eval((h), (msg), (src)[i+2].u.data); \
+				if (unlikely(rv == 0 || \
+					rval_get_str((h), (msg), &s, rv, 0) < 0)) { \
+					rval_destroy(rv); \
+					ERR("failed to convert RVE to string\n"); \
+					(dst)[1].u.number = i; \
+					MODF_RVE_PARAM_FREE(cmd, src, dst); \
+					goto error; \
+				} \
+				(dst)[i+2].type = STRING_RVE_ST; \
+				(dst)[i+2].u.string = s.s; \
+				(dst)[i+2].u.str.len = s.len; \
+				rval_destroy(rv); \
+				if ((cmd)->fixup) {\
+					if ((cmd)->free_fixup) {\
+						if (likely( call_fixup((cmd)->fixup, \
+										&(dst)[i+2].u.data, i+1) >= 0) ) { \
+							/* success => mark it for calling free fixup */ \
+							if (likely((dst)[i+2].u.data != s.s)) \
+								(dst)[i+2].type = RVE_FREE_FIXUP_ST; \
+						} else { \
+							/* error calling fixup => mark conv. parameter \
+							   and return error */ \
+							(dst)[1].u.number = i; \
+							ERR("runtime fixup failed for %s param %d\n", \
+									(cmd)->name, i+1); \
+							MODF_RVE_PARAM_FREE(cmd, src, dst); \
+							goto error; \
+						} \
+					} else if ((cmd)->fixup_flags & FIXUP_F_FPARAM_RVE) { \
+						if (likely( call_fixup((cmd)->fixup, \
+										&(dst)[i+2].u.data, i+1) >= 0)) { \
+							if ((dst)[i+2].u.data != s.s) \
+								(dst)[i+2].type = FPARAM_DYN_ST; \
+						} else { \
+							/* error calling fixup => mark conv. parameter \
+							   and return error */ \
+							(dst)[1].u.number = i; \
+							ERR("runtime fixup failed for %s param %d\n", \
+									(cmd)->name, i+1); \
+							MODF_RVE_PARAM_FREE(cmd, src, dst); \
+							goto error; \
+						}\
+					} \
+				} \
+			} else \
+				(dst)[i+2]=(src)[i+2]; \
+		} \
+	} while(0)
+
+
+
+/* call a module function with normal STRING_ST params.
+ * (used internally in do_action())
+ * @param f_type - cmd_function type
+ * @param h
+ * @param msg
+ * @param src - source action_u_t array (e.g. action->val)
+ * @param params... - variable list of parameters, passed to the module
+ *               function
+ * Side-effects: sets ret, clobbers i (int), s (str), rv (rvalue*), cmd,
+ *               might jump to error.
+ *
+ */
+#ifdef __SUNPRO_C
+#define MODF_CALL(f_type, h, msg, src, ...) \
+	do { \
+		cmd=(src)[0].u.data; \
+		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
+		MODF_HANDLE_RETCODE(h, ret); \
+	} while (0)
+#else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
+#define MODF_CALL(f_type, h, msg, src, params...) \
+	do { \
+		cmd=(src)[0].u.data; \
+		ret=((f_type)cmd->function)((msg), ## params ); \
+		MODF_HANDLE_RETCODE(h, ret); \
+	} while (0)
+#endif /* __SUNPRO_C */
+
+
+
+/* call a module function with possible RVE params.
+ * (used internally in do_action())
+ * @param f_type - cmd_function type
+ * @param h
+ * @param msg
+ * @param src - source action_u_t array (e.g. action->val)
+ * @param dst - temporary action_u_t array used for conversions. It can be
+ *              used for the function parameters. It's contents it's not
+ *              valid after the call.
+ * @param params... - variable list of parameters, passed to the module
+ *               function
+ * Side-effects: sets ret, clobbers i (int), s (str), rv (rvalue*), f, dst,
+ *               might jump to error.
+ *
+ */
+#ifdef __SUNPRO_C
+#define MODF_RVE_CALL(f_type, h, msg, src, dst, ...) \
+	do { \
+		cmd=(src)[0].u.data; \
+		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
+		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
+		MODF_HANDLE_RETCODE(h, ret); \
+		/* free strings allocated by us or fixups */ \
+		MODF_RVE_PARAM_FREE(cmd, src, dst); \
+	} while (0)
+#else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
+#define MODF_RVE_CALL(f_type, h, msg, src, dst, params...) \
+	do { \
+		cmd=(src)[0].u.data; \
+		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
+		ret=((f_type)cmd->function)((msg), ## params ); \
+		MODF_HANDLE_RETCODE(h, ret); \
+		/* free strings allocated by us or fixups */ \
+		MODF_RVE_PARAM_FREE(cmd, src, dst); \
+	} while (0)
+#endif /* __SUNPRO_C */
+
+
 /* ret= 0! if action -> end of list(e.g DROP),
       > 0 to continue processing next actions
    and <0 on error */
@@ -118,7 +293,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct dest_info dst;
 	char* tmp;
 	char *new_uri, *end, *crt;
-	void* f;
+	sr31_cmd_export_t* cmd;
 	int len;
 	int user;
 	struct sip_uri uri, next_hop;
@@ -135,6 +310,13 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct rval_cache c1;
 	str s;
 	void *srevp[2];
+	/* temporary storage space for a struct action.val[] working copy
+	 (needed to transform RVE intro STRING before calling module
+	   functions). [0] is not used (corresp. to the module export pointer),
+	   [1] contains the number of params, and [2..] the param values.
+	   We need [1], because some fixup function use it
+	  (see fixup_get_param_count()).  */
+	static action_u_t mod_f_params[MAX_ACTIONS];
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -900,108 +1082,111 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 										(struct action*)a->val[2].u.data, msg);
 					}
 			break;
-		case MODULE_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
-				ret=((cmd_function)f)(msg,
-										(char*)a->val[2].u.data,
-										(char*)a->val[3].u.data
-									);
-				if (ret==0) h->run_flags|=EXIT_R_F;
-				h->last_retcode=ret;
-				_last_returned_code = h->last_retcode;
-			} else {
-				LOG(L_CRIT,"BUG: do_action: bad module call\n");
-				goto error;
-			}
+		case MODULE0_T:
+			MODF_CALL(cmd_function, h, msg, a->val, 0, 0);
 			break;
 		/* instead of using the parameter number, we use different names
 		 * for calls to functions with 3, 4, 5, 6 or variable number of
 		 * parameters due to performance reasons */
+		case MODULE1_T:
+			MODF_CALL(cmd_function, h, msg, a->val,
+										(char*)a->val[2].u.data,
+										0
+					);
+			break;
+		case MODULE2_T:
+			MODF_CALL(cmd_function, h, msg, a->val,
+										(char*)a->val[2].u.data,
+										(char*)a->val[3].u.data
+					);
+			break;
 		case MODULE3_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
-				ret=((cmd_function3)f)(msg,
+			MODF_CALL(cmd_function3, h, msg, a->val,
 										(char*)a->val[2].u.data,
 										(char*)a->val[3].u.data,
 										(char*)a->val[4].u.data
-									);
-				if (ret==0) h->run_flags|=EXIT_R_F;
-				h->last_retcode=ret;
-				_last_returned_code = h->last_retcode;
-			} else {
-				LOG(L_CRIT,"BUG: do_action: bad module call\n");
-				goto error;
-			}
+					);
 			break;
 		case MODULE4_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
-				ret=((cmd_function4)f)(msg,
+			MODF_CALL(cmd_function4, h, msg, a->val,
 										(char*)a->val[2].u.data,
 										(char*)a->val[3].u.data,
 										(char*)a->val[4].u.data,
 										(char*)a->val[5].u.data
-									);
-				if (ret==0) h->run_flags|=EXIT_R_F;
-				h->last_retcode=ret;
-				_last_returned_code = h->last_retcode;
-			} else {
-				LOG(L_CRIT,"BUG: do_action: bad module call\n");
-				goto error;
-			}
+					);
 			break;
 		case MODULE5_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
-				ret=((cmd_function5)f)(msg,
+			MODF_CALL(cmd_function5, h, msg, a->val,
 										(char*)a->val[2].u.data,
 										(char*)a->val[3].u.data,
 										(char*)a->val[4].u.data,
 										(char*)a->val[5].u.data,
 										(char*)a->val[6].u.data
-									);
-				if (ret==0) h->run_flags|=EXIT_R_F;
-				h->last_retcode=ret;
-				_last_returned_code = h->last_retcode;
-			} else {
-				LOG(L_CRIT,"BUG: do_action: bad module call\n");
-				goto error;
-			}
+					);
 			break;
 		case MODULE6_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
-				ret=((cmd_function6)f)(msg,
+			MODF_CALL(cmd_function6, h, msg, a->val,
 										(char*)a->val[2].u.data,
 										(char*)a->val[3].u.data,
 										(char*)a->val[4].u.data,
 										(char*)a->val[5].u.data,
 										(char*)a->val[6].u.data,
 										(char*)a->val[7].u.data
-									);
-				if (ret==0) h->run_flags|=EXIT_R_F;
-				h->last_retcode=ret;
-				_last_returned_code = h->last_retcode;
-			} else {
-				LOG(L_CRIT,"BUG: do_action: bad module call\n");
-				goto error;
-			}
+					);
 			break;
 		case MODULEX_T:
-			if ( a->val[0].type==MODEXP_ST && a->val[0].u.data && 
-					(f=((union cmd_export_u*)a->val[0].u.data)->c.function)){
-				ret=((cmd_function_var)f)(msg,
-											a->val[1].u.number,
-											&a->val[2]
-										);
-				if (ret==0) h->run_flags|=EXIT_R_F;
-				h->last_retcode=ret;
-				_last_returned_code = h->last_retcode;
-			} else {
-				LOG(L_CRIT,"BUG: do_action: bad module call\n");
-				goto error;
-			}
+			MODF_CALL(cmd_function_var, h, msg, a->val,
+							a->val[1].u.number, &a->val[2]);
+			break;
+		case MODULE1_RVE_T:
+			MODF_RVE_CALL(cmd_function, h, msg, a->val, mod_f_params,
+											(char*)mod_f_params[2].u.data,
+											0
+					);
+			break;
+		case MODULE2_RVE_T:
+			MODF_RVE_CALL(cmd_function, h, msg, a->val, mod_f_params,
+											(char*)mod_f_params[2].u.data,
+											(char*)mod_f_params[3].u.data
+					);
+			break;
+		case MODULE3_RVE_T:
+			MODF_RVE_CALL(cmd_function3, h, msg, a->val, mod_f_params,
+											(char*)mod_f_params[2].u.data,
+											(char*)mod_f_params[3].u.data,
+											(char*)mod_f_params[4].u.data
+					);
+			break;
+		case MODULE4_RVE_T:
+			MODF_RVE_CALL(cmd_function4, h, msg, a->val, mod_f_params,
+											(char*)mod_f_params[2].u.data,
+											(char*)mod_f_params[3].u.data,
+											(char*)mod_f_params[4].u.data,
+											(char*)mod_f_params[5].u.data
+					);
+			break;
+		case MODULE5_RVE_T:
+			MODF_RVE_CALL(cmd_function5, h, msg, a->val, mod_f_params,
+											(char*)mod_f_params[2].u.data,
+											(char*)mod_f_params[3].u.data,
+											(char*)mod_f_params[4].u.data,
+											(char*)mod_f_params[5].u.data,
+											(char*)mod_f_params[6].u.data
+					);
+			break;
+		case MODULE6_RVE_T:
+			MODF_RVE_CALL(cmd_function6, h, msg, a->val, mod_f_params,
+											(char*)mod_f_params[2].u.data,
+											(char*)mod_f_params[3].u.data,
+											(char*)mod_f_params[4].u.data,
+											(char*)mod_f_params[5].u.data,
+											(char*)mod_f_params[6].u.data,
+											(char*)mod_f_params[7].u.data
+					);
+			break;
+		case MODULEX_RVE_T:
+			MODF_RVE_CALL(cmd_function_var, h, msg, a->val, mod_f_params,
+							a->val[1].u.number, &mod_f_params[2]);
 			break;
 		case EVAL_T:
 			/* only eval the expression to account for possible
@@ -1357,11 +1542,8 @@ end:
 	/* process module onbreak handlers if present */
 	if (unlikely(h->rec_lev==0 && ret==0))
 		for (mod=modules;mod;mod=mod->next)
-			if (unlikely((mod->mod_interface_ver==0) && mod->exports && 
-					mod->exports->v0.onbreak_f)) {
-				mod->exports->v0.onbreak_f( msg );
-				DBG("DEBUG: %s onbreak handler called\n",
-						mod->exports->c.name);
+			if (unlikely(mod->exports.onbreak_f)) {
+				mod->exports.onbreak_f( msg );
 			}
 	return ret;
 

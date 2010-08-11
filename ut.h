@@ -5,26 +5,17 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * History
  * ------
@@ -42,6 +33,11 @@
  * 2007-05-14 added get_sys_ver() (andrei)
  * 2007-06-05 added MAX_UVAR_VALUE(), MAX_int(a,b) MIN_int(a,b) (andrei)
  * 2008-05-21 added ushort2sbuf(), ushort2str() (andrei)
+ * 2009-03-16 added sint2strbuf() and incremented INST2STR_MAX_LEN to account
+ *             for sign (andrei)
+ */
+/** various general purpose/helper functions.
+ * @file
  */
 
 
@@ -245,7 +241,8 @@ static inline int btostr( char *p,  unsigned char val)
 }
 
 
-#define INT2STR_MAX_LEN  (19+1+1) /* 2^64~= 16*10^18 => 19+1 digits + \0 */
+#define INT2STR_MAX_LEN  (19+1+1+1) /* 2^64~= 16*10^18 =>
+									   19+1 digits + sign + \0 */
 
 /* 
  * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len 
@@ -292,9 +289,19 @@ static inline char* int2str_base(unsigned int l, int* len, int base)
 
 
 
-/* print int to asciiz in a string buffer
- * - be sure result buffer is at least INT2STR_MAX_LEN in size */
-static inline char* int2strbuf(unsigned int l, char *r, int r_size, int* len)
+/** unsigned long to str conversion using a provided buffer.
+ * Converts/prints an unsigned long to a string. The result buffer must be
+ * provided  and its length must be at least INT2STR_MAX_LEN.
+ * @param l - unsigned long to be converted
+ * @param r - pointer to result buffer
+ * @param r_size - result buffer size, must be at least INT2STR_MAX_LEN.
+ * @param *len - length of the written string, _without_ the terminating 0.
+ * @return  pointer _inside_ r, to the converted string (note: the string
+ *  is written from the end of the buffer and not from the start and hence
+ *  the returned pointer will most likely not be equal to r). In case of error
+ *  it returns 0 (the only error being insufficient provided buffer size).
+ */
+static inline char* int2strbuf(unsigned long l, char *r, int r_size, int* len)
 {
 	int i;
 
@@ -318,32 +325,69 @@ static inline char* int2strbuf(unsigned int l, char *r, int r_size, int* len)
 }
 
 extern char ut_buf_int2str[INT2STR_MAX_LEN];
-/* returns a pointer to a static buffer containing l in asciiz & sets len */
+/** interger(long) to string conversion.
+ * This version uses a static buffer (shared with sint2str()).
+ * WARNING: other function calls might overwrite the static buffer, so
+ * either always save the result immediately or use int2strbuf(...).
+ * @param l - unsigned long to be converted/printed.
+ * @param *len - will be filled with the final length (without the terminating
+ *   0).
+ * @return a pointer to a static buffer containing l in asciiz & sets len.
+ */
 static inline char* int2str(unsigned long l, int* len)
 {
 	return int2strbuf(l, ut_buf_int2str, INT2STR_MAX_LEN, len);
 }
 
-/* Signed INTeger-TO-STRing: convers a long to a string
- * returns a pointer to a static buffer containing l in asciiz & sets len */
-static inline char* sint2str(long l, int* len)
+
+
+/** signed long to str conversion using a provided buffer.
+ * Converts a long to a signed string. The result buffer must be provided
+ * and its length must be at least INT2STR_MAX_LEN.
+ * @param l - long to be converted
+ * @param r - pointer to result buffer
+ * @param r_size - result buffer size, must be at least INT2STR_MAX_LEN.
+ * @param *len - length of the written string, _without_ the terminating 0.
+ * @return  pointer _inside_ r, to the converted string (note: the string
+ *  is written from the end of the buffer and not from the start and hence
+ *  the returned pointer will most likely not be equal to r). In case of error
+ *  it returns 0 (the only error being insufficient provided buffer size).
+ */
+static inline char* sint2strbuf(long l, char* r, int r_size, int* len)
 {
 	int sign;
 	char *p;
+	int p_len;
 
 	sign = 0;
 	if(l<0) {
 		sign = 1;
 		l = -l;
 	}
-	p = int2str((unsigned long)l, len);
-	if(sign && *len<(INT2STR_MAX_LEN-1)) {
+	p = int2strbuf((unsigned long)l, r, r_size, &p_len);
+	if(sign && p_len<(r_size-1)) {
 		*(--p) = '-';
-		if (len) (*len)++;
+		p_len++;;
 	}
+	if (likely(len))
+		*len = p_len;
 	return p;
 }
 
+
+/** Signed INTeger-TO-STRing: converts a long to a string.
+ * This version uses a static buffer, shared with int2str().
+ * WARNING: other function calls might overwrite the static buffer, so
+ * either always save the result immediately or use sint2strbuf(...).
+ * @param l - long to be converted/printed.
+ * @param *len - will be filled with the final length (without the terminating
+ *   0).
+ * @return a pointer to a static buffer containing l in asciiz & sets len.
+ */
+static inline char* sint2str(long l, int* len)
+{
+	return sint2strbuf(l, ut_buf_int2str, INT2STR_MAX_LEN, len);
+}
 
 
 

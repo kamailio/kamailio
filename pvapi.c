@@ -1147,8 +1147,9 @@ error:
 	return NULL;
 }
 
-/**
- * destroy the content of pv_spec_t structure
+
+
+/** destroy the content of pv_spec_t structure.
  */
 void pv_spec_destroy(pv_spec_t *spec)
 {
@@ -1160,8 +1161,7 @@ void pv_spec_destroy(pv_spec_t *spec)
 		tr_free((trans_t*)spec->trans);
 }
 
-/**
- * free the pv_spec_t structure
+/** free the pv_spec_t structure.
  */
 void pv_spec_free(pv_spec_t *spec)
 {
