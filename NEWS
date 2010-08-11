@@ -6,6 +6,7 @@ $Id$
 sip-router changes
 
 core:
+  - Dragonfly BSD support
   - type casts operators: (int), (str).
   - new operators eq, ne for string compares and ieq, ine for interger 
     compares. The names are not yet final (use them at your own risk).

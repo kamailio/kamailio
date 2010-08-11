@@ -10,18 +10,18 @@ $Id$
      ===========================================
 
   Welcome to the SIP router! This is an amazingly flexible, robust
-  and secure SIP server built on years of experience in several Open 
+  and secure SIP server built on years of experience in several Open
   Source projects. It's a merge of the SIP Express Router and the
   OpenSER/Kamailio products produced by a joint development team.
 
   This memo gives you hints how to set up SIP Router quickly. To 
   understand how SIP Router works and how to configure it properly,
-  please read the admin's guide available from the SIP Router website. 
+  please read the admin's guide available from the SIP Router website.
 
-  We also urge you to read latest ISSUES (available from SIP Router website 
+  We also urge you to read latest ISSUES (available from SIP Router website
   too) and check for potential problems in this release.
-  Users of previous releases are encouraged to read NEWS to learn how to move to 
-  this new SIP Router version.
+  Users of previous releases are encouraged to read NEWS to learn how to move
+  to this new SIP Router version.
   
 
 Table of Contents
@@ -41,11 +41,13 @@ Table of Contents
 1. Supported Architectures and Requirements
 -------------------------------------------
 
-Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, OS/X Darwin
-Partially supported: Windows+Cygwin (core + static modules only, no IPv6, no TCP, 
-no dynamic modules)
+Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, OS/X
+Darwin, Dragonfly BSD.
+Partially supported: Windows+Cygwin (core + static modules only, no IPv6, no
+TCP, no dynamic modules)
 
-Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc, powerpc64
+Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc,
+powerpc64
 Experimental architectures: mips1, mips2, sparc32, alpha
 
 (for other architectures the Makefiles might need to be edited)
