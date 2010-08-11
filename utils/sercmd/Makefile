@@ -29,14 +29,29 @@ DEFS:= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' \
 # from a module Makefile)
 #LIBS:=$(filter-out -lfl  -ldl -lpthread -lssl -lcrypto, $(LIBS))
 
-ifeq  ($(OS), dragonfly)
-	LIBS:= -L$(LOCALBASE)/lib
-else
+ifeq ($(OS), linux)
 	LIBS:= -lresolv
 endif
-
-ifeq  ($(OS), solaris)
-	LIBS+= -L$(LOCALBASE)/lib -lxnet -lnsl
+ifeq ($(OS), solaris)
+	LIBS:= -lresolv -L$(LOCALBASE)/lib -lxnet -lnsl
+endif
+ifeq ($(OS), freebsd)
+	LIBS:=
+endif
+ifeq  ($(OS), dragonfly)
+	LIBS:= -L$(LOCALBASE)/lib
+endif
+ifeq ($(OS), openbsd)
+	LIBS:=
+endif
+ifeq ($(OS), netbsd)
+	LIBS:=
+endif
+ifeq ($(OS), darwin)
+	LIBS:= -lresolv
+endif
+ifneq (,$(findstring cygwin, $(OS)))
+	LIBS:= -lresolv
 endif
 
 ifeq ($(use_readline),)
