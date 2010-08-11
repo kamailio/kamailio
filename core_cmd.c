@@ -44,6 +44,7 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "core_cmd.h"
+#include "cfg_core.h"
 #ifdef USE_SCTP
 #include "sctp_options.h"
 #include "sctp_server.h"
@@ -807,6 +808,30 @@ static void core_sctpinfo(rpc_t* rpc, void* c)
 
 
 
+
+static const char* core_udp4rawinfo_doc[] = {
+	"Returns udp4_raw related info.",    /* Documentation string */
+	0                                     /* Method signature(s) */
+};
+
+static void core_udp4rawinfo(rpc_t* rpc, void* c)
+{
+#ifdef USE_RAW_SOCKS
+	void *handle;
+
+	rpc->add(c, "{", &handle);
+	rpc->struct_add(handle, "ddd",
+		"udp4_raw", cfg_get(core, core_cfg, udp4_raw),
+		"udp4_raw_mtu", cfg_get(core, core_cfg, udp4_raw_mtu),
+		"udp4_raw_ttl", cfg_get(core, core_cfg, udp4_raw_ttl)
+	);
+#else /* USE_RAW_SOCKS */
+	rpc->fault(c, 500, "udp4_raw mode support not compiled");
+#endif /* USE_RAW_SOCKS */
+}
+
+
+
 /*
  * RPC Methods exported by this module
  */
@@ -835,6 +860,8 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.sctp_options",      core_sctp_options,      core_sctp_options_doc,
 		0},
 	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
+	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
+		0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
