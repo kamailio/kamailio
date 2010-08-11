@@ -117,12 +117,21 @@ str* dbg_get_action_name(struct action *a)
 			if(a->val[1].u.number&RETURN_R_F)
 				return &_dbg_action_special[3];
 			return &_dbg_action_special[1];
-		case MODULE_T:
+		case MODULE0_T:
+		case MODULE1_T:
+		case MODULE2_T:
 		case MODULE3_T:
 		case MODULE4_T:
 		case MODULE5_T:
 		case MODULE6_T:
 		case MODULEX_T:
+		case MODULE1_RVE_T:
+		case MODULE2_RVE_T:
+		case MODULE3_RVE_T:
+		case MODULE4_RVE_T:
+		case MODULE5_RVE_T:
+		case MODULE6_RVE_T:
+		case MODULEX_RVE_T:
 			cmd = (cmd_export_common_t*)(a->val[0].u.data);
 			aname.s = cmd->name;
 			aname.len = strlen(aname.s);
