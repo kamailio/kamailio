@@ -6,6 +6,7 @@ $Id$
 sip-router 3.1 chages
 
 core:
+  - Dragonfly BSD support
   - statistics / counters support for tcp and sctp (enable by default)
   - statistics / counters api
   - networks addresses support in ip comparisons (src_ip, dst_ip, to_ip)
