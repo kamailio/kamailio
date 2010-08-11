@@ -263,9 +263,8 @@ endif
 # Doxygen directory
 doxygen_dir=doc/doxygen
 
- # install location
-DESTDIR ?= $(LOCALBASE)
-PREFIX ?= $(DESTDIR)
+# install location
+PREFIX ?= $(LOCALBASE)
 prefix = $(PREFIX)
 # install path is $(basedir) $(prefix) 
 # example:
@@ -273,7 +272,7 @@ prefix = $(PREFIX)
 #  basedir=/tmp
 #  prefix=/usr/local
 
-BASEDIR ?=
+BASEDIR ?= $(DESTDIR)
 basedir = $(BASEDIR)
 # install prefixes for various stuff
 cfg_prefix = $(basedir)$(prefix)
