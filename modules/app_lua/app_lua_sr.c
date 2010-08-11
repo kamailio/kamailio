@@ -109,10 +109,11 @@ static int lua_sr_modf (lua_State *L)
 	char *argv[MAX_ACTIONS];
 	int argc;
 	int i;
+	int mod_type;
 	struct run_act_ctx ra_ctx;
 	unsigned modver;
 	struct action *act;
-	union cmd_export_u* expf;
+	sr31_cmd_export_t* expf;
 	sr_lua_env_t *env_L;
 
 	ret = 1;
@@ -169,12 +170,42 @@ static int lua_sr_modf (lua_State *L)
 		goto error;
 	}
 	/* check fixups */
-	if (expf->v1.fixup!=NULL && (modver!=1 || expf->v1.free_fixup==NULL)) {
+	if (expf->fixup!=NULL && expf->free_fixup==NULL) {
 		LM_ERR("function '%s' has fixup - cannot be used\n", luav[0]);
 		goto error;
 	}
+	switch(expf->param_no) {
+		case 0:
+			mod_type = MODULE0_T;
+			break;
+		case 1:
+			mod_type = MODULE1_T;
+			break;
+		case 2:
+			mod_type = MODULE2_T;
+			break;
+		case 3:
+			mod_type = MODULE3_T;
+			break;
+		case 4:
+			mod_type = MODULE4_T;
+			break;
+		case 5:
+			mod_type = MODULE5_T;
+			break;
+		case 6:
+			mod_type = MODULE6_T;
+			break;
+		case VAR_PARAM_NO:
+			mod_type = MODULEX_T;
+			break;
+		default:
+			LM_ERR("unknown/bad definition for function '%s' (%d params)\n",
+					luav[0], expf->param_no);
+			goto error;
+	}
 
-	act = mk_action(MODULE_T,  argc+1   /* number of (type, value) pairs */,
+	act = mk_action(mod_type,  argc+1   /* number of (type, value) pairs */,
 					MODEXP_ST, expf,    /* function */
 					NUMBER_ST, argc-1,  /* parameter number */
 					STRING_ST, argv[1], /* param. 1 */
@@ -191,10 +222,10 @@ static int lua_sr_modf (lua_State *L)
 	}
 
 	/* handle fixups */
-	if (expf->v1.fixup) {
+	if (expf->fixup) {
 		if(argc==1)
 		{ /* no parameters */
-			if(expf->v1.fixup(0, 0)<0)
+			if(expf->fixup(0, 0)<0)
 			{
 				LM_ERR("Error in fixup (0) for '%s'\n", luav[0]);
 				goto error;
@@ -202,7 +233,7 @@ static int lua_sr_modf (lua_State *L)
 		} else {
 			for(i=1; i<=argc; i++)
 			{
-				if(expf->v1.fixup(&(act->val[i+1].u.data), i)<0)
+				if(expf->fixup(&(act->val[i+1].u.data), i)<0)
 				{
 					LM_ERR("Error in fixup (%d) for '%s'\n", i, luav[0]);
 					goto error;
@@ -215,12 +246,12 @@ static int lua_sr_modf (lua_State *L)
 	ret = do_action(&ra_ctx, act, env_L->msg);
 
 	/* free fixups */
-	if (expf->v1.fixup) {
+	if (expf->fixup) {
 		for(i=1; i<=argc; i++)
 		{
 			if ((act->val[i+1].type == MODFIXUP_ST) && (act->val[i+1].u.data))
 			{
-				expf->v1.free_fixup(&(act->val[i+1].u.data), i);
+				expf->free_fixup(&(act->val[i+1].u.data), i);
 			}
 		}
 	}
