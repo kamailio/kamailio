@@ -6,8 +6,9 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=xmlrpc.so
-DEFS += -I/usr/include/libxml2 -I/usr/local/include/libxml2 -I/usr/local/include
-LIBS +=-lxml2
+INCLUDES += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+				-I$(LOCALBASE)/include
+LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2
 
 DEFS+=-DSER_MOD_INTERFACE
 
