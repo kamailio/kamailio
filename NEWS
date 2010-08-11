@@ -6,6 +6,15 @@ $Id$
 sip-router 3.1 chages
 
 core:
+  - lots of module functions automatically support now expressions or
+      variables in function parameters. This applies to all the module
+      functions declared without a fixup, with a fixup and the corresponding
+      free_fixup function or with a compatible ser or kamailio style standard
+      fixup (declared in sr_module.h or mod_fix.h).
+      E.g.: f($a, "b = " + $b);  t_set_fr($v + 2 + $x).
+            t_set_fr($foo) (equivalent now with t_set_fr("$foo")).
+  - all the module functions can now be called with any constant expression
+      as parameters. E.g.: f("7 *" +" 6 = " + 7 * 6);
   - onreply_route {...} is now equivalent with onreply_route[0] {...}
   - global, per protocol blacklist ignore masks (via extended send_flags).
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
