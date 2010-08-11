@@ -191,7 +191,7 @@ install-modules: $(bin_prefix)/$(bin_dir)
 					$(data_prefix)/$(data_dir)/oracle/admin/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
-			make -C ../db_oracle/ ; \
+			$(MAKE) -C ../db_oracle/ ; \
 			$(INSTALL_BIN) ../db_oracle/kamailio_orasel $(bin_prefix)/$(bin_dir) ; \
 		fi
 		# install Berkeley database stuff
@@ -216,7 +216,7 @@ install-modules: $(bin_prefix)/$(bin_dir)
 					$(data_prefix)/$(data_dir)/db_berkeley/kamailio/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
-			make -C ../db_berkeley/ ; \
+			$(MAKE) -C ../db_berkeley/ ; \
 			$(INSTALL_BIN) ../db_berkeley/kambdb_recover $(bin_prefix)/$(bin_dir) ; \
 		fi
 		# install dbtext stuff
@@ -246,3 +246,15 @@ install-modules: $(bin_prefix)/$(bin_dir)
 			done ;\
 		fi
 
+
+$(cfg_prefix)/$(cfg_dir):
+		mkdir -p $(cfg_prefix)/$(cfg_dir)
+
+$(bin_prefix)/$(bin_dir):
+		mkdir -p $(bin_prefix)/$(bin_dir)
+
+$(man_prefix)/$(man_dir)/man8:
+		mkdir -p $(man_prefix)/$(man_dir)/man8
+
+$(man_prefix)/$(man_dir)/man5:
+		mkdir -p $(man_prefix)/$(man_dir)/man5
