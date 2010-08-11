@@ -24,16 +24,15 @@
  *  2007-12-03	Initial version (Miklos)
  *  2008-01-31  added DNS resolver parameters (Miklos)
  */
-/*!
- * \file
- * \brief SIP-router core ::  Core configuration parser
- * \ingroup core
- * Module: \ref core
+/** core runtime config.
+ * @file cfg_core.c
+ * @ingroup core
+ * Module: @ref core
  *
- * See 
- * - \ref ConfigCoreDoc
- * - \ref ConfigEngine
- * - \ref cfg_core.h
+ * See
+ * - @ref ConfigCoreDoc
+ * - @ref ConfigEngine
+ * - @ref cfg_core.h
  */
 /*!
  * \page ConfigCoreDoc Documentation of configuration parser
@@ -57,6 +56,8 @@
 #include "pt.h"
 #endif
 #include "msg_translator.h" /* fix_global_req_flags() */
+#include "globals.h"
+#include "sock_ut.h"
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
@@ -113,6 +114,9 @@ struct cfg_group_core default_core_cfg = {
 	DEFAULT_MAX_WHILE_LOOPS, /*!< max_while_loops */
 	0, /*!< udp_mtu (disabled by default) */
 	0, /*!< udp_mtu_try_proto -> default disabled */
+	0, /**< udp4_raw (disabled by default) */
+	1500, /**< udp4_raw_mtu (1500 by default) */
+	-1,  /**< udp4_raw_ttl (auto detect by default) */
 	0,  /*!< force_rport */
 	L_DBG, /*!< memlog */
 	3 /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
@@ -120,6 +124,57 @@ struct cfg_group_core default_core_cfg = {
 };
 
 void	*core_cfg = &default_core_cfg;
+
+
+static int check_raw_sock_support(void* cfg_h, str* gname, str* name,
+									void** v)
+{
+	int val;
+	
+	val = (int)(long)(*v);
+#ifndef USE_RAW_SOCKS
+	if (val > 0) {
+		ERR("no RAW_SOCKS support, please recompile with it enabled\n");
+		return -1;
+	}
+	return 0;
+#else /* USE_RAW_SOCKS */
+	if (raw_udp4_send_sock < 0) {
+		if (val > 0) {
+			ERR("could not intialize raw socket on startup, please "
+					"restart as root or with CAP_NET_RAW\n");
+			return -1;
+		} else if (val < 0) {
+			/* auto and no socket => disable */
+			*v = (void*)(long)0;
+		}
+	} else if (val < 0) {
+		/* auto and socket => enable */
+		*v = (void*)(long)1;
+	}
+	return 0;
+#endif /* USE_RAW_SOCKS */
+}
+
+
+
+static int  udp4_raw_ttl_fixup(void* cfg_h, str* gname, str* name, void** val)
+{
+	int v;
+	v = (int)(long)(*val);
+	if (v < 0) {
+		if (sendipv4)
+			v = sock_get_ttl(sendipv4->socket);
+	}
+	if (v < 0) {
+		/* some error => use a reasonable default */
+		v = 63;
+	}
+	*val = (void*)(long)v;
+	return 0;
+}
+
+
 
 cfg_def_t core_cfg_def[] = {
 	{"debug",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
@@ -179,7 +234,8 @@ cfg_def_t core_cfg_def[] = {
 	{"dns_search_full_match",	CFG_VAR_INT,	0, 1, 0, 0,
 		"enable/disable domain name checks against the search list "
 		"in DNS answers"},
-	{"dns_reinit",		CFG_VAR_INT|CFG_INPUT_INT,	1, 1, dns_reinit_fixup, resolv_reinit,
+	{"dns_reinit",		CFG_VAR_INT|CFG_INPUT_INT,	1, 1, dns_reinit_fixup,
+		resolv_reinit,
 		"set to 1 in order to reinitialize the DNS resolver"},
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
@@ -230,6 +286,16 @@ cfg_def_t core_cfg_def[] = {
 			" exceeds udp_mtu"},
 	{"udp_mtu_try_proto", CFG_VAR_INT, 1, 4, 0, fix_global_req_flags,
 		"if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp)"},
+	{"udp4_raw", CFG_VAR_INT | CFG_ATOMIC, -1, 1, check_raw_sock_support, 0,
+		"enable/disable using a raw socket for sending UDP IPV4 packets."
+		" Should be  faster on multi-CPU linux running machines."},
+	{"udp4_raw_mtu", CFG_VAR_INT | CFG_ATOMIC, 28, 65535, 0, 0,
+		"set the MTU used when using raw sockets for udp sending."
+		" This  value will be used when deciding whether or not to fragment"
+		" the packets."},
+	{"udp4_raw_ttl", CFG_VAR_INT | CFG_ATOMIC, -1, 255, udp4_raw_ttl_fixup, 0,
+		"set the IP TTL used when using raw sockets for udp sending."
+		" -1 will use the same value as for normal udp sockets."},
 	{"force_rport",     CFG_VAR_INT, 0, 1,  0, fix_global_req_flags,
 		"force rport for all the received messages" },
 	{"memlog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,

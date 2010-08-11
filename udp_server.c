@@ -41,14 +41,14 @@
  *  2007-08-28  disable/set MTU discover option for the udp sockets
  *               (in linux it's enabled by default which produces udp packets
  *                with the DF flag ser) (patch from hscholz)
+ *  2010-06-15  support for using raw sockets for sending (andrei)
  */
 
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** udp send and loop-receive functions.
+ * @file udp_server.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 #include <stdlib.h>
@@ -67,6 +67,7 @@
 
 
 #include "udp_server.h"
+#include "compiler_opt.h"
 #include "globals.h"
 #include "config.h"
 #include "dprint.h"
@@ -74,6 +75,10 @@
 #include "mem/mem.h"
 #include "ip_addr.h"
 #include "cfg/cfg_struct.h"
+#ifdef USE_RAW_SOCKS
+#include "raw_sock.h"
+#endif /* USE_RAW_SOCKS */
+
 
 #ifdef USE_STUN
   #include "ser_stun.h"
@@ -551,6 +556,9 @@ int udp_send(struct dest_info* dst, char *buf, unsigned len)
 	int n;
 	int tolen;
 	struct ip_addr ip; /* used only on error, for debugging */
+#ifdef USE_RAW_SOCKS
+	int mtu;
+#endif /* USE_RAW_SOCKS */
 
 #ifdef DBG_MSG_QA
 	/* aborts on error, does nothing otherwise */
@@ -559,24 +567,47 @@ int udp_send(struct dest_info* dst, char *buf, unsigned len)
 		abort();
 	}
 #endif
-
-	tolen=sockaddru_len(dst->to);
+#ifdef USE_RAW_SOCKS
+	if (likely( ! (raw_udp4_send_sock >= 0 &&
+					cfg_get(core, core_cfg, udp4_raw) &&
+					dst->send_sock->address.af == AF_INET) )) {
+#endif /* USE_RAW_SOCKS */
+		/* normal send over udp socket */
+		tolen=sockaddru_len(dst->to);
 again:
-	n=sendto(dst->send_sock->socket, buf, len, 0, &dst->to.s, tolen);
+		n=sendto(dst->send_sock->socket, buf, len, 0, &dst->to.s, tolen);
 #ifdef XL_DEBUG
-	LOG(L_INFO, "INFO: send status: %d\n", n);
+		LOG(L_INFO, "INFO: send status: %d\n", n);
 #endif
-	if (n==-1){
-		su2ip_addr(&ip, &dst->to);
-		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%u,0,%s:%d,%d): %s(%d)\n",
-				buf,len, ip_addr2a(&ip), su_getport(&dst->to), tolen,
-				strerror(errno),errno);
-		if (errno==EINTR) goto again;
-		if (errno==EINVAL) {
-			LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
-			"one possible reason is the server is bound to localhost and\n"
-			"attempts to send to the net\n");
+		if (unlikely(n==-1)){
+			su2ip_addr(&ip, &dst->to);
+			LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%u,0,%s:%d,%d):"
+					" %s(%d)\n", buf,len, ip_addr2a(&ip),
+					su_getport(&dst->to), tolen, strerror(errno), errno);
+			if (errno==EINTR) goto again;
+			if (errno==EINVAL) {
+				LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
+				"one possible reason is the server is bound to localhost and\n"
+				"attempts to send to the net\n");
+			}
+		}
+#ifdef USE_RAW_SOCKS
+	} else {
+		/* send over a raw socket */
+		mtu = cfg_get(core, core_cfg, udp4_raw_mtu);
+raw_again:
+		n=raw_iphdr_udp4_send(raw_udp4_send_sock, buf, len,
+								&dst->send_sock->su,
+								&dst->to,
+								mtu);
+		if (unlikely(n==-1)){
+			su2ip_addr(&ip, &dst->to);
+			LOG(L_ERR, "ERROR: raw_iphdr_udp4_send(%d,%p,%u,...,%s:%d,%d):"
+					" %s(%d)\n", raw_udp4_send_sock, buf,len, ip_addr2a(&ip),
+					su_getport(&dst->to), mtu, strerror(errno), errno);
+			if (errno==EINTR) goto raw_again;
 		}
 	}
+#endif /* USE_RAW_SOCKS */
 	return n;
 }

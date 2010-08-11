@@ -200,6 +200,12 @@
 	#define IF_SCTP(x) warn("sctp support not compiled in")
 #endif
 
+#ifdef USE_RAW_SOCKS
+	#define IF_RAW_SOCKS(x) x
+#else
+	#define IF_RAW_SOCKS(x) warn("raw socket support not compiled in")
+#endif
+
 
 extern int yylex();
 /* safer then using yytext which can be array or pointer */
@@ -325,6 +331,9 @@ extern char *finame;
 %token FORCE_TCP_ALIAS
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
+%token UDP4_RAW
+%token UDP4_RAW_MTU
+%token UDP4_RAW_TTL
 %token IF
 %token ELSE
 %token SET_ADV_ADDRESS
@@ -1581,6 +1590,16 @@ assign_stm:
 		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0, 0); }
 	| UDP_MTU_TRY_PROTO EQUAL error
 		{ yyerror("TCP, TLS, SCTP or UDP expected"); }
+	| UDP4_RAW EQUAL intno { IF_RAW_SOCKS(default_core_cfg.udp4_raw=$3); }
+	| UDP4_RAW EQUAL error { yyerror("number expected"); }
+	| UDP4_RAW_MTU EQUAL NUMBER {
+		IF_RAW_SOCKS(default_core_cfg.udp4_raw_mtu=$3);
+	}
+	| UDP4_RAW_MTU EQUAL error { yyerror("number expected"); }
+	| UDP4_RAW_TTL EQUAL NUMBER {
+		IF_RAW_SOCKS(default_core_cfg.udp4_raw_ttl=$3);
+	}
+	| UDP4_RAW_TTL EQUAL error { yyerror("number expected"); }
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;

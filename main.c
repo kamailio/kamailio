@@ -73,9 +73,9 @@
  * 2008-08-08  sctp support (andrei)
  * 2008-08-19  -l support for mmultihomed addresses/addresses lists
  *                (e.g. -l (eth0, 1.2.3.4, foo.bar) ) (andrei)
- *  2010-04-19 added daemon_status_fd pipe to communicate the parent process
- *             with the main process in daemonize mode, so the parent process
- *             can return the proper exit status code (ibc)
+ * 2010-04-19  added daemon_status_fd pipe to communicate the parent process
+ *              with the main process in daemonize mode, so the parent process
+ *              can return the proper exit status code (ibc)
  */
 
 /** main file (init, daemonize, startup) 
@@ -145,6 +145,9 @@
 #include "nonsip_hooks.h"
 #include "ut.h"
 #include "signals.h"
+#ifdef USE_RAW_SOCKS
+#include "raw_sock.h"
+#endif /* USE_RAW_SOCKS */
 #ifdef USE_TCP
 #include "poll_types.h"
 #include "tcp_init.h"
@@ -185,6 +188,7 @@
 #include "pvapi_init.h" /* init */
 #include "pv_core.h" /* register core pvars */
 #include "ppcfg.h"
+#include "sock_ut.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -437,6 +441,9 @@ struct socket_info* bind_address=0; /* pointer to the crt. proc.
 									 listening address*/
 struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
 struct socket_info* sendipv6; /* same as above for ipv6 */
+#ifdef USE_RAW_SOCKS
+int raw_udp4_send_sock = -1; /* raw socket used for sending udp4 packets */
+#endif /* USE_RAW_SOCKS */
 #ifdef USE_TCP
 struct socket_info* sendipv4_tcp;
 struct socket_info* sendipv6_tcp;
@@ -1236,15 +1243,57 @@ int main_loop()
 		/* only one address, we ignore all the others */
 		if (udp_init(udp_listen)==-1) goto error;
 		bind_address=udp_listen;
-		if (bind_address->address.af==AF_INET)
+		if (bind_address->address.af==AF_INET) {
 			sendipv4=bind_address;
-		else
+#ifdef USE_RAW_SOCKS
+		/* always try to have a raw socket opened if we are using ipv4 */
+		raw_udp4_send_sock = raw_socket(IPPROTO_RAW, 0, 0, 1);
+		if (raw_udp4_send_sock < 0) {
+			if ( default_core_cfg.udp4_raw > 0) {
+				/* force use raw socket failed */
+				ERR("could not initialize raw udp send socket (ipv4):"
+						" %s (%d)\n", strerror(errno), errno);
+				if (errno == EPERM)
+					ERR("could not initialize raw socket on startup"
+						" due to inadequate permissions, please"
+						" restart as root or with CAP_NET_RAW\n");
+				goto error;
+			}
+			default_core_cfg.udp4_raw = 0; /* disabled */
+		} else {
+			register_fds(1);
+			if (default_core_cfg.udp4_raw < 0) {
+				/* auto-detect => use it */
+				default_core_cfg.udp4_raw = 1; /* enabled */
+				DBG("raw socket possible => turning it on\n");
+			}
+			if (default_core_cfg.udp4_raw_ttl < 0) {
+				/* auto-detect */
+				default_core_cfg.udp4_raw_ttl = sock_get_ttl(sendipv4->socket);
+				if (default_core_cfg.udp4_raw_ttl < 0)
+					/* error, use some default value */
+					default_core_cfg.udp4_raw_ttl = 63;
+			}
+		}
+#else
+		default_core.cfg.udp4_raw = 0;
+#endif /* USE_RAW_SOCKS */
+		} else
 			sendipv6=bind_address;
 		if (udp_listen->next){
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
 		}
 
+		/* delay cfg_shmize to the last moment (it must be called _before_
+		   forking). Changes to default cfgs after this point will be
+		   ignored.
+		*/
+		if (cfg_shmize() < 0) {
+			LOG(L_CRIT, "could not initialize shared configuration\n");
+			goto error;
+		}
+	
 		/* Register the children that will keep updating their
 		 * local configuration */
 		cfg_register_child(
@@ -1363,6 +1412,42 @@ int main_loop()
 			/* children_no per each socket */
 			cfg_register_child(children_no);
 		}
+#ifdef USE_RAW_SOCKS
+		/* always try to have a raw socket opened if we are using ipv4 */
+		if (sendipv4) {
+			raw_udp4_send_sock = raw_socket(IPPROTO_RAW, 0, 0, 1);
+			if (raw_udp4_send_sock < 0) {
+				if ( default_core_cfg.udp4_raw > 0) {
+						/* force use raw socket failed */
+						ERR("could not initialize raw udp send socket (ipv4):"
+								" %s (%d)\n", strerror(errno), errno);
+						if (errno == EPERM)
+							ERR("could not initialize raw socket on startup"
+								" due to inadequate permissions, please"
+								" restart as root or with CAP_NET_RAW\n");
+						goto error;
+					}
+					default_core_cfg.udp4_raw = 0; /* disabled */
+			} else {
+				register_fds(1);
+				if (default_core_cfg.udp4_raw < 0) {
+					/* auto-detect => use it */
+					default_core_cfg.udp4_raw = 1; /* enabled */
+					DBG("raw socket possible => turning it on\n");
+				}
+				if (default_core_cfg.udp4_raw_ttl < 0) {
+					/* auto-detect */
+					default_core_cfg.udp4_raw_ttl =
+						sock_get_ttl(sendipv4->socket);
+					if (default_core_cfg.udp4_raw_ttl < 0)
+						/* error, use some default value */
+						default_core_cfg.udp4_raw_ttl = 63;
+				}
+			}
+		}
+#else
+		default_core_cfg.udp4_raw = 0;
+#endif /* USE_RAW_SOCKS */
 #ifdef USE_SCTP
 		if (!sctp_disable){
 			for(si=sctp_listen; si; si=si->next){
@@ -1428,6 +1513,14 @@ int main_loop()
 			 * sending) so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 
+		/* delay cfg_shmize to the last moment (it must be called _before_
+		   forking). Changes to default cfgs after this point will be
+		   ignored (cfg_shmize() will copy the default cfgs into shmem).
+		*/
+		if (cfg_shmize() < 0) {
+			LOG(L_CRIT, "could not initialize shared configuration\n");
+			goto error;
+		}
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
@@ -2288,11 +2381,6 @@ try_select_again:	tval.tv_usec = 0;
 	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
-		goto error;
-	}
-	
-	if (cfg_shmize() < 0) {
-		LOG(L_CRIT, "could not initialize shared configuration\n");
 		goto error;
 	}
 	

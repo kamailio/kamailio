@@ -21,6 +21,19 @@ core:
             t_set_fr($foo) (equivalent now with t_set_fr("$foo")).
   - all the module functions can now be called with any constant expression
       as parameters. E.g.: f("7 *" +" 6 = " + 7 * 6);
+  - major performance increase on Linux multi-cpu machines that send a lot
+     of UDP IPv4 packets (40-50% faster in stateless mode). For it to work
+     udp4_raw must be enabled or set into auto mode in sr.cfg and sr must be
+     started as root or with CAP_NET_RAW. Note that even if udp4_raw is
+     off (default), if sr was started with enough privileges, it can be
+     enabled at runtime.
+     The support for using raw sockets is also available on FreeBSD (compiled
+     by default but not tested for performance yet), NetBSD, OpenBSD and
+     Darwin (not tested and not compiled by default, needs
+     make cfg extra_defs=-DUSE_RAW_SOCKS). To check if the support is
+     compiled, use ser -V |grep --color RAW_SOCKS or for a running
+     ser: sercmd core.udp4_raw_info.
+     See udp4_raw, udp4_raw_mtu and udp4_raw_ttl below.
   - onreply_route {...} is now equivalent with onreply_route[0] {...}
   - global, per protocol blacklist ignore masks (via extended send_flags).
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
@@ -29,6 +42,28 @@ core:
   - support for permanent entries in the DNS cache.
 
 new config variables:
+  - udp4_raw - enables raw socket support for sending UDP IPv4 datagrams 
+      (40-50% performance increase on linux multi-cpu).
+      Possible values: 0 - disabled (default), 1 - enabled, -1 auto.
+      In "auto" mode it will be enabled if possible (sr started as root or
+      with CAP_NET_RAW).
+      udp4_raw can be used on Linux and FreeBSD. For other BSDs and Darwin
+      one must compile with -DUSE_RAW_SOCKS.
+      On Linux one should also set udp4_raw_mtu if the MTU on any network
+      interface that could be used for sending is smaller then 1500.
+      Can be set at runtime as long as sr was started with enough privileges
+      (core.udp4_raw).
+  - udp4_raw_mtu - MTU value used for UDP IPv4 packets when udp4_raw is
+      enabled.  It should be set to the minimum MTU of all the network
+      interfaces that could be used for sending. The default value is 1500.
+      Note that on BSDs it does not need to be set (if set it will be ignored,
+      the proper MTU will be used automatically by the kernel). On Linux it
+      should be set.
+      Can be set at runtime (core.udp4_raw_mtu).
+  - udp4_raw_ttl - TTL value used for UDP IPv4 packets when udp4_raw is
+      enabled. By default it is set to auto mode (-1), meaning that the
+      same TTL will be used as for normal UDP sockets.
+      Can be set at runtime (core.udp4_raw_ttl).
   - dst_blacklist_udp_imask - global blacklist events ignore mask for udp
     (a blacklist event/reason set in this variable will be ignored when 
     deciding whether or not to blacklist an udp destination). Can be set
