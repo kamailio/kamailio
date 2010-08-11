@@ -29,7 +29,12 @@ DEFS:= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' \
 # from a module Makefile)
 #LIBS:=$(filter-out -lfl  -ldl -lpthread -lssl -lcrypto, $(LIBS))
 
-LIBS:= -lresolv
+ifeq  ($(OS), dragonfly)
+	LIBS:= -L$(LOCALBASE)/lib
+else
+	LIBS:= -lresolv
+endif
+
 ifeq  ($(OS), solaris)
 	LIBS+= -L$(LOCALBASE)/lib -lxnet -lnsl
 endif
