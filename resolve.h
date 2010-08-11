@@ -47,6 +47,7 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include "counters.h"
 
 #ifdef __OS_darwin
 #include <arpa/nameser_compat.h>
@@ -77,6 +78,14 @@
 /* get_record flags */
 #define RES_ONLY_TYPE 1   /* return only the specified type records */
 #define RES_AR		  2   /* return also the additional records */
+
+/* counter for failed DNS requests
+*/
+struct dns_counters_h {
+    counter_handle_t failed_dns_req;
+};
+
+extern struct dns_counters_h dns_cnts_h;
 
 /* query union*/
 union dns_query{

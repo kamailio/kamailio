@@ -77,7 +77,13 @@
 #include "dns_cache.h"
 #endif
 
-
+/* counters framework */
+struct dns_counters_h dns_cnts_h;
+counter_def_t dns_cnt_defs[] =  {
+	{&dns_cnts_h.failed_dns_req, "failed_dns_request", 0, 0, 0,
+		"incremented each time a DNS request has failed."},
+	{0, 0, 0, 0, 0, 0 }
+};
 
 /* mallocs for local stuff */
 #define local_malloc pkg_malloc
@@ -119,6 +125,18 @@ int register_resolv_reinit_cb(on_resolv_reinit cb)
 }
 #endif
 
+/* counter init function
+  must be called before fork
+*/
+static int stat_init()
+{
+	if (counter_register_array("dns", dns_cnt_defs) < 0)
+		goto error;
+	return 0;
+error:
+	return -1;
+}
+
 /* init. the resolver
  * params: retr_time  - time before retransmitting (must be >0)
  *         retr_no    - retransmissions number
@@ -157,12 +175,17 @@ static int _resolv_init()
 /* wrapper function to initialize the resolver at startup */
 int resolv_init()
 {
+	int res = -1;
 	_resolv_init();
 
 #ifdef USE_NAPTR
 	init_naptr_proto_prefs();
 #endif
-	return 0;
+	/* init counter API only at startup
+	 * This function must be called before DNS cache init method (if available)
+	 */
+	res = stat_init();
+	return res;
 }
 
 /* wrapper function to reinitialize the resolver
@@ -1486,11 +1509,17 @@ end:
  */
 struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto)
 {
+	struct hostent* res = NULL;
 #ifdef USE_NAPTR
 	if (cfg_get(core, core_cfg, dns_try_naptr))
-		return naptr_sip_resolvehost(name, port, proto);
+		res = naptr_sip_resolvehost(name, port, proto);
 #endif
-	return srv_sip_resolvehost(name, 0, port, proto, 0, 0);
+	res = srv_sip_resolvehost(name, 0, port, proto, 0, 0);
+	if( unlikely(!res) ){
+		/* failed DNS request */
+		counter_inc(dns_cnts_h.failed_dns_req);
+	}
+	return res;
 }
 
 
