@@ -2057,15 +2057,108 @@ int pv_set_xto_attr(struct sip_msg* msg, pv_param_t *param,
 				goto error;
 			}
 			buf.len = val->rs.len;
-			memcpy(buf.s, val->rs.s, val->rs.len); 
+			memcpy(buf.s, val->rs.s, val->rs.len);
 			loffset = tb->uri.s - msg->buf;
 			llen    = tb->uri.len;
 		break;
 		case 1: /* username */
+			if(val == NULL || (val->flags&PV_VAL_NULL))
+			{
+				if(tb->parsed_uri.user.len==0)
+					return 0; /* nothing to delete */
+				/* delete username */
+				loffset = tb->parsed_uri.user.s - msg->buf;
+				llen    = tb->parsed_uri.user.len;
+				/* delete '@' after */
+				if(tb->parsed_uri.user.s[tb->parsed_uri.user.len]=='@')
+					llen++;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("attempt to assign non-str value to To header"
+						" display name\n");
+				return -1;
+			}
+			buf.s = pkg_malloc(val->rs.len+1);
+			if (buf.s==0)
+			{
+				LM_ERR("no more pkg mem\n");
+				goto error;
+			}
+			buf.len = val->rs.len;
+			memcpy(buf.s, val->rs.s, val->rs.len);
+			if(tb->parsed_uri.user.len==0)
+			{
+				l = anchor_lump(msg, tb->parsed_uri.host.s - msg->buf, 0, 0);
+				buf.s[buf.len] = '@';
+				buf.len++;
+			} else {
+				/* delete username */
+				loffset = tb->parsed_uri.user.s - msg->buf;
+				llen    = tb->parsed_uri.user.len;
+			}
 		break;
 		case 2: /* domain */
+			if(val == NULL || (val->flags&PV_VAL_NULL))
+			{
+				LM_WARN("To header URI domain cannot be deleted\n");
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("attempt to assign non-str value to To header"
+						" URI domain\n");
+				return -1;
+			}
+			buf.s = pkg_malloc(val->rs.len);
+			if (buf.s==0)
+			{
+				LM_ERR("no more pkg mem\n");
+				goto error;
+			}
+			buf.len = val->rs.len;
+			memcpy(buf.s, val->rs.s, val->rs.len);
+			loffset = tb->parsed_uri.host.s - msg->buf;
+			llen    = tb->parsed_uri.host.len;
 		break;
 		case 3: /* display */
+			if(val == NULL || (val->flags&PV_VAL_NULL))
+			{
+				if(tb->display.len==0)
+					return 0; /* nothing to delete */
+				/* delete display */
+				loffset = tb->display.s - msg->buf;
+				llen    = tb->display.len;
+				/* delete whitespace after */
+				if(tb->display.s[tb->display.len]==' ')
+					llen++;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("attempt to assign non-str value to To header"
+						" display name\n");
+				return -1;
+			}
+			buf.s = pkg_malloc(val->rs.len+1);
+			if (buf.s==0)
+			{
+				LM_ERR("no more pkg mem\n");
+				goto error;
+			}
+			buf.len = val->rs.len;
+			memcpy(buf.s, val->rs.s, val->rs.len);
+			if(tb->display.len==0)
+			{
+				l = anchor_lump(msg, tb->body.s - msg->buf, 0, 0);
+				buf.s[buf.len] = ' ';
+				buf.len++;
+			} else {
+				/* delete display */
+				loffset = tb->display.s - msg->buf;
+				llen    = tb->display.len;
+			}
 		break;
 	}
 
@@ -2079,7 +2172,7 @@ int pv_set_xto_attr(struct sip_msg* msg, pv_param_t *param,
 		}
 	}
 	/* set new value when given */
-	if(buf.len>0)
+	if(l!=NULL && buf.len>0)
 	{
 		if (insert_new_lump_after(l, buf.s, buf.len, 0)==0)
 		{
@@ -2101,13 +2194,16 @@ int pv_set_to_attr(struct sip_msg* msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
-	if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1)
-	{
+	if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1) {
 		LM_ERR("cannot parse To header\n");
 		return -1;
 	}
 	if(msg->to==NULL || get_to(msg)==NULL) {
 		LM_DBG("no To header\n");
+		return -1;
+	}
+	if(parse_to_uri(msg)==NULL) {
+		LM_ERR("cannot parse To header\n");
 		return -1;
 	}
 	return pv_set_xto_attr(msg, param, op, val, get_to(msg), type);
@@ -2117,6 +2213,24 @@ int pv_set_to_uri(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
 	return pv_set_to_attr(msg, param, op, val, 0);
+}
+
+int pv_set_to_username(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_to_attr(msg, param, op, val, 1);
+}
+
+int pv_set_to_domain(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_to_attr(msg, param, op, val, 2);
+}
+
+int pv_set_to_display(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_to_attr(msg, param, op, val, 3);
 }
 
 /********* end PV set functions *********/

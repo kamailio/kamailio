@@ -328,13 +328,13 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_srcport, 0,
 		0, 0, 0, 0},
 	{{"td", (sizeof("td")-1)}, /* */
-		PVT_OTHER, pv_get_to_attr, 0,
+		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
 		0, 0, pv_init_iname, 3},
 	{{"to.domain", (sizeof("to.domain")-1)}, /* */
-		PVT_OTHER, pv_get_to_attr, 0,
+		PVT_OTHER, pv_get_to_attr, pv_set_to_domain,
 		0, 0, pv_init_iname, 3},
 	{{"tn", (sizeof("tn")-1)}, /* */
-		PVT_OTHER, pv_get_to_attr, 0,
+		PVT_OTHER, pv_get_to_attr, pv_set_to_display,
 		0, 0, pv_init_iname, 5},
 	{{"tt", (sizeof("tt")-1)}, /* */
 		PVT_OTHER, pv_get_to_attr, 0,
@@ -343,13 +343,13 @@ static pv_export_t mod_pvs[] = {
 		PVT_TO, pv_get_to_attr, pv_set_to_uri,
 		0, 0, pv_init_iname, 1},
 	{{"to", (sizeof("to")-1)}, /* */
-		PVT_TO, pv_get_to_attr, 0,
+		PVT_TO, pv_get_to_attr, pv_set_to_uri,
 		0, 0, pv_init_iname, 1},
 	{{"tU", (sizeof("tU")-1)}, /* */
-		PVT_OTHER, pv_get_to_attr, 0,
+		PVT_OTHER, pv_get_to_attr, pv_set_to_username,
 		0, 0, pv_init_iname, 2},
 	{{"to.user", (sizeof("to.user")-1)}, /* */
-		PVT_OTHER, pv_get_to_attr, 0,
+		PVT_OTHER, pv_get_to_attr, pv_set_to_username,
 		0, 0, pv_init_iname, 2},
 	{{"true", (sizeof("true")-1)}, /* */
 		PVT_OTHER, pv_get_true, 0,
