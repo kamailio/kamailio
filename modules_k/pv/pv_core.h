@@ -231,6 +231,10 @@ int pv_set_sflags(struct sip_msg* msg, pv_param_t *param,
 
 int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
+
+int pv_set_to_uri(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
 /********* end PV set functions *********/
 
 int pv_parse_scriptvar_name(pv_spec_p sp, str *in);

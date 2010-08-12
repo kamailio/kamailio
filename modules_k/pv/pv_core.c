@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2001-2005 FhG Fokus
  * Copyright (C) 2005 Voice Sistem SRL
+ * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -29,6 +30,7 @@
 #include "../../dset.h"
 #include "../../action.h"
 #include "../../socket_info.h"
+#include "../../data_lump.h"
 #include "../../lib/kcore/cmpapi.h"
 
 #include "../../parser/parse_from.h"
@@ -2019,6 +2021,104 @@ int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
 
 	return 0;
 }
+
+int pv_set_xto_attr(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val, struct to_body *tb, int type)
+{
+	str buf = {0, 0};
+	struct lump *l = NULL;
+	int loffset = 0;
+	int llen = 0;
+
+	if(msg==NULL || param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+					
+	switch(type)
+	{
+		case 0: /* uri */
+			if(val == NULL || (val->flags&PV_VAL_NULL))
+			{
+				LM_WARN("To header URI cannot be deleted\n");
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("attempt to assign non-str value to To header URI\n");
+				return -1;
+			}
+
+			buf.s = pkg_malloc(val->rs.len);
+			if (buf.s==0)
+			{
+				LM_ERR("no more pkg mem\n");
+				goto error;
+			}
+			buf.len = val->rs.len;
+			memcpy(buf.s, val->rs.s, val->rs.len); 
+			loffset = tb->uri.s - msg->buf;
+			llen    = tb->uri.len;
+		break;
+		case 1: /* username */
+		break;
+		case 2: /* domain */
+		break;
+		case 3: /* display */
+		break;
+	}
+
+	/* delete old value */
+	if(llen>0)
+	{
+		if ((l=del_lump(msg, loffset, llen, 0))==0)
+		{
+			LM_ERR("failed to delete xto attribute %d\n", type);
+			goto error;
+		}
+	}
+	/* set new value when given */
+	if(buf.len>0)
+	{
+		if (insert_new_lump_after(l, buf.s, buf.len, 0)==0)
+		{
+			LM_ERR("failed to set xto attribute %d\n", type);
+			goto error;
+		}
+	}
+	return 0;
+
+error:
+	if(buf.s!=0)
+		pkg_free(buf.s);
+	return -1;
+}
+
+int pv_set_to_attr(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val, int type)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1)
+	{
+		LM_ERR("cannot parse To header\n");
+		return -1;
+	}
+	if(msg->to==NULL || get_to(msg)==NULL) {
+		LM_DBG("no To header\n");
+		return -1;
+	}
+	return pv_set_xto_attr(msg, param, op, val, get_to(msg), type);
+}
+
+int pv_set_to_uri(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_to_attr(msg, param, op, val, 0);
+}
+
 /********* end PV set functions *********/
 
 int pv_parse_scriptvar_name(pv_spec_p sp, str *in)

@@ -340,7 +340,7 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_to_attr, 0,
 		0, 0, pv_init_iname, 4},
 	{{"tu", (sizeof("tu")-1)}, /* */
-		PVT_TO, pv_get_to_attr, 0,
+		PVT_TO, pv_get_to_attr, pv_set_to_uri,
 		0, 0, pv_init_iname, 1},
 	{{"to", (sizeof("to")-1)}, /* */
 		PVT_TO, pv_get_to_attr, 0,
