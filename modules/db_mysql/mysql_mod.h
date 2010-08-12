@@ -36,10 +36,21 @@
 #ifndef _MYSQL_MOD_H
 #define _MYSQL_MOD_H
 
+#include "../../counters.h"
+
+/* counter struct
+*/
+struct mysql_counters_h {
+    counter_handle_t driver_err;
+};
+/* defined in km_dbase.c */
+extern struct mysql_counters_h mysql_cnts_h;
+
 /** @defgroup mysql MySQL db driver
  *  @ingroup DB_API
  */
 /** @{ */
+
 extern int my_ping_interval;
 extern unsigned int my_connect_to;
 extern unsigned int my_send_to;

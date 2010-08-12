@@ -57,6 +57,12 @@ unsigned int my_retries = 1;    /* Number of retries when command fails */
 
 unsigned long my_client_ver = 0;
 
+struct mysql_counters_h mysql_cnts_h;
+counter_def_t mysql_cnt_defs[] =  {
+	{&mysql_cnts_h.driver_err, "Mysql driver erros", 0, 0, 0,
+		"incremented each time a Mysql error happened because the server/connection has failed."},
+	{0, 0, 0, 0, 0, 0 }
+};
 #define DEFAULT_MY_SEND_TO  2   /* in seconds */
 #define DEFAULT_MY_RECV_TO  4   /* in seconds */
 
@@ -145,8 +151,12 @@ static int mysql_mod_init(void)
 			" compiled against %ld)\n", MYSQL_VERSION_ID);
 	}
 #endif
+	if (counter_register_array("mysql", mysql_cnt_defs) < 0)
+		goto error;
 
 	return kam_mysql_mod_init();
+error:
+	return -1;
 }
 
 /** @} */

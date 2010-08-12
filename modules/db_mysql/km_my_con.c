@@ -34,7 +34,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-
+#include "mysql_mod.h"
 
 /*! \brief
  * Create a new connection structure,
@@ -107,6 +107,8 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 				id->database, id->port, 0, 0)) {
 #endif
 		LM_ERR("driver error: %s\n", mysql_error(ptr->con));
+		/* increase error counter */
+		counter_inc(mysql_cnts_h.driver_err);
 		mysql_close(ptr->con);
 		goto err;
 	}

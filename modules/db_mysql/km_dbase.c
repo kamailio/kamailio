@@ -81,6 +81,7 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 		if ((t - CON_TIMESTAMP(_h)) > my_ping_interval) {
 			if (mysql_ping(CON_CONNECTION(_h))) {
 				LM_WARN("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
+				counter_inc(mysql_cnts_h.driver_err);
 			}
 		}
 		/*
@@ -115,6 +116,10 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 		}
 	}
 	LM_ERR("driver error on query: %s\n", mysql_error(CON_CONNECTION(_h)));
+	/* Bad queries don't count */
+	if(code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
+		counter_inc(mysql_cnts_h.driver_err);
+	}
 	return -2;
 }
 
