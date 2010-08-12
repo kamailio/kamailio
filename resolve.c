@@ -990,6 +990,8 @@ error:
 		LOG(L_ERR, "ERROR: get_record \n");
 		if (head) free_rdata_list(head);
 not_found:
+	/* increment error counter */
+	counter_inc(dns_cnts_h.failed_dns_req);
 	return 0;
 }
 
