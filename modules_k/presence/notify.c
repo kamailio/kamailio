@@ -1693,7 +1693,7 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			ps->code,((c_back_param*)(*ps->param))->to_tag.len,
 			((c_back_param*)(*ps->param))->to_tag.s);
 
-	if(ps->code >= 300)
+	if(ps->code >= 300 && (ps->code != 408 || timeout_rm_subs))
 	{
 		unsigned int hash_code;
 

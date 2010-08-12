@@ -358,6 +358,29 @@ modparam("presence", "enable_sphere_check", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>timeout_rm_subs</varname> (int)</title>
+		<para>
+		This parameter is a flag that should be set if subscriptions should be
+		removed from the active_watchers when a NOTIFY times out. RFC3265
+		section 3.2.2 defines this behaviour as a SHOULD, so by default it is
+		on. Disabling this will keep subscriptions active on unreliable
+		networks.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_rm_subs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "timeout_rm_subs", 0)
+...
+	</programlisting>
+		</example>
+	</section>
+
 </section>
 
 <section>

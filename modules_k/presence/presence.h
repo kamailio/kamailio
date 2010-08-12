@@ -68,6 +68,7 @@ extern str server_address;
 extern int max_expires;
 extern int fallback2db;
 extern int sphere_enable;
+extern int timeout_rm_subs;
 extern int shtable_size;
 extern shtable_t subs_htable;
 
