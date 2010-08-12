@@ -244,6 +244,18 @@ int pv_set_to_domain(struct sip_msg* msg, pv_param_t *param,
 int pv_set_to_display(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
+int pv_set_from_uri(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_from_username(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_from_domain(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_from_display(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
 /********* end PV set functions *********/
 
 int pv_parse_scriptvar_name(pv_spec_p sp, str *in);

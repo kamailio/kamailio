@@ -2203,7 +2203,7 @@ int pv_set_to_attr(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 	if(parse_to_uri(msg)==NULL) {
-		LM_ERR("cannot parse To header\n");
+		LM_ERR("cannot parse To header URI\n");
 		return -1;
 	}
 	return pv_set_xto_attr(msg, param, op, val, get_to(msg), type);
@@ -2231,6 +2231,49 @@ int pv_set_to_display(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
 	return pv_set_to_attr(msg, param, op, val, 3);
+}
+
+int pv_set_from_attr(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val, int type)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(parse_from_header(msg)<0)
+	{
+		LM_ERR("failed to parse From header\n");
+		return -1;
+	}
+	if(parse_from_uri(msg)==NULL)
+	{
+		LM_ERR("cannot parse From header URI\n");
+		return -1;
+	}
+	return pv_set_xto_attr(msg, param, op, val, get_from(msg), type);
+}
+
+int pv_set_from_uri(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_from_attr(msg, param, op, val, 0);
+}
+
+int pv_set_from_username(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_from_attr(msg, param, op, val, 1);
+}
+
+int pv_set_from_domain(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_from_attr(msg, param, op, val, 2);
+}
+
+int pv_set_from_display(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	return pv_set_from_attr(msg, param, op, val, 3);
 }
 
 /********* end PV set functions *********/

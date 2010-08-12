@@ -178,13 +178,13 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_errinfo_attr, 0,
 		0, 0, pv_init_iname, 4},
 	{{"fd", (sizeof("fd")-1)}, /* */
-		PVT_OTHER, pv_get_from_attr, 0,
+		PVT_OTHER, pv_get_from_attr, pv_set_from_domain,
 		0, 0, pv_init_iname, 3},
 	{{"from.domain", (sizeof("from.domain")-1)}, /* */
-		PVT_OTHER, pv_get_from_attr, 0,
+		PVT_OTHER, pv_get_from_attr, pv_set_from_domain,
 		0, 0, pv_init_iname, 3},
 	{{"fn", (sizeof("fn")-1)}, /* */
-		PVT_OTHER, pv_get_from_attr, 0,
+		PVT_OTHER, pv_get_from_attr, pv_set_from_display,
 		0, 0, pv_init_iname, 5},
 	{{"fs", (sizeof("fs")-1)}, /* */
 		PVT_OTHER, pv_get_force_sock, pv_set_force_sock,
@@ -193,16 +193,16 @@ static pv_export_t mod_pvs[] = {
 		PVT_OTHER, pv_get_from_attr, 0,
 		0, 0, pv_init_iname, 4},
 	{{"fu", (sizeof("fu")-1)}, /* */
-		PVT_FROM, pv_get_from_attr, 0,
+		PVT_FROM, pv_get_from_attr, pv_set_from_uri,
 		0, 0, pv_init_iname, 1},
 	{{"from", (sizeof("from")-1)}, /* */
-		PVT_FROM, pv_get_from_attr, 0,
+		PVT_FROM, pv_get_from_attr, pv_set_from_uri,
 		0, 0, pv_init_iname, 1},
 	{{"fU", (sizeof("fU")-1)}, /* */
-		PVT_OTHER, pv_get_from_attr, 0,
+		PVT_OTHER, pv_get_from_attr, pv_set_from_username,
 		0, 0, pv_init_iname, 2},
 	{{"from.user", (sizeof("from.user")-1)}, /* */
-		PVT_OTHER, pv_get_from_attr, 0,
+		PVT_OTHER, pv_get_from_attr, pv_set_from_username,
 		0, 0, pv_init_iname, 2},
 	{{"mb", (sizeof("mb")-1)}, /* */
 		PVT_OTHER, pv_get_msg_buf, 0,
