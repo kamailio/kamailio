@@ -340,10 +340,13 @@ char* check_poll_method(enum poll_types poll_method)
 #ifndef HAVE_KQUEUE
 			ret="kqueue not supported, try re-compiling with -DHAVE_KQUEUE";
 #else
-		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD 2.9, Darwin */
+		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD 2.9, Darwin, DragonFly */
 	#ifdef __OS_freebsd
+		/* all DragonFly versions have kqueque */
+		#ifndef __OS_dragonfly
 			if (_os_ver<0x0401) /* if ver < 4.1 */
 				ret="kqueue not supported on FreeBSD < 4.1";
+		#endif /* __OS_dragonfly */
 	#elif defined (__OS_netbsd)
 			if (_os_ver<0x020000) /* if ver < 2.0 */
 				ret="kqueue not supported on NetBSD < 2.0";
@@ -388,9 +391,12 @@ enum poll_types choose_poll_method()
 #endif
 #ifdef HAVE_KQUEUE
 	if (poll_method==0)
-		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD 2.9, Darwin */
+		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD 2.9, Darwin, DragonFly */
 	#ifdef __OS_freebsd
+		/* all DragonFly versions have kqueque */
+		#ifndef __OS_dragonfly
 		if (_os_ver>=0x0401) /* if ver >= 4.1 */
+		#endif /**__OS_dragonfly
 	#elif defined (__OS_netbsd)
 		if (_os_ver>=0x020000) /* if ver >= 2.0 */
 	#elif defined (__OS_openbsd)
