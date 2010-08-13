@@ -396,7 +396,7 @@ enum poll_types choose_poll_method()
 		/* all DragonFly versions have kqueque */
 		#ifndef __OS_dragonfly
 		if (_os_ver>=0x0401) /* if ver >= 4.1 */
-		#endif /**__OS_dragonfly
+		#endif /**__OS_dragonfly */
 	#elif defined (__OS_netbsd)
 		if (_os_ver>=0x020000) /* if ver >= 2.0 */
 	#elif defined (__OS_openbsd)
