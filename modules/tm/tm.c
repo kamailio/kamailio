@@ -87,16 +87,17 @@
  *  2008-08-11  sctp support: t_relay_to_sctp, t_replicate_sctp,
  *               t_forward_nonack_sctp (andrei)
  *  2009-03-18  added a new param: auto_inv_100_reason (aheise) 
+ *  2010-03-03  added new params: local_cancel_reason and e2e_cancel_reason
+ *              (andrei)
  */
 
-/*!
- * \file 
- * \brief TM :: Module API (core)
- * \ingroup tm
+/** TM :: Module API (core).
+ * @file 
+ * @ingroup tm
  */
 
-/*!
- * \defgroup tm TM :: Transaction stateful proxy support
+/**
+ * @defgroup tm TM :: Transaction stateful proxy support
  *
    The TM module enables stateful processing of SIP transactions. The main use
    of stateful logic, which is costly in terms of memory and CPU, is some
@@ -283,6 +284,10 @@ static int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar);
 static int t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
 static int t_set_disable_6xx(struct sip_msg* msg, char* on_off, char* foo);
 static int t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
+#ifdef CANCEL_REASON_SUPPORT
+static int t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
+										char* f);
+#endif /* CANCEL_REASON_SUPPORT */
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -428,6 +433,15 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_disable_failover", t_set_disable_failover, 1, fixup_var_int_1,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+#ifdef CANCEL_REASON_SUPPORT
+	{"t_set_no_e2e_cancel_reason", t_set_no_e2e_cancel_reason, 1,
+		fixup_var_int_1,
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	/* alias for t_set_no_e2e_cancel_reason */
+	{"t_disable_e2e_cancel_reason", t_set_no_e2e_cancel_reason, 1,
+		fixup_var_int_1,
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+#endif /* CANCEL_REASON_SUPPORT */
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,  FAILURE_ROUTE},
 	{"t_branch_replied",  t_branch_replied,         0, 0,  FAILURE_ROUTE},
 	{"t_any_timeout",     t_any_timeout,            0, 0, 
@@ -502,6 +516,10 @@ static param_export_t params[]={
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
 	{"local_ack_mode",      PARAM_INT, &default_tm_cfg.local_ack_mode        },
 	{"failure_reply_mode",  PARAM_INT, &failure_reply_mode                   },
+#ifdef CANCEL_REASON_SUPPORT
+	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason   },
+	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },
+#endif /* CANCEL_REASON_SUPPORT */
 	{0,0,0}
 };
 
@@ -1710,6 +1728,11 @@ T_SET_FLAG_GEN_FUNC(t_set_disable_6xx, T_DISABLE_6xx)
 /* disable dns failover for the current transaction */
 T_SET_FLAG_GEN_FUNC(t_set_disable_failover, T_DISABLE_FAILOVER)
 
+
+#ifdef CANCEL_REASON_SUPPORT
+/* disable/enable e2e cancel reason copy for the current transaction */
+T_SET_FLAG_GEN_FUNC(t_set_no_e2e_cancel_reason, T_NO_E2E_CANCEL_REASON)
+#endif /* CANCEL_REASON_SUPPORT */
 
 
 /* script function, FAILURE_ROUTE only, returns true if the 

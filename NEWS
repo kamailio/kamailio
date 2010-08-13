@@ -109,6 +109,23 @@ modules:
             increase dramatically especially for large number of
             connections (>1000).
 tm:
+   - reason header support (RFC3326) both for CANCELs generated due to a
+      received final reply and for hop by hop CANCELs generated because of a
+      received CANCEL.
+      E.g.: reason header added for a CANCEL generated after a 200 reply was
+            received on one of the branches "Reason: SIP;cause=200".
+      The reason header support can be turned on/off using either tm
+      module parameters or in the end to end CANCEL case also on a per
+      transaction basis, using a script function:
+       local_cancel_reason = 0 | 1 (default 1/on) - turns on adding reason
+         headers for CANCELs generated due to a final reply. Can be changed
+         at runtime.
+       e2e_cancel_reason = 0 | 1 (default 1/on) - turns on copying reason
+         headers from a received end to end CANCEL (the generated hop by hop
+         CANCELs will have the same reason headers as the received CANCEL).
+         Can be changed at runtime.
+       t_set_no_e2e_cancel_reason(0|1) - enable/disable cancel reason 
+         header copying on a per transaction basis (0 - enable, 1 disable).
    - t_reply() can be used both from the main/core onreply_route{} and tm
      onreply_route[...]{}s.
 

@@ -1213,7 +1213,9 @@ if (!t_next_contacts()) {
 				INVITE transactions) it will return true if the corresponding
 				INVITE transaction is found and still active and false if not.
 				</para>
-				<note>Note that the e2e ACK matching is more of a hint
+				<note>
+				<para>
+				Note that the e2e ACK matching is more of a hint
 				then a certainty. A delayed e2e ACK might arrive after the
 				transaction wait time elapses, when the INVITE transaction no
 				longer exists and thus would not match anything. There are
@@ -1221,6 +1223,7 @@ if (!t_next_contacts()) {
 				for e2e ACK matching (since this is not needed for a statefull
 				proxy and it requires additional memory, tm will not keep this
 				information unless needed by some other module or callbacks).
+				</para>
 				</note>
 			</listitem>
 			<listitem>
@@ -1321,27 +1324,27 @@ route {
 	<para>
 		There are several function prototypes:
 		<itemizedlist>
-		<listitem>
+		<listitem><para>
 	    <function>t_replicate(uri)</function>,
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_replicate(host, port)</function>,
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_replicat_udp(host, port)</function>
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_replicate_tcp(host, port)</function>
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_replicate_tls(host, port)</function>
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_replicate_sctp(host, port)</function>
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_replicate_to(proto, hostport)</function>
-		</listitem>
+		</para></listitem>
 		</itemizedlist>
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
@@ -1397,18 +1400,18 @@ t_replicate_to_udp("1.2.3.4", "5060");
 	<para>
 		There are several function prototypes:
 		<itemizedlist>
-		<listitem>
+		<listitem><para>
 	    <function>t_relay_to()</function>,
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_relay_to(proxy)</function>,
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_relay_to(flags)</function>
-		</listitem>
-		<listitem>
+		</para></listitem>
+		<listitem><para>
 	    <function>t_relay_to(proxy, flags)</function>
-		</listitem>
+		</para></listitem>
 		</itemizedlist>
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
@@ -1456,5 +1459,37 @@ t_relay_to("0x01");
 	    </programlisting>
 	</example>
     </section>
+
+
+	<section id="t_set_no_e2e_cancel_reason">
+	<title>
+		<function>t_set_no_e2e_cancel_reason(0|1)</function>
+	</title>
+	<para>
+		Enables/disables reason header (RFC 3326) copying from the triggering
+		received CANCEL to the generated hop-by-hop CANCEL. 0 enables and
+		1 disables.
+	</para>
+	<para>
+		It overrides the <varname>e2e_cancel_reason</varname> setting (module
+		 parameter) for the current transaction.
+	</para>
+	<para>
+		See also: <varname>e2e_cancel_reason</varname>.
+	</para>
+	<example>
+		<title><function>t_set_no_e2e_cancel_reason</function> usage</title>
+		<programlisting>
+...
+route {
+...
+	if (src_ip!=10.0.0.0/8) #  don't trust CANCELs from the outside
+		t_set_no_e2e_cancel_reason(1); # turn off CANCEL reason header copying
+...
+}
+		</programlisting>
+	</example>
+	</section>
+
 
 </section>

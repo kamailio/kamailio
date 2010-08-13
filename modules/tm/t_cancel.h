@@ -35,6 +35,7 @@
  *  2009-07-14  should_cancel_branch() renamed to prepare_cancel_branch() to
  *               better reflect its purpose
  *              which_cancel() renamed to prepare_to_cancel() (andrei)
+ * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
  */
 
 
@@ -46,6 +47,7 @@
 #include "../../atomic_ops.h"
 #include "defs.h"
 #include "h_table.h"
+#include "t_reply.h"
 
 
 /* a buffer is empty but cannot be used by anyone else;
@@ -79,9 +81,13 @@
 
 
 void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
-int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags );
+int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags );
 int cancel_all_uacs(struct cell *trans, int how);
-int cancel_branch( struct cell *t, int branch, int flags );
+int cancel_branch( struct cell *t, int branch,
+#ifdef CANCEL_REASON_SUPPORT
+					struct cancel_reason* reason,
+#endif /* CANCEL_REASON_SUPPORT */
+					int flags );
 
 typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
 								int flags );

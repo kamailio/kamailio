@@ -46,6 +46,7 @@
  *              reflecting its purpose
  *             prepare_to_cancel() takes now an additional skip_branches
  *              bitmap parameter (andrei)
+ * 2010-02-26  cancel reason (rfc3326) basic support (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
@@ -102,13 +103,14 @@ void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
 
 /* cancel branches scheduled for deletion
  * params: t          - transaction
- *          cancel_bm - bitmap with the branches that are supposed to be 
- *                       canceled 
+ *          cancel_data - structure filled with the cancel bitmap (bitmap with
+ *                       the branches that are supposed to be canceled) and
+ *                       the cancel reason.
  *          flags     - how_to_cancel flags, see cancel_branch()
  * returns: bitmap with the still active branches (on fr timer)
- * WARNING: always fill cancel_bm using prepare_to_cancel(), supplying values
- *          in any other way is a bug*/
-int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
+ * WARNING: always fill cancel_data->cancel_bitmap using prepare_to_cancel(),
+ *          supplying values in any other way is a bug*/
+int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
 {
 	int i;
 	int ret;
@@ -117,10 +119,13 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 	ret=0;
 	/* cancel pending client transactions, if any */
 	for( i=0 ; i<t->nr_of_outgoings ; i++ ) 
-		if (cancel_bm & (1<<i)){
+		if (cancel_data->cancel_bitmap & (1<<i)){
 			r=cancel_branch(
 				t,
 				i,
+#ifdef CANCEL_REASON_SUPPORT
+				&cancel_data->reason,
+#endif /* CANCEL_REASON_SUPPORT */
 				flags | ((t->uac[i].request.buffer==NULL)?
 					F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
 			);
@@ -131,7 +136,7 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 
 int cancel_all_uacs(struct cell *trans, int how)
 {
-	branch_bm_t cancel_bm;
+	struct cancel_info cancel_data;
 	int i,j;
 
 #ifdef EXTRA_DEBUG
@@ -139,10 +144,10 @@ int cancel_all_uacs(struct cell *trans, int how)
 #endif
 	DBG("Canceling T@%p [%u:%u]\n", trans, trans->hash_index, trans->label);
 	
-	cancel_bm=0;
-	prepare_to_cancel(trans, &cancel_bm, 0);
+	init_cancel_info(&cancel_data);
+	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	 /* tell tm to cancel the call */
-	i=cancel_uacs(trans, cancel_bm, how);
+	i=cancel_uacs(trans, &cancel_data, how);
 	
 	if (how & F_CANCEL_UNREF)
 #ifndef TM_DEL_UNREF
@@ -172,6 +177,7 @@ int cancel_all_uacs(struct cell *trans, int how)
  *
  * params:  t - transaction
  *          branch - branch number to be canceled
+ *          reason - cancel reason structure
  *          flags - howto cancel: 
  *                   F_CANCEL_B_KILL - will completely stop the 
  *                     branch (stops the timers), use with care
@@ -202,13 +208,17 @@ int cancel_all_uacs(struct cell *trans, int how)
  *          - checking for buffer==0 under REPLY_LOCK is no enough, an 
  *           atomic_cmpxhcg or atomic_get_and_set _must_ be used.
  */
-int cancel_branch( struct cell *t, int branch, int flags )
+int cancel_branch( struct cell *t, int branch,
+	#ifdef CANCEL_REASON_SUPPORT
+					struct cancel_reason* reason,
+	#endif /* CANCEL_REASON_SUPPORT */
+					int flags )
 {
 	char *cancel;
 	unsigned int len;
 	struct retr_buf *crb, *irb;
 	int ret;
-	branch_bm_t tmp_bm;
+	struct cancel_info tmp_cd;
 	void* pcbuf;
 
 	crb=&t->uac[branch].local_cancel;
@@ -236,7 +246,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 			atomic_set_long(pcbuf, 0);
 			if (flags & F_CANCEL_B_FAKE_REPLY){
 				LOCK_REPLIES(t);
-				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm, 1) == 
+				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1) == 
 										RPS_ERROR){
 					return -1;
 				}
@@ -257,7 +267,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 				if (flags & F_CANCEL_B_FAKE_REPLY){
 					stop_rb_timers( irb ); /* stop even the fr timer */
 					LOCK_REPLIES(t);
-					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm, 1)== 
+					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1)== 
 											RPS_ERROR){
 						return -1;
 					}
@@ -272,10 +282,19 @@ int cancel_branch( struct cell *t, int branch, int flags )
 
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* build the CANCEL from the INVITE which was sent out */
-		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN, &t->to);
+		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN,
+									 &t->to
+	#ifdef CANCEL_REASON_SUPPORT
+									 , reason
+	#endif /* CANCEL_REASON_SUPPORT */
+									 );
 	} else {
-		/* build the CANCEL from the reveived INVITE */
-		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to);
+		/* build the CANCEL from the received INVITE */
+		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to
+	#ifdef CANCEL_REASON_SUPPORT
+								, reason
+	#endif /* CANCEL_REASON_SUPPORT */
+								);
 	}
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
@@ -333,7 +352,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 {
 	struct cell *trans;
 	static char cseq[128], callid[128];
-	branch_bm_t cancel_bm;
+	struct cancel_info cancel_data;
 	int i,j;
 
 	str cseq_s;   /* cseq */
@@ -341,7 +360,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 
 	cseq_s.s=cseq;
 	callid_s.s=callid;
-	cancel_bm=0;
+	init_cancel_info(&cancel_data);
 
 	if (rpc->scan(c, "SS", &callid_s, &cseq_s) < 2) {
 		rpc->fault(c, 400, "Callid and CSeq expected as parameters");
@@ -354,10 +373,10 @@ void rpc_cancel(rpc_t* rpc, void* c)
 		return;
 	}
 	/*  find the branches that need cancel-ing */
-	prepare_to_cancel(trans, &cancel_bm, 0);
+	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	 /* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
-	i=cancel_uacs(trans, cancel_bm, 0); /* don't fake 487s, 
+	i=cancel_uacs(trans, &cancel_data, 0); /* don't fake 487s, 
 										 just wait for timeout */
 	
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */

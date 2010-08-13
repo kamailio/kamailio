@@ -299,7 +299,7 @@ inline static ticks_t  delete_cell( struct cell *p_cell, int unlock )
  * it assumes the REPLY_LOCK is already held and returns unlocked */
 static void fake_reply(struct cell *t, int branch, int code )
 {
-	branch_bm_t cancel_bitmap;
+	struct cancel_info cancel_data;
 	short do_cancel_branch;
 	enum rps reply_status;
 
@@ -308,15 +308,19 @@ static void fake_reply(struct cell *t, int branch, int code )
 	t->uac[branch].request.flags|=F_RB_CANCELED;
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
-					  code, &cancel_bitmap );
+					  code, &cancel_data );
 	} else {
 		/* rely reply, but don't put on wait, we still need t
 		 * to send the cancels */
 		reply_status=relay_reply( t, FAKED_REPLY, branch, code,
-					  &cancel_bitmap, 0 );
+					  &cancel_data, 0 );
 	}
 	/* now when out-of-lock do the cancel I/O */
+#ifdef CANCEL_REASON_SUPPORT
+	if (do_cancel_branch) cancel_branch(t, branch, &cancel_data.reason, 0);
+#else /* CANCEL_REASON_SUPPORT */
 	if (do_cancel_branch) cancel_branch(t, branch, 0);
+#endif /* CANCEL_REASON_SUPPORT */
 	/* it's cleaned up on error; if no error occurred and transaction
 	   completed regularly, I have to clean-up myself
 	*/

@@ -141,6 +141,10 @@ void free_cell( struct cell* dead_cell )
 		sip_msg_free_unsafe( dead_cell->uas.request );
 	if ( dead_cell->uas.response.buffer )
 		shm_free_unsafe( dead_cell->uas.response.buffer );
+#ifdef CANCEL_REASON_SUPPORT
+	if (unlikely(dead_cell->uas.cancel_reas))
+		shm_free_unsafe(dead_cell->uas.cancel_reas);
+#endif /* CANCEL_REASON_SUPPORT */
 
 	/* callbacks */
 	for( cbs=(struct tm_callback*)dead_cell->tmcb_hl.first ; cbs ; ) {

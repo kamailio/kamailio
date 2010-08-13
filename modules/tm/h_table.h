@@ -40,10 +40,9 @@
  *              inlined often used functions (andrei)
  */
 
-/*!
- * \file 
- * \brief TM :: 
- * \ingroup tm
+/**  TM :: hash table, flags and other general defines.
+ * @file 
+ * @ingroup tm
  */
 
 
@@ -192,6 +191,10 @@ typedef struct ua_server
 	 * we need them for dialog-wise matching of ACKs;
 	 * the pointer shows to shmem-ed reply */
 	str				 local_totag;
+#ifdef CANCEL_REASON_SUPPORT
+	struct cancel_reason* cancel_reas; /* pointer to cancel reason, used
+										  for e2e cancels */
+#endif /* CANCEL_REASON_SUPPORT */
 	unsigned int     status;
 }ua_server_type;
 
@@ -281,6 +284,9 @@ struct totag_elem {
 
 #define T_DISABLE_6xx (1<<8) /* treat 6xx as a normal reply */
 #define T_DISABLE_FAILOVER (1<<9) /* don't perform dns failover */
+#ifdef CANCEL_REASON_SUPPORT
+#define T_NO_E2E_CANCEL_REASON (1<<10) /* don't propagate CANCEL Reason */
+#endif /* CANCEL_REASON_SUPPORT */
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
