@@ -104,7 +104,8 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 	 * Thus the 3 in the loop count. Increasing the loop count over this
 	 * value shouldn't be needed, but it doesn't hurt either, since the loop
 	 * will most of the time stop at the second or sometimes at the third
-	 * iteration.
+	 * iteration. In the case of CR_SERVER_GONE_ERROR and CR_SERVER_LOST the
+	 * driver error counter is increased
 	 */
 	for (i=0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
 		if (mysql_real_query(CON_CONNECTION(_h), _s->s, _s->len) == 0) {
@@ -114,12 +115,9 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 		if (code != CR_SERVER_GONE_ERROR && code != CR_SERVER_LOST) {
 			break;
 		}
-	}
-	LM_ERR("driver error on query: %s\n", mysql_error(CON_CONNECTION(_h)));
-	/* Bad queries don't count */
-	if(code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
 		counter_inc(mysql_cnts_h.driver_err);
 	}
+	LM_ERR("driver error on query: %s\n", mysql_error(CON_CONNECTION(_h)));
 	return -2;
 }
 
@@ -157,6 +155,7 @@ void db_mysql_close(db1_con_t* _h)
  */
 static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 {
+	int code;
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
@@ -176,6 +175,10 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 			goto done;
 		} else {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
+			code = mysql_errno(CON_CONNECTION(_h));
+			if (code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
+				counter_inc(mysql_cnts_h.driver_err);
+			}
 			db_free_result(*_r);
 			*_r = 0;
 			return -3;
@@ -274,7 +277,7 @@ int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  */
 int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 {
-	int rows, i;
+	int rows, i, code;
 
 	if (!_h || !_r || nrows < 0) {
 		LM_ERR("Invalid parameter value\n");
@@ -304,6 +307,10 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 				return 0;
 			} else {
 				LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
+				code = mysql_errno(CON_CONNECTION(_h));
+				if (code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
+					counter_inc(mysql_cnts_h.driver_err);
+				}
 				db_free_result(*_r);
 				*_r = 0;
 				return -3;
