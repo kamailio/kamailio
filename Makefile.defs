@@ -618,18 +618,20 @@ $(info target architecture <$(ARCH)>, host architecture <$(HOST_ARCH)>)
 #		adds support for Application Server interface
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
-# Tell it that dragonflybsd is equivalent to compiling for freebsd.
-# This will cause __OS_freebsd to be defined below.
 ifeq ($(OS), dragonfly)
-	EQUIV_OS := freebsd
+	# Tell it that dragonflybsd is equivalent to compiling for freebsd, but
+	# define also __OS_dragonfly (for fine-tunning like kqueue support).
+	os_defs := -D__OS_freebsd -D__OS_dragonfly
+	EQUIV_OS = freebsd
 else
-	EQUIV_OS := $(OS)
+	os_defs := -D__OS_$(OS)
+	EQUIV_OS = $(OS)
 endif
 
 C_DEFS= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
-	 -D__CPU_$(ARCH) -D__OS_$(EQUIV_OS) \
+	 -D__CPU_$(ARCH) $(os_defs) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg_target)"'\
 	 -DPKG_MALLOC \
@@ -1806,11 +1808,9 @@ ifeq ($(OS), dragonfly)
 	else
 		LIBS=   #dlopen is in libc
 	endif
-	# check for ver >= 4.1
-	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
-		ifeq ($(NO_KQUEUE),)
-			C_DEFS+=-DHAVE_KQUEUE
-		endif
+	# dragonfly was forked from freebsd 4.8 => all version have kqueue
+	ifeq ($(NO_KQUEUE),)
+		C_DEFS+=-DHAVE_KQUEUE
 	endif
 	ifeq ($(NO_SELECT),)
 		C_DEFS+=-DHAVE_SELECT
@@ -1826,8 +1826,11 @@ ifeq ($(OS), dragonfly)
 $(info "sctp development files not installed -- sctp disabled")
 			override SCTP :=
 		endif
-		ifeq ($(shell [ $(OSREL_N) -lt 7000 ] && echo sctp), sctp)
-$(info "old freebsd version (>= 7.0 needed) -- sctp disabled")
+		# FIXME: don't know what's the status of SCTP on dragonfly
+		#        (we suppose the 2.6 version is >= the version in
+		#         in freebsd 7.0)
+		ifeq ($(shell [ $(OSREL_N) -lt 2006 ] && echo sctp), sctp)
+$(info "old dragonfly version (>= 2.6 needed) -- sctp disabled")
 			override SCTP :=
 		endif
 		
