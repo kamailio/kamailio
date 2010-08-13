@@ -2598,9 +2598,14 @@ error:
 struct hostent* dns_resolvehost(char* name)
 {
 	str host;
-
+        struct hostent* ret;
 	if ((cfg_get(core, core_cfg, use_dns_cache)==0) || (dns_hash==0)){ /* not init yet */
-		return _resolvehost(name);
+		ret =  _resolvehost(name);
+		if(unlikely(!ret)){
+			/* increment dns error counter */
+			counter_inc(dns_cnts_h.failed_dns_req);
+		}
+		return ret;
 	}
 	host.s=name;
 	host.len=strlen(name);
