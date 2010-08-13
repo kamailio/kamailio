@@ -339,7 +339,11 @@ static void fake_reply(struct cell *t, int branch, int code )
 					  &cancel_data, 0 );
 	}
 	/* now when out-of-lock do the cancel I/O */
+#ifdef CANCEL_REASON_SUPPORT
 	if (do_cancel_branch) cancel_branch(t, branch, &cancel_data.reason, 0);
+#else /* CANCEL_REASON_SUPPORT */
+	if (do_cancel_branch) cancel_branch(t, branch, 0);
+#endif /* CANCEL_REASON_SUPPORT */
 	/* it's cleaned up on error; if no error occurred and transaction
 	   completed regularly, I have to clean-up myself
 	*/

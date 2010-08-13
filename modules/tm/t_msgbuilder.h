@@ -37,6 +37,7 @@
 #include "../../ip_addr.h"
 #include "defs.h"
 #include "dlg.h"
+#include "h_table.h"
 
 
 #define CSEQ "CSeq: "
@@ -54,12 +55,18 @@
 
 
 char *build_local(struct cell *Trans, unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to,
-	struct cancel_reason* reason);
+	unsigned int *len, char *method, int method_len, str *to
+#ifdef CANCEL_REASON_SUPPORT
+	, struct cancel_reason* reason
+#endif /* CANCEL_REASON_SUPPORT */
+	);
 
 char *build_local_reparse(struct cell *Trans, unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to,
-	struct cancel_reason* reason);
+	unsigned int *len, char *method, int method_len, str *to
+#ifdef CANCEL_REASON_SUPPORT
+	, struct cancel_reason* reason
+#endif /* CANCEL_REASON_SUPPORT */
+	);
 
 char *build_uac_request(  str msg_type, str dst, str from,
 	str fromtag, int cseq, str callid, str headers, 

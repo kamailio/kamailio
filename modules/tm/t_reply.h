@@ -30,6 +30,11 @@
 #ifndef _T_REPLY_H
 #define _T_REPLY_H
 
+/* CANCEL_REASON_SUPPORT on by default */
+#ifndef NO_CANCEL_REASON_SUPPORT
+#define CANCEL_REASON_SUPPORT
+#endif /* NO_CANCEL_REASON_SUPPORT */
+
 #include "defs.h"
 #include "../../rpc.h"
 #include "../../tags.h"
@@ -64,6 +69,7 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack);
 /* branch bitmap type */
 typedef unsigned int branch_bm_t;
 
+#ifdef CANCEL_REASON_SUPPORT
 
 /* reason building blocks (see rfc3326) */
 #define REASON_PREFIX "Reason: SIP;cause="
@@ -105,6 +111,20 @@ struct cancel_info {
 		(ci)->cancel_bitmap=0; \
 		init_cancel_reason(&(ci)->reason); \
 	}while (0);
+
+#else /* ! CANCEL_REASON_SUPPORT */
+
+struct cancel_info {
+	branch_bm_t cancel_bitmap; /**< cancel branch bitmap */
+};
+
+#define init_cancel_info(ci) \
+	do {\
+		(ci)->cancel_bitmap=0; \
+	}while (0);
+
+#endif /* CANCEL_REASON_SUPPORT */
+
 
 /* reply export types */
 typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
@@ -162,12 +182,12 @@ int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
 int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
 
 
-enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
+enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int msg_status, struct cancel_info *cancel_data,
 	int do_put_on_wait );
 
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-    unsigned int msg_status, struct cancel_info *cancel_data );
+	unsigned int msg_status, struct cancel_info *cancel_data );
 
 void set_final_timer( /* struct s_table *h_table,*/ struct cell *t );
 

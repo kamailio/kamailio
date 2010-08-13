@@ -86,8 +86,11 @@
    customers of this function are local ACK and local CANCEL
  */
 char *build_local(struct cell *Trans,unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to,
-	struct cancel_reason* reason)
+	unsigned int *len, char *method, int method_len, str *to
+#ifdef CANCEL_REASON_SUPPORT
+	, struct cancel_reason* reason
+#endif /* CANCEL_REASON_SUPPORT */
+	)
 {
 	char                *cancel_buf, *p, *via;
 	unsigned int         via_len;
@@ -97,8 +100,10 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	str branch_str;
 	str via_id;
 	struct hostport hp;
+#ifdef CANCEL_REASON_SUPPORT
 	int reason_len, code_len;
 	struct hdr_field *reas1, *reas_last;
+#endif /* CANCEL_REASON_SUPPORT */
 
 	/* init */
 	via_id.s=0;
@@ -163,6 +168,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	/* Content Length, EoM */
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
+#ifdef CANCEL_REASON_SUPPORT
 	reason_len = 0;
 	reas1 = 0;
 	reas_last = 0;
@@ -193,6 +199,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
 	*len+= reason_len;
+#endif /* CANCEL_REASON_SUPPORT */
 	*len+= CRLF_LEN; /* end of msg. */
 
 	cancel_buf=shm_malloc( *len+1 );
@@ -235,6 +242,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	/* Content Length */
 	append_str(p, CONTENT_LENGTH "0" CRLF, CONTENT_LENGTH_LEN + 1 + CRLF_LEN);
+#ifdef CANCEL_REASON_SUPPORT
 	/* add reason if needed */
 	if (reason_len) {
 		if (likely(reason->cause > 0)) {
@@ -262,6 +270,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			}
 		}
 	}
+#endif /* CANCEL_REASON_SUPPORT */
 	append_str(p, CRLF, CRLF_LEN); /* msg. end */
 	*p=0;
 
@@ -280,8 +289,11 @@ error:
  * Can not be used to build other type of requests!
  */
 char *build_local_reparse(struct cell *Trans,unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to,
-	struct cancel_reason *reason)
+	unsigned int *len, char *method, int method_len, str *to
+#ifdef CANCEL_REASON_SUPPORT
+	, struct cancel_reason *reason
+#endif /* CANCEL_REASON_SUPPORT */
+	)
 {
 	char	*invite_buf, *invite_buf_end;
 	char	*cancel_buf;
@@ -289,8 +301,11 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	short	invite_len;
 	enum _hdr_types_t	hf_type;
 	int	first_via, to_len;
-	int cancel_buf_len, reason_len, code_len;
+	int cancel_buf_len;
+#ifdef CANCEL_REASON_SUPPORT
+	int reason_len, code_len;
 	struct hdr_field *reas1, *reas_last, *hdr;
+#endif /* CANCEL_REASON_SUPPORT */
 
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
@@ -305,6 +320,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 		goto error;
 	}
 	
+#ifdef CANCEL_REASON_SUPPORT
 	reason_len = 0;
 	reas1 = 0;
 	reas_last = 0;
@@ -334,6 +350,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 		} else if (unlikely(reason->cause < CANCEL_REAS_MIN))
 			BUG("unhandled reason cause %d\n", reason->cause);
 	}
+#endif /* CANCEL_REASON_SUPPORT */
 
 	invite_buf_end = invite_buf + invite_len;
 	s = invite_buf;
@@ -343,7 +360,11 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	I just extend it with the length of new To HF to be sure.
 	Ugly, but we avoid lots of checks and memory allocations this way */
 	to_len = to ? to->len : 0;
+#ifdef CANCEL_REASON_SUPPORT
 	cancel_buf_len = invite_len + to_len + reason_len;
+#else
+	cancel_buf_len = invite_len + to_len;
+#endif /* CANCEL_REASON_SUPPORT */
 	cancel_buf = shm_malloc(sizeof(char)*cancel_buf_len);
 	if (!cancel_buf)
 	{
@@ -437,6 +458,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 
 			case HDR_EOH_T:
 				/* end of SIP message found */
+#ifdef CANCEL_REASON_SUPPORT
 				/* add reason if needed */
 				if (reason_len) {
 					/* if reason_len !=0, no need for any reason enabled
@@ -469,6 +491,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 						}
 					}
 				}
+#endif /* CANCEL_REASON_SUPPORT */
 				/* final (end-of-headers) CRLF */
 				append_str(d, CRLF, CRLF_LEN);
 				*len = d - cancel_buf;

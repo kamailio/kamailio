@@ -191,8 +191,10 @@ typedef struct ua_server
 	 * we need them for dialog-wise matching of ACKs;
 	 * the pointer shows to shmem-ed reply */
 	str				 local_totag;
+#ifdef CANCEL_REASON_SUPPORT
 	struct cancel_reason* cancel_reas; /* pointer to cancel reason, used
 										  for e2e cancels */
+#endif /* CANCEL_REASON_SUPPORT */
 	unsigned int     status;
 }ua_server_type;
 

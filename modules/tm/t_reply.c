@@ -392,11 +392,19 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* build the ACK from the INVITE which was sent out */
 		return build_local_reparse( trans, branch, ret_len,
-					ACK, ACK_LEN, &to, 0 );
+					ACK, ACK_LEN, &to
+	#ifdef CANCEL_REASON_SUPPORT
+					, 0
+	#endif /* CANCEL_REASON_SUPPORT */
+					);
 	} else {
 		/* build the ACK from the reveived INVITE */
 		return build_local( trans, branch, ret_len,
-					ACK, ACK_LEN, &to, 0 );
+					ACK, ACK_LEN, &to
+	#ifdef CANCEL_REASON_SUPPORT
+					, 0
+	#endif /* CANCEL_REASON_SUPPORT */
+					);
 	}
 }
 
@@ -594,7 +602,9 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		cleanup_uac_timers( trans );
 		if (is_invite(trans)){
 			prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
+#ifdef CANCEL_REASON_SUPPORT
 			cancel_data.reason.cause=code;
+#endif /* CANCEL_REASON_SUPPORT */
 			cancel_uacs( trans, &cancel_data, F_CANCEL_B_KILL );
 		}
 		start_final_repl_retr(  trans );
@@ -1140,7 +1150,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 					  if the 6xx handling is not disabled */
 					prepare_to_cancel(Trans, &cancel_data->cancel_bitmap, 0);
 					Trans->flags|=T_6xx;
+#ifdef CANCEL_REASON_SUPPORT
 					cancel_data->reason.cause=new_code;
+#endif /* CANCEL_REASON_SUPPORT */
 				}
 			}
 			return RPS_STORE;
@@ -1295,7 +1307,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		*should_relay= new_code==100? -1 : branch;
 		if (new_code>=200 ) {
 			prepare_to_cancel( Trans, &cancel_data->cancel_bitmap, 0);
+#ifdef CANCEL_REASON_SUPPORT
 			cancel_data->reason.cause=new_code;
+#endif /* CANCEL_REASON_SUPPORT */
 			return RPS_COMPLETED;
 		} else return RPS_PROVISIONAL;
 	}
@@ -2041,6 +2055,7 @@ int reply_received( struct sip_msg  *p_msg )
 				 * if BUSY or set just exit, a cancel will be (or was) sent 
 				 * shortly on this branch */
 				DBG("tm: reply_received: branch CANCEL created\n");
+#ifdef CANCEL_REASON_SUPPORT
 				if (t->uas.cancel_reas) {
 					/* cancel reason was saved, use it */
 					cancel_branch(t, branch, t->uas.cancel_reas,
@@ -2055,6 +2070,9 @@ int reply_received( struct sip_msg  *p_msg )
 					cancel_branch(t, branch, &cancel_data.reason,
 														F_CANCEL_B_FORCE_C);
 				}
+#else /* CANCEL_REASON_SUPPORT */
+				cancel_branch(t, branch, F_CANCEL_B_FORCE_C);
+#endif /* CANCEL_REASON_SUPPORT */
 			}
 			goto done; /* nothing to do */
 		}

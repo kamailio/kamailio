@@ -123,7 +123,9 @@ int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
 			r=cancel_branch(
 				t,
 				i,
+#ifdef CANCEL_REASON_SUPPORT
 				&cancel_data->reason,
+#endif /* CANCEL_REASON_SUPPORT */
 				flags | ((t->uac[i].request.buffer==NULL)?
 					F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
 			);
@@ -206,7 +208,10 @@ int cancel_all_uacs(struct cell *trans, int how)
  *          - checking for buffer==0 under REPLY_LOCK is no enough, an 
  *           atomic_cmpxhcg or atomic_get_and_set _must_ be used.
  */
-int cancel_branch( struct cell *t, int branch, struct cancel_reason* reason,
+int cancel_branch( struct cell *t, int branch,
+	#ifdef CANCEL_REASON_SUPPORT
+					struct cancel_reason* reason,
+	#endif /* CANCEL_REASON_SUPPORT */
 					int flags )
 {
 	char *cancel;
@@ -278,11 +283,18 @@ int cancel_branch( struct cell *t, int branch, struct cancel_reason* reason,
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* build the CANCEL from the INVITE which was sent out */
 		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN,
-									 &t->to, reason);
+									 &t->to
+	#ifdef CANCEL_REASON_SUPPORT
+									 , reason
+	#endif /* CANCEL_REASON_SUPPORT */
+									 );
 	} else {
-		/* build the CANCEL from the reveived INVITE */
-		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to,
-							 reason);
+		/* build the CANCEL from the received INVITE */
+		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to
+	#ifdef CANCEL_REASON_SUPPORT
+								, reason
+	#endif /* CANCEL_REASON_SUPPORT */
+								);
 	}
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
