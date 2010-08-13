@@ -284,7 +284,9 @@ struct totag_elem {
 
 #define T_DISABLE_6xx (1<<8) /* treat 6xx as a normal reply */
 #define T_DISABLE_FAILOVER (1<<9) /* don't perform dns failover */
+#ifdef CANCEL_REASON_SUPPORT
 #define T_NO_E2E_CANCEL_REASON (1<<10) /* don't propagate CANCEL Reason */
+#endif /* CANCEL_REASON_SUPPORT */
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
