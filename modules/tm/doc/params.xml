@@ -45,9 +45,11 @@ modparam("tm", "fr_timer", 10000)
 	</para>
 	<para>
 	</para>
+	<para>
 		Note: this timer can be restarted when a provisional response is
 		received. For more details see
 		<varname>restart_fr_on_each_reply</varname>.
+	</para>
 	<para>
 	    Default value is 120000 ms (120 seconds).
 	</para>
@@ -1142,11 +1144,11 @@ modparam("tm", "disable_6xx_block", 1)
 		reply.
 		</para></listitem>
 	</itemizedlist>
-	<note>
+	<note><para>
 	Mode 1 and 2 break the rfc, but are useful to deal with some simple UAs
 	behind the NAT cases (no different routing for the ACK and the contact 
 	contains an address behind the NAT).
-	</note>
+	</para></note>
 	<para>
 		The default value is 0 (rfc conformant behaviour).
 	</para>
@@ -1164,6 +1166,68 @@ modparam("tm", "local_ack_mode", 1)
 ...
 	    </programlisting>
 	</example>
+	</section>
+
+
+	<section id="local_cancel_reason">
+		<title><varname>local_cancel_reason</varname> (boolean)</title>
+		<para>
+			Enables/disables adding reason headers (RFC 3326) for CANCELs
+			generated due to receiving a final reply. The reason header added
+			will look like: "Reason: SIP;cause=&lt;final_reply_code&gt;".
+		</para>
+		<para>
+			Default value is 1 (enabled).
+		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+	$ sercmd cfg.set_now_int tm local_cancel_reason 0
+			</programlisting>
+		</para>
+		<para>
+			See also: <varname>e2e_cancel_reason</varname>.
+		</para>
+		<example>
+			<title>Set <varname>local_cancel_reason</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "local_cancel_reason", "0")
+...
+			</programlisting>
+		</example>
+	</section>
+
+
+	<section id="e2e_cancel_reason">
+		<title><varname>e2e_cancel_reason</varname> (boolean)</title>
+		<para>
+			Enables/disables adding reason headers (RFC 3326) for CANCELs
+			generated due to a received CANCEL.  If enabled the reason headers
+			from received CANCELs will be copied into the generated hop-by-hop
+			CANCELs.
+		</para>
+		<para>
+			Default value is 1 (enabled).
+		</para>
+		<para>
+			Can be changed at runtime, e.g.:
+			<programlisting>
+	$ sercmd cfg.set_now_int tm e2e_cancel_reason 0
+			</programlisting>
+		</para>
+		<para>
+			See also: <function>t_set_no_e2e_cancel_reason()</function> and
+						<varname>local_cancel_reason</varname>.
+		</para>
+		<example>
+			<title>Set <varname>e2e_cancel_reason</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "e2e_cancel_reason", "0")
+...
+			</programlisting>
+		</example>
 	</section>
 
 </section>
