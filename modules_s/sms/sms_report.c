@@ -93,7 +93,7 @@ static time_t get_time_sys(void)
 }
 /* detects if the ser time function get_ticks works, and depending of that
    sets the correct time function to be used */
-void set_gettime_function()
+void set_gettime_function(void)
 {
 	unsigned int t1,t2;
 
@@ -102,10 +102,10 @@ void set_gettime_function()
 	t2 = get_ticks();
 	if (!t1 && !t2) {
 		get_time = get_time_sys;
-		LOG(L_INFO,"INFO:sms:set_gettime_function: using system time func.\n");
+		LM_INFO("using system time func.\n");
 	} else {
 		get_time = get_time_ser;
-		LOG(L_INFO,"INFO:sms:set_gettime_function: using ser time func.\n");
+		LM_INFO("using ser time func.\n");
 	}
 }
 
@@ -128,12 +128,12 @@ inline void free_report_cell(struct report_cell *cell)
 
 
 
-int init_report_queue()
+int init_report_queue(void)
 {
 	report_queue = (struct report_cell*)
 		shm_malloc(NR_CELLS*sizeof(struct report_cell));
 	if (!report_queue) {
-		LOG(L_ERR,"ERROR:sms:init_report_queue: no more free pkg_mem!\n");
+		LM_ERR("no more free pkg_mem!\n");
 		return -1;
 	}
 	memset( report_queue , 0 , NR_CELLS*sizeof(struct report_cell) );
@@ -143,7 +143,7 @@ int init_report_queue()
 
 
 
-void destroy_report_queue()
+void destroy_report_queue(void)
 {
 	int i;
 
@@ -162,8 +162,8 @@ void destroy_report_queue()
 void add_sms_into_report_queue(int id, struct sms_msg *sms, char *p, int l)
 {
 	if (report_queue[id].sms){
-		LOG(L_INFO,"INFO:sms:add_sms_into_report_queue: old message still "
-			"waiting for report at location %d -> discarding\n",id);
+		LM_INFO("old message still waiting for report at location %d"
+				" -> discarding\n",id);
 		free_report_cell(&(report_queue[id]));
 	}
 
@@ -188,14 +188,14 @@ int  relay_report_to_queue(int id, char *phone, int status, int *old_status)
 
 	/* first, do we have a match into the sms queue? */
 	if (!cell->sms) {
-		LOG(L_INFO,"INFO:sms:relay_report_to_queue: report received for cell"
-			" %d,  but the sms was already trashed from queue!\n",id);
+		LM_INFO("report received for cell %d,"
+				" but the sms was already trashed from queue!\n",id);
 		goto done;
 	}
 	if (strlen(phone)!=cell->sms->to.len ||
 	strncmp(phone,cell->sms->to.s,cell->sms->to.len)) {
-		LOG(L_INFO,"INFO:sms:relay_report_to_queue: report received for cell"
-			" %d, but the phone nr is different->old report->ignored\n",id);
+		LM_INFO("report received for cell %d, but the phone nr is different"
+				"->old report->ignored\n",id);
 		goto done;
 	}
 
@@ -203,17 +203,15 @@ int  relay_report_to_queue(int id, char *phone, int status, int *old_status)
 		*old_status = cell->status;
 	cell->status = status;
 	if (status>=0 && status<32) {
-		DBG("DEBUG:sms:relay_report_to_queue:sms %d confirmed with code %d\n",
-			id, status);
+		LM_DBG("sms %d confirmed with code %d\n", id, status);
 		ret_code = 2; /* success */
 	} else if (status<64) {
 		/* provisional report */
-		DBG("DEBUG:sms:relay_report_to_queue:sms %d received prov. report with"
+		LM_DBG("sms %d received prov. report with"
 			" code %d\n",id, status);
 		ret_code = 1; /* provisional */
 	} else {
-		DBG("DEBUG:sms:relay_report_to_queue:sms %d received error report with"
-			" code %d\n",id, status);
+		LM_DBG("sms %d received error report with code %d\n",id, status);
 		ret_code = 3; /* error */
 	}
 
@@ -224,7 +222,7 @@ done:
 
 
 
-void check_timeout_in_report_queue()
+void check_timeout_in_report_queue(void)
 {
 	int i;
 	time_t current_time;
@@ -232,9 +230,8 @@ void check_timeout_in_report_queue()
 	current_time = get_time();
 	for(i=0;i<NR_CELLS;i++)
 		if (report_queue[i].sms && report_queue[i].timeout<=current_time) {
-			LOG(L_INFO,"INFO:sms:check_timeout_in_report_queue: [%lu,%lu] "
-				"record %d is discarded (timeout), having status %d\n",
-				(long unsigned int)current_time,
+			LM_INFO("[%lu,%lu] record %d is discarded (timeout), having status"
+				" %d\n", (long unsigned int)current_time,
 				(long unsigned int)report_queue[i].timeout,
 				i,report_queue[i].status);
 			free_report_cell(&(report_queue[i]));

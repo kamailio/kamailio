@@ -53,7 +53,7 @@ mailto:s.frings@mail.isis.de
 
 
 /* converts an octet to a 8-Bit value */
-int octet2bin(char* octet)
+static inline int octet2bin(char* octet)
 {
 	int result=0;
 
@@ -74,7 +74,7 @@ int octet2bin(char* octet)
 
 /* converts a PDU-String to Ascii; the first octet is the length
    return the length of ascii */
-int pdu2ascii(char* pdu, char* ascii)
+static int pdu2ascii(char* pdu, char* ascii)
 {
 	int bitposition=0;
 	int byteposition;
@@ -116,7 +116,7 @@ int pdu2ascii(char* pdu, char* ascii)
 
 
 
-int pdu2binary(char* pdu, char* binary)
+static int pdu2binary(char* pdu, char* binary)
 {
 	int count;
 	int octetcounter;
@@ -134,7 +134,7 @@ int pdu2binary(char* pdu, char* binary)
 /* reads a SMS from the SIM-memory 1-10 */
 /* returns number of SIM memory if successful */
 /* on digicom the return value can be != sim */
-int fetchsms(struct modem *mdm, int sim, char* pdu)
+static int fetchsms(struct modem *mdm, int sim, char* pdu)
 {
 	char command[16];
 	char answer[512];
@@ -156,7 +156,7 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 			if (end==position+7) {
 				foo = str2s(position+7,end-position-7,&err);
 				if (!err) {
-					DBG("DEBUG:fetchsms:Found a message at memory %i\n",foo);
+					LM_DBG("Found a message at memory %i\n",foo);
 					sim=foo;
 				}
 				position = 0;
@@ -164,7 +164,7 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 			position = 0;
 		}
 	} else {
-		DBG("DEBUG:fetchsms:Trying to get stored message %i\n",sim);
+		LM_DBG("Trying to get stored message %i\n",sim);
 		clen=sprintf(command,"AT+CMGR=%i\r",sim);
 		put_command(mdm,command,clen,answer,sizeof(answer),50,0);
 		/* search for beginning of the answer */
@@ -198,12 +198,12 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 
 
 /* deletes the selected sms from the sim card */
-void deletesms(struct modem *mdm, int sim) {
+static void deletesms(struct modem *mdm, int sim) {
 	char command[32];
 	char answer[128];
 	int  clen;
 
-	DBG("DEBUG:deletesms: Deleting message %i !\n",sim);
+	LM_DBG("Deleting message %i !\n",sim);
 	clen = sprintf(command,"AT+CMGD=%i\r",sim);
 	put_command(mdm, command, clen, answer, sizeof(answer), 50, 0);
 }
@@ -232,8 +232,7 @@ int check_memory(struct modem *mdm, int flag)
 					if (flag==USED_MEM ) {
 						foo = str2s(posi,laenge,&err);
 						if (err) {
-							LOG(L_ERR,"ERROR:sms_check_memory: unable to "
-								"convert into integer used_memory from CPMS"
+							LM_ERR("unable to convert into integer used_memory from CPMS"
 								" response\n");
 						} else {
 							return foo;
@@ -243,8 +242,7 @@ int check_memory(struct modem *mdm, int flag)
 					if ( (laenge=strcspn(posi,",\r"))!=0 ) {
 						foo = str2s(posi,laenge,&err);
 						if (err) {
-							LOG(L_ERR,"ERROR:sms_check_memory: unable to"
-								"convert into integer max_memory from CPMS"
+							LM_ERR("unable to convert into integer max_memory from CPMS"
 								" response\n");
 						} else {
 							return foo;
@@ -255,18 +253,15 @@ int check_memory(struct modem *mdm, int flag)
 		} /* if(put_command) */
 		/* if we are here ->  some error happend */
 		if (checkmodem(mdm)!=0) {
-			LOG(L_WARN,"WARNING:sms_check_memory: something happend with the"
-				" modem -> was reinit -> let's retry\n");
+			LM_WARN("something happend with the modem -> was reinit -> let's retry\n");
 		} else {
-			LOG(L_ERR,"ERROR:sms_check_memory: modem seems to be ok, but we"
-				"had an error? I give up!\n");
+			LM_ERR("modem seems to be ok, but we had an error? I give up!\n");
 			out = 1;
 		}
 	} /* for */
 
 	if (out==0)
-		LOG(L_ERR,"ERROR:sms_check_memory: modem does not respond after 10"
-			"reties! I give up :-(\n");
+		LM_ERR("modem does not respond after 10 retries, give up!\n");
 
 	return -1;
 }
@@ -276,7 +271,7 @@ int check_memory(struct modem *mdm, int flag)
 
 /* splits an ASCII string into the parts */
 /* returns length of ascii */
-int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
+static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 {
 	char* start;
 	char* end;
@@ -333,7 +328,7 @@ int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 /* Subroutine for splitpdu() for messages type 0 (SMS-Deliver)
    Returns the length of the ascii string
    In binary mode ascii contains the binary SMS */
-int split_type_0( char* Pointer,struct incame_sms *sms)
+static int split_type_0( char* Pointer,struct incame_sms *sms)
 {
 	int Length;
 	int padding;
@@ -366,7 +361,7 @@ int split_type_0( char* Pointer,struct incame_sms *sms)
 /* Subroutine for splitpdu() for messages type 2 (Staus Report)
    Returns the length of the ascii string. In binary mode ascii 
    contains the binary SMS */
-int split_type_2( char* position, struct incame_sms *sms)
+static int split_type_2( char* position, struct incame_sms *sms)
 {
 	int  length;
 	int  padding;
@@ -407,7 +402,7 @@ int split_type_2( char* position, struct incame_sms *sms)
 
 /* Splits a PDU string into the parts */
 /* Returns the length of the ascii string. In binary mode ascii contains the binary SMS */
-int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
+static int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
 {
 	int Length;
 	int Type;
@@ -468,7 +463,7 @@ int splitpdu(struct modem *mdm, char* pdu, struct incame_sms *sms)
 
 
 
-inline int decode_pdu( struct modem *mdm, char *pdu, struct incame_sms *sms)
+static inline int decode_pdu( struct modem *mdm, char *pdu, struct incame_sms *sms)
 {
 	int ret;
 
@@ -480,7 +475,7 @@ inline int decode_pdu( struct modem *mdm, char *pdu, struct incame_sms *sms)
 		ret = splitpdu(mdm, pdu, sms);
 
 	if (ret==-1) {
-		LOG(L_ERR,"ERROR:decode_pdu: unable split pdu/ascii!\n");
+		LM_ERR("unable split pdu/ascii!\n");
 		return -1;
 	}
 	return 1;
@@ -491,13 +486,13 @@ inline int decode_pdu( struct modem *mdm, char *pdu, struct incame_sms *sms)
 
 int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 {
-	char   pdu[500];
+	char   pdu[512];
 	int    found;
 	int    ret;
 
 	found = fetchsms(mdm,sim,pdu);
 	if ( !found ) {
-		LOG(L_ERR,"ERROR:getsms: unable to fetch sms %d!\n",sim);
+		LM_ERR("unable to fetch sms %d!\n",sim);
 		return -1;
 	}
 
@@ -524,14 +519,14 @@ int cds2sms(struct incame_sms *sms, struct modem *mdm, char *s, int s_len)
 	ptr = s;
 	for ( n=0 ; n<2 && (ptr=strstr(ptr,"\r\n")) ; n++,ptr+=2 );
 	if (n<2) {
-		LOG(L_ERR,"ERROR:cds2sms: cannot find pdu begining in CDS!\n");
+		LM_ERR("failed to find pdu begining in CDS!\n");
 		goto error;
 	}
 	data = ptr;
 
 	/* pdu end with "\r\n" */
 	if (!(ptr=strstr(data,"\r\n"))) {
-		LOG(L_ERR,"ERROR:cds2sms: cannot find pdu end in CDS!\n");
+		LM_ERR("failed to find pdu end in CDS!\n");
 		goto error;
 		}
 	tmp = ptr[0];

@@ -66,12 +66,12 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 		timeoutcounter++;
 		ioctl(mdm->fd,TIOCMGET,&status);
 		if (timeoutcounter>=timeout) {
-			LOG(L_INFO,"INFO:put_command: Modem is not clear to send\n");
+			LM_INFO("Modem is not clear to send\n");
 			return 0;
 		}
 	}
 #ifdef SHOW_SMS_MODEM_COMMAND
-	DBG("DEBUG: put_command: -<%d>-->[%.*s] \n",cmd_len,cmd_len,cmd);
+	LM_DBG("-<%d>-->[%.*s] \n",cmd_len,cmd_len,cmd);
 #endif
 	/* send the command to the modem */
 	write(mdm->fd,cmd,cmd_len);
@@ -101,20 +101,19 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 			/* read data */
 			n = read( mdm->fd, buf+buf_len, n);
 			if (n<0) {
-				LOG(L_ERR,"ERROR:put_command: error reading from modem: %s\n",
-					strerror(errno));
+				LM_ERR("error reading from modem: %s\n", strerror(errno));
 				goto error;
 			}
 			if (n) {
 				buf_len += n;
 				buf[buf_len] = 0;
-				//DBG("DEBUG:put_commnad: read = [%s]\n",buf+buf_len-n);
+				//LM_DBG("read = [%s]\n",buf+buf_len-n);
 				foo = pos = 0;
 				if ( (!exp_end && ((pos=strstr(optz(n,4),"OK\r\n"))
 				|| (foo=strstr(optz(n,5),"ERROR"))))
 				|| (exp_end && (pos=strstr(optz(n,exp_end_len),exp_end)) )) {
 					/* we found the end */
-					//DBG("DEBUG:put_commnad: end found = %s\n",
+					//LM_DBG("end found = %s\n",
 					//	(foo?"ERROR":(exp_end?exp_end:"OK")));
 					/* for ERROR we still have to read EOL */
 					if (!foo || (foo=strstr(foo+5,"\r\n"))) {
@@ -143,12 +142,12 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 			ptr = pos+CDS_HDR_LEN;
 			for( n=0 ; n<2&&(foo=strstr(ptr,"\r\n")) ; ptr=foo+2,n++ );
 			if (n<2) { /* we haven't read the entire CDS response */
-				DBG("DEBUG:put_command: CDS end not found!\n");
+				LM_DBG("CDS end not found!\n");
 				to_move = pos;
 				ptr = buf + buf_len;
 			}else{
 				/* process the CDS */
-				DBG("DEBUG:put_command:CDS=[%.*s]\n",(int)(ptr-pos),pos);
+				LM_DBG("CDS=[%.*s]\n",(int)(ptr-pos),pos);
 				cds_report_func(mdm,pos,ptr-pos);
 			}
 		}
@@ -171,13 +170,13 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 		buf_len = buf_len - (to_move-buf);
 		memcpy(buf,to_move,buf_len);
 		buf[buf_len] = 0;
-		DBG("DEBUG:put_commnad: buffer shifted left=[%d][%s]\n",buf_len,buf);
+		LM_DBG("buffer shifted left=[%d][%s]\n",buf_len,buf);
 	} else {
 		buf_len = 0;
 	}
 
 #ifdef SHOW_SMS_MODEM_COMMAND
-	DBG("DEBUG:put_command: <-[%s] \n",answer);
+	LM_DBG("<-[%s] \n",answer);
 #endif
 	return answer_e-answer_s;
 
@@ -219,30 +218,28 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 	int clen=0;
 	int n;
 
-	LOG(L_INFO,"INFO:initmodem: init modem %s on %s.\n",mdm->name,mdm->device);
+	LM_INFO("init modem %s on %s.\n",mdm->name,mdm->device);
 
 	if (mdm->pin[0]) {
 		/* Checking if modem needs PIN */
 		put_command(mdm,"AT+CPIN?\r",9,answer,sizeof(answer),50,0);
 		if (strstr(answer,"+CPIN: SIM PIN")) {
-			LOG(L_INFO,"INFO:initmodem: Modem needs PIN, entering PIN...\n");
+			LM_INFO("Modem needs PIN, entering PIN...\n");
 			clen=sprintf(command,"AT+CPIN=\"%s\"\r",mdm->pin);
 			put_command(mdm,command,clen,answer,sizeof(answer),100,0);
 			put_command(mdm,"AT+CPIN?\r",9,answer,sizeof(answer),50,0);
 			if (!strstr(answer,"+CPIN: READY")) {
 				if (strstr(answer,"+CPIN: SIM PIN")) {
-					LOG(L_ERR,"ERROR:initmodem: Modem did not accept"
-						" this PIN\n");
+					LM_ERR("Modem did not accept this PIN\n");
 					goto error;
 				} else if (strstr(answer,"+CPIN: SIM PUK")) {
-					LOG(L_ERR,"ERROR:initmodem: YourPIN is locked!"
-						" Unlock it manually!\n");
+					LM_ERR("YourPIN is locked! Unlock it manually!\n");
 					goto error;
 				} else {
 					goto error;
 				}
 			}
-			LOG(L_INFO,"INFO:initmodem: PIN Ready!\n");
+			LM_INFO("PIN Ready!\n");
 			sleep(5);
 		}
 	}
@@ -250,8 +247,7 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 	if (mdm->mode==MODE_DIGICOM)
 		success=1;
 	else {
-		LOG(L_INFO,"INFO:initmodem: Checking if Modem is registered to"
-			" the network\n");
+		LM_INFO("Checking if Modem is registered to the network\n");
 		success=0;
 		retries=0;
 		do
@@ -260,34 +256,30 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 			put_command(mdm,"AT+CREG?\r",9,answer,sizeof(answer),100,0);
 			if (strchr(answer,'1') )
 			{
-				LOG(L_INFO,"INFO:initmodem: Modem is registered to the"
-					" network\n");
+				LM_INFO("Modem is registered to the network\n");
 				success=1;
 			} else if (strchr(answer,'2')) {
 				// added by bogdan
-				LOG(L_WARN,"WARNING:initmodem: Modems seems to try to "
-					"reach the network! Let's wait a little bit\n");
+				LM_WARN("Modems seems to try to reach the network!"
+						" Let's wait a little bit\n");
 				retries--;
 				sleep(2);
 			} else if (strchr(answer,'5')) {
 				// added by Thomas Stoeckel
-				LOG(L_INFO,"INFO:initmodem: Modem is registered to a"
-					" roaming partner network\n");
+				LM_INFO("Modem is registered to a roaming partner network\n");
 				success=1;
 			} else if (strstr(answer,"ERROR")) {
-				LOG(L_WARN,"WARNING:initmodem: Ignoring that modem does"
-					" not support +CREG command.\n");
+				LM_WARN("Ignoring that modem does not support +CREG command.\n");
 				success=1;
 			} else {
-				LOG(L_NOTICE,"NOTICE:initmodem: Waiting 2 sec. before"
-					" retrying\n");
+				LM_NOTICE("Waiting 2 sec. before retrying\n");
 				sleep(2);
 			}
 		}while ((success==0)&&(retries<20));
 	}
 
 	if (success==0) {
-		LOG(L_ERR,"ERROR:initmodem: Modem is not registered to the network\n");
+		LM_ERR("Modem is not registered to the network\n");
 		goto error;
 	}
 
@@ -321,28 +313,26 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 			put_command(mdm,command,clen,answer,sizeof(answer),100,0);
 			/*dealing with the answer*/
 			if (strstr(answer,"ERROR")) {
-				LOG(L_NOTICE,"NOTICE:initmodem: Waiting 1 sec. before to"
-					" retrying\n");
+				LM_NOTICE("Waiting 1 sec. before to retrying\n");
 				sleep(1);
 			} else
 				success=1;
 		}while ((success==0)&&(retries<3));
 		/* have we succeeded? */
 		if (success==0) {
-			LOG(L_ERR,"ERROR:initmodem: cmd [%.*s] returned ERROR\n",
-				clen-1,command);
+			LM_ERR("cmd [%.*s] returned ERROR\n", clen-1,command);
 			goto error;
 		}
 	} /* end for */
 
 	if ( sms_report_type==CDS_REPORT && !cds_report_f) {
-		LOG(L_ERR,"ERROR:initmodem:no CDS_REPORT function given\n");
+		LM_ERR("no CDS_REPORT function given\n");
 		goto error;
 	}
 	cds_report_func = cds_report_f;
 
 	if (mdm->smsc[0]) {
-		LOG(L_INFO,"INFO:initmodem: Changing SMSC to \"%s\"\n",mdm->smsc);
+		LM_INFO("Changing SMSC to \"%s\"\n",mdm->smsc);
 		setsmsc(mdm,mdm->smsc);
 	}
 
@@ -363,22 +353,21 @@ int checkmodem(struct modem *mdm)
 	/* Checking if modem needs PIN */
 	put_command(mdm,"AT+CPIN?\r",9,answer,sizeof(answer),50,0);
 	if (!strstr(answer,"+CPIN: READY")) {
-		LOG(L_WARN,"WARNING:sms_checkmodem: modem wants the PIN again!\n");
+		LM_WARN("modem wants the PIN again!\n");
 		goto reinit;
 	}
 
 	if (mdm->mode!=MODE_DIGICOM) {
 		put_command(mdm,"AT+CREG?\r",9,answer,sizeof(answer),100,0);
 		if (!strchr(answer,'1') ) {
-			LOG(L_WARN,"WARNING:sms_checkmodem: Modem is not registered to the"
-					" network\n");
+			LM_WARN("Modem is not registered to the network\n");
 			goto reinit;
 		}
 	}
 
 	return 1;
 reinit:
-	LOG(L_WARN,"WARNING:sms_checkmodem: re -init the modem!!\n");
+	LM_WARN("re -init the modem!!\n");
 	initmodem(mdm,cds_report_func);
 	return -1;
 }

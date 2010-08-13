@@ -230,20 +230,19 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 			/* we have an error */
 			if (checkmodem(mdm)==-1) {
 				err_code = 0;
-				LOG(L_WARN,"WARNING: putsms: resending last sms! \n");
+				LM_WARN("resending last sms! \n");
 			} else if (err_code==0) {
-				LOG(L_WARN,"WARNING: putsms :possible corrupted sms."
-					" Let's try again!\n");
+				LM_WARN("possible corrupted sms. Let's try again!\n");
 				err_code = 1;
 			}else {
-				LOG(L_ERR,"ERROR: We have a FUBAR sms!! drop it!\n");
+				LM_ERR("We have a FUBAR sms!! drop it!\n");
 				err_code = 3;
 			}
 		}
 	}
 
 	if (err_code==0)
-		LOG(L_WARN,"WARNING: something spooky is going on with the modem!"
+		LM_WARN("something spooky is going on with the modem!"
 			" Re-inited and re-tried for %d times without success!\n",
 			mdm->retry);
 	return (err_code==0?-2:(err_code==2?sms_id:-1));
