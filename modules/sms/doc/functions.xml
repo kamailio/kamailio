@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="sms.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="sms_send_msg_to_net">
+	<title>
+	    <function>sms_send_msg_to_net(network_name)</function>
+	</title>
+	<para>
+	    Put the SIP msg in the specified network queue. The function return
+	    error if the number encapsulated into SIP message is malformed, if
+	    the content_type is incorrect or because of some internal failures.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>network_name</emphasis> - Name of network.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>sms_send_msg_to_net</function> usage</title>
+	    <programlisting>
+...
+if (sms_send_msg_to_net("D1"))
+{
+    if (!t_reply("202", "yes sir, SMS sent over"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+} else {
+    if (!t_reply("502", "Bad gateway - SMS error"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+    break;
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="sms_send_msg">
+	<title>
+	    <function>sms_send_msg()</function>
+	</title>
+	<para>
+	    The same as the previous one, but use the default network queue.
+	</para>
+	<example>
+	    <title><function>sms_send_msg</function> usage</title>
+	    <programlisting>
+...
+if (sms_send_msg_to_net())
+{
+    if (!t_reply("202", "yes sir, SMS sent over"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+} else {
+    if (!t_reply("502", "Bad gateway - SMS error"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+    break;
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>
