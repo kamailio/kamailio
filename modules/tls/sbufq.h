@@ -265,7 +265,8 @@ inline static int sbufq_flush(struct sbuffer_queue* q, int* flags,
 			}else{
 				q->offset+=n;
 				q->queued-=n;
-				break;
+				/* no break: if we are here n < block_size => partial write
+				   => the write should be retried */
 			}
 		}else{
 			if (unlikely(n<0))
