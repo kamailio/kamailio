@@ -54,6 +54,7 @@ struct cfg_group_tls {
 	str session_id;
 	str config_file;
 	int log;
+	int debug;
 	int con_lifetime;
 	int disable_compression;
 	/* release internal openssl read or write buffer when they are no longer

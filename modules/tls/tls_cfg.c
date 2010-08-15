@@ -50,7 +50,8 @@ struct cfg_group_tls default_tls_cfg = {
 	0, /* session_cache */
 	STR_STATIC_INIT("sip-router-tls-3.1"), /* session_id */
 	STR_NULL, /* config_file */
-	3, /* log */
+	3, /* log  (L_DBG)*/
+	3, /* debug (L_DBG) */
 	600, /* con_lifetime (s)*/
 	1, /* disable_compression */
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L
@@ -164,6 +165,8 @@ cfg_def_t	tls_cfg_def[] = {
 		"tls config file name (used for the per domain options)" },
 	{"log", CFG_VAR_INT | CFG_ATOMIC, 0, 1000, 0, 0,
 		"tls info messages log level" },
+	{"debug", CFG_VAR_INT | CFG_ATOMIC, 0, 1000, 0, 0,
+		"tls debug messages log level" },
 	{"connection_timeout", CFG_VAR_INT | CFG_ATOMIC,
 							-1, MAX_TLS_CON_LIFETIME, fix_con_lt, 0,
 		"initial connection lifetime (in s) (obsolete)" },

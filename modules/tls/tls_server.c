@@ -90,11 +90,13 @@
 #ifdef TLS_F_DEBUG
 	#ifdef __SUNPRO_C
 		#define TLS_F_TRACE(fmt, ...) \
-			LOG_(DEFAULT_FACILITY, L_INFO, "TLS_TRACE: " LOC_INFO, " %s" fmt,\
+			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+					"TLS_TRACE: " LOC_INFO, " %s" fmt,\
 					_FUNC_NAME_,  __VA_ARGS__)
 	#else
 		#define TLS_F_TRACE(fmt, args...) \
-			LOG_(DEFAULT_FACILITY, L_INFO, "TLS_TRACE: " LOC_INFO, " %s" fmt,\
+			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+					"TLS_TRACE: " LOC_INFO, " %s" fmt,\
 					_FUNC_NAME_, ## args)
 	#endif /* __SUNPRO_c */
 #else /* TLS_F_DEBUG */

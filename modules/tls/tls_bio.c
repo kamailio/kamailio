@@ -32,6 +32,7 @@
 #include "../../compiler_opt.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "tls_cfg.h"
 
 /* 0xf2 should be unused (as of openssl 1.0.0 max.
    internal defined BIO is 23) */
@@ -44,10 +45,12 @@
 #ifdef TLS_BIO_DEBUG
 	#ifdef __SUNPRO_C
 		#define TLS_BIO_DBG(...) \
-			LOG_(DEFAULT_FACILITY, L_INFO, "tls_BIO: " LOC_INFO,  __VA_ARGS__)
+			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+					"tls_BIO: " LOC_INFO,  __VA_ARGS__)
 	#else
 		#define TLS_BIO_DBG(args...) \
-			LOG_(DEFAULT_FACILITY, L_INFO, "tls_BIO: " LOC_INFO, ## args)
+			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+					"tls_BIO: " LOC_INFO, ## args)
 	#endif /* __SUNPRO_c */
 #else /* TLS_BIO_DEBUG */
 	#ifdef __SUNPRO_C
