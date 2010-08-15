@@ -6,6 +6,7 @@ $Id$
 sip-router 3.1 chages
 
 core:
+  - asynchronous TLS support
   - onreply_route {...} is now equivalent with onreply_route[0] {...}
   - global, per protocol blacklist ignore masks (via extended send_flags).
     See dst_blacklist_udp_imask a.s.o (dst_blacklist_*_imask).
@@ -38,11 +39,39 @@ modules:
            blst_rpl_clear_ignore(mask): like blst_rpl_ignore(mask), but
             clears instead of setting.
    - tls:
-           new options for better tuning memory usage for modern openssl
-            versions: ssl_release_buffers, ssl_freelist_max_len,
-            ssl_max_send_fragment, ssl_read_ahead. For more info see
-            modules/doc/tls/README.
-           compression is now disabled by default. To enable it set
+          asynchronous TLS support
+          new TLS RPCs (tls.info, tls.options), tls.list more detailed.
+          removed handshake_timeout and send_timeout module parameters /
+            config variables. The values from tcp are used instead
+            (tcp_connect_timeout and tcp_send_timeout).
+          runtime config support
+          more config options:
+            send_close_notify - enables/disables sending close notify
+              alerts prior to closing the corresponding TCP connection.
+              Sending the close notify prior to tcp shutdown is "nicer"
+              from a TLS point of view, but it has a measurable
+              performance impact. Default: off. Can be set at runtime
+              (tls.send_close_notify).
+            con_ct_wq_max - per connection tls maximum clear text write
+              queue size.  The TLS clear-text write queues are used when a
+              send attempt has to be delayed due to an on-going TLS level
+              renegotiation. Can be set at runtime (tls.con_ct_wq_max).
+              Default: 65536 (64 Kb).
+            ct_wq_max - maximum total for all the tls clear text write
+              queues (summed). Can be set at runtime (tls.ct_wq_max).
+              Default: 10485760 (10 Mb).
+            ct_wq_blk_size - internal TLS pre-write (clear-text) queue
+              minimum block size (advance tunning or debugging).
+              Can be set at runtime (tls.ct_wq_blk_size).
+              Default: 4096 (4 Kb).
+          verbose debug messages can be enable by re-compiling with
+            -DTLS_RD_DEBUG (for the read path) and -DTLS_WR_DEBUG
+            (for the write path).
+          new options for better tuning memory usage for modern openssl
+            versions: ssl_release_buffers (default 1), ssl_freelist_max_len
+            (default 0), ssl_max_send_fragment, ssl_read_ahead (default 0).
+            For more info see modules/doc/tls/README.
+          compression is now disabled by default. To enable it set
             tls_disable_compression to 0, but note that memory usage will
             increase dramatically especially for large number of
             connections (>1000).

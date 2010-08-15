@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
-	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">]
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'"> ]
 >
 
 <section id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -34,7 +34,7 @@
 		<section id="tls.overview">
 		<title>Overview</title>
 		<para>
-			This module implements the TLS transport for SIP-router using the <ulink url="http://www.openssl.org">Openssl library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the SIP-router config file 
+			This module implements the TLS transport for SIP-router using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the SIP-router config file 
 		</para>
 		</section>
 		<section id="tls.quick_start">
@@ -76,7 +76,9 @@ route{
 			Try to avoid using keys larger then 1024 bytes. Large keys significantly slow down the TLS connection handshake, thus limiting the maximum SIP-router TLS connection rate.
 		</para>
 		<para>
-			Compression is fully supported and used by default, if you have a new enough Openssl version (starting with 0.9.8). Although there are some problems with zlib compression in currently deployed Openssl versions (up to and including 0.9.8d, see openssl bug #1468), the TLS module will automatically switch to its own fixed version. There's no need to force-disable the compression.
+			Compression is fully supported if you have a new enough Openssl version (starting with 0.9.8).  Although there are some problems with zlib compression in currently deployed Openssl versions (up to and including 0.9.8d, see openssl bug #1468), the TLS module will automatically switch to its own fixed version.
+			Note however that starting with sr 3.1 compression is not enabled by default, due to the huge extra memory consumption that it causes (about 10x more memory). To enable it use modparam("tls", "tls_disable_compression", 0)
+ (see <varname>tls_disable_compression</varname>).
 		</para>
 		<para>
 			The TLS module includes workarounds for the following known openssl bugs:  openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled, for versions between 0.9.8 and 0.9.8c), openssl #1468 (fix zlib compression memory allocation), openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) and openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory). The bug reports can be viewed at
@@ -90,12 +92,11 @@ route{
 		<para>
 			In most case compiling the TLS module is as simple as:
 			<programlisting>
-make modules modules=modules/tls
+make -C modules/tls
 			</programlisting>
 			or
 			<programlisting>
-cd modules/tls
-make
+make modules modules=modules/tls
 			</programlisting>
 			or (compiling whole SIP-router and the tls module)
 			<programlisting>
@@ -133,7 +134,15 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 			TLS specific config reloading is not safe, so for now better don't use it, especially under heavy traffic.
 		</para>
 		<para>
-			This documentation is incomplete. The select framework and rpc sections are completely missing.
+			This documentation is incomplete.
+			The RPCs are not documented here, but in doc/rpc_list/rpc_tls.txt
+			or <ulink url="http://sip-router.org/docbook/sip-router/branch/master/rpc_list/rpc_list.html#rpc_exports.tls">
+			http://sip-router.org/docbook/sip-router/branch/master/rpc_list/rpc_list.html#rpc_exports.tls</ulink>.
+			The provided selects are not documented. A list with all the
+			ones implemented by the tls module can be seen under
+			doc/select_list/select_tls.txt or
+			or <ulink url="http://sip-router.org/docbook/sip-router/branch/master/select_list/select_list.html#select_list.tls">
+			http://sip-router.org/docbook/sip-router/branch/master/select_list/select_list.html#select_list.tls</ulink>.
 		</para>
 		</section>
 
