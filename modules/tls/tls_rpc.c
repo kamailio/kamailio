@@ -203,7 +203,7 @@ static void tls_options(rpc_t* rpc, void* c)
 {
 	void* handle;
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dSdddSSSSdSSdddddddddddd",
+	rpc->struct_add(handle, "dSdddSSSSdSSdddddddddddddd",
 		"force_run",	cfg_get(tls, tls_cfg, force_run),
 		"method",		&cfg_get(tls, tls_cfg, method),
 		"verify_certificate", cfg_get(tls, tls_cfg, verify_cert),
@@ -218,12 +218,14 @@ static void tls_options(rpc_t* rpc, void* c)
 		"session_id",		&cfg_get(tls, tls_cfg, session_id),
 		"config",			&cfg_get(tls, tls_cfg, config_file),
 		"log",				cfg_get(tls, tls_cfg, log),
+		"debug",			cfg_get(tls, tls_cfg, debug),
 		"connection_timeout", TICKS_TO_S(cfg_get(tls, tls_cfg, con_lifetime)),
 		"disable_compression",	cfg_get(tls, tls_cfg, disable_compression),
 		"ssl_release_buffers",	cfg_get(tls, tls_cfg, ssl_release_buffers),
 		"ssl_freelist_max",		cfg_get(tls, tls_cfg, ssl_freelist_max),
 		"ssl_max_send_fragment", cfg_get(tls, tls_cfg, ssl_max_send_fragment),
 		"ssl_read_ahead",		cfg_get(tls, tls_cfg, ssl_read_ahead),
+		"send_close_notify",	cfg_get(tls, tls_cfg, send_close_notify),
 		"low_mem_threshold1",	cfg_get(tls, tls_cfg, low_mem_threshold1),
 		"low_mem_threshold2",	cfg_get(tls, tls_cfg, low_mem_threshold2),
 		"ct_wq_max",			cfg_get(tls, tls_cfg, ct_wq_max),
