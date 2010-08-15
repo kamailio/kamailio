@@ -565,7 +565,7 @@ modparam("tls", "ct_wq_blk_size", 2048)
 		Sets the log level at which TLS related messages will be logged.
 	</para>
 	<para>
-		The default value is 3.
+		The default value is 3 (L_DBG).
 	</para>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
@@ -584,6 +584,39 @@ modparam("tls", "tls_log", 10)
 		<title>Set <varname>tls.log</varname> at runtime</title>
 		<programlisting>
  $ &sercmd; cfg.set_now_int tls log 10
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="tls_debug">
+	<title><varname>tls_debug</varname> (int)</title>
+	<para>
+		Sets the log level at which TLS debug messages will be logged.
+		Note that TLS debug messages are enabled only if the TLS module
+		is compiled with debugging enabled (e.g. -DTLS_WR_DEBUG,
+		-DTLS_RD_DEBUG or -DTLS_BIO_DEBUG).
+	</para>
+	<para>
+		The default value is 3 (L_DBG).
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.debug.
+	</para>
+	<example>
+		<title>Set <varname>tls_debug</varname> parameter</title>
+		<programlisting>
+...
+# ignore TLS debug messages if SIP-router is started with debug less than 10
+modparam("tls", "tls_debug", 10)
+...
+		</programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.debug</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls debug 10
 		</programlisting>
 	</example>
 	</section>

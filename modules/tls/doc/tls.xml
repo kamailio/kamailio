@@ -122,6 +122,42 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 		</para>
 		</section>
 
+		<section id="tls.debugging">
+		<title>TLS Debugging</title>
+		<para>
+			Debugging messages can be selectively enabled by recompiling
+			the tls module with a combination of the following defines:
+			<itemizedlist>
+				<listitem>
+					<para>
+						TLS_WR_DEBUG - debug messages for the write/send part.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						TLS_RD_DEBUG - debug messages for the read/receive
+						part.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						TLS_BIO_DEBUG - debug messages for the custom BIO.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<example>
+			<title>Compiling TLS with Debug Messages</title>
+			<programlisting>
+make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
+			</programlisting>
+		</example>
+		<para>
+			To change the level at which the debug messages are logged,
+			change the <varname>tls_debug</varname> module parameter.
+		</para>
+		</section>
+
 		<section id="tls.known_limitations">
 		<title>Known Limitations</title>
 		<para>
