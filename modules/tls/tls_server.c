@@ -787,6 +787,10 @@ redo_wr:
 					/* this function should be called again => disallow
 					   immediate closing of the connection */
 					send_flags->f &= ~SND_F_CON_CLOSE;
+					TLS_WR_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+								" (written %p , %d, rest_buf=%p"
+								" rest_len=%d))\n", c, buf, offs,
+								*rest_buf, *rest_len);
 				}
 				break; /* or goto end */
 			case SSL_ERROR_SSL:
@@ -1157,6 +1161,8 @@ ssl_read_skipped:
 				/* something was written => buffer not big enough to hold
 				   everything => reset buffer & retry (the tcp_write already
 				   happened if we are here) */
+				TLS_RD_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+							" (written  %d), retrying\n", c, wr.used);
 				goto continue_ssl_read;
 			}
 			/* else write buffer too small, nothing written */
