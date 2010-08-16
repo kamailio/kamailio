@@ -89,8 +89,8 @@ int cancel_branch( struct cell *t, int branch,
 #endif /* CANCEL_REASON_SUPPORT */
 					int flags );
 
-typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
-								int flags );
+typedef int(*cancel_uacs_f)(struct cell *t, struct cancel_info* cancel_data,
+		int flags);
 typedef int (*cancel_all_uacs_f)(struct cell *trans, int how);
 
 typedef void (*prepare_to_cancel_f)(struct cell *t, branch_bm_t *cancel_bm,
@@ -137,5 +137,13 @@ inline short static prepare_cancel_branch( struct cell *t, int b, int noreply )
 void rpc_cancel(rpc_t* rpc, void* c);
 int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val);
 int cancel_b_flags_get(unsigned int* f, int m);
+
+typedef unsigned int (*tuaccancel_f)( str *headers,str *body,
+		unsigned int cancelledIdx,unsigned int cancelledLabel,
+		transaction_cb cb, void* cbp);
+
+unsigned int t_uac_cancel(str *headers,str *body,
+		unsigned int cancelledIdx,unsigned int cancelledLabel,
+		transaction_cb cb, void* cbp);
 
 #endif

@@ -1578,3 +1578,117 @@ int t_calc_branch(struct cell *t,
 			b, branch, branch_len );
 }
 
+/**
+ * build CANCEL from UAC side
+ */
+char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
+		unsigned int branch, unsigned int *len, struct dest_info* dst)
+{
+	char *cancel_buf, *p;
+	char branch_buf[MAX_BRANCH_PARAM_LEN];
+	str branch_str;
+	struct hostport hp;
+	str content_length, via;
+
+	LM_DBG("sing FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
+		cancelledT->from.len, cancelledT->from.s, cancelledT->to.len,
+		cancelledT->to.s, cancelledT->cseq_n.len, cancelledT->cseq_n.s);
+
+	branch_str.s=branch_buf;
+	if (!t_calc_branch(cancelledT,  branch, branch_str.s, &branch_str.len )){
+		LM_ERR("failed to create branch !\n");
+		goto error;
+	}
+	set_hostport(&hp,0);
+
+	if (assemble_via(&via, cancelledT, dst, branch) < 0) {
+		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
+		return 0;
+	}
+
+	/* method, separators, version  */
+	*len=CANCEL_LEN + 2 /* spaces */ +SIP_VERSION_LEN + CRLF_LEN;
+	*len+=cancelledT->uac[branch].uri.len;
+	/*via*/
+	*len+= via.len;
+	/*From*/
+	*len+=cancelledT->from.len;
+	/*To*/
+	*len+=cancelledT->to.len;
+	/*CallId*/
+	*len+=cancelledT->callid.len;
+	/*CSeq*/
+	*len+=cancelledT->cseq_n.len+1+CANCEL_LEN+CRLF_LEN;
+	/* User Agent */
+	if (server_signature) {
+		*len += USER_AGENT_LEN + CRLF_LEN;
+	}
+	/* Content Length  */
+	if (print_content_length(&content_length, body) < 0) {
+		LM_ERR("failed to print content-length\n");
+		return 0;
+	}
+	/* Content-Length */
+	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);
+	/*Additional headers*/
+	*len += (headers ? headers->len : 0);
+	/*EoM*/
+	*len+= CRLF_LEN;
+	/* Message body */
+	*len += (body ? body->len : 0);
+
+	cancel_buf=shm_malloc( *len+1 );
+	if (!cancel_buf)
+	{
+		LM_ERR("no more share memory\n");
+		goto error01;
+	}
+	p = cancel_buf;
+
+	memapp( p, CANCEL, CANCEL_LEN );
+
+	*(p++) = ' ';
+	memapp( p, cancelledT->uac[branch].uri.s,
+		cancelledT->uac[branch].uri.len);
+	memapp( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
+
+	/* insert our via */
+	memapp(p,via.s,via.len);
+
+	/*other headers*/
+	memapp( p, cancelledT->from.s, cancelledT->from.len );
+	memapp( p, cancelledT->callid.s, cancelledT->callid.len );
+	memapp( p, cancelledT->to.s, cancelledT->to.len );
+
+	memapp( p, cancelledT->cseq_n.s, cancelledT->cseq_n.len );
+	*(p++) = ' ';
+	memapp( p, CANCEL, CANCEL_LEN );
+	memapp( p, CRLF, CRLF_LEN );
+
+	/* User Agent header */
+	if (server_signature) {
+		memapp(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+	}
+	/* Content Length*/
+	if (body) {
+		memapp(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		memapp(p, content_length.s, content_length.len);
+		memapp(p, CRLF, CRLF_LEN);
+	}
+	if(headers && headers->len){
+		memapp(p,headers->s,headers->len);
+	}
+	/*EoM*/
+	memapp(p,CRLF,CRLF_LEN);
+	if(body && body->len){
+		memapp(p,body->s,body->len);
+	}
+	*p=0;
+	pkg_free(via.s);
+	return cancel_buf;
+error01:
+	pkg_free(via.s);
+error:
+	return NULL;
+}
+

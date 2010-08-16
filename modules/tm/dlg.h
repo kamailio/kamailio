@@ -114,6 +114,8 @@ typedef struct dlg {
 	str rem_uri;            /* Remote URI */
 	str rem_target;         /* Remote target URI */
 	str dst_uri;		/* Destination URI */
+	str loc_dname;          /* Local Display Name */
+	str rem_dname;          /* Remote Display Name */
 	unsigned char secure;   /* Secure flag -- currently not used */
 	dlg_state_t state;      /* State of the dialog */
 	rr_t* route_set;        /* Route set */
@@ -138,6 +140,13 @@ typedef enum {
  */
 int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
 typedef int (*new_dlg_uac_f)(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
+
+
+/**
+* Function to add Display Names to an existing dialog
+*/
+int dlg_add_extra(dlg_t* _d, str* _ldname, str* _rdname);
+typedef int (*dlg_add_extra_f)(dlg_t* _d, str* _ldname, str* _rdname);
 
 
 /*

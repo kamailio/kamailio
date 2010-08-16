@@ -289,6 +289,12 @@ struct totag_elem {
 #endif /* CANCEL_REASON_SUPPORT */
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
+#ifdef WITH_AS_SUPPORT
+	/* provisional replies must trigger callbacks for local transaction */
+#	define T_PASS_PROVISIONAL_FLAG (1<<11)
+#	define pass_provisional(_t_)	((_t_)->flags&T_PASS_PROVISIONAL_FLAG)
+#endif
+
 /* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
  * max  retr. = 1023 s for tick = 15 ms, which should be more then enough and
  * saves us 2*2 bytes */

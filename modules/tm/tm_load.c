@@ -113,7 +113,9 @@ int load_tm( struct tm_binds *tmb)
 	tmb->cancel_all_uacs = cancel_all_uacs;
 	tmb->prepare_request_within = prepare_req_within;
 	tmb->send_prepared_request = send_prepared_request;
-	
+	tmb->dlg_add_extra = dlg_add_extra;
+	tmb->t_cancel_uac = t_uac_cancel;
+
 #ifdef DIALOG_CALLBACKS
 	tmb->register_new_dlg_cb=register_new_dlg_cb;
 	tmb->register_dlg_tmcb=register_dlg_tmcb;

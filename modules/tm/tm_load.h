@@ -122,6 +122,8 @@ struct tm_binds {
 	prepare_to_cancel_f prepare_to_cancel;
 	tm_get_stats_f get_stats;
 	tm_get_table_f get_table;
+	dlg_add_extra_f dlg_add_extra;
+	tuaccancel_f    t_cancel_uac;
 #ifdef WITH_TM_CTX
 	tm_ctx_get_f tm_ctx_get;
 #else

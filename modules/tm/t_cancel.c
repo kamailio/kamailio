@@ -433,5 +433,112 @@ int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val)
 }
 
 
+/**
+ * This function cancels a previously created local invite
+ * transaction. The cancel parameter should NOT have any via (CANCEL is
+ * hop by hop). returns 0 if error return >0 if OK (returns the LABEL of
+ * the cancel).*/
+unsigned int t_uac_cancel( str *headers, str *body,
+		unsigned int cancelled_hashIdx, unsigned int cancelled_label,
+		transaction_cb cb, void* cbp)
+{
+	struct cell *t_invite,*cancel_cell;
+	struct retr_buf *cancel,*invite;
+	unsigned int len,ret;
+	char *buf;
+
+	ret=0;
+	if(t_lookup_ident(&t_invite,cancelled_hashIdx,cancelled_label)<0){
+		LM_ERR("failed to t_lookup_ident hash_idx=%d,"
+				"label=%d\n", cancelled_hashIdx,cancelled_label);
+		return 0;
+	}
+	/* <sanity_checks> */
+	if(! is_local(t_invite))
+	{
+		LM_ERR("tried to cancel a non-local transaction\n");
+		goto error3;
+	}
+	if(t_invite->uac[0].last_received < 100)
+	{
+		LM_WARN("trying to cancel a transaction not in "
+					"Proceeding state !\n");
+		goto error3;
+	}
+	if(t_invite->uac[0].last_received > 200)
+	{
+		LM_WARN("trying to cancel a completed transaction !\n");
+		goto error3;
+	}
+	/* </sanity_checks*/
+	/* <build_cell> */
+	if(!(cancel_cell = build_cell(0))){
+		ret=0;
+		LM_ERR("no more shm memory!\n");
+		goto error3;
+	}
+	reset_avps();
+	if(cb && insert_tmcb(&(cancel_cell->tmcb_hl),
+			TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED,cb,cbp,0)!=1){
+		ret=0;
+		LM_ERR("short of tmcb shmem !\n");
+		goto error2;
+	}
+	/* </build_cell> */
+
+	/* <insert_into_hashtable> */
+	cancel_cell->flags |= T_IS_LOCAL_FLAG;
+	cancel_cell->hash_index=t_invite->hash_index;
+
+	LOCK_HASH(cancel_cell->hash_index);
+	insert_into_hash_table_unsafe(cancel_cell,cancel_cell->hash_index);
+	ret=cancel_cell->label;
+	cancel_cell->label=t_invite->label;
+	UNLOCK_HASH(cancel_cell->hash_index);
+	/* </insert_into_hashtable> */
+
+	/* <prepare_cancel> */
+
+	cancel=&cancel_cell->uac[0].request;
+	invite=&t_invite->uac[0].request;
+
+	cancel->dst.to              = invite->dst.to;
+	cancel->dst.send_sock       = invite->dst.send_sock;
+	cancel->dst.proto           = invite->dst.proto;
+	//cancel->dst.proto_reserved1 = invite->dst.proto_reserved1;
+
+	if(!(buf = build_uac_cancel(headers,body,t_invite,0,&len,
+					&(cancel->dst)))){
+		ret=0;
+		LM_ERR("attempt to build a CANCEL failed\n");
+		goto error1;
+	}
+	cancel->buffer=buf;
+	cancel->buffer_len=len;
+	cancel_cell->method.s = buf;
+	cancel_cell->method.len = 6 /*c-a-n-c-e-l*/;
+	/* </prepare_cancel> */
+
+	/* <strart_sending> */
+	cancel_cell->nr_of_outgoings++;
+	if (SEND_BUFFER(cancel)==-1) {
+		ret=0;
+		LM_ERR("send failed\n");
+		goto error1;
+	}
+	start_retr(cancel);
+	/* </start_sending> */
+
+	return ret;
+
+error1:
+	LOCK_HASH(cancel_cell->hash_index);
+	remove_from_hash_table_unsafe(cancel_cell);
+	UNLOCK_HASH(cancel_cell->hash_index);
+error2:
+	free_cell(cancel_cell);
+error3:
+	return ret;
+}
 
 

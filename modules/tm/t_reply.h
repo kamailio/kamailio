@@ -131,8 +131,8 @@ struct cancel_info {
 /* reply export types */
 typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
 typedef int (*treply_wb_f)( struct cell* trans,
-	unsigned int code, char * text, char * body, 
-	char * new_header, char * to_tag);
+	unsigned int code, str *text, str *body,
+	str *new_header, str *to_tag);
 typedef int (*treply_trans_f)(struct cell *t, struct sip_msg* p_msg, unsigned int code,
 	char * text);
 
@@ -171,8 +171,8 @@ int t_retransmit_reply( /* struct sip_msg * */  );
  */
 
 
-int t_reply_with_body( struct cell *trans, unsigned int code, 
-		       char * text, char * body, char * new_header, char * to_tag );
+int t_reply_with_body(struct cell *trans, unsigned int code,
+		str *text, str *body, str *new_header, str *to_tag);
 
 
 /* send a UAS reply
