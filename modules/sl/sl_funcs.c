@@ -128,6 +128,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	struct dest_info dst;
 	struct bookmark dummy_bm;
 	int backup_mhomed, ret;
+	str text;
 
 
 	if (msg->first_line.u.request.method_value==METHOD_ACK)
@@ -151,6 +152,9 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 		}
 	}
 
+	text.s = reason;
+	text.len = strlen(reason);
+
 	/* add a to-tag if there is a To header field without it */
 	if ( 	/* since RFC3261, we append to-tags anywhere we can, except
 		 * 100 replies */
@@ -160,15 +164,15 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
 		if(tag!=NULL && tag->s!=NULL) {
-			buf.s = build_res_buf_from_sip_req(code, reason, tag,
+			buf.s = build_res_buf_from_sip_req(code, &text, tag,
 						msg, (unsigned int*)&buf.len, &dummy_bm);
 		} else {
 			calc_crc_suffix( msg, tag_suffix );
-			buf.s = build_res_buf_from_sip_req(code,reason, &sl_tag, msg,
+			buf.s = build_res_buf_from_sip_req(code, &text, &sl_tag, msg,
 					(unsigned int*)&buf.len, &dummy_bm);
 		}
 	} else {
-		buf.s = build_res_buf_from_sip_req(code, reason, 0, msg,
+		buf.s = build_res_buf_from_sip_req(code, &text, 0, msg,
 				(unsigned int*)&buf.len, &dummy_bm);
 	}
 	if (!buf.s)
