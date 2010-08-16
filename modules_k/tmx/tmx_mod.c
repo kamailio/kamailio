@@ -232,7 +232,7 @@ static int fixup_cancel_branches(void** param, int param_no)
  */
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 {
-	branch_bm_t cb = 0;
+	struct cancel_info cancel_data;
 	struct cell *t = 0;
 	tm_ctx_t *tcx = 0;
 	int n=0;
@@ -244,26 +244,30 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 	if(tcx != NULL)
 		idx = tcx->branch_index;
 	n = (int)(long)k;
+	init_cancel_info(&cancel_data);
 	switch(n) {
 		case 1:
 			/* prepare cancel for every branch except idx */
-			_tmx_tmb.prepare_to_cancel(t, &cb, 1<<idx);
+			_tmx_tmb.prepare_to_cancel(t,
+					&cancel_data.cancel_bitmap, 1<<idx);
 		case 2:
 			if(msg->first_line.u.reply.statuscode>=200)
 				break;
-			cb = 1<<idx;
+			cancel_data.cancel_bitmap = 1<<idx;
 		break;
 		default:
 			if (msg->first_line.u.reply.statuscode>=200)
 				/* prepare cancel for every branch except idx */
-				_tmx_tmb.prepare_to_cancel(t, &cb, 1<<idx);
+				_tmx_tmb.prepare_to_cancel(t,
+						&cancel_data.cancel_bitmap, 1<<idx);
 			else
-				_tmx_tmb.prepare_to_cancel(t, &cb, 0);
+				_tmx_tmb.prepare_to_cancel(t,
+						&cancel_data.cancel_bitmap, 0);
 	}
-	LM_DBG("canceling %d/%d\n", n, (int)cb);
-	if(cb==0)
+	LM_DBG("canceling %d/%d\n", n, (int)cancel_data.cancel_bitmap);
+	if(cancel_data.cancel_bitmap==0)
 		return -1;
-	_tmx_tmb.cancel_uacs(t, cb, 0);
+	_tmx_tmb.cancel_uacs(t, &cancel_data, 0);
 	return 1;
 }
 
@@ -287,12 +291,11 @@ static int fixup_cancel_callid(void** param, int param_no)
 static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *flag)
 {
 	struct cell *trans;
-	branch_bm_t cancel_bm;
+	struct cancel_info cancel_data;
 	str cseq_s;
 	str callid_s;
 	int fl;
 
-	cancel_bm=0;
 	fl = -1;
 
 	if(fixup_get_svalue(msg, (gparam_p)cid, &callid_s)<0)
@@ -321,8 +324,10 @@ static int t_cancel_callid(struct sip_msg* msg, char *cid, char *cseq, char *fla
 	DBG("Now calling cancel_uacs\n");
 	if(trans->uas.request && fl>0 && fl<32)
 		setflag(trans->uas.request, fl);
-	_tmx_tmb.prepare_to_cancel(trans, &cancel_bm, 0);
-	_tmx_tmb.cancel_uacs(trans, cancel_bm, 0);
+	init_cancel_info(&cancel_data);
+	cancel_data.cancel_bitmap = 0;
+	_tmx_tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
+	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
 
 	//_tmx_tmb.unref_cell(trans);
 

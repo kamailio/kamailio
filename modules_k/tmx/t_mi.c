@@ -663,6 +663,7 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 */
 struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 {
+	struct cancel_info cancel_data;
 	struct mi_node *node;
 	struct cell *trans;
 
@@ -676,7 +677,9 @@ struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 	/* cancel the call */
 	LM_DBG("cancelling transaction %p\n",trans);
 
-	_tmx_tmb.cancel_uacs( trans, ~0/*all branches*/, 0);
+	init_cancel_info(&cancel_data);
+	cancel_data.cancel_bitmap = ~0; /*all branches*/
+	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
 
 	_tmx_tmb.unref_cell(trans);
 
@@ -753,11 +756,11 @@ struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 	unsigned int hash_label;
 	unsigned int rpl_code;
 	struct cell *trans;
-	char *reason;
-	char *totag;
-	char *new_hdrs;
-	char *body;
-	str tmp;
+	str reason = {0, 0};
+	str totag = {0, 0};
+	str new_hdrs = {0, 0};
+	str body = {0, 0};
+	str tmp = {0, 0};
 	char *p;
 	int n;
 
@@ -774,49 +777,45 @@ struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 
 	/* reason text (param 2) */
 	node = node->next;
-	reason = as_asciiz(&node->value);
+	reason = node->value;
 
 	/* trans_id (param 3) */
 	node = node->next;
 	tmp = node->value;
 	p = memchr( tmp.s, ':', tmp.len);
-	if ( p==NULL)
+	if(p==NULL)
 		return init_mi_tree( 400, "Invalid trans_id", 16);
 
 	tmp.len = p-tmp.s;
-	if( str2int( &tmp, &hash_index)!=0 )
+	if(str2int(&tmp, &hash_index)!=0)
 		return init_mi_tree( 400, "Invalid index in trans_id", 25);
 
 	tmp.s = p+1;
 	tmp.len = (node->value.s+node->value.len) - tmp.s;
-	if( str2int( &tmp, &hash_label)!=0 )
+	if(str2int(&tmp, &hash_label)!=0)
 		return init_mi_tree( 400, "Invalid label in trans_id", 25);
 
-	if( _tmx_tmb.t_lookup_ident( &trans, hash_index, hash_label)<0 )
+	if(_tmx_tmb.t_lookup_ident( &trans, hash_index, hash_label)<0)
 		return init_mi_tree( 404, "Transaction not found", 21);
 
 	/* to_tag (param 4) */
 	node = node->next;
-	totag = as_asciiz(&node->value);
+	totag = node->value;
 
 	/* new headers (param 5) */
 	node = node->next;
-	if (node->value.len==1 && node->value.s[0]=='.')
-		new_hdrs = 0;
-	else 
-		new_hdrs = as_asciiz(&node->value);
+	if (!(node->value.len==1 && node->value.s[0]=='.'))
+		new_hdrs = node->value;
 
 	/* body (param 5 - optional) */
 	node = node->next;
 	if (node)
-		body = as_asciiz(&node->value);
-	else
-		body = 0;
+		body = node->value;
 
 	/* it's refcounted now, t_reply_with body unrefs for me -- I can 
 	 * continue but may not use T anymore  */
-	n = _tmx_tmb.t_reply_with_body( trans, rpl_code, reason, body,
-			new_hdrs, totag);
+	n = _tmx_tmb.t_reply_with_body(trans, rpl_code, &reason, &body,
+			&new_hdrs, &totag);
 
 	if (n<0)
 		return init_mi_tree( 500, "Reply failed", 12);
