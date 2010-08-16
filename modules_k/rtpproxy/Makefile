@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=nathelper.so
+NAME=rtpproxy.so
 LIBS=
 
 DEFS+=-DOPENSER_MOD_INTERFACE
