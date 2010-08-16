@@ -1,0 +1,1027 @@
+nathelper Module
+
+Maxim Sobolev
+
+   Sippy Software, Inc.
+
+Juha Heinanen
+
+   TuTPro, Inc.
+
+Edited by
+
+Maxim Sobolev
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+Edited by
+
+Juha Heinanen
+
+   Copyright © 2003-2008 Sippy Software, Inc.
+
+   Copyright © 2005 voice-system.ro
+
+   Copyright © 2009 TuTPro Inc.
+   Revision History
+   Revision $Revision$ $Date$
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. NAT pinging types
+        3. Multiple RTPProxy usage
+        4. Dependencies
+
+              4.1. Kamailio Modules
+              4.2. External Libraries or Applications
+
+        5. Exported Parameters
+
+              5.1. natping_interval (integer)
+              5.2. ping_nated_only (integer)
+              5.3. natping_processes (integer)
+              5.4. natping_socket (string)
+              5.5. received_avp (str)
+              5.6. rtpproxy_sock (string)
+              5.7. rtpproxy_disable_tout (integer)
+              5.8. rtpproxy_tout (integer)
+              5.9. rtpproxy_retr (integer)
+              5.10. force_socket (string)
+              5.11. sipping_bflag (integer)
+              5.12. sipping_from (string)
+              5.13. sipping_method (string)
+              5.14. nortpproxy_str (string)
+
+        6. Exported Functions
+
+              6.1. fix_nated_contact()
+              6.2. fix_nated_sdp(flags [, ip_address])
+              6.3. set_rtp_proxy_set()
+              6.4. force_rtp_proxy([flags [, ip_address]])
+              6.5. rtpproxy_offer([flags [, ip_address]])
+              6.6. rtpproxy_answer([flags [, ip_address]])
+              6.7. unforce_rtp_proxy()
+              6.8. rtpproxy_stream2uac(prompt_name, count),
+                      rtpproxy_stream2uas(prompt_name, count)
+
+              6.9. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+              6.10. add_rcv_param([flag]),
+              6.11. fix_nated_register()
+              6.12. nat_uac_test(flags)
+              6.13. start_recording()
+              6.14. add_contact_alias()
+              6.15. handle_ruri_alias()
+
+        7. Exported Pseudo Variables
+
+              7.1. $rr_count
+              7.2. $rr_top_count
+
+        8. MI Commands
+
+              8.1. nh_enable_ping
+              8.2. nh_enable_rtpp
+              8.3. nh_show_rtpp
+
+   2. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set natping_interval parameter
+   1.2. Set ping_nated_only parameter
+   1.3. Set natping_processes parameter
+   1.4. Set natping_socket parameter
+   1.5. Set received_avp parameter
+   1.6. Set rtpproxy_sock parameter
+   1.7. Set rtpproxy_disable_tout parameter
+   1.8. Set rtpproxy_tout parameter
+   1.9. Set rtpproxy_retr parameter
+   1.10. Set force_socket parameter
+   1.11. Set sipping_bflag parameter
+   1.12. Set sipping_from parameter
+   1.13. Set sipping_method parameter
+   1.14. Set nortpproxy_str parameter
+   1.15. fix_nated_contact usage
+   1.16. fix_nated_sdp usage
+   1.17. fix_nated_contact usage
+   1.18. force_rtp_proxy usage
+   1.19. rtpproxy_offer usage
+   1.20.
+   1.21. unforce_rtp_proxy usage
+   1.22. rtpproxy_stream2xxx usage
+   1.23. add_rcv_paramer usage
+   1.24. fix_nated_register usage
+   1.25. start_recording usage
+   1.26. add_contact_alias usage
+   1.27. handle_ruri_alias usage
+   1.28. $rr_count usage
+   1.29. $rr_top_count usage
+   1.30. nh_enable_ping usage
+   1.31. nh_enable_rtpp usage
+   1.32. nh_show_rtpp usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. NAT pinging types
+   3. Multiple RTPProxy usage
+   4. Dependencies
+
+        4.1. Kamailio Modules
+        4.2. External Libraries or Applications
+
+   5. Exported Parameters
+
+        5.1. natping_interval (integer)
+        5.2. ping_nated_only (integer)
+        5.3. natping_processes (integer)
+        5.4. natping_socket (string)
+        5.5. received_avp (str)
+        5.6. rtpproxy_sock (string)
+        5.7. rtpproxy_disable_tout (integer)
+        5.8. rtpproxy_tout (integer)
+        5.9. rtpproxy_retr (integer)
+        5.10. force_socket (string)
+        5.11. sipping_bflag (integer)
+        5.12. sipping_from (string)
+        5.13. sipping_method (string)
+        5.14. nortpproxy_str (string)
+
+   6. Exported Functions
+
+        6.1. fix_nated_contact()
+        6.2. fix_nated_sdp(flags [, ip_address])
+        6.3. set_rtp_proxy_set()
+        6.4. force_rtp_proxy([flags [, ip_address]])
+        6.5. rtpproxy_offer([flags [, ip_address]])
+        6.6. rtpproxy_answer([flags [, ip_address]])
+        6.7. unforce_rtp_proxy()
+        6.8. rtpproxy_stream2uac(prompt_name, count),
+                rtpproxy_stream2uas(prompt_name, count)
+
+        6.9. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+        6.10. add_rcv_param([flag]),
+        6.11. fix_nated_register()
+        6.12. nat_uac_test(flags)
+        6.13. start_recording()
+        6.14. add_contact_alias()
+        6.15. handle_ruri_alias()
+
+   7. Exported Pseudo Variables
+
+        7.1. $rr_count
+        7.2. $rr_top_count
+
+   8. MI Commands
+
+        8.1. nh_enable_ping
+        8.2. nh_enable_rtpp
+        8.3. nh_show_rtpp
+
+1. Overview
+
+   This is a module to help with NAT traversal and reuse of tcp
+   connections. In particular, it helps symmetric UAs that don't advertise
+   they are symmetric and are not able to determine their public address.
+
+   Function fix_nated_contact() rewrites Contact header field with
+   request's source address:port pair. Function fix_nated_sdp() adds the
+   active direction ndication to SDP (flag 0x01) and updates source IP
+   address too (flag 0x02). Function fix_nated_register() exports exports
+   the request's source address:port into an AVP to be used during save()
+   and should be used for REGISTER requests.
+
+   Note: fix_nated_contact changes the Contact header, thus it breaks the
+   RFC. Although usually this is not an issue, it may cause problems with
+   strict SIP clients. An alternative is to use add_contact_alias() that
+   together with handle_ruri_alias() is standards conforming and also
+   supports reuse of TCP/TLS connections.
+
+   Known devices that get along over NATs with nathelper are ATAs (as
+   clients) and Cisco Gateways (since 12.2(T)) as servers. See
+   http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature
+   _guide09186a0080110bf9.html">
+
+2. NAT pinging types
+
+   Currently, the nathelper module supports two types of NAT pings:
+     * UDP package - 4 bytes (zero filled) UDP packages are sent to the
+       contact address.
+          + Advantages: low bandwitdh traffic, easy to generate by
+            Kamailio;
+          + Disadvantages: unidirectional traffic through NAT (inbound -
+            from outside to inside); As many NATs do update the bind
+            timeout only on outbound traffic, the bind may expire and
+            closed.
+     * SIP request - a stateless SIP request is sent to the contact
+       address.
+          + Advantages: bidirectional traffic through NAT, since each PING
+            request from Kamailio (inbound traffic) will force the SIP
+            client to generate a SIP reply (outbound traffic) - the NAT
+            bind will be surely kept open.
+          + Disadvantages: higher bandwitdh traffic, more expensive (as
+            time) to generate by Kamailio;
+
+3. Multiple RTPProxy usage
+
+   Currently, the nathelper module can support multiple rtpproxies for
+   balancing/distribution and control/selection purposes.
+
+   The module allows the definition of several sets of rtpproxies -
+   load-balancing will be performed over a set and the user has the
+   ability to choose what set should be used. The set is selected via its
+   id - the id being defined along with the set. Refer to the
+   “rtpproxy_sock” module parameter definition for syntax description.
+
+   The balancing inside a set is done automatically by the module based on
+   the weight of each rtpproxy from the set.
+
+   The selection of the set is done from script prior using
+   [un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() functions
+   - see the set_rtp_proxy_set() function.
+
+   For backward compatibility reasons, a set with no id take by default
+   the id 0. Also if no set is explicitly set before
+   [un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() the 0 id
+   set will be used.
+
+   IMPORTANT: if you use multiple sets, take care and use the same set for
+   both force_ and unforce_rtpproxy()!!
+
+4. Dependencies
+
+   4.1. Kamailio Modules
+   4.2. External Libraries or Applications
+
+4.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * usrloc module - only if the NATed contacts are to be pinged.
+
+4.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+5. Exported Parameters
+
+   5.1. natping_interval (integer)
+   5.2. ping_nated_only (integer)
+   5.3. natping_processes (integer)
+   5.4. natping_socket (string)
+   5.5. received_avp (str)
+   5.6. rtpproxy_sock (string)
+   5.7. rtpproxy_disable_tout (integer)
+   5.8. rtpproxy_tout (integer)
+   5.9. rtpproxy_retr (integer)
+   5.10. force_socket (string)
+   5.11. sipping_bflag (integer)
+   5.12. sipping_from (string)
+   5.13. sipping_method (string)
+   5.14. nortpproxy_str (string)
+
+5.1. natping_interval (integer)
+
+   Period of time in seconds between sending the NAT pings to all
+   currently registered UAs to keep their NAT bindings alive. Value of 0
+   disables this functionality.
+
+Note
+
+   Enabling the NAT pinging functionality will force the module to bind
+   itself to USRLOC module.
+
+   Default value is 0.
+
+   Example 1.1. Set natping_interval parameter
+...
+modparam("nathelper", "natping_interval", 10)
+...
+
+5.2. ping_nated_only (integer)
+
+   If this variable is set then only contacts that have “behind_NAT” flag
+   in user location database set will get ping.
+
+   Default value is 0.
+
+   Example 1.2. Set ping_nated_only parameter
+...
+modparam("nathelper", "ping_nated_only", 1)
+...
+
+5.3. natping_processes (integer)
+
+   How many timer processes should be created by the module for the
+   exclusive task of sending the NAT pings.
+
+   Default value is 1.
+
+   Example 1.3. Set natping_processes parameter
+...
+modparam("nathelper", "natping_processes", 3)
+...
+
+5.4. natping_socket (string)
+
+   Spoof the natping's source-ip to this address. Works only for IPv4.
+
+   Default value is NULL.
+
+   Example 1.4. Set natping_socket parameter
+...
+modparam("nathelper", "natping_socket", "192.168.1.1:5006")
+...
+
+5.5. received_avp (str)
+
+   The name of the Attribute-Value-Pair (AVP) used to store the URI
+   containing the received IP, port, and protocol. The URI is created by
+   fix_nated_register function of nathelper module and the attribute is
+   then used by the registrar to store the received parameters. Do not
+   forget to change the value of corresponding parameter in registrar
+   module if you change the value of this parameter.
+
+Note
+
+   You must set this parameter if you use "fix_nated_register". In such
+   case you must set the parameter with same name of "registrar" module to
+   same value.
+
+   Default value is "NULL" (disabled).
+
+   Example 1.5. Set received_avp parameter
+...
+modparam("nathelper", "received_avp", "$avp(i:42)")
+...
+
+5.6. rtpproxy_sock (string)
+
+   Definition of socket(s) used to connect to (a set) RTPProxy. It may
+   specify a UNIX socket or an IPv4/IPv6 UDP socket.
+
+   Default value is “NONE” (disabled).
+
+   Example 1.6. Set rtpproxy_sock parameter
+...
+# single rtproxy
+modparam("nathelper", "rtpproxy_sock", "udp:localhost:12221")
+# multiple rtproxies for LB
+modparam("nathelper", "rtpproxy_sock",
+        "udp:localhost:12221 udp:localhost:12222")
+# multiple sets of multiple rtproxies
+modparam("nathelper", "rtpproxy_sock",
+        "1 == udp:localhost:12221 udp:localhost:12222")
+modparam("nathelper", "rtpproxy_sock",
+        "2 == udp:localhost:12225")
+...
+
+5.7. rtpproxy_disable_tout (integer)
+
+   Once RTPProxy was found unreachable and marked as disable, nathelper
+   will not attempt to establish communication to RTPProxy for
+   rtpproxy_disable_tout seconds.
+
+   Default value is “60”.
+
+   Example 1.7. Set rtpproxy_disable_tout parameter
+...
+modparam("nathelper", "rtpproxy_disable_tout", 20)
+...
+
+5.8. rtpproxy_tout (integer)
+
+   Timeout value in waiting for reply from RTPProxy.
+
+   Default value is “1”.
+
+   Example 1.8. Set rtpproxy_tout parameter
+...
+modparam("nathelper", "rtpproxy_tout", 2)
+...
+
+5.9. rtpproxy_retr (integer)
+
+   How many times nathelper should retry to send and receive after timeout
+   was generated.
+
+   Default value is “5”.
+
+   Example 1.9. Set rtpproxy_retr parameter
+...
+modparam("nathelper", "rtpproxy_retr", 2)
+...
+
+5.10. force_socket (string)
+
+   Socket to be forced in communicating to RTPProxy. It makes sense only
+   for UDP communication. If no one specified, the OS will choose.
+
+   Default value is “NULL”.
+
+   Example 1.10. Set force_socket parameter
+...
+modparam("nathelper", "force_socket", "localhost:33333")
+...
+
+5.11. sipping_bflag (integer)
+
+   What branch flag should be used by the module to identify NATed
+   contacts for which it should perform NAT ping via a SIP request instead
+   if dummy UDP package.
+
+   Default value is -1 (disabled).
+
+   Example 1.11. Set sipping_bflag parameter
+...
+modparam("nathelper", "sipping_bflag", 7)
+...
+
+5.12. sipping_from (string)
+
+   The parameter sets the SIP URI to be used in generating the SIP
+   requests for NAT ping purposes. To enable the SIP request pinging
+   feature, you have to set this parameter. The SIP request pinging will
+   be used only for requests marked so.
+
+   Default value is “NULL”.
+
+   Example 1.12. Set sipping_from parameter
+...
+modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
+...
+
+5.13. sipping_method (string)
+
+   The parameter sets the SIP method to be used in generating the SIP
+   requests for NAT ping purposes.
+
+   Default value is “OPTIONS”.
+
+   Example 1.13. Set sipping_method parameter
+...
+modparam("nathelper", "sipping_method", "INFO")
+...
+
+5.14. nortpproxy_str (string)
+
+   The parameter sets the SDP attribute used by nathelper to mark the
+   packet SDP informations have already been mangled.
+
+   If empty string, no marker will be added or checked.
+
+Note
+
+   The string must be a complete SDP line, including the EOH (\r\n).
+
+   Default value is “a=nortpproxy:yes\r\n”.
+
+   Example 1.14. Set nortpproxy_str parameter
+...
+modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
+...
+
+6. Exported Functions
+
+   6.1. fix_nated_contact()
+   6.2. fix_nated_sdp(flags [, ip_address])
+   6.3. set_rtp_proxy_set()
+   6.4. force_rtp_proxy([flags [, ip_address]])
+   6.5. rtpproxy_offer([flags [, ip_address]])
+   6.6. rtpproxy_answer([flags [, ip_address]])
+   6.7. unforce_rtp_proxy()
+   6.8. rtpproxy_stream2uac(prompt_name, count),
+          rtpproxy_stream2uas(prompt_name, count)
+
+   6.9. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+   6.10. add_rcv_param([flag]),
+   6.11. fix_nated_register()
+   6.12. nat_uac_test(flags)
+   6.13. start_recording()
+   6.14. add_contact_alias()
+   6.15. handle_ruri_alias()
+
+6.1.  fix_nated_contact()
+
+   Rewrites Contact HF to contain request's source address:port.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.15. fix_nated_contact usage
+...
+if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
+...
+
+6.2.  fix_nated_sdp(flags [, ip_address])
+
+   Alters the SDP information in orer to facilitate NAT traversal. What
+   changes to be performed may be controled via the “flags” parameter.
+
+   Meaning of the parameters is as follows:
+     * flags - the value may be a bitwise OR of the following flags:
+          + 0x01 - adds “a=direction:active” SDP line;
+          + 0x02 - rewrite media IP address (c=) with source address of
+            the message or the provided IP address (the provide IP address
+            take precedence over the source address).
+          + 0x04 - adds “a=nortpproxy:yes” SDP line;
+          + 0x08 - rewrite IP from origin description (o=) with source
+            address of the message or the provided IP address (the provide
+            IP address take precedence over the source address).
+     * ip_address - IP to be used for rewritting SDP. If not specified,
+       the received signalling IP will be used. The parameter allows
+       pseudo-variables usage. NOTE: For the IP to be used, you need to
+       use 0x02 or 0x08 flags, otherwise it will have no effect.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.16. fix_nated_sdp usage
+...
+if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
+...
+
+6.3.  set_rtp_proxy_set()
+
+   Sets the Id of the rtpproxy set to be used for the next
+   [un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() command.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.17. fix_nated_contact usage
+...
+set_rtp_proxy_set("2");
+force_rtp_proxy();
+...
+
+6.4.  force_rtp_proxy([flags [, ip_address]])
+
+   Rewrites SDP body to ensure that media is passed through an RTP proxy.
+   It can have optional parameters to force additional features. If
+   ip_address is provided, it will be used to replace the one in SDP.
+
+   Note: Behavior of rtpproxy depends on the mode in which rtpproxy is
+   running: If rtpproxy listens only to a single interface, then rtpproxy
+   is default symmetric (port), if rtpproxy listens to two interfaces (so
+   called bridge-mode), then rtpproxy is default asymmetric (port).
+
+   Note: Regardless of symmetric/asymmetric rtpproxy mode, per default
+   rtpproxy accepts incoming RTP packets only from the same IP address as
+   the SIP signaling was received. Thus, if a SIP client uses different IP
+   for media and SIP (often seen with SBCs), the 'r' flag must be
+   specified.
+
+   The function is considered depreciated and provided for the
+   compatibility purposes. Use rtpproxy_offer() or rtpproxy_answer()
+   instead.
+
+   Meaning of the parameters is as follows:
+     * flags - flags to turn on some features.
+          + a - flags that UA from which message is received doesn't
+            support symmetric RTP. (automatically sets the 'r' flag)
+          + l - force “lookup”, that is, only rewrite SDP when
+            corresponding session is already exists in the RTP proxy. By
+            default is on when the session is to be completed (reply in
+            non-swap or ACK in swap mode).
+          + i, e - these flags specify the direction of the SIP message.
+            These flags only make sense when rtpproxy is running in bridge
+            mode. 'i' means internal network (LAN), 'e' means external
+            network (WAN). 'i' corresponds to rtpproxy's first interface,
+            'e' corresponds to rtpproxy's second interface. You always
+            have to specify two flags to define the incoming network and
+            the outgoing network. For example, 'ie' should be used for SIP
+            message received from the local interface and sent out on the
+            external interface, and 'ei' vice versa. Other options are
+            'ii' and 'ee'. So, for example if a SIP requests is processed
+            with 'ie' flags, the corresponding response must be processed
+            with 'ie' flags.
+            Note: As rtpproxy is in bridge mode per default asymmetric,
+            you have to specify the 'w' flag for clients behind NAT! See
+            also above notes!
+          + f - instructs nathelper to ignore marks inserted by another
+            nathelper in transit to indicate that the session is already
+            goes through another proxy. Allows creating chain of proxies.
+          + r - flags that IP address in SDP should be trusted. Without
+            this flag, nathelper ignores address in the SDP and uses
+            source address of the SIP message as media address which is
+            passed to the RTP proxy.
+          + o - flags that IP from the origin description (o=) should be
+            also changed.
+          + c - flags to change the session-level SDP connection (c=) IP
+            if media-description also includes connection information.
+          + s - flags to swap creation with confirmation between requests
+            and replies. By default, a request creates the RTP session and
+            a reply confirms it. If swapped, a reply will create the RTP
+            session and a request will confirm it. The flag is considered
+            depreciated and provided for the compatibility purposes. Use
+            rtpproxy_offer() or rtpproxy_answer() instead.
+          + w - flags that for the UA from which message is received,
+            support symmetric RTP must be forced.
+          + zNN - requests the RTPproxy to perform re-packetization of RTP
+            traffic coming from the UA which has sent the current message
+            to increase or decrease payload size per each RTP packet
+            forwarded if possible. The NN is the target payload size in
+            ms, for the most codecs its value should be in 10ms
+            increments, however for some codecs the increment could differ
+            (e.g. 30ms for GSM or 20ms for G.723). The RTPproxy would
+            select the closest value supported by the codec. This feature
+            could be used for significantly reducing bandwith overhead for
+            low bitrate codecs, for example with G.729 going from 10ms to
+            100ms saves two thirds of the network bandwith.
+     * ip_address - new SDP IP address.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.18. force_rtp_proxy usage
+...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
+if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
+...
+
+6.5.  rtpproxy_offer([flags [, ip_address]])
+
+   Rewrites SDP body to ensure that media is passed through an RTP proxy.
+   Equivalent of force_rtp_proxy() function to be invoked on INVITE for
+   the cases the SDPs are in INVITE and 200 OK and on 200 OK when SDPs are
+   in 200 OK and ACK.
+
+   See force_rtp_proxy() function description above for the meaning of the
+   parameters.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.19. rtpproxy_offer usage
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_sdp()) {
+            if (rtpproxy_offer())
+                t_on_reply("1");
+        } else {
+            t_on_reply("2");
+        }
+    }
+    if (is_method("ACK") && has_sdp())
+        rtpproxy_answer();
+...
+}
+
+onreply_route[1]
+{
+...
+    if (has_sdp())
+        rtpproxy_answer();
+...
+}
+
+onreply_route[2]
+{
+...
+    if (has_sdp())
+        rtpproxy_offer();
+...
+}
+
+6.6.  rtpproxy_answer([flags [, ip_address]])
+
+   Rewrites SDP body to ensure that media is passed through an RTP proxy.
+   Equivalent of force_rtp_proxy() function to be invoked on 200 OK for
+   the cases the SDPs are in INVITE and 200 OK and on ACK when SDPs are in
+   200 OK and ACK.
+
+   See force_rtp_proxy() function description above for the meaning of the
+   parameters.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.20.
+
+   See rtpproxy_offer() function example above for example.
+
+6.7.  unforce_rtp_proxy()
+
+   Tears down the RTPProxy session for the current call.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.21. unforce_rtp_proxy usage
+...
+unforce_rtp_proxy();
+...
+
+6.8.  rtpproxy_stream2uac(prompt_name, count),
+rtpproxy_stream2uas(prompt_name, count)
+
+   Instruct the RTPproxy to stream prompt/announcement pre-encoded with
+   the makeann command from the RTPproxy distribution. The uac/uas suffix
+   selects who will hear the announcement relatively to the current
+   transaction - UAC or UAS. For example invoking the rtpproxy_stream2uac
+   in the request processing block on ACK transaction will play the prompt
+   to the UA that has generated original INVITE and ACK while
+   rtpproxy_stop_stream2uas on 183 in reply processing block will play the
+   prompt to the UA that has generated 183.
+
+   Apart from generating announcements, another possible application of
+   this function is implementing music on hold (MOH) functionality. When
+   count is -1, the streaming will be in loop indefinitely until the
+   appropriate rtpproxy_stop_stream2xxx is issued.
+
+   In order to work correctly, functions require that the session in the
+   RTPproxy already exists. Also those functions don't alted SDP, so that
+   they are not substitute for calling rtpproxy_offer, rtpproxy_answer or
+   force_rtp_proxy.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
+   Meaning of the parameters is as follows:
+     * prompt_name - name of the prompt to stream. Should be either
+       absolute pathname or pathname relative to the directory where
+       RTPproxy runs.
+     * count - number of times the prompt should be repeated. The value of
+       -1 means that it will be streaming in loop indefinitely, until
+       appropriate rtpproxy_stop_stream2xxx is issued.
+
+   Example 1.22. rtpproxy_stream2xxx usage
+...
+    if (is_method("INVITE")) {
+        rtpproxy_offer();
+        if (detect_hold()) {
+            rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", "-1");
+        } else {
+            rtpproxy_stop_stream2uas();
+        };
+    };
+...
+
+6.9.  rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+
+   Stop streaming of announcement/prompt/MOH started previously by the
+   respective rtpproxy_stream2xxx. The uac/uas suffix selects whose
+   announcement relatively to tha current transaction should be stopped -
+   UAC or UAS.
+
+   These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
+6.10.  add_rcv_param([flag]),
+
+   Add received parameter to Contact header fields or Contact URI. The
+   parameter will contain URI created from the source IP, port, and
+   protocol of the packet containing the SIP message. The parameter can be
+   then processed by another registrar, this is useful, for example, when
+   replicating register messages using t_replicate function to another
+   registrar.
+
+   Meaning of the parameters is as follows:
+     * flag - flags to indicate if the parameter should be added to
+       Contact URI or Contact header. If the flag is non-zero, the
+       parameter will be added to the Contact URI. If not used or equal to
+       zero, the parameter will go to the Contact header.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.23. add_rcv_paramer usage
+...
+add_rcv_param(); # add the parameter to the Contact header
+....
+add_rcv_param("1"); # add the parameter to the Contact URI
+...
+
+6.11.  fix_nated_register()
+
+   The function creates a URI consisting of the source IP, port, and
+   protocol and stores the URI in an Attribute-Value-Pair. The URI will be
+   appended as "received" parameter to Contact in 200 OK and registrar
+   will store it in the received cloumn in the location table.
+
+   Note: You have to set the received_avp parameter of the nathelper
+   module and the registrar module (both module parameters must have the
+   same value) to use this function.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.24. fix_nated_register usage
+...
+fix_nated_register();
+...
+
+6.12.  nat_uac_test(flags)
+
+   Tries to guess if client's request originated behind a nat. The
+   parameter determines what heuristics is used.
+
+   Meaning of the flags is as follows:
+     * 1 - Contact header field is searched for occurrence of RFC1918
+       addresses.
+     * 2 - the "received" test is used: address in Via is compared against
+       source IP address of signaling
+     * 4 - Top Most VIA is searched for occurrence of RFC1918 addresses
+     * 8 - SDP is searched for occurrence of RFC1918 addresses
+     * 16 - test if the source port is different from the port in Via
+
+   All flags can be bitwise combined, the test returns true if any of the
+   tests identified a NAT.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+6.13.  start_recording()
+
+   This command will send a signal to the RTP-Proxy to record the RTP
+   stream on the RTP-Proxy.
+
+   This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.25. start_recording usage
+...
+start_recording();
+...
+
+6.14.  add_contact_alias()
+
+   Adds ;alias=ip:port parameter to contact URI containing received
+   ip:port if contact uri ip:port does not match received ip:port.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE, and LOCAL_ROUTE.
+
+   Example 1.26. add_contact_alias usage
+...
+    if (!is_present_hf("Record-Route")) {
+        if (!add_contact_alias()) {
+            xlog("L_ERR", "Error in aliasing contact $ct\n");
+            send_reply("400", "Bad request");
+            exit;
+        };
+    };
+...
+
+6.15.  handle_ruri_alias()
+
+   Checks if Request URI has alias param and if so, removes it and sets
+   $du based on its value. Note that this means that routing of request is
+   based on ;alias parameter value of Request URI rather than Request URI
+   itself. If you call handle_ruri_alias() on a request, make thus sure
+   that you screen alias parameter value of Request URI the same way as
+   you would screen Request URI itself.
+
+   Returns 1 if ;alias param was found and $du was set and $ru rewritten,
+   2 if alias param was not found and nothing was done, or -1 in case of
+   error.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
+   LOCAL_ROUTE.
+
+   Example 1.27. handle_ruri_alias usage
+...
+    if ($du == "") {
+        handle_ruri_alias();
+        switch ($rc) {
+        case -1:
+            xlog("L_ERR", "Failed to handle alias of R-URI $ru\n");
+            send_reply("400", "Bad request");
+            exit;
+        case 1:
+            xlog("L_INFO", "Routing in-dialog $rm from $fu to $du\n");
+            break;
+        case 2:
+            xlog("L_INFO", "Routing in-dialog $rm from $fu to $ru\n");
+            break;
+         };
+    };
+...
+
+7. Exported Pseudo Variables
+
+   7.1. $rr_count
+   7.2. $rr_top_count
+
+7.1. $rr_count
+
+   Number of Record Routes in received SIP request or reply.
+
+   Example 1.28. $rr_count usage
+...
+    $avp(rr_count) = $rr_count;
+...
+
+7.2. $rr_top_count
+
+   If topmost Record Route in received SIP request or reply is a double
+   Record Route, value of $rr_top_count is 2. If it a single Record Route,
+   value of $rr_top_count is 1. If there is no Record Route(s), value of
+   $rr_top_count is 0.
+
+   Example 1.29. $rr_top_count usage
+...
+    if ($rr_count == $avp(rr_count) + $rr_top_count) {
+        route(ADD_CONTACT_ALIAS);
+    };
+...
+
+8. MI Commands
+
+   8.1. nh_enable_ping
+   8.2. nh_enable_rtpp
+   8.3. nh_show_rtpp
+
+8.1. nh_enable_ping
+
+   Enables natping if parameter value greater than 0. Disables natping if
+   parameter value is 0.
+
+   The function takes only one parameter - a number in decimal format.
+
+   Example 1.30. nh_enable_ping usage
+...
+$ kamctl fifo nh_enable_ping 1
+...
+
+8.2. nh_enable_rtpp
+
+   Enables a rtp proxy if parameter value is greater than 0. Disables it
+   if a zero value is given.
+
+   The first parameter is the rtp proxy url (exactly as defined in the
+   config file).
+
+   The second parameter value must be a number in decimal.
+
+   NOTE: if a rtpproxy is defined multiple times (in the same or diferente
+   sete), all its instances will be enables/disabled.
+
+   Example 1.31.  nh_enable_rtpp usage
+...
+$ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+...
+
+8.3. nh_show_rtpp
+
+   Displays all the rtp proxies and their information: set and status
+   (disabled or not, weight and recheck_ticks).
+
+   No parameter.
+
+   Example 1.32.  nh_show_rtpp usage
+...
+$ kamctl fifo nh_show_rtpp
+...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1. What happend with “rtpproxy_disable” parameter?
+   2.2. Where can I find more about Kamailio?
+   2.3. Where can I post a question about this module?
+   2.4. How can I report a bug?
+
+   2.1.
+
+       What happend with “rtpproxy_disable” parameter?
+
+       It was removed as it became obsolete - now “rtpproxy_sock” can take
+       empty value to disable the rtpproxy functionality.
+
+   2.2.
+
+       Where can I find more about Kamailio?
+
+       Take a look at http://www.kamailio.org/.
+
+   2.3.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable Kamailio release should be sent to
+       <users@lists.kamailio.org> and e-mails regarding development versions
+       should be sent to <devel@lists.kamailio.org>.
+
+       If you want to keep the mail private, send it to
+       <team@lists.kamailio.org>.
+
+   2.4.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
