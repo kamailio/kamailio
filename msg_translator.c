@@ -1908,7 +1908,7 @@ error:
 }
 
 
-char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
+char * build_res_buf_from_sip_req( unsigned int code, str *text ,str *new_tag,
 		struct sip_msg* msg, unsigned int *returned_len, struct bookmark *bmark)
 {
 	char              *buf, *p;
@@ -1925,7 +1925,6 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	unsigned int      warning_len;
 	char*             content_len_buf;
 	unsigned int      content_len_len;
-	unsigned int      text_len;
 	char *after_body;
 	str  to_tag;
 	char *totags;
@@ -1934,8 +1933,6 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	buf=0;
 	received_buf=rport_buf=warning_buf=content_len_buf=0;
 	received_len=rport_len=warning_len=content_len_len=0;
-
-	text_len=strlen(text);
 
 	to_tag.s=0;  /* fixes gcc 4.0 warning */
 	to_tag.len=0;
@@ -1975,7 +1972,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 
 	/* first line */
 	len += msg->first_line.u.request.version.len + 1/*space*/ + 3/*code*/ + 1/*space*/ +
-		text_len + CRLF_LEN/*new line*/;
+		text->len + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
 		switch (hdr->type) {
@@ -2055,8 +2052,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		*(p+i) = '0' + foo - ( foo/10 )*10;
 	p += 3;
 	*(p++) = ' ' ;
-	memcpy( p , text , text_len );
-	p += text_len;
+	memcpy( p , text->s , text->len );
+	p += text->len;
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	/* headers*/

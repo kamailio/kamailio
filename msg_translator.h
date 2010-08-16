@@ -80,17 +80,17 @@ struct hostport {
 			(hp)->port=&default_global_port; \
 	}while(0)
 
-char * build_req_buf_from_sip_req (	struct sip_msg* msg, 
+char * build_req_buf_from_sip_req(struct sip_msg* msg, 
 				unsigned int *returned_len, struct dest_info* send_info,
 				unsigned int mode);
 
-char * build_res_buf_from_sip_res(	struct sip_msg* msg,
+char * build_res_buf_from_sip_res(struct sip_msg* msg,
 				unsigned int *returned_len);
 
 
-char * build_res_buf_from_sip_req( unsigned int code ,
-				char *text ,
-				str *new_tag ,
+char * build_res_buf_from_sip_req(unsigned int code,
+				str *text,
+				str *new_tag,
 				struct sip_msg* msg,
 				unsigned int *returned_len,
 				struct bookmark *bmark);
