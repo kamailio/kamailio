@@ -161,7 +161,6 @@ other:
 	return -1;
 }
 
-
 /*
  * Get message body and check Content-Type header field
  */
@@ -318,80 +317,6 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 /*
  * Some helper functions taken verbatim from tm module.
  */
-
-/*
- * Extract Call-ID value
- * assumes the callid header is already parsed
- * (so make sure it is, before calling this function or
- *  it might fail even if the message _has_ a callid)
- */
-int
-get_callid(struct sip_msg* _m, str* _cid)
-{
-
-        if ((parse_headers(_m, HDR_CALLID_F, 0) == -1)) {
-                LM_ERR("failed to parse call-id header\n");
-                return -1;
-        }
-
-        if (_m->callid == NULL) {
-                LM_ERR("call-id not found\n");
-                return -1;
-        }
-
-        _cid->s = _m->callid->body.s;
-        _cid->len = _m->callid->body.len;
-        trim(_cid);
-        return 0;
-}
-
-/*
- * Extract tag from To header field of a response
- * assumes the to header is already parsed, so
- * make sure it really is before calling this function
- */
-int
-get_to_tag(struct sip_msg* _m, str* _tag)
-{
-
-        if (!_m->to) {
-                LM_ERR("To header field missing\n");
-                return -1;
-        }
-
-        if (get_to(_m)->tag_value.len) {
-                _tag->s = get_to(_m)->tag_value.s;
-                _tag->len = get_to(_m)->tag_value.len;
-        } else {
-                _tag->s = NULL; /* fixes gcc 4.0 warnings */
-                _tag->len = 0;
-        }
-
-        return 0;
-}
-
-/*
- * Extract tag from From header field of a request
- */
-int
-get_from_tag(struct sip_msg* _m, str* _tag)
-{
-
-        if (parse_from_header(_m)<0) {
-                LM_ERR("failed to parse From header\n");
-                return -1;
-        }
-
-        if (get_from(_m)->tag_value.len) {
-                _tag->s = get_from(_m)->tag_value.s;
-                _tag->len = get_from(_m)->tag_value.len;
-        } else {
-                _tag->s = NULL; /* fixes gcc 4.0 warnings */
-                _tag->len = 0;
-        }
-
-        return 0;
-}
 
 /*
  * Extract URI from the Contact header field

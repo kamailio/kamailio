@@ -31,9 +31,6 @@
 int extract_body(struct sip_msg * , str *);
 int check_content_type(struct sip_msg * );
 void *ser_memmem(const void *, const void *, size_t, size_t);
-int get_callid(struct sip_msg *, str *);
-int get_to_tag(struct sip_msg *, str *);
-int get_from_tag(struct sip_msg *, str *);
 int get_contact_uri(struct sip_msg *, struct sip_uri *, contact_t **);
 
 #endif
