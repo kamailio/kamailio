@@ -134,8 +134,8 @@ endif
 module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
 				eval exec fifo db_flatstore gflags maxfwd mediaproxy \
 				nathelper options pdt permissions pike print ratelimit \
-				registrar rr sanity sl textops timer tm uac unixsock uri \
-				usrloc xlog cfg_rpc
+				registrar rr rtpproxy sanity sl textops timer tm uac \
+				unixsock uri usrloc xlog cfg_rpc
 
 # Modules in this group are considered a standard part of SER (due to 
 # widespread usage) but they have dependencies that must be satisfied for 
@@ -201,9 +201,9 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				cfgutils db_text dialog dispatcher diversion domain drouting \
 				exec group htable imc kex maxfwd mi_datagram mi_fifo msilo \
 				nat_traversal nathelper path pdt permissions pike pv qos \
-				ratelimit regex registrar rr rtimer siptrace siputils sl sms \
-				speeddial sqlops sst statistics textops tmx uac uac_redirect \
-				uri_db userblacklist usrloc xlog \
+				ratelimit regex registrar rr rtimer rtpproxy siptrace siputils \
+				sl sms speeddial sqlops sst statistics textops tmx uac \
+				uac_redirect uri_db userblacklist usrloc xlog \
 				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh
 
