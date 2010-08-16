@@ -317,7 +317,7 @@ int fixup_pvar_pvar(void** param, int param_no)
 {
 	if (param_no > 2)
 		return E_UNSPEC;
-	return fixup_free_pvar_all(param, param_no);
+	return fixup_pvar_all(param, param_no);
 }
 
 
