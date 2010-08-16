@@ -17,6 +17,11 @@
 			This module was put together by Jan Janak <email>jan@iptel.org</email> from code  from the experimental tls core addon (<ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/">http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/</ulink>), code originally written by Peter Griffiths and later maintained by Cesc Santasusana and from an iptelorg tls code addon, written by Andrei Pelinescu-Onciul <email>andrei@iptel.org</email>. Jan also added support for multiple domains, a tls specific config, config reloading and a tls specific select framework.
 		</para>
 		<para>
+			For ser/sr 3.1 most of the TLS specific code was completely
+			re-written to add support for asynchrounous TLS and fix several
+			long standing bugs.
+		</para>
+		<para>
 			The code is currently maintained by Andrei Pelinescu-Onciul <email>andrei@iptel.org</email>.
 		</para>
 </section>

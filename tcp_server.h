@@ -35,7 +35,7 @@
 /* "public" functions*/
 
 int tcp_send(struct dest_info* dst, union sockaddr_union* from,
-				char* buf, unsigned len);
+				const char* buf, unsigned len);
 
 int tcpconn_add_alias(int id, int port, int proto);
 

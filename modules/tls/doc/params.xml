@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+		"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[<!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
+>
 
-<section id="tm.parameters">
+<section id="tls.parameters">
     <sectioninfo>
 	<revhistory>
 	    <revision>
@@ -201,49 +206,40 @@ modparam("tls", "cipher_list", "HIGH")
 	<section id="send_timeout">
 	<title><varname>send_timeout</varname> (int)</title>
 	<para>
-		Sets the maximum interval of time after which SIP-router will give up trying to send a message over TLS (time after a TLS send will be aborted and the corresponding TLS connection closed). The value is in seconds.
+		This parameter is <emphasis>obsolete</emphasis> and cannot be used
+		in newer TLS versions (&gt; sip-router 3.0). In these versions the
+		send_timeout is replaced by <varname>tcp_send_timeout</varname>
+		(common with all the tcp connections).
 	</para>
-	<para>
-		The default value is 120 s.
-	</para>
-	<example>
-	    <title>Set <varname>send_timeout</varname> parameter</title>
-	    <programlisting>
-...
-modparam("tls", "send_timeout", 1)
-...
-	    </programlisting>
-	</example>
 	</section>
 
 	<section id="handshake_timeout">
 	<title><varname>handshake_timeout</varname> (int)</title>
 	<para>
-		Sets the maximum interval of time after which SIP-router will give up trying to accept a TLS connection or connect to a TLS peer. The value is in seconds.
+		This parameter is <emphasis>obsolete</emphasis> and cannot be used
+		in newer TLS versions (&gt; sip-router 3.0). In these versions the
+		handshake_timeout is replaced by <varname>tcp_connect_timeout</varname>
+		(common with all the tcp connections).
 	</para>
-	<para>
-		The default value is 120 s.
-	</para>
-	<example>
-	    <title>Set <varname>handshake_timeout</varname> parameter</title>
-	    <programlisting>
-...
-modparam("tls", "handshake_timeout", 1)
-...
-	    </programlisting>
-	</example>
 	</section>
 
 	<section id="connection_timeout">
 	<title><varname>connection_timeout</varname> (int)</title>
 	<para>
-		Sets the amount of time after which an idle TLS connection will be closed. This is similar to tcp_connection_lifetime. The value is expressed in seconds.
+		Sets the amount of time after which an idle TLS connection will be
+		closed, if no I/O ever occured after the initial open. If an I/O event
+		occurs, the timeout will be extended with tcp_connection_lifetime.
+		The value is expressed in seconds.
 	</para>
 	<para>
 		The default value is 10 min.
 	</para>
 	<para>
 		If the value set is -1, the connection will never be close on idle.
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.connection_timeout.
 	</para>
 	<example>
 	    <title>Set <varname>connection_timeout</varname> parameter</title>
@@ -252,6 +248,12 @@ modparam("tls", "handshake_timeout", 1)
 modparam("tls", "connection_timeout", 60)
 ...
 	    </programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.connection_timeout</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls connection_timeout 180
+		</programlisting>
 	</example>
 	</section>
 
@@ -285,14 +287,15 @@ modparam("tls", "tls_disable_compression", 0) # enable
 		<varname>ssl_free_list_max_len</varname> has the potential of saving
 		a lot of memory ( ~ 32k per connection in the default configuration,
 		or 16k + <varname>ssl_max_send_fragment</varname>).
+		For sr versions &gt; 3.0 it makes little sense to disable it (0)
+		since the tls module already has its own internal buffering.
 	</para>
 	<para>
 		A value of -1 would not change this option from its openssl default.
 		Use 0 or 1 for enable/disable.
 	</para>
 	<para>
-		By default the value is -1 (the openssl default, which at least in
-		openssl 1.0.0 is 0/disabled).
+		By default the value is 1 (enabled).
 	</para>
 	<note>
 		<para>
@@ -324,11 +327,11 @@ modparam("tls", "ssl_release_buffers", 1)
 	</para>
 	<para>
 		A value of -1 has a special meaning: the OpenSSL default will be used
-		(no attempt on changing the value will be made).
+		(no attempt on changing the value will be made). For OpenSSL 1.0
+		the internal default is 32.
 	</para>
 	<para>
-		By default the value is -1 (the OpenSSL default, which at least in
-		OpenSSL 1.0.0 is 32).
+		By default the value is 0 (no freelist).
 	</para>
 	<note>
 		<para>
@@ -400,25 +403,157 @@ modparam("tls", "ssl_max_send_fragment", 4096)
 <section id="ssl_read_ahead">
 	<title><varname>ssl_read_ahead</varname> (boolean)</title>
 	<para>
-		Enables read ahead, reducing the number of read() system calls
-		done internally by the OpenSSL library.
+		Enables read ahead, reducing the number of internal OpenSSL BIO read()
+		calls. This option has only debugging value, in normal circumstances
+		it should not be changed from the default.
 	</para>
 	<para>
-		When disabled OpenSSL will make at least 2 read() sytem calls per
+		When disabled OpenSSL will make at least 2 BIO read() calls per
 		received record: one to get the record header and one to get the
 		rest of the record.
+	</para>
+	<para>
+		The TLS module buffers internally all read()s and defines its own fast
+		BIO so enabling this option would only cause more memory consumption
+		and a minor slow-down (extra memcpy).
 	</para>
 	<para>
 		A value of -1 has a special meaning: the OpenSSL default will be used
 		(no attempt on changing the value will be made).
 	</para>
 	<para>
-		By default the value is 1 (enabled).
+		By default the value is 0 (disabled).
 	</para>
 	<example>
 		<title>Set <varname>ssl_read_ahead</varname> parameter</title>
 		<programlisting>
 modparam("tls", "ssl_read_ahead", 1)
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="send_close_notify">
+	<title><varname>send_close_notify</varname> (boolean)</title>
+	<para>
+		Enables/disables sending close notify alerts prior to closing the
+		corresponding TCP connection.  Sending the close notify prior to tcp
+		shutdown is "nicer" from a TLS point of view, but it has a measurable
+		performance impact. Default: off. Can be set at runtime
+		(tls.send_close_notify).
+	</para>
+	<para>
+		The default value is 0 (off).
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.send_close_notify.
+	</para>
+	<example>
+	    <title>Set <varname>send_close_notify</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "send_close_notify", 1)
+...
+	    </programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.send_close_notify</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls send_close_notify 1
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="con_ct_wq_max">
+	<title><varname>con_ct_wq_max</varname> (integer)</title>
+	<para>
+		Sets the maximum allowed per connection clear-text send queue size in
+		bytes. This queue is used when data cannot be encrypted and sent
+		immediately because of an ongoing TLS/SSL level renegotiation.
+	</para>
+	<para>
+		The default value is 65536 (64 Kb).
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.con_ct_wq_max.
+	</para>
+	<example>
+	    <title>Set <varname>con_ct_wq_max</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "con_ct_wq_max", 1048576)
+...
+	    </programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.con_ct_wq_max</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls con_ct_wq_max 1048576
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="ct_wq_max">
+	<title><varname>ct_wq_max</varname> (integer)</title>
+	<para>
+		Sets the maximum total number of bytes queued in all the clear-text
+		send queues.  These queues are used when data cannot be encrypted and
+		sent immediately because of an ongoing TLS/SSL level renegotiation.
+	</para>
+	<para>
+		The default value is 10485760 (10 Mb).
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.ct_wq_max.
+	</para>
+	<example>
+	    <title>Set <varname>ct_wq_max</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "ct_wq_max", 4194304)
+...
+	    </programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.ct_wq_max</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls ct_wq_max 4194304
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="ct_wq_blk_size">
+	<title><varname>ct_wq_blk_size</varname> (integer)</title>
+	<para>
+		Minimum block size for the internal clear-text send queues
+		(debugging / advanced tunning).
+		Good values are multiple of typical datagram sizes.
+	</para>
+	<para>
+		The default value is 4096.
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.ct_wq_blk_size.
+	</para>
+	<example>
+	    <title>Set <varname>ct_wq_blk_size</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "ct_wq_blk_size", 2048)
+...
+	    </programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.ct_wq_max</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls ct_wq_blk_size 2048
 		</programlisting>
 	</example>
 	</section>
@@ -430,7 +565,11 @@ modparam("tls", "ssl_read_ahead", 1)
 		Sets the log level at which TLS related messages will be logged.
 	</para>
 	<para>
-		The default value is 3.
+		The default value is 3 (L_DBG).
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.log.
 	</para>
 	<example>
 		<title>Set <varname>tls_log</varname> parameter</title>
@@ -441,13 +580,53 @@ modparam("tls", "tls_log", 10)
 ...
 		</programlisting>
 	</example>
+	<example>
+		<title>Set <varname>tls.log</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls log 10
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="tls_debug">
+	<title><varname>tls_debug</varname> (int)</title>
+	<para>
+		Sets the log level at which TLS debug messages will be logged.
+		Note that TLS debug messages are enabled only if the TLS module
+		is compiled with debugging enabled (e.g. -DTLS_WR_DEBUG,
+		-DTLS_RD_DEBUG or -DTLS_BIO_DEBUG).
+	</para>
+	<para>
+		The default value is 3 (L_DBG).
+	</para>
+	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.debug.
+	</para>
+	<example>
+		<title>Set <varname>tls_debug</varname> parameter</title>
+		<programlisting>
+...
+# ignore TLS debug messages if SIP-router is started with debug less than 10
+modparam("tls", "tls_debug", 10)
+...
+		</programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.debug</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls debug 10
+		</programlisting>
+	</example>
 	</section>
 
 
 <section id="low_mem_threshold1">
 	<title><varname>low_mem_threshold1</varname> (integer)</title>
 	<para>
-		Sets the minimal free memory from which new TLS connection will start to fail. The value is expressed in KB.
+		Sets the minimal free memory from which attempts to open or accept
+		new TLS connections will start to fail. The value is expressed in KB.
 	</para>
 	<para>
 		The default value depends on whether the openssl library used handles well low memory situations (openssl bug #1491). As of this writing this is not true for any openssl version (including 0.9.8e).
@@ -471,6 +650,10 @@ modparam("tls", "tls_log", 10)
 			</listitem>
 	</itemizedlist>
 	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.low_mem_threshold1.
+	</para>
+	<para>
 		See also <varname>low_mem_threshold2</varname>.
 	</para>
 	<example>
@@ -480,6 +663,12 @@ modparam("tls", "tls_log", 10)
 modparam("tls", "low_mem_threshold1", -1)
 ...
 	</programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.low_mem_threshold1</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls low_mem_threshold1 2048
+		</programlisting>
 	</example>
 	</section>
 
@@ -510,6 +699,10 @@ modparam("tls", "low_mem_threshold1", -1)
 			</listitem>
 	</itemizedlist>
 	<para>
+		It can be changed also at runtime, via the RPC interface and config
+		framework. The config variable name is tls.low_mem_threshold2.
+	</para>
+	<para>
 		See also <varname>low_mem_threshold1</varname>.
 	</para>
 	<example>
@@ -519,6 +712,12 @@ modparam("tls", "low_mem_threshold1", -1)
 modparam("tls", "low_mem_threshold2", -1)
 ...
 	</programlisting>
+	</example>
+	<example>
+		<title>Set <varname>tls.low_mem_threshold2</varname> at runtime</title>
+		<programlisting>
+ $ &sercmd; cfg.set_now_int tls low_mem_threshold2 1024
+		</programlisting>
 	</example>
 	</section>
 
@@ -620,6 +819,17 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 ...
 	</programlisting>
 	</example>
+	<para>
+		It can be changed also at runtime. The new config will not be loaded
+		immediately, but after the first tls.reload RPC call.
+		<example>
+			<title>Change and reload tls config at runtime</title>
+			<programlisting>
+ $ &sercmd; cfg.set_now_string tls config "/usr/local/etc/ser/new_tls.cfg"
+ $ &sercmd; tls.reload
+			</programlisting>
+		</example>
+	</para>
 	</section>
 
 </section>

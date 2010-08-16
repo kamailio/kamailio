@@ -44,8 +44,9 @@
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
+#include "../../cfg/cfg.h"
 
-static tls_cfg_t* cfg = NULL;
+static tls_domains_cfg_t* cfg = NULL;
 static tls_domain_t* domain = NULL;
 
 #ifdef USE_IPV6
@@ -340,7 +341,7 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 /*
  * Create configuration structures from configuration file
  */
-tls_cfg_t* tls_load_config(str* filename)
+tls_domains_cfg_t* tls_load_config(str* filename)
 {
 	cfg_parser_t* parser;
 

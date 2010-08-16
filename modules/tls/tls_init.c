@@ -63,12 +63,16 @@
 #include "../../tcp_init.h"
 #include "../../socket_info.h"
 #include "../../pt.h"
+#include "../../cfg/cfg.h"
+#include "../../cfg/cfg_ctx.h"
 #include "tls_verify.h"
 #include "tls_domain.h"
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_init.h"
 #include "tls_locking.h"
+#include "tls_ct_wrq.h"
+#include "tls_cfg.h"
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 #    warning ""
@@ -124,12 +128,6 @@ to compile on the  _target_ system)"
 #ifdef TLS_KSSL_WORKARROUND
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
-int openssl_mem_threshold1=-1; /* low memory threshold for connect/accept */
-int openssl_mem_threshold2=-1; /* like above but for other tsl operations */
-int tls_disable_compression = 1; /* by default disabled due to high memory
-									use (~10x then without compression) */
-int tls_force_run = 0; /* ignore some start-up sanity checks, use it
-						  at your own risk */
 
 const SSL_METHOD* ssl_methods[TLS_USE_SSLv23 + 1];
 
@@ -371,7 +369,7 @@ static int init_tls_compression(void)
 		LOG(L_INFO, "tls: init_tls: compression support disabled in the"
 					" openssl lib\n");
 		goto end; /* nothing to do, exit */
-	} else if (tls_disable_compression){
+	} else if (cfg_get(tls, tls_cfg, disable_compression)){
 		LOG(L_INFO, "tls: init_tls: disabling compression...\n");
 		sk_SSL_COMP_zero(comp_methods);
 	}else{
@@ -456,6 +454,11 @@ int init_tls_h(void)
 	int kerberos_support;
 	int comp_support;
 	const char* lib_cflags;
+	int low_mem_threshold1;
+	int low_mem_threshold2;
+	str tls_grp;
+	str s;
+	cfg_ctx_t* cfg_ctx;
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 	WARN("You are using an old version of OpenSSL (< 0.9.7). Upgrade!\n");
@@ -472,7 +475,7 @@ int init_tls_h(void)
 				" (tls_force_run in ser.cfg will override this check)\n",
 				SSLeay_version(SSLEAY_VERSION), ssl_version,
 				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER);
-		if (tls_force_run)
+		if (cfg_get(tls, tls_cfg, force_run))
 			LOG(L_WARN, "tls: init_tls_h: tls_force_run turned on, ignoring "
 						" openssl version mismatch\n");
 		else
@@ -524,7 +527,7 @@ int init_tls_h(void)
 						lib_kerberos?"enabled":"disabled",
 						kerberos_support?"enabled":"disabled"
 				);
-			if (tls_force_run)
+			if (cfg_get(tls, tls_cfg, force_run))
 				LOG(L_WARN, "tls: init_tls_h: tls_force_run turned on, "
 						"ignoring kerberos support mismatch\n");
 			else
@@ -561,54 +564,65 @@ int init_tls_h(void)
 			" kerberos support will be disabled...\n");
 	}
 	#endif
-	 /* set free memory threshold for openssl bug #1491 workaround */
-	if (openssl_mem_threshold1<0){
+	/* set free memory threshold for openssl bug #1491 workaround */
+	low_mem_threshold1 = cfg_get(tls, tls_cfg, low_mem_threshold1);
+	low_mem_threshold2 = cfg_get(tls, tls_cfg, low_mem_threshold2);
+	if (low_mem_threshold1<0){
 		/* default */
-		openssl_mem_threshold1=512*1024*get_max_procs();
+		low_mem_threshold1=512*1024*get_max_procs();
 	}else
-		openssl_mem_threshold1*=1024; /* KB */
-	if (openssl_mem_threshold2<0){
+		low_mem_threshold1*=1024; /* KB */
+	if (low_mem_threshold2<0){
 		/* default */
-		openssl_mem_threshold2=256*1024*get_max_procs();
+		low_mem_threshold2=256*1024*get_max_procs();
 	}else
-		openssl_mem_threshold2*=1024; /* KB */
-	if ((openssl_mem_threshold1==0) || (openssl_mem_threshold2==0))
+		low_mem_threshold2*=1024; /* KB */
+	if ((low_mem_threshold1==0) || (low_mem_threshold2==0))
 		LOG(L_WARN, "tls: openssl bug #1491 (crash/mem leaks on low memory)"
 					" workarround disabled\n");
 	else
 		LOG(L_WARN, "tls: openssl bug #1491 (crash/mem leaks on low memory)"
 				" workaround enabled (on low memory tls operations will fail"
 				" preemptively) with free memory thresholds %d and %d bytes\n",
-				openssl_mem_threshold1, openssl_mem_threshold2);
+				low_mem_threshold1, low_mem_threshold2);
 	
 	if (shm_available()==(unsigned long)(-1)){
 		LOG(L_WARN, "tls: ser compiled without MALLOC_STATS support:"
 				" the workaround for low mem. openssl bugs will _not_ "
 				"work\n");
-		openssl_mem_threshold1=0;
-		openssl_mem_threshold2=0;
+		low_mem_threshold1=0;
+		low_mem_threshold2=0;
 	}
+	if ((low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1)) ||
+	    (low_mem_threshold2 != cfg_get(tls, tls_cfg, low_mem_threshold2))) {
+		/* ugly hack to set the initial values for the mem tresholds */
+		if (cfg_register_ctx(&cfg_ctx, 0)) {
+			ERR("failed to register cfg context\n");
+			return -1;
+		}
+		tls_grp.s = "tls";
+		tls_grp.len = strlen(tls_grp.s);
+		s.s = "low_mem_threshold1";
+		s.len = strlen(s.s);
+		if (low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1) &&
+				cfg_set_now_int(cfg_ctx, &tls_grp, &s, low_mem_threshold1)) {
+			ERR("failed to set tls.low_mem_threshold1 to %d\n",
+					low_mem_threshold1);
+			return -1;
+		}
+		s.s = "low_mem_threshold2";
+		s.len = strlen(s.s);
+		if (low_mem_threshold2 != cfg_get(tls, tls_cfg, low_mem_threshold2) &&
+				cfg_set_now_int(cfg_ctx, &tls_grp, &s, low_mem_threshold2)) {
+			ERR("failed to set tls.low_mem_threshold1 to %d\n",
+					low_mem_threshold2);
+			return -1;
+		}
+	}
+	
 	SSL_library_init();
 	SSL_load_error_strings();
 	init_ssl_methods();
-#if 0
-	/* OBSOLETE: we are using the tls_h_init_si callback */
-	     /* Now initialize TLS sockets */
-	for(si = tls_listen; si; si = si->next) {
-		if (tls_h_init_si(si) < 0)  return -1;
-		     /* get first ipv4/ipv6 socket*/
-		if ((si->address.af == AF_INET) &&
-		    ((sendipv4_tls == 0) || (sendipv4_tls->flags & SI_IS_LO))) {
-			sendipv4_tls = si;
-		}
-#ifdef USE_IPV6
-		if ((sendipv6_tls == 0) && (si->address.af == AF_INET6)) {
-			sendipv6_tls = si;
-		}
-#endif
-	}
-#endif
-
 	return 0;
 }
 
@@ -617,7 +631,7 @@ int init_tls_h(void)
  * Make sure that all server domains in the configuration have corresponding
  * listening socket in SER
  */
-int tls_check_sockets(tls_cfg_t* cfg)
+int tls_check_sockets(tls_domains_cfg_t* cfg)
 {
 	tls_domain_t* d;
 
@@ -645,4 +659,5 @@ void destroy_tls_h(void)
 	/* TODO: free all the ctx'es */
 	tls_destroy_cfg();
 	tls_destroy_locks();
+	tls_ct_wq_destroy();
 }

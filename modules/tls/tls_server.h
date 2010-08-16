@@ -2,37 +2,28 @@
  * $Id$
  *
  * TLS module - main server part
- *
+ * 
  * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * Copyright (C) 2005,2006 iptelorg GmbH
+ * Copyright (C) 2005-2010 iptelorg GmbH
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of SIP-router, a free SIP server.
  *
- * sip-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * For a license to use the sip-router software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * sip-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: Main server part
- * \ingroup tls
- * Module: \ref tls
+/** main tls part (implements the tls hooks that are called from the tcp code).
+ * @file tls_server.h
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -42,6 +33,7 @@
 #include <stdio.h>
 #include "../../tcp_conn.h"
 #include "tls_domain.h"
+#include "tls_ct_wrq.h"
 
 enum tls_conn_states {
 						S_TLS_NONE = 0,
@@ -50,16 +42,31 @@ enum tls_conn_states {
 						S_TLS_ESTABLISHED
 					};
 
+struct tls_rd_buf {
+	unsigned int pos; /* current position */
+	unsigned int size; /* total size (buf) */
+	unsigned char buf[1];
+};
+
+/* tls conn flags */
+#define F_TLS_CON_WR_WANTS_RD 1 /* write wants read */
+
 struct tls_extra_data {
-	tls_cfg_t* cfg; /* Configuration used for this connection */
-	SSL* ssl;       /* SSL context used for the connection */
+	tls_domains_cfg_t* cfg; /* Configuration used for this connection */
+	SSL* ssl;               /* SSL context used for the connection */
+	BIO* rwbio;             /* bio used for read/write
+							   (openssl code might add buffering BIOs so
+							    it's better to remember our original BIO) */
+	tls_ct_q* ct_wq;
+	struct tls_rd_buf* enc_rd_buf;
+	unsigned int flags;
 	enum  tls_conn_states state;
 };
 
-/*
- * dump ssl error stack 
- */
-void tls_print_errstack(void);
+
+/* return true if write wants read */
+#define tls_write_wants_read(tls_ed) (tls_ed->flags & F_TLS_CON_WR_WANTS_RD)
+
 
 /*
  * Called when new tcp connection is accepted 
@@ -76,11 +83,15 @@ void tls_h_tcpconn_clean(struct tcp_connection *c);
  */
 void tls_h_close(struct tcp_connection *c, int fd);
 
-int tls_h_blocking_write(struct tcp_connection *c, int fd,
-			  const char *buf, unsigned int len);
+int tls_encode_f(struct tcp_connection *c,
+					const char ** pbuf, unsigned int* plen,
+						const char** rest_buf, unsigned int* rest_len,
+						snd_flags_t* send_flags) ;
 
-int tls_h_read(struct tcp_connection *c);
+int tls_read_f(struct tcp_connection *c, int* flags);
 
 int tls_h_fix_read_conn(struct tcp_connection *c);
 
+int tls_connect(struct tcp_connection *c, int* error);
+int tls_accept(struct tcp_connection *c, int* error);
 #endif /* _TLS_SERVER_H */

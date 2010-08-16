@@ -61,7 +61,6 @@
 
 
 /* tcp connection flags */
-#define F_CONN_NON_BLOCKING 1
 #define F_CONN_READ_W       2 /* watched for READ ev. in main */
 #define F_CONN_WRITE_W      4 /* watched for WRITE (main) */
 #define F_CONN_READER       8 /* handled by a tcp reader */
@@ -98,11 +97,26 @@ enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1,
 
 
 /* fd communication commands */
-enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
-					CONN_GET_FD, CONN_NEW, CONN_QUEUED_WRITE,
-					CONN_NEW_PENDING_WRITE, CONN_NEW_COMPLETE };
+enum conn_cmds {
+	CONN_DESTROY=-3 /* destroy connection & auto-dec. refcnt */,
+	CONN_ERROR=-2   /* error on connection & auto-dec. refcnt */,
+	CONN_EOF=-1     /* eof received or conn. closed & auto-dec refcnt */,
+	CONN_NOP=0      /* do-nothing (invalid for tcp_main) */,
+	CONN_RELEASE    /* release a connection from tcp_read back into tcp_main
+					   & auto-dec refcnt */,
+	CONN_GET_FD     /* request a fd from tcp_main */,
+	CONN_NEW        /* update/set a fd int a new tcp connection; refcnts are
+					  not touched */,
+	CONN_QUEUED_WRITE /* new write queue: start watching the fd for write &
+						 auto-dec refcnt */,
+	CONN_NEW_PENDING_WRITE /* like CONN_NEW+CONN_QUEUED_WRITE: set fd and
+							  start watching it for write (write queue
+							  non-empty); refcnts are not touced */,
+	CONN_NEW_COMPLETE  /* like CONN_NEW_PENDING_WRITE, but there is no
+						  pending write (the write queue might be empty) */
+};
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
- * CONN_GET_FD, NEW, ERROR only by writers */
+ * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
 
 struct tcp_req{
 	struct tcp_req* next;

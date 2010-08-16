@@ -4,24 +4,21 @@
  * TLS module - main server part
  * 
  * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * Copyright (C) 2005,2006 iptelorg GmbH
+ * Copyright (C) 2005-2010 iptelorg GmbH
  *
  * This file is part of SIP-router, a free SIP server.
  *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * History:
@@ -31,11 +28,10 @@
  *  2009-09-21  tls connection state is now kept in c->extra_data (no
  *               longer shared with tcp state) (andrei)
  */
-/*!
- * \file
- * \brief SIP-router TLS support :: Main server part
- * \ingroup tls
- * Module: \ref tls
+/** main tls part (implements the tls hooks that are called from the tcp code).
+ * @file tls_server.c
+ * @ingroup tls
+ * Module: @ref tls
  */
 
 
@@ -49,29 +45,104 @@
 #include "../../timer.h"
 #include "../../globals.h"
 #include "../../pt.h"
+#include "../../tcp_int_send.h"
+#include "../../tcp_read.h"
+#include "../../cfg/cfg.h"
 
 #include "tls_init.h"
 #include "tls_domain.h"
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_server.h"
+#include "tls_bio.h"
+#include "tls_dump_vf.h"
+#include "tls_cfg.h"
 
 /* low memory treshold for openssl bug #1491 workaround */
 #define LOW_MEM_NEW_CONNECTION_TEST() \
-	((openssl_mem_threshold1) && (shm_available()<openssl_mem_threshold1))
+	(cfg_get(tls, tls_cfg, low_mem_threshold1) && \
+	  (shm_available() < cfg_get(tls, tls_cfg, low_mem_threshold1)))
 #define LOW_MEM_CONNECTED_TEST() \
-	((openssl_mem_threshold2) && (shm_available()<openssl_mem_threshold2))
+	(cfg_get(tls, tls_cfg, low_mem_threshold2) && \
+	  (shm_available() <  cfg_get(tls, tls_cfg, low_mem_threshold2)))
 
-/* 
- * finish the ssl init (creates the SSL and set extra_data to it)
- * separated from tls_tcpconn_init to allow delayed ssl context
- * init. (from the "child" process and not from the main one 
+#define TLS_RD_MBUF_SZ	65536
+#define TLS_WR_MBUF_SZ	65536
+
+
+/* debugging */
+#ifdef NO_TLS_RD_DEBUG
+#undef TLS_RD_DEBUG
+#endif
+
+#ifdef NO_TLS_WR_DEBUG
+#undef TLS_WR_DEBUG
+#endif
+#if defined TLS_RD_DEBUG || defined TLS_WR_DEBUG
+#define TLS_F_DEBUG
+#endif
+
+/* if NO_TLS_F_DEBUG or NO_TLS_DEBUG => no debug code */
+#if defined NO_TLS_F_DEBUG || defined NO_TLS_DEBUG
+#undef TLS_F_DEBUG
+#endif
+
+#ifdef TLS_F_DEBUG
+	#ifdef __SUNPRO_C
+		#define TLS_F_TRACE(fmt, ...) \
+			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+					"TLS_TRACE: " LOC_INFO, " %s" fmt,\
+					_FUNC_NAME_,  __VA_ARGS__)
+	#else
+		#define TLS_F_TRACE(fmt, args...) \
+			LOG_(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),\
+					"TLS_TRACE: " LOC_INFO, " %s" fmt,\
+					_FUNC_NAME_, ## args)
+	#endif /* __SUNPRO_c */
+#else /* TLS_F_DEBUG */
+	#ifdef __SUNPRO_C
+		#define TLS_F_TRACE(...)
+	#else
+		#define TLS_F_TRACE(fmt, args...)
+	#endif /* __SUNPRO_c */
+#endif /* TLS_F_DEBUG */
+
+/* tls_read debugging */
+#ifdef TLS_RD_DEBUG
+	#define TLS_RD_TRACE TLS_F_TRACE
+#else /* TLS_RD_DEBUG */
+	#ifdef __SUNPRO_C
+		#define TLS_RD_TRACE(...)
+	#else
+		#define TLS_RD_TRACE(fmt, args...)
+	#endif /* __SUNPRO_c */
+#endif /* TLS_RD_DEBUG */
+
+/* tls_write debugging */
+#ifdef TLS_WR_DEBUG
+	#define TLS_WR_TRACE TLS_F_TRACE
+#else /* TLS_RD_DEBUG */
+	#ifdef __SUNPRO_C
+		#define TLS_WR_TRACE(...)
+	#else
+		#define TLS_WR_TRACE(fmt, args...)
+	#endif /* __SUNPRO_c */
+#endif /* TLS_RD_DEBUG */
+
+
+/** finish the ssl init.
+ * Creates the SSL context + internal tls_extra_data and sets
+ * extra_data to it.
+ * Separated from tls_tcpconn_init to allow delayed ssl context
+ * init (from the "child" process and not from the main one).
+ * WARNING: the connection should be already locked.
+ * @return 0 on success, -1 on errror.
  */
 static int tls_complete_init(struct tcp_connection* c)
 {
 	tls_domain_t* dom;
 	struct tls_extra_data* data = 0;
-	tls_cfg_t* cfg;
+	tls_domains_cfg_t* cfg;
 	enum tls_conn_states state;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
@@ -79,15 +150,15 @@ static int tls_complete_init(struct tcp_connection* c)
 				" operation: %lu\n", shm_available());
 		goto error2;
 	}
-	     /* Get current TLS configuration and increate reference
+	     /* Get current TLS configuration and increase reference
 	      * count immediately. There is no need to lock the structure
 	      * here, because it does not get deleted immediately. When
 	      * SER reloads TLS configuration it will put the old configuration
 	      * on a garbage queue and delete it later, so we know here that
-	      * the pointer we get from *tls_cfg will be valid for a while, at
-	      * least by the time this function finishes
+	      * the pointer we get from *tls_domains_cfg will be valid for a while,
+		  * at least by the time this function finishes
 	      */
-	cfg = *tls_cfg;
+	cfg = *tls_domains_cfg;
 
 	     /* Increment the reference count in the configuration structure, this
 	      * is to ensure that, while on the garbage queue, the configuration does
@@ -117,11 +188,16 @@ static int tls_complete_init(struct tcp_connection* c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	data->ssl = SSL_new(dom->ctx[process_no]);
+	data->rwbio = tls_BIO_new_mbuf(0, 0);
 	data->cfg = cfg;
 	data->state = state;
 
-	if (data->ssl == 0) {
-		TLS_ERR("Failed to create SSL structure:");
+	if (unlikely(data->ssl == 0 || data->rwbio == 0)) {
+		TLS_ERR("Failed to create SSL or BIO structure:");
+		if (data->ssl)
+			SSL_free(data->ssl);
+		if (data->rwbio)
+			BIO_free(data->rwbio);
 		goto error;
 	}
 #ifdef TLS_KSSL_WORKARROUND
@@ -131,6 +207,7 @@ static int tls_complete_init(struct tcp_connection* c)
 		data->ssl->kssl_ctx=0;
 	}
 #endif
+	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
 	return 0;
 
@@ -142,37 +219,73 @@ static int tls_complete_init(struct tcp_connection* c)
 }
 
 
-/*
- * Update ssl structure with new fd 
+
+/** completes tls init if needed and checks if tls can be used (unsafe).
+ *  It will check for low memory.
+ *  If it returns success, c->extra_data is guaranteed to be !=0.
+ *  WARNING: must be called with c->write_lock held.
+ *  @return 0 on success, < 0 on error (complete init failed or out of memory).
  */
-static int tls_update_fd(struct tcp_connection *c, int fd)
+static int tls_fix_connection_unsafe(struct tcp_connection* c)
 {
-	SSL *ssl;
-	BIO *rbio;
-	BIO *wbio;
-	
-	if (!c->extra_data && tls_complete_init(c) < 0) {
-		ERR("Delayed init failed\n");
-		return -1;
-	}else if (LOW_MEM_CONNECTED_TEST()){
+	if (unlikely(!c->extra_data)) {
+		if (unlikely(tls_complete_init(c) < 0)) {
+			return -1;
+		}
+	}else if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		return -1;
 	}
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
+	return 0;
+}
+
+
+
+/** completes tls init if needed and checks if tls can be used, (safe).
+ *  It will check for low memory.
+ *  If it returns success, c->extra_data is guaranteed to be !=0.
+ *  WARNING: must _not_ be called with c->write_lock held (it will
+ *   lock/unlock internally), see also tls_fix_connection_unsafe().
+ *  @return 0 on success, < 0 on error (complete init failed or out of memory).
+ */
+static int tls_fix_connection(struct tcp_connection* c)
+{
+	int ret;
 	
-	if (((rbio=SSL_get_rbio(ssl))==0) || ((wbio=SSL_get_wbio(ssl))==0)){
-		/* no BIO connected */
-		if (SSL_set_fd(ssl, fd) != 1) {
-			TLS_ERR("tls_update_fd:");
-			return -1;
-		}
-		return 0;
+	if (unlikely(c->extra_data == 0)) {
+		lock_get(&c->write_lock);
+			if (unlikely(c->extra_data == 0)) {
+				ret = tls_complete_init(c);
+				lock_release(&c->write_lock);
+				return ret;
+			}
+		lock_release(&c->write_lock);
 	}
-	if ((BIO_set_fd(rbio, fd, BIO_NOCLOSE)!=1) ||
-		(BIO_set_fd(wbio, fd, BIO_NOCLOSE)!=1)) {
+	if (unlikely(LOW_MEM_CONNECTED_TEST())){
+		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
+				" operation: %lu\n", shm_available());
+		return -1;
+	}
+	return 0;
+}
+
+
+
+/** sets an mbuf pair for the bio used by the tls connection.
+ * WARNING: must be called with c->write_lock held.
+ * @return 0 on success, -1 on error.
+ */
+static int tls_set_mbufs(struct tcp_connection *c,
+							struct tls_mbuf* rd,
+							struct tls_mbuf* wr)
+{
+	BIO *rwbio;
+	
+	rwbio = ((struct tls_extra_data*)c->extra_data)->rwbio;
+	if (unlikely(tls_BIO_mbuf_set(rwbio, rd, wr)<=0)) {
 		/* it should be always 1 */
-		TLS_ERR("tls_update_fd:");
+		ERR("failed to set mbufs");
 		return -1;
 	}
 	return 0;
@@ -189,147 +302,52 @@ static void tls_dump_cert_info(char* s, X509* cert)
 	issuer = X509_NAME_oneline(X509_get_issuer_name(cert), 0 , 0);
 	
 	if (subj){
-		LOG(tls_log, "%s subject:%s\n", s ? s : "", subj);
+		LOG(cfg_get(tls, tls_cfg, log), "%s subject:%s\n", s ? s : "", subj);
 		OPENSSL_free(subj);
 	}
 	if (issuer){
-		LOG(tls_log, "%s issuer:%s\n", s ? s : "", issuer);
+		LOG(cfg_get(tls, tls_cfg, log), "%s issuer:%s\n", s ? s : "", issuer);
 		OPENSSL_free(issuer);
 	}
 }
 
 
-static void tls_dump_verification_failure(long verification_result)
-{
-	switch(verification_result) {
-	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-		LOG(tls_log, "verification failure: unable to get issuer certificate\n");
-		break;
-	case X509_V_ERR_UNABLE_TO_GET_CRL:
-		LOG(tls_log, "verification failure: unable to get certificate CRL\n");
-		break;
-	case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
-		LOG(tls_log, "verification failure: unable to decrypt certificate's signature\n");
-		break;
-	case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
-		LOG(tls_log, "verification failure: unable to decrypt CRL's signature\n");
-		break;
-	case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
-		LOG(tls_log, "verification failure: unable to decode issuer public key\n");
-		break;
-	case X509_V_ERR_CERT_SIGNATURE_FAILURE:
-		LOG(tls_log, "verification failure: certificate signature failure\n");
-		break;
-	case X509_V_ERR_CRL_SIGNATURE_FAILURE:
-		LOG(tls_log, "verification failure: CRL signature failure\n");
-		break;
-	case X509_V_ERR_CERT_NOT_YET_VALID:
-		LOG(tls_log, "verification failure: certificate is not yet valid\n");
-		break;
-	case X509_V_ERR_CERT_HAS_EXPIRED:
-		LOG(tls_log, "verification failure: certificate has expired\n");
-		break;
-	case X509_V_ERR_CRL_NOT_YET_VALID:
-		LOG(tls_log, "verification failure: CRL is not yet valid\n");
-		break;
-	case X509_V_ERR_CRL_HAS_EXPIRED:
-		LOG(tls_log, "verification failure: CRL has expired\n");
-		break;
-	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-		LOG(tls_log, "verification failure: format error in certificate's notBefore field\n");
-		break;
-	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-		LOG(tls_log, "verification failure: format error in certificate's notAfter field\n");
-		break;
-	case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
-		LOG(tls_log, "verification failure: format error in CRL's lastUpdate field\n");
-		break;
-	case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
-		LOG(tls_log, "verification failure: format error in CRL's nextUpdate field\n");
-		break;
-	case X509_V_ERR_OUT_OF_MEM:
-		LOG(tls_log, "verification failure: out of memory\n");
-		break;
-	case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-		LOG(tls_log, "verification failure: self signed certificate\n");
-		break;
-	case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-		LOG(tls_log, "verification failure: self signed certificate in certificate chain\n");
-		break;
-	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
-		LOG(tls_log, "verification failure: unable to get local issuer certificate\n");
-		break;
-	case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-		LOG(tls_log, "verification failure: unable to verify the first certificate\n");
-		break;
-	case X509_V_ERR_CERT_CHAIN_TOO_LONG:
-		LOG(tls_log, "verification failure: certificate chain too long\n");
-		break;
-	case X509_V_ERR_CERT_REVOKED:
-		LOG(tls_log, "verification failure: certificate revoked\n");
-		break;
-	case X509_V_ERR_INVALID_CA:
-		LOG(tls_log, "verification failure: invalid CA certificate\n");
-		break;
-	case X509_V_ERR_PATH_LENGTH_EXCEEDED:
-		LOG(tls_log, "verification failure: path length constraint exceeded\n");
-		break;
-	case X509_V_ERR_INVALID_PURPOSE:
-		LOG(tls_log, "verification failure: unsupported certificate purpose\n");
-		break;
-	case X509_V_ERR_CERT_UNTRUSTED:
-		LOG(tls_log, "verification failure: certificate not trusted\n");
-		break;
-	case X509_V_ERR_CERT_REJECTED:
-		LOG(tls_log, "verification failure: certificate rejected\n");
-		break;
-	case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
-		LOG(tls_log, "verification failure: subject issuer mismatch\n");
-		break;
-	case X509_V_ERR_AKID_SKID_MISMATCH:
-		LOG(tls_log, "verification failure: authority and subject key identifier mismatch\n");
-		break;
-	case X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:
-		LOG(tls_log, "verification failure: authority and issuer serial number mismatch\n");
-		break;
-	case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
-		LOG(tls_log, "verification failure: key usage does not include certificate signing\n");
-		break;
-	case X509_V_ERR_APPLICATION_VERIFICATION:
-		LOG(tls_log, "verification failure: application verification failure\n");
-		break;
-	}
-}
 
-
-/*
- * Wrapper around SSL_accept, returns -1 on error, 0 on success 
+/** wrapper around SSL_accept, usin SSL return convention.
+ * It will also log critical errors and certificate debugging info.
+ * @param c - tcp connection with tls (extra_data must be a filled
+ *            tcp_extra_data structure). The state must be S_TLS_ACCEPTING.
+ * @param error  set to the error reason (SSL_ERROR_*).
+ *            Note that it can be SSL_ERROR_NONE while the return is < 0
+ *            ("internal" error, not at the SSL level, see below).
+ * @return >=1 on success, 0 and <0 on error. 0 means the underlying SSL
+ *           connection was closed/shutdown.  < 0 is returned for any
+ *           SSL_ERROR (including  WANT_READ or WANT_WRITE), but also
+ *           for internal non SSL related errors (in this case -2 is
+ *           returned and error==SSL_ERROR_NONE).
+ *
  */
-static int tls_accept(struct tcp_connection *c, int* error)
+int tls_accept(struct tcp_connection *c, int* error)
 {
-	int ret, err, ssl_err;
+	int ret;
 	SSL *ssl;
 	X509* cert;
 	struct tls_extra_data* tls_c;
+	int tls_log;
 
-	if (LOW_MEM_NEW_CONNECTION_TEST()){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
-		goto err;
-	}
-	
+	*error = SSL_ERROR_NONE;
 	tls_c=(struct tls_extra_data*)c->extra_data;
 	ssl=tls_c->ssl;
 	
-	if (tls_c->state != S_TLS_ACCEPTING) {
+	if (unlikely(tls_c->state != S_TLS_ACCEPTING)) {
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
-		/* Not critical */
-		return 0;
+		goto err;
 	}
 	ret = SSL_accept(ssl);
-	if (ret == 1) {
+	if (unlikely(ret == 1)) {
 		DBG("TLS accept successful\n");
 		tls_c->state = S_TLS_ESTABLISHED;
+		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_accept: new connection from %s:%d using %s %s %d\n",
 		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl), 
@@ -350,85 +368,51 @@ static int tls_accept(struct tcp_connection *c, int* error)
 		} else {
 			LOG(tls_log, "tls_accept: client did not present a certificate\n");
 		}
-	} else {
-		err = SSL_get_error(ssl, ret);
-		if (error) *error = err;
-		switch (err) {
-		case SSL_ERROR_ZERO_RETURN:
-			DBG("TLS handshake failed cleanly\n");
-			goto err;
-			
-		case SSL_ERROR_WANT_READ:
-			DBG("Need to get more data to finish TLS accept\n");
-			break;
-			
-		case SSL_ERROR_WANT_WRITE:
-			DBG("Need to send more data to finish TLS accept\n");
-			break;
-			
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-		case SSL_ERROR_WANT_CONNECT:
-			DBG("Need to retry connect\n");
-			break;
-			
-		case SSL_ERROR_WANT_ACCEPT:
-			DBG("Need to retry accept\n");
-			break;
-#endif
-		case SSL_ERROR_WANT_X509_LOOKUP:
-			DBG("Application callback asked to be called again\n");
-			break;
-			
-		case SSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "TLS accept:");
-			if (!ssl_err) {
-				if (ret == 0) {
-					WARN("Unexpected EOF occurred while performing TLS accept\n");
-				} else {
-					ERR("IO error: (%d) %s\n", errno, strerror(errno));
-				}
-			}
-			goto err;
-			
-		default:
-			TLS_ERR("SSL error:");
-			goto err;
-		}
+	} else { /* ret == 0 or < 0 */
+		*error = SSL_get_error(ssl, ret);
 	}
-	return 0;
+	return ret;
 err:
-	return -1;
+	/* internal non openssl related errors */
+	return -2;
 }
 
 
-/*
- * wrapper around SSL_connect, returns 0 on success, -1 on error 
+/** wrapper around SSL_connect, using SSL return convention.
+ * It will also log critical errors and certificate debugging info.
+ * @param c - tcp connection with tls (extra_data must be a filled
+ *            tcp_extra_data structure). The state must be S_TLS_CONNECTING.
+ * @param error  set to the error reason (SSL_ERROR_*).
+ *            Note that it can be SSL_ERROR_NONE while the return is < 0
+ *            ("internal" error, not at the SSL level, see below).
+ * @return >=1 on success, 0 and <0 on error. 0 means the underlying SSL
+ *           connection was closed/shutdown. < 0 is returned for any
+ *           SSL_ERROR (including  WANT_READ or WANT_WRITE), but also
+ *           for internal non SSL related errors (in this case -2 is
+ *           returned and error==SSL_ERROR_NONE).
+ *
  */
-static int tls_connect(struct tcp_connection *c, int* error)
+int tls_connect(struct tcp_connection *c, int* error)
 {
 	SSL *ssl;
-	int ret, err, ssl_err;
+	int ret;
 	X509* cert;
 	struct tls_extra_data* tls_c;
+	int tls_log;
 
-	if (LOW_MEM_NEW_CONNECTION_TEST()){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
-		goto err;
-	}
-
+	*error = SSL_ERROR_NONE;
 	tls_c=(struct tls_extra_data*)c->extra_data;
 	ssl=tls_c->ssl;
 	
-	if (tls_c->state != S_TLS_CONNECTING) {
+	if (unlikely(tls_c->state != S_TLS_CONNECTING)) {
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
-		/* Not critical */
-		return 0;
+		goto err;
 	}
 	ret = SSL_connect(ssl);
-	if (ret == 1) {
-		DBG("TLS connect successuful\n");
+	if (unlikely(ret == 1)) {
+		DBG("TLS connect successful\n");
 		tls_c->state = S_TLS_ESTABLISHED;
+		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_connect: new connection to %s:%d using %s %s %d\n", 
 		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl),
@@ -447,74 +431,40 @@ static int tls_connect(struct tcp_connection *c, int* error)
 			}
 			X509_free(cert);
 		} else {
-			     /* this should not happen, servers always present a cert */
-			LOG(tls_log, "tls_connect: server did not present a certificate\n");
+			/* this should not happen, servers always present a cert */
+			LOG(tls_log, "tls_connect: server did not "
+							"present a certificate\n");
 		}
-	} else {
-		err = SSL_get_error(ssl, ret);
-		if (error) *error = err;
-		switch (err) {
-		case SSL_ERROR_ZERO_RETURN:
-			DBG("TLS handshake failed cleanly\n");
-			goto err;
-			
-		case SSL_ERROR_WANT_READ:
-			DBG("Need to get more data to finish TLS connect\n");
-			break;
-			
-		case SSL_ERROR_WANT_WRITE:
-			DBG("Need to send more data to finish TLS connect\n");
-			break;
-			
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-		case SSL_ERROR_WANT_CONNECT:
-			DBG("Need to retry connect\n");
-			break;
-			
-		case SSL_ERROR_WANT_ACCEPT:
-			DBG("Need to retry accept\n");
-			break;
-#endif
-		case SSL_ERROR_WANT_X509_LOOKUP:
-			DBG("Application callback asked to be called again\n");
-			break;
-			
-		case SSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "TLS connect:");
-			if (!ssl_err) {
-				if (ret == 0) {
-					WARN("Unexpected EOF occurred while performing TLS connect\n");
-				} else {
-					ERR("IO error: (%d) %s\n", errno, strerror(errno));
-				}
-			}
-			goto err;
-			
-		default:
-			TLS_ERR("SSL error:");
-			goto err;
-		}
+	} else { /* 0 or < 0 */
+		*error = SSL_get_error(ssl, ret);
 	}
-	return 0;
+	return ret;
 err:
-	return -1;
+	/* internal non openssl related errors */
+	return -2;
 }
 
 
 /*
- * wrapper around SSL_shutdown, returns -1 on error, 0 on success 
+ * wrapper around SSL_shutdown, returns -1 on error, 0 on success.
  */
 static int tls_shutdown(struct tcp_connection *c)
 {
 	int ret, err, ssl_err;
+	struct tls_extra_data* tls_c;
 	SSL *ssl;
 
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
-	if (ssl == 0) {
+	tls_c=(struct tls_extra_data*)c->extra_data;
+	if (unlikely(tls_c == 0 || tls_c->ssl == 0)) {
 		ERR("No SSL data to perform tls_shutdown\n");
 		return -1;
 	}
-	if (LOW_MEM_CONNECTED_TEST()){
+	ssl = tls_c->ssl;
+	/* it doesn't make sense to try a TLS level shutdown
+	   if the connection is not fully initialized */
+	if (unlikely(tls_c->state != S_TLS_ESTABLISHED))
+		return 0;
+	if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
 				" operation: %lu\n", shm_available());
 		goto err;
@@ -566,6 +516,7 @@ static int tls_shutdown(struct tcp_connection *c)
 			}
 			goto err;
 			
+		case SSL_ERROR_SSL:
 		default:
 			TLS_ERR("SSL error:");
 			goto err;
@@ -578,105 +529,36 @@ static int tls_shutdown(struct tcp_connection *c)
 }
 
 
-/* "normal", return number of bytes written,  -1 on error/EOF & sets error
- * & c->state on EOF; 0 on want READ/WRITE
- * 
- * expects a set fd */
-static int tls_write(struct tcp_connection *c, const void *buf, size_t len, int* error)
-{
-	int ret, err, ssl_err;
-	SSL *ssl;
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 
-	err = 0;
-	if (LOW_MEM_CONNECTED_TEST()){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
-		ret=-1;
-		goto err;
-	}
-	ret = SSL_write(ssl, buf, len);
-	if (ret <= 0) {
-		err = SSL_get_error(ssl, ret);
-		switch (err) {
-		case SSL_ERROR_ZERO_RETURN:
-			DBG("TLS connection has been closed\n");
-			c->state = S_CONN_EOF;
-			ret = -1;
-			break;
-			
-		case SSL_ERROR_WANT_READ:
-			DBG("Need to get more data to finish TLS write\n");
-			ret = 0;
-			break;
-
-		case SSL_ERROR_WANT_WRITE:
-			DBG("Need to send more data to finish TLS write\n");
-			ret = 0;
-			break;
-			
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-		case SSL_ERROR_WANT_CONNECT:
-		case SSL_ERROR_WANT_ACCEPT:
-			DBG("TLS not connected\n");
-			ret = -1;
-			break;
-#endif
-		case SSL_ERROR_WANT_X509_LOOKUP:
-			DBG("Application callback asked to be called again\n");
-			ret = 0;
-			break;
-			
-		case SSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "tls_write:");
-			if (!ssl_err) {
-				if (ret == 0) {
-					WARN("Unexpected EOF occurred while performing TLS shutdown\n");
-					c->state = S_CONN_EOF;
-					ret = -1;
-				} else {
-					ERR("IO error: (%d) %s\n", errno, strerror(errno));
-				}
-			}
-			break;
-			
-		default:
-			TLS_ERR("SSL error:");
-			break;
-		}
-	}
-
-err:
-	if (error) *error = err;
-	return ret;
-}
-
-
-/*
- * Called when new tcp connection is accepted or connected, create ssl
- * data structures here, there is no need to acquire any lock, because the 
- * connection is being created by a new process and on other process has
- * access to it yet, this is called before adding the tcp_connection
- * structure into the hash 
+/** init tls specific data in a tcp connection.
+ * Called when a new tcp connection is accepted or connected.
+ * It completes the tcp connection initialisation by setting the tls
+ * specific parts.
+ * Note that ssl context creation and other expensive operation are left
+ * out (they are delayed until the first read/write).
+ * No locking is needed (when the connection is created no other process
+ * can access it).
+ * @param c - tcp connection.
+ * @param sock - socket (unused for now).
+ * @return  0 on success, < 0 on error.
  */
 int tls_h_tcpconn_init(struct tcp_connection *c, int sock)
 {
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
-	c->timeout = get_ticks_raw() + tls_con_lifetime;
+	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
 	return 0;
 }
 
 
-/*
- * clean the extra data upon connection shut down 
+/** clean the extra data upon connection shut down.
  */
 void tls_h_tcpconn_clean(struct tcp_connection *c)
 {
 	struct tls_extra_data* extra;
 	/*
-	* runs within global tcp lock 
+	* runs within global tcp lock
 	*/
 	if (c->type != PROTO_TLS) {
 		BUG("Bad connection structure\n");
@@ -686,344 +568,766 @@ void tls_h_tcpconn_clean(struct tcp_connection *c)
 		extra = (struct tls_extra_data*)c->extra_data;
 		SSL_free(extra->ssl);
 		extra->cfg->ref_count--;
+		if (extra->ct_wq)
+			tls_ct_wq_free(&extra->ct_wq);
+		if (extra->enc_rd_buf) {
+			shm_free(extra->enc_rd_buf);
+			extra->enc_rd_buf = 0;
+		}
 		shm_free(c->extra_data);
 		c->extra_data = 0;
 	}
 }
 
 
-/*
- * perform one-way shutdown, do not wait for notify from the remote peer 
+/** perform one-way shutdown, do not wait for notify from the remote peer.
  */
 void tls_h_close(struct tcp_connection *c, int fd)
 {
-	     /*
-	      * runs within global tcp lock 
-	      */
-	DBG("Closing SSL connection\n");
-	if (c->extra_data) {
-		if (tls_update_fd(c, fd)==0)
-			tls_shutdown(c); /* shudown only on succesfull set fd */
-	}
-}
-
-
-
-/*
- * This is shamelessly stolen tsend_stream from tsend.c 
- */
-/*
- * fixme: probably does not work correctly 
- */
-int tls_h_blocking_write(struct tcp_connection *c, int fd, const char *buf,
-			  unsigned int len)
-{
-	int err, n, ticks, tout;
-	fd_set sel_set;
-	struct timeval timeout;
-	struct tls_extra_data* tls_c;
+	unsigned char wr_buf[TLS_WR_MBUF_SZ];
+	struct tls_mbuf rd, wr;
 	
-	n = 0;
-	if (tls_update_fd(c, fd) < 0) goto error;
-	tls_c=(struct tls_extra_data*)c->extra_data;
-again:
-	err = 0;
-	     /* first try  a "fast" write -- avoid the extra select call,
-	      * we might get lucky and not need it */
-	if (tls_c->state == S_TLS_CONNECTING) {
-		if (tls_connect(c, &err) < 0) goto error;
-		tout = tls_handshake_timeout;
-	} else if (tls_c->state == S_TLS_ACCEPTING) {
-		if (tls_accept(c, &err) < 0) goto error;
-		tout = tls_handshake_timeout;
-	} else {
-		n = tls_write(c, buf, len, &err);
-		if (n < 0) {
-			DBG("tls_write error %d (ssl %d)\n", n, err);
-			goto error;
-		} else if (n < len) {
-			     /* not all the contents was written => try again w/ the rest
-			      * (possible when SSL_MODE_ENABLE_PARTIAL_WRITE is set)
-			      */
-			DBG("%ld bytes still need to be written\n", 
-				(long)(len - n));
-			buf += n; 
-			len -= n;
-		} else {
-			     /* succesfull write */
-			DBG("write finished, %d bytes written\n", n);
-			goto end;
-		}
-		tout = tls_send_timeout;
-	}
-
-	while(1) {
-		FD_ZERO(&sel_set);
-		FD_SET(fd, &sel_set);
-		timeout.tv_sec = tout;
-		timeout.tv_usec = 0;
-		ticks = get_ticks();
-
-		     /* blocking part, wait until we can write again on the fd */
-		switch(err){
-			case 0:
-			case SSL_ERROR_WANT_WRITE:
-				n = select(fd + 1, 0, &sel_set ,0 , &timeout);
-				break;
-
-			case SSL_ERROR_WANT_READ:
-				n = select(fd + 1, &sel_set, 0 ,0 , &timeout);
-				break;
-
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-			case SSL_ERROR_WANT_ACCEPT:
-#endif
-			case SSL_ERROR_WANT_CONNECT:
-				DBG("re-trying accept/connect\n");
-				goto again;
-
-			default:
-				BUG("Unhandled SSL error %d\n", err);
-				goto error;
-		}
-		if (n < 0) {
-			if (errno == EINTR) continue;/* just a signal */
-			ERR("Select failed:"
-			    " (%d) %s\n", errno, strerror(errno));
-			goto error;
-		}
-		if (n == 0) {
-			     /* timeout, make sure the interval really expired */
-			if ((get_ticks() - ticks) >= tout) {
-				ERR("Peer not "
-				    " responding after %d s=> timeout (state %d) \n",
-				    tout, c->state);
-				goto error;
+	/*
+	 * runs either within global tcp lock or after the connection has
+	 * been "detached" and is unreachable from any other process.
+	 * Unfortunately when called via
+	 * tcpconn_put_destroy()+tcpconn_close_main_fd() the connection might
+	 * still be in a writer, so in this case locking is needed.
+	 */
+	DBG("Closing SSL connection %p\n", c->extra_data);
+	if (unlikely(cfg_get(tls, tls_cfg, send_close_notify) && c->extra_data)) {
+		lock_get(&c->write_lock);
+			if (unlikely(c->extra_data == 0)) {
+				/* changed in the meanwhile */
+				lock_release(&c->write_lock);
+				return;
 			}
-		}
-		if (FD_ISSET(fd, &sel_set)) {
-			     /* we can write again */
-			DBG("Ready to read/write again\n");
-			goto again;
-		}
+			tls_mbuf_init(&rd, 0, 0); /* no read */
+			tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
+			if (tls_set_mbufs(c, &rd, &wr)==0) {
+				tls_shutdown(c); /* shudown only on succesfull set fd */
+				/* write as much as possible and update wr.
+				 * Since this is a close, we don't want to queue the write
+				 * (if it can't write immediately, just fail silently)
+				 */
+				if (wr.used)
+					_tcpconn_write_nb(fd, c, (char*)wr.buf, wr.used);
+				/* we don't bother reading anything (we don't want to wait
+				on close) */
+			}
+		lock_release(&c->write_lock);
 	}
-	
- error:
-	return -1;
- end:
-	return n;
 }
 
 
 
-#if 0  /* not used for now */
-/* nonblocking version */
-int tls_h_nonblocking_write(struct tcp_connection *c, int fd, const char *buf,
-			  unsigned int len)
-{
-	int err, n;
-	struct tls_extra_data* tls_c;
-	
-	n = 0;
-	if (tls_update_fd(c, fd) < 0) goto error;
-	tls_c=(struct tls_extra_data*)c->extra_data;
-again:
-	err = 0;
-	if (tls_c->state == S_TLS_CONNECTING) {
-		if (tls_connect(c, &err) < 0) goto error;
-	} else if (tls_c->state == S_TLS_ACCEPTING) {
-		if (tls_accept(c, &err) < 0) goto error;
-	}
-	if (tls_c->state!=S_TLS_CONNECTING && tls_c->state!=S_TLS_ACCEPTING){
-		n = tls_write(c, buf, len, &err);
-		if (n < 0) {
-			DBG("tls_write error %d (ssl %d)\n", n, err);
-			goto error;
-		} else if (n==len){
-			goto end;
-		}else{
-			DBG("%ld bytes still need to be written\n", 
-				(long)(len - n));
-		}
-	}else
-		n=0; /* no bytes written */
-
-		switch(err){
-			/* TODO: set some flag: WANT_READ, WANT_WRITE */
-			case 0:
-			case SSL_ERROR_WANT_WRITE:
-				break;
-			case SSL_ERROR_WANT_READ:
-				break;
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
-			case SSL_ERROR_WANT_ACCEPT:
-#endif
-			case SSL_ERROR_WANT_CONNECT:
-				DBG("re-trying accept/connect\n");
-				break;
-			default:
-				BUG("Unhandled SSL error %d\n", err);
-				goto error;
-		}
-	
-error:
-	return -1;
-end:
-	return n;
-}
-#endif
+/* generic tcpconn_{do,1st}_send() function pointer type */
+typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c,
+									char* buf, unsigned len,
+									snd_flags_t send_flags,
+									long* resp, int locked);
 
 
-/*
- * called only when a connection is in S_TLS_ESTABLISHED, we do not have to
- * care about accepting or connecting here. Each modification of ssl data
- * structures has to be protected, another process might ask for the same
- * connection and attempt write to it which would result in updating the
- * ssl structures 
+
+/** tls encrypt before sending function.
+ * It is a callback that will be called by the tcp code, before a send
+ * on TLS would be attempted. It should replace the input buffer with a
+ * new static buffer containing the TLS processed data.
+ * If the input buffer could not be fully encoded (e.g. run out of space
+ * in the internal static buffer), it should set rest_buf and rest_len to
+ * the remaining part, so that it could be called again once the output has
+ * been used (sent). The send_flags used are also passed and they can be
+ * changed (e.g. to disallow a close() after a partial encode).
+ * WARNING: it must always be called with c->write_lock held!
+ * @param c - tcp connection
+ * @param pbuf - pointer to buffer (value/result, on success it will be
+ *               replaced with a static buffer).
+ * @param plen - pointer to buffer size (value/result, on success it will be
+ *               replaced with the size of the replacement buffer.
+ * @param rest_buf - (result) should be filled with a pointer to the
+ *                remaining unencoded part of the original buffer if any,
+ *                0 otherwise.
+ * @param rest_len - (result) should be filled with the length of the
+ *                 remaining unencoded part of the original buffer (0 if
+ *                 the original buffer was fully encoded).
+ * @param send_flags - pointer to the send_flags that will be used for sending
+ *                     the message.
+ * @return *plen on success (>=0), < 0 on error.
  */
-int tls_h_read(struct tcp_connection * c)
+int tls_encode_f(struct tcp_connection *c,
+						const char** pbuf, unsigned int* plen,
+						const char** rest_buf, unsigned int* rest_len,
+						snd_flags_t* send_flags)
+{
+	int n, offs;
+	SSL* ssl;
+	struct tls_extra_data* tls_c;
+	static unsigned char wr_buf[TLS_WR_MBUF_SZ];
+	struct tls_mbuf rd, wr;
+	int ssl_error;
+	char* err_src;
+	const char* buf;
+	unsigned int len;
+	int x;
+	
+	buf = *pbuf;
+	len = *plen;
+	*rest_buf = 0;
+	*rest_len = 0;
+	TLS_WR_TRACE("(%p, %p, %d, ... 0x%0x) start (%s:%d* -> %s)\n",
+					c, buf, len, send_flags->f,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)));
+	n = 0;
+	offs = 0;
+	ssl_error = SSL_ERROR_NONE;
+	err_src = "TLS write:";
+	if (unlikely(tls_fix_connection_unsafe(c) < 0)) {
+		/* c->extra_data might be null => exit immediately */
+		TLS_WR_TRACE("(%p) end: tls_fix_connection_unsafe failed =>"
+						" immediate error exit\n", c);
+		return -1;
+	}
+	tls_c = (struct tls_extra_data*)c->extra_data;
+	ssl = tls_c->ssl;
+	tls_mbuf_init(&rd, 0, 0); /* no read */
+	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
+	/* clear text already queued (WANTS_READ) queue directly*/
+	if (unlikely(tls_write_wants_read(tls_c))) {
+		TLS_WR_TRACE("(%p) WANTS_READ queue present => queueing"
+						" (%d bytes,  %p + %d)\n", c, len - offs, buf, offs);
+		if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs) < 0)) {
+				ERR("ct write buffer full for %p (%d bytes)\n",
+						c, tls_c->ct_wq?tls_c->ct_wq->queued:0);
+				goto error_wq_full;
+		}
+		/* buffer queued for a future send attempt, after first reading
+		   some data (key exchange) => don't allow immediate closing of
+		   the connection */
+		send_flags->f &= ~SND_F_CON_CLOSE;
+		goto end;
+	}
+	if (unlikely(tls_set_mbufs(c, &rd, &wr) < 0)) {
+		ERR("tls_set_mbufs failed\n");
+		goto error;
+	}
+redo_wr:
+	if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
+		n = tls_connect(c, &ssl_error);
+		TLS_WR_TRACE("(%p) tls_connect() => %d (err=%d)\n", c, n, ssl_error);
+		if (unlikely(n>=1)) {
+			n = SSL_write(ssl, buf + offs, len - offs);
+			if (unlikely(n <= 0))
+				ssl_error = SSL_get_error(ssl, n);
+		} else {
+			/* tls_connect failed/needs more IO */
+			if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE))
+				goto error;
+			err_src = "TLS connect:";
+		}
+	} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
+		n = tls_accept(c, &ssl_error);
+		TLS_WR_TRACE("(%p) tls_accept() => %d (err=%d)\n", c, n, ssl_error);
+		if (unlikely(n>=1)) {
+			n = SSL_write(ssl, buf + offs, len - offs);
+			if (unlikely(n <= 0))
+				ssl_error = SSL_get_error(ssl, n);
+		} else {
+			/* tls_accept failed/needs more IO */
+			if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE))
+				goto error;
+			err_src = "TLS accept:";
+		}
+	} else {
+		n = SSL_write(ssl, buf + offs, len - offs);
+		if (unlikely(n <= 0))
+			ssl_error = SSL_get_error(ssl, n);
+	}
+	TLS_WR_TRACE("(%p) SSL_write(%p + %d, %d) => %d (err=%d)\n",
+					c, buf, offs, len - offs, n, ssl_error);
+	/* check for possible ssl errors */
+	if (unlikely(n <= 0)){
+		switch(ssl_error) {
+			case SSL_ERROR_NONE:
+				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				goto error;
+				break;
+			case SSL_ERROR_ZERO_RETURN:
+				/* SSL EOF */
+				ERR("ssl level EOF\n");
+				goto ssl_eof;
+			case SSL_ERROR_WANT_READ:
+				/* queue write buffer */
+				TLS_WR_TRACE("(%p) SSL_ERROR_WANT_READ => queueing for read"
+								" (%p + %d, %d)\n", c, buf, offs, len -offs);
+				if (unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf+offs, len -offs)
+								< 0)) {
+					ERR("ct write buffer full (%d bytes)\n",
+							tls_c->ct_wq?tls_c->ct_wq->queued:0);
+					goto error_wq_full;
+				}
+				tls_c->flags |= F_TLS_CON_WR_WANTS_RD;
+				/* buffer queued for a future send attempt, after first
+				   reading some data (key exchange) => don't allow immediate
+				   closing of the connection */
+				send_flags->f &= ~SND_F_CON_CLOSE;
+				break; /* or goto end */
+			case SSL_ERROR_WANT_WRITE:
+				if (unlikely(offs == 0)) {
+					/*  error, no record fits in the buffer or
+					  no partial write enabled and buffer to small to fit
+					  all the records */
+					BUG("write buffer too small (%d/%d bytes)\n",
+							wr.used, wr.size);
+					goto bug;
+				} else {
+					/* offs != 0 => something was "written"  */
+					*rest_buf = buf + offs;
+					*rest_len = len - offs;
+					/* this function should be called again => disallow
+					   immediate closing of the connection */
+					send_flags->f &= ~SND_F_CON_CLOSE;
+					TLS_WR_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+								" (written %p , %d, rest_buf=%p"
+								" rest_len=%d))\n", c, buf, offs,
+								*rest_buf, *rest_len);
+				}
+				break; /* or goto end */
+			case SSL_ERROR_SSL:
+				/* protocol level error */
+				TLS_ERR(err_src);
+				goto error;
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
+			case SSL_ERROR_WANT_CONNECT:
+				/* only if the underlying BIO is not yet connected
+				   and the call would block in connect().
+				   (not possible in our case) */
+				BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+				break;
+			case SSL_ERROR_WANT_ACCEPT:
+				/* only if the underlying BIO is not yet connected
+				   and call would block in accept()
+				   (not possible in our case) */
+				BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+				break;
+#endif
+			case SSL_ERROR_WANT_X509_LOOKUP:
+				/* can only appear on client application and it indicates that
+				   an installed client cert. callback should be called again
+				   (it returned < 0 indicated that it wants to be called
+				   later). Not possible in our case */
+				BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+				goto bug;
+			case SSL_ERROR_SYSCALL:
+				TLS_ERR_RET(x, err_src);
+				if (!x) {
+					if (n == 0) {
+						WARN("Unexpected EOF\n");
+					} else
+						/* should never happen */
+						BUG("IO error (%d) %s\n", errno, strerror(errno));
+				}
+				goto error;
+			default:
+				TLS_ERR(err_src);
+				BUG("unexpected SSL error %d\n", ssl_error);
+				goto bug;
+		}
+	} else if (unlikely(n < (len - offs))) {
+		/* partial ssl write (possible if SSL_MODE_ENABLE_PARTIAL_WRITE) =>
+		   retry with the rest */
+		TLS_WR_TRACE("(%p) partial write (%d < %d, offset %d), retry\n",
+						c, n, len - offs, offs);
+		offs += n;
+		goto redo_wr;
+	}
+	tls_set_mbufs(c, 0, 0);
+end:
+	*pbuf = (const char*)wr.buf;
+	*plen = wr.used;
+	TLS_WR_TRACE("(%p) end (offs %d, rest_buf=%p rest_len=%d 0x%0x) => %d \n",
+					c, offs, *rest_buf, *rest_len, send_flags->f, *plen);
+	return *plen;
+error:
+/*error_send:*/
+error_wq_full:
+bug:
+	tls_set_mbufs(c, 0, 0);
+	TLS_WR_TRACE("(%p) end error (offs %d, %d encoded) => -1\n",
+					c, offs, wr.used);
+	return -1;
+ssl_eof:
+	c->state = S_CONN_EOF;
+	c->flags |= F_CONN_FORCE_EOF;
+	*pbuf = (const char*)wr.buf;
+	*plen = wr.used;
+	DBG("TLS connection has been closed\n");
+	TLS_WR_TRACE("(%p) end EOF (offs %d) => (%d\n",
+					c, offs, *plen);
+	return *plen;
+}
+
+
+
+/** tls read.
+ * Each modification of ssl data structures has to be protected, another process * might ask for the same connection and attempt write to it which would
+ * result in updating the ssl structures.
+ * WARNING: must be called whic c->write_lock _unlocked_.
+ * @param c - tcp connection pointer. The following flags might be set:
+ * @param flags - value/result:
+ *                     input: RD_CONN_FORCE_EOF  - force EOF after the first
+ *                            successful read (bytes_read >=0 )
+ *                     output: RD_CONN_SHORT_READ if the read exhausted
+ *                              all the bytes in the socket read buffer.
+ *                             RD_CONN_EOF if EOF detected (0 bytes read)
+ *                              or forced via RD_CONN_FORCE_EOF.
+ *                             RD_CONN_REPEAT_READ  if this function should
+ *                              be called again (e.g. has some data
+ *                              buffered internally that didn't fit in
+ *                              tcp_req).
+ *                     Note: RD_CONN_SHORT_READ & RD_CONN_EOF should be cleared
+ *                           before calling this function when there is new
+ *                           data (e.g. POLLIN), but not if the called is
+ *                           retried because of RD_CONN_REPEAT_READ and there
+ *                           is no information about the socket having more
+ *                           read data available.
+ * @return bytes decrypted on success, -1 on error (it also sets some
+ *         tcp connection flags and might set c->state and r->error on
+ *         EOF or error).
+ */
+int tls_read_f(struct tcp_connection* c, int* flags)
 {
 	struct tcp_req* r;
-	int bytes_free, bytes_read, err, ssl_err;
+	int bytes_free, bytes_read, read_size, ssl_error, ssl_read;
 	SSL* ssl;
-
-	r = &c->req;
-	bytes_free = c->req.b_size - (int)(r->pos - r->buf);
+	unsigned char rd_buf[TLS_RD_MBUF_SZ];
+	unsigned char wr_buf[TLS_WR_MBUF_SZ];
+	struct tls_mbuf rd, wr;
+	struct tls_extra_data* tls_c;
+	struct tls_rd_buf* enc_rd_buf;
+	int n, flush_flags;
+	char* err_src;
+	int x;
 	
-	if (bytes_free == 0) {
+	TLS_RD_TRACE("(%p, %p (%d)) start (%s -> %s:%d*)\n",
+					c, flags, *flags,
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+	ssl_read = 0;
+	r = &c->req;
+	enc_rd_buf = 0;
+	*flags &= ~RD_CONN_REPEAT_READ;
+	if (unlikely(tls_fix_connection(c) < 0)) {
+		TLS_RD_TRACE("(%p, %p) end: tls_fix_connection failed =>"
+						" immediate error exit\n", c, flags);
+		return -1;
+	}
+	/* here it's safe to use c->extra_data in read-only mode.
+	   If it's != 0 is changed only on destroy. It's not possible to have
+	   parallel reads.*/
+	tls_c = c->extra_data;
+	bytes_free = c->req.b_size - (int)(r->pos - r->buf);
+	if (unlikely(bytes_free == 0)) {
 		ERR("Buffer overrun, dropping\n");
 		r->error = TCP_REQ_OVERRUN;
 		return -1;
 	}
-	if (LOW_MEM_CONNECTED_TEST()){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
-		return -1;
-	}
-	     /* we have to avoid to run in the same time 
-	      * with a tls_write because of the 
-	      * update_fd stuff  (we don't want a write
-	      * stealing the fd under us or vice versa)
-	      * => lock on con->write_lock (ugly hack) */
-	lock_get(&c->write_lock);
-	if (tls_update_fd(c, c->fd) != 0) {
-		     /* error */
-		lock_release(&c->write_lock);
-		return -1;
-	}
-	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
-	bytes_read = SSL_read(ssl, r->pos, bytes_free);
-	lock_release(&c->write_lock);
-	
-	if (bytes_read <= 0) {
-		err = SSL_get_error(ssl, bytes_read);
-		switch(err){
-		case SSL_ERROR_ZERO_RETURN:
-			     /* tls connection has been closed */
-			DBG("tls_read: eof\n");
-			c->state = S_CONN_EOF;
-			return 0;
-
-		case SSL_ERROR_WANT_READ:
-			DBG("tls_read: Need to read more data\n");
-			return 0;
-			
-		case SSL_ERROR_WANT_WRITE:
-			     /* retry later */
-			DBG("tls_read: Need to write more data\n");
-			return 0;
-
-		case SSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "tls_read:");
-			if (!ssl_err) {
-				if (bytes_read == 0) {
-					LOG(tls_log, "WARNING: tls_read: improper EOF on tls"
-					    " (harmless)\n");
-					c->state = S_CONN_EOF;
-					return 0;
-				} else {
-					ERR("Error reading: syscall"
-					    " (%d) %s\n", errno, strerror(errno));
-				}
-			} 
-			     /* error return */
-			r->error = TCP_READ_ERROR;
-			return -1;
-		default:
-			TLS_ERR("tls_read:");
-			r->error = TCP_READ_ERROR;
-			return -1;
-		}
-	}
-
-	r->pos += bytes_read;
-	return bytes_read;
-}
-
-
-/*
- * called before tls_read, the this function should attempt tls_accept or
- * tls_connect depending on the state of the connection.
- * If this function does not return 1, then the tcp layer would not
- * call tcp_read 
- * @return  1 success, 0 try again (don't attempt tls_read()), -1 error
- */
-int tls_h_fix_read_conn(struct tcp_connection *c)
-{
-	int ret;
-	struct tls_extra_data* tls_c;
-	
-	ret = -1;
-	tls_c = 0;
-	if (unlikely(c->extra_data==0)){
-		lock_get(&c->write_lock);
-			if (unlikely(tls_update_fd(c, c->fd) < 0)){
-				ret = -1;
-			} else {
-				tls_c=(struct tls_extra_data*)c->extra_data;
-				switch(tls_c->state){
-					case S_TLS_ACCEPTING:
-						ret=tls_accept(c, 0);
-						break;
-					case S_TLS_CONNECTING:
-						ret=tls_connect(c, 0);
-						break;
-					default:
-						/* fall through */
-						ret=1;
-						break;
-				}
-			}
-		lock_release(&c->write_lock);
+redo_read:
+	/* if data queued from a previous read(), use it (don't perform
+	 * a real read()).
+	*/
+	if (unlikely(tls_c->enc_rd_buf)) {
+		/* use queued data */
+		/* safe to use without locks, because only read changes it and
+		   there can't be parallel reads on the same connection */
+		enc_rd_buf = tls_c->enc_rd_buf;
+		tls_c->enc_rd_buf = 0;
+		TLS_RD_TRACE("(%p, %p) using queued data (%p: %p %d bytes)\n", c,
+					flags, enc_rd_buf, enc_rd_buf->buf + enc_rd_buf->pos,
+					enc_rd_buf->size - enc_rd_buf->pos);
+		tls_mbuf_init(&rd, enc_rd_buf->buf + enc_rd_buf->pos,
+						enc_rd_buf->size - enc_rd_buf->pos);
+		rd.used = enc_rd_buf->size - enc_rd_buf->pos;
 	} else {
-		tls_c=(struct tls_extra_data*)c->extra_data;
-		switch (tls_c->state) {
-			case S_TLS_ACCEPTING:
-				lock_get(&c->write_lock);
-					tls_c=(struct tls_extra_data*)c->extra_data;
-					/* It might have changed meanwhile */
-					if (likely(tls_c->state == S_TLS_ACCEPTING)) {
-						ret = tls_update_fd(c, c->fd);
-						if (ret == 0) ret = tls_accept(c, 0);
-						else ret = -1;
-					}
-				lock_release(&c->write_lock);
-			break;
-			case S_TLS_CONNECTING:
-				lock_get(&c->write_lock);
-					tls_c=(struct tls_extra_data*)c->extra_data;
-					/* It might have changed meanwhile */
-					if (likely(tls_c->state == S_TLS_CONNECTING)) {
-						ret = tls_update_fd(c, c->fd);
-						if (ret == 0) ret = tls_connect(c, 0);
-						else ret = -1;
-					}
-				lock_release(&c->write_lock);
-			break;
-		default: /* fall through */
-			ret=1;
-			break;
+		/* if we were using using queued data before, free & reset the
+			the queued read data before performing the real read() */
+		if (unlikely(enc_rd_buf)) {
+			TLS_RD_TRACE("(%p, %p) reset prev. used enc_rd_buf (%p)\n", c,
+							flags, enc_rd_buf);
+			shm_free(enc_rd_buf);
+			enc_rd_buf = 0;
+		}
+		/* real read() */
+		tls_mbuf_init(&rd, rd_buf, sizeof(rd_buf));
+		/* read() only if no previously detected EOF, or previous
+		   short read (which means the socket buffer was emptied) */
+		if (likely(!(*flags & (RD_CONN_EOF|RD_CONN_SHORT_READ)))) {
+			/* don't read more then the free bytes in the tcp req buffer */
+			read_size = MIN_unsigned(rd.size, bytes_free);
+			bytes_read = tcp_read_data(c->fd, c, (char*)rd.buf, read_size,
+										flags);
+			TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n",
+						c, flags, read_size, *flags, bytes_read);
+			/* try SSL_read even on 0 bytes read, it might have
+			   internally buffered data */
+			if (unlikely(bytes_read < 0)) {
+					goto error;
+			}
+			rd.used = bytes_read;
 		}
 	}
-	return (ret>=0)?(tls_c->state==S_TLS_ESTABLISHED):ret;
+	
+continue_ssl_read:
+	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
+	ssl_error = SSL_ERROR_NONE;
+	err_src = "TLS read:";
+	/* we have to avoid to run in the same time 
+	 * with a tls_write because of the
+	 * update bio stuff  (we don't want a write
+	 * stealing the wbio or rbio under us or vice versa)
+	 * => lock on con->write_lock (ugly hack) */
+	lock_get(&c->write_lock);
+		tls_set_mbufs(c, &rd, &wr);
+		ssl = tls_c->ssl;
+		n = 0;
+		if (unlikely(tls_write_wants_read(tls_c) &&
+						!(*flags & RD_CONN_EOF))) {
+			n = tls_ct_wq_flush(c, &tls_c->ct_wq, &flush_flags,
+								&ssl_error);
+			TLS_RD_TRACE("(%p, %p) tls write on read (WRITE_WANTS_READ):"
+							" ct_wq_flush()=> %d (ff=%d ssl_error=%d))\n",
+							c, flags, n, flush_flags, ssl_error);
+			if (unlikely(n < 0 )) {
+				tls_set_mbufs(c, 0, 0);
+				lock_release(&c->write_lock);
+				ERR("write flush error (%d)\n", n);
+				goto error;
+			}
+			if (likely(flush_flags & F_BUFQ_EMPTY))
+				tls_c->flags &= ~F_TLS_CON_WR_WANTS_RD;
+			if (unlikely(flush_flags & F_BUFQ_ERROR_FLUSH))
+				err_src = "TLS write:";
+		}
+		if (likely(ssl_error == SSL_ERROR_NONE)) {
+			if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
+				n = tls_connect(c, &ssl_error);
+				TLS_RD_TRACE("(%p, %p) tls_connect() => %d (err=%d)\n",
+								c, flags, n, ssl_error);
+				if (unlikely(n>=1)) {
+					n = SSL_read(ssl, r->pos, bytes_free);
+				} else {
+					/* tls_connect failed/needs more IO */
+					if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE)) {
+						lock_release(&c->write_lock);
+						goto error;
+					}
+					err_src = "TLS connect:";
+					goto ssl_read_skipped;
+				}
+			} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
+				n = tls_accept(c, &ssl_error);
+				TLS_RD_TRACE("(%p, %p) tls_accept() => %d (err=%d)\n",
+								c, flags, n, ssl_error);
+				if (unlikely(n>=1)) {
+					n = SSL_read(ssl, r->pos, bytes_free);
+				} else {
+					/* tls_accept failed/needs more IO */
+					if (unlikely(n < 0 && ssl_error == SSL_ERROR_NONE)) {
+						lock_release(&c->write_lock);
+						goto error;
+					}
+					err_src = "TLS accept:";
+					goto ssl_read_skipped;
+				}
+			} else {
+				/* if bytes in then decrypt read buffer into tcpconn req.
+				   buffer */
+				n = SSL_read(ssl, r->pos, bytes_free);
+			}
+			/** handle SSL_read() return.
+			 *  There are 3 main cases, each with several sub-cases, depending
+			 *  on whether or not the output buffer was filled, if there
+			 *  is still unconsumed input data in the input buffer (rd)
+			 *  and if there is "cached" data in the internal openssl
+			 *  buffers.
+			 *  0. error (n<=0):
+			 *     SSL_ERROR_WANT_READ - input data fully
+			 *       consumed, no more returnable cached data inside openssl
+			 *       => exit.
+			 *     SSL_ERROR_WANT_WRITE - should never happen (the write
+			 *       buffer is big enough to handle any re-negociation).
+			 *     SSL_ERROR_ZERO_RETURN - ssl level shutdown => exit.
+			 *    other errors are unexpected.
+			 * 1. output buffer filled (n == bytes_free):
+			 *    1i.  - still unconsumed input, nothing buffered by openssl
+			 *    1ip. - unconsumed input + buffered data by openssl (pending
+			             on the next SSL_read).
+			 *    1p.  - completely consumed input, buffered data internally
+			 *            by openssl (pending).
+			 *           Likely to happen, about the only case when
+			 *           SSL_pending() could be used (but only if readahead=0).
+			 *    1f.  - consumed input, no buffered data.
+			 * 2. output buffer not fully filled (n < bytes_free):
+			 *     2i. - still unconsumed input, nothing buffered by openssl.
+			 *           This can appear if SSL readahead is 0 (SSL_read()
+			 *           tries to get only 1 record from the input).
+			 *     2ip. - unconsumed input and buffered data by openssl.
+			 *            Unlikely to happen (e.g. readahead is 1, more
+			 *            records are buffered internally by openssl, but
+			 *            there was not enough space for buffering the whole
+			 *            input).
+			 *     2p  - consumed input, but buffered data by openssl.
+			 *            It happens especially when readahead is 1.
+			 *     2f.  - consumed input, no buffered data.
+			 *
+			 * One should repeat SSL_read() until and error is detected
+			 *  (0*) or the input and internal ssl buffers are fully consumed
+			 *  (1f or 2f). However in general is not possible to see if
+			 *  SSL_read() could return more data. SSL_pending() has very
+			 *  limited usability (basically it would return !=0 only if there
+			 *  was no enough space in the output buffer and only if this did
+			 *  not happen at a record boundary).
+			 * The solution is to repeat SSL_read() until error or until
+			 *  the output buffer is filled (0* or 1*).
+			 *  In the later case, this whole function should be called again
+			 *  once there is more output space (set RD_CONN_REPEAT_READ).
+			 */
+			if (unlikely(n <= 0)) {
+				ssl_error = SSL_get_error(ssl, n);
+				err_src = "TLS read:";
+				/*  errors handled below, outside the lock */
+			} else {
+				ssl_error = SSL_ERROR_NONE;
+				r->pos += n;
+				ssl_read += n;
+				bytes_free -=n;
+			}
+			TLS_RD_TRACE("(%p, %p) SSL_read() => %d (err=%d) ssl_read=%d"
+							" *flags=%d tls_c->flags=%d\n",
+							c, flags, n, ssl_error, ssl_read, *flags,
+							tls_c->flags);
+ssl_read_skipped:
+			;
+		}
+		if (unlikely(wr.used != 0 && ssl_error != SSL_ERROR_ZERO_RETURN)) {
+			TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe %d bytes\n",
+							c, flags, wr.used);
+			/* something was written and it's not ssl EOF*/
+			if (unlikely(tcpconn_send_unsafe(c->fd, c, (char*)wr.buf,
+											wr.used, c->send_flags) < 0)) {
+				tls_set_mbufs(c, 0, 0);
+				lock_release(&c->write_lock);
+				TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe error\n", c, flags);
+				goto error_send;
+			}
+		}
+	/* quickly catch bugs: segfault if accessed and not set */
+	tls_set_mbufs(c, 0, 0);
+	lock_release(&c->write_lock);
+	switch(ssl_error) {
+		case SSL_ERROR_NONE:
+			if (unlikely(n < 0)) {
+				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				goto error;
+			}
+			break;
+		case SSL_ERROR_ZERO_RETURN:
+			/* SSL EOF */
+			TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, c->fd);
+			goto ssl_eof;
+		case SSL_ERROR_WANT_READ:
+			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n",
+							c, flags, *flags);
+			/* needs to read more data */
+			if (unlikely(rd.pos != rd.used)) {
+				/* data still in the read buffer */
+				BUG("SSL_ERROR_WANT_READ but data still in"
+						" the rbio (%p, %d bytes at %d)\n", rd.buf,
+						rd.used - rd.pos, rd.pos);
+				goto bug;
+			}
+			if (unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0) &&
+							bytes_free){
+				/* there might still be data to read and there is space
+				   to decrypt it in tcp_req (no byte has been written into
+				    tcp_req in this case) */
+				TLS_RD_TRACE("(%p, %p) redo read *flags=%d bytes_free=%d\n",
+								c, flags, *flags, bytes_free);
+				goto redo_read;
+			}
+			goto end; /* no more data to read */
+		case SSL_ERROR_WANT_WRITE:
+			if (wr.used) {
+				/* something was written => buffer not big enough to hold
+				   everything => reset buffer & retry (the tcp_write already
+				   happened if we are here) */
+				TLS_RD_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+							" (written  %d), retrying\n", c, wr.used);
+				goto continue_ssl_read;
+			}
+			/* else write buffer too small, nothing written */
+			BUG("write buffer too small (%d/%d bytes)\n",
+						wr.used, wr.size);
+			goto bug;
+		case SSL_ERROR_SSL:
+			/* protocol level error */
+			TLS_ERR(err_src);
+			goto error;
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
+		case SSL_ERROR_WANT_CONNECT:
+			/* only if the underlying BIO is not yet connected
+			   and the call would block in connect().
+			   (not possible in our case) */
+			BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+			goto bug;
+		case SSL_ERROR_WANT_ACCEPT:
+			/* only if the underlying BIO is not yet connected
+			   and call would block in accept()
+			   (not possible in our case) */
+			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+			goto bug;
+#endif
+		case SSL_ERROR_WANT_X509_LOOKUP:
+			/* can only appear on client application and it indicates that
+			   an installed client cert. callback should be called again
+			   (it returned < 0 indicated that it wants to be called
+			   later). Not possible in our case */
+			BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+			goto bug;
+		case SSL_ERROR_SYSCALL:
+			TLS_ERR_RET(x, err_src);
+			if (!x) {
+				if (n == 0) {
+					WARN("Unexpected EOF\n");
+				} else
+					/* should never happen */
+					BUG("IO error (%d) %s\n", errno, strerror(errno));
+			}
+			goto error;
+		default:
+			TLS_ERR(err_src);
+			BUG("unexpected SSL error %d\n", ssl_error);
+			goto bug;
+	}
+	if (unlikely(n < 0)) {
+		/* here n should always be >= 0 */
+		BUG("unexpected value (n = %d)\n", n);
+		goto bug;
+	}
+	if (unlikely(rd.pos != rd.used)) {
+		/* encrypted data still in the read buffer (SSL_read() did not
+		   consume all of it) */
+		if (unlikely(n < 0))
+			/* here n should always be >= 0 */
+			BUG("unexpected value (n = %d)\n", n);
+		else {
+			if (unlikely(bytes_free != 0)) {
+				/* 2i or 2ip: unconsumed input and output buffer not filled =>
+				  retry ssl read (SSL_read() will read will stop at
+				  record boundaries, unless readahead==1).
+				  No tcp_read() is attempted, since that would reset the
+				  current no-yet-consumed input data.
+				 */
+				TLS_RD_TRACE("(%p, %p) input not fully consumed =>"
+								" retry SSL_read"
+								" (pos: %d, remaining %d, output free %d)\n",
+								c, flags, rd.pos, rd.used-rd.pos, bytes_free);
+				goto continue_ssl_read;
+			}
+			/* 1i or 1ip: bytes_free == 0
+			   (unconsumed input, but filled output  buffer) =>
+			    queue read data, and exit asking for repeating the call
+			    once there is some space in the output buffer.
+			 */
+			if (likely(!enc_rd_buf)) {
+				TLS_RD_TRACE("(%p, %p) creating enc_rd_buf (for %d bytes)\n",
+								c, flags, rd.used - rd.pos);
+				enc_rd_buf = shm_malloc(sizeof(*enc_rd_buf) -
+										sizeof(enc_rd_buf->buf) +
+										rd.used - rd.pos);
+				if (unlikely(enc_rd_buf == 0)) {
+					ERR("memory allocation error (%d bytes requested)\n",
+						(int)(sizeof(*enc_rd_buf) + sizeof(enc_rd_buf->buf) +
+										rd.used - rd.pos));
+					goto error;
+				}
+				enc_rd_buf->pos = 0;
+				enc_rd_buf->size = rd.used - rd.pos;
+				memcpy(enc_rd_buf->buf, rd.buf + rd.pos,
+										enc_rd_buf->size);
+			} else if ((enc_rd_buf->buf + enc_rd_buf->pos) == rd.buf) {
+				TLS_RD_TRACE("(%p, %p) enc_rd_buf already in use,"
+								" updating pos %d\n",
+								c, flags, enc_rd_buf->pos);
+				enc_rd_buf->pos += rd.pos;
+			} else {
+				BUG("enc_rd_buf->buf = %p, pos = %d, rd_buf.buf = %p\n",
+						enc_rd_buf->buf, enc_rd_buf->pos, rd.buf);
+				goto bug;
+			}
+			if (unlikely(tls_c->enc_rd_buf))
+				BUG("tls_c->enc_rd_buf!=0 (%p)\n", tls_c->enc_rd_buf);
+			/* there can't be 2 reads in parallel, so no locking is needed
+			   here */
+			tls_c->enc_rd_buf = enc_rd_buf;
+			enc_rd_buf = 0;
+			*flags |= RD_CONN_REPEAT_READ;
+		}
+	} else if (bytes_free != 0) {
+		/*  2f or 2p: input fully consumed (rd.pos == rd.used),
+		    output buffer not filled, still possible to have pending
+		    data buffered by openssl */
+		if (unlikely((*flags & (RD_CONN_EOF|RD_CONN_SHORT_READ)) == 0)) {
+			/* still space in the tcp unenc. req. buffer, no SSL_read error,
+			   not a short read and not an EOF (possible more data in
+			   the socket buffer) => try a new tcp read too */
+			TLS_RD_TRACE("(%p, %p) retry read (still space and no short"
+							" tcp read: %d)\n", c, flags, *flags);
+			goto redo_read;
+		} else {
+			/* don't tcp_read() anymore, but there might still be data
+			   buffered internally by openssl (e.g. if readahead==1) =>
+			   retry SSL_read() with the current full input buffer
+			   (if no more internally SSL buffered data => WANT_READ => exit).
+			 */
+			TLS_RD_TRACE("(%p, %p) retry SSL_read only (*flags =%d)\n",
+							c, flags, *flags);
+			goto continue_ssl_read;
+		}
+	} else {
+		/*   1p or 1f: rd.pos == rd.used && bytes_free == 0
+			 (input fully consumed && output buffer filled) */
+		/* ask for a repeat when there is more buffer space
+		   (there is no definitive way to know if ssl doesn't still have
+		    some internal buffered data until we get WANT_READ, see
+			SSL_read() comment above) */
+		*flags |= RD_CONN_REPEAT_READ;
+		TLS_RD_TRACE("(%p, %p) output filled, exit asking to be called again"
+						" (*flags =%d)\n", c, flags, *flags);
+	}
+	
+end:
+	if (enc_rd_buf)
+		shm_free(enc_rd_buf);
+	TLS_RD_TRACE("(%p, %p) end => %d (*flags=%d)\n",
+					c, flags, ssl_read, *flags);
+	return ssl_read;
+ssl_eof:
+	/* behave as an EOF would have been received at the tcp level */
+	if (enc_rd_buf)
+		shm_free(enc_rd_buf);
+	c->state = S_CONN_EOF;
+	*flags |= RD_CONN_EOF;
+	TLS_RD_TRACE("(%p, %p) end EOF => %d (*flags=%d)\n",
+					c, flags, ssl_read, *flags);
+	return ssl_read;
+error_send:
+error:
+bug:
+	if (enc_rd_buf)
+		shm_free(enc_rd_buf);
+	r->error=TCP_READ_ERROR;
+	TLS_RD_TRACE("(%p, %p) end error => %d (*flags=%d)\n",
+					c, flags, ssl_read, *flags);
+	return -1;
 }

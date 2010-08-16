@@ -555,13 +555,21 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 #endif
 #ifdef HAVE_KQUEUE
 		case POLL_KQUEUE:
-			h->kq_array=local_malloc(sizeof(*(h->kq_array))*h->max_fd_no);
+			h->kq_changes_size=KQ_CHANGES_ARRAY_SIZE;
+			/* kevent returns different events for read & write
+			   => to get all the possible events in one call we
+			   need twice the number of added fds + space
+			   for possible changelist errors.
+			   OTOH if memory is to be saved at all costs, one can
+			   decrease the array size.
+			 */
+			h->kq_array_size=2 * h->max_fd_no + h->kq_changes_size;
+			h->kq_array=local_malloc(sizeof(*(h->kq_array))*h->kq_array_size);
 			if (h->kq_array==0){
 				LOG(L_CRIT, "ERROR: init_io_wait: could not alloc"
 							" kqueue event array\n");
 				goto error;
 			}
-			h->kq_changes_size=KQ_CHANGES_ARRAY_SIZE;
 			h->kq_changes=local_malloc(sizeof(*(h->kq_changes))*
 										h->kq_changes_size);
 			if (h->kq_changes==0){
@@ -570,7 +578,8 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 				goto error;
 			}
 			h->kq_nchanges=0;
-			memset((void*)h->kq_array, 0, sizeof(*(h->kq_array))*h->max_fd_no);
+			memset((void*)h->kq_array, 0,
+						sizeof(*(h->kq_array))*h->kq_array_size);
 			memset((void*)h->kq_changes, 0,
 						sizeof(*(h->kq_changes))* h->kq_changes_size);
 			if (init_kqueue(h)<0){

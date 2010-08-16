@@ -21,6 +21,7 @@
  * History:
  * --------
  *  2007-02-09  created by andrei
+ *  2010-05-14  new hook interface (better suited for async. tcp) (andrei)
  */
 
 /**
@@ -50,21 +51,28 @@
 
 
 struct tls_hooks{
-	int  (*read)(struct tcp_connection* c);
-	int (*blocking_write)(struct tcp_connection* c, int fd, const char* buf,
-							unsigned int len);
+	/* read using tls (should use tcp internal read functions to
+	   get the data from the connection) */
+	int  (*read)(struct tcp_connection* c, int* flags);
+	/* process data for sending. Should replace pbuf & plen with
+	   an internal buffer containing the tls records. If it was not able
+	   to process the whole pbuf, it should set (rest_buf, rest_len) to
+	   the remaining unprocessed part, else they must be set to 0.
+	   send_flags are passed as a pointer and they can also be changed
+	   (e.g. reset a FORCE_CLOSE flag if there is internal queued data
+	    waiting to be written).
+	   If rest_len or rest_buf are not 0 the call will be repeated after the
+	   contents of pbuf is sent, with (rest_buf, rest_len) as input.
+	   Should return *plen (if >=0).
+	   If it returns < 0 => error (tcp connection will be closed).
+	*/
+	int (*encode)(struct tcp_connection* c,
+					const char** pbuf, unsigned int* plen,
+					const char** rest_buf, unsigned int* rest_len,
+					snd_flags_t* send_flags);
 	int  (*on_tcpconn_init)(struct tcp_connection *c, int sock);
 	void (*tcpconn_clean)(struct tcp_connection* c);
 	void (*tcpconn_close)(struct tcp_connection*c , int fd);
-	/* checks if a tls connection is fully established before a read, and if 
-	 * not it runs tls_accept() or tls_connect() as needed
-	 * (tls_accept and tls_connect are deferred to the "reader" process for
-	 *  performance reasons)
-	 * returns 1 if the read can continue, 0 if the connection is not yet
-	 * ready for the read and fix_read_con() should be attempted at a latter
-	 * time and <0 on error.
-	 */
-	int (*fix_read_con)(struct tcp_connection* c);
 	
 	/* per listening socket init, called on ser startup (after modules,
 	 *  process table, init() and udp socket initialization)*/
@@ -100,11 +108,10 @@ extern struct tls_hooks tls_hook;
 
 #define tls_tcpconn_init(c, s)	tls_hook_call(on_tcpconn_init, 0, (c), (s))
 #define tls_tcpconn_clean(c)	tls_hook_call_v(tcpconn_clean, (c))
-#define tls_blocking_write(c, fd, buf, len) \
-	tls_hook_call(blocking_write, -1, (c), (fd), (buf), (len))
+#define tls_encode(c, pbuf, plen, rbuf, rlen, sflags) \
+	tls_hook_call(encode, -1, (c), (pbuf), (plen), (rbuf), (rlen), (sflags))
 #define tls_close(conn, fd)		tls_hook_call_v(tcpconn_close, (conn), (fd))
-#define tls_read(c)				tls_hook_call(read, -1, (c))
-#define tls_fix_read_conn(c)	tls_hook_call(fix_read_con, -1, (c))
+#define tls_read(c, flags)				tls_hook_call(read, -1, (c), (flags))
 
 int register_tls_hooks(struct tls_hooks* h);
 

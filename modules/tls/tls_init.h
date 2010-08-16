@@ -55,12 +55,7 @@
 #define TLS_KSSL_WORKARROUND
 extern int openssl_kssl_malloc_bug; /* is openssl bug #1467 present ? */
 #endif
-extern int openssl_mem_threshold1; /* low memory threshold for connect */
-extern int openssl_mem_threshold2; /* like above but for other tsl operations */
 
-
-extern int tls_disable_compression; /* by default enabled */
-extern int tls_force_run; /* by default disabled */
 
 extern const SSL_METHOD* ssl_methods[];
 
@@ -86,6 +81,6 @@ int tls_h_init_si(struct socket_info *si);
  * Make sure that all server domains in the configuration have corresponding
  * listening socket in SER
  */
-int tls_check_sockets(tls_cfg_t* cfg);
+int tls_check_sockets(tls_domains_cfg_t* cfg);
 
 #endif /* _TLS_INIT_H */

@@ -1,12 +1,7 @@
-/*
+/* 
  * $Id$
- *
- * TLS module - management interface
- *
- * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2005 iptelorg GmbH
- *
- * This file is part of sip-router, a free SIP server.
+ * 
+ * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,17 +15,28 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tls module management interface (rpc).
- * @file tls_rpc.h
- * @ingroup tls
- * Module: @ref tls
+/** internal tcp send functions (use with care).
+ * @file tcp_int_send.h
  */
+/*
+ * History:
+ * --------
+ *  2010-03-23  initial version (andrei)
+*/
 
-#ifndef _TLS_RPC_H
-#define _TLS_RPC_H
+#ifndef __tcp_int_send_h
+#define __tcp_int_send_h
 
-#include "../../rpc.h"
+#include "tcp_conn.h"
 
-extern rpc_export_t tls_rpc[];
+int tcpconn_send_unsafe(int fd, struct tcp_connection *c,
+						const char* buf, unsigned len, snd_flags_t send_flags);
 
-#endif /* _TLS_RPC_H */
+/* direct non-blocking, unsafe (assumes locked) send on a tcp connection */
+int _tcpconn_write_nb(int fd, struct tcp_connection* c,
+									const char* buf, int len);
+
+
+#endif /*__tcp_int_send_h*/
+
+/* vi: set ts=4 sw=4 tw=79:ai:cindent: */

@@ -43,7 +43,7 @@
 #include "../../str.h"
 #include "tls_domain.h"
 
-tls_cfg_t* tls_load_config(str* filename);
+tls_domains_cfg_t* tls_load_config(str* filename);
 
 /*
  * Convert TLS method string to integer

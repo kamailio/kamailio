@@ -39,11 +39,13 @@
 #include "../../ut.h"
 #include "../../mem/shm_mem.h"
 #include "../../pt.h"
+#include "../../cfg/cfg.h"
 #include "tls_server.h"
 #include "tls_util.h"
 #include "tls_mod.h"
 #include "tls_init.h"
 #include "tls_domain.h"
+#include "tls_cfg.h"
 
 
 /*
@@ -102,7 +104,7 @@ void tls_free_domain(tls_domain_t* d)
 /*
  * clean up 
  */
-void tls_free_cfg(tls_cfg_t* cfg)
+void tls_free_cfg(tls_domains_cfg_t* cfg)
 {
 	tls_domain_t* p;
 	while(cfg->srv_list) {
@@ -123,21 +125,23 @@ void tls_free_cfg(tls_cfg_t* cfg)
 
 void tls_destroy_cfg(void)
 {
-	tls_cfg_t* ptr;
+	tls_domains_cfg_t* ptr;
 
-	if (tls_cfg_lock) {
-		lock_destroy(tls_cfg_lock);
-		lock_dealloc(tls_cfg_lock);
+	if (tls_domains_cfg_lock) {
+		lock_destroy(tls_domains_cfg_lock);
+		lock_dealloc(tls_domains_cfg_lock);
+		tls_domains_cfg_lock = 0;
 	}
 
-	if (tls_cfg) {
-		while(*tls_cfg) {
-			ptr = *tls_cfg;
-			*tls_cfg = (*tls_cfg)->next;
+	if (tls_domains_cfg) {
+		while(*tls_domains_cfg) {
+			ptr = *tls_domains_cfg;
+			*tls_domains_cfg = (*tls_domains_cfg)->next;
 			tls_free_cfg(ptr);
 		}
 		
-		shm_free(tls_cfg);
+		shm_free(tls_domains_cfg);
+		tls_domains_cfg = 0;
 	}
 }
 
@@ -267,7 +271,7 @@ static int tls_foreach_CTX_in_domain_lst(tls_domain_t* d,
  * @param p - parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
-static int tls_foreach_CTX_in_srv_domains(tls_cfg_t* cfg,
+static int tls_foreach_CTX_in_srv_domains(tls_domains_cfg_t* cfg,
 											per_ctx_cbk_f ctx_cbk,
 											long l1, void* p2)
 {
@@ -288,7 +292,7 @@ static int tls_foreach_CTX_in_srv_domains(tls_cfg_t* cfg,
  * @param p - parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
-static int tls_foreach_CTX_in_cli_domains(tls_cfg_t* cfg,
+static int tls_foreach_CTX_in_cli_domains(tls_domains_cfg_t* cfg,
 											per_ctx_cbk_f ctx_cbk,
 											long l1, void* p2)
 {
@@ -309,7 +313,8 @@ static int tls_foreach_CTX_in_cli_domains(tls_cfg_t* cfg,
  * @param p - parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
-static int tls_foreach_CTX_in_cfg(tls_cfg_t* cfg, per_ctx_cbk_f ctx_cbk,
+static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
+										per_ctx_cbk_f ctx_cbk,
 										long l1, void* p2)
 {
 	int ret;
@@ -331,7 +336,7 @@ static int load_cert(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->cert_file.s) {
+	if (!d->cert_file.s || !d->cert_file.len) {
 		DBG("%s: No certificate configured\n", tls_domain_str(d));
 		return 0;
 	}
@@ -358,7 +363,7 @@ static int load_ca_list(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->ca_file.s) {
+	if (!d->ca_file.s || !d->ca_file.len) {
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
@@ -526,17 +531,21 @@ static int set_session_cache(tls_domain_t* d)
 {
 	int i;
 	int procs_no;
+	str tls_session_id;
 	
 	procs_no=get_max_procs();
+	tls_session_id=cfg_get(tls, tls_cfg, session_id);
 	for(i = 0; i < procs_no; i++) {
-		     /* janakj: I am not sure if session cache makes sense in ser, session 
-		      * cache is stored in SSL_CTX and we have one SSL_CTX per process, thus 
-		      * sessions among processes will not be reused
-		      */
-		SSL_CTX_set_session_cache_mode(d->ctx[i], 
-				   tls_session_cache ? SSL_SESS_CACHE_SERVER : SSL_SESS_CACHE_OFF);
-		SSL_CTX_set_session_id_context(d->ctx[i], 
-					       (unsigned char*)tls_session_id.s, tls_session_id.len);
+		/* janakj: I am not sure if session cache makes sense in ser, session
+		 * cache is stored in SSL_CTX and we have one SSL_CTX per process,
+		 * thus sessions among processes will not be reused
+		 */
+		SSL_CTX_set_session_cache_mode(d->ctx[i],
+				cfg_get(tls, tls_cfg, session_cache) ? SSL_SESS_CACHE_SERVER :
+				SSL_SESS_CACHE_OFF);
+		/* not really needed is SSL_SESS_CACHE_OFF */
+		SSL_CTX_set_session_id_context(d->ctx[i],
+					(unsigned char*)tls_session_id.s, tls_session_id.len);
 	}
 	return 0;
 }
@@ -688,7 +697,7 @@ static int load_private_key(tls_domain_t* d)
 	int idx, ret_pwd, i;
 	int procs_no;
 	
-	if (!d->pkey_file.s) {
+	if (!d->pkey_file.s || !d->pkey_file.len) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
 	}
@@ -735,9 +744,14 @@ static int load_private_key(tls_domain_t* d)
  * Initialize attributes of all domains from default domains
  * if necessary
  */
-int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_defaults)
+int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
+				tls_domain_t* cli_defaults)
 {
 	tls_domain_t* d;
+	int ssl_mode_release_buffers;
+	int ssl_freelist_max_len;
+	int ssl_max_send_fragment;
+	int ssl_read_ahead;
 
 	if (!cfg->cli_default) {
 		cfg->cli_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, 0, 0);
@@ -781,6 +795,10 @@ int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_de
 	/* set various global per CTX options
 	 * (done here to show possible missing features messages only once)
 	 */
+	ssl_mode_release_buffers = cfg_get(tls, tls_cfg, ssl_release_buffers);
+	ssl_freelist_max_len = cfg_get(tls, tls_cfg, ssl_freelist_max);
+	ssl_max_send_fragment = cfg_get(tls, tls_cfg, ssl_max_send_fragment);
+	ssl_read_ahead = cfg_get(tls, tls_cfg, ssl_read_ahead);
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L
 	/* set SSL_MODE_RELEASE_BUFFERS if ssl_mode_release_buffers !=0,
 	   reset if == 0 and ignore if < 0 */
@@ -810,7 +828,7 @@ int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_de
 #endif
 #endif
 #if defined (OPENSSL_NO_BUF_FREELISTS) || OPENSSL_VERSION_NUMBER < 0x01000000L
-	if (ssl_freelist_max_len != 0)
+	if (ssl_freelist_max_len >= 0)
 		ERR("cannot change openssl freelist_max_len, openssl too old"
 				"(needed at least 1.0.0) or compiled without freelist support"
 				" (OPENSSL_NO_BUF_FREELIST)\n");
@@ -833,6 +851,22 @@ int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_de
 		ERR("invalid ssl_read_ahead value (%d)\n", ssl_read_ahead);
 		return -1;
 	}
+	/* set options for SSL_write:
+		SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER - needed when queueing
+		  clear text for a future write (WANTS_READ). In this case the
+		  buffer address will change for the repeated SSL_write() and
+		  without this option it will trigger the openssl sanity checks.
+		SSL_MODE_ENABLE_PARTIAL_WRITE - needed to deal with potentially
+		  huge multi-record writes that don't fit in the default buffer
+		  (the default buffer must have space for at least 1 record) */
+	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_mode,
+								SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER |
+								SSL_MODE_ENABLE_PARTIAL_WRITE,
+								0) < 0) {
+		ERR("could not set SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER and"
+				" SSL_MODE_ENABLE_PARTIAL_WRITE\n");
+		return -1;
+	}
 
 	return 0;
 }
@@ -841,16 +875,16 @@ int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_de
 /*
  * Create new configuration structure
  */
-tls_cfg_t* tls_new_cfg(void)
+tls_domains_cfg_t* tls_new_cfg(void)
 {
-	tls_cfg_t* r;
+	tls_domains_cfg_t* r;
 
-	r = (tls_cfg_t*)shm_malloc(sizeof(tls_cfg_t));
+	r = (tls_domains_cfg_t*)shm_malloc(sizeof(tls_domains_cfg_t));
 	if (!r) {
 		ERR("No memory left\n");
 		return 0;
 	}
-	memset(r, 0, sizeof(tls_cfg_t));
+	memset(r, 0, sizeof(tls_domains_cfg_t));
 	return r;
 }
 
@@ -858,7 +892,8 @@ tls_cfg_t* tls_new_cfg(void)
 /*
  * Lookup TLS configuration based on type, ip, and port
  */
-tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsigned short port)
+tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
+								struct ip_addr* ip, unsigned short port)
 {
 	tls_domain_t *p;
 
@@ -885,7 +920,7 @@ tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsig
 /*
  * Check whether configuration domain exists
  */
-static int domain_exists(tls_cfg_t* cfg, tls_domain_t* d)
+static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {
 	tls_domain_t *p;
 
@@ -910,7 +945,7 @@ static int domain_exists(tls_cfg_t* cfg, tls_domain_t* d)
 /*
  * Add a domain to the configuration set
  */
-int tls_add_domain(tls_cfg_t* cfg, tls_domain_t* d)
+int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {
 	if (!cfg) {
 		ERR("TLS configuration structure missing\n");

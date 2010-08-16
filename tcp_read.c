@@ -42,13 +42,14 @@
  *              reads (sock. buffer empty) (andrei)
  * 2009-02-26  direct blacklist support (andrei)
  * 2009-04-09  tcp ev and tcp stats macros added (andrei)
+ * 2010-05-14  split tcp_read() into tcp_read() and tcp_read_data() (andrei)
+ * 2010-05-17  new RD_CONN_REPEAT_READ flag, used by the tls hooks (andrei)
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** tcp readers processes, tcp read and pre-parse msg. functions.
+ * @file tcp_read.c
+ * @ingroup core
+ * Module: @ref core
  */
 
 #ifdef USE_TCP
@@ -69,6 +70,7 @@
 
 #include "dprint.h"
 #include "tcp_conn.h"
+#include "tcp_read.h"
 #include "tcp_stats.h"
 #include "tcp_ev.h"
 #include "pass_fd.h"
@@ -103,10 +105,6 @@ int is_msg_complete(struct tcp_req* r);
 
 #define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
 
-#define RD_CONN_SHORT_READ	1
-#define RD_CONN_EOF		2
-#define RD_CONN_FORCE_EOF	65536
-
 /* types used in io_wait* */
 enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
 
@@ -119,38 +117,43 @@ static struct local_timer tcp_reader_ltimer;
 static ticks_t tcp_reader_prev_ticks;
 
 
-/* reads next available bytes
- *   c- tcp connection used for reading, tcp_read changes also c->state on
- *      EOF and c->req.error on read error
- *   * flags - value/result - used to signal a seen or "forced" EOF on the 
+/** reads data from an existing tcp connection.
+ * Side-effects: blacklisting, sets connection state to S_CONN_OK, tcp stats.
+ * @param fd - connection file descriptor
+ * @param c - tcp connection structure. c->state might be changed and
+ *             receive info might be used for blacklisting.
+ * @param buf - buffer where the received data will be stored.
+ * @param b_size - buffer size.
+ * @param flags - value/result - used to signal a seen or "forced" EOF on the
  *     connection (when it is known that no more data will come after the 
- *     current socket buffer is emptied )=> return/signal EOF on the first 
+ *     current socket buffer is emptied )=> return/signal EOF on the first
  *     short read (=> don't use it on POLLPRI, as OOB data will cause short
- *      reads even if there are still remaining bytes in the socket buffer)
- * return number of bytes read, 0 on EOF or -1 on error,
+ *     reads even if there are still remaining bytes in the socket buffer)
+ *     input: RD_CONN_FORCE_EOF  - force EOF after the first successful read
+ *                                 (bytes_read >=0 )
+ *     output: RD_CONN_SHORT_READ - if the read exhausted all the bytes
+ *                                  in the socket read buffer.
+ *             RD_CONN_EOF - if EOF detected (0 bytes read) or forced via
+ *                           RD_CONN_FORCE_EOF.
+ *             RD_CONN_REPEAT_READ - the read should be repeated immediately
+ *                                   (used only by the tls code for now).
+ *     Note: RD_CONN_SHORT_READ & RD_CONN_EOF _are_ not cleared internally,
+ *           so one should clear them before calling this function.
+ * @return number of bytes read, 0 on EOF or -1 on error,
  * on EOF it also sets c->state to S_CONN_EOF.
  * (to distinguish from reads that would block which could return 0)
  * RD_CONN_SHORT_READ is also set in *flags for short reads.
- * sets also r->error */
-int tcp_read(struct tcp_connection *c, int* flags)
+ * EOF checking should be done by checking the RD_CONN_EOF flag.
+ */
+int tcp_read_data(int fd, struct tcp_connection *c,
+					char* buf, int b_size, int* flags)
 {
-	int bytes_free, bytes_read;
-	struct tcp_req *r;
-	int fd;
-
-	r=&c->req;
-	fd=c->fd;
-	bytes_free=r->b_size- (int)(r->pos - r->buf);
+	int bytes_read;
 	
-	if (bytes_free==0){
-		LOG(L_ERR, "ERROR: tcp_read: buffer overrun, dropping\n");
-		r->error=TCP_REQ_OVERRUN;
-		return -1;
-	}
 again:
-	bytes_read=read(fd, r->pos, bytes_free);
-
-	if (likely(bytes_read!=bytes_free)){
+	bytes_read=read(fd, buf, b_size);
+	
+	if (likely(bytes_read!=b_size)){
 		if(unlikely(bytes_read==-1)){
 			if (errno == EWOULDBLOCK || errno == EAGAIN){
 				bytes_read=0; /* nothing has been read */
@@ -194,16 +197,14 @@ again:
 								break;
 						}
 				}
-				LOG(L_ERR, "ERROR: tcp_read: error reading: %s (%d)\n",
-							strerror(errno), errno);
-				r->error=TCP_READ_ERROR;
+				LOG(L_ERR, "error reading: %s (%d)\n", strerror(errno), errno);
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) || 
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
-			DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
+			DBG("EOF on %p, FD %d\n", c, fd);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -217,6 +218,44 @@ again:
 			TCP_STATS_ESTABLISHED(c->state);
 			c->state=S_CONN_OK;
 		}
+	}
+	return bytes_read;
+}
+
+
+
+/* reads next available bytes
+ *   c- tcp connection used for reading, tcp_read changes also c->state on
+ *      EOF and c->req.error on read error
+ *   * flags - value/result - used to signal a seen or "forced" EOF on the 
+ *     connection (when it is known that no more data will come after the 
+ *     current socket buffer is emptied )=> return/signal EOF on the first 
+ *     short read (=> don't use it on POLLPRI, as OOB data will cause short
+ *      reads even if there are still remaining bytes in the socket buffer)
+ * return number of bytes read, 0 on EOF or -1 on error,
+ * on EOF it also sets c->state to S_CONN_EOF.
+ * (to distinguish from reads that would block which could return 0)
+ * RD_CONN_SHORT_READ is also set in *flags for short reads.
+ * sets also r->error */
+int tcp_read(struct tcp_connection *c, int* flags)
+{
+	int bytes_free, bytes_read;
+	struct tcp_req *r;
+	int fd;
+
+	r=&c->req;
+	fd=c->fd;
+	bytes_free=r->b_size- (int)(r->pos - r->buf);
+	
+	if (unlikely(bytes_free==0)){
+		LOG(L_ERR, "ERROR: tcp_read: buffer overrun, dropping\n");
+		r->error=TCP_REQ_OVERRUN;
+		return -1;
+	}
+	bytes_read = tcp_read_data(fd, c, r->pos, bytes_free, flags);
+	if (unlikely(bytes_read < 0)){
+		r->error=TCP_READ_ERROR;
+		return -1;
 	}
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
@@ -295,7 +334,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 	}else{
 #ifdef USE_TLS
 		if (unlikely(c->type==PROTO_TLS))
-			bytes=tls_read(c); /* FIXME: read_flags support */
+			bytes=tls_read(c, read_flags);
 		else
 #endif
 			bytes=tcp_read(c, read_flags);
@@ -661,16 +700,6 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 		resp=CONN_RELEASE;
 		s=con->fd;
 		req=&con->req;
-#ifdef USE_TLS
-		if (con->type==PROTO_TLS){
-			ret=tls_fix_read_conn(con);
-			if (unlikely(ret<0)){
-				resp=CONN_ERROR;
-				goto end_req;
-			}else if (unlikely(ret==0))
-				goto end_req; /* not enough data */
-		}
-#endif
 
 again:
 		if (likely(req->error==TCP_REQ_OK)){
@@ -938,9 +967,12 @@ again:
 			}
 			/* if we received the fd there is most likely data waiting to
 			 * be read => process it first to avoid extra sys calls */
-			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) && 
+			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) &&
 						!(con->flags & F_CONN_OOB_DATA))? RD_CONN_FORCE_EOF
 						:0;
+#ifdef USE_TLS
+repeat_1st_read:
+#endif /* USE_TLS */
 			resp=tcp_read_req(con, &n, &read_flags);
 			if (unlikely(resp<0)){
 				/* some error occured, but on the new fd, not on the tcp
@@ -950,6 +982,11 @@ again:
 				release_tcpconn(con, resp, tcpmain_sock);
 				break;
 			}
+#ifdef USE_TLS
+			/* repeat read if requested (for now only tls might do this) */
+			if (unlikely(read_flags & RD_CONN_REPEAT_READ))
+				goto repeat_1st_read;
+#endif /* USE_TLS */
 			
 			/* must be before io_watch_add, io_watch_add might catch some
 			 * already existing events => might call handle_io and
@@ -984,13 +1021,16 @@ again:
 							con, con->id, atomic_get(&con->refcnt));
 				goto read_error;
 			}
+			read_flags=((
 #ifdef POLLRDHUP
-			read_flags=(((events & POLLRDHUP) | 
+						(events & POLLRDHUP) |
+#endif /* POLLRDHUP */
+						(events & (POLLHUP|POLLERR)) |
 							(con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)))
 						&& !(events & POLLPRI))? RD_CONN_FORCE_EOF: 0;
-#else /* POLLRDHUP */
-			read_flags=0;
-#endif /* POLLRDHUP */
+#ifdef USE_TLS
+repeat_read:
+#endif /* USE_TLS */
 			resp=tcp_read_req(con, &ret, &read_flags);
 			if (unlikely(resp<0)){
 read_error:
@@ -1009,11 +1049,15 @@ read_error:
 					con->state=S_CONN_BAD;
 				release_tcpconn(con, resp, tcpmain_sock);
 			}else{
+#ifdef USE_TLS
+				if (unlikely(read_flags & RD_CONN_REPEAT_READ))
+						goto repeat_read;
+#endif /* USE_TLS */
 				/* update timeout */
 				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
 				/* ret= 0 (read the whole socket buffer) if short read & 
 				 *  !POLLPRI,  bytes read otherwise */
-				ret&=(((read_flags & RD_CONN_SHORT_READ) && 
+				ret&=(((read_flags & RD_CONN_SHORT_READ) &&
 						!(events & POLLPRI)) - 1);
 			}
 			break;

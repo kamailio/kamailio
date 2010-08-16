@@ -14,42 +14,48 @@ Andrei Pelinescu-Onciul
    1.3. Important Notes
    1.4. Compiling the TLS Module
    1.5. TLS and Low Memory
-   1.6. Known Limitations
-   1.7. Quick Certificate Howto
-   1.8. Parameters
+   1.6. TLS Debugging
+   1.7. Known Limitations
+   1.8. Quick Certificate Howto
+   1.9. Parameters
 
-        1.8.1. tls_method (string)
-        1.8.2. certificate (string)
-        1.8.3. private_key (string)
-        1.8.4. ca_list (string)
-        1.8.5. verify_certificate (boolean)
-        1.8.6. verify_depth (integer)
-        1.8.7. require_certificate (boolean)
-        1.8.8. cipher_list (string)
-        1.8.9. send_timeout (int)
-        1.8.10. handshake_timeout (int)
-        1.8.11. connection_timeout (int)
-        1.8.12. tls_disable_compression (boolean)
-        1.8.13. ssl_release_buffers (integer)
-        1.8.14. ssl_free_list_max_len (integer)
-        1.8.15. ssl_max_send_fragment (integer)
-        1.8.16. ssl_read_ahead (boolean)
-        1.8.17. tls_log (int)
-        1.8.18. low_mem_threshold1 (integer)
-        1.8.19. low_mem_threshold2 (integer)
-        1.8.20. tls_force_run (boolean)
-        1.8.21. config (string)
+        1.9.1. tls_method (string)
+        1.9.2. certificate (string)
+        1.9.3. private_key (string)
+        1.9.4. ca_list (string)
+        1.9.5. verify_certificate (boolean)
+        1.9.6. verify_depth (integer)
+        1.9.7. require_certificate (boolean)
+        1.9.8. cipher_list (string)
+        1.9.9. send_timeout (int)
+        1.9.10. handshake_timeout (int)
+        1.9.11. connection_timeout (int)
+        1.9.12. tls_disable_compression (boolean)
+        1.9.13. ssl_release_buffers (integer)
+        1.9.14. ssl_free_list_max_len (integer)
+        1.9.15. ssl_max_send_fragment (integer)
+        1.9.16. ssl_read_ahead (boolean)
+        1.9.17. send_close_notify (boolean)
+        1.9.18. con_ct_wq_max (integer)
+        1.9.19. ct_wq_max (integer)
+        1.9.20. ct_wq_blk_size (integer)
+        1.9.21. tls_log (int)
+        1.9.22. tls_debug (int)
+        1.9.23. low_mem_threshold1 (integer)
+        1.9.24. low_mem_threshold2 (integer)
+        1.9.25. tls_force_run (boolean)
+        1.9.26. config (string)
 
-   1.9. Functions
+   1.10. Functions
 
-        1.9.1. is_peer_verified()
+        1.10.1. is_peer_verified()
 
-   1.10. History
+   1.11. History
 
 1.1. Overview
 
    This module implements the TLS transport for SIP-router using the
-   Openssl library (http://www.openssl.org). To enable the TLS support
+   OpenSSL library (http://www.openssl.org). To enable the TLS support
    this module must be loaded and enable_tls=yes must be added to the
    SIP-router config file
 
@@ -103,12 +109,15 @@ route{
    significantly slow down the TLS connection handshake, thus limiting the
    maximum SIP-router TLS connection rate.
 
-   Compression is fully supported and used by default, if you have a new
-   enough Openssl version (starting with 0.9.8). Although there are some
-   problems with zlib compression in currently deployed Openssl versions
-   (up to and including 0.9.8d, see openssl bug #1468), the TLS module
-   will automatically switch to its own fixed version. There's no need to
-   force-disable the compression.
+   Compression is fully supported if you have a new enough Openssl version
+   (starting with 0.9.8). Although there are some problems with zlib
+   compression in currently deployed Openssl versions (up to and including
+   0.9.8d, see openssl bug #1468), the TLS module will automatically
+   switch to its own fixed version. Note however that starting with sr 3.1
+   compression is not enabled by default, due to the huge extra memory
+   consumption that it causes (about 10x more memory). To enable it use
+   modparam("tls", "tls_disable_compression", 0) (see
+   tls_disable_compression).
 
    The TLS module includes workarounds for the following known openssl
    bugs: openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression
@@ -122,11 +131,10 @@ route{
 1.4. Compiling the TLS Module
 
    In most case compiling the TLS module is as simple as:
-make modules modules=modules/tls
+make -C modules/tls
 
    or
-cd modules/tls
-make
+make modules modules=modules/tls
 
    or (compiling whole SIP-router and the tls module)
 make all include_modules=tls
@@ -157,7 +165,21 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
    reduce openssl memory usage it to disable compression (see
    tls_disable_compression).
 
-1.6. Known Limitations
+1.6. TLS Debugging
+
+   Debugging messages can be selectively enabled by recompiling the tls
+   module with a combination of the following defines:
+     * TLS_WR_DEBUG - debug messages for the write/send part.
+     * TLS_RD_DEBUG - debug messages for the read/receive part.
+     * TLS_BIO_DEBUG - debug messages for the custom BIO.
+
+   Example 2. Compiling TLS with Debug Messages
+make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
+
+   To change the level at which the debug messages are logged, change the
+   tls_debug module parameter.
+
+1.7. Known Limitations
 
    The private key must not encrypted (SIP-router cannot ask you for a
    password on startup).
@@ -173,10 +195,16 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
    TLS specific config reloading is not safe, so for now better don't use
    it, especially under heavy traffic.
 
-   This documentation is incomplete. The select framework and rpc sections
-   are completely missing.
+   This documentation is incomplete. The RPCs are not documented here, but
+   in doc/rpc_list/rpc_tls.txt or
+   http://sip-router.org/docbook/sip-router/branch/master/rpc_list/rpc_lis
+   t.html#rpc_exports.tls. The provided selects are not documented. A list
+   with all the ones implemented by the tls module can be seen under
+   doc/select_list/select_tls.txt or or
+   http://sip-router.org/docbook/sip-router/branch/master/select_list/sele
+   ct_list.html#select_list.tls.
 
-1.7. Quick Certificate Howto
+1.8. Quick Certificate Howto
 
    Revision History
    Revision $Revision$ $Date$
@@ -260,12 +288,12 @@ fg:
                 modparam("tls", "require_certificate", 1)
         (for more information see the module parameters documentation)
 
-1.8. Parameters
+1.9. Parameters
 
    Revision History
    Revision $Revision$ $Date$
 
-1.8.1. tls_method (string)
+1.9.1. tls_method (string)
 
    Sets the SSL/TLS protocol method. Possible values are:
      * TLSv1 - only TLSv1 connections are accepted. This is the default
@@ -283,12 +311,12 @@ fg:
    If rfc3261 conformance is desired, TLSv1 must be used. For
    compatibility with older clients SSLv23 is a good option.
 
-   Example 2. Set tls_method parameter
+   Example 3. Set tls_method parameter
 ...
 modparam("tls", "tls_method", "TLSv1")
 ...
 
-1.8.2. certificate (string)
+1.9.2. certificate (string)
 
    Sets the certificate file name. The certificate file can also contain
    the private key in PEM format.
@@ -299,12 +327,12 @@ modparam("tls", "tls_method", "TLSv1")
 
    The default value is [SER_CFG_DIR]/cert.pem.
 
-   Example 3. Set certificate parameter
+   Example 4. Set certificate parameter
 ...
 modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
 ...
 
-1.8.3. private_key (string)
+1.9.3. private_key (string)
 
    Sets the private key file name.
 
@@ -314,12 +342,12 @@ modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
 
    The default value is [SER_CFG_DIR]/cert.pem.
 
-   Example 4. Set private_key parameter
+   Example 5. Set private_key parameter
 ...
 modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
 ...
 
-1.8.4. ca_list (string)
+1.9.4. ca_list (string)
 
    Sets the CA list file name. This file contains a list of all the
    trusted CAs certificates. If a signature in a certificate chain belongs
@@ -332,12 +360,12 @@ modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
    certificate in the PEM format to one file, e.g.: for f in
    trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done .
 
-   Example 5. Set ca_list parameter
+   Example 6. Set ca_list parameter
 ...
 modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
 ...
 
-1.8.5. verify_certificate (boolean)
+1.9.5. verify_certificate (boolean)
 
    If enabled it will force certificate verification. For more information
    see the verify(1) openssl man page.
@@ -349,12 +377,12 @@ modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
 
    By default the certificate verification is off.
 
-   Example 6. Set verify_certificate parameter
+   Example 7. Set verify_certificate parameter
 ...
 modparam("tls", "verify_certificate", 1)
 ...
 
-1.8.6. verify_depth (integer)
+1.9.6. verify_depth (integer)
 
    Sets how far up the certificate chain will the certificate verification
    go in the search for a trusted CA.
@@ -363,12 +391,12 @@ modparam("tls", "verify_certificate", 1)
 
    The default value is 9.
 
-   Example 7. Set verify_depth parameter
+   Example 8. Set verify_depth parameter
 ...
 modparam("tls", "verify_depth", 9)
 ...
 
-1.8.7. require_certificate (boolean)
+1.9.7. require_certificate (boolean)
 
    When enabled it will require a certificate from a client. If the client
    does not offer a certificate and verify_certificate is on, the
@@ -376,12 +404,12 @@ modparam("tls", "verify_depth", 9)
 
    The default value is off.
 
-   Example 8. Set require_certificate parameter
+   Example 9. Set require_certificate parameter
 ...
 modparam("tls", "require_certificate", 1)
 ...
 
-1.8.8. cipher_list (string)
+1.9.8. cipher_list (string)
 
    Sets the list of accepted ciphers. The list consists of cipher strings
    separated by colons. For more information on the cipher list format see
@@ -390,54 +418,46 @@ modparam("tls", "require_certificate", 1)
    The default value is not set (all the Openssl supported ciphers are
    enabled).
 
-   Example 9. Set cipher_list parameter
+   Example 10. Set cipher_list parameter
 ...
 modparam("tls", "cipher_list", "HIGH")
 ...
 
-1.8.9. send_timeout (int)
+1.9.9. send_timeout (int)
 
-   Sets the maximum interval of time after which SIP-router will give up
-   trying to send a message over TLS (time after a TLS send will be
-   aborted and the corresponding TLS connection closed). The value is in
-   seconds.
+   This parameter is obsolete and cannot be used in newer TLS versions (>
+   sip-router 3.0). In these versions the send_timeout is replaced by
+   tcp_send_timeout (common with all the tcp connections).
 
-   The default value is 120 s.
+1.9.10. handshake_timeout (int)
 
-   Example 10. Set send_timeout parameter
-...
-modparam("tls", "send_timeout", 1)
-...
+   This parameter is obsolete and cannot be used in newer TLS versions (>
+   sip-router 3.0). In these versions the handshake_timeout is replaced by
+   tcp_connect_timeout (common with all the tcp connections).
 
-1.8.10. handshake_timeout (int)
-
-   Sets the maximum interval of time after which SIP-router will give up
-   trying to accept a TLS connection or connect to a TLS peer. The value
-   is in seconds.
-
-   The default value is 120 s.
-
-   Example 11. Set handshake_timeout parameter
-...
-modparam("tls", "handshake_timeout", 1)
-...
-
-1.8.11. connection_timeout (int)
+1.9.11. connection_timeout (int)
 
    Sets the amount of time after which an idle TLS connection will be
-   closed. This is similar to tcp_connection_lifetime. The value is
-   expressed in seconds.
+   closed, if no I/O ever occured after the initial open. If an I/O event
+   occurs, the timeout will be extended with tcp_connection_lifetime. The
+   value is expressed in seconds.
 
    The default value is 10 min.
 
    If the value set is -1, the connection will never be close on idle.
 
-   Example 12. Set connection_timeout parameter
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.connection_timeout.
+
+   Example 11. Set connection_timeout parameter
 ...
 modparam("tls", "connection_timeout", 60)
 ...
 
-1.8.12. tls_disable_compression (boolean)
+   Example 12. Set tls.connection_timeout at runtime
+ $ sercmd cfg.set_now_int tls connection_timeout 180
+
+1.9.12. tls_disable_compression (boolean)
 
    If set compression over SSL/TLS will be disabled. Note that compression
    uses a lot of memory (about 10x more then with the compression
@@ -451,18 +471,19 @@ modparam("tls", "connection_timeout", 60)
 modparam("tls", "tls_disable_compression", 0) # enable
 ...
 
-1.8.13. ssl_release_buffers (integer)
+1.9.13. ssl_release_buffers (integer)
 
    Release internal OpenSSL read or write buffers as soon as they are no
    longer needed. Combined with ssl_free_list_max_len has the potential of
    saving a lot of memory ( ~ 32k per connection in the default
-   configuration, or 16k + ssl_max_send_fragment).
+   configuration, or 16k + ssl_max_send_fragment). For sr versions > 3.0
+   it makes little sense to disable it (0) since the tls module already
+   has its own internal buffering.
 
    A value of -1 would not change this option from its openssl default.
    Use 0 or 1 for enable/disable.
 
-   By default the value is -1 (the openssl default, which at least in
-   openssl 1.0.0 is 0/disabled).
+   By default the value is 1 (enabled).
 
 Note
 
@@ -472,7 +493,7 @@ Note
    Example 14. Set ssl_release_buffers parameter
 modparam("tls", "ssl_release_buffers", 1)
 
-1.8.14. ssl_free_list_max_len (integer)
+1.9.14. ssl_free_list_max_len (integer)
 
    Sets the maximum number of free memory chunks, that OpenSSL will keep
    per connection. Setting it to 0 would cause any unused memory chunk to
@@ -482,10 +503,10 @@ modparam("tls", "ssl_release_buffers", 1)
    Should be combined with ssl_release_buffers.
 
    A value of -1 has a special meaning: the OpenSSL default will be used
-   (no attempt on changing the value will be made).
+   (no attempt on changing the value will be made). For OpenSSL 1.0 the
+   internal default is 32.
 
-   By default the value is -1 (the OpenSSL default, which at least in
-   OpenSSL 1.0.0 is 32).
+   By default the value is 0 (no freelist).
 
 Note
 
@@ -495,7 +516,7 @@ Note
    Example 15. Set ssl_freelist_max_len parameter
 modparam("tls", "ssl_freelist_max_len", 0)
 
-1.8.15. ssl_max_send_fragment (integer)
+1.9.15. ssl_max_send_fragment (integer)
 
    Sets the maximum number of bytes (from the clear text) sent into one
    TLS or SSL record. Valid values are between 512 and 16384. Note however
@@ -530,39 +551,148 @@ Note
    Example 16. Set ssl_max_send_fragment parameter
 modparam("tls", "ssl_max_send_fragment", 4096)
 
-1.8.16. ssl_read_ahead (boolean)
+1.9.16. ssl_read_ahead (boolean)
 
-   Enables read ahead, reducing the number of read() system calls done
-   internally by the OpenSSL library.
+   Enables read ahead, reducing the number of internal OpenSSL BIO read()
+   calls. This option has only debugging value, in normal circumstances it
+   should not be changed from the default.
 
-   When disabled OpenSSL will make at least 2 read() sytem calls per
+   When disabled OpenSSL will make at least 2 BIO read() calls per
    received record: one to get the record header and one to get the rest
    of the record.
+
+   The TLS module buffers internally all read()s and defines its own fast
+   BIO so enabling this option would only cause more memory consumption
+   and a minor slow-down (extra memcpy).
 
    A value of -1 has a special meaning: the OpenSSL default will be used
    (no attempt on changing the value will be made).
 
-   By default the value is 1 (enabled).
+   By default the value is 0 (disabled).
 
    Example 17. Set ssl_read_ahead parameter
 modparam("tls", "ssl_read_ahead", 1)
 
-1.8.17. tls_log (int)
+1.9.17. send_close_notify (boolean)
+
+   Enables/disables sending close notify alerts prior to closing the
+   corresponding TCP connection. Sending the close notify prior to tcp
+   shutdown is "nicer" from a TLS point of view, but it has a measurable
+   performance impact. Default: off. Can be set at runtime
+   (tls.send_close_notify).
+
+   The default value is 0 (off).
+
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.send_close_notify.
+
+   Example 18. Set send_close_notify parameter
+...
+modparam("tls", "send_close_notify", 1)
+...
+
+   Example 19. Set tls.send_close_notify at runtime
+ $ sercmd cfg.set_now_int tls send_close_notify 1
+
+1.9.18. con_ct_wq_max (integer)
+
+   Sets the maximum allowed per connection clear-text send queue size in
+   bytes. This queue is used when data cannot be encrypted and sent
+   immediately because of an ongoing TLS/SSL level renegotiation.
+
+   The default value is 65536 (64 Kb).
+
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.con_ct_wq_max.
+
+   Example 20. Set con_ct_wq_max parameter
+...
+modparam("tls", "con_ct_wq_max", 1048576)
+...
+
+   Example 21. Set tls.con_ct_wq_max at runtime
+ $ sercmd cfg.set_now_int tls con_ct_wq_max 1048576
+
+1.9.19. ct_wq_max (integer)
+
+   Sets the maximum total number of bytes queued in all the clear-text
+   send queues. These queues are used when data cannot be encrypted and
+   sent immediately because of an ongoing TLS/SSL level renegotiation.
+
+   The default value is 10485760 (10 Mb).
+
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.ct_wq_max.
+
+   Example 22. Set ct_wq_max parameter
+...
+modparam("tls", "ct_wq_max", 4194304)
+...
+
+   Example 23. Set tls.ct_wq_max at runtime
+ $ sercmd cfg.set_now_int tls ct_wq_max 4194304
+
+1.9.20. ct_wq_blk_size (integer)
+
+   Minimum block size for the internal clear-text send queues (debugging /
+   advanced tunning). Good values are multiple of typical datagram sizes.
+
+   The default value is 4096.
+
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.ct_wq_blk_size.
+
+   Example 24. Set ct_wq_blk_size parameter
+...
+modparam("tls", "ct_wq_blk_size", 2048)
+...
+
+   Example 25. Set tls.ct_wq_max at runtime
+ $ sercmd cfg.set_now_int tls ct_wq_blk_size 2048
+
+1.9.21. tls_log (int)
 
    Sets the log level at which TLS related messages will be logged.
 
-   The default value is 3.
+   The default value is 3 (L_DBG).
 
-   Example 18. Set tls_log parameter
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.log.
+
+   Example 26. Set tls_log parameter
 ...
 # ignore TLS messages if SIP-router is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
-1.8.18. low_mem_threshold1 (integer)
+   Example 27. Set tls.log at runtime
+ $ sercmd cfg.set_now_int tls log 10
 
-   Sets the minimal free memory from which new TLS connection will start
-   to fail. The value is expressed in KB.
+1.9.22. tls_debug (int)
+
+   Sets the log level at which TLS debug messages will be logged. Note
+   that TLS debug messages are enabled only if the TLS module is compiled
+   with debugging enabled (e.g. -DTLS_WR_DEBUG, -DTLS_RD_DEBUG or
+   -DTLS_BIO_DEBUG).
+
+   The default value is 3 (L_DBG).
+
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.debug.
+
+   Example 28. Set tls_debug parameter
+...
+# ignore TLS debug messages if SIP-router is started with debug less than 10
+modparam("tls", "tls_debug", 10)
+...
+
+   Example 29. Set tls.debug at runtime
+ $ sercmd cfg.set_now_int tls debug 10
+
+1.9.23. low_mem_threshold1 (integer)
+
+   Sets the minimal free memory from which attempts to open or accept new
+   TLS connections will start to fail. The value is expressed in KB.
 
    The default value depends on whether the openssl library used handles
    well low memory situations (openssl bug #1491). As of this writing this
@@ -577,14 +707,20 @@ modparam("tls", "tls_log", 10)
      * -1 - use the default value
      * 0 - disable (TLS connections will not fail preemptively)
 
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.low_mem_threshold1.
+
    See also low_mem_threshold2.
 
-   Example 19. Set low_mem_threshold1 parameter
+   Example 30. Set low_mem_threshold1 parameter
 ...
 modparam("tls", "low_mem_threshold1", -1)
 ...
 
-1.8.19. low_mem_threshold2 (integer)
+   Example 31. Set tls.low_mem_threshold1 at runtime
+ $ sercmd cfg.set_now_int tls low_mem_threshold1 2048
+
+1.9.24. low_mem_threshold2 (integer)
 
    Sets the minimal free memory from which TLS operations on already
    established TLS connections will start to fail preemptively. The value
@@ -603,14 +739,20 @@ modparam("tls", "low_mem_threshold1", -1)
      * -1 - use the default value
      * 0 - disable (TLS operations will not fail preemptively)
 
+   It can be changed also at runtime, via the RPC interface and config
+   framework. The config variable name is tls.low_mem_threshold2.
+
    See also low_mem_threshold1.
 
-   Example 20. Set low_mem_threshold2 parameter
+   Example 32. Set low_mem_threshold2 parameter
 ...
 modparam("tls", "low_mem_threshold2", -1)
 ...
 
-1.8.20. tls_force_run (boolean)
+   Example 33. Set tls.low_mem_threshold2 at runtime
+ $ sercmd cfg.set_now_int tls low_mem_threshold2 1024
+
+1.9.25. tls_force_run (boolean)
 
    If enabled SIP-router will start even if some of the openssl sanity
    checks fail (turn it on at your own risk).
@@ -626,12 +768,12 @@ modparam("tls", "low_mem_threshold2", -1)
 
    By default tls_force_run is disabled.
 
-   Example 21. Set tls_force_run parameter
+   Example 34. Set tls_force_run parameter
 ...
 modparam("tls", "tls_force_run", 11)
 ...
 
-1.8.21. config (string)
+1.9.26. config (string)
 
    Sets the name of the TLS specific config file.
 
@@ -657,7 +799,7 @@ modparam("tls", "tls_force_run", 11)
    client when it initiates a new connection by itself (it connects to
    something).
 
-   Example 22. Short config file
+   Example 35. Short config file
 [server:default]
 method = TLSv1
 verify_certificate = no
@@ -683,29 +825,36 @@ ca_list = local_ca.pem
    For a more complete example check the tls.cfg distributed with the
    SIP-router source (sip_router/modules/tls/tls.cfg).
 
-   Example 23. Set config parameter
+   Example 36. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 ...
 
-1.9. Functions
+   It can be changed also at runtime. The new config will not be loaded
+   immediately, but after the first tls.reload RPC call.
+
+   Example 37. Change and reload tls config at runtime
+ $ sercmd cfg.set_now_string tls config "/usr/local/etc/ser/new_tls.cfg"
+ $ sercmd tls.reload
+
+1.10. Functions
 
    Revision History
    Revision $Revision$ $Date$
 
-1.9.1. is_peer_verified()
+1.10.1. is_peer_verified()
 
    Returns true if the connection on which the message was received is TLS
    , the peer presented an X509 certificate and the certificate chain
    verified ok. It can be used only in a request route.
 
-   Example 24. is_peer_verified usage
+   Example 38. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()){
                 sl_send_reply("400", "No certificate or verification failed");
                 drop;
         }
 
-1.10. History
+1.11. History
 
    Revision History
    Revision $Revision$ $Date$
@@ -718,6 +867,10 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    Pelinescu-Onciul <andrei@iptel.org>. Jan also added support for
    multiple domains, a tls specific config, config reloading and a tls
    specific select framework.
+
+   For ser/sr 3.1 most of the TLS specific code was completely re-written
+   to add support for asynchrounous TLS and fix several long standing
+   bugs.
 
    The code is currently maintained by Andrei Pelinescu-Onciul
    <andrei@iptel.org>.

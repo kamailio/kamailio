@@ -98,14 +98,14 @@ typedef struct tls_domain {
 /*
  * TLS configuration structures
  */
-typedef struct tls_cfg {
+typedef struct tls_domains_cfg {
 	tls_domain_t* srv_default; /* Default server domain */
 	tls_domain_t* cli_default; /* Default client domain */
 	tls_domain_t* srv_list;    /* Server domain list */
 	tls_domain_t* cli_list;    /* Client domain list */
-	struct tls_cfg* next;      /* Next element in the garbage list */
+	struct tls_domains_cfg* next; /* Next element in the garbage list */
 	int ref_count;             /* How many connections use this configuration */
-} tls_cfg_t;
+} tls_domains_cfg_t;
 
 
 /*
@@ -131,31 +131,33 @@ char* tls_domain_str(tls_domain_t* d);
 /*
  * Create new instance of TLS configuration data
  */
-tls_cfg_t* tls_new_cfg(void);
+tls_domains_cfg_t* tls_new_cfg(void);
 
 
 /*
  * Add a new configuration domain
  */
-int tls_add_domain(tls_cfg_t* cfg, tls_domain_t* d);
+int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d);
 
 
 /*
  * Fill in missing parameters
  */
-int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_defaults);
+int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
+				tls_domain_t* cli_defaults);
 
 
 /*
  * Lookup TLS configuration
  */
-tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsigned short port);
+tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
+								struct ip_addr* ip, unsigned short port);
 
 
 /*
  * Free TLS configuration data
  */
-void tls_free_cfg(tls_cfg_t* cfg);
+void tls_free_cfg(tls_domains_cfg_t* cfg);
 
 /*
  * Destroy all the config data
