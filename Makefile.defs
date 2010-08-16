@@ -146,6 +146,8 @@ CFG_NAME=kamailio
 KMSTATS ?= 1
 # fast malloc statistics on
 FMSTATS ?= 1
+# application server support on
+WITHAS ?= 1
 else # default:
 # main binary name
 MAIN_NAME=sip-router
@@ -698,6 +700,9 @@ ifeq ($(KMSTATS), 1)
 endif
 ifeq ($(FMSTATS), 1)
 	C_DEFS+= -DMALLOC_STATS
+endif
+ifeq ($(WITHAS), 1)
+	C_DEFS+= -DWITH_AS_SUPPORT
 endif
 
 ifneq ($(STUN),)
