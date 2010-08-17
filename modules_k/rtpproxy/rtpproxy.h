@@ -24,8 +24,8 @@
 */
 
 
-#ifndef _NATHELPER_NATHELPER_H
-#define _NATHELPER_NATHELPER_H
+#ifndef _RTPPROXY_H
+#define _RTPPROXY_H
 
 #include "../../str.h"
 

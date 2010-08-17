@@ -21,8 +21,8 @@
  */
 
 
-#ifndef _NHLPR_FUNCS_H
-#define  _NHLPR_FUNCS_H
+#ifndef _RTPPROXY_FUNCS_H
+#define _RTPPROXY_FUNCS_H
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"

@@ -24,13 +24,13 @@ Edited by
 
 Sas Ovidiu
 
-   Copyright � 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright � 2005 voice-system.ro
+   Copyright © 2005 voice-system.ro
 
-   Copyright � 2009 TuTPro Inc.
+   Copyright © 2009 TuTPro Inc.
 
-   Copyright � 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -39,42 +39,40 @@ Sas Ovidiu
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Multiple RTPProxy usage
-        1.3. Dependencies
+        1. Overview
+        2. Multiple RTPProxy usage
+        3. Dependencies
 
-              1.3.1. Kamailio Modules
-              1.3.2. External Libraries or Applications
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        1.4. Exported Parameters
+        4. Exported Parameters
 
-              1.4.1. rtpproxy_sock (string)
-              1.4.2. rtpproxy_disable_tout (integer)
-              1.4.3. rtpproxy_tout (integer)
-              1.4.4. rtpproxy_retr (integer)
-              1.4.5. force_socket (string)
-              1.4.6. nortpproxy_str (string)
+              4.1. rtpproxy_sock (string)
+              4.2. rtpproxy_disable_tout (integer)
+              4.3. rtpproxy_tout (integer)
+              4.4. rtpproxy_retr (integer)
+              4.5. force_socket (string)
+              4.6. nortpproxy_str (string)
 
-        1.5. Exported Functions
+        5. Exported Functions
 
-              1.5.1. set_rtp_proxy_set()
-              1.5.2. force_rtp_proxy([flags [, ip_address]])
-              1.5.3. rtpproxy_offer([flags [, ip_address]])
-              1.5.4. rtpproxy_answer([flags [, ip_address]])
-              1.5.5. unforce_rtp_proxy()
-              1.5.6. rtpproxy_stream2uac(prompt_name, count),
+              5.1. set_rtp_proxy_set()
+              5.2. force_rtp_proxy([flags [, ip_address]])
+              5.3. rtpproxy_offer([flags [, ip_address]])
+              5.4. rtpproxy_answer([flags [, ip_address]])
+              5.5. unforce_rtp_proxy()
+              5.6. rtpproxy_stream2uac(prompt_name, count),
                       rtpproxy_stream2uas(prompt_name, count)
 
-              1.5.7. rtpproxy_stop_stream2uac(),
-                      rtpproxy_stop_stream2uas()
+              5.7. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+              5.8. start_recording()
 
-              1.5.8. start_recording()
+        6. Exported Pseudo Variables
+        7. MI Commands
 
-        1.6. Exported Pseudo Variables
-        1.7. MI Commands
-
-              1.7.1. nh_enable_rtpp
-              1.7.2. nh_show_rtpp
+              7.1. nh_enable_rtpp
+              7.2. nh_show_rtpp
 
    2. Frequently Asked Questions
 
@@ -98,7 +96,44 @@ Sas Ovidiu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Multiple RTPProxy usage
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Exported Parameters
+
+        4.1. rtpproxy_sock (string)
+        4.2. rtpproxy_disable_tout (integer)
+        4.3. rtpproxy_tout (integer)
+        4.4. rtpproxy_retr (integer)
+        4.5. force_socket (string)
+        4.6. nortpproxy_str (string)
+
+   5. Exported Functions
+
+        5.1. set_rtp_proxy_set()
+        5.2. force_rtp_proxy([flags [, ip_address]])
+        5.3. rtpproxy_offer([flags [, ip_address]])
+        5.4. rtpproxy_answer([flags [, ip_address]])
+        5.5. unforce_rtp_proxy()
+        5.6. rtpproxy_stream2uac(prompt_name, count),
+                rtpproxy_stream2uas(prompt_name, count)
+
+        5.7. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+        5.8. start_recording()
+
+   6. Exported Pseudo Variables
+   7. MI Commands
+
+        7.1. nh_enable_rtpp
+        7.2. nh_show_rtpp
+
+1. Overview
 
    This is a module that enables media streams to be proxied via an
    rtpproxy.
@@ -108,7 +143,7 @@ Chapter 1. Admin Guide
    http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature
    _guide09186a0080110bf9.html">
 
-1.2. Multiple RTPProxy usage
+2. Multiple RTPProxy usage
 
    Currently, the rtpproxy module can support multiple rtpproxies for
    balancing/distribution and control/selection purposes.
@@ -117,7 +152,7 @@ Chapter 1. Admin Guide
    load-balancing will be performed over a set and the user has the
    ability to choose what set should be used. The set is selected via its
    id - the id being defined along with the set. Refer to the
-   "rtpproxy_sock" module parameter definition for syntax description.
+   “rtpproxy_sock” module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
    the weight of each rtpproxy from the set.
@@ -134,27 +169,37 @@ Chapter 1. Admin Guide
    IMPORTANT: if you use multiple sets, take care and use the same set for
    both force_ and unforce_rtpproxy()!!
 
-1.3. Dependencies
+3. Dependencies
 
-1.3.1. Kamailio Modules
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * None
 
-1.3.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-1.4. Exported Parameters
+4. Exported Parameters
 
-1.4.1. rtpproxy_sock (string)
+   4.1. rtpproxy_sock (string)
+   4.2. rtpproxy_disable_tout (integer)
+   4.3. rtpproxy_tout (integer)
+   4.4. rtpproxy_retr (integer)
+   4.5. force_socket (string)
+   4.6. nortpproxy_str (string)
+
+4.1. rtpproxy_sock (string)
 
    Definition of socket(s) used to connect to (a set) RTPProxy. It may
    specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
-   Default value is "NONE" (disabled).
+   Default value is “NONE” (disabled).
 
    Example 1.1. Set rtpproxy_sock parameter
 ...
@@ -170,55 +215,55 @@ modparam("rtpproxy", "rtpproxy_sock",
         "2 == udp:localhost:12225")
 ...
 
-1.4.2. rtpproxy_disable_tout (integer)
+4.2. rtpproxy_disable_tout (integer)
 
    Once RTPProxy was found unreachable and marked as disable, rtpproxy
    will not attempt to establish communication to RTPProxy for
    rtpproxy_disable_tout seconds.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.2. Set rtpproxy_disable_tout parameter
 ...
 modparam("rtpproxy", "rtpproxy_disable_tout", 20)
 ...
 
-1.4.3. rtpproxy_tout (integer)
+4.3. rtpproxy_tout (integer)
 
    Timeout value in waiting for reply from RTPProxy.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.3. Set rtpproxy_tout parameter
 ...
 modparam("rtpproxy", "rtpproxy_tout", 2)
 ...
 
-1.4.4. rtpproxy_retr (integer)
+4.4. rtpproxy_retr (integer)
 
    How many times rtpproxy should retry to send and receive after timeout
    was generated.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.4. Set rtpproxy_retr parameter
 ...
 modparam("rtpproxy", "rtpproxy_retr", 2)
 ...
 
-1.4.5. force_socket (string)
+4.5. force_socket (string)
 
    Socket to be forced in communicating to RTPProxy. It makes sense only
    for UDP communication. If no one specified, the OS will choose.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.5. Set force_socket parameter
 ...
 modparam("rtpproxy", "force_socket", "localhost:33333")
 ...
 
-1.4.6. nortpproxy_str (string)
+4.6. nortpproxy_str (string)
 
    The parameter sets the SDP attribute used by rtpproxy to mark the
    packet SDP informations have already been mangled.
@@ -229,16 +274,27 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is "a=nortpproxy:yes\r\n".
+   Default value is “a=nortpproxy:yes\r\n”.
 
    Example 1.6. Set nortpproxy_str parameter
 ...
 modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
 
-1.5. Exported Functions
+5. Exported Functions
 
-1.5.1.  set_rtp_proxy_set()
+   5.1. set_rtp_proxy_set()
+   5.2. force_rtp_proxy([flags [, ip_address]])
+   5.3. rtpproxy_offer([flags [, ip_address]])
+   5.4. rtpproxy_answer([flags [, ip_address]])
+   5.5. unforce_rtp_proxy()
+   5.6. rtpproxy_stream2uac(prompt_name, count),
+          rtpproxy_stream2uas(prompt_name, count)
+
+   5.7. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+   5.8. start_recording()
+
+5.1.  set_rtp_proxy_set()
 
    Sets the Id of the rtpproxy set to be used for the next
    [un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() command.
@@ -252,7 +308,7 @@ set_rtp_proxy_set("2");
 force_rtp_proxy();
 ...
 
-1.5.2.  force_rtp_proxy([flags [, ip_address]])
+5.2.  force_rtp_proxy([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    It can have optional parameters to force additional features. If
@@ -277,7 +333,7 @@ force_rtp_proxy();
      * flags - flags to turn on some features.
           + a - flags that UA from which message is received doesn't
             support symmetric RTP. (automatically sets the 'r' flag)
-          + l - force "lookup", that is, only rewrite SDP when
+          + l - force “lookup”, that is, only rewrite SDP when
             corresponding session is already exists in the RTP proxy. By
             default is on when the session is to be completed (reply in
             non-swap or ACK in swap mode).
@@ -338,7 +394,7 @@ if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 ...
 
-1.5.3.  rtpproxy_offer([flags [, ip_address]])
+5.3.  rtpproxy_offer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    Equivalent of force_rtp_proxy() function to be invoked on INVITE for
@@ -383,7 +439,7 @@ onreply_route[2]
 ...
 }
 
-1.5.4.  rtpproxy_answer([flags [, ip_address]])
+5.4.  rtpproxy_answer([flags [, ip_address]])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    Equivalent of force_rtp_proxy() function to be invoked on 200 OK for
@@ -400,7 +456,7 @@ onreply_route[2]
 
    See rtpproxy_offer() function example above for example.
 
-1.5.5.  unforce_rtp_proxy()
+5.5.  unforce_rtp_proxy()
 
    Tears down the RTPProxy session for the current call.
 
@@ -412,7 +468,7 @@ onreply_route[2]
 unforce_rtp_proxy();
 ...
 
-1.5.6.  rtpproxy_stream2uac(prompt_name, count),
+5.6.  rtpproxy_stream2uac(prompt_name, count),
 rtpproxy_stream2uas(prompt_name, count)
 
    Instruct the RTPproxy to stream prompt/announcement pre-encoded with
@@ -456,7 +512,7 @@ rtpproxy_stream2uas(prompt_name, count)
     };
 ...
 
-1.5.7.  rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+5.7.  rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
 
    Stop streaming of announcement/prompt/MOH started previously by the
    respective rtpproxy_stream2xxx. The uac/uas suffix selects whose
@@ -465,7 +521,7 @@ rtpproxy_stream2uas(prompt_name, count)
 
    These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-1.5.8.  start_recording()
+5.8.  start_recording()
 
    This command will send a signal to the RTP-Proxy to record the RTP
    stream on the RTP-Proxy.
@@ -477,11 +533,14 @@ rtpproxy_stream2uas(prompt_name, count)
 start_recording();
 ...
 
-1.6. Exported Pseudo Variables
+6. Exported Pseudo Variables
 
-1.7. MI Commands
+7. MI Commands
 
-1.7.1. nh_enable_rtpp
+   7.1. nh_enable_rtpp
+   7.2. nh_show_rtpp
+
+7.1. nh_enable_rtpp
 
    Enables a rtp proxy if parameter value is greater than 0. Disables it
    if a zero value is given.
@@ -499,7 +558,7 @@ start_recording();
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
 
-1.7.2. nh_show_rtpp
+7.2. nh_show_rtpp
 
    Displays all the rtp proxies and their information: set and status
    (disabled or not, weight and recheck_ticks).
@@ -513,11 +572,16 @@ $ kamctl fifo nh_show_rtpp
 
 Chapter 2. Frequently Asked Questions
 
+   2.1. What happend with “rtpproxy_disable” parameter?
+   2.2. Where can I find more about Kamailio?
+   2.3. Where can I post a question about this module?
+   2.4. How can I report a bug?
+
    2.1.
 
-       What happend with "rtpproxy_disable" parameter?
+       What happend with “rtpproxy_disable” parameter?
 
-       It was removed as it became obsolete - now "rtpproxy_sock" can take
+       It was removed as it became obsolete - now “rtpproxy_sock” can take
        empty value to disable the rtpproxy functionality.
 
    2.2.

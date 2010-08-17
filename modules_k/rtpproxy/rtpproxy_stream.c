@@ -32,8 +32,8 @@
 #include "../../parser/msg_parser.h"
 #include "../../sr_module.h"
 #include "../../ut.h"
-#include "nathelper.h"
-#include "nhelpr_funcs.h"
+#include "rtpproxy.h"
+#include "rtpproxy_funcs.h"
 
 int
 fixup_var_str_int(void **param, int param_no)

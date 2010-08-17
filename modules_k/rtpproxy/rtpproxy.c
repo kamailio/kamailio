@@ -219,8 +219,8 @@
 #include "../../socket_info.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
-#include "nathelper.h"
-#include "nhelpr_funcs.h"
+#include "rtpproxy.h"
+#include "rtpproxy_funcs.h"
 #include "rtpproxy_stream.h"
  
 MODULE_VERSION

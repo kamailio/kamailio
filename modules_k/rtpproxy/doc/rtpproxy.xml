@@ -83,7 +83,7 @@
 	</bookinfo>
 	<toc></toc>
 	
-	<xi:include href="nathelper_admin.xml"/>
-	<xi:include href="nathelper_faq.xml"/>
+	<xi:include href="rtpproxy_admin.xml"/>
+	<xi:include href="rtpproxy_faq.xml"/>
 	
 </book>
