@@ -21,7 +21,7 @@
 		via an rtpproxy.
 	</para>
 	<para>
-		Known devices that get along over &nat;s with rtpproxy are ATAs 
+		Known devices that get along over &nat;s with rtpproxy are ATAs
 		(as clients) and Cisco Gateways (since 12.2(T)) as servers.  See <ulink
 		url="http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html">
 		http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html"></ulink>
@@ -35,10 +35,10 @@
 		balancing/distribution and control/selection purposes.
 	</para>
 	<para>
-		The module allows the definition of several sets of rtpproxies - 
+		The module allows the definition of several sets of rtpproxies -
 		load-balancing will be performed over a set and the user has the
 		ability to choose what set should be used. The set is selected via
-		its id - the id being defined along with the set. Refer to the 
+		its id - the id being defined along with the set. Refer to the
 		<quote>rtpproxy_sock</quote> module parameter definition for syntax
 		description.
 	</para>
@@ -47,13 +47,13 @@
 		the weight of each rtpproxy from the set.
 	</para>
 	<para>
-		The selection of the set is done from script prior using 
+		The selection of the set is done from script prior using
 		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
 		functions - see the set_rtp_proxy_set() function.
 	</para>
 	<para>
-		For backward compatibility reasons, a set with no id take by default 
-		the id 0. Also if no set is explicitly set before 
+		For backward compatibility reasons, a set with no id take by default
+		the id 0. Also if no set is explicitly set before
 		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
 		the 0 id set will be used.
 	</para>
@@ -81,7 +81,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -99,7 +99,7 @@
 	<section>
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
-		Definition of socket(s) used to connect to (a set) RTPProxy. It may 
+		Definition of socket(s) used to connect to (a set) RTPProxy. It may
 		specify a UNIX socket or an IPv4/IPv6 UDP socket.
 		</para>
 		<para>
@@ -129,7 +129,7 @@ modparam("rtpproxy", "rtpproxy_sock",
 		<title><varname>rtpproxy_disable_tout</varname> (integer)</title>
 		<para>
 		Once RTPProxy was found unreachable and marked as disable, rtpproxy
-		will not attempt to establish communication to RTPProxy for 
+		will not attempt to establish communication to RTPProxy for
 		rtpproxy_disable_tout seconds.
 		</para>
 		<para>
@@ -241,12 +241,12 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 		<function moreinfo="none">set_rtp_proxy_set()</function>
 		</title>
 		<para>
-		Sets the Id of the rtpproxy set to be used for the next 
+		Sets the Id of the rtpproxy set to be used for the next
 		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
 		command.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		BRANCH_ROUTE.
 		</para>
 		<example>
@@ -264,7 +264,7 @@ force_rtp_proxy();
 		<function moreinfo="none">force_rtp_proxy([flags [, ip_address]])</function>
 		</title>
 		<para>
-		Rewrites &sdp; body to ensure that media is passed through 
+		Rewrites &sdp; body to ensure that media is passed through
 		an &rtp; proxy. It can have optional parameters to force additional
 		features. If ip_address is provided, it will be used to replace the
 		one in SDP.
@@ -298,7 +298,7 @@ force_rtp_proxy();
 				</para></listitem>
 				<listitem><para>
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
-				only rewrite SDP when corresponding session is already exists 
+				only rewrite SDP when corresponding session is already exists
 				in the RTP proxy. By default is on when the session is to be
 				completed (reply in non-swap or ACK in swap mode).
 				</para></listitem>
@@ -318,29 +318,29 @@ force_rtp_proxy();
 				the 'w' flag for clients behind NAT! See also above notes!
 				</para></listitem>
 				<listitem><para>
-				<emphasis>f</emphasis> - instructs rtpproxy to ignore marks 
-				inserted by another rtpproxy in transit to indicate that the 
-				session is already goes through another proxy. Allows creating 
+				<emphasis>f</emphasis> - instructs rtpproxy to ignore marks
+				inserted by another rtpproxy in transit to indicate that the
+				session is already goes through another proxy. Allows creating
 				chain of proxies.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>r</emphasis> - flags that IP address in SDP should 
-				be trusted. Without this flag, rtpproxy ignores address in 
-				the SDP and uses source address of the SIP message as media 
+				<emphasis>r</emphasis> - flags that IP address in SDP should
+				be trusted. Without this flag, rtpproxy ignores address in
+				the SDP and uses source address of the SIP message as media
 				address which is passed to the RTP proxy.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>o</emphasis> - flags that IP from the origin 
+				<emphasis>o</emphasis> - flags that IP from the origin
 				description (o=) should be also changed.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>c</emphasis> - flags to change the session-level 
-				SDP connection (c=) IP if media-description also includes 
+				<emphasis>c</emphasis> - flags to change the session-level
+				SDP connection (c=) IP if media-description also includes
 				connection information.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>s</emphasis> - flags to swap creation with 
-				confirmation between requests and replies. By default, a 
+				<emphasis>s</emphasis> - flags to swap creation with
+				confirmation between requests and replies. By default, a
 				request creates the RTP session and a reply confirms it. If
 				swapped, a reply will create the RTP session and a request
 				will confirm it.  The flag is considered depreciated and
@@ -348,7 +348,7 @@ force_rtp_proxy();
 				rtpproxy_offer() or rtpproxy_answer() instead.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>w</emphasis> - flags that for the UA from which 
+				<emphasis>w</emphasis> - flags that for the UA from which
 				message is received, support symmetric RTP must be forced.
 				</para></listitem>
 				<listitem><para>
@@ -371,7 +371,7 @@ force_rtp_proxy();
 		</para></listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -568,7 +568,7 @@ unforce_rtp_proxy();
 		<function moreinfo="none">start_recording()</function>
 		</title>
 		<para>
-		This command will send a signal to the RTP-Proxy to record 
+		This command will send a signal to the RTP-Proxy to record
 		the RTP stream on the RTP-Proxy.
 		</para>
 		<para>
@@ -600,7 +600,7 @@ start_recording();
 			Disables it if a zero value is given.
 			</para>
 			<para>
-			The first parameter is the rtp proxy url (exactly as defined in 
+			The first parameter is the rtp proxy url (exactly as defined in
 			the config file).
 			</para>
 			<para>
@@ -624,7 +624,7 @@ $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 			<section>
 			<title><function moreinfo="none">nh_show_rtpp</function></title>
 			<para>
-			Displays all the rtp proxies and their information: set and 
+			Displays all the rtp proxies and their information: set and
 			status (disabled or not, weight and recheck_ticks).
 			</para>
 			<para>
@@ -635,7 +635,7 @@ $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 				<function moreinfo="none">nh_show_rtpp</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_show_rtpp 
+$ &ctltool; fifo nh_show_rtpp
 ...
 			</programlisting>
 			</example>
