@@ -101,10 +101,14 @@ struct sr_module* modules=0;
 	extern struct module_exports sl_exports;
 #endif
 
+#ifndef offsetof
+#warning "use null pointer dereference for offsetof"
+#define offsetof(st, m) \
+		((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
+#endif
 
 int mod_response_cbk_no=0;
 response_function* mod_response_cbks=0;
-
 
 /* initializes statically built (compiled in) modules*/
 int register_builtin_modules()
