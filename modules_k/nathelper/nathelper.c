@@ -389,6 +389,7 @@ static pv_export_t mod_pvs[] = {
 static param_export_t params[] = {
 	{"natping_interval",      INT_PARAM, &natping_interval      },
 	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
+	{"nortpproxy_str",        STR_PARAM, &nortpproxy_str.s      },
 	{"received_avp",          STR_PARAM, &rcv_avp_param         },
 	{"force_socket",          STR_PARAM, &force_socket_str      },
 	{"sipping_from",          STR_PARAM, &sipping_from.s        },
@@ -584,6 +585,18 @@ mod_init(void)
 			return -1;
 		if (init_raw_socket() < 0)
 			return -1;
+	}
+
+	if (nortpproxy_str.s==NULL || nortpproxy_str.s[0]==0) {
+		nortpproxy_str.len = 0;
+		nortpproxy_str.s = NULL;
+	} else {
+		nortpproxy_str.len = strlen(nortpproxy_str.s);
+		while (nortpproxy_str.len > 0 && (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
+			nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
+				nortpproxy_str.len--;
+		if (nortpproxy_str.len == 0)
+			nortpproxy_str.s = NULL;
 	}
 
 	if (natping_interval > 0) {
