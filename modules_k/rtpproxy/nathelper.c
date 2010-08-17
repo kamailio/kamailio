@@ -2005,7 +2005,9 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		LM_ERR("Unable to parse sdp\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	print_sdp((sdp_info_t*)msg->body, L_INFO);
+#ifdef EXTRA_DEBUG
+	print_sdp((sdp_info_t*)msg->body, L_DBG);
+#endif
 
 	bodylimit = body.s + body.len;
 
