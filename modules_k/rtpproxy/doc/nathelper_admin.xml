@@ -17,28 +17,11 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This is a module to help with &nat; traversal and reuse
-	of tcp connections.  In particular, 
-		it helps symmetric &ua;s that don't advertise they are symmetric 
-		and are not able to determine their public
-	address. 
+		This is a module that enables media streams to be proxied
+		via an rtpproxy.
 	</para>
 	<para>
-		Function fix_nated_contact() rewrites Contact header field with request's source
-		address:port pair. Function fix_nated_sdp() adds the active direction ndication 
-		to &sdp; (flag 0x01) and updates source &ip; address too (flag 0x02). Function
-		fix_nated_register() exports exports the request's source address:port into an AVP
-		to be used during save() and should be used for REGISTER requests.
-	</para>
-        <para>
-		Note: fix_nated_contact changes the Contact header, thus it breaks the RFC.
-		Although usually this is not an issue, it may cause problems with strict
-		SIP clients.  An alternative is to use add_contact_alias() that
-		together with handle_ruri_alias() is standards
-	conforming and also supports reuse of TCP/TLS connections.
-	</para>
-	<para>
-		Known devices that get along over &nat;s with nathelper are ATAs 
+		Known devices that get along over &nat;s with rtpproxy are ATAs 
 		(as clients) and Cisco Gateways (since 12.2(T)) as servers.  See <ulink
 		url="http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html">
 		http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html"></ulink>
@@ -46,58 +29,9 @@
 	</section>
 
 	<section>
-	<title>NAT pinging types</title>
-	<para>
-		Currently, the nathelper module supports two types of NAT pings:
-	</para>
-	<itemizedlist>
-		<listitem>
-			<para>
-			<emphasis>UDP package</emphasis> - 4 bytes (zero filled) UDP 
-			packages are sent to the contact address.
-			</para>
-			<itemizedlist>
-				<listitem>
-				<para><emphasis>Advantages:</emphasis> low bandwitdh traffic,
-				easy to generate by &kamailio;;
-				</para>
-				</listitem>
-				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> unidirectional 
-				traffic through NAT (inbound - from outside to inside); As 
-				many NATs do update the bind timeout only on outbound traffic,
-				the bind may expire and closed.
-				</para>
-				</listitem>
-			</itemizedlist>
-		</listitem>
-		<listitem>
-			<para>
-			<emphasis>SIP request</emphasis> - a stateless SIP request is 
-			sent to the contact address.
-			</para>
-			<itemizedlist>
-				<listitem>
-				<para><emphasis>Advantages:</emphasis> bidirectional traffic
-				through NAT, since each PING request from &kamailio; (inbound 
-				traffic) will force the SIP client to generate a SIP reply 
-				(outbound traffic) - the NAT bind will be surely kept open.
-				</para>
-				</listitem>
-				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> higher bandwitdh 
-				traffic, more expensive (as time) to generate by &kamailio;;
-				</para>
-				</listitem>
-			</itemizedlist>
-		</listitem>
-	</itemizedlist>
-	</section>
-
-	<section>
 	<title>Multiple RTPProxy usage</title>
 	<para>
-		Currently, the nathelper module can support multiple rtpproxies for
+		Currently, the rtpproxy module can support multiple rtpproxies for
 		balancing/distribution and control/selection purposes.
 	</para>
 	<para>
@@ -138,8 +72,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>usrloc</emphasis> module - only if the NATed 
-				contacts are to be pinged.
+				<emphasis>None</emphasis>
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -164,122 +97,6 @@
 	<section>
 	<title>Exported Parameters</title>
 	<section>
-		<title><varname>natping_interval</varname> (integer)</title>
-		<para>
-		Period of time in seconds between sending the NAT pings to all 
-		currently registered &ua;s to keep their &nat; bindings alive. 
-		Value of 0 disables this functionality.
-		</para>
-		<note><para>
-		Enabling the NAT pinging functionality will force the module to
-		bind itself to USRLOC module.
-		</para></note>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>natping_interval</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "natping_interval", 10)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>ping_nated_only</varname> (integer)</title>
-		<para>
-		If this variable is set then only contacts that have 
-		<quote>behind_NAT</quote> flag in user location database set will 
-		get ping.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>ping_nated_only</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "ping_nated_only", 1)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>natping_processes</varname> (integer)</title>
-		<para>
-		How many timer processes should be created by the module for the
-		exclusive task of sending the NAT pings.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 1.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>natping_processes</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "natping_processes", 3)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>natping_socket</varname> (string)</title>
-		<para>
-		Spoof the natping's source-ip to this address. Works only for IPv4.
-		</para>
-		<para>
-		<emphasis>
-			Default value is NULL.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>natping_socket</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "natping_socket", "192.168.1.1:5006")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>received_avp</varname> (str)</title>
-		<para>
-		The name of the Attribute-Value-Pair (AVP) used to store the URI 
-		containing the received IP, port, and protocol. The URI is created 
-		by fix_nated_register function of nathelper module and the attribute 
-		is then used by the registrar to store the received parameters. Do 
-		not forget to change the value of corresponding parameter in
-		registrar module if you change the value of this parameter.
-		</para>
-		<note>
-		<para>
-		You must set this parameter if you use "fix_nated_register". In such
-		case you must set the parameter with same name of "registrar"
-		module to same value.
-		</para>
-		</note>
-		<para>
-		<emphasis>
-			Default value is "NULL" (disabled).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>received_avp</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "received_avp", "$avp(i:42)")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
 		Definition of socket(s) used to connect to (a set) RTPProxy. It may 
@@ -295,14 +112,14 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 		<programlisting format="linespecific">
 ...
 # single rtproxy
-modparam("nathelper", "rtpproxy_sock", "udp:localhost:12221")
+modparam("rtpproxy", "rtpproxy_sock", "udp:localhost:12221")
 # multiple rtproxies for LB
-modparam("nathelper", "rtpproxy_sock",
+modparam("rtpproxy", "rtpproxy_sock",
 	"udp:localhost:12221 udp:localhost:12222")
 # multiple sets of multiple rtproxies
-modparam("nathelper", "rtpproxy_sock",
+modparam("rtpproxy", "rtpproxy_sock",
 	"1 == udp:localhost:12221 udp:localhost:12222")
-modparam("nathelper", "rtpproxy_sock",
+modparam("rtpproxy", "rtpproxy_sock",
 	"2 == udp:localhost:12225")
 ...
 </programlisting>
@@ -311,7 +128,7 @@ modparam("nathelper", "rtpproxy_sock",
 	<section>
 		<title><varname>rtpproxy_disable_tout</varname> (integer)</title>
 		<para>
-		Once RTPProxy was found unreachable and marked as disable, nathelper
+		Once RTPProxy was found unreachable and marked as disable, rtpproxy
 		will not attempt to establish communication to RTPProxy for 
 		rtpproxy_disable_tout seconds.
 		</para>
@@ -324,7 +141,7 @@ modparam("nathelper", "rtpproxy_sock",
 		<title>Set <varname>rtpproxy_disable_tout</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "rtpproxy_disable_tout", 20)
+modparam("rtpproxy", "rtpproxy_disable_tout", 20)
 ...
 </programlisting>
 		</example>
@@ -343,7 +160,7 @@ modparam("nathelper", "rtpproxy_disable_tout", 20)
 		<title>Set <varname>rtpproxy_tout</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "rtpproxy_tout", 2)
+modparam("rtpproxy", "rtpproxy_tout", 2)
 ...
 </programlisting>
 		</example>
@@ -351,7 +168,7 @@ modparam("nathelper", "rtpproxy_tout", 2)
 	<section>
 		<title><varname>rtpproxy_retr</varname> (integer)</title>
 		<para>
-		How many times nathelper should retry to send and receive after
+		How many times rtpproxy should retry to send and receive after
 		timeout was generated.
 		</para>
 		<para>
@@ -363,7 +180,7 @@ modparam("nathelper", "rtpproxy_tout", 2)
 		<title>Set <varname>rtpproxy_retr</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "rtpproxy_retr", 2)
+modparam("rtpproxy", "rtpproxy_retr", 2)
 ...
 </programlisting>
 		</example>
@@ -383,70 +200,7 @@ modparam("nathelper", "rtpproxy_retr", 2)
 		<title>Set <varname>force_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "force_socket", "localhost:33333")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>sipping_bflag</varname> (integer)</title>
-		<para>
-		What branch flag should be used by the module to identify NATed 
-		contacts for which it should perform NAT ping via a SIP request 
-		instead if dummy UDP package.
-		</para>
-		<para>
-		<emphasis>
-			Default value is -1 (disabled).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>sipping_bflag</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "sipping_bflag", 7)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>sipping_from</varname> (string)</title>
-		<para>
-		The parameter sets the SIP URI to be used in generating the SIP
-		requests for NAT ping purposes. To enable the SIP request pinging
-		feature, you have to set this parameter. The SIP request pinging 
-		will be used only for requests marked so.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>NULL</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>sipping_from</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>sipping_method</varname> (string)</title>
-		<para>
-		The parameter sets the SIP method to be used in generating the SIP
-		requests for NAT ping purposes.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>OPTIONS</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>sipping_method</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("nathelper", "sipping_method", "INFO")
+modparam("rtpproxy", "force_socket", "localhost:33333")
 ...
 </programlisting>
 		</example>
@@ -454,7 +208,7 @@ modparam("nathelper", "sipping_method", "INFO")
 	<section>
 		<title><varname>nortpproxy_str</varname> (string)</title>
 		<para>
-		The parameter sets the SDP attribute used by nathelper to mark
+		The parameter sets the SDP attribute used by rtpproxy to mark
 		the packet SDP informations have already been mangled.
 		</para>
 		<para>
@@ -472,7 +226,7 @@ modparam("nathelper", "sipping_method", "INFO")
 		<title>Set <varname>nortpproxy_str</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
+modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
 </programlisting>
 		</example>
@@ -482,87 +236,6 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 
 	<section>
 	<title>Exported Functions</title>
-	<section>
-		<title>
-		<function moreinfo="none">fix_nated_contact()</function>
-		</title>
-		<para>
-		Rewrites Contact <acronym>HF</acronym> to contain request's source 
-		address:port.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>fix_nated_contact</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">fix_nated_sdp(flags [, ip_address])</function>
-		</title>
-		<para>
-		Alters the SDP information in orer to facilitate NAT traversal. What
-		changes to be performed may be controled via the 
-		<quote>flags</quote> parameter.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>flags</emphasis> - the value may be a bitwise OR of 
-			the following flags:
-			</para>
-			<itemizedlist>
-				<listitem>
-					<para><emphasis>0x01</emphasis> - adds 
-					<quote>a=direction:active</quote> SDP line;
-					</para>
-				</listitem>
-				<listitem>
-					<para><emphasis>0x02</emphasis> - rewrite media
-					&ip; address (c=) with source address of the message
-					or the provided IP address (the provide IP address take
-					precedence over the source address).</para>
-				</listitem>
-				<listitem>
-					<para><emphasis>0x04</emphasis> - adds 
-						<quote>a=nortpproxy:yes</quote> SDP line;</para>
-				</listitem>
-				<listitem>
-					<para><emphasis>0x08</emphasis> - rewrite IP from
-					origin description (o=) with source address of the message
-					or the provided IP address (the provide IP address take
-					precedence over the source address).</para>
-				</listitem>
-			</itemizedlist>
-			</listitem>
-			<listitem><para>
-			<emphasis>ip_address</emphasis> - IP to be used for rewritting SDP.
-			If not specified, the received signalling IP will be used. The
-			parameter allows pseudo-variables usage. NOTE: For the IP to be
-			used, you need to use 0x02 or 0x08 flags, otherwise it will have
-			no effect.
-			</para>
-			</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>fix_nated_sdp</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
-...
-</programlisting>
-		</example>
-	</section>
 	<section>
 		<title>
 		<function moreinfo="none">set_rtp_proxy_set()</function>
@@ -645,14 +318,14 @@ force_rtp_proxy();
 				the 'w' flag for clients behind NAT! See also above notes!
 				</para></listitem>
 				<listitem><para>
-				<emphasis>f</emphasis> - instructs nathelper to ignore marks 
-				inserted by another nathelper in transit to indicate that the 
+				<emphasis>f</emphasis> - instructs rtpproxy to ignore marks 
+				inserted by another rtpproxy in transit to indicate that the 
 				session is already goes through another proxy. Allows creating 
 				chain of proxies.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>r</emphasis> - flags that IP address in SDP should 
-				be trusted. Without this flag, nathelper ignores address in 
+				be trusted. Without this flag, rtpproxy ignores address in 
 				the SDP and uses source address of the SIP message as media 
 				address which is passed to the RTP proxy.
 				</para></listitem>
@@ -892,109 +565,6 @@ unforce_rtp_proxy();
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">add_rcv_param([flag])</function>,
-		</title>
-		<para>
-		Add received parameter to Contact header fields or Contact URI.
-		The parameter will 
-		contain URI created from the source IP, port, and protocol of the 
-		packet containing the SIP message. The parameter can be then 
-		processed by another registrar, this is useful, for example, when 
-		replicating register messages using t_replicate function to
-		another registrar.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>flag</emphasis> - flags to indicate if the parameter
-			should be added to Contact URI or Contact header. If the flag is
-			non-zero, the parameter will be added to the Contact URI. If not
-			used or equal to zero, the parameter will go to the Contact 
-			header.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>add_rcv_paramer</function> usage</title>
-		<programlisting format="linespecific">
-...
-add_rcv_param(); # add the parameter to the Contact header
-....
-add_rcv_param("1"); # add the parameter to the Contact URI
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">fix_nated_register()</function>
-		</title>
-		<para>
-		The function creates a URI consisting of the source IP, port, and 
-		protocol and stores the URI in an Attribute-Value-Pair. The URI will 
-		be appended as "received" parameter to Contact in 200 OK and 
-		registrar will store it in the received cloumn in the location table.
-		</para>
-		<para>
-		Note: You have to set the received_avp parameter of the nathelper module
-		and the registrar module (both module parameters must have the same value)
-		to use this function.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>fix_nated_register</function> usage</title>
-		<programlisting format="linespecific">
-...
-fix_nated_register();
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-			<function>nat_uac_test(flags)</function>
-		</title>
-		<para>
-			Tries to guess if client's request originated behind a nat.
-			The parameter determines what heuristics is used.
-		</para>
-		<para>Meaning of the flags is as follows:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>1</emphasis> -  Contact header field is searched 
-			for occurrence of RFC1918 addresses.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>2</emphasis> -  the "received" test is used: address
-			in Via is compared against source IP address of signaling
-			</para></listitem>
-			<listitem><para>
-			<emphasis>4</emphasis> -  Top Most VIA is searched 
-			for occurrence of RFC1918 addresses
-			</para></listitem>
-			<listitem><para>
-			<emphasis>8</emphasis> -  SDP is searched for occurrence of 
-			RFC1918 addresses
-			</para></listitem>
-			<listitem><para>
-			<emphasis>16</emphasis> -  test if the source port is different
-			from the port in Via 
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		All flags can be bitwise combined, the test returns true if any of 
-		the tests identified a NAT.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-	</section>
-	<section>
-		<title>
 		<function moreinfo="none">start_recording()</function>
 		</title>
 		<para>
@@ -1014,147 +584,15 @@ start_recording();
 		</example>
 	</section>
 
-	<section>
-		<title>
-		<function moreinfo="none">add_contact_alias()</function>
-		</title>
-		<para>
-		Adds ;alias=ip:port parameter to contact URI containing
-		received ip:port if contact uri ip:port does not match
-		received ip:port.
-		</para>
-		<para>
-		This function can be used from
-		REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE, and LOCAL_ROUTE.
-		</para>
-		<example>
-		<title><function>add_contact_alias</function> usage</title>
-		<programlisting format="linespecific">
-...
-    if (!is_present_hf("Record-Route")) {
-        if (!add_contact_alias()) {
-            xlog("L_ERR", "Error in aliasing contact $ct\n");
-            send_reply("400", "Bad request");
-            exit;
-        };
-    };
-...
-		</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">handle_ruri_alias()</function>
-		</title>
-		<para>
-		Checks if Request URI has alias param and if so, removes
-		it and sets $du based on its value.  Note that this
-		means that routing of request is based on ;alias
-		parameter value of Request URI rather than Request URI
-		itself. If you call handle_ruri_alias() on a request,
-		make thus sure that you screen alias parameter value of
-		Request URI the same way as you would screen
-		Request URI itself.
-		</para>
-		<para>
-		Returns 1 if ;alias param was found and $du was set and
-		$ru rewritten, 2 if alias param was not found and
-		nothing was done, or -1 in case of error.
-		</para>
-		<para>
-		This function can be used from
-		REQUEST_ROUTE, BRANCH_ROUTE, and LOCAL_ROUTE.
-		</para>
-		<example>
-		<title><function>handle_ruri_alias</function> usage</title>
-		<programlisting format="linespecific">
-...
-    if ($du == "") {
-        handle_ruri_alias();
-        switch ($rc) {
-        case -1:
-            xlog("L_ERR", "Failed to handle alias of R-URI $ru\n");
-            send_reply("400", "Bad request");
-            exit;
-        case 1:
-            xlog("L_INFO", "Routing in-dialog $rm from $fu to $du\n");
-            break;
-        case 2:
-            xlog("L_INFO", "Routing in-dialog $rm from $fu to $ru\n");
-            break;
-         };
-    };
-...
-		</programlisting>
-		</example>
-	</section>
 
 	</section>
 
 	<section>
 		<title>Exported Pseudo Variables</title>
-		<section>
-			<title><function moreinfo="none">$rr_count</function></title>
-			<para>
-			Number of Record Routes in received SIP request
-			or reply.
-			</para>
-		<example>
-		<title>$rr_count usage</title>
-		<programlisting format="linespecific">
-...
-    $avp(rr_count) = $rr_count;
-...
-		</programlisting>
-		</example>
-	        </section>
-
-		<section>
-			<title><function moreinfo="none">$rr_top_count</function></title>
-			<para>
-			If topmost Record Route in received SIP request
-			or reply is a double Record Route, value of
-			$rr_top_count is 2.  If it a single Record
-			Route, value of $rr_top_count 
-			is 1.  If there is no Record Route(s), value of
-			$rr_top_count is 0.
-			</para>
-		<example>
-		<title>$rr_top_count usage</title>
-		<programlisting format="linespecific">
-...
-    if ($rr_count == $avp(rr_count) + $rr_top_count) {
-        route(ADD_CONTACT_ALIAS);
-    };
-...
-		</programlisting>
-		</example>
-	        </section>
-
 	</section>
 
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
-		<section>
-			<title><function moreinfo="none">nh_enable_ping</function></title>
-			<para>
-			Enables natping if parameter value greater than 0.
-			Disables natping if parameter value is 0.
-			</para>
-			<para>
-			The function takes only one parameter - a number in decimal format.
-			</para>
-			<example>
-			<title><function moreinfo="none">nh_enable_ping</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; fifo nh_enable_ping 1
-...
-			</programlisting>
-			</example>
-		</section>
-
 		<section>
 			<title><function moreinfo="none">nh_enable_rtpp</function></title>
 			<para>

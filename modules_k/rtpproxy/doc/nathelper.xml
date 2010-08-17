@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-	<title>nathelper Module</title>
+	<title>rtpproxy Module</title>
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 		<author>
@@ -50,6 +50,13 @@
 			<email>jh@tutpro.com</email>
 		</address>
 		</editor>
+		<editor>
+		<firstname>Sas</firstname>
+		<surname>Ovidiu</surname>
+		<address>
+			<email>osas@voipembedded.com</email>
+		</address>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2003-2008</year>
@@ -62,6 +69,10 @@
 	<copyright>
 		<year>2009</year>
 		<holder>TuTPro Inc.</holder>
+	</copyright>
+	<copyright>
+		<year>2010</year>
+		<holder>VoIPEmbedded Inc.</holder>
 	</copyright>
 	<revhistory>
 		<revision>
