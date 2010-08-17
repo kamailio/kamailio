@@ -69,6 +69,7 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h> /* for offsetof */
 
 
 struct sr_module* modules=0;
@@ -922,9 +923,9 @@ int init_modules(void)
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no,
 							int required_param_no)
 {
-	action_u_t *a, a2;
+	action_u_t *a;
 	/* cur_param points to a->u.string, get pointer to a */
-	a = (void*) ((char *)cur_param - ((char *)&a2.u.string-(char *)&a2));
+	a = (void*) ((char *)cur_param - offsetof(action_u_t, u.string));
 	return a + required_param_no - cur_param_no;
 }
 
@@ -947,7 +948,7 @@ int fixup_get_param_count(void **cur_param, int cur_param_no)
 action_param_type* fixup_get_param_ptype(void** param)
 {
 	action_u_t* a;
-	a = (void*)((char*)param - (char*)&(((action_u_t*)(0))->u.string));
+	a = (void*)((char*)param - offsetof(action_u_t, u.string));
 	return &a->type;
 }
 
