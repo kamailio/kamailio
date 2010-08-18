@@ -60,6 +60,7 @@
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
+#include "dlg_req_within.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -1065,3 +1066,52 @@ error:
 	free_mi_tree(rpl_tree);
 	return NULL;
 }
+
+/*!
+ * \brief Terminate all or selected dialogs via the MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return mi node with the dialog information, or NULL on failure
+ */
+struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param )
+{
+	struct mi_root* rpl_tree= NULL;
+	struct dlg_cell* dlg = NULL;
+	str headers = {0, 0};
+	unsigned int i;
+
+	rpl_tree = process_mi_params( cmd_tree, &dlg);
+	if (rpl_tree)
+		/* param error */
+		return rpl_tree;
+
+	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
+	if (rpl_tree==0)
+		return 0;
+
+	if (dlg==NULL) {
+		LM_DBG("terminating %i dialogs\n", d_table->size);
+
+		for( i=0 ; i<d_table->size ; i++ ) {
+			dlg_lock( d_table, &(d_table->entries[i]) );
+
+			for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+				if (dlg_bye_all(dlg, &headers)!=0)
+					goto error_all;
+			}
+			dlg_unlock( d_table, &(d_table->entries[i]) );
+		}
+	} else {
+		if (dlg_bye_all(dlg, &headers)!=0)
+			goto error;
+	}
+	return rpl_tree;
+error_all:
+	dlg_unlock( d_table, &(d_table->entries[i]) );
+	free_mi_tree(rpl_tree);
+	return NULL;
+error:
+	free_mi_tree(rpl_tree);
+	return NULL;
+}
+

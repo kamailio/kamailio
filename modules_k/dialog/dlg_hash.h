@@ -327,6 +327,13 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
  */
 struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd, void *param );
 
+/*!
+ * \brief Terminate all or selected dialogs via the MI interface
+ * \param cmd_tree MI command tree
+ * \param param unused
+ * \return mi node with the dialog information, or NULL on failure
+ */
+struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param );
 
 /*!
  * \brief Check if a dialog structure matches to a SIP message dialog

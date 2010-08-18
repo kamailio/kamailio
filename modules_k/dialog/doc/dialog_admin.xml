@@ -1530,6 +1530,45 @@ if(dlg_get("abcdef", "123", "456"))
 		</section>
 
 		<section>
+		<title><varname>dlg_terminate_dlgs</varname></title>
+		<para>
+		Terminates a dialog or of all dialogs (calls). If only
+		one dialogs is to be terminated, the dialog identifiers are to be passed
+		as parameter (callid and fromtag).
+		</para>
+		<para>
+		Name: <emphasis>dlg_terminate_dlgs</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> (optional) - callid if a single
+				dialog to be terminated.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>from_tag</emphasis> (optional, but cannot be present
+				without the callid parameter) - from tag (as per initial request)
+				of the dialog to be terminated.  Note that if the from_tag is not
+				specified, only dialogs created by a request without a from tag
+				are matched, which will only occur with broken clients and is
+				thus a very rare situation.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:dlg_terminate_dlgs:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		<programlisting  format="linespecific">
+		:dlg_terminate_dlgs:_reply_fifo_file_
+		abcdrssfrs122444@192.168.1.1
+		AAdfeEFF33
+		</programlisting>
+		</section>
+
+		<section>
 		<title><varname>profile_get_size</varname></title>
 		<para>
 		Returns the number of dialogs belonging to a profile. If the profile
