@@ -1196,7 +1196,6 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	/*struct socket_info* send_sock;*/
 	struct via_body* via;
 	int proto;
-	int backup_mhomed;
 
 	/* rb. timers are init. init_t()/new_cell() */
 	via=msg->via1;
@@ -1220,20 +1219,8 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	rb->dst.comp=via->comp_no;
 #endif
 	rb->dst.send_flags=msg->rpl_send_flags;
-	/* turn off mhomed for generating replies -- they are ideally sent to where
-	   request came from to make life with NATs and other beasts easier
-	*/
-	backup_mhomed=mhomed;
-	mhomed=0;
-	mhomed=backup_mhomed;
-	/* use for sending replies the incoming interface of the request -bogdan */
-	/*send_sock=get_send_socket(msg, &rb->dst.to, proto);
-	if (send_sock==0) {
-		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d, proto %d "
-			"no socket\n", rb->dst.to.s.sa_family, proto);
-		ser_error=E_BAD_VIA;
-		return 0;
-	}*/
+	
+	membar_write();
 	rb->dst.send_sock=msg->rcv.bind_address;
 	return 1;
 }
