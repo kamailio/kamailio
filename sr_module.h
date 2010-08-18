@@ -68,7 +68,7 @@
 #include "str.h"
 
 /* kamailio compat */
-#include "statistics.h"
+#include "kstats_types.h"
 #include "mi/mi_types.h"
 #include "pvar.h"
 

@@ -35,12 +35,15 @@
  * History:
  * --------
  *  2010-08-08  initial version (andrei)
+ *  2010-08-18  type declaration needed by sr_module.c moved to
+ *               ../../kstats_types.h (andrei)
 */
 
 #ifndef __kstats_wrapper_h
 #define __kstats_wrapper_h
 
 #include "../../counters.h"
+#include "../../kstats_types.h"
 
 /* k stat flags */
 #define STAT_NO_RESET	1  /* used in dialog(k), nat_traversal(k),
@@ -49,31 +52,7 @@
 #define STAT_SHM_NAME	4 /* used only from usrloc(k) */
 #define STAT_IS_FUNC	8
 
-/* types */
 
-typedef counter_val_t    stat_val;
-/* stat_var is always used as a pointer in k, we missuse
-   stat_var* for holding out counter id */
-typedef void stat_var;
-/* get val callback
- * TODO: change it to counter_cbk_f compatible callback?
- */
-typedef counter_val_t (*stat_function)(void);
-
-/* statistic module interface */
-struct stat_export_s {
-	char* name;
-	int flags;
-	stat_var** stat_pointer; /* pointer to the memory location
-								(where a counter handle will be stored)
-								Note: it's a double pointer because of
-								the original k version which needed it
-								allocated in shm. This version
-								will store the counter id at *stat_pointer.
-							  */
-};
-
-typedef struct stat_export_s stat_export_t;
 
 #ifdef STATISTICS
 
