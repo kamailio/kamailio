@@ -23,6 +23,7 @@
  * History:
  * ---------
  *  2006-09-08  first version (bogdan)
+ *  2010-08-18  use mi types from ../../mi/mi_types.h (andrei)
  */
 
 /*!
@@ -39,6 +40,7 @@
 
 #include <stdarg.h>
 #include "../../str.h"
+#include "../../mi/mi_types.h"
 
 struct mi_node;
 struct mi_handler;
@@ -63,21 +65,7 @@ struct mi_handler;
 #define MI_MISSING_PARM       MI_MISSING_PARM_S
 #define MI_BAD_PARM           MI_BAD_PARM_S
 
-struct mi_node {
-	str value;
-	str name;
-	struct mi_node *kids;
-	struct mi_node *next;
-	struct mi_node *last;
-	struct mi_attr *attributes;
-};
 
-struct mi_root {
-	unsigned int       code;
-	str                reason;
-	struct mi_handler  *async_hdl;
-	struct mi_node     node;
-};
 
 struct mi_root *init_mi_tree(unsigned int code, char *reason, int reason_len);
 

@@ -69,7 +69,7 @@
 
 /* kamailio compat */
 #include "statistics.h"
-#include "mi/mi.h"
+#include "mi/mi_types.h"
 #include "pvar.h"
 
 

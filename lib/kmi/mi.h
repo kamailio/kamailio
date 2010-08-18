@@ -23,6 +23,7 @@
  * History:
  * ---------
  *  2006-09-08  first version (bogdan)
+ *  2010-08-18  use mi types from ../../mi/mi_types.h (andrei)
  */
 
 /*!
@@ -36,6 +37,7 @@
 #define _MI_MI_H_
 
 #include "../../str.h"
+#include "../../mi/mi_types.h"
 #include "tree.h"
 
 #define MI_ASYNC_RPL_FLAG   (1<<0)
@@ -43,11 +45,6 @@
 
 #define MI_ROOT_ASYNC_RPL   ((struct mi_root*)-1)
 
-struct mi_handler;
-
-typedef struct mi_root* (mi_cmd_f)(struct mi_root*, void *param);
-typedef int (mi_child_init_f)(void);
-typedef void (mi_handler_f)(struct mi_root *, struct mi_handler *, int);
 
 
 struct mi_handler {
@@ -64,15 +61,6 @@ struct mi_cmd {
 	unsigned int flags;
 	void *param;
 };
-
-
-typedef struct mi_export_ {
-	char *name;
-	mi_cmd_f *cmd;
-	unsigned int flags;
-	void *param;
-	mi_child_init_f *init_f;
-}mi_export_t;
 
 
 int register_mi_cmd( mi_cmd_f f, char *name, void *param,
