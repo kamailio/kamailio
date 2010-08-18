@@ -601,7 +601,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	   If reply_to_via is set and via contains a host name (and not an ip)
 	   the chances for this increase a lot.
 	 */
-	if (!trans->uas.response.dst.send_sock) {
+	if (unlikely(!trans->uas.response.dst.send_sock)) {
 		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
 	} else {
 		if (likely(SEND_PR_BUFFER( rb, buf, len )>=0)){
@@ -1718,7 +1718,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (reply_status == RPS_COMPLETED) {
 			start_final_repl_retr(t);
 		}
-		if (SEND_PR_BUFFER( uas_rb, buf, res_len )>=0){
+		if (likely(uas_rb->dst.send_sock &&
+					SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0)){
 			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 				run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
 					relayed_msg, relayed_code);
@@ -1733,7 +1734,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, t, &onsend_params);
 			}
 #endif
-		}
+		} else if (unlikely(uas_rb->dst.send_sock == 0))
+			ERR("no resolved dst to send reply to\n");
 		/* Call put_on_wait() only if we really send out
 		* the reply. It can happen that the reply has been already sent from
 		* failure_route  or from a callback and the timer has been already
