@@ -56,7 +56,9 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/ui-pdbt.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/ui-pdbt
+	mkdir -p $(CURDIR)/debian/pdbt/usr/bin
+	mkdir -p $(CURDIR)/debian/pdbt/etc
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/pdbt
 
 
 # Build architecture-independent files here.
