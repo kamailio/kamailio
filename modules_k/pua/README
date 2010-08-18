@@ -344,16 +344,7 @@ typedef struct publ_info
                           should match */
   str* extra_headers  /*  (optional) extra_headers that should be added
                           to Publish msg*/
-  publrpl_cb_t* cbrpl;/*  callback function to be called when receiving
-                          the reply for the sent request */
-  void* cbparam;      /*  extra parameter for tha callback function */
-
 }publ_info_t;
-...
-
-   The callback function type:
-...
-typedef int (publrpl_cb_t)(struct sip_msg* reply, void*  extra_param);
 ...
 
 3. send_subscribe
@@ -422,7 +413,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 ...
 
    This function registers a callback to be called on receiving the reply
-   message for a sent Subscribe request. The type parameter should be set
+   message for a sent Publish or Subscribe request. The type parameter should be set
    the same as the source_flag for that request. The function registered
    as callback for pua should be of type pua_cb , which is: typedef void
    (pua_cb)(ua_pres_t* hentity, struct msg_start * fl); The parameters are
@@ -437,6 +428,13 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
                 return -1;
         }
 ...
+
+   The callback function type:
+
+...
+typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
+...
+
 
 6. add_event
 
