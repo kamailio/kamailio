@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include "../../parser/parse_from.h"
 #include "../../modules/tm/ut.h"
+#include "../../lib/kmi/mi.h"
 #include "tmx_mod.h"
 
 /*! simple string list */

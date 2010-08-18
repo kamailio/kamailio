@@ -40,6 +40,7 @@
 #include "../../mem/mem.h"
 #include "../../pt.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../lib/kmi/mi.h"
 #include "../pua/pua_bind.h"
 #include "mi_func.h"
 
