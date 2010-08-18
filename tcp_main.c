@@ -3973,7 +3973,15 @@ static inline int handle_new_connect(struct socket_info* si)
 		return 1; /* success, because the accept was succesfull */
 	}
 	(*tcp_connections_no)++;
-	TCP_STATS_ESTABLISHED(S_CONN_ACCEPT);
+	/* stats for established connections are incremented after
+	   the first received or sent packet.
+	   Alternatively they could be incremented here for accepted
+	   connections, but then the connection state must be changed to
+	  S_CONN_OK:
+	  TCP_STATS_ESTABLISHED(S_CONN_ACCEPT);
+	  ...
+	  tcpconn=tcpconn_new(new_sock, &su, dst_su, si, si->proto, S_CONN_OK);
+	*/
 	
 	dst_su=&si->su;
 	if (unlikely(si->flags & SI_IS_ANY)){
