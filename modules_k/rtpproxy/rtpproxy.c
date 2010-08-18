@@ -1814,7 +1814,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		{" ", 1},	/* separator */
 		{NULL, 0},	/* to_tag */
 		{";", 1},	/* separator */
-		{NULL, 0}	/* medianum */
+		{NULL, 0},	/* medianum */
 		{" ", 1},	/* separator */
 		{NULL, 0},	/* Timeout-Socket */
 	};
