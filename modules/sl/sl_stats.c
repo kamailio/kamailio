@@ -33,6 +33,7 @@
 #include "../../config.h"
 #include "../../pt.h"
 #include "sl_stats.h"
+#include "../../lib/kcore/kstats_wrapper.h"
 #include <strings.h>
 #include <stdio.h>
 

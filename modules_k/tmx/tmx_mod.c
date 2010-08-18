@@ -28,6 +28,7 @@
 #include "../../dprint.h"
 #include "../../mod_fix.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../lib/kcore/kstats_wrapper.h"
 
 #include "t_var.h"
 #include "t_mi.h"
