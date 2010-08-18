@@ -4072,6 +4072,8 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	ticks_t expire;
 	int err, h;
 	int size;
+	struct dns_rr	*new_rr, **rr_p, **rr_iter;
+	struct srv_rdata	*srv_rd;
 
 	/* eliminate gcc warnings */
 	ip_addr = 0;
@@ -4206,6 +4208,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 				/* let the rr point to the new structure */
 				rr = (struct dns_rr*)translate_pointer((char*)new, (char*)old,
 														(char*)rr);
+				new_rr = rr;
 
 				if (type == T_SRV) {
 					/* fix the priority, weight, and port */
@@ -4240,6 +4243,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 											" the cache");
 					goto error;
 				}
+				new_rr = rr;
 
 				switch(type) {
 				case T_A:
@@ -4256,6 +4260,46 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 				}
 				/* maximum expire value has been already fixed by 
 				 * dns_cache_clone_entry() */
+			}
+
+			if (type == T_SRV) {
+				/* SRV records must be ordered by their priority and weight.
+				 * With modifying an exising rr, or adding new rr to the DNS entry,
+				 * the ordered list might got broken which needs to be fixed.
+				 */
+				rr_p = NULL;
+				for (	rr_iter = &new->rr_lst;
+					*rr_iter;
+					rr_iter = &((*rr_iter)->next)
+				) {
+					if (*rr_iter == new_rr) {
+						rr_p = rr_iter;
+						continue;
+					}
+					srv_rd = (struct srv_rdata*)(*rr_iter)->rdata;
+					if ((priority < srv_rd->priority) ||
+						((priority == srv_rd->priority)	&& (weight > srv_rd->weight))
+					)
+						break; /* insert here */
+				}
+
+				if (!rr_p)
+					for (	rr_p = rr_iter;
+						*rr_p && (*rr_p != new_rr);
+						rr_p = &((*rr_p)->next)
+					);
+				if (!rr_p) {
+					LOG(L_ERR, "ERROR: Failed to correct the orderd list of SRV resource records\n");
+					goto error;
+				}
+
+				if (*rr_iter != new_rr->next) {
+					/* unlink rr from the list */
+					*rr_p = (*rr_p)->next;
+					/* link it before *rr_iter */
+					new_rr->next = *rr_iter;
+					*rr_iter = new_rr;
+				}
 			}
 		}
 	}
