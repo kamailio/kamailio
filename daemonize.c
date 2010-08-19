@@ -3,21 +3,17 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * 
@@ -81,16 +77,165 @@
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
 
-/*! \brief daemon init, return 0 on success, -1 on error */
-int daemonize(char*  name,  int daemon_status_fd_input)
+/** temporary pipe FDs for sending exit status back to the ancestor process.
+ * This pipe is used to send the desired exit status to the initial process,
+ * that waits for it in the foreground. This way late errors preventing
+ * startup (e.g. during modules child inits or TCP late init) can still be
+ * reported back.
+ */
+static int daemon_status_fd[2];
+
+
+
+/** init daemon status reporting.
+ * Must be called before any other daemon_status function has a chance to
+ * run.
+ */
+void daemon_status_init()
+{
+	daemon_status_fd[0] = -1;
+	daemon_status_fd[1] = -1;
+}
+
+
+
+/** pre-daemonize init for daemon status reporting.
+ * Must be called before forking.
+ * Typically the parent process will call daemon_status_wait() while
+ * one of the children will call daemon_status_send() at some point.
+ *
+ * @return 0 on success, -1 on error (and sets errno).
+ */
+int daemon_status_pre_daemonize()
+{
+	int ret;
+	
+retry:
+	ret = pipe(daemon_status_fd);
+	if (ret < 0 && errno == EINTR)
+		goto retry;
+	return ret;
+}
+
+
+
+/** wait for an exit status to be send by daemon_status_send().
+ * @param status - filled with the sent status (a char).
+ * @return  0 on success, -1 on error (e.g. process died before sending
+ *          status, not intialized a.s.o.).
+ * Side-effects: it will close the write side of the pipe
+ *  (must not be used from the same process as the daemon_status_send()).
+ * Note: if init is not complete (only init, but no pre-daemonize)
+ * it will return success always and status 0.
+ */
+int daemon_status_wait(char* status)
+{
+	int ret;
+	
+	/* close the output side of the pipe */
+	if (daemon_status_fd[1] != -1) {
+		close(daemon_status_fd[1]);
+		daemon_status_fd[1] = -1;
+	}
+	if (daemon_status_fd[0] == -1) {
+		*status = 0;
+		return -1;
+	}
+retry:
+	ret = read(daemon_status_fd[0], status, 1);
+	if (ret < 0 && errno == EINTR)
+		goto retry;
+	return (ret ==1 ) ? 0 : -1;
+}
+
+
+
+/** send 'status' to a waiting process running daemon_status_wait().
+ * @param status - status byte
+ * @return 0 on success, -1 on error.
+ * Note: if init is not complete (only init, but no pre-daemonize)
+ * it will return success always.
+ */
+int daemon_status_send(char status)
+{
+	int ret;
+
+	if (daemon_status_fd[1] == -1)
+		return 0;
+retry:
+	ret = write(daemon_status_fd[1], &status, 1);
+	if (ret < 0 && errno == EINTR)
+		goto retry;
+	return (ret ==1 ) ? 0 : -1;
+}
+
+
+
+/** cleanup functions for new processes.
+ * Should be called after fork(), for each new process that _does_ _not_
+ * use  daemon_status_send() or daemon_status_wait().
+ */
+void daemon_status_on_fork_cleanup()
+{
+	if (daemon_status_fd[0] != -1) {
+		close(daemon_status_fd[0]);
+		daemon_status_fd[0] = -1;
+	}
+	if (daemon_status_fd[1] != -1) {
+		close(daemon_status_fd[1]);
+		daemon_status_fd[1] = -1;
+	}
+}
+
+
+
+/** cleanup functions for processes that don't intead to wait.
+ * Should be called after fork(), for each new process that doesn't
+ * use daemon_status_wait().
+ */
+void daemon_status_no_wait()
+{
+	if (daemon_status_fd[0] != -1) {
+		close(daemon_status_fd[0]);
+		daemon_status_fd[0] = -1;
+	}
+}
+
+
+
+/** daemon init.
+ *@param name - daemon name used for logging (used when opening syslog).
+ *@param status_wait  - if 1 the original process will wait until it gets
+ *                  an exit code send using daemon_status_send().
+ *@return 0 in the child process (in case of daemonize mode),
+ *        -1 on error.
+ * The original process that called daemonize() will be terminated if
+ * dont_daemonize == 0. The exit code depends on status_wait. If status_wait
+ * is non-zero, the original process will wait for a status code, that
+ * must be sent with daemon_status_send() (daemon_status_send() must be
+ * called or the original process will remain waiting until all the children
+ * close()). If status_wait is 0, the original process will exit immediately
+ * with exit(0).
+ * Global variables/config params used:
+ * dont_daemonize
+ * chroot_dir
+ * working_dir
+ * pid_file - if set the pid will be written here (ascii).
+ * pgid_file - if set, the pgid will be written here (ascii).
+ * log_stderr - if not set syslog will be opened (openlog(name,...))
+ * 
+ *
+ * Side-effects:
+ *  sets own_pgid after becoming session leader (own process group).
+*/
+int daemonize(char*  name,  int status_wait)
 {
 	FILE *pid_stream;
 	pid_t pid;
 	int r, p;
-
+	char pipe_status;
 
 	p=-1;
-
 	/* flush std file descriptors to avoid flushes after fork
 	 *  (same message appearing multiple times)
 	 *  and switch to unbuffered
@@ -108,14 +253,27 @@ int daemonize(char*  name,  int daemon_status_fd_input)
 	}
 
 	if (!dont_daemonize) {
+		if (status_wait) {
+			if (daemon_status_pre_daemonize() < 0)
+				goto error;
+		}
 		/* fork to become!= group leader*/
 		if ((pid=fork())<0){
 			LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
 			goto error;
-		}else if (pid!=0){	
-			/*parent process => return 0 */
-			return 0;
+		}else if (pid!=0){
+			if (status_wait) {
+				if (daemon_status_wait(&pipe_status) == 0)
+					exit((int)pipe_status);
+				else{
+					LOG(L_ERR, "Main process exited before writing to pipe\n");
+					exit(-1);
+				}
+			}
+			exit(0);
 		}
+		if (status_wait)
+			daemon_status_no_wait(); /* clean unused read fd */
 		/* become session leader to drop the ctrl. terminal */
 		if (setsid()<0){
 			LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
@@ -211,11 +369,11 @@ int daemonize(char*  name,  int daemon_status_fd_input)
 		/* continue, leave it open */
 	};
 	
-	/* close all but the daemon_status_fd_input as the main process
+	/* close all but the daemon_status_fd output as the main process
 	  must still write into it to tell the parent to exit with 0 */
 	closelog();
 	for (r=3;r<MAX_FD; r++){
-		if(r !=  daemon_status_fd_input)
+		if(r !=  daemon_status_fd[1])
 			close(r);
 	}
 	
@@ -440,5 +598,3 @@ int set_rt_prio(int prio, int policy)
 	return -1;
 #endif
 }
-
-

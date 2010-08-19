@@ -3,28 +3,25 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of SIP-router, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * 
  * History:
  * --------
  *  2004-02-20  created by andrei
- *  2007-06-07 added mem_lock_pages() (andrei)
+ *  2007-06-07  added mem_lock_pages() (andrei)
+ *  2010-08-19  send status via pipe code derived from 9167c1 (ibc) (andrei)
  */
 
 #ifndef _daemonize_h
@@ -37,5 +34,12 @@ int set_core_dump(int enable, int size);
 int mem_lock_pages();
 int set_rt_prio(int prio, int policy);
 
+void daemon_status_init();
+void daemon_status_on_fork_cleanup();
+int daemon_status_send(char status);
+void daemon_status_no_wait();
+void daemon_status_on_fork_cleanup();
 
-#endif
+#endif /*_daemonize_h */
+
+/* vi: set ts=4 sw=4 tw=79:ai:cindent: */
