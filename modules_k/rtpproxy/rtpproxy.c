@@ -407,7 +407,7 @@ static param_export_t params[] = {
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
-	{"timeout_socket",    STR_PARAM, &timeout_socket_str.s  },
+	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
 	{0, 0, 0}
 };
 

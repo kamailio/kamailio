@@ -1,0 +1,1 @@
+./rtpproxy -T 10 -f -F -i -l 195.71.4.179 -s udp:*:22222 -d DBUG

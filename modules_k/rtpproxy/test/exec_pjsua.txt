@@ -1,0 +1,3 @@
+./pjsua-i686-pc-linux-gnu --registrar=sip:localhost --id=sip:1@localhost --realm=localhost --username=1 --password=none --local-port=15060 --null-audio --auto-answer=200
+
+./pjsua-i686-pc-linux-gnu --registrar=sip:localhost --id=sip:2@localhost --realm=localhost --username=2 --password=none --local-port=15061 --null-audio sip:1@localhost
