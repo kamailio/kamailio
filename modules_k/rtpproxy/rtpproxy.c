@@ -407,7 +407,7 @@ static param_export_t params[] = {
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
-	{"timeout_socket_str",    STR_PARAM, &timeout_socket_str.s  },
+	{"timeout_socket",    STR_PARAM, &timeout_socket_str.s  },
 	{0, 0, 0}
 };
 
@@ -2173,12 +2173,12 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 				}
 				if (to_tag.len > 0) {
 					iovec_param_count = 18;
+					if (timeout_socket_str.len > 0) {
+						iovec_param_count = 20;
+						STR2IOVEC(timeout_socket_str, v[19]);
+					}
 				} else {
 					iovec_param_count = 14;
-					if (timeout_socket_str.len > 0) {
-						iovec_param_count = 16;
-						STR2IOVEC(timeout_socket_str, v[15]);
-					}
 				}
 
 				cp = send_rtpp_command(node, v, iovec_param_count);
