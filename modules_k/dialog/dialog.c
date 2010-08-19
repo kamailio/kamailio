@@ -232,7 +232,7 @@ static mi_export_t mi_cmds[] = {
 	{ "dlg_list",           mi_print_dlgs,       0,  0,  0},
 	{ "dlg_list_ctx",       mi_print_dlgs_ctx,   0,  0,  0},
 	{ "dlg_end_dlg",        mi_terminate_dlg,    0,  0,  0},
-	{ "dlg_terminate_dlgs", mi_terminate_dlgs,   0,  0,  0},
+	{ "dlg_terminate_dlg",  mi_terminate_dlgs,   0,  0,  0},
 	{ "profile_get_size",   mi_get_profile,      0,  0,  0},
 	{ "profile_list_dlgs",  mi_profile_list,     0,  0,  0},
 	{ "dlg_bridge",         mi_dlg_bridge,       0,  0,  0},
@@ -1200,7 +1200,7 @@ static void internal_rpc_print_single_dlg(rpc_t *rpc, void *c, int with_context)
 
 	if (rpc->scan(c, ".S.S", &callid, &from_tag) < 2) return;
 
-	h_entry = core_hash( &callid, &from_tag, d_table->size);
+	h_entry = core_hash( &callid, 0, d_table->size);
 	d_entry = &(d_table->entries[h_entry]);
 	dlg_lock( d_table, d_entry);
 	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {

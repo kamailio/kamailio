@@ -1532,9 +1532,7 @@ if(dlg_get("abcdef", "123", "456"))
 		<section>
 		<title><varname>dlg_terminate_dlgs</varname></title>
 		<para>
-		Terminates a dialog or of all dialogs (calls). If only
-		one dialogs is to be terminated, the dialog identifiers are to be passed
-		as parameter (callid and fromtag).
+		Terminates a singe dialog, identified by a Call-ID.
 		</para>
 		<para>
 		Name: <emphasis>dlg_terminate_dlgs</emphasis>
@@ -1542,8 +1540,7 @@ if(dlg_get("abcdef", "123", "456"))
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>callid</emphasis> (optional) - callid if a single
-				dialog to be terminated.
+				<emphasis>callid</emphasis> - callid of the dialog to be terminated.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>from_tag</emphasis> (optional, but cannot be present
@@ -1557,10 +1554,6 @@ if(dlg_get("abcdef", "123", "456"))
 		<para>
 		MI FIFO Command Format:
 		</para>
-		<programlisting  format="linespecific">
-		:dlg_terminate_dlgs:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
 		<programlisting  format="linespecific">
 		:dlg_terminate_dlgs:_reply_fifo_file_
 		abcdrssfrs122444@192.168.1.1

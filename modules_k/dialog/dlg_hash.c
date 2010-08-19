@@ -240,7 +240,7 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	memset( dlg, 0, len);
 	dlg->state = DLG_STATE_UNCONFIRMED;
 
-	dlg->h_entry = core_hash( callid, from_tag->len?from_tag:0, d_table->size);
+	dlg->h_entry = core_hash( callid, 0, d_table->size);
 	LM_DBG("new dialog on hash %u\n",dlg->h_entry);
 
 	p = (char*)(dlg+1);
@@ -470,7 +470,7 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir,
 {
 	struct dlg_cell *dlg;
 
-	if ((dlg = internal_get_dlg(core_hash(callid, ftag->len?ftag:0,
+	if ((dlg = internal_get_dlg(core_hash(callid, 0,
 			d_table->size), callid, ftag, ttag, dir, del)) == 0 &&
 			(dlg = internal_get_dlg(core_hash(callid, ttag->len
 			?ttag:0, d_table->size), callid, ftag, ttag, dir, del)) == 0) {
@@ -971,7 +971,7 @@ static inline struct mi_root* process_mi_params(struct mi_root *cmd_tree,
 			return init_mi_tree( 400, MI_SSTR(MI_MISSING_PARM));
 	}
 
-	h_entry = core_hash( callid, from_tag, d_table->size);
+	h_entry = core_hash( callid, 0, d_table->size);
 
 	d_entry = &(d_table->entries[h_entry]);
 	dlg_lock( d_table, d_entry);
@@ -1084,32 +1084,15 @@ struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param )
 	if (rpl_tree)
 		/* param error */
 		return rpl_tree;
+	if (dlg==NULL)
+		return init_mi_tree( 400, MI_SSTR(MI_MISSING_PARM));
 
 	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
 	if (rpl_tree==0)
 		return 0;
-
-	if (dlg==NULL) {
-		LM_DBG("terminating %i dialogs\n", d_table->size);
-
-		for( i=0 ; i<d_table->size ; i++ ) {
-			dlg_lock( d_table, &(d_table->entries[i]) );
-
-			for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
-				if (dlg_bye_all(dlg, &headers)!=0)
-					goto error_all;
-			}
-			dlg_unlock( d_table, &(d_table->entries[i]) );
-		}
-	} else {
-		if (dlg_bye_all(dlg, &headers)!=0)
-			goto error;
-	}
+	if (dlg_bye_all(dlg, &headers)!=0)
+		goto error;
 	return rpl_tree;
-error_all:
-	dlg_unlock( d_table, &(d_table->entries[i]) );
-	free_mi_tree(rpl_tree);
-	return NULL;
 error:
 	free_mi_tree(rpl_tree);
 	return NULL;
