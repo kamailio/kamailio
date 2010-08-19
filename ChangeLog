@@ -1,5 +1,1102 @@
 # $Id$
 
+===================== 2010-08-19 Kamailio v3.0.3 released =====================
+
+===================== Changes since release 3.0.2 =============================
+
+commit 999cc449e3b6a86e09ebfa37453b9c1f8e5be22c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 19 16:55:49 2010 +0200
+
+    version set to 3.0.3
+
+commit d2b602ebdc58310f69ef3e4ea932482fad874d08
+Author: Miklos Tirpak <miklos@iptel.org>
+Date:   Wed Aug 18 15:32:36 2010 +0200
+
+    dns cache: fix manually inserted SRV record order
+    
+    The manually inserted SRV records thought the RPC interface
+    were not ordered by their priority and weight which resulted in
+    wrong SRV look-ups, i.e. not the highest priority record
+    was chosen first.
+    (cherry picked from commit 78beed37b8975e11851553c41c17578481772dad)
+
+commit a1264e11d3fa77f841ff541ac7fb73956316183e
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 18 18:36:14 2010 +0200
+
+    tcp: fix double increment for the established stats
+    
+    The counter/stats for established TCP connections were incremented
+    twice in the case of accept()-ed connections: once immediately
+    after the accept() and another time after the first packet
+    received or sent on the connection.
+    Now they are incremented only after the first successful send or
+    receive.
+    (cherry picked from commit 66cda7bc5f642ce892124cfb35f1e5effd78e9d6)
+
+commit 711e02646dacba1dba16edd6eab1a573a46114e1
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 18 18:39:43 2010 +0200
+
+    tm: don't reply if the reply dest. is not yet set
+    
+    - relay_reply() doesn't attempt to send the reply if the reply
+     destination is not yet fully set. This can happen for example
+     if reply_to_via is set, Via contains a host name (and not an ip)
+     and before having a chance to resolve the name a reply must be
+     sent (reply for a message that hasn't been sent yet: very
+     unlikely, but possible).
+    
+    - use a membar_write() in init_rb(), before setting the reply send
+      socket (the reply send socket is also used as a flag for a fully
+      initialized reply destination and the membar_write() makes sure
+      that everything else was written before the send socket and no
+      re-ordering will take place).
+    (cherry picked from commit 96e1bc629bc7ed78dd64b221bc54b266cd45e3ca)
+
+commit 29c162adab9a978ce189dd4c71a925490e68f960
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 11 19:49:09 2010 +0200
+
+    kamctl: fix make use and make install
+    
+    - use $(MAKE) instead of directly using make.
+    - added targets for the install dirs (create bin_dir, cfg_dir and
+      man_dirs if missing). This fixes make -C utils/kamctl install
+      (allows installing only kamctl).
+    (cherry picked from commit 91ce090529ac1a1c6285f387e57013cad5598def)
+
+commit cc3351c1b9ee0df6aa43c6382cf577c382687043
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 11 19:31:14 2010 +0200
+
+    presence_dialoginfo(k): fix bsd compilation
+    
+    On FreeBSD don't define _XOPEN_SOURCE (define it only on linux).
+    It's not needed for strptime() and worse will cause some other
+    defines to be missing, like INADDR_LOOPBACK ( if_XOPEN_SOURCE
+     is defined, __BSD_VISIBLE will be undefined => lots of missing
+     defines).
+    
+    Reported-by: Reported-by: Olle E. Johansson  oej edvina net
+    (cherry picked from commit 850a7b31de86056fc9223d809dfae54b0e490c5f)
+
+commit 9d7d827f7a1d61deb6d79d421c89fd6727cc0a02
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 11 18:56:57 2010 +0200
+
+    xmlrpc: fix includes and libs
+    
+    Reported-by: Olle E. Johansson  oej edvina net
+    (cherry picked from commit ecc9fcf9fe61cb355864bf8142e65b8dd9d8658b)
+
+commit 3ed79ac954831d8639a80388cf02116f0d93386b
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 11 18:51:09 2010 +0200
+
+    sercmd: fix LIBS - don't link -lresolv if not needed
+    
+    - link with libresolv only on linux, solaris and darwin
+    - on solaris link also witl -lxnet and -lnsl
+    
+    (bugs introduced in b0f00c3348b9)
+    (cherry picked from commit e5978c182e4bd5d5c1d723d00e9f54ea958816c8)
+
+commit f92afdbac5429538d11466123bd723044636e87f
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Aug 13 22:25:34 2010 +0200
+
+    core: fix unclosed comment
+    (cherry picked from commit b4f7c405a7c15a950ce50561a5a61fb36d59bc28)
+
+commit 5ccc5b3c51f7619b679dde4079b0b35e5f2bfeae
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Aug 13 11:45:39 2010 +0200
+
+    core: DragonFly kqueue support enabled
+    
+    - fixed kqueue support check for DragonFly (seems to be always
+    supported since it was forked from FreeBSD 4.8).
+    - in dragonfly case define both __OS_freebsd and __OS_dragonfly so
+      that we can make some exceptions for dragonfly (e.g. no >= 4.1
+      version check at runtime before enabling kqueue).
+    - assume SCTP in 2.6 is at least on par with SCTP in FreeBSD 7.1.
+    (cherry picked from commit c07c2b5e599a2b97fc21d04731f1f9d409859d43)
+
+commit e6a3241fc7ca837e615476579f1b4bbf2c09a78a
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Aug 11 17:04:14 2010 +0200
+
+    NEWS: notes about Dragonfly BSD support
+    
+    (cherry picked from commit f6b240d51684040572c75555b1f767df0100d970)
+
+commit aabb5829213fba878df2c3836bd26a09d2a78197
+Author: Vincent Stemen <vince.lists@ngtek.org>
+Date:   Wed Aug 11 16:58:04 2010 +0200
+
+    makefile: Dragonfly BSD support
+    
+    This also simplifies the platform directory path settings so that
+    the ifeq() statements are not nested 5 levels deep.
+    
+    Signed-off-by: Andrei Pelinescu-Onciul <andrei@iptel.org>
+    (cherry picked from commit 7d27010d3aa8ead2d9fec4155c5146d4329b7c35)
+
+commit 09f89961914b6461a626e9eed970bdafca9102a8
+Author: Vincent Stemen <vince.lists@ngtek.org>
+Date:   Wed Aug 11 16:49:40 2010 +0200
+
+    sercmd: Patch to add Dragonfly BSD support (makefile)
+    
+    Signed-off-by: Andrei Pelinescu-Onciul <andrei@iptel.org>
+    (cherry picked from commit c39dd933973ba24b449c2b35756c593c093d5f4f)
+
+commit 8bc0c9ba5dc1fd9d863cd58c54ce469a6186d81f
+Author: Vincent Stemen <vince.lists@ngtek.org>
+Date:   Wed Aug 11 16:45:05 2010 +0200
+
+    db_text(k) makefile: fix make use
+    
+    This fixes a bug.  It called make directly which breaks on
+    platforms where it is being compiled under gmake.
+    
+    Signed-off-by: Andrei Pelinescu-Onciul <andrei@iptel.org>
+    (cherry picked from commit 5d8552087be74332c1a7812ffb01d8298060cc62)
+
+commit c4da41b1fce9819df15e5c5f9dafa145392af8b6
+Author: Vincent Stemen <vince.lists@ngtek.org>
+Date:   Wed Aug 11 16:40:41 2010 +0200
+
+    makefile: fix $DESTDIR
+    
+    This fixes Makefile.defs to properly handle $DESTDIR as a base
+    installation directory for packaging, etc (equivalent to BASEDIR).
+    
+    Signed-off-by: Andrei Pelinescu-Onciul <andrei@iptel.org>
+    (cherry picked from commit bef528185d7b2e6bfa4ae5ec4bfd4808e1dcf28f)
+
+commit 089c773b62311b93154518bbfd8d94cf4150c092
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sun Aug 8 18:09:17 2010 +0200
+
+    sercmd: fix cfg. var name completion
+    
+    In some rare cases cfg. variable name completion did not work properly
+    (e.g. reusing a command from history, editing it, changing the
+     group and attempting command completion again).
+    This was due to an assumption that the state would be re-initialized
+    on new commands (which is mostly not true).
+    (cherry picked from commit 261d8282e6dabf73a65904e7a8413ccec9faf2fd)
+
+commit 1ee403b74de46a14a0c9a8c2e507160c182230b1
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Jun 18 22:22:59 2010 +0200
+
+    core: fix selects in optimized rvalue expressions
+    
+    - do not attempt to resolve_select() twice the same select. This
+      happened when a rve containing only a select was optimized,
+      the select moved out of the rve and fix_expr() tried to "fix"
+      the already resolved select later.
+    - changed BUG() messages for failed resolve_select() into ERR().
+    (cherry picked from commit a7fa13ed757d74cfd4486f3c282ec50259929edc)
+
+commit 4ca0f2295fcb2b93a853edad472c5578b335e72a
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sun Jun 20 19:40:55 2010 +0200
+
+    tcp: force eof after read if write side hangup
+    
+    Even if POLLRDHUP is not supported, but we detected a write side close
+    (POLLHUP) or an error (POLLERR) or such an event was previously detected by
+    tcp_main (F_CONN_EOF_SEEN), force connection closing after reading all the data
+    in the socket buffer. In this case we can close() after the first short read
+    and we save an extra system call (a read() that returns 0).
+    
+    (cherry picked from commit 28e313250503d6f8d06ebab15c8421c40e7f0fe4)
+
+commit 5b30df2dc48ce9bb31b88b523fc54ad8292e3251
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Jun 19 00:21:58 2010 +0200
+
+    tcp: more consistent IO_FD_CLOSING usage
+    
+    - extra safety checks before using IO_FD_CLOSING in io_watch_del()
+      calls (must be used only when the fd will be close() imediately
+      afterwards).
+    - add IO_FD_CLOSING when POLLERR or POLLHUP is detected in
+      tcp_main and the socket receive buffer is empty (in this case
+      the fd will be shortly closed)
+    
+    (cherry picked from commit 504ef98ed34366303476032013c28a4a7d1c8131)
+
+commit a160156bdca1708bcbca7e000c2da91c13f67336
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Jul 7 11:59:30 2010 +0200
+
+    tcp: fix dispatching closed connections to tcp readers
+    
+    Under very heavy load it is possible that send2child() might try
+    to send an already closed connection/fd to a tcp reader.
+    This can happen only if the tcp connection is watched for read
+    (POLLIN) by tcp_main (and not by a tcp reader), the connection
+    becomes available for reading (either new data received, EOF or
+    RST) and tcp_main chooses a specific tcp reader to send the
+    connection to while in the same time the same tcp reader tries to
+    send on the same connection, fails for some reason (no more space
+    for buffering, EOF, RST a.s.o) and sends a close command back to
+    tcp_main. Because send2child() executes first any pending commands
+    from the choosen tcp_reader, this might lead to closing the fd
+    before attempting to send it to the tcp_reader.
+    Under normal circumstances the impact is only an extra syscall and
+    some log messages, however it is possible (but highly unlikely)
+    that after sending the close command the tcp_reader opens a new
+    connection for sending and sends its fd back to tcp_main. This new
+    fd might get the same number as the freshly closed fd and
+    send2child might send the wrong (fd, tcp connection) pair.
+    
+    (cherry picked from commit d89437a3d7bc25a9c098a04c6ee69fc3848ff0b5)
+
+commit 66619631879132e3d93fd858fa81c79ac9788617
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Jun 16 21:03:06 2010 +0200
+
+    tcp: fix fd passing bug
+    
+    If connections are opened and closed very quickly when data is
+    sent on them, it is possible that a connection gets closed
+    (close() inside tcp_main) while a process waits for its fd, just
+    before tcp_main attempts to send the fd.  In this case the fd
+    sending will fail (one cannot send a closed fd) and the process
+    that asked for it will remain waiting forever.
+    The fix always checks before attempting to send the fd if the fd is
+    still open and the connection is not in a "bad" state. If not,
+     a new error response is sent (no fd and connection == NULL).
+    
+    (backported from 9da6fae72b9883ab8dbbb4e681c4d4e96d6549e4)
+
+commit aed168981e6dae1333afcdaff5976b44c4fac738
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Jul 8 15:18:52 2010 +0200
+
+    io_wait: kqueue: use the entire array during too many errors fallback
+    
+    Minor fix/optimization: if there are too many errors in the
+    changelist and the kevent() call has to be retried, use the entire
+    array (don't rely on the current watched fd number which will be
+    smaller then the array real size, since commit 996826).
+    
+    (only kqueue using systems are affected by this fix: *bsd and
+     darwin)
+     (cherry picked from commit a9cdfc2938ca73d6ba40f5896c6a8930c2e73f85)
+
+commit 8387cdd610ad15952e7f0e7d7f9bcbfb4a5b9cfe
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Jun 19 00:16:38 2010 +0200
+
+    io_wait: kqueue: use a bigger array
+    
+    Use a bigger array for kevent(). Instead of the fd number, use
+    2* max_fd_no (2 because read and write events are not merged) and
+    with extra space for possible changelist errors.
+    (minor optimization)
+    (cherry picked from commit a9cdfc2938ca73d6ba40f5896c6a8930c2e73f85)
+
+commit a95f607d8118e668dccfc0cf85520addf3326cfe
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Jun 19 00:44:24 2010 +0200
+
+    io_wait: kqueue: handle ENOENT and more robust error handling
+    
+    - handle also ENOENT (along EBADF) when kevent fails due to errors
+      in the changelist. ENOENT can be returned in the following valid
+      scenario: fd scheduled for delayed removal from the watched fd
+      list, fd closed (which automatically removes the fd from the
+      kqueue watched list), new opened fd which gets the same number,
+      delayed changes applied (kevent()).
+    - treat all the other kevent errors or EV_ERRORs in a similar way
+      but log them (at BUG() level).
+    - return POLLERR|POLLHUP for EV_EOF with a non-null fflags.
+    
+    (only kqueue, meaning *bsd and darwin are affected by this fix)
+    (cherry picked from commit 8966d0a1787152fa64d1f78321ee539116bd448a)
+
+commit 8e6609c4416dd4f1196daa793b75c305ca22155e
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Jun 19 00:35:47 2010 +0200
+
+    io_wait: fix kqueue io_wait_add & POLLIN
+    
+    A "goto error" was placed outside the error handling "if",
+    resulting in any io_watch_add(), that tried to enable write
+    watching on a new FD, returning failure (fortunately this kind
+    of io_watch_add() usage doesn't happen very often, usually write
+    watch is enabled via io_watch_chg() on FDs already
+    io_watch_add()'ed for reading).
+    
+    Only POLL_KQUEUE was affected by this bug, meaning the default on
+    all *bsd and darwin.
+    
+    (cherry picked from commit e5be1a067158c8ba49d33082eb403937546e7c69)
+
+commit bf75177d709d97d70db9ca21d4f9526bd50fbcf5
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Jun 18 09:48:21 2010 +0200
+
+    io_wait: don't update FD watched status on error
+    
+    If the syscall to change the events or delete a watched FD fails,
+    don't update/delete the FD status in fd_hash.
+    For /dev/poll if a change fails when re-adding the FD, delete it
+    from the hash (in the /dev/poll case to change the events a FD is
+    watched for one has to remove it and re-add it with the new
+    events).
+    The syscalls should never fail in an un-handled way, but in the
+    unlikely event that it happens this change will make the code more
+    robust.
+    
+    (cherry picked from commit 2d8cd170ab867ab15296b30f0b784abe1adc1bca)
+
+commit d3a1deaefdd0f23388fece48530a0ae1f39ad93a
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Jun 17 18:43:14 2010 +0200
+
+    io_wait: fix kqueue and too many errors in changelist
+    
+    kevent() tries to return errors in the changelist back in the
+    supplied eventlist array. However if this is not large enough, the
+    whole kevent() syscall will fail.
+    Now if kevent() fails with EBADF the call will be retried with a
+    smaller set of changes, until the entire original changelist is
+    applied.
+    Fixes also kq_ev_change() flush mode: on error it will try to
+    apply the changes one-by-one.
+    
+    (this affects only systems that have kqueue: *bsd and darwin)
+    (cherry picked from commit b0bd3201826ee693d6f96c6e336477b9d9db7c32)
+
+commit 37314964b0b8be0c560705a5a1d8cfc3db9242fd
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Jun 17 16:15:10 2010 +0200
+
+    io_wait: fix: check for EV_ERROR for kqueue()
+    
+    Re-enabled and enhanced the check for EV_ERROR when using kqueue
+    (*bsd).  This is needed to workaround errors reported by kqueue
+    when trying to delete (EV_DELETE) an already closed FD (this
+    can happen in the tcp code, where we try to avoid applying
+    immediately changes in the set of watched FDs and instead
+    collect them and apply them after all the current kqueue
+    events are processed => in some corner case situations it's
+    possible to try to delete the FD from kqueue after the fd
+    was close()'ed).
+    This fix will ignore EV_ERROR with data == EBADF. All the other
+    errors will result in a POLLERR flag for the callback.
+    
+    It fixes crashes with *bsd under tcp stress tests (lots of very
+    short lived connections).
+    (cherry picked from commit 05c080a53f88babad6729f79015f555f53fdf957)
+
+commit edde2d53d60f5174cc91a01daae92fdbb2b49d56
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed Aug 18 13:45:37 2010 +0200
+
+    pdbt: fix two bugs in debian packaging
+    (cherry picked from commit cd71125fcdb434d50f6e7b5d208d260ebc49fca6)
+
+commit d61051672432a9d323389dbf8051de83fa069189
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 12 17:14:38 2010 +0200
+
+    presence(k): copy evs_subs_handl to presence event list
+    
+    - patch by Nikita Kozlov, closes FS#82
+    (cherry picked from commit 9216a2ffa4c6ffd4bdd387530cad359f75acf0d7)
+
+commit aa509c804d81f08a75a87c7083d76a3e321a042b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 23:29:43 2010 +0200
+
+    presence_dialoginfo(k): don't exeed array size in error case
+    
+    - error handling could get to the size of array as index, resulting in
+      out of bounds operation
+    - patch by Marius-Ovidiu Bucur
+    (cherry picked from commit 48f3159cdcc9ef06114a6d8f853687dc1338a8f0)
+
+commit 1463ba2c10179608c72332c4fac96d0e3f4c14d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 23:26:35 2010 +0200
+
+    presence(k): set properly db updated flag
+    
+    - patch by Marius-Ovidiu Bucur
+    (cherry picked from commit b31c53abf1c3bafafb59d3fa6456135f1da6e6c9)
+
+commit 33dcaf08698eb1fd6ee2bedfb78380939013081a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 20:25:52 2010 +0200
+
+    pua(k): use the outbound proxy on updates
+    
+    - patch by Alex Hermann, SF#3035780
+    (cherry picked from commit f39cb1976978f0860d41a05ed181e45e14c88c58)
+
+commit 2e9f1eee444bc4937a4de4be24343ac5cccb2c6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 20:15:13 2010 +0200
+
+    pv: fixed tobody.params transformation
+    
+    - len was wrong when having quoted parameters
+    - patch by Alex Hermann, closes SF#3035382
+    (cherry picked from commit 6cc5f8ec90db48483d644430bc2628356833fc1e)
+
+commit 8839ee27a09ecbc37ca1a899655d76c6d4720e3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 20:07:45 2010 +0200
+
+    core: fix parsing quoted paramers in To header
+    
+    - fix off-by-one bug for quoted parameter values in parse_to
+    - patch by Alex Hermann, SF#3035382
+    (cherry picked from commit 8593bc83c748835c6132eaa678064a2466316ae7)
+
+commit e9229ca19b4946cecda89cc3ada716ba8a506b3c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 19:40:50 2010 +0200
+
+    registrar(k): reset local contact holder
+    
+    - when an UA fetches the bindings for a user and the user isn't
+      registered, properly return an empty contact.
+    - closes SF#3035778, patch by Alex Hermann
+    (cherry picked from commit 776d941bef2e97089493a896bf0b57607078c52d)
+
+commit 8672d515c263d73717503c1d4ce5499188205f16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 24 08:44:56 2010 +0200
+
+    sl(k): removed not needed var
+    (cherry picked from commit 52e256540d8d2e6aa17256887fb9ff17580af3f8)
+
+commit fa28c630360669af64bffb4ef3a8bcc12b050bbc
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Aug 5 18:17:01 2010 +0200
+
+    modules_k/dialog: Remove trailing whitespace.
+    (cherry picked from commit 3ed75d129730ffe30fb3c1d5f8fa7870c9b5516a)
+
+commit 7dfea988c61544752b4c5fef642d9599c20f36c6
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Aug 5 18:12:17 2010 +0200
+
+    modules_k/dialog: Provide new fix to prevent "unable to find
+    dialog" WARN messages caused by accessing a dialog in the
+    "deleted" state (often happens with simultaneous BYE requests when
+    both UAs hang up at the same time).
+    
+    This commit uses a different approach where a "deleted" flag is
+    set in get_dlg() and lookup_dlg() which callers may evaluate.
+    Callers who only care about existing dialogs can ignore the flag
+    by passing a NULL argument.
+    
+    The commit "replaces" 9b7f25d7 and follows up 0723496c.
+    (cherry picked from commit d1693b2c64dfc44f0271bdd1c38315578ebe7135)
+
+commit 2e570f72f82e9cf29a6e0a2b73e4019c8820847b
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Aug 5 17:23:34 2010 +0200
+
+    modules_k/dialog: Revert "Prevent 'unable to find dialog' WARN
+    messages caused by accessing a dialog in the "deleted" state".
+    
+    The approach chosen was incomplete as it requires extending checks
+    of return values for all calls to get_dlg() and lookup_dlg()
+    against POINTER_CLOSED_MARKER. Otherwise, it may lead to server
+    crashes when code mistakes POINTER_CLOSED_MARKER for an existing
+    dialog. However, having to check against two return values
+    requires a lot of logic changes.
+    
+    Therefore, a better approach will be taken in a follow-up commit.
+    
+    This reverts commit 9b7f25d7196e41cbcc77c1d6e316cb1a8664ed81.
+    (cherry picked from commit 0723496c037d8e22210861d6a0e9041351097f63)
+
+commit b5ef768bcabf905d455ca26225c55f858cbe4c48
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Aug 5 11:31:02 2010 +0300
+
+    modules:carrierroute Better handling of fclose
+
+commit 821a4322a0902b827add7913705f72d5e50176b5
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Aug 5 11:02:14 2010 +0300
+
+    modules/carrierroute: Prevent resource leak in case of error
+    
+    the 2 FILE* opened in file mode where not properly closed on all code paths
+
+commit d82acc969092fa8f9ddcb88775c221aceaace4df
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Aug 2 17:26:20 2010 +0300
+
+    modules/tm: Fixed memory leak related to several tm function exports
+    
+    Mk_proxy() call allocates a new proxy_t* structure. The free_proxy() call does
+    not free this structure, it frees only the content. Another pkg_free is necessary
+    in this case.
+    (cherry picked from commit 2ae7c6779188e053aa6d1cbd891c428ccc2b63fa)
+
+commit 0657d12cf2a1788c8d77d6495dd93e84d0f83c83
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Jul 29 19:09:51 2010 +0200
+
+    modules_k/sst: Setting AVPs from integer values requires the
+    PV_TYPE_INT flag to be set.
+    (cherry picked from commit 61c4a93486fd3d215efb8d045c7415d752d3f057)
+
+commit dadcfdb11c4c5bac986eb6fe553a615349aa72df
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Thu Jul 29 18:42:27 2010 +0200
+
+    reg(k): only store path if indicated by the configuration
+    (cherry picked from commit 1ede271e9b669b2f335858edb47dd260f0d28ad2)
+
+commit 4215ccd295c1f04ce22ef043887f24f4bb686fe8
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Tue Jul 27 18:51:07 2010 +0200
+
+    auth_db(k): proper initialization for the default column
+    (cherry picked from commit 42a27402b74d44eebd702bcd5b5afa598205b520)
+
+commit 62e4b3d0e1aef798189b50cc869e540b9deff50b
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Jul 27 14:37:06 2010 +0200
+
+    modules_k/dialog: Prevent "unable to find dialog" WARN messages
+    caused by accessing a dialog in the "deleted" state (often happens
+    with simultaneous BYE requests when both UAs hang up at the same
+    time).
+    
+    - Move POINTER_CLOSED_MARKER from dlg_cb.c into dlg_hash.h for
+      common usage.
+    - in lookup_dlg() and internal_get_dlg(), return
+      POINTER_CLOSED_MARKER when dialog is found but in the
+      DLG_STATE_DELETED state.
+    - in dlg_onroute(), abort request processing if dialog is found to
+      be in the "deleted" state.
+    (cherry picked from commit 9b7f25d7196e41cbcc77c1d6e316cb1a8664ed81)
+
+commit 40c00244f872e8af270cf26d4e3b9f48d3958ced
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Jul 27 14:06:11 2010 +0200
+
+    modules_k/dialog: Move comment regarding dialog-destroying
+    unreference operation to proper new location.
+    (cherry picked from commit 191cc1d6437a252516d76c6249aa701a5b39b4e4)
+
+commit c3964dbca625de202db16ae6a4f9ea91128ccb48
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Jul 26 19:02:04 2010 +0200
+
+    Revert "db_postgres(old API) FS#77: fix BLOBs with postgres"
+    
+    This reverts commit a6141a32738b8610c70ba7e0a88c0d79561cb7a6.
+
+commit 53c179bb3042bb767c43cd1a87a2cb8ab0ea92b7
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Jul 26 17:39:18 2010 +0300
+
+    modules_k/presence and modules_k/rls Fixed parse_to() usage
+    
+    In case of error parse_to returns a pointer to the last parsed character. This is not a strict
+    error check, as several other modules provide a relaxed way of parsing To header (the uri is still
+    parseable even if the TO headers are not).
+
+commit 06f269b9f12b1c0e3c945aa5fe8cd16b5d943a30
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Fri Jul 23 13:51:11 2010 +0200
+
+    dialog(k): also update README after doc change
+    (cherry picked from commit 3fe08c96578a49fb70af11dd869de9572057afcd)
+
+commit 12894357413fe9fc91fc115d28d7fd523c1955f6
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Jul 23 11:32:25 2010 +0300
+
+    modules_k/pv : Fixed a bug in pv transformation (tobody transformation), that caused a segmentation fault.
+    
+    The bug was caused by a incorrect error handling of the parse_to() method (defined in parser/parse_to.c).
+    The function returns a char* (pointer to the last character parsed), in case of error it updates an error status.
+    On incorrect to params, a segmentation fault happened after some time.(Because of a double pkg_free).
+    (cherry picked from commit e7096bf24310b71623520a3b963ddc50c111827c)
+
+commit 1eef50f9d5cf90d36c4f1cca5d87d1eb8a00a2d5
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Wed Jul 21 16:19:06 2010 +0200
+
+    modules_k/dialog (doc update): Be specific on the fact that only
+    confirmed dialogs can be terminated by means of "dlg_end_dlg".
+    (cherry picked from commit 03e20458bc83a8d918c2ea17c3f46a073ce7cdd8)
+
+commit c72473fc34a5dd738a998ac14e73d2dd8f8446e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 16 17:22:05 2010 +0200
+
+    dispatcher: doc updated to reflect PV parameter options
+    
+    - ds_select_dst() can take PVs as parameters
+    (cherry picked from commit f3d351355852c7df6582bcd7939ee3855168a60a)
+
+commit e4b3a3df1707606d5291d3e5ddc87b16f42ef6a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 16 17:19:48 2010 +0200
+
+    tm: use warn to print message if load_tm is not found
+    
+    - in case of sl trying to import tm api for stateful reply, is not an
+      error if tm is not found
+    - modules importing tm api print error message if the function returns
+      error code and they need the tm
+    (cherry picked from commit 5a25609343f5697e6ebcf8f49e589b992a8af72e)
+
+commit d9a4c3b4aefeb87f62b06dd2bd55f23bdb804b43
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 15 13:48:21 2010 +0200
+
+    core: print line for include_file errors
+    
+    - easier to localize the error, reported by Raul Alexis Betancor Santana
+    (cherry picked from commit 2b680bde0605cbc1cb4840105fafc83a2a235ec5)
+
+commit a0c6d4b90bb972e6c56334221530ee00ed25f22f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 8 12:34:40 2010 +0200
+
+    tmx: use TM api function to get tm table
+    
+    - fix missing symbol for mode=debug, reported by Santiago Gimeno
+    (cherry picked from commit fb39052ff574c133c74f1f0a1c8d5f43b5bc93be)
+
+commit f6ddf0a5e9d878b426f515ef7900ee993b6ff06b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 8 12:32:45 2010 +0200
+
+    tm: export function to get access to tm table
+    
+    - to fix missing symbol in tmx for mode=debug, reported by Santiago Gimeno
+    (cherry picked from commit 181f81b2458ee04241b36c65ac1d95f38003250d)
+
+commit 87f7392cc0675ae4b5521b82820ae6dcfe1d0ad9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 5 10:36:58 2010 +0200
+
+    core: typos in comments
+    (cherry picked from commit 39ac6a5c0a7833ad0c29ae7711f37b92c5c81e95)
+
+commit cbac69c6e52bbc855b34d62d99991a74ebd8be33
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 2 18:21:10 2010 +0200
+
+    tm: TMCB_RESPONSE_READY executes by its own
+    
+    - removed the define of it to TMCB_RESPONSE_OUT
+    - now this callback is executed before writing reply to network
+    (cherry picked from commit f1c35c13252d3160334e9b3f56094404f06009ba)
+
+commit f9f7bef1eac716fcc09087aa544ca8938c4b60c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 21:03:36 2010 +0200
+
+    msilo(k): updated readme file
+    
+    - documented the new parameter add_contact
+    - readme file regenerated
+    (cherry picked from commit 9d8c55287ea9ac93440d762c511afe531c629552)
+
+commit cb4d9985d53a88e6c650d813fdc0e0061781c5f6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 20:56:23 2010 +0200
+
+    msilo(k): parameter to control contact header
+    
+    - add_contact parameter controls whether contact header is added to
+      msilo generated messages
+    - default is off (no contact added, as per RFC3428), reported by Juha
+      Heinanen
+    (cherry picked from commit 8ffb09ce908088af89e70a5acd87a318baf5a029)
+
+commit 56d19db4ae94d62ebc7e7590995a24eef1fd1d20
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 19:19:17 2010 +0200
+
+    pdb: avoid child re-init
+    
+    - for mi cmd when used over xmlrpc module
+    (cherry picked from commit bc34a82fbf5bd903cc50cb34c73afb7b685603a7)
+
+commit b4b903e1df57d290b2fcf3b7463b863ad402e15c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 19:08:04 2010 +0200
+
+    presence_xml: avoid re-init of db handler
+    
+    - safety check for usage of xmlrpc module for mi cmds
+    (cherry picked from commit 098deec785ab7c4e927104e83fc84b6c1b347719)
+
+commit ad6ae8cdc749ac7cc89f0a8b2c5fed84e427a5cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 19:07:18 2010 +0200
+
+    presence: avoid re-init of db handler
+    
+    - safety check for usage of xmlrpc for mi cmds
+    (cherry picked from commit 8a1d985743fe6ec544a215b8ddb6e54adbb024d9)
+
+commit 2b47fd2f68d1ab3fd5e378be64b8d134cd03f7af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 19:00:51 2010 +0200
+
+    kex: check if uptime value was initialized
+    (cherry picked from commit 7537d27782b185a20d32b08f7bcb30557bb3b7ff)
+
+commit a01e7edab700843227c4cc7fabf8b831ed0714f3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:57:09 2010 +0200
+
+    userblacklist: avoid double child initialization
+    
+    - safety check for cases when xmlrpc module is used to run mi commands
+    (cherry picked from commit 3f2ca85f4254746240177830e85a87b81d8cfd85)
+
+commit 705a61b1b9f03c11c10b266f6743124afaf40ea4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:43:54 2010 +0200
+
+    usrloc(k): avoid re-initialization of db handler
+    
+    - can happen if mi commands are used over rpc interface via xmlrpc
+      module
+    (cherry picked from commit 8948fe654b83217979b2d2154934a973aefa9ae3)
+
+commit 7e2eaeb37c61561a9192032acfde6255ce9b595d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:35:27 2010 +0200
+
+    domain(k): safety check for db handler initialization
+    
+    - avoid double initialization of db handler when using xmlrpc module for
+      mi commands
+    (cherry picked from commit c65fc04ff83c6304d5889f3426b3b96b5ac7ee69)
+
+commit 8a9b915901a9e3fad9899cb6402f3cb1572baf37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:31:14 2010 +0200
+
+    drouting: check if db connection is initialized
+    
+    - applied for the case of mi reload command
+    (cherry picked from commit 76266ca085d05be949ddc34df513de6810c5d65f)
+
+commit 36b8d1a70020490a2ef0fbf5ae61550296a7befe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:22:15 2010 +0200
+
+    htable: close db connection in case of mi cmd errors
+    
+    - in some error cases while processing mi reload command, db connection
+      was left open
+    (cherry picked from commit e723b2b24a87599d538b652ee60c862f769f8036)
+
+commit 4a83157af27953f8d2fc76976e198491ccc8897d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:15:33 2010 +0200
+
+    pdt(k): safety check for db handler initialization
+    
+    - there can be two attepts to initialize if xmlrpc module is loaded
+    (cherry picked from commit 2e8d469de4253444d61cb186395d40c0fd492fe6)
+
+commit 59d209fe33a50d2d3d841a125c9bd8f73d91a099
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 18:13:54 2010 +0200
+
+    mi_rpc: initialize mi cmds for sip workers
+    
+    - xmlrpc module re-uses sip workers to process xmlrpc request which can
+      execute mi commands, therefore is need to initialize mi cmds as for a
+      mi process
+    - initialization is done only when xmlrpc module is loaded
+    (cherry picked from commit b2b2a82d497ee37428abab933f4862255bc5c4a1)
+
+commit a6abcee6da3bf7f7c16c19bbd64aa20e4b1d3b9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 17:40:20 2010 +0200
+
+    permissions(k): safety check for db_handle
+    
+    - avoid double initialization of trusted ops db handler
+    (cherry picked from commit df2d92a1f0698e0d108ec080de5fc3673d332209)
+
+commit a92bb2ee265c6d7f44d3fe848725b458c441b207
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 12:10:34 2010 +0200
+
+    permissions(k): reverted incomplete fix for mi cmd
+    
+    - the mi command execution via rpc is fixed by initialization of mi commands
+      done now by mi_rpc module
+
+commit 6028bb26af3839727db03823f4734f90ed00f85e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 12:08:42 2010 +0200
+
+    mi_rpc: call MI init child functions
+    
+    - MI init child functions called for RPC processes
+    - fix for several MI commands that can be executed now via RPC and they
+      needed to do specific initialization for each process
+    - reported by Juha Heinanen
+    (cherry picked from commit af18dae034cf8836f1627929f189983ca6010428)
+
+commit 1364efd78fbea8f9921c9a897d2fcb4310dca168
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 12:04:52 2010 +0200
+
+    kmi: allow multiple initializations of mi child
+    
+    - safety check to detect if mi child was initialized
+    - protect against multiple initializations that can occure due to
+      usage from MI or RPC processes
+    (cherry picked from commit 4047fc33053898d17498104b849dae9e45bee1e6)
+
+commit 99a0c0e3c418346f6b63234fd7dc817366fe5fc1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 19:48:59 2010 +0200
+
+    core: safety check for free contact
+    
+    - patch by Sebastian Z., checking if the content is null before freeing
+      it
+    (cherry picked from commit 7aed7d72c98a8228e9687773c3bab20d8934251a)
+
+commit 134edd5fcdfffcf18299f0673a1ecb65bd8b3241
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 1 23:02:14 2010 +0200
+
+    presence_xml: fixed log message
+
+commit 24877089b48cdbf9389981c0e9285e6a3a1ce6c8
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon Jun 28 10:50:05 2010 +0200
+
+    modules_k/dialog: Delay dialog deletion to absorb late in-dialog
+    requests
+    
+    - When a dialog's state transitions to DLG_STATE_DELETED, register
+      a tm callback for TMCB_DESTROY to absorb late in-dialog requests
+      (no more "unable to find dialog for <REQUEST TYPE>" log
+      messages).
+    - On callback, unreference and, in consequence, destroy the
+      dialog.
+    (cherry picked from commit 3537c2d8c27617023cb9f9a569435483748fef1f)
+
+commit c074bd7c719c4e054c5a537f92467db207e42f9b
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon Jul 5 17:52:12 2010 +0200
+
+    Increase failed_dlgs when a non-2xx final response has been
+    received only.
+    (cherry picked from commit dd9681ce5f6602c888d847a283eaaf637318994d)
+
+commit 6e3cef5314573e56de6b7bd8f58691526101a98c
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Jul 13 14:46:54 2010 +0200
+
+    Fix minor typo
+    (cherry picked from commit d4c63b7f3e7be5a2a86c929d013f19d6c8cbb4eb)
+
+commit 983411fa3db60fd3f5735dc026ee9bf8946e9253
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Jul 13 13:21:40 2010 +0200
+
+    modules/dialog: Do not send BYE request for non-confirmed dialogs
+      (not supported).
+    (cherry picked from commit 4a84c8c410ce45d9e5443eb52ac4c79e47ab5f3c)
+
+commit 5c5cc3df5301e86ee78d79f52aa917e0f67f37e8
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Jul 7 12:39:58 2010 +0300
+
+    Fixed a memory leak on shm memory, caused by the dtrie implementation.
+    
+     dtrie_destroy and dtrie_clear could leak 10 * sizeof(void*) for each node in the trie.
+    Mainly affected carrierroute and userblacklist modules
+
+commit 44aa85c78952288c4350b9e2277354e7fbf4d2b2
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Wed Jun 30 18:25:55 2010 +0200
+
+    Do not consider in-early-dialog BYE requests to be bogus.
+    (cherry picked from commit 8bf53ec54beab825794b8345cce7fdb41c783809)
+
+commit 37940ea09b861b18994c4243abf8c6d8e711a2ef
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Jun 30 17:15:37 2010 +0300
+
+    modules_k/msilo: do not include Contact header in msilo generated messages
+
+commit a6141a32738b8610c70ba7e0a88c0d79561cb7a6
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Tue Jun 29 18:11:58 2010 +0200
+
+    db_postgres(old API) FS#77: fix BLOBs with postgres
+    
+    fix BLOBs with postgres, also add a null-termination as the other
+    SQL databases in order to be able to work with the presence modules
+    (cherry picked from commit 2e56720769913c55cacc83fe3a31f44f072e7590)
+
+commit 96d8f8335587d35b6a2b887f597fdc68de799875
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Tue Jun 29 12:26:30 2010 +0200
+
+    auc(k): fix error in authentification: Digest should be compared case insensitive
+    (cherry picked from commit 3f5909fd3ca55aa43148d81a8874eaeaeaf91968)
+
+commit 3d1d941dde7a2b4a764dcfc9939501e5ddf83f04
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Jun 24 18:39:49 2010 +0200
+
+    modules_k/dialog: Fix timer reset and improve timeout value logging
+    
+    - Fix a bug that caused dialog timeout values to be refreshed only
+      when a custom timeout was provided by the user via AVP.
+    - Do not log failure to get timeout from AVP when in fact no AVP
+      was used.
+    - Add missing newline character.
+
+commit 927351a2c4bd222db8a58b877a5fb018fdce2d00
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Jun 24 15:50:52 2010 +0200
+
+    Correct typo in comment referring to other file.
+
+commit a5f03adcad92993e170be1d2a5dbb879b4777347
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Jun 24 15:01:13 2010 +0200
+
+    modules_k/dialog: Reduce log verbosity for list traversal of
+    expired dialogs.
+    
+    - Change logging of start/previous/next pointers from WARN to DBG
+      when traversing the list of expired dialogs.
+
+commit cbbc5eff256565a3eae29a9353bbb4e3064640bb
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Wed Jun 23 15:39:21 2010 +0200
+
+    Do not consider in-early-dialog requests to be bogus.
+
+commit 268c9e7db0fd94c94c5e4d5b28c898620f31a9f4
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Jun 16 14:11:48 2010 +0300
+
+    Always set data payload to NULL, thus avoiding problems when root node had data associated with it
+    Credits for the patch go to Henning Westerholt.
+    (cherry picked from commit f05a578613ca1c9cc15e27cc01c5573e1cf0b888)
+
+commit 3224810f6fc75b0f7a498e8bfe3947c0e05bc98f
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sun Jun 6 13:26:31 2010 +0200
+
+    *PKG Debian
+    - Mantainer header changed to $me
+
+commit 64db1af36c67e7ecb5bc3451f94a11b69edc1fa6
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Wed Jun 2 00:49:56 2010 +0200
+
+    PKG Debian: More version support
+    
+    - debian-squeeze added.
+          Purple excluded from the compile list. Seems that purple module does not work with libpurple 2.7+
+    - ubuntu-lucid added
+          Universe has to be enabled in sources.list for radius and memcached module dependency matching
+
+commit aa2526dce7e5fcade57f577de5d701c990705cee
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Tue Jun 1 23:31:14 2010 +0200
+
+    PKG Debian version dependant changes
+    
+    - debian-lenny is erased and symlinks now to debian
+    - debian-etch is recreated from debian. This provides consistency to all debian* folders
+    - Berkeley and purple modules excluded in debian-etch to avoid dependency problems
+
+commit 31d63323511540f9510ad9b0c7967e2f79004917
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 30 11:03:22 2010 +0200
+
+    db_berkeley: get rid of compile warnings
+    (cherry picked from commit 8b506f7d9b8eba682d180e458b0e2a278053d29a)
+
+commit a71c4f22859c85eeca90890a9496398537cd006f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 30 11:34:47 2010 +0200
+
+    srdb1: updated entities.xml path in db schema
+    (cherry picked from commit 387e7ec22e736d1ce51f5c12d9f4e8533ead8512)
+
+commit e0eeace9b3c0c90d390bba63dee6d161c3f34d40
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sat May 29 22:13:26 2010 +0200
+
+    pkg Changes to debian/control
+    
+    - Dependency changes to match lenny and squeeze at least. This will allow to
+      drop debian-lenny folder in the future.
+    - Added "Replaces" to kamailio-*-modules since the name of the modules has
+      changed since kamailio-1.5 and the upgrade would not work properly.
+    - VCS lines erased since the pointed to wrong URLs and we do not have a 3.0.2
+      tag to point.
+    - Added "Conflicts" to erase old packages that do not exist in this version and
+      could cause upgrade not to work properly.
+
+commit 754e46dd87756c0aef7046c143ff090d76299159
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Fri May 28 22:27:42 2010 +0200
+
+    pkg: update debian changelog version for kamailio
+    
+    - Updated kamailio version to 3.0.2.99. This will allow development builds to
+      update the stable branch and will be clear that it's an unreleased version.
+      This will change just before releasing 3.0.3 and then change again to
+      3.0.3.99
+
+commit db3dc3f305409ad34dcf985c5dc63bddd4dd9e1b
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Fri May 28 21:44:39 2010 +0200
+
+    pkg: Update debian changelog files
+    
+    - Update kamailio version to 3.0.2 for debian-etch and debian-lenny builds.
+
+commit 45fb6e4f1000de253d19e08d86699ea865d120f9
+Author: Miklos Tirpak <miklos@iptel.org>
+Date:   Wed Nov 11 12:24:50 2009 +0100
+
+    tm: TMCB_E2EACK callback fix
+    
+    TMCB_E2EACK_RETR_IN was called instead of TMCB_E2EACK_IN
+    for the initial e2e-ACK message.
+    (cherry picked from commit 3da5ebc8bdc3530d1c61b84665e4dadf6c6cb3e9)
+
+
+
 ===================== 2010-05-27 Kamailio v3.0.2 released =====================
 
 ===================== Changes since release 3.0.1 =============================
