@@ -971,7 +971,7 @@ int tls_h_fix_read_conn(struct tcp_connection *c)
 	int ret;
 	struct tls_extra_data* tls_c;
 	
-	ret = -1;
+	ret = 1;
 	tls_c = 0;
 	if (unlikely(c->extra_data==0)){
 		lock_get(&c->write_lock);
