@@ -41,11 +41,9 @@
  *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
+/** module loading, standard fixups.
+ * @file sr_module.c
+ * @ingroup core
  */
 
 #include "sr_module.h"
@@ -1299,9 +1297,6 @@ int fixup_var_str_12(void** param, int param_no)
 		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
-		/* FIXME: if not PVE (string only), fix as string! or
-		   make a separate fixup  fixup_varpve_... */
-		if ((ret = fix_param(FPARAM_PVE, param)) <= 0) return ret;
 	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
 	ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
@@ -1322,6 +1317,64 @@ int fixup_var_str_2(void** param, int param_no)
 	if (param_no == 2) return fixup_var_str_12(param, param_no);
 	else return 0;
 }
+
+
+
+/** fixup variable-pve-string.
+ * The parameter can be a PVAR, AVP, SELECT, PVE (pv based format string)
+ * or string.
+ * PVAR, AVP and select and non-static PVEs  identifiers will be resolved to
+ * their values during runtime.
+ * The parameter value will be converted to fparam structure
+ * @param  param - double pointer to param, as for normal fixup functions.
+ * @param  param_no - parameter number, ignored.
+ * @return -1 on an error, 0 on success.
+ */
+int fixup_var_pve_str_12(void** param, int param_no)
+{
+	int ret;
+	fparam_t* fp;
+	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+		/* if called with a RVE already converted to string =>
+		   don't try AVP, PVAR, SELECT or PVE again (to avoid double
+		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
+		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
+		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+		if ((ret = fix_param(FPARAM_PVE, param)) <= 0) {
+			if (ret < 0)
+				return ret;
+			/* check if it resolved to a dynamic or "static" PVE.
+			   If the resulting PVE is static (normal string), discard
+			   it and use the normal string fixup (faster at runtime) */
+			fp = (fparam_t*)*param;
+			if (fp->v.pve->spec.getf == 0)
+				fparam_free_restore(param); /* fallback to STR below */
+			else
+				return ret; /* dynamic PVE => return */
+		}
+		
+	}
+	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+	ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
+			" failed\n");
+	return -1;
+}
+
+/* Same as fixup_var_pve_str_12 but applies to the 1st parameter only */
+int fixup_var_pve_str_1(void** param, int param_no)
+{
+	if (param_no == 1) return fixup_var_pve_str_12(param, param_no);
+	else return 0;
+}
+
+/* Same as fixup_var_pve_str_12 but applies to the 2nd parameter only */
+int fixup_var_pve_str_2(void** param, int param_no)
+{
+	if (param_no == 2) return fixup_var_pve_str_12(param, param_no);
+	else return 0;
+}
+
 
 
 /*
@@ -1654,6 +1707,9 @@ int is_fparam_rve_fixup(fixup_function f)
 	if (f == fixup_var_str_12 ||
 		f == fixup_var_str_1 ||
 		f == fixup_var_str_2 ||
+		f == fixup_var_pve_str_12 ||
+		f == fixup_var_pve_str_1 ||
+		f == fixup_var_pve_str_2 ||
 		f == fixup_var_int_12 ||
 		f == fixup_var_int_1 ||
 		f == fixup_var_int_2 ||
@@ -1684,6 +1740,7 @@ free_fixup_function get_fixup_free(fixup_function f)
 	free_fixup_function ret;
 	/* "pure" fparam, all parameters */
 	if (f == fixup_var_str_12 ||
+		f == fixup_var_pve_str_12 ||
 		f == fixup_var_int_12 ||
 		f == fixup_int_12 ||
 		f == fixup_str_12 ||
@@ -1692,6 +1749,7 @@ free_fixup_function get_fixup_free(fixup_function f)
 	
 	/* "pure" fparam, 1st parameter */
 	if (f == fixup_var_str_1 ||
+		f == fixup_var_pve_str_1 ||
 		f == fixup_var_int_1 ||
 		f == fixup_int_1 ||
 		f == fixup_str_1 ||
@@ -1700,6 +1758,7 @@ free_fixup_function get_fixup_free(fixup_function f)
 	
 	/* "pure" fparam, 2nd parameters */
 	if (f == fixup_var_str_2 ||
+		f == fixup_var_pve_str_2 ||
 		f == fixup_var_int_2 ||
 		f == fixup_int_2 ||
 		f == fixup_str_2 ||

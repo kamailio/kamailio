@@ -49,9 +49,8 @@
  *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
  */
 
-/*!
- * \file
- * \brief modules/plug-in structures declarations
+/** modules structures/exports declarations and utilities (fixups a.s.o).
+ * @file sr_module.h
  */
 
 
@@ -514,6 +513,18 @@ int fixup_var_str_1(void** param, int param_no);
 
 /* Same as fixup_var_str_12 but applies to the 2nd parameter only */
 int fixup_var_str_2(void** param, int param_no);
+
+/** fixup variable-pve-string.
+ * The parameter can be a PVAR, AVP, SELECT, PVE (pv based format string)
+ * or string.
+ */
+int fixup_var_pve_str_12(void** param, int param_no);
+
+/* same as fixup_var_pve_str_12 but applies to the 1st parameter only */
+int fixup_var_pve_str_1(void** param, int param_no);
+
+/* same as fixup_var_pve_str_12 but applies to the 2nd parameter only */
+int fixup_var_pve_str_2(void** param, int param_no);
 
 /*
  * Fixup variable integer, the parameter can be
