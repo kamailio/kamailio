@@ -1,0 +1,337 @@
+diff --git a/Makefile.am b/Makefile.am
+index b47241b..a737d77 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -4,7 +4,7 @@ rtpproxy_SOURCES=main.c rtp.h rtp_server.c rtp_server.h \
+   rtpp_util.c rtpp_util.h rtp.c rtp_resizer.c rtp_resizer.h rtpp_session.c \
+   rtpp_command.c rtpp_command.h rtpp_log.c rtpp_network.h rtpp_network.c \
+   rtpp_syslog_async.c rtpp_syslog_async.h rtpp_notify.c rtpp_notify.h
+-rtpproxy_LDADD=-lm -lpthread
++rtpproxy_LDADD=-lm -lpthread @LIBS_XMLRPC@
+ dist_man_MANS=rtpproxy.8
+ makeann_SOURCES=makeann.c rtp.h g711.h
+ makeann_LDADD=@LIBS_G729@ @LIBS_GSM@
+diff --git a/config.h.in b/config.h.in
+index cd0c23a..87491e3 100644
+--- a/config.h.in
++++ b/config.h.in
+@@ -14,6 +14,9 @@
+ /* Define if you have libgsm library installed */
+ #undef ENABLE_GSM
+ 
++/* Define if you have xmlrpc library installed */
++#undef ENABLE_XMLRPC
++
+ /* Define to 1 if you have `alloca', as a function or macro. */
+ #undef HAVE_ALLOCA
+ 
+diff --git a/configure.ac b/configure.ac
+index 54c1a60..1c88b99 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -53,6 +53,17 @@ then
+    AC_DEFINE([ENABLE_G729], 1, [Define if you have libg729 library installed])
+   )
+ fi
++
++# XML-RPC-Libs:
++AC_CHECK_HEADERS(xmlrpc_client.h xmlrpc.h, found_xmlrpc=yes)
++if test "$found_xmlrpc" = yes
++then
++  AC_CHECK_LIB(curl, curl_version,
++   LIBS_XMLRPC="-lcurl -lxmlrpc_client -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
++   AC_DEFINE([ENABLE_XMLRPC], 1, [Define if you have XML-RPC-Client library installed])
++  )
++fi
++
+ ##if test -z "$G729_SUPPORT"
+ ##then
+ ##  echo "*************************************************************************** $ECHO_C" 1>&6
+@@ -94,4 +105,5 @@ AC_CONFIG_FILES([Makefile])
+ AC_SUBST(AM_CFLAGS)
+ AC_SUBST(LIBS_GSM)
+ AC_SUBST(LIBS_G729)
++AC_SUBST(LIBS_XMLRPC)
+ AC_OUTPUT
+diff --git a/rtpp_command.c b/rtpp_command.c
+index fa342b8..2b3059d 100644
+--- a/rtpp_command.c
++++ b/rtpp_command.c
+@@ -67,6 +67,9 @@ struct proto_cap proto_caps[] = {
+     { "20081102", "Support for setting codecs in the update/lookup command" },
+     { "20081224", "Support for session timeout notifications" },
+     { "20090810", "Support for automatic bridging" },
++#ifdef ENABLE_XMLRPC
++    { "20100819", "Support for timeout notifications using XML-RPC towards Kamailio" },
++#endif
+     { NULL, NULL }
+ };
+ 
+@@ -266,6 +269,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+     int max_argc;
+     char *socket_name_u, *notify_tag;
+     struct sockaddr *local_addr;
++    struct rtpp_timeout_handler * my_timeout_h;
+     char c;
+ 
+     requested_nsamples = -1;
+@@ -309,6 +313,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+ 	    if (++ap >= &argv[10])
+ 		break;
+ 	}
++	
+     cookie = NULL;
+     if (argc < 1 || (cf->umode != 0 && argc < 2)) {
+ 	rtpp_log_write(RTPP_LOG_ERR, cf->glog, "command syntax error");
+@@ -459,9 +464,11 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+     }
+     call_id = argv[1];
+     if (op == UPDATE || op == LOOKUP || op == PLAY) {
+-	max_argc = (op == UPDATE ? 8 : 6);
++	if (op == UPDATE) max_argc = 8;
++	if (op == LOOKUP) max_argc = 7;
++	else max_argc = 6;
+ 	if (argc < 5 || argc > max_argc) {
+-	    rtpp_log_write(RTPP_LOG_ERR, cf->glog, "command syntax error");
++	    rtpp_log_write(RTPP_LOG_ERR, cf->glog, "command syntax error (%d/%d)", argc, max_argc);
+ 	    reply_error(cf, controlfd, &raddr, rlen, cookie, 4);
+ 	    return 0;
+ 	}
+@@ -469,7 +476,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+ 	to_tag = argv[5];
+ 	if (op == PLAY && argv[0][1] != '\0')
+ 	    playcount = atoi(argv[0] + 1);
+-	if (op == UPDATE && argc > 6) {
++	if ((op == UPDATE || op == LOOKUP) && argc > 6) {
+ 	    socket_name_u = argv[6];
+ 	    if (strncmp("unix:", socket_name_u, 5) == 0)
+ 		socket_name_u += 5;
+@@ -924,9 +931,30 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+ 	}
+     }
+ 
+-    if (op == UPDATE) {
+-	if (cf->timeout_handler.socket_name == NULL && socket_name_u != NULL)
++    if (op == UPDATE || op == LOOKUP) {
++	if (cf->timeout_handler.socket_name == NULL && socket_name_u != NULL) {
++#ifdef ENABLE_XMLRPC
++	    if (strncmp("http://", socket_name_u, 7) == 0) {
++		rtpp_log_write(RTPP_LOG_INFO, spa->log, "setting Kamailio-timeout handler");
++		my_timeout_h = malloc(sizeof(struct rtpp_timeout_handler));
++		if (my_timeout_h == NULL) {
++			rtpp_log_write(RTPP_LOG_ERR, spa->log, "Unable to allocate memory");
++		} else {
++			memset(my_timeout_h, 0, sizeof(struct rtpp_timeout_handler));
++	    		my_timeout_h->socket_name = (char *)malloc(strlen(socket_name_u) + 1);
++	    		if(my_timeout_h->socket_name != NULL) {
++				strcpy(my_timeout_h->socket_name, socket_name_u);
++				spa->timeout_data.handler = my_timeout_h;
++				spa->timeout_data.notify_tag = 0;
++			} else {
++				rtpp_log_write(RTPP_LOG_ERR, spa->log, "Unable to allocate memory");
++				free(my_timeout_h);
++			}
++		}
++	    } else
+ 	    rtpp_log_write(RTPP_LOG_ERR, spa->log, "must permit notification socket with -n");
++#endif
++	}
+ 	if (spa->timeout_data.notify_tag != NULL) {
+ 	    free(spa->timeout_data.notify_tag);
+ 	    spa->timeout_data.notify_tag = NULL;
+diff --git a/rtpp_notify.c b/rtpp_notify.c
+index 26bb9a5..9fe6a6d 100644
+--- a/rtpp_notify.c
++++ b/rtpp_notify.c
+@@ -39,10 +39,23 @@
+ #include "rtpp_log.h"
+ #include "rtpp_session.h"
+ 
++#ifdef ENABLE_XMLRPC
++#include <xmlrpc.h>
++#include <xmlrpc_client.h>
++#define XMLRPC_CLIENT_NAME       "XML-RPC RTPProxy Client"
++#define XMLRPC_CLIENT_VERSION    "0.1"
++#endif
++
+ struct rtpp_notify_wi
+ {
+     char *notify_buf;
+     int len;
++#ifdef ENABLE_XMLRPC
++    char *call_id;
++    int call_id_len;
++    char *xmlrpc_server;
++    int xmlrpc_server_len;
++#endif
+     struct rtpp_timeout_handler *th;
+     rtpp_log_t glog;
+     struct rtpp_notify_wi *next;
+@@ -170,7 +183,7 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
+     struct rtpp_timeout_handler *th = sp->timeout_data.handler;
+     int len;
+     char *notify_buf;
+-
++    
+     if (th == NULL) {
+         /* Not an error, just nothing to do */
+         return 0;
+@@ -202,8 +215,6 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
+         }
+         wi->notify_buf = notify_buf;
+     }
+-    wi->len = len;
+-
+     if (sp->timeout_data.notify_tag == NULL) {
+         len = snprintf(wi->notify_buf, len, "%d %d\n",
+           sp->ports[0], sp->ports[1]);
+@@ -211,6 +222,54 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
+         len = snprintf(wi->notify_buf, len, "%s\n",
+           sp->timeout_data.notify_tag);
+     }
++    wi->len = len;
++
++
++#ifdef ENABLE_XMLRPC
++    if (strncmp(wi->th->socket_name, "http://", 7) == 0) {
++	    // Copy the Socket-Name
++	    len = strlen(wi->th->socket_name)+1;
++	    if (wi->xmlrpc_server == NULL) {
++		wi->xmlrpc_server = malloc(len);
++		if (wi->xmlrpc_server == NULL) {
++		    rtpp_notify_queue_return_free_item(wi);
++		    return -1;
++		}
++	    } else {
++		notify_buf = realloc(wi->xmlrpc_server, len);
++		if (notify_buf == NULL) {
++		    rtpp_notify_queue_return_free_item(wi);
++		    return -1;
++		}
++		wi->xmlrpc_server = notify_buf;
++	    }
++	    memset(wi->xmlrpc_server, '\0', len);
++	    len = snprintf(wi->xmlrpc_server, len, "%s",
++		  wi->th->socket_name);
++	    wi->xmlrpc_server_len = len;
++
++	    // Copy the Call-ID:
++	    len = strlen(sp->call_id)+1;
++	    if (wi->call_id == NULL) {
++		wi->call_id = malloc(len);
++		if (wi->call_id == NULL) {
++		    rtpp_notify_queue_return_free_item(wi);
++		    return -1;
++		}
++	    } else {
++		notify_buf = realloc(wi->call_id, len);
++		if (notify_buf == NULL) {
++		    rtpp_notify_queue_return_free_item(wi);
++		    return -1;
++		}
++		wi->call_id = notify_buf;
++	    }
++	    memset(wi->call_id, '\0', len);
++	    len = snprintf(wi->call_id, len, "%s",
++		  sp->call_id);
++	    wi->call_id_len = len;
++    }
++#endif
+ 
+     wi->glog = cf->glog;
+ 
+@@ -249,24 +308,63 @@ reconnect_timeout_handler(rtpp_log_t log, struct rtpp_timeout_handler *th)
+     }
+ }
+ 
++#ifdef ENABLE_XMLRPC
++static int
++do_xmlrpc_timeout_notification(rtpp_log_t log, struct rtpp_notify_wi *wi) {
++    xmlrpc_env env;
++    xmlrpc_value *result;
++    
++    /* Start up our XML-RPC client library. */
++    xmlrpc_client_init(XMLRPC_CLIENT_NO_FLAGS, XMLRPC_CLIENT_NAME, XMLRPC_CLIENT_VERSION);
++    xmlrpc_env_init(&env);
++
++    /* Get the dialog-Info: */
++    result = xmlrpc_client_call(&env, wi->xmlrpc_server,
++                                "dlg_terminate_dlg", "(s)",
++                                wi->call_id);
++    if (env.fault_occurred) {
++        rtpp_log_write(RTPP_LOG_ERR, wi->glog, "XML-RPC Fault: %s (%d)\n", env.fault_string, env.fault_code);
++        return -1;
++    }
++    
++    /* Dispose of our result value. */
++    xmlrpc_DECREF(result);
++
++    /* Shutdown our XML-RPC client library. */
++    xmlrpc_env_clean(&env);
++    xmlrpc_client_cleanup();
++
++    return 0;
++}
++#endif
++
++
+ static void
+ do_timeout_notification(struct rtpp_notify_wi *wi, int retries)
+ {
+     int result;
+-
+-    if (wi->th->connected == 0) {
+-        reconnect_timeout_handler(wi->glog, wi->th);
+-
+-        /* If connect fails, no notification will be sent */
++#ifdef ENABLE_XMLRPC
++    if (wi->xmlrpc_server_len > 0) {
++	rtpp_log_write(RTPP_LOG_INFO, wi->glog, "Using XML-RPC-Timeout handler (%s)", wi->xmlrpc_server);
++	result = do_xmlrpc_timeout_notification(wi->glog, wi);
++    } else {
++#endif
+         if (wi->th->connected == 0) {
+-            rtpp_log_write(RTPP_LOG_ERR, wi->glog, "unable to send timeout notification");
+-            return;
+-        }
++	    reconnect_timeout_handler(wi->glog, wi->th);
++
++    	    /* If connect fails, no notification will be sent */
++            if (wi->th->connected == 0) {
++	        rtpp_log_write(RTPP_LOG_ERR, wi->glog, "unable to send timeout notification");
++    	        return;
++            }
++	}
++
++        do {
++	    result = send(wi->th->fd, wi->notify_buf, wi->len, 0);
++        } while (result == -1 && errno == EINTR);
++#ifdef ENABLE_XMLRPC
+     }
+-
+-    do {
+-        result = send(wi->th->fd, wi->notify_buf, wi->len, 0);
+-    } while (result == -1 && errno == EINTR);
++#endif
+ 
+     if (result < 0) {
+         wi->th->connected = 0;
+diff --git a/rtpp_session.c b/rtpp_session.c
+index 9962cac..b84cdf3 100644
+--- a/rtpp_session.c
++++ b/rtpp_session.c
+@@ -205,6 +205,14 @@ remove_session(struct cfg *cf, struct rtpp_session *sp)
+ 	if (sp->rtcp->codecs[i] != NULL)
+ 	    free(sp->rtcp->codecs[i]);
+     }
++#ifdef ENABLE_XMLRPC
++    // In case we use the Kamailio-XML-RPC-Timeout, we have our own timeout-handler
++    if (sp->timeout_data.handler != &cf->timeout_handler) {
++ 	free(sp->timeout_data.handler->socket_name);
++	free(sp->timeout_data.handler);
++    }
++#endif
++	
+     if (sp->timeout_data.notify_tag != NULL)
+ 	free(sp->timeout_data.notify_tag);
+     hash_table_remove(cf, sp);
