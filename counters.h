@@ -109,7 +109,10 @@ char* counter_get_name(counter_handle_t handle);
 char* counter_get_group(counter_handle_t handle);
 char* counter_get_doc(counter_handle_t handle);
 
-/** gets the per process value of counter h for process p_no. */
+/** gets the per process value of counter h for process p_no.
+ *  Note that if used before counter_prefork_init() process_no is 0
+ *  and _cnts_vals will point into a temporary one "row"  array.
+ */
 #define counter_pprocess_val(p_no, h) \
 	_cnts_vals[(p_no) * _cnts_row_len + (h).id].v
 

@@ -47,6 +47,7 @@
 #if defined PKG_MALLOC || defined SHM_MEM
 #include "cfg_core.h"
 #endif
+#include "daemonize.h"
 
 #include <stdio.h>
 #include <time.h> /* time(), used to initialize random numbers */

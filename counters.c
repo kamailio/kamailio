@@ -23,6 +23,7 @@
  * History:
  * --------
  *  2010-08-06  initial version (andrei)
+ *  2010-08-24  counters can be used (inc,add) before prefork_init (andrei)
 */
 
 #include "counters.h"
@@ -47,6 +48,11 @@
 
 /* leave space for one flag */
 #define MAX_COUNTER_ID 32767
+/* size (number of entries) of the temporary array used for keeping stats
+   pre-prefork init.  Note: if more counters are registered then this size,
+   the array will be dynamically increased (doubled each time). The value
+   here is meant only to optimize startup/memory fragmentation. */
+#define PREINIT_CNTS_VALS_SIZE 128
 
 struct counter_record {
 	str group;
@@ -85,7 +91,7 @@ static int grp_no; /* number of groups */
 counter_array_t* _cnts_vals;
 int _cnts_row_len; /* number of elements per row */
 static int cnts_no; /* number of registered counters */
-static int cnts_max_rows; /* set to process number */
+static int cnts_max_rows; /* set to 0 if not yet fully init */
 
 
 
@@ -101,6 +107,8 @@ int init_counters()
 		goto error;
 	str_hash_init(&grp_hash_table);
 	cnts_no = 1; /* start at 1 (0 used only for invalid counters) */
+	cnts_max_rows = 0; /* 0 initially, !=0 after full init
+						  (counters_prefork_init()) */
 	grp_no = 0;
 	cnt_id2record_size = CNT_ID2RECORD_SIZE;
 	cnt_id2record = pkg_malloc(sizeof(*cnt_id2record) * cnt_id2record_size);
@@ -127,7 +135,12 @@ void destroy_counters()
 	struct str_hash_entry* e;
 	struct str_hash_entry* bak;
 	if (_cnts_vals) {
-		shm_free(_cnts_vals);
+		if (cnts_max_rows)
+			/* fully init => it is in shm */
+			shm_free(_cnts_vals);
+		else
+			/* partially init (before prefork) => pkg */
+			pkg_free(_cnts_vals);
 		_cnts_vals = 0;
 	}
 	if (cnts_hash_table.table) {
@@ -160,6 +173,7 @@ void destroy_counters()
 	grp_sorted_max_size = 0;
 	cnts_no = 0;
 	_cnts_row_len = 0;
+	cnts_max_rows = 0;
 	grp_no = 0;
 }
 
@@ -171,7 +185,9 @@ void destroy_counters()
  */
 int counters_prefork_init(int max_process_no)
 {
+	counter_array_t* old;
 	int size, row_size;
+	counter_handle_t h;
 	/* round cnts_no so that cnts_no * sizeof(counter) it's a CACHELINE_PAD
 	   multiple */
 	/* round-up row_size to a CACHELINE_PAD multiple  if needed */
@@ -183,11 +199,20 @@ int counters_prefork_init(int max_process_no)
 	/* get updated cnts_no (row length) */
 	_cnts_row_len = row_size / sizeof(*_cnts_vals);
 	size = max_process_no * row_size;
+	/* replace the temporary pre-fork pkg array (with only 1 row) with
+	   the final shm version (with max_process_no rows) */
+	old = _cnts_vals;
 	_cnts_vals = shm_malloc(max_process_no * row_size);
 	if (_cnts_vals == 0)
 		return -1;
 	memset(_cnts_vals, 0, max_process_no * row_size);
 	cnts_max_rows = max_process_no;
+	/* copy prefork values into the newly shm array */
+	if (old) {
+		for (h.id = 0; h.id < cnts_no; h.id++)
+			counter_pprocess_val(process_no, h) = old[h.id].v;
+		pkg_free(old);
+	}
 	return 0;
 }
 
@@ -286,7 +311,9 @@ static struct counter_record* cnt_hash_add(
 	struct counter_record* cnt_rec;
 	struct grp_record* grp_rec;
 	struct counter_record** p;
+	counter_array_t* v;
 	int doc_len;
+	int n;
 	
 	e = 0;
 	if (cnts_no >= MAX_COUNTER_ID)
@@ -323,7 +350,31 @@ static struct counter_record* cnt_hash_add(
 		cnt_rec->doc.s[0] = 0;
 	e->key = cnt_rec->name;
 	e->flags = 0;
-	/* add it a pointer to it in the records array */
+	/* check to see if it fits in the prefork tmp. vals array.
+	   This array contains only one "row", is allocated in pkg and
+	   is used only until counters_prefork_init() (after that the
+	   array is replaced with a shm version with all the needed rows).
+	 */
+	if (cnt_rec->h.id >= _cnts_row_len || _cnts_vals == 0) {
+		/* array to small or not yet allocated => reallocate/allocate it
+		   (min size PREINIT_CNTS_VALS_SIZE, max MAX_COUNTER_ID)
+		 */
+		n = (cnt_rec->h.id < PREINIT_CNTS_VALS_SIZE) ?
+				PREINIT_CNTS_VALS_SIZE :
+				((2 * (cnt_rec->h.id + (cnt_rec->h.id == 0)) < MAX_COUNTER_ID)?
+					(2 * (cnt_rec->h.id + (cnt_rec->h.id == 0))) :
+					MAX_COUNTER_ID + 1);
+		v = pkg_realloc(_cnts_vals, n * sizeof(*_cnts_vals));
+		if (v == 0)
+			/* realloc/malloc error */
+			goto error;
+		_cnts_vals = v;
+		/* zero newly allocated memory */
+		memset(&_cnts_vals[_cnts_row_len], 0,
+				(n - _cnts_row_len) * sizeof(*_cnts_vals));
+		_cnts_row_len = n; /* record new length */
+	}
+	/* add a pointer to it in the records array */
 	if (cnt_id2record_size <= cnt_rec->h.id) {
 		/* must increase the array */
 		p = pkg_realloc(cnt_id2record,
@@ -438,7 +489,7 @@ int counter_register(	counter_handle_t* handle, const char* group,
 	str n;
 	struct counter_record* cnt_rec;
 
-	if (unlikely(_cnts_vals)) {
+	if (unlikely(cnts_max_rows)) {
 		/* too late */
 		BUG("late attempt to register counter: %s.%s\n", group, name);
 		goto error;
@@ -554,7 +605,7 @@ counter_val_t counter_get_raw_val(counter_handle_t handle)
 		BUG("counters not fully initialized yet\n");
 		return 0;
 	}
-	if (unlikely(handle.id >= cnts_no || handle.id < 0)) {
+	if (unlikely(handle.id >= cnts_no || (short)handle.id < 0)) {
 		BUG("invalid counter id %d (max %d)\n", handle.id, cnts_no - 1);
 		return 0;
 	}
@@ -597,7 +648,7 @@ void counter_reset(counter_handle_t handle)
 {
 	int r;
 
-	if (unlikely(_cnts_vals == 0)) {
+	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
 		BUG("counters not fully initialized yet\n");
 		return;
@@ -622,7 +673,7 @@ void counter_reset(counter_handle_t handle)
  */
 char* counter_get_name(counter_handle_t handle)
 {
-	if (unlikely(_cnts_vals == 0)) {
+	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
 		BUG("counters not fully initialized yet\n");
 		goto error;
@@ -645,7 +696,7 @@ error:
  */
 char* counter_get_group(counter_handle_t handle)
 {
-	if (unlikely(_cnts_vals == 0)) {
+	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
 		BUG("counters not fully initialized yet\n");
 		goto error;
@@ -668,7 +719,7 @@ error:
  */
 char* counter_get_doc(counter_handle_t handle)
 {
-	if (unlikely(_cnts_vals == 0)) {
+	if (unlikely(_cnts_vals == 0 || cnt_id2record == 0)) {
 		/* not init yet */
 		BUG("counters not fully initialized yet\n");
 		goto error;
