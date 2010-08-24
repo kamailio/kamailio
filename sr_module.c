@@ -549,7 +549,7 @@ reload:
 	if (((error =(char*)dlerror())==0) && mr) {
 		/* no error call it */
 		new_dlflags=dlflags;
-		if (mr(path, &dlflags, 0, 0)!=0) {
+		if (mr(path, &new_dlflags, 0, 0)!=0) {
 			LOG(L_ERR, "ERROR: load_module: %s: mod_register failed\n", path);
 			goto error1;
 		}
