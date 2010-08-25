@@ -1441,7 +1441,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	LM_ERR("you can't call alias_contact twice, check your config!\n");
 	return -1;
     }
-    param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* : */ + 5 /* port */ +
+    param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */ +
 	1 /* t */ + 1 /* proto */;
     param = (char*)pkg_malloc(param_len);
     if (!param) {
@@ -1457,7 +1457,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	return -1;
     }
     at = at + ip_len;
-    append_chr(at, ':');
+    append_chr(at, '~');
     port = int2str(msg->rcv.src_port, &len);
     append_str(at, port, len);
     append_chr(at, 't');
@@ -1500,7 +1500,8 @@ static int
 handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
 {
     str uri, proto;
-    char buf[MAX_URI_SIZE], *val, *sep, *trans, *at, *next, *cur_uri, *rest;
+    char buf[MAX_URI_SIZE], *val, *sep, *trans, *at, *next, *cur_uri, *rest,
+	*col;
     unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
 	ip_port_len;
 
@@ -1543,6 +1544,13 @@ handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
     append_str(at, "sip:", 4);
     ip_port_len = sep - val;
     alias_len = SALIAS_LEN + ip_port_len + 2 /* tn */;
+    /* replace ~ with : */
+    col = memchr(val, 126 /* ~ */, ip_port_len); 
+    if (col == NULL) {
+	LM_ERR("no '~' in alias param value\n");
+	return -1;
+    }
+    *(col) = ':';
     memcpy(at, val, ip_port_len);
     at = at + ip_port_len;
     trans = sep + 1;
