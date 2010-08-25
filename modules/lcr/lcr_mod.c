@@ -1695,7 +1695,12 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 /*
  * Load info of matching GWs into gw_uri_avps
  */
+<<<<<<< HEAD
 static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
+=======
+static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id,
+					pv_spec_t* _from_uri)
+>>>>>>> ef56e6b... lcr: fix load_gws() 2nd param
 {
     str ruri_user, from_uri;
     int i, j, lcr_id;
@@ -1704,6 +1709,11 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
     struct lcr_info **lcrs, *lcr_rec, *pl;
     struct gw_info *gws;
+<<<<<<< HEAD
+=======
+    struct target *t;
+    pv_value_t pv_val;
+>>>>>>> ef56e6b... lcr: fix load_gws() 2nd param
 
     /* Get and check parameter values */
     if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
@@ -1714,6 +1724,7 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
+<<<<<<< HEAD
 
     if (get_str_fparam(&from_uri, _m, (fparam_t *)_from_uri) != 0) {
 	LM_ERR("no from_uri parameter value\n");
@@ -1722,6 +1733,23 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
     if (from_uri.len == 0) {
 	LM_ERR("empry from_uri param value\n");
 	return -1;
+=======
+    if (_from_uri) {
+		if (pv_get_spec_value(_m, _from_uri, &pv_val) == 0) {
+			if (pv_val.flags & PV_VAL_STR)
+				from_uri = pv_val.rs;
+			else {
+				LM_ERR("non string from_uri parameter value\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("could not get from_uri pvar value\n");
+			return -1;
+		}
+    } else {
+	from_uri.len = 0;
+	from_uri.s = (char *)0;
+>>>>>>> ef56e6b... lcr: fix load_gws() 2nd param
     }
 
     /* Use gws and lcr rules with index lcr_id */
@@ -1815,7 +1843,27 @@ static int load_gws(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 	add_avp(lcr_id_avp_type, lcr_id_avp, val);
     }
     
+<<<<<<< HEAD
     return 1;
+=======
+    if (gw_index > 0) {
+	return 1;
+    } else {
+	return 2;
+    }
+}
+
+
+static int load_gws_1(struct sip_msg* _m, char *_lcr_id, char *_s2)
+{
+    return load_gws(_m, (fparam_t *)_lcr_id, 0);
+}
+
+
+static int load_gws_2(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
+{
+    return load_gws(_m, (fparam_t *)_lcr_id, (pv_spec_t *)_from_uri);
+>>>>>>> ef56e6b... lcr: fix load_gws() 2nd param
 }
 
 
