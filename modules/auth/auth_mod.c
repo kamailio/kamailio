@@ -544,7 +544,7 @@ static int fixup_pv_auth(void **param, int param_no)
 	switch(param_no) {
 		case 1:
 		case 2:
-			return fixup_var_str_12(param, 1);
+			return fixup_var_pve_str_12(param, 1);
 		case 3:
 			return fixup_var_int_12(param, 1);
 	}
