@@ -1649,7 +1649,8 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 /*
  * Load info of matching GWs into gw_uri_avps
  */
-static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id, fparam_t *_from_uri)
+static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id,
+					pv_spec_t* _from_uri)
 {
     str ruri_user, from_uri;
     int i, j, lcr_id;
@@ -1659,6 +1660,7 @@ static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id, fparam_t *_from_uri)
     struct rule_info **rules, *rule, *pl;
     struct gw_info *gws;
     struct target *t;
+    pv_value_t pv_val;
 
     /* Get and check parameter values */
     if (get_int_fparam(&lcr_id, _m, _lcr_id) != 0) {
@@ -1670,14 +1672,17 @@ static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id, fparam_t *_from_uri)
 	return -1;
     }
     if (_from_uri) {
-	if (get_str_fparam(&from_uri, _m, _from_uri) != 0) {
-	    LM_ERR("no from_uri parameter value\n");
-	    return -1;
-	}
-	if (from_uri.len == 0) {
-	    LM_ERR("empty from_uri parameter value\n");
-	    return -1;
-	}
+		if (pv_get_spec_value(_m, _from_uri, &pv_val) == 0) {
+			if (pv_val.flags & PV_VAL_STR)
+				from_uri = pv_val.rs;
+			else {
+				LM_ERR("non string from_uri parameter value\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("could not get from_uri pvar value\n");
+			return -1;
+		}
     } else {
 	from_uri.len = 0;
 	from_uri.s = (char *)0;
@@ -1787,13 +1792,13 @@ static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id, fparam_t *_from_uri)
 
 static int load_gws_1(struct sip_msg* _m, char *_lcr_id, char *_s2)
 {
-    return load_gws(_m, (fparam_t *)_lcr_id, (fparam_t *)0);
+    return load_gws(_m, (fparam_t *)_lcr_id, 0);
 }
 
 
 static int load_gws_2(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
 {
-    return load_gws(_m, (fparam_t *)_lcr_id, (fparam_t *)_from_uri);
+    return load_gws(_m, (fparam_t *)_lcr_id, (pv_spec_t *)_from_uri);
 }
 
 
