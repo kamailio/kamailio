@@ -342,7 +342,7 @@ static int fixup_sl_reply(void** param, int param_no)
 	if (param_no == 1) {
 		return fixup_var_int_12(param, 1);
 	} else if (param_no == 2) {
-		return fixup_var_str_12(param, 2);
+		return fixup_var_pve_str_12(param, 2);
 	}
 	return 0;
 }
