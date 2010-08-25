@@ -155,7 +155,7 @@ static int change_reply_status_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		return fixup_var_int_12(param, param_no);
 	} else if (param_no == 2)
-		return fixup_var_str_12(param, param_no);
+		return fixup_var_pve_str_12(param, param_no);
 	else
 		return 0;
 }
