@@ -50,7 +50,8 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 
 	uri.s = get_branch(idx, &uri.len, &lq, &duri, &path, &fl, &fsocket);
 
-	if(uri.s == 0)
+	/* branch(count) doesn't need a valid branch, everything else does */
+	if(uri.s == 0 && ( param->pvn.u.isname.name.n != 5/* count*/ ))
 	{
 		LM_ERR("error accessing branch [%d]\n", idx);
 		return pv_get_null(msg, param, res);
