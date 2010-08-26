@@ -597,11 +597,12 @@ int mt_table_spec(char* val)
 	param_t* params_list = NULL;
 	param_hooks_t phooks;
 	param_t *pit=NULL;
-	if(val==NULL)
-		return -1;
 	m_tree_t tmp;
 	m_tree_t *it, *prev, *ndl;
 	str s;
+	
+	if(val==NULL)
+		return -1;
 
 	if(!shm_initialized())
 	{
