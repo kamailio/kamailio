@@ -1595,6 +1595,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
 	str* to_tag;
+	str reason;
 #ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
 #endif
@@ -1605,7 +1606,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	relayed_msg=0;
 	relayed_code=0;
 	totag_retr=0;
-	str reason;
 
 
 	/* remember, what was sent upstream to know whether we are

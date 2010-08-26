@@ -402,6 +402,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 					char* contacts_avp_param)
 {
 	pv_spec_t avp_spec;
+	unsigned short avp_type;
 
 	if (fr_timer_param && *fr_timer_param) {
 		fr_timer_str.s = fr_timer_param;
@@ -417,12 +418,12 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 				return -1;
 			}
 
-			if(pv_get_avp_name(0, &avp_spec.pvp, &fr_timer_avp, 
-						(unsigned short*)&fr_timer_avp_type)!=0)
+			if(pv_get_avp_name(0, &avp_spec.pvp, &fr_timer_avp, &avp_type)!=0)
 			{
 				LM_ERR("[%s]- invalid AVP definition\n", fr_timer_param);
 				return -1;
 			}
+			fr_timer_avp_type = avp_type;
 		} else {
 			if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
 			&fr_timer_avp, &fr_timer_index)<0) {
@@ -448,11 +449,12 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 			}
 
 			if(pv_get_avp_name(0, &avp_spec.pvp, &fr_inv_timer_avp,
-						(unsigned short*)&fr_inv_timer_avp_type)!=0)
+								&avp_type)!=0)
 			{
 				LM_ERR("[%s]- invalid AVP definition\n", fr_inv_timer_param);
 				return -1;
 			}
+			fr_inv_timer_avp_type = avp_type;
 		} else {
 			if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
 			&fr_inv_timer_avp, &fr_inv_timer_index)<0) {
@@ -476,10 +478,11 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 			}
 
 			if(pv_get_avp_name(0, &(avp_spec.pvp), &contacts_avp,
-						(unsigned short*)&contacts_avp_type) != 0) {
+						&avp_type) != 0) {
 				LM_ERR("invalid AVP definition <%s>\n", contacts_avp_param);
 				return -1;
 			}
+			contacts_avp_type = avp_type;
 		} else {
 			if (parse_avp_spec( &contacts_avp_str, &contacts_avp_type,
 								&contacts_avp, &contacts_avp_index)<0) {

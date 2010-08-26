@@ -808,7 +808,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 	 * equals the address provided by this route; if does -> loose */
 	DEBUG("checking INVITE's destination against its first route.\n");
 	URI_PORT(&topr_uri, uri_port);
-	if (! (dst_port = su_getport((void *)&dst_inv->to)))
+	if (! (dst_port = su_getport(&dst_inv->to)))
 		return 0; /* not really expected */
 	if (dst_port != uri_port)
 		return F_RB_NH_STRICT;
@@ -821,7 +821,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 		/* we have an IP address in route -> comparison can go swiftly */
 		if (init_su(&uri_sau, uri_ia, uri_port) < 0)
 			return 0; /* not really expected */
-		if (su_cmp(&uri_sau, (void *)&dst_inv->to))
+		if (su_cmp(&uri_sau, &dst_inv->to))
 			/* ;lr and sent there */
 			return F_RB_NH_LOOSE;
 		else
