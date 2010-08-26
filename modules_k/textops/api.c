@@ -53,12 +53,14 @@ int remove_hf_api(struct sip_msg *msg, str* str_hf){
 
 int search_append_api(struct sip_msg *msg, str *regex, str *data_str){
 	int retval;
+	char *data;
+	void **param;
 	
-	char *data=pkg_malloc(data_str->len+1);
+	data=pkg_malloc(data_str->len+1);
 	memcpy(data,data_str->s,data_str->len);
 	memset(data+data_str->len,0,1);
 	
-	void **param=pkg_malloc(sizeof(void*));
+	param=pkg_malloc(sizeof(void*));
 	*param=pkg_malloc(regex->len+1);
 	memcpy(*param,regex->s,regex->len);
 	memset(*param+regex->len,0,1);
