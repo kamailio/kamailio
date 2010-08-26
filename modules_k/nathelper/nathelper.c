@@ -1442,7 +1442,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	return -1;
     }
     param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */ +
-	1 /* t */ + 1 /* proto */;
+	1 /* ~ */ + 1 /* proto */;
     param = (char*)pkg_malloc(param_len);
     if (!param) {
 	LM_ERR("no pkg memory left for alias param\n");
@@ -1460,7 +1460,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
     append_chr(at, '~');
     port = int2str(msg->rcv.src_port, &len);
     append_str(at, port, len);
-    append_chr(at, 't');
+    append_chr(at, '~');
     if ((msg->rcv.proto < PROTO_UDP) || (msg->rcv.proto > PROTO_SCTP)) {
 	pkg_free(param);
 	LM_ERR("invalid transport protocol\n");
@@ -1500,8 +1500,8 @@ static int
 handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
 {
     str uri, proto;
-    char buf[MAX_URI_SIZE], *val, *sep, *trans, *at, *next, *cur_uri, *rest,
-	*col;
+    char buf[MAX_URI_SIZE], *val, *sep, *at, *next, *cur_uri, *rest,
+	*port, *trans;
     unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
 	ip_port_len;
 
@@ -1535,25 +1535,24 @@ handle_ruri_alias_f(struct sip_msg* msg, char* str1, char* str2)
     /* set dst uri based on alias param value */
     val = rest + ALIAS_LEN;
     val_len = rest_len - ALIAS_LEN;
-    sep = memchr(val, 116 /* t */, val_len);
-    if (sep == NULL) {
-	LM_ERR("no 't' in alias param value\n");
+    port = memchr(val, 126 /* ~ */, val_len);
+    if (port == NULL) {
+	LM_ERR("no '~' in alias param value\n");
+	return -1;
+    }
+    *(port++) = ':';
+    trans = memchr(port, 126 /* ~ */, val_len - (port - val));
+    if (trans == NULL) {
+	LM_ERR("no second '~' in alias param value\n");
 	return -1;
     }
     at = &(buf[0]);
     append_str(at, "sip:", 4);
-    ip_port_len = sep - val;
-    alias_len = SALIAS_LEN + ip_port_len + 2 /* tn */;
-    /* replace ~ with : */
-    col = memchr(val, 126 /* ~ */, ip_port_len); 
-    if (col == NULL) {
-	LM_ERR("no '~' in alias param value\n");
-	return -1;
-    }
-    *(col) = ':';
+    ip_port_len = trans - val;
+    alias_len = SALIAS_LEN + ip_port_len + 2 /* ~n */;
     memcpy(at, val, ip_port_len);
     at = at + ip_port_len;
-    trans = sep + 1;
+    trans = trans + 1;
     if ((ip_port_len + 2 > val_len) || (*trans == ';') || (*trans == '?')) {
 	LM_ERR("no proto in alias param\n");
 	return -1;
