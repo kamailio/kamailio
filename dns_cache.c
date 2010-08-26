@@ -4112,7 +4112,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 	/* fix the values and pointers */
 	new->next = new->prev = NULL;
 #ifdef DNS_LU_LST
-	new->last_used_lst.next = new->last_used_lst.next = NULL;
+	new->last_used_lst.next = new->last_used_lst.prev = NULL;
 #endif
 	new->rr_lst = (struct dns_rr*)translate_pointer((char*)new, (char*)e,
 														(char*)new->rr_lst);
