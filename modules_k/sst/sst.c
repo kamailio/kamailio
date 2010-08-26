@@ -50,6 +50,9 @@
 #include "../../modules/sl/sl.h"
 #include "sst_handlers.h" /* also includes sr_module.h needed by
                              handlers */
+#ifdef STATISTICS
+#include "../../lib/kcore/kstats_wrapper.h"
+#endif
 
 MODULE_VERSION
 
@@ -118,6 +121,7 @@ static param_export_t mod_params[]={
 	{ 0,0,0 }
 };
 
+#ifdef STATISTICS
 /*
  * Export the statistics we have
  */
@@ -125,13 +129,14 @@ static stat_export_t mod_stats[] = {
 	{"expired_sst", 0,  &expired_sst},
 	{0,0,0}
 };
+#endif /* STATISTICS */
 
 struct module_exports exports= {
 	"sst",        /* module's name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,         /* exported functions */
 	mod_params,   /* param exports */
-	mod_stats,    /* exported statistics */
+	0,            /* exported statistics (they are registered from mod_init) */
 	0,            /* exported MI functions */
 	0,            /* exported pseudo-variables */
 	0,            /* extra processes */
