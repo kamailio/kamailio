@@ -365,7 +365,8 @@ static inline void sockaddr2ip_addr(struct ip_addr* ip, struct sockaddr* sa)
 
 
 /* compare 2 sockaddr_unions */
-static inline int su_cmp(union sockaddr_union* s1, union sockaddr_union* s2)
+static inline int su_cmp(const union sockaddr_union* s1,
+						 const union sockaddr_union* s2)
 {
 	if (s1->s.sa_family!=s2->s.sa_family) return 0;
 	switch(s1->s.sa_family){
@@ -387,7 +388,7 @@ static inline int su_cmp(union sockaddr_union* s1, union sockaddr_union* s2)
 
 
 /* gets the port number (host byte order) */
-static inline unsigned short su_getport(union sockaddr_union* su)
+static inline unsigned short su_getport(const union sockaddr_union* su)
 {
 	switch(su->s.sa_family){
 		case AF_INET:
