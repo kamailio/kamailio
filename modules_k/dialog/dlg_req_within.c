@@ -237,6 +237,10 @@ error:
  */
 static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 {
+	uac_req_t uac_r;
+	dlg_t* dialog_info;
+	str met = {"BYE", 3};
+	int result;
 	/* do not send BYE request for non-confirmed dialogs (not supported) */
 	if (cell->state != DLG_STATE_CONFIRMED_NA && cell->state != DLG_STATE_CONFIRMED) {
 		LM_ERR("terminating non-confirmed dialogs not supported\n");
@@ -244,10 +248,6 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	}
 
 	/*verify direction*/
-	uac_req_t uac_r;
-	dlg_t* dialog_info;
-	str met = {"BYE", 3};
-	int result;
 
 	if ((dialog_info = build_dlg_t(cell, dir)) == 0){
 		LM_ERR("failed to create dlg_t\n");
