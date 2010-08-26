@@ -2475,12 +2475,17 @@ int sctp_rcv_loop()
 		
 		/* get ancillary data */
 		for (cmsg=CMSG_FIRSTHDR(&msg); cmsg; cmsg=CMSG_NXTHDR(&msg, cmsg)){
+#ifdef SCTP_EXT
 			if (likely((cmsg->cmsg_level==IPPROTO_SCTP) &&
 						((cmsg->cmsg_type==SCTP_SNDRCV)
-#ifdef SCTP_EXT
 						 || (cmsg->cmsg_type==SCTP_EXTRCV)
-#endif
-						) && (cmsg->cmsg_len>=CMSG_LEN(sizeof(*sinfo)))) ){
+						) && (cmsg->cmsg_len>=CMSG_LEN(sizeof(*sinfo)))) )
+#else  /* !SCTP_EXT -- same as above but w/o SCTP_EXTRCV */
+			if (likely((cmsg->cmsg_level==IPPROTO_SCTP) &&
+						((cmsg->cmsg_type==SCTP_SNDRCV)
+						) && (cmsg->cmsg_len>=CMSG_LEN(sizeof(*sinfo)))) )
+#endif /*SCTP_EXT */
+			{
 				sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
 				DBG("sctp recv: message from %s:%d stream %d  ppid %x"
 						" flags %x%s tsn %u" " cumtsn %u assoc_id %d\n",

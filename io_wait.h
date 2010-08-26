@@ -812,12 +812,14 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 	del_events=e->events & ~events;
 	switch(h->poll_method){
 		case POLL_POLL:
-			fd_array_chg(events
 #ifdef POLLRDHUP
+			fd_array_chg(events |
 							/* listen to POLLRDHUP by default (if POLLIN) */
-							| (((int)!(events & POLLIN) - 1) & POLLRDHUP)
-#endif /* POLLRDHUP */
+							(((int)!(events & POLLIN) - 1) & POLLRDHUP)
 						);
+#else /* POLLRDHUP */
+			fd_array_chg(events);
+#endif /* POLLRDHUP */
 			break;
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
