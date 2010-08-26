@@ -1568,6 +1568,7 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id, ice_candidate_data *ice_da
     Bool removed_session_ip, have_sdp;
     SessionInfo session;
     StreamInfo stream;
+    unsigned int priority;
 
     if (msg == NULL)
         return -1;
@@ -1807,7 +1808,7 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id, ice_candidate_data *ice_da
             struct in_addr hexip;
             inet_aton(tokens[0].s, &hexip);
 
-            unsigned int priority = (ice_data == NULL)?get_ice_candidate_priority(priority_str):ice_data->priority;
+            priority = (ice_data == NULL)?get_ice_candidate_priority(priority_str):ice_data->priority;
             port = strtoint(&tokens[j]);
             candidate.s = buf;
             candidate.len = sprintf(candidate.s, "a=candidate:R%x 1 UDP %u %.*s %i typ relay%.*s",
