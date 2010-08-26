@@ -83,7 +83,7 @@
 /* "raw" 2 strings hash
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash2_raw(str* key1, str* key2)
+inline static unsigned int get_hash2_raw(const str* key1, const str* key2)
 {
 	char* p;
 	register unsigned v;
@@ -101,9 +101,9 @@ inline static unsigned int get_hash2_raw(str* key1, str* key2)
 /* "raw" 1 string hash
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash1_raw(char* s, int len)
+inline static unsigned int get_hash1_raw(const char* s, int len)
 {
-	char* p;
+	const char* p;
 	register unsigned v;
 	register unsigned h;
 	
@@ -148,9 +148,9 @@ inline static unsigned int get_hash1_raw(char* s, int len)
 
 /* a little slower than get_hash1_raw() , but better distribution for 
  * numbers and about the same for strings */
-inline static unsigned int get_hash1_raw2(char* s, int len)
+inline static unsigned int get_hash1_raw2(const char* s, int len)
 {
-	char* p;
+	const char* p;
 	register unsigned v;
 	register unsigned h;
 	
@@ -165,7 +165,7 @@ inline static unsigned int get_hash1_raw2(char* s, int len)
 /* "raw" 2 strings hash optimized for numeric strings (see above)
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash2_raw2(str* key1, str* key2)
+inline static unsigned int get_hash2_raw2(const str* key1, const str* key2)
 {
 	char* p;
 	register unsigned v;
@@ -184,7 +184,7 @@ inline static unsigned int get_hash2_raw2(str* key1, str* key2)
  * insensitive)
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash2_case_raw(str* key1, str* key2)
+inline static unsigned int get_hash2_case_raw(const str* key1, const str* key2)
 {
 	char* p;
 	register unsigned v;
@@ -202,9 +202,9 @@ inline static unsigned int get_hash2_case_raw(str* key1, str* key2)
 /* "raw" 1 string case insensitive hash
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash1_case_raw(char* s, int len)
+inline static unsigned int get_hash1_case_raw(const char* s, int len)
 {
-	char* p;
+	const char* p;
 	register unsigned v;
 	register unsigned h;
 	
@@ -218,9 +218,9 @@ inline static unsigned int get_hash1_case_raw(char* s, int len)
 /* same as get_hash1_raw2, but case insensitive and slower
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash1_case_raw2(char* s, int len)
+inline static unsigned int get_hash1_case_raw2(const char* s, int len)
 {
-	char* p;
+	const char* p;
 	register unsigned v;
 	register unsigned h;
 	
@@ -236,7 +236,8 @@ inline static unsigned int get_hash1_case_raw2(char* s, int len)
  * same as get_hash2_raw2 but case insensitive and slower
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */
-inline static unsigned int get_hash2_case_raw2(str* key1, str* key2)
+inline static unsigned int get_hash2_case_raw2(const str* key1,
+											   const str* key2)
 {
 	char* p;
 	register unsigned v;

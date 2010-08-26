@@ -96,7 +96,7 @@ inline static void str_hash_add(struct str_hash_table* ht,
 
 
 inline static struct str_hash_entry* str_hash_get(struct str_hash_table* ht,
-									char* key, int len)
+									const char* key, int len)
 {
 	int h;
 	struct str_hash_entry* e;
