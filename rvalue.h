@@ -240,5 +240,5 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 void rve_destroy(struct rval_expr* rve);
 
 /** fix a rval_expr. */
-int fix_rval_expr(void** p);
+int fix_rval_expr(void* p);
 #endif /* _rvalue_h */

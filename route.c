@@ -549,7 +549,7 @@ int fix_expr(struct expr* exp)
 			   to non-rvals, e.g. string, avp a.s.o and needs to be done
 			   before MATCH_OP and other fixups) */
 			if (exp->l_type==RVEXP_O){
-				if ((ret=fix_rval_expr(&exp->l.param))<0){
+				if ((ret=fix_rval_expr(exp->l.param))<0){
 					ERR("Unable to fix left rval expression\n");
 					return ret;
 				}
@@ -557,7 +557,7 @@ int fix_expr(struct expr* exp)
 					exp_optimize_left(exp);
 			}
 			if (exp->r_type==RVE_ST){
-				if ((ret=fix_rval_expr(&exp->r.param))<0){
+				if ((ret=fix_rval_expr(exp->r.param))<0){
 					ERR("Unable to fix right rval expression\n");
 					return ret;
 				}
@@ -747,7 +747,7 @@ int fix_actions(struct action* a)
 						return E_UNSPEC;
 					}
 					*/
-					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
+					if ((ret=fix_rval_expr(t->val[0].u.data))<0)
 						goto error;
 				}
 				if ( (t->val[1].type==ACTIONS_ST)&&(t->val[1].u.data) ){
@@ -775,7 +775,7 @@ int fix_actions(struct action* a)
 					goto error;
 				}
 				if (t->val[0].u.data){
-					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
+					if ((ret=fix_rval_expr(t->val[0].u.data))<0)
 						goto error;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null switch()"
@@ -827,7 +827,7 @@ int fix_actions(struct action* a)
 						ret = E_SCRIPT;
 						goto error;
 					}
-					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
+					if ((ret=fix_rval_expr(t->val[0].u.data))<0)
 						goto error;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null while()"
@@ -871,7 +871,7 @@ int fix_actions(struct action* a)
 						ret = E_SCRIPT;
 						goto error;
 					}
-					if ((ret=fix_rval_expr(&t->val[0].u.data))<0)
+					if ((ret=fix_rval_expr(t->val[0].u.data))<0)
 						goto error;
 				}else{
 					LOG(L_CRIT, "BUG: fix_actions: null drop/return"
@@ -910,7 +910,7 @@ int fix_actions(struct action* a)
 						goto error;
 					}
 				}
-				if ((ret=fix_rval_expr(&t->val[1].u.data))<0)
+				if ((ret=fix_rval_expr(t->val[1].u.data))<0)
 					goto error;
 				break;
 
@@ -963,7 +963,7 @@ int fix_actions(struct action* a)
 								/* expression is not constant => fixup &
 								   optimize it */
 								rve_param_no++;
-								if ((ret=fix_rval_expr(&t->val[i+2].u.data))
+								if ((ret=fix_rval_expr(t->val[i+2].u.data))
 										< 0) {
 									ERR("rve fixup failed\n");
 									ret = E_BUG;
@@ -1104,7 +1104,7 @@ int fix_actions(struct action* a)
 				if (t->val[0].type == RVE_ST) {
 					rve=(struct rval_expr*)t->val[0].u.data;
 					if (!rve_is_constant(rve)) {
-						if ((ret=fix_rval_expr(&t->val[0].u.data)) < 0){
+						if ((ret=fix_rval_expr(t->val[0].u.data)) < 0){
 							ERR("route() failed to fix rve at %s:%d\n",
 								(t->cfile)?t->cfile:"line", t->cline);
 							ret = E_BUG;

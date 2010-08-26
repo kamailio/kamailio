@@ -2899,7 +2899,7 @@ static int fix_match_rve(struct rval_expr* rve)
 	v.s.s=0;
 	v.re.regex=0;
 	/* normal fix-up for the  left side */
-	ret=fix_rval_expr((void**)&rve->left.rve);
+	ret=fix_rval_expr((void*)rve->left.rve);
 	if (ret<0) return ret;
 	
 	/* fixup the right side (RE) */
@@ -2946,7 +2946,7 @@ static int fix_match_rve(struct rval_expr* rve)
 			goto error;
 	}else{
 		/* right side is not constant => normal fixup */
-		return fix_rval_expr((void**)&rve->right.rve);
+		return fix_rval_expr((void*)rve->right.rve);
 	}
 	return 0;
 error:
@@ -3688,19 +3688,16 @@ error:
 /** fix a rval_expr.
  * fixes action, bexprs, resolves selects, pvars and
  * optimizes simple sub expressions (e.g. 1+2).
- * It might modify *p.
  *
- * @param p - double pointer to a rval_expr (might be changed to a new one)
- * @return 0 on success, <0 on error (modifies also *p)
+ * @param p - pointer to a rval_expr
+ * @return 0 on success, <0 on error (modifies also *(struct rval_expr*)p)
  */
-int fix_rval_expr(void** p)
+int fix_rval_expr(void* p)
 {
-	struct rval_expr** prve;
 	struct rval_expr* rve;
 	int ret;
 	
-	prve=(struct rval_expr**)p;
-	rve=*prve;
+	rve=(struct rval_expr*)p;
 	
 	switch(rve->op){
 		case RVE_NONE_OP:
@@ -3716,7 +3713,7 @@ int fix_rval_expr(void** p)
 		case RVE_DEFINED_OP:
 		case RVE_INT_OP:
 		case RVE_STR_OP:
-			ret=fix_rval_expr((void**)&rve->left.rve);
+			ret=fix_rval_expr((void*)rve->left.rve);
 			if (ret<0) return ret;
 			break;
 		case RVE_MUL_OP:
@@ -3740,9 +3737,9 @@ int fix_rval_expr(void** p)
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
 		case RVE_CONCAT_OP:
-			ret=fix_rval_expr((void**)&rve->left.rve);
+			ret=fix_rval_expr((void*)rve->left.rve);
 			if (ret<0) return ret;
-			ret=fix_rval_expr((void**)&rve->right.rve);
+			ret=fix_rval_expr((void*)rve->right.rve);
 			if (ret<0) return ret;
 			break;
 		case RVE_MATCH_OP:
