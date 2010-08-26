@@ -241,6 +241,7 @@ static int mod_init(void)
 	pv_spec_t avp_spec;
 	str s;
 	bind_usrloc_t bind_usrloc;
+	qvalue_t dq;
 
 
 #ifdef STATISTICS
@@ -326,7 +327,7 @@ static int mod_init(void)
 	}
 
 	/* Normalize default_q parameter */
-	qvalue_t dq = cfg_get(registrar, registrar_cfg, default_q);
+	dq = cfg_get(registrar, registrar_cfg, default_q);
 	if ( dq!= Q_UNSPECIFIED) {
 		if (dq > MAX_Q) {
 			LM_DBG("default_q = %d, lowering to MAX_Q: %d\n", dq, MAX_Q);
