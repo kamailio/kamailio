@@ -86,6 +86,10 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP_EMPTY_CR_FOUND, H_SKIP_EMPTY_CRLF_FOU
 		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
 		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE,
 		H_STUN_MSG, H_STUN_READ_BODY, H_STUN_FP, H_STUN_END, H_PING_CRLF
+#ifdef READ_HTTP11
+		, H_HTTP11_CHUNK_START, H_HTTP11_CHUNK_SIZE,
+		H_HTTP11_CHUNK_BODY, H_HTTP11_CHUNK_END, H_HTTP11_CHUNK_FINISH
+#endif
 	};
 
 enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1,
@@ -129,6 +133,9 @@ struct tcp_req{
 	char* body; /* body position */
 	unsigned int b_size; /* buffer size-1 (extra space for 0-term)*/
 	int content_len;
+#ifdef READ_HTTP11
+	int chunk_size;
+#endif
 	unsigned short flags; /* F_TCP_REQ_HAS_CLEN | F_TCP_REQ_COMPLETE */
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
@@ -138,9 +145,15 @@ struct tcp_req{
 /* tcp_req flags */
 #define F_TCP_REQ_HAS_CLEN 1
 #define F_TCP_REQ_COMPLETE 2
+#ifdef READ_HTTP11
+#define F_TCP_REQ_BCHUNKED 4
+#endif
 
 #define TCP_REQ_HAS_CLEN(tr)  ((tr)->flags & F_TCP_REQ_HAS_CLEN)
 #define TCP_REQ_COMPLETE(tr)  ((tr)->flags & F_TCP_REQ_COMPLETE)
+#ifdef READ_HTTP11
+#define TCP_REQ_BCHUNKED(tr)  ((tr)->flags & F_TCP_REQ_BCHUNKED)
+#endif
 
 
 struct tcp_connection;

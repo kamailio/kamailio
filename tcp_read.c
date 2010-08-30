@@ -103,6 +103,11 @@ int is_msg_complete(struct tcp_req* r);
 
 #endif /* USE_STUN */
 
+#ifdef READ_HTTP11
+#define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Lenght: 0\r\n\r\n"
+#define HTTP11CONTINUE_LEN	(sizeof(HTTP11CONTINUE)-1)
+#endif
+
 #define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
 
 /* types used in io_wait* */
@@ -115,6 +120,47 @@ static int tcpmain_sock=-1;
 
 static struct local_timer tcp_reader_ltimer;
 static ticks_t tcp_reader_prev_ticks;
+
+#ifdef READ_HTTP11
+int tcp_http11_continue(struct tcp_connection *c)
+{
+	struct dest_info dst;
+	char *p;
+	struct msg_start fline;
+	int ret;
+
+	ret = 0;
+
+	p = parse_first_line(c->req.buf, c->req.pos - c->req.buf, &fline);
+	if(p==NULL)
+		return 0;
+
+	if(fline.type!=SIP_REQUEST)
+		return 0;
+
+	/* check if http request */
+	if(fline.u.request.version.len < HTTP_VERSION_LEN
+			|| strncasecmp(fline.u.request.version.s,
+				HTTP_VERSION, HTTP_VERSION_LEN))
+		return 0;
+
+	/* check for Expect header */
+	if(strstr(c->req.buf, "Expect: 100-continue")!=NULL)
+	{
+		init_dst_from_rcv(&dst, &c->rcv);
+		if (tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
+			LOG(L_ERR, "HTTP/1.1 continue failed\n");
+		}
+	}
+	/* check for Transfer-Encoding header */
+	if(strstr(c->req.buf, "Transfer-Encoding: chunked")!=NULL)
+	{
+		c->req.flags |= F_TCP_REQ_BCHUNKED;
+		ret = 1;
+	}
+	return ret;
+}
+#endif /* HTTP11 */
 
 
 /** reads data from an existing tcp connection.
@@ -400,6 +446,10 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				if (*p=='\n'){
 					/* found LF CR LF */
 					r->state=H_BODY;
+#ifdef READ_HTTP11
+					if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0)
+						tcp_http11_continue(c);
+#endif
 					if (TCP_REQ_HAS_CLEN(r)){
 						r->body=p+1;
 						r->bytes_to_go=r->content_len;
@@ -410,6 +460,17 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						}
 					}else{
 						if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0) {
+#ifdef READ_HTTP11
+							if(TCP_REQ_BCHUNKED(r)) {
+								r->body=p+1;
+								/* at least 3 bytes: 0\r\n */
+								r->bytes_to_go=3;
+								p++;
+								r->content_len = 0;
+								r->state=H_HTTP11_CHUNK_START;
+								break;
+							}
+#endif
 							r->body=p+1;
 							r->bytes_to_go=0;
 							r->flags|=F_TCP_REQ_COMPLETE;
@@ -598,7 +659,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 			change_state_case(H_CONT_LEN11, 'G', 'g', H_CONT_LEN12);
 			change_state_case(H_CONT_LEN12, 'T', 't', H_CONT_LEN13);
 			change_state_case(H_CONT_LEN13, 'H', 'h', H_L_COLON);
-			
+
 			case H_L_COLON:
 				switch(*p){
 					case ' ':
@@ -611,7 +672,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				};
 				p++;
 				break;
-			
+
 			case  H_CONT_LEN_BODY:
 				switch(*p){
 					case ' ':
@@ -635,7 +696,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				}
 				p++;
 				break;
-				
+
 			case H_CONT_LEN_BODY_PARSE:
 				switch(*p){
 					case '0':
@@ -670,6 +731,87 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				p++;
 				break;
 			
+#ifdef READ_HTTP11
+			case H_HTTP11_CHUNK_START: /* start a new body chunk: SIZE\r\nBODY\r\n */
+				r->chunk_size = 0;
+				r->state = H_HTTP11_CHUNK_SIZE;
+				break;
+			case H_HTTP11_CHUNK_BODY: /* content of chunnk */
+				remaining=r->pos-p;
+				if (remaining>r->bytes_to_go) remaining=r->bytes_to_go;
+				r->bytes_to_go-=remaining;
+				p+=remaining;
+				if (r->bytes_to_go==0){
+					r->state = H_HTTP11_CHUNK_END;
+					/* shift back body content */
+					if(p-r->chunk_size>0) {
+						memcpy(r->body + r->content_len, p - r->chunk_size,
+								r->chunk_size);
+						r->content_len += r->chunk_size;
+					}
+					goto skip;
+				}
+				break;
+
+			case H_HTTP11_CHUNK_END:
+				switch(*p){
+					case '\r':
+					case ' ':
+					case '\t': /* skip */
+						break;
+					case '\n':
+						r->state = H_HTTP11_CHUNK_START;
+						break;
+					default:
+						LM_ERR("bad chunk, unexpected "
+								"char %c in state %d\n", *p, r->state);
+						r->state=H_SKIP; /* try to find another?*/
+				}
+				p++;
+				break;
+
+			case H_HTTP11_CHUNK_SIZE:
+				switch(*p){
+					case '0': case '1': case '2': case '3':
+					case '4': case '5': case '6': case '7':
+					case '8': case '9':
+						r->chunk_size <<= 4;
+						r->chunk_size += *p - '0';
+						break;
+					case 'a': case 'b': case 'c': case 'd':
+					case 'e': case 'f':
+						r->chunk_size <<= 4;
+						r->chunk_size += *p - 'a' + 10;
+						break;
+					case 'A': case 'B': case 'C': case 'D':
+					case 'E': case 'F':
+						r->chunk_size <<= 4;
+						r->chunk_size += *p - 'A' + 10;
+						break;
+					case '\r':
+					case ' ':
+					case '\t': /* skip */
+						break;
+					case '\n':
+						/* end of line, parse successful */
+						r->state=H_HTTP11_CHUNK_BODY;
+						r->bytes_to_go = r->chunk_size;
+						if (r->bytes_to_go==0){
+							r->state=H_HTTP11_CHUNK_FINISH;
+							r->flags|=F_TCP_REQ_COMPLETE;
+							p++;
+							goto skip;
+						}
+						break;
+					default:
+						LM_ERR("bad chunk size value, unexpected "
+								"char %c in state %d\n", *p, r->state);
+						r->state=H_SKIP; /* try to find another?*/
+				}
+				p++;
+				break;
+#endif
+
 			default:
 				LOG(L_CRIT, "BUG: tcp_read_headers: unexpected state %d\n",
 						r->state);
@@ -799,6 +941,15 @@ again:
 				/* stun request */
 				ret = stun_process_msg(req->start, req->parsed-req->start,
 									 &con->rcv);
+			}else
+#endif
+#ifdef READ_HTTP11
+			if (unlikely(req->state==H_HTTP11_CHUNK_FINISH)){
+				/* http chunked request */
+				req->body[req->content_len] = 0;
+				ret = receive_msg(req->start,
+						req->body + req->content_len - req->start,
+						&con->rcv);
 			}else
 #endif
 				ret = receive_msg(req->start, req->parsed-req->start,
