@@ -54,10 +54,18 @@ index 54c1a60..1c88b99 100644
 +AC_SUBST(LIBS_XMLRPC)
  AC_OUTPUT
 diff --git a/rtpp_command.c b/rtpp_command.c
-index fa342b8..2b3059d 100644
+index fa342b8..53c4a40 100644
 --- a/rtpp_command.c
 +++ b/rtpp_command.c
-@@ -67,6 +67,9 @@ struct proto_cap proto_caps[] = {
+@@ -52,6 +52,7 @@
+ #include "rtpp_record.h"
+ #include "rtpp_session.h"
+ #include "rtpp_util.h"
++#include "rtpp_notify.h"
+ 
+ struct proto_cap proto_caps[] = {
+     /*
+@@ -67,6 +68,9 @@ struct proto_cap proto_caps[] = {
      { "20081102", "Support for setting codecs in the update/lookup command" },
      { "20081224", "Support for session timeout notifications" },
      { "20090810", "Support for automatic bridging" },
@@ -67,15 +75,17 @@ index fa342b8..2b3059d 100644
      { NULL, NULL }
  };
  
-@@ -266,6 +269,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+@@ -266,7 +270,9 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
      int max_argc;
      char *socket_name_u, *notify_tag;
      struct sockaddr *local_addr;
 +    struct rtpp_timeout_handler * my_timeout_h;
      char c;
++    int rtp_timeout_type;
  
      requested_nsamples = -1;
-@@ -309,6 +313,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+     ia[0] = ia[1] = NULL;
+@@ -309,6 +315,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
  	    if (++ap >= &argv[10])
  		break;
  	}
@@ -83,13 +93,12 @@ index fa342b8..2b3059d 100644
      cookie = NULL;
      if (argc < 1 || (cf->umode != 0 && argc < 2)) {
  	rtpp_log_write(RTPP_LOG_ERR, cf->glog, "command syntax error");
-@@ -459,9 +464,11 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+@@ -459,22 +466,52 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
      }
      call_id = argv[1];
      if (op == UPDATE || op == LOOKUP || op == PLAY) {
 -	max_argc = (op == UPDATE ? 8 : 6);
-+	if (op == UPDATE) max_argc = 8;
-+	if (op == LOOKUP) max_argc = 7;
++	if (op == UPDATE || op == LOOKUP) max_argc = 9;
 +	else max_argc = 6;
  	if (argc < 5 || argc > max_argc) {
 -	    rtpp_log_write(RTPP_LOG_ERR, cf->glog, "command syntax error");
@@ -97,26 +106,64 @@ index fa342b8..2b3059d 100644
  	    reply_error(cf, controlfd, &raddr, rlen, cookie, 4);
  	    return 0;
  	}
-@@ -469,7 +476,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
- 	to_tag = argv[5];
+ 	from_tag = argv[4];
+-	to_tag = argv[5];
++	if ((op == UPDATE || op == LOOKUP) && argc > 5)
++	    to_tag = argv[5];
  	if (op == PLAY && argv[0][1] != '\0')
  	    playcount = atoi(argv[0] + 1);
 -	if (op == UPDATE && argc > 6) {
+-	    socket_name_u = argv[6];
 +	if ((op == UPDATE || op == LOOKUP) && argc > 6) {
- 	    socket_name_u = argv[6];
++	    if (argc == 7) {
++		// Only the Timeout-Socket is set:
++		socket_name_u = argv[6];
++		rtp_timeout_type = RTP_TIMEOUT_TYPE_NATIVE;
++	    } else {
++		notify_tag = 0;
++		if (argc == 9) {
++		    // 9 Parameters: timeout_type socket notify_tag
++		    rtp_timeout_type = atoi(argv[6]);
++		    socket_name_u = argv[7];
++		    notify_tag = argv[8];
++		} else {
++		    // 8 Parameters: May be timeout_type socket or socket tag
++		    rtp_timeout_type = -1;	
++		    for (t = argv[6]; *t != '\0'; t++) {
++		        // Parameter 6 is not numerical, lets assume it is std. timeout-socket + tag
++		        if (!isdigit(*t)) {
++			    socket_name_u = argv[6];
++		            rtp_timeout_type = RTP_TIMEOUT_TYPE_NATIVE;
++			    notify_tag = argv[7];	
++		            break;
++		        }
++		    }
++		    // Param 6 was numeric? So it must be a timeout_type_indicator
++		    if (rtp_timeout_type == -1) {
++			rtp_timeout_type = atoi(argv[6]);
++			socket_name_u = argv[7];
++		    }
++		}
++	    }
  	    if (strncmp("unix:", socket_name_u, 5) == 0)
  		socket_name_u += 5;
-@@ -924,9 +931,30 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+-	    if (argc == 8) {
+-		notify_tag = argv[7];
++	    if (notify_tag != 0) {
+ 		len = url_unquote((uint8_t *)notify_tag, strlen(notify_tag));
+ 		if (len == -1) {
+ 		    rtpp_log_write(RTPP_LOG_ERR, cf->glog,
+@@ -924,9 +961,29 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
  	}
      }
  
 -    if (op == UPDATE) {
 -	if (cf->timeout_handler.socket_name == NULL && socket_name_u != NULL)
+-	    rtpp_log_write(RTPP_LOG_ERR, spa->log, "must permit notification socket with -n");
 +    if (op == UPDATE || op == LOOKUP) {
 +	if (cf->timeout_handler.socket_name == NULL && socket_name_u != NULL) {
-+#ifdef ENABLE_XMLRPC
-+	    if (strncmp("http://", socket_name_u, 7) == 0) {
-+		rtpp_log_write(RTPP_LOG_INFO, spa->log, "setting Kamailio-timeout handler");
++	    if ((rtp_timeout_type > 0) && (rtp_timeout_type <= RTP_TIMEOUT_TYPE_MAX)) {
++		rtpp_log_write(RTPP_LOG_INFO, spa->log, "setting custom timeout handler (%d)", rtp_timeout_type);
 +		my_timeout_h = malloc(sizeof(struct rtpp_timeout_handler));
 +		if (my_timeout_h == NULL) {
 +			rtpp_log_write(RTPP_LOG_ERR, spa->log, "Unable to allocate memory");
@@ -125,6 +172,7 @@ index fa342b8..2b3059d 100644
 +	    		my_timeout_h->socket_name = (char *)malloc(strlen(socket_name_u) + 1);
 +	    		if(my_timeout_h->socket_name != NULL) {
 +				strcpy(my_timeout_h->socket_name, socket_name_u);
++				spa->timeout_data.rtp_timeout_type = rtp_timeout_type;
 +				spa->timeout_data.handler = my_timeout_h;
 +				spa->timeout_data.notify_tag = 0;
 +			} else {
@@ -133,41 +181,43 @@ index fa342b8..2b3059d 100644
 +			}
 +		}
 +	    } else
- 	    rtpp_log_write(RTPP_LOG_ERR, spa->log, "must permit notification socket with -n");
-+#endif
++                rtpp_log_write(RTPP_LOG_ERR, spa->log, "must permit notification socket with -n");
 +	}
  	if (spa->timeout_data.notify_tag != NULL) {
  	    free(spa->timeout_data.notify_tag);
  	    spa->timeout_data.notify_tag = NULL;
 diff --git a/rtpp_notify.c b/rtpp_notify.c
-index 26bb9a5..9fe6a6d 100644
+index 26bb9a5..1553cb4 100644
 --- a/rtpp_notify.c
 +++ b/rtpp_notify.c
-@@ -39,10 +39,23 @@
+@@ -38,11 +38,26 @@
+ 
  #include "rtpp_log.h"
  #include "rtpp_session.h"
- 
++#include "rtpp_notify.h"
++
 +#ifdef ENABLE_XMLRPC
 +#include <xmlrpc.h>
 +#include <xmlrpc_client.h>
 +#define XMLRPC_CLIENT_NAME       "XML-RPC RTPProxy Client"
 +#define XMLRPC_CLIENT_VERSION    "0.1"
 +#endif
-+
+ 
  struct rtpp_notify_wi
  {
      char *notify_buf;
      int len;
++    int rtp_timeout_type;
 +#ifdef ENABLE_XMLRPC
 +    char *call_id;
 +    int call_id_len;
-+    char *xmlrpc_server;
-+    int xmlrpc_server_len;
++    char *param;
++    int param_len;
 +#endif
      struct rtpp_timeout_handler *th;
      rtpp_log_t glog;
      struct rtpp_notify_wi *next;
-@@ -170,7 +183,7 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
+@@ -170,7 +185,7 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
      struct rtpp_timeout_handler *th = sp->timeout_data.handler;
      int len;
      char *notify_buf;
@@ -176,7 +226,7 @@ index 26bb9a5..9fe6a6d 100644
      if (th == NULL) {
          /* Not an error, just nothing to do */
          return 0;
-@@ -202,8 +215,6 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
+@@ -202,8 +217,6 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
          }
          wi->notify_buf = notify_buf;
      }
@@ -185,35 +235,36 @@ index 26bb9a5..9fe6a6d 100644
      if (sp->timeout_data.notify_tag == NULL) {
          len = snprintf(wi->notify_buf, len, "%d %d\n",
            sp->ports[0], sp->ports[1]);
-@@ -211,6 +222,54 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
+@@ -211,6 +224,55 @@ rtpp_notify_schedule(struct cfg *cf, struct rtpp_session *sp)
          len = snprintf(wi->notify_buf, len, "%s\n",
            sp->timeout_data.notify_tag);
      }
 +    wi->len = len;
 +
-+
++    // Take RTP-Timeout type
++    wi->rtp_timeout_type = sp->timeout_data.rtp_timeout_type;
 +#ifdef ENABLE_XMLRPC
-+    if (strncmp(wi->th->socket_name, "http://", 7) == 0) {
++    if (wi->rtp_timeout_type == RTP_TIMEOUT_TYPE_KAMAILIO_XMLRPC) {
 +	    // Copy the Socket-Name
 +	    len = strlen(wi->th->socket_name)+1;
-+	    if (wi->xmlrpc_server == NULL) {
-+		wi->xmlrpc_server = malloc(len);
-+		if (wi->xmlrpc_server == NULL) {
++	    if (wi->param == NULL) {
++		wi->param = malloc(len);
++		if (wi->param == NULL) {
 +		    rtpp_notify_queue_return_free_item(wi);
 +		    return -1;
 +		}
 +	    } else {
-+		notify_buf = realloc(wi->xmlrpc_server, len);
++		notify_buf = realloc(wi->param, len);
 +		if (notify_buf == NULL) {
 +		    rtpp_notify_queue_return_free_item(wi);
 +		    return -1;
 +		}
-+		wi->xmlrpc_server = notify_buf;
++		wi->param = notify_buf;
 +	    }
-+	    memset(wi->xmlrpc_server, '\0', len);
-+	    len = snprintf(wi->xmlrpc_server, len, "%s",
++	    memset(wi->param, '\0', len);
++	    len = snprintf(wi->param, len, "%s",
 +		  wi->th->socket_name);
-+	    wi->xmlrpc_server_len = len;
++	    wi->param_len = len;
 +
 +	    // Copy the Call-ID:
 +	    len = strlen(sp->call_id)+1;
@@ -240,7 +291,7 @@ index 26bb9a5..9fe6a6d 100644
  
      wi->glog = cf->glog;
  
-@@ -249,24 +308,63 @@ reconnect_timeout_handler(rtpp_log_t log, struct rtpp_timeout_handler *th)
+@@ -249,24 +311,70 @@ reconnect_timeout_handler(rtpp_log_t log, struct rtpp_timeout_handler *th)
      }
  }
  
@@ -255,7 +306,7 @@ index 26bb9a5..9fe6a6d 100644
 +    xmlrpc_env_init(&env);
 +
 +    /* Get the dialog-Info: */
-+    result = xmlrpc_client_call(&env, wi->xmlrpc_server,
++    result = xmlrpc_client_call(&env, wi->param,
 +                                "dlg_terminate_dlg", "(s)",
 +                                wi->call_id);
 +    if (env.fault_occurred) {
@@ -284,12 +335,19 @@ index 26bb9a5..9fe6a6d 100644
 -        reconnect_timeout_handler(wi->glog, wi->th);
 -
 -        /* If connect fails, no notification will be sent */
++    if (wi->rtp_timeout_type > 0) {
++	switch (wi->rtp_timeout_type) {
 +#ifdef ENABLE_XMLRPC
-+    if (wi->xmlrpc_server_len > 0) {
-+	rtpp_log_write(RTPP_LOG_INFO, wi->glog, "Using XML-RPC-Timeout handler (%s)", wi->xmlrpc_server);
-+	result = do_xmlrpc_timeout_notification(wi->glog, wi);
-+    } else {
++		case RTP_TIMEOUT_TYPE_KAMAILIO_XMLRPC:
++			rtpp_log_write(RTPP_LOG_INFO, wi->glog, "Using XML-RPC-Timeout handler (%s)", wi->param);
++			result = do_xmlrpc_timeout_notification(wi->glog, wi);
++			break;
 +#endif
++		default:
++			rtpp_log_write(RTPP_LOG_ERR, wi->glog, "Invalid/unsupported timeout handler type (%d)", wi->rtp_timeout_type);
++			break;
++	}
++    } else {
          if (wi->th->connected == 0) {
 -            rtpp_log_write(RTPP_LOG_ERR, wi->glog, "unable to send timeout notification");
 -            return;
@@ -316,6 +374,21 @@ index 26bb9a5..9fe6a6d 100644
  
      if (result < 0) {
          wi->th->connected = 0;
+diff --git a/rtpp_notify.h b/rtpp_notify.h
+index 10077a4..3f411cb 100644
+--- a/rtpp_notify.h
++++ b/rtpp_notify.h
+@@ -31,6 +31,10 @@
+ #include "rtpp_defines.h"
+ #include "rtpp_session.h"
+ 
++#define RTP_TIMEOUT_TYPE_NATIVE 0
++#define RTP_TIMEOUT_TYPE_KAMAILIO_XMLRPC 1
++#define RTP_TIMEOUT_TYPE_MAX 1
++
+ int rtpp_notify_schedule(struct cfg *, struct rtpp_session *);
+ int rtpp_notify_init(void);
+ 
 diff --git a/rtpp_session.c b/rtpp_session.c
 index 9962cac..b84cdf3 100644
 --- a/rtpp_session.c
@@ -335,3 +408,15 @@ index 9962cac..b84cdf3 100644
      if (sp->timeout_data.notify_tag != NULL)
  	free(sp->timeout_data.notify_tag);
      hash_table_remove(cf, sp);
+diff --git a/rtpp_session.h b/rtpp_session.h
+index 07aa794..9022f12 100644
+--- a/rtpp_session.h
++++ b/rtpp_session.h
+@@ -38,6 +38,7 @@
+ 
+ struct rtpp_timeout_data {
+     char *notify_tag;
++    int rtp_timeout_type;
+     struct rtpp_timeout_handler *handler;
+ };
+ 
