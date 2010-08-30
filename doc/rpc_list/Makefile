@@ -137,13 +137,26 @@ get_make_idefs=$(subst ^LF^,$(LF),$(shell sed \
 
 
 # get all the lines from the makefile containing variable definitions.
+# It will also return conditionals and try to filter out possible rules.
 # WARNING: does not work with all sed implementation (tested with GNU sed).
 # It uses a hack to restore the LFs (LFs are removed by $(shell)): LFs are
 # replaced with '^LF^' and then ^LF^ is subst'ed back to a real LF.
-get_make_vars=$(subst ^LF^,$(LF),$(shell sed \
- -ne '/^[\t ]*[A-Za-z0-9_-]\+[\t ]*[+:]\?=.*[^\]$$/H'\
- -ne '/^[\t ]*[A-Za-z0-9_-]\+[\t ]*[+:]\?=.*\\$$/,/\(^$$\)\|\([^\]$$\)/H'\
- -ne '$${g;s/\n/^LF^/g;p}'\
+get_make_vars=$(subst ^LF^,$(LF),$(shell sed -n \
+ -e ': start' \
+ -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]*\($$\|.*[^\]$$\)/{H;d}' \
+ -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]\+.*[\]$$/,/[^\]$$/{H;d}' \
+ -e '/^[a-zA-Z._/$$][a-zA-Z0-9._()/$$ \t-]*:\([^=]\|$$\)/b eat_rule' \
+ -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*[^\]$$/{H;d}' \
+ -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*\\$$/,/\(^$$\)\|\([^\]$$\)/{H;d}' \
+ -e ': end' \
+ -e '$${g;s/\n/^LF^/g;p}'\
+ -e 'b' \
+ -e ': eat_rule' \
+ -e '$$b end' \
+ -e 'n' \
+ -e '/^[a-zA-Z._/$$][a-zA-Z0-9._()/$$ \t-]*:\([^=]\|$$\)/b eat_rule' \
+ -e '/^[\t]/b eat_rule' \
+ -e 'b start' \
 < $(1)/Makefile ))
 
 
@@ -159,6 +172,8 @@ INCLUDES:=
 # extract all the includes and defs from the module makefile and
 # evaluate them
 $$(eval $$(call get_make_vars,$$(dir $$(call get_prereq,$(1)))))
+# override COREPATH (we know better)
+COREPATH=../..
 # save the result in a per group e_idefs_<grp_name> var
 $$(eval e_idefs_$$(call get_grp,$(1)):=$$(DEFS) $$(INCLUDES))
 
