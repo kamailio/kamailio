@@ -221,9 +221,20 @@ if (! defined $opt_is_tu){
 	# => we have to create one
 	$src_fname=basename($file);
 	$tmp_file = "/tmp/" . mktemp ("dump_translation_unit_XXXXXX");
-	system("$gcc -fdump-translation-unit $c_defs -c $file -o $tmp_file && \
-			mv \"$src_fname\".001t.tu  $tmp_file") == 0 or
-		die "$gcc failed to generate a translation unit dump from $file";
+	# Note: gcc < 4.5 will produce the translation unit dump in a file in
+	# the current directory. gcc 4.5 will write it in the same directory as
+	# the output file.
+	system("$gcc -fdump-translation-unit $c_defs -c $file -o $tmp_file") == 0
+		or die "$gcc -fdump-translation-unit $c_defs -c $file -o $tmp_file" .
+			"  failed to generate a translation unit dump from $file";
+	if (system("if [ -f \"$src_fname\".001t.tu ]; then \
+					mv \"$src_fname\".001t.tu  $tmp_file; \
+				else mv /tmp/\"$src_fname\".001t.tu  $tmp_file; fi ") != 0) {
+		unlink($tmp_file, "$tmp_file.o");
+		die "could not find the gcc translation unit dump file" .
+				" ($src_fname.001t.tu) neither in the current directory" .
+				" or /tmp";
+	};
 	$tu=GCC::TranslationUnit::Parser->parsefile($tmp_file);
 	print(STDERR "src name $src_fname\n") if $dbg;
 	unlink($tmp_file, "$tmp_file.o");
