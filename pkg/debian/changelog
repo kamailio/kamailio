@@ -1,3 +1,10 @@
+ser (2.99.0-dev1.1) unstable; urgency=low
+
+  * Updated the build dependencies with the doc building tools:
+    docbook2x, xsltproc and lynx.
+
+ -- Andrei Pelinescu - Onciul <andrei@ape.fokus.gmd.de>  Mon, 30 Aug 2010 23:15:18 +0200
+
 ser (2.99.0-dev01) unstable; urgency=low
 
   * Added the ser-db-modules package, containing database using modules and
