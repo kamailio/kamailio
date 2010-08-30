@@ -305,7 +305,7 @@ static int xcaps_put_db(str* user, str *domain, str* path, str *etag,
 	ncols++;
 
 	qcols[ncols] = &str_etag_col;
-	qvals[ncols].type = DB1_STRING;
+	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
 	qvals[ncols].val.str_val= *etag;
 	ncols++;
@@ -431,7 +431,7 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		goto error;
 	}
 	etag.s = etag_hdr.s + 10; /* 'SIP-ETag: ' */
-	etag.len = etag_hdr.len - 12;
+	etag.len = etag_hdr.len - 12; /* 'SIP-ETag: '  '\r\n' */
 	if(xcaps_put_db(&turi.user, &turi.host, &path, &etag, dtype, &body)<0)
 	{
 		LM_ERR("could not store document\n");
