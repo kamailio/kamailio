@@ -62,7 +62,23 @@ override force_grp=
 endif
 
 # command used for gcc (contains extra includes)
-gcc=gcc -I$(COREPATH)/lib -I/usr/include/libxml2
+gcc=gcc
+#-I$(COREPATH)/lib -I$(COREPATH) -I/usr/include/libxml2
+
+# defines used by gcc
+c_defs=-D__CPU_i386 -D__OS_linux -DSER_VER=2099099 -DPKG_MALLOC -DSHM_MEM  \
+		-DSHM_MMAP -DDNS_IP_HACK -DUSE_IPV6 -DUSE_MCAST -DUSE_TCP \
+		-DUSE_DNS_CACHE -DUSE_DNS_FAILOVER -DUSE_DST_BLACKLIST -DUSE_NAPTR \
+		-DUSE_TLS -DTLS_HOOKS -DFAST_LOCK   -DCC_GCC_LIKE_ASM \
+		-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
+		-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
+		-DHAVE_SCHED_SETSCHEDULER -DHAVE_EPOLL -DUSE_SCTP -DNAME='\"ser\"' \
+		-DVERSION='\"2.99.99-pre3\"' -DARCH='\"i386\"' -DOS_QUOTED='\"linux\"'
+
+
+# common makefile vars used in defs
+LOCALBASE=/usr/local
+SYSBASE=/usr
 
 filter_files=$(subst .h:,.c:, $(filter-out $(addsuffix %,$(file_exclude)),\
 				$(filter-out $(addprefix %:,$(grp_exclude)),$(1))) )
@@ -95,23 +111,82 @@ get_grp=$(strip $(if $(grp_f_$(call get_bname,$(1))), \
 # get target from file:grp (get_target(file:grp) => select_grp)
 get_target=select_$(call get_grp,$(1))
 
+
+# $(LF) definition (do not remove)
+define LF
+
+
+endef
+
+# get all the lines containing DEFS or INCLUDES definitions from the Makefile.
+# WARNING: does not work with all sed implementation (tested with GNU sed).
+# It uses a hack to restore the LFs (LFs are removed by $(shell)): LFs are
+# replaced with '^LF^' and then ^LF^ is subst'ed back to a real LF.
+get_make_idefs=$(subst ^LF^,$(LF),$(shell sed \
+ -ne '/^[\t ]*\(DEFS\|INCLUDES\)[\t ]*[+:]\?=.*[^\]$$/H'\
+ -ne '/^[\t ]*\(DEFS\|INCLUDES\)[\t ]*[+:]\?=.*\\$$/,/\(^$$\)\|\([^\]$$\)/H'\
+ -ne '$${g;s/\n/^LF^/g;p}'\
+< $(1)/Makefile ))
+
+
+# get all the lines from the makefile containing variable definitions.
+# It will also return conditionals and try to filter out possible rules.
+# WARNING: does not work with all sed implementation (tested with GNU sed).
+# It uses a hack to restore the LFs (LFs are removed by $(shell)): LFs are
+# replaced with '^LF^' and then ^LF^ is subst'ed back to a real LF.
+get_make_vars=$(subst ^LF^,$(LF),$(shell sed -n \
+ -e ': start' \
+ -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]*\($$\|.*[^\]$$\)/{H;d}' \
+ -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]\+.*[\]$$/,/[^\]$$/{H;d}' \
+ -e '/^[a-zA-Z._/$$][a-zA-Z0-9._()/$$ \t-]*:\([^=]\|$$\)/b eat_rule' \
+ -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*[^\]$$/{H;d}' \
+ -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*\\$$/,/\(^$$\)\|\([^\]$$\)/{H;d}' \
+ -e ': end' \
+ -e '$${g;s/\n/^LF^/g;p}'\
+ -e 'b' \
+ -e ': eat_rule' \
+ -e '$$b end' \
+ -e 'n' \
+ -e '/^[a-zA-Z._/$$][a-zA-Z0-9._()/$$ \t-]*:\([^=]\|$$\)/b eat_rule' \
+ -e '/^[\t]/b eat_rule' \
+ -e 'b start' \
+< $(1)/Makefile ))
+
+
 define  mk_rules
 
 $(call check_fname_grp, $(1))
 
 #$$(info generating select_$$(call get_grp,$(1)).txt: $$(call get_prereq,$(1)))
 
+
+DEFS:=
+INCLUDES:=
+# extract all the includes and defs from the module makefile and
+# evaluate them
+$$(eval $$(call get_make_vars,$$(dir $$(call get_prereq,$(1)))))
+# override COREPATH (we know better)
+COREPATH=../..
+# save the result in a per group e_idefs_<grp_name> var
+$$(eval e_idefs_$$(call get_grp,$(1)):=$$(DEFS) $$(INCLUDES))
+
+# debugging:
+#$$(info eval: $$(call get_make_vars,$$(dir $$(call get_prereq,$(1)))))
+#$$(info e_idefs_$$(call get_grp,$(1))=$$(e_idefs_$$(call get_grp,$(1))))
+
 $(txt_output_dir)/$$(call get_target,$(1)).txt: \
 								$$(call get_prereq,$(1)) Makefile $(CFG2TXT)
 	$(CFG2TXT) --file $$< --$(force_grp)grp=$$(call get_grp,$(1)) \
-		--gcc="$(gcc)" --txt $(CFG2TXT_EXTRA_OPTS) > "$$@" || \
-		(rm -f "$$@"; exit 1)
+		--gcc="$(gcc)" --txt  $(CFG2TXT_EXTRA_OPTS) \
+		--defs="$(c_defs) $$(e_idefs_$$(call get_grp,$(1)))" \
+		> "$$@" || (rm -f "$$@"; exit 1)
 
 $(docbook_output_dir)/$$(call get_target,$(1)).xml: \
 								$$(call get_prereq,$(1)) Makefile $(CFG2TXT)
 	$(CFG2DOCBOOK) --file $$< --$(force_grp)grp=$$(call get_grp,$(1)) \
-		--gcc="$(gcc)" --docbook $(CFG2DOCBOOK_EXTRA_OPTS) > "$$@" || \
-		(rm -f "$$@"; exit 1)
+		--gcc="$(gcc)" --docbook $(CFG2DOCBOOK_EXTRA_OPTS) \
+		--defs="$(c_defs) $$(e_idefs_$$(call get_grp,$(1)))" \
+		> "$$@" || (rm -f "$$@"; exit 1)
 
 
 clean_$$(call get_target,$(1)).txt:
