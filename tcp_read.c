@@ -744,7 +744,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				if (r->bytes_to_go==0){
 					r->state = H_HTTP11_CHUNK_END;
 					/* shift back body content */
-					if(p-r->chunk_size>0) {
+					if(r->chunk_size>0 && p-r->chunk_size>r->body) {
 						memcpy(r->body + r->content_len, p - r->chunk_size,
 								r->chunk_size);
 						r->content_len += r->chunk_size;
