@@ -945,23 +945,18 @@ int pv_get_msg_body(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	str s;
-    if(msg==NULL)
+	if(msg==NULL)
 		return -1;
-    
+
 	s.s = get_body( msg );
 
-	if (s.s == NULL)
+	if(s.s == NULL)
 	{
 		LM_DBG("no message body\n");
 		return pv_get_null(msg, param, res);
-    }    
+	}    
+	s.len = msg->buf + msg->len - s.s;
 
-	if (!msg->content_length) 
-	{
-		LM_ERR("no Content-Length header found\n");
-		return pv_get_null(msg, param, res);
-	}
-    s.len = get_content_length(msg);
 	return pv_get_strval(msg, param, res, &s);
 }
 
