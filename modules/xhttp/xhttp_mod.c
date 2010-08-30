@@ -292,8 +292,6 @@ static int xhttp_handler(sip_msg_t* msg)
 		return NONSIP_MSG_PASS;
 	}
 
-	/* we support HTTP/1.0 - fix it for replies */
-	msg->first_line.u.request.version.s[HTTP_VERSION_LEN] = '0';
 	if(xhttp_url_match!=NULL)
 	{
 		c = msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len];
