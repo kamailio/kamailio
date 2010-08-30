@@ -231,7 +231,6 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 </programlisting>
 		</example>
 	</section>
-	</section>
 	<section>
 		<title><varname>timeout_socket</varname> (string)</title>
 		<para>
@@ -253,6 +252,33 @@ modparam("nathelper", "timeout_socket", "http://127.0.0.1:8000/RPC2")
 ...
 </programlisting>
 		</example>
+	</section>
+	<section>
+		<title><varname>timeout_socket_type</varname> (int)</title>
+		<para>
+		The parameter sets type of the timeout socket, which is transmitted to the RTP-Proxy.
+		</para>
+		<para>
+		If it is not set, type 1 (Kamailio XML-RPC-Socket) is transmitted to the RTP-Proxy.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_socket_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "timeout_socket_type", 42)
+...
+</programlisting>
+		</example>
+		<para>
+		<emphasis>
+			The only supported Type on the RTP-Proxy is currently <quote>1</quote> or <quote>0</quote> which is the default socket-type of the RTP-Proxy which is not compatible to Kamailio.
+		</emphasis>
+		</para>
 	</section>
 	</section>
 
