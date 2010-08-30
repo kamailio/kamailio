@@ -32,6 +32,7 @@
 
 #include "bdb_res.h"
 #include "bdb_cmd.h"
+#include "bdb_crs_compat.h"
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -48,7 +49,7 @@ void bdb_res_free(db_res_t* res, bdb_res_t *payload)
 
 	if(bcmd->dbcp!=NULL)
 	{
-		bcmd->dbcp->close(bcmd->dbcp);
+		bcmd->dbcp->CLOSE_CURSOR(bcmd->dbcp);
 		bcmd->dbcp = NULL;
 	}
 	db_drv_free(&payload->gen);

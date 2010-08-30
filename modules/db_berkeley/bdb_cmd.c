@@ -44,6 +44,7 @@
 #include "bdb_uri.h"
 #include "bdb_res.h"
 #include "bdb_lib.h"
+#include "bdb_crs_compat.h"
 
 #define BDB_BUF_SIZE 1024
 
@@ -56,7 +57,7 @@ static void bdb_cmd_free(db_cmd_t* cmd, bdb_cmd_t* payload)
 {
 	db_drv_free(&payload->gen);
 	if (payload->dbcp)
-		payload->dbcp->c_close(payload->dbcp);
+		payload->dbcp->CLOSE_CURSOR(payload->dbcp);
 	if(payload->skey.s)
 		pkg_free(payload->skey.s);
 	pkg_free(payload);

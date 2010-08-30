@@ -51,6 +51,7 @@
 #include "km_bdb_res.h"
 #include "km_bdb_mi.h"
 #include "bdb_mod.h"
+#include "bdb_crs_compat.h"
 
 #ifndef CFG_DIR
 #define CFG_DIR "/tmp"
@@ -457,7 +458,7 @@ int km_bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			i++;
 		}
 		
-		dbcp->c_close(dbcp);
+		dbcp->CLOSE_CURSOR(dbcp);
 		ret=0;
 		
 #ifdef BDB_EXTRA_DEBUG
@@ -520,7 +521,7 @@ int km_bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			i++;
 		}
 		
-		dbcp->c_close(dbcp);
+		dbcp->CLOSE_CURSOR(dbcp);
 		BDB_CON_RESULT(_con) = *_r;
 		return 0; 
 	}
@@ -834,7 +835,7 @@ int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 			ret = dbcp->c_del(dbcp, 0);
 		}
 		
-		dbcp->c_close(dbcp);
+		dbcp->CLOSE_CURSOR(dbcp);
 		return 0;
 	}
 
@@ -1006,7 +1007,7 @@ int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 	
 error:
 	if(dbcp)
-		dbcp->c_close(dbcp);
+		dbcp->CLOSE_CURSOR(dbcp);
 	if(_r)
 		db_free_result(_r);
 	if(lkey)
