@@ -231,8 +231,56 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>timeout_socket</varname> (string)</title>
+		<para>
+		The parameter sets timeout socket, which is transmitted to the RTP-Proxy.
+		</para>
+		<para>
+		If it is an empty string, no timeout socket will be transmitted to the RTP-Proxy.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "timeout_socket", "http://127.0.0.1:8000/RPC2")
+...
+</programlisting>
+		</example>
 	</section>
-
+	<section>
+		<title><varname>timeout_socket_type</varname> (int)</title>
+		<para>
+		The parameter sets type of the timeout socket, which is transmitted to the RTP-Proxy.
+		</para>
+		<para>
+		If it is not set, type 1 (Kamailio XML-RPC-Socket) is transmitted to the RTP-Proxy.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_socket_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "timeout_socket_type", 42)
+...
+</programlisting>
+		</example>
+		<para>
+		<emphasis>
+			The only supported Type on the RTP-Proxy is currently <quote>1</quote> or <quote>0</quote> which is the default socket-type of the RTP-Proxy which is not compatible to Kamailio.
+		</emphasis>
+		</para>
+	</section>
+	</section>
 
 	<section>
 	<title>Exported Functions</title>
@@ -589,6 +637,24 @@ start_recording();
 
 	<section>
 		<title>Exported Pseudo Variables</title>
+		<section>
+			<title><function moreinfo="none">$rtpstart</function></title>
+			<para>
+			Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from the RTP-Proxy
+			are provided as a string and it does contain several packet-counters. The statistics
+			must be retrieved before the session is deleted	(before unforce_rtpproxy).
+			</para>
+
+		<example>
+		<title>$rtpstat-Usage</title>
+		<programlisting format="linespecific">
+...
+    append_hf("X-RTP-Statistics: $rtpstat\r\n");
+...
+		</programlisting>
+		</example>
+	        </section>
+
 	</section>
 
 	<section>

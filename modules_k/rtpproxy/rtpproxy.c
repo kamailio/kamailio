@@ -306,6 +306,9 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
+/* Pseudo-Variables */
+static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+
 /*mi commands*/
 static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree,
 		void* param );
@@ -336,6 +339,9 @@ static int *rtpp_socks = 0;
 
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state=0;
+
+static str timeout_socket_str = {0, 0};
+static int timeout_socket_type = 1;
 
 static cmd_export_t cmds[] = {
 	{"set_rtp_proxy_set",  (cmd_function)set_rtp_proxy_set_f,    1,
@@ -390,6 +396,8 @@ static cmd_export_t cmds[] = {
 };
 
 static pv_export_t mod_pvs[] = {
+    {{"rtpstat", (sizeof("rtpstat")-1)}, /* RTP-Statistics */
+     PVT_OTHER, pv_get_rtpstat_f, 0, 0, 0, 0, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -400,6 +408,8 @@ static param_export_t params[] = {
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
+	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
+	{"timeout_socket_type",   INT_PARAM, &timeout_socket_type   },
 	{0, 0, 0}
 };
 
@@ -854,8 +864,16 @@ mod_init(void)
 		if(rtpp_strings[i])
 			pkg_free(rtpp_strings[i]);
 	}
+	if (timeout_socket_str.s==NULL || timeout_socket_str.s[0]==0) {
+		timeout_socket_str.len = 0;
+		timeout_socket_str.s = NULL;
+	} else {
+		timeout_socket_str.len = strlen(timeout_socket_str.s);
+	}
+
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
+
 
 	return 0;
 }
@@ -1798,12 +1816,18 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		{" ", 1},	/* separator */
 		{NULL, 0},	/* to_tag */
 		{";", 1},	/* separator */
-		{NULL, 0}	/* medianum */
+		{NULL, 0},	/* medianum */
+		{" ", 1},	/* separator */
+		{NULL, 0},	/* Type of timeout-socket: 1 Kamailio-XML-RPC */
+		{" ", 1},	/* separator */
+		{NULL, 0},	/* Timeout-Socket */
 	};
+	int iovec_param_count;
+
 	char *c1p, *c2p, *bodylimit, *o1p;
-	char medianum_buf[20];
+	char itoabuf_buf[20];
 	int medianum, media_multi;
-	str medianum_str;
+	str itoabuf_str;
 	int c1p_altered;
 	static int swap_warned = 0;
 
@@ -2082,14 +2106,14 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 #endif
 			if (1 || media_multi) /* XXX netch: can't choose now*/
 			{
-				snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
-				medianum_str.s = medianum_buf;
-				medianum_str.len = strlen(medianum_buf);
-				STR2IOVEC(medianum_str, v[13]);
-				STR2IOVEC(medianum_str, v[17]);
+				snprintf(itoabuf_buf, sizeof itoabuf_buf, "%d", medianum);
+				itoabuf_str.s = itoabuf_buf;
+				itoabuf_str.len = strlen(itoabuf_buf);
+				STR2IOVEC(itoabuf_str, v[13]);
+				STR2IOVEC(itoabuf_str, v[17]);
 #ifdef EXTRA_DEBUG
-				LM_DBG("STR2IOVEC(medianum_str, v[13])\n");
-				LM_DBG("STR2IOVEC(medianum_str, v[17])\n");
+				LM_DBG("STR2IOVEC(itoabuf_str, v[13])\n");
+				LM_DBG("STR2IOVEC(itoabuf_str, v[17])\n");
 #endif
 			} else {
 				v[12].iov_len = v[13].iov_len = 0;
@@ -2151,7 +2175,21 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 				} else {
 					v[3].iov_len = 0;
 				}
-				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 18 : 14);
+				if (to_tag.len > 0) {
+					iovec_param_count = 18;
+					if (timeout_socket_str.len > 0) {
+						iovec_param_count = 22;
+						snprintf(itoabuf_buf, sizeof itoabuf_buf, "%d", timeout_socket_type);
+						itoabuf_str.s = itoabuf_buf;
+						itoabuf_str.len = strlen(itoabuf_buf);
+						STR2IOVEC(itoabuf_str, v[19]);
+						STR2IOVEC(timeout_socket_str, v[21]);
+					}
+				} else {
+					iovec_param_count = 14;
+				}
+
+				cp = send_rtpp_command(node, v, iovec_param_count);
 			} while (cp == NULL);
 			LM_DBG("proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
@@ -2387,5 +2425,61 @@ static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 	send_rtpp_command(node, v, nitems);
 
 	return 1;
+}
+
+/*
+ * Returns the current RTP-Statistics from the RTP-Proxy
+ */
+static int
+pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
+		  pv_value_t *res)
+{
+    str ret_val = {0, 0};
+    int nitems;
+    str callid = {0, 0};
+    str from_tag = {0, 0};
+    str to_tag = {0, 0};
+    struct rtpp_node *node;
+    struct iovec v[1 + 4 + 3 + 1] = {{NULL, 0}, {"Q", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {";1 ", 3}, {";1", }, {NULL, 0}};
+
+    if (get_callid(msg, &callid) == -1 || callid.len == 0) {
+        LM_ERR("can't get Call-Id field\n");
+        return -1;
+    }
+    if (get_to_tag(msg, &to_tag) == -1) {
+        LM_ERR("can't get To tag\n");
+        return -1;
+    }
+    if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
+        LM_ERR("can't get From tag\n");
+        return -1;
+    }
+    if(msg->id != current_msg_id){
+        selected_rtpp_set = default_rtpp_set;
+    }
+
+    STR2IOVEC(callid, v[3]);
+    STR2IOVEC(from_tag, v[5]);
+    STR2IOVEC(to_tag, v[7]);
+    node = select_rtpp_node(callid, 1);
+    if (!node) {
+        LM_ERR("no available proxies\n");
+        return -1;
+    }
+    nitems = 8;
+    if (msg->first_line.type == SIP_REPLY) {
+        if (to_tag.len == 0)
+            return -1;
+        STR2IOVEC(to_tag, v[5]);
+        STR2IOVEC(from_tag, v[7]);
+    } else {
+        STR2IOVEC(from_tag, v[5]);
+        STR2IOVEC(to_tag, v[7]);
+        if (to_tag.len <= 0)
+            nitems = 6;
+    }
+    ret_val.s = send_rtpp_command(node, v, nitems);
+    ret_val.len = strlen(ret_val.s);
+    return pv_get_strval(msg, param, res, &ret_val);
 }
 
