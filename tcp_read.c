@@ -145,7 +145,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		return 0;
 
 	/* check for Expect header */
-	if(strstr(c->req.buf, "Expect: 100-continue")!=NULL)
+	if(strstr(c->req.start, "Expect: 100-continue")!=NULL)
 	{
 		init_dst_from_rcv(&dst, &c->rcv);
 		if (tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
@@ -153,7 +153,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		}
 	}
 	/* check for Transfer-Encoding header */
-	if(strstr(c->req.buf, "Transfer-Encoding: chunked")!=NULL)
+	if(strstr(c->req.start, "Transfer-Encoding: chunked")!=NULL)
 	{
 		c->req.flags |= F_TCP_REQ_BCHUNKED;
 		ret = 1;
@@ -745,7 +745,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					r->state = H_HTTP11_CHUNK_END;
 					/* shift back body content */
 					if(r->chunk_size>0 && p-r->chunk_size>r->body) {
-						memcpy(r->body + r->content_len, p - r->chunk_size,
+						memmove(r->body + r->content_len, p - r->chunk_size,
 								r->chunk_size);
 						r->content_len += r->chunk_size;
 					}
