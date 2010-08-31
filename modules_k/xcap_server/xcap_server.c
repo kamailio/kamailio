@@ -45,10 +45,18 @@
 #include "../../modules_k/xcap_client/xcap_callbacks.h"
 #include "../../modules/sl/sl.h"
 
+#include "xcap_misc.h"
+
 MODULE_VERSION
 
 #define XCAP_TABLE_VERSION   3
 
+
+static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
+		str* doc);
+static int xcaps_get_db(str* user, str *domain, xcap_uri_t *xuri,
+		str *etag, str *doc);
+static int xcaps_del_db(str* user, str *domain, xcap_uri_t *xuri);
 
 static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		char* pbody);
@@ -60,6 +68,8 @@ static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 
+int xcaps_xpath_ns_param(modparam_t type, void *val);
+
 int xcaps_path_get_auid_type(str *path);
 int xcaps_generate_etag_hdr(str *etag);
 
@@ -69,7 +79,7 @@ static str xcaps_root = str_init("/xcap-root/");
 static int xcaps_init_time = 0;
 static int xcaps_etag_counter = 1;
 
-static str xcaps_buf = {0, 1024};
+static str xcaps_buf = {0, 8192};
 #define XCAPS_ETAG_SIZE	128
 static char xcaps_etag_buf[XCAPS_ETAG_SIZE];
 
@@ -95,6 +105,7 @@ static param_export_t params[] = {
 	{ "xcap_table",	STR_PARAM, &xcaps_db_table.s  },
 	{ "xcap_root",	STR_PARAM, &xcaps_root.s  },
 	{ "buf_size",	INT_PARAM, &xcaps_buf.len  },
+	{ "xml_ns",     STR_PARAM|USE_FUNC_PARAM, (void*)xcaps_xpath_ns_param },
 	{ 0, 0, 0 }
 };
 
@@ -268,16 +279,51 @@ static int xcaps_send_reply(sip_msg_t *msg, int code, str *reason,
 	return 0;
 }
 
+/**
+ *
+ */
+int xcaps_xpath_hack(str *buf, int type)
+{
+	char *match;
+	char *repl;
+	char c;
+	char *p;
+	char *start;
+
+	if(buf==NULL || buf->len <=10)
+		return 0;
+
+	if(type==0)
+	{
+		match = " xmlns=";
+		repl  = " x____=";
+	} else {
+		match = " x____=";
+		repl  = " xmlns=";
+	}
+
+	start = buf->s;
+	c = buf->s[buf->len-1];
+	buf->s[buf->len-1] = '\0';
+	while((p = strstr(start, match))!=NULL)
+	{
+		memcpy(p, repl, 7);
+		start = p + 7;
+	}
+	buf->s[buf->len-1] = c;
+	return 0;
+}
 
 /**
  *
  */
-static int xcaps_put_db(str* user, str *domain, str* path, str *etag,
-		int dtype, str* doc)
+static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
+		str* doc)
 {
 	db_key_t qcols[9];
 	db_val_t qvals[9];
 	int ncols = 0;
+
 
 	/* insert in xcap table*/
 	qcols[ncols] = &str_username_col;
@@ -295,7 +341,7 @@ static int xcaps_put_db(str* user, str *domain, str* path, str *etag,
 	qcols[ncols] = &str_doc_type_col;
 	qvals[ncols].type = DB1_INT;
 	qvals[ncols].nul = 0;
-	qvals[ncols].val.int_val= dtype;
+	qvals[ncols].val.int_val= xuri->type;
 	ncols++;
 
 	qcols[ncols] = &str_doc_col;
@@ -319,7 +365,7 @@ static int xcaps_put_db(str* user, str *domain, str* path, str *etag,
 	qcols[ncols] = &str_doc_uri_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
-	qvals[ncols].val.str_val= *path;
+	qvals[ncols].val.str_val= xuri->adoc;
 	ncols++;
 
 	qcols[ncols] = &str_port_col;
@@ -358,14 +404,16 @@ static str xcaps_str_appxml     = {"application/xml", 15};
 static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		char* pbody)
 {
-	int dtype;
 	struct sip_uri turi;
 	str uri;
 	str path;
-	str body;
+	str body = {0, 0};
 	str etag;
 	str etag_hdr;
+	str tbuf;
+	str nbuf = {0, 0};
 	pv_elem_t *xm;
+	xcap_uri_t xuri;
 
 	if(puri==0 || ppath==0 || pbody==0)
 	{
@@ -403,26 +451,84 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		LM_ERR("unable to get body\n");
 		goto error;
 	}
-	if(body.s==NULL || body.len == 0)
+	if(body.s==NULL || body.len <= 0)
 	{
 		LM_ERR("invalid body parameter\n");
 		goto error;
 	}
-	/* TODO: do xml parsing for validation */
+	nbuf.s = (char*)pkg_malloc(body.len+1);
+	if(nbuf.s==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		body.s = NULL;
+		goto error;
+	}
+
+	memcpy(nbuf.s, body.s, body.len);
+	body.s = nbuf.s;
+	body.s[body.len] = '\0';
+	nbuf.s = NULL;
 
 	if(parse_uri(uri.s, uri.len, &turi)!=0)
 	{
 		LM_ERR("parsing uri parameter\n");
 		goto error;
 	}
+	/* TODO: do xml parsing for validation */
 
-	dtype = xcaps_path_get_auid_type(&path);
-
-	if(dtype==-1)
+	if(xcap_parse_uri(&path, &xcaps_root, &xuri)<0)
 	{
-		LM_ERR("unknown documet type in [%.*s]\n",
+		LM_ERR("cannot parse xcap uri [%.*s]\n",
 				path.len, path.s);
 		goto error;
+	}
+	if(xuri.nss==NULL || xuri.node.len<=0)
+	{
+		/* full document upload
+		 *   - fetch and then delete is too expensive if record in db
+		 *   - just try to delete
+		 */
+		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
+		{
+			LM_ERR("could not delete document\n");
+			goto error;
+		}
+	} else {
+		/* partial document upload
+		 *   - fetch, update, delete and store
+		 */
+		if(xcaps_get_db(&turi.user, &turi.host, &xuri, &etag, &tbuf)<0)
+		{
+			LM_ERR("could not fetch xcap document\n");
+			goto error;
+		}
+		if(xcaps_xpath_hack(&tbuf, 0)<0)
+		{
+			LM_ERR("could not hack xcap document\n");
+			goto error;
+		}
+		if(xcaps_xpath_set(&tbuf, &xuri.node, &body, &nbuf)<0)
+		{
+			LM_ERR("could not update xcap document\n");
+			goto error;
+		}
+		if(nbuf.len<=0)
+		{
+			LM_ERR("no new content\n");
+			goto error;
+		}
+		pkg_free(body.s);
+		body = nbuf;
+		if(xcaps_xpath_hack(&body, 1)<0)
+		{
+			LM_ERR("could not hack xcap document\n");
+			goto error;
+		}
+		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
+		{
+			LM_ERR("could not delete document\n");
+			goto error;
+		}
 	}
 
 	if(xcaps_generate_etag_hdr(&etag_hdr)<0)
@@ -432,25 +538,30 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 	}
 	etag.s = etag_hdr.s + 10; /* 'SIP-ETag: ' */
 	etag.len = etag_hdr.len - 12; /* 'SIP-ETag: '  '\r\n' */
-	if(xcaps_put_db(&turi.user, &turi.host, &path, &etag, dtype, &body)<0)
+	if(xcaps_put_db(&turi.user, &turi.host,
+				&xuri, &etag, &body)<0)
 	{
 		LM_ERR("could not store document\n");
 		goto error;
 	}
 	xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag_hdr,
 				&xcaps_str_empty, &xcaps_str_empty);
+	if(body.s!=NULL)
+		pkg_free(body.s);
 	return 1;
 
 error:
 	xcaps_send_reply(msg, 500, &xcaps_str_srverr, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
+	if(body.s!=NULL)
+		pkg_free(body.s);
 	return -1;
 }
 
 /**
  *
  */
-static int xcaps_get_db(str* user, str *domain, str* path,
+static int xcaps_get_db(str* user, str *domain, xcap_uri_t *xuri,
 		str *etag, str *doc)
 {
 	db_key_t qcols[4];
@@ -466,24 +577,24 @@ static int xcaps_get_db(str* user, str *domain, str* path,
 	nrcols++;
 	rcols[nrcols] = &str_doc_col;
 	nrcols++;
-	
+
 	/* query cols in xcap table*/
 	qcols[ncols] = &str_username_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
 	qvals[ncols].val.str_val = *user;
 	ncols++;
-	
+
 	qcols[ncols] = &str_domain_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
 	qvals[ncols].val.str_val = *domain;
 	ncols++;
-	
+
 	qcols[ncols] = &str_doc_uri_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
-	qvals[ncols].val.str_val= *path;
+	qvals[ncols].val.str_val= xuri->adoc;
 	ncols++;
 
 	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0) 
@@ -492,7 +603,7 @@ static int xcaps_get_db(str* user, str *domain, str* path,
 				xcaps_db_table.s);
 		goto error;
 	}
-	
+
 	if(xcaps_dbf.query(xcaps_db, qcols, NULL, qvals, rcols,
 				ncols, nrcols, NULL, &db_res)< 0)
 	{
@@ -603,6 +714,7 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	str etag;
 	str body;
 	int ret = 0;
+	xcap_uri_t xuri;
 
 	if(puri==0 || ppath==0)
 	{
@@ -638,7 +750,14 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 		goto error;
 	}
 
-	if((ret=xcaps_get_db(&turi.user, &turi.host, &path, &etag, &body))<0)
+	if(xcap_parse_uri(&path, &xcaps_root, &xuri)<0)
+	{
+		LM_ERR("cannot parse xcap uri [%.*s]\n",
+				path.len, path.s);
+		goto error;
+	}
+
+	if((ret=xcaps_get_db(&turi.user, &turi.host, &xuri, &etag, &body))<0)
 	{
 		LM_ERR("could not fetch xcap document\n");
 		goto error;
@@ -665,7 +784,7 @@ error:
 /**
  *
  */
-static int xcaps_del_db(str* user, str *domain, str* path)
+static int xcaps_del_db(str* user, str *domain, xcap_uri_t *xuri)
 {
 	db_key_t qcols[4];
 	db_val_t qvals[4];
@@ -687,7 +806,7 @@ static int xcaps_del_db(str* user, str *domain, str* path)
 	qcols[ncols] = &str_doc_uri_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
-	qvals[ncols].val.str_val= *path;
+	qvals[ncols].val.str_val= xuri->adoc;
 	ncols++;
 
 	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0) 
@@ -717,6 +836,11 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 	struct sip_uri turi;
 	str uri;
 	str path;
+	xcap_uri_t xuri;
+	str body;
+	str etag_hdr;
+	str etag;
+	str tbuf;
 
 	if(puri==0 || ppath==0)
 	{
@@ -752,18 +876,82 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 		goto error;
 	}
 
-	if(xcaps_del_db(&turi.user, &turi.host, &path)<0)
+	if(xcap_parse_uri(&path, &xcaps_root, &xuri)<0)
 	{
-		LM_ERR("could not delete document\n");
+		LM_ERR("cannot parse xcap uri [%.*s]\n",
+				path.len, path.s);
 		goto error;
 	}
-	xcaps_send_reply(msg, 200, &xcaps_str_ok, &xcaps_str_empty,
+
+
+	if(xuri.nss==NULL)
+	{
+		/* delete document */
+		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
+		{
+			LM_ERR("could not delete document\n");
+			goto error;
+		}
+		xcaps_send_reply(msg, 200, &xcaps_str_ok, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
+	} else {
+		/* delete element */
+		if(xcaps_get_db(&turi.user, &turi.host, &xuri, &etag, &tbuf)<0)
+		{
+			LM_ERR("could not fetch xcap document\n");
+			goto error;
+		}
+		if(xcaps_xpath_hack(&tbuf, 0)<0)
+		{
+			LM_ERR("could not hack xcap document\n");
+			goto error;
+		}
+		if(xcaps_xpath_set(&tbuf, &xuri.node, NULL, &body)<0)
+		{
+			LM_ERR("could not update xcap document\n");
+			goto error;
+		}
+		if(body.len<=0)
+		{
+			LM_ERR("no new content\n");
+			goto error;
+		}
+		if(xcaps_xpath_hack(&body, 1)<0)
+		{
+			LM_ERR("could not hack xcap document\n");
+			goto error;
+		}
+		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
+		{
+			LM_ERR("could not delete document\n");
+			goto error;
+		}
+		if(xcaps_generate_etag_hdr(&etag_hdr)<0)
+		{
+			LM_ERR("could not generate etag\n");
+			goto error;
+		}
+		etag.s = etag_hdr.s + 10; /* 'SIP-ETag: ' */
+		etag.len = etag_hdr.len - 12; /* 'SIP-ETag: '  '\r\n' */
+		if(xcaps_put_db(&turi.user, &turi.host,
+				&xuri, &etag, &body)<0)
+		{
+			LM_ERR("could not store document\n");
+			goto error;
+		}
+		xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag_hdr,
+				&xcaps_str_empty, &xcaps_str_empty);
+		if(body.s!=NULL)
+			pkg_free(body.s);
+		return 1;
+	}
 	return 1;
 
 error:
 	xcaps_send_reply(msg, 500, &xcaps_str_srverr, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
+	if(body.s!=NULL)
+		pkg_free(body.s);
 	return -1;
 }
 
