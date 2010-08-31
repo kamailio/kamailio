@@ -1519,6 +1519,9 @@ if(dlg_get("abcdef", "123", "456"))
 		MI command.
 		</para>
 		<para>
+		<emphasis>Note: Works only for confirmed dialogs.</emphasis>
+		</para>
+		<para>
 		MI FIFO Command Format:
 		</para>
 		<programlisting  format="linespecific">
@@ -1526,6 +1529,41 @@ if(dlg_get("abcdef", "123", "456"))
 		342
 		56
 		_empty_line_
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>dlg_terminate_dlg</varname></title>
+		<para>
+		Terminates a singe dialog, identified by a Call-ID.
+		</para>
+		<para>
+		Name: <emphasis>dlg_terminate_dlg</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - callid of the dialog to be terminated.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>from_tag</emphasis> (optional, but cannot be present
+				without the callid parameter) - from tag (as per initial request)
+				of the dialog to be terminated.  Note that if the from_tag is not
+				specified, only dialogs created by a request without a from tag
+				are matched, which will only occur with broken clients and is
+				thus a very rare situation.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>Note: Works only for confirmed dialogs.</emphasis>
+		</para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:dlg_terminate_dlg:_reply_fifo_file_
+		abcdrssfrs122444@192.168.1.1
+		AAdfeEFF33
 		</programlisting>
 		</section>
 

@@ -31,6 +31,7 @@
 #define DLG_REQUEST_WITHIN_H
 
 #include "dlg_hash.h"
+#include "../../modules/tm/tm_load.h"
 
 #define MAX_FWD			"70"
 #define MAX_SIZE		256
