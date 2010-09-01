@@ -29,6 +29,7 @@ Daniel-Constantin Mierla
               3.2. xcap_table (string)
               3.3. xcap_root (str)
               3.4. buf_size (int)
+              3.5. xml_ns (str)
 
         4. Exported Functions
 
@@ -36,7 +37,8 @@ Daniel-Constantin Mierla
               4.2. xcaps_get(uri, path)
               4.3. xcaps_del(uri, path)
 
-        5. Simple XCAP Server Config
+        5. Exported pseudo-variables
+        6. Simple XCAP Server Config
 
    List of Examples
 
@@ -44,10 +46,12 @@ Daniel-Constantin Mierla
    1.2. Set the “xcap_table” parameter
    1.3. Set url_match parameter
    1.4. Set the “buf_size” parameter
-   1.5. xcaps_put usage
-   1.6. xcaps_get usage
-   1.7. xcaps_del usage
-   1.8. sample xcap server
+   1.5. Set url_match parameter
+   1.6. xcaps_put usage
+   1.7. xcaps_get usage
+   1.8. xcaps_del usage
+   1.9. $xcapuri(...) PV
+   1.10. sample xcap server
 
 Chapter 1. Admin Guide
 
@@ -65,6 +69,7 @@ Chapter 1. Admin Guide
         3.2. xcap_table (string)
         3.3. xcap_root (str)
         3.4. buf_size (int)
+        3.5. xml_ns (str)
 
    4. Exported Functions
 
@@ -72,7 +77,8 @@ Chapter 1. Admin Guide
         4.2. xcaps_get(uri, path)
         4.3. xcaps_del(uri, path)
 
-   5. Simple XCAP Server Config
+   5. Exported pseudo-variables
+   6. Simple XCAP Server Config
 
 1. Overview
 
@@ -98,6 +104,8 @@ Chapter 1. Admin Guide
        server, therefore you can blend the XCAP logic with features
        provided by core or other modules.
 
+   Important: be sure you have global parameter: 'tcp_accept_no_cl=yes'.
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -108,6 +116,8 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * sl - stateless reply module
      * db - a database engine module
+     * xhttp - embedded HTTP server if you want to get XCAP documents via
+       HTTP.
 
 2.2. External Libraries or Applications
 
@@ -122,6 +132,7 @@ Chapter 1. Admin Guide
    3.2. xcap_table (string)
    3.3. xcap_root (str)
    3.4. buf_size (int)
+   3.5. xml_ns (str)
 
 3.1. db_url (string)
 
@@ -167,6 +178,22 @@ modparam("xcap_server", "xcap_root", "/xcap-root/")
 modparam("xcap_server", "buf_size", 2048)
 ...
 
+3.5. xml_ns (str)
+
+   Register extra XML namespaces to be used with XPath. You can set the
+   parameter many times to add more namespaces. The format is
+   'prefix=href'.
+
+   Default value is 'null'.
+
+   Example 1.5. Set url_match parameter
+...
+modparam("xcap_server", "xml_ns",
+    "rl=urn:ietf:params:xml:ns:resource-lists")
+modparam("xcap_server", "xml_ns",
+    "my=urn:my:prefix")
+...
+
 4. Exported Functions
 
    4.1. xcaps_put(uri, path, doc)
@@ -177,7 +204,7 @@ modparam("xcap_server", "buf_size", 2048)
 
    Handle XCAP PUT command.
 
-   Example 1.5. xcaps_put usage
+   Example 1.6. xcaps_put usage
 ...
 event_route[xhttp:request] {
         if($hu=~"^/xcap-root/")
@@ -197,7 +224,7 @@ event_route[xhttp:request] {
 
    Handle XCAP GET command.
 
-   Example 1.6. xcaps_get usage
+   Example 1.7. xcaps_get usage
 ...
 event_route[xhttp:request] {
         if($hu=~"^/xcap-root/")
@@ -217,7 +244,7 @@ event_route[xhttp:request] {
 
    Handle XCAP DELETE command.
 
-   Example 1.7. xcaps_del usage
+   Example 1.8. xcaps_del usage
 ...
 event_route[xhttp:request] {
         if($hu=~"^/xcap-root/")
@@ -233,9 +260,25 @@ event_route[xhttp:request] {
 }
 ...
 
-5. Simple XCAP Server Config
+5. Exported pseudo-variables
 
-   Example 1.8. sample xcap server
+     * $xcapuri(name=>key) - name can be any to idenitfy the XCAP uri; key
+       can be: data, uri, root, auid, type, tree, xuid, file, node.
+
+   Exported pseudo-variables are documented at
+   http://www.kamailio.org/dokuwiki/.
+
+   Example 1.9. $xcapuri(...) PV
+...
+    $xcapuri(u=>data) = $hu;
+    xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
+...
+
+6. Simple XCAP Server Config
+
+   Example 1.10. sample xcap server
+...
+tcp_accept_no_cl=yes
 ...
 loadmodule "xhttp.so"
 loadmodule "xcap_server.so"
@@ -250,37 +293,44 @@ modparam("xcap_server", "db_url",
 
 event_route[xhttp:request] {
 #!ifdef WITH_XHTTPAUTH
-        if (!www_authorize("xcap", "subscriber"))
-        {
-                www_challenge("xcap", "0");
-                exit;
-        }
-#!endif
-        if($hu=~"^/xcap-root/")
-        {
-                # xcap requests
-                switch($rm) {
-                        case "PUT":
-                                xcaps_put("sip:101@$Ri", "$hu", "$rb");
-                                exit;
-                        break;
-                        case "GET":
-                                xcaps_get("sip:101@$Ri", "$hu");
-                                exit;
-                        break;
-                        case "DELETE":
-                                xcaps_del("sip:101@$Ri", "$hu");
-                                exit;
-                        break;
-                }
-        }
-
-        # other http requests
-        xhttp_reply("200", "OK", "text/html",
-                "<html><body>OK: $si:$sp</body></html>");
+    if (!www_authorize("xcap", "subscriber"))
+    {
+        www_challenge("xcap", "0");
         exit;
-}
+    }
+#!endif
+    if($hu=~"^/xcap-root/")
+    {
+        set_reply_close();
+        set_reply_no_connect();
+        # xcap ops - break down http uri to get xcap user id
+        $xcapuri(u=>data) = $hu;
+        if($xcapuri(u=>xuid)=~"^sip:.+@.+")
+            $var(uri) = $xcapuri(u=>xuid);
+        else
+            $var(uri) = "sip:"+ $xcapuri(u=>xuid) + "@" + $Ri;
+        xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
+        switch($rm) {
+            case "PUT":
+                xcaps_put("$var(uri)", "$hu", "$rb");
+                exit;
+            break;
+            case "GET":
+                xcaps_get("$var(uri)", "$hu");
+                exit;
+            break;
+            case "DELETE":
+                xcaps_del("$var(uri)", "$hu");
+                exit;
+            break;
+        }
+    }
 
+    # other http requests
+    xhttp_reply("200", "OK", "text/html",
+            "<html><body>OK: $si:$sp</body></html>");
+    exit;
+}
 ...
 
    The URL for XCAP has to be:

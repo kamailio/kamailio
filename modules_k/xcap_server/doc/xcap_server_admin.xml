@@ -65,6 +65,9 @@
 		</listitem>
 		</itemizedlist>
 	</para>
+	<para>
+		Important: be sure you have global parameter: 'tcp_accept_no_cl=yes'.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -81,6 +84,12 @@
 			<listitem>
 			<para>
 				<emphasis>db</emphasis> - a database engine module
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>xhttp</emphasis> - embedded HTTP server
+				if you want to get XCAP documents via HTTP.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -181,6 +190,30 @@ modparam("xcap_server", "buf_size", 2048)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>xml_ns</varname> (str)</title>
+		<para>
+			Register extra XML namespaces to be used with XPath. You
+			can set the parameter many times to add more namespaces. The
+			format is 'prefix=href'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'null'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "xml_ns",
+    "rl=urn:ietf:params:xml:ns:resource-lists")
+modparam("xcap_server", "xml_ns",
+    "my=urn:my:prefix")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -269,10 +302,35 @@ event_route[xhttp:request] {
 	</section>
 
 	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>$xcapuri(name=>key)</emphasis> - name can be any
+				to idenitfy the XCAP uri; key can be: data, uri, root, auid,
+				type, tree, xuid, file, node.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		Exported pseudo-variables are documented at &kamwikilink;.
+		</para>
+		<example>
+		<title>$xcapuri(...) PV</title>
+		<programlisting format="linespecific">
+...
+    $xcapuri(u=>data) = $hu;
+    xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	<title>Simple XCAP Server Config</title>
 		<example>
 		<title>sample xcap server</title>
 		<programlisting format="linespecific">
+...
+tcp_accept_no_cl=yes
 ...
 loadmodule "xhttp.so"
 loadmodule "xcap_server.so"
@@ -287,37 +345,44 @@ modparam("xcap_server", "db_url",
 
 event_route[xhttp:request] {
 #!ifdef WITH_XHTTPAUTH
-	if (!www_authorize("xcap", "subscriber"))
-	{
-		www_challenge("xcap", "0");
-		exit;
-	}
+    if (!www_authorize("xcap", "subscriber"))
+    {
+        www_challenge("xcap", "0");
+        exit;
+    }
 #!endif
-	if($hu=~"^/xcap-root/")
-	{
-		# xcap requests
-		switch($rm) {
-			case "PUT":
-				xcaps_put("sip:101@$Ri", "$hu", "$rb");
-				exit;
-			break;
-			case "GET":
-				xcaps_get("sip:101@$Ri", "$hu");
-				exit;
-			break;
-			case "DELETE":
-				xcaps_del("sip:101@$Ri", "$hu");
-				exit;
-			break;
-		}
-	}
+    if($hu=~"^/xcap-root/")
+    {
+        set_reply_close();
+        set_reply_no_connect();
+        # xcap ops - break down http uri to get xcap user id
+        $xcapuri(u=>data) = $hu;
+        if($xcapuri(u=>xuid)=~"^sip:.+@.+")
+            $var(uri) = $xcapuri(u=>xuid);
+        else
+            $var(uri) = "sip:"+ $xcapuri(u=>xuid) + "@" + $Ri;
+        xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
+        switch($rm) {
+            case "PUT":
+                xcaps_put("$var(uri)", "$hu", "$rb");
+                exit;
+            break;
+            case "GET":
+                xcaps_get("$var(uri)", "$hu");
+                exit;
+            break;
+            case "DELETE":
+                xcaps_del("$var(uri)", "$hu");
+                exit;
+            break;
+        }
+    }
 
-	# other http requests
-	xhttp_reply("200", "OK", "text/html",
-		"&lt;html&gt;&lt;body>OK: $si:$sp&lt;/body&gt;&lt;/html&gt;");
-	exit;
+    # other http requests
+    xhttp_reply("200", "OK", "text/html",
+            "&lt;html&gt;&lt;body>OK: $si:$sp&lt;/body&gt;&lt;/html&gt;");
+    exit;
 }
-
 ...
 </programlisting>
 	    </example>
