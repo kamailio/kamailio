@@ -30,15 +30,19 @@
 #include <libxml/xpathInternals.h>
 
 #include "../../dprint.h"
-#include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_param.h"
 #include "../../modules_k/xcap_client/xcap_callbacks.h"
 
 #include "xcap_misc.h"
 
+extern str xcaps_root;
+
 static param_t *_xcaps_xpath_ns_root = NULL;
 
+/**
+ * parse xcap uri
+ */
 int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 {
 	str s;
@@ -213,6 +217,7 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		xuri->node.len = xuri->uri.s + xuri->uri.len - xuri->node.s;
 	}
 
+#if 0
 	LM_DBG("----- uri: [%.*s]\n", xuri->uri.len, xuri->uri.s);
 	LM_DBG("----- root: [%.*s]\n", xuri->root.len, xuri->root.s);
 	LM_DBG("----- auid: [%.*s] (%d)\n", xuri->auid.len, xuri->auid.s,
@@ -225,9 +230,13 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 	LM_DBG("----- rdoc: [%.*s]\n", xuri->rdoc.len, xuri->rdoc.s);
 	if(xuri->nss!=NULL)
 		LM_DBG("----- node: [%.*s]\n", xuri->node.len, xuri->node.s);
+#endif
 	return 0;
 }
 
+/**
+ * get content of xpath pointer
+ */
 int xcaps_xpath_get(str *inbuf, str *xpaths, str *outbuf)
 {
 	xmlDocPtr doc = NULL;
@@ -357,7 +366,9 @@ error:
 	return -1;
 }
 
-
+/**
+ * set content of xpath pointer
+ */
 int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 {
 	xmlDocPtr doc = NULL;
@@ -499,7 +510,9 @@ error:
 	return -1;
 }
 
-
+/**
+ * register extra xml name spaces
+ */
 void xcaps_xpath_register_ns(xmlXPathContextPtr xpathCtx)
 {
 	param_t *ns;
@@ -511,6 +524,9 @@ void xcaps_xpath_register_ns(xmlXPathContextPtr xpathCtx)
 	}
 }
 
+/**
+ * parse xml ns parameter
+ */
 int xcaps_xpath_ns_param(modparam_t type, void *val)
 {
 	char *p;
@@ -549,3 +565,228 @@ error:
 
 }
 
+/**
+ * xcapuri PV export
+ */
+typedef struct _pv_xcap_uri {
+	str name;
+	unsigned int id;
+	xcap_uri_t xuri;
+	struct _pv_xcap_uri *next;
+} pv_xcap_uri_t;
+
+typedef struct _pv_xcap_uri_spec {
+	str name;
+	str key;
+	int ktype;
+	pv_xcap_uri_t *xus;
+} pv_xcap_uri_spec_t;
+
+
+pv_xcap_uri_t *_pv_xcap_uri_root = NULL;
+
+/**
+ *
+ */
+pv_xcap_uri_t *pv_xcap_uri_get_struct(str *name)
+{
+	unsigned int id;
+	pv_xcap_uri_t *it;
+
+	id = get_hash1_raw(name->s, name->len);
+	it = _pv_xcap_uri_root;
+
+	while(it!=NULL)
+	{
+		if(id == it->id && name->len==it->name.len
+				&& strncmp(name->s, it->name.s, name->len)==0)
+		{
+			LM_DBG("uri found [%.*s]\n", name->len, name->s);
+			return it;
+		}
+		it = it->next;
+	}
+
+	it = (pv_xcap_uri_t*)pkg_malloc(sizeof(pv_xcap_uri_t));
+	if(it==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		return NULL;
+	}
+	memset(it, 0, sizeof(pv_xcap_uri_t));
+
+	it->id = id;
+	it->name = *name;
+
+	it->next = _pv_xcap_uri_root;
+	_pv_xcap_uri_root = it;
+	return it;
+}
+
+
+/**
+ *
+ */
+int pv_parse_xcap_uri_name(pv_spec_p sp, str *in)
+{
+	pv_xcap_uri_spec_t *pxs = NULL;
+	char *p;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+
+	pxs = (pv_xcap_uri_spec_t*)pkg_malloc(sizeof(pv_xcap_uri_spec_t));
+	if(pxs==NULL)
+		return -1;
+
+	memset(pxs, 0, sizeof(pv_xcap_uri_spec_t));
+
+	p = in->s;
+
+	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in->s+in->len || *p=='\0')
+		goto error;
+	pxs->name.s = p;
+	while(p < in->s + in->len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+	if(p>in->s+in->len || *p=='\0')
+		goto error;
+	pxs->name.len = p - pxs->name.s;
+	if(*p!='=')
+	{
+		while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+			p++;
+		if(p>in->s+in->len || *p=='\0' || *p!='=')
+			goto error;
+	}
+	p++;
+	if(*p!='>')
+		goto error;
+	p++;
+
+	pxs->key.len = in->len - (int)(p - in->s);
+	pxs->key.s = p;
+	LM_DBG("uri name [%.*s] - key [%.*s]\n", pxs->name.len, pxs->name.s,
+			pxs->key.len, pxs->key.s);
+	if(pxs->key.len==4 && strncmp(pxs->key.s, "data", 4)==0) {
+		pxs->ktype = 0;
+	} else if(pxs->key.len==3 && strncmp(pxs->key.s, "uri", 4)==0) {
+		pxs->ktype = 1;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "root", 4)==0) {
+		pxs->ktype = 2;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "auid", 4)==0) {
+		pxs->ktype = 3;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "type", 4)==0) {
+		pxs->ktype = 4;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "tree", 4)==0) {
+		pxs->ktype = 5;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "xuid", 4)==0) {
+		pxs->ktype = 6;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "file", 4)==0) {
+		pxs->ktype = 7;
+	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "node", 4)==0) {
+		pxs->ktype = 8;
+	} else {
+		LM_ERR("unknown key type [%.*s]\n", in->len, in->s);
+		goto error;
+	}
+	pxs->xus = pv_xcap_uri_get_struct(&pxs->name);
+	sp->pvp.pvn.u.dname = (void*)pxs;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
+	return 0;
+
+error:
+	if(pxs!=NULL)
+		pkg_free(pxs);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_set_xcap_uri(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	pv_xcap_uri_spec_t *pxs = NULL;
+
+	pxs = (pv_xcap_uri_spec_t*)param->pvn.u.dname;
+	if(pxs->xus==NULL)
+		return -1;
+	if(!(val->flags&PV_VAL_STR))
+		return -1;
+	if(pxs->ktype!=0)
+		return -1;
+	/* set uri data */
+	if(xcap_parse_uri(&val->rs, &xcaps_root, &pxs->xus->xuri)<0)
+	{
+		LM_ERR("error setting xcap uri data [%.*s]\n",
+				val->rs.len, val->rs.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int pv_get_xcap_uri(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	pv_xcap_uri_spec_t *pxs = NULL;
+
+	pxs = (pv_xcap_uri_spec_t*)param->pvn.u.dname;
+	if(pxs->xus==NULL)
+		return -1;
+
+	switch(pxs->ktype) {
+		case 0:
+		case 1:
+			/* get uri */
+			if(pxs->xus->xuri.uri.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.uri);
+		break;
+		case 2:
+			/* get root */
+			if(pxs->xus->xuri.root.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.root);
+		break;
+		case 3:
+			/* get auid */
+			if(pxs->xus->xuri.auid.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.auid);
+		break;
+		case 4:
+			/* get type */
+			return pv_get_sintval(msg, param, res, pxs->xus->xuri.type);
+		break;
+		case 5:
+			/* get tree */
+			if(pxs->xus->xuri.tree.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.tree);
+		break;
+		case 6:
+			/* get xuid */
+			if(pxs->xus->xuri.xuid.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.xuid);
+		break;
+		case 7:
+			/* get file */
+			if(pxs->xus->xuri.file.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.file);
+		break;
+		case 8:
+			/* get node */
+			if(pxs->xus->xuri.node.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.node);
+		break;
+		default:
+			return pv_get_null(msg, param, res);
+	}
+	return pv_get_null(msg, param, res);
+}

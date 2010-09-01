@@ -75,9 +75,9 @@ int xcaps_generate_etag_hdr(str *etag);
 
 static str xcaps_db_table = str_init("xcap");
 static str xcaps_db_url = str_init(DEFAULT_DB_URL);
-static str xcaps_root = str_init("/xcap-root/");
 static int xcaps_init_time = 0;
 static int xcaps_etag_counter = 1;
+str xcaps_root = str_init("/xcap-root/");
 
 static str xcaps_buf = {0, 8192};
 #define XCAPS_ETAG_SIZE	128
@@ -99,6 +99,12 @@ db_func_t xcaps_dbf;
 
 /** SL API structure */
 sl_api_t slb;
+
+static pv_export_t mod_pvs[] = {
+	{ {"xcapuri", sizeof("xcapuri")-1}, PVT_OTHER, pv_get_xcap_uri,
+		pv_set_xcap_uri, pv_parse_xcap_uri_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 static param_export_t params[] = {
 	{ "db_url",		STR_PARAM, &xcaps_db_url.s    },
@@ -128,7 +134,7 @@ struct module_exports exports= {
 	params,						/* exported parameters */
 	0,      					/* exported statistics */
 	0,							/* exported MI functions */
-	0,							/* exported pseudo-variables */
+	mod_pvs,					/* exported pseudo-variables */
 	0,							/* extra processes */
 	mod_init,					/* module initialization function */
 	0,							/* response handling function */
