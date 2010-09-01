@@ -143,11 +143,11 @@ get_make_idefs=$(subst ^LF^,$(LF),$(shell sed \
 # replaced with '^LF^' and then ^LF^ is subst'ed back to a real LF.
 get_make_vars=$(subst ^LF^,$(LF),$(shell sed -n \
  -e ': start' \
- -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]*\($$\|.*[^\]$$\)/{H;d}' \
- -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]\+.*[\]$$/,/[^\]$$/{H;d}' \
+ -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]*\($$\|.*[^\]$$\)/{H;b end}' \
+ -e '/^\(ifeq\|ifneq\|else\|endif\)[\t ]\+.*[\]$$/,/[^\]$$/{H;b end}' \
  -e '/^[a-zA-Z._/$$][a-zA-Z0-9._()/$$ \t-]*:\([^=]\|$$\)/b eat_rule' \
- -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*[^\]$$/{H;d}' \
- -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*\\$$/,/\(^$$\)\|\([^\]$$\)/{H;d}' \
+ -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*[^\]$$/{H;b end}' \
+ -e '/^[\t ]*[A-Za-z._][A-Za-z0-9._-]*[\t ]*[+:]\?=.*\\$$/,/\(^$$\)\|\([^\]$$\)/{H;b end}' \
  -e ': end' \
  -e '$${g;s/\n/^LF^/g;p}'\
  -e 'b' \
