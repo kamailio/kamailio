@@ -76,6 +76,9 @@
 #define F_CONN_WANTS_WR  8192  /* conn. should be watched for WRITE */
 #define F_CONN_PASSIVE  16384 /* conn. created via accept() and not connect()*/
 
+#ifndef NO_READ_HTTP11
+#define READ_HTTP11
+#endif
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
 						TCP_REQ_OVERRUN, TCP_REQ_BAD_LEN };
