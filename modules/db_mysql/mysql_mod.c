@@ -59,7 +59,7 @@ unsigned long my_client_ver = 0;
 
 struct mysql_counters_h mysql_cnts_h;
 counter_def_t mysql_cnt_defs[] =  {
-	{&mysql_cnts_h.driver_err, "Mysql driver erros", 0, 0, 0,
+	{&mysql_cnts_h.driver_err, "driver_errors", 0, 0, 0,
 		"incremented each time a Mysql error happened because the server/connection has failed."},
 	{0, 0, 0, 0, 0, 0 }
 };
