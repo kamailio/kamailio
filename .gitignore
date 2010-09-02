@@ -35,3 +35,4 @@ utils/sercmd/sercmd
 # MacOSX auto-generated files
 libiname.lst
 *.dylib
+*.7
