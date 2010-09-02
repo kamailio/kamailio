@@ -22,10 +22,12 @@ files_list= \
 	$(COREPATH)/sctp_options.c:sctp \
 	$(COREPATH)/tcp_options.c:tcp \
 	$(COREPATH)/modules/tm/config.c:tm \
-	$(COREPATH)/modules_k/ratelimit/config.c:ratelimit \
 	$(COREPATH)/modules_k/registrar/config.c:registrar \
 	$(COREPATH)/modules_k/siputils/config.c:siputils \
-	$(COREPATH)/modules_s/maxfwd/maxfwd.c:maxfwd
+	$(COREPATH)/modules_s/maxfwd/maxfwd.c:maxfwd \
+	$(COREPATH)/modules/carrierroute/config.c:carrierroute \
+	$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
+	$(COREPATH)/modules/tls/tls_cfg.c:tls
 
 
 
@@ -156,6 +158,8 @@ INCLUDES:=
 # extract all the includes and defs from the module makefile and
 # evaluate them
 $$(eval $$(call get_make_vars,$$(dir $$(call get_prereq,$(1)))))
+# override COREPATH (we know better)
+COREPATH=../..
 # save the result in a per group e_idefs_<grp_name> var
 $$(eval e_idefs_$$(call get_grp,$(1)):=$$(DEFS) $$(INCLUDES))
 
