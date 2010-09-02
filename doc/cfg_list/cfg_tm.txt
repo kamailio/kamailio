@@ -212,3 +212,17 @@ Configuration Variables for tm
         Range: 0 - 2.
         Type: integer.
 
+34. tm.local_cancel_reason
+        if set to 1, a Reason header is added to locally generated
+        CANCELs (see RFC3326).
+        Default: 1.
+        Range: 0 - 1.
+        Type: integer.
+
+35. tm.e2e_cancel_reason
+        if set to 1, Reason headers from received CANCELs are copied
+        into the corresponding generated hop-by-hop CANCELs.
+        Default: 1.
+        Range: 0 - 1.
+        Type: integer.
+

@@ -412,4 +412,30 @@
     </para>
 </section>
 
+<section id="tm.local_cancel_reason">
+    <title>tm.local_cancel_reason</title>
+    <para>
+        if set to 1, a Reason header is added to locally generated
+        CANCELs (see RFC3326).
+    </para>
+    <para>Default value: 1.</para>
+    <para>Range: 0 - 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="tm.e2e_cancel_reason">
+    <title>tm.e2e_cancel_reason</title>
+    <para>
+        if set to 1, Reason headers from received CANCELs are copied
+        into the corresponding generated hop-by-hop CANCELs.
+    </para>
+    <para>Default value: 1.</para>
+    <para>Range: 0 - 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 </chapter>

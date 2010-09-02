@@ -369,6 +369,20 @@
     </para>
 </section>
 
+<section id="core.dns_cache_rec_pref">
+    <title>core.dns_cache_rec_pref</title>
+    <para>
+        DNS cache record preference:  0 - do not check duplicates 1 -
+        prefer old records 2 - prefer new records 3 - prefer records
+        with longer lifetime.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Range: 0 - 3.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 <section id="core.mem_dump_pkg">
     <title>core.mem_dump_pkg</title>
     <para>
@@ -428,6 +442,46 @@
     </para>
 </section>
 
+<section id="core.udp4_raw">
+    <title>core.udp4_raw</title>
+    <para>
+        enable/disable using a raw socket for sending UDP IPV4 packets.
+        Should be  faster on multi-CPU linux running machines..
+    </para>
+    <para>Default value: 0.</para>
+    <para>Range: -1 - 1.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.udp4_raw_mtu">
+    <title>core.udp4_raw_mtu</title>
+    <para>
+        set the MTU used when using raw sockets for udp sending. This
+        value will be used when deciding whether or not to fragment the
+        packets..
+    </para>
+    <para>Default value: 1500.</para>
+    <para>Range: 28 - 65535.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.udp4_raw_ttl">
+    <title>core.udp4_raw_ttl</title>
+    <para>
+        set the IP TTL used when using raw sockets for udp sending. -1
+        will use the same value as for normal udp sockets..
+    </para>
+    <para>Default value: -1.</para>
+    <para>Range: -1 - 255.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 <section id="core.force_rport">
     <title>core.force_rport</title>
     <para>
@@ -455,11 +509,12 @@
     <title>core.mem_summary</title>
     <para>
         memory debugging information displayed on exit (flags):  0 -
-        off, 1 - dump all the used blocks (status), 2 - summary of used
-        blocks.
+        off, 1 - dump all the pkg used blocks (status), 2 - dump all
+        the shm used blocks (status), 4 - summary of pkg used blocks, 8
+        - summary of shm used blocks.
     </para>
-    <para>Default value: 1.</para>
-    <para>Range: 0 - 3.</para>
+    <para>Default value: 3.</para>
+    <para>Range: 0 - 15.</para>
     <para>Type: integer.</para>
     <para>
     </para>

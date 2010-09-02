@@ -18,6 +18,19 @@
     </para>
 </section>
 
+<section id="registrar.default_expires_range">
+    <title>registrar.default_expires_range</title>
+    <para>
+        Percent from default_expires that will be used in generating
+        the range for the expire interval.
+    </para>
+    <para>Default value: 0.</para>
+    <para>Range: 0 - 100.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 <section id="registrar.min_expires">
     <title>registrar.min_expires</title>
     <para>

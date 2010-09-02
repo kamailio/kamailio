@@ -23,7 +23,7 @@ Configuration Variables for core
         enable/disable destination blacklisting.
         Default: 0.
         Range: 0 - 1.
-        Type: integer. 
+        Type: integer.
 
  5. core.dst_blacklist_expire
         how much time (in s) a blacklisted destination is kept in the
@@ -181,50 +181,81 @@ Configuration Variables for core
         Range: 0 - 1.
         Type: integer.
 
-32. core.mem_dump_pkg
+32. core.dns_cache_rec_pref
+        DNS cache record preference:  0 - do not check duplicates 1 -
+        prefer old records 2 - prefer new records 3 - prefer records
+        with longer lifetime.
+        Default: 0.
+        Range: 0 - 3.
+        Type: integer.
+
+33. core.mem_dump_pkg
         dump process memory status, parameter: pid_number.
         Default: 0.
         Type: integer.
 
-33. core.mem_dump_shm
+34. core.mem_dump_shm
         dump shared memory status.
         Default: 0.
         Type: integer.
 
-34. core.max_while_loops
+35. core.max_while_loops
         maximum iterations allowed for a while loop.
         Default: 100.
         Type: integer.
 
-35. core.udp_mtu
+36. core.udp_mtu
         fallback to a congestion controlled protocol if send size
         exceeds udp_mtu.
         Default: 0.
         Range: 0 - 65535.
         Type: integer.
 
-36. core.udp_mtu_try_proto
+37. core.udp_mtu_try_proto
         if send size > udp_mtu use proto (1 udp, 2 tcp, 3 tls, 4 sctp).
         Default: 0.
         Range: 1 - 4.
         Type: integer.
 
-37. core.force_rport
+38. core.udp4_raw
+        enable/disable using a raw socket for sending UDP IPV4 packets.
+        Should be  faster on multi-CPU linux running machines..
+        Default: 0.
+        Range: -1 - 1.
+        Type: integer.
+
+39. core.udp4_raw_mtu
+        set the MTU used when using raw sockets for udp sending. This
+        value will be used when deciding whether or not to fragment the
+        packets..
+        Default: 1500.
+        Range: 28 - 65535.
+        Type: integer.
+
+40. core.udp4_raw_ttl
+        set the IP TTL used when using raw sockets for udp sending. -1
+        will use the same value as for normal udp sockets..
+        Default: -1.
+        Range: -1 - 255.
+        Type: integer.
+
+41. core.force_rport
         force rport for all the received messages.
         Default: 0.
         Range: 0 - 1.
         Type: integer.
 
-38. core.memlog
+42. core.memlog
         log level for memory status/summary information.
         Default: 3.
         Type: integer.
 
-39. core.mem_summary
+43. core.mem_summary
         memory debugging information displayed on exit (flags):  0 -
-        off, 1 - dump all the used blocks (status), 2 - summary of used
-        blocks.
-        Default: 1.
-        Range: 0 - 3.
+        off, 1 - dump all the pkg used blocks (status), 2 - dump all
+        the shm used blocks (status), 4 - summary of pkg used blocks, 8
+        - summary of shm used blocks.
+        Default: 3.
+        Range: 0 - 15.
         Type: integer.
 
