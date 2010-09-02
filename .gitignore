@@ -28,6 +28,8 @@ TAGS
 test/udp_flood
 utils/gen_ha1/gen_ha1
 utils/sercmd/sercmd
+utils/pdbt/pdb_server
+utils/pdbt/pdbt
 # Emacs backup files
 *~
 # Emacs file locks
@@ -35,4 +37,5 @@ utils/sercmd/sercmd
 # MacOSX auto-generated files
 libiname.lst
 *.dylib
+# man pages
 *.7
