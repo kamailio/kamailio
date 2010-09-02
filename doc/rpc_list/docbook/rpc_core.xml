@@ -68,6 +68,23 @@ RPC Exports for core
 </para>
 </section>
 
+<section id="core.flags"><title>core.flags</title>
+<para>
+        Returns the compile flags.
+</para>
+<para>
+</para>
+</section>
+
+<section id="core.info"><title>core.info</title>
+<para>
+        Verbose info, including version number, compile flags,
+        compiler,repository hash a.s.o.
+</para>
+<para>
+</para>
+</section>
+
 <section id="core.uptime"><title>core.uptime</title>
 <para>
         Returns uptime of SER server.
@@ -160,6 +177,14 @@ RPC Exports for core
 </para>
 </section>
 
+<section id="core.udp4_raw_info"><title>core.udp4_raw_info</title>
+<para>
+        Returns udp4_raw related info.
+</para>
+<para>
+</para>
+</section>
+
 <section id="dns.mem_info"><title>dns.mem_info</title>
 <para>
         dns cache memory info.
@@ -202,7 +227,16 @@ RPC Exports for core
 
 <section id="dns.delete_all"><title>dns.delete_all</title>
 <para>
-        deletes all the entries from the DNS cache
+        deletes all the non-permanent entries from the DNS cache
+</para>
+<para>
+</para>
+</section>
+
+<section id="dns.delete_all_force"><title>dns.delete_all_force</title>
+<para>
+        deletes all the entries from the DNS cache including the
+        permanent ones
 </para>
 <para>
 </para>

@@ -11,3 +11,9 @@ RPC Exports for tls
         List currently open TLS connections
         Returns an array.
 
+ 3. tls.info
+        Returns internal tls related info.
+
+ 4. tls.options
+        Dumps all the tls config options.
+

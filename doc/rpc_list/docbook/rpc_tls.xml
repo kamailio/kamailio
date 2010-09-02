@@ -25,4 +25,20 @@ RPC Exports for tls
 </para>
 </section>
 
+<section id="tls.info"><title>tls.info</title>
+<para>
+        Returns internal tls related info.
+</para>
+<para>
+</para>
+</section>
+
+<section id="tls.options"><title>tls.options</title>
+<para>
+        Dumps all the tls config options.
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

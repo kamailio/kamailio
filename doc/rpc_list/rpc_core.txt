@@ -29,37 +29,44 @@ RPC Exports for core
  7. core.version
         Returns the version string of the server.
 
- 8. core.uptime
+ 8. core.flags
+        Returns the compile flags.
+
+ 9. core.info
+        Verbose info, including version number, compile flags,
+        compiler,repository hash a.s.o.
+
+10. core.uptime
         Returns uptime of SER server.
 
- 9. core.ps
+11. core.ps
         Returns the description of running SER processes.
         Returns an array.
 
-10. core.pwd
+12. core.pwd
         Returns the working directory of SER server.
         Returns an array.
 
-11. core.arg
+13. core.arg
         Returns the list of command line arguments used on SER startup.
         Returns an array.
 
-12. core.kill
+14. core.kill
         Sends the given signal to SER.
 
-13. core.shmmem
+15. core.shmmem
         Returns shared memory info. It has an optional parameter that
         specifies the measuring unit: b - bytes (default), k or kb, m
         or mb, g or gb. Note: when using something different from
         bytes, the value is truncated.
 
-14. core.tcp_info
+16. core.tcp_info
         Returns tcp related info.
 
-15. core.tcp_options
+17. core.tcp_options
         Returns active tcp options.
 
-16. core.sctp_options
+18. core.sctp_options
         Returns active sctp options. With one parameter it returns the
         sctp options set in the kernel for a specific
         socket(debugging), with 0 filled in for non-kernel related
@@ -67,73 +74,80 @@ RPC Exports for core
         address[:port] . With no parameters it returns ser's idea of
         the current sctp options (intended non-debugging use).
 
-17. core.sctp_info
+19. core.sctp_info
         Returns sctp related info.
 
-18. dns.mem_info
+20. core.udp4_raw_info
+        Returns udp4_raw related info.
+
+21. dns.mem_info
         dns cache memory info.
 
-19. dns.debug
+22. dns.debug
         dns debug  info.
 
-20. dns.debug_all
+23. dns.debug_all
         complete dns debug  dump
 
-21. dns.view
+24. dns.view
         dns cache dump in a human-readable format
 
-22. dns.lookup
+25. dns.lookup
         perform a dns lookup
 
-23. dns.delete_all
-        deletes all the entries from the DNS cache
+26. dns.delete_all
+        deletes all the non-permanent entries from the DNS cache
 
-24. dns.add_a
+27. dns.delete_all_force
+        deletes all the entries from the DNS cache including the
+        permanent ones
+
+28. dns.add_a
         adds an A record to the DNS cache
 
-25. dns.add_aaaa
+29. dns.add_aaaa
         adds an AAAA record to the DNS cache
 
-26. dns.add_srv
+30. dns.add_srv
         adds an SRV record to the DNS cache
 
-27. dns.delete_a
+31. dns.delete_a
         deletes an A record from the DNS cache
 
-28. dns.delete_aaaa
+32. dns.delete_aaaa
         deletes an AAAA record from the DNS cache
 
-29. dns.delete_srv
+33. dns.delete_srv
         deletes an SRV record from the DNS cache
 
-30. dns.delete_naptr
+34. dns.delete_naptr
         deletes a NAPTR record from the DNS cache
 
-31. dns.delete_cname
+35. dns.delete_cname
         deletes a CNAME record from the DNS cache
 
-32. dns.delete_txt
+36. dns.delete_txt
         deletes a TXT record from the DNS cache
 
-33. dns.delete_ebl
+37. dns.delete_ebl
         deletes an EBL record from the DNS cache
 
-34. dns.delete_ptr
+38. dns.delete_ptr
         deletes an PTR record from the DNS cache
 
-35. dst_blacklist.mem_info
+39. dst_blacklist.mem_info
         dst blacklist memory usage info.
 
-36. dst_blacklist.debug
+40. dst_blacklist.debug
         dst blacklist  debug  info.
 
-37. dst_blacklist.view
+41. dst_blacklist.view
         dst blacklist dump in human-readable format.
 
-38. dst_blacklist.delete_all
+42. dst_blacklist.delete_all
         Deletes all the entries from the dst blacklist except the
         permanent ones.
 
-39. dst_blacklist.add
+43. dst_blacklist.add
         Adds a new entry to the dst blacklist.
 

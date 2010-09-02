@@ -5,11 +5,11 @@ RPC Exports for lcr
 
 
  1. lcr.reload
-        Reload gw and lcr tables from database.
+        Reload lcr tables from database.
 
  2. lcr.dump_gws
-        Dump the contents of the gw table.
+        Dump the contents of lcr_gws table.
 
- 3. lcr.dump_lcrs
-        Dump the contents of the lcr table.
+ 3. lcr.dump_rules
+        Dump the contents of the lcr_rules table.
 
