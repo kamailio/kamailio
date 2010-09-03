@@ -321,6 +321,9 @@ int socket2str(char* s, int* len, struct socket_info* si)
 	proto.len = strlen(proto.s);
 	
 	l = proto.len + si->address_str.len + si->port_no_str.len + 2;
+
+	if(si->address.af==AF_INET6)
+		l += 2;
 	
 	if (*len < l) {
 		ERR("socket2str: Destionation buffer too short\n");
@@ -331,8 +334,14 @@ int socket2str(char* s, int* len, struct socket_info* si)
 	memcpy(s, proto.s, proto.len);
 	s += proto.len;
 	*s = ':'; s++;
+	if(si->address.af==AF_INET6) {
+		*s = '['; s++;
+	}
 	memcpy(s, si->address_str.s, si->address_str.len);
 	s += si->address_str.len;
+	if(si->address.af==AF_INET6) {
+		*s = ']'; s++;
+	}
 	*s = ':'; s++;
 	memcpy(s, si->port_no_str.s, si->port_no_str.len);
 	s += si->port_no_str.len;
