@@ -42,7 +42,7 @@ cfg_block_t	**cfg_global = NULL;	/* pointer to the active cfg block */
 cfg_block_t	*cfg_local = NULL;	/* per-process pointer to the active cfg block.
 					Updated only when the child process
 					finishes working on the SIP message */
-static int	cfg_block_size = 0;	/* size of the cfg block (constant) */
+static int	cfg_block_size = 0;	/* size of the cfg block including the meta-data (constant) */
 gen_lock_t	*cfg_global_lock = 0;	/* protects *cfg_global */
 gen_lock_t	*cfg_writer_lock = 0;	/* This lock makes sure that two processes do not
 					try to clone *cfg_global at the same time.
@@ -65,6 +65,14 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 
 	if (cfg_shmized) {
 		LOG(L_ERR, "ERROR: cfg_new_group(): too late config declaration\n");
+		return NULL;
+	}
+
+	if (num > CFG_MAX_VAR_NUM) {
+		LOG(L_ERR, "ERROR: cfg_new_group(): too many variables (%d) within a single group,"
+			" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group into multiple"
+			" definitions.\n",
+			num, CFG_MAX_VAR_NUM);
 		return NULL;
 	}
 
@@ -162,13 +170,31 @@ int cfg_shmize(void)
 	if (!cfg_group) return 0;
 
 	/* Let us allocate one memory block that
-	will contain all the variables */
+	 * will contain all the variables + meta-data
+	 * in the following form:
+	 * |-----------|
+	 * | meta-data | <- group A: meta_offset
+	 * | variables | <- group A: var_offset
+	 * |-----------|
+	 * | meta-data | <- group B: meta_offset
+	 * | variables | <- group B: var_offset
+	 * |-----------|
+	 * |    ...    |
+	 * |-----------|
+	 *
+	 * The additional array for the multiple values
+	 * of the same variable is linked to the meta-data.
+	 */
 	for (	size=0, group = cfg_group;
 		group;
 		group=group->next
 	) {
 		size = ROUND_POINTER(size);
-		group->offset = size;
+		group->meta_offset = size;
+		size += sizeof(cfg_group_meta_t);
+
+		size = ROUND_POINTER(size);
+		group->var_offset = size;
 		size += group->size;
 	}
 
@@ -190,19 +216,19 @@ int cfg_shmize(void)
 			if (cfg_shmize_strings(group)) goto error;
 
 			/* copy the values to the new block */
-			memcpy(block->vars+group->offset, group->vars, group->size);
+			memcpy(block->vars+group->var_offset, group->vars, group->size);
 		} else {
 			/* The group was declared with NULL values,
 			 * we have to fix it up.
 			 * The fixup function takes care about the values,
 			 * it fills up the block */
-			if (cfg_script_fixup(group, block->vars+group->offset)) goto error;
+			if (cfg_script_fixup(group, block->vars+group->var_offset)) goto error;
 
 			/* Notify the drivers about the new config definition.
 			 * Temporary set the group handle so that the drivers have a chance to
 			 * overwrite the default values. The handle must be reset after this
 			 * because the main process does not have a local configuration. */
-			*(group->handle) = block->vars+group->offset;
+			*(group->handle) = block->vars+group->var_offset;
 			cfg_notify_drivers(group->name, group->name_len,
 					group->mapping->def);
 			*(group->handle) = NULL;
@@ -243,7 +269,7 @@ static void cfg_destory_groups(unsigned char *block)
 				(CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR)) &&
 					mapping[i].flag & cfg_var_shmized) {
 
-						old_string = *(char **)(block + group->offset + mapping[i].offset);
+						old_string = *(char **)(block + group->var_offset + mapping[i].offset);
 						if (old_string) shm_free(old_string);
 				}
 

@@ -36,6 +36,9 @@
 #include "../compiler_opt.h"
 #include "cfg.h"
 
+/*! \brief Maximum number of variables within a configuration group. */
+#define CFG_MAX_VAR_NUM	256
+
 /*! \brief indicates that the variable has been already shmized */
 #define cfg_var_shmized	1U
 
@@ -59,8 +62,10 @@ typedef struct _cfg_group {
 					shmized. */
 	int		size;		/*!< size of the memory block that has to be
 					allocated to store the values */
-	int		offset;		/*!< offset of the group within the
-					shmized memory block */
+	int		meta_offset;	/*!< offset of the group within the
+					shmized memory block for the meta_data */
+	int		var_offset;	/*!< offset of the group within the
+					shmized memory block for the variables */
 	void		**handle;	/*!< per-process handle that can be used
 					by the modules to access the variables.
 					It is registered when the group is created,
@@ -72,6 +77,25 @@ typedef struct _cfg_group {
 	int		name_len;	
 	char		name[1];
 } cfg_group_t;
+
+/*! \brief One instance of the cfg group variables which stores
+ * the additional values. These values can overwrite the default values. */
+typedef struct _cfg_group_inst {
+	unsigned int	set[CFG_MAX_VAR_NUM/(sizeof(int)*8)];
+					/*!< Bitmap indicating whether or not a value is explicitely set
+					within this instance. If the value is not set,
+					then the default value is used, and copied into this instance. */
+	unsigned char	vars[1];	/*!< block for the values */
+} cfg_group_inst_t;
+
+/*! \bried Meta-data which is stored before each variable group
+ * within the blob. This structure is used to handle the multivalue
+ * instances of the variables, i.e. manages the array for the
+ * additional values. */
+typedef struct _cfg_group_meta {
+	int			num;	/*!< Number of items in the array */
+	cfg_group_inst_t	*array;	/*!< Array of cfg groups with num number of items */
+} cfg_group_meta_t;
 
 /*! \brief single memoy block that contains all the cfg values */
 typedef struct _cfg_block {
@@ -242,7 +266,7 @@ static inline void cfg_update_local(int no_cbs)
 		group;
 		group = group->next
 	)
-		*(group->handle) = cfg_local->vars + group->offset;
+		*(group->handle) = cfg_local->vars + group->var_offset;
 
 	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS || no_cbs))
 		return;

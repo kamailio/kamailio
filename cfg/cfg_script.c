@@ -103,7 +103,15 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 		LOG(L_ERR, "ERROR: new_cfg_script_var(): unsupported variable type\n");
 		return NULL;
 	}
+
 	group->num++;
+	if (group->num > CFG_MAX_VAR_NUM) {
+		LOG(L_ERR, "ERROR: new_cfg_script_var(): too many variables (%d) within a single group,"
+			" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group into multiple"
+			" definitions.\n",
+			group->num, CFG_MAX_VAR_NUM);
+		return NULL;
+	}
 
 	var = (cfg_script_var_t *)pkg_malloc(sizeof(cfg_script_var_t));
 	if (!var) goto error;

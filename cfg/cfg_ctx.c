@@ -328,13 +328,13 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		if (var->def->type & CFG_ATOMIC) {
 			/* atomic change is allowed, we can rewrite the value
 			directly in the global config */
-			p = (*cfg_global)->vars+group->offset+var->offset;
+			p = (*cfg_global)->vars+group->var_offset+var->offset;
 
 		} else {
 			/* clone the memory block, and prepare the modification */
 			if (!(block = cfg_clone_global())) goto error;
 
-			p = block->vars+group->offset+var->offset;
+			p = block->vars+group->var_offset+var->offset;
 		}
 	} else {
 		/* we are allowed to rewrite the value on-the-fly
@@ -786,7 +786,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 		changed = changed->next
 	) {
 		p = block->vars
-			+ changed->group->offset
+			+ changed->group->var_offset
 			+ changed->var->offset;
 
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
