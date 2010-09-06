@@ -889,8 +889,9 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 		@if [ -f etc/$(CFG_NAME).cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
 					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-				< etc/$(CFG_NAME).cfg > \
-				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample; \
+					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
+				< etc/$(CFG_NAME).cfg \
+				> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample; \
 			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg.sample; \
 			if [ -z "${skip_cfg_install}" -a \
 					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME).cfg ]; then \
@@ -901,8 +902,9 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 		@if [ -f etc/$(CFG_NAME)-basic.cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
 					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
-				< etc/$(CFG_NAME)-basic.cfg > \
-				$(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg.sample; \
+					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
+				< etc/$(CFG_NAME)-basic.cfg \
+				> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg.sample; \
 			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg.sample; \
 			if [ -z "${skip_cfg_install}" -a \
 					! -f $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-basic.cfg ]; then \
@@ -912,7 +914,8 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 		fi
 		@if [ -f etc/$(CFG_NAME)-oob.cfg ]; then \
 			sed $(foreach m,$(modules_dirs),\
-				-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+					-e "s#/usr/[^:]*lib/$(CFG_NAME)/$(m)\([:/\"]\)#$($(m)_target)\1#g") \
+					-e "s#/usr/local/etc/$(CFG_NAME)/#$(cfg_target)#g" \
 				< etc/$(CFG_NAME)-oob.cfg \
 				> $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample; \
 			chmod 644 $(cfg_prefix)/$(cfg_dir)$(MAIN_NAME)-advanced.cfg.sample; \
