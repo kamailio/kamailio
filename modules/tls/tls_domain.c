@@ -172,7 +172,7 @@ char* tls_domain_str(tls_domain_t* d)
 
 /*
  * Initialize parameters that have not been configured from
- * parent domain (usualy one of default domains
+ * parent domain (usually one of default domains
  */
 static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 {
@@ -184,27 +184,36 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 		return -1;
 	}
 	
-	if (!d->cert_file.s && 
-	    shm_asciiz_dup(&d->cert_file.s, parent->cert_file.s) < 0) return -1;
-	d->cert_file.len = parent->cert_file.len;
+	if (!d->cert_file.s) {
+		if (shm_asciiz_dup(&d->cert_file.s, parent->cert_file.s) < 0)
+			return -1;
+		d->cert_file.len = parent->cert_file.len;
+	}
 	LOG(L_INFO, "%s: certificate='%s'\n", tls_domain_str(d), d->cert_file.s);
 	
-	if (!d->ca_file.s &&
-	    shm_asciiz_dup(&d->ca_file.s, parent->ca_file.s) < 0) return -1;
-	d->ca_file.len = parent->ca_file.len;
+	if (!d->ca_file.s){
+		if (shm_asciiz_dup(&d->ca_file.s, parent->ca_file.s) < 0)
+			return -1;
+		d->ca_file.len = parent->ca_file.len;
+	}
 	LOG(L_INFO, "%s: ca_list='%s'\n", tls_domain_str(d), d->ca_file.s);
 	
 	if (d->require_cert == -1) d->require_cert = parent->require_cert;
-	LOG(L_INFO, "%s: require_certificate=%d\n", tls_domain_str(d), d->require_cert);
+	LOG(L_INFO, "%s: require_certificate=%d\n", tls_domain_str(d),
+			d->require_cert);
 	
-	if (!d->cipher_list.s &&
-	    shm_asciiz_dup(&d->cipher_list.s, parent->cipher_list.s) < 0) return -1;
-	d->cipher_list.len = parent->cipher_list.len;
+	if (!d->cipher_list.s) {
+		if ( shm_asciiz_dup(&d->cipher_list.s, parent->cipher_list.s) < 0)
+			return -1;
+		d->cipher_list.len = parent->cipher_list.len;
+	}
 	LOG(L_INFO, "%s: cipher_list='%s'\n", tls_domain_str(d), d->cipher_list.s);
 	
-	if (!d->pkey_file.s &&
-	    shm_asciiz_dup(&d->pkey_file.s, parent->pkey_file.s) < 0) return -1;
-	d->pkey_file.len = parent->pkey_file.len;
+	if (!d->pkey_file.s) {
+		if (shm_asciiz_dup(&d->pkey_file.s, parent->pkey_file.s) < 0)
+			return -1;
+		d->pkey_file.len = parent->pkey_file.len;
+	}
 	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
 	
 	if (d->verify_cert == -1) d->verify_cert = parent->verify_cert;
