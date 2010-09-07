@@ -61,6 +61,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	for (i=0, size=0; i<num; i++) {
 		mapping[i].def = &(def[i]);
 		mapping[i].name_len = strlen(def[i].name);
+		mapping[i].pos = i;
 		/* record all the types for sanity checks */
 		types|=1 << CFG_VAR_MASK(def[i].type);
 

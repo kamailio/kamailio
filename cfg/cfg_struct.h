@@ -34,6 +34,7 @@
 #include "../mem/shm_mem.h"
 #include "../locking.h"
 #include "../compiler_opt.h"
+#include "../bit_test.h"
 #include "cfg.h"
 
 /*! \brief Maximum number of variables within a configuration group. */
@@ -42,12 +43,27 @@
 /*! \brief indicates that the variable has been already shmized */
 #define cfg_var_shmized	1U
 
+/*! \brief Structure for storing additional values of a variable.
+ * When the config is shmzied, these variables are combined in
+ * an array.
+ */
+typedef struct _cfg_add_var {
+	unsigned int	type;
+	union {
+		str	s;
+		int	i;
+	} val;
+	unsigned int	group_id; /*!< Id of the group instance */
+	struct _cfg_add_var	*next;
+} cfg_add_var_t;
+
 /*! \brief structure used for variable - pointer mapping */
 typedef struct _cfg_mapping {
 	cfg_def_t	*def;		/*!< one item of the cfg structure definition */
 	int		name_len;	/*!< length of def->name */
 
 	/* additional information about the cfg variable */
+	int		pos;	/*!< position of the variable within the group starting from 0 */
 	int		offset; /*!< offest within the memory block */
 	unsigned int	flag;	/*!< flag indicating the state of the variable */
 } cfg_mapping_t;
@@ -59,6 +75,9 @@ typedef struct _cfg_group {
 					the cfg variable definition and the memory block */
 	char		*vars;		/*!< pointer to the memory block where the values
 					are stored -- used only before the config is
+					shmized. */
+	cfg_add_var_t	*add_var;	/*!< Additional instances of the variables.
+					This linked list is used only before the config is
 					shmized. */
 	int		size;		/*!< size of the memory block that has to be
 					allocated to store the values */
@@ -81,6 +100,7 @@ typedef struct _cfg_group {
 /*! \brief One instance of the cfg group variables which stores
  * the additional values. These values can overwrite the default values. */
 typedef struct _cfg_group_inst {
+	unsigned int	id;		/*!< identifier of the group instance */
 	unsigned int	set[CFG_MAX_VAR_NUM/(sizeof(int)*8)];
 					/*!< Bitmap indicating whether or not a value is explicitely set
 					within this instance. If the value is not set,
@@ -146,6 +166,24 @@ extern cfg_child_cb_t	*cfg_child_cb;
 /* macros for easier variable access */
 #define CFG_VAR_TYPE(var)	CFG_VAR_MASK((var)->def->type)
 #define CFG_INPUT_TYPE(var)	CFG_INPUT_MASK((var)->def->type)
+
+/* get the meta-data of a group from the block */
+#define CFG_GROUP_META(block, group) \
+	((cfg_group_meta_t *)((block)->vars + (group)->meta_offset))
+
+/* get the data block of a group from the block */
+#define CFG_GROUP_DATA(block, group) \
+	((unsigned char *)((block)->vars + (group)->var_offset))
+
+/* Test whether a variable is explicitely set in the group instance,
+ * or it uses the default value */
+#define CFG_VAR_TEST(group_inst, var) \
+	bit_test((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
+
+/* Test whether a variable is explicitely set in the group instance,
+ * or it uses the default value, and set the flag. */
+#define CFG_VAR_TEST_AND_SET(group_inst, var) \
+	bit_test_and_set((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
 
 /* initiate the cfg framework */
 int sr_cfg_init(void);
@@ -266,7 +304,7 @@ static inline void cfg_update_local(int no_cbs)
 		group;
 		group = group->next
 	)
-		*(group->handle) = cfg_local->vars + group->var_offset;
+		*(group->handle) = CFG_GROUP_DATA(cfg_local, group);
 
 	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS || no_cbs))
 		return;
@@ -328,11 +366,19 @@ cfg_group_t *cfg_lookup_group(char *name, int len);
 int cfg_lookup_var(str *gname, str *vname,
 			cfg_group_t **group, cfg_mapping_t **var);
 
-/* clones the global config block */
+/* clones the global config block
+ * WARNING: unsafe, cfg_writer_lock or cfg_global_lock must be held!
+ */
 cfg_block_t *cfg_clone_global(void);
+
+/* Clone an array of configuration group instances. */
+cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group);
 
 /* clones a string to shared memory */
 int cfg_clone_str(str *src, str *dst);
+
+/* Find the group instance within the meta-data based on the group_id */
+cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id);
 
 /* append new callbacks to the end of the child callback list
  *

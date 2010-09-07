@@ -216,19 +216,19 @@ int cfg_shmize(void)
 			if (cfg_shmize_strings(group)) goto error;
 
 			/* copy the values to the new block */
-			memcpy(block->vars+group->var_offset, group->vars, group->size);
+			memcpy(CFG_GROUP_DATA(block, group), group->vars, group->size);
 		} else {
 			/* The group was declared with NULL values,
 			 * we have to fix it up.
 			 * The fixup function takes care about the values,
 			 * it fills up the block */
-			if (cfg_script_fixup(group, block->vars+group->var_offset)) goto error;
+			if (cfg_script_fixup(group, CFG_GROUP_DATA(block, group))) goto error;
 
 			/* Notify the drivers about the new config definition.
 			 * Temporary set the group handle so that the drivers have a chance to
 			 * overwrite the default values. The handle must be reset after this
 			 * because the main process does not have a local configuration. */
-			*(group->handle) = block->vars+group->var_offset;
+			*(group->handle) = CFG_GROUP_DATA(block, group);
 			cfg_notify_drivers(group->name, group->name_len,
 					group->mapping->def);
 			*(group->handle) = NULL;
@@ -582,6 +582,48 @@ cfg_block_t *cfg_clone_global(void)
 	atomic_set(&block->refcnt, 0);
 
 	return block;
+}
+
+/* Clone an array of configuration group instances.
+ * WARNING: unsafe, cfg_writer_lock or cfg_global_lock must be held!
+ */
+cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
+{
+	cfg_group_inst_t	*new_array;
+	int			size;
+
+	if (!meta->array || !meta->num)
+		return NULL;
+
+	size = (sizeof(cfg_group_inst_t) + group->size - 1) * meta->num;
+	new_array = (cfg_group_inst_t *)shm_malloc(size);
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: cfg_clone_array(): not enough shm memory\n");
+		return NULL;
+	}
+	memcpy(new_array, meta->array, size);
+
+	return new_array;
+}
+
+/* Find the group instance within the meta-data based on the group_id */
+cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id)
+{
+	int	i;
+	cfg_group_inst_t *ginst;
+
+	if (!meta)
+		return NULL;
+
+	/* For now, search lineray till the end of the array.
+	TODO: improve */
+	for (i = 0; i < meta->num; i++) {
+		ginst = (cfg_group_inst_t *)((char *)meta->array
+			+ (sizeof(cfg_group_meta_t) + group_size - 1) * i);
+		if (ginst->id == group_id)
+			return ginst;
+	}
+	return NULL;
 }
 
 /* append new callbacks to the end of the child callback list

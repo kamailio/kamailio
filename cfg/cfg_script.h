@@ -29,6 +29,7 @@
 #define _CFG_SCRIPT_H
 
 #include "../str.h"
+#include "cfg_struct.h"
 
 /* structure used for temporary storing the variables
  * which are declared in the script */

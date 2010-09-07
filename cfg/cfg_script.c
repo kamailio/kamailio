@@ -181,6 +181,7 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 
 		mapping[i].def = &(def[i]);
 		mapping[i].name_len = script_var->name_len;
+		mapping[i].pos = i;
 
 		switch (script_var->type) {
 		case CFG_VAR_INT:

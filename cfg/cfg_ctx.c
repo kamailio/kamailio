@@ -239,6 +239,63 @@ error:
 		} \
 	} while(0)
 
+/* returns the size of the variable */
+static int cfg_var_size(cfg_mapping_t *var)
+{
+	switch (CFG_VAR_TYPE(var)) {
+
+	case CFG_VAR_INT:
+		return sizeof(int);
+
+	case CFG_VAR_STRING:
+		return sizeof(char *);
+
+	case CFG_VAR_STR:
+		return sizeof(str);
+
+	case CFG_VAR_POINTER:
+		return sizeof(void *);
+
+	default:
+		LOG(L_CRIT, "BUG: cfg_var_size(): unknown type: %u\n",
+			CFG_VAR_TYPE(var));
+		return 0;
+	}
+}
+
+/* Update the varibales of the array within the meta structure
+ * with the new default value.
+ * The array is cloned before a change if clone is set to 1.
+ */
+static int cfg_update_defaults(cfg_group_meta_t	*meta,
+				cfg_group_t *group, cfg_mapping_t *var, char *new_val,
+				int clone)
+{
+	int	i, clone_done=0;
+	cfg_group_inst_t *array, *ginst;
+
+	array = meta->array;
+	for (i = 0; i < meta->num; i++) {
+		ginst = (cfg_group_inst_t *)((char *)array
+			+ (sizeof(cfg_group_meta_t) + group->size - 1) * i);
+
+		if (!CFG_VAR_TEST(ginst, var)) {
+			/* The variable uses the default value, it needs to be rewritten. */
+			if (clone && !clone_done) {
+				/* The array needs to be cloned before the modification */
+				if (!(array = cfg_clone_array(meta, group)))
+					return -1;
+				ginst = translate_pointer(array, meta->array, ginst);
+				/* re-link the array to the meta-data */
+				meta->array = array;
+				clone_done = 1;
+			}
+			memcpy(ginst->vars + var->offset, new_val, cfg_var_size(var)); 
+		}
+	}
+	return 0;
+}
+
 /* sets the value of a variable without the need of commit
  *
  * return value:
@@ -246,7 +303,7 @@ error:
  *  -1: error
  *   1: variable has not been found
  */
-int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type)
 {
 	cfg_group_t	*group;
@@ -257,12 +314,23 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	char		*old_string = NULL;
 	char		**replaced = NULL;
 	cfg_child_cb_t	*child_cb = NULL;
+	cfg_group_inst_t	*group_inst, *new_array = NULL;
+	unsigned char		*var_block;
 
 	/* verify the context even if we do not need it now
 	to make sure that a cfg driver has called the function
 	(very very weak security) */
 	if (!ctx) {
 		LOG(L_ERR, "ERROR: cfg_set_now(): context is undefined\n");
+		return -1;
+	}
+
+	if (group_id && !cfg_shmized) {
+		/* The config group has not been shmized yet,
+		but an additional instance of a variable needs to be added to the group.
+		Add this instance to the linked list of variables, they
+		will be fixed later. */
+		/* TODO */
 		return -1;
 	}
 
@@ -273,6 +341,19 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	/* check whether the variable is read-only */
 	if (var->def->type & CFG_READONLY) {
 		LOG(L_ERR, "ERROR: cfg_set_now(): variable is read-only\n");
+		goto error0;
+	}
+
+	/* The additional variable instances having per-child process callback
+	 * with CFG_CB_ONLY_ONCE flag cannot be rewritten.
+	 * The reason is that such variables typically set global parameters
+	 * as opposed to per-process variables. Hence, it is not possible to set
+	 * the group handle temporary to another block, and then reset it back later. */
+	if (group_id
+		&& var->def->on_set_child_cb
+		&& var->def->type & CFG_CB_ONLY_ONCE
+	) {
+		LOG(L_ERR, "ERROR: cfg_set_now(): This variable does not support muliple values.\n");
 		goto error0;
 	}
 
@@ -294,7 +375,24 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		/* Call the fixup function.
 		There is no need to set a temporary cfg handle,
 		becaue a single variable is changed */
-		if (var->def->on_change_cb(*(group->handle),
+		if (!group_id) {
+			var_block = *(group->handle);
+		} else {
+			if (!cfg_local) {
+				LOG(L_ERR, "ERROR: cfg_set_now(): Local configuration is missing\n");
+				goto error0;
+			}
+			group_inst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
+							group->size,
+							*group_id);
+			if (!group_inst) {
+				LOG(L_ERR, "ERROR: cfg_set_now(): local group instance is not found\n");
+				goto error0;
+			}
+			var_block = group_inst->vars;
+		}
+
+		if (var->def->on_change_cb(var_block,
 						group_name,
 						var_name,
 						&v) < 0) {
@@ -304,7 +402,10 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 
 	}
 
-	if (var->def->on_set_child_cb) {
+	/* Set the per-child process callback only if the default value is changed.
+	 * The callback of other instances will be called when the config is
+	 * switched to that instance. */
+	if (!group_id && var->def->on_set_child_cb) {
 		/* get the name of the variable from the internal struct,
 		because var_name may be freed before the callback needs it */
 		s.s = group->name;
@@ -325,16 +426,50 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		while the new one is prepared */
 		CFG_WRITER_LOCK();
 
+		if (group_id) {
+			group_inst = cfg_find_group(CFG_GROUP_META(*cfg_global, group),
+							group->size,
+							*group_id);
+			if (!group_inst) {
+				LOG(L_ERR, "ERROR: cfg_set_now(): global group instance is not found\n");
+				goto error0;
+			}
+			var_block = group_inst->vars;
+		} else {
+			group_inst = NULL;
+			var_block = CFG_GROUP_DATA(*cfg_global, group);
+		}
+
 		if (var->def->type & CFG_ATOMIC) {
 			/* atomic change is allowed, we can rewrite the value
 			directly in the global config */
-			p = (*cfg_global)->vars+group->var_offset+var->offset;
+			p = var_block + var->offset;
 
 		} else {
 			/* clone the memory block, and prepare the modification */
 			if (!(block = cfg_clone_global())) goto error;
 
-			p = block->vars+group->var_offset+var->offset;
+			if (group_inst) {
+				/* The additional array of the group needs to be also cloned.
+				 * When any of the variables within this array is changed, then
+				 * the complete config block and this array is replaced. */
+				if (!(new_array = cfg_clone_array(CFG_GROUP_META(*cfg_global, group), group)))
+					goto error;
+				group_inst = translate_pointer(new_array,
+					CFG_GROUP_META(*cfg_global, group)->array,
+					group_inst);
+				var_block = group_inst->vars;
+				CFG_GROUP_META(block, group)->array = new_array;
+			} else {
+				/* The additional array may need to be replaced depending
+				 * on whether or not there is any variable in the array set
+				 * to the default value which is changed now. If this is the case,
+				 * then the array will be replaced later when the variables are
+				 * updated.
+				 */
+				var_block = CFG_GROUP_DATA(block, group);
+			}
+			p = var_block + var->offset;
 		}
 	} else {
 		/* we are allowed to rewrite the value on-the-fly
@@ -371,8 +506,23 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		break;
 
 	}
+	if (group_inst && !CFG_VAR_TEST_AND_SET(group_inst, var))
+		old_string = NULL; /* the string is the same as the default one,
+					it cannot be freed */
 
 	if (cfg_shmized) {
+		if (!group_inst && CFG_GROUP_META(block, group)->array) {
+			if (cfg_update_defaults(CFG_GROUP_META(block, group),
+						group, var, p,
+						((var->def->type & CFG_ATOMIC) == 0)) /* clone if needed */
+			) {
+				LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
+				goto error;
+			}
+			if (CFG_GROUP_META(block, group)->array != CFG_GROUP_META(*cfg_global, group)->array)
+				new_array = CFG_GROUP_META(block, group)->array;
+		}
+
 		if (old_string) {
 			/* prepare the array of the replaced strings,
 			they will be freed when the old block is freed */
@@ -430,6 +580,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 error:
 	if (cfg_shmized) CFG_WRITER_UNLOCK();
 	if (block) cfg_block_free(block);
+	if (new_array) shm_free(new_array);
 	if (child_cb) cfg_child_cb_free(child_cb);
 
 error0:
@@ -443,45 +594,27 @@ error0:
 }
 
 /* wrapper function for cfg_set_now */
-int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val)
+int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			int val)
 {
-	return cfg_set_now(ctx, group_name, var_name, (void *)(long)val, CFG_VAR_INT);
+	return cfg_set_now(ctx, group_name, group_id, var_name,
+				(void *)(long)val, CFG_VAR_INT);
 }
 
 /* wrapper function for cfg_set_now */
-int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val)
+int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			char *val)
 {
-	return cfg_set_now(ctx, group_name, var_name, (void *)val, CFG_VAR_STRING);
+	return cfg_set_now(ctx, group_name, group_id, var_name,
+				(void *)val, CFG_VAR_STRING);
 }
 
 /* wrapper function for cfg_set_now */
-int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val)
+int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			str *val)
 {
-	return cfg_set_now(ctx, group_name, var_name, (void *)val, CFG_VAR_STR);
-}
-
-/* returns the size of the variable */
-static int cfg_var_size(cfg_mapping_t *var)
-{
-	switch (CFG_VAR_TYPE(var)) {
-
-	case CFG_VAR_INT:
-		return sizeof(int);
-
-	case CFG_VAR_STRING:
-		return sizeof(char *);
-
-	case CFG_VAR_STR:
-		return sizeof(str);
-
-	case CFG_VAR_POINTER:
-		return sizeof(void *);
-
-	default:
-		LOG(L_CRIT, "BUG: cfg_var_size(): unknown type: %u\n",
-			CFG_VAR_TYPE(var));
-		return 0;
-	}
+	return cfg_set_now(ctx, group_name, group_id, var_name,
+				(void *)val, CFG_VAR_STR);
 }
 
 /* sets the value of a variable but does not commit the change
@@ -491,7 +624,7 @@ static int cfg_var_size(cfg_mapping_t *var)
  *  -1: error
  *   1: variable has not been found
  */
-int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type)
 {
 	cfg_group_t	*group;
@@ -506,7 +639,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	if (!cfg_shmized)
 		/* the cfg has not been shmized yet, there is no
 		point in registering the change and committing it later */
-		return cfg_set_now(ctx, group_name, var_name,
+		return cfg_set_now(ctx, group_name, group_id, var_name,
 					val, val_type);
 
 	if (!ctx) {
@@ -683,21 +816,27 @@ error0:
 }
 
 /* wrapper function for cfg_set_delayed */
-int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val)
+int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+				int val)
 {
-	return cfg_set_delayed(ctx, group_name, var_name, (void *)(long)val, CFG_VAR_INT);
+	return cfg_set_delayed(ctx, group_name, group_id, var_name,
+				(void *)(long)val, CFG_VAR_INT);
 }
 
 /* wrapper function for cfg_set_delayed */
-int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val)
+int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+				char *val)
 {
-	return cfg_set_delayed(ctx, group_name, var_name, (void *)val, CFG_VAR_STRING);
+	return cfg_set_delayed(ctx, group_name, group_id, var_name,
+				(void *)val, CFG_VAR_STRING);
 }
 
 /* wrapper function for cfg_set_delayed */
-int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val)
+int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+				str *val)
 {
-	return cfg_set_delayed(ctx, group_name, var_name, (void *)val, CFG_VAR_STR);
+	return cfg_set_delayed(ctx, group_name, group_id, var_name,
+				(void *)val, CFG_VAR_STR);
 }
 
 /* commits the previously prepared changes within the context */
@@ -785,8 +924,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 		changed;
 		changed = changed->next
 	) {
-		p = block->vars
-			+ changed->group->var_offset
+		p = CFG_GROUP_DATA(block, changed->group)
 			+ changed->var->offset;
 
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)

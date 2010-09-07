@@ -84,18 +84,24 @@ int cfg_register_ctx(cfg_ctx_t **handle, cfg_on_declare on_declare_cb);
 void cfg_ctx_destroy(void);
 
 /*! \brief set the value of a variable without the need of explicit commit */
-int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type);
-int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val);
-int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val);
-int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val);
+int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			int val);
+int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			char *val);
+int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			str *val);
 
 /* sets the value of a variable but does not commit the change */
-int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type);
-int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val);
-int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val);
-int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val);
+int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			int val);
+int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			char *val);
+int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			str *val);
 
 /*! \brief commits the previously prepared changes within the context */
 int cfg_commit(cfg_ctx_t *ctx);
