@@ -321,6 +321,12 @@ modparam("tls", "tls_method", "TLSv1")
    Sets the certificate file name. The certificate file can also contain
    the private key in PEM format.
 
+   If the file name starts with a '.' the path will be relative to the
+   working directory (at runtime). If it starts with a '/' it will be an
+   absolute path and if it starts with anything else the path will be
+   relative to the main config file directory (e.g.: for ser -f
+   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+
    Warning: try not to use certificate with keys longer then 1024 bytes.
    Longer keys will severely impact performance, in particular the TLS
    connection rate.
@@ -335,6 +341,12 @@ modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
 1.9.3. private_key (string)
 
    Sets the private key file name.
+
+   If the file name starts with a '.' the path will be relative to the
+   working directory (at runtime). If it starts with a '/' it will be an
+   absolute path and if it starts with anything else the path will be
+   relative to the main config file directory (e.g.: for ser -f
+   /etc/ser/ser.cfg it will be relative to /etc/ser/).
 
    Note: the private key can be contained in the same file as the
    certificate (just append it to the certificate file, e.g.: cat pkey.pem
@@ -353,6 +365,12 @@ modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
    trusted CAs certificates. If a signature in a certificate chain belongs
    to one of the listed CAs, the authentication will succeed. See also
    verify_certificate, verify_depth and require_certificate.
+
+   If the file name starts with a '.' the path will be relative to the
+   working directory (at runtime). If it starts with a '/' it will be an
+   absolute path and if it starts with anything else the path will be
+   relative to the main config file directory (e.g.: for ser -f
+   /etc/ser/ser.cfg it will be relative to /etc/ser/).
 
    By default the CA file is not set.
 
@@ -782,6 +800,12 @@ modparam("tls", "tls_force_run", 11)
    client) and domain basis (for now only IPs). The corresponding module
    parameters will be ignored.
 
+   If the file name starts with a '.' the path will be relative to the
+   working directory (at runtime). If it starts with a '/' it will be an
+   absolute path and if it starts with anything else the path will be
+   relative to the main config file directory (e.g.: for ser -f
+   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+
    By default no config file is specified.
 
    The following parameters can be set in the config file, for each
@@ -794,6 +818,12 @@ modparam("tls", "tls_force_run", 11)
      * verify_depth
      * ca_list
      * cipher_list
+
+   All the parameters that take filenames as values will be resolved using
+   the same rules as for the tls config filename itself: starting with a
+   '.' means relative to the working directory, a '/' means an absolute
+   path and anything else a path relative to the directory of the current
+   ser main config file.
 
    SIP-router acts as a server when it accepts a connection and as a
    client when it initiates a new connection by itself (it connects to
