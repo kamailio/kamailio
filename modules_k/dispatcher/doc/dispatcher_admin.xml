@@ -456,13 +456,14 @@ modparam("dispatcher", "force_dst", 1)
  	<section>
  		<title><varname>ds_ping_interval</varname> (int)</title>
  		<para>
- 		With this Method you can define the interval for sending a request to a failed gateway.
+		With this parameter you can define the interval for sending a request
+		to a gateway marked as inactive upon a failed request routing to it.
  		This parameter is only used, when the TM-Module is loaded.
-		If set to <quote>0</quote>, the pinging of failed requests is disabled.
+		If set to <quote>0</quote>, the pinging of inactive gateway is disabled.
  		</para>
  		<para>
  		<emphasis>
- 			Default value is <quote>10</quote>.
+			Default value is <quote>0</quote>.
  		</emphasis>
  		</para>
  		<example>

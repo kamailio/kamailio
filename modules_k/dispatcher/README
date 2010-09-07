@@ -456,11 +456,12 @@ Note
 
 3.18. ds_ping_interval (int)
 
-   With this Method you can define the interval for sending a request to a
-   failed gateway. This parameter is only used, when the TM-Module is
-   loaded. If set to “0”, the pinging of failed requests is disabled.
+   With this parameter you can define the interval for sending a request
+   to a gateway marked as inactive upon a failed request routing to it.
+   This parameter is only used, when the TM-Module is loaded. If set to
+   “0”, the pinging of inactive gateway is disabled.
 
-   Default value is “10”.
+   Default value is “0”.
 
    Example 1.19. Set the “ds_ping_interval” parameter
  ...
