@@ -484,7 +484,7 @@ int ld_load_cfg(str* filename)
 	cfg_parser_t* parser;
 	cfg = NULL;
 
-	if ((parser = cfg_parser_init(filename)) == NULL) {
+	if ((parser = cfg_parser_init(0, filename)) == NULL) {
 		ERR("ldap: Error while initializing configuration file parser.\n");
 		return -1;
 	}
