@@ -39,14 +39,10 @@ struct cfg_group_tls default_tls_cfg = {
 	0, /* verify_certificate */
 	9, /* verify_depth */
 	0, /* require_certificate */
-	STR_STATIC_INIT(TLS_PKEY_FILE), /* private_key */
-#if TLS_CA_FILE == 0
-	STR_NULL,
-#else
-	STR_STATIC_INIT(TLS_CA_FILE),   /* ca_list */
-#endif
-	STR_STATIC_INIT(TLS_CERT_FILE), /* certificate */
-	STR_NULL, /* cipher_list */
+	STR_NULL, /* private_key (default value set in fix_tls_cfg) */
+	STR_NULL, /* ca_list (default value set in fix_tls_cfg) */
+	STR_NULL, /* certificate (default value set in fix_tls_cfg) */
+	STR_NULL, /* cipher_list (default value set in fix_tls_cfg) */
 	0, /* session_cache */
 	STR_STATIC_INIT("sip-router-tls-3.1"), /* session_id */
 	STR_NULL, /* config_file */
@@ -216,7 +212,7 @@ cfg_def_t	tls_cfg_def[] = {
 
 
 /* to be used on start-up, with pkg_alloc'ed path names  (path->s)*/
-static int fix_initial_pathname(str* path)
+static int fix_initial_pathname(str* path, char* def)
 {
 	str new_path;
 	if (path->s && path->len) {
@@ -224,6 +220,14 @@ static int fix_initial_pathname(str* path)
 		if (new_path.s == 0) return -1;
 		new_path.len = strlen(new_path.s);
 		pkg_free(path->s);
+		*path = new_path;
+	} else if (path->s == 0 && def) {
+		/* use defaults */
+		new_path.len = strlen(def);
+		new_path.s = def;
+		new_path.s = get_abs_pathname(0, &new_path);
+		if (new_path.s == 0) return -1;
+		new_path.len = strlen(new_path.s);
 		*path = new_path;
 	}
 	return 0;
@@ -243,13 +247,13 @@ int fix_tls_cfg(struct cfg_group_tls* cfg)
 	 * pathnames will be converted to absolute and the directory of the main
 	 * SER configuration file will be used as reference.
 	 */
-	if (fix_initial_pathname(&cfg->config_file) < 0)
+	if (fix_initial_pathname(&cfg->config_file, 0) < 0)
 		return -1;
-	if (fix_initial_pathname(&cfg->private_key) < 0)
+	if (fix_initial_pathname(&cfg->private_key, TLS_PKEY_FILE) < 0)
 		return -1;
-	if (fix_initial_pathname(&cfg->ca_list) < 0 )
+	if (fix_initial_pathname(&cfg->ca_list, TLS_CA_FILE) < 0 )
 		return -1;
-	if (fix_initial_pathname(&cfg->certificate) < 0)
+	if (fix_initial_pathname(&cfg->certificate, TLS_CERT_FILE) < 0)
 		return -1;
 	
 	return 0;
