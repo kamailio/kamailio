@@ -151,7 +151,7 @@ typedef struct cfg_parser {
 
 extern struct cfg_option cfg_bool_values[];
 
-struct cfg_parser* cfg_parser_init(str* filename);
+struct cfg_parser* cfg_parser_init(str* basedir, str* filename);
 
 void cfg_section_parser(struct cfg_parser* st, cfg_func_f parser, void* param);
 

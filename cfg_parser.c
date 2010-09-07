@@ -612,19 +612,33 @@ static char* get_base_name(str* filename)
 }
 
 
-cfg_parser_t* cfg_parser_init(str* filename)
+
+/** intialize the config parser.
+ * @param basedir - path to the config file name. If 0 the path
+ *               (base directory) of the main ser.cfg file will be used, else
+ *               basedir will be concatenated to the filename. It will be
+ *               used only if filename is not an absolute path.
+ * @param filename - config filename (can include path elements).
+ * @return 0 on error, !=0 on success.
+ */
+cfg_parser_t* cfg_parser_init(str* basedir, str* filename)
 {
 	cfg_parser_t* st;
-	char* pathname, *base;
+	char* pathname, *base, *abs_pathname;
 
-	pathname = NULL;
+	abs_pathname = NULL;
+	pathname = filename->s;
 	st = NULL;
 	base = NULL;
 	
-	if ((pathname = get_abs_pathname(NULL, filename)) == NULL) {
-		ERR("cfg_parser: Error while converting %.*s to absolute pathname\n", 
-			STR_FMT(filename));
-		goto error;
+	/* if basedir == 0 or != "" get_abs_pathname */
+	if (basedir == 0  || basedir->len != 0) {
+		if ((abs_pathname = get_abs_pathname(basedir, filename)) == NULL) {
+			ERR("cfg_parser: Error while converting %.*s to absolute"
+					" pathname\n", STR_FMT(filename));
+			goto error;
+		}
+		pathname = abs_pathname;
 	}
 
 	if ((base = get_base_name(filename)) == NULL) goto error;
@@ -640,7 +654,7 @@ cfg_parser_t* cfg_parser_init(str* filename)
 		goto error;
 	}
 
-	pkg_free(pathname);
+	if (abs_pathname) pkg_free(abs_pathname);
 
 	st->file = base;
 	st->line = 1;
@@ -653,7 +667,7 @@ cfg_parser_t* cfg_parser_init(str* filename)
 		pkg_free(st);
 	}
 	if (base) pkg_free(base);
-	if (pathname) pkg_free(pathname);
+	if (abs_pathname) pkg_free(abs_pathname);
 	return NULL;
 }
 
