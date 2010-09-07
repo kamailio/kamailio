@@ -32,13 +32,14 @@ max_depth = 10
 debug = 0
 
 re_main_route = re.compile("^([a-z]+_)*route[\s\t]*(?![\(\)])[\s\t]*\{?", re.I)
-re_def_route = re.compile("^([a-z]+_)*route(\[\"?([A-Za-z0-9-_]+)\"?\])+[\s\t]*\{?", re.I)
+re_def_route = re.compile("^([a-z]+_)*route(\[\"?([A-Za-z0-9-_:]+)\"?\])+[\s\t]*\{?", re.I)
 re_call_route = re.compile("^(.*\([\s\t!]*)?route\(\"?([A-Za-z0-9-_]+)\"?\)", re.I)
 routes = {}
 f_routes = {}
 b_routes = {}
 r_routes = {}
 s_routes = {}
+e_routes = {}
 
 
 def log(_s):
@@ -114,6 +115,10 @@ while line:
 				rt = b_routes
 				if rname == None:
 					rname = "branch"
+			elif rtype == "event_":
+				rt = e_routes
+				if rname == None:
+					rname = "event"
 			else:
 				rt = routes
 			log(rname)
@@ -133,6 +138,9 @@ while line:
 			elif rtype == "branch_":
 				rt = b_routes
 				rname = "branch"
+			elif rtype == "event_":
+				rt = e_routes
+				rname = "event"
 			else:
 				rt = routes
 				rname = "Main"
@@ -145,6 +153,7 @@ log("branch_routes: %s" % (b_routes))
 log("failure_routes: %s" % (f_routes))
 log("onreply_routes: %s" % (r_routes))
 log("onsend_routes: %s" % (s_routes))
+log("event_routes: %s" % (e_routes))
 
 for name in routes.keys():
 	for val in routes[name]:
@@ -189,6 +198,13 @@ if len(r_routes) > 0:
 	for onr in r_routes.keys():
 		print "\n%s" % (onr)
 		for r in r_routes[onr]:
+			traverse_routes(1, r)
+
+if len(e_routes) > 0:
+	print "\nEvent routes\n--------------"
+	for onr in e_routes.keys():
+		print "\n%s" % (onr)
+		for r in e_routes[onr]:
 			traverse_routes(1, r)
 
 print
