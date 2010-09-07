@@ -344,11 +344,14 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 tls_domains_cfg_t* tls_load_config(str* filename)
 {
 	cfg_parser_t* parser;
+	str empty;
 
 	parser = NULL;
 	if ((cfg = tls_new_cfg()) == NULL) goto error;
 
-	if ((parser = cfg_parser_init(filename)) == NULL) {
+	empty.s = 0;
+	empty.len = 0;
+	if ((parser = cfg_parser_init(&empty, filename)) == NULL) {
 		ERR("tls: Error while initializing configuration file parser.\n");
 		goto error;
 	}

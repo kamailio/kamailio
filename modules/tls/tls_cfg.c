@@ -110,7 +110,9 @@ static int fix_rel_pathname(void* cfg_h, str* gname, str* name, void** val)
 	static char path_buf[MAX_PATH_SIZE];
 
 	f = *val;
-	if (f && f->s && f->len) {
+	/* use absolute paths, except when the path starts with
+	   '.' (in this case leave it as it is) */
+	if (f && f->s && f->len && *f->s != '.' && *f->s != '/') {
 		new_f.s = get_abs_pathname(0, f);
 		if (new_f.s == 0)
 			return -1;
@@ -211,11 +213,19 @@ cfg_def_t	tls_cfg_def[] = {
 
 
 
-/* to be used on start-up, with pkg_alloc'ed path names  (path->s)*/
+/** fix pathnames.
+ * to be used on start-up, with pkg_alloc'ed path names  (path->s).
+ * @param path - path to be fixed. If it starts with '.' or '/' is left alone
+ *               (forced "relative" or "absolute" path). Otherwise the path
+ *               is considered to be relative to the main config file directory
+ *               (e.g. for /etc/ser/ser.cfg => /etc/ser/<path>).
+ * @param def - default value used if path->s is empty (path->s == 0).
+ * @return  0 on success, -1 on error.
+ */
 static int fix_initial_pathname(str* path, char* def)
 {
 	str new_path;
-	if (path->s && path->len) {
+	if (path->s && path->len && *path->s != '.' && *path->s != '/') {
 		new_path.s = get_abs_pathname(0, path);
 		if (new_path.s == 0) return -1;
 		new_path.len = strlen(new_path.s);

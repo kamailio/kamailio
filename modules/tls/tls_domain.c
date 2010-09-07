@@ -4,24 +4,19 @@
  * TLS module - virtual configuration domain support
  *
  * Copyright (C) 2001-2003 FhG FOKUS
- * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005,2006 iptelorg GmbH
  *
- * This file is part of SIP-router, a free SIP server.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * SIP-router is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
- *
- * SIP-router is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /** SIP-router TLS support :: Virtual domain configuration support.
  * @file
@@ -217,7 +212,8 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
 	
 	if (d->verify_cert == -1) d->verify_cert = parent->verify_cert;
-	LOG(L_INFO, "%s: verify_certificate=%d\n", tls_domain_str(d), d->verify_cert);
+	LOG(L_INFO, "%s: verify_certificate=%d\n", tls_domain_str(d),
+			d->verify_cert);
 	
 	if (d->verify_depth == -1) d->verify_depth = parent->verify_depth;
 	LOG(L_INFO, "%s: verify_depth=%d\n", tls_domain_str(d), d->verify_depth);
@@ -337,6 +333,37 @@ static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
 
 
 
+
+/** fix pathnames.
+ * To be used when loading the domain key, cert, ca list a.s.o.
+ * It will replace path with a fixed shm allocated version. Assumes path->s
+ * was shm allocated.
+ * @param path - path to be fixed. If it starts with '.' or '/' is left alone
+ *               (forced "relative" or "absolute" path). Otherwise the path
+ *               is considered to be relative to the main config file directory
+ *               (e.g. for /etc/ser/ser.cfg => /etc/ser/<path>).
+ * @return  0 on success, -1 on error.
+ */
+int fix_shm_pathname(str* path)
+{
+	str new_path;
+	char* abs_path;
+	
+	if (path->s && path->len && *path->s != '.' && *path->s != '/') {
+		abs_path = get_abs_pathname(0, path);
+		if (abs_path == 0) return -1;
+		new_path.len = strlen(abs_path);
+		new_path.s = shm_malloc(new_path.len + 1);
+		memcpy(new_path.s, abs_path, new_path.len);
+		new_path.s[new_path.len] = 0;
+		shm_free(path->s);
+		*path = new_path;
+	}
+	return 0;
+}
+
+
+
 /* 
  * Load certificate from file 
  */
@@ -349,7 +376,8 @@ static int load_cert(tls_domain_t* d)
 		DBG("%s: No certificate configured\n", tls_domain_str(d));
 		return 0;
 	}
-
+	if (fix_shm_pathname(&d->cert_file) < 0)
+		return -1;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if (!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file.s)) {
@@ -376,15 +404,18 @@ static int load_ca_list(tls_domain_t* d)
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
-
+	if (fix_shm_pathname(&d->ca_file) < 0)
+		return -1;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, 0) != 1) {
-			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d), d->ca_file.s);
+			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d),
+					d->ca_file.s);
 			TLS_ERR("load_ca_list:");
 			return -1;
 		}
-		SSL_CTX_set_client_CA_list(d->ctx[i], SSL_load_client_CA_file(d->ca_file.s));
+		SSL_CTX_set_client_CA_list(d->ctx[i],
+				SSL_load_client_CA_file(d->ca_file.s));
 		if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
 			ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
 			TLS_ERR("load_ca_list:");
@@ -453,24 +484,24 @@ static int set_verification(tls_domain_t* d)
 	if (d->require_cert) {
 		verify_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 		LOG(L_INFO, "%s: %s MUST present valid certificate\n", 
-		     tls_domain_str(d), d->type & TLS_DOMAIN_SRV ? "Client" : "Server");
+			tls_domain_str(d), d->type & TLS_DOMAIN_SRV ? "Client" : "Server");
 	} else {
 		if (d->verify_cert) {
 			verify_mode = SSL_VERIFY_PEER;
 			if (d->type & TLS_DOMAIN_SRV) {
-				LOG(L_INFO, "%s: IF client provides certificate then it MUST be valid\n", 
-				     tls_domain_str(d));
+				LOG(L_INFO, "%s: IF client provides certificate then it"
+						" MUST be valid\n", tls_domain_str(d));
 			} else {
-				LOG(L_INFO, "%s: Server MUST present valid certificate\n", 
+				LOG(L_INFO, "%s: Server MUST present valid certificate\n",
 				     tls_domain_str(d));
 			}
 		} else {
 			verify_mode = SSL_VERIFY_NONE;
 			if (d->type & TLS_DOMAIN_SRV) {
-				LOG(L_INFO, "%s: No client certificate required and no checks performed\n", 
-				     tls_domain_str(d));
+				LOG(L_INFO, "%s: No client certificate required and no checks"
+						" performed\n", tls_domain_str(d));
 			} else {
-				LOG(L_INFO, "%s: Server MAY present invalid certificate\n", 
+				LOG(L_INFO, "%s: Server MAY present invalid certificate\n",
 				     tls_domain_str(d));
 			}
 		}
@@ -710,6 +741,8 @@ static int load_private_key(tls_domain_t* d)
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
 	}
+	if (fix_shm_pathname(&d->pkey_file) < 0)
+		return -1;
 
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
@@ -717,7 +750,8 @@ static int load_private_key(tls_domain_t* d)
 		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
 		
 		for(idx = 0, ret_pwd = 0; idx < NUM_RETRIES; idx++) {
-			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s, SSL_FILETYPE_PEM);
+			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
+					SSL_FILETYPE_PEM);
 			if (ret_pwd) {
 				break;
 			} else {
@@ -729,15 +763,15 @@ static int load_private_key(tls_domain_t* d)
 		}
 		
 		if (!ret_pwd) {
-			ERR("%s: Unable to load private key file '%s'\n", 
+			ERR("%s: Unable to load private key file '%s'\n",
 			    tls_domain_str(d), d->pkey_file.s);
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
 		
 		if (!SSL_CTX_check_private_key(d->ctx[i])) {
-			ERR("%s: Key '%s' does not match the public key of the certificate\n", 
-			    tls_domain_str(d), d->pkey_file.s);
+			ERR("%s: Key '%s' does not match the public key of the"
+					" certificate\n", tls_domain_str(d), d->pkey_file.s);
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
@@ -763,11 +797,13 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 	int ssl_read_ahead;
 
 	if (!cfg->cli_default) {
-		cfg->cli_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, 0, 0);
+		cfg->cli_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_CLI,
+											0, 0);
 	}
 
 	if (!cfg->srv_default) {
-		cfg->srv_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, 0, 0);
+		cfg->srv_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_SRV,
+											0, 0);
 	}
 
 	if (fix_domain(cfg->srv_default, srv_defaults) < 0) return -1;
