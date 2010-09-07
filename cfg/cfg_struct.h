@@ -122,7 +122,8 @@ typedef struct _cfg_block {
 	atomic_t	refcnt;		/*!< reference counter,
 					the block is automatically deleted
 					when it reaches 0 */
-	char		**replaced;	/*!< set of the strings that must be freed
+	void		**replaced;	/*!< set of the strings and other memory segments
+					that must be freed
 					together with the block. The content depends
 					on the block that replaces this one */
 	unsigned char	vars[1];	/*!< blob that contains the values */
@@ -394,7 +395,7 @@ void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
  * cb_first and cb_last define a linked list of per-child process
  * callbacks. This list is added to the global linked list.
  */
-void cfg_install_global(cfg_block_t *block, char **replaced,
+void cfg_install_global(cfg_block_t *block, void **replaced,
 			cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
 
 /* creates a structure for a per-child process callback */

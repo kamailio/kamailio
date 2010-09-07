@@ -306,13 +306,14 @@ static int cfg_update_defaults(cfg_group_meta_t	*meta,
 int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type)
 {
+	int		i;
 	cfg_group_t	*group;
 	cfg_mapping_t	*var;
 	void		*p, *v;
 	cfg_block_t	*block = NULL;
 	str		s, s2;
 	char		*old_string = NULL;
-	char		**replaced = NULL;
+	void		**replaced = NULL;
 	cfg_child_cb_t	*child_cb = NULL;
 	cfg_group_inst_t	*group_inst, *new_array = NULL;
 	unsigned char		*var_block;
@@ -523,16 +524,26 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 				new_array = CFG_GROUP_META(block, group)->array;
 		}
 
-		if (old_string) {
+		if (old_string || new_array) {
 			/* prepare the array of the replaced strings,
+			and replaced group instances,
 			they will be freed when the old block is freed */
-			replaced = (char **)shm_malloc(sizeof(char *)*2);
+			replaced = (void **)shm_malloc(sizeof(void *)
+					* ((old_string?1:0) + (new_array?1:0) + 1));
 			if (!replaced) {
 				LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
 				goto error;
 			}
-			replaced[0] = old_string;
-			replaced[1] = NULL;
+			i = 0;
+			if (old_string) {
+				replaced[i] = old_string;
+				i++;
+			}
+			if (new_array) {	
+				replaced[i] = CFG_GROUP_META(*cfg_global, group)->array;
+				i++;
+			}
+			replaced[i] = NULL;
 		}
 		/* replace the global config with the new one */
 		if (block) cfg_install_global(block, replaced, child_cb, child_cb);
@@ -845,7 +856,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 	int	replaced_num = 0;
 	cfg_changed_var_t	*changed, *changed2;
 	cfg_block_t	*block;
-	char	**replaced = NULL;
+	void	**replaced = NULL;
 	cfg_child_cb_t	*child_cb;
 	cfg_child_cb_t	*child_cb_first = NULL;
 	cfg_child_cb_t	*child_cb_last = NULL;
@@ -899,8 +910,8 @@ int cfg_commit(cfg_ctx_t *ctx)
 
 	if (replaced_num) {
 		/* allocate memory for the replaced string array */
-		size = sizeof(char *)*(replaced_num + 1);
-		replaced = (char **)shm_malloc(size);
+		size = sizeof(void *)*(replaced_num + 1);
+		replaced = (void **)shm_malloc(size);
 		if (!replaced) {
 			LOG(L_ERR, "ERROR: cfg_commit(): not enough shm memory\n");
 			goto error;

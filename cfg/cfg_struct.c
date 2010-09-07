@@ -645,7 +645,7 @@ void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
  * cb_first and cb_last define a linked list of per-child process
  * callbacks. This list is added to the global linked list.
  */
-void cfg_install_global(cfg_block_t *block, char **replaced,
+void cfg_install_global(cfg_block_t *block, void **replaced,
 			cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
 {
 	cfg_block_t* old_cfg;
