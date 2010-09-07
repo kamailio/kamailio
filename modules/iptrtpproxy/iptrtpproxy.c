@@ -1046,7 +1046,7 @@ skip:
 static int parse_iptrtpproxy_cfg() {
 	cfg_parser_t* parser = NULL;
 	struct switchboard_item *si;
-	if ((parser = cfg_parser_init(&iptrtpproxy_cfg_filename)) == NULL) {
+	if ((parser = cfg_parser_init(0, &iptrtpproxy_cfg_filename)) == NULL) {
 		ERR(MODULE_NAME"parse_iptrtpproxy_cfg: Error while initializing configuration file parser.\n");
 		return -1;
         }
