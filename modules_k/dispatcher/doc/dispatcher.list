@@ -3,7 +3,7 @@
 #
 
 # line format
-# setit(integer) destination(sip uri) flags (integer, optional)
+# setit(int) destination(sip uri) flags(int,opt) priority(int,opt) attributes(str,opt)
 
 # proxies
 2 sip:127.0.0.1:5080

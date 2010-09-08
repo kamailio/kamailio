@@ -38,15 +38,13 @@
 	</copyright>
 	<copyright>
 	    <year>2005</year>
-	    <holder>Voice-System.RO</holder>
+	    <holder>Voice Sistem</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </bookinfo>
+ 	<copyright>
+	    <year>2010</year>
+	    <holder>Daniel-Constantin Mierla (asipto.com)</holder>
+	</copyright>
+   </bookinfo>
     <toc></toc>
     
     <xi:include href="dispatcher_admin.xml"/>
