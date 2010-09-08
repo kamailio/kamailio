@@ -400,6 +400,12 @@ static int lflf2crlf=0; /* default off */
 /* do not register for non-sip requests */
 static int xmlrpc_mode = 0;
 
+static char* xmlrpc_url_match = NULL;
+static regex_t xmlrpc_url_match_regexp;
+static char* xmlrpc_url_skip = NULL;
+static regex_t xmlrpc_url_skip_regexp;
+
+
 /*
  * Exported functions
  */
@@ -414,11 +420,13 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"route", PARAM_STRING, &xmlrpc_route},
-	{"autoconversion", PARAM_INT, &autoconvert},
-	{"escape_cr", PARAM_INT, &escape_cr},
-	{"double_lf_to_crlf", PARAM_INT, &lflf2crlf},
-	{"mode", PARAM_INT, &xmlrpc_mode},
+	{"route",             PARAM_STRING, &xmlrpc_route},
+	{"autoconversion",    PARAM_INT,    &autoconvert},
+	{"escape_cr",         PARAM_INT,    &escape_cr},
+	{"double_lf_to_crlf", PARAM_INT,    &lflf2crlf},
+	{"mode",              PARAM_INT,    &xmlrpc_mode},
+	{"url_match",         PARAM_STRING, &xmlrpc_url_match},
+	{"url_skip",          PARAM_STRING, &xmlrpc_url_skip},
 	{0, 0, 0}
 };
 
@@ -2160,50 +2168,78 @@ static int process_xmlrpc(sip_msg_t* msg)
 	int fake_msg_len;
 	unsigned char* method;
 	unsigned int method_len, n_method;
+	regmatch_t pmatch;
+	char c;
 	
 	ret=NONSIP_MSG_DROP;
-	if (IS_HTTP(msg)) {
-		method = (unsigned char*)msg->first_line.u.request.method.s;
-		method_len = msg->first_line.u.request.method.len;
-		/* first line is always > 4, so it's always safe to try to read the
-		 * 1st 4 bytes from method, even if method is shorter*/
-		n_method = method[0] + (method[1] << 8) + (method[2] << 16) + 
-			(method[3] << 24);
-		n_method |= 0x20202020;
-		n_method &= ((method_len < 4) * (1U << method_len * 8) - 1);
-		/* accept only GET or POST */
-		if ((n_method == N_HTTP_GET) || 
-			((n_method == N_HTTP_POST) && (method_len == HTTP_POST_LEN))) {
-			if (msg->via1 == 0){
-				/* create a fake sip message */
-				fake_msg = http_xmlrpc2sip(msg, &fake_msg_len);
-				if (fake_msg == 0) {
-					ERR("xmlrpc: out of memory\n");
-					ret=NONSIP_MSG_ERROR;
-				} else {
-					/* send it */
-					DBG("new fake xml msg created (%d bytes):\n<%.*s>\n",
-						fake_msg_len, fake_msg_len, fake_msg);
-					if (em_receive_request(msg, fake_msg, fake_msg_len)<0)
-						ret=NONSIP_MSG_ERROR;
-					pkg_free(fake_msg);
-				}
-				return ret; /* we "ate" the message, 
-										   stop processing */
-			} else { /* the message has a via */
-				DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n",
-					msg->len, msg->len, msg->buf);
-				if (em_receive_request(msg, 0, 0)<0)
-					ret=NONSIP_MSG_ERROR;
-				return ret;
-			}
-		} else {
-			ERR("xmlrpc: bad HTTP request method: \"%.*s\"\n",
-				msg->first_line.u.request.method.len,
-				msg->first_line.u.request.method.s);
-			/* the message was for us, but it is an error */
-			return NONSIP_MSG_ERROR; 
+	if (IS_HTTP(msg))
+		return NONSIP_MSG_PASS;
+
+	if(xmlrpc_url_skip!=NULL || xmlrpc_url_match!=NULL)
+	{
+		c = msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len];
+		msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
+			= '\0';
+		if (xmlrpc_url_skip!=NULL &&
+			regexec(&xmlrpc_url_skip_regexp, msg->first_line.u.request.uri.s,
+					1, &pmatch, 0)==0)
+		{
+			LM_DBG("URL matched skip re\n");
+			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
+				= c;
+			return NONSIP_MSG_PASS;
 		}
+		if (xmlrpc_url_match!=NULL &&
+			regexec(&xmlrpc_url_match_regexp, msg->first_line.u.request.uri.s,
+					1, &pmatch, 0)!=0)
+		{
+			LM_DBG("URL not matched\n");
+			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
+				= c;
+			return NONSIP_MSG_PASS;
+		}
+		msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len] = c;
+	}
+
+	method = (unsigned char*)msg->first_line.u.request.method.s;
+	method_len = msg->first_line.u.request.method.len;
+	/* first line is always > 4, so it's always safe to try to read the
+	 * 1st 4 bytes from method, even if method is shorter*/
+	n_method = method[0] + (method[1] << 8) + (method[2] << 16) +
+			(method[3] << 24);
+	n_method |= 0x20202020;
+	n_method &= ((method_len < 4) * (1U << method_len * 8) - 1);
+	/* accept only GET or POST */
+	if ((n_method == N_HTTP_GET) ||
+			((n_method == N_HTTP_POST) && (method_len == HTTP_POST_LEN))) {
+		if (msg->via1 == 0){
+			/* create a fake sip message */
+			fake_msg = http_xmlrpc2sip(msg, &fake_msg_len);
+			if (fake_msg == 0) {
+				ERR("xmlrpc: out of memory\n");
+				ret=NONSIP_MSG_ERROR;
+			} else {
+			/* send it */
+				DBG("new fake xml msg created (%d bytes):\n<%.*s>\n",
+					fake_msg_len, fake_msg_len, fake_msg);
+				if (em_receive_request(msg, fake_msg, fake_msg_len)<0)
+					ret=NONSIP_MSG_ERROR;
+				pkg_free(fake_msg);
+			}
+			return ret; /* we "ate" the message, stop processing */
+		} else { /* the message has a via */
+			DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n",
+				msg->len, msg->len, msg->buf);
+			if (em_receive_request(msg, 0, 0)<0)
+				ret=NONSIP_MSG_ERROR;
+			return ret;
+		}
+	} else {
+		ERR("xmlrpc: bad HTTP request method: \"%.*s\"\n",
+			msg->first_line.u.request.method.len,
+			msg->first_line.u.request.method.s);
+		/* the message was for us, but it is an error */
+		return NONSIP_MSG_ERROR;
 	}
 	return NONSIP_MSG_PASS; /* message not for us, maybe somebody 
 								   else needs it */
@@ -2395,6 +2431,23 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+	if(xmlrpc_url_match!=NULL)
+	{
+		memset(&xmlrpc_url_match_regexp, 0, sizeof(regex_t));
+		if (regcomp(&xmlrpc_url_match_regexp, xmlrpc_url_match, REG_EXTENDED)!=0) {
+			LM_ERR("bad match re %s\n", xmlrpc_url_match);
+			return E_BAD_RE;
+		}
+	}
+	if(xmlrpc_url_skip!=NULL)
+	{
+		memset(&xmlrpc_url_skip_regexp, 0, sizeof(regex_t));
+		if (regcomp(&xmlrpc_url_skip_regexp, xmlrpc_url_skip, REG_EXTENDED)!=0) {
+			LM_ERR("bad skip re %s\n", xmlrpc_url_skip);
+			return E_BAD_RE;
+		}
+	}
+
 	return 0;
 }
 

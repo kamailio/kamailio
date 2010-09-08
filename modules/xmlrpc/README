@@ -25,6 +25,8 @@ Jan Janak
         1.5.3. escape_cr (integer)
         1.5.4. double_lf_to_crlf (integer)
         1.5.5. mode (integer)
+        1.5.6. url_skip (str)
+        1.5.7. url_match (str)
 
    1.6. Functions
 
@@ -578,6 +580,32 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
    Example 6. Set the mode parameter
 modparam("xmlrpc", "mode", 1)
 
+1.5.6. url_skip (str)
+
+   Regular expression to match the HTPP URL. If there is match, then
+   xmlrpc route is not executed.
+
+   Default value is null (don't skip).
+
+   Example 7. Set url_skip parameter
+...
+modparam("xhttp", "url_skip", "^/sip")
+...
+
+1.5.7. url_match (str)
+
+   Regular expression to match the HTPP URL. If there is no match, then
+   xmlrpc route is not executed. This check is done after url_skip, so if
+   both url_skip and url_match would match then the xmlrpc route is not
+   executed (url_skip has higher priority).
+
+   Default value is null (match everything).
+
+   Example 8. Set url_match parameter
+...
+modparam("xhttp", "url_match", "^/RPC2")
+...
+
 1.6. Functions
 
    Revision History
@@ -599,7 +627,7 @@ modparam("xmlrpc", "mode", 1)
    function with matching name. If such a function is found then
    dispatch_rpc() will pass control to the function to handle the request.
 
-   Example 7. dispatch_rpc usage
+   Example 9. dispatch_rpc usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
@@ -615,7 +643,7 @@ route[XMLRPC]{
    This function can be called from the config script to directly generate
    an XML-RPC reply.
 
-   Example 8. xmlrpc_reply usage
+   Example 10. xmlrpc_reply usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
