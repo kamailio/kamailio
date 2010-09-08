@@ -396,9 +396,9 @@ if (check_route_param("nat=yes")) {
 		<title>
 		<function moreinfo="none">is_direction(dir)</function>
 		</title>
-		<para>The function checks the flow direction of the request.
-		As for checking it's used the <quote>ftag</quote> Route header 
-		parameter, the append_fromtag (see <xref linkend="append-fromtag-id"/> 
+		<para>The function checks the flow direction of in-dialog requests.
+		This function uses the <quote>ftag</quote> prameter from the Route header, 
+		therefore the append_fromtag (see <xref linkend="append-fromtag-id"/> 
 		module parameter must be enabled. Also this must be called only after 
 		loose_route() (see <xref linkend="loose-route-id"/>).
 		</para>
@@ -407,16 +407,16 @@ if (check_route_param("nat=yes")) {
 		the request's flow direction.
 		</para>
 		<para>
-		The <quote>downstream</quote> (UAC to UAS) direction is relative to the
-		initial request that created the dialog.
+		The <quote>downstream</quote> direction means that the request is in the same
+		direction as the initial request that created the dialog.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
 			<emphasis>dir</emphasis> - string containing the direction to be 
-				checked. It may be <quote>upstream</quote> (from UAS to UAC) or 
-				<quote>downstream</quote> (UAC to UAS).
+				checked. It may be <quote>upstream</quote> (from callee to caller) or 
+				<quote>downstream</quote> (caller to callee).
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -427,8 +427,10 @@ if (check_route_param("nat=yes")) {
 		<title><function>is_direction</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (is_direction("upstream")) {
-    xdbg("upstream request ($rm)\n");
+if (is_direction("downstream")) {
+    xdbg("in-dialog request from caller to callee (downstream) ($rm)\n");
+} else {
+    xdbg("in-dialog request from callee to caller (upstream) ($rm)\n");
 }
 ...
 </programlisting>
