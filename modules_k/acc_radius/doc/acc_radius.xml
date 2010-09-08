@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-	<title>AACC_RADIUS Module</title>
+	<title>ACC_RADIUS Module</title>
 	<productname class="trade">&kamailio;</productname>
 	<authorgroup>
         <author>
