@@ -58,7 +58,9 @@ static int pv_get_huri(struct sip_msg *msg, pv_param_t *param,
 
 static int xhttp_route_no=DEFAULT_RT;
 static char* xhttp_url_match = NULL;
-static regex_t xhttp_url_regexp;
+static regex_t xhttp_url_match_regexp;
+static char* xhttp_url_skip = NULL;
+static regex_t xhttp_url_skip_regexp;
 
 /** SL API structure */
 sl_api_t slb;
@@ -80,6 +82,7 @@ static pv_export_t mod_pvs[] = {
 
 static param_export_t params[] = {
 	{"url_match",       STR_PARAM, &xhttp_url_match},
+	{"url_skip",        STR_PARAM, &xhttp_url_skip},
 	{0, 0, 0}
 };
 
@@ -138,9 +141,17 @@ static int mod_init(void)
 
 	if(xhttp_url_match!=NULL)
 	{
-		memset(&xhttp_url_regexp, 0, sizeof(regex_t));
-		if (regcomp(&xhttp_url_regexp, xhttp_url_match, REG_EXTENDED)!=0) {
-			LM_ERR("bad re %s\n", xhttp_url_match);
+		memset(&xhttp_url_match_regexp, 0, sizeof(regex_t));
+		if (regcomp(&xhttp_url_match_regexp, xhttp_url_match, REG_EXTENDED)!=0) {
+			LM_ERR("bad match re %s\n", xhttp_url_match);
+			return E_BAD_RE;
+		}
+	}
+	if(xhttp_url_skip!=NULL)
+	{
+		memset(&xhttp_url_skip_regexp, 0, sizeof(regex_t));
+		if (regcomp(&xhttp_url_skip_regexp, xhttp_url_skip, REG_EXTENDED)!=0) {
+			LM_ERR("bad skip re %s\n", xhttp_url_skip);
 			return E_BAD_RE;
 		}
 	}
@@ -292,12 +303,22 @@ static int xhttp_handler(sip_msg_t* msg)
 		return NONSIP_MSG_PASS;
 	}
 
-	if(xhttp_url_match!=NULL)
+	if(xhttp_url_skip!=NULL || xhttp_url_match!=NULL)
 	{
 		c = msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len];
 		msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
 			= '\0';
-		if (regexec(&xhttp_url_regexp, msg->first_line.u.request.uri.s,
+		if (xhttp_url_skip!=NULL &&
+			regexec(&xhttp_url_skip_regexp, msg->first_line.u.request.uri.s,
+					1, &pmatch, 0)==0)
+		{
+			LM_DBG("URL matched skip re\n");
+			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
+				= c;
+			return NONSIP_MSG_PASS;
+		}
+		if (xhttp_url_match!=NULL &&
+			regexec(&xhttp_url_match_regexp, msg->first_line.u.request.uri.s,
 					1, &pmatch, 0)!=0)
 		{
 			LM_DBG("URL not matched\n");

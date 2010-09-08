@@ -25,7 +25,8 @@ Daniel-Constantin Mierla
 
         3. Exported Parameters
 
-              3.1. url_match (str)
+              3.1. url_skip (str)
+              3.2. url_match (str)
 
         4. Exported Functions
 
@@ -33,8 +34,9 @@ Daniel-Constantin Mierla
 
    List of Examples
 
-   1.1. Set url_match parameter
-   1.2. xhttp_reply usage
+   1.1. Set url_skip parameter
+   1.2. Set url_match parameter
+   1.3. xhttp_reply usage
 
 Chapter 1. Admin Guide
 
@@ -48,7 +50,8 @@ Chapter 1. Admin Guide
 
    3. Exported Parameters
 
-        3.1. url_match (str)
+        3.1. url_skip (str)
+        3.2. url_match (str)
 
    4. Exported Functions
 
@@ -83,16 +86,31 @@ Chapter 1. Admin Guide
 
 3. Exported Parameters
 
-   3.1. url_match (str)
+   3.1. url_skip (str)
+   3.2. url_match (str)
 
-3.1. url_match (str)
+3.1. url_skip (str)
+
+   Regular expression to match the HTPP URL. If there is match, then event
+   route is not executed.
+
+   Default value is null (don't skip).
+
+   Example 1.1. Set url_skip parameter
+...
+modparam("xhttp", "url_skip", "^/RPC2")
+...
+
+3.2. url_match (str)
 
    Regular expression to match the HTPP URL. If there is no match, then
-   event route is not executed
+   event route is not executed. This check is done after url_skip, so if
+   both url_skip and url_match would match then the event route is not
+   executed (url_skip has higher priority).
 
    Default value is null (match everything).
 
-   Example 1.1. Set url_match parameter
+   Example 1.2. Set url_match parameter
 ...
 modparam("xhttp", "url_match", "^/sip/")
 ...
@@ -105,7 +123,7 @@ modparam("xhttp", "url_match", "^/sip/")
 
    Send back a reply with content-type and body.
 
-   Example 1.2. xhttp_reply usage
+   Example 1.3. xhttp_reply usage
 ...
 event_route[xhttp:request] {
     xhttp_reply("200", "OK", "text/html",

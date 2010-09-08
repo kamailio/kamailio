@@ -61,10 +61,32 @@
 	<section>
 	<title>Exported Parameters</title>
 	<section>
+		<title><varname>url_skip</varname> (str)</title>
+		<para>
+			Regular expression to match the HTPP URL. If there is match,
+			then event route is not executed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is null (don't skip).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_skip</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xhttp", "url_skip", "^/RPC2")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>url_match</varname> (str)</title>
 		<para>
 			Regular expression to match the HTPP URL. If there is no match,
-			then event route is not executed
+			then event route is not executed. This check is done after
+			url_skip, so if both url_skip and url_match would match then
+			the event route is not executed (url_skip has higher priority).
 		</para>
 		<para>
 		<emphasis>
