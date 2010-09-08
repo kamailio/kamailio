@@ -415,8 +415,8 @@ modparam("dispatcher", "force_dst", 1)
  	<section>
  		<title><varname>ds_ping_method</varname> (string)</title>
  		<para>
- 		With this Method you can define, with which method you want to probe the failed gateways.
- 		This method is only available, if compiled with the probing of failed gateways enabled. 		
+		With this Method you can define, with which method you want to probe the gateways.
+		Pinging gateways feature depends on ds_ping_interval parameter.
  		</para>
  		<para>
  		<emphasis>

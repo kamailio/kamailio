@@ -431,8 +431,8 @@ Note
 3.16. ds_ping_method (string)
 
    With this Method you can define, with which method you want to probe
-   the failed gateways. This method is only available, if compiled with
-   the probing of failed gateways enabled.
+   the gateways. Pinging gateways feature depends on ds_ping_interval
+   parameter.
 
    Default value is “OPTIONS”.
 
