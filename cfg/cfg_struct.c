@@ -584,9 +584,7 @@ cfg_block_t *cfg_clone_global(void)
 	return block;
 }
 
-/* Clone an array of configuration group instances.
- * WARNING: unsafe, cfg_writer_lock or cfg_global_lock must be held!
- */
+/* Clone an array of configuration group instances. */
 cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
 {
 	cfg_group_inst_t	*new_array;
@@ -606,6 +604,47 @@ cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
 	return new_array;
 }
 
+/* Extend the array of configuration group instances with one more instance.
+ * Only the ID of the new group is set, nothing else. */
+cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				unsigned int group_id,
+				cfg_group_inst_t **new_group)
+{
+	int			i;
+	cfg_group_inst_t	*new_array, *old_array;
+	int			inst_size;
+
+	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
+	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num + 1));
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: cfg_extend_array(): not enough shm memory\n");
+		return NULL;
+	}
+	/* Find the position of the new group in the array. The array is ordered
+	by the group IDs. */
+	old_array = meta->array;
+	for (	i = 0;
+		(i < meta->num)
+			&& (((cfg_group_inst_t *)((char *)old_array + inst_size * i))->id < group_id);
+		i++
+	);
+	if (i > 0)
+		memcpy(	new_array,
+			old_array,
+			inst_size * i);
+
+	memset((char*)new_array + inst_size * i, 0, inst_size);
+	*new_group = (cfg_group_inst_t *)((char*)new_array + inst_size * i);
+	(*new_group)->id = group_id;
+
+	if (i < meta->num)
+		memcpy(	(char*)new_array + inst_size * (i + 1),
+			(char*)old_array + inst_size * i,
+			inst_size * (meta->num - i));
+
+	return new_array;
+}
+
 /* Find the group instance within the meta-data based on the group_id */
 cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id)
 {
@@ -615,13 +654,15 @@ cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigne
 	if (!meta)
 		return NULL;
 
-	/* For now, search lineray till the end of the array.
+	/* For now, search lineray.
 	TODO: improve */
 	for (i = 0; i < meta->num; i++) {
 		ginst = (cfg_group_inst_t *)((char *)meta->array
 			+ (sizeof(cfg_group_meta_t) + group_size - 1) * i);
 		if (ginst->id == group_id)
 			return ginst;
+		else if (ginst->id > group_id)
+			break; /* needless to continue, the array is ordered */
 	}
 	return NULL;
 }

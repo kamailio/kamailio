@@ -593,6 +593,7 @@ error:
 	if (block) cfg_block_free(block);
 	if (new_array) shm_free(new_array);
 	if (child_cb) cfg_child_cb_free(child_cb);
+	if (replaced) shm_free(replaced);
 
 error0:
 	LOG(L_ERR, "ERROR: cfg_set_now(): failed to set the variable: %.*s.%.*s\n",
@@ -1218,4 +1219,98 @@ void cfg_diff_release(cfg_ctx_t *ctx)
 	}
 
 	CFG_CTX_UNLOCK(ctx);
+}
+
+/* Add a new instance to an existing group */
+int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
+{
+	cfg_group_t	*group;
+	cfg_block_t	*block = NULL;
+	void		**replaced = NULL;
+	cfg_group_inst_t	*new_array = NULL, *new_inst;
+
+	/* verify the context even if we do not need it now
+	to make sure that a cfg driver has called the function
+	(very very weak security) */
+	if (!ctx) {
+		LOG(L_ERR, "ERROR: cfg_add_group_inst(): context is undefined\n");
+		return -1;
+	}
+
+	if (!cfg_shmized) {
+		/* TODO: Add a new fake variable belonging to
+		the additional group instance to the linked list. */
+		return -1;
+	}
+
+	if (!(group = cfg_lookup_group(group_name->s, group_name->len))) {
+		LOG(L_ERR, "ERROR: cfg_add_group_inst(): group not found\n");
+		return -1;
+	}
+
+	/* make sure that nobody else replaces the global config
+	while the new one is prepared */
+	CFG_WRITER_LOCK();
+	if (cfg_find_group(CFG_GROUP_META(*cfg_global, group),
+							group->size,
+							group_id)
+	) {
+		LOG(L_DBG, "DEBUG: cfg_add_group_inst(): the group instance already exists\n");
+		CFG_WRITER_UNLOCK();
+		return 0; /* not an error */
+	}
+
+	/* clone the global memory block because the additional array can be
+	replaced only together with the block. */
+	if (!(block = cfg_clone_global()))
+		goto error;
+
+	/* Extend the array with a new group instance */
+	if (!(new_array = cfg_extend_array(CFG_GROUP_META(*cfg_global, group), group,
+					group_id,
+					&new_inst))
+	)
+		goto error;
+
+	/* fill in the new group instance with the default data */
+	memcpy(	new_inst->vars,
+		CFG_GROUP_DATA(*cfg_global, group),
+		sizeof(cfg_group_inst_t) + group->size - 1);
+
+	CFG_GROUP_META(block, group)->array = new_array;
+
+	if (CFG_GROUP_META(*cfg_global, group)->array) {
+		/* prepare the array of the replaced strings,
+		and replaced group instances,
+		they will be freed when the old block is freed */
+		replaced = (void **)shm_malloc(sizeof(void *) * 2);
+		if (!replaced) {
+			LOG(L_ERR, "ERROR: cfg_add_group_inst(): not enough shm memory\n");
+			goto error;
+		}
+		replaced[0] = CFG_GROUP_META(*cfg_global, group)->array;
+		replaced[1] = NULL;
+	}
+	/* replace the global config with the new one */
+	cfg_install_global(block, replaced, NULL, NULL);
+	CFG_WRITER_UNLOCK();
+
+	LOG(L_INFO, "INFO: cfg_add_group_inst(): "
+		"group instance is added: %.*s[%u]\n",
+		group_name->len, group_name->s,
+		group_id);
+
+	return 0;
+error:
+	CFG_WRITER_UNLOCK();
+	if (block) cfg_block_free(block);
+	if (new_array) shm_free(new_array);
+	if (replaced) shm_free(replaced);
+
+	LOG(L_ERR, "ERROR: cfg_add_group_inst(): "
+		"Failed to add the group instance: %.*s[%u]\n",
+		group_name->len, group_name->s,
+		group_id);
+
+	return -1;
 }

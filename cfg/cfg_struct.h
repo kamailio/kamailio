@@ -375,6 +375,12 @@ cfg_block_t *cfg_clone_global(void);
 /* Clone an array of configuration group instances. */
 cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group);
 
+/* Extend the array of configuration group instances with one more instance.
+ * Only the ID of the new group is set, nothing else. */
+cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				unsigned int group_id,
+				cfg_group_inst_t **new_group);
+
 /* clones a string to shared memory */
 int cfg_clone_str(str *src, str *dst);
 
