@@ -584,6 +584,9 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 			group_name->len, group_name->s,
 			var_name->len, var_name->s,
 			((str *)val)->len, ((str *)val)->s);
+	if (group_id)
+		LOG(L_INFO, "INFO: cfg_set_now(): group id = %u\n",
+			*group_id);
 
 	convert_val_cleanup();
 	return 0;
