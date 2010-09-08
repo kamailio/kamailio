@@ -18,8 +18,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History
@@ -35,7 +35,7 @@
  * re-enabling of destinations (carsten)
  * 2007-05-08  Ported the changes to SVN-Trunk, renamed ds_is_domain to
  * ds_is_from_list and modified the function to work with IPv6 adresses.
- * 2007-07-18  removed index stuff 
+ * 2007-07-18  removed index stuff
  * 			   added DB support to load/reload data(ancuta)
  * 2007-09-17  added list-file support for reload data (carstenbock)
  */
@@ -78,13 +78,17 @@
 #define DS_TABLE_VERSION3	3
 #define DS_TABLE_VERSION4	4
 
+#define DS_ALG_RROBIN	4
+#define DS_ALG_LOAD		10
+
 static int _ds_table_version = DS_TABLE_VERSION;
 
 static ds_ht_t *_dsht_load = NULL;
 
 typedef struct _ds_attrs
 {
-	char duid[DS_DUID_SIZE];
+	str body;
+	str duid;
 	int maxload;
 	int weight;
 } ds_attrs_t;
@@ -129,6 +133,34 @@ int *next_idx   = NULL;
 
 void destroy_list(int);
 
+/**
+ *
+ */
+int ds_hash_load_init(unsigned int htsize, int expire, int initexpire)
+{
+	if(_dsht_load != NULL)
+		return 0;
+	_dsht_load = ds_ht_init(htsize, expire, initexpire);
+	if(_dsht_load == NULL)
+		return -1;
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_hash_load_destroy(void)
+{
+	if(_dsht_load == NULL)
+		return -1;
+	ds_ht_destroy(_dsht_load);
+	_dsht_load = NULL;
+	return 0;
+}
+
+/**
+ *
+ */
 int ds_print_sets(void)
 {
 	ds_set_t *si = NULL;
@@ -143,10 +175,11 @@ int ds_print_sets(void)
 	{
 		for(i=0; i<si->nr; i++)
 		{
-			LM_DBG("dst>> %d %.*s %d %d (%s,%d,%d)\n", si->id,
+			LM_DBG("dst>> %d %.*s %d %d (%.*s,%d,%d)\n", si->id,
 					si->dlist[i].uri.len, si->dlist[i].uri.s,
 					si->dlist[i].flags, si->dlist[i].priority,
-					si->dlist[i].attrs.duid, si->dlist[i].attrs.maxload,
+					si->dlist[i].attrs.duid.len, si->dlist[i].attrs.duid.s,
+					si->dlist[i].attrs.maxload,
 					si->dlist[i].attrs.weight);
 		}
 		si = si->next;
@@ -155,6 +188,9 @@ int ds_print_sets(void)
 	return 0;
 }
 
+/**
+ *
+ */
 int init_data(void)
 {
 	int * p;
@@ -183,45 +219,53 @@ int init_data(void)
 	return 0;
 }
 
+/**
+ *
+ */
 int ds_set_attrs(ds_dest_t *dest, str *attrs)
 {
 	param_t* params_list = NULL;
 	param_hooks_t phooks;
 	param_t *pit=NULL;
+	str param;
 
 	if(attrs==NULL || attrs->len<=0)
 		return 0;
 	if(attrs->s[attrs->len-1]==';')
 		attrs->len--;
-	if (parse_params(attrs, CLASS_ANY, &phooks, &params_list)<0)
+	/* clone in shm */
+	dest->attrs.body.s = (char*)shm_malloc(attrs->len+1);
+	if(dest->attrs.body.s==NULL)
+	{
+		LM_ERR("no more shm\n");
+		return -1;
+	}
+	memcpy(dest->attrs.body.s, attrs->s, attrs->len);
+	dest->attrs.body.s[attrs->len] = '\0';
+	dest->attrs.body.len = attrs->len;
+
+	param = dest->attrs.body;
+	if (parse_params(&param, CLASS_ANY, &phooks, &params_list)<0)
 		return -1;
 	for (pit = params_list; pit; pit=pit->next)
 	{
 		if (pit->name.len==4
 				&& strncasecmp(pit->name.s, "duid", 4)==0) {
-			if(pit->body.len>=DS_DUID_SIZE)
-			{
-				LM_ERR("dest unique id too long: %.*s\n",
-						pit->body.len, pit->body.s);
-				return -1;
-			}
-			memcpy(dest->attrs.duid, pit->body.s, pit->body.len);
-			dest->attrs.duid[pit->body.len] = '\0';
+			dest->attrs.duid = pit->body;
 		} else if(pit->name.len==6
 				&& strncasecmp(pit->name.s, "weight", 4)==0) {
 			str2sint(&pit->body, &dest->attrs.weight);
 		} else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "maxload", 7)==0) {
 			str2sint(&pit->body, &dest->attrs.maxload);
-		} else {
-			LM_ERR("unknown dest attribute: %.*s\n",
-						pit->name.len, pit->name.s);
-			return -1;
 		}
 	}
 	return 0;
 }
 
+/**
+ *
+ */
 int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 		int list_idx, int * setn)
 {
@@ -351,6 +395,9 @@ err:
 	return -1;
 }
 
+/**
+ *
+ */
 int dp_init_weights(ds_set_t *dset)
 {
 	int j;
@@ -571,10 +618,13 @@ error:
 	if(f!=NULL)
 		fclose(f);
 	destroy_list(*next_idx);
-	*next_idx = *crt_idx; 
+	*next_idx = *crt_idx;
 	return -1;
 }
 
+/**
+ *
+ */
 int ds_connect_db(void)
 {
 	if(!ds_db_url.s)
@@ -593,6 +643,9 @@ int ds_connect_db(void)
 	return 0;
 }
 
+/**
+ *
+ */
 void ds_disconnect_db(void)
 {
 	if(ds_db_handle)
@@ -627,17 +680,18 @@ int init_ds_db(void)
 	}
 	
 	_ds_table_version = db_table_version(&ds_dbf, ds_db_handle, &ds_table_name);
-	if (_ds_table_version < 0) 
+	if (_ds_table_version < 0)
 	{
 		LM_ERR("failed to query table version\n");
 		return -1;
 	} else if (_ds_table_version != DS_TABLE_VERSION
 			&& _ds_table_version != DS_TABLE_VERSION2
-			&& _ds_table_version != DS_TABLE_VERSION3) {
-		LM_ERR("invalid table version (found %d , required %d, %d or %d)\n"
+			&& _ds_table_version != DS_TABLE_VERSION3
+			&& _ds_table_version != DS_TABLE_VERSION4) {
+		LM_ERR("invalid table version (found %d , required %d, %d, %d or %d)\n"
 			"(use kamdbctl reinit)\n",
 			_ds_table_version, DS_TABLE_VERSION, DS_TABLE_VERSION2,
-			DS_TABLE_VERSION3);
+			DS_TABLE_VERSION3, DS_TABLE_VERSION4);
 		return -1;
 	}
 
@@ -754,7 +808,7 @@ int ds_load_db(void)
 err2:
 	destroy_list(*next_idx);
 	ds_dbf.free_result(ds_db_handle, res);
-	*next_idx = *crt_idx; 
+	*next_idx = *crt_idx;
 
 	return -1;
 }
@@ -774,6 +828,9 @@ int ds_destroy_list(void)
 	return 0;
 }
 
+/**
+ *
+ */
 void destroy_list(int list_id)
 {
 	ds_set_t  *sp = NULL;
@@ -823,8 +880,8 @@ unsigned int ds_get_hash(str *x, str *y)
 		}
 		v=0;
 		for (;p<(x->s+x->len); p++)
-		{ 
-			v<<=8; 
+		{
+			v<<=8;
 			v+=*p;
 		}
 		h+=v^(v>>3);
@@ -832,7 +889,7 @@ unsigned int ds_get_hash(str *x, str *y)
 	if(y)
 	{
 		p=y->s;
-		if (y->len>=4) 
+		if (y->len>=4)
 		{
 			for (; p<=(y->s+y->len-4); p+=4)
 			{
@@ -843,8 +900,8 @@ unsigned int ds_get_hash(str *x, str *y)
 	
 		v=0;
 		for (;p<(y->s+y->len); p++)
-		{ 
-			v<<=8; 
+		{
+			v<<=8;
 			v+=*p;
 		}
 		h+=v^(v>>3);
@@ -919,7 +976,6 @@ error:
 }
 
 
-
 /**
  *
  */
@@ -957,7 +1013,6 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 }
 
 
-
 /**
  *
  */
@@ -991,7 +1046,6 @@ int ds_hash_touri(struct sip_msg *msg, unsigned int *hash)
 }
 
 
-
 /**
  *
  */
@@ -1021,7 +1075,9 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 }
 
 
-
+/**
+ *
+ */
 int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 {
 	str* uri;
@@ -1047,6 +1103,9 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
+/**
+ *
+ */
 int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 {
 	/* Header, which contains the authorization */
@@ -1108,6 +1167,9 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 }
 
 
+/**
+ *
+ */
 int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 {
 	/* The String to create the hash */
@@ -1136,49 +1198,9 @@ int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
-int ds_get_leastloaded(ds_set_t *dset)
-{
-	int j;
-	int k;
-	int t;
-
-	k = 0;
-	t = dset->dlist[k].dload;
-	for(j=1; j<dset->nr; j++)
-	{
-		if(!((dset->dlist[j].flags & DS_INACTIVE_DST)
-				|| (dset->dlist[j].flags & DS_PROBING_DST)))
-		{
-			if(dset->dlist[j].dload<t)
-			{
-				k = j;
-				t = dset->dlist[k].dload;
-			}
-		}
-	}
-	return k;
-}
-
-int ds_update_load(struct sip_msg *msg, ds_set_t *dset, int setid, int dst)
-{
-	if(dset->dlist[dst].attrs.duid[0]=='\0')
-	{
-		LM_ERR("dst unique id not set for %d (%.*s)\n", setid,
-				msg->callid->body.len, msg->callid->body.s);
-		return -1;
-	}
-
-	if(ds_add_cell(_dsht_load, &msg->callid->body,
-			dset->dlist[dst].attrs.duid, setid)<0)
-	{
-		LM_ERR("cannot add load to %d (%.*s)\n", setid,
-				msg->callid->body.len, msg->callid->body.s);
-		return -1;
-	}
-	dset->dlist[dst].dload++;
-	return 0;
-}
-
+/**
+ *
+ */
 static inline int ds_get_index(int group, ds_set_t **index)
 {
 	ds_set_t *si = NULL;
@@ -1207,6 +1229,307 @@ static inline int ds_get_index(int group, ds_set_t **index)
 	return 0;
 }
 
+
+/**
+ *
+ */
+int ds_get_leastloaded(ds_set_t *dset)
+{
+	int j;
+	int k;
+	int t;
+
+	k = 0;
+	t = dset->dlist[k].dload;
+	for(j=1; j<dset->nr; j++)
+	{
+		if(!((dset->dlist[j].flags & DS_INACTIVE_DST)
+				|| (dset->dlist[j].flags & DS_PROBING_DST)))
+		{
+			if(dset->dlist[j].dload<t)
+			{
+				k = j;
+				t = dset->dlist[k].dload;
+			}
+		}
+	}
+	return k;
+}
+
+/**
+ *
+ */
+int ds_load_add(struct sip_msg *msg, ds_set_t *dset, int setid, int dst)
+{
+	if(dset->dlist[dst].attrs.duid.len==0)
+	{
+		LM_ERR("dst unique id not set for %d (%.*s)\n", setid,
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if(ds_add_cell(_dsht_load, &msg->callid->body,
+			&dset->dlist[dst].attrs.duid, setid)<0)
+	{
+		LM_ERR("cannot add load to %d (%.*s)\n", setid,
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+	dset->dlist[dst].dload++;
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_load_replace(struct sip_msg *msg, str *duid)
+{
+	ds_cell_t *it;
+	int set;
+	int olddst;
+	int newdst;
+	ds_set_t *idx = NULL;
+	int i;
+
+	if(duid->len<=0)
+	{
+		LM_ERR("invalid dst unique id not set for (%.*s)\n",
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	if((it=ds_get_cell(_dsht_load, &msg->callid->body))==NULL)
+	{
+		LM_ERR("cannot find load for (%.*s)\n",
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+	set = it->dset;
+	/* get the index of the set */
+	if(ds_get_index(set, &idx)!=0)
+	{
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		LM_ERR("destination set [%d] not found\n", set);
+		return -1;
+	}
+	olddst = -1;
+	newdst = -1;
+	for(i=0; i<idx->nr; i++)
+	{
+		if(idx->dlist[i].attrs.duid.len==it->duid.len
+				&& strncasecmp(idx->dlist[i].attrs.duid.s, it->duid.s,
+					it->duid.len)==0)
+		{
+			olddst = i;
+			if(newdst!=-1)
+				break;
+		}
+		if(idx->dlist[i].attrs.duid.len==duid->len
+				&& strncasecmp(idx->dlist[i].attrs.duid.s, duid->s,
+					duid->len)==0)
+		{
+			newdst = i;
+			if(olddst!=-1)
+				break;
+		}
+	}
+	if(olddst==-1)
+	{
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		LM_ERR("old destination address not found for [%d, %.*s]\n", set,
+				it->duid.len, it->duid.s);
+		return -1;
+	}
+	if(newdst==-1)
+	{
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		LM_ERR("new destination address not found for [%d, %.*s]\n", set,
+				duid->len, duid->s);
+		return -1;
+	}
+
+	ds_unlock_cell(_dsht_load, &msg->callid->body);
+	ds_del_cell(_dsht_load, &msg->callid->body);
+	idx->dlist[olddst].dload--;
+
+	if(ds_load_add(msg, idx, set, newdst)<0)
+	{
+		LM_ERR("unable to replace destination load [%.*s / %.*s]\n",
+			duid->len, duid->s, msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_load_remove(struct sip_msg *msg)
+{
+	ds_cell_t *it;
+	int set;
+	int olddst;
+	ds_set_t *idx = NULL;
+	int i;
+
+	if((it=ds_get_cell(_dsht_load, &msg->callid->body))==NULL)
+	{
+		LM_ERR("cannot find load for (%.*s)\n",
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+	set = it->dset;
+	/* get the index of the set */
+	if(ds_get_index(set, &idx)!=0)
+	{
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		LM_ERR("destination set [%d] not found\n", set);
+		return -1;
+	}
+	olddst = -1;
+	for(i=0; i<idx->nr; i++)
+	{
+		if(idx->dlist[i].attrs.duid.len==it->duid.len
+				&& strncasecmp(idx->dlist[i].attrs.duid.s, it->duid.s,
+					it->duid.len)==0)
+		{
+			olddst = i;
+			break;
+		}
+	}
+	if(olddst==-1)
+	{
+		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		LM_ERR("old destination address not found for [%d, %.*s]\n", set,
+				it->duid.len, it->duid.s);
+		return -1;
+	}
+
+	ds_unlock_cell(_dsht_load, &msg->callid->body);
+	ds_del_cell(_dsht_load, &msg->callid->body);
+	idx->dlist[olddst].dload--;
+
+	return 0;
+}
+
+
+/**
+ *
+ */
+int ds_load_remove_byid(int set, str *duid)
+{
+	int olddst;
+	ds_set_t *idx = NULL;
+	int i;
+
+	/* get the index of the set */
+	if(ds_get_index(set, &idx)!=0)
+	{
+		LM_ERR("destination set [%d] not found\n", set);
+		return -1;
+	}
+	olddst = -1;
+	for(i=0; i<idx->nr; i++)
+	{
+		if(idx->dlist[i].attrs.duid.len==duid->len
+				&& strncasecmp(idx->dlist[i].attrs.duid.s, duid->s,
+					duid->len)==0)
+		{
+			olddst = i;
+			break;
+		}
+	}
+	if(olddst==-1)
+	{
+		LM_ERR("old destination address not found for [%d, %.*s]\n", set,
+				duid->len, duid->s);
+		return -1;
+	}
+
+	idx->dlist[olddst].dload--;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_load_state(struct sip_msg *msg, int state)
+{
+	ds_cell_t *it;
+
+	if((it=ds_get_cell(_dsht_load, &msg->callid->body))==NULL)
+	{
+		LM_DBG("cannot find load for (%.*s)\n",
+				msg->callid->body.len, msg->callid->body.s);
+		return -1;
+	}
+
+	it->state = state;
+	ds_unlock_cell(_dsht_load, &msg->callid->body);
+
+	return 0;
+}
+
+
+/**
+ *
+ */
+int ds_load_update(struct sip_msg *msg)
+{
+    if(parse_headers(msg, HDR_CSEQ_F|HDR_CALLID_F, 0)!=0
+			|| msg->cseq==NULL || msg->callid==NULL)
+    {
+        LM_ERR("cannot parse cseq and callid headers\n");
+        return -1;
+    }
+	if(msg->first_line.type==SIP_REQUEST)
+    {
+		if(msg->first_line.u.request.method_value==METHOD_BYE
+				|| msg->first_line.u.request.method_value==METHOD_CANCEL)
+		{
+			/* off-load call */
+			ds_load_remove(msg);
+		}
+		return 0;
+	}
+
+	if(get_cseq(msg)->method_id==METHOD_INVITE)
+	{
+		/* if status is 2xx then set state to confirmed */
+		if(REPLY_CLASS(msg)==2)
+			ds_load_state(msg, DS_LOAD_CONFIRMED);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_load_unset(struct sip_msg *msg)
+{
+	struct search_state st;
+	struct usr_avp *prev_avp;
+	int_str avp_value;
+	
+	if(dstid_avp_name.n==0)
+		return 0;
+
+	/* for INVITE requests should be called after dst list is built */
+	if(msg->first_line.type==SIP_REQUEST
+			&&  msg->first_line.u.request.method_value==METHOD_INVITE)
+    {
+		prev_avp = search_first_avp(dstid_avp_type, dstid_avp_name,
+				&avp_value, &st);
+		if(prev_avp==NULL)
+			return 0;
+	}
+	return ds_load_remove(msg);
+}
+
+/**
+ *
+ */
 static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 {
 	struct action act;
@@ -1218,7 +1541,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			memset(&act, '\0', sizeof(act));
 			act.type = SET_HOSTALL_T;
 			act.val[0].type = STRING_ST;
-			if(uri->len>4 
+			if(uri->len>4
 					&& strncasecmp(uri->s,"sip:",4)==0)
 				act.val[0].u.string = uri->s+4;
 			else
@@ -1322,7 +1645,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 				return -1;
 			}
 		break;
-		case 4: /* round robin */
+		case DS_ALG_RROBIN: /* round robin */
 			hash = idx->last;
 			idx->last = (idx->last+1) % idx->nr;
 		break;
@@ -1361,9 +1684,30 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			hash = idx->wlist[idx->wlast];
 			idx->wlast = (idx->wlast+1) % 100;
 		break;
-		case 10: /* load based distribution */
-			hash = ds_get_leastloaded(idx);
-			ds_update_load(msg, idx, set, hash);
+		case DS_ALG_LOAD: /* call load based distribution */
+			/* only INVITE can start a call */
+			if(msg->first_line.u.request.method_value!=METHOD_INVITE)
+			{
+				/* use first entry */
+				hash = 0;
+				alg = 0;
+				break;
+			}
+			if(dstid_avp_name.n==0)
+			{
+				LM_ERR("no dst ID avp for load distribution"
+						" - using first entry...\n");
+				hash = 0;
+				alg = 0;
+			} else {
+				hash = ds_get_leastloaded(idx);
+				if(ds_load_add(msg, idx, set, hash)<0)
+				{
+					LM_ERR("unable to update destination load"
+							" - classic dispatching\n");
+					alg = 0;
+				}
+			}
 		break;
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n", alg);
@@ -1404,7 +1748,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		return -1;
 	}
 	/* if alg is round-robin then update the shortcut to next to be used */
-	if(alg==4)
+	if(alg==DS_ALG_RROBIN)
 		idx->last = (hash+1) % idx->nr;
 	
 	LM_DBG("selected [%d-%d/%d] <%.*s>\n", alg, set, hash,
@@ -1420,6 +1764,28 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			avp_val.s = idx->dlist[idx->nr-1].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
+
+			if(attrs_avp_name.n!=0 && idx->dlist[idx->nr-1].attrs.body.len>0)
+			{
+				avp_val.s = idx->dlist[idx->nr-1].attrs.body;
+				if(add_avp(AVP_VAL_STR|attrs_avp_type, attrs_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
+			if(alg==DS_ALG_LOAD)
+			{
+				if(idx->dlist[idx->nr-1].attrs.duid.len<=0)
+				{
+					LM_ERR("no uid for destination: %d %.*s\n", set,
+							idx->dlist[idx->nr-1].uri.len,
+							idx->dlist[idx->nr-1].uri.s);
+					return -1;
+				}
+				avp_val.s = idx->dlist[idx->nr-1].attrs.duid;
+				if(add_avp(AVP_VAL_STR|dstid_avp_type, dstid_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
 			cnt++;
 		}
 	
@@ -1434,6 +1800,28 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
+
+			if(attrs_avp_name.n!=0 && idx->dlist[i].attrs.body.len>0)
+			{
+				avp_val.s = idx->dlist[i].attrs.body;
+				if(add_avp(AVP_VAL_STR|attrs_avp_type, attrs_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
+			if(alg==DS_ALG_LOAD)
+			{
+				if(idx->dlist[i].attrs.duid.len<=0)
+				{
+					LM_ERR("no uid for destination: %d %.*s\n", set,
+							idx->dlist[i].uri.len,
+							idx->dlist[i].uri.s);
+					return -1;
+				}
+				avp_val.s = idx->dlist[i].attrs.duid;
+				if(add_avp(AVP_VAL_STR|dstid_avp_type, dstid_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
 			cnt++;
 		}
 
@@ -1446,6 +1834,28 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
+
+			if(attrs_avp_name.n!=0 && idx->dlist[i].attrs.body.len>0)
+			{
+				avp_val.s = idx->dlist[i].attrs.body;
+				if(add_avp(AVP_VAL_STR|attrs_avp_type, attrs_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
+			if(alg==DS_ALG_LOAD)
+			{
+				if(idx->dlist[i].attrs.duid.len<=0)
+				{
+					LM_ERR("no uid for destination: %d %.*s\n", set,
+							idx->dlist[i].uri.len,
+							idx->dlist[i].uri.s);
+					return -1;
+				}
+				avp_val.s = idx->dlist[i].attrs.duid;
+				if(add_avp(AVP_VAL_STR|dstid_avp_type, dstid_avp_name,
+							avp_val)!=0)
+					return -1;
+			}
 			cnt++;
 		}
 	
@@ -1453,6 +1863,28 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		avp_val.s = idx->dlist[hash].uri;
 		if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 			return -1;
+
+		if(attrs_avp_name.n!=0 && idx->dlist[hash].attrs.body.len>0)
+		{
+			avp_val.s = idx->dlist[hash].attrs.body;
+			if(add_avp(AVP_VAL_STR|attrs_avp_type, attrs_avp_name,
+						avp_val)!=0)
+				return -1;
+		}
+		if(alg==DS_ALG_LOAD)
+		{
+			if(idx->dlist[hash].attrs.duid.len<=0)
+			{
+				LM_ERR("no uid for destination: %d %.*s\n", set,
+							idx->dlist[hash].uri.len,
+							idx->dlist[hash].uri.s);
+				return -1;
+			}
+			avp_val.s = idx->dlist[hash].attrs.duid;
+			if(add_avp(AVP_VAL_STR|dstid_avp_type, dstid_avp_name,
+						avp_val)!=0)
+				return -1;
+		}
 		cnt++;
 	}
 
@@ -1481,6 +1913,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
 	int_str avp_value;
+	int alg = 0;
 	
 	if(!(ds_flags&DS_FAILOVER_ON) || dst_avp_name.n==0)
 	{
@@ -1488,6 +1921,28 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 		return -1;
 	}
 
+	if(dstid_avp_name.n!=0)
+	{
+		prev_avp = search_first_avp(dstid_avp_type, dstid_avp_name,
+				&avp_value, &st);
+		if(prev_avp!=NULL)
+		{
+			/* load based dispatching */
+			alg = DS_ALG_LOAD;
+			/* off-load destination id */
+			destroy_avp(prev_avp);
+		}
+	}
+
+	if(attrs_avp_name.n!=0)
+	{
+		prev_avp = search_first_avp(attrs_avp_type,
+					attrs_avp_name, &avp_value, &st);
+		if(prev_avp!=NULL)
+		{
+			destroy_avp(prev_avp);
+		}
+	}
 
 	prev_avp = search_first_avp(dst_avp_type, dst_avp_name, &avp_value, &st);
 	if(prev_avp==NULL)
@@ -1504,6 +1959,21 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 		return -1;
 	}
 	LM_DBG("using [%.*s]\n", avp_value.s.len, avp_value.s.s);
+	if(alg==DS_ALG_LOAD)
+	{
+		prev_avp = search_first_avp(dstid_avp_type, dstid_avp_name,
+				&avp_value, &st);
+		if(prev_avp!=NULL)
+		{
+			LM_ERR("cannot uid for dst addr\n");
+			return -1;
+		}
+		if(ds_load_replace(msg, &avp_value.s)<0)
+		{
+			LM_ERR("cannot update load distribution\n");
+			return -1;
+		}
+	}
 	
 	return 1;
 }
@@ -1532,7 +2002,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 		return -1; /* dst avp deleted -- strange */
 	
 	if(mode==1) {
-		ret = ds_set_state(group, &avp_value.s, 
+		ret = ds_set_state(group, &avp_value.s,
 				DS_INACTIVE_DST|DS_PROBING_DST, 0);
 	} else if(mode==2) {
 		ret = ds_set_state(group, &avp_value.s, DS_PROBING_DST, 1);
@@ -1570,7 +2040,7 @@ int ds_set_state(int group, str *address, int state, int type)
 
 	while(i<idx->nr)
 	{
-		if(idx->dlist[i].uri.len==address->len 
+		if(idx->dlist[i].uri.len==address->len
 				&& strncasecmp(idx->dlist[i].uri.s, address->s,
 					address->len)==0)
 		{
@@ -1586,10 +2056,10 @@ int ds_set_state(int group, str *address, int state, int type)
 					
 					idx->dlist[i].failure_count++;
 					/* Fire only, if the Threshold is reached. */
-					if (idx->dlist[i].failure_count 
+					if (idx->dlist[i].failure_count
 							< probing_threshhold) return 0;
 					if (idx->dlist[i].failure_count
-							> probing_threshhold) 
+							> probing_threshhold)
 						idx->dlist[i].failure_count
 							= probing_threshhold;				
 				}
@@ -1647,7 +2117,7 @@ int ds_print_list(FILE *fout)
   					fprintf(fout, "           ");
   				}
   			}
-  
+
   			fprintf(fout, "   %.*s\n",
   				list->dlist[j].uri.len, list->dlist[j].uri.s);		
 		}
@@ -1704,6 +2174,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 	int len, j;
 	char* p;
 	char c;
+	str data;
 	ds_set_t *list;
 	struct mi_node* node = NULL;
 	struct mi_node* set_node = NULL;
@@ -1715,7 +2186,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 		return  0;
 	}
 
-	p= int2str(_ds_list_nr, &len); 
+	p= int2str(_ds_list_nr, &len);
 	node = add_mi_node_child(rpl, MI_DUP_VALUE, "SET_NO",6, p, len);
 	if(node== NULL)
 		return -1;
@@ -1733,16 +2204,26 @@ int ds_print_mi_list(struct mi_node* rpl)
   					list->dlist[j].uri.s, list->dlist[j].uri.len);
   			if(node == NULL)
   				return -1;
-  
+
   			if (list->dlist[j].flags & DS_INACTIVE_DST) c = 'I';
   			else if (list->dlist[j].flags & DS_PROBING_DST) c = 'P';
   			else c = 'A';
-  
+
   			attr = add_mi_attr (node, MI_DUP_VALUE, "flag",4, &c, 1);
   			if(attr == 0)
   				return -1;
-  
- 		}
+
+			data.s = int2str(list->dlist[j].priority, &data.len);
+  			attr = add_mi_attr (node, MI_DUP_VALUE, "priority", 8,
+					data.s, data.len);
+  			if(attr == 0)
+  				return -1;
+   			attr = add_mi_attr (node, MI_DUP_VALUE, "attrs", 5,
+				(list->dlist[j].attrs.body.s)?list->dlist[j].attrs.body.s:"",
+				list->dlist[j].attrs.body.len);
+  			if(attr == 0)
+  				return -1;
+		}
 	}
 
 	return 0;
@@ -1752,8 +2233,7 @@ int ds_print_mi_list(struct mi_node* rpl)
  * Callback-Function for the OPTIONS-Request
  * This Function is called, as soon as the Transaction is finished
  * (e. g. a Response came in, the timeout was hit, ...)
- * 
- */ 
+ */
 static void ds_options_callback( struct cell *t, int type,
 		struct tmcb_params *ps )
 {
@@ -1778,7 +2258,7 @@ static void ds_options_callback( struct cell *t, int type,
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
 	/* ps->code contains the result-code of the request.
-	 * 
+	 *
 	 * We accept both a "200 OK", "501 Not supported" and "403" as an
 	 * successful reply.
 	 *   501: Cisco-Gateways reply with a "501 Not supported" to the request.
@@ -1809,7 +2289,7 @@ static void ds_options_callback( struct cell *t, int type,
 
 /*! \brief
  * Timer for checking inactive destinations
- * 
+ *
  * This timer is regularly fired.
  */
 void ds_check_timer(unsigned int ticks, void* param)
@@ -1828,7 +2308,7 @@ void ds_check_timer(unsigned int ticks, void* param)
 	/* Iterate over the groups and the entries of each group: */
 	for(list = _ds_list; list!= NULL; list= list->next)
 	{
-		for(j=0; j<list->nr; j++) 
+		for(j=0; j<list->nr; j++)
 		{
 			/* If the Flag of the entry has "Probing set, send a probe:	*/
 			if (ds_probing_mode==1 ||
@@ -1857,6 +2337,11 @@ void ds_check_timer(unsigned int ticks, void* param)
 	}
 }
 
+/*! \brief
+ * Timer for checking expired items in call load dispatching
+ *
+ * This timer is regularly fired.
+ */
 void ds_ht_timer(unsigned int ticks, void *param)
 {
 	ds_cell_t *it;
@@ -1877,7 +2362,9 @@ void ds_ht_timer(unsigned int ticks, void *param)
 		while(it)
 		{
 			it0 = it->next;
-			if(it->expire!=0 && it->expire<now)
+			if((it->expire!=0 && it->expire<now)
+				|| (it->state==DS_LOAD_INIT
+						&& it->initexpire!=0 && it->initexpire<now))
 			{
 				/* expired */
 				if(it->prev==NULL)
@@ -1887,7 +2374,10 @@ void ds_ht_timer(unsigned int ticks, void *param)
 				if(it->next)
 					it->next->prev = it->prev;
 				_dsht_load->entries[i].esize--;
+
 				/* execute ds unload callback */
+				ds_load_remove_byid(it->dset, &it->duid);
+
 				ds_cell_free(it);
 			}
 			it = it0;

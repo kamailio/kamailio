@@ -70,6 +70,10 @@ extern int_str grp_avp_name;
 extern unsigned short grp_avp_type;
 extern int_str cnt_avp_name;
 extern unsigned short cnt_avp_type;
+extern int_str dstid_avp_name;
+extern unsigned short dstid_avp_type;
+extern int_str attrs_avp_name;
+extern unsigned short attrs_avp_type;
 
 extern pv_elem_t * hash_param_model;
 
@@ -99,6 +103,12 @@ int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
 int ds_print_sets(void);
+
+int ds_load_unset(struct sip_msg *msg);
+int ds_load_update(struct sip_msg *msg);
+
+int ds_hash_load_init(unsigned int htsize, int expire, int initexpire);
+int ds_hash_load_destroy(void);
 
 int ds_is_from_list(struct sip_msg *_m, int group);
 /*! \brief

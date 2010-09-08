@@ -35,12 +35,12 @@
 #define ds_get_entry(_h,_size)    (_h)&((_size)-1)
 
 
-ds_cell_t* ds_cell_new(str *cid, char *did, int dset, unsigned int cellid)
+ds_cell_t* ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
 {
 	ds_cell_t *cell;
 	unsigned int msize;
 
-	msize = sizeof(ds_cell_t) + (cid->len + 1)*sizeof(char);
+	msize = sizeof(ds_cell_t) + (cid->len + duid->len + 2)*sizeof(char);
 
 	cell = (ds_cell_t*)shm_malloc(msize);
 	if(cell==NULL)
@@ -56,7 +56,11 @@ ds_cell_t* ds_cell_new(str *cid, char *did, int dset, unsigned int cellid)
 	cell->callid.s = (char*)cell + sizeof(ds_cell_t);
 	memcpy(cell->callid.s, cid->s, cid->len);
 	cell->callid.s[cid->len] = '\0';
-	strcpy(cell->duid, did);
+
+	cell->duid.len = duid->len;
+	cell->duid.s = cell->callid.s + cell->callid.len + 1;
+	memcpy(cell->duid.s, duid->s, duid->len);
+	cell->duid.s[duid->len] = '\0';
 	return cell;
 }
 
@@ -70,7 +74,7 @@ int ds_cell_free(ds_cell_t *cell)
 
 
 
-ds_ht_t *ds_ht_init(unsigned int htsize, int expire)
+ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
 {
 	int i;
 	ds_ht_t *dsht = NULL;
@@ -84,6 +88,7 @@ ds_ht_t *ds_ht_init(unsigned int htsize, int expire)
 	memset(dsht, 0, sizeof(ds_ht_t));
 	dsht->htsize = htsize;
 	dsht->htexpire = expire;
+	dsht->htinitexpire = initexpire;
 
 	dsht->entries = (ds_entry_t*)shm_malloc(dsht->htsize*sizeof(ds_entry_t));
 	if(dsht->entries==NULL)
@@ -144,7 +149,7 @@ int ds_ht_destroy(ds_ht_t *dsht)
 }
 
 
-int ds_add_cell(ds_ht_t *dsht, str *cid, char *duid, int dset)
+int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -152,7 +157,10 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, char *duid, int dset)
 	time_t now;
 
 	if(dsht==NULL || dsht->entries==NULL)
+	{
+		LM_ERR("invalid parameters.\n");
 		return -1;
+	}
 
 	hid = ds_compute_hash(cid);
 	
@@ -173,6 +181,8 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, char *duid, int dset)
 				&& strncmp(cid->s, it->callid.s, cid->len)==0)
 		{
 			lock_release(&dsht->entries[idx].lock);
+			LM_WARN("call-id already in hash table [%.*s].\n",
+					cid->len, cid->s);
 			return -2;
 		}
 		prev = it;
@@ -187,6 +197,7 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, char *duid, int dset)
 		return -1;
 	}
 	cell->expire = now + dsht->htexpire;
+	cell->initexpire = now + dsht->htinitexpire;
 	if(prev==NULL)
 	{
 		if(dsht->entries[idx].first!=NULL)
@@ -206,6 +217,62 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, char *duid, int dset)
 	lock_release(&dsht->entries[idx].lock);
 	return 0;
 }
+
+int ds_unlock_cell(ds_ht_t *dsht, str *cid)
+{
+	unsigned int idx;
+	unsigned int hid;
+
+	if(dsht==NULL || dsht->entries==NULL)
+		return -1;
+
+	hid = ds_compute_hash(cid);
+	
+	idx = ds_get_entry(hid, dsht->htsize);
+
+	/* head test and return */
+	if(dsht->entries[idx].first==NULL)
+		return 0;
+	
+	lock_release(&dsht->entries[idx].lock);
+	return 0;
+}
+
+ds_cell_t* ds_get_cell(ds_ht_t *dsht, str *cid)
+{
+	unsigned int idx;
+	unsigned int hid;
+	ds_cell_t *it;
+
+	if(dsht==NULL || dsht->entries==NULL)
+		return 0;
+
+	hid = ds_compute_hash(cid);
+	
+	idx = ds_get_entry(hid, dsht->htsize);
+
+	/* head test and return */
+	if(dsht->entries[idx].first==NULL)
+		return 0;
+	
+	lock_get(&dsht->entries[idx].lock);
+	it = dsht->entries[idx].first;
+	while(it!=NULL && it->cellid < hid)
+		it = it->next;
+	while(it!=NULL && it->cellid == hid)
+	{
+		if(cid->len==it->callid.len 
+				&& strncmp(cid->s, it->callid.s, cid->len)==0)
+		{
+			/* found */
+			return it;
+		}
+		it = it->next;
+	}
+	lock_release(&dsht->entries[idx].lock);
+	return 0;
+}
+
 
 int ds_del_cell(ds_ht_t *dsht, str *cid)
 {
@@ -264,9 +331,9 @@ int ds_ht_dbg(ds_ht_t *dsht)
 		while(it)
 		{
 			LM_ERR("\tcell: %.*s\n", it->callid.len, it->callid.s);
-			LM_ERR("\tduid: %s\n", it->duid);
-			LM_ERR("\thid: %u expire: %u\n", it->cellid,
-					(unsigned int)it->expire);
+			LM_ERR("\tduid: %.*s\n", it->duid.len, it->duid.s);
+			LM_ERR("\thid: %u expire: %u initexpire: %u\n", it->cellid,
+					(unsigned int)it->expire, (unsigned int)it->initexpire);
 			LM_ERR("\tdset:%d\n", it->dset);
 			it = it->next;
 		}

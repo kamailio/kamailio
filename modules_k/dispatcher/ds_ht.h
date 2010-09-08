@@ -28,15 +28,18 @@
 #include "../../str.h"
 #include "../../locking.h"
 
-#define DS_DUID_SIZE	16
+#define DS_LOAD_INIT		0
+#define DS_LOAD_CONFIRMED	1
 
 typedef struct _ds_cell
 {
     unsigned int cellid;
 	str callid;
-	char duid[DS_DUID_SIZE];
+	str duid;
 	int dset;
+	int state;
 	time_t  expire;
+	time_t  initexpire;
     struct _ds_cell *prev;
     struct _ds_cell *next;
 } ds_cell_t;
@@ -51,15 +54,18 @@ typedef struct _ds_entry
 typedef struct _ds_ht
 {
 	unsigned int htexpire;
+	unsigned int htinitexpire;
 	unsigned int htsize;
 	ds_entry_t *entries;
 	struct _ds_ht *next;
 } ds_ht_t;
 
-ds_ht_t *ds_ht_init(unsigned int htsize, int expire);
+ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire);
 int ds_ht_destroy(ds_ht_t *dsht);
-int ds_add_cell(ds_ht_t *dsht, str *cid, char *did, int dset);
+int ds_add_cell(ds_ht_t *dsht, str *cid, str *did, int dset);
 int ds_del_cell(ds_ht_t *dsht, str *cid);
+ds_cell_t* ds_get_cell(ds_ht_t *dsht, str *cid);
+int ds_unlock_cell(ds_ht_t *dsht, str *cid);
 
 int ds_ht_dbg(ds_ht_t *dsht);
 int ds_cell_free(ds_cell_t *cell);
