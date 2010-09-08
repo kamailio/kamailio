@@ -433,7 +433,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 							*group_id);
 			if (!group_inst) {
 				LOG(L_ERR, "ERROR: cfg_set_now(): global group instance is not found\n");
-				goto error0;
+				goto error;
 			}
 			var_block = group_inst->vars;
 		} else {
