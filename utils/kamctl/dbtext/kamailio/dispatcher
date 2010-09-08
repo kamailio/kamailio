@@ -1,1 +1,1 @@
-id(int,auto) setid(int) destination(string) flags(int) priority(int) description(string) 
+id(int,auto) setid(int) destination(string) flags(int) priority(int) attrs(string) description(string) 
