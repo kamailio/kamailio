@@ -512,7 +512,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 					it cannot be freed */
 
 	if (cfg_shmized) {
-		if (!group_inst && CFG_GROUP_META(block, group)->array) {
+		if (!group_inst && block && CFG_GROUP_META(block, group)->array) {
 			if (cfg_update_defaults(CFG_GROUP_META(block, group),
 						group, var, p,
 						((var->def->type & CFG_ATOMIC) == 0)) /* clone if needed */
@@ -1281,6 +1281,7 @@ int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 		sizeof(cfg_group_inst_t) + group->size - 1);
 
 	CFG_GROUP_META(block, group)->array = new_array;
+	CFG_GROUP_META(block, group)->num++;
 
 	if (CFG_GROUP_META(*cfg_global, group)->array) {
 		/* prepare the array of the replaced strings,
