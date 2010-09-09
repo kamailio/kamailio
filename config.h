@@ -52,7 +52,7 @@
 #define TLS_PKEY_FILE "cert.pem" 	/*!< The certificate private key file */
 #define TLS_CERT_FILE "cert.pem"	/*!< The certificate file */
 #define TLS_CA_FILE 0			/*!< no CA list file by default */
-
+#define TLS_CRL_FILE 0 /*!< no CRL by default */
 
 #define MAX_LISTEN 16			/*!< maximum number of addresses on which we will listen */
 

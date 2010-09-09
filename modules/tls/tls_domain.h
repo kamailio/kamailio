@@ -80,6 +80,7 @@ typedef struct tls_domain {
 	int require_cert;
 	str cipher_list;
 	enum tls_method method;
+	str crl_file;
 	struct tls_domain* next;
 } tls_domain_t;
 

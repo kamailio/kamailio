@@ -119,6 +119,7 @@ static tls_domain_t mod_params = {
 	0,                /* Require certificate */
 	{0, },                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
+	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	0                 /* next */
 };
 
@@ -139,6 +140,7 @@ tls_domain_t srv_defaults = {
 	0,                /* Require certificate */
 	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
+	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	0                 /* next */
 };
 
@@ -159,6 +161,7 @@ tls_domain_t cli_defaults = {
 	0,                /* Require certificate */
 	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
+	{0, 0}, /* Certificate revocation list */
 	0                 /* next */
 };
 
@@ -192,6 +195,7 @@ static param_export_t params[] = {
 	{"private_key",         PARAM_STR,    &default_tls_cfg.private_key  },
 	{"ca_list",             PARAM_STR,    &default_tls_cfg.ca_list      },
 	{"certificate",         PARAM_STR,    &default_tls_cfg.certificate  },
+	{"crl",                 PARAM_STR,    &default_tls_cfg.crl          },
 	{"cipher_list",         PARAM_STR,    &default_tls_cfg.cipher_list  },
 	{"connection_timeout",  PARAM_INT,    &default_tls_cfg.con_lifetime },
 	{"tls_log",             PARAM_INT,    &default_tls_cfg.log          },
@@ -299,6 +303,7 @@ static int mod_init(void)
 	mod_params.require_cert = cfg_get(tls, tls_cfg, require_cert);
 	mod_params.pkey_file = cfg_get(tls, tls_cfg, private_key);
 	mod_params.ca_file = cfg_get(tls, tls_cfg, ca_list);
+	mod_params.crl_file = cfg_get(tls, tls_cfg, crl);
 	mod_params.cert_file = cfg_get(tls, tls_cfg, certificate);
 	mod_params.cipher_list = cfg_get(tls, tls_cfg, cipher_list);
 

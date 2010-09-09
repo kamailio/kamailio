@@ -90,6 +90,7 @@ void tls_free_domain(tls_domain_t* d)
 
 	if (d->cipher_list.s) shm_free(d->cipher_list.s);
 	if (d->ca_file.s) shm_free(d->ca_file.s);
+	if (d->crl_file.s) shm_free(d->crl_file.s);
 	if (d->pkey_file.s) shm_free(d->pkey_file.s);
 	if (d->cert_file.s) shm_free(d->cert_file.s);
 	shm_free(d);
@@ -192,6 +193,13 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 		d->ca_file.len = parent->ca_file.len;
 	}
 	LOG(L_INFO, "%s: ca_list='%s'\n", tls_domain_str(d), d->ca_file.s);
+
+	if (!d->crl_file.s) {
+		if (shm_asciiz_dup(&d->crl_file.s, parent->crl_file.s) < 0)
+			return -1;
+		d->crl_file.len = parent->crl_file.len;
+	}
+	LOG(L_INFO, "%s: crl='%s'\n", tls_domain_str(d), d->crl_file.s);
 	
 	if (d->require_cert == -1) d->require_cert = parent->require_cert;
 	LOG(L_INFO, "%s: require_certificate=%d\n", tls_domain_str(d),
@@ -424,6 +432,40 @@ static int load_ca_list(tls_domain_t* d)
 	}
 	return 0;
 }
+
+
+/*
+ * Load CRL from file
+ */
+static int load_crl(tls_domain_t* d)
+{
+	int i;
+	int procs_no;
+	X509_STORE* store;
+
+	if (!d->crl_file.s) {
+		DBG("%s: No CRL configured\n", tls_domain_str(d));
+		return 0;
+	}
+	if (fix_shm_pathname(&d->crl_file) < 0)
+		return -1;
+	LOG(L_INFO, "%s: Certificate revocation lists will be checked (%.*s)\n",
+				tls_domain_str(d), d->crl_file.len, d->crl_file.s);
+	procs_no=get_max_procs();
+	for(i = 0; i < procs_no; i++) {
+		if (SSL_CTX_load_verify_locations(d->ctx[i], d->crl_file.s, 0) != 1) {
+			ERR("%s: Unable to load certificate revocation list '%s'\n",
+					tls_domain_str(d), d->crl_file.s);
+			TLS_ERR("load_crl:");
+			return -1;
+		}
+		store = SSL_CTX_get_cert_store(d->ctx[i]);
+		X509_STORE_set_flags(store,
+						X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+	}
+	return 0;
+}
+
 
 #define C_DEF_NO_KRB5 "DEFAULT:!KRB5"
 #define C_DEF_NO_KRB5_LEN (sizeof(C_DEF_NO_KRB5)-1)
@@ -687,6 +729,7 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 	
 	if (load_cert(d) < 0) return -1;
 	if (load_ca_list(d) < 0) return -1;
+	if (load_crl(d) < 0) return -1;
 	if (set_cipher_list(d) < 0) return -1;
 	if (set_verification(d) < 0) return -1;
 	if (set_ssl_options(d) < 0) return -1;

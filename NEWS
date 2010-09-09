@@ -101,6 +101,7 @@ modules:
            blst_rpl_clear_ignore(mask): like blst_rpl_ignore(mask), but
             clears instead of setting.
    - tls:
+          certificate revocation list (CRL) support.
           asynchronous TLS support
           new TLS RPCs (tls.info, tls.options), tls.list more detailed.
           removed handshake_timeout and send_timeout module parameters /
@@ -108,6 +109,7 @@ modules:
             (tcp_connect_timeout and tcp_send_timeout).
           runtime config support
           more config options:
+            crl - certificate revocation list file path (PEM format).
             send_close_notify - enables/disables sending close notify
               alerts prior to closing the corresponding TCP connection.
               Sending the close notify prior to tcp shutdown is "nicer"

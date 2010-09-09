@@ -48,6 +48,7 @@ struct cfg_group_tls {
 	int require_cert;
 	str private_key;
 	str ca_list;
+	str crl;
 	str certificate;
 	str cipher_list;
 	int session_cache;
