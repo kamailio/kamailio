@@ -180,4 +180,7 @@ void cfg_diff_release(cfg_ctx_t *ctx);
 /* Add a new instance to an existing group */
 int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
 
+/* Delete an instance of a group */
+int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
+
 #endif /* _CFG_CTX_H */

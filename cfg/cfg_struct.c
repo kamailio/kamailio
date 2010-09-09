@@ -645,6 +645,47 @@ cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
 	return new_array;
 }
 
+/* Remove an instance from a group array.
+ * inst must point to an instance within meta->array.
+ * *_new_array is set to the newly allocated array. */
+int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				cfg_group_inst_t *inst,
+				cfg_group_inst_t **_new_array)
+{
+	cfg_group_inst_t	*new_array, *old_array;
+	int			inst_size, offset;
+
+	if (!meta->num)
+		return -1;
+
+	if (meta->num == 1) {
+		*_new_array = NULL;
+		return 0;
+	}
+
+	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
+	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num - 1));
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: cfg_collapse_array(): not enough shm memory\n");
+		return -1;
+	}
+
+	old_array = meta->array;
+	offset = (char *)inst - (char *)old_array;
+	if (offset)
+		memcpy(	new_array,
+			old_array,
+			offset);
+
+	if (meta->num * inst_size > offset + inst_size)
+		memcpy( (char *)new_array + offset,
+			(char *)old_array + offset + inst_size,
+			(meta->num - 1) * inst_size - offset);
+
+	*_new_array = new_array;
+	return 0;
+}
+
 /* Find the group instance within the meta-data based on the group_id */
 cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id)
 {
@@ -658,7 +699,7 @@ cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigne
 	TODO: improve */
 	for (i = 0; i < meta->num; i++) {
 		ginst = (cfg_group_inst_t *)((char *)meta->array
-			+ (sizeof(cfg_group_meta_t) + group_size - 1) * i);
+			+ (sizeof(cfg_group_inst_t) + group_size - 1) * i);
 		if (ginst->id == group_id)
 			return ginst;
 		else if (ginst->id > group_id)

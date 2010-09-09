@@ -381,6 +381,13 @@ cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
 				unsigned int group_id,
 				cfg_group_inst_t **new_group);
 
+/* Remove an instance from a group array.
+ * inst must point to an instance within meta->array.
+ * *_new_array is set to the newly allocated array. */
+int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				cfg_group_inst_t *inst,
+				cfg_group_inst_t **_new_array);
+
 /* clones a string to shared memory */
 int cfg_clone_str(str *src, str *dst);
 

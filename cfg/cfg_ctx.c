@@ -274,10 +274,11 @@ static int cfg_update_defaults(cfg_group_meta_t	*meta,
 	int	i, clone_done=0;
 	cfg_group_inst_t *array, *ginst;
 
-	array = meta->array;
+	if (!(array = meta->array))
+		return 0;
 	for (i = 0; i < meta->num; i++) {
 		ginst = (cfg_group_inst_t *)((char *)array
-			+ (sizeof(cfg_group_meta_t) + group->size - 1) * i);
+			+ (sizeof(cfg_group_inst_t) + group->size - 1) * i);
 
 		if (!CFG_VAR_TEST(ginst, var)) {
 			/* The variable uses the default value, it needs to be rewritten. */
@@ -514,15 +515,15 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 					it cannot be freed */
 
 	if (cfg_shmized) {
-		if (!group_inst && block && CFG_GROUP_META(block, group)->array) {
-			if (cfg_update_defaults(CFG_GROUP_META(block, group),
+		if (!group_inst) {
+			/* the default value is changed, the copies of this value
+			need to be also updated */
+			if (cfg_update_defaults(CFG_GROUP_META(block ? block : *cfg_global, group),
 						group, var, p,
-						((var->def->type & CFG_ATOMIC) == 0)) /* clone if needed */
-			) {
-				LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
+						block ? 1 : 0) /* clone if needed */
+			)
 				goto error;
-			}
-			if (CFG_GROUP_META(block, group)->array != CFG_GROUP_META(*cfg_global, group)->array)
+			if (block && (CFG_GROUP_META(block, group)->array != CFG_GROUP_META(*cfg_global, group)->array))
 				new_array = CFG_GROUP_META(block, group)->array;
 		}
 
@@ -1333,6 +1334,95 @@ error:
 
 	LOG(L_ERR, "ERROR: cfg_add_group_inst(): "
 		"Failed to add the group instance: %.*s[%u]\n",
+		group_name->len, group_name->s,
+		group_id);
+
+	return -1;
+}
+
+/* Delete an instance of a group */
+int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
+{
+	cfg_group_t	*group;
+	cfg_block_t	*block = NULL;
+	void		**replaced = NULL;
+	cfg_group_inst_t	*new_array = NULL, *group_inst;
+
+	/* verify the context even if we do not need it now
+	to make sure that a cfg driver has called the function
+	(very very weak security) */
+	if (!ctx) {
+		LOG(L_ERR, "ERROR: cfg_del_group_inst(): context is undefined\n");
+		return -1;
+	}
+
+	if (!cfg_shmized) {
+		/* It makes no sense to delete a group instance that has not
+		been created yet */
+		return -1;
+	}
+
+	if (!(group = cfg_lookup_group(group_name->s, group_name->len))) {
+		LOG(L_ERR, "ERROR: cfg_del_group_inst(): group not found\n");
+		return -1;
+	}
+
+	/* make sure that nobody else replaces the global config
+	while the new one is prepared */
+	CFG_WRITER_LOCK();
+	if (!(group_inst = cfg_find_group(CFG_GROUP_META(*cfg_global, group),
+							group->size,
+							group_id))
+	) {
+		LOG(L_DBG, "DEBUG: cfg_del_group_inst(): the group instance does not exist\n");
+		goto error;
+	}
+
+	/* clone the global memory block because the additional array can be
+	replaced only together with the block. */
+	if (!(block = cfg_clone_global()))
+		goto error;
+
+	/* Remove the group instance from the array. */
+	if (cfg_collapse_array(CFG_GROUP_META(*cfg_global, group), group,
+					group_inst,
+					&new_array)
+	)
+		goto error;
+
+	CFG_GROUP_META(block, group)->array = new_array;
+	CFG_GROUP_META(block, group)->num--;
+
+	if (CFG_GROUP_META(*cfg_global, group)->array) {
+		/* prepare the array of the replaced strings,
+		and replaced group instances,
+		they will be freed when the old block is freed */
+		replaced = (void **)shm_malloc(sizeof(void *) * 2);
+		if (!replaced) {
+			LOG(L_ERR, "ERROR: cfg_del_group_inst(): not enough shm memory\n");
+			goto error;
+		}
+		replaced[0] = CFG_GROUP_META(*cfg_global, group)->array;
+		replaced[1] = NULL;
+	}
+	/* replace the global config with the new one */
+	cfg_install_global(block, replaced, NULL, NULL);
+	CFG_WRITER_UNLOCK();
+
+	LOG(L_INFO, "INFO: cfg_del_group_inst(): "
+		"group instance is deleted: %.*s[%u]\n",
+		group_name->len, group_name->s,
+		group_id);
+
+	return 0;
+error:
+	CFG_WRITER_UNLOCK();
+	if (block) cfg_block_free(block);
+	if (new_array) shm_free(new_array);
+	if (replaced) shm_free(replaced);
+
+	LOG(L_ERR, "ERROR: cfg_add_group_inst(): "
+		"Failed to delete the group instance: %.*s[%u]\n",
 		group_name->len, group_name->s,
 		group_id);
 
