@@ -110,7 +110,7 @@ int cfg_commit(cfg_ctx_t *ctx);
 int cfg_rollback(cfg_ctx_t *ctx);
 
 /*! \brief returns the value of a variable */
-int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void **val, unsigned int *val_type);
 
 /*! \brief returns the description of a variable */
@@ -176,5 +176,8 @@ int cfg_diff_next(void **h,
 
 /*! \brief destroy the handle of cfg_diff_next() */
 void cfg_diff_release(cfg_ctx_t *ctx);
+
+/* Add a new instance to an existing group */
+int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
 
 #endif /* _CFG_CTX_H */

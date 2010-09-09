@@ -387,7 +387,8 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 							group->size,
 							*group_id);
 			if (!group_inst) {
-				LOG(L_ERR, "ERROR: cfg_set_now(): local group instance is not found\n");
+				LOG(L_ERR, "ERROR: cfg_set_now(): local group instance %.*s[%u] is not found\n",
+					group_name->len, group_name->s, *group_id);
 				goto error0;
 			}
 			var_block = group_inst->vars;
@@ -432,7 +433,8 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 							group->size,
 							*group_id);
 			if (!group_inst) {
-				LOG(L_ERR, "ERROR: cfg_set_now(): global group instance is not found\n");
+				LOG(L_ERR, "ERROR: cfg_set_now(): global group instance %.*s[%u] is not found\n",
+					group_name->len, group_name->s, *group_id);
 				goto error;
 			}
 			var_block = group_inst->vars;
@@ -1038,7 +1040,7 @@ int cfg_rollback(cfg_ctx_t *ctx)
  * -1 - error
  *  1 - variable exists, but it is not readable
  */
-int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void **val, unsigned int *val_type)
 {
 	cfg_group_t	*group;
@@ -1046,6 +1048,7 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	void		*p;
 	static str	s;	/* we need the value even
 				after the function returns */
+	cfg_group_inst_t	*group_inst;
 
 	/* verify the context even if we do not need it now
 	to make sure that a cfg driver has called the function
@@ -1066,10 +1069,27 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		return 1;
 	}
 
-	/* use the module's handle to access the variable
-	It means that the variable is read from the local config
-	after forking */
-	p = *(group->handle) + var->offset;
+	if (group_id) {
+		if (!cfg_local) {
+			LOG(L_ERR, "ERROR: cfg_get_by_name(): Local configuration is missing\n");
+			return -1;
+		}
+		group_inst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
+						group->size,
+						*group_id);
+		if (!group_inst) {
+			LOG(L_ERR, "ERROR: cfg_get_by_name(): local group instance %.*s[%u] is not found\n",
+				group_name->len, group_name->s, *group_id);
+			return -1;
+		}
+		p = group_inst->vars + var->offset;
+
+	} else {
+		/* use the module's handle to access the variable
+		It means that the variable is read from the local config
+		after forking */
+		p = *(group->handle) + var->offset;
+	}
 
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:
@@ -1278,7 +1298,7 @@ int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 	/* fill in the new group instance with the default data */
 	memcpy(	new_inst->vars,
 		CFG_GROUP_DATA(*cfg_global, group),
-		sizeof(cfg_group_inst_t) + group->size - 1);
+		group->size);
 
 	CFG_GROUP_META(block, group)->array = new_array;
 	CFG_GROUP_META(block, group)->num++;
