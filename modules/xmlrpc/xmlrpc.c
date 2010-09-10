@@ -2172,7 +2172,7 @@ static int process_xmlrpc(sip_msg_t* msg)
 	char c;
 	
 	ret=NONSIP_MSG_DROP;
-	if (IS_HTTP(msg))
+	if (!IS_HTTP(msg))
 		return NONSIP_MSG_PASS;
 
 	if(xmlrpc_url_skip!=NULL || xmlrpc_url_match!=NULL)
