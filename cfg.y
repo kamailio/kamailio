@@ -3130,9 +3130,21 @@ cmd:
 		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)(long)q);
 		set_cfg_pos($$);
 	}
-	| APPEND_BRANCH LPAREN STRING RPAREN { $$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)Q_UNSPECIFIED); set_cfg_pos($$); }
-	| APPEND_BRANCH LPAREN RPAREN { $$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0, NUMBER_ST, (void *)Q_UNSPECIFIED); set_cfg_pos($$); }
-	| APPEND_BRANCH {  $$=mk_action( APPEND_BRANCH_T, 1, STRING_ST, 0); set_cfg_pos($$); }
+	| APPEND_BRANCH LPAREN STRING RPAREN {
+		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3,
+							NUMBER_ST, (void *)Q_UNSPECIFIED);
+		set_cfg_pos($$);
+	}
+	| APPEND_BRANCH LPAREN RPAREN {
+		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0,
+							NUMBER_ST, (void *)Q_UNSPECIFIED);
+		set_cfg_pos($$);
+	}
+	| APPEND_BRANCH {
+		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0,
+							NUMBER_ST, (void *)Q_UNSPECIFIED);
+		set_cfg_pos($$);
+	}
 	| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORT_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
