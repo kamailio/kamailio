@@ -38,12 +38,18 @@
 #include "cfg_core.h"
 
 
+/** if defined the function name will also be logged. */
+#ifdef NO_LOG_FUNC_NAME
+#	undef LOG_FUNC_NAME
+#endif /* NO_LOG_FUNC_NAME */
+
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
 #if __STDC_VERSION__ < 199901L
 #	if __GNUC__ >= 2
 #		define _FUNC_NAME_ __FUNCTION__
 #	else
 #		define _FUNC_NAME_ ""
+#		undef LOG_FUNC_NAME
 #	endif
 #else
 #	define _FUNC_NAME_ __func__
@@ -199,10 +205,23 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 				} \
 			} while(0)
 			
-#		define LOG(level, fmt, ...) \
+#		ifdef LOG_FUNC_NAME
+#			define LOG(level, fmt, ...) \
+	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt,\
+				_FUNC_NAME_, __VA_ARGS__)
+
+#			define LOG_FC(facility, level, fmt, ...) \
+	LOG_((facility), (level), LOC_INFO, "%s(): " fmt,\
+				_FUNC_NAME_, __VA_ARGS__)
+#		else /* LOG_FUNC_NAME */
+
+#			define LOG(level, fmt, ...) \
 	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt, __VA_ARGS__)
-#		define LOG_FC(facility, level, fmt, ...) \
+
+#			define LOG_FC(facility, level, fmt, ...) \
 	LOG_((facility), (level), LOC_INFO, fmt, __VA_ARGS__)
+
+#		endif /* LOG_FUNC_NAME */
 
 #	else /* ! __SUNPRO_C */
 #		define LOG_(facility, level, prefix, fmt, args...) \
@@ -248,11 +267,21 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 				} \
 			} while(0)
 			
-#		define LOG(level, fmt, args...) \
+#		ifdef LOG_FUNC_NAME
+#			define LOG(level, fmt, args...) \
+	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt ,\
+			_FUNC_NAME_, ## args)
+
+#			define LOG_FC(facility, level, fmt, args...) \
+	LOG_((facility), (level), LOC_INFO, "%s(): " fmt , _FUNC_NAME_, ## args)
+
+#		else /* LOG_FUNC_NAME */
+#			define LOG(level, fmt, args...) \
 	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt , ## args)
-#		define LOG_FC(facility, level, fmt, args...) \
+#			define LOG_FC(facility, level, fmt, args...) \
 	LOG_((facility), (level), LOC_INFO, fmt , ## args)
-		
+
+#		endif /* LOG_FUNC_NAME */
 #	endif /* __SUNPRO_C */
 #endif /* NO_LOG */
 
