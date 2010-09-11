@@ -549,6 +549,11 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			ret=append_branch(msg, &a->val[0].u.str, &msg->dst_uri,
 								&msg->path_vec, a->val[1].u.number,
 								(flag_t)flags, msg->force_send_socket);
+			/* if the uri is the ruri and q was also not changed, mark
+			   ruri as consumed, to avoid having an identical branch */
+			if ((a->val[0].u.str.s == 0 || a->val[0].u.str.len == 0) &&
+					a->val[1].u.number == Q_UNSPECIFIED)
+				ruri_mark_consumed();
 			break;
 
 		/* jku begin: is_length_greater_than */
