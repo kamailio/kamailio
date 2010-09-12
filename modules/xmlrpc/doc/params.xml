@@ -149,7 +149,7 @@ modparam("xmlrpc", "mode", 1)
 		<title>Set <varname>url_skip</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xhttp", "url_skip", "^/sip")
+modparam("xmlrpc", "url_skip", "^/sip")
 ...
 </programlisting>
 		</example>
@@ -171,7 +171,7 @@ modparam("xhttp", "url_skip", "^/sip")
 		<title>Set <varname>url_match</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xhttp", "url_match", "^/RPC2")
+modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 </programlisting>
 		</example>

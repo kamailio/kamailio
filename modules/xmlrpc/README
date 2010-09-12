@@ -589,7 +589,7 @@ modparam("xmlrpc", "mode", 1)
 
    Example 7. Set url_skip parameter
 ...
-modparam("xhttp", "url_skip", "^/sip")
+modparam("xmlrpc", "url_skip", "^/sip")
 ...
 
 1.5.7. url_match (str)
@@ -603,7 +603,7 @@ modparam("xhttp", "url_skip", "^/sip")
 
    Example 8. Set url_match parameter
 ...
-modparam("xhttp", "url_match", "^/RPC2")
+modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 
 1.6. Functions
