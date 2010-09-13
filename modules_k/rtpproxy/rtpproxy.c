@@ -2074,7 +2074,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
 			if(!sdp_stream) break;
 
-			if (sdp_stream->ip_addr.s && !sdp_stream->ip_addr.len) {
+			if (sdp_stream->ip_addr.s && sdp_stream->ip_addr.len>0) {
 				oldip = sdp_stream->ip_addr;
 				pf = sdp_stream->pf;
 			} else {
