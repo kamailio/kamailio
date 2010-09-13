@@ -23,9 +23,10 @@
 # the 'Bundesnetzagentur' and convert this into the format which the pdbt tool
 # understands.
 
-url="http://www.bundesnetzagentur.de/enid/Portierungskennung/Verzeichnis_1ct.html"
+url="http://www.bundesnetzagentur.de/cln_1912/DE/Sachgebiete/Telekommunikation/RegulierungTelekommunikation/Nummernverwaltung/TechnischeNummern/Portierungskennung/VerzeichnisPortKenn_Basepage.html"
 
 # fix LOCALE problem during filtering 
 export LANG="C"
 
-wget -O - "$url" | recode latin1..utf8 | tr -d '\r' | tr '\n' '@' | sed 's/^.*Firma//' | sed 's/<\/table>.*$//' | tr '@' '\n' | sed 's/<\/p>/@/' | sed 's/<\/td>/@/' | egrep -v "^ *<" | tr -d '\n' | sed 's/@ *@/@/g' | tr '@' '\n' | sed 's/  */ /g' | sed 's/^ *//' | tr '\n' '@' | sed 's/\([^@]*\)@\(D[0-9][0-9][0-9]\)[^@]*@/\2 \1@/g' | tr '@' '\n' | sed 's/\&nbsp\;/ /g' | sed 's/\&amp\;/\&/g' | sed 's/  */ /g' | egrep -v '^$'
+wget -O - "$url" | recode latin1..utf8 | sed 's/^*.Verzeichnis der Portierungskennungen//' | awk '/<tbody>/, /<\/tbody>/' | tr -d '\r' | tr '\n' '@' | sed 's/<\/table>.*$//' | sed 's/<\/tbody>.*$//'
+
