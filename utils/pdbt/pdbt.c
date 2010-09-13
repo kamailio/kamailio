@@ -66,7 +66,7 @@ void print_usage(char *program) {
 	LINFO("    -s <file>: Specifies the csv list.\n");
 	LINFO("               Use '-' as filename to read from stdin.\n");
 	LINFO("               Line format: <number prefix>;<carrier id>\n");
-	LINFO("               Format of carrier id: D[0-9][0-9][0-9]\n");
+	LINFO("               Format of carrier id: [0-9][0-9][0-9]\n");
 	LINFO("    -m <file>: Specifies the mmap image.\n");
 	LINFO("    -f <file>: Specifies the query file.\n");
 	LINFO("               Use '-' as filename to read from stdin.\n");
@@ -159,7 +159,7 @@ int file_query(char *filename, query_func_t query_func, void *data) {
 /*
  Read a csv list from the given file and build a dtree structure.
  Format of lines in csv file: "<number prefix>;<carrier id>".
- Format of carrier id: "D[0-9][0-9][0-9]".
+ Format of carrier id: "[0-9][0-9][0-9]".
  Returns the number of lines imported or -1 on error.
 */
 int import_csv(struct dt_node_t *root, char *filename) {
