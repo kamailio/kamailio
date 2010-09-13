@@ -68,14 +68,13 @@ int pp_subst_add(char *data)
 	}
 	pr->indata = data;
 	pr->ppdata = (void*)se;
-	pr->next   = pp_subst_rules_tail;
 	if(pp_subst_rules_head==NULL)
 	{
 		pp_subst_rules_head = pr;
-		pp_subst_rules_tail = pr;
 	} else {
 		pp_subst_rules_tail->next = pr;
 	}
+	pp_subst_rules_tail = pr;
 
 	return 0;
 }
