@@ -53,6 +53,7 @@
 #include "../presence/notify.h"
 #include "../xcap_client/xcap_functions.h"
 #include "../../modules/sl/sl.h"
+#include "../../lib/kmi/mi.h"
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
