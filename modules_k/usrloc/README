@@ -199,26 +199,28 @@ Chapter 1. Admin Guide
 1.1. Contact matching
 
    How the contacts are matched (dor same AOR - Address of Record) is an
-   important aspect of the usrloc modules, especialy in the context of NAT
-   traversal - this raise mre problems since contacts from different
-   phones of same users may overlap (if behind NATs with same
-   configuration) or the re-register contact of same phone may be seen as
-   a new one (due different binding via NAT).
+   important aspect of the usrloc module, especially in the context of NAT
+   traversal - this raises more problems since contacts from different
+   phones of the same user may overlap (if behind NATs with same
+   configuration) or the re-register contact of the same phone may be seen
+   as a new one (due different binding via NAT).
 
    The SIP RFC 3261 publishes a matching algorithm based only on the
    contact string with callid and cseq number extra checking (if callid is
-   the same, it must have a higher cseq number, otherwise invalid). But as
-   argumented above, this is not enough in NAT traversal context, so the
-   Kamailio implementation of contact machting offers more algorithms:
-     * contact based only - it strict RFC 3261 compiancy - the contact is
-       matched as string and extra checked via callid and cseg (if callid
-       is the same, it must have a higher cseq number, otherwise invalid).
-     * contact and callid based - it an extension of the first case - the
-       contact and callid must matched as string; the cseg must be higher
-       than the previous one - so be careful how you deal with REGISTER
-       retransmissions in this case.
-     * contact and path based - it an extension of the first case - the
-       contact and path must matched as string; the cseg must be higher
+   the same, it must have a higher cseq number, otherwise it is invalid).
+   But as argumented above, this is not enough in NAT traversal context,
+   so the Kamailio implementation of contact matching offers more
+   algorithms:
+     * contact based only - it is strict RFC 3261 compliancy - the contact
+       is matched as string and extra checked via callid and cseq (if
+       callid is the same, it must have a higher cseq number, otherwise it
+       is invalid).
+     * contact and callid based - it is an extension of the first case -
+       the contact and callid must be matched as string; the cseq must be
+       higher than the previous one - so be careful how you deal with
+       REGISTER retransmissions in this case.
+     * contact and path based - it is an extension of the first case - the
+       contact and path must be matched as string; the cseq must be higher
        than the previous one - so be careful how you deal with REGISTER
        retransmissions in this case.
 
