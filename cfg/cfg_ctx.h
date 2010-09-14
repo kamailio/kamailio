@@ -157,19 +157,28 @@ int cfg_diff_init(cfg_ctx_t *ctx,
 
 /*! \brief return the pending changes that have not been
  * committed yet
+ * return value:
+ *	1: valid value is found
+ *	0: no more changed value found
+ *	-1: error occured
+ *
  *
  * can be used as follows:
  *
  * void *handle;
  * if (cfg_diff_init(ctx, &handle)) return -1
- * while (cfg_diff_next(&handle
+ * while ((err = cfg_diff_next(&handle
  *			&group_name, &group_id, &var_name,
  *			&old_val, &new_val
- *			&val_type)
+ *			&val_type)) > 0
  * ) {
  *		...
  * }
  * cfg_diff_release(ctx);
+ * if (err) {
+ *	error occured, the changes cannot be retrieved
+ *	...
+ * }
  */
 int cfg_diff_next(void **h,
 			str *gname, unsigned int **gid, str *vname,

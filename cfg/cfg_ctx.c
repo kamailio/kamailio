@@ -1027,8 +1027,11 @@ int cfg_commit(cfg_ctx_t *ctx)
 				group = changed->group;
 				if (!(CFG_GROUP_META(block, group)->array = 
 					cfg_clone_array(CFG_GROUP_META(*cfg_global, group), group))
-				)
+				) {
+					LOG(L_ERR, "ERROR: cfg_set_now(): group array cannot be cloned for %.*s[%u]\n",
+						group->name_len, group->name, changed->group_id);
 					goto error;
+				}
 
 				replaced[replaced_num] = CFG_GROUP_META(*cfg_global, group)->array;
 				replaced_num++;
@@ -1318,6 +1321,10 @@ int cfg_diff_init(cfg_ctx_t *ctx,
 
 /* return the pending changes that have not been
  * committed yet
+ * return value:
+ *	1: valid value is found
+ *	0: no more changed value found
+ *	-1: error occured 
  */
 int cfg_diff_next(void **h,
 			str *gname, unsigned int **gid, str *vname,
@@ -1348,7 +1355,7 @@ int cfg_diff_next(void **h,
 	} else {
 		if (!cfg_local) {
 			LOG(L_ERR, "ERROR: cfg_diff_next(): Local configuration is missing\n");
-			return 0;
+			return -1;
 		}
 		group_inst = cfg_find_group(CFG_GROUP_META(cfg_local, changed->group),
 						changed->group->size,
@@ -1356,7 +1363,7 @@ int cfg_diff_next(void **h,
 		if (!group_inst) {
 			LOG(L_ERR, "ERROR: cfg_diff_next(): local group instance %.*s[%u] is not found\n",
 				changed->group->name_len, changed->group->name, changed->group_id);
-			return 0;
+			return -1;
 		}
 		pval = (union cfg_var_value*)
 				(group_inst->vars + changed->var->offset);
