@@ -605,7 +605,7 @@ int init_tls_h(void)
 		s.s = "low_mem_threshold1";
 		s.len = strlen(s.s);
 		if (low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1) &&
-				cfg_set_now_int(cfg_ctx, &tls_grp, &s, low_mem_threshold1)) {
+				cfg_set_now_int(cfg_ctx, &tls_grp, NULL /* group id */, &s, low_mem_threshold1)) {
 			ERR("failed to set tls.low_mem_threshold1 to %d\n",
 					low_mem_threshold1);
 			return -1;
@@ -613,7 +613,7 @@ int init_tls_h(void)
 		s.s = "low_mem_threshold2";
 		s.len = strlen(s.s);
 		if (low_mem_threshold2 != cfg_get(tls, tls_cfg, low_mem_threshold2) &&
-				cfg_set_now_int(cfg_ctx, &tls_grp, &s, low_mem_threshold2)) {
+				cfg_set_now_int(cfg_ctx, &tls_grp, NULL /* group id */, &s, low_mem_threshold2)) {
 			ERR("failed to set tls.low_mem_threshold1 to %d\n",
 					low_mem_threshold2);
 			return -1;
