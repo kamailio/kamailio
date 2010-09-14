@@ -648,11 +648,13 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	cfg_group_t	*group;
 	cfg_mapping_t	*var;
 	void		*v;
-	char		*temp_handle;
+	unsigned char	*temp_handle;
 	int		temp_handle_created;
-	cfg_changed_var_t	*changed = NULL;
+	cfg_changed_var_t	*changed = NULL, **changed_p;
 	int		size;
 	str		s;
+	cfg_group_inst_t	*group_inst;
+	unsigned char		*var_block;
 
 	if (!cfg_shmized)
 		/* the cfg has not been shmized yet, there is no
@@ -672,6 +674,19 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	/* check whether the variable is read-only */
 	if (var->def->type & CFG_READONLY) {
 		LOG(L_ERR, "ERROR: cfg_set_delayed(): variable is read-only\n");
+		goto error0;
+	}
+
+	/* The additional variable instances having per-child process callback
+	 * with CFG_CB_ONLY_ONCE flag cannot be rewritten.
+	 * The reason is that such variables typically set global parameters
+	 * as opposed to per-process variables. Hence, it is not possible to set
+	 * the group handle temporary to another block, and then reset it back later. */
+	if (group_id
+		&& var->def->on_set_child_cb
+		&& var->def->type & CFG_CB_ONLY_ONCE
+	) {
+		LOG(L_ERR, "ERROR: cfg_set_now(): This variable does not support muliple values.\n");
 		goto error0;
 	}
 
@@ -700,31 +715,56 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 		Only the values within the group are applied,
 		other modifications are not visible to the callback.
 		The local config is the base. */
+		if (!group_id) {
+			var_block = *(group->handle);
+		} else {
+			if (!cfg_local) {
+				LOG(L_ERR, "ERROR: cfg_set_delayed(): Local configuration is missing\n");
+				goto error;
+			}
+			group_inst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
+							group->size,
+							*group_id);
+			if (!group_inst) {
+				LOG(L_ERR, "ERROR: cfg_set_delayed(): local group instance %.*s[%u] is not found\n",
+					group_name->len, group_name->s, *group_id);
+				goto error;
+			}
+			var_block = group_inst->vars;
+		}
 
 		if (ctx->changed_first) {
-			temp_handle = (char *)pkg_malloc(group->size);
+			temp_handle = (unsigned char *)pkg_malloc(group->size);
 			if (!temp_handle) {
 				LOG(L_ERR, "ERROR: cfg_set_delayed(): "
 					"not enough memory\n");
 				goto error;
 			}
 			temp_handle_created = 1;
-			memcpy(temp_handle, *(group->handle), group->size);
+			memcpy(temp_handle, var_block, group->size);
 
 			/* apply the changes */
 			for (	changed = ctx->changed_first;
 				changed;
 				changed = changed->next
 			) {
-				if (changed->group != group) continue;
-
-				memcpy(	temp_handle + changed->var->offset,
-					changed->new_val.vraw,
-					cfg_var_size(changed->var));
+				if (changed->group != group)
+					continue;
+				if ((!group_id && !changed->group_id_set) /* default values */
+					|| (group_id && !changed->group_id_set
+						&& !CFG_VAR_TEST(group_inst, changed->var))
+							/* default value is changed which affects the group_instance */
+					|| (group_id && changed->group_id_set
+						&& (*group_id == changed->group_id))
+							/* change within the group instance */
+				)
+					memcpy(	temp_handle + changed->var->offset,
+						changed->new_val.vraw,
+						cfg_var_size(changed->var));
 			}
 		} else {
 			/* there is not any change */
-			temp_handle = *(group->handle);
+			temp_handle = var_block;
 			temp_handle_created = 0;
 		}
 			
@@ -751,6 +791,10 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	memset(changed, 0, size);
 	changed->group = group;
 	changed->var = var;
+	if (group_id) {
+		changed->group_id = *group_id;
+		changed->group_id_set = 1;
+	}
 
 	switch (CFG_VAR_TYPE(var)) {
 
@@ -779,15 +823,27 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 
 	}
 
-	/* Add the new item to the end of the linked list,
-	The commit will go though the list from the first item,
-	so the list is kept in order */
-	if (ctx->changed_first)
-		ctx->changed_last->next = changed;
-	else
-		ctx->changed_first = changed;
-
-	ctx->changed_last = changed;
+	/* Order the changes by group + group_id + original order.
+	 * Hence, the list is still kept in order within the group.
+	 * The changes can be committed faster this way, the group instances
+	 * do not have to be looked-up for each and every variable. */
+	/* Check whether there is any variable in the list which
+	belongs to the same group */
+	for (	changed_p = &ctx->changed_first;
+		*changed_p && ((*changed_p)->group != changed->group);
+		changed_p = &(*changed_p)->next);
+	/* try to find the group instance, and move changed_p to the end of
+	the instance. */
+	for (	;
+		*changed_p
+			&& ((*changed_p)->group == changed->group)
+			&& (!(*changed_p)->group_id_set
+				|| ((*changed_p)->group_id_set && changed->group_id_set
+					&& ((*changed_p)->group_id <= changed->group_id)));
+		changed_p = &(*changed_p)->next);
+	/* Add the new variable before *changed_p */
+	changed->next = *changed_p;
+	*changed_p = changed;
 
 	CFG_CTX_UNLOCK(ctx);
 
@@ -816,6 +872,11 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 			group_name->len, group_name->s,
 			var_name->len, var_name->s,
 			((str *)val)->len, ((str *)val)->s,
+			ctx);
+	if (group_id)
+		LOG(L_INFO, "INFO: cfg_set_delayed(): group id = %u "
+			"[context=%p]\n",
+			*group_id,
 			ctx);
 
 	convert_val_cleanup();
@@ -862,7 +923,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 {
 	int	replaced_num = 0;
 	cfg_changed_var_t	*changed, *changed2;
-	cfg_block_t	*block;
+	cfg_block_t	*block = NULL;
 	void	**replaced = NULL;
 	cfg_child_cb_t	*child_cb;
 	cfg_child_cb_t	*child_cb_first = NULL;
@@ -870,6 +931,8 @@ int cfg_commit(cfg_ctx_t *ctx)
 	int	size;
 	void	*p;
 	str	s, s2;
+	cfg_group_t	*group;
+	cfg_group_inst_t	*group_inst;
 
 	if (!ctx) {
 		LOG(L_ERR, "ERROR: cfg_commit(): context is undefined\n");
@@ -885,19 +948,30 @@ int cfg_commit(cfg_ctx_t *ctx)
 	/* is there any change? */
 	if (!ctx->changed_first) goto done;
 
-	/* count the number of replaced strings,
-	and prepare the linked list of per-child process
-	callbacks, that will be added to the global list */
-	for (	changed = ctx->changed_first;
+	/* Count the number of replaced strings,
+	and replaced group arrays.
+	Prepare the linked list of per-child process
+	callbacks, that will be added to the global list. */
+	for (	changed = ctx->changed_first, group = NULL;
 		changed;
 		changed = changed->next
 	) {
+		/* Each string/str potentially causes an old string to be freed
+		 * unless the variable of an additional group instance is set
+		 * which uses the default value. This case cannot be determined
+		 * without locking *cfg_global, hence, it is better to count these
+		 * strings as well even though the slot might not be used later. */
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
 		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR))
 			replaced_num++;
 
+		/* See the above comments for strings */
+		if (group != changed->group) {
+			replaced_num++;
+			group = changed->group;
+		}
 
-		if (changed->var->def->on_set_child_cb) {
+		if (!changed->group_id_set && changed->var->def->on_set_child_cb) {
 			s.s = changed->group->name;
 			s.len = changed->group->name_len;
 			s2.s = changed->var->def->name;
@@ -921,7 +995,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 		replaced = (void **)shm_malloc(size);
 		if (!replaced) {
 			LOG(L_ERR, "ERROR: cfg_commit(): not enough shm memory\n");
-			goto error;
+			goto error0;
 		}
 		memset(replaced, 0 , size);
 	}
@@ -931,22 +1005,54 @@ int cfg_commit(cfg_ctx_t *ctx)
 	CFG_WRITER_LOCK();
 
 	/* clone the memory block, and prepare the modification */
-	if (!(block = cfg_clone_global())) {
-		CFG_WRITER_UNLOCK();
+	if (!(block = cfg_clone_global()))
 		goto error;
-	}
 
-	/* apply the modifications to the buffer */
+	/* Apply the modifications to the buffer.
+	Note that the cycle relies on the order of the groups and group instances, i.e.
+	the order is group + group_id + order of commits. */
 	replaced_num = 0;
-	for (	changed = ctx->changed_first;
+	for (	changed = ctx->changed_first, group = NULL; /* group points to the
+							last group array that has been cloned */
 		changed;
 		changed = changed->next
 	) {
-		p = CFG_GROUP_DATA(block, changed->group)
-			+ changed->var->offset;
+		if (!changed->group_id_set) {
+			p = CFG_GROUP_DATA(block, changed->group)
+				+ changed->var->offset;
+			group_inst = NULL; /* fore the look-up of the next group_inst */
+		} else {
+			if (group != changed->group) {
+				/* The group array has not been cloned yet. */
+				group = changed->group;
+				if (!(CFG_GROUP_META(block, group)->array = 
+					cfg_clone_array(CFG_GROUP_META(*cfg_global, group), group))
+				)
+					goto error;
 
-		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
-		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
+				replaced[replaced_num] = CFG_GROUP_META(*cfg_global, group)->array;
+				replaced_num++;
+
+				group_inst = NULL; /* fore the look-up of group_inst */
+			}
+			if (!group_inst || (group_inst->id != changed->group_id)) {
+				group_inst = cfg_find_group(CFG_GROUP_META(block, group),
+								group->size,
+								changed->group_id);
+			}
+			if (!group_inst) {
+				LOG(L_ERR, "ERROR: cfg_set_now(): global group instance %.*s[%u] is not found\n",
+					group->name_len, group->name, changed->group_id);
+				goto error;
+			}
+			p = group_inst->vars + changed->var->offset;
+		}
+
+		if (((changed->group_id_set && CFG_VAR_TEST_AND_SET(group_inst, changed->var))
+			|| !changed->group_id_set)
+		&& ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
+			|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) 
+		) {
 			replaced[replaced_num] = *(char **)p;
 			if (replaced[replaced_num])
 				replaced_num++;
@@ -958,13 +1064,33 @@ int cfg_commit(cfg_ctx_t *ctx)
 		memcpy(	p,
 			changed->new_val.vraw,
 			cfg_var_size(changed->var));
+
+		if (!changed->group_id_set) {
+			/* the default value is changed, the copies of this value
+			need to be also updated */
+			if (cfg_update_defaults(CFG_GROUP_META(block, changed->group),
+						changed->group, changed->var, p,
+						(group != changed->group)) /* clone if the array
+									has not been cloned yet */
+                        )
+                                goto error;
+                        if ((group != changed->group)
+				&& (CFG_GROUP_META(block, changed->group)->array != CFG_GROUP_META(*cfg_global, changed->group)->array)
+			) {
+				/* The array has been cloned */
+				group = changed->group;
+
+				replaced[replaced_num] = CFG_GROUP_META(*cfg_global, group)->array;
+				replaced_num++;
+			}
+		}
 	}
 
 	/* replace the global config with the new one */
 	cfg_install_global(block, replaced, child_cb_first, child_cb_last);
 	CFG_WRITER_UNLOCK();
 
-	/* free the changed list */	
+	/* free the changed list */
 	for (	changed = ctx->changed_first;
 		changed;
 		changed = changed2
@@ -973,7 +1099,6 @@ int cfg_commit(cfg_ctx_t *ctx)
 		shm_free(changed);
 	}
 	ctx->changed_first = NULL;
-	ctx->changed_last = NULL;
 
 done:
 	LOG(L_INFO, "INFO: cfg_commit(): config changes have been applied "
@@ -984,9 +1109,24 @@ done:
 	return 0;
 
 error:
-	CFG_CTX_UNLOCK(ctx);
+	if (block) {
+		/* clean the new block from the cloned arrays */
+		for (	group = cfg_group;
+			group;
+			group = group->next
+		)
+			if (CFG_GROUP_META(block, group)->array
+				&& (CFG_GROUP_META(block, group)->array != CFG_GROUP_META(*cfg_global, group)->array)
+			)
+				shm_free(CFG_GROUP_META(block, group)->array);
+		/* the block can be freed outside of the writer lock */
+	}
+	CFG_WRITER_UNLOCK();
+	if (block)
+		shm_free(block);
 
 error0:
+	CFG_CTX_UNLOCK(ctx);
 
 	if (child_cb_first) cfg_child_cb_free(child_cb_first);
 	if (replaced) shm_free(replaced);
@@ -1028,7 +1168,6 @@ int cfg_rollback(cfg_ctx_t *ctx)
 		shm_free(changed);
 	}
 	ctx->changed_first = NULL;
-	ctx->changed_last = NULL;
 
 	CFG_CTX_UNLOCK(ctx);
 
@@ -1181,11 +1320,12 @@ int cfg_diff_init(cfg_ctx_t *ctx,
  * committed yet
  */
 int cfg_diff_next(void **h,
-			str *gname, str *vname,
+			str *gname, unsigned int **gid, str *vname,
 			void **old_val, void **new_val,
 			unsigned int *val_type)
 {
 	cfg_changed_var_t	*changed;
+	cfg_group_inst_t	*group_inst;
 	union cfg_var_value* pval;
 	static str	old_s, new_s;	/* we need the value even
 					after the function returns */
@@ -1195,14 +1335,32 @@ int cfg_diff_next(void **h,
 
 	gname->s = changed->group->name;
 	gname->len = changed->group->name_len;
+	*gid = (changed->group_id_set ? &changed->group_id : NULL);
 	vname->s = changed->var->def->name;
 	vname->len = changed->var->name_len;
 
 	/* use the module's handle to access the variable
 	It means that the variable is read from the local config
 	after forking */
-	pval = (union cfg_var_value*)
-			(*(changed->group->handle) + changed->var->offset);
+	if (!changed->group_id_set) {
+		pval = (union cfg_var_value*)
+				(*(changed->group->handle) + changed->var->offset);
+	} else {
+		if (!cfg_local) {
+			LOG(L_ERR, "ERROR: cfg_diff_next(): Local configuration is missing\n");
+			return 0;
+		}
+		group_inst = cfg_find_group(CFG_GROUP_META(cfg_local, changed->group),
+						changed->group->size,
+						changed->group_id);
+		if (!group_inst) {
+			LOG(L_ERR, "ERROR: cfg_diff_next(): local group instance %.*s[%u] is not found\n",
+				changed->group->name_len, changed->group->name, changed->group_id);
+			return 0;
+		}
+		pval = (union cfg_var_value*)
+				(group_inst->vars + changed->var->offset);
+	}
 
 	switch (CFG_VAR_TYPE(changed->var)) {
 	case CFG_VAR_INT:

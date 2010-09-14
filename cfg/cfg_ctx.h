@@ -49,6 +49,9 @@ typedef struct _cfg_changed_var {
 	cfg_mapping_t	*var;
 	struct _cfg_changed_var	*next;
 
+	unsigned int	group_id; /* valid only if group_id_set==1 */
+	unsigned char	group_id_set;
+
 	/* blob that contains the new value */
 	union cfg_var_value new_val; /* variable size */
 } cfg_changed_var_t;
@@ -61,7 +64,6 @@ typedef struct _cfg_ctx {
 	/* variables that are already changed
 	but have not been committed yet */
 	cfg_changed_var_t	*changed_first;
-	cfg_changed_var_t	*changed_last;
 	/* lock protecting the linked-list of
 	changed variables */
 	gen_lock_t		lock;
@@ -161,7 +163,7 @@ int cfg_diff_init(cfg_ctx_t *ctx,
  * void *handle;
  * if (cfg_diff_init(ctx, &handle)) return -1
  * while (cfg_diff_next(&handle
- *			&group_name, &var_name,
+ *			&group_name, &group_id, &var_name,
  *			&old_val, &new_val
  *			&val_type)
  * ) {
@@ -170,7 +172,7 @@ int cfg_diff_init(cfg_ctx_t *ctx,
  * cfg_diff_release(ctx);
  */
 int cfg_diff_next(void **h,
-			str *gname, str *vname,
+			str *gname, unsigned int **gid, str *vname,
 			void **old_val, void **new_val,
 			unsigned int *val_type);
 
