@@ -328,7 +328,7 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 			return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
 		set = 1;
 	} else {
-		if(cfg_get_by_name(_kex_cfg_ctx, &group_name, &var_name, &vval,
+		if(cfg_get_by_name(_kex_cfg_ctx, &group_name, NULL /* group id */, &var_name, &vval,
 					&val_type)!=0)
 			return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
 		new_debug = (int)(long)vval;
@@ -346,7 +346,7 @@ static struct mi_root *mi_debug(struct mi_root *cmd, void *param)
 	}
 
 	if(set==1) {
-		cfg_set_now(_kex_cfg_ctx, &group_name, &var_name,
+		cfg_set_now(_kex_cfg_ctx, &group_name, NULL /* group id */, &var_name,
 				(void *)(long)new_debug, CFG_VAR_INT);
 	}
 
