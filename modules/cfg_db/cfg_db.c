@@ -195,13 +195,13 @@ static int find_cfg_var(str *group_name, char *def_name, db_res_t *transl_res) {
 			/* read and set cfg var */
 			switch (rec->fld[0].type) {
 				case DB_STR:
-					if (cfg_set_now(cfg_ctx, group_name, &def_name_s, &rec->fld[0].v.lstr, CFG_VAR_STR) < 0) goto err;
+					if (cfg_set_now(cfg_ctx, group_name, NULL /* group id */, &def_name_s, &rec->fld[0].v.lstr, CFG_VAR_STR) < 0) goto err;
 					break;
 				case DB_CSTR:					
-					if (cfg_set_now_string(cfg_ctx, group_name, &def_name_s, rec->fld[0].v.cstr) < 0) goto err;
+					if (cfg_set_now_string(cfg_ctx, group_name, NULL /* group id */, &def_name_s, rec->fld[0].v.cstr) < 0) goto err;
 					break;
 				case DB_INT:
-					if (cfg_set_now_int(cfg_ctx, group_name, &def_name_s, rec->fld[0].v.int4) < 0) goto err;
+					if (cfg_set_now_int(cfg_ctx, group_name, NULL /* group id */, &def_name_s, rec->fld[0].v.int4) < 0) goto err;
 					break;
 				default:
 					ERR(MODULE_NAME": unexpected field type (%d), table:'%s', field:'%s'\n", 
