@@ -1028,7 +1028,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 				if (!(CFG_GROUP_META(block, group)->array = 
 					cfg_clone_array(CFG_GROUP_META(*cfg_global, group), group))
 				) {
-					LOG(L_ERR, "ERROR: cfg_set_now(): group array cannot be cloned for %.*s[%u]\n",
+					LOG(L_ERR, "ERROR: cfg_commit(): group array cannot be cloned for %.*s[%u]\n",
 						group->name_len, group->name, changed->group_id);
 					goto error;
 				}
@@ -1044,7 +1044,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 								changed->group_id);
 			}
 			if (!group_inst) {
-				LOG(L_ERR, "ERROR: cfg_set_now(): global group instance %.*s[%u] is not found\n",
+				LOG(L_ERR, "ERROR: cfg_commit(): global group instance %.*s[%u] is not found\n",
 					group->name_len, group->name, changed->group_id);
 				goto error;
 			}
