@@ -197,6 +197,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel</ulink>
 			</para>
 			<para>
+			Note: For all the ACK processed by tm, the registered callbacks
+			(like acc module) will be called with the corresponding INVITE
+			transaction contexts as long as this is still available. This means
+			that the ACK callbacks will see the AVPs setup for the INVITE
+			transaction and not the AVPs setup before t_relay().
+			</para>
+			<para>
 			Via <emphasis>log_name</emphasis> you define how/where the 
 			<emphasis>data</emphasis> will be logged. Its meaning depends 
 			of the accounting support which is used:
@@ -552,6 +559,7 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 		<title><varname>log_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged.
+		See section <xref linkend="ACC-extra-id"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -639,6 +647,7 @@ modparam("acc", "service_type", 16)
 		<title><varname>radius_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via RADIUS - RADIUS specific.
+		See section <xref linkend="ACC-extra-id"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -842,6 +851,7 @@ modparam("acc", "acc_time_column", "time")
 		<title><varname>db_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged into database - DB specific.
+		See section <xref linkend="ACC-extra-id"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
@@ -922,6 +932,7 @@ modparam("acc", "diameter_client_port", 3000)
 		<title><varname>diameter_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via DIAMETER - DIAMETER specific.
+		See section <xref linkend="ACC-extra-id"/> for more details.
 		</para>
 		<para>
 		Default value is NULL.
