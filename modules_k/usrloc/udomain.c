@@ -433,7 +433,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 
 			if (use_domain) {
 				domain = (char*)VAL_STRING(ROW_VALUES(row) + 14);
-				if (VAL_NULL(ROW_VALUES(row)+13) || domain==0 || domain[0]==0){
+				if (VAL_NULL(ROW_VALUES(row)+14) || domain==0 || domain[0]==0){
 					LM_CRIT("empty domain record for user %.*s...skipping\n",
 							user.len, user.s);
 					continue;
