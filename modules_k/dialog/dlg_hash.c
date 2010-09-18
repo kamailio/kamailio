@@ -1078,7 +1078,6 @@ struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param )
 	struct mi_root* rpl_tree= NULL;
 	struct dlg_cell* dlg = NULL;
 	str headers = {0, 0};
-	unsigned int i;
 
 	rpl_tree = process_mi_params( cmd_tree, &dlg);
 	if (rpl_tree)
