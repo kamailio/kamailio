@@ -22,9 +22,9 @@ Bogdan-Andrei Iancu
    voice-system.ro
    <bogdan@voice-system.ro>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
 
-   Copyright � 2004, 2006 voice-system.ro
+   Copyright © 2004, 2006 voice-system.ro
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -219,8 +219,8 @@ Chapter 1. Admin Guide
 
    To account a transaction and to choose which set of backends to be
    used, the script writer just has to set some flags (see the module
-   parameters section for flag definitions Section 5, "Exported
-   Parameters"). If the accounting flag for a specific backend is set, the
+   parameters section for flag definitions Section 5, “Exported
+   Parameters”). If the accounting flag for a specific backend is set, the
    acc module will then report on completed transaction. A typical usage
    of the module takes no acc-specific script command -- the functionality
    binds invisibly through transaction processing. Script writers just
@@ -231,7 +231,7 @@ Chapter 1. Admin Guide
    The accounting module will log by default a fixed set of attributes for
    the transaction - if you customize your accounting by adding more
    information to be logged, please see the next chapter about extra
-   accounting - Section 2, "Extra accounting".
+   accounting - Section 2, “Extra accounting”.
 
    The fixed minimal accounting information is:
      * Request Method name
@@ -336,6 +336,12 @@ if (uri=~"sip:+40") /* calls to Romania */ {
    The full list of supported pseudo-variables in Kamailio is available
    at: http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel
 
+   Note: For all the ACK processed by tm, the registered callbacks (like
+   acc module) will be called with the corresponding INVITE transaction
+   contexts as long as this is still available. This means that the ACK
+   callbacks will see the AVPs setup for the INVITE transaction and not
+   the AVPs setup before t_relay().
+
    Via log_name you define how/where the data will be logged. Its meaning
    depends of the accounting support which is used:
      * LOG accounting - log_name will be just printed along with the data
@@ -430,7 +436,7 @@ Note
    listed modules must be loaded before this module):
      * tm -- Transaction Manager
      * a database module -- If SQL support is used.
-     * rr -- Record Route, if "detect_direction" module parameter is
+     * rr -- Record Route, if “detect_direction” module parameter is
        enabled.
 
 4.2. External Libraries or Applications
@@ -537,7 +543,7 @@ modparam("acc", "detect_direction", 1)
 5.6. multi_leg_info (string)
 
    Defines the AVP set to be used in per-call-leg accounting. See
-   Section 3, "Multi Call-Legs accounting" for a detailed description of
+   Section 3, “Multi Call-Legs accounting” for a detailed description of
    the Multi Call-Legs accounting.
 
    If empty, the multi-leg accounting support will be disabled.
@@ -598,7 +604,8 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 
 5.11. log_extra (string)
 
-   Extra values to be logged.
+   Extra values to be logged. See section Section 2, “Extra accounting”
+   for more details.
 
    Default value is NULL.
 
@@ -616,7 +623,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
    If the parameter is set to empty string, the RADIUS accounting support
    will be disabled (even if compiled).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.12. radius_config example
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
@@ -652,7 +659,8 @@ modparam("acc", "service_type", 16)
 
 5.16. radius_extra (string)
 
-   Extra values to be logged via RADIUS - RADIUS specific.
+   Extra values to be logged via RADIUS - RADIUS specific. See section
+   Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
@@ -683,7 +691,7 @@ modparam("acc", "db_missed_flag", 3)
 
    Table name of accounting successfull calls -- database specific.
 
-   Default value is "acc"
+   Default value is “acc”
 
    Example 1.19. db_table_acc example
 modparam("acc", "db_table_acc", "myacc_table")
@@ -692,7 +700,7 @@ modparam("acc", "db_table_acc", "myacc_table")
 
    Table name for accounting missed calls -- database specific.
 
-   Default value is "missed_calls"
+   Default value is “missed_calls”
 
    Example 1.20. db_table_missed_calls example
 modparam("acc", "db_table_missed_calls", "myMC_table")
@@ -702,7 +710,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
    SQL address -- database specific. If is set to NULL or emty string, the
    SQL support is disabled.
 
-   Default value is "NULL" (SQL disabled).
+   Default value is “NULL” (SQL disabled).
 
    Example 1.21. db_url example
 modparam("acc", "db_url", "mysql://user:password@localhost/openser")
@@ -712,7 +720,7 @@ modparam("acc", "db_url", "mysql://user:password@localhost/openser")
    Column name in accounting table to store the request's method name as
    string.
 
-   Default value is "method".
+   Default value is “method”.
 
    Example 1.22. acc_method_column example
 modparam("acc", "acc_method_column", "method")
@@ -721,7 +729,7 @@ modparam("acc", "acc_method_column", "method")
 
    Column name in accounting table to store the From header TAG parameter.
 
-   Default value is "from_tag".
+   Default value is “from_tag”.
 
    Example 1.23. acc_from_tag_column example
 modparam("acc", "acc_from_tag_column", "from_tag")
@@ -730,7 +738,7 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 
    Column name in accounting table to store the To header TAG parameter.
 
-   Default value is "to_tag".
+   Default value is “to_tag”.
 
    Example 1.24. acc_to_tag_column example
 modparam("acc", "acc_to_tag_column", "to_tag")
@@ -739,7 +747,7 @@ modparam("acc", "acc_to_tag_column", "to_tag")
 
    Column name in accounting table to store the request's Callid value.
 
-   Default value is "callid".
+   Default value is “callid”.
 
    Example 1.25. acc_callid_column example
 modparam("acc", "acc_callid_column", "callid")
@@ -749,7 +757,7 @@ modparam("acc", "acc_callid_column", "callid")
    Column name in accounting table to store the final reply's numric code
    value in string format.
 
-   Default value is "sip_code".
+   Default value is “sip_code”.
 
    Example 1.26. acc_sip_code_column example
 modparam("acc", "acc_sip_code_column", "sip_code")
@@ -759,7 +767,7 @@ modparam("acc", "acc_sip_code_column", "sip_code")
    Column name in accounting table to store the final reply's reason
    phrase value.
 
-   Default value is "sip_reason".
+   Default value is “sip_reason”.
 
    Example 1.27. acc_sip_reason_column example
 modparam("acc", "acc_sip_reason_column", "sip_reason")
@@ -769,14 +777,15 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
    Column name in accounting table to store the time stamp of the
    transaction completion in date-time format.
 
-   Default value is "time".
+   Default value is “time”.
 
    Example 1.28. acc_time_column example
 modparam("acc", "acc_time_column", "time")
 
 5.29. db_extra (string)
 
-   Extra values to be logged into database - DB specific.
+   Extra values to be logged into database - DB specific. See section
+   Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
@@ -808,7 +817,7 @@ modparam("acc", "diameter_missed_flag", 3)
    Hostname of the machine where the DIAMETER Client is running --
    DIAMETER specific.
 
-   Default value is "localhost".
+   Default value is “localhost”.
 
    Example 1.32. diameter_client_host example
 modparam("acc", "diameter_client_host", "3a_server.net")
@@ -825,7 +834,8 @@ modparam("acc", "diameter_client_port", 3000)
 
 5.34. diameter_extra (string)
 
-   Extra values to be logged via DIAMETER - DIAMETER specific.
+   Extra values to be logged via DIAMETER - DIAMETER specific. See section
+   Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
@@ -839,7 +849,7 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
    6.3. acc_rad_request(comment)
    6.4. acc_diam_request(comment)
 
-6.1. acc_log_request(comment)
+6.1.  acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used to report
    on missed calls to off-line users who are replied 404 - Not Found. To
@@ -856,10 +866,10 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 acc_log_request("Some comment");
 ...
 
-6.2. acc_db_request(comment, table)
+6.2.  acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The report
-   is sent to database at "db_url", in the table referred to in the second
+   is sent to database at “db_url”, in the table referred to in the second
    action parameter.
 
    Meaning of the parameters is as follows:
@@ -873,10 +883,10 @@ acc_log_request("Some comment");
 acc_log_request("Some comment", "Some table");
 ...
 
-6.3. acc_rad_request(comment)
+6.3.  acc_rad_request(comment)
 
    Like acc_log_request, acc_rad_request reports on a request. It reports
-   to radius server as configured in "radius_config".
+   to radius server as configured in “radius_config”.
 
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
@@ -888,7 +898,7 @@ acc_log_request("Some comment", "Some table");
 acc_rad_request("Some comment");
 ...
 
-6.4. acc_diam_request(comment)
+6.4.  acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.
@@ -914,50 +924,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with old log_fmt parameter
+       What happend with old log_fmt parameter
 
-   The parameter became obsolete with the restructure of the data logged
-   by ACC module (refer to the Overview chapter). For similar behaviour
-   you can use the extra accouting (see the coresponding chapter).
+       The parameter became obsolete with the restructure of the data logged
+       by ACC module (refer to the Overview chapter). For similar behaviour
+       you can use the extra accouting (see the coresponding chapter).
+
    2.2.
 
-   What happend with old multi_leg_enabled parameter
+       What happend with old multi_leg_enabled parameter
 
-   The parameter becaome obsolete by the addition of the new
-   multi_leg_info parameter. The multi-leg accouting is automatically
-   enabled when multi_leg_info is defined.
+       The parameter becaome obsolete by the addition of the new
+       multi_leg_info parameter. The multi-leg accouting is automatically
+       enabled when multi_leg_info is defined.
+
    2.3.
 
-   What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+       What happend with old src_leg_avp_id and dst_leg_avp_id parameters
 
-   The parameter was replaced by the more generic new parameter
-   multi_leg_info. This allows logging (per-leg) of more information than
-   just dst and src.
+       The parameter was replaced by the more generic new parameter
+       multi_leg_info. This allows logging (per-leg) of more information than
+       just dst and src.
+
    2.4.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
+
    2.5.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <users@lists.kamailio.org> and e-mails regarding development versions
-   should be sent to <devel@lists.kamailio.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <users@lists.kamailio.org> and e-mails regarding development versions
+       should be sent to <devel@lists.kamailio.org>.
 
-   If you want to keep the mail private, send it to
-   <team@lists.kamailio.org>.
+       If you want to keep the mail private, send it to
+       <team@lists.kamailio.org>.
+
    2.6.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
