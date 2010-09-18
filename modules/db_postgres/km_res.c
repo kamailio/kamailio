@@ -220,7 +220,6 @@ int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 		return -1;
 	}
 	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_r), len, row_buf);
-	memset(row_buf, 0, len);
 
 	if (db_allocate_rows(_r) < 0) {
 		LM_ERR("could not allocate rows\n");
@@ -230,6 +229,8 @@ int db_postgres_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 	}
 
 	for(row = RES_LAST_ROW(_r); row < (RES_LAST_ROW(_r) + RES_ROW_N(_r)); row++) {
+		/* reset row buf content */
+		memset(row_buf, 0, len);
 		for(col = 0; col < RES_COL_N(_r); col++) {
 			/*
 			 * The row data pointer returned by PQgetvalue points to storage
