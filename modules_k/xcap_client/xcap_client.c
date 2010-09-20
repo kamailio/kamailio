@@ -44,6 +44,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../lib/kmi/mi.h"
 #include "../presence/utils_func.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
