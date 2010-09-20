@@ -6,6 +6,9 @@
 #
 #===================================================================
 
+### version for this script
+VERSION='3.1.0'
+
 PATH=$PATH:/usr/local/sbin/
 
 # for testing only, please don't enable this in production environments
@@ -36,9 +39,6 @@ if [ -z "$ETCDIR" ] ; then
 	ETCDIR="/usr/local/etc/kamailio"
 fi
 
-### version for this script
-VERSION='$Revision$'
-
 if [ -z "$MYDIR" ] ; then
 	MYDIR=`dirname $0`
 fi
@@ -47,6 +47,33 @@ if [ -z "$MYLIBDIR" ] ; then
 	MYLIBDIR="/usr/local/lib/kamailio/kamctl"
 	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
+	fi
+fi
+
+# locate sercmd
+if [ -z "$SERCMD" ] ; then
+	# try same dir as kamctl
+	SERCMD="$MYDIR/sercmd"
+	if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
+		# try standard location installed from sources
+		SERCMD="/usr/local/sbin/sercmd"
+		if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
+			# try source tree location
+			SERCMD="$MYDIR/../sercmd/sercmd"
+			if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
+				# try locate it with which
+				SERCMD=`which sercmd`
+				if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
+					merr "sercmd tool not found"
+					exit -1;
+				fi
+			fi
+		fi
+	fi
+else
+	if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
+		merr "SERCMD does not point to an executable file"
+		exit -1;
 	fi
 fi
 
@@ -127,7 +154,7 @@ case $CTLENGINE in
 			CTLENGINELOADED=1
 		fi
 		;;
-	SER_MI|ser_mi)
+	SER_MI|ser_mi|SERCMD_MI|sercmd_mi|SERCMDMI|sercmdmi)
 		if [ -f "$MYLIBDIR/kamctl.ser_mi" ]; then
 			. "$MYLIBDIR/kamctl.ser_mi"
 			CTLENGINELOADED=1
@@ -136,7 +163,7 @@ case $CTLENGINE in
 esac
 
 #### ------------------------------------------------- #####
-### Load sercm interface
+### Load sercmd interface
 #
 if [ -f "$MYLIBDIR/kamctl.ser" ]; then
 	. "$MYLIBDIR/kamctl.ser"
@@ -2326,13 +2353,13 @@ case $1 in
 		trusted "$@"
 		;;
 
-	fifo|unixsock|ser_mi)
+	fifo|unixsock|ser_mi|sercmd_mi|sercmdmi)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
 		;;
 
-	ser)
+	ser|sercmd)
 		shift
 		$SERCTLCMD "$@"
 		;;

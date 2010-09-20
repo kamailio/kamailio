@@ -23,10 +23,6 @@ fi
 ##### ----------------------------------------------- #####
 ### parameters
 #
-SERCMD=`which sercmd`
-if [ -z "$SERCMD" ] ; then 
-    SERCMD="/usr/local/sbin/sercmd"
-fi
 
 #
 ##### ----------------------------------------------- #####
@@ -34,10 +30,10 @@ fi
 #
 usage_ser_mi() {
 	echo
-	mecho " -- command 'ser_mi'"
+	mecho " -- command 'sercmd_mi'"
 	echo
 cat <<EOF
- ser ............................... send mi  command thru sercmd
+ sercmd_mi ............................. send mi command through sercmd
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ser_mi"
@@ -48,7 +44,7 @@ ser_mi_cmd()
 	mdbg "entering ser_mi_cmd $*"
 	
 	if [ "$#" -lt 1 ]; then
-		merr "ser_cmd must take at least command name as parameter"
+		merr "sercmd_mi must take at least command name as parameter"
 		exit 1
 	fi
 
