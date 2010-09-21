@@ -57,6 +57,7 @@ Juha Heinanen
               4.1. handle_publish(char* sender_uri)
               4.2. handle_subscribe()
               4.3. pres_auth_status(watcher_uri, presentity_uri)
+              4.4. pres_refresh_watchers(uri, event, type)
 
         5. Exported MI Functions
 
@@ -103,6 +104,7 @@ Juha Heinanen
    1.16. handle_publish usage
    1.17. handle_subscribe usage
    1.18. pres_auth_status usage
+   1.19. pres_refresh_watchers usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -138,6 +140,7 @@ Chapter 1. Admin Guide
         4.1. handle_publish(char* sender_uri)
         4.2. handle_subscribe()
         4.3. pres_auth_status(watcher_uri, presentity_uri)
+        4.4. pres_refresh_watchers(uri, event, type)
 
    5. Exported MI Functions
 
@@ -406,6 +409,7 @@ modparam("presence", "timeout_rm_subs", 0)
    4.1. handle_publish(char* sender_uri)
    4.2. handle_subscribe()
    4.3. pres_auth_status(watcher_uri, presentity_uri)
+   4.4. pres_refresh_watchers(uri, event, type)
 
 4.1.  handle_publish(char* sender_uri)
 
@@ -482,6 +486,30 @@ if (method=="MESSAGE") {
 }
 ...
 
+4.4.  pres_refresh_watchers(uri, event, type)
+
+   The function can be used in configuration to triger notifies to
+   watchers if a change in watchers authorization or in published state
+   occurred (i.e., updates of xcap documents).
+
+   Parameters:
+     * uri - the uri of the user who made the change and whose watchers
+       should be informed.
+     * event - the event package.
+     * type - it distinguishes between the two different types of events
+       that can trigger the refresh, depending on its value:
+          + 0 - a change in watchers authentication.
+          + 1 - a statical update in published state (either through
+            direct update in db table or by modifying the pidf
+            manipulation document, if pidf_manipulation parameter is set).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. pres_refresh_watchers usage
+...
+pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
+...
+
 5. Exported MI Functions
 
    5.1. refreshWatchers
@@ -508,7 +536,7 @@ if (method=="MESSAGE") {
 
    MI FIFO Command Format:
                 :refreshWatchers:fifo_reply
-                sip:11@192.168.2.132
+                sip:test@kamailio.org
                 presence
                 1
                 _empty_line_

@@ -115,10 +115,14 @@ static int fixup_presence(void** param, int param_no);
 static int fixup_subscribe(void** param, int param_no);
 static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
 static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
-static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
+static int update_pw_dialogs(subs_t* subs, unsigned int hash_code,
+		subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 static int mi_child_init(void);
 static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
+static int w_pres_refresh_watchers(struct sip_msg *msg, char *puri,
+		char *pevent, char *ptype);
+static int fixup_refresh_watchers(void** param, int param_no);
 
 int counter =0;
 int pid = 0;
@@ -138,12 +142,19 @@ phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",  (cmd_function)handle_publish,  0,fixup_presence,0, REQUEST_ROUTE},
-	{"handle_publish",  (cmd_function)handle_publish,  1,fixup_presence, 0, REQUEST_ROUTE},
-	{"handle_subscribe",(cmd_function)handle_subscribe,0,fixup_subscribe,0, REQUEST_ROUTE},
- 	{"pres_auth_status",     (cmd_function)pres_auth_status, 2, fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
-	{"bind_presence",   (cmd_function)bind_presence,   1,     0,         0,  0},
-	{ 0,                    0,                         0,     0,         0,  0}
+	{"handle_publish",        (cmd_function)handle_publish,          0,
+		fixup_presence,0, REQUEST_ROUTE},
+	{"handle_publish",        (cmd_function)handle_publish,          1,
+		fixup_presence, 0, REQUEST_ROUTE},
+	{"handle_subscribe",      (cmd_function)handle_subscribe,        0,
+		fixup_subscribe,0, REQUEST_ROUTE},
+	{"pres_auth_status",      (cmd_function)pres_auth_status,        2,
+		fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
+	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers, 3,
+		fixup_refresh_watchers, 0, ANY_ROUTE},
+	{"bind_presence",         (cmd_function)bind_presence,           1,
+		0, 0, 0},
+	{ 0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
@@ -501,6 +512,74 @@ static int fixup_subscribe(void** param, int param_no)
 	return 0;
 }
 
+int pres_refresh_watchers(str *pres, str *event, int type)
+{
+	pres_ev_t *ev;
+	struct sip_uri uri;
+	str *rules_doc= NULL;
+	int result;
+
+	ev= contains_event(event, NULL);
+	if(ev==NULL)
+	{
+		LM_ERR("wrong event parameter\n");
+		return -1;
+	}
+
+	if(type==0)
+	{
+		/* if a request to refresh watchers authorization */
+		if(ev->get_rules_doc==NULL)
+		{
+			LM_ERR("wrong request for a refresh watchers authorization status"
+					"for an event that does not require authorization\n");
+			goto error;
+		}
+
+		if(parse_uri(pres->s, pres->len, &uri)<0)
+		{
+			LM_ERR("parsing uri [%.*s]\n", pres->len, pres->s);
+			goto error;
+		}
+
+		result= ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
+		if(result<0 || rules_doc==NULL || rules_doc->s==NULL)
+		{
+			LM_ERR("no rules doc found for the user\n");
+			goto error;
+		}
+
+		if(update_watchers_status(*pres, ev, rules_doc)<0)
+		{
+			LM_ERR("failed to update watchers\n");
+			goto error;
+		}
+
+		pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+		rules_doc = NULL;
+
+	} else {
+		/* if a request to refresh notified info */
+		if(query_db_notify(pres, ev, NULL)< 0)
+		{
+			LM_ERR("sending Notify requests\n");
+			goto error;
+		}
+
+	}
+	return 0;
+
+error:
+	if(rules_doc)
+	{
+		if(rules_doc->s)
+			pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+	}
+	return -1;
+}
+
 /*! \brief
  *  mi cmd: refreshWatchers
  *			\<presentity_uri> 
@@ -513,10 +592,6 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 {
 	struct mi_node* node= NULL;
 	str pres_uri, event;
-	struct sip_uri uri;
-	pres_ev_t* ev;
-	str* rules_doc= NULL;
-	int result;
 	unsigned int refresh_type;
 
 	LM_DBG("start\n");
@@ -564,65 +639,12 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		return init_mi_tree(400, "Too many parameters", 19);
 	}
 
-	ev= contains_event(&event, NULL);
-	if(ev== NULL)
-	{
-		LM_ERR( "wrong event parameter\n");
+	if(pres_refresh_watchers(&pres_uri, &event, refresh_type)<0)
 		return 0;
-	}
 	
-	if(refresh_type== 0) /* if a request to refresh watchers authorization*/
-	{
-		if(ev->get_rules_doc== NULL)
-		{
-			LM_ERR("wrong request for a refresh watchers authorization status"
-					"for an event that does not require authorization\n");
-			goto error;
-		}
-		
-		if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
-		{
-			LM_ERR( "parsing uri\n");
-			goto error;
-		}
-
-		result= ev->get_rules_doc(&uri.user,&uri.host,&rules_doc);
-		if(result< 0 || rules_doc==NULL || rules_doc->s== NULL)
-		{
-			LM_ERR( "no rules doc found for the user\n");
-			goto error;
-		}
-	
-		if(update_watchers_status(pres_uri, ev, rules_doc)< 0)
-		{
-			LM_ERR("failed to update watchers\n");
-			goto error;
-		}
-
-		pkg_free(rules_doc->s);
-		pkg_free(rules_doc);
-		rules_doc = NULL;
-
-	}
-	else     /* if a request to refresh Notified info */
-	{
-		if(query_db_notify(&pres_uri, ev, NULL)< 0)
-		{
-			LM_ERR("sending Notify requests\n");
-			goto error;
-		}
-
-	}
-		
 	return init_mi_tree(200, "OK", 2);
 
 error:
-	if(rules_doc)
-	{
-		if(rules_doc->s)
-			pkg_free(rules_doc->s);
-		pkg_free(rules_doc);
-	}
 	return 0;
 }
 
@@ -1179,4 +1201,54 @@ static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
     pkg_free(rules_doc->s);
     pkg_free(rules_doc);
     return -1;
+}
+
+/**
+ * wrapper for pres_refresh_watchers to use in config
+ */
+static int w_pres_refresh_watchers(struct sip_msg *msg, char *puri,
+		char *pevent, char *ptype)
+{
+	str pres_uri;
+	str event;
+	int refresh_type;
+
+	if(fixup_get_svalue(msg, (gparam_p)puri, &pres_uri)!=0)
+	{
+		LM_ERR("invalid uri parameter");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)pevent, &event)!=0)
+	{
+		LM_ERR("invalid uri parameter");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)ptype, &refresh_type)!=0)
+	{
+		LM_ERR("no type value\n");
+		return -1;
+	}
+
+	if(pres_refresh_watchers(&pres_uri, &event, refresh_type)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ * fixup for w_pres_refresh_watchers
+ */
+static int fixup_refresh_watchers(void** param, int param_no)
+{
+	if(param_no==1)
+	{
+		return fixup_spve_null(param, 1);
+	} else if(param_no==2) {
+		return fixup_spve_null(param, 1);
+	} else if(param_no==3) {
+		return fixup_igp_null(param, 1);
+	}
+	return 0;
 }

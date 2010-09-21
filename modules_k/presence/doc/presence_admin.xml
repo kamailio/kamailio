@@ -519,6 +519,55 @@ if (method=="MESSAGE") {
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">pres_refresh_watchers(uri, event, type)</function>
+		</title>
+		<para>
+			The function can be used in configuration to triger notifies to watchers
+			if a change in watchers authorization or in published state occurred
+			(i.e., updates of xcap documents).
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>uri - the uri of the user who made the change
+				and whose watchers should be informed.</para>
+			</listitem>
+			<listitem>
+				<para>event - the event package.</para>
+			</listitem>
+			<listitem>
+				<para>type - it distinguishes between the two different types of events
+						that can trigger the refresh, depending on its value:
+						<itemizedlist>
+							<listitem>
+								<para>0 - a change in watchers authentication.</para>
+							</listitem>
+							<listitem>
+								<para>
+									1 - a statical update in published state (either through direct
+									update in db table or by modifying the pidf manipulation document,
+									if pidf_manipulation parameter is set).
+								</para>
+							</listitem>
+						</itemizedlist>
+				</para>
+			</listitem>
+        </itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pres_refresh_watchers</function> usage</title>
+		<programlisting format="linespecific">
+...
+pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 
 <section>
@@ -567,7 +616,7 @@ if (method=="MESSAGE") {
 		</para>
         <programlisting  format="linespecific">
 		:refreshWatchers:fifo_reply
-		sip:11@192.168.2.132
+		sip:test@kamailio.org
 		presence
 		1
 		_empty_line_
