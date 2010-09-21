@@ -32,9 +32,9 @@ Tomas Mandys
 
    It provides similar functionality as nathelper but communicates with
    netfilter kernel xt_RTPPROXY module using libipt_RTPPROXY userspace
-   library. See http://www.2p.cz/en/netfilter_rtp_proxy All RTP streams
-   are manipulated directly in kernel space, no data are copied from
-   kernel to userspace and back, it reduces load and delay.
+   library. All RTP streams are manipulated directly in kernel space, no
+   data is copied from kernel to userspace and back, it reduces load and
+   delay. See http://www.2p.cz/en/netfilter_rtp_proxy for more details.
 
    The ser module is written as light-weighted, there is not implemented
    any dialog managment as in nathelper, the reason is that such API
@@ -59,6 +59,13 @@ Tomas Mandys
    running SER with this module loaded:
      * netfilter xt_RTPROXY & libipt_RTPPROXY, see
        http://www.2p.cz/en/netfilter_rtp_proxy
+
+Note
+
+   The module Makefile must be edited and iptdir setup to the directory
+   with the iptable sources (if different from ~/iptables). Alternatively
+   compile the module using:
+                make -C modules/iptrtpproxy iptdir=path_to_iptables_src
 
 1.3. Parameters
 
