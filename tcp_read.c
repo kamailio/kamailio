@@ -122,16 +122,39 @@ static struct local_timer tcp_reader_ltimer;
 static ticks_t tcp_reader_prev_ticks;
 
 #ifdef READ_HTTP11
+static inline char *strfindcasestrz(str *haystack, char *needlez)
+{
+	int i,j;
+	str needle;
+
+	needle.s = needlez;
+	needle.len = strlen(needlez);
+	for(i=0;i<haystack->len-needle.len;i++) {
+		for(j=0;j<needle.len;j++) {
+			if ( !((haystack->s[i+j]==needle.s[j]) ||
+					( isalpha((int)haystack->s[i+j])
+						&& ((haystack->s[i+j])^(needle.s[j]))==0x20 )) )
+				break;
+		}
+		if (j==needle.len)
+			return haystack->s+i;
+	}
+	return 0;
+}
+
 int tcp_http11_continue(struct tcp_connection *c)
 {
 	struct dest_info dst;
 	char *p;
 	struct msg_start fline;
 	int ret;
+	str msg;
 
 	ret = 0;
 
-	p = parse_first_line(c->req.buf, c->req.pos - c->req.buf, &fline);
+	msg.s = c->req.start;
+	msg.len = c->req.pos - c->req.start;
+	p = parse_first_line(msg.s, msg.len, &fline);
 	if(p==NULL)
 		return 0;
 
@@ -145,7 +168,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		return 0;
 
 	/* check for Expect header */
-	if(strstr(c->req.start, "Expect: 100-continue")!=NULL)
+	if(strfindcasestrz(&msg, "Expect: 100-continue")!=NULL)
 	{
 		init_dst_from_rcv(&dst, &c->rcv);
 		if (tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
@@ -153,7 +176,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 		}
 	}
 	/* check for Transfer-Encoding header */
-	if(strstr(c->req.start, "Transfer-Encoding: chunked")!=NULL)
+	if(strfindcasestrz(&msg, "Transfer-Encoding: chunked")!=NULL)
 	{
 		c->req.flags |= F_TCP_REQ_BCHUNKED;
 		ret = 1;
