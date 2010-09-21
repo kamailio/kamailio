@@ -294,6 +294,8 @@ else
 	exclude_modules+= app_lua
 	# depends on libpython-dev
 	exclude_modules+= app_python
+	# depends on libxml2
+	exclude_modules+= xmlops
 endif
 
 # always exclude the CVS dir
