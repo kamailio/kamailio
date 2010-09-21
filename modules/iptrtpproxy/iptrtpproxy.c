@@ -1053,7 +1053,7 @@ static int parse_iptrtpproxy_cfg() {
 	cfg_section_parser(parser, parse_switchboard_section, NULL);
 	cfg_set_options(parser, section_options);
 	memset(&parse_config_vals, 0, sizeof(parse_config_vals));
-	if (cfg_parse(parser)) {
+	if (sr_cfg_parse(parser)) {
 		return -1;
 	}
 	cfg_parser_close(parser);
