@@ -35,6 +35,7 @@
 #define RESOURCE_LIST      1<<2
 #define RLS_SERVICE        1<<3
 #define PIDF_MANIPULATION  1<<4
+#define XCAP_CAPS          1<<5
 
 
 /* callback function prototype */
