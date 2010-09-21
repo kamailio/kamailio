@@ -309,6 +309,35 @@ event_route[xhttp:request] {
             $var(uri) = $xcapuri(u=>xuid);
         else
             $var(uri) = "sip:"+ $xcapuri(u=>xuid) + "@" + $Ri;
+
+        # handle XCAP capability request
+        if($rm=="GET" && $xcapuri(u=>auid)=="xcap-caps")
+        {
+            $var(xbody) =
+"<?xml version='1.0' encoding='UTF-8'?>
+<xcap-caps xmlns='urn:ietf:params:xml:ns:xcap-caps'>
+  <auids>
+    <auid>rls-services</auid>
+    <auid>pidf-manipulation</auid>
+    <auid>xcap-caps</auid>
+    <auid>resource-lists</auid>
+    <auid>pres-rules</auid>
+  </auids>
+  <extensions>
+  </extensions>
+  <namespaces>
+    <namespace>urn:ietf:params:xml:ns:rls-services</namespace>
+    <namespace>urn:ietf:params:xml:ns:pidf</namespace>
+    <namespace>urn:ietf:params:xml:ns:xcap-caps</namespace>
+    <namespace>urn:ietf:params:xml:ns:resource-lists</namespace>
+    <namespace>urn:ietf:params:xml:ns:pres-rules</namespace>
+  </namespaces>
+</xcap-caps>";
+            xhttp_reply("200", "ok", "application/xcap-caps+xml",
+                    "$var(xbody)");
+            exit;
+        }
+
         xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
         switch($rm) {
             case "PUT":
