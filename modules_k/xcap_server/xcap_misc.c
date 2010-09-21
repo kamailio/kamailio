@@ -145,6 +145,10 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		LM_DBG("matched resource-lists\n");
 		xuri->type = RESOURCE_LIST;
 		xuri->auid.len = 14;
+	} else if(s.len>10 && strncmp(s.s, "xcap-caps/", 10)==0) {
+		LM_DBG("matched xcap-caps\n");
+		xuri->type = XCAP_CAPS;
+		xuri->auid.len = 9;
 	} else {
 		LM_ERR("unsupported auid in [%.*s]\n", xuri->uri.len,
 				xuri->uri.s);

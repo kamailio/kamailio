@@ -403,6 +403,13 @@ static str xcaps_str_ok         = {"OK", 2};
 static str xcaps_str_srverr     = {"Server error", 12};
 static str xcaps_str_nocontent  = {"No content", 10};
 static str xcaps_str_appxml     = {"application/xml", 15};
+static str xcaps_str_apprlxml   = {"application/resource-lists+xml", 30};
+static str xcaps_str_apprsxml   = {"application/rls-services+xml", 28};
+#if 0
+static str xcaps_str_appxcxml   = {"application/xcap-caps+xml", 25};
+#endif
+static str xcaps_str_appapxml   = {"application/auth-policy+xml", 27};
+
 
 /**
  *
@@ -721,6 +728,7 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	str body;
 	int ret = 0;
 	xcap_uri_t xuri;
+	str *ctype;
 
 	if(puri==0 || ppath==0)
 	{
@@ -771,11 +779,18 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 	if(ret==0)
 	{
 		/* doc found */
+		ctype = &xcaps_str_appxml;
+		if(xuri.type==RESOURCE_LIST)
+			ctype = &xcaps_str_apprlxml;
+		else if(xuri.type==PRES_RULES)
+			ctype = &xcaps_str_appapxml;
+		else if(xuri.type==RLS_SERVICE)
+			ctype = &xcaps_str_apprsxml;
 		xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag,
-				&xcaps_str_appxml, &body);
+				ctype, &body);
 	} else {
 		/* doc not found */
-		xcaps_send_reply(msg, 204, &xcaps_str_nocontent, &xcaps_str_empty,
+		xcaps_send_reply(msg, 200, &xcaps_str_nocontent, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
 	}
 	return 1;
