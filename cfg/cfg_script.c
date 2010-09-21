@@ -56,14 +56,14 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	/* the group may have been already declared */
 	group = cfg_lookup_group(gname, gname_len);
 	if (group) {
-		if (group->dynamic == 0) {
+		if (group->dynamic == CFG_GROUP_STATIC) {
 			/* the group has been already declared by a module or by the core */
 			LOG(L_ERR, "ERROR: new_cfg_script_var(): "
 				"configuration group has been already declared: %s\n",
 				gname);
 			return NULL;
 		}
-		/* the dynamic group is found */
+		/* the dynamic or empty group is found */
 		/* verify that the variable does not exist */
 		for (	var = (cfg_script_var_t *)group->vars;
 			var;
@@ -76,6 +76,8 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 				return NULL;
 			}
 		}
+		if (group->dynamic == CFG_GROUP_UNKNOWN)
+			group->dynamic = CFG_GROUP_DYNAMIC;
 
 	} else {
 		/* create a new group with NULL values, we will fix it later,
@@ -85,7 +87,7 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 					NULL /* vars */, 0 /* size */, NULL /* handle */);
 					
 		if (!group) goto error;
-		group->dynamic = 1;
+		group->dynamic = CFG_GROUP_DYNAMIC;
 	}
 
 	switch (type) {

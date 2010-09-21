@@ -48,13 +48,19 @@
  * an array.
  */
 typedef struct _cfg_add_var {
-	unsigned int	type;
+	struct _cfg_add_var	*next;
+	unsigned int	type;	/*!< type == 0 is also valid, it indicates that the group
+				must be created with the default values */
 	union {
 		str	s;
 		int	i;
 	} val;
 	unsigned int	group_id; /*!< Id of the group instance */
-	struct _cfg_add_var	*next;
+	int		name_len;	/*!< Name of the variable. The variable may not be known,
+					for example the additional group value is set in the script
+					before the cfg group is declared. Hence, the pointer cannot
+					be stored here. */
+	char		name[1];
 } cfg_add_var_t;
 
 /*! \brief structure used for variable - pointer mapping */
@@ -67,6 +73,9 @@ typedef struct _cfg_mapping {
 	int		offset; /*!< offest within the memory block */
 	unsigned int	flag;	/*!< flag indicating the state of the variable */
 } cfg_mapping_t;
+
+/*! \brief type of the group */
+enum { CFG_GROUP_UNKNOWN = 0, CFG_GROUP_DYNAMIC, CFG_GROUP_STATIC };
 
 /*! \brief linked list of registered groups */
 typedef struct _cfg_group {
@@ -93,7 +102,7 @@ typedef struct _cfg_group {
 	unsigned char	dynamic;	/*!< indicates whether the variables within the group
 					are dynamically	allocated or not */
 	struct _cfg_group	*next;
-	int		name_len;	
+	int		name_len;
 	char		name[1];
 } cfg_group_t;
 
@@ -233,6 +242,11 @@ void cfg_child_destroy(void);
 
 /* creates a new cfg group, and adds it to the linked list */
 cfg_group_t *cfg_new_group(char *name, int name_len,
+		int num, cfg_mapping_t *mapping,
+		char *vars, int size, void **handle);
+
+/* Set the values of an existing cfg group. */
+void cfg_set_group(cfg_group_t *group,
 		int num, cfg_mapping_t *mapping,
 		char *vars, int size, void **handle);
 

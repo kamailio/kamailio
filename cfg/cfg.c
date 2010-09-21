@@ -43,6 +43,7 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 {
 	int	i, num, size, group_name_len;
 	cfg_mapping_t	*mapping = NULL;
+	cfg_group_t	*group;
 	int types;
 
 	/* check the number of the variables */
@@ -142,18 +143,24 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 	group_name_len = strlen(group_name);
 	/* check for duplicates */
-	if (cfg_lookup_group(group_name, group_name_len)) {
-		LOG(L_ERR, "ERROR: register_cfg_def(): "
-			"configuration group has been already declared: %s\n",
-			group_name);
-		goto error;
+	if ((group = cfg_lookup_group(group_name, group_name_len))) {
+		if (group->dynamic != CFG_GROUP_UNKNOWN) {
+			/* conflict with another module/core group, or with a dynamic group */
+			LOG(L_ERR, "ERROR: register_cfg_def(): "
+				"configuration group has been already declared: %s\n",
+				group_name);
+			goto error;
+		}
+		/* An empty group is found which does not have any variable yet */
+		cfg_set_group(group, num, mapping, values, size, handle);
+	} else {
+		/* create a new group
+		I will allocate memory in shm mem for the variables later in a single block,
+		when we know the size of all the registered groups. */
+		if (!(group = cfg_new_group(group_name, group_name_len, num, mapping, values, size, handle)))
+			goto error;
 	}
-
-	/* create a new group
-	I will allocate memory in shm mem for the variables later in a single block,
-	when we know the size of all the registered groups. */
-	if (!cfg_new_group(group_name, group_name_len, num, mapping, values, size, handle))
-		goto error;
+	group->dynamic = CFG_GROUP_STATIC;
 
 	/* The cfg variables are ready to use, let us set the handle
 	before passing the new definitions to the drivers.
@@ -226,7 +233,7 @@ void **cfg_get_handle(char *gname)
 	cfg_group_t	*group;
 
 	group = cfg_lookup_group(gname, strlen(gname));
-	if (!group || group->dynamic) return NULL;
+	if (!group || (group->dynamic != CFG_GROUP_STATIC)) return NULL;
 
 	return group->handle;
 }

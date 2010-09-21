@@ -98,6 +98,18 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 	return group;
 }
 
+/* Set the values of an existing cfg group. */
+void cfg_set_group(cfg_group_t *group,
+		int num, cfg_mapping_t *mapping,
+		char *vars, int size, void **handle)
+{
+	group->num = num;
+	group->mapping = mapping;
+	group->vars = vars;
+	group->size = size;
+	group->handle = handle;
+}
+
 /* clones a string to shared memory
  * (src and dst can be the same)
  */
@@ -200,7 +212,7 @@ int cfg_shmize(void)
 
 	block = (cfg_block_t*)shm_malloc(sizeof(cfg_block_t)+size-1);
 	if (!block) {
-		LOG(L_ERR, "ERROR: cfg_clone_str(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: cfg_shmize(): not enough shm memory\n");
 		goto error;
 	}
 	memset(block, 0, sizeof(cfg_block_t)+size-1);
@@ -211,13 +223,13 @@ int cfg_shmize(void)
 		group;
 		group=group->next
 	) {
-		if (group->dynamic == 0) {
+		if (group->dynamic == CFG_GROUP_STATIC) {
 			/* clone the strings to shm mem */
 			if (cfg_shmize_strings(group)) goto error;
 
 			/* copy the values to the new block */
 			memcpy(CFG_GROUP_DATA(block, group), group->vars, group->size);
-		} else {
+		} else if (group->dynamic == CFG_GROUP_DYNAMIC) {
 			/* The group was declared with NULL values,
 			 * we have to fix it up.
 			 * The fixup function takes care about the values,
@@ -232,6 +244,11 @@ int cfg_shmize(void)
 			cfg_notify_drivers(group->name, group->name_len,
 					group->mapping->def);
 			*(group->handle) = NULL;
+		} else {
+			LOG(L_ERR, "ERROR: cfg_shmize(): Configuration group is declared "
+					"without any variable: %.*s\n",
+					group->name_len, group->name);
+			goto error;
 		}
 	}
 	/* try to fixup the selects that failed to be fixed-up previously */
@@ -273,7 +290,7 @@ static void cfg_destory_groups(unsigned char *block)
 						if (old_string) shm_free(old_string);
 				}
 
-		if (group->dynamic) {
+		if (group->dynamic == CFG_GROUP_DYNAMIC) {
 			/* the group was dynamically allocated */
 			cfg_script_destroy(group);
 		} else {

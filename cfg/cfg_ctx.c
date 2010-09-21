@@ -77,7 +77,7 @@ int cfg_register_ctx(cfg_ctx_t **handle, cfg_on_declare on_declare_cb)
 		) {
 			/* dynamic groups are not ready, the callback
 			will be called later when the group is fixed-up */
-			if (group->dynamic) continue;
+			if (group->dynamic != CFG_GROUP_STATIC) continue;
 
 			gname.s = group->name;
 			gname.len = group->name_len;
