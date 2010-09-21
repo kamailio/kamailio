@@ -616,7 +616,7 @@ $(1): modules.lst
 .PHONY: $(1)-doc
 $(1)-doc: modules.lst
 	+@for r in $($(1)) "" ; do \
-		if [ -n "$$$$r" ]; then \
+		if [ -n "$$$$r" -a -r "$$$$r/Makefile" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
 			$(MAKE) -C $$$$r/doc $(doc_format) $$(mk_params); \
@@ -627,7 +627,7 @@ $(1)-doc: modules.lst
 
 $(1)-readme: modules.lst
 	-+@for r in $($(1)) "" ; do \
-		if [ -n "$$$$r" ]; then \
+		if [ -n "$$$$r" -a -r "$$$$r/Makefile" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
 			if  $(MAKE) -C $$$$r $$(mk_params) README || [ ${err_fail} != 1 ];\
@@ -641,11 +641,13 @@ $(1)-readme: modules.lst
 
 .PHONY: $(1)-man
 $(1)-man: modules.lst
-	-+@for r in $($(1)) "" ; do \
-		if [ -n "$$$$r" ]; then \
+	-+@for r in $($(1)_basenames) "" ; do \
+		if [ -n "$$$$r" -a -r $(1)/"$$$$r/Makefile" -a \
+			 -r $(1)/"$$$$r/$$$$r.xml" ]; then \
 			$(call oecho, "" ;) \
 			$(call oecho, "" ;) \
-			if  $(MAKE) -C $$$$r $$(mk_params) man || [ ${err_fail} != 1 ] ;\
+			if  $(MAKE) -C $(1)/"$$$$r" $$(mk_params) man || \
+				[ ${err_fail} != 1 ] ;\
 			then \
 				:; \
 			else \
@@ -675,7 +677,7 @@ install-$(1): modules.lst $$($(1)_dst)
 
 install-$(1)-doc: modules.lst $(doc_prefix)/$(doc_dir)$(1)
 	@for r in $($(1)_basenames) "" ; do \
-		if [ -n "$$$$r" ]; then \
+		if [ -n "$$$$r" -a -r $(1)/"$$$$r/Makefile" ]; then \
 			if [ -f $(1)/"$$$$r"/README ]; then \
 				$$(call try_err,\
 					$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)$(1)/README ); \
@@ -693,7 +695,7 @@ install-$(1)-doc: modules.lst $(doc_prefix)/$(doc_dir)$(1)
 
 install-$(1)-man: $(1)-man $(man_prefix)/$(man_dir)/man7
 	@for r in $($(1)_basenames) "" ; do \
-		if [ -n "$$$$r" ]; then \
+		if [ -n "$$$$r" -a -r $(1)/"$$$$r/Makefile" ]; then \
 			if [ -f $(1)/"$$$$r"/"$$$$r".7 ]; then \
 				$$(call try_err,\
 				  $(INSTALL_TOUCH) $(man_prefix)/$(man_dir)/man7/"$$$$r".7 );\
