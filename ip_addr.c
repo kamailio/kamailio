@@ -330,3 +330,26 @@ int is_mcast(struct ip_addr* ip)
 }
 
 #endif /* USE_MCAST */
+
+
+
+/** get protocol name (asciiz).
+ * @param proto - protocol number
+ * @return  string with the protocol name or "unknown".
+ */
+char* proto2a(enum sip_protos proto)
+{
+	switch(proto){
+		case PROTO_NONE:
+			return "*";
+		case PROTO_UDP:
+			return "udp";
+		case PROTO_TCP:
+			return "tcp";
+		case PROTO_TLS:
+			return "tls";
+		case PROTO_SCTP:
+			return "sctp";
+	}
+	return "unknown";
+}

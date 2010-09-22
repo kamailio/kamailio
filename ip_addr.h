@@ -250,6 +250,10 @@ void print_ip(char* prefix, struct ip_addr* ip, char* suffix);
 void stdout_print_ip(struct ip_addr* ip);
 void print_net(struct net* net);
 
+char* proto2a(enum sip_protos proto);
+
+
+
 #ifdef USE_MCAST
 /* Returns 1 if the given address is a multicast address */
 int is_mcast(struct ip_addr* ip);
