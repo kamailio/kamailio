@@ -1690,11 +1690,6 @@ rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 static int
 rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
 {
-
-	if (msg->first_line.type == SIP_REQUEST)
-		if (msg->first_line.u.request.method_value != METHOD_INVITE)
-			return -1;
-
 	return force_rtp_proxy(msg, param1, param2, 1);
 }
 
@@ -1725,8 +1720,7 @@ force_rtp_proxy2_f(struct sip_msg *msg, char *param1, char *param2)
 {
 	int offer;
 
-	if (msg->first_line.type == SIP_REQUEST &&
-	    msg->first_line.u.request.method_value == METHOD_INVITE) {
+	if (msg->first_line.type == SIP_REQUEST) {
 		offer = 1;
 	} else if (msg->first_line.type == SIP_REPLY) {
 		offer = 0;
