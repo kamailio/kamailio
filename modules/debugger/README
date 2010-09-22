@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -44,7 +44,6 @@ Daniel-Constantin Mierla
               5.3. dbg.bp
 
         6. Usage
-        7. To-do
 
    List of Examples
 
@@ -88,7 +87,6 @@ Chapter 1. Admin Guide
         5.3. dbg.bp
 
    6. Usage
-   7. To-do
 
 1. Overview
 
@@ -142,7 +140,7 @@ Chapter 1. Admin Guide
 
    Control whether config running trace is enabled or disabled at startup.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.1. Set cfgtrace parameter
 ...
@@ -154,7 +152,7 @@ modparam("debugger", "cfgtrace", 1)
    Control whether every line (for now) breakpoint is enabled or disabled
    at startup.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.2. Set breakpoint parameter
 ...
@@ -165,7 +163,7 @@ modparam("debugger", "breakpoint", 1)
 
    What log level to be used to print module specific messages.
 
-   Default value is "-1" (L_ERR).
+   Default value is “-1” (L_ERR).
 
    Example 1.3. Set log_level parameter
 ...
@@ -176,7 +174,7 @@ modparam("debugger", "log_level", 1)
 
    What log facility to be used to print module specific messages.
 
-   Default value is "NULL" (default from core).
+   Default value is “NULL” (default from core).
 
    Example 1.4. Set log_facility parameter
 ...
@@ -187,7 +185,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 
    String to print before any module specific messages.
 
-   Default value is "*** cfgtrace:".
+   Default value is “*** cfgtrace:”.
 
    Example 1.5. Set log_prefix parameter
 ...
@@ -199,7 +197,7 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
    Microseconds to sleep before checking for new commands when waiting at
    breakpoint
 
-   Default value is "100000" (that is 0.1sec).
+   Default value is “100000” (that is 0.1sec).
 
    Example 1.6. Set step_usleep parameter
 ...
@@ -213,7 +211,7 @@ modparam("debugger", "step_usleep", 500000)
    blocking RPC process for ever in case the worker process 'forgets' to
    write back a reply.
 
-   Default value is "200".
+   Default value is “200”.
 
    Example 1.7. Set step_loops parameter
 ...
@@ -389,12 +387,3 @@ sercmd> dbg.bp move 10481
  1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=44 a=25
  1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=45 a=3
 ...
-
-7. To-do
-
-   The 'MUSTS' and ideas of what can be done:
-     * Complete breakpoint setting and usage on specific lines.
-     * Make the output more human friendly - text can be used instead of
-       integer values for some fields such as state. Also, for some
-       actions (e.g., module functions) string name can be printed instead
-       of action internal type code.

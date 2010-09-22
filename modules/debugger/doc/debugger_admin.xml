@@ -470,27 +470,5 @@ sercmd> dbg.bp move 10481
 </programlisting>
     </section>
 
-	<section>
-		<title>To-do</title>
-		<para>
-			The 'MUSTS' and ideas of what can be done:
-		</para>
-		<itemizedlist>
-		<listitem>
-		<para>
-			Complete breakpoint setting and usage on specific lines.
-		</para>
-		</listitem>
-		<listitem>
-		<para>
-			Make the output more human friendly - text can be used instead of
-			integer values for some fields such as state. Also, for some
-			actions (e.g., module functions) string name can be printed instead
-			of action internal type code.
-		</para>
-		</listitem>
-		</itemizedlist>
-    </section>
-
 </chapter>
 
