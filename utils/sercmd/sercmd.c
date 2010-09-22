@@ -74,11 +74,10 @@
 #endif
 
 #define IOVEC_CNT 20
-#define BUF_SIZE  65535
-#define MAX_LINE_SIZE 1024 /* for non readline mode */
-#define MAX_REPLY_SIZE  4096
-#define MAX_BODY_SIZE   4096
-#define MAX_BINRPC_ARGS  128
+#define MAX_LINE_SIZE 16384 /* for non readline mode */
+#define MAX_REPLY_SIZE 65536
+#define MAX_BODY_SIZE  65536
+#define MAX_BINRPC_ARGS 256
 
 
 #ifndef UNIX_PATH_MAX
