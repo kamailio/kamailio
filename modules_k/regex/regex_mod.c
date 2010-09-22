@@ -575,9 +575,10 @@ static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
 				LM_DBG("matching error '%d'\n", pcre_rc);
 				break;
 		}
+		pcre_free(pcre_re);
 		return -1;
 	}
-
+	pcre_free(pcre_re);
 	LM_DBG("'%s' matches '%s'\n", string.s, regex.s);
 	return 1;
 }
