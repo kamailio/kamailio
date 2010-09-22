@@ -417,7 +417,7 @@ if($si=="10.0.0.10")
 sercmd> dbg.ls
 {
 	entry: 0
-	pid: 10480
+	pid: 6393
 	set: 3
 	state: 0
 	in.pid: 0
@@ -425,49 +425,86 @@ sercmd> dbg.ls
 }
 {
 	entry: 1
-	pid: 10481
-	set: 3
-	state: 1
-	in.pid: 0
-	in.cmd: 0
-}
-{
-	entry: 2
-	pid: 10482
+	pid: 6394
 	set: 3
 	state: 0
 	in.pid: 0
 	in.cmd: 0
 }
+...
+{
+	entry: 9
+	pid: 6402
+	set: 3
+	state: 1
+	in.pid: 0
+	in.cmd: 0
+}
 
-sercmd> dbg.bp show 10481
-at bkp [/etc/kamailio/debugger.cfg:36] a=25
+sercmd> dbg.bp show 6402
+at bkp [/etc/kamailio/debugger.cfg:369] a=6 n=route
 
-sercmd> dbg.bp next 10481
-exec [/etc/kamailio/debugger.cfg:37] a=54
+sercmd> dbg.bp next 6402
+exec [/etc/kamailio/debugger.cfg:369] a=6 n=route
 
-sercmd> dbg.bp eval 10481 $fu
-$fu : t=str v=sip:test@192.168.1.1
+sercmd> dbg.bp next 6402
+exec [/etc/kamailio/debugger.cfg:462] a=17 n=if
 
-sercmd> dbg.bp move 10481
+sercmd> dbg.bp eval 6402 $fu
+$fu : t=str v=sip:test@kamailio.org
+
+sercmd> dbg.bp move 6402
 200 ok
 ...
 </programlisting>
 		<para>
-		The cfg running trace looks like:
+		Running config trace looks like:
 		</para>
 <programlisting  format="linespecific">
 ...
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=36 a=25
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=37 a=54
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=41 a=17
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=41 a=25
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=42 a=31
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=43 a=25
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=44 a=25
- 1(10481) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=45 a=3
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=368 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=456 a=26 n=mf_process_maxfwd_header
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=466 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=27 n=sanity_check
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=371 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=659 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=374 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=501 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=470 a=25 n=has_totag
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=386 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=379 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=386 a=25 n=t_check_trans
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=389 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=643 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=393 a=26 n=remove_hf
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=398 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=394 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=404 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=398 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=404 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=682 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=409 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=575 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=550 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=551 a=3 n=return
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=412 a=6 n=route
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=518 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=505 a=26 n=is_method
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=513 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=507 a=42 n=isflagset
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=17 n=if
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=513 a=26 n=save
+ 9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=3 n=exit
 ...
 </programlisting>
+		<para>
+			Above example is for registration with default config for
+			version 3.1.0, without authentication. Listed fields are:
+			'c' - config file; 'l' - line; 'a' - internal action id;
+			'n' - name of executed action. 'ERROR' prefix is printed
+			because these messages were sent to L_ERR log level.
+		</para>
     </section>
 
 </chapter>
