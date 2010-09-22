@@ -234,26 +234,36 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 										enum ss_mismatch* mismatch)
 {
 	struct socket_info* send_sock;
+	struct socket_info* orig;
 	
 	if (likely(mismatch)) *mismatch=0;
 	/* check if send interface is not forced */
 	if (unlikely(force_send_socket)){
 		if (unlikely(force_send_socket->proto!=proto)){
+			orig=force_send_socket;
 			force_send_socket=find_si(&(force_send_socket->address),
 											force_send_socket->port_no,
 											proto);
 			if (unlikely(force_send_socket == 0)){
 				if (likely(mismatch)) *mismatch=SS_MISMATCH_ADDR;
 				LOG(L_WARN, "WARNING: get_send_socket: "
-						"protocol/port mismatch\n");
+						"protocol/port mismatch (forced %s:%s:%d,"
+						" to %s:%s)\n",
+						proto2a(orig->proto), ip_addr2a(&orig->address),
+						orig->port_no,
+						proto2a(proto), su2a(to, sizeof(*to)));
 				goto not_forced;
 			}
 			if (likely(mismatch)) *mismatch=SS_MISMATCH_PROTO;
 		}
 		if (unlikely(force_send_socket->address.af!=to->s.sa_family)){
-			DBG("get_send_socket: force_send_socket of different af (dst %d,"
-					" forced %d)\n",
-					to->s.sa_family, force_send_socket->address.af);
+			DBG("get_send_socket: force_send_socket of different af"
+					" (dst %d - %s:%s forced %d -%s:%s:%d)\n",
+					to->s.sa_family, proto2a(proto), su2a(to, sizeof(*to)),
+					force_send_socket->address.af,
+					proto2a(force_send_socket->proto),
+					ip_addr2a(&force_send_socket->address),
+					force_send_socket->port_no);
 			if (likely(mismatch)) *mismatch=SS_MISMATCH_AF;
 			goto not_forced;
 		}
@@ -268,7 +278,11 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 		else{
 			if (!(force_send_socket->flags & SI_IS_MCAST))
 				LOG(L_WARN, "WARNING: get_send_socket: not listening"
-							 " on the requested socket, no fork mode?\n");
+							 " on the requested socket (%s:%s:%d),"
+							 " no fork mode?\n",
+							proto2a(force_send_socket->proto),
+							ip_addr2a(&force_send_socket->address),
+							force_send_socket->port_no);
 			else if (likely(mismatch)) *mismatch=SS_MISMATCH_MCAST;
 		}
 	};
@@ -279,7 +293,9 @@ not_forced:
 			return send_sock; /* found or error*/
 		else if (send_sock->socket==-1){
 			LOG(L_WARN, "WARNING: get_send_socket: not listening on the"
-					" requested socket, no fork mode?\n");
+					" requested socket (%s:%s:%d), no fork mode?\n",
+					proto2a(send_sock->proto), ip_addr2a(&send_sock->address),
+					send_sock->port_no);
 			/* continue: try to use some socket */
 		}
 	}
@@ -358,7 +374,8 @@ not_forced:
 			}else send_sock=bind_address;
 			break;
 		default:
-			LOG(L_CRIT, "BUG: get_send_socket: unknown proto %d\n", proto);
+			LOG(L_CRIT, "BUG: get_send_socket: unsupported proto %d (%s)\n",
+					proto, proto2a(proto));
 	}
 	return send_sock;
 }
