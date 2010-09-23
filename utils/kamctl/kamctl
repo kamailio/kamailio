@@ -50,6 +50,16 @@ if [ -z "$MYLIBDIR" ] ; then
 	fi
 fi
 
+##### ------------------------------------------------ #####
+### load base functions
+#
+if [ -f "$MYLIBDIR/kamctl.base" ]; then
+	. "$MYLIBDIR/kamctl.base"
+else
+	echo -e "Cannot load core functions '$MYLIBDIR/kamctl.base' - exiting ...\n"
+	exit -1
+fi
+
 # locate sercmd
 if [ -z "$SERCMD" ] ; then
 	# try same dir as kamctl
@@ -75,16 +85,6 @@ else
 		merr "SERCMD does not point to an executable file"
 		exit -1;
 	fi
-fi
-
-##### ------------------------------------------------ #####
-### load base functions
-#
-if [ -f "$MYLIBDIR/kamctl.base" ]; then
-	. "$MYLIBDIR/kamctl.base"
-else
-	echo -e "Cannot load core functions '$MYLIBDIR/kamctl.base' - exiting ...\n"
-	exit -1
 fi
 
 #
