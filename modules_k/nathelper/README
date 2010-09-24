@@ -24,13 +24,13 @@ Edited by
 
 Ovidiu Sas
 
-   Copyright � 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright � 2005 voice-system.ro
+   Copyright © 2005 voice-system.ro
 
-   Copyright � 2009 TuTPro Inc.
+   Copyright © 2009 TuTPro Inc.
 
-   Copyright � 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -39,44 +39,44 @@ Ovidiu Sas
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. NAT pinging types
-        1.3. Dependencies
+        1. Overview
+        2. NAT pinging types
+        3. Dependencies
 
-              1.3.1. Kamailio Modules
-              1.3.2. External Libraries or Applications
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        1.4. Exported Parameters
+        4. Exported Parameters
 
-              1.4.1. natping_interval (integer)
-              1.4.2. ping_nated_only (integer)
-              1.4.3. natping_processes (integer)
-              1.4.4. natping_socket (string)
-              1.4.5. received_avp (str)
-              1.4.6. sipping_bflag (integer)
-              1.4.7. sipping_from (string)
-              1.4.8. sipping_method (string)
-              1.4.9. nortpproxy_str (string)
+              4.1. natping_interval (integer)
+              4.2. ping_nated_only (integer)
+              4.3. natping_processes (integer)
+              4.4. natping_socket (string)
+              4.5. received_avp (str)
+              4.6. sipping_bflag (integer)
+              4.7. sipping_from (string)
+              4.8. sipping_method (string)
+              4.9. nortpproxy_str (string)
 
-        1.5. Exported Functions
+        5. Exported Functions
 
-              1.5.1. fix_nated_contact()
-              1.5.2. fix_nated_sdp(flags [, ip_address])
-              1.5.3. set_rtp_proxy_set()
-              1.5.4. add_rcv_param([flag]),
-              1.5.5. fix_nated_register()
-              1.5.6. nat_uac_test(flags)
-              1.5.7. add_contact_alias()
-              1.5.8. handle_ruri_alias()
+              5.1. fix_nated_contact()
+              5.2. fix_nated_sdp(flags [, ip_address])
+              5.3. set_rtp_proxy_set()
+              5.4. add_rcv_param([flag]),
+              5.5. fix_nated_register()
+              5.6. nat_uac_test(flags)
+              5.7. add_contact_alias()
+              5.8. handle_ruri_alias()
 
-        1.6. Exported Pseudo Variables
+        6. Exported Pseudo Variables
 
-              1.6.1. $rr_count
-              1.6.2. $rr_top_count
+              6.1. $rr_count
+              6.2. $rr_top_count
 
-        1.7. MI Commands
+        7. MI Commands
 
-              1.7.1. nh_enable_ping
+              7.1. nh_enable_ping
 
    2. Frequently Asked Questions
 
@@ -104,7 +104,48 @@ Ovidiu Sas
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. NAT pinging types
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Exported Parameters
+
+        4.1. natping_interval (integer)
+        4.2. ping_nated_only (integer)
+        4.3. natping_processes (integer)
+        4.4. natping_socket (string)
+        4.5. received_avp (str)
+        4.6. sipping_bflag (integer)
+        4.7. sipping_from (string)
+        4.8. sipping_method (string)
+        4.9. nortpproxy_str (string)
+
+   5. Exported Functions
+
+        5.1. fix_nated_contact()
+        5.2. fix_nated_sdp(flags [, ip_address])
+        5.3. set_rtp_proxy_set()
+        5.4. add_rcv_param([flag]),
+        5.5. fix_nated_register()
+        5.6. nat_uac_test(flags)
+        5.7. add_contact_alias()
+        5.8. handle_ruri_alias()
+
+   6. Exported Pseudo Variables
+
+        6.1. $rr_count
+        6.2. $rr_top_count
+
+   7. MI Commands
+
+        7.1. nh_enable_ping
+
+1. Overview
 
    This is a module to help with NAT traversal and reuse of tcp
    connections. In particular, it helps symmetric UAs that don't advertise
@@ -128,7 +169,7 @@ Chapter 1. Admin Guide
    http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature
    _guide09186a0080110bf9.html">
 
-1.2. NAT pinging types
+2. NAT pinging types
 
    Currently, the nathelper module supports two types of NAT pings:
      * UDP package - 4 bytes (zero filled) UDP packages are sent to the
@@ -148,22 +189,35 @@ Chapter 1. Admin Guide
           + Disadvantages: higher bandwitdh traffic, more expensive (as
             time) to generate by Kamailio;
 
-1.3. Dependencies
+3. Dependencies
 
-1.3.1. Kamailio Modules
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * usrloc module - only if the NATed contacts are to be pinged.
 
-1.3.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-1.4. Exported Parameters
+4. Exported Parameters
 
-1.4.1. natping_interval (integer)
+   4.1. natping_interval (integer)
+   4.2. ping_nated_only (integer)
+   4.3. natping_processes (integer)
+   4.4. natping_socket (string)
+   4.5. received_avp (str)
+   4.6. sipping_bflag (integer)
+   4.7. sipping_from (string)
+   4.8. sipping_method (string)
+   4.9. nortpproxy_str (string)
+
+4.1. natping_interval (integer)
 
    Period of time in seconds between sending the NAT pings to all
    currently registered UAs to keep their NAT bindings alive. Value of 0
@@ -181,9 +235,9 @@ Note
 modparam("nathelper", "natping_interval", 10)
 ...
 
-1.4.2. ping_nated_only (integer)
+4.2. ping_nated_only (integer)
 
-   If this variable is set then only contacts that have "behind_NAT" flag
+   If this variable is set then only contacts that have “behind_NAT” flag
    in user location database set will get ping.
 
    Default value is 0.
@@ -193,7 +247,7 @@ modparam("nathelper", "natping_interval", 10)
 modparam("nathelper", "ping_nated_only", 1)
 ...
 
-1.4.3. natping_processes (integer)
+4.3. natping_processes (integer)
 
    How many timer processes should be created by the module for the
    exclusive task of sending the NAT pings.
@@ -205,7 +259,7 @@ modparam("nathelper", "ping_nated_only", 1)
 modparam("nathelper", "natping_processes", 3)
 ...
 
-1.4.4. natping_socket (string)
+4.4. natping_socket (string)
 
    Spoof the natping's source-ip to this address. Works only for IPv4.
 
@@ -216,7 +270,7 @@ modparam("nathelper", "natping_processes", 3)
 modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 ...
 
-1.4.5. received_avp (str)
+4.5. received_avp (str)
 
    The name of the Attribute-Value-Pair (AVP) used to store the URI
    containing the received IP, port, and protocol. The URI is created by
@@ -238,7 +292,7 @@ Note
 modparam("nathelper", "received_avp", "$avp(i:42)")
 ...
 
-1.4.6. sipping_bflag (integer)
+4.6. sipping_bflag (integer)
 
    What branch flag should be used by the module to identify NATed
    contacts for which it should perform NAT ping via a SIP request instead
@@ -251,33 +305,33 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 modparam("nathelper", "sipping_bflag", 7)
 ...
 
-1.4.7. sipping_from (string)
+4.7. sipping_from (string)
 
    The parameter sets the SIP URI to be used in generating the SIP
    requests for NAT ping purposes. To enable the SIP request pinging
    feature, you have to set this parameter. The SIP request pinging will
    be used only for requests marked so.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.7. Set sipping_from parameter
 ...
 modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
 ...
 
-1.4.8. sipping_method (string)
+4.8. sipping_method (string)
 
    The parameter sets the SIP method to be used in generating the SIP
    requests for NAT ping purposes.
 
-   Default value is "OPTIONS".
+   Default value is “OPTIONS”.
 
    Example 1.8. Set sipping_method parameter
 ...
 modparam("nathelper", "sipping_method", "INFO")
 ...
 
-1.4.9. nortpproxy_str (string)
+4.9. nortpproxy_str (string)
 
    The parameter sets the SDP attribute used by nathelper to mark the
    packet SDP informations have already been mangled.
@@ -288,16 +342,25 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is "a=nortpproxy:yes\r\n".
+   Default value is “a=nortpproxy:yes\r\n”.
 
    Example 1.9. Set nortpproxy_str parameter
 ...
 modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
 
-1.5. Exported Functions
+5. Exported Functions
 
-1.5.1.  fix_nated_contact()
+   5.1. fix_nated_contact()
+   5.2. fix_nated_sdp(flags [, ip_address])
+   5.3. set_rtp_proxy_set()
+   5.4. add_rcv_param([flag]),
+   5.5. fix_nated_register()
+   5.6. nat_uac_test(flags)
+   5.7. add_contact_alias()
+   5.8. handle_ruri_alias()
+
+5.1.  fix_nated_contact()
 
    Rewrites Contact HF to contain request's source address:port.
 
@@ -309,18 +372,18 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
 
-1.5.2.  fix_nated_sdp(flags [, ip_address])
+5.2.  fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
-   changes to be performed may be controled via the "flags" parameter.
+   changes to be performed may be controled via the “flags” parameter.
 
    Meaning of the parameters is as follows:
      * flags - the value may be a bitwise OR of the following flags:
-          + 0x01 - adds "a=direction:active" SDP line;
+          + 0x01 - adds “a=direction:active” SDP line;
           + 0x02 - rewrite media IP address (c=) with source address of
             the message or the provided IP address (the provide IP address
             take precedence over the source address).
-          + 0x04 - adds "a=nortpproxy:yes" SDP line;
+          + 0x04 - adds “a=nortpproxy:yes” SDP line;
           + 0x08 - rewrite IP from origin description (o=) with source
             address of the message or the provided IP address (the provide
             IP address take precedence over the source address).
@@ -337,7 +400,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
 
-1.5.3.  set_rtp_proxy_set()
+5.3.  set_rtp_proxy_set()
 
    Sets the Id of the rtpproxy set to be used for the next
    [un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer() command.
@@ -351,7 +414,7 @@ set_rtp_proxy_set("2");
 force_rtp_proxy();
 ...
 
-1.5.4.  add_rcv_param([flag]),
+5.4.  add_rcv_param([flag]),
 
    Add received parameter to Contact header fields or Contact URI. The
    parameter will contain URI created from the source IP, port, and
@@ -375,7 +438,7 @@ add_rcv_param(); # add the parameter to the Contact header
 add_rcv_param("1"); # add the parameter to the Contact URI
 ...
 
-1.5.5.  fix_nated_register()
+5.5.  fix_nated_register()
 
    The function creates a URI consisting of the source IP, port, and
    protocol and stores the URI in an Attribute-Value-Pair. The URI will be
@@ -393,7 +456,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 fix_nated_register();
 ...
 
-1.5.6.  nat_uac_test(flags)
+5.6.  nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat. The
    parameter determines what heuristics is used.
@@ -406,6 +469,8 @@ fix_nated_register();
      * 4 - Top Most VIA is searched for occurrence of RFC1918 addresses
      * 8 - SDP is searched for occurrence of RFC1918 addresses
      * 16 - test if the source port is different from the port in Via
+     * 32 - test if the source IP address of signaling is a RFC1918
+       address
 
    All flags can be bitwise combined, the test returns true if any of the
    tests identified a NAT.
@@ -413,7 +478,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-1.5.7.  add_contact_alias()
+5.7.  add_contact_alias()
 
    Adds ;alias=ip:port parameter to contact URI containing received
    ip:port if contact uri ip:port does not match received ip:port.
@@ -432,7 +497,7 @@ fix_nated_register();
     };
 ...
 
-1.5.8.  handle_ruri_alias()
+5.8.  handle_ruri_alias()
 
    Checks if Request URI has alias param and if so, removes it and sets
    $du based on its value. Note that this means that routing of request is
@@ -467,9 +532,12 @@ fix_nated_register();
     };
 ...
 
-1.6. Exported Pseudo Variables
+6. Exported Pseudo Variables
 
-1.6.1. $rr_count
+   6.1. $rr_count
+   6.2. $rr_top_count
+
+6.1. $rr_count
 
    Number of Record Routes in received SIP request or reply.
 
@@ -478,7 +546,7 @@ fix_nated_register();
     $avp(rr_count) = $rr_count;
 ...
 
-1.6.2. $rr_top_count
+6.2. $rr_top_count
 
    If topmost Record Route in received SIP request or reply is a double
    Record Route, value of $rr_top_count is 2. If it a single Record Route,
@@ -492,9 +560,11 @@ fix_nated_register();
     };
 ...
 
-1.7. MI Commands
+7. MI Commands
 
-1.7.1. nh_enable_ping
+   7.1. nh_enable_ping
+
+7.1. nh_enable_ping
 
    Enables natping if parameter value greater than 0. Disables natping if
    parameter value is 0.
@@ -508,11 +578,16 @@ $ kamctl fifo nh_enable_ping 1
 
 Chapter 2. Frequently Asked Questions
 
+   2.1. What happend with “rtpproxy_disable” parameter?
+   2.2. Where can I find more about Kamailio?
+   2.3. Where can I post a question about this module?
+   2.4. How can I report a bug?
+
    2.1.
 
-       What happend with "rtpproxy_disable" parameter?
+       What happend with “rtpproxy_disable” parameter?
 
-       It was removed as it became obsolete - now "rtpproxy_sock" can take
+       It was removed as it became obsolete - now “rtpproxy_sock” can take
        empty value to disable the rtpproxy functionality.
 
    2.2.

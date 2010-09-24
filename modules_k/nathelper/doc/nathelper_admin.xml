@@ -536,7 +536,11 @@ fix_nated_register();
 			<emphasis>16</emphasis> -  test if the source port is different
 			from the port in Via 
 			</para></listitem>
-		</itemizedlist>
+			<listitem><para>
+			<emphasis>32</emphasis> -  test if the source IP address of
+			signaling is a RFC1918 address
+			</para></listitem>
+			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
 		the tests identified a NAT.

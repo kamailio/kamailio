@@ -197,6 +197,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../error.h"
 #include "../../forward.h"
+#include "../../ip_addr.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
@@ -241,6 +242,7 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_V_1918	0x04
 #define	NAT_UAC_TEST_S_1918	0x08
 #define	NAT_UAC_TEST_RPORT	0x10
+#define	NAT_UAC_TEST_O_1918	0x20
 
 
 #define DEFAULT_RTPP_SET_ID		0
@@ -1059,6 +1061,24 @@ pv_get_rr_top_count_f(struct sip_msg *msg, pv_param_t *param,
     }
 }
 
+/*
+ * Test if IP address in netaddr belongs to RFC1918 networks
+ * netaddr in network byte order
+ */
+static inline int
+is1918addr_n(uint32_t netaddr)
+{
+	int i;
+	uint32_t hl;
+
+	hl = ntohl(netaddr);
+	for (i = 0; nets_1918[i].cnetaddr != NULL; i++) {
+		if ((hl & nets_1918[i].mask) == nets_1918[i].netaddr) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /*
  * Test if IP address pointed to by saddr belongs to RFC1918 networks
@@ -1067,8 +1087,7 @@ static inline int
 is1918addr(str *saddr)
 {
 	struct in_addr addr;
-	uint32_t netaddr;
-	int i, rval;
+	int rval;
 	char backup;
 
 	rval = -1;
@@ -1076,18 +1095,22 @@ is1918addr(str *saddr)
 	saddr->s[saddr->len] = '\0';
 	if (inet_aton(saddr->s, &addr) != 1)
 		goto theend;
-	netaddr = ntohl(addr.s_addr);
-	for (i = 0; nets_1918[i].cnetaddr != NULL; i++) {
-		if ((netaddr & nets_1918[i].mask) == nets_1918[i].netaddr) {
-			rval = 1;
-			goto theend;
-		}
-	}
-	rval = 0;
+	rval = is1918addr_n(addr.s_addr);
 
 theend:
 	saddr->s[saddr->len] = backup;
 	return rval;
+}
+
+/*
+ * Test if IP address pointed to by ip belongs to RFC1918 networks
+ */
+static inline int
+is1918addr_ip(struct ip_addr *ip)
+{
+	if (ip->af != AF_INET)
+		return 0;
+	return is1918addr_n(ip->u.addr32[0]);
 }
 
 /*
@@ -1173,6 +1196,12 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurrences of RFC1918 addresses top Via
 	 */
 	if ((tests & NAT_UAC_TEST_V_1918) && via_1918(msg))
+		return 1;
+
+	/*
+	 * test for occurrences of RFC1918 addresses in source address
+	 */
+	if ((tests & NAT_UAC_TEST_O_1918) && is1918addr_ip(&msg->rcv.src_ip))
 		return 1;
 
 	/* no test succeeded */
