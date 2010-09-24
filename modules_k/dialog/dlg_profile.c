@@ -661,6 +661,16 @@ unsigned int get_profile_size(struct dlg_profile_table *profile, str *value)
 	}
 }
 
+/*
+ * Determine if message is in a dialog currently being tracked
+ */
+int	is_known_dlg(struct sip_msg *msg) {
+	if(get_current_dialog(msg) == NULL)
+		return -1;
+
+	return 1;
+}
+
 /****************************** MI commands *********************************/
 
 /*!

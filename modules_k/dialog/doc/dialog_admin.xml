@@ -1388,6 +1388,35 @@ if(dlg_get("abcdef", "123", "456"))
 </programlisting>
 		</example>
 	</section>
+	
+	<section>
+		<title>
+		<function moreinfo="none">is_known_dlg()</function>
+		</title>
+		<para>
+		This function checks if the dialog module is aware of this
+		dialog, regardless of whether it is in any profiles.   The 
+		dialog module tracks all dialogs irrespectively of profile usage;
+		as such, this function will return affirmatively if the request 
+		corresponds to a dialog that is currently active.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>is_known_dlg()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!uri == myself) {
+	if(is_known_dlg()) {
+		xlog("Request $rm from $ci is in-dialog\n");
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 

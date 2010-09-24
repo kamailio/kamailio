@@ -192,4 +192,9 @@ struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param );
  */
 struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param );
 
+/*!
+ * \brief return true if the messages belongs to a tracked dialog
+ */
+int is_known_dlg(struct sip_msg *msg);
+
 #endif

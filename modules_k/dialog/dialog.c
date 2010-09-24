@@ -137,6 +137,7 @@ static int fixup_dlg_bye(void** param, int param_no);
 static int fixup_dlg_refer(void** param, int param_no);
 static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
+static int w_is_known_dlg(struct sip_msg *);
 
 static cmd_export_t cmds[]={
 	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
@@ -170,6 +171,8 @@ static cmd_export_t cmds[]={
 	{"dlg_bridge",(cmd_function)w_dlg_bridge,             3,fixup_dlg_bridge,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"dlg_get",(cmd_function)w_dlg_get,                   3,fixup_dlg_bridge,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"is_known_dlg", (cmd_function)w_is_known_dlg,        0, NULL,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -1306,6 +1309,13 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 	}
 }
 
+/*
+ * Wrapper around is_known_dlg().
+ */
+
+static int w_is_known_dlg(struct sip_msg *msg) {
+	return	is_known_dlg(msg);
+}
 
 static const char *rpc_print_dlgs_doc[2] = {
 	"Print all dialogs", 0
