@@ -2005,7 +2005,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		}
 	}
 	if (proxied != 0 && force == 0) {
-		FORCE_RTP_PROXY_RET (-1);
+		FORCE_RTP_PROXY_RET (-2);
 	}
 	/*
 	 * Parsing of SDP body.

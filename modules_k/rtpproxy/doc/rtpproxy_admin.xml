@@ -419,6 +419,11 @@ force_rtp_proxy();
 		</para></listitem>
 		</itemizedlist>
 		<para>
+			It returns value -2 when a rtp proxy has already mangled the
+			packet, making possible to determine in the script if an
+			rtpproxy is in the audio path.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
