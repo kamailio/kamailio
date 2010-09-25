@@ -438,6 +438,9 @@ modparam("lcr", "flags_column", "gw_flags")
 		<para>
 		Name of the column holding UNIX timestamp telling the
 		time until which the gw is considered as defunct.
+		If timestamp value is 4294967295 (= max UNIX timestamp value)
+		or greater, gw is considered currently unused and is not
+		loaded into memory at all.
 		</para>
 		<para>
 		<emphasis>

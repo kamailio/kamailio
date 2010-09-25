@@ -1110,10 +1110,29 @@ int reload_tables()
 	    goto err;
 	}
 
-	null_gw_ip_addr = 0;
+	null_gw_ip_addr = gw_cnt = 0;
 
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    row = RES_ROWS(res) + i;
+	    if ((VAL_NULL(ROW_VALUES(row) + 11) == 1) ||
+		(VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT)) {
+		LM_ERR("lcr_gw id at row <%u> is null or not int\n", i);
+		goto err;
+	    }
+	    gw_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 11);
+	    if (VAL_NULL(ROW_VALUES(row) + 10)) {
+		defunct_until = 0;
+	    } else {
+		if (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
+		    LM_ERR("lcr_gw defunct at row <%u> is not int\n", i);
+		    goto err;
+		}
+		defunct_until = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
+		if (defunct_until > 4294967294UL) {
+		    LM_DBG("skipping disabled gw <%u>\n", gw_id);
+		    continue;
+		}
+	    }
 	    if (!VAL_NULL(ROW_VALUES(row)) &&
 		(VAL_TYPE(ROW_VALUES(row)) != DB1_STRING)) {
 		LM_ERR("lcr_gw gw_name at row <%u> is not null or string\n", i);
@@ -1277,22 +1296,8 @@ int reload_tables()
 		goto err;
 	    }
 	    flags = (unsigned int)VAL_INT(ROW_VALUES(row) + 9);
-	    if (VAL_NULL(ROW_VALUES(row) + 10)) {
-		defunct_until = 0;
-	    } else {
-		if (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
-		    LM_ERR("lcr_gw defunct at row <%u> is not int\n", i);
-		    goto err;
-		}
-		defunct_until = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
-	    }
-	    if ((VAL_NULL(ROW_VALUES(row) + 11) == 1) ||
-		(VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT)) {
-		LM_ERR("lcr_gw id at row <%u> is null or not int\n", i);
-		goto err;
-	    }
-	    gw_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 11);
-	    if (!insert_gw(gws, i + 1, gw_id, gw_name, gw_name_len,
+	    gw_cnt++;
+	    if (!insert_gw(gws, gw_cnt, gw_id, gw_name, gw_name_len,
 			   scheme, (unsigned int)ip_addr.s_addr, port,
 			   transport, params, params_len, hostname,
 			   hostname_len, ip_string, strip, tag, tag_len, flags,
@@ -1303,8 +1308,6 @@ int reload_tables()
 
 	lcr_dbf.free_result(dbh, res);
 	res = NULL;
-    
-	gw_cnt = i;
 
 	qsort(&(gws[1]), gw_cnt, sizeof(struct gw_info), comp_gws);
 	gws[0].ip_addr = gw_cnt;

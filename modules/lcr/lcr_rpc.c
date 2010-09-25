@@ -46,12 +46,9 @@ static const char* reload_doc[2] = {
 
 static void reload(rpc_t* rpc, void* c)
 {
-    int i;
     lock_get(reload_lock);
-    for (i = 1; i <= lcr_count_param; i++) {
-	if (reload_tables(i) != 1)
-	    rpc->fault(c, 500, "LCR Module Reload Failed");
-    }
+    if (reload_tables() != 1)
+	rpc->fault(c, 500, "LCR Module Reload Failed");
     lock_release(reload_lock);
 }
 
