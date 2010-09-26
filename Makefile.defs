@@ -704,9 +704,6 @@ endif
 ifeq ($(WITHAS), 1)
 	C_DEFS+= -DWITH_AS_SUPPORT
 endif
-ifeq ($(FLAVOUR),kamailio)
-	C_DEFS+= -DLOG_FUNC_NAME
-endif
 
 ifneq ($(STUN),)
 	C_DEFS+= -DUSE_STUN
