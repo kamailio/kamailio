@@ -202,10 +202,12 @@ static int parse_sdp_content(struct sip_msg* msg, struct sdp_session *sess) {
 	unsigned int cline_ip;
 
 	static str supported_media_types[] = {
+		STR_STATIC_INIT("rtp/avp"),
+		STR_STATIC_INIT("rtp/savp"),
+		STR_STATIC_INIT("rtp/avpf"),
+		STR_STATIC_INIT("rtp/savpf"),
 		STR_STATIC_INIT("udp"),
 		STR_STATIC_INIT("udptl"),
-		STR_STATIC_INIT("rtp/avp"),
-		STR_STATIC_INIT("rtp/savpf"),
 		STR_NULL
 	};
 	memset(sess, 0, sizeof(*sess));
