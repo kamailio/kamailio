@@ -41,6 +41,9 @@
 /** if defined the function name will also be logged. */
 #ifdef NO_LOG_FUNC_NAME
 #	undef LOG_FUNC_NAME
+#else
+/* by default log the function name */
+#	define LOG_FUNC_NAME
 #endif /* NO_LOG_FUNC_NAME */
 
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
