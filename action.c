@@ -1089,17 +1089,39 @@ sw_jt_def:
 					  regexec(mct->match[i].l.regex, s.s, 0, 0, 0) == 0)
 					){
 					if (likely(mct->jump[i])){
+						/* make sure we cleanup first, in case run_actions()
+						   exits the script directly via longjmp() */
+						if (rv1){
+							rval_destroy(rv1);
+							rval_destroy(rv);
+							rval_cache_clean(&c1);
+						}else if (rv){
+							rval_destroy(rv);
+							rval_cache_clean(&c1);
+						}
 						ret=run_actions(h, mct->jump[i], msg);
 						h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
 													   returns passthrough */
+						break;
 					}
 					goto match_cleanup;
 				}
 match_cond_def:
 			if (mct->def){
+				/* make sure we cleanup first, in case run_actions()
+				   exits the script directly via longjmp() */
+				if (rv1){
+					rval_destroy(rv1);
+					rval_destroy(rv);
+					rval_cache_clean(&c1);
+				}else if (rv){
+					rval_destroy(rv);
+					rval_cache_clean(&c1);
+				}
 				ret=run_actions(h, mct->def, msg);
 				h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
 											   returns passthrough */
+				break;
 			}
 match_cleanup:
 			if (rv1){
