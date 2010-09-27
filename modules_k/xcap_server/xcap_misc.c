@@ -133,6 +133,10 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		LM_DBG("matched pres-rules\n");
 		xuri->type = PRES_RULES;
 		xuri->auid.len = 10;
+	} else if(s.len>34 && strncmp(s.s, "org.openmobilealliance.pres-rules/", 34)==0) {
+		LM_DBG("matched oma pres-rules\n");
+		xuri->type = PRES_RULES;
+		xuri->auid.len = 33;
 	} else if(s.len>13 && strncmp(s.s, "rls-services/", 13)==0) {
 		LM_DBG("matched rls-services\n");
 		xuri->type = RLS_SERVICE;
