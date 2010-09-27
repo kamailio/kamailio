@@ -52,6 +52,7 @@ typedef struct _cfg_add_var {
 	unsigned int	type;	/*!< type == 0 is also valid, it indicates that the group
 				must be created with the default values */
 	union {
+		char	*ch;
 		str	s;
 		int	i;
 	} val;
@@ -432,5 +433,14 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 
 /* free the memory allocated for a child cb list */
 void cfg_child_cb_free(cfg_child_cb_t *child_cb_first);
+
+/* Allocate memory for a new additional variable
+ * and link it to a configuration group.
+ * type==0 results in creating a new group instance with the default values.
+ * The group is created with CFG_GROUP_UNKNOWN type if it does not exist.
+ * Note: this function is usable only before the configuration is shmized.
+ */
+int new_add_var(str *group_name, unsigned int group_id, str *var_name,
+				void *val, unsigned int type);
 
 #endif /* _CFG_STRUCT_H */

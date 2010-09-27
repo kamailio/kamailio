@@ -332,8 +332,8 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 		but an additional instance of a variable needs to be added to the group.
 		Add this instance to the linked list of variables, they
 		will be fixed later. */
-		/* TODO */
-		return -1;
+		return new_add_var(group_name, *group_id, var_name,
+				val, val_type);
 	}
 
 	/* look-up the group and the variable */
@@ -686,7 +686,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 		&& var->def->on_set_child_cb
 		&& var->def->type & CFG_CB_ONLY_ONCE
 	) {
-		LOG(L_ERR, "ERROR: cfg_set_now(): This variable does not support muliple values.\n");
+		LOG(L_ERR, "ERROR: cfg_set_delayed(): This variable does not support muliple values.\n");
 		goto error0;
 	}
 
@@ -1427,9 +1427,11 @@ int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 	}
 
 	if (!cfg_shmized) {
-		/* TODO: Add a new fake variable belonging to
-		the additional group instance to the linked list. */
-		return -1;
+		/* Add a new variable without any value to
+		the linked list of additional values. This variable
+		will force a new group instance to be created. */
+		return new_add_var(group_name, group_id,  NULL /* var_name */,
+					NULL /* val */, 0 /* type */);
 	}
 
 	if (!(group = cfg_lookup_group(group_name->s, group_name->len))) {

@@ -56,6 +56,10 @@ cfg_child_cb_t	**cfg_child_cb_first = NULL;	/* first item of the per-child proce
 cfg_child_cb_t	**cfg_child_cb_last = NULL;	/* last item of the above list */
 cfg_child_cb_t	*cfg_child_cb = NULL;	/* pointer to the previously executed cb */	
 
+
+/* forward declarations */
+static void del_add_var_list(cfg_group_t *group);
+
 /* creates a new cfg group, and adds it to the linked list */
 cfg_group_t *cfg_new_group(char *name, int name_len,
 		int num, cfg_mapping_t *mapping,
@@ -298,6 +302,8 @@ static void cfg_destory_groups(unsigned char *block)
 			pointers are just set to static variables */
 			if (mapping) pkg_free(mapping);
 		}
+		/* Delete the additional variable list */
+		del_add_var_list(group);
 
 		group2 = group->next;
 		pkg_free(group);
@@ -823,4 +829,130 @@ void cfg_child_cb_free(cfg_child_cb_t *child_cb_first)
 		cb_next = cb->next;
 		shm_free(cb);
 	}
+}
+
+/* Allocate memory for a new additional variable
+ * and link it to a configuration group.
+ * type==0 results in creating a new group instance with the default values.
+ * The group is created with CFG_GROUP_UNKNOWN type if it does not exist.
+ * Note: this function is usable only before the configuration is shmized.
+ */
+int new_add_var(str *group_name, unsigned int group_id, str *var_name,
+				void *val, unsigned int type)
+{
+	cfg_group_t	*group;
+	cfg_add_var_t	*add_var = NULL, **add_var_p;
+	int		len;
+
+	LOG(L_DBG, "DEBUG: new_add_var(): declaring a new variable instance %.*s[%u].%.*s\n",
+			group_name->len, group_name->s,
+			group_id,
+			var_name->len, var_name->s);
+
+	if (cfg_shmized) {
+		LOG(L_ERR, "ERROR: new_add_var(): too late, the configuration has already been shmized\n");
+		goto error;
+	}
+
+	group = cfg_lookup_group(group_name->s, group_name->len);
+	if (!group) {
+		/* create a new group with NULL values, it will be filled in later */
+		group = cfg_new_group(group_name->s, group_name->len,
+					0 /* num */, NULL /* mapping */,
+					NULL /* vars */, 0 /* size */, NULL /* handle */);
+
+		if (!group)
+			goto error;
+		/* It is not yet known whether the group will be static or dynamic */
+		group->dynamic = CFG_GROUP_UNKNOWN;
+	}
+
+	add_var = (cfg_add_var_t *)pkg_malloc(sizeof(cfg_add_var_t) +
+						(type ? (var_name->len - 1) : 0));
+	if (!add_var) {
+		LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+		goto error;
+	}
+	memset(add_var, 0, sizeof(cfg_add_var_t) +
+				(type ? (var_name->len - 1) : 0));
+
+	add_var->group_id = group_id;
+	if (type) {
+		add_var->name_len = var_name->len;
+		memcpy(add_var->name, var_name->s, var_name->len);
+
+		switch (type) {
+		case CFG_VAR_INT:
+			add_var->val.i = (int)(long)val;
+			break;
+
+		case CFG_VAR_STR:
+			len = ((str *)val)->len;
+			add_var->val.s.s = (char *)pkg_malloc(sizeof(char) * len);
+			if (!add_var->val.s.s) {
+				LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+				goto error;
+			}
+			add_var->val.s.len = len;
+			memcpy(add_var->val.s.s, ((str *)val)->s, len);
+			break;
+
+		case CFG_VAR_STRING:
+			len = strlen((char *)val);
+			add_var->val.ch = (char *)pkg_malloc(sizeof(char) * (len + 1));
+			if (!add_var->val.ch) {
+				LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+				goto error;
+			}
+			memcpy(add_var->val.ch, (char *)val, len);
+			add_var->val.ch[len] = '\0';
+			break;
+
+		default:
+			LOG(L_ERR, "ERROR: new_add_var(): unsupported value type: %u\n",
+				type);
+			goto error;
+		}
+		add_var->type = type;
+	}
+
+	/* order the list by group_id, it will be easier to count the group instances */
+	for(	add_var_p = &group->add_var;
+		*add_var_p && ((*add_var_p)->group_id < group_id);
+		add_var_p = &((*add_var_p)->next));
+
+	add_var->next = *add_var_p;
+	*add_var_p = add_var;
+
+	return 0;
+
+error:
+	if (!type)
+		LOG(L_ERR, "ERROR: new_add_var(): failed to add the additional group instance: %.*s[%u]\n",
+			group_name->len, group_name->s, group_id);
+	else
+		LOG(L_ERR, "ERROR: new_add_var(): failed to add the additional variable instance: %.*s[%u].%.*s\n",
+			group_name->len, group_name->s, group_id,
+			var_name->len, var_name->s);
+
+	if (add_var)
+		pkg_free(add_var);
+	return -1;
+}
+
+/* delete the additional variable list */
+static void del_add_var_list(cfg_group_t *group) {
+	cfg_add_var_t	*add_var, *add_var2;
+
+	add_var = group->add_var;
+	while (add_var) {
+		add_var2 = add_var->next;
+		if ((add_var->type == CFG_VAR_STR) && add_var->val.s.s)
+			pkg_free(add_var->val.s.s);
+		else if ((add_var->type == CFG_VAR_STRING) && add_var->val.ch)
+			pkg_free(add_var->val.ch);
+		pkg_free(add_var);
+		add_var = add_var2;
+	}
+	group->add_var = NULL;
 }
