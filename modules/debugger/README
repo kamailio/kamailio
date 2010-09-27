@@ -96,12 +96,13 @@ Chapter 1. Admin Guide
    the config.
 
    Debugging can be done from local or remote host via RPC interface
-   (e.g., XMLRPC, sercmd).
+   (e.g., XMLRPC, sercmd, siremis).
 
    The framework to set breakpoints on specific actions and config lines
-   is not exported to RPC yet, right now each action has an breakpoint.
-   The breakpoint can be enabled/disabled at runtime. Also the config
-   running trace can be enabled/disabled at runtime.
+   is not exported to RPC yet. Each action can be accompanied by an
+   breakpoint or you can use dbg_breakpoint() function to set a breakpoint
+   at certain line. Global breakpoint can be enabled/disabled at runtime.
+   Also the config running trace can be enabled/disabled at runtime.
 
    When the SIP router process is stopped at a breakpoint, you can
    investigate the values of any pseudo-varaibles. Note that some of
@@ -139,6 +140,8 @@ Chapter 1. Admin Guide
 3.1. cfgtrace (int)
 
    Control whether config running trace is enabled or disabled at startup.
+   You can change the value at runtime without restart, globally or per
+   process.
 
    Default value is “0” (disabled).
 
@@ -149,7 +152,7 @@ modparam("debugger", "cfgtrace", 1)
 
 3.2. breakpoint (int)
 
-   Control whether every line (for now) breakpoint is enabled or disabled
+   Control whether every line (global) breakpoint is enabled or disabled
    at startup.
 
    Default value is “0” (disabled).
@@ -224,7 +227,7 @@ modparam("debugger", "step_loops", 100)
 
 4.1.  dbg_breakpoint(mode)
 
-   Achor a breakpoint at that line in config. Mode specifies whether the
+   Anchor a breakpoint at that line in config. Mode specifies whether the
    breakpoint is enabled (1) or disabled (0) at startup.
 
    Note that this version does not export this anchors to RPC for
@@ -282,7 +285,7 @@ if($si=="10.0.0.10")
    Parameters:
      * _cmd_ : inner command, see next section for the list of available
        values.
-     * _pid_ : pid for which to apply the inner command. If it missing,
+     * _pid_ : pid for which to apply the inner command. If it is missing,
        then will be applied for all processes.
      * _params_ : extra params specific for each inner command.
 
