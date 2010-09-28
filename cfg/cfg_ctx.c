@@ -286,7 +286,9 @@ static int cfg_update_defaults(cfg_group_meta_t	*meta,
 				/* The array needs to be cloned before the modification */
 				if (!(array = cfg_clone_array(meta, group)))
 					return -1;
-				ginst = translate_pointer(array, meta->array, ginst);
+				ginst = (cfg_group_inst_t *)translate_pointer((char *)array,
+								(char *)meta->array,
+								(char *)ginst);
 				/* re-link the array to the meta-data */
 				meta->array = array;
 				clone_done = 1;
@@ -459,9 +461,9 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 				 * the complete config block and this array is replaced. */
 				if (!(new_array = cfg_clone_array(CFG_GROUP_META(*cfg_global, group), group)))
 					goto error;
-				group_inst = translate_pointer(new_array,
-					CFG_GROUP_META(*cfg_global, group)->array,
-					group_inst);
+				group_inst = (cfg_group_inst_t *)translate_pointer((char *)new_array,
+					(char *)CFG_GROUP_META(*cfg_global, group)->array,
+					(char *)group_inst);
 				var_block = group_inst->vars;
 				CFG_GROUP_META(block, group)->array = new_array;
 			} else {
