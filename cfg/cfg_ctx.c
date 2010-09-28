@@ -1595,3 +1595,178 @@ error:
 
 	return -1;
 }
+
+/* Apply the changes to a group instance as long as the additional variable
+ * belongs to the specified group_id. *add_var_p is moved to the next additional
+ * variable, and all the consumed variables are freed.
+ * This function can be used only during the cfg shmize process.
+ * For internal use only!
+ */
+int cfg_apply_list(cfg_group_inst_t *ginst, cfg_group_t *group,
+			unsigned int group_id, cfg_add_var_t **add_var_p)
+{
+	cfg_add_var_t	*add_var;
+	cfg_mapping_t	*var;
+	void		*val, *v, *p;
+	str		group_name, var_name, s;
+	char		*old_string;
+
+	group_name.s = group->name;
+	group_name.len = group->name_len;
+	while (*add_var_p && ((*add_var_p)->group_id == group_id)) {
+		add_var = *add_var_p;
+
+		if (add_var->type == 0)
+			goto done; /* Nothing needs to be changed,
+				this additional variable only forces a new
+				group instance to be created. */
+		var_name.s = add_var->name;
+		var_name.len = add_var->name_len;
+
+		if (!(var = cfg_lookup_var2(group, add_var->name, add_var->name_len))) {
+			LOG(L_ERR, "ERROR: cfg_apply_list(): Variable is not found: %.*s.%.*s\n",
+				group->name_len, group->name,
+				add_var->name_len, add_var->name);
+			goto error;
+		}
+
+		/* check whether the variable is read-only */
+		if (var->def->type & CFG_READONLY) {
+			LOG(L_ERR, "ERROR: cfg_apply_list(): variable is read-only\n");
+			goto error;
+		}
+
+		/* The additional variable instances having per-child process callback
+		 * with CFG_CB_ONLY_ONCE flag cannot be rewritten.
+		 * The reason is that such variables typically set global parameters
+		 * as opposed to per-process variables. Hence, it is not possible to set
+		 * the group handle temporary to another block, and then reset it back later. */
+		if (var->def->on_set_child_cb
+			&& var->def->type & CFG_CB_ONLY_ONCE
+		) {
+			LOG(L_ERR, "ERROR: cfg_apply_list(): This variable does not support muliple values.\n");
+			goto error;
+		}
+
+		switch(add_var->type) {
+		case CFG_VAR_INT:
+			val = (void *)(long)add_var->val.i;
+			break;
+		case CFG_VAR_STR:
+			val = (str *)&(add_var->val.s);
+			break;
+		case CFG_VAR_STRING:
+			val = (char *)add_var->val.ch;
+			break;
+		default:
+			LOG(L_ERR, "ERROR: cfg_apply_list(): unsupported variable type: %d\n",
+				add_var->type);
+			goto error;
+		}
+		/* check whether we have to convert the type */
+		if (convert_val(add_var->type, val, CFG_INPUT_TYPE(var), &v))
+			goto error;
+
+		if ((CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
+		&& (var->def->min || var->def->max)) {
+			/* perform a simple min-max check for integers */
+			if (((int)(long)v < var->def->min)
+			|| ((int)(long)v > var->def->max)) {
+				LOG(L_ERR, "ERROR: cfg_apply_list(): integer value is out of range\n");
+				goto error;
+			}
+		}
+
+		if (var->def->on_change_cb) {
+			/* Call the fixup function.
+			The handle can point to the variables of the group instance. */
+			if (var->def->on_change_cb(ginst->vars,
+							&group_name,
+							&var_name,
+							&v) < 0) {
+				LOG(L_ERR, "ERROR: cfg_apply_list(): fixup failed\n");
+				goto error;
+			}
+		}
+
+		p = ginst->vars + var->offset;
+		old_string = NULL;
+		/* set the new value */
+		switch (CFG_VAR_TYPE(var)) {
+		case CFG_VAR_INT:
+			*(int *)p = (int)(long)v;
+			break;
+
+		case CFG_VAR_STRING:
+			/* clone the string to shm mem */
+			s.s = v;
+			s.len = (s.s) ? strlen(s.s) : 0;
+			if (cfg_clone_str(&s, &s)) goto error;
+			old_string = *(char **)p;
+			*(char **)p = s.s;
+			break;
+
+		case CFG_VAR_STR:
+			/* clone the string to shm mem */
+			s = *(str *)v;
+			if (cfg_clone_str(&s, &s)) goto error;
+			old_string = *(char **)p;
+			memcpy(p, &s, sizeof(str));
+			break;
+
+		case CFG_VAR_POINTER:
+			*(void **)p = v;
+			break;
+
+		}
+		if (CFG_VAR_TEST_AND_SET(ginst, var) && old_string)
+			shm_free(old_string); /* the string was already in shm memory,
+					it needs to be freed.
+					This can happen when the same variable is set
+					multiple times before forking. */
+
+		if (add_var->type == CFG_VAR_INT)
+			LOG(L_INFO, "INFO: cfg_apply_list(): %.*s[%u].%.*s "
+				"has been set to %d\n",
+				group_name.len, group_name.s,
+				group_id,
+				var_name.len, var_name.s,
+				(int)(long)val);
+
+		else if (add_var->type == CFG_VAR_STRING)
+			LOG(L_INFO, "INFO: cfg_apply_list(): %.*s[%u].%.*s "
+				"has been set to \"%s\"\n",
+				group_name.len, group_name.s,
+				group_id,
+				var_name.len, var_name.s,
+				(char *)val);
+
+		else /* str type */
+			LOG(L_INFO, "INFO: cfg_apply_list(): %.*s[%u].%.*s "
+				"has been set to \"%.*s\"\n",
+				group_name.len, group_name.s,
+				group_id,
+				var_name.len, var_name.s,
+				((str *)val)->len, ((str *)val)->s);
+
+		convert_val_cleanup();
+
+done:
+		*add_var_p = add_var->next;
+
+		if ((add_var->type == CFG_VAR_STR) && add_var->val.s.s)
+			pkg_free(add_var->val.s.s);
+		else if ((add_var->type == CFG_VAR_STRING) && add_var->val.ch)
+			pkg_free(add_var->val.ch);
+		pkg_free(add_var);
+	}
+	return 0;
+
+error:
+	LOG(L_ERR, "ERROR: cfg_apply_list(): Failed to set the value for: %.*s[%u].%.*s\n",
+		group->name_len, group->name,
+		group_id,
+		add_var->name_len, add_var->name);
+	convert_val_cleanup();
+	return -1;
+}

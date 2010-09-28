@@ -59,6 +59,7 @@ cfg_child_cb_t	*cfg_child_cb = NULL;	/* pointer to the previously executed cb */
 
 /* forward declarations */
 static void del_add_var_list(cfg_group_t *group);
+static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group);
 
 /* creates a new cfg group, and adds it to the linked list */
 cfg_group_t *cfg_new_group(char *name, int name_len,
@@ -255,6 +256,11 @@ int cfg_shmize(void)
 			goto error;
 		}
 	}
+	/* Create the additional group instances with applying
+	the temporary list. */
+	if (apply_add_var_list(block, group))
+		goto error;
+
 	/* try to fixup the selects that failed to be fixed-up previously */
 	if (cfg_fixup_selects()) goto error;
 
@@ -585,6 +591,29 @@ int cfg_lookup_var(str *gname, str *vname,
 			gname->len, gname->s,
 			vname->len, vname->s);
 	return -1;
+}
+
+/* searches a variable definition within a group by its name */
+cfg_mapping_t *cfg_lookup_var2(cfg_group_t *group, char *name, int len)
+{
+	int	i;
+
+	if (!group->mapping) return NULL; /* dynamic group is not ready */
+
+	for (	i = 0;
+		i < group->num;
+		i++
+	) {
+		if ((group->mapping[i].name_len == len)
+		&& (memcmp(group->mapping[i].def->name, name, len)==0)) {
+			return &(group->mapping[i]);
+		}
+	}
+
+	LOG(L_DBG, "DEBUG: cfg_lookup_var2(): variable not found: %.*s.%.*s\n",
+			group->name_len, group->name,
+			len, name);
+	return NULL;
 }
 
 /* clones the global config block
@@ -941,7 +970,8 @@ error:
 }
 
 /* delete the additional variable list */
-static void del_add_var_list(cfg_group_t *group) {
+static void del_add_var_list(cfg_group_t *group)
+{
 	cfg_add_var_t	*add_var, *add_var2;
 
 	add_var = group->add_var;
@@ -955,4 +985,74 @@ static void del_add_var_list(cfg_group_t *group) {
 		add_var = add_var2;
 	}
 	group->add_var = NULL;
+}
+
+/* create the array of additional group instances from the linked list */
+static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group)
+{
+	int		i, num, size;
+	unsigned int	group_id;
+	cfg_add_var_t	*add_var;
+	cfg_group_inst_t	*new_array, *ginst;
+
+	/* count the number of group instances */
+	for (	add_var = group->add_var, num = 0, group_id = 0;
+		add_var;
+		add_var = add_var->next
+	) {
+		if (!num || (group_id != add_var->group_id)) {
+			num++;
+			group_id = add_var->group_id;
+		}
+	}
+
+	if (!num)	/* nothing to do */
+		return 0;
+
+	LOG(L_DBG, "DEBUG: apply_add_var_list(): creating the group instance array "
+		"for '%.*s' with %d slots\n",
+		group->name_len, group->name, num);
+	size = (sizeof(cfg_group_inst_t) + group->size - 1) * num;
+	new_array = (cfg_group_inst_t *)shm_malloc(size);
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: apply_add_var_list(): not enough shm memory\n");
+		return -1;
+	}
+	memset(new_array, 0, size);
+
+	for (i = 0; i < num; i++) {
+		/* Go though each group instance, set the default values,
+		and apply the changes */
+
+		if (!group->add_var) {
+			LOG(L_ERR, "BUG: apply_add_var_list(): no more additional variable left\n");
+			goto error;
+		}
+		ginst = (cfg_group_inst_t *)((char*)new_array + (sizeof(cfg_group_inst_t) + group->size - 1) * i);
+		ginst->id = group->add_var->group_id;
+		/* fill in the new group instance with the default data */
+		memcpy(	ginst->vars,
+			CFG_GROUP_DATA(block, group),
+			group->size);
+		/* cfg_apply_list() moves the group->add_var pointer to
+		the beginning of the new group instance. */
+		if (cfg_apply_list(ginst, group, ginst->id, &group->add_var))
+			goto error;
+	}
+
+#ifdef EXTRA_DEBUG
+	if (group->add_var) {
+		LOG(L_ERR, "BUG: apply_add_var_list(): not all the additional variables have been consumed\n");
+		goto error;
+	}
+#endif
+
+	CFG_GROUP_META(block, group)->num = num;
+	CFG_GROUP_META(block, group)->array = new_array;
+	return 0;
+
+error:
+	LOG(L_ERR, "ERROR: apply_add_var_list(): Failed to apply the additional variable list\n");
+	shm_free(new_array);
+	return -1;
 }

@@ -382,6 +382,9 @@ cfg_group_t *cfg_lookup_group(char *name, int len);
 int cfg_lookup_var(str *gname, str *vname,
 			cfg_group_t **group, cfg_mapping_t **var);
 
+/* searches a variable definition within a group by its name */
+cfg_mapping_t *cfg_lookup_var2(cfg_group_t *group, char *name, int len);
+
 /* clones the global config block
  * WARNING: unsafe, cfg_writer_lock or cfg_global_lock must be held!
  */
