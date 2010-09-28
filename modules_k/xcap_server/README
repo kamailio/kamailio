@@ -322,6 +322,7 @@ event_route[xhttp:request] {
     <auid>xcap-caps</auid>
     <auid>resource-lists</auid>
     <auid>pres-rules</auid>
+    <auid>org.openmobilealliance.pres-rules</auid>
   </auids>
   <extensions>
   </extensions>

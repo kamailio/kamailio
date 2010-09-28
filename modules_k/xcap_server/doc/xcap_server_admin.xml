@@ -369,11 +369,12 @@ event_route[xhttp:request] {
 "&lt;?xml version='1.0' encoding='UTF-8'?&gt;
 &lt;xcap-caps xmlns='urn:ietf:params:xml:ns:xcap-caps'&gt;
   &lt;auids&gt;
-    &lt;auid>rls-services&lt;/auid&gt;
-    &lt;auid>pidf-manipulation&lt;/auid&gt;
-    &lt;auid>xcap-caps&lt;/auid&gt;
-    &lt;auid>resource-lists&lt;/auid&gt;
-    &lt;auid>pres-rules&lt;/auid&gt;
+    &lt;auid&gt;rls-services&lt;/auid&gt;
+    &lt;auid&gt;pidf-manipulation&lt;/auid&gt;
+    &lt;auid&gt;xcap-caps&lt;/auid&gt;
+    &lt;auid&gt;resource-lists&lt;/auid&gt;
+    &lt;auid&gt;pres-rules&lt;/auid&gt;
+    &lt;auid&gt;org.openmobilealliance.pres-rules&lt;/auid&gt;
   &lt;/auids&gt;
   &lt;extensions&gt;
   &lt;/extensions&gt;
