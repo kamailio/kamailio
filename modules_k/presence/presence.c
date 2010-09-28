@@ -122,7 +122,10 @@ static int mi_child_init(void);
 static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
 static int w_pres_refresh_watchers(struct sip_msg *msg, char *puri,
 		char *pevent, char *ptype);
+static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
+		char *pevent);
 static int fixup_refresh_watchers(void** param, int param_no);
+static int fixup_update_watchers(void** param, int param_no);
 
 int counter =0;
 int pid = 0;
@@ -152,6 +155,8 @@ static cmd_export_t cmds[]=
 		fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers, 3,
 		fixup_refresh_watchers, 0, ANY_ROUTE},
+	{"pres_update_watchers",  (cmd_function)w_pres_update_watchers,  2,
+		fixup_update_watchers, 0, ANY_ROUTE},
 	{"bind_presence",         (cmd_function)bind_presence,           1,
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
@@ -1249,6 +1254,87 @@ static int fixup_refresh_watchers(void** param, int param_no)
 		return fixup_spve_null(param, 1);
 	} else if(param_no==3) {
 		return fixup_igp_null(param, 1);
+	}
+	return 0;
+}
+
+
+/**
+ * wrapper for update_watchers_status to use in config
+ */
+static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
+		char *pevent)
+{
+	str pres_uri;
+	str event;
+	pres_ev_t* ev;
+	struct sip_uri uri;
+	str* rules_doc = NULL;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_p)puri, &pres_uri)!=0)
+	{
+		LM_ERR("invalid uri parameter");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)pevent, &event)!=0)
+	{
+		LM_ERR("invalid uri parameter");
+		return -1;
+	}
+
+	ev = contains_event(&event, NULL);
+	if(ev==NULL)
+	{
+		LM_ERR("event %.*s is not registered\n",
+				event.len, event.s);
+		return -1;
+	}
+	if(ev->get_rules_doc==NULL)
+	{
+		LM_DBG("event  %.*s does not provide rules doc API\n",
+				event.len, event.s);
+		return -1;
+	}
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0)
+	{
+		LM_ERR("failed to parse presentity uri [%.*s]\n",
+				pres_uri.len, pres_uri.s);
+		return -1;
+	}
+	ret = ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
+	if((ret < 0) || (rules_doc==NULL) || (rules_doc->s==NULL))
+	{
+		LM_DBG("no xcap rules doc found for presentity uri [%.*s]\n",
+				pres_uri.len, pres_uri.s);
+		if(rules_doc != NULL)
+			pkg_free(rules_doc);
+		return -1;
+	}
+	ret = 1;
+	if(update_watchers_status(pres_uri, ev, rules_doc)<0)
+	{
+		LM_ERR("updating watchers in presence\n");
+		ret = -1;
+	}
+
+	pkg_free(rules_doc->s);
+	pkg_free(rules_doc);
+
+	return ret;
+}
+
+/**
+ * fixup for w_pres_update_watchers
+ */
+static int fixup_update_watchers(void** param, int param_no)
+{
+	if(param_no==1)
+	{
+		return fixup_spve_null(param, 1);
+	} else if(param_no==2) {
+		return fixup_spve_null(param, 1);
 	}
 	return 0;
 }

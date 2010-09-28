@@ -568,6 +568,38 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">pres_update_watchers(uri, event)</function>
+		</title>
+		<para>
+			The function can be used in configuration to triger updates to watchers
+			status if a change in watchers authorization state occurred
+			(i.e., updates of xcap documents change state from pending to active).
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>uri - the uri of the user who made the change
+				and whose watchers should be informed. Can be PV.</para>
+			</listitem>
+			<listitem>
+				<para>event - the event package (e.g., presence).</para>
+			</listitem>
+        </itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pres_update_watchers</function> usage</title>
+		<programlisting format="linespecific">
+...
+pres_update_watchers("sip:test@kamailio.org", "presence");
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 
 <section>

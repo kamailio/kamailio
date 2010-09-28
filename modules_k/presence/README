@@ -58,6 +58,7 @@ Juha Heinanen
               4.2. handle_subscribe()
               4.3. pres_auth_status(watcher_uri, presentity_uri)
               4.4. pres_refresh_watchers(uri, event, type)
+              4.5. pres_update_watchers(uri, event)
 
         5. Exported MI Functions
 
@@ -105,6 +106,7 @@ Juha Heinanen
    1.17. handle_subscribe usage
    1.18. pres_auth_status usage
    1.19. pres_refresh_watchers usage
+   1.20. pres_update_watchers usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -141,6 +143,7 @@ Chapter 1. Admin Guide
         4.2. handle_subscribe()
         4.3. pres_auth_status(watcher_uri, presentity_uri)
         4.4. pres_refresh_watchers(uri, event, type)
+        4.5. pres_update_watchers(uri, event)
 
    5. Exported MI Functions
 
@@ -410,6 +413,7 @@ modparam("presence", "timeout_rm_subs", 0)
    4.2. handle_subscribe()
    4.3. pres_auth_status(watcher_uri, presentity_uri)
    4.4. pres_refresh_watchers(uri, event, type)
+   4.5. pres_update_watchers(uri, event)
 
 4.1.  handle_publish(char* sender_uri)
 
@@ -508,6 +512,24 @@ if (method=="MESSAGE") {
    Example 1.19. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
+...
+
+4.5.  pres_update_watchers(uri, event)
+
+   The function can be used in configuration to triger updates to watchers
+   status if a change in watchers authorization state occurred (i.e.,
+   updates of xcap documents change state from pending to active).
+
+   Parameters:
+     * uri - the uri of the user who made the change and whose watchers
+       should be informed. Can be PV.
+     * event - the event package (e.g., presence).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.20. pres_update_watchers usage
+...
+pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
 
 5. Exported MI Functions
