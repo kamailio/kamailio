@@ -255,11 +255,12 @@ int cfg_shmize(void)
 					group->name_len, group->name);
 			goto error;
 		}
+
+		/* Create the additional group instances with applying
+		the temporary list. */
+		if (apply_add_var_list(block, group))
+			goto error;
 	}
-	/* Create the additional group instances with applying
-	the temporary list. */
-	if (apply_add_var_list(block, group))
-		goto error;
 
 	/* try to fixup the selects that failed to be fixed-up previously */
 	if (cfg_fixup_selects()) goto error;
