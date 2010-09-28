@@ -1333,7 +1333,7 @@ sw_jt_def:
 						ret=run_actions(h, mct->jump[i], msg);
 						h->run_flags &= ~BREAK_R_F; /* catch breaks, but let
 													   returns passthrough */
-						break;
+						goto skip;
 					}
 					goto match_cleanup;
 				}
