@@ -378,7 +378,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
  */
 static int dp_trans_fixup(void ** param, int param_no){
 
-	int dpid, err;
+	int dpid;
 	dp_param_p dp_par= NULL;
 	char *p, *s=NULL;
 	str lstr;
@@ -404,8 +404,8 @@ static int dp_trans_fixup(void ** param, int param_no){
 	if(param_no == 1) {
 		if(*p != '$') {
 			dp_par->type = DP_VAL_INT;
-			dpid = str2s(*param, strlen(*param), &err);
-			if (err != 0) {
+			lstr.s = *param; lstr.len = strlen(*param);
+			if(str2sint(&lstr, &dpid) != 0) {
 				LM_ERR("bad number <%s>\n",(char *)(*param));
 				pkg_free(dp_par);
 				return E_CFG;
@@ -496,7 +496,6 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 	str dpid_str;
 	str input;
 	int dpid;
-	int err;
 	str attrs;
 	str output= {0, 0};
 
@@ -510,8 +509,7 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 		LM_ERR( "empty idp parameter\n");
 		return init_mi_tree(404, "Empty id parameter", 18);
 	}
-	dpid = str2s(dpid_str.s, dpid_str.len, &err);
-	if(err != 0)    {
+	if(str2sint(&dpid_str, &dpid) != 0)	{
 		LM_ERR("Wrong id parameter - should be an integer\n");
 		return init_mi_tree(404, "Wrong id parameter", 18);
 	}
