@@ -227,6 +227,56 @@ int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr)
 	return 0;
 }
 
+/* Add a varibale to a group instance with integer type.
+ * The group instance is created if it does not exist.
+ * wrapper function for new_add_var()
+ */
+int cfg_ginst_var_int(char *group_name, unsigned int group_id, char *var_name,
+			int val)
+{
+	str	gname, vname;
+
+	gname.s = group_name;
+	gname.len = strlen(group_name);
+	vname.s = var_name;
+	vname.len = strlen(var_name);
+
+	return new_add_var(&gname, group_id, &vname,
+			(void *)(long)val, CFG_VAR_INT);
+}
+
+/* Add a varibale to a group instance with string type.
+ * The group instance is created if it does not exist.
+ * wrapper function for new_add_var()
+ */
+int cfg_ginst_var_string(char *group_name, unsigned int group_id, char *var_name,
+			char *val)
+{
+	str	gname, vname;
+
+	gname.s = group_name;
+	gname.len = strlen(group_name);
+	vname.s = var_name;
+	vname.len = strlen(var_name);
+
+	return new_add_var(&gname, group_id, &vname,
+			(void *)val, CFG_VAR_STRING);
+}
+
+/* Create a new group instance.
+ * wrapper function for new_add_var()
+ */
+int cfg_new_ginst(char *group_name, unsigned int group_id)
+{
+	str	gname;
+
+	gname.s = group_name;
+	gname.len = strlen(group_name);
+
+	return new_add_var(&gname, group_id, NULL /* var */,
+			NULL /* val */, 0 /* type */);
+}
+
 /* returns the handle of a cfg group */
 void **cfg_get_handle(char *gname)
 {

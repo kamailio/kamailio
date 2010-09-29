@@ -1632,6 +1632,16 @@ cfg_var:
 	| cfg_var_id DOT cfg_var_id EQUAL error { 
 		yyerror("number or string expected"); 
 	}
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL NUMBER {
+		if (cfg_ginst_var_int($1, $3, $6, $8)) {
+			yyerror("variable cannot be added to the group instance");
+		}
+	}
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL STRING {
+		if (cfg_ginst_var_string($1, $3, $6, $8)) {
+			yyerror("variable cannot be added to the group instance");
+		}
+	}
 	;
 
 module_stm:
