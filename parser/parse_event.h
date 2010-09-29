@@ -48,7 +48,7 @@ enum event_type {
 
 
 struct event_params {
-	struct event_dialog_hooks dialog; /* Well known dialog package params */
+	param_hooks_t hooks; /* Well known dialog package params */
 	param_t* list; /* Linked list of all parsed parameters */
 };
 

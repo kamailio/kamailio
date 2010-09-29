@@ -131,7 +131,7 @@ int event_parser(char* s, int len, event_t* e)
 		/* We have parameters to parse */
 		if (e->type == EVENT_DIALOG) {
 			pclass = CLASS_EVENT_DIALOG;
-			phooks = (param_hooks_t*)&e->params.dialog;
+			phooks = (param_hooks_t*)&e->params.hooks;
 		}
 
 		if (parse_params(&tmp, pclass, phooks, &e->params.list) < 0) {
