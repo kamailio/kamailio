@@ -46,6 +46,8 @@
 #include "../../locking.h"
 #include "../../mem/mem.h"
 
+#include "../../lib/kcore/kstats_wrapper.h"
+
 /*!
  * This function copies an OpenSER "str" datatype into a '\\0' terminated char*
  * string. 
