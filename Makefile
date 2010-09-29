@@ -217,7 +217,7 @@ module_group_kpostgres=db_postgres
 module_group_kcpl=cpl-c
 
 # K radius modules
-module_group_kradius=auth_radius misc_radius peering
+module_group_kradius=acc_radius auth_radius misc_radius peering
 
 # K unixodbc module
 module_group_kunixodbc=db_unixodbc
@@ -259,6 +259,15 @@ module_group_ktls=tls
 module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml \
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
 						rls xcap_client xcap_server
+
+# K lua module
+module_group_klua=app_lua
+
+# K python module
+module_group_kpython=app_python
+
+# K geoip module
+module_group_kgeoip=geoip
 
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
