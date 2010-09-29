@@ -528,6 +528,7 @@ modparam("dispatcher", "force_dst", 1)
  		<para>
 		If you want to set a gateway into probing mode, you will need a specific number of requests until it will change from "active" to probing.
 		The number of attempts can be set with this parameter.
+		This parameter can be modified via ser config framework.
  		</para>
  		<para>
  		<emphasis>
@@ -543,7 +544,27 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
-
+ 	<section>
+ 		<title><varname>ds_ping_reply_codes</varname> (string)</title>
+ 		<para>
+		This parameter defines the valid response codes, which are accepted as a valid reply to the PING-Method.
+		It is a list separated by colons, whery you may define either a single code (e.g. "code=202" would accept 202 as an additional, valid response) or a class of responses, you want to accept (e.g. "class=2" would accept everything from 200 to 299 as valid response).
+		This parameter can be modified via ser config framework.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote></quote> (only 200 OK is accepted).
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_ping_reply_codes</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3")
+ ...
+ </programlisting>
+ 		</example>
+	</section> 	
  	<section>
  		<title><varname>ds_probing_mode</varname> (int)</title>
  		<para>

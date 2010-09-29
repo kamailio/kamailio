@@ -65,6 +65,7 @@
 
 #include "ds_ht.h"
 #include "dispatch.h"
+#include "config.h"
 
 MODULE_VERSION
 
@@ -106,6 +107,11 @@ str ds_ping_method = {"OPTIONS",7};
 str ds_ping_from   = {"sip:dispatcher@localhost", 24};
 static int ds_ping_interval = 0;
 int ds_probing_mode  = 0;
+
+static str ds_ping_reply_codes_str= {NULL, 0};
+static int** ds_ping_reply_codes = NULL;
+static int* ds_ping_reply_codes_cnt;
+
 int ds_append_branch = 1;
 int ds_hash_size = 0;
 int ds_hash_expire = 7200;
@@ -130,6 +136,8 @@ pv_spec_t ds_setid_pv;
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
+
+static int ds_parse_reply_codes();
 
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
 static int w_ds_select_domain(struct sip_msg*, char*, char*);
@@ -200,6 +208,7 @@ static param_export_t params[]={
 	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
 	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
+	{"ds_ping_reply_codes", STR_PARAM, &ds_ping_reply_codes_str},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
 	{"ds_append_branch",   INT_PARAM, &ds_append_branch},
 	{"ds_hash_size",       INT_PARAM, &ds_hash_size},
@@ -263,6 +272,27 @@ static int mod_init(void)
 		ds_setid_pvname.len = strlen(ds_setid_pvname.s);
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
+
+        if(cfg_declare("dispatcher", dispatcher_cfg_def, &default_dispatcher_cfg, cfg_sizeof(dispatcher), &dispatcher_cfg)){
+                LM_ERR("Fail to declare the configuration\n");
+                return -1;
+        }
+	/* Initialize the counter */
+	ds_ping_reply_codes = (int**)shm_malloc(sizeof(unsigned int*));
+	*ds_ping_reply_codes = 0;
+	ds_ping_reply_codes_cnt = (int*)shm_malloc(sizeof(int));
+	*ds_ping_reply_codes_cnt = 0;
+	if(ds_ping_reply_codes_str.s) {
+		ds_ping_reply_codes_str.len = strlen(ds_ping_reply_codes_str.s);
+		cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str) = ds_ping_reply_codes_str;
+		if(ds_parse_reply_codes()< 0)
+		{
+			return -1;
+		}
+	}	
+	/* Copy Threshhold to Config */
+	cfg_get(dispatcher, dispatcher_cfg, probing_threshhold) = probing_threshhold;
+
 
 	if(init_data()!= 0)
 		return -1;
@@ -475,6 +505,9 @@ static void destroy(void)
 	if(ds_db_url.s)
 		ds_disconnect_db();
 	ds_hash_load_destroy();
+	if(ds_ping_reply_codes)
+		shm_free(ds_ping_reply_codes);	
+
 }
 
 /**
@@ -708,4 +741,125 @@ static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
 static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 {
 	return ds_is_from_list(msg, (int)(long)set);
+}
+
+static int ds_parse_reply_codes() {
+	param_t* params_list = NULL;
+	param_t *pit=NULL;
+	int list_size = 0;
+	int i = 0;
+	int pos = 0;
+	int code = 0;
+	str input = {0, 0};
+	int* ds_ping_reply_codes_new = NULL;
+	int* ds_ping_reply_codes_old = NULL;
+
+	/* Validate String: */
+	if (cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0 
+		|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len<=0)
+		return 0;
+
+	/* parse_params will modify the string pointer of .s, so we need to make a copy. */
+	input.s = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s;
+	input.len = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len;
+	
+	/* Parse the parameters: */
+	if (parse_params(&input, CLASS_ANY, 0, &params_list)<0)
+		return -1;
+
+	/* Get the number of entries in the list */
+	for (pit = params_list; pit; pit=pit->next)
+	{
+		if (pit->name.len==4
+				&& strncasecmp(pit->name.s, "code", 4)==0) {
+			str2sint(&pit->body, &code);
+			if ((code >= 100) && (code < 700))
+				list_size += 1;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "class", 5)==0) {
+			str2sint(&pit->body, &code);
+			if ((code >= 1) && (code < 7))
+				list_size += 100;
+		}
+	}
+	LM_INFO("Should be %d Destinations.\n", list_size);
+
+	if (list_size > 0) {
+		/* Allocate Memory for the new list: */
+		ds_ping_reply_codes_new = (int*)shm_malloc(list_size * sizeof(int));
+		if(ds_ping_reply_codes_new== NULL)
+		{
+			free_params(params_list);
+			LM_ERR("no more memory\n");
+			return -1;
+		}
+	 
+		/* Now create the list of valid reply-codes: */
+		for (pit = params_list; pit; pit=pit->next)
+		{
+			if (pit->name.len==4
+					&& strncasecmp(pit->name.s, "code", 4)==0) {
+				str2sint(&pit->body, &code);
+				if ((code >= 100) && (code < 700))
+					ds_ping_reply_codes_new[pos++] = code;
+			} else if (pit->name.len==5
+					&& strncasecmp(pit->name.s, "class", 5)==0) {
+				str2sint(&pit->body, &code);
+				if ((code >= 1) && (code < 7)) {
+					/* Add every code from this class, e.g. 100 to 199 */
+					for (i = (code*100); i <= ((code*100)+99); i++) 
+						ds_ping_reply_codes_new[pos++] = i;
+				}
+			}
+		}
+	} else {
+		ds_ping_reply_codes_new = 0;
+	}
+	free_params(params_list);
+
+	/* More reply-codes? Change Pointer and then set number of codes. */
+	if (list_size > *ds_ping_reply_codes_cnt) {
+		// Copy Pointer
+		ds_ping_reply_codes_old = *ds_ping_reply_codes;
+		*ds_ping_reply_codes = ds_ping_reply_codes_new;
+		// Done: Set new Number of entries:
+		*ds_ping_reply_codes_cnt = list_size;
+		// Free the old memory area:
+		if(ds_ping_reply_codes_old)
+			shm_free(ds_ping_reply_codes_old);	
+	/* Less or equal? Set the number of codes first. */
+	} else {
+		// Done:
+		*ds_ping_reply_codes_cnt = list_size;
+		// Copy Pointer
+		ds_ping_reply_codes_old = *ds_ping_reply_codes;
+		*ds_ping_reply_codes = ds_ping_reply_codes_new;
+		// Free the old memory area:
+		if(ds_ping_reply_codes_old)
+			shm_free(ds_ping_reply_codes_old);	
+	}
+	/* Print the list as INFO: */
+	for (i =0; i< *ds_ping_reply_codes_cnt; i++)
+	{
+		LM_INFO("Dispatcher: Now accepting Reply-Code %d (%d/%d) as valid\n",
+			(*ds_ping_reply_codes)[i], (i+1), *ds_ping_reply_codes_cnt);
+	}
+	return 0;
+}
+
+int ds_ping_check_rplcode(int code)
+{
+	int i;
+	
+	for (i =0; i< *ds_ping_reply_codes_cnt; i++)
+	{
+		if((*ds_ping_reply_codes)[i] == code)
+			return 1;
+	}
+
+	return 0;
+}
+
+void ds_ping_reply_codes_update(str* gname, str* name){
+	ds_parse_reply_codes();
 }

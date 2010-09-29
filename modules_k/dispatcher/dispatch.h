@@ -122,5 +122,10 @@ void ds_check_timer(unsigned int ticks, void* param);
  */
 void ds_ht_timer(unsigned int ticks, void *param);
 
+/*! \brief
+ * Check if the reply-code is valid:
+ */
+int ds_ping_check_rplcode(int);
+
 #endif
 
