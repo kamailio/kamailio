@@ -1,5 +1,3 @@
-#!/usr/bin/awk -f
-
 # This script can be used to find out actual probabilities
 # that correspond to a list of LCR gateway weights.
 
