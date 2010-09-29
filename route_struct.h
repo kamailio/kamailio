@@ -134,6 +134,7 @@ typedef enum _operand_subtype action_param_type;
 #define RETURN_R_F 2
 #define BREAK_R_F  4
 #define DROP_R_F   8
+#define IGNORE_ON_BREAK_R_F 256
 
 
 struct cfg_pos{
