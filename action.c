@@ -1564,7 +1564,8 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	h->rec_lev--;
 end:
 	/* process module onbreak handlers if present */
-	if (unlikely(h->rec_lev==0 && ret==0))
+	if (unlikely(h->rec_lev==0 && ret==0 &&
+					!(h->run_flags & IGNORE_ON_BREAK_R_F)))
 		for (mod=modules;mod;mod=mod->next)
 			if (unlikely(mod->exports.onbreak_f)) {
 				mod->exports.onbreak_f( msg );
@@ -1576,6 +1577,33 @@ error:
 	h->rec_lev--;
 	return ret;
 }
+
+
+
+#ifdef USE_LONGJMP
+/** safe version of run_actions().
+ * It always return (it doesn't longjmp on forced script end).
+ * @returns 0, or 1 on success, <0 on error
+ * (0 if drop or break encountered, 1 if not ) */
+int run_actions_safe(struct run_act_ctx* h, struct action* a,
+						struct sip_msg* msg)
+{
+	struct run_act_ctx ctx;
+	int ret;
+	int ign_on_break;
+	
+	/* start with a fresh action context */
+	init_run_actions_ctx(&ctx);
+	ctx.last_retcode = h->last_retcode;
+	ign_on_break = h->run_flags & IGNORE_ON_BREAK_R_F;
+	ctx.run_flags = h->run_flags | IGNORE_ON_BREAK_R_F;
+	ret = run_actions(&ctx, a, msg);
+	h->last_retcode = ctx.last_retcode;
+	h->run_flags = (ctx.run_flags & ~IGNORE_ON_BREAK_R_F) | ign_on_break;
+	return ret;
+}
+#endif /* USE_LONGJMP */
+
 
 
 int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx *c)

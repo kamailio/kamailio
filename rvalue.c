@@ -901,7 +901,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_ACTION_ST:
 			if (rv->v.action)
-				*i=(run_actions(h, rv->v.action, msg)>0);
+				*i=(run_actions_safe(h, rv->v.action, msg)>0);
 			else
 				*i=0;
 			break;
@@ -1100,7 +1100,7 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_ACTION_ST:
 			if (rv->v.action)
-				i=(run_actions(h, rv->v.action, msg)>0);
+				i=(run_actions_safe(h, rv->v.action, msg)>0);
 			else
 				i=0;
 			tmpv->s=sint2strbuf(i, tmp_cache->i2s,
