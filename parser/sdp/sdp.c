@@ -694,7 +694,7 @@ int parse_sdp(struct sip_msg* _m)
 			res = parse_sdp_session(&body, 0, NULL, (sdp_info_t*)_m->body);
 			if (res != 0) {
 				LM_DBG("free_sdp\n");
-				free_sdp((sdp_info_t**)&_m->body);
+				free_sdp((sdp_info_t**)(void*)&_m->body);
 			}
 			return res;
 			break;
@@ -716,7 +716,7 @@ int parse_sdp(struct sip_msg* _m)
 				}
 				res = parse_mixed_content(&body, mp_delimiter, (sdp_info_t*)_m->body);
 				if (res != 0) {
-					free_sdp((sdp_info_t**)&_m->body);
+					free_sdp((sdp_info_t**)(void*)&_m->body);
 				}
 				return res;
 			} else {
