@@ -948,7 +948,7 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 
 	/* order the list by group_id, it will be easier to count the group instances */
 	for(	add_var_p = &group->add_var;
-		*add_var_p && ((*add_var_p)->group_id < group_id);
+		*add_var_p && ((*add_var_p)->group_id <= group_id);
 		add_var_p = &((*add_var_p)->next));
 
 	add_var->next = *add_var_p;
