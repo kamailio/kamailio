@@ -269,7 +269,7 @@ static int get_direction(struct sip_msg* msg)
 				return -1;
 			}
 		        ret = check_ftag(msg, &((rr_t*)msg->route->parsed)->nameaddr.uri);
-			if (msg->route->parsed) free_rr((rr_t**)&msg->route->parsed);
+			if (msg->route->parsed) free_rr((rr_t**)(void*)&msg->route->parsed);
 			return ret;
 		} else {
 			DBG("No Route headers found\n");
