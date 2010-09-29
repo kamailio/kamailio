@@ -782,7 +782,7 @@ static int ds_parse_reply_codes() {
 				list_size += 100;
 		}
 	}
-	LM_INFO("Should be %d Destinations.\n", list_size);
+	LM_DBG("Should be %d Destinations.\n", list_size);
 
 	if (list_size > 0) {
 		/* Allocate Memory for the new list: */
@@ -841,7 +841,7 @@ static int ds_parse_reply_codes() {
 	/* Print the list as INFO: */
 	for (i =0; i< *ds_ping_reply_codes_cnt; i++)
 	{
-		LM_INFO("Dispatcher: Now accepting Reply-Code %d (%d/%d) as valid\n",
+		LM_DBG("Dispatcher: Now accepting Reply-Code %d (%d/%d) as valid\n",
 			(*ds_ping_reply_codes)[i], (i+1), *ds_ping_reply_codes_cnt);
 	}
 	return 0;
