@@ -354,6 +354,7 @@ cat <<EOF
  lcr dump_gws....... show in memory gateways
  lcr dump_routes.... show in memory routes
  lcr reload ........ reload lcr gateways and routes
+ lcr eval_weights .. evaluates probability for given GW's weights
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_lcr"
