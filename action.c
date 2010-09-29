@@ -680,11 +680,13 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				if (unlikely(i < 0)) {
 					ERR("route \"%s\" not found at %s:%d\n",
 							s.s, (a->cfile)?a->cfile:"line", a->cline);
+					rval_destroy(rv);
 					rval_cache_clean(&c1);
 					s.s = 0;
 					ret = E_SCRIPT;
 					goto error;
 				}
+				rval_destroy(rv);
 				rval_cache_clean(&c1);
 				s.s = 0;
 			} else {
