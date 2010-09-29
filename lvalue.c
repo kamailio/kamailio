@@ -100,9 +100,11 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_ACTION_ST:
 			flags=avp->type & ~AVP_VAL_STR;
-			if (rv->v.action)
+			if (rv->v.action) {
 				value.n=run_actions_safe(h, rv->v.action, msg);
-			else
+				h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
+														    break in expr*/
+			} else
 				value.n=-1;
 			ret=value.n;
 			break;
@@ -275,9 +277,11 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_ACTION_ST:
 			pval.flags=PV_TYPE_INT|PV_VAL_INT;
-			if (rv->v.action)
+			if (rv->v.action) {
 				pval.ri=run_actions_safe(h, rv->v.action, msg);
-			else
+				h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
+														    break in expr*/
+			} else
 				pval.ri=0;
 			ret=pval.ri;
 			break;
