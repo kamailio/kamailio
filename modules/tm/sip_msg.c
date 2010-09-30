@@ -116,6 +116,14 @@ int save_msg_lumps( struct sip_msg *shm_msg, struct sip_msg *pkg_msg)
 		return -1;
 	}
 
+#ifdef EXTRA_DEBUG
+	membar_depends();
+	if (shm_msg->add_rm || shm_msg->body_lumps || shm_msg->reply_lump) {
+		LOG(L_ERR, "ERROR: save_msg_lumps: BUG, trying to overwrite the already cloned lumps\n");
+		return -1;
+	}
+#endif
+
 	/* needless to clone the lumps for ACK, they will not be used again */
 	if (shm_msg->REQ_METHOD == METHOD_ACK)
 		return 0;

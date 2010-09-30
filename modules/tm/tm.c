@@ -1885,17 +1885,19 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 #ifdef POSTPONE_MSG_CLONING
 	struct cell *t;
 
-	t=get_t();
-	if (!t || t==T_UNDEFINED) {
-		LOG(L_ERR, "ERROR: w_t_save_lumps: transaction has not been created yet\n");
-		return -1;
-	}
+	if (is_route_type(REQUEST_ROUTE)) {
+		t=get_t();
+		if (!t || t==T_UNDEFINED) {
+			LOG(L_ERR, "ERROR: w_t_save_lumps: transaction has not been created yet\n");
+			return -1;
+		}
 
-	if (save_msg_lumps(t->uas.request, msg)) {
-		LOG(L_ERR, "ERROR: w_t_save_lumps: "
-			"failed to save the message lumps\n");
-		return -1;
-	}
+		if (save_msg_lumps(t->uas.request, msg)) {
+			LOG(L_ERR, "ERROR: w_t_save_lumps: "
+				"failed to save the message lumps\n");
+			return -1;
+		}
+	} /* else nothing to do, the lumps have already been saved */
 	return 1;
 #else
 	LOG(L_ERR, "ERROR: w_t_save_lumps: POSTPONE_MSG_CLONING is not defined,"
