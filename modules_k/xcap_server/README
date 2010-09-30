@@ -338,11 +338,22 @@ event_route[xhttp:request] {
                     "$var(xbody)");
             exit;
         }
+        # be sure auth user access only its documents
+        if ($au!=$(var(uri){uri.user})) {
+            xhttp_reply("403", "Forbidden", "text/html",
+                    "operation not allowed");
+            exit;
+        }
 
         xdbg("SCRIPT: xcap service $xcapuri(u=>auid) for $xcapuri(u=>xuid)\n");
         switch($rm) {
             case "PUT":
                 xcaps_put("$var(uri)", "$hu", "$rb");
+                if($xcapuri(u=>auid)=~"pres-rules")
+                {
+                    pres_update_watchers("$var(uri)", "presence");
+                    pres_refresh_watchers("$var(uri)", "presence", 1);
+                }
                 exit;
             break;
             case "GET":
@@ -351,6 +362,11 @@ event_route[xhttp:request] {
             break;
             case "DELETE":
                 xcaps_del("$var(uri)", "$hu");
+                if($xcapuri(u=>auid)=~"pres-rules")
+                {
+                    pres_update_watchers("$var(uri)", "presence");
+                    pres_refresh_watchers("$var(uri)", "presence", 1);
+                }
                 exit;
             break;
         }
