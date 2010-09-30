@@ -344,13 +344,11 @@ modparam("xcap_server", "db_url",
 ...
 
 event_route[xhttp:request] {
-#!ifdef WITH_XHTTPAUTH
     if (!www_authorize("xcap", "subscriber"))
     {
         www_challenge("xcap", "0");
         exit;
     }
-#!endif
     if($hu=~"^/xcap-root/")
     {
         set_reply_close();
