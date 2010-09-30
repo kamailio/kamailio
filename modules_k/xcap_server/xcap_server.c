@@ -401,11 +401,12 @@ error:
 static str xcaps_str_empty      = {"", 0};
 static str xcaps_str_ok         = {"OK", 2};
 static str xcaps_str_srverr     = {"Server error", 12};
-static str xcaps_str_nocontent  = {"No content", 10};
+static str xcaps_str_notfound   = {"Not found", 9};
 static str xcaps_str_appxml     = {"application/xml", 15};
 static str xcaps_str_apprlxml   = {"application/resource-lists+xml", 30};
 static str xcaps_str_apprsxml   = {"application/rls-services+xml", 28};
 #if 0
+static str xcaps_str_nocontent  = {"No content", 10};
 static str xcaps_str_appxcxml   = {"application/xcap-caps+xml", 25};
 #endif
 static str xcaps_str_appapxml   = {"application/auth-policy+xml", 27};
@@ -790,7 +791,7 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 				ctype, &body);
 	} else {
 		/* doc not found */
-		xcaps_send_reply(msg, 200, &xcaps_str_nocontent, &xcaps_str_empty,
+		xcaps_send_reply(msg, 404, &xcaps_str_notfound, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
 	}
 	return 1;
