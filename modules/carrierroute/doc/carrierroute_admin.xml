@@ -66,8 +66,8 @@
 		installations it probably make more sense to use the lcr and dispatcher module.
 	</para>
 	<para>
-		If you want to use this module in failure routes, then you need to call
-		<quote>append_branch()</quote> after rewriting the request URI in order to
+		Starting with version 3.0 of kamailio, if you want to use this module in failure routes,
+		it is not needed to call<quote>append_branch()</quote> after rewriting the request URI in order to
 		relay the message to the new target. Its also supportes the usage of database
 		derived failure routing descisions with the carrierfailureroute table.
 	</para>
@@ -845,7 +845,6 @@ failure_route[1] {
 			t_reply("403", "Not allowed");
 		} else {
 			t_on_failure("2");
-			append_branch();
 			t_relay();
 		}
 	}
@@ -895,7 +894,6 @@ failure_route[1] {
 	}
 	$avp(s:host)= $rd+":"+$rp;
 	t_on_failure("1");
-	append_branch();
 	if (!t_relay()) {
 		xlog("L_ERR", "t_relay failed\n");
 		exit;
