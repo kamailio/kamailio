@@ -54,6 +54,9 @@ typedef struct _m_tree
 	str tname;
 	str dbtable;
 	int type;
+	unsigned int nrnodes;
+	unsigned int nritems;
+	unsigned int memsize;
 	mt_node_t *head;
 
 	struct _m_tree *next;

@@ -162,6 +162,8 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
 			return -1;
 		}
 		memset(pt->head, 0, MT_NODE_SIZE*sizeof(mt_node_t));
+		pt->nrnodes++;
+		pt->memsize +=  MT_NODE_SIZE*sizeof(mt_node_t);
 	}
 
 	itn0 = pt->head;
@@ -184,6 +186,8 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
 				return -1;
 			}
 			memset(itn, 0, MT_NODE_SIZE*sizeof(mt_node_t));
+			pt->nrnodes++;
+			pt->memsize +=  MT_NODE_SIZE*sizeof(mt_node_t);
 			itn0[_mt_char_table[(unsigned int)sp->s[l]]].child = itn;
 		}
 		l++;	
@@ -213,6 +217,8 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
 		LM_ERR("no more shm mem!\n");
 		return -1;
 	}
+	pt->memsize +=  (sv->len+1)*sizeof(char);
+	pt->nritems++;
 	strncpy(itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s, sv->s,
 			sv->len);
 	itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.len = sv->len;

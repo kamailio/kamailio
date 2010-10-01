@@ -111,6 +111,7 @@ static int mt_match(struct sip_msg *msg, gparam_t *dm, gparam_t *var,
 
 static struct mi_root* mt_mi_reload(struct mi_root*, void* param);
 static struct mi_root* mt_mi_list(struct mi_root*, void* param);
+static struct mi_root* mt_mi_summary(struct mi_root*, void* param);
 
 static int mt_load_db(str *tname);
 static int mt_load_db_trees();
@@ -141,6 +142,7 @@ static param_export_t params[]={
 static mi_export_t mi_cmds[] = {
 	{ "mt_reload",  mt_mi_reload,  0,  0,  child_init },
 	{ "mt_list",    mt_mi_list,    0,  0,  0 },
+	{ "mt_summary", mt_mi_summary, 0,  0,  0 },
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -886,3 +888,56 @@ error:
 	return 0;
 }
 
+struct mi_root* mt_mi_summary(struct mi_root* cmd_tree, void* param)
+{
+	m_tree_t *pt;
+	struct mi_root* rpl_tree = NULL;
+	struct mi_node* node = NULL;
+	struct mi_attr* attr= NULL;
+	str val;
+
+	if(!mt_defined_trees())
+	{
+		LM_ERR("empty tree list\n");
+		return init_mi_tree( 500, "No trees", 8);
+	}
+
+	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	if(rpl_tree == NULL)
+		return 0;
+
+	pt = mt_get_first_tree();
+
+	while(pt!=NULL)
+	{
+		node = add_mi_node_child(&rpl_tree->node, 0, "MT", 2, 0, 0);
+		if(node == NULL)
+			goto error;
+		attr = add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
+				pt->tname.s, pt->tname.len);
+		if(attr == NULL)
+			goto error;
+		val.s = int2str(pt->memsize, &val.len);
+		attr = add_mi_attr(node, MI_DUP_VALUE, "MEMSIZE", 7,
+				val.s, val.len);
+		if(attr == NULL)
+			goto error;
+		val.s = int2str(pt->nrnodes, &val.len);
+		attr = add_mi_attr(node, MI_DUP_VALUE, "NRNODES", 7,
+				val.s, val.len);
+		if(attr == NULL)
+			goto error;
+		val.s = int2str(pt->nritems, &val.len);
+		attr = add_mi_attr(node, MI_DUP_VALUE, "NRITEMS", 7,
+				val.s, val.len);
+		if(attr == NULL)
+			goto error;
+
+		pt = pt->next;
+	}
+
+	return rpl_tree;
+error:
+	free_mi_tree(rpl_tree);
+	return 0;
+}

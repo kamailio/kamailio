@@ -329,6 +329,26 @@ mt_match("mytree", "$rU", "0");
 		_empty_line_
 		</programlisting>
     </section>
+
+	<section>
+		<title>
+		<function moreinfo="none">mt_summary</function>
+		</title>
+		<para>
+		List usage summary for all trees.
+		</para>
+		<para>
+		Name: <emphasis>mt_summary</emphasis>
+		</para>
+		<para>Parameters: none.</para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:mt_summary:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+    </section>
     </section>
 
 </chapter>
