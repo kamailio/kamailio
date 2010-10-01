@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('dialog','4');
+INSERT INTO version (table_name, table_version) values ('dialog','5');
 CREATE TABLE dialog (
     id SERIAL PRIMARY KEY NOT NULL,
     hash_entry INTEGER NOT NULL,
@@ -21,6 +21,7 @@ CREATE TABLE dialog (
     timeout INTEGER DEFAULT 0 NOT NULL,
     sflags INTEGER DEFAULT 0 NOT NULL,
     toroute INTEGER DEFAULT 0 NOT NULL,
+    toroute_name VARCHAR(32),
     req_uri VARCHAR(128) NOT NULL
 );
 

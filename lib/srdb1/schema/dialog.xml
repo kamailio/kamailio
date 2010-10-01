@@ -9,7 +9,7 @@
 
 <table id="dialog" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dialog</name>
-	<version>4</version>
+	<version>5</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>Persistent dialog information for the dialog module. More 
@@ -181,7 +181,17 @@
 		<type>unsigned int</type>
 		<size>10</size>
 		<default>0</default>
-		<description>The route to be executed at dialog timeout.
+		<description>The ID of route to be executed at dialog timeout (ignored from v3.1,
+			using instead toroute_name).
+		</description>
+	</column>
+
+	<column>
+		<name>toroute_name</name>
+		<type>string</type>
+		<size>32</size>
+		<null/>
+		<description>The name of route to be executed at dialog timeout.
 		</description>
 	</column>
 
