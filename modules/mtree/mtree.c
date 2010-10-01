@@ -753,6 +753,7 @@ void mt_destroy_trees(void)
 		if (*_ptree!=NULL)
 			mt_free_tree(*_ptree);
 		shm_free(_ptree);
+		_ptree = NULL;
 	}
 }
 
