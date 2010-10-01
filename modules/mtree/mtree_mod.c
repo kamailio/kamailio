@@ -90,6 +90,7 @@ pv_spec_t pv_dstid;
 pv_spec_t pv_weight;
 pv_spec_t pv_count;
 int _mt_tree_type = MT_TREE_SVAL;
+int _mt_ignore_duplicates = 0;
 
 /* lock, ref counter and flag used for reloading the date */
 static gen_lock_t *mt_lock = 0;
@@ -136,6 +137,7 @@ static param_export_t params[]={
 	{"pv_weight",      STR_PARAM, &weight_param.s},
 	{"pv_count",       STR_PARAM, &count_param.s},
 	{"mt_tree_type",   INT_PARAM, &_mt_tree_type},
+	{"mt_ignore_duplicates", INT_PARAM, &_mt_ignore_duplicates},
 	{0, 0, 0}
 };
 

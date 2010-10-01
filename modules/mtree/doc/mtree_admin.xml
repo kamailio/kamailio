@@ -255,6 +255,26 @@ modparam("mtree", "mt_tree_type", 1)
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>mt_ignore_duplicates</varname> (integer)</title>
+	    <para>
+		Ignore duplicated prefixes when loading data.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mt_ignore_duplicates</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "mt_ignore_duplicates", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 	
     <section>

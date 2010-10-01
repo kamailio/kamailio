@@ -43,6 +43,7 @@ extern pv_spec_t pv_value;
 extern pv_spec_t pv_dstid;
 extern pv_spec_t pv_weight;
 extern int _mt_tree_type;
+extern int _mt_ignore_duplicates;
 
 /** structures containing prefix-value pairs */
 static m_tree_t **_ptree = NULL; 
@@ -207,6 +208,8 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
 			sp->len, sp->s, sv->len, sv->s,
 			itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.len,
 			itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s);
+		if(_mt_ignore_duplicates!=0)
+			return 1;
 		return -1;
 	}
 
