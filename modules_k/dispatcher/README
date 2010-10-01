@@ -58,11 +58,10 @@ Carsten Bock
               3.21. ds_probing_threshhold (int)
               3.22. ds_ping_reply_codes (string)
               3.23. ds_probing_mode (int)
-              3.24. ds_append_branch (int)
-              3.25. ds_hash_size (int)
-              3.26. ds_hash_expire (int)
-              3.27. ds_hash_initexpire (int)
-              3.28. ds_hash_check_interval (int)
+              3.24. ds_hash_size (int)
+              3.25. ds_hash_expire (int)
+              3.26. ds_hash_initexpire (int)
+              3.27. ds_hash_check_interval (int)
 
         4. Exported Functions
 
@@ -116,15 +115,14 @@ Carsten Bock
    1.22. Set the “ds_probing_threshhold” parameter
    1.23. Set the “ds_ping_reply_codes” parameter
    1.24. Set the “ds_probing_mode” parameter
-   1.25. Set the “ds_append_branch” parameter
-   1.26. Set the “ds_hash_size” parameter
-   1.27. Set the “ds_hash_expire” parameter
-   1.28. Set the “ds_hash_initexpire” parameter
-   1.29. Set the “ds_hash_check_interval” parameter
-   1.30. ds_select_dst usage
-   1.31. ds_load_unset usage
-   1.32. dispatcher list file
-   1.33. Kamailio config script - sample dispatcher usage
+   1.25. Set the “ds_hash_size” parameter
+   1.26. Set the “ds_hash_expire” parameter
+   1.27. Set the “ds_hash_initexpire” parameter
+   1.28. Set the “ds_hash_check_interval” parameter
+   1.29. ds_select_dst usage
+   1.30. ds_load_unset usage
+   1.31. dispatcher list file
+   1.32. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -161,11 +159,10 @@ Chapter 1. Admin Guide
         3.21. ds_probing_threshhold (int)
         3.22. ds_ping_reply_codes (string)
         3.23. ds_probing_mode (int)
-        3.24. ds_append_branch (int)
-        3.25. ds_hash_size (int)
-        3.26. ds_hash_expire (int)
-        3.27. ds_hash_initexpire (int)
-        3.28. ds_hash_check_interval (int)
+        3.24. ds_hash_size (int)
+        3.25. ds_hash_expire (int)
+        3.26. ds_hash_initexpire (int)
+        3.27. ds_hash_check_interval (int)
 
    4. Exported Functions
 
@@ -241,11 +238,10 @@ Chapter 1. Admin Guide
    3.21. ds_probing_threshhold (int)
    3.22. ds_ping_reply_codes (string)
    3.23. ds_probing_mode (int)
-   3.24. ds_append_branch (int)
-   3.25. ds_hash_size (int)
-   3.26. ds_hash_expire (int)
-   3.27. ds_hash_initexpire (int)
-   3.28. ds_hash_check_interval (int)
+   3.24. ds_hash_size (int)
+   3.25. ds_hash_expire (int)
+   3.26. ds_hash_initexpire (int)
+   3.27. ds_hash_check_interval (int)
 
 3.1. list_file (string)
 
@@ -577,20 +573,7 @@ Note
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
 
-3.24. ds_append_branch (int)
-
-   If set to 1, functions will automaticall append a new branch if called
-   in FAILURE_ROUTE. If set to 0, script writer has to call
-   append_branch() in config after calling dispatcher functions.
-
-   Default value is “1”.
-
-   Example 1.25. Set the “ds_append_branch” parameter
- ...
- modparam("dispatcher", "ds_append_branch", 0)
- ...
-
-3.25. ds_hash_size (int)
+3.24. ds_hash_size (int)
 
    The value to be used as power of two to set the number of slots to hash
    table storing data for call load dispatching (e.g., value 8 will create
@@ -599,24 +582,24 @@ Note
 
    Default value is “0”.
 
-   Example 1.26. Set the “ds_hash_size” parameter
+   Example 1.25. Set the “ds_hash_size” parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
 
-3.26. ds_hash_expire (int)
+3.25. ds_hash_expire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
    Default value is “7200”.
 
-   Example 1.27. Set the “ds_hash_expire” parameter
+   Example 1.26. Set the “ds_hash_expire” parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
 
-3.27. ds_hash_initexpire (int)
+3.26. ds_hash_initexpire (int)
 
    Expiration time in seconds to remove the load on a destination if no
    200 for INVITE was received meanwhile and state updated with
@@ -624,19 +607,19 @@ Note
 
    Default value is “7200”.
 
-   Example 1.28. Set the “ds_hash_initexpire” parameter
+   Example 1.27. Set the “ds_hash_initexpire” parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
 
-3.28. ds_hash_check_interval (int)
+3.27. ds_hash_check_interval (int)
 
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
    Default value is “30”.
 
-   Example 1.29. Set the “ds_hash_check_interval” parameter
+   Example 1.28. Set the “ds_hash_check_interval” parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
@@ -703,7 +686,7 @@ Note
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.30. ds_select_dst usage
+   Example 1.29. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -799,7 +782,7 @@ ds_select_dst("1", "$var(a)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.31. ds_load_unset usage
+   Example 1.30. ds_load_unset usage
 ...
 route {
     ...
@@ -907,7 +890,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.32. dispatcher list file
+   Example 1.31. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -932,7 +915,7 @@ r,opt)
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1.33. Kamailio config script - sample dispatcher usage
+   Example 1.32. Kamailio config script - sample dispatcher usage
 ...
 # $Id$
 # sample config file for dispatcher module

@@ -112,7 +112,6 @@ static str ds_ping_reply_codes_str= {NULL, 0};
 static int** ds_ping_reply_codes = NULL;
 static int* ds_ping_reply_codes_cnt;
 
-int ds_append_branch = 1;
 int ds_hash_size = 0;
 int ds_hash_expire = 7200;
 int ds_hash_initexpire = 7200;
@@ -210,7 +209,6 @@ static param_export_t params[]={
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
 	{"ds_ping_reply_codes", STR_PARAM, &ds_ping_reply_codes_str},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
-	{"ds_append_branch",   INT_PARAM, &ds_append_branch},
 	{"ds_hash_size",       INT_PARAM, &ds_hash_size},
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
