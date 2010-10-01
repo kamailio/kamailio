@@ -272,11 +272,11 @@ Chapter 1. Admin Guide
    modules. But for smaller installations it probably make more sense to
    use the lcr and dispatcher module.
 
-   Starting with version 3.0 of kamailio, if you want to use this module
-   in failure routes, it is not needed to call“append_branch()” after
-   rewriting the request URI in order to relay the message to the new
-   target. Its also supportes the usage of database derived failure
-   routing descisions with the carrierfailureroute table.
+   Starting with version 3.1 , if you want to use this module in failure
+   routes, it is not needed to call“append_branch()” after rewriting the
+   request URI in order to relay the message to the new target. Its also
+   supportes the usage of database derived failure routing descisions with
+   the carrierfailureroute table.
 
 2. Dependencies
 
