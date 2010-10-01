@@ -134,6 +134,7 @@ MODULE_VERSION
 struct tm_binds tmb;
 
 static int  mod_init(void);
+static int  child_init(int rank);
 static void xmpp_process(int rank);
 static int  cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar);
 
@@ -200,7 +201,7 @@ struct module_exports exports = {
 	mod_init,        /* Initialization function */
 	0,               /* Response function */
 	0,               /* Destroy function */
-	0,               /* Child init function */
+	child_init,      /* Child init function */
 };
 
 /*
@@ -240,6 +241,30 @@ static int mod_init(void) {
 	if (pipe(pipe_fds) < 0) {
 		LM_ERR("pipe() failed\n");
 		return -1;
+	}
+
+	/* add space for one extra process */
+	register_procs(1);
+
+
+	return 0;
+}
+
+/**
+ * initialize child processes
+ */
+static int child_init(int rank)
+{
+	int pid;
+
+	if (rank==PROC_MAIN) {
+		pid=fork_process(PROC_NOCHLDINIT, "XMPP Manager", 1);
+		if (pid<0)
+			return -1; /* error */
+		if(pid==0){
+			/* child */
+			xmpp_process(1);
+		}
 	}
 
 	return 0;
