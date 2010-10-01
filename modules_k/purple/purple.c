@@ -41,6 +41,7 @@
 MODULE_VERSION
 
 static int init(void);
+static int child_init(int rank);
 static void destroy(void);
 static void runprocs(int rank);
 static int func_send_message(struct sip_msg* msg);
@@ -104,7 +105,7 @@ struct module_exports exports= {
         init,            /* module initialization function */
         0,               /* response function */
         destroy,         /* destroy function */
-  	0,               /* per-child init function */
+        child_init,      /* per-child init function */
 };
 
  
@@ -216,9 +217,32 @@ static int init(void) {
 		return -1;
 	}
 
+	/* add space for one extra process */
+	register_procs(1);
+
 	return 0;
 }
- 
+
+/**
+ * initialize child processes
+ */
+static int child_init(int rank)
+{
+	int pid;
+
+	if (rank==PROC_MAIN) {
+		pid=fork_process(PROC_NOCHLDINIT, "PURPLE Manager", 1);
+		if (pid<0)
+			return -1; /* error */
+		if(pid==0){
+			/* child */
+			runprocs(1);
+		}
+	}
+
+	return 0;
+}
+
 static void destroy(void) {
 	LM_DBG("cleaning up...\n");
 	close(pipefds[0]);
