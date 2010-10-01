@@ -26,11 +26,13 @@
 #include "../../pvar.h"
 #include "dlg_hash.h"
 
+#define DLG_TOROUTE_SIZE	32
 /*! dialog context */
 typedef struct _dlg_ctx {
 	int on;
 	unsigned int flags;
 	int to_route;
+	char to_route_name[DLG_TOROUTE_SIZE];
 	int to_bye;
 	int timeout;
 	struct dlg_cell *dlg;

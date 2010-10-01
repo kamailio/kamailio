@@ -98,6 +98,7 @@ struct dlg_cell
 	unsigned int         dflags;		/*!< internal dialog flags */
 	unsigned int         sflags;		/*!< script dialog flags */
 	unsigned int         toroute;		/*!< index of route that is executed on timeout */
+	str                  toroute_name;	/*!< name of route that is executed on timeout */
 	unsigned int         from_rr_nb;	/*!< information from record routing */
 	struct dlg_tl        tl;		/*!< dialog timer list */
 	str                  callid;		/*!< callid from SIP message */
@@ -237,6 +238,14 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
  * \return 0 on success, -1 on failure
  */
 int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq);
+
+/*!
+ * \brief Set time-out route
+ * \param dlg dialog
+ * \param route name of route
+ * \return 0 on success, -1 on failure
+ */
+int dlg_set_toroute(struct dlg_cell *dlg, str *route);
 
 
 /*!

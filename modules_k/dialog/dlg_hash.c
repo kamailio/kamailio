@@ -175,6 +175,9 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 	if (dlg->cseq[DLG_CALLEE_LEG].s)
 		shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
 
+	if (dlg->toroute_name.s)
+		shm_free(dlg->toroute_name.s);
+
 	shm_free(dlg);
 	dlg = 0;
 }
@@ -759,6 +762,29 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 		"state %d, due event %d\n",dlg,*old_state,*new_state,event);
 }
 
+/**
+ *
+ */
+int dlg_set_toroute(struct dlg_cell *dlg, str *route)
+{
+	if(dlg==NULL || route==NULL || route->len<=0)
+		return 0;
+	if(dlg->toroute_name.s!=NULL) {
+		shm_free(dlg->toroute_name.s);
+		dlg->toroute_name.s = NULL;
+		dlg->toroute_name.len = 0;
+	}
+	dlg->toroute_name.s = (char*)shm_malloc((route->len+1)*sizeof(char));
+	if(dlg->toroute_name.s!=NULL) {
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	memcpy(dlg->toroute_name.s, route->s, route->len);
+	dlg->toroute_name.len = route->len;
+	dlg->toroute_name.s[dlg->toroute_name.len] = '\0';
+	dlg->toroute = route_lookup(&main_rt, dlg->toroute_name.s);
+	return 0;
+}
 
 /**************************** MI functions ******************************/
 /*!

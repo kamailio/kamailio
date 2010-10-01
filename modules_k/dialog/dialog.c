@@ -210,7 +210,7 @@ static param_export_t mod_params[]={
 	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
 	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
 	{ "sflags_column",         STR_PARAM, &sflags_column.s          },
-	{ "toroute_column",        STR_PARAM, &toroute_column.s         },
+	{ "toroute_name_column",   STR_PARAM, &toroute_name_column.s    },
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
@@ -424,7 +424,7 @@ static int mod_init(void)
 	to_sock_column.len = strlen(to_sock_column.s);
 	from_sock_column.len = strlen(from_sock_column.s);
 	sflags_column.len = strlen(sflags_column.s);
-	toroute_column.len = strlen(toroute_column.s);
+	toroute_name_column.len = strlen(toroute_name_column.s);
 	dialog_table_name.len = strlen(dialog_table_name.s);
 
 	/* param checkings */

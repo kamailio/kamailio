@@ -93,13 +93,16 @@ int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
 		break;
 		case 4:
 			if(val->flags&PV_VAL_STR) {
-				if(val->rs.s[val->rs.len]=='\0')
+				if(val->rs.s[val->rs.len]=='\0'
+						&& val->rs.len<DLG_TOROUTE_SIZE) {
 					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);
-				else _dlg_ctx.to_route = 0;
+					strcpy(_dlg_ctx.to_route_name, val->rs.s);
+				} else _dlg_ctx.to_route = 0;
 			} else {
 				if(n!=0) {
 					rtp = int2str(n, NULL);
 					_dlg_ctx.to_route = route_lookup(&main_rt, rtp);
+					strcpy(_dlg_ctx.to_route_name, rtp);
 				} else _dlg_ctx.to_route = 0;
 			}
 			if(_dlg_ctx.to_route <0) _dlg_ctx.to_route = 0;

@@ -708,7 +708,9 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	}
 
 	dlg->lifetime = get_dlg_timeout(msg);
-	dlg->toroute = _dlg_ctx.to_route;
+	s.s   = _dlg_ctx.to_route_name;
+	s.len = strlen(s.s);
+	dlg_set_toroute(dlg, &s);
 	dlg->sflags |= _dlg_ctx.flags;
 
 	if (_dlg_ctx.to_bye!=0)
