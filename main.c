@@ -1274,7 +1274,7 @@ int main_loop()
 			}
 		}
 #else
-		default_core.cfg.udp4_raw = 0;
+		default_core_cfg.udp4_raw = 0;
 #endif /* USE_RAW_SOCKS */
 		} else
 			sendipv6=bind_address;
