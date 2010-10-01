@@ -54,7 +54,7 @@
 #define REQ_URI_COL				"req_uri"
 #define DIALOG_TABLE_NAME		"dialog"
 
-#define DLG_TABLE_VERSION		4
+#define DLG_TABLE_VERSION		5
 
 /*every minute the dialogs' information will be refreshed*/
 #define DB_DEFAULT_UPDATE_PERIOD	60
