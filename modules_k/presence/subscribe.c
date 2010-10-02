@@ -1536,12 +1536,10 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 			switch(s->db_flag)
 			{
 				case NO_UPDATEDB_FLAG:
-				{
 					LM_DBG("NO_UPDATEDB_FLAG\n");
 					break;			  
-				}
+
 				case UPDATEDB_FLAG:
-				{
 					LM_DBG("UPDATEDB_FLAG\n");
 
 					query_vals[pres_uri_col].val.str_val= s->pres_uri;
@@ -1560,14 +1558,12 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 								update_vals, n_query_update, n_update_cols)< 0)
 					{
 						LM_ERR("updating in database\n");
-						if(!no_lock)
-							lock_release(&hash_table[i].lock);	
-						return ;
+					} else {
+						s->db_flag= NO_UPDATEDB_FLAG;	
 					}
 					break;
-				}
+
 				case  INSERTDB_FLAG:
-				{
 					LM_DBG("INSERTDB_FLAG\n");
 
 					query_vals[pres_uri_col].val.str_val= s->pres_uri;
@@ -1594,15 +1590,11 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
 					{
 						LM_ERR("unsuccessful sql insert\n");
-						if(!no_lock)
-							lock_release(&hash_table[i].lock);
-						return ;
+					} else {
+						s->db_flag= NO_UPDATEDB_FLAG;	
 					}
 					break;										
-				}
-
-			}
-			s->db_flag= NO_UPDATEDB_FLAG;	
+			} /* switch */
 			prev_s= s;
 			s= s->next;
 		}
@@ -1808,7 +1800,9 @@ int restore_db_subs(void)
 	
 			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
-			
+
+			if(fallback2db!=0)
+				s.db_flag = NO_UPDATEDB_FLAG;
 			hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
 			if(insert_shtable(subs_htable, hash_code, &s)< 0)
 			{

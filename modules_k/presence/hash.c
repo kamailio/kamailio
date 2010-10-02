@@ -261,10 +261,12 @@ int insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 	}
 
 	new_rec->expires+= (int)time(NULL);
-	if(fallback2db!=0)
-		new_rec->db_flag= INSERTDB_FLAG;
-	else
-		new_rec->db_flag= NO_UPDATEDB_FLAG;
+	if(fallback2db!=0) {
+		if(new_rec->db_flag==0)
+			new_rec->db_flag = INSERTDB_FLAG;
+	} else {
+		new_rec->db_flag = NO_UPDATEDB_FLAG;
+	}
 
 	lock_get(&htable[hash_code].lock);
 	
