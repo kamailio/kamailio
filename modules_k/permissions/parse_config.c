@@ -248,7 +248,7 @@ rule *parse_config_file(char *filename)
 
 	file = fopen(filename,"r");
 	if (!file) {
-		LM_WARN("file not found: %s\n", filename);
+		LM_INFO("file not found: %s\n", filename);
 		return NULL;
 	}
 	
