@@ -775,7 +775,7 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route)
 		dlg->toroute_name.len = 0;
 	}
 	dlg->toroute_name.s = (char*)shm_malloc((route->len+1)*sizeof(char));
-	if(dlg->toroute_name.s!=NULL) {
+	if(dlg->toroute_name.s==NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
