@@ -1424,7 +1424,7 @@ int check_message_support(struct sip_msg* msg)
 
 	if (!msg->contact)
 	{
-		LM_ERR("no Contact found\n");
+		LM_DBG("no Contact found\n");
 		return -1;
 	}
 	if (parse_contact(msg->contact) < 0)
