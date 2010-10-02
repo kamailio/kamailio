@@ -422,7 +422,9 @@ int remove_dialog_from_db(struct dlg_cell * cell)
 	db_key_t match_keys[2] = { &h_entry_column, &h_id_column};
 
 	/*if the dialog hasn 't been yet inserted in the database*/
-	LM_DBG("trying to remove a dialog, update_flag is %i\n", cell->dflags);
+	LM_DBG("trying to remove dialog [%.*s], update_flag is %i\n",
+			cell->callid.len, cell->callid.s,
+			cell->dflags);
 	if (cell->dflags & DLG_FLAG_NEW) 
 		return 0;
 

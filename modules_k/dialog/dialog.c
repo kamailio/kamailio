@@ -111,6 +111,8 @@ struct tm_binds d_tmb;
 struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
 
+int dlg_db_mode_param = DB_MODE_NONE;
+
 /* db stuff */
 static str db_url = str_init(DEFAULT_DB_URL);
 static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
@@ -189,7 +191,7 @@ static param_export_t mod_params[]={
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
 	{ "detect_spirals",        INT_PARAM, &detect_spirals,          },
 	{ "db_url",                STR_PARAM, &db_url.s                 },
-	{ "db_mode",               INT_PARAM, &dlg_db_mode              },
+	{ "db_mode",               INT_PARAM, &dlg_db_mode_param        },
 	{ "table_name",            STR_PARAM, &dialog_table_name        },
 	{ "call_id_column",        STR_PARAM, &call_id_column.s         },
 	{ "from_uri_column",       STR_PARAM, &from_uri_column.s        },
@@ -574,6 +576,7 @@ static int mod_init(void)
 	}
 
 	/* if a database should be used to store the dialogs' information */
+	dlg_db_mode = dlg_db_mode_param;
 	if (dlg_db_mode==DB_MODE_NONE) {
 		db_url.s = 0; db_url.len = 0;
 	} else {
@@ -601,6 +604,8 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	dlg_db_mode = dlg_db_mode_param;
+
 	if (rank==1) {
 		if_update_stat(dlg_enable_stats, active_dlgs, active_dlgs_cnt);
 		if_update_stat(dlg_enable_stats, early_dlgs, early_dlgs_cnt);
