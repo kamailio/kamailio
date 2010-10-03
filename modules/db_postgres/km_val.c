@@ -55,9 +55,11 @@
  * \param _l string length
  * \return 0 on success, negative on error
  */
-int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
+int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s,
+		const int _l)
 {
-	/* use common function for non BLOB, NULL setting and input parameter checking */
+	/* use common function for non BLOB, NULL setting and input
+	 * parameter checking */
 	if ( _t != DB1_BLOB || _s == NULL || _v == NULL) {
 		return db_str2val(_t, _v, _s, _l, 1);
 	} else {
@@ -67,21 +69,24 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		 * The string is stored in new allocated memory, which we could
 		 * not free later thus we need to copy it to some new memory here.
 		 */
- 		tmp_s = (char*)PQunescapeBytea((unsigned char*)_s, (size_t*)(void*)&(VAL_BLOB(_v).len));
+		tmp_s = (char*)PQunescapeBytea((unsigned char*)_s,
+					(size_t*)(void*)&(VAL_BLOB(_v).len));
 		if(tmp_s==NULL) {
 			LM_ERR("PQunescapeBytea failed\n");
 			return -7;
 		}
-		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len);
+		VAL_BLOB(_v).s = pkg_malloc(VAL_BLOB(_v).len + 1);
 		if (VAL_BLOB(_v).s == NULL) {
 			LM_ERR("no private memory left\n");
 			PQfreemem(tmp_s);
 			return -8;
 		}
-		LM_DBG("allocate %d bytes memory for BLOB at %p", VAL_BLOB(_v).len, VAL_BLOB(_v).s);
+		LM_DBG("allocate %d+1 bytes memory for BLOB at %p",
+				VAL_BLOB(_v).len, VAL_BLOB(_v).s);
 		memcpy(VAL_BLOB(_v).s, tmp_s, VAL_BLOB(_v).len);
 		PQfreemem(tmp_s);
 
+		VAL_BLOB(_v).s[VAL_BLOB(_v).len] = '\0';
 		VAL_TYPE(_v) = DB1_BLOB;
 		VAL_FREE(_v) = 1;
 
