@@ -1,97 +1,110 @@
-Prefix route module
+1. prefix_route Module
+
 Alfred E. Heggestad
 
-Sponsored by Telio Telecom
+   Telio Telecom
 
+   Copyright © 2007 Alfred E. Heggestad
 
+   Copyright © 2008 Telio Telecom AS
+     __________________________________________________________________
 
+   1.1. Overview
+   1.2. Parameters
 
-Overview
+        1.2.1. db_url (string)
+        1.2.2. db_table (string)
 
-   The prefix_route module does routing based on a set of prefixes from the
-   database. The prefix rule-set is loaded from the database into a binary
-   tree in memory, either on startup or when issuing the "prefix_route.reload" RPC
-   command. When calling the "prefix_route()" function from the ser.cfg
-   configuration script, it will try to match the user part of the request URI
-   with the best matching route. If a route is found, it will be used for
-   further processing. If not found normal processing will continue.
+   1.3. Functions
 
+        1.3.1. prefix_route()
 
+   1.4. RPC Commands
 
+        1.4.1. prefix_route.reload
+        1.4.2. prefix_route.dump
 
-Exported Parameters
+   1.5. Database Structure
 
-   db_url (string)
+1.1. Overview
 
-   Database URL.
+   The prefix_route module does routing based on a set of prefixes from
+   the database. The prefix rule-set is loaded from the database into a
+   binary tree in memory, either on startup or when issuing the
+   "prefix_route.reload" RPC command. When calling the "prefix_route()"
+   function from the ser.cfg configuration script, it will try to match
+   the user part of the request URI with the best matching route. If a
+   route is found, it will be used for further processing. If not found
+   normal processing will continue.
 
-   Default value is "mysql://ser@localhost/ser". 
+   Development was sponsored by Telio Telecom.
 
-   Example. Set the "db_url" parameter
-   ...
-   modparam("prefix_route", "db_url", "mysql://user:passwd@host.com/dbname")
-   ...
+1.2. Parameters
 
+1.2.1. db_url (string)
 
-   db_table (string)
+   This is URL of the database to be used.
 
-   The name of table where to read prefix route set
+   Default value is "mysql://ser@localhost/ser"
 
-   Default value is "prefix_route". 
+   Example 1. Setting db_url parameter
+...
+modparam("prefix_route", "db_url", "mysql://ser:pass@db_host/ser")
+...
 
-   Example. Set the "db_table" parameter
-   ...
-   modparam("prefix_route", "db_table", "prefix_route")
-   ...
+1.2.2. db_table (string)
 
+   The name of table where to read prefix route set.
 
+   Default value is "prefix_route".
 
+   Example 2. Setting db_table parameter
+...
+modparam("prefix_route", "db_table", "new_prefix_route")
+...
 
-Exported Functions
+1.3. Functions
 
-   prefix_route()
+1.3.1. prefix_route()
 
-   This function tries to find a route from the user part of the request URI.
-   If a route is found, it will be used for further processing. Otherwise the
-   function will return false.
+   This function tries to find a route from the user part of the request
+   URI. If a route is found, it will be used for further processing.
+   Otherwise the function will return false.
 
-   Example:
+   Example 3. prefix_route() usage
+...
+  if (!prefix_route()) {
+      xlog("L_ERR", "prefix_route(): no matching routes\n");
+  }
+...
 
-        if (!prefix_route()) {
-                xlog("L_ERR", "prefix_route(): no matching routes\n");
-        }
+1.4. RPC Commands
 
+1.4.1. prefix_route.reload
 
+   Reload prefix route tree from the database. Validation is done and the
+   prefix route tree will only be reloaded if there are no errors.
 
+1.4.2. prefix_route.dump
 
-RPC commands
+   Dump the current prefix route tree.
 
-   "prefix_route.reload" - Reload prefix route tree from the database.
-                           Validation is done and the prefix route tree will
-                           only be reloaded if there are no errors.
-
-   "prefix_route.dump"   - Dump the current prefix route tree.
-
-
-
-
-Database schema
+1.5. Database Structure
 
    A prefix route set consists of three fields:
+     * prefix - varchar(64) - Prefix rule
+     * route - varchar(64) - Route name
+     * comment - varchar(64) - Free-form comment
 
-     - prefix   varchar(64)  Prefix rule
-     - route    varchar(64)  Route name
-     - comment  varchar(64)  Free-form comment
-
-
-   Example:
-
+   Example 4. Sample data
+...
    +--------+-------+---------------+
    | prefix | route | comment       |
    +--------+-------+---------------+
-   | 46     | SE    | Sweden        | 
-   | 47     | NO    | Norway        | 
-   | 479    | NOMOB | Norway mobile | 
-   | 49     | DE    | Deutschland   | 
-   | 39     | IT    | Italy         | 
+   | 46     | SE    | Sweden        |
+   | 47     | NO    | Norway        |
+   | 479    | NOMOB | Norway mobile |
+   | 49     | DE    | Deutschland   |
+   | 39     | IT    | Italy         |
    +--------+-------+---------------+
+...
