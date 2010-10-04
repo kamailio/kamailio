@@ -32,7 +32,7 @@ files_list= \
 	$(COREPATH)/modules/tm/tm.c:tm \
 	$(COREPATH)/modules_k/dialog/dialog.c:dialog \
 	$(COREPATH)/modules_k/htable/htable.c:htable \
-	$(COREPATH)/modules_k/ratelimit/ratelimit.c:ratelimit_k \
+	$(COREPATH)/modules/ratelimit/ratelimit.c:ratelimit \
 	$(COREPATH)/modules_k/uac/uac_reg.c:uac \
 	$(COREPATH)/modules_k/usrloc/ul_rpc.c:usrloc_k \
 	$(COREPATH)/modules_s/cpl-c/cpl_rpc.c:cpl-c \
@@ -41,9 +41,8 @@ files_list= \
 	$(COREPATH)/modules_s/gflags/gflags.c:gflags \
 	$(COREPATH)/modules_s/pdt/pdt.c:pdt \
 	$(COREPATH)/modules_s/pike/rpc.c:pike \
-	$(COREPATH)/modules_s/prefix_route/pr_rpc.c:prefix_route \
+	$(COREPATH)/modules/prefix_route/pr_rpc.c:prefix_route \
 	$(COREPATH)/modules_s/presence_b2b/rpc.c:presence_b2b \
-	$(COREPATH)/modules_s/ratelimit/ratelimit.c:ratelimit_s \
 	$(COREPATH)/modules_s/usrloc/ul_rpc.c:usrloc_s
 
 
