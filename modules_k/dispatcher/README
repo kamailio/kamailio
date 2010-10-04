@@ -190,12 +190,19 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This modules implements a dispatcher for destination addresses. It
-   computes hashes over parts of the request and selects an address from a
-   destination set. The selected address is used then as outbound proxy.
+   This module offers SIP load balancer functionality and it can be used
+   as SIP traffic dispatcher. There are many load balancing and traffic
+   dispaching algorithms that you can choose from, like: round-robin,
+   weight based load balancing, call load distribution, hashing over SIP
+   message attributes.
 
-   The module can be used as a stateless load balancer, having no
-   guarantee of fair distribution.
+   The module can be used as a stateless load balancer, it does not depend
+   on any call state tracing module. It requires TM module if you enable
+   auto-discovery of active/inactive gateways.
+
+   It is very lightweight, therefore suitable for handling heavy SIP
+   traffic. Its small footprint and ability to load balancing rules from a
+   text plain file makes it suitable for embedded systems.
 
 2. Dependencies
 
@@ -206,6 +213,8 @@ Chapter 1. Admin Guide
 
    The following modules must be loaded before this module:
      * TM - only if active recovery of failed hosts is required.
+     * database engine - only if you want to load balancing routes from
+       database instead of plain text file. .
 
 2.2. External libraries or applications
 
