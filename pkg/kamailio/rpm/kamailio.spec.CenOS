@@ -168,15 +168,15 @@ BuildPrereq:  libconfuse-devel
 The kamailio-carrierroute package contains a fast routing engine.
 
 
-#%package  purple
-#Summary:  Provides the purple module, a multi-protocol IM gateway.
-#Group:    System Environment/Daemons
-#Requires: kamailio = %ver
-#BuildPrereq: libpurple-devel
-#
-#%description purple
-#The kamailio-purple package provides the purple module, a multi-protocol instant
-#messaging gateway module.
+%package  purple
+Summary:  Provides the purple module, a multi-protocol IM gateway.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq: libpurple-devel
+
+%description purple
+The kamailio-purple package provides the purple module, a multi-protocol instant
+messaging gateway module.
 
 
 #%package  ldap
@@ -212,15 +212,15 @@ The kamailio-carrierroute package contains a fast routing engine.
 #Management and Control Interface.
 
 
-#%package  perl
-#Summary:  Perl extensions and database driver for Kamailio.
-#Group:    System Environment/Daemons 
-#Requires: kamailio = %ver
-#BuildPrereq: libperl-devel
-#
-#%description perl
-#The kamailio-perl package provides an interface for Kamailio to write Perl extensions and
-#the perlvdb database driver for Kamailio.
+%package  perl
+Summary:  Perl extensions and database driver for Kamailio.
+Group:    System Environment/Daemons 
+Requires: kamailio = %ver
+BuildPrereq: mod_perl-devel
+
+%description perl
+The kamailio-perl package provides an interface for Kamailio to write Perl extensions and
+the perlvdb database driver for Kamailio.
 
 
 #%package  lua
@@ -273,11 +273,11 @@ make every-module group_include="k%PRESENCE_MODULES"
 make every-module group_include="k%XMPP_MODULES"
 make every-module group_include="k%TLS_MODULES"
 make every-module group_include="k%CARRIERROUTE_MODULES"
-#make every-module group_include="k%PURPLE_MODULES"
+make every-module group_include="k%PURPLE_MODULES"
 #make every-module group_include="k%LDAP_MODULES"
 #make every-module group_include="k%MEMCACHED_MODULES"
 #make every-module group_include="k%XMLRPC_MODULES"
-#make every-module group_include="k%PERL_MODULES"
+make every-module group_include="k%PERL_MODULES"
 #make every-module group_include="k%LUA_MODULES"
 make every-module group_include="k%PYTHON_MODULES"
 make every-module group_include="k%GEOIP_MODULES"
@@ -298,11 +298,11 @@ make install-modules-all group_include="k%PRESENCE_MODULES"
 make install-modules-all group_include="k%XMPP_MODULES"
 make install-modules-all group_include="k%TLS_MODULES"
 make install-modules-all group_include="k%CARRIERROUTE_MODULES"
-#make install-modules-all group_include="k%PURPLE_MODULES"
+make install-modules-all group_include="k%PURPLE_MODULES"
 #make install-modules-all group_include="k%LDAP_MODULES"
 #make install-modules-all group_include="k%MEMCACHED_MODULES"
 #make install-modules-all group_include="k%XMLRPC_MODULES"
-#make install-modules-all group_include="k%PERL_MODULES"
+make install-modules-all group_include="k%PERL_MODULES"
 #make install-modules-all group_include="k%LUA_MODULES"
 make install-modules-all group_include="k%PYTHON_MODULES"
 make install-modules-all group_include="k%GEOIP_MODULES"
@@ -664,10 +664,10 @@ fi
 %{_libdir}/kamailio/modules/carrierroute.so
 
 
-#%files purple
-#%defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules_k/README.purple
-#%{_libdir}/kamailio/modules_k/purple.so
+%files purple
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules_k/README.purple
+%{_libdir}/kamailio/modules_k/purple.so
 
 
 #%files ldap
@@ -690,13 +690,32 @@ fi
 #%{_libdir}/kamailio/modules_k/memcached.so
 
 
-#%files perl
-#%defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules_k/README.perl
-#%doc %{_docdir}/kamailio/modules_k/README.perlvdb
-#%{_libdir}/kamailio/modules_k/perl.so
-#%{_libdir}/kamailio/modules_k/perlvdb.so
-
+%files perl
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules_k/README.perl
+%doc %{_docdir}/kamailio/modules_k/README.perlvdb
+%{_libdir}/kamailio/modules_k/perl.so
+%{_libdir}/kamailio/modules_k/perlvdb.so
+%{_libdir}/kamailio/perl/OpenSER.pm
+%{_libdir}/kamailio/perl/OpenSER/Constants.pm
+%{_libdir}/kamailio/perl/OpenSER/LDAPUtils/LDAPConf.pm
+%{_libdir}/kamailio/perl/OpenSER/LDAPUtils/LDAPConnection.pm
+%{_libdir}/kamailio/perl/OpenSER/Message.pm
+%{_libdir}/kamailio/perl/OpenSER/Utils/Debug.pm
+%{_libdir}/kamailio/perl/OpenSER/Utils/PhoneNumbers.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/AccountingSIPtrace.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Alias.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Auth.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Describe.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Speeddial.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/TableVersions.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Column.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Pair.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/ReqCond.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Result.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/VTab.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Value.pm
 
 #%files lua
 #%defattr(-,root,root)
