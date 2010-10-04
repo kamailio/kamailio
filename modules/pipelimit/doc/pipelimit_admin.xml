@@ -42,7 +42,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				<emphasis>database connection module</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -65,6 +65,106 @@
 	</section>
 	<section>
 	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		URL of the database server to be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>&defaultdb;</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "db_url", "&exampledb;")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>plp_table_name</varname> (string)</title>
+	    <para>
+			Name of DB table where data definitio for pipes is stores.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>pl_pipes</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_table_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_table_name", "mypipes")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>plp_pipeid_column</varname> (string)</title>
+	    <para>
+		Name of 'pipeid' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>pipeid</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_pipeid_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_pipeid_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>plp_limit_column</varname> (string)</title>
+	    <para>
+		Name of 'limit' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>limit</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_limit_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_limit_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>plp_algorithm_column</varname> (string)</title>
+	    <para>
+		Name of 'algorithm' column.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>algorithm</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>plp_algorithm_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pipelimit", "plp_algorithm_column", "name")
+...
+</programlisting>
+	    </example>
+	</section>
+
 	<section>
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>

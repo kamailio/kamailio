@@ -132,10 +132,10 @@ static param_export_t params[]={
 	{"reply_code",     INT_PARAM,                &pl_drop_code},
 	{"reply_reason",   STR_PARAM,                &pl_drop_reason.s},
 	{"db_url",            STR_PARAM,             &pl_db_url},
-	{"rlp_pipeid_col",    STR_PARAM,             &rlp_pipeid_col},
-	{"rlp_limit_col",     STR_PARAM,             &rlp_limit_col},
-	{"rlp_algorithm_col", STR_PARAM,             &rlp_algorithm_col},
-	{"rlp_table_name",    STR_PARAM,             &rlp_table_name},
+	{"plp_table_name",    STR_PARAM,             &rlp_table_name},
+	{"plp_pipeid_colunm",    STR_PARAM,             &rlp_pipeid_col},
+	{"plp_limit_column",     STR_PARAM,             &rlp_limit_col},
+	{"plp_algorithm_column", STR_PARAM,             &rlp_algorithm_col},
 
 	{0,0,0}
 };

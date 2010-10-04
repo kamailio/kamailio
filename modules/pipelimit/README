@@ -8,9 +8,9 @@ Edited by
 
 Daniel-Constantin Mierla
 
-   Copyright � 2010 Asipto.com
+   Copyright © 2010 Asipto.com
 
-   Copyright � 2006 Freenet Cityline GmbH
+   Copyright © 2006 Freenet Cityline GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -25,9 +25,14 @@ Daniel-Constantin Mierla
 
         3. Exported Parameters
 
-              3.1. timer_interval (integer)
-              3.2. reply_code (integer)
-              3.3. reply_reason (string)
+              3.1. db_url (string)
+              3.2. plp_table_name (string)
+              3.3. plp_pipeid_column (string)
+              3.4. plp_limit_column (string)
+              3.5. plp_algorithm_column (string)
+              3.6. timer_interval (integer)
+              3.7. reply_code (integer)
+              3.8. reply_reason (string)
 
         4. Exported Functions
 
@@ -45,13 +50,18 @@ Daniel-Constantin Mierla
 
    List of Examples
 
-   1.1. Set timer_interval parameter
-   1.2. Set reply_code parameter
-   1.3. Set reply_code parameter at runtime
-   1.4. Set reply_reason parameter
-   1.5. Set reply_reason parameter at runtime
-   1.6. rl_check usage
-   1.7. pl_drop usage
+   1.1. Set db_url parameter
+   1.2. Set plp_table_name parameter
+   1.3. Set plp_pipeid_column parameter
+   1.4. Set plp_limit_column parameter
+   1.5. Set plp_algorithm_column parameter
+   1.6. Set timer_interval parameter
+   1.7. Set reply_code parameter
+   1.8. Set reply_code parameter at runtime
+   1.9. Set reply_reason parameter
+   1.10. Set reply_reason parameter at runtime
+   1.11. rl_check usage
+   1.12. pl_drop usage
 
 Chapter 1. Admin Guide
 
@@ -65,9 +75,14 @@ Chapter 1. Admin Guide
 
    3. Exported Parameters
 
-        3.1. timer_interval (integer)
-        3.2. reply_code (integer)
-        3.3. reply_reason (string)
+        3.1. db_url (string)
+        3.2. plp_table_name (string)
+        3.3. plp_pipeid_column (string)
+        3.4. plp_limit_column (string)
+        3.5. plp_algorithm_column (string)
+        3.6. timer_interval (integer)
+        3.7. reply_code (integer)
+        3.8. reply_reason (string)
 
    4. Exported Functions
 
@@ -107,7 +122,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other Kamailio modules.
+     * database connection module.
 
 2.2. External Libraries or Applications
 
@@ -117,11 +132,71 @@ Chapter 1. Admin Guide
 
 3. Exported Parameters
 
-   3.1. timer_interval (integer)
-   3.2. reply_code (integer)
-   3.3. reply_reason (string)
+   3.1. db_url (string)
+   3.2. plp_table_name (string)
+   3.3. plp_pipeid_column (string)
+   3.4. plp_limit_column (string)
+   3.5. plp_algorithm_column (string)
+   3.6. timer_interval (integer)
+   3.7. reply_code (integer)
+   3.8. reply_reason (string)
 
-3.1. timer_interval (integer)
+3.1. db_url (string)
+
+   URL of the database server to be used.
+
+   Default value is “mysql://openser:openserrw@localhost/openser”.
+
+   Example 1.1. Set db_url parameter
+...
+modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+3.2. plp_table_name (string)
+
+   Name of DB table where data definitio for pipes is stores.
+
+   Default value is “pl_pipes”.
+
+   Example 1.2. Set plp_table_name parameter
+...
+modparam("pipelimit", "plp_table_name", "mypipes")
+...
+
+3.3. plp_pipeid_column (string)
+
+   Name of 'pipeid' column.
+
+   Default value is “pipeid”.
+
+   Example 1.3. Set plp_pipeid_column parameter
+...
+modparam("pipelimit", "plp_pipeid_column", "name")
+...
+
+3.4. plp_limit_column (string)
+
+   Name of 'limit' column.
+
+   Default value is “limit”.
+
+   Example 1.4. Set plp_limit_column parameter
+...
+modparam("pipelimit", "plp_limit_column", "name")
+...
+
+3.5. plp_algorithm_column (string)
+
+   Name of 'algorithm' column.
+
+   Default value is “algorithm”.
+
+   Example 1.5. Set plp_algorithm_column parameter
+...
+modparam("pipelimit", "plp_algorithm_column", "name")
+...
+
+3.6. timer_interval (integer)
 
    The initial length of a timer interval in seconds. All amounts of
    messages have to be divided by this timer to get a messages per second
@@ -132,41 +207,41 @@ Chapter 1. Admin Guide
 
    Default value is 10.
 
-   Example 1.1. Set timer_interval parameter
+   Example 1.6. Set timer_interval parameter
 ...
 modparam("ratelimit", "timer_interval", 5)
 ...
 
-3.2. reply_code (integer)
+3.7. reply_code (integer)
 
    The code of the reply sent by Kamailio while limiting.
 
    Default value is 503.
 
-   Example 1.2. Set reply_code parameter
+   Example 1.7. Set reply_code parameter
 ...
 modparam("ratelimit", "reply_code", 505)
 ...
 
    This value cant be modified at runtime using sercmd
 
-   Example 1.3.  Set reply_code parameter at runtime
+   Example 1.8.  Set reply_code parameter at runtime
 sercmd cfg.set_now_int ratelimit reply_code 505
 
-3.3. reply_reason (string)
+3.8. reply_reason (string)
 
    The reason of the reply sent by Kamailio while limiting.
 
    Default value is "Server Unavailable".
 
-   Example 1.4. Set reply_reason parameter
+   Example 1.9. Set reply_reason parameter
 ...
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
 
    This value cant be modified at runtime using sercmd
 
-   Example 1.5.  Set reply_reason parameter at runtime
+   Example 1.10.  Set reply_reason parameter at runtime
 sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
 4. Exported Functions
@@ -187,7 +262,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.6. rl_check usage
+   Example 1.11. rl_check usage
 ...
         # perform pipe match for current method
         if (!pl_check("one")) {
@@ -219,7 +294,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.7. pl_drop usage
+   Example 1.12. pl_drop usage
 ...
         if (!pl_check("one")) {
                 # send back a "503 - Server Unavailable"
