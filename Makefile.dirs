@@ -18,6 +18,6 @@ override makefile_dirs_included:=1
 #            support '-' in variables)
 # makefile module related targets will be defined based on them:
 # install-$(1), install-$(1)-doc, $(1) a.s.o.
-modules_dirs= modules modules_s modules_k
+modules_dirs?= modules modules_s modules_k
 
 endif
