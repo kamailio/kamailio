@@ -34,7 +34,7 @@ struct unc_as{
 /*should only be modified by the dispatcher process, or we should add a lock*/
 extern struct unc_as unc_as_t[];
 
-int process_unbind_action(as_p as,char *payload,int len);
-int process_bind_action(as_p as,char *payload,int len);
-int dispatcher_main_loop(void);
+int process_unbind_action(as_p as,unsigned char processor_id,unsigned int flags,char *payload,int len);
+int process_bind_action(as_p as,unsigned char processor_id,unsigned int flags,char *payload,int len);
+int dispatcher_main_loop();
 int spawn_action_dispatcher(struct as_entry *as);

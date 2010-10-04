@@ -378,7 +378,7 @@ static int open_server_sockets(struct ip_addr *address,unsigned short port,int *
 	 LM_ERR("setsockopt (%s)\n",strerror(errno));
 	 goto error;
       }
-      if ((bind(fd[i], &su.s,sizeof(union sockaddr_union)))==-1){
+      if ((bind(fd[i],(struct sockaddr *)&(su.s),sizeof(struct sockaddr_in)))==-1){
 	 LM_ERR( "bind (%s)\n",strerror(errno));
 	 goto error;
       }
@@ -730,7 +730,7 @@ again:
    }
    as->u.as.ev_buffer.len+=j;
    LM_DBG("read %d bytes from AS (total = %d)\n",j,as->u.as.ev_buffer.len);
-   if(as->u.as.ev_buffer.len>5)
+   if(as->u.as.ev_buffer.len>10)
       process_event_reply(&as->u.as);
    return 0;
 }
@@ -759,7 +759,14 @@ again:
 static int process_event_reply(as_p as)
 {
    unsigned int ev_len;
-   ev_len=(as->ev_buffer.s[0]<<24)|(as->ev_buffer.s[1]<<16)|(as->ev_buffer.s[2]<<8)|(as->ev_buffer.s[3]);/*yeah, it comes in network byte order*/
+   unsigned char processor_id,type;
+   unsigned int flags;
+
+   ev_len=(as->ev_buffer.s[0]<<24)|(as->ev_buffer.s[1]<<16)|(as->ev_buffer.s[2]<<8)|((as->ev_buffer.s[3])&0xFF);
+   type=as->ev_buffer.s[4];
+   processor_id=as->ev_buffer.s[5];
+   flags=(as->ev_buffer.s[6]<<24)|(as->ev_buffer.s[7]<<16)|(as->ev_buffer.s[8]<<8)|((as->ev_buffer.s[9])&0xFF);
+ 
    /*if ev_len > BUF_SIZE then a flag should be put on the AS so that the whole length
     * of the action is skipped, until a mechanism for handling big packets is implemented*/
    if(ev_len>AS_BUF_SIZE){
@@ -769,22 +776,35 @@ static int process_event_reply(as_p as)
    }
    if((as->ev_buffer.len<ev_len) || as->ev_buffer.len<4)
       return 0;
-   switch(as->ev_buffer.s[4]){
-      case BIND_AC:
-	 LM_DBG("Processing a BIND action from AS (length=%d): %.*s\n",
-	 ev_len,as->name.len,as->name.s);
-	 process_bind_action(as,&as->ev_buffer.s[5],ev_len-5);
-	 break;
-      case UNBIND_AC:
-	 LM_DBG("Processing a UNBIND action from AS (length=%d): %.*s\n",
-			 ev_len,as->name.len,as->name.s);
-	 process_unbind_action(as,&as->ev_buffer.s[5],ev_len-5);
-	 break;
-      default:
-	 return 0;
+
+   while (as->ev_buffer.len>=ev_len) {
+      switch(type){
+         case BIND_AC:
+            LM_DBG("Processing a BIND action from AS (length=%d): %.*s\n",
+                  ev_len,as->name.len,as->name.s);
+            process_bind_action(as,processor_id,flags,&as->ev_buffer.s[10],ev_len-10);
+            break;
+         case UNBIND_AC:
+            LM_DBG("Processing a UNBIND action from AS (length=%d): %.*s\n",
+                  ev_len,as->name.len,as->name.s);
+            process_unbind_action(as,processor_id,flags,&as->ev_buffer.s[10],ev_len-10);
+            break;
+         default:
+            LM_DBG("Unknown action type %d (len=%d,proc=%d,flags=%d)\n",type,ev_len,(int)processor_id,flags);
+            return 0;
+      }
+      memmove(as->ev_buffer.s,&(as->ev_buffer.s[ev_len]),(as->ev_buffer.len)-ev_len);
+      (as->ev_buffer.len)-=ev_len;
+      if(as->ev_buffer.len>10){
+         ev_len=(as->ev_buffer.s[0]<<24)|(as->ev_buffer.s[1]<<16)|(as->ev_buffer.s[2]<<8)|((as->ev_buffer.s[3])&0xFF);
+         type=as->ev_buffer.s[4];
+         processor_id=as->ev_buffer.s[5];
+         flags=(as->ev_buffer.s[6]<<24)|(as->ev_buffer.s[7]<<16)|(as->ev_buffer.s[8]<<8)|((as->ev_buffer.s[9])&0xFF);
+      }else{
+         return 0;
+      }
    }
-   memmove(as->ev_buffer.s,&(as->ev_buffer.s[ev_len]),(as->ev_buffer.len)-ev_len);
-   (as->ev_buffer.len)-=ev_len;
+
    return 0;
 }
 
@@ -792,8 +812,6 @@ static int process_event_reply(as_p as)
 /**
  * processes a BIND event type from the AS.
  * Bind events follow this form:
- * 4:flags
- * 1:processor_id
  * 1:Address Family
  * 1:address length in bytes (16 for ipv6, 4 for ipv4) in NETWORK BYTE ORDER (fortunately, ip_addr struct stores it in NBO)
  * [16|4]:the IP address
@@ -801,19 +819,16 @@ static int process_event_reply(as_p as)
  * 2:NBO port
  *
  */
-int process_bind_action(as_p as,char *payload,int len)
+int process_bind_action(as_p as,unsigned char processor_id,unsigned int flags,char *payload,int len)
 {
    struct socket_info *si,*xxx_listen;
    struct ip_addr my_addr;
    int i,k,proto;
-   unsigned int flags;
    unsigned short port;
-   char processor_id,buffer[300],*proto_s;
+   char buffer[300],*proto_s;
    k=0;
    *buffer=0;
    proto_s="NONE";
-   net2hostL(flags,payload,k);
-   processor_id=payload[k++];
    for(i=0;i<MAX_BINDS;i++){
       if(as->bound_processor[i]==0)
 	 break;
@@ -875,14 +890,10 @@ error:
  * 1:processor_id
  *
  */
-int process_unbind_action(as_p as,char *payload,int len)
+int process_unbind_action(as_p as,unsigned char processor_id,unsigned int flags,char *payload,int len)
 {
    int i,k;
-   unsigned int flags;
-   char processor_id;
    k=0;
-   net2hostL(flags,payload,k);
-   processor_id=payload[k++];
    for(i=0;i<as->num_binds;i++){
       if(as->bound_processor[i] == processor_id)
 	 break;

@@ -85,9 +85,10 @@ static inline int calculate_hooks(dlg_t* _d);
 
 static inline int process_input(int fd);
 static inline int process_pings(struct ha *the_table);
-static inline int ac_jain_pong(as_p the_as,char *action,int len);
+static inline int ac_jain_pong(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len);
 int process_pong(struct ha *the_table,unsigned int seqno);
 int print_local_uri(as_p as,char processor_id,char *where,int len);
+void uas_e2e_ack_cb(struct cell* t, int type,struct tmcb_params *rcvd_params);
 
 
 int dispatch_actions(void)
@@ -189,7 +190,7 @@ again:
    LM_DBG("read %d bytes from AS action socket (total = %d)\n",j,my_as->u.as.ac_buffer.len);
    if(use_stats)
       receivedplus();
-   if(my_as->u.as.ac_buffer.len>5){
+   if(my_as->u.as.ac_buffer.len>=10){
       process_action(&my_as->u.as);
       LM_DBG("(Action dispatched,buffer.len=%d)\n",my_as->u.as.ac_buffer.len);
    }
@@ -276,7 +277,13 @@ static inline void set_process_no()
 int process_action(as_p the_as)
 {
    unsigned int ac_len;
+   unsigned char processor_id,type;
+   unsigned int flags;
+
    ac_len=(the_as->ac_buffer.s[0]<<24)|(the_as->ac_buffer.s[1]<<16)|(the_as->ac_buffer.s[2]<<8)|((the_as->ac_buffer.s[3])&0xFF);
+   type=the_as->ac_buffer.s[4];
+   processor_id=the_as->ac_buffer.s[5];
+   flags=(the_as->ac_buffer.s[6]<<24)|(the_as->ac_buffer.s[7]<<16)|(the_as->ac_buffer.s[8]<<8)|((the_as->ac_buffer.s[9])&0xFF);
    /*yeah, it comes in network byte order*/
    /*if ac_len > BUF_SIZE then a flag should be put on the AS so that the whole length
     * of the action is skipped, until a mechanism for handling big packets is implemented*/
@@ -289,31 +296,31 @@ int process_action(as_p the_as)
    }
    while (the_as->ac_buffer.len>=ac_len) {
       LM_DBG("Processing action %d bytes long\n",ac_len);
-      switch(the_as->ac_buffer.s[4]){
+      switch(type){
 	 case REPLY_PROV:
 	 case REPLY_FIN:
 	    LM_DBG("Processing a REPLY action from AS (length=%d): %.*s\n",
 				ac_len,the_as->name.len,the_as->name.s);
-	    ac_reply(the_as,the_as->ac_buffer.s+5,ac_len-5);
+	    ac_reply(the_as,processor_id,flags,the_as->ac_buffer.s+10,ac_len-10);
 	    break;
 	 case UAC_REQ:
 	    LM_DBG("Processing an UAC REQUEST action from AS (length=%d): %.*s\n",
 				ac_len,the_as->name.len,the_as->name.s);
-	    ac_uac_req(the_as,the_as->ac_buffer.s+5,ac_len-5);
+	    ac_uac_req(the_as,processor_id,flags,the_as->ac_buffer.s+10,ac_len-10);
 	    break;
 	 case AC_CANCEL:
 	    LM_DBG("Processing a CANCEL REQUEST action from AS (length=%d): %.*s\n",
 				ac_len,the_as->name.len,the_as->name.s);
-	    ac_cancel(the_as,the_as->ac_buffer.s+5,ac_len-5);
+	    ac_cancel(the_as,processor_id,flags,the_as->ac_buffer.s+10,ac_len-10);
 	    break;
 	 case SL_MSG:
 	    LM_DBG("Processing a STATELESS MESSAGE action from AS (length=%d): %.*s\n",
 				ac_len,the_as->name.len,the_as->name.s);
-	    ac_sl_msg(the_as,the_as->ac_buffer.s+5,ac_len-5);
+	    ac_sl_msg(the_as,processor_id,flags,the_as->ac_buffer.s+10,ac_len-10);
 	    break;
 	 case JAIN_PONG:
 	    LM_DBG("Processing a PONG\n");
-	    ac_jain_pong(the_as,the_as->ac_buffer.s+5,ac_len-5);
+	    ac_jain_pong(the_as,processor_id,flags,the_as->ac_buffer.s+10,ac_len-10);
 	    break;
 	 default:
 	    LM_DBG("Processing a UNKNOWN TYPE action from AS (length=%d): %.*s\n",
@@ -322,8 +329,11 @@ int process_action(as_p the_as)
       }
       memmove(the_as->ac_buffer.s,the_as->ac_buffer.s+ac_len,(the_as->ac_buffer.len)-ac_len);
       (the_as->ac_buffer.len)-=ac_len;
-      if(the_as->ac_buffer.len>5){
+      if(the_as->ac_buffer.len>10){
 	 ac_len=(the_as->ac_buffer.s[0]<<24)|(the_as->ac_buffer.s[1]<<16)|(the_as->ac_buffer.s[2]<<8)|((the_as->ac_buffer.s[3])&0xFF);
+         type=the_as->ac_buffer.s[4];
+         processor_id=the_as->ac_buffer.s[5];
+         flags=(the_as->ac_buffer.s[6]<<24)|(the_as->ac_buffer.s[7]<<16)|(the_as->ac_buffer.s[8]<<8)|((the_as->ac_buffer.s[9])&0xFF);
       }else{
 	 return 0;
       }
@@ -331,12 +341,11 @@ int process_action(as_p the_as)
    return 0;
 }
 
-static inline int ac_jain_pong(as_p the_as,char *action,int len)
+static inline int ac_jain_pong(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len)
 {
-   unsigned int seqno,flags;
+   unsigned int seqno;
    int k;
    k=0;
-   net2hostL(flags,action,k);
    net2hostL(seqno,action,k);
    process_pong(&the_as->jain_pings,seqno);
    return 0;
@@ -390,14 +399,13 @@ int process_pong(struct ha *the_table,unsigned int seqno)
  * Returns: 
  * */
 
-int ac_cancel(as_p the_as,char *action,int len)
+int ac_cancel(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len)
 {
-   unsigned int flags,ret,cancelled_hashIdx,cancelled_label,i;
-   char processor_id;
+   unsigned int ret,cancelled_hashIdx,cancelled_label,i;
    struct sip_msg *my_msg;
    struct as_uac_param *the_param;
    struct cell* t_invite;
-	int k,retval,uac_id;
+   int k,retval,uac_id;
    str headers,body;
 
    body.s=headers.s=NULL;
@@ -405,10 +413,7 @@ int ac_cancel(as_p the_as,char *action,int len)
    the_param=NULL;
    i=k=0;
 
-   net2hostL(flags,action,k);
    net2hostL(uac_id,action,k);
-
-   processor_id=action[k++];
 
    net2hostL(cancelled_hashIdx,action,k);
    net2hostL(cancelled_label,action,k);
@@ -492,6 +497,7 @@ int ac_cancel(as_p the_as,char *action,int len)
    the_param->processor_id=processor_id;
    the_param->destroy_cb_set=0;
    
+   /* registers TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED tm callbacks */
    ret=seas_f.tmb.t_cancel_uac(&headers,&body,cancelled_hashIdx,cancelled_label,uac_cb,(void*)the_param);
    if (ret == 0) {
       LM_ERR( "t_cancel_uac failed\n");
@@ -529,7 +535,7 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
    i=j=k=0;
    /* count how many record-route bodies come in the response*/
    /* this does not work, I think because of siblings
-   for(hf=resp->record_route;hf;hf=next_sibling_hdr(hf),j=0){
+   for(hf=resp->record_route;hf;hf=hf->sibling,j=0){
    */
    for(hf=resp->headers;hf;hf=hf->next,j=0){
       if(hf->type != HDR_RECORDROUTE_T)
@@ -548,7 +554,7 @@ int recordroute_diff(struct sip_msg *req,struct sip_msg *resp)
       }
    }
    /*
-   for(hf=req->record_route;hf;hf=next_sibling_hdr(hf),j=0){
+   for(hf=req->record_route;hf;hf=hf->sibling,j=0){
       */
    for(hf=req->headers;hf;hf=hf->next,j=0){
       if(hf->type != HDR_RECORDROUTE_T)
@@ -631,6 +637,10 @@ error:
    return -1;
 }
 
+static void param_free(void *param)
+{
+   shm_free(param);
+}
 /**
  * ac_reply: UAS transaction Reply action. It replies to an incoming request with a response.
  * @param the_as The App Server that sent this action.
@@ -641,23 +651,23 @@ error:
  *
  * Returns: what
  */
-int ac_reply(as_p the_as,char *action,int len)
+int ac_reply(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len)
 {
-   unsigned int flags,hash_index,label,contentlength;
-   struct cell *c;
+   unsigned int hash_index,label,contentlength;
+   struct cell *c=NULL;
    struct sip_msg *my_msg;
    struct to_body *tb;
    str new_header,body,totag;
    char *ttag;
    int i,k,retval;
    static char headers[MAX_HEADER];
+   struct as_uac_param *the_param;
 
    contentlength=0;
    ttag=NULL;
    my_msg=NULL;
    i=k=0;
 
-   net2hostL(flags,action,k);
    net2hostL(hash_index,action,k);
    net2hostL(label,action,k);
 
@@ -697,7 +707,8 @@ int ac_reply(as_p the_as,char *action,int len)
       contentlength=(unsigned int)(long)my_msg->content_length->parsed;
    if(0>(i=recordroute_diff(c->uas.request,my_msg))){/*not likely..*/
       LM_DBG("Seems that request had more RecordRoutes than response...\n");
-      goto error;
+      /* This prevents host->proxy->host from working. TODO review recordroute_diff code.
+      goto error; */
    }else
       LM_DBG("Recordroute Diff = %d\n",i);
 
@@ -712,8 +723,20 @@ int ac_reply(as_p the_as,char *action,int len)
    /* If it is INVITE and response is success (>=200 && <300), we mark it as local so that
     * SER does NOT retransmit the final response (by default, SER retransmit local UAS final
     * responses...*/
-   if(is_invite(c) && my_msg->first_line.u.reply.statuscode>=200 && my_msg->first_line.u.reply.statuscode<300)
+   if(is_invite(c) && my_msg->first_line.u.reply.statuscode>=200 && my_msg->first_line.u.reply.statuscode<300){
       c->flags |= T_IS_LOCAL_FLAG;
+      if(!(the_param=shm_malloc(sizeof(struct as_uac_param)))){
+         LM_ERR("no more share memory\n");
+         goto error;
+      }
+      the_param->processor_id=processor_id;
+      the_param->who=my_as;
+      the_param->destroy_cb_set=0;
+      if (seas_f.tmb.register_tmcb( 0, c, TMCB_E2EACK_IN,uas_e2e_ack_cb, the_param,&param_free)<=0) {
+         LM_ERR("cannot register additional callbacks\n");
+         goto error;
+      }
+   }
    /*WARNING casting unsigned int to int*/
    body.len=contentlength;
    body.s=get_body(my_msg);
@@ -730,7 +753,10 @@ int ac_reply(as_p the_as,char *action,int len)
    goto exit;
 error:
    retval = -1;
-   seas_f.tmb.unref_cell(c);
+   if(c)
+      seas_f.tmb.unref_cell(c);
+   if(the_param)
+      shm_free(the_param);
 exit:
    if(ttag)
       pkg_free(ttag);
@@ -778,22 +804,18 @@ error:
  * use static buffers.
  *
  */
-int ac_sl_msg(as_p the_as,char *action,int len)
+int ac_sl_msg(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len)
 {
-   char processor_id;
    struct sip_msg *my_msg;
    str *uri;
    struct proxy_l *proxy;
    rr_t *my_route;
    int i,k,retval;
-   unsigned int flags;
-   enum sip_protos proto;
+   //enum sip_protos proto;
 
    my_msg=NULL;
    i=k=0;
 
-   net2hostL(flags,action,k);
-   processor_id=action[k++];
    proxy=0;
 
    if(!(my_msg = parse_ac_msg(HDR_EOH_F,action+k,len-k))){
@@ -824,14 +846,15 @@ int ac_sl_msg(as_p the_as,char *action,int len)
       my_msg->force_send_socket=the_as->binds[processor_id].bind_address;
       not sure which is better...
       */
-   proxy=uri2proxy(uri,PROTO_NONE);
+   /*proxy=uri2proxy(uri,PROTO_NONE);
    if (proxy==0) {
       LM_ERR("unable to create proxy from URI \n");
       goto error;
    }
-   proto=proxy->proto; /* uri2proxy set it correctly */
+   proto=proxy->proto;
+   */
    //TODO my_msg->recvd
-   if(0>forward_sl_request(my_msg,proxy,proto))
+   if(0>forward_sl_request(my_msg,uri,PROTO_NONE))
       goto error;
    retval=0;
    goto exit;
@@ -866,36 +889,28 @@ static inline void free_sip_msg_lite(struct sip_msg *my_msg)
    }
 }
 
-int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
+int forward_sl_request(struct sip_msg *msg,str *uri,int proto)
 {
-	union sockaddr_union *to;
-	struct socket_info *send_sock;
+	struct dest_info dst;
 	int ret;
 
-	to = (union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	ret = -1;
 
-	hostent2su(to, &proxy->host, proxy->addr_idx,
-		(proxy->port)?proxy->port:SIP_PORT);
+#ifdef USE_DNS_FAILOVER
+        if ((uri2dst(NULL,&dst, msg,  uri, proto)==0) || (dst.send_sock==0))
+#else
+        if ((uri2dst(&dst, msg,  uri, proto)==0) || (dst.send_sock==0))
+#endif 
+        {
+		LOG(L_ERR, "forward_sl_request: no socket found\n");
+		return -1;
+	}
 
-	do {
-		send_sock=get_send_socket(msg, to, proto);
-		if (send_sock==0){
-			LM_ERR( "cannot forward to af %d, "
-				"proto %d no corresponding listening socket\n",
-				to->s.sa_family, proto);
-			continue;
-		}
-		LM_DBG("Sending:\n%.*s.\n", (int)msg->len,msg->buf);
-		if (msg_send(send_sock, proto, to, 0, msg->buf,msg->len)<0){
-			LM_ERR("Error sending message !!\n");
-			continue;
-		}
-		ret = 0;
-		break;
-	}while( get_next_su( proxy, to, 0)==0 );
-
-	pkg_free(to);
+        LM_DBG("Sending:\n%.*s.\n", (int)msg->len,msg->buf);
+        if (msg_send(&dst, msg->buf,msg->len)<0){
+           LM_ERR("ERROR:seas:forward_sl_request: Error sending message !!\n");
+           return -1;
+        }
 	return ret;
 }
 
@@ -911,10 +926,10 @@ int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
  * use static buffers.
  *
  */
-int ac_uac_req(as_p the_as,char *action,int len)
+int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len)
 {
-   unsigned int flags,cseq;
-   char err_buf[MAX_REASON_LEN],processor_id;
+   unsigned int cseq;
+   char err_buf[MAX_REASON_LEN];
    struct sip_msg *my_msg;
    struct to_body *fb,*tb;
    struct cseq_body *cseqb;
@@ -923,6 +938,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
    int i,k,retval,uac_id,sip_error,ret,err_ret;
    long clen;
    str headers,body,fake_uri;
+   uac_req_t uac_r;
 
    headers.s=body.s=fake_uri.s=NULL;
    my_dlg=NULL;
@@ -930,10 +946,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
    the_param=NULL;
    i=k=clen=0;
 
-   net2hostL(flags,action,k);
    net2hostL(uac_id,action,k);
-
-   processor_id=action[k++];
 
    if(!(headers.s=pkg_malloc(MAX_HEADER))){
       LM_ERR("Out of Memory!!");
@@ -950,7 +963,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
       goto error;
    }
    if(parse_headers(my_msg,HDR_EOH_F,0)==-1){
-      LM_ERR("parsing headers\n");
+      LM_ERR("ERROR:seas:ac_uac_req:parsing headers\n");
       goto error;
    }
    if(parse_from_header(my_msg)<0){
@@ -1072,13 +1085,24 @@ int ac_uac_req(as_p the_as,char *action,int len)
       }
       my_dlg->hooks.next_hop=&fake_uri;
    }
-   my_dlg->T_flags=T_NO_AUTOACK_FLAG|T_PASS_PROVISIONAL_FLAG ;
-   ret=seas_f.tmb.t_request_within(&(my_msg->first_line.u.request.method),&headers,&body,my_dlg,uac_cb,(void *)the_param);
+   /* Kamailio and OpenSIPs seem to have diverged quite a bit on flags and events
+      notified to UACs. Let's see if kamailio gets it right by now, if not
+      this is a TODO: check PASS_PROVISIONAL
+      my_dlg->T_flags=T_NO_AUTO_ACK|T_PASS_PROVISIONAL_FLAG ;
+      this is the same as (TMCB_DONT_ACK|TMCB_LOCAL_RESPONSE_OUT) in Kamailio
+   */
+
+   memset(&uac_r,0, sizeof(uac_req_t));
+   set_uac_req(&uac_r, &(my_msg->first_line.u.request.method), &headers, &body, my_dlg,TMCB_DONT_ACK|TMCB_LOCAL_RESPONSE_OUT, uac_cb, (void*)the_param);
+
+   ret=seas_f.tmb.t_request_within(&uac_r);
+
    /** now undo all the fakes we have put in my_dlg*/
    /*because my_dlg->route_set should be shm but we fake it (its pkg_mem)*/
    my_dlg->route_set=(rr_t *)0;
-   if (ret <= 0) {
+   if (ret < 0) {
       err_ret = err2reason_phrase(ret,&sip_error,err_buf, sizeof(err_buf), "SEAS/UAC");
+      LM_ERR("failed to send the [%.*s] request\n",uac_r.method->len,uac_r.method->s);
       LM_ERR("Error on request_within %s\n",err_buf );
       if(err_ret > 0) {
 	 as_action_fail_resp(uac_id,ret,err_buf,0);
@@ -1400,16 +1424,50 @@ void uac_cleanup_cb(struct cell* t, int type, struct tmcb_params *rcvd_params)
 	}
 }
 
+void uas_e2e_ack_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
+{
+   struct as_uac_param *ev_info;
+   int mylen;
+   as_msg_p my_as_ev=NULL;
+   char *buffer=NULL;
+
+   ev_info=(struct as_uac_param*)*rcvd_params->param;
+
+   if(!(type & TMCB_E2EACK_IN))
+      return;
+
+   if(!(my_as_ev=shm_malloc(sizeof(as_msg_t)))){
+      LM_ERR("no more shared mem\n");
+      goto error;
+   }
+   if(!(buffer=create_as_event_t(t,rcvd_params->req,ev_info->processor_id,&mylen,E2E_ACK))){
+      LM_ERR("unable to create event code\n");
+      goto error;
+   }
+   my_as_ev->as = ev_info->who;
+   my_as_ev->msg = buffer;
+   my_as_ev->len = mylen;
+   my_as_ev->type = RES_IN;
+   my_as_ev->transaction = t;
+   if(write(write_pipe,&my_as_ev,sizeof(as_msg_p))<=0){
+      goto error;
+   }
+   goto exit;
+error:
+   if(my_as_ev){
+      shm_free(my_as_ev);
+   }
+   if(buffer)
+      shm_free(buffer);
+exit:
+   return ;
+}
+
 /**
  * This function will be called from a SER process when a reply is received for
  * the transaction. The SER processes only have acces to the EventDispatcher 
  * fifo (not to the ActionDispatcher) so EventDispatcher will be the one who 
  * will send the event to the AppServer.
- * TODO WARNING !!! there's a clear MEMORY LEAK here, see exit: at the bottom of
- * the function... it should free ev_info !!!!!!!!
- * I have disabled the free() because It may be that we receive a retransmitted 200 OK
- * if the ACK gets lost, that 200 OK will make SER invoke this callback a second,third, etc time...
- *
  */
 void uac_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
 {
@@ -1428,12 +1486,12 @@ void uac_cb(struct cell* t, int type,struct tmcb_params *rcvd_params)
    }
 
    if(type == TMCB_LOCAL_COMPLETED && !ev_info->destroy_cb_set) {
-		if(seas_f.tmb.register_tmcb(NULL, t, TMCB_DESTROY, uac_cleanup_cb, (void*)ev_info, NULL) <= 0) {
-			LM_ERR( "register_tmcb for destroy callback failed\n");
-			goto error;
-		}
-		ev_info->destroy_cb_set = 1;
-	}
+      if(seas_f.tmb.register_tmcb(NULL, t, TMCB_DESTROY , uac_cleanup_cb, (void*)ev_info, 0) <= 0) {
+         LM_ERR( "register_tmcb for destroy callback failed\n");
+         goto error;
+      }
+      ev_info->destroy_cb_set = 1;
+   }
 
    LM_DBG("reply to UAC Transaction for AS:%.*s code: %d\n",
 		   ev_info->who->name.len,ev_info->who->name.s,code);

@@ -121,6 +121,10 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
    ptr=htons((short int)(hdr->len));
    memcpy(payload+HEADER_LEN_IDX,&ptr,2);
    payload[HEADER_NAME_LEN_IDX]=(unsigned char)hdr->name.len;
+   if(hdr->len>256){
+      LM_INFO("header bigger than 256 bytes. Skipping express-encoding\n");
+      return 4;/*2 for header offset + 2 for header length*/
+   }
    switch(hdr->type){
       case HDR_FROM_T:
       case HDR_TO_T:

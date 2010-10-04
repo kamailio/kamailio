@@ -52,6 +52,7 @@ struct statscell
       } uac;
    }u;
 };
+
 /** Transactions statistics table */
 struct statstable
 {
@@ -64,6 +65,7 @@ struct statstable
    unsigned int received_replies;
    unsigned int received;
 };
+
 extern struct statstable *seas_stats_table;
 
 /**

@@ -79,6 +79,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	       mylittlepointer=toparam->next->name.s;
 	    else
 	       mylittlepointer=toparam->name.s+toparam->name.len+1;
+         if(mylittlepointer[-1]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer--;/*if so, account for quotes*/
 	 where[i++]=(unsigned char)(mylittlepointer-hdrstart);
       }
       if((toparam=tbody->last_param)){
@@ -86,6 +88,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	    mylittlepointer=toparam->value.s+toparam->value.len;
 	 else
 	    mylittlepointer=toparam->name.s+toparam->name.len;
+         if(mylittlepointer[0]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer++;/*if so, account for quotes*/
 	 where[i++]=(unsigned char)(mylittlepointer-hdrstart+1);
       }
       return i;
@@ -100,6 +104,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	       mylittlepointer=parametro->next->name.s;
 	    else
 	       mylittlepointer=parametro->name.s+parametro->name.len+1;
+         if(mylittlepointer[-1]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer--;/*if so, account for quotes*/
 	 where[i++]=(unsigned char)(mylittlepointer-hdrstart);
       }
       /*look for the last parameter*/
@@ -112,6 +118,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	    mylittlepointer=parametro->body.s+parametro->body.len;
 	 else
 	    mylittlepointer=parametro->name.s+parametro->name.len;
+         if(mylittlepointer[0]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer++;/*if so, account for quotes*/
 	 where[i++]=(unsigned char)(mylittlepointer-hdrstart+1);
       }
       return i;
@@ -126,6 +134,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	       mylittlepointer=dparam->next->name.s;
 	    else
 	       mylittlepointer=dparam->name.s+dparam->name.len+1;
+         if(mylittlepointer[-1]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer--;/*if so, account for quotes*/
 	 where[i++]=(unsigned char)(mylittlepointer-hdrstart);
       }
       /*WARNING the ** parameters are in reversed order !!! */
@@ -136,6 +146,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	    mylittlepointer=dparam->body.s+dparam->body.len;
 	 else
 	    mylittlepointer=dparam->name.s+dparam->name.len;
+         if(mylittlepointer[0]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer++;/*if so, account for quotes*/
 	 where[i++]=(unsigned char)(mylittlepointer-hdrstart+1);
       }
       return i;
@@ -151,6 +163,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	       mylittlepointer=vparam->next->name.s;
 	    else
 	       mylittlepointer=vparam->name.s+vparam->name.len+1;
+         if(mylittlepointer[-1]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer--;/*if so, account for quotes*/
 	 where[i++]=REL_PTR(hdrstart,mylittlepointer);
       }
       if((vparam=vbody->last_param)){
@@ -158,6 +172,8 @@ int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body
 	    mylittlepointer=vparam->value.s+vparam->value.len;
 	 else
 	    mylittlepointer=vparam->name.s+vparam->name.len;
+         if(mylittlepointer[0]=='\"')/*check if the parameter was quoted*/
+            mylittlepointer++;/*if so, account for quotes*/
 	 where[i++]=REL_PTR(hdrstart,mylittlepointer+1);
       }
       return i;

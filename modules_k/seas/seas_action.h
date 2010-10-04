@@ -42,22 +42,23 @@ struct as_uac_param{
    unsigned int label;
    char processor_id;
    char destroy_cb_set;
+   struct cell* inviteT;
 };
 
 
 /**
  * ACTION processing functions
  */
-int ac_reply(as_p the_as,char *action,int len);
-int ac_sl_msg(as_p the_as,char *action,int len);
-int ac_uac_req(as_p the_as,char *action,int len);
-int ac_encode_msg(as_p the_as,char *action,int len);
-int ac_cancel(as_p the_as,char *action,int len);
+int ac_reply(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len);
+int ac_sl_msg(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len);
+int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len);
+int ac_encode_msg(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len);
+int ac_cancel(as_p the_as,unsigned char processor_id,unsigned int flags,char *action,int len);
 
 /**
  * Utility functions
  */
-int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto);
+int forward_sl_request(struct sip_msg *msg,str *uri,int proto);
 int extract_allowed_headers(struct sip_msg *my_msg,int allow_vias,int allow_Rroutes,hdr_flags_t forbidden_hdrs,char *headers,int headers_len);
 
 /**

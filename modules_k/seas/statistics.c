@@ -246,7 +246,7 @@ int start_stats_server(char *stats_socket)
 	 break;
       }
    }
-   if(!(he=resolvehost(stats_socket,0)))
+   if(!(he=resolvehost(stats_socket)))
       goto error;
    if(port==(char*)0 || *port==0)
       stats_port=5088;
