@@ -203,9 +203,11 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				nat_traversal nathelper path pdt permissions pike pv qos \
 				ratelimit regex registrar rr rtimer rtpproxy siptrace siputils \
 				sl sms speeddial sqlops sst statistics textops tmx uac \
-				uac_redirect uri_db userblacklist usrloc xlog \
+				uac_redirect uri_db userblacklist usrloc xlog seas \
 				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
-				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh
+				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
+				blst prefix_route counters debugger matrix mqueue mtree \
+				pipelimit rtpproxy textopsx xhttp
 
 # K mysql module
 module_group_kmysql=db_mysql
@@ -223,7 +225,7 @@ module_group_kradius=acc_radius auth_radius misc_radius peering
 module_group_kunixodbc=db_unixodbc
 
 # K xmlrpc modules
-module_group_kxmlrpc=xmlrpc mi_xmlrpc
+module_group_kxml=xmlrpc mi_xmlrpc xmlops
 
 # K perl module
 module_group_kperl=perl perlvdb
@@ -285,7 +287,7 @@ else
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_unixodbc memcached mi_xmlrpc \
-							perl perlvdb purple seas \
+							perl perlvdb purple \
 							snmpstats xmpp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
