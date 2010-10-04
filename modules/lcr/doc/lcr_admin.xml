@@ -73,8 +73,9 @@
 	fast, but unfair favoring larger weight values at the expense smaller
 	ones.  For example, if two gateways have weights 1 and 2, probability
 	that the gateway with weight 1 is tried first is 1/4, not 1/3.
-	A script is provided in lcr/utils directory that can be used to
+	Two scripts are provided in lcr/utils directory that can be used to
 	check the probabilities resulting from a given set of weight values.
+	Same can be done with command 'kamctl eval_weights'.
 	</para>
 	<para>
         The function <emphasis>next_gw()</emphasis> can then be used to

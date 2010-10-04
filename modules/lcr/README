@@ -235,9 +235,10 @@ Chapter 1. Admin Guide
    Weight is an integer value from 1 to 254. Weight implementation is
    fast, but unfair favoring larger weight values at the expense smaller
    ones. For example, if two gateways have weights 1 and 2, probability
-   that the gateway with weight 1 is tried first is 1/4, not 1/3. A script
-   is provided in lcr/utils directory that can be used to check the
-   probabilities resulting from a given set of weight values.
+   that the gateway with weight 1 is tried first is 1/4, not 1/3. Two
+   scripts are provided in lcr/utils directory that can be used to check
+   the probabilities resulting from a given set of weight values. Same can
+   be done with command 'kamctl eval_weights'.
 
    The function next_gw() can then be used to select one gateway at a time
    for forwarding. Upon each call, unless "dont_strip_of_tag" flag is set,
