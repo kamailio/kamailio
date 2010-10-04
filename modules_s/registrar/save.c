@@ -420,8 +420,10 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 		}
 		
 		send_sock = 0;
-		if (_c->received && (trust_received_flag >=0) &&
-				(isflagset(_m, trust_received_flag) == 1)) {
+		if (_c->received &&
+				(((trust_received_flag >= 0) &&
+					(isflagset(_m, trust_received_flag) == 1)) ||
+				 (trust_received_flag == -2)) ) {
 			recv = &_c->received->body;
 			send_sock = find_send_socket(recv);
 		} else if (flags & FL_NAT && _m->first_line.type == SIP_REQUEST) {
@@ -591,8 +593,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 				}
 				
 				send_sock = 0;
-				if (_c->received && (trust_received_flag >=0) &&
-						(isflagset(_m, trust_received_flag) == 1)) {
+				if (_c->received &&
+						(((trust_received_flag >=0 ) &&
+							(isflagset(_m, trust_received_flag) == 1)) ||
+						 (trust_received_flag == -2)) ) {
 					recv = &_c->received->body;
 					send_sock = find_send_socket(recv);
 				} else if (nated & FL_NAT && 
@@ -649,8 +653,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 				}
 				
 				send_sock = 0;
-				if (_c->received && (trust_received_flag >=0) &&
-						(isflagset(_m, trust_received_flag) == 1)) {
+				if (_c->received &&
+						(((trust_received_flag >=0 ) &&
+							(isflagset(_m, trust_received_flag) == 1)) ||
+						 (trust_received_flag == -2)) ) {
 					recv = &_c->received->body;
 					send_sock = find_send_socket(recv);
 				} else if (nated & FL_NAT && _m->first_line.type == SIP_REQUEST) {

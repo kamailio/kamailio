@@ -67,9 +67,12 @@ int append_branches = 1;              /* If set to 1, lookup will put all contac
 int case_sensitive  = 0;              /* If set to 1, username in aor will be case sensitive */
 int save_nat_flag   = 4;              /* The contact will be marked as behind NAT if this flag is set before calling save */
 int load_nat_flag   = 4;              /* This flag will be set by lookup if a contact is behind NAT*/
-int trust_received_flag = -1;         /* if this flag is set, a contact
+int trust_received_flag = -2;         /* if this flag is set (>=0), a contact
 										 received param. will be trusted
-										 (otherwise it will be ignored) */
+										 (otherwise it will be ignored)
+										 -1 = disable
+										 -2 = trust all.
+									   */
 int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
 int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
