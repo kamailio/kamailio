@@ -1607,10 +1607,11 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 	pv_value_t pval;
 	int destroy_pval;
 
-	right=0; /* warning fix */
-	rv=0;
+	right=NULL; /* warning fix */
+	rv=NULL;
 	destroy_pval=0;
 	ret=-1;
+	he=NULL; /* warning fix */
 	switch(rtype){
 		case NET_ST:
 			switch(op){
