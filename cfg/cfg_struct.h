@@ -421,6 +421,16 @@ static inline void cfg_reset_handles(void)
 			cfg_update_local(1); \
 	} while(0)
 
+/* Reset all the group handles in the child process,
+ * i.e. move them back to the default local configuration.
+ */
+#define cfg_reset_all() \
+	do { \
+		if (unlikely(cfg_ginst_count)) \
+			cfg_reset_handles(); \
+	} while(0)
+
+
 /* searches a group by name */
 cfg_group_t *cfg_lookup_group(char *name, int len);
 	

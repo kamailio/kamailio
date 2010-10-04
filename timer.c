@@ -892,6 +892,8 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
 #endif
 			UNLOCK_TIMER_LIST(); /* acts also as write barrier */ 
 				ret=tl->f(t, tl, tl->data);
+				/* reset the configuration group handles */
+				cfg_reset_all();
 				if (ret==0){
 					UNSET_RUNNING();
 					LOCK_TIMER_LIST();
@@ -1147,6 +1149,8 @@ void slow_timer_main()
 				SET_RUNNING_SLOW(tl);
 				UNLOCK_SLOW_TIMER_LIST();
 					ret=tl->f(*ticks, tl, tl->data);
+					/* reset the configuration group handles */
+					cfg_reset_all();
 					if (ret==0){
 						/* one shot */
 						UNSET_RUNNING_SLOW();
