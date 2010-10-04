@@ -1394,11 +1394,18 @@ if(dlg_get("abcdef", "123", "456"))
 		<function moreinfo="none">is_known_dlg()</function>
 		</title>
 		<para>
-		This function checks if the dialog module is aware of this
-		dialog, regardless of whether it is in any profiles.   The 
-		dialog module tracks all dialogs irrespectively of profile usage;
-		as such, this function will return affirmatively if the request 
-		corresponds to a dialog that is currently active.
+		This function checks if the current SIP message being processed
+		belongs to any transaction within an active dialog that the 
+		dialog module is currently tracking.  This is a check for 
+		tracking of any kind, without regard to profiles.
+		</para>
+		<para>
+		This function has numerous potential applications, among which
+		is that it can be used to strengthen security for 
+		loose-routing sequential (in-dialog) requests or responses
+		to them, as by providing a preventative check against
+		spoofing on the proxy level instead of leaving the issue
+		purely to the receiving UA.  
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
