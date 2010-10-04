@@ -2,7 +2,7 @@ Source: kamailio
 Section: net
 Priority: optional
 Maintainer: Jon Bonilla <manwe@aholab.ehu.es>
-Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libpurple-dev, libmemcache-dev, libreadline5-dev
+Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libpurple-dev, libmemcache-dev, libreadline-dev, liblua5.1-0-dev, python-dev, libgeoip-dev
 Standards-Version: 3.8.0
 Homepage: http://www.kamailio.org/
 
@@ -98,17 +98,19 @@ Description: SIMPLE presence modules for Kamailio
  server and presence user agent for RICH presence, registrar-based presence,
  external triggered presence and XCAP support.
 
-Package: kamailio-xmlrpc-modules
+Package: kamailio-xml-modules
 Architecture: any
 Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
-Replaces: kamailio-xmlrpc-module
-Description: XMLRPC support for Kamailio's Management Interface
+Replaces: kamailio-xml-module
+Description: XML based extensions for Kamailio's Management Interface
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the XMLRPC transport implementations for Kamailio's
+ This package provides:
+ - the XMLRPC transport implementations for Kamailio's
  Management and Control Interface.
+ - xmlops module for XPath operations in configuration file
 
 Package: kamailio-perl-modules
 Architecture: any
@@ -225,6 +227,39 @@ Depends: ${shlibs:Depends}, kamailio (= ${Source-Version})
 Description: contains the TLS kamailio transport module
  This has been split out of the main kamailio package, so that kamailio will not
  depend on openssl. This module will enable you to use the TLS transport.
+
+Package: kamailio-lua-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${Source-Version})
+Description: contains the app_lua module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_lua module, an extension allowing to
+ execute embedded Lua applications within configuration file.
+
+Package: kamailio-python-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${Source-Version})
+Description: contains the app_python module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_python module, an extension allowing to
+ execute embedded Python applications within configuration file.
+
+Package: kamailio-geoip-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${Source-Version})
+Description: contains the geoip module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the geoip module, an extension allowing to
+ use GeoIP API within configuration file.
 
 Package: kamailio-nth
 Architecture: any
